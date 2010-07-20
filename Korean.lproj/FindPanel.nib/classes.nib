@@ -1,0 +1,13 @@
+{
+    IBClasses = (
+        {
+            ACTIONS = {findNext = id; findPrevious = id; ignoreCaseSwitchAction = id; }; 
+            CLASS = FindPanelWindowController; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {caseCheckBox = NSButton; delegate = id; searchStringField = NSTextField; }; 
+            SUPERCLASS = NSWindowController; 
+        }, 
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }
+    ); 
+    IBVersion = 1; 
+}

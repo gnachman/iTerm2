@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>iTerm : General Usage</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" LINK="#696969" ALINK="#696969" VLINK="#696969">
+<LINK REL=stylesheet HREF="styles.css" TYPE="text/css">
+<CENTER>
+<TABLE BGCOLOR="#FFFFFF" CELLPADDING="10" CELLSPACING="1" BORDER="0" WIDTH="100%">
+<TR>
+<TD VALIGN="TOP" WIDTH="120" BGCOLOR="#EEEEFF">
+<A HREF="index.html"><IMG SRC="iTerm.png" TITLE="" ALT="iTerm" BORDER="0" WIDTH=96></A><BR><BR>
+<LI><A HREF="index.html">Home</A></LI>
+<LI><A HREF="navigation.html">General Usage</A></LI>
+<LI><A HREF="preferences.html">Preferences</A></LI>
+<LI><A HREF="profiles.html">Profiles</A></LI>
+<LI><A HREF="bookmarks.html">Bookmarks</A></LI>
+<LI><A HREF="scripting.html">Scripting</A></LI>
+<LI><A HREF="install.html">Installation</A></LI>
+<LI><A HREF="misc.html">Misc</A></LI>
+</TD>
+
+
+<TD VALIGN="TOP" BGCOLOR="#FFFFFF">
+<FONT SIZE="5"><STRONG>General Usage</STRONG></FONT><BR><BR>
+For casual users, iTerm can be straightforward. When starting up, iTerm will create a default session that take
+you to your home directory with your default shell. You can however set up iTerm in millions of ways. This can be
+done in the <A HREF="preferences.html">Preferences Panel</A>, <A HREF="profiles.html">Profiles Window</A>, and
+<A HREF="bookmarks.html">Bookmarks Window</A>.<BR><BR>
+
+<STRONG>The Tab</STRONG><BR><BR>
+The tab might be the most important feature of iTerm. It works as (and looks like) the tabs in Safari. Further more,
+you can drag and drop tabs between windows, tear down a tab to create a new window, or even join a window with just
+one tab into another window. All tabs with a window will have the same size and same font, regardless what the
+settings for each session is. However, if you tear a tab to create a new window, it will restore its own setting.
+<BR><BR>
+By default, the label of each tab is the name of the session. You can however change the label either from the Info
+panel, or using escape sequences (ESC ]0;string^G) from within the session. The color of the label indicate the
+status of the tab. Normally it will be black. A dead session has a greyed out label. If a background tab is having 
+some new output, its label will change into magenta. Once the new output stops, its label will be red. Therefore,
+you can run a long <I>make</I> in the background. You do not have to check it frequently. Once the label changes 
+to the red, you know it is probably done. You can also set up a Growl notification in case you have iTerm window
+buried underneath other windows.<BR><BR>
+
+<STRONG>Toolbar</STRONG><BR><BR>
+The toolbar lets you do things quickly. The <STRONG>New</STRONG> button gives you a list of bookmarks to launch. 
+Hold the Option key for launching in a new window. The <STRONG>Info</STRONG> brings up the <I>Info</I> panel. 
+The <STRONG>Bookmarks</STRONG> gives you a bookmark draw. That is just one more way to launch a new session. It
+is especially useful when you need to look at your bookmarks all the time. The <STRONG>Close</STRONG> button closes
+the front tab, and the window if it is the last tab. And finally, the <STRONG>Execute</STRONG> field lets you
+to type in the command locally before you send it to the terminal. You can also type in a URL. In this case, iTerm
+will launch the URL handler, in some case it is another application. If you press TAB key instead of Enter after you
+type in the command, a new session will be launched with your command.
+<BR><BR>
+
+<STRONG>Info Panel</STRONG><BR><BR>
+Info Panel lets you examine the property of the session. You can change the settings. Notice the change
+you do here will not be saved, unless you press the <I>Update</I> button.<BR><BR>
+
+<STRONG>Mouse</STRONG><BR><BR>
+Although iTerm is a command line tool, it nevertheless lets you to use the invention of GUI era, the mouse. Mouse
+works mostly the way you would expect. Xterm mouse reporting is supported (there is an option in the Terminal
+profile to switch it on and off). Hold down Option key will temporarily disable xterm mouse reporting, so that
+you can select and paste text. Double-click selects a word, triple-click selects a line. Quadruple-click, well,
+does nothing yet. Shift key lets you extend a selection. Ctrl key mimics the right-click. Command-click launchs
+a URL. Command key is also used to drag and drop selected text. If your mouse has a wheel, that works too.
+<BR><BR>
+
+<STRONG>Keyboard</STRONG><BR><BR>
+Key behavior is very configurable in iTerm. Go to <A HREF="profiles.html">Profiles Window</A> to set it up to
+your taste. By default, command left/right arrow lets you cycle through the tabs. Command 1 to 9 brings you
+directly to a tab. Command ` and ~ cycle through the windows. <BR><BR>
+
+If you have problem using certain keys in your session, make sure your TERM setting is correct. iTerm uses
+terminfo to get the key information. If that does not work, you can always create a keyboard profile to specify
+your own key bindings. Many key bindings invovling the Command key need to be "high priority".
+<BR><BR>
+
+<STRONG>Contextual menus</STRONG><BR><BR>
+There are a couple of useful contextual menus available in iTerm. The first one is available by right or control 
+clicking in the text view of a tab. This brings up options to launch new sessions or select among the sessions already 
+open. When the option key is held down, new sessions are opened in new windows. 
+Also, selected text can also be sent to the default web browser and email client. You can launch a google search
+for the selected text. You can also command-click on URLs to launch them directly. Finally, other standard functions
+such as copy, paste, save, and close are also available.
+<BR><BR>
+The other contextual menu is availble by right or control clicking on a session's tab. This menu provides options to 
+select among open tabs and to move a specific tab to a separate window.
+<BR><BR>
+
+</TD>
+</TR>
+</TABLE>
+
+<BR>
+<FONT SIZE="-1">
+Modified: Jan 12th, 2006<BR>Created: Dec 18th, 2002<BR>
+<A HREF="MAILTO:fabian@macvillage.net">Fabian</A> and <A HREF="MAILTO:ujwal@setlurgroup.com">Ujwal S. Setlur</A><BR>
+Support free software by writing one.<BR>
+</FONT>
+
+</CENTER>
+</BODY>
+</HTML>
