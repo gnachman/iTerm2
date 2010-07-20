@@ -1,0 +1,188 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>iTerm : Navigation</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" LINK="#696969" ALINK="#696969" VLINK="#696969">
+<LINK REL=stylesheet HREF="styles.css" TYPE="text/css">
+<CENTER>
+<TABLE BGCOLOR="#FFFFFF" CELLPADDING="10" CELLSPACING="1" BORDER="0" WIDTH="100%">
+<TR>
+<TD VALIGN="TOP" WIDTH="120" BGCOLOR="#EEEEFF">
+<A HREF="index.html"><IMG SRC="iTerm.png" TITLE="" ALT="iTerm" BORDER="0" WIDTH=96></A><BR><BR>
+<LI><A HREF="index.html">Home</A></LI>
+<LI><A HREF="navigation.html">General Usage</A></LI>
+<LI><A HREF="preferences.html">Preferences</A></LI>
+<LI><A HREF="profiles.html">Profiles</A></LI>
+<LI><A HREF="bookmarks.html">Bookmarks</A></LI>
+<LI><A HREF="scripting.html">Scripting</A></LI>
+<LI><A HREF="install.html">Installation</A></LI>
+<LI><A HREF="misc.html">Misc</A></LI>
+</TD>
+
+<TD VALIGN="TOP" BGCOLOR="#FFFFFF">
+<FONT SIZE="5"><STRONG>Scripting support:</STRONG></FONT><BR>
+<UL>
+iTerm has sophisticated Applescript support allowing one to write stand-alone scripts to launch the application and open multiple sessions from the addressbook into either new tabs or new windows. You can also set some other parameters for a session such as foreground and background colors, and transparency. Here is a sample script:
+<br>
+<br>
+-- A sample iTerm Applescript
+<br>
+<br>
+
+tell application "iTerm"
+<br>
+	activate
+<br>
+<br>	
+	-- close the first session
+<br>
+	terminate the first session of the first terminal
+<br>
+<br>	
+	-- make a new terminal
+<br>
+	set myterm to (make new terminal)
+<br>
+<br>	
+	-- talk to the new terminal
+<br>
+	tell myterm
+<br>
+<br>		
+		-- set size
+<br>
+		set number of columns to 100
+<br>
+		set number of rows to 50
+<br>		
+		-- make a new session
+<br>
+		set mysession to (make new session at the end of sessions)
+<br>
+<br>		
+		-- talk to the session
+<br>
+		tell mysession
+<br>
+<br>			
+			-- set some attributes
+<br>
+			set name to "tcsh"
+<br>
+			set foreground color to "red"
+<br>
+			set background color to "blue"
+<br>
+			set transparency to "0.6"
+<br>
+<br>			
+			-- execute a command
+<br>
+			exec command "/bin/tcsh"
+<br>
+<br>			
+		end tell -- we are done talking to the session
+<br>
+<br>		
+		-- we are back to talking to the terminal
+<br>
+<br>		
+		-- launch a default shell in a new tab in the same terminal
+<br>
+		launch session "Default Session"
+<br>
+<br>		
+		-- launch a saved session from the addressbook.
+<br>
+		launch session "path/to/saved/session"
+<br>		
+		-- select the previous session
+<br>
+		select mysession
+<br>
+		-- get the tty name of a session
+<br>
+		set myttyname to the tty of the first session
+<br>
+		-- refer to a session by its tty/id
+<br>
+		tell session id myttyname
+<br>
+		    set foreground color to "yellow"
+<br>
+		end tell
+<br>
+<br>		
+	end tell
+<br>
+<br>	
+	-- talk to the first terminal
+<br>
+	tell the first terminal
+<br>
+<br>		
+		-- launch a default shell in a new tab in the same terminal
+<br>
+		launch session "Default Session"
+<br>
+<br>		
+		tell the last session
+<br>
+<br>			
+			-- write some text
+<br>
+			write text "cd Projects/Cocoa/iTerm"
+<br>			
+			-- write the contents of a file
+<br>
+			write contents of file "/path/to/file/"
+<br>
+<br>			
+		end tell
+<br>
+<br>		
+	end tell
+<br>
+<br>	
+	-- reposition window and name it
+<br>
+	set the bounds of the first window to {100, 100, 700, 700}
+<br>
+	set the name of the first window to "A Window Title"
+<br>
+
+<br>
+<br>	
+	
+end tell
+<br><br>
+These scripts can then be saved as stand-alone executable applications.
+
+</UL>
+
+<FONT SIZE="5"><STRONG>Autolaunching script:</STRONG></FONT><BR>
+<UL>
+iTerm supports autolaunching of an Applescript on startup. On startup, iTerm looks for an Applescript called <b>"AutoLaunch.scpt"</b> under <b>~/Library/Application Support/iTerm</b>. If it is found, the <b>AutoLauch.scpt</b> is launched and executed. This feature can be used to launch multiple sessions in defined windows and tabs when iTerm starts up.
+</UL>
+
+<FONT SIZE="5"><STRONG>User defined scripts:</STRONG></FONT><BR>
+<UL>
+iTerm also supports launching of user defined scripts from the "Scripts" menu. The scripts need to be stored under the "~/Library/Application Support/iTerm/Scripts" directory. You can create this directory if it does not already exist. iTerm checks this directory on startup.
+</UL>
+
+</TD>
+</TR>
+</TABLE>
+
+<BR>
+<FONT SIZE="-1">
+Modified: Nov 16th, 2006<BR>Created: Dec 18th, 2002<BR>
+<A HREF="MAILTO:fabian@macvillage.net">Fabian</A> and <A HREF="MAILTO:ujwal@setlurgroup.com">Ujwal S. Setlur</A><BR>
+Support free software by writing one.<BR>
+</FONT>
+
+</CENTER>
+</BODY>
+</HTML>

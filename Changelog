@@ -1,0 +1,3737 @@
+2009-10-12 delx
+	* Fixed incorrect vertical font positioning (#2765901)
+	* Lock scrollback buffer after finding text (#2875908)
+
+2009-10-07 delx
+	* Fixed report bug link in about box (#2872981)
+
+2009-09-29 delx
+	* Lock scrolling while the user is selecting text (#2868971)
+
+2009-09-28 delx
+	* Fixed IME when option key is set to meta/esc
+	* Fix auto update bug
+	* Fix showing toolbar when window is maximised (#2765328)
+	* Fixed window cycling (#2805216, #2688460)
+
+2009-09-27 delx
+	* Fixed focus follows mouse not working when viewing scrollback (#2764633)
+
+2009-09-26 delx
+	* Fixed option key as esc/meta under Snow Leopard (#2849154)
+
+2009-09-24 delx
+	* Clear selection when VT100Screen calls setDirty
+	* Only redraw "blinked" characters every 0.5 seconds, not entire screen
+
+2009-09-23 delx
+	* Integrated new version of Sparkle for cryptographically protected
+	  updates. Should also be better about prompting for updates.
+
+2009-09-22 delx
+	* Draw bold text the old fashioned way, much faster
+	* Separate bold & highlight attributes for text
+	* New behaviour gives four distinct modes -- plain, bold, highlight, bold+highlight
+	  Use the disable bold option to collapse the last 3 into one
+
+2009-09-20 delx
+	* Fixed blinking text
+	* Fixed drawing corruption when new text is placed into a full buffer is not scrolled to the bottom
+	* Fixed a careless redraw error
+	* Fixed refreshing of non-active tabs (#2862256)
+
+2009-09-17 delx
+	* Save cursor position separately for alternate screens (#2833765)
+	* Show correct window titles (#2765347)
+
+2009-09-16 delx
+	* Fixed CMD-num tab switching (#2271203)
+	* Improved performance, blank lines are no longer constantly regenerated
+
+2009-09-15 delx
+	* Fixed handling of overflow on full scrollback
+	* Update text selection so it stays correct
+	* Only redraw the new line, not the whole screen
+	* Pay better attention to refresh rate timer
+
+2009-06-11 delx
+	* PTYTask spawns a separate thread to call select() on all the pipes.
+	  Previously NSFileHandle would create a new thread of each pipe that
+	  was being waited on.
+	* This extra thread is used to perform read/write operations in 2048-byte
+	  chunks from each pipe. This greatly improves interactivity.
+	* Entering a different runloop mode no longer blocks PTYTask read/write
+	  or drawing. Fixes #2682132
+	* Automatically set the version number in target plist as part of the
+	  xcode build phase. Dev versions get svn revisions & Deployment gets
+	  the current date.
+
+2009-06-09 delx
+	* Always disable Apple's smooth scrolling to avoid drawing corruption
+	* Fixed xterm window title reporting
+
+2009-05-08 delx
+	* PTYTextView now uses the Cocoa drawing machinery as Apple intended.
+	  This means dirty flagged chars are converted into dirty rectangles.
+	  No more forceUpdate, drawRect draws the rectangle it is given. It does
+	  check needsToDrawRect for each line to avoid overdrawing.  This should
+	  hopefully make drawing more reliable on Tiger and Leopard.
+	* Selected text will now be invalidated only one of the characters in the
+	  selection is changed.
+	* The end result of these changes should be fast drawing on all OSes
+	  with all the features of previous versions restored.
+	* If no working directory is specified then new tabs will open in the
+	  same directory as the previous session. This doesn't work with the
+	  default settings yet. Need to execute the user's login shell directly
+	  rather than using 'login -fp' to do it for us.
+	* Clear the bell symbol upon any key press
+	* Converted to XCode 3.1 project format and IB 3.0 XIBs
+	* Report as xterm patch level 95 so Vim detects ttymouse=xterm2, also
+	  increased default refresh rate.
+
+2009-04-15 delx
+	* Fixed selection highlighting when using background images (#2762076)
+
+2009-04-10 ujwal
+	* Moved display update timer from PTYTask to PTYSession. PTYTask should 
+	  have no knowledge of display logic. Timer is now a repeating timer.
+
+2009-04-10 delx
+	* Revert to old force screen update behaviour for 10.4
+	* Fix overwriting of static window titles (#2744363)
+	* Fixed a bug when pasting more than 1024 characters of text
+	* Rewrote bits of PTYTask
+
+2009-04-07 delx
+	* Fixed non-Monaco font drawing
+	* Fixed regression, default bg color was drawn over background image
+	* Don't position windows in the dock area
+	* Save last window position and reopen first window in that location
+
+2009-04-07 ujwal
+	* Fixed crash on quitting.
+
+2009-03-28 delx
+	* Guaranteed restoration of old window position upon exiting fullscreen
+
+2009-03-23 delx
+	* Smarter placement of new terminal windows. It is aware of multiple
+	  monitors as well as workspaces (Spaces). Windows are positioned on
+	  screen so they have the smallest overlap with any other window.
+
+2009-03-20 delx
+	* charWidth is now set with ceil() rather than being truncated. This
+	  should make wider characters fit correctly.
+	* If char j on a line is dirty, force redraw of j+1 also. This ensures
+	  that any subpixel rendering that is done does not leave trails on the
+	  next character.
+
+2009-03-16 delx
+	* The cursor is now double-width when over a double-width character.
+	* Fixed selection of wide chars after breaking it on 2009-03-13
+
+2009-03-13  delx
+	* Remove character caching code. Testing shows the drawing to run just
+	  as fast without it. This reduces code complexity and colour reproduction
+	  bug that was triggered by changing OSX's ColorSync calibration profiles,
+	  eg when switching to a new monitor. It also makes operations that would
+	  previously have required clearing the cache happen faster.
+	* Fixed high density background colors:
+	  $ echo -ne '\e[46m LD \e[106m HI \e[00m\n'
+	* Refactored the selection handling. It no longer touches VT100Screen,
+	  instead keeping a copy of the start & end points of the current and last
+	  drawn selection. This saves [PTYTextView drawRect] from having to treat
+	  all characters in the scrollback buffer as dirty.
+
+2009-03-07  delx
+	* Dramatically improve scrolling speed, iTerm no longer redraws the
+	  whole terminal when scrolled, only the lines that have changed
+	* Scroll on new input stops/starts on pushing home/end respectively
+	* Set magic defaults to allow antialiasing on small fonts. Previously
+	  even if antialiasing was enabled in iTerm, OSX would force it off
+	  for smaller fonts. You can do this manually from the Info panel.
+	* Cleaned up [PTYTextView drawRect]
+
+2009-02-09  delx
+	* Corrected xterm mouse scroll wheel button reporting (#2254084)
+
+2009-02-07  delx
+	* Fixed rendering bug with bold characters
+	* Restore window title bar colour when leaving sendInputToAllTabs
+
+2009-01-16  delx
+	* Terminal window title bar displays "Session" if an empty title is set
+	* Makefile ensures that permissions on build products are correct
+
+2008-11-24  delx
+	* ITConfigPanel can now only set transparency in integer multiples
+	* ITConfigPanel font spacing now snaps to ticks
+
+2008-11-21  delx
+	* Fixed the screen blanking bug on setWindowTitle (#2188028)
+	* Improved the layout of ITConfigPanel
+	* Removed "Use transparency" button from ITConfigPanel as it was causing
+	  confusion. To disable transparency just set it to 0%.
+
+2008-10-23	fabian
+
+	* Fixed a problem with pasting a big chunk of stuff.
+	  
+2008-10-22	fabian
+
+	* Detached tabs now keep their size/font settings.
+	* Removed the writing threads to avoid potential sync problems.
+	* Now iTerm automatically restores its window title after a window resizes.
+	
+2008-10-21	fabian
+
+	* I think I finally nailed down the "scroll up/down" crash!
+	
+2008-10-20	fabian
+
+	* Incorporated the color template patch provided by Walter Dšrwald.
+	
+2008-10-19	fabian
+	
+	* Added handling of ESC SP L/M/N/F/G sequences. Right now, they don't do anything.
+	
+2008-10-16	fabian
+
+	* Improved URL handling for ssh/ftp/telnet
+		1.  If there is no handler specified, iTerm will launch ssh/ftp/telnet using the 
+			default OS X program with default session settings.
+		2.  You can also specify a url handler bookmark, and put $$ as its command. Then 
+			iTerm will use the default OS X program with customized terminal/display/keyboard 
+			settings.
+		3.	The old way still works.
+	* iTerm no longer sends a growl alert for a bell event if the winodw is the key window.
+	* Highlight window when it's in the "send input to all tab" mode.
+	* Better handling of "fork" errors.
+	
+2008-10-15	fabian
+
+	* Made a simple icon for the sort button in the bookmarks window.
+	
+2008-10-14	fabian
+
+	* The anti-idle is no longer sent to all tabs when "send input to all tabs" is on.
+	* Fixed a newly introduced bug that disable manually change the font size.
+	
+2008-10-12	fabian
+
+	* If the preference panel loses focus, we now close font menu to avoid confuse.
+	
+2008-10-08	fabian
+
+	* Fixed a bug that causes the bell icon never shows.
+	* Pasting DOS-format strings now no longer have extra new lines.
+	
+2008-10-07  fabian
+
+    * We now use NSFileHandle to monitor session activity in PTYTask.m. The CPU
+      usage is very low even with lots of tabs open.
+	* Allow bookmark names to include macros defined by $$ (bug #2142459).
+    * Cleaned up code. 
+	
+2008-10-01	fabian
+
+	* Tweaked close confirmation behavior.
+	
+2008-09-30	fabian
+
+	* Bookmark sort now an option.
+	* Folder name in bookmarks window is now editable.
+	* Double-clicking folder names to expand/collapse them.
+	* Fixed a bug that stops one to create a bbookmark in an empty folder.
+	
+2008-09-29	fabian
+
+	* Implemented xterm's window report sequences.
+	
+2008-09-28	fabian
+
+	* now iTerm uses just one thread to avoid synchronization problem.
+	* Removed all the locks/semaphores, coz we no longer need them
+	* Fixed a bug of processing wrapping text.
+	* Fixed DECCOLM: now screens are correctly cleared.
+
+
+2008-09-24  fabian
+
+    * Cleaned up for the 0.9.6 release.
+    * Fixed a few Panther building problems (haven't tested under Panther).
+    
+2008-09-23	delx
+
+	* Backed out duplicate change.
+	* Don't allow toggling transparency in full screen mode
+	* Full screen windows get a window title
+	* Restore windows to correct positions after full screen
+
+2008-09-22  fabian
+    
+    * Fixed a bug that enables blur when de-miniaturizing windows.
+	* Disable transparency in the full screen mode.
+	* Fixed a transparency consistency problem when moving tabs between windows.
+    
+2008-09-20	fabian
+
+	* Added support of ESC\ as the end of string to VT100Terminal.
+	
+2008-09-18  fabian
+
+    * Minor UI change: Double-clicking a bookmark item now launches it.
+    * UI change: Now bookmarks are sorted alphabetically.
+    * UI change: Now you can open all items in a bookmark folder from the bookmark window.
+    * UI change: The bookmarks window now has a column for shortcut key.
+    * Minor UI change: Added shortcut key for menu Reset and Return to Default Size.
+    * UI change: Double-clicking the tab bar now launches new tab.
+    * UI change: Double-clicking the key-binding list now opens the edit sheet.
+    * Fixed a bug that crashes iTerm when a profile is deleted.
+    
+2008-09-17  fabian
+
+    * UI change: now there's separate close warning option plus a ">1" tab option.
+    * Minor UI change: now the resize control is also hidden if the scroll bar is hidden.
+    * Minor UI change: the optional bottom border's color is now windowFrameColor.
+    
+2008-09-15  fabian
+
+    * Fixed a bug in the character cache handlings of PTYTextView. A new hash function is used.
+    
+2008-09-12  fabian
+
+    * Fixed a bug in PTYTask that causes crashes when a session is terminated.
+    * Fixed a bug related to window resizing deadlocks.
+
+2008-09-13  delx
+
+    * Check if locale exists before setting LANG environment variables (#2102884)
+    * ISO8859-* and eucXX encodings will get correct environment variables
+    * Keep menubar when setting full screen mode in a secondary screen (#2090939)
+    * Multiple windows can now be in full screen mode, over different spaces and monitors
+    
+
+2008-09-11  fabian
+
+    * Fixed a bug that might crashes iTerm when there's a background image.
+    * No longer override PATH when launching a program.
+    
+2008-09-10	fabian
+
+	* Profile name changes or deletion now update bookmarks (bug #1762237).
+	* Add bookmark dialog now clears the text entries, and automatically 
+	  fills profiles from the selected bookmark (#1815642).
+	* Tweaked full screen code to allow it work better with multiple monitors.
+	* Added "xterm" into the terminal type drop box.
+	
+2008-09-09	fabian
+
+	* Fixed a bug that crashes iTerm when one scrolls up with a lot of new text coming in.
+    * Fixed a UTF decoding problem (#1867339, by sakamoto).
+    * Fixed a bug when detecting user scroll.
+    * Cleaned up code for 0.9.5.0909
+	* Fixed a configure panel bug that fails to update the "blur" info.
+
+2008-09-08	fabian
+
+	* UI change: mid-button to paste -> mid-button to paste from clipboard.
+	* Now "prompt on Close" only prompts when multiple sessions are open.
+	* Added code to check OS version for the blur stuff.
+
+2008-09-07	fabian
+
+	* Incorporated the "blur" patch provided by Dean Scarff.
+	* Incorporated the "drop folder" patch provided by Rafael Gaspar (#1789464).
+	* Fixed the URL characters (#1773764)
+	* Fixed the transparency setting bug.
+	* Fixed "double-click selects pass the EOL" bug (#2065311 & #1765813).
+	
+2008-09-06	ujwal
+	
+	* Moved Growl notification of session bell from VT100Screen to VT100Session.
+	* Disabled session bell Growl notification when key repeat is detected.
+	
+2008-09-04	fabian
+
+	* Removed the close button of the About window (#1916989).
+	* Fixed a script error (#1883879).
+	* Fixed resizing background image problem (#1871380).
+	* Fixed a bug that closes the wrong tab when using contextual menu. (#1916982)
+	
+2008-09-03	fabian
+
+	* Fixed a bug that causes iTerm to crash when executing scripts.
+	
+2008-09-03  delx
+
+	* A few documentation spelling and grammar fixes.
+	* Fixed borders once and for all.
+	* Full-screen mode hides menubar rather than pretending to be
+	  a screensaver. This fixes Apple-Tab and other things.
+	* Fixed enter key on the numeric keypad in keypad app mode
+	* Fixed iTerm so that it can start with no preferences file again
+
+2008-08-27	fabian
+
+	* Incorporated two patches provided by Akinori MUSHA (knu). They fixed two double-width character issues.
+	
+2008-08-21	fabian
+
+	* Fixed a bug that causes loss of preferences when upgrade.
+	
+2008-08-21  delx
+
+	* Compiles & runs!
+	* Better default preferences
+	* Works with TERM=xterm
+	* Sets the COLORFGBG variable
+	* No annoying reverse-video border
+	* tput smso ; clear ; tput rmso -- works as expected
+	* back_tab supported (the key and the function)
+	* new-style xterm altscreens supported
+	* Fixed NSLock warnings on 10.5
+	* Horizontal scroll-wheel doesn't scroll vertically anymore
+	* Improved numeric keypad behaviour, now acts like xterm
+	* Fixed a nasty crashing bug
+
+2007-11-20  fabian
+
+    * Added ESC[s and ESC[u to save and restore cursor, based on the patch from SF's bug report.
+    
+2007-09-08	dnedrow
+
+	* Added private method to PreferencePanel to migrate (copy) old settings to new name.
+	
+2007-08-14  fabian
+
+    * Change the behavior of the PAUSE_MODE in PTYSession so the labels can still be refreshed.
+    
+2007-08-11	ujwal
+
+	* Removed some unused code.
+
+2007-06-16	ujwal
+	
+	* Updated version strings so that dev build does not try to download latest version from web site.
+	* Added an import statement in PTYTextView.m to fix a warning.
+	* Fixed initialization bug in iTermController:-nextTerminal
+
+2007-6-11   fabian
+
+    * Aoid crashes when memory runs out.
+    * Removed excessive debug outputs.
+    * Adjustments to the full screen mode. Fixed a crash related (#1725139).
+
+2007-5-24   fabian
+
+    * Fixed a timer bug in PTYSession introduced in the last change.
+	
+2007-5-23   fabian
+
+    * Added a PASUE_MODE in PTYSession. Now the background sessions' timer stops when there's no activity. CPU usage reducde.
+    
+2007-5-21	fabian
+
+	* Changed the default font for NSTextInput display to the non-ASCII font.
+	
+2007-5-17	fabian
+
+	* Fixed a key mapping problem with number keys (#1720922).
+	* Fixed a key-mapping sorting bug (#1720913).
+	
+2007-5-16	fabian
+
+	* Fixed a toolbar menu bug (#1716916).
+	
+2007-4-23   fabian
+
+    * Fixed a bug when one launches multiple-line urls.
+    * Fixed a bug with selection that scrolls out of the view.
+    
+2007-4-11   fabian
+    
+    * Fixed a bug that displays wrong actions when one edits existing key mappings.
+    * Profile lists are now sorted
+    * Key-mapping lists are now sorted.
+    
+2007-3-15   fabian
+
+    * Changing font size when in full screen mode now changes row/col numbers correctly (#1671723).
+    * Enhanced "Font size follow window size" behavior.
+    
+2007-3-13   fabian
+
+    * Fixed a selection bug (#1677708).
+    * Improved Fn key handling (#1676087).
+    * Improved window cycling behavior (#1676009).
+    
+2007-2-20   fabian
+
+    * iTerm no longer appends \n if a applescript writes a string ending with a space.
+    * Fixed several localization problems.
+    
+2007-2-14	fabian
+
+	* Fixed a bug that disables the background image setting.
+	* Added an option to prompt for test-releases.
+	
+2007-2-12	fabian
+
+	* Fixed a crash that happens when you toggle between the fullscreen and normal modes.
+	* Fixed a "losing char space setting" bug (#1658074).
+	* Adding @ as a valid URL character.
+	* Enhanced numeric keypad behavior. Enter key on the keypad now works under application mode.
+
+2007-2-10	fabian
+
+	* Fixed a keypad mode problem. Cursor keys should behave better now.
+	
+2007-2-9	fabian
+
+	* Fixed a bug that causes dead session be left open sometimes (#1653347).
+	* Adjusted the full screen mode behavior, so you are less likely to be stuck.
+	* Added selectedTextColor into Applescript.
+	
+2007-2-1	fabian
+
+	* Added a default keyboard profile: xterm(OS X).
+	* Fixed a Panther compatibility bug.
+	* 0.9.5 release
+	
+2007-1-30	fabian
+
+	* Fixed loss of settings bug due to full screen mode switchings.
+	* Fixed a bug that causes the text under cursor rendered in wrong font.
+	* Fixed window level for the preference panel under full screen mode transitions.
+	
+2007-1-29	fabian
+
+	* Now full screen mode uses the current window settings instead of the settings in address book.
+	* Full screen mode will adjust font size if "Font Size Follows Resize" is set.
+	* Fixed the scrolling bug when there's no scroller bar.
+	
+2007-1-26	fabian
+
+	* Windows will have unified look when tabs are set to unified style.
+	* Fixed underline color bug (#1640553).
+	* Slow down update rate when the terminal window is not the key window.
+	
+2007-1-25	fabian
+
+	* Added option to send text in custom key-mapping.
+	* Added option to disable session-initiated window resize.
+	
+2007-1-24	fabian
+
+	* Added option to turn off vertical scrollbar.
+	* Fixed broken Find.
+	* Fixed tab updating glitch.
+	* Fixed several full screen related bug/crashes.
+	
+2007-1-23	fabian
+
+	* Fixed the "report a bug" link in the about panel.
+	* Finished full screen support.
+	
+2007-1-22	fabian
+	
+	* Fixed a timer function bug that fails to turn of timer after a session is over.
+	* Fixed a emulation bug related to an unsupported escape sequences.
+	* Changed the "Use Transparency" behavior. Now it's a per window setting. When it's disabled, any updates of
+	  display behind the terminal window will not cause a refresh.
+	* Unfinished support for full screen mode (still crashes).
+	
+2007-1-16	fabian
+
+	* Moved updateTimer back to PTYSession and fixed a type of related crash.
+	* Improved the handling of title changing. 
+	* Changed the timer code in hope of reducing the CPU usage.
+	
+2007-1-12	fabian
+
+	* Fixed a memory leak in PseudoTerminal.
+	* Fixed opening file behavior (#1629686).
+	* Added support for opening .command, .tool, .sh, .zsh, .csh, .pl files as shell scripts.
+	* Now press TAB in the Execute field will open a new session with the command.
+	* Fixed a crash when saving/restoring buffers.
+	* More fixes for resizing behaviors.
+	
+2007-1-11	fabian
+
+	* Clear screen now leaves the last line (which can wrap to several lines) intact.
+	* Fixed a bug of cmd-w closing a terminal tab when preference panel is in the front. (#1618969)
+	* Fixed hanging-on-printing bug. (#1630780, #1598353)
+	* Added support for CSI[0i, which prints out the screen.
+	
+2007-1-11	fabian
+
+	* Fixed a bug that causes failure to update screen when there's no scrollback buffer.
+	* Fixed a few resizing related bugs.
+	* Moved display update timers from PTYSession to PseudoTerminal to reduce CPU usage.
+	
+2007-1-10	fabian
+
+	* Added a semaphore to coordinate updating. Resizing and dynamic title is now processed in a faster cycle.
+	
+2007-1-9	fabian
+
+	* save/restore buffer now only save/restore the current screen.
+	* removed redundant first_buffer_line from VT100Screen.
+	* Added a wrapping flag to indicate hard line break. Selecting&copying now uses this flag.
+	* Wrapping now works with resizing.
+	
+2007-1-6	fabian
+
+	* Improved memory usage for "unlimited" scrollback situation. An upper limit is set to avoid eating up
+	  all system memory.
+
+2007-1-3	fabian
+
+	* Added support for xterm's CSI S (SU), CSI T (SD) commands. Nano now works correctly when term type is xterm.
+		  
+2007-1-2	fabian
+
+	* Fixed initial window size bug (#1623786).
+	* Fixed the bottom border, so it no longer overlaps with the resizing triangle.
+	* Added support for unlimited scrollback. Set scroll back lines to -1 or any number larger than 1,000,000.
+	
+2006-12-28	fabian
+
+	* Added an option to enable/disable the border at the bottom of windows.
+	
+2006-12-21	fabian
+
+	* Moved some scrolling code from VT100Screen to PTYSession to avoid possible crashes.
+	* Changed terminal windows to non-deferred to avoid some initializing problem.
+	
+2006-12-20	fabian
+
+	* Fixed a selection location bug (#1608727).
+	* Fixed a scrolling bug (#1619629).
+	
+2006-12-19	fabian
+
+	* Fixed a bug in VT100Terminal that causes crashes.
+	* Fixed a bug that disables dragging of text.
+	
+2006-12-18	fabian
+
+	* Updated the "term type" list. Removed xterm that doesn't work for many keys.
+	* Added a window border when there's no tab bar at the bottom of screen.
+	* Fixed a reverse bold color bug.
+	
+2006-12-15	fabian
+
+	* Fixed the tabbar-disappearing bug (#1613110).
+	* Set echok when launching new sessions (#1472673).
+	
+2006-12-14	fabian
+
+	* Fixed another bold color bug.
+	* Changed the default for "use default title with dynamic title" to NO.
+	
+2006-12-12	fabian
+
+	* Fixed bold color bug.
+	* Changed the wording for the "dynamic title" option.
+	
+2006-12-11	fabian
+
+	* Fixed transparency bug #1609022.
+	
+2006-12-8	fabian
+
+	* Fixed a wrapping porblem under ANSI terminals.
+	* Incorporated the data processing thread into the data reading thread.
+	* Find panel now will set the string system-wide.
+	* Added an option in the terminal profile to allow default session name not to be overwritten
+	  by dynamic tab name changes.
+	* Double click on a parenthesis now selects everything between the pair of parenthesis.
+	
+2006-12-7	fabian
+
+	* Fixed bug that loses changes to 'Characters considered parts of word' text field.
+	* Fixed the "show cursor" behavior in RESET.
+
+2006-12-6	fabian
+
+	* An attempt to fix the closing window confirmation panel.
+	
+2006-12-5	fabian
+
+	* Added support for xterm's 256-color mode
+	* Fixed tab order bug
+	
+2006-12-4	fabian
+
+	* Fixed a selection bug (BUG #1608727).
+	* Added new cursor types (underline and vertical).
+	* Fixed auto-check of updates setting bug (BUG #1599702).
+	* Release 0.9.4 for Tiger.
+	
+2006-12-2	fabian
+
+	* Fixed a RESET and clearScreen bug.
+	
+2006-12-1	fabian
+
+	* Stop scrolling with new output when users manually move back to the history buffer.
+	* Added support to launch a google session with the selected contents from the contextual menu. 
+	  To customize your search command, do this (using yahoo as an example):
+		defaults write iTerm SearchCommand -string "http://search.yahoo.com/search?p=%@"
+	* Fixed a clearScreen bug.
+	* Completed RESET command.
+	
+2006-11-30	fabian
+
+	* Fixed a bug in [PTYSession handleWriteScriptCommand]
+	
+2006-11-29	fabian
+
+	* For better speed, the characters between 0x20 and 0x7e are no longer in a hash table.
+	* Added a hidden setting cacheSize for the size of rendered characters. Increase it if you 
+	  work with a large character set such as Chinese.
+	    defaults write iTerm CacheSize -float 2048
+	* Fixed a bug related to blink characters when there is no background image.
+	* Fixed a background updating bug.
+	
+2006-11-24	fabian
+
+	* A fix for the anti-aliasing problem by caching the background. Enable the new rendering by 
+	  setting the strokewidth to 0:
+		defaults write iTerm StrokeWidth -float 0
+
+2006-11-21	fabian
+
+	* Removed some UI code from the writeTask process
+	
+2006-11-20	fabian
+
+	* Fixed CPU usgae bug related to unclosed dead tab.
+	* Reduced update frequency for the tabs in the background.
+	* Fixed a memory leak in [VT100Screen setString:ascii:].
+	* Fixed Script menu behavior. Now it will only show and launch scpt and app files.
+	* Added Refresh option in the script menu.
+	* Fixed bug when adding keyboard profile.
+	* Fixed a bug that might cause crash when there's a lot of incoming data.
+	
+2006-11-19	fabian
+
+	* Fixed a toolbar related bug that causes crash.
+	* Fixed a few typo in help files.
+	
+2006-11-17	fabian
+	
+	* Updated Help files.
+	
+2006-11-16	fabian
+
+	* Fixed scrolling bug.
+	* Fixed a drag&drop bug where newly created window is not properly set up.
+	* One more bell related fix.
+	* Replaced NSData object STREAM with a plain char buffer to improve performance.
+	* Fixed a bug in PTYTask that crashes iTerm.
+	* Fixed a bug that keeps PTYSession's data thread from exiting properly sometimes.
+	* Disabled Option-click to position cursor. Option key is now used to escape xterm mouse reporting.
+	* Now ascii strings are processed separately from nonascii strings. Hopefully this will improve performance.
+		
+2006-11-15	fabian
+
+	* Fixed URL getting cut bug.
+	* Now changing window/tab title  blocks the processing.
+	
+2006-11-14	fabian
+
+	* Fixed "bookmark folder grey out" bug.
+	* Possible fix for resizing related crashes.
+	* Fixed "info panel font selection" bug.
+	
+2006-11-12	fabian
+
+	* Improved eastern asian language double width processing.
+	
+2006-11-11	fabian
+
+	* Made mouse cursor a tiny bit darker.
+	* release 0.9.3
+	
+2006-11-09	fabian
+
+	* Changed toolbar's execute field's strings to localizable ones.
+	
+2006-11-08	fabian
+
+	* Fixed the bookmark menu bug that an empty tab is open when one clicks on a folder.
+	* Removed unnecssary lock code from PTYTabView.
+	* Now iTerm precomposes UTF characters (e' -> Ž)
+	* Moved UI related stuff from [PTYSession brokenPipe] to the timer function to avoid crashes.
+	* Moved window title setting stuff and bell stuff from [VT100Screen putToken] to the PTYSession's 
+	  timer function. Now putToken should be strictly only operating on the buffers.
+	* Fixed a toolbar bug (missing encode/decode for TreeNode)
+	* Added a command field in the toolbar. It handles URL too.
+	* Now opening URL within iTerm will give iTerm handlers priority.
+	
+2006-11-07	fabian
+
+	* Added the support for using Option key to temporarily disable xterm mouse reporting.
+	* double click tab to open info window.
+	
+2006-11-06	fabian
+
+	* Fixed "Add Profile" dialog.
+	* Fixed "New" button position in the bookmarks window.
+	* Removed now unnecessary lock for display updating.
+	* Added # as an acceptable URL character.
+	* Added an "High interception priority" to allow certain key mappings being processed before others.
+	
+2006-11-03	fabian
+
+	* Changed VT100Screen code so that the resize caused by escape sequences is processed in the main thread.
+	  This way the data reading process is UI free now too.
+	* "Open all in new window" command now creates a new window for every bookmark folder.
+
+2006-11-02	fabian
+
+	* Eliminated the updateDisplay thread. Now all the UI stuff is in one thread, that should
+	  help with the stability a lot.
+	* Fixed the resizing bug when window is maximized and tab is hidden and a new tab is being opened.
+	  
+2006-11-01	fabian
+
+	* Rewrite [VT100Screen _getLineAtIndex] for clarity.
+	* Fixed background image problem when scrolling
+	* Replace the termcap code with terminfo.
+	* Changed the default profiles. Got rid of redundant keyboard settings.
+	* Fixed a bug in [PTYSession brokenPipe] that has been producing crashes.
+	* Fixed a bug in URL handlers where parameters are processed correctly.
+	
+2006-10-31	fabian
+
+	* Added a few strings into iTerm.strings for localization purposes.
+	* Fixed a bug in Profiles window's background image settings.
+	* Added paste with escape
+	* Added support to open all sessions in a bookmark folder.
+	* Added a Reset operation in the menu (not fully working yet)
+	
+2006-10-30	fabian
+
+	* A few tweaks to make panther version to have its own appcast and updates channel.
+	
+2006-10-29	fabian
+	
+	* Allowing users to specify parameters in bookmarks' command. For example, if the command is
+	  ssh $$User Name$$@myserver.com, when you start this session, iTerm will ask you to enter
+	  the "User Name", then plug your input into the command and run the session.
+	* Release 0.9.2
+	  
+2006-10-26	fabian
+
+	* Added a visual to indicate whether "send to all session" is turned on or not.
+	* Improved About dialog.
+	* Added Edit button for keymapping settings.
+	* Changed cmd-click to open URL behavior: now http:// is no longer added unless the URL doesn't
+	  explicitly have a scheme prefix.
+	
+2006-10-25	fabian
+
+	* Added a semaphore in PTYSession's read thread to avoid the loss of data when the session ends.
+	* Replaced two launch buttons in bookmarks window with a segmented control.
+	* Cleaned some of the notification code. Now notifications will only be processed if it's from
+	  the front session or window.
+	* Icons updated.
+	* Fixed a bug in [VT100Screen resizeWidth:Height] that might be the source of many crashes.
+	* Added ability to parse URL for URL handlers. The following macros can be used in handler's command:
+		$$URL$$, $$HOST$$, $$USER$$, $$PASSWORD$$, $$PORT$$, $$PATH$$
+	  For example, a bookmark's command is: telnet -l $$USER$$ $$HOST$$ $$PORT$$, and the
+	  URL is: telnet://joe@fancyland.com:23
+	  This will give you this command: telnet -l joe fancyland.com 23
+	  The URL will no longer be passed to a session by default, unless you specify one of those 6 macros
+	  in your command line.
+	* Now iTerm offers to become the default handler when you connect a URL scheme to a session. No undo.
+	
+2006-10-24	fabian
+
+	* Changed default stroke width to a less bold look.
+	* Allow using ESC to close preferences, profiles and bookmarks windows.
+	* Added support for the escape sequences of show/hide cursor: ESC [ ? 25 h/l
+	* Fixed crashes if no preferences file is found.
+	* Fixed crashes when initial font settings are wrong.
+	
+2006-10-23	fabian
+
+	* Added ,+~ into acceptable set of URL characters.
+	* CMD-Click to open URL now works for multi-line URLs.
+	* Fixed a bug in [VT100Screen scrollUp]
+	* Subclassed NSOutlineView to avoid possible crashes (http://www.corbinstreehouse.com/blog/?p=151)
+	* Added tool tips for tabs.
+	* A hack for enter key on laptops.
+	
+2006-10-22	fabian
+	
+	* Enforced one extra refreshing of tab bar every time a tab is closed or opened to fix the display.
+	
+2006-10-20	fabian
+
+	* A fix for the memory leak.
+	* Fixed a input problem when non-english input manager is active. 
+	
+2006-10-19	fabian
+
+	* Added support for handling URLs.
+	* Removed outdated resource localization files.
+	
+2006-10-18  fabian
+
+    * Further tweaking of the Profiles window and Bookmarks window UI.
+    
+2006-10-17  fabian
+
+    * Changed the UI for the profile window.
+    * Made iTerm to display the "About" window once it's updated.
+    * Changed the Delete Profile and Add Profile sheet window.
+    
+2006-10-16  fabian
+
+    * Changes in Prefrence panel are now immediately effective. OK&Cancel buttons are gone.
+    * Re-ordered Windows menu to make it more consistent with other OS X applications (and Terminal).
+    * Added "Return to Default Size" menu item.
+    * Script menu no longer shows when there are no scripts found.
+    
+2006-10-15  fabian
+
+    * Changed the New menu for terminal window's toolbar to be "option"-controlled.
+    * Added option to quit application when all windows are closed.
+    * Now saves profile settings immediately after changese are made.
+    * Fixed several preference-not-sticky bugs.
+    * Removed old drag&drop codes
+    * Fixed a bug when drag&drop-ing tabs with different size and fonts.
+    * Fixed a bug that causes scrolling to fail to update screen when there's a background image.
+    * Incorporated Spark framework for automatic update.
+    
+2006-10-14  fabian
+    
+    * Overhaul of the UI:
+      1. Move bookmark tab to a separate window. Added an option to display bookmark window
+         on startup.
+      2. Move profiles window outside of Preference Panel
+      3. Changed Preference Panel into 4 tabs.
+      4. Renamed Configure window to Info to avoid confusion. 
+         1) Made the window long to make it look like an Info window.
+         2) Cmd-I to open and close window.
+         3) Added a button to allow updating.
+      4. Re-ordered main menu.
+         1) added a bookmark menu. Opening a window or a tab is controlled by option key.
+         2) Moved tab operations into Windows menu.
+         
+    * Added a double check for scrollback size. Avoid crash when scrollback is too large.  
+
+2006-10-09  fabian
+
+    * Initial attempt to incorporate the termcap for keyboard input. Now when a key is 
+      pressed, iTerm will first check keyboard profile, if it doesn't find anything, it 
+      checks termcap. If the key is defined in termcap, use the termcap definition. 
+      Otherwise, the standard vt100/xterm definition is used.
+    * Fixed a few building problems for pre-tiger OSes.
+    * Removed excessive NSLog warnings about growl.
+    * Added a cancel button in the "send input to all sessions" warning.
+    
+2006-10-05  fabian
+
+    * Added a few hidden preferences for more user control. (use defaults write... to change
+      these settings, see PreferencePanel.m)
+    * Fixed building problem for the pre-tiger version.
+      
+2006-10-04  fabian
+
+    * Made minimum tab width smaller when compact tab option is set.
+    * Fixed a bug in [VT100Screen setString] that might be the cause of bug #1545337.
+    * Added a copy-fille phase to include iTerm.string for adding localizations outside
+      of the iTerm Framework.
+    * Further fix for the wrapping bug.
+    * Removed a few NSLog messages.
+    * Changed version number to 0.9.0.
+    
+2006-10-04	dnedrow
+
+	* Added plist entries to hook into Unsanity's Smart Crash Reporter.
+
+2006-10-02  fabian
+
+    * Changed the PTYTextView's cursor so that it looks more obvious with both black and white
+      backgrounds.
+    * Now selecting previous/next tab loops around.
+    * Re-implemented the color-coding of tab state.
+    * Reversed code for tab sizing. Now using a Safari-like behavior.
+
+2006-09-30  fabian
+
+    * Fixed a display bug when window size is set to larger than screen.
+    
+2006-09-29  fabian
+
+    * Removed excessive NSLog info
+    * Fixed a possible deadlock during resizing.
+    * Fixed a bug in [VT100Screen resizeWidth:height:].
+    * Fixed a bug in [VT100Screen setTab].
+    * Added support for xterm's raise/lower window sequencies.
+    * Cleaned outdated variables of VT100Screen.
+    
+2006-09-27  fabian
+
+    * Reorganized Preference panel's UI
+    * Updated websites
+    * Incorporated the patch by Joseph Ates.
+    
+2006-09-26  fabian
+
+    * Fixed a trackRect bug of our textview. Now the focus-follow-mouse is working again.
+    * Fixed a bug of ignoring "Enable Growl" option.
+    * Changed cursor to I-Beam.
+    
+2006-09-25  fabian
+
+    * Added an option to disable close tab button and tab number.
+    * Fixed support for xterm's resize CSI sequence support.
+    
+2006-09-24  fabian
+
+    * Fixed a bug is PTYSession that causes crashes when a tab is dragged across window.
+    * Added support for xterm's iconify/deiconify escape sequences.
+    * Added support for xterm's window position escape sequences.
+    
+2006-9-23   fabian 
+
+    * Re-implemented missing PseudoTerminal methods for Applescript.
+    
+2006-9-21   fabian
+
+    * Fixed another bug that makes program crash when one clicks close tab button too fast.
+    * Fixed a bug that causes incorrect tab status reports.
+    * Fixed a bug that happens when one clears scrollback buffer.
+    * Changed the version to 0.9.0 pre-release
+    * Fixed a timing bug in [PTYSession updateDisplay]
+    * Fixed a display bug when one searches for a string in scrollback buffer.
+    * Fixed Cmd-Click to open URL
+    
+2006-9-20   fabian
+
+    * Cleaned the code. Removed ITSessionMgr class. Improved stability.
+    * Made "close session" warning dialog available upon clicking the close button.
+    * Fixed a bug in Growl that causes crashes.
+    
+2006-9-18   fabian
+
+    * Added UI for allowing users to adjust the display refreshing rate.
+    * Added supprot for dragging a window's only tab to join another window.
+    * Changed tab ordering behavior. Now the tabs are no longer sorted by the order of their creation.
+    * Fixed wrong bookmark draw bug.
+        
+2006-9-16   fabian
+
+    * Fixed another resize bug
+    * Fixed a scrolling bug
+    * Added support for escape codes that changes window size (Crashes in the vttest's xterm resizing
+      test because of the fast resizing request).
+    
+2006-9-15   fabian
+
+    * Fixed the close button not working bug.
+    * Fixed the wrong tab location after resizing bug.
+    * Added support for dragging a tab outside of a window to create a new window.
+    * Now allows tab size to be changed dynamically.
+    
+2006-9-14   fabian
+
+    * Partly fixed the window resize bug. Now the cursor will be at the location. But the frame size
+      isn't entirely correct under all conditions yet.
+      
+2006-9-13   fabian
+
+    * Incorporated Growl branch into the main branch
+    * Added support for a new iTerm-specific escape sequence:
+        ESC ]9;string^G
+      This sends an alert with specified string via Growl.
+    * Added growl related strings into iTerm.string for future translations.
+    * A temporary fix to the window resize bug.
+
+2006-09-11  fabian
+
+    * Fixed a bug that fails to refresh background windows when TAB settings are changed.
+    
+2006-09-07  fabian
+
+    * removed controller in PTYSession. Now a PTYSession is directly binded to NSTabViewItem objects.
+      This is because PSMTabBarControl works this way.
+    * Fixed tab images when dragging.
+    * Re-implemented contentual menu for the tab.
+    * Fixed a memory leak.
+    
+2006-09-06  fabian
+
+    * Added a lock to PSMTabBarControl to avoid crashes.
+    * Fixed a blinking timing bug found by Roine Gusatfsson.
+    
+2006-09-01  fabian
+
+    * Fixed a memory leak.
+    * Fixed a bug that ignores tab style setting.
+    
+2006-08-30  fabian
+
+    * Updated PSMTabBarControl to the latest CVS version. That fixed a frequent crash.
+    
+2006-08-29  fabian
+
+    * Fixed a bug related to close-tab button.
+    * Added tabLocation property to PSMTabBarControl so that Unified looks correct both
+      when the tab is at the top and the tab is at the bottom.
+    * Fixed a display bug so that new settings of tab location will be shown in opened windows.
+    
+2006-08-25  fabian
+
+    * Fixed the overflow menu bug where the 1st item isn't updated correctly.
+    * Restored (partly) context menu functionality for the new tabview.
+    
+2006-08-24  fabian
+
+    * Fixed a few bugs related to the upgrade to new PSMTabBarControl.
+    * Removed now redundant PTYTabViemItem
+    * Cleaned up related PTYSession code
+    
+2006-08-23  fabian
+
+    * Cleaned up iTermController.m, moved profile related code to PseudoTerminal.m
+    * Cleaned up PseudoTerminal.m, to make it more robust to session addition/removal.
+    * Updated PSMTabBarControl to the latest version 1.3
+    * Fixed PreferencePanel so now the tab location works (only top and bottom though).
+    
+2006-08-22  fabian
+
+    * Tweaked PTYTextView to enhance text display, especially with small fonts.
+    
+2006-03-26	ujwal
+
+	* Added preference to choose between Metal and Aqua style window and tabs.
+	* Added support to show warning bell in tab.
+
+2006-03-25	ujwal
+
+	* Added back support to show/hide first tab.
+
+2006-03-23	ujwal
+
+	* Made window metallized to get full Safari tab effect.
+
+2006-03-20	ujwal
+
+	* Initial checkin of new tabs provided by PSMTabBarControl. Not complete
+	  or stable yet.
+	* Rolled back the PTYTextView:-refresh change. Too many problems.
+
+2006-03-17	ujwal
+	
+	* PTYTextView:-refresh selects only dirty regions to refresh before 
+	  calling drawRect.
+	* Removed all NSConnection related stuff from PTYTask.
+
+2006-03-15  fabian
+
+    * Put in locks to eliminate the bugs related to opening/closing sessions.
+    * Removed NSConnection once again.
+    * A (not-so-elegant) fix for occassional tab label refreshing problem.
+    
+2006-03-03  ujwal
+	
+	* Fixed VT100Screen:-setNewLine to redraw whole screen if buffer is full
+	* Protecting PTYTextView:-refresh with locking datasource
+	* Fixed memory leak in VT100Screen:-setString
+	* Not using NSData in PTYTask:+_processReadThread. Instead passing raw char buffer.
+
+2006-03-02  ujwal
+
+	* Fixed VT100Screen:-numberOfLines to guarantee that it does not
+	  report more lines than it actually has.
+
+2006-03-02  fabian
+
+    * Fixed VT100Screen::eraseInDisplay behavior.
+    * Fixed CPU usage issue.
+    * Changed VT100Screen::setNewLine so that we are not redrawing all
+      characters in the case of a scrolling.
+    
+2006-03-01  fabian
+
+    * Fixed a memory leak in VT100Screen
+    * Changed the timing behavior of PTYSession and PTYTextView. Now we use
+      the system clock, and the blinking is no longer associated with the
+      input.
+    * Changed the alloc/dealloc code so that now VT100Screen, VT100Terminal,
+      and PTYTask objects are no longer retaining each other. All alloc and
+      dealloc of these objects is done in PTYSession.
+      
+2006-03-01	ujwal
+
+	* Fixed bug in PTYTextView:-drawRect in calculation of foreground color.
+
+2006-02-28	ujwal
+
+	* Rewrite of VT100Screen. Screen and scrollback contents are held in a single
+	  contiguous buffer with pointers maintaining position of screen and scrollback 
+	  tops. Defined a data type "screen_char_t" to hold unichar value, foreground 
+	  color, and background color.
+
+2006-02-23	ujwal
+
+	* Tagged source tree for RC_0_8_2
+	* Clearing buffer now does NOT clear last line. Last line now becomes first line.
+
+2006-02-21	ujwal
+
+	* Fixed bug in PTYTextView: -contentFromX...
+
+2006-02-21	dnedrow
+	* Updated doco to clarify session behavior reported as bug in #1011334.
+
+2006-02-20	ujwal
+
+	* Rolled back _updateDisplayThread change in PseudoTerminal since that broke the
+	  the anti-idle processing in non-current sessions.
+	* Removed explicit session of next/previous session in PseudoTerminal:-closeSession. This 
+	  is handled by the tabview.
+
+2006-02-19	ujwal
+
+	* _updateDisplayThread in PseudoTerminal updates only current session since
+	  other sessions are off screen anyway.
+
+2006-02-18	ujwal
+
+	* Acquiring screenLock in VT100Screen when resizing.
+	* Reduced idle CPU usage by about 90% by using a semaphore to signal data processing thread.
+	* Saving and restoring width of Bookmarks drawer.
+	* Updated Help files.
+
+2006-02-17	ujwal
+	
+	* Rolled back some of the NSConnection code since tabview was having redraw problems when a tab was closed.
+	* Some code cleanup.
+	* Moved iTermNumberOfSessionsDidChange notification from closeSession to tabViewDidChangeNumberOfTabViewItems.
+	* Fixed deadlock between VT100Terminal and PTYTextView.
+
+2006-02-14  fabian
+
+    * Bug fixes for crashes when sessions are closed.
+    
+2006-02-13  fabian
+
+    * Removed NSConnection from PTYTask all together
+    
+2006-02-12	ujwal
+	* Fixed memory leak in PTYTask.
+	* Moved event handlers for NSMouseEntered and NSMouseExited to PTYWindow.
+	* Using separate thread in PTYSession to process data read from file descriptor in PTYTask. When data is read, the 
+	  PTYTask instance justs appends data to the STREAM in VT100Terminal. The separate thread in PTYSession now reads 
+	  the STREAM and processes data.
+
+2006-02-06  fabian
+
+    * Updated website files for the new release.
+
+2006-02-06	dnedrow
+
+	* Set default terminal type to ANSI rather than VT100. This should
+	  reduce the numerous support message re: "lack of color" support
+          in the shell (eg. ls -G).
+
+2006-02-05	dnedrow
+
+	* Updated NIB PreferencePanels to reflect Rendezvous->Bonjour namechange.
+	* Fixes for mismatched signedness warnings in PTYSession.m.
+	* Corrected an XCODE 2.2 warning re: boolean assignment used for while()
+	  in iTermApplicationDelegate.m.
+	* Disabled prebinding in default XCode project to clear linker warnings
+	  when compiling for UB targets. Can be enabled as needed for 10.2 or 
+	  10.3 builds.
+
+2006-02-05	ujwal
+
+	* Fixed outlet bug in German NIB that caused drawer not to open.
+	* Removed unnecessary code in iTermApplication.m 
+
+2006-02-03  fabian
+
+    * Fixed bugs in [VT100Screen InsertLines&DeleteLines] (#1180993), as suggested by
+      A'rpi (arpi@mplayerhq.hu)
+    * Fixed bug in Cmd-Click to start browser.
+    * Fixed bug in Shift-Click to extend selection.
+
+2006-02-02	fabian
+
+	* Fixed background color incomplete bug (#1208764).
+	
+2006-02-01	fabian
+
+	* Fixed "can't save changes" bug.
+	* Fixed a bug in [VT100Screen setString] that could cause crashes in rare occasions.
+	* Incorporated the patch submitted by Tom Emerson. Now the URL selection is trimmed 
+	  before it's sent to the browser.
+	* Updated zh_CN and zh_TW files.
+	
+2006-01-07	dnedrow
+	* Converted project to XCode 2.2.1.
+	* Set project to default to Universal Binary.
+	
+2005-09-21	fabian
+
+	* Added contribution from Damon Parker into Resource page of the website.
+
+2005-05-04	fabian
+
+	* Changes in decoding_string(). Now we do not ignore the whole line after receiving an invalid code.
+	
+2005-04-16	ujwal
+
+	* All key input is checked for mapping.
+	* Preferences are saved to disk on hitting OK.
+
+2005-04-09	ujwal
+
+	* Removed bouncing icon feature. Not a good idea for a terminal.
+	* Incorporated Geoff Reedy's patch for xterm mouse reporting with minor changes.
+	* Incorporated Rob Warner's patch to toggle transparency.
+	* Fixed "Find" and "Copy" in selecting correct text and breaking across lines.
+	* Fixed "appending of spaces and of last line coped". Bug #1068198.
+	* Added an option to "show" bell that is separate from "play" bell in terminal profile.
+	* Fixed visual representation of "help" key in keymapping editor.
+
+2005-04-06	fabian
+
+	* Updated website files
+	
+2005-4-03	ujwal
+
+	* Cancelling Rendezvous resolution after resolution or error.
+	* Re-implemented sorting of encoding list using user supplied patch.
+	* Cleaning up zombie process after terminating session.
+	* 0.8.1 release
+
+2005-04-03	ujwal
+
+	* Version number is 0.8.1.
+	* Fixed "get contents" script support.
+	* Put in a warning when enabling "Send Input to all sessions".
+	* Encoding list in drop-down menu is sorted.
+	* Added support to specify path to nested bookmark in AppleScript.
+
+2005-03-11	fabian
+
+	* Updated zh_TW locale files.
+	* Updated website files.
+	
+2004-12-18	fabian
+
+	* Updated website files for new release.
+	* Improved version of iTerm icon (still provided by sinomac.com)
+	
+2004-12-13	fabian
+
+	* Fixed the keyboard input problem that causes editing keys not working when inputing deadkeys.
+	* Updated zh_CN, zh_TW and Japanese localization files
+	
+	
+2004-11-26	fabian
+
+	* Updated German localization, provided by Felix KŸhne.
+	
+2004-11-20  ujwal
+
+	* Re-organized some of the sizing code to make it work better when iTerm is embedded 
+	  in other applications.
+
+2004-11-14  ujwal
+
+	* Re-organized some code.
+
+2004-11-09  ujwal
+	
+	* Fixed more reverse video issues on OpenVMS: in [VT100Screen: -eraseInLine]; if 
+	  entire line is erased, it gets default foreground and background colors.
+
+
+2004-10-27  ujwal
+
+	* Fixed bug in nested bookmark search.
+
+2004-10-22	fabian
+
+	* Updated Japanese nib files using translation provided by OHKAWA Yuichi.
+	* Updated zh_CN, zh_TW, Japanese, Korean, French, German nib files for next controls.
+	
+2004-10-20  ujwal
+	
+	* Fixed more reverse video issues on OpenVMS: in [VT100Screen: -eraseDisplay], all 
+	  erased characters get default foreground and background colors.
+
+2004-10-20  ujwal
+
+	* Fixed reverse video problem in OpenVMS again. Hopefully, this time it 
+	  is the correct fix. In [VT100Screen: -scrollUp] and [VT100Screen: -scrollDown], 
+	  new lines have DEFAULT_FG_COLOR_CODE DEFAULT_BG_COLOR_CODE for foreground and 
+	  background colors respectively instead of using the terminal's current fg and bg 
+	  colors. I am not sure why OpenVMS does not set the video properties appropriately 
+	  when scrolling.
+
+2004-10-10  ujwal
+
+	* Added support to display Bookmarks in drawer of terminal window.
+
+2004-10-03  ujwal
+
+	* Periodically refreshing autorelease pool in display update thread to avoid 
+	  memory leak from autoreleased objects.
+	* Fixed code for numeric enter from \012 to \015.
+
+2004-09-25  ujwal
+	
+	* Fixed problem when PTYSession: -keyDown is never called when numeric or function 
+	  keys were pressed. This messes up switching between application and numeric 
+	  keypad modes. Now PTYTextView: -keyDown: invokes PTYSession: -keyDown: when 
+	  numeric or function keys are pressed.	  
+	* Fixed printing to NOT wrap text.	
+	* Added support to launch command line tools from Finder.
+
+2004-09-12  fabian
+	
+	* More fix for "Font Size Follows Window Resize" option. Largely works now,
+	  but maximization still has weird behavior sometimes.
+	  
+2004-09-07  ujwal
+
+	* setHidden method is invoked only if target view supports it (>= 10.3).
+	* Added keybinding action for numeric enter key.
+
+2004-09-02	fabian
+	
+	* Added "Maximize Vertically Only" option.
+	* Added "Font Size Follows Window Resize" option (not working well yet)
+	
+2004-08-30	fabian
+	
+	* Removed unused [PseudoTerminal setCharWidth:(int)width height:(int)height];
+
+2004-08-04  ujwal
+
+	* Cmd-click on selection is activated only if mouseDown and mouseUp are 
+	  in the same location.
+
+2004-07-07  ujwal
+
+	* Reimplemented print-to-ansi feature to use standard printing. Should 
+	  also fix any encoding issues.
+
+2004-07-05  ujwal
+
+	* Added support to drag selection from iTerm window.
+	* Added support to specify a bookmark as default.
+
+2004-06-15  fabian
+
+	* Fixed title problem in some web html files
+	
+2004-05-26  ujwal
+
+	* Added an option to enable/disable Rendezvous.
+
+2004-05-24  ujwal
+
+	* Added support for services.
+
+2004-05-19  ujwal
+
+	* Made horizontal spacing parameter an "int" instead of a "float" since 
+	  "float" was making the fonts look blurry. Spacing changes will be 
+	  choppier, so we will need to revisit that.
+
+2004-05-17  ujwal
+
+	* Put back in fabian's fix for crash when closing window too fast. 
+	  Object de-allocation does work correctly. It just happens when the 
+	  next event is processed like a key or mouse event. However, it still 
+	  leaves behind a zombie shell process that goes away only when iTerm 
+	  is quit.
+
+2004-05-15  fabian
+
+    * Selection now occurs when mouseDown instead of mouseUp.
+    
+2004-05-11  ujwal
+	
+	* Added support to set cursor color and cursor text color from applescript.
+
+2004-05-08  ujwal
+
+	* Fixed printing.
+
+2004-05-08  ujwal
+
+	* Re-implemented display update thread using NSThread instead of NSTimer 
+	  to avoid posting frequent events on main run loop. Hopefully this 
+	  should reduce CPU usage seen on laptops. Also, the thread is called 
+	  from the controlling Pseudoterminal instead of in each tab. Thread 
+	  updates all tabs in the controlling PseudoTerminal. This should reduce 
+	  the number of threads to one per PseudoTerminal.
+
+2004-04-27  fabian
+
+    * Added support for double/triple click and drag to copy.
+    * Fixes for shift-to-extend-selection
+    * Now Command-selection opens what is selected in a browser.
+    
+2004-04-26  ujwal
+	
+	* Fixed resize bug in VT100Screen.
+
+2004-04-24  ujwal
+
+	* Removed some code in PTToolbarController that triggered a 
+	  bug in toolbar visibility toggling.
+	* Added support for mapping the help key.
+
+2004-04-20  ujwal
+
+	* Added an option to have middle mouse button paste from clipboard.
+	* Added an option to disable bold font rendering in display profile 
+	  and config panel.
+
+2004-04-18  fabian
+
+    * Fix for dead key and related issues.
+    * Fixes of Japanaese and German translatons.
+    
+2004-04-18  ujwal
+
+	* Potential fix for dead key and key repeat issue.
+
+2004-04-16  ujwal
+
+	* Honoring anti-aliasing for bold also. We don't use strokewidth for 
+	  bold when antialias is off since it looks ugly. Instead, we use 
+	  the old method of redrawing the character offset by 1 pixel.
+	  
+	* Added a screen lock API to VT100Screen.
+
+2004-04-15  ujwal
+
+	* Fixed size of window in setWindowSize when tabs are at bottom.
+
+2004-04-14  fabian
+
+    * Updated website files.
+    
+2004-04-13  ujwal
+
+	* Updated help pages.
+	* Made changes to horizontal character spacing inconfig panel update smoother.
+
+2004-04-11  ujwal
+	
+	* PTYTask is back to blocking read since we are not doing any 
+	  idle processing anymore. This should cut down onthe number 
+	  of select calls.
+
+2004-04-11  fabian
+
+    * Check in correct Japanese localization.
+    
+2004-04-11  ujwal
+
+	* Made config panel a floating window. Changes are applied immediately 
+	  to the active session.
+	* Added back in support for bookmark shortcuts.
+
+2004-04-10  ujwal
+
+	* Removed obsolete code activating fonts.
+	* Migrating name, command, and working directories of old 
+	  addressbook to new format. Default profiles will be used.
+	* Subclassed NSApplication to override sendEvent: so that 
+	  custom key bindings with command key mask would work correctly. 
+	  Take care not to define key mappings that override something 
+	  important like cmd-q.
+
+2004-04-08  ujwal
+
+	* Updated ProjectBuilder file.
+
+2004-04-06  fabian
+
+	* A fix for Jaguar incompatibility with NSStrokeWidthAttributeName
+	
+2004-04-04  fabian
+
+	* A few touchups of website files.
+	
+2004-04-03  fabian
+
+	* German localization completed by Felix FŸhne.
+	
+2004-04-02  fabian
+
+	* Updated traditional Chinese localiaztion, contributed by kang-min Liu
+	* Updated German localization by Felix FŸhne (not complete yet)
+	* A temporary fix for the auto-resizing bug.
+	
+2004-03-31  fabian
+
+	* Updated Korean localization, by TaeYoung Oh
+	* Fixed problems displaying blinking and underline characters.
+	
+2004-03-30  ujwal
+
+	* Reimplemented "find" to work across lines.
+
+2004-03-29  fabian
+
+	* Updated Japanese localization, provided by OHKAWA Yuichi.
+	
+2004-03-29  ujwal
+
+	* Fixed bugs in retrieving default and blobal profile names from 
+	  the profile managers.
+
+2004-03-28  ujwal
+
+	* Added Rendezvous support.
+	* Fixed bug in selection in reverse direction.
+
+2004-03-27  fabian
+
+	* Updated zh_CN translation
+	
+2004-03-26  fabian
+
+	* Merged in the French localization by Matt Anton
+	
+2004-03-25  fabian
+
+	* Removed 'Bookmarks' button from toolbar.
+	* Updates of website files.
+	* Removed all reference to USE_CUSTOM_DRAWING & USE_CUSTOM_LAYOUT
+	
+2004-03-25  ujwal
+	
+	* Re-implemented bold drawing to use NSStrokeAttributeName on 
+	  Panther systems and above.
+	* Added controls for character spacing in config panel.
+
+2004-03-24  ujwal
+
+	* Embedding default profiles for keyboard, display, and terminal 
+	  in the application package to be loaded if there no profiles 
+	  already defined.
+
+2004-03-23  ujwal
+
+	* Fixed bug in saving display and terminal profiles.
+
+2004-03-23  fabian
+
+	* Changed version number to 0.8.0
+	
+2004-03-22  fabian
+
+	* Fixed a bug in encoding settings.
+	* Added cursor text and selection text in config panel.
+	* Fixed bugs in char cache. It now follows changes of color setting correctly.
+	* Added Save Display/Terminal Profile in Tools menu.
+	
+2004-03-21  ujwal
+
+	* Added support to hide all tabs.
+
+2004-03-19  ujwal
+
+	* Removed obsolete code.
+	* Minor fix with margins.
+	* Shift click extends selection.
+	* Added support for horizontal and vertical character spacing.
+
+2004-03-18  ujwal
+
+	* Completed required aspects of new bookmark editor. 
+	* Removed remapping of delete key function. Handled by 
+	  custom key mapping.
+	* New bookmark code activated.
+	* Added support for selected text and cursor text colors.
+
+2004-03-14  fabian
+
+	* Completed new UI for terminal profile editor.
+	
+2004-03-13  ujwal
+	
+	* Completed new UI for display profile editor.
+
+2004-03-11  fabian
+
+	* Fixes of several margin related bugs (bg image, size calculation...)
+	
+2004-03-10  fabian
+
+	* Fixed bug in scrolling
+	
+2004-03-10  ujwal
+
+	* Adjusted selection code to accommodate newly added margin.
+	* Fixed yet another selection/CR problem.
+
+2004-03-09  fabian
+
+	* Added margins on the side.
+	* Fixed "fast-quit-causing-hangup" problem.
+	
+2004-03-09  ujwal
+
+	* Fixed a copy/save bug triggered by some blank spaces NOT at end of line.
+
+2004-03-08  ujwal
+
+	* Created a new window controller class for the profiles window.
+
+2004-03-07  ujwal
+
+	* Checking in new preferences UI. Backend code for Color and 
+	  Terminal, and Bookmark editor still needs to be done.
+	* Fixed [PTYTextView selectedText] and [PTYTextView contentFromX: Y: ToX: Y:] 
+	  so that '\n' is inserted only on a hard wrap.
+	* Added key mapping action "ignore" to throw away key events.
+	* Added support to specify characters to be considered part of word. Will add 
+	  regex support later.
+
+2004-03-06  fabian
+
+	* Fixed a bug in VT100Screen that causes crashes.
+	* Updated html files.
+		
+2004-03-05  ujwal
+	
+	* Made option key setting part of keyboard profile.
+	* Built proposed UI for new preferences.
+
+2004-03-04  ujwal
+
+	* Fixed "Send Input to All Tabs" and "Paste".
+	* Fixed selection of complete line by dragging.
+	* Fixed +ESC behaviour.
+	* Changed data structure for key bindings.
+	  Previously saved key bindings will be lost :-( Sorry.
+
+2004-03-03  ujwal
+
+	* Made application of transparency more consistent.
+	* Common keymapping profile is searched last for a keybinding match.
+	* Fixed "select all" in text view.
+
+2004-03-03  fabian
+
+	* Rewrite the selection code. Faster and more consistent.
+	
+2004-03-02  fabian
+
+	* Fixed bug in copy&paste
+	
+2004-03-02  ujwal
+
+	* Initial pass at keybinding manager complete. Some more work left, 
+	  particularly with the meta key and associating bookmarks with 
+	  keyboard profiles.
+
+2004-02-29  ujwal
+
+	* Fixed bug in [PseudoTerminal saveSession:].
+	* Added more code for keybinding manager. Still incomplete.
+
+2004-02-27 fabian
+	
+	* Fixed a bug in [VT100Screen putToken], ANSIECH, which causes a crash.
+	
+2004-02-27  ujwal
+
+	* Added support for secondary device attribute.
+	* Changed Device Attribute response to "VT100 with Advanced Video Option"
+	* Fixed double click selection bug.
+
+2004-02-26  fabian
+
+	* Fixed reversed screen mode bug
+	* Now blinking characters on screen are synchronized
+	* Removed ARRAY/BUFFER mode indicator in About dialog.
+	
+2004-02-26  ujwal
+
+	* Fixed a couple of emulation problems with reverse video on 
+	  OpenVMS systems in scrollDown and scrollUp. New lines now have 
+	  fg and bg colors of the line they just replaced.
+
+2004-02-25  ujwal
+
+	* Fixed display bug in scrollUp.
+	* Change cursor when window becomes/resigns key.
+
+2004-02-25  fabian
+
+	* Changed all the html docs into shtml
+	* Made some attempt to allow selections to follow changes on screen
+	* Fixed an underline drawing bug
+	
+2004-02-24  fabian
+
+	* Fixed a double-width character handling bug in PTYTextView
+	* Find Panel is now working. Limitation: doesn't search across lines.
+	* Blink now only happens for key window.
+	* Non-key or no-input windows now have a slower refresh rate.
+	
+2004-02-24  ujwal
+
+	* Added back support for blinking cursor. Reduced blink frequency.
+	* Added back support for "Focus follows mouse".
+	* Added back support for cmd +/- to change font size on the fly.
+	* Removed preference for "Enforce character alignment".
+	* Made PreferencePanel a NSWindowController.
+
+2004-02-23  ujwal
+
+	* Added support for setting cursor color.
+	* Changed bold behavior by redrawing character. 
+	  Bold now works for all fonts.
+	* Fixed config panel nibs.
+
+2004-02-23  fabian
+
+	* Fixed bug in [PTYTextView getCharImage].
+	* Changed blinking behavior. No we no longer reverse fg/bg
+	* Changed bold behavior. Bold now works for all fonts.
+	
+2004-02-22  ujwal
+
+	* Making sure dirty flags are reset for a line after processing it.
+
+2004-02-21  fabian
+
+	* Fixed highlight color display
+	* Now including color code in the hash function
+	
+2004-02-20  ujwal
+
+	* Minor updates to selection stuff. Re-enabled "select all".
+	* Added back print functionality. Removed "Print Selection". 
+	  Handled by "Print".
+
+2004-02-19  fabian
+
+	* Now using srand() as hash function in hoping of less collision.
+	* Fixed another cursor problem when dealing with double width characters.
+	* Fixed a memory allocation bug that cause crashes.
+	* Fixed some memory leaks in PTYTextView.
+	
+2004-02-19  ujwal
+
+	* Forcing redraw when tabview is redrawn.
+	* Fixed scrollbar problem.
+	* Added back support for drag-drop into textview.
+	* Added support for double and triple-click to select word and line.
+
+2004-02-18  ujwal
+
+	* Fixed scrollUp crash in PTYTextView: drawRect.
+
+2004-02-18  fabian
+
+	* Enhanced [PTYTextView drawRect] to use dirty array more efficiently.
+	* fixed a bug in save/restoreBuffer in VT100Screen.
+	* Optimized blinking
+	* Unfinished work on Find functions
+	* Proper init of PTYTextView fixed some weird crashes
+	* Fixed some cursor problems related to wide characters.
+	
+2004-02-17  fabian
+
+	* Fixed a bug in [VT100Screen eraseInDisplay].
+	* Fixed a bug in [PTYTextView drawRect] when drawing underlines.
+	* A slightly better hash algorithm for char image cache.
+	
+2004-02-17  ujwal
+
+	* Added back support for background images. 
+	* Some more optimizations in drawing code to draw only line rects that 
+	  need drawing.
+
+2004-02-16  ujwal
+
+	* Forcing update in texview drawRect until drawing issue is resolved.
+	* Fixed bold display bug.
+	* Fixed a crash in moving tab to another window.
+	* Added back support for "middle button paste".
+
+2004-02-14  ujwal
+
+	* Fixed bug in VT100Screen: setString when text wraps.
+	* Drawing a nicer cursor. We can later allow the user to pick cursor color.
+	* Not forcing an update on scrollEnd...gives big speed boost.
+
+2004-02-13  ujwal
+
+	* Fixed "Kill Buffer" crash.
+	* Fixed "moving into buffer" in eraseInDisplay and scrollUp.
+
+2004-02-13  fabian
+
+	* Massive rewrite of drawing code. Some lost functionality needs to be recovered.
+
+2004-02-05  ujwal
+
+	* Selection is maintained after screen update unless text of selection has changed.
+
+2004-02-03  ujwal
+
+	* Not closing task if writing 0 bytes in PTYTask.m
+	
+2004-01-30  ujwal
+
+	* Fixed a nil NSString problem with selecting background images in AddressBook.
+
+2004-01-28  ujwal
+
+    * Fixed problem resetting scrollbar at bottom on new output while scrolling.
+	
+	* Toggling of "Remap Delete Key" is handled by menu item and shortcut with 
+	  cmd-Delete. This frees up opt-delete for applications that need it.
+
+2004-01-27  ujwal
+
+	* Significant improvement in display/layout speed for curses based applications 
+	  by adjusting position only for graphical glyphs, and NOT for ALL GLYPHS on 
+	  in the line.
+	  
+	* iTerm's text system is the only supported one now since it is now proven to 
+	  work well and much faster than Cocoa's default text system. You can switch to 
+	  Cocoa's built in text system at compile time. "Enforce character alignment" 
+	  preference can now be turned off for fonts that have native support for 
+	  graphical characters.
+	  
+	* Replaced a 10.3 only API in PTYSession.m with one that works on 10.2 as well.
+
+2004-01-23  ujwal
+
+	* Fixed some error handling for unknown tokens.
+
+2004-01-22	ujwal
+
+    * Added support for tab bonding, i.e. inout is sent to all tabs in 
+      a window.
+	* Middle mouse button pastes selection instead of pasting from clipboard.
+
+2004-01-21	ujwal
+
+	* Fixed some weird nib corruption in Preferences. Tab positioning 
+	  was lost.
+
+2004-01-20	ujwal
+
+    * Added support for "Focus follows mouse".
+	* Fixed ctrl-/ key to generate \037 and ctrl-? to generate \177.
+
+2004-01-19	ujwal
+
+    * Made cmd-W behave more consistently when Find and AddressBook windows 
+      are key.
+    * Added support for cmd-+ and cmd-- for increasing and decreasing font size 
+      respectively. Localizations need to be translated.
+    * Preferences shortcut is not cmd-, in line with new Apple guidelines.
+    * Overrode PTYTextView: -mouseEntered method to avoid activation of 
+      I-beam cursor.
+    * Added menu item to toggle toolbar visibility with shortcut.
+
+2004-01-01	ujwal
+
+    * Cursor blinks only in active window.
+
+2003-12-18	fabian
+    
+    * Fixed a bug related to inputting international characters
+    * Fixed errors in Korean translation (provided by TaeYoung).
+    
+2003-11-27	ujwal
+
+    * Added method in PreferencePanel to set tabViewType.
+
+2003-11-15	ujwal
+
+    * ARRAY code is working again, i.e. as well as it was before.
+
+2003-11-13	ujwal
+
+    * Added Xcode project.
+    * Update Makefile to work with both Xcode and ProjectBuilder.
+    * Fixed ARRAY code build errors. Still does not run correctly.
+
+2003-11-09	ujwal
+
+    * Removed hardcoded references to Osaka-Mono font.
+
+2003-11-06	ujwal
+
+    * Fixed bug causing incorrect number of columns.
+    * Updating screen on keydown.
+
+2003-11-05	ujwal
+
+    * Fixed resizing problems when toolbar visibility is toggled by overriding 
+      behavior of toolbar button.
+
+2003-11-04	fabian
+    
+    * Checking in the new icon
+    * Checking in German localization
+    * Updated webpage and help files for new release
+    
+2003-10-15	fabian
+
+    * Put in Ujwal's fix of crash when enforce aligment unchecked
+    
+2003-10-10	fabian
+
+    * Corrected the encoding for the French version of iTerm.strings.
+    
+2003-10-09	ujwal
+
+    * Reverted to individual timer threads for each session. Other code 
+      is not fully tested yet.
+
+2003-10-09	fabian
+
+    * Updated all localizations for Script menu.
+    
+2003-10-07	ujwal
+
+    * Fixed bug in VT100Screen: clearBuffer.
+
+2003-10-05	ujwal
+
+    * Put in a Scripts menu in the main menu to run user defined scripts.
+      The scripts need to be stored in in the ~/Library/Application Support/iTerm/Scripts 
+      directory.
+    * Fixed compiler warnings about weak link by removing unused link against 
+      CoreFoundation framework.
+
+2003-10-03	fabian
+
+    * Put in a link to nightly CVS tarball and CVS build in webpages
+    
+2003-10-03	ujwal
+
+    * Put in exception handlers in VT100Screen wherever screen lock is 
+      aquired. This makes sure that the screen lock is released when 
+      an exception is raised.
+
+2003-10-02	ujwal
+
+    * Added some more scripting support to get and set the current 
+      terminal.
+
+2003-10-01	ujwal
+
+    * Default font is now chosen with [NSFont userFixedPitchFontOfSize:0].
+
+2003-09-30	ujwal
+
+    * All periodic timer code for each open session is called by a single 
+      timer from PsedoTerminal. Thus there is one thread per window. 
+      This should reduce the number of timer threads running and hence 
+      lessen the load on the CPU.
+
+2003-09-29	fabian
+
+    * Fixed a bug in ANSICSI_ECH code. It shouldn't move cursor position.
+    
+2003-09-27	fabian
+
+    * Added a section of Interesting Links in resources section of website.
+    
+2003-09-27	ujwal
+
+    * Disabling log start/stop menus depending on current logging status.
+
+2003-09-26	fabian
+
+    * Updated French, Japanese and Korean localizations.
+    * Changed versumber to 0.7.8
+    * Updated help files and website files for new version.
+    
+2003-09-26	ujwal
+
+    * Changed bookmark shortcut modifiers from Cmd-opt to 
+      Cmd-ctrl.
+
+2003-09-25	ujwal
+
+    * Fixed bug in showCursor accessing attribute at invalid index.
+    
+2003-09-24	ujwal
+
+    * Disabled re-selection of text since that was interfering with copy/paste 
+      in other apps.
+
+2003-09-23	fabian
+
+    * Updated zh_CN and zh_TW localiztions.
+    
+2003-09-23	ujwal
+
+    * While printing, we print a back-on-white copy of the textview.
+
+2003-09-22	ujwal
+
+    * Added iTerm-Aqua.jpg as the default background image.
+    
+2003-09-21	ujwal
+
+    * When PTYSession: terminate is called, we wait for shell task to exit 
+      after sending it the SIGHUP signal.
+    * Changed some NSImage calls of initByReferencingFile to initWithContentsOfDile 
+      so that an attempt to init the image is made immediately.
+
+2003-09-16	ujwal
+
+    * Added support to change background image after session has been opened.
+    * Added scripting support to set background image.
+
+2003-09-15	fabian
+
+    * Fixed a bug that causes wrong color of new line character (introduced in 0.7.7).
+    
+2003-09-15	ujwal
+
+    * Removed "Choose" button for background images in the session 
+      preferenced UI.
+
+2003-09-14	fabian
+
+    * Fixed a bug in removeOverLine that causes crashes.
+    * Fixed a bug in DeleteCharacters that causes crashes.
+    
+2003-09-14	ujwal
+
+    * Fixed a bunch of bugs that prevented scripting from working.
+
+2003-09-13	ujwal
+
+    * Moved more session-specific code to from PseudoTerminal to PTYSession. 
+      Potential for each tab to have its own font. Screen sizing issues need 
+      to be worked out.
+    * Fixed bug in PTYTabView that prevented non-selected tabs from being dragged.
+
+2003-09-12	ujwal
+
+    * Changed preview of background image to a real NSImageView.
+    * Fixed image scaling issue.
+
+2003-09-11	ujwal
+
+    * Added support for background images including transparency.
+    * Fixed showCursor bug.
+    * Not setting updateIndex = 0 in restoreBuffer; causes screen contents to be lost on man and vi.
+
+2003-09-11	fabian
+
+    * Fixed a bug in showCursor that causes assertation failures.
+    * Fixed a bug that causes sometimes incorrect screen refreshing.
+    
+2003-09-10	fabian
+
+    * Changed doIdleCode behavior to reduce CPU using of idle sessions.
+    * Fixed a bug in save/restore buffer, and revert the eraseInDisplay code.
+    
+2003-09-10	ujwal
+
+    * Fixed massive memory leaks.
+    * Fixed "Prompt on Close" preference bug.
+    * Clear Buffer is now local: clears clears everything up the current line.
+    * Changed keyboard short for "Save Config" so that it does not interfere with 
+      bookmarks shortcuts.
+
+2003-09-09	ujwal
+
+    * Fixed screen bauffer saving code in eraseInDisplay by partially 
+      reverting to the old code.
+
+2003-09-09	fabian
+
+    * Changed the email address in website html files to stop spams.
+    * Updated web site regarding to the icon issue.
+    
+2003-09-08	ujwal
+
+    * Addressbook menu gets shortcuts only for main menu.
+    * Release of version 0.7.7
+
+2003-09-07	ujwal
+
+    * Fixed printSelection where unnecessary white space was being printed.
+    * Fixed setting up menus. AddressBook menu is now available under the 
+      Shell->New Window and Shell->New Tab menu items.
+    * Reworked line padding code in VT100Typesetter to avoid possible recursive 
+      loop with layout manager.
+
+2003-09-07	fabian
+
+    * Fixed some memory leaks. Cleaned up the alloc/dealloc code to make
+      coding more consistent.
+      
+2003-09-06	fabian
+    
+    * Added PTYScroller to completely fix the scrolling problem.
+    * Updated Japanese translation
+    
+2003-09-06	ujwal
+
+    * Fixed check whether user has scrolled up in PTYSession: timerTick.
+
+2003-09-05	fabian
+
+    * Fixed lost scrollback buffer size UI.
+    
+2003-09-05	ujwal
+
+    * Caching text selection and re-applying in VT100Screen: updateScreen.
+
+2003-09-04	fabian
+
+    * Added support for mid-button paste.
+    
+2003-09-02	fabian
+
+    * Updated Korean and French translations.
+    * Fixed laptop's enter key.
+    * Fixed the lost new line attributes bug.
+    * Cleaned up eraseInDisplay code
+    
+2003-08-30	fabian
+
+    * Implemented scrollback buffer size UI.
+    * Fixed a bug in VT100Screen::eraseInDisplay that causes a dead lock.
+    
+2003-08-30	ujwal
+    
+    * Fixed bug in VT100Screen: deleteLines.
+
+2003-08-29	ujwal
+    
+    * Fixed a problem in calculating number of rows when tabs are on the side.
+    * Disabled "trim white space on copy" feature. Terminal applications should 
+      not really be doing this. If the feature is requested again, we could make 
+      it an option.
+    * Made PTYTask: +_processReadTask non-blocking so that other functions can be 
+      performed during idle time.
+
+2003-08-28	fabian
+
+    * Changed version number to 0.7.7
+    * Updated documentation
+    * Fixed a typo in Preference panel of zh_TW localiztion
+    
+2003-08-13	ujwal
+
+    * Fixed an obscure bug that prevented textview from being first responder when 
+      "hide tab" option was disabled. Now not allowing tabview to accept first responder.
+
+
+2003-08-13	sgehrman & ujwal
+
+    * Moved config panel sheet and code into separate nib file and controller.
+
+2003-08-11	sgehrman
+
+    * fixed a bug when setting tabs to the right or left.
+    * made iTermApplicationDelegate to further separate that code from the iTermController
+    * added [iTermController sharedInstance] to make it simple to use one instance of this
+    * added some missing [super dealloc] calls
+    * cleaned up some formatting
+    * cleaned up addressbookcontroller
+
+
+2003-08-09	ujwal
+
+    * Fixed resizing when terminal view is not in an iTerm window.
+
+2003-08-08	ujwal
+
+    * Fixed a bug that caused sessions launched from applescript in a 
+      new window not honor the row, column, and font settings.
+      
+    * Created [PseudoTerminal initViewWithFrame] that creates a terminal view that should 
+      be embeddable in a non-iTerm window. Refactored window initialization 
+      code in the process so that an iTerm window does not have to be created 
+      before a terminal view can be created.
+
+    * Moved all the header files into Headers/iTerm. Easier to build a framework.
+    
+    * Made images loadable from bundle.
+
+2003-08-06	ujwal
+    
+    * Removed all references to [NSApp delegate].
+    
+    * Renamed MainMenu class to iTermController.
+
+2003-08-03	ujwal
+
+    * Using an autorelease pool in screen update thread.
+
+
+2003-08-01	ujwal
+
+    * Added Michael Johnston's patch to access text storage of session via 
+      Applescript.
+
+2003-07-21	fabian
+    * Fixed a bug that messes up deadkey input with alternative OPTION key options.
+    
+2003-07-21	ujwal
+
+    * Checked in new icons and images.
+
+2003-07-20	ujwal
+
+    * Put back in bold face support for fonts that support it.
+
+2003-07-18	ujwal
+
+    * Re-implemented eraseInDisplay code to save screen contents to scrollback buffer. 
+      Fixed a bug in VT100Typesetter in the process.
+      
+    * During scrollUp, lines at the top are moved into the scrollback buffer.
+
+2003-07-17	ujwal
+
+    * Disabled code in eraseDisplay where contents were saved in the scrollback buffer 
+      since it was not right. Needs more thought and work.
+
+2003-07-16	ujwal
+
+    * Added support for ANSI 16 color sequences.
+    
+    * Added support for alternate screen buffer mode.
+    
+    * When display is erased, contents are stored in scrollback buffer.
+
+2003-07-09	ujwal
+
+    * Made a change in PTYSession: insertText to always use dataUsingEncoding.
+
+2003-06-27	ujwal
+
+    * Version number is 0.7.6
+
+2003-06-26	ujwal
+
+    * Put in a "Default Sessions" button in the preferences pane 
+      for easy access.
+      
+    * Fixed bug in saving sessions.
+    
+    * Fixed "Clear Scrollback Buffer" bug in VT100Typesetter.
+
+2003-06-22	ujwal
+
+    * Updated documentation.
+    
+    * Remapping of delete key can be toggled with Alt-Delete sequence.
+    
+    * Fixed a bug in [VT100TextStorage replaceCharactersInRange] optimization.
+    
+    * Added keyboard shortcut to cycle through terminal windows.
+
+2003-06-21	ujwal
+
+    * Version string in "About" box is dynamically generated.
+    
+    * Changed version number to 0.7.5
+
+2003-06-19	ujwal
+
+    * Updated localizations.
+
+2003-06-18	ujwal
+
+    * Updated Korean translation from TaeYoung Oh.
+
+    * Added UI preference to enforce character alignment.
+    
+    * Removed "Save" and "Cancel" buttons from Bookmarks window.
+    
+    * Added support to select and launch multiple sessions in bookmarks.
+
+2003-06-16	ujwal
+
+    * Improved printing support.
+
+2003-06-15	ujwal
+
+    * Incorporated Peter Lewis' "Paste Selection" patch.
+
+2003-06-14	ujwal
+
+    * Reverted back to v1.20 of VT100Typesetter accunting for line 
+      endings at the end of the line instead of beginning since the 
+      other version was more problematic. This version now handles 
+      new line characters at the end correctly.
+      
+2003-06-13	ujwal
+
+    * Fixed bug in VT100Typesetter line bounds calculation where 
+      the new line character should be at the beginning rather 
+      than at the end. Otherwise text ending in a new line character 
+      will not display the ending new line.
+
+2003-06-12	ujwal
+
+    * Created VT100TextStorage class subclassing NSTextStorage.
+
+2003-06-11	ujwal
+
+    * Using embedded FreeMono font for graphical characters 
+      since that font provides all the glyphs.
+      
+    * VT100Terminal does not set NSCharacterWidthAttributeName for ascii text.
+      This is so that the custom typesetter can easily check 
+      for double width characters by just looking for the existence of the 
+      attribute.
+      
+    * Created VT100LayoutManager, a NSLayoutManager subclass to speed up 
+      some operations such as window resizing.
+
+2003-06-10	ujwal
+
+    * Bug fixes and speed improvement to VT100Typesetter.
+
+2003-06-09	fabian
+    * Let VT100Typesetter layout every glyph. Glyph alignment
+      problem solved. But, 
+        1. speed is much slower (~2x), 
+        2. change font with a large scrollback buffer takes for
+           ever (due to re-layout, I think).
+    * Added double width character support in VT100Typesetter.
+           
+2003-06-09	ujwal
+
+    * Caching new line string in VT100Screen for big speed boost.
+
+2003-06-08	ujwal
+
+    * Updated localizations including strings dictionaries.
+    
+2003-06-05	ujwal
+
+    * Custom typesetter to speed up display. Needs more testing. 
+      To activate, turn on USE_CUSTOM_LAYOUT in iTerm.h
+
+2003-06-01	ujwal
+
+    * Updated Korean translation from TaeYoung Oh.
+    
+    * Hiding cursor during typing.
+
+2003-05-31	ujwal
+    
+    * Added an "Add" button to the AddressBook.
+    
+    * Changed name of Address Book to Bookmarks.
+
+2003-05-30	ujwal
+
+    * Changed AddressBook window class back to NSPanel so that it 
+      does not appear in the list of windows. Fixed some resizing and 
+      button positioning issues.
+
+
+2003-05-29	ujwal
+
+    * Fixed bug where PseduoTerminal's delegate was not being set.
+    
+    * Fixed bug in PTYTextView in ARRAY mode where the delagate was not 
+      being retained. 
+          
+    * Fixed more memory leaks caused by PseudoTerminal and PTYSession 
+      retaining each other. Now PTYSession does not retain PseudoTerminal 
+      parent.
+      
+    * Added support for blinking cursor.
+
+2003-05-28	ujwal
+
+    * Removed duplicate preferences from main preference panel.
+    
+    * Added UI for Peter Lewis's mac navigation patch.
+
+
+2003-05-26	ujwal
+    
+    * Incorporated Peter Lewis' Mac navigation keys code patch.
+    
+    * Localized "Default Session" string in addressbook.
+
+2003-05-25	ujwal
+
+    * Refactored some AddressBook code.
+
+2003-05-22	ujwal
+
+    * Moved "Remap Delete Key" preference to addressbook session.
+
+2003-05-19	ujwal
+
+    * Consolidation of preferences into "Default Session" of 
+      addressbook. New look for addressbook.
+      
+    * Restructured addressbook GUI.
+
+2003-05-18	ujwal
+
+    * Added a submenu under the tools menu to choose between sessions 
+      with keyboard shortcuts.
+
+2003-05-17	ujwal
+
+    * Made PseudoTerminal a true NSWindowController class.
+
+    * Removed all references to WINDOW.
+    
+    * Saving all nibs in both pre and post-10.2 format.
+
+2003-05-16	ujwal
+
+    * Fixed a crash when closing a window with both "close session 
+      when it ends" and "Prompt on closing" are unselected.
+      
+    * When a window is created, it grabs the first available position 
+      for the frame name.
+
+2003-05-15	ujwal
+
+    * making sure we have a ~/Library/Application Support/iTerm 
+      directory on startup.
+
+2003-05-14	fabian
+    * Fixed a japanese keyboard input problem. Cleaned up the
+      keyDown code in PTYSession.
+      
+2003-05-13	ujwal
+
+    * Fixed a pretty big memory leak where the text views were not 
+      being released and freed.
+      
+    * Implemented "Find" functionality to search through the text 
+      view.
+
+    * Implemented "Print Selection..." to print selected text. 
+      Currently works only on rectangular selections.
+
+2003-05-12	ujwal
+
+    * Moved AddressBook file to new location under 
+      ~/Library/Application Support/iTerm.
+      
+    * On startup, iTerm.app now looks for an "AutoLaunch.scpt"
+      script under ~/Library/Application Support/iTerm. If it 
+      finds one, it launches the apple script.
+
+
+2003-05-11	ujwal
+
+    * Added '+' in keypad mode.
+
+2003-05-09	ujwal
+
+    * Applying transparency when setting background color from 
+      color table.
+      
+    * Applying transparency when setting screen mode.
+    
+    * Fixed strange bug in vertical page scrolling when multiple 
+      sessions are opened.
+
+2003-05-07	ujwal
+
+    * When a new Default Session entry is created, the font is 
+      set to FreeMonoBold.
+      
+    * Added Applescript support to get tty name. Sessions can 
+      also be referenced by id which is the same as the tty name.
+
+2003-05-07	fabian
+    * Incorporated patch from Peter Lewis
+    * Added paragraph style into deault attributes: We now clip
+      everything that goes beyond the border.
+      
+2003-05-07	ujwal
+
+    * Fixed a bug in switching font from Osaka-Mono to FreeMono.
+    
+    * Fixed bug in window resize.
+
+2003-05-06	fabian/ujwal
+
+    * Release of version 0.7.0
+
+2003-05-06	fabian
+    * Updated Korean localizations
+    * Updated French localizations
+    * Updated web files (not uploaded yet) and help files.
+    
+2003-05-05	ujwal
+
+    * Bundling FreeMono font with the application. If Osaka-Mono is 
+      seen as the preferred font, we switch to FreeMono.
+      
+    * Changed version number from 0.7.0 to 0.70 since it is easier to 
+      parse into a number.
+
+    * Updated some help files.
+
+2003-05-02	ujwal
+
+    * Distinguising session name and windwo title. Storing window 
+      separately from session name in session.
+      
+    * Added support to terminate a session via Applescript.
+
+2003-05-01	fabian
+    * removed scrollback settings in UI for performance reasons.
+    * Japanese nib file updated
+    
+2003-04-29	ujwal
+
+    * Fixed bug in storing and reading for scrollback lines preference.
+    
+    * default scrollback value is 1000.
+
+2003-04-29	fabian
+    * Fixed a bug in VT100Screen's removeOverLine
+    * Implemented custom setting of scrollback buffer size
+    * a little bit code cleanup in iTermController and PseudoTerminal.
+    
+    
+2003-04-29	ujwal
+
+    * Added Applescript support for "write text <text>" 
+      and "write contents of file <file>" to a session.
+
+    * A little more code consolidation in PseudoTerminal.
+    
+    * Added Applescript support to select session by name:
+      select session named "aName"
+
+2003-04-28	fabian
+    * Dynamically change the tab size based on the number of tabs
+    * Version number updated to 0.7.0
+    * Implemented "clear scrollback buffer"
+    * Implemented "Save as a new entry" in Edit AddressEntry dialog
+      to allow copy of existing entries.
+    * Added support for CTRL-arrow keys
+    
+2003-04-28	ujwal
+
+    * Massive code re-organization for revamped 
+      Applescript support.
+      
+    * Fixed some memory related crashes when closing 
+      windows created from Applescript.
+      
+    * Fixed bug in moving tab to new window caused by code 
+      re-organization.
+
+
+2003-04-27	fabian
+    * Updated zh_CN and zh_TW IB files
+    * Updated all string files
+    
+2003-04-26	ujwal
+
+    * When changing colors, setting color scheme 
+      popup button value to "Custom".
+      
+    * Now checking for minimum OS version on startup.
+    
+    * Added UI to customize color for bold output.
+
+2003-04-25	ujwal
+
+    * Fixed setting of tab position preference 
+      in previous commit.
+      
+    * Fixed some quirks in color scheme selection in IB file.
+
+
+2003-04-25	fabian
+    * Changed the look of preference panel.
+    * Added custom ANSI color support. 
+      (need to update non english nib files)
+      
+2003-04-24	ujwal
+
+    * Re-implemented window resizing.
+
+2003-04-23	ujwal
+
+    * Using real bell icon instead of warning sign.
+
+    * Clearing bell on user input.
+    
+2003-04-21	ujwal
+    
+    * Set document cursor of scrollview to arrow cursor so that 
+      the I-Beam cursor is disabled. Removed all other cursor related 
+      code.
+
+2003-04-20	ujwal
+    
+    * When preferences are read, if the selected font is not 
+      found, fall back on the default fixed pit font for the user.
+      
+    * Increased the width of the encoding combo-box in all nibs.
+
+2003-04-18	ujwal
+
+    * Using named color contants instead of building our own 
+      in VT100Terminal.
+      
+    * Fixed a bug in setting foreground and background colors at 
+      the same time.
+
+2003-04-15	ujwal
+
+    * Implemented NSApplication delegate applicationDidUnide: 
+      since a user reported problems after an unhide operation.
+
+2003-04-11	fabian
+    * Fixed a bug that causes iTerm to hang when illege UTF-8
+      characters encountered. We now display a '#' whenever
+      encoding translations failed
+      
+2003-04-11	ujwal
+
+    * Setting cursor color to a mix of foreground and 
+      background colors when window is inactive.
+
+2003-04-10	fabian
+    * Fixed some bugs in setNeedsDisplayInRect of PTYTextView
+    * Removed background attributes when background is default
+    * Fixed a email error on website
+
+2003-04-10	ujwal
+
+    * Put back in the code for not auto-scrolling down 
+      on new output if the user has scrolled up. It had 
+      been interfering with the vttest program. Now we 
+      auto-scroll down when the window size changes, so 
+      vttest largely works.
+
+2003-04-09	ujwal
+
+    * Preliminary support for print-to-ansi.
+    
+    * Incorporated French nib files into project.
+
+2003-04-08	fabian
+    * Added French localization provided by Matt Anton
+    
+2003-04-07	ujwal
+
+    * Fixed a namespace collision bug in PTYTask.
+    
+    * Fixed linewrap bug in VT100Screen.
+
+2003-04-05	ujwal
+
+    * Fixed write problem when prompted for passwords.
+    
+    * Now explicitly setting PATH to something sensible 
+      since the default includes the user's home directory.
+    
+    * Implemented ESC [?40h (allow 132<->80 column mode).
+    
+2003-04-02	ujwal
+
+    * Fixed a problem that was causing iTerm to hang when 
+      a large piece of text was being pasted.
+
+2003-04-01	fabian
+    * Fixed a bug in text input
+    * Applied the URL parsing into ARRAY code
+    * Added an indictor in About box to show if iTerm is
+      build under ARRAY mode or BUFFER mode
+    
+2003-04-01	ujwal
+
+    * Now dynamically displaying window size as window is 
+      being resized.
+
+2003-03-31	ujwal
+
+    * Made URL parsing in PTYTextView slightly more 
+      intelligent.
+
+2003-03-30	ujwal
+
+    * When dragging a text clipping onto iTerm, we 
+      don't insert the file name of the clipping since 
+      the contents are inserted.
+
+2003-03-28	ujwal
+    * Made addressbook non-modal.
+    * Fixed a crash in showing preferences window.
+    * Fixed bug in changing font for addressbook entries.
+
+2003-03-28	fabian
+    * Fixed bugs in selection
+    * Fixed context menu
+    * Fixed wrong setDirtyLine calls in VT100Screen
+    * Fixed a bug in VT100Screen that causes duplicated lines
+    * "Save as" now is working, we need a new print function
+    * Fixed a crashing bug in "Save Config"
+    * Fixed browse and mail in PTYTextView
+    * Made selection invalid if text is changed
+    
+2003-03-27	ujwal
+
+    * Protected some ARRAY specific code in #if USE_CUSTOM_DRAWING
+      ...#endif so that BUFFER code does not crash.
+      
+    * Fixed bug in loading preferences nib.
+      
+
+2003-03-27	fabian
+    * Bug fixes in ARRAY mode
+    * We periodically scroll to the end to reduce amount
+      of redraw when large trunk of data come in.
+    
+2003-03-26	fabian
+    * Bug fixes in ARRAY mode
+    * No long uses periodic update
+    * Refresh now only updates the necessary part of screen
+    
+2003-03-26	ujwal
+
+    * Created a new target "iTerm Framework" in the 
+      project. This is the core of iTerm.app. The 
+      iTerm application target just contains the 
+      entry point source file and images. It then 
+      links against the iTerm framework. This enables 
+      other applications to link against iTerm framework 
+      to embed iTerm functionality. 
+      
+    * Regrouped Preference and AddressBook elements into 
+      separate NIB files. Created AddressBookWindowController 
+      class.
+
+2003-03-25	fabian
+    * PTYTextView is now a subclass of NSView under ARRAY 
+      mode. Text input works properly. 
+    * Working selection and copy/paste 
+        
+2003-03-22	Ujwal S. Setlur <ujwal@setlurgroup.com>
+    
+    * Added option-click support to position cursor.
+    
+    * Added keyboard shortcut to "Clear Buffer"
+
+2003-03-20	fabian
+    * Japanese localization patch from Yuichi OHKAWA
+    * Imported all the website files into the project
+    * New key combination for scrolling:
+        cmd-Up/Down arrow: scroll one line up/down
+        shift-cmd-Up/Down arrow: scroll one pague up/down
+    * Added an alert window after configuration is saved.
+    * Added shortcut option for address entry.
+        Control-Option-Key: Open in new tab
+        Shift-Control-Option-Key: Open in new window
+      (not working when some input method is being used)
+    
+2003-03-19	fabian
+    * Fixed some AddressBook interface issues
+    * Corrected typos in Korean localizations
+    * Updated help files
+    * finalize the release of 0.6.5
+    
+2003-03-18	fabian
+    * Added Korean localization provided by TaeYoung Oh
+    * Updated Chinese nib files for new option.
+
+2003-03-18	Ujwal S. Setlur <ujwal@setlurgroup.com>
+    * Added explicit preference to warn on quitting 
+      or closing a window/tab.
+      
+2003-03-14	fabian
+    * Decrease the brightness of default color to give it
+      more contrast to the highlight
+    * Fixed a bug related to input CJK.
+    * Updated Japanese nib files by Yuichi OHKAWA
+    * Added a screen lock to prevent conflicting update.
+    * Fixed a bug in dead key processing
+      
+2003-03-13	fabian
+    * Added a new option to allow opening the bookmarks
+      window when startup.
+    * Change version number to 0.6.5
+    * Localized GPL license statement for zh_CN and zn_TW
+    * Fixed a bug in PseudoTerminal.nib, zh_TW
+    * Cleaned up unused outlets in PseudoTerminal
+    * Changed Bookmarks behavior:
+        double click opens a new session
+        new window is specified using a switch
+    * Correct the yellow
+        
+2003-03-12	fabian
+    * Fixed a bug that causes incorrect process of color.
+    * Cleaned up the color code
+    * Fixed a bug related to reversed video mode.
+    * Changed default black color to pure black.
+    * Fixed some timer settings
+    
+2003-03-11	fabian
+    * Changed the color code. Now we no longer have fixed
+      bold text color. Instead, it's calculated from the
+      base color. So we can choose whatever color we want
+      again.
+      
+2003-03-10	fabian
+    * Rewrite the color stuff in emulation code. Now we
+      use seperate color table for normal and bold text.
+      We now will using high color to indicate bold. Also,
+      the color table will make the future implementation
+      of customized ANSI color easier.
+      Limitations: Any color you select for FG/BG will be
+      converted to the closest color in the colorTable.
+      Aslo, currently FG color will have no alpha.
+    * Fixed a display problem when change FG/BG colors or
+      Transparency.
+    * Implemented ANSI code VPA and VPR, to fix one user's
+      problem with Debian programs.
+    * Fixed a blinking bug
+    * Implemented ANSI code ECH
+      
+2003-03-10	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added some missing semi-colons in Chinese strings files.
+
+
+2003-03-08	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed an issue where '=', '/', and '*' could not be 
+      typed from numeric keypad. This was because those 
+      keys were mapped to the PF2, PF3, PF4 keys. Now we 
+      have a numLock state that is on by default. When 
+      state is enabled, numeric keypad has the default 
+      operation. When it is disabled, the keys 
+      'numlock', '=', '/', and '*' send PF1, PF2, PF3, 
+      and PF4 sequences. The state can be toggled by using 
+      Cmd-numLock. This behavior is basically the same as 
+      that implemented in GLTerm.
+      
+
+2003-03-04	fabian
+    * Fixed a bug in screen update
+    
+2003-03-04	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed a bug in changing forground and background color 
+      in a session.
+      
+
+2003-03-03	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Incorporated Max Horn's patches for a variety of 
+      enhancements and fixes for some bugs and memory leaks.
+      
+
+2003-03-02	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed a screen update bug. Sometimes screen HAS to be 
+      updated even if minIndex == [BUFFER length], e.g. when 
+      doing ^u on the last line.
+      
+
+2003-03-01	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed a warning bell orientation bug.
+    
+
+2003-02-28	fabian
+    * Fixed a bug that cause incorrect screen update
+      in BUFFER mode
+      
+2003-02-27	fabian
+    * Fixed cursor code in ARRAY mode
+    * Fixed more double-width character stuff in ARRAY mode, 
+      display should be fully working now
+    * We now use the taller one between font and nafont to
+      decide the lineHeight.
+    * Fixed bugs in scrollUp and scrollDown in ARRAY mode
+    * Added some #ifdef to make code compatible in BUFFER mode.
+    
+2003-02-26	fabian
+    * Fixed general double-width character processing in ARRAY mode
+    * Fixed "last line missing" bug in ARRAY mode
+    * Fixed "clearBuffer" bug in BUFFER mode
+    * Fixed scrolling bug that messes up display in ARRAY mode
+    
+2003-02-25	fabian
+    * Further optimization of BUFFER method by updating
+      less portion of screen
+    * Fixed a showCursor bug
+      
+2003-02-24	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added highly experimental code to do custom drawing 
+      for high speed. Still very buggy. To enable the 
+      code, turn on the USE_CUSTOM_DRAWING flag in 
+      PseudoTerminal.m, turn on the DEBUG_USE_ARRAY 
+      and turn off the DEBUG_USE_BUFFER flags in VT100Screen.m
+      
+    * Fixed a problem causing huge CPU usage when displaying 
+      the bell in tab. Now displaying only if there is a 
+      change.
+      
+
+2003-02-24	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed and simplified screen updating code.
+
+2003-02-24	fabian
+    * Changed version number to 0.6.4
+    * Updated help files
+    * Fixed a bug in timerTick
+    * Fixed a bug that deals non-ASCII characters wrong.
+    * Removed the trigger in keyDown in PTYSession.
+    * Added an icon in Tab when a bell is received.
+    * Now iTerm removes the warning icon when switching tabs.
+    
+2003-02-22	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed a bug in resizing tabs and window when closing 
+      a session.
+      
+    * Using smaller icon for popup menu in toolbar when 
+      toolbar size mode is NSToolbarSizeModeSmall.
+      
+    * Further speed optimizations by caching rarely changing 
+      character attribute dictionaries. We are also not 
+      recreating our data stream in VT100Terminal every 
+      time we pick off a token. That is too expensive. 
+      We just mark our position in the stream and recreate 
+      the stream only when we reach the end.
+      
+
+2003-02-21	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Manually firing screen update timer after a keyDown 
+      to make user input more responsive.
+      
+    * Fixed memory leak by properly releasing BUFFER in 
+      VT100Screen: -dealloc. Also no need to retain 
+      BUFFER after alloc and init.
+      
+    * Fixed bug in accessing characters in buffer while 
+      marking autowrap position.
+      
+
+2003-02-21	fabian
+    * Fixed a bug in function key mapping: F1~F12
+    * Fixed a bug in showCursor. Cleaned overall cursor
+      Code.
+    * Fixed bugs related to color/font settings in buffer
+    * Fixed a bug affecting CJK input
+    * Perfromace improvement. Now a buffer is used in
+      displaying the text. Significantly improve the
+      overall speed. Need more test.
+      
+2003-02-20	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added and implemented tabViewWillPerformDragOperation 
+      tabViewDidPerformDragOperation delegate methods. This 
+      gets rid of a visual glitch when doing drag-n-drop 
+      within a window with only two tabs.
+      
+
+2003-02-19	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added support for a few xterm character attributes.
+    
+    * Tabs are dragged only after about 8 pixels to prevent 
+      accidental dragging.
+    
+
+2003-02-16	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Changed implementation of cursorToX: Y: and 
+      cursorToX: in VT100Screen. Was interfering 
+      with resize command.
+      
+
+2003-02-14	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed encoding bug in PTYsession: -keyDown:
+    
+    * Workaround for a possible Cocoa bug in copy/paste.
+    
+    * Changed keyboard shortcuts to navigate sessions 
+      from Cmd-1/2 to Cmd [ and Cmd ].
+      
+      
+2003-02-13	fabian
+    * Enhanced text input
+    * Incorporated Japanese patch from OHKAWA
+    
+2003-02-12	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added preference to remap DELETE key to BACKSPACE.
+    
+
+2003-02-11	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Moved dead key code from PTYSession: -keyDown to 
+      PTYTextView: -keyDown since that implements the 
+      NSTextInput protocol.
+      
+    * Fixed a minor problem in VT100Screen: scrollUp 
+      where an unwanted "\n" was inserted when 
+      CURSOR_Y > SCROLL_BOTTOM.
+      
+    * Made flag to open session in new window in the toolbar 
+      popup menu sticky.
+      
+    * Added GPL notice to all files.
+      
+
+2003-02-10	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added support for alternate keypad mode and 
+      PF1, PF2, PF3, PF4 keys.
+      
+    * Fixed a bug in VT100Terminal: getCSIParam() 
+      where the the paramters would be parsed into 
+      incorrect array indices when blank (implied) 
+      parameters were encountered. This is was messing 
+      up some token processing where the position of 
+      the parameters in the array was important like 
+      [VT100Screen: -setTopBottom].
+      
+    * Fixed a cursor display bug in PseudoTerminal: -windowConfigOk.
+      
+
+2003-02-10	fabian
+    * Cleaned up showCursor code
+    * Incorparated Japanese nib files from OHKAWA
+    * Fixed a bug in scrollUp
+    
+2003-02-09	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added drag-and-drop support to the PTYTabView class. 
+      Tabs can now be moved within and between windows.
+      
+
+2003-02-07	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Workaround for a problem in Bookmarks where the 
+      scrollbar was not being activated when it should have 
+      been on load. It was being activated only on window 
+      resize. Looks like a Cocoa bug, but I put in a 
+      workaround of telling the NSTableView that the 
+      number of rows had changed after loading the addressbook.
+      
+    * This time really fixed the cursor updating problem. 
+      Root cause was VT100: -deleteCharacters that sometimes 
+      caused OLD_CURSOR_INDEX to end up with the incorrect 
+      value.
+	
+
+2003-02-06	Ujwal S. Setlur <ujwal@setlurgroup.com>
+    
+    * Now displaying tab number in label to make it easier 
+      to switch between tabs using function keys.
+      
+    * Changed version number in Info.plist to 0.6.3.
+      
+
+2003-02-05	fabian
+    * Fixed a bug in showCursor that causes the loss of
+      attributes. That partially solves the double-width
+      characters problem.
+    * Localized new interface additions for zh_CN and zh_TW.
+    * 0.6.3!
+      
+2003-02-04	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added menu item in tabview contextual menu to move 
+      tab to new window.
+      
+    * Simplified PseudoTerminal code by removing direct 
+      references to SCREEN, SCROLLVIEW, TEXTVIEW, TERMINAL, 
+      TERM_VALUE. All these operate only on the PTYSession 
+      object. Also simplified PseudoTerminal: -setupSession 
+      code by moving a bunch of it into addSession which 
+      is called by other stuff.
+      
+    * Fixed multi-line copy paste problem that was caused by
+      line feed that is inserted when a command wraps over to 
+      the next line. Now marking the position where the line 
+      feed is inserted and removing it in the copy operation.
+      
+
+2003-02-03	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added submenus to tabview contextual menu. Tabview 
+      contextual menu is now built and controlled by 
+      the tabview delegate.
+      
+
+2003-02-02	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added basic Applescript support. One can now write 
+      Applescripts to open one or more default or addressbook 
+      sessions in a new tab or window. The syntax is:
+      
+      To open a new session in a new tab:
+      launch session "<session_name>" in tab
+      
+      To open a new session in a new window:
+      launch session "<session_name>" in terminal
+      
+      The <session_name> is either the name of a stored 
+      addressbook session or "default session" for a 
+      default session.
+      
+      Here is a sample Applescript:
+      
+      tell application "iTerm"
+	activate
+	launch session "default session" in tab
+	launch session "Fink list" in terminal
+      end tell
+      
+      These scripts can then be save as executable scripts.
+      
+    * Incorporated a modified patch by Aaron Gerber to escape 
+      special characters out of a file name when doing a 
+      drag-and-drop.
+      
+
+2003-01-31	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed bug in showing cursor when going up in command 
+      history
+      
+
+2003-01-30	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Removed terminal size constraints from Preferences, 
+      Configuration panel, and Bookmarks entries. 
+      Minimum size is 1x1.
+      
+    * We don't autoscroll to the bottom on shell output if 
+      the user has scrolled up. Typing something on the 
+      command line will trigger an autoscroll again.
+      
+
+2003-01-29	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Incorporated patch by Aaron Gerber to add a "Cancel" 
+      button in the preferences panel.
+      
+    * Added preference to specify tab position:
+      top, left, bottom, right
+      
+
+2003-01-27	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Refactored a lot of the addressbook menu building code.
+    
+    * Added addressbook menu to dock menu.
+    
+
+2003-01-25	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Bookmarks window now has Autosave name.
+    
+
+2003-01-24	fabian
+    * Fixed a bug in VT100Terminal that causes loss of
+      character sometimes
+    * Fixed bug in PseudoTerminal that makes choosing
+      non-ASCII font not working
+      
+2003-01-23	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed mapping of function keys in VT100Terminal.
+    
+
+2003-01-21	fabian
+    * Fixed bug in SetDoubleWidthString()
+    * Fixed bug in attrString that disabled bold
+    * Fixed bug in DECRC/DECSC
+    * Fixed bug in character set settings
+    
+2003-01-21	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Refactored toolbar item popup menu to enable it in 
+      text only mode.
+      
+    * Fixed bug in PseudoTerminal: -saveSession where 
+      row and column values were swapped.
+      
+    * Better sunchronization between window and session 
+      titles. Tab label width is limited to 20 characters.
+      
+
+2003-01-20	fabian
+    * New option in preference&bookmarks entry
+      Treat NonASCII characters as double width
+    * Graphical characters now works for VT100 font
+    * Fixed a bug in function key code
+    * New SetASCIIString() to process ascii strings and
+      old SetString() to handle other(multibytes) strings
+    * Cleaned up code in VT100Screen.m
+    * bug fixes in SetDoubleString
+      
+2003-01-20	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Enabling WRAPAROUND_MODE in VT100Terminal by default 
+      for long command lines.
+      
+    * Added support for ANSI "Cursor Horizontal Absolute".
+      
+2003-01-17	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added support to specify text highlight/selection color 
+      in preferences, session settings, and bookmarks.
+      
+
+2003-01-16	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed common bugs in insertLines, scrollDown in 
+      VT100Screen.
+
+2003-01-15	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Removed adjustScroll override in PTYTextView.
+      Not needed anymore and was conflicting with 
+      scrolling in vi.
+      
+
+2003-01-14	fabian
+    * Enhanced save session
+    * Fixed insert mode bug
+    * Fixed wrap around mode
+    * Failed attempt to set up mouse cursor
+    
+2003-01-14	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed bug where adding a second tab would cause 
+      the scroll position of the first tab to be reset.
+      
+    * Added option to silence terminal bell.
+      
+
+2002-01-13	fabian
+    * Version number is now 0.6.2
+    * New command in Tools menu: Save Config
+    * Add Hide-Tab as an option
+    * Updated Chinese nib files(Japanese nib files need
+      to be updated)
+    * bold is now enabled when font with appropriate bold
+      size is used.
+    * bug fixes in VT100Screen
+    
+      
+2003-01-13	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added an option to copy selected text to emulate 
+      X copy/paste. This requires a multi-button mouse 
+      with one of the buttons programmed to be "Cmd-V" or 
+      "paste".
+      
+
+2003-01-10	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added some keyboard shortcuts to addressbook.
+    
+
+2003-01-11	Aaron D. Gerber <gerber@trvnet.net>
+
+    * When you edit or add an entry to the bookmarks,
+      it will be sorted.
+      
+2003-01-10	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed bugs in syncing transparency value and control 
+      in the Preference panel.
+
+
+2003-01-10	fabian
+    * Better resize behavior
+    * Tab title changes when an icon title change
+      request is received
+    
+2003-01-09	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed some scrolling/sizing issues by overriding 
+      adjustScroll: in PTYTextView. Reactivated the 
+      windowWillResize: toSize: code.
+      
+
+2003-01-09 	fabian
+    * help docs updated. Removed unnecessary links and pics
+    * Fixed a bug in scrollDown
+    * Fixed a bug in putToken(), NEL
+    
+2003-01-08	fabian
+    * Added new option in bookmarks entries that allow
+      user to set "close session automatically" individually
+      
+2003-01-08	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Save menu item in contextual menu is always validated. 
+      Saves selection if there is one, save everything if not.
+      
+    * Added "Close" menu item to contextual menu to close 
+      current session.
+      
+    * When copying text, trimming white spaces and new lines.
+      
+    
+2003-01-07	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Adjusted some visual sizing glitches when going from 
+      no tabs to tabs and vice versa.
+      
+    * windowWillResize: toSize does the default OS thing.
+    
+
+2003-01-07	fabian
+    * fixed a bug in eraseInLine()
+    * hide the tab when there's only one session
+    * new VT100Screen code, should be faster
+    * Japanese localization files updated
+    
+2003-01-06	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Remove fatal recursive loop by not calling 
+      [self setWindowSize] from PseudoTerminal: -windowDidResize.
+      The window sizing part needs some real attention. 
+      Temporarily re-activating new resizing code with 
+      windowWillresize: toSize: method.
+       
+
+2003-01-06	fabian
+    * Fixed the display problem related to "bold"
+    * Updated Chinese nib files for anti-aliasing and print&save
+    * Chinese strings files updated for new contextual menu item
+    * Set the version number to 0.6.1
+    * Incorporated the patch sent by kuri@makino.ecei.tohoku.ac.jp
+      
+    
+2003-01-05	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added Bookmarks into contextual menu. Entries 
+      can be executed in a new tab or in a new window. 
+      To execute in a new window, hold down the command 
+      key while accessing the contextual menu.
+    
+    * Refactored the contextual menu code, so that the 
+      text view does not have know about the bookmarks 
+      and session configuration.
+      
+    * Fixed AutoResizingMask of buttons in Bookmarks.
+
+
+2003-01-04	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Can't reproduce the emacs editing bug anymore.
+    
+    * Fixed an emulation problem handling the CSI_RI and 
+      CSI_IND tokens. This fixes the vi editing problem.
+      
+
+2003-01-01	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added support for bold character attributes.
+      Only works with fonts that support bold typeface
+      such as Courier.
+      
+    * Fixed bug where a blink attribute would cause bold 
+      attributes to be lost.
+      
+    * Validating paste menu item only if there is a string 
+      type on the pasteboard.
+      
+    * New resizing code did not really work, so disbled it 
+      and using original method.
+      
+
+2002-12-31	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed some resizing issues by implementing 
+      windowWillResize: toSize: window delegate method.
+      
+    * Default shell command is "login -fp $USER" to start 
+      a login shell.
+      
+
+2002-12-30	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Setting TERM_PROGRAM environment variable to iTerm.app.
+    
+    * Added flag to disable anti-aliasing. Chinese NIBS need 
+      to be updated.
+    
+
+2002-12-21	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added Save/Print functionality.
+      Chinese NIBs and localized strings file need to be 
+      updated.
+      
+    * Fixed some horizontal tabbing issues in VT100Screeen.
+      Now pre-populating tab array with tabs every TABWIDTH 
+      on init since we won't always get CSI_HTS command 
+      before a tab is issued. Also ensuring that we move 
+      to the next tab if we are already on one.
+
+
+2002-12-20	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed a bug that cause the tabview item label 
+      attributes to be released when any session was 
+      closed. Dictionaries had been static class variables 
+      instead of belonging to specific instances.
+      
+    * Optimized code for setting tab label attributes so 
+      that the drawing code is not called unnecessarily.
+      
+
+2002-12-20	fabian
+    * Fixed the session status display problem
+    
+2002-12-20	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed all compiler warnings.
+    
+    * Fixed annoying glitch that would sometimes resize 
+      window when the config session window was closed 
+      even though the window sizes were not changed.
+      
+    * Fixed a window sizing problem that was evident in vi.
+      I wish NSTabView would offer to calculate its frame 
+      based on content size just like NSScrollView.
+    
+
+2002-12-19	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Re-implemented UI from button based to real-tab based 
+      using NSTabView based on user feedback. Major code 
+      changes and simplifications.
+      
+    * Fixed bug causing a crash when a session was closed 
+      without the shell exiting with the "autoclose" 
+      preference off.
+      
+    * Disabled the limit on the window size. Not sure why
+      that was there.
+      
+
+2002-12-19	fabian
+    * Changed version number to 0.6.0
+    * Fixed a bug in zh_TW nib file
+    * Alt/Option key now can be used as Meta or to add ESC
+    * Fixed the "not saving auto-close option" bug
+    * Fixed enter key on numeric keyboard problem
+    * Fixed a problem that causes transparency settings lost
+    * Fixed a lot of bugs related to VT100 emulation.
+    
+2002-12-18	fabian
+    * change the shortcut key to close terminal to command-w
+      and close window to shift-command-w, a la mozilla
+      
+2002-12-18	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Page up/down scrolling keys now need Shift key down 
+      a la xterm since some programs like vi need to 
+      interpret page up/down keys on their own.
+      
+
+2002-12-17	fabian
+    * Added an AutoClose option in preference
+    * Re-arranged preference panel
+    * Re-arranged the toolbar items
+    * Got rid of the quick-run panel
+    * Del key now sends the correct escape sequence instead of 
+      0x7f
+    * Set default term type to xterm, which is consitent with
+      the rest of the code
+    * Version number is now 0.5.7
+    * Fixed a bug related to setting default shell
+    
+2002-12-17	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Using user's default shell in setting initial preferences.
+    
+    * Added drag-n-drop support for the text view. Text and file 
+      names get pasted into the shell when dragged and dropped 
+      onto the text view.
+      
+    * Fixed crash when customizing toolbar.
+    
+    * Page Up and Page Down keys now scroll the text view.
+    
+
+2002-12-16	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Removed ugly hack of spinning off a new thread when 
+      switching sessions using popup menu. Calling selectSession: 
+      directly now works.
+      
+
+2002-12-16	fabian
+    * Got the addressbook popup button icon to work
+    * Updated strings files for Chinese
+    
+2002-12-16	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Removed addressbook toolbar item since the 
+      addressbook popup menu gives similar functionality.
+      Ideally, the icon for the popup button should be 
+      the addressbook icon, but I couldn't get it to work.
+      More research needs to be done on that...
+      
+    * Fixed bugs in iTermController that did not save addressbook 
+      when entries were deleted.
+      
+
+2002-12-16	fabian
+    * Changed version number to 0.5.6
+    * Made author name localized strings in About panel.
+    * Added a "Report a Bug" link in About panel.
+    * Turned on the GREED_KEYDOWN flag in PTYTextView.m to 
+      allow special key to work when IM is turned on.
+    * Added a 2nd font option to display CJK font to address
+      some screen text alignment problems.
+    * Added anti-idle settings to AddressBook
+      
+2002-12-14	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added popup button in toolbar for quick access to 
+      addressbook entries.
+      
+    * Added missing OK button in AddressBook panel. 
+      Was causing addressbook changes not to be saved.
+    
+    * Refactored addressbook code by introducing an 
+      "executeABCommand:" method in iTermController.
+      
+
+2002-12-11	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Made links to authors and web site in the About
+      panel of the English NIB.
+
+
+2002-12-11	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Removed keyDown code from PsudoTerminal. 
+      First responder is TEXTVIEW.
+
+
+2002-12-11	fabian
+    * Changed/Added several shortcut keys:
+      command-left and right arrow: pre/next session
+      command-Fn: switch to n-th session
+      
+2002-12-10	fabian
+    * Rewritten all the encoding related code. Now all 
+      the encodings that are available on the system will 
+      be usable.
+      (Note, the local settings file will have to be 
+       manually updated)
+    * Fixed a few inconsistencies in the interface about 
+      transparency
+    * Fixed a bug that make user unable to open a new 
+      window from quick run and bookmarks panel.
+    * Now the version number is 0.5.5
+
+2002-12-08	fabian
+    * fixed a bug that causes crash when a ended session 
+      is manually closed
+    * now a warning panel will pop out when you try to 
+      close an active session
+    * session button uses gray to suggest the session has 
+      ended, and session name is enclosed in []
+    * fixed a bug in screenSizeInFrame() in VT100Screen.m,
+      which makes row/col smaller than it should be
+      (this one need more test)
+      
+2002-12-07	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Re-implemented transparency code to affect only text 
+     instead of the whole window. Had to subclass NSWindow 
+     since I ran into a nasty window redrawing Cocoa bug.
+     
+    * Instantiating scroll view in code rather than in NIB 
+      to make layout look better.
+      
+    * PseudoTerminal is now a NSWindowController rather 
+      than a NSResponder. Later I will refactor the code 
+      to make is a true window controller.
+      
+
+2002-12-06	fabian
+    * Fix (temporally) a bug that causes program to hang when a session is closed
+    * Fix the NLog info in PTYSession.m
+
+2002-12-05	fabian
+    * Fix a bug that disable "clear buffer" in the menu
+    * Fix a bug that causes incorrectly display of session status
+    * Now choosing "open new tab" while no windows are open
+      will open a new window first.
+    * Cleaned up nib files
+    
+2002-12-04	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added a pulldown menu at the bottom right corner 
+      when window cannot draw all the session buttons.
+      
+    * Made session buttons narrower in height.
+    
+    * Refactored some code.
+    
+
+2002-11-30	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed bug in PreferencePanel where transparency was
+      not being stored.
+      
+
+2002-11-28	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Fixed crash when closing window when a session program 
+      had exited.
+      
+
+2002-11-28      fabian
+    * Added Japanese (EUC-JP/SJIS) and Korean (EUC-KR) support
+
+2002-11-27	Ujwal S. Setlur <ujwal@setlurgroup.com>
+
+    * Added menu item and keyboard shortcut to close the current 
+      terminal session.

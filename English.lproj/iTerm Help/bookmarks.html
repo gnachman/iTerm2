@@ -1,0 +1,68 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>iTerm : Bookmarks</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" LINK="#696969" ALINK="#696969" VLINK="#696969">
+<LINK REL=stylesheet HREF="styles.css" TYPE="text/css">
+<CENTER>
+<TABLE BGCOLOR="#FFFFFF" CELLPADDING="10" CELLSPACING="1" BORDER="0" WIDTH="100%">
+<TR>
+<TD VALIGN="TOP" WIDTH="120" BGCOLOR="#EEEEFF">
+<A HREF="index.html"><IMG SRC="iTerm.png" TITLE="" ALT="iTerm" BORDER="0" WIDTH=96></A><BR><BR>
+<LI><A HREF="index.html">Home</A></LI>
+<LI><A HREF="navigation.html">General Usage</A></LI>
+<LI><A HREF="preferences.html">Preferences</A></LI>
+<LI><A HREF="profiles.html">Profiles</A></LI>
+<LI><A HREF="bookmarks.html">Bookmarks</A></LI>
+<LI><A HREF="scripting.html">Scripting</A></LI>
+<LI><A HREF="install.html">Installation</A></LI>
+<LI><A HREF="misc.html">Misc</A></LI>
+</TD>
+
+<TD VALIGN="TOP" BGCOLOR="#FFFFFF">
+
+<FONT SIZE="5"><STRONG>Bookmarks</STRONG></FONT><BR>
+
+The bookmarks are more than just a convenience. They allow you to run different sessions, connecting to
+different servers, with different setup and behavior, all at the easy of one key-stroke. <BR><BR>
+
+Besides <STRONG>Name</STRONG> and three <A HREF="profiles.html">Profiles</A>, A bookmark has three fields:<BR><BR>
+
+<STRONG>Command</STRONG><BR><BR>
+This lets you to specify the command you want to run. The default will be <I>login -fp your_user_name</I>.
+You can however run whatever you want. Full path to the command is not necessary. You can even specify
+parameters with <I>$$</I>. iTerm will replace anything between a pair of $$ with the result from a input
+panel. For example, if your command is <I>ssh $$USER NAME$$@myserver.com</I>, you will get an input panel 
+asking for USER NAME when you launch this bookmark. Say you type in joe, then <I>ssh joe@myserver.com</I>
+will become the command. You can have multiple parameters. iTerm will ask you to enter each of them. And 
+you can have the same parameters many times. iTerm will ask you once and replace all of them. Parameters
+are also used in <A HREF="preferences.html">URL handlers</A><BR><BR>
+
+<STRONG>Working Directory</STRONG><BR>
+This let you to specify where you would like to launch the bookmark. This however will only work when you
+are on a local machine. And <I>login</I> will always take you to your home directory. To get a shell
+at your desired location, launch a shell command such as <I>bash</I> directly instead of <I>login</I>.<BR><BR>
+
+<STRONG>Shortcut Key</STRONG><BR>
+You can specify a key to be used with Command-CTRL as a shortcut key to launch a new bookmark. By default,
+the bookmark will be launched as a new tab in the front window. You can add Option key to launch it in
+a new window. Option key is also used in bookmark menus when you want to launch a bookmark in a new window.<BR><BR>
+
+
+</TD>
+</TR>
+
+</TABLE>
+
+<BR>
+<FONT SIZE="-1">
+Modified: Nov 16th, 2006<BR>Created: Dec 18th, 2002<BR>
+<A HREF="MAILTO:fabian@macvillage.net">Fabian</A> and <A HREF="MAILTO:ujwal@setlurgroup.com">Ujwal S. Setlur</A><BR>
+Support free software by writing one.<BR>
+</FONT>
+
+</CENTER>
+</BODY>
+</HTML>

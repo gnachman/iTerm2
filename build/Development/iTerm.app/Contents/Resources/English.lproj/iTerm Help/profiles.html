@@ -1,0 +1,82 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>iTerm : Profiles</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" LINK="#696969" ALINK="#696969" VLINK="#696969">
+<LINK REL=stylesheet HREF="styles.css" TYPE="text/css">
+<CENTER>
+<TABLE BGCOLOR="#FFFFFF" CELLPADDING="10" CELLSPACING="1" BORDER="0" WIDTH="100%">
+<TR>
+<TD VALIGN="TOP" WIDTH="120" BGCOLOR="#EEEEFF">
+<A HREF="index.html"><IMG SRC="iTerm.png" TITLE="" ALT="iTerm" BORDER="0" WIDTH=96></A><BR><BR>
+<LI><A HREF="index.html">Home</A></LI>
+<LI><A HREF="navigation.html">General Usage</A></LI>
+<LI><A HREF="preferences.html">Preferences</A></LI>
+<LI><A HREF="profiles.html">Profiles</A></LI>
+<LI><A HREF="bookmarks.html">Bookmarks</A></LI>
+<LI><A HREF="scripting.html">Scripting</A></LI>
+<LI><A HREF="install.html">Installation</A></LI>
+<LI><A HREF="misc.html">Misc</A></LI>
+</TD>
+
+
+<TD VALIGN="TOP" BGCOLOR="#FFFFFF">
+
+<FONT SIZE="5"><STRONG>Profiles</STRONG></FONT><BR><BR>
+
+The settings of bookmarks in iTerm use <STRONG>Profiles</STRONG>. Bascially, you need
+to create profiles first (there are several pre-defined profiles if you install iTerm from
+scratch), and then associate them to your bookmarks. There are 3 kinds of profiles associated 
+with each bookmark: 
+<STRONG>Keyboard</STRONG>, <STRONG>Terminal</STRONG>, and <STRONG>Display</STRONG>.
+By using profiles, you can conveniently create bookmarks that share same properties.
+<p>
+
+
+<BR>
+<STRONG>Keyboard</STRONG><BR><BR>
+
+There is a "Global" profile in which you define keys for global things such as switching
+tabs and scrolling screens. The keys defined there will be available in all sessions. For
+individual bookmarks, you need to create separate keyboard profiles. You can specify 
+either an escape sequence, a hexcode, a text, or to ignore, for each key along with modifiers. 
+When specifying a text, the following escape characters are supported: \n, \e, \a and \t.
+There is a "high priority" option for each key binding. Once selected, the keybinding will
+have priority over menu, text input manager, and other standard OS X shortcut. <BR><BR>
+
+The keymappings in the non global profiles have the highest priority. The global profile 
+is consulted next if there is no match for the key input in the bookmark specific. If no
+customized keymapping were found, iTerm uses key sequences defined by terminfo, which is
+based on the TERM settings in the <STRONG>Terminal Profile</STRONG>. If that does not work
+either, iTerm generates the standard VT100 sequences. <BR><BR>
+
+<STRONG>Terminal</STRONG><BR><BR>
+
+Terminal profiles let you specify the behavior of terminals. Most settings are straightforward.
+For infinite scrollback, set the scrollback lines to -1. However, enabling this will greatly reduce
+the speed of iTerm. Use it cautiously.<BR><BR>
+
+
+<STRONG>Display</STRONG><BR><BR>
+Display profiles let you specify the display behavior of iTerm. You can create your own color set,
+specify window size and choose your favorite font. Notice since every tab within a window should
+have same size and font, the window settings will only be honored for the newly created windows.
+<BR><BR>
+
+</TD>
+</TR>
+
+</TABLE>
+
+<BR>
+<FONT SIZE="-1">
+Modified: Jan 25th, 2007<BR>Created: Dec 18th, 2002<BR>
+<A HREF="MAILTO:fabian@macvillage.net">Fabian</A> and <A HREF="MAILTO:ujwal@setlurgroup.com">Ujwal S. Setlur</A><BR>
+Support free software by writing one.<BR>
+</FONT>
+
+</CENTER>
+</BODY>
+</HTML>

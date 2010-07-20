@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Classes</key>
+	<dict>
+		<key>PTYSession</key>
+		<dict>
+			<key>Attributes</key>
+			<dict>
+				<key>backgroundColor</key>
+				<dict>
+					<key>Description</key>
+					<string>Background color</string>
+					<key>Name</key>
+					<string>background color</string>
+				</dict>
+				<key>backgroundImagePath</key>
+				<dict>
+					<key>Description</key>
+					<string>Path to background image</string>
+					<key>Name</key>
+					<string>background image path</string>
+				</dict>
+				<key>boldColor</key>
+				<dict>
+					<key>Description</key>
+					<string>Bold color</string>
+					<key>Name</key>
+					<string>bold color</string>
+				</dict>
+				<key>cursorColor</key>
+				<dict>
+					<key>Description</key>
+					<string>Cursor color</string>
+					<key>Name</key>
+					<string>cursor color</string>
+				</dict>
+				<key>cursorTextColor</key>
+				<dict>
+					<key>Description</key>
+					<string>Cursor text color</string>
+					<key>Name</key>
+					<string>cursor_text color</string>
+				</dict>
+				<key>foregroundColor</key>
+				<dict>
+					<key>Description</key>
+					<string>Foreground color</string>
+					<key>Name</key>
+					<string>foreground color</string>
+				</dict>
+				<key>name</key>
+				<dict>
+					<key>Description</key>
+					<string>Name of this session</string>
+					<key>Name</key>
+					<string>name</string>
+				</dict>
+				<key>selectionColor</key>
+				<dict>
+					<key>Description</key>
+					<string>Selection color</string>
+					<key>Name</key>
+					<string>selection color</string>
+				</dict>
+				<key>selectedTextColor</key>
+				<dict>
+					<key>Description</key>
+					<string>Selected text color</string>
+					<key>Name</key>
+					<string>selected text color</string>
+				</dict>
+				<key>transparency</key>
+				<dict>
+					<key>Description</key>
+					<string>Transparency (0-1)</string>
+					<key>Name</key>
+					<string>transparency</string>
+				</dict>
+				<key>uniqueID</key>
+				<dict>
+					<key>Description</key>
+					<string>id of session; set to tty name</string>
+					<key>Name</key>
+					<string>id</string>
+				</dict>
+			</dict>
+			<key>Description</key>
+			<string>A terminal session</string>
+			<key>Name</key>
+			<string>session</string>
+			<key>PluralName</key>
+			<string>sessions</string>
+			<key>ToOneRelationships</key>
+			<dict>
+				<key>contents</key>
+				<dict>
+					<key>Description</key>
+					<string>text of the session</string>
+					<key>Name</key>
+					<string>contents</string>
+				</dict>
+				<key>number</key>
+				<dict>
+					<key>Description</key>
+					<string>index of session</string>
+					<key>Name</key>
+					<string>number</string>
+				</dict>
+				<key>tty</key>
+				<dict>
+					<key>Description</key>
+					<string>tty device of session</string>
+					<key>Name</key>
+					<string>tty</string>
+				</dict>
+			</dict>
+		</dict>
+		<key>PseudoTerminal</key>
+		<dict>
+			<key>Attributes</key>
+			<dict>
+				<key>antiAlias</key>
+				<dict>
+					<key>Description</key>
+					<string>Anti alias for window</string>
+					<key>Name</key>
+					<string>anti alias</string>
+				</dict>
+				<key>columns</key>
+				<dict>
+					<key>Description</key>
+					<string>Number of columns</string>
+					<key>Name</key>
+					<string>number of columns</string>
+				</dict>
+				<key>rows</key>
+				<dict>
+					<key>Description</key>
+					<string>Number of rows</string>
+					<key>Name</key>
+					<string>number of rows</string>
+				</dict>
+			</dict>
+			<key>Description</key>
+			<string>A pseudo terminal</string>
+			<key>Name</key>
+			<string>terminal</string>
+			<key>PluralName</key>
+			<string>terminals</string>
+			<key>ToOneRelationships</key>
+			<dict>
+				<key>currentSession</key>
+				<dict>
+					<key>Description</key>
+					<string>current session in the terminal</string>
+					<key>Name</key>
+					<string>current session</string>
+				</dict>
+			</dict>
+		</dict>
+		<key>iTermApplication</key>
+		<dict>
+			<key>Description</key>
+			<string>Main application class</string>
+			<key>Name</key>
+			<string>i term application</string>
+			<key>PluralName</key>
+			<string>i term applications</string>
+			<key>ToOneRelationships</key>
+			<dict>
+				<key>currentTerminal</key>
+				<dict>
+					<key>Description</key>
+					<string>currently active terminal</string>
+					<key>Name</key>
+					<string>current terminal</string>
+				</dict>
+			</dict>
+		</dict>
+	</dict>
+	<key>Commands</key>
+	<dict>
+		<key>exec</key>
+		<dict>
+			<key>Arguments</key>
+			<dict>
+				<key>command</key>
+				<dict>
+					<key>Description</key>
+					<string>Command executed in a session</string>
+					<key>Name</key>
+					<string>command</string>
+				</dict>
+			</dict>
+			<key>Description</key>
+			<string>Executes a command in a session (attach a trailing space for commands without carriage return)</string>
+			<key>Name</key>
+			<string>exec</string>
+		</dict>
+		<key>launch</key>
+		<dict>
+			<key>Arguments</key>
+			<dict>
+				<key>session</key>
+				<dict>
+					<key>Description</key>
+					<string>Name of session to be launched</string>
+					<key>Name</key>
+					<string>session</string>
+				</dict>
+			</dict>
+			<key>Description</key>
+			<string>Launches a default or saved session</string>
+			<key>Name</key>
+			<string>launch</string>
+		</dict>
+		<key>select</key>
+		<dict>
+			<key>Description</key>
+			<string>Selects a specified session</string>
+			<key>Name</key>
+			<string>select</string>
+		</dict>
+		<key>terminate</key>
+		<dict>
+			<key>Description</key>
+			<string>Terminates a session</string>
+			<key>Name</key>
+			<string>terminate</string>
+		</dict>
+		<key>write</key>
+		<dict>
+			<key>Arguments</key>
+			<dict>
+				<key>contentsOfFile</key>
+				<dict>
+					<key>Description</key>
+					<string>File to be written</string>
+					<key>Name</key>
+					<string>contents of file</string>
+				</dict>
+				<key>text</key>
+				<dict>
+					<key>Description</key>
+					<string>Text to be written</string>
+					<key>Name</key>
+					<string>text</string>
+				</dict>
+			</dict>
+			<key>Description</key>
+			<string>Writes text or file contents into a session</string>
+			<key>Name</key>
+			<string>write</string>
+		</dict>
+	</dict>
+	<key>Description</key>
+	<string>Scripting interface for iTerm.app</string>
+	<key>Name</key>
+	<string>iTerm Suite</string>
+</dict>
+</plist>

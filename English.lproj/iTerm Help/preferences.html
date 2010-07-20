@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<TITLE>iTerm : Preferences</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" LINK="#696969" ALINK="#696969" VLINK="#696969">
+<LINK REL=stylesheet HREF="styles.css" TYPE="text/css">
+<CENTER>
+<TABLE BGCOLOR="#FFFFFF" CELLPADDING="10" CELLSPACING="1" BORDER="0" WIDTH="100%">
+<TR>
+<TD VALIGN="TOP" WIDTH="120" BGCOLOR="#EEEEFF">
+<A HREF="index.html"><IMG SRC="iTerm.png" TITLE="" ALT="iTerm" BORDER="0" WIDTH=96></A><BR><BR>
+<LI><A HREF="index.html">Home</A></LI>
+<LI><A HREF="navigation.html">General Usage</A></LI>
+<LI><A HREF="preferences.html">Preferences</A></LI>
+<LI><A HREF="profiles.html">Profiles</A></LI>
+<LI><A HREF="bookmarks.html">Bookmarks</A></LI>
+<LI><A HREF="scripting.html">Scripting</A></LI>
+<LI><A HREF="install.html">Installation</A></LI>
+<LI><A HREF="misc.html">Misc</A></LI>
+</TD>
+
+
+<TD VALIGN="TOP" BGCOLOR="#FFFFFF">
+<FONT SIZE="5"><STRONG>Preferences Panel</STRONG></FONT><BR><BR>
+There are five tabs in the Perferences Panel.<BR><BR>
+<STRONG>General</STRONG>
+<UL><LI><STRONG>Enable Growl Notifications</STRONG>: Once enabled, iTerm will send Growl notifications for events such as bell, new output, 
+session end, etc. You can also use ESC ]9;string^G to generate a Growl notification from within the session. For more settings of Growl,
+go to the Growl's own preference panel.</LI>
+<LI><STRONG>Enable Bonjour</STRONG>: iTerm is able to use Bonjour to find ssh, sftp services.</LI>
+<LI><STRONG>Check Updates When iTerm Starts</STRONG>: Once checked, iTerm will automatically check whether there is an updated version 
+availabel. It is in general a good idea to keep up with the latest version.</LI>
+<LI><STRONG>Quit When All Windows All Closed</STRONG>: This makes iTerm behaves more like an xterm: it quits when you close its window.</LI>
+<LI><STRONG>Display Refreshing Rate</STRONG>: Set it to fastest to allow quick UI response, but slowest to reduce CPU usage. Generally,
+if you are having a lot of stuff scrolling across your window, and you don't really need to see every line, set the refreshing rate slower
+for better performance. It is however usually a safe bet to leave it in the middle (default). </LI>
+</UL>
+
+<STRONG>Window</STRONG>
+<UL><LI><STRONG>Prompt when quiting or closing window</STRONG>: Once checked, iTerm will ask you for confirmation when you close a session 
+or quit the program.</LI>
+<LI><STRONG>Zoom vertically only</STRONG></LI>
+<LI><STRONG>Open bookmark window when iTerm starts</STRONG>: By default, iTerm opens a default session on start. But you can enable this
+option to let iTerm open the bookmark window instead.</LI>
+</UL>
+
+<STRONG>Tab</STRONG>
+<UL><LI><STRONG>Style</STRONG>: Four styles are currently available: Metal, Aqua, Unified, and Adium. The tab can be either
+at the top or at the bottom of the window. Notice when you choose the metal style, newly opened window will have
+metal style as well, but existing windows will not be affected.</LI>
+<LI><STRONG>Use compact tab labels</STRONG>: When you have a lot of tabs, you may use this to scqueeze a little bit more
+space. Also see below  for the hidden settings for more  options.</LI>
+<LI><STRONG>Hide tab when there is only one session</STRONG>: Another way to get more real estate space.</LI>
+</UL>
+
+<STRONG>Mouse</STRONG>
+<UL><LI><STRONG>Copy on selection</STRONG>: This will automatically put any selection onto the clipboard, basically emulating Cmd-C. 
+            Note hwoever, that this preference is not needed for middle-button to act as paste. Pressing the middle mouse button 
+			will paste whatever is selected in the current session. It does not emulate Cmd-V and read from the clipboard.</LI>
+<LI><STRONG>Middle button paste</STRONG>: This enables the middle mouse button.</LI>
+<LI><STRONG>Focus follows mouse:</STRONG> This does just that. Focusing is applied only when iTerm is the active application. 
+            Windows are not raised, but instead just receive keyboard focus.
+<LI><STRONG>Cmd-click to launch URL</STRONG>: This launchs the URL. If no protocol is specified, http:// will be added to the
+string. If available, iTerm's own URL handler will be used first, then the default URL handler of the system.</LI>
+<LI><STRONG>Characters considered part of word</STRONG>: This is used to define the word when one uses double-click
+to select.</LI>
+</UL>
+
+<STRONG>URL Handler</STRONG><BR>
+<UL>This tab allows user to specify a session to be a handler of URL schemes. When "Connect" button is clicked, iTerm
+offers a chance to become the default handler if it is not so yet. To disconnect a handler, choose "No Handler".
+However there is no way to restore the original handler application within iTerm. You can also break a URL into components
+and use them as parameters in the bookmark's command. Six parameters can be used:<BR>
+<LI><I>$$URL$$</I> The complete URL as the way it is passed in.</LI>
+<LI><I>$$HOST$$</I> The host name in the URL.</LI>
+<LI><I>$$USER$$</I> The user name</LI>
+<LI><I>$$PASSWORD$$</I> The password</LI>
+<LI><I>$$PORT$$</I> The port number</LI>
+<LI><I>$$PATH$$</I> The path</LI>
+For example, a bookmark's command is: <I>telnet -l $$USER$$ $$HOST$$ $$PORT$$</I>, and the
+	  URL is: <I>telnet://joe@fancyland.com:23</I>.
+	  This will give you this command: <I>telnet -l joe fancyland.com 23</I>
+</UL>
+
+<FONT SIZE="5"><STRONG>Hidden Settings</STRONG></FONT><BR><BR>
+There are a few settings that you cannot access via iTerm's own
+Preferences panel. However, you can use 'defaults" command to
+change them to your taste. The settings available along with the
+default numbers are:<BR>
+<ul>
+  defaults write iTerm UseUnevenTabs -bool false<BR>
+  defaults write iTerm MinTabWidth -int 75        <BR>
+  defaults write iTerm MinCompactTabWidth -int 60<BR>
+  defaults write iTerm OptimumTabWidth -int 175<BR>
+  defaults write iTerm StrokeWidth -float 0<BR>
+  defaults write iTerm BoldStrokeWidth -float -2<BR>
+  defaults write iTerm CacheSize -float 2048<BR>
+  defaults write iTerm SearchCommand -string "http://google.com/search?q=%@"<BR>
+</ul>
+The first four are for setting the tab size. And the next 2 are for setting the stroke width
+of fonts rendering. The numbers in the example are all default settings. Experiment with
+different numbers. For example, to enable antialias for very small fonts, type these commands:
+<ul>
+  defaults write iTerm StrokeWidth -float -1<BR>
+</ul>
+The CacheSize is the number of characters that are cached for rendering.
+Increase it when you use a lot of different colors and a large character set. The last one
+is for the search command launched from the contextual menu. The default is to use Google.
+You can set it to anything you want. For example, if you like Yahoo, here is the command:<BR>
+<ul>
+  defaults write iTerm SearchCommand -string "http://search.yahoo.com/search?p=%@"
+</ul>
+
+</TD>
+</TR>
+
+</TABLE>
+
+<BR>
+<FONT SIZE="-1">
+Modified: Dec 1st, 2006<BR>Created: Dec 18th, 2002<BR>
+<A HREF="MAILTO:fabian@macvillage.net">Fabian</A> and <A HREF="MAILTO:ujwal@setlurgroup.com">Ujwal S. Setlur</A><BR>
+Support free software by writing one.<BR>
+</FONT>
+
+</CENTER>
+</BODY>
+</HTML>
