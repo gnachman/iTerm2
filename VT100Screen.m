@@ -395,41 +395,21 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     return line_length;
 }
 
-- (void)resizeWidth:(int)new_width height:(int)new_height
-{
-    int i, total_height;
-	screen_char_t *new_buffer_lines, *aLine;
-	
-#ifdef DEBUG_RESIZEDWIDTH
-	NSLog(@"Resize from %dx%d to %dx%d\n", WIDTH, HEIGHT, new_width, new_height);
-	[self dumpScreen];
-#endif
-	
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s:%d :%d]", __PRETTY_FUNCTION__, new_width, new_height);
-#endif
-	
-	if (WIDTH == 0 || HEIGHT == 0 || (new_width==WIDTH && new_height==HEIGHT)) {
-		return;
-	}
-    total_height = max_scrollback_lines + HEIGHT;
-
+// Returns the number of lines appended.
+- (int) _appendScreenToScrollback {
     // Set used_height to the number of lines on the screen that are in use.
-	int used_height = HEIGHT;
+	  int i;
+  int used_height = HEIGHT;
     for(; used_height > CURSOR_Y+1; used_height--) {
-        aLine = [self getLineAtScreenIndex: used_height-1];
-        for (i=0; i < WIDTH; i++)
-            if (aLine[i].ch) break;
-        if (i < WIDTH) break;
+        screen_char_t* aLine = [self getLineAtScreenIndex: used_height-1];
+        for (i = 0; i < WIDTH; i++)
+            if (aLine[i].ch) {
+				break;
+			}
+		if (i < WIDTH) {
+			break;
+		}
     }
-	
-	
-	// create a new buffer and fill it with the default line.
-	new_buffer_lines = (screen_char_t*)malloc(new_height*(new_width+1)*sizeof(screen_char_t));	
-	screen_char_t* defaultLine = [self _getDefaultLineWithWidth: new_width];	
-	for (i = 0; i < new_height; ++i) {
-		memcpy(new_buffer_lines + (new_width + 1) * i, defaultLine, sizeof(screen_char_t) * new_width);
-	}
 	
 	// Push the current screen contents into the scrollback buffer.
 	// The maximum number of lines of scrollback are temporarily ignored because this
@@ -461,6 +441,38 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 		NSLog(@"Appended a line. now have %d lines for width %d\n", [linebuffer numLinesWithWidth:WIDTH], WIDTH);
 #endif
 	}
+
+	return used_height;
+}
+
+- (void)resizeWidth:(int)new_width height:(int)new_height
+{
+    int i, total_height;
+	screen_char_t *new_buffer_lines;
+	
+#ifdef DEBUG_RESIZEDWIDTH
+	NSLog(@"Resize from %dx%d to %dx%d\n", WIDTH, HEIGHT, new_width, new_height);
+	[self dumpScreen];
+#endif
+	
+#if DEBUG_METHOD_TRACE
+    NSLog(@"%s:%d :%d]", __PRETTY_FUNCTION__, new_width, new_height);
+#endif
+	
+	if (WIDTH == 0 || HEIGHT == 0 || (new_width==WIDTH && new_height==HEIGHT)) {
+		return;
+	}
+    total_height = max_scrollback_lines + HEIGHT;
+
+	// create a new buffer and fill it with the default line.
+	new_buffer_lines = (screen_char_t*)malloc(new_height*(new_width+1)*sizeof(screen_char_t));	
+	screen_char_t* defaultLine = [self _getDefaultLineWithWidth: new_width];	
+	for (i = 0; i < new_height; ++i) {
+		memcpy(new_buffer_lines + (new_width + 1) * i, defaultLine, sizeof(screen_char_t) * new_width);
+	}
+	
+    [self _appendScreenToScrollback];
+
 	
 #ifdef DEBUG_RESIZEDWIDTH
 	NSLog(@"After push:\n");
@@ -2171,6 +2183,58 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 	return [NSString isDoubleWidthCharacter:c encoding:[TERMINAL encoding]];
 }
 
+
+- (BOOL) findString: (NSString*) aString forwardDirection: (BOOL) direction ignoringCase: (BOOL) ignoreCase startingAtX: (int) x staringAtY: (int) y atStartX: (int*)startX atStartY: (int*)startY atEndX: (int*)endX atEndY: (int*)endY
+{
+	// Append the screen contents to the scrollback buffer so they are included in the search.
+	int linesPushed;
+	linesPushed = [self _appendScreenToScrollback];
+	
+	// Get the start position of (x,y)
+	int startPos;
+	BOOL ok = [linebuffer convertCoordinatesAtX:x atY:y withWidth:WIDTH toPosition:&startPos];
+	if (!ok) {
+		NSLog(@"Couldn't convert %d,%d to position", x, y);
+		if (direction) {
+			startPos = [linebuffer firstPos];
+		} else {
+			startPos = [linebuffer lastPos];
+		}
+	}
+	
+	// Set up the options bitmask and call findSubstring.
+	int opts = 0;
+	if (!direction) {
+		opts |= FindOptBackwards;
+	}
+	if (ignoreCase) {
+		opts |= FindOptCaseInsensitive;
+	}
+	int len;	
+	int position = [linebuffer findSubstring:aString startingAt:startPos resultLength:&len options:opts];
+	
+	// Save the (x,y)-(x,y) coords of the match, if any.
+	if (position >= 0) {
+		BOOL ok = [linebuffer convertPosition: position withWidth: WIDTH toX: startX toY: startY];
+		NSAssert(ok, @"Couldn't convert start position");
+		
+		ok = [linebuffer convertPosition: position + len withWidth: WIDTH toX: endX toY: endY];
+		NSAssert(ok, @"Couldn't convert end position");
+	}
+	
+	// Undo the appending of the screen to scrollback
+	int i;
+	screen_char_t* dummy = malloc(WIDTH * sizeof(screen_char_t));
+	for (i = 0; i < linesPushed; ++i) {
+		BOOL eol;
+		BOOL ok = [linebuffer popAndCopyLastLineInto: dummy width: WIDTH includesEndOfLine: &eol];
+		NSAssert(ok, @"Pop shouldn't fail");
+	}
+	free(dummy);
+	
+	return position >= 0;  // return whether a result was found.
+}
+
 @end
 
 @implementation VT100Screen (Private)
@@ -2249,11 +2313,6 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 	NSAssert(dropped == 0 || dropped == 1, @"Unexpected number of lines dropped");
 	
 	return dropped == 1;
-}
-
-- (BOOL) findString: (NSString*) aString forwardDirection: (BOOL) direction ignoringCase: (BOOL) ignoreCase startingAtX: (int) lastFindX staringAtY: (int) lastFindY atStartX: (int*)startX atStartY: (int*)startY atEndX: (int*)endX atEndY: (int*)endY
-{
-	// TODO
 }
 
 

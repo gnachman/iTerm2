@@ -117,6 +117,9 @@ typedef struct screen_char_t
 // Return the number of raw (unwrapped) lines
 - (int) numRawLines;
 
+// Return the position of the first used character in the raw buffer. Only valid if not empty.
+- (int) startOffset;
+
 // Return the length of a raw (unwrapped) line
 - (int) getRawLineLength: (int) linenum;
 
@@ -217,5 +220,15 @@ typedef struct screen_char_t
 // Convert a position (as returned by findSubstring) into an x,y position.
 // Returns TRUE if the conversion was successful, false if the position was out of bounds.
 - (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y;
+
+// Convert x,y coordinates (with y=0 being the first line) into a position.
+// Returns TRUE if the conversion was successful, false, if out of bounds.
+- (BOOL) convertCoordinatesAtX: (int) x atY: (int) y withWidth: (int) width toPosition: (int*) position;
+
+// Returns the position at the stat of the buffer
+- (int) firstPos;
+
+// Returns the position at the end of the buffer
+- (int) lastPos;
 
 @end
