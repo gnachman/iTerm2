@@ -2251,5 +2251,11 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 	return dropped == 1;
 }
 
+- (BOOL) findString: (NSString*) aString forwardDirection: (BOOL) direction ignoringCase: (BOOL) ignoreCase startingAtX: (int) lastFindX staringAtY: (int) lastFindY atStartX: (int*)startX atStartY: (int*)startY atEndX: (int*)endX atEndY: (int*)endY
+{
+	// TODO
+}
+
+
 @end
 

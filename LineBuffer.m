@@ -59,7 +59,7 @@
     [super dealloc];
 }
 
-- (int) _spaceUsed
+- (int) rawSpaceUsed
 {
     if (cll_entries == 0) {
         return 0;
@@ -109,7 +109,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
 
 - (BOOL) appendLine: (screen_char_t*) buffer length: (int) length partial: (BOOL) partial
 {
-    const int space_used = [self _spaceUsed];
+    const int space_used = [self rawSpaceUsed];
     const int free_space = buffer_size - space_used - start_offset;
     if (length > free_space) {
         return NO;
@@ -266,7 +266,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
 
 - (void) changeBufferSize: (int) capacity
 {
-    NSAssert(capacity >= [self _spaceUsed], @"Truncating used space");
+    NSAssert(capacity >= [self rawSpaceUsed], @"Truncating used space");
     raw_buffer = (screen_char_t*) realloc((void*) raw_buffer, sizeof(screen_char_t) * capacity);
     buffer_start = raw_buffer + start_offset;
     buffer_size = capacity;
@@ -285,7 +285,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
 
 - (void) shrinkToFit
 {
-    [self changeBufferSize: [self _spaceUsed]];
+    [self changeBufferSize: [self rawSpaceUsed]];
 }
 
 - (int) dropLines: (int) n withWidth: (int) width;
@@ -322,6 +322,143 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     
     return orig_n - n;
 }
+
+// FindOptCaseInsensitive
+// FindOptBackwards
+
+BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int haystack_len)
+{
+	for (int i = 0; i < needle_len && i < haystack_len; ++i) {
+		if (haystack[i].ch =! 0xffff && needle[i] != haystack[i].ch) {
+			return NO;
+		}
+	}
+	return YES;
+}
+
+- (int) _findInRawLine: (NSString*) substring options: (int) options atOffset: (int) offset length: (int) raw_line_length
+{
+	screen_char_t* rawline = buffer_start;
+	unichar buffer[1000];
+	NSRange range;
+	range.location = 0;
+	range.length = [substring length];
+	if (range.length > 1000) {
+		range.length = 1000;
+	}
+    [substring getCharacters:buffer range:range];
+	// TODO: use a smarter search algorithm
+	if (options & FindOptBackwards) {
+		int i;
+		if (offset == -1) {
+			offset = raw_line_length - [substring length];
+		}
+		if (offset + range.length > raw_line_length) {
+			offset = raw_line_length - range.length;
+		}
+		for (i = offset; i >= 0; --i) {
+			if (stringCompare(buffer, range.length, rawline + i, raw_line_length - i)) {
+				return i;
+			}
+		}
+	} else {
+		int i;
+		int limit = raw_line_length - [substring length];
+		if (offset + range.length > raw_line_length) {
+			return -1;
+		}
+		for (i = offset; i < limit; ++i) {
+			if (stringCompare(buffer, range.length, rawline + i, raw_line_length - i)) {
+				return i;
+			}
+		}
+	}
+	return -1;
+}
+				
+- (int) _lineLength: (int) index
+{
+	int prev;
+	if (index == first_entry) {
+		prev = start_offset;
+	} else {
+		prev = cumulative_line_lengths[index - 1];
+	}
+	return cumulative_line_lengths[index] - prev;
+}
+
+- (int) _findEntryBeforeOffset: (int) offset
+{
+	NSAssert(offset >= start_offset, @"Offset before start_offset");
+	int i;
+	for (i = first_entry; i < cll_entries; ++i) {
+		if (cumulative_line_lengths[i] > offset) {
+			return i;
+		}
+	}
+	NSAssert(NO, @"Offset not in block");
+	return cll_entries - 1;
+}
+
+- (int) findSubstring: (NSString*) substring options: (int) options atOffset: (int) offset
+{
+	if (offset == -1) {
+		offset = [self rawSpaceUsed] - 1;
+	}
+	int entry;
+	int limit;
+	int dir;
+	if (options & FindOptBackwards) {
+		entry = [self _findEntryBeforeOffset: offset];
+		limit = first_entry - 1;
+		dir = -1;
+	} else {
+		entry = first_entry;
+		limit = cll_entries;
+		dir = 1;
+	}
+	if (entry > first_entry) {
+		int entry_start = cumulative_line_lengths[entry - 1] - start_offset;
+		offset -= entry_start;
+	}
+	while (entry != limit) {
+		int pos = [self _findInRawLine:substring options:options atOffset: offset length: [self _lineLength: entry]];
+		if (pos != -1) {
+			return pos;
+		}
+		if (dir < 0) {
+			offset = -1;
+		} else {
+			offset = 0;
+		}
+	}
+	return -1;
+}
+
+- (void) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y
+{
+	int i;
+	*x = 0;
+	*y = 0;
+	position += start_offset;
+	int prev = start_offset;
+	for (i = first_entry; i < cll_entries; ++i) {
+		int eol = cumulative_line_lengths[i];
+		int line_length = eol-prev;
+		if (position > eol) {
+			int spans = (line_length - 1) / width;
+			*y += spans;
+		} else {
+			int bytes_to_consume_in_this_line = position - prev;
+			int consume = (bytes_to_consume_in_this_line - 1) / width;
+			*y += consume;
+			*x = bytes_to_consume_in_this_line % (consume * width);
+			return;
+		}
+	}
+	NSLog(@"Didn't find position %d", position);
+}
+
 
 @end
 
@@ -614,5 +751,78 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     return NO;
 }
 
+- (BOOL) _findPosition: (int) start inBlock: (int*) block_num inOffset: (int*) offset
+{
+	int i;
+	int position = start;
+	for (i = 0; position >= 0 && i < [blocks count]; ++i) {
+		LineBlock* block = [blocks objectAtIndex:i];
+		int used = [block rawSpaceUsed];
+		if (position >= used) {
+			position -= used;
+		} else {
+			*block_num = i;
+			*offset = position;
+			return YES;
+		}
+	}
+	return NO;
+}
+
+- (int) _blockPosition: (int) block_num
+{
+	int i;
+	int position = 0;
+	for (i = 0; i < block_num; ++i) {
+		LineBlock* block = [blocks objectAtIndex:i];
+		position += [block rawSpaceUsed];
+	}
+	return position;
+		
+}
+
+- (int) findSubstring: (NSString*) substring startingAt: (int) start resultLength: (int*) length options: (int) options
+{
+	int i;
+	int offset;
+	if ([self _findPosition: start inBlock: &i inOffset: &offset]) {
+		int dir;
+		if (options & FindOptBackwards) {
+			dir = -1;
+		} else {
+			dir = 1;
+		}
+		while (i >= 0 && i < [blocks count]) {
+			LineBlock* block = [blocks objectAtIndex:i];
+			int position = [block findSubstring: substring options: options atOffset: offset];
+			if (position >= 0) {
+				return position + [self _blockPosition: i];
+			}
+			if (dir < 0) {
+				offset = -1;
+			} else {
+				offset = 0;
+			}
+			i += dir;
+		}
+	}
+	return -1;
+}
+
+- (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y
+{
+	int i;
+	for (i = 0; position >= 0 && i < [blocks count]; ++i) {
+		LineBlock* block = [blocks objectAtIndex:i];
+		int used = [block rawSpaceUsed];
+		if (position >= used) {
+			position -= used;
+		} else {
+			[block convertPosition: position withWidth: width toX: x toY: y];
+			return YES;
+		}
+	}
+	return NO;
+}
 
 @end

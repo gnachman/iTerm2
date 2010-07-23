@@ -2178,24 +2178,26 @@ static NSCursor* textViewCursor =  nil;
 
 - (void) findString: (NSString *) aString forwardDirection: (BOOL) direction ignoringCase: (BOOL) ignoreCase
 {
-	BOOL foundString;
+	BOOL found;
 	int tmpX, tmpY;
 	
-	foundString = [self _findString: aString forwardDirection: direction ignoringCase: ignoreCase wrapping:YES];
-	if(foundString == NO)
-	{
-		// start from beginning or end depending on search direction
-		tmpX = lastFindX;
-		tmpY = lastFindY;
-		lastFindX = lastFindY = -1;
-		foundString = [self _findString: aString forwardDirection: direction ignoringCase: ignoreCase wrapping:YES];
-		if(foundString == NO)
-		{
-			lastFindX = tmpX;
-			lastFindY = tmpY;
+	found = [dataSource findString: aString forwardDirection: direction ignoringCase: ignoreCase startingAtX: lastFindX staringAtY: lastFindY
+						  atStartX: &startX atStartY: &startY atEndX: &endX atEndY: &endY];
+
+	if (found) {
+		// Lock scrolling after finding text
+		[(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+		
+		[self _scrollToLine:endY];
+		[self setNeedsDisplay:YES];
+		if (direction) {
+			lastFindX = endX;
+			lastFindY = endY;
+		} else {
+			lastFindX = startX;
+			lastFindY = endY;
 		}
 	}
-	
 }
 
 // transparency
@@ -2897,6 +2899,7 @@ static NSCursor* textViewCursor =  nil;
 	}
 	
 	// ok, now get the search body
+	// TODO: don't call contentFromX. Its worst-case is quadratic in the size of the buffer!
 	searchBody = [NSMutableString stringWithString:[self contentFromX: x1 Y: y1 ToX: x2 Y: y2 pad: YES]];
 	[searchBody replaceOccurrencesOfString:@"\n" withString:@"" options:NSLiteralSearch range:NSMakeRange(0, [searchBody length])];
 	

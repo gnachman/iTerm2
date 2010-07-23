@@ -2402,5 +2402,4 @@ static VT100TCC decode_string(unsigned char *datap,
     SCREEN=sc;
 }
 
-
 @end

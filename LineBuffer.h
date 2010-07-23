@@ -126,9 +126,6 @@ typedef struct screen_char_t
 // Append a value to cumulativeLineLengths.
 - (void) _appendCumulativeLineLength: (int) cumulativeLength;
 
-// Return the number of bytes used in total
-- (int) _spaceUsed;
-
 // NSLog the contents of the block. For debugging.
 - (void) dump;
 @end
@@ -209,5 +206,16 @@ typedef struct screen_char_t
 
 // Print the raw lines to the console for debugging.
 - (void) dump;
+
+// Search for a substring. If found, return the position of the hit. Otherwise return -1. Use 0 for the start to indicate the beginning of the buffer or
+// pass the result of a previous findSubstring result. The number of positions the result occupies will be set in *length (which would be different than the
+// length of the substring in the presence of double-width characters.
+#define FindOptCaseInsensitive (1 << 0)
+#define FindOptBackwards       (1 << 1)
+- (int) findSubstring: (NSString*) substring startingAt: (int) start resultLength: (int*) length options: (int) options;
+
+// Convert a position (as returned by findSubstring) into an x,y position.
+// Returns TRUE if the conversion was successful, false if the position was out of bounds.
+- (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y;
 
 @end
