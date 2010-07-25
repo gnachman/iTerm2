@@ -2202,7 +2202,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 			startPos = [linebuffer lastPos] - 1;
 		}
 	}
-	
+	 
 	// Set up the options bitmask and call findSubstring.
 	int opts = 0;
 	int stopAt;

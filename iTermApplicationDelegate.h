@@ -36,7 +36,7 @@
     // about window
 	NSWindowController *aboutController;
     IBOutlet id ABOUT;
-	IBOutlet id scrollingInfo;
+	IBOutlet NSTextView *scrollingInfo;
     IBOutlet NSTextView *AUTHORS;
 
 	//Scrolling

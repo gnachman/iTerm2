@@ -1010,6 +1010,22 @@ NSString *sessionsKey = @"sessions";
 	[self setWindowSizeWithVisibleFrame:[[[self window] screen] visibleFrame]];
 }
 
+- (void) _resizeEverySession: (BOOL) hasScrollbar  {
+	// Resize every session.
+    int i;
+	for (i=0;i<[TABVIEW numberOfTabViewItems];i++) 
+	{
+		PTYSession *aSession = [[TABVIEW tabViewItemAtIndex: i] identifier];
+		[aSession setObjectCount:i+1];
+		[[aSession SCREEN] resizeWidth:WIDTH height:HEIGHT];
+		[[aSession SHELL] setWidth:WIDTH  height:HEIGHT];
+		[[aSession SCROLLVIEW] setLineScroll: [[aSession TEXTVIEW] lineHeight]];
+		[[aSession SCROLLVIEW] setPageScroll: 2*[[aSession TEXTVIEW] lineHeight]];
+		[[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
+		if ([aSession backgroundImagePath]) [aSession setBackgroundImagePath:[aSession backgroundImagePath]]; 
+	}
+}
+
 - (void)setWindowSizeWithVisibleFrame: (NSRect)visibleFrame
 {
 	NSSize size, vsize, winSize, tabViewSize;
@@ -1170,43 +1186,8 @@ NSString *sessionsKey = @"sessions";
 				  winSize.width, winSize.height);
 		#endif
 
-		}
-		else {
-			// Full-screen mode.
-			aRect = [thisWindow frame];
-			WIDTH = (int)((aRect.size.width - MARGIN * 2)/charWidth);
-			HEIGHT = (int)((aRect.size.height)/charHeight);
-			int yoffset=0;
-			if (![findBar isHidden]) {
-				int dh = [findBar frame].size.height / charHeight + 1;
-				HEIGHT -= dh;
-				yoffset = [findBar frame].size.height;
-			} else {
-				yoffset = floor(aRect.size.height-charHeight*HEIGHT)/2; // screen height minus one half character
-			}
-			aRect = NSMakeRect(floor((aRect.size.width-WIDTH*charWidth-MARGIN*2)/2),  // screen width minus one half character and a margin
-                               yoffset,        
-                               WIDTH*charWidth+MARGIN*2,                              // enough width for WIDTH col plus two margins
-                               charHeight*HEIGHT);                                    // enough height for HEIGHT rows
-//			aRect.origin.y += charHeight;
-			[TABVIEW setFrame: aRect];
-		}			
-		
-		// Resize every session.
-		int i;
-		for (i=0;i<[TABVIEW numberOfTabViewItems];i++) 
-		{
-			PTYSession *aSession = [[TABVIEW tabViewItemAtIndex: i] identifier];
-			[aSession setObjectCount:i+1];
-			[[aSession SCREEN] resizeWidth:WIDTH height:HEIGHT];
-			[[aSession SHELL] setWidth:WIDTH  height:HEIGHT];
-			[[aSession SCROLLVIEW] setLineScroll: [[aSession TEXTVIEW] lineHeight]];
-			[[aSession SCROLLVIEW] setPageScroll: 2*[[aSession TEXTVIEW] lineHeight]];
-			[[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
-			if ([aSession backgroundImagePath]) [aSession setBackgroundImagePath:[aSession backgroundImagePath]]; 
-		}
-		
-		if (!_fullScreen) {
+			[self _resizeEverySession: hasScrollbar];
+
 			// Preserve the top-left corner of the frame.
 			aRect = [thisWindow frame];
 			topLeft.x = aRect.origin.x;
@@ -1229,6 +1210,26 @@ NSString *sessionsKey = @"sessions";
 				[[thisWindow contentView] unlockFocus];
 			}
 		}
+		else {
+			// Full-screen mode.
+			aRect = [thisWindow frame];
+			WIDTH = (int)((aRect.size.width - MARGIN * 2)/charWidth);
+			HEIGHT = (int)((aRect.size.height)/charHeight);
+			int yoffset=0;
+			if (![findBar isHidden]) {
+				int dh = [findBar frame].size.height / charHeight + 1;
+				HEIGHT -= dh;
+				yoffset = [findBar frame].size.height;
+			} else {
+				yoffset = floor(aRect.size.height-charHeight*HEIGHT)/2; // screen height minus one half character
+			}
+			aRect = NSMakeRect(floor((aRect.size.width-WIDTH*charWidth-MARGIN*2)/2),  // screen width minus one half character and a margin
+                               yoffset,        
+                               WIDTH*charWidth+MARGIN*2,                              // enough width for WIDTH col plus two margins
+                               charHeight*HEIGHT);                                    // enough height for HEIGHT rows
+			[TABVIEW setFrame: aRect];
+			[self _resizeEverySession: hasScrollbar];
+		}			
 		
 		_resizeInProgressFlag = NO;
 	}

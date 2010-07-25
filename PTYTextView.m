@@ -2187,6 +2187,8 @@ static NSCursor* textViewCursor =  nil;
 		lastFindX = 0;
 		lastFindY = [dataSource numberOfLines] + 1;
 	}
+
+	
 	found = [dataSource findString: aString forwardDirection: direction ignoringCase: ignoreCase startingAtX: lastFindX staringAtY: lastFindY
 						  atStartX: &startX atStartY: &startY atEndX: &endX atEndY: &endY];
 

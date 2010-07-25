@@ -354,7 +354,7 @@ BOOL stringCaseCompare(unichar* needle, int needle_len, screen_char_t* haystack,
 	}
 	*result_length = i;
 	return YES;
-}
+} 
 
 BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int haystack_len, int* result_length)
 {
@@ -859,11 +859,14 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
 		while (i >= 0 && i < [blocks count]) {
 			LineBlock* block = [blocks objectAtIndex:i];
 			int position = [block findSubstring: substring options: options atOffset: offset resultLength: length];
-			if (dir * (position - stopAt) > 0 || dir * (position + *length - stopAt) > 0) {
-				return -1;
+			if (position >= 0) {
+				position += [self _blockPosition:i];
+				if (dir * (position - stopAt) > 0 || dir * (position + *length - stopAt) > 0) {
+					return -1;
+				}
 			}
 			if (position >= 0) {
-				return position + [self _blockPosition: i];
+				return position;
 			}
 			if (dir < 0) {
 				offset = -1;
@@ -879,13 +882,17 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
 - (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y
 {
 	int i;
+	int yoffset = 0;
 	for (i = 0; position >= 0 && i < [blocks count]; ++i) {
 		LineBlock* block = [blocks objectAtIndex:i];
 		int used = [block rawSpaceUsed];
 		if (position >= used) {
 			position -= used;
+			yoffset += [block getNumLinesWithWrapWidth:width];
 		} else {
-			return [block convertPosition: position withWidth: width toX: x toY: y];
+			BOOL result = [block convertPosition: position withWidth: width toX: x toY: y];
+			*y += yoffset;
+			return result;
 		}
 	}
 	return NO;
@@ -895,6 +902,7 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
 {
     int line = y;
     int i;
+	*position = 0;
     for (i = 0; i < [blocks count]; ++i) {
         LineBlock* block = [blocks objectAtIndex: i];
         NSAssert(block, @"Null block");
@@ -905,6 +913,7 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
         int block_lines = [block getNumLinesWithWrapWidth:width];
         if (block_lines < line) {
             line -= block_lines;
+			*position += [block rawSpaceUsed];
             continue;
         }
 		
@@ -913,7 +922,7 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
 		if (pos >= 0) {
 			int tempx, tempy;
 			if ([self convertPosition:pos+offset withWidth:width toX:&tempx toY:&tempy]) {
-				*position = pos + offset;
+				*position += pos + offset;
 				return YES;
 			} else {
 				return NO;

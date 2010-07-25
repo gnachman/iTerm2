@@ -45,7 +45,7 @@
 	<key>CFBundleIconFile</key>
 	<string>iTerm.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>net.sourceforge.iTerm</string>
+	<string>com.googlecode.iterm2</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -176,9 +176,9 @@
 	<key>SUPublicDSAKeyFile</key>
 	<string>dsa_pub.pem</string>
 	<key>SUFeedURLForTesting</key>
-	<string>http://iterm.sourceforge.net/appcasts/b/testing.xml</string>
+	<string>http://iterm2.googlecode.com/svn/fork/appcasts/testing.xml</string>
 	<key>SUFeedURLForFinal</key>
-	<string>http://iterm.sourceforge.net/appcasts/b/final.xml</string>
+	<string>http://iterm2.googlecode.com/svn/fork/appcasts/final.xml</string>
 	<key>SmartCrashReports_CompanyName</key>
 	<string>iTerm</string>
 	<key>SmartCrashReports_EmailTicket</key>

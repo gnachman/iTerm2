@@ -83,15 +83,6 @@ static BOOL usingAutoLaunchScript = NO;
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-		
-    id prefs = [NSUserDefaults standardUserDefaults];
-    NSString *version = [prefs objectForKey: @"Last Updated Version"];
-    
-    if (!version || ![version isEqualToString:[prefs objectForKey: @"iTerm Version"]]) {
-        [prefs setObject:[prefs objectForKey: @"iTerm Version"] forKey:@"Last Updated Version"];
-        [self showAbout:nil];
-    }
-    
 	[self buildAddressBookMenu:nil];
 	
 	// register for services
@@ -365,16 +356,16 @@ static BOOL usingAutoLaunchScript = NO;
 		NULL];
 	
     // Web URL
-    webURL = [NSURL URLWithString: @"http://iterm.sourceforge.net"];
+    webURL = [NSURL URLWithString: @"http://iterm2.googlecode.com/"];
     linkAttributes= [NSDictionary dictionaryWithObjectsAndKeys: webURL, NSLinkAttributeName,
                         [NSNumber numberWithInt: NSSingleUnderlineStyle], NSUnderlineStyleAttributeName,
 					    [NSColor blueColor], NSForegroundColorAttributeName,
 						[NSCursor pointingHandCursor], NSCursorAttributeName,
 					    NULL];
-    webSite = [[NSAttributedString alloc] initWithString: @"http://iterm.sourceforge.net" attributes: linkAttributes];
+    webSite = [[NSAttributedString alloc] initWithString: @"http://iterm2.googlecode.com/" attributes: linkAttributes];
 
     // Bug report
-    bugURL = [NSURL URLWithString: @"http://iterm.sourceforge.net/tracker-bug"];
+    bugURL = [NSURL URLWithString: @"http://code.google.com/p/iterm2/issues/entry"];
     linkAttributes= [NSDictionary dictionaryWithObjectsAndKeys: bugURL, NSLinkAttributeName,
         [NSNumber numberWithInt: NSSingleUnderlineStyle], NSUnderlineStyleAttributeName,
         [NSColor blueColor], NSForegroundColorAttributeName,
@@ -397,10 +388,16 @@ static BOOL usingAutoLaunchScript = NO;
     [[AUTHORS textStorage] appendAttributedString: bugReport];
     [AUTHORS setAlignment: NSCenterTextAlignment range: NSMakeRange(0, [[AUTHORS textStorage] length])];
 
+	NSString* creditsPath = [[NSBundle mainBundle] pathForResource:@"credits" ofType:@"rtf"];
+	NSAttributedString* creditsString = [[NSAttributedString alloc] initWithPath:creditsPath documentAttributes:nil];
+	[scrollingInfo replaceCharactersInRange:NSMakeRange( 0, 0 ) 
+				   withRTF:[creditsString RTFFromRange:NSMakeRange( 0, [creditsString length] ) 
+				   documentAttributes:nil]];
+	
 	[[scrollingInfo enclosingScrollView] setLineScroll:0.0];
     [[scrollingInfo enclosingScrollView] setPageScroll:0.0];
 	[[scrollingInfo enclosingScrollView] setVerticalScroller:nil];
-    
+
     //Start scrolling    
     scrollLocation = 0; 
     scrollRate = ABOUT_SCROLL_RATE;
@@ -416,7 +413,7 @@ static BOOL usingAutoLaunchScript = NO;
 												  userInfo:nil
 												   repeats:YES] retain];
     [[NSRunLoop currentRunLoop] addTimer:eventLoopScrollTimer forMode:NSEventTrackingRunLoopMode];
-	
+
     aboutController = [[NSWindowController alloc] initWithWindow:ABOUT];
     [aboutController showWindow:ABOUT];
 
