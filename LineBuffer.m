@@ -363,7 +363,7 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
 		return NO;
 	}
 	for (i = 0; i < needle_len; ++i) {
-		if (haystack[i].ch =! 0xffff && needle[i] != haystack[i].ch) {
+		if (haystack[i].ch != 0xffff && needle[i] != haystack[i].ch) {
 			return NO;
 		}
 	}

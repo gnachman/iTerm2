@@ -1809,7 +1809,7 @@ static NSImage *warningImage;
 // Object specifier
 - (NSScriptObjectSpecifier *)objectSpecifier
 {
-    unsigned index = 0;
+    NSUInteger index = 0;
     id classDescription = nil;
 	
     NSScriptObjectSpecifier *containerRef = nil;

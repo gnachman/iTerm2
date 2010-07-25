@@ -195,7 +195,7 @@ static TaskNotifier* taskNotifier = nil;
 
 		// Add all the PTYTask pipes
 		iter = [tasks objectEnumerator];
-		while(task = [iter nextObject]) {
+		while ((task = [iter nextObject])) {
 			int fd = [task fd];
 			if(fd < 0)
 				goto breakloop;
@@ -230,7 +230,7 @@ static TaskNotifier* taskNotifier = nil;
 
 		// Check for read events on PTYTask pipes
 		iter = [tasks objectEnumerator];
-		while(task = [iter nextObject]) {
+		while ((task = [iter nextObject])) {
 			int fd = [task fd];
 			if(fd < 0)
 				goto breakloop;
@@ -359,7 +359,7 @@ setup_tty_param(
 	setup_tty_param(&term, &win, width, height);
 	pid = forkpty(&fd, ttyname, &term, &win);
 	if (pid == (pid_t)0) {
-		const char* argpath = [[progpath stringByStandardizingPath] cString];
+		const char* argpath = [[progpath stringByStandardizingPath] UTF8String];
 		int max = args == nil ? 0: [args count];
 		const char* argv[max + 2];
 
@@ -380,10 +380,10 @@ setup_tty_param(
 				key = [keys objectAtIndex:i];
 				value = [env objectForKey:key];
 				if (key != nil && value != nil)
-					setenv([key cString], [value cString], 1);
+					setenv([key UTF8String], [value UTF8String], 1);
 			}
 		}
-		chdir([[[env objectForKey:@"PWD"] stringByExpandingTildeInPath] cString]);
+		chdir([[[env objectForKey:@"PWD"] stringByExpandingTildeInPath] UTF8String]);
 		sts = execvp(argpath, (char* const*)argv);
 
 		/* exec error */
@@ -457,7 +457,7 @@ setup_tty_param(
 	[writeLock lock];
 
 	// Only write up to MAXRW bytes, then release control
-	const char* ptr = [writeBuffer mutableBytes];
+	char* ptr = [writeBuffer mutableBytes];
 	unsigned int length = [writeBuffer length];
 	if(length > MAXRW) length = MAXRW;
 	ssize_t written = write(fd, [writeBuffer mutableBytes], length);

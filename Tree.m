@@ -232,8 +232,8 @@
 }
 
 - (void)removeChild:(TreeNode*)child {
-    int index = [self indexOfChild: child];
-    if (index!=NSNotFound) {
+    NSUInteger index = [self indexOfChild: child];
+    if (index != NSNotFound) {
         [self _removeChildrenIdenticalTo: [NSArray arrayWithObject: [self childAtIndex:index]]];
     }
 }

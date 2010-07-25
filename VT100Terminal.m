@@ -1057,7 +1057,10 @@ static VT100TCC decode_euccn(unsigned char *datap,
 	
     while (len > 0) {
         if (iseuccn(*p)&&len>1) {
-            if ((*(p+1)>=0x40&&*(p+1)<=0x7e)||*(p+1)>=0x80&&*(p+1)<=0xfe) {
+            if ((*(p+1) >= 0x40 &&
+				 *(p+1) <= 0x7e) ||
+				(*(p+1) >= 0x80 &&
+				 *(p+1) <= 0xfe)) {
                 p += 2;
                 len -= 2;
             }
@@ -1091,7 +1094,10 @@ static VT100TCC decode_big5(unsigned char *datap,
     
     while (len > 0) {
         if (isbig5(*p)&&len>1) {
-            if ((*(p+1)>=0x40&&*(p+1)<=0x7e)||*(p+1)>=0xa1&&*(p+1)<=0xfe) {
+            if ((*(p+1) >= 0x40 &&
+				 *(p+1) <= 0x7e) ||
+				(*(p+1) >= 0xa1 &&
+				 *(p+1)<=0xfe)) {
                 p += 2;
                 len -= 2;
             }
@@ -1440,10 +1446,10 @@ static VT100TCC decode_string(unsigned char *datap,
     int i;
     int r;
 
-    setupterm((char *)[termtype cString], fileno(stdout), &r);
+    setupterm((char *)[termtype UTF8String], fileno(stdout), &r);
 	
     if (r!=1) {
-        NSLog(@"Terminal type %s is not defined.\n",[termtype cString]);
+        NSLog(@"Terminal type %s is not defined.\n",[termtype UTF8String]);
         for(i = 0; i < TERMINFO_KEYS; i ++) {
             if (key_strings[i]) free(key_strings[i]);
             key_strings[i]=NULL;

@@ -33,6 +33,7 @@
 #import <iTerm/PreferencePanel.h>
 #import <iTerm/PseudoTerminal.h>
 #import <iTerm/iTermController.h>
+// This is included because the blurring code uses undocumented APIs to do its thing.
 #import <CGSInternal.h>
 
 #define DEBUG_METHOD_ALLOC	0
@@ -143,7 +144,7 @@
 	NSMutableArray* windows = [[NSMutableArray alloc] init];
 	iterator = [[[iTermController sharedInstance] terminals] objectEnumerator];
 	PseudoTerminal* term;
-	while(term = [iterator nextObject]) {
+	while ((term = [iterator nextObject])) {
 		PTYWindow* otherWindow = (PTYWindow*)[term window];
 		if(otherWindow == self) continue;
 
@@ -195,7 +196,7 @@
 				iterator = [windows objectEnumerator];
 				PTYWindow* other;
 				float badness = 0.0f;
-				while(other = [iterator nextObject]) {
+				while ((other = [iterator nextObject])) {
 					NSRect otherFrame = [other frame];
 					NSRect intersection = NSIntersectionRect(testRects[i], otherFrame);
 					badness += intersection.size.width * intersection.size.height;

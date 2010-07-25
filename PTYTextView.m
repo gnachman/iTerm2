@@ -82,6 +82,8 @@ static NSCursor* textViewCursor =  nil;
     self = [super initWithFrame: aRect];
     dataSource=_delegate=markedTextAttributes=NULL;
 
+	layoutManager = [[NSLayoutManager alloc] init];
+	
     [self setMarkedTextAttributes:
         [NSDictionary dictionaryWithObjectsAndKeys:
             [NSColor yellowColor], NSBackgroundColorAttributeName,
@@ -169,6 +171,7 @@ static NSCursor* textViewCursor =  nil;
     [defaultBoldColor release];
     [selectionColor release];
 	[defaultCursorColor release];
+	[layoutManager release];
 	
     [font release];
 	[nafont release];
@@ -425,7 +428,7 @@ static NSCursor* textViewCursor =  nil;
     sz = [@"W" sizeWithAttributes:dic];
 	
 	charWidthWithoutSpacing = sz.width;
-	charHeightWithoutSpacing = [aFont defaultLineHeightForFont];
+	charHeightWithoutSpacing = [layoutManager defaultLineHeightForFont:aFont];
 	
     [font release];
     [aFont retain];

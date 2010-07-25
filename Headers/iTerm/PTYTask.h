@@ -36,6 +36,13 @@
 
 #import <Foundation/Foundation.h>
 
+// Silence a few warnings.
+@class PTYSession;
+
+@protocol PTYTaskDelegate
+- (void) closeSession: (PTYSession*) aSession;
+@end
+
 @interface PTYTask : NSObject
 {
 	pid_t pid;

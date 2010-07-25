@@ -153,7 +153,7 @@ static BOOL usingAutoLaunchScript = NO;
 {
     // Check if we have an autolauch script to execute. Do it only once, i.e. at application launch.
     if(usingAutoLaunchScript == NO &&
-       [[NSFileManager defaultManager] fileExistsAtPath: [AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]] != nil)
+       [[NSFileManager defaultManager] fileExistsAtPath: [AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]])
     {
 		usingAutoLaunchScript = YES;
 		

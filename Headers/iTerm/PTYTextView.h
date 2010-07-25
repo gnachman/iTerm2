@@ -122,6 +122,8 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE };
 	
 	BOOL keyIsARepeat;
     
+	// Needed for determining font size.
+	NSLayoutManager *layoutManager;
 }
 
 + (NSCursor *) textViewCursor;

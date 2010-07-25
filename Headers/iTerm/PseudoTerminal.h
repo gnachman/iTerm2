@@ -95,6 +95,9 @@
 	int oldWidth, oldHeight;
 	float oldCharHorizontalSpacingMultiplier, oldCharVerticalSpacingMultiplier;
 	NSFont *oldFont, *oldNAFont;
+
+	// Needed for font size.
+	NSLayoutManager *layoutManager;
 }
 
 

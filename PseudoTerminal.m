@@ -101,7 +101,7 @@ NSString *sessionsKey = @"sessions";
     
     p=[[NSMutableArray alloc] init];
     
-    s=[cmdl cString];
+    s=[cmdl UTF8String];
     slen = strlen(s);
     
     i=j=qf=0;
@@ -561,7 +561,7 @@ NSString *sessionsKey = @"sessions";
 				NSFont *font = [[NSFontManager sharedFontManager] convertFont:FONT toSize:(int)(([FONT pointSize] * scale))];
 				font = [self _getMaxFont:font height:aRect.size.height lines:HEIGHT];
 				
-				float height = [font defaultLineHeightForFont] * charVerticalSpacingMultiplier;
+				float height = [layoutManager defaultLineHeightForFont:font] * charVerticalSpacingMultiplier;
 				
 				if (height != charHeight) {
 					//NSLog(@"Old size: %f\t proposed New size:%f\tWindow Height: %f",[FONT pointSize], [font pointSize],frame.size.height);
@@ -873,6 +873,7 @@ NSString *sessionsKey = @"sessions";
 	[NAFONT release];
 	[oldFont release];
 	[oldNAFont release];
+        [layoutManager release];
 	[findBar release];
 	
 	[_toolbarController release];
@@ -961,7 +962,7 @@ NSString *sessionsKey = @"sessions";
     sz = [@"W" sizeWithAttributes:dic];
 	
 	charWidth = ceil(sz.width * charHorizontalSpacingMultiplier);
-	charHeight = ([font defaultLineHeightForFont] * charVerticalSpacingMultiplier);
+	charHeight = ([layoutManager defaultLineHeightForFont:font] * charVerticalSpacingMultiplier);
 
 	for(i=0;i<[TABVIEW numberOfTabViewItems]; i++) 
     {
@@ -1738,7 +1739,7 @@ NSString *sessionsKey = @"sessions";
 		[dic setObject:font forKey:NSFontAttributeName];
 		sz = [@"W" sizeWithAttributes:dic];
 		
-		proposedFrameSize.height = [font defaultLineHeightForFont] * charVerticalSpacingMultiplier * HEIGHT + nch;
+		proposedFrameSize.height = [layoutManager defaultLineHeightForFont:font] * charVerticalSpacingMultiplier * HEIGHT + nch;
         proposedFrameSize.width = sz.width * charHorizontalSpacingMultiplier * WIDTH + wch + MARGIN * 2;
 	}
     else {
@@ -1781,7 +1782,7 @@ NSString *sessionsKey = @"sessions";
 		NSFont *font = [[NSFontManager sharedFontManager] convertFont:FONT toSize:(int)(([FONT pointSize] * scale))];
 		font = [self _getMaxFont:font height:frame.size.height lines:HEIGHT];
 		
-		float height = [font defaultLineHeightForFont] * charVerticalSpacingMultiplier;
+		float height = [layoutManager defaultLineHeightForFont:font] * charVerticalSpacingMultiplier;
 
 		if (height != charHeight) {
 			//NSLog(@"Old size: %f\t proposed New size:%f\tWindow Height: %f",[FONT pointSize], [font pointSize],frame.size.height);
@@ -1950,7 +1951,7 @@ NSString *sessionsKey = @"sessions";
 		[dic setObject:font forKey:NSFontAttributeName];
 		sz = [@"W" sizeWithAttributes:dic];
 		
-		defaultFrame.size.height = [font defaultLineHeightForFont] * charVerticalSpacingMultiplier * HEIGHT + nch;
+		defaultFrame.size.height = [layoutManager defaultLineHeightForFont:font] * charVerticalSpacingMultiplier * HEIGHT + nch;
 		defaultFrame.size.width = sz.width * charHorizontalSpacingMultiplier * WIDTH + MARGIN*2 + wch;
         defaultFrame.origin.y = [sender frame].origin.y + [sender frame].size.height -  defaultFrame.size.height;
 //		NSLog(@"actual height: %f\t (nch=%f) scale: %f\t new font:%f\told:%f",defaultFrame.size.height,nch,scale, [font pointSize], [FONT pointSize]);
@@ -2782,6 +2783,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void) _commonInit
 {
+	layoutManager = [[NSLayoutManager alloc] init];
 	charHorizontalSpacingMultiplier = charVerticalSpacingMultiplier = 1.0;
 	[self setUseTransparency: YES];
 	normalBackgroundColor = [[self window] backgroundColor];
@@ -2798,7 +2800,7 @@ NSString *sessionsKey = @"sessions";
 		newfont = font;
 		font = [[NSFontManager sharedFontManager] convertFont:font toSize:newSize];
 		newSize++;
-		newHeight = [font defaultLineHeightForFont] * charVerticalSpacingMultiplier * lines;
+		newHeight = [layoutManager defaultLineHeightForFont:font] * charVerticalSpacingMultiplier * lines;
 	} while (height >= newHeight);
 	
 	return newfont;
@@ -3239,7 +3241,7 @@ NSString *sessionsKey = @"sessions";
 // Object specifier
 - (NSScriptObjectSpecifier *)objectSpecifier
 {
-    unsigned index = 0;
+    NSUInteger index = 0;
     id classDescription = nil;
     
     NSScriptObjectSpecifier *containerRef;

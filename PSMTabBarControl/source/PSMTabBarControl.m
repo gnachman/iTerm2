@@ -16,6 +16,7 @@
 #import "PSMUnifiedTabStyle.h"
 #import "PSMAdiumTabStyle.h"
 #import "PSMTabDragAssistant.h"
+#import "PTYTask.h"
 
 @interface PSMTabBarControl (Private)
 // characteristics
@@ -1288,7 +1289,8 @@
 		BOOL equal = YES;
 		equal = [_overflowPopUpButton menu] && [[_overflowPopUpButton menu] numberOfItems ] == [overflowMenu numberOfItems];
 		for (i = 0; equal && i < [overflowMenu numberOfItems]; i++) {
-			id <NSMenuItem> currentItem = [[_overflowPopUpButton menu] itemAtIndex:i], newItem = [overflowMenu itemAtIndex:i];
+			NSMenuItem *currentItem = [[_overflowPopUpButton menu] itemAtIndex:i];
+			NSMenuItem *newItem = [overflowMenu itemAtIndex:i];
 			if (([newItem state] != [currentItem state]) ||
 					([[newItem title] compare:[currentItem title]] != NSOrderedSame) ||
 					([newItem image] != [currentItem image])) {
@@ -1607,7 +1609,7 @@
 	
     [item retain];
     if(([self delegate]) && ([[self delegate] respondsToSelector:@selector(closeSession:)])){
-        [[self delegate] closeSession: [item identifier]];
+        [(id<PTYTaskDelegate>)[self delegate] closeSession: [item identifier]];
     } 
         
     [item release];
@@ -1758,7 +1760,7 @@
 #pragma mark -
 #pragma mark Menu Validation
 
-- (BOOL)validateMenuItem:(id <NSMenuItem>)sender
+- (BOOL)validateMenuItem:(NSMenuItem *)sender
 {
 	return [[self delegate] respondsToSelector:@selector(tabView:validateOverflowMenuItem:forTabViewItem:)] ?
     [[self delegate] tabView:[self tabView] validateOverflowMenuItem:sender forTabViewItem:[sender representedObject]] : YES;
@@ -1808,6 +1810,11 @@
             [[self delegate] tabView: aTabView didSelectTabViewItem: tabViewItem];
         }
     }
+}
+
+- (void) tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem
+{
+	
 }
 
 - (BOOL)tabView:(NSTabView *)aTabView shouldSelectTabViewItem:(NSTabViewItem *)tabViewItem
@@ -1986,7 +1993,7 @@
 			[bindingOptions setObject:NSNegateBooleanTransformerName forKey:@"NSValueTransformerName"];
 			[[cell indicator] bind:@"animate" toObject:[item identifier] withKeyPath:@"isProcessing" options:nil];
 			[[cell indicator] bind:@"hidden" toObject:[item identifier] withKeyPath:@"isProcessing" options:bindingOptions];
-			[[item identifier] addObserver:cell forKeyPath:@"isProcessing" options:nil context:nil];
+			[[item identifier] addObserver:cell forKeyPath:@"isProcessing" options:0 context:nil];
         }
     }
     
@@ -1997,7 +2004,7 @@
 			NSMutableDictionary *bindingOptions = [NSMutableDictionary dictionary];
 			[bindingOptions setObject:NSIsNotNilTransformerName forKey:@"NSValueTransformerName"];
 			[cell bind:@"hasIcon" toObject:[item identifier] withKeyPath:@"icon" options:bindingOptions];
-			[[item identifier] addObserver:cell forKeyPath:@"icon" options:nil context:nil];
+			[[item identifier] addObserver:cell forKeyPath:@"icon" options:0 context:nil];
         }
     }
     
@@ -2006,12 +2013,12 @@
     if ([item identifier] != nil) {
 		if ([[[cell representedObject] identifier] respondsToSelector:@selector(objectCount)]) {
 			[cell bind:@"count" toObject:[item identifier] withKeyPath:@"objectCount" options:nil];
-			[[item identifier] addObserver:cell forKeyPath:@"objectCount" options:nil context:nil];
+			[[item identifier] addObserver:cell forKeyPath:@"objectCount" options:0 context:nil];
 		}
     }
     
     // watch for changes in the identifier
-    [item addObserver:self forKeyPath:@"identifier" options:nil context:nil];
+    [item addObserver:self forKeyPath:@"identifier" options:0 context:nil];
 	
     // bind my string value to the label on the represented tab
     [cell bind:@"title" toObject:item withKeyPath:@"label" options:nil];
