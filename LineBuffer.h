@@ -215,15 +215,15 @@ typedef struct screen_char_t
 // length of the substring in the presence of double-width characters.
 #define FindOptCaseInsensitive (1 << 0)
 #define FindOptBackwards       (1 << 1)
-- (int) findSubstring: (NSString*) substring startingAt: (int) start resultLength: (int*) length options: (int) options;
+- (int) findSubstring: (NSString*) substring startingAt: (int) start resultLength: (int*) length options: (int) options stopAt: (int) stopAt;
 
 // Convert a position (as returned by findSubstring) into an x,y position.
 // Returns TRUE if the conversion was successful, false if the position was out of bounds.
 - (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y;
 
-// Convert x,y coordinates (with y=0 being the first line) into a position.
+// Convert x,y coordinates (with y=0 being the first line) into a position. Offset is added to the position safely.
 // Returns TRUE if the conversion was successful, false, if out of bounds.
-- (BOOL) convertCoordinatesAtX: (int) x atY: (int) y withWidth: (int) width toPosition: (int*) position;
+- (BOOL) convertCoordinatesAtX: (int) x atY: (int) y withWidth: (int) width toPosition: (int*) position offset:(int)offset;
 
 // Returns the position at the stat of the buffer
 - (int) firstPos;

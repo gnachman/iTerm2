@@ -2182,7 +2182,7 @@ static NSCursor* textViewCursor =  nil;
 	
 	if (lastFindX == -1) {
 		lastFindX = 0;
-		lastFindY = 0;
+		lastFindY = [dataSource numberOfLines] + 1;
 	}
 	found = [dataSource findString: aString forwardDirection: direction ignoringCase: ignoreCase startingAtX: lastFindX staringAtY: lastFindY
 						  atStartX: &startX atStartY: &startY atEndX: &endX atEndY: &endY];
@@ -2193,13 +2193,8 @@ static NSCursor* textViewCursor =  nil;
 		
 		[self _scrollToLine:endY];
 		[self setNeedsDisplay:YES];
-		if (direction) {
-			lastFindX = endX;
-			lastFindY = endY;
-		} else {
-			lastFindX = startX;
-			lastFindY = endY;
-		}
+		lastFindX = startX;
+		lastFindY = startY;
 	}
 }
 

@@ -344,11 +344,11 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
 BOOL stringCaseCompare(unichar* needle, int needle_len, screen_char_t* haystack, int haystack_len, int* result_length)
 {
 	int i;
-	if (needle_len < haystack_len) {
+	if (needle_len > haystack_len) {
 		return NO;
 	}
 	for (i = 0; i < needle_len; ++i) {
-		if (haystack[i].ch =! 0xffff && tolower(needle[i]) != tolower(haystack[i].ch)) {
+		if (haystack[i].ch != 0xffff && tolower(needle[i]) != tolower(haystack[i].ch)) {
 			return NO;
 		}
 	}
@@ -359,7 +359,7 @@ BOOL stringCaseCompare(unichar* needle, int needle_len, screen_char_t* haystack,
 BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int haystack_len, int* result_length)
 {
 	int i;
-	if (needle_len < haystack_len) {
+	if (needle_len > haystack_len) {
 		return NO;
 	}
 	for (i = 0; i < needle_len; ++i) {
@@ -371,9 +371,18 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
 	return YES;
 }
 
-- (int) _findInRawLine: (NSString*) substring options: (int) options atOffset: (int) offset length: (int) raw_line_length resultLength: (int*) resultLength
+- (int) _lineRawOffset: (int) index
 {
-	screen_char_t* rawline = buffer_start;
+	if (index == first_entry) {
+		return start_offset;
+	} else {
+		return cumulative_line_lengths[index - 1];
+	}
+}
+
+- (int) _findInRawLine:(int) entry needle:(NSString*) substring options: (int) options skip: (int) skip length: (int) raw_line_length resultLength: (int*) resultLength
+{
+	screen_char_t* rawline = raw_buffer + [self _lineRawOffset:entry];
 	unichar buffer[1000];
 	NSRange range;
 	range.location = 0;
@@ -386,20 +395,21 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
 	// TODO: use a smarter search algorithm
 	if (options & FindOptBackwards) {
 		int i;
-		if (offset == -1) {
-			offset = raw_line_length - [substring length];
+		NSAssert(skip >= 0, @"Negative skip");
+		if (skip + range.length > raw_line_length) {
+			skip = raw_line_length - range.length;
 		}
-		if (offset + range.length > raw_line_length) {
-			offset = raw_line_length - range.length;
+		if (skip < 0) {
+			return -1;
 		}
 		if (options & FindOptCaseInsensitive) {
-			for (i = offset; i >= 0; --i) {
+			for (i = skip; i >= 0; --i) {
 				if (stringCaseCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
 					return i;
 				}
 			}
 		} else {
-			for (i = offset; i >= 0; --i) {
+			for (i = skip; i >= 0; --i) {
 				if (stringCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
 					return i;
 				}
@@ -408,17 +418,17 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
 	} else {
 		int i;
 		int limit = raw_line_length - [substring length];
-		if (offset + range.length > raw_line_length) {
+		if (skip + range.length > raw_line_length) {
 			return -1;
 		}
 		if (options & FindOptCaseInsensitive) {
-			for (i = offset; i < limit; ++i) {
+			for (i = skip; i <= limit; ++i) {
 				if (stringCaseCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
 					return i;
 				}
 			}
 		} else {
-			for (i = offset; i < limit; ++i) {
+			for (i = skip; i <= limit; ++i) {
 				if (stringCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
 					return i;
 				}
@@ -469,46 +479,48 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
 		limit = cll_entries;
 		dir = 1;
 	}
-	if (entry > first_entry) {
-		int entry_start = cumulative_line_lengths[entry - 1] - start_offset;
-		offset -= entry_start;
-	}
 	while (entry != limit) {
-		int pos = [self _findInRawLine:substring options:options atOffset: offset length: [self _lineLength: entry] resultLength: resultLength];
+		int line_raw_offset = [self _lineRawOffset:entry];
+		int skipped = offset - line_raw_offset;
+		if (skipped < 0) {
+			skipped = 0;
+		}
+		int pos = [self _findInRawLine:entry needle:substring options:options skip: skipped length: [self _lineLength: entry] resultLength: resultLength];
 		if (pos != -1) {
-			return pos;
+			return pos + line_raw_offset;
 		}
-		if (dir < 0) {
-			offset = -1;
-		} else {
-			offset = 0;
-		}
+		entry += dir;
 	}
 	return -1;
 }
 
-- (void) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y
+- (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y
 {
 	int i;
 	*x = 0;
 	*y = 0;
-	position += start_offset;
 	int prev = start_offset;
 	for (i = first_entry; i < cll_entries; ++i) {
 		int eol = cumulative_line_lengths[i];
 		int line_length = eol-prev;
-		if (position > eol) {
+		if (position >= eol) {
 			int spans = (line_length - 1) / width;
-			*y += spans;
+			*y += spans + 1;
 		} else {
 			int bytes_to_consume_in_this_line = position - prev;
-			int consume = (bytes_to_consume_in_this_line - 1) / width;
+			int consume = bytes_to_consume_in_this_line / width;
 			*y += consume;
-			*x = bytes_to_consume_in_this_line % (consume * width);
-			return;
+			if (consume > 0) {
+				*x = bytes_to_consume_in_this_line % (consume * width);
+			} else {
+				*x = bytes_to_consume_in_this_line;
+			}
+			return YES;
 		}
+		prev = eol;
 	}
 	NSLog(@"Didn't find position %d", position);
+	return NO;
 }
 
 
@@ -833,7 +845,7 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
 		
 }
 
-- (int) findSubstring: (NSString*) substring startingAt: (int) start resultLength: (int*) length options: (int) options
+- (int) findSubstring: (NSString*) substring startingAt: (int) start resultLength: (int*) length options: (int) options stopAt: (int) stopAt
 {
 	int i;
 	int offset;
@@ -847,6 +859,9 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
 		while (i >= 0 && i < [blocks count]) {
 			LineBlock* block = [blocks objectAtIndex:i];
 			int position = [block findSubstring: substring options: options atOffset: offset resultLength: length];
+			if (dir * (position - stopAt) > 0 || dir * (position + *length - stopAt) > 0) {
+				return -1;
+			}
 			if (position >= 0) {
 				return position + [self _blockPosition: i];
 			}
@@ -870,14 +885,13 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
 		if (position >= used) {
 			position -= used;
 		} else {
-			[block convertPosition: position withWidth: width toX: x toY: y];
-			return YES;
+			return [block convertPosition: position withWidth: width toX: x toY: y];
 		}
 	}
 	return NO;
 }
 
-- (BOOL) convertCoordinatesAtX: (int) x atY: (int) y withWidth: (int) width toPosition: (int*) position
+- (BOOL) convertCoordinatesAtX: (int) x atY: (int) y withWidth: (int) width toPosition: (int*) position offset:(int)offset
 {
     int line = y;
     int i;
@@ -897,12 +911,15 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
 		int pos;
 		pos = [block getPositionOfLine: &line atX: x withWidth: width];
 		if (pos >= 0) {
-			*position = pos;
-			return YES;
+			int tempx, tempy;
+			if ([self convertPosition:pos+offset withWidth:width toX:&tempx toY:&tempy]) {
+				*position = pos + offset;
+				return YES;
+			} else {
+				return NO;
+			}
 		}
     }
-    NSLog(@"Couldn't find line %d", y);
-    NSAssert(NO, @"Tried to convert position of non-existant line");
     return NO;
 }
 

@@ -396,7 +396,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 }
 
 // Returns the number of lines appended.
-- (int) _appendScreenToScrollback {
+- (int) _appendScreenToScrollback 
+{
     // Set used_height to the number of lines on the screen that are in use.
 	  int i;
   int used_height = HEIGHT;
@@ -2192,33 +2193,49 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 	
 	// Get the start position of (x,y)
 	int startPos;
-	BOOL ok = [linebuffer convertCoordinatesAtX:x atY:y withWidth:WIDTH toPosition:&startPos];
+	BOOL ok = [linebuffer convertCoordinatesAtX:x atY:y withWidth:WIDTH toPosition:&startPos offset:(direction ? 1 : -1)];
 	if (!ok) {
 		NSLog(@"Couldn't convert %d,%d to position", x, y);
 		if (direction) {
 			startPos = [linebuffer firstPos];
 		} else {
-			startPos = [linebuffer lastPos];
+			startPos = [linebuffer lastPos] - 1;
 		}
 	}
 	
 	// Set up the options bitmask and call findSubstring.
 	int opts = 0;
+	int stopAt;
 	if (!direction) {
 		opts |= FindOptBackwards;
+		stopAt = [linebuffer firstPos];
+	} else {
+		stopAt = [linebuffer lastPos];
 	}
 	if (ignoreCase) {
 		opts |= FindOptCaseInsensitive;
 	}
 	int len;	
-	int position = [linebuffer findSubstring:aString startingAt:startPos resultLength:&len options:opts];
+	int position = [linebuffer findSubstring:aString startingAt:startPos resultLength:&len options:opts stopAt:stopAt];
+	if (position < 0) {
+		// wrap around
+		if (direction) {
+			// forward search, wrap to top
+			// TODO: stop search at previous starting position.
+			position = [linebuffer findSubstring:aString startingAt:[linebuffer firstPos] resultLength:&len options:opts stopAt:startPos];
+
+		} else {
+			// backward search, wrap to bottom
+			position = [linebuffer findSubstring:aString startingAt:[linebuffer lastPos]-1 resultLength:&len options:opts stopAt:startPos];
+		}
+	}
 	
 	// Save the (x,y)-(x,y) coords of the match, if any.
 	if (position >= 0) {
 		BOOL ok = [linebuffer convertPosition: position withWidth: WIDTH toX: startX toY: startY];
 		NSAssert(ok, @"Couldn't convert start position");
 		
-		ok = [linebuffer convertPosition: position + len withWidth: WIDTH toX: endX toY: endY];
+		ok = [linebuffer convertPosition: position + len - 1 withWidth: WIDTH toX: endX toY: endY];
 		NSAssert(ok, @"Couldn't convert end position");
 	}
 	
