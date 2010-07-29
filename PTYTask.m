@@ -29,7 +29,7 @@
 // Debug option
 #define DEBUG_ALLOC         0
 #define DEBUG_METHOD_TRACE  0
-#define PtyTaskDebugLog
+#define PtyTaskDebugLog(fmt, ...)
 // Use this instead to debug this module:
 // #define PtyTaskDebugLog NSLog
 

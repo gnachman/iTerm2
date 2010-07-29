@@ -716,8 +716,8 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
         int length;
         BOOL eol;
         screen_char_t* p = [block getWrappedLineWithWrapWidth: width lineNum: &line lineLength: &length includesEndOfLine: &eol];
-        NSAssert(length <= width, @"Length too long");
         if (p) {
+            NSAssert(length <= width, @"Length too long");
             memcpy((char*) buffer, (char*) p, length * sizeof(screen_char_t));
             return !eol;
         }
