@@ -1853,7 +1853,12 @@
 				[[self delegate] tabView:aTabView didCloseTabViewItem:[cell representedObject]];
             }
             
+	    // finish enumerating to avoid getting an error for mutating while
+	    // enumerating.
+            [e allObjects];
             [self removeTabForCell:cell];
+	    // start the enumeration over again.
+            e = [_cells objectEnumerator];
         }
     }   
      
