@@ -624,27 +624,38 @@ static NSCursor* textViewCursor =  nil;
 		// frame is extended due to scrolling, eg a new line appears in the
 		// terminal. To work around this we disable drawing during the frame
 		// resize and then manually expose the new portion of the frame.
-		float diff = height - frame.size.height;
-		NSRect old = [self visibleRect];
-		if(diff > 0) {
-			drawAllowed = NO;
-			[self displayIfNeeded];
-		}
+		
+		// The hack doesn't work during window resize if font size follows window is on,
+		// so we pay the price and do a full redraw then. Figuring out exactly what to draw
+		// in that case is really hard.
+		BOOL use_hack = ![[[dataSource session] parent] isResizeInProgress];
 
+		float diff;
+		NSRect old;
+		if (use_hack) {
+			diff = height - frame.size.height;
+			old = [self visibleRect];
+			if(diff > 0) {
+				drawAllowed = NO;
+				[self displayIfNeeded];
+			}
+		}
 		// Resize the frame
 		frame.size.height = height;
 		[self setFrame:frame];
 
-		// XXX - resume hack
-		NSRect new = [self visibleRect];
-		if(diff > 0) {
-			[self display];
-			drawAllowed = YES;
+		if (use_hack) {
+			// XXX - resume hack
+			NSRect new = [self visibleRect];
+			if(diff > 0) {
+				[self display];
+				drawAllowed = YES;
 
-			NSRect dirty = new;
-			dirty.origin.y = old.origin.y + old.size.height;
-			dirty.size.height = new.origin.y + new.size.height - dirty.origin.y;
-			[self setNeedsDisplayInRect:dirty];
+				NSRect dirty = new;
+				dirty.origin.y = old.origin.y + old.size.height;
+				dirty.size.height = new.origin.y + new.size.height - dirty.origin.y;
+				[self setNeedsDisplayInRect:dirty];
+			}
 		}
 	}
 	else if(scrollbackOverflow > 0) {
@@ -2290,7 +2301,7 @@ static NSCursor* textViewCursor =  nil;
 		NSRectFill(leftMargin);
 		NSRectFill(rightMargin);
 	}
-
+	
 	// Contiguous sections of background with the same colour
 	// are combined into runs and draw as one operation
 	int bgstart = -1;

@@ -1428,6 +1428,11 @@ NSString *sessionsKey = @"sessions";
 	tempTitle = NO;
 }
 
+- (BOOL) isResizeInProgress
+{
+	return _resizeInProgressFlag;
+}
+
 - (void)setFont:(NSFont *)font nafont:(NSFont *)nafont
 {
 	int i;
@@ -1799,7 +1804,7 @@ NSString *sessionsKey = @"sessions";
         
         WIDTH = (int)((frame.size.width - MARGIN * 2)/charWidth + 0.5);
 		HEIGHT = (int)((frame.size.height)/charHeight + 0.5);
-        [self setWindowSize];
+        [self setWindowSize];		
     }
 	else {	    
 		w = (int)((frame.size.width - MARGIN * 2)/charWidth);

@@ -163,6 +163,7 @@
 - (void) disableBlur;
 - (BOOL) tempTitle;
 - (void) resetTempTitle;
+- (BOOL) isResizeInProgress;
 
 - (IBAction)searchPrevious:(id)sender;
 - (IBAction)searchNext:(id)sender;
