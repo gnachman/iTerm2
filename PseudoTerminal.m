@@ -32,7 +32,7 @@
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
 
-#define WINDOW_NAME @"iTerm Window 0"
+#define WINDOW_NAME @"iTerm Window %d"
 
 #import <iTerm/iTerm.h>
 #import <iTerm/PseudoTerminal.h>
@@ -60,6 +60,9 @@
 #import <iTermBookmarkController.h>
 #import <iTerm/iTermGrowlDelegate.h>
 #include <unistd.h>
+
+#define CACHED_WINDOW_POSITIONS 100
+static BOOL windowPositions[CACHED_WINDOW_POSITIONS];
 
 @interface PSMTabBarControl (Private)
 - (void)update;
@@ -764,6 +767,18 @@ NSString *sessionsKey = @"sessions";
     if([TABVIEW indexOfTabViewItemWithIdentifier: aSession] == NSNotFound)
         return;
     
+#if 0
+    // TODO(salobaas): Elucidate:
+    // The original smart placement patch included this code
+    // but it doesn't seem necessary for smart placement, and
+    // is redundant with the call to [aSession terminate] ahead
+    // (or if there's only one session, it's called in -dealloc)
+    if (![aSession exited]) {
+        [[aSession SHELL] sendSignal: SIGHUP];
+        return;
+    }
+#endif
+   
     numberOfSessions = [TABVIEW numberOfTabViewItems]; 
     if(numberOfSessions == 1 && [self windowInited])
     {   
@@ -842,6 +857,20 @@ NSString *sessionsKey = @"sessions";
 		
     }
 }
+
+- (void) setFramePos 
+{
+   // Set framePos to the next unused window position.
+   for (int i = 0; i < CACHED_WINDOW_POSITIONS; i++) {
+      if (!windowPositions[i]) {
+         windowPositions[i] = YES;
+         framePos = i;
+         return;
+      }
+   }
+   framePos = CACHED_WINDOW_POSITIONS - 1;
+}
+
 
 - (PTYSession *) currentSession
 {
@@ -1659,15 +1688,26 @@ NSString *sessionsKey = @"sessions";
 
 	// Save frame position for last window
 	if([[[iTermController sharedInstance] terminals] count] == 1) {
-		// Close the findbar because otherwise the wrong size frame is saved.
-		// You wouldn't want the findbar to open automatically anyway.
-		if (![findBar isHidden]) {
-			[self showHideFindBar];
-		}
-		NSRect rect = [[self window] frame];
-		NSLog(@"Save frame: %d %d, %dx%d", rect.origin.x, rect.origin.y, rect.size.width, rect.size.height);
-		[[self window] saveFrameUsingName:WINDOW_NAME];
-	}
+	    // Close the findbar because otherwise the wrong size
+	    // frame is saved.  You wouldn't want the findbar to
+	    // open automatically anyway.
+            if (![findBar isHidden]) {
+            	[self showHideFindBar];
+            }
+            if ([[PreferencePanel sharedInstance] smartPlacement]) {
+                [[self window] saveFrameUsingName: [NSString stringWithFormat: WINDOW_NAME, 0]];
+            } else {
+                // Save frame position for window
+                [[self window] saveFrameUsingName: [NSString stringWithFormat: WINDOW_NAME, framePos]];
+                windowPositions[framePos] = NO;
+            }
+	} else {
+            if (![[PreferencePanel sharedInstance] smartPlacement]) {
+                // Save frame position for window
+                [[self window] saveFrameUsingName: [NSString stringWithFormat: WINDOW_NAME, framePos]];
+                windowPositions[framePos] = NO;
+            }
+        }
 
 	[[iTermController sharedInstance] terminalWillClose: self];
 }
@@ -1976,16 +2016,18 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowWillShowInitial
 {
-	PTYWindow* window = (PTYWindow*)[self window];
-	if([[[iTermController sharedInstance] terminals] count] == 1) {
-		NSRect frame = [window frame];
-		[window setFrameUsingName:WINDOW_NAME];
-		frame.origin = [window frame].origin;
-		frame.origin.y += [window frame].size.height - frame.size.height;
-		[window setFrame:frame display:NO];
-	} else {
-		[window smartLayout];
-	}
+    PTYWindow* window = (PTYWindow*)[self window];
+    if (([[[iTermController sharedInstance] terminals] count] == 1) ||
+        (![[PreferencePanel sharedInstance] smartPlacement])) {
+        NSRect frame = [window frame];
+        [self setFramePos];
+        [window setFrameUsingName: [NSString stringWithFormat: WINDOW_NAME, framePos]];
+        frame.origin = [window frame].origin;
+        frame.origin.y += [window frame].size.height - frame.size.height;
+        [window setFrame:frame display:NO];
+    } else {
+        [window smartLayout];
+    }
 }
 
 // Close Window

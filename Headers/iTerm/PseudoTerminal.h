@@ -95,6 +95,8 @@
 	int oldWidth, oldHeight;
 	float oldCharHorizontalSpacingMultiplier, oldCharVerticalSpacingMultiplier;
 	NSFont *oldFont, *oldNAFont;
+        // Index of the last used frame position for smart placement.
+        int framePos;
 
 	// Needed for font size.
 	NSLayoutManager *layoutManager;
@@ -118,6 +120,7 @@
 - (int) currentSessionIndex;
 - (NSString *) currentSessionName;
 - (void) setCurrentSessionName: (NSString *) theSessionName;
+- (void) setFramePos;
 
 - (void) updateCurrentSessionProfiles;
 
