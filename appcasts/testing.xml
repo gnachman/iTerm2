@@ -8,7 +8,7 @@
                 <item>
                         <title>Version 0.20.20100729</title>
                         <sparkle:releaseNotesLink>
-                                http://iterm.sourceforge.net/appcasts/b/testing_changes.html
+                                http://iterm2.googlecode.com/svn/fork/appcasts/testing_changes.html
                         </sparkle:releaseNotesLink>
                         <pubDate>Thu, 29 Jul 2010 23:44:00 +0900</pubDate>
                         <enclosure url="http://iterm2.googlecode.com/files/iTerm2-alpha4.zip"
