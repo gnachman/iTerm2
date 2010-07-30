@@ -1,28 +1,26 @@
-<h2>Alpha 4</h2>
-<ul>
-<li>Fix jump-to-scroll to stay at the scroll position. Fixed bug 13: cannot select one character.</li>
-<li>Apply patch from iTerm1 bug 2905335: adds an option to disable smart placement and saves window positions in prefs.</li>
-<li>Migrate old preferences, fixing bug 5. Also remove some extraneous build files from svn.</li>
-<li>Fix bug where display is corrupted when reizing with font size follows window turned on (bug 3).</li>
-</ul>
+These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2.
 
-<h2>Alpha 3</h2>
-<ul>
-<li>Fixed some warnings in PTYTask. Moved assertion in linebuffer per bug 9.</li>
-<li>Fix a bug in the psmtabbar where they mutate an array while enumerating it. Also fix a race condition that caused Major fail! crashes or dereferencing free memory in PTYTask by properly locking the list of tasks and tolerating closed fd rather than hoping usleep prevents the race (hint: it doesn't)</li>
-</ul>
+Alpha 4
+Fix jump-to-scroll to stay at the scroll position. Fixed bug 13: cannot select one character.
+Apply patch from iTerm1 bug 2905335: adds an option to disable smart placement and saves window positions in prefs.
+Migrate old preferences, fixing bug 5. Also remove some extraneous build files from svn.
+Fix bug where display is corrupted when reizing with font size follows window turned on (bug 3).
 
-<h2>Alpha 2</h2>
-<ul>
-<li>Added link to homepage.</li>
-<li>Fixed some bugs with find. Changed credits. Updated Sparkle for the new site.</li>
-<li>Rewrote find for better performance. Unicode not working so great now, though.</li>
-</ul>
 
-<h2>Alpha 1</h2>
-<ul>
-<li>Find feature moved into a toolbar</li>
-<li>Slowness on resize fixed.</li>
-<li>Find performance increased (but searching is temporarily not conforming with unicode best practices for non-ascii text)</li>
-<li>Capslock doesn't break command-number ot change tabs</li>
-</ul>
+Alpha 3
+Fixed some warnings in PTYTask. Moved assertion in linebuffer per bug 9.
+Fix a bug in the psmtabbar where they mutate an array while enumerating it. Also fix a race condition that caused Major fail! crashes or dereferencing free memory in PTYTask by properly locking the list of tasks and tolerating closed fd rather than hoping usleep prevents the race (hint: it doesn't)
+
+
+Alpha 2
+Added link to homepage.
+Fixed some bugs with find. Changed credits. Updated Sparkle for the new site.
+Rewrote find for better performance. Unicode not working so great now, though.
+
+
+Alpha 1
+Find feature moved into a toolbar
+Slowness on resize fixed.
+Find performance increased (but searching is temporarily not conforming with unicode best practices for non-ascii text)
+Capslock doesn't break command-number ot change tabs
+
