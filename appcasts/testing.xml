@@ -6,14 +6,14 @@
 		<description>Most recent changes with links to updates.</description>
 		<language>en</language>
                 <item>
-                        <title>Version 0.20a2</title>
+                        <title>Version 0.20.20100729</title>
                         <sparkle:releaseNotesLink>
-                                http://iterm.sourceforge.net/appcasts/b/a2_changes.html
+                                http://iterm.sourceforge.net/appcasts/b/testing_changes.html
                         </sparkle:releaseNotesLink>
-                        <pubDate>Sun, 25 Jul 2010 13:04:25 +0900</pubDate>
-                        <enclosure url="http://iterm2.googlecode.com/files/iTerm-alpha2.zip"
-                                sparkle:version="0.20a2" length="3895914" type="application/octet-stream"
-                                sparkle:dsaSignature="MCwCFHFO1AjI78VbhnpaBa+9r6/iCeRZAhQDQ9EyR/bKIoCvFpRrsRMG6SdqcA==" />
+                        <pubDate>Thu, 29 Jul 2010 23:44:00 +0900</pubDate>
+                        <enclosure url="http://iterm2.googlecode.com/files/iTerm2-alpha4.zip"
+                                sparkle:version="0.20.20100729" length="3903300" type="application/octet-stream"
+                                sparkle:dsaSignature="MCwCFDITFWblNgWeiF9AmfvAmqDT/XAcAhQ3XinBOw/UZHGK9SgAJChPaXAj0Q==" />
                 </item>
 	</channel>
 </rss>
