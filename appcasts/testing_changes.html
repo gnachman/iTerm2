@@ -1,3 +1,25 @@
+<h2>Alpha 4</h2>
+<ul>
+<li>Fix jump-to-scroll to stay at the scroll position. Fixed bug 13: cannot select one character.</li>
+<li>Apply patch from iTerm1 bug 2905335: adds an option to disable smart placement and saves window positions in prefs.</li>
+<li>Migrate old preferences, fixing bug 5. Also remove some extraneous build files from svn.</li>
+<li>Fix bug where display is corrupted when reizing with font size follows window turned on (bug 3).</li>
+</ul>
+
+<h2>Alpha 3</h2>
+<ul>
+<li>Fixed some warnings in PTYTask. Moved assertion in linebuffer per bug 9.</li>
+<li>Fix a bug in the psmtabbar where they mutate an array while enumerating it. Also fix a race condition that caused Major fail! crashes or dereferencing free memory in PTYTask by properly locking the list of tasks and tolerating closed fd rather than hoping usleep prevents the race (hint: it doesn't)</li>
+</ul>
+
+<h2>Alpha 2</h2>
+<ul>
+<li>Added link to homepage.</li>
+<li>Fixed some bugs with find. Changed credits. Updated Sparkle for the new site.</li>
+<li>Rewrote find for better performance. Unicode not working so great now, though.</li>
+</ul>
+
+<h2>Alpha 1</h2>
 <ul>
 <li>Find feature moved into a toolbar</li>
 <li>Slowness on resize fixed.</li>
