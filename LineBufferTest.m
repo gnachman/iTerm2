@@ -488,8 +488,70 @@ char* poplines9[] = {
 	}
 }
 
+- (void) findTest
+{
+	LineBuffer* buffer = [[LineBuffer alloc] initWithBlockSize:20];
+	[buffer setMaxLines:3];
+	
+	screen_char_t* sct;
+	int length;
+	BOOL partial;
+	sct = [self toSct: "deadxx" length: &length partial: &partial];
+	[buffer appendLine:sct length:6 partial:NO];
+	free((void*)sct);
+
+	sct = [self toSct: "firstx" length: &length partial: &partial];
+	[buffer appendLine:sct length:6 partial:NO];
+	free((void*)sct);
+	
+	sct = [self toSct: "lastxx" length: &length partial: &partial];
+	[buffer appendLine:sct length:6 partial:NO];
+	free((void*)sct);
+	
+	sct = [self toSct: "xzzyzza" length: &length partial: &partial];
+	[buffer appendLine:sct length:7 partial:NO];
+	free((void*)sct);
+	[buffer dropExcessLinesWithWidth:10];
+
+	[buffer dump];
+	int len;
+	int pos = [buffer findSubstring:@"zz" startingAt:0 resultLength:&len options:FindOptCaseInsensitive stopAt:[buffer lastPos]];
+	NSAssert(pos == 19, @"First match in wrong place");
+	int x=0, y=0;
+	BOOL ok = [buffer convertPosition:pos withWidth:8 toX:&x toY:&y];
+	NSAssert(ok, @"convertPosition failed");
+	NSAssert(x == 1, @"Wrong x");
+	NSAssert(y == 2, @"Wrong y");
+	
+	ok = [buffer convertCoordinatesAtX:x atY:y withWidth:8 toPosition:&pos offset:1];
+	NSAssert(ok, @"convertCoords failed");
+	NSAssert(pos == 20, @"Pos advanced wrong");
+	
+	pos = [buffer findSubstring:@"zz" startingAt:pos resultLength:&len options:FindOptCaseInsensitive stopAt:[buffer lastPos]];
+	NSAssert(pos == 22, @"Seond match in wrong place");
+	
+	ok = [buffer convertPosition:pos withWidth:8 toX:&x toY:&y];
+	NSAssert(ok, @"convertposition failed");
+	NSAssert(x == 4, @"Wrong x");
+	NSAssert(y == 2, @"Wrong y");
+
+	ok = [buffer convertCoordinatesAtX:x atY:y withWidth:8 toPosition:&pos offset:1];
+	NSAssert(ok, @"convertCoords failed");
+	NSAssert(pos == 23, @"Pos advanced wrong");
+	
+	ok = [buffer convertCoordinatesAtX:6 atY:2 withWidth:10 toPosition:&pos offset:1];
+	NSAssert(!ok, @"Went past end but succeeded.");
+
+	ok = [buffer convertCoordinatesAtX:5 atY:0 withWidth:10 toPosition:&pos offset:1];
+	NSAssert(ok, @"Crossing blocks failed.");
+	NSAssert(pos == 12, @"offset crossing blocks failed");
+
+	[buffer release];
+}
+
 - (void) runTests
 {
+	[self findTest];
 	[self testAppend];
 	[self testPop];
 	[self testBufferAppend];

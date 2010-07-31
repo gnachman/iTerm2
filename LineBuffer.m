@@ -89,7 +89,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     return dest;
 }
 
-- (void) dump
+- (void) dump: (int) rawOffset
 {
     char temp[1000];
     int i;
@@ -101,7 +101,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     }
     for (i = first_entry; i < cll_entries; ++i) {
         BOOL iscont = (i == cll_entries-1) && is_partial;
-        NSLog(@"Line %d, length %d, offset from raw=%d, continued=%s: %s\n", i, cumulative_line_lengths[i] - prev, prev, iscont?"yes":"no", 
+        NSLog(@"Line %d, length %d, offset from raw=%d, abs pos=%d, continued=%s: %s\n", i, cumulative_line_lengths[i] - prev, prev, prev + rawOffset, iscont?"yes":"no", 
               formatsct(buffer_start+prev-start_offset, cumulative_line_lengths[i]-prev, temp));
         prev = cumulative_line_lengths[i];
     }
@@ -607,9 +607,11 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
 - (void) dump
 {
     int i;
+	int rawOffset = 0;
     for (i = 0; i < [blocks count]; ++i) {
         NSLog(@"Block %d:\n", i);
-        [[blocks objectAtIndex: i] dump];
+        [[blocks objectAtIndex: i] dump:rawOffset];
+		rawOffset += [[blocks objectAtIndex:i] rawSpaceUsed];
     }
 }
 
@@ -911,7 +913,7 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
         // this is usually faster than calling getWrappedLineWithWrapWidth since
         // most calls to the latter will just decrement line and return NULL.
         int block_lines = [block getNumLinesWithWrapWidth:width];
-        if (block_lines < line) {
+        if (block_lines <= line) {
             line -= block_lines;
 			*position += [block rawSpaceUsed];
             continue;
@@ -920,8 +922,14 @@ BOOL stringCompare(unichar* needle, int needle_len, screen_char_t* haystack, int
 		int pos;
 		pos = [block getPositionOfLine: &line atX: x withWidth: width];
 		if (pos >= 0) {
-			int tempx, tempy;
-			if ([self convertPosition:pos+offset withWidth:width toX:&tempx toY:&tempy]) {
+			int tempx=0, tempy=0;
+			// The correct position has been computed:
+			// *position = start of block
+			// pos = offset within block
+			// offset = additional offset the user requested
+			// but we need to see if the position actually exists after adding offset. If it can be
+			// converted to an x,y position the it's all right.
+			if ([self convertPosition:*position+pos+offset withWidth:width toX:&tempx toY:&tempy] && tempy >= 0 && tempx >= 0) {
 				*position += pos + offset;
 				return YES;
 			} else {

@@ -10,7 +10,6 @@
 
 #import <Cocoa/Cocoa.h>
 #import <iTerm/PreferencePanel.h>
-#import <LineBuffer.h>
 
 int main(int argc, const char *argv[])
 {
