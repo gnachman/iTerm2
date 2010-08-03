@@ -2632,32 +2632,115 @@ static NSCursor* textViewCursor =  nil;
 					y: (int) y 
 {
 	static char *urlSet = ".?/:;%=&_-,+~#@!*'()";
-	int x1=x, x2=x, y1=y, y2=y;
-	int startx=-1, starty=-1, endx, endy;
 	int w = [dataSource width];
 	int h = [dataSource numberOfLines];
-	unichar c;
-    
-    for (;x1>=0&&y1>=0;) {
-        c = [self _getCharacterAtX:x1 Y:y1];
-        if (!c || !(isnumber(c) || isalpha(c) || strchr(urlSet, c))) break;
-		startx = x1; starty = y1;
-		x1--;
-		if (x1<0) y1--, x1=w-1;
-    }
-    if (startx == -1) return nil;
+    NSMutableString *url = [NSMutableString string];
+    unichar c = [self _getCharacterAtX:x Y:y];
 
-	endx = x; endy = y;
-	for (;x2<w&&y2<h;) {
-        c = [self _getCharacterAtX:x2 Y:y2];
-        if (!c || !(isnumber(c) || isalpha(c) || strchr(urlSet, c))) break;
-		endx = x2; endy = y2;
-		x2++;
-		if (x2>=w) y2++, x2=0;
-    }
+    if (c == '\0' || !(isalnum(c) || strchr(urlSet, c)))
+        return url;
 
-    NSMutableString *url = [[[NSMutableString alloc] initWithString:[self contentFromX:startx Y:starty ToX:endx+1 Y:endy pad: YES]] autorelease];
-	
+	// Look for a left and right edge bracketed by | characters
+    // Look for a left edge
+    int leftx = 0;
+    for (int xi = x-1, yi = y; 0 <= xi; xi--) {
+        unichar c = [self _getCharacterAtX:xi Y:yi];
+        if (c == '|' && 
+            ((yi > 0 && [self _getCharacterAtX:xi Y:yi-1] == '|') ||
+             (yi < h-1 && [self _getCharacterAtX:xi Y:yi+1] == '|'))) {
+            leftx = xi+1;
+            break;
+        }
+    }
+    //NSLog(@"%s: leftx: %d", __PRETTY_FUNCTION__, leftx);
+
+    // Look for a right edge
+    int rightx = w-1;
+    for (int xi = x+1, yi = y; xi < w; xi++) {
+        unichar c = [self _getCharacterAtX:xi Y:yi];
+        if (c == '|' &&
+            ((yi > 0 && [self _getCharacterAtX:xi Y:yi-1] == '|') ||
+             (yi < h-1 && [self _getCharacterAtX:xi Y:yi+1] == '|'))) {
+            rightx = xi-1;
+            break;
+        }
+    }
+    //NSLog(@"%s: width: %d", __PRETTY_FUNCTION__, w);
+    //NSLog(@"%s: rightx: %d", __PRETTY_FUNCTION__, rightx);
+
+    // Move to the left
+    {
+        int endx = x-1;
+        for (int xi = endx, yi = y; xi >= leftx && 0 <= yi; xi--) {
+            unichar c = [self _getCharacterAtX:xi Y:yi];
+            if (c == '\0' || !(isalnum(c) || strchr(urlSet, c))) {
+				// Found a non-url character so append the left part of the URL.
+                [url insertString:[self contentFromX:xi+1 Y:yi ToX:endx Y:yi pad: YES]
+                     atIndex:0];
+                break;
+            }
+            if (xi == leftx) {
+				// hit the start of the line
+                [url insertString:[self contentFromX:xi Y:yi ToX:endx Y:yi pad: YES]
+                     atIndex:0];
+				// Try to wrap around to the previous line
+                if (yi == 0) {
+					break;
+				}
+                yi--;
+                if (rightx < w-1 && [self _getCharacterAtX:rightx+1 Y:yi] != '|') {
+					// Was bracketed by |s but the previous line lacks them.
+                    break;
+				}
+				// skip backslashes at the end of the line indicating wrapping.
+                xi = rightx;
+                while (xi >= leftx && [self _getCharacterAtX:xi Y:yi] == '\\') {
+                    xi--;
+                }
+                endx = xi;
+            }
+        }
+    }
+    //NSLog(@"%s: url-at-the-left: %@", __PRETTY_FUNCTION__, url);
+
+    // Move to the right
+    {
+        int startx = x;
+        for (int xi = startx+1, yi = y; xi <= rightx && yi < h; xi++) {
+            unichar c = [self _getCharacterAtX:xi Y:yi];
+            if (c == '\0' || !(isalnum(c) || strchr(urlSet, c))) {
+				// Found something non-urly. Append what we have so far.
+                [url appendString:[self contentFromX:startx Y:yi ToX:xi-1 Y:yi pad: YES]];
+				// skip backslahes that indicate wrapping
+                while (x <= rightx && [self _getCharacterAtX:xi Y:yi] == '\\') {
+                    xi++;
+                }
+                if (xi <= rightx) {
+					// before rightx there was something besides \s
+					break;
+				}
+				// xi is left at rightx+1
+            } else if (xi == rightx) {
+				// Made it to rightx.
+                [url appendString:[self contentFromX:startx Y:yi ToX:xi Y:yi pad: YES]];
+            } else {
+				// Char is valid and xi < rightx.
+                continue;
+            }
+			// Wrap to the next line
+            if (yi == h-1) {
+				// got to the end of the screen.
+				break;
+			}
+            yi++;
+            if (leftx > 0 && [self _getCharacterAtX:leftx-1 Y:yi] != '|') {
+				// Tried to wrap but there was no |, so stop.
+				break;
+			}
+            xi = startx = leftx;
+        }
+    }
+    //NSLog(@"%s: url-whole: %@", __PRETTY_FUNCTION__, url);
     
     // Grab the addressbook command
 	[url replaceOccurrencesOfString:@"\n" withString:@"" options:NSLiteralSearch range:NSMakeRange(0, [url length])];
@@ -2823,8 +2906,36 @@ static NSCursor* textViewCursor =  nil;
     // Check for common types of URLs
 
 	NSRange range = [trimmedURLString rangeOfString:@"://"];
-	if (range.location == NSNotFound)
+	if (range.location == NSNotFound) {
 		trimmedURLString = [@"http://" stringByAppendingString:trimmedURLString];
+    } else {
+		// Search backwards for the start of the scheme.
+        for (int i = range.location - 1; 0 <= i; i--) {
+            unichar c = [trimmedURLString characterAtIndex:i];
+            if (!isalnum(c)) {
+                // Remove garbage before the scheme part
+                trimmedURLString = [trimmedURLString substringFromIndex:i + 1];
+                switch (c) {
+                case '(':
+                    // If an open parenthesis is right before the
+                    // scheme part, remove the closing parenthesis
+                    {
+                        NSRange closer = [trimmedURLString rangeOfString:@")"];
+                        if (closer.location != NSNotFound) {
+                            trimmedURLString = [trimmedURLString substringToIndex:closer.location];
+						}
+                    }
+                    break;
+                }
+                // Chomp a dot at the end
+                int last = [trimmedURLString length] - 1;
+                if (0 <= last && [trimmedURLString characterAtIndex:last] == '.') {
+                    trimmedURLString = [trimmedURLString substringToIndex:last];
+				}
+                break;
+            }
+        }
+    }
 	
 	url = [NSURL URLWithString:trimmedURLString];
 
