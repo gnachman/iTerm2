@@ -562,7 +562,7 @@ static NSCursor* textViewCursor =  nil;
 			}
 		}
 	}
-	oldStartX=startX; oldStartY=startY; oldEndX=endX; oldEndY=endY;
+	oldStartX=startX; oldStartY=startY; oldEndX=endX; oldEndY=endY; oldSelectMode = selectMode;
 
 	// Redraw lines with dirty characters
 	dirty = [dataSource dirty];
@@ -1213,7 +1213,12 @@ static NSCursor* textViewCursor =  nil;
 	mouseDownOnSelection = NO;
     
     if ([event clickCount]<2 ) {
-        selectMode = SELECT_CHAR;
+		if (([event modifierFlags] & NSAlternateKeyMask) || 
+			(selectMode == SELECT_BOX && ([event modifierFlags] & NSCommandKeyMask))) {
+			selectMode = SELECT_BOX;
+		} else {
+			selectMode = SELECT_CHAR;
+		}
 
         // if we are holding the shift key down, we are extending selection
         if (startX > -1 && ([event modifierFlags] & NSShiftKeyMask))
@@ -1393,7 +1398,9 @@ static NSCursor* textViewCursor =  nil;
 			[self copy: self];
 	}
 	
-	selectMode = SELECT_CHAR;
+	if (selectMode != SELECT_BOX) {
+		selectMode = SELECT_CHAR;
+	}
 	[self updateDirtyRects];
 }
 
@@ -1448,7 +1455,11 @@ static NSCursor* textViewCursor =  nil;
 	// check if we want to drag and drop a selection
 	if(mouseDownOnSelection == YES && ([event modifierFlags] & NSCommandKeyMask))
 	{
-		theSelectedText = [self contentFromX: startX Y: startY ToX: endX Y: endY pad: NO];
+		if (selectMode == SELECT_BOX) {
+			theSelectedText = [self contentInBoxFromX: startX Y: startY ToX: endX Y: endY pad: NO];
+		} else {
+			theSelectedText = [self contentFromX: startX Y: startY ToX: endX Y: endY pad: NO];
+		}
 		if([theSelectedText length] > 0)
 		{
 			[self _dragText: theSelectedText forEvent: event];
@@ -1482,6 +1493,7 @@ static NSCursor* textViewCursor =  nil;
     
     switch (selectMode) {
         case SELECT_CHAR:
+		case SELECT_BOX:
             endX=x+1;
             endY=y;
             break;
@@ -1526,6 +1538,20 @@ static NSCursor* textViewCursor =  nil;
 	//NSLog(@"(%d,%d)-(%d,%d)",startX,startY,endX,endY);
 }
 
+- (NSString*)contentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad
+{
+	int i;
+	NSMutableString* result = [[NSMutableString alloc] init];
+	for (i = starty; i < endy; ++i) {
+		NSString* line = [self contentFromX:startx Y:i ToX:nonInclusiveEndx Y:i pad:pad];
+		[result appendString:line];
+		if (i < endy-1) {
+			[result appendString:@"\n"];
+		}
+//		[line release];
+	}
+	return result;
+}
 
 - (NSString *) contentFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad
 {
@@ -1621,8 +1647,11 @@ static NSCursor* textViewCursor =  nil;
 #endif
 	
 	if (startX <= -1) return nil;
-	return ([self contentFromX: startX Y: startY ToX: endX Y: endY pad: pad]);
-	
+	if (selectMode == SELECT_BOX) {
+		return [self contentInBoxFromX: startX Y: startY ToX: endX Y: endY pad: pad];
+	} else {
+		return ([self contentFromX: startX Y: startY ToX: endX Y: endY pad: pad]);
+	}
 }
 
 - (NSString *) content
@@ -3133,10 +3162,11 @@ static NSCursor* textViewCursor =  nil;
 - (BOOL) _isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old
 {
 	int _startX=startX, _startY=startY, _endX=endX, _endY=endY;
+	char _selectMode = selectMode;
 	if(!old) {
-		_startY=startY; _startX=startX; _endY=endY; _endX=endX;
+		_startY=startY; _startX=startX; _endY=endY; _endX=endX; _selectMode = selectMode;
 	} else {
-		_startY=oldStartY; _startX=oldStartX; _endY=oldEndY; _endX=oldEndX;
+		_startY=oldStartY; _startX=oldStartX; _endY=oldEndY; _endX=oldEndX; _selectMode = oldSelectMode;
 	}
 
 	if(_startX <= -1 || (_startY == _endY && _startX == _endX)) {
@@ -3146,6 +3176,9 @@ static NSCursor* textViewCursor =  nil;
         int t;
         t=_startY; _startY=_endY; _endY=t;
         t=_startX; _startX=_endX; _endX=t;
+	}
+	if (_selectMode == SELECT_BOX) {
+		return (row >= _startY && row < _endY) && (col >= _startX && col < _endX);
 	}
 	if(row == _startY && _startY == _endY) {
 		return (col >= _startX && col < _endX);

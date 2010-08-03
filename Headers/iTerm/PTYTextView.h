@@ -38,7 +38,7 @@
 
 @class VT100Screen;
 
-enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE };
+enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 
 @interface PTYTextView : NSView <NSTextInput>
 {
@@ -99,6 +99,7 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE };
 	//selection
 	int startX, startY, endX, endY;
 	int oldStartX, oldStartY, oldEndX, oldEndY;
+	char oldSelectMode;
 	BOOL mouseDown;
 	BOOL mouseDragged;
 	char selectMode;
@@ -150,6 +151,7 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE };
 - (void)rightMouseDragged:(NSEvent *)event;
 - (void)scrollWheel:(NSEvent *)event;
 - (NSString *) contentFromX:(int)startx Y:(int)starty ToX:(int)endx Y:(int)endy pad: (BOOL) pad;
+- (NSString*) contentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad;
 - (NSString *) selectedText;
 - (NSString *) selectedTextWithPad: (BOOL) pad;
 - (NSString *) content;
