@@ -42,6 +42,7 @@
 #import <iTerm/PTYSession.h>
 #import <iTerm/PTYTask.h>
 #import <iTerm/PreferencePanel.h>
+#import "iTermApplicationDelegate.h"
 #import <iTerm/iTermGrowlDelegate.h>
 #import <iTerm/iTermTerminalProfileMgr.h>
 #include <string.h>
@@ -347,7 +348,6 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     }
 }
 
-#ifdef DEBUG_RESIZEDWIDTH
 // NSLog the screen contents for debugging.
 - (void) dumpScreen
 {
@@ -378,7 +378,47 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 		NSLog(@"%04d @ buffer+%2d lines: %s %s\n", y, ((p - buffer_lines) / REAL_WIDTH), line, p[WIDTH].ch ? "[cont]" : "[eol]");
 	}
 }
-#endif
+
+- (void) dumpDebugLog;
+{
+	int x, y;
+	char line[1000];
+	char dirtyline[1000];
+	DebugLog([NSString stringWithFormat:@"width=%d height=%d cursor_x=%d cursor_y=%d scroll_top=%d scroll_bottom=%d max_scrollback_lines=%d current_scrollback_lines=%d scrollback_overflow=%d",
+			  WIDTH, HEIGHT, CURSOR_X, CURSOR_Y, SCROLL_TOP, SCROLL_BOTTOM, max_scrollback_lines, current_scrollback_lines, scrollback_overflow]);
+
+	for (y = 0; y < HEIGHT; ++y) {
+		int ox = 0;
+		screen_char_t* p = [self getLineAtScreenIndex: y];
+		if (p == buffer_lines) {
+			DebugLog(@"--- top of buffer ---\n");
+		}
+		for (x = 0; x < WIDTH; ++x, ++ox) {
+			if (y == CURSOR_Y && x == CURSOR_X) {
+				line[ox++] = '<';
+				line[ox++] = '*';
+				line[ox++] = '>';
+			}
+			if (p+x > buffer_lines + HEIGHT*REAL_WIDTH) {
+				line[ox++] = '!';
+			}
+			if (p[x].ch) {
+				line[ox] = p[x].ch;
+			} else {
+				line[ox] = '.';
+			}
+			if (dirty[y*WIDTH+x]) {
+				dirtyline[x] = '*';
+			} else {
+				dirtyline[x] = ' ';
+			}
+		}
+		dirtyline[x] = 0;
+		line[x] = 0;
+		DebugLog([NSString stringWithFormat:@"%04d @ buffer+%2d lines: %s %s", y, ((p - buffer_lines) / REAL_WIDTH), line, p[WIDTH].ch ? "[cont]" : "[eol]"]);
+		DebugLog([NSString stringWithFormat:@"                 dirty: %s", dirtyline]);
+	}
+}
 
 - (int) _getLineLength: (screen_char_t*) line
 {
@@ -1523,8 +1563,10 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 	// clear the contents between idx1 and idx2
 	for(i = idx1, aScreenChar = screen_top + idx1; i < idx2; i++, aScreenChar++)
 	{
-		if(aScreenChar >= (buffer_lines + HEIGHT*REAL_WIDTH))
-			aScreenChar = buffer_lines; // wrap around to top of buffer
+		if (aScreenChar >= (buffer_lines + HEIGHT*REAL_WIDTH)) {
+			aScreenChar -= HEIGHT * REAL_WIDTH; // wrap around to top of buffer
+			NSAssert(aScreenChar < (buffer_lines + HEIGHT*REAL_WIDTH), @"Tried to go way past the end of the screen");
+		}
 		aScreenChar->ch = 0;
 		aScreenChar->fg_color = [TERMINAL foregroundColorCodeReal];
 		aScreenChar->bg_color = [TERMINAL backgroundColorCodeReal];
@@ -2157,6 +2199,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (void)resetDirty
 {
+	DebugLog(@"resetDirty");
 	memset(dirty,0,WIDTH*HEIGHT*sizeof(char));
 }
 

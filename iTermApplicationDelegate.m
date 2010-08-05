@@ -47,6 +47,8 @@ static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Script
 static NSString* AUTO_LAUNCH_SCRIPT = @"~/Library/Application Support/iTerm/AutoLaunch.scpt";
 
 static BOOL usingAutoLaunchScript = NO;
+BOOL gDebugLogging = NO;
+int gDebugLogFile = -1;
 
 #define ABOUT_SCROLL_FPS	30.0
 #define ABOUT_SCROLL_RATE	1.0
@@ -338,6 +340,34 @@ static BOOL usingAutoLaunchScript = NO;
   [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermWindowDidResize" object: self userInfo: nil];    
 }
 
+// Debug logging
+-(IBAction)debugLogging:(id)sender
+{
+	gDebugLogging = !gDebugLogging;
+	if (gDebugLogging) {
+		gDebugLogFile = open("/tmp/debuglog.txt", O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+		NSRunAlertPanel(@"Debug Logging Enabled", 
+						@"Writing to /tmp/debuglog.txt",
+						@"OK", nil, nil);
+	} else {
+		close(gDebugLogFile);
+		gDebugLogFile=-1;
+		NSRunAlertPanel(@"Debug Logging Stopped", 
+						@"Please compress and send /tmp/debuglog.txt to the developers.",
+						@"OK", nil, nil);
+	}
+}
+
+void DebugLog(NSString* value)
+{
+	if (gDebugLogging) {
+		NSData* data = [value dataUsingEncoding:NSUTF8StringEncoding];
+		int written = write(gDebugLogFile, [data bytes], [data length]);
+		assert(written == [data length]);
+		written = write(gDebugLogFile, "\n", 1);
+		assert(written == 1);
+	}
+}
 
 /// About window
 

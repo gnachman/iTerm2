@@ -209,4 +209,5 @@
 // Perform a search of the screen and scrollback buffer.
 - (BOOL) findString: (NSString*) aString forwardDirection: (BOOL) direction ignoringCase: (BOOL) ignoreCase startingAtX: (int) x staringAtY: (int) y atStartX: (int*)startX atStartY: (int*)startY atEndX: (int*)endX atEndY: (int*)endY;
 
+- (void) dumpDebugLog;
 @end

@@ -41,6 +41,7 @@
 #import <iTerm/PTYScrollView.h>
 #import <iTerm/PTYTask.h>
 #import <iTerm/iTermController.h>
+#import "iTermApplicationDelegate.h"
 #import "ITConfigPanelController.h"
 #import <iTerm/Tree.h>
 
@@ -506,6 +507,7 @@ static NSCursor* textViewCursor =  nil;
 
 - (void)updateDirtyRects
 {
+	DebugLog(@"updateDirtyRects called");
 	int WIDTH = [dataSource width];
 	char* dirty;
 	int lineStart;
@@ -525,6 +527,7 @@ static NSCursor* textViewCursor =  nil;
 			if(dirty[x] && isSelected && !isCursor) {
 				// Don't call [self deselect] as it would recurse back here
 				startX = -1;
+				DebugLog(@"found selected dirty noncursor");
 				break;
 			}
 		}
@@ -539,6 +542,7 @@ static NSCursor* textViewCursor =  nil;
 		blinkShow = !blinkShow;
 		lastBlink = now;
 		redrawBlink = YES;
+		DebugLog(@"time to redraw blinking text");
 	}
 
 	// Visible chars that have changed selection status are dirty
@@ -557,6 +561,7 @@ static NSCursor* textViewCursor =  nil;
 				NSRect dirtyRect = [self visibleRect];
 				dirtyRect.origin.y = y*lineHeight;
 				dirtyRect.size.height = lineHeight;
+				DebugLog([NSString stringWithFormat:@"found selection change/blink at %d,%d", x, y]);
 				[self setNeedsDisplayInRect:dirtyRect];
 				break;
 			}
@@ -574,6 +579,7 @@ static NSCursor* textViewCursor =  nil;
 				NSRect dirtyRect = [self visibleRect];
 				dirtyRect.origin.y = y*lineHeight;
 				dirtyRect.size.height = lineHeight;
+				DebugLog([NSString stringWithFormat:@"Line y=%d has dirty chars, draw height=%f", y, lineHeight]);
 				[self setNeedsDisplayInRect:dirtyRect];
 				break;
 			}
@@ -784,8 +790,54 @@ static NSCursor* textViewCursor =  nil;
     CURSOR=YES;
 }
 
+-(void)_debugLogScreenContents
+{
+	NSRect rect = [self visibleRect];
+	[self lockFocus];
+	int x,y;
+	DebugLog([NSString stringWithFormat:@"visible rect is %d,%d %dx%d", rect.origin.x, rect.origin.y, rect.size.width, rect.size.height]);
+	for (y=rect.origin.y; y < rect.origin.y + rect.size.height; ++y) {
+		NSMutableString* line = [[NSMutableString alloc] init];
+		[line autorelease];
+		int i = 0;
+		int count = 0;
+		int prev = -1;
+		for (x=rect.origin.x; x <= rect.origin.x + rect.size.width; ++x, ++i) {
+			NSColor *theColor;
+			int b;
+			if (x < rect.origin.x + rect.size.width) {
+				theColor = NSReadPixel(NSMakePoint(x, y));
+				b = (int)(10*[theColor brightnessComponent]);
+			} else {
+				// last pix on the line, force output.
+				b = -1;
+			}
+			if (prev == -1) {
+				// first pixel on the line
+				prev = b;
+				count = 1;
+			} else if (b == prev) {
+				// repeated value
+				++count;
+			} else {
+				// value changed, output previous value
+				[line appendFormat:@"%c%d", 'a'+prev, count];
+				prev = b;
+				count = 1;
+			}
+		}
+		
+		DebugLog(line);
+	}
+	[self unlockFocus];
+}
+
 - (void)drawRect:(NSRect)rect
 {
+	DebugLog([NSString stringWithFormat:@"%s(0x%x):-[PTYTextView drawRect:(%f,%f,%f,%f) frameRect: (%f,%f,%f,%f)]",
+		  __PRETTY_FUNCTION__, self,
+		  rect.origin.x, rect.origin.y, rect.size.width, rect.size.height,
+		  [self frame].origin.x, [self frame].origin.y, [self frame].size.width, [self frame].size.height]);
 #if DEBUG_METHOD_TRACE
 	NSLog(@"%s(0x%x):-[PTYTextView drawRect:(%f,%f,%f,%f) frameRect: (%f,%f,%f,%f)]",
 		__PRETTY_FUNCTION__, self,
@@ -808,6 +860,7 @@ static NSCursor* textViewCursor =  nil;
 	if(lineStart < 0) lineStart = 0;
 	if(lineEnd > [dataSource numberOfLines]) lineEnd = [dataSource numberOfLines];
 
+	DebugLog([NSString stringWithFormat:@"Draw lines in [%d, %d)", lineStart, lineEnd]);
 	// Draw each line
 	for(int line = lineStart; line < lineEnd; line++) {
 		NSRect lineRect = [self visibleRect];
@@ -821,6 +874,10 @@ static NSCursor* textViewCursor =  nil;
 
 	// Draw cursor
 	[self _drawCursor];
+	
+	if (gDebugLogging) {
+		[self _debugLogScreenContents];
+	}
 }
 
 - (void)keyDown:(NSEvent*)event
@@ -1302,6 +1359,7 @@ static NSCursor* textViewCursor =  nil;
         }            
 	}
 
+	DebugLog([NSString stringWithFormat:@"Mouse down. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
     if([_delegate respondsToSelector: @selector(willHandleEvent:)] && [_delegate willHandleEvent: event])
         [_delegate handleEvent: event];
 	[self updateDirtyRects];
@@ -1359,8 +1417,10 @@ static NSCursor* textViewCursor =  nil;
 		[(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:NO];
 	}
 
-	if(mouseDown == NO)
+	if(mouseDown == NO) {
+		DebugLog([NSString stringWithFormat:@"Mouse up. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);		
 		return;
+	}
 	mouseDown = NO;
 		
 	// make sure we have key focus
@@ -1401,6 +1461,8 @@ static NSCursor* textViewCursor =  nil;
 	if (selectMode != SELECT_BOX) {
 		selectMode = SELECT_CHAR;
 	}
+	DebugLog([NSString stringWithFormat:@"Mouse up. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
+	
 	[self updateDirtyRects];
 }
 
@@ -1441,6 +1503,7 @@ static NSCursor* textViewCursor =  nil;
 			case MOUSE_REPORTING_ALL_MOTION:
 				[session writeTask:[terminal mouseMotion:0 withModifiers:[event modifierFlags] atX:rx Y:ry]];
 			case MOUSE_REPORTING_NORMAL:
+				DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
 				return;
 				break;
 			case MOUSE_REPORTING_NONE:
@@ -1463,6 +1526,7 @@ static NSCursor* textViewCursor =  nil;
 		if([theSelectedText length] > 0)
 		{
 			[self _dragText: theSelectedText forEvent: event];
+			DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
 			return;
 		}
 	}
@@ -1534,6 +1598,7 @@ static NSCursor* textViewCursor =  nil;
             break;
     }
 
+	DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
 	[self updateDirtyRects];
 	//NSLog(@"(%d,%d)-(%d,%d)",startX,startY,endX,endY);
 }
@@ -2312,6 +2377,9 @@ static NSCursor* textViewCursor =  nil;
 
 - (void) _drawLine:(int)line AtY:(float)curY
 {
+	int screenstartline = [self frame].origin.y / lineHeight;
+	DebugLog([NSString stringWithFormat:@"Draw line %d (%d on screen) at %f w/ lineHeight=%f", line, (line - screenstartline), line*lineHeight, lineHeight]);
+
 	int WIDTH = [dataSource width];
 	screen_char_t* theLine = [dataSource getLineAtIndex:line];
 	PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
