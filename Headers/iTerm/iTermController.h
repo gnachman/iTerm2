@@ -52,6 +52,7 @@
 - (IBAction) nextTerminal: (id) sender;
 - (void)newSessionInTabAtIndex: (id) sender;
 - (void)newSessionInWindowAtIndex: (id) sender;
+- (void)showHideFindBar;
 
 - (PseudoTerminal *) currentTerminal;
 - (void) terminalWillClose: (PseudoTerminal *) theTerminalWindow;

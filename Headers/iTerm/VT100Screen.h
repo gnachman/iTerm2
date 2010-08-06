@@ -29,18 +29,12 @@
 
 #import <Cocoa/Cocoa.h>
 #import <iTerm/VT100Terminal.h>
+#import <LineBuffer.h>
 
 @class PTYTask;
 @class PTYSession;
 @class PTYTextView;
 @class iTermGrowlDelegate;
-
-typedef struct screen_char_t
-{
-	unichar ch;    // the actual character
-	unsigned int bg_color; // background color
-	unsigned int fg_color; // foreground color
-} screen_char_t;
 
 #define TABWINDOW	300
 
@@ -71,32 +65,32 @@ typedef struct screen_char_t
     BOOL blinkingCursor;
     PTYTextView *display;
 	
-	// single buffer that holds both scrollback and screen contents
+	// A circular buffer exactly (WIDTH+1) * HEIGHT elements in size. This contains
+	// only the contents of the screen. The scrollback buffer is stored in linebuffer.
 	screen_char_t *buffer_lines;
+	
+	// The position in buffer_lines of the first line in the screen. The logical lines
+	// wrap around the circular buffer.
+	screen_char_t *screen_top;
+
 	// buffer holding flags for each char on whether it needs to be redrawn
 	char *dirty;
+	
 	// a single default line
 	screen_char_t *default_line;
+	screen_char_t *result_line;
+	
 	// temporary buffer to store main buffer in SAVE_BUFFER/RESET_BUFFER mode
 	screen_char_t *temp_buffer;
-	
-	// pointer to last line in buffer
-	screen_char_t *last_buffer_line;
-	// pointer to first screen line
-	screen_char_t *screen_top;
-	//pointer to first scrollback line
-	screen_char_t *scrollback_top;
-	
+		
 	// default line stuff
 	int default_bg_code;
 	int default_fg_code;
 	int default_line_width;
 
-	//scroll back stuff
-	BOOL dynamic_scrollback_size;
 	// max size of scrollback buffer
     unsigned int  max_scrollback_lines;
-	// current number of lines in scrollback buffer
+	// current number of lines in scrollback buffer (not including what is on screen)
 	unsigned int current_scrollback_lines;
 	// how many scrollback lines have been lost due to overflow
 	int scrollback_overflow;
@@ -107,6 +101,9 @@ typedef struct screen_char_t
 	
 	// Growl stuff
 	iTermGrowlDelegate* gd;
+	
+	// Scrollback buffer
+	LineBuffer* linebuffer;
 }
 
 
@@ -116,7 +113,7 @@ typedef struct screen_char_t
 - (NSString *)description;
 
 - (screen_char_t*)initScreenWithWidth:(int)width Height:(int)height;
-- (void)resizeWidth:(int)width height:(int)height;
+- (void)resizeWidth:(int)new_width height:(int)height;
 - (void)reset;
 - (void)setWidth:(int)width height:(int)height;
 - (int)width;
@@ -209,4 +206,8 @@ typedef struct screen_char_t
 // double width
 - (BOOL) isDoubleWidthCharacter:(unichar) c;
 
+// Perform a search of the screen and scrollback buffer.
+- (BOOL) findString: (NSString*) aString forwardDirection: (BOOL) direction ignoringCase: (BOOL) ignoreCase startingAtX: (int) x staringAtY: (int) y atStartX: (int*)startX atStartY: (int*)startY atEndX: (int*)endX atEndY: (int*)endY;
+
+- (void) dumpDebugLog;
 @end

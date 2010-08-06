@@ -55,7 +55,7 @@ static NSString *SUPPORT_DIRECTORY = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 
 // Comparator for sorting encodings
-static int _compareEncodingByLocalizedName(id a, id b, void *unused)
+static NSInteger _compareEncodingByLocalizedName(id a, id b, void *unused)
 {
 	NSString *sa = [NSString localizedNameOfStringEncoding: [a unsignedIntValue]];
 	NSString *sb = [NSString localizedNameOfStringEncoding: [b unsignedIntValue]];
@@ -131,7 +131,7 @@ static BOOL initDone = NO;
 
 	// Close all terminal windows
 	iterator = [terminalWindows objectEnumerator];
-	while(terminal = [iterator nextObject]) {
+	while ((terminal = [iterator nextObject])) {
 		[[terminal window] close];
 	}
 	NSAssert([terminalWindows count] == 0, @"Expected terminals to be gone");
@@ -153,6 +153,11 @@ static BOOL initDone = NO;
 - (void) newSessionInTabAtIndex: (id) sender
 {
     [self launchBookmark:[sender representedObject] inTerminal:FRONT];
+}
+
+- (void) showHideFindBar
+{
+	[[self currentTerminal] showHideFindBar];
 }
 
 - (void)newSessionInWindowAtIndex: (id) sender

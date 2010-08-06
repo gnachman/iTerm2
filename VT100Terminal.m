@@ -33,6 +33,7 @@
 #import <iTerm/PTYSession.h>
 #import <iTerm/VT100Screen.h>
 #import <iTerm/NSStringITerm.h>
+#import "iTermApplicationDelegate.h"
 #include <term.h>
 
 #define DEBUG_ALLOC		0
@@ -1057,7 +1058,10 @@ static VT100TCC decode_euccn(unsigned char *datap,
 	
     while (len > 0) {
         if (iseuccn(*p)&&len>1) {
-            if ((*(p+1)>=0x40&&*(p+1)<=0x7e)||*(p+1)>=0x80&&*(p+1)<=0xfe) {
+            if ((*(p+1) >= 0x40 &&
+				 *(p+1) <= 0x7e) ||
+				(*(p+1) >= 0x80 &&
+				 *(p+1) <= 0xfe)) {
                 p += 2;
                 len -= 2;
             }
@@ -1091,7 +1095,10 @@ static VT100TCC decode_big5(unsigned char *datap,
     
     while (len > 0) {
         if (isbig5(*p)&&len>1) {
-            if ((*(p+1)>=0x40&&*(p+1)<=0x7e)||*(p+1)>=0xa1&&*(p+1)<=0xfe) {
+            if ((*(p+1) >= 0x40 &&
+				 *(p+1) <= 0x7e) ||
+				(*(p+1) >= 0xa1 &&
+				 *(p+1)<=0xfe)) {
                 p += 2;
                 len -= 2;
             }
@@ -1440,10 +1447,10 @@ static VT100TCC decode_string(unsigned char *datap,
     int i;
     int r;
 
-    setupterm((char *)[termtype cString], fileno(stdout), &r);
+    setupterm((char *)[termtype UTF8String], fileno(stdout), &r);
 	
     if (r!=1) {
-        NSLog(@"Terminal type %s is not defined.\n",[termtype cString]);
+        NSLog(@"Terminal type %s is not defined.\n",[termtype UTF8String]);
         for(i = 0; i < TERMINFO_KEYS; i ++) {
             if (key_strings[i]) free(key_strings[i]);
             key_strings[i]=NULL;
@@ -1594,6 +1601,14 @@ static VT100TCC decode_string(unsigned char *datap,
     datap = STREAM + streamOffset;
     datalen = current_stream_length - streamOffset;
 	
+	if (gDebugLogging) {
+		DebugLog([NSString stringWithFormat:@"Read %d bytes", datalen]);
+		int i;
+		for (i = 0; i < datalen; ++i) {
+			DebugLog([NSString stringWithFormat:@"Byte %d: %d (%c)", i, (int)datap[i], (datap[i] > 32 && datap[i] < 127)?datap[i]:' ']);
+		}
+	}
+	
     if (datalen == 0) {
 		result.type = VT100CC_NULL;
 		result.length = 0;
@@ -1654,6 +1669,11 @@ static VT100TCC decode_string(unsigned char *datap,
 		}
     }
 	
+	if (gDebugLogging) {
+		DebugLog(@"At end of getNextToken");
+		[SCREEN dumpDebugLog];
+		DebugLog(@"Return from getNextToken");
+	}
     return result;
 }
 
@@ -2401,6 +2421,5 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     SCREEN=sc;
 }
-
 
 @end

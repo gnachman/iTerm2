@@ -749,6 +749,11 @@ static NSImage *warningImage;
     mstring = [NSMutableString stringWithString:string];
     max = [string length];
     for(i=0; i<max; i++) {
+        // From http://lists.apple.com/archives/cocoa-dev/2001/Jul/msg00114.html
+        // in MacJapanese, the backslash char (ASCII 0x5C) is mapped to Unicode 0xA5.
+        // The following line gives you NSString containing an Unicode character Yen sign (0xA5) in Japanese localization.
+        // string = [NSString stringWithCString:"\"];
+        // TODO: Check the locale before doing this.
         if ([mstring characterAtIndex:i] == 0xa5) {
             [mstring replaceCharactersInRange:NSMakeRange(i, 1) withString:@"\\"];
         }
@@ -1804,7 +1809,7 @@ static NSImage *warningImage;
 // Object specifier
 - (NSScriptObjectSpecifier *)objectSpecifier
 {
-    unsigned index = 0;
+    NSUInteger index = 0;
     id classDescription = nil;
 	
     NSScriptObjectSpecifier *containerRef = nil;

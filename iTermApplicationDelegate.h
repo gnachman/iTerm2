@@ -30,13 +30,15 @@
 #import <Cocoa/Cocoa.h>
 
 @class PseudoTerminal;
+extern BOOL gDebugLogging;
+void DebugLog(NSString* value);
 
 @interface iTermApplicationDelegate : NSObject
 {
     // about window
 	NSWindowController *aboutController;
     IBOutlet id ABOUT;
-	IBOutlet id scrollingInfo;
+	IBOutlet NSTextView *scrollingInfo;
     IBOutlet NSTextView *AUTHORS;
 
 	//Scrolling
@@ -75,6 +77,8 @@
 - (IBAction)newWindow:(id)sender;
 - (IBAction)newSession:(id)sender;
 - (IBAction)buildScriptMenu:(id)sender;
+
+-(IBAction)debugLogging:(id)sender;
 
     // About window
 - (IBAction)showAbout:(id)sender;

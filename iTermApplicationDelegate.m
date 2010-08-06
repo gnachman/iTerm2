@@ -34,7 +34,7 @@
 #import <iTerm/PseudoTerminal.h>
 #import <iTerm/PTYSession.h>
 #import <iTerm/VT100Terminal.h>
-#import <iTerm/FindPanelWindowController.h>
+#import <iTerm/FindCommandHandler.h>
 #import <iTerm/PTYWindow.h>
 #import <iTermProfileWindowController.h>
 #import <iTermBookmarkController.h>
@@ -46,7 +46,11 @@
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 static NSString* AUTO_LAUNCH_SCRIPT = @"~/Library/Application Support/iTerm/AutoLaunch.scpt";
 
+NSMutableString* gDebugLogStr = nil;
+NSMutableString* gDebugLogStr2 = nil;
 static BOOL usingAutoLaunchScript = NO;
+BOOL gDebugLogging = NO;
+int gDebugLogFile = -1;
 
 #define ABOUT_SCROLL_FPS	30.0
 #define ABOUT_SCROLL_RATE	1.0
@@ -83,15 +87,6 @@ static BOOL usingAutoLaunchScript = NO;
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-		
-    id prefs = [NSUserDefaults standardUserDefaults];
-    NSString *version = [prefs objectForKey: @"Last Updated Version"];
-    
-    if (!version || ![version isEqualToString:[prefs objectForKey: @"iTerm Version"]]) {
-        [prefs setObject:[prefs objectForKey: @"iTerm Version"] forKey:@"Last Updated Version"];
-        [self showAbout:nil];
-    }
-    
 	[self buildAddressBookMenu:nil];
 	
 	// register for services
@@ -153,7 +148,7 @@ static BOOL usingAutoLaunchScript = NO;
 {
     // Check if we have an autolauch script to execute. Do it only once, i.e. at application launch.
     if(usingAutoLaunchScript == NO &&
-       [[NSFileManager defaultManager] fileExistsAtPath: [AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]] != nil)
+       [[NSFileManager defaultManager] fileExistsAtPath: [AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]])
     {
 		usingAutoLaunchScript = YES;
 		
@@ -347,6 +342,60 @@ static BOOL usingAutoLaunchScript = NO;
   [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermWindowDidResize" object: self userInfo: nil];    
 }
 
+void FlushDebugLog();
+void SwapDebugLog() {
+	NSMutableString* temp;
+	temp = gDebugLogStr;
+	gDebugLogStr = gDebugLogStr2;
+	gDebugLogStr2 = temp;
+}
+
+void FlushDebugLog() {
+	NSData* data = [gDebugLogStr dataUsingEncoding:NSUTF8StringEncoding];
+	int written = write(gDebugLogFile, [data bytes], [data length]);
+	assert(written == [data length]);
+	[gDebugLogStr setString:@""];
+}
+
+// Debug logging
+-(IBAction)debugLogging:(id)sender
+{
+	if (!gDebugLogging) {
+		NSRunAlertPanel(@"Debug Logging Enabled", 
+						@"Writing to /tmp/debuglog.txt",
+						@"OK", nil, nil);
+		gDebugLogFile = open("/tmp/debuglog.txt", O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+		gDebugLogStr = [[NSMutableString alloc] init];
+		gDebugLogStr2 = [[NSMutableString alloc] init];
+		gDebugLogging = !gDebugLogging;
+	} else {
+		gDebugLogging = !gDebugLogging;
+		SwapDebugLog();
+		FlushDebugLog();
+		SwapDebugLog();
+		FlushDebugLog();
+
+		close(gDebugLogFile);
+		gDebugLogFile=-1;
+		NSRunAlertPanel(@"Debug Logging Stopped", 
+						@"Please compress and send /tmp/debuglog.txt to the developers.",
+						@"OK", nil, nil);
+		[gDebugLogStr release];
+		[gDebugLogStr2 release];
+	}
+}
+
+void DebugLog(NSString* value)
+{
+	if (gDebugLogging) {
+		[gDebugLogStr appendString:value];
+		[gDebugLogStr appendString:@"\n"];
+		if ([gDebugLogStr length] > 100000000) {
+			SwapDebugLog();
+			[gDebugLogStr2 setString:@""];
+		}
+	}
+}
 
 /// About window
 
@@ -365,16 +414,16 @@ static BOOL usingAutoLaunchScript = NO;
 		NULL];
 	
     // Web URL
-    webURL = [NSURL URLWithString: @"http://iterm.sourceforge.net"];
+    webURL = [NSURL URLWithString: @"http://iterm2.googlecode.com/"];
     linkAttributes= [NSDictionary dictionaryWithObjectsAndKeys: webURL, NSLinkAttributeName,
                         [NSNumber numberWithInt: NSSingleUnderlineStyle], NSUnderlineStyleAttributeName,
 					    [NSColor blueColor], NSForegroundColorAttributeName,
 						[NSCursor pointingHandCursor], NSCursorAttributeName,
 					    NULL];
-    webSite = [[NSAttributedString alloc] initWithString: @"http://iterm.sourceforge.net" attributes: linkAttributes];
+    webSite = [[NSAttributedString alloc] initWithString: @"http://iterm2.googlecode.com/" attributes: linkAttributes];
 
     // Bug report
-    bugURL = [NSURL URLWithString: @"http://iterm.sourceforge.net/tracker-bug"];
+    bugURL = [NSURL URLWithString: @"http://code.google.com/p/iterm2/issues/entry"];
     linkAttributes= [NSDictionary dictionaryWithObjectsAndKeys: bugURL, NSLinkAttributeName,
         [NSNumber numberWithInt: NSSingleUnderlineStyle], NSUnderlineStyleAttributeName,
         [NSColor blueColor], NSForegroundColorAttributeName,
@@ -397,10 +446,16 @@ static BOOL usingAutoLaunchScript = NO;
     [[AUTHORS textStorage] appendAttributedString: bugReport];
     [AUTHORS setAlignment: NSCenterTextAlignment range: NSMakeRange(0, [[AUTHORS textStorage] length])];
 
+	NSString* creditsPath = [[NSBundle mainBundle] pathForResource:@"credits" ofType:@"rtf"];
+	NSAttributedString* creditsString = [[NSAttributedString alloc] initWithPath:creditsPath documentAttributes:nil];
+	[scrollingInfo replaceCharactersInRange:NSMakeRange( 0, 0 ) 
+				   withRTF:[creditsString RTFFromRange:NSMakeRange( 0, [creditsString length] ) 
+				   documentAttributes:nil]];
+	
 	[[scrollingInfo enclosingScrollView] setLineScroll:0.0];
     [[scrollingInfo enclosingScrollView] setPageScroll:0.0];
 	[[scrollingInfo enclosingScrollView] setVerticalScroller:nil];
-    
+
     //Start scrolling    
     scrollLocation = 0; 
     scrollRate = ABOUT_SCROLL_RATE;
@@ -416,7 +471,7 @@ static BOOL usingAutoLaunchScript = NO;
 												  userInfo:nil
 												   repeats:YES] retain];
     [[NSRunLoop currentRunLoop] addTimer:eventLoopScrollTimer forMode:NSEventTrackingRunLoopMode];
-	
+
     aboutController = [[NSWindowController alloc] initWithWindow:ABOUT];
     [aboutController showWindow:ABOUT];
 
@@ -738,7 +793,7 @@ static BOOL usingAutoLaunchScript = NO;
 
 - (IBAction) showFindPanel: (id) sender
 {
-    [[FindPanelWindowController sharedInstance] showWindow:self];
+	[[iTermController sharedInstance] showHideFindBar];
 }
 
 - (IBAction) findNext: (id) sender

@@ -53,8 +53,8 @@ static NSString *NoHandler = @"<No Handler>";
 }
 
 /*
- Static method to copy old preferences file, iTerm.plist, to new
- preferences file, net.sourceforge.iTerm.plist
+ Static method to copy old preferences file, iTerm.plist or net.sourceforge.iTerm.plist, to new
+ preferences file, com.googlecode.iterm2.plist
  */
 + (BOOL) migratePreferences {
 	
@@ -62,19 +62,28 @@ static NSString *NoHandler = @"<No Handler>";
         stringByAppendingPathComponent:@"Library"]
         stringByAppendingPathComponent:@"Preferences"];
 	
-	NSString *oldPrefs = [prefDir stringByAppendingPathComponent:@"iTerm.plist"];
-	NSString *newPrefs = [prefDir stringByAppendingPathComponent:@"net.sourceforge.iTerm.plist"];
+	NSString *reallyOldPrefs = [prefDir stringByAppendingPathComponent:@"iTerm.plist"];
+	NSString *somewhatOldPrefs = [prefDir stringByAppendingPathComponent:@"net.sourceforge.iTerm.plist"];
+	NSString *newPrefs = [prefDir stringByAppendingPathComponent:@"com.googlecode.iterm2.plist"];
 	
 	NSFileManager *mgr = [NSFileManager defaultManager];
 	
-	if(([mgr fileExistsAtPath:oldPrefs]) &&
-	   (![mgr fileExistsAtPath:newPrefs])) {
-		NSLog(@"Preference file migrated");
-		[mgr copyPath:oldPrefs toPath:newPrefs handler:nil];
-		[NSUserDefaults resetStandardUserDefaults];
-		return (YES);	
+	if ([mgr fileExistsAtPath:newPrefs]) {
+		return NO;
 	}
-	return (NO);	
+	NSString* source;
+	if ([mgr fileExistsAtPath:somewhatOldPrefs]) {
+		source = somewhatOldPrefs;
+	} else if ([mgr fileExistsAtPath:reallyOldPrefs]) {
+		source = reallyOldPrefs;
+	} else {
+		return NO;
+	}
+	
+	NSLog(@"Preference file migrated");
+	[mgr copyPath:source toPath:newPrefs handler:nil];
+	[NSUserDefaults resetStandardUserDefaults];
+	return (YES);	
 }
 
 
@@ -151,6 +160,7 @@ static NSString *NoHandler = @"<No Handler>";
 	defaultCheckUpdate = [prefs objectForKey:@"SUEnableAutomaticChecks"]?[[prefs objectForKey:@"SUEnableAutomaticChecks"] boolValue]: YES;
 	defaultUseBorder = [prefs objectForKey:@"UseBorder"]?[[prefs objectForKey:@"UseBorder"] boolValue]: NO;
 	defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
+	defaultSmartPlacement = [prefs objectForKey:@"SmartPlacement"]?[[prefs objectForKey:@"SmartPlacement"] boolValue]: YES;
 	defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
 	NSString *appCast = defaultCheckTestRelease ?
 		[[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
@@ -213,6 +223,7 @@ static NSString *NoHandler = @"<No Handler>";
 	[prefs setInteger:defaultCursorType forKey:@"CursorType"];
 	[prefs setBool:defaultUseBorder forKey:@"UseBorder"];
 	[prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
+	[prefs setBool:defaultSmartPlacement forKey:@"SmartPlacement"];
 	[prefs setBool:defaultCheckTestRelease forKey:@"CheckTestRelease"];
 	
 	// save the handlers by converting the bookmark into an index
@@ -261,6 +272,7 @@ static NSString *NoHandler = @"<No Handler>";
 	[cursorType selectCellWithTag:defaultCursorType];
 	[useBorder setState: defaultUseBorder?NSOnState:NSOffState];
 	[hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
+	[smartPlacement setState: defaultSmartPlacement?NSOnState:NSOffState];
 	[checkTestRelease setState: defaultCheckTestRelease?NSOnState:NSOffState];
 	
 	[self showWindow: self];
@@ -309,6 +321,7 @@ static NSString *NoHandler = @"<No Handler>";
         defaultWordChars = [[wordChars stringValue] retain];
         defaultQuitWhenAllWindowsClosed = ([quitWhenAllWindowsClosed state] == NSOnState);
         defaultCheckUpdate = ([checkUpdate state] == NSOnState);
+        defaultSmartPlacement = ([smartPlacement state] == NSOnState);
         
 		if (defaultCheckTestRelease != ([checkTestRelease state] == NSOnState)) {
 		
@@ -454,6 +467,11 @@ static NSString *NoHandler = @"<No Handler>";
 - (BOOL) hideScrollbar
 {
 	return defaultHideScrollbar;
+}
+
+- (BOOL) smartPlacement
+{
+	return defaultSmartPlacement;
 }
 
 - (BOOL) checkTestRelease

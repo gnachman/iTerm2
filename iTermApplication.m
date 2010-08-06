@@ -46,7 +46,8 @@
 			PTYTabView* tabView = [currentTerminal tabView];
 			PTYSession* currentSession = [currentTerminal currentSession];
 
-			if(([event modifierFlags] & 0xffff0000) == NSCommandKeyMask) {
+			const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
+			if(([event modifierFlags] & mask) == NSCommandKeyMask) {
 				int digit = [[event charactersIgnoringModifiers] intValue];
 				if(digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
 					[tabView selectTabViewItemAtIndex:digit-1];

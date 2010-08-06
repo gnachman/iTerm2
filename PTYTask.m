@@ -29,7 +29,9 @@
 // Debug option
 #define DEBUG_ALLOC         0
 #define DEBUG_METHOD_TRACE  0
-
+#define PtyTaskDebugLog(fmt, ...)
+// Use this instead to debug this module:
+// #define PtyTaskDebugLog NSLog
 
 #define MAXRW 2048
 
@@ -96,6 +98,10 @@ struct proc_vnodepathinfo {
 @interface TaskNotifier : NSObject
 {
 	NSMutableArray* tasks;
+	// Set to true when an element of 'tasks' was modified
+	BOOL tasksChanged;
+	// Protects 'tasks' and 'tasksChanged'.
+	NSRecursiveLock* tasksLock;
 	int unblockPipeR;
 	int unblockPipeW;
 }
@@ -133,6 +139,8 @@ static TaskNotifier* taskNotifier = nil;
 		return nil;
 
 	tasks = [[NSMutableArray alloc] init];
+	tasksLock = [[NSRecursiveLock alloc] init];
+	tasksChanged = NO;
 
 	int unblockPipe[2];
 	if(pipe(unblockPipe) != 0) {
@@ -148,6 +156,7 @@ static TaskNotifier* taskNotifier = nil;
 - (void)dealloc
 {
 	[tasks release];
+	[tasksLock release];
 	close(unblockPipeR);
 	close(unblockPipeW);
 	[super dealloc];
@@ -155,13 +164,27 @@ static TaskNotifier* taskNotifier = nil;
 
 - (void)registerTask:(PTYTask*)task
 {
+	PtyTaskDebugLog(@"registerTask: lock\n");
+	[tasksLock lock];
+	PtyTaskDebugLog(@"Add task at 0x%x\n", (void*)task);
 	[tasks addObject:task];
+	PtyTaskDebugLog(@"There are now %d tasks\n", [tasks count]);
+	tasksChanged = YES;
+	PtyTaskDebugLog(@"registerTask: unlock\n");
+	[tasksLock unlock];
 	[self unblock];
 }
 
 - (void)deregisterTask:(PTYTask*)task
 {
+	PtyTaskDebugLog(@"deregisterTask: lock\n");
+	[tasksLock lock];
+	PtyTaskDebugLog(@"Begin remove task 0x%x\n", (void*)task);
 	[tasks removeObject:task];
+	tasksChanged = YES;
+	PtyTaskDebugLog(@"End remove task 0x%x. There are now %d tasks.\n", (void*)task, [tasks count]);
+	PtyTaskDebugLog(@"deregisterTask: unlock\n");
+	[tasksLock unlock];
 	[self unblock];
 }
 
@@ -192,31 +215,52 @@ static TaskNotifier* taskNotifier = nil;
 		// Unblock pipe to interrupt select() whenever a PTYTask register/unregisters
 		highfd = unblockPipeR;
 		FD_SET(unblockPipeR, &rfds);
+		CFMutableSetRef handledFds = CFSetCreateMutable (NULL, [tasks count], NULL);
 
 		// Add all the PTYTask pipes
-		iter = [tasks objectEnumerator];
-		while(task = [iter nextObject]) {
-			int fd = [task fd];
-			if(fd < 0)
-				goto breakloop;
-			if(fd > highfd)
-				highfd = fd;
-			if([task wantsRead])
-				FD_SET(fd, &rfds);
-			if([task wantsWrite])
-				FD_SET(fd, &wfds);
-			FD_SET(fd, &efds);
+		PtyTaskDebugLog(@"run1: lock");
+		[tasksLock lock];
+		PtyTaskDebugLog(@"Begin cleaning out dead tasks");
+		int j;
+		for (j = [tasks count] - 1; j >= 0; --j) {
+			PTYTask* task = [tasks objectAtIndex:j];
+			if ([task fd] < 0) {
+				PtyTaskDebugLog(@"Deregister dead task %d\n", j);
+				[self deregisterTask:task];
+			}
 		}
+		PtyTaskDebugLog(@"Begin enumeration over %d tasks\n", [tasks count]);
+		iter = [tasks objectEnumerator];
+		int i = 0;
+		while ((task = [iter nextObject])) {
+			PtyTaskDebugLog(@"Got task %d\n", i);
+			int fd = [task fd];
+			if(fd < 0) {
+				PtyTaskDebugLog(@"Task has fd of %d\n", fd);
+			} else {
+//				PtyTaskDebugLog(@"Select on fd %d\n", fd);
+				if(fd > highfd)
+					highfd = fd;
+				if([task wantsRead])
+					FD_SET(fd, &rfds);
+				if([task wantsWrite])
+					FD_SET(fd, &wfds);
+				FD_SET(fd, &efds);
+			}
+			i++;
+			PtyTaskDebugLog(@"About to get task %d\n", i);
+		}
+		PtyTaskDebugLog(@"run1: unlock");
+		[tasksLock unlock];
 
 		// Poll...
 		if(select(highfd+1, &rfds, &wfds, &efds, NULL) <= 0) {
 			switch(errno) {
 				case EAGAIN:
 				case EINTR:
-					goto breakloop;
 				default:
-					NSLog(@"Major fail! %s", strerror(errno));
-					exit(1);
+					goto breakloop;
+				// If the file descriptor is closed in the main thread there's a race where sometimes you'll get an EBADF.
 			}
 		}
 
@@ -229,20 +273,71 @@ static TaskNotifier* taskNotifier = nil;
 		}
 
 		// Check for read events on PTYTask pipes
+		PtyTaskDebugLog(@"run2: lock");
+		[tasksLock lock];
+		PtyTaskDebugLog(@"Iterating over %d tasks\n", [tasks count]);
 		iter = [tasks objectEnumerator];
-		while(task = [iter nextObject]) {
+		i = 0;
+		
+		while ((task = [iter nextObject])) {
+			PtyTaskDebugLog(@"Got task %d\n", i);
 			int fd = [task fd];
-			if(fd < 0)
-				goto breakloop;
-			if(FD_ISSET(fd, &rfds))
-				[task processRead];
-			if(FD_ISSET(fd, &wfds))
-				[task processWrite];
-			if(FD_ISSET(fd, &efds))
-				[task brokenPipe];
+			if(fd >= 0) {
+				// This is mostly paranoia, but if two threads
+				// end up with the same fd (because one closed
+				// and there was a race condition) then trying
+				// to read twice would hang.
+				if (CFSetContainsValue(handledFds, (void*)fd)) {
+					PtyTaskDebugLog(@"Duplicate fd %d", fd);
+					continue;
+				}
+				CFSetAddValue(handledFds, (void*)fd);
+				
+				if(FD_ISSET(fd, &rfds)) {
+					PtyTaskDebugLog(@"run/processREad: unlock");
+					[tasksLock unlock];
+					[task processRead];
+					PtyTaskDebugLog(@"run/processREad: lock");
+					[tasksLock lock];
+					if (tasksChanged) {
+						PtyTaskDebugLog(@"Restart iteration\n");
+						tasksChanged = NO;
+						iter = [tasks objectEnumerator];
+					}
+				}
+				if(FD_ISSET(fd, &wfds)) {
+					PtyTaskDebugLog(@"run/processWrite: unlock");
+					[tasksLock unlock];
+					[task processWrite];
+					PtyTaskDebugLog(@"run/processWrite: lock");
+					[tasksLock lock];
+					if (tasksChanged) {
+						PtyTaskDebugLog(@"Restart iteration\n");
+						tasksChanged = NO;
+						iter = [tasks objectEnumerator];
+					}
+				}
+				if(FD_ISSET(fd, &efds)) {
+					PtyTaskDebugLog(@"run/brokenPipe: unlock");
+					[tasksLock unlock];
+					[task brokenPipe];
+					PtyTaskDebugLog(@"run/brokenPipe: lock");
+					[tasksLock lock];
+					if (tasksChanged) {
+						PtyTaskDebugLog(@"Restart iteration\n");
+						tasksChanged = NO;
+						iter = [tasks objectEnumerator];
+					}
+				}
+			}
+			i++;
+			PtyTaskDebugLog(@"About to get task %d\n", i);
 		}
+		PtyTaskDebugLog(@"run3: unlock");
+		[tasksLock unlock];
 
 		breakloop:
+		CFRelease(handledFds);		
 		[innerPool drain];
 	}
 
@@ -301,7 +396,7 @@ setup_tty_param(
 - (id)init
 {
 #if DEBUG_ALLOC
-	NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
+	PtyTaskDebugLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
 #endif
 	if ([super init] == nil)
 		return nil;
@@ -324,15 +419,17 @@ setup_tty_param(
 - (void)dealloc
 {
 #if DEBUG_ALLOC
-	NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
+	PtyTaskDebugLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
 #endif
 	[[TaskNotifier sharedInstance] deregisterTask:self];
 
 	if (pid > 0)
 		kill(pid, SIGKILL);
 
-	if (fd >= 0)
+	if (fd >= 0) {
+		PtyTaskDebugLog(@"dealloc: Close fd %d\n", fd);
 		close(fd);
+	}
 
 	[writeLock release];
 	[writeBuffer release];
@@ -359,7 +456,7 @@ setup_tty_param(
 	setup_tty_param(&term, &win, width, height);
 	pid = forkpty(&fd, ttyname, &term, &win);
 	if (pid == (pid_t)0) {
-		const char* argpath = [[progpath stringByStandardizingPath] cString];
+		const char* argpath = [[progpath stringByStandardizingPath] UTF8String];
 		int max = args == nil ? 0: [args count];
 		const char* argv[max + 2];
 
@@ -380,10 +477,10 @@ setup_tty_param(
 				key = [keys objectAtIndex:i];
 				value = [env objectForKey:key];
 				if (key != nil && value != nil)
-					setenv([key cString], [value cString], 1);
+					setenv([key UTF8String], [value UTF8String], 1);
 			}
 		}
-		chdir([[[env objectForKey:@"PWD"] stringByExpandingTildeInPath] cString]);
+		chdir([[[env objectForKey:@"PWD"] stringByExpandingTildeInPath] UTF8String]);
 		sts = execvp(argpath, (char* const*)argv);
 
 		/* exec error */
@@ -394,7 +491,7 @@ setup_tty_param(
 		_exit(-1);
 	}
 	else if (pid < (pid_t)0) {
-		NSLog(@"%@ %s", progpath, strerror(errno));
+		PtyTaskDebugLog(@"%@ %s", progpath, strerror(errno));
 		NSRunCriticalAlertPanel(NSLocalizedStringFromTableInBundle(@"Unable to Fork!",@"iTerm", [NSBundle bundleForClass: [self class]], @"Fork Error"),
 						NSLocalizedStringFromTableInBundle(@"iTerm cannot launch the program for this session.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Fork Error"),
 						NSLocalizedStringFromTableInBundle(@"Close Session",@"iTerm", [NSBundle bundleForClass: [self class]], @"Fork Error"),
@@ -457,7 +554,7 @@ setup_tty_param(
 	[writeLock lock];
 
 	// Only write up to MAXRW bytes, then release control
-	const char* ptr = [writeBuffer mutableBytes];
+	char* ptr = [writeBuffer mutableBytes];
 	unsigned int length = [writeBuffer length];
 	if(length > MAXRW) length = MAXRW;
 	ssize_t written = write(fd, [writeBuffer mutableBytes], length);
@@ -574,9 +671,13 @@ setup_tty_param(
 - (void)stop
 {
 	[self sendSignal:SIGKILL];
-	usleep(10000);
-	if(fd >= 0)
+	if (fd >= 0) {
 		close(fd);
+	}
+	// This isn't an atomic update, but select() should be resilient to
+	// being passed a half-broken fd. We must change it because after this
+	// function returns, a new task may be created with this fd and then
+	// the select thread wouldn't know which task a fd belongs to.
 	fd = -1;
 
 	[self wait];

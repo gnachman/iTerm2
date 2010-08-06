@@ -32,7 +32,7 @@
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
 
-#define WINDOW_NAME @"iTerm Window 0"
+#define WINDOW_NAME @"iTerm Window %d"
 
 #import <iTerm/iTerm.h>
 #import <iTerm/PseudoTerminal.h>
@@ -49,7 +49,7 @@
 #import <iTerm/VT100Screen.h>
 #import <iTerm/PTYSession.h>
 #import <iTerm/PTToolbarController.h>
-#import <iTerm/FindPanelWindowController.h>
+#import <iTerm/FindCommandHandler.h>
 #import <iTerm/ITAddressBookMgr.h>
 #import <iTerm/ITConfigPanelController.h>
 #import <iTerm/iTermTerminalProfileMgr.h>
@@ -60,6 +60,9 @@
 #import <iTermBookmarkController.h>
 #import <iTerm/iTermGrowlDelegate.h>
 #include <unistd.h>
+
+#define CACHED_WINDOW_POSITIONS 100
+static BOOL windowPositions[CACHED_WINDOW_POSITIONS];
 
 @interface PSMTabBarControl (Private)
 - (void)update;
@@ -80,6 +83,15 @@ NSString *sessionsKey = @"sessions";
 #define TABVIEW_LEFT_RIGHT_OFFSET		29
 #define TOOLBAR_OFFSET					0
 
+@implementation FindBarView
+- (void)drawRect:(NSRect)dirtyRect
+{
+    [[NSColor controlColor] setFill];
+    NSRectFill(dirtyRect);
+}
+
+@end
+
 @implementation PseudoTerminal
 
 // Utility
@@ -92,7 +104,7 @@ NSString *sessionsKey = @"sessions";
     
     p=[[NSMutableArray alloc] init];
     
-    s=[cmdl cString];
+    s=[cmdl UTF8String];
     slen = strlen(s);
     
     i=j=qf=0;
@@ -119,7 +131,7 @@ NSString *sessionsKey = @"sessions";
                     [p addObject:[NSString stringWithCString:tmp]];
                 j=0;
                 k++;
-                while (i<slen&&s[i+1]==' '||s[i+1]=='\t'||s[i+1]=='\n'||s[i+1]==0) i++;
+                while (i<slen && (s[i+1]==' '||s[i+1]=='\t'||s[i+1]=='\n'||s[i+1]==0)) i++;
             }
             else {
                 tmp[j++]=s[i];
@@ -150,6 +162,7 @@ NSString *sessionsKey = @"sessions";
 	[self window];
 	[commandField retain];
 	[commandField setDelegate:self];
+	[findBar retain];
 	
 	// create the window programmatically with appropriate style mask
 	styleMask = NSTitledWindowMask | 
@@ -227,7 +240,10 @@ NSString *sessionsKey = @"sessions";
 	NSScreen *currentScreen = [[[[iTermController sharedInstance] currentTerminal] window]screen];
     if ((self = [super initWithWindowNibName: windowNibName]) == nil)
 		return nil;
-			
+	//enforce the nib to load
+	[self window];
+	[commandField retain];
+	
 	myWindow = [[PTYWindow alloc] initWithContentRect: [currentScreen frame]
 											styleMask: NSBorderlessWindowMask 
 											  backing: NSBackingStoreBuffered 
@@ -324,10 +340,21 @@ NSString *sessionsKey = @"sessions";
 	[tabBarControl setAutoresizingMask: (NSViewWidthSizable | NSViewMinYMargin)];
 	[[[self window] contentView] addSubview: tabBarControl];
 	[tabBarControl release];	
-	
+
+	// Set up findbar
+
+	NSRect fbFrame = [findBarSubview frame];
+	findBar = [[NSView alloc] initWithFrame: NSMakeRect(0, 0, fbFrame.size.width, fbFrame.size.height)];
+	[findBar addSubview: findBarSubview];
+	[findBar setHidden: YES];
+
+	[findBarTextField setDelegate: self];
+		
     // create the tabview
 	aRect = [[[self window] contentView] bounds];
-	//aRect.size.height -= [tabBarControl frame].size.height;
+	if (![findBar isHidden]) {
+		aRect.size.height -= [findBar frame].size.height;
+	}
     TABVIEW = [[PTYTabView alloc] initWithFrame: aRect];
     [TABVIEW setAutoresizingMask: NSViewWidthSizable|NSViewHeightSizable];
 	[TABVIEW setAutoresizesSubviews: YES];
@@ -337,7 +364,9 @@ NSString *sessionsKey = @"sessions";
     // Add to the window
     [[[self window] contentView] addSubview: TABVIEW];
 	[TABVIEW release];
-	
+
+	[[[self window] contentView] addSubview: findBar];
+
 	// assign tabview and delegates
 	[tabBarControl setTabView: TABVIEW];
 	[TABVIEW setDelegate: tabBarControl];
@@ -423,7 +452,6 @@ NSString *sessionsKey = @"sessions";
 	}
 	
 }
-
 - (void)initWindowWithSettingsFrom:(PseudoTerminal *)aPseudoTerminal
 {
 	NSRect aRect;
@@ -483,6 +511,17 @@ NSString *sessionsKey = @"sessions";
             [tabBarControl setStyleNamed:@"Adium"];
             break;
     }
+
+	NSRect frame = [aPseudoTerminal->findBarSubview frame];
+	[findBarSubview setFrame: frame];
+	NSRect fbFrame = [findBarSubview frame];
+	findBar = [[NSView alloc] initWithFrame: NSMakeRect(0, 0, fbFrame.size.width, fbFrame.size.height)];
+ 
+	[findBar addSubview: findBarSubview];
+	[findBar setHidden: [aPseudoTerminal->findBar isHidden]];
+	[findBarTextField setDelegate: self];
+	[[[self window] contentView] addSubview: findBar];	
+
 	
     [[[self window] contentView] setAutoresizesSubviews: YES];
     [[self window] setDelegate: self];
@@ -525,7 +564,7 @@ NSString *sessionsKey = @"sessions";
 				NSFont *font = [[NSFontManager sharedFontManager] convertFont:FONT toSize:(int)(([FONT pointSize] * scale))];
 				font = [self _getMaxFont:font height:aRect.size.height lines:HEIGHT];
 				
-				float height = [font defaultLineHeightForFont] * charVerticalSpacingMultiplier;
+				float height = [layoutManager defaultLineHeightForFont:font] * charVerticalSpacingMultiplier;
 				
 				if (height != charHeight) {
 					//NSLog(@"Old size: %f\t proposed New size:%f\tWindow Height: %f",[FONT pointSize], [font pointSize],frame.size.height);
@@ -728,6 +767,18 @@ NSString *sessionsKey = @"sessions";
     if([TABVIEW indexOfTabViewItemWithIdentifier: aSession] == NSNotFound)
         return;
     
+#if 0
+    // TODO(salobaas): Elucidate:
+    // The original smart placement patch included this code
+    // but it doesn't seem necessary for smart placement, and
+    // is redundant with the call to [aSession terminate] ahead
+    // (or if there's only one session, it's called in -dealloc)
+    if (![aSession exited]) {
+        [[aSession SHELL] sendSignal: SIGHUP];
+        return;
+    }
+#endif
+   
     numberOfSessions = [TABVIEW numberOfTabViewItems]; 
     if(numberOfSessions == 1 && [self windowInited])
     {   
@@ -807,6 +858,20 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (void) setFramePos 
+{
+   // Set framePos to the next unused window position.
+   for (int i = 0; i < CACHED_WINDOW_POSITIONS; i++) {
+      if (!windowPositions[i]) {
+         windowPositions[i] = YES;
+         framePos = i;
+         return;
+      }
+   }
+   framePos = CACHED_WINDOW_POSITIONS - 1;
+}
+
+
 - (PTYSession *) currentSession
 {
     return [[TABVIEW selectedTabViewItem] identifier];
@@ -837,7 +902,9 @@ NSString *sessionsKey = @"sessions";
 	[NAFONT release];
 	[oldFont release];
 	[oldNAFont release];
-
+        [layoutManager release];
+	[findBar release];
+	
 	[_toolbarController release];
 
 	[super dealloc];
@@ -924,7 +991,7 @@ NSString *sessionsKey = @"sessions";
     sz = [@"W" sizeWithAttributes:dic];
 	
 	charWidth = ceil(sz.width * charHorizontalSpacingMultiplier);
-	charHeight = ([font defaultLineHeightForFont] * charVerticalSpacingMultiplier);
+	charHeight = ([layoutManager defaultLineHeightForFont:font] * charVerticalSpacingMultiplier);
 
 	for(i=0;i<[TABVIEW numberOfTabViewItems]; i++) 
     {
@@ -969,7 +1036,28 @@ NSString *sessionsKey = @"sessions";
 
 - (void)setWindowSize
 {    
-    NSSize size, vsize, winSize, tabViewSize;
+	[self setWindowSizeWithVisibleFrame:[[[self window] screen] visibleFrame]];
+}
+
+- (void) _resizeEverySession: (BOOL) hasScrollbar  {
+	// Resize every session.
+    int i;
+	for (i=0;i<[TABVIEW numberOfTabViewItems];i++) 
+	{
+		PTYSession *aSession = [[TABVIEW tabViewItemAtIndex: i] identifier];
+		[aSession setObjectCount:i+1];
+		[[aSession SCREEN] resizeWidth:WIDTH height:HEIGHT];
+		[[aSession SHELL] setWidth:WIDTH  height:HEIGHT];
+		[[aSession SCROLLVIEW] setLineScroll: [[aSession TEXTVIEW] lineHeight]];
+		[[aSession SCROLLVIEW] setPageScroll: 2*[[aSession TEXTVIEW] lineHeight]];
+		[[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
+		if ([aSession backgroundImagePath]) [aSession setBackgroundImagePath:[aSession backgroundImagePath]]; 
+	}
+}
+
+- (void)setWindowSizeWithVisibleFrame: (NSRect)visibleFrame
+{
+	NSSize size, vsize, winSize, tabViewSize;
     NSWindow *thisWindow = [self window];
     NSRect aRect;
     NSPoint topLeft;
@@ -984,25 +1072,37 @@ NSString *sessionsKey = @"sessions";
     if([self windowInited] == NO) 
 		return;
 	
+	// This code sets up aRect to be the new size of the window.
 	if (!_resizeInProgressFlag) {
 		_resizeInProgressFlag = YES;
 		if (!_fullScreen) {
-			aRect = [thisWindow contentRectForFrameRect:[[thisWindow screen] visibleFrame]];
-			if ([TABVIEW numberOfTabViewItems] > 1 || ![[PreferencePanel sharedInstance] hideTab])
+			// Get size of window
+			aRect = [thisWindow contentRectForFrameRect:visibleFrame];
+			if ([TABVIEW numberOfTabViewItems] > 1 || ![[PreferencePanel sharedInstance] hideTab]) {
+				// reduce window size by hight of tabview
 				aRect.size.height -= [tabBarControl frame].size.height;
+			}
+			// compute the max number of rows that fits in the remaining space
+			if (![findBar isHidden]) {
+				// reduce window height by size of findbar
+				aRect.size.height -= [findBar frame].size.height;
+			}
 			max_height = aRect.size.height / charHeight;
-				
+			if (max_height < 0) {
+				return;
+			}
+			// clamp size to some minimum
 			if (WIDTH<20) WIDTH=20;
 			if (HEIGHT<2) HEIGHT=2;
 			if (HEIGHT>max_height) HEIGHT=max_height;
 			
-			// desired size of textview
+			// set desired size of textview to enough pixels to fit WIDTH*HEIGHT
 			vsize.width = charWidth * WIDTH + MARGIN * 2;
 			vsize.height = charHeight * HEIGHT;
 			
 			// NSLog(@"width=%d,height=%d",[[[_sessionMgr currentSession] SCREEN] width],[[[_sessionMgr currentSession] SCREEN] height]);
 			
-			// desired size of scrollview
+			// figure out how big the scrollview should be to achieve the desired textview size of vsize.
 			size = [PTYScrollView frameSizeForContentSize:vsize
 									hasHorizontalScroller:NO
 									  hasVerticalScroller:hasScrollbar
@@ -1014,7 +1114,7 @@ NSString *sessionsKey = @"sessions";
 		#endif
 			
 			
-			// desired size of tabview
+			// figure out how big the tabview should be to fit the scrollview.
 			tabViewSize = [PTYTabView frameSizeForContentSize:size 
 												  tabViewType:[TABVIEW tabViewType] 
 												  controlSize:[TABVIEW controlSize]];
@@ -1025,44 +1125,62 @@ NSString *sessionsKey = @"sessions";
 			
 			// desired size of window content
 			winSize = tabViewSize;
-			
+			if (![findBar isHidden]) {
+				winSize.height += [findBar frame].size.height;
+			}
 			if([TABVIEW numberOfTabViewItems] == 1 && [[PreferencePanel sharedInstance] hideTab])
 			{
+				// The tabs are not visible at the top of the window. Set aRect appropriately.
 				[tabBarControl setHidden: YES];
 				aRect.origin.x = 0;
-				aRect.origin.y = [[PreferencePanel sharedInstance] useBorder] ? VMARGIN : 0;
+				aRect.origin.y = ([findBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) ? VMARGIN : 0;
+				if (![findBar isHidden]) {
+					aRect.origin.y += [findBar frame].size.height;
+				}
 				aRect.size = tabViewSize;
 				[TABVIEW setFrame: aRect];		
-				if ([[PreferencePanel sharedInstance] useBorder]) {
+				if ([findBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) {
 					winSize.height += VMARGIN;
 					vmargin_added = YES;
 				}
 			}
 			else
 			{
+				// The tabs are visible at the top of the window.
 				[tabBarControl setHidden: NO];
 				[tabBarControl setTabLocation: [[PreferencePanel sharedInstance] tabViewType]];
 				winSize.height += [tabBarControl frame].size.height;
 				if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+					// setup aRect to make room for the tabs at the top.
 					aRect.origin.x = 0;
-					aRect.origin.y = [[PreferencePanel sharedInstance] useBorder] ? VMARGIN : 0;
+					aRect.origin.y = ([findBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) ? VMARGIN : 0;
 					aRect.size = tabViewSize;
+					if (![findBar isHidden]) {
+						aRect.origin.y += [findBar frame].size.height;
+					}
 					[TABVIEW setFrame: aRect];
 					aRect.origin.y += aRect.size.height;
 					aRect.size.height = [tabBarControl frame].size.height;
 					[tabBarControl setFrame: aRect];
-					if ([[PreferencePanel sharedInstance] useBorder]) {
+					if ([findBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) {
 						winSize.height += VMARGIN;
 						vmargin_added = YES;
 					}
 				}
 				else {
+					// setup aRect to make room for the tabs at the bottom.
 					aRect.origin.x = 0;
 					aRect.origin.y = 0;
 					aRect.size.width = tabViewSize.width;
 					aRect.size.height = [tabBarControl frame].size.height;
+					if (![findBar isHidden]) {
+						aRect.origin.y += [findBar frame].size.height;
+					}
 					[tabBarControl setFrame: aRect];
 					aRect.origin.y = [tabBarControl frame].size.height;
+					if (![findBar isHidden]) {
+						aRect.origin.y += [findBar frame].size.height;
+					}
 					aRect.size.height = tabViewSize.height;
 					//[TABVIEW setAutoresizesSubviews: NO];
 					[TABVIEW setFrame: aRect];
@@ -1097,44 +1215,23 @@ NSString *sessionsKey = @"sessions";
 				  winSize.width, winSize.height);
 		#endif
 
-		}
-		else {
-			aRect = [thisWindow frame];
-			WIDTH = (int)((aRect.size.width - MARGIN * 2)/charWidth);
-			HEIGHT = (int)((aRect.size.height)/charHeight);
-			aRect = NSMakeRect(floor((aRect.size.width-WIDTH*charWidth-MARGIN*2)/2),floor((aRect.size.height-charHeight*HEIGHT)/2),WIDTH*charWidth+MARGIN*2, charHeight*HEIGHT);
-			[TABVIEW setFrame: aRect];
-			/*[[thisWindow contentView] lockFocus];
-			[[NSColor blackColor] set];
-			NSRectFill([thisWindow frame]);
-			[[thisWindow contentView] unlockFocus];*/
-		}			
-		
-		int i;
-		for (i=0;i<[TABVIEW numberOfTabViewItems];i++) 
-		{
-			PTYSession *aSession = [[TABVIEW tabViewItemAtIndex: i] identifier];
-			[aSession setObjectCount:i+1];
-			[[aSession SCREEN] resizeWidth:WIDTH height:HEIGHT];
-			[[aSession SHELL] setWidth:WIDTH  height:HEIGHT];
-			[[aSession SCROLLVIEW] setLineScroll: [[aSession TEXTVIEW] lineHeight]];
-			[[aSession SCROLLVIEW] setPageScroll: 2*[[aSession TEXTVIEW] lineHeight]];
-			[[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
-			if ([aSession backgroundImagePath]) [aSession setBackgroundImagePath:[aSession backgroundImagePath]]; 
-		}
-		
-		if (!_fullScreen) {
-			// preserve the top left corner of the frame
+			[self _resizeEverySession: hasScrollbar];
+
+			// Preserve the top-left corner of the frame.
 			aRect = [thisWindow frame];
 			topLeft.x = aRect.origin.x;
 			topLeft.y = aRect.origin.y + aRect.size.height;
 			
+			aRect.size.width = winSize.width;
+			aRect.size.height = winSize.height;
+			NSRect frame = [thisWindow frameRectForContentRect: aRect];
+			frame.origin.x = topLeft.x;
+			frame.origin.y = topLeft.y - frame.size.height;
 			
 			[[thisWindow contentView] setAutoresizesSubviews: NO];
-			[thisWindow setContentSize:winSize];
+			[thisWindow setFrame: frame display:YES];
 			[[thisWindow contentView] setAutoresizesSubviews: YES]; 
-			[thisWindow setFrameTopLeftPoint: topLeft];
-
+			
 			if (vmargin_added) {
 				[[thisWindow contentView] lockFocus];
 				[[NSColor windowFrameColor] set];
@@ -1142,10 +1239,39 @@ NSString *sessionsKey = @"sessions";
 				[[thisWindow contentView] unlockFocus];
 			}
 		}
+		else {
+			// Full-screen mode.
+			aRect = [thisWindow frame];
+			WIDTH = (int)((aRect.size.width - MARGIN * 2)/charWidth);
+			HEIGHT = (int)((aRect.size.height)/charHeight);
+			int yoffset=0;
+			if (![findBar isHidden]) {
+				int dh = [findBar frame].size.height / charHeight + 1;
+				HEIGHT -= dh;
+				yoffset = [findBar frame].size.height;
+			} else {
+				yoffset = floor(aRect.size.height-charHeight*HEIGHT)/2; // screen height minus one half character
+			}
+			aRect = NSMakeRect(floor((aRect.size.width-WIDTH*charWidth-MARGIN*2)/2),  // screen width minus one half character and a margin
+                               yoffset,        
+                               WIDTH*charWidth+MARGIN*2,                              // enough width for WIDTH col plus two margins
+                               charHeight*HEIGHT);                                    // enough height for HEIGHT rows
+			[TABVIEW setFrame: aRect];
+			[self _resizeEverySession: hasScrollbar];
+		}			
 		
 		_resizeInProgressFlag = NO;
 	}
 
+	// Adjust the position of the findbar to fit properly below the tabview.
+	NSRect findBarFrame = [findBar frame];
+	findBarFrame.size.width = [TABVIEW frame].size.width;
+	findBarFrame.origin.x = [TABVIEW frame].origin.x;
+	[findBar setFrame: findBarFrame];
+	findBarFrame.size.width += findBarFrame.origin.x;
+	findBarFrame.origin.x = 0;
+	[findBarSubview setFrame: findBarFrame];
+	
 	[[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
 	[tabBarControl update];
 	
@@ -1329,6 +1455,11 @@ NSString *sessionsKey = @"sessions";
 - (void) resetTempTitle
 {
 	tempTitle = NO;
+}
+
+- (BOOL) isResizeInProgress
+{
+	return _resizeInProgressFlag;
 }
 
 - (void)setFont:(NSFont *)font nafont:(NSFont *)nafont
@@ -1557,8 +1688,26 @@ NSString *sessionsKey = @"sessions";
 
 	// Save frame position for last window
 	if([[[iTermController sharedInstance] terminals] count] == 1) {
-		[[self window] saveFrameUsingName:WINDOW_NAME];
-	}
+	    // Close the findbar because otherwise the wrong size
+	    // frame is saved.  You wouldn't want the findbar to
+	    // open automatically anyway.
+            if (![findBar isHidden]) {
+            	[self showHideFindBar];
+            }
+            if ([[PreferencePanel sharedInstance] smartPlacement]) {
+                [[self window] saveFrameUsingName: [NSString stringWithFormat: WINDOW_NAME, 0]];
+            } else {
+                // Save frame position for window
+                [[self window] saveFrameUsingName: [NSString stringWithFormat: WINDOW_NAME, framePos]];
+                windowPositions[framePos] = NO;
+            }
+	} else {
+            if (![[PreferencePanel sharedInstance] smartPlacement]) {
+                // Save frame position for window
+                [[self window] saveFrameUsingName: [NSString stringWithFormat: WINDOW_NAME, framePos]];
+                windowPositions[framePos] = NO;
+            }
+        }
 
 	[[iTermController sharedInstance] terminalWillClose: self];
 }
@@ -1636,7 +1785,7 @@ NSString *sessionsKey = @"sessions";
 		[dic setObject:font forKey:NSFontAttributeName];
 		sz = [@"W" sizeWithAttributes:dic];
 		
-		proposedFrameSize.height = [font defaultLineHeightForFont] * charVerticalSpacingMultiplier * HEIGHT + nch;
+		proposedFrameSize.height = [layoutManager defaultLineHeightForFont:font] * charVerticalSpacingMultiplier * HEIGHT + nch;
         proposedFrameSize.width = sz.width * charHorizontalSpacingMultiplier * WIDTH + wch + MARGIN * 2;
 	}
     else {
@@ -1679,7 +1828,7 @@ NSString *sessionsKey = @"sessions";
 		NSFont *font = [[NSFontManager sharedFontManager] convertFont:FONT toSize:(int)(([FONT pointSize] * scale))];
 		font = [self _getMaxFont:font height:frame.size.height lines:HEIGHT];
 		
-		float height = [font defaultLineHeightForFont] * charVerticalSpacingMultiplier;
+		float height = [layoutManager defaultLineHeightForFont:font] * charVerticalSpacingMultiplier;
 
 		if (height != charHeight) {
 			//NSLog(@"Old size: %f\t proposed New size:%f\tWindow Height: %f",[FONT pointSize], [font pointSize],frame.size.height);
@@ -1695,7 +1844,7 @@ NSString *sessionsKey = @"sessions";
         
         WIDTH = (int)((frame.size.width - MARGIN * 2)/charWidth + 0.5);
 		HEIGHT = (int)((frame.size.height)/charHeight + 0.5);
-        [self setWindowSize];
+        [self setWindowSize];		
     }
 	else {	    
 		w = (int)((frame.size.width - MARGIN * 2)/charWidth);
@@ -1848,7 +1997,7 @@ NSString *sessionsKey = @"sessions";
 		[dic setObject:font forKey:NSFontAttributeName];
 		sz = [@"W" sizeWithAttributes:dic];
 		
-		defaultFrame.size.height = [font defaultLineHeightForFont] * charVerticalSpacingMultiplier * HEIGHT + nch;
+		defaultFrame.size.height = [layoutManager defaultLineHeightForFont:font] * charVerticalSpacingMultiplier * HEIGHT + nch;
 		defaultFrame.size.width = sz.width * charHorizontalSpacingMultiplier * WIDTH + MARGIN*2 + wch;
         defaultFrame.origin.y = [sender frame].origin.y + [sender frame].size.height -  defaultFrame.size.height;
 //		NSLog(@"actual height: %f\t (nch=%f) scale: %f\t new font:%f\told:%f",defaultFrame.size.height,nch,scale, [font pointSize], [FONT pointSize]);
@@ -1867,16 +2016,18 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowWillShowInitial
 {
-	PTYWindow* window = (PTYWindow*)[self window];
-	if([[[iTermController sharedInstance] terminals] count] == 1) {
-		NSRect frame = [window frame];
-		[window setFrameUsingName:WINDOW_NAME];
-		frame.origin = [window frame].origin;
-		frame.origin.y += [window frame].size.height - frame.size.height;
-		[window setFrame:frame display:NO];
-	} else {
-		[window smartLayout];
-	}
+    PTYWindow* window = (PTYWindow*)[self window];
+    if (([[[iTermController sharedInstance] terminals] count] == 1) ||
+        (![[PreferencePanel sharedInstance] smartPlacement])) {
+        NSRect frame = [window frame];
+        [self setFramePos];
+        [window setFrameUsingName: [NSString stringWithFormat: WINDOW_NAME, framePos]];
+        frame.origin = [window frame].origin;
+        frame.origin.y += [window frame].size.height - frame.size.height;
+        [window setFrame:frame display:NO];
+    } else {
+        [window smartLayout];
+    }
 }
 
 // Close Window
@@ -2606,10 +2757,33 @@ NSString *sessionsKey = @"sessions";
 {
     [NSApp stopModal];
 }
+- (IBAction)searchPrevious:(id)sender
+{
+	[[FindCommandHandler sharedInstance] setSearchString:[findBarTextField stringValue]];
+	[[FindCommandHandler sharedInstance] setIgnoresCase: [ignoreCase state]];
+	[[FindCommandHandler sharedInstance] findPrevious];
+}
+- (IBAction)searchNext:(id)sender
+{
+	[[FindCommandHandler sharedInstance] setSearchString:[findBarTextField stringValue]];
+	[[FindCommandHandler sharedInstance] setIgnoresCase: [ignoreCase state]];
+	[[FindCommandHandler sharedInstance] findNext];
+}
+- (IBAction)closeFindBar:(id)sender
+{
+	if (![findBar isHidden]) {
+		[self showHideFindBar];
+	}
+}
 
 - (void)controlTextDidEndEditing:(NSNotification *)aNotification
 {
 	int move = [[[aNotification userInfo] objectForKey:@"NSTextMovement"] intValue];
+	NSControl *postingObject = [aNotification object]; 
+	if (postingObject == findBarTextField) {
+		// This is handled elsewhere.
+		return;
+	}
 	
 	switch (move) {
 		case 16: // Return key
@@ -2623,12 +2797,41 @@ NSString *sessionsKey = @"sessions";
 	}
 }
 
+- (void) showHideFindBar
+{
+	BOOL hide = ![findBar isHidden];
+	NSObject* firstResponder = [[self window] firstResponder];
+	NSText* currentEditor = [findBarTextField currentEditor];
+	if (hide && (!currentEditor || currentEditor != firstResponder)) {
+		// The bar is visible but doesn't have focus. Just set the focus.
+		[[self window] makeFirstResponder:findBarTextField];
+		return;
+	}
+	[findBar setHidden: hide];
+	[self setWindowSize];
+
+	// On OS X 10.5.8, the scroll bar and resize indicator are messed up at this point. Resizing the tabview fixes it. This seems to be fixed in 10.6.
+	NSRect tvframe = [TABVIEW frame];
+	tvframe.size.height += 1;
+	[TABVIEW setFrame: tvframe];
+	tvframe.size.height -= 1;
+	[TABVIEW setFrame: tvframe];
+	
+	if (!hide) {
+		[[self window] makeFirstResponder:findBarTextField];
+	} else {
+		[[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+	}
+}
+
+
 @end
 
 @implementation PseudoTerminal (Private)
 
 - (void) _commonInit
 {
+	layoutManager = [[NSLayoutManager alloc] init];
 	charHorizontalSpacingMultiplier = charVerticalSpacingMultiplier = 1.0;
 	[self setUseTransparency: YES];
 	normalBackgroundColor = [[self window] backgroundColor];
@@ -2645,7 +2848,7 @@ NSString *sessionsKey = @"sessions";
 		newfont = font;
 		font = [[NSFontManager sharedFontManager] convertFont:font toSize:newSize];
 		newSize++;
-		newHeight = [font defaultLineHeightForFont] * charVerticalSpacingMultiplier * lines;
+		newHeight = [layoutManager defaultLineHeightForFont:font] * charVerticalSpacingMultiplier * lines;
 	} while (height >= newHeight);
 	
 	return newfont;
@@ -3086,7 +3289,7 @@ NSString *sessionsKey = @"sessions";
 // Object specifier
 - (NSScriptObjectSpecifier *)objectSpecifier
 {
-    unsigned index = 0;
+    NSUInteger index = 0;
     id classDescription = nil;
     
     NSScriptObjectSpecifier *containerRef;
