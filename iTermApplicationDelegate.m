@@ -46,6 +46,8 @@
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 static NSString* AUTO_LAUNCH_SCRIPT = @"~/Library/Application Support/iTerm/AutoLaunch.scpt";
 
+NSMutableString* gDebugLogStr = nil;
+NSMutableString* gDebugLogStr2 = nil;
 static BOOL usingAutoLaunchScript = NO;
 BOOL gDebugLogging = NO;
 int gDebugLogFile = -1;
@@ -340,32 +342,58 @@ int gDebugLogFile = -1;
   [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermWindowDidResize" object: self userInfo: nil];    
 }
 
+void FlushDebugLog();
+void SwapDebugLog() {
+	NSMutableString* temp;
+	temp = gDebugLogStr;
+	gDebugLogStr = gDebugLogStr2;
+	gDebugLogStr2 = temp;
+}
+
+void FlushDebugLog() {
+	NSData* data = [gDebugLogStr dataUsingEncoding:NSUTF8StringEncoding];
+	int written = write(gDebugLogFile, [data bytes], [data length]);
+	assert(written == [data length]);
+	[gDebugLogStr setString:@""];
+}
+
 // Debug logging
 -(IBAction)debugLogging:(id)sender
 {
-	gDebugLogging = !gDebugLogging;
-	if (gDebugLogging) {
-		gDebugLogFile = open("/tmp/debuglog.txt", O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+	if (!gDebugLogging) {
 		NSRunAlertPanel(@"Debug Logging Enabled", 
 						@"Writing to /tmp/debuglog.txt",
 						@"OK", nil, nil);
+		gDebugLogFile = open("/tmp/debuglog.txt", O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+		gDebugLogStr = [[NSMutableString alloc] init];
+		gDebugLogStr2 = [[NSMutableString alloc] init];
+		gDebugLogging = !gDebugLogging;
 	} else {
+		gDebugLogging = !gDebugLogging;
+		SwapDebugLog();
+		FlushDebugLog();
+		SwapDebugLog();
+		FlushDebugLog();
+
 		close(gDebugLogFile);
 		gDebugLogFile=-1;
 		NSRunAlertPanel(@"Debug Logging Stopped", 
 						@"Please compress and send /tmp/debuglog.txt to the developers.",
 						@"OK", nil, nil);
+		[gDebugLogStr release];
+		[gDebugLogStr2 release];
 	}
 }
 
 void DebugLog(NSString* value)
 {
 	if (gDebugLogging) {
-		NSData* data = [value dataUsingEncoding:NSUTF8StringEncoding];
-		int written = write(gDebugLogFile, [data bytes], [data length]);
-		assert(written == [data length]);
-		written = write(gDebugLogFile, "\n", 1);
-		assert(written == 1);
+		[gDebugLogStr appendString:value];
+		[gDebugLogStr appendString:@"\n"];
+		if ([gDebugLogStr length] > 100000000) {
+			SwapDebugLog();
+			[gDebugLogStr2 setString:@""];
+		}
 	}
 }
 
