@@ -1,0 +1,146 @@
+{
+    IBClasses = (
+        {
+            ACTIONS = {
+                clearBuffer = id; 
+                clearScrollbackBuffer = id; 
+                closeCurrentSession = id; 
+                findNext = id; 
+                findPrevious = id; 
+                findWithSelection = id; 
+                jumpToSelection = id; 
+                logStart = id; 
+                logStop = id; 
+                nextSession = id; 
+                pasteSelection = id; 
+                previousSession = id; 
+                saveDisplayProfile = id; 
+                saveTerminalProfile = id; 
+                showConfigWindow = id; 
+                showFindPanel = id; 
+                toggleBookmarksView = id; 
+                toggleFontSizeFollowWindowResize = id; 
+                toggleInputToAllSessions = id; 
+                toggleRemapDeleteKey = id; 
+            }; 
+            CLASS = FirstResponder; 
+            LANGUAGE = ObjC; 
+            SUPERCLASS = NSObject; 
+        }, 
+        {CLASS = PTYTextView; LANGUAGE = ObjC; SUPERCLASS = NSTextView; }, 
+        {
+            ACTIONS = {
+                cancel = id; 
+                changeBackground = id; 
+                changeFontButton = id; 
+                changeForeground = id; 
+                changeNAFontButton = id; 
+                ok = id; 
+                restore = id; 
+            }; 
+            CLASS = PreferencePanel; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                antiAlias = id; 
+                autoclose = id; 
+                background = id; 
+                col = id; 
+                copySelection = id; 
+                doubleWidth = id; 
+                encoding = id; 
+                fontExample = id; 
+                foreground = id; 
+                hideTab = id; 
+                nafontExample = id; 
+                openAddressBook = id; 
+                optionKey = id; 
+                prefPanel = id; 
+                promptOnClose = id; 
+                remapDeleteKey = id; 
+                row = id; 
+                selectionColor = id; 
+                shell = id; 
+                silenceBell = id; 
+                tabViewType = id; 
+                terminal = id; 
+                transparency = id; 
+                "transparency_control" = id; 
+            }; 
+            SUPERCLASS = NSResponder; 
+        }, 
+        {
+            ACTIONS = {
+                clearBuffer = id; 
+                closeCurrentSession = id; 
+                logStart = id; 
+                logStop = id; 
+                newSession = id; 
+                nextSession = id; 
+                previousSession = id; 
+                saveDisplayProfile = id; 
+                saveTerminalProfile = id; 
+                setMainMenu = id; 
+                switchSession = id; 
+                windowConfigBackground = id; 
+                windowConfigCancel = id; 
+                windowConfigFont = id; 
+                windowConfigForeground = id; 
+                windowConfigOk = id; 
+            }; 
+            CLASS = PseudoTerminal; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                "AI_CODE" = id; 
+                "AI_ON" = id; 
+                "CONFIG_BACKGROUND" = id; 
+                "CONFIG_COL" = id; 
+                "CONFIG_ENCODING" = id; 
+                "CONFIG_EXAMPLE" = id; 
+                "CONFIG_FOREGROUND" = id; 
+                "CONFIG_NAME" = id; 
+                "CONFIG_PANEL" = id; 
+                "CONFIG_ROW" = id; 
+                "CONFIG_TRANS2" = id; 
+                "CONFIG_TRANSPARENCY" = id; 
+                SCROLLVIEW = id; 
+                WINDOW = id; 
+            }; 
+            SUPERCLASS = NSResponder; 
+        }, 
+        {
+            ACTIONS = {
+                aboutOK = id; 
+                biggerFont = id; 
+                newSession = id; 
+                newWindow = id; 
+                nextTerminal = id; 
+                previousTerminal = id; 
+                showAbout = id; 
+                showPrefWindow = id; 
+                smallerFont = id; 
+                useTransparency = id; 
+            }; 
+            CLASS = iTermApplicationDelegate; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                ABOUT = id; 
+                AUTHORS = NSTextView; 
+                closeTab = NSMenuItem; 
+                closeWindow = NSMenuItem; 
+                fontSizeFollowWindowResize = NSMenuItem; 
+                logStart = NSMenuItem; 
+                logStop = NSMenuItem; 
+                newTab = NSMenuItem; 
+                newWindow = NSMenuItem; 
+                nextTerminal = NSMenuItem; 
+                previousTerminal = NSMenuItem; 
+                selectTab = NSMenuItem; 
+                sendInputToAllSessions = NSMenuItem; 
+                toggleBookmarksView = NSMenuItem; 
+                toggleTransparency = NSMenuItem; 
+            }; 
+            SUPERCLASS = NSObject; 
+        }
+    ); 
+    IBVersion = 1; 
+}

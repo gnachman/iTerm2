@@ -1,0 +1,12 @@
+/*
+ *  GrowlFramework_Prefix.pch
+ *  Growl.Framework
+ *
+ *  Created by Sean McGovern on Wed Jun 23 2004.
+ *
+ */
+
+#ifdef __OBJC__
+#import <Cocoa/Cocoa.h>
+#endif
+#include <Carbon/Carbon.h>

@@ -1,0 +1,234 @@
+/* Context menu */
+"-> Browser" = "-> Browser";
+"-> Mail" = "-> Mail";
+"-> Google" = "-> Google";
+
+/* Toolbar Item:Bookmarks */
+"Bookmarks" = "Bookmarks";
+
+/* Close window */
+"All sessions will be closed" = "All sessions will be closed";
+
+/* Cancel */
+"Cancel" = "Cancel";
+
+/* Context menu */
+"Clear Buffer" = "Clear Buffer";
+
+/* Toolbar Item: Close Session */
+"Close" = "Close";
+
+/* Toolbar Item Tip: Close */
+"Close the current session" = "Close the current session";
+
+/* Close window */
+"Close Window?" = "Close Window?";
+"Quit iTerm?" = "Quit iTerm?";
+
+/* Close Session */
+"This session will be closed."="This session will be closed.";
+"All unsaved data will be lost"="All unsaved data will be lost";
+
+/* Toolbar Item:Info */
+"Info" = "Info";
+
+/* Toolbar Item Tip:Info */
+"Window/Session Info" = "Window/Session Info";
+
+/* Context menu */
+"Info..." = "Info...";
+
+/* Context menu */
+"Copy" = "Copy";
+
+/* Context menu */
+"New Tab" = "New Tab";
+
+/* Context menu */
+"New Window" = "New Window";
+
+
+/* Removal Alert */
+"Do you really want to remove this item?" = "Do you really want to remove this item?";
+
+/* Toolbar Item:New */
+"Default Session"="Default Session";
+"New" = "New";
+"Press Option for New Window"="Press Option for New Window";
+"Open In New Window" = "Open In New Window";
+"Open a new session"="Open a new session";
+"Execute" = "Execute";
+"Execute Command or Launch URL" = "Execute Command or Launch URL";
+
+/* OK */
+"OK" = "OK";
+
+/* Toolbar Item Tip:Bookmarks */
+"Open the bookmarks" = "Open the bookmarks";
+
+/* Context menu */
+"Paste" = "Paste";
+
+/* Context menu */
+"Save" = "Save";
+
+/* Context menu */
+"Select" = "Select";
+
+/* Context menu */
+"Move to new window" = "Move to new window";
+
+/* Anti-Idle: wrong input */
+"Please enter a valid code (0~255)" = "Please enter a valid code (0~255)";
+
+/* wrong input */
+"Please enter a valid window size" = "Please enter a valid window size";
+
+/* Remove */
+"Remove" = "Remove";
+
+/* Context menu */
+"Select All" = "Select All";
+"Save" = "Save";
+"Print..." = "Print...";
+"Print Selection..." = "Print Selection...";
+
+/* Removal Alert */
+"There is no undo for this operation." = "There is no undo for this operation.";
+
+/* wrong input */
+"Wrong Input" = "Wrong Input";
+
+/* Upgrade */
+"Upgrade Warning: New language encodings available!"="Upgrade Warning: New language encodings available!";
+"Please reset all the encoding settings in your preference and bookmarks"="Please reset all the encoding settings in your preference and bookmarks";
+
+/* Author */
+"fabian"="fabian";
+"Ujwal S. Setlur"="Ujwal S. Setlur";
+
+/* About */
+"Report A Bug"="Report A Bug";
+
+/* Config */
+"Configuration saved as a new entry in Bookmarks"="Configuration saved as a new entry in Bookmarks";
+"Configuration saved"="Configuration saved";
+
+/* OS Version */
+"Minimum_OS"="iTerm requires OS X version 10.2 or higher to run. This application will now terminate.";
+
+/* Sorry */
+"Sorry"="Sorry";
+
+/* Quit */
+"Quit"="Quit";
+
+/* PreferencePanel */
+"Display"="Display";
+"Shell"="Shell";
+"Emulation"="Emulation";
+"Color"="Color";
+
+/* Script */
+"Script" = "Script";
+"Refresh" = "Refresh";
+
+/* Key Binding Profiles */
+"Global"="Global";
+
+/* Display Profiles */
+"Default" = "Default";
+
+/* Key Binding Actions */
+"next tab"="next tab";
+"next window"="next window";
+"previous tab"="previous tab";
+"previous window"="previous window";
+"scroll end"="scroll end";
+"scroll home"="scroll home";
+"scroll line down"="scroll line down";
+"scroll line up"="scroll line up";
+"scroll page down"="scroll page down";
+"scroll page up"="scroll page up";
+"send ^["="send ^[";
+"send hex code"="send hex code";
+"send"="send";
+"ignore"="ignore";
+"unknown action ID"="unknown action ID";
+
+/* Key Names */
+"cursor down"="cursor down";
+"cursor left"="cursor left";
+"cursor right"="cursor right";
+"cursor up"="cursor up";
+"del"="del";
+"delete"="delete";
+"end"="end";
+"help"="help";
+"home"="home";
+"numlock"="numlock";
+"page down"="page down";
+"page up"="page up";
+"unknown key"="unknown key";
+
+/* Save Confirmation */
+"%@'s display profile %@ and terminal profile %@ have been updated"="%@'s display profile %@ and terminal profile %@ have been updated";
+"All bookmarks associated with this profile are affected"="All bookmarks associated with this profile are affected";
+
+/* Profiles */
+"Delete Profile" = "Delete Profile";
+"Are you sure that you want to delete %@? There is no way to undo this action." = "Are you sure that you want to delete %@? There is no way to undo this action.";
+"Delete" = "Delete";
+"Cancel" = "Cancel";
+"Untitled" = "Untitled";
+"%@ copy" = "%@ copy";
+
+/* Bookmarks */
+"Show Bookmark Drawer" = "Show Bookmark Drawer";
+"Hide Bookmark Drawer"="Hide Bookmark Drawer";
+"Delete Bookmark"="Delete Bookmark";
+
+/* Warning */
+"Warning!" = "Warning!";
+
+/* Keyboard Input */
+"Keyboard input will be sent to all sessions in this terminal." = "Keyboard input will be sent to all sessions in this terminal.";
+
+/* Growl Alerts */
+"Alert" = "Alert";
+"Session %@ #%d: %@" = "Session %@ #%d: %@";
+"Bell" = "Bell";
+"Session %@ #%d just rang a bell!" = "Session %@ #%d just rang a bell!";
+"Broken Pipe" = "Broken Pipe";
+"Session %@ #%d just terminated." = "Session %@ #%d just terminated.";
+"Idle" = "Idle";
+"Session %@ #%d becomes idle." = "Session %@ #%d becomes idle.";
+"New Output" = "New Output";
+"New Output was received in %@ #%d." = "New Output was received in %@ #%d.";
+
+/* Info */
+"Update %@" = "Update %@";
+
+/* Tab Tooltips */
+"Name: %@\nCommand: %@\nTerminal Profile: %@\nDisplay Profile: %@\nKeyboard Profile: %@" = "Name: %@\nCommand: %@\nTerminal Profile: %@\nDisplay Profile: %@\nKeyboard Profile: %@";
+
+/* Profiles */
+"Keyboard Profiles" = "Keyboard Profiles";
+"Display Profiles" = "Display Profiles";
+"Terminal Profiles" = "Terminal Profiles";
+"eg. [OC for ESC [OC." = "eg. [OC for ESC [OC.";
+"eg. 7F for backward delete." = "eg. 7F for backward delete.";
+"use \n for new-line, etc" = "use \n for new-line, etc";
+
+/* Error */
+"Out of memory" = "Out of memory";
+"New sesssion cannot be created. Try smaller buffer sizes." = "New sesssion cannot be created. Try smaller buffer sizes.";
+
+/* Security Warnings */
+"Bad User Shell" = "Bad User Shell";
+"The shell for this account is not a valid shell as defined in /etc/shells. Contact your system administrator." = "The shell for this account is not matched by a valid shell as defined in /etc/shells. Contact your system administrator.";
+
+/* Fork Error*/
+"Unable to Fork!"="Unable to Fork!";
+"iTerm cannot launch the program for this session."="iTerm cannot launch the program for this session.";
+"Close Session"="Close Session";

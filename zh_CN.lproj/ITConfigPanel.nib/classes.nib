@@ -1,0 +1,58 @@
+{
+    IBClasses = (
+        {CLASS = FirstResponder; LANGUAGE = ObjC; SUPERCLASS = NSObject; }, 
+        {
+            ACTIONS = {
+                chooseBackgroundImage = id; 
+                setAntiIdle = id; 
+                setAntiIdleCode = id; 
+                setBackgroundColor = id; 
+                setBoldColor = id; 
+                setCharacterSpacing = id; 
+                setCursorColor = id; 
+                setCursorTextColor = id; 
+                setDisableBold = id; 
+                setForegroundColor = id; 
+                setSelectedTextColor = id; 
+                setSelectionColor = id; 
+                setSessionEncoding = id; 
+                setSessionName = id; 
+                setTransparency = id; 
+                setWindowSize = id; 
+                toggleAntiAlias = id; 
+                useBackgroundImage = id; 
+                windowConfigFont = id; 
+                windowConfigNAFont = id; 
+            }; 
+            CLASS = ITConfigPanelController; 
+            LANGUAGE = ObjC; 
+            OUTLETS = {
+                "AI_CODE" = id; 
+                "AI_ON" = id; 
+                "CONFIG_ANTIALIAS" = id; 
+                "CONFIG_BACKGROUND" = NSColorWell; 
+                "CONFIG_BOLD" = NSColorWell; 
+                "CONFIG_COL" = id; 
+                "CONFIG_CURSOR" = NSColorWell; 
+                "CONFIG_CURSORTEXT" = NSColorWell; 
+                "CONFIG_ENCODING" = NSPopUpButton; 
+                "CONFIG_EXAMPLE" = id; 
+                "CONFIG_FOREGROUND" = NSColorWell; 
+                "CONFIG_NAEXAMPLE" = id; 
+                "CONFIG_NAME" = id; 
+                "CONFIG_ROW" = id; 
+                "CONFIG_SELECTION" = NSColorWell; 
+                "CONFIG_SELECTIONTEXT" = NSColorWell; 
+                "CONFIG_TRANS2" = id; 
+                "CONFIG_TRANSPARENCY" = id; 
+                backgroundImageView = NSImageView; 
+                charHorizontalSpacing = NSSlider; 
+                charVerticalSpacing = NSSlider; 
+                disableBoldButton = NSButton; 
+                useBackgroundImage = NSButton; 
+            }; 
+            SUPERCLASS = NSWindowController; 
+        }
+    ); 
+    IBVersion = 1; 
+}
