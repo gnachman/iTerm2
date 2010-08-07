@@ -342,15 +342,14 @@ int gDebugLogFile = -1;
   [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermWindowDidResize" object: self userInfo: nil];    
 }
 
-void FlushDebugLog();
-void SwapDebugLog() {
+static void SwapDebugLog() {
 	NSMutableString* temp;
 	temp = gDebugLogStr;
 	gDebugLogStr = gDebugLogStr2;
 	gDebugLogStr2 = temp;
 }
 
-void FlushDebugLog() {
+static void FlushDebugLog() {
 	NSData* data = [gDebugLogStr dataUsingEncoding:NSUTF8StringEncoding];
 	int written = write(gDebugLogFile, [data bytes], [data length]);
 	assert(written == [data length]);
@@ -364,7 +363,7 @@ void FlushDebugLog() {
 		NSRunAlertPanel(@"Debug Logging Enabled", 
 						@"Writing to /tmp/debuglog.txt",
 						@"OK", nil, nil);
-		gDebugLogFile = open("/tmp/debuglog.txt", O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+		gDebugLogFile = open("/tmp/debuglog.txt", O_TRUNC | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
 		gDebugLogStr = [[NSMutableString alloc] init];
 		gDebugLogStr2 = [[NSMutableString alloc] init];
 		gDebugLogging = !gDebugLogging;
