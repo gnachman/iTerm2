@@ -70,7 +70,6 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
     
     BOOL CURSOR;
     BOOL colorInvertedCursor;
-    BOOL drawAllowed;
     
     // geometry
     float lineHeight;

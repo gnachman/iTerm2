@@ -320,7 +320,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>PTYTextView.m</string>
+								<string>PTYTextView.h</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -328,11 +328,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>PTYTextView.m</string>
+										<string>PTYTextView.h</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D3544EE1213799500FF8EF9</string>
+										<string>1D3544F412137A9B00FF8EF9</string>
 										<key>history</key>
 										<array>
 											<string>1D5FD88011F4EE1E00C46BA3</string>
@@ -359,9 +359,9 @@
 											<string>1D35449612136BC800FF8EF9</string>
 											<string>1D3544A012136CB400FF8EF9</string>
 											<string>1D3544A412136CBC00FF8EF9</string>
-											<string>1D3544AD12136EB500FF8EF9</string>
 											<string>1D3544CA1213703400FF8EF9</string>
-											<string>1D3544E81213780500FF8EF9</string>
+											<string>1D3544F012137A8700FF8EF9</string>
+											<string>1D3544AD12136EB500FF8EF9</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -557,7 +557,7 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1D3544EF1213799500FF8EF9</string>
+		<string>1D3544F512137A9B00FF8EF9</string>
 		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>1D35443D12135E8700FF8EF9</string>
 		<string>1D35443E12135E8700FF8EF9</string>
