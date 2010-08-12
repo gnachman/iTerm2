@@ -7,7 +7,7 @@
  **  Copyright (c) 2002, 2003
  **
  **  Author: Fabian, Ujwal S. Setlur
- **	     Initial code by Kiichi Kusama
+ **         Initial code by Kiichi Kusama
  **
  **  Project: iTerm
  **
@@ -57,25 +57,26 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 
     // anti-alias flag
     BOOL antiAlias;
-	
-	// option to not render in bold
-	BOOL disableBold;
+    
+    // option to not render in bold
+    BOOL disableBold;
 
-	// NSTextInput support
+    // NSTextInput support
     BOOL IM_INPUT_INSERT;
     NSRange IM_INPUT_SELRANGE;
     NSRange IM_INPUT_MARKEDRANGE;
     NSDictionary *markedTextAttributes;
     NSAttributedString *markedText;
-	
-	BOOL CURSOR;
-	BOOL drawAllowed;
-	
+    
+    BOOL CURSOR;
+    BOOL colorInvertedCursor;
+    BOOL drawAllowed;
+    
     // geometry
-	float lineHeight;
+    float lineHeight;
     float lineWidth;
-	float charWidth;
-	float charWidthWithoutSpacing, charHeightWithoutSpacing;
+    float charWidth;
+    float charWidthWithoutSpacing, charHeightWithoutSpacing;
     
     NSFont *font;
     NSFont *nafont;
@@ -83,179 +84,179 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
     NSColor* defaultFGColor;
     NSColor* defaultBGColor;
     NSColor* defaultBoldColor;
-	NSColor* defaultCursorColor;
-	NSColor* selectionColor;
-	NSColor* selectedTextColor;
-	NSColor* cursorTextColor;
-	
-	// transparency
-	float transparency;
+    NSColor* defaultCursorColor;
+    NSColor* selectionColor;
+    NSColor* selectedTextColor;
+    NSColor* cursorTextColor;
+    
+    // transparency
+    float transparency;
     BOOL useTransparency;
-	
+    
     // data source
     VT100Screen *dataSource;
     id _delegate;
-	
-	//selection
-	int startX, startY, endX, endY;
-	int oldStartX, oldStartY, oldEndX, oldEndY;
-	char oldSelectMode;
-	BOOL mouseDown;
-	BOOL mouseDragged;
-	char selectMode;
-	BOOL mouseDownOnSelection;
-	NSEvent *mouseDownEvent;
-		
-	//find support
-	int lastFindX, lastFindY;
-	
-	BOOL reportingMouseDown;
-	
-	// blinking cursor
-	BOOL blinkingCursor;
-	BOOL showCursor;
-	BOOL blinkShow;
+    
+    //selection
+    int startX, startY, endX, endY;
+    int oldStartX, oldStartY, oldEndX, oldEndY;
+    char oldSelectMode;
+    BOOL mouseDown;
+    BOOL mouseDragged;
+    char selectMode;
+    BOOL mouseDownOnSelection;
+    NSEvent *mouseDownEvent;
+        
+    //find support
+    int lastFindX, lastFindY;
+    
+    BOOL reportingMouseDown;
+    
+    // blinking cursor
+    BOOL blinkingCursor;
+    BOOL showCursor;
+    BOOL blinkShow;
     struct timeval lastBlink;
     int oldCursorX, oldCursorY;
-	
-	// trackingRect tab
-	NSTrackingRectTag trackingRectTag;
-	
-	BOOL keyIsARepeat;
     
-	// Needed for determining font size.
-	NSLayoutManager *layoutManager;
+    // trackingRect tab
+    NSTrackingRectTag trackingRectTag;
+    
+    BOOL keyIsARepeat;
+    
+    // Needed for determining font size.
+    NSLayoutManager *layoutManager;
 }
 
-+ (NSCursor *) textViewCursor;
-- (id)initWithFrame: (NSRect) aRect;
++ (NSCursor *)textViewCursor;
+- (id)initWithFrame:(NSRect)aRect;
 - (void)dealloc;
-- (BOOL) becomeFirstResponder;
-- (BOOL) resignFirstResponder;
+- (BOOL)becomeFirstResponder;
+- (BOOL)resignFirstResponder;
 - (BOOL)isFlipped;
 - (BOOL)isOpaque;
 - (BOOL)shouldDrawInsertionPoint;
 - (void)drawRect:(NSRect)rect;
 - (void)keyDown:(NSEvent *)event;
-- (BOOL) keyIsARepeat;
+- (BOOL)keyIsARepeat;
 - (void)mouseExited:(NSEvent *)event;
 - (void)mouseEntered:(NSEvent *)event;
 - (void)mouseDown:(NSEvent *)event;
 - (void)mouseUp:(NSEvent *)event;
 - (void)mouseDragged:(NSEvent *)event;
-- (void) otherMouseDown: (NSEvent *) event;
+- (void)otherMouseDown: (NSEvent *) event;
 - (void)otherMouseUp:(NSEvent *)event;
 - (void)otherMouseDragged:(NSEvent *)event;
 - (void)rightMouseDown:(NSEvent *)event;
 - (void)rightMouseUp:(NSEvent *)event;
 - (void)rightMouseDragged:(NSEvent *)event;
 - (void)scrollWheel:(NSEvent *)event;
-- (NSString *) contentFromX:(int)startx Y:(int)starty ToX:(int)endx Y:(int)endy pad: (BOOL) pad;
-- (NSString*) contentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad;
-- (NSString *) selectedText;
-- (NSString *) selectedTextWithPad: (BOOL) pad;
-- (NSString *) content;
-- (void)copy: (id) sender;
+- (NSString *)contentFromX:(int)startx Y:(int)starty ToX:(int)endx Y:(int)endy pad: (BOOL) pad;
+- (NSString*)contentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad;
+- (NSString *)selectedText;
+- (NSString *)selectedTextWithPad: (BOOL) pad;
+- (NSString *)content;
+- (void)copy:(id)sender;
 - (void)paste:(id)sender;
-- (void) pasteSelection: (id) sender;
+- (void)pasteSelection:(id)sender;
 - (BOOL)validateMenuItem:(NSMenuItem *)item;
 - (void)changeFont:(id)sender;
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent;
-- (void) browse:(id)sender;
-- (void) searchInBrowser:(id)sender;
-- (void) mail:(id)sender;
+- (void)browse:(id)sender;
+- (void)searchInBrowser:(id)sender;
+- (void)mail:(id)sender;
 
 //get/set methods
 - (NSFont *)font;
 - (NSFont *)nafont;
-- (void) setFont:(NSFont*)aFont nafont:(NSFont*)naFont;
-- (BOOL) antiAlias;
-- (void) setAntiAlias: (BOOL) antiAliasFlag;
-- (BOOL) disableBold;
-- (void) setDisableBold: (BOOL) boldFlag;
-- (BOOL) blinkingCursor;
-- (void) setBlinkingCursor: (BOOL) bFlag;
+- (void)setFont:(NSFont*)aFont nafont:(NSFont*)naFont;
+- (BOOL)antiAlias;
+- (void)setAntiAlias:(BOOL)antiAliasFlag;
+- (BOOL)disableBold;
+- (void)setDisableBold:(BOOL)boldFlag;
+- (BOOL)blinkingCursor;
+- (void)setBlinkingCursor:(BOOL)bFlag;
 
 //color stuff
-- (NSColor *) defaultFGColor;
-- (NSColor *) defaultBGColor;
-- (NSColor *) defaultBoldColor;
-- (NSColor *) colorForCode:(int) index;
-- (NSColor *) selectionColor;
-- (NSColor *) defaultCursorColor;
-- (NSColor *) selectedTextColor;
-- (NSColor *) cursorTextColor;
-- (void) setFGColor:(NSColor*)color;
-- (void) setBGColor:(NSColor*)color;
-- (void) setBoldColor:(NSColor*)color;
-- (void) setColorTable:(int) index color:(NSColor *) c;
-- (void) setSelectionColor: (NSColor *) aColor;
-- (void)setCursorColor:(NSColor*) color;
-- (void) setSelectedTextColor: (NSColor *) aColor;
-- (void) setCursorTextColor:(NSColor*) color;
+- (NSColor *)defaultFGColor;
+- (NSColor *)defaultBGColor;
+- (NSColor *)defaultBoldColor;
+- (NSColor *)colorForCode:(int) index;
+- (NSColor *)selectionColor;
+- (NSColor *)defaultCursorColor;
+- (NSColor *)selectedTextColor;
+- (NSColor *)cursorTextColor;
+- (void)setFGColor:(NSColor*)color;
+- (void)setBGColor:(NSColor*)color;
+- (void)setBoldColor:(NSColor*)color;
+- (void)setColorTable:(int) theIndex color:(NSColor *) c;
+- (void)setSelectionColor:(NSColor *)aColor;
+- (void)setCursorColor:(NSColor*)color;
+- (void)setSelectedTextColor:(NSColor *)aColor;
+- (void)setCursorTextColor:(NSColor*)color;
 
 
-- (NSDictionary*) markedTextAttributes;
-- (void) setMarkedTextAttributes: (NSDictionary *) attr;
+- (NSDictionary*)markedTextAttributes;
+- (void)setMarkedTextAttributes:(NSDictionary*)attr;
 
-- (id) dataSource;
-- (void) setDataSource: (id) aDataSource;
-- (id) delegate;
-- (void) setDelegate: (id) delegate;
-- (float) lineHeight;
-- (void) setLineHeight: (float) aLineHeight;
-- (float) lineWidth;
-- (void) setLineWidth: (float) aLineWidth;
-- (float) charWidth;
-- (void) setCharWidth: (float) width;
+- (id)dataSource;
+- (void)setDataSource:(id)aDataSource;
+- (id)delegate;
+- (void)setDelegate:(id)delegate;
+- (float)lineHeight;
+- (void)setLineHeight:(float)aLineHeight;
+- (float)lineWidth;
+- (void)setLineWidth:(float)aLineWidth;
+- (float)charWidth;
+- (void)setCharWidth:(float)width;
 
-- (void) refresh;
-- (void) setFrameSize: (NSSize) aSize;
-- (void) updateDirtyRects;
-- (void) showCursor;
-- (void) hideCursor;
+- (void)refresh;
+- (void)setFrameSize:(NSSize)aSize;
+- (void)updateDirtyRects;
+- (void)showCursor;
+- (void)hideCursor;
 
 // selection
-- (IBAction) selectAll: (id) sender;
-- (void) deselect;
+- (IBAction)selectAll:(id)sender;
+- (void)deselect;
 
 // transparency
-- (float) transparency;
-- (void) setTransparency: (float) fVal;
-- (BOOL) useTransparency;
-- (void) setUseTransparency: (BOOL) flag;
+- (float)transparency;
+- (void)setTransparency:(float)fVal;
+- (BOOL)useTransparency;
+- (void)setUseTransparency:(BOOL)flag;
 
 //
 // Drag and Drop methods for our text view
 //
-- (unsigned int) draggingEntered: (id<NSDraggingInfo>) sender;
-- (unsigned int) draggingUpdated: (id<NSDraggingInfo>) sender;
-- (void) draggingExited: (id<NSDraggingInfo>) sender;
-- (BOOL) prepareForDragOperation: (id<NSDraggingInfo>) sender;
-- (BOOL) performDragOperation: (id<NSDraggingInfo>) sender;
-- (void) concludeDragOperation: (id<NSDraggingInfo>) sender;
+- (unsigned int)draggingEntered: (id<NSDraggingInfo>) sender;
+- (unsigned int)draggingUpdated: (id<NSDraggingInfo>) sender;
+- (void)draggingExited: (id<NSDraggingInfo>) sender;
+- (BOOL)prepareForDragOperation: (id<NSDraggingInfo>) sender;
+- (BOOL)performDragOperation: (id<NSDraggingInfo>) sender;
+- (void)concludeDragOperation: (id<NSDraggingInfo>) sender;
 
 // Cursor control
 - (void)resetCursorRects;
 
 // Scrolling control
 - (NSRect)adjustScroll:(NSRect)proposedVisibleRect;
-- (void) scrollLineUp: (id) sender;
-- (void) scrollLineDown: (id) sender;
-- (void) scrollPageUp: (id) sender;
-- (void) scrollPageDown: (id) sender;
-- (void) scrollHome;
-- (void) scrollEnd;
-- (void) scrollToSelection;
+- (void)scrollLineUp:(id)sender;
+- (void)scrollLineDown:(id)sender;
+- (void)scrollPageUp:(id)sender;
+- (void)scrollPageDown:(id)sender;
+- (void)scrollHome;
+- (void)scrollEnd;
+- (void)scrollToSelection;
 
 
     // Save method
-- (void) saveDocumentAs: (id) sender;
-- (void) print:(id)sender;
-- (void) printContent: (NSString *) aString;
+- (void)saveDocumentAs:(id)sender;
+- (void)print:(id)sender;
+- (void)printContent:(NSString *)aString;
 
 // Find method
-- (void) findString: (NSString *) aString forwardDirection: (BOOL) direction ignoringCase: (BOOL) ignoreCase;
+- (void)findString:(NSString *)aString forwardDirection:(BOOL)direction ignoringCase:(BOOL)ignoreCase;
 
 // NSTextInput
 - (void)insertText:(id)aString;
@@ -271,10 +272,10 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 - (long)conversationIdentifier;
 - (NSRect)firstRectForCharacterRange:(NSRange)theRange;
 
-	// service stuff
+    // service stuff
 - (id)validRequestorForSendType:(NSString *)sendType returnType:(NSString *)returnType;
 - (BOOL)writeSelectionToPasteboard:(NSPasteboard *)pboard types:(NSArray *)types;
-- (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard;	
+- (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard;    
 
 @end
 
@@ -284,25 +285,26 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 @interface PTYTextView (Private)
 
 - (unsigned int) _checkForSupportedDragTypes:(id <NSDraggingInfo>) sender;
-- (void) _savePanelDidEnd: (NSSavePanel *) theSavePanel returnCode: (int) theReturnCode contextInfo: (void *) theContextInfo;
+- (void)_savePanelDidEnd:(NSSavePanel *)theSavePanel returnCode:(int)theReturnCode contextInfo:(void *)theContextInfo;
 
 - (void) _scrollToLine:(int)line;
-- (NSString *) _getWordForX: (int) x 
-					y: (int) y 
-			   startX: (int *) startx 
-			   startY: (int *) starty 
-				 endX: (int *) endx 
-				 endY: (int *) endy;
-- (NSString *) _getURLForX: (int) x y: (int) y;
-- (void) _drawLine:(int)line AtY:(float)curY;
-- (void) _drawCursor;
-- (void) _drawCharacter:(unichar)c fgColor:(int)fg AtX:(float)X Y:(float)Y doubleWidth:(BOOL) dw;
-- (BOOL) _isBlankLine: (int) y;
-- (void) _openURL: (NSString *) aURLString;
-- (BOOL) _findString: (NSString *) aString forwardDirection: (BOOL) direction ignoringCase: (BOOL) ignoreCase wrapping: (BOOL) wrapping;
-- (BOOL) _findMatchingParenthesis: (NSString *) parenthesis withX:(int)X Y:(int)Y;
-- (void) _dragText: (NSString *) aString forEvent: (NSEvent *) theEvent;
-- (BOOL) _isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old;
+- (NSString *)_getWordForX:(int)x 
+                    y:(int)y 
+               startX:(int *)startx 
+               startY:(int *)starty 
+                 endX:(int *)endx 
+                 endY:(int *)endy;
+- (NSString *)_getURLForX:(int)x y:(int)y;
+- (void)_drawLine:(int)line AtY:(float)curY;
+- (void)_drawCursor;
+- (void)_drawCharacter:(unichar)c fgColor:(int)fg AtX:(float)X Y:(float)Y doubleWidth:(BOOL)dw overrideColor:(NSColor*)overrideColor;
+- (BOOL)_isBlankLine:(int)y;
+- (void)_openURL:(NSString *)aURLString;
+- (BOOL)_findString:(NSString *)aString forwardDirection:(BOOL)direction ignoringCase:(BOOL)ignoreCase wrapping:(BOOL)wrapping;
+- (BOOL)_findMatchingParenthesis:(NSString *)parenthesis withX:(int)X Y:(int)Y;
+- (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent;
+- (BOOL)_isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old;
+- (void)_settingsChanged:(NSNotification *)notification;
 
 @end
 

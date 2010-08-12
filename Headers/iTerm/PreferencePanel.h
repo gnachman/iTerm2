@@ -38,61 +38,63 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 @interface PreferencePanel : NSWindowController
 {
     
-	IBOutlet NSPopUpButton *windowStyle;
-	IBOutlet NSPopUpButton *tabPosition;
+    IBOutlet NSPopUpButton *windowStyle;
+    IBOutlet NSPopUpButton *tabPosition;
     IBOutlet NSOutlineView *urlHandlerOutline;
-	IBOutlet NSTableView *urlTable;
+    IBOutlet NSTableView *urlTable;
     IBOutlet NSButton *selectionCopiesText;
-	IBOutlet NSButton *middleButtonPastesFromClipboard;
+    IBOutlet NSButton *middleButtonPastesFromClipboard;
     IBOutlet id hideTab;
     IBOutlet id promptOnClose;
     IBOutlet id onlyWhenMoreTabs;
     IBOutlet NSButton *focusFollowsMouse;
-	IBOutlet NSTextField *wordChars;
-	IBOutlet NSButton *enableBonjour;
+    IBOutlet NSTextField *wordChars;
+    IBOutlet NSButton *enableBonjour;
     IBOutlet NSButton *enableGrowl;
     IBOutlet NSButton *cmdSelection;
-	IBOutlet NSButton *maxVertically;
-	IBOutlet NSButton *useCompactLabel;
+    IBOutlet NSButton *maxVertically;
+    IBOutlet NSButton *useCompactLabel;
     IBOutlet NSButton *openBookmark;
     IBOutlet NSSlider *refreshRate;
-	IBOutlet NSButton *quitWhenAllWindowsClosed;
+    IBOutlet NSButton *quitWhenAllWindowsClosed;
     IBOutlet NSButton *checkUpdate;
-	IBOutlet NSMatrix *cursorType;
-	IBOutlet NSButton *useBorder;
-	IBOutlet NSButton *hideScrollbar;
-   IBOutlet NSButton *smartPlacement;
+    IBOutlet NSMatrix *cursorType;
+    IBOutlet NSButton *useBorder;
+    IBOutlet NSButton *hideScrollbar;
+    IBOutlet NSButton *smartPlacement;
     IBOutlet NSButton *checkTestRelease;
-	
+    IBOutlet NSButton *checkColorInvertedCursor;
+    
     NSUserDefaults *prefs;
 
-	int defaultWindowStyle;
+    int defaultWindowStyle;
     BOOL defaultCopySelection;
-	BOOL defaultPasteFromClipboard;
+    BOOL defaultPasteFromClipboard;
     BOOL defaultHideTab;
     int defaultTabViewType;
     BOOL defaultPromptOnClose;
     BOOL defaultOnlyWhenMoreTabs;
     BOOL defaultFocusFollowsMouse;
-	BOOL defaultEnableBonjour;
-	BOOL defaultEnableGrowl;
-	BOOL defaultCmdSelection;
-	BOOL defaultMaxVertically;
+    BOOL defaultEnableBonjour;
+    BOOL defaultEnableGrowl;
+    BOOL defaultCmdSelection;
+    BOOL defaultMaxVertically;
     BOOL defaultUseCompactLabel;
     BOOL defaultOpenBookmark;
     int  defaultRefreshRate;
-	NSString *defaultWordChars;
+    NSString *defaultWordChars;
     BOOL defaultQuitWhenAllWindowsClosed;
-	BOOL defaultCheckUpdate;
-	BOOL defaultUseBorder;
-	BOOL defaultHideScrollbar;
+    BOOL defaultCheckUpdate;
+    BOOL defaultUseBorder;
+    BOOL defaultHideScrollbar;
    BOOL defaultSmartPlacement;
-	BOOL defaultCheckTestRelease;
-	ITermCursorType defaultCursorType;
-	
-	// url handler stuff
-	NSMutableArray *urlTypes;
-	NSMutableDictionary *urlHandlers;
+    BOOL defaultCheckTestRelease;
+    BOOL defaultColorInvertedCursor;
+    ITermCursorType defaultCursorType;
+    
+    // url handler stuff
+    NSMutableArray *urlTypes;
+    NSMutableDictionary *urlHandlers;
 }
 
 
@@ -133,6 +135,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 - (BOOL) quitWhenAllWindowsClosed;
 - (BOOL) checkTestRelease;
 - (ITermCursorType) cursorType;
+- (BOOL) colorInvertedCursor;
 - (TreeNode *) handlerBookmarkForURL:(NSString *)url;
 
 // Hidden preferences
