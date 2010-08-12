@@ -6,7 +6,7 @@
  **  Copyright (c) 2002, 2003
  **
  **  Author: Fabian, Ujwal S. Setlur
- **	     Initial code by Kiichi Kusama
+ **         Initial code by Kiichi Kusama
  **
  **  Project: iTerm
  **
@@ -42,64 +42,70 @@
 
 @interface PseudoTerminal : NSWindowController <PTYTabViewDelegateProtocol, PTYWindowDelegateProtocol>
 {
-	
-	NSOutlineView *bookmarksView;
-	
-	// Parameter Panel
-	IBOutlet NSTextField *parameterName;
-	IBOutlet NSPanel     *parameterPanel;
-	IBOutlet NSTextField *parameterValue;
-	IBOutlet NSTextField *parameterPrompt;
+    
+    NSOutlineView *bookmarksView;
+    
+    // Parameter Panel
+    IBOutlet NSTextField *parameterName;
+    IBOutlet NSPanel     *parameterPanel;
+    IBOutlet NSTextField *parameterValue;
+    IBOutlet NSTextField *parameterPrompt;
 
-	IBOutlet NSView*      findBarSubview;
-	IBOutlet NSTextField* findBarTextField;
-	IBOutlet NSButton*    findBarNextButton;
-	IBOutlet NSButton*    findBarPreviousButton;
-	IBOutlet NSButton*    ignoreCase;
-	
-	NSView* findBar;
+    IBOutlet NSView*      findBarSubview;
+    IBOutlet NSTextField* findBarTextField;
+    IBOutlet NSButton*    findBarNextButton;
+    IBOutlet NSButton*    findBarPreviousButton;
+    IBOutlet NSButton*    ignoreCase;
+    IBOutlet NSProgressIndicator* findProgressIndicator;
+    
+    // Find happens incrementally. This remembers the string to search for.
+    NSMutableString* previousFindString;
+    NSView* findBar;
 
     /// tab view
     PTYTabView *TABVIEW;
-	PSMTabBarControl *tabBarControl;
+    PSMTabBarControl *tabBarControl;
     PTToolbarController* _toolbarController;
-	IBOutlet id commandField;
+    IBOutlet id commandField;
 
     
     /////////////////////////////////////////////////////////////////////////
     int WIDTH, HEIGHT;
-	int charWidth;
-	int charHeight;
-	float charHorizontalSpacingMultiplier, charVerticalSpacingMultiplier;
+    int charWidth;
+    int charHeight;
+    float charHorizontalSpacingMultiplier, charVerticalSpacingMultiplier;
     NSFont *FONT, *NAFONT;
-	BOOL antiAlias;
-	BOOL useTransparency;
-	BOOL blur;
-	
-	BOOL _fullScreen;
+    BOOL antiAlias;
+    BOOL useTransparency;
+    BOOL blur;
+    
+    BOOL _fullScreen;
     
     BOOL windowInited;
-	BOOL sendInputToAllSessions;
-	BOOL fontSizeFollowWindowResize;
-	BOOL suppressContextualMenu;
-	BOOL tempTitle;
-	
-	// For send input to all sessions highlighting
-	NSColor *normalBackgroundColor;
-	
-	// flags
-	BOOL _resizeInProgressFlag;
-	
-	// for full screen windows
-	NSRect oldFrame;
-	int oldWidth, oldHeight;
-	float oldCharHorizontalSpacingMultiplier, oldCharVerticalSpacingMultiplier;
-	NSFont *oldFont, *oldNAFont;
+    BOOL sendInputToAllSessions;
+    BOOL fontSizeFollowWindowResize;
+    BOOL suppressContextualMenu;
+    BOOL tempTitle;
+    
+    // For send input to all sessions highlighting
+    NSColor *normalBackgroundColor;
+    
+    // flags
+    BOOL _resizeInProgressFlag;
+    
+    // for full screen windows
+    NSRect oldFrame;
+    int oldWidth, oldHeight;
+    float oldCharHorizontalSpacingMultiplier, oldCharVerticalSpacingMultiplier;
+    NSFont *oldFont, *oldNAFont;
         // Index of the last used frame position for smart placement.
         int framePos;
 
-	// Needed for font size.
-	NSLayoutManager *layoutManager;
+    // Needed for font size.
+    NSLayoutManager *layoutManager;
+
+    // Used to do incremental find.
+    NSTimer* _timer;
 }
 
 
@@ -111,7 +117,7 @@
 - (void)initWindowWithAddressbook:(NSDictionary *)entry;
 - (void)initWindowWithSettingsFrom:(PseudoTerminal *)aPseudoTerminal;
 - (void)setupSession: (PTYSession *) aSession title: (NSString *)title;
-- (void) insertSession: (PTYSession *) aSession atIndex: (int) index;
+- (void) insertSession: (PTYSession *) aSession atIndex: (int) anIndex;
 - (void) closeSession: (PTYSession*) aSession;
 - (IBAction) closeCurrentSession: (id) sender;
 - (IBAction) previousSession:(id)sender;
@@ -214,6 +220,7 @@
 - (void) setSuppressContextualMenu: (BOOL) aBool;
 - (NSMenu *)tabView:(NSTabView *)aTabView menuForTabViewItem:(NSTabViewItem *)tabViewItem;
 
+- (void)findWithSelection;
 
 // Close Window
 - (BOOL)showCloseWindow;
@@ -273,8 +280,8 @@
 
 - (void) _commonInit;
 - (NSFont *) _getMaxFont:(NSFont* ) font 
-				  height:(float) height
-				   lines:(float) lines;
+                  height:(float) height
+                   lines:(float) lines;
 - (void) hideMenuBar;
 
 @end

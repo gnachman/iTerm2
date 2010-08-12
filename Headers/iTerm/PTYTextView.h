@@ -107,7 +107,9 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
     NSEvent *mouseDownEvent;
         
     //find support
-    int lastFindX, lastFindY;
+    int lastFindX;
+    // this includes all the lines since the beginning of time. It is stable.
+    long long absLastFindY;
     
     BOOL reportingMouseDown;
     
@@ -122,9 +124,15 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
     NSTrackingRectTag trackingRectTag;
     
     BOOL keyIsARepeat;
-    
+
     // Needed for determining font size.
     NSLayoutManager *layoutManager;
+    
+    // Is a find currently executing?
+    BOOL _findInProgress;
+
+    // Previous tracking rect to avoid expensive calls to addTrackingRect.
+    NSRect _trackingRect;
 }
 
 + (NSCursor *)textViewCursor;
@@ -164,6 +172,8 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 - (void)browse:(id)sender;
 - (void)searchInBrowser:(id)sender;
 - (void)mail:(id)sender;
+// Cause the next find to start at the top/bottom of the buffer
+- (void)resetFindCursor;
 
 //get/set methods
 - (NSFont *)font;
@@ -255,7 +265,7 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 - (void)printContent:(NSString *)aString;
 
 // Find method
-- (void)findString:(NSString *)aString forwardDirection:(BOOL)direction ignoringCase:(BOOL)ignoreCase;
+- (BOOL)findString:(NSString *)aString forwardDirection:(BOOL)direction ignoringCase:(BOOL)ignoreCase withOffset:(int)offset;
 
 // NSTextInput
 - (void)insertText:(id)aString;
@@ -275,6 +285,8 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 - (id)validRequestorForSendType:(NSString *)sendType returnType:(NSString *)returnType;
 - (BOOL)writeSelectionToPasteboard:(NSPasteboard *)pboard types:(NSArray *)types;
 - (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard;    
+- (BOOL)findInProgress;
+- (BOOL)continueFind;
 
 @end
 
@@ -299,7 +311,6 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 - (void)_drawCharacter:(unichar)c fgColor:(int)fg AtX:(float)X Y:(float)Y doubleWidth:(BOOL)dw overrideColor:(NSColor*)overrideColor;
 - (BOOL)_isBlankLine:(int)y;
 - (void)_openURL:(NSString *)aURLString;
-- (BOOL)_findString:(NSString *)aString forwardDirection:(BOOL)direction ignoringCase:(BOOL)ignoreCase wrapping:(BOOL)wrapping;
 - (BOOL)_findMatchingParenthesis:(NSString *)parenthesis withX:(int)X Y:(int)Y;
 - (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent;
 - (BOOL)_isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old;
