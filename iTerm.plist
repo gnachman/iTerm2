@@ -176,9 +176,9 @@
 	<key>SUPublicDSAKeyFile</key>
 	<string>dsa_pub.pem</string>
 	<key>SUFeedURLForTesting</key>
-	<string>http://iterm2.googlecode.com/svn/fork/appcasts/testing.xml</string>
+	<string>http://iterm2.googlecode.com/svn/trunk/appcasts/testing.xml</string>
 	<key>SUFeedURLForFinal</key>
-	<string>http://iterm2.googlecode.com/svn/fork/appcasts/final.xml</string>
+	<string>http://iterm2.googlecode.com/svn/trunk/appcasts/final.xml</string>
 	<key>SmartCrashReports_CompanyName</key>
 	<string>iTerm</string>
 	<key>SmartCrashReports_EmailTicket</key>
