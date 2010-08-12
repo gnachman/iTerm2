@@ -506,12 +506,12 @@ static NSImage *warningImage;
 			case KEY_ACTION_TEXT:
 				if([keyBindingText length] > 0)
 				{
-					NSMutableString *aString = [NSMutableString stringWithString: keyBindingText];
-					[aString replaceOccurrencesOfString:@"\\n" withString:@"\n" options:NSLiteralSearch range:NSMakeRange(0,[aString length])];
-					[aString replaceOccurrencesOfString:@"\\e" withString:@"\e" options:NSLiteralSearch range:NSMakeRange(0,[aString length])];
-					[aString replaceOccurrencesOfString:@"\\a" withString:@"\a" options:NSLiteralSearch range:NSMakeRange(0,[aString length])];
-					[aString replaceOccurrencesOfString:@"\\t" withString:@"\t" options:NSLiteralSearch range:NSMakeRange(0,[aString length])];
-					[self writeTask: [aString dataUsingEncoding: NSUTF8StringEncoding]];
+					NSMutableString *bindingText = [NSMutableString stringWithString: keyBindingText];
+					[bindingText replaceOccurrencesOfString:@"\\n" withString:@"\n" options:NSLiteralSearch range:NSMakeRange(0,[bindingText length])];
+					[bindingText replaceOccurrencesOfString:@"\\e" withString:@"\e" options:NSLiteralSearch range:NSMakeRange(0,[bindingText length])];
+					[bindingText replaceOccurrencesOfString:@"\\a" withString:@"\a" options:NSLiteralSearch range:NSMakeRange(0,[bindingText length])];
+					[bindingText replaceOccurrencesOfString:@"\\t" withString:@"\t" options:NSLiteralSearch range:NSMakeRange(0,[bindingText length])];
+					[self writeTask: [bindingText dataUsingEncoding: NSUTF8StringEncoding]];
 				}
 				break;
 			case KEY_ACTION_IGNORE:
@@ -1554,9 +1554,9 @@ static NSImage *warningImage;
 	
 }
 
-- (void) setColorTable:(int) index color:(NSColor *) c
+- (void) setColorTable:(int) theIndex color:(NSColor *) theColor
 {
-    [TEXTVIEW setColorTable:index color:c];
+    [TEXTVIEW setColorTable:theIndex color:theColor];
 }
 
 - (BOOL) antiIdle
@@ -1809,14 +1809,14 @@ static NSImage *warningImage;
 // Object specifier
 - (NSScriptObjectSpecifier *)objectSpecifier
 {
-    NSUInteger index = 0;
+    NSUInteger theIndex = 0;
     id classDescription = nil;
 	
     NSScriptObjectSpecifier *containerRef = nil;
 	
-    index = [[[self parent] tabView] indexOfTabViewItem: [self tabViewItem]];
+    theIndex = [[[self parent] tabView] indexOfTabViewItem: [self tabViewItem]];
     
-    if (index != NSNotFound)
+    if (theIndex != NSNotFound)
     {
 		containerRef     = [[self parent] objectSpecifier];
 		classDescription = [containerRef keyClassDescription];
@@ -1825,7 +1825,7 @@ static NSImage *warningImage;
                initWithContainerClassDescription: classDescription
                               containerSpecifier: containerRef
                                              key: @ "sessions"
-                                           index: index] autorelease];
+                                           index: theIndex] autorelease];
     } else {
 		// NSLog(@"recipient not found!");
         return nil;

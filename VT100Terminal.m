@@ -2379,9 +2379,9 @@ static VT100TCC decode_string(unsigned char *datap,
 	if (token.type == XTERMCC_SET_RGB) {
 		// The format of this command is "<index>;rgb:<redhex>/<greenhex>/<bluehex>", e.g. "105;rgb:00/cc/ff"
 		const char *s = [token.u.string UTF8String];
-		int index = 0;
+		int theIndex = 0;
 		while (isdigit(*s))
-			index = 10*index + *s++ - '0';
+			theIndex = 10*theIndex + *s++ - '0';
 		if (*s++ != ';')
 			return;
 		if (*s++ != 'r')
@@ -2409,9 +2409,9 @@ static VT100TCC decode_string(unsigned char *datap,
 		while (isxdigit(*s))
 			b = 16*b + (*s>='a' ? *s++ - 'a' + 10 : *s>='A' ? *s++ - 'A' + 10 : *s++ - '0');
 		
-		if (index >= 16 && index <= 255 && // ignore assigns to the systems colors or outside the palette
+		if (theIndex >= 16 && theIndex <= 255 && // ignore assigns to the systems colors or outside the palette
 			 r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) { // ignore bad colors
-			[[SCREEN session] setColorTable:index
+			[[SCREEN session] setColorTable:theIndex
 											  color:[NSColor colorWithCalibratedRed:r/256.0 green:g/256.0 blue:b/256.0 alpha:1]];
 		}
 	}

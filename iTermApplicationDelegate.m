@@ -797,17 +797,26 @@ void DebugLog(NSString* value)
 
 - (IBAction) findNext: (id) sender
 {
-    [[FindCommandHandler sharedInstance] findNext];
+    PseudoTerminal* pty = [[iTermController sharedInstance] currentTerminal];
+    if (pty) {
+        [pty searchNext:nil];
+    }
 }
 
 - (IBAction) findPrevious: (id) sender
 {
-    [[FindCommandHandler sharedInstance] findPrevious];
+    PseudoTerminal* pty = [[iTermController sharedInstance] currentTerminal];
+    if (pty) {
+        [pty searchPrevious:nil];
+    }
 }
 
 - (IBAction) findWithSelection: (id) sender
 {
-    [[FindCommandHandler sharedInstance] findWithSelection];
+    PseudoTerminal* pty = [[iTermController sharedInstance] currentTerminal];
+    if (pty) {
+        [pty findWithSelection];
+    }
 }
 
 - (IBAction) jumpToSelection: (id) sender

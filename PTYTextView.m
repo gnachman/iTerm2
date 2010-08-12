@@ -610,15 +610,27 @@ static NSCursor* textViewCursor =  nil;
     [super setFrameSize:frameSize];
 }
 
+static BOOL RectsEqual(NSRect* a, NSRect* b) {
+	return a->origin.x == b->origin.x &&
+		   a->origin.y == b->origin.y &&
+	       a->size.width == b->size.width &&
+       	   a->size.height == b->size.height;
+}
+
 - (void)refresh
 {
     if(dataSource == nil) return;
 
     // reset tracking rect
-    if(trackingRectTag) {
-        [self removeTrackingRect:trackingRectTag];
+    NSRect visibleRect = [self visibleRect];
+    if (!trackingRectTag || !RectsEqual(&visibleRect, &_trackingRect)) {
+        if (trackingRectTag) {
+            [self removeTrackingRect:trackingRectTag];
+        }
+        // This call is very slow.
+        trackingRectTag = [self addTrackingRect:visibleRect owner:self userData:nil assumeInside:NO];
+        _trackingRect = visibleRect;
     }
-    trackingRectTag = [self addTrackingRect:[self visibleRect] owner:self userData:nil assumeInside:NO];
 
     // number of lines that have disappeared if circular buffer is full
     int scrollbackOverflow = [dataSource scrollbackOverflow];
@@ -1804,43 +1816,43 @@ static NSCursor* textViewCursor =  nil;
 
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
 {
-    NSMenu *ctxMenu;
+    NSMenu *theMenu;
     
     // Allocate a menu
-    ctxMenu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
+    theMenu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
     
     // Menu items for acting on text selections
-    [ctxMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"-> Browser",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
+    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"-> Browser",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(browse:) keyEquivalent:@""];
-    [ctxMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"-> Google",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
+    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"-> Google",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(searchInBrowser:) keyEquivalent:@""];
-    [ctxMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"-> Mail",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
+    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"-> Mail",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(mail:) keyEquivalent:@""];
     
     // Separator
-    [ctxMenu addItem:[NSMenuItem separatorItem]];
+    [theMenu addItem:[NSMenuItem separatorItem]];
     
     // Copy,  paste, and save
-    [ctxMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Copy",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
+    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Copy",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(copy:) keyEquivalent:@""];
-    [ctxMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Paste",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
+    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Paste",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(paste:) keyEquivalent:@""];
-    [ctxMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Save",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
+    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Save",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(saveDocumentAs:) keyEquivalent:@""];
     
     // Separator
-    [ctxMenu addItem:[NSMenuItem separatorItem]];
+    [theMenu addItem:[NSMenuItem separatorItem]];
     
     // Select all
-    [ctxMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Select All",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
+    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Select All",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(selectAll:) keyEquivalent:@""];
     
     
     // Ask the delegae if there is anything to be added
     if ([[self delegate] respondsToSelector:@selector(menuForEvent: menu:)])
-        [[self delegate] menuForEvent:theEvent menu: ctxMenu];
+        [[self delegate] menuForEvent:theEvent menu: theMenu];
     
-    return [ctxMenu autorelease];
+    return [theMenu autorelease];
 }
 
 - (void) mail:(id)sender
@@ -2285,29 +2297,67 @@ static NSCursor* textViewCursor =  nil;
     return rect;
 }
 
-- (void) findString: (NSString *) aString forwardDirection: (BOOL) direction ignoringCase: (BOOL) ignoreCase
+- (BOOL)findInProgress
 {
+    return _findInProgress;
+}
+    
+- (BOOL) continueFind 
+{
+    BOOL more;
     BOOL found;
+    // NSLog(@"PTYTextView continueFind");
+    more = [dataSource continueFindResultAtStartX:&startX 
+                                         atStartY:&startY 
+                                           atEndX:&endX 
+                                           atEndY:&endY 
+                                            found:&found];
+    
+	if (found) {
+		// Lock scrolling after finding text
+		++endX; // make it half-open
+		[(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+		
+		[self _scrollToLine:endY];
+		[self setNeedsDisplay:YES];
+		lastFindX = startX;
+		absLastFindY = (long long)startY + [dataSource totalScrollbackOverflow];
+	}
+    if (!more) {
+        // NSLog(@"PTYTextView: done");
+        _findInProgress = NO;
+    }
+    return more;
+}
+
+- (void)resetFindCursor
+{
+    lastFindX = absLastFindY = -1;
+}
+
+- (BOOL)findString:(NSString *)aString 
+  forwardDirection:(BOOL)direction 
+      ignoringCase:(BOOL)ignoreCase 
+        withOffset:(int)offset
+{
+    if (_findInProgress) {
+        [dataSource cancelFind];
+    }
     
     if (lastFindX == -1) {
         lastFindX = 0;
-        lastFindY = [dataSource numberOfLines] + 1;
+        absLastFindY = (long long)([dataSource numberOfLines] + 1) + [dataSource totalScrollbackOverflow];
     }
 
-    
-    found = [dataSource findString: aString forwardDirection: direction ignoringCase: ignoreCase startingAtX: lastFindX staringAtY: lastFindY
-                          atStartX: &startX atStartY: &startY atEndX: &endX atEndY: &endY];
+    [dataSource initFindString:aString 
+              forwardDirection:direction 
+                  ignoringCase:ignoreCase 
+                   startingAtX:lastFindX 
+                   startingAtY:absLastFindY - [dataSource totalScrollbackOverflow] 
+                    withOffset:offset];
+    _findInProgress = YES;
 
-    if (found) {
-        // Lock scrolling after finding text
-        ++endX; // make it half-open
-        [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
-        
-        [self _scrollToLine:endY];
-        [self setNeedsDisplay:YES];
-        lastFindX = startX;
-        lastFindY = startY;
-    }
+    return [self continueFind];
 }
 
 // transparency
@@ -2766,7 +2816,6 @@ static NSCursor* textViewCursor =  nil;
     y2 = tmpY;
     
     return ([self contentFromX:x1 Y:yStart ToX:x2 Y:y2 pad: YES]);
-    
 }
 
 - (NSString *) _getURLForX: (int) x 
@@ -2785,8 +2834,8 @@ static NSCursor* textViewCursor =  nil;
     // Look for a left edge
     int leftx = 0;
     for (int xi = x-1, yi = y; 0 <= xi; xi--) {
-        unichar c = [self _getCharacterAtX:xi Y:yi];
-        if (c == '|' && 
+        unichar curChar = [self _getCharacterAtX:xi Y:yi];
+        if (curChar == '|' && 
             ((yi > 0 && [self _getCharacterAtX:xi Y:yi-1] == '|') ||
              (yi < h-1 && [self _getCharacterAtX:xi Y:yi+1] == '|'))) {
             leftx = xi+1;
@@ -2813,8 +2862,8 @@ static NSCursor* textViewCursor =  nil;
     {
         int endx = x-1;
         for (int xi = endx, yi = y; xi >= leftx && 0 <= yi; xi--) {
-            unichar c = [self _getCharacterAtX:xi Y:yi];
-            if (c == '\0' || !(isalnum(c) || strchr(urlSet, c))) {
+            unichar curChar = [self _getCharacterAtX:xi Y:yi];
+            if (curChar == '\0' || !(isalnum(curChar) || strchr(urlSet, curChar))) {
                 // Found a non-url character so append the left part of the URL.
                 [url insertString:[self contentFromX:xi+1 Y:yi ToX:endx Y:yi pad: YES]
                      atIndex:0];
@@ -2848,8 +2897,8 @@ static NSCursor* textViewCursor =  nil;
     {
         int startx = x;
         for (int xi = startx+1, yi = y; xi <= rightx && yi < h; xi++) {
-            unichar c = [self _getCharacterAtX:xi Y:yi];
-            if (c == '\0' || !(isalnum(c) || strchr(urlSet, c))) {
+            unichar curChar = [self _getCharacterAtX:xi Y:yi];
+            if (curChar == '\0' || !(isalnum(curChar) || strchr(urlSet, curChar))) {
                 // Found something non-urly. Append what we have so far.
                 [url appendString:[self contentFromX:startx Y:yi ToX:xi-1 Y:yi pad: YES]];
                 // skip backslahes that indicate wrapping

@@ -6,7 +6,7 @@
  **  Copyright (c) 2002, 2003
  **
  **  Author: Fabian, Ujwal S. Setlur
- **	     Initial code by Kiichi Kusama
+ **         Initial code by Kiichi Kusama
  **
  **  Project: iTerm
  **
@@ -36,7 +36,7 @@
 @class PTYTextView;
 @class iTermGrowlDelegate;
 
-#define TABWINDOW	300
+#define TABWINDOW    300
 
 @interface VT100Screen : NSObject
 {
@@ -57,53 +57,55 @@
     PTYSession *SESSION;
     int charset[4], saveCharset[4];
     BOOL blinkShow;
-	BOOL PLAYBELL;
-	BOOL SHOWBELL;
-	BOOL GROWL;
+    BOOL PLAYBELL;
+    BOOL SHOWBELL;
+    BOOL GROWL;
 
     
     BOOL blinkingCursor;
     PTYTextView *display;
-	
-	// A circular buffer exactly (WIDTH+1) * HEIGHT elements in size. This contains
-	// only the contents of the screen. The scrollback buffer is stored in linebuffer.
-	screen_char_t *buffer_lines;
-	
-	// The position in buffer_lines of the first line in the screen. The logical lines
-	// wrap around the circular buffer.
-	screen_char_t *screen_top;
+    
+    // A circular buffer exactly (WIDTH+1) * HEIGHT elements in size. This contains
+    // only the contents of the screen. The scrollback buffer is stored in linebuffer.
+    screen_char_t *buffer_lines;
+    
+    // The position in buffer_lines of the first line in the screen. The logical lines
+    // wrap around the circular buffer.
+    screen_char_t *screen_top;
 
-	// buffer holding flags for each char on whether it needs to be redrawn
-	char *dirty;
-	
-	// a single default line
-	screen_char_t *default_line;
-	screen_char_t *result_line;
-	
-	// temporary buffer to store main buffer in SAVE_BUFFER/RESET_BUFFER mode
-	screen_char_t *temp_buffer;
-		
-	// default line stuff
-	int default_bg_code;
-	int default_fg_code;
-	int default_line_width;
+    // buffer holding flags for each char on whether it needs to be redrawn
+    char *dirty;
+    
+    // a single default line
+    screen_char_t *default_line;
+    screen_char_t *result_line;
+    
+    // temporary buffer to store main buffer in SAVE_BUFFER/RESET_BUFFER mode
+    screen_char_t *temp_buffer;
+        
+    // default line stuff
+    int default_bg_code;
+    int default_fg_code;
+    int default_line_width;
 
-	// max size of scrollback buffer
+    // max size of scrollback buffer
     unsigned int  max_scrollback_lines;
-	// current number of lines in scrollback buffer (not including what is on screen)
-	unsigned int current_scrollback_lines;
-	// how many scrollback lines have been lost due to overflow
-	int scrollback_overflow;
-	
-	// print to ansi...
-	BOOL printToAnsi;		// YES=ON, NO=OFF, default=NO;
-	NSMutableString *printToAnsiString;
-	
-	// Growl stuff
-	iTermGrowlDelegate* gd;
-	
-	// Scrollback buffer
-	LineBuffer* linebuffer;
+    // current number of lines in scrollback buffer (not including what is on screen)
+    unsigned int current_scrollback_lines;
+    // how many scrollback lines have been lost due to overflow
+    int scrollback_overflow;
+    long long cumulative_scrollback_overflow;
+    
+    // print to ansi...
+    BOOL printToAnsi;        // YES=ON, NO=OFF, default=NO;
+    NSMutableString *printToAnsiString;
+    
+    // Growl stuff
+    iTermGrowlDelegate* gd;
+    
+    // Scrollback buffer
+    LineBuffer* linebuffer;
+    FindContext findContext;
 }
 
 
@@ -153,9 +155,9 @@
 // internal
 - (void)setString:(NSString *)s ascii:(BOOL)ascii;
 - (void)setStringToX:(int)x
-				   Y:(int)y
-			  string:(NSString *)string
-			   ascii:(BOOL)ascii;
+                   Y:(int)y
+              string:(NSString *)string
+               ascii:(BOOL)ascii;
 - (void)setNewLine;
 - (void)deleteCharacters:(int)n;
 - (void)backSpace;
@@ -190,6 +192,7 @@
 - (int)numberOfLines;
 
 - (int)scrollbackOverflow;
+- (long long)totalScrollbackOverflow;
 - (void)resetScrollbackOverflow;
 
 - (void)resetDirty;
@@ -206,8 +209,10 @@
 // double width
 - (BOOL) isDoubleWidthCharacter:(unichar) c;
 
-// Perform a search of the screen and scrollback buffer.
-- (BOOL) findString: (NSString*) aString forwardDirection: (BOOL) direction ignoringCase: (BOOL) ignoreCase startingAtX: (int) x staringAtY: (int) y atStartX: (int*)startX atStartY: (int*)startY atEndX: (int*)endX atEndY: (int*)endY;
+// Initialize the find context.
+- (void)initFindString:(NSString*)aString forwardDirection:(BOOL)direction ignoringCase:(BOOL)ignoreCase startingAtX:(int)x startingAtY:(int)y withOffset:(int)offsetof;
+- (BOOL)continueFindResultAtStartX:(int*)startX atStartY:(int*)startY atEndX:(int*)endX atEndY:(int*)endY found:(BOOL*)found;
+- (void)cancelFind;
 
 - (void) dumpDebugLog;
 @end

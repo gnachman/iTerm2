@@ -55,7 +55,7 @@
 #define REAL_WIDTH (WIDTH+1)
 
 /* translates normal char into graphics char */
-void translate(screen_char_t *s, int len)
+static void translate(screen_char_t *s, int len)
 {
     int i;
     
@@ -63,7 +63,7 @@ void translate(screen_char_t *s, int len)
 }
 
 /* pad the source string whenever double width character appears */
-void padString(NSString *s, screen_char_t *buf, int fg, int bg, int *len, NSStringEncoding encoding)
+static void padString(NSString *s, screen_char_t *buf, int fg, int bg, int *len, NSStringEncoding encoding)
 {
     unichar *sc;
     int l=*len;
@@ -162,7 +162,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     screen_top = NULL;
     
     temp_buffer=NULL;
-
+    findContext.substring = nil;
+    
     max_scrollback_lines = DEFAULT_SCROLLBACK;
     scrollback_overflow = 0;
     [self clearTabStop];
@@ -247,7 +248,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     SCROLL_TOP = 0;
     SCROLL_BOTTOM = HEIGHT - 1;    
     blinkShow=YES;
-    
+    findContext.substring = nil;
     // allocate our buffer to hold both scrollback and screen contents
     buffer_lines = (screen_char_t *)malloc(HEIGHT*REAL_WIDTH*sizeof(screen_char_t));
     
@@ -614,7 +615,6 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     // An immediate refresh is needed so that the size of TEXTVIEW can be
     // adjusted to fit the new size
     DebugLog(@"resizeWidth setDirty");
-
     [self setDirty];
 
 #ifdef DEBUG_RESIZEDWIDTH
@@ -1373,6 +1373,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         // try to add top line to scroll area
         if ([self _addLineToScrollback]) {
             scrollback_overflow++;
+            cumulative_scrollback_overflow++;
         }
         
         // Increment screen_top pointer
@@ -1388,6 +1389,11 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         [self scrollUp];
         DebugLog(@"setNewline weird case");
     }
+}
+
+- (long long)totalScrollbackOverflow
+{
+    return cumulative_scrollback_overflow;
 }
 
 - (void)deleteCharacters:(int) n
@@ -1518,7 +1524,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (void)eraseInDisplay:(VT100TCC)token
 {
-    int x1, y1, x2, y2;    
+    int x1, yStart, x2, y2;    
     int i;
     screen_char_t *aScreenChar;
     //BOOL wrap;
@@ -1530,7 +1536,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     switch (token.u.csi.p[0]) {
     case 1:
         x1 = 0;
-        y1 = 0;
+        yStart = 0;
         x2 = CURSOR_X<WIDTH?CURSOR_X+1:WIDTH;
         y2 = CURSOR_Y;
         break;
@@ -1547,7 +1553,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
             SCROLL_BOTTOM = HEIGHT - 1;
             CURSOR_Y = HEIGHT - 1;
             int last_line = [self _lastNonEmptyLine];
-            for (int i = 0; i <= last_line; ++i) {
+            for (int j = 0; j <= last_line; ++j) {
                 [self setNewLine];
             }
             CURSOR_X = cx;
@@ -1556,7 +1562,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
             SCROLL_BOTTOM = sb;
         }
         x1 = 0;
-        y1 = 0;
+        yStart = 0;
         x2 = 0;
         y2 = HEIGHT;
         break;
@@ -1564,16 +1570,15 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     case 0:
     default:
         x1 = CURSOR_X;
-        y1 = CURSOR_Y;
+        yStart = CURSOR_Y;
         x2 = 0;
         y2 = HEIGHT;
         break;
     }
     
-
     int idx1, idx2;
     
-    idx1=y1*REAL_WIDTH+x1;
+    idx1=yStart*REAL_WIDTH+x1;
     idx2=y2*REAL_WIDTH+x2;
     
     // clear the contents between idx1 and idx2
@@ -1588,9 +1593,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         aScreenChar->bg_color = [TERMINAL backgroundColorCodeReal];
     }
     
-    memset(dirty+y1*WIDTH+x1,1,((y2-y1)*WIDTH+(x2-x1))*sizeof(char));
+    memset(dirty+yStart*WIDTH+x1,1,((y2-yStart)*WIDTH+(x2-x1))*sizeof(char));
     DebugLog(@"eraseInDisplay");
-
 }
 
 - (void)eraseInLine:(VT100TCC)token
@@ -1650,7 +1654,6 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     idx=CURSOR_Y*WIDTH+x1;
     memset(dirty+idx,1,(x2-x1)*sizeof(char));
     DebugLog(@"eraseInLine");
-    
 }
 
 - (void)selectGraphicRendition:(VT100TCC)token
@@ -1694,7 +1697,6 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     
     dirty[CURSOR_Y*WIDTH+CURSOR_X] = 1;
     DebugLog(@"cursorRight");
-
 }
 
 - (void)cursorUp:(int)n
@@ -1786,9 +1788,6 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     
     dirty[CURSOR_Y*WIDTH+CURSOR_X] = 1;
     DebugLog(@"cursorToX:Y");
-
-    //    NSParameterAssert(CURSOR_X >= 0 && CURSOR_X < WIDTH);
-    
 }
 
 - (void)saveCursorPosition
@@ -1913,7 +1912,6 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         // everything between SCROLL_TOP and SCROLL_BOTTOM is dirty
         memset(dirty+SCROLL_TOP*WIDTH,1,(SCROLL_BOTTOM-SCROLL_TOP+1)*WIDTH*sizeof(char));
         DebugLog(@"scrollUp");
-
     }
 }
 
@@ -1993,7 +1991,6 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     int screenIdx=CURSOR_Y*WIDTH+CURSOR_X;
     memset(dirty+screenIdx,1,WIDTH-CURSOR_X);
     DebugLog(@"insertBlank");
-    
 }
 
 - (void) insertLines: (int)n
@@ -2267,8 +2264,25 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     return [NSString isDoubleWidthCharacter:c encoding:[TERMINAL encoding]];
 }
 
+- (void)_popScrollbackLines:(int)linesPushed
+{
+	// Undo the appending of the screen to scrollback
+	int i;
+	screen_char_t* dummy = malloc(WIDTH * sizeof(screen_char_t));
+	for (i = 0; i < linesPushed; ++i) {
+		BOOL eol;
+		BOOL isOk = [linebuffer popAndCopyLastLineInto: dummy width: WIDTH includesEndOfLine: &eol];
+		NSAssert(isOk, @"Pop shouldn't fail");
+	}
+	free(dummy);
+}
 
-- (BOOL) findString: (NSString*) aString forwardDirection: (BOOL) direction ignoringCase: (BOOL) ignoreCase startingAtX: (int) x staringAtY: (int) y atStartX: (int*)startX atStartY: (int*)startY atEndX: (int*)endX atEndY: (int*)endY
+- (void)initFindString:(NSString*)aString 
+      forwardDirection:(BOOL)direction 
+          ignoringCase:(BOOL)ignoreCase 
+           startingAtX:(int)x 
+           startingAtY:(int)y 
+            withOffset:(int)offset
 {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
@@ -2276,9 +2290,13 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     
     // Get the start position of (x,y)
     int startPos;
-    BOOL ok = [linebuffer convertCoordinatesAtX:x atY:y withWidth:WIDTH toPosition:&startPos offset:(direction ? 1 : -1)];
-    if (!ok) {
-        NSLog(@"Couldn't convert %d,%d to position", x, y);
+    BOOL isOk = [linebuffer convertCoordinatesAtX:x 
+                                            atY:y 
+                                      withWidth:WIDTH 
+                                     toPosition:&startPos 
+                                         offset:offset * (direction ? 1 : -1)];
+    if (!isOk) {
+        // NSLog(@"Couldn't convert %d,%d to position", x, y);
         if (direction) {
             startPos = [linebuffer firstPos];
         } else {
@@ -2288,51 +2306,118 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
      
     // Set up the options bitmask and call findSubstring.
     int opts = 0;
-    int stopAt;
     if (!direction) {
         opts |= FindOptBackwards;
-        stopAt = [linebuffer firstPos];
-    } else {
-        stopAt = [linebuffer lastPos];
     }
     if (ignoreCase) {
         opts |= FindOptCaseInsensitive;
     }
-    int len;    
-    int position = [linebuffer findSubstring:aString startingAt:startPos resultLength:&len options:opts stopAt:stopAt];
-    if (position < 0) {
-        // wrap around
-        if (direction) {
-            // forward search, wrap to top
-            // TODO: stop search at previous starting position.
-            position = [linebuffer findSubstring:aString startingAt:[linebuffer firstPos] resultLength:&len options:opts stopAt:startPos];
+    [linebuffer initFind:aString startingAt:startPos options:opts withContext:&findContext];
+    findContext.hasWrapped = NO;
+    [self _popScrollbackLines:linesPushed];
+}
 
-        } else {
-            // backward search, wrap to bottom
-            position = [linebuffer findSubstring:aString startingAt:[linebuffer lastPos]-1 resultLength:&len options:opts stopAt:startPos];
+- (void)cancelFind
+{
+    [linebuffer releaseFind:&findContext];
+}
+
+- (BOOL)continueFindResultAtStartX:(int*)startX 
+                          atStartY:(int*)startY 
+                            atEndX:(int*)endX 
+                            atEndY:(int*)endY 
+                             found:(BOOL*)found
+{
+	// Append the screen contents to the scrollback buffer so they are included in the search.
+	int linesPushed;
+	linesPushed = [self _appendScreenToScrollback];
+
+    // Search one block.
+    int stopAt;
+    if (findContext.dir > 0) {
+        stopAt = [linebuffer lastPos];
+    } else {
+        stopAt = [linebuffer firstPos];
+    }
+
+    struct timeval begintime;
+    gettimeofday(&begintime, NULL);
+    BOOL keepSearching = NO;
+    int iterations = 0;
+    int ms_diff = 0;    
+    do {
+        if (findContext.status == Searching) {
+            // NSLog(@"VT100Screen: Search next block");
+            [linebuffer findSubstring:&findContext stopAt:stopAt];
         }
-    }
     
-    // Save the (x,y)-(x,y) coords of the match, if any.
-    if (position >= 0) {
-        BOOL ok = [linebuffer convertPosition: position withWidth: WIDTH toX: startX toY: startY];
-        NSAssert(ok, @"Couldn't convert start position");
+        // Handle the current state
+        BOOL isOk;
+        switch (findContext.status) {
+            case Matched:
+                // NSLog(@"matched");
+                // Found a match in the text.
+                isOk = [linebuffer convertPosition:findContext.resultPosition 
+                                       withWidth:WIDTH 
+                                             toX:startX 
+                                             toY:startY];
+                NSAssert(isOk, @"Couldn't convert start position");
+                
+                isOk = [linebuffer convertPosition:findContext.resultPosition + findContext.matchLength - 1 
+                                       withWidth:WIDTH 
+                                             toX:endX 
+                                             toY:endY];
+                NSAssert(isOk, @"Couldn't convert end position");
+                [linebuffer releaseFind:&findContext];
+                keepSearching = NO;
+                *found = YES;
+                break;
+                
+            case Searching:
+                // NSLog(@"searching");
+                // No result yet but keep looking
+                keepSearching = YES;
+                *found = NO;
+                break;
+                
+            case NotFound:
+                // NSLog(@"not found");
+                // Reached stopAt point with no match.
+                if (findContext.hasWrapped) {
+                    [linebuffer releaseFind:&findContext];
+                    keepSearching = NO;
+                } else {
+                    // NSLog(@"...wrapping");
+                    // wrap around and resume search.
+                    FindContext temp;
+                    [linebuffer initFind:findContext.substring 
+                              startingAt:(findContext.dir > 0 ? [linebuffer firstPos] : [linebuffer lastPos]-1) 
+                                 options:findContext.options 
+                             withContext:&temp];
+                    [linebuffer releaseFind:&findContext];
+                    findContext = temp;
+                    findContext.hasWrapped = YES;
+                    keepSearching = YES;
+                }
+                *found = NO;
+                break;
+                
+            default:
+                NSAssert(0, @"Bogus status");
+        }       
         
-        ok = [linebuffer convertPosition: position + len - 1 withWidth: WIDTH toX: endX toY: endY];
-        NSAssert(ok, @"Couldn't convert end position");
-    }
+        struct timeval endtime;
+        if (keepSearching) {
+            gettimeofday(&endtime, NULL);
+            ms_diff = (endtime.tv_sec - begintime.tv_sec) * 1000 +
+                      (endtime.tv_usec - begintime.tv_usec) / 1000;
+        }
+        ++iterations;
+    } while (keepSearching && ms_diff < 100);
+    // NSLog(@"Did %d iterations in %dms. Average time per block was %dms", iterations, ms_diff, ms_diff/iterations);
     
-    // Undo the appending of the screen to scrollback
-    int i;
-    screen_char_t* dummy = malloc(WIDTH * sizeof(screen_char_t));
-    for (i = 0; i < linesPushed; ++i) {
-        BOOL eol;
-        BOOL ok = [linebuffer popAndCopyLastLineInto: dummy width: WIDTH includesEndOfLine: &eol];
-        NSAssert(ok, @"Pop shouldn't fail");
-    }
-    free(dummy);
-    
-    return position >= 0;  // return whether a result was found.
+    [self _popScrollbackLines:linesPushed];
+    return keepSearching;
 }
 
 @end

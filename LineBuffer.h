@@ -29,6 +29,19 @@
 
 #import <Cocoa/Cocoa.h>
 
+typedef struct FindContext {
+    int absBlockNum;
+    NSString* substring;
+    int options;
+    int dir;
+    int offset;
+    int stopAt;
+    enum { Searching, Matched, NotFound } status;
+    int resultPosition;
+    int matchLength;
+    BOOL hasWrapped;   // for client use. Not read or written by LineBuffer.
+} FindContext;
+
 typedef struct screen_char_t
 {
     // ch has some special meanings:
@@ -130,7 +143,7 @@ typedef struct screen_char_t
 - (void) _appendCumulativeLineLength: (int) cumulativeLength;
 
 // NSLog the contents of the block. For debugging.
-- (void) dump;
+- (void)dump:(int)rawOffset;
 @end
 
 // A LineBuffer represents an ordered collection of strings of screen_char_t. Each string forms a
@@ -158,6 +171,9 @@ typedef struct screen_char_t
     // The maximum number of lines to store. In truth, more lines will be stored, but no more
     // than max_lines will be exposed by the interface.
     int max_lines;
+    
+    // The number of blocks at the head of the list that have been removed.
+    int num_dropped_blocks;
 }
 
 - (LineBuffer*) initWithBlockSize: (int) bs;
@@ -215,7 +231,9 @@ typedef struct screen_char_t
 // length of the substring in the presence of double-width characters.
 #define FindOptCaseInsensitive (1 << 0)
 #define FindOptBackwards       (1 << 1)
-- (int) findSubstring: (NSString*) substring startingAt: (int) start resultLength: (int*) length options: (int) options stopAt: (int) stopAt;
+- (void)initFind:(NSString*)substring startingAt:(int)start options:(int)options withContext:(FindContext*)context;
+- (void)releaseFind:(FindContext*)context;
+- (void)findSubstring:(FindContext*)context stopAt:(int)stopAt;
 
 // Convert a position (as returned by findSubstring) into an x,y position.
 // Returns TRUE if the conversion was successful, false if the position was out of bounds.

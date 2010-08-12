@@ -485,10 +485,10 @@ NSString *terminalsKey = @"terminals";
 
 // accessors for to-many relationships:
 // (See NSScriptKeyValueCoding.h)
--(id)valueInTerminalsAtIndex:(unsigned)index
+-(id)valueInTerminalsAtIndex:(unsigned)theIndex
 {
-    //NSLog(@"iTerm: valueInTerminalsAtIndex %d: %@", index, [terminalWindows objectAtIndex: index]);
-    return ([terminalWindows objectAtIndex: index]);
+    //NSLog(@"iTerm: valueInTerminalsAtIndex %d: %@", theIndex, [terminalWindows objectAtIndex: theIndex]);
+    return ([terminalWindows objectAtIndex: theIndex]);
 }
 
 - (void) setCurrentTerminal: (PseudoTerminal *) thePseudoTerminal
@@ -504,10 +504,10 @@ NSString *terminalsKey = @"terminals";
 	
 }
 
--(void)replaceInTerminals:(PseudoTerminal *)object atIndex:(unsigned)index
+-(void)replaceInTerminals:(PseudoTerminal *)object atIndex:(unsigned)theIndex
 {
-    // NSLog(@"iTerm: replaceInTerminals 0x%x atIndex %d", object, index);
-    [terminalWindows replaceObjectAtIndex: index withObject: object];
+    // NSLog(@"iTerm: replaceInTerminals 0x%x atIndex %d", object, theIndex);
+    [terminalWindows replaceObjectAtIndex: theIndex withObject: object];
 }
 
 - (void) addInTerminals: (PseudoTerminal *) object
@@ -522,20 +522,20 @@ NSString *terminalsKey = @"terminals";
     [self insertInTerminals: object atIndex: [terminalWindows count]];
 }
 
--(void)insertInTerminals:(PseudoTerminal *)object atIndex:(unsigned)index
+-(void)insertInTerminals:(PseudoTerminal *)object atIndex:(unsigned)theIndex
 {
     if([terminalWindows containsObject: object] == YES)
 		return;
     
-	[terminalWindows insertObject: object atIndex: index];
+	[terminalWindows insertObject: object atIndex: theIndex];
     // make sure we have a window
     [object initWindowWithAddressbook:NULL];
 }
 
--(void)removeFromTerminalsAtIndex:(unsigned)index
+-(void)removeFromTerminalsAtIndex:(unsigned)theIndex
 {
-    // NSLog(@"iTerm: removeFromTerminalsAtInde %d", index);
-    [terminalWindows removeObjectAtIndex: index];
+    // NSLog(@"iTerm: removeFromTerminalsAtInde %d", theIndex);
+    [terminalWindows removeObjectAtIndex: theIndex];
     if([terminalWindows count] == 0)
 		[ITConfigPanelController close];
 }
