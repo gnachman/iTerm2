@@ -94,7 +94,6 @@ static NSCursor* textViewCursor =  nil;
             [NSNumber numberWithInt:2],NSUnderlineStyleAttributeName,
             NULL]];
     CURSOR=YES;
-    drawAllowed = YES;
     lastFindX = oldStartX = startX = -1;
     markedText=nil;
     gettimeofday(&lastBlink, NULL);
@@ -830,10 +829,6 @@ static NSCursor* textViewCursor =  nil;
         [self frame].origin.x, [self frame].origin.y, [self frame].size.width, [self frame].size.height);
 #endif
 
-    if(!drawAllowed) {
-        DebugLog(@"!drawAllowed");
-        return;
-    }
     if (lineHeight <= 0 || lineWidth <= 0) {
         DebugLog(@"height or width too small");
         return;
