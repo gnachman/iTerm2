@@ -23,6 +23,8 @@
 
 #pragma once
 
+#include "Compability.h"
+
 typedef int CGSConnectionID;
 static const CGSConnectionID kCGSNullConnectionID = 0;
 
