@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "Compability.h"
+#include "Compatability.h"
 
 typedef int CGSConnectionID;
 static const CGSConnectionID kCGSNullConnectionID = 0;
