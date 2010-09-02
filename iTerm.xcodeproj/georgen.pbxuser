@@ -95,15 +95,14 @@
 			1D6C4D9D1223300100E0AA3E /* iTermBookmarkController.m:298 */,
 			1D6C4FC9122358AB00E0AA3E /* BookmarksController.h:16 */,
 			1DCF40851226CDF600AD56F1 /* ITAddressBookMgr.m:54 */,
-			1D6C50DC1227238600E0AA3E /* BookmarkTableView.m:482 */,
+			1D6C50DC1227238600E0AA3E /* BookmarkTableView.m:338 */,
 			1DCF423312277E1700AD56F1 /* PreferencePanel.m:993 */,
 			1DD55F1C122B38E1000B9E83 /* PreferencePanel.m:1645 */,
-			1DD55F86122B7C4E000B9E83 /* BookmarkTableView.m:437 */,
-			1DD55F88122B7C51000B9E83 /* BookmarkTableView.m:185 */,
+			1DD55F86122B7C4E000B9E83 /* BookmarkTableView.m:292 */,
+			1DD55F88122B7C51000B9E83 /* BookmarkTableView.m:183 */,
 			1DD55FE2122B82EA000B9E83 /* PreferencePanel.m:1093 */,
-			1DD55FF5122B83BE000B9E83 /* BookmarkTableView.m:412 */,
-			1D0B30FA122C1B1500F39BD5 /* BookmarkTableView.m:385 */,
-			1D0B3149122C211300F39BD5 /* BookmarkTableView.m:354 */,
+			1DD55FF5122B83BE000B9E83 /* BookmarkTableView.m:267 */,
+			1D0B30FA122C1B1500F39BD5 /* BookmarkTableView.m:240 */,
 			1DA9B505122C92D4002FCC65 /* iTermController.m:261 */,
 			1DA9B538122C952A002FCC65 /* PTToolbarController.m:244 */,
 			1DA9B540122C95E6002FCC65 /* PTToolbarController.m:282 */,
@@ -111,8 +110,8 @@
 			1DA9B68C122CB3DC002FCC65 /* PseudoTerminal.m:198 */,
 			1DA9B6ED122CB777002FCC65 /* PTYWindow.m:52 */,
 			1DA9B6FA122CBA5A002FCC65 /* PseudoTerminal.m:890 */,
-			1DA9B71F122CBBCF002FCC65 /* BookmarkTableView.m:610 */,
-			1DA9B721122CBBD1002FCC65 /* BookmarkTableView.m:616 */,
+			1DA9B71F122CBBCF002FCC65 /* BookmarkTableView.m:466 */,
+			1DA9B721122CBBD1002FCC65 /* BookmarkTableView.m:472 */,
 			1DA9B798122CCCD8002FCC65 /* PreferencePanel.m:1191 */,
 			1DA9B7EF122CD2AB002FCC65 /* VT100Screen.m:954 */,
 			1DA9B7F1122CD2AC002FCC65 /* VT100Screen.m:960 */,
@@ -121,10 +120,8 @@
 			1DA9B999122D8F02002FCC65 /* PreferencePanel.m:172 */,
 			1DA9B9E8122D9073002FCC65 /* PreferencePanel.m:1188 */,
 			1DA9BACE122DACB7002FCC65 /* BookmarkModel.m:220 */,
-			1DA9BB5A122DC19E002FCC65 /* BookmarkTableView.m:335 */,
 			1DA9BB70122DC21F002FCC65 /* PreferencePanel.m:1205 */,
 			1DA9BB83122DC24A002FCC65 /* BookmarkModel.m:192 */,
-			1DA9BD19122F1244002FCC65 /* BookmarkTableView.m:335 */,
 			1DA9BDB6122F1A6F002FCC65 /* ITAddressBookMgr.m:182 */,
 			1D091CF6122F6BEF00FCD9C2 /* PseudoTerminal.m:645 */,
 		);
@@ -318,6 +315,86 @@
 			1D091D34122F6F2F00FCD9C2 /* PBXTextBookmark */ = 1D091D34122F6F2F00FCD9C2 /* PBXTextBookmark */;
 			1D091D36122F6F4A00FCD9C2 /* PBXTextBookmark */ = 1D091D36122F6F4A00FCD9C2 /* PBXTextBookmark */;
 			1D091D37122F6F4A00FCD9C2 /* PBXTextBookmark */ = 1D091D37122F6F4A00FCD9C2 /* PBXTextBookmark */;
+			1D091D3A122F714800FCD9C2 /* PBXTextBookmark */ = 1D091D3A122F714800FCD9C2 /* PBXTextBookmark */;
+			1D091D3B122F714800FCD9C2 /* PBXTextBookmark */ = 1D091D3B122F714800FCD9C2 /* PBXTextBookmark */;
+			1D091D41122F718F00FCD9C2 /* PBXTextBookmark */ = 1D091D41122F718F00FCD9C2 /* PBXTextBookmark */;
+			1D091D42122F718F00FCD9C2 /* PBXTextBookmark */ = 1D091D42122F718F00FCD9C2 /* PBXTextBookmark */;
+			1D091D4D122F72D200FCD9C2 /* PBXTextBookmark */ = 1D091D4D122F72D200FCD9C2 /* PBXTextBookmark */;
+			1D091D4E122F72D200FCD9C2 /* PBXTextBookmark */ = 1D091D4E122F72D200FCD9C2 /* PBXTextBookmark */;
+			1D091D4F122F72D200FCD9C2 /* PBXTextBookmark */ = 1D091D4F122F72D200FCD9C2 /* PBXTextBookmark */;
+			1D091D50122F72D200FCD9C2 /* PBXTextBookmark */ = 1D091D50122F72D200FCD9C2 /* PBXTextBookmark */;
+			1D091D51122F72D200FCD9C2 /* PBXTextBookmark */ = 1D091D51122F72D200FCD9C2 /* PBXTextBookmark */;
+			1D091D52122F72D200FCD9C2 /* PBXTextBookmark */ = 1D091D52122F72D200FCD9C2 /* PBXTextBookmark */;
+			1D091D53122F72D200FCD9C2 /* PBXTextBookmark */ = 1D091D53122F72D200FCD9C2 /* PBXTextBookmark */;
+			1D091D57122F72FD00FCD9C2 /* PBXTextBookmark */ = 1D091D57122F72FD00FCD9C2 /* PBXTextBookmark */;
+			1D091D58122F72FD00FCD9C2 /* PBXTextBookmark */ = 1D091D58122F72FD00FCD9C2 /* PBXTextBookmark */;
+			1D091D5C122F731000FCD9C2 /* PBXTextBookmark */ = 1D091D5C122F731000FCD9C2 /* PBXTextBookmark */;
+			1D091D5D122F731000FCD9C2 /* PBXTextBookmark */ = 1D091D5D122F731000FCD9C2 /* PBXTextBookmark */;
+			1D091D61122F734000FCD9C2 /* PBXTextBookmark */ = 1D091D61122F734000FCD9C2 /* PBXTextBookmark */;
+			1D091D62122F734000FCD9C2 /* PBXTextBookmark */ = 1D091D62122F734000FCD9C2 /* PBXTextBookmark */;
+			1D091D66122F73B100FCD9C2 /* PBXTextBookmark */ = 1D091D66122F73B100FCD9C2 /* PBXTextBookmark */;
+			1D091D67122F73B100FCD9C2 /* PBXTextBookmark */ = 1D091D67122F73B100FCD9C2 /* PBXTextBookmark */;
+			1D091D6B122F742D00FCD9C2 /* PBXTextBookmark */ = 1D091D6B122F742D00FCD9C2 /* PBXTextBookmark */;
+			1D091D6C122F742D00FCD9C2 /* PBXTextBookmark */ = 1D091D6C122F742D00FCD9C2 /* PBXTextBookmark */;
+			1D091D6F122F748100FCD9C2 /* PBXTextBookmark */ = 1D091D6F122F748100FCD9C2 /* PBXTextBookmark */;
+			1D091D72122F749A00FCD9C2 /* PBXTextBookmark */ = 1D091D72122F749A00FCD9C2 /* PBXTextBookmark */;
+			1D091D73122F749A00FCD9C2 /* PBXTextBookmark */ = 1D091D73122F749A00FCD9C2 /* PBXTextBookmark */;
+			1D091D77122F74E400FCD9C2 /* PBXTextBookmark */ = 1D091D77122F74E400FCD9C2 /* PBXTextBookmark */;
+			1D091D78122F74E400FCD9C2 /* PBXTextBookmark */ = 1D091D78122F74E400FCD9C2 /* PBXTextBookmark */;
+			1D091D7B122F74F700FCD9C2 /* XCBuildMessageTextBookmark */ = 1D091D7B122F74F700FCD9C2 /* XCBuildMessageTextBookmark */;
+			1D091D7C122F74F700FCD9C2 /* PBXTextBookmark */ = 1D091D7C122F74F700FCD9C2 /* PBXTextBookmark */;
+			1D091D7D122F74F700FCD9C2 /* PBXTextBookmark */ = 1D091D7D122F74F700FCD9C2 /* PBXTextBookmark */;
+			1D091D7F122F752D00FCD9C2 /* XCBuildMessageTextBookmark */ = 1D091D7F122F752D00FCD9C2 /* XCBuildMessageTextBookmark */;
+			1D091D80122F752D00FCD9C2 /* PBXTextBookmark */ = 1D091D80122F752D00FCD9C2 /* PBXTextBookmark */;
+			1D091D81122F752D00FCD9C2 /* PBXTextBookmark */ = 1D091D81122F752D00FCD9C2 /* PBXTextBookmark */;
+			1D091D84122F758400FCD9C2 /* PBXTextBookmark */ = 1D091D84122F758400FCD9C2 /* PBXTextBookmark */;
+			1D091D85122F758400FCD9C2 /* PBXTextBookmark */ = 1D091D85122F758400FCD9C2 /* PBXTextBookmark */;
+			1D091D89122F75EC00FCD9C2 /* PBXTextBookmark */ = 1D091D89122F75EC00FCD9C2 /* PBXTextBookmark */;
+			1D091D8A122F75EC00FCD9C2 /* PBXTextBookmark */ = 1D091D8A122F75EC00FCD9C2 /* PBXTextBookmark */;
+			1D091D8B122F75EC00FCD9C2 /* PBXTextBookmark */ = 1D091D8B122F75EC00FCD9C2 /* PBXTextBookmark */;
+			1D091D8C122F75EC00FCD9C2 /* PBXTextBookmark */ = 1D091D8C122F75EC00FCD9C2 /* PBXTextBookmark */;
+			1D091D8D122F75EC00FCD9C2 /* PBXTextBookmark */ = 1D091D8D122F75EC00FCD9C2 /* PBXTextBookmark */;
+			1D091D91122F75F100FCD9C2 /* PBXTextBookmark */ = 1D091D91122F75F100FCD9C2 /* PBXTextBookmark */;
+			1D091D92122F75F100FCD9C2 /* PBXTextBookmark */ = 1D091D92122F75F100FCD9C2 /* PBXTextBookmark */;
+			1D091D93122F75F100FCD9C2 /* PBXTextBookmark */ = 1D091D93122F75F100FCD9C2 /* PBXTextBookmark */;
+			1D091D94122F760800FCD9C2 /* PBXTextBookmark */ = 1D091D94122F760800FCD9C2 /* PBXTextBookmark */;
+			1D091D95122F760800FCD9C2 /* PBXTextBookmark */ = 1D091D95122F760800FCD9C2 /* PBXTextBookmark */;
+			1D091D96122F761500FCD9C2 /* PBXTextBookmark */ = 1D091D96122F761500FCD9C2 /* PBXTextBookmark */;
+			1D091D97122F761500FCD9C2 /* PBXTextBookmark */ = 1D091D97122F761500FCD9C2 /* PBXTextBookmark */;
+			1D091D98122F761500FCD9C2 /* PBXTextBookmark */ = 1D091D98122F761500FCD9C2 /* PBXTextBookmark */;
+			1D091D99122F761500FCD9C2 /* PBXTextBookmark */ = 1D091D99122F761500FCD9C2 /* PBXTextBookmark */;
+			1D091D9A122F762100FCD9C2 /* PBXTextBookmark */ = 1D091D9A122F762100FCD9C2 /* PBXTextBookmark */;
+			1D091D9B122F762100FCD9C2 /* PBXTextBookmark */ = 1D091D9B122F762100FCD9C2 /* PBXTextBookmark */;
+			1D091D9C122F763400FCD9C2 /* PBXTextBookmark */ = 1D091D9C122F763400FCD9C2 /* PBXTextBookmark */;
+			1D091D9D122F763400FCD9C2 /* PBXTextBookmark */ = 1D091D9D122F763400FCD9C2 /* PBXTextBookmark */;
+			1D091DA0122F763E00FCD9C2 /* PBXTextBookmark */ = 1D091DA0122F763E00FCD9C2 /* PBXTextBookmark */;
+			1D091DA1122F763E00FCD9C2 /* PBXTextBookmark */ = 1D091DA1122F763E00FCD9C2 /* PBXTextBookmark */;
+			1D091DA2122F763E00FCD9C2 /* PBXTextBookmark */ = 1D091DA2122F763E00FCD9C2 /* PBXTextBookmark */;
+			1D091DA5122F76F600FCD9C2 /* PBXTextBookmark */ = 1D091DA5122F76F600FCD9C2 /* PBXTextBookmark */;
+			1D091DA6122F76F600FCD9C2 /* PBXTextBookmark */ = 1D091DA6122F76F600FCD9C2 /* PBXTextBookmark */;
+			1D091DA7122F76F600FCD9C2 /* PBXTextBookmark */ = 1D091DA7122F76F600FCD9C2 /* PBXTextBookmark */;
+			1D091DA8122F76F600FCD9C2 /* PBXTextBookmark */ = 1D091DA8122F76F600FCD9C2 /* PBXTextBookmark */;
+			1D091DAE122F770D00FCD9C2 /* PBXTextBookmark */ = 1D091DAE122F770D00FCD9C2 /* PBXTextBookmark */;
+			1D091DAF122F770D00FCD9C2 /* PBXTextBookmark */ = 1D091DAF122F770D00FCD9C2 /* PBXTextBookmark */;
+			1D091DB0122F770D00FCD9C2 /* PBXTextBookmark */ = 1D091DB0122F770D00FCD9C2 /* PBXTextBookmark */;
+			1D091DB3122F771900FCD9C2 /* PBXTextBookmark */ = 1D091DB3122F771900FCD9C2 /* PBXTextBookmark */;
+			1D091DB4122F771900FCD9C2 /* PBXTextBookmark */ = 1D091DB4122F771900FCD9C2 /* PBXTextBookmark */;
+			1D091DB7122F772F00FCD9C2 /* PBXTextBookmark */ = 1D091DB7122F772F00FCD9C2 /* PBXTextBookmark */;
+			1D091DB8122F772F00FCD9C2 /* PBXTextBookmark */ = 1D091DB8122F772F00FCD9C2 /* PBXTextBookmark */;
+			1D091DB9122F772F00FCD9C2 /* PBXTextBookmark */ = 1D091DB9122F772F00FCD9C2 /* PBXTextBookmark */;
+			1D091DBA122F772F00FCD9C2 /* PBXTextBookmark */ = 1D091DBA122F772F00FCD9C2 /* PBXTextBookmark */;
+			1D091DBE122F77CF00FCD9C2 /* PBXTextBookmark */ = 1D091DBE122F77CF00FCD9C2 /* PBXTextBookmark */;
+			1D091DBF122F77CF00FCD9C2 /* PBXTextBookmark */ = 1D091DBF122F77CF00FCD9C2 /* PBXTextBookmark */;
+			1D091DC3122F786B00FCD9C2 /* PBXTextBookmark */ = 1D091DC3122F786B00FCD9C2 /* PBXTextBookmark */;
+			1D091DC4122F786B00FCD9C2 /* PBXTextBookmark */ = 1D091DC4122F786B00FCD9C2 /* PBXTextBookmark */;
+			1D091DC6122F78A000FCD9C2 /* PBXTextBookmark */ = 1D091DC6122F78A000FCD9C2 /* PBXTextBookmark */;
+			1D091DC7122F78A000FCD9C2 /* PBXTextBookmark */ = 1D091DC7122F78A000FCD9C2 /* PBXTextBookmark */;
+			1D091DCE122F78CD00FCD9C2 /* PBXTextBookmark */ = 1D091DCE122F78CD00FCD9C2 /* PBXTextBookmark */;
+			1D091DCF122F78CD00FCD9C2 /* PBXTextBookmark */ = 1D091DCF122F78CD00FCD9C2 /* PBXTextBookmark */;
+			1D091DD5122F792D00FCD9C2 /* PBXTextBookmark */ = 1D091DD5122F792D00FCD9C2 /* PBXTextBookmark */;
+			1D091DD6122F792D00FCD9C2 /* PBXTextBookmark */ = 1D091DD6122F792D00FCD9C2 /* PBXTextBookmark */;
+			1D091DDA122F796300FCD9C2 /* PBXTextBookmark */ = 1D091DDA122F796300FCD9C2 /* PBXTextBookmark */;
+			1D091DDB122F796300FCD9C2 /* PBXTextBookmark */ = 1D091DDB122F796300FCD9C2 /* PBXTextBookmark */;
 			1D0B30E3122C18EC00F39BD5 = 1D0B30E3122C18EC00F39BD5 /* PBXTextBookmark */;
 			1D0B30E4122C18EC00F39BD5 = 1D0B30E4122C18EC00F39BD5 /* PBXTextBookmark */;
 			1D0B312F122C208E00F39BD5 = 1D0B312F122C208E00F39BD5 /* PBXTextBookmark */;
@@ -2140,7 +2217,7 @@
 		ignoreCount = 0;
 		lineNumber = 645;
 		location = iTerm;
-		modificationTime = 305098542.100005;
+		modificationTime = 305101154.035479;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -2472,6 +2549,798 @@
 		vrLen = 909;
 		vrLoc = 6584;
 	};
+	1D091D3A122F714800FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = E8A66F030272453F03A80106 /* iTermController.m */;
+		name = "iTermController.m: 123";
+		rLen = 0;
+		rLoc = 3587;
+		rType = 0;
+		vrLen = 1000;
+		vrLoc = 3202;
+	};
+	1D091D3B122F714800FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091D41122F718F00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = E8A66F030272453F03A80106 /* iTermController.m */;
+		name = "iTermController.m: 123";
+		rLen = 0;
+		rLoc = 3587;
+		rType = 0;
+		vrLen = 997;
+		vrLoc = 3207;
+	};
+	1D091D42122F718F00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091D4D122F72D200FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = E8A66F030272453F03A80106 /* iTermController.m */;
+		name = "iTermController.m: 123";
+		rLen = 0;
+		rLoc = 3587;
+		rType = 0;
+		vrLen = 1023;
+		vrLoc = 3207;
+	};
+	1D091D4E122F72D200FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = FB019DE103670C6501F955DB /* PreferencePanel.m */;
+		name = "PreferencePanel.m: 1588";
+		rLen = 0;
+		rLoc = 62209;
+		rType = 0;
+		vrLen = 1338;
+		vrLoc = 61528;
+	};
+	1D091D4F122F72D200FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */;
+		name = "BookmarkModel.m: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1396;
+		vrLoc = 0;
+	};
+	1D091D50122F72D200FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
+		name = "BookmarkTableView.h: 42";
+		rLen = 0;
+		rLoc = 1438;
+		rType = 0;
+		vrLen = 1449;
+		vrLoc = 885;
+	};
+	1D091D51122F72D200FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 1";
+		rLen = 0;
+		rLoc = 0;
+		rType = 0;
+		vrLen = 1679;
+		vrLoc = 14203;
+	};
+	1D091D52122F72D200FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 366";
+		rLen = 11;
+		rLoc = 5904;
+		rType = 0;
+		vrLen = 1683;
+		vrLoc = 11218;
+	};
+	1D091D53122F72D200FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091D57122F72FD00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 123";
+		rLen = 0;
+		rLoc = 3282;
+		rType = 0;
+		vrLen = 1916;
+		vrLoc = 2242;
+	};
+	1D091D58122F72FD00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091D5C122F731000FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 123";
+		rLen = 0;
+		rLoc = 3282;
+		rType = 0;
+		vrLen = 1916;
+		vrLoc = 2242;
+	};
+	1D091D5D122F731000FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091D61122F734000FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 400";
+		rLen = 0;
+		rLoc = 7301;
+		rType = 0;
+		vrLen = 1604;
+		vrLoc = 12100;
+	};
+	1D091D62122F734000FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091D66122F73B100FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 462";
+		rLen = 0;
+		rLoc = 10454;
+		rType = 0;
+		vrLen = 1325;
+		vrLoc = 13679;
+	};
+	1D091D67122F73B100FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091D6B122F742D00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 529";
+		rLen = 0;
+		rLoc = 12197;
+		rType = 0;
+		vrLen = 1418;
+		vrLoc = 15611;
+	};
+	1D091D6C122F742D00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091D6F122F748100FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */;
+		name = "PseudoTerminal.m: 645";
+		rLen = 15;
+		rLoc = 22800;
+		rType = 0;
+		vrLen = 1492;
+		vrLoc = 22140;
+	};
+	1D091D72122F749A00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 529";
+		rLen = 0;
+		rLoc = 12195;
+		rType = 0;
+		vrLen = 1428;
+		vrLoc = 15645;
+	};
+	1D091D73122F749A00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091D77122F74E400FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 502";
+		rLen = 13;
+		rLoc = 11652;
+		rType = 0;
+		vrLen = 1488;
+		vrLoc = 14699;
+	};
+	1D091D78122F74E400FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 909;
+		vrLoc = 6584;
+	};
+	1D091D7B122F74F700FCD9C2 /* XCBuildMessageTextBookmark */ = {
+		isa = PBXTextBookmark;
+		comments = "'bookmark' undeclared (first use in this function)";
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		fallbackIsa = XCBuildMessageTextBookmark;
+		rLen = 1;
+		rLoc = 194;
+		rType = 1;
+	};
+	1D091D7C122F74F700FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 294";
+		rLen = 0;
+		rLoc = 5671;
+		rType = 0;
+		vrLen = 1887;
+		vrLoc = 8277;
+	};
+	1D091D7D122F74F700FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091D7F122F752D00FCD9C2 /* XCBuildMessageTextBookmark */ = {
+		isa = PBXTextBookmark;
+		comments = "'bookmark' undeclared (first use in this function)";
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		fallbackIsa = XCBuildMessageTextBookmark;
+		rLen = 1;
+		rLoc = 194;
+		rType = 1;
+	};
+	1D091D80122F752D00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 302";
+		rLen = 0;
+		rLoc = 5985;
+		rType = 0;
+		vrLen = 1115;
+		vrLoc = 8687;
+	};
+	1D091D81122F752D00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */;
+		name = "PseudoTerminal.m: 645";
+		rLen = 15;
+		rLoc = 22800;
+		rType = 0;
+		vrLen = 1578;
+		vrLoc = 22140;
+	};
+	1D091D84122F758400FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 504";
+		rLen = 11;
+		rLoc = 12204;
+		rType = 0;
+		vrLen = 1296;
+		vrLoc = 14756;
+	};
+	1D091D85122F758400FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091D89122F75EC00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */;
+		name = "BookmarkModel.m: 412";
+		rLen = 4;
+		rLoc = 13026;
+		rType = 0;
+		vrLen = 1482;
+		vrLoc = 11609;
+	};
+	1D091D8A122F75EC00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
+		name = "BookmarkTableView.h: 58";
+		rLen = 25;
+		rLoc = 1906;
+		rType = 0;
+		vrLen = 1535;
+		vrLoc = 820;
+	};
+	1D091D8B122F75EC00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 209";
+		rLen = 0;
+		rLoc = 5269;
+		rType = 0;
+		vrLen = 1497;
+		vrLoc = 16149;
+	};
+	1D091D8C122F75EC00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 278";
+		rLen = 25;
+		rLoc = 5311;
+		rType = 0;
+		vrLen = 1898;
+		vrLoc = 8328;
+	};
+	1D091D8D122F75EC00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091D91122F75F100FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 278";
+		rLen = 25;
+		rLoc = 5311;
+		rType = 0;
+		vrLen = 1898;
+		vrLoc = 8328;
+	};
+	1D091D92122F75F100FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 278";
+		rLen = 25;
+		rLoc = 5311;
+		rType = 0;
+		vrLen = 1898;
+		vrLoc = 8328;
+	};
+	1D091D93122F75F100FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091D94122F760800FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 304";
+		rLen = 0;
+		rLoc = 5985;
+		rType = 0;
+		vrLen = 868;
+		vrLoc = 8663;
+	};
+	1D091D95122F760800FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */;
+		name = "PseudoTerminal.m: 645";
+		rLen = 15;
+		rLoc = 22800;
+		rType = 0;
+		vrLen = 1492;
+		vrLoc = 22140;
+	};
+	1D091D96122F761500FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */;
+		name = "BookmarkModel.m: 137";
+		rLen = 0;
+		rLoc = 3953;
+		rType = 0;
+		vrLen = 1251;
+		vrLoc = 3276;
+	};
+	1D091D97122F761500FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		rLen = 0;
+		rLoc = 194;
+		rType = 1;
+	};
+	1D091D98122F761500FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 293";
+		rLen = 0;
+		rLoc = 5671;
+		rType = 0;
+		vrLen = 1934;
+		vrLoc = 8195;
+	};
+	1D091D99122F761500FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091D9A122F762100FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 293";
+		rLen = 0;
+		rLoc = 5671;
+		rType = 0;
+		vrLen = 1934;
+		vrLoc = 8195;
+	};
+	1D091D9B122F762100FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091D9C122F763400FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 283";
+		rLen = 0;
+		rLoc = 5393;
+		rType = 0;
+		vrLen = 1934;
+		vrLoc = 8195;
+	};
+	1D091D9D122F763400FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091DA0122F763E00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 283";
+		rLen = 0;
+		rLoc = 5393;
+		rType = 0;
+		vrLen = 1934;
+		vrLoc = 8195;
+	};
+	1D091DA1122F763E00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 283";
+		rLen = 0;
+		rLoc = 5393;
+		rType = 0;
+		vrLen = 1934;
+		vrLoc = 8195;
+	};
+	1D091DA2122F763E00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091DA5122F76F600FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */;
+		name = "BookmarkModel.m: 137";
+		rLen = 0;
+		rLoc = 3953;
+		rType = 0;
+		vrLen = 1436;
+		vrLoc = 3576;
+	};
+	1D091DA6122F76F600FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		rLen = 0;
+		rLoc = 194;
+		rType = 1;
+	};
+	1D091DA7122F76F600FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 284";
+		rLen = 0;
+		rLoc = 5537;
+		rType = 0;
+		vrLen = 1829;
+		vrLoc = 8437;
+	};
+	1D091DA8122F76F600FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091DAE122F770D00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 284";
+		rLen = 0;
+		rLoc = 5537;
+		rType = 0;
+		vrLen = 2011;
+		vrLoc = 8437;
+	};
+	1D091DAF122F770D00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 284";
+		rLen = 0;
+		rLoc = 5537;
+		rType = 0;
+		vrLen = 1829;
+		vrLoc = 8437;
+	};
+	1D091DB0122F770D00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091DB3122F771900FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 284";
+		rLen = 0;
+		rLoc = 5537;
+		rType = 0;
+		vrLen = 1829;
+		vrLoc = 8437;
+	};
+	1D091DB4122F771900FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091DB7122F772F00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
+		name = "BookmarkTableView.h: 58";
+		rLen = 25;
+		rLoc = 1906;
+		rType = 0;
+		vrLen = 1465;
+		vrLoc = 890;
+	};
+	1D091DB8122F772F00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 285";
+		rLen = 0;
+		rLoc = 5577;
+		rType = 0;
+		vrLen = 1829;
+		vrLoc = 8437;
+	};
+	1D091DB9122F772F00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 278";
+		rLen = 0;
+		rLoc = 5336;
+		rType = 0;
+		vrLen = 1853;
+		vrLoc = 8437;
+	};
+	1D091DBA122F772F00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091DBE122F77CF00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 426";
+		rLen = 0;
+		rLoc = 10053;
+		rType = 0;
+		vrLen = 1545;
+		vrLoc = 12348;
+	};
+	1D091DBF122F77CF00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091DC3122F786B00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 426";
+		rLen = 0;
+		rLoc = 10053;
+		rType = 0;
+		vrLen = 1351;
+		vrLoc = 12564;
+	};
+	1D091DC4122F786B00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091DC6122F78A000FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 439";
+		rLen = 0;
+		rLoc = 10555;
+		rType = 0;
+		vrLen = 1388;
+		vrLoc = 12564;
+	};
+	1D091DC7122F78A000FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 909;
+		vrLoc = 6584;
+	};
+	1D091DCE122F78CD00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 483";
+		rLen = 0;
+		rLoc = 14224;
+		rType = 0;
+		vrLen = 1497;
+		vrLoc = 12727;
+	};
+	1D091DCF122F78CD00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091DD5122F792D00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 203";
+		rLen = 0;
+		rLoc = 6053;
+		rType = 0;
+		vrLen = 1706;
+		vrLoc = 5067;
+	};
+	1D091DD6122F792D00FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
+	1D091DDA122F796300FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
+		name = "BookmarkTableView.m: 203";
+		rLen = 0;
+		rLoc = 6053;
+		rType = 0;
+		vrLen = 1706;
+		vrLoc = 5067;
+	};
+	1D091DDB122F796300FCD9C2 /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 872EBC5404E42E320073D10E /* PTYTextView.h */;
+		name = "PTYTextView.h: 235";
+		rLen = 9;
+		rLoc = 6913;
+		rType = 0;
+		vrLen = 836;
+		vrLoc = 6584;
+	};
 	1D0B30E3122C18EC00F39BD5 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = 20D5CC6404E7AA0500000106 /* iTermApplicationDelegate.m */;
@@ -2492,7 +3361,7 @@
 		vrLen = 1326;
 		vrLoc = 0;
 	};
-	1D0B30FA122C1B1500F39BD5 /* BookmarkTableView.m:385 */ = {
+	1D0B30FA122C1B1500F39BD5 /* BookmarkTableView.m:240 */ = {
 		isa = PBXFileBreakpoint;
 		actions = (
 		);
@@ -2504,9 +3373,9 @@
 		functionName = "-tableView:sortDescriptorsDidChange:";
 		hitCount = 0;
 		ignoreCount = 0;
-		lineNumber = 385;
+		lineNumber = 240;
 		location = iTerm;
-		modificationTime = 305098541.616044;
+		modificationTime = 305101153.513218;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -2515,35 +3384,17 @@
 		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
 		name = "BookmarkTableView.h: 41";
 		rLen = 0;
-		rLoc = 1420;
+		rLoc = 1452;
 		rType = 0;
 		vrLen = 1508;
 		vrLoc = 0;
-	};
-	1D0B3149122C211300F39BD5 /* BookmarkTableView.m:354 */ = {
-		isa = PBXFileBreakpoint;
-		actions = (
-		);
-		breakpointStyle = 0;
-		continueAfterActions = 0;
-		countType = 0;
-		delayBeforeContinue = 0;
-		fileReference = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
-		functionName = "-tableView:objectValueForTableColumn:row:";
-		hitCount = 0;
-		ignoreCount = 0;
-		lineNumber = 354;
-		location = iTerm;
-		modificationTime = 305098541.616062;
-		originalNumberOfMultipleMatches = 1;
-		state = 2;
 	};
 	1D0B316A122C222700F39BD5 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 302";
 		rLen = 0;
-		rLoc = 11720;
+		rLoc = 5873;
 		rType = 0;
 		vrLen = 1898;
 		vrLoc = 8950;
@@ -2592,7 +3443,7 @@
 		ignoreCount = 0;
 		lineNumber = 137;
 		location = iTerm;
-		modificationTime = 305098541.615182;
+		modificationTime = 305101153.511776;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2609,7 +3460,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 566;
-		modificationTime = 305098541.615211;
+		modificationTime = 305101153.511801;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2626,7 +3477,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 582;
-		modificationTime = 305098541.615232;
+		modificationTime = 305101153.511825;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2644,7 +3495,7 @@
 		ignoreCount = 0;
 		lineNumber = 2753;
 		location = iTerm;
-		modificationTime = 305098541.615293;
+		modificationTime = 305101153.5119;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2662,7 +3513,7 @@
 		ignoreCount = 0;
 		lineNumber = 2744;
 		location = iTerm;
-		modificationTime = 305098541.615373;
+		modificationTime = 305101153.511985;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2680,7 +3531,7 @@
 		ignoreCount = 0;
 		lineNumber = 2771;
 		location = iTerm;
-		modificationTime = 305098541.615434;
+		modificationTime = 305101153.512057;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2698,7 +3549,7 @@
 		ignoreCount = 0;
 		lineNumber = 2339;
 		location = iTerm;
-		modificationTime = 305098541.615493;
+		modificationTime = 305101153.512122;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2716,7 +3567,7 @@
 		ignoreCount = 0;
 		lineNumber = 2359;
 		location = iTerm;
-		modificationTime = 305098541.615514;
+		modificationTime = 305101153.512145;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2734,7 +3585,7 @@
 		ignoreCount = 0;
 		lineNumber = 396;
 		location = iTerm;
-		modificationTime = 305098541.614365;
+		modificationTime = 305101153.510652;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2752,7 +3603,7 @@
 		ignoreCount = 0;
 		lineNumber = 498;
 		location = iTerm;
-		modificationTime = 305098541.61438;
+		modificationTime = 305101153.510675;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2767,7 +3618,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = libobjc.A.dylib;
-		modificationTime = 305098542.131591;
+		modificationTime = 305101154.088314;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 		symbolName = objc_exception_throw;
@@ -2783,7 +3634,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = CoreFoundation;
-		modificationTime = 305098541.617773;
+		modificationTime = 305101153.515482;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 		symbolName = "-[NSException raise]";
@@ -2802,7 +3653,7 @@
 		ignoreCount = 0;
 		lineNumber = 502;
 		location = iTerm;
-		modificationTime = 305098541.614401;
+		modificationTime = 305101153.5107;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2820,7 +3671,7 @@
 		ignoreCount = 0;
 		lineNumber = 2272;
 		location = iTerm;
-		modificationTime = 305098541.614421;
+		modificationTime = 305101153.51073;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2838,7 +3689,7 @@
 		ignoreCount = 0;
 		lineNumber = 500;
 		location = iTerm;
-		modificationTime = 305098541.61444;
+		modificationTime = 305101153.510762;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2856,7 +3707,7 @@
 		ignoreCount = 0;
 		lineNumber = 496;
 		location = iTerm;
-		modificationTime = 305098541.614459;
+		modificationTime = 305101153.510801;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2874,7 +3725,7 @@
 		ignoreCount = 0;
 		lineNumber = 405;
 		location = iTerm;
-		modificationTime = 305098541.614481;
+		modificationTime = 305101153.510829;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2891,7 +3742,7 @@
 		ignoreCount = 0;
 		lineNumber = 415;
 		location = iTerm;
-		modificationTime = 305098541.614498;
+		modificationTime = 305101153.510852;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2909,7 +3760,7 @@
 		ignoreCount = 0;
 		lineNumber = 518;
 		location = iTerm;
-		modificationTime = 305098541.614516;
+		modificationTime = 305101153.510878;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2927,7 +3778,7 @@
 		ignoreCount = 0;
 		lineNumber = 508;
 		location = iTerm;
-		modificationTime = 305098541.614553;
+		modificationTime = 305101153.510904;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -2942,7 +3793,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = iTerm;
-		modificationTime = 305098541.617917;
+		modificationTime = 305101153.515649;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 		symbolName = start;
@@ -3053,7 +3904,7 @@
 		ignoreCount = 0;
 		lineNumber = 440;
 		location = iTerm;
-		modificationTime = 305098541.614076;
+		modificationTime = 305101153.510288;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3071,7 +3922,7 @@
 		ignoreCount = 0;
 		lineNumber = 440;
 		location = iTerm;
-		modificationTime = 305098541.614122;
+		modificationTime = 305101153.510357;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3089,7 +3940,7 @@
 		ignoreCount = 0;
 		lineNumber = 557;
 		location = iTerm;
-		modificationTime = 305098541.614146;
+		modificationTime = 305101153.510385;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3107,7 +3958,7 @@
 		ignoreCount = 0;
 		lineNumber = 565;
 		location = iTerm;
-		modificationTime = 305098541.614164;
+		modificationTime = 305101153.510409;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3125,7 +3976,7 @@
 		ignoreCount = 0;
 		lineNumber = 543;
 		location = iTerm;
-		modificationTime = 305098541.614183;
+		modificationTime = 305101153.510431;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3143,7 +3994,7 @@
 		ignoreCount = 0;
 		lineNumber = 553;
 		location = iTerm;
-		modificationTime = 305098541.6142;
+		modificationTime = 305101153.510451;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3161,7 +4012,7 @@
 		ignoreCount = 0;
 		lineNumber = 431;
 		location = iTerm;
-		modificationTime = 305098541.614235;
+		modificationTime = 305101153.51048;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3179,7 +4030,7 @@
 		ignoreCount = 0;
 		lineNumber = 440;
 		location = iTerm;
-		modificationTime = 305098541.614255;
+		modificationTime = 305101153.510503;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3197,7 +4048,7 @@
 		ignoreCount = 0;
 		lineNumber = 440;
 		location = iTerm;
-		modificationTime = 305098541.614269;
+		modificationTime = 305101153.510524;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3215,7 +4066,7 @@
 		ignoreCount = 0;
 		lineNumber = 2462;
 		location = iTerm;
-		modificationTime = 305098541.614285;
+		modificationTime = 305101153.510545;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3233,7 +4084,7 @@
 		ignoreCount = 0;
 		lineNumber = 588;
 		location = iTerm;
-		modificationTime = 305098541.614304;
+		modificationTime = 305101153.51057;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3252,7 +4103,7 @@
 		ignoreCount = 0;
 		lineNumber = 299;
 		location = iTerm;
-		modificationTime = 305098541.614325;
+		modificationTime = 305101153.510598;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3274,7 +4125,7 @@
 		ignoreCount = 0;
 		lineNumber = 81;
 		location = iTerm;
-		modificationTime = 305098541.614348;
+		modificationTime = 305101153.510624;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3292,7 +4143,7 @@
 		ignoreCount = 0;
 		lineNumber = 169;
 		location = iTerm;
-		modificationTime = 305098541.614626;
+		modificationTime = 305101153.511007;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3317,7 +4168,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = Foundation;
-		modificationTime = 305098541.617807;
+		modificationTime = 305101153.515503;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 		symbolName = _NSLockError;
@@ -3336,7 +4187,7 @@
 		ignoreCount = 0;
 		lineNumber = 169;
 		location = iTerm;
-		modificationTime = 305098541.614648;
+		modificationTime = 305101153.51103;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3351,7 +4202,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = Foundation;
-		modificationTime = 305098541.617824;
+		modificationTime = 305101153.515526;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 		symbolName = _NSLockError;
@@ -3370,7 +4221,7 @@
 		ignoreCount = 0;
 		lineNumber = 124;
 		location = iTerm;
-		modificationTime = 305098541.61467;
+		modificationTime = 305101153.511074;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3388,7 +4239,7 @@
 		ignoreCount = 0;
 		lineNumber = 169;
 		location = iTerm;
-		modificationTime = 305098541.614688;
+		modificationTime = 305101153.511098;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3406,7 +4257,7 @@
 		ignoreCount = 0;
 		lineNumber = 567;
 		location = iTerm;
-		modificationTime = 305098541.614707;
+		modificationTime = 305101153.511123;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3424,7 +4275,7 @@
 		ignoreCount = 0;
 		lineNumber = 755;
 		location = iTerm;
-		modificationTime = 305098541.614728;
+		modificationTime = 305101153.51115;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3442,7 +4293,7 @@
 		ignoreCount = 0;
 		lineNumber = 158;
 		location = iTerm;
-		modificationTime = 305098541.614861;
+		modificationTime = 305101153.511317;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3460,7 +4311,7 @@
 		ignoreCount = 0;
 		lineNumber = 156;
 		location = iTerm;
-		modificationTime = 305098541.61488;
+		modificationTime = 305101153.511344;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3478,7 +4329,7 @@
 		ignoreCount = 0;
 		lineNumber = 169;
 		location = iTerm;
-		modificationTime = 305098541.6149;
+		modificationTime = 305101153.511366;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3503,7 +4354,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = Foundation;
-		modificationTime = 305098541.61785;
+		modificationTime = 305101153.515551;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 		symbolName = _NSLockError;
@@ -3519,7 +4370,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = "";
-		modificationTime = 305098541.617868;
+		modificationTime = 305101153.515574;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 		symbolName = "-[objc_exception_throw]";
@@ -3535,7 +4386,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = libobjc.A.dylib;
-		modificationTime = 305098541.617885;
+		modificationTime = 305101153.515595;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 		symbolName = objc_exception_throw;
@@ -3564,7 +4415,7 @@
 		ignoreCount = 0;
 		lineNumber = 169;
 		location = iTerm;
-		modificationTime = 305098541.614919;
+		modificationTime = 305101153.511386;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3582,7 +4433,7 @@
 		ignoreCount = 0;
 		lineNumber = 169;
 		location = iTerm;
-		modificationTime = 305098541.614933;
+		modificationTime = 305101153.511411;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3600,7 +4451,7 @@
 		ignoreCount = 0;
 		lineNumber = 304;
 		location = iTerm;
-		modificationTime = 305098541.61495;
+		modificationTime = 305101153.511436;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3618,7 +4469,7 @@
 		ignoreCount = 0;
 		lineNumber = 510;
 		location = iTerm;
-		modificationTime = 305098541.614965;
+		modificationTime = 305101153.511463;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3636,7 +4487,7 @@
 		ignoreCount = 0;
 		lineNumber = 765;
 		location = iTerm;
-		modificationTime = 305098541.615002;
+		modificationTime = 305101153.511492;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3654,7 +4505,7 @@
 		ignoreCount = 0;
 		lineNumber = 334;
 		location = iTerm;
-		modificationTime = 305098541.615019;
+		modificationTime = 305101153.511524;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3672,7 +4523,7 @@
 		ignoreCount = 0;
 		lineNumber = 352;
 		location = iTerm;
-		modificationTime = 305098541.615038;
+		modificationTime = 305101153.511565;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3690,7 +4541,7 @@
 		ignoreCount = 0;
 		lineNumber = 343;
 		location = iTerm;
-		modificationTime = 305098541.615062;
+		modificationTime = 305101153.511588;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3708,7 +4559,7 @@
 		ignoreCount = 0;
 		lineNumber = 352;
 		location = iTerm;
-		modificationTime = 305098541.615083;
+		modificationTime = 305101153.511614;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3726,7 +4577,7 @@
 		ignoreCount = 0;
 		lineNumber = 782;
 		location = iTerm;
-		modificationTime = 305098541.615102;
+		modificationTime = 305101153.511642;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3744,7 +4595,7 @@
 		ignoreCount = 0;
 		lineNumber = 2426;
 		location = iTerm;
-		modificationTime = 305098541.615118;
+		modificationTime = 305101153.511665;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3762,7 +4613,7 @@
 		ignoreCount = 0;
 		lineNumber = 1592;
 		location = iTerm;
-		modificationTime = 305098541.615133;
+		modificationTime = 305101153.511689;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3780,7 +4631,7 @@
 		ignoreCount = 0;
 		lineNumber = 740;
 		location = iTerm;
-		modificationTime = 305098541.615151;
+		modificationTime = 305101153.511713;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3798,7 +4649,7 @@
 		ignoreCount = 0;
 		lineNumber = 1576;
 		location = iTerm;
-		modificationTime = 305098541.615166;
+		modificationTime = 305101153.511752;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3816,7 +4667,7 @@
 		ignoreCount = 0;
 		lineNumber = 2302;
 		location = iTerm;
-		modificationTime = 305098541.615256;
+		modificationTime = 305101153.51185;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3834,7 +4685,7 @@
 		ignoreCount = 0;
 		lineNumber = 953;
 		location = iTerm;
-		modificationTime = 305098541.615273;
+		modificationTime = 305101153.511875;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -3849,7 +4700,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = libobjc.A.dylib;
-		modificationTime = 305098541.6179;
+		modificationTime = 305101153.515615;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 		symbolName = objc_exception_throw;
@@ -3878,7 +4729,7 @@
 		ignoreCount = 0;
 		lineNumber = 134;
 		location = iTerm;
-		modificationTime = 305098541.615533;
+		modificationTime = 305101153.512167;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -3897,7 +4748,7 @@
 		ignoreCount = 0;
 		lineNumber = 2675;
 		location = iTerm;
-		modificationTime = 305098541.615552;
+		modificationTime = 305101153.512188;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -3918,7 +4769,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 298;
-		modificationTime = 305098541.615843;
+		modificationTime = 305101153.512582;
 		originalNumberOfMultipleMatches = 1;
 		state = 0;
 	};
@@ -3942,7 +4793,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 16;
-		modificationTime = 305098541.615864;
+		modificationTime = 305101153.51261;
 		originalNumberOfMultipleMatches = 1;
 		state = 0;
 	};
@@ -3955,17 +4806,17 @@
 	};
 	1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {866, 1092}}";
-			sepNavSelRange = "{0, 0}";
-			sepNavVisRange = "{940, 1263}";
+			sepNavIntBoundsRect = "{{0, 0}, {1169, 1118}}";
+			sepNavSelRange = "{1906, 25}";
+			sepNavVisRange = "{890, 1465}";
 			sepNavWindowFrame = "{{648, 91}, {629, 685}}";
 		};
 	};
 	1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {859, 8216}}";
-			sepNavSelRange = "{18251, 0}";
-			sepNavVisRange = "{17634, 1291}";
+			sepNavIntBoundsRect = "{{0, 0}, {1169, 5837}}";
+			sepNavSelRange = "{6053, 0}";
+			sepNavVisRange = "{5067, 1706}";
 			sepNavWindowFrame = "{{648, 91}, {629, 685}}";
 		};
 	};
@@ -3973,7 +4824,7 @@
 		isa = PBXBookmark;
 		fRef = FB019DE103670C6501F955DB /* PreferencePanel.m */;
 	};
-	1D6C50DC1227238600E0AA3E /* BookmarkTableView.m:482 */ = {
+	1D6C50DC1227238600E0AA3E /* BookmarkTableView.m:338 */ = {
 		isa = PBXFileBreakpoint;
 		actions = (
 		);
@@ -3985,9 +4836,9 @@
 		functionName = "-awakeFromNib";
 		hitCount = 0;
 		ignoreCount = 0;
-		lineNumber = 482;
+		lineNumber = 338;
 		location = iTerm;
-		modificationTime = 305098541.615909;
+		modificationTime = 305101153.51267;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -4192,7 +5043,7 @@
 		ignoreCount = 0;
 		lineNumber = 261;
 		location = iTerm;
-		modificationTime = 305098541.61608;
+		modificationTime = 305101153.513301;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -4494,7 +5345,7 @@
 		ignoreCount = 0;
 		lineNumber = 244;
 		location = iTerm;
-		modificationTime = 305098541.6162;
+		modificationTime = 305101153.513383;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -4572,7 +5423,7 @@
 		ignoreCount = 0;
 		lineNumber = 282;
 		location = iTerm;
-		modificationTime = 305098541.616223;
+		modificationTime = 305101153.513413;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -4620,7 +5471,7 @@
 		ignoreCount = 0;
 		lineNumber = 2148;
 		location = iTerm;
-		modificationTime = 305098541.616247;
+		modificationTime = 305101153.513472;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -4806,7 +5657,7 @@
 		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
 		name = "BookmarkTableView.h: 74";
 		rLen = 20;
-		rLoc = 2595;
+		rLoc = 2627;
 		rType = 0;
 		vrLen = 1164;
 		vrLoc = 1277;
@@ -4816,7 +5667,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 302";
 		rLen = 0;
-		rLoc = 11720;
+		rLoc = 5873;
 		rType = 0;
 		vrLen = 1555;
 		vrLoc = 9293;
@@ -4826,7 +5677,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 518";
 		rLen = 0;
-		rLoc = 17862;
+		rLoc = 12629;
 		rType = 0;
 		vrLen = 1191;
 		vrLoc = 15096;
@@ -4856,7 +5707,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 518";
 		rLen = 0;
-		rLoc = 17860;
+		rLoc = 12627;
 		rType = 0;
 		vrLen = 1209;
 		vrLoc = 15096;
@@ -4886,7 +5737,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 518";
 		rLen = 0;
-		rLoc = 17860;
+		rLoc = 12627;
 		rType = 0;
 		vrLen = 1209;
 		vrLoc = 15096;
@@ -4916,7 +5767,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 518";
 		rLen = 0;
-		rLoc = 17860;
+		rLoc = 12627;
 		rType = 0;
 		vrLen = 1209;
 		vrLoc = 15096;
@@ -4946,7 +5797,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 518";
 		rLen = 0;
-		rLoc = 17860;
+		rLoc = 12627;
 		rType = 0;
 		vrLen = 1209;
 		vrLoc = 15096;
@@ -5043,7 +5894,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 496";
 		rLen = 0;
-		rLoc = 17396;
+		rLoc = 12035;
 		rType = 0;
 		vrLen = 1210;
 		vrLoc = 15095;
@@ -5053,7 +5904,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 496";
 		rLen = 0;
-		rLoc = 17396;
+		rLoc = 12035;
 		rType = 0;
 		vrLen = 1240;
 		vrLoc = 15062;
@@ -5083,7 +5934,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 496";
 		rLen = 0;
-		rLoc = 17396;
+		rLoc = 12035;
 		rType = 0;
 		vrLen = 1240;
 		vrLoc = 15062;
@@ -5140,7 +5991,7 @@
 		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
 		name = "BookmarkTableView.h: 47";
 		rLen = 0;
-		rLoc = 1620;
+		rLoc = 1652;
 		rType = 0;
 		vrLen = 1301;
 		vrLoc = 947;
@@ -5295,7 +6146,7 @@
 		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
 		name = "BookmarkTableView.h: 47";
 		rLen = 0;
-		rLoc = 1620;
+		rLoc = 1652;
 		rType = 0;
 		vrLen = 1359;
 		vrLoc = 947;
@@ -5355,7 +6206,7 @@
 		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
 		name = "BookmarkTableView.h: 76";
 		rLen = 57;
-		rLoc = 2615;
+		rLoc = 2647;
 		rType = 0;
 		vrLen = 1256;
 		vrLoc = 1277;
@@ -5375,7 +6226,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 554";
 		rLen = 0;
-		rLoc = 19010;
+		rLoc = 13777;
 		rType = 0;
 		vrLen = 1239;
 		vrLoc = 16255;
@@ -5405,7 +6256,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 554";
 		rLen = 0;
-		rLoc = 19010;
+		rLoc = 13777;
 		rType = 0;
 		vrLen = 1051;
 		vrLoc = 1702;
@@ -5499,7 +6350,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 554";
 		rLen = 0;
-		rLoc = 18968;
+		rLoc = 13735;
 		rType = 0;
 		vrLen = 1224;
 		vrLoc = 16306;
@@ -5529,7 +6380,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 554";
 		rLen = 0;
-		rLoc = 18968;
+		rLoc = 13735;
 		rType = 0;
 		vrLen = 1223;
 		vrLoc = 16306;
@@ -5628,7 +6479,7 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		rLen = 1;
-		rLoc = 603;
+		rLoc = 459;
 		rType = 1;
 	};
 	1DA9B5F0122CA79A002FCC65 /* PBXTextBookmark */ = {
@@ -5636,7 +6487,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 559";
 		rLen = 0;
-		rLoc = 19457;
+		rLoc = 14224;
 		rType = 0;
 		vrLen = 1223;
 		vrLoc = 16312;
@@ -5646,7 +6497,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 559";
 		rLen = 0;
-		rLoc = 19457;
+		rLoc = 14224;
 		rType = 0;
 		vrLen = 1224;
 		vrLoc = 16306;
@@ -5676,7 +6527,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 555";
 		rLen = 42;
-		rLoc = 18969;
+		rLoc = 13736;
 		rType = 0;
 		vrLen = 1245;
 		vrLoc = 16306;
@@ -5706,7 +6557,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 529";
 		rLen = 0;
-		rLoc = 17954;
+		rLoc = 12721;
 		rType = 0;
 		vrLen = 1250;
 		vrLoc = 16306;
@@ -6648,7 +7499,7 @@
 		ignoreCount = 0;
 		lineNumber = 198;
 		location = iTerm;
-		modificationTime = 305098541.616304;
+		modificationTime = 305101153.513544;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -6717,7 +7568,7 @@
 		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
 		name = "BookmarkTableView.h: 77";
 		rLen = 14;
-		rLoc = 2672;
+		rLoc = 2704;
 		rType = 0;
 		vrLen = 1243;
 		vrLoc = 1310;
@@ -6727,7 +7578,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 561";
 		rLen = 0;
-		rLoc = 19163;
+		rLoc = 13930;
 		rType = 0;
 		vrLen = 1262;
 		vrLoc = 16334;
@@ -6737,7 +7588,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 561";
 		rLen = 0;
-		rLoc = 19163;
+		rLoc = 13930;
 		rType = 0;
 		vrLen = 1276;
 		vrLoc = 16312;
@@ -6787,7 +7638,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 561";
 		rLen = 0;
-		rLoc = 19163;
+		rLoc = 13930;
 		rType = 0;
 		vrLen = 1276;
 		vrLoc = 16312;
@@ -6907,7 +7758,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 552";
 		rLen = 0;
-		rLoc = 18812;
+		rLoc = 13579;
 		rType = 0;
 		vrLen = 1196;
 		vrLoc = 16400;
@@ -6967,7 +7818,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 561";
 		rLen = 0;
-		rLoc = 19163;
+		rLoc = 13930;
 		rType = 0;
 		vrLen = 1276;
 		vrLoc = 16312;
@@ -7017,7 +7868,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 561";
 		rLen = 0;
-		rLoc = 19163;
+		rLoc = 13930;
 		rType = 0;
 		vrLen = 1276;
 		vrLoc = 16312;
@@ -7027,7 +7878,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 561";
 		rLen = 0;
-		rLoc = 19163;
+		rLoc = 13930;
 		rType = 0;
 		vrLen = 1276;
 		vrLoc = 16312;
@@ -7087,7 +7938,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 560";
 		rLen = 0;
-		rLoc = 19151;
+		rLoc = 13918;
 		rType = 0;
 		vrLen = 1260;
 		vrLoc = 16336;
@@ -7097,7 +7948,7 @@
 		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
 		name = "BookmarkTableView.h: 77";
 		rLen = 0;
-		rLoc = 2672;
+		rLoc = 2704;
 		rType = 0;
 		vrLen = 1243;
 		vrLoc = 1310;
@@ -7137,7 +7988,7 @@
 		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
 		name = "BookmarkTableView.h: 78";
 		rLen = 24;
-		rLoc = 2686;
+		rLoc = 2718;
 		rType = 0;
 		vrLen = 1230;
 		vrLoc = 1345;
@@ -7147,7 +7998,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 565";
 		rLen = 0;
-		rLoc = 19318;
+		rLoc = 14085;
 		rType = 0;
 		vrLen = 1249;
 		vrLoc = 16400;
@@ -7157,7 +8008,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 564";
 		rLen = 21;
-		rLoc = 19296;
+		rLoc = 14063;
 		rType = 0;
 		vrLen = 1190;
 		vrLoc = 16459;
@@ -7184,7 +8035,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 565";
 		rLen = 0;
-		rLoc = 19318;
+		rLoc = 14085;
 		rType = 0;
 		vrLen = 1249;
 		vrLoc = 16400;
@@ -7194,7 +8045,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 565";
 		rLen = 0;
-		rLoc = 19318;
+		rLoc = 14085;
 		rType = 0;
 		vrLen = 1249;
 		vrLoc = 16400;
@@ -7213,7 +8064,7 @@
 		ignoreCount = 0;
 		lineNumber = 52;
 		location = iTerm;
-		modificationTime = 305098541.61638;
+		modificationTime = 305101153.513612;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -7262,7 +8113,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 565";
 		rLen = 0;
-		rLoc = 19318;
+		rLoc = 14085;
 		rType = 0;
 		vrLen = 1249;
 		vrLoc = 16400;
@@ -7321,7 +8172,7 @@
 		ignoreCount = 0;
 		lineNumber = 890;
 		location = iTerm;
-		modificationTime = 305098541.616403;
+		modificationTime = 305101153.513637;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -7380,7 +8231,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 565";
 		rLen = 0;
-		rLoc = 19318;
+		rLoc = 14085;
 		rType = 0;
 		vrLen = 1249;
 		vrLoc = 16400;
@@ -7440,7 +8291,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 565";
 		rLen = 0;
-		rLoc = 19318;
+		rLoc = 14085;
 		rType = 0;
 		vrLen = 1249;
 		vrLoc = 16400;
@@ -7540,7 +8391,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 567";
 		rLen = 0;
-		rLoc = 19318;
+		rLoc = 14085;
 		rType = 0;
 		vrLen = 1365;
 		vrLoc = 16459;
@@ -7560,7 +8411,7 @@
 		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
 		name = "BookmarkTableView.h: 81";
 		rLen = 0;
-		rLoc = 2731;
+		rLoc = 2763;
 		rType = 0;
 		vrLen = 1231;
 		vrLoc = 1381;
@@ -7580,7 +8431,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 574";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1252;
 		vrLoc = 16760;
@@ -7605,7 +8456,7 @@
 		vrLen = 893;
 		vrLoc = 10178;
 	};
-	1DA9B71F122CBBCF002FCC65 /* BookmarkTableView.m:610 */ = {
+	1DA9B71F122CBBCF002FCC65 /* BookmarkTableView.m:466 */ = {
 		isa = PBXFileBreakpoint;
 		actions = (
 		);
@@ -7617,13 +8468,13 @@
 		functionName = "-retain";
 		hitCount = 0;
 		ignoreCount = 0;
-		lineNumber = 610;
+		lineNumber = 466;
 		location = iTerm;
-		modificationTime = 305098541.616463;
+		modificationTime = 305101153.513704;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
-	1DA9B721122CBBD1002FCC65 /* BookmarkTableView.m:616 */ = {
+	1DA9B721122CBBD1002FCC65 /* BookmarkTableView.m:472 */ = {
 		isa = PBXFileBreakpoint;
 		actions = (
 		);
@@ -7635,9 +8486,9 @@
 		functionName = "-release";
 		hitCount = 0;
 		ignoreCount = 0;
-		lineNumber = 616;
+		lineNumber = 472;
 		location = iTerm;
-		modificationTime = 305098541.616487;
+		modificationTime = 305101153.513799;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -7673,7 +8524,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 574";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1445;
 		vrLoc = 16544;
@@ -7683,7 +8534,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 574";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1445;
 		vrLoc = 16544;
@@ -7713,7 +8564,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 562";
 		rLen = 0;
-		rLoc = 19044;
+		rLoc = 13811;
 		rType = 0;
 		vrLen = 1281;
 		vrLoc = 16708;
@@ -7753,7 +8604,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 574";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1445;
 		vrLoc = 16544;
@@ -7773,7 +8624,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 574";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1445;
 		vrLoc = 16544;
@@ -7793,7 +8644,7 @@
 		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
 		name = "BookmarkTableView.h: 51";
 		rLen = 0;
-		rLoc = 1745;
+		rLoc = 1777;
 		rType = 0;
 		vrLen = 1197;
 		vrLoc = 1381;
@@ -7803,7 +8654,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 159";
 		rLen = 0;
-		rLoc = 4800;
+		rLoc = 4986;
 		rType = 0;
 		vrLen = 1264;
 		vrLoc = 3961;
@@ -7833,7 +8684,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -7852,7 +8703,7 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		rLen = 0;
-		rLoc = 609;
+		rLoc = 465;
 		rType = 1;
 	};
 	1DA9B743122CBD65002FCC65 /* PBXTextBookmark */ = {
@@ -7860,7 +8711,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 568";
 		rLen = 0;
-		rLoc = 19044;
+		rLoc = 13811;
 		rType = 0;
 		vrLen = 1359;
 		vrLoc = 16621;
@@ -7870,7 +8721,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -7880,7 +8731,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 568";
 		rLen = 0;
-		rLoc = 19044;
+		rLoc = 13811;
 		rType = 0;
 		vrLen = 1359;
 		vrLoc = 16621;
@@ -7907,7 +8758,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -7927,7 +8778,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -7947,7 +8798,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -7997,7 +8848,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -8017,7 +8868,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1400;
 		vrLoc = 16581;
@@ -8037,7 +8888,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1400;
 		vrLoc = 16581;
@@ -8142,7 +8993,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -8277,7 +9128,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1400;
 		vrLoc = 16581;
@@ -8344,7 +9195,7 @@
 		ignoreCount = 0;
 		lineNumber = 1191;
 		location = iTerm;
-		modificationTime = 305098541.616505;
+		modificationTime = 305101153.513887;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -8453,7 +9304,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -8560,7 +9411,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -8617,7 +9468,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -8667,7 +9518,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -8707,7 +9558,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -8787,7 +9638,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -8847,7 +9698,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -8897,7 +9748,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -8954,7 +9805,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -8994,7 +9845,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -9023,7 +9874,7 @@
 		ignoreCount = 0;
 		lineNumber = 954;
 		location = iTerm;
-		modificationTime = 305098541.986303;
+		modificationTime = 305101153.932508;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -9041,7 +9892,7 @@
 		ignoreCount = 0;
 		lineNumber = 960;
 		location = iTerm;
-		modificationTime = 305098542.021422;
+		modificationTime = 305101153.958396;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -9059,7 +9910,7 @@
 		ignoreCount = 0;
 		lineNumber = 969;
 		location = iTerm;
-		modificationTime = 305098542.064582;
+		modificationTime = 305101154.008903;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -9135,7 +9986,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -9195,7 +10046,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -9275,7 +10126,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -9405,7 +10256,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -9485,7 +10336,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -9525,7 +10376,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -9585,7 +10436,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -9655,7 +10506,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -9735,7 +10586,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -9795,7 +10646,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1400;
 		vrLoc = 16581;
@@ -9855,7 +10706,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -9895,7 +10746,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -10000,7 +10851,7 @@
 		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
 		name = "BookmarkTableView.h: 51";
 		rLen = 0;
-		rLoc = 1745;
+		rLoc = 1777;
 		rType = 0;
 		vrLen = 1257;
 		vrLoc = 1345;
@@ -10010,7 +10861,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 552";
 		rLen = 0;
-		rLoc = 18548;
+		rLoc = 13315;
 		rType = 0;
 		vrLen = 1365;
 		vrLoc = 16616;
@@ -10090,7 +10941,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1400;
 		vrLoc = 16581;
@@ -10140,7 +10991,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -10180,7 +11031,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -10220,7 +11071,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -10260,7 +11111,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -10350,7 +11201,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 580";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1399;
 		vrLoc = 16581;
@@ -10427,7 +11278,7 @@
 		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
 		name = "BookmarkTableView.h: 52";
 		rLen = 50;
-		rLoc = 1695;
+		rLoc = 1727;
 		rType = 0;
 		vrLen = 1236;
 		vrLoc = 1123;
@@ -10437,7 +11288,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 162";
 		rLen = 0;
-		rLoc = 4717;
+		rLoc = 4903;
 		rType = 0;
 		vrLen = 1157;
 		vrLoc = 3822;
@@ -10487,7 +11338,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -10527,7 +11378,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -10567,7 +11418,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -10607,7 +11458,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -10725,7 +11576,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -10794,7 +11645,7 @@
 		ignoreCount = 0;
 		lineNumber = 727;
 		location = iTerm;
-		modificationTime = 305098541.616575;
+		modificationTime = 305101153.513984;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -10843,7 +11694,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -10933,7 +11784,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -10990,7 +11841,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11047,7 +11898,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11107,7 +11958,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11164,7 +12015,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11193,7 +12044,7 @@
 		ignoreCount = 0;
 		lineNumber = 172;
 		location = iTerm;
-		modificationTime = 305098541.616593;
+		modificationTime = 305101153.514009;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -11242,7 +12093,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11282,7 +12133,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11322,7 +12173,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11362,7 +12213,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11402,7 +12253,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11442,7 +12293,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11482,7 +12333,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11522,7 +12373,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11562,7 +12413,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11602,7 +12453,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11642,7 +12493,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11671,7 +12522,7 @@
 		ignoreCount = 0;
 		lineNumber = 1188;
 		location = iTerm;
-		modificationTime = 305098541.616612;
+		modificationTime = 305101153.514062;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -11710,7 +12561,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11790,7 +12641,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11847,7 +12698,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11907,7 +12758,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11947,7 +12798,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -11987,7 +12838,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -12037,7 +12888,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -12077,7 +12928,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -12117,7 +12968,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -12157,7 +13008,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1474;
 		vrLoc = 16550;
@@ -12217,7 +13068,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -12257,7 +13108,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -12382,7 +13233,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -12422,7 +13273,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -12482,7 +13333,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1382;
 		vrLoc = 16550;
@@ -12512,7 +13363,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 162";
 		rLen = 0;
-		rLoc = 4717;
+		rLoc = 4903;
 		rType = 0;
 		vrLen = 1194;
 		vrLoc = 3817;
@@ -12522,7 +13373,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 296";
 		rLen = 0;
-		rLoc = 10738;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1394;
 		vrLoc = 8270;
@@ -12542,7 +13393,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -12562,7 +13413,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 296";
 		rLen = 0;
-		rLoc = 10738;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1386;
 		vrLoc = 13003;
@@ -12582,7 +13433,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -12602,7 +13453,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 296";
 		rLen = 0;
-		rLoc = 10738;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1434;
 		vrLoc = 13003;
@@ -12642,7 +13493,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -12691,7 +13542,7 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		rLen = 15;
-		rLoc = 13538;
+		rLoc = 8350;
 		rType = 0;
 	};
 	1DA9BA88122DA4A6002FCC65 /* PBXTextBookmark */ = {
@@ -12699,7 +13550,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 391";
 		rLen = 15;
-		rLoc = 13538;
+		rLoc = 8350;
 		rType = 0;
 		vrLen = 791;
 		vrLoc = 11665;
@@ -12759,7 +13610,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -12799,7 +13650,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -12859,7 +13710,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -12899,7 +13750,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -12939,7 +13790,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -12979,7 +13830,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -13019,7 +13870,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -13079,7 +13930,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -13108,7 +13959,7 @@
 		ignoreCount = 0;
 		lineNumber = 220;
 		location = iTerm;
-		modificationTime = 305098541.61663;
+		modificationTime = 305101153.51411;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -13167,7 +14018,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -13207,7 +14058,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -13237,7 +14088,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 391";
 		rLen = 15;
-		rLoc = 13538;
+		rLoc = 8350;
 		rType = 0;
 		vrLen = 764;
 		vrLoc = 12094;
@@ -13257,7 +14108,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 416";
 		rLen = 0;
-		rLoc = 14175;
+		rLoc = 8987;
 		rType = 0;
 		vrLen = 764;
 		vrLoc = 12094;
@@ -13277,7 +14128,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 416";
 		rLen = 0;
-		rLoc = 14175;
+		rLoc = 8987;
 		rType = 0;
 		vrLen = 764;
 		vrLoc = 12094;
@@ -13327,7 +14178,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -13367,7 +14218,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1427;
 		vrLoc = 16614;
@@ -13417,7 +14268,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1427;
 		vrLoc = 16614;
@@ -13467,7 +14318,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -13527,7 +14378,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1427;
 		vrLoc = 16614;
@@ -13567,7 +14418,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1427;
 		vrLoc = 16614;
@@ -13617,7 +14468,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1427;
 		vrLoc = 16614;
@@ -13657,7 +14508,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -13697,7 +14548,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -13737,7 +14588,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1427;
 		vrLoc = 16614;
@@ -13777,7 +14628,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -13827,7 +14678,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 416";
 		rLen = 0;
-		rLoc = 14175;
+		rLoc = 8987;
 		rType = 0;
 		vrLen = 860;
 		vrLoc = 12349;
@@ -13857,7 +14708,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -13897,7 +14748,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -13977,7 +14828,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -14017,7 +14868,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 587";
 		rLen = 0;
-		rLoc = 19431;
+		rLoc = 14198;
 		rType = 0;
 		vrLen = 1425;
 		vrLoc = 16614;
@@ -14047,7 +14898,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 416";
 		rLen = 0;
-		rLoc = 14175;
+		rLoc = 8987;
 		rType = 0;
 		vrLen = 1024;
 		vrLoc = 12475;
@@ -14067,7 +14918,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 296";
 		rLen = 0;
-		rLoc = 10738;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1434;
 		vrLoc = 13003;
@@ -14077,7 +14928,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 245";
 		rLen = 0;
-		rLoc = 7260;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1531;
 		vrLoc = 7162;
@@ -14096,8 +14947,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1318;
 		vrLoc = 17111;
@@ -14112,30 +14963,12 @@
 		vrLen = 1562;
 		vrLoc = 3232;
 	};
-	1DA9BB5A122DC19E002FCC65 /* BookmarkTableView.m:335 */ = {
-		isa = PBXFileBreakpoint;
-		actions = (
-		);
-		breakpointStyle = 0;
-		continueAfterActions = 0;
-		countType = 0;
-		delayBeforeContinue = 0;
-		fileReference = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
-		functionName = "-tableView:objectValueForTableColumn:row:";
-		hitCount = 0;
-		ignoreCount = 0;
-		lineNumber = 335;
-		location = iTerm;
-		modificationTime = 305098541.616648;
-		originalNumberOfMultipleMatches = 1;
-		state = 2;
-	};
 	1DA9BB5C122DC19F002FCC65 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 245";
 		rLen = 0;
-		rLoc = 7260;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1542;
 		vrLoc = 9279;
@@ -14145,7 +14978,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 245";
 		rLen = 0;
-		rLoc = 7260;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1542;
 		vrLoc = 9279;
@@ -14164,8 +14997,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1318;
 		vrLoc = 17111;
@@ -14185,7 +15018,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 245";
 		rLen = 0;
-		rLoc = 7260;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1542;
 		vrLoc = 9279;
@@ -14204,8 +15037,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1318;
 		vrLoc = 17111;
@@ -14225,7 +15058,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 245";
 		rLen = 0;
-		rLoc = 7260;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1542;
 		vrLoc = 9279;
@@ -14244,8 +15077,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1318;
 		vrLoc = 17111;
@@ -14275,7 +15108,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 455";
 		rLen = 0;
-		rLoc = 14664;
+		rLoc = 9476;
 		rType = 0;
 		vrLen = 1182;
 		vrLoc = 13829;
@@ -14285,7 +15118,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 245";
 		rLen = 0;
-		rLoc = 7260;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1612;
 		vrLoc = 8878;
@@ -14304,8 +15137,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1318;
 		vrLoc = 17111;
@@ -14334,7 +15167,7 @@
 		ignoreCount = 0;
 		lineNumber = 1205;
 		location = iTerm;
-		modificationTime = 305098541.616664;
+		modificationTime = 305101153.514134;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -14343,7 +15176,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 245";
 		rLen = 0;
-		rLoc = 7260;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1143;
 		vrLoc = 17730;
@@ -14382,8 +15215,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1318;
 		vrLoc = 17111;
@@ -14403,7 +15236,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 316";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1486;
 		vrLoc = 9361;
@@ -14439,8 +15272,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1318;
 		vrLoc = 17111;
@@ -14479,8 +15312,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1318;
 		vrLoc = 17111;
@@ -14509,7 +15342,7 @@
 		ignoreCount = 0;
 		lineNumber = 192;
 		location = iTerm;
-		modificationTime = 305098541.616683;
+		modificationTime = 305101153.514161;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -14537,8 +15370,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1318;
 		vrLoc = 17111;
@@ -14578,7 +15411,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 316";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1486;
 		vrLoc = 9361;
@@ -14588,7 +15421,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 313";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1580;
 		vrLoc = 9361;
@@ -14607,8 +15440,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1308;
 		vrLoc = 17197;
@@ -14638,7 +15471,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 313";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1580;
 		vrLoc = 9361;
@@ -14648,7 +15481,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 313";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1739;
 		vrLoc = 9361;
@@ -14667,8 +15500,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1216;
 		vrLoc = 17331;
@@ -14698,7 +15531,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 313";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1199;
 		vrLoc = 9361;
@@ -14758,7 +15591,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 313";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1739;
 		vrLoc = 9361;
@@ -14768,7 +15601,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 313";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1745;
 		vrLoc = 9411;
@@ -14787,8 +15620,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17410;
@@ -14878,7 +15711,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 313";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1868;
 		vrLoc = 9076;
@@ -14888,7 +15721,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 313";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1880;
 		vrLoc = 9128;
@@ -14907,8 +15740,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17410;
@@ -14948,7 +15781,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 313";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1880;
 		vrLoc = 9128;
@@ -14997,8 +15830,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17410;
@@ -15037,8 +15870,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17410;
@@ -15068,7 +15901,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 313";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1965;
 		vrLoc = 9077;
@@ -15078,7 +15911,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 314";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1711;
 		vrLoc = 9077;
@@ -15097,8 +15930,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17275;
@@ -15118,7 +15951,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 314";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1710;
 		vrLoc = 9077;
@@ -15137,8 +15970,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -15158,7 +15991,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 314";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1740;
 		vrLoc = 9077;
@@ -15197,8 +16030,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -15257,8 +16090,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -15306,7 +16139,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 314";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1222;
 		vrLoc = 9488;
@@ -15453,7 +16286,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 314";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1659;
 		vrLoc = 9158;
@@ -15463,7 +16296,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 314";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1659;
 		vrLoc = 9158;
@@ -15482,8 +16315,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -15592,7 +16425,7 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		rLen = 0;
-		rLoc = 334;
+		rLoc = 194;
 		rType = 1;
 	};
 	1DA9BC1A122DC8FD002FCC65 /* PBXTextBookmark */ = {
@@ -15600,7 +16433,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 312";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1659;
 		vrLoc = 9158;
@@ -15619,8 +16452,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -15640,7 +16473,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 312";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1659;
 		vrLoc = 9158;
@@ -15659,8 +16492,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -15680,7 +16513,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 312";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1659;
 		vrLoc = 9158;
@@ -15699,8 +16532,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -15740,7 +16573,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 312";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1659;
 		vrLoc = 9158;
@@ -15776,8 +16609,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -15816,8 +16649,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -15856,8 +16689,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -15896,8 +16729,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -15936,8 +16769,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -15976,8 +16809,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -16016,8 +16849,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -16056,8 +16889,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -16096,8 +16929,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -16136,8 +16969,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -16176,8 +17009,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -16266,8 +17099,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -16306,8 +17139,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17274;
@@ -16337,7 +17170,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 313";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1651;
 		vrLoc = 9076;
@@ -16356,8 +17189,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1343;
 		vrLoc = 17331;
@@ -16437,7 +17270,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 313";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1651;
 		vrLoc = 9076;
@@ -16473,8 +17306,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1343;
 		vrLoc = 17331;
@@ -16533,8 +17366,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1343;
 		vrLoc = 17331;
@@ -16593,8 +17426,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1343;
 		vrLoc = 17331;
@@ -16653,8 +17486,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1343;
 		vrLoc = 17331;
@@ -16693,8 +17526,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1343;
 		vrLoc = 17331;
@@ -16733,8 +17566,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1343;
 		vrLoc = 17331;
@@ -16793,8 +17626,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1343;
 		vrLoc = 17331;
@@ -16873,8 +17706,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1343;
 		vrLoc = 17331;
@@ -16973,8 +17806,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1343;
 		vrLoc = 17331;
@@ -17033,8 +17866,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1343;
 		vrLoc = 17331;
@@ -17093,8 +17926,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1343;
 		vrLoc = 17331;
@@ -17173,8 +18006,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1435;
 		vrLoc = 17331;
@@ -17213,8 +18046,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1343;
 		vrLoc = 17331;
@@ -17244,7 +18077,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 313";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1599;
 		vrLoc = 9128;
@@ -17254,7 +18087,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 327";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1667;
 		vrLoc = 9530;
@@ -17273,8 +18106,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17570;
@@ -17289,30 +18122,12 @@
 		vrLen = 1562;
 		vrLoc = 3232;
 	};
-	1DA9BD19122F1244002FCC65 /* BookmarkTableView.m:335 */ = {
-		isa = PBXFileBreakpoint;
-		actions = (
-		);
-		breakpointStyle = 0;
-		continueAfterActions = 0;
-		countType = 0;
-		delayBeforeContinue = 0;
-		fileReference = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
-		functionName = "-tableView:objectValueForTableColumn:row:";
-		hitCount = 0;
-		ignoreCount = 0;
-		lineNumber = 335;
-		location = iTerm;
-		modificationTime = 305098541.616705;
-		originalNumberOfMultipleMatches = 1;
-		state = 2;
-	};
 	1DA9BD1B122F1245002FCC65 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 327";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1667;
 		vrLoc = 9530;
@@ -17322,7 +18137,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 327";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1667;
 		vrLoc = 9530;
@@ -17341,8 +18156,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17570;
@@ -17362,7 +18177,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 318";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1657;
 		vrLoc = 9587;
@@ -17381,8 +18196,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17564;
@@ -17422,7 +18237,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 318";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1657;
 		vrLoc = 9587;
@@ -17441,8 +18256,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1384;
 		vrLoc = 17564;
@@ -17462,7 +18277,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 324";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1598;
 		vrLoc = 9750;
@@ -17481,8 +18296,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1367;
 		vrLoc = 17622;
@@ -17502,7 +18317,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 324";
 		rLen = 0;
-		rLoc = 10886;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1862;
 		vrLoc = 8996;
@@ -17521,8 +18336,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1351;
 		vrLoc = 17703;
@@ -17542,7 +18357,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 329";
 		rLen = 0;
-		rLoc = 10747;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1787;
 		vrLoc = 9158;
@@ -17561,8 +18376,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1167;
 		vrLoc = 17505;
@@ -17612,7 +18427,7 @@
 		fRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */;
 		name = "BookmarkTableView.h: 43";
 		rLen = 12;
-		rLoc = 1457;
+		rLoc = 1489;
 		rType = 0;
 		vrLen = 1350;
 		vrLoc = 973;
@@ -17622,7 +18437,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 203";
 		rLen = 0;
-		rLoc = 5755;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1242;
 		vrLoc = 5287;
@@ -17632,7 +18447,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 236";
 		rLen = 0;
-		rLoc = 6899;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1383;
 		vrLoc = 6290;
@@ -17651,8 +18466,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 247";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1159;
 		vrLoc = 17554;
@@ -17672,7 +18487,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 297";
 		rLen = 0;
-		rLoc = 9207;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1578;
 		vrLoc = 8732;
@@ -17691,8 +18506,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17543;
@@ -17722,7 +18537,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 278";
 		rLen = 0;
-		rLoc = 8539;
+		rLoc = 5622;
 		rType = 0;
 		vrLen = 1244;
 		vrLoc = 7807;
@@ -17732,7 +18547,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 277";
 		rLen = 0;
-		rLoc = 8479;
+		rLoc = 5589;
 		rType = 0;
 		vrLen = 1158;
 		vrLoc = 7894;
@@ -17751,8 +18566,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -17772,7 +18587,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 277";
 		rLen = 0;
-		rLoc = 8479;
+		rLoc = 5589;
 		rType = 0;
 		vrLen = 1264;
 		vrLoc = 7894;
@@ -17791,8 +18606,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1310;
 		vrLoc = 17659;
@@ -17812,7 +18627,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 277";
 		rLen = 0;
-		rLoc = 8479;
+		rLoc = 5589;
 		rType = 0;
 		vrLen = 1241;
 		vrLoc = 7917;
@@ -17831,8 +18646,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -17852,7 +18667,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 277";
 		rLen = 0;
-		rLoc = 8479;
+		rLoc = 5589;
 		rType = 0;
 		vrLen = 1207;
 		vrLoc = 7991;
@@ -17871,8 +18686,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -17892,7 +18707,7 @@
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 277";
 		rLen = 0;
-		rLoc = 8479;
+		rLoc = 5589;
 		rType = 0;
 		vrLen = 1207;
 		vrLoc = 7991;
@@ -17928,8 +18743,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -17988,8 +18803,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18048,8 +18863,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18108,8 +18923,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18148,8 +18963,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18188,8 +19003,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18228,8 +19043,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18288,8 +19103,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18348,8 +19163,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18398,7 +19213,7 @@
 		ignoreCount = 0;
 		lineNumber = 182;
 		location = iTerm;
-		modificationTime = 305098541.616723;
+		modificationTime = 305101153.514185;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -18446,8 +19261,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18486,8 +19301,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18596,8 +19411,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18636,8 +19451,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1310;
 		vrLoc = 17659;
@@ -18676,8 +19491,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18716,8 +19531,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18756,8 +19571,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18796,8 +19611,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18853,8 +19668,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -18913,8 +19728,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1310;
 		vrLoc = 17659;
@@ -18953,8 +19768,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -19010,8 +19825,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -19050,8 +19865,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -19130,8 +19945,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -19227,8 +20042,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1266;
 		vrLoc = 17659;
@@ -19267,8 +20082,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1216;
 		vrLoc = 17636;
@@ -19341,8 +20156,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1333;
 		vrLoc = 17636;
@@ -19413,8 +20228,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1216;
 		vrLoc = 17636;
@@ -19551,8 +20366,8 @@
 		isa = PBXTextBookmark;
 		fRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */;
 		name = "BookmarkTableView.m: 246";
-		rLen = 541;
-		rLoc = 7265;
+		rLen = 0;
+		rLoc = 5269;
 		rType = 0;
 		vrLen = 1333;
 		vrLoc = 17636;
@@ -19801,7 +20616,7 @@
 		ignoreCount = 0;
 		lineNumber = 877;
 		location = iTerm;
-		modificationTime = 305098541.615572;
+		modificationTime = 305101153.51221;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -19819,7 +20634,7 @@
 		ignoreCount = 0;
 		lineNumber = 980;
 		location = iTerm;
-		modificationTime = 305098541.615592;
+		modificationTime = 305101153.51223;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -19837,7 +20652,7 @@
 		ignoreCount = 0;
 		lineNumber = 987;
 		location = iTerm;
-		modificationTime = 305098541.615606;
+		modificationTime = 305101153.51228;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -19855,7 +20670,7 @@
 		ignoreCount = 0;
 		lineNumber = 994;
 		location = iTerm;
-		modificationTime = 305098541.615625;
+		modificationTime = 305101153.512327;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -19873,7 +20688,7 @@
 		ignoreCount = 0;
 		lineNumber = 1229;
 		location = iTerm;
-		modificationTime = 305098541.615644;
+		modificationTime = 305101153.512351;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -19891,7 +20706,7 @@
 		ignoreCount = 0;
 		lineNumber = 1252;
 		location = iTerm;
-		modificationTime = 305098541.615659;
+		modificationTime = 305101153.512379;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -19909,7 +20724,7 @@
 		ignoreCount = 0;
 		lineNumber = 3193;
 		location = iTerm;
-		modificationTime = 305098541.942733;
+		modificationTime = 305101153.872505;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -19927,7 +20742,7 @@
 		ignoreCount = 0;
 		lineNumber = 821;
 		location = iTerm;
-		modificationTime = 305098541.615728;
+		modificationTime = 305101153.51247;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -19945,7 +20760,7 @@
 		ignoreCount = 0;
 		lineNumber = 767;
 		location = iTerm;
-		modificationTime = 305098541.61575;
+		modificationTime = 305101153.512499;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -19963,7 +20778,7 @@
 		ignoreCount = 0;
 		lineNumber = 30;
 		location = iTerm;
-		modificationTime = 305098541.615771;
+		modificationTime = 305101153.512526;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -19981,7 +20796,7 @@
 		ignoreCount = 0;
 		lineNumber = 62;
 		location = iTerm;
-		modificationTime = 305098541.615792;
+		modificationTime = 305101153.512555;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -20003,7 +20818,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = Foundation;
-		modificationTime = 305098541.617931;
+		modificationTime = 305101153.515685;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 		symbolName = NSLog;
@@ -20019,16 +20834,16 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = Foundation;
-		modificationTime = 305098541.617946;
+		modificationTime = 305101153.515708;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 		symbolName = NSLog;
 	};
 	1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1231, 5655}}";
-			sepNavSelRange = "{10956, 0}";
-			sepNavVisRange = "{10878, 416}";
+			sepNavIntBoundsRect = "{{0, 0}, {1169, 5538}}";
+			sepNavSelRange = "{3953, 0}";
+			sepNavVisRange = "{3576, 1436}";
 			sepNavWindowFrame = "{{15, 91}, {629, 685}}";
 		};
 	};
@@ -20054,7 +20869,7 @@
 		ignoreCount = 0;
 		lineNumber = 54;
 		location = iTerm;
-		modificationTime = 305098541.615886;
+		modificationTime = 305101153.512639;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -20092,7 +20907,7 @@
 		ignoreCount = 0;
 		lineNumber = 993;
 		location = iTerm;
-		modificationTime = 305098541.615929;
+		modificationTime = 305101153.512831;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -20150,7 +20965,7 @@
 		ignoreCount = 0;
 		lineNumber = 1645;
 		location = iTerm;
-		modificationTime = 305098541.615952;
+		modificationTime = 305101153.512857;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -20164,7 +20979,7 @@
 		vrLen = 808;
 		vrLoc = 806;
 	};
-	1DD55F86122B7C4E000B9E83 /* BookmarkTableView.m:437 */ = {
+	1DD55F86122B7C4E000B9E83 /* BookmarkTableView.m:292 */ = {
 		isa = PBXFileBreakpoint;
 		actions = (
 		);
@@ -20176,13 +20991,13 @@
 		functionName = "-numberOfRows";
 		hitCount = 0;
 		ignoreCount = 0;
-		lineNumber = 437;
+		lineNumber = 292;
 		location = iTerm;
-		modificationTime = 305098541.615973;
+		modificationTime = 305101153.512883;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
-	1DD55F88122B7C51000B9E83 /* BookmarkTableView.m:185 */ = {
+	1DD55F88122B7C51000B9E83 /* BookmarkTableView.m:183 */ = {
 		isa = PBXFileBreakpoint;
 		actions = (
 		);
@@ -20194,9 +21009,9 @@
 		functionName = "-numberOfRowsInTableView:";
 		hitCount = 0;
 		ignoreCount = 0;
-		lineNumber = 185;
+		lineNumber = 183;
 		location = iTerm;
-		modificationTime = 305098541.615992;
+		modificationTime = 305101153.513001;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -20213,11 +21028,11 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		lineNumber = 1093;
-		modificationTime = 305098541.616011;
+		modificationTime = 305101153.513106;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
-	1DD55FF5122B83BE000B9E83 /* BookmarkTableView.m:412 */ = {
+	1DD55FF5122B83BE000B9E83 /* BookmarkTableView.m:267 */ = {
 		isa = PBXFileBreakpoint;
 		actions = (
 		);
@@ -20229,9 +21044,9 @@
 		functionName = "-reloadData";
 		hitCount = 0;
 		ignoreCount = 0;
-		lineNumber = 412;
+		lineNumber = 267;
 		location = iTerm;
-		modificationTime = 305098541.616028;
+		modificationTime = 305101153.513134;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -20324,7 +21139,7 @@
 		ignoreCount = 0;
 		lineNumber = 404;
 		location = iTerm;
-		modificationTime = 305098541.61457;
+		modificationTime = 305101153.510929;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -20350,7 +21165,7 @@
 		ignoreCount = 0;
 		lineNumber = 475;
 		location = iTerm;
-		modificationTime = 305098541.614589;
+		modificationTime = 305101153.510956;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -20368,7 +21183,7 @@
 		ignoreCount = 0;
 		lineNumber = 2242;
 		location = iTerm;
-		modificationTime = 305098541.614608;
+		modificationTime = 305101153.510978;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 	};
@@ -20456,7 +21271,7 @@
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {789, 4225}}";
 			sepNavSelRange = "{6913, 9}";
-			sepNavVisRange = "{6584, 909}";
+			sepNavVisRange = "{6584, 836}";
 			sepNavWindowFrame = "{{106, 131}, {750, 558}}";
 		};
 	};
@@ -20622,9 +21437,9 @@
 	};
 	E8A66F030272453F03A80106 /* iTermController.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1169, 7514}}";
-			sepNavSelRange = "{3587, 0}";
-			sepNavVisRange = "{2996, 1206}";
+			sepNavIntBoundsRect = "{{0, 0}, {1231, 7332}}";
+			sepNavSelRange = "{3827, 0}";
+			sepNavVisRange = "{3348, 620}";
 		};
 	};
 	E8CF755F026DDA6303A80106 /* PTYScrollView.m */ = {
@@ -20792,9 +21607,9 @@
 	};
 	FB019DE103670C6501F955DB /* PreferencePanel.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {1219, 23868}}";
-			sepNavSelRange = "{64549, 0}";
-			sepNavVisRange = "{64056, 730}";
+			sepNavIntBoundsRect = "{{0, 0}, {1169, 23998}}";
+			sepNavSelRange = "{62209, 0}";
+			sepNavVisRange = "{61528, 1338}";
 			sepNavWindowFrame = "{{130, 110}, {750, 558}}";
 		};
 	};
@@ -20809,7 +21624,7 @@
 		uiCtxt = {
 			sepNavIntBoundsRect = "{{0, 0}, {1231, 44343}}";
 			sepNavSelRange = "{22800, 15}";
-			sepNavVisRange = "{22140, 1578}";
+			sepNavVisRange = "{22140, 1492}";
 			sepNavWindowFrame = "{{15, 91}, {629, 787}}";
 		};
 	};

@@ -120,7 +120,7 @@ const int kInterWidgetMargin = 10;
                                    borderType:[scrollView_ borderType]];
     
     tableView_ = [[NSTableView alloc] initWithFrame:tableViewFrame];
-    rowHeight_ = 75;
+    rowHeight_ = 21;
     showGraphic_ = YES;
     [tableView_ setRowHeight:rowHeight_];
     [tableView_ 
@@ -134,12 +134,17 @@ const int kInterWidgetMargin = 10;
     [tableView_ setHeaderView:nil];
     [tableView_ setBackgroundColor:[NSColor whiteColor]];
     
-    tableColumn_ = 
-        [[NSTableColumn alloc] initWithIdentifier:@"image"];
-    [tableColumn_ setEditable:NO];
-    [tableColumn_ setDataCell:[[NSImageCell alloc] initImageCell:nil]];
+    starColumn_ = [[NSTableColumn alloc] initWithIdentifier:@"default"];
+    [starColumn_ setEditable:NO];
+    [starColumn_ setDataCell:[[NSImageCell alloc] initImageCell:nil]];
+    [starColumn_ setWidth:34];
+    [tableView_ addTableColumn:starColumn_];
 
+    tableColumn_ = 
+        [[NSTableColumn alloc] initWithIdentifier:@"name"];
+    [tableColumn_ setEditable:NO];
     [tableView_ addTableColumn:tableColumn_];
+    
     [scrollView_ setDocumentView:tableView_];
     [tableView_ sizeLastColumnToFit];
     [tableView_ setDelegate:self];
@@ -172,142 +177,34 @@ const int kInterWidgetMargin = 10;
     delegate_ = delegate;
 }
 
-static void ShrinkFrame(NSRect* frame, int xMargin, int yMargin) {
-    frame->origin.y += yMargin;
-    frame->origin.x += xMargin;
-    frame->size.height -= 2*yMargin;
-    frame->size.width -= 2*xMargin;
-}
-
 // DataSource methods
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
 {
     return [dataSource_ numberOfBookmarksWithFilter:[searchField_ stringValue]];
 }
 
-- (void)_drawShellImage:(NSRect)fullCellFrame dict:(Bookmark*)bookmark
-{
-    NSRect cellFrame = fullCellFrame;
-    
-    // Draw the rectangle around the shell
-    ShrinkFrame(&cellFrame, 7, 7);
-    float b = 0.3;
-    for (int i = 0; i < 3; ++i) {
-        [[NSColor colorWithCalibratedRed:1-b green:1-b blue:1-b alpha:1] set];
-        NSFrameRect(cellFrame);
-        ShrinkFrame(&cellFrame, 1, 1);
-        b *= 0.8;
-    }
-    
-    // Draw background color/image
-    NSColor* color = [ITAddressBookMgr decodeColor:
-        [bookmark objectForKey:KEY_BACKGROUND_COLOR]];
-    [color set];
-    NSString* imageName = [bookmark objectForKey:KEY_BACKGROUND_IMAGE_LOCATION];
-    if (imageName && [imageName length]) {
-        NSImage* image = [PTYSession loadBackgroundImage:imageName];
-        float t = [[bookmark objectForKey:KEY_TRANSPARENCY] floatValue];
-        NSLog(@"Transparency is %f", t);
-        
-        [image drawInRect:cellFrame 
-                 fromRect:NSZeroRect 
-                operation:NSCompositeSourceOver 
-                 fraction:(1-t)];
-    } else {
-        NSRectFill(cellFrame);
-    }
-
-    ShrinkFrame(&cellFrame, 2, 2);
-    
-    // Draw sample text
-    NSPoint textOrigin;
-    textOrigin.x = cellFrame.origin.x+3;
-    textOrigin.y = cellFrame.origin.y+3;
-    NSMutableDictionary* textAttrs = 
-        [[[NSMutableDictionary alloc] init] autorelease];
-    
-    NSFont* font = 
-        [ITAddressBookMgr fontWithDesc:[bookmark objectForKey:KEY_NORMAL_FONT]];
-    [textAttrs setValue:font forKey:NSFontAttributeName];
-    
-    color = 
-        [ITAddressBookMgr decodeColor:
-            [bookmark objectForKey:KEY_FOREGROUND_COLOR]];
-    [textAttrs setValue:color forKey:NSForegroundColorAttributeName];
-    
-    NSString* gibberish = @"The quick brown fox jumps over the lazy dog.";
-    [gibberish drawInRect:cellFrame withAttributes:textAttrs];
-}
-
-- (void)_prepareToDrawStringHeight:(int*)heightPtr attr:(NSDictionary**)attrPtr
-{
-    int height;
-
-    NSMutableParagraphStyle *style = 
-        [[[NSMutableParagraphStyle alloc] init] autorelease];
-    [style setParagraphStyle:[NSParagraphStyle defaultParagraphStyle]];
-    [style setLineBreakMode:NSLineBreakByTruncatingTail];
-    NSDictionary *attr = (NSDictionary*)
-        [NSDictionary dictionaryWithObject:style 
-                                    forKey:NSParagraphStyleAttributeName];
-    NSFont* font = [NSFont systemFontOfSize:0];
-    NSLayoutManager* layoutManager = [[NSLayoutManager alloc] init];
-    [layoutManager autorelease];
-    height = ([layoutManager defaultLineHeightForFont:font]);
-    *heightPtr = height;
-    *attrPtr = attr;
-}
-
-- (int)_drawVerticallyCenteredText:(NSRect)rect string:(NSString*)string
-{
-    int height;
-    NSDictionary* attr;
-    [self _prepareToDrawStringHeight:&height attr:&attr];
-    rect.origin.y = (rect.size.height - height)/2;
-    rect.size.height = height;
-    
-    [string drawInRect:rect withAttributes:attr];    
-    return height;
-}
-
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
 {
+    Bookmark* bookmark = 
+        [dataSource_ bookmarkAtIndex:rowIndex 
+                          withFilter:[searchField_ stringValue]];
+
     if (aTableColumn == tableColumn_) {
-        if (!showGraphic_) {
-            return [[dataSource_ bookmarkAtIndex:rowIndex] objectForKey:KEY_NAME];
-        }
-        NSAssert([[aTableColumn identifier] isEqualToString:@"image"], 
-                 @"Unexpected column");
-        ComparableImage *image = [[ComparableImage alloc] init];
-        NSSize size;
-        size.width = [aTableColumn width];
-        size.height = rowHeight_;
-        [image setSize:size];
-        
-        [image lockFocus];
-        
-        NSRect rect;
-        rect.origin.x = 0;
-        rect.origin.y = 0;
-        rect.size = size;
-        
-        if ([aTableView selectedRow] != rowIndex) {
-            // Fill the background to get subpixel anti-aliasing.
-            [[NSColor whiteColor] set];
-            NSRectFill(rect);
-        }
-         
-        rect.size.width = size.height * 4 / 3;    
-        Bookmark* bookmark = 
-            [dataSource_ bookmarkAtIndex:rowIndex 
-                              withFilter:[searchField_ stringValue]];
-        if (showGraphic_){
-            [self _drawShellImage:rect dict:bookmark];
-            rect.origin.x += rect.size.width + 5;
-            rect.size.width = size.width - rect.size.width;
+        return [bookmark objectForKey:KEY_NAME];
+    } else if (aTableColumn == commandColumn_) {
+        if (![[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
+            return @"Login shell";
         } else {
-            rect.size.width = size.width;
+            return [bookmark objectForKey:KEY_COMMAND];
         }
+    } else if (aTableColumn == shortcutColumn_) {
+        NSString* key = [bookmark objectForKey:KEY_SHORTCUT];
+        if (key) {
+            return [NSString stringWithFormat:@"^⌘%@", [bookmark objectForKey:KEY_SHORTCUT]];
+        } else {
+            return @"";
+        }
+    } else if (aTableColumn == starColumn_) {
         static NSImage* starImage;
         if (!starImage) {
             NSString* starFile = [[NSBundle bundleForClass:[self class]] 
@@ -316,29 +213,6 @@ static void ShrinkFrame(NSRect* frame, int xMargin, int yMargin) {
             starImage = [[NSImage alloc] initWithContentsOfFile:starFile];
             [starImage retain];
         }
-        if (rect.size.height > [starImage size].height + 10) {
-            if ([[bookmark objectForKey:KEY_GUID] isEqualToString:[[[BookmarkModel sharedInstance] defaultBookmark] objectForKey:KEY_GUID]]) {
-                NSPoint destPoint;
-                destPoint.x = size.width - [starImage size].width - 5;
-                destPoint.y = (rowHeight_ - [starImage size].height) / 2;
-                [starImage drawAtPoint:destPoint fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
-
-                // Squish the text into less space
-                rect.size.width -= [starImage size].width + 5;
-            }
-        }
-        
-        rect.size.width -= 5;  // right margin
-        [self _drawVerticallyCenteredText:rect string:[bookmark objectForKey:KEY_NAME]];
-        [image setKey:[bookmark objectForKey:KEY_NAME]];
-
-        [image unlockFocus];
-        
-        return image;
-    } else if (aTableColumn == commandColumn_) {
-        Bookmark* bookmark = 
-            [dataSource_ bookmarkAtIndex:rowIndex 
-                              withFilter:[searchField_ stringValue]];
         NSImage *image = [[NSImage alloc] init];
         NSSize size;
         size.width = [aTableColumn width];
@@ -350,35 +224,16 @@ static void ShrinkFrame(NSRect* frame, int xMargin, int yMargin) {
         rect.origin.y = 0;
         rect.size = size;
         [image lockFocus];
-        NSString* command = [bookmark objectForKey:KEY_COMMAND];
-        if (![[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
-            command = @"Login shell";
-        }
-        [self _drawVerticallyCenteredText:rect string:command];
-        [image unlockFocus];
-        return image;
-    } else if (aTableColumn == shortcutColumn_) {
-        Bookmark* bookmark = 
-        [dataSource_ bookmarkAtIndex:rowIndex 
-                          withFilter:[searchField_ stringValue]];
-        NSImage *image = [[NSImage alloc] init];
-        NSSize size;
-        size.width = [aTableColumn width];
-        size.height = rowHeight_;
-        [image setSize:size];
-        
-        NSRect rect;
-        rect.origin.x = 0;
-        rect.origin.y = 0;
-        rect.size = size;
-        [image lockFocus];
-        NSString* key = [bookmark objectForKey:KEY_SHORTCUT];
-        if (key) {
-            [self _drawVerticallyCenteredText:rect string:[NSString stringWithFormat:@"⇧⌘%@", [bookmark objectForKey:KEY_SHORTCUT]]];
+        if ([[bookmark objectForKey:KEY_GUID] isEqualToString:[[[BookmarkModel sharedInstance] defaultBookmark] objectForKey:KEY_GUID]]) {
+            NSPoint destPoint;
+            destPoint.x = (size.width - [starImage size].width) / 2;
+            destPoint.y = (rowHeight_ - [starImage size].height) / 2;
+            [starImage drawAtPoint:destPoint fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
         }
         [image unlockFocus];
         return image;
     }
+    
     return @"";
 }
 
@@ -476,6 +331,7 @@ static void ShrinkFrame(NSRect* frame, int xMargin, int yMargin) {
         [tableView_ setUsesAlternatingRowBackgroundColors:YES];
         [tableView_ 
          setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleRegular];
+        [tableView_ removeTableColumn:starColumn_];
         [tableColumn_ setDataCell:[[NSTextFieldCell alloc] initTextCell:@""]];
     } else {
         [tableView_ setUsesAlternatingRowBackgroundColors:NO];
@@ -483,9 +339,9 @@ static void ShrinkFrame(NSRect* frame, int xMargin, int yMargin) {
              setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleSourceList];
         [tableView_ removeTableColumn:tableColumn_];
         tableColumn_ = 
-            [[NSTableColumn alloc] initWithIdentifier:@"image"];
+            [[NSTableColumn alloc] initWithIdentifier:@"name"];
         [tableColumn_ setEditable:NO];
-        [tableColumn_ setDataCell:[[NSImageCell alloc] initImageCell:nil]];
+
         [tableView_ addTableColumn:tableColumn_];
     }
 }
@@ -535,13 +391,11 @@ static void ShrinkFrame(NSRect* frame, int xMargin, int yMargin) {
 
     shortcutColumn_ = [[NSTableColumn alloc] initWithIdentifier:@"shortcut"];
     [shortcutColumn_ setEditable:NO];
-    [shortcutColumn_ setDataCell:[[NSImageCell alloc] initImageCell:nil]];
     [shortcutColumn_ setWidth:50];
     [tableView_ addTableColumn:shortcutColumn_];
     
     commandColumn_ = [[NSTableColumn alloc] initWithIdentifier:@"command"];
     [commandColumn_ setEditable:NO];
-    [commandColumn_ setDataCell:[[NSImageCell alloc] initImageCell:nil]];
     [tableView_ addTableColumn:commandColumn_];
 
     [tableView_ sizeLastColumnToFit];
@@ -549,6 +403,8 @@ static void ShrinkFrame(NSRect* frame, int xMargin, int yMargin) {
     [tableView_ setHeaderView:header];
     [[tableColumn_ headerCell] setStringValue:@"Name"];
     [[commandColumn_ headerCell] setStringValue:@"Command"];
+    [[starColumn_ headerCell] setStringValue:@"Default"];
+    [starColumn_ setWidth:[[starColumn_ headerCell] cellSize].width];
     [[shortcutColumn_ headerCell] setStringValue:@"Shortcut"];
 
     [tableView_ setAllowsColumnResizing:YES];
