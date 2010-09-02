@@ -42,8 +42,6 @@
 #import <iTerm/PTYTask.h>
 #import <iTerm/iTermController.h>
 #import "iTermApplicationDelegate.h"
-#import "ITConfigPanelController.h"
-#import <iTerm/Tree.h>
 #import "PreferencePanel.h"
 
 #include <sys/time.h>
@@ -427,7 +425,7 @@ static NSCursor* textViewCursor =  nil;
     return nafont;
 }
 
-- (void) setFont:(NSFont*)aFont nafont:(NSFont *)naFont;
+- (void)setFont:(NSFont*)aFont nafont:(NSFont *)naFont;
 {    
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
     NSSize sz;
@@ -456,10 +454,11 @@ static NSCursor* textViewCursor =  nil;
 
 - (void)changeFont:(id)fontManager
 {
-    if ([ITConfigPanelController onScreen])
-        [[ITConfigPanelController singleInstance] changeFont:fontManager];
-    else
+    if ([[PreferencePanel sharedInstance] onScreen]) {
+        [[PreferencePanel sharedInstance] changeFont:fontManager];
+    } else {
         [super changeFont:fontManager];
+    }
 }
 
 - (id) dataSource
@@ -2673,7 +2672,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     static NSMutableDictionary* attrib = nil;
     if(attrib == nil) attrib = [[NSMutableDictionary alloc] init];
 
-    NSFont* theFont = dw?nafont:font;
+    NSFont* theFont = dw ? nafont : font;
     BOOL renderBold = (fg&BOLD_MASK) && ![self disableBold];
     NSColor* color = overrideColor ? overrideColor : [self colorForCode:fg];
 
@@ -3129,13 +3128,16 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     
     url = [NSURL URLWithString:trimmedURLString];
 
-    TreeNode *bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL: [url scheme]];
+    Bookmark *bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:[url scheme]];
     
     //NSLog(@"Got the URL:%@\n%@", [url scheme], bm);
-    if (bm != nil) 
-        [[iTermController sharedInstance] launchBookmark:[bm nodeData] inTerminal:[[iTermController sharedInstance] currentTerminal] withURL:trimmedURLString];
-    else 
+    if (bm != nil)  {
+        [[iTermController sharedInstance] launchBookmark:bm 
+                                              inTerminal:[[iTermController sharedInstance] currentTerminal] 
+                                                 withURL:trimmedURLString];
+    } else {
         [[NSWorkspace sharedWorkspace] openURL:url];
+    }
         
 }
 

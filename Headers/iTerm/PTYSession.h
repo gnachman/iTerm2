@@ -26,6 +26,7 @@
 
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
+#import <iTerm/BookmarkModel.h>
 
 #include <sys/time.h>
 
@@ -90,6 +91,8 @@
 // init/dealloc
 - (id) init;
 - (void) dealloc;
+
++ (NSImage*) loadBackgroundImage:(NSString*)imageFilePath;
 
 // Session specific methods
 - (BOOL)initScreen: (NSRect) aRect width:(int)width height:(int) height;
@@ -238,6 +241,7 @@
 - (void)updateDisplay;
 - (void)doAntiIdle;
 - (void)scheduleUpdateSoon:(BOOL)soon;
+- (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Bookmark*)aDict;
 
 @end
 

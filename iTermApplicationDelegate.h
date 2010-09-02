@@ -107,6 +107,8 @@ void DebugLog(NSString* value);
 
 // size
 - (IBAction) returnToDefaultSize: (id) sender;
+- (IBAction)editCurrentSession:(id)sender;
+
 
 @end
 

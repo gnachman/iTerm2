@@ -589,7 +589,6 @@ static BOOL stringCompare(unichar* needle,
         if (toDrop > extra_lines) {
             toDrop = extra_lines;
         }
-        int prev_offset = [block startOffset];
         int dropped = [block dropLines: toDrop withWidth: width];
         
         if ([block isEmpty]) {

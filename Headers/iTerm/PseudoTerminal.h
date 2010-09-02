@@ -30,6 +30,7 @@
 #import <Cocoa/Cocoa.h>
 #import <iTerm/PTYTabView.h>
 #import <iTerm/PTYWindow.h>
+#import <BookmarkTableView.h>
 
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
 
@@ -40,7 +41,7 @@
 
 @end
 
-@interface PseudoTerminal : NSWindowController <PTYTabViewDelegateProtocol, PTYWindowDelegateProtocol>
+@interface PseudoTerminal : NSWindowController <PTYTabViewDelegateProtocol, PTYWindowDelegateProtocol, BookmarkTableDelegate>
 {
     
     NSOutlineView *bookmarksView;
@@ -106,6 +107,8 @@
 
     // Used to do incremental find.
     NSTimer* _timer;
+    NSDrawer    *myDrawer;
+    BookmarkTableView* drawerBookmarks_;
 }
 
 
@@ -123,12 +126,12 @@
 - (IBAction) previousSession:(id)sender;
 - (IBAction) nextSession:(id)sender;
 - (PTYSession *) currentSession;
+- (int)numberOfSessions;
+- (PTYSession*)sessionAtIndex:(int)i;
 - (int) currentSessionIndex;
 - (NSString *) currentSessionName;
 - (void) setCurrentSessionName: (NSString *) theSessionName;
 - (void) setFramePos;
-
-- (void) updateCurrentSessionProfiles;
 
 - (void)startProgram:(NSString *)program;
 - (void)startProgram:(NSString *)program
@@ -240,6 +243,10 @@
 + (void) breakDown:(NSString *)cmdl cmdPath: (NSString **) cmd cmdArgs: (NSArray **) path;
 
 - (void) showHideFindBar;
+- (void)bookmarkTableSelectionDidChange:(id)bookmarkTable;
+- (void)bookmarkTableSelectionWillChange:(id)bookmarkTable;
+- (void)bookmarkTableRowSelected:(id)bookmarkTable;
+- (void)reloadBookmarks;
 
 @end
 

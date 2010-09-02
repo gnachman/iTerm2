@@ -27,177 +27,18 @@
 #import "ITAddressBookMgr.h"
 #import <iTerm/iTermKeyBindingMgr.h>
 
-static iTermKeyBindingMgr *singleInstance = nil;
-
 @implementation iTermKeyBindingMgr
 
-+ (id) singleInstance;
++ (NSString *) formatKeyCombination:(NSString *)theKeyCombination  
 {
-	if(singleInstance == nil)
-	{
-		singleInstance = [[iTermKeyBindingMgr alloc] init];
-	}
+    unsigned int keyMods;
+    unsigned int keyCode;
+    NSString *aString;
+    NSMutableString *theKeyString;
+    keyCode = keyMods = 0;
+	sscanf([theKeyCombination UTF8String], "%x-%x", &keyCode, &keyMods);
 	
-	return (singleInstance);
-}
-
-- (id) init
-{
-	self = [super init];
-	
-	if(!self)
-		return (nil);
-	
-	profiles = [[NSMutableDictionary alloc] init];
-
-	return (self);
-}
-
-- (void) dealloc
-{
-	[profiles release];
-	[super dealloc];
-}
-
-- (NSDictionary *) profiles
-{
-	return (profiles);
-}
-
-- (void) setProfiles: (NSMutableDictionary *) aDict
-{
-	NSEnumerator *keyEnumerator;
-	NSMutableDictionary *mappingDict, *aMutableDict;
-	NSString *profileName;
-	NSDictionary *sourceDict;
-	BOOL foundGlobalProfile = NO;
-
-	// recursively copy the dictionary to ensure mutability
-	if(aDict != nil)
-	{
-		keyEnumerator = [aDict keyEnumerator];
-		while((profileName = [keyEnumerator nextObject]) != nil)
-		{
-			sourceDict = [aDict objectForKey: profileName];
-			mappingDict = [[NSMutableDictionary alloc] initWithDictionary: sourceDict];
-			// make sure key mapping dict is mutable
-			if([sourceDict objectForKey: @"Key Mappings"] != nil)
-			{
-				aMutableDict = [[NSMutableDictionary alloc] initWithDictionary: [sourceDict objectForKey: @"Key Mappings"]];
-				[mappingDict setObject: aMutableDict forKey: @"Key Mappings"];
-				[aMutableDict release];
-			}
-			[profiles setObject: mappingDict forKey: profileName];
-			[mappingDict release];
-			if([[sourceDict objectForKey: @"Global Profile"] isEqualToString: @"Yes"])
-				foundGlobalProfile = YES;
-		}
-	}
-	
-	if(foundGlobalProfile == NO)
-	{
-		mappingDict = [[NSMutableDictionary alloc] init];
-		[mappingDict setObject: @"Yes" forKey: @"Global Profile"];
-		[profiles setObject: mappingDict forKey: NSLocalizedStringFromTableInBundle(@"Global",@"iTerm", 
-																					[NSBundle bundleForClass: [self class]], 
-																					@"Key Binding Profiles")];
-		[mappingDict release];
-	}
-}
-
-- (BOOL) isGlobalProfile: (NSString *)profileName
-{
-	NSDictionary *aProfile;
-	
-	if([profileName length] <= 0)
-		return (NO);
-	
-	aProfile = [profiles objectForKey: profileName];
-	return ([[aProfile objectForKey: @"Global Profile"] isEqualToString: @"Yes"]);
-}
-
-- (void) addProfileWithName: (NSString *) aString copyProfile: (NSString *) profileName
-{
-	//NSLog(@"%s: %@", __PRETTY_FUNCTION__, aString);
-	if([aString length] > 0 && [profiles objectForKey: aString] == nil)
-	{
-		NSMutableDictionary *newProfile, *sourceProfile, *mappingDict;
-				
-		if([profileName length] > 0)
-		{
-			sourceProfile = [profiles objectForKey: profileName];
-			newProfile = [[NSMutableDictionary alloc] initWithDictionary: sourceProfile];				
-
-			// make sure key mapping dict is mutable
-			if([sourceProfile objectForKey: @"Key Mappings"] != nil)
-			{
-				mappingDict = [[NSMutableDictionary alloc] initWithDictionary: [sourceProfile objectForKey: @"Key Mappings"]];
-				[newProfile setObject: mappingDict forKey: @"Key Mappings"];
-				[mappingDict release];
-			}
-			[newProfile removeObjectForKey: @"Global Profile"];
-		}	
-		else
-		{
-			newProfile = [[NSMutableDictionary alloc] init];				
-		}
-		
-		[profiles setObject: newProfile forKey: aString];
-		[newProfile release];		
-	}
-	else
-		NSBeep();
-}
-
-- (void) deleteProfileWithName: (NSString *) aString
-{
-	if([aString length] > 0)
-	{
-		[self updateBookmarkProfile: aString with:@"Default"];
-		[profiles removeObjectForKey: aString];
-	}
-}
-
-- (int) numberOfEntriesInProfile: (NSString *) profileName
-{
-	NSDictionary *keyMappings;
-	
-	//NSLog(@"%s: %@", __PRETTY_FUNCTION__, profileName);
-	
-	if([profileName length] > 0)
-	{
-		keyMappings = [[profiles objectForKey: profileName] objectForKey: @"Key Mappings"];
-		return ([keyMappings count]);
-	}
-	else
-		return (0);
-}
-
-- (NSString *) keyCombinationAtIndex: (int) index inProfile: (NSString *) profile
-{
-	NSMutableDictionary *keyMappings;
-	NSArray *allKeys;
-	NSString *theKeyCombination, *aString;
-	NSMutableString *theKeyString;
-	unsigned int keyCode, keyModifiers;
-	
-	//NSLog(@"%s: %@", __PRETTY_FUNCTION__, profile);
-	
-	keyMappings = [[profiles objectForKey: profile] objectForKey: @"Key Mappings"];
-	allKeys = [[keyMappings allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
-	
-	if(index >= 0 && index < [allKeys count])
-	{
-		theKeyCombination = [allKeys objectAtIndex: index];
-	}
-	else
-		return (nil);
-	
-	keyCode = keyModifiers = 0;
-	sscanf([theKeyCombination UTF8String], "%x-%x", &keyCode, &keyModifiers);
-	
-	switch (keyCode)
-	{
+	switch (keyCode) {
 		case NSDownArrowFunctionKey:
 			aString = NSLocalizedStringFromTableInBundle(@"cursor down",@"iTerm", 
 														 [NSBundle bundleForClass: [self class]], 
@@ -322,67 +163,52 @@ static iTermKeyBindingMgr *singleInstance = nil;
 			break;
 			
 		default:
-			aString = [NSString stringWithFormat: @"%@ 0x%x", 
-				NSLocalizedStringFromTableInBundle(@"hex code",@"iTerm", 
-														 [NSBundle bundleForClass: [self class]], 
-														 @"Key Names"),
-				keyCode];
+            if (keyCode >= '!' && keyCode <= '~') {
+                aString = [NSString stringWithFormat:@"%c", keyCode];
+            } else {
+                aString = [NSString stringWithFormat: @"%@ 0x%x", 
+                           NSLocalizedStringFromTableInBundle(@"hex code",@"iTerm", 
+                                                              [NSBundle bundleForClass: [self class]], 
+                                                              @"Key Names"),
+                           keyCode];
+            }
 			break;
 	}
 	
 	theKeyString = [[NSMutableString alloc] initWithString: @""];
-	if(keyModifiers & NSCommandKeyMask)
-	{
+	if (keyMods & NSCommandKeyMask) {
 		[theKeyString appendString: @"cmd-"];
 	}		
-	if(keyModifiers & NSAlternateKeyMask)
-	{
+	if (keyMods & NSAlternateKeyMask) {
 		[theKeyString appendString: @"opt-"];
 	}
-	if(keyModifiers & NSControlKeyMask)
-	{
+	if (keyMods & NSControlKeyMask) {
 		[theKeyString appendString: @"ctrl-"];
 	}
-	if(keyModifiers & NSShiftKeyMask)
-	{
+	if (keyMods & NSShiftKeyMask) {
 		[theKeyString appendString: @"shift-"];
 	}
-	if(keyModifiers & NSNumericPadKeyMask)
-	{
+	if (keyMods & NSNumericPadKeyMask) {
 		[theKeyString appendString: @"num-"];
 	}		
 	[theKeyString appendString: aString];
-	
-	return ([theKeyString autorelease]);
-	
-	
+    return theKeyString;
 }
 
-- (NSString *) actionForKeyCombinationAtIndex: (int) index inProfile: (NSString *) profile
+
++ (NSString *)formatAction:(NSDictionary *)keyInfo
 {
-	NSMutableDictionary *keyMappings;
-	NSArray *allKeys;
-	int action;
-	NSString *actionString;
+    NSString *actionString;
+    int action;
 	NSString *auxText;
 	BOOL priority;
-	
-	//NSLog(@"%s: %@", __PRETTY_FUNCTION__, profile);
-	
-	keyMappings = [[profiles objectForKey: profile] objectForKey: @"Key Mappings"];
-	allKeys = [[keyMappings allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
-	
-	if(index >= 0 && index < [allKeys count])
-	{
-		action = [[[keyMappings objectForKey: [allKeys objectAtIndex: index]] objectForKey: @"Action"] intValue];
-		auxText = [[keyMappings objectForKey: [allKeys objectAtIndex: index]] objectForKey: @"Text"];
-		priority = [[keyMappings objectForKey: [allKeys objectAtIndex: index]] objectForKey: @"Priority"] ? [[[keyMappings objectForKey: [allKeys objectAtIndex: index]] objectForKey: @"Priority"] boolValue] : NO;
-	}
-	else
-		return (nil);
-	
-	switch (action)
-	{
+
+    action = [[keyInfo objectForKey: @"Action"] intValue];
+    auxText = [keyInfo objectForKey: @"Text"];
+    priority = [keyInfo objectForKey: @"Priority"] ? 
+        [[keyInfo objectForKey: @"Priority"] boolValue] : NO;
+    
+	switch (action) {
 		case KEY_ACTION_NEXT_SESSION:
 			actionString = NSLocalizedStringFromTableInBundle(@"next tab",@"iTerm", 
 															  [NSBundle bundleForClass: [self class]], 
@@ -468,334 +294,31 @@ static iTermKeyBindingMgr *singleInstance = nil;
 			break;
 	}
 	
-	return (priority?[actionString stringByAppendingString:@" (!)"] : actionString);
+    return (priority?[actionString stringByAppendingString:@" (!)"] : actionString);
 }
 
-
-- (void) addEntryForKeyCode: (unsigned int) hexCode 
-				  modifiers: (unsigned int) modifiers
-					 action: (unsigned int) action
-			   highPriority: (BOOL) highPriority
-					   text: (NSString *) text
-					profile: (NSString *) profile
++ (int) actionForKeyCode: (unichar)keyCode 
+               modifiers: (unsigned int) keyMods 
+            highPriority: (BOOL *) highPriority 
+                    text: (NSString **) text 
+             keyMappings:(NSDictionary *)keyMappings
 {
-	//NSLog(@"%s", __PRETTY_FUNCTION__);
-	
-	NSMutableDictionary *keyMappings, *keyBinding;
-	NSString *keyString;
-	
-	if([profile length] <= 0)
-		return;
-	
-	keyMappings = [[profiles objectForKey: profile] objectForKey: @"Key Mappings"];
-	if(keyMappings == nil)
-	{
-		keyMappings = [[NSMutableDictionary alloc] init];
-		[[profiles objectForKey: profile] setObject: keyMappings forKey: @"Key Mappings"];
-		[keyMappings release];
-	}
-	
-	keyString = [NSString stringWithFormat: @"0x%x-0x%x", hexCode, modifiers];
-	keyBinding = [[NSMutableDictionary alloc] init];
-	[keyBinding setObject: [NSNumber numberWithInt: action] forKey: @"Action"];
-	if([text length] > 0)
-		[keyBinding setObject:[[text copy] autorelease] forKey: @"Text"];
-	[keyBinding setObject: [NSNumber numberWithBool:highPriority] forKey: @"Priority"];
-	[keyMappings setObject: keyBinding forKey: keyString];
-	[keyBinding release];
-	
-}
-
-- (void) addEntryForKey: (unsigned int) key 
-			  modifiers: (unsigned int) modifiers
-				 action: (unsigned int) action
-		   highPriority: (BOOL) highPriority
-				   text: (NSString *) text
-				profile: (NSString *) profile
-{
-	//NSLog(@"%s", __PRETTY_FUNCTION__);
-	
-	unsigned int keyModifiers;
-	unichar keyUnicode;
-	
-	keyModifiers = modifiers;
-	
-	// this is how we distinguish between regular numbers and those on the numeric keypad
-	if(key >= KEY_NUMERIC_0 && key <= KEY_NUMERIC_PERIOD)
-		keyModifiers |= NSNumericPadKeyMask;
-	
-	// on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
-	if(key >= KEY_CURSOR_DOWN && key <= KEY_CURSOR_UP)
-		keyModifiers |= NSNumericPadKeyMask;
-	
-	switch (key)
-	{
-		case KEY_CURSOR_DOWN:
-			keyUnicode = NSDownArrowFunctionKey;
-			break;
-		case KEY_CURSOR_LEFT:
-			keyUnicode = NSLeftArrowFunctionKey;
-			break;
-		case KEY_CURSOR_RIGHT:
-			keyUnicode = NSRightArrowFunctionKey;
-			break;
-		case KEY_CURSOR_UP:
-			keyUnicode = NSUpArrowFunctionKey;
-			break;
-		case KEY_DEL:
-			keyUnicode = NSDeleteFunctionKey;
-			break;
-		case KEY_DELETE:
-			keyUnicode = 0x7f;
-			break;
-		case KEY_END:
-			keyUnicode = NSEndFunctionKey;
-			break;
-		case KEY_F1:
-		case KEY_F2:
-		case KEY_F3:
-		case KEY_F4:
-		case KEY_F5:
-		case KEY_F6:
-		case KEY_F7:
-		case KEY_F8:
-		case KEY_F9:
-		case KEY_F10:
-		case KEY_F11:
-		case KEY_F12:
-		case KEY_F13:
-		case KEY_F14:
-		case KEY_F15:
-		case KEY_F16:
-		case KEY_F17:
-		case KEY_F18:
-		case KEY_F19:
-		case KEY_F20:
-			keyUnicode = NSF1FunctionKey + (key - KEY_F1);
-			break;
-		case KEY_HELP:
-			keyUnicode = NSHelpFunctionKey;
-			break;			
-		case KEY_HOME:
-			keyUnicode = NSHomeFunctionKey;
-			break;
-		case KEY_NUMERIC_0:
-		case KEY_NUMERIC_1:
-		case KEY_NUMERIC_2:
-		case KEY_NUMERIC_3:
-		case KEY_NUMERIC_4:
-		case KEY_NUMERIC_5:
-		case KEY_NUMERIC_6:
-		case KEY_NUMERIC_7:
-		case KEY_NUMERIC_8:
-		case KEY_NUMERIC_9:
-			keyUnicode = '0' + (key - KEY_NUMERIC_0);
-			break;
-		case KEY_NUMERIC_ENTER:
-			keyUnicode = 0x3; // 'enter' on numeric keypad
-			break;
-		case KEY_NUMERIC_EQUAL:
-			keyUnicode = '=';
-			break;
-		case KEY_NUMERIC_DIVIDE:
-			keyUnicode = '/';
-			break;
-		case KEY_NUMERIC_MULTIPLY:
-			keyUnicode = '*';
-			break;
-		case KEY_NUMERIC_MINUS:
-			keyUnicode = '-';
-			break;
-		case KEY_NUMERIC_PLUS:
-			keyUnicode = '+';
-			break;
-		case KEY_NUMERIC_PERIOD:
-			keyUnicode = '.';
-			break;
-		case KEY_NUMLOCK:
-			keyUnicode = NSClearLineFunctionKey;
-			break;
-		case KEY_PAGE_DOWN:
-			keyUnicode = NSPageDownFunctionKey;
-			break;
-		case KEY_PAGE_UP:
-			keyUnicode = NSPageUpFunctionKey;
-			break;
-		case KEY_INS:
-			keyUnicode = NSInsertCharFunctionKey;
-			break;
-		default:
-			NSLog(@"%s: unknown key %d", __PRETTY_FUNCTION__, key);
-			return;
-	}
-	
-	[self addEntryForKeyCode: keyUnicode modifiers: keyModifiers action: action highPriority: highPriority text: text profile: profile];
-		
-}
-
-- (void) deleteEntryAtIndex: (int) index inProfile: (NSString *) profile
-{
-	NSMutableDictionary *keyMappings;
-	NSArray *allKeys;
-	NSString *keyString;
-	
-	keyMappings = [[profiles objectForKey: profile] objectForKey: @"Key Mappings"];
-	allKeys = [[keyMappings allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
-
-	if(index >= 0 && index < [allKeys count])
-	{
-		keyString = [allKeys objectAtIndex: index];
-		[keyMappings removeObjectForKey: keyString];
-	}
-}
-
-- (int) optionKeyForProfile: (NSString *) profileName
-{
-	NSDictionary *aProfile;
-	
-	if([profileName length] > 0)
-		aProfile = [profiles objectForKey: profileName];
-	else
-		aProfile = [self globalProfile];
-	return ([[aProfile objectForKey: @"Option Key"] intValue]);
-}
-
-- (void) setOptionKey: (int) option forProfile: (NSString *) profileName
-{
-	NSMutableDictionary *aProfile;
-	
-	//NSLog(@"%s: profile = %@; option = %d", __PRETTY_FUNCTION__, profileName, option);
-	aProfile = [profiles objectForKey: profileName];
-	[aProfile setObject: [NSNumber numberWithInt: option] forKey: @"Option Key"];
-}
-
-- (NSDictionary *) globalProfile
-{
-	NSString *globalProfile;
-	
-	globalProfile = NSLocalizedStringFromTableInBundle(@"Global",@"iTerm", [NSBundle bundleForClass: [self class]], @"Key Binding Profiles");
-
-	return ([profiles objectForKey: globalProfile]);
-}
-
-- (NSString *) globalProfileName
-{
-	NSDictionary *aProfile;
-	NSEnumerator *keyEnumerator;
-	NSString *aKey, *aProfileName;
-	
-	keyEnumerator = [profiles keyEnumerator];
-	aProfileName = nil;
-	while ((aKey = [keyEnumerator nextObject]))
-	{
-		aProfile = [profiles objectForKey: aKey];
-		if([self isGlobalProfile: aKey])
-		{
-			aProfileName = aKey;
-			break;
-		}
-	}
-	
-	return (aProfileName);
-}
-
-- (NSString *) defaultProfileName
-{
-	return [self globalProfileName];
-}
-
-- (int) actionForKeyCode: (unichar)keyCode modifiers: (unsigned int) keyModifiers highPriority: (BOOL *) highPriority text: (NSString **) text profile: (NSString *)profile
-{
-	int retCode = -1;
-	NSString *globalProfile;
-			
-	// search the specified profile first
-	if([profile length] > 0)
-		retCode = [self _actionForKeyCode: keyCode modifiers: keyModifiers highPriority: highPriority text: text profile: profile];
-	
-	// If we found something in the common profile, return that
-	if(retCode >= 0)
-		return (retCode);
-	
-	globalProfile = NSLocalizedStringFromTableInBundle(@"Global",@"iTerm", [NSBundle bundleForClass: [self class]], @"Key Binding Profiles");
-	
-	// search the common profile if a match was not found
-	if([globalProfile length] > 0)
-		retCode = [self _actionForKeyCode: keyCode modifiers: keyModifiers highPriority: highPriority text: text profile: globalProfile];	
-	
-	
-	return (retCode);
-}
-
-- (void) updateBookmarkNode: (TreeNode *)node forProfile: (NSString*) oldProfile with:(NSString*)newProfile
-{
-	int i;
-	TreeNode *child;
-	NSDictionary *aDict;
-	int n = [node numberOfChildren];
-	
-	for (i=0;i<n;i++) {
-		child = [node childAtIndex:i];
-		if ([child isLeaf]) {
-			aDict = [child nodeData];
-			if ([[aDict objectForKey:KEY_KEYBOARD_PROFILE] isEqualToString: oldProfile]) {
-				NSMutableDictionary *newBookmark= [[NSMutableDictionary alloc] initWithDictionary: aDict];
-				[newBookmark setObject: newProfile forKey: KEY_KEYBOARD_PROFILE];
-				[child setNodeData: newBookmark];
-				[newBookmark release];
-			}
-		}
-		else {
-			[self updateBookmarkNode: child forProfile: oldProfile with:newProfile];
-		}
-	}
-}
-
-- (void) updateBookmarkProfile: (NSString*) oldProfile with:(NSString*)newProfile
-{
-	[self updateBookmarkNode: [[ITAddressBookMgr sharedInstance] rootNode] forProfile: oldProfile with:newProfile];
-	
-	// Post a notification for all listeners that bookmarks have changed
-	[[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];    		
-}
-
-@end
-
-@implementation iTermKeyBindingMgr (Private)
-- (int) _actionForKeyCode: (unichar)keyCode modifiers: (unsigned int) keyModifiers highPriority: (BOOL *) highPriority text: (NSString **) text profile: (NSString *)profile
-{
-	NSDictionary *keyMappings;
 	NSString *keyString;
 	NSDictionary *theKeyMapping;
 	int retCode = -1;
 	unsigned int theModifiers;
-	
-	if(profile == nil)
-	{
-		if(text)
-			*text = nil;
-		return (-1);
-	}
-	
-	keyMappings = [[profiles objectForKey: profile] objectForKey: @"Key Mappings"];
-	
-	if(keyMappings == nil)
-	{
-		if(text)
-			*text = nil;
-		return (-1);
-	}
-	
+    
 	// turn off all the other modifier bits we don't care about
-	theModifiers = keyModifiers & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask | NSNumericPadKeyMask);
+	theModifiers = keyMods & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask | NSNumericPadKeyMask);
 	
 	// on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
-	if(keyCode >= NSUpArrowFunctionKey && keyCode <= NSRightArrowFunctionKey)
+	if (keyCode >= NSUpArrowFunctionKey && keyCode <= NSRightArrowFunctionKey) {
 		theModifiers |= NSNumericPadKeyMask;
+    }
 	
 	keyString = [NSString stringWithFormat: @"0x%x-0x%x", keyCode, theModifiers];
 	theKeyMapping = [keyMappings objectForKey: keyString];
-	if(theKeyMapping == nil)
+	if (theKeyMapping == nil)
 	{
 		if(text)
 			*text = nil;
@@ -809,6 +332,102 @@ static iTermKeyBindingMgr *singleInstance = nil;
 	*highPriority = [theKeyMapping objectForKey: @"Priority"] ? [[theKeyMapping objectForKey: @"Priority"] boolValue] : NO;
 	
 	return (retCode);
-	
 }
+
++ (void)removeMappingAtIndex:(int)rowIndex inBookmark:(NSMutableDictionary*)bookmark
+{
+    NSMutableDictionary* km = [NSMutableDictionary dictionaryWithDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]];
+    NSArray* allKeys = [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+    if (rowIndex >= 0 && rowIndex < [allKeys count]) {
+        [km removeObjectForKey:[allKeys objectAtIndex:rowIndex]];
+        [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
+    } else {
+        return;
+    }
+    
+}
+
++ (void)setKeyMappingsToPreset:(NSString*)presetName inBookmark:(NSMutableDictionary*)bookmark
+{
+    NSMutableDictionary* km = [NSMutableDictionary dictionaryWithDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]];
+    
+    [km removeAllObjects];
+    
+ 	NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"PresetKeyMappings" ofType:@"plist"];   
+    NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile: plistFile];
+    NSDictionary* settings = [presetsDict objectForKey:presetName];
+    [km setDictionary:settings];
+    
+    [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
+}
+
+
++ (void)setMappingAtIndex:(int)rowIndex 
+                   forKey:(NSString*)keyString 
+                   action:(int)actionIndex 
+                    value:(NSString*)valueToSend 
+                createNew:(BOOL)newMapping 
+               inBookmark:(NSMutableDictionary*)bookmark
+{
+    NSString* origKeyCombo = nil;
+
+    NSMutableDictionary* km = 
+        [NSMutableDictionary dictionaryWithDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]];
+    NSArray* allKeys = 
+        [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+    if (!newMapping) {
+        if (rowIndex >= 0 && rowIndex < [allKeys count]) {
+            origKeyCombo = [allKeys objectAtIndex:rowIndex];
+        } else {
+            return;
+        }
+    } else if ([km objectForKey:keyString]) {
+        // new mapping but same key combo as an existing one - overwrite it
+        origKeyCombo = keyString;
+    } else {
+        // creating a new mapping and it doesn't collide with an existing one
+        origKeyCombo = nil;
+    }
+    
+    NSMutableDictionary* keyBinding = 
+        [[[NSMutableDictionary alloc] init] autorelease];
+	[keyBinding setObject:[NSNumber numberWithInt:actionIndex] 
+                   forKey:@"Action"];
+	[keyBinding setObject:[[valueToSend copy] autorelease] forKey:@"Text"];
+    if (origKeyCombo) {
+        [km removeObjectForKey:origKeyCombo];
+    }
+	[km setObject:keyBinding forKey:keyString];
+    [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
+}
+
++ (NSString*)shortcutAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark
+{
+    NSDictionary* km = [bookmark objectForKey:KEY_KEYBOARD_MAP];
+    NSArray* allKeys = [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+    if (rowIndex >= 0 && rowIndex < [allKeys count]) {
+        return [allKeys objectAtIndex:rowIndex];
+    } else {
+        return nil;
+    }
+}
+
++ (NSDictionary*)mappingAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark
+{
+    NSDictionary* km = [bookmark objectForKey:KEY_KEYBOARD_MAP];
+    NSArray* allKeys = [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+    if (rowIndex >= 0 && rowIndex < [allKeys count]) {
+        return [km objectForKey:[allKeys objectAtIndex:rowIndex]];
+    } else {
+        return nil;
+    }
+}
+
++ (int)numberOfMappingsForBookmark:(Bookmark*)bmDict
+{
+    NSDictionary* keyMapDict = [bmDict objectForKey:KEY_KEYBOARD_MAP];
+    return [keyMapDict count];
+}
+
 @end
+

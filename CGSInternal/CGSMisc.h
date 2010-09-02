@@ -36,7 +36,7 @@ CG_EXTERN bool CGSIsScreenWatcherPresent(void);
 CG_EXTERN bool CGSEventIsAppUnresponsive(CGSConnectionID cid, const ProcessSerialNumber *psn);
 
 /*! Sets the amount of time it takes for an application to be considered unresponsive. */
-CG_EXTERN CGError CGSEventSetAppIsUnresponsiveNotificationTimeout(CGSConnectionID cid, double time);
+CG_EXTERN CGError CGSEventSetAppIsUnresponsiveNotificationTimeout(CGSConnectionID cid, double theTime);
 
 /*! Sets the cursor position. */
 CG_EXTERN CGError CGSWarpCursorPosition(CGSConnectionID cid, float x, float y);
