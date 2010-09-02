@@ -151,7 +151,7 @@
         NSString* suffix = [xform objectForKey:@"Suffix"];
         id defaultValue = [xform objectForKey:@"Default"];
         
-        NSDictionary* parent;
+        NSDictionary* parent = nil;
         if ([prefix isEqualToString:@"Terminal"]) {
             parent = [terminalProfiles objectForKey:[dict objectForKey:KEY_TERMINAL_PROFILE]];
         } else if ([prefix isEqualToString:@"Displays"]) {
@@ -161,7 +161,10 @@
         } else {
             NSAssert(0, @"Bad prefix");
         }
-        id value = [parent objectForKey:suffix];
+        id value = nil;
+        if (parent) {
+            value = [parent objectForKey:suffix];
+        }
         if (!value) {
             value = defaultValue;
         }
