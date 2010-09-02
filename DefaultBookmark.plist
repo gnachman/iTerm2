@@ -252,7 +252,7 @@
     <key>Disable Bold</key>
     <false/>
     <key>Disable Window Resizing</key>
-    <false/>
+    <true/>
     <key>Has Background Image</key>
     <false/>
     <key>Horizontal Spacing</key>
