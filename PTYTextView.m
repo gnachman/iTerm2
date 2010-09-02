@@ -2864,13 +2864,13 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             unichar curChar = [self _getCharacterAtX:xi Y:yi];
             if (curChar == '\0' || !(isalnum(curChar) || strchr(urlSet, curChar))) {
                 // Found a non-url character so append the left part of the URL.
-                [url insertString:[self contentFromX:xi+1 Y:yi ToX:endx Y:yi pad: YES]
+                [url insertString:[self contentFromX:xi+1 Y:yi ToX:endx+1 Y:yi pad: YES]
                      atIndex:0];
                 break;
             }
             if (xi == leftx) {
                 // hit the start of the line
-                [url insertString:[self contentFromX:xi Y:yi ToX:endx Y:yi pad: YES]
+                [url insertString:[self contentFromX:xi Y:yi ToX:endx+1 Y:yi pad: YES]
                      atIndex:0];
                 // Try to wrap around to the previous line
                 if (yi == 0) {
@@ -2899,7 +2899,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             unichar curChar = [self _getCharacterAtX:xi Y:yi];
             if (curChar == '\0' || !(isalnum(curChar) || strchr(urlSet, curChar))) {
                 // Found something non-urly. Append what we have so far.
-                [url appendString:[self contentFromX:startx Y:yi ToX:xi-1 Y:yi pad: YES]];
+                [url appendString:[self contentFromX:startx Y:yi ToX:xi Y:yi pad: YES]];
                 // skip backslahes that indicate wrapping
                 while (x <= rightx && [self _getCharacterAtX:xi Y:yi] == '\\') {
                     xi++;
@@ -2911,7 +2911,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 // xi is left at rightx+1
             } else if (xi == rightx) {
                 // Made it to rightx.
-                [url appendString:[self contentFromX:startx Y:yi ToX:xi Y:yi pad: YES]];
+                [url appendString:[self contentFromX:startx Y:yi ToX:xi+1 Y:yi pad: YES]];
             } else {
                 // Char is valid and xi < rightx.
                 continue;

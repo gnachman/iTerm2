@@ -1994,9 +1994,16 @@ NSString *sessionsKey = @"sessions";
         int new_height = (defaultFrame.size.height - nch) / charHeight;
         int new_width =  (defaultFrame.size.width - wch - MARGIN * 2) /charWidth;
         
-        // TODO: If you're holding down shift, go to full screen even if maxVertically==YES
         defaultFrame.size.height = charHeight * new_height + nch;
-        defaultFrame.size.width = ([[PreferencePanel sharedInstance] maxVertically] ? [sender frame].size.width : new_width*charWidth+wch+MARGIN*2);
+        defaultFrame.origin.y = [sender frame].size.height;
+        BOOL verticalOnly = NO;
+        
+        if ([[PreferencePanel sharedInstance] maxVertically] &&
+            !([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask)) {
+            verticalOnly = YES;
+        }
+
+        defaultFrame.size.width = (verticalOnly ? [sender frame].size.width : new_width*charWidth+wch+MARGIN*2);
         //NSLog(@"actual width: %f, height: %f",defaultFrame.size.width,defaultFrame.size.height);
     }
         

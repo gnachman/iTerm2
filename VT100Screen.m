@@ -2487,6 +2487,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     }
     //Not wrapped by default
     default_line[width].ch = 0;
+    default_line[width].bg_color = 0;
+    default_line[width].fg_color = 0;
 
     return default_line;
 }
