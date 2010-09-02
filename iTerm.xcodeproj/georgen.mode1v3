@@ -330,7 +330,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1DA9BF10122F273A002FCC65</string>
+										<string>1DA9BF1C122F276A002FCC65</string>
 										<key>history</key>
 										<array>
 											<string>1D5FDB6A11FF96BB00C46BA3</string>
@@ -570,13 +570,14 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
+		<string>1DA9BF1D122F276A002FCC65</string>
+		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>1DA9BEC2122F1EFC002FCC65</string>
 		<string>1DA9BEC3122F1EFC002FCC65</string>
 		<string>1C78EAAD065D492600B07095</string>
 		<string>1CD10A99069EF8BA00B06720</string>
 		<string>1D3D257711EBFCC400873609</string>
 		<string>/Users/georgen/iterm2/iTerm.xcodeproj</string>
-		<string>1C530D57069F1CE1000CFCEE</string>
 	</array>
 	<key>WindowString</key>
 	<string>0 146 1017 632 0 0 1280 778 </string>
@@ -611,7 +612,7 @@
 								<key>Frame</key>
 								<string>{{0, 0}, {1280, 349}}</string>
 								<key>RubberWindowFrame</key>
-								<string>0 146 1280 631 0 0 1280 778 </string>
+								<string>0 147 1280 631 0 0 1280 778 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXNavigatorGroup</string>
@@ -635,7 +636,7 @@
 								<key>Frame</key>
 								<string>{{0, 354}, {1280, 236}}</string>
 								<key>RubberWindowFrame</key>
-								<string>0 146 1280 631 0 0 1280 778 </string>
+								<string>0 147 1280 631 0 0 1280 778 </string>
 							</dict>
 							<key>Module</key>
 							<string>PBXBuildResultsModule</string>
@@ -665,7 +666,7 @@
 			<key>ToolbarConfiguration</key>
 			<string>xcode.toolbar.config.buildV3</string>
 			<key>WindowString</key>
-			<string>0 146 1280 631 0 0 1280 778 </string>
+			<string>0 147 1280 631 0 0 1280 778 </string>
 			<key>WindowToolGUID</key>
 			<string>1D3D257711EBFCC400873609</string>
 			<key>WindowToolIsVisible</key>
@@ -884,7 +885,7 @@
 			<key>WindowToolGUID</key>
 			<string>1C530D57069F1CE1000CFCEE</string>
 			<key>WindowToolIsVisible</key>
-			<true/>
+			<false/>
 		</dict>
 		<dict>
 			<key>Identifier</key>
