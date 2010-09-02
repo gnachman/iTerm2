@@ -223,7 +223,9 @@
 {
     [[BookmarkModel sharedInstance] load:newBookmarksArray];
     if (guid) {
-        [[BookmarkModel sharedInstance] setDefaultByGuid:guid];
+        if ([[BookmarkModel sharedInstance] bookmarkWithGuid:guid]) {
+            [[BookmarkModel sharedInstance] setDefaultByGuid:guid];
+        }
     }
 }
 
