@@ -52,20 +52,29 @@
 	return inFocus;
 }
 
+static bool hasFocus(id theField) {
+    return [[[theField window] firstResponder] isKindOfClass:[NSTextView class]] &&
+            [[theField window] fieldEditor:NO forObject:nil] != nil && (
+        (id)[[theField window] firstResponder] == theField ||
+       [(id)[[theField window] firstResponder] delegate] == theField); 
+}
+
 // override to catch key press events very early on
 - (void)sendEvent:(NSEvent*)event
 {
 	if ([event type] == NSKeyDown) {
         PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
+        PseudoTerminal* currentTerminal = [[iTermController sharedInstance] currentTerminal];
+        PTYTabView* tabView = [currentTerminal tabView];
+        PTYSession* currentSession = [currentTerminal currentSession];
+        PTYTextView* textView = [currentSession TEXTVIEW];
         if ([prefPanel keySheet] == [self keyWindow] &&
             [prefPanel keySheetIsOpen] &&
             [self isTextFieldInFocus:[[PreferencePanel sharedInstance] shortcutKeyTextField]]) {
             [[PreferencePanel sharedInstance] shortcutKeyDown:event];
             return;
-        } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
-			PseudoTerminal* currentTerminal = [[iTermController sharedInstance] currentTerminal];
-			PTYTabView* tabView = [currentTerminal tabView];
-			PTYSession* currentSession = [currentTerminal currentSession];
+        } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]] &&
+                   hasFocus(textView)) {
 
 			const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
 			if(([event modifierFlags] & mask) == NSCommandKeyMask) {
