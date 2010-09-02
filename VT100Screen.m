@@ -625,7 +625,11 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (void) reset
 {
+    // Save screen contents before resetting.
+    [self scrollScreenIntoScrollbackBuffer:1];
+
     // reset terminal scroll top and bottom
+    CURSOR_Y = SCROLL_TOP;
     SCROLL_TOP = 0;
     SCROLL_BOTTOM = HEIGHT - 1;
 
@@ -1531,6 +1535,27 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     return y;
 }
 
+- (void)scrollScreenIntoScrollbackBuffer:(int)leaving
+{
+    // Move the current screen into the scrollback buffer unless it's empty.
+    int cx = CURSOR_X;
+    int cy = CURSOR_Y;
+    int st = SCROLL_TOP;
+    int sb = SCROLL_BOTTOM;
+    
+    SCROLL_TOP = 0;
+    SCROLL_BOTTOM = HEIGHT - 1;
+    CURSOR_Y = HEIGHT - 1;
+    int last_line = [self _lastNonEmptyLine];
+    for (int j = 0; j <= last_line - leaving; ++j) {
+        [self setNewLine];
+    }
+    CURSOR_X = cx;
+    CURSOR_Y = cy;
+    SCROLL_TOP = st;
+    SCROLL_BOTTOM = sb;
+}
+
 - (void)eraseInDisplay:(VT100TCC)token
 {
     int x1, yStart, x2, y2;    
@@ -1551,25 +1576,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         break;
 
     case 2: 
-        {
-            // Move the current screen into the scrollback buffer unless it's empty.
-            int cx = CURSOR_X;
-            int cy = CURSOR_Y;
-            int st = SCROLL_TOP;
-            int sb = SCROLL_BOTTOM;
-            
-            SCROLL_TOP = 0;
-            SCROLL_BOTTOM = HEIGHT - 1;
-            CURSOR_Y = HEIGHT - 1;
-            int last_line = [self _lastNonEmptyLine];
-            for (int j = 0; j <= last_line; ++j) {
-                [self setNewLine];
-            }
-            CURSOR_X = cx;
-            CURSOR_Y = cy;
-            SCROLL_TOP = st;
-            SCROLL_BOTTOM = sb;
-        }
+        [self scrollScreenIntoScrollbackBuffer:0];
         x1 = 0;
         yStart = 0;
         x2 = 0;
