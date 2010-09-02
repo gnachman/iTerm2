@@ -358,7 +358,7 @@ static BOOL initDone = NO;
     NSDictionary *aDict;
 	
 	aDict = bookmarkData;
-    // TODO: wtf is $$
+    // $$ is a prefix/suffix of a variabe.
 	if (aDict == nil || [[ITAddressBookMgr bookmarkCommand:aDict] isEqualToString:@"$$"]) {
         Bookmark* prototype = aDict;
         if (!prototype) {

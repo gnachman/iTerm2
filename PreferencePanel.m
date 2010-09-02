@@ -1789,8 +1789,6 @@ completionsForSubstring:(NSString *)substring
     [toolbar setSelectedItemIdentifier:bookmarksToolbarId];
 }
 
-// TODO(georgen): Have one-bookmark mode hide all the basics except name and have it
-// update the tab title when the name is changed.
 - (void)openToBookmark:(NSString*)guid
 {
     [self run];
