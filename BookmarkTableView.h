@@ -39,6 +39,7 @@
     NSTableColumn* tableColumn_;
     NSTableColumn* commandColumn_;
     NSTableColumn* shortcutColumn_;
+    NSTableColumn* starColumn_;
     id<BookmarkTableDelegate> delegate_;
     BOOL showGraphic_;
     NSString* guid_; // selected guid

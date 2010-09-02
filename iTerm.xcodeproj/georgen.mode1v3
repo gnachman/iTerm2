@@ -216,7 +216,7 @@
 						<key>_historyCapacity</key>
 						<integer>0</integer>
 						<key>bookmark</key>
-						<string>1D091D37122F6F4A00FCD9C2</string>
+						<string>1D091DDB122F796300FCD9C2</string>
 						<key>history</key>
 						<array>
 							<string>1D091CC5122F687400FCD9C2</string>
@@ -319,7 +319,7 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>6</integer>
+									<integer>2</integer>
 									<integer>1</integer>
 									<integer>0</integer>
 								</array>
@@ -362,7 +362,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>iTermController.m</string>
+								<string>BookmarkTableView.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -370,11 +370,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>iTermController.m</string>
+										<string>BookmarkTableView.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D091D36122F6F4A00FCD9C2</string>
+										<string>1D091DDA122F796300FCD9C2</string>
 										<key>history</key>
 										<array>
 											<string>1D5FDB6A11FF96BB00C46BA3</string>
@@ -406,11 +406,7 @@
 											<string>1DA9BAA0122DA911002FCC65</string>
 											<string>1DA9BB05122DB11A002FCC65</string>
 											<string>1DA9BB3A122DB2AA002FCC65</string>
-											<string>1DA9BC80122F0B97002FCC65</string>
 											<string>1DA9BCB9122F0D3C002FCC65</string>
-											<string>1DA9BD5D122F17D2002FCC65</string>
-											<string>1DA9BD76122F18CE002FCC65</string>
-											<string>1DA9BDB8122F1A70002FCC65</string>
 											<string>1DA9BECA122F1F83002FCC65</string>
 											<string>1D091CBD122F687400FCD9C2</string>
 											<string>1D091CBE122F687400FCD9C2</string>
@@ -418,7 +414,11 @@
 											<string>1D091CFC122F6BF300FCD9C2</string>
 											<string>1D091D22122F6E9600FCD9C2</string>
 											<string>1D091D31122F6F2F00FCD9C2</string>
-											<string>1D091D32122F6F2F00FCD9C2</string>
+											<string>1D091D4D122F72D200FCD9C2</string>
+											<string>1D091D4E122F72D200FCD9C2</string>
+											<string>1D091DA5122F76F600FCD9C2</string>
+											<string>1D091DB7122F772F00FCD9C2</string>
+											<string>1D091DB8122F772F00FCD9C2</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -614,6 +614,7 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
+		<string>1D091DDC122F796300FCD9C2</string>
 		<string>1D091CD1122F687400FCD9C2</string>
 		<string>1D091CD2122F687400FCD9C2</string>
 		<string>1CD10A99069EF8BA00B06720</string>
@@ -640,12 +641,14 @@
 					<key>Dock</key>
 					<array>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string></string>
+								<string>BookmarkTableView.m</string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>
