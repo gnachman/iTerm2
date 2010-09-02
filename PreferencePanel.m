@@ -1650,7 +1650,7 @@ completionsForSubstring:(NSString *)substring
     }
     Bookmark* src = [dataSource bookmarkWithGuid:guid];
     NSMutableDictionary* newDict = [[NSMutableDictionary alloc] initWithDictionary:dest];
-    NSString** keys;
+    NSString** keys = nil;
     if ([copyTo isEqualToString:@"colors"]) {
         NSString* colorsKeys[] = {
             KEY_FOREGROUND_COLOR,
@@ -1722,12 +1722,14 @@ completionsForSubstring:(NSString *)substring
         };
         keys = keyboardKeys;
     }
-    for (int i = 0; keys[i]; ++i) {
-        id srcValue = [src objectForKey:keys[i]];
-        if (srcValue) {
-            [newDict setObject:srcValue forKey:keys[i]];
-        } else {
-            [newDict removeObjectForKey:keys[i]];
+    if (keys) {
+        for (int i = 0; keys[i]; ++i) {
+            id srcValue = [src objectForKey:keys[i]];
+            if (srcValue) {
+                [newDict setObject:srcValue forKey:keys[i]];
+            } else {
+                [newDict removeObjectForKey:keys[i]];
+            }
         }
     }
     [dataSource setBookmark:newDict 
