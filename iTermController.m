@@ -119,14 +119,10 @@ static BOOL initDone = NO;
 	NSLog(@"%s(%d):-[iTermController dealloc]",
 		__FILE__, __LINE__);
 #endif
-	NSEnumerator* iterator;
-	PseudoTerminal* terminal;
-
 	// Close all terminal windows
-	iterator = [terminalWindows objectEnumerator];
-	while ((terminal = [iterator nextObject])) {
-		[[terminal window] close];
-	}
+    while ([terminalWindows count] > 0) {
+        [[terminalWindows objectAtIndex:0] close];
+    }
 	NSAssert([terminalWindows count] == 0, @"Expected terminals to be gone");
 	[terminalWindows release];
 
