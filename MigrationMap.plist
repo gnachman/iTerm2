@@ -1,0 +1,772 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Migration Map</key>
+  <array>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Foreground Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Foreground Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.0</real>
+              <key>Green Component</key>
+              <real>0.0</real>
+              <key>Red Component</key>
+              <real>0.0</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Background Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Background Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>1</real>
+              <key>Green Component</key>
+              <real>1</real>
+              <key>Red Component</key>
+              <real>1</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Bold Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Bold Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.0</real>
+              <key>Green Component</key>
+              <real>0.0</real>
+              <key>Red Component</key>
+              <real>1</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Selection Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Selection Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>1</real>
+              <key>Green Component</key>
+              <real>0.8353000283241272</real>
+              <key>Red Component</key>
+              <real>0.70980000495910645</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Selected Text Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Selected Text Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.0</real>
+              <key>Green Component</key>
+              <real>0.0</real>
+              <key>Red Component</key>
+              <real>0.0</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Cursor Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Cursor Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.0</real>
+              <key>Green Component</key>
+              <real>0.0</real>
+              <key>Red Component</key>
+              <real>0.0</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Cursor Text Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Cursor Text Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>1</real>
+              <key>Green Component</key>
+              <real>1</real>
+              <key>Red Component</key>
+              <real>1</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 0 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 0 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.0</real>
+              <key>Green Component</key>
+              <real>0.0</real>
+              <key>Red Component</key>
+              <real>0.0</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 1 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 1 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.0</real>
+              <key>Green Component</key>
+              <real>0.0</real>
+              <key>Red Component</key>
+              <real>0.73333334922790527</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 2 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 2 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.0</real>
+              <key>Green Component</key>
+              <real>0.73333334922790527</real>
+              <key>Red Component</key>
+              <real>0.0</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 3 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 3 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.0</real>
+              <key>Green Component</key>
+              <real>0.73333334922790527</real>
+              <key>Red Component</key>
+              <real>0.73333334922790527</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 4 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 4 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.73333334922790527</real>
+              <key>Green Component</key>
+              <real>0.0</real>
+              <key>Red Component</key>
+              <real>0.0</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 5 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 5 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.73333334922790527</real>
+              <key>Green Component</key>
+              <real>0.0</real>
+              <key>Red Component</key>
+              <real>0.73333334922790527</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 6 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 6 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.73333334922790527</real>
+              <key>Green Component</key>
+              <real>0.73333334922790527</real>
+              <key>Red Component</key>
+              <real>0.0</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 7 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 7 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.73333334922790527</real>
+              <key>Green Component</key>
+              <real>0.73333334922790527</real>
+              <key>Red Component</key>
+              <real>0.73333334922790527</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 8 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 8 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.3333333432674408</real>
+              <key>Green Component</key>
+              <real>0.3333333432674408</real>
+              <key>Red Component</key>
+              <real>0.3333333432674408</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 9 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 9 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.3333333432674408</real>
+              <key>Green Component</key>
+              <real>0.3333333432674408</real>
+              <key>Red Component</key>
+              <real>1</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 10 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 10 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.3333333432674408</real>
+              <key>Green Component</key>
+              <real>1</real>
+              <key>Red Component</key>
+              <real>0.3333333432674408</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 11 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 11 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>0.3333333432674408</real>
+              <key>Green Component</key>
+              <real>1</real>
+              <key>Red Component</key>
+              <real>1</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 12 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 12 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>1</real>
+              <key>Green Component</key>
+              <real>0.3333333432674408</real>
+              <key>Red Component</key>
+              <real>0.3333333432674408</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 13 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 13 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>1</real>
+              <key>Green Component</key>
+              <real>0.3333333432674408</real>
+              <key>Red Component</key>
+              <real>1</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 14 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 14 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>1</real>
+              <key>Green Component</key>
+              <real>1</real>
+              <key>Red Component</key>
+              <real>0.3333333432674408</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Ansi 15 Color</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Ansi 15 Color</string>
+      <key>Default</key>
+      <dict>
+              <key>Blue Component</key>
+              <real>1</real>
+              <key>Green Component</key>
+              <real>1</real>
+              <key>Red Component</key>
+              <real>1</real>
+      </dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Columns</string>
+      <key>Type</key>
+      <string>int</string>
+      <key>Destination</key>
+      <string>Columns</string>
+      <key>Default</key>
+      <integer>80</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Rows</string>
+      <key>Type</key>
+      <string>int</string>
+      <key>Destination</key>
+      <string>Rows</string>
+      <key>Default</key>
+      <integer>24</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Font</string>
+      <key>Type</key>
+      <string>string</string>
+      <key>Destination</key>
+      <string>Normal Font</string>
+      <key>Default</key>
+      <string></string>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>NAFont</string>
+      <key>Type</key>
+      <string>string</string>
+      <key>Destination</key>
+      <string>Non Ascii Font</string>
+      <key>Default</key>
+      <string></string>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Horizontal Character Spacing</string>
+      <key>Type</key>
+      <string>float</string>
+      <key>Destination</key>
+      <string>Horizontal Spacing</string>
+      <key>Default</key>
+      <real>1.0</real>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Vertical Character Spacing</string>
+      <key>Type</key>
+      <string>float</string>
+      <key>Destination</key>
+      <string>Vertical Spacing</string>
+      <key>Default</key>
+      <real>1.0</real>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Disable Bold</string>
+      <key>Type</key>
+      <string>bool</string>
+      <key>Destination</key>
+      <string>Disable Bold</string>
+      <key>Default</key>
+      <integer>0</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Transparency</string>
+      <key>Type</key>
+      <string>float</string>
+      <key>Destination</key>
+      <string>Transparency</string>
+      <key>Default</key>
+      <real>0</real>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Blur</string>
+      <key>Type</key>
+      <string>bool</string>
+      <key>Destination</key>
+      <string>Blur</string>
+      <key>Default</key>
+      <integer>0</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Anti Alias</string>
+      <key>Type</key>
+      <string>bool</string>
+      <key>Destination</key>
+      <string>Anti Aliasing</string>
+      <key>Default</key>
+      <integer>1</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Displays</string>
+      <key>Suffix</key>
+      <string>Background Image</string>
+      <key>Type</key>
+      <string>string</string>
+      <key>Destination</key>
+      <string>Background Image Location</string>
+      <key>Default</key>
+      <string></string>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Terminal</string>
+      <key>Suffix</key>
+      <string>Encoding</string>
+      <key>Type</key>
+      <string>uint</string>
+      <key>Destination</key>
+      <string>Character Encoding</string>
+      <key>Default</key>
+      <integer>4</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Terminal</string>
+      <key>Suffix</key>
+      <string>No Resizing</string>
+      <key>Type</key>
+      <string>bool</string>
+      <key>Destination</key>
+      <string>Disable Window Resizing</string>
+      <key>Default</key>
+      <integer>0</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Terminal</string>
+      <key>Suffix</key>
+      <string>Append Title</string>
+      <key>Type</key>
+      <string>bool</string>
+      <key>Destination</key>
+      <string>Sync Title</string>
+      <key>Default</key>
+      <integer>0</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Terminal</string>
+      <key>Suffix</key>
+      <string>Auto shouldClose</string>
+      <key>Type</key>
+      <string>bool</string>
+      <key>Destination</key>
+      <string>Close Sessions On End</string>
+      <key>Default</key>
+      <integer>1</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Terminal</string>
+      <key>Suffix</key>
+      <string>Double Width</string>
+      <key>Type</key>
+      <string>bool</string>
+      <key>Destination</key>
+      <string>Non Ascii Double Width</string>
+      <key>Default</key>
+      <integer>1</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Terminal</string>
+      <key>Suffix</key>
+      <string>Silence Bell</string>
+      <key>Type</key>
+      <string>bool</string>
+      <key>Destination</key>
+      <string>Silence Bell</string>
+      <key>Default</key>
+      <integer>0</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Terminal</string>
+      <key>Suffix</key>
+      <string>Show Bell</string>
+      <key>Type</key>
+      <string>bool</string>
+      <key>Destination</key>
+      <string>Visual Bell</string>
+      <key>Default</key>
+      <integer>1</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Terminal</string>
+      <key>Suffix</key>
+      <string>Xterm Mouse Reporting</string>
+      <key>Type</key>
+      <string>bool</string>
+      <key>Destination</key>
+      <string>Mouse Reporting</string>
+      <key>Default</key>
+      <integer>1</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Terminal</string>
+      <key>Suffix</key>
+      <string>Growl</string>
+      <key>Type</key>
+      <string>bool</string>
+      <key>Destination</key>
+      <string>BM Growl</string>
+      <key>Default</key>
+      <integer>1</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Terminal</string>
+      <key>Suffix</key>
+      <string>Blink</string>
+      <key>Type</key>
+      <string>bool</string>
+      <key>Destination</key>
+      <string>Blinking Cursor</string>
+      <key>Default</key>
+      <integer>1</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Terminal</string>
+      <key>Suffix</key>
+      <string>Scrollback</string>
+      <key>Type</key>
+      <string>int</string>
+      <key>Destination</key>
+      <string>Scrollback Lines</string>
+      <key>Default</key>
+      <integer>0</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Terminal</string>
+      <key>Suffix</key>
+      <string>Term Type</string>
+      <key>Type</key>
+      <string>string</string>
+      <key>Destination</key>
+      <string>Terminal Type</string>
+      <key>Default</key>
+      <string>xterm</string>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Terminal</string>
+      <key>Suffix</key>
+      <string>Send Idle Char</string>
+      <key>Type</key>
+      <string>bool</string>
+      <key>Destination</key>
+      <string>Send Code When Idle</string>
+      <key>Default</key>
+      <integer>1</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>Terminal</string>
+      <key>Suffix</key>
+      <string>Idle Char</string>
+      <key>Type</key>
+      <string>uint</string>
+      <key>Destination</key>
+      <string>Idle Code</string>
+      <key>Default</key>
+      <integer>0</integer>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>KeyBindings</string>
+      <key>Suffix</key>
+      <string>Key Mappings</string>
+      <key>Type</key>
+      <string>dict</string>
+      <key>Destination</key>
+      <string>Keyboard Map</string>
+      <key>Default</key>
+      <dict></dict>
+    </dict>
+    <dict>
+      <key>Prefix</key>
+      <string>KeyBindings</string>
+      <key>Suffix</key>
+      <string>Option Key</string>
+      <key>Type</key>
+      <string>int</string>
+      <key>Destination</key>
+      <string>Option Key Sends</string>
+      <key>Default</key>
+      <integer>0</integer>
+    </dict>
+  </array>
+</dict>
+</plist>
+
+

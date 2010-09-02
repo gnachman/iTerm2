@@ -1,4 +1,3 @@
-
 /*
  **  ITAddressBookMgr.m
  **
@@ -25,48 +24,61 @@
  **  along with this program; if not, write to the Free Software
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 #import "ITAddressBookMgr.h"
 
 #import <iTerm/PreferencePanel.h>
-#import <iTerm/Tree.h>
-#import <iTerm/iTermTerminalProfileMgr.h>
 #import <iTerm/iTermKeyBindingMgr.h>
-#import <iTerm/iTermDisplayProfileMgr.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
 
-#define SAFENODE(n) 		((TreeNode*)((n)?(n):(bookmarks)))
-
-static NSString* ADDRESS_BOOK_FILE = @"~/Library/Application Support/iTerm/AddressBook";
-
-
-static TreeNode *defaultBookmark = nil;
-
 @implementation ITAddressBookMgr
 
-+ (id)sharedInstance;
++ (id)sharedInstance
 {
     static ITAddressBookMgr* shared = nil;
     
-    if (!shared)
+    if (!shared) {
         shared = [[ITAddressBookMgr alloc] init];
+    }
     
     return shared;
 }
 
-- (id)init;
+- (id)init
 {
     self = [super init];
-    	
+    
+    NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
+
+    if ([prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] && ![prefs objectForKey:KEY_NEW_BOOKMARKS]) {
+        // Have only old-style bookmarks. Load them and convert them to new-style
+        // bookmarks.
+        [self recursiveMigrateBookmarks:[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] path:[NSArray arrayWithObjects:nil]];
+        [prefs removeObjectForKey:KEY_DEPRECATED_BOOKMARKS];
+        [prefs setObject:[[BookmarkModel sharedInstance] rawData] forKey:KEY_NEW_BOOKMARKS];
+        [[BookmarkModel sharedInstance] removeAllBookmarks];
+    }
+    
+    // Load new-style bookmarks.
+    if ([prefs objectForKey:KEY_NEW_BOOKMARKS]) {
+        [self setBookmarks:[prefs objectForKey:KEY_NEW_BOOKMARKS] 
+               defaultGuid:[prefs objectForKey:KEY_DEFAULT_GUID]];
+    }
+    
+    // Make sure there is at least one bookmark.
+    if ([[BookmarkModel sharedInstance] numberOfBookmarks] == 0) {
+        NSMutableDictionary* aDict = [[NSMutableDictionary alloc] init];
+        [ITAddressBookMgr setDefaultsInBookmark:aDict];
+        [[BookmarkModel sharedInstance] addBookmark:aDict];
+        [aDict release];
+    }
+    
     return self;
 }
 
-- (void)dealloc;
+- (void)dealloc
 {
-	[bookmarks release];
-	[bonjourGroup release];	
 	[bonjourServices removeAllObjects];
 	[bonjourServices release];
 	
@@ -97,428 +109,187 @@ static TreeNode *defaultBookmark = nil;
 	
 }
 
-- (void) setBookmarks: (NSDictionary *) aDict
++ (NSArray*)encodeColor:(NSColor*)origColor
 {
-	//NSLog(@"%s: %@", __PRETTY_FUNCTION__, aDict);
-	[bookmarks release];
-	bookmarks = [TreeNode treeFromDictionary: aDict];
-	[bookmarks setIsLeaf: NO];
-	[bookmarks retain];
-	
-	// make sure we have a default bookmark
-	if([self _checkForDefaultBookmark: bookmarks defaultBookmark: &defaultBookmark] == NO)
-	{
-		NSMutableDictionary *aDict;
-		char *userShell, *thisUser;
-		NSString *shell;
-		NSString *aName;
-		TreeNode *childNode;
-				
-		aDict = [[NSMutableDictionary alloc] init];
-		
-		// Get the user's default shell
-		if((thisUser = getenv("USER")) != NULL) {
-			shell = [NSString stringWithFormat: @"login -fp %s", thisUser];
-		} else if((userShell = getenv("SHELL")) != NULL) {
-			shell = [NSString stringWithCString: userShell];
-		} else {
-			shell = @"/bin/bash --login";
-		}
-		
-		aName = NSLocalizedStringFromTableInBundle(@"Default",@"iTerm", [NSBundle bundleForClass: [self class]],
-												   @"Terminal Profiles");
-		[aDict setObject: aName forKey: KEY_NAME];
-		[aDict setObject: shell forKey: KEY_COMMAND];
-		[aDict setObject: shell forKey: KEY_DESCRIPTION];
-		[aDict setObject: NSHomeDirectory() forKey: KEY_WORKING_DIRECTORY];
-		[aDict setObject: [[iTermTerminalProfileMgr singleInstance] defaultProfileName] forKey: KEY_TERMINAL_PROFILE];
-		[aDict setObject: [[iTermKeyBindingMgr singleInstance] globalProfileName] forKey: KEY_KEYBOARD_PROFILE];
-		[aDict setObject: [[iTermDisplayProfileMgr singleInstance] defaultProfileName] forKey: KEY_DISPLAY_PROFILE];
-		[aDict setObject: @"Yes" forKey: KEY_DEFAULT_BOOKMARK];
+    NSColor* color = [origColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+	CGFloat red, green, blue, alpha;
+	[color getRed:&red green:&green blue:&blue alpha:&alpha];
+    return [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithFloat:red], @"Red Component",
+                                                      [NSNumber numberWithFloat:green], @"Green Component",
+                                                      [NSNumber numberWithFloat:blue], @"Blue Component",
+                                                      nil];
+}
 
-		childNode = [[TreeNode alloc] initWithData: aDict parent: nil children: [NSArray array]];
-		[childNode setIsLeaf: YES];
-		[bookmarks insertChild: childNode atIndex: [bookmarks numberOfChildren]];
-		[aDict release];
-		[childNode release];
-		
-		defaultBookmark = childNode;
-		
++ (NSColor*)decodeColor:(NSDictionary*)plist
+{
+    if ([plist count] != 3) {
+        return [NSColor blackColor];
+    }
+    
+    return [NSColor colorWithCalibratedRed:[[plist objectForKey:@"Red Component"] floatValue]
+                                     green:[[plist objectForKey:@"Green Component"] floatValue]
+                                      blue:[[plist objectForKey:@"Blue Component"] floatValue]
+                                     alpha:1.0];
+}
+
+- (void)copyProfileToBookmark:(NSMutableDictionary *)dict
+{
+ 	NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"MigrationMap" ofType:@"plist"];   
+    NSDictionary* fileDict = [NSDictionary dictionaryWithContentsOfFile: plistFile];
+    NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];    
+    NSDictionary* keybindingProfiles = [prefs objectForKey: @"KeyBindings"];
+	NSDictionary* displayProfiles =  [prefs objectForKey: @"Displays"];
+	NSDictionary* terminalProfiles = [prefs objectForKey: @"Terminals"];
+    NSArray* xforms = [fileDict objectForKey:@"Migration Map"];
+    for (int i = 0; i < [xforms count]; ++i) {
+        NSDictionary* xform = [xforms objectAtIndex:i];
+        NSString* destination = [xform objectForKey:@"Destination"];
+        if ([dict objectForKey:destination]) {
+            continue;
+        }
+        NSString* prefix = [xform objectForKey:@"Prefix"];
+        NSString* suffix = [xform objectForKey:@"Suffix"];
+        id defaultValue = [xform objectForKey:@"Default"];
+        
+        NSDictionary* parent;
+        if ([prefix isEqualToString:@"Terminal"]) {
+            parent = [terminalProfiles objectForKey:[dict objectForKey:KEY_TERMINAL_PROFILE]];
+        } else if ([prefix isEqualToString:@"Displays"]) {
+            parent = [displayProfiles objectForKey:[dict objectForKey:KEY_DISPLAY_PROFILE]];
+        } else if ([prefix isEqualToString:@"KeyBindings"]) {
+            parent = [keybindingProfiles objectForKey:[dict objectForKey:KEY_KEYBOARD_PROFILE]];
+        } else {
+            NSAssert(0, @"Bad prefix");
+        }
+        id value = [parent objectForKey:suffix];
+        if (!value) {
+            value = defaultValue;
+        }
+        [dict setObject:value forKey:destination];
+    }
+}
+
+- (void)recursiveMigrateBookmarks:(NSDictionary*)node path:(NSArray*)path
+{
+    NSDictionary* data = [node objectForKey:@"Data"];
+
+	if ([data objectForKey:KEY_COMMAND]) {
+        // Not just a folder if it has a command.
+        NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:data];
+        [self copyProfileToBookmark:temp];
+        [temp setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
+        [temp setObject:path forKey:KEY_TAGS];
+        [[BookmarkModel sharedInstance] addBookmark:temp];
 	}
-	
-	// add any bonjour services if we have any
-	if([bonjourGroup numberOfChildren] > 0)
-	{
-		[bookmarks insertChild: bonjourGroup atIndex: [bookmarks numberOfChildren]];
-	}	
-
-    //[bookmarks recursiveSortChildren];
-}
-
-- (NSDictionary *) bookmarks
-{
-	NSDictionary *aDict;
-	NSUInteger anIndex;
-	
-	//NSLog(@"%s", __PRETTY_FUNCTION__);
-	
-	// remove bonjour group since we do not want to save that
-	anIndex = [[bookmarks children] indexOfObject: bonjourGroup];
-	[bonjourGroup retain];
-	[bookmarks  removeChild: bonjourGroup];	
-	aDict = [bookmarks dictionary];
-	if(anIndex != NSNotFound)
-		[bookmarks insertChild: bonjourGroup atIndex: anIndex];	
-	[bonjourGroup release];
-	
-	return (aDict);
-}
-
-- (BOOL) mayDeleteBookmarkNode: (TreeNode *) aNode
-{
-	BOOL mayDeleteNode = YES;
-	
-	if([defaultBookmark isDescendantOfNode: aNode])
-		mayDeleteNode = NO;
-	
-	if([aNode isDescendantOfNode: bonjourGroup])
-		mayDeleteNode = NO;
-	
-	return (mayDeleteNode);
-}
-
-// Model for NSOutlineView tree structure
-
-- (id) child:(int)index ofItem:(id)item
-{	
-	return ([SAFENODE(item) childAtIndex: index]);
-}
-
-- (BOOL) isExpandable:(id)item
-{
-	//NSLog(@"%s: %@", __PRETTY_FUNCTION__, item);
-	return (![SAFENODE(item) isLeaf]);
-}
-
-- (int) numberOfChildrenOfItem:(id)item
-{
-	//NSLog(@"%s", __PRETTY_FUNCTION__);
-	return ([SAFENODE(item) numberOfChildren]);
-}
-
-- (id) objectForKey: (id) key inItem: (id) item
-{	
-	NSDictionary *data = [SAFENODE(item) nodeData];
-	
-	return ([data objectForKey: key]);
-}
-
-- (void) setObjectValue: (id) object forKey: (id) key inItem: (id) item
-{
-	NSMutableDictionary *aDict;
-	
-	aDict = [[NSMutableDictionary alloc] initWithDictionary: [SAFENODE(item) nodeData]];
-	[aDict setObject: object forKey: key];
-	[SAFENODE(item) setNodeData: aDict];
-	[aDict release];
-	
-	// Post a notification for all listeners that bookmarks have changed
-	[[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];    		
-}
-
-- (void) addFolder: (NSString *) folderName toNode: (TreeNode *) aNode
-{
-	TreeNode *targetNode, *childNode;
-	NSMutableDictionary *aDict;
-	
-	// NSLog(@"%s: %@", __PRETTY_FUNCTION__, folderName);
-	
-	targetNode = SAFENODE(aNode);
-	
-	aDict = [[NSMutableDictionary alloc] init];
-	[aDict setObject: folderName forKey: KEY_NAME];
-	[aDict setObject: @"" forKey: KEY_DESCRIPTION];
-	
-	childNode = [[TreeNode alloc] initWithData: aDict parent: nil children: [NSArray array]];
-	[childNode setIsLeaf: NO];
-	[targetNode insertChild: childNode atIndex: [targetNode numberOfChildren]];
-	[aDict release];
-	[childNode release];
-	
-	// Post a notification for all listeners that bookmarks have changed
-	[[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];    		
-}
-
-- (void) addBookmarkWithData: (NSDictionary *) data toNode: (TreeNode *) aNode;
-{
-	TreeNode *targetNode, *childNode;
-	NSMutableDictionary *aDict;
-		
-	//NSLog(@"%s", __PRETTY_FUNCTION__);
-	
-	if(data == nil)
-		return;
-	
-	targetNode = SAFENODE(aNode);
-	
-	aDict = [[NSMutableDictionary alloc] initWithDictionary: data];
-	
-	childNode = [[TreeNode alloc] initWithData: aDict parent: nil children: [NSArray array]];
-	[childNode setIsLeaf: YES];
-	[targetNode insertChild: childNode atIndex: [targetNode numberOfChildren]];
-	[aDict release];
-	[childNode release];
-	
-
-	// Post a notification for all listeners that bookmarks have changed
-	[[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];    		
-}
-
-- (void) setBookmarkWithData: (NSDictionary *) data forNode: (TreeNode *) aNode
-{
-	NSMutableDictionary *aDict;
-	
-	aDict = [[NSMutableDictionary alloc] initWithDictionary: [SAFENODE(aNode) nodeData]];
-	[aDict addEntriesFromDictionary: data];
-	[SAFENODE(aNode) setNodeData: aDict];
-	[aDict release];
-	
-	// Post a notification for all listeners that bookmarks have changed
-	[[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];    		
-}
-
-- (void) deleteBookmarkNode: (TreeNode *) aNode
-{
-	[aNode removeFromParent];
-	// Post a notification for all listeners that bookmarks have changed
-	[[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];    		
-}
-
-- (TreeNode *) rootNode
-{
-	return (bookmarks);
-}
-
-- (TreeNode *) defaultBookmark
-{
-	return (defaultBookmark);
-}
-
-- (void) setDefaultBookmark: (TreeNode *) aNode
-{
-	NSMutableDictionary *aMutableDict;
-	
-	if(aNode == nil)
-		return;
-	
-	// get the current default bookmark
-	aMutableDict = [NSMutableDictionary dictionaryWithDictionary: [defaultBookmark nodeData]];
-	[aMutableDict removeObjectForKey: KEY_DEFAULT_BOOKMARK];
-	[defaultBookmark setNodeData: aMutableDict];
-	
-	// set the new default bookmark
-	aMutableDict = [NSMutableDictionary dictionaryWithDictionary: [aNode nodeData]];
-	[aMutableDict setObject: @"Yes" forKey: KEY_DEFAULT_BOOKMARK];
-	[aNode setNodeData: aMutableDict];
-	defaultBookmark = aNode;
-	
-}
-
-- (NSDictionary *) defaultBookmarkData
-{
-	return ([defaultBookmark nodeData]);
-}
-
-- (NSDictionary *) dataForBookmarkWithName: (NSString *) bookmarkName
-{
-	NSArray *pathComponents;
-	NSEnumerator *anEnumerator;
-	NSString *aPathComponent;
-	TreeNode *theNode;
-	NSDictionary *theData;
-	
-	// break up into path components
-	pathComponents = [bookmarkName componentsSeparatedByString: @"/"];
-	anEnumerator = [pathComponents objectEnumerator];
-	theNode = bookmarks;
-	while((aPathComponent = [anEnumerator nextObject]) != NULL && theNode != NULL)
-	{
-		theNode = [self _getBookmarkNodeWithName: aPathComponent searchFromNode: theNode];
+    
+    NSArray* entries = [node objectForKey:@"Entries"];
+    for (int i = 0; i < [entries count]; ++i) {
+        NSMutableArray* childPath = [NSMutableArray arrayWithArray:path];
+        NSDictionary* dataDict = [node objectForKey:@"Data"];
+        if (dataDict) {
+            NSString* name = [dataDict objectForKey:@"Name"];
+            if (name) {
+                [childPath addObject:name];
+            }
+        }
+		[self recursiveMigrateBookmarks:[entries objectAtIndex:i] path:childPath];
 	}
-	if([theNode isGroup])
-		theData = nil;
-	else
-		theData = [theNode nodeData];
-	
-	return (theData);
 }
 
-// migrate any old bookmarks in the old format we might have
-- (void) migrateOldBookmarks
++ (NSFont *)fontWithDesc:(NSString *)fontDesc
 {
-	NSMutableArray *_addressBookArray = [[NSUnarchiver unarchiveObjectWithFile: [ADDRESS_BOOK_FILE stringByExpandingTildeInPath]] retain];
-	NSDictionary *_adEntry;
-	NSMutableDictionary *aBookmarkData;
-	int i;
-	NSFileManager *fileManager;
-	TreeNode *childNode;
-	NSString *shortcut;
+	float fontSize;
+	char utf8FontName[128];
+	NSFont *aFont;
 	
-	for (i = 0; i < [_addressBookArray count]; i++)
-	{
-		_adEntry = [_addressBookArray objectAtIndex: i];
-		
-		// add all entries except for default entry
-		if([[_adEntry objectForKey:@"DefaultEntry"] boolValue] == NO)
-		{
-			aBookmarkData = [[NSMutableDictionary alloc] init];
-			[aBookmarkData setObject: [_adEntry objectForKey: @"Name"] forKey: KEY_NAME];
-			[aBookmarkData setObject: [_adEntry objectForKey: @"Command"] forKey: KEY_DESCRIPTION];
-			[aBookmarkData setObject: [_adEntry objectForKey: @"Command"] forKey: KEY_COMMAND];
-			[aBookmarkData setObject: [_adEntry objectForKey: @"Directory"] forKey: KEY_WORKING_DIRECTORY];
-			[aBookmarkData setObject: [[iTermTerminalProfileMgr singleInstance] defaultProfileName] forKey: KEY_TERMINAL_PROFILE];
-			[aBookmarkData setObject: [[iTermKeyBindingMgr singleInstance] globalProfileName] forKey: KEY_KEYBOARD_PROFILE];
-			[aBookmarkData setObject: [[iTermDisplayProfileMgr singleInstance] defaultProfileName] forKey: KEY_DISPLAY_PROFILE];
-			
-			shortcut=([[_adEntry objectForKey:@"Shortcut"] intValue]? [NSString stringWithFormat:@"%c",[[_adEntry objectForKey:@"Shortcut"] intValue]]:@"");
-			shortcut = [shortcut lowercaseString];
-			[aBookmarkData setObject: shortcut forKey: KEY_SHORTCUT];
-			
-			childNode = [[TreeNode alloc] initWithData: aBookmarkData parent: nil children: [NSArray array]];
-			[childNode setIsLeaf: YES];
-			[bookmarks insertChild: childNode atIndex: [bookmarks numberOfChildren]];
-			[childNode release];						
-			[aBookmarkData release];
-		}
-		
+	if ([fontDesc length] == 0) {
+		return ([NSFont userFixedPitchFontOfSize: 0.0]);
 	}
+    
+	sscanf([fontDesc UTF8String], "%s %g", utf8FontName, &fontSize);
 	
-	// delete old addressbook file.
-	fileManager = [NSFileManager defaultManager];
-	if([fileManager isDeletableFileAtPath: [ADDRESS_BOOK_FILE stringByExpandingTildeInPath]])
-		[fileManager removeFileAtPath: [ADDRESS_BOOK_FILE stringByExpandingTildeInPath] handler: nil];
+	aFont = [NSFont fontWithName:[NSString stringWithFormat: @"%s", utf8FontName] size:fontSize];
+	if (aFont == nil) {
+		return ([NSFont userFixedPitchFontOfSize: 0.0]);
+    }
 	
+    return aFont;
 }
 
-- (int) indexForBookmark: (NSDictionary *)bookmark
+- (void)setBookmarks:(NSArray*)newBookmarksArray defaultGuid:(NSString*)guid
 {
-	return [[self rootNode] indexForNode: bookmark];
+    [[BookmarkModel sharedInstance] load:newBookmarksArray];
+    if (guid) {
+        [[BookmarkModel sharedInstance] setDefaultByGuid:guid];
+    }
 }
 
-- (NSDictionary *) bookmarkForIndex: (int)index
+- (BookmarkModel*)model
 {
-	return [[self rootNode] nodeForIndex: index];
+    return [BookmarkModel sharedInstance];
 }
 
 // NSNetServiceBrowser delegate methods
 - (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didFindService:(NSNetService *)aNetService moreComing:(BOOL)moreComing 
 {
-	NSMutableDictionary *aDict;
-
-	// Get the OS info without using Carbon. This method is recommended by Apple
-	NSDictionary *systemVersionDict = [NSDictionary dictionaryWithContentsOfFile:@"/System/Library/CoreServices/SystemVersion.plist"];
-	NSString *versionString = [systemVersionDict objectForKey:@"ProductVersion"];
-	NSArray *osArray = [versionString componentsSeparatedByString:@"."];
-	int osElementCount = [osArray count];
-	int osMajor = (osElementCount >= 1) ? [[osArray objectAtIndex:0] intValue] : 0;
-	int osMinor = (osElementCount >= 2) ? [[osArray objectAtIndex:1] intValue] : 0;
-	//int osBugfix = (osElementCount >= 3) ? [[osArray objectAtIndex:2] intValue] : 0;
-	
-	//NSLog(@"%s: %@", __PRETTY_FUNCTION__, aNetService);
-	
-	if(bonjourGroup == nil)
-	{
-		aDict = [[NSMutableDictionary alloc] init];
-		[aDict setObject: @"Bonjour" forKey: KEY_NAME];
-		[aDict setObject: @"" forKey: KEY_DESCRIPTION];
-		[aDict setObject: @"Yes" forKey: KEY_BONJOUR_GROUP];
-						
-		bonjourGroup = [[TreeNode alloc] initWithData: aDict parent: nil children: [NSArray array]];
-		[bonjourGroup setIsLeaf: NO];
-		[aDict release];
-	}
-	
-	// add a subgroup for this service if it does not already exist
-	[self _getBonjourServiceTypeNode: [aNetService type]];
-	
-	// resolve the service
-	// add to temporary array to retain it so that resolving works.
-	[bonjourServices addObject: aNetService];
-	[aNetService setDelegate: self];
-		
-	if (osMajor == 10 && osMinor >= 4)
-		[aNetService resolveWithTimeout: (NSTimeInterval)5];
-	else
-		[aNetService resolve];
+	// resolve the service and add to temporary array to retain it so that 
+    // resolving works.
+	[bonjourServices addObject:aNetService];
+	[aNetService setDelegate:self];		
+    [aNetService resolve];
 }
 
 
 - (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didRemoveService:(NSNetService *)aNetService moreComing:(BOOL)moreComing 
 {
-	TreeNode *serviceNode, *childNode, *parentNode;
-	NSDictionary *nodeData;
-	NSEnumerator *anEnumerator;
-	BOOL sshService = NO;
-	
-	//NSLog(@"%s: %@", __PRETTY_FUNCTION__, aNetService);
-	
-	if(aNetService == nil)
+	if (aNetService == nil) {
 		return;
+    }
 		
-	// grab the service group node in the tree
-	serviceNode = [self _getBonjourServiceTypeNode: [aNetService type]];
-	
 	// remove host entry from this group
-	anEnumerator = [[serviceNode children] objectEnumerator];
-	while ((childNode = [anEnumerator nextObject]))
-	{
-		nodeData = [childNode nodeData];
-		if([[nodeData objectForKey: KEY_NAME] isEqualToString: [aNetService name]])
-		{
-			// check for ssh service to remove sftp service below
-			if([[[serviceNode nodeData] objectForKey: KEY_BONJOUR_SERVICE] isEqualToString: @"ssh"])
-				sshService = YES;
-			parentNode = [childNode nodeParent];
-			[childNode removeFromParent];
-			if([parentNode numberOfChildren] == 0)
-				[parentNode removeFromParent];
-			
-			break;			
-		}
-	}
-	
-	// if this was an ssh service, remove associated sftp service also
-	if(sshService == YES)
-	{
-		// grab the service group node in the tree
-		serviceNode = [self _getBonjourServiceTypeNode: @"_sftp.tcp."];
-		
-		// remove host entry from this group
-		anEnumerator = [[serviceNode children] objectEnumerator];
-		while ((childNode = [anEnumerator nextObject]))
-		{
-			nodeData = [childNode nodeData];
-			if([[nodeData objectForKey: KEY_NAME] isEqualToString: [aNetService name]])
-			{
-				parentNode = [childNode nodeParent];
-				[childNode removeFromParent];
-				if([parentNode numberOfChildren] == 0)
-					[parentNode removeFromParent];
-				
-				
-				break;			
-			}
-		}
-	}
-	
-	// if bonjour group is empty, remove it
-	if([bonjourGroup numberOfChildren] == 0)
-		[bonjourGroup removeFromParent];
-	
-	// Post a notification for all listeners that bookmarks have changed
-	[[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];    		
+    BOOL sshService = NO;
+    NSMutableArray* toRemove = [[[NSMutableArray alloc] init] autorelease];
+    for (int i = 0; i < [[BookmarkModel sharedInstance] numberOfBookmarksWithFilter:@"bonjour"]; ++i) {
+        Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkAtIndex:i withFilter:@"bonjour"];
+        if ([[bookmark objectForKey:KEY_NAME] isEqualToString:[aNetService name]]) {
+            if ([[bookmark objectForKey:KEY_BONJOUR_SERVICE] isEqualToString:@"ssh"]) {
+                sshService = YES;
+            }
+            [toRemove addObject:[NSNumber numberWithInt:i]];
+        }
+    }
+    for (int i = [toRemove count]-1; i >= 0; --i) {
+        [[BookmarkModel sharedInstance] removeBookmarkAtIndex:[[toRemove objectAtIndex:i] intValue] withFilter:@"bonjour"];
+    }
+    if (sshService) {
+        int i = [[BookmarkModel sharedInstance] indexOfBookmarkWithName:[aNetService name]];
+        if (i >= 0) {
+            [toRemove addObject:[NSNumber numberWithInt:i]];
+        }
+    }
+    [toRemove removeAllObjects];	
+}
 
-	
++ (void)setDefaultsInBookmark:(NSMutableDictionary*)aDict
+{
+ 	NSString* plistFile = [[NSBundle bundleForClass:[self class]] 
+                                    pathForResource:@"DefaultBookmark" 
+                                             ofType:@"plist"];   
+    NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile: plistFile];
+    [aDict addEntriesFromDictionary:presetsDict];
+
+    NSString *aName;
+    
+    aName = NSLocalizedStringFromTableInBundle(@"Default",
+                                               @"iTerm", 
+                                               [NSBundle bundleForClass: [self class]],
+                                               @"Terminal Profiles");
+    [aDict setObject:aName forKey: KEY_NAME];
+    [aDict setObject:@"No" forKey:KEY_CUSTOM_COMMAND];
+    [aDict setObject:@"" forKey: KEY_COMMAND];
+    [aDict setObject:aName forKey: KEY_DESCRIPTION];
+    [aDict setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
+    [aDict setObject:NSHomeDirectory() forKey: KEY_WORKING_DIRECTORY];
 }
 
 // NSNetService delegate
@@ -528,68 +299,59 @@ static TreeNode *defaultBookmark = nil;
 	NSData  *address = nil;
 	struct sockaddr_in  *socketAddress;
 	NSString	*ipAddressString = nil;
-	TreeNode *serviceNode;
 	
 	//NSLog(@"%s: %@", __PRETTY_FUNCTION__, sender);
 	
 	// cancel the resolution
 	[sender stop];
 	
-	if([bonjourServices containsObject: sender] == NO)
+	if ([bonjourServices containsObject: sender] == NO) {
 		return;
-	
-	// now that we have at least one resolved service, add the bonjour group to the bookmarks.
-	if([[bookmarks children] containsObject: bonjourGroup] == NO)
-	{
-		[bookmarks insertChild: bonjourGroup atIndex: [bookmarks numberOfChildren]];
-	}	
+    }
 	
 	// grab the address
+    if ([[sender addresses] count] == 0) {
+        return;
+    }
 	address = [[sender addresses] objectAtIndex: 0];
 	socketAddress = (struct sockaddr_in *)[address bytes];
 	ipAddressString = [NSString stringWithFormat:@"%s", inet_ntoa(socketAddress->sin_addr)];
 	
-	aDict = [[NSMutableDictionary alloc] init];
-
-	serviceNode = [self _getBonjourServiceTypeNode: [sender type]];
+    Bookmark* prototype = [[BookmarkModel sharedInstance] defaultBookmark];
+    if (prototype) {
+        aDict = [NSMutableDictionary dictionaryWithDictionary:prototype];
+    } else {
+        aDict = [[NSMutableDictionary alloc] init];
+        [ITAddressBookMgr setDefaultsInBookmark:aDict];
+    }
+    
+    NSString* serviceType = [self getBonjourServiceType:[sender type]];
 	
-	[aDict setObject: [NSString stringWithFormat: @"%@", [sender name]] forKey: KEY_NAME];
-	[aDict setObject: [NSString stringWithFormat: @"%@", [sender name]] forKey: KEY_DESCRIPTION];
-	[aDict setObject: [NSString stringWithFormat: @"%@ %@", 
-		[[serviceNode nodeData] objectForKey: KEY_BONJOUR_SERVICE], ipAddressString] forKey: KEY_COMMAND];
-	[aDict setObject: @"" forKey: KEY_WORKING_DIRECTORY];
-	[aDict setObject: [[iTermTerminalProfileMgr singleInstance] defaultProfileName] forKey: KEY_TERMINAL_PROFILE];
-	[aDict setObject: [[iTermKeyBindingMgr singleInstance] globalProfileName] forKey: KEY_KEYBOARD_PROFILE];
-	[aDict setObject: [[iTermDisplayProfileMgr singleInstance] defaultProfileName] forKey: KEY_DISPLAY_PROFILE];
-	[aDict setObject: ipAddressString forKey: KEY_BONJOUR_SERVICE_ADDRESS];
-	
-	[[ITAddressBookMgr sharedInstance] addBookmarkWithData: aDict toNode: serviceNode];
+	[aDict setObject:[NSString stringWithFormat:@"%@", [sender name]] forKey:KEY_NAME];
+	[aDict setObject:[NSString stringWithFormat:@"%@", [sender name]] forKey:KEY_DESCRIPTION];
+	[aDict setObject:[NSString stringWithFormat:@"%@ %@", serviceType, ipAddressString] forKey:KEY_COMMAND];
+	[aDict setObject:@"" forKey:KEY_WORKING_DIRECTORY];
+	[aDict setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
+	[aDict setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
+	[aDict setObject:ipAddressString forKey:KEY_BONJOUR_SERVICE_ADDRESS];
+    [aDict setObject:[NSArray arrayWithObjects:@"bonjour",nil] forKey:KEY_TAGS];
+    [aDict setObject:[BookmarkModel newGuid] forKey:KEY_GUID];    
+    [aDict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
+    [[BookmarkModel sharedInstance] addBookmark:aDict];
 
 	// No bonjour service for sftp. Rides over ssh, so try to detect that
-	if([[[serviceNode nodeData] objectForKey: KEY_BONJOUR_SERVICE] isEqualToString: @"ssh"])
-	{
-		serviceNode = [self _getBonjourServiceTypeNode: @"_sftp._tcp."];
-		
-		[aDict setObject: [NSString stringWithFormat: @"%@", [sender name]] forKey: KEY_NAME];
-		[aDict setObject: [NSString stringWithFormat: @"%@", [sender name]] forKey: KEY_DESCRIPTION];
-		[aDict setObject: [NSString stringWithFormat: @"%@ %@", 
-			[[serviceNode nodeData] objectForKey: KEY_BONJOUR_SERVICE], ipAddressString] forKey: KEY_COMMAND];
-		[aDict setObject: @"" forKey: KEY_WORKING_DIRECTORY];
-		[aDict setObject: [[iTermTerminalProfileMgr singleInstance] defaultProfileName] forKey: KEY_TERMINAL_PROFILE];
-		[aDict setObject: [[iTermKeyBindingMgr singleInstance] globalProfileName] forKey: KEY_KEYBOARD_PROFILE];
-		[aDict setObject: [[iTermDisplayProfileMgr singleInstance] defaultProfileName] forKey: KEY_DISPLAY_PROFILE];
-		
-		[[ITAddressBookMgr sharedInstance] addBookmarkWithData: aDict toNode: serviceNode];
+	if ([serviceType isEqualToString:@"ssh"]) {
+        [aDict setObject:[NSString stringWithFormat:@"%@-sftp", [sender name]] forKey:KEY_NAME];
+        [aDict setObject:[NSArray arrayWithObjects:@"bonjour", @"sftp", nil] forKey:KEY_TAGS];
+        [aDict setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
+        [aDict setObject:[NSString stringWithFormat:@"sftp %@", ipAddressString] forKey:KEY_COMMAND];
+        [[BookmarkModel sharedInstance] addBookmark:aDict];
 	}
 	
-	[aDict release];
-	
 	// remove from array now that resolving is done
-	if([bonjourServices containsObject: sender])
-		[bonjourServices removeObject: sender];
-	
-	// Post a notification for all listeners that bookmarks have changed
-	[[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];    	
+	if ([bonjourServices containsObject:sender]) {
+		[bonjourServices removeObject:sender];
+    }
 		
 }
 
@@ -609,113 +371,52 @@ static TreeNode *defaultBookmark = nil;
 	//NSLog(@"%s: %@", __PRETTY_FUNCTION__, aNetService);
 }
 
-@end
-
-@implementation ITAddressBookMgr (Private);
-
-- (BOOL) _checkForDefaultBookmark: (TreeNode *) rootNode defaultBookmark: (TreeNode **) aNode
+- (NSString*)getBonjourServiceType:(NSString*)aType
 {
-	BOOL haveDefaultBookmark = NO;
-	NSEnumerator *entryEnumerator;
-	NSDictionary *dataDict;
-	TreeNode *entry;
-	
-	entryEnumerator = [[rootNode children] objectEnumerator];
-	while ((entry = [entryEnumerator nextObject]))
-	{
-		if([entry isGroup])
-			haveDefaultBookmark = [self _checkForDefaultBookmark: entry defaultBookmark: aNode];
-		else
-		{
-			dataDict = [entry nodeData];
-			if([[dataDict objectForKey: KEY_DEFAULT_BOOKMARK] isEqualToString: @"Yes"])
-			{
-				if(aNode)
-					*aNode = entry;
-				haveDefaultBookmark = YES;
-			}			
-		}
-		if(haveDefaultBookmark)
-			break;
-	}
-
-	return (haveDefaultBookmark);
+    NSString *serviceType = aType;
+    if ([aType length] <= 0) {
+        return nil;
+    }
+    NSRange aRange = [serviceType rangeOfString: @"."];
+    if(aRange.location != NSNotFound) {
+        return [serviceType substringWithRange: NSMakeRange(1, aRange.location - 1)];
+    } else {
+        return serviceType;
+    }
 }
 
-- (TreeNode *) _getBookmarkNodeWithName: (NSString *) aName searchFromNode: (TreeNode *) aNode
++ (NSString*)loginShellCommand
 {
-	NSEnumerator *entryEnumerator;
-	NSDictionary *dataDict;
-	TreeNode *entry, *theNode;
-	
-	dataDict = nil;
-	
-	entryEnumerator = [[aNode children] objectEnumerator];
-	while ((entry = [entryEnumerator nextObject]))
-	{
-		dataDict = [entry nodeData];
-		
-		if([[dataDict objectForKey: KEY_NAME] isEqualToString: aName])
-		{
-			return (entry);
-		}					
-		else if([entry isGroup])
-		{
-			theNode = [self _getBookmarkNodeWithName: aName searchFromNode: entry];
-			if(theNode != nil)
-				return (theNode);
-		}
-	}
-	
-	return (nil);
+    char* thisUser = getenv("USER");
+    char* userShell = getenv("SHELL");
+    if (thisUser) {
+        return [NSString stringWithFormat:@"login -fp %s", thisUser];
+    } else if (userShell) {
+        return [NSString stringWithCString:userShell];
+    } else {
+        return @"/bin/bash --login";
+    }
 }
 
-- (TreeNode *) _getBonjourServiceTypeNode: (NSString *) aType
++ (NSString*)bookmarkCommand:(Bookmark*)bookmark
 {
-	NSEnumerator *keyEnumerator;
-	BOOL aBool;
-	TreeNode *childNode;
-	NSRange aRange;
-	NSString *serviceType = aType;
-	NSMutableDictionary *aDict;
-	
-	if([aType length] <= 0)
-		return (nil);
-	
-	aRange = [serviceType rangeOfString: @"."];
-	if(aRange.location != NSNotFound)
-	{
-		serviceType = [serviceType substringWithRange: NSMakeRange(1, aRange.location - 1)];
-	}	
-	
-	aBool = NO;
-	keyEnumerator = [[bonjourGroup children] objectEnumerator];
-	while ((childNode = [keyEnumerator nextObject]))
-	{
-		if([[[childNode nodeData] objectForKey: KEY_NAME] isEqualToString: serviceType])
-		{
-			aBool = YES;
-			break;
-		}
-	}
-	if(aBool == NO)
-	{
-		aDict = [[NSMutableDictionary alloc] init];
-		[aDict setObject: serviceType forKey: KEY_NAME];
-		[aDict setObject: @"" forKey: KEY_DESCRIPTION];
-		[aDict setObject: serviceType forKey: KEY_BONJOUR_SERVICE];
-		
-		childNode = [[TreeNode alloc] initWithData: aDict parent: nil children: [NSArray array]];
-		[childNode setIsLeaf: NO];
-		[aDict release];
-		
-		[bonjourGroup insertChild: childNode atIndex: [bonjourGroup numberOfChildren]];
-		[childNode release];		
+    BOOL custom = [[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"];
+    if (custom) {
+        return [bookmark objectForKey:KEY_COMMAND];
+    } else {
+        return [ITAddressBookMgr loginShellCommand];
+    }
+}
 
-	}
-	
-	return (childNode);
+
++ (NSString*)bookmarkWorkingDirectory:(Bookmark*)bookmark
+{
+    BOOL custom = [[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"Yes"];
+    if (custom) {
+        return [bookmark objectForKey:KEY_WORKING_DIRECTORY];
+    } else {
+        return NSHomeDirectory();
+    }
 }
 
 @end
-

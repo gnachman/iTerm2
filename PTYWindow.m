@@ -85,15 +85,18 @@
 	// Only works in Leopard (or hopefully later)
 	if (!OSX_LEOPARDORLATER) return;
 	
-	if (blurFilter)
+	if (blurFilter) {
 		return;
+    }
 
 	CGSConnectionID con = CGSMainConnectionID();
-	if (!con)
+	if (!con) {
 		return;
+    }
 
-	if (CGSNewCIFilterByName(con, (CFStringRef)@"CIGaussianBlur", &blurFilter))
+	if (CGSNewCIFilterByName(con, (CFStringRef)@"CIGaussianBlur", &blurFilter)) {
 		return;
+    }
 
 	// should really set this from options:
 	NSDictionary *optionsDict = [NSDictionary dictionaryWithObject:[NSNumber numberWithFloat:2.0] forKey:@"inputRadius"];

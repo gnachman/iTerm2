@@ -223,10 +223,10 @@ static TaskNotifier* taskNotifier = nil;
 		PtyTaskDebugLog(@"Begin cleaning out dead tasks");
 		int j;
 		for (j = [tasks count] - 1; j >= 0; --j) {
-			PTYTask* task = [tasks objectAtIndex:j];
-			if ([task fd] < 0) {
+			PTYTask* theTask = [tasks objectAtIndex:j];
+			if ([theTask fd] < 0) {
 				PtyTaskDebugLog(@"Deregister dead task %d\n", j);
-				[self deregisterTask:task];
+				[self deregisterTask:theTask];
 			}
 		}
 		PtyTaskDebugLog(@"Begin enumeration over %d tasks\n", [tasks count]);
@@ -444,7 +444,7 @@ setup_tty_param(
 {
 	struct termios term;
 	struct winsize win;
-	char ttyname[PATH_MAX];
+	char theTtyname[PATH_MAX];
 	int sts;
 
 	path = [progpath copy];
@@ -454,7 +454,7 @@ setup_tty_param(
 #endif
 
 	setup_tty_param(&term, &win, width, height);
-	pid = forkpty(&fd, ttyname, &term, &win);
+	pid = forkpty(&fd, theTtyname, &term, &win);
 	if (pid == (pid_t)0) {
 		const char* argpath = [[progpath stringByStandardizingPath] UTF8String];
 		int max = args == nil ? 0: [args count];
@@ -470,8 +470,8 @@ setup_tty_param(
 
 		if (env != nil ) {
 			NSArray* keys = [env allKeys];
-			int i, max = [keys count];
-			for (i = 0; i < max; ++i) {
+			int i, theMax = [keys count];
+			for (i = 0; i < theMax; ++i) {
 				NSString* key;
 				NSString* value;
 				key = [keys objectAtIndex:i];
@@ -502,7 +502,7 @@ setup_tty_param(
 		return;
 	}
 
-	tty = [[NSString stringWithCString:ttyname] retain];
+	tty = [[NSString stringWithCString:theTtyname] retain];
 	NSParameterAssert(tty != nil);
 
 	fcntl(fd,F_SETFL,O_NONBLOCK);
@@ -768,8 +768,7 @@ setup_tty_param(
 		return nil;
 	} else {
 		/* All is good */
-		NSString* ret = [NSString stringWithUTF8String:vpi.pvi_cdir.vip_path];
-		return ret;
+		return [NSString stringWithUTF8String:vpi.pvi_cdir.vip_path];
 	}
 }
 

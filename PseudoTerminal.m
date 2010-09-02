@@ -51,13 +51,8 @@
 #import <iTerm/PTToolbarController.h>
 #import <iTerm/FindCommandHandler.h>
 #import <iTerm/ITAddressBookMgr.h>
-#import <iTerm/ITConfigPanelController.h>
-#import <iTerm/iTermTerminalProfileMgr.h>
-#import <iTerm/iTermDisplayProfileMgr.h>
-#import <iTerm/Tree.h>
 #import <PSMTabBarControl.h>
 #import <PSMTabStyle.h>
-#import <iTermBookmarkController.h>
 #import <iTerm/iTermGrowlDelegate.h>
 #include <unistd.h>
 
@@ -146,13 +141,10 @@ NSString *sessionsKey = @"sessions";
 
 - (id)initWithWindowNibName: (NSString *) windowNibName
 {
-    NSScrollView *aScrollView;
-    NSTableColumn *aTableColumn;
     NSSize aSize;
     NSRect aRect;
     unsigned int styleMask;
     PTYWindow *myWindow;
-    NSDrawer    *myDrawer;
     
     
     if ((self = [super initWithWindowNibName: windowNibName]) == nil)
@@ -198,31 +190,16 @@ NSString *sessionsKey = @"sessions";
     [myDrawer setContentSize: NSMakeSize(aWidth, 0)];
     [myDrawer release];
     
-    aScrollView = [[NSScrollView alloc] initWithFrame:NSMakeRect(0, 0, 20, 100)];
-    [aScrollView setBorderType:NSBezelBorder];
-    [aScrollView setHasHorizontalScroller: NO];
-    [aScrollView setHasVerticalScroller: YES];
-    [[aScrollView verticalScroller] setControlSize:NSSmallControlSize];
-    [aScrollView setAutohidesScrollers: YES];
-    aSize = [aScrollView contentSize];
+    aSize = [myDrawer contentSize];
     aRect = NSZeroRect;
     aRect.size = aSize;
     
-    bookmarksView = [[NSOutlineView alloc] initWithFrame:aRect];
-    aTableColumn = [[NSTableColumn alloc] initWithIdentifier: @"Name"];
-    [[aTableColumn headerCell] setStringValue: NSLocalizedStringFromTableInBundle(@"Bookmarks",@"iTerm", [NSBundle bundleForClass: [self class]], @"Bookmarks")];
-    [bookmarksView addTableColumn: aTableColumn];
-    [aTableColumn release];
-    [bookmarksView setOutlineTableColumn: aTableColumn];
-    [bookmarksView setDelegate: self];
-    [bookmarksView setTarget: self];
-    [bookmarksView setDoubleAction: @selector(doubleClickedOnBookmarksView:)];    
-    [bookmarksView setDataSource: [iTermBookmarkController sharedInstance]];
-    
-    [aScrollView setDocumentView:bookmarksView];
-    [bookmarksView release];
-    [myDrawer setContentView: aScrollView];
-    [aScrollView release];
+    BookmarkTableView* view = [[BookmarkTableView alloc] initWithFrame:aRect];
+    [view setAutoresizesSubviews:YES];
+    [view setDelegate:self];
+    drawerBookmarks_ = view;
+    [myDrawer setContentView:view];
+    [view setHidden:NO];
     
     [self _commonInit];
     
@@ -233,6 +210,24 @@ NSString *sessionsKey = @"sessions";
     _resizeInProgressFlag = NO;
 
     return self;
+}
+
+- (void)bookmarkTableSelectionDidChange:(id)bookmarkTable;
+{
+}
+
+- (void)bookmarkTableSelectionWillChange:(id)bookmarkTable
+{
+}
+
+- (void)bookmarkTableRowSelected:(id)bookmarkTable
+{
+    NSString* guid = [drawerBookmarks_ selectedGuid];
+    if (!guid) {
+        return;
+    }
+    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+    [[iTermController sharedInstance] launchBookmark:bookmark inTerminal: self];
 }
 
 - (id)initWithFullScreenWindowNibName: (NSString *) windowNibName
@@ -278,9 +273,8 @@ NSString *sessionsKey = @"sessions";
 // initViewWithFrame is mainly meant for embedding a terminal view in a non-iTerm window.
 - (PTYTabView*) initViewWithFrame: (NSRect) frame
 {
-    NSFont *aFont1, *aFont2;
+    NSFont *aFont1;
     NSSize contentSize;
-    NSString *displayProfile;
     
     // sanity check
     if(TABVIEW != nil)
@@ -296,15 +290,8 @@ NSString *sessionsKey = @"sessions";
     [TABVIEW setDelegate: self];
     
     aFont1 = FONT;
-    if(aFont1 == nil)
-    {
-        NSDictionary *defaultSession = [[ITAddressBookMgr sharedInstance] defaultBookmarkData];
-        displayProfile = [defaultSession objectForKey: KEY_DISPLAY_PROFILE];
-        if(displayProfile == nil)
-            displayProfile = [[iTermDisplayProfileMgr singleInstance] defaultProfileName];
-        aFont1 = [[iTermDisplayProfileMgr singleInstance] windowFontForProfile: displayProfile];
-        aFont2 = [[iTermDisplayProfileMgr singleInstance] windowNAFontForProfile: displayProfile];
-        [self setFont: aFont1 nafont: aFont2];
+    if (aFont1 == nil) {
+        [self setFont:[NSFont userFixedPitchFontOfSize:0] nafont:[NSFont userFixedPitchFontOfSize:0]];
     }
     
     NSParameterAssert(aFont1 != nil);
@@ -408,22 +395,12 @@ NSString *sessionsKey = @"sessions";
     [self setWindowInited: YES];
     
     if (entry) {
-        NSString *displayProfile;
-        iTermDisplayProfileMgr *displayProfileMgr;
-        
-        displayProfileMgr = [iTermDisplayProfileMgr singleInstance];
-        
-        // grab the profiles
-        displayProfile = [entry objectForKey: KEY_DISPLAY_PROFILE];
-        if(displayProfile == nil)
-            displayProfile = [displayProfileMgr defaultProfileName];
-        
-        [self setAntiAlias: [displayProfileMgr windowAntiAliasForProfile: displayProfile]];
-        [self setBlur: [displayProfileMgr windowBlurForProfile: displayProfile]];
-        [self setFont: [displayProfileMgr windowFontForProfile: displayProfile] 
-               nafont: [displayProfileMgr windowNAFontForProfile: displayProfile]];
-        [self setCharacterSpacingHorizontal: [displayProfileMgr windowHorizontalCharSpacingForProfile: displayProfile] 
-                                   vertical: [displayProfileMgr windowVerticalCharSpacingForProfile: displayProfile]];
+        [self setAntiAlias:[[entry objectForKey:KEY_ANTI_ALIASING] boolValue]];
+        [self setBlur: [[entry objectForKey:KEY_BLUR] boolValue]];
+        [self setFont: [ITAddressBookMgr fontWithDesc:[entry objectForKey:KEY_NORMAL_FONT]]
+               nafont: [ITAddressBookMgr fontWithDesc:[entry objectForKey:KEY_NON_ASCII_FONT]]];
+        [self setCharacterSpacingHorizontal:[[entry objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
+                                   vertical:[[entry objectForKey:KEY_VERTICAL_SPACING] floatValue]];
 
          if (_fullScreen) {
             aRect = [TABVIEW frame];
@@ -431,8 +408,8 @@ NSString *sessionsKey = @"sessions";
             HEIGHT = (int)((aRect.size.height)/charHeight);
         }
         else {
-            WIDTH = [displayProfileMgr windowColumnsForProfile: displayProfile];
-            HEIGHT = [displayProfileMgr windowRowsForProfile: displayProfile];
+            WIDTH = [[entry objectForKey:KEY_COLUMNS] intValue];
+            HEIGHT = [[entry objectForKey:KEY_ROWS] intValue];
         }
     }
 
@@ -626,14 +603,10 @@ NSString *sessionsKey = @"sessions";
 }
 
 
-- (void)setupSession: (PTYSession *) aSession
-               title: (NSString *)title
+- (void)setupSession:(PTYSession *) aSession
+               title:(NSString *)title
 {
-    NSDictionary *addressBookPreferences;
     NSDictionary *tempPrefs;
-    NSString *terminalProfile, *displayProfile;
-    iTermTerminalProfileMgr *terminalProfileMgr;
-    iTermDisplayProfileMgr *displayProfileMgr;
     ITAddressBookMgr *bookmarkManager;
         
     
@@ -645,43 +618,34 @@ NSString *sessionsKey = @"sessions";
     NSParameterAssert(aSession != nil);    
     
     // get our shared managers
-    terminalProfileMgr = [iTermTerminalProfileMgr singleInstance];
-    displayProfileMgr = [iTermDisplayProfileMgr singleInstance];
     bookmarkManager = [ITAddressBookMgr sharedInstance];    
     
     // Init the rest of the session
     [aSession setParent: self];
     
     // set some default parameters
-    if([aSession addressBookEntry] == nil)
-    {
+    if ([aSession addressBookEntry] == nil) {
         // get the default entry
-        addressBookPreferences = [[ITAddressBookMgr sharedInstance] defaultBookmarkData];
-        [aSession setAddressBookEntry:addressBookPreferences];
-        tempPrefs = addressBookPreferences;
-    }
-    else
-    {
+        NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
+        [ITAddressBookMgr setDefaultsInBookmark:dict];
+        [aSession setAddressBookEntry:dict];
+        tempPrefs = dict;
+    } else {
         tempPrefs = [aSession addressBookEntry];
     }
     
-    terminalProfile = [tempPrefs objectForKey: KEY_TERMINAL_PROFILE];
-    displayProfile = [tempPrefs objectForKey: KEY_DISPLAY_PROFILE];
-    
-    if(WIDTH == 0 && HEIGHT == 0)
-    {
-        WIDTH = [displayProfileMgr windowColumnsForProfile: displayProfile];
-        HEIGHT = [displayProfileMgr windowRowsForProfile: displayProfile];
-        [self setAntiAlias: [displayProfileMgr windowAntiAliasForProfile: displayProfile]];
-        [self setBlur: [displayProfileMgr windowBlurForProfile: displayProfile]];
+    if (WIDTH == 0 && HEIGHT == 0) {
+        WIDTH = [[tempPrefs objectForKey:KEY_COLUMNS] intValue];
+        HEIGHT = [[tempPrefs objectForKey:KEY_ROWS] intValue];
+        [self setAntiAlias:[[tempPrefs objectForKey:KEY_ANTI_ALIASING] boolValue]];
+        [self setBlur:[[tempPrefs objectForKey:KEY_BLUR] boolValue]];
     }
     if ([aSession initScreen: [TABVIEW contentRect] width:WIDTH height:HEIGHT]) {
-        if(FONT == nil) 
-        {
-            [self setFont: [displayProfileMgr windowFontForProfile: displayProfile] 
-                   nafont: [displayProfileMgr windowNAFontForProfile: displayProfile]];
-            [self setCharacterSpacingHorizontal: [displayProfileMgr windowHorizontalCharSpacingForProfile: displayProfile] 
-                                       vertical: [displayProfileMgr windowVerticalCharSpacingForProfile: displayProfile]];
+        if (FONT == nil)  {
+            [self setFont:[ITAddressBookMgr fontWithDesc:[tempPrefs objectForKey:KEY_NORMAL_FONT]]
+                   nafont:[ITAddressBookMgr fontWithDesc:[tempPrefs objectForKey:KEY_NON_ASCII_FONT]]];
+            [self setCharacterSpacingHorizontal:[[tempPrefs objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
+                                       vertical:[[tempPrefs objectForKey:KEY_VERTICAL_SPACING] floatValue]];
         }
 
         [aSession setPreferencesFromAddressBookEntry: tempPrefs];
@@ -720,7 +684,10 @@ NSString *sessionsKey = @"sessions";
 
 - (void) newSessionInTabAtIndex: (id) sender
 {
-    [self addNewSession: [sender representedObject]];
+    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
+    if (bookmark) {
+        [self addNewSession:bookmark];
+    }
 }
 
 - (void) insertSession: (PTYSession *) aSession atIndex: (int)anIndex
@@ -832,6 +799,17 @@ NSString *sessionsKey = @"sessions";
     return [session windowTitle] ? [session windowTitle] : [session defaultName];
 }
 
+- (int)numberOfSessions
+{
+    return [TABVIEW numberOfTabViewItems];
+}
+
+- (PTYSession*)sessionAtIndex:(int)i
+{
+    NSTabViewItem* tvi = [TABVIEW tabViewItemAtIndex:i];
+    return [tvi identifier];
+}
+
 - (void) setCurrentSessionName: (NSString *) theSessionName
 {
 #if DEBUG_METHOD_TRACE
@@ -884,7 +862,7 @@ NSString *sessionsKey = @"sessions";
     return ([TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]]);
 }
 
-- (void) dealloc
+- (void)dealloc
 {
 #if DEBUG_ALLOC
     NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
@@ -899,14 +877,17 @@ NSString *sessionsKey = @"sessions";
         [[aTabViewItem identifier] terminate];
         [TABVIEW removeTabViewItem: aTabViewItem];
     }
+
+    // why isn't drawerBookmarks_ freed
     [commandField release];
     [FONT release];
     [NAFONT release];
     [oldFont release];
     [oldNAFont release];
     [layoutManager release];
+    [drawerBookmarks_ release];
+    [drawerBookmarks_ setDelegate:nil];
     [findBar release];
-    
     [_toolbarController release];
     if (_timer) {
         [_timer invalidate];
@@ -989,7 +970,7 @@ NSString *sessionsKey = @"sessions";
     return oldHeight;
 }
 
-- (void)setCharSizeUsingFont: (NSFont *)font
+- (void)setCharSizeUsingFont:(NSFont *)font
 {
     int i;
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
@@ -1310,11 +1291,9 @@ NSString *sessionsKey = @"sessions";
 }
 
 // increases or dcreases font size
-- (void) changeFontSize: (BOOL) increase
+- (void)changeFontSize:(BOOL)increase
 {
-    
     float newFontSize;
-    
         
     float asciiFontSize = [[self font] pointSize];
     if(increase == YES)
@@ -1401,7 +1380,7 @@ NSString *sessionsKey = @"sessions";
 {
     charHorizontalSpacingMultiplier = horizontal;
     charVerticalSpacingMultiplier = vertical;
-    [self setCharSizeUsingFont: FONT];
+    [self setCharSizeUsingFont:FONT];
 }
 
 - (BOOL) antiAlias
@@ -1479,11 +1458,11 @@ NSString *sessionsKey = @"sessions";
     [NAFONT autorelease];
     [nafont retain];
     NAFONT=nafont;
-    [self setCharSizeUsingFont: FONT];
+    [self setCharSizeUsingFont:FONT];
     for(i=0;i<[TABVIEW numberOfTabViewItems]; i++) 
     {
         PTYSession* session = [[TABVIEW tabViewItemAtIndex: i] identifier];
-        [[session TEXTVIEW]  setFont:FONT nafont:NAFONT];
+        [[session TEXTVIEW] setFont:FONT nafont:NAFONT];
     }
 
     [[self window] setResizeIncrements: NSMakeSize(charWidth, charHeight)];
@@ -1494,17 +1473,17 @@ NSString *sessionsKey = @"sessions";
     return FONT;
 }
 
-- (NSFont *) nafont
+- (NSFont *)nafont
 {
     return NAFONT;
 }
 
-- (NSFont *) oldFont
+- (NSFont *)oldFont
 {
     return oldFont;
 }
 
-- (NSFont *) oldNAFont
+- (NSFont *)oldNAFont
 {
     return oldNAFont;
 }
@@ -1634,12 +1613,12 @@ NSString *sessionsKey = @"sessions";
     [self setWindowTitle];
 }
 
-- (void) setFontSizeFollowWindowResize: (BOOL) flag
+- (void)setFontSizeFollowWindowResize:(BOOL)flag
 {
     fontSizeFollowWindowResize = flag;
 }
 
-- (IBAction) toggleFontSizeFollowWindowResize: (id) sender
+- (IBAction)toggleFontSizeFollowWindowResize:(id)sender
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PseudoTerminal toggleFontSizeFollowWindowResize:%@]",
@@ -1735,8 +1714,10 @@ NSString *sessionsKey = @"sessions";
 
     if (_fullScreen) [self hideMenuBar];
 
-    if ([NSFontPanel sharedFontPanelExists]) [[NSFontPanel sharedFontPanel] close];
-
+    if ([NSFontPanel sharedFontPanelExists]) {
+        [[NSFontPanel sharedFontPanel] close];
+    }
+    
     // update the cursor
     [[[self currentSession] TEXTVIEW] updateDirtyRects];
 }
@@ -2013,6 +1994,7 @@ NSString *sessionsKey = @"sessions";
         int new_height = (defaultFrame.size.height - nch) / charHeight;
         int new_width =  (defaultFrame.size.width - wch - MARGIN * 2) /charWidth;
         
+        // TODO: If you're holding down shift, go to full screen even if maxVertically==YES
         defaultFrame.size.height = charHeight * new_height + nch;
         defaultFrame.size.width = ([[PreferencePanel sharedInstance] maxVertically] ? [sender frame].size.width : new_width*charWidth+wch+MARGIN*2);
         //NSLog(@"actual width: %f, height: %f",defaultFrame.size.width,defaultFrame.size.height);
@@ -2049,14 +2031,6 @@ NSString *sessionsKey = @"sessions";
                             NSLocalizedStringFromTableInBundle(@"OK",@"iTerm", [NSBundle bundleForClass: [self class]], @"OK"),
                             NSLocalizedStringFromTableInBundle(@"Cancel",@"iTerm", [NSBundle bundleForClass: [self class]], @"Cancel")
                             ,nil)==NSAlertDefaultReturn);
-}
-
-- (IBAction)showConfigWindow:(id)sender;
-{
-    if ([ITConfigPanelController onScreen])
-        [ITConfigPanelController close];
-    else
-        [ITConfigPanelController show];
 }
 
 - (void) resizeWindow:(int) w height:(int)h
@@ -2117,8 +2091,10 @@ NSString *sessionsKey = @"sessions";
     suppressContextualMenu = aBool;
 }
 
-- (void) menuForEvent:(NSEvent *)theEvent menu: (NSMenu *) theMenu
+- (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu
 {
+    // Constructs the context menu for right-clicking on a terminal when
+    // right click does not paste.
     unsigned int modflag = 0;
     int nextIndex;
     NSMenuItem *aMenuItem;
@@ -2168,10 +2144,10 @@ NSString *sessionsKey = @"sessions";
     
     // Build the bookmarks menu
     NSMenu *aMenu = [[[NSMenu alloc] init] autorelease];
-    [[iTermController sharedInstance] alternativeMenu: aMenu 
-                                              forNode: [[ITAddressBookMgr sharedInstance] rootNode] 
-                                               target: self
-                                        withShortcuts: NO];
+
+    [[iTermController sharedInstance] addBookmarksToMenu:aMenu 
+                                                  target:self 
+                                           withShortcuts:NO];
     [aMenu addItem: [NSMenuItem separatorItem]];
     NSMenuItem *tip = [[[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"Press Option for New Window",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item: New") action:@selector(xyz) keyEquivalent: @""] autorelease];
     [tip setKeyEquivalentModifierMask: NSCommandKeyMask];
@@ -2540,9 +2516,8 @@ NSString *sessionsKey = @"sessions";
 {
     NSDictionary *ade = [[aTabViewItem identifier] addressBookEntry];
     
-    NSString *temp = [NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Name: %@\nCommand: %@\nTerminal Profile: %@\nDisplay Profile: %@\nKeyboard Profile: %@",@"iTerm", [NSBundle bundleForClass: [self class]], @"Tab Tooltips"),
-        [ade objectForKey:KEY_NAME], [ade objectForKey:KEY_COMMAND], [ade objectForKey:KEY_TERMINAL_PROFILE],
-        [ade objectForKey:KEY_DISPLAY_PROFILE], [ade objectForKey:KEY_KEYBOARD_PROFILE]];
+    NSString *temp = [NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Name: %@\nCommand: %@",@"iTerm", [NSBundle bundleForClass: [self class]], @"Tab Tooltips"),
+                      [ade objectForKey:KEY_NAME], [ITAddressBookMgr bookmarkCommand:ade]];
     
     return temp;
     
@@ -2551,12 +2526,21 @@ NSString *sessionsKey = @"sessions";
 - (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem
 {
     [tabView selectTabViewItem:tabViewItem];
+    // TODO(georgen): bring this back
+#if 0
     [ITConfigPanelController show];
+#endif
 }
 
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView
 {
-    [self addNewSession: [[ITAddressBookMgr sharedInstance] defaultBookmarkData]];
+    Bookmark* prototype = [[BookmarkModel sharedInstance] defaultBookmark];
+    if (!prototype) {
+        NSMutableDictionary* aDict = [[[NSMutableDictionary alloc] init] autorelease];
+        [ITAddressBookMgr setDefaultsInBookmark:aDict];
+        prototype = aDict;
+    }
+    [self addNewSession:prototype];
 }
 
 - (void) setLabelColor: (NSColor *) color forTabViewItem: tabViewItem
@@ -2646,10 +2630,12 @@ NSString *sessionsKey = @"sessions";
         if (range.location == NSNotFound) {
             NSURL *url = [NSURL URLWithString: command];
             NSString *urlType = [url scheme];
-            id bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL: urlType];
+            id bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:urlType];
             
             //NSLog(@"Got the URL:%@\n%@", urlType, bm);
-            if (bm) [[iTermController sharedInstance] launchBookmark:[bm nodeData] inTerminal:[[iTermController sharedInstance] currentTerminal] withURL:command];
+            if (bm) [[iTermController sharedInstance] launchBookmark:bm 
+                                                          inTerminal:[[iTermController sharedInstance] currentTerminal] 
+                                                             withURL:command];
             else [[NSWorkspace sharedWorkspace] openURL:url];
             
             return;
@@ -2659,63 +2645,34 @@ NSString *sessionsKey = @"sessions";
     [commandField setStringValue:@""];
 }
 
-- (void) updateCurrentSessionProfiles
+// TODO(georgen): This doesn't affect certain preferences.
+// These are hard to fix because they're PseudoTerminal settings and not per-session:
+// regular font
+// nonascii font
+// blur
+// anti aliasing
+- (void)reloadBookmarks
 {
-    iTermDisplayProfileMgr *displayProfileMgr;
-    NSDictionary *aDict;
-    NSString *displayProfile;
-    PTYSession *current;
-    
-    current = [self currentSession];
-    displayProfileMgr = [iTermDisplayProfileMgr singleInstance];
-    aDict = [current addressBookEntry];
-    displayProfile = [aDict objectForKey: KEY_DISPLAY_PROFILE];
-    if(displayProfile == nil)
-        displayProfile = [displayProfileMgr defaultProfileName];    
-    
-    [displayProfileMgr setTransparency: [current transparency] forProfile: displayProfile];
-    [displayProfileMgr setDisableBold: [current disableBold] forProfile: displayProfile];
-    [displayProfileMgr setBackgroundImage: [current backgroundImagePath] forProfile: displayProfile];
-    [displayProfileMgr setWindowColumns: [self columns] forProfile: displayProfile];
-    [displayProfileMgr setWindowRows: [self rows] forProfile: displayProfile];
-    [displayProfileMgr setWindowFont: [self font] forProfile: displayProfile];
-    [displayProfileMgr setWindowNAFont: [self nafont] forProfile: displayProfile];
-    [displayProfileMgr setWindowHorizontalCharSpacing: charHorizontalSpacingMultiplier forProfile: displayProfile];
-    [displayProfileMgr setWindowVerticalCharSpacing: charVerticalSpacingMultiplier forProfile: displayProfile];
-    [displayProfileMgr setWindowBlur: [self blur] forProfile: displayProfile];
-    [displayProfileMgr setWindowAntiAlias: [[current TEXTVIEW] antiAlias] forProfile: displayProfile];
-    [displayProfileMgr setColor: [current foregroundColor] forType: TYPE_FOREGROUND_COLOR forProfile: displayProfile];
-    [displayProfileMgr setColor: [current backgroundColor] forType: TYPE_BACKGROUND_COLOR forProfile: displayProfile];
-    [displayProfileMgr setColor: [current boldColor] forType: TYPE_BOLD_COLOR forProfile: displayProfile];
-    [displayProfileMgr setColor: [current selectionColor] forType: TYPE_SELECTION_COLOR forProfile: displayProfile];
-    [displayProfileMgr setColor: [current selectedTextColor] forType: TYPE_SELECTED_TEXT_COLOR forProfile: displayProfile];
-    [displayProfileMgr setColor: [current cursorColor] forType: TYPE_CURSOR_COLOR forProfile: displayProfile];
-    [displayProfileMgr setColor: [current cursorTextColor] forType: TYPE_CURSOR_TEXT_COLOR forProfile: displayProfile];
-
-    iTermTerminalProfileMgr *terminalProfileMgr;
-    NSString *terminalProfile;
-    
-    terminalProfileMgr = [iTermTerminalProfileMgr singleInstance];
-    aDict = [current addressBookEntry];
-    terminalProfile = [aDict objectForKey: KEY_TERMINAL_PROFILE];
-    if(terminalProfile == nil)
-        terminalProfile = [terminalProfileMgr defaultProfileName];    
-    
-    [terminalProfileMgr setEncoding: [current encoding] forProfile: terminalProfile];
-    [terminalProfileMgr setSendIdleChar: [current antiIdle] forProfile: terminalProfile];
-    [terminalProfileMgr setIdleChar: [current antiCode] forProfile: terminalProfile];
-    
-    id prefs = [NSUserDefaults standardUserDefaults];
-    
-    [prefs setObject: [[iTermDisplayProfileMgr singleInstance] profiles] forKey: @"Displays"];
-    [prefs setObject: [[iTermTerminalProfileMgr singleInstance] profiles] forKey: @"Terminals"];
-    [prefs synchronize];
-    
-    NSRunInformationalAlertPanel(
-        [NSString stringWithFormat: NSLocalizedStringFromTableInBundle(@"%@'s display profile %@ and terminal profile %@ have been updated",@"iTerm", [NSBundle bundleForClass: [self class]], @"Profile"), 
-            [[current addressBookEntry] objectForKey: @"Name"], displayProfile, terminalProfile],
-         NSLocalizedStringFromTableInBundle(@"All bookmarks associated with these profiles are affected",@"iTerm", [NSBundle bundleForClass: [self class]], @"Profile"), 
-         NSLocalizedStringFromTableInBundle(@"OK",@"iTerm", [NSBundle bundleForClass: [self class]], @"Profile"), nil, nil);
+    for (int j = 0; j < [self numberOfSessions]; ++j) {
+        PTYSession* session = [self sessionAtIndex:j];
+        Bookmark *oldBookmark = [session addressBookEntry];
+        NSString* oldName = [oldBookmark objectForKey:KEY_NAME];
+        [oldName retain];
+        NSString* guid = [oldBookmark objectForKey:KEY_GUID];
+        Bookmark* newBookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+        if (!newBookmark) {
+            newBookmark = [[BookmarkModel sessionsInstance] bookmarkWithGuid:guid];
+        }
+        if (newBookmark && newBookmark != oldBookmark) {
+            // Same guid but different pointer means it has changed.
+            [session setPreferencesFromAddressBookEntry:newBookmark];
+            [session setAddressBookEntry:newBookmark];
+            if (![[newBookmark objectForKey:KEY_NAME] isEqualToString:oldName]) {
+                [session setName:[newBookmark objectForKey:KEY_NAME]];
+            }
+        }
+        [oldName release];
+     }         
 }
 
 // NSOutlineView delegate methods
@@ -2723,23 +2680,6 @@ NSString *sessionsKey = @"sessions";
                item:(id)item
 {
     return (NO);
-}
-
-// NSOutlineView doubleclick action
-- (IBAction) doubleClickedOnBookmarksView: (id) sender
-{
-    int selectedRow = [bookmarksView selectedRow];
-    TreeNode *selectedItem;
-    
-    if(selectedRow < 0)
-        return;
-    
-    selectedItem = [bookmarksView itemAtRow: selectedRow];
-    if(selectedItem != nil && [selectedItem isLeaf])
-    {
-        [[iTermController sharedInstance] launchBookmark: [selectedItem nodeData] inTerminal: self];
-    }
-    
 }
 
 // Bookmarks
@@ -2863,8 +2803,18 @@ NSString *sessionsKey = @"sessions";
             [self sendCommand: nil];
             break;
         case 17: // Tab key
-            [self addNewSession: [[ITAddressBookMgr sharedInstance] defaultBookmarkData] withCommand: [commandField stringValue]];
+        {
+            Bookmark* prototype = [[BookmarkModel sharedInstance] defaultBookmark];
+            if (!prototype) {
+                NSMutableDictionary* aDict = [[[NSMutableDictionary alloc] init] autorelease];
+                [ITAddressBookMgr setDefaultsInBookmark:aDict];
+                prototype = aDict;
+            }
+            
+            [self addNewSession:prototype
+                    withCommand:[commandField stringValue]];
             break;
+        }
         default:
             break;
     }
@@ -2946,9 +2896,7 @@ NSString *sessionsKey = @"sessions";
 {
     NSRange r1, r2, currentRange;
     
-    
-    while (1)
-    {
+    while (1) {
         currentRange = NSMakeRange(0,[command length]);
         r1 = [command rangeOfString:@"$$" options:NSLiteralSearch range:currentRange];
         if (r1.location == NSNotFound) break;
@@ -3127,9 +3075,9 @@ NSString *sessionsKey = @"sessions";
 
 -(void)addNewSession:(NSDictionary *) addressbookEntry
 {
+    NSAssert(addressbookEntry, @"Null address book entry");
     // NSLog(@"PseudoTerminal: -addInSessions: 0x%x", object);
     PTYSession *aSession;
-    NSString *terminalProfile;
     NSString *oldCWD = nil;
     
     /* Get currently selected tabviewitem */
@@ -3137,13 +3085,10 @@ NSString *sessionsKey = @"sessions";
         oldCWD = [[[self currentSession] SHELL] getWorkingDirectory];
     }
 
-    terminalProfile = [addressbookEntry objectForKey: KEY_TERMINAL_PROFILE];
-    if(terminalProfile == nil)
-        terminalProfile = [[iTermTerminalProfileMgr singleInstance] defaultProfileName];    
-    
     // Initialize a new session
     aSession = [[PTYSession alloc] init];
-    [[aSession SCREEN] setScrollback:[[iTermTerminalProfileMgr singleInstance] scrollbackLinesForProfile: [addressbookEntry objectForKey: KEY_TERMINAL_PROFILE]]];
+    [[aSession SCREEN] setScrollback:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
+
     // set our preferences
     [aSession setAddressBookEntry: addressbookEntry];
     // Add this session to our term and make it current
@@ -3155,15 +3100,15 @@ NSString *sessionsKey = @"sessions";
         NSString *pwd;
         
         // Grab the addressbook command
-        cmd = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey: KEY_COMMAND]] autorelease];
+        cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry]] autorelease];
         name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey: KEY_NAME]] autorelease];
         // Get session parameters
-        [self _getSessionParameters: cmd withName:name];
+        [self _getSessionParameters:cmd withName:name];
         
         [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
         
-        pwd = [addressbookEntry objectForKey: KEY_WORKING_DIRECTORY];
-        if([pwd length] <= 0) {
+        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
+        if ([pwd length] <= 0) {
             if (oldCWD) {
                 pwd = oldCWD;
             } else {
@@ -3185,15 +3130,10 @@ NSString *sessionsKey = @"sessions";
 {
     // NSLog(@"PseudoTerminal: -addInSessions: 0x%x", object);
     PTYSession *aSession;
-    NSString *terminalProfile;
-    
-    terminalProfile = [addressbookEntry objectForKey: KEY_TERMINAL_PROFILE];
-    if(terminalProfile == nil)
-        terminalProfile = [[iTermTerminalProfileMgr singleInstance] defaultProfileName];    
-    
+
     // Initialize a new session
     aSession = [[PTYSession alloc] init];
-    [[aSession SCREEN] setScrollback:[[iTermTerminalProfileMgr singleInstance] scrollbackLinesForProfile: [addressbookEntry objectForKey: KEY_TERMINAL_PROFILE]]];
+    [[aSession SCREEN] setScrollback:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
     // set our preferences
     [aSession setAddressBookEntry: addressbookEntry];
     // Add this session to our term and make it current
@@ -3201,7 +3141,7 @@ NSString *sessionsKey = @"sessions";
     if ([aSession SCREEN]) {
        
         // We process the cmd to insert URL parts
-        NSMutableString *cmd = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey: KEY_COMMAND]] autorelease];
+        NSMutableString *cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry]] autorelease];
         NSMutableString *name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey: KEY_NAME]] autorelease];
         NSURL *urlRep = [NSURL URLWithString: url];
         
@@ -3229,9 +3169,10 @@ NSString *sessionsKey = @"sessions";
         NSString *pwd;
         [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
         
-        pwd = [addressbookEntry objectForKey: KEY_WORKING_DIRECTORY];
-        if([pwd length] <= 0)
+        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
+        if ([pwd length] <= 0) {
             pwd = NSHomeDirectory();
+        }
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         
         [self setCurrentSessionName: name];    
@@ -3246,15 +3187,10 @@ NSString *sessionsKey = @"sessions";
 {
     // NSLog(@"PseudoTerminal: -addInSessions: 0x%x", object);
     PTYSession *aSession;
-    NSString *terminalProfile;
-    
-    terminalProfile = [addressbookEntry objectForKey: KEY_TERMINAL_PROFILE];
-    if(terminalProfile == nil)
-        terminalProfile = [[iTermTerminalProfileMgr singleInstance] defaultProfileName];    
     
     // Initialize a new session
     aSession = [[PTYSession alloc] init];
-    [[aSession SCREEN] setScrollback:[[iTermTerminalProfileMgr singleInstance] scrollbackLinesForProfile: [addressbookEntry objectForKey: KEY_TERMINAL_PROFILE]]];
+    [[aSession SCREEN] setScrollback:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
     // set our preferences
     [aSession setAddressBookEntry: addressbookEntry];
     // Add this session to our term and make it current
@@ -3273,9 +3209,10 @@ NSString *sessionsKey = @"sessions";
         
         [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
         
-        pwd = [addressbookEntry objectForKey: KEY_WORKING_DIRECTORY];
-        if([pwd length] <= 0)
+        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
+        if ([pwd length] <= 0) {
             pwd = NSHomeDirectory();
+        }
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         
         [self setCurrentSessionName:name];    
@@ -3402,16 +3339,23 @@ NSString *sessionsKey = @"sessions";
     NSString *session = [args objectForKey:@"session"];
     NSDictionary *abEntry;
 
-    abEntry = [[ITAddressBookMgr sharedInstance] dataForBookmarkWithName: session];
-    if(abEntry == nil)
-        abEntry = [[ITAddressBookMgr sharedInstance] defaultBookmarkData];
-        
+    abEntry = [[BookmarkModel sharedInstance] bookmarkWithName:session];
+    if (abEntry == nil) {
+        abEntry = [[BookmarkModel sharedInstance] defaultBookmark];
+    }
+    if (abEntry == nil) {
+        NSMutableDictionary* aDict = [[[NSMutableDictionary alloc] init] autorelease];
+        [ITAddressBookMgr setDefaultsInBookmark:aDict];
+        abEntry = aDict;
+    }
+    
     // If we have not set up a window, do it now
     if([self windowInited] == NO)
     {
         [self initWindowWithAddressbook:abEntry];
     }
     
+    // TODO(georgen): test this
     // launch the session!
     [[iTermController sharedInstance] launchBookmark: abEntry inTerminal: self];
     

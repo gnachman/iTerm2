@@ -25,7 +25,6 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import <Tree.h>
 
 // Key Definitions
 #define KEY_CURSOR_DOWN					0
@@ -99,60 +98,26 @@
 
 
 @interface iTermKeyBindingMgr : NSObject {
-	NSMutableDictionary *profiles;
 }
 
-// Class methods
-+ (id) singleInstance;
++ (NSString *) formatKeyCombination:(NSString *)theKeyCombination;
++ (NSString *)formatAction:(NSDictionary *)keyInfo;+ (int) actionForKeyCode: (unichar)keyCode 
+                 modifiers: (unsigned int) keyMods 
+              highPriority: (BOOL *) highPriority 
+                      text: (NSString **) text 
+               keyMappings:(NSDictionary *)keyMappings;
++ (void)removeMappingAtIndex:(int)rowIndex inBookmark:(NSMutableDictionary*)bookmark;
++ (void)setKeyMappingsToPreset:(NSString*)presetName inBookmark:(NSMutableDictionary*)bookmark;
++ (void)setMappingAtIndex:(int)rowIndex 
+                   forKey:(NSString*)keyString 
+                   action:(int)actionIndex 
+                    value:(NSString*)valueToSend 
+                createNew:(BOOL)newMapping 
+               inBookmark:(NSMutableDictionary*)bookmark;
++ (NSString*)shortcutAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark;
++ (NSDictionary*)mappingAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark;
++ (int)numberOfMappingsForBookmark:(Bookmark*)bmDict;
 
-// Instance methods
-- (id) init;
-- (void) dealloc;
-
-- (NSDictionary *) profiles;
-- (void) setProfiles: (NSMutableDictionary *) aDict;
-
-- (NSDictionary *) globalProfile;
-- (BOOL) isGlobalProfile: (NSString *)profileName;
-- (NSString *) globalProfileName;
-- (void) addProfileWithName: (NSString *) aString copyProfile: (NSString *) profileName;
-- (void) deleteProfileWithName: (NSString *) aString;
-- (int) numberOfEntriesInProfile: (NSString *) profileName;
-
-- (int) optionKeyForProfile: (NSString *) profileName;
-- (void) setOptionKey: (int) option forProfile: (NSString *) profileName;
-
-- (void) addEntryForKeyCode: (unsigned int) hexCode 
-				  modifiers: (unsigned int) modifiers
-					 action: (unsigned int) action
-			   highPriority: (BOOL) highPriority
-					   text: (NSString *) text
-					profile: (NSString *) profile;
-- (void) addEntryForKey: (unsigned int) key 
-				  modifiers: (unsigned int) modifiers
-					 action: (unsigned int) action
-			   highPriority: (BOOL) highPriority
-					   text: (NSString *) text
-				    profile: (NSString *) profile;
-- (void) deleteEntryAtIndex: (int) index inProfile: (NSString *) profile;
-
-- (NSString *) keyCombinationAtIndex: (int) index inProfile: (NSString *) profile;
-- (NSString *) actionForKeyCombinationAtIndex: (int) index inProfile: (NSString *) profile;
-- (int) actionForKeyCode: (unichar)keyCode 
-			   modifiers: (unsigned int) keyModifiers 
-			highPriority: (BOOL *) highPriority
-					text: (NSString **) text 
-				 profile: (NSString *)profile;
-
-- (void) updateBookmarkNode: (TreeNode *)node forProfile: (NSString*) oldProfile with:(NSString*)newProfile;
-- (void) updateBookmarkProfile: (NSString*) oldProfile with:(NSString*)newProfile;
 
 @end
 
-@interface iTermKeyBindingMgr (Private)
-- (int) _actionForKeyCode: (unichar)keyCode 
-				modifiers: (unsigned int) keyModifiers
-			 highPriority: (BOOL *) highPriority
-					 text: (NSString **) text 
-				  profile: (NSString *)profile;
-@end

@@ -36,10 +36,7 @@
 #import <iTerm/VT100Terminal.h>
 #import <iTerm/FindCommandHandler.h>
 #import <iTerm/PTYWindow.h>
-#import <iTermProfileWindowController.h>
-#import <iTermBookmarkController.h>
-#import <iTermDisplayProfileMgr.h>
-#import <Tree.h>
+#import <BookmarksWindow.h>
 
 #include <unistd.h>
 
@@ -80,8 +77,7 @@ int gDebugLogFile = -1;
 		
 	// read preferences
     [PreferencePanel migratePreferences];
-	[iTermProfileWindowController sharedInstance];
-    [iTermBookmarkController sharedInstance];
+    [ITAddressBookMgr sharedInstance];
     [PreferencePanel sharedInstance];
 }
 
@@ -240,7 +236,7 @@ int gDebugLogFile = -1;
 	id bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL: urlType];
 
 	//NSLog(@"Got the URL:%@\n%@", urlType, bm);
-	[[iTermController sharedInstance] launchBookmark:[bm nodeData] inTerminal:[[iTermController sharedInstance] currentTerminal] withURL:urlStr];
+	[[iTermController sharedInstance] launchBookmark:bm inTerminal:[[iTermController sharedInstance] currentTerminal] withURL:urlStr];
 }
 
 - (void) dealloc
@@ -279,12 +275,7 @@ int gDebugLogFile = -1;
 
 - (IBAction)showBookmarkWindow:(id)sender
 {
-    [[iTermBookmarkController sharedInstance] showWindow];
-}
-
-- (IBAction)showProfileWindow:(id)sender
-{
-    [[iTermProfileWindowController sharedInstance] showProfilesWindow: nil];
+    [[BookmarksWindow sharedInstance] showWindow:sender];
 }
 
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender
@@ -303,10 +294,8 @@ int gDebugLogFile = -1;
 	frontTerminal = [[iTermController sharedInstance] currentTerminal];
     // Build the bookmark menu
 	bookmarksMenu = [[[NSMenu alloc] init] autorelease];
-    [[iTermController sharedInstance] alternativeMenu: bookmarksMenu 
-                                              forNode: [[ITAddressBookMgr sharedInstance] rootNode] 
-                                               target: frontTerminal
-                                        withShortcuts: NO];
+
+    [[iTermController sharedInstance] addBookmarksToMenu:bookmarksMenu target:frontTerminal withShortcuts:NO];
 	[newMenuItem setSubmenu: bookmarksMenu];
 
 	[bookmarksMenu addItem: [NSMenuItem separatorItem]];
@@ -493,16 +482,13 @@ void DebugLog(NSString* value)
 {
     PseudoTerminal *frontTerminal = [[iTermController sharedInstance] currentTerminal];
     NSDictionary *abEntry = [[frontTerminal currentSession] addressBookEntry];
-    NSString *displayProfile = [abEntry objectForKey: KEY_DISPLAY_PROFILE];
-    iTermDisplayProfileMgr *displayProfileMgr = [iTermDisplayProfileMgr singleInstance];
 
-    if(displayProfile == nil)
-        displayProfile = [displayProfileMgr defaultProfileName];
-    
-    [frontTerminal setFont: [displayProfileMgr windowFontForProfile: displayProfile] 
-                    nafont: [displayProfileMgr windowNAFontForProfile: displayProfile]];
-    [frontTerminal resizeWindow: [displayProfileMgr windowColumnsForProfile: displayProfile]
-                         height: [displayProfileMgr windowRowsForProfile: displayProfile]];
+    NSString* fontDesc = [abEntry objectForKey:KEY_NORMAL_FONT];
+    NSFont* font = [ITAddressBookMgr fontWithDesc:fontDesc];
+    [frontTerminal setFont: font
+                    nafont: [ITAddressBookMgr fontWithDesc:[abEntry objectForKey:KEY_NON_ASCII_FONT]]];
+    [frontTerminal resizeWindow:[[abEntry objectForKey:KEY_COLUMNS] intValue]
+                         height:[[abEntry objectForKey:KEY_ROWS] intValue]];
 					
 }
 
@@ -612,16 +598,16 @@ void DebugLog(NSString* value)
     [aMenu release];
 }
 
-- (void) buildAddressBookMenu : (NSNotification *) aNotification
+- (void)buildAddressBookMenu:(NSNotification *)aNotification
 {
     // clear Bookmark menu
-    for (; [bookmarkMenu numberOfItems]>7;) [bookmarkMenu removeItemAtIndex: 7];
+    const int kNumberOfStaticMenuItems = 5;
+    for (; [bookmarkMenu numberOfItems] > kNumberOfStaticMenuItems;) [bookmarkMenu removeItemAtIndex:kNumberOfStaticMenuItems];
     
     // add bookmarks into Bookmark menu
-    [[iTermController sharedInstance] alternativeMenu: bookmarkMenu 
-                                              forNode: [[ITAddressBookMgr sharedInstance] rootNode] 
-                                               target: [[iTermController sharedInstance] currentTerminal] 
-                                        withShortcuts: YES];    
+    [[iTermController sharedInstance] addBookmarksToMenu:bookmarkMenu 
+                                                  target:[[iTermController sharedInstance] currentTerminal]
+                                           withShortcuts:YES];
 }
 
 - (void) reloadSessionMenus: (NSNotification *) aNotification
@@ -709,6 +695,38 @@ void DebugLog(NSString* value)
         [scriptMenuItem setTitle: NSLocalizedStringFromTableInBundle(@"Script",@"iTerm", [NSBundle bundleForClass: [iTermController class]], @"Script")];
     }
 }
+
+// TODO(georgen): Disable "Edit Current Session..." when there are no current sessions.
+- (IBAction)editCurrentSession:(id)sender
+{
+    PseudoTerminal* pty = [[iTermController sharedInstance] currentTerminal];
+    if (!pty) {
+        return;
+    }
+    PTYSession* session = [pty currentSession];
+    if (!session) {
+        return;
+    }
+    Bookmark* bookmark = [session addressBookEntry];
+    if (!bookmark) {
+        return;
+    }
+    NSString* guid = [bookmark objectForKey:KEY_GUID];
+    [[BookmarkModel sessionsInstance] removeBookmarkWithGuid:guid];
+    [[BookmarkModel sessionsInstance] addBookmark:bookmark];
+    
+    // Change the GUID so that this session can follow a different path in life
+    // than its bookmark. Changes to the bookmark will no longer affect this
+    // session, and changes to this session won't affect its originating bookmark
+    // (which may not evene exist any longer).
+    guid = [BookmarkModel newGuid];
+    [[BookmarkModel sessionsInstance] setObject:guid
+                                         forKey:KEY_GUID 
+                                     inBookmark:bookmark];
+    [session setAddressBookEntry:[[BookmarkModel sessionsInstance] bookmarkWithGuid:guid]];
+    [[PreferencePanel sessionsInstance] openToBookmark:guid];
+}
+
 
 @end
 

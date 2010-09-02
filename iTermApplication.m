@@ -33,15 +33,36 @@
 #import <iTerm/PTYWindow.h>
 #import <iTerm/PseudoTerminal.h>
 #import <iTerm/PTYSession.h>
+#import <iTerm/PreferencePanel.h>
 
 
 @implementation iTermApplication
 
+- (BOOL)isTextFieldInFocus:(NSTextField *)textField
+{
+	BOOL inFocus = NO;
+	
+    // If the textfield's widow's first responder is a text view and
+    // the default editor for the text field exists and
+    // the textfield is the textfield's window's first responder's delegate
+	inFocus = ([[[textField window] firstResponder] isKindOfClass:[NSTextView class]]
+			   && [[textField window] fieldEditor:NO forObject:nil]!=nil
+			   && [textField isEqualTo:(id)[(NSTextView *)[[textField window] firstResponder]delegate]]);
+	
+	return inFocus;
+}
+
 // override to catch key press events very early on
 - (void)sendEvent:(NSEvent*)event
 {
-	if([event type] == NSKeyDown) {
-		if([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
+	if ([event type] == NSKeyDown) {
+        PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
+        if ([prefPanel keySheet] == [self keyWindow] &&
+            [prefPanel keySheetIsOpen] &&
+            [self isTextFieldInFocus:[[PreferencePanel sharedInstance] shortcutKeyTextField]]) {
+            [[PreferencePanel sharedInstance] shortcutKeyDown:event];
+            return;
+        } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
 			PseudoTerminal* currentTerminal = [[iTermController sharedInstance] currentTerminal];
 			PTYTabView* tabView = [currentTerminal tabView];
 			PTYSession* currentSession = [currentTerminal currentSession];
@@ -55,7 +76,7 @@
 				}
 			}
 
-			if([currentSession hasKeyMappingForEvent:event highPriority:YES]) {
+			if ([currentSession hasKeyMappingForEvent:event highPriority:YES]) {
 				[currentSession keyDown:event];
 				return;
 			}

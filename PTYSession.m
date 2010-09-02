@@ -37,8 +37,6 @@
 #import <iTerm/NSStringITerm.h>
 #import <iTerm/iTermKeyBindingMgr.h>
 #import <iTerm/ITAddressBookMgr.h>
-#import <iTerm/iTermTerminalProfileMgr.h>
-#import <iTerm/iTermDisplayProfileMgr.h>
 #import <iTerm/iTermGrowlDelegate.h>
 
 #include <unistd.h>
@@ -394,13 +392,13 @@ static NSImage *warningImage;
 	//NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
 	
 	// Check if we have a custom key mapping for this event
-	keyBindingAction = [[iTermKeyBindingMgr singleInstance] actionForKeyCode: unmodunicode 
-																   modifiers: modflag 
-																highPriority: &keyBindingPriority
-																		text: &keyBindingText 
-																	 profile: [[self addressBookEntry] objectForKey: KEY_KEYBOARD_PROFILE]];
+	keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode 
+                                                  modifiers:modflag 
+                                               highPriority:&keyBindingPriority
+                                                       text:&keyBindingText 
+                                                keyMappings:[[self addressBookEntry] objectForKey: KEY_KEYBOARD_MAP]];
 	
-	return (keyBindingAction >= 0 && keyBindingPriority >= priority);
+	return (keyBindingAction >= 0); // TODO: figure out why priority exists and maybe reinstate this: && keyBindingPriority >= priority);
 }
 
 // Screen for special keys
@@ -440,13 +438,13 @@ static NSImage *warningImage;
     //NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
     
 	// Check if we have a custom key mapping for this event
-	keyBindingAction = [[iTermKeyBindingMgr singleInstance] actionForKeyCode: unmodunicode 
-																   modifiers: modflag 
-																highPriority: &priority
-																		text: &keyBindingText 
-																	 profile: [[self addressBookEntry] objectForKey: KEY_KEYBOARD_PROFILE]];
-	if(keyBindingAction >= 0)
-	{
+	keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode 
+                                                  modifiers:modflag 
+                                               highPriority:&priority
+                                                       text:&keyBindingText 
+                                                keyMappings:[[self addressBookEntry] objectForKey:KEY_KEYBOARD_MAP]];
+
+	if(keyBindingAction >= 0) {
 		NSString *aString;
 		unsigned char hexCode;
 		int hexCodeTmp;
@@ -1031,7 +1029,33 @@ static NSImage *warningImage;
 	isProcessing = aFlag;
 }
 
-- (void) setPreferencesFromAddressBookEntry: (NSDictionary *) aePrefs
+- (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Bookmark*)aDict
+{
+    NSColor *fgColor;
+    NSColor *bgColor;
+    fgColor = [ITAddressBookMgr decodeColor:fg];
+    bgColor = [ITAddressBookMgr decodeColor:bg];
+    
+    int bgNum = -1;
+    int fgNum = -1; 
+    for(int i = 0; i < 16; ++i) {
+        NSString* key = [NSString stringWithFormat:@"KEY_ANSI_%d_COLOR", i];
+        if ([fgColor isEqual: [ITAddressBookMgr decodeColor:[aDict objectForKey:key]]]) {
+            fgNum = i;
+        }
+        if ([bgColor isEqual: [ITAddressBookMgr decodeColor:[aDict objectForKey:key]]]) {
+            bgNum = i;
+        }
+    }
+    
+    if (bgNum < 0 || fgNum < 0) {
+        return nil;
+    }
+    
+    return ([[NSString alloc] initWithFormat:@"%d;%d", fgNum, bgNum]);
+}
+
+- (void)setPreferencesFromAddressBookEntry:(NSDictionary *) aePrefs
 {
 	
 #if DEBUG_METHOD_TRACE
@@ -1040,43 +1064,30 @@ static NSImage *warningImage;
     
     NSColor *colorTable[2][8];
     int i;
-    NSString *imageFilePath;
-	NSString *displayProfile, *terminalProfile;
 	NSDictionary *aDict;
-	iTermTerminalProfileMgr *terminalProfileMgr;
-	iTermDisplayProfileMgr *displayProfileMgr;
 	ITAddressBookMgr *bookmarkManager;
 	
 	// get our shared managers
-	terminalProfileMgr = [iTermTerminalProfileMgr singleInstance];
-	displayProfileMgr = [iTermDisplayProfileMgr singleInstance];
 	bookmarkManager = [ITAddressBookMgr sharedInstance];
 	
 	aDict = aePrefs;
-	if(aDict == nil)
-		aDict = [bookmarkManager defaultBookmarkData];
-	
-	// grab the profiles
-	displayProfile = [aDict objectForKey: KEY_DISPLAY_PROFILE];
-	if(displayProfile == nil || [[displayProfileMgr profiles] objectForKey: displayProfile] == nil)
-		displayProfile = [displayProfileMgr defaultProfileName];
-	terminalProfile = [aDict objectForKey: KEY_TERMINAL_PROFILE];
-	if(terminalProfile == nil || [[terminalProfileMgr profiles] objectForKey: terminalProfile] == nil)
-		terminalProfile = [terminalProfileMgr defaultProfileName];	
-	
-	
-    // colors
-    [self setForegroundColor: [displayProfileMgr color: TYPE_FOREGROUND_COLOR forProfile: displayProfile]];
-    [self setBackgroundColor: [displayProfileMgr color: TYPE_BACKGROUND_COLOR forProfile: displayProfile]];
-	[self setSelectionColor: [displayProfileMgr color: TYPE_SELECTION_COLOR forProfile: displayProfile]];
-	[self setSelectedTextColor: [displayProfileMgr color: TYPE_SELECTED_TEXT_COLOR forProfile: displayProfile]];	
-	[self setBoldColor: [displayProfileMgr color: TYPE_BOLD_COLOR forProfile: displayProfile]];
-	[self setCursorColor: [displayProfileMgr color: TYPE_CURSOR_COLOR forProfile: displayProfile]];	
-	[self setCursorTextColor: [displayProfileMgr color: TYPE_CURSOR_TEXT_COLOR forProfile: displayProfile]];	
-	for(i = TYPE_ANSI_0_COLOR; i < TYPE_ANSI_8_COLOR; i++)
-	{
-		colorTable[0][i] = [displayProfileMgr color: i forProfile: displayProfile];
-		colorTable[1][i] = [displayProfileMgr color: (i + TYPE_ANSI_8_COLOR)  forProfile: displayProfile];
+	if (aDict == nil) {
+		aDict = [[BookmarkModel sharedInstance] defaultBookmark];
+	}
+    if (aDict == nil) {
+        return;
+    }
+    
+    [self setForegroundColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_FOREGROUND_COLOR]]];
+    [self setBackgroundColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_BACKGROUND_COLOR]]];
+	[self setSelectionColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_SELECTION_COLOR]]];
+	[self setSelectedTextColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_SELECTED_TEXT_COLOR]]];
+	[self setBoldColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_BOLD_COLOR]]];
+	[self setCursorColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_CURSOR_COLOR]]];
+	[self setCursorTextColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_CURSOR_TEXT_COLOR]]];
+	for (i = 0; i < 8; i++) {
+		colorTable[0][i] = [ITAddressBookMgr decodeColor:[aDict objectForKey:[NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i]]];
+		colorTable[1][i] = [ITAddressBookMgr decodeColor:[aDict objectForKey:[NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i + 8]]];
 	}	
     for(i=0;i<8;i++) {
         [self setColorTable:i color:colorTable[0][i]];
@@ -1093,33 +1104,33 @@ static NSImage *warningImage;
 	}
 	
     // background image
-    imageFilePath = [displayProfileMgr backgroundImageForProfile: displayProfile];
-    if([imageFilePath length] > 0)
-		[self setBackgroundImagePath: imageFilePath];
-
+    [self setBackgroundImagePath:[aDict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
+        
 	// colour scheme
-    [self setCOLORFGBG_VALUE: [displayProfileMgr COLORFGBGForProfile: displayProfile]];
+    [self setCOLORFGBG_VALUE: [self ansiColorsMatchingForeground:[aDict objectForKey:KEY_FOREGROUND_COLOR] 
+                                                   andBackground:[aDict objectForKey:KEY_BACKGROUND_COLOR] 
+                                                      inBookmark:aDict]];
 	
     // transparency
-    [self setTransparency: [displayProfileMgr transparencyForProfile: displayProfile]];  
+    [self setTransparency:[[aDict objectForKey:KEY_TRANSPARENCY] floatValue]];
 	
 	// bold
-	[self setDisableBold: [displayProfileMgr disableBoldForProfile: displayProfile]];
+	[self setDisableBold:[[aDict objectForKey:KEY_DISABLE_BOLD] boolValue]];
 	
     // set up the rest of the preferences
-    [SCREEN setPlayBellFlag: ![terminalProfileMgr silenceBellForProfile: terminalProfile]];
-	[SCREEN setShowBellFlag: [terminalProfileMgr showBellForProfile: terminalProfile]];
-	[SCREEN setGrowlFlag: [terminalProfileMgr growlForProfile: terminalProfile]];
-	[SCREEN setBlinkingCursor: [terminalProfileMgr blinkCursorForProfile: terminalProfile]];
-	[TEXTVIEW setBlinkingCursor: [terminalProfileMgr blinkCursorForProfile: terminalProfile]];
-    [self setEncoding: [terminalProfileMgr encodingForProfile: terminalProfile]];
-    [self setTERM_VALUE: [terminalProfileMgr typeForProfile: terminalProfile]];
-    [self setAntiCode: [terminalProfileMgr idleCharForProfile: terminalProfile]];
-    [self setAntiIdle: [terminalProfileMgr sendIdleCharForProfile: terminalProfile]];
-    [self setAutoClose: [terminalProfileMgr closeOnSessionEndForProfile: terminalProfile]];
-    [self setDoubleWidth:[terminalProfileMgr doubleWidthForProfile: terminalProfile]];
-	[self setXtermMouseReporting:[terminalProfileMgr xtermMouseReportingForProfile: terminalProfile]];
-    
+    [SCREEN setPlayBellFlag:![[aDict objectForKey:KEY_SILENCE_BELL] boolValue]];
+	[SCREEN setShowBellFlag:[[aDict objectForKey:KEY_VISUAL_BELL] boolValue]];
+	[SCREEN setGrowlFlag:[[aDict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue]];
+	[SCREEN setBlinkingCursor: [[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];
+	[TEXTVIEW setBlinkingCursor: [[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];
+    [self setEncoding:[[aDict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]];
+    [self setTERM_VALUE:[aDict objectForKey:KEY_TERMINAL_TYPE]];
+    [self setAntiCode:[[aDict objectForKey:KEY_IDLE_CODE] intValue]];
+    [self setAntiIdle:[[aDict objectForKey:KEY_SEND_CODE_WHEN_IDLE] boolValue]];
+    [self setAutoClose:[[aDict objectForKey:KEY_CLOSE_SESSIONS_ON_END] boolValue]];
+    [self setDoubleWidth:[[aDict objectForKey:KEY_TREAT_NON_ASCII_AS_DOUBLE_WIDTH] boolValue]];
+	[self setXtermMouseReporting:[[aDict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue]];
+    [SCREEN setScrollback:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 }
 
 // Contextual menu
@@ -1189,7 +1200,7 @@ static NSImage *warningImage;
 		[defaultName release];
 		defaultName = nil;
 	}
-	if(!theName) {
+	if (!theName) {
 		theName = NSLocalizedStringFromTableInBundle(@"Untitled",@"iTerm",
 			[NSBundle bundleForClass:[self class]], @"Profiles");
 	}
@@ -1406,6 +1417,19 @@ static NSImage *warningImage;
     return (backgroundImagePath);
 }
 
++ (NSImage*) loadBackgroundImage:(NSString*)imageFilePath
+{
+    NSString* actualPath;
+    if ([imageFilePath isAbsolutePath] == NO)
+    {
+        NSBundle *myBundle = [NSBundle bundleForClass: [PTYSession class]];
+        actualPath = [myBundle pathForResource:imageFilePath ofType:@""];
+    } else {
+        actualPath = imageFilePath;
+    }
+    return [[NSImage alloc] initWithContentsOfFile:actualPath];
+}
+
 - (void) setBackgroundImagePath: (NSString *) imageFilePath
 {
     if([imageFilePath length]) {
@@ -1615,7 +1639,7 @@ static NSImage *warningImage;
     return doubleWidth;
 }
 
-- (void) setDoubleWidth:(BOOL)set
+- (void)setDoubleWidth:(BOOL)set
 {
     doubleWidth=set;
 }
@@ -1691,14 +1715,9 @@ static NSImage *warningImage;
     return EXIT;
 }
 
-- (int) optionKey
+- (int)optionKey
 {
-	NSString *kbProfile;
-	
-	// Grab our keyboard profile
-	kbProfile = [[self addressBookEntry] objectForKey: @"Keyboard Profile"];
-	
-	return ([[iTermKeyBindingMgr singleInstance] optionKeyForProfile: kbProfile]);
+    return [[[self addressBookEntry] objectForKey:KEY_OPTION_KEY_SENDS] intValue];
 }
 
 - (void) setAddressBookEntry:(NSDictionary*) entry

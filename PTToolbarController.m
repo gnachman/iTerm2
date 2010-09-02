@@ -241,10 +241,10 @@ NSString *CommandToolbarItem = @"Command";
     aMenu = [[NSMenu alloc] init];
     // first menu item is just a space taker
 	[aMenu addItem: [[[NSMenuItem alloc] initWithTitle: @"AAA" action:@selector(newSessionInTabAtIndex:) keyEquivalent:@""] autorelease]];
-    [[iTermController sharedInstance] alternativeMenu: aMenu 
-                                              forNode: [[ITAddressBookMgr sharedInstance] rootNode] 
-                                               target: _pseudoTerminal
-                                        withShortcuts: NO];    
+    [[iTermController sharedInstance] addBookmarksToMenu:aMenu 
+                                                  target:_pseudoTerminal 
+                                           withShortcuts:NO];
+
     [aMenu addItem: [NSMenuItem separatorItem]];
     tip = [[[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"Press Option for New Window",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item: New") action:@selector(xyz) keyEquivalent: @""] autorelease];
     [tip setKeyEquivalentModifierMask: NSCommandKeyMask];
@@ -279,10 +279,10 @@ NSString *CommandToolbarItem = @"Command";
     // build a menu representation for text only.
     item = [[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"New",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item:New") action: nil keyEquivalent: @""];
     aMenu = [[NSMenu alloc] init];
-    [[iTermController sharedInstance] alternativeMenu: aMenu 
-                                              forNode: [[ITAddressBookMgr sharedInstance] rootNode] 
-                                               target: _pseudoTerminal
-                                        withShortcuts: NO];    
+    [[iTermController sharedInstance] addBookmarksToMenu:aMenu 
+                                                  target:_pseudoTerminal 
+                                           withShortcuts:NO];
+
     [aMenu addItem: [NSMenuItem separatorItem]];
     tip = [[[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"Press Option for New Window",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item: New") action:@selector(xyz) keyEquivalent: @""] autorelease];
     [tip setKeyEquivalentModifierMask: NSCommandKeyMask];

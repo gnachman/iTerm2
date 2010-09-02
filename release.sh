@@ -1,4 +1,5 @@
 #!/bin/bash
+# Run this before uploading.
 set -x
 NAME=$1
 cd build/Deployment

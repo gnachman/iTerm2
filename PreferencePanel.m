@@ -30,13 +30,11 @@
 #import <iTerm/iTermController.h>
 #import <iTerm/ITAddressBookMgr.h>
 #import <iTerm/iTermKeyBindingMgr.h>
-#import <iTerm/iTermDisplayProfileMgr.h>
-#import <iTerm/iTermTerminalProfileMgr.h>
-#import <iTerm/Tree.h>
-#import <iTermBookmarkController.h>
+#import <iTerm/PTYSession.h>
+#import <iTerm/PseudoTerminal.h>
+#import <iTerm/BookmarkModel.h>
 
 static float versionNumber;
-static NSString *NoHandler = @"<No Handler>";
 
 @implementation PreferencePanel
 
@@ -44,13 +42,28 @@ static NSString *NoHandler = @"<No Handler>";
 {
     static PreferencePanel* shared = nil;
 
-    if (!shared)
-    {
-        shared = [[self alloc] init];
+    if (!shared) {
+        shared = [[self alloc] initWithDataSource:[BookmarkModel sharedInstance] 
+                                     userDefaults:[NSUserDefaults standardUserDefaults]];
+        shared->oneBookmarkMode = NO;
     }
     
     return shared;
 }
+
++ (PreferencePanel*)sessionsInstance;
+{
+    static PreferencePanel* shared = nil;
+    
+    if (!shared) {
+        shared = [[self alloc] initWithDataSource:[BookmarkModel sessionsInstance] 
+                                     userDefaults:[[NSUserDefaults alloc] init]];
+        shared->oneBookmarkMode = YES;
+    }
+    
+    return shared;
+}
+
 
 /*
  Static method to copy old preferences file, iTerm.plist or net.sourceforge.iTerm.plist, to new
@@ -86,22 +99,23 @@ static NSString *NoHandler = @"<No Handler>";
     return (YES);    
 }
 
-
-- (id) init
+- (id)initWithDataSource:(BookmarkModel*)model userDefaults:(NSUserDefaults*)userDefaults
 {
     unsigned int storedMajorVersion = 0, storedMinorVersion = 0, storedMicroVersion = 0;
 
     self = [super init];
-    
+    dataSource = model;
+    prefs = userDefaults;
+    oneBookmarkOnly = NO;
     [self readPreferences];
-    if(defaultEnableBonjour == YES)
+    if (defaultEnableBonjour == YES) {
         [[ITAddressBookMgr sharedInstance] locateBonjourServices];
+    }
     
     // get the version
     NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
     versionNumber = [(NSNumber *)[myDict objectForKey:@"CFBundleVersion"] floatValue];
-    if([prefs objectForKey: @"iTerm Version"])
-    {
+    if ([prefs objectForKey: @"iTerm Version"]) {
         sscanf([[prefs objectForKey: @"iTerm Version"] cString], "%d.%d.%d", &storedMajorVersion, &storedMinorVersion, &storedMicroVersion);
         // briefly, version 0.7.0 was stored as 0.70
         if(storedMajorVersion == 0 && storedMinorVersion == 70)
@@ -109,18 +123,203 @@ static NSString *NoHandler = @"<No Handler>";
     }
     //NSLog(@"Stored version = %d.%d.%d", storedMajorVersion, storedMinorVersion, storedMicroVersion);
     
-    
     // sync the version number
     [prefs setObject: [myDict objectForKey:@"CFBundleVersion"] forKey: @"iTerm Version"];
+    [toolbar setSelectedItemIdentifier:globalToolbarId];
 
-    [[NSNotificationCenter defaultCenter] addObserver: self
-                                     selector: @selector(_reloadURLHandlers:)
-                                         name: @"iTermReloadAddressBook"
-                                       object: nil];    
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_reloadURLHandlers:)
+                                                 name:@"iTermReloadAddressBook"
+                                               object:nil];    
 
     return (self);
 }
 
+- (void)setOneBokmarkOnly
+{
+    oneBookmarkOnly = YES;
+    [self showBookmarks];
+    [toolbar setVisible:NO];
+    [bookmarksTableView setHidden:YES];
+    [addBookmarkButton setHidden:YES];
+    [removeBookmarkButton setHidden:YES];
+    [bookmarksPopup setHidden:YES];
+	[bookmarkDirectory setHidden:YES];
+    [bookmarkShortcutKeyLabel setHidden:YES];
+    [bookmarkShortcutKeyModifiersLabel setHidden:YES];
+    [bookmarkTagsLabel setHidden:YES];
+    [bookmarkCommandLabel setHidden:YES];
+    [bookmarkDirectoryLabel setHidden:YES];
+    [bookmarkShortcutKey setHidden:YES];
+    [tags setHidden:YES];
+    [bookmarkCommandType setHidden:YES];
+    [bookmarkCommand setHidden:YES];
+    [bookmarkDirectoryType setHidden:YES];
+    [bookmarkDirectory setHidden:YES];
+    [displayFontsLabel setHidden:YES];
+    [displayFontsLabel setHidden:YES];
+    [displayRegularFontButton setHidden:YES];
+    [displayNAFontButton setHidden:YES];
+    [blur setHidden:YES];
+    [antiAliasing setHidden:YES];
+    [normalFontField setHidden:YES];
+    [nonAsciiFontField setHidden:YES];
+    [displayRegularFontButton setHidden:YES];
+    [displayNAFontButton setHidden:YES];
+    
+    NSRect newFrame = [bookmarksSettingsTabViewParent frame];
+    newFrame.origin.x = 0;
+    [bookmarksSettingsTabViewParent setFrame:newFrame];
+    
+    newFrame = [[self window] frame];
+    newFrame.size.width = [bookmarksSettingsTabViewParent frame].size.width + 26;
+    [[self window] setFrame:newFrame display:YES];
+}
+
+- (void)awakeFromNib
+{
+    [self window];
+    NSAssert(bookmarksTableView, @"Null table view");
+    [bookmarksTableView setDataSource:dataSource];
+
+    bookmarksToolbarId = [bookmarksToolbarItem itemIdentifier];
+    globalToolbarId = [globalToolbarItem itemIdentifier];
+    advancedToolbarId = [advancedToolbarItem itemIdentifier];
+    [toolbar setSelectedItemIdentifier:globalToolbarId];
+
+	// add list of encodings
+	NSEnumerator *anEnumerator;
+	NSNumber *anEncoding;
+    
+	[characterEncoding removeAllItems];
+	anEnumerator = [[[iTermController sharedInstance] sortedEncodingList] objectEnumerator];
+	while ((anEncoding = [anEnumerator nextObject]) != NULL) {
+		[characterEncoding addItemWithTitle: [NSString localizedNameOfStringEncoding: [anEncoding unsignedIntValue]]];
+		[[characterEncoding lastItem] setTag: [anEncoding unsignedIntValue]];
+	}
+    [keyMappings setDoubleAction:@selector(editKeyMapping:)];
+    keyString = nil;
+    [bookmarksForUrlsTable setShowGraphic:NO];
+    [bookmarksForUrlsTable hideSearch];
+    [bookmarksForUrlsTable allowEmptySelection];
+    [bookmarksForUrlsTable deselectAll];
+    [bookmarksForUrlsTable setDelegate:self];
+    
+    [bookmarksTableView setDelegate:self];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self 
+                                             selector:@selector(handleWindowWillCloseNotification:)
+                                                 name:NSWindowWillCloseNotification object: [self window]];
+    if (oneBookmarkMode) {
+        [self setOneBokmarkOnly];
+    }
+}
+
+- (void)handleWindowWillCloseNotification:(NSNotification *)notification {
+    // This is so tags get saved because Cocoa doesn't notify you that the
+    // field changed unless the user presses enter twice in it (!).
+    [self bookmarkSettingChanged:nil];
+}
+
+- (void)genericCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo
+{
+    [sheet close];
+}
+
+- (void)editKeyMapping:(id)sender
+{
+    int rowIndex = [keyMappings selectedRow];
+    [keyPress setStringValue:[self formattedKeyCombinationForRow:rowIndex]];
+    if (keyString) {
+        [keyString release];
+    }
+    keyString = [[[self keyComboAtIndex:rowIndex] copy] retain];
+    [action selectItemAtIndex:[[[self keyInfoAtIndex:rowIndex] objectForKey:@"Action"] intValue]];
+    NSString* text = [[self keyInfoAtIndex:rowIndex] objectForKey:@"Text"];
+    [valueToSend setStringValue:text ? text : @""];
+
+    [self updateValueToSend];
+    newMapping = NO;
+    [NSApp beginSheet:editKeyMappingWindow
+       modalForWindow:[self window]
+        modalDelegate:self
+       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
+          contextInfo:nil];            
+}
+
+- (IBAction)saveKeyMapping:(id)sender
+{
+    NSString* guid = [bookmarksTableView selectedGuid];
+    NSAssert(guid, @"Null guid unexpected here");
+    NSMutableDictionary* dict = [NSMutableDictionary dictionaryWithDictionary:[dataSource bookmarkWithGuid:guid]];
+    NSAssert(dict, @"Can't find node");
+    
+    [iTermKeyBindingMgr setMappingAtIndex:[keyMappings selectedRow] 
+                                   forKey:keyString 
+                                   action:[action indexOfSelectedItem] 
+                                    value:[valueToSend stringValue] 
+                                createNew:newMapping 
+                               inBookmark:dict];
+
+    [dataSource setBookmark:dict withGuid:guid];
+    [keyMappings reloadData];
+    [self closeKeyMapping:sender];
+    [self bookmarkSettingChanged:sender];
+}
+
+- (BOOL)keySheetIsOpen
+{
+    return [editKeyMappingWindow isVisible];
+}
+
+- (IBAction)closeKeyMapping:(id)sender
+{
+    [NSApp endSheet:editKeyMappingWindow];
+}
+
+- (BOOL)validateToolbarItem:(NSToolbarItem *)theItem
+{
+    return TRUE;
+}
+
+- (NSToolbarItem *)toolbar:(NSToolbar *)toolbar itemForItemIdentifier:(NSString *)itemIdentifier willBeInsertedIntoToolbar:(BOOL)flag
+{
+    if (!flag) {
+        return nil;
+    }
+    if ([itemIdentifier isEqual:globalToolbarId]) {
+        return globalToolbarItem;
+    } else if ([itemIdentifier isEqual:bookmarksToolbarId]) {
+        return bookmarksToolbarItem;
+    } else if ([itemIdentifier isEqual:advancedToolbarId]) {
+        return advancedToolbarItem;
+    } else {
+        return nil;
+    }
+}
+
+- (NSArray *)toolbarAllowedItemIdentifiers:(NSToolbar *)toolbar
+{
+    return [NSArray arrayWithObjects:globalToolbarId,
+                                     bookmarksToolbarId,
+                                     advancedToolbarId,
+                                     nil];
+}
+
+- (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar
+{
+    return [NSArray arrayWithObjects:globalToolbarId, bookmarksToolbarId, advancedToolbarId, nil];
+}
+
+- (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar
+{
+    // Optional delegate method: Returns the identifiers of the subset of
+    // toolbar items that are selectable.
+    return [NSArray arrayWithObjects:globalToolbarId,
+                                     bookmarksToolbarId,
+                                     advancedToolbarId,
+                                     nil];
+}
 
 - (void)dealloc
 {
@@ -130,8 +329,6 @@ static NSString *NoHandler = @"<No Handler>";
 
 - (void) readPreferences
 {
-    prefs = [NSUserDefaults standardUserDefaults];
-
     // Force antialiasing to be allowed on small font sizes
     [prefs setInteger:1 forKey:@"AppleAntiAliasingThreshold"];
     [prefs setInteger:1 forKey:@"AppleSmoothFixedFontsSizeThreshold"];
@@ -139,7 +336,9 @@ static NSString *NoHandler = @"<No Handler>";
          
     defaultWindowStyle=[prefs objectForKey:@"WindowStyle"]?[prefs integerForKey:@"WindowStyle"]:0;
     defaultTabViewType=[prefs objectForKey:@"TabViewType"]?[prefs integerForKey:@"TabViewType"]:0;
-    if (defaultTabViewType>1) defaultTabViewType = 0;
+    if (defaultTabViewType > 1) {
+        defaultTabViewType = 0;
+    }
     defaultCopySelection=[prefs objectForKey:@"CopySelection"]?[[prefs objectForKey:@"CopySelection"] boolValue]:YES;
     defaultPasteFromClipboard=[prefs objectForKey:@"PasteFromClipboard"]?[[prefs objectForKey:@"PasteFromClipboard"] boolValue]:YES;
     defaultHideTab=[prefs objectForKey:@"HideTab"]?[[prefs objectForKey:@"HideTab"] boolValue]: YES;
@@ -169,30 +368,48 @@ static NSString *NoHandler = @"<No Handler>";
     [[NSUserDefaults standardUserDefaults] setObject:appCast forKey:@"SUFeedURL"];
 
     NSArray *urlArray;
-    NSDictionary *tempDict = [prefs objectForKey:@"URLHandlers"];
-    int i;
     
+    // Migrate old-style URL handlers.
     // make sure bookmarks are loaded
-    [iTermBookmarkController sharedInstance];
+    [ITAddressBookMgr sharedInstance];
     
     // read in the handlers by converting the index back to bookmarks
-    urlHandlers = [[NSMutableDictionary alloc] init];
-    if (tempDict) {
+    urlHandlersByGuid = [[NSMutableDictionary alloc] init];
+    NSDictionary *tempDict = [prefs objectForKey:@"URLHandlersByGuid"];
+    if (!tempDict) {
+        // Iterate over old style url handlers (which stored bookmark by index)
+        // and add guid->urlkey to urlHandlersByGuid.
+        tempDict = [prefs objectForKey:@"URLHandlers"];
+        
+        if (tempDict) {
+            NSEnumerator *enumerator = [tempDict keyEnumerator];
+            id key;
+           
+            while ((key = [enumerator nextObject])) {
+                //NSLog(@"%@\n%@",[tempDict objectForKey:key], [[ITAddressBookMgr sharedInstance] bookmarkForIndex:[[tempDict objectForKey:key] intValue]]);
+                int theIndex = [[tempDict objectForKey:key] intValue];
+                if (theIndex >= 0 && 
+                    theIndex  < [dataSource numberOfBookmarks]) {
+                    NSString* guid = [[dataSource bookmarkAtIndex:theIndex] objectForKey:KEY_GUID];
+                    [urlHandlersByGuid setObject:guid forKey:key];
+                }
+            }
+        }
+    } else {
         NSEnumerator *enumerator = [tempDict keyEnumerator];
         id key;
-        int index;
-       
+        
         while ((key = [enumerator nextObject])) {
             //NSLog(@"%@\n%@",[tempDict objectForKey:key], [[ITAddressBookMgr sharedInstance] bookmarkForIndex:[[tempDict objectForKey:key] intValue]]);
-            index = [[tempDict objectForKey:key] intValue];
-            if (index>=0 && index  < [[[ITAddressBookMgr sharedInstance] bookmarks] count])
-                [urlHandlers setObject:[[ITAddressBookMgr sharedInstance] bookmarkForIndex:index]
-                                forKey:key];
+            NSString* guid = [tempDict objectForKey:key];
+            if ([dataSource indexOfBookmarkWithGuid:guid] >= 0) {
+                [urlHandlersByGuid setObject:guid forKey:key];
+            }
         }
     }
     urlArray = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleURLTypes"];
     urlTypes = [[NSMutableArray alloc] initWithCapacity:[urlArray count]];
-    for (i=0; i<[urlArray count]; i++) {
+    for (int i=0; i<[urlArray count]; i++) {
         [urlTypes addObject:[[[urlArray objectAtIndex:i] objectForKey: @"CFBundleURLSchemes"] objectAtIndex:0]];
     }
 }
@@ -215,10 +432,7 @@ static NSString *NoHandler = @"<No Handler>";
     [prefs setInteger:defaultRefreshRate forKey:@"RefreshRate"];
     [prefs setObject: defaultWordChars forKey: @"WordCharacters"];
     [prefs setBool:defaultOpenBookmark forKey:@"OpenBookmark"];
-    [prefs setObject: [[iTermKeyBindingMgr singleInstance] profiles] forKey: @"KeyBindings"];
-    [prefs setObject: [[iTermDisplayProfileMgr singleInstance] profiles] forKey: @"Displays"];
-    [prefs setObject: [[iTermTerminalProfileMgr singleInstance] profiles] forKey: @"Terminals"];
-    [prefs setObject: [[ITAddressBookMgr sharedInstance] bookmarks] forKey: @"Bookmarks"];
+    [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
     [prefs setBool:defaultQuitWhenAllWindowsClosed forKey:@"QuitWhenAllWindowsClosed"];
     [prefs setBool:defaultCheckUpdate forKey:@"SUEnableAutomaticChecks"];
     [prefs setInteger:defaultCursorType forKey:@"CursorType"];
@@ -229,27 +443,20 @@ static NSString *NoHandler = @"<No Handler>";
     [prefs setBool:defaultColorInvertedCursor forKey:@"ColorInvertedCursor"];
     
     // save the handlers by converting the bookmark into an index
-    NSMutableDictionary *tempDict = [[NSMutableDictionary alloc] init];
-    NSEnumerator *enumerator = [urlHandlers keyEnumerator];
-    id key;
-   
-    while ((key = [enumerator nextObject])) {
-        [tempDict setObject:[NSNumber numberWithInt:[[ITAddressBookMgr sharedInstance] indexForBookmark:[urlHandlers objectForKey:key]]]
-                     forKey:key];
-    }
-    [prefs setObject: tempDict forKey:@"URLHandlers"];
+    [prefs setObject:urlHandlersByGuid forKey:@"URLHandlersByGuid"];
 
     [prefs synchronize];
 }
 
 - (void)run
 {
-    
     // load nib if we haven't already
-    if([self window] == nil)
-        [self initWithWindowNibName: @"PreferencePanel"];
-                
+    if ([self window] == nil) {
+        [self initWithWindowNibName:@"PreferencePanel"];
+    }
+
     [[self window] setDelegate: self]; // also forces window to load
+    
     [wordChars setDelegate: self];
     
     [windowStyle selectItemAtIndex: defaultWindowStyle];
@@ -280,10 +487,19 @@ static NSString *NoHandler = @"<No Handler>";
     
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];
-        
+    [tabView selectTabViewItem:globalTabViewItem];
+    NSString* guid = [bookmarksTableView selectedGuid];
+    if (guid) {
+        Bookmark* dict = [dataSource bookmarkWithGuid:guid];
+        [bookmarksSettingsTabViewParent setHidden:NO];
+        [self updateBookmarkFields:dict];
+    } else {
+        [bookmarksSettingsTabViewParent setHidden:YES];
+        [self updateBookmarkFields:nil];
+    }
+ 
     // Show the window.
     [[self window] makeKeyAndOrderFront:self];
-    
 }
 
 - (IBAction)settingChanged:(id)sender
@@ -296,8 +512,7 @@ static NSString *NoHandler = @"<No Handler>";
         sender == cursorType ||
         sender == useBorder ||
         sender == hideScrollbar ||
-        sender == checkColorInvertedCursor)
-    {
+        sender == checkColorInvertedCursor) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
         defaultTabViewType=[tabPosition indexOfSelectedItem];
         defaultUseCompactLabel = ([useCompactLabel state] == NSOnState);
@@ -307,9 +522,7 @@ static NSString *NoHandler = @"<No Handler>";
         defaultUseBorder = ([useBorder state] == NSOnState);
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermRefreshTerminal" object: nil userInfo: nil];    
-    }
-    else
-    {
+    } else {
         defaultCopySelection=([selectionCopiesText state]==NSOnState);
         defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
         defaultPromptOnClose = ([promptOnClose state] == NSOnState);
@@ -329,7 +542,6 @@ static NSString *NoHandler = @"<No Handler>";
         defaultSmartPlacement = ([smartPlacement state] == NSOnState);
         
         if (defaultCheckTestRelease != ([checkTestRelease state] == NSOnState)) {
-        
             defaultCheckTestRelease = ([checkTestRelease state] == NSOnState);
 
             NSString *appCast = defaultCheckTestRelease ?
@@ -344,7 +556,7 @@ static NSString *NoHandler = @"<No Handler>";
 - (void)windowWillLoad
 {
     // We finally set our autosave window frame name and restore the one from the user's defaults.
-    [self setWindowFrameAutosaveName: @"Preferences"];
+    [self setWindowFrameAutosaveName:@"Preferences"];
 }
 
 - (void)windowWillClose:(NSNotification *)aNotification
@@ -355,141 +567,149 @@ static NSString *NoHandler = @"<No Handler>";
 - (void)windowDidBecomeKey:(NSNotification *)aNotification
 {
     // Post a notification
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"nonTerminalWindowBecameKey" object: nil userInfo: nil];        
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"nonTerminalWindowBecameKey" 
+                                                        object:nil 
+                                                      userInfo:nil];        
 }
 
 
 // accessors for preferences
 
 
-- (BOOL) copySelection
+- (BOOL)copySelection
 {
-    return (defaultCopySelection);
+    return defaultCopySelection;
 }
 
-- (void) setCopySelection: (BOOL) flag
+- (void) setCopySelection:(BOOL)flag
 {
     defaultCopySelection = flag;
 }
 
-- (BOOL) pasteFromClipboard
+- (BOOL)pasteFromClipboard
 {
-    return (defaultPasteFromClipboard);
+    return defaultPasteFromClipboard;
 }
 
-- (void) setPasteFromClipboard: (BOOL) flag
+- (void)setPasteFromClipboard:(BOOL)flag
 {
     defaultPasteFromClipboard = flag;
 }
 
-- (BOOL) hideTab
+- (BOOL)hideTab
 {
-    return (defaultHideTab);
+    return defaultHideTab;
 }
 
-- (void) setTabViewType: (NSTabViewType) type
+- (void)setTabViewType:(NSTabViewType)type
 {
     defaultTabViewType = type;
 }
 
-- (NSTabViewType) tabViewType
+- (NSTabViewType)tabViewType
 {
-    return (defaultTabViewType);
+    return defaultTabViewType;
 }
 
-- (int) windowStyle
+- (int)windowStyle
 {
-    return (defaultWindowStyle);
+    return defaultWindowStyle;
 }
 
 - (BOOL)promptOnClose
 {
-    return (defaultPromptOnClose);
+    return defaultPromptOnClose;
 }
 
 - (BOOL)onlyWhenMoreTabs
 {
-    return (defaultOnlyWhenMoreTabs);
+    return defaultOnlyWhenMoreTabs;
 }
 
-- (BOOL) focusFollowsMouse
+- (BOOL)focusFollowsMouse
 {
-    return (defaultFocusFollowsMouse);
+    return defaultFocusFollowsMouse;
 }
 
-- (BOOL) enableBonjour
+- (BOOL)enableBonjour
 {
-    return (defaultEnableBonjour);
+    return defaultEnableBonjour;
 }
 
-- (BOOL) enableGrowl
+- (BOOL)enableGrowl
 {
-    return (defaultEnableGrowl);
+    return defaultEnableGrowl;
 }
 
-- (BOOL) cmdSelection
+- (BOOL)cmdSelection
 {
-    return (defaultCmdSelection);
+    return defaultCmdSelection;
 }
 
-- (BOOL) maxVertically
+- (BOOL)maxVertically
 {
-    return (defaultMaxVertically);
+    return defaultMaxVertically;
 }
 
-- (BOOL) useCompactLabel
+- (BOOL)useCompactLabel
 {
-    return (defaultUseCompactLabel);
+    return defaultUseCompactLabel;
 }
 
-- (BOOL) openBookmark
+- (BOOL)openBookmark
 {
-    return (defaultOpenBookmark);
+    return defaultOpenBookmark;
 }
 
-- (int) refreshRate
+- (int)refreshRate
 {
-    return (defaultRefreshRate);
+    return defaultRefreshRate;
 }
 
-- (NSString *) wordChars
+- (NSString *)wordChars
 {
-    if([defaultWordChars length] <= 0)
-        return (@"");
-    return (defaultWordChars);
+    if ([defaultWordChars length] <= 0) {
+        return @"";
+    }
+    return defaultWordChars;
 }
 
-- (ITermCursorType) cursorType
+- (ITermCursorType)cursorType
 {
     return defaultCursorType;
 }
 
-- (BOOL) useBorder
+- (BOOL)useBorder
 {
     return (defaultUseBorder);
 }
 
-- (BOOL) hideScrollbar
+- (BOOL)hideScrollbar
 {
     return defaultHideScrollbar;
 }
 
-- (BOOL) smartPlacement
+- (BOOL)smartPlacement
 {
     return defaultSmartPlacement;
 }
 
-- (BOOL) checkTestRelease
-{
-    return defaultCheckTestRelease;
-}
-
-- (BOOL) colorInvertedCursor
+- (BOOL)checkColorInvertedCursor
 {
     return defaultColorInvertedCursor;
 }
 
-- (BOOL) quitWhenAllWindowsClosed
+- (BOOL)checkTestRelease
+{
+    return defaultCheckTestRelease;
+}
+
+- (BOOL)colorInvertedCursor
+{
+    return defaultColorInvertedCursor;
+}
+
+- (BOOL)quitWhenAllWindowsClosed
 {
     return defaultQuitWhenAllWindowsClosed;
 }
@@ -501,158 +721,624 @@ static NSString *NoHandler = @"<No Handler>";
 //  defaults write net.sourceforge.iTerm MinCompactTabWidth -int 120
 //  defaults write net.sourceforge.iTerm OptimumTabWidth -int 100
 
-- (BOOL) useUnevenTabs
+- (BOOL)useUnevenTabs
 {
-    return [prefs objectForKey:@"UseUnevenTabs"]?[[prefs objectForKey:@"UseUnevenTabs"] boolValue]:NO;
+    return [prefs objectForKey:@"UseUnevenTabs"] ? [[prefs objectForKey:@"UseUnevenTabs"] boolValue] : NO;
 }
 
 - (int) minTabWidth
 {
-    return [prefs objectForKey:@"MinTabWidth"]?[[prefs objectForKey:@"MinTabWidth"] intValue]:75;
+    return [prefs objectForKey:@"MinTabWidth"] ? [[prefs objectForKey:@"MinTabWidth"] intValue] : 75;
 }
 
 - (int) minCompactTabWidth
 {
-    return [prefs objectForKey:@"MinCompactTabWidth"]?[[prefs objectForKey:@"MinCompactTabWidth"] intValue]:60;
+    return [prefs objectForKey:@"MinCompactTabWidth"] ? [[prefs objectForKey:@"MinCompactTabWidth"] intValue] : 60;
 }
 
 - (int) optimumTabWidth
 {
-    return [prefs objectForKey:@"OptimumTabWidth"]?[[prefs objectForKey:@"OptimumTabWidth"] intValue]:175;
+    return [prefs objectForKey:@"OptimumTabWidth"] ? [[prefs objectForKey:@"OptimumTabWidth"] intValue] : 175;
 }
 
 - (NSString *) searchCommand
 {
-    return [prefs objectForKey:@"SearchCommand"]?[prefs objectForKey:@"SearchCommand"]:@"http://google.com/search?q=%@";
+    return [prefs objectForKey:@"SearchCommand"] ? [prefs objectForKey:@"SearchCommand"] : @"http://google.com/search?q=%@";
 }
 
 // URL handler stuff
-- (TreeNode *) handlerBookmarkForURL:(NSString *)url
+- (Bookmark *) handlerBookmarkForURL:(NSString *)url
 {
-    return [urlHandlers objectForKey: url];
+    NSString* guid = [urlHandlersByGuid objectForKey:url];
+    if (!guid) {
+        return nil;
+    }
+    int theIndex = [dataSource indexOfBookmarkWithGuid:guid];
+    if (theIndex < 0) {
+        return nil;
+    }
+    return [dataSource bookmarkAtIndex:theIndex];
 }
 
 // NSTableView data source
-- (int) numberOfRowsInTableView: (NSTableView *)aTableView
+- (int)numberOfRowsInTableView: (NSTableView *)aTableView
 {
-    return [urlTypes count];
+    if (aTableView == keyMappings) {
+        NSString* guid = [bookmarksTableView selectedGuid];
+        if (!guid) {
+            return 0;
+        }
+        Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
+        NSAssert(bookmark, @"Null node");
+        return [iTermKeyBindingMgr numberOfMappingsForBookmark:bookmark];
+    } else {
+        return [urlTypes count];
+    }
 }
 
+
+- (NSString*)keyComboAtIndex:(int)rowIndex
+{
+    NSString* guid = [bookmarksTableView selectedGuid];
+    NSAssert(guid, @"Null guid unexpected here");
+    Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
+    NSAssert(bookmark, @"Can't find node");
+    return [iTermKeyBindingMgr shortcutAtIndex:rowIndex forBookmark:bookmark];
+}
+
+- (NSDictionary*)keyInfoAtIndex:(int)rowIndex
+{
+    NSString* guid = [bookmarksTableView selectedGuid];
+    NSAssert(guid, @"Null guid unexpected here");
+    Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
+    NSAssert(bookmark, @"Can't find node");
+    return [iTermKeyBindingMgr mappingAtIndex:rowIndex forBookmark:bookmark];
+}
+
+- (NSString*)formattedKeyCombinationForRow:(int)rowIndex
+{
+    return [[iTermKeyBindingMgr formatKeyCombination:[self keyComboAtIndex:rowIndex]] autorelease];
+}
+
+- (NSString*)formattedActionForRow:(int)rowIndex
+{
+    return [iTermKeyBindingMgr formatAction:[self keyInfoAtIndex:rowIndex]];
+}
+
+- (NSString*)valueToSendForRow:(int)rowIndex
+{
+    return [[self keyInfoAtIndex:rowIndex] objectForKey:@"Text"];
+}
+            
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(int)rowIndex
 {
-    //NSLog(@"%s: %@", __PRETTY_FUNCTION__, aTableView);
+    if (aTableView == keyMappings) {
+        NSString* guid = [bookmarksTableView selectedGuid];
+        NSAssert(guid, @"Null guid unexpected here");
+        Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
+        NSAssert(bookmark, @"Can't find node");
+        
+        if (aTableColumn == keyCombinationColumn) {
+            return [[iTermKeyBindingMgr formatKeyCombination:[iTermKeyBindingMgr shortcutAtIndex:rowIndex forBookmark:bookmark]] autorelease];
+        } else if (aTableColumn == actionColumn) {
+            return [iTermKeyBindingMgr formatAction:[iTermKeyBindingMgr mappingAtIndex:rowIndex forBookmark:bookmark]];
+        }
+    } else {       
+        return [urlTypes objectAtIndex:rowIndex];
+    }
+    // Shouldn't get here but must return something to avoid a warning.
+    return nil;
+}
+
+- (void) _updateFontsDisplay
+{
+	// load the fonts
+	NSString *fontName;
+    if (normalFont != nil) {
+		fontName = [NSString stringWithFormat: @"%gpt %s", [normalFont pointSize], [[normalFont displayName] UTF8String]];
+	} else {
+		fontName = @"Unknown Font";
+	}
+    [normalFontField setStringValue: fontName];
     
-    return [urlTypes objectAtIndex: rowIndex];
+    if (nonAsciiFont != nil) {
+		fontName = [NSString stringWithFormat: @"%gpt %s", [nonAsciiFont pointSize], [[nonAsciiFont displayName] UTF8String]];
+	} else {
+		fontName = @"Unknown Font";
+	}
+    [nonAsciiFontField setStringValue: fontName];
+}
+
+// Update the values in form fields to reflect the bookmark's state
+- (void)updateBookmarkFields:(NSDictionary *)dict  
+{
+    if ([dataSource numberOfBookmarks] < 2 || !dict) {
+        [removeBookmarkButton setEnabled:NO];
+    } else {
+        [removeBookmarkButton setEnabled:YES];
+    }
+    if (!dict) {
+        [bookmarksSettingsTabViewParent setHidden:YES];
+        [bookmarksPopup setEnabled:NO];
+        [removeBookmarkButton setEnabled:NO];
+        return;
+    } else {
+        [bookmarksSettingsTabViewParent setHidden:NO];
+        [bookmarksPopup setEnabled:YES];
+    }
+    
+	NSString* name;
+	NSString* shortcut;
+	NSString* command;
+	NSString* dir;
+	NSString* customCommand;
+	NSString* customDir;
+	name = [dict objectForKey:KEY_NAME];
+	shortcut = [dict objectForKey:KEY_SHORTCUT];
+	command = [dict objectForKey:KEY_COMMAND];
+	dir = [dict objectForKey:KEY_WORKING_DIRECTORY];
+	customCommand = [dict objectForKey:KEY_CUSTOM_COMMAND];
+	customDir = [dict objectForKey:KEY_CUSTOM_DIRECTORY];
+	
+	[bookmarkName setStringValue:name];
+	[bookmarkShortcutKey selectItemWithTitle:shortcut];
+
+	if ([customCommand isEqualToString:@"Yes"]) {
+        [bookmarkCommandType selectCellWithTag:0];
+	} else {
+		[bookmarkCommandType selectCellWithTag:1];
+	}
+	[bookmarkCommand setStringValue:command];
+	
+	if ([customDir isEqualToString:@"Yes"]) {
+		[bookmarkDirectoryType selectCellWithTag:0];
+	} else {
+		[bookmarkDirectoryType selectCellWithTag:1];
+	}
+	[bookmarkDirectory setStringValue:dir];
+
+	// Colors tab
+    [ansi0Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_0_COLOR]]];
+    [ansi1Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_1_COLOR]]];
+    [ansi2Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_2_COLOR]]];
+    [ansi3Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_3_COLOR]]];
+    [ansi4Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_4_COLOR]]];
+    [ansi5Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_5_COLOR]]];
+    [ansi6Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_6_COLOR]]];
+    [ansi7Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_7_COLOR]]];
+    [ansi8Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_8_COLOR]]];
+    [ansi9Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_9_COLOR]]];
+    [ansi10Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_10_COLOR]]];
+    [ansi11Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_11_COLOR]]];
+    [ansi12Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_12_COLOR]]];
+    [ansi13Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_13_COLOR]]];
+    [ansi14Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_14_COLOR]]];
+    [ansi15Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_15_COLOR]]];
+    [foregroundColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_FOREGROUND_COLOR]]];
+    [backgroundColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_BACKGROUND_COLOR]]];
+    [boldColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_BOLD_COLOR]]];
+    [selectionColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_SELECTION_COLOR]]];
+    [selectedTextColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_SELECTED_TEXT_COLOR]]];
+    [cursorColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_CURSOR_COLOR]]];
+    [cursorTextColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_CURSOR_TEXT_COLOR]]];
+	
+	// Display tab
+    int cols = [[dict objectForKey:KEY_COLUMNS] intValue];
+    [columnsField setStringValue:[NSString stringWithFormat:@"%d", cols]];
+    int rows = [[dict objectForKey:KEY_ROWS] intValue];
+    [rowsField setStringValue:[NSString stringWithFormat:@"%d", rows]];
+    
+    [normalFontField setStringValue:[[ITAddressBookMgr fontWithDesc:[dict objectForKey:KEY_NORMAL_FONT]] displayName]];
+    if (normalFont) {
+        [normalFont release];
+    }
+    normalFont = [ITAddressBookMgr fontWithDesc:[dict objectForKey:KEY_NORMAL_FONT]];
+    [normalFont retain];
+    
+    [nonAsciiFontField setStringValue:[[ITAddressBookMgr fontWithDesc:[dict objectForKey:KEY_NON_ASCII_FONT]] displayName]];
+    if (nonAsciiFont) {
+        [nonAsciiFont release];
+    }
+    nonAsciiFont = [ITAddressBookMgr fontWithDesc:[dict objectForKey:KEY_NON_ASCII_FONT]];
+    [nonAsciiFont retain];
+    
+    [self _updateFontsDisplay];
+	
+	float horizontalSpacing = [[dict objectForKey:KEY_HORIZONTAL_SPACING] floatValue];
+	float verticalSpacing = [[dict objectForKey:KEY_VERTICAL_SPACING] floatValue];
+    
+	[displayFontSpacingWidth setFloatValue:horizontalSpacing];
+	[displayFontSpacingHeight setFloatValue:verticalSpacing];
+    [blinkingCursor setState:[[dict objectForKey:KEY_BLINKING_CURSOR] boolValue] ? NSOnState : NSOffState];
+    [disableBold setState:[[dict objectForKey:KEY_DISABLE_BOLD] boolValue] ? NSOnState : NSOffState];
+    [transparency setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
+    [blur setState:[[dict objectForKey:KEY_BLUR] boolValue] ? NSOnState : NSOffState];
+    [antiAliasing setState:[[dict objectForKey:KEY_ANTI_ALIASING] boolValue] ? NSOnState : NSOffState];
+    NSString* imageFilename = [dict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION];
+    if (!imageFilename) {
+        imageFilename = @"";
+    }
+    [backgroundImage setState:[imageFilename length] > 0 ? NSOnState : NSOffState];
+    [backgroundImagePreview setImage:[[NSImage alloc] initByReferencingFile:imageFilename]];
+    backgroundImageFilename = imageFilename;
+    
+	// Terminal tab
+    [disableWindowResizing setState:[[dict objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] ? NSOnState : NSOffState];
+    [syncTitle setState:[[dict objectForKey:KEY_SYNC_TITLE] boolValue] ? NSOnState : NSOffState];
+    [closeSessionsOnEnd setState:[[dict objectForKey:KEY_CLOSE_SESSIONS_ON_END] boolValue] ? NSOnState : NSOffState];
+    [nonAsciiDoubleWidth setState:[[dict objectForKey:KEY_TREAT_NON_ASCII_AS_DOUBLE_WIDTH] boolValue] ? NSOnState : NSOffState];
+    [silenceBell setState:[[dict objectForKey:KEY_SILENCE_BELL] boolValue] ? NSOnState : NSOffState];
+    [visualBell setState:[[dict objectForKey:KEY_VISUAL_BELL] boolValue] ? NSOnState : NSOffState];
+    [xtermMouseReporting setState:[[dict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue] ? NSOnState : NSOffState];
+    [bookmarkGrowlNotifications setState:[[dict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue] ? NSOnState : NSOffState];
+    [characterEncoding setTitle:[NSString localizedNameOfStringEncoding:[[dict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]]];
+    [scrollbackLines setIntValue:[[dict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
+    [terminalType setStringValue:[dict objectForKey:KEY_TERMINAL_TYPE]];
+    [sendCodeWhenIdle setState:[[dict objectForKey:KEY_SEND_CODE_WHEN_IDLE] boolValue] ? NSOnState : NSOffState];
+    [idleCode setIntValue:[[dict objectForKey:KEY_IDLE_CODE] intValue]];
+    
+	// Keyboard tab
+    int rowIndex = [keyMappings selectedRow];
+    if (rowIndex >= 0) {
+        [removeMappingButton setEnabled:YES];
+    } else {
+        [removeMappingButton setEnabled:NO];
+    } 
+    [keyMappings reloadData];
+    [optionKeySends selectCellWithTag:[[dict objectForKey:KEY_OPTION_KEY_SENDS] intValue]];
+    [tags setObjectValue:[dict objectForKey:KEY_TAGS]];
+    
+    // Epilogue
+    [bookmarksTableView reloadData];
+    [copyFromBookmarks reloadData];
+}
+
+- (void)_commonDisplaySelectFont:(id)sender
+{
+    // make sure we get the messages from the NSFontManager
+    [[self window] makeFirstResponder:self];
+    
+    NSFontPanel* aFontPanel = [[NSFontManager sharedFontManager] fontPanel: YES];
+    [aFontPanel setAccessoryView: displayFontAccessoryView];
+    [[NSFontManager sharedFontManager] setSelectedFont:(changingNAFont ? nonAsciiFont : normalFont) isMultiple:NO];
+    [[NSFontManager sharedFontManager] orderFrontFontPanel:self];
+}
+
+
+- (IBAction)displaySelectFont:(id)sender
+{
+	changingNAFont = [sender tag] == 1;
+    [self _commonDisplaySelectFont:sender];
+}
+
+// sent by NSFontManager up the responder chain
+- (void)changeFont:(id)fontManager
+{
+	if (changingNAFont) {
+        NSFont* oldFont = nonAsciiFont;
+        nonAsciiFont = [fontManager convertFont:oldFont];
+        [nonAsciiFont retain];
+        if (oldFont) {
+            [oldFont release];
+        }
+	} else {
+        NSFont* oldFont = normalFont;
+        normalFont = [fontManager convertFont:oldFont];
+        [normalFont retain];
+        if (oldFont) {
+            [oldFont release];
+        }
+    }
+         
+    [self bookmarkSettingChanged:fontManager];    
+}
+
+- (NSString*)_chooseBackgroundImage
+{
+    NSOpenPanel *panel;
+    int sts;
+    NSString *filename = nil;
+    
+    panel = [NSOpenPanel openPanel];
+    [panel setAllowsMultipleSelection: NO];
+    
+    sts = [panel runModalForDirectory: NSHomeDirectory() file:@"" types: [NSImage imageFileTypes]];
+    if (sts == NSOKButton) {
+		if ([[panel filenames] count] > 0) {
+			filename = [[panel filenames] objectAtIndex: 0];
+        }
+		
+		if ([filename length] > 0) {
+			NSImage *anImage = [[NSImage alloc] initWithContentsOfFile: filename];
+			if (anImage != nil) {
+				[backgroundImagePreview setImage:anImage];
+				[anImage release];
+				return filename;
+			} else {
+				[backgroundImage setState: NSOffState];
+            }
+		} else {
+			[backgroundImage setState: NSOffState];
+        }
+    } else {
+		[backgroundImage setState: NSOffState];
+    }
+	return nil;
+}
+
+- (IBAction)bookmarkSettingChanged:(id)sender
+{
+    NSString* name = [bookmarkName stringValue];
+    NSString* shortcut = [[bookmarkShortcutKey selectedItem] title];
+    NSString* command = [bookmarkCommand stringValue];
+    NSString* dir = [bookmarkDirectory stringValue];
+    NSString* customCommand = [[bookmarkCommandType selectedCell] tag] == 0 ? @"Yes" : @"No";
+    NSString* customDir = [[bookmarkDirectoryType selectedCell] tag] == 0 ? @"Yes" : @"No";
+        
+    NSString* guid = [bookmarksTableView selectedGuid];
+    if (!guid) {
+        return;
+    }
+    Bookmark* origBookmark = [dataSource bookmarkWithGuid:guid];
+    if (!origBookmark) {
+        return;
+    }
+    NSMutableDictionary* newDict = [[NSMutableDictionary alloc] init];
+    [newDict autorelease];
+    NSString* isDefault = [origBookmark objectForKey:KEY_DEFAULT_BOOKMARK];
+    if (!isDefault) {
+        isDefault = @"No";
+    }
+    [newDict setObject:isDefault forKey:KEY_DEFAULT_BOOKMARK];
+    [newDict setObject:name forKey:KEY_NAME];
+    [newDict setObject:guid forKey:KEY_GUID];
+    if (shortcut) {
+        [newDict setObject:shortcut forKey:KEY_SHORTCUT];
+    }
+    [newDict setObject:command forKey:KEY_COMMAND];
+    [newDict setObject:dir forKey:KEY_WORKING_DIRECTORY];
+    [newDict setObject:customCommand forKey:KEY_CUSTOM_COMMAND];
+    [newDict setObject:customDir forKey:KEY_CUSTOM_DIRECTORY];
+    
+    // Colors tab
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi0Color color]] forKey:KEY_ANSI_0_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi1Color color]] forKey:KEY_ANSI_1_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi2Color color]] forKey:KEY_ANSI_2_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi3Color color]] forKey:KEY_ANSI_3_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi4Color color]] forKey:KEY_ANSI_4_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi5Color color]] forKey:KEY_ANSI_5_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi6Color color]] forKey:KEY_ANSI_6_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi7Color color]] forKey:KEY_ANSI_7_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi8Color color]] forKey:KEY_ANSI_8_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi9Color color]] forKey:KEY_ANSI_9_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi10Color color]] forKey:KEY_ANSI_10_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi11Color color]] forKey:KEY_ANSI_11_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi12Color color]] forKey:KEY_ANSI_12_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi13Color color]] forKey:KEY_ANSI_13_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi14Color color]] forKey:KEY_ANSI_14_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[ansi15Color color]] forKey:KEY_ANSI_15_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[foregroundColor color]] forKey:KEY_FOREGROUND_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[backgroundColor color]] forKey:KEY_BACKGROUND_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[boldColor color]] forKey:KEY_BOLD_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[selectionColor color]] forKey:KEY_SELECTION_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[selectedTextColor color]] forKey:KEY_SELECTED_TEXT_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[cursorColor color]] forKey:KEY_CURSOR_COLOR];
+    [newDict setObject:[ITAddressBookMgr encodeColor:[cursorTextColor color]] forKey:KEY_CURSOR_TEXT_COLOR];
+    
+    // Display tab
+    int rows, cols;
+    rows = [rowsField intValue];
+    cols = [columnsField intValue];
+    if (cols > 0) {
+        [newDict setObject:[NSNumber numberWithInt:cols] forKey:KEY_COLUMNS];
+    }
+    if (rows > 0) {
+        [newDict setObject:[NSNumber numberWithInt:rows] forKey:KEY_ROWS];
+    }
+    
+    [newDict setObject:[NSString stringWithFormat:@"%s %g", [[normalFont fontName] UTF8String], [normalFont pointSize]] forKey:KEY_NORMAL_FONT];
+    [newDict setObject:[NSString stringWithFormat:@"%s %g", [[nonAsciiFont fontName] UTF8String], [nonAsciiFont pointSize]] forKey:KEY_NON_ASCII_FONT];
+    [newDict setObject:[NSNumber numberWithFloat:[displayFontSpacingWidth floatValue]] forKey:KEY_HORIZONTAL_SPACING];
+    [newDict setObject:[NSNumber numberWithFloat:[displayFontSpacingHeight floatValue]] forKey:KEY_VERTICAL_SPACING];
+    [newDict setObject:[NSNumber numberWithBool:([blinkingCursor state]==NSOnState)] forKey:KEY_BLINKING_CURSOR];
+    [newDict setObject:[NSNumber numberWithBool:([disableBold state]==NSOnState)] forKey:KEY_DISABLE_BOLD];
+    [newDict setObject:[NSNumber numberWithFloat:[transparency floatValue]] forKey:KEY_TRANSPARENCY];
+    [newDict setObject:[NSNumber numberWithBool:([blur state]==NSOnState)] forKey:KEY_BLUR];
+    [newDict setObject:[NSNumber numberWithBool:([antiAliasing state]==NSOnState)] forKey:KEY_ANTI_ALIASING];
+    [self _updateFontsDisplay];
+
+    if (sender == backgroundImage) {
+        NSString* filename = nil;
+		if ([sender state] == NSOnState) {
+			filename = [self _chooseBackgroundImage];
+        }
+        if (!filename) {
+			[backgroundImagePreview setImage: nil];
+            filename = @"";
+        }
+        backgroundImageFilename = filename;
+    }
+    [newDict setObject:backgroundImageFilename forKey:KEY_BACKGROUND_IMAGE_LOCATION];
+    
+    // Terminal tab
+    [newDict setObject:[NSNumber numberWithBool:([disableWindowResizing state]==NSOnState)] forKey:KEY_DISABLE_WINDOW_RESIZING];
+    [newDict setObject:[NSNumber numberWithBool:([syncTitle state]==NSOnState)] forKey:KEY_SYNC_TITLE];
+    [newDict setObject:[NSNumber numberWithBool:([closeSessionsOnEnd state]==NSOnState)] forKey:KEY_CLOSE_SESSIONS_ON_END];
+    [newDict setObject:[NSNumber numberWithBool:([nonAsciiDoubleWidth state]==NSOnState)] forKey:KEY_TREAT_NON_ASCII_AS_DOUBLE_WIDTH];
+    [newDict setObject:[NSNumber numberWithBool:([silenceBell state]==NSOnState)] forKey:KEY_SILENCE_BELL];
+    [newDict setObject:[NSNumber numberWithBool:([visualBell state]==NSOnState)] forKey:KEY_VISUAL_BELL];
+    [newDict setObject:[NSNumber numberWithBool:([xtermMouseReporting state]==NSOnState)] forKey:KEY_XTERM_MOUSE_REPORTING];
+    [newDict setObject:[NSNumber numberWithBool:([bookmarkGrowlNotifications state]==NSOnState)] forKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS];
+    [newDict setObject:[NSNumber numberWithUnsignedInt:[[characterEncoding selectedItem] tag]] forKey:KEY_CHARACTER_ENCODING];
+    [newDict setObject:[NSNumber numberWithInt:[scrollbackLines intValue]] forKey:KEY_SCROLLBACK_LINES];
+    [newDict setObject:[terminalType stringValue] forKey:KEY_TERMINAL_TYPE];
+    [newDict setObject:[NSNumber numberWithBool:([sendCodeWhenIdle state]==NSOnState)] forKey:KEY_SEND_CODE_WHEN_IDLE];
+    [newDict setObject:[NSNumber numberWithInt:[idleCode intValue]] forKey:KEY_IDLE_CODE];
+    
+    // Keyboard tab
+    [newDict setObject:[origBookmark objectForKey:KEY_KEYBOARD_MAP] forKey:KEY_KEYBOARD_MAP];
+    [newDict setObject:[NSNumber numberWithInt:[[optionKeySends selectedCell] tag]] forKey:KEY_OPTION_KEY_SENDS];
+    [newDict setObject:[tags objectValue] forKey:KEY_TAGS];
+    
+    // Epilogue
+    [dataSource setBookmark:newDict withGuid:guid];
+    [bookmarksTableView reloadData];
+
+    // Update existing sessions
+    int n = [[iTermController sharedInstance] numberOfTerminals];
+    for (int i = 0; i < n; ++i) {
+        PseudoTerminal* pty = [[iTermController sharedInstance] terminalAtIndex:i];
+        [pty reloadBookmarks];
+    }
+    [[NSUserDefaults standardUserDefaults] setObject:[dataSource rawData] forKey: @"New Bookmarks"];
+}
+
+- (void)bookmarkTableSelectionWillChange:(id)aBookmarkTableView
+{
+    [self bookmarkSettingChanged:nil];
+}
+
+- (void)bookmarkTableSelectionDidChange:(id)bookmarkTable
+{
+    // General tab
+    // Save everything just to be sure.
+    NSString* guid = [bookmarksTableView selectedGuid];
+    if (!guid) {
+        [bookmarksSettingsTabViewParent setHidden:YES];
+    } else {
+        [bookmarksSettingsTabViewParent setHidden:NO];
+    }
+    if (bookmarkTable == bookmarksTableView) {
+        [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
+    }
+}
+
+- (void)bookmarkTableRowSelected:(id)bookmarkTable
+{
+    // Do nothing for double click
 }
 
 // NSTableView delegate
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
 {
-    int i;
-    
     //NSLog(@"%s", __PRETTY_FUNCTION__);
-    if ((i=[urlTable selectedRow])<0) 
-        [urlHandlerOutline deselectAll:nil];
-    else {
-        id temp = [urlHandlers objectForKey: [urlTypes objectAtIndex: i]];
-        if (temp) {
-            [urlHandlerOutline selectRow: [urlHandlerOutline rowForItem: temp] byExtendingSelection:NO];
+    if ([aNotification object] == keyMappings) {
+        int rowIndex = [keyMappings selectedRow];
+        if (rowIndex >= 0) {
+            [removeMappingButton setEnabled:YES];
+        } else {
+            [removeMappingButton setEnabled:NO];
         }
-        else {
-            [urlHandlerOutline selectRow: 0 byExtendingSelection:NO];
+    } else if ([aNotification object] == urlTable) {
+        int i = [urlTable selectedRow];
+        if (i < 0) {
+            [bookmarksForUrlsTable deselectAll];
+        } else {
+            NSString* guid = [urlHandlersByGuid objectForKey:[urlTypes objectAtIndex:i]];
+            if (guid) {
+                [bookmarksForUrlsTable selectRowByGuid:guid];
+            } else {
+                [bookmarksForUrlsTable deselectAll];
+            }
         }
-        [urlHandlerOutline scrollRowToVisible: [urlHandlerOutline selectedRow]];
     }
 }
 
-// NSOutlineView delegate methods
-- (void) outlineViewSelectionDidChange: (NSNotification *) aNotification
+- (IBAction)showGlobalTabView:(id)sender
 {
+    [tabView selectTabViewItem:globalTabViewItem];
 }
 
-// NSOutlineView data source methods
-// required
-- (id)outlineView:(NSOutlineView *)ov child:(int)index ofItem:(id)item
+- (IBAction)showBookmarksTabView:(id)sender
 {
-    //NSLog(@"%s", __PRETTY_FUNCTION__);
-    if (item)
-        return [[ITAddressBookMgr sharedInstance] child:index ofItem: item];
-    else if (index)
-        return [[ITAddressBookMgr sharedInstance] child:index-1 ofItem: item];
-    else
-        return NoHandler;
+    [tabView selectTabViewItem:bookmarksTabViewItem];
 }
 
-- (BOOL)outlineView:(NSOutlineView *)ov isItemExpandable:(id)item
+- (IBAction)showAdvancedTabView:(id)sender
 {
-    //NSLog(@"%s", __PRETTY_FUNCTION__);
-    if ([item isKindOfClass:[NSString class]])
-        return NO;
-    else
-        return [[ITAddressBookMgr sharedInstance] isExpandable: item];
-}
-
-- (int)outlineView:(NSOutlineView *)ov numberOfChildrenOfItem:(id)item
-{
-    //NSLog(@"%s: ov = 0x%x; item = 0x%x; numChildren: %d", __PRETTY_FUNCTION__, ov, item,
-    //      [[ITAddressBookMgr sharedInstance] numberOfChildrenOfItem: item]);
-    if (item)
-        return [[ITAddressBookMgr sharedInstance] numberOfChildrenOfItem: item];
-    else
-        return [[ITAddressBookMgr sharedInstance] numberOfChildrenOfItem: item] + 1;
-}
-
-- (id)outlineView:(NSOutlineView *)ov objectValueForTableColumn:(NSTableColumn *)tableColumn byItem:(id)item
-{
-    //NSLog(@"%s: outlineView = 0x%x; item = %@; column= %@", __PRETTY_FUNCTION__, ov, item, [tableColumn identifier]);
-    // item should be a tree node witha dictionary data object
-    if ([item isKindOfClass:[NSString class]])
-        return item;
-    else
-        return [[ITAddressBookMgr sharedInstance] objectForKey:@"Name" inItem: item];
-}
-
-- (BOOL)outlineView:(NSOutlineView *)outlineView shouldEditTableColumn:(NSTableColumn *)tableColumn item:(id)item
-{
-    return NO;
+    [tabView selectTabViewItem:advancedTabViewItem];
 }
 
 - (IBAction)connectURL:(id)sender
 {
     int i, j;
 
-    if ((i=[urlTable selectedRow])<0 ||(j=[urlHandlerOutline selectedRow])<0) return;
-    if (!j) { // No Handler
-        [urlHandlers removeObjectForKey:[urlTypes objectAtIndex: i]];
+    i = [urlTable selectedRow];
+    j = [bookmarksForUrlsTable selectedRow];
+    if (i < 0) {
+        return;
     }
-    else {
-        [urlHandlers setObject:[urlHandlerOutline itemAtRow:j] forKey: [urlTypes objectAtIndex: i]];
+    if (j < 0) {
+        // No Handler selected
+        [urlHandlersByGuid removeObjectForKey:[urlTypes objectAtIndex: i]];
+    } else {
+        Bookmark* bookmark = 
+            [dataSource 
+                bookmarkAtIndex:[bookmarksForUrlsTable selectedRow]];
+        [urlHandlersByGuid setObject:[bookmark objectForKey:KEY_GUID] 
+                              forKey:[urlTypes objectAtIndex:i]];
         
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
         NSURL *appURL = nil;
         OSStatus err;
         BOOL set = NO;
         
-        err = LSGetApplicationForURL((CFURLRef)[NSURL URLWithString:[[urlTypes objectAtIndex: i] stringByAppendingString:@":"]], kLSRolesAll, NULL, (CFURLRef *)&appURL);
+        err = LSGetApplicationForURL(
+            (CFURLRef)[NSURL URLWithString:[[urlTypes objectAtIndex: i] stringByAppendingString:@":"]], 
+                                     kLSRolesAll, NULL, (CFURLRef *)&appURL);
         if (err != noErr) {
-            set = NSRunAlertPanel([NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"iTerm is not the default handler for %@. Would you like to set iTerm as the default handler?", @"iTerm", [NSBundle bundleForClass: [self class]], @"URL Handler"), [urlTypes objectAtIndex: i]],
-                                  NSLocalizedStringFromTableInBundle(@"There is no handler currently.",@"iTerm", [NSBundle bundleForClass: [self class]], @"URL Handler"),
-                                  NSLocalizedStringFromTableInBundle(@"OK",@"iTerm", [NSBundle bundleForClass: [self class]], @"OK"),
-                                  NSLocalizedStringFromTableInBundle(@"Cancel",@"iTerm", [NSBundle bundleForClass: [self class]], @"Cancel")
-                                  ,nil) == NSAlertDefaultReturn;
+            set = NSRunAlertPanel(
+                [NSString stringWithFormat:NSLocalizedStringFromTableInBundle(
+                    @"iTerm is not the default handler for %@. Would you like to set iTerm as the default handler?", 
+                    @"iTerm", 
+                    [NSBundle bundleForClass: [self class]], 
+                    @"URL Handler"), [urlTypes objectAtIndex: i]],
+                NSLocalizedStringFromTableInBundle(
+                    @"There is no handler currently.",
+                    @"iTerm", 
+                    [NSBundle bundleForClass: [self class]], 
+                    @"URL Handler"),
+                NSLocalizedStringFromTableInBundle(
+                    @"OK",
+                    @"iTerm", 
+                    [NSBundle bundleForClass: [self class]], 
+                    @"OK"),
+                NSLocalizedStringFromTableInBundle(
+                    @"Cancel",
+                    @"iTerm", 
+                    [NSBundle bundleForClass: [self class]], 
+                    @"Cancel"),
+                nil) == NSAlertDefaultReturn;
         }
         else if (![[[NSFileManager defaultManager] displayNameAtPath:[appURL path]] isEqualToString:@"iTerm"]) {
-            set = NSRunAlertPanel([NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"iTerm is not the default handler for %@. Would you like to set iTerm as the default handler?", @"iTerm", [NSBundle bundleForClass: [self class]], @"URL Handler"), [urlTypes objectAtIndex: i]],
-                                  [NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"The current handler is: %@" ,@"iTerm", [NSBundle bundleForClass: [self class]], @"URL Handler"), [[NSFileManager defaultManager] displayNameAtPath:[appURL path]]],
-                                  NSLocalizedStringFromTableInBundle(@"OK",@"iTerm", [NSBundle bundleForClass: [self class]], @"OK"),
-                                  NSLocalizedStringFromTableInBundle(@"Cancel",@"iTerm", [NSBundle bundleForClass: [self class]], @"Cancel")
-                                  ,nil) == NSAlertDefaultReturn;
+            set = NSRunAlertPanel(
+                [NSString stringWithFormat:NSLocalizedStringFromTableInBundle(
+                    @"iTerm is not the default handler for %@. Would you like to set iTerm as the default handler?", 
+                    @"iTerm", 
+                    [NSBundle bundleForClass: [self class]], 
+                    @"URL Handler"), 
+                [urlTypes objectAtIndex: i]],
+                [NSString stringWithFormat:NSLocalizedStringFromTableInBundle(
+                    @"The current handler is: %@",
+                    @"iTerm", 
+                    [NSBundle bundleForClass: [self class]], 
+                    @"URL Handler"), 
+                [[NSFileManager defaultManager] displayNameAtPath:[appURL path]]],
+                NSLocalizedStringFromTableInBundle(
+                    @"OK",
+                    @"iTerm", 
+                    [NSBundle bundleForClass: [self class]], 
+                    @"OK"),
+                NSLocalizedStringFromTableInBundle(
+                    @"Cancel",
+                    @"iTerm", 
+                    [NSBundle bundleForClass: [self class]], 
+                    @"Cancel")
+                ,nil) == NSAlertDefaultReturn;
         }
             
         if (set) {
               LSSetDefaultHandlerForURLScheme ((CFStringRef)[urlTypes objectAtIndex: i],(CFStringRef)[[NSBundle mainBundle] bundleIdentifier]);
         }
-#endif
     }
     //NSLog(@"urlHandlers:%@", urlHandlers);
 }
@@ -662,11 +1348,452 @@ static NSString *NoHandler = @"<No Handler>";
     [[self window] close];
 }
 
-
 // NSTextField delegate
 - (void)controlTextDidChange:(NSNotification *)aNotification
 {
-    defaultWordChars = [[wordChars stringValue] retain];
+    id obj = [aNotification object];
+    if (obj == wordChars) {
+        defaultWordChars = [[wordChars stringValue] retain];
+    } else if (obj == bookmarkName ||
+               obj == columnsField ||
+               obj == rowsField ||
+               obj == scrollbackLines ||
+               obj == terminalType ||
+               obj == idleCode) {
+        [self bookmarkSettingChanged:nil];
+    } else if (obj == tagFilter) {
+        NSLog(@"Tag filter changed");
+    }
+}
+
+- (void)textDidChange:(NSNotification *)aNotification
+{
+    [self bookmarkSettingChanged:nil];
+}
+
+- (BOOL)onScreen
+{
+    return [self window] && [[self window] isVisible];
+}
+
+- (NSTextField*)shortcutKeyTextField
+{
+    return keyPress;
+}
+
+- (void)shortcutKeyDown:(NSEvent*)event
+{
+    unsigned int keyMods;
+    unsigned short keyCode;
+    NSString *unmodkeystr;
+
+    keyMods = [event modifierFlags];
+    unmodkeystr = [event charactersIgnoringModifiers];
+    keyCode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+
+    // turn off all the other modifier bits we don't care about
+    unsigned int theModifiers = keyMods & 
+        (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | 
+         NSCommandKeyMask | NSNumericPadKeyMask);
+	
+	// on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
+	if (keyCode >= NSUpArrowFunctionKey && 
+        keyCode <= NSRightArrowFunctionKey) {
+		theModifiers |= NSNumericPadKeyMask;
+    }
+    if (keyString) {
+        [keyString release];
+    }
+    keyString = [[NSString stringWithFormat:@"0x%x-0x%x", keyCode, 
+                               theModifiers] retain];
+    
+    [keyPress setStringValue:[iTermKeyBindingMgr formatKeyCombination:keyString]];
+}
+
+- (void)updateValueToSend
+{
+    int tag = [[action selectedItem] tag];
+    if (tag == 1) {
+        [valueToSend setHidden:NO];
+        [[valueToSend cell] setPlaceholderString:@"ex: 0x7f"];
+        [escPlus setHidden:YES];
+    } else if (tag == 2) {
+        [valueToSend setHidden:NO];
+        [[valueToSend cell] setPlaceholderString:@"Enter value to send"];
+        [escPlus setHidden:YES];
+    } else if (tag == 3) {
+        [valueToSend setHidden:NO];
+        [[valueToSend cell] setPlaceholderString:@"characters to send"];
+        [escPlus setHidden:NO];
+    } else {
+        [valueToSend setHidden:YES];
+        [valueToSend setStringValue:@""];
+        [escPlus setHidden:YES];
+    }
+}
+
+- (IBAction)actionChanged:(id)sender
+{
+    [self updateValueToSend];
+}
+
+- (NSWindow*)keySheet
+{
+    return editKeyMappingWindow;
+}
+
+- (IBAction)addNewMapping:(id)sender
+{
+    if (keyString) {
+        [keyString release];
+    }
+    [keyPress setStringValue:@""];
+    keyString = [[NSString alloc] init];
+    [action selectItemAtIndex:0];
+    [valueToSend setStringValue:@""];
+    [self updateValueToSend];
+    newMapping = YES;
+    
+    [NSApp beginSheet:editKeyMappingWindow
+       modalForWindow:[self window]
+        modalDelegate:self
+       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
+          contextInfo:nil];        
+}
+
+- (IBAction)removeMapping:(id)sender
+{
+    NSString* guid = [bookmarksTableView selectedGuid];
+    if (!guid) {
+        NSBeep();
+        return;
+    }
+    NSMutableDictionary* tempDict = [NSMutableDictionary dictionaryWithDictionary:[dataSource bookmarkWithGuid:guid]];
+    NSAssert(tempDict, @"Can't find node");
+    [iTermKeyBindingMgr removeMappingAtIndex:[keyMappings selectedRow] inBookmark:tempDict];
+    [dataSource setBookmark:tempDict withGuid:guid];
+    [keyMappings reloadData];
+}
+
+- (void)setKeyMappingsToPreset:(NSString*)presetName
+{
+    NSString* guid = [bookmarksTableView selectedGuid];
+    NSAssert(guid, @"Null guid unexpected here");
+    NSMutableDictionary* tempDict = [NSMutableDictionary dictionaryWithDictionary:[dataSource bookmarkWithGuid:guid]];
+    NSAssert(tempDict, @"Can't find node");
+    [iTermKeyBindingMgr setKeyMappingsToPreset:presetName inBookmark:tempDict];
+    [dataSource setBookmark:tempDict withGuid:guid];
+    [keyMappings reloadData];
+    [self bookmarkSettingChanged:nil];
+}
+
+- (IBAction)useBasicKeyMappings:(id)sender
+{
+    [self setKeyMappingsToPreset:@"Basic Defaults"];
+}
+
+- (IBAction)useXtermKeyMappings:(id)sender
+{    
+    [self setKeyMappingsToPreset:@"xterm Defaults"];
+}
+
+- (void)_loadPresetColors:(NSString*)presetName
+{
+    NSString* guid = [bookmarksTableView selectedGuid];
+    NSAssert(guid, @"Null guid unexpected here");
+    
+ 	NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"ColorPresets" 
+                                                                            ofType:@"plist"];   
+    NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
+    NSDictionary* settings = [presetsDict objectForKey:presetName];
+    NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:[dataSource bookmarkWithGuid:guid]];
+    
+    for (id colorName in settings) {
+        NSDictionary* preset = [settings objectForKey:colorName];
+        float r = [[preset objectForKey:@"Red Component"] floatValue];
+        float g = [[preset objectForKey:@"Green Component"] floatValue];
+        float b = [[preset objectForKey:@"Blue Component"] floatValue];
+        NSColor* color = [NSColor colorWithCalibratedRed:r green:g blue:b alpha:1];
+        NSAssert([newDict objectForKey:colorName], @"Missing color in existing dict");
+        [newDict setObject:[ITAddressBookMgr encodeColor:color] forKey:colorName];
+    }
+    
+    [dataSource setBookmark:newDict withGuid:guid];
+    [self updateBookmarkFields:newDict];
+    [self bookmarkSettingChanged:self];  // this causes existing sessions to be updated
+}
+
+- (IBAction)loadLightBackgroundPreset:(id)sender
+{
+    [self _loadPresetColors:@"Light Background"];
+}
+
+- (IBAction)loadDarkBackgroundPreset:(id)sender
+{
+    [self _loadPresetColors:@"Dark Background"];
+}
+
+- (IBAction)addBookmark:(id)sender
+{
+    NSMutableDictionary* newDict = [[NSMutableDictionary alloc] init];
+    // Copy the default bookmark's settings in
+    Bookmark* prototype = [dataSource defaultBookmark];
+    if (!prototype) {
+        [ITAddressBookMgr setDefaultsInBookmark:newDict];
+    } else {
+        [newDict setValuesForKeysWithDictionary:[dataSource defaultBookmark]];
+    }
+    [newDict setObject:@"New Bookmark" forKey:KEY_NAME];
+    [newDict setObject:@"" forKey:KEY_SHORTCUT];
+    NSString* guid = [BookmarkModel newGuid];
+    [newDict setObject:guid forKey:KEY_GUID];
+    [newDict setObject:[NSArray arrayWithObjects:nil] forKey:KEY_TAGS];
+    if ([[BookmarkModel sharedInstance] bookmark:newDict hasTag:@"bonjour"]) {
+        [newDict removeObjectForKey:KEY_BONJOUR_GROUP];
+        [newDict removeObjectForKey:KEY_BONJOUR_SERVICE];
+        [newDict removeObjectForKey:KEY_BONJOUR_SERVICE_ADDRESS];
+        [newDict setObject:@"" forKey:KEY_COMMAND];
+        [newDict setObject:@"No" forKey:KEY_CUSTOM_COMMAND];
+        [newDict setObject:@"" forKey:KEY_WORKING_DIRECTORY];
+        [newDict setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
+    }
+    [dataSource addBookmark:newDict];
+    [bookmarksTableView reloadData];
+    [bookmarksTableView eraseQuery];
+    [bookmarksTableView selectRowByGuid:guid];
+}
+
+- (IBAction)removeBookmark:(id)sender
+{
+    if ([dataSource numberOfBookmarks] == 1) {
+        NSBeep();
+    } else {
+        NSString* guid = [bookmarksTableView selectedGuid];
+        if (!guid) {
+            NSBeep();
+            return;
+        }
+        [dataSource removeBookmarkWithGuid:guid];
+        [bookmarksTableView reloadData];
+    }
+}
+
+- (IBAction)setAsDefault:(id)sender
+{
+    NSString* guid = [bookmarksTableView selectedGuid];
+    if (!guid) {
+        NSBeep();
+        return;
+    }
+    [dataSource setDefaultByGuid:guid];
+}
+
+- (IBAction)duplicateBookmark:(id)sender
+{
+    NSString* guid = [bookmarksTableView selectedGuid];
+    if (!guid) {
+        NSBeep();
+        return;
+    }
+    Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
+    NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
+    NSString* newName = [NSString stringWithFormat:@"Copy of %@", [newDict objectForKey:KEY_NAME]];
+    
+    [newDict setObject:newName forKey:KEY_NAME];
+    [newDict setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
+    [newDict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
+    [dataSource addBookmark:newDict];
+    [bookmarksTableView reloadData];
+    // TODO: Make sure the right thing is selected regardless of query
+    //[bookmarksTableView selectRowIndex:[bookmarksTableView numberOfRows]-1];
+}
+
+- (NSArray *)tokenField:(NSTokenField *)tokenField 
+completionsForSubstring:(NSString *)substring 
+           indexOfToken:(NSInteger)tokenIndex 
+    indexOfSelectedItem:(NSInteger *)selectedIndex
+{
+    if (tokenField == tags) {
+        NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
+        int numBookmarks = [dataSource numberOfBookmarks];
+        for (int i = 0; i < numBookmarks; ++i) {
+            NSDictionary* bmDict = [dataSource bookmarkAtIndex:i];
+            NSArray* bmTags = [bmDict objectForKey:KEY_TAGS];
+            for (int j = 0; j < [bmTags count]; ++j) {
+                NSString* aTag = [bmTags objectAtIndex:j];
+                if ([aTag hasPrefix:substring]) {
+                    [temp setObject:@"" forKey:aTag];
+                }
+            }
+        }
+        NSMutableArray* result = [[NSMutableArray alloc] init];
+        for (NSString* aTag in temp) {
+            [result addObject:[aTag retain]];
+        }
+        return result;
+    }
+    return nil;
+}
+
+- (IBAction)doCopyFrom:(id)sender
+{
+    NSString* guid = [bookmarksTableView selectedGuid];
+    if (!guid) {
+        NSBeep();
+        return;
+    }
+    Bookmark* dest = [dataSource bookmarkWithGuid:guid];
+    guid = [copyFromBookmarks selectedGuid];
+    if (!guid) {
+        NSBeep();
+        [self cancelCopyFrom:self];
+    }
+    Bookmark* src = [dataSource bookmarkWithGuid:guid];
+    NSMutableDictionary* newDict = [[NSMutableDictionary alloc] initWithDictionary:dest];
+    NSString** keys;
+    if ([copyTo isEqualToString:@"colors"]) {
+        NSString* colorsKeys[] = {
+            KEY_FOREGROUND_COLOR,
+            KEY_BACKGROUND_COLOR,
+            KEY_BOLD_COLOR,
+            KEY_SELECTION_COLOR,
+            KEY_SELECTED_TEXT_COLOR,
+            KEY_CURSOR_COLOR,
+            KEY_CURSOR_TEXT_COLOR,
+            KEY_ANSI_0_COLOR,
+            KEY_ANSI_1_COLOR,
+            KEY_ANSI_2_COLOR,
+            KEY_ANSI_3_COLOR,
+            KEY_ANSI_4_COLOR,
+            KEY_ANSI_5_COLOR,
+            KEY_ANSI_6_COLOR,
+            KEY_ANSI_7_COLOR,
+            KEY_ANSI_8_COLOR,
+            KEY_ANSI_9_COLOR,
+            KEY_ANSI_10_COLOR,
+            KEY_ANSI_11_COLOR,
+            KEY_ANSI_12_COLOR,
+            KEY_ANSI_13_COLOR,
+            KEY_ANSI_14_COLOR,
+            KEY_ANSI_15_COLOR,
+            nil
+        };
+        keys = colorsKeys;
+    } else if ([copyTo isEqualToString:@"display"]) {
+        NSString* displayKeys[] = {
+            KEY_ROWS,                  
+            KEY_COLUMNS,               
+            KEY_NORMAL_FONT,           
+            KEY_NON_ASCII_FONT,        
+            KEY_HORIZONTAL_SPACING,    
+            KEY_VERTICAL_SPACING,      
+            KEY_BLINKING_CURSOR,       
+            KEY_DISABLE_BOLD,          
+            KEY_TRANSPARENCY,          
+            KEY_BLUR,                  
+            KEY_ANTI_ALIASING,         
+            KEY_BACKGROUND_IMAGE_LOCATION,
+            nil
+        };
+        keys = displayKeys;
+    } else if ([copyTo isEqualToString:@"terminal"]) {
+        NSString* terminalKeys[] = {
+            KEY_DISABLE_WINDOW_RESIZING,          
+            KEY_SYNC_TITLE,                       
+            KEY_CLOSE_SESSIONS_ON_END,            
+            KEY_TREAT_NON_ASCII_AS_DOUBLE_WIDTH,  
+            KEY_SILENCE_BELL,                     
+            KEY_VISUAL_BELL,                      
+            KEY_XTERM_MOUSE_REPORTING,            
+            KEY_BOOKMARK_GROWL_NOTIFICATIONS,     
+            KEY_CHARACTER_ENCODING,               
+            KEY_SCROLLBACK_LINES,                 
+            KEY_TERMINAL_TYPE,                    
+            KEY_SEND_CODE_WHEN_IDLE,              
+            KEY_IDLE_CODE,
+            nil
+        };
+        keys = terminalKeys;
+    } else if ([copyTo isEqualToString:@"keyboard"]) {
+        NSString* keyboardKeys[] = {
+            KEY_KEYBOARD_MAP,
+            KEY_OPTION_KEY_SENDS,
+            nil
+        };
+        keys = keyboardKeys;
+    }
+    for (int i = 0; keys[i]; ++i) {
+        id srcValue = [src objectForKey:keys[i]];
+        if (srcValue) {
+            [newDict setObject:srcValue forKey:keys[i]];
+        } else {
+            [newDict removeObjectForKey:keys[i]];
+        }
+    }
+    [dataSource setBookmark:newDict 
+                                       withGuid:[bookmarksTableView selectedGuid]];
+    [self updateBookmarkFields:newDict];
+    [NSApp endSheet:copyFromView];
+}
+
+- (IBAction)cancelCopyFrom:(id)sender
+{
+    [NSApp endSheet:copyFromView];    
+}
+
+- (IBAction)openCopyFromColors:(id)sender
+{
+    copyTo = @"colors";
+    [NSApp beginSheet:copyFromView
+       modalForWindow:[self window]
+        modalDelegate:self
+       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
+          contextInfo:nil];            
+}
+
+- (IBAction)openCopyFromDisplay:(id)sender
+{
+    copyTo = @"display";
+    [NSApp beginSheet:copyFromView
+       modalForWindow:[self window]
+        modalDelegate:self
+       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
+          contextInfo:nil];            
+}
+
+- (IBAction)openCopyFromTerminal:(id)sender
+{
+    copyTo = @"terminal";
+    [NSApp beginSheet:copyFromView
+       modalForWindow:[self window]
+        modalDelegate:self
+       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
+          contextInfo:nil];            
+}
+
+- (IBAction)openCopyFromKeyboard:(id)sender
+{
+    copyTo = @"keyboard";
+    [NSApp beginSheet:copyFromView
+       modalForWindow:[self window]
+        modalDelegate:self
+       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
+          contextInfo:nil];            
+}
+
+- (void)showBookmarks
+{
+    [tabView selectTabViewItem:bookmarksTabViewItem];
+    [toolbar setSelectedItemIdentifier:bookmarksToolbarId];
+}
+
+// TODO(georgen): Have one-bookmark mode hide all the basics except name and have it
+// update the tab title when the name is changed.
+- (void)openToBookmark:(NSString*)guid
+{
+    [self run];
+    [self showBookmarks];
+    [bookmarksTableView selectRowByGuid:guid];
 }
 
 @end
@@ -674,9 +1801,9 @@ static NSString *NoHandler = @"<No Handler>";
 
 @implementation PreferencePanel (Private)
 
-- (void) _reloadURLHandlers: (NSNotification *) aNotification
+- (void)_reloadURLHandlers:(NSNotification *)aNotification
 {
-    [urlHandlerOutline reloadData];
+    [bookmarksForUrlsTable reloadData];
 }
 
 @end

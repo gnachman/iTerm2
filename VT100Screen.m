@@ -44,7 +44,7 @@
 #import <iTerm/PreferencePanel.h>
 #import "iTermApplicationDelegate.h"
 #import <iTerm/iTermGrowlDelegate.h>
-#import <iTerm/iTermTerminalProfileMgr.h>
+#import <iTerm/ITAddressBookMgr.h>
 #include <string.h>
 #include <unistd.h>
 #include <LineBuffer.h>
@@ -751,12 +751,14 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     case VT100_STRING:
     case VT100_ASCIISTRING:
         // check if we are in print mode
-        if([self printToAnsi] == YES)
+        if ([self printToAnsi] == YES) {
             [self printStringToAnsi: token.u.string];
-        // else display string on screen
-        else
+        } else {
+            // else display string on screen
             [self setString:token.u.string ascii: token.type == VT100_ASCIISTRING];
+        }
         break;
+    
     case VT100_UNKNOWNCHAR: break;
     case VT100_NOTSUPPORT: break;
 
@@ -872,7 +874,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
     case VT100CSI_DECSET:
     case VT100CSI_DECRST:
-        if (token.u.csi.p[0]==3 && [TERMINAL allowColumnMode] == YES && ![[iTermTerminalProfileMgr singleInstance] noResizingForProfile: [[SESSION addressBookEntry] objectForKey: @"Terminal Profile"]]) {
+        if (token.u.csi.p[0]==3 && [TERMINAL allowColumnMode] == YES && 
+            ![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue]) {
             // set the column
             [[SESSION parent] resizeWindow:[TERMINAL columnMode]?132:80 height:HEIGHT];
             token.u.csi.p[0]=2; [self eraseInDisplay:token]; //erase the screen
@@ -948,21 +951,24 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     // XTERM extensions
     case XTERMCC_WIN_TITLE:
         newTitle = [[token.u.string copy] autorelease];
-        if ([[iTermTerminalProfileMgr singleInstance] appendTitleForProfile: [[SESSION addressBookEntry] objectForKey: @"Terminal Profile"]]) 
+        if ([[[SESSION addressBookEntry] objectForKey:KEY_SYNC_TITLE] boolValue]) {
             newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION defaultName], newTitle];
+        }
         [SESSION setWindowTitle: newTitle];
         break;
     case XTERMCC_WINICON_TITLE:
         newTitle = [[token.u.string copy] autorelease];
-        if ([[iTermTerminalProfileMgr singleInstance] appendTitleForProfile: [[SESSION addressBookEntry] objectForKey: @"Terminal Profile"]]) 
+        if ([[[SESSION addressBookEntry] objectForKey:KEY_SYNC_TITLE] boolValue]) {
             newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION defaultName], newTitle];
+        }
         [SESSION setWindowTitle: newTitle];
         [SESSION setName: newTitle];
         break;
     case XTERMCC_ICON_TITLE:
         newTitle = [[token.u.string copy] autorelease];
-        if ([[iTermTerminalProfileMgr singleInstance] appendTitleForProfile: [[SESSION addressBookEntry] objectForKey: @"Terminal Profile"]]) 
+        if ([[[SESSION addressBookEntry] objectForKey:KEY_SYNC_TITLE] boolValue]) {
             newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION defaultName], newTitle];
+        }
         [SESSION setName: newTitle];
         break;
     case XTERMCC_INSBLNK: [self insertBlank:token.u.csi.p[0]]; break;
@@ -971,19 +977,22 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     case XTERMCC_DELLN: [self deleteLines:token.u.csi.p[0]]; break;
     case XTERMCC_WINDOWSIZE:
         //NSLog(@"setting window size from (%d, %d) to (%d, %d)", WIDTH, HEIGHT, token.u.csi.p[1], token.u.csi.p[2]);
-        if (![[iTermTerminalProfileMgr singleInstance] noResizingForProfile: [[SESSION addressBookEntry] objectForKey: @"Terminal Profile"]] && ![[SESSION parent] fullScreen]) {
+        if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] && 
+            ![[SESSION parent] fullScreen]) {
             // set the column
             [[SESSION parent] resizeWindow:token.u.csi.p[2] height:token.u.csi.p[1]];
         }
         break;
     case XTERMCC_WINDOWSIZE_PIXEL:
-        if (![[iTermTerminalProfileMgr singleInstance] noResizingForProfile: [[SESSION addressBookEntry] objectForKey: @"Terminal Profile"]] && ![[SESSION parent] fullScreen]) {
+        if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] && 
+            ![[SESSION parent] fullScreen]) {
             [[SESSION parent] resizeWindowToPixelsWidth:token.u.csi.p[2] height:token.u.csi.p[1]];
         }
         break;
     case XTERMCC_WINDOWPOS:
         //NSLog(@"setting window position to Y=%d, X=%d", token.u.csi.p[1], token.u.csi.p[2]);
-        if (![[iTermTerminalProfileMgr singleInstance] noResizingForProfile: [[SESSION addressBookEntry] objectForKey: @"Terminal Profile"]] && ![[SESSION parent] fullScreen])
+        if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] && 
+            ![[SESSION parent] fullScreen])
             [[[SESSION parent] window] setFrameTopLeftPoint: NSMakePoint(token.u.csi.p[2], [[[[SESSION parent] window] screen] frame].size.height - token.u.csi.p[1])];
         break;
     case XTERMCC_ICONIFY:

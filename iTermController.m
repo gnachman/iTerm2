@@ -38,11 +38,7 @@
 #import <iTerm/VT100Screen.h>
 #import <iTerm/NSStringITerm.h>
 #import <iTerm/ITAddressBookMgr.h>
-#import <iTerm/Tree.h>
-#import <iTerm/ITConfigPanelController.h>
 #import <iTerm/iTermGrowlDelegate.h>
-#import <iTermProfileWindowController.h>
-#import <iTermBookmarkController.h>
 
 
 @interface NSApplication (Undocumented)
@@ -73,9 +69,6 @@ static BOOL initDone = NO;
 	if(!shared && !initDone) {
 		shared = [[iTermController alloc] init];
 		initDone = YES;
-	}
-	if(!shared && initDone) {
-		NSLog(@"Bad call to [iTermController sharedInstance]");
 	}
 
 	return shared;
@@ -152,7 +145,10 @@ static BOOL initDone = NO;
 
 - (void) newSessionInTabAtIndex: (id) sender
 {
-    [self launchBookmark:[sender representedObject] inTerminal:FRONT];
+    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
+    if (bookmark) {
+        [self launchBookmark:bookmark inTerminal:FRONT];
+    }
 }
 
 - (void) showHideFindBar
@@ -162,49 +158,10 @@ static BOOL initDone = NO;
 
 - (void)newSessionInWindowAtIndex: (id) sender
 {
-    [self launchBookmark:[sender representedObject] inTerminal:nil];
-}
-
-// Open all childs within a given window
-- (PseudoTerminal *) newSessionsInWindow:(PseudoTerminal *) terminal forNode:(TreeNode*)theNode
-{
-	NSEnumerator *entryEnumerator;
-	NSDictionary *dataDict;
-	TreeNode *childNode;
-	PseudoTerminal *term =terminal;
-	
-	entryEnumerator = [[theNode children] objectEnumerator];
-	
-	while ((childNode = [entryEnumerator nextObject]))
-	{
-		dataDict = [childNode nodeData];
-		if([childNode isGroup])
-		{
-			[self newSessionsInWindow:terminal forNode:childNode];
-		}
-		else
-		{
-			if (!term) {
-				term = [[PseudoTerminal alloc] init];
-				[term initWindowWithAddressbook: [childNode nodeData]];
-				[self addInTerminals: term];
-				[term release];
-			}
-			[self launchBookmark:[childNode nodeData] inTerminal:term];
-		}
-	}
-	
-	return term;
-}
-
-- (void) newSessionsInWindow: (id) sender
-{
-	[self newSessionsInWindow:FRONT forNode:[sender representedObject]];
-}
-
-- (void) newSessionsInNewWindow: (id) sender
-{
-	[self newSessionsInWindow:nil forNode:[sender representedObject]];
+    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
+    if (bookmark) {
+        [self launchBookmark:bookmark inTerminal:nil];
+    }
 }
 
 // meant for action for menu items that have a submenu
@@ -255,101 +212,119 @@ static BOOL initDone = NO;
 	return (tmp);
 }
 
-- (void) alternativeMenu: (NSMenu *)aMenu forNode: (TreeNode *) theNode target: (id) aTarget withShortcuts: (BOOL) withShortcuts
+- (void)_addBookmark:(Bookmark*)bookmark toMenu:(NSMenu*)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts
 {
-    NSMenu *subMenu;
-	NSMenuItem *aMenuItem;
-	NSEnumerator *entryEnumerator;
-	NSDictionary *dataDict;
-	TreeNode *childNode;
-	NSString *shortcut;
-	unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
-	int count = 0;
+    NSMenuItem* aMenuItem = [[[NSMenuItem alloc] initWithTitle: [bookmark objectForKey: KEY_NAME] 
+                                                        action:@selector(newSessionInTabAtIndex:) 
+                                                 keyEquivalent:@""] autorelease];
+    if (withShortcuts) {
+        if ([bookmark objectForKey:KEY_SHORTCUT] != nil) {
+            NSString* shortcut = [bookmark objectForKey:KEY_SHORTCUT];
+            shortcut = [shortcut lowercaseString];
+            [aMenuItem setKeyEquivalent:shortcut];
+        }
+    }
     
-	entryEnumerator = [[theNode children] objectEnumerator];
-	
-	while ((childNode = [entryEnumerator nextObject]))
-	{
-		count ++;
-		dataDict = [childNode nodeData];
-		aMenuItem = [[[NSMenuItem alloc] initWithTitle: [dataDict objectForKey: KEY_NAME] action:@selector(newSessionInTabAtIndex:) keyEquivalent:@""] autorelease];
-		if([childNode isGroup])
-		{
-			subMenu = [[[NSMenu alloc] init] autorelease];
-            [self alternativeMenu: subMenu forNode: childNode target: aTarget withShortcuts: withShortcuts]; 
-			[aMenuItem setSubmenu: subMenu];
-			[aMenuItem setAction:@selector(noAction:)];
-			[aMenuItem setTarget: self];
-			[aMenu addItem: aMenuItem];
-			
-		}
-		else
-		{
-            if(withShortcuts)
-			{
-				if ([dataDict objectForKey: KEY_SHORTCUT] != nil)
-				{
-					shortcut=[dataDict objectForKey: KEY_SHORTCUT];
-					shortcut = [shortcut lowercaseString];
-                    
-					[aMenuItem setKeyEquivalent: shortcut];
-				}
-			}
-			
-            [aMenuItem setKeyEquivalentModifierMask: modifierMask];
-            [aMenuItem setRepresentedObject: dataDict];
-			[aMenuItem setTarget: aTarget];
-			[aMenu addItem: aMenuItem];
-			
-			aMenuItem = [[aMenuItem copy] autorelease];
-			[aMenuItem setKeyEquivalentModifierMask: modifierMask | NSAlternateKeyMask];
-			[aMenuItem setAlternate:YES];
-			[aMenuItem setAction: @selector(newSessionInWindowAtIndex:)];
-			[aMenuItem setTarget: self];
-			[aMenu addItem: aMenuItem];
-		}                
-	}
-	
-	if (count>1) {
+    unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
+    [aMenuItem setKeyEquivalentModifierMask:modifierMask];
+    [aMenuItem setRepresentedObject:[bookmark objectForKey:KEY_GUID]];
+    [aMenuItem setTarget:aTarget];
+    [aMenu addItem:aMenuItem];
+    
+    aMenuItem = [[aMenuItem copy] autorelease];
+    [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSAlternateKeyMask];
+    [aMenuItem setAlternate:YES];
+    [aMenuItem setAction:@selector(newSessionInWindowAtIndex:)];
+    [aMenuItem setTarget:self];
+    [aMenu addItem:aMenuItem];
+}
+
+- (void)_addBookmarksForTag:(NSString*)tag toMenu:(NSMenu*)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts
+{
+    NSMenuItem* aMenuItem = [[[NSMenuItem alloc] initWithTitle:tag action:@selector(noAction:) keyEquivalent:@""] autorelease];
+    NSMenu* subMenu = [[[NSMenu alloc] init] autorelease];
+    for (int i = 0; i < [[BookmarkModel sharedInstance] numberOfBookmarks]; ++i) {
+        Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkAtIndex:i];
+        NSArray* tags = [bookmark objectForKey:KEY_TAGS];
+        for (int j = 0; j < [tags count]; ++j) {
+            if ([tag localizedCaseInsensitiveCompare:[tags objectAtIndex:j]] == NSOrderedSame) {
+                [self _addBookmark:bookmark toMenu:subMenu target:aTarget withShortcuts:withShortcuts];
+                break;
+            }
+        }
+    }
+    [aMenuItem setSubmenu:subMenu];
+    [aMenuItem setTarget:self];
+    [aMenu addItem:aMenuItem];
+}
+
+- (void)addBookmarksToMenu:(NSMenu *)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts
+{
+    NSArray* tags = [[BookmarkModel sharedInstance] allTags];
+    int count = 0;
+    for (int i = 0; i < [tags count]; ++i) {
+        [self _addBookmarksForTag:[tags objectAtIndex:i] toMenu:aMenu target:aTarget withShortcuts:withShortcuts];
+        ++count;
+    }
+    for (int i = 0; i < [[BookmarkModel sharedInstance] numberOfBookmarks]; ++i) {
+        Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkAtIndex:i];
+        if ([[bookmark objectForKey:KEY_TAGS] count] == 0) {
+            ++count;
+            [self _addBookmark:bookmark toMenu:aMenu target:aTarget withShortcuts:withShortcuts];
+        }
+    }
+    
+	if (count > 1) {
 		[aMenu addItem:[NSMenuItem separatorItem]];
-		aMenuItem = [[[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"Open All",@"iTerm", [NSBundle bundleForClass: [iTermController class]], @"Context Menu") action:@selector(newSessionsInWindow:) keyEquivalent:@""] autorelease];
-		[aMenuItem setKeyEquivalentModifierMask: modifierMask];
-		[aMenuItem setRepresentedObject: theNode];
-		[aMenuItem setTarget: self];
-		[aMenu addItem: aMenuItem];
+		NSMenuItem* aMenuItem = [[[NSMenuItem alloc] initWithTitle:
+                                  NSLocalizedStringFromTableInBundle(@"Open All",
+                                                                     @"iTerm", 
+                                                                     [NSBundle bundleForClass: [iTermController class]], 
+                                                                     @"Context Menu") 
+                                                            action:@selector(newSessionsInWindow:) 
+                                                     keyEquivalent:@""] autorelease];
+        unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
+		[aMenuItem setKeyEquivalentModifierMask:modifierMask];
+		[aMenuItem setRepresentedObject:@""];
+		[aMenuItem setTarget:self];
+		[aMenu addItem:aMenuItem];
 		aMenuItem = [[aMenuItem copy] autorelease];
-		[aMenuItem setKeyEquivalentModifierMask: modifierMask | NSAlternateKeyMask];
+		[aMenuItem setKeyEquivalentModifierMask:modifierMask | NSAlternateKeyMask];
 		[aMenuItem setAlternate:YES];
-		[aMenuItem setAction: @selector(newSessionsInNewWindow:)];
-		[aMenuItem setTarget: self];
-		[aMenu addItem: aMenuItem];
+        [aMenuItem setAction:@selector(newSessionsInNewWindow:)];
+		[aMenuItem setTarget:self];
+		[aMenu addItem:aMenuItem];
 	}
-	
 }
 
 // Executes an addressbook command in new window or tab
-- (void) launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm
+- (void)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm
 {
     PseudoTerminal *term;
     NSDictionary *aDict;
 	
 	aDict = bookmarkData;
-	if(aDict == nil)
-		aDict = [[ITAddressBookMgr sharedInstance] defaultBookmarkData];
-	
+	if (aDict == nil) {
+		aDict = [[BookmarkModel sharedInstance] defaultBookmark];
+        if (!aDict) {
+            NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
+            [ITAddressBookMgr setDefaultsInBookmark:temp];
+            aDict = temp;
+        }
+	}
+    
 	// Where do we execute this command?
-    if(theTerm == nil)
-    {
+    if (theTerm == nil) {
         term = [[PseudoTerminal alloc] init];
 		[term initWindowWithAddressbook: aDict];
 		[self addInTerminals: term];
 		[term release];
 		
-    }
-    else
+    } else {
         term = theTerm;
-	
-	[term addNewSession: aDict];
+	}
+    
+	[term addNewSession:aDict];
 }
 
 - (void) launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm withCommand: (NSString *)command
@@ -358,20 +333,25 @@ static BOOL initDone = NO;
     NSDictionary *aDict;
 	
 	aDict = bookmarkData;
-	if(aDict == nil)
-		aDict = [[ITAddressBookMgr sharedInstance] defaultBookmarkData];
-	
+	if (aDict == nil) {
+		aDict = [[BookmarkModel sharedInstance] defaultBookmark];
+        if (!aDict) {
+            NSMutableDictionary* temp = [[NSMutableDictionary alloc] init];
+            [ITAddressBookMgr setDefaultsInBookmark:temp];
+            [temp autorelease];
+            aDict = temp;
+        }
+	}
+    
 	// Where do we execute this command?
-    if(theTerm == nil)
-    {
+    if (theTerm == nil) {
         term = [[PseudoTerminal alloc] init];
 		[term initWindowWithAddressbook: aDict];
 		[self addInTerminals: term];
 		[term release];
-		
-    }
-    else
+    } else {
         term = theTerm;
+    }
 	
 	[term addNewSession: aDict withCommand: command];
 }
@@ -382,8 +362,20 @@ static BOOL initDone = NO;
     NSDictionary *aDict;
 	
 	aDict = bookmarkData;
-	if(aDict == nil || [[aDict objectForKey:KEY_COMMAND] isEqualToString:@"$$"]) {
-		NSMutableDictionary *tempDict = [NSMutableDictionary dictionaryWithDictionary: aDict ? aDict : [[ITAddressBookMgr sharedInstance] defaultBookmarkData]];
+    // TODO: wtf is $$
+	if (aDict == nil || [[ITAddressBookMgr bookmarkCommand:aDict] isEqualToString:@"$$"]) {
+        Bookmark* prototype = aDict;
+        if (!prototype) {
+            prototype = [[BookmarkModel sharedInstance] defaultBookmark];
+        }
+        if (!prototype) {
+            NSMutableDictionary* temp = [[NSMutableDictionary alloc] init];
+            [ITAddressBookMgr setDefaultsInBookmark:temp];
+            [temp autorelease];
+            prototype = temp;
+        }
+        
+		NSMutableDictionary *tempDict = [NSMutableDictionary dictionaryWithDictionary:prototype];
 		NSURL *urlRep = [NSURL URLWithString: url];
 		NSString *urlType = [urlRep scheme];
 		
@@ -413,16 +405,15 @@ static BOOL initDone = NO;
 	}
 	
 	// Where do we execute this command?
-    if(theTerm == nil)
-    {
+    if (theTerm == nil) {
         term = [[PseudoTerminal alloc] init];
 		[term initWindowWithAddressbook: aDict];
 		[self addInTerminals: term];
 		[term release];
 		
-    }
-    else
+    } else {
         term = theTerm;
+    }
 	
 	[term addNewSession: aDict withURL: url];
 }
@@ -452,6 +443,16 @@ static BOOL initDone = NO;
 - (PTYTextView *) frontTextView
 {
     return ([[FRONT currentSession] TEXTVIEW]);
+}
+
+-(int)numberOfTerminals
+{
+    return [terminalWindows count];
+}
+
+-(PseudoTerminal*)terminalAtIndex:(int)i
+{
+    return [terminalWindows objectAtIndex:i];
 }
 
 
@@ -536,8 +537,6 @@ NSString *terminalsKey = @"terminals";
 {
     // NSLog(@"iTerm: removeFromTerminalsAtInde %d", theIndex);
     [terminalWindows removeObjectAtIndex: theIndex];
-    if([terminalWindows count] == 0)
-		[ITConfigPanelController close];
 }
 
 // a class method to provide the keys for KVC:

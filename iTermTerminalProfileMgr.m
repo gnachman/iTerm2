@@ -413,27 +413,30 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 - (BOOL) closeOnSessionEndForProfile: (NSString *) profileName
 {
 	NSDictionary *aProfile;
-	NSNumber *close;
+	NSNumber *shouldClose;
 	
-	if([profileName length] <= 0)
+	if ([profileName length] <= 0) {
 		return (YES);
+    }
 	
 	aProfile = [profiles objectForKey: profileName];
-	if(aProfile == nil)
+	if (aProfile == nil) {
 		return (YES);
+    }
 	
-	close = [aProfile objectForKey: @"Auto Close"];
-	if(close == nil)
+	shouldClose = [aProfile objectForKey: @"Auto shouldClose"];
+	if (shouldClose == nil) {
 		return (YES);
+    }
 	
-	return ([close boolValue]);	
+	return ([shouldClose boolValue]);	
 }
 
-- (void) setCloseOnSessionEnd: (BOOL) close forProfile: (NSString *) profileName
+- (void) setCloseOnSessionEnd: (BOOL) shouldClose forProfile: (NSString *) profileName
 {
 	NSMutableDictionary *aProfile;
 	
-	if([profileName length] <= 0)
+	if ([profileName length] <= 0)
 		return;
 	
 	aProfile = [profiles objectForKey: profileName];
@@ -441,7 +444,7 @@ static iTermTerminalProfileMgr *singleInstance = nil;
 	if(aProfile == nil)
 		return;
 	
-	[aProfile setObject: [NSNumber numberWithBool: close] forKey: @"Auto Close"];	
+	[aProfile setObject: [NSNumber numberWithBool: shouldClose] forKey: @"Auto Close"];	
 }
 
 
