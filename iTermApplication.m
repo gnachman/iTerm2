@@ -34,7 +34,7 @@
 #import <iTerm/PseudoTerminal.h>
 #import <iTerm/PTYSession.h>
 #import <iTerm/PreferencePanel.h>
-
+#import <iTerm/PTYTextView.h>
 
 @implementation iTermApplication
 
@@ -52,13 +52,6 @@
 	return inFocus;
 }
 
-static bool hasFocus(id theField) {
-    return [[[theField window] firstResponder] isKindOfClass:[NSTextView class]] &&
-            [[theField window] fieldEditor:NO forObject:nil] != nil && (
-        (id)[[theField window] firstResponder] == theField ||
-       [(id)[[theField window] firstResponder] delegate] == theField); 
-}
-
 // override to catch key press events very early on
 - (void)sendEvent:(NSEvent*)event
 {
@@ -67,14 +60,13 @@ static bool hasFocus(id theField) {
         PseudoTerminal* currentTerminal = [[iTermController sharedInstance] currentTerminal];
         PTYTabView* tabView = [currentTerminal tabView];
         PTYSession* currentSession = [currentTerminal currentSession];
-        PTYTextView* textView = [currentSession TEXTVIEW];
         if ([prefPanel keySheet] == [self keyWindow] &&
             [prefPanel keySheetIsOpen] &&
             [self isTextFieldInFocus:[[PreferencePanel sharedInstance] shortcutKeyTextField]]) {
             [[PreferencePanel sharedInstance] shortcutKeyDown:event];
             return;
         } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]] &&
-                   hasFocus(textView)) {
+                   [[[self keyWindow] firstResponder] isKindOfClass:[PTYTextView class]]) {
 
 			const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
 			if(([event modifierFlags] & mask) == NSCommandKeyMask) {
