@@ -151,7 +151,7 @@
 - (void)netServiceWillResolve:(NSNetService *)aNetService;
 - (void)netServiceDidStop:(NSNetService *)aNetService;
 - (NSString*) getBonjourServiceType:(NSString*)aType;
-+ (NSString*)loginShellCommand;
++ (NSString*)loginShellCommandForBookmark:(Bookmark*)bookmark;
 + (NSString*)bookmarkCommand:(Bookmark*)bookmark;
 + (NSString*)bookmarkWorkingDirectory:(Bookmark*)bookmark;
 

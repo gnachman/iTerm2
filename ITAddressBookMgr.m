@@ -390,12 +390,16 @@
     }
 }
 
-+ (NSString*)loginShellCommand
++ (NSString*)loginShellCommandForBookmark:(Bookmark*)bookmark
 {
     char* thisUser = getenv("USER");
     char* userShell = getenv("SHELL");
     if (thisUser) {
-        return [NSString stringWithFormat:@"login -fp %s", thisUser];
+        if ([[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"Yes"]) {
+            return [NSString stringWithFormat:@"login -fpl %s", thisUser];
+        } else {
+            return [NSString stringWithFormat:@"login -fp %s", thisUser];
+        }
     } else if (userShell) {
         return [NSString stringWithCString:userShell];
     } else {
@@ -409,7 +413,7 @@
     if (custom) {
         return [bookmark objectForKey:KEY_COMMAND];
     } else {
-        return [ITAddressBookMgr loginShellCommand];
+        return [ITAddressBookMgr loginShellCommandForBookmark:bookmark];
     }
 }
 
