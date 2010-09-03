@@ -216,7 +216,7 @@
 						<key>_historyCapacity</key>
 						<integer>0</integer>
 						<key>bookmark</key>
-						<string>1D8C682C1230D0E3005D857E</string>
+						<string>1D8C68411230D1C2005D857E</string>
 						<key>history</key>
 						<array>
 							<string>1D091CC5122F687400FCD9C2</string>
@@ -270,6 +270,8 @@
 			<key>Layout</key>
 			<array>
 				<dict>
+					<key>BecomeActive</key>
+					<true/>
 					<key>ContentConfiguration</key>
 					<dict>
 						<key>PBXBottomSmartGroupGIDs</key>
@@ -319,13 +321,13 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>24</integer>
-									<integer>1</integer>
-									<integer>0</integer>
+									<integer>68</integer>
+									<integer>67</integer>
+									<integer>62</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 0}, {200, 673}}</string>
+							<string>{{0, 534}, {200, 673}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -355,14 +357,12 @@
 					<key>Dock</key>
 					<array>
 						<dict>
-							<key>BecomeActive</key>
-							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>PTYSession.m</string>
+								<string>VT100Screen.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -370,11 +370,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>PTYSession.m</string>
+										<string>VT100Screen.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D8C682B1230D0E3005D857E</string>
+										<string>1D8C68401230D1C2005D857E</string>
 										<key>history</key>
 										<array>
 											<string>1D5FDB6A11FF96BB00C46BA3</string>
@@ -418,8 +418,8 @@
 											<string>1D63508C1230CC690048AD5C</string>
 											<string>1D6350911230CCDB0048AD5C</string>
 											<string>1D63509C1230CD650048AD5C</string>
-											<string>1D8C681C1230CF42005D857E</string>
-											<string>1D8C681D1230CF42005D857E</string>
+											<string>1D8C68331230D188005D857E</string>
+											<string>1D8C68341230D188005D857E</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -615,6 +615,7 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
+		<string>1D8C68421230D1C2005D857E</string>
 		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>1D8C67FE1230CE9C005D857E</string>
 		<string>1D8C67FF1230CE9C005D857E</string>
@@ -641,12 +642,14 @@
 					<key>Dock</key>
 					<array>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string></string>
+								<string>VT100Screen.h</string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>
