@@ -19,4 +19,4 @@ sed -e "s/%LENGTH%/$LENGTH/" |
 sed -e "s,%SIG%,${SIG}," > ../../appcasts/testing.xml
 echo "Go upload the iTerm2-${NAME}.zip, then run:"
 echo "svn commit -m $NAME"
-echo "cd .. && ./release2.sh $NAME"
+echo "cd .. && trunk/release2.sh $NAME"
