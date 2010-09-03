@@ -68,7 +68,6 @@
 		1D5FDD821208E91100C46BA3 /* iTerm.scriptSuite in Resources */ = {isa = PBXBuildFile; fileRef = DD48F1C703EBB1C400A8A065 /* iTerm.scriptSuite */; };
 		1D5FDD831208E91100C46BA3 /* iTerm.scriptTerminology in Resources */ = {isa = PBXBuildFile; fileRef = DD48F1CC03EBB20500A8A065 /* iTerm.scriptTerminology */; };
 		1D5FDD841208E91100C46BA3 /* iTerm-Aqua.jpg in Resources */ = {isa = PBXBuildFile; fileRef = DD9C1AE2051F45C000A8A065 /* iTerm-Aqua.jpg */; };
-		1D5FDD851208E91100C46BA3 /* Profiles.plist in Resources */ = {isa = PBXBuildFile; fileRef = DDB79A9A0612BBBF00EAE159 /* Profiles.plist */; };
 		1D5FDD861208E91100C46BA3 /* AquaTabClose_Front.tif in Resources */ = {isa = PBXBuildFile; fileRef = DD02575809CB93C2008F320C /* AquaTabClose_Front.tif */; };
 		1D5FDD871208E91100C46BA3 /* AquaTabClose_Front_Pressed.tif in Resources */ = {isa = PBXBuildFile; fileRef = DD02575909CB93C2008F320C /* AquaTabClose_Front_Pressed.tif */; };
 		1D5FDD881208E91100C46BA3 /* AquaTabClose_Front_Rollover.tif in Resources */ = {isa = PBXBuildFile; fileRef = DD02575A09CB93C2008F320C /* AquaTabClose_Front_Rollover.tif */; };
@@ -313,7 +312,6 @@
 		DD57633605653C5F00F1905E /* iTerm.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = iTerm.plist; sourceTree = "<group>"; };
 		DD8CF2DE03CDD34C00A8A065 /* iTerm Help */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; name = "iTerm Help"; path = "English.lproj/iTerm Help"; sourceTree = "<group>"; };
 		DD9C1AE2051F45C000A8A065 /* iTerm-Aqua.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "iTerm-Aqua.jpg"; path = "images/iTerm-Aqua.jpg"; sourceTree = "<group>"; };
-		DDB79A9A0612BBBF00EAE159 /* Profiles.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; path = Profiles.plist; sourceTree = "<group>"; };
 		DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyBindingMgr.m; sourceTree = "<group>"; };
 		DDDB7AD605D773B400E197C2 /* iTermKeyBindingMgr.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = iTermKeyBindingMgr.h; path = Headers/iTerm/iTermKeyBindingMgr.h; sourceTree = "<group>"; };
 		DDF0FD63062916F70080EF74 /* iTermApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermApplication.h; sourceTree = "<group>"; };
@@ -552,7 +550,6 @@
 				FBDF6B63042A6B3101F955DB /* website */,
 				F500A65D0395269C01A8A066 /* Changelog */,
 				DD8CF2DD03CDD34B00A8A065 /* iTerm Help */,
-				DDB79A9A0612BBBF00EAE159 /* Profiles.plist */,
 				93A6FEF910685E9900A5F905 /* dsa_pub.pem */,
 			);
 			name = "Supporting Files";
@@ -934,7 +931,6 @@
 				1D5FDD831208E91100C46BA3 /* iTerm.scriptTerminology in Resources */,
 				F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */,
 				1D5FDD841208E91100C46BA3 /* iTerm-Aqua.jpg in Resources */,
-				1D5FDD851208E91100C46BA3 /* Profiles.plist in Resources */,
 				1D5FDD861208E91100C46BA3 /* AquaTabClose_Front.tif in Resources */,
 				1D5FDD871208E91100C46BA3 /* AquaTabClose_Front_Pressed.tif in Resources */,
 				1D5FDD881208E91100C46BA3 /* AquaTabClose_Front_Rollover.tif in Resources */,
