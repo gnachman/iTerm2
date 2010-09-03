@@ -182,6 +182,13 @@
         [self copyProfileToBookmark:temp];
         [temp setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
         [temp setObject:path forKey:KEY_TAGS];
+        [temp setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
+        NSString* dir = [data objectForKey:KEY_WORKING_DIRECTORY];
+        if (dir && [dir length] > 0) {
+            [temp setObject:@"Yes" forKey:KEY_CUSTOM_DIRECTORY];
+        } else {
+            [temp setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
+        }
         [[BookmarkModel sharedInstance] addBookmark:temp];
 	}
     
@@ -390,12 +397,16 @@
     }
 }
 
-+ (NSString*)loginShellCommand
++ (NSString*)loginShellCommandForBookmark:(Bookmark*)bookmark
 {
     char* thisUser = getenv("USER");
     char* userShell = getenv("SHELL");
     if (thisUser) {
-        return [NSString stringWithFormat:@"login -fp %s", thisUser];
+        if ([[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"Yes"]) {
+            return [NSString stringWithFormat:@"login -fpl %s", thisUser];
+        } else {
+            return [NSString stringWithFormat:@"login -fp %s", thisUser];
+        }
     } else if (userShell) {
         return [NSString stringWithCString:userShell];
     } else {
@@ -409,7 +420,7 @@
     if (custom) {
         return [bookmark objectForKey:KEY_COMMAND];
     } else {
-        return [ITAddressBookMgr loginShellCommand];
+        return [ITAddressBookMgr loginShellCommandForBookmark:bookmark];
     }
 }
 

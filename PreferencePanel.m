@@ -487,7 +487,6 @@ static float versionNumber;
     
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];
-    [tabView selectTabViewItem:globalTabViewItem];
     NSString* guid = [bookmarksTableView selectedGuid];
     if (guid) {
         Bookmark* dict = [dataSource bookmarkWithGuid:guid];

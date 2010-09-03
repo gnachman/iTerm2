@@ -2,18 +2,18 @@
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"  xmlns:dc="http://purl.org/dc/elements/1.1/">
 	<channel>
 		<title>iTerm2 Changelog - Test releases</title>
-		<link>http://iterm2.googlecode.com/svn/fork/appcasts/testing.xml</link>
+		<link>http://iterm2.googlecode.com/svn/trunk/appcasts/testing.xml</link>
 		<description>Most recent changes with links to updates.</description>
 		<language>en</language>
                 <item>
-                        <title>Version 0.20.20100901</title>
+                        <title>Version 0.20.20100903</title>
                         <sparkle:releaseNotesLink>
-                                http://iterm2.googlecode.com/svn/fork/appcasts/testing_changes.html
+                                http://iterm2.googlecode.com/svn/trunk/appcasts/testing_changes.html
                         </sparkle:releaseNotesLink>
-                        <pubDate>Wed, 01 Sep 2010 17:35:12 -0700</pubDate>
-                        <enclosure url="http://iterm2.googlecode.com/files/iTerm2-alpha6.zip"
-                                sparkle:version="0.20.20100901" length="2261926" type="application/octet-stream"
-                                sparkle:dsaSignature="MCwCFCJKDCox/geMUuFsJhGppIyxu8e8AhRggBrXaCQLaCKCwqPXzRWxWuafSA==" />
+                        <pubDate>Fri, 03 Sep 2010 00:22:41 -0700</pubDate>
+                        <enclosure url="http://iterm2.googlecode.com/files/iTerm2-alpha7.zip"
+                                sparkle:version="0.20.20100903" length="2239391" type="application/octet-stream"
+                                sparkle:dsaSignature="MCwCFB6MKLA2hxt8UwPc27hJn4JlrU5gAhRalaAy9683snslrA2A4xSbEz4Ddw==" />
                 </item>
 	</channel>
 </rss>
