@@ -194,6 +194,7 @@
 - (int)scrollbackOverflow;
 - (long long)totalScrollbackOverflow;
 - (void)resetScrollbackOverflow;
+- (void)scrollScreenIntoScrollbackBuffer:(int)leaving;
 
 - (void)resetDirty;
 - (void)setDirty;
