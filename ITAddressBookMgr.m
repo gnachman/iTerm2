@@ -182,6 +182,13 @@
         [self copyProfileToBookmark:temp];
         [temp setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
         [temp setObject:path forKey:KEY_TAGS];
+        [temp setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
+        NSString* dir = [data objectForKey:KEY_WORKING_DIRECTORY];
+        if (dir && [dir length] > 0) {
+            [temp setObject:@"Yes" forKey:KEY_CUSTOM_DIRECTORY];
+        } else {
+            [temp setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
+        }
         [[BookmarkModel sharedInstance] addBookmark:temp];
 	}
     
