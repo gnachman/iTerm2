@@ -216,7 +216,7 @@
 						<key>_historyCapacity</key>
 						<integer>0</integer>
 						<key>bookmark</key>
-						<string>1D63505B1230C6730048AD5C</string>
+						<string>1D63508E1230CC690048AD5C</string>
 						<key>history</key>
 						<array>
 							<string>1D091CC5122F687400FCD9C2</string>
@@ -319,7 +319,7 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>19</integer>
+									<integer>6</integer>
 									<integer>1</integer>
 									<integer>0</integer>
 								</array>
@@ -362,7 +362,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>PseudoTerminal.m</string>
+								<string>ITAddressBookMgr.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -370,11 +370,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>PseudoTerminal.m</string>
+										<string>ITAddressBookMgr.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D63505A1230C6730048AD5C</string>
+										<string>1D63508D1230CC690048AD5C</string>
 										<key>history</key>
 										<array>
 											<string>1D5FDB6A11FF96BB00C46BA3</string>
@@ -404,8 +404,6 @@
 											<string>1DA9BECA122F1F83002FCC65</string>
 											<string>1D091CBD122F687400FCD9C2</string>
 											<string>1D091CBE122F687400FCD9C2</string>
-											<string>1D091CFA122F6BF300FCD9C2</string>
-											<string>1D091DA5122F76F600FCD9C2</string>
 											<string>1D091DB7122F772F00FCD9C2</string>
 											<string>1D091DF9122F7B9B00FCD9C2</string>
 											<string>1D091DFA122F7B9B00FCD9C2</string>
@@ -416,10 +414,12 @@
 											<string>1D634FCE1230C0550048AD5C</string>
 											<string>1D63502F1230C48D0048AD5C</string>
 											<string>1D6350301230C48D0048AD5C</string>
-											<string>1D6350451230C5580048AD5C</string>
-											<string>1D63504A1230C5EC0048AD5C</string>
 											<string>1D6350541230C6240048AD5C</string>
-											<string>1D6350551230C6240048AD5C</string>
+											<string>1D63505C1230C89A0048AD5C</string>
+											<string>1D63505D1230C89A0048AD5C</string>
+											<string>1D6350761230CA5F0048AD5C</string>
+											<string>1D63508C1230CC690048AD5C</string>
+											<string>1D6350861230CC200048AD5C</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -617,11 +617,11 @@
 	<array>
 		<string>1D634FDA1230C0550048AD5C</string>
 		<string>1D634FDB1230C0550048AD5C</string>
-		<string>1C78EAAD065D492600B07095</string>
 		<string>1CD10A99069EF8BA00B06720</string>
 		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>1D3D257711EBFCC400873609</string>
 		<string>1D091CC3122F687400FCD9C2</string>
+		<string>1C78EAAD065D492600B07095</string>
 		<string>/Users/georgen/iterm2/trunk/iTerm.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
@@ -862,7 +862,7 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CDD528C0622207200134675</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>ITAddressBookMgr.m</string>
+										<string>PreferencePanel.m</string>
 										<key>StatusBarVisibility</key>
 										<true/>
 									</dict>
@@ -994,7 +994,7 @@
 			<key>WindowToolGUID</key>
 			<string>1C78EAAD065D492600B07095</string>
 			<key>WindowToolIsVisible</key>
-			<false/>
+			<true/>
 		</dict>
 		<dict>
 			<key>Identifier</key>
