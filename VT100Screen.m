@@ -31,6 +31,7 @@
 // Debug option
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
+//#define DEBUG_CORRUPTION
 
 #import <iTerm/iTerm.h>
 #import <iTerm/VT100Screen.h>
@@ -251,7 +252,9 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     findContext.substring = nil;
     // allocate our buffer to hold both scrollback and screen contents
     buffer_lines = (screen_char_t *)malloc(HEIGHT*REAL_WIDTH*sizeof(screen_char_t));
-    
+#ifdef DEBUG_CORRUPTION
+    memset(buffer_lines, -1, HEIGHT*REAL_WIDTH*sizeof(screen_char_t));
+#endif
     if (!buffer_lines) return NULL;
     
     // set up our pointers
@@ -508,9 +511,12 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
     // create a new buffer and fill it with the default line.
     new_buffer_lines = (screen_char_t*)malloc(new_height*(new_width+1)*sizeof(screen_char_t));    
+#ifdef DEBUG_CORRUPTION
+    memset(new_buffer_lines, -1, new_height*(new_width+1)*sizeof(screen_char_t));
+#endif
     screen_char_t* defaultLine = [self _getDefaultLineWithWidth: new_width];    
     for (i = 0; i < new_height; ++i) {
-        memcpy(new_buffer_lines + (new_width + 1) * i, defaultLine, sizeof(screen_char_t) * new_width);
+        memcpy(new_buffer_lines + (new_width + 1) * i, defaultLine, sizeof(screen_char_t) * (new_width+1));
     }
     
     [self _appendScreenToScrollback];
