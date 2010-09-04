@@ -12,7 +12,6 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="6"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -53,7 +52,7 @@
 				<string key="NSWindowContentMaxSize">{1.79769e+308, 1.79769e+308}</string>
 				<string key="NSWindowContentMinSize">{500, 200}</string>
 				<object class="NSView" key="NSWindowView" id="944403435">
-					<reference key="NSNextResponder"/>
+					<nil key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
 					<object class="NSMutableArray" key="NSSubviews">
 						<bool key="EncodedWithXMLCoder">YES</bool>
@@ -115,7 +114,7 @@
 							<int key="NSvFlags">270</int>
 							<string key="NSFrame">{{21, 48}, {565, 254}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
-							<string key="NSClassName">BookmarkTableView</string>
+							<string key="NSClassName">BookmarkListView</string>
 						</object>
 						<object class="NSButton" id="627943894">
 							<reference key="NSNextResponder" ref="944403435"/>
@@ -139,7 +138,6 @@
 						</object>
 					</object>
 					<string key="NSFrameSize">{601, 322}</string>
-					<reference key="NSSuperview"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {1600, 1002}}</string>
 				<string key="NSMinSize">{500, 222}</string>
@@ -357,7 +355,7 @@
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
 				<bool key="EncodedWithXMLCoder">YES</bool>
 				<object class="IBPartialClassDescription">
-					<string key="className">BookmarkTableView</string>
+					<string key="className">BookmarkListView</string>
 					<string key="superclassName">NSView</string>
 					<object class="NSMutableDictionary" key="actions">
 						<bool key="EncodedWithXMLCoder">YES</bool>
@@ -403,8 +401,8 @@
 						</object>
 					</object>
 					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">BookmarkTableView.h</string>
+						<string key="majorKey">IBUserSource</string>
+						<string key="minorKey"/>
 					</object>
 				</object>
 				<object class="IBPartialClassDescription">
@@ -452,7 +450,7 @@
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>NSSegmentedControl</string>
-							<string>BookmarkTableView</string>
+							<string>BookmarkListView</string>
 						</object>
 					</object>
 					<object class="NSMutableDictionary" key="toOneOutletInfosByName">
@@ -470,7 +468,7 @@
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">tableView_</string>
-								<string key="candidateClassName">BookmarkTableView</string>
+								<string key="candidateClassName">BookmarkListView</string>
 							</object>
 						</object>
 					</object>

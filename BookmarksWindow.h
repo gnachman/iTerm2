@@ -23,10 +23,10 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import "BookmarkTableView.h"
+#import "BookmarkListView.h"
 
 @interface BookmarksWindow : NSWindowController <BookmarkTableDelegate> {
-    IBOutlet BookmarkTableView* tableView_;
+    IBOutlet BookmarkListView* tableView_;
     IBOutlet NSSegmentedControl* actions_;
 }
 

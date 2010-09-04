@@ -26,7 +26,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import <iTerm/BookmarkModel.h>
-#import "BookmarkTableView.h"
+#import "BookmarkListView.h"
 
 #define OPT_NORMAL 0
 #define OPT_META   1
@@ -63,7 +63,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 	IBOutlet NSPopUpButton *tabPosition;
     int defaultTabViewType;
 
-    IBOutlet BookmarkTableView* bookmarksForUrlsTable;
+    IBOutlet BookmarkListView* bookmarksForUrlsTable;
     
     IBOutlet NSTextField* tagFilter;
     
@@ -179,7 +179,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 	NSMutableDictionary *urlHandlersByGuid;
     
     // Bookmarks -----------------------------
-    IBOutlet BookmarkTableView *bookmarksTableView;
+    IBOutlet BookmarkListView *bookmarksTableView;
     IBOutlet NSTableColumn *shellImageColumn;
     IBOutlet NSTableColumn *nameShortcutColumn;
 	IBOutlet NSButton *removeBookmarkButton;
@@ -280,7 +280,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     BOOL newMapping;  // true if the keymap sheet is open for adding a new entry
     
     // Copy from...
-    IBOutlet BookmarkTableView *copyFromBookmarks;
+    IBOutlet BookmarkListView *copyFromBookmarks;
     IBOutlet NSPanel* copyFromView;
     IBOutlet NSPopUpButton* bookmarksPopup;
     NSString* copyTo;
