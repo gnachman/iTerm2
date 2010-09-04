@@ -246,9 +246,24 @@ const int kInterWidgetMargin = 10;
     return YES;
 }
 
+- (NSDragOperation)tableView:(NSTableView *)aTableView validateDrop:(id < NSDraggingInfo >)info proposedRow:(NSInteger)row proposedDropOperation:(NSTableViewDropOperation)operation
+{
+    return NSDragOperationNone;
+}
+
+
+- (void)tableViewSelectionIsChanging:(NSNotification *)aNotification
+{
+    // Mouse is being dragged across rows
+    if (delegate_) {
+        [delegate_ bookmarkTableSelectionDidChange:self];
+    }
+    guid_ = [self selectedGuid];
+}
 
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
 {
+    // There was a click on a row
     if (delegate_) {
         [delegate_ bookmarkTableSelectionDidChange:self];
     }
