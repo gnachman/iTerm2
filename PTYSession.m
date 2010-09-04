@@ -392,13 +392,15 @@ static NSImage *warningImage;
 	//NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
 	
 	// Check if we have a custom key mapping for this event
+
 	keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode 
                                                   modifiers:modflag 
                                                highPriority:&keyBindingPriority
                                                        text:&keyBindingText 
                                                 keyMappings:[[self addressBookEntry] objectForKey: KEY_KEYBOARD_MAP]];
 	
-	return (keyBindingAction >= 0); // TODO: figure out why priority exists and maybe reinstate this: && keyBindingPriority >= priority);
+
+	return (keyBindingAction >= 0);
 }
 
 // Screen for special keys

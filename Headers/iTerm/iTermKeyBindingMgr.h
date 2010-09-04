@@ -101,7 +101,8 @@
 }
 
 + (NSString *) formatKeyCombination:(NSString *)theKeyCombination;
-+ (NSString *)formatAction:(NSDictionary *)keyInfo;+ (int) actionForKeyCode: (unichar)keyCode 
++ (NSString *)formatAction:(NSDictionary *)keyInfo;
++ (int) actionForKeyCode: (unichar)keyCode 
                  modifiers: (unsigned int) keyMods 
               highPriority: (BOOL *) highPriority 
                       text: (NSString **) text 
@@ -117,6 +118,12 @@
 + (NSString*)shortcutAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark;
 + (NSDictionary*)mappingAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark;
 + (int)numberOfMappingsForBookmark:(Bookmark*)bmDict;
+
++ (int) _actionForKeyCode:(unichar)keyCode 
+                modifiers:(unsigned int) keyMods 
+             highPriority:(BOOL *) highPriority 
+                     text:(NSString **) text 
+              keyMappings:(NSDictionary *)keyMappings;
 
 
 @end
