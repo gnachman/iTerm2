@@ -70,21 +70,21 @@
                         <key>Action</key>
                         <integer>10</integer>
                         <key>Text</key>
-                        <string>O2A</string>
+                        <string>[1;2A</string>
                 </dict>
                 <key>0xf701-0x220000</key>
                 <dict>
                         <key>Action</key>
                         <integer>10</integer>
                         <key>Text</key>
-                        <string>O2B</string>
+                        <string>[1;2B</string>
                 </dict>
                 <key>0xf702-0x220000</key>
                 <dict>
                         <key>Action</key>
                         <integer>10</integer>
                         <key>Text</key>
-                        <string>O2D</string>
+                        <string>[1;2D</string>
                 </dict>
                 <key>0xf702-0x240000</key>
                 <dict>
@@ -93,14 +93,14 @@
                         <key>Priority</key>
                         <integer>1</integer>
                         <key>Text</key>
-                        <string>O5D</string>
+                        <string>[1;5D</string>
                 </dict>
                 <key>0xf703-0x220000</key>
                 <dict>
                         <key>Action</key>
                         <integer>10</integer>
                         <key>Text</key>
-                        <string>O2C</string>
+                        <string>[1;2C</string>
                 </dict>
                 <key>0xf703-0x240000</key>
                 <dict>
@@ -109,35 +109,35 @@
                         <key>Priority</key>
                         <integer>1</integer>
                         <key>Text</key>
-                        <string>O5C</string>
+                        <string>[1;5C</string>
                 </dict>
                 <key>0xf704-0x20000</key>
                 <dict>
                         <key>Action</key>
                         <integer>10</integer>
                         <key>Text</key>
-                        <string>[11;2~</string>
+                        <string>[1;2P</string>
                 </dict>
                 <key>0xf705-0x20000</key>
                 <dict>
                         <key>Action</key>
                         <integer>10</integer>
                         <key>Text</key>
-                        <string>[12;2~</string>
+                        <string>[1;2Q</string>
                 </dict>
                 <key>0xf706-0x20000</key>
                 <dict>
                         <key>Action</key>
                         <integer>10</integer>
                         <key>Text</key>
-                        <string>[13;2~</string>
+                        <string>[1;2R</string>
                 </dict>
                 <key>0xf707-0x20000</key>
                 <dict>
                         <key>Action</key>
                         <integer>10</integer>
                         <key>Text</key>
-                        <string>[14;2~</string>
+                        <string>[1;2S</string>
                 </dict>
                 <key>0xf708-0x20000</key>
                 <dict>
@@ -200,28 +200,28 @@
                         <key>Action</key>
                         <integer>10</integer>
                         <key>Text</key>
-                        <string>O2H</string>
+                        <string>[1;2H</string>
                 </dict>
                 <key>0xf729-0x40000</key>
                 <dict>
                         <key>Action</key>
                         <integer>10</integer>
                         <key>Text</key>
-                        <string>O5H</string>
+                        <string>[1;5H</string>
                 </dict>
                 <key>0xf72b-0x20000</key>
                 <dict>
                         <key>Action</key>
                         <integer>10</integer>
                         <key>Text</key>
-                        <string>O2F</string>
+                        <string>[1;2F</string>
                 </dict>
                 <key>0xf72b-0x40000</key>
                 <dict>
                         <key>Action</key>
                         <integer>10</integer>
                         <key>Text</key>
-                        <string>O5F</string>
+                        <string>[1;5F</string>
                 </dict>
         </dict>
 </dict>
