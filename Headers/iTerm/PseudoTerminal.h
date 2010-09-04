@@ -30,7 +30,7 @@
 #import <Cocoa/Cocoa.h>
 #import <iTerm/PTYTabView.h>
 #import <iTerm/PTYWindow.h>
-#import <BookmarkTableView.h>
+#import <BookmarkListView.h>
 
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
 
@@ -108,7 +108,7 @@
     // Used to do incremental find.
     NSTimer* _timer;
     NSDrawer    *myDrawer;
-    BookmarkTableView* drawerBookmarks_;
+    BookmarkListView* drawerBookmarks_;
 }
 
 
