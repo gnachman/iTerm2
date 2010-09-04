@@ -297,11 +297,11 @@
     return (priority?[actionString stringByAppendingString:@" (!)"] : actionString);
 }
 
-+ (int) actionForKeyCode: (unichar)keyCode 
-               modifiers: (unsigned int) keyMods 
-            highPriority: (BOOL *) highPriority 
-                    text: (NSString **) text 
-             keyMappings:(NSDictionary *)keyMappings
++ (int) _actionForKeyCode:(unichar)keyCode 
+                modifiers:(unsigned int) keyMods 
+             highPriority:(BOOL *) highPriority 
+                     text:(NSString **) text 
+              keyMappings:(NSDictionary *)keyMappings
 {
 	NSString *keyString;
 	NSDictionary *theKeyMapping;
@@ -332,6 +332,35 @@
 	*highPriority = [theKeyMapping objectForKey: @"Priority"] ? [[theKeyMapping objectForKey: @"Priority"] boolValue] : NO;
 	
 	return (retCode);
+}
+
++ (int) actionForKeyCode:(unichar)keyCode 
+               modifiers:(unsigned int) keyMods 
+            highPriority:(BOOL *) highPriority 
+                    text:(NSString **) text 
+             keyMappings:(NSDictionary *)keyMappings
+{
+    int keyBindingAction = [iTermKeyBindingMgr _actionForKeyCode:keyCode 
+                                                       modifiers:keyMods 
+                                                    highPriority:highPriority 
+                                                            text:text 
+                                                     keyMappings:keyMappings];
+    if (keyBindingAction < 0) {
+        static NSDictionary* globalKeyMap;
+        if (!globalKeyMap) {
+            NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"DefaultGlobalKeyMap" ofType:@"plist"];   
+            globalKeyMap = [NSDictionary dictionaryWithContentsOfFile:plistFile];
+            [globalKeyMap retain];
+        }
+        if (globalKeyMap) {
+            keyBindingAction = [iTermKeyBindingMgr _actionForKeyCode:keyCode 
+                                                           modifiers:keyMods 
+                                                        highPriority:highPriority 
+                                                                text:text 
+                                                         keyMappings:globalKeyMap];
+        }
+    }
+    return keyBindingAction;
 }
 
 + (void)removeMappingAtIndex:(int)rowIndex inBookmark:(NSMutableDictionary*)bookmark

@@ -71,7 +71,7 @@
 			const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
 			if(([event modifierFlags] & mask) == NSCommandKeyMask) {
 				int digit = [[event charactersIgnoringModifiers] intValue];
-				if(digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
+				if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
 					[tabView selectTabViewItemAtIndex:digit-1];
 					return;
 				}
