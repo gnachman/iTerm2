@@ -22,10 +22,12 @@
  **  along with this program; if not, write to the Free Software
  */
 
-#import "BookmarkTableView.h"
+#import "BookmarkListView.h"
 #import <iTerm/BookmarkModel.h>
 #import <iTerm/ITAddressBookMgr.h>
 #import <iTerm/PTYSession.h>
+
+#define BookmarkTableViewDataType @"iTerm2BookmarkGuid"
 
 const int kSearchWidgetHeight = 22;
 const int kInterWidgetMargin = 10;
@@ -77,11 +79,59 @@ const int kInterWidgetMargin = 10;
 @end
 
 
-@implementation BookmarkTableView
+@implementation BookmarkListView
+
 
 - (void)awakeFromNib
 {
 }
+
+// Drag drop -------------------------------
+- (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard*)pboard
+{
+    // Copy guid to pboard
+    NSInteger rowIndex = [rowIndexes firstIndex];
+    Bookmark* bookmark = [dataSource_ bookmarkAtIndex:rowIndex
+                                           withFilter:[searchField_ stringValue]];
+    NSString* guid = [bookmark objectForKey:KEY_GUID];
+    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:guid];
+    [pboard declareTypes:[NSArray arrayWithObject:BookmarkTableViewDataType] owner:self];
+    [pboard setData:data forType:BookmarkTableViewDataType];
+    return YES;
+}
+
+- (NSDragOperation)tableView:(NSTableView *)aTableView validateDrop:(id < NSDraggingInfo >)info proposedRow:(NSInteger)row proposedDropOperation:(NSTableViewDropOperation)operation
+{
+    if ([info draggingSource] != aTableView) {
+        return NSDragOperationNone;
+    }
+    
+    // Add code here to validate the drop
+    switch (operation) {
+        case NSTableViewDropOn:
+            return NSDragOperationNone;
+            
+        case NSTableViewDropAbove:
+            return NSDragOperationMove;
+
+        default:
+            return NSDragOperationNone;
+    }
+}
+
+- (BOOL)tableView:(NSTableView *)aTableView acceptDrop:(id <NSDraggingInfo>)info
+              row:(NSInteger)row dropOperation:(NSTableViewDropOperation)operation
+{
+    NSPasteboard* pboard = [info draggingPasteboard];
+    NSData* rowData = [pboard dataForType:BookmarkTableViewDataType];
+    NSString* guid = [NSKeyedUnarchiver unarchiveObjectWithData:rowData];
+    [dataSource_ moveGuid:guid toRow:row];
+
+    [self reloadData];
+    return YES;
+}
+
+// End Drag drop -------------------------------
 
 - (id)initWithFrame:(NSRect)frameRect
 {
@@ -120,6 +170,7 @@ const int kInterWidgetMargin = 10;
                                    borderType:[scrollView_ borderType]];
     
     tableView_ = [[NSTableView alloc] initWithFrame:tableViewFrame];
+    [tableView_ registerForDraggedTypes:[NSArray arrayWithObject:BookmarkTableViewDataType]];
     rowHeight_ = 21;
     showGraphic_ = YES;
     [tableView_ setRowHeight:rowHeight_];
@@ -246,9 +297,18 @@ const int kInterWidgetMargin = 10;
     return YES;
 }
 
+- (void)tableViewSelectionIsChanging:(NSNotification *)aNotification
+{
+    // Mouse is being dragged across rows
+    if (delegate_) {
+        [delegate_ bookmarkTableSelectionDidChange:self];
+    }
+    guid_ = [self selectedGuid];
+}
 
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
 {
+    // There was a click on a row
     if (delegate_) {
         [delegate_ bookmarkTableSelectionDidChange:self];
     }

@@ -194,7 +194,7 @@ NSString *sessionsKey = @"sessions";
     aRect = NSZeroRect;
     aRect.size = aSize;
     
-    BookmarkTableView* view = [[BookmarkTableView alloc] initWithFrame:aRect];
+    BookmarkListView* view = [[BookmarkListView alloc] initWithFrame:aRect];
     [view setAutoresizesSubviews:YES];
     [view setDelegate:self];
     drawerBookmarks_ = view;

@@ -150,6 +150,11 @@
 
 - (void)addBookmark:(Bookmark*)bookmark
 {
+    [self addBookmark:bookmark inSortedOrder:NO];
+}
+
+- (void)addBookmark:(Bookmark*)bookmark inSortedOrder:(BOOL)sort
+{
     // Ensure required fields are present
     if (![bookmark objectForKey:KEY_NAME]) {
         NSMutableDictionary* aDict = [[NSMutableDictionary alloc] initWithDictionary:bookmark];
@@ -182,33 +187,37 @@
         bookmark = aDict;
     }
     
-    // Insert alphabetically. Sort so that objects with the "bonjour" tag come after objects without.
-    int insertionPoint = -1;
-    NSString* newName = [bookmark objectForKey:KEY_NAME];
-    BOOL hasBonjour = [self bookmark:bookmark hasTag:@"bonjour"];
-    for (int i = 0; i < [bookmarks_ count]; ++i) {
-        Bookmark* bookmarkAtI = [bookmarks_ objectAtIndex:i];
-        NSComparisonResult order = NSOrderedSame;
-        BOOL currentHasBonjour = [self bookmark:bookmarkAtI hasTag:@"bonjour"];
-        if (hasBonjour != currentHasBonjour) {
-            if (hasBonjour) {
-                order = NSOrderedAscending;
-            } else {
-                order = NSOrderedDescending;
+    if (sort) {
+        // Insert alphabetically. Sort so that objects with the "bonjour" tag come after objects without.
+        int insertionPoint = -1;
+        NSString* newName = [bookmark objectForKey:KEY_NAME];
+        BOOL hasBonjour = [self bookmark:bookmark hasTag:@"bonjour"];
+        for (int i = 0; i < [bookmarks_ count]; ++i) {
+            Bookmark* bookmarkAtI = [bookmarks_ objectAtIndex:i];
+            NSComparisonResult order = NSOrderedSame;
+            BOOL currentHasBonjour = [self bookmark:bookmarkAtI hasTag:@"bonjour"];
+            if (hasBonjour != currentHasBonjour) {
+                if (hasBonjour) {
+                    order = NSOrderedAscending;
+                } else {
+                    order = NSOrderedDescending;
+                }
+            }
+            if (order == NSOrderedSame) {
+                order = [[[bookmarks_ objectAtIndex:i] objectForKey:KEY_NAME] caseInsensitiveCompare:newName];
+            }
+            if (order == NSOrderedDescending) {
+                insertionPoint = i;
+                break;
             }
         }
-        if (order == NSOrderedSame) {
-            order = [[[bookmarks_ objectAtIndex:i] objectForKey:KEY_NAME] caseInsensitiveCompare:newName];
+        if (insertionPoint == -1) {
+            [bookmarks_ addObject:[NSDictionary dictionaryWithDictionary:bookmark]];
+        } else {
+            [bookmarks_ insertObject:[NSDictionary dictionaryWithDictionary:bookmark] atIndex:insertionPoint];
         }
-        if (order == NSOrderedDescending) {
-            insertionPoint = i;
-            break;
-        }
-    }
-    if (insertionPoint == -1) {
-        [bookmarks_ addObject:[NSDictionary dictionaryWithDictionary:bookmark]];
     } else {
-        [bookmarks_ insertObject:[NSDictionary dictionaryWithDictionary:bookmark] atIndex:insertionPoint];
+        [bookmarks_ addObject:[NSDictionary dictionaryWithDictionary:bookmark]];
     }
     NSString* isDeprecatedDefaultBookmark = [bookmark objectForKey:KEY_DEFAULT_BOOKMARK];
     if (![self defaultBookmark] || (isDeprecatedDefaultBookmark && [isDeprecatedDefaultBookmark isEqualToString:@"Yes"])) {
@@ -410,6 +419,22 @@
         [prefs_ setObject:defaultBookmarkGuid_ forKey:KEY_DEFAULT_GUID];
     }
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];    		    
+}
+
+- (void)moveGuid:(NSString*)guid toRow:(int)destinationRow
+{
+    int sourceRow = [self indexOfBookmarkWithGuid:guid];
+    if (sourceRow < 0) {
+        return;
+    }
+    Bookmark* bookmark = [bookmarks_ objectAtIndex:sourceRow];
+    [bookmark retain];
+    [bookmarks_ removeObjectAtIndex:sourceRow];
+    if (sourceRow < destinationRow) {
+        destinationRow--;
+    }
+    [bookmarks_ insertObject:bookmark atIndex:destinationRow];
+    [bookmark release];
 }
 
 @end

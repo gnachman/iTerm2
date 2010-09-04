@@ -44,6 +44,7 @@ typedef NSDictionary Bookmark;
 - (Bookmark*)bookmarkAtIndex:(int)index;
 - (Bookmark*)bookmarkAtIndex:(int)index withFilter:(NSString*)filter;
 - (void)addBookmark:(Bookmark*)bookmark;
+- (void)addBookmark:(Bookmark*)bookmark inSortedOrder:(BOOL)sort;
 - (void)removeBookmarkWithGuid:(NSString*)guid;
 - (void)removeBookmarkAtIndex:(int)index;
 - (void)removeBookmarkAtIndex:(int)index withFilter:(NSString*)filter;
@@ -60,5 +61,6 @@ typedef NSDictionary Bookmark;
 - (BOOL)bookmark:(Bookmark*)bookmark hasTag:(NSString*)tag;
 - (void)setObject:(id)object forKey:(NSString*)key inBookmark:(Bookmark*)bookmark;
 - (void)setDefaultByGuid:(NSString*)guid;
+- (void)moveGuid:(NSString*)guid toRow:(int)row;
 
 @end

@@ -12,9 +12,6 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="2104"/>
-			<integer value="2758"/>
-			<integer value="2568"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -44,7 +41,7 @@
 				<nil key="NSNextResponder"/>
 				<int key="NSvFlags">12</int>
 				<string key="NSFrame">{{25, -87}, {261, 341.371}}</string>
-				<string key="NSClassName">BookmarkTableView</string>
+				<string key="NSClassName">BookmarkListView</string>
 			</object>
 			<object class="NSWindowTemplate" id="899476705">
 				<int key="NSWindowStyleMask">7</int>
@@ -160,7 +157,7 @@
 				</object>
 				<string key="NSWindowContentMaxSize">{1.79769e+308, 1.79769e+308}</string>
 				<object class="NSView" key="NSWindowView" id="130574301">
-					<reference key="NSNextResponder"/>
+					<nil key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
 					<object class="NSMutableArray" key="NSSubviews">
 						<bool key="EncodedWithXMLCoder">YES</bool>
@@ -4472,7 +4469,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 												<int key="NSvFlags">12</int>
 												<string key="NSFrame">{{0, 32}, {261, 341.371}}</string>
 												<reference key="NSSuperview" ref="105539794"/>
-												<string key="NSClassName">BookmarkTableView</string>
+												<string key="NSClassName">BookmarkListView</string>
 											</object>
 										</object>
 										<string key="NSFrameSize">{707, 383}</string>
@@ -5122,7 +5119,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 												<int key="NSvFlags">268</int>
 												<string key="NSFrame">{{555, 103}, {152, 230}}</string>
 												<reference key="NSSuperview" ref="965535712"/>
-												<string key="NSClassName">BookmarkTableView</string>
+												<string key="NSClassName">BookmarkListView</string>
 											</object>
 										</object>
 										<string key="NSFrameSize">{707, 383}</string>
@@ -5144,7 +5141,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						</object>
 					</object>
 					<string key="NSFrameSize">{740, 411}</string>
-					<reference key="NSSuperview"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {1280, 778}}</string>
 				<string key="NSMaxSize">{1.79769e+308, 1.79769e+308}</string>
@@ -5162,7 +5158,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 				<nil key="NSViewClass"/>
 				<string key="NSWindowContentMaxSize">{1.79769e+308, 1.79769e+308}</string>
 				<object class="NSView" key="NSWindowView" id="520202052">
-					<reference key="NSNextResponder"/>
+					<nil key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
 					<object class="NSMutableArray" key="NSSubviews">
 						<bool key="EncodedWithXMLCoder">YES</bool>
@@ -5486,7 +5482,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						</object>
 					</object>
 					<string key="NSFrameSize">{406, 157}</string>
-					<reference key="NSSuperview"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {1440, 878}}</string>
 				<string key="NSMaxSize">{1.79769e+308, 1.79769e+308}</string>
@@ -5501,7 +5496,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 				<nil key="NSViewClass"/>
 				<string key="NSWindowContentMaxSize">{1.79769e+308, 1.79769e+308}</string>
 				<object class="NSView" key="NSWindowView" id="985529587">
-					<reference key="NSNextResponder"/>
+					<nil key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
 					<object class="NSMutableArray" key="NSSubviews">
 						<bool key="EncodedWithXMLCoder">YES</bool>
@@ -5568,11 +5563,10 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<int key="NSvFlags">12</int>
 							<string key="NSFrame">{{20, 60}, {261, 300}}</string>
 							<reference key="NSSuperview" ref="985529587"/>
-							<string key="NSClassName">BookmarkTableView</string>
+							<string key="NSClassName">BookmarkListView</string>
 						</object>
 					</object>
 					<string key="NSFrameSize">{301, 400}</string>
-					<reference key="NSSuperview"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {1440, 878}}</string>
 				<string key="NSMaxSize">{1.79769e+308, 1.79769e+308}</string>
@@ -12428,7 +12422,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
 				<bool key="EncodedWithXMLCoder">YES</bool>
 				<object class="IBPartialClassDescription">
-					<string key="className">BookmarkTableView</string>
+					<string key="className">BookmarkListView</string>
 					<string key="superclassName">NSView</string>
 					<object class="NSMutableDictionary" key="actions">
 						<bool key="EncodedWithXMLCoder">YES</bool>
@@ -12474,8 +12468,8 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						</object>
 					</object>
 					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">BookmarkTableView.h</string>
+						<string key="majorKey">IBUserSource</string>
+						<string key="minorKey"/>
 					</object>
 				</object>
 				<object class="IBPartialClassDescription">
@@ -12889,11 +12883,11 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>NSTextField</string>
 							<string>NSTextField</string>
 							<string>NSTextField</string>
-							<string>BookmarkTableView</string>
+							<string>BookmarkListView</string>
 							<string>NSPopUpButton</string>
 							<string>NSView</string>
 							<string>NSTabViewItem</string>
-							<string>BookmarkTableView</string>
+							<string>BookmarkListView</string>
 							<string>NSToolbarItem</string>
 							<string>NSPopUpButton</string>
 							<string>NSButton</string>
@@ -12902,7 +12896,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>NSButton</string>
 							<string>NSButton</string>
 							<string>NSTextField</string>
-							<string>BookmarkTableView</string>
+							<string>BookmarkListView</string>
 							<string>NSPanel</string>
 							<string>NSColorWell</string>
 							<string>NSColorWell</string>
@@ -13258,7 +13252,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">bookmarksForUrlsTable</string>
-								<string key="candidateClassName">BookmarkTableView</string>
+								<string key="candidateClassName">BookmarkListView</string>
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">bookmarksPopup</string>
@@ -13274,7 +13268,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">bookmarksTableView</string>
-								<string key="candidateClassName">BookmarkTableView</string>
+								<string key="candidateClassName">BookmarkListView</string>
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">bookmarksToolbarItem</string>
@@ -13310,7 +13304,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">copyFromBookmarks</string>
-								<string key="candidateClassName">BookmarkTableView</string>
+								<string key="candidateClassName">BookmarkListView</string>
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">copyFromView</string>

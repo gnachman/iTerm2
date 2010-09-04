@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
+		1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */; };
 		1D5FDD411208E8F000C46BA3 /* NSStringITerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 872EBC5304E42E320073D10E /* NSStringITerm.h */; };
 		1D5FDD421208E8F000C46BA3 /* PTYTextView.h in Headers */ = {isa = PBXBuildFile; fileRef = 872EBC5404E42E320073D10E /* PTYTextView.h */; };
 		1D5FDD431208E8F000C46BA3 /* PTYTabView.h in Headers */ = {isa = PBXBuildFile; fileRef = 872EBC5704E42E320073D10E /* PTYTabView.h */; };
@@ -68,7 +69,6 @@
 		1D5FDD821208E91100C46BA3 /* iTerm.scriptSuite in Resources */ = {isa = PBXBuildFile; fileRef = DD48F1C703EBB1C400A8A065 /* iTerm.scriptSuite */; };
 		1D5FDD831208E91100C46BA3 /* iTerm.scriptTerminology in Resources */ = {isa = PBXBuildFile; fileRef = DD48F1CC03EBB20500A8A065 /* iTerm.scriptTerminology */; };
 		1D5FDD841208E91100C46BA3 /* iTerm-Aqua.jpg in Resources */ = {isa = PBXBuildFile; fileRef = DD9C1AE2051F45C000A8A065 /* iTerm-Aqua.jpg */; };
-		1D5FDD851208E91100C46BA3 /* Profiles.plist in Resources */ = {isa = PBXBuildFile; fileRef = DDB79A9A0612BBBF00EAE159 /* Profiles.plist */; };
 		1D5FDD861208E91100C46BA3 /* AquaTabClose_Front.tif in Resources */ = {isa = PBXBuildFile; fileRef = DD02575809CB93C2008F320C /* AquaTabClose_Front.tif */; };
 		1D5FDD871208E91100C46BA3 /* AquaTabClose_Front_Pressed.tif in Resources */ = {isa = PBXBuildFile; fileRef = DD02575909CB93C2008F320C /* AquaTabClose_Front_Pressed.tif */; };
 		1D5FDD881208E91100C46BA3 /* AquaTabClose_Front_Rollover.tif in Resources */ = {isa = PBXBuildFile; fileRef = DD02575A09CB93C2008F320C /* AquaTabClose_Front_Rollover.tif */; };
@@ -128,8 +128,8 @@
 		1D5FDDC71208E93600C46BA3 /* iTermGrowlDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */; };
 		1D5FDDC91208E93600C46BA3 /* LineBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D72438C11F416E500BD4924 /* LineBuffer.m */; };
 		1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D6C4D59122329F000E0AA3E /* ColorPresets.plist */; };
-		1D6C50A71226EEFB00E0AA3E /* BookmarkTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */; };
-		1D6C50A81226EEFB00E0AA3E /* BookmarkTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */; };
+		1D6C50A71226EEFB00E0AA3E /* BookmarkListView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */; };
+		1D6C50A81226EEFB00E0AA3E /* BookmarkListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */; };
 		1D72439011F416F300BD4924 /* LineBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72438F11F416F300BD4924 /* LineBuffer.h */; };
 		1D72477411F55E5700BD4924 /* LineBufferTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72477211F55E5700BD4924 /* LineBufferTest.h */; };
 		1DA9BD0D122F1077002FCC65 /* star-gold24.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA9BD0C122F1077002FCC65 /* star-gold24.png */; };
@@ -216,9 +216,10 @@
 		0464AB2F006CD2EC7F000001 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		0464AB30006CD2EC7F000001 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		1D13EADB12113A2D00909F9C /* libncurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libncurses.dylib; path = usr/lib/libncurses.dylib; sourceTree = SDKROOT; };
+		1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultGlobalKeyMap.plist; sourceTree = "<group>"; };
 		1D6C4D59122329F000E0AA3E /* ColorPresets.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ColorPresets.plist; sourceTree = "<group>"; };
-		1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkTableView.h; sourceTree = "<group>"; };
-		1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarkTableView.m; sourceTree = "<group>"; };
+		1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkListView.h; sourceTree = "<group>"; };
+		1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarkListView.m; sourceTree = "<group>"; };
 		1D72438C11F416E500BD4924 /* LineBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBuffer.m; sourceTree = "<group>"; };
 		1D72438F11F416F300BD4924 /* LineBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBuffer.h; sourceTree = "<group>"; };
 		1D72477211F55E5700BD4924 /* LineBufferTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferTest.h; sourceTree = "<group>"; };
@@ -313,7 +314,6 @@
 		DD57633605653C5F00F1905E /* iTerm.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = iTerm.plist; sourceTree = "<group>"; };
 		DD8CF2DE03CDD34C00A8A065 /* iTerm Help */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; name = "iTerm Help"; path = "English.lproj/iTerm Help"; sourceTree = "<group>"; };
 		DD9C1AE2051F45C000A8A065 /* iTerm-Aqua.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "iTerm-Aqua.jpg"; path = "images/iTerm-Aqua.jpg"; sourceTree = "<group>"; };
-		DDB79A9A0612BBBF00EAE159 /* Profiles.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist.xml; path = Profiles.plist; sourceTree = "<group>"; };
 		DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyBindingMgr.m; sourceTree = "<group>"; };
 		DDDB7AD605D773B400E197C2 /* iTermKeyBindingMgr.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = iTermKeyBindingMgr.h; path = Headers/iTerm/iTermKeyBindingMgr.h; sourceTree = "<group>"; };
 		DDF0FD63062916F70080EF74 /* iTermApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermApplication.h; sourceTree = "<group>"; };
@@ -447,7 +447,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				1D6C50A61226EEFB00E0AA3E /* BookmarkTableView.m */,
+				1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */,
 				1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */,
 				1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */,
 				DD4BAB7C0470C44C00A8A065 /* FindCommandHandler.m */,
@@ -479,7 +479,7 @@
 			isa = PBXGroup;
 			children = (
 				1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */,
-				1D6C50A51226EEFB00E0AA3E /* BookmarkTableView.h */,
+				1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */,
 				1DE5EBE6122B892900C736B0 /* BookmarksWindow.h */,
 				1D72438F11F416F300BD4924 /* LineBuffer.h */,
 				872EBC6B04E42E320073D10E /* charmaps.h */,
@@ -552,7 +552,6 @@
 				FBDF6B63042A6B3101F955DB /* website */,
 				F500A65D0395269C01A8A066 /* Changelog */,
 				DD8CF2DD03CDD34B00A8A065 /* iTerm Help */,
-				DDB79A9A0612BBBF00EAE159 /* Profiles.plist */,
 				93A6FEF910685E9900A5F905 /* dsa_pub.pem */,
 			);
 			name = "Supporting Files";
@@ -580,6 +579,7 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */,
 				1DA9BD0C122F1077002FCC65 /* star-gold24.png */,
 				1D6C4D59122329F000E0AA3E /* ColorPresets.plist */,
 				1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */,
@@ -820,7 +820,7 @@
 				1D72477411F55E5700BD4924 /* LineBufferTest.h in Headers */,
 				49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */,
 				1DCF3F4A1225F6F200AD56F1 /* BookmarkModel.h in Headers */,
-				1D6C50A71226EEFB00E0AA3E /* BookmarkTableView.h in Headers */,
+				1D6C50A71226EEFB00E0AA3E /* BookmarkListView.h in Headers */,
 				1DE5EBE8122B892900C736B0 /* BookmarksWindow.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -934,7 +934,6 @@
 				1D5FDD831208E91100C46BA3 /* iTerm.scriptTerminology in Resources */,
 				F638C2620AD483BF00BEE23D /* iTerm.strings in Resources */,
 				1D5FDD841208E91100C46BA3 /* iTerm-Aqua.jpg in Resources */,
-				1D5FDD851208E91100C46BA3 /* Profiles.plist in Resources */,
 				1D5FDD861208E91100C46BA3 /* AquaTabClose_Front.tif in Resources */,
 				1D5FDD871208E91100C46BA3 /* AquaTabClose_Front_Pressed.tif in Resources */,
 				1D5FDD881208E91100C46BA3 /* AquaTabClose_Front_Rollover.tif in Resources */,
@@ -979,6 +978,7 @@
 				1DCF3EC61224D03D00AD56F1 /* DefaultBookmark.plist in Resources */,
 				1DCF3F001224EEBD00AD56F1 /* MigrationMap.plist in Resources */,
 				1DA9BD0D122F1077002FCC65 /* star-gold24.png in Resources */,
+				1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1058,7 +1058,7 @@
 				874206500564169600CFC3F1 /* iTermApplicationDelegate.m in Sources */,
 				DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */,
 				1DCF3E8F122419D200AD56F1 /* BookmarkModel.m in Sources */,
-				1D6C50A81226EEFB00E0AA3E /* BookmarkTableView.m in Sources */,
+				1D6C50A81226EEFB00E0AA3E /* BookmarkListView.m in Sources */,
 				1DE5EBE9122B892900C736B0 /* BookmarksWindow.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
