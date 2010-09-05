@@ -42,7 +42,7 @@
     NSTableColumn* starColumn_;
     id<BookmarkTableDelegate> delegate_;
     BOOL showGraphic_;
-    NSString* guid_; // selected guid
+    NSSet* selectedGuids_;
     BOOL debug;
     BookmarkModel* dataSource_;
 }
@@ -70,6 +70,7 @@
 - (BOOL)selectionShouldChangeInTableView:(NSTableView *)aTableView;
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification;
 
+// Don't use this if you've called allowMultipleSelection.
 - (int)selectedRow;
 - (void)reloadData;
 - (void)selectRowIndex:(int)theIndex;
@@ -82,7 +83,9 @@
 - (void)deselectAll;
 - (void)multiColumns;
 
+// Dont' use this if you've called allowMultipleSelection
 - (NSString*)selectedGuid;
+- (NSSet*)selectedGuids;
 - (void)dataChangeNotification:(id)sender;
 - (void)onDoubleClick:(id)sender;
 - (void)eraseQuery;
@@ -90,5 +93,6 @@
 - (id)retain;
 - (oneway void)release;
 - (void)turnOnDebug;
+- (void)allowMultipleSelection;
 
 @end

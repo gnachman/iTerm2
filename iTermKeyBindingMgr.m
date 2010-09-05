@@ -24,6 +24,28 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+/*
+ * Note: xterm reports new escape codes for modifiers like Shift + any key,
+ * like, for instance, the cursor keys as of 2006.
+ *
+ * Excerpt from terminfo:
+ *  kLFT=\E[1;2D,
+ *  kRIT=\E[1;2C,
+ *  ...
+ *
+ * Also, the default setting of the xterm setting "modifyCursorKeys"
+ * changed to "2" which will generate these new escape codes.
+ * The old ones can be seen by setting it to zero, although they are
+ * obsolete.
+ *
+ * Please check with "infocmp -L xterm" and "read", if anything behaves
+ * weird in iTerm2 and the reported escape code is wrong.
+ *
+ * For checking the escape codes, run "read" (a shell builtin) and press
+ * the key combination you want to know the code of, like, Shift + Arrow
+ * Left.
+ */
+
 #import "ITAddressBookMgr.h"
 #import <iTerm/iTermKeyBindingMgr.h>
 

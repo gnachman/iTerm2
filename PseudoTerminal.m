@@ -141,8 +141,10 @@ NSString *sessionsKey = @"sessions";
 
 - (id)initWithWindowNibName: (NSString *) windowNibName
 {
+#ifdef ITERM_DRAWER
     NSSize aSize;
     NSRect aRect;
+#endif
     unsigned int styleMask;
     PTYWindow *myWindow;
     
@@ -180,6 +182,7 @@ NSString *sessionsKey = @"sessions";
     _fullScreen = NO;
     previousFindString = [[NSMutableString alloc] init];
     
+#ifdef ITERM_DRAWER
     // create and set up drawer
     myDrawer = [[NSDrawer alloc] initWithContentSize: NSMakeSize(20, 100) preferredEdge: NSMinXEdge];
     [myDrawer setParentWindow: myWindow];
@@ -200,6 +203,7 @@ NSString *sessionsKey = @"sessions";
     drawerBookmarks_ = view;
     [myDrawer setContentView:view];
     [view setHidden:NO];
+#endif
     
     [self _commonInit];
     
@@ -212,6 +216,7 @@ NSString *sessionsKey = @"sessions";
     return self;
 }
 
+#ifdef ITERM_DRAWER
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable;
 {
 }
@@ -229,6 +234,7 @@ NSString *sessionsKey = @"sessions";
     Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
     [[iTermController sharedInstance] launchBookmark:bookmark inTerminal: self];
 }
+#endif
 
 - (id)initWithFullScreenWindowNibName: (NSString *) windowNibName
 {
@@ -878,15 +884,16 @@ NSString *sessionsKey = @"sessions";
         [TABVIEW removeTabViewItem: aTabViewItem];
     }
 
-    // why isn't drawerBookmarks_ freed
     [commandField release];
     [FONT release];
     [NAFONT release];
     [oldFont release];
     [oldNAFont release];
     [layoutManager release];
+#ifdef ITERM_DRAWER
     [drawerBookmarks_ release];
     [drawerBookmarks_ setDelegate:nil];
+#endif
     [findBar release];
     [_toolbarController release];
     if (_timer) {
@@ -1714,9 +1721,11 @@ NSString *sessionsKey = @"sessions";
 
     if (_fullScreen) [self hideMenuBar];
 
-    if ([NSFontPanel sharedFontPanelExists]) {
-        [[NSFontPanel sharedFontPanel] close];
-    }
+    // Note: there was a bug in the old iterm that setting fonts didn't work
+    // properly if the font panel was left open in focus-follows-mouse mode.
+    // There was codehere to close the font panel. I couldn't reproduce the old
+    // bug and it was reported as bug 51 in iTerm2 so it was removed. See the
+    // svn history for the old impl.
     
     // update the cursor
     [[[self currentSession] TEXTVIEW] updateDirtyRects];
@@ -2689,6 +2698,7 @@ NSString *sessionsKey = @"sessions";
     return (NO);
 }
 
+#ifdef ITERM_DRAWER
 // Bookmarks
 - (IBAction) toggleBookmarksView: (id) sender
 {
@@ -2706,6 +2716,7 @@ NSString *sessionsKey = @"sessions";
     
     return (contentSize);
 }
+#endif
 
 - (IBAction) parameterPanelEnd: (id) sender
 {

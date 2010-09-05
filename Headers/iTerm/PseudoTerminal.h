@@ -41,7 +41,10 @@
 
 @end
 
-@interface PseudoTerminal : NSWindowController <PTYTabViewDelegateProtocol, PTYWindowDelegateProtocol, BookmarkTableDelegate>
+@interface PseudoTerminal : NSWindowController <PTYTabViewDelegateProtocol, PTYWindowDelegateProtocol>
+#ifdef ITERM_DRAWER
+, BookmarkTableDelegate>
+#endif
 {
     
     NSOutlineView *bookmarksView;
@@ -107,8 +110,10 @@
 
     // Used to do incremental find.
     NSTimer* _timer;
+#ifdef ITERM_DRAWER
     NSDrawer    *myDrawer;
     BookmarkListView* drawerBookmarks_;
+#endif
 }
 
 
