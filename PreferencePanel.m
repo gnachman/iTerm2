@@ -229,6 +229,10 @@ static float versionNumber;
 - (void)editKeyMapping:(id)sender
 {
     int rowIndex = [keyMappings selectedRow];
+    if (rowIndex < 0) {
+        [self addNewMapping:self];
+        return;
+    }
     [keyPress setStringValue:[self formattedKeyCombinationForRow:rowIndex]];
     if (keyString) {
         [keyString release];

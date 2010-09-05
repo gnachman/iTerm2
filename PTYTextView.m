@@ -2679,7 +2679,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if (overrideColor || oldfg != fg) {
         [attrib setObject:color forKey:NSForegroundColorAttributeName];
     }
-    if(oldFont != theFont) {
+    if (oldFont != theFont) {
         [attrib setObject:theFont forKey: NSFontAttributeName];
     }
 

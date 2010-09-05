@@ -57,13 +57,20 @@
 {
 	if ([event type] == NSKeyDown) {
         PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
+        PreferencePanel* privatePrefPanel = [PreferencePanel sessionsInstance];
         PseudoTerminal* currentTerminal = [[iTermController sharedInstance] currentTerminal];
         PTYTabView* tabView = [currentTerminal tabView];
         PTYSession* currentSession = [currentTerminal currentSession];
+        
         if ([prefPanel keySheet] == [self keyWindow] &&
             [prefPanel keySheetIsOpen] &&
-            [self isTextFieldInFocus:[[PreferencePanel sharedInstance] shortcutKeyTextField]]) {
-            [[PreferencePanel sharedInstance] shortcutKeyDown:event];
+            [self isTextFieldInFocus:[prefPanel shortcutKeyTextField]]) {
+            [prefPanel shortcutKeyDown:event];
+            return;
+        } else if ([privatePrefPanel keySheet] == [self keyWindow] &&
+                   [privatePrefPanel keySheetIsOpen] &&
+                   [self isTextFieldInFocus:[privatePrefPanel shortcutKeyTextField]]) {
+            [privatePrefPanel shortcutKeyDown:event];
             return;
         } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]] &&
                    [[[self keyWindow] firstResponder] isKindOfClass:[PTYTextView class]]) {
