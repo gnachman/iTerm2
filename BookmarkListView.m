@@ -250,7 +250,7 @@ const int kInterWidgetMargin = 10;
         }
     } else if (aTableColumn == shortcutColumn_) {
         NSString* key = [bookmark objectForKey:KEY_SHORTCUT];
-        if ((key) && (![key isEqualToString:@""])) {
+        if ([key length]) {
             return [NSString stringWithFormat:@"^⌘%@", [bookmark objectForKey:KEY_SHORTCUT]];
         } else {
             return @"";
