@@ -158,8 +158,7 @@ static NSCursor* textViewCursor =  nil;
 #endif
     int i;
     
-    if(mouseDownEvent != nil)
-    {
+    if (mouseDownEvent != nil) {
         [mouseDownEvent release];
         mouseDownEvent = nil;
     }
@@ -1261,16 +1260,22 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     locationInWindow = [event locationInWindow];
     locationInTextView = [self convertPoint: locationInWindow fromView: nil]; 
     
-    x = (locationInTextView.x-MARGIN)/charWidth;
-    if (x<0) x=0;
+    x = (locationInTextView.x - MARGIN + charWidth/2)/charWidth;
+    //NSLog(@"Down on to pixel %d -> x=%d (charWidth=%d)", (int) locationInTextView.x-MARGIN, x, (int)charWidth);
+    if (x < 0) {
+        x = 0;
+    }
     y = locationInTextView.y/lineHeight;
     
-    if (x>=width) x = width  - 1;
-
+    if (x >= width) {
+        x = width  - 1;
+    }
+    
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([[self delegate] xtermMouseReporting]) 
-        && (locationInTextView.y > visibleRect.origin.y) && !([event modifierFlags] & NSAlternateKeyMask))
-    {
+    if (([[self delegate] xtermMouseReporting]) && 
+        (locationInTextView.y > visibleRect.origin.y) && 
+        !([event modifierFlags] & NSAlternateKeyMask)) {
+        
         int rx, ry;
         rx = (locationInTextView.x-MARGIN - visibleRect.origin.x)/charWidth;
         ry = (locationInTextView.y - visibleRect.origin.y)/lineHeight;
@@ -1297,8 +1302,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     // Lock auto scrolling while the user is selecting text
     [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 
-    if(mouseDownEvent != nil)
-    {
+    if(mouseDownEvent != nil) {
         [mouseDownEvent release];
         mouseDownEvent = nil;
     }    
@@ -1310,7 +1314,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     mouseDown = YES;
     mouseDownOnSelection = NO;
     
-    if ([event clickCount]<2 ) {
+    if ([event clickCount] < 2) {
+        // single click
         if (([event modifierFlags] & NSAlternateKeyMask) || 
             (selectMode == SELECT_BOX && ([event modifierFlags] & NSCommandKeyMask))) {
             selectMode = SELECT_BOX;
@@ -1318,82 +1323,83 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             selectMode = SELECT_CHAR;
         }
 
-        // if we are holding the shift key down, we are extending selection
-        if (startX > -1 && ([event modifierFlags] & NSShiftKeyMask))
-        {
-            if (x+y*width<startX+startY*width) {
+        if (startX > -1 && ([event modifierFlags] & NSShiftKeyMask)) {
+            // holding down shfit key and there is an existing selection ->
+            // extend the selection.
+            // If you click before the start then flip start and end and extend end to click location. (effectively extends left)
+            // If you click after the start then move the end to the click location. (extends right)
+            // This means that if you click inside the selection it truncates it by moving the end (whichever that is)
+            if (x + y * width < startX + startY * width) {
+                // Clicked before the start. Move the start to the old end.
                 startX = endX;
                 startY = endY;
             }
+            // Move the end to the click location.
             endX = x;
             endY = y;
-        }
-        // check if we clicked inside a selection for a possible drag
-        else if(startX > -1 && [self _isCharSelectedInRow:y col:x checkOld:NO])
-        {
+            // startX and endX may be reversed, but mouseUp fixes it.
+        } else if (startX > -1 && 
+                   [self _isCharSelectedInRow:y col:x checkOld:NO]) {
+            // not holding down shift key but there is an existing selection.
+            // Possibly a drag coming up.
             mouseDownOnSelection = YES;
             [super mouseDown: event];
             return;
-        }
-        else if (!([event modifierFlags] & NSCommandKeyMask))
-        {
+        } else if (!([event modifierFlags] & NSCommandKeyMask)) {
+            // start a new selection
             endX = startX = x;
             endY = startY = y;
         }    
-    }
-    // Handle double and triple click
-    else if([event clickCount] == 2)
-    {
+    } else if ([event clickCount] == 2) {
         int tmpX1, tmpY1, tmpX2, tmpY2;
         
         // double-click; select word
         selectMode = SELECT_WORD;
         NSString *selectedWord = [self _getWordForX: x y: y startX: &tmpX1 startY: &tmpY1 endX: &tmpX2 endY: &tmpY2];
         if ([self _findMatchingParenthesis:selectedWord withX:tmpX1 Y:tmpY1]) {
+            // Found a matching paren
             ;
-        }
-        else if (startX > -1 && ([event modifierFlags] & NSShiftKeyMask))
-        {
-            if (startX+startY*width<tmpX1+tmpY1*width) {
+        } else if (startX > -1 && ([event modifierFlags] & NSShiftKeyMask)) {
+            // no matching paren, but holding shift and extending selection
+            if (startX + startY * width < tmpX1 + tmpY1 * width) {
+                // extend end of selection
                 endX = tmpX2;
                 endY = tmpY2;    
-            }
-            else {
+            } else {
+                // extend start of selection
                 startX = endX;
                 startY = endY;
                 endX = tmpX1;
                 endY = tmpY1;
             }
-        }
-        else 
-        {
+        } else  {
+            // no matching paren and not holding shift. Set selection to word boundary.
             startX = tmpX1;
             startY = tmpY1;
             endX = tmpX2;
             endY = tmpY2;    
         }
-    }
-    else if ([event clickCount] >= 3)
-    {
+    } else if ([event clickCount] >= 3) {
         // triple-click; select line
         selectMode = SELECT_LINE;
-        if (startX > -1 && ([event modifierFlags] & NSShiftKeyMask))
-        {
-            if (startY<y) {
+        if (startX > -1 && ([event modifierFlags] & NSShiftKeyMask)) {
+            // extend existing selection
+            if (startY < y) {
+                // extend start
                 endX = width;
                 endY = y;
-            }
-            else {
-                if (startX+startY*width<endX+endY*width) {
+            } else {
+                // extend end
+                if (startX + startY * width < endX + endY * width) {
+                    // advance start to end
                     startX = endX;
                     startY = endY;
                 }
                 endX = 0;
                 endY = y;
             }
-        }
-        else
-        {
+        } else {
+            // not holding shift
             startX = 0;
             endX = width;
             startY = endY = y;
@@ -1419,6 +1425,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int width = [dataSource width];
     
     x = (locationInTextView.x - MARGIN) / charWidth;
+    // TODO
     if (x < 0) x = 0;
     if (x>=width) x = width - 1;
     
@@ -1467,24 +1474,25 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     // make sure we have key focus
     [[self window] makeFirstResponder: self];
     
-    if (startY>endY||(startY==endY&&startX>endX)) {
+    if (startY > endY ||
+        (startY == endY && startX > endX)) {
+        // Make sure the start is before the end.
         int t;
-        t=startY; startY=endY; endY=t;
-        t=startX; startX=endX; endX=t;
-    }
-    else if ([mouseDownEvent locationInWindow].x == [event locationInWindow].x &&
-             [mouseDownEvent locationInWindow].y == [event locationInWindow].y && 
-             !([event modifierFlags] & NSShiftKeyMask) &&
-             [event clickCount] < 2 && !mouseDragged) 
-    {        
+        t = startY; startY = endY; endY = t;
+        t = startX; startX = endX; endX = t;
+    } else if ([mouseDownEvent locationInWindow].x == [event locationInWindow].x &&
+               [mouseDownEvent locationInWindow].y == [event locationInWindow].y && 
+               !([event modifierFlags] & NSShiftKeyMask) &&
+               [event clickCount] < 2 && !mouseDragged) {        
         startX=-1;
         if(([event modifierFlags] & NSCommandKeyMask) && [[PreferencePanel sharedInstance] cmdSelection] &&
            [mouseDownEvent locationInWindow].x == [event locationInWindow].x &&
-           [mouseDownEvent locationInWindow].y == [event locationInWindow].y)
-        {
+           [mouseDownEvent locationInWindow].y == [event locationInWindow].y) {
             //[self _openURL: [self selectedText]];
             NSString *url = [self _getURLForX:x y:y];
-            if (url != nil) [self _openURL:url];
+            if (url != nil) {
+                [self _openURL:url];
+            }
         }
     }
     
@@ -1520,16 +1528,21 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int width = [dataSource width];
     NSString *theSelectedText;
     
-    x = (locationInTextView.x - MARGIN) / charWidth;
-    if (x < 0) x = 0;
+    float logicalX = locationInTextView.x - MARGIN - charWidth/2;
+    if (logicalX >= 0) {
+        x = logicalX / charWidth;
+    } else {
+        x = -1;
+    }
+    NSLog(@"Drag to pixel %d -> x=%d (charWidth=%d) logical=%f", (int) locationInTextView.x-MARGIN, x, (int)charWidth, logicalX);
+    if (x < -1) x = -1;
     if (x >= width) x = width - 1;
     
     
     y = locationInTextView.y/lineHeight;
     
     if (([[self delegate] xtermMouseReporting])
-        && reportingMouseDown&& !([event modifierFlags] & NSAlternateKeyMask)) 
-    {
+        && reportingMouseDown&& !([event modifierFlags] & NSAlternateKeyMask)) {
         int rx, ry;
         NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
         rx = (locationInTextView.x-MARGIN - visibleRect.origin.x)/charWidth;
@@ -1556,16 +1569,15 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     
     mouseDragged = YES;
     
-    // check if we want to drag and drop a selection
-    if(mouseDownOnSelection == YES && ([event modifierFlags] & NSCommandKeyMask))
-    {
+    if (mouseDownOnSelection == YES && 
+        ([event modifierFlags] & NSCommandKeyMask)) {
+        // Drag and drop a selection
         if (selectMode == SELECT_BOX) {
             theSelectedText = [self contentInBoxFromX: startX Y: startY ToX: endX Y: endY pad: NO];
         } else {
             theSelectedText = [self contentFromX: startX Y: startY ToX: endX Y: endY pad: NO];
         }
-        if([theSelectedText length] > 0)
-        {
+        if ([theSelectedText length] > 0) {
             [self _dragText: theSelectedText forEvent: event];
             DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
             return;
@@ -1573,51 +1585,55 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
     
     // NSLog(@"(%f,%f)->(%f,%f)",locationInWindow.x,locationInWindow.y,locationInTextView.x,locationInTextView.y); 
-    if (locationInTextView.y<rectInTextView.origin.y) {
-        rectInTextView.origin.y=locationInTextView.y;
-        [self scrollRectToVisible: rectInTextView];
-    }
-    else if (locationInTextView.y>rectInTextView.origin.y+rectInTextView.size.height) {
-        rectInTextView.origin.y+=locationInTextView.y-rectInTextView.origin.y-rectInTextView.size.height;
-        [self scrollRectToVisible: rectInTextView];
+    if (locationInTextView.y < rectInTextView.origin.y) {
+        // Scroll window up to show selection
+        rectInTextView.origin.y = locationInTextView.y;
+        [self scrollRectToVisible:rectInTextView];
+    } else if (locationInTextView.y > rectInTextView.origin.y + rectInTextView.size.height) {
+        // Scroll window down to show selection
+        rectInTextView.origin.y += locationInTextView.y - rectInTextView.origin.y - rectInTextView.size.height;
+        [self scrollRectToVisible:rectInTextView];
     }
     
     // if we are on an empty line, we select the current line to the end
-    if(y>=0 && [self _isBlankLine: y]) {
+    if (y >= 0 && [self _isBlankLine: y]) {
         x = width;
     }
     
-    if(locationInTextView.x < MARGIN && startY < y)
-    {
+    if (locationInTextView.x < MARGIN && startY < y) {
         // complete selection of previous line
         x = width;
         y--;
     }
-    if (y<0) y=0;
-    if (y>=[dataSource numberOfLines]) y=[dataSource numberOfLines] - 1;
+    if (y < 0) {
+        y = 0;
+    }
+    if (y >= [dataSource numberOfLines]) {
+        y=[dataSource numberOfLines] - 1;
+    }
     
     switch (selectMode) {
         case SELECT_CHAR:
         case SELECT_BOX:
-            endX=x+1;
-            endY=y;
+            endX = x + 1;
+            endY = y;
             break;
         case SELECT_WORD:
-            [self _getWordForX: x y: y startX: &tmpX1 startY: &tmpY1 endX: &tmpX2 endY: &tmpY2];
-            if (startX+startY*width<tmpX2+tmpY2*width) {
-                if (startX+startY*width>endX+endY*width) {
+            // TODO(georgen): test this with x=01
+            [self _getWordForX:x y:y startX:&tmpX1 startY:&tmpY1 endX:&tmpX2 endY:&tmpY2];
+            if (startX + startY * width < tmpX2 + tmpY2 * width) {
+                if (startX + startY * width > endX + endY * width) {
                     int tx1, tx2, ty1, ty2;
-                    [self _getWordForX: startX y: startY startX: &tx1 startY: &ty1 endX: &tx2 endY: &ty2];
+                    [self _getWordForX:startX y:startY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
                     startX = tx1;
                     startY = ty1;
                 }
                 endX = tmpX2;
                 endY = tmpY2;
-            }
-            else {
-                if (startX+startY*width<endX+endY*width) {
+            } else {
+                if (startX + startY * width < endX + endY * width) {
                     int tx1, tx2, ty1, ty2;
-                    [self _getWordForX: startX y: startY startX: &tx1 startY: &ty1 endX: &tx2 endY: &ty2];
+                    [self _getWordForX:startX y:startY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
                     startX = tx2;
                     startY = ty2;
                 }
@@ -1630,8 +1646,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 startX = 0;
                 endX = [dataSource width];
                 endY = y;
-            }
-            else {
+            } else {
                 endX = 0;
                 endY = y;
                 startX = [dataSource width];
