@@ -1,7 +1,7 @@
 // !$*UTF8*$!
 {
 	0464AB0C006CD2EC7F000001 /* Project object */ = {
-		activeBuildConfigurationName = Development;
+		activeBuildConfigurationName = Deployment;
 		activeExecutable = 1D5FD84611F4E65200C46BA3 /* iTerm */;
 		activeSDKPreference = macosx10.5;
 		activeTarget = 874206460564169600CFC3F1 /* iTerm */;
