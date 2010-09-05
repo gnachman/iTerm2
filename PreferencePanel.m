@@ -895,7 +895,9 @@ static float versionNumber;
 	
 	if ([customDir isEqualToString:@"Yes"]) {
 		[bookmarkDirectoryType selectCellWithTag:0];
-	} else {
+	} else if ([customDir isEqualToString:@"Recycle"]) {
+		[bookmarkDirectoryType selectCellWithTag:2];
+    } else {
 		[bookmarkDirectoryType selectCellWithTag:1];
 	}
 	[bookmarkDirectory setStringValue:dir];
@@ -1075,9 +1077,25 @@ static float versionNumber;
     NSString* shortcut = [[bookmarkShortcutKey selectedItem] title];
     NSString* command = [bookmarkCommand stringValue];
     NSString* dir = [bookmarkDirectory stringValue];
+
     NSString* customCommand = [[bookmarkCommandType selectedCell] tag] == 0 ? @"Yes" : @"No";
-    NSString* customDir = [[bookmarkDirectoryType selectedCell] tag] == 0 ? @"Yes" : @"No";
-        
+    NSString* customDir;
+
+    switch ([[bookmarkDirectoryType selectedCell] tag]) {
+        case 0:
+            customDir = @"Yes";
+            break;
+            
+        case 1:
+            customDir = @"No";
+            break;
+            
+        case 2:
+            customDir = @"Recycle";
+            break;
+    }
+    
+    
     NSString* guid = [bookmarksTableView selectedGuid];
     if (!guid) {
         return;
@@ -1102,7 +1120,7 @@ static float versionNumber;
     [newDict setObject:dir forKey:KEY_WORKING_DIRECTORY];
     [newDict setObject:customCommand forKey:KEY_CUSTOM_COMMAND];
     [newDict setObject:customDir forKey:KEY_CUSTOM_DIRECTORY];
-    
+
     // Colors tab
     [newDict setObject:[ITAddressBookMgr encodeColor:[ansi0Color color]] forKey:KEY_ANSI_0_COLOR];
     [newDict setObject:[ITAddressBookMgr encodeColor:[ansi1Color color]] forKey:KEY_ANSI_1_COLOR];

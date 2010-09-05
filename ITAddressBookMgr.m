@@ -186,6 +186,8 @@
         NSString* dir = [data objectForKey:KEY_WORKING_DIRECTORY];
         if (dir && [dir length] > 0) {
             [temp setObject:@"Yes" forKey:KEY_CUSTOM_DIRECTORY];
+        } else if (dir && [dir length] == 0) {
+            [temp setObject:@"Recycle" forKey:KEY_CUSTOM_DIRECTORY];
         } else {
             [temp setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
         }
@@ -402,9 +404,12 @@
     char* thisUser = getenv("USER");
     char* userShell = getenv("SHELL");
     if (thisUser) {
-        if ([[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"Yes"]) {
+        if (![[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"No"]) {
+            // -l specifies a login shell which goes to the home dir
+            // there is either a custom dir or we're recycling the last tab's dir
             return [NSString stringWithFormat:@"login -fpl %s", thisUser];
         } else {
+            // Using either a custom dir or recycling the last tab's dir. Caller will set CWD appropriately.
             return [NSString stringWithFormat:@"login -fp %s", thisUser];
         }
     } else if (userShell) {
@@ -427,11 +432,14 @@
 
 + (NSString*)bookmarkWorkingDirectory:(Bookmark*)bookmark
 {
-    BOOL custom = [[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"Yes"];
-    if (custom) {
+    NSString* custom = [bookmark objectForKey:KEY_CUSTOM_DIRECTORY];
+    if ([custom isEqualToString:@"Yes"]) {
         return [bookmark objectForKey:KEY_WORKING_DIRECTORY];
-    } else {
+    } else if ([custom isEqualToString:@"No"]) {
         return NSHomeDirectory();
+    } else {
+        // recycle
+        return @"";
     }
 }
 
