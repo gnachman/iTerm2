@@ -181,6 +181,10 @@ static NSCursor* textViewCursor =  nil;
     
     [font release];
     [nafont release];
+#ifdef PRETTY_BOLD
+    [boldFont release];
+    [boldNaFont release];
+#endif
     [markedTextAttributes release];
     [markedText release];
     
@@ -427,6 +431,9 @@ static NSCursor* textViewCursor =  nil;
 
 - (void)setFont:(NSFont*)aFont nafont:(NSFont *)naFont;
 {    
+#ifdef PRETTY_BOLD
+    NSFontManager* fontManager = [NSFontManager sharedFontManager];	
+#endif
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
     NSSize sz;
     
@@ -439,9 +446,34 @@ static NSCursor* textViewCursor =  nil;
     [font release];
     [aFont retain];
     font=aFont;
+    
+#ifdef PRETTY_BOLD
+    [boldFont release];
+    boldFont = [fontManager convertFont:font toHaveTrait:NSBoldFontMask];	
+    if (!([fontManager traitsOfFont:boldFont] & NSBoldFontMask)) {	
+        boldFont = nil;
+    } else {
+        // may be nil at this point
+        [boldFont retain];
+    }
+#endif
+    
     [nafont release];
     [naFont retain];
     nafont=naFont;
+    
+#ifdef PRETTY_BOLD
+    [boldNaFont release];
+    boldNaFont = [fontManager convertFont:naFont toHaveTrait:NSBoldFontMask];
+    if (!([fontManager traitsOfFont:boldNaFont] & NSBoldFontMask)) {	
+        boldNaFont = nil;
+    } else {
+        // may be nil at this point
+        [boldNaFont retain];
+    }
+    [boldNaFont retain];
+#endif
+    
     [self setMarkedTextAttributes:
         [NSDictionary dictionaryWithObjectsAndKeys:
             [NSColor yellowColor], NSBackgroundColorAttributeName,
@@ -2672,8 +2704,36 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     static NSMutableDictionary* attrib = nil;
     if(attrib == nil) attrib = [[NSMutableDictionary alloc] init];
 
-    NSFont* theFont = dw ? nafont : font;
-    BOOL renderBold = (fg&BOLD_MASK) && ![self disableBold];
+    NSFont* theFont;
+    BOOL isBold = (fg&BOLD_MASK) && ![self disableBold];
+    BOOL renderBold = NO;
+#ifdef PRETTY_BOLD
+    if (!dw) {
+        if (isBold) {
+            theFont = boldFont;
+            if (!theFont) {
+                theFont = font;
+                renderBold = YES;
+            }
+        } else {
+            theFont = font;
+        }
+    } else {
+        if (isBold) {
+            theFont = boldNaFont;
+            if (!theFont) {
+                theFont = nafont;
+                renderBold = YES;
+            }
+        } else {
+            theFont = nafont;
+        }
+    }
+#else
+    renderBold = isBold;
+    theFont = dw ? naFont : font;
+#endif
+    
     NSColor* color = overrideColor ? overrideColor : [self colorForCode:fg];
 
     if (overrideColor || oldfg != fg) {
@@ -2684,12 +2744,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 
     Y += lineHeight + [theFont descender];
-    NSString* crap = [NSString stringWithCharacters:&code length:1];
-    [crap drawWithRect:NSMakeRect(X,Y, 0, 0) options:0 attributes:attrib];
+    NSString* charToDraw = [NSString stringWithCharacters:&code length:1];
+    [charToDraw drawWithRect:NSMakeRect(X,Y, 0, 0) options:0 attributes:attrib];
     
     // redraw the character offset by 1 pixel, this is faster than real bold
-    if(renderBold) {
-        [crap drawWithRect:NSMakeRect(X+1,Y, 0, 0) options:0 attributes:attrib];
+    if (renderBold) {
+        [charToDraw drawWithRect:NSMakeRect(X+1,Y, 0, 0) options:0 attributes:attrib];
     }
 }
 

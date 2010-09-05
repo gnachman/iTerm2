@@ -241,16 +241,20 @@
 - (void) setLabelColor: (NSColor *) color forTabViewItem: tabViewItem;
 
 // Bookmarks
-- (IBAction) toggleBookmarksView: (id) sender;
 -  (id) commandField;
 
 // Utility methods
 + (void) breakDown:(NSString *)cmdl cmdPath: (NSString **) cmd cmdArgs: (NSArray **) path;
 
 - (void) showHideFindBar;
+
+#ifdef ITERM_DRAWER
+- (IBAction) toggleBookmarksView: (id) sender;
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable;
 - (void)bookmarkTableSelectionWillChange:(id)bookmarkTable;
 - (void)bookmarkTableRowSelected:(id)bookmarkTable;
+#endif
+
 - (void)reloadBookmarks;
 
 @end
