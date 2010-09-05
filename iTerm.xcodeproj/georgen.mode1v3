@@ -333,7 +333,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D2AC87512337BAF007A021A</string>
+										<string>1D2AC91412341A73007A021A</string>
 										<key>history</key>
 										<array>
 											<string>1D5FDB6A11FF96BB00C46BA3</string>
@@ -346,14 +346,11 @@
 											<string>1DA9B6F0122CB77A002FCC65</string>
 											<string>1DA9B75D122CBEB4002FCC65</string>
 											<string>1DA9B79C122CCCDB002FCC65</string>
-											<string>1DA9B818122CD519002FCC65</string>
 											<string>1DA9B81D122CD519002FCC65</string>
 											<string>1DA9B8ED122CE090002FCC65</string>
 											<string>1DA9BB05122DB11A002FCC65</string>
 											<string>1DA9BECA122F1F83002FCC65</string>
 											<string>1D091CBD122F687400FCD9C2</string>
-											<string>1D091CBE122F687400FCD9C2</string>
-											<string>1D091E4A122F81B800FCD9C2</string>
 											<string>1D634FCD1230C0550048AD5C</string>
 											<string>1D634FCE1230C0550048AD5C</string>
 											<string>1D6350541230C6240048AD5C</string>
@@ -379,11 +376,14 @@
 											<string>1D2AC73712335508007A021A</string>
 											<string>1D2AC76512335E4D007A021A</string>
 											<string>1D2AC76612335E4D007A021A</string>
-											<string>1D2AC80612336769007A021A</string>
 											<string>1D2AC82D12336C7D007A021A</string>
 											<string>1D2AC866123379D1007A021A</string>
-											<string>1D2AC87312337BA0007A021A</string>
-											<string>1D2AC86F12337AD1007A021A</string>
+											<string>1D2AC88A123381E0007A021A</string>
+											<string>1D2AC88C123381E0007A021A</string>
+											<string>1D2AC8931233823B007A021A</string>
+											<string>1D2AC89C12340CDC007A021A</string>
+											<string>1D2AC8F412341874007A021A</string>
+											<string>1D2AC90A123419F1007A021A</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -579,12 +579,13 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
+		<string>1D2AC91312341A6A007A021A</string>
 		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>1D2AC800123365C7007A021A</string>
 		<string>1D2AC801123365C7007A021A</string>
-		<string>1D3D257711EBFCC400873609</string>
 		<string>1CD10A99069EF8BA00B06720</string>
 		<string>1D2AC84F12337741007A021A</string>
+		<string>1D3D257711EBFCC400873609</string>
 		<string>1C78EAAD065D492600B07095</string>
 		<string>/Users/georgen/iterm2/trunk/iTerm.xcodeproj</string>
 	</array>
@@ -612,7 +613,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>PseudoTerminal.h</string>
+								<string>PTYTextView.m</string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>
@@ -679,7 +680,7 @@
 			<key>WindowToolGUID</key>
 			<string>1D3D257711EBFCC400873609</string>
 			<key>WindowToolIsVisible</key>
-			<false/>
+			<true/>
 		</dict>
 		<dict>
 			<key>FirstTimeWindowDisplayed</key>
@@ -803,7 +804,7 @@
 			<key>WindowToolGUID</key>
 			<string>1CD10A99069EF8BA00B06720</string>
 			<key>WindowToolIsVisible</key>
-			<true/>
+			<false/>
 		</dict>
 		<dict>
 			<key>FirstTimeWindowDisplayed</key>
