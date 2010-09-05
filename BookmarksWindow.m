@@ -54,31 +54,44 @@
     // Force the window to load
     [self window];
     [tableView_ setDelegate:self];
+    [tableView_ allowMultipleSelection];
     [tableView_ multiColumns];
     return self;
 }
 
-- (IBAction)openBookmark:(id)sender
+- (void)_openBookmarkInTab:(BOOL)inTab
 {
-    NSString* guid = [tableView_ selectedGuid];
-    if (!guid) {
+    NSSet* guids = [tableView_ selectedGuids];
+    if (![guids count]) {
         NSBeep();
         return;
     }
-    PseudoTerminal* terminal = nil;
-    if ([sender selectedSegment] == 0) {
-        terminal = [[iTermController sharedInstance] currentTerminal];
+    for (NSString* guid in guids) {
+        PseudoTerminal* terminal = nil;
+        if (inTab) {
+            terminal = [[iTermController sharedInstance] currentTerminal];
+        }
+        Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+        [[iTermController sharedInstance] launchBookmark:bookmark 
+                                              inTerminal:terminal];
     }
-    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
-    [[iTermController sharedInstance] launchBookmark:bookmark 
-                                          inTerminal:terminal];
+}
+
+- (IBAction)openBookmarkInTab:(id)sender
+{
+    [self _openBookmarkInTab:YES];
+}
+
+- (IBAction)openBookmarkInWindow:(id)sender
+{
+    [self _openBookmarkInTab:NO];
 }
 
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable
 {
-    NSString* guid = [tableView_ selectedGuid];
+    NSSet* guids = [tableView_ selectedGuids];
     for (int i = 0; i < 2; ++i) {
-        [actions_ setEnabled:(guid != nil) forSegment:i];
+        [actions_ setEnabled:([guids count] > 0) forSegment:i];
     }
 }
 
@@ -88,11 +101,13 @@
 
 - (void)bookmarkTableRowSelected:(id)bookmarkTable
 {
-    NSString* guid = [tableView_ selectedGuid];
-    PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
-    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
-    [[iTermController sharedInstance] launchBookmark:bookmark 
-                                          inTerminal:terminal];    
+    NSSet* guids = [tableView_ selectedGuids];
+    for (NSString* guid in guids) {
+        PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
+        Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+        [[iTermController sharedInstance] launchBookmark:bookmark 
+                                              inTerminal:terminal];
+    }
 }
 
 - (IBAction)editBookmarks:(id)sender

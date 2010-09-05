@@ -33,7 +33,8 @@
 + (BookmarksWindow*)sharedInstance;
 - (id)init;
 - (id)initWithWindowNibName:(NSString *)windowNibName;
-- (IBAction)openBookmark:(id)sender;
+- (IBAction)openBookmarkInTab:(id)sender;
+- (IBAction)openBookmarkInWindow:(id)sender;
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable;
 - (void)bookmarkTableSelectionWillChange:(id)bookmarkTable;
 - (void)bookmarkTableRowSelected:(id)bookmarkTable;

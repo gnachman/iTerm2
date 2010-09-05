@@ -32,6 +32,47 @@
 const int kSearchWidgetHeight = 22;
 const int kInterWidgetMargin = 10;
 
+@interface BookmarkSearchField : NSSearchField
+{
+    id arrowHandler_;
+}
+
+- (BOOL)performKeyEquivalent:(NSEvent *)theEvent;
+- (void)setArrowHandler:(id)handler;
+
+@end
+
+@implementation BookmarkSearchField
+
+- (void)setArrowHandler:(id)handler
+{
+    arrowHandler_ = handler;
+}
+
+- (BOOL)performKeyEquivalent:(NSEvent *)theEvent
+{
+    unsigned int modflag;
+    unsigned short keycode;
+    modflag = [theEvent modifierFlags];
+    keycode = [theEvent keyCode];
+    NSLog(@"Keycode %d", keycode);
+    
+    const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
+    // TODO(georgen): Not getting normal keycodes here, but 125 and 126 are up and down arrows.
+    // This is a pretty ugly hack. Also, calling keyDown from here is probably not cool.
+    BOOL handled = NO;
+    if (!(mask & modflag) && (keycode == 125 || keycode == 126)) {
+        [arrowHandler_ keyDown:theEvent];
+        handled = YES;
+        
+    } else {
+        handled = [super performKeyEquivalent:theEvent];
+    }
+    return handled;
+}
+
+@end
+
 @interface ComparableImage : NSImage {
     NSString* key_;
 }
@@ -91,10 +132,16 @@ const int kInterWidgetMargin = 10;
 {
     // Copy guid to pboard
     NSInteger rowIndex = [rowIndexes firstIndex];
-    Bookmark* bookmark = [dataSource_ bookmarkAtIndex:rowIndex
-                                           withFilter:[searchField_ stringValue]];
-    NSString* guid = [bookmark objectForKey:KEY_GUID];
-    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:guid];
+    NSMutableSet* guids = [[[NSMutableSet alloc] init] autorelease];
+    while (rowIndex != NSNotFound) {
+        Bookmark* bookmark = [dataSource_ bookmarkAtIndex:rowIndex
+                                               withFilter:[searchField_ stringValue]];
+        NSString* guid = [bookmark objectForKey:KEY_GUID];
+        [guids addObject:guid];
+        rowIndex = [rowIndexes indexGreaterThanIndex:rowIndex];
+    }
+    
+    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:guids];
     [pboard declareTypes:[NSArray arrayWithObject:BookmarkTableViewDataType] owner:self];
     [pboard setData:data forType:BookmarkTableViewDataType];
     return YES;
@@ -124,9 +171,34 @@ const int kInterWidgetMargin = 10;
 {
     NSPasteboard* pboard = [info draggingPasteboard];
     NSData* rowData = [pboard dataForType:BookmarkTableViewDataType];
-    NSString* guid = [NSKeyedUnarchiver unarchiveObjectWithData:rowData];
-    [dataSource_ moveGuid:guid toRow:row];
+    NSSet* guids = [NSKeyedUnarchiver unarchiveObjectWithData:rowData];
+    NSMutableDictionary* map = [[[NSMutableDictionary alloc] init] autorelease];
 
+    for (NSString* guid in guids) {
+        [map setObject:guid forKey:[NSNumber numberWithInt:[dataSource_ indexOfBookmarkWithGuid:guid]]];
+    }
+    NSArray* sortedIndexes = [map allKeys];
+    sortedIndexes = [sortedIndexes sortedArrayUsingSelector:@selector(compare:)];
+    for (NSNumber* mapIndex in sortedIndexes) {
+        NSString* guid = [map objectForKey:mapIndex];
+
+        int absRow;
+        if (row < [dataSource_ numberOfBookmarks]) {
+            absRow = [dataSource_ convertFilteredIndex:row withFilter:[searchField_ stringValue]];
+        } else {
+            // convertFilteredIndex can't handle this case. Would only happen w/o a filter.
+            absRow = row;
+        }
+        [dataSource_ moveGuid:guid toRow:absRow];
+        row = [dataSource_ indexOfBookmarkWithGuid:guid withFilter:[searchField_ stringValue]] + 1;
+    }
+    NSMutableIndexSet* newIndexes = [[[NSMutableIndexSet alloc] init] autorelease];
+    for (NSString* guid in guids) {
+        row = [dataSource_ indexOfBookmarkWithGuid:guid withFilter:[searchField_ stringValue]];
+        [newIndexes addIndex:row];
+    }
+    [tableView_ selectRowIndexes:newIndexes byExtendingSelection:NO];
+    
     [self reloadData];
     return YES;
 }
@@ -145,7 +217,7 @@ const int kInterWidgetMargin = 10;
     searchFieldFrame.origin.y = frame.size.height - kSearchWidgetHeight;
     searchFieldFrame.size.height = kSearchWidgetHeight;
     searchFieldFrame.size.width = frame.size.width;
-    searchField_ = [[NSSearchField alloc] initWithFrame:searchFieldFrame];
+    searchField_ = [[BookmarkSearchField alloc] initWithFrame:searchFieldFrame];
     [searchField_ setDelegate:self];
     [self addSubview:searchField_];
     delegate_ = nil;
@@ -200,9 +272,10 @@ const int kInterWidgetMargin = 10;
     [tableView_ sizeLastColumnToFit];
     [tableView_ setDelegate:self];
     [tableView_ setDataSource:self];    
-    guid_ = @"";
+    selectedGuids_ = [[NSMutableSet alloc] init];
 
     [tableView_ setDoubleAction:@selector(onDoubleClick:)];    
+    [searchField_ setArrowHandler:tableView_];
 
     [[NSNotificationCenter defaultCenter] addObserver: self
                                              selector: @selector(dataChangeNotification:)
@@ -220,6 +293,7 @@ const int kInterWidgetMargin = 10;
 - (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [selectedGuids_ release];
     [super dealloc];
 }
 
@@ -303,7 +377,9 @@ const int kInterWidgetMargin = 10;
     if (delegate_) {
         [delegate_ bookmarkTableSelectionDidChange:self];
     }
-    guid_ = [self selectedGuid];
+    [selectedGuids_ release];
+    selectedGuids_ = [self selectedGuids];
+    [selectedGuids_ retain];
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
@@ -312,7 +388,9 @@ const int kInterWidgetMargin = 10;
     if (delegate_) {
         [delegate_ bookmarkTableSelectionDidChange:self];
     }
-    guid_ = [self selectedGuid];
+    [selectedGuids_ release];
+    selectedGuids_ = [self selectedGuids];
+    [selectedGuids_ retain];
 }
 
 - (int)selectedRow
@@ -323,8 +401,10 @@ const int kInterWidgetMargin = 10;
 - (void)reloadData
 {
     [tableView_ reloadData];
-    if (delegate_ && ![guid_ isEqualToString:[self selectedGuid]]) {
-        guid_ = [self selectedGuid];
+    if (delegate_ && ![selectedGuids_ isEqualToSet:[self selectedGuids]]) {
+        [selectedGuids_ release];
+        selectedGuids_ = [self selectedGuids];
+        [selectedGuids_ retain];
         [delegate_ bookmarkTableSelectionDidChange:self];
     }
 }
@@ -435,6 +515,23 @@ const int kInterWidgetMargin = 10;
     return [bookmark objectForKey:KEY_GUID];
 }
 
+- (NSSet*)selectedGuids
+{
+    NSMutableSet* result = [[[NSMutableSet alloc] init] autorelease];
+    NSIndexSet* indexes = [tableView_ selectedRowIndexes];
+    NSUInteger theIndex = [indexes firstIndex];
+    while (theIndex != NSNotFound) {
+        Bookmark* bookmark = [dataSource_ bookmarkAtIndex:theIndex 
+                                               withFilter:[searchField_ stringValue]];
+        if (bookmark) {
+            [result addObject:[bookmark objectForKey:KEY_GUID]];
+        }
+        
+        theIndex = [indexes indexGreaterThanIndex:theIndex];
+    }
+    return result;
+}
+
 - (void)controlTextDidChange:(NSNotification *)aNotification
 {
     // serach field changed
@@ -537,6 +634,11 @@ const int kInterWidgetMargin = 10;
 {
     NSLog(@"Debugging object at %x. Current count is %d", (void*)self, [self retainCount]);
     debug=YES;
+}
+
+- (void)allowMultipleSelection
+{
+    [tableView_ setAllowsMultipleSelection:YES];
 }
 
 @end
