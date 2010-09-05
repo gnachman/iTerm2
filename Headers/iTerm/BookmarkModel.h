@@ -61,6 +61,8 @@ typedef NSDictionary Bookmark;
 - (BOOL)bookmark:(Bookmark*)bookmark hasTag:(NSString*)tag;
 - (void)setObject:(id)object forKey:(NSString*)key inBookmark:(Bookmark*)bookmark;
 - (void)setDefaultByGuid:(NSString*)guid;
-- (void)moveGuid:(NSString*)guid toRow:(int)row;
-
+- (int)moveGuid:(NSString*)guid toRow:(int)row;
+// Return the absolute index of a bookmark given its index with the filter applied.
+- (int)convertFilteredIndex:(int)theIndex withFilter:(NSString*)filter;
+- (void)dump;
 @end

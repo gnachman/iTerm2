@@ -421,7 +421,7 @@
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];    		    
 }
 
-- (void)moveGuid:(NSString*)guid toRow:(int)destinationRow
+- (int)moveGuid:(NSString*)guid toRow:(int)destinationRow
 {
     int sourceRow = [self indexOfBookmarkWithGuid:guid];
     if (sourceRow < 0) {
@@ -435,6 +435,15 @@
     }
     [bookmarks_ insertObject:bookmark atIndex:destinationRow];
     [bookmark release];
+    return destinationRow;
+}
+
+- (void)dump
+{
+    for (int i = 0; i < [self numberOfBookmarks]; ++i) {
+        Bookmark* bookmark = [self bookmarkAtIndex:i];
+        NSLog(@"%d: %@ %@", i, [bookmark objectForKey:KEY_NAME], [bookmark objectForKey:KEY_GUID]);
+    }
 }
 
 @end
