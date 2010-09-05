@@ -1721,9 +1721,11 @@ NSString *sessionsKey = @"sessions";
 
     if (_fullScreen) [self hideMenuBar];
 
-    if ([NSFontPanel sharedFontPanelExists]) {
-        [[NSFontPanel sharedFontPanel] close];
-    }
+    // Note: there was a bug in the old iterm that setting fonts didn't work
+    // properly if the font panel was left open in focus-follows-mouse mode.
+    // There was codehere to close the font panel. I couldn't reproduce the old
+    // bug and it was reported as bug 51 in iTerm2 so it was removed. See the
+    // svn history for the old impl.
     
     // update the cursor
     [[[self currentSession] TEXTVIEW] updateDirtyRects];
