@@ -1086,16 +1086,16 @@ static float versionNumber;
             customDir = @"Yes";
             break;
             
-        case 1:
-            customDir = @"No";
-            break;
-            
         case 2:
             customDir = @"Recycle";
             break;
+
+        case 1:
+        default:
+            customDir = @"No";
+            break;
     }
-    
-    
+
     NSString* guid = [bookmarksTableView selectedGuid];
     if (!guid) {
         return;
