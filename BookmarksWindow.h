@@ -28,6 +28,8 @@
 @interface BookmarksWindow : NSWindowController <BookmarkTableDelegate> {
     IBOutlet BookmarkListView* tableView_;
     IBOutlet NSSegmentedControl* actions_;
+    IBOutlet NSButton* tabButton_;
+    IBOutlet NSButton* windowButton_;
 }
 
 + (BookmarksWindow*)sharedInstance;

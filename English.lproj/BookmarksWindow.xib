@@ -39,7 +39,7 @@
 				<string key="NSClassName">NSApplication</string>
 			</object>
 			<object class="NSWindowTemplate" id="442949890">
-				<int key="NSWindowStyleMask">3</int>
+				<int key="NSWindowStyleMask">11</int>
 				<int key="NSWindowBacking">2</int>
 				<string key="NSWindowRect">{{252, 611}, {601, 322}}</string>
 				<int key="NSWTFlags">1618477056</int>
@@ -91,7 +91,7 @@
 						</object>
 						<object class="NSButton" id="627943894">
 							<reference key="NSNextResponder" ref="944403435"/>
-							<int key="NSvFlags">268</int>
+							<int key="NSvFlags">292</int>
 							<string key="NSFrame">{{15, 11}, {151, 32}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
 							<bool key="NSEnabled">YES</bool>
@@ -111,12 +111,12 @@
 						</object>
 						<object class="NSButton" id="113789196">
 							<reference key="NSNextResponder" ref="944403435"/>
-							<int key="NSvFlags">268</int>
+							<int key="NSvFlags">289</int>
 							<string key="NSFrame">{{376, 11}, {96, 32}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="1056452351">
-								<int key="NSCellFlags">67239424</int>
+								<int key="NSCellFlags">604110336</int>
 								<int key="NSCellFlags2">134217728</int>
 								<string key="NSContents">New Tab</string>
 								<reference key="NSSupport" ref="981454797"/>
@@ -131,12 +131,12 @@
 						</object>
 						<object class="NSButton" id="619839802">
 							<reference key="NSNextResponder" ref="944403435"/>
-							<int key="NSvFlags">268</int>
+							<int key="NSvFlags">289</int>
 							<string key="NSFrame">{{472, 11}, {120, 32}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="153751991">
-								<int key="NSCellFlags">67239424</int>
+								<int key="NSCellFlags">604110336</int>
 								<int key="NSCellFlags2">134217728</int>
 								<string key="NSContents">New Window</string>
 								<reference key="NSSupport" ref="981454797"/>
@@ -200,6 +200,22 @@
 						<reference key="destination" ref="619839802"/>
 					</object>
 					<int key="connectionID">332</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">tabButton_</string>
+						<reference key="source" ref="702893507"/>
+						<reference key="destination" ref="113789196"/>
+					</object>
+					<int key="connectionID">333</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">windowButton_</string>
+						<reference key="source" ref="702893507"/>
+						<reference key="destination" ref="619839802"/>
+					</object>
+					<int key="connectionID">334</int>
 				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -380,7 +396,7 @@
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">332</int>
+			<int key="maxID">334</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -491,12 +507,16 @@
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>actions_</string>
+							<string>tabButton_</string>
 							<string>tableView_</string>
+							<string>windowButton_</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>NSSegmentedControl</string>
+							<string>NSButton</string>
 							<string>BookmarkListView</string>
+							<string>NSButton</string>
 						</object>
 					</object>
 					<object class="NSMutableDictionary" key="toOneOutletInfosByName">
@@ -504,7 +524,9 @@
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>actions_</string>
+							<string>tabButton_</string>
 							<string>tableView_</string>
+							<string>windowButton_</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
@@ -513,8 +535,16 @@
 								<string key="candidateClassName">NSSegmentedControl</string>
 							</object>
 							<object class="IBToOneOutletInfo">
+								<string key="name">tabButton_</string>
+								<string key="candidateClassName">NSButton</string>
+							</object>
+							<object class="IBToOneOutletInfo">
 								<string key="name">tableView_</string>
 								<string key="candidateClassName">BookmarkListView</string>
+							</object>
+							<object class="IBToOneOutletInfo">
+								<string key="name">windowButton_</string>
+								<string key="candidateClassName">NSButton</string>
 							</object>
 						</object>
 					</object>

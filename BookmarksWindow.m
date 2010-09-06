@@ -90,6 +90,13 @@
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable
 {
     NSSet* guids = [tableView_ selectedGuids];
+    if ([guids count]) {
+        [tabButton_ setEnabled:YES];
+        [windowButton_ setEnabled:YES];
+    } else {
+        [tabButton_ setEnabled:NO];
+        [windowButton_ setEnabled:NO];
+    }
     for (int i = 0; i < 2; ++i) {
         [actions_ setEnabled:([guids count] > 0) forSegment:i];
     }
