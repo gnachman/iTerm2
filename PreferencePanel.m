@@ -213,6 +213,7 @@ static float versionNumber;
     if (oneBookmarkMode) {
         [self setOneBokmarkOnly];
     }
+    [[tags cell] setDelegate:self];
 }
 
 - (void)handleWindowWillCloseNotification:(NSNotification *)notification {
@@ -501,6 +502,9 @@ static float versionNumber;
         [self updateBookmarkFields:nil];
     }
  
+    if (![bookmarksTableView selectedGuid] && [bookmarksTableView numberOfRows]) {
+        [bookmarksTableView selectRowIndex:0];
+    }
     // Show the window.
     [[self window] makeKeyAndOrderFront:self];
 }
@@ -1815,6 +1819,17 @@ completionsForSubstring:(NSString *)substring
     [self run];
     [self showBookmarks];
     [bookmarksTableView selectRowByGuid:guid];
+}
+
+- (id)tokenFieldCell:(NSTokenFieldCell *)tokenFieldCell representedObjectForEditingString:(NSString *)editingString
+{
+    static BOOL running;
+    if (!running) {
+        running = YES;
+        [self bookmarkSettingChanged:tags];
+        running = NO;
+    }
+    return editingString;
 }
 
 @end

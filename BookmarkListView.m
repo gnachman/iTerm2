@@ -248,13 +248,12 @@ const int kInterWidgetMargin = 10;
     [tableView_ setRowHeight:rowHeight_];
     [tableView_ 
          setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleSourceList];
-    [tableView_ setAllowsColumnResizing:NO];
-    [tableView_ setAllowsColumnReordering:NO];
+    [tableView_ setAllowsColumnResizing:YES];
+    [tableView_ setAllowsColumnReordering:YES];
     [tableView_ setAllowsColumnSelection:NO];
     [tableView_ setAllowsEmptySelection:YES];
     [tableView_ setAllowsMultipleSelection:NO];
     [tableView_ setAllowsTypeSelect:NO];
-    [tableView_ setHeaderView:nil];
     [tableView_ setBackgroundColor:[NSColor whiteColor]];
     
     starColumn_ = [[NSTableColumn alloc] initWithIdentifier:@"default"];
@@ -268,13 +267,27 @@ const int kInterWidgetMargin = 10;
     [tableColumn_ setEditable:NO];
     [tableView_ addTableColumn:tableColumn_];
     
+    tagsColumn_ = [[NSTableColumn alloc] initWithIdentifier:@"tags"];
+    [tagsColumn_ setEditable:NO];
+    [tableView_ addTableColumn:tagsColumn_];
+    
     [scrollView_ setDocumentView:tableView_];
-    [tableView_ sizeLastColumnToFit];
+
     [tableView_ setDelegate:self];
     [tableView_ setDataSource:self];    
     selectedGuids_ = [[NSMutableSet alloc] init];
 
     [tableView_ setDoubleAction:@selector(onDoubleClick:)];    
+
+    NSTableHeaderView* header = [[NSTableHeaderView alloc] init];
+    [tableView_ setHeaderView:header];
+    [[tableColumn_ headerCell] setStringValue:@"Name"];
+    [[starColumn_ headerCell] setStringValue:@"Default"];
+    [starColumn_ setWidth:[[starColumn_ headerCell] cellSize].width];
+    [[tagsColumn_ headerCell] setStringValue:@"Tags"];
+
+    [tableView_ sizeLastColumnToFit];
+    
     [searchField_ setArrowHandler:tableView_];
 
     [[NSNotificationCenter defaultCenter] addObserver: self
@@ -329,6 +342,9 @@ const int kInterWidgetMargin = 10;
         } else {
             return @"";
         }
+    } else if (aTableColumn == tagsColumn_) {
+        NSArray* tags = [bookmark objectForKey:KEY_TAGS];
+        return [NSString stringWithString:[tags componentsJoinedByString:@", "]];
     } else if (aTableColumn == starColumn_) {
         static NSImage* starImage;
         if (!starImage) {
@@ -544,8 +560,6 @@ const int kInterWidgetMargin = 10;
 
 - (void)multiColumns
 {
-    [tableColumn_ setWidth:300];
-
     shortcutColumn_ = [[NSTableColumn alloc] initWithIdentifier:@"shortcut"];
     [shortcutColumn_ setEditable:NO];
     [shortcutColumn_ setWidth:50];
@@ -555,17 +569,12 @@ const int kInterWidgetMargin = 10;
     [commandColumn_ setEditable:NO];
     [tableView_ addTableColumn:commandColumn_];
 
-    [tableView_ sizeLastColumnToFit];
-    NSTableHeaderView* header = [[NSTableHeaderView alloc] init];
-    [tableView_ setHeaderView:header];
-    [[tableColumn_ headerCell] setStringValue:@"Name"];
-    [[commandColumn_ headerCell] setStringValue:@"Command"];
-    [[starColumn_ headerCell] setStringValue:@"Default"];
-    [starColumn_ setWidth:[[starColumn_ headerCell] cellSize].width];
-    [[shortcutColumn_ headerCell] setStringValue:@"Shortcut"];
+    [tableColumn_ setWidth:150];
+    [tagsColumn_ setWidth:150];
 
-    [tableView_ setAllowsColumnResizing:YES];
-    [tableView_ setAllowsColumnReordering:YES];
+    [[shortcutColumn_ headerCell] setStringValue:@"Shortcut"];
+    [[commandColumn_ headerCell] setStringValue:@"Command"];
+    [tableView_ sizeLastColumnToFit];
 }
 
 - (void)dataChangeNotification:(id)sender

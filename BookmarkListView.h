@@ -40,6 +40,7 @@
     NSTableColumn* commandColumn_;
     NSTableColumn* shortcutColumn_;
     NSTableColumn* starColumn_;
+    NSTableColumn* tagsColumn_;
     id<BookmarkTableDelegate> delegate_;
     BOOL showGraphic_;
     NSSet* selectedGuids_;
