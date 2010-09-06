@@ -214,6 +214,7 @@ static float versionNumber;
         [self setOneBokmarkOnly];
     }
     [[tags cell] setDelegate:self];
+    [tags setDelegate:self];
 }
 
 - (void)handleWindowWillCloseNotification:(NSNotification *)notification {
@@ -1633,31 +1634,24 @@ static float versionNumber;
     //[bookmarksTableView selectRowIndex:[bookmarksTableView numberOfRows]-1];
 }
 
-- (NSArray *)tokenField:(NSTokenField *)tokenField 
-completionsForSubstring:(NSString *)substring 
-           indexOfToken:(NSInteger)tokenIndex 
-    indexOfSelectedItem:(NSInteger *)selectedIndex
+- (NSArray *)tokenField:(NSTokenField *)tokenField completionsForSubstring:(NSString *)substring indexOfToken:(NSInteger)tokenIndex indexOfSelectedItem:(NSInteger *)selectedIndex
 {
     if (tokenField == tags) {
-        NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
-        int numBookmarks = [dataSource numberOfBookmarks];
-        for (int i = 0; i < numBookmarks; ++i) {
-            NSDictionary* bmDict = [dataSource bookmarkAtIndex:i];
-            NSArray* bmTags = [bmDict objectForKey:KEY_TAGS];
-            for (int j = 0; j < [bmTags count]; ++j) {
-                NSString* aTag = [bmTags objectAtIndex:j];
-                if ([aTag hasPrefix:substring]) {
-                    [temp setObject:@"" forKey:aTag];
-                }
-            }
-        }
+        NSArray* allTags = [[dataSource allTags] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
         NSMutableArray* result = [[NSMutableArray alloc] init];
-        for (NSString* aTag in temp) {
-            [result addObject:[aTag retain]];
+        for (NSString* aTag in allTags) {
+            if ([aTag hasPrefix:substring]) {
+                [result addObject:[aTag retain]];
+            }
         }
         return result;
     }
     return nil;
+}
+
+- (id)tokenField:(NSTokenField *)tokenField representedObjectForEditingString:(NSString *)editingString
+{
+    return [editingString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 }
 
 - (IBAction)doCopyFrom:(id)sender
@@ -1829,7 +1823,7 @@ completionsForSubstring:(NSString *)substring
         [self bookmarkSettingChanged:tags];
         running = NO;
     }
-    return editingString;
+    return [editingString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 }
 
 @end
