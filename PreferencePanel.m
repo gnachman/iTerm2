@@ -213,6 +213,8 @@ static float versionNumber;
     if (oneBookmarkMode) {
         [self setOneBokmarkOnly];
     }
+    [[tags cell] setDelegate:self];
+    [tags setDelegate:self];
 }
 
 - (void)handleWindowWillCloseNotification:(NSNotification *)notification {
@@ -229,6 +231,10 @@ static float versionNumber;
 - (void)editKeyMapping:(id)sender
 {
     int rowIndex = [keyMappings selectedRow];
+    if (rowIndex < 0) {
+        [self addNewMapping:self];
+        return;
+    }
     [keyPress setStringValue:[self formattedKeyCombinationForRow:rowIndex]];
     if (keyString) {
         [keyString release];
@@ -497,6 +503,9 @@ static float versionNumber;
         [self updateBookmarkFields:nil];
     }
  
+    if (![bookmarksTableView selectedGuid] && [bookmarksTableView numberOfRows]) {
+        [bookmarksTableView selectRowIndex:0];
+    }
     // Show the window.
     [[self window] makeKeyAndOrderFront:self];
 }
@@ -891,7 +900,9 @@ static float versionNumber;
 	
 	if ([customDir isEqualToString:@"Yes"]) {
 		[bookmarkDirectoryType selectCellWithTag:0];
-	} else {
+	} else if ([customDir isEqualToString:@"Recycle"]) {
+		[bookmarkDirectoryType selectCellWithTag:2];
+    } else {
 		[bookmarkDirectoryType selectCellWithTag:1];
 	}
 	[bookmarkDirectory setStringValue:dir];
@@ -1071,9 +1082,25 @@ static float versionNumber;
     NSString* shortcut = [[bookmarkShortcutKey selectedItem] title];
     NSString* command = [bookmarkCommand stringValue];
     NSString* dir = [bookmarkDirectory stringValue];
+
     NSString* customCommand = [[bookmarkCommandType selectedCell] tag] == 0 ? @"Yes" : @"No";
-    NSString* customDir = [[bookmarkDirectoryType selectedCell] tag] == 0 ? @"Yes" : @"No";
-        
+    NSString* customDir;
+
+    switch ([[bookmarkDirectoryType selectedCell] tag]) {
+        case 0:
+            customDir = @"Yes";
+            break;
+            
+        case 2:
+            customDir = @"Recycle";
+            break;
+
+        case 1:
+        default:
+            customDir = @"No";
+            break;
+    }
+
     NSString* guid = [bookmarksTableView selectedGuid];
     if (!guid) {
         return;
@@ -1098,7 +1125,7 @@ static float versionNumber;
     [newDict setObject:dir forKey:KEY_WORKING_DIRECTORY];
     [newDict setObject:customCommand forKey:KEY_CUSTOM_COMMAND];
     [newDict setObject:customDir forKey:KEY_CUSTOM_DIRECTORY];
-    
+
     // Colors tab
     [newDict setObject:[ITAddressBookMgr encodeColor:[ansi0Color color]] forKey:KEY_ANSI_0_COLOR];
     [newDict setObject:[ITAddressBookMgr encodeColor:[ansi1Color color]] forKey:KEY_ANSI_1_COLOR];
@@ -1607,31 +1634,24 @@ static float versionNumber;
     //[bookmarksTableView selectRowIndex:[bookmarksTableView numberOfRows]-1];
 }
 
-- (NSArray *)tokenField:(NSTokenField *)tokenField 
-completionsForSubstring:(NSString *)substring 
-           indexOfToken:(NSInteger)tokenIndex 
-    indexOfSelectedItem:(NSInteger *)selectedIndex
+- (NSArray *)tokenField:(NSTokenField *)tokenField completionsForSubstring:(NSString *)substring indexOfToken:(NSInteger)tokenIndex indexOfSelectedItem:(NSInteger *)selectedIndex
 {
     if (tokenField == tags) {
-        NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
-        int numBookmarks = [dataSource numberOfBookmarks];
-        for (int i = 0; i < numBookmarks; ++i) {
-            NSDictionary* bmDict = [dataSource bookmarkAtIndex:i];
-            NSArray* bmTags = [bmDict objectForKey:KEY_TAGS];
-            for (int j = 0; j < [bmTags count]; ++j) {
-                NSString* aTag = [bmTags objectAtIndex:j];
-                if ([aTag hasPrefix:substring]) {
-                    [temp setObject:@"" forKey:aTag];
-                }
-            }
-        }
+        NSArray* allTags = [[dataSource allTags] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
         NSMutableArray* result = [[NSMutableArray alloc] init];
-        for (NSString* aTag in temp) {
-            [result addObject:[aTag retain]];
+        for (NSString* aTag in allTags) {
+            if ([aTag hasPrefix:substring]) {
+                [result addObject:[aTag retain]];
+            }
         }
         return result;
     }
     return nil;
+}
+
+- (id)tokenField:(NSTokenField *)tokenField representedObjectForEditingString:(NSString *)editingString
+{
+    return [editingString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 }
 
 - (IBAction)doCopyFrom:(id)sender
@@ -1793,6 +1813,17 @@ completionsForSubstring:(NSString *)substring
     [self run];
     [self showBookmarks];
     [bookmarksTableView selectRowByGuid:guid];
+}
+
+- (id)tokenFieldCell:(NSTokenFieldCell *)tokenFieldCell representedObjectForEditingString:(NSString *)editingString
+{
+    static BOOL running;
+    if (!running) {
+        running = YES;
+        [self bookmarkSettingChanged:tags];
+        running = NO;
+    }
+    return [editingString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 }
 
 @end

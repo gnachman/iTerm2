@@ -397,6 +397,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 - (IBAction)openCopyFromKeyboard:(id)sender;
 - (void)showBookmarks;
 - (void)openToBookmark:(NSString*)guid;
+- (id)tokenFieldCell:(NSTokenFieldCell *)tokenFieldCell representedObjectForEditingString:(NSString *)editingString;
 
 @end
 

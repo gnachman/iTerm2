@@ -32,6 +32,7 @@
 #import <iTerm/iTerm.h>
 
 #include <sys/time.h>
+#define PRETTY_BOLD
 
 #define MARGIN  5
 #define VMARGIN 5
@@ -79,6 +80,11 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
     
     NSFont *font;
     NSFont *nafont;
+
+#ifdef PRETTY_BOLD
+    NSFont *boldFont;
+    NSFont *boldNaFont;
+#endif
     NSColor* colorTable[256];
     NSColor* defaultFGColor;
     NSColor* defaultBGColor;
