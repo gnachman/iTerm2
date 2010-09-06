@@ -240,7 +240,7 @@
 - (PSMTabBarControl*) tabBarControl;
 - (void) setLabelColor: (NSColor *) color forTabViewItem: tabViewItem;
 
-// Bookmarks
+// Toolbar
 -  (id) commandField;
 
 // Utility methods

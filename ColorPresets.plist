@@ -164,7 +164,7 @@
 			<key>Green Component</key>
 			<real>0.0</real>
 			<key>Red Component</key>
-			<real>1</real>
+			<real>0.0</real>
 		</dict>
 		<key>Cursor Color</key>
 		<dict>
@@ -370,9 +370,9 @@
 		<key>Bold Color</key>
 		<dict>
 			<key>Blue Component</key>
-			<real>0.49019607843137253</real>
+			<real>1</real>
 			<key>Green Component</key>
-			<real>0.49019607843137253</real>
+			<real>1</real>
 			<key>Red Component</key>
 			<real>1</real>
 		</dict>
