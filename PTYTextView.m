@@ -676,7 +676,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int height = [dataSource numberOfLines] * lineHeight;
     NSRect frame = [self frame];
 
-    if(height != frame.size.height) {
+    if (height != frame.size.height) {
         // The old iTerm code had a comment about a hack at this location
         // that worked around an (alleged) but in NSClipView not respecting
         // setCopiesOnScroll:YES and a gross workaround. The workaround caused
@@ -695,8 +695,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         frame.size.height = height;
         [self setFrame:frame];
 
-    }
-    else if(scrollbackOverflow > 0) {
+    } else if (scrollbackOverflow > 0) {
+        // Some number of lines were lost from the head of the buffer.
+        
         NSScrollView* scrollView = [self enclosingScrollView];
         NSClipView* clipView = [scrollView contentView];
         float amount = [scrollView verticalLineScroll] * scrollbackOverflow;
@@ -704,25 +705,36 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
         // Keep correct selection highlighted
         startY -= scrollbackOverflow;
-        if(startY < 0) startX = -1;
+        if (startY < 0) {
+            startX = -1;
+        }
         endY -= scrollbackOverflow;
         oldStartY -= scrollbackOverflow;
-        if(oldStartY < 0) oldStartX = -1;
+        if (oldStartY < 0) {
+            oldStartX = -1;
+        }
         oldEndY -= scrollbackOverflow;
 
         // Keep the users' current scroll position, nothing to redraw
-        if(userScroll) {
+        if (userScroll) {
+            BOOL redrawAll = NO;
             NSRect scrollRect = [self visibleRect];
             scrollRect.origin.y -= amount;
-            if(scrollRect.origin.y < 0) scrollRect.origin.y = 0;
+            if (scrollRect.origin.y < 0) {
+                scrollRect.origin.y = 0;
+                redrawAll = YES;
+                [self setNeedsDisplay:YES];
+            }
             [clipView setCopiesOnScroll:NO];
             [self scrollRectToVisible:scrollRect];
             [clipView setCopiesOnScroll:YES];
-            return;
+            if (!redrawAll) {
+                return;
+            }
         }
 
         // Shift the old content upwards
-        if(scrollbackOverflow < [dataSource height] && !userScroll) {
+        if (scrollbackOverflow < [dataSource height] && !userScroll) {
             [self scrollRect:[self visibleRect] by:NSMakeSize(0, -amount)];
         }
     }
