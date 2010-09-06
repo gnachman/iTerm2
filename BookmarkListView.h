@@ -25,6 +25,17 @@
 #import <Cocoa/Cocoa.h>
 #import "BookmarkModel.h"
 
+@interface BookmarkSearchField : NSSearchField
+{
+    id arrowHandler_;
+}
+
+- (BOOL)performKeyEquivalent:(NSEvent *)theEvent;
+- (void)setArrowHandler:(id)handler;
+
+@end
+
+
 @protocol BookmarkTableDelegate
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable;
 - (void)bookmarkTableSelectionWillChange:(id)bookmarkTable;
@@ -34,7 +45,7 @@
 @interface BookmarkListView : NSView {
     int rowHeight_;
     NSScrollView* scrollView_;
-    NSSearchField* searchField_;
+    BookmarkSearchField* searchField_;
     NSTableView* tableView_;
     NSTableColumn* tableColumn_;
     NSTableColumn* commandColumn_;
