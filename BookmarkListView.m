@@ -32,16 +32,6 @@
 const int kSearchWidgetHeight = 22;
 const int kInterWidgetMargin = 10;
 
-@interface BookmarkSearchField : NSSearchField
-{
-    id arrowHandler_;
-}
-
-- (BOOL)performKeyEquivalent:(NSEvent *)theEvent;
-- (void)setArrowHandler:(id)handler;
-
-@end
-
 @implementation BookmarkSearchField
 
 - (void)setArrowHandler:(id)handler
