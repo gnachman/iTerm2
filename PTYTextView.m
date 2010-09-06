@@ -386,8 +386,14 @@ static NSCursor* textViewCursor =  nil;
         }
     }
     else {
-        if([self disableBold] && (theIndex & BOLD_MASK) && (theIndex % 256 < 8)) {
-            theIndex = theIndex - BOLD_MASK + 8;
+        // Render bold text as bright. The spec (ECMA-48) describes the intense
+        // display setting (esc[1m) as "bold or bright". One user complained that
+        // bold black on black bg didn't show up. Let's try making all bold text
+        // also bright and see how that works.
+        // If this is unpopular, make it bright iff the foreground=background.
+        if ((theIndex & BOLD_MASK) && 
+            (theIndex % 256 < 8)) {
+            theIndex = (theIndex & ~BOLD_MASK) + 8;
         }
         color = colorTable[theIndex & 0xff];
     }
