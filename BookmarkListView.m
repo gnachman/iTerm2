@@ -205,6 +205,45 @@ const int kInterWidgetMargin = 10;
 
 // End Drag drop -------------------------------
 
+- (void)_addTag:(id)sender
+{
+    int itemTag = [sender tag];
+    NSArray* allTags = [dataSource_ allTags];
+    NSString* tag = [allTags objectAtIndex:itemTag];
+    
+    [searchField_ setStringValue:[[NSString stringWithFormat:@"%@ %@", 
+                                   [[searchField_ stringValue] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]], 
+                                   tag] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]];
+    [self controlTextDidChange:nil];
+}
+
+- (void)_addTags:(NSArray*)tags toSearchField:(NSSearchField*)searchField
+{
+    NSMenu *cellMenu = [[[NSMenu alloc] initWithTitle:@"Search Menu"]
+                        autorelease];
+    NSMenuItem *item;
+    
+    item = [[[NSMenuItem alloc] initWithTitle:@"Tags"
+                                       action:nil
+                                keyEquivalent:@""] autorelease];
+    [item setTarget:self];
+    [item setTag:-1];
+    [cellMenu insertItem:item atIndex:0];
+        
+    for (int i = 0; i < [tags count]; ++i) {
+        item = [[[NSMenuItem alloc] initWithTitle:[tags objectAtIndex:i]
+                                           action:@selector(_addTag:)
+                                    keyEquivalent:@""] autorelease];
+        [item setTarget:self];
+        [item setTag:i];
+        [cellMenu insertItem:item atIndex:i+1];
+    }
+    
+    id searchCell = [searchField cell];
+    [searchCell setSearchMenuTemplate:cellMenu];
+}
+
+
 - (id)initWithFrame:(NSRect)frameRect
 {
     self = [super initWithFrame:frameRect];
@@ -218,6 +257,7 @@ const int kInterWidgetMargin = 10;
     searchFieldFrame.size.height = kSearchWidgetHeight;
     searchFieldFrame.size.width = frame.size.width;
     searchField_ = [[BookmarkSearchField alloc] initWithFrame:searchFieldFrame];
+    [self _addTags:[dataSource_ allTags] toSearchField:searchField_];
     [searchField_ setDelegate:self];
     [self addSubview:searchField_];
     delegate_ = nil;
@@ -416,6 +456,7 @@ const int kInterWidgetMargin = 10;
 
 - (void)reloadData
 {
+    [self _addTags:[dataSource_ allTags] toSearchField:searchField_];
     [tableView_ reloadData];
     if (delegate_ && ![selectedGuids_ isEqualToSet:[self selectedGuids]]) {
         [selectedGuids_ release];
@@ -550,7 +591,7 @@ const int kInterWidgetMargin = 10;
 
 - (void)controlTextDidChange:(NSNotification *)aNotification
 {
-    // serach field changed
+    // search field changed
     [self reloadData];
     if ([self selectedRow] < 0 && [self numberOfRows] > 0) {
         [self selectRowIndex:0];
