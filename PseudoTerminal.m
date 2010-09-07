@@ -3157,7 +3157,7 @@ NSString *sessionsKey = @"sessions";
         [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
         
         pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
-        if ([pwd length] <= 0) {
+        if ([pwd length] == 0) {
             if (oldCWD) {
                 pwd = oldCWD;
             } else {
@@ -3219,7 +3219,7 @@ NSString *sessionsKey = @"sessions";
         [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
         
         pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
-        if ([pwd length] <= 0) {
+        if ([pwd length] == 0) {
             pwd = NSHomeDirectory();
         }
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
@@ -3259,7 +3259,7 @@ NSString *sessionsKey = @"sessions";
         [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
         
         pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
-        if ([pwd length] <= 0) {
+        if ([pwd length] == 0) {
             pwd = NSHomeDirectory();
         }
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
