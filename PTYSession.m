@@ -1145,7 +1145,12 @@ static NSImage *warningImage;
 #endif
 	
     // Clear buffer
-    aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Clear Buffer",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu") action:@selector(clearBuffer:) keyEquivalent:@""];
+    aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Clear Buffer",
+                                                                                     @"iTerm", 
+                                                                                     [NSBundle bundleForClass: [self class]], 
+                                                                                     @"Context menu") 
+                                           action:@selector(clearBuffer:) 
+                                    keyEquivalent:@""];
     [aMenuItem setTarget: [self parent]];
     [theMenu addItem: aMenuItem];
     [aMenuItem release];

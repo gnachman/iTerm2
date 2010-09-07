@@ -32,6 +32,23 @@
 const int kSearchWidgetHeight = 22;
 const int kInterWidgetMargin = 10;
 
+@implementation BookmarkTableView
+
+- (void)setParent:(id)parent
+{
+    parent_ = parent;
+}
+
+- (NSMenu *)menuForEvent:(NSEvent *)theEvent
+{
+    if ([[parent_ delegate] respondsToSelector:@selector(bookmarkTable:menuForEvent:)]) {
+        return [[parent_ delegate] bookmarkTable:parent_ menuForEvent:theEvent];
+    }
+    return nil;
+}
+
+@end
+
 @implementation BookmarkSearchField
 
 - (void)setArrowHandler:(id)handler
@@ -271,7 +288,8 @@ const int kInterWidgetMargin = 10;
                           hasVerticalScroller:YES 
                                    borderType:[scrollView_ borderType]];
     
-    tableView_ = [[NSTableView alloc] initWithFrame:tableViewFrame];
+    tableView_ = [[BookmarkTableView alloc] initWithFrame:tableViewFrame];
+    [tableView_ setParent:self];
     [tableView_ registerForDraggedTypes:[NSArray arrayWithObject:BookmarkTableViewDataType]];
     rowHeight_ = 21;
     showGraphic_ = YES;
@@ -679,6 +697,16 @@ const int kInterWidgetMargin = 10;
 - (void)allowMultipleSelection
 {
     [tableView_ setAllowsMultipleSelection:YES];
+}
+
+- (NSTableView*)tableView
+{
+    return tableView_;
+}
+
+- (id)delegate
+{
+    return delegate_;
 }
 
 @end

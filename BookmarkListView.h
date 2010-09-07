@@ -35,18 +35,26 @@
 
 @end
 
+@interface BookmarkTableView : NSTableView
+{
+    id parent_;
+}
+
+- (void)setParent:(id)parent;
+@end
 
 @protocol BookmarkTableDelegate
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable;
 - (void)bookmarkTableSelectionWillChange:(id)bookmarkTable;
 - (void)bookmarkTableRowSelected:(id)bookmarkTable;
+- (NSMenu*)bookmarkTable:(id)bookmarkTable menuForEvent:(NSEvent*)theEvent;
 @end
 
 @interface BookmarkListView : NSView {
     int rowHeight_;
     NSScrollView* scrollView_;
     BookmarkSearchField* searchField_;
-    NSTableView* tableView_;
+    BookmarkTableView* tableView_;
     NSTableColumn* tableColumn_;
     NSTableColumn* commandColumn_;
     NSTableColumn* shortcutColumn_;
@@ -106,5 +114,7 @@
 - (oneway void)release;
 - (void)turnOnDebug;
 - (void)allowMultipleSelection;
+- (NSTableView*)tableView;
+- (id)delegate;
 
 @end

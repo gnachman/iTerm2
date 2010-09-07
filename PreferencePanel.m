@@ -1219,6 +1219,12 @@ static float versionNumber;
     [[NSUserDefaults standardUserDefaults] setObject:[dataSource rawData] forKey: @"New Bookmarks"];
 }
 
+- (NSMenu*)bookmarkTable:(id)bookmarkTable menuForEvent:(NSEvent*)theEvent
+{
+    return nil;
+}
+
+
 - (void)bookmarkTableSelectionWillChange:(id)aBookmarkTableView
 {
     [self bookmarkSettingChanged:nil];
