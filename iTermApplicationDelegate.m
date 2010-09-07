@@ -703,28 +703,7 @@ void DebugLog(NSString* value)
     if (!pty) {
         return;
     }
-    PTYSession* session = [pty currentSession];
-    if (!session) {
-        return;
-    }
-    Bookmark* bookmark = [session addressBookEntry];
-    if (!bookmark) {
-        return;
-    }
-    NSString* guid = [bookmark objectForKey:KEY_GUID];
-    [[BookmarkModel sessionsInstance] removeBookmarkWithGuid:guid];
-    [[BookmarkModel sessionsInstance] addBookmark:bookmark];
-    
-    // Change the GUID so that this session can follow a different path in life
-    // than its bookmark. Changes to the bookmark will no longer affect this
-    // session, and changes to this session won't affect its originating bookmark
-    // (which may not evene exist any longer).
-    guid = [BookmarkModel newGuid];
-    [[BookmarkModel sessionsInstance] setObject:guid
-                                         forKey:KEY_GUID 
-                                     inBookmark:bookmark];
-    [session setAddressBookEntry:[[BookmarkModel sessionsInstance] bookmarkWithGuid:guid]];
-    [[PreferencePanel sessionsInstance] openToBookmark:guid];
+    [pty editCurrentSession:sender];
 }
 
 
