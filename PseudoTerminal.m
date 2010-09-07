@@ -3164,8 +3164,6 @@ NSString *sessionsKey = @"sessions";
                 pwd = NSHomeDirectory();
             }
         }
-
-        pwd = [pwd stringByStandardizingPath];
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         
         [self setCurrentSessionName:name];    
@@ -3224,8 +3222,6 @@ NSString *sessionsKey = @"sessions";
         if ([pwd length] == 0) {
             pwd = NSHomeDirectory();
         }
-
-        pwd = [pwd stringByStandardizingPath];
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         
         [self setCurrentSessionName: name];    
@@ -3266,8 +3262,6 @@ NSString *sessionsKey = @"sessions";
         if ([pwd length] == 0) {
             pwd = NSHomeDirectory();
         }
-
-        pwd = [pwd stringByStandardizingPath];
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         
         [self setCurrentSessionName:name];    

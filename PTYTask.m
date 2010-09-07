@@ -480,7 +480,7 @@ setup_tty_param(
 					setenv([key UTF8String], [value UTF8String], 1);
 			}
 		}
-		chdir([[[env objectForKey:@"PWD"] stringByExpandingTildeInPath] UTF8String]);
+		chdir([[[[env objectForKey:@"PWD"] stringByExpandingTildeInPath] stringByStandardizingPath] UTF8String]);
 		sts = execvp(argpath, (char* const*)argv);
 
 		/* exec error */
