@@ -123,4 +123,39 @@
     [[PreferencePanel sharedInstance] showBookmarks];
 }
 
+- (IBAction)editSelectedBookmark:(id)sender
+{
+    NSString* guid = [tableView_ selectedGuid];
+    if (guid) {
+        [[PreferencePanel sharedInstance] openToBookmark:guid];
+    }
+}
+
+- (NSMenu*)bookmarkTable:(id)bookmarkTable menuForEvent:(NSEvent*)theEvent
+{
+    NSMenu* menu =[[NSMenu alloc] initWithTitle:@"Contextual Menu"];
+
+    int count = [[bookmarkTable selectedGuids] count];
+    if (count == 1) {
+        [menu addItemWithTitle:@"Edit Bookmark..."
+                        action:@selector(editSelectedBookmark:) 
+                 keyEquivalent:@""];
+        [menu addItemWithTitle:@"Open in New Tab"
+                        action:@selector(openBookmarkInTab:) 
+                 keyEquivalent:@""];
+        [menu addItemWithTitle:@"Open in New Window"
+                        action:@selector(openBookmarkInWindow:) 
+                 keyEquivalent:@""];
+    } else if (count > 1) {
+        [menu addItemWithTitle:@"Open in New Tabs"
+                        action:@selector(openBookmarkInTab:) 
+                 keyEquivalent:@""];
+        [menu addItemWithTitle:@"Open in New Windows"
+                        action:@selector(openBookmarkInWindow:) 
+                 keyEquivalent:@""];
+    }
+    return menu;
+}
+
+
 @end

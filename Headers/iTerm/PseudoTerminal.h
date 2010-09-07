@@ -256,6 +256,7 @@
 #endif
 
 - (void)reloadBookmarks;
+- (void)editCurrentSession:(id)sender;
 
 @end
 

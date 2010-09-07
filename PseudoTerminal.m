@@ -2107,6 +2107,32 @@ NSString *sessionsKey = @"sessions";
     suppressContextualMenu = aBool;
 }
 
+- (void)editCurrentSession:(id)sender
+{
+    PTYSession* session = [self currentSession];
+    if (!session) {
+        return;
+    }
+    Bookmark* bookmark = [session addressBookEntry];
+    if (!bookmark) {
+        return;
+    }
+    NSString* guid = [bookmark objectForKey:KEY_GUID];
+    [[BookmarkModel sessionsInstance] removeBookmarkWithGuid:guid];
+    [[BookmarkModel sessionsInstance] addBookmark:bookmark];
+    
+    // Change the GUID so that this session can follow a different path in life
+    // than its bookmark. Changes to the bookmark will no longer affect this
+    // session, and changes to this session won't affect its originating bookmark
+    // (which may not evene exist any longer).
+    guid = [BookmarkModel newGuid];
+    [[BookmarkModel sessionsInstance] setObject:guid
+                                         forKey:KEY_GUID 
+                                     inBookmark:bookmark];
+    [session setAddressBookEntry:[[BookmarkModel sessionsInstance] bookmarkWithGuid:guid]];
+    [[PreferencePanel sessionsInstance] openToBookmark:guid];
+}
+
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu
 {
     // Constructs the context menu for right-clicking on a terminal when
@@ -2180,7 +2206,12 @@ NSString *sessionsKey = @"sessions";
     [theMenu addItem:[NSMenuItem separatorItem]];
     
     // Info
-    aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Info...",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu") action:@selector(showConfigWindow:) keyEquivalent:@""];
+    aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Info...",
+                                                                                     @"iTerm", 
+                                                                                     [NSBundle bundleForClass: [self class]], 
+                                                                                     @"Context menu") 
+                                           action:@selector(editCurrentSession:) 
+                                    keyEquivalent:@""];
     [aMenuItem setTarget: self];
     [theMenu addItem: aMenuItem];
     [aMenuItem release];
@@ -3126,13 +3157,15 @@ NSString *sessionsKey = @"sessions";
         [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
         
         pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
-        if ([pwd length] <= 0) {
+        if ([pwd length] == 0) {
             if (oldCWD) {
                 pwd = oldCWD;
             } else {
                 pwd = NSHomeDirectory();
             }
         }
+
+        pwd = [pwd stringByStandardizingPath];
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         
         [self setCurrentSessionName:name];    
@@ -3188,9 +3221,11 @@ NSString *sessionsKey = @"sessions";
         [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
         
         pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
-        if ([pwd length] <= 0) {
+        if ([pwd length] == 0) {
             pwd = NSHomeDirectory();
         }
+
+        pwd = [pwd stringByStandardizingPath];
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         
         [self setCurrentSessionName: name];    
@@ -3228,9 +3263,11 @@ NSString *sessionsKey = @"sessions";
         [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
         
         pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
-        if ([pwd length] <= 0) {
+        if ([pwd length] == 0) {
             pwd = NSHomeDirectory();
         }
+
+        pwd = [pwd stringByStandardizingPath];
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         
         [self setCurrentSessionName:name];    
