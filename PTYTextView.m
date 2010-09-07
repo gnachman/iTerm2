@@ -954,9 +954,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [NSCursor setHiddenUntilMouseMoves:YES];
 
     // Should we process the event immediately in the delegate?
-    if([delegate hasKeyMappingForEvent:event highPriority:YES] ||
-        (modflag & NSNumericPadKeyMask) || (modflag & NSFunctionKeyMask) ||
-        ((modflag & NSAlternateKeyMask) && [delegate optionKey] != OPT_NORMAL))
+    if ([delegate hasKeyMappingForEvent:event highPriority:YES] ||
+         (modflag & NSNumericPadKeyMask) || 
+         (modflag & NSFunctionKeyMask) ||
+         ((modflag & NSAlternateKeyMask) && [delegate optionKey] != OPT_NORMAL))
     {
         [delegate keyDown:event];
         return;
@@ -967,7 +968,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [self interpretKeyEvents:[NSArray arrayWithObject:event]];
 
     // If the IME didn't want it, pass it on to the delegate
-    if(!prev && !IM_INPUT_INSERT && ![self hasMarkedText]) {
+    if (!prev && 
+        !IM_INPUT_INSERT && 
+        ![self hasMarkedText]) {
         [delegate keyDown:event];
     }
 }
@@ -1443,24 +1446,29 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int width = [dataSource width];
     
     x = (locationInTextView.x - MARGIN) / charWidth;
-    // TODO
-    if (x < 0) x = 0;
-    if (x>=width) x = width - 1;
+    if (x < 0) {
+        x = 0;
+    }
+    if (x>=width) {
+        x = width - 1;
+    }
     
+    y = locationInTextView.y / lineHeight;
     
-    y = locationInTextView.y/lineHeight;
-    
-    
+    // Send mouse up event to host if xterm mouse reporting is on
     if ([[self delegate] xtermMouseReporting]
-        && reportingMouseDown && !([event modifierFlags] & NSAlternateKeyMask)) 
-    {
+        && reportingMouseDown && !([event modifierFlags] & NSAlternateKeyMask)) {
         reportingMouseDown = NO;
         int rx, ry;
         NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-        rx = (locationInTextView.x-MARGIN - visibleRect.origin.x)/charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y)/lineHeight;
-        if (rx < 0) rx = -1;
-        if (ry < 0) ry = -1;
+        rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
+        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
+        if (rx < 0) {
+            rx = -1;
+        }
+        if (ry < 0) {
+            ry = -1;
+        }
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
         
@@ -1483,7 +1491,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:NO];
     }
 
-    if(mouseDown == NO) {
+    if (mouseDown == NO) {
         DebugLog([NSString stringWithFormat:@"Mouse up. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);        
         return;
     }
@@ -1501,16 +1509,24 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     } else if ([mouseDownEvent locationInWindow].x == [event locationInWindow].x &&
                [mouseDownEvent locationInWindow].y == [event locationInWindow].y && 
                !([event modifierFlags] & NSShiftKeyMask) &&
-               [event clickCount] < 2 && !mouseDragged) {        
+               [event clickCount] < 2 && 
+               !mouseDragged) {  
+        // Just a click in the window.
         startX=-1;
-        if(([event modifierFlags] & NSCommandKeyMask) && [[PreferencePanel sharedInstance] cmdSelection] &&
-           [mouseDownEvent locationInWindow].x == [event locationInWindow].x &&
-           [mouseDownEvent locationInWindow].y == [event locationInWindow].y) {
+        if (([event modifierFlags] & NSCommandKeyMask) && 
+            [[PreferencePanel sharedInstance] cmdSelection] &&
+            [mouseDownEvent locationInWindow].x == [event locationInWindow].x &&
+            [mouseDownEvent locationInWindow].y == [event locationInWindow].y) {
+            // Command click in place.
             //[self _openURL: [self selectedText]];
             NSString *url = [self _getURLForX:x y:y];
             if (url != nil) {
                 [self _openURL:url];
             }
+        } else {
+            lastFindX = endX;
+            absLastFindY = endY + [dataSource totalScrollbackOverflow];
+            NSLog(@"Reset find position to %d,%d", lastFindX, absLastFindY);
         }
     }
     
@@ -1518,11 +1534,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     //if([self _isBlankLine: y] && y >= 0)
     //  endX = [dataSource width] - 1;
     
-    
     if (startX > -1 && _delegate) {
         // if we want to copy our selection, do so
-        if([[PreferencePanel sharedInstance] copySelection])
+        if ([[PreferencePanel sharedInstance] copySelection]) {
             [self copy: self];
+        }
     }
     
     if (selectMode != SELECT_BOX) {
@@ -2231,7 +2247,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         [markedText release];
         markedText=nil;
     }
-
+    if (startX == -1) {
+        [self resetFindCursor];
+    }
+    
     if ([(NSString*)aString length]>0) {
         if ([_delegate respondsToSelector:@selector(insertText:)])
             [_delegate insertText:aString];

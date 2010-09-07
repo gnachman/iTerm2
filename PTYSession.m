@@ -748,7 +748,7 @@ static NSImage *warningImage;
 	//    NSLog(@"insertText: %@",string);
     mstring = [NSMutableString stringWithString:string];
     max = [string length];
-    for(i=0; i<max; i++) {
+    for(i=0; i < max; i++) {
         // From http://lists.apple.com/archives/cocoa-dev/2001/Jul/msg00114.html
         // in MacJapanese, the backslash char (ASCII 0x5C) is mapped to Unicode 0xA5.
         // The following line gives you NSString containing an Unicode character Yen sign (0xA5) in Japanese localization.
@@ -767,9 +767,9 @@ static NSImage *warningImage;
     data = [mstring dataUsingEncoding:[TERMINAL encoding]
 				 allowLossyConversion:YES];
 
-    if (data != nil) 
+    if (data != nil) {
 		[self writeTask:data];
-
+    }
 	// let the update thred update display if a key is being held down
 	/*if([TEXTVIEW keyIsARepeat] == NO)
 		[self updateDisplay];*/
