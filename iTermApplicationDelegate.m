@@ -395,8 +395,8 @@ void DebugLog(NSString* value)
     NSURL *webURL, *bugURL, *creditsURL;
     NSAttributedString *webSite, *bugReport, *wikiCredits;
     NSAttributedString *tmpAttrString;
-    NSDictionary *linkTextViewAttributes, *linkAttributes, *otherAttributes;
-    NSString *web = @"http://iterm2.googlecode.com/";
+    NSDictionary *linkTextViewAttributes, *linkAttributes;
+    NSString *web = @"http://sites.google.com/site/iterm2home/";
     NSString *bugtraq = @"http://code.google.com/p/iterm2/issues/entry";
     NSString *credits = @"http://code.google.com/p/iterm2/wiki/Credits";
 //    [NSApp orderFrontStandardAboutPanel:nil];
@@ -406,11 +406,6 @@ void DebugLog(NSString* value)
                               [NSColor blueColor], NSForegroundColorAttributeName,
                               [NSCursor pointingHandCursor], NSCursorAttributeName,
                               NULL];
-
-    //otherAttributes = [NSDictionary dictionaryWithObjectsAndKeys: [NSCursor pointingHandCursor], NSCursorAttributeName,
-    //                   NULL];
-    otherAttributes = [NSDictionary dictionaryWithObjectsAndKeys: [NSColor redColor], NSForegroundColorAttributeName,
-                       NULL];
 	
     // Web URL
     webURL = [NSURL URLWithString: web];
@@ -425,7 +420,7 @@ void DebugLog(NSString* value)
     // Credits
     creditsURL = [NSURL URLWithString: credits];
     linkAttributes = [NSDictionary dictionaryWithObjectsAndKeys: creditsURL, NSLinkAttributeName, NULL];
-    wikiCredits = [[NSAttributedString alloc] initWithString: @"Credits (Wiki)" attributes: linkAttributes];
+    wikiCredits = [[NSAttributedString alloc] initWithString: @"Credits" attributes: linkAttributes];
 
     // version number and mode
     NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
@@ -433,8 +428,7 @@ void DebugLog(NSString* value)
 
     [AUTHORS setLinkTextAttributes: linkTextViewAttributes];
     [[AUTHORS textStorage] deleteCharactersInRange: NSMakeRange(0, [[AUTHORS textStorage] length])];
-    tmpAttrString = [[[NSAttributedString alloc] initWithString: versionString attributes: otherAttributes] autorelease];
-    [[AUTHORS textStorage] appendAttributedString: tmpAttrString];
+    [[AUTHORS textStorage] appendAttributedString: [[NSAttributedString alloc] initWithString: versionString]];
     [[AUTHORS textStorage] appendAttributedString: [[NSAttributedString alloc] initWithString: @"\n\n"]];
     [[AUTHORS textStorage] appendAttributedString: webSite];
     [[AUTHORS textStorage] appendAttributedString: [[NSAttributedString alloc] initWithString: @"\n"]];

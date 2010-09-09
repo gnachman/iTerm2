@@ -987,7 +987,7 @@
 			<object class="NSWindowTemplate" id="1019469817">
 				<int key="NSWindowStyleMask">1</int>
 				<int key="NSWindowBacking">2</int>
-				<string key="NSWindowRect">{{386, 460}, {371, 228}}</string>
+				<string key="NSWindowRect">{{386, 477}, {496, 211}}</string>
 				<int key="NSWTFlags">1886912512</int>
 				<string key="NSWindowTitle">About iTerm</string>
 				<string key="NSWindowClass">NSPanel</string>
@@ -1004,7 +1004,7 @@
 						<object class="NSButton" id="398986259">
 							<reference key="NSNextResponder" ref="813030389"/>
 							<int key="NSvFlags">256</int>
-							<string key="NSFrame">{{106, 12}, {184, 32}}</string>
+							<string key="NSFrame">{{168, 12}, {184, 32}}</string>
 							<reference key="NSSuperview" ref="813030389"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="547419290">
@@ -1033,7 +1033,7 @@
 						<object class="NSTextField" id="198376688">
 							<reference key="NSNextResponder" ref="813030389"/>
 							<int key="NSvFlags">256</int>
-							<string key="NSFrame">{{221, 181}, {79, 27}}</string>
+							<string key="NSFrame">{{283, 164}, {79, 27}}</string>
 							<reference key="NSSuperview" ref="813030389"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSTextFieldCell" key="NSCell" id="26136141">
@@ -1079,7 +1079,7 @@
 										<object class="NSTextView" id="637673380">
 											<reference key="NSNextResponder" ref="829948544"/>
 											<int key="NSvFlags">2322</int>
-											<string key="NSFrameSize">{182, 64}</string>
+											<string key="NSFrameSize">{307, 0}</string>
 											<reference key="NSSuperview" ref="829948544"/>
 											<object class="NSTextContainer" key="NSTextContainer" id="700346087">
 												<object class="NSLayoutManager" key="NSLayoutManager">
@@ -1097,7 +1097,7 @@
 													<nil key="NSDelegate"/>
 												</object>
 												<reference key="NSTextView" ref="637673380"/>
-												<double key="NSWidth">182</double>
+												<double key="NSWidth">307</double>
 												<int key="NSTCFlags">1</int>
 											</object>
 											<object class="NSTextViewSharedData" key="NSSharedData">
@@ -1138,7 +1138,7 @@
 											<nil key="NSDelegate"/>
 										</object>
 									</object>
-									<string key="NSFrameSize">{182, 111}</string>
+									<string key="NSFrameSize">{307, 92}</string>
 									<reference key="NSSuperview" ref="949675429"/>
 									<reference key="NSNextKeyView" ref="637673380"/>
 									<reference key="NSDocView" ref="637673380"/>
@@ -1171,7 +1171,7 @@
 									<double key="NSPercent">0.94565220000000005</double>
 								</object>
 							</object>
-							<string key="NSFrame">{{169, 65}, {182, 111}}</string>
+							<string key="NSFrame">{{169, 67}, {307, 92}}</string>
 							<reference key="NSSuperview" ref="813030389"/>
 							<reference key="NSNextKeyView" ref="829948544"/>
 							<int key="NSsFlags">0</int>
@@ -1194,7 +1194,7 @@
 									<string>NeXT TIFF v4.0 pasteboard type</string>
 								</object>
 							</object>
-							<string key="NSFrame">{{20, 96}, {128, 128}}</string>
+							<string key="NSFrame">{{20, 79}, {128, 128}}</string>
 							<reference key="NSSuperview" ref="813030389"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSImageCell" key="NSCell" id="423045545">
@@ -1212,7 +1212,7 @@
 							<bool key="NSEditable">YES</bool>
 						</object>
 					</object>
-					<string key="NSFrameSize">{371, 228}</string>
+					<string key="NSFrameSize">{496, 211}</string>
 					<reference key="NSSuperview"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {1680, 1028}}</string>
@@ -2914,9 +2914,9 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 						<reference key="object" ref="813030389"/>
 						<object class="NSMutableArray" key="children">
 							<bool key="EncodedWithXMLCoder">YES</bool>
-							<reference ref="198376688"/>
 							<reference ref="949675429"/>
 							<reference ref="174023371"/>
+							<reference ref="198376688"/>
 							<reference ref="398986259"/>
 						</object>
 						<reference key="parent" ref="1019469817"/>
@@ -3361,9 +3361,9 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>{{329, 714}, {444, 20}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{396, 528}, {371, 228}}</string>
+					<string>{{396, 545}, {496, 211}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{396, 528}, {371, 228}}</string>
+					<string>{{396, 545}, {496, 211}}</string>
 					<boolean value="YES"/>
 					<boolean value="YES"/>
 					<string>{213, 107}</string>
