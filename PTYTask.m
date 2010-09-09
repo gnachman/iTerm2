@@ -355,12 +355,14 @@ setup_tty_param(
 		struct termios* term,
 		struct winsize* win,
 		int width,
-		int height)
+		int height,
+        BOOL isUTF8)
 {
 	memset(term, 0, sizeof(struct termios));
 	memset(win, 0, sizeof(struct winsize));
 
-	term->c_iflag = ICRNL | IXON | IXANY | IMAXBEL | BRKINT;
+    // UTF-8 input will be added on demand.
+	term->c_iflag = ICRNL | IXON | IXANY | IMAXBEL | BRKINT | (isUTF8 * IUTF8);
 	term->c_oflag = OPOST | ONLCR;
 	term->c_cflag = CREAD | CS8 | HUPCL;
 	term->c_lflag = ICANON | ISIG | IEXTEN | ECHO | ECHOE | ECHOK | ECHOKE | ECHOCTL;
@@ -439,8 +441,11 @@ setup_tty_param(
 }
 
 - (void)launchWithPath:(NSString*)progpath
-		arguments:(NSArray*)args environment:(NSDictionary*)env
-		width:(int)width height:(int)height
+		arguments:(NSArray*)args
+        environment:(NSDictionary*)env
+        width:(int)width
+        height:(int)height
+        isUTF8:(BOOL)isUTF8
 {
 	struct termios term;
 	struct winsize win;
@@ -453,7 +458,7 @@ setup_tty_param(
 	NSLog(@"%s(%d):-[launchWithPath:%@ arguments:%@ environment:%@ width:%d height:%d", __FILE__, __LINE__, progpath, args, env, width, height);
 #endif
 
-	setup_tty_param(&term, &win, width, height);
+	setup_tty_param(&term, &win, width, height, isUTF8);
 	pid = forkpty(&fd, theTtyname, &term, &win);
 	if (pid == (pid_t)0) {
 		const char* argpath = [[progpath stringByStandardizingPath] UTF8String];
@@ -468,7 +473,7 @@ setup_tty_param(
 		}
 		argv[max + 1] = NULL;
 
-		if (env != nil ) {
+		if (env != nil) {
 			NSArray* keys = [env allKeys];
 			int i, theMax = [keys count];
 			for (i = 0; i < theMax; ++i) {

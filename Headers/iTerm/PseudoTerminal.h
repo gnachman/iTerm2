@@ -142,8 +142,9 @@
 - (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv;
 - (void)startProgram:(NSString *)program
-                  arguments:(NSArray *)prog_argv
-                environment:(NSDictionary *)prog_env;
+        arguments:(NSArray *)prog_argv
+        environment:(NSDictionary *)prog_env
+        isUTF8:(BOOL)isUTF8;
 - (void)setWindowSize;
 - (void)setWindowSizeWithVisibleFrame: (NSRect)visibleFrame;
 - (void)setWindowTitle;

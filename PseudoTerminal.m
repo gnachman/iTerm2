@@ -575,7 +575,7 @@ NSString *sessionsKey = @"sessions";
                 charHorizontalSpacingMultiplier =[aPseudoTerminal oldCharSpacingHorizontal];
                 charVerticalSpacingMultiplier= [aPseudoTerminal oldCharSpacingVertical];
                 [self setFont:[aPseudoTerminal oldFont] nafont:[aPseudoTerminal oldNAFont]];
-                
+
             }
             else {
                 WIDTH = [aPseudoTerminal width];
@@ -643,8 +643,8 @@ NSString *sessionsKey = @"sessions";
     if (WIDTH == 0 && HEIGHT == 0) {
         WIDTH = [[tempPrefs objectForKey:KEY_COLUMNS] intValue];
         HEIGHT = [[tempPrefs objectForKey:KEY_ROWS] intValue];
-        [self setAntiAlias:[[tempPrefs objectForKey:KEY_ANTI_ALIASING] boolValue]];
-        [self setBlur:[[tempPrefs objectForKey:KEY_BLUR] boolValue]];
+        [self setAntiAlias:[[tempPrefs objectForKey:KEY_ANTI_ALIASING] BOOLValue]];
+        [self setBlur:[[tempPrefs objectForKey:KEY_BLUR] BOOLValue]];
     }
     if ([aSession initScreen: [TABVIEW contentRect] width:WIDTH height:HEIGHT]) {
         if (FONT == nil)  {
@@ -913,7 +913,8 @@ NSString *sessionsKey = @"sessions";
 #endif
     [[self currentSession] startProgram:program
                                      arguments:[NSArray array]
-                                   environment:[NSDictionary dictionary]];
+                                     environment:[NSDictionary dictionary]
+                                     isUTF8:NO];
         
 }
 
@@ -924,14 +925,16 @@ NSString *sessionsKey = @"sessions";
           __FILE__, __LINE__, program, prog_argv );
 #endif
     [[self currentSession] startProgram:program
-                                     arguments:prog_argv
-                                   environment:[NSDictionary dictionary]];
+                                    arguments:prog_argv
+                                    environment:[NSDictionary dictionary]
+                                    isUTF8:NO];
         
 }
 
 - (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv
-         environment:(NSDictionary *)prog_env
+           environment:(NSDictionary *)prog_env
+           isUTF8:(BOOL)isUTF8
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PseudoTerminal startProgram:%@ arguments:%@]",
@@ -939,7 +942,8 @@ NSString *sessionsKey = @"sessions";
 #endif
     [[self currentSession] startProgram:program
                                      arguments:prog_argv
-                                   environment:prog_env];
+                                     environment:prog_env
+                                     isUTF8:isUTF8];
     
     if ([[[self window] title] compare:@"Window"]==NSOrderedSame) 
         [self setWindowTitle];
@@ -3147,6 +3151,7 @@ NSString *sessionsKey = @"sessions";
         NSMutableString *cmd, *name;
         NSArray *arg;
         NSString *pwd;
+        BOOL isUTF8;
         
         // Grab the addressbook command
         cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry]] autorelease];
@@ -3166,10 +3171,12 @@ NSString *sessionsKey = @"sessions";
         }
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         
+        isUTF8 = ([[addressbookEntry objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
+        
         [self setCurrentSessionName:name];    
         
         // Start the command        
-        [self startProgram:cmd arguments:arg environment:env];
+        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8];
     }
     
     [aSession release];
@@ -3216,6 +3223,7 @@ NSString *sessionsKey = @"sessions";
         
         NSArray *arg;
         NSString *pwd;
+        BOOL isUTF8;
         [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
         
         pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
@@ -3224,10 +3232,12 @@ NSString *sessionsKey = @"sessions";
         }
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         
+        isUTF8 = ([[addressbookEntry objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
+        
         [self setCurrentSessionName: name];    
         
         // Start the command        
-        [self startProgram:cmd arguments:arg environment:env];
+        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8];
     }
     [aSession release];
 }
@@ -3249,6 +3259,7 @@ NSString *sessionsKey = @"sessions";
         NSMutableString *cmd, *name;
         NSArray *arg;
         NSString *pwd;
+        BOOL isUTF8;
         
         // Grab the addressbook command
         cmd = [[[NSMutableString alloc] initWithString:command] autorelease];
@@ -3264,10 +3275,12 @@ NSString *sessionsKey = @"sessions";
         }
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         
+        isUTF8 = ([[addressbookEntry objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
+        
         [self setCurrentSessionName:name];    
         
         // Start the command        
-        [self startProgram:cmd arguments:arg environment:env];
+        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8];
     }
     
     [aSession release];

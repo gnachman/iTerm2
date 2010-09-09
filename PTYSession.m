@@ -224,7 +224,8 @@ static NSImage *warningImage;
 
 - (void)startProgram:(NSString *)program
 		   arguments:(NSArray *)prog_argv
-		 environment:(NSDictionary *)prog_env
+		   environment:(NSDictionary *)prog_env
+           isUTF8:(BOOL)isUTF8
 {
     NSString *path = program;
     NSMutableArray *argv = [NSMutableArray arrayWithArray:prog_argv];
@@ -257,10 +258,12 @@ static NSImage *warningImage;
         [env setObject:[PWD_ENVVALUE stringByExpandingTildeInPath] forKey:PWD_ENVNAME];
 	
     [SHELL launchWithPath:path
-				arguments:argv
-			  environment:env
-					width:[SCREEN width]
-				   height:[SCREEN height]];
+                arguments:argv
+                environment:env
+                width:[SCREEN width]
+                height:[SCREEN height]
+                isUTF8:isUTF8
+    ];
 	
 }
 
@@ -1872,13 +1875,14 @@ static NSImage *warningImage;
     // Get the command's arguments:
     NSDictionary *args = [aCommand evaluatedArguments];
     NSString *command = [args objectForKey:@"command"];
+    BOOL isUTF8 = [[args objectForKey:@"isUTF8"] boolValue];
 	
     NSString *cmd;
     NSArray *arg;
 	
     [PseudoTerminal breakDown:command cmdPath:&cmd cmdArgs:&arg];
 	
-    [self startProgram:cmd arguments:arg environment:[NSDictionary dictionary]];
+    [self startProgram:cmd arguments:arg environment:[NSDictionary dictionary] isUTF8:isUTF8];
     
     return;
 }
