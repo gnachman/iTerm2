@@ -954,10 +954,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [NSCursor setHiddenUntilMouseMoves:YES];
 
     // Should we process the event immediately in the delegate?
-    if ([delegate hasKeyMappingForEvent:event highPriority:YES] ||
-         (modflag & NSNumericPadKeyMask) || 
-         (modflag & NSFunctionKeyMask) ||
-         ((modflag & NSAlternateKeyMask) && [delegate optionKey] != OPT_NORMAL))
+    if ((!prev) &&
+        ([delegate hasKeyMappingForEvent:event highPriority:YES] ||
+         (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)) ||
+         ((modflag & NSAlternateKeyMask) && [delegate optionKey] != OPT_NORMAL)))
     {
         [delegate keyDown:event];
         return;
@@ -1568,7 +1568,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     } else {
         x = -1;
     }
-    NSLog(@"Drag to pixel %d -> x=%d (charWidth=%d) logical=%f", (int) locationInTextView.x-MARGIN, x, (int)charWidth, logicalX);
+    //NSLog(@"Drag to pixel %d -> x=%d (charWidth=%d) logical=%f", (int) locationInTextView.x-MARGIN, x, (int)charWidth, logicalX);
     if (x < -1) x = -1;
     if (x >= width) x = width - 1;
     
@@ -1655,22 +1655,43 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         case SELECT_WORD:
             // TODO(georgen): test this with x=01
             [self _getWordForX:x y:y startX:&tmpX1 startY:&tmpY1 endX:&tmpX2 endY:&tmpY2];
-            if (startX + startY * width < tmpX2 + tmpY2 * width) {
-                if (startX + startY * width > endX + endY * width) {
+            if ((startX + (startY * width)) < (tmpX2 + (tmpY2 * width))) {
+                // We go forwards in our selection session... and...
+                if ((startX + (startY * width)) > (endX + (endY * width))) {
+                    // This will always be called, if the selection direction is changed from backwards to forwards,
+                    // that is the user changed his mind and now wants to select text AFTER the initial starting
+                    // word, AND we come back to the initial starting word.
+                    // In this case, our X starting and ending values will be SWAPPED, as swapping the values is
+                    // necessary for backwards selection (forward selection: start|(several) word(s)|end---->,
+                    //                                    backward selection: <----|end|(several) word(s)|start)
+                    // We thus need to re-select the current word by starting with our smallest number, which is
+                    // endX (as explained above).
+                    // Afterwards, selecting will continue normally.
                     int tx1, tx2, ty1, ty2;
-                    [self _getWordForX:startX y:startY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
+                    [self _getWordForX:endX y:startY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
                     startX = tx1;
                     startY = ty1;
                 }
+                // This will update the ending coordinates to the new selected word's end boundaries.
+                // If we had to swap the starting and ending value (see above), the ending value is set
+                // to the new value gathered from above (initial double-clicked word).
+                // Else, just extend the selection.
                 endX = tmpX2;
                 endY = tmpY2;
             } else {
-                if (startX + startY * width < endX + endY * width) {
+                // This time, the user wants to go backwards in his selection session.
+                if ((startX + (startY * width)) < (endX + (endY * width))) {
+                    // This branch will re-select the current word with both start and end values swapped,
+                    // whenever the initial double clicked word is reached again (that is, we were already
+                    // selecting backwards.)
+                    // For an explanation why, read the long comment above.
                     int tx1, tx2, ty1, ty2;
                     [self _getWordForX:startX y:startY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
                     startX = tx2;
                     startY = ty2;
                 }
+                // Continue selecting text backwards. For a complete explanation see above, but read
+                // it upside-down. :p
                 endX = tmpX1;
                 endY = tmpY1;
             }

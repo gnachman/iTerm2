@@ -61,6 +61,7 @@
         PseudoTerminal* currentTerminal = [[iTermController sharedInstance] currentTerminal];
         PTYTabView* tabView = [currentTerminal tabView];
         PTYSession* currentSession = [currentTerminal currentSession];
+        NSResponder *responder;
         
         if ([prefPanel keySheet] == [self keyWindow] &&
             [prefPanel keySheetIsOpen] &&
@@ -73,25 +74,30 @@
             [privatePrefPanel shortcutKeyDown:event];
             return;
         } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]] &&
-                   [[[self keyWindow] firstResponder] isKindOfClass:[PTYTextView class]]) {
+                   [(responder = [[self keyWindow] firstResponder]) isKindOfClass:[PTYTextView class]]) {
+            if ([(PTYTextView *)responder hasMarkedText]) {
+                // Let the IM process it
+                [(PTYTextView *)responder interpretKeyEvents:[NSArray arrayWithObject:event]];
+                return;
+            }
 
-			const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
-			if(([event modifierFlags] & mask) == NSCommandKeyMask) {
-				int digit = [[event charactersIgnoringModifiers] intValue];
-				if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
-					[tabView selectTabViewItemAtIndex:digit-1];
-					return;
-				}
-			}
+            const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
+            if(([event modifierFlags] & mask) == NSCommandKeyMask) {
+                int digit = [[event charactersIgnoringModifiers] intValue];
+                if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
+                    [tabView selectTabViewItemAtIndex:digit-1];
+                    return;
+                }
+            }
 
-			if ([currentSession hasKeyMappingForEvent:event highPriority:YES]) {
-				[currentSession keyDown:event];
-				return;
-			}
-		}
-	}
+            if ([currentSession hasKeyMappingForEvent:event highPriority:YES]) {
+                [currentSession keyDown:event];
+                return;
+            }
+        }
+    }
 
-	[super sendEvent: event];
+    [super sendEvent: event];
 }
 
 @end
