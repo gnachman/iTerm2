@@ -643,8 +643,8 @@ NSString *sessionsKey = @"sessions";
     if (WIDTH == 0 && HEIGHT == 0) {
         WIDTH = [[tempPrefs objectForKey:KEY_COLUMNS] intValue];
         HEIGHT = [[tempPrefs objectForKey:KEY_ROWS] intValue];
-        [self setAntiAlias:[[tempPrefs objectForKey:KEY_ANTI_ALIASING] BOOLValue]];
-        [self setBlur:[[tempPrefs objectForKey:KEY_BLUR] BOOLValue]];
+        [self setAntiAlias:[[tempPrefs objectForKey:KEY_ANTI_ALIASING] boolValue]];
+        [self setBlur:[[tempPrefs objectForKey:KEY_BLUR] boolValue]];
     }
     if ([aSession initScreen: [TABVIEW contentRect] width:WIDTH height:HEIGHT]) {
         if (FONT == nil)  {
