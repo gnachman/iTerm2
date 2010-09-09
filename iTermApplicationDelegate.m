@@ -49,9 +49,6 @@ static BOOL usingAutoLaunchScript = NO;
 BOOL gDebugLogging = NO;
 int gDebugLogFile = -1;
 
-#define ABOUT_SCROLL_FPS	30.0
-#define ABOUT_SCROLL_RATE	1.0
-
 
 @implementation iTermApplicationDelegate
 
@@ -392,89 +389,63 @@ void DebugLog(NSString* value)
 	// check if an About window is shown already
 	if (aboutController) return;
 	
-    NSURL *webURL, *bugURL;
-    NSAttributedString *webSite, *bugReport;
-    NSAttributedString *tmpAttrString;
-    NSDictionary *linkAttributes, *otherAttributes;
+    NSURL *webURL, *bugsURL, *creditsURL;
+    NSAttributedString *webAString, *bugsAString, *creditsAString;
+    NSDictionary *linkTextViewAttributes, *linkAttributes;
+    NSString *web = @"http://sites.google.com/site/iterm2home/";
+    NSString *bugs = @"http://code.google.com/p/iterm2/issues/entry";
+    NSString *credits = @"http://code.google.com/p/iterm2/wiki/Credits";
 //    [NSApp orderFrontStandardAboutPanel:nil];
-
-	otherAttributes= [NSDictionary dictionaryWithObjectsAndKeys: [NSCursor pointingHandCursor], NSCursorAttributeName,
-		NULL];
+    
+    linkTextViewAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
+                              [NSNumber numberWithInt: NSSingleUnderlineStyle], NSUnderlineStyleAttributeName,
+                              [NSColor blueColor], NSForegroundColorAttributeName,
+                              [NSCursor pointingHandCursor], NSCursorAttributeName,
+                              NULL];
 	
     // Web URL
-    webURL = [NSURL URLWithString: @"http://iterm2.googlecode.com/"];
-    linkAttributes= [NSDictionary dictionaryWithObjectsAndKeys: webURL, NSLinkAttributeName,
-                        [NSNumber numberWithInt: NSSingleUnderlineStyle], NSUnderlineStyleAttributeName,
-					    [NSColor blueColor], NSForegroundColorAttributeName,
-						[NSCursor pointingHandCursor], NSCursorAttributeName,
-					    NULL];
-    webSite = [[NSAttributedString alloc] initWithString: @"http://iterm2.googlecode.com/" attributes: linkAttributes];
+    webURL = [NSURL URLWithString: web];
+    linkAttributes = [NSDictionary dictionaryWithObjectsAndKeys: webURL, NSLinkAttributeName, NULL];
+    webAString = [[NSAttributedString alloc] initWithString: NSLocalizedStringFromTableInBundle(@"Home Page", @"iTerm", [NSBundle bundleForClass: [self class]], @"About") attributes: linkAttributes];
 
     // Bug report
-    bugURL = [NSURL URLWithString: @"http://code.google.com/p/iterm2/issues/entry"];
-    linkAttributes= [NSDictionary dictionaryWithObjectsAndKeys: bugURL, NSLinkAttributeName,
-        [NSNumber numberWithInt: NSSingleUnderlineStyle], NSUnderlineStyleAttributeName,
-        [NSColor blueColor], NSForegroundColorAttributeName,
-		[NSCursor pointingHandCursor], NSCursorAttributeName,
-        NULL];
-    bugReport = [[NSAttributedString alloc] initWithString: NSLocalizedStringFromTableInBundle(@"Report A Bug", @"iTerm", [NSBundle bundleForClass: [self class]], @"About") attributes: linkAttributes];
+    bugsURL = [NSURL URLWithString: bugs];
+    linkAttributes = [NSDictionary dictionaryWithObjectsAndKeys: bugsURL, NSLinkAttributeName, NULL];
+    bugsAString= [[NSAttributedString alloc] initWithString: NSLocalizedStringFromTableInBundle(@"Report a bug", @"iTerm", [NSBundle bundleForClass: [self class]], @"About") attributes: linkAttributes];
+  
+    // Credits
+    creditsURL = [NSURL URLWithString: credits];
+    linkAttributes = [NSDictionary dictionaryWithObjectsAndKeys: creditsURL, NSLinkAttributeName, NULL];
+    creditsAString = [[NSAttributedString alloc] initWithString: NSLocalizedStringFromTableInBundle(@"Credits", @"iTerm", [NSBundle bundleForClass: [self class]], @"About") attributes: linkAttributes];
 
     // version number and mode
     NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
     NSString *versionString = [@"Build " stringByAppendingString: (NSString *)[myDict objectForKey:@"CFBundleVersion"]];
-    
+
+    [AUTHORS setLinkTextAttributes: linkTextViewAttributes];
     [[AUTHORS textStorage] deleteCharactersInRange: NSMakeRange(0, [[AUTHORS textStorage] length])];
-    tmpAttrString = [[[NSAttributedString alloc] initWithString: versionString attributes: otherAttributes] autorelease];
-    [[AUTHORS textStorage] appendAttributedString: tmpAttrString];
-    tmpAttrString = [[[NSAttributedString alloc] initWithString: @"\n\n" attributes: otherAttributes] autorelease];
-    [[AUTHORS textStorage] appendAttributedString: tmpAttrString];
-    [[AUTHORS textStorage] appendAttributedString: webSite];
-    tmpAttrString = [[[NSAttributedString alloc] initWithString: @"\n" attributes: otherAttributes] autorelease];
-    [[AUTHORS textStorage] appendAttributedString: tmpAttrString];
-    [[AUTHORS textStorage] appendAttributedString: bugReport];
+    [[AUTHORS textStorage] appendAttributedString: [[NSAttributedString alloc] initWithString: versionString]];
+    [[AUTHORS textStorage] appendAttributedString: [[NSAttributedString alloc] initWithString: @"\n\n"]];
+    [[AUTHORS textStorage] appendAttributedString: webAString];
+    [[AUTHORS textStorage] appendAttributedString: [[NSAttributedString alloc] initWithString: @"\n"]];
+    [[AUTHORS textStorage] appendAttributedString: bugsAString];
+    [[AUTHORS textStorage] appendAttributedString: [[NSAttributedString alloc] initWithString: @"\n\n"]];
+    [[AUTHORS textStorage] appendAttributedString: creditsAString]; 
     [AUTHORS setAlignment: NSCenterTextAlignment range: NSMakeRange(0, [[AUTHORS textStorage] length])];
-
-	NSString* creditsPath = [[NSBundle mainBundle] pathForResource:@"credits" ofType:@"rtf"];
-	NSAttributedString* creditsString = [[NSAttributedString alloc] initWithPath:creditsPath documentAttributes:nil];
-	[scrollingInfo replaceCharactersInRange:NSMakeRange( 0, 0 ) 
-				   withRTF:[creditsString RTFFromRange:NSMakeRange( 0, [creditsString length] ) 
-				   documentAttributes:nil]];
-	
-	[[scrollingInfo enclosingScrollView] setLineScroll:0.0];
-    [[scrollingInfo enclosingScrollView] setPageScroll:0.0];
-	[[scrollingInfo enclosingScrollView] setVerticalScroller:nil];
-
-    //Start scrolling    
-    scrollLocation = 0; 
-    scrollRate = ABOUT_SCROLL_RATE;
-    maxScroll = [[scrollingInfo textStorage] size].height - [[scrollingInfo enclosingScrollView] documentVisibleRect].size.height;
-    scrollTimer = [[NSTimer scheduledTimerWithTimeInterval:(1.0/ABOUT_SCROLL_FPS)
-													target:self
-												  selector:@selector(_scrollTimer:)
-												  userInfo:nil
-												   repeats:YES] retain];
-	eventLoopScrollTimer = [[NSTimer timerWithTimeInterval:(1.0/ABOUT_SCROLL_FPS)
-													target:self
-												  selector:@selector(_scrollTimer:)
-												  userInfo:nil
-												   repeats:YES] retain];
-    [[NSRunLoop currentRunLoop] addTimer:eventLoopScrollTimer forMode:NSEventTrackingRunLoopMode];
 
     aboutController = [[NSWindowController alloc] initWithWindow:ABOUT];
     [aboutController showWindow:ABOUT];
 
-    [webSite release];	
-	
-	
+    [webAString release];
+    [bugsAString release];
+    [creditsAString release];
 }
 
 - (IBAction)aboutOK:(id)sender
 {
     [ABOUT close];
-	[scrollTimer invalidate]; [scrollTimer release]; scrollTimer = nil;
-	[eventLoopScrollTimer invalidate]; [eventLoopScrollTimer release]; eventLoopScrollTimer = nil;
-	[aboutController release];
-	aboutController = nil;
+		[aboutController release];
+    aboutController = nil;
 }
 
 // size
@@ -833,21 +804,6 @@ void DebugLog(NSString* value)
 - (void)newSessionInWindowAtIndex: (id) sender
 {
     [[iTermController sharedInstance] newSessionInWindowAtIndex:sender];
-}
-
-@end
-
-@implementation iTermApplicationDelegate (Private)
-
-//Scroll the credits
-- (void)_scrollTimer:(NSTimer *)scrollTimer
-{    
-	scrollLocation += scrollRate;
-	
-	if (scrollLocation > maxScroll) scrollLocation = 0;    
-	if (scrollLocation < 0) scrollLocation = maxScroll;
-	
-	[scrollingInfo scrollPoint:NSMakePoint(0, scrollLocation)];
 }
 
 @end
