@@ -64,9 +64,9 @@
 - (void)dealloc;
 
 - (void)launchWithPath:(NSString*)progpath
-		arguments:(NSArray*)args
+        arguments:(NSArray*)args
         environment:(NSDictionary*)env
-		width:(int)width
+        width:(int)width
         height:(int)height
         isUTF8:(BOOL)isUTF8;
 

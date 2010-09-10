@@ -906,32 +906,6 @@ NSString *sessionsKey = @"sessions";
 }
 
 - (void)startProgram:(NSString *)program
-{
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal startProgram:%@]",
-          __FILE__, __LINE__, program );
-#endif
-    [[self currentSession] startProgram:program
-                                     arguments:[NSArray array]
-                                     environment:[NSDictionary dictionary]
-                                     isUTF8:NO];
-        
-}
-
-- (void)startProgram:(NSString *)program arguments:(NSArray *)prog_argv
-{
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal startProgram:%@ arguments:%@]",
-          __FILE__, __LINE__, program, prog_argv );
-#endif
-    [[self currentSession] startProgram:program
-                                    arguments:prog_argv
-                                    environment:[NSDictionary dictionary]
-                                    isUTF8:NO];
-        
-}
-
-- (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv
            environment:(NSDictionary *)prog_env
            isUTF8:(BOOL)isUTF8
