@@ -127,7 +127,7 @@ NSString *sessionsKey = @"sessions";
                     [p addObject:[NSString stringWithCString:tmp]];
                 j = 0;
                 ++k;
-                while ((i < slen) && (s[i+1] == ' ') || (s[i+1] == '\t') || (s[i+1] == '\n') || (s[i+1] == 0)))
+                while ((i < slen) && ((s[i+1] == ' ') || (s[i+1] == '\t') || (s[i+1] == '\n') || (s[i+1] == 0)))
                     ++i;
             }
             else
