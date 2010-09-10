@@ -202,8 +202,8 @@ static TaskNotifier* taskNotifier = nil;
     fd_set             wfds;
     fd_set             efds;
     int                highfd;
-	NSEnumerator*      iter;
-	PTYTask*           task;
+    NSEnumerator*      iter;
+    PTYTask*           task;
     
     // FIXME: replace this with something better...
     for(;;) {
@@ -333,7 +333,7 @@ static TaskNotifier* taskNotifier = nil;
                     }
                 }
             }
-            i++;
+            ++i;
             PtyTaskDebugLog(@"About to get task %d\n", i);
         }
         PtyTaskDebugLog(@"run3: unlock");
