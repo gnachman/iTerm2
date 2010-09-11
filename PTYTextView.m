@@ -2710,9 +2710,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                                 // Draw an outline in the foreground color
                                 fgColor = theLine[x1].fg_color; 
                             }
-                            NSColor* proposedForeground = [self colorForCode:fgColor];
+                            NSColor* proposedForeground = [[self colorForCode:fgColor] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
                             CGFloat fgBrightness = [proposedForeground brightnessComponent];
-                            CGFloat bgBrightness = [bgColor brightnessComponent];
+                            CGFloat bgBrightness = [[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace] brightnessComponent];
                             NSColor* overrideColor = nil;
                             if (fabs(fgBrightness - bgBrightness) < 0.2) {
                                 // foreground and background are very similar. Just use black and
