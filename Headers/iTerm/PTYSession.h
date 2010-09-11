@@ -97,9 +97,9 @@
 // Session specific methods
 - (BOOL)initScreen: (NSRect) aRect width:(int)width height:(int) height;
 - (void)startProgram:(NSString *)program
-        arguments:(NSArray *)prog_argv
-        environment:(NSDictionary *)prog_env
-        isUTF8:(BOOL)isUTF8;
+           arguments:(NSArray *)prog_argv
+         environment:(NSDictionary *)prog_env
+              isUTF8:(BOOL)isUTF8;
 - (void) terminate;
 - (BOOL) isActiveSession;
 

@@ -224,8 +224,8 @@ static NSImage *warningImage;
 
 - (void)startProgram:(NSString *)program
 		   arguments:(NSArray *)prog_argv
-		   environment:(NSDictionary *)prog_env
-           isUTF8:(BOOL)isUTF8
+         environment:(NSDictionary *)prog_env
+              isUTF8:(BOOL)isUTF8
 {
     NSString *path = program;
     NSMutableArray *argv = [NSMutableArray arrayWithArray:prog_argv];
@@ -259,10 +259,10 @@ static NSImage *warningImage;
 	
     [SHELL launchWithPath:path
                 arguments:argv
-                environment:env
-                width:[SCREEN width]
-                height:[SCREEN height]
-                isUTF8:isUTF8
+              environment:env
+                    width:[SCREEN width]
+                   height:[SCREEN height]
+                   isUTF8:isUTF8
     ];
 	
 }

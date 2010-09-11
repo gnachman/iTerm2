@@ -64,11 +64,11 @@
 - (void)dealloc;
 
 - (void)launchWithPath:(NSString*)progpath
-        arguments:(NSArray*)args
-        environment:(NSDictionary*)env
-        width:(int)width
-        height:(int)height
-        isUTF8:(BOOL)isUTF8;
+             arguments:(NSArray*)args
+           environment:(NSDictionary*)env
+                 width:(int)width
+                height:(int)height
+                isUTF8:(BOOL)isUTF8;
 
 - (void)setDelegate:(id)object;
 - (id)delegate;

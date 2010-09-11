@@ -445,10 +445,10 @@ setup_tty_param(
 
 - (void)launchWithPath:(NSString*)progpath
              arguments:(NSArray*)args
-             environment:(NSDictionary*)env
-             width:(int)width
-             height:(int)height
-             isUTF8:(BOOL)isUTF8
+           environment:(NSDictionary*)env
+                 width:(int)width
+                height:(int)height
+                isUTF8:(BOOL)isUTF8
 {
     struct termios term;
     struct winsize win;
