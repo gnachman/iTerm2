@@ -465,7 +465,7 @@ setup_tty_param(
     pid = forkpty(&fd, theTtyname, &term, &win);
     if (pid == (pid_t)0) {
         const char* argpath = [[progpath stringByStandardizingPath] UTF8String];
-        int max = [args count]; // Check with OS X < 10.6: args == nil ? 0 : [args count] - for 10.6 NSArray -count reports 0, if array == nil.
+        int max = (args == nil) ? 0 : [args count]; 
         const char* argv[max + 2];
 
         argv[0] = argpath;
