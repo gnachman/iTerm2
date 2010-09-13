@@ -1664,11 +1664,15 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                     // In this case, our X starting and ending values will be SWAPPED, as swapping the values is
                     // necessary for backwards selection (forward selection: start|(several) word(s)|end---->,
                     //                                    backward selection: <----|end|(several) word(s)|start)
-                    // We thus need to re-select the current word by starting with our smallest number, which is
-                    // endX (as explained above).
+                    // _getWordForX will report a word range with a half open interval (a <= x < b). b-1 will thus be
+                    // the LAST character of the current word. If we call the function again with new_a = b, it will
+                    // report the boundaries for the next word in line (which by definition will always be a white
+                    // space, iff we're in SELECT_WORD mode.)
+                    // Thus calling the function with b-1 will report the correct values for the CURRENT (read as in
+                    // NOT next word).
                     // Afterwards, selecting will continue normally.
                     int tx1, tx2, ty1, ty2;
-                    [self _getWordForX:endX y:startY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
+                    [self _getWordForX:startX-1 y:startY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
                     startX = tx1;
                     startY = ty1;
                 }

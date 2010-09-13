@@ -73,9 +73,10 @@
                    [self isTextFieldInFocus:[privatePrefPanel shortcutKeyTextField]]) {
             [privatePrefPanel shortcutKeyDown:event];
             return;
-        } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]] &&
-                   [(responder = [[self keyWindow] firstResponder]) isKindOfClass:[PTYTextView class]]) {
-            if ([(PTYTextView *)responder hasMarkedText]) {
+        } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
+            responder = [[self keyWindow] firstResponder];
+            if (([responder isKindOfClass:[PTYTextView class]]) &&
+                ([(PTYTextView *)responder hasMarkedText])) {
                 // Let the IM process it
                 [(PTYTextView *)responder interpretKeyEvents:[NSArray arrayWithObject:event]];
                 return;
