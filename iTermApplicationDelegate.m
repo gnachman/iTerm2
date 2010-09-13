@@ -444,7 +444,7 @@ void DebugLog(NSString* value)
 - (IBAction)aboutOK:(id)sender
 {
     [ABOUT close];
-		[aboutController release];
+    [aboutController release];
     aboutController = nil;
 }
 

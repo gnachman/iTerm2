@@ -92,49 +92,50 @@ NSString *sessionsKey = @"sessions";
 // Utility
 + (void) breakDown:(NSString *)cmdl cmdPath: (NSString **) cmd cmdArgs: (NSArray **) path
 {
-    int i,j,k,qf,slen;
-    char tmp[100];
-    const char *s;
+    int            i, j, k, qf, slen;
+    char           tmp[100];
+    const char     *s;
     NSMutableArray *p;
-    
-    p=[[NSMutableArray alloc] init];
-    
-    s=[cmdl UTF8String];
+
+    p = [[NSMutableArray alloc] init];
+
+    s = [cmdl UTF8String];
     slen = strlen(s);
-    
-    i=j=qf=0;
-    k=-1;
-    while (i<=slen) {
+
+    i = j = qf = 0;
+    k = -1;
+
+    while (i <= slen) {
         if (qf) {
-            if (s[i]=='\"') {
-                qf=0;
+            if (s[i] == '\"') {
+                qf = 0;
             }
             else {
-                tmp[j++]=s[i];
+                tmp[j++] = s[i];
             }
         }
         else {
-            if (s[i]=='\"') {
-                qf=1;
+            if (s[i] == '\"') {
+                qf = 1;
             }
-            else if (s[i]==' ' || s[i]=='\t' || s[i]=='\n'||s[i]==0) {
-                tmp[j]=0;
-                if (k==-1) {
-                    *cmd=[NSString stringWithCString:tmp];
+            else if ((s[i] == ' ') || (s[i] == '\t') || (s[i] == '\n') || (s[i] == 0)) {
+                tmp[j] = 0;
+                if (k == -1) {
+                    *cmd = [NSString stringWithCString:tmp];
                 }
                 else
                     [p addObject:[NSString stringWithCString:tmp]];
-                j=0;
-                k++;
-                while (i<slen && (s[i+1]==' '||s[i+1]=='\t'||s[i+1]=='\n'||s[i+1]==0)) i++;
+                j = 0;
+                ++k;
+                while ((i < slen) && ((s[i+1] == ' ') || (s[i+1] == '\t') || (s[i+1] == '\n') || (s[i+1] == 0)))
+                    ++i;
             }
-            else {
-                tmp[j++]=s[i];
-            }
+            else
+                tmp[j++] = s[i];
         }
-        i++;
+        ++i;
     }
-    
+
     *path = [NSArray arrayWithArray:p];
     [p release];
 }
@@ -575,7 +576,7 @@ NSString *sessionsKey = @"sessions";
                 charHorizontalSpacingMultiplier =[aPseudoTerminal oldCharSpacingHorizontal];
                 charVerticalSpacingMultiplier= [aPseudoTerminal oldCharSpacingVertical];
                 [self setFont:[aPseudoTerminal oldFont] nafont:[aPseudoTerminal oldNAFont]];
-                
+
             }
             else {
                 WIDTH = [aPseudoTerminal width];
@@ -847,7 +848,7 @@ NSString *sessionsKey = @"sessions";
 - (void) setFramePos 
 {
    // Set framePos to the next unused window position.
-   for (int i = 0; i < CACHED_WINDOW_POSITIONS; i++) {
+   for (int i = 0; i < CACHED_WINDOW_POSITIONS; ++i) {
       if (!windowPositions[i]) {
          windowPositions[i] = YES;
          framePos = i;
@@ -906,32 +907,9 @@ NSString *sessionsKey = @"sessions";
 }
 
 - (void)startProgram:(NSString *)program
-{
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal startProgram:%@]",
-          __FILE__, __LINE__, program );
-#endif
-    [[self currentSession] startProgram:program
-                                     arguments:[NSArray array]
-                                   environment:[NSDictionary dictionary]];
-        
-}
-
-- (void)startProgram:(NSString *)program arguments:(NSArray *)prog_argv
-{
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal startProgram:%@ arguments:%@]",
-          __FILE__, __LINE__, program, prog_argv );
-#endif
-    [[self currentSession] startProgram:program
-                                     arguments:prog_argv
-                                   environment:[NSDictionary dictionary]];
-        
-}
-
-- (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv
-         environment:(NSDictionary *)prog_env
+           environment:(NSDictionary *)prog_env
+           isUTF8:(BOOL)isUTF8
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PseudoTerminal startProgram:%@ arguments:%@]",
@@ -939,7 +917,8 @@ NSString *sessionsKey = @"sessions";
 #endif
     [[self currentSession] startProgram:program
                                      arguments:prog_argv
-                                   environment:prog_env];
+                                     environment:prog_env
+                                     isUTF8:isUTF8];
     
     if ([[[self window] title] compare:@"Window"]==NSOrderedSame) 
         [self setWindowTitle];
@@ -988,8 +967,7 @@ NSString *sessionsKey = @"sessions";
     charWidth = ceil(sz.width * charHorizontalSpacingMultiplier);
     charHeight = ([layoutManager defaultLineHeightForFont:font] * charVerticalSpacingMultiplier);
 
-    for(i=0;i<[TABVIEW numberOfTabViewItems]; i++) 
-    {
+    for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
         PTYSession* session = [[TABVIEW tabViewItemAtIndex:i] identifier];
         [[session TEXTVIEW] setCharWidth: charWidth];
         [[session TEXTVIEW] setLineHeight: charHeight];
@@ -1037,8 +1015,7 @@ NSString *sessionsKey = @"sessions";
 - (void) _resizeEverySession: (BOOL) hasScrollbar  {
     // Resize every session.
     int i;
-    for (i=0;i<[TABVIEW numberOfTabViewItems];i++) 
-    {
+    for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
         PTYSession *aSession = [[TABVIEW tabViewItemAtIndex: i] identifier];
         [aSession setObjectCount:i+1];
         [[aSession SCREEN] resizeWidth:WIDTH height:HEIGHT];
@@ -1402,8 +1379,7 @@ NSString *sessionsKey = @"sessions";
     
     antiAlias = bAntiAlias;
     
-    for(i=0; i<cnt; i++)
-    {
+    for (i = 0; i < cnt; ++i) {
         aSession = [[TABVIEW tabViewItemAtIndex: i] identifier];
         [[aSession TEXTVIEW] setAntiAlias: antiAlias];
     }
@@ -1466,8 +1442,7 @@ NSString *sessionsKey = @"sessions";
     [nafont retain];
     NAFONT=nafont;
     [self setCharSizeUsingFont:FONT];
-    for(i=0;i<[TABVIEW numberOfTabViewItems]; i++) 
-    {
+    for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
         PTYSession* session = [[TABVIEW tabViewItemAtIndex: i] identifier];
         [[session TEXTVIEW] setFont:FONT nafont:NAFONT];
     }
@@ -1514,7 +1489,7 @@ NSString *sessionsKey = @"sessions";
     
     int n = [TABVIEW numberOfTabViewItems];
     int i;
-    for(i=0;i<n;i++) {
+    for (i = 0; i < n; ++i) {
         [[[[TABVIEW tabViewItemAtIndex:i] identifier] TEXTVIEW] setUseTransparency:flag];
     }
 }
@@ -1572,8 +1547,7 @@ NSString *sessionsKey = @"sessions";
     int i;
     
     int n = [TABVIEW numberOfTabViewItems];    
-    for (i=0; i<n; i++)
-    {
+    for (i = 0; i < n; ++i) {
         aSession = [[TABVIEW tabViewItemAtIndex: i] identifier];
         
         if (![aSession exited]) [[aSession SHELL] writeTask:data];
@@ -1898,7 +1872,7 @@ NSString *sessionsKey = @"sessions";
             PTYSession *aSession;
             
             fullScreenTerminal->_resizeInProgressFlag = YES;
-            for(i=0;i<n;i++) {
+            for (i = 0; i < n; ++i) {
                 aTabViewItem = [[TABVIEW tabViewItemAtIndex:0] retain];
                 aSession = [aTabViewItem identifier];
                 
@@ -1941,7 +1915,7 @@ NSString *sessionsKey = @"sessions";
             
             normalScreenTerminal->_resizeInProgressFlag = YES;
             _resizeInProgressFlag = YES;
-            for(i=0;i<n;i++) {
+            for (i = 0; i < n; ++i) {
                 aTabViewItem = [[TABVIEW tabViewItemAtIndex:0] retain];
                 aSession = [aTabViewItem identifier];
                 
@@ -2162,8 +2136,7 @@ NSString *sessionsKey = @"sessions";
         NSMenu *tabMenu = [[NSMenu alloc] initWithTitle:@""];
         int i;
         
-        for (i = 0; i < [TABVIEW numberOfTabViewItems]; i++)
-        {
+        for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
             aMenuItem = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"%@ #%d", [[TABVIEW tabViewItemAtIndex: i] label], i+1]
                                                    action:@selector(selectTab:) keyEquivalent:@""];
             [aMenuItem setRepresentedObject: [[TABVIEW tabViewItemAtIndex: i] identifier]];
@@ -2173,7 +2146,7 @@ NSString *sessionsKey = @"sessions";
         }
         [theMenu setSubmenu: tabMenu forItem: [theMenu itemAtIndex: nextIndex]];
         [tabMenu release];
-        nextIndex++;
+        ++nextIndex;
     }
     
     // Bookmarks
@@ -2329,8 +2302,7 @@ NSString *sessionsKey = @"sessions";
     if ([[term tabView] numberOfTabViewItems] == 1) [term setWindowSize];
 
     int i;
-    for (i=0;i<[aTabView numberOfTabViewItems];i++) 
-    {
+    for (i = 0; i < [aTabView numberOfTabViewItems]; ++i) {
         PTYSession *currentSession = [[aTabView tabViewItemAtIndex: i] identifier];
         [currentSession setObjectCount:i+1];
     }        
@@ -2465,14 +2437,11 @@ NSString *sessionsKey = @"sessions";
     
     // check window size in case tabs have to be hidden or shown
     if (([TABVIEW numberOfTabViewItems] == 1) || ([[PreferencePanel sharedInstance] hideTab] && 
-        ([TABVIEW numberOfTabViewItems] > 1 && [tabBarControl isHidden])) )
-    {
-        [self setWindowSize];      
-    }
+        ([TABVIEW numberOfTabViewItems] > 1 && [tabBarControl isHidden])))
+        [self setWindowSize];
     
     int i;
-    for (i=0;i<[TABVIEW numberOfTabViewItems];i++) 
-    {
+    for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
         PTYSession *aSession = [[TABVIEW tabViewItemAtIndex: i] identifier];
         [aSession setObjectCount:i+1];
     }        
@@ -2491,16 +2460,14 @@ NSString *sessionsKey = @"sessions";
     NSMenu *theMenu = [[[NSMenu alloc] init] autorelease];
     
     // Create a menu with a submenu to navigate between tabs if there are more than one
-    if([TABVIEW numberOfTabViewItems] > 1)
-    {    
+    if ([TABVIEW numberOfTabViewItems] > 1) {    
         int nextIndex = 0;
         int i;
         
         [theMenu insertItemWithTitle: NSLocalizedStringFromTableInBundle(@"Select",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu") action:nil keyEquivalent:@"" atIndex: nextIndex];
         NSMenu *tabMenu = [[NSMenu alloc] initWithTitle:@""];
         
-        for (i = 0; i < [TABVIEW numberOfTabViewItems]; i++)
-        {
+        for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
             aMenuItem = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"%@ #%d", [[TABVIEW tabViewItemAtIndex: i] label], i+1]
                                                    action:@selector(selectTab:) keyEquivalent:@""];
             [aMenuItem setRepresentedObject: [[TABVIEW tabViewItemAtIndex: i] identifier]];
@@ -2510,7 +2477,7 @@ NSString *sessionsKey = @"sessions";
         }
         [theMenu setSubmenu: tabMenu forItem: [theMenu itemAtIndex: nextIndex]];
         [tabMenu release];
-        nextIndex++;
+        ++nextIndex;
         [theMenu addItem: [NSMenuItem separatorItem]];
    }
     
@@ -2924,7 +2891,7 @@ NSString *sessionsKey = @"sessions";
     do {
         newfont = font;
         font = [[NSFontManager sharedFontManager] convertFont:font toSize:newSize];
-        newSize++;
+        ++newSize;
         newHeight = [layoutManager defaultLineHeightForFont:font] * charVerticalSpacingMultiplier * lines;
     } while (height >= newHeight);
     
@@ -3071,8 +3038,7 @@ NSString *sessionsKey = @"sessions";
     NSMutableArray *sessions = [NSMutableArray arrayWithCapacity: n];
     int i;
     
-    for (i= 0; i < n; i++)
-    {
+    for (i= 0; i < n; ++i) {
         [sessions addObject: [[TABVIEW tabViewItemAtIndex:i] identifier]];
     } 
 
@@ -3086,12 +3052,10 @@ NSString *sessionsKey = @"sessions";
     id result = nil;
     int i;
     
-    if([propertyKey isEqualToString: sessionsKey] == YES)
-    {
+    if ([propertyKey isEqualToString: sessionsKey] == YES) {
         PTYSession *aSession;
         
-        for (i= 0; i < [TABVIEW numberOfTabViewItems]; i++)
-        {
+        for (i= 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
             aSession = [[TABVIEW tabViewItemAtIndex:i] identifier];
             if([[aSession name] isEqualToString: uniqueName] == YES)
                 return (aSession);
@@ -3106,15 +3070,14 @@ NSString *sessionsKey = @"sessions";
 {
     id result = nil;
     int i;
-    
-    if([propertyKey isEqualToString: sessionsKey] == YES)
-    {
+
+    // TODO: if (... == YES) => if (...)
+    if ([propertyKey isEqualToString: sessionsKey] == YES) {
         PTYSession *aSession;
         
-        for (i= 0; i < [TABVIEW numberOfTabViewItems]; i++)
-        {
+        for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
             aSession = [[TABVIEW tabViewItemAtIndex:i] identifier];
-            if([[aSession tty] isEqualToString: uniqueID] == YES)
+            if ([[aSession tty] isEqualToString: uniqueID] == YES)
                 return (aSession);
         }
     }
@@ -3147,6 +3110,7 @@ NSString *sessionsKey = @"sessions";
         NSMutableString *cmd, *name;
         NSArray *arg;
         NSString *pwd;
+        BOOL isUTF8;
         
         // Grab the addressbook command
         cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry]] autorelease];
@@ -3166,10 +3130,12 @@ NSString *sessionsKey = @"sessions";
         }
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         
+        isUTF8 = ([[addressbookEntry objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
+        
         [self setCurrentSessionName:name];    
         
         // Start the command        
-        [self startProgram:cmd arguments:arg environment:env];
+        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8];
     }
     
     [aSession release];
@@ -3216,6 +3182,7 @@ NSString *sessionsKey = @"sessions";
         
         NSArray *arg;
         NSString *pwd;
+        BOOL isUTF8;
         [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
         
         pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
@@ -3224,10 +3191,12 @@ NSString *sessionsKey = @"sessions";
         }
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         
+        isUTF8 = ([[addressbookEntry objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
+        
         [self setCurrentSessionName: name];    
         
         // Start the command        
-        [self startProgram:cmd arguments:arg environment:env];
+        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8];
     }
     [aSession release];
 }
@@ -3249,6 +3218,7 @@ NSString *sessionsKey = @"sessions";
         NSMutableString *cmd, *name;
         NSArray *arg;
         NSString *pwd;
+        BOOL isUTF8;
         
         // Grab the addressbook command
         cmd = [[[NSMutableString alloc] initWithString:command] autorelease];
@@ -3264,10 +3234,12 @@ NSString *sessionsKey = @"sessions";
         }
         NSDictionary *env=[NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         
+        isUTF8 = ([[addressbookEntry objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
+        
         [self setCurrentSessionName:name];    
         
         // Start the command        
-        [self startProgram:cmd arguments:arg environment:env];
+        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8];
     }
     
     [aSession release];
