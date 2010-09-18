@@ -389,15 +389,30 @@
 // Called when the empty area in the tab bar is double clicked.
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView;
 
+// Returns true if an init... method was already called.
+- (BOOL)isInitialized;
+
 @end
 
 @interface PseudoTerminal (KeyValueCoding)
+// IMPORTANT:
+// Never remove methods from here because it will break existing Applescript.
+// Be careful making any changes that might not be backward-compatible.
+
 // accessors for to-many relationships:
+// accessors for attributes:
+// IMPORTANT: These accessors are here for backward compatibility with existing
+// applescript. These methods don't make sense since each tab may have a
+// different number of rows and columns.
+-(int)columns;
+-(void)setColumns: (int)columns;
+-(int)rows;
+-(void)setRows: (int)rows;
+
 // (See NSScriptKeyValueCoding.h)
 -(id)valueInSessionsAtIndex:(unsigned)index;
 -(id)valueWithName: (NSString *)uniqueName inPropertyWithKey: (NSString*)propertyKey;
 -(id)valueWithID: (NSString *)uniqueID inPropertyWithKey: (NSString*)propertyKey;
--(void)addNewSession:(NSDictionary *)addressbookEntry;
 -(void)addNewSession:(NSDictionary *)addressbookEntry withURL: (NSString *)url;
 -(void)addNewSession:(NSDictionary *) addressbookEntry withCommand: (NSString *)command;
 -(void)appendSession:(PTYSession *)object;
@@ -408,6 +423,9 @@
 -(void)addInSessions:(PTYSession *)object;
 -(void)insertInSessions:(PTYSession *)object;
 -(void)insertInSessions:(PTYSession *)object atIndex:(unsigned)index;
+// Add a new session to this window with the given addressbook entry.
+- (void)addNewSession:(NSDictionary *)addressbookEntry;
+
 
 - (BOOL)windowInited;
 - (void) setWindowInited: (BOOL) flag;
