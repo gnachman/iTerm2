@@ -210,7 +210,7 @@ static BOOL initDone = NO;
 
 - (void)_addBookmark:(Bookmark*)bookmark toMenu:(NSMenu*)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts
 {
-    NSMenuItem* aMenuItem = [[[NSMenuItem alloc] initWithTitle: [bookmark objectForKey: KEY_NAME] 
+    NSMenuItem* aMenuItem = [[[NSMenuItem alloc] initWithTitle:[bookmark objectForKey:KEY_NAME] 
                                                         action:@selector(newSessionInTabAtIndex:) 
                                                  keyEquivalent:@""] autorelease];
     if (withShortcuts) {
@@ -312,8 +312,8 @@ static BOOL initDone = NO;
 	// Where do we execute this command?
     if (theTerm == nil) {
         term = [[PseudoTerminal alloc] init];
-		[term initWindowWithAddressbook: aDict];
-		[self addInTerminals: term];
+		[term initWithSmartLayout:YES fullScreen:nil];
+		[self addInTerminals:term];
 		[term release];
 		
     } else {
@@ -342,7 +342,7 @@ static BOOL initDone = NO;
 	// Where do we execute this command?
     if (theTerm == nil) {
         term = [[PseudoTerminal alloc] init];
-		[term initWindowWithAddressbook: aDict];
+		[term initWithSmartLayout:YES fullScreen:nil];
 		[self addInTerminals: term];
 		[term release];
     } else {
@@ -403,7 +403,7 @@ static BOOL initDone = NO;
 	// Where do we execute this command?
     if (theTerm == nil) {
         term = [[PseudoTerminal alloc] init];
-		[term initWindowWithAddressbook: aDict];
+		[term initWithSmartLayout:YES fullScreen:nil];
 		[self addInTerminals: term];
 		[term release];
 		
@@ -521,12 +521,11 @@ NSString *terminalsKey = @"terminals";
 
 -(void)insertInTerminals:(PseudoTerminal *)object atIndex:(unsigned)theIndex
 {
-    if([terminalWindows containsObject: object] == YES)
+    if ([terminalWindows containsObject: object] == YES) {
 		return;
+    }
     
 	[terminalWindows insertObject: object atIndex: theIndex];
-    // make sure we have a window
-    [object initWindowWithAddressbook:NULL];
 }
 
 -(void)removeFromTerminalsAtIndex:(unsigned)theIndex

@@ -6,7 +6,7 @@
  **  Copyright (c) 2002, 2003
  **
  **  Author: Fabian, Ujwal S. Setlur
- **	     Initial code by Kiichi Kusama
+ **      Initial code by Kiichi Kusama
  **
  **  Project: iTerm
  **
@@ -50,9 +50,7 @@ void DebugLog(NSString* value);
     IBOutlet NSMenuItem *closeTab;
     IBOutlet NSMenuItem *closeWindow;
     IBOutlet NSMenuItem *sendInputToAllSessions;
-    IBOutlet NSMenuItem *fontSizeFollowWindowResize;
     IBOutlet NSMenuItem *toggleBookmarksView;
-    IBOutlet NSMenuItem *toggleTransparency;
 
 }
 
@@ -92,9 +90,6 @@ void DebugLog(NSString* value);
 // font control
 - (IBAction) biggerFont: (id) sender;
 - (IBAction) smallerFont: (id) sender;
-
-// transparency
-- (IBAction) useTransparency: (id) sender;
 
 // size
 - (IBAction) returnToDefaultSize: (id) sender;

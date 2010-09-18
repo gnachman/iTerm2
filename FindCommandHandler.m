@@ -30,7 +30,7 @@
 #import <iTerm/PTYSession.h>
 #import <iTerm/FindCommandHandler.h>
 
-#define DEBUG_ALLOC	0
+#define DEBUG_ALLOC     0
 
 @implementation FindCommandHandler : NSObject
 
@@ -79,11 +79,10 @@
 - (BOOL)findWithSelection
 {
     PTYTextView* textView = [self currentTextView];
-    if (textView)
-    {
+    if (textView) {
         // get the selected text
         NSString *contentString = [textView selectedText];
-		if (!contentString) {
+        if (!contentString) {
             NSBeep();
             return NO;
         }
@@ -100,7 +99,7 @@
     PTYTextView* textView = [self currentTextView];
     if (textView)
     {        
-		[textView scrollToSelection];
+                [textView scrollToSelection];
     }
     else
         NSBeep();
@@ -131,7 +130,7 @@
 
 - (void) setSearchString: (NSString *) aString
 {
-	    
+            
     [_searchString release];
     _searchString = [aString retain];
 }

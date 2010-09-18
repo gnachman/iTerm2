@@ -241,8 +241,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
     NSParameterAssert(width > 0 && height > 0);
     
-    WIDTH=width;
-    HEIGHT=height;
+    WIDTH = width;
+    HEIGHT = height;
     CURSOR_X = CURSOR_Y = 0;
     SAVE_CURSOR_X = SAVE_CURSOR_Y = 0;
     ALT_SAVE_CURSOR_X = ALT_SAVE_CURSOR_Y = 0;
@@ -887,11 +887,11 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         if (token.u.csi.p[0]==3 && [TERMINAL allowColumnMode] == YES && 
             ![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue]) {
             // set the column
-            [[SESSION parent] resizeWindow:[TERMINAL columnMode]?132:80 height:HEIGHT];
+            [[SESSION parent] sessionInitiatedResize:SESSION width:([TERMINAL columnMode]?132:80) height:HEIGHT];
             token.u.csi.p[0]=2; [self eraseInDisplay:token]; //erase the screen
             token.u.csi.p[0]=token.u.csi.p[1]=0; [self setTopBottom:token]; // reset scroll;
         }
-        
+
         break;
 
     // ANSI CSI
@@ -990,13 +990,18 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] && 
             ![[SESSION parent] fullScreen]) {
             // set the column
-            [[SESSION parent] resizeWindow:token.u.csi.p[2] height:token.u.csi.p[1]];
+            [[SESSION parent] sessionInitiatedResize:SESSION 
+                                               width:token.u.csi.p[2] 
+                                              height:token.u.csi.p[1]];
+
         }
         break;
     case XTERMCC_WINDOWSIZE_PIXEL:
         if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] && 
             ![[SESSION parent] fullScreen]) {
-            [[SESSION parent] resizeWindowToPixelsWidth:token.u.csi.p[2] height:token.u.csi.p[1]];
+            [[SESSION parent] sessionInitiatedResize:SESSION 
+                                               width:(token.u.csi.p[2] / [display charWidth])  
+                                              height:(token.u.csi.p[1] / [display lineHeight])];
         }
         break;
     case XTERMCC_WINDOWPOS:
@@ -1061,8 +1066,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
             NSRect screenSize = [[[[SESSION parent] window] screen] frame];
             float nch = [[[SESSION parent] window] frame].size.height - [[[[SESSION parent] currentSession] SCROLLVIEW] documentVisibleRect].size.height;
             float wch = [[[SESSION parent] window] frame].size.width - [[[[SESSION parent] currentSession] SCROLLVIEW] documentVisibleRect].size.width;
-            int h = (screenSize.size.height - nch) / [[SESSION parent] charHeight];
-            int w =  (screenSize.size.width - wch - MARGIN * 2) / [[SESSION parent] charWidth];
+            int h = (screenSize.size.height - nch) / [display lineHeight];
+            int w =  (screenSize.size.width - wch - MARGIN * 2) / [display charWidth];
 
             snprintf(buf, sizeof(buf), "\033[9;%d;%dt", h, w);
             [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
@@ -2288,15 +2293,15 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (void)_popScrollbackLines:(int)linesPushed
 {
-	// Undo the appending of the screen to scrollback
-	int i;
-	screen_char_t* dummy = malloc(WIDTH * sizeof(screen_char_t));
-	for (i = 0; i < linesPushed; ++i) {
-		BOOL eol;
-		BOOL isOk = [linebuffer popAndCopyLastLineInto: dummy width: WIDTH includesEndOfLine: &eol];
-		NSAssert(isOk, @"Pop shouldn't fail");
-	}
-	free(dummy);
+    // Undo the appending of the screen to scrollback
+    int i;
+    screen_char_t* dummy = malloc(WIDTH * sizeof(screen_char_t));
+    for (i = 0; i < linesPushed; ++i) {
+        BOOL eol;
+        BOOL isOk = [linebuffer popAndCopyLastLineInto: dummy width: WIDTH includesEndOfLine: &eol];
+        NSAssert(isOk, @"Pop shouldn't fail");
+    }
+    free(dummy);
 }
 
 - (void)initFindString:(NSString*)aString 
@@ -2350,9 +2355,9 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
                             atEndY:(int*)endY 
                              found:(BOOL*)found
 {
-	// Append the screen contents to the scrollback buffer so they are included in the search.
-	int linesPushed;
-	linesPushed = [self _appendScreenToScrollback];
+    // Append the screen contents to the scrollback buffer so they are included in the search.
+    int linesPushed;
+    linesPushed = [self _appendScreenToScrollback];
 
     // Search one block.
     int stopAt;

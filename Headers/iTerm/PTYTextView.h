@@ -58,7 +58,7 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 
     // anti-alias flag
     BOOL antiAlias;
-    
+
     // option to not render in bold
     BOOL disableBold;
 
@@ -68,16 +68,18 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
     NSRange IM_INPUT_MARKEDRANGE;
     NSDictionary *markedTextAttributes;
     NSAttributedString *markedText;
-    
+
     BOOL CURSOR;
     BOOL colorInvertedCursor;
-    
+
     // geometry
     float lineHeight;
     float lineWidth;
     float charWidth;
     float charWidthWithoutSpacing, charHeightWithoutSpacing;
-    
+    float horizontalSpacing_;
+    float  verticalSpacing_;
+
     NSFont *font;
     NSFont *nafont;
 
@@ -93,15 +95,15 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
     NSColor* selectionColor;
     NSColor* selectedTextColor;
     NSColor* cursorTextColor;
-    
+
     // transparency
     float transparency;
     BOOL useTransparency;
-    
+
     // data source
     VT100Screen *dataSource;
     id _delegate;
-    
+
     //selection
     int startX, startY, endX, endY;
     int oldStartX, oldStartY, oldEndX, oldEndY;
@@ -111,29 +113,29 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
     char selectMode;
     BOOL mouseDownOnSelection;
     NSEvent *mouseDownEvent;
-        
+
     //find support
     int lastFindX;
     // this includes all the lines since the beginning of time. It is stable.
     long long absLastFindY;
-    
+
     BOOL reportingMouseDown;
-    
+
     // blinking cursor
     BOOL blinkingCursor;
     BOOL showCursor;
     BOOL blinkShow;
     struct timeval lastBlink;
     int oldCursorX, oldCursorY;
-    
+
     // trackingRect tab
     NSTrackingRectTag trackingRectTag;
-    
+
     BOOL keyIsARepeat;
 
     // Needed for determining font size.
     NSLayoutManager *layoutManager;
-    
+
     // Is a find currently executing?
     BOOL _findInProgress;
 
@@ -142,6 +144,7 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 }
 
 + (NSCursor *)textViewCursor;
++ (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(float)hspace verticalSpacing:(float)vspace;
 - (id)initWithFrame:(NSRect)aRect;
 - (void)dealloc;
 - (BOOL)becomeFirstResponder;
@@ -184,7 +187,8 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 //get/set methods
 - (NSFont *)font;
 - (NSFont *)nafont;
-- (void)setFont:(NSFont*)aFont nafont:(NSFont*)naFont;
+- (void)setFont:(NSFont*)aFont nafont:(NSFont *)naFont horizontalSpacing:(float)horizontalSpacing verticalSpacing:(float)verticalSpacing;
+- (NSRect)scrollViewContentSize;
 - (BOOL)antiAlias;
 - (void)setAntiAlias:(BOOL)antiAliasFlag;
 - (BOOL)disableBold;
@@ -220,8 +224,6 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 - (void)setDelegate:(id)delegate;
 - (float)lineHeight;
 - (void)setLineHeight:(float)aLineHeight;
-- (float)lineWidth;
-- (void)setLineWidth:(float)aLineWidth;
 - (float)charWidth;
 - (void)setCharWidth:(float)width;
 
@@ -293,6 +295,8 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 - (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard;    
 - (BOOL)findInProgress;
 - (BOOL)continueFind;
+- (float)horizontalSpacing;
+- (float)verticalSpacing;
 
 @end
 

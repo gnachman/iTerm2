@@ -2,19 +2,19 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="7.10">
 	<data>
 		<int key="IBDocument.SystemTarget">1030</int>
-		<string key="IBDocument.SystemVersion">10D2063a</string>
+		<string key="IBDocument.SystemVersion">10F569</string>
 		<string key="IBDocument.InterfaceBuilderVersion">788</string>
 		<string key="IBDocument.AppKitVersion">1038.29</string>
-		<string key="IBDocument.HIToolboxVersion">460.00</string>
+		<string key="IBDocument.HIToolboxVersion">461.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
 			<string key="NS.object.0">788</string>
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
+			<integer value="377"/>
 			<integer value="352"/>
 			<integer value="365"/>
-			<integer value="377"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -857,7 +857,7 @@
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{126, 585}, {126, 22}}</string>
+					<string>{{247, 767}, {126, 22}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -938,22 +938,34 @@
 							<string>clearBuffer:</string>
 							<string>clearScrollbackBuffer:</string>
 							<string>closeCurrentSession:</string>
-							<string>closeFindBar:</string>
 							<string>closeTabContextualMenuAction:</string>
+							<string>closeWindow:</string>
+							<string>editCurrentSession:</string>
 							<string>logStart:</string>
 							<string>logStop:</string>
 							<string>moveTabToNewWindowContextualMenuAction:</string>
+							<string>newSessionInTabAtIndex:</string>
 							<string>nextSession:</string>
+							<string>parameterPanelEnd:</string>
 							<string>previousSession:</string>
+							<string>reset:</string>
 							<string>searchNext:</string>
 							<string>searchPrevious:</string>
-							<string>toggleBookmarksView:</string>
-							<string>toggleFontSizeFollowWindowResize:</string>
+							<string>selectSessionAtIndexAction:</string>
+							<string>sendCommand:</string>
 							<string>toggleFullScreen:</string>
 							<string>toggleInputToAllSessions:</string>
+							<string>windowDidToggleToolbarVisibility:</string>
+							<string>windowWillToggleToolbarVisibility:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>id</string>
+							<string>id</string>
+							<string>id</string>
+							<string>id</string>
+							<string>id</string>
+							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -979,19 +991,25 @@
 							<string>clearBuffer:</string>
 							<string>clearScrollbackBuffer:</string>
 							<string>closeCurrentSession:</string>
-							<string>closeFindBar:</string>
 							<string>closeTabContextualMenuAction:</string>
+							<string>closeWindow:</string>
+							<string>editCurrentSession:</string>
 							<string>logStart:</string>
 							<string>logStop:</string>
 							<string>moveTabToNewWindowContextualMenuAction:</string>
+							<string>newSessionInTabAtIndex:</string>
 							<string>nextSession:</string>
+							<string>parameterPanelEnd:</string>
 							<string>previousSession:</string>
+							<string>reset:</string>
 							<string>searchNext:</string>
 							<string>searchPrevious:</string>
-							<string>toggleBookmarksView:</string>
-							<string>toggleFontSizeFollowWindowResize:</string>
+							<string>selectSessionAtIndexAction:</string>
+							<string>sendCommand:</string>
 							<string>toggleFullScreen:</string>
 							<string>toggleInputToAllSessions:</string>
+							<string>windowDidToggleToolbarVisibility:</string>
+							<string>windowWillToggleToolbarVisibility:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
@@ -1008,11 +1026,15 @@
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
-								<string key="name">closeFindBar:</string>
+								<string key="name">closeTabContextualMenuAction:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
-								<string key="name">closeTabContextualMenuAction:</string>
+								<string key="name">closeWindow:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
+								<string key="name">editCurrentSession:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
@@ -1028,11 +1050,23 @@
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
+								<string key="name">newSessionInTabAtIndex:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
 								<string key="name">nextSession:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
+								<string key="name">parameterPanelEnd:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
 								<string key="name">previousSession:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
+								<string key="name">reset:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
@@ -1044,11 +1078,11 @@
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
-								<string key="name">toggleBookmarksView:</string>
+								<string key="name">selectSessionAtIndexAction:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
-								<string key="name">toggleFontSizeFollowWindowResize:</string>
+								<string key="name">sendCommand:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
@@ -1057,6 +1091,14 @@
 							</object>
 							<object class="IBActionInfo">
 								<string key="name">toggleInputToAllSessions:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
+								<string key="name">windowDidToggleToolbarVisibility:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
+								<string key="name">windowWillToggleToolbarVisibility:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 						</object>
@@ -1082,7 +1124,7 @@
 							<string>id</string>
 							<string>NSButton</string>
 							<string>NSButton</string>
-							<string>NSView</string>
+							<string>FindBarView</string>
 							<string>NSTextField</string>
 							<string>NSProgressIndicator</string>
 							<string>NSButton</string>
@@ -1124,7 +1166,7 @@
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">findBarSubview</string>
-								<string key="candidateClassName">NSView</string>
+								<string key="candidateClassName">FindBarView</string>
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">findBarTextField</string>
@@ -1165,16 +1207,12 @@
 						<bool key="EncodedWithXMLCoder">YES</bool>
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
-							<string>parameterPanelEnd:</string>
 							<string>saveDisplayProfile:</string>
 							<string>saveTerminalProfile:</string>
-							<string>sendCommand:</string>
 							<string>switchSession:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
-							<string>id</string>
-							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -1184,28 +1222,18 @@
 						<bool key="EncodedWithXMLCoder">YES</bool>
 						<object class="NSArray" key="dict.sortedKeys">
 							<bool key="EncodedWithXMLCoder">YES</bool>
-							<string>parameterPanelEnd:</string>
 							<string>saveDisplayProfile:</string>
 							<string>saveTerminalProfile:</string>
-							<string>sendCommand:</string>
 							<string>switchSession:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
-							<object class="IBActionInfo">
-								<string key="name">parameterPanelEnd:</string>
-								<string key="candidateClassName">id</string>
-							</object>
 							<object class="IBActionInfo">
 								<string key="name">saveDisplayProfile:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
 								<string key="name">saveTerminalProfile:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-							<object class="IBActionInfo">
-								<string key="name">sendCommand:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
@@ -1742,7 +1770,7 @@
 				<string>{12, 13}</string>
 				<string>{12, 13}</string>
 				<string>{15, 15}</string>
-				<string>{128, 128}</string>
+				<string>{512, 512}</string>
 			</object>
 		</object>
 	</data>

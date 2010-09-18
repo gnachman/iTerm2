@@ -423,7 +423,6 @@ static NSCursor* textViewCursor =  nil;
     [self setNeedsDisplay:YES];
 }
 
-
 - (NSFont *)font
 {
     return font;
@@ -434,28 +433,52 @@ static NSCursor* textViewCursor =  nil;
     return nafont;
 }
 
-- (void)setFont:(NSFont*)aFont nafont:(NSFont *)naFont;
-{    
-#ifdef PRETTY_BOLD
-    NSFontManager* fontManager = [NSFontManager sharedFontManager];	
-#endif
++ (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(float)hspace verticalSpacing:(float)vspace
+{
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
-    NSSize sz;
     
     [dic setObject:aFont forKey:NSFontAttributeName];
-    sz = [@"W" sizeWithAttributes:dic];
+    NSSize size = [@"W" sizeWithAttributes:dic];
+    size.width *= hspace;
+    NSLayoutManager* layoutManager = [[[NSLayoutManager alloc] init] autorelease];
+    size.height = [layoutManager defaultLineHeightForFont:aFont] * vspace;
+    
+    size.width = ceil(size.width);
+    size.height = ceil(size.height);
+    return size;
+}
+
+- (float)horizontalSpacing
+{
+    return horizontalSpacing_;
+}
+
+- (float)verticalSpacing
+{
+    return verticalSpacing_;
+}
+
+- (void)setFont:(NSFont*)aFont nafont:(NSFont *)naFont horizontalSpacing:(float)horizontalSpacing verticalSpacing:(float)verticalSpacing
+{    
+#ifdef PRETTY_BOLD
+    NSFontManager* fontManager = [NSFontManager sharedFontManager];     
+#endif
+    NSSize sz = [PTYTextView charSizeForFont:aFont horizontalSpacing:1.0 verticalSpacing:1.0];
     
     charWidthWithoutSpacing = sz.width;
-    charHeightWithoutSpacing = [layoutManager defaultLineHeightForFont:aFont];
-    
+    charHeightWithoutSpacing = sz.height;
+    horizontalSpacing_ = horizontalSpacing;
+    verticalSpacing_ = verticalSpacing;
+    charWidth = charWidthWithoutSpacing * horizontalSpacing;
+    lineHeight = charHeightWithoutSpacing * verticalSpacing;
     [font release];
     [aFont retain];
     font=aFont;
     
 #ifdef PRETTY_BOLD
     [boldFont release];
-    boldFont = [fontManager convertFont:font toHaveTrait:NSBoldFontMask];	
-    if (!([fontManager traitsOfFont:boldFont] & NSBoldFontMask)) {	
+    boldFont = [fontManager convertFont:font toHaveTrait:NSBoldFontMask];       
+    if (!([fontManager traitsOfFont:boldFont] & NSBoldFontMask)) {      
         boldFont = nil;
     } else {
         // may be nil at this point
@@ -470,7 +493,7 @@ static NSCursor* textViewCursor =  nil;
 #ifdef PRETTY_BOLD
     [boldNaFont release];
     boldNaFont = [fontManager convertFont:naFont toHaveTrait:NSBoldFontMask];
-    if (!([fontManager traitsOfFont:boldNaFont] & NSBoldFontMask)) {	
+    if (!([fontManager traitsOfFont:boldNaFont] & NSBoldFontMask)) {    
         boldNaFont = nil;
     } else {
         // may be nil at this point
@@ -487,14 +510,18 @@ static NSCursor* textViewCursor =  nil;
             [NSNumber numberWithInt:2],NSUnderlineStyleAttributeName,
             NULL]];
     [self setNeedsDisplay:YES];
+
+    NSScrollView* scrollview = [self enclosingScrollView];
+    [scrollview setLineScroll:[self lineHeight]];
+    [scrollview setPageScroll:2*[self lineHeight]];
 }
 
 - (void)changeFont:(id)fontManager
 {
     if ([[PreferencePanel sharedInstance] onScreen]) {
         [[PreferencePanel sharedInstance] changeFont:fontManager];
-    } else {
-        [super changeFont:fontManager];
+    } else if ([[PreferencePanel sessionsInstance] onScreen]) {
+        [[PreferencePanel sessionsInstance] changeFont:fontManager];
     }
 }
 
@@ -516,11 +543,11 @@ static NSCursor* textViewCursor =  nil;
 - (void) setDelegate: (id) aDelegate
 {
     _delegate = aDelegate;
-}    
+}
 
-- (float) lineHeight
+- (float)lineHeight
 {
-    return (lineHeight);
+    return ceil(lineHeight);
 }
 
 - (void) setLineHeight: (float) aLineHeight
@@ -528,19 +555,9 @@ static NSCursor* textViewCursor =  nil;
     lineHeight = aLineHeight;
 }
 
-- (float) lineWidth
-{
-    return (lineWidth);
-}
-
-- (void) setLineWidth: (float) aLineWidth
-{
-    lineWidth = aLineWidth;
-}
-
 - (float) charWidth
 {
-    return (charWidth);
+    return ceil(charWidth);
 }
 
 - (void) setCharWidth: (float) width
@@ -636,21 +653,36 @@ static NSCursor* textViewCursor =  nil;
     [dataSource resetDirty];
 }
 
+- (NSRect)scrollViewContentSize
+{
+    NSRect r = NSMakeRect(0, 0, 0, 0);
+    r.size = [[self enclosingScrollView] contentSize];
+    return r;
+}
+
+- (float)excess
+{
+    NSRect visible = [self scrollViewContentSize];
+    int rows = visible.size.height / lineHeight;
+    float usablePixels = rows * lineHeight;
+    return visible.size.height - usablePixels;
+}
+
 // We override this method since both refresh and window resize can conflict
 // resulting in this happening twice So we do not allow the size to be set
 // larger than what the data source can fill
 - (void)setFrameSize:(NSSize)frameSize
 {
     // Force the height to always be correct
-    frameSize.height = [dataSource numberOfLines] * lineHeight;
+    frameSize.height = [dataSource numberOfLines] * lineHeight + [self excess];
     [super setFrameSize:frameSize];
 }
 
 static BOOL RectsEqual(NSRect* a, NSRect* b) {
-	return a->origin.x == b->origin.x &&
-		   a->origin.y == b->origin.y &&
-	       a->size.width == b->size.width &&
-       	   a->size.height == b->size.height;
+        return a->origin.x == b->origin.x &&
+                   a->origin.y == b->origin.y &&
+               a->size.width == b->size.width &&
+           a->size.height == b->size.height;
 }
 
 - (void)refresh
@@ -676,7 +708,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int height = [dataSource numberOfLines] * lineHeight;
     NSRect frame = [self frame];
 
-    if (height != frame.size.height) {
+    NSRect visible = [self scrollViewContentSize];
+    int rows = visible.size.height / lineHeight;
+    float usablePixels = rows * lineHeight;
+    float excess = visible.size.height - usablePixels;
+
+    if ((int)(height + excess) != frame.size.height) {
         // The old iTerm code had a comment about a hack at this location
         // that worked around an (alleged) but in NSClipView not respecting
         // setCopiesOnScroll:YES and a gross workaround. The workaround caused
@@ -694,12 +731,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         // Resize the frame
         frame.size.height = height;
         [self setFrame:frame];
-
     } else if (scrollbackOverflow > 0) {
         // Some number of lines were lost from the head of the buffer.
-        
+
         NSScrollView* scrollView = [self enclosingScrollView];
-        NSClipView* clipView = [scrollView contentView];
         float amount = [scrollView verticalLineScroll] * scrollbackOverflow;
         BOOL userScroll = [(PTYScroller*)([scrollView verticalScroller]) userScroll];
 
@@ -725,9 +760,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 redrawAll = YES;
                 [self setNeedsDisplay:YES];
             }
-            [clipView setCopiesOnScroll:NO];
             [self scrollRectToVisible:scrollRect];
-            [clipView setCopiesOnScroll:YES];
             if (!redrawAll) {
                 return;
             }
@@ -805,10 +838,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     NSLog(@"%s(%d):-[PTYTextView scrollEnd]", __FILE__, __LINE__ );
 #endif
 
-    if([dataSource numberOfLines] <= 0) return;
-
+    if ([dataSource numberOfLines] <= 0) {
+      return;
+    }
     NSRect lastLine = [self visibleRect];
-    lastLine.origin.y = ([dataSource numberOfLines] - 1) * lineHeight;
+    lastLine.origin.y = ([dataSource numberOfLines] - 1) * lineHeight + [self excess];
     lastLine.size.height = lineHeight;
     [self scrollRectToVisible:lastLine];
 }
@@ -889,7 +923,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         [self frame].origin.x, [self frame].origin.y, [self frame].size.width, [self frame].size.height);
 #endif
 
-    if (lineHeight <= 0 || lineWidth <= 0) {
+    float curLineWidth = [dataSource width] * charWidth;
+    if (lineHeight <= 0 || curLineWidth <= 0) {
         DebugLog(@"height or width too small");
         return;
     }
@@ -905,6 +940,13 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     // Ensure valid line ranges
     if(lineStart < 0) lineStart = 0;
     if(lineEnd > [dataSource numberOfLines]) lineEnd = [dataSource numberOfLines];
+    NSRect visible = [self scrollViewContentSize];
+    int vh = visible.size.height;
+    int lh = lineHeight;
+    int visibleRows = vh/lh;
+    if (lineEnd > lineStart + visibleRows) {
+        lineEnd = lineStart + visibleRows;
+    }
 
     DebugLog([NSString stringWithFormat:@"Draw lines in [%d, %d)", lineStart, lineEnd]);
     // Draw each line
@@ -917,6 +959,24 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             [self _drawLine:line AtY:line*lineHeight];
         }
     }
+
+    NSRect excessRect;
+    excessRect.origin.x = 0;
+    excessRect.origin.y = lineEnd*lineHeight; //lineEnd * lineHeight;
+    excessRect.size.width = [[self enclosingScrollView] contentSize].width;
+    excessRect.size.height = 15; //[self excess];
+#if 0
+    // Draws the excess bar in a different color each time
+    static int i;
+    i++;
+    float r = ((float)((i + 0) % 100)) / 100;
+    float g = ((float)((i + 33) % 100)) / 100;
+    float b = ((float)((i + 66) % 100)) / 100;
+    [[NSColor colorWithDeviceRed:r green:g blue:b alpha:1] set];
+#endif
+
+    [defaultBGColor set];
+    NSRectFill(excessRect);
 
 #if 0
     // Draws a different-colored rectangle around each drawn area. Useful for
@@ -1653,7 +1713,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             endY = y;
             break;
         case SELECT_WORD:
-            // TODO(georgen): test this with x=01
             [self _getWordForX:x y:y startX:&tmpX1 startY:&tmpY1 endX:&tmpX2 endY:&tmpY2];
             if ((startX + (startY * width)) < (tmpX2 + (tmpY2 * width))) {
                 // We go forwards in our selection session... and...
@@ -2421,16 +2480,16 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                                            atEndY:&endY 
                                             found:&found];
     
-	if (found) {
-		// Lock scrolling after finding text
-		++endX; // make it half-open
-		[(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
-		
-		[self _scrollToLine:endY];
-		[self setNeedsDisplay:YES];
-		lastFindX = startX;
-		absLastFindY = (long long)startY + [dataSource totalScrollbackOverflow];
-	}
+        if (found) {
+                // Lock scrolling after finding text
+                ++endX; // make it half-open
+                [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+                
+                [self _scrollToLine:endY];
+                [self setNeedsDisplay:YES];
+                lastFindX = startX;
+                absLastFindY = (long long)startY + [dataSource totalScrollbackOverflow];
+        }
     if (!more) {
         // NSLog(@"PTYTextView: done");
         _findInProgress = NO;
@@ -2532,7 +2591,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 @implementation PTYTextView (Private)
 
 - (void) _drawLine:(int)line AtY:(float)curY
-{
+{    
     int screenstartline = [self frame].origin.y / lineHeight;
     DebugLog([NSString stringWithFormat:@"Draw line %d (%d on screen)", line, (line - screenstartline)]);
 
@@ -2543,11 +2602,16 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     float alpha = useTransparency ? 1.0 - transparency : 1.0;
     BOOL reversed = [[dataSource terminal] screenMode];
     NSColor *aColor = nil;
-    
+
     // Redraw margins
     NSRect leftMargin = NSMakeRect(0, curY, MARGIN, lineHeight);
-    NSRect rightMargin = leftMargin;
-    leftMargin.origin.x = [self visibleRect].size.width - MARGIN;
+    NSRect rightMargin;
+    NSRect visibleRect = [self visibleRect];
+    rightMargin.origin.x = charWidth * WIDTH;
+    rightMargin.origin.y = curY;
+    rightMargin.size.width = visibleRect.size.width - rightMargin.origin.x;
+    rightMargin.size.height = lineHeight;
+
     aColor = [self colorForCode:DEFAULT_BG_COLOR_CODE];
     aColor = [aColor colorWithAlphaComponent:alpha];
     [aColor set];
@@ -2558,7 +2622,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         NSRectFill(leftMargin);
         NSRectFill(rightMargin);
     }
-    
+    [aColor set];
+
     // Contiguous sections of background with the same colour
     // are combined into runs and draw as one operation
     int bgstart = -1;
