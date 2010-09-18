@@ -273,122 +273,39 @@ static const unichar ambiguous_chars[] = {
     return [NSString stringWithFormat:@"%d", num];
 }
 
-+ (BOOL)isCJKEncoding:(NSStringEncoding)encoding
++ (BOOL)isDoubleWidthCharacter:(unichar)unicode 
+                      encoding:(NSStringEncoding)e 
+        ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 {
-    static NSMutableDictionary *isEncodingCJK = nil; // cache for encoding to isCJK mapping
-    static NSStringEncoding previousEncoding = 1; // ASCII
-    static BOOL isCJK = NO;
-    NSNumber *key, *val;
-    NSString *localeIdentifier;
-    
-    if (encoding == previousEncoding) {
-        //NSLog(@"encoding[0x%08lx] is %s, again", encoding, isCJK ? "CJK" : "not CJK");
-        return isCJK;
-    }
-
-    previousEncoding = encoding;
-
-    key = [NSNumber numberWithUnsignedInt:encoding];
-
-    if (isEncodingCJK == nil) {
-        isEncodingCJK = [[NSMutableDictionary alloc] init];
-    }
-    else {
-        val = [isEncodingCJK objectForKey:key];
-
-        if (val != nil) {
-            isCJK = [val boolValue];
-            //NSLog(@"encoding[0x%08lx] is %s, IIRC", encoding, isCJK ? "CJK" : "not CJK");
-            return isCJK;
-        }
-    }
-
-    switch (encoding) {
-      // Simplified Chinese
-      case 0x80000019: // Mac
-      case 0x80000421: // Windows
-      case 0x80000631: // GBK
-      case 0x80000632: // GB 18030
-      case 0x80000930: // EUC
-      // Traditional Chinese
-      case 0x80000002: // Mac
-      case 0x80000423: // Windows
-      case 0x80000931: // EUC
-      case 0x80000A03: // Big5
-      case 0x80000A06: // Big5 HKSCS
-      // Japanese
-      case 0x00000003: // EUC
-      case 0x00000008: // Windows
-      case 0x00000015: // ISO-2022-JP
-      case 0x80000001: // Mac
-      case 0x80000628: // Shift JIS X0213
-      case 0x80000A01: // Shift JIS
-      // Korean
-      case 0x80000003: // Mac
-      case 0x80000422: // Windows
-      case 0x80000840: // ISO-2022-KR
-      case 0x80000940: // EUC
-        isCJK = YES;
-        //NSLog(@"0x%08lx is known to be %s", encoding, isCJK ? "CJK" : "not CJK");
-        break;
-
-      case 0x00000004: // UTF-8
- #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-        localeIdentifier = [[NSLocale currentLocale] localeIdentifier];
-        isCJK = [localeIdentifier hasPrefix:@"ja_"] ||
-          [localeIdentifier hasPrefix:@"kr_"] ||
-          [localeIdentifier hasPrefix:@"zh_"];
-        //NSLog(@"locale[%@] looks %s", localeIdentifier, isCJK ? "CJK" : "not CJK");
-#else
-        return NO;
-#endif
-        break;
-
-      default:
-        isCJK = NO;
-        //NSLog(@"encoding[0x%08lx] is not known to be CJK", encoding);
-        break;
-    }
-
-    // Store in cache
-    val = [NSNumber numberWithBool:isCJK];
-    [isEncodingCJK setObject:val forKey:key];
-
-    return isCJK;
-}
-
-+ (BOOL)isDoubleWidthCharacter:(unichar)unicode encoding:(NSStringEncoding) e
-{
-	if (unicode <= 0xa0 || (unicode>0x452 && unicode <0x1100))
+	if (unicode <= 0xa0 || (unicode > 0x452 && unicode < 0x1100)) {
 		return NO;
+    }
+    
 	// Unicode character width check.
 	// Character ranges: http://www.alanwood.net/unicode/unicode_samples.html
 	// Also: http://www.unicode.org
 	// EastAsianWidth-3.2.0.txt
-    if ((unicode >= 0x1100 &&  unicode <= 0x115f) || // Hangule choseong
-        unicode == 0x2329 ||	// left pointing angle bracket
-        unicode == 0x232a ||	// right pointing angle bracket
-        (unicode >= 0x2600 && unicode <= 0x26C3) || // Miscellaneous symbols, etc
-        (unicode >= 0x2e80 && unicode <= 0x2fff) || // 
+    if ((unicode >= 0x1100 &&  unicode <= 0x115f) ||  // Hangule choseong
+        unicode == 0x2329 ||	                      // left pointing angle bracket
+        unicode == 0x232a ||	                      // right pointing angle bracket
+        (unicode >= 0x2600 && unicode <= 0x26C3) ||   // Miscellaneous symbols, etc
+        (unicode >= 0x2e80 && unicode <= 0x2fff) ||   // 
         (unicode >= 0x3000 && unicode <= 0x303E) ||
-		(unicode >= 0x3041 && unicode <= 0x33ff) || // HIRAGANA, KATAKANA, BOPOMOFO, Hangul, etc
-        (unicode >= 0x3400 && unicode <= 0x4db5) || // CJK ideograph extension A
-        (unicode >= 0x4e00 && unicode <= 0x9fbb) || // CJK ideograph
-        (unicode >= 0xa000 && unicode <= 0xa4c6) || // Yi
-        (unicode >= 0xac00 && unicode <= 0xd7a3) || // hangul syllable
-        (unicode >= 0xf900 && unicode <= 0xfad9) || // CJK compatibility
-		(unicode >= 0xfe10 && unicode <= 0xfe19) || // Presentation forms
+		(unicode >= 0x3041 && unicode <= 0x33ff) ||   // HIRAGANA, KATAKANA, BOPOMOFO, Hangul, etc
+        (unicode >= 0x3400 && unicode <= 0x4db5) ||   // CJK ideograph extension A
+        (unicode >= 0x4e00 && unicode <= 0x9fbb) ||   // CJK ideograph
+        (unicode >= 0xa000 && unicode <= 0xa4c6) ||   // Yi
+        (unicode >= 0xac00 && unicode <= 0xd7a3) ||   // hangul syllable
+        (unicode >= 0xf900 && unicode <= 0xfad9) ||   // CJK compatibility
+		(unicode >= 0xfe10 && unicode <= 0xfe19) ||   // Presentation forms
         (unicode >= 0xfe30 && unicode <= 0xfe6b) || 
         (unicode >= 0xff01 && unicode <= 0xff60) ||
-        (unicode >= 0xffe0 && unicode <= 0xffe6))
-    {
+        (unicode >= 0xffe0 && unicode <= 0xffe6)) {
         return YES;
     }
 	
 	/* Ambiguous ones */
-	
-	if ([self isCJKEncoding:e])
-	{
+	if (ambiguousIsDoubleWidth) {
 		if ((unicode >=0xfe00 && unicode <=0xfe0f) ||
 			(unicode >=0x2776 && unicode <=0x277f) ||
 			(unicode >=0x2580 && unicode <=0x258f) ||
@@ -405,25 +322,25 @@ static const unichar ambiguous_chars[] = {
 			(unicode >=0x391 && unicode <=0x3a1) ||
 			(unicode >=0x360 && unicode <=0x36f) ||
 			(unicode >=0x300 && unicode <=0x34f))
-// Private use:	(unicode >= 0xe000 && unicode <=0xf8ff) not double width
+            // Private use:	(unicode >= 0xe000 && unicode <= 0xf8ff) not double width
 			return YES;
 
 		// binary search in the ambiguous char list
-		int ind= AMB_CHAR_NUMBER / 2, start = 0, end = AMB_CHAR_NUMBER;
-		while (start<end) {
+		int ind = AMB_CHAR_NUMBER / 2;
+        int start = 0;
+        int end = AMB_CHAR_NUMBER;
+		while (start < end) {
 			if (ambiguous_chars[ind] == unicode) {
 				return YES;
-			}
-			else if (ambiguous_chars[ind] < unicode) {
-				start = ind+1;
-				ind = (start+end)/2;
-			}
-			else {
+			} else if (ambiguous_chars[ind] < unicode) {
+				start = ind + 1;
+				ind = (start + end) / 2;
+			} else {
 				end = ind;
-				ind = (start+end)/2;
+				ind = (start + end) / 2;
 			}
 		}
-
+        // Fall through if not in ambiguous character list.
 	}
 	
     return NO;

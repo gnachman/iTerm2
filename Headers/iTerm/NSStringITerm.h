@@ -11,7 +11,7 @@
  **  Copyright (c) 2002, 2003
  **
  **  Author: Fabian
- **	     Initial code by Kiichi Kusama
+ **      Initial code by Kiichi Kusama
  **
  **  Project: iTerm
  **
@@ -38,7 +38,9 @@
 @interface NSString (iTerm)
 
 + (NSString *)stringWithInt:(int)num;
-+ (BOOL)isDoubleWidthCharacter:(unichar)unicode encoding:(NSStringEncoding) e;
++ (BOOL)isDoubleWidthCharacter:(unichar)unicode
+                      encoding:(NSStringEncoding)e
+        ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth;
 
 - (NSMutableString *) stringReplaceSubstringFrom:(NSString *)oldSubstring to:(NSString *)newSubstring;
 
