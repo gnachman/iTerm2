@@ -1687,14 +1687,14 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 }
 
 
-- (BOOL) doubleWidth
+- (BOOL)doubleWidth
 {
     return doubleWidth;
 }
 
 - (void)setDoubleWidth:(BOOL)set
 {
-    doubleWidth=set;
+    doubleWidth = set;
 }
 
 - (BOOL) xtermMouseReporting

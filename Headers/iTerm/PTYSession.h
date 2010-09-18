@@ -69,6 +69,8 @@
     char ai_code;
 
     BOOL autoClose;
+
+    // True if ambiguous-width characters are double-width.
     BOOL doubleWidth;
     BOOL xtermMouseReporting;
     int bell;
@@ -89,10 +91,10 @@
 }
 
 // init/dealloc
-- (id) init;
-- (void) dealloc;
+- (id)init;
+- (void)dealloc;
 
-+ (NSImage*) loadBackgroundImage:(NSString*)imageFilePath;
++ (NSImage*)loadBackgroundImage:(NSString*)imageFilePath;
 
 // Session specific methods
 - (BOOL)initScreen:(NSRect)aRect vmargin:(float)vmargin;
@@ -100,11 +102,11 @@
            arguments:(NSArray *)prog_argv
          environment:(NSDictionary *)prog_env
               isUTF8:(BOOL)isUTF8;
-- (void) terminate;
-- (BOOL) isActiveSession;
+- (void)terminate;
+- (BOOL)isActiveSession;
 
 // Preferences
-- (void) setPreferencesFromAddressBookEntry: (NSDictionary *) aePrefs;
+- (void)setPreferencesFromAddressBookEntry: (NSDictionary *)aePrefs;
 
 // PTYTask
 - (void)writeTask:(NSData*)data;
@@ -112,10 +114,10 @@
 - (void)brokenPipe;
 
 // PTYTextView
-- (BOOL)hasKeyMappingForEvent: (NSEvent *) event highPriority: (BOOL) priority;
+- (BOOL)hasKeyMappingForEvent: (NSEvent *)event highPriority: (BOOL)priority;
 - (void)keyDown:(NSEvent *)event;
-- (BOOL)willHandleEvent: (NSEvent *) theEvent;
-- (void)handleEvent: (NSEvent *) theEvent;
+- (BOOL)willHandleEvent: (NSEvent *)theEvent;
+- (void)handleEvent: (NSEvent *)theEvent;
 - (void)insertText:(NSString *)string;
 - (void)insertNewline:(id)sender;
 - (void)insertTab:(id)sender;
@@ -126,75 +128,75 @@
 - (void)pageUp:(id)sender;
 - (void)pageDown:(id)sender;
 - (void)paste:(id)sender;
-- (void)pasteString: (NSString *) aString;
+- (void)pasteString: (NSString *)aString;
 - (void)deleteBackward:(id)sender;
 - (void)deleteForward:(id)sender;
-- (void)textViewDidChangeSelection: (NSNotification *) aNotification;
-- (void)textViewResized: (NSNotification *) aNotification;
-- (void)tabViewWillRedraw: (NSNotification *) aNotification;
+- (void)textViewDidChangeSelection: (NSNotification *)aNotification;
+- (void)textViewResized: (NSNotification *)aNotification;
+- (void)tabViewWillRedraw: (NSNotification *)aNotification;
 
 
 // misc
-- (void) handleOptionClick: (NSEvent *) theEvent;
+- (void)handleOptionClick: (NSEvent *)theEvent;
 - (void)setWidth:(int)width height:(int)height;
 
 
 // Contextual menu
-- (void) menuForEvent:(NSEvent *)theEvent menu: (NSMenu *) theMenu;
+- (void)menuForEvent:(NSEvent *)theEvent menu: (NSMenu *)theMenu;
 
 
 // get/set methods
-- (PseudoTerminal *) parent;
-- (void) setParent: (PseudoTerminal *) theParent;
-- (NSTabViewItem *) tabViewItem;
-- (void) setTabViewItem: (NSTabViewItem *) theTabViewItem;
-- (NSString *) name;
-- (void) setName: (NSString *) theName;
-- (NSString *) defaultName;
-- (void) setDefaultName: (NSString *) theName;
-- (NSString *) uniqueID;
-- (void) setUniqueID: (NSString *)uniqueID;
-- (NSString *) windowTitle;
-- (void) setWindowTitle: (NSString *) theTitle;
-- (PTYTask *) SHELL;
-- (void) setSHELL: (PTYTask *) theSHELL;
-- (VT100Terminal *) TERMINAL;
-- (void) setTERMINAL: (VT100Terminal *) theTERMINAL;
-- (NSString *) TERM_VALUE;
-- (void) setTERM_VALUE: (NSString *) theTERM_VALUE;
-- (NSString *) COLORFGBG_VALUE;
-- (void) setCOLORFGBG_VALUE: (NSString *) theCOLORFGBG_VALUE;
-- (VT100Screen *) SCREEN;
-- (void) setSCREEN: (VT100Screen *) theSCREEN;
-- (NSImage *) image;
-- (NSView *) view;
-- (PTYTextView *) TEXTVIEW;
-- (void) setTEXTVIEW: (PTYTextView *) theTEXTVIEW;
-- (PTYScrollView *) SCROLLVIEW;
-- (void) setSCROLLVIEW: (PTYScrollView *) theSCROLLVIEW;
-- (NSStringEncoding) encoding;
+- (PseudoTerminal *)parent;
+- (void)setParent: (PseudoTerminal *)theParent;
+- (NSTabViewItem *)tabViewItem;
+- (void)setTabViewItem: (NSTabViewItem *)theTabViewItem;
+- (NSString *)name;
+- (void)setName: (NSString *)theName;
+- (NSString *)defaultName;
+- (void)setDefaultName: (NSString *)theName;
+- (NSString *)uniqueID;
+- (void)setUniqueID: (NSString *)uniqueID;
+- (NSString *)windowTitle;
+- (void)setWindowTitle: (NSString *)theTitle;
+- (PTYTask *)SHELL;
+- (void)setSHELL: (PTYTask *)theSHELL;
+- (VT100Terminal *)TERMINAL;
+- (void)setTERMINAL: (VT100Terminal *)theTERMINAL;
+- (NSString *)TERM_VALUE;
+- (void)setTERM_VALUE: (NSString *)theTERM_VALUE;
+- (NSString *)COLORFGBG_VALUE;
+- (void)setCOLORFGBG_VALUE: (NSString *)theCOLORFGBG_VALUE;
+- (VT100Screen *)SCREEN;
+- (void)setSCREEN: (VT100Screen *)theSCREEN;
+- (NSImage *)image;
+- (NSView *)view;
+- (PTYTextView *)TEXTVIEW;
+- (void)setTEXTVIEW: (PTYTextView *)theTEXTVIEW;
+- (PTYScrollView *)SCROLLVIEW;
+- (void)setSCROLLVIEW: (PTYScrollView *)theSCROLLVIEW;
+- (NSStringEncoding)encoding;
 - (void)setEncoding:(NSStringEncoding)encoding;
-- (BOOL) antiIdle;
-- (int) antiCode;
-- (void) setAntiIdle:(BOOL)set;
-- (void) setAntiCode:(int)code;
-- (BOOL) autoClose;
-- (void) setAutoClose:(BOOL)set;
-- (BOOL) doubleWidth;
-- (void) setDoubleWidth:(BOOL)set;
-- (BOOL) xtermMouseReporting;
-- (void) setXtermMouseReporting:(BOOL)set;
-- (NSDictionary *) addressBookEntry;
-- (void) setAddressBookEntry:(NSDictionary*) entry;
-- (int) number;
-- (int) objectCount;
-- (int) realObjectCount;
+- (BOOL)antiIdle;
+- (int)antiCode;
+- (void)setAntiIdle:(BOOL)set;
+- (void)setAntiCode:(int)code;
+- (BOOL)autoClose;
+- (void)setAutoClose:(BOOL)set;
+- (BOOL)doubleWidth;
+- (void)setDoubleWidth:(BOOL)set;
+- (BOOL)xtermMouseReporting;
+- (void)setXtermMouseReporting:(BOOL)set;
+- (NSDictionary *)addressBookEntry;
+- (void)setAddressBookEntry:(NSDictionary*)entry;
+- (int)number;
+- (int)objectCount;
+- (int)realObjectCount;
 - (void)setObjectCount:(int)value;
-- (NSString *) tty;
-- (NSString *) contents;
-- (NSImage *) icon;
-- (void) setIcon: (NSImage *) anIcon;
-- (iTermGrowlDelegate*) growlDelegate;
+- (NSString *)tty;
+- (NSString *)contents;
+- (NSImage *)icon;
+- (void)setIcon: (NSImage *)anIcon;
+- (iTermGrowlDelegate*)growlDelegate;
 
 
 - (void)clearBuffer;
@@ -202,30 +204,30 @@
 - (BOOL)logging;
 - (void)logStart;
 - (void)logStop;
-- (NSString *) backgroundImagePath;
-- (void) setBackgroundImagePath: (NSString *) imageFilePath;
-- (NSColor *) foregroundColor;
-- (void)setForegroundColor:(NSColor*) color;
-- (NSColor *) backgroundColor;
-- (void)setBackgroundColor:(NSColor*) color;
-- (NSColor *) selectionColor;
-- (void) setSelectionColor: (NSColor *) color;
-- (NSColor *) boldColor;
-- (void)setBoldColor:(NSColor*) color;
-- (NSColor *) cursorColor;
-- (void)setCursorColor:(NSColor*) color;
-- (NSColor *) selectedTextColor;
-- (void) setSelectedTextColor: (NSColor *) aColor;
-- (NSColor *) cursorTextColor;
-- (void) setCursorTextColor: (NSColor *) aColor;
-- (float) transparency;
+- (NSString *)backgroundImagePath;
+- (void)setBackgroundImagePath: (NSString *)imageFilePath;
+- (NSColor *)foregroundColor;
+- (void)setForegroundColor:(NSColor*)color;
+- (NSColor *)backgroundColor;
+- (void)setBackgroundColor:(NSColor*)color;
+- (NSColor *)selectionColor;
+- (void)setSelectionColor: (NSColor *)color;
+- (NSColor *)boldColor;
+- (void)setBoldColor:(NSColor*)color;
+- (NSColor *)cursorColor;
+- (void)setCursorColor:(NSColor*)color;
+- (NSColor *)selectedTextColor;
+- (void)setSelectedTextColor: (NSColor *)aColor;
+- (NSColor *)cursorTextColor;
+- (void)setCursorTextColor: (NSColor *)aColor;
+- (float)transparency;
 - (void)setTransparency:(float)transparency;
-- (BOOL) disableBold;
-- (void) setDisableBold: (BOOL) boldFlag;
-- (BOOL) disableBold;
-- (void) setDisableBold: (BOOL) boldFlag;
-- (void) setColorTable:(int) index color:(NSColor *) c;
-- (int) optionKey;
+- (BOOL)disableBold;
+- (void)setDisableBold: (BOOL)boldFlag;
+- (BOOL)disableBold;
+- (void)setDisableBold: (BOOL)boldFlag;
+- (void)setColorTable:(int)index color:(NSColor *)c;
+- (int)optionKey;
 
 // Session status
 
@@ -233,9 +235,9 @@
 - (BOOL)exited;
 - (void)setLabelAttribute;
 - (BOOL)bell;
-- (void)setBell: (BOOL) flag;
+- (void)setBell: (BOOL)flag;
 - (BOOL)isProcessing;
-- (void)setIsProcessing: (BOOL) aFlag;
+- (void)setIsProcessing: (BOOL)aFlag;
 
 - (void)sendCommand: (NSString *)command;
 

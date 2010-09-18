@@ -207,8 +207,8 @@
 // UI stuff
 - (void) doPrint;
 
-// double width
-- (BOOL) isDoubleWidthCharacter:(unichar) c;
+// Is this character double width on this screen?
+- (BOOL)isDoubleWidthCharacter:(unichar)c;
 
 // Initialize the find context.
 - (void)initFindString:(NSString*)aString forwardDirection:(BOOL)direction ignoringCase:(BOOL)ignoreCase startingAtX:(int)x startingAtY:(int)y withOffset:(int)offsetof;
