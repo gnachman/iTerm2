@@ -42,50 +42,50 @@
 
 @interface PTYSession : NSResponder
 {
-	// Owning tab view item
-	NSTabViewItem* tabViewItem;
+    // Owning tab view item
+    NSTabViewItem* tabViewItem;
 
-	// tty device
-	NSString* tty;
+    // tty device
+    NSString* tty;
 
-	PseudoTerminal* parent;  // parent controller
-	NSString* name;
-	NSString* defaultName;
-	NSString* windowTitle;
+    PseudoTerminal* parent;  // parent controller
+    NSString* name;
+    NSString* defaultName;
+    NSString* windowTitle;
 
-	PTYTask* SHELL;
-	VT100Terminal* TERMINAL;
-	NSString* TERM_VALUE;
-	NSString* COLORFGBG_VALUE;
-	VT100Screen* SCREEN;
-	BOOL EXIT;
-	NSView* view;
-	PTYScrollView* SCROLLVIEW;
-	PTYTextView* TEXTVIEW;
-	NSTimer *updateTimer;
+    PTYTask* SHELL;
+    VT100Terminal* TERMINAL;
+    NSString* TERM_VALUE;
+    NSString* COLORFGBG_VALUE;
+    VT100Screen* SCREEN;
+    BOOL EXIT;
+    NSView* view;
+    PTYScrollView* SCROLLVIEW;
+    PTYTextView* TEXTVIEW;
+    NSTimer *updateTimer;
 
-	// anti-idle
-	NSTimer* antiIdleTimer;
-	char ai_code;
+    // anti-idle
+    NSTimer* antiIdleTimer;
+    char ai_code;
 
-	BOOL autoClose;
-	BOOL doubleWidth;
-	BOOL xtermMouseReporting;
-	int bell;
+    BOOL autoClose;
+    BOOL doubleWidth;
+    BOOL xtermMouseReporting;
+    int bell;
 
-	NSString* backgroundImagePath;
-	NSDictionary* addressBookEntry;
+    NSString* backgroundImagePath;
+    NSDictionary* addressBookEntry;
 
-	// Growl stuff
-	iTermGrowlDelegate* gd;
+    // Growl stuff
+    iTermGrowlDelegate* gd;
 
-	// Status reporting
-	struct timeval lastInput, lastOutput, lastBlink;
-	int objectCount;
-	NSImage* icon;
-	BOOL isProcessing;
-	BOOL newOutput;
-	BOOL growlIdle, growlNewOutput;
+    // Status reporting
+    struct timeval lastInput, lastOutput, lastBlink;
+    int objectCount;
+    NSImage* icon;
+    BOOL isProcessing;
+    BOOL newOutput;
+    BOOL growlIdle, growlNewOutput;
 }
 
 // init/dealloc
@@ -95,7 +95,7 @@
 + (NSImage*) loadBackgroundImage:(NSString*)imageFilePath;
 
 // Session specific methods
-- (BOOL)initScreen: (NSRect) aRect width:(int)width height:(int) height;
+- (BOOL)initScreen:(NSRect)aRect vmargin:(float)vmargin;
 - (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv
          environment:(NSDictionary *)prog_env
@@ -136,6 +136,7 @@
 
 // misc
 - (void) handleOptionClick: (NSEvent *) theEvent;
+- (void)setWidth:(int)width height:(int)height;
 
 
 // Contextual menu
@@ -243,6 +244,11 @@
 - (void)doAntiIdle;
 - (void)scheduleUpdateSoon:(BOOL)soon;
 - (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Bookmark*)aDict;
+
+- (int)columns;
+- (int)rows;
+- (void)changeFontSizeDirection:(int)dir;
+- (void)setFont:(NSFont*)font nafont:(NSFont*)nafont horizontalSpacing:(float)horizontalSpacing verticalSpacing:(float)verticalSpacing;
 
 @end
 

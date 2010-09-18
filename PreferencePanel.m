@@ -144,7 +144,7 @@ static float versionNumber;
     [addBookmarkButton setHidden:YES];
     [removeBookmarkButton setHidden:YES];
     [bookmarksPopup setHidden:YES];
-	[bookmarkDirectory setHidden:YES];
+        [bookmarkDirectory setHidden:YES];
     [bookmarkShortcutKeyLabel setHidden:YES];
     [bookmarkShortcutKeyModifiersLabel setHidden:YES];
     [bookmarkTagsLabel setHidden:YES];
@@ -156,21 +156,11 @@ static float versionNumber;
     [bookmarkCommand setHidden:YES];
     [bookmarkDirectoryType setHidden:YES];
     [bookmarkDirectory setHidden:YES];
-    [displayFontsLabel setHidden:YES];
-    [displayFontsLabel setHidden:YES];
-    [displayRegularFontButton setHidden:YES];
-    [displayNAFontButton setHidden:YES];
-    [blur setHidden:YES];
-    [antiAliasing setHidden:YES];
-    [normalFontField setHidden:YES];
-    [nonAsciiFontField setHidden:YES];
-    [displayRegularFontButton setHidden:YES];
-    [displayNAFontButton setHidden:YES];
-    
+
     NSRect newFrame = [bookmarksSettingsTabViewParent frame];
     newFrame.origin.x = 0;
     [bookmarksSettingsTabViewParent setFrame:newFrame];
-    
+
     newFrame = [[self window] frame];
     newFrame.size.width = [bookmarksSettingsTabViewParent frame].size.width + 26;
     [[self window] setFrame:newFrame display:YES];
@@ -187,16 +177,16 @@ static float versionNumber;
     advancedToolbarId = [advancedToolbarItem itemIdentifier];
     [toolbar setSelectedItemIdentifier:globalToolbarId];
 
-	// add list of encodings
-	NSEnumerator *anEnumerator;
-	NSNumber *anEncoding;
+        // add list of encodings
+        NSEnumerator *anEnumerator;
+        NSNumber *anEncoding;
     
-	[characterEncoding removeAllItems];
-	anEnumerator = [[[iTermController sharedInstance] sortedEncodingList] objectEnumerator];
-	while ((anEncoding = [anEnumerator nextObject]) != NULL) {
-		[characterEncoding addItemWithTitle: [NSString localizedNameOfStringEncoding: [anEncoding unsignedIntValue]]];
-		[[characterEncoding lastItem] setTag: [anEncoding unsignedIntValue]];
-	}
+        [characterEncoding removeAllItems];
+        anEnumerator = [[[iTermController sharedInstance] sortedEncodingList] objectEnumerator];
+        while ((anEncoding = [anEnumerator nextObject]) != NULL) {
+                [characterEncoding addItemWithTitle: [NSString localizedNameOfStringEncoding: [anEncoding unsignedIntValue]]];
+                [[characterEncoding lastItem] setTag: [anEncoding unsignedIntValue]];
+        }
     [keyMappings setDoubleAction:@selector(editKeyMapping:)];
     keyString = nil;
     [bookmarksForUrlsTable setShowGraphic:NO];
@@ -840,20 +830,20 @@ static float versionNumber;
 
 - (void) _updateFontsDisplay
 {
-	// load the fonts
-	NSString *fontName;
+        // load the fonts
+        NSString *fontName;
     if (normalFont != nil) {
-		fontName = [NSString stringWithFormat: @"%gpt %s", [normalFont pointSize], [[normalFont displayName] UTF8String]];
-	} else {
-		fontName = @"Unknown Font";
-	}
+                fontName = [NSString stringWithFormat: @"%gpt %s", [normalFont pointSize], [[normalFont displayName] UTF8String]];
+        } else {
+                fontName = @"Unknown Font";
+        }
     [normalFontField setStringValue: fontName];
     
     if (nonAsciiFont != nil) {
-		fontName = [NSString stringWithFormat: @"%gpt %s", [nonAsciiFont pointSize], [[nonAsciiFont displayName] UTF8String]];
-	} else {
-		fontName = @"Unknown Font";
-	}
+                fontName = [NSString stringWithFormat: @"%gpt %s", [nonAsciiFont pointSize], [[nonAsciiFont displayName] UTF8String]];
+        } else {
+                fontName = @"Unknown Font";
+        }
     [nonAsciiFontField setStringValue: fontName];
 }
 
@@ -875,39 +865,39 @@ static float versionNumber;
         [bookmarksPopup setEnabled:YES];
     }
     
-	NSString* name;
-	NSString* shortcut;
-	NSString* command;
-	NSString* dir;
-	NSString* customCommand;
-	NSString* customDir;
-	name = [dict objectForKey:KEY_NAME];
-	shortcut = [dict objectForKey:KEY_SHORTCUT];
-	command = [dict objectForKey:KEY_COMMAND];
-	dir = [dict objectForKey:KEY_WORKING_DIRECTORY];
-	customCommand = [dict objectForKey:KEY_CUSTOM_COMMAND];
-	customDir = [dict objectForKey:KEY_CUSTOM_DIRECTORY];
-	
-	[bookmarkName setStringValue:name];
-	[bookmarkShortcutKey selectItemWithTitle:shortcut];
+        NSString* name;
+        NSString* shortcut;
+        NSString* command;
+        NSString* dir;
+        NSString* customCommand;
+        NSString* customDir;
+        name = [dict objectForKey:KEY_NAME];
+        shortcut = [dict objectForKey:KEY_SHORTCUT];
+        command = [dict objectForKey:KEY_COMMAND];
+        dir = [dict objectForKey:KEY_WORKING_DIRECTORY];
+        customCommand = [dict objectForKey:KEY_CUSTOM_COMMAND];
+        customDir = [dict objectForKey:KEY_CUSTOM_DIRECTORY];
+        
+        [bookmarkName setStringValue:name];
+        [bookmarkShortcutKey selectItemWithTitle:shortcut];
 
-	if ([customCommand isEqualToString:@"Yes"]) {
+        if ([customCommand isEqualToString:@"Yes"]) {
         [bookmarkCommandType selectCellWithTag:0];
-	} else {
-		[bookmarkCommandType selectCellWithTag:1];
-	}
-	[bookmarkCommand setStringValue:command];
-	
-	if ([customDir isEqualToString:@"Yes"]) {
-		[bookmarkDirectoryType selectCellWithTag:0];
-	} else if ([customDir isEqualToString:@"Recycle"]) {
-		[bookmarkDirectoryType selectCellWithTag:2];
+        } else {
+                [bookmarkCommandType selectCellWithTag:1];
+        }
+        [bookmarkCommand setStringValue:command];
+        
+        if ([customDir isEqualToString:@"Yes"]) {
+                [bookmarkDirectoryType selectCellWithTag:0];
+        } else if ([customDir isEqualToString:@"Recycle"]) {
+                [bookmarkDirectoryType selectCellWithTag:2];
     } else {
-		[bookmarkDirectoryType selectCellWithTag:1];
-	}
-	[bookmarkDirectory setStringValue:dir];
+                [bookmarkDirectoryType selectCellWithTag:1];
+        }
+        [bookmarkDirectory setStringValue:dir];
 
-	// Colors tab
+        // Colors tab
     [ansi0Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_0_COLOR]]];
     [ansi1Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_1_COLOR]]];
     [ansi2Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_2_COLOR]]];
@@ -931,8 +921,8 @@ static float versionNumber;
     [selectedTextColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_SELECTED_TEXT_COLOR]]];
     [cursorColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_CURSOR_COLOR]]];
     [cursorTextColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_CURSOR_TEXT_COLOR]]];
-	
-	// Display tab
+        
+        // Display tab
     int cols = [[dict objectForKey:KEY_COLUMNS] intValue];
     [columnsField setStringValue:[NSString stringWithFormat:@"%d", cols]];
     int rows = [[dict objectForKey:KEY_ROWS] intValue];
@@ -953,12 +943,12 @@ static float versionNumber;
     [nonAsciiFont retain];
     
     [self _updateFontsDisplay];
-	
-	float horizontalSpacing = [[dict objectForKey:KEY_HORIZONTAL_SPACING] floatValue];
-	float verticalSpacing = [[dict objectForKey:KEY_VERTICAL_SPACING] floatValue];
+        
+        float horizontalSpacing = [[dict objectForKey:KEY_HORIZONTAL_SPACING] floatValue];
+        float verticalSpacing = [[dict objectForKey:KEY_VERTICAL_SPACING] floatValue];
     
-	[displayFontSpacingWidth setFloatValue:horizontalSpacing];
-	[displayFontSpacingHeight setFloatValue:verticalSpacing];
+        [displayFontSpacingWidth setFloatValue:horizontalSpacing];
+        [displayFontSpacingHeight setFloatValue:verticalSpacing];
     [blinkingCursor setState:[[dict objectForKey:KEY_BLINKING_CURSOR] boolValue] ? NSOnState : NSOffState];
     [disableBold setState:[[dict objectForKey:KEY_DISABLE_BOLD] boolValue] ? NSOnState : NSOffState];
     [transparency setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
@@ -972,7 +962,7 @@ static float versionNumber;
     [backgroundImagePreview setImage:[[NSImage alloc] initByReferencingFile:imageFilename]];
     backgroundImageFilename = imageFilename;
     
-	// Terminal tab
+        // Terminal tab
     [disableWindowResizing setState:[[dict objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] ? NSOnState : NSOffState];
     [syncTitle setState:[[dict objectForKey:KEY_SYNC_TITLE] boolValue] ? NSOnState : NSOffState];
     [closeSessionsOnEnd setState:[[dict objectForKey:KEY_CLOSE_SESSIONS_ON_END] boolValue] ? NSOnState : NSOffState];
@@ -987,7 +977,7 @@ static float versionNumber;
     [sendCodeWhenIdle setState:[[dict objectForKey:KEY_SEND_CODE_WHEN_IDLE] boolValue] ? NSOnState : NSOffState];
     [idleCode setIntValue:[[dict objectForKey:KEY_IDLE_CODE] intValue]];
     
-	// Keyboard tab
+        // Keyboard tab
     int rowIndex = [keyMappings selectedRow];
     if (rowIndex >= 0) {
         [removeMappingButton setEnabled:YES];
@@ -1017,21 +1007,21 @@ static float versionNumber;
 
 - (IBAction)displaySelectFont:(id)sender
 {
-	changingNAFont = [sender tag] == 1;
+        changingNAFont = [sender tag] == 1;
     [self _commonDisplaySelectFont:sender];
 }
 
 // sent by NSFontManager up the responder chain
 - (void)changeFont:(id)fontManager
 {
-	if (changingNAFont) {
+        if (changingNAFont) {
         NSFont* oldFont = nonAsciiFont;
         nonAsciiFont = [fontManager convertFont:oldFont];
         [nonAsciiFont retain];
         if (oldFont) {
             [oldFont release];
         }
-	} else {
+        } else {
         NSFont* oldFont = normalFont;
         normalFont = [fontManager convertFont:oldFont];
         [normalFont retain];
@@ -1054,26 +1044,26 @@ static float versionNumber;
     
     sts = [panel runModalForDirectory: NSHomeDirectory() file:@"" types: [NSImage imageFileTypes]];
     if (sts == NSOKButton) {
-		if ([[panel filenames] count] > 0) {
-			filename = [[panel filenames] objectAtIndex: 0];
+                if ([[panel filenames] count] > 0) {
+                        filename = [[panel filenames] objectAtIndex: 0];
         }
-		
-		if ([filename length] > 0) {
-			NSImage *anImage = [[NSImage alloc] initWithContentsOfFile: filename];
-			if (anImage != nil) {
-				[backgroundImagePreview setImage:anImage];
-				[anImage release];
-				return filename;
-			} else {
-				[backgroundImage setState: NSOffState];
+                
+                if ([filename length] > 0) {
+                        NSImage *anImage = [[NSImage alloc] initWithContentsOfFile: filename];
+                        if (anImage != nil) {
+                                [backgroundImagePreview setImage:anImage];
+                                [anImage release];
+                                return filename;
+                        } else {
+                                [backgroundImage setState: NSOffState];
             }
-		} else {
-			[backgroundImage setState: NSOffState];
+                } else {
+                        [backgroundImage setState: NSOffState];
         }
     } else {
-		[backgroundImage setState: NSOffState];
+                [backgroundImage setState: NSOffState];
     }
-	return nil;
+        return nil;
 }
 
 - (IBAction)bookmarkSettingChanged:(id)sender
@@ -1175,11 +1165,11 @@ static float versionNumber;
 
     if (sender == backgroundImage) {
         NSString* filename = nil;
-		if ([sender state] == NSOnState) {
-			filename = [self _chooseBackgroundImage];
+                if ([sender state] == NSOnState) {
+                        filename = [self _chooseBackgroundImage];
         }
         if (!filename) {
-			[backgroundImagePreview setImage: nil];
+                        [backgroundImagePreview setImage: nil];
             filename = @"";
         }
         backgroundImageFilename = filename;
@@ -1427,11 +1417,11 @@ static float versionNumber;
     unsigned int theModifiers = keyMods & 
         (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | 
          NSCommandKeyMask | NSNumericPadKeyMask);
-	
-	// on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
-	if (keyCode >= NSUpArrowFunctionKey && 
+        
+        // on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
+        if (keyCode >= NSUpArrowFunctionKey && 
         keyCode <= NSRightArrowFunctionKey) {
-		theModifiers |= NSNumericPadKeyMask;
+                theModifiers |= NSNumericPadKeyMask;
     }
     if (keyString) {
         [keyString release];
@@ -1534,7 +1524,7 @@ static float versionNumber;
     NSString* guid = [bookmarksTableView selectedGuid];
     NSAssert(guid, @"Null guid unexpected here");
     
- 	NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"ColorPresets" 
+        NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"ColorPresets" 
                                                                             ofType:@"plist"];   
     NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
     NSDictionary* settings = [presetsDict objectForKey:presetName];
