@@ -78,7 +78,14 @@ static void padString(NSString *s,
     int i;
     int j;
 
-    sc = (unichar *) malloc(l * sizeof(unichar));
+    const int kBufferElements = 1024;
+    unichar staticBuffer[kBufferElements];
+    unichar* dynamicBuffer = 0;
+    if ([s length] > kBufferElements) {
+        sc = dynamicBuffer = (unichar *) malloc(l * sizeof(unichar));
+    } else {
+        sc = staticBuffer;
+    }
     [s getCharacters: sc];
     for(i = j = 0; i < l; i++, j++) {
         buf[j].ch = sc[i];
@@ -100,7 +107,9 @@ static void padString(NSString *s,
         }
     }
     *len=j;
-    free(sc);
+    if (dynamicBuffer) {
+        free(dynamicBuffer);
+    }
 }
 
 // increments line pointer accounting for buffer wrap-around
@@ -130,7 +139,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (screen_char_t *) _getLineAtIndex: (int) anIndex fromLine: (screen_char_t *) aLine;
 - (screen_char_t *) _getDefaultLineWithWidth: (int) width;
-- (BOOL) _addLineToScrollback;
+- (int) _addLineToScrollback;
 
 @end
 
@@ -493,7 +502,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
             [linebuffer setCursor: CURSOR_X+1];
         }
 
-        [linebuffer appendLine:line length:line_length partial:is_partial];
+        [linebuffer appendLine:line length:line_length partial:is_partial width:WIDTH];
 #ifdef DEBUG_RESIZEDWIDTH
         NSLog(@"Appended a line. now have %d lines for width %d\n", [linebuffer numLinesWithWidth:WIDTH], WIDTH);
 #endif
@@ -1213,7 +1222,9 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     screen_char_t *buffer;
     screen_char_t *aLine;
 
-    DebugLog([NSString stringWithFormat:@"setString: %s at line %d", [string UTF8String], CURSOR_Y + current_scrollback_lines]);
+    if (gDebugLogging) {
+        DebugLog([NSString stringWithFormat:@"setString: %s at line %d", [string UTF8String], CURSOR_Y + current_scrollback_lines]);
+    }
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[VT100Screen setString:%@ at %d]",
@@ -1226,16 +1237,32 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     }
 
     // Allocate a buffer of screen_char_t and place the new string in it.
+    const int kStaticBufferElements = 1024;
+    screen_char_t staticBuffer[kStaticBufferElements];
+    screen_char_t* dynamicBuffer = 0;
+
     if (ascii) {
         // Only Unicode code points 0 through 127 occur in the string.
-        unichar *sc = (unichar *) malloc(len*sizeof(unichar));
+        const int kStaticTempElements = 1024;
+        unichar staticTemp[kStaticTempElements];
+        unichar* dynamicTemp = 0;
+        unichar *sc;
+        if ([string length] > kStaticTempElements) {
+            dynamicTemp = sc = (unichar *) malloc(len*sizeof(unichar));
+        } else {
+            sc = staticTemp;
+        }
         int fg = [TERMINAL foregroundColorCode];
         int bg = [TERMINAL backgroundColorCode];
 
-        buffer = (screen_char_t *) malloc([string length] * sizeof(screen_char_t));
-        if (!buffer) {
-            NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
-            return;
+        if ([string length] > kStaticBufferElements) {
+            buffer = dynamicBuffer = (screen_char_t *) malloc([string length] * sizeof(screen_char_t));
+            if (!buffer) {
+                NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
+                return;
+            }
+        } else {
+            buffer = staticBuffer;
         }
 
         [string getCharacters:sc];
@@ -1250,14 +1277,20 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         if (charset[[TERMINAL charset]]) {
             translate(buffer,len);
         }
-        free(sc);
+        if (dynamicTemp) {
+            free(dynamicTemp);
+        }
     } else {
         string = [string precomposedStringWithCanonicalMapping];
         len = [string length];
-        buffer = (screen_char_t *) malloc(2 * len * sizeof(screen_char_t) );
-        if (!buffer) {
-            NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
-            return;
+        if (2 * len > kStaticBufferElements) {
+            buffer = dynamicBuffer = (screen_char_t *) malloc(2 * len * sizeof(screen_char_t) );
+            if (!buffer) {
+                NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
+                return;
+            }
+        } else {
+            buffer = staticBuffer;
         }
 
         // Add 0xffff after each double-byte character.
@@ -1271,6 +1304,9 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
     if (len < 1) {
         // The string is empty so do nothing.
+        if (dynamicBuffer) {
+            free(dynamicBuffer);
+        }
         return;
     }
 
@@ -1371,7 +1407,9 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         }
     }
 
-    free(buffer);
+    if (dynamicBuffer) {
+        free(dynamicBuffer);
+    }
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"setString done at %d", CURSOR_X);
@@ -1423,9 +1461,10 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         memset(dirty+WIDTH*(HEIGHT-1)*sizeof(char),1,WIDTH*sizeof(char));
 
         // try to add top line to scroll area
-        if ([self _addLineToScrollback]) {
-            scrollback_overflow++;
-            cumulative_scrollback_overflow++;
+        int overflowCount = [self _addLineToScrollback];
+        if (overflowCount) {
+            scrollback_overflow += overflowCount;
+            cumulative_scrollback_overflow += overflowCount;
         }
 
         // Increment screen_top pointer
@@ -2536,7 +2575,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 
 // adds a line to scrollback area. Returns YES if oldest line is lost, NO otherwise
-- (BOOL) _addLineToScrollback
+- (int) _addLineToScrollback
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s", __PRETTY_FUNCTION__);
@@ -2550,13 +2589,13 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         }
     }
 
-    [linebuffer appendLine:screen_top length:len partial:(screen_top[WIDTH].ch != 0)];
+    [linebuffer appendLine:screen_top length:len partial:(screen_top[WIDTH].ch != 0) width:WIDTH];
     int dropped = [linebuffer dropExcessLinesWithWidth: WIDTH];
     current_scrollback_lines = [linebuffer numLinesWithWidth: WIDTH];
 
     NSAssert(dropped == 0 || dropped == 1, @"Unexpected number of lines dropped");
 
-    return dropped == 1;
+    return dropped;
 }
 
 

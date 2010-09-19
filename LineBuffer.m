@@ -130,14 +130,14 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
 
 - (int) getPositionOfLine: (int*)lineNum atX: (int) x withWidth: (int)width
 {
-	int length;
-	BOOL eol;
-	screen_char_t* p = [self getWrappedLineWithWrapWidth: width lineNum: lineNum lineLength: &length includesEndOfLine: &eol];
-	if (!p) {
-		return -1;
-	} else {
-		return p - raw_buffer + x;
-	}
+    int length;
+    BOOL eol;
+    screen_char_t* p = [self getWrappedLineWithWrapWidth: width lineNum: lineNum lineLength: &length includesEndOfLine: &eol];
+    if (!p) {
+        return -1;
+    } else {
+        return p - raw_buffer + x;
+    }
 }
 
 - (screen_char_t*) getWrappedLineWithWrapWidth: (int) width lineNum: (int*) lineNum lineLength: (int*) lineLength includesEndOfLine: (BOOL*) includesEndOfLine
@@ -184,7 +184,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     if (width == cached_numlines_width) {
         return cached_numlines;
     }
-    
+
     int count = 0;
     int prev = 0;
     int i;
@@ -201,7 +201,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     // occurs that invalidates the cache.
     cached_numlines_width = width;
     cached_numlines = count;
-    
+
     return count;
 }
 
@@ -240,7 +240,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
         --cll_entries;
         is_partial = NO;
     }
-    
+
     if (cll_entries == first_entry) {
         // Popped the last line. Reset everything.
         buffer_start = raw_buffer;
@@ -248,7 +248,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
         first_entry = 0;
         cll_entries = 0;
     }
-        
+
     // Mark the cache dirty.
     cached_numlines_width = -1;
     return YES;
@@ -264,9 +264,14 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     return cll_entries - first_entry;
 }
 
+- (int)numEntries
+{
+    return cll_entries;
+}
+
 - (int) startOffset
 {
-	return start_offset;
+    return start_offset;
 }
 
 - (int) getRawLineLength: (int) linenum
@@ -336,7 +341,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     buffer_start = raw_buffer;
     start_offset = 0;
     first_entry = 0;
-    
+
     return orig_n - n;
 }
 
@@ -347,17 +352,17 @@ static BOOL stringCaseCompare(unichar* needle,
                               int haystack_len, 
                               int* result_length)
 {
-	int i;
-	if (needle_len > haystack_len) {
-		return NO;
-	}
-	for (i = 0; i < needle_len; ++i) {
-		if (haystack[i].ch != 0xffff && tolower(needle[i]) != tolower(haystack[i].ch)) {
-			return NO;
-		}
-	}
-	*result_length = i;
-	return YES;
+    int i;
+    if (needle_len > haystack_len) {
+        return NO;
+    }
+    for (i = 0; i < needle_len; ++i) {
+        if (haystack[i].ch != 0xffff && tolower(needle[i]) != tolower(haystack[i].ch)) {
+            return NO;
+        }
+    }
+    *result_length = i;
+    return YES;
 } 
 
 static BOOL stringCompare(unichar* needle, 
@@ -366,171 +371,181 @@ static BOOL stringCompare(unichar* needle,
                           int haystack_len, 
                           int* result_length)
 {
-	int i;
-	if (needle_len > haystack_len) {
-		return NO;
-	}
-	for (i = 0; i < needle_len; ++i) {
-		if (haystack[i].ch != 0xffff && needle[i] != haystack[i].ch) {
-			return NO;
-		}
-	}
-	*result_length = i;
-	return YES;
+    int i;
+    if (needle_len > haystack_len) {
+        return NO;
+    }
+    for (i = 0; i < needle_len; ++i) {
+        if (haystack[i].ch != 0xffff && needle[i] != haystack[i].ch) {
+            return NO;
+        }
+    }
+    *result_length = i;
+    return YES;
 }
 
 - (int) _lineRawOffset: (int) anIndex
 {
-	if (anIndex == first_entry) {
-		return start_offset;
-	} else {
-		return cumulative_line_lengths[anIndex - 1];
-	}
+    if (anIndex == first_entry) {
+        return start_offset;
+    } else {
+        return cumulative_line_lengths[anIndex - 1];
+    }
 }
 
 - (int) _findInRawLine:(int) entry needle:(NSString*) substring options: (int) options skip: (int) skip length: (int) raw_line_length resultLength: (int*) resultLength
 {
-	screen_char_t* rawline = raw_buffer + [self _lineRawOffset:entry];
-	unichar buffer[1000];
-	NSRange range;
-	range.location = 0;
-	range.length = [substring length];
-	if (range.length > 1000) {
-		range.length = 1000;
-	}
-	[substring getCharacters:buffer range:range];
+    screen_char_t* rawline = raw_buffer + [self _lineRawOffset:entry];
+    unichar buffer[1000];
+    NSRange range;
+    range.location = 0;
+    range.length = [substring length];
+    if (range.length > 1000) {
+        range.length = 1000;
+    }
+    [substring getCharacters:buffer range:range];
 
-	// TODO: use a smarter search algorithm
-	if (options & FindOptBackwards) {
-		int i;
-		NSAssert(skip >= 0, @"Negative skip");
-		if (skip + range.length > raw_line_length) {
-			skip = raw_line_length - range.length;
-		}
-		if (skip < 0) {
-			return -1;
-		}
-		if (options & FindOptCaseInsensitive) {
-			for (i = skip; i >= 0; --i) {
-				if (stringCaseCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
-					return i;
-				}
-			}
-		} else {
-			for (i = skip; i >= 0; --i) {
-				if (stringCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
-					return i;
-				}
-			}
-		}
-	} else {
-		int i;
-		int limit = raw_line_length - [substring length];
-		if (skip + range.length > raw_line_length) {
-			return -1;
-		}
-		if (options & FindOptCaseInsensitive) {
-			for (i = skip; i <= limit; ++i) {
-				if (stringCaseCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
-					return i;
-				}
-			}
-		} else {
-			for (i = skip; i <= limit; ++i) {
-				if (stringCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
-					return i;
-				}
-			}
-		}			
-	}
-	return -1;
+    // TODO: use a smarter search algorithm
+    if (options & FindOptBackwards) {
+        int i;
+        NSAssert(skip >= 0, @"Negative skip");
+        if (skip + range.length > raw_line_length) {
+            skip = raw_line_length - range.length;
+        }
+        if (skip < 0) {
+            return -1;
+        }
+        if (options & FindOptCaseInsensitive) {
+            for (i = skip; i >= 0; --i) {
+                if (stringCaseCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
+                    return i;
+                }
+            }
+        } else {
+            for (i = skip; i >= 0; --i) {
+                if (stringCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
+                    return i;
+                }
+            }
+        }
+    } else {
+        int i;
+        int limit = raw_line_length - [substring length];
+        if (skip + range.length > raw_line_length) {
+            return -1;
+        }
+        if (options & FindOptCaseInsensitive) {
+            for (i = skip; i <= limit; ++i) {
+                if (stringCaseCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
+                    return i;
+                }
+            }
+        } else {
+            for (i = skip; i <= limit; ++i) {
+                if (stringCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
+                    return i;
+                }
+            }
+        }           
+    }
+    return -1;
 }
-				
+
 - (int) _lineLength: (int) anIndex
 {
-	int prev;
-	if (anIndex == first_entry) {
-		prev = start_offset;
-	} else {
-		prev = cumulative_line_lengths[anIndex - 1];
-	}
-	return cumulative_line_lengths[anIndex] - prev;
+    int prev;
+    if (anIndex == first_entry) {
+        prev = start_offset;
+    } else {
+        prev = cumulative_line_lengths[anIndex - 1];
+    }
+    return cumulative_line_lengths[anIndex] - prev;
 }
 
 - (int) _findEntryBeforeOffset: (int) offset
 {
-	NSAssert(offset >= start_offset, @"Offset before start_offset");
-	int i;
-	for (i = first_entry; i < cll_entries; ++i) {
-		if (cumulative_line_lengths[i] > offset) {
-			return i;
-		}
-	}
-	NSAssert(NO, @"Offset not in block");
-	return cll_entries - 1;
+    NSAssert(offset >= start_offset, @"Offset before start_offset");
+    int i;
+    for (i = first_entry; i < cll_entries; ++i) {
+        if (cumulative_line_lengths[i] > offset) {
+            return i;
+        }
+    }
+    NSAssert(NO, @"Offset not in block");
+    return cll_entries - 1;
 }
 
 - (int) findSubstring: (NSString*) substring options: (int) options atOffset: (int) offset resultLength: (int*) resultLength
 {
-	if (offset == -1) {
-		offset = [self rawSpaceUsed] - 1;
-	}
-	int entry;
-	int limit;
-	int dir;
-	if (options & FindOptBackwards) {
-		entry = [self _findEntryBeforeOffset: offset];
-		limit = first_entry - 1;
-		dir = -1;
-	} else {
-		entry = first_entry;
-		limit = cll_entries;
-		dir = 1;
-	}
-	while (entry != limit) {
-		int line_raw_offset = [self _lineRawOffset:entry];
-		int skipped = offset - line_raw_offset;
-		if (skipped < 0) {
-			skipped = 0;
-		}
-		int pos = [self _findInRawLine:entry needle:substring options:options skip: skipped length: [self _lineLength: entry] resultLength: resultLength];
-		if (pos != -1) {
-			return pos + line_raw_offset;
-		}
-		entry += dir;
-	}
-	return -1;
+    if (offset == -1) {
+        offset = [self rawSpaceUsed] - 1;
+    }
+    int entry;
+    int limit;
+    int dir;
+    if (options & FindOptBackwards) {
+        entry = [self _findEntryBeforeOffset: offset];
+        limit = first_entry - 1;
+        dir = -1;
+    } else {
+        entry = first_entry;
+        limit = cll_entries;
+        dir = 1;
+    }
+    while (entry != limit) {
+        int line_raw_offset = [self _lineRawOffset:entry];
+        int skipped = offset - line_raw_offset;
+        if (skipped < 0) {
+            skipped = 0;
+        }
+        int pos = [self _findInRawLine:entry needle:substring options:options skip: skipped length: [self _lineLength: entry] resultLength: resultLength];
+        if (pos != -1) {
+            return pos + line_raw_offset;
+        }
+        entry += dir;
+    }
+    return -1;
 }
 
 - (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y
 {
-	int i;
-	*x = 0;
-	*y = 0;
-	int prev = start_offset;
-	for (i = first_entry; i < cll_entries; ++i) {
-		int eol = cumulative_line_lengths[i];
-		int line_length = eol-prev;
-		if (position >= eol) {
-			int spans = (line_length - 1) / width;
-			*y += spans + 1;
-		} else {
-			int bytes_to_consume_in_this_line = position - prev;
-			int consume = bytes_to_consume_in_this_line / width;
-			*y += consume;
-			if (consume > 0) {
-				*x = bytes_to_consume_in_this_line % (consume * width);
-			} else {
-				*x = bytes_to_consume_in_this_line;
-			}
-			return YES;
-		}
-		prev = eol;
-	}
-	NSLog(@"Didn't find position %d", position);
-	return NO;
+    int i;
+    *x = 0;
+    *y = 0;
+    int prev = start_offset;
+    for (i = first_entry; i < cll_entries; ++i) {
+        int eol = cumulative_line_lengths[i];
+        int line_length = eol-prev;
+        if (position >= eol) {
+            int spans = (line_length - 1) / width;
+            *y += spans + 1;
+        } else {
+            int bytes_to_consume_in_this_line = position - prev;
+            int consume = bytes_to_consume_in_this_line / width;
+            *y += consume;
+            if (consume > 0) {
+                *x = bytes_to_consume_in_this_line % (consume * width);
+            } else {
+                *x = bytes_to_consume_in_this_line;
+            }
+            return YES;
+        }
+        prev = eol;
+    }
+    NSLog(@"Didn't find position %d", position);
+    return NO;
 }
 
+- (int) getTrailingWithWidth:(int)width
+{
+    int numLines = [self numRawLines];
+    if (!is_partial || numLines == 0) {
+        return 0;
+    } else {
+        int len = [self getRawLineLength:cll_entries-1];
+        return len % width;
+    }
+}
 
 @end
 
@@ -553,19 +568,24 @@ static BOOL stringCompare(unichar* needle,
     blocks = [[NSMutableArray alloc] initWithCapacity: 1];
     [self _addBlockOfSize: block_size];
     max_lines = -1;
+    num_wrapped_lines_width = -1;
     num_dropped_blocks = 0;
     return self;
 }
 
-// Return the number of wrapped lines, not including dropped lines.
-- (int) _rawNumLinesWithWidth: (int) width
-{
+// This is called a lot so it's a C function to avoid obj_msgSend
+static int RawNumLines(LineBuffer* buffer, int width) {
+    if (buffer->num_wrapped_lines_width == width) {
+        return buffer->num_wrapped_lines_cache;
+    }
     int count = 0;
     int i;
-    for (i = 0; i < [blocks count]; ++i) {
-        LineBlock* block = [blocks objectAtIndex: i];
+    for (i = 0; i < [buffer->blocks count]; ++i) {
+        LineBlock* block = [buffer->blocks objectAtIndex: i];
         count += [block getNumLinesWithWrapWidth: width];
     }
+    buffer->num_wrapped_lines_width = width;
+    buffer->num_wrapped_lines_cache = count;
     return count;
 }
 
@@ -576,11 +596,11 @@ static BOOL stringCompare(unichar* needle,
         // Do nothing: the buffer is infinite.
         return;
     }
-    
-    int total_lines = [self _rawNumLinesWithWidth: width];
+
+    int total_lines = RawNumLines(self, width);
     while (total_lines > max_lines) {
         int extra_lines = total_lines - max_lines;
-        
+
         NSAssert([blocks count] > 0, @"No blocks");
         LineBlock* block = [blocks objectAtIndex: 0];
         int block_lines = [block getNumLinesWithWrapWidth: width];
@@ -590,38 +610,40 @@ static BOOL stringCompare(unichar* needle,
             toDrop = extra_lines;
         }
         int dropped = [block dropLines: toDrop withWidth: width];
-        
+
         if ([block isEmpty]) {
             [blocks removeObjectAtIndex:0];
             ++num_dropped_blocks;
         }
         total_lines -= dropped;
     }
+    num_wrapped_lines_cache = total_lines;
 }
 
 - (void) setMaxLines: (int) maxLines
 {
     max_lines = maxLines;
+    num_wrapped_lines_width = -1;
 }
 
 
 - (int) dropExcessLinesWithWidth: (int) width
 {
-    int nl = [self _rawNumLinesWithWidth: width];
+    int nl = RawNumLines(self, width);
     if (nl > max_lines) {
         [self _dropLinesForWidth: width];
     }
-    return nl - [self _rawNumLinesWithWidth: width];
+    return nl - RawNumLines(self, width);
 }
 
 - (void) dump
 {
     int i;
-	int rawOffset = 0;
+    int rawOffset = 0;
     for (i = 0; i < [blocks count]; ++i) {
         NSLog(@"Block %d:\n", i);
         [[blocks objectAtIndex: i] dump:rawOffset];
-		rawOffset += [[blocks objectAtIndex:i] rawSpaceUsed];
+        rawOffset += [[blocks objectAtIndex:i] rawSpaceUsed];
     }
 }
 
@@ -638,7 +660,7 @@ static BOOL stringCompare(unichar* needle,
     return self;
 }
 
-- (void) appendLine: (screen_char_t*) buffer length: (int) length partial: (BOOL) partial
+- (void) appendLine: (screen_char_t*) buffer length: (int) length partial: (BOOL) partial width:(int) width
 {
 #ifdef LOG_MUTATIONS
     {
@@ -654,8 +676,9 @@ static BOOL stringCompare(unichar* needle,
     if ([blocks count] == 0) {
         [self _addBlockOfSize: block_size];
     }
-    
+
     LineBlock* block = [blocks objectAtIndex: ([blocks count] - 1)]; 
+    int trailing = [block getTrailingWithWidth:width];
     if (![block appendLine: buffer length: length partial: partial]) {
         int prefix_len = 0;
         screen_char_t* prefix = NULL;
@@ -691,7 +714,7 @@ static BOOL stringCompare(unichar* needle,
                 block = [self _addBlockOfSize: block_size];
             }
         }
-        
+
         // Append the prefix if there is one (the prefix was a partial line that we're
         // moving out of the last block into the new block)
         if (prefix) {
@@ -704,6 +727,13 @@ static BOOL stringCompare(unichar* needle,
         BOOL ok = [block appendLine: buffer length: length partial: partial];
         NSAssert(ok, @"append can't fail here");
     }
+
+    // Update the cache of the number of wrapped lines.
+    if (num_wrapped_lines_width == width) {
+        num_wrapped_lines_cache += (length + trailing - 1) / width + 1;
+    } else {
+        num_wrapped_lines_width = -1;
+    }
 }
 
 // Copy a line into the buffer. If the line is shorter than 'width' then only the first 'width' characters will be modified.
@@ -715,7 +745,7 @@ static BOOL stringCompare(unichar* needle,
     for (i = 0; i < [blocks count]; ++i) {
         LineBlock* block = [blocks objectAtIndex: i];
         NSAssert(block, @"Null block");
-        
+
         // getNumLinesWithWrapWidth caches its result for the last-used width so
         // this is usually faster than calling getWrappedLineWithWrapWidth since
         // most calls to the latter will just decrement line and return NULL.
@@ -741,7 +771,7 @@ static BOOL stringCompare(unichar* needle,
 
 - (int) numLinesWithWidth: (int) width
 {
-    return [self _rawNumLinesWithWidth: width];
+    return RawNumLines(self, width);
 }
 
 - (BOOL) popAndCopyLastLineInto: (screen_char_t*) ptr width: (int) width includesEndOfLine: (BOOL*) includsEndOfLine;
@@ -749,13 +779,14 @@ static BOOL stringCompare(unichar* needle,
     if ([self numLinesWithWidth: width] == 0) {
         return NO;
     }
-    
+    num_wrapped_lines_width = -1;
+
     LineBlock* block = [blocks lastObject];
-    
+
     // If the line is partial the client will want to add a continuation marker so 
     // tell him there's no EOL in that case.
     *includsEndOfLine = ![block hasPartial];
-    
+
     // Pop the last up-to-width chars off the last line.
     int length;
     screen_char_t* temp;
@@ -763,10 +794,10 @@ static BOOL stringCompare(unichar* needle,
     NSAssert(ok, @"Unexpected empty block");
     NSAssert(length <= width, @"Length too large");
     NSAssert(length >= 0, @"Negative length");
-    
+
     // Copy into the provided buffer.
     memcpy(ptr, temp, sizeof(screen_char_t) * length);
-    
+
     // Clean up the block if the whole thing is empty, otherwise another call
     // to this function would not work correctly.
     if ([block isEmpty]) {
@@ -789,16 +820,16 @@ static BOOL stringCompare(unichar* needle,
 
 - (void) setCursor: (int) x
 {
-    LineBlock* block = [blocks lastObject];    
+    LineBlock* block = [blocks lastObject];
     if ([block hasPartial]) {
-        int last_line_length = [block getRawLineLength: [block numRawLines]-1];
+        int last_line_length = [block getRawLineLength: [block numEntries]-1];
         cursor_x = x + last_line_length;
         cursor_rawline = -1;
     } else {
         cursor_x = x;
         cursor_rawline = 0;
     }
-    
+
     int i;
     for (i = 0; i < [blocks count]; ++i) {
         cursor_rawline += [[blocks objectAtIndex: i] numRawLines];
@@ -815,7 +846,7 @@ static BOOL stringCompare(unichar* needle,
     if (cursor_rawline == total_raw_lines-1) {
         // The cursor is on the last line in the buffer.
         LineBlock* block = [blocks lastObject];
-        int last_line_length = [block getRawLineLength: [block numRawLines]-1];
+        int last_line_length = [block getRawLineLength: [block numEntries]-1];
         int num_overflow_lines = (last_line_length-1) / width;
         int min_x = num_overflow_lines * width;
         int max_x = min_x + width;  // inclusive because the cursor wraps to the next line on the last line in the buffer
@@ -829,32 +860,32 @@ static BOOL stringCompare(unichar* needle,
 
 - (BOOL) _findPosition: (int) start inBlock: (int*) block_num inOffset: (int*) offset
 {
-	int i;
-	int position = start;
-	for (i = 0; position >= 0 && i < [blocks count]; ++i) {
-		LineBlock* block = [blocks objectAtIndex:i];
-		int used = [block rawSpaceUsed];
-		if (position >= used) {
-			position -= used;
-		} else {
-			*block_num = i;
-			*offset = position;
-			return YES;
-		}
-	}
-	return NO;
+    int i;
+    int position = start;
+    for (i = 0; position >= 0 && i < [blocks count]; ++i) {
+        LineBlock* block = [blocks objectAtIndex:i];
+        int used = [block rawSpaceUsed];
+        if (position >= used) {
+            position -= used;
+        } else {
+            *block_num = i;
+            *offset = position;
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (int) _blockPosition: (int) block_num
 {
-	int i;
-	int position = 0;
-	for (i = 0; i < block_num; ++i) {
-		LineBlock* block = [blocks objectAtIndex:i];
-		position += [block rawSpaceUsed];
-	}
-	return position;
-		
+    int i;
+    int position = 0;
+    for (i = 0; i < block_num; ++i) {
+        LineBlock* block = [blocks objectAtIndex:i];
+        position += [block rawSpaceUsed];
+    }
+    return position;
+
 }
 
 - (void)initFind:(NSString*)substring startingAt:(int)start options:(int)options withContext:(FindContext*)context
@@ -867,7 +898,7 @@ static BOOL stringCompare(unichar* needle,
     } else {
         context->dir = 1;
     }
-	if ([self _findPosition:start inBlock:&context->absBlockNum inOffset:&context->offset]) {
+    if ([self _findPosition:start inBlock:&context->absBlockNum inOffset:&context->offset]) {
         context->absBlockNum += num_dropped_blocks;
         context->status = Searching;
     } else {
@@ -911,7 +942,7 @@ static BOOL stringCompare(unichar* needle,
     NSAssert(context->absBlockNum - num_dropped_blocks >= 0, @"bounds check");
     NSAssert(context->absBlockNum - num_dropped_blocks < [blocks count], @"bounds check");
     LineBlock* block = [blocks objectAtIndex:context->absBlockNum - num_dropped_blocks];
-    
+
     if (context->absBlockNum - num_dropped_blocks == 0 &&
         context->offset != -1 &&
         context->offset < [block startOffset]) {
@@ -928,7 +959,7 @@ static BOOL stringCompare(unichar* needle,
     }
 
     // NSLog(@"search block %d starting at offset %d", context->absBlockNum - num_dropped_blocks, context->offset);
-    
+
     int position = [block findSubstring:context->substring 
                                 options:context->options 
                                atOffset:context->offset 
@@ -958,92 +989,92 @@ static BOOL stringCompare(unichar* needle,
 
 - (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y
 {
-	int i;
-	int yoffset = 0;
-	for (i = 0; position >= 0 && i < [blocks count]; ++i) {
-		LineBlock* block = [blocks objectAtIndex:i];
-		int used = [block rawSpaceUsed];
-		if (position >= used) {
-			position -= used;
-			yoffset += [block getNumLinesWithWrapWidth:width];
-		} else {
-			BOOL result = [block convertPosition: position withWidth: width toX: x toY: y];
-			*y += yoffset;
-			return result;
-		}
-	}
-	return NO;
+    int i;
+    int yoffset = 0;
+    for (i = 0; position >= 0 && i < [blocks count]; ++i) {
+        LineBlock* block = [blocks objectAtIndex:i];
+        int used = [block rawSpaceUsed];
+        if (position >= used) {
+            position -= used;
+            yoffset += [block getNumLinesWithWrapWidth:width];
+        } else {
+            BOOL result = [block convertPosition: position withWidth: width toX: x toY: y];
+            *y += yoffset;
+            return result;
+        }
+    }
+    return NO;
 }
 
 - (BOOL) convertCoordinatesAtX: (int) x atY: (int) y withWidth: (int) width toPosition: (int*) position offset:(int)offset
 {
     int line = y;
     int i;
-	*position = 0;
+    *position = 0;
     for (i = 0; i < [blocks count]; ++i) {
         LineBlock* block = [blocks objectAtIndex: i];
         NSAssert(block, @"Null block");
-        
+
         // getNumLinesWithWrapWidth caches its result for the last-used width so
         // this is usually faster than calling getWrappedLineWithWrapWidth since
         // most calls to the latter will just decrement line and return NULL.
         int block_lines = [block getNumLinesWithWrapWidth:width];
         if (block_lines <= line) {
             line -= block_lines;
-			*position += [block rawSpaceUsed];
+            *position += [block rawSpaceUsed];
             continue;
         }
-		
-		int pos;
-		pos = [block getPositionOfLine: &line atX: x withWidth: width];
-		if (pos >= 0) {
-			int tempx=0, tempy=0;
-			// The correct position has been computed:
-			// *position = start of block
-			// pos = offset within block
-			// offset = additional offset the user requested
-			// but we need to see if the position actually exists after adding offset. If it can be
-			// converted to an x,y position the it's all right.
-			if ([self convertPosition:*position+pos+offset withWidth:width toX:&tempx toY:&tempy] && tempy >= 0 && tempx >= 0) {
-				*position += pos + offset;
-				return YES;
-			} else {
-				return NO;
-			}
-		}
+
+        int pos;
+        pos = [block getPositionOfLine: &line atX: x withWidth: width];
+        if (pos >= 0) {
+            int tempx=0, tempy=0;
+            // The correct position has been computed:
+            // *position = start of block
+            // pos = offset within block
+            // offset = additional offset the user requested
+            // but we need to see if the position actually exists after adding offset. If it can be
+            // converted to an x,y position the it's all right.
+            if ([self convertPosition:*position+pos+offset withWidth:width toX:&tempx toY:&tempy] && tempy >= 0 && tempx >= 0) {
+                *position += pos + offset;
+                return YES;
+            } else {
+                return NO;
+            }
+        }
     }
     return NO;
 }
 
 - (int) firstPos
 {
-	int i;
-	int position = 0;
-	for (i = 0; i < [blocks count]; ++i) {
-		LineBlock* block = [blocks objectAtIndex:i];
-		if (![block isEmpty]) {
-			position += [block startOffset];
-			break;
-		} else {
-			position += [block rawSpaceUsed];
-		}
-	}
-	return position;
+    int i;
+    int position = 0;
+    for (i = 0; i < [blocks count]; ++i) {
+        LineBlock* block = [blocks objectAtIndex:i];
+        if (![block isEmpty]) {
+            position += [block startOffset];
+            break;
+        } else {
+            position += [block rawSpaceUsed];
+        }
+    }
+    return position;
 }
 
 - (int) lastPos
 {
-	int i;
-	int position = 0;
-	for (i = 0; i < [blocks count]; ++i) {
-		LineBlock* block = [blocks objectAtIndex:i];
-		if (![block isEmpty]) {
-			position += [block rawSpaceUsed];
-		} else {
-			position += [block rawSpaceUsed];
-		}
-	}
-	return position;
+    int i;
+    int position = 0;
+    for (i = 0; i < [blocks count]; ++i) {
+        LineBlock* block = [blocks objectAtIndex:i];
+        if (![block isEmpty]) {
+            position += [block rawSpaceUsed];
+        } else {
+            position += [block rawSpaceUsed];
+        }
+    }
+    return position;
 }
 
 

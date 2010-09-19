@@ -345,8 +345,9 @@ static NSImage *warningImage;
 
 - (void)readTask:(NSData*)data
 {
-    if([data length] == 0 || EXIT)
+    if ([data length] == 0 || EXIT) {
         return;
+    }
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PTYSession readTask:%@]", __FILE__, __LINE__,
@@ -358,16 +359,16 @@ static NSImage *warningImage;
     VT100TCC token;
 
     // while loop to process all the tokens we can get
-    while(!EXIT && TERMINAL && ((token = [TERMINAL getNextToken]),
-            token.type != VT100_WAIT && token.type != VT100CC_NULL))
-    {
+    while (!EXIT && 
+           TERMINAL && 
+           ((token = [TERMINAL getNextToken]),
+            token.type != VT100_WAIT && 
+            token.type != VT100CC_NULL)) {
         // process token
-        if (token.type != VT100_SKIP)
-        {
+        if (token.type != VT100_SKIP) {
             if (token.type == VT100_NOTSUPPORT) {
                 //NSLog(@"%s(%d):not support token", __FILE__ , __LINE__);
-            }
-            else {
+            } else {
                 [SCREEN putToken:token];
             }
         }
