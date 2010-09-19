@@ -49,8 +49,6 @@
     NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
 #endif
 
-	[drawer release];
-	
     [super dealloc];
     
 }
@@ -260,18 +258,6 @@ end:
     if([delegate conformsToProtocol: @protocol(PTYWindowDelegateProtocol)])
 	[delegate windowDidToggleToolbarVisibility: self];    
     
-}
-
-- (NSDrawer *) drawer
-{
-	return (drawer);
-}
-
-- (void) setDrawer: (NSDrawer *) aDrawer
-{
-	[aDrawer retain];
-	[drawer release];
-	drawer = aDrawer;
 }
 
 - (BOOL)canBecomeKeyWindow

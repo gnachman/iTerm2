@@ -2889,7 +2889,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 #else
     renderBold = isBold;
-    theFont = dw ? naFont : font;
+    theFont = dw ? nafont : font;
 #endif
 
     NSColor* color = overrideColor ? overrideColor : [self colorForCode:fg];

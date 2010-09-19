@@ -39,8 +39,6 @@
 
 @interface PTYWindow : NSWindow 
 {
-	IBOutlet NSDrawer *drawer;
-
 	int blurFilter;
 	BOOL layoutDone;
 }
@@ -51,9 +49,6 @@
 		defer:(BOOL)flag;
 
 - (void)toggleToolbarShown:(id)sender;
-
-- (NSDrawer *) drawer;
-- (void) setDrawer: (NSDrawer *) aDrawer;
 
 - (void)smartLayout;
 - (void)setLayoutDone;

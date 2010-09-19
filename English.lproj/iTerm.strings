@@ -184,8 +184,6 @@
 "%@ copy" = "%@ copy";
 
 /* Bookmarks */
-"Show Bookmark Drawer" = "Show Bookmark Drawer";
-"Hide Bookmark Drawer"="Hide Bookmark Drawer";
 "Delete Bookmark"="Delete Bookmark";
 
 /* Warning */
