@@ -43,4 +43,7 @@
 - (NSMenu*)bookmarkTable:(id)bookmarkTable menuForEvent:(NSEvent*)theEvent;
 - (IBAction)editBookmarks:(id)sender;
 
+// NSWindow Delegate
+- (void)windowDidBecomeKey:(NSNotification *)notification;
+
 @end

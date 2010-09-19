@@ -85,8 +85,9 @@ static NSImage *warningImage;
 // init/dealloc
 - (id)init
 {
-    if((self = [super init]) == nil)
+    if ((self = [super init]) == nil) {
         return (nil);
+    }
 
     gettimeofday(&lastInput, NULL);
     lastOutput = lastBlink = lastInput;
@@ -271,7 +272,7 @@ static NSImage *warningImage;
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
     NSString* locale = [self _getLocale];
-    if(locale != nil) {
+    if (locale != nil) {
         [env setObject:locale forKey:@"LANG"];
         [env setObject:locale forKey:@"LC_COLLATE"];
         [env setObject:locale forKey:@"LC_CTYPE"];
@@ -329,7 +330,7 @@ static NSImage *warningImage;
 - (void)writeTask:(NSData*)data
 {
     // check if we want to send this input to all the sessions
-    if([parent sendInputToAllSessions] == NO) {
+    if ([parent sendInputToAllSessions] == NO) {
         if (!EXIT) {
             [self setBell: NO];
             PTYScroller* ptys=(PTYScroller*)[SCROLLVIEW verticalScroller];
@@ -477,7 +478,7 @@ static NSImage *warningImage;
                                                        text:&keyBindingText 
                                                 keyMappings:[[self addressBookEntry] objectForKey:KEY_KEYBOARD_MAP]];
 
-    if(keyBindingAction >= 0) {
+    if (keyBindingAction >= 0) {
         NSString *aString;
         unsigned char hexCode;
         int hexCodeTmp;
@@ -521,22 +522,20 @@ static NSImage *warningImage;
                 [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll]; 
                 break;  
             case KEY_ACTION_ESCAPE_SEQUENCE:
-                if([keyBindingText length] > 0)
-                {
+                if ([keyBindingText length] > 0) {
                     aString = [NSString stringWithFormat:@"\e%@", keyBindingText];
                     [self writeTask: [aString dataUsingEncoding: NSUTF8StringEncoding]];
                 }
                 break;
             case KEY_ACTION_HEX_CODE:
-                if([keyBindingText length] > 0 && sscanf([keyBindingText UTF8String], "%x", &hexCodeTmp) == 1)
-                {
+                if ([keyBindingText length] > 0 && 
+                    sscanf([keyBindingText UTF8String], "%x", &hexCodeTmp) == 1) {
                     hexCode = (unsigned char) hexCodeTmp;
                     [self writeTask:[NSData dataWithBytes:&hexCode length: sizeof(hexCode)]];
                 }
                 break;
             case KEY_ACTION_TEXT:
-                if([keyBindingText length] > 0)
-                {
+                if([keyBindingText length] > 0) {
                     NSMutableString *bindingText = [NSMutableString stringWithString: keyBindingText];
                     [bindingText replaceOccurrencesOfString:@"\\n" withString:@"\n" options:NSLiteralSearch range:NSMakeRange(0,[bindingText length])];
                     [bindingText replaceOccurrencesOfString:@"\\e" withString:@"\e" options:NSLiteralSearch range:NSMakeRange(0,[bindingText length])];
@@ -740,27 +739,28 @@ static NSImage *warningImage;
     // NSLog(@"x = %d; y = %d", x, y);
 
 
-    if(x == [SCREEN cursorX] && y == [SCREEN cursorY])
+    if (x == [SCREEN cursorX] && y == [SCREEN cursorY]) {
         return;
-
+    }
+    
     NSData *data;
     int i;
     // now move the cursor up or down
-    for(i = 0; i < abs(y - [SCREEN cursorY]); i++)
-    {
-        if(y < [SCREEN cursorY])
+    for (i = 0; i < abs(y - [SCREEN cursorY]); i++) {
+        if (y < [SCREEN cursorY]) {
             data = [TERMINAL keyArrowUp:0];
-        else
+        } else {
             data = [TERMINAL keyArrowDown:0];
+        }
         [self writeTask:[NSData dataWithBytes:[data bytes] length:[data length]]];
     }
     // now move the cursor left or right    
-    for(i = 0; i < abs(x - [SCREEN cursorX]); i++)
-    {
-        if(x < [SCREEN cursorX])
+    for (i = 0; i < abs(x - [SCREEN cursorX]); i++) {
+        if (x < [SCREEN cursorX]) {
             data = [TERMINAL keyArrowLeft:0];
-        else
+        } else {
             data = [TERMINAL keyArrowRight:0];
+        }
         [self writeTask:[NSData dataWithBytes:[data bytes] length:[data length]]];
     }
 
@@ -772,14 +772,17 @@ static NSImage *warningImage;
 {
     NSData *data;
     NSMutableString *mstring;
-    int i, max;
+    int i;
+    int max;
 
-    if (EXIT) return;
-
+    if (EXIT) {
+        return;
+    }
+    
     //    NSLog(@"insertText: %@",string);
     mstring = [NSMutableString stringWithString:string];
     max = [string length];
-    for(i=0; i < max; i++) {
+    for (i = 0; i < max; i++) {
         // From http://lists.apple.com/archives/cocoa-dev/2001/Jul/msg00114.html
         // in MacJapanese, the backslash char (ASCII 0x5C) is mapped to Unicode 0xA5.
         // The following line gives you NSString containing an Unicode character Yen sign (0xA5) in Japanese localization.
@@ -890,8 +893,8 @@ static NSImage *warningImage;
     board = [NSPasteboard generalPasteboard];
     NSParameterAssert(board != nil );
     str = [[[NSMutableString alloc] initWithString:[board stringForType:NSStringPboardType]] autorelease];
-    if ([sender tag]) // paste with escape;
-    {
+    if ([sender tag]) {
+        // paste with escape;
         [str replaceOccurrencesOfString:@"\\" withString:@"\\\\" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
         [str replaceOccurrencesOfString:@"'" withString:@"\\'" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
         [str replaceOccurrencesOfString:@"\"" withString:@"\\\"" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
@@ -903,15 +906,13 @@ static NSImage *warningImage;
 - (void) pasteString: (NSString *) aString
 {
 
-    if ([aString length] > 0)
-    {
+    if ([aString length] > 0) {
         NSString *tempString = [aString stringReplaceSubstringFrom:@"\r\n" to:@"\r"];
-        [self writeTask: [[tempString stringReplaceSubstringFrom:@"\n" to:@"\r"]
-                          dataUsingEncoding:[TERMINAL encoding]
-                          allowLossyConversion:YES]];
-    }
-    else
+        [self writeTask:[[tempString stringReplaceSubstringFrom:@"\n" to:@"\r"] dataUsingEncoding:[TERMINAL encoding]
+                                                                             allowLossyConversion:YES]];
+    } else {
         NSBeep();
+    }
 
 }
 
@@ -945,8 +946,9 @@ static NSImage *warningImage;
           __FILE__, __LINE__);
 #endif
 
-    if([[PreferencePanel sharedInstance] copySelection])
+    if ([[PreferencePanel sharedInstance] copySelection]) {
         [TEXTVIEW copy: self];
+    }
 }
 
 - (void) textViewResized: (NSNotification *) aNotification;
@@ -954,10 +956,11 @@ static NSImage *warningImage;
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s: textView = 0x%x", __PRETTY_FUNCTION__, TEXTVIEW);
 #endif
-    int w, h;
+    int w;
+    int h;
 
-    w = (int)(([[SCROLLVIEW contentView] frame].size.width - MARGIN * 2)/[TEXTVIEW charWidth]);
-    h = (int)(([[SCROLLVIEW contentView] frame].size.height)/[TEXTVIEW lineHeight]);
+    w = (int)(([[SCROLLVIEW contentView] frame].size.width - MARGIN * 2) / [TEXTVIEW charWidth]);
+    h = (int)(([[SCROLLVIEW contentView] frame].size.height) / [TEXTVIEW lineHeight]);
     //NSLog(@"%s: w = %d; h = %d; old w = %d; old h = %d", __PRETTY_FUNCTION__, w, h, [SCREEN width], [SCREEN height]);
 
     [SCREEN resizeWidth:w height:h];
@@ -965,27 +968,24 @@ static NSImage *warningImage;
 
 }
 
-- (void) setLabelAttribute
+- (void)setLabelAttribute
 {
     struct timeval now;
 
-
     gettimeofday(&now, NULL);
-    if ([self exited])
-    {
+    if ([self exited]) {
         // dead
         [parent setLabelColor: deadStateColor forTabViewItem: tabViewItem];
-        if(isProcessing)
+        if (isProcessing) {
             [self setIsProcessing: NO];
-    }
-    else if([[tabViewItem tabView] selectedTabViewItem] != tabViewItem) 
-    {
+        }
+    } else if ([[tabViewItem tabView] selectedTabViewItem] != tabViewItem) {
         if (now.tv_sec > lastOutput.tv_sec+2) {
-            if(isProcessing)
+            if (isProcessing) {
                 [self setIsProcessing: NO];
-
-            if (newOutput)
-            {
+            }
+            
+            if (newOutput) {
                 // Idle after new output
                 if (!growlIdle && now.tv_sec > lastOutput.tv_sec+1) {
                     [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Idle",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts")
@@ -995,39 +995,35 @@ static NSImage *warningImage;
                     growlNewOutput = NO;
                 }
                 [parent setLabelColor: idleStateColor forTabViewItem: tabViewItem];
-            }
-            else
-            {
+            } else {
                 // normal state
                 [parent setLabelColor: normalStateColor forTabViewItem: tabViewItem];
             }
-        }
-        else 
-        {
+        } else {
             if (newOutput) {
-                if(isProcessing == NO && ![[PreferencePanel sharedInstance] useCompactLabel])
+                if (isProcessing == NO && ![[PreferencePanel sharedInstance] useCompactLabel]) {
                     [self setIsProcessing: YES];
-
+                }
+                
                 if (!growlNewOutput && ![parent sendInputToAllSessions]) {
                     [gd growlNotify:NSLocalizedStringFromTableInBundle(@"New Output",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts")
                     withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"New Output was received in %@ #%d.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts"),[self name],[self realObjectCount]] 
                     andNotification:@"New Output"];
-                    growlNewOutput=YES;
+                    growlNewOutput = YES;
                 }
 
                 [parent setLabelColor: newOutputStateColor forTabViewItem: tabViewItem];
             }
         }
-    }
-    else {
+    } else {
         // front tab
-        if(isProcessing)
+        if (isProcessing) {
             [self setIsProcessing: NO];
-        growlNewOutput=NO;
+        }
+        growlNewOutput = NO;
         newOutput = NO;
         [parent setLabelColor: chosenStateColor forTabViewItem: tabViewItem];
     }
-    //[self setBell:NO];
 }
 
 - (BOOL) bell
@@ -1035,20 +1031,28 @@ static NSImage *warningImage;
     return bell;
 }
 
-- (void) setBell: (BOOL) flag
+- (void)setBell:(BOOL)flag
 {
-    if(flag!=bell) {
+    if (flag != bell) {
         bell = flag;
-        if (bell)
-        {
+        if (bell) {
             [self setIcon: warningImage];
-            if([TEXTVIEW keyIsARepeat] == NO && ![[TEXTVIEW window] isKeyWindow])
-                [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Bell",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts")
-                withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Session %@ #%d just rang a bell!",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts"),[self name],[self realObjectCount]] 
+            if ([TEXTVIEW keyIsARepeat] == NO && ![[TEXTVIEW window] isKeyWindow]) {
+                [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Bell",
+                                                                   @"iTerm", 
+                                                                   [NSBundle bundleForClass:[self class]], 
+                                                                   @"Growl Alerts")
+                withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Session %@ #%d just rang a bell!",
+                                                                                              @"iTerm", 
+                                                                                              [NSBundle bundleForClass:[self class]], 
+                                                                                              @"Growl Alerts"),
+                                 [self name],
+                                 [self realObjectCount]] 
                 andNotification:@"Bells"];          
-        }
-        else
+            }
+        } else {
             [self setIcon: nil];
+        }
     }   
 }
 
@@ -1201,36 +1205,37 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     [aMenuItem release];
 
     // Ask the parent if it has anything to add
-    if ([[self parent] respondsToSelector:@selector(menuForEvent: menu:)])
+    if ([[self parent] respondsToSelector:@selector(menuForEvent: menu:)]) {
         [[self parent] menuForEvent:theEvent menu: theMenu];    
+    }
 }
 
-- (PseudoTerminal *) parent
+- (PseudoTerminal *)parent
 {
     return (parent);
 }
 
-- (void) setParent: (PseudoTerminal *) theParent
+- (void)setParent:(PseudoTerminal *)theParent
 {
     parent = theParent; // don't retain parent. parent retains self.
 }
 
-- (NSTabViewItem *) tabViewItem
+- (NSTabViewItem *)tabViewItem
 {
     return (tabViewItem);
 }
 
-- (void) setTabViewItem: (NSTabViewItem *) theTabViewItem
+- (void)setTabViewItem:(NSTabViewItem *)theTabViewItem
 {
     tabViewItem = theTabViewItem;
 }
 
-- (NSString *) uniqueID
+- (NSString *)uniqueID
 {
     return ([self tty]);
 }
 
-- (void) setUniqueID:(NSString*)uniqueID
+- (void)setUniqueID:(NSString*)uniqueID
 {
     NSLog(@"Not allowed to set unique ID");
 }
@@ -1242,19 +1247,23 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 
 - (void)setDefaultName:(NSString*)theName
 {
-    if([defaultName isEqualToString:theName])
+    if ([defaultName isEqualToString:theName]) {
         return;
+    }
 
-    if(defaultName) {
+    if (defaultName) {
         // clear the window title if it is not different
-        if(windowTitle == nil || [name isEqualToString:windowTitle])
+        if (windowTitle == nil || [name isEqualToString:windowTitle]) {
             windowTitle = nil;
+        }
         [defaultName release];
         defaultName = nil;
     }
     if (!theName) {
-        theName = NSLocalizedStringFromTableInBundle(@"Untitled",@"iTerm",
-            [NSBundle bundleForClass:[self class]], @"Profiles");
+        theName = NSLocalizedStringFromTableInBundle(@"Untitled",
+                                                     @"iTerm",
+                                                     [NSBundle bundleForClass:[self class]], 
+                                                     @"Profiles");
     }
 
     defaultName = [theName retain];
@@ -1267,34 +1276,39 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 
 - (void)setName:(NSString*)theName
 {
-    if([name isEqualToString:theName])
+    if ([name isEqualToString:theName]) {
         return;
+    }
 
-    if(name) {
+    if (name) {
         // clear the window title if it is not different
-        if([name isEqualToString:windowTitle])
+        if ([name isEqualToString:windowTitle]) {
             windowTitle = nil;
+        }
         [name release];
         name = nil;
     }
-    if(!theName) {
-        theName = NSLocalizedStringFromTableInBundle(@"Untitled",@"iTerm",
-            [NSBundle bundleForClass:[self class]], @"Profiles");
+    if (!theName) {
+        theName = NSLocalizedStringFromTableInBundle(@"Untitled",
+                                                     @"iTerm",
+                                                     [NSBundle bundleForClass:[self class]], 
+                                                     @"Profiles");
     }
 
     name = [theName retain];
     // sync the window title if it is not set to something else
-    if(windowTitle == nil)
+    if (windowTitle == nil) {
         [self setWindowTitle:theName];
-
+    }
+    
     [tabViewItem setLabel:name];
     [self setBell:NO];
 
     // get the session submenu to be rebuilt
-    if([[iTermController sharedInstance] currentTerminal] == [self parent]) {
-        [[NSNotificationCenter defaultCenter]
-            postNotificationName:@"iTermNameOfSessionDidChange"
-            object:[self parent] userInfo:nil];
+    if ([[iTermController sharedInstance] currentTerminal] == [self parent]) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNameOfSessionDidChange"
+                                                            object:[self parent] 
+                                                          userInfo:nil];
     }
 }
 
@@ -1310,102 +1324,104 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     [windowTitle autorelease];
     windowTitle = nil;
 
-    if(theTitle != nil && [theTitle length] > 0)
+    if (theTitle != nil && [theTitle length] > 0) {
         windowTitle = [theTitle retain];
+    }
 
-    if([[self parent] currentSession] == self)
+    if ([[self parent] currentSession] == self) {
         [[self parent] setWindowTitle];
+    }
 }
 
-- (PTYTask *) SHELL
+- (PTYTask *)SHELL
 {
-    return (SHELL);
+    return SHELL;
 }
 
-- (void) setSHELL: (PTYTask *) theSHELL
+- (void)setSHELL:(PTYTask *)theSHELL
 {
     [SHELL autorelease];
     SHELL = [theSHELL retain];
 }
 
-- (VT100Terminal *) TERMINAL
+- (VT100Terminal *)TERMINAL
 {
-    return (TERMINAL);
+    return TERMINAL;
 }
 
-- (void) setTERMINAL: (VT100Terminal *) theTERMINAL
+- (void)setTERMINAL:(VT100Terminal *)theTERMINAL
 {
     [TERMINAL autorelease];
     TERMINAL = [theTERMINAL retain];
 }
 
-- (NSString *) TERM_VALUE
+- (NSString *)TERM_VALUE
 {
-    return (TERM_VALUE);
+    return TERM_VALUE;
 }
 
-- (void) setTERM_VALUE: (NSString *) theTERM_VALUE
+- (void)setTERM_VALUE:(NSString *)theTERM_VALUE
 {
     [TERM_VALUE autorelease];
     TERM_VALUE = [theTERM_VALUE retain];
-    [TERMINAL setTermType: theTERM_VALUE];
+    [TERMINAL setTermType:theTERM_VALUE];
 }
 
-- (NSString *) COLORFGBG_VALUE
+- (NSString *)COLORFGBG_VALUE
 {
     return (COLORFGBG_VALUE);
 }
 
-- (void) setCOLORFGBG_VALUE: (NSString *) theCOLORFGBG_VALUE
+- (void)setCOLORFGBG_VALUE:(NSString *)theCOLORFGBG_VALUE
 {
     [COLORFGBG_VALUE autorelease];
     COLORFGBG_VALUE = [theCOLORFGBG_VALUE retain];
 }
 
-- (VT100Screen *) SCREEN
+- (VT100Screen *)SCREEN
 {
-    return (SCREEN);
+    return SCREEN;
 }
 
-- (void) setSCREEN: (VT100Screen *) theSCREEN
+- (void)setSCREEN:(VT100Screen *)theSCREEN
 {
     [SCREEN autorelease];
     SCREEN = [theSCREEN retain];
 }
 
-- (NSImage *) image
+- (NSImage *)image
 {
-    return ([SCROLLVIEW backgroundImage]);
+    return [SCROLLVIEW backgroundImage];
 }
 
-- (NSView *) view
+- (NSView *)view
 {
-    return (view);
+    return view;
 }
 
-- (PTYTextView *) TEXTVIEW
+- (PTYTextView *)TEXTVIEW
 {
-    return (TEXTVIEW);
+    return TEXTVIEW;
 }
 
-- (void) setTEXTVIEW: (PTYTextView *) theTEXTVIEW
+- (void)setTEXTVIEW:(PTYTextView *)theTEXTVIEW
 {
     [TEXTVIEW autorelease];
     TEXTVIEW = [theTEXTVIEW retain];
 }
 
-- (PTYScrollView *) SCROLLVIEW
+- (PTYScrollView *)SCROLLVIEW
 {
-    return (SCROLLVIEW);
+    return SCROLLVIEW;
 }
 
-- (void) setSCROLLVIEW: (PTYScrollView *) theSCROLLVIEW
+- (void)setSCROLLVIEW:(PTYScrollView *)theSCROLLVIEW
 {
     [SCROLLVIEW autorelease];
     SCROLLVIEW = [theSCROLLVIEW retain];
 }
 
-- (NSStringEncoding) encoding
+- (NSStringEncoding)encoding
 {
     return [TERMINAL encoding];
 }
@@ -1420,26 +1436,26 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 }
 
 
-- (NSString *) tty
+- (NSString *)tty
 {
-    return ([SHELL tty]);
+    return [SHELL tty];
 }
 
 // I think Applescript needs this method; need to check
-- (int) number
+- (int)number
 {
-    return ([[tabViewItem tabView] indexOfTabViewItem: tabViewItem]);
+    return [[tabViewItem tabView] indexOfTabViewItem: tabViewItem];
 }
 
-- (int) objectCount
+- (int)objectCount
 {
-    return ([[PreferencePanel sharedInstance] useCompactLabel]?0:objectCount);
+    return [[PreferencePanel sharedInstance] useCompactLabel]?0:objectCount;
 }
 
 // This one is for purposes other than PSMTabBarControl
-- (int) realObjectCount
+- (int)realObjectCount
 {
-    return (objectCount);
+    return objectCount;
 }
 
 - (void)setObjectCount:(int)value
@@ -1447,34 +1463,33 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     objectCount = value;
 }
 
-- (NSImage *) icon
+- (NSImage *)icon
 {
-    return (icon);
+    return icon;
 }
 
-- (void) setIcon: (NSImage *) anIcon
+- (void)setIcon:(NSImage *)anIcon
 {
     [anIcon retain];
     [icon release];
     icon = anIcon;
 }
 
-- (NSString *) contents
+- (NSString *)contents
 {
-    return ([TEXTVIEW content]);
+    return [TEXTVIEW content];
 }
 
-- (NSString *) backgroundImagePath
+- (NSString *)backgroundImagePath
 {
-    return (backgroundImagePath);
+    return backgroundImagePath;
 }
 
-+ (NSImage*) loadBackgroundImage:(NSString*)imageFilePath
++ (NSImage*)loadBackgroundImage:(NSString*)imageFilePath
 {
     NSString* actualPath;
-    if ([imageFilePath isAbsolutePath] == NO)
-    {
-        NSBundle *myBundle = [NSBundle bundleForClass: [PTYSession class]];
+    if ([imageFilePath isAbsolutePath] == NO) {
+        NSBundle *myBundle = [NSBundle bundleForClass:[PTYSession class]];
         actualPath = [myBundle pathForResource:imageFilePath ofType:@""];
     } else {
         actualPath = imageFilePath;
@@ -1482,42 +1497,34 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     return [[NSImage alloc] initWithContentsOfFile:actualPath];
 }
 
-- (void) setBackgroundImagePath: (NSString *) imageFilePath
+- (void)setBackgroundImagePath:(NSString *)imageFilePath
 {
-    if([imageFilePath length]) {
+    if ([imageFilePath length]) {
         [imageFilePath retain];
         [backgroundImagePath release];
         backgroundImagePath = nil;
 
-        if ([imageFilePath isAbsolutePath] == NO)
-        {
-            NSBundle *myBundle = [NSBundle bundleForClass: [self class]];
-            backgroundImagePath = [myBundle pathForResource: imageFilePath ofType: @""];
+        if ([imageFilePath isAbsolutePath] == NO) {
+            NSBundle *myBundle = [NSBundle bundleForClass:[self class]];
+            backgroundImagePath = [myBundle pathForResource:imageFilePath ofType:@""];
             [imageFilePath release];
             [backgroundImagePath retain];
-        }
-        else
-        {
+        } else {
             backgroundImagePath = imageFilePath;
         }
-        NSImage *anImage = [[NSImage alloc] initWithContentsOfFile: backgroundImagePath];
-        if(anImage != nil)
-        {
-            [SCROLLVIEW setDrawsBackground: NO];
-            [SCROLLVIEW setBackgroundImage: anImage];
+        NSImage *anImage = [[NSImage alloc] initWithContentsOfFile:backgroundImagePath];
+        if (anImage != nil) {
+            [SCROLLVIEW setDrawsBackground:NO];
+            [SCROLLVIEW setBackgroundImage:anImage];
             [anImage release];
-        }
-        else
-        {
-            [SCROLLVIEW setDrawsBackground: YES];
+        } else {
+            [SCROLLVIEW setDrawsBackground:YES];
             [backgroundImagePath release];
             backgroundImagePath = nil;
         }
-    }
-    else
-    {
-        [SCROLLVIEW setDrawsBackground: YES];
-        [SCROLLVIEW setBackgroundImage: nil];
+    } else {
+        [SCROLLVIEW setDrawsBackground:YES];
+        [SCROLLVIEW setBackgroundImage:nil];
         [backgroundImagePath release];
         backgroundImagePath = nil;
     }
@@ -1526,37 +1533,36 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 }
 
 
-- (NSColor *) foregroundColor
+- (NSColor *)foregroundColor
 {
-    return ([TEXTVIEW defaultFGColor]);
+    return [TEXTVIEW defaultFGColor];
 }
 
-- (void)setForegroundColor:(NSColor*) color
+- (void)setForegroundColor:(NSColor*)color
 {
-    if(color == nil)
+    if (color == nil) {
         return;
+    }
 
-    if(([TEXTVIEW defaultFGColor] != color) || 
-       ([[TEXTVIEW defaultFGColor] alphaComponent] != [color alphaComponent]))
-    {
+    if (([TEXTVIEW defaultFGColor] != color) || 
+       ([[TEXTVIEW defaultFGColor] alphaComponent] != [color alphaComponent])) {
         // Change the fg color for future stuff
         [TEXTVIEW setFGColor: color];
     }
 }
 
-- (NSColor *) backgroundColor
+- (NSColor *)backgroundColor
 {
-    return ([TEXTVIEW defaultBGColor]);
+    return [TEXTVIEW defaultBGColor];
 }
 
-- (void)setBackgroundColor:(NSColor*) color
-{
-    if(color == nil)
+- (void)setBackgroundColor:(NSColor*) color {
+    if (color == nil) {
         return;
+    }
 
-    if(([TEXTVIEW defaultBGColor] != color) || 
-       ([[TEXTVIEW defaultBGColor] alphaComponent] != [color alphaComponent]))
-    {
+    if (([TEXTVIEW defaultBGColor] != color) || 
+        ([[TEXTVIEW defaultBGColor] alphaComponent] != [color alphaComponent])) {
         // Change the bg color for future stuff
         [TEXTVIEW setBGColor: color];
     }
@@ -1566,59 +1572,59 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 
 - (NSColor *) boldColor
 {
-    return ([TEXTVIEW defaultBoldColor]);
+    return [TEXTVIEW defaultBoldColor];
 }
 
-- (void)setBoldColor:(NSColor*) color
+- (void)setBoldColor:(NSColor*)color
 {
     [[self TEXTVIEW] setBoldColor: color];
 }
 
-- (NSColor *) cursorColor
+- (NSColor *)cursorColor
 {
-    return ([TEXTVIEW defaultCursorColor]);
+    return [TEXTVIEW defaultCursorColor];
 }
 
-- (void)setCursorColor:(NSColor*) color
+- (void)setCursorColor:(NSColor*)color
 {
     [[self TEXTVIEW] setCursorColor: color];
 }
 
-- (NSColor *) selectionColor
+- (NSColor *)selectionColor
 {
-    return ([TEXTVIEW selectionColor]);
+    return [TEXTVIEW selectionColor];
 }
 
-- (void) setSelectionColor: (NSColor *) color
+- (void)setSelectionColor:(NSColor *)color
 {
-    [TEXTVIEW setSelectionColor: color];
+    [TEXTVIEW setSelectionColor:color];
 }
 
-- (NSColor *) selectedTextColor
+- (NSColor *)selectedTextColor
 {
-    return ([TEXTVIEW selectedTextColor]);
+    return [TEXTVIEW selectedTextColor];
 }
 
-- (void) setSelectedTextColor: (NSColor *) aColor
+- (void)setSelectedTextColor:(NSColor *)aColor
 {
     [TEXTVIEW setSelectedTextColor: aColor];
 }
 
-- (NSColor *) cursorTextColor
+- (NSColor *)cursorTextColor
 {
-    return ([TEXTVIEW cursorTextColor]);
+    return [TEXTVIEW cursorTextColor];
 }
 
-- (void) setCursorTextColor: (NSColor *) aColor
+- (void)setCursorTextColor:(NSColor *)aColor
 {
     [TEXTVIEW setCursorTextColor: aColor];
 }
 
 // Changes transparency
 
-- (float) transparency
+- (float)transparency
 {
-    return ([TEXTVIEW transparency]);
+    return [TEXTVIEW transparency];
 }
 
 - (void)setTransparency:(float)transparency
@@ -1632,26 +1638,28 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 
 }
 
-- (void) setColorTable:(int) theIndex color:(NSColor *) theColor
+- (void)setColorTable:(int)theIndex color:(NSColor *)theColor
 {
     [TEXTVIEW setColorTable:theIndex color:theColor];
 }
 
-- (BOOL) antiIdle
+- (BOOL)antiIdle
 {
     return antiIdleTimer ? YES : NO;
 }
 
-- (int) antiCode
+- (int)antiCode
 {
     return ai_code;
 }
 
-- (void) setAntiIdle:(BOOL)set
+- (void)setAntiIdle:(BOOL)set
 {
-    if(set == [self antiIdle]) return;
-
-    if(set) {
+    if (set == [self antiIdle]) {
+        return;
+    }
+    
+    if (set) {
         antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:30
                 target:self selector:@selector(doAntiIdle) userInfo:nil
                 repeats:YES] retain];
@@ -1662,29 +1670,29 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     }
 }
 
-- (void) setAntiCode:(int)code
+- (void)setAntiCode:(int)code
 {
-    ai_code=code;
+    ai_code = code;
 }
 
-- (BOOL) autoClose
+- (BOOL)autoClose
 {
     return autoClose;
 }
 
-- (void) setAutoClose:(BOOL)set
+- (void)setAutoClose:(BOOL)set
 {
-    autoClose=set;
+    autoClose = set;
 }
 
-- (BOOL) disableBold
+- (BOOL)disableBold
 {
-    return ([TEXTVIEW disableBold]);
+    return [TEXTVIEW disableBold];
 }
 
-- (void) setDisableBold: (BOOL) boldFlag
+- (void)setDisableBold:(BOOL)boldFlag
 {
-    [TEXTVIEW setDisableBold: boldFlag];
+    [TEXTVIEW setDisableBold:boldFlag];
 }
 
 
@@ -1698,20 +1706,20 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     doubleWidth = set;
 }
 
-- (BOOL) xtermMouseReporting
+- (BOOL)xtermMouseReporting
 {
     return xtermMouseReporting;
 }
 
-- (void) setXtermMouseReporting:(BOOL)set
+- (void)setXtermMouseReporting:(BOOL)set
 {
     xtermMouseReporting = set;
 }
 
 
-- (BOOL) logging
+- (BOOL)logging
 {
-    return ([SHELL logging]);
+    return [SHELL logging];
 }
 
 - (void)logStart
@@ -1727,8 +1735,9 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     sts = [panel runModalForDirectory:NSHomeDirectory() file:@""];
     if (sts == NSOKButton) {
         BOOL logsts = [SHELL loggingStartWithPath:[panel filename]];
-        if (logsts == NO)
+        if (logsts == NO) {
             NSBeep();
+        }
     }
 }
 
@@ -1774,7 +1783,7 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     return [[[self addressBookEntry] objectForKey:KEY_OPTION_KEY_SENDS] intValue];
 }
 
-- (void) setAddressBookEntry:(NSDictionary*) entry
+- (void)setAddressBookEntry:(NSDictionary*)entry
 {
     [addressBookEntry release];
     addressBookEntry = [entry retain];
@@ -1785,40 +1794,38 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     return addressBookEntry;
 }
 
-- (iTermGrowlDelegate*) growlDelegate
+- (iTermGrowlDelegate*)growlDelegate
 {
     return gd;
 }
 
--(void)sendCommand: (NSString *)command
+-(void)sendCommand:(NSString *)command
 {
     NSData *data = nil;
     NSString *aString = nil;
 
-    if(command != nil)
-    {
+    if (command != nil) {
         aString = [NSString stringWithFormat:@"%@\n", command];
         data = [aString dataUsingEncoding: [TERMINAL encoding]];
     }
 
-    if(data != nil)
-    {
+    if (data != nil) {
         [self writeTask:data];
     }
 }
 
 - (void)updateDisplay
 {
-    if([[tabViewItem tabView] selectedTabViewItem] != tabViewItem) {
+    if ([[tabViewItem tabView] selectedTabViewItem] != tabViewItem) {
         [self setLabelAttribute];
     }
 
-    if([parent currentSession] == self) {
+    if ([parent currentSession] == self) {
         struct timeval now;
         gettimeofday(&now, NULL);
 
-        if(now.tv_sec*10+now.tv_usec/100000 >= lastBlink.tv_sec*10+lastBlink.tv_usec/100000+7) {
-            if([parent tempTitle]) {
+        if (now.tv_sec*10+now.tv_usec/100000 >= lastBlink.tv_sec*10+lastBlink.tv_usec/100000+7) {
+            if ([parent tempTitle]) {
                 [parent setWindowTitle];
                 [parent resetTempTitle];
             }
@@ -1827,7 +1834,7 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     }
 
     [TEXTVIEW refresh];
-    if(![(PTYScroller*)([SCROLLVIEW verticalScroller]) userScroll]) {
+    if (![(PTYScroller*)([SCROLLVIEW verticalScroller]) userScroll]) {
         [TEXTVIEW scrollEnd];
     }
     [self scheduleUpdateSoon:NO];
@@ -1838,7 +1845,7 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     // This method ensures regular updates for text blinking, but allows
     // for quicker (soon=YES) updates to draw newly read text from PTYTask
 
-    if(soon && [updateTimer isValid] && [[updateTimer userInfo] intValue]) {
+    if (soon && [updateTimer isValid] && [[updateTimer userInfo] intValue]) {
         return;
     }
 
@@ -1846,7 +1853,7 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     [updateTimer release];
 
     NSTimeInterval timeout = 0.5;
-    if(soon) {
+    if (soon) {
         timeout = (0.001 + 0.001*[[PreferencePanel sharedInstance] refreshRate]);
     }
 
@@ -1861,7 +1868,7 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     struct timeval now;
     gettimeofday(&now, NULL);
 
-    if(now.tv_sec >= lastInput.tv_sec+60) {
+    if (now.tv_sec >= lastInput.tv_sec+60) {
         [SHELL writeTask:[NSData dataWithBytes:&ai_code length:1]];
         lastInput = now;
     }
@@ -1871,8 +1878,9 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 // Notification
 - (void) tabViewWillRedraw: (NSNotification *) aNotification
 {
-    if([aNotification object] == [[self tabViewItem] tabView])
+    if ([aNotification object] == [[self tabViewItem] tabView]) {
         [TEXTVIEW setNeedsDisplay:YES];
+    }
 }
 
 - (int)rows
@@ -1924,9 +1932,8 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 
     theIndex = [[[self parent] tabView] indexOfTabViewItem: [self tabViewItem]];
 
-    if (theIndex != NSNotFound)
-    {
-        containerRef     = [[self parent] objectSpecifier];
+    if (theIndex != NSNotFound) {
+        containerRef = [[self parent] objectSpecifier];
         classDescription = [containerRef keyClassDescription];
         //create and return the specifier
         return [[[NSIndexSpecifier allocWithZone:[self zone]]
@@ -1942,11 +1949,10 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 }
 
 // Handlers for supported commands:
--(void)handleExecScriptCommand: (NSScriptCommand *)aCommand
+-(void)handleExecScriptCommand:(NSScriptCommand *)aCommand
 {
     // if we are already doing something, get out.
-    if([SHELL pid] > 0)
-    {
+    if ([SHELL pid] > 0) {
         NSBeep();
         return;
     }
@@ -1982,29 +1988,24 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     NSData *data = nil;
     NSString *aString = nil;
 
-    if(text != nil)
-    {
+    if (text != nil) {
         if ([text characterAtIndex:[text length]-1]==' ') {
             data = [text dataUsingEncoding: [TERMINAL encoding]];
-        }
-        else {
+        } else {
             aString = [NSString stringWithFormat:@"%@\n", text];
             data = [aString dataUsingEncoding: [TERMINAL encoding]];
         }
     }
 
-    if(contentsOfFile != nil)
-    {
+    if (contentsOfFile != nil) {
         aString = [NSString stringWithContentsOfFile: contentsOfFile];
         data = [aString dataUsingEncoding: [TERMINAL encoding]];
     }
 
-    if(data != nil && [SHELL pid] > 0)
-    {
+    if (data != nil && [SHELL pid] > 0) {
         int i = 0;
         // wait here until we have had some output
-        while([SHELL hasOutput] == NO && i < 1000000)
-        {
+        while ([SHELL hasOutput] == NO && i < 1000000) {
             usleep(50000);
             i += 50000;
         }
@@ -2014,7 +2015,7 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 }
 
 
--(void)handleTerminateScriptCommand: (NSScriptCommand *)command
+- (void)handleTerminateScriptCommand:(NSScriptCommand *)command
 {
     [parent closeSession: self];
 }
@@ -2035,22 +2036,24 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     // Append the encoding
     CFStringEncoding cfEncoding = CFStringConvertNSStringEncodingToEncoding([self encoding]);
     NSString* ianaEncoding = (NSString*)CFStringConvertEncodingToIANACharSetName(cfEncoding);
-    if(ianaEncoding != nil) {
+    if (ianaEncoding != nil) {
         // Mangle the names slightly
         NSMutableString* encoding = [[NSMutableString alloc] initWithString:ianaEncoding];
         [encoding replaceOccurrencesOfString:@"ISO-" withString:@"ISO" options:0 range:NSMakeRange(0, [encoding length])];
         [encoding replaceOccurrencesOfString:@"EUC-" withString:@"euc" options:0 range:NSMakeRange(0, [encoding length])];
 
         NSString* test = [locale stringByAppendingFormat:@".%@", encoding];
-        if(NULL != setlocale(LC_CTYPE, [test UTF8String]))
+        if (NULL != setlocale(LC_CTYPE, [test UTF8String])) {
             locale = test;
+        }
 
         [encoding release];
     }
 
     // Check the locale is valid
-    if(NULL == setlocale(LC_CTYPE, [locale UTF8String]))
+    if (NULL == setlocale(LC_CTYPE, [locale UTF8String])) {
         locale = nil;
+    }
 
     // Restore locale and return
     setlocale(LC_CTYPE, backupLocale);

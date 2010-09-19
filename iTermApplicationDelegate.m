@@ -481,30 +481,16 @@ void DebugLog(NSString* value)
 
         // set some menu item states
         if (frontTerminal && [[frontTerminal tabView] numberOfTabViewItems]) {
-                [toggleBookmarksView setEnabled:YES];
-                [sendInputToAllSessions setEnabled:YES];
-
-                if([frontTerminal sendInputToAllSessions] == YES)
+            [toggleBookmarksView setEnabled:YES];
+            [sendInputToAllSessions setEnabled:YES];
+            if ([frontTerminal sendInputToAllSessions] == YES) {
                 [sendInputToAllSessions setState: NSOnState];
-                else
+            } else {
                 [sendInputToAllSessions setState: NSOffState];
-
-                // reword some menu items
-                drawerState = [[(PTYWindow *)[frontTerminal window] drawer] state];
-                if(drawerState == NSDrawerClosedState || drawerState == NSDrawerClosingState)
-                {
-                        [toggleBookmarksView setTitle: 
-                                NSLocalizedStringFromTableInBundle(@"Show Bookmark Drawer", @"iTerm", [NSBundle bundleForClass: [self class]], @"Bookmarks")];
-                }
-                else
-                {
-                        [toggleBookmarksView setTitle: 
-                                NSLocalizedStringFromTableInBundle(@"Hide Bookmark Drawer", @"iTerm", [NSBundle bundleForClass: [self class]], @"Bookmarks")];
-                }
-        }
-        else {
-                [toggleBookmarksView setEnabled:NO];
-                [sendInputToAllSessions setEnabled:NO];
+            }
+        } else {
+            [toggleBookmarksView setEnabled:NO];
+            [sendInputToAllSessions setEnabled:NO];
         }
 }
 

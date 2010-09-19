@@ -53,6 +53,7 @@
 
     // Force the window to load
     [self window];
+    [[self window] setDelegate:self];
     [tableView_ setDelegate:self];
     [tableView_ allowMultipleSelection];
     [tableView_ multiColumns];
@@ -151,11 +152,17 @@
                         action:@selector(openBookmarkInTab:) 
                  keyEquivalent:@""];
         [menu addItemWithTitle:@"Open in New Windows"
-                        action:@selector(openBookmarkInWindow:) 
+                        action:@selector(openBookmarkInWindow:)
                  keyEquivalent:@""];
     }
     return menu;
 }
 
+- (void)windowDidBecomeKey:(NSNotification *)notification
+{
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"nonTerminalWindowBecameKey" 
+                                                        object:nil
+                                                      userInfo:nil];
+}
 
 @end
