@@ -60,30 +60,30 @@ typedef struct screen_char_t
     // The raw lines, end-to-end. There is no delimiter between each line.
     screen_char_t* raw_buffer;
     screen_char_t* buffer_start;  // usable start of buffer (stuff before this is dropped)
-    
+
     int start_offset;  // distance from raw_buffer to buffer_start
     int first_entry;  // first valid cumulative_line_length
-    
+
     // The number of elements allocated for raw_buffer.
     int buffer_size;
-    
+
     // There will be as many entries in this array as there are lines in raw_buffer.
     // The ith value is the length of the ith line plus the value of 
     // cumulative_line_lengths[i-1] for i>0 or 0 for i==0.
     int* cumulative_line_lengths;
-    
+
     // The number of elements allocated for cumulative_line_lengths.
     int cll_capacity;
-    
+
     // The number of values in the cumulative_line_lengths array.
     int cll_entries;
-    
+
     // If true, then the last raw line does not include a logical newline at its terminus.
     BOOL is_partial;
-    
+
     // The number of wrapped lines if width==cached_numlines_width.
     int cached_numlines;
-    
+
     // This is -1 if the cache is invalid; otherwise it specifies the width for which
     // cached_numlines is correct.
     int cached_numlines_width;
@@ -142,6 +142,9 @@ typedef struct screen_char_t
 // Append a value to cumulativeLineLengths.
 - (void) _appendCumulativeLineLength: (int) cumulativeLength;
 
+// Get length of last wrapped line if partial, or 0 if not partial.
+- (int) getTrailingWithWidth:(int)width;
+
 // NSLog the contents of the block. For debugging.
 - (void)dump:(int)rawOffset;
 @end
@@ -158,22 +161,26 @@ typedef struct screen_char_t
 @interface LineBuffer : NSObject {
     // An array of LineBlock*s.
     NSMutableArray* blocks;
-    
+
     // The default storage for a LineBlock (some may be larger to accomodate very long lines).
     int block_size;
-    
+
     // If a cursor size is saved, this gives its offset from the start of its line.
     int cursor_x;
-    
+
     // The raw line number (in lines from the first block) of the cursor.
     int cursor_rawline;
-    
+
     // The maximum number of lines to store. In truth, more lines will be stored, but no more
     // than max_lines will be exposed by the interface.
     int max_lines;
-    
+
     // The number of blocks at the head of the list that have been removed.
     int num_dropped_blocks;
+
+    // Cache of the number of wrapped lines
+    int num_wrapped_lines_cache;
+    int num_wrapped_lines_width;
 }
 
 - (LineBuffer*) initWithBlockSize: (int) bs;
@@ -188,7 +195,7 @@ typedef struct screen_char_t
 // that is to say, this buffer contains only a prefix or infix of the entire line.
 //
 // NOTE: call dropExcessLinesWithWidth after this if you want to limit the buffer to max_lines.
-- (void) appendLine: (screen_char_t*) buffer length: (int) length partial: (BOOL) partial;
+- (void) appendLine: (screen_char_t*) buffer length: (int) length partial: (BOOL) partial width: (int) width;
 
 // If more lines are in the buffer than max_lines, call this function. It will adjust the count
 // of excess lines and try to free the first block(s) if they are unused. Because this could happen

@@ -938,8 +938,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int lineEnd = lineStart + ceil(rect.size.height / lineHeight);
 
     // Ensure valid line ranges
-    if(lineStart < 0) lineStart = 0;
-    if(lineEnd > [dataSource numberOfLines]) lineEnd = [dataSource numberOfLines];
+    if(lineStart < 0) {
+        lineStart = 0;
+    }
+    if (lineEnd > [dataSource numberOfLines]) {
+        lineEnd = [dataSource numberOfLines];
+    }
     NSRect visible = [self scrollViewContentSize];
     int vh = visible.size.height;
     int lh = lineHeight;

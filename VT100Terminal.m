@@ -1622,24 +1622,21 @@ static VT100TCC decode_string(unsigned char *datap,
             total_stream_length = STANDARD_STREAM_SIZE;
             STREAM = malloc(total_stream_length);
         }
-    }
-    else {
+    } else {
         size_t rmlen = 0;
 
-        if (*datap>=0x20 && *datap<=0x7f) {
+        if (*datap >= 0x20 && *datap <= 0x7f) {
             result = decode_ascii_string(datap, datalen, &rmlen);
             result.length = rmlen;
             result.position = datap;
-        }
-        else if (iscontrol(datap[0])) {
+        } else if (iscontrol(datap[0])) {
             result = decode_control(datap, datalen, &rmlen, ENCODING, SCREEN);
             result.length = rmlen;
             result.position = datap;
             [self _setMode:result];
             [self _setCharAttr:result];
             [self _setRGB:result];
-        }
-        else {
+        } else {
             if (isString(datap,ENCODING)) {
                 result = decode_string(datap, datalen, &rmlen, ENCODING);
                 if(result.type != VT100_WAIT && rmlen == 0) {
@@ -1647,8 +1644,7 @@ static VT100TCC decode_string(unsigned char *datap,
                     result.u.code = datap[0];
                     rmlen = 1;
                 }
-            }
-            else {
+            } else {
                 result.type = VT100_UNKNOWNCHAR;
                 result.u.code = datap[0];
                 rmlen = 1;
