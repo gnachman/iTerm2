@@ -464,13 +464,15 @@ static NSCursor* textViewCursor =  nil;
     NSFontManager* fontManager = [NSFontManager sharedFontManager];
 #endif
     NSSize sz = [PTYTextView charSizeForFont:aFont horizontalSpacing:1.0 verticalSpacing:1.0];
-
+    sz.width = ceil(sz.width);
+    sz.height = ceil(sz.height);
+    
     charWidthWithoutSpacing = sz.width;
     charHeightWithoutSpacing = sz.height;
     horizontalSpacing_ = horizontalSpacing;
     verticalSpacing_ = verticalSpacing;
-    charWidth = charWidthWithoutSpacing * horizontalSpacing;
-    lineHeight = charHeightWithoutSpacing * verticalSpacing;
+    charWidth = ceil(charWidthWithoutSpacing * horizontalSpacing);
+    lineHeight = ceil(charHeightWithoutSpacing * verticalSpacing);
     [font release];
     [aFont retain];
     font=aFont;
@@ -977,9 +979,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     float g = ((float)((i + 33) % 100)) / 100;
     float b = ((float)((i + 66) % 100)) / 100;
     [[NSColor colorWithDeviceRed:r green:g blue:b alpha:1] set];
-#endif
-
+#else
     [defaultBGColor set];
+#endif
     NSRectFill(excessRect);
 
 #if 0
@@ -2736,7 +2738,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     else
         showCursor = YES;
 
-    if(CURSOR) {
+    if (CURSOR) {
         if (showCursor && x1 < WIDTH && x1 >= 0 && yStart >= 0 && yStart < HEIGHT) {
             curX = floor(x1 * charWidth + MARGIN);
             curY = (yStart + [dataSource numberOfLines] - HEIGHT + 1) * lineHeight - cursorHeight;
