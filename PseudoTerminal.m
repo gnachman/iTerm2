@@ -1962,7 +1962,8 @@ NSString *sessionsKey = @"sessions";
 - (NSRect)visibleContentRect
 {
     NSRect current = [[[self currentSession] SCROLLVIEW] documentVisibleRect];
-    if (([TABVIEW numberOfTabViewItems] + tabViewItemsBeingAdded) > 1 && 
+    if (!_fullScreen &&
+        ([TABVIEW numberOfTabViewItems] + tabViewItemsBeingAdded) > 1 && 
         [tabBarControl isHidden] &&
         [[PreferencePanel sharedInstance] hideTab]) {
         // A tab bar control is about to be shown.
