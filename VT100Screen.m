@@ -306,24 +306,35 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 }
 
 // gets line at specified index starting from scrollback_top
-- (screen_char_t *) getLineAtIndex: (int) theIndex
+- (screen_char_t *)getLineAtIndex: (int) theIndex
 {
     NSAssert([linebuffer numLinesWithWidth: WIDTH] == current_scrollback_lines, @"Scrollback mismatch");
     if (theIndex >= current_scrollback_lines) {
-            // Get a line from the circular screen buffer
+        // Get a line from the circular screen buffer
         return [self _getLineAtIndex:(theIndex - current_scrollback_lines) fromLine: screen_top];
     } else {
-            // Get a line from the scrollback buffer.
+        // Get a line from the scrollback buffer.
         memcpy(result_line, default_line, sizeof(screen_char_t) * WIDTH);
-        BOOL cont = [linebuffer copyLineToBuffer:result_line width:WIDTH lineNum:theIndex];
-        result_line[WIDTH].ch = cont ? 1 : 0;
+        int cont = [linebuffer copyLineToBuffer:result_line width:WIDTH lineNum:theIndex];
+        if (cont == EOL_SOFT && 
+            theIndex == current_scrollback_lines - 1 &&
+            screen_top[1].ch == 0xffff &&
+            result_line[WIDTH - 1].ch == 0) {
+            // The last line in the scrollback buffer is actually a split DWC
+            // if the first line in the screen is double-width.
+            cont = EOL_DWC;
+        }
+        if (cont == EOL_DWC) {
+            result_line[WIDTH - 1].ch = DWC_SKIP;
+        }
+        result_line[WIDTH].ch = cont;
 
         return result_line;
     }
 }
 
 // gets line at specified index starting from screen_top
-- (screen_char_t *) getLineAtScreenIndex: (int) theIndex
+- (screen_char_t *)getLineAtScreenIndex: (int) theIndex
 {
     return ([self _getLineAtIndex:theIndex fromLine:screen_top]);
 }
@@ -373,6 +384,20 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     }
 }
 
+static char* FormatCont(int c)
+{
+    switch (c) {
+        case EOL_HARD:
+            return "[hard]";
+        case EOL_SOFT:
+            return "[soft]";
+        case EOL_DWC:
+            return "[dwc]";
+        default:
+            return "[?]";
+    }
+}
+
 // NSLog the screen contents for debugging.
 - (void) dumpScreen
 {
@@ -394,13 +419,21 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
                 line[ox++] = '!';
             }
             if (p[x].ch) {
-                line[ox] = p[x].ch;
+                if (p[x].ch > 0 && p[x].ch < 128) {
+                    line[ox] = p[x].ch;
+                } else if (p[x].ch == 0xffff) {
+                    line[ox] = '-';
+                } else if (p[x].ch == DWC_SKIP) {
+                    line[ox] = '>';
+                } else {
+                  line[ox] = '?';
+                }
             } else {
                 line[ox] = '.';
             }
         }
         line[x] = 0;
-        NSLog(@"%04d @ buffer+%2d lines: %s %s\n", y, ((p - buffer_lines) / REAL_WIDTH), line, p[WIDTH].ch ? "[cont]" : "[eol]");
+        NSLog(@"%04d @ buffer+%2d lines: %s %s\n", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].ch));
     }
 }
 
@@ -440,20 +473,24 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         }
         dirtyline[x] = 0;
         line[x] = 0;
-        DebugLog([NSString stringWithFormat:@"%04d @ buffer+%2d lines: %s %s", y, ((p - buffer_lines) / REAL_WIDTH), line, p[WIDTH].ch ? "[cont]" : "[eol]"]);
+        DebugLog([NSString stringWithFormat:@"%04d @ buffer+%2d lines: %s %s", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].ch)]);
         DebugLog([NSString stringWithFormat:@"                 dirty: %s", dirtyline]);
     }
 }
 
-- (int) _getLineLength: (screen_char_t*) line
+- (int)_getLineLength: (screen_char_t*) line
 {
     int line_length = 0;
     // Figure out the line length.
-    if (line[WIDTH].ch) {
+    if (line[WIDTH].ch == EOL_SOFT) {
         line_length = WIDTH;
+    } else if (line[WIDTH].ch == EOL_DWC) {
+        line_length = WIDTH - 1;
     } else {
         for (line_length = WIDTH - 1; line_length >= 0; --line_length) {
-            if (line[line_length].ch) break;
+            if (line[line_length].ch && line[line_length].ch != DWC_SKIP) {
+                break;
+            }
         }
         ++line_length;
     }
@@ -494,15 +531,19 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         }
 
 
-        BOOL is_partial = line[WIDTH].ch != 0;
+        int continuation = line[WIDTH].ch;
         if (i == CURSOR_Y) {
             [linebuffer setCursor: CURSOR_X];
-        } else if ((CURSOR_X == 0) && (i == CURSOR_Y - 1) && (next_line_length == 0) && line[WIDTH].ch != 0) {
-            // This line is continued, the next line is empty, and the cursor is on the first column of the next line. Pull it up.
+        } else if ((CURSOR_X == 0) &&
+                   (i == CURSOR_Y - 1) &&
+                   (next_line_length == 0) &&
+                   line[WIDTH].ch != EOL_HARD) {
+            // This line is continued, the next line is empty, and the cursor is
+            // on the first column of the next line. Pull it up.
             [linebuffer setCursor: CURSOR_X+1];
         }
 
-        [linebuffer appendLine:line length:line_length partial:is_partial width:WIDTH];
+        [linebuffer appendLine:line length:line_length partial:(continuation != EOL_HARD) width:WIDTH];
 #ifdef DEBUG_RESIZEDWIDTH
         NSLog(@"Appended a line. now have %d lines for width %d\n", [linebuffer numLinesWithWidth:WIDTH], WIDTH);
 #endif
@@ -542,7 +583,6 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
     [self _appendScreenToScrollback];
 
-
 #ifdef DEBUG_RESIZEDWIDTH
     NSLog(@"After push:\n");
         [linebuffer dump];
@@ -579,10 +619,10 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
     int source_line_num = num_lines_in_scrollback;
     BOOL found_cursor = NO;
+    BOOL prevLineStartsWithDoubleWidth = NO;
     while (dest_y >= 0) {
         screen_char_t* dest = [self getLineAtScreenIndex: dest_y];
         memcpy(dest, defaultLine, sizeof(screen_char_t) * WIDTH);
-        BOOL eol;
         if (!found_cursor) {
             found_cursor = [linebuffer getCursorInLastLineWithWidth: new_width atX: &CURSOR_X];
             if (found_cursor) {
@@ -590,8 +630,24 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
                 CURSOR_X %= new_width;
             }
         }
-        [linebuffer popAndCopyLastLineInto:dest width: WIDTH includesEndOfLine: &eol];
-        dest[WIDTH].ch = eol ? 0 : 1;
+        int cont;
+        [linebuffer popAndCopyLastLineInto:dest width: WIDTH includesEndOfLine: &cont];
+        if (cont && dest[WIDTH - 1].ch == 0 && prevLineStartsWithDoubleWidth) {
+            // If you pop a soft-wrapped line that's a character short and the
+            // line below it starts with a DWC, it's safe to conclude that a DWC
+            // was wrapped.
+            dest[WIDTH - 1].ch = DWC_SKIP;
+            cont = EOL_DWC;
+        }
+        if (dest[1].ch == 0xffff) {
+            prevLineStartsWithDoubleWidth = YES;
+        } else {
+            prevLineStartsWithDoubleWidth = NO;
+        }
+        dest[WIDTH].ch = cont;
+        if (cont == EOL_DWC) {
+            dest[WIDTH - 1].ch = DWC_SKIP;
+        }
         --dest_y;
         --source_line_num;
     }
@@ -835,7 +891,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
                 aLine[j].fg_color = [TERMINAL foregroundColorCodeReal];
                 aLine[j].bg_color = [TERMINAL backgroundColorCodeReal];
             }
-            aLine[WIDTH].ch = 0;
+            aLine[WIDTH].ch = EOL_HARD;
         }
         DebugLog(@"putToken DECALN");
         [self setDirty];
@@ -1212,6 +1268,12 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         [printToAnsiString appendString: aString];
 }
 
+static void DumpBuf(screen_char_t* p, int n) {
+    for (int i = 0; i < n; ++i) {
+        NSLog(@"%3d: \"%@\" (0x%04x)", i, [NSString stringWithCharacters:&p[i].ch length:1], (int)p[i].ch);
+    }
+}
+
 // ascii: True if string contains only ascii characters.
 - (void)setString:(NSString *)string ascii:(BOOL)ascii
 {
@@ -1314,61 +1376,179 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     // Grab a block of consecutive characters up to the remaining length in the
     // line and append them at once.
     for (idx = 0; idx < len; )  {
-        if (buffer[idx].ch == 0xffff) { // cut off in the middle of double width characters
-            buffer[idx].ch = '#';
-        }
+        int startIdx = idx;
+#ifdef VERBOSE_STRING
+        NSLog(@"Begin inserting line. CURSOR_X=%d, WIDTH=%d", CURSOR_X, WIDTH);
+#endif
+        NSAssert(buffer[idx].ch != 0xffff, @"DWC cut off");
 
-        if (CURSOR_X >= WIDTH) {
+        if (buffer[idx].ch == DWC_SKIP) {
+            // This is an invalid unicode character that iTerm2 has appropriated
+            // for internal use. Change it to something invalid but safe.
+            buffer[idx].ch++;
+        }
+        int widthOffset;
+        if (idx + 1 < len && buffer[idx + 1].ch == 0xffff) {
+            // If we're about to insert a double width character then reduce the
+            // line width for the purposes of testing if the cursor is in the
+            // rightmost position.
+            widthOffset = 1;
+#ifdef VERBOSE_STRING
+            NSLog(@"The first char we're going to insert is a DWC");
+#endif
+        } else {
+            widthOffset = 0;
+        }
+        if (CURSOR_X >= WIDTH - widthOffset) {
             if ([TERMINAL wraparoundMode]) {
-                CURSOR_X = 0;
                 // Set the continuation marker
-                [self getLineAtScreenIndex: CURSOR_Y][WIDTH].ch = 1;
+                screen_char_t* prevLine = [self getLineAtScreenIndex: CURSOR_Y];
+                BOOL splitDwc = (CURSOR_X == WIDTH - 1);
+                prevLine[WIDTH].ch = (splitDwc ? EOL_DWC : EOL_SOFT);
+                if (splitDwc) {
+                    prevLine[WIDTH].ch = EOL_DWC;
+                    prevLine[WIDTH-1].ch = DWC_SKIP;
+                }
+                CURSOR_X = 0;
                 // Advance to the next line
                 [self setNewLine];
+#ifdef VERBOSE_STRING
+                NSLog(@"Advance cursor to next line");
+#endif
             } else {
+                // Wraparound is off.
+                // That means all the characters are effectively inserted at the
+                // rightmost position. Move the cursor to the end of the line
+                // and insert the last character there.
+
                 // Clear the continuation marker
-                [self getLineAtScreenIndex: CURSOR_Y][WIDTH].ch = 0;
+                [self getLineAtScreenIndex: CURSOR_Y][WIDTH].ch = EOL_HARD;
                 // Cause the loop to end after this character.
-                CURSOR_X = WIDTH-1;
+                CURSOR_X = WIDTH - 1;
+                if (CURSOR_X < 0) {
+                    CURSOR_X = 0;
+                }
                 idx = len-1;
+                if (buffer[idx].ch == 0xffff && idx > startIdx) {
+                    // The last character to insert is double width. Back up one
+                    // byte in buffer and move the cursor left one position.
+                    idx--;
+                    CURSOR_X--;
+                }
+                if (CURSOR_X < 0) {
+                    CURSOR_X = 0;
+                }
+                screen_char_t* line = [self getLineAtScreenIndex: CURSOR_Y];
+                if (line[CURSOR_X].ch == 0xffff) {
+                    // This would cause us to overwrite the second part of a
+                    // double-width character. Convert it to a space.
+                    line[CURSOR_X - 1].ch = ' ';
+                }
+
+#ifdef VERBOSE_STRING
+                NSLog(@"Scribbling on last position");
+#endif
             }
         }
-        if (WIDTH - CURSOR_X <= len - idx) {
-            newx = WIDTH;
+        const int spaceRemainingInLine = WIDTH - CURSOR_X;
+        const int charsLeftToAppend = len - idx;
+
+#ifdef VERBOSE_STRING
+        DumpBuf(buffer + idx, charsLeftToAppend);
+#endif
+        BOOL wrapDwc = NO;
+#ifdef VERBOSE_STRING
+        NSLog(@"There is %d space left in the line and we are appending %d chars", 
+              spaceRemainingInLine, charsLeftToAppend);
+#endif
+        int effective_width = WIDTH;
+        if (spaceRemainingInLine <= charsLeftToAppend) {
+#ifdef VERBOSE_STRING
+            NSLog(@"Not enough space in the line for everything we want to append.");
+#endif
+            // There is enough text to at least fill the line. Place the cursor
+            // at the end of the line.
+            int potentialCharsToInsert = spaceRemainingInLine;
+            if (idx + potentialCharsToInsert < len &&
+                buffer[idx + potentialCharsToInsert].ch == 0xffff) {
+                // If we filled the line all the way out to WIDTH a DWC would be
+                // split. Wrap the DWC around to the next line.
+#ifdef VERBOSE_STRING
+                NSLog(@"Dropping a char from the end to avoid splitting a DWC.");
+#endif
+                wrapDwc = YES;
+                newx = WIDTH - 1;
+                --effective_width;
+            } else {
+#ifdef VERBOSE_STRING
+                NSLog(@"Inserting up to the end of the line only.");
+#endif
+                newx = WIDTH;
+            }
         } else {
-            newx = CURSOR_X + len - idx;
+            // This is the last iteration through this loop and we will not
+            // advance to another line. Place the cursor at the end of the line
+            // where it should be after appending is complete.
+            newx = CURSOR_X + charsLeftToAppend;
+#ifdef VERBOSE_STRING
+            NSLog(@"All remaining chars fit.");
+#endif
         }
 
         // Get the number of chars to insert this iteration (no more than fit
         // on the current line).
         charsToInsert = newx - CURSOR_X;
-
+#ifdef VERBOSE_STRING
+        NSLog(@"Will insert %d chars", charsToInsert);
+#endif
         if (charsToInsert <= 0) {
             //NSLog(@"setASCIIString: output length=0?(%d+%d)%d+%d",CURSOR_X,charsToInsert,idx2,len);
             break;
         }
 
         screenIdx = CURSOR_Y * WIDTH;
-        aLine = [self getLineAtScreenIndex: CURSOR_Y];
+        aLine = [self getLineAtScreenIndex:CURSOR_Y];
 
         if ([TERMINAL insertMode]) {
             if (CURSOR_X + charsToInsert < WIDTH) {
+#ifdef VERBOSE_STRING
+                NSLog(@"Shifting old contents to the right");
+#endif
                 // Shift the old line contents to the right by 'charsToInsert' positions.
-                memmove(aLine + CURSOR_X + charsToInsert,
-                        aLine + CURSOR_X,
-                        (WIDTH - CURSOR_X - charsToInsert) * sizeof(screen_char_t));
+                screen_char_t* src = aLine + CURSOR_X;
+                screen_char_t* dst = aLine + CURSOR_X + charsToInsert;
+                int elements = WIDTH - CURSOR_X - charsToInsert;
+                if (CURSOR_X > 0 && src[0].ch == 0xffff) {
+                    // The insert occurred in the middle of a DWC.
+                    src[-1].ch = ' ';
+                    src[0].ch = ' ';
+                }
+                if (src[elements].ch == 0xffff) {
+                    // Moving a DWC on top of its right half. Erase the DWC.
+                    src[elements - 1].ch = ' ';
+                } else if (src[elements].ch == DWC_SKIP &&
+                           aLine[WIDTH].ch == EOL_DWC) {
+                    // Stomping on a DWC_SKIP. Join the lines normally.
+                    aLine[WIDTH].ch = EOL_SOFT;
+                }
+                memmove(dst, src, elements * sizeof(screen_char_t));
                 memset(dirty + screenIdx + CURSOR_X,
                        1,
                        WIDTH - CURSOR_X);
             }
         }
 
-        // Inserting the second half of a double-width character so replace the
-        // DWC with a '#'.
+        // Overwriting the second-half of a double-width character so turn the
+        // DWC into a space.
         if (aLine[CURSOR_X].ch == 0xffff) {
-            if (CURSOR_X > 0) {
-                aLine[CURSOR_X-1].ch = '#';
-            }
+#ifdef VERBOSE_STRING
+            NSLog(@"Wiping out the right-half DWC at the cursor before writing to screen");
+#endif
+            NSAssert(CURSOR_X > 0, @"DWC split");  // there should never be the second half of a DWC at x=0
+            aLine[CURSOR_X].ch = ' ';
+            aLine[CURSOR_X-1].ch = ' ';
+            dirty[screenIdx + CURSOR_X] = 1;
+            dirty[screenIdx + CURSOR_X - 1] = 1;
         }
 
         // copy charsToInsret characters into the line and set them dirty.
@@ -1378,27 +1558,29 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         memset(dirty + screenIdx + CURSOR_X,
                1,
                charsToInsert);
-
+        if (wrapDwc) {
+            aLine[CURSOR_X + charsToInsert].ch = DWC_SKIP;
+        }
         CURSOR_X = newx;
         idx += charsToInsert;
 
-        // cut off in the middle of double width characters
+        // Overwrote some stuff that was already on the screen leaving behind the
+        // second half of a DWC
         if (CURSOR_X < WIDTH-1 && aLine[CURSOR_X].ch == 0xffff) {
-            aLine[CURSOR_X].ch = '#';
+            aLine[CURSOR_X].ch = ' ';
         }
 
-        if (idx < len && buffer[idx].ch == 0xffff) {
-            if (CURSOR_X>0) aLine[CURSOR_X-1].ch = '#';
-        }
+        // The next char in the buffer shouldn't be 0xffff because we wouldn't have inserted its first half due to a check at the top.
+        NSAssert(!(idx < len && buffer[idx].ch == 0xffff), @"Truncated DWC in buffer after insert");
 
         // ANSI terminals will go to a new line after displaying a character at
         // the rightmost column.
-        if (CURSOR_X >= WIDTH &&
+        if (CURSOR_X >= effective_width &&
             [[TERMINAL termtype] rangeOfString:@"ANSI" options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location != NSNotFound) {
             if ([TERMINAL wraparoundMode]) {
                 //set the wrapping flag
-                aLine[WIDTH].ch = 1;
-                CURSOR_X=0;
+                aLine[WIDTH].ch = ((effective_width == WIDTH) ? EOL_SOFT : EOL_DWC);
+                CURSOR_X = 0;
                 [self setNewLine];
             } else {
                 CURSOR_X = WIDTH - 1;
@@ -1572,21 +1754,24 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         return;
 
     // make the current line the first line and clear everything else
-    for(i=CURSOR_Y-1;i>=0;i--) {
+    for (i = CURSOR_Y - 1; i >= 0; i--) {
         aLine = [self getLineAtScreenIndex:i];
-        if (!aLine[WIDTH].ch) break;
+        if (aLine[WIDTH].ch == EOL_HARD) {
+            break;
+        }
     }
     // i is the index of the lowest nonempty line above the cursor
     // copy the lines between that and the cursor to the top of the screen
-    for(j=0,i++;i<=CURSOR_Y;i++,j++) {
+    for (j = 0, i++; i <= CURSOR_Y; i++, j++) {
         aLine = [self getLineAtScreenIndex:i];
-        memcpy(screen_top+j*REAL_WIDTH, aLine, REAL_WIDTH*sizeof(screen_char_t));
+        memcpy(screen_top + j * REAL_WIDTH, 
+               aLine, 
+               REAL_WIDTH * sizeof(screen_char_t));
     }
 
     CURSOR_Y = j-1;
     aDefaultLine = [self _getDefaultLineWithWidth: WIDTH];
-    for (i = j; i < HEIGHT; i++)
-    {
+    for (i = j; i < HEIGHT; i++) {
         aLine = [self getLineAtScreenIndex:i];
         memcpy(aLine, aDefaultLine, REAL_WIDTH*sizeof(screen_char_t));
     }
@@ -2366,8 +2551,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     int i;
     screen_char_t* dummy = malloc(WIDTH * sizeof(screen_char_t));
     for (i = 0; i < linesPushed; ++i) {
-        BOOL eol;
-        BOOL isOk = [linebuffer popAndCopyLastLineInto: dummy width: WIDTH includesEndOfLine: &eol];
+        int cont;
+        BOOL isOk = [linebuffer popAndCopyLastLineInto: dummy width: WIDTH includesEndOfLine: &cont];
         NSAssert(isOk, @"Pop shouldn't fail");
     }
     free(dummy);
@@ -2521,7 +2706,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 @implementation VT100Screen (Private)
 
 // gets line offset by specified index from specified line poiner; accounts for buffer wrap
-- (screen_char_t *) _getLineAtIndex: (int) anIndex fromLine: (screen_char_t *) aLine
+- (screen_char_t *)_getLineAtIndex: (int) anIndex fromLine: (screen_char_t *) aLine
 {
     screen_char_t *the_line = NULL;
 
@@ -2566,7 +2751,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         default_line[i].bg_color = default_bg_code;
     }
     //Not wrapped by default
-    default_line[width].ch = 0;
+    default_line[width].ch = EOL_HARD;
     default_line[width].bg_color = 0;
     default_line[width].fg_color = 0;
 
@@ -2582,14 +2767,17 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 #endif
 
     int len = WIDTH;
-    if (!screen_top[WIDTH].ch) {
-        // The line is not continud. Figure out its length by finding the last nonnull char.
-        while (len > 0 && screen_top[len - 1].ch == 0) {
+    if (screen_top[WIDTH].ch == EOL_HARD) {
+        // The line is not continued. Figure out its length by finding the last nonnull char.
+        while (len > 0 && (screen_top[len - 1].ch == 0)) {
+            NSAssert(screen_top[len - 1].ch != DWC_SKIP, @"Impossible to have a dwc skip here");
             --len;
         }
     }
-
-    [linebuffer appendLine:screen_top length:len partial:(screen_top[WIDTH].ch != 0) width:WIDTH];
+    if (screen_top[WIDTH].ch == EOL_DWC && len == WIDTH) {
+        --len;
+    }
+    [linebuffer appendLine:screen_top length:len partial:(screen_top[WIDTH].ch != EOL_HARD) width:WIDTH];
     int dropped = [linebuffer dropExcessLinesWithWidth: WIDTH];
     current_scrollback_lines = [linebuffer numLinesWithWidth: WIDTH];
 

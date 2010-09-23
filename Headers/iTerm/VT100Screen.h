@@ -36,6 +36,13 @@
 @class PTYTextView;
 @class iTermGrowlDelegate;
 
+// This is used in the rightmost column when a double-width character would
+// have been split in half and was wrapped to the next line. It is nonprintable
+// and not selectable. It is not copied into the clipboard. A line ending in this
+// character should always have EOL_DWC. These are stripped when adding a line
+// to the scrollback buffer.
+#define DWC_SKIP 0xf000
+
 #define TABWINDOW    300
 
 @interface VT100Screen : NSObject
