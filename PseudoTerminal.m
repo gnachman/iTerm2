@@ -1913,10 +1913,7 @@ NSString *sessionsKey = @"sessions";
                                  horizontalSpacing:[[tempPrefs objectForKey:KEY_HORIZONTAL_SPACING] floatValue] 
                                    verticalSpacing:[[tempPrefs objectForKey:KEY_VERTICAL_SPACING] floatValue]];
 
-    if ([TABVIEW numberOfTabViewItems] == 0) {
-        rows = [aSession rows];
-        columns = [aSession columns];
-    } else {
+    if ([TABVIEW numberOfTabViewItems] != 0) {
         NSSize contentSize = [self visibleContentRect].size;
         rows = contentSize.height / charSize.height;
         columns = (contentSize.width - MARGIN*2) / charSize.width;
