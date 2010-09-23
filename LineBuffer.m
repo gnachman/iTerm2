@@ -844,6 +844,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     int beforeLines = [block getNumLinesWithWrapWidth:width];
     if (![block appendLine: buffer length: length partial: partial]) {
+        // It's going to be complicated. Invalidate the number of wrapped lines
+        // cache.
+        num_wrapped_lines_width = -1;
         int prefix_len = 0;
         screen_char_t* prefix = NULL;
         if ([block hasPartial]) {
@@ -892,13 +895,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         // enough room for it.
         BOOL ok = [block appendLine: buffer length: length partial: partial];
         NSAssert(ok, @"append can't fail here");
-    }
-
-    // Update the cache of the number of wrapped lines.
-    if (num_wrapped_lines_width == width) {
+    } else if (num_wrapped_lines_width == width) {
+        // Straightforward addition of a line to an existing block. Update the
+        // wrapped lines cache.
         int afterLines = [block getNumLinesWithWrapWidth:width];
         num_wrapped_lines_cache += (afterLines - beforeLines);
     } else {
+        // Width change. Invalidate the wrapped lines cache.
         num_wrapped_lines_width = -1;
     }
 }
