@@ -169,6 +169,7 @@ static float versionNumber;
 - (void)awakeFromNib
 {
     [self window];
+    [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     NSAssert(bookmarksTableView, @"Null table view");
     [bookmarksTableView setDataSource:dataSource];
 
