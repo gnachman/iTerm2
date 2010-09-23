@@ -950,8 +950,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int vh = visible.size.height;
     int lh = lineHeight;
     int visibleRows = vh/lh;
-    if (lineEnd > lineStart + visibleRows) {
-        lineEnd = lineStart + visibleRows;
+    int firstVisibleRow = [[[dataSource session] SCROLLVIEW] documentVisibleRect].origin.y / lh;
+    if (lineEnd > firstVisibleRow + visibleRows) {
+        lineEnd = firstVisibleRow + visibleRows;
     }
 
     DebugLog([NSString stringWithFormat:@"Draw lines in [%d, %d)", lineStart, lineEnd]);
@@ -2741,6 +2742,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     HEIGHT = [dataSource height];
     x1=[dataSource cursorX]-1;
     yStart=[dataSource cursorY]-1;
+
+    int lastVisibleLine = [[[dataSource session] SCROLLVIEW] documentVisibleRect].origin.y / [self lineHeight] + HEIGHT;
+    int cursorLine = [dataSource numberOfLines] - [dataSource height] + [dataSource cursorY];
+    if (cursorLine > lastVisibleLine) {
+        return;
+    }
 
     if(charWidth < charWidthWithoutSpacing)
         cursorWidth = charWidth;
