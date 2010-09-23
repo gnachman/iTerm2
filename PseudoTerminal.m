@@ -1509,58 +1509,91 @@ NSString *sessionsKey = @"sessions";
 // Utility
 + (void)breakDown:(NSString *)cmdl cmdPath:(NSString **)cmd cmdArgs:(NSArray **)path
 {
-    int i;  // Position in s that we're reading from.
-    int j;  // Position in currentWord that we're writing to.
-    int currentArgNumber;  // -1 for command, >=0 for arguments.
-    int inQuotes;  // Are we inside double quotes?
-    const char *s = [cmdl UTF8String];  // UTF-8 input string
-    int slen = strlen(s);  // length of input command line.
-    char* currentWord = malloc(slen + 1);  // buffer for the word being read.
-    NSMutableArray *arguments;  // will store argv[1, ...]
+    NSMutableArray *mutableCmdArgs;
+    char *cmdLine; // The temporary UTF-8 version of the command line
+    char *nextChar; // The character we will process next
+    char *argStart; // The start of the current argument we are processing
+    char *copyPos; // The position where we are currently writing characters
+    int inQuotes = 0; // Are we inside double quotes?
 
-    arguments = [[NSMutableArray alloc] init];
+    mutableCmdArgs = [[NSMutableArray alloc] init];
 
-    i = 0;
-    j = 0;
-    inQuotes = 0;
-    currentArgNumber = -1;
-    while (i <= slen) {
-        if (inQuotes) {
-            if (s[i] == '\"') {
-                inQuotes = 0;
-            } else {
-                currentWord[j++] = s[i];
-            }
-        } else {
-            if (s[i] == '\"') {
-                inQuotes = 1;
-            } else if (s[i] == ' ' || 
-                       s[i] == '\t' || 
-                       s[i] == '\n' || 
-                       s[i] == 0) {
-                currentWord[j] = 0;
-                if (currentArgNumber == -1) {
-                    *cmd = [NSString stringWithCString:currentWord];
-                } else
-                    [arguments addObject:[NSString stringWithCString:currentWord]];
-                j = 0;
-                ++currentArgNumber;
-                while (i < slen && (s[i+1] == ' ' || 
-                                    s[i+1] == '\t' || 
-                                    s[i+1] == '\n' || 
-                                    s[i+1] == 0)) {
-                    ++i;
-                }
-            } else {
-                currentWord[j++] = s[i];
-            }
-        }
-        ++i;
+    // The value returned by [cmdl UTF8String] is automatically freed (when the
+    // autorelease context containing this is destroyed). We need to copy the
+    // string, as the tokenisation is easier when we can modify string we are
+    // working with.
+    cmdLine = strdup([cmdl UTF8String]);
+    nextChar = cmdLine;
+    copyPos = cmdLine;
+    argStart = cmdLine;
+
+    if (!cmdLine) {
+        // We could not allocate enough memory for the cmdLine... bailing
+        *path = [[NSArray alloc] init];
+        return;
     }
 
-    *path = [NSArray arrayWithArray:arguments];
-    [arguments release];
-    free(currentWord);
+    char c;
+    while ((c = *nextChar++)) {
+        switch (c) {
+            case '\\':
+                if (*nextChar == '\0') {
+                    // This is the last character, thus this is a malformed
+                    // command line, we will just leave the "\" character as a
+                    // literal.
+                }
+
+                // We need to copy the next character verbatim.
+                *copyPos++ = *nextChar++;
+                break;
+            case '\"':
+                // Time to toggle the quotation mode
+                inQuotes = !inQuotes;
+                // Note: Since we don't copy to/increment copyPos, this
+                // character will be dropped from the output string.
+                break;
+            case ' ':
+            case '\t':
+            case '\n':
+                if (inQuotes) {
+                    // We need to copy the current character verbatim.
+                    *copyPos++ = c;
+                } else {
+                    // Time to split the command
+                    *copyPos = '\0';
+                    [mutableCmdArgs addObject:[NSString stringWithUTF8String: argStart]];
+                    argStart = nextChar;
+                    copyPos = nextChar;
+                }
+                break;
+            default:
+                // Just copy the current character.
+                // Note: This could be made more efficient for the 'normal
+                // case' where copyPos is not offset from the current place we
+                // are reading from. Since this function is called rarely, and
+                // it isn't that slow, we will just ignore the optimisation.
+                *copyPos++ = c;
+                break;
+        }
+    }
+
+    if (copyPos != argStart) {
+        // We have data that we have not copied into mutableCmdArgs.
+        *copyPos = '\0';
+        [mutableCmdArgs addObject:[NSString stringWithUTF8String: argStart]];
+    }
+
+    if ([mutableCmdArgs count] > 1) {
+        *cmd = [mutableCmdArgs objectAtIndex:0];
+        [mutableCmdArgs removeObjectAtIndex:0];
+    } else {
+        // This will only occur if the input string is empty.
+        // Note: The old code did nothing in this case, so neither will we.
+    }
+
+    free(cmdLine);
+    *path = [NSArray arrayWithArray:mutableCmdArgs];
+    [mutableCmdArgs release];
 }
 
 // Assumes all sessions are reasonable sizes.
