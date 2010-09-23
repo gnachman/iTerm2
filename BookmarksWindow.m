@@ -54,6 +54,7 @@
     // Force the window to load
     [self window];
     [[self window] setDelegate:self];
+    [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     [tableView_ setDelegate:self];
     [tableView_ allowMultipleSelection];
     [tableView_ multiColumns];
