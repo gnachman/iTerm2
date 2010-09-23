@@ -75,25 +75,26 @@
             return;
         } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
             responder = [[self keyWindow] firstResponder];
-            if (([responder isKindOfClass:[PTYTextView class]]) &&
-                ([(PTYTextView *)responder hasMarkedText])) {
-                // Let the IM process it
-                [(PTYTextView *)responder interpretKeyEvents:[NSArray arrayWithObject:event]];
-                return;
-            }
-
-            const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
-            if(([event modifierFlags] & mask) == NSCommandKeyMask) {
-                int digit = [[event charactersIgnoringModifiers] intValue];
-                if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
-                    [tabView selectTabViewItemAtIndex:digit-1];
+            if ([responder isKindOfClass:[PTYTextView class]]) {
+                if ([(PTYTextView *)responder hasMarkedText]) {
+                    // Let the IM process it
+                    [(PTYTextView *)responder interpretKeyEvents:[NSArray arrayWithObject:event]];
                     return;
                 }
-            }
 
-            if ([currentSession hasKeyMappingForEvent:event highPriority:YES]) {
-                [currentSession keyDown:event];
-                return;
+                const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
+                if(([event modifierFlags] & mask) == NSCommandKeyMask) {
+                    int digit = [[event charactersIgnoringModifiers] intValue];
+                    if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
+                        [tabView selectTabViewItemAtIndex:digit-1];
+                        return;
+                    }
+                }
+
+                if ([currentSession hasKeyMappingForEvent:event highPriority:YES]) {
+                    [currentSession keyDown:event];
+                    return;
+                }
             }
         }
     }

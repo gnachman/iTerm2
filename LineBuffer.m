@@ -9,7 +9,7 @@
  **
  **  Project: iTerm
  **
- **  Description: Implements a buffer of lines. It can hold a large number 
+ **  Description: Implements a buffer of lines. It can hold a large number
  **   of lines and can quickly format them to a fixed width.
  **
  **  This program is free software; you can redistribute it and/or modify
@@ -101,13 +101,13 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     }
     for (i = first_entry; i < cll_entries; ++i) {
         BOOL iscont = (i == cll_entries-1) && is_partial;
-        NSLog(@"Line %d, length %d, offset from raw=%d, abs pos=%d, continued=%s: %s\n", i, cumulative_line_lengths[i] - prev, prev, prev + rawOffset, iscont?"yes":"no", 
+        NSLog(@"Line %d, length %d, offset from raw=%d, abs pos=%d, continued=%s: %s\n", i, cumulative_line_lengths[i] - prev, prev, prev + rawOffset, iscont?"yes":"no",
               formatsct(buffer_start+prev-start_offset, cumulative_line_lengths[i]-prev, temp));
         prev = cumulative_line_lengths[i];
     }
 }
 
-- (BOOL) appendLine: (screen_char_t*) buffer length: (int) length partial: (BOOL) partial
+- (BOOL) appendLine: (screen_char_t*) buffer length: (int) length partial:(BOOL) partial
 {
     const int space_used = [self rawSpaceUsed];
     const int free_space = buffer_size - space_used - start_offset;
@@ -131,8 +131,11 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
 - (int) getPositionOfLine: (int*)lineNum atX: (int) x withWidth: (int)width
 {
     int length;
-    BOOL eol;
-    screen_char_t* p = [self getWrappedLineWithWrapWidth: width lineNum: lineNum lineLength: &length includesEndOfLine: &eol];
+    int eol;
+    screen_char_t* p = [self getWrappedLineWithWrapWidth: width
+                                                 lineNum: lineNum
+                                              lineLength: &length
+                                       includesEndOfLine: &eol];
     if (!p) {
         return -1;
     } else {
@@ -140,7 +143,63 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     }
 }
 
-- (screen_char_t*) getWrappedLineWithWrapWidth: (int) width lineNum: (int*) lineNum lineLength: (int*) lineLength includesEndOfLine: (BOOL*) includesEndOfLine
+// Count the number of "full lines" in buffer up to position 'length'. A full
+// line is one that, after wrapping, goes all the way to the edge of the screen
+// and has at least one character wrap around. It is equal to the number of
+// lines after wrapping minus one. Examples:
+//
+// 2 Full Lines:    0 Full Lines:   0 Full Lines:    1 Full Line:
+// |xxxxx|          |x     |        |xxxxxx|         |xxxxxx|
+// |xxxxx|                                           |x     |
+// |x    |
+static int NumberOfFullLines(screen_char_t* buffer, int length, int width)
+{
+    // In the all-single-width case, it should return (length - 1) / width.
+    int fullLines = 0;
+    for (int i = width; i < length; i += width) {
+        if (buffer[i].ch == 0xffff) {
+            --i;
+        }
+        ++fullLines;
+    }
+    return fullLines;
+}
+
+// Finds a where the nth line begins after wrapping and returns its offset from the start of the buffer.
+//
+// In the following example, this would return:
+// pointer to a if n==0, pointer to g if n==1, asserts if n > 1
+// |abcdef|
+// |ghi   |
+//
+// It's more complex with double-width characters.
+// In this example, suppose XX is a double-width character.
+//
+// Returns a pointer to a if n==0, pointer XX if n==1, asserts if n > 1:
+// |abcde|   <- line is short after wrapping
+// |XXzzzz|
+static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
+    int lines = 0;
+    int i = 0;
+    while (lines < n) {
+        // Advance i to the start of the next line
+        i += width;
+        ++lines;
+        assert(i < length);
+        if (p[i].ch == 0xffff) {
+            // Oops, the line starts with the second half of a double-width
+            // character. Wrap the last character of the previous line on to
+            // this line.
+            --i;
+        }
+    }
+    return i;
+}
+
+- (screen_char_t*) getWrappedLineWithWrapWidth: (int) width
+                                       lineNum: (int*) lineNum
+                                    lineLength: (int*) lineLength
+                             includesEndOfLine: (int*) includesEndOfLine
 {
     int prev = 0;
     int length;
@@ -148,28 +207,38 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     for (i = first_entry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - start_offset;
         length = cll - prev;
-        int spans = (length - 1) / width;
+        int spans = NumberOfFullLines(buffer_start + prev, length, width);
         if (*lineNum > spans) {
             // Consume the entire raw line and keep looking for more.
             int consume = spans + 1;
             *lineNum -= consume;
         } else {  // *lineNum <= spans
             // We found the raw line that inclues the wrapped line we're searching for.
-            int consume = *lineNum;  // eat up this many width-sized wrapped lines from this start of the current full line
+            // eat up *lineNum many width-sized wrapped lines from this start of the current full line
+            int offset = OffsetOfWrappedLine(buffer_start + prev,
+                                             *lineNum,
+                                             length,
+                                             width);
             *lineNum = 0;
-            int offset = consume * width;  // the relevant part of the raw line begins at this offset into it
+            // offset: the relevant part of the raw line begins at this offset into it
             *lineLength = length - offset;  // the length of the suffix of the raw line, beginning at the wrapped line we want
             if (*lineLength > width) {
                 // return an infix of the full line
-                *lineLength = width;
-                *includesEndOfLine = NO;
+                if (buffer_start[prev + offset + width].ch == 0xffff) {
+                    // Result would end with the first half of a double-width character
+                    *lineLength = width - 1;
+                    *includesEndOfLine = EOL_DWC;
+                } else {
+                    *lineLength = width;
+                    *includesEndOfLine = EOL_SOFT;
+                }
             } else {
                 // return a suffix of the full line
                 if (i == cll_entries - 1 && is_partial) {
                     // If this is the last line and it's partial then it doesn't have an end-of-line.
-                    *includesEndOfLine = NO;
+                    *includesEndOfLine = EOL_SOFT;
                 } else {
-                    *includesEndOfLine = YES;
+                    *includesEndOfLine = EOL_HARD;
                 }
             }
             return buffer_start + prev + offset;
@@ -193,7 +262,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     for (i = first_entry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - start_offset;
         int length = cll - prev;
-        count += (length - 1) / width + 1;
+        count += NumberOfFullLines(buffer_start + prev, length, width) + 1;
         prev = cll;
     }
 
@@ -227,9 +296,17 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     if (available_len > width) {
         // The last raw line is longer than width. So get the last part of it after wrapping.
         // If the width is four and the last line is "0123456789" then return "89". It would
-        // wrap as: 0123/4567/89
-        int offset_from_start = width * ((available_len - 1) / width);
-        *length = available_len - offset_from_start;        
+        // wrap as: 0123/4567/89. If there are double-width characters, this ensures they are
+        // not split across lines when computing the wrapping.
+        // If there were only single width characters, the formula would be:
+        //     width * ((available_len - 1) / width);
+        int offset_from_start = OffsetOfWrappedLine(buffer_start + start,
+                                                    NumberOfFullLines(buffer_start + start,
+                                                                      available_len,
+                                                                      width),
+                                                    available_len,
+                                                    width);
+        *length = available_len - offset_from_start;
         *ptr = buffer_start + start + offset_from_start;
         cumulative_line_lengths[cll_entries - 1] -= *length;
         is_partial = YES;
@@ -264,7 +341,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     return cll_entries - first_entry;
 }
 
-- (int)numEntries
+- (int) numEntries
 {
     return cll_entries;
 }
@@ -284,6 +361,17 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
         prev = cumulative_line_lengths[linenum-1] - start_offset;
     }
     return cumulative_line_lengths[linenum] - start_offset - prev;
+}
+
+- (screen_char_t*) rawLine: (int) linenum
+{
+    int start;
+    if (linenum == 0) {
+        start = 0;
+    } else {
+        start = cumulative_line_lengths[linenum - 1];
+    }
+    return buffer_start + start;
 }
 
 - (void) changeBufferSize: (int) capacity
@@ -320,15 +408,21 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     for (i = first_entry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - start_offset;
         length = cll - prev;
-        int spans = (length - 1) / width;
+        // Get the number of full-length wrapped lines in this raw line. If there
+        // were only single-width characters the formula would be:
+        //     (length - 1) / width;
+        int spans = NumberOfFullLines(buffer_start + prev, length, width);
         if (n > spans) {
             // Consume the entire raw line and keep looking for more.
             int consume = spans + 1;
             n -= consume;
         } else {  // n <= spans
             // We found the raw line that inclues the wrapped line we're searching for.
-            int consume = n;  // eat up this many width-sized wrapped lines from this start of the current full line
-            int offset = consume * width;  // the relevant part of the raw line begins at this offset into it
+            // Set offset to the offset into the raw line where the nth wrapped
+            // line begins. If there were only single-width characters the formula
+            // would be:
+            //   offset = n * width;
+            int offset = OffsetOfWrappedLine(buffer_start + prev, n, length, width);
             buffer_start += prev + offset;
             start_offset = buffer_start - raw_buffer;
             first_entry = i;
@@ -346,39 +440,67 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
 }
 
 // TODO: Make this more unicode friendly
-static BOOL stringCaseCompare(unichar* needle, 
-                              int needle_len, 
-                              screen_char_t* haystack, 
-                              int haystack_len, 
+static BOOL stringCaseCompare(unichar* needle,
+                              int needle_len,
+                              screen_char_t* haystack,
+                              int haystack_len,
                               int* result_length)
 {
-    int i;
+    int i, j;
     if (needle_len > haystack_len) {
         return NO;
     }
-    for (i = 0; i < needle_len; ++i) {
-        if (haystack[i].ch != 0xffff && tolower(needle[i]) != tolower(haystack[i].ch)) {
+    if (haystack[0].ch == 0xffff) {
+        // A search that starts in the middle of a DWC must fail so that reverse
+        // searches don't begin one to the right of their intended starting place.
+        return NO;
+    }
+    for (i = 0, j = 0; i < needle_len && j < haystack_len; ++i, ++j) {
+        if (haystack[j].ch == 0xffff) {
+            --i;
+            continue;
+        }
+        if (tolower(needle[i]) != tolower(haystack[j].ch)) {
             return NO;
         }
+    }
+    if (i < needle_len) {
+        // Ran out of haystack before running out of needle. Can happen if
+        // haystack has double-width characters.
+        return NO;
     }
     *result_length = i;
     return YES;
-} 
+}
 
-static BOOL stringCompare(unichar* needle, 
-                          int needle_len, 
-                          screen_char_t* haystack, 
-                          int haystack_len, 
+static BOOL stringCompare(unichar* needle,
+                          int needle_len,
+                          screen_char_t* haystack,
+                          int haystack_len,
                           int* result_length)
 {
-    int i;
+    int i, j;
     if (needle_len > haystack_len) {
         return NO;
     }
-    for (i = 0; i < needle_len; ++i) {
-        if (haystack[i].ch != 0xffff && needle[i] != haystack[i].ch) {
+    if (haystack[0].ch == 0xffff) {
+        // A search that starts in the middle of a DWC must fail so that reverse
+        // searches don't begin one to the right of their intended starting place.
+        return NO;
+    }
+    for (i = 0, j = 0; i < needle_len && j < haystack_len; ++i, ++j) {
+        if (haystack[j].ch == 0xffff) {
+            --i;
+            continue;
+        }
+        if (needle[i] != haystack[j].ch) {
             return NO;
         }
+    }
+    if (i < needle_len) {
+        // Ran out of haystack before running out of needle. Can happen if
+        // haystack has double-width characters.
+        return NO;
     }
     *result_length = i;
     return YES;
@@ -429,6 +551,7 @@ static BOOL stringCompare(unichar* needle,
             }
         }
     } else {
+        // Search forwards
         int i;
         int limit = raw_line_length - [substring length];
         if (skip + range.length > raw_line_length) {
@@ -446,7 +569,7 @@ static BOOL stringCompare(unichar* needle,
                     return i;
                 }
             }
-        }           
+        }
     }
     return -1;
 }
@@ -498,7 +621,12 @@ static BOOL stringCompare(unichar* needle,
         if (skipped < 0) {
             skipped = 0;
         }
-        int pos = [self _findInRawLine:entry needle:substring options:options skip: skipped length: [self _lineLength: entry] resultLength: resultLength];
+        int pos = [self _findInRawLine:entry
+                                needle:substring
+                               options:options
+                                  skip: skipped
+                                length: [self _lineLength: entry]
+                          resultLength: resultLength];
         if (pos != -1) {
             return pos + line_raw_offset;
         }
@@ -515,16 +643,38 @@ static BOOL stringCompare(unichar* needle,
     int prev = start_offset;
     for (i = first_entry; i < cll_entries; ++i) {
         int eol = cumulative_line_lengths[i];
-        int line_length = eol-prev;
+        int line_length = eol - prev;
         if (position >= eol) {
-            int spans = (line_length - 1) / width;
+            // Get the number of full-width lines in the raw line. If there were
+            // only single-width characters the formula would be:
+            //     spans = (line_length - 1) / width;
+            int spans = NumberOfFullLines(buffer_start + prev, line_length, width);
             *y += spans + 1;
         } else {
             int bytes_to_consume_in_this_line = position - prev;
-            int consume = bytes_to_consume_in_this_line / width;
+            int dwc_peek = 0;
+            if (bytes_to_consume_in_this_line < line_length &&
+                buffer_start[prev + bytes_to_consume_in_this_line + 1].ch == 0xffff) {
+                // It doesn't make sense to ask for the number of lines that end
+                // in the middle of a DWC. Add one extra char to look at if that
+                // is the case.
+                ++dwc_peek;
+            }
+            int consume = NumberOfFullLines(buffer_start + prev,
+                                            bytes_to_consume_in_this_line + 1 + dwc_peek,
+                                            width);
             *y += consume;
             if (consume > 0) {
-                *x = bytes_to_consume_in_this_line % (consume * width);
+                // Offset from prev where the consume'th line begin.
+                int offset = OffsetOfWrappedLine(buffer_start + prev,
+                                                 consume,
+                                                 line_length,
+                                                 width);
+                // We know that position falls in this line. Set x to the number
+                // of chars after the beginning on the line. If there were only
+                // single-width chars the formula would be:
+                //     bytes_to_consume_in_this_line % (consume * width);
+                *x = position - (prev + offset);
             } else {
                 *x = bytes_to_consume_in_this_line;
             }
@@ -536,14 +686,27 @@ static BOOL stringCompare(unichar* needle,
     return NO;
 }
 
+// If you were to do an append, this is the x position of where your append
+// would begin.
 - (int) getTrailingWithWidth:(int)width
 {
     int numLines = [self numRawLines];
     if (!is_partial || numLines == 0) {
         return 0;
     } else {
-        int len = [self getRawLineLength:cll_entries-1];
-        return len % width;
+        int start;
+        if (cll_entries == 1) {
+            start = 0;
+        } else {
+            start = cumulative_line_lengths[cll_entries - 2];
+        }
+        int length = cumulative_line_lengths[cll_entries - 1] - start;
+        int spans = NumberOfFullLines(buffer_start + start, length, width);
+        int offset = OffsetOfWrappedLine(buffer_start + start,
+                                         spans,
+                                         length,
+                                         width);
+        return offset;
     }
 }
 
@@ -653,7 +816,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     // on average. Very small blocks make finding a wrapped line expensive because caching the
     // number of wrapped lines is spread out over more blocks. Very large blocks are expensive
     // because of the linear search through a block for the start of a wrapped line. This is
-    // in the middle. Ideally, the number of blocks would equal the number of wrapped lines per 
+    // in the middle. Ideally, the number of blocks would equal the number of wrapped lines per
     // block, and this should be in that neighborhood for typical uses.
     const int BLOCK_SIZE = 1024 * 8;
     [self initWithBlockSize: BLOCK_SIZE];
@@ -677,8 +840,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         [self _addBlockOfSize: block_size];
     }
 
-    LineBlock* block = [blocks objectAtIndex: ([blocks count] - 1)]; 
-    int trailing = [block getTrailingWithWidth:width];
+    LineBlock* block = [blocks objectAtIndex: ([blocks count] - 1)];
+
+    int beforeLines = [block getNumLinesWithWrapWidth:width];
     if (![block appendLine: buffer length: length partial: partial]) {
         int prefix_len = 0;
         screen_char_t* prefix = NULL;
@@ -687,7 +851,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             // Remove its prefix fromt he current block and later add the
             // concatenation of prefix + buffer to a larger block.
             screen_char_t* temp;
-            BOOL ok = [block popLastLineInto: &temp withLength: &prefix_len upToWidth: [block rawBufferSize]+1];
+            BOOL ok = [block popLastLineInto: &temp
+                                  withLength: &prefix_len
+                                   upToWidth: [block rawBufferSize]+1];
             prefix = (screen_char_t*) malloc(prefix_len * sizeof(screen_char_t));
             memcpy(prefix, temp, prefix_len * sizeof(screen_char_t));
             NSAssert(ok, @"hasPartial but pop failed.");
@@ -730,15 +896,17 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     // Update the cache of the number of wrapped lines.
     if (num_wrapped_lines_width == width) {
-        num_wrapped_lines_cache += (length + trailing - 1) / width + 1;
+        int afterLines = [block getNumLinesWithWrapWidth:width];
+        num_wrapped_lines_cache += (afterLines - beforeLines);
     } else {
         num_wrapped_lines_width = -1;
     }
 }
 
-// Copy a line into the buffer. If the line is shorter than 'width' then only the first 'width' characters will be modified.
+// Copy a line into the buffer. If the line is shorter than 'width' then only
+// the first 'width' characters will be modified.
 // 0 <= lineNum < numLinesWithWidth:width
-- (BOOL) copyLineToBuffer: (screen_char_t*) buffer width: (int) width lineNum: (int) lineNum
+- (int) copyLineToBuffer: (screen_char_t*) buffer width: (int) width lineNum: (int) lineNum
 {
     int line = lineNum;
     int i;
@@ -756,12 +924,15 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         }
 
         int length;
-        BOOL eol;
-        screen_char_t* p = [block getWrappedLineWithWrapWidth: width lineNum: &line lineLength: &length includesEndOfLine: &eol];
+        int eol;
+        screen_char_t* p = [block getWrappedLineWithWrapWidth: width
+                                                      lineNum: &line
+                                                   lineLength: &length
+                                            includesEndOfLine: &eol];
         if (p) {
             NSAssert(length <= width, @"Length too long");
             memcpy((char*) buffer, (char*) p, length * sizeof(screen_char_t));
-            return !eol;
+            return eol;
         }
     }
     NSLog(@"Couldn't find line %d", lineNum);
@@ -774,7 +945,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return RawNumLines(self, width);
 }
 
-- (BOOL) popAndCopyLastLineInto: (screen_char_t*) ptr width: (int) width includesEndOfLine: (BOOL*) includsEndOfLine;
+- (BOOL) popAndCopyLastLineInto: (screen_char_t*) ptr width: (int) width includesEndOfLine: (int*) includesEndOfLine;
 {
     if ([self numLinesWithWidth: width] == 0) {
         return NO;
@@ -783,9 +954,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     LineBlock* block = [blocks lastObject];
 
-    // If the line is partial the client will want to add a continuation marker so 
+    // If the line is partial the client will want to add a continuation marker so
     // tell him there's no EOL in that case.
-    *includsEndOfLine = ![block hasPartial];
+    *includesEndOfLine = [block hasPartial] ? EOL_SOFT : EOL_HARD;
 
     // Pop the last up-to-width chars off the last line.
     int length;
@@ -814,7 +985,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         a[i] = '\0';
         NSLog(@"Pop: %s\n", a);
     }
-#endif    
+#endif
     return YES;
 }
 
@@ -846,14 +1017,22 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     if (cursor_rawline == total_raw_lines-1) {
         // The cursor is on the last line in the buffer.
         LineBlock* block = [blocks lastObject];
-        int last_line_length = [block getRawLineLength: [block numEntries]-1];
-        int num_overflow_lines = (last_line_length-1) / width;
-        int min_x = num_overflow_lines * width;
+        int last_line_length = [block getRawLineLength: ([block numEntries]-1)];
+        screen_char_t* lastRawLine = [block rawLine: ([block numEntries]-1)];
+        int num_overflow_lines = NumberOfFullLines(lastRawLine,
+                                                   last_line_length,
+                                                   width);
+        int min_x = OffsetOfWrappedLine(lastRawLine,
+                                        num_overflow_lines,
+                                        last_line_length,
+                                        width);
+        //int num_overflow_lines = (last_line_length-1) / width;
+        //int min_x = num_overflow_lines * width;
         int max_x = min_x + width;  // inclusive because the cursor wraps to the next line on the last line in the buffer
         if (cursor_x >= min_x && cursor_x <= max_x) {
             *x = cursor_x - min_x;
             return YES;
-        } 
+        }
     }
     return NO;
 }
@@ -947,7 +1126,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         context->offset != -1 &&
         context->offset < [block startOffset]) {
         if (context->dir > 0) {
-            // Part of the first block has been dropped. Skip ahead to its 
+            // Part of the first block has been dropped. Skip ahead to its
             // current beginning.
             context->offset = [block startOffset];
         } else {
@@ -960,14 +1139,14 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     // NSLog(@"search block %d starting at offset %d", context->absBlockNum - num_dropped_blocks, context->offset);
 
-    int position = [block findSubstring:context->substring 
-                                options:context->options 
-                               atOffset:context->offset 
+    int position = [block findSubstring:context->substring
+                                options:context->options
+                               atOffset:context->offset
                            resultLength:&context->matchLength];
     if (position >= 0) {
         // NSLog(@"match at position %d", position);
         position += [self _blockPosition:context->absBlockNum - num_dropped_blocks];
-        if (context->dir * (position - stopAt) > 0 || 
+        if (context->dir * (position - stopAt) > 0 ||
             context->dir * (position + context->matchLength - stopAt) > 0) {
             context->status = NotFound;
             return;

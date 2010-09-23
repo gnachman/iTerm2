@@ -466,7 +466,7 @@ static NSCursor* textViewCursor =  nil;
     NSSize sz = [PTYTextView charSizeForFont:aFont horizontalSpacing:1.0 verticalSpacing:1.0];
     sz.width = ceil(sz.width);
     sz.height = ceil(sz.height);
-    
+
     charWidthWithoutSpacing = sz.width;
     charHeightWithoutSpacing = sz.height;
     horizontalSpacing_ = horizontalSpacing;
@@ -586,7 +586,7 @@ static NSCursor* textViewCursor =  nil;
             int cursorX = [dataSource cursorX] - 1;
             int cursorY = [dataSource cursorY] + [dataSource numberOfLines] - [dataSource height] - 1;
             BOOL isCursor = (x == cursorX && y == cursorY);
-            if(dirty[x] && isSelected && !isCursor) {
+            if (dirty[x] && isSelected && !isCursor) {
                 // Don't call [self deselect] as it would recurse back here
                 startX = -1;
                 DebugLog(@"found selected dirty noncursor");
@@ -619,7 +619,7 @@ static NSCursor* textViewCursor =  nil;
             BOOL isSelected = [self _isCharSelectedInRow:y col:x checkOld:NO];
             BOOL wasSelected = [self _isCharSelectedInRow:y col:x checkOld:YES];
             BOOL blinked = redrawBlink && (theLine[x].fg_color & BLINK_MASK);
-            if(isSelected != wasSelected || blinked) {
+            if (isSelected != wasSelected || blinked) {
                 NSRect dirtyRect = [self visibleRect];
                 dirtyRect.origin.y = y*lineHeight;
                 dirtyRect.size.height = lineHeight;
@@ -1798,7 +1798,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return result;
 }
 
-- (NSString *) contentFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad
+- (NSString *)contentFromX:(int)startx
+                         Y:(int)starty
+                       ToX:(int)nonInclusiveEndx
+                         Y:(int)endy
+                       pad:(BOOL) pad
 {
     int endx = nonInclusiveEndx-1;
     unichar *temp;
@@ -1812,42 +1816,41 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     width = [dataSource width];
     temp = (unichar *) malloc(((endy-starty+1)*(width+1)+(endx-startx+1))*sizeof(unichar));
     j = 0;
-    for (y = starty; y <= endy; y++)
-    {
+    for (y = starty; y <= endy; y++) {
         theLine = [dataSource getLineAtIndex:y];
 
         x1 = y == starty ? startx : 0;
         x2 = y == endy ? endx : width-1;
-        for(; x1 <= x2; x1++)
-        {
-            if (theLine[x1].ch != 0xffff)
-            {
+        for ( ; x1 <= x2; x1++) {
+            if (theLine[x1].ch != 0xffff && theLine[x1].ch != DWC_SKIP) {
                 temp[j] = theLine[x1].ch;
-                if(theLine[x1].ch == 0) // end of line?
-                {
-                    // if there is no text after this, insert a hard line break
+                if (theLine[x1].ch == 0) { // end of line?
+                    // If there is no text after this, insert a hard line break.
                     endOfLine = YES;
-                    for(i = x1+1; i <= x2 && endOfLine; i++)
-                    {
-                        if(theLine[i].ch != 0)
+                    for (i = x1 + 1; i <= x2 && endOfLine; i++) {
+                        if (theLine[i].ch != 0) {
                             endOfLine = NO;
+                        }
                     }
                     if (endOfLine) {
                         if (pad) {
-                            for(i = x1; i <= x2; i++) temp[j++] = ' ';
+                            for (i = x1; i <= x2; i++) {
+                              temp[j++] = ' ';
+                            }
                         }
-                        if (y < endy && !theLine[width].ch){
+                        if (y < endy && theLine[width].ch == EOL_HARD) {
                             temp[j] = '\n'; // hard break
                             j++;
                             break; // continue to next line
                         }
                         break;
-                    }
-                    else
+                    } else {
                         temp[j] = ' '; // represent blank with space
-                }
-                else if (x1 == x2 && y < endy && !theLine[width].ch) // definitely end of line
-                {
+                    }
+                } else if (x1 == x2 &&
+                           y < endy &&
+                           theLine[width].ch == EOL_HARD) {
+                    // definitely end of line
                     temp[++j] = '\n'; // hard break
                 }
                 j++;
@@ -1855,7 +1858,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         }
     }
 
-    str=[NSString stringWithCharacters:temp length:j];
+    str = [NSString stringWithCharacters:temp length:j];
     free(temp);
 
     return str;
@@ -2636,34 +2639,42 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int j = 0;
     unsigned int bgcode = 0, fgcode = 0;
     BOOL bgselected = NO;
-    while(j <= WIDTH) {
-        if(theLine[j].ch == 0xffff) {
+    // Iterate over each character in the line
+    while (j <= WIDTH) {
+        if (theLine[j].ch == 0xffff) {
+            // Do not draw the right-hand side of double-width characters.
             j++;
             continue;
         }
 
-        BOOL selected = [self _isCharSelectedInRow:line col:j checkOld:NO];
+        BOOL selected;
+        if (theLine[j].ch == DWC_SKIP) {
+            selected = NO;
+        } else {
+            selected = [self _isCharSelectedInRow:line col:j checkOld:NO];
+        }
         BOOL double_width = j < WIDTH - 1 && (theLine[j+1].ch == 0xffff);
 
-        if(j != WIDTH && bgstart < 0) {
+        if (j != WIDTH && bgstart < 0) {
             // Start new run
             bgstart = j;
             bgcode = theLine[j].bg_color;
             bgselected = selected;
         }
 
-        if(j != WIDTH && bgselected == selected && theLine[j].bg_color == bgcode) {
+        if (j != WIDTH &&
+            bgselected == selected &&
+            theLine[j].bg_color == bgcode) {
             // Continue the run
             j += (double_width ? 2 : 1);
-        }
-        else if(bgstart >= 0) {
+        } else if (bgstart >= 0) {
             // This run is finished, draw it
             NSRect bgRect = NSMakeRect(floor(MARGIN+bgstart*charWidth),curY,ceil((j-bgstart)*charWidth),lineHeight);
 
-            if(hasBGImage) {
+            if (hasBGImage) {
                 [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect: bgRect];
             }
-            if(!hasBGImage || bgcode != DEFAULT_BG_COLOR_CODE || bgselected) {
+            if (!hasBGImage || bgcode != DEFAULT_BG_COLOR_CODE || bgselected) {
                 aColor = bgselected ? selectionColor : [self colorForCode: (reversed && bgcode == DEFAULT_BG_COLOR_CODE) ? DEFAULT_FG_COLOR_CODE: bgcode];
                 aColor = [aColor colorWithAlphaComponent:alpha];
                 [aColor set];
@@ -2673,19 +2684,28 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             // Now draw characters over the top
             float curX = MARGIN + bgstart*charWidth;
 
-            for(int k = bgstart; k < j; k++) {
-                if(theLine[k].ch == 0xffff) continue;
+            for (int k = bgstart; k < j; k++) {
+                if (theLine[k].ch == 0xffff) {
+                    continue;
+                }
                 double_width = k < WIDTH - 1 && (theLine[k+1].ch == 0xffff);
 
-                if(bgselected && ((theLine[k].fg_color & 0x3ff) == DEFAULT_FG_COLOR_CODE))
+                if (bgselected && ((theLine[k].fg_color & 0x3ff) == DEFAULT_FG_COLOR_CODE)) {
                     fgcode = SELECTED_TEXT | (theLine[k].fg_color & BOLD_MASK); // check for bold
-                else
+                } else {
                     fgcode = (reversed && theLine[k].fg_color & DEFAULT_FG_COLOR_CODE) ?
                         (DEFAULT_BG_COLOR_CODE | (theLine[k].fg_color & BOLD_MASK)) : theLine[k].fg_color & 0x3ff;
+                }
 
                 if (blinkShow || !(theLine[k].fg_color & BLINK_MASK)) {
-                    [self _drawCharacter:theLine[k].ch fgColor:fgcode AtX:curX Y:curY doubleWidth:double_width overrideColor:nil];
-                    //draw underline
+                    [self _drawCharacter:theLine[k].ch
+                                 fgColor:fgcode
+                                     AtX:curX
+                                       Y:curY
+                             doubleWidth:double_width
+                           overrideColor:nil];
+
+                    // draw underline
                     if (theLine[k].fg_color & UNDER_MASK && theLine[k].ch) {
                         [[self colorForCode:fgcode] set];
                         NSRectFill(NSMakeRect(curX,
@@ -2700,8 +2720,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             bgstart = -1;
             // Return to top of loop without incrementing j so this
             // character gets the chance to start its own run
-        }
-        else {
+        } else {
             // Don't need to draw and not on a run, move to next char
             j += (double_width ? 2 : 1);
         }
@@ -2747,7 +2766,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             double_width = 0;
             unichar aChar = theLine[x1].ch;
             if (aChar) {
-                if (aChar == 0xffff && x1>0) {
+                if (aChar == 0xffff && x1 > 0) {
                     x1--;
                     aChar = theLine[x1].ch;
                 }
@@ -2858,7 +2877,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 - (void)_drawCharacter:(unichar)code fgColor:(int)fg AtX:(float)X Y:(float)Y doubleWidth:(BOOL)dw overrideColor:(NSColor*)overrideColor
 {
     if (!code) return;
-
+    if (code == DWC_SKIP) {
+        code = ' ';
+    }
     static int oldfg = -1;
     static NSFont* oldFont = nil;
     static NSMutableDictionary* attrib = nil;
@@ -2932,105 +2953,135 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return theLine[x].ch;
 }
 
-- (NSString *) _getWordForX: (int) x
-                          y: (int) y
-                     startX: (int *) startx
-                     startY: (int *) starty
-                       endX: (int *) endx
-                       endY: (int *) endy
+- (NSString *)_getWordForX:(int) x
+                         y:(int) y
+                    startX:(int *) startx
+                    startY:(int *) starty
+                      endX:(int *) endx
+                      endY:(int *) endy
 {
-    NSString *aString,*wordChars;
-    int tmpX, tmpY, x1, yStart, x2, y2;
-    screen_char_t *theLine;
+    NSString *wordChars;
+    int tmpX;
+    int tmpY;
+    int x1;
+    int yStart;
+    int x2;
+    int y2;
     int width = [dataSource width];
 
-    // grab our preference for extra characters to be included in a word
+    // Grab the preference for extra characters to be included in a word.
     wordChars = [[PreferencePanel sharedInstance] wordChars];
-    if(wordChars == nil)
+    if (wordChars == nil) {
         wordChars = @"";
-    // find the beginning of the word
+    }
+
+    // Search backward from (x, y) to find the beginning of the word.
     tmpX = x;
     tmpY = y;
-    while(tmpX >= 0)
-    {
-        aString = [self contentFromX:tmpX Y:tmpY ToX:tmpX+1 Y:tmpY pad: YES];
-        if(([aString length] == 0 ||
-            [aString rangeOfCharacterFromSet: [NSCharacterSet alphanumericCharacterSet]].length == 0) &&
-           [wordChars rangeOfString: aString].length == 0)
+    while (tmpX >= 0) {
+        screen_char_t* theLine = [dataSource getLineAtIndex:tmpY];
+        NSString* aString = [NSString stringWithCharacters:&theLine[tmpX].ch length:1];
+        if ([aString characterAtIndex:0] != 0xffff &&
+            ([aString rangeOfCharacterFromSet:[NSCharacterSet alphanumericCharacterSet]].length == 0) &&
+            [wordChars rangeOfString:aString].length == 0) {
+            // Found whitespace at this position.
             break;
+        }
         tmpX--;
-        if(tmpX < 0 && tmpY > 0)
-        {
+        if (tmpX < 0 && tmpY > 0) {
+            // Wrap tmpX, tmpY to the end of the previous line.
             theLine = [dataSource getLineAtIndex:tmpY-1];
-            if (theLine[width].ch) // check if there's a hard line break
-            {
+            if (theLine[width].ch != EOL_HARD) {
+                // check if there's a hard line break
                 tmpY--;
                 tmpX = width - 1;
             }
         }
     }
-    if(tmpX != x)
+    if (tmpX != x) {
+        // Advance back to the right of the whitespace that caused us to break.
         tmpX++;
+    }
 
-    if(tmpX < 0)
+    // Ensure the values are sane, although I think none of these cases will
+    // ever occur.
+    if (tmpX < 0) {
         tmpX = 0;
-    if(tmpY < 0)
+    }
+    if (tmpY < 0) {
         tmpY = 0;
-    if(tmpX >= width)
-    {
+    }
+    if (tmpX >= width) {
         tmpX = 0;
         tmpY++;
     }
-    if(tmpY >= [dataSource numberOfLines])
+
+    if (tmpY >= [dataSource numberOfLines]) {
         tmpY = [dataSource numberOfLines] - 1;
-    if(startx)
+    }
+
+    // Save to startx, starty.
+    if (startx) {
         *startx = tmpX;
-    if(starty)
+    }
+    if (starty) {
         *starty = tmpY;
+    }
     x1 = tmpX;
     yStart = tmpY;
 
 
-    // find the end of the word
+    // Search forward from x to find the end of the word.
     tmpX = x;
     tmpY = y;
-    while(tmpX < width)
-    {
-        aString = [self contentFromX:tmpX Y:tmpY ToX:tmpX+1 Y:tmpY pad: YES];
-        if(([aString length] == 0 ||
-            [aString rangeOfCharacterFromSet: [NSCharacterSet alphanumericCharacterSet]].length == 0) &&
-           [wordChars rangeOfString: aString].length == 0)
+    while (tmpX < width) {
+        screen_char_t* theLine = [dataSource getLineAtIndex:tmpY];
+        NSString* aString = [NSString stringWithCharacters:&theLine[tmpX].ch length:1];
+        if ([aString characterAtIndex:0] != 0xffff &&
+            ([aString rangeOfCharacterFromSet:[NSCharacterSet alphanumericCharacterSet]].length == 0) &&
+            [wordChars rangeOfString:aString].length == 0) {
+            // Found whitespace at this position.
             break;
+        }
         tmpX++;
-        if(tmpX >= width && tmpY < [dataSource numberOfLines])
-        {
-            theLine = [dataSource getLineAtIndex:tmpY];
-            if (theLine[width].ch) // check if there's a hard line break
-            {
+        if (tmpX >= width && tmpY < [dataSource numberOfLines]) {
+            if (theLine[width].ch == EOL_HARD) {
+                // check if there's a hard line break
                 tmpY++;
                 tmpX = 0;
             }
         }
     }
-    if(tmpX != x)
-        tmpX--;
 
-    if(tmpX < 0)
-    {
+    // Back off from trailing whitespace
+    if (tmpX != x) {
+        tmpX--;
+    }
+
+    // Sanity checks.
+    if (tmpX < 0) {
         tmpX = width - 1;
         tmpY--;
     }
-    if(tmpY < 0)
+    if (tmpY < 0) {
         tmpY = 0;
-    if(tmpX >= width)
+    }
+    if (tmpX >= width) {
         tmpX = width - 1;
-    if(tmpY >= [dataSource numberOfLines])
+    }
+    if (tmpY >= [dataSource numberOfLines]) {
         tmpY = [dataSource numberOfLines] - 1;
-    if(endx)
-        *endx = tmpX+1;
-    if(endy)
-        *endy = tmpY;
+    }
 
+    // Save to endx, endy.
+    if (endx) {
+        *endx = tmpX+1;
+    }
+    if (endy) {
+        *endy = tmpY;
+    }
+
+    // Grab the contents to return.
     x2 = tmpX+1;
     y2 = tmpY;
 
@@ -3414,32 +3465,50 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (BOOL) _isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old
 {
-    int _startX=startX, _startY=startY, _endX=endX, _endY=endY;
-    char _selectMode = selectMode;
-    if(!old) {
-        _startY=startY; _startX=startX; _endY=endY; _endX=endX; _selectMode = selectMode;
+    int tempStartX = startX;
+    int tempStartY = startY;
+    int tempEndX = endX;
+    int tempEndY = endY;
+    char tempSelectMode = selectMode;
+
+    if (!old) {
+        tempStartY = startY;
+        tempStartX = startX;
+        tempEndY = endY;
+        tempEndX = endX;
+        tempSelectMode = selectMode;
     } else {
-        _startY=oldStartY; _startX=oldStartX; _endY=oldEndY; _endX=oldEndX; _selectMode = oldSelectMode;
+        tempStartY = oldStartY;
+        tempStartX = oldStartX;
+        tempEndY = oldEndY;
+        tempEndX = oldEndX;
+        tempSelectMode = oldSelectMode;
     }
 
-    if(_startX <= -1 || (_startY == _endY && _startX == _endX)) {
+    if (tempStartX <= -1 || (tempStartY == tempEndY && tempStartX == tempEndX)) {
         return NO;
     }
-    if (_startY>_endY||(_startY==_endY&&_startX>_endX)) {
+    if (tempStartY > tempEndY || (tempStartY == tempEndY && tempStartX > tempEndX)) {
         int t;
-        t=_startY; _startY=_endY; _endY=t;
-        t=_startX; _startX=_endX; _endX=t;
+        // swap start and end.
+        t = tempStartY;
+        tempStartY = tempEndY;
+        tempEndY = t;
+
+        t = tempStartX;
+        tempStartX = tempEndX;
+        tempEndX = t;
     }
-    if (_selectMode == SELECT_BOX) {
-        return (row >= _startY && row < _endY) && (col >= _startX && col < _endX);
+    if (tempSelectMode == SELECT_BOX) {
+        return (row >= tempStartY && row < tempEndY) && (col >= tempStartX && col < tempEndX);
     }
-    if(row == _startY && _startY == _endY) {
-        return (col >= _startX && col < _endX);
-    } else if(row == _startY && col >= _startX) {
+    if (row == tempStartY && tempStartY == tempEndY) {
+        return (col >= tempStartX && col < tempEndX);
+    } else if (row == tempStartY && col >= tempStartX) {
         return YES;
-    } else if(row == _endY && col < _endX) {
+    } else if (row == tempEndY && col < tempEndX) {
         return YES;
-    } else if(row > _startY && row < _endY) {
+    } else if (row > tempStartY && row < tempEndY) {
         return YES;
     } else {
         return NO;

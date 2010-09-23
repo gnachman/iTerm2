@@ -252,7 +252,7 @@
 		872EBC5404E42E320073D10E /* PTYTextView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = PTYTextView.h; path = Headers/iTerm/PTYTextView.h; sourceTree = "<group>"; };
 		872EBC5704E42E320073D10E /* PTYTabView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = PTYTabView.h; path = Headers/iTerm/PTYTabView.h; sourceTree = "<group>"; };
 		872EBC5804E42E320073D10E /* PTYTask.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = PTYTask.h; path = Headers/iTerm/PTYTask.h; sourceTree = "<group>"; };
-		872EBC5A04E42E320073D10E /* VT100Screen.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = VT100Screen.h; path = Headers/iTerm/VT100Screen.h; sourceTree = "<group>"; };
+		872EBC5A04E42E320073D10E /* VT100Screen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VT100Screen.h; path = Headers/iTerm/VT100Screen.h; sourceTree = "<group>"; };
 		872EBC5B04E42E320073D10E /* PTYWindow.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = PTYWindow.h; path = Headers/iTerm/PTYWindow.h; sourceTree = "<group>"; };
 		872EBC6004E42E320073D10E /* PTYScrollView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = PTYScrollView.h; path = Headers/iTerm/PTYScrollView.h; sourceTree = "<group>"; };
 		872EBC6104E42E320073D10E /* VT100Terminal.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = VT100Terminal.h; path = Headers/iTerm/VT100Terminal.h; sourceTree = "<group>"; };

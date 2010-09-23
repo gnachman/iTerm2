@@ -29,6 +29,12 @@
 
 #import <Cocoa/Cocoa.h>
 
+// These codes go in the continuation character to the right of the
+// rightmost column.
+#define EOL_HARD 0 // Hard line break (explicit newline)
+#define EOL_SOFT 1 // Soft line break (a long line was wrapped)
+#define EOL_DWC  2 // Double-width character wrapped to next line
+
 typedef struct FindContext {
     int absBlockNum;
     NSString* substring;
@@ -100,7 +106,7 @@ typedef struct screen_char_t
 // Try to get a line that is lineNum after the first line in this block after wrapping them to a given width.
 // If the line is present, return a pointer to its start and fill in *lineLength with the number of bytes in the line.
 // If the line is not present, decrement *lineNum by the number of lines in this block and return NULL.
-- (screen_char_t*) getWrappedLineWithWrapWidth: (int) width lineNum: (int*) lineNum lineLength: (int*) lineLength includesEndOfLine: (BOOL*) includesEndOfLine;
+- (screen_char_t*) getWrappedLineWithWrapWidth: (int) width lineNum: (int*) lineNum lineLength: (int*) lineLength includesEndOfLine: (int*) includesEndOfLine;
 
 // Get the number of lines in this block at a given screen width.
 - (int) getNumLinesWithWrapWidth: (int) width;
@@ -144,6 +150,9 @@ typedef struct screen_char_t
 
 // Get length of last wrapped line if partial, or 0 if not partial.
 - (int) getTrailingWithWidth:(int)width;
+
+// Return a raw line
+- (screen_char_t*) rawLine: (int) linenum;
 
 // NSLog the contents of the block. For debugging.
 - (void)dump:(int)rawOffset;
@@ -209,13 +218,13 @@ typedef struct screen_char_t
 // Copy a line into the buffer. If the line is shorter than 'width' then only the first 'width'
 // characters will be modified.
 // 0 <= lineNum < numLinesWithWidth:width
-// Returns true if a continuation marker is needed at the end of this line.
-- (BOOL) copyLineToBuffer: (screen_char_t*) buffer width: (int) width lineNum: (int) lineNum;
+// Returns EOL code.
+- (int) copyLineToBuffer: (screen_char_t*) buffer width: (int) width lineNum: (int) lineNum;
 
 // Copy up to width chars from the last line into *ptr. The last line will be removed or
 // truncated from the buffer. Sets *includesEndOfLine to true if this line should have a
 // continuation marker.
-- (BOOL) popAndCopyLastLineInto: (screen_char_t*) ptr width: (int) width includesEndOfLine: (BOOL*) includesEndOfLine;
+- (BOOL) popAndCopyLastLineInto: (screen_char_t*) ptr width: (int) width includesEndOfLine: (int*) includesEndOfLine;
 
 // Get the number of buffer lines at a given width.
 - (int) numLinesWithWidth: (int) width;
