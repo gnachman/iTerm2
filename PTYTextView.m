@@ -2491,18 +2491,24 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                                             found:&found];
 
         if (found) {
-                // Lock scrolling after finding text
-                ++endX; // make it half-open
-                [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+            // Lock scrolling after finding text
+            ++endX; // make it half-open
+            [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 
-                [self _scrollToLine:endY];
-                [self setNeedsDisplay:YES];
-                lastFindX = startX;
-                absLastFindY = (long long)startY + [dataSource totalScrollbackOverflow];
+            [self _scrollToLine:endY];
+            [self setNeedsDisplay:YES];
+            lastFindX = startX;
+            absLastFindY = (long long)startY + [dataSource totalScrollbackOverflow];
         }
     if (!more) {
         // NSLog(@"PTYTextView: done");
         _findInProgress = NO;
+        if (!found) {
+	    // Clear the selection.
+            startX = startY = endX = endY = -1;
+            absLastFindY = -1;
+            [self setNeedsDisplay:YES];
+        }
     }
     return more;
 }
