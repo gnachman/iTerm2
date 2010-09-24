@@ -439,73 +439,6 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     return orig_n - n;
 }
 
-// TODO: Make this more unicode friendly
-static BOOL stringCaseCompare(unichar* needle,
-                              int needle_len,
-                              screen_char_t* haystack,
-                              int haystack_len,
-                              int* result_length)
-{
-    int i, j;
-    if (needle_len > haystack_len) {
-        return NO;
-    }
-    if (haystack[0].ch == 0xffff) {
-        // A search that starts in the middle of a DWC must fail so that reverse
-        // searches don't begin one to the right of their intended starting place.
-        return NO;
-    }
-    for (i = 0, j = 0; i < needle_len && j < haystack_len; ++i, ++j) {
-        if (haystack[j].ch == 0xffff) {
-            --i;
-            continue;
-        }
-        if (tolower(needle[i]) != tolower(haystack[j].ch)) {
-            return NO;
-        }
-    }
-    if (i < needle_len) {
-        // Ran out of haystack before running out of needle. Can happen if
-        // haystack has double-width characters.
-        return NO;
-    }
-    *result_length = i;
-    return YES;
-}
-
-static BOOL stringCompare(unichar* needle,
-                          int needle_len,
-                          screen_char_t* haystack,
-                          int haystack_len,
-                          int* result_length)
-{
-    int i, j;
-    if (needle_len > haystack_len) {
-        return NO;
-    }
-    if (haystack[0].ch == 0xffff) {
-        // A search that starts in the middle of a DWC must fail so that reverse
-        // searches don't begin one to the right of their intended starting place.
-        return NO;
-    }
-    for (i = 0, j = 0; i < needle_len && j < haystack_len; ++i, ++j) {
-        if (haystack[j].ch == 0xffff) {
-            --i;
-            continue;
-        }
-        if (needle[i] != haystack[j].ch) {
-            return NO;
-        }
-    }
-    if (i < needle_len) {
-        // Ran out of haystack before running out of needle. Can happen if
-        // haystack has double-width characters.
-        return NO;
-    }
-    *result_length = i;
-    return YES;
-}
-
 - (int) _lineRawOffset: (int) anIndex
 {
     if (anIndex == first_entry) {
@@ -515,63 +448,140 @@ static BOOL stringCompare(unichar* needle,
     }
 }
 
-- (int) _findInRawLine:(int) entry needle:(NSString*) substring options: (int) options skip: (int) skip length: (int) raw_line_length resultLength: (int*) resultLength
+static int Search(NSString* needle,
+                  screen_char_t* rawline, 
+                  int raw_line_length, 
+                  int start, 
+                  int end, 
+                  int options,
+                  int* resultLength)
+{
+    char* charHaystack = malloc(raw_line_length + 1);
+    int* deltas = malloc(sizeof(int) * (raw_line_length + 1));
+    // The 'deltas' array maps positions in the stripped haystack to
+    // their offset from the original position in the buffer after removing
+    // 0xffff characters.
+    //
+    // Original string with some double-width characters. 0xfff shown as '-':
+    // 0123456789
+    // ab-c-de-fg
+    //
+    // Stripped string:
+    // 0123456
+    // abcdefg
+    //
+    // Mapping:
+    // new -> orig    delta
+    // 0 -> 0         0
+    // 1 -> 2         1
+    // 2 -> 3         1
+    // 3 -> 5         2
+    // 4 -> 6         2
+    // 5 -> 8         3
+    // 6 -> 9         3
+    int delta = 0;
+    int o = 0;
+    for (int i = start; i < end; ++i) {
+        unichar c = rawline[i].ch;
+        if (c == 0xffff) {
+            ++delta;
+        } else {
+            deltas[o] = delta;
+            charHaystack[o++] = c;
+        }
+    }
+    deltas[o] = delta;
+    NSString* haystack = [[[NSString alloc] initWithBytesNoCopy:charHaystack 
+                                                         length:o 
+                                                       encoding:NSUTF8StringEncoding 
+                                                   freeWhenDone:NO] autorelease];
+    
+    int apiOptions = NSBackwardsSearch;
+    if (options & FindOptCaseInsensitive) {
+        apiOptions |= NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch | NSWidthInsensitiveSearch;
+    }
+    NSRange range = [haystack rangeOfString:needle options:apiOptions];
+    int result = -1;
+    if (range.location != NSNotFound) {
+        int adjustedLocation;
+        int adjustedLength;
+        adjustedLocation = range.location + deltas[range.location];
+        adjustedLength = range.length + deltas[range.location + range.length] - 
+            deltas[range.location];
+        *resultLength = adjustedLength;
+        result = adjustedLocation;
+    }
+    free(deltas);
+    free(charHaystack);
+    return result;
+}
+
+- (int) _findInRawLine:(int) entry needle:(NSString*)needle options: (int) options skip: (int) skip length: (int) raw_line_length resultLength: (int*) resultLength
 {
     screen_char_t* rawline = raw_buffer + [self _lineRawOffset:entry];
-    unichar buffer[1000];
-    NSRange range;
-    range.location = 0;
-    range.length = [substring length];
-    if (range.length > 1000) {
-        range.length = 1000;
+    if (skip > raw_line_length) {
+        skip = raw_line_length;
     }
-    [substring getCharacters:buffer range:range];
-
-    // TODO: use a smarter search algorithm
+    if (skip < 0) {
+        skip = 0;
+    }
     if (options & FindOptBackwards) {
-        int i;
-        NSAssert(skip >= 0, @"Negative skip");
-        if (skip + range.length > raw_line_length) {
-            skip = raw_line_length - range.length;
+        // This algorithm is wacky and slow but stay with me here:
+        // When you search backward, the most common case is that you are
+        // repeating the previous search but with a one-character longer
+        // needle (having grown at the end). So the rightmost result we can
+        // accept is one whose leftmost position is at the leftmost position of
+        // the previous result.
+        //
+        // Example: Consider a previosu search of [jump]
+        //  The quick brown fox jumps over the lazy dog.
+        //                      ^^^^
+        // The search is then extended to [jumps]. We want to return:
+        //  The quick brown fox jumps over the lazy dog.
+        //                      ^^^^^
+        // Ideally, we would search only the necessary part of the haystack:
+        //  Search("The quick brown fox jumps", "jumps")
+        //
+        // But what we did there was to add one byte to the haystack. That works
+        // for ascii, but not in other cases. Let us consider a localized
+        // German search where "ss" matches "ß". Let's first search for [jump]
+        // in this translation:
+        //
+        //  Ein quicken Braunfox jumpss uber die Lazydog.
+        //                       ^^^^
+        // Then the needle becomes [jumpß]. Under the previous algorithm we'd
+        // extend the haystack to:
+        //  Ein quicken Braunfox jumps
+        // And there is no match for jumpß.
+        //
+        // So to do the optimal algorithm, you'd have to know how many characters
+        // to add to the haystack in the worst localized case. With decomposed
+        // diacriticals, the upper bound is unclear.
+        //
+        // I'm going to err on the side of correctness over performance. I'm
+        // sure this could be improved if needed. One obvious
+        // approach is to use the naïve algorithm when the text is all ASCII.
+        //
+        // Thus, the algorithm is to do a reverse search until a hit is found
+        // that begins not before 'skip', which is the leftmost acceptable
+        // position.
+        
+        int limit = raw_line_length;
+        int tempResultLength;
+        int tempPosition;
+        do {
+            tempPosition =  Search(needle, rawline, raw_line_length, 0, limit, 
+                                   options, &tempResultLength);
+            limit = tempPosition + tempResultLength - 1;
+        } while (tempPosition != -1 && tempPosition > skip);
+        if (tempPosition != -1) {
+            *resultLength = tempResultLength;
         }
-        if (skip < 0) {
-            return -1;
-        }
-        if (options & FindOptCaseInsensitive) {
-            for (i = skip; i >= 0; --i) {
-                if (stringCaseCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
-                    return i;
-                }
-            }
-        } else {
-            for (i = skip; i >= 0; --i) {
-                if (stringCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
-                    return i;
-                }
-            }
-        }
+        return tempPosition;
     } else {
-        // Search forwards
-        int i;
-        int limit = raw_line_length - [substring length];
-        if (skip + range.length > raw_line_length) {
-            return -1;
-        }
-        if (options & FindOptCaseInsensitive) {
-            for (i = skip; i <= limit; ++i) {
-                if (stringCaseCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
-                    return i;
-                }
-            }
-        } else {
-            for (i = skip; i <= limit; ++i) {
-                if (stringCompare(buffer, range.length, rawline + i, raw_line_length - i, resultLength)) {
-                    return i;
-                }
-            }
-        }
+        return Search(needle, rawline, raw_line_length, skip, raw_line_length, 
+                      options, resultLength);
     }
-    return -1;
 }
 
 - (int) _lineLength: (int) anIndex
