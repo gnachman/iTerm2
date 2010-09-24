@@ -2937,13 +2937,39 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         [attrib setObject:theFont forKey: NSFontAttributeName];
     }
 
-    Y += lineHeight + [theFont descender];
-    NSString* charToDraw = [NSString stringWithCharacters:&code length:1];
-    [charToDraw drawWithRect:NSMakeRect(X,Y, 0, 0) options:0 attributes:attrib];
+    char ascii_char = (char)code;
+    if (!renderBold && ascii_char == code) {
+        // if we can safely convert to an ascii character, we can use the faster CoreGraphics api.
+        CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
 
-    // redraw the character offset by 1 pixel, this is faster than real bold
-    if (renderBold) {
-        [charToDraw drawWithRect:NSMakeRect(X+1,Y, 0, 0) options:0 attributes:attrib];
+        CGContextSelectFont(ctx, 
+                            [[theFont fontName] UTF8String], 
+                            [theFont pointSize], 
+                            kCGEncodingMacRoman);
+
+        CGContextSetFillColorSpace(ctx, [[color colorSpace] CGColorSpace]);
+        int componentCount = [color numberOfComponents];
+        {
+          float components[componentCount];
+          [color getComponents:components];
+          CGContextSetFillColor(ctx, components);
+        }
+        CGContextSetTextMatrix(ctx, CGAffineTransformMakeScale(1.0, -1.0));
+        CGContextSetTextDrawingMode(ctx, kCGTextFill);
+        CGContextSetShouldAntialias(ctx, YES);
+
+        Y += lineHeight + [theFont descender];
+        CGContextShowTextAtPoint(ctx, X, Y, &ascii_char, 1);
+        CGContextFillPath(ctx);
+    } else {
+        Y += lineHeight + [theFont descender];
+        NSString* charToDraw = [NSString stringWithCharacters:&code length:1];
+        [charToDraw drawWithRect:NSMakeRect(X,Y, 0, 0) options:0 attributes:attrib];
+        
+        // redraw the character offset by 1 pixel, this is faster than real bold
+        if (renderBold) {
+            [charToDraw drawWithRect:NSMakeRect(X+1,Y, 0, 0) options:0 attributes:attrib];
+        }
     }
 }
 
