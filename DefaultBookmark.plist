@@ -433,8 +433,8 @@
     <true/>
     <key>Name</key>
     <string>Default</string>
-    <key>Non Ascii Double Width</key>
-    <true/>
+    <key>Ambiguous Double Width</key>
+    <false/>
     <key>Non Ascii Font</key>
     <string>Monaco 12</string>
     <key>Normal Font</key>

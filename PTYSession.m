@@ -1174,7 +1174,7 @@ static NSImage *warningImage;
     [self setAntiCode:[[aDict objectForKey:KEY_IDLE_CODE] intValue]];
     [self setAntiIdle:[[aDict objectForKey:KEY_SEND_CODE_WHEN_IDLE] boolValue]];
     [self setAutoClose:[[aDict objectForKey:KEY_CLOSE_SESSIONS_ON_END] boolValue]];
-    [self setDoubleWidth:[[aDict objectForKey:KEY_TREAT_NON_ASCII_AS_DOUBLE_WIDTH] boolValue]];
+    [self setDoubleWidth:[[aDict objectForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH] boolValue]];
     [self setXtermMouseReporting:[[aDict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue]];
     [SCREEN setScrollback:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
