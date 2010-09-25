@@ -2504,7 +2504,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         // NSLog(@"PTYTextView: done");
         _findInProgress = NO;
         if (!found) {
-	    // Clear the selection.
+        // Clear the selection.
             startX = startY = endX = endY = -1;
             absLastFindY = -1;
             [self setNeedsDisplay:YES];
@@ -2937,14 +2937,14 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         [attrib setObject:theFont forKey: NSFontAttributeName];
     }
 
-    char ascii_char = (char)code;
-    if (!renderBold && ascii_char == code) {
+    if (code < 128) {
+        char ascii_char = (char)code;
         // if we can safely convert to an ascii character, we can use the faster CoreGraphics api.
         CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
 
-        CGContextSelectFont(ctx, 
-                            [[theFont fontName] UTF8String], 
-                            [theFont pointSize], 
+        CGContextSelectFont(ctx,
+                            [[theFont fontName] UTF8String],
+                            [theFont pointSize],
                             kCGEncodingMacRoman);
 
         CGContextSetFillColorSpace(ctx, [[color colorSpace] CGColorSpace]);
@@ -2956,16 +2956,24 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         }
         CGContextSetTextMatrix(ctx, CGAffineTransformMakeScale(1.0, -1.0));
         CGContextSetTextDrawingMode(ctx, kCGTextFill);
-        CGContextSetShouldAntialias(ctx, YES);
+        CGContextSetShouldAntialias(ctx, [self antiAlias]);
 
         Y += lineHeight + [theFont descender];
+        Y = (int)Y;
+        X = (int)X;
         CGContextShowTextAtPoint(ctx, X, Y, &ascii_char, 1);
         CGContextFillPath(ctx);
+        if (renderBold) {
+            CGContextShowTextAtPoint(ctx, X+1, Y, &ascii_char, 1);
+            CGContextFillPath(ctx);
+        }
     } else {
         Y += lineHeight + [theFont descender];
+        Y = (int)Y;
+        X = (int)X;
         NSString* charToDraw = [NSString stringWithCharacters:&code length:1];
         [charToDraw drawWithRect:NSMakeRect(X,Y, 0, 0) options:0 attributes:attrib];
-        
+
         // redraw the character offset by 1 pixel, this is faster than real bold
         if (renderBold) {
             [charToDraw drawWithRect:NSMakeRect(X+1,Y, 0, 0) options:0 attributes:attrib];
