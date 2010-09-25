@@ -141,7 +141,7 @@ NSString *sessionsKey = @"sessions";
 
     _resizeInProgressFlag = NO;
 
-    if (smartLayout) {
+    if (!smartLayout) {
         [(PTYWindow*)[self window] setLayoutDone];
     }
 
