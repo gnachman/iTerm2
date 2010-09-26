@@ -2877,9 +2877,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if([self hasMarkedText]) {
         int len=[markedText length];
         if (len>WIDTH-x1) len=WIDTH-x1;
-        [markedText drawInRect:NSMakeRect(floor(x1 * charWidth + MARGIN),
-                (yStart + [dataSource numberOfLines] - HEIGHT) * lineHeight + (lineHeight - cursorHeight),
-                ceil((WIDTH-x1)*cursorWidth),cursorHeight)];
+        int descender = [nafont descender];
+        NSRect rect = NSMakeRect(floor(x1 * charWidth + MARGIN),
+                                 (yStart + [dataSource numberOfLines] - HEIGHT) * lineHeight + (lineHeight - cursorHeight) + descender,
+                                 ceil((WIDTH-x1)*cursorWidth),
+                                 cursorHeight - descender);
+        [markedText drawInRect:rect];
         memset([dataSource dirty] + yStart * WIDTH + x1,
                1,
                WIDTH - x1 > len*2 ? len*2 : WIDTH-x1); //len*2 is an over-estimation, but safe
