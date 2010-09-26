@@ -589,6 +589,7 @@ NSString *sessionsKey = @"sessions";
 
     // Display the new size in the window title.
     // TODO(georgen): Maybe do this only if the size actually changed
+    [self fitSessionsToWindow];
     PTYSession* session = [self currentSession];
     NSString *aTitle = [NSString stringWithFormat:@"%@ (%d,%d)", 
                         [self currentSessionName], 
@@ -596,7 +597,6 @@ NSString *sessionsKey = @"sessions";
                         [session rows]];
     [self setWindowTitle: aTitle];
     tempTitle = YES;
-    [self fitSessionsToWindow];
 
     // Post a notification
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermWindowDidResize" object: self userInfo: nil];    
