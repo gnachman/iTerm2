@@ -71,7 +71,7 @@ static NSImage *warningImage;
     thisBundle = [NSBundle bundleForClass: [self class]];
     imagePath = [thisBundle pathForResource:@"important" ofType:@"png"];
     if (imagePath) {
-        warningImage = [[NSImage alloc] initByReferencingFile: imagePath];  
+        warningImage = [[NSImage alloc] initByReferencingFile: imagePath];
         //NSLog(@"%@\n%@",imagePath,warningImage);
     }
 
@@ -89,6 +89,7 @@ static NSImage *warningImage;
         return (nil);
     }
 
+    isDivorced = NO;
     gettimeofday(&lastInput, NULL);
     lastOutput = lastBlink = lastInput;
     EXIT=NO;
@@ -105,7 +106,7 @@ static NSImage *warningImage;
     SHELL = [[PTYTask alloc] init];
     TERMINAL = [[VT100Terminal alloc] init];
     SCREEN = [[VT100Screen alloc] init];
-    NSParameterAssert(SHELL != nil && TERMINAL != nil && SCREEN != nil);    
+    NSParameterAssert(SHELL != nil && TERMINAL != nil && SCREEN != nil);
 
     // Need Growl plist stuff
     gd = [iTermGrowlDelegate sharedInstance];
@@ -142,7 +143,7 @@ static NSImage *warningImage;
 
     [[NSNotificationCenter defaultCenter] removeObserver: self];
 
-    [super dealloc];    
+    [super dealloc];
 #if DEBUG_ALLOC
     NSLog(@"%s: 0x%x, done", __PRETTY_FUNCTION__, self);
 #endif
@@ -186,8 +187,8 @@ static NSImage *warningImage;
     TEXTVIEW = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, 0, aSize.width, aSize.height)];
     [TEXTVIEW setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [TEXTVIEW setFont:[ITAddressBookMgr fontWithDesc:[addressBookEntry objectForKey:KEY_NORMAL_FONT]]
-               nafont:[ITAddressBookMgr fontWithDesc:[addressBookEntry objectForKey:KEY_NON_ASCII_FONT]] 
-    horizontalSpacing:[[addressBookEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue] 
+               nafont:[ITAddressBookMgr fontWithDesc:[addressBookEntry objectForKey:KEY_NON_ASCII_FONT]]
+    horizontalSpacing:[[addressBookEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
       verticalSpacing:[[addressBookEntry objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [self setTransparency:[[addressBookEntry objectForKey:KEY_TRANSPARENCY] floatValue]];
 
@@ -219,7 +220,7 @@ static NSImage *warningImage;
         antiIdleTimer = nil;
         newOutput = NO;
 
-        // register for some notifications  
+        // register for some notifications
         [[NSNotificationCenter defaultCenter] addObserver:self
                 selector:@selector(tabViewWillRedraw:)
                 name:@"iTermTabViewWillRedraw" object:nil];
@@ -302,7 +303,7 @@ static NSImage *warningImage;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     EXIT = YES;
-    [SHELL stop];   
+    [SHELL stop];
 
     // final update of display
     [self updateDisplay];
@@ -322,7 +323,7 @@ static NSImage *warningImage;
 
     [updateTimer invalidate];
     [updateTimer release];
-    updateTimer = nil;  
+    updateTimer = nil;
 
     parent = nil;
 }
@@ -360,10 +361,10 @@ static NSImage *warningImage;
     VT100TCC token;
 
     // while loop to process all the tokens we can get
-    while (!EXIT && 
-           TERMINAL && 
+    while (!EXIT &&
+           TERMINAL &&
            ((token = [TERMINAL getNextToken]),
-            token.type != VT100_WAIT && 
+            token.type != VT100_WAIT &&
             token.type != VT100CC_NULL)) {
         // process token
         if (token.type != VT100_SKIP) {
@@ -388,7 +389,7 @@ static NSImage *warningImage;
     NSLog(@"%s(%d):-[PTYSession brokenPipe]", __FILE__, __LINE__);
 #endif
     [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Broken Pipe",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts")
-    withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Session %@ #%d just terminated.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts"),[self name],[self realObjectCount]] 
+    withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Session %@ #%d just terminated.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts"),[self name],[self realObjectCount]]
     andNotification:@"Broken Pipes"];
 
     EXIT=YES;
@@ -425,10 +426,10 @@ static NSImage *warningImage;
 
     // Check if we have a custom key mapping for this event
 
-    keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode 
-                                                  modifiers:modflag 
+    keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
+                                                  modifiers:modflag
                                                highPriority:&keyBindingPriority
-                                                       text:&keyBindingText 
+                                                       text:&keyBindingText
                                                 keyMappings:[[self addressBookEntry] objectForKey: KEY_KEYBOARD_MAP]];
 
 
@@ -472,10 +473,10 @@ static NSImage *warningImage;
     //NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
 
     // Check if we have a custom key mapping for this event
-    keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode 
-                                                  modifiers:modflag 
+    keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
+                                                  modifiers:modflag
                                                highPriority:&priority
-                                                       text:&keyBindingText 
+                                                       text:&keyBindingText
                                                 keyMappings:[[self addressBookEntry] objectForKey:KEY_KEYBOARD_MAP]];
 
     if (keyBindingAction >= 0) {
@@ -496,31 +497,31 @@ static NSImage *warningImage;
                 break;
             case KEY_ACTION_PREVIOUS_WINDOW:
                 [[iTermController sharedInstance] previousTerminal: nil];
-                break;  
+                break;
             case KEY_ACTION_SCROLL_END:
                 [TEXTVIEW scrollEnd];
-                [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll]; 
+                [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll];
                 break;
             case KEY_ACTION_SCROLL_HOME:
                 [TEXTVIEW scrollHome];
-                [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll]; 
+                [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll];
                 break;
             case KEY_ACTION_SCROLL_LINE_DOWN:
                 [TEXTVIEW scrollLineDown: self];
-                [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll]; 
+                [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll];
                 break;
             case KEY_ACTION_SCROLL_LINE_UP:
                 [TEXTVIEW scrollLineUp: self];
-                [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll]; 
-                break;  
+                [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll];
+                break;
             case KEY_ACTION_SCROLL_PAGE_DOWN:
                 [TEXTVIEW scrollPageDown: self];
-                [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll]; 
+                [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll];
                 break;
             case KEY_ACTION_SCROLL_PAGE_UP:
                 [TEXTVIEW scrollPageUp: self];
-                [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll]; 
-                break;  
+                [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll];
+                break;
             case KEY_ACTION_ESCAPE_SEQUENCE:
                 if ([keyBindingText length] > 0) {
                     aString = [NSString stringWithFormat:@"\e%@", keyBindingText];
@@ -528,7 +529,7 @@ static NSImage *warningImage;
                 }
                 break;
             case KEY_ACTION_HEX_CODE:
-                if ([keyBindingText length] > 0 && 
+                if ([keyBindingText length] > 0 &&
                     sscanf([keyBindingText UTF8String], "%x", &hexCodeTmp) == 1) {
                     hexCode = (unsigned char) hexCodeTmp;
                     [self writeTask:[NSData dataWithBytes:&hexCode length: sizeof(hexCode)]];
@@ -552,13 +553,13 @@ static NSImage *warningImage;
         }
     }
     // else do standard handling of event
-    else 
+    else
     {
         if (modflag & NSFunctionKeyMask)
         {
             NSData *data = nil;
 
-            switch(unicode) 
+            switch(unicode)
             {
                 case NSUpArrowFunctionKey: data = [TERMINAL keyArrowUp:modflag]; break;
                 case NSDownArrowFunctionKey: data = [TERMINAL keyArrowDown:modflag]; break;
@@ -600,7 +601,7 @@ static NSImage *warningImage;
                 send_strlen = [keydat length];
             }
         }
-        else if ((modflag & NSAlternateKeyMask) && 
+        else if ((modflag & NSAlternateKeyMask) &&
                  ([self optionKey] != OPT_NORMAL))
         {
             NSData *keydat = ((modflag & NSControlKeyMask) && unicode>0)?
@@ -614,7 +615,7 @@ static NSImage *warningImage;
             if ([self optionKey] == OPT_ESC) {
                 send_pchr = '\e';
             }
-            else if ([self optionKey] == OPT_META && send_str != NULL) 
+            else if ([self optionKey] == OPT_META && send_str != NULL)
             {
                 int i;
                 for (i = 0; i < send_strlen; ++i)
@@ -639,7 +640,7 @@ static NSImage *warningImage;
             // Check if we are in keypad mode
             if (modflag & NSNumericPadKeyMask) {
                 data = [TERMINAL keypadData: unicode keystr: keystr];
-            }       
+            }
 
 
             if (data != nil ) {
@@ -656,14 +657,14 @@ static NSImage *warningImage;
                 send_strlen = 1;
             }
 
-            else if ((modflag & NSControlKeyMask) && 
+            else if ((modflag & NSControlKeyMask) &&
                 (modflag & NSShiftKeyMask) &&
                 send_strlen == 1 &&
                 send_str[0] == '/')
             {
                 send_str = (unsigned char*)"\177"; // control-?
                 send_strlen = 1;
-            }                       
+            }
             else if (modflag & NSControlKeyMask &&
                      send_strlen == 1 &&
                      send_str[0] == '/')
@@ -681,7 +682,7 @@ static NSImage *warningImage;
 
         }
 
-        if (EXIT == NO ) 
+        if (EXIT == NO )
         {
             if (send_pchr >= 0) {
                 char c = send_pchr;
@@ -742,7 +743,7 @@ static NSImage *warningImage;
     if (x == [SCREEN cursorX] && y == [SCREEN cursorY]) {
         return;
     }
-    
+
     NSData *data;
     int i;
     // now move the cursor up or down
@@ -754,7 +755,7 @@ static NSImage *warningImage;
         }
         [self writeTask:[NSData dataWithBytes:[data bytes] length:[data length]]];
     }
-    // now move the cursor left or right    
+    // now move the cursor left or right
     for (i = 0; i < abs(x - [SCREEN cursorX]); i++) {
         if (x < [SCREEN cursorX]) {
             data = [TERMINAL keyArrowLeft:0];
@@ -778,7 +779,7 @@ static NSImage *warningImage;
     if (EXIT) {
         return;
     }
-    
+
     //    NSLog(@"insertText: %@",string);
     mstring = [NSMutableString stringWithString:string];
     max = [string length];
@@ -984,12 +985,12 @@ static NSImage *warningImage;
             if (isProcessing) {
                 [self setIsProcessing: NO];
             }
-            
+
             if (newOutput) {
                 // Idle after new output
                 if (!growlIdle && now.tv_sec > lastOutput.tv_sec+1) {
                     [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Idle",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts")
-                    withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Session %@ #%d becomes idle.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts"),[self name],[self realObjectCount]]  
+                    withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Session %@ #%d becomes idle.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts"),[self name],[self realObjectCount]]
                     andNotification:@"Idle"];
                     growlIdle = YES;
                     growlNewOutput = NO;
@@ -1004,10 +1005,10 @@ static NSImage *warningImage;
                 if (isProcessing == NO && ![[PreferencePanel sharedInstance] useCompactLabel]) {
                     [self setIsProcessing: YES];
                 }
-                
+
                 if (!growlNewOutput && ![parent sendInputToAllSessions]) {
                     [gd growlNotify:NSLocalizedStringFromTableInBundle(@"New Output",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts")
-                    withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"New Output was received in %@ #%d.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts"),[self name],[self realObjectCount]] 
+                    withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"New Output was received in %@ #%d.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts"),[self name],[self realObjectCount]]
                     andNotification:@"New Output"];
                     growlNewOutput = YES;
                 }
@@ -1039,21 +1040,21 @@ static NSImage *warningImage;
             [self setIcon: warningImage];
             if ([TEXTVIEW keyIsARepeat] == NO && ![[TEXTVIEW window] isKeyWindow]) {
                 [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Bell",
-                                                                   @"iTerm", 
-                                                                   [NSBundle bundleForClass:[self class]], 
+                                                                   @"iTerm",
+                                                                   [NSBundle bundleForClass:[self class]],
                                                                    @"Growl Alerts")
                 withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Session %@ #%d just rang a bell!",
-                                                                                              @"iTerm", 
-                                                                                              [NSBundle bundleForClass:[self class]], 
+                                                                                              @"iTerm",
+                                                                                              [NSBundle bundleForClass:[self class]],
                                                                                               @"Growl Alerts"),
                                  [self name],
-                                 [self realObjectCount]] 
-                andNotification:@"Bells"];          
+                                 [self realObjectCount]]
+                andNotification:@"Bells"];
             }
         } else {
             [self setIcon: nil];
         }
-    }   
+    }
 }
 
 - (BOOL) isProcessing
@@ -1074,7 +1075,7 @@ static NSImage *warningImage;
     bgColor = [ITAddressBookMgr decodeColor:bg];
 
     int bgNum = -1;
-    int fgNum = -1; 
+    int fgNum = -1;
     for(int i = 0; i < 16; ++i) {
         NSString* key = [NSString stringWithFormat:@"KEY_ANSI_%d_COLOR", i];
         if ([fgColor isEqual: [ITAddressBookMgr decodeColor:[aDict objectForKey:key]]]) {
@@ -1125,14 +1126,14 @@ static NSImage *warningImage;
     for (i = 0; i < 8; i++) {
         colorTable[0][i] = [ITAddressBookMgr decodeColor:[aDict objectForKey:[NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i]]];
         colorTable[1][i] = [ITAddressBookMgr decodeColor:[aDict objectForKey:[NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i + 8]]];
-    }   
+    }
     for(i=0;i<8;i++) {
         [self setColorTable:i color:colorTable[0][i]];
         [self setColorTable:i+8 color:colorTable[1][i]];
     }
     for (i=0;i<216;++i) {
-        [self setColorTable:i+16 color:[NSColor colorWithCalibratedRed:(i/36) ? ((i/36)*40+55)/256.0:0 
-                                                  green:(i%36)/6 ? (((i%36)/6)*40+55)/256.0:0 
+        [self setColorTable:i+16 color:[NSColor colorWithCalibratedRed:(i/36) ? ((i/36)*40+55)/256.0:0
+                                                  green:(i%36)/6 ? (((i%36)/6)*40+55)/256.0:0
                                                     blue:(i%6) ?((i%6)*40+55)/256.0:0
                                                   alpha:1]];
     }
@@ -1144,8 +1145,8 @@ static NSImage *warningImage;
     [self setBackgroundImagePath:[aDict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
 
     // colour scheme
-    [self setCOLORFGBG_VALUE: [self ansiColorsMatchingForeground:[aDict objectForKey:KEY_FOREGROUND_COLOR] 
-                                                   andBackground:[aDict objectForKey:KEY_BACKGROUND_COLOR] 
+    [self setCOLORFGBG_VALUE: [self ansiColorsMatchingForeground:[aDict objectForKey:KEY_FOREGROUND_COLOR]
+                                                   andBackground:[aDict objectForKey:KEY_BACKGROUND_COLOR]
                                                       inBookmark:aDict]];
 
     // transparency
@@ -1167,7 +1168,7 @@ static NSImage *warningImage;
         } else {
             [parent disableBlur];
         }
-    } 
+    }
     [TEXTVIEW setAntiAlias:[[aDict objectForKey:KEY_ANTI_ALIASING] boolValue]];
     [self setEncoding:[[aDict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]];
     [self setTERM_VALUE:[aDict objectForKey:KEY_TERMINAL_TYPE]];
@@ -1178,9 +1179,9 @@ static NSImage *warningImage;
     [self setXtermMouseReporting:[[aDict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue]];
     [SCREEN setScrollback:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
-    [self setFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NORMAL_FONT]] 
+    [self setFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NORMAL_FONT]]
            nafont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NON_ASCII_FONT]]
-horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue] 
+horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
   verticalSpacing:[[aDict objectForKey:KEY_VERTICAL_SPACING] floatValue]];
 }
 
@@ -1195,10 +1196,10 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 
     // Clear buffer
     aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Clear Buffer",
-                                                                                     @"iTerm", 
-                                                                                     [NSBundle bundleForClass: [self class]], 
-                                                                                     @"Context menu") 
-                                           action:@selector(clearBuffer:) 
+                                                                                     @"iTerm",
+                                                                                     [NSBundle bundleForClass: [self class]],
+                                                                                     @"Context menu")
+                                           action:@selector(clearBuffer:)
                                     keyEquivalent:@""];
     [aMenuItem setTarget: [self parent]];
     [theMenu addItem: aMenuItem];
@@ -1206,7 +1207,7 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 
     // Ask the parent if it has anything to add
     if ([[self parent] respondsToSelector:@selector(menuForEvent: menu:)]) {
-        [[self parent] menuForEvent:theEvent menu: theMenu];    
+        [[self parent] menuForEvent:theEvent menu: theMenu];
     }
 }
 
@@ -1262,7 +1263,7 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     if (!theName) {
         theName = NSLocalizedStringFromTableInBundle(@"Untitled",
                                                      @"iTerm",
-                                                     [NSBundle bundleForClass:[self class]], 
+                                                     [NSBundle bundleForClass:[self class]],
                                                      @"Profiles");
     }
 
@@ -1291,7 +1292,7 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     if (!theName) {
         theName = NSLocalizedStringFromTableInBundle(@"Untitled",
                                                      @"iTerm",
-                                                     [NSBundle bundleForClass:[self class]], 
+                                                     [NSBundle bundleForClass:[self class]],
                                                      @"Profiles");
     }
 
@@ -1300,14 +1301,14 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     if (windowTitle == nil) {
         [self setWindowTitle:theName];
     }
-    
+
     [tabViewItem setLabel:name];
     [self setBell:NO];
 
     // get the session submenu to be rebuilt
     if ([[iTermController sharedInstance] currentTerminal] == [self parent]) {
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNameOfSessionDidChange"
-                                                            object:[self parent] 
+                                                            object:[self parent]
                                                           userInfo:nil];
     }
 }
@@ -1544,7 +1545,7 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
         return;
     }
 
-    if (([TEXTVIEW defaultFGColor] != color) || 
+    if (([TEXTVIEW defaultFGColor] != color) ||
        ([[TEXTVIEW defaultFGColor] alphaComponent] != [color alphaComponent])) {
         // Change the fg color for future stuff
         [TEXTVIEW setFGColor: color];
@@ -1561,7 +1562,7 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
         return;
     }
 
-    if (([TEXTVIEW defaultBGColor] != color) || 
+    if (([TEXTVIEW defaultBGColor] != color) ||
         ([[TEXTVIEW defaultBGColor] alphaComponent] != [color alphaComponent])) {
         // Change the bg color for future stuff
         [TEXTVIEW setBGColor: color];
@@ -1658,7 +1659,7 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     if (set == [self antiIdle]) {
         return;
     }
-    
+
     if (set) {
         antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:30
                 target:self selector:@selector(doAntiIdle) userInfo:nil
@@ -1916,6 +1917,48 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     NSFont* font = [self fontWithRelativeSize:dir from:[TEXTVIEW font]];
     NSFont* nafont = [self fontWithRelativeSize:dir from:[TEXTVIEW nafont]];
     [self setFont:font nafont:nafont horizontalSpacing:[TEXTVIEW horizontalSpacing] verticalSpacing:[TEXTVIEW verticalSpacing]];
+
+    // Move this bookmark into the sessions model.
+    NSString* guid = [self divorceAddressBookEntryFromPreferences];
+
+    // Set the font in the bookmark dictionary
+    NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:addressBookEntry];
+    [temp setObject:[ITAddressBookMgr descFromFont:font] forKey:KEY_NORMAL_FONT];
+    [temp setObject:[ITAddressBookMgr descFromFont:nafont] forKey:KEY_NON_ASCII_FONT];
+
+    // Update this session's copy of the bookmark
+    [self setAddressBookEntry:[NSDictionary dictionaryWithDictionary:temp]];
+
+    // Update the model's copy of the bookmark.
+    [[BookmarkModel sessionsInstance] setBookmark:[self addressBookEntry] withGuid:guid];
+
+    // Update an existing one-bookmark prefs dialog, if open.
+    if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
+        [[PreferencePanel sessionsInstance] underlyingBookmarkDidChange];
+    }
+}
+
+- (NSString*)divorceAddressBookEntryFromPreferences
+{
+    Bookmark* bookmark = [self addressBookEntry];
+    NSString* guid = [bookmark objectForKey:KEY_GUID];
+    if (isDivorced) {
+        return guid;
+    }
+    isDivorced = YES;
+    [[BookmarkModel sessionsInstance] removeBookmarkWithGuid:guid];
+    [[BookmarkModel sessionsInstance] addBookmark:bookmark];
+
+    // Change the GUID so that this session can follow a different path in life
+    // than its bookmark. Changes to the bookmark will no longer affect this
+    // session, and changes to this session won't affect its originating bookmark
+    // (which may not evene exist any longer).
+    guid = [BookmarkModel newGuid];
+    [[BookmarkModel sessionsInstance] setObject:guid
+                                         forKey:KEY_GUID
+                                     inBookmark:bookmark];
+    [self setAddressBookEntry:[[BookmarkModel sessionsInstance] bookmarkWithGuid:guid]];
+    return guid;
 }
 
 @end

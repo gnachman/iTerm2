@@ -145,15 +145,18 @@
     // a number, and the positions are stored by window name. The window name
     // includes its unique number. framePos gives this window's number.
     int framePos;
+
+    // In the process of toggling full screen.
+    BOOL _togglingFullScreen;
 }
 
 // Initialize a new PseudoTerminal.
-// smartLayout: If true then position windows using the "smart layout" 
+// smartLayout: If true then position windows using the "smart layout"
 //   algorithm.
 // fullScreen: If nil, then a normal window is opened. If not nil, it gives the
 //   size of the screen and a full screen window is opened with those
 //   dimensions.
-- (id)initWithSmartLayout:(BOOL)smartLayout 
+- (id)initWithSmartLayout:(BOOL)smartLayout
                fullScreen:(NSScreen*)fullScreen;
 
 // Called on object deallocation.
@@ -215,7 +218,7 @@
 // accessor
 - (BOOL)fullScreen;
 
-// Called by VT100Screen when it wants to resize a window for a 
+// Called by VT100Screen when it wants to resize a window for a
 // session-initiated resize. It resizes the session, then the window, then all
 // sessions to fit the new window size.
 - (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
@@ -276,7 +279,7 @@
 - (void)windowWillMiniaturize:(NSNotification *)aNotification;
 
 // Called when this window becomes key.
-// "A key window is the current focus for keyboard events (for example, it 
+// "A key window is the current focus for keyboard events (for example, it
 // contains a text field the user is typing in)"
 - (void)windowDidBecomeKey:(NSNotification *)aNotification;
 
@@ -302,7 +305,7 @@
 - (void)windowDidToggleToolbarVisibility:(id)sender;
 
 // Called when the green 'zoom' button in the top left of the window is pressed.
-- (NSRect)windowWillUseStandardFrame:(NSWindow *)sender 
+- (NSRect)windowWillUseStandardFrame:(NSWindow *)sender
                         defaultFrame:(NSRect)defaultFrame;
 
 
@@ -317,51 +320,51 @@
 // Tab View Delegate Methods
 
 // Called before a tab view item is selected.
-- (void)tabView:(NSTabView *)tabView 
+- (void)tabView:(NSTabView *)tabView
     willSelectTabViewItem:(NSTabViewItem *)tabViewItem;
 
 // Called afer a tab is selected.
-- (void)tabView:(NSTabView *)tabView 
+- (void)tabView:(NSTabView *)tabView
     didSelectTabViewItem:(NSTabViewItem *)tabViewItem;
 
 // Called before removing a tab.
-- (void)tabView:(NSTabView *)tabView 
+- (void)tabView:(NSTabView *)tabView
     willRemoveTabViewItem:(NSTabViewItem *)tabViewItem;
 
 // Called before adding a tab.
-- (void)tabView:(NSTabView *)tabView 
+- (void)tabView:(NSTabView *)tabView
     willAddTabViewItem:(NSTabViewItem *)tabViewItem;
 
 // Called before inserting a tab at a specific location.
-- (void)tabView:(NSTabView *)tabView 
-    willInsertTabViewItem:(NSTabViewItem *)tabViewItem 
+- (void)tabView:(NSTabView *)tabView
+    willInsertTabViewItem:(NSTabViewItem *)tabViewItem
         atIndex:(int)anIndex;
 
 // Called to see if a tab can be closed. May open a confirmation dialog.
-- (BOOL)tabView:(NSTabView*)tabView 
+- (BOOL)tabView:(NSTabView*)tabView
      shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem;
 
 // Called to see if a tab can be dragged.
-- (BOOL)tabView:(NSTabView*)aTabView 
-    shouldDragTabViewItem:(NSTabViewItem *)tabViewItem 
+- (BOOL)tabView:(NSTabView*)aTabView
+    shouldDragTabViewItem:(NSTabViewItem *)tabViewItem
      fromTabBar:(PSMTabBarControl *)tabBarControl;
 
 // Called to see if a tab can be dropped in this window.
-- (BOOL)tabView:(NSTabView*)aTabView 
-    shouldDropTabViewItem:(NSTabViewItem *)tabViewItem 
+- (BOOL)tabView:(NSTabView*)aTabView
+    shouldDropTabViewItem:(NSTabViewItem *)tabViewItem
        inTabBar:(PSMTabBarControl *)tabBarControl;
 
 // Called after droping a tab in this window.
-- (void)tabView:(NSTabView*)aTabView 
-    didDropTabViewItem:(NSTabViewItem *)tabViewItem 
+- (void)tabView:(NSTabView*)aTabView
+    didDropTabViewItem:(NSTabViewItem *)tabViewItem
        inTabBar:(PSMTabBarControl *)aTabBarControl;
 
 // Called after the last tab in a window is closed.
-- (void)tabView:(NSTabView *)aTabView 
+- (void)tabView:(NSTabView *)aTabView
     closeWindowForLastTabViewItem:(NSTabViewItem *)tabViewItem;
 
 // Compose the image for a tab control.
-- (NSImage *)tabView:(NSTabView *)aTabView 
+- (NSImage *)tabView:(NSTabView *)aTabView
  imageForTabViewItem:(NSTabViewItem *)tabViewItem
               offset:(NSSize *)offset
            styleMask:(unsigned int *)styleMask;
@@ -370,17 +373,17 @@
 - (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)tabView;
 
 // Creates a context menu for a tab control.
-- (NSMenu *)tabView:(NSTabView *)aTabView 
+- (NSMenu *)tabView:(NSTabView *)aTabView
  menuForTabViewItem:(NSTabViewItem *)tabViewItem;
 
 // Called when a tab is dragged and dropped into an area not in an existing
 // window. A new window is created having only this tab.
-- (PSMTabBarControl *)tabView:(NSTabView *)aTabView 
-    newTabBarForDraggedTabViewItem:(NSTabViewItem *)tabViewItem 
+- (PSMTabBarControl *)tabView:(NSTabView *)aTabView
+    newTabBarForDraggedTabViewItem:(NSTabViewItem *)tabViewItem
                       atPoint:(NSPoint)point;
 
 // Returns a tooltip for a tab control.
-- (NSString *)tabView:(NSTabView *)aTabView 
+- (NSString *)tabView:(NSTabView *)aTabView
     toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem;
 
 // Called when a tab is double clicked.
@@ -437,12 +440,16 @@
 
 @interface PseudoTerminal (Private)
 
+// For full screen mode, draw the window contents in black except for the find
+// bar area.
+- (void)_drawFullScreenBlackBackground;
+
 - (void)hideMenuBar;
 
-// This is a half-baked function that tries to parse a command line into a 
+// This is a half-baked function that tries to parse a command line into a
 // command (returned in *cmd) and an array of arguments (returned in *path).
-+ (void)breakDown:(NSString *)cmdl 
-          cmdPath:(NSString **)cmd 
++ (void)breakDown:(NSString *)cmdl
+          cmdPath:(NSString **)cmd
           cmdArgs:(NSArray **)path;
 
 // Force the window size to change to be just large enough to fit this session.
@@ -470,9 +477,9 @@
 
 // Force the window to fit a hypothetical session with a given number of rows,
 // columns, character width, and line height.
-- (void)fitWindowToSessionsWithWidth:(int)width 
-                              height:(int)height 
-                           charWidth:(float)charWidth 
+- (void)fitWindowToSessionsWithWidth:(int)width
+                              height:(int)height
+                           charWidth:(float)charWidth
                           charHeight:(float)charHeight;
 
 // Copy state from 'other' to this terminal.
@@ -488,15 +495,10 @@
 // while leaving space for the toolbar, findbar, window decorations, etc.
 - (NSRect)maxContentRect;
 
-// Returns the size of the area where text is shown. Does not include the
-// scrollbar, findbar, toolbar, or window decorations, but does include any
-// margins within the PTYTextView.
-- (NSRect)visibleContentRect;
-
 // Push a size change to a session (and on to its shell) but clamps the size to
-// reasonable minimum and maximum limits. 
-- (void)safelySetSessionSize:(PTYSession*)aSession 
-                        rows:(int)rows 
+// reasonable minimum and maximum limits.
+- (void)safelySetSessionSize:(PTYSession*)aSession
+                        rows:(int)rows
                      columns:(int)columns;
 
 // Push a size change to a session so that it is as large as possible while
@@ -524,7 +526,7 @@
 // Execute the given program and set the window title if it is uninitialized.
 - (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv
-         environment:(NSDictionary *)prog_env 
+         environment:(NSDictionary *)prog_env
               isUTF8:(BOOL)isUTF8;
 
 // Send a reset to the current session's terminal.

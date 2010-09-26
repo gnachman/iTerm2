@@ -40,17 +40,17 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 {
     BookmarkModel* dataSource;
     BOOL oneBookmarkMode;
-    
+
     // This is actually the tab style. It takes one of these values:
     // 0: Metal
     // 1: Aqua
     // 2: Unified
     // other: Adium
-    // Bound to Metal/Aqua/Unified/Adium button 
-	IBOutlet NSPopUpButton *windowStyle;
-	int defaultWindowStyle;
+    // Bound to Metal/Aqua/Unified/Adium button
+    IBOutlet NSPopUpButton *windowStyle;
+    int defaultWindowStyle;
     BOOL oneBookmarkOnly;
-    
+
     // This gives a value from NSTabViewType, which as of OS 10.6 is:
     // Bound to Top/Bottom button
     // NSTopTabsBezelBorder     = 0,
@@ -60,24 +60,24 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     // NSNoTabsBezelBorder      = 4,
     // NSNoTabsLineBorder       = 5,
     // NSNoTabsNoBorder         = 6
-	IBOutlet NSPopUpButton *tabPosition;
+    IBOutlet NSPopUpButton *tabPosition;
     int defaultTabViewType;
 
     IBOutlet BookmarkListView* bookmarksForUrlsTable;
-    
+
     IBOutlet NSTextField* tagFilter;
-    
+
     // List of URL schemes.
-	IBOutlet NSTableView *urlTable;
-    
+    IBOutlet NSTableView *urlTable;
+
     // Copy to clipboard on selection
     IBOutlet NSButton *selectionCopiesText;
     BOOL defaultCopySelection;
-    
+
     // Middle button paste from clipboard
-	IBOutlet NSButton *middleButtonPastesFromClipboard;
-	BOOL defaultPasteFromClipboard;
-    
+    IBOutlet NSButton *middleButtonPastesFromClipboard;
+    BOOL defaultPasteFromClipboard;
+
     // Hide tab bar when there is only one session
     IBOutlet id hideTab;
     BOOL defaultHideTab;
@@ -89,35 +89,35 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     // only when multiple sessions close
     IBOutlet id onlyWhenMoreTabs;
     BOOL defaultOnlyWhenMoreTabs;
-    
+
     // Focus follows mouse
     IBOutlet NSButton *focusFollowsMouse;
     BOOL defaultFocusFollowsMouse;
 
     // Characters considered part of word
-	IBOutlet NSTextField *wordChars;
-	NSString *defaultWordChars;
+    IBOutlet NSTextField *wordChars;
+    NSString *defaultWordChars;
 
     // Enable bonjour
-	IBOutlet NSButton *enableBonjour;
-	BOOL defaultEnableBonjour;
+    IBOutlet NSButton *enableBonjour;
+    BOOL defaultEnableBonjour;
 
     // Enable growl notifications
     IBOutlet NSButton *enableGrowl;
-	BOOL defaultEnableGrowl;
+    BOOL defaultEnableGrowl;
 
     // cmd-click to launch url
     IBOutlet NSButton *cmdSelection;
-	BOOL defaultCmdSelection;
+    BOOL defaultCmdSelection;
 
     // Zoom vertically only
-	IBOutlet NSButton *maxVertically;
-	BOOL defaultMaxVertically;
+    IBOutlet NSButton *maxVertically;
+    BOOL defaultMaxVertically;
 
     // use compact tab labels
-	IBOutlet NSButton *useCompactLabel;
+    IBOutlet NSButton *useCompactLabel;
     BOOL defaultUseCompactLabel;
-    
+
     // open bookmarks when iterm starts
     IBOutlet NSButton *openBookmark;
     BOOL defaultOpenBookmark;
@@ -127,45 +127,45 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     int  defaultRefreshRate;
 
     // quit when all windows are closed
-	IBOutlet NSButton *quitWhenAllWindowsClosed;
+    IBOutlet NSButton *quitWhenAllWindowsClosed;
     BOOL defaultQuitWhenAllWindowsClosed;
-    
+
     // check for updates automatically
     IBOutlet NSButton *checkUpdate;
-	BOOL defaultCheckUpdate;
+    BOOL defaultCheckUpdate;
 
     // cursor type: underline/vertical bar/box
     // See ITermCursorType. One of: CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX
-	IBOutlet NSMatrix *cursorType;
-	ITermCursorType defaultCursorType;
+    IBOutlet NSMatrix *cursorType;
+    ITermCursorType defaultCursorType;
 
     IBOutlet NSButton *checkColorInvertedCursor;
-	BOOL defaultColorInvertedCursor;
+    BOOL defaultColorInvertedCursor;
 
     // border at bottom
-	IBOutlet NSButton *useBorder;
-	BOOL defaultUseBorder;
-    
+    IBOutlet NSButton *useBorder;
+    BOOL defaultUseBorder;
+
     // hide scrollbar and resize
-	IBOutlet NSButton *hideScrollbar;
-	BOOL defaultHideScrollbar;
+    IBOutlet NSButton *hideScrollbar;
+    BOOL defaultHideScrollbar;
 
     // smart window placement
     IBOutlet NSButton *smartPlacement;
     BOOL defaultSmartPlacement;
-    
+
     // prompt for test-release updates
     IBOutlet NSButton *checkTestRelease;
-	BOOL defaultCheckTestRelease;
-	
+    BOOL defaultCheckTestRelease;
+
     IBOutlet NSView* bookmarksSettingsTabViewParent;
-    
+
     NSUserDefaults *prefs;
 
     IBOutlet NSToolbar* toolbar;
     IBOutlet NSTabView* tabView;
     IBOutlet NSToolbarItem* globalToolbarItem;
-	IBOutlet NSTabViewItem* globalTabViewItem;
+    IBOutlet NSTabViewItem* globalTabViewItem;
     IBOutlet NSToolbarItem* bookmarksToolbarItem;
     IBOutlet NSTabViewItem* bookmarksTabViewItem;
     IBOutlet NSToolbarItem* advancedToolbarItem;
@@ -173,32 +173,32 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     NSString* globalToolbarId;
     NSString* bookmarksToolbarId;
     NSString* advancedToolbarId;
-    
-	// url handler stuff
-	NSMutableArray *urlTypes;
-	NSMutableDictionary *urlHandlersByGuid;
-    
+
+    // url handler stuff
+    NSMutableArray *urlTypes;
+    NSMutableDictionary *urlHandlersByGuid;
+
     // Bookmarks -----------------------------
     IBOutlet BookmarkListView *bookmarksTableView;
     IBOutlet NSTableColumn *shellImageColumn;
     IBOutlet NSTableColumn *nameShortcutColumn;
-	IBOutlet NSButton *removeBookmarkButton;
+    IBOutlet NSButton *removeBookmarkButton;
     IBOutlet NSButton *addBookmarkButton;
-    
-	// General tab
-	IBOutlet NSTextField *bookmarkName;
-	IBOutlet NSPopUpButton *bookmarkShortcutKey;
-	IBOutlet NSMatrix *bookmarkCommandType;
-	IBOutlet NSTextField *bookmarkCommand;
-	IBOutlet NSMatrix *bookmarkDirectoryType;
-	IBOutlet NSTextField *bookmarkDirectory;
+
+    // General tab
+    IBOutlet NSTextField *bookmarkName;
+    IBOutlet NSPopUpButton *bookmarkShortcutKey;
+    IBOutlet NSMatrix *bookmarkCommandType;
+    IBOutlet NSTextField *bookmarkCommand;
+    IBOutlet NSMatrix *bookmarkDirectoryType;
+    IBOutlet NSTextField *bookmarkDirectory;
     IBOutlet NSTextField *bookmarkShortcutKeyLabel;
     IBOutlet NSTextField *bookmarkShortcutKeyModifiersLabel;
     IBOutlet NSTextField *bookmarkTagsLabel;
     IBOutlet NSTextField *bookmarkCommandLabel;
     IBOutlet NSTextField *bookmarkDirectoryLabel;
-    
-	// Colors tab
+
+    // Colors tab
     IBOutlet NSColorWell *ansi0Color;
     IBOutlet NSColorWell *ansi1Color;
     IBOutlet NSColorWell *ansi2Color;
@@ -222,16 +222,16 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSColorWell *selectedTextColor;
     IBOutlet NSColorWell *cursorColor;
     IBOutlet NSColorWell *cursorTextColor;
-    
+
     // Display tab
-	IBOutlet NSView *displayFontAccessoryView;
-	IBOutlet NSSlider *displayFontSpacingWidth;
-	IBOutlet NSSlider *displayFontSpacingHeight;
+    IBOutlet NSView *displayFontAccessoryView;
+    IBOutlet NSSlider *displayFontSpacingWidth;
+    IBOutlet NSSlider *displayFontSpacingHeight;
     IBOutlet NSTextField *columnsField;
     IBOutlet NSTextField *rowsField;
     IBOutlet NSTextField *normalFontField;
     IBOutlet NSTextField *nonAsciiFontField;
-    
+
     IBOutlet NSButton* blinkingCursor;
     IBOutlet NSButton* disableBold;
     IBOutlet NSSlider *transparency;
@@ -243,11 +243,11 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTextField* displayFontsLabel;
     IBOutlet NSButton* displayRegularFontButton;
     IBOutlet NSButton* displayNAFontButton;
-    
+
     NSFont* normalFont;
     NSFont *nonAsciiFont;
     BOOL changingNAFont; // true if font dialog is currently modifying the non-ascii font
-    
+
     // Terminal tab
     IBOutlet NSButton* disableWindowResizing;
     IBOutlet NSButton* syncTitle;
@@ -262,7 +262,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* sendCodeWhenIdle;
     IBOutlet NSTextField* idleCode;
     IBOutlet NSPopUpButton* characterEncoding;
-    
+
     // Keyboard tab
     IBOutlet NSTableView* keyMappings;
     IBOutlet NSTableColumn* keyCombinationColumn;
@@ -275,10 +275,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTextField* escPlus;
     IBOutlet NSMatrix *optionKeySends;
     IBOutlet NSTokenField* tags;
-    
+
     NSString* keyString;  // hexcode-hexcode rep of keystring in current sheet
     BOOL newMapping;  // true if the keymap sheet is open for adding a new entry
-    
+
     // Copy from...
     IBOutlet BookmarkListView *copyFromBookmarks;
     IBOutlet NSPanel* copyFromView;
@@ -399,6 +399,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 - (void)showBookmarks;
 - (void)openToBookmark:(NSString*)guid;
 - (id)tokenFieldCell:(NSTokenFieldCell *)tokenFieldCell representedObjectForEditingString:(NSString *)editingString;
+- (void)underlyingBookmarkDidChange;
 
 @end
 
