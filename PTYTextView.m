@@ -86,10 +86,11 @@ static NSCursor* textViewCursor =  nil;
 
     [self setMarkedTextAttributes:
         [NSDictionary dictionaryWithObjectsAndKeys:
-            [NSColor yellowColor], NSBackgroundColorAttributeName,
-            [NSColor blackColor], NSForegroundColorAttributeName,
+            defaultBGColor, NSBackgroundColorAttributeName,
+            defaultFGColor, NSForegroundColorAttributeName,
             nafont, NSFontAttributeName,
-            [NSNumber numberWithInt:2],NSUnderlineStyleAttributeName,
+            [NSNumber numberWithInt:(NSUnderlineStyleSingle|NSUnderlineByWordMask)],
+                NSUnderlineStyleAttributeName,
             NULL]];
     CURSOR=YES;
     lastFindX = oldStartX = startX = -1;
@@ -506,10 +507,11 @@ static NSCursor* textViewCursor =  nil;
 
     [self setMarkedTextAttributes:
         [NSDictionary dictionaryWithObjectsAndKeys:
-            [NSColor yellowColor], NSBackgroundColorAttributeName,
-            [NSColor blackColor], NSForegroundColorAttributeName,
+            defaultBGColor, NSBackgroundColorAttributeName,
+            defaultFGColor, NSForegroundColorAttributeName,
             nafont, NSFontAttributeName,
-            [NSNumber numberWithInt:2],NSUnderlineStyleAttributeName,
+            [NSNumber numberWithInt:(NSUnderlineStyleSingle|NSUnderlineByWordMask)],
+                NSUnderlineStyleAttributeName,
             NULL]];
     [self setNeedsDisplay:YES];
 
@@ -2875,14 +2877,23 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     // draw any text for NSTextInput
     if([self hasMarkedText]) {
+        // The following mod is brought to you by Zonble.
         int len=[markedText length];
         if (len>WIDTH-x1) len=WIDTH-x1;
         int descender = [nafont descender];
-        NSRect rect = NSMakeRect(floor(x1 * charWidth + MARGIN),
-                                 (yStart + [dataSource numberOfLines] - HEIGHT) * lineHeight + (lineHeight - cursorHeight) + descender,
-                                 ceil((WIDTH-x1)*cursorWidth),
-                                 cursorHeight - descender);
-        [markedText drawInRect:rect];
+
+        NSRect inputFrame = NSMakeRect(floor(x1 * charWidth + MARGIN),
+                                       (yStart + [dataSource numberOfLines] - HEIGHT) * lineHeight + (lineHeight - cursorHeight) + descender,
+                                       ceil((WIDTH-x1)*cursorWidth),
+                                       cursorHeight - descender);
+        [markedText drawInRect:inputFrame];
+
+        NSAttributedString *attributedStringBeforeCursor = [markedText attributedSubstringFromRange:NSMakeRange(0, IM_INPUT_SELRANGE.location)];
+        NSRect spaceFrame = [attributedStringBeforeCursor boundingRectWithSize:inputFrame.size options:0];
+        NSRect cursorFrame = NSMakeRect(inputFrame.origin.x + spaceFrame.size.width, inputFrame.origin.y, 2.0, inputFrame.size.height);
+        [[NSColor yellowColor] set];
+        NSRectFill(cursorFrame);
+
         memset([dataSource dirty] + yStart * WIDTH + x1,
                1,
                WIDTH - x1 > len*2 ? len*2 : WIDTH-x1); //len*2 is an over-estimation, but safe
