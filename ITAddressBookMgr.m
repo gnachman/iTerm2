@@ -4,7 +4,7 @@
  **  Copyright (c) 2002, 2003
  **
  **  Author: Fabian, Ujwal S. Setlur
- **	     Initial code by Kiichi Kusama
+ **      Initial code by Kiichi Kusama
  **
  **  Project: iTerm
  **
@@ -37,18 +37,18 @@
 + (id)sharedInstance
 {
     static ITAddressBookMgr* shared = nil;
-    
+
     if (!shared) {
         shared = [[ITAddressBookMgr alloc] init];
     }
-    
+
     return shared;
 }
 
 - (id)init
 {
     self = [super init];
-    
+
     NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
 
     if ([prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] && ![prefs objectForKey:KEY_NEW_BOOKMARKS]) {
@@ -59,13 +59,13 @@
         [prefs setObject:[[BookmarkModel sharedInstance] rawData] forKey:KEY_NEW_BOOKMARKS];
         [[BookmarkModel sharedInstance] removeAllBookmarks];
     }
-    
+
     // Load new-style bookmarks.
     if ([prefs objectForKey:KEY_NEW_BOOKMARKS]) {
-        [self setBookmarks:[prefs objectForKey:KEY_NEW_BOOKMARKS] 
+        [self setBookmarks:[prefs objectForKey:KEY_NEW_BOOKMARKS]
                defaultGuid:[prefs objectForKey:KEY_DEFAULT_GUID]];
     }
-    
+
     // Make sure there is at least one bookmark.
     if ([[BookmarkModel sharedInstance] numberOfBookmarks] == 0) {
         NSMutableDictionary* aDict = [[NSMutableDictionary alloc] init];
@@ -73,47 +73,47 @@
         [[BookmarkModel sharedInstance] addBookmark:aDict];
         [aDict release];
     }
-    
+
     return self;
 }
 
 - (void)dealloc
 {
-	[bonjourServices removeAllObjects];
-	[bonjourServices release];
-	
-	[sshBonjourBrowser stop];
-	[ftpBonjourBrowser stop];
-	[telnetBonjourBrowser stop];	
-	[sshBonjourBrowser release];
-	[ftpBonjourBrowser release];
-	[telnetBonjourBrowser release];
-	
+    [bonjourServices removeAllObjects];
+    [bonjourServices release];
+
+    [sshBonjourBrowser stop];
+    [ftpBonjourBrowser stop];
+    [telnetBonjourBrowser stop];
+    [sshBonjourBrowser release];
+    [ftpBonjourBrowser release];
+    [telnetBonjourBrowser release];
+
     [super dealloc];
 }
 
 - (void) locateBonjourServices
 {
-	sshBonjourBrowser = [[NSNetServiceBrowser alloc] init];
-	ftpBonjourBrowser = [[NSNetServiceBrowser alloc] init];
-	telnetBonjourBrowser = [[NSNetServiceBrowser alloc] init];
-	
-	bonjourServices = [[NSMutableArray alloc] init];
-	
-	[sshBonjourBrowser setDelegate: self];
-	[ftpBonjourBrowser setDelegate: self];
-	[telnetBonjourBrowser setDelegate: self];
-	[sshBonjourBrowser searchForServicesOfType: @"_ssh._tcp." inDomain: @""];
-	[ftpBonjourBrowser searchForServicesOfType: @"_ftp._tcp." inDomain: @""];
-	[telnetBonjourBrowser searchForServicesOfType: @"_telnet._tcp." inDomain: @""];		
-	
+    sshBonjourBrowser = [[NSNetServiceBrowser alloc] init];
+    ftpBonjourBrowser = [[NSNetServiceBrowser alloc] init];
+    telnetBonjourBrowser = [[NSNetServiceBrowser alloc] init];
+
+    bonjourServices = [[NSMutableArray alloc] init];
+
+    [sshBonjourBrowser setDelegate: self];
+    [ftpBonjourBrowser setDelegate: self];
+    [telnetBonjourBrowser setDelegate: self];
+    [sshBonjourBrowser searchForServicesOfType: @"_ssh._tcp." inDomain: @""];
+    [ftpBonjourBrowser searchForServicesOfType: @"_ftp._tcp." inDomain: @""];
+    [telnetBonjourBrowser searchForServicesOfType: @"_telnet._tcp." inDomain: @""];
+
 }
 
 + (NSArray*)encodeColor:(NSColor*)origColor
 {
     NSColor* color = [origColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-	CGFloat red, green, blue, alpha;
-	[color getRed:&red green:&green blue:&blue alpha:&alpha];
+    CGFloat red, green, blue, alpha;
+    [color getRed:&red green:&green blue:&blue alpha:&alpha];
     return [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithFloat:red], @"Red Component",
                                                       [NSNumber numberWithFloat:green], @"Green Component",
                                                       [NSNumber numberWithFloat:blue], @"Blue Component",
@@ -125,7 +125,7 @@
     if ([plist count] != 3) {
         return [NSColor blackColor];
     }
-    
+
     return [NSColor colorWithCalibratedRed:[[plist objectForKey:@"Red Component"] floatValue]
                                      green:[[plist objectForKey:@"Green Component"] floatValue]
                                       blue:[[plist objectForKey:@"Blue Component"] floatValue]
@@ -134,12 +134,12 @@
 
 - (void)copyProfileToBookmark:(NSMutableDictionary *)dict
 {
- 	NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"MigrationMap" ofType:@"plist"];   
+    NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"MigrationMap" ofType:@"plist"];
     NSDictionary* fileDict = [NSDictionary dictionaryWithContentsOfFile: plistFile];
-    NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];    
+    NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
     NSDictionary* keybindingProfiles = [prefs objectForKey: @"KeyBindings"];
-	NSDictionary* displayProfiles =  [prefs objectForKey: @"Displays"];
-	NSDictionary* terminalProfiles = [prefs objectForKey: @"Terminals"];
+    NSDictionary* displayProfiles =  [prefs objectForKey: @"Displays"];
+    NSDictionary* terminalProfiles = [prefs objectForKey: @"Terminals"];
     NSArray* xforms = [fileDict objectForKey:@"Migration Map"];
     for (int i = 0; i < [xforms count]; ++i) {
         NSDictionary* xform = [xforms objectAtIndex:i];
@@ -150,7 +150,7 @@
         NSString* prefix = [xform objectForKey:@"Prefix"];
         NSString* suffix = [xform objectForKey:@"Suffix"];
         id defaultValue = [xform objectForKey:@"Default"];
-        
+
         NSDictionary* parent = nil;
         if ([prefix isEqualToString:@"Terminal"]) {
             parent = [terminalProfiles objectForKey:[dict objectForKey:KEY_TERMINAL_PROFILE]];
@@ -176,7 +176,7 @@
 {
     NSDictionary* data = [node objectForKey:@"Data"];
 
-	if ([data objectForKey:KEY_COMMAND]) {
+    if ([data objectForKey:KEY_COMMAND]) {
         // Not just a folder if it has a command.
         NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:data];
         [self copyProfileToBookmark:temp];
@@ -192,8 +192,8 @@
             [temp setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
         }
         [[BookmarkModel sharedInstance] addBookmark:temp];
-	}
-    
+    }
+
     NSArray* entries = [node objectForKey:@"Entries"];
     for (int i = 0; i < [entries count]; ++i) {
         NSMutableArray* childPath = [NSMutableArray arrayWithArray:path];
@@ -204,27 +204,27 @@
                 [childPath addObject:name];
             }
         }
-		[self recursiveMigrateBookmarks:[entries objectAtIndex:i] path:childPath];
-	}
+        [self recursiveMigrateBookmarks:[entries objectAtIndex:i] path:childPath];
+    }
 }
 
 + (NSFont *)fontWithDesc:(NSString *)fontDesc
 {
-	float fontSize;
-	char utf8FontName[128];
-	NSFont *aFont;
-	
-	if ([fontDesc length] == 0) {
-		return ([NSFont userFixedPitchFontOfSize: 0.0]);
-	}
-    
-	sscanf([fontDesc UTF8String], "%s %g", utf8FontName, &fontSize);
-	
-	aFont = [NSFont fontWithName:[NSString stringWithFormat: @"%s", utf8FontName] size:fontSize];
-	if (aFont == nil) {
-		return ([NSFont userFixedPitchFontOfSize: 0.0]);
+    float fontSize;
+    char utf8FontName[128];
+    NSFont *aFont;
+
+    if ([fontDesc length] == 0) {
+        return ([NSFont userFixedPitchFontOfSize: 0.0]);
     }
-	
+
+    sscanf([fontDesc UTF8String], "%s %g", utf8FontName, &fontSize);
+
+    aFont = [NSFont fontWithName:[NSString stringWithFormat: @"%s", utf8FontName] size:fontSize];
+    if (aFont == nil) {
+        return ([NSFont userFixedPitchFontOfSize: 0.0]);
+    }
+
     return aFont;
 }
 
@@ -244,23 +244,23 @@
 }
 
 // NSNetServiceBrowser delegate methods
-- (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didFindService:(NSNetService *)aNetService moreComing:(BOOL)moreComing 
+- (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didFindService:(NSNetService *)aNetService moreComing:(BOOL)moreComing
 {
-	// resolve the service and add to temporary array to retain it so that 
+    // resolve the service and add to temporary array to retain it so that
     // resolving works.
-	[bonjourServices addObject:aNetService];
-	[aNetService setDelegate:self];		
+    [bonjourServices addObject:aNetService];
+    [aNetService setDelegate:self];
     [aNetService resolve];
 }
 
 
-- (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didRemoveService:(NSNetService *)aNetService moreComing:(BOOL)moreComing 
+- (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didRemoveService:(NSNetService *)aNetService moreComing:(BOOL)moreComing
 {
-	if (aNetService == nil) {
-		return;
+    if (aNetService == nil) {
+        return;
     }
-		
-	// remove host entry from this group
+
+    // remove host entry from this group
     BOOL sshService = NO;
     NSMutableArray* toRemove = [[[NSMutableArray alloc] init] autorelease];
     for (int i = 0; i < [[BookmarkModel sharedInstance] numberOfBookmarksWithFilter:@"bonjour"]; ++i) {
@@ -281,21 +281,26 @@
             [toRemove addObject:[NSNumber numberWithInt:i]];
         }
     }
-    [toRemove removeAllObjects];	
+    [toRemove removeAllObjects];
+}
+
++ (NSString*)descFromFont:(NSFont*)font
+{
+    return [NSString stringWithFormat:@"%s %g", [[font fontName] UTF8String], [font pointSize]];
 }
 
 + (void)setDefaultsInBookmark:(NSMutableDictionary*)aDict
 {
- 	NSString* plistFile = [[NSBundle bundleForClass:[self class]] 
-                                    pathForResource:@"DefaultBookmark" 
-                                             ofType:@"plist"];   
+    NSString* plistFile = [[NSBundle bundleForClass:[self class]]
+                                    pathForResource:@"DefaultBookmark"
+                                             ofType:@"plist"];
     NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile: plistFile];
     [aDict addEntriesFromDictionary:presetsDict];
 
     NSString *aName;
-    
+
     aName = NSLocalizedStringFromTableInBundle(@"Default",
-                                               @"iTerm", 
+                                               @"iTerm",
                                                [NSBundle bundleForClass: [self class]],
                                                @"Terminal Profiles");
     [aDict setObject:aName forKey: KEY_NAME];
@@ -309,28 +314,28 @@
 // NSNetService delegate
 - (void)netServiceDidResolveAddress:(NSNetService *)sender
 {
-	NSMutableDictionary *aDict;
-	NSData  *address = nil;
-	struct sockaddr_in  *socketAddress;
-	NSString	*ipAddressString = nil;
-	
-	//NSLog(@"%s: %@", __PRETTY_FUNCTION__, sender);
-	
-	// cancel the resolution
-	[sender stop];
-	
-	if ([bonjourServices containsObject: sender] == NO) {
-		return;
+    NSMutableDictionary *aDict;
+    NSData  *address = nil;
+    struct sockaddr_in  *socketAddress;
+    NSString    *ipAddressString = nil;
+
+    //NSLog(@"%s: %@", __PRETTY_FUNCTION__, sender);
+
+    // cancel the resolution
+    [sender stop];
+
+    if ([bonjourServices containsObject: sender] == NO) {
+        return;
     }
-	
-	// grab the address
+
+    // grab the address
     if ([[sender addresses] count] == 0) {
         return;
     }
-	address = [[sender addresses] objectAtIndex: 0];
-	socketAddress = (struct sockaddr_in *)[address bytes];
-	ipAddressString = [NSString stringWithFormat:@"%s", inet_ntoa(socketAddress->sin_addr)];
-	
+    address = [[sender addresses] objectAtIndex: 0];
+    socketAddress = (struct sockaddr_in *)[address bytes];
+    ipAddressString = [NSString stringWithFormat:@"%s", inet_ntoa(socketAddress->sin_addr)];
+
     Bookmark* prototype = [[BookmarkModel sharedInstance] defaultBookmark];
     if (prototype) {
         aDict = [NSMutableDictionary dictionaryWithDictionary:prototype];
@@ -338,51 +343,51 @@
         aDict = [[NSMutableDictionary alloc] init];
         [ITAddressBookMgr setDefaultsInBookmark:aDict];
     }
-    
+
     NSString* serviceType = [self getBonjourServiceType:[sender type]];
-	
-	[aDict setObject:[NSString stringWithFormat:@"%@", [sender name]] forKey:KEY_NAME];
-	[aDict setObject:[NSString stringWithFormat:@"%@", [sender name]] forKey:KEY_DESCRIPTION];
-	[aDict setObject:[NSString stringWithFormat:@"%@ %@", serviceType, ipAddressString] forKey:KEY_COMMAND];
-	[aDict setObject:@"" forKey:KEY_WORKING_DIRECTORY];
-	[aDict setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
-	[aDict setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
-	[aDict setObject:ipAddressString forKey:KEY_BONJOUR_SERVICE_ADDRESS];
+
+    [aDict setObject:[NSString stringWithFormat:@"%@", [sender name]] forKey:KEY_NAME];
+    [aDict setObject:[NSString stringWithFormat:@"%@", [sender name]] forKey:KEY_DESCRIPTION];
+    [aDict setObject:[NSString stringWithFormat:@"%@ %@", serviceType, ipAddressString] forKey:KEY_COMMAND];
+    [aDict setObject:@"" forKey:KEY_WORKING_DIRECTORY];
+    [aDict setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
+    [aDict setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
+    [aDict setObject:ipAddressString forKey:KEY_BONJOUR_SERVICE_ADDRESS];
     [aDict setObject:[NSArray arrayWithObjects:@"bonjour",nil] forKey:KEY_TAGS];
-    [aDict setObject:[BookmarkModel newGuid] forKey:KEY_GUID];    
+    [aDict setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
     [aDict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
     [[BookmarkModel sharedInstance] addBookmark:aDict];
 
-	// No bonjour service for sftp. Rides over ssh, so try to detect that
-	if ([serviceType isEqualToString:@"ssh"]) {
+    // No bonjour service for sftp. Rides over ssh, so try to detect that
+    if ([serviceType isEqualToString:@"ssh"]) {
         [aDict setObject:[NSString stringWithFormat:@"%@-sftp", [sender name]] forKey:KEY_NAME];
         [aDict setObject:[NSArray arrayWithObjects:@"bonjour", @"sftp", nil] forKey:KEY_TAGS];
         [aDict setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
         [aDict setObject:[NSString stringWithFormat:@"sftp %@", ipAddressString] forKey:KEY_COMMAND];
         [[BookmarkModel sharedInstance] addBookmark:aDict];
-	}
-	
-	// remove from array now that resolving is done
-	if ([bonjourServices containsObject:sender]) {
-		[bonjourServices removeObject:sender];
     }
-		
+
+    // remove from array now that resolving is done
+    if ([bonjourServices containsObject:sender]) {
+        [bonjourServices removeObject:sender];
+    }
+
 }
 
 - (void)netService:(NSNetService *)aNetService didNotResolve:(NSDictionary *)errorDict
 {
-	//NSLog(@"%s: %@", __PRETTY_FUNCTION__, aNetService);
-	[aNetService stop];
+    //NSLog(@"%s: %@", __PRETTY_FUNCTION__, aNetService);
+    [aNetService stop];
 }
 
 - (void)netServiceWillResolve:(NSNetService *)aNetService
 {
-	//NSLog(@"%s: %@", __PRETTY_FUNCTION__, aNetService);
+    //NSLog(@"%s: %@", __PRETTY_FUNCTION__, aNetService);
 }
 
 - (void)netServiceDidStop:(NSNetService *)aNetService
 {
-	//NSLog(@"%s: %@", __PRETTY_FUNCTION__, aNetService);
+    //NSLog(@"%s: %@", __PRETTY_FUNCTION__, aNetService);
 }
 
 - (NSString*)getBonjourServiceType:(NSString*)aType

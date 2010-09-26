@@ -621,6 +621,12 @@ NSString *sessionsKey = @"sessions";
         newTerminal = [[PseudoTerminal alloc] initWithSmartLayout:NO fullScreen:currentScreen];
         newTerminal->oldFrame_ = [[self window] frame];
     } else {
+        // If a window is created while the menu bar is hidden then its
+        // miniaturize button will be disabled, even if the menu bar is later
+        // shown. Thus, we must show the menu bar before creating the new window.
+        // It is not hidden in the other clause of this if statement because
+        // hiding the menu bar must be done after setting the window's frame.
+        [NSMenu setMenuBarVisible:YES];
         newTerminal = [[PseudoTerminal alloc] initWithSmartLayout:NO fullScreen:nil];
     }
 
@@ -630,11 +636,10 @@ NSString *sessionsKey = @"sessions";
     // tabs over to the new window.
     PTYSession *currentSession = [self currentSession];
 
+    if (_fullScreen) {
+        [newTerminal _drawFullScreenBlackBackground];
+    }
     [newTerminal copySettingsFrom:self];
-    [[[newTerminal window] contentView] lockFocus];
-    [[NSColor blackColor] set];
-    NSRectFill([[newTerminal window] frame]);
-    [[[newTerminal window] contentView] unlockFocus];
 
     [[iTermController sharedInstance] addInTerminals:newTerminal];
     [newTerminal release];
@@ -668,14 +673,38 @@ NSString *sessionsKey = @"sessions";
     [[self window] close];
     if (!fs) {
         [[newTerminal window] setFrame:oldFrame_ display:YES];
-        [NSMenu setMenuBarVisible:YES];
     } else {
         [newTerminal adjustFullScreenWindowForFindBarChange];
         [newTerminal hideMenuBar];
     }
+
+    if (!fs) {
+        // Find the largest possible session size for the existing window frame 
+        // and fit the window to an imaginary session of that size.
+        float charWidth = [newTerminal maxCharWidth:NULL];
+        float charHeight = [newTerminal maxCharHeight:NULL];
+        NSRect visibleFrame = [[newTerminal window] frame];
+        NSRect contentRect = [[newTerminal window] contentRectForFrameRect:visibleFrame];
+        if (![newTerminal->findBar isHidden]) {
+            contentRect.size.height -= [newTerminal->findBar frame].size.height;
+        }
+        if (n > 1 || ![[PreferencePanel sharedInstance] hideTab]) {
+            contentRect.size.height -= [newTerminal->tabBarControl frame].size.height;
+        }
+        NSSize scrollContentSize = [PTYScrollView contentSizeForFrameSize:contentRect.size 
+                                                    hasHorizontalScroller:NO 
+                                                      hasVerticalScroller:(![[PreferencePanel sharedInstance] hideScrollbar])
+                                                               borderType:NSNoBorder];
+        NSSize textSize = scrollContentSize;
+        textSize.width -= MARGIN * 2;
+        int width = textSize.width / charWidth;
+        int height = textSize.height / charHeight;
+        [newTerminal fitWindowToSessionsWithWidth:width height:height charWidth:charWidth charHeight:charHeight];
+    }
     [newTerminal fitSessionsToWindow];
     [newTerminal fitWindowToSessions];
     [newTerminal setWindowTitle];
+    [[newTerminal window] update];
 }
 
 - (BOOL)fullScreen
@@ -788,20 +817,8 @@ NSString *sessionsKey = @"sessions";
     if (!bookmark) {
         return;
     }
-    NSString* guid = [bookmark objectForKey:KEY_GUID];
-    [[BookmarkModel sessionsInstance] removeBookmarkWithGuid:guid];
-    [[BookmarkModel sessionsInstance] addBookmark:bookmark];
-
-    // Change the GUID so that this session can follow a different path in life
-    // than its bookmark. Changes to the bookmark will no longer affect this
-    // session, and changes to this session won't affect its originating bookmark
-    // (which may not evene exist any longer).
-    guid = [BookmarkModel newGuid];
-    [[BookmarkModel sessionsInstance] setObject:guid
-                                         forKey:KEY_GUID 
-                                     inBookmark:bookmark];
-    [session setAddressBookEntry:[[BookmarkModel sessionsInstance] bookmarkWithGuid:guid]];
-    [[PreferencePanel sessionsInstance] openToBookmark:guid];
+    NSString* newGuid = [session divorceAddressBookEntryFromPreferences];
+    [[PreferencePanel sessionsInstance] openToBookmark:newGuid];
 }
 
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu
@@ -962,10 +979,7 @@ NSString *sessionsKey = @"sessions";
     [[tabViewItem identifier] resetStatus];
     [[[tabViewItem identifier] TEXTVIEW] setNeedsDisplay: YES];
     if (_fullScreen) {
-        [[[self window] contentView] lockFocus];
-        [[NSColor blackColor] set];
-        NSRectFill([[self window] frame]);
-        [[[self window] contentView] unlockFocus];
+        [self _drawFullScreenBlackBackground];
     } else {
         [[tabViewItem identifier] setLabelAttribute];
         [self setWindowTitle];
@@ -1427,6 +1441,20 @@ NSString *sessionsKey = @"sessions";
 
 @implementation PseudoTerminal (Private)
 
+- (void)_drawFullScreenBlackBackground
+{
+    [[[self window] contentView] lockFocus];
+    [[NSColor blackColor] set];
+    NSRect frame = [[self window] frame];
+    if (![findBar isHidden]) {
+        int h = [findBar frame].size.height;
+        frame.origin.y += h;
+        frame.size.height -= h;
+    }
+    NSRectFill(frame);
+    [[[self window] contentView] unlockFocus];
+}
+
 - (void)_refreshTerminal:(NSNotification *)aNotification
 {
     [self fitWindowToSessions];
@@ -1694,8 +1722,7 @@ NSString *sessionsKey = @"sessions";
         // set desired size of textview to enough pixels to fit WIDTH*HEIGHT
         vsize.width = (int)ceil(charWidth * width + MARGIN * 2);
         vsize.height = (int)ceil(charHeight * height);
-        NSLog(@"Setting window to content width of %d pixels for %d columns at charwidth of ", (int)vsize.width, width, charWidth);
-
+        
         NSSize maxContentSize = [self maxContentRect].size;
         if (vsize.width > maxContentSize.width) {
             vsize.width = (int)(maxContentSize.width / charWidth) * (int)charWidth;
@@ -1703,6 +1730,8 @@ NSString *sessionsKey = @"sessions";
         if (vsize.height > maxContentSize.height) {
             vsize.height = (int)(maxContentSize.height / charHeight) * (int)charHeight;
         }
+        NSLog(@"Textview size must be %fx%f to fit %dx%d session", vsize.width, vsize.height, width, height);
+
         // NSLog(@"width=%d,height=%d",[[[_sessionMgr currentSession] SCREEN] width],[[[_sessionMgr currentSession] SCREEN] height]);
 
         // figure out how big the scrollview should be to achieve the desired textview size of vsize.
@@ -1711,20 +1740,20 @@ NSString *sessionsKey = @"sessions";
                                   hasVerticalScroller:hasScrollbar
                                            borderType:NSNoBorder];
         [thisWindow setShowsResizeIndicator: hasScrollbar];
-        NSLog(@"%s: scrollview content size %.1f, %.1f", __PRETTY_FUNCTION__,
-              size.width, size.height);            
+        NSLog(@"Scrollview size for this text view is %fx%f", size.width, size.height);
 
         // figure out how big the tabview should be to fit the scrollview.
         tabViewSize = [PTYTabView frameSizeForContentSize:size 
                                               tabViewType:[TABVIEW tabViewType] 
                                               controlSize:[TABVIEW controlSize]];
-        NSLog(@"%s: tabview content size %.1f, %.1f", __PRETTY_FUNCTION__,
-              tabViewSize.width, tabViewSize.height);
+        NSLog(@"Tabview size for this scrollview is %fx%f", tabViewSize.width, tabViewSize.height);
 
         // desired size of window content
         winSize = tabViewSize;
+        NSLog(@"Initialize window size to %fx%f", winSize.width, winSize.height);
         if (![findBar isHidden]) {
             winSize.height += [findBar frame].size.height;
+            NSLog(@"Add findbar height to window. New window size is %fx%f", winSize.width, winSize.height);
         }
         if ([TABVIEW numberOfTabViewItems] == 1 && 
             [[PreferencePanel sharedInstance] hideTab]) {
@@ -1736,16 +1765,21 @@ NSString *sessionsKey = @"sessions";
                 aRect.origin.y += [findBar frame].size.height;
             }
             aRect.size = tabViewSize;
+            NSLog(@"Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
             [TABVIEW setFrame: aRect];        
             if ([findBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) {
                 winSize.height += VMARGIN;
+                NSLog(@"Add lower margin to window. Window size is now %fx%f", winSize.width, winSize.height);
                 vmargin_added = YES;
             }
         } else {
             // The tabs are visible at the top of the window.
-            [tabBarControl setHidden: NO];
-            [tabBarControl setTabLocation: [[PreferencePanel sharedInstance] tabViewType]];
+            NSLog(@"Tabs are visible. Adjusting window size...");
+            [tabBarControl setHidden:NO];
+            [tabBarControl setTabLocation:[[PreferencePanel sharedInstance] tabViewType]];
             winSize.height += [tabBarControl frame].size.height;
+            NSLog(@"Add tab bar control height to window height. Window size is now %fx%f",
+                  winSize.width, winSize.height);
             if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
                 // setup aRect to make room for the tabs at the top.
                 aRect.origin.x = 0;
@@ -1754,12 +1788,14 @@ NSString *sessionsKey = @"sessions";
                 if (![findBar isHidden]) {
                     aRect.origin.y += [findBar frame].size.height;
                 }
+                NSLog(@"Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
                 [TABVIEW setFrame: aRect];
                 aRect.origin.y += aRect.size.height;
                 aRect.size.height = [tabBarControl frame].size.height;
                 [tabBarControl setFrame: aRect];
                 if ([findBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) {
                     winSize.height += VMARGIN;
+                    NSLog(@"Add lower margin to window. Window size is now %fx%f", winSize.width, winSize.height);
                     vmargin_added = YES;
                 }
             } else {
@@ -1777,6 +1813,7 @@ NSString *sessionsKey = @"sessions";
                     aRect.origin.y += [findBar frame].size.height;
                 }
                 aRect.size.height = tabViewSize.height;
+                NSLog(@"Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
                 [TABVIEW setFrame: aRect];
             }
         }
@@ -1803,8 +1840,6 @@ NSString *sessionsKey = @"sessions";
          [[PreferencePanel sharedInstance] minTabWidth]];
         [tabBarControl setSizeCellsToFit: [[PreferencePanel sharedInstance] useUnevenTabs]];
         [tabBarControl setCellOptimumWidth:  [[PreferencePanel sharedInstance] optimumTabWidth]];
-        NSLog(@"%s: window content size %.1f, %.1f", __PRETTY_FUNCTION__,
-              winSize.width, winSize.height);
 
         // Preserve the top-left corner of the frame.
         aRect = [thisWindow frame];
@@ -1814,6 +1849,8 @@ NSString *sessionsKey = @"sessions";
         aRect.size.width = winSize.width;
         aRect.size.height = winSize.height;
         NSRect frame = [thisWindow frameRectForContentRect: aRect];
+        NSLog(@"For a window size of %fxf, using a frame of %fx%f", aRect.size.width,
+              aRect.size.height, frame.size.width, frame.size.height);
         frame.origin.x = topLeft.x;
         frame.origin.y = topLeft.y - frame.size.height;
 
@@ -1947,7 +1984,7 @@ NSString *sessionsKey = @"sessions";
                                    verticalSpacing:[[tempPrefs objectForKey:KEY_VERTICAL_SPACING] floatValue]];
 
     if ([TABVIEW numberOfTabViewItems] != 0) {
-        NSSize contentSize = [self visibleContentRect].size;
+        NSSize contentSize = [[[self currentSession] SCROLLVIEW] documentVisibleRect].size;
         rows = contentSize.height / charSize.height;
         columns = (contentSize.width - MARGIN*2) / charSize.width;
     }
@@ -1989,19 +2026,6 @@ NSString *sessionsKey = @"sessions";
     return maxContentRect;
 }
 
-- (NSRect)visibleContentRect
-{
-    NSRect current = [[[self currentSession] SCROLLVIEW] documentVisibleRect];
-    if (!_fullScreen &&
-        ([TABVIEW numberOfTabViewItems] + tabViewItemsBeingAdded) > 1 && 
-        [tabBarControl isHidden] &&
-        [[PreferencePanel sharedInstance] hideTab]) {
-        // A tab bar control is about to be shown.
-        current.size.height -= [tabBarControl frame].size.height;
-    }
-    return current;
-}
-
 // Set the session to a size that fits on the screen.
 - (void)safelySetSessionSize:(PTYSession*)aSession rows:(int)rows columns:(int)columns
 {
@@ -2029,15 +2053,15 @@ NSString *sessionsKey = @"sessions";
         if ([aSession backgroundImagePath]) {
             [aSession setBackgroundImagePath:[aSession backgroundImagePath]]; 
         }
-    }        
+    }
 }
 
 - (void)fitSessionToWindow:(PTYSession*)aSession
 {
     BOOL hasScrollbar = !_fullScreen && ![[PreferencePanel sharedInstance] hideScrollbar];
-    NSSize size = [self visibleContentRect].size;
+    NSSize size = [[[self currentSession] SCROLLVIEW] documentVisibleRect].size;
     int width = (size.width - MARGIN*2) / [[aSession TEXTVIEW] charWidth];
-    NSLog(@"There are %d pixels avilable for %d columns at charwidth of %f", (int)size.width, width, [[aSession TEXTVIEW] charWidth]);
+    NSLog(@"fitSessionToWindow: There are %d pixels avilable for %d columns at charwidth of %f", (int)size.width, width, [[aSession TEXTVIEW] charWidth]);
     int height = size.height / [[aSession TEXTVIEW] lineHeight];
 
     [[aSession SCREEN] resizeWidth:width height:height];
@@ -2674,6 +2698,8 @@ NSString *sessionsKey = @"sessions";
 -(void)appendSession:(PTYSession *)object
 {
     // NSLog(@"PseudoTerminal: -appendSession: 0x%x", object);
+    // Increment tabViewItemsBeingAdded so that the maximum content size will
+    // be calculated with the tab bar if it's about to open.
     ++tabViewItemsBeingAdded;
     [self setupSession: object title: nil];
     tabViewItemsBeingAdded--;
