@@ -1,5 +1,44 @@
 These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2.
 
+Alpha 9
+The main focus of this release is performance, improved internationalization support, and allowing different fonts/sizes in tabs in the same window. Double-width characters are supported as first class citizens now. Rendering performance is greatly improved. Now the details:
+
+Internationalization/Localization
+- Make find work correctly for localized unicode search (bug 70).
+- Many improvements to the input method editor (bug 105).
+- Fix wrapping of double-width characters (bug 71).
+- Fix bug with double clicking on words with double-width characters.
+- Double-width characters are now always double-width (instead of displaying overlapping characters).
+- Only ambiguous characters are affected by the "ambiguous characters are double-width" setting. The preference was renamed so it will be off for everyone by default.
+
+Performance
+- Major performance improvements for ASCII text (bug 39).
+
+New Features
+- Allow each tab to have a different font, font size, blur, transparency, and anti-alias setting.
+- Allow changing of font, blur, antialias, transparency from Edit Session window.
+- Sets find location when you single-click in the window (bug 17).
+- Add context menu to bookmarks window (bug 33).
+
+Other Bug Fixes
+- Fix redraw bug with selecting text in scrollback buffer (bug 25).
+- Double click to select by word behavior improved (bug 97).
+- Fixed drawing bug in 256 color mode (bugs 122, 123).
+- Make bookmarks window change size correctly (bug 114).
+- Fix default escape codes for ctrl
+- shift-arrows.
+- Fix crash when dragging a tab out of a window.
+- Fix bug where key mappings were ignored when focus was in find bar.
+- Keep Bookmark and Prefs window in the Spaces screen you're in instead of switching to the app's original screen (bug 147).
+- Improve command parsing (bug 121).
+- Fix bug where minimize button is disabled when exiting fullscreen mode (bug 86).
+- Fix bug where adding a bookmark changes the default bookmark (bug 129).
+- Make cmd-number work when focus is in find bar (bug 111).
+
+Miscellaneous
+- Improvements to "About iTerm" dialog.
+- Remove font size follows window and use transparency menu items.
+
 Alpha 8
 Some improvements to the UI for selecting bookmarks. Change to use a new icon! Add global key mappings for cmd-{ and } to switch tabs, ^6 to send ^^, ^- to send ^_. Bugs fixed: cmd-number to switch tabs works again (bug 48). Fix dragging bookmarks (bug 54). Use new xterm keymaps for shift-arrow keys. Correctly display unset shortcuts in bookmarks list (bug 53). Don't close font panel automatically for focus-follows-mouse (bug 51). Fix bug where double clicking on empty line in key mapping crashed. Use bold font for bold text. Improve selection behavior (bug 60). Import "empty" working directory as new "recycle directory" option (bug 65). Make all bold text bright (bug 62). Change default color of bold text to not be red/pink.
 
