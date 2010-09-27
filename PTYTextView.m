@@ -2736,7 +2736,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 }
 
-- (void) _drawCursor
+- (void)_drawCursor
 {
     int WIDTH, HEIGHT;
     screen_char_t* theLine;
@@ -2772,10 +2772,36 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     else
         showCursor = YES;
 
+    // draw any text for NSTextInput
+    if ([self hasMarkedText]) {
+        // The following mod is brought to you by Zonble.
+        int len = [markedText length];
+        if (len > WIDTH - x1) {
+          len = WIDTH - x1;
+        }
+        int descender = [nafont descender];
+
+        NSRect inputFrame = NSMakeRect(floor(x1 * charWidth + MARGIN),
+                                       (yStart + [dataSource numberOfLines] - HEIGHT) * lineHeight + (lineHeight - cursorHeight) + descender,
+                                       ceil((WIDTH-x1)*cursorWidth),
+                                       cursorHeight - descender);
+        [markedText drawInRect:inputFrame];
+
+        NSAttributedString *attributedStringBeforeCursor = [markedText attributedSubstringFromRange:NSMakeRange(0, IM_INPUT_SELRANGE.location)];
+        NSRect spaceFrame = [attributedStringBeforeCursor boundingRectWithSize:inputFrame.size options:0];
+        NSRect cursorFrame = NSMakeRect(inputFrame.origin.x + spaceFrame.size.width, inputFrame.origin.y, 2.0, inputFrame.size.height);
+        [[NSColor yellowColor] set];
+        NSRectFill(cursorFrame);
+
+        memset([dataSource dirty] + yStart * WIDTH + x1,
+               1,
+               WIDTH - x1 > len*2 ? len*2 : WIDTH-x1); //len*2 is an over-estimation, but safe
+        return;
+    }
+
+
     if (CURSOR) {
         if (showCursor && x1 < WIDTH && x1 >= 0 && yStart >= 0 && yStart < HEIGHT) {
-            curX = floor(x1 * charWidth + MARGIN);
-            curY = (yStart + [dataSource numberOfLines] - HEIGHT + 1) * lineHeight - cursorHeight;
             // get the cursor line
             theLine = [dataSource getLineAtScreenIndex:yStart];
             double_width = 0;
@@ -2787,6 +2813,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 }
                 double_width = (x1 < WIDTH-1) && (theLine[x1+1].ch == 0xffff);
             }
+            curX = floor(x1 * charWidth + MARGIN);
+            curY = (yStart + [dataSource numberOfLines] - HEIGHT + 1) * lineHeight - cursorHeight;
 
             NSColor *bgColor;
             if (colorInvertedCursor) {
@@ -2874,31 +2902,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     oldCursorX = x1;
     oldCursorY = yStart;
-
-    // draw any text for NSTextInput
-    if([self hasMarkedText]) {
-        // The following mod is brought to you by Zonble.
-        int len=[markedText length];
-        if (len>WIDTH-x1) len=WIDTH-x1;
-        int descender = [nafont descender];
-
-        NSRect inputFrame = NSMakeRect(floor(x1 * charWidth + MARGIN),
-                                       (yStart + [dataSource numberOfLines] - HEIGHT) * lineHeight + (lineHeight - cursorHeight) + descender,
-                                       ceil((WIDTH-x1)*cursorWidth),
-                                       cursorHeight - descender);
-        [markedText drawInRect:inputFrame];
-
-        NSAttributedString *attributedStringBeforeCursor = [markedText attributedSubstringFromRange:NSMakeRange(0, IM_INPUT_SELRANGE.location)];
-        NSRect spaceFrame = [attributedStringBeforeCursor boundingRectWithSize:inputFrame.size options:0];
-        NSRect cursorFrame = NSMakeRect(inputFrame.origin.x + spaceFrame.size.width, inputFrame.origin.y, 2.0, inputFrame.size.height);
-        [[NSColor yellowColor] set];
-        NSRectFill(cursorFrame);
-
-        memset([dataSource dirty] + yStart * WIDTH + x1,
-               1,
-               WIDTH - x1 > len*2 ? len*2 : WIDTH-x1); //len*2 is an over-estimation, but safe
-    }
-
 }
 
 - (void)_drawCharacter:(unichar)code fgColor:(int)fg AtX:(float)X Y:(float)Y doubleWidth:(BOOL)dw overrideColor:(NSColor*)overrideColor
