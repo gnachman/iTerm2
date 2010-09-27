@@ -11,7 +11,7 @@
  **  Project: iTerm
  **
  **  Description: overrides sendEvent: so that key mappings with command mask  
- **				  are handled properly.
+ **               are handled properly.
  **
  **  This program is free software; you can redistribute it and/or modify
  **  it under the terms of the GNU General Public License as published by
@@ -40,22 +40,22 @@
 
 - (BOOL)isTextFieldInFocus:(NSTextField *)textField
 {
-	BOOL inFocus = NO;
-	
+    BOOL inFocus = NO;
+    
     // If the textfield's widow's first responder is a text view and
     // the default editor for the text field exists and
     // the textfield is the textfield's window's first responder's delegate
-	inFocus = ([[[textField window] firstResponder] isKindOfClass:[NSTextView class]]
-			   && [[textField window] fieldEditor:NO forObject:nil]!=nil
-			   && [textField isEqualTo:(id)[(NSTextView *)[[textField window] firstResponder]delegate]]);
-	
-	return inFocus;
+    inFocus = ([[[textField window] firstResponder] isKindOfClass:[NSTextView class]]
+               && [[textField window] fieldEditor:NO forObject:nil]!=nil
+               && [textField isEqualTo:(id)[(NSTextView *)[[textField window] firstResponder]delegate]]);
+    
+    return inFocus;
 }
 
 // override to catch key press events very early on
 - (void)sendEvent:(NSEvent*)event
 {
-	if ([event type] == NSKeyDown) {
+    if ([event type] == NSKeyDown) {
         PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
         PreferencePanel* privatePrefPanel = [PreferencePanel sessionsInstance];
         PseudoTerminal* currentTerminal = [[iTermController sharedInstance] currentTerminal];
@@ -75,26 +75,28 @@
             return;
         } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
             responder = [[self keyWindow] firstResponder];
-            if ([responder isKindOfClass:[PTYTextView class]]) {
-                if ([(PTYTextView *)responder hasMarkedText]) {
-                    // Let the IM process it
-                    [(PTYTextView *)responder interpretKeyEvents:[NSArray arrayWithObject:event]];
+            bool inTextView = [responder isKindOfClass:[PTYTextView class]];
+
+            if (inTextView &&
+                [(PTYTextView *)responder hasMarkedText]) {
+                // Let the IM process it
+                [(PTYTextView *)responder interpretKeyEvents:[NSArray arrayWithObject:event]];
+                return;
+            }
+
+            const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
+            if(([event modifierFlags] & mask) == NSCommandKeyMask) {
+                int digit = [[event charactersIgnoringModifiers] intValue];
+                if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
+                    [tabView selectTabViewItemAtIndex:digit-1];
                     return;
                 }
+            }
 
-                const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
-                if(([event modifierFlags] & mask) == NSCommandKeyMask) {
-                    int digit = [[event charactersIgnoringModifiers] intValue];
-                    if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
-                        [tabView selectTabViewItemAtIndex:digit-1];
-                        return;
-                    }
-                }
-
-                if ([currentSession hasKeyMappingForEvent:event highPriority:YES]) {
-                    [currentSession keyDown:event];
-                    return;
-                }
+            if (inTextView && 
+                [currentSession hasKeyMappingForEvent:event highPriority:YES]) {
+                [currentSession keyDown:event];
+                return;
             }
         }
     }
