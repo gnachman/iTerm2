@@ -1711,7 +1711,11 @@ static void DumpBuf(screen_char_t* p, int n) {
     NSLog(@"%s(%d):-[VT100Screen backSpace]", __FILE__, __LINE__);
 #endif
     if (CURSOR_X > 0) {
-        if (CURSOR_X>=WIDTH) CURSOR_X-=2; else CURSOR_X--;
+        if (CURSOR_X >= WIDTH) {
+            CURSOR_X -= 2; 
+        } else {
+            CURSOR_X--;
+        }
     }
 }
 
