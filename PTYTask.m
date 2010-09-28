@@ -5,7 +5,7 @@
  **  Copyright (c) 2002, 2003
  **
  **  Author: Fabian, Ujwal S. Setlur
- **	     Initial code by Kiichi Kusama
+ **      Initial code by Kiichi Kusama
  **
  **  Project: iTerm
  **
@@ -137,11 +137,11 @@ static TaskNotifier* taskNotifier = nil;
 {
     if ([super init] == nil)
         return nil;
-    
+
     tasks        = [[NSMutableArray alloc] init];
     tasksLock    = [[NSRecursiveLock alloc] init];
     tasksChanged = NO;
-    
+
     int unblockPipe[2];
     if (pipe(unblockPipe) != 0) {
         return nil;
@@ -149,8 +149,8 @@ static TaskNotifier* taskNotifier = nil;
     fcntl(unblockPipe[0], F_SETFL, O_NONBLOCK);
     unblockPipeR = unblockPipe[0];
     unblockPipeW = unblockPipe[1];
-    
-	return self;
+
+    return self;
 }
 
 - (void)dealloc
@@ -204,11 +204,11 @@ static TaskNotifier* taskNotifier = nil;
     int                highfd;
     NSEnumerator*      iter;
     PTYTask*           task;
-    
+
     // FIXME: replace this with something better...
     for(;;) {
         NSAutoreleasePool* innerPool = [[NSAutoreleasePool alloc] init];
-        
+
         FD_ZERO(&rfds);
         FD_ZERO(&wfds);
         FD_ZERO(&efds);
@@ -217,7 +217,7 @@ static TaskNotifier* taskNotifier = nil;
         highfd = unblockPipeR;
         FD_SET(unblockPipeR, &rfds);
         CFMutableSetRef handledFds = CFSetCreateMutable (NULL, [tasks count], NULL);
-        
+
         // Add all the PTYTask pipes
         PtyTaskDebugLog(@"run1: lock");
         [tasksLock lock];
@@ -338,9 +338,9 @@ static TaskNotifier* taskNotifier = nil;
         }
         PtyTaskDebugLog(@"run3: unlock");
         [tasksLock unlock];
-        
+
     breakloop:
-        CFRelease(handledFds);		
+        CFRelease(handledFds);
         [innerPool drain];
     }
 
@@ -465,7 +465,7 @@ setup_tty_param(
     pid = forkpty(&fd, theTtyname, &term, &win);
     if (pid == (pid_t)0) {
         const char* argpath = [[progpath stringByStandardizingPath] UTF8String];
-        int max = (args == nil) ? 0 : [args count]; 
+        int max = (args == nil) ? 0 : [args count];
         const char* argv[max + 2];
 
         argv[0] = argpath;
@@ -543,7 +543,7 @@ setup_tty_param(
         [self brokenPipe];
         return;
     }
-    
+
     // Send data to the terminal
     [data setLength:bytesread];
     hasOutput = YES;
@@ -561,13 +561,13 @@ setup_tty_param(
     // Lock to protect the writeBuffer from the main thread
     [self retain];
     [writeLock lock];
-    
+
     // Only write up to MAXRW bytes, then release control
     char*        ptr    = [writeBuffer mutableBytes];
     unsigned int length = [writeBuffer length];
     if (length > MAXRW)
         length = MAXRW;
-	ssize_t written = write(fd, [writeBuffer mutableBytes], length);
+    ssize_t written = write(fd, [writeBuffer mutableBytes], length);
 
     // No data?
     if ((written < 0) && (!(errno == EAGAIN || errno == EINTR))) {
@@ -651,7 +651,7 @@ setup_tty_param(
 
     if (fd == -1)
         return;
-    
+
     ioctl(fd, TIOCGWINSZ, &winsize);
     if ((winsize.ws_col != width) || (winsize.ws_row != height)) {
         winsize.ws_col = width;
@@ -674,7 +674,7 @@ setup_tty_param(
 {
     if (pid >= 0)
         waitpid(pid, &status, 0);
-    
+
     return status;
 }
 
@@ -773,11 +773,11 @@ setup_tty_param(
     if (ret <= 0) {
         /* An error occured */
         return nil;
-	}
+    }
     else if (ret != sizeof(vpi)) {
         /* Now this is very bad... */
         return nil;
-	}
+    }
     else {
         /* All is good */
         return [NSString stringWithUTF8String:vpi.pvi_cdir.vip_path];
