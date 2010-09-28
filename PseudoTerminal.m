@@ -1611,7 +1611,7 @@ NSString *sessionsKey = @"sessions";
         [mutableCmdArgs addObject:[NSString stringWithUTF8String: argStart]];
     }
 
-    if ([mutableCmdArgs count] > 1) {
+    if ([mutableCmdArgs count] > 0) {
         *cmd = [mutableCmdArgs objectAtIndex:0];
         [mutableCmdArgs removeObjectAtIndex:0];
     } else {
