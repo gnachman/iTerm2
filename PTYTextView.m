@@ -41,6 +41,7 @@
 #import <iTerm/PTYScrollView.h>
 #import <iTerm/PTYTask.h>
 #import <iTerm/iTermController.h>
+#import <iTerm/NSStringITerm.h>
 #import "iTermApplicationDelegate.h"
 #import "PreferencePanel.h"
 
@@ -88,7 +89,7 @@ static NSCursor* textViewCursor =  nil;
         [NSDictionary dictionaryWithObjectsAndKeys:
             defaultBGColor, NSBackgroundColorAttributeName,
             defaultFGColor, NSForegroundColorAttributeName,
-            nafont, NSFontAttributeName,
+            secondaryFont.font, NSFontAttributeName,
             [NSNumber numberWithInt:(NSUnderlineStyleSingle|NSUnderlineByWordMask)],
                 NSUnderlineStyleAttributeName,
             NULL]];
@@ -179,12 +180,9 @@ static NSCursor* textViewCursor =  nil;
     [defaultCursorColor release];
     [layoutManager release];
 
-    [font release];
-    [nafont release];
-#ifdef PRETTY_BOLD
-    [boldFont release];
-    [boldNaFont release];
-#endif
+    [self releaseFontInfo:&primaryFont];
+    [self releaseFontInfo:&secondaryFont];
+
     [markedTextAttributes release];
     [markedText release];
 
@@ -426,12 +424,12 @@ static NSCursor* textViewCursor =  nil;
 
 - (NSFont *)font
 {
-    return font;
+    return primaryFont.font;
 }
 
 - (NSFont *)nafont
 {
-    return nafont;
+    return secondaryFont.font;
 }
 
 + (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(float)hspace verticalSpacing:(float)vspace
@@ -461,9 +459,6 @@ static NSCursor* textViewCursor =  nil;
 
 - (void)setFont:(NSFont*)aFont nafont:(NSFont *)naFont horizontalSpacing:(float)horizontalSpacing verticalSpacing:(float)verticalSpacing
 {
-#ifdef PRETTY_BOLD
-    NSFontManager* fontManager = [NSFontManager sharedFontManager];
-#endif
     NSSize sz = [PTYTextView charSizeForFont:aFont horizontalSpacing:1.0 verticalSpacing:1.0];
     sz.width = ceil(sz.width);
     sz.height = ceil(sz.height);
@@ -474,42 +469,15 @@ static NSCursor* textViewCursor =  nil;
     verticalSpacing_ = verticalSpacing;
     charWidth = ceil(charWidthWithoutSpacing * horizontalSpacing);
     lineHeight = ceil(charHeightWithoutSpacing * verticalSpacing);
-    [font release];
-    [aFont retain];
-    font=aFont;
+    [self modifyFont:aFont info:&primaryFont];
+    [self modifyFont:naFont info:&secondaryFont];
 
-#ifdef PRETTY_BOLD
-    [boldFont release];
-    boldFont = [fontManager convertFont:font toHaveTrait:NSBoldFontMask];
-    if (!([fontManager traitsOfFont:boldFont] & NSBoldFontMask)) {
-        boldFont = nil;
-    } else {
-        // may be nil at this point
-        [boldFont retain];
-    }
-#endif
-
-    [nafont release];
-    [naFont retain];
-    nafont=naFont;
-
-#ifdef PRETTY_BOLD
-    [boldNaFont release];
-    boldNaFont = [fontManager convertFont:naFont toHaveTrait:NSBoldFontMask];
-    if (!([fontManager traitsOfFont:boldNaFont] & NSBoldFontMask)) {
-        boldNaFont = nil;
-    } else {
-        // may be nil at this point
-        [boldNaFont retain];
-    }
-    [boldNaFont retain];
-#endif
 
     [self setMarkedTextAttributes:
         [NSDictionary dictionaryWithObjectsAndKeys:
             defaultBGColor, NSBackgroundColorAttributeName,
             defaultFGColor, NSForegroundColorAttributeName,
-            nafont, NSFontAttributeName,
+            secondaryFont.font, NSFontAttributeName,
             [NSNumber numberWithInt:(NSUnderlineStyleSingle|NSUnderlineByWordMask)],
                 NSUnderlineStyleAttributeName,
             NULL]];
@@ -2608,6 +2576,55 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 //
 @implementation PTYTextView (Private)
 
+static PTYFontInfo* GetFontForChar(UniChar ch,
+                                  int fgColor,
+                                  BOOL* renderBold,
+                                  BOOL disableBold,
+                                  PTYFontInfo* primaryFont,
+                                  PTYFontInfo* secondaryFont) {
+    BOOL isBold = (fgColor & BOLD_MASK) && !disableBold;
+    *renderBold = NO;
+    PTYFontInfo* theFont;
+    BOOL usePrimary = (ch < 128);
+    if (!usePrimary) {
+        // Try to use the primary font for non-ascii characters, but only
+        // if it has the glyph.
+        CGGlyph glyph;
+        if (CTFontGetGlyphsForCharacters((CTFontRef)primaryFont->font,
+                                         &ch,
+                                         &glyph,
+                                         1)) {
+            usePrimary = YES;
+        } else {
+            usePrimary = NO;
+        }
+    }
+
+    if (usePrimary) {
+        if (isBold) {
+            theFont = primaryFont->boldVersion;
+            if (!theFont) {
+                theFont = primaryFont;
+                *renderBold = YES;
+            }
+        } else {
+            theFont = primaryFont;
+        }
+    } else {
+        if (isBold) {
+            theFont = secondaryFont->boldVersion;
+            if (!theFont) {
+                theFont = secondaryFont;
+                *renderBold = YES;
+            }
+        } else {
+            theFont = secondaryFont;
+        }
+    }
+    return theFont;
+}
+
+
 - (void)_drawLine:(int)line AtY:(float)curY
 {
     int screenstartline = [self frame].origin.y / lineHeight;
@@ -2648,6 +2665,20 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int j = 0;
     unsigned int bgcode = 0, fgcode = 0;
     BOOL bgselected = NO;
+
+    // Build up runs of characters.
+    UniChar codes[WIDTH];
+    CGSize advances[WIDTH];
+    NSColor* colors[WIDTH];  // TODO(georgen): should be 1:1 with runs.
+    PTYFontInfo* fonts[WIDTH];  // TODO(georgen): should be 1:1 with runs.
+    BOOL renderBold[WIDTH];  // TODO(georgen): should be 1:1 with runs.
+    int runs[WIDTH];
+    int runX[WIDTH];
+    int runLength = 0;
+    int numRuns = 0;
+    int numGlyphs = 0;
+    BOOL interruptedRun = NO;
+
     // Iterate over each character in the line
     while (j <= WIDTH) {
         if (theLine[j].ch == 0xffff) {
@@ -2707,12 +2738,42 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 }
 
                 if (blinkShow || !(theLine[k].fg_color & BLINK_MASK)) {
-                    [self _drawCharacter:theLine[k].ch
-                                 fgColor:fgcode
-                                     AtX:curX
-                                       Y:curY
-                             doubleWidth:double_width
-                           overrideColor:nil];
+                    if (theLine[k].ch == 0) {
+                        // Skip nulls because they should display empty (not all fonts do, either).
+                        if (numGlyphs > 0) {
+                            interruptedRun = YES;
+                        }
+                    } else {
+                        codes[numGlyphs] = (theLine[k].ch == DWC_SKIP) ? ' ' : theLine[k].ch;
+                        colors[numGlyphs] = [self colorForCode:fgcode];
+                        advances[numGlyphs].width = double_width ? charWidth * 2 : charWidth;
+                        advances[numGlyphs].height = 0;
+                        fonts[numGlyphs] = GetFontForChar(codes[numGlyphs],
+                                                          fgcode,
+                                                          &renderBold[numGlyphs],
+                                                          disableBold,
+                                                          &primaryFont,
+                                                          &secondaryFont);
+                        if (numGlyphs > 0) {
+                            if (interruptedRun ||
+                                colors[numGlyphs] != colors[numGlyphs - 1] ||
+                                fonts[numGlyphs] != fonts[numGlyphs - 1] ||
+                                renderBold[numGlyphs] != renderBold[numGlyphs - 1]) {
+                                // This is the first char of a new run.
+                                // Set the length of the previous run.
+                                runs[numRuns++] = runLength;
+                                // Set the x position of this new run.
+                                runX[numRuns] = curX;
+                                runLength = 0;
+                            }
+                        } else {
+                            // Save the x position of the first glyph
+                            runX[numRuns] = curX;
+                        }
+                        interruptedRun = NO;
+                        ++runLength;
+                        ++numGlyphs;
+                    }
 
                     // draw underline
                     if (theLine[k].fg_color & UNDER_MASK && theLine[k].ch) {
@@ -2733,6 +2794,97 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             // Don't need to draw and not on a run, move to next char
             j += (double_width ? 2 : 1);
         }
+    }
+    if (runLength > 0) {
+        runs[numRuns++] = runLength;
+    }
+
+    // TODO(georgen): Factor this out into drawRunOfChars().
+    // Display runs of text with same font, color, boldness.
+    CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
+    CGContextSetTextDrawingMode(ctx, kCGTextFill);
+    CGContextSetShouldAntialias(ctx, antiAlias);
+    int start = 0;
+    for (int i = 0; i < numRuns; ++i) {
+        CGGlyph glyphs[WIDTH];
+        int length = runs[i];
+        PTYFontInfo* theFont = fonts[start];
+
+        CTFontGetGlyphsForCharacters((CTFontRef)theFont->font,
+                                     codes + start,
+                                     glyphs,
+                                     length);
+        CGContextSelectFont(ctx,
+                            [[theFont->font fontName] UTF8String],
+                            [theFont->font pointSize],
+                            kCGEncodingMacRoman);
+        NSColor* color = colors[start];
+        CGContextSetFillColorSpace(ctx, [[color colorSpace] CGColorSpace]);
+        int componentCount = [color numberOfComponents];
+        {
+            float components[componentCount];
+            [color getComponents:components];
+            CGContextSetFillColor(ctx, components);
+        }
+        int y = curY + lineHeight + theFont->baselineOffset;
+        int x = runX[i];
+        // Flip vertically and translate to (x, y).
+        CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
+                                                          0.0, -1.0,
+                                                          x,    y));
+
+        CGContextShowGlyphsWithAdvances(ctx, glyphs, advances + start, length);
+        if (renderBold[start]) {
+            CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
+                                                              0.0, -1.0,
+                                                              x + 1, y));
+
+            CGContextShowGlyphsWithAdvances(ctx, glyphs, advances + start, length);
+        }
+        start += length;
+    }
+}
+
+- (void)_drawCharacter:(unichar)c fgColor:(int)fg AtX:(float)X Y:(float)Y doubleWidth:(BOOL)dw overrideColor:(NSColor*)overrideColor
+{
+    CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
+    CGContextSetTextDrawingMode(ctx, kCGTextFill);
+    CGContextSetShouldAntialias(ctx, antiAlias);
+    CGGlyph glyph;
+    BOOL renderBold;
+    PTYFontInfo* theFont = GetFontForChar(c, fg, &renderBold, disableBold, &primaryFont, &secondaryFont);
+
+    CTFontGetGlyphsForCharacters((CTFontRef)theFont->font,
+                                 &c,
+                                 &glyph,
+                                 1);
+    CGContextSelectFont(ctx,
+                        [[theFont->font fontName] UTF8String],
+                        [theFont->font pointSize],
+                        kCGEncodingMacRoman);
+    NSColor* color = overrideColor ? overrideColor : [self colorForCode:fg];
+    CGContextSetFillColorSpace(ctx, [[color colorSpace] CGColorSpace]);
+    int componentCount = [color numberOfComponents];
+    {
+        float components[componentCount];
+        [color getComponents:components];
+        CGContextSetFillColor(ctx, components);
+    }
+    // Flip vertically and translate to (x, y).
+    Y += lineHeight + theFont->baselineOffset;
+    CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
+                                                      0.0, -1.0,
+                                                      X,    Y));
+    CGSize advances[1];
+    advances[0].width = charWidth;
+    advances[0].height = 0;
+    CGContextShowGlyphsWithAdvances(ctx, &glyph, advances, 1);
+    if (renderBold) {
+        CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
+                                                          0.0, -1.0,
+                                                          X + 1, Y));
+
+        CGContextShowGlyphsWithAdvances(ctx, &glyph, advances, 1);
     }
 }
 
@@ -2779,17 +2931,54 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         if (len > WIDTH - x1) {
           len = WIDTH - x1;
         }
-        int descender = [nafont descender];
 
-        NSRect inputFrame = NSMakeRect(floor(x1 * charWidth + MARGIN),
-                                       (yStart + [dataSource numberOfLines] - HEIGHT) * lineHeight + (lineHeight - cursorHeight) + descender,
-                                       ceil((WIDTH-x1)*cursorWidth),
-                                       cursorHeight - descender);
-        [markedText drawInRect:inputFrame];
+        NSString* str = [markedText string];
+        int offset = 0;
+        int cursorOffset = 0;
+        int cursorY;
+        int baseX = floor(x1 * charWidth + MARGIN);
+        int i;
+        int y = (yStart + [dataSource numberOfLines] - HEIGHT) * lineHeight;
+        for (i = 0; i < [str length]; ++i) {
+            UniChar aChar = [str characterAtIndex:i];
+            int x = baseX + offset;
+            if (x >= WIDTH * charWidth + MARGIN) {
+                // TODO(georgen): Wrapping doesn't work. This code should be
+                // moved out of drawCursor and be part of the regular window
+                // drawing code. It should also scroll the screen as needed when
+                // the IME text is too large to fit on screen.
+                x = MARGIN;
+                y += lineHeight;
+            }
+            BOOL doubleWidth = [NSString isDoubleWidthCharacter:aChar
+                                                       encoding:NSUTF32StringEncoding
+                                         ambiguousIsDoubleWidth:[[dataSource session] doubleWidth]];
 
-        NSAttributedString *attributedStringBeforeCursor = [markedText attributedSubstringFromRange:NSMakeRange(0, IM_INPUT_SELRANGE.location)];
-        NSRect spaceFrame = [attributedStringBeforeCursor boundingRectWithSize:inputFrame.size options:0];
-        NSRect cursorFrame = NSMakeRect(inputFrame.origin.x + spaceFrame.size.width, inputFrame.origin.y, 2.0, inputFrame.size.height);
+            NSRect r = NSMakeRect(x, y, charWidth * (doubleWidth ? 2 : 1), lineHeight);
+            [defaultBGColor set];
+            NSRectFill(r);
+
+            [self _drawCharacter:aChar
+                         fgColor:0
+                             AtX:x
+                               Y:y
+                     doubleWidth:doubleWidth
+                   overrideColor:defaultFGColor];
+            if (i == IM_INPUT_SELRANGE.location) {
+                cursorOffset = offset;
+                cursorY = y;
+            }
+            offset += r.size.width;
+        }
+        if (i == IM_INPUT_SELRANGE.location) {
+            cursorOffset = offset;
+            cursorY = y;
+        }
+
+        NSRect cursorFrame = NSMakeRect(floor(x1 * charWidth + MARGIN) + cursorOffset,
+                                        cursorY,
+                                        2.0,
+                                        cursorHeight);
         [[NSColor yellowColor] set];
         NSRectFill(cursorFrame);
 
@@ -2904,99 +3093,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     oldCursorY = yStart;
 }
 
-- (void)_drawCharacter:(unichar)code fgColor:(int)fg AtX:(float)X Y:(float)Y doubleWidth:(BOOL)dw overrideColor:(NSColor*)overrideColor
-{
-    if (!code) return;
-    if (code == DWC_SKIP) {
-        code = ' ';
-    }
-    static int oldfg = -1;
-    static NSFont* oldFont = nil;
-    static NSMutableDictionary* attrib = nil;
-    if(attrib == nil) attrib = [[NSMutableDictionary alloc] init];
-
-    NSFont* theFont;
-    BOOL isBold = (fg&BOLD_MASK) && ![self disableBold];
-    BOOL renderBold = NO;
-#ifdef PRETTY_BOLD
-    if (!dw) {
-        if (isBold) {
-            theFont = boldFont;
-            if (!theFont) {
-                theFont = font;
-                renderBold = YES;
-            }
-        } else {
-            theFont = font;
-        }
-    } else {
-        if (isBold) {
-            theFont = boldNaFont;
-            if (!theFont) {
-                theFont = nafont;
-                renderBold = YES;
-            }
-        } else {
-            theFont = nafont;
-        }
-    }
-#else
-    renderBold = isBold;
-    theFont = dw ? nafont : font;
-#endif
-
-    NSColor* color = overrideColor ? overrideColor : [self colorForCode:fg];
-
-    if (overrideColor || oldfg != fg) {
-        [attrib setObject:color forKey:NSForegroundColorAttributeName];
-    }
-    if (oldFont != theFont) {
-        [attrib setObject:theFont forKey: NSFontAttributeName];
-    }
-
-    if (code < 128) {
-        char ascii_char = (char)code;
-        // if we can safely convert to an ascii character, we can use the faster CoreGraphics api.
-        CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
-
-        CGContextSelectFont(ctx,
-                            [[theFont fontName] UTF8String],
-                            [theFont pointSize],
-                            kCGEncodingMacRoman);
-
-        CGContextSetFillColorSpace(ctx, [[color colorSpace] CGColorSpace]);
-        int componentCount = [color numberOfComponents];
-        {
-          float components[componentCount];
-          [color getComponents:components];
-          CGContextSetFillColor(ctx, components);
-        }
-        CGContextSetTextMatrix(ctx, CGAffineTransformMakeScale(1.0, -1.0));
-        CGContextSetTextDrawingMode(ctx, kCGTextFill);
-        CGContextSetShouldAntialias(ctx, [self antiAlias]);
-
-        Y += lineHeight + [theFont descender];
-        Y = (int)Y;
-        X = (int)X;
-        CGContextShowTextAtPoint(ctx, X, Y, &ascii_char, 1);
-        CGContextFillPath(ctx);
-        if (renderBold) {
-            CGContextShowTextAtPoint(ctx, X+1, Y, &ascii_char, 1);
-            CGContextFillPath(ctx);
-        }
-    } else {
-        Y += lineHeight + [theFont descender];
-        Y = (int)Y;
-        X = (int)X;
-        NSString* charToDraw = [NSString stringWithCharacters:&code length:1];
-        [charToDraw drawWithRect:NSMakeRect(X,Y, 0, 0) options:0 attributes:attrib];
-
-        // redraw the character offset by 1 pixel, this is faster than real bold
-        if (renderBold) {
-            [charToDraw drawWithRect:NSMakeRect(X+1,Y, 0, 0) options:0 attributes:attrib];
-        }
-    }
-}
 
 - (void) _scrollToLine:(int)line
 {
@@ -3583,6 +3679,40 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 {
     colorInvertedCursor = [[PreferencePanel sharedInstance] colorInvertedCursor];
     [self setNeedsDisplay:YES];
+}
+
+- (void)_modifyFont:(NSFont*)font into:(PTYFontInfo*)fontInfo
+{
+    if (fontInfo->font) {
+        [self releaseFontInfo:fontInfo];
+    }
+
+    fontInfo->font = font;
+    [fontInfo->font retain];
+    fontInfo->baselineOffset = -floorf([font leading] - [font descender] + 0.5);
+    fontInfo->descender = floorf([font descender]);
+    fontInfo->boldVersion = NULL;
+}
+
+- (void)modifyFont:(NSFont*)font info:(PTYFontInfo*)fontInfo
+{
+    [self _modifyFont:font into:fontInfo];
+    NSFontManager* fontManager = [NSFontManager sharedFontManager];
+    NSFont* boldFont = [fontManager convertFont:font toHaveTrait:NSBoldFontMask];
+    if (boldFont && ([fontManager traitsOfFont:boldFont] & NSBoldFontMask)) {
+        fontInfo->boldVersion = (PTYFontInfo*)malloc(sizeof(PTYFontInfo));
+        fontInfo->boldVersion->font = NULL;
+        [self _modifyFont:boldFont into:fontInfo->boldVersion];
+    }
+}
+
+
+- (void)releaseFontInfo:(PTYFontInfo*)fontInfo
+{
+    [fontInfo->font release];
+    if (fontInfo->boldVersion) {
+        [self releaseFontInfo:fontInfo->boldVersion];
+    }
 }
 
 @end

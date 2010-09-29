@@ -41,6 +41,18 @@
 
 enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 
+// A collection of data about a font.
+struct PTYFontInfo {
+    NSFont* font;  // Toll-free bridged to CTFontRef
+
+    // Metrics
+    int baselineOffset;
+    int descender;
+
+    struct PTYFontInfo* boldVersion;  // may be NULL
+};
+typedef struct PTYFontInfo PTYFontInfo;
+
 @interface PTYTextView : NSView <NSTextInput>
 {
     // This is a flag to let us know whether we are handling this
@@ -80,13 +92,9 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
     float horizontalSpacing_;
     float  verticalSpacing_;
 
-    NSFont *font;
-    NSFont *nafont;
+    PTYFontInfo primaryFont;
+    PTYFontInfo secondaryFont;
 
-#ifdef PRETTY_BOLD
-    NSFont *boldFont;
-    NSFont *boldNaFont;
-#endif
     NSColor* colorTable[256];
     NSColor* defaultFGColor;
     NSColor* defaultBGColor;
@@ -292,7 +300,7 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
     // service stuff
 - (id)validRequestorForSendType:(NSString *)sendType returnType:(NSString *)returnType;
 - (BOOL)writeSelectionToPasteboard:(NSPasteboard *)pboard types:(NSArray *)types;
-- (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard;    
+- (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard;
 - (BOOL)findInProgress;
 - (BOOL)continueFind;
 - (float)horizontalSpacing;
@@ -305,15 +313,18 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 //
 @interface PTYTextView (Private)
 
+- (void)modifyFont:(NSFont*)font info:(PTYFontInfo*)fontInfo;
+- (void)releaseFontInfo:(PTYFontInfo*)fontInfo;
+
 - (unsigned int) _checkForSupportedDragTypes:(id <NSDraggingInfo>) sender;
 - (void)_savePanelDidEnd:(NSSavePanel *)theSavePanel returnCode:(int)theReturnCode contextInfo:(void *)theContextInfo;
 
 - (void) _scrollToLine:(int)line;
-- (NSString *)_getWordForX:(int)x 
-                    y:(int)y 
-               startX:(int *)startx 
-               startY:(int *)starty 
-                 endX:(int *)endx 
+- (NSString *)_getWordForX:(int)x
+                    y:(int)y
+               startX:(int *)startx
+               startY:(int *)starty
+                 endX:(int *)endx
                  endY:(int *)endy;
 - (NSString *)_getURLForX:(int)x y:(int)y;
 - (void)_drawLine:(int)line AtY:(float)curY;
@@ -325,6 +336,7 @@ enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
 - (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent;
 - (BOOL)_isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old;
 - (void)_settingsChanged:(NSNotification *)notification;
+- (void)_modifyFont:(NSFont*)font into:(PTYFontInfo*)fontInfo;
 
 @end
 
