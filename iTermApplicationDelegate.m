@@ -463,9 +463,6 @@ void DebugLog(NSString* value)
 {
         PseudoTerminal *frontTerminal = [self currentTerminal];
     if (frontTerminal != [aNotification object]) return;
-
-        unsigned int drawerState;
-
         [previousTerminal setAction: (frontTerminal?@selector(previousTerminal:):nil)];
         [nextTerminal setAction: (frontTerminal?@selector(nextTerminal:):nil)];
 
