@@ -2126,8 +2126,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
                     // Check for file names
                     propertyList = [pb propertyListForType: NSFilenamesPboardType];
-                for(i = 0; i < [propertyList count]; i++)
-                {
+                for (i = 0; i < (int)[propertyList count]; i++) {
 
                     // Ignore text clippings
                     NSString *filename = (NSString*)[propertyList objectAtIndex: i]; // this contains the POSIX path to a file
@@ -2823,7 +2822,7 @@ static PTYFontInfo* GetFontForChar(UniChar ch,
         CGContextSetFillColorSpace(ctx, [[color colorSpace] CGColorSpace]);
         int componentCount = [color numberOfComponents];
         {
-            float components[componentCount];
+            CGFloat components[componentCount];
             [color getComponents:components];
             CGContextSetFillColor(ctx, components);
         }
@@ -2867,7 +2866,7 @@ static PTYFontInfo* GetFontForChar(UniChar ch,
     CGContextSetFillColorSpace(ctx, [[color colorSpace] CGColorSpace]);
     int componentCount = [color numberOfComponents];
     {
-        float components[componentCount];
+        CGFloat components[componentCount];
         [color getComponents:components];
         CGContextSetFillColor(ctx, components);
     }
@@ -2940,7 +2939,7 @@ static PTYFontInfo* GetFontForChar(UniChar ch,
         int baseX = floor(x1 * charWidth + MARGIN);
         int i;
         int y = (yStart + [dataSource numberOfLines] - HEIGHT) * lineHeight;
-        for (i = 0; i < [str length]; ++i) {
+        for (i = 0; i < (int)[str length]; ++i) {
             UniChar aChar = [str characterAtIndex:i];
             int x = baseX + offset;
             if (x >= WIDTH * charWidth + MARGIN) {
@@ -2965,13 +2964,13 @@ static PTYFontInfo* GetFontForChar(UniChar ch,
                                Y:y
                      doubleWidth:doubleWidth
                    overrideColor:defaultFGColor];
-            if (i == IM_INPUT_SELRANGE.location) {
+            if (i == (int)IM_INPUT_SELRANGE.location) {
                 cursorOffset = offset;
                 cursorY = y;
             }
             offset += r.size.width;
         }
-        if (i == IM_INPUT_SELRANGE.location) {
+        if (i == (int)IM_INPUT_SELRANGE.location) {
             cursorOffset = offset;
             cursorY = y;
         }

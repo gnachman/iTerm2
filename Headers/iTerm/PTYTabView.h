@@ -52,7 +52,7 @@
 // NSTabView methods overridden
 - (void) addTabViewItem: (NSTabViewItem *) aTabViewItem;
 - (void) removeTabViewItem: (NSTabViewItem *) aTabViewItem;
-- (void) insertTabViewItem: (NSTabViewItem *) tabViewItem atIndex: (int) index;
+- (void) insertTabViewItem: (NSTabViewItem *) tabViewItem atIndex: (int) theIndex;
 
 // selects a tab from the contextual menu
 - (void) selectTab: (id) sender;

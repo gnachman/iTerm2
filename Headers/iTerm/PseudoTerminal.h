@@ -395,6 +395,9 @@
 // Returns true if an init... method was already called.
 - (BOOL)isInitialized;
 
+// Called when the close button in the find bar is pressed.
+- (IBAction)closeFindBar:(id)sender;
+
 @end
 
 @interface PseudoTerminal (KeyValueCoding)
@@ -586,9 +589,6 @@
 
 // Begin searching for a string.
 - (void)_newSearch:(BOOL)needTimer;
-
-// Called when the close button in the find bar is pressed.
-- (IBAction)closeFindBar:(id)sender;
 
 // Grow or shrink the tabview to make room for the find bar in fullscreen mode
 // and then fit sessions to new window size.

@@ -40,9 +40,9 @@
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"PTYTabView: -contentSizeForFrameSize");
-#endif    
+#endif
 
-    // make a temporary tabview 
+    // make a temporary tabview
     aRect = NSMakeRect(0, 0, 200, 200);
     aTabView = [[NSTabView alloc] initWithFrame: aRect];
     [aTabView setTabViewType: type];
@@ -123,11 +123,11 @@
 
 - (void) drawRect: (NSRect) rect
 {
-	//NSLog(@"%s", __PRETTY_FUNCTION__);
-	
-	[[NSNotificationCenter defaultCenter] postNotificationName: @"iTermTabViewWillRedraw" object: self];
-	[super drawRect: rect];
-	
+    //NSLog(@"%s", __PRETTY_FUNCTION__);
+
+    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermTabViewWillRedraw" object: self];
+    [super drawRect: rect];
+
 }
 
 
@@ -142,9 +142,9 @@
     id delegate = [self delegate];
 
     if([delegate conformsToProtocol: @protocol(PTYTabViewDelegateProtocol)])
-		[delegate tabView: self willAddTabViewItem: aTabViewItem];
-    
-    
+        [delegate tabView: self willAddTabViewItem: aTabViewItem];
+
+
     [super addTabViewItem: aTabViewItem];
 }
 
@@ -156,35 +156,35 @@
 
     // Let our delegate know
     id delegate = [self delegate];
-    
+
     if([delegate conformsToProtocol: @protocol(PTYTabViewDelegateProtocol)])
-		[delegate tabView: self willRemoveTabViewItem: aTabViewItem];
-    
+        [delegate tabView: self willRemoveTabViewItem: aTabViewItem];
+
     // remove the item
     [super removeTabViewItem: aTabViewItem];
 }
 
-- (void) insertTabViewItem: (NSTabViewItem *) tabViewItem atIndex: (int) index
+- (void) insertTabViewItem: (NSTabViewItem *) tabViewItem atIndex: (int) theIndex
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"PTYTabView: -insertTabViewItem atIndex: %d", index);
+    NSLog(@"PTYTabView: -insertTabViewItem atIndex: %d", theIndex);
 #endif
 
     // Let our delegate know
     id delegate = [self delegate];
 
     // Check the boundary
-    if (index>[super numberOfTabViewItems]) {
-        NSLog(@"Warning: index(%d) > numberOfTabViewItems(%d)", index, [super numberOfTabViewItems]);
-        index = [super numberOfTabViewItems];
+    if (theIndex>[super numberOfTabViewItems]) {
+        NSLog(@"Warning: index(%d) > numberOfTabViewItems(%d)", theIndex, [super numberOfTabViewItems]);
+        theIndex = [super numberOfTabViewItems];
     }
-    
-    if([delegate conformsToProtocol: @protocol(PTYTabViewDelegateProtocol)])
-        [delegate tabView: self willInsertTabViewItem: tabViewItem atIndex: index];    
 
-    [super insertTabViewItem: tabViewItem atIndex: index];
+    if([delegate conformsToProtocol: @protocol(PTYTabViewDelegateProtocol)])
+        [delegate tabView: self willInsertTabViewItem: tabViewItem atIndex: theIndex];
+
+    [super insertTabViewItem: tabViewItem atIndex: theIndex];
 #if DEBUG_METHOD_TRACE
-    NSLog(@"PTYTabView: -insertTabViewItem atIndex: %d, done", index);
+    NSLog(@"PTYTabView: -insertTabViewItem atIndex: %d, done", theIndex);
 #endif
 }
 

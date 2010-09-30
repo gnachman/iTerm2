@@ -4,7 +4,7 @@
  **  Copyright (c) 2002, 2003
  **
  **  Author: Fabian, Ujwal S. Setlur
- **	     Initial code by Kiichi Kusama
+ **      Initial code by Kiichi Kusama
  **
  **  Project: iTerm
  **
@@ -48,13 +48,13 @@ NSString *CommandToolbarItem = @"Command";
 {
     self = [super init];
     _pseudoTerminal = terminal; // don't retain;
-    
+
     // Add ourselves as an observer for notifications to reload the addressbook.
     [[NSNotificationCenter defaultCenter] addObserver: self
                                              selector: @selector(reloadAddressBookMenu:)
                                                  name: @"iTermReloadAddressBook"
                                                object: nil];
-    
+
     [self setupToolbar];
     return self;
 }
@@ -69,7 +69,7 @@ NSString *CommandToolbarItem = @"Command";
 - (NSArray *)toolbarDefaultItemIdentifiers: (NSToolbar *) toolbar
 {
     NSMutableArray* itemIdentifiers= [[[NSMutableArray alloc]init] autorelease];
-    
+
     [itemIdentifiers addObject: NewToolbarItem];
     [itemIdentifiers addObject: ConfigToolbarItem];
     [itemIdentifiers addObject: NSToolbarSeparatorItemIdentifier];
@@ -77,17 +77,17 @@ NSString *CommandToolbarItem = @"Command";
     [itemIdentifiers addObject: CloseToolbarItem];
     [itemIdentifiers addObject: NSToolbarSeparatorItemIdentifier];
     [itemIdentifiers addObject: CommandToolbarItem];
-	[itemIdentifiers addObject: BookmarksToolbarItem];
-    
+    [itemIdentifiers addObject: BookmarksToolbarItem];
+
     return itemIdentifiers;
 }
 
 - (NSArray *)toolbarAllowedItemIdentifiers: (NSToolbar *) toolbar
 {
     NSMutableArray* itemIdentifiers = [[[NSMutableArray alloc]init] autorelease];
-    
+
     [itemIdentifiers addObject: NewToolbarItem];
-	[itemIdentifiers addObject: BookmarksToolbarItem];
+    [itemIdentifiers addObject: BookmarksToolbarItem];
     [itemIdentifiers addObject: ConfigToolbarItem];
     [itemIdentifiers addObject: NSToolbarCustomizeToolbarItemIdentifier];
     [itemIdentifiers addObject: CloseToolbarItem];
@@ -95,7 +95,7 @@ NSString *CommandToolbarItem = @"Command";
     [itemIdentifiers addObject: NSToolbarFlexibleSpaceItemIdentifier];
     [itemIdentifiers addObject: NSToolbarSpaceItemIdentifier];
     [itemIdentifiers addObject: NSToolbarSeparatorItemIdentifier];
-    
+
     return itemIdentifiers;
 }
 
@@ -105,8 +105,8 @@ NSString *CommandToolbarItem = @"Command";
     NSBundle *thisBundle = [NSBundle bundleForClass: [self class]];
     NSString *imagePath;
     NSImage *anImage;
-    
-    if ([itemIdent isEqual: CloseToolbarItem]) 
+
+    if ([itemIdent isEqual: CloseToolbarItem])
     {
         [toolbarItem setLabel: NSLocalizedStringFromTableInBundle(@"Close",@"iTerm", thisBundle, @"Toolbar Item: Close Session")];
         [toolbarItem setPaletteLabel: NSLocalizedStringFromTableInBundle(@"Close",@"iTerm", thisBundle, @"Toolbar Item: Close Session")];
@@ -119,7 +119,7 @@ NSString *CommandToolbarItem = @"Command";
         [toolbarItem setTarget: nil];
         [toolbarItem setAction: @selector(closeCurrentSession:)];
     }
-    else if ([itemIdent isEqual: ConfigToolbarItem]) 
+    else if ([itemIdent isEqual: ConfigToolbarItem])
     {
         [toolbarItem setLabel: NSLocalizedStringFromTableInBundle(@"Info",@"iTerm", thisBundle, @"Toolbar Item:Info") ];
         [toolbarItem setPaletteLabel: NSLocalizedStringFromTableInBundle(@"Info",@"iTerm", thisBundle, @"Toolbar Item:Info") ];
@@ -131,8 +131,8 @@ NSString *CommandToolbarItem = @"Command";
         [anImage release];
         [toolbarItem setTarget: nil];
         [toolbarItem setAction: @selector(showConfigWindow:)];
-    } 
-	else if ([itemIdent isEqual: BookmarksToolbarItem]) 
+    }
+    else if ([itemIdent isEqual: BookmarksToolbarItem])
     {
         [toolbarItem setLabel: NSLocalizedStringFromTableInBundle(@"Bookmarks",@"iTerm", thisBundle, @"Toolbar Item: Bookmarks") ];
         [toolbarItem setPaletteLabel: NSLocalizedStringFromTableInBundle(@"Bookmarks",@"iTerm", thisBundle, @"Toolbar Item: Bookmarks") ];
@@ -144,28 +144,28 @@ NSString *CommandToolbarItem = @"Command";
         [anImage release];
         [toolbarItem setTarget: nil];
         [toolbarItem setAction: @selector(toggleBookmarksView:)];
-    } 	
+    }
     else if ([itemIdent isEqual: NewToolbarItem])
     {
         NSPopUpButton *aPopUpButton;
-        
+
         if([toolbar sizeMode] == NSToolbarSizeModeSmall)
             aPopUpButton = [[NSPopUpButton alloc] initWithFrame: NSMakeRect(0.0, 0.0, 32.0, 24.0) pullsDown: YES];
         else
             aPopUpButton = [[NSPopUpButton alloc] initWithFrame: NSMakeRect(0.0, 0.0, 40.0, 32.0) pullsDown: YES];
-        
+
         [aPopUpButton setTarget: nil];
         [aPopUpButton setBordered: NO];
         [[aPopUpButton cell] setArrowPosition:NSPopUpNoArrow];
         [toolbarItem setView: aPopUpButton];
         // Release the popup button since it is retained by the toolbar item.
         [aPopUpButton release];
-        
+
         // build the menu
         [self buildToolbarItemPopUpMenu: toolbarItem forToolbar: toolbar];
-		
-		NSSize sz = [aPopUpButton bounds].size;
-		//sz.width += 8;
+
+        NSSize sz = [aPopUpButton bounds].size;
+        //sz.width += 8;
         [toolbarItem setMinSize:sz];
         [toolbarItem setMaxSize:sz];
         [toolbarItem setLabel: NSLocalizedStringFromTableInBundle(@"New",@"iTerm", thisBundle, @"Toolbar Item:New")];
@@ -173,21 +173,21 @@ NSString *CommandToolbarItem = @"Command";
         [toolbarItem setToolTip: NSLocalizedStringFromTableInBundle(@"Open a new session",@"iTerm", thisBundle, @"Toolbar Item:New")];
     }
     else if ([itemIdent isEqual: CommandToolbarItem])
-	{
-		// Set up the standard properties 
-		[toolbarItem setLabel:NSLocalizedStringFromTableInBundle(@"Execute",@"iTerm", thisBundle, @"Toolbar Item:New")];
-		[toolbarItem setPaletteLabel:NSLocalizedStringFromTableInBundle(@"Execute",@"iTerm", thisBundle, @"Toolbar Item:New")];
-		[toolbarItem setToolTip:NSLocalizedStringFromTableInBundle(@"Execute Command or Launch URL",@"iTerm", thisBundle, @"Toolbar Item:New")];
-		
-		// Use a custom view, a rounded text field,
-		[toolbarItem setView:[_pseudoTerminal commandField]];
-		[toolbarItem setMinSize:NSMakeSize(100,NSHeight([[_pseudoTerminal commandField] frame]))];
-		[toolbarItem setMaxSize:NSMakeSize(700,NSHeight([[_pseudoTerminal commandField] frame]))];
-		
-	}
-	else
+    {
+        // Set up the standard properties
+        [toolbarItem setLabel:NSLocalizedStringFromTableInBundle(@"Execute",@"iTerm", thisBundle, @"Toolbar Item:New")];
+        [toolbarItem setPaletteLabel:NSLocalizedStringFromTableInBundle(@"Execute",@"iTerm", thisBundle, @"Toolbar Item:New")];
+        [toolbarItem setToolTip:NSLocalizedStringFromTableInBundle(@"Execute Command or Launch URL",@"iTerm", thisBundle, @"Toolbar Item:New")];
+
+        // Use a custom view, a rounded text field,
+        [toolbarItem setView:[_pseudoTerminal commandField]];
+        [toolbarItem setMinSize:NSMakeSize(100,NSHeight([[_pseudoTerminal commandField] frame]))];
+        [toolbarItem setMaxSize:NSMakeSize(700,NSHeight([[_pseudoTerminal commandField] frame]))];
+
+    }
+    else
         toolbarItem=nil;
-    
+
     return toolbarItem;
 }
 
@@ -196,18 +196,18 @@ NSString *CommandToolbarItem = @"Command";
 @implementation PTToolbarController (Private)
 
 - (void)setupToolbar;
-{   
-	_toolbar = [[NSToolbar alloc] initWithIdentifier: @"Terminal Toolbar"];
+{
+    _toolbar = [[NSToolbar alloc] initWithIdentifier: @"Terminal Toolbar"];
     [_toolbar setVisible:false];
     [_toolbar setDelegate:self];
     [_toolbar setAllowsUserCustomization:YES];
     [_toolbar setAutosavesConfiguration:YES];
-	
+
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-	[_toolbar setShowsBaselineSeparator:NO];
+    [_toolbar setShowsBaselineSeparator:NO];
 #endif
 
-	[_toolbar setDisplayMode:NSToolbarDisplayModeDefault];
+    [_toolbar setDisplayMode:NSToolbarDisplayModeDefault];
     [_toolbar insertItemWithItemIdentifier: NewToolbarItem atIndex:0];
     [_toolbar insertItemWithItemIdentifier: ConfigToolbarItem atIndex:1];
     [_toolbar insertItemWithItemIdentifier: NSToolbarFlexibleSpaceItemIdentifier atIndex:2];
@@ -215,9 +215,9 @@ NSString *CommandToolbarItem = @"Command";
     [_toolbar insertItemWithItemIdentifier: NSToolbarSeparatorItemIdentifier atIndex:4];
     [_toolbar insertItemWithItemIdentifier: CommandToolbarItem atIndex:5];
     [_toolbar insertItemWithItemIdentifier: CloseToolbarItem atIndex:6];
-    
+
     [[_pseudoTerminal window] setToolbar:_toolbar];
-    
+
 }
 
 - (void)buildToolbarItemPopUpMenu:(NSToolbarItem *)toolbarItem forToolbar:(NSToolbar *)toolbar
@@ -228,10 +228,10 @@ NSString *CommandToolbarItem = @"Command";
     NSString *imagePath;
     NSImage *anImage;
     NSBundle *thisBundle = [NSBundle bundleForClass: [self class]];
-    
+
     if (toolbarItem == nil)
         return;
-    
+
     aPopUpButton = (NSPopUpButton *)[toolbarItem view];
     //[aPopUpButton setAction: @selector(_addressbookPopupSelectionDidChange:)];
     [aPopUpButton setAction: nil];
@@ -240,9 +240,9 @@ NSString *CommandToolbarItem = @"Command";
 
     aMenu = [[NSMenu alloc] init];
     // first menu item is just a space taker
-	[aMenu addItem: [[[NSMenuItem alloc] initWithTitle: @"AAA" action:@selector(newSessionInTabAtIndex:) keyEquivalent:@""] autorelease]];
-    [[iTermController sharedInstance] addBookmarksToMenu:aMenu 
-                                                  target:_pseudoTerminal 
+    [aMenu addItem: [[[NSMenuItem alloc] initWithTitle: @"AAA" action:@selector(newSessionInTabAtIndex:) keyEquivalent:@""] autorelease]];
+    [[iTermController sharedInstance] addBookmarksToMenu:aMenu
+                                                  target:_pseudoTerminal
                                            withShortcuts:NO];
 
     [aMenu addItem: [NSMenuItem separatorItem]];
@@ -254,9 +254,9 @@ NSString *CommandToolbarItem = @"Command";
     [tip setKeyEquivalentModifierMask: NSCommandKeyMask | NSAlternateKeyMask];
     [tip setAlternate:YES];
     [aMenu addItem: tip];
-	[aPopUpButton setMenu: aMenu];
+    [aPopUpButton setMenu: aMenu];
     [aMenu release];
-        
+
     // Now set the icon
     item = [[aPopUpButton cell] menuItem];
     imagePath = [thisBundle pathForResource:@"newwin"
@@ -269,18 +269,18 @@ NSString *CommandToolbarItem = @"Command";
         [anImage setSize:NSMakeSize(30.0, 30.0)];
     [toolbarItem setImage: anImage];
     [anImage release];
- 	
+
     [item setImage:anImage];
     [item setOnStateImage:nil];
     [item setMixedStateImage:nil];
     [aPopUpButton setPreferredEdge:NSMinXEdge];
-    [[[aPopUpButton menu] menuRepresentation] setHorizontalEdgePadding:0.0];
-    
+    // Used to set horizontal edge padding to 0 in 32-bit version.
+
     // build a menu representation for text only.
     item = [[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"New",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item:New") action: nil keyEquivalent: @""];
     aMenu = [[NSMenu alloc] init];
-    [[iTermController sharedInstance] addBookmarksToMenu:aMenu 
-                                                  target:_pseudoTerminal 
+    [[iTermController sharedInstance] addBookmarksToMenu:aMenu
+                                                  target:_pseudoTerminal
                                            withShortcuts:NO];
 
     [aMenu addItem: [NSMenuItem separatorItem]];
@@ -292,9 +292,9 @@ NSString *CommandToolbarItem = @"Command";
     [tip setKeyEquivalentModifierMask: NSCommandKeyMask | NSAlternateKeyMask];
     [tip setAlternate:YES];
     [aMenu addItem: tip];
-	[item setSubmenu: aMenu];
+    [item setSubmenu: aMenu];
     [aMenu release];
-        
+
     [toolbarItem setMenuFormRepresentation: item];
     [item release];
 }
@@ -303,7 +303,7 @@ NSString *CommandToolbarItem = @"Command";
 - (void)reloadAddressBookMenu:(NSNotification *)aNotification
 {
     NSToolbarItem *aToolbarItem = [self toolbarItemWithIdentifier:NewToolbarItem];
-    
+
     if (aToolbarItem )
         [self buildToolbarItemPopUpMenu: aToolbarItem forToolbar:_toolbar];
 }
@@ -313,19 +313,19 @@ NSString *CommandToolbarItem = @"Command";
     NSArray *toolbarItemArray;
     NSToolbarItem *aToolbarItem;
     int i;
-    
+
     toolbarItemArray = [_toolbar items];
-    
+
     // Find the addressbook popup item and reset it
     for (i = 0; i < [toolbarItemArray count]; i++)
     {
         aToolbarItem = [toolbarItemArray objectAtIndex: i];
-        
+
         if ([[aToolbarItem itemIdentifier] isEqual: identifier])
             return aToolbarItem;
     }
 
-	return nil;
+    return nil;
 }
 
 

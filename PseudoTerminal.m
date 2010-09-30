@@ -1445,6 +1445,13 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (IBAction)closeFindBar:(id)sender
+{
+    if (![findBar isHidden]) {
+        [self showHideFindBar];
+    }
+}
+
 
 @end
 
@@ -2443,14 +2450,6 @@ NSString *sessionsKey = @"sessions";
         [findProgressIndicator setHidden:YES];
     }
 }
-
-- (IBAction)closeFindBar:(id)sender
-{
-    if (![findBar isHidden]) {
-        [self showHideFindBar];
-    }
-}
-
 
 @end
 
