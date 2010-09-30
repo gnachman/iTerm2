@@ -3689,7 +3689,7 @@ static PTYFontInfo* GetFontForChar(UniChar ch,
 
     fontInfo->font = font;
     [fontInfo->font retain];
-    fontInfo->baselineOffset = -ceil([font leading] - [font descender]);
+    fontInfo->baselineOffset = -floor([font leading] - [font descender]);
     fontInfo->boldVersion = NULL;
 }
 
