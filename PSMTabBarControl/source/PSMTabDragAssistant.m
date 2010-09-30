@@ -347,18 +347,18 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
         NSTabView *tabView = [[self sourceTabBar] tabView];
         NSTabViewItem *item = [[self draggedCell] representedObject];
         BOOL reselect = ([tabView selectedTabViewItem] == item);
-        int index;
+        int theIndex;
         NSArray *cells = [[self sourceTabBar] cells];
 
         //find the index of where the dragged cell was just dropped
-        for (index = 0; index < [cells count] && [cells objectAtIndex:index] != [self draggedCell]; index++);
+        for (theIndex = 0; theIndex < [cells count] && [cells objectAtIndex:theIndex] != [self draggedCell]; theIndex++);
 
         //temporarily disable the delegate in order to move the tab to a different index
         id tempDelegate = [tabView delegate];
         [tabView setDelegate:nil];
         [item retain];
         [tabView removeTabViewItem:item];
-        [tabView insertTabViewItem:item atIndex:index];
+        [tabView insertTabViewItem:item atIndex:theIndex];
         if (reselect) {
             [tabView selectTabViewItem:item];
         }
