@@ -460,8 +460,7 @@ static NSCursor* textViewCursor =  nil;
 - (void)setFont:(NSFont*)aFont nafont:(NSFont *)naFont horizontalSpacing:(float)horizontalSpacing verticalSpacing:(float)verticalSpacing
 {
     NSSize sz = [PTYTextView charSizeForFont:aFont horizontalSpacing:1.0 verticalSpacing:1.0];
-    sz.width = ceil(sz.width);
-    sz.height = ceil(sz.height);
+    sz.height = ceil([aFont ascender] - [aFont descender] + [aFont leading]);
 
     charWidthWithoutSpacing = sz.width;
     charHeightWithoutSpacing = sz.height;
@@ -472,6 +471,8 @@ static NSCursor* textViewCursor =  nil;
     [self modifyFont:aFont info:&primaryFont];
     [self modifyFont:naFont info:&secondaryFont];
 
+    // Force the secondary font to use the same baseline as the primary font.
+    secondaryFont.baselineOffset = primaryFont.baselineOffset;
 
     [self setMarkedTextAttributes:
         [NSDictionary dictionaryWithObjectsAndKeys:
@@ -3689,8 +3690,7 @@ static PTYFontInfo* GetFontForChar(UniChar ch,
 
     fontInfo->font = font;
     [fontInfo->font retain];
-    fontInfo->baselineOffset = -floorf([font leading] - [font descender] + 0.5);
-    fontInfo->descender = floorf([font descender]);
+    fontInfo->baselineOffset = -ceil([font leading] - [font descender]);
     fontInfo->boldVersion = NULL;
 }
 

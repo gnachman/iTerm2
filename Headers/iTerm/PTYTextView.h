@@ -47,7 +47,6 @@ struct PTYFontInfo {
 
     // Metrics
     int baselineOffset;
-    int descender;
 
     struct PTYFontInfo* boldVersion;  // may be NULL
 };
