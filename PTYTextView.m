@@ -443,7 +443,7 @@ static NSCursor* textViewCursor =  nil;
     size.height = [layoutManager defaultLineHeightForFont:aFont] * vspace;
 
     size.width = ceil(size.width);
-    size.height = ceil(size.height);
+    size.height = ceil(vspace * ([aFont ascender] - [aFont descender] + [aFont leading]));
     return size;
 }
 
@@ -460,7 +460,6 @@ static NSCursor* textViewCursor =  nil;
 - (void)setFont:(NSFont*)aFont nafont:(NSFont *)naFont horizontalSpacing:(float)horizontalSpacing verticalSpacing:(float)verticalSpacing
 {
     NSSize sz = [PTYTextView charSizeForFont:aFont horizontalSpacing:1.0 verticalSpacing:1.0];
-    sz.height = ceil([aFont ascender] - [aFont descender] + [aFont leading]);
 
     charWidthWithoutSpacing = sz.width;
     charHeightWithoutSpacing = sz.height;
