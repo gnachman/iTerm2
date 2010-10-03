@@ -398,11 +398,12 @@ static char* FormatCont(int c)
     }
 }
 
-// NSLog the screen contents for debugging.
-- (void) dumpScreen
+- (NSString*)debugString
 {
+    NSMutableString* result = [NSMutableString stringWithString:@""];
     int x, y;
     char line[1000];
+    char dirtyline[1000];
     for (y = 0; y < HEIGHT; ++y) {
         int ox = 0;
         screen_char_t* p = [self getLineAtScreenIndex: y];
@@ -410,10 +411,18 @@ static char* FormatCont(int c)
             NSLog(@"--- top of buffer ---\n");
         }
         for (x = 0; x < WIDTH; ++x, ++ox) {
+            if (dirty[y * WIDTH + x]) {
+                dirtyline[ox] = '-';
+            } else {
+                dirtyline[ox] = '.';
+            }
             if (y == CURSOR_Y && x == CURSOR_X) {
-                line[ox++] = '<';
-                line[ox++] = '*';
-                line[ox++] = '>';
+                if (dirtyline[ox] == '-') {
+                    dirtyline[ox] = '=';
+                }
+                if (dirtyline[ox] == '.') {
+                    dirtyline[ox] = ':';
+                }
             }
             if (p+x > buffer_lines + HEIGHT*REAL_WIDTH) {
                 line[ox++] = '!';
@@ -426,15 +435,24 @@ static char* FormatCont(int c)
                 } else if (p[x].ch == DWC_SKIP) {
                     line[ox] = '>';
                 } else {
-                  line[ox] = '?';
+                    line[ox] = '?';
                 }
             } else {
                 line[ox] = '.';
             }
         }
         line[x] = 0;
-        NSLog(@"%04d @ buffer+%2d lines: %s %s\n", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].ch));
+        dirtyline[x] = 0;
+        [result appendFormat:@"%04d @ buffer+%2d lines: %s %s\n", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].ch)];
+        [result appendFormat:@"%04d @ buffer+%2d dirty: %s\n", y, ((p - buffer_lines) / REAL_WIDTH), dirtyline];
     }
+    return result;
+}
+
+// NSLog the screen contents for debugging.
+- (void)dumpScreen
+{
+    NSLog(@"%@", [self debugString]);
 }
 
 - (void) dumpDebugLog;
@@ -1637,8 +1655,11 @@ static void DumpBuf(screen_char_t* p, int n) {
     else if (SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT - 1)
     {
 
-        // top line can move into scroll area; we need to draw only bottom line
-        //dirty[WIDTH*(CURSOR_Y-1)*sizeof(char)+CURSOR_X-1]=1;
+        // Mark the cursor's previous location dirty. This fixes a rare race condition where
+        // the cursor is not erased.
+        dirty[WIDTH * (CURSOR_Y - 1) * sizeof(char) + CURSOR_X - 1] = 1;
+
+        // Top line can move into scroll area; we need to draw only bottom line.
         memmove(dirty, dirty+WIDTH*sizeof(char), WIDTH*(HEIGHT-1)*sizeof(char));
         memset(dirty+WIDTH*(HEIGHT-1)*sizeof(char),1,WIDTH*sizeof(char));
 

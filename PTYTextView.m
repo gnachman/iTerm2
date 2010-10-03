@@ -30,6 +30,7 @@
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
 #define GREED_KEYDOWN         1
+//#define DEBUG_DRAWING
 
 #import <iTerm/iTerm.h>
 #import <iTerm/PTYTextView.h>
@@ -438,11 +439,8 @@ static NSCursor* textViewCursor =  nil;
 
     [dic setObject:aFont forKey:NSFontAttributeName];
     NSSize size = [@"W" sizeWithAttributes:dic];
-    size.width *= hspace;
-    NSLayoutManager* layoutManager = [[[NSLayoutManager alloc] init] autorelease];
-    size.height = [layoutManager defaultLineHeightForFont:aFont] * vspace;
 
-    size.width = ceil(size.width);
+    size.width = ceil(size.width * hspace);
     size.height = ceil(vspace * ([aFont ascender] - [aFont descender] + [aFont leading]));
     return size;
 }
@@ -537,8 +535,30 @@ static NSCursor* textViewCursor =  nil;
     charWidth = width;
 }
 
+#ifdef DEBUG_DRAWING
+NSMutableArray* screens=0;
+- (void)appendDebug:(NSString*)str
+{
+    if (!screens) {
+        screens = [[NSMutableArray alloc] init];
+    }
+    [screens addObject:str];
+    if ([screens count] > 100) {
+        [screens removeObjectAtIndex:0];
+    }
+}
+#endif
+
+// WARNING: Do not call this function directly. Call
+// -[refresh] instead, as it ensures scrollback overflow
+// is dealt with so that this function can dereference
+// [dataSource dirty] correctly.
 - (void)updateDirtyRects
 {
+  NSAssert([dataSource scrollbackOverflow] == 0, @"updateDirtyRects called with nonzero overflow");
+#ifdef DEBUG_DRAWING
+    [self appendDebug:[NSString stringWithFormat:@"updateDirtyRects called. Scrollback overflow is %d. Screen is: %@", [dataSource scrollbackOverflow], [dataSource debugString]]];
+#endif
     DebugLog(@"updateDirtyRects called");
     int WIDTH = [dataSource width];
     char* dirty;
@@ -550,8 +570,8 @@ static NSCursor* textViewCursor =  nil;
     dirty = [dataSource dirty];
     lineStart = [dataSource numberOfLines] - [dataSource height];
     lineEnd = [dataSource numberOfLines];
-    for(int y = lineStart; y < lineEnd && startX > -1; y++) {
-        for(int x = 0; x < WIDTH; x++) {
+    for (int y = lineStart; y < lineEnd && startX > -1; y++) {
+        for (int x = 0; x < WIDTH; x++) {
             BOOL isSelected = [self _isCharSelectedInRow:y col:x checkOld:NO];
             int cursorX = [dataSource cursorX] - 1;
             int cursorY = [dataSource cursorY] + [dataSource numberOfLines] - [dataSource height] - 1;
@@ -608,6 +628,10 @@ static NSCursor* textViewCursor =  nil;
     lineEnd = [dataSource numberOfLines];
     // lineEnd = number of scrollback lines + screen height
     DebugLog([NSString stringWithFormat:@"Search lines [%d, %d) for dirty", lineStart, lineEnd]);
+#ifdef DEBUG_DRAWING
+    NSMutableString* dirtyDebug = [NSMutableString stringWithString:@"updateDirtyRects found these dirty lines:\n"];
+    int screenindex=0;
+#endif
     for(int y = lineStart; y < lineEnd; y++) {
         for(int x = 0; x < WIDTH; x++) {
             if(dirty[x]) {
@@ -616,12 +640,32 @@ static NSCursor* textViewCursor =  nil;
                 dirtyRect.size.height = lineHeight;
                 DebugLog([NSString stringWithFormat:@"%d is dirty", y]);
                 [self setNeedsDisplayInRect:dirtyRect];
+#ifdef DEBUG_DRAWING
+                char temp[100];
+                screen_char_t* p = [dataSource getLineAtScreenIndex:screenindex];
+                for (int i = 0; i < WIDTH; ++i) {
+                    temp[i] = p[i].ch;
+                }
+                temp[WIDTH] = 0;
+                [dirtyDebug appendFormat:@"set rect %d,%d %dx%d (line %d=%s) dirty\n", 
+                     (int)dirtyRect.origin.x,
+                     (int)dirtyRect.origin.y,
+                     (int)dirtyRect.size.width,
+                     (int)dirtyRect.size.height,
+                     y, temp];
+#endif
                 break;
             }
         }
+#ifdef DEBUG_DRAWING
+        ++screenindex;
+#endif
         dirty += WIDTH;
     }
     DebugLog(@"updateDirtyRects resetDirty");
+#ifdef DEBUG_DRAWING
+    [self appendDebug:dirtyDebug];
+#endif
     [dataSource resetDirty];
 }
 
@@ -722,7 +766,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         }
         oldEndY -= scrollbackOverflow;
 
-        // Keep the users' current scroll position, nothing to redraw
+        // Keep the user's current scroll position, nothing to redraw.
         if (userScroll) {
             BOOL redrawAll = NO;
             NSRect scrollRect = [self visibleRect];
@@ -741,6 +785,31 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         // Shift the old content upwards
         if (scrollbackOverflow < [dataSource height] && !userScroll) {
             [self scrollRect:[self visibleRect] by:NSMakeSize(0, -amount)];
+
+#ifdef DEBUG_DRAWING
+            [self appendDebug:[NSString stringWithFormat:@"refresh: Scroll by %d", (int)amount]];
+#endif
+            if ([self needsDisplay]) {
+                // If any part of the view needed to be drawn prior to
+                // scrolling, mark the whole thing as needing to be redrawn.
+                // This avoids some race conditions between scrolling and
+                // drawing.  For example, if there was a region that needed to
+                // be displayed because the underlying data changed, but before
+                // drawRect is called we scroll with [self scrollRect], then
+                // the wrong region will be drawn. This could be optimized by
+                // storing the regions that need to be drawn and re-invaliding
+                // them in their new positions, but it should be somewhat rare
+                // that this branch of the if statement is taken.
+                [self setNeedsDisplay:YES];
+            } else {
+                // Invalidate the bottom of the screen that was revealed by
+                // scrolling.
+                NSRect dr = NSMakeRect(0, frame.size.height - amount, frame.size.width, amount);
+#ifdef DEBUG_DRAWING
+                [self appendDebug:[NSString stringWithFormat:@"refresh: setNeedsDisplayInRect:%d,%d %dx%d", (int)dr.origin.x, (int)dr.origin.y, (int)dr.size.width, (int)dr.size.height]];
+#endif
+                [self setNeedsDisplayInRect:dr];
+            }
         }
     }
 
@@ -884,6 +953,15 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)drawRect:(NSRect)rect
 {
+#ifdef DEBUG_DRAWING
+    static int iteration=0;
+    static BOOL prevBad=NO;
+    ++iteration;
+    if (prevBad) {
+        NSLog(@"Last was bad.");
+        prevBad = NO;
+    }
+#endif
     DebugLog([NSString stringWithFormat:@"%s(0x%x):-[PTYTextView drawRect:(%f,%f,%f,%f) frameRect: (%f,%f,%f,%f)]",
           __PRETTY_FUNCTION__, self,
           rect.origin.x, rect.origin.y, rect.size.width, rect.size.height,
@@ -927,16 +1005,49 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     DebugLog([NSString stringWithFormat:@"Draw lines in [%d, %d)", lineStart, lineEnd]);
     // Draw each line
+#ifdef DEBUG_DRAWING
+    NSMutableDictionary* dct = 
+    [NSDictionary dictionaryWithObjectsAndKeys:
+     [NSColor textBackgroundColor], NSBackgroundColorAttributeName,
+     [NSColor textColor], NSForegroundColorAttributeName,
+     [NSFont userFixedPitchFontOfSize: 0], NSFontAttributeName, NULL];
+#endif
+    int overflow = [dataSource scrollbackOverflow];
+#ifdef DEBUG_DRAWING
+    NSMutableString* lineDebug = [NSMutableString stringWithFormat:@"drawRect:%d,%d %dx%d drawing these lines with scrollback overflow of %d, iteration=%d:\n", (int)rect.origin.x, (int)rect.origin.y, (int)rect.size.width, (int)rect.size.height, (int)[dataSource scrollbackOverflow], iteration];
+#endif
     for(int line = lineStart; line < lineEnd; line++) {
         NSRect lineRect = [self visibleRect];
         lineRect.origin.y = line*lineHeight;
         lineRect.size.height = lineHeight;
         if([self needsToDrawRect:lineRect]) {
 ///            NSLog(@"drawing %d", line);
-            [self _drawLine:line AtY:line*lineHeight];
+            if (overflow <= line) {
+                // If overflow > 0 then the lines in the dataSource are not
+                // lined up in the normal way with the view. This happens when
+                // the datasource has scrolled its contents up but -[refresh]
+                // has not been called yet, so the view's contents haven't been
+                // scrolled up yet. When that's the case, the first line of the
+                // view is what the first line of the datasource was before
+                // it overflowed. Continue to draw text in this out-of-alignment
+                // manner until refresh is called and gets things in sync again.
+                [self _drawLine:line-overflow AtY:line*lineHeight];
+            }
+            // if overflow > line then the requested line cannot be drawn
+            // because it has been lost to the sands of time.
+#ifdef DEBUG_DRAWING
+            screen_char_t* theLine = [dataSource getLineAtIndex:line-overflow];
+            for (int i = 0; i < [dataSource width]; ++i) {
+                [lineDebug appendFormat:@"%c", theLine[i].ch];
+            }
+            [lineDebug appendString:@"\n"];
+            [[NSString stringWithFormat:@"Iter %d, line %d", iteration, line] drawInRect:NSMakeRect(rect.size.width-200, line*lineHeight, 200, lineHeight) withAttributes:dct];
+#endif
         }
     }
-
+#ifdef DEBUG_DRAWING
+    [self appendDebug:lineDebug];
+#endif
     NSRect excessRect;
     excessRect.origin.x = 0;
     excessRect.origin.y = lineEnd*lineHeight; //lineEnd * lineHeight;
@@ -955,7 +1066,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 #endif
     NSRectFill(excessRect);
 
-#if 0
+#ifdef DEBUG_DRAWING
     // Draws a different-colored rectangle around each drawn area. Useful for
     // seeing which groups of lines were drawn in a batch.
     static float it;
@@ -965,7 +1076,23 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     float blue = sin(it + 2*2*3.14/3);
     NSColor* c = [NSColor colorWithDeviceRed:red green:green blue:blue alpha:1];
     [c set];
+    NSRect r = rect;
+    r.origin.y++;
+    r.size.height -= 2;
     NSFrameRect(rect);
+    if (overflow != 0) {
+        // Draw a diagonal line through blocks that were drawn when there
+        // [dataSource scrollbackOverflow] > 0.
+        [NSBezierPath strokeLineFromPoint:NSMakePoint(r.origin.x, r.origin.y) 
+                                  toPoint:NSMakePoint(r.origin.x + r.size.width, r.origin.y + r.size.height)];
+    }
+    NSString* debug;
+    if (overflow == 0) {
+        debug = [NSString stringWithFormat:@"origin=%d", (int)rect.origin.y];
+    } else {
+        debug = [NSString stringWithFormat:@"origin=%d, overflow=%d", (int)rect.origin.y, (int)overflow];
+    }
+    [debug drawInRect:rect withAttributes:dct];
 #endif
     // Draw cursor
     [self _drawCursor];
@@ -973,6 +1100,14 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if (gDebugLogging) {
         [self _debugLogScreenContents];
     }
+#ifdef DEBUG_DRAWING
+    if (overflow) {
+        // It's useful to put a breakpoint at the top of this function
+        // when prevBad == YES because then you can see the results of this
+        // draw function.
+        prevBad=YES;
+    }
+#endif
 }
 
 - (void)keyDown:(NSEvent*)event
@@ -1467,7 +1602,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     DebugLog([NSString stringWithFormat:@"Mouse down. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
     if([_delegate respondsToSelector: @selector(willHandleEvent:)] && [_delegate willHandleEvent: event])
         [_delegate handleEvent: event];
-    [self updateDirtyRects];
+    [self refresh];
 
 }
 
@@ -1583,7 +1718,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
     DebugLog([NSString stringWithFormat:@"Mouse up. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
 
-    [self updateDirtyRects];
+    [self refresh];
 }
 
 - (void)mouseDragged:(NSEvent *)event
@@ -1750,7 +1885,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 
     DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
-    [self updateDirtyRects];
+    [self refresh];
     //NSLog(@"(%d,%d)-(%d,%d)",startX,startY,endX,endY);
 }
 
@@ -1841,14 +1976,14 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     startX = startY = 0;
     endX = [dataSource width];
     endY = [dataSource numberOfLines] - 1;
-    [self updateDirtyRects];
+    [self refresh];
 }
 
 - (void) deselect
 {
     if (startX > -1) {
         startX = -1;
-        [self updateDirtyRects];
+        [self refresh];
     }
 }
 
@@ -2341,7 +2476,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
     IM_INPUT_MARKEDRANGE = NSMakeRange(0,[markedText length]);
     IM_INPUT_SELRANGE = selRange;
-    [self updateDirtyRects];
+    [self refresh];
 }
 
 - (void)unmarkText
@@ -2899,30 +3034,38 @@ static PTYFontInfo* GetFontForChar(UniChar ch,
 
     WIDTH = [dataSource width];
     HEIGHT = [dataSource height];
-    x1=[dataSource cursorX]-1;
-    yStart=[dataSource cursorY]-1;
+    x1 = [dataSource cursorX] - 1;
+    yStart = [dataSource cursorY] - 1;
 
     int lastVisibleLine = [[[dataSource session] SCROLLVIEW] documentVisibleRect].origin.y / [self lineHeight] + HEIGHT;
-    int cursorLine = [dataSource numberOfLines] - [dataSource height] + [dataSource cursorY];
+    int cursorLine = [dataSource numberOfLines] - [dataSource height] + [dataSource cursorY] - [dataSource scrollbackOverflow];
     if (cursorLine > lastVisibleLine) {
         return;
     }
+    if (cursorLine < 0) {
+        return;
+    }
 
-    if(charWidth < charWidthWithoutSpacing)
+    if (charWidth < charWidthWithoutSpacing) {
         cursorWidth = charWidth;
-    else
+    } else {
         cursorWidth = charWidthWithoutSpacing;
-
-    if(lineHeight < charHeightWithoutSpacing)
+    }
+    if (lineHeight < charHeightWithoutSpacing) {
         cursorHeight = lineHeight;
-    else
+    } else {
         cursorHeight = charHeightWithoutSpacing;
+    }
 
-    if([self blinkingCursor] && [[self window] isKeyWindow] && x1==oldCursorX && yStart==oldCursorY)
+    if ([self blinkingCursor] && 
+        [[self window] isKeyWindow] && 
+        x1 == oldCursorX && 
+        yStart == oldCursorY) {
         showCursor = blinkShow;
-    else
+    } else {
         showCursor = YES;
-
+    }
+    
     // draw any text for NSTextInput
     if ([self hasMarkedText]) {
         // The following mod is brought to you by Zonble.

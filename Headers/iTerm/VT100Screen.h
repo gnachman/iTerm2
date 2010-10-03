@@ -223,4 +223,7 @@
 - (void)cancelFind;
 
 - (void) dumpDebugLog;
+
+// Return a human-readable dump of the screen contents.
+- (NSString*)debugString;
 @end
