@@ -1,5 +1,22 @@
 These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2.
 
+Alpha 10
+The focus of this release is bug fixes. It also features a major performance improvement as well as better internationalization support. This is the first 64-bit release.
+
+- Rewrote drawing code for up to 10x speedup.
+- iTerm2 is now a 64-bit binary!
+- Improve text rendering by making baselines always line up when mixing fonts and in IME.
+- Input method editor improved.
+- Bold selections have proper foreground color (bug 106).
+- Fix bug where cursor remains I-bar in title (bug 88).
+- Resynchornize properly after invalid utf-8 sequence (bug 73).
+- Fix bug where opening a tab changes window size.
+- Fix race condition when toggling full screen and a draw occurs.
+- Fix drawing bugs.
+- Fix some minor memory leaks.
+- Fix bug where tab bar would not draw correctly after window resize (bug 167).
+- Fix bug where one-word commands in a bookmark didn't work (bug 166).
+
 Alpha 9
 The main focus of this release is performance, improved internationalization support, and allowing different fonts/sizes in tabs in the same window. Double-width characters are supported as first class citizens now. Rendering performance is greatly improved. Now the details:
 
