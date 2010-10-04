@@ -148,6 +148,10 @@
 
     // In the process of toggling full screen.
     BOOL _togglingFullScreen;
+
+    // In the process of setting up a new session. Ignore calls to
+    // fitWindowToSession due to setting the font.
+    BOOL inSetup;
 }
 
 // Initialize a new PseudoTerminal.

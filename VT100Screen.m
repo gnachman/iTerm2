@@ -2495,7 +2495,7 @@ static void DumpBuf(screen_char_t* p, int n) {
 - (void)blink
 {
     if (memchr(dirty, 1, WIDTH*HEIGHT)) {
-        [display updateDirtyRects];
+        [display refresh];
     }
 }
 
