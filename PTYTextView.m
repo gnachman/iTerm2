@@ -3006,6 +3006,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             [defaultBGColor set];
             NSRectFill(r);
 
+            [defaultFGColor set];
+            NSRect s = NSMakeRect(x, y + lineHeight - 1, charWidth * (doubleWidth ? 2 : 1), 1);
+            NSRectFill(s);
+
             [self _drawCharacter:aChar
                          fgColor:0
                              AtX:x
