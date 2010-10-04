@@ -67,7 +67,9 @@ static NSCursor* textViewCursor =  nil;
     [aCursorImage lockFocus];
     [reverseCursorImage compositeToPoint:NSMakePoint(2,0) operation:NSCompositePlusLighter];
     [aCursorImage unlockFocus];
+    [reverseCursorImage release];
     textViewCursor = [[NSCursor alloc] initWithImage:aCursorImage hotSpot:hotspot];
+    [aCursorImage release];
 }
 
 + (NSCursor *) textViewCursor
@@ -85,6 +87,7 @@ static NSCursor* textViewCursor =  nil;
     dataSource=_delegate=markedTextAttributes=NULL;
 
     layoutManager = [[NSLayoutManager alloc] init];
+    fallbackFonts = [[NSMutableDictionary alloc] init];
 
     [self setMarkedTextAttributes:
         [NSDictionary dictionaryWithObjectsAndKeys:
@@ -154,7 +157,7 @@ static NSCursor* textViewCursor =  nil;
 
 }
 
-- (void) dealloc
+- (void)dealloc
 {
 #if DEBUG_ALLOC
     NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
@@ -186,6 +189,9 @@ static NSCursor* textViewCursor =  nil;
 
     [markedTextAttributes release];
     [markedText release];
+
+    [self releaseAllFallbackFonts];
+    [fallbackFonts release];
 
     [super dealloc];
 
@@ -468,6 +474,11 @@ static NSCursor* textViewCursor =  nil;
     [self modifyFont:aFont info:&primaryFont];
     [self modifyFont:naFont info:&secondaryFont];
 
+    // Cannot keep fallback fonts if the primary font changes because their
+    // baseline offsets are set by the primary font. It's simplest to remove
+    // them and then re-add them as needed.
+    [self releaseAllFallbackFonts];
+
     // Force the secondary font to use the same baseline as the primary font.
     secondaryFont.baselineOffset = primaryFont.baselineOffset;
 
@@ -647,7 +658,7 @@ NSMutableArray* screens=0;
                     temp[i] = p[i].ch;
                 }
                 temp[WIDTH] = 0;
-                [dirtyDebug appendFormat:@"set rect %d,%d %dx%d (line %d=%s) dirty\n", 
+                [dirtyDebug appendFormat:@"set rect %d,%d %dx%d (line %d=%s) dirty\n",
                      (int)dirtyRect.origin.x,
                      (int)dirtyRect.origin.y,
                      (int)dirtyRect.size.width,
@@ -1006,7 +1017,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     DebugLog([NSString stringWithFormat:@"Draw lines in [%d, %d)", lineStart, lineEnd]);
     // Draw each line
 #ifdef DEBUG_DRAWING
-    NSMutableDictionary* dct = 
+    NSMutableDictionary* dct =
     [NSDictionary dictionaryWithObjectsAndKeys:
      [NSColor textBackgroundColor], NSBackgroundColorAttributeName,
      [NSColor textColor], NSForegroundColorAttributeName,
@@ -1083,7 +1094,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if (overflow != 0) {
         // Draw a diagonal line through blocks that were drawn when there
         // [dataSource scrollbackOverflow] > 0.
-        [NSBezierPath strokeLineFromPoint:NSMakePoint(r.origin.x, r.origin.y) 
+        [NSBezierPath strokeLineFromPoint:NSMakePoint(r.origin.x, r.origin.y)
                                   toPoint:NSMakePoint(r.origin.x + r.size.width, r.origin.y + r.size.height)];
     }
     NSString* debug;
@@ -1892,14 +1903,14 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 - (NSString*)contentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad
 {
     int i;
-    NSMutableString* result = [[NSMutableString alloc] init];
+    int estimated_size = abs((endy-startx) * [dataSource width]) + abs(nonInclusiveEndx - startx);
+    NSMutableString* result = [NSMutableString stringWithCapacity:estimated_size];
     for (i = starty; i < endy; ++i) {
         NSString* line = [self contentFromX:startx Y:i ToX:nonInclusiveEndx Y:i pad:pad];
         [result appendString:line];
         if (i < endy-1) {
             [result appendString:@"\n"];
         }
-//        [line release];
     }
     return result;
 }
@@ -2710,12 +2721,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 //
 @implementation PTYTextView (Private)
 
-static PTYFontInfo* GetFontForChar(UniChar ch,
-                                  int fgColor,
-                                  BOOL* renderBold,
-                                  BOOL disableBold,
-                                  PTYFontInfo* primaryFont,
-                                  PTYFontInfo* secondaryFont) {
+- (PTYFontInfo*)getFontForChar:(UniChar)ch
+                       fgColor:(int)fgColor
+                    renderBold:(BOOL*)renderBold
+{
     BOOL isBold = (fgColor & BOLD_MASK) && !disableBold;
     *renderBold = NO;
     PTYFontInfo* theFont;
@@ -2724,7 +2733,7 @@ static PTYFontInfo* GetFontForChar(UniChar ch,
         // Try to use the primary font for non-ascii characters, but only
         // if it has the glyph.
         CGGlyph glyph;
-        if (CTFontGetGlyphsForCharacters((CTFontRef)primaryFont->font,
+        if (CTFontGetGlyphsForCharacters((CTFontRef)primaryFont.font,
                                          &ch,
                                          &glyph,
                                          1)) {
@@ -2736,25 +2745,41 @@ static PTYFontInfo* GetFontForChar(UniChar ch,
 
     if (usePrimary) {
         if (isBold) {
-            theFont = primaryFont->boldVersion;
+            theFont = primaryFont.boldVersion;
             if (!theFont) {
-                theFont = primaryFont;
+                theFont = &primaryFont;
                 *renderBold = YES;
             }
         } else {
-            theFont = primaryFont;
+            theFont = &primaryFont;
         }
     } else {
         if (isBold) {
-            theFont = secondaryFont->boldVersion;
+            theFont = secondaryFont.boldVersion;
             if (!theFont) {
-                theFont = secondaryFont;
+                theFont = &secondaryFont;
                 *renderBold = YES;
             }
         } else {
-            theFont = secondaryFont;
+            theFont = &secondaryFont;
+        }
+
+        // Make sure the secondary font has the glyph. If not, ask core text
+        // to pick one for us.
+        CGGlyph glyph;
+        if (!CTFontGetGlyphsForCharacters((CTFontRef)theFont->font,
+                                          &ch,
+                                          &glyph,
+                                          1)) {
+            CFStringRef tempString = CFStringCreateWithCharactersNoCopy(0, &ch, 1, kCFAllocatorNull);
+            CTFontRef substituteFont = CTFontCreateForString((CTFontRef)theFont->font, tempString, CFRangeMake(0, 1));
+            CFRelease(tempString);
+            if (substituteFont) {
+                return [self getOrAddFallbackFont:(NSFont*)substituteFont];
+            }
         }
     }
+
     return theFont;
 }
 
@@ -2882,12 +2907,9 @@ static PTYFontInfo* GetFontForChar(UniChar ch,
                         colors[numGlyphs] = [self colorForCode:fgcode];
                         advances[numGlyphs].width = double_width ? charWidth * 2 : charWidth;
                         advances[numGlyphs].height = 0;
-                        fonts[numGlyphs] = GetFontForChar(codes[numGlyphs],
-                                                          fgcode,
-                                                          &renderBold[numGlyphs],
-                                                          disableBold,
-                                                          &primaryFont,
-                                                          &secondaryFont);
+                        fonts[numGlyphs] = [self getFontForChar:codes[numGlyphs]
+                                                        fgColor:fgcode
+                                                     renderBold:&renderBold[numGlyphs]];
                         if (numGlyphs > 0) {
                             if (interruptedRun ||
                                 colors[numGlyphs] != colors[numGlyphs - 1] ||
@@ -2986,7 +3008,9 @@ static PTYFontInfo* GetFontForChar(UniChar ch,
     CGContextSetShouldAntialias(ctx, antiAlias);
     CGGlyph glyph;
     BOOL renderBold;
-    PTYFontInfo* theFont = GetFontForChar(c, fg, &renderBold, disableBold, &primaryFont, &secondaryFont);
+    PTYFontInfo* theFont = [self getFontForChar:c
+                                        fgColor:fg
+                                     renderBold:&renderBold];
 
     CTFontGetGlyphsForCharacters((CTFontRef)theFont->font,
                                  &c,
@@ -3057,15 +3081,15 @@ static PTYFontInfo* GetFontForChar(UniChar ch,
         cursorHeight = charHeightWithoutSpacing;
     }
 
-    if ([self blinkingCursor] && 
-        [[self window] isKeyWindow] && 
-        x1 == oldCursorX && 
+    if ([self blinkingCursor] &&
+        [[self window] isKeyWindow] &&
+        x1 == oldCursorX &&
         yStart == oldCursorY) {
         showCursor = blinkShow;
     } else {
         showCursor = YES;
     }
-    
+
     // draw any text for NSTextInput
     if ([self hasMarkedText]) {
         // The following mod is brought to you by Zonble.
@@ -3077,10 +3101,10 @@ static PTYFontInfo* GetFontForChar(UniChar ch,
         NSString* str = [markedText string];
         int offset = 0;
         int cursorOffset = 0;
-        int cursorY;
         int baseX = floor(x1 * charWidth + MARGIN);
         int i;
         int y = (yStart + [dataSource numberOfLines] - HEIGHT) * lineHeight;
+        int cursorY = y;
         for (i = 0; i < (int)[str length]; ++i) {
             UniChar aChar = [str characterAtIndex:i];
             int x = baseX + offset;
@@ -3767,11 +3791,11 @@ static PTYFontInfo* GetFontForChar(UniChar ch,
 
 - (BOOL) _isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old
 {
-    int tempStartX = startX;
-    int tempStartY = startY;
-    int tempEndX = endX;
-    int tempEndY = endY;
-    char tempSelectMode = selectMode;
+    int tempStartX;
+    int tempStartY;
+    int tempEndX;
+    int tempEndY;
+    char tempSelectMode;
 
     if (!old) {
         tempStartY = startY;
@@ -3847,6 +3871,39 @@ static PTYFontInfo* GetFontForChar(UniChar ch,
     }
 }
 
+- (PTYFontInfo*)getOrAddFallbackFont:(NSFont*)font
+{
+    NSString* name = [font fontName];
+    NSValue* entry = [fallbackFonts objectForKey:name];
+    if (entry) {
+        return [entry pointerValue];
+    } else {
+        PTYFontInfo* info = (PTYFontInfo*) malloc(sizeof(PTYFontInfo));
+        info->font = NULL;
+        [self _modifyFont:font into:info];
+
+        // Force this font to line up with the primary font's baseline.
+        info->baselineOffset = primaryFont.baselineOffset;
+        if (info->boldVersion) {
+            info->boldVersion->baselineOffset = primaryFont.baselineOffset;
+        }
+
+        [fallbackFonts setObject:[NSValue valueWithPointer:info] forKey:name];
+        return info;
+    }
+}
+
+- (void)releaseAllFallbackFonts
+{
+    NSEnumerator* enumerator = [fallbackFonts keyEnumerator];
+    id key;
+    while ((key = [enumerator nextObject])) {
+        PTYFontInfo* info = [[fallbackFonts objectForKey:key] pointerValue];
+        [self releaseFontInfo:info];
+        free(info);
+    }
+    [fallbackFonts removeAllObjects];
+}
 
 - (void)releaseFontInfo:(PTYFontInfo*)fontInfo
 {

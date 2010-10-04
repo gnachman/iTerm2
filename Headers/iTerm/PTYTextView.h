@@ -148,6 +148,8 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Previous tracking rect to avoid expensive calls to addTrackingRect.
     NSRect _trackingRect;
+
+    NSMutableDictionary* fallbackFonts;
 }
 
 + (NSCursor *)textViewCursor;
@@ -336,6 +338,11 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (BOOL)_isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old;
 - (void)_settingsChanged:(NSNotification *)notification;
 - (void)_modifyFont:(NSFont*)font into:(PTYFontInfo*)fontInfo;
+- (PTYFontInfo*)getFontForChar:(UniChar)ch
+                       fgColor:(int)fgColor
+                    renderBold:(BOOL*)renderBold;
+- (PTYFontInfo*)getOrAddFallbackFont:(NSFont*)font;
+- (void)releaseAllFallbackFonts;
 
 @end
 
