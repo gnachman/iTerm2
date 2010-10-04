@@ -238,7 +238,6 @@ typedef struct PTYFontInfo PTYFontInfo;
 
 - (void)refresh;
 - (void)setFrameSize:(NSSize)aSize;
-- (void)updateDirtyRects;
 - (void)showCursor;
 - (void)hideCursor;
 
@@ -343,6 +342,7 @@ typedef struct PTYFontInfo PTYFontInfo;
                     renderBold:(BOOL*)renderBold;
 - (PTYFontInfo*)getOrAddFallbackFont:(NSFont*)font;
 - (void)releaseAllFallbackFonts;
+- (void)updateDirtyRects;
 
 @end
 

@@ -447,7 +447,7 @@ static NSCursor* textViewCursor =  nil;
     NSSize size = [@"W" sizeWithAttributes:dic];
 
     size.width = ceil(size.width * hspace);
-    size.height = ceil(vspace * ([aFont ascender] - [aFont descender] + [aFont leading]));
+    size.height = ceil(vspace * ceil([aFont ascender] - [aFont descender] + [aFont leading]));
     return size;
 }
 
@@ -559,126 +559,6 @@ NSMutableArray* screens=0;
     }
 }
 #endif
-
-// WARNING: Do not call this function directly. Call
-// -[refresh] instead, as it ensures scrollback overflow
-// is dealt with so that this function can dereference
-// [dataSource dirty] correctly.
-- (void)updateDirtyRects
-{
-  NSAssert([dataSource scrollbackOverflow] == 0, @"updateDirtyRects called with nonzero overflow");
-#ifdef DEBUG_DRAWING
-    [self appendDebug:[NSString stringWithFormat:@"updateDirtyRects called. Scrollback overflow is %d. Screen is: %@", [dataSource scrollbackOverflow], [dataSource debugString]]];
-#endif
-    DebugLog(@"updateDirtyRects called");
-    int WIDTH = [dataSource width];
-    char* dirty;
-    int lineStart;
-    int lineEnd;
-
-    // Check each line for dirty selected text
-    // If any is found then deselect everything
-    dirty = [dataSource dirty];
-    lineStart = [dataSource numberOfLines] - [dataSource height];
-    lineEnd = [dataSource numberOfLines];
-    for (int y = lineStart; y < lineEnd && startX > -1; y++) {
-        for (int x = 0; x < WIDTH; x++) {
-            BOOL isSelected = [self _isCharSelectedInRow:y col:x checkOld:NO];
-            int cursorX = [dataSource cursorX] - 1;
-            int cursorY = [dataSource cursorY] + [dataSource numberOfLines] - [dataSource height] - 1;
-            BOOL isCursor = (x == cursorX && y == cursorY);
-            if (dirty[x] && isSelected && !isCursor) {
-                // Don't call [self deselect] as it would recurse back here
-                startX = -1;
-                DebugLog(@"found selected dirty noncursor");
-                break;
-            }
-        }
-        dirty += WIDTH;
-    }
-
-    // Time to redraw blinking text?
-    struct timeval now;
-    BOOL redrawBlink = NO;
-    gettimeofday(&now, NULL);
-    if(now.tv_sec*10+now.tv_usec/100000 >= lastBlink.tv_sec*10+lastBlink.tv_usec/100000+7) {
-        blinkShow = !blinkShow;
-        lastBlink = now;
-        redrawBlink = YES;
-        DebugLog(@"time to redraw blinking text");
-    }
-
-    // Visible chars that have changed selection status are dirty
-    // Also mark blinking text as dirty if needed
-    lineStart = [self visibleRect].origin.y / lineHeight;
-    lineEnd = lineStart + ceil([self visibleRect].size.height / lineHeight);
-    if(lineStart < 0) lineStart = 0;
-    if(lineEnd > [dataSource numberOfLines]) lineEnd = [dataSource numberOfLines];
-    for(int y = lineStart; y < lineEnd; y++) {
-        screen_char_t* theLine = [dataSource getLineAtIndex:y];
-        for(int x = 0; x < WIDTH; x++) {
-            BOOL isSelected = [self _isCharSelectedInRow:y col:x checkOld:NO];
-            BOOL wasSelected = [self _isCharSelectedInRow:y col:x checkOld:YES];
-            BOOL blinked = redrawBlink && (theLine[x].fg_color & BLINK_MASK);
-            if (isSelected != wasSelected || blinked) {
-                NSRect dirtyRect = [self visibleRect];
-                dirtyRect.origin.y = y*lineHeight;
-                dirtyRect.size.height = lineHeight;
-                DebugLog([NSString stringWithFormat:@"found selection change/blink at %d,%d", x, y]);
-                [self setNeedsDisplayInRect:dirtyRect];
-                break;
-            }
-        }
-    }
-    oldStartX=startX; oldStartY=startY; oldEndX=endX; oldEndY=endY; oldSelectMode = selectMode;
-
-    // Redraw lines with dirty characters
-    dirty = [dataSource dirty];
-    lineStart = [dataSource numberOfLines] - [dataSource height];
-    // lineStart = number of scrollback lines
-    lineEnd = [dataSource numberOfLines];
-    // lineEnd = number of scrollback lines + screen height
-    DebugLog([NSString stringWithFormat:@"Search lines [%d, %d) for dirty", lineStart, lineEnd]);
-#ifdef DEBUG_DRAWING
-    NSMutableString* dirtyDebug = [NSMutableString stringWithString:@"updateDirtyRects found these dirty lines:\n"];
-    int screenindex=0;
-#endif
-    for(int y = lineStart; y < lineEnd; y++) {
-        for(int x = 0; x < WIDTH; x++) {
-            if(dirty[x]) {
-                NSRect dirtyRect = [self visibleRect];
-                dirtyRect.origin.y = y*lineHeight;
-                dirtyRect.size.height = lineHeight;
-                DebugLog([NSString stringWithFormat:@"%d is dirty", y]);
-                [self setNeedsDisplayInRect:dirtyRect];
-#ifdef DEBUG_DRAWING
-                char temp[100];
-                screen_char_t* p = [dataSource getLineAtScreenIndex:screenindex];
-                for (int i = 0; i < WIDTH; ++i) {
-                    temp[i] = p[i].ch;
-                }
-                temp[WIDTH] = 0;
-                [dirtyDebug appendFormat:@"set rect %d,%d %dx%d (line %d=%s) dirty\n",
-                     (int)dirtyRect.origin.x,
-                     (int)dirtyRect.origin.y,
-                     (int)dirtyRect.size.width,
-                     (int)dirtyRect.size.height,
-                     y, temp];
-#endif
-                break;
-            }
-        }
-#ifdef DEBUG_DRAWING
-        ++screenindex;
-#endif
-        dirty += WIDTH;
-    }
-    DebugLog(@"updateDirtyRects resetDirty");
-#ifdef DEBUG_DRAWING
-    [self appendDebug:dirtyDebug];
-#endif
-    [dataSource resetDirty];
-}
 
 - (NSRect)scrollViewContentSize
 {
@@ -3911,6 +3791,128 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if (fontInfo->boldVersion) {
         [self releaseFontInfo:fontInfo->boldVersion];
     }
+}
+
+// WARNING: Do not call this function directly. Call
+// -[refresh] instead, as it ensures scrollback overflow
+// is dealt with so that this function can dereference
+// [dataSource dirty] correctly.
+- (void)updateDirtyRects
+{
+    if ([dataSource scrollbackOverflow] != 0) {
+        NSAssert([dataSource scrollbackOverflow] == 0, @"updateDirtyRects called with nonzero overflow");
+    }
+#ifdef DEBUG_DRAWING
+    [self appendDebug:[NSString stringWithFormat:@"updateDirtyRects called. Scrollback overflow is %d. Screen is: %@", [dataSource scrollbackOverflow], [dataSource debugString]]];
+#endif
+    DebugLog(@"updateDirtyRects called");
+    int WIDTH = [dataSource width];
+    char* dirty;
+    int lineStart;
+    int lineEnd;
+
+    // Check each line for dirty selected text
+    // If any is found then deselect everything
+    dirty = [dataSource dirty];
+    lineStart = [dataSource numberOfLines] - [dataSource height];
+    lineEnd = [dataSource numberOfLines];
+    for (int y = lineStart; y < lineEnd && startX > -1; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            BOOL isSelected = [self _isCharSelectedInRow:y col:x checkOld:NO];
+            int cursorX = [dataSource cursorX] - 1;
+            int cursorY = [dataSource cursorY] + [dataSource numberOfLines] - [dataSource height] - 1;
+            BOOL isCursor = (x == cursorX && y == cursorY);
+            if (dirty[x] && isSelected && !isCursor) {
+                // Don't call [self deselect] as it would recurse back here
+                startX = -1;
+                DebugLog(@"found selected dirty noncursor");
+                break;
+            }
+        }
+        dirty += WIDTH;
+    }
+
+    // Time to redraw blinking text?
+    struct timeval now;
+    BOOL redrawBlink = NO;
+    gettimeofday(&now, NULL);
+    if(now.tv_sec*10+now.tv_usec/100000 >= lastBlink.tv_sec*10+lastBlink.tv_usec/100000+7) {
+        blinkShow = !blinkShow;
+        lastBlink = now;
+        redrawBlink = YES;
+        DebugLog(@"time to redraw blinking text");
+    }
+
+    // Visible chars that have changed selection status are dirty
+    // Also mark blinking text as dirty if needed
+    lineStart = [self visibleRect].origin.y / lineHeight;
+    lineEnd = lineStart + ceil([self visibleRect].size.height / lineHeight);
+    if(lineStart < 0) lineStart = 0;
+    if(lineEnd > [dataSource numberOfLines]) lineEnd = [dataSource numberOfLines];
+    for(int y = lineStart; y < lineEnd; y++) {
+        screen_char_t* theLine = [dataSource getLineAtIndex:y];
+        for(int x = 0; x < WIDTH; x++) {
+            BOOL isSelected = [self _isCharSelectedInRow:y col:x checkOld:NO];
+            BOOL wasSelected = [self _isCharSelectedInRow:y col:x checkOld:YES];
+            BOOL blinked = redrawBlink && (theLine[x].fg_color & BLINK_MASK);
+            if (isSelected != wasSelected || blinked) {
+                NSRect dirtyRect = [self visibleRect];
+                dirtyRect.origin.y = y*lineHeight;
+                dirtyRect.size.height = lineHeight;
+                DebugLog([NSString stringWithFormat:@"found selection change/blink at %d,%d", x, y]);
+                [self setNeedsDisplayInRect:dirtyRect];
+                break;
+            }
+        }
+    }
+    oldStartX=startX; oldStartY=startY; oldEndX=endX; oldEndY=endY; oldSelectMode = selectMode;
+
+    // Redraw lines with dirty characters
+    dirty = [dataSource dirty];
+    lineStart = [dataSource numberOfLines] - [dataSource height];
+    // lineStart = number of scrollback lines
+    lineEnd = [dataSource numberOfLines];
+    // lineEnd = number of scrollback lines + screen height
+    DebugLog([NSString stringWithFormat:@"Search lines [%d, %d) for dirty", lineStart, lineEnd]);
+#ifdef DEBUG_DRAWING
+    NSMutableString* dirtyDebug = [NSMutableString stringWithString:@"updateDirtyRects found these dirty lines:\n"];
+    int screenindex=0;
+#endif
+    for(int y = lineStart; y < lineEnd; y++) {
+        for(int x = 0; x < WIDTH; x++) {
+            if(dirty[x]) {
+                NSRect dirtyRect = [self visibleRect];
+                dirtyRect.origin.y = y*lineHeight;
+                dirtyRect.size.height = lineHeight;
+                DebugLog([NSString stringWithFormat:@"%d is dirty", y]);
+                [self setNeedsDisplayInRect:dirtyRect];
+#ifdef DEBUG_DRAWING
+                char temp[100];
+                screen_char_t* p = [dataSource getLineAtScreenIndex:screenindex];
+                for (int i = 0; i < WIDTH; ++i) {
+                    temp[i] = p[i].ch;
+                }
+                temp[WIDTH] = 0;
+                [dirtyDebug appendFormat:@"set rect %d,%d %dx%d (line %d=%s) dirty\n",
+                 (int)dirtyRect.origin.x,
+                 (int)dirtyRect.origin.y,
+                 (int)dirtyRect.size.width,
+                 (int)dirtyRect.size.height,
+                 y, temp];
+#endif
+                break;
+            }
+        }
+#ifdef DEBUG_DRAWING
+        ++screenindex;
+#endif
+        dirty += WIDTH;
+    }
+    DebugLog(@"updateDirtyRects resetDirty");
+#ifdef DEBUG_DRAWING
+    [self appendDebug:dirtyDebug];
+#endif
+    [dataSource resetDirty];
 }
 
 @end
