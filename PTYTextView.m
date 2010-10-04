@@ -170,11 +170,12 @@ static NSCursor* textViewCursor =  nil;
     }
 
     //NSLog(@"remove tracking");
-    if(trackingRectTag)
+    if (trackingRectTag) {
         [self removeTrackingRect:trackingRectTag];
+    }
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    for(i=0;i<256;i++) {
+    for (i = 0; i < 256; i++) {
         [colorTable[i] release];
     }
     [defaultFGColor release];
@@ -1325,8 +1326,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 {
     //NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
 
-    if([[PreferencePanel sharedInstance] focusFollowsMouse])
+    if ([[PreferencePanel sharedInstance] focusFollowsMouse]) {
         [[self window] makeKeyWindow];
+    }
 }
 
 - (void)mouseDown:(NSEvent *)event
@@ -2212,7 +2214,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)resetCursorRects
 {
-    [self addCursorRect:[self bounds] cursor:textViewCursor];
+    [self addCursorRect:[self visibleRect] cursor:textViewCursor];
     [textViewCursor setOnMouseEntered:YES];
 }
 
