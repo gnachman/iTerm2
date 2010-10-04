@@ -2771,8 +2771,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 }
                 double_width = k < WIDTH - 1 && (theLine[k+1].ch == 0xffff);
 
-                if (bgselected && ((theLine[k].fg_color & 0x3ff) == DEFAULT_FG_COLOR_CODE)) {
-                    fgcode = SELECTED_TEXT | (theLine[k].fg_color & BOLD_MASK); // check for bold
+                if (bgselected && ((theLine[k].fg_color & 0x1ff) == DEFAULT_FG_COLOR_CODE)) {
+                    fgcode = SELECTED_TEXT;
                 } else {
                     fgcode = (reversed && theLine[k].fg_color & DEFAULT_FG_COLOR_CODE) ?
                         (DEFAULT_BG_COLOR_CODE | (theLine[k].fg_color & BOLD_MASK)) : theLine[k].fg_color & 0x3ff;
