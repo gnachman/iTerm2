@@ -151,7 +151,7 @@ static VT100TCC decode_csi(unsigned char *, size_t, size_t *,VT100Screen *);
 static VT100TCC decode_xterm(unsigned char *, size_t, size_t *,NSStringEncoding);
 static VT100TCC decode_other(unsigned char *, size_t, size_t *);
 static VT100TCC decode_control(unsigned char *, size_t, size_t *,NSStringEncoding,VT100Screen *);
-static int utf8_reqbyte(unsigned char);
+static int decode_utf8_char(unsigned char *, size_t, unsigned int *);
 static VT100TCC decode_utf8(unsigned char *, size_t, size_t *);
 static VT100TCC decode_euccn(unsigned char *, size_t, size_t *);
 static VT100TCC decode_big5(unsigned char *,size_t, size_t *);
@@ -180,8 +180,12 @@ static BOOL isString(unsigned char *code,
 
     //    NSLog(@"%@",[NSString localizedNameOfStringEncoding:encoding]);
     if (encoding== NSUTF8StringEncoding) {
-        if (*code >= 0x80)
+        if (*code >= 0x20) {
+            // Control characters must be treated specially because, for example,
+            // mouse reporting is not aware of character encoding issues.
+            // See decode_utf8 for details.
             result = YES;
+        }
     }
     else if (isGBEncoding(encoding)) {
         if (iseuccn(*code))
@@ -983,67 +987,123 @@ static VT100TCC decode_control(unsigned char *datap,
     return result;
 }
 
-static int utf8_reqbyte(unsigned char f)
+// Examine the leading UTF-8 sequence in a char array and check that it
+// is properly encoded. Computes the number of bytes to use for the
+// first code point.
+//
+// Return value:
+// positive: This many bytes compose a legal Unicode character.
+// negative: abs(this many) bytes are illegal, should be replaced by one
+//   single replacement symbol.
+// zero: Unfinished sequence, input needs to grow.
+static int decode_utf8_char(unsigned char *datap,
+                            size_t datalen,
+                            unsigned int *result)
 {
-    int result;
+    unsigned int theChar;
+    int utf8Length;
+    unsigned char c;
+    // This maps a utf-8 sequence length to the smallest code point it should
+    // encode (e.g., using 5 bytes to encode an ascii character would be
+    // considered an error).
+    unsigned int smallest[7] = { 0, 0, 0x80UL, 0x800UL, 0x10000UL, 0x200000UL, 0x4000000UL };
 
-    if (isascii(f))
-        result = 1;
-    else if ((f & 0xe0) == 0xc0)
-        result = 2;
-    else if ((f & 0xf0) == 0xe0)
-        result = 3;
-    else if ((f & 0xf8) == 0xf0)
-        result = 4;
-    else if ((f & 0xfc) == 0xf8)
-        result = 5;
-    else if ((f & 0xfe) == 0xfc)
-        result = 6;
-    else
-        result = 0;
+    if (datalen == 0) {
+        return 0;
+    }
 
-    return result;
+    c = *datap;
+    if ((c & 0x80) == 0x00) {
+        *result = c;
+        return 1;
+    } else if ((c & 0xE0) == 0xC0) {
+        theChar = c & 0x1F;
+        utf8Length = 2;
+    } else if ((c & 0xF0) == 0xE0) {
+        theChar = c & 0x0F;
+        utf8Length = 3;
+    } else if ((c & 0xF8) == 0xF0) {
+        theChar = c & 0x07;
+        utf8Length = 4;
+    } else if ((c & 0xFC) == 0xF8) {
+        theChar = c & 0x03;
+        utf8Length = 5;
+    } else if ((c & 0xFE) == 0xFC) {
+        theChar = c & 0x01;
+        utf8Length = 6;
+    } else {
+        return -1;
+    }
+    for (int i = 1; i < utf8Length; i++) {
+        if (datalen <= i) {
+            return 0;
+        }
+        c = datap[i];
+        if ((c & 0xc0) != 0x80) {
+            // Expected a continuation character but did not get one.
+            return -i;
+        }
+        theChar = (theChar << 6) | (c & 0x3F);
+    }
+
+    if (theChar < smallest[utf8Length]) {
+        // Reject overlong sequences.
+        return -utf8Length;
+    }
+
+    *result = theChar;
+    return utf8Length;
 }
 
 static VT100TCC decode_utf8(unsigned char *datap,
-                            size_t datalen ,
+                            size_t datalen,
                             size_t *rmlen)
 {
     VT100TCC result;
     unsigned char *p = datap;
     size_t len = datalen;
-    int reqbyte;
+    int utf8DecodeResult;
+    unsigned int theChar;
 
-    while (len > 0) {
-        if (*p>=0x80) {
-            reqbyte = utf8_reqbyte(*p);
-            if (reqbyte > 0) {
-                if (len >= reqbyte) {
-                    p += reqbyte;
-                    len -= reqbyte;
-                }
-                else break;
-            }
-            else {
-                //NSLog(@"unknown code in UTF8: %d(%c)",*p,*p);
-                *p=UNKNOWN;
-                p++;
-                len--;
-            }
+    while (true) {
+        utf8DecodeResult = decode_utf8_char(p, len, &theChar);
+        // Stop on error or end of stream.
+        if (utf8DecodeResult <= 0) {
+            break;
         }
-       else break;
+        // Intentionally break out at control characters. They are
+        // processed separately, some (e.g. mouse location reporting)
+        // are not even valid UTF-8.
+        if (theChar < 0x20) {
+            break;
+        }
+        // Reject UTF-16 surrogates. They are invalid Unicode codepoints,
+        // and NSString initWithBytes fails on them.
+        // Reject characters above U+10FFFF. NSString uses UTF-16
+        // internally, so it cannot handle higher codepoints.
+        if ((theChar >= 0xD800 && theChar <= 0xDFFF) || theChar > 0x10FFFF) {
+            utf8DecodeResult = -utf8DecodeResult;
+            break;
+        }
+        p += utf8DecodeResult;
+        len -= utf8DecodeResult;
     }
-    if (len == datalen) {
-        *rmlen = 0;
-        result.type = VT100_WAIT;
-    } else {
-        *rmlen = datalen - len;
+
+    if (p > datap) {
+        // If some characters were successfully decoded, just return them
+        // and ignore the error or end of stream for now.
+        *rmlen = p - datap;
         result.type = VT100_STRING;
+    } else {
+        // Report error or waiting state.
+        if (utf8DecodeResult == 0) {
+            result.type = VT100_WAIT;
+        } else {
+            *rmlen = -utf8DecodeResult;
+            result.type = VT100_INVALID_SEQUENCE;
+        }
     }
-
     return result;
-
-
 }
 
 
@@ -1325,7 +1385,12 @@ static VT100TCC decode_string(unsigned char *datap,
         result = decode_other_enc(datap, datalen, rmlen);
     }
 
-    if (result.type != VT100_WAIT) {
+    if (result.type == VT100_INVALID_SEQUENCE) {
+        // Output only one replacement symbol, even if rmlen is higher.
+        datap[0] = UNKNOWN;
+        result.u.string = [[[NSString alloc] initWithBytes:datap length:1 encoding:encoding] autorelease];
+        result.type = VT100_STRING;
+    } else if (result.type != VT100_WAIT) {
         /*data = [NSData dataWithBytes:datap length:*rmlen];
         result.u.string = [[[NSString alloc]
                                    initWithData:data
@@ -1625,7 +1690,7 @@ static VT100TCC decode_string(unsigned char *datap,
     } else {
         size_t rmlen = 0;
 
-        if (*datap >= 0x20 && *datap <= 0x7f) {
+        if (ENCODING != NSUTF8StringEncoding && *datap >= 0x20 && *datap <= 0x7f) {
             result = decode_ascii_string(datap, datalen, &rmlen);
             result.length = rmlen;
             result.position = datap;
