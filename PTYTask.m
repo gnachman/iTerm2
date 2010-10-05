@@ -41,6 +41,7 @@
 #include <util.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
+#include <libproc.h>
 
 #import <iTerm/PTYTask.h>
 #import <iTerm/PreferencePanel.h>
@@ -50,49 +51,6 @@
 /* Definition stolen from libproc.h */
 #define PROC_PIDVNODEPATHINFO 9
 //int proc_pidinfo(pid_t pid, int flavor, uint64_t arg,  void *buffer, int buffersize);
-
-struct vinfo_stat {
-    uint32_t    vst_dev;            /* [XSI] ID of device containing file */
-    uint16_t    vst_mode;           /* [XSI] Mode of file (see below) */
-    uint16_t    vst_nlink;          /* [XSI] Number of hard links */
-    uint64_t    vst_ino;            /* [XSI] File serial number */
-    uid_t       vst_uid;            /* [XSI] User ID of the file */
-    gid_t       vst_gid;            /* [XSI] Group ID of the file */
-    int64_t     vst_atime;          /* [XSI] Time of last access */
-    int64_t     vst_atimensec;      /* nsec of last access */
-    int64_t     vst_mtime;          /* [XSI] Last data modification time */
-    int64_t     vst_mtimensec;      /* last data modification nsec */
-    int64_t     vst_ctime;          /* [XSI] Time of last status change */
-    int64_t     vst_ctimensec;      /* nsec of last status change */
-    int64_t     vst_birthtime;      /* File creation time(birth) */
-    int64_t     vst_birthtimensec;  /* nsec of File creation time */
-    off_t       vst_size;           /* [XSI] file size, in bytes */
-    int64_t     vst_blocks;         /* [XSI] blocks allocated for file */
-    int32_t     vst_blksize;        /* [XSI] optimal blocksize for I/O */
-    uint32_t    vst_flags;          /* user defined flags for file */
-    uint32_t    vst_gen;            /* file generation number */
-    uint32_t    vst_rdev;           /* [XSI] Device ID */
-    int64_t     vst_qspare[2];      /* RESERVED: DO NOT USE! */
-};
-
-struct vnode_info {
-    struct vinfo_stat vi_stat;
-    int               vi_type;
-    fsid_t            vi_fsid;
-    int               vi_pad;
-};
-
-struct vnode_info_path {
-    struct vnode_info vip_vi;
-    char              vip_path[MAXPATHLEN];  /* tail end of it  */
-};
-
-struct proc_vnodepathinfo {
-    struct vnode_info_path pvi_cdir;
-    struct vnode_info_path pvi_rdir;
-};
-
-
 
 
 @interface TaskNotifier : NSObject
@@ -290,10 +248,13 @@ static TaskNotifier* taskNotifier = nil;
                 // end up with the same fd (because one closed
                 // and there was a race condition) then trying
                 // to read twice would hang.
+                
+                // The cast warning on this line can be ignored.
                 if (CFSetContainsValue(handledFds, (void*)fd)) {
                     PtyTaskDebugLog(@"Duplicate fd %d", fd);
                     continue;
                 }
+                // The cast warning on this line can be ignored.
                 CFSetAddValue(handledFds, (void*)fd);
 
                 if (FD_ISSET(fd, &rfds)) {
@@ -746,30 +707,67 @@ setup_tty_param(
     return [NSString stringWithFormat:@"PTYTask(pid %d, fildes %d)", pid, fd];
 }
 
+// This is a stunningly brittle hack. Find the child of parentPid with the
+// oldest start time. This relies on undocumented APIs, but short of forking
+// ps, I can't see another way to do it.
+
+- (pid_t)getFirstChildOfPid:(pid_t)parentPid
+{
+    int numPids;
+    numPids = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    if (numPids <= 0) {
+        return -1;
+    }
+    
+    int* pids = (int*) malloc(sizeof(int) * numPids);
+    numPids = proc_listpids(PROC_ALL_PIDS, 0, pids, numPids);
+    if (numPids <= 0) {
+        free(pids);
+        return -1;
+    }
+    
+    long long oldestTime = 0;
+    pid_t oldestPid = -1;
+    for (int i = 0; i < numPids; ++i) {
+        struct proc_taskallinfo taskAllInfo;
+        int rc = proc_pidinfo(pids[i], 
+                              PROC_PIDTASKALLINFO, 
+                              0, 
+                              &taskAllInfo, 
+                              sizeof(taskAllInfo));
+        if (rc <= 0) {
+            continue;
+        }
+     
+        pid_t ppid = taskAllInfo.pbsd.pbi_ppid;
+        if (ppid == parentPid) {
+            long long birthday = taskAllInfo.pbsd.pbi_start.tv_sec * 1000000 + taskAllInfo.pbsd.pbi_start.tv_usec;
+            if (birthday < oldestTime || oldestTime == 0) {
+                oldestTime = birthday;
+                oldestPid = pids[i];
+            }
+        }
+    }
+    
+    free(pids);
+    return oldestPid;
+}
+
 - (NSString*)getWorkingDirectory
 {
-    static int loadedAttempted = 0;
-    static int(*proc_pidinfo)(pid_t pid, int flavor, uint64_t arg, void* buffer, int buffersize) = NULL;
-    if (!proc_pidinfo) {
-        if (loadedAttempted) {
-            /* Hmm, we can't find the symbols that we need... so lets not try */
-            return nil;
-        }
-        loadedAttempted = 1;
-
-        /* We need to load the function first */
-        void* handle = dlopen("libSystem.B.dylib", RTLD_LAZY);
-        if (!handle)
-            return nil;
-        proc_pidinfo = dlsym(handle, "proc_pidinfo");
-        if (!proc_pidinfo)
-            return nil;
-    }
 
     struct proc_vnodepathinfo vpi;
     int                       ret;
     /* This only works if the child process is owned by our uid */
     ret = proc_pidinfo(pid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
+    if (ret <= 0) {
+        // The child was probably owned by root (which is expected if it's
+        // a login shell. Use the cwd of its oldest child instead.
+        pid_t childPid = [self getFirstChildOfPid:pid];
+        if (childPid > 0) {
+            ret = proc_pidinfo(childPid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));            
+        }
+    }
     if (ret <= 0) {
         /* An error occured */
         return nil;
