@@ -538,19 +538,26 @@ NSString *sessionsKey = @"sessions";
     NSLog(@"%s(%d):-[PseudoTerminal windowWillResize: proposedFrameSize width = %f; height = %f]",
           __FILE__, __LINE__, proposedFrameSize.width, proposedFrameSize.height);
 #endif
-    if (sender!=[self window]) {
+    float charHeight = [self maxCharHeight:nil];
+    float charWidth = [self maxCharWidth:nil];
+    //NSLog(@"charSize=%fx%f", charHeight, charWidth);
+    NSLog(@"Proposed size: %fx%f", proposedFrameSize.height, proposedFrameSize.width);
+    if (sender != [self window]) {
+        if (!(proposedFrameSize.width > 20*charWidth + MARGIN*2)) {
+            proposedFrameSize.width = 20*charWidth + MARGIN * 2;
+        }
+        if (!(proposedFrameSize.height > 20*charHeight)) {
+            proposedFrameSize.height = 20*charHeight + MARGIN * 2;
+        }
+        NSLog(@"ALlowed size: %fx%f", proposedFrameSize.height, proposedFrameSize.width);
         return proposedFrameSize;
     }
 
-    //NSLog(@"Proposed size: %fx%f", proposedFrameSize.height, proposedFrameSize.width);
     float northChange = [sender frame].size.height -
         [[[self currentSession] SCROLLVIEW] documentVisibleRect].size.height;
     float westChange = [sender frame].size.width -
         [[[self currentSession] SCROLLVIEW] documentVisibleRect].size.width;
     //NSLog(@"Change change: %f,%f", northChange, westChange);
-    float charHeight = [self maxCharHeight:nil];
-    float charWidth = [self maxCharWidth:nil];
-    //NSLog(@"charSize=%fx%f", charHeight, charWidth);
     int old_height = (proposedFrameSize.height - northChange) / charHeight + 0.5;
     int old_width = (proposedFrameSize.width - westChange - MARGIN*2) / charWidth + 0.5;
     if (old_height < 2) {
@@ -585,6 +592,15 @@ NSString *sessionsKey = @"sessions";
           frame.origin.x, frame.origin.y,
           frame.size.width, frame.size.height);
 #endif
+
+    if (frame.size.width <= 0 || frame.size.height <= 0) {
+        NSLog(@"Tried to resize to way too small.");
+        return;
+    }
+    if (isnan(frame.size.width) || isnan(frame.size.height)) {
+        NSLog(@"Tried to resize to nan");
+        return;
+    }
 
     // Adjust the size of all the sessions.
     [self fitSessionsToWindow];
