@@ -1021,8 +1021,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if ((!prev) &&
         ([delegate hasKeyMappingForEvent:event highPriority:YES] ||
          (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)) ||
-         ((modflag & NSAlternateKeyMask) && [delegate optionKey] != OPT_NORMAL)))
-    {
+         ((modflag & NSAlternateKeyMask) && [delegate optionKey] != OPT_NORMAL))) {
         [delegate keyDown:event];
         return;
     }
@@ -1044,7 +1043,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return (keyIsARepeat);
 }
 
-- (void) otherMouseDown: (NSEvent *) event
+- (void)otherMouseDown: (NSEvent *) event
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s: %@]", __PRETTY_FUNCTION__, event);
@@ -1056,28 +1055,38 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
     if (([[self delegate] xtermMouseReporting])
-        && (locationInTextView.y > visibleRect.origin.y) && !([event modifierFlags] & NSAlternateKeyMask))
-        //        && ([event modifierFlags] & NSCommandKeyMask == 0))
-    {
+        && (locationInTextView.y > visibleRect.origin.y)
+        && !([event modifierFlags] & NSAlternateKeyMask)) {
+        // Mouse reporting is on
         int rx, ry;
-        rx = (locationInTextView.x-MARGIN - visibleRect.origin.x)/charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y)/lineHeight;
-        if (rx < 0) rx = -1;
-        if (ry < 0) ry = -1;
+        rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
+        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
+        if (rx < 0) {
+            rx = -1;
+        }
+        if (ry < 0) {
+            ry = -1;
+        }
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
         int bnum = [event buttonNumber];
-        if (bnum == 2) bnum = 1;
+        if (bnum == 2) {
+            bnum = 1;
+        }
 
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
                 reportingMouseDown = YES;
-                [session writeTask:[terminal mousePress:bnum withModifiers:[event modifierFlags] atX:rx Y:ry]];
+                [session writeTask:[terminal mousePress:bnum
+                                          withModifiers:[event modifierFlags]
+                                                    atX:rx
+                                                      Y:ry]];
                 return;
                 break;
+
             case MOUSE_REPORTING_NONE:
             case MOUSE_REPORTING_HILITE:
                 // fall through
@@ -1085,10 +1094,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         }
     }
 
-    if([[PreferencePanel sharedInstance] pasteFromClipboard])
+    if ([[PreferencePanel sharedInstance] pasteFromClipboard]) {
         [self paste: nil];
-    else
+    } else {
         [self pasteSelection: nil];
+    }
 }
 
 - (void)otherMouseUp:(NSEvent *)event
@@ -1098,15 +1108,19 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([[self delegate] xtermMouseReporting])
-        && reportingMouseDown && !([event modifierFlags] & NSAlternateKeyMask))
-    {
+    if (([[self delegate] xtermMouseReporting]) &&
+        reportingMouseDown &&
+        !([event modifierFlags] & NSAlternateKeyMask)) {
         reportingMouseDown = NO;
         int rx, ry;
-        rx = (locationInTextView.x-MARGIN - visibleRect.origin.x)/charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y)/lineHeight;
-        if (rx < 0) rx = -1;
-        if (ry < 0) ry = -1;
+        rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
+        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
+        if (rx < 0) {
+            rx = -1;
+        }
+        if (ry < 0) {
+            ry = -1;
+        }
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
@@ -1117,6 +1131,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 [session writeTask:[terminal mouseReleaseAtX:rx Y:ry]];
                 return;
                 break;
+
             case MOUSE_REPORTING_NONE:
             case MOUSE_REPORTING_HILITE:
                 // fall through
@@ -1133,28 +1148,39 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([[self delegate] xtermMouseReporting])
-        && (locationInTextView.y > visibleRect.origin.y)
-        && reportingMouseDown && !([event modifierFlags] & NSAlternateKeyMask))
-    {
+    if (([[self delegate] xtermMouseReporting]) &&
+        (locationInTextView.y > visibleRect.origin.y) &&
+        reportingMouseDown &&
+        !([event modifierFlags] & NSAlternateKeyMask)) {
+        // Mouse reporting is on.
         int rx, ry;
-        rx = (locationInTextView.x-MARGIN - visibleRect.origin.x)/charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y)/lineHeight;
-        if (rx < 0) rx = -1;
-        if (ry < 0) ry = -1;
+        rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
+        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
+        if (rx < 0) {
+            rx = -1;
+        }
+        if (ry < 0) {
+            ry = -1;
+        }
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
         int bnum = [event buttonNumber];
-        if (bnum == 2) bnum = 1;
+        if (bnum == 2) {
+            bnum = 1;
+        }
 
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseMotion:bnum withModifiers:[event modifierFlags] atX:rx Y:ry]];
+                [session writeTask:[terminal mouseMotion:bnum
+                                           withModifiers:[event modifierFlags]
+                                                     atX:rx
+                                                       Y:ry]];
                 return;
                 break;
+
             case MOUSE_REPORTING_NONE:
             case MOUSE_REPORTING_HILITE:
                 // fall through
@@ -1164,7 +1190,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [super otherMouseDragged:event];
 }
 
-- (void) rightMouseDown: (NSEvent *) event
+- (void)rightMouseDown: (NSEvent *) event
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s: %@]", __PRETTY_FUNCTION__, event);
@@ -1192,7 +1218,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
                 reportingMouseDown = YES;
-                [session writeTask:[terminal mousePress:2 withModifiers:[event modifierFlags] atX:rx Y:ry]];
+                [session writeTask:[terminal mousePress:2
+                                          withModifiers:[event modifierFlags]
+                                                    atX:rx
+                                                      Y:ry]];
                 return;
                 break;
             case MOUSE_REPORTING_NONE:
@@ -1211,15 +1240,20 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([[self delegate] xtermMouseReporting])
-        && reportingMouseDown && !([event modifierFlags] & NSAlternateKeyMask))
-    {
+    if (([[self delegate] xtermMouseReporting]) &&
+        reportingMouseDown &&
+        !([event modifierFlags] & NSAlternateKeyMask)) {
+        // Mouse reporting is on
         reportingMouseDown = NO;
         int rx, ry;
         rx = (locationInTextView.x-MARGIN - visibleRect.origin.x)/charWidth;
         ry = (locationInTextView.y - visibleRect.origin.y)/lineHeight;
-        if (rx < 0) rx = -1;
-        if (ry < 0) ry = -1;
+        if (rx < 0) {
+            rx = -1;
+        }
+        if (ry < 0) {
+            ry = -1;
+        }
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
@@ -1230,6 +1264,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 [session writeTask:[terminal mouseReleaseAtX:rx Y:ry]];
                 return;
                 break;
+
             case MOUSE_REPORTING_NONE:
             case MOUSE_REPORTING_HILITE:
                 // fall through
@@ -1246,15 +1281,20 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([[self delegate] xtermMouseReporting])
-        && (locationInTextView.y > visibleRect.origin.y)
-        && reportingMouseDown && !([event modifierFlags] & NSAlternateKeyMask))
-    {
+    if (([[self delegate] xtermMouseReporting]) &&
+        (locationInTextView.y > visibleRect.origin.y) &&
+        reportingMouseDown &&
+        !([event modifierFlags] & NSAlternateKeyMask)) {
+        // Mouse reporting is on.
         int rx, ry;
-        rx = (locationInTextView.x-MARGIN - visibleRect.origin.x)/charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y)/lineHeight;
-        if (rx < 0) rx = -1;
-        if (ry < 0) ry = -1;
+        rx = (locationInTextView.x -MARGIN - visibleRect.origin.x) / charWidth;
+        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
+        if (rx < 0) {
+            rx = -1;
+        }
+        if (ry < 0) {
+            ry = -1;
+        }
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
@@ -1262,9 +1302,13 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseMotion:2 withModifiers:[event modifierFlags] atX:rx Y:ry]];
+                [session writeTask:[terminal mouseMotion:2
+                                           withModifiers:[event modifierFlags]
+                                                     atX:rx
+                                                       Y:ry]];
                 return;
                 break;
+
             case MOUSE_REPORTING_NONE:
             case MOUSE_REPORTING_HILITE:
                 // fall through
@@ -1285,15 +1329,19 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([[self delegate] xtermMouseReporting])
-        && (locationInTextView.y > visibleRect.origin.y) && !([event modifierFlags] & NSAlternateKeyMask))
-        //        && ([event modifierFlags] & NSCommandKeyMask == 0))
-    {
+    if (([[self delegate] xtermMouseReporting]) &&
+        (locationInTextView.y > visibleRect.origin.y) &&
+        !([event modifierFlags] & NSAlternateKeyMask)) {
+        // Mouse reporting is on.
         int rx, ry;
-        rx = (locationInTextView.x-MARGIN - visibleRect.origin.x)/charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y)/lineHeight;
-        if (rx < 0) rx = -1;
-        if (ry < 0) ry = -1;
+        rx = (locationInTextView.x-MARGIN - visibleRect.origin.x) / charWidth;
+        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
+        if (rx < 0) {
+            rx = -1;
+        }
+        if (ry < 0) {
+            ry = -1;
+        }
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
@@ -1301,8 +1349,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                if([event deltaY] != 0) {
-                    [session writeTask:[terminal mousePress:([event deltaY] > 0 ? 4:5) withModifiers:[event modifierFlags] atX:rx Y:ry]];
+                if ([event deltaY] != 0) {
+                    [session writeTask:[terminal mousePress:([event deltaY] > 0 ? 4:5)
+                                              withModifiers:[event modifierFlags]
+                                                        atX:rx
+                                                          Y:ry]];
                     return;
                 }
                 break;
@@ -1351,7 +1402,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if (x < 0) {
         x = 0;
     }
-    y = locationInTextView.y/lineHeight;
+    y = locationInTextView.y / lineHeight;
 
     if (x >= width) {
         x = width  - 1;
@@ -1361,12 +1412,16 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if (([[self delegate] xtermMouseReporting]) &&
         (locationInTextView.y > visibleRect.origin.y) &&
         !([event modifierFlags] & NSAlternateKeyMask)) {
-
+        // Mouse reporting is on.
         int rx, ry;
-        rx = (locationInTextView.x-MARGIN - visibleRect.origin.x)/charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y)/lineHeight;
-        if (rx < 0) rx = -1;
-        if (ry < 0) ry = -1;
+        rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
+        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
+        if (rx < 0) {
+            rx = -1;
+        }
+        if (ry < 0) {
+            ry = -1;
+        }
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
@@ -1375,9 +1430,13 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
                 reportingMouseDown = YES;
-                [session writeTask:[terminal mousePress:0 withModifiers:[event modifierFlags] atX:rx Y:ry]];
+                [session writeTask:[terminal mousePress:0
+                                          withModifiers:[event modifierFlags]
+                                                    atX:rx
+                                                      Y:ry]];
                 return;
                 break;
+
             case MOUSE_REPORTING_NONE:
             case MOUSE_REPORTING_HILITE:
                 // fall through
@@ -1388,28 +1447,28 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     // Lock auto scrolling while the user is selecting text
     [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 
-    if(mouseDownEvent != nil) {
+    if (mouseDownEvent != nil) {
         [mouseDownEvent release];
         mouseDownEvent = nil;
     }
     [event retain];
     mouseDownEvent = event;
-
-
     mouseDragged = NO;
     mouseDown = YES;
     mouseDownOnSelection = NO;
 
+    BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
+    BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
+    BOOL shiftPressed = ([event modifierFlags] & NSShiftKeyMask) != 0;
     if ([event clickCount] < 2) {
         // single click
-        if (([event modifierFlags] & NSAlternateKeyMask) ||
-            (selectMode == SELECT_BOX && ([event modifierFlags] & NSCommandKeyMask))) {
+        if (altPressed && cmdPressed) {
             selectMode = SELECT_BOX;
         } else {
             selectMode = SELECT_CHAR;
         }
 
-        if (startX > -1 && ([event modifierFlags] & NSShiftKeyMask)) {
+        if (startX > -1 && shiftPressed) {
             // holding down shfit key and there is an existing selection ->
             // extend the selection.
             // If you click before the start then flip start and end and extend end to click location. (effectively extends left)
@@ -1431,7 +1490,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             mouseDownOnSelection = YES;
             [super mouseDown: event];
             return;
-        } else if (!([event modifierFlags] & NSCommandKeyMask)) {
+        } else if (!cmdPressed || altPressed) {
             // start a new selection
             endX = startX = x;
             endY = startY = y;
@@ -1445,7 +1504,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         if ([self _findMatchingParenthesis:selectedWord withX:tmpX1 Y:tmpY1]) {
             // Found a matching paren
             ;
-        } else if (startX > -1 && ([event modifierFlags] & NSShiftKeyMask)) {
+        } else if (startX > -1 && shiftPressed) {
             // no matching paren, but holding shift and extending selection
             if (startX + startY * width < tmpX1 + tmpY1 * width) {
                 // extend end of selection
@@ -1468,7 +1527,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     } else if ([event clickCount] >= 3) {
         // triple-click; select line
         selectMode = SELECT_LINE;
-        if (startX > -1 && ([event modifierFlags] & NSShiftKeyMask)) {
+        if (startX > -1 && shiftPressed) {
             // extend existing selection
             if (startY < y) {
                 // extend start
@@ -1521,8 +1580,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     y = locationInTextView.y / lineHeight;
 
     // Send mouse up event to host if xterm mouse reporting is on
-    if ([[self delegate] xtermMouseReporting]
-        && reportingMouseDown && !([event modifierFlags] & NSAlternateKeyMask)) {
+    if ([[self delegate] xtermMouseReporting] &&
+        reportingMouseDown &&
+        !([event modifierFlags] & NSAlternateKeyMask)) {
+        // Mouse reporting is on.
         reportingMouseDown = NO;
         int rx, ry;
         NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
@@ -1544,6 +1605,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 [session writeTask:[terminal mouseReleaseAtX:rx Y:ry]];
                 return;
                 break;
+
             case MOUSE_REPORTING_NONE:
             case MOUSE_REPORTING_HILITE:
                 // fall through
@@ -1552,7 +1614,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 
     // Unlock auto scrolling as the user as finished selecting text
-    if(([self visibleRect].origin.y + [self visibleRect].size.height) / lineHeight == [dataSource numberOfLines]) {
+    if (([self visibleRect].origin.y + [self visibleRect].size.height) / lineHeight == [dataSource numberOfLines]) {
         [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:NO];
     }
 
@@ -1634,31 +1696,44 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         x = -1;
     }
     //NSLog(@"Drag to pixel %d -> x=%d (charWidth=%d) logical=%f", (int) locationInTextView.x-MARGIN, x, (int)charWidth, logicalX);
-    if (x < -1) x = -1;
-    if (x >= width) x = width - 1;
+    if (x < -1) {
+        x = -1;
+    }
+    if (x >= width) {
+        x = width - 1;
+    }
 
+    y = locationInTextView.y / lineHeight;
 
-    y = locationInTextView.y/lineHeight;
-
-    if (([[self delegate] xtermMouseReporting])
-        && reportingMouseDown&& !([event modifierFlags] & NSAlternateKeyMask)) {
+    if (([[self delegate] xtermMouseReporting]) &&
+        reportingMouseDown &&
+        !([event modifierFlags] & NSAlternateKeyMask)) {
+        // Mouse reporting is on.
         int rx, ry;
         NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-        rx = (locationInTextView.x-MARGIN - visibleRect.origin.x)/charWidth;
-        ry = (locationInTextView.y - visibleRect.origin.y)/lineHeight;
-        if (rx < 0) rx = -1;
-        if (ry < 0) ry = -1;
+        rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
+        ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
+        if (rx < 0) {
+            rx = -1;
+        }
+        if (ry < 0) {
+            ry = -1;
+        }
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseMotion:0 withModifiers:[event modifierFlags] atX:rx Y:ry]];
+                [session writeTask:[terminal mouseMotion:0
+                                           withModifiers:[event modifierFlags]
+                                                     atX:rx
+                                                       Y:ry]];
             case MOUSE_REPORTING_NORMAL:
                 DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
                 return;
                 break;
+
             case MOUSE_REPORTING_NONE:
             case MOUSE_REPORTING_HILITE:
                 // fall through
@@ -1717,8 +1792,14 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             endX = x + 1;
             endY = y;
             break;
+
         case SELECT_WORD:
-            [self _getWordForX:x y:y startX:&tmpX1 startY:&tmpY1 endX:&tmpX2 endY:&tmpY2];
+            [self _getWordForX:x
+                             y:y
+                        startX:&tmpX1
+                        startY:&tmpY1
+                          endX:&tmpX2
+                          endY:&tmpY2];
             if ((startX + (startY * width)) < (tmpX2 + (tmpY2 * width))) {
                 // We go forwards in our selection session... and...
                 if ((startX + (startY * width)) > (endX + (endY * width))) {
@@ -1736,7 +1817,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                     // NOT next word).
                     // Afterwards, selecting will continue normally.
                     int tx1, tx2, ty1, ty2;
-                    [self _getWordForX:startX-1 y:startY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
+                    [self _getWordForX:startX-1
+                                     y:startY
+                                startX:&tx1
+                                startY:&ty1
+                                  endX:&tx2
+                                  endY:&ty2];
                     startX = tx1;
                     startY = ty1;
                 }
@@ -1754,7 +1840,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                     // selecting backwards.)
                     // For an explanation why, read the long comment above.
                     int tx1, tx2, ty1, ty2;
-                    [self _getWordForX:startX y:startY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
+                    [self _getWordForX:startX
+                                     y:startY
+                                startX:&tx1
+                                startY:&ty1
+                                  endX:&tx2
+                                  endY:&ty2];
                     startX = tx2;
                     startY = ty2;
                 }
@@ -1764,6 +1855,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 endY = tmpY1;
             }
             break;
+
         case SELECT_LINE:
             if (startY <= y) {
                 startX = 0;
