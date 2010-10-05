@@ -1189,7 +1189,7 @@
 				PRODUCT_NAME = iTerm;
 				SDKROOT = macosx10.5;
 				SECTORDER_FLAGS = "";
-				VALID_ARCHS = "ppc x86_64";
+				VALID_ARCHS = "i386 x86_64 ppc";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = YES;
@@ -1225,7 +1225,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PRODUCT_NAME = iTerm;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "ppc x86_64";
+				VALID_ARCHS = "i386 x86_64 ppc";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -1266,7 +1266,7 @@
 				REZ_EXECUTABLE = YES;
 				SDKROOT = macosx10.5;
 				SECTORDER_FLAGS = "";
-				VALID_ARCHS = "ppc x86_64";
+				VALID_ARCHS = "i386 x86_64 ppc";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
 			};
@@ -1276,8 +1276,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = (
-					ppc,
+					i386,
 					x86_64,
+					ppc,
 				);
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1297,7 +1298,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "ppc x86_64";
+				VALID_ARCHS = "i386 x86_64 ppc";
 				WARNING_CFLAGS = "-Wall";
 			};
 			name = Development;
@@ -1306,8 +1307,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = (
-					ppc,
+					i386,
 					x86_64,
+					ppc,
 				);
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1321,7 +1323,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "ppc x86_64";
+				VALID_ARCHS = "i386 x86_64 ppc";
 				WARNING_CFLAGS = "-Wall";
 			};
 			name = Deployment;
@@ -1330,8 +1332,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = (
-					ppc,
+					i386,
 					x86_64,
+					ppc,
 				);
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1344,7 +1347,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "ppc x86_64";
+				VALID_ARCHS = "i386 x86_64 ppc";
 				WARNING_CFLAGS = "-Wall";
 			};
 			name = Default;
@@ -1372,7 +1375,7 @@
 				PREBINDING = NO;
 				PRODUCT_NAME = Growl;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "ppc x86_64";
+				VALID_ARCHS = "i386 x86_64 ppc";
 				ZERO_LINK = YES;
 			};
 			name = Development;
@@ -1399,7 +1402,7 @@
 				PREBINDING = NO;
 				PRODUCT_NAME = Growl;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "ppc x86_64";
+				VALID_ARCHS = "i386 x86_64 ppc";
 				ZERO_LINK = NO;
 			};
 			name = Deployment;
@@ -1424,7 +1427,7 @@
 				PREBINDING = NO;
 				PRODUCT_NAME = Growl;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "ppc x86_64";
+				VALID_ARCHS = "i386 x86_64 ppc";
 				ZERO_LINK = YES;
 			};
 			name = Default;
