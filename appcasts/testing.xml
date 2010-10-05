@@ -12,7 +12,7 @@
                         </sparkle:releaseNotesLink>
                         <pubDate>Mon, 04 Oct 2010 00:04:32 -0700</pubDate>
                         <enclosure url="http://iterm2.googlecode.com/files/iTerm2-alpha10.zip"
-                                sparkle:version="0.20.20101004" length="2184483" type="application/octet-stream"
+                                sparkle:version="0.20.20101003" length="2184483" type="application/octet-stream"
                                 sparkle:dsaSignature="MCwCFHrrGhnhVkwaKHxwMOEsqYxoAmw6AhQEHOty6p7W+AMmshZegMeNWCkT3A==" />
                 </item>
 	</channel>
