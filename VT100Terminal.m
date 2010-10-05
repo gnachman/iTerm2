@@ -1663,14 +1663,6 @@ static VT100TCC decode_string(unsigned char *datap,
     datap = STREAM + streamOffset;
     datalen = current_stream_length - streamOffset;
 
-    if (gDebugLogging) {
-        DebugLog([NSString stringWithFormat:@"Read %d bytes", datalen]);
-        int i;
-        for (i = 0; i < datalen; ++i) {
-            DebugLog([NSString stringWithFormat:@"Byte %d: %d (%c)", i, (int)datap[i], (datap[i] > 32 && datap[i] < 127)?datap[i]:' ']);
-        }
-    }
-
     if (datalen == 0) {
         result.type = VT100CC_NULL;
         result.length = 0;
@@ -1730,10 +1722,36 @@ static VT100TCC decode_string(unsigned char *datap,
     }
 
     if (gDebugLogging) {
-        DebugLog(@"At end of getNextToken");
-        [SCREEN dumpDebugLog];
-        DebugLog(@"Return from getNextToken");
+        char* hexdigits = "0123456789abcdef";
+        int i;
+        char loginfo[1000];
+        int o = 0;
+        for (i = 0; i < result.length && i < 20; ++i) {
+            unsigned char c = datap[i];
+            if (c < 32) {
+                loginfo[o++] = '^';
+                loginfo[o++] = datap[i] + '@';
+            } else if (c == 32) {
+                loginfo[o++] = 'S';
+                loginfo[o++] = 'P';
+            } else if (c < 128) {
+                loginfo[o++] = c;
+            } else {
+                loginfo[o++] = '0';
+                loginfo[o++] = 'x';
+                loginfo[o++] = hexdigits[(c/16)];
+                loginfo[o++] = hexdigits[c & 0x0f];
+            }
+            loginfo[o++] = ' ';
+        }
+        loginfo[o] = 0;
+        if (i < result.length) {
+            DebugLog([NSString stringWithFormat:@"Read %d bytes (%d shown): %s", result.length, i, loginfo]);
+        } else {
+            DebugLog([NSString stringWithFormat:@"Read %d bytes: %s", result.length, loginfo]);
+        }
     }
+    
     return result;
 }
 

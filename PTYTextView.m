@@ -595,6 +595,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)refresh
 {
+    DebugLog(@"PTYTextView refresh called");
     if(dataSource == nil) return;
 
     // reset tracking rect
@@ -801,48 +802,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     CURSOR=YES;
 }
 
--(void)_debugLogScreenContents
-{
-    NSRect rect = [self visibleRect];
-    [self lockFocus];
-    int x,y;
-    DebugLog([NSString stringWithFormat:@"visible rect is %d,%d %dx%d", rect.origin.x, rect.origin.y, rect.size.width, rect.size.height]);
-    for (y=rect.origin.y; y < rect.origin.y + rect.size.height; ++y) {
-        NSMutableString* line = [[NSMutableString alloc] init];
-        [line autorelease];
-        int i = 0;
-        int count = 0;
-        int prev = -1;
-        for (x=rect.origin.x; x <= rect.origin.x + rect.size.width; ++x, ++i) {
-            NSColor *theColor;
-            int b;
-            if (x < rect.origin.x + rect.size.width) {
-                theColor = NSReadPixel(NSMakePoint(x, y));
-                b = (int)(10*[theColor brightnessComponent]);
-            } else {
-                // last pix on the line, force output.
-                b = -1;
-            }
-            if (prev == -1) {
-                // first pixel on the line
-                prev = b;
-                count = 1;
-            } else if (b == prev) {
-                // repeated value
-                ++count;
-            } else {
-                // value changed, output previous value
-                [line appendFormat:@"%c%d", 'a'+prev, count];
-                prev = b;
-                count = 1;
-            }
-        }
-
-        DebugLog(line);
-    }
-    [self unlockFocus];
-}
-
 - (void)drawRect:(NSRect)rect
 {
 #ifdef DEBUG_DRAWING
@@ -854,7 +813,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         prevBad = NO;
     }
 #endif
-    DebugLog([NSString stringWithFormat:@"%s(0x%x):-[PTYTextView drawRect:(%f,%f,%f,%f) frameRect: (%f,%f,%f,%f)]",
+    DebugLog([NSString stringWithFormat:@"%s(0x%x): rect=(%f,%f,%f,%f) frameRect=(%f,%f,%f,%f)]",
           __PRETTY_FUNCTION__, self,
           rect.origin.x, rect.origin.y, rect.size.width, rect.size.height,
           [self frame].origin.x, [self frame].origin.y, [self frame].size.width, [self frame].size.height]);
@@ -895,7 +854,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         lineEnd = firstVisibleRow + visibleRows;
     }
 
-    DebugLog([NSString stringWithFormat:@"Draw lines in [%d, %d)", lineStart, lineEnd]);
+    DebugLog([NSString stringWithFormat:@"drawRect: Draw lines in range [%d, %d)", lineStart, lineEnd]);
     // Draw each line
 #ifdef DEBUG_DRAWING
     NSMutableDictionary* dct =
@@ -927,6 +886,16 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             }
             // if overflow > line then the requested line cannot be drawn
             // because it has been lost to the sands of time.
+            if (gDebugLogging) {
+                screen_char_t* theLine = [dataSource getLineAtIndex:line-overflow];
+                int w = [dataSource width];
+                char dl[w+1];
+                for (int i = 0; i < [dataSource width]; ++i) {
+                    dl[i] = theLine[i].ch;
+                }
+                DebugLog([NSString stringWithCString:dl]);
+            }
+            
 #ifdef DEBUG_DRAWING
             screen_char_t* theLine = [dataSource getLineAtIndex:line-overflow];
             for (int i = 0; i < [dataSource width]; ++i) {
@@ -989,9 +958,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     // Draw cursor
     [self _drawCursor];
 
-    if (gDebugLogging) {
-        [self _debugLogScreenContents];
-    }
 #ifdef DEBUG_DRAWING
     if (overflow) {
         // It's useful to put a breakpoint at the top of this function

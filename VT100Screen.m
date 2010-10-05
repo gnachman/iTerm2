@@ -455,7 +455,7 @@ static char* FormatCont(int c)
     NSLog(@"%@", [self debugString]);
 }
 
-- (void) dumpDebugLog;
+- (void) dumpDebugLog
 {
     int x, y;
     char line[1000];
@@ -1303,7 +1303,7 @@ static void DumpBuf(screen_char_t* p, int n) {
     screen_char_t *aLine;
 
     if (gDebugLogging) {
-        DebugLog([NSString stringWithFormat:@"setString: %s at line %d", [string UTF8String], CURSOR_Y + current_scrollback_lines]);
+        DebugLog([NSString stringWithFormat:@"setString: %d chars starting with %c at line %d", [string length], [string characterAtIndex:0], CURSOR_Y + current_scrollback_lines]);
     }
 
 #if DEBUG_METHOD_TRACE
