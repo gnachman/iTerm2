@@ -180,10 +180,7 @@ static BOOL isString(unsigned char *code,
 
     //    NSLog(@"%@",[NSString localizedNameOfStringEncoding:encoding]);
     if (encoding== NSUTF8StringEncoding) {
-        if (*code >= 0x20) {
-            // Control characters must be treated specially because, for example,
-            // mouse reporting is not aware of character encoding issues.
-            // See decode_utf8 for details.
+        if (*code >= 0x80) {
             result = YES;
         }
     }
@@ -1071,10 +1068,10 @@ static VT100TCC decode_utf8(unsigned char *datap,
         if (utf8DecodeResult <= 0) {
             break;
         }
-        // Intentionally break out at control characters. They are
-        // processed separately, some (e.g. mouse location reporting)
-        // are not even valid UTF-8.
-        if (theChar < 0x20) {
+        // Intentionally break out at ASCII characters. They are
+        // processed separately, e.g. they might get converted into
+        // line drawing characters.
+        if (theChar < 0x80) {
             break;
         }
         // Reject UTF-16 surrogates. They are invalid Unicode codepoints,
@@ -1690,7 +1687,7 @@ static VT100TCC decode_string(unsigned char *datap,
     } else {
         size_t rmlen = 0;
 
-        if (ENCODING != NSUTF8StringEncoding && *datap >= 0x20 && *datap <= 0x7f) {
+        if (*datap >= 0x20 && *datap <= 0x7f) {
             result = decode_ascii_string(datap, datalen, &rmlen);
             result.length = rmlen;
             result.position = datap;
@@ -1702,14 +1699,16 @@ static VT100TCC decode_string(unsigned char *datap,
             [self _setCharAttr:result];
             [self _setRGB:result];
         } else {
-            if (isString(datap,ENCODING)) {
+            if (isString(datap, ENCODING)) {
+                // If the encoding is UTF-8 then you get here only if *datap >= 0x80.
                 result = decode_string(datap, datalen, &rmlen, ENCODING);
-                if(result.type != VT100_WAIT && rmlen == 0) {
+                if (result.type != VT100_WAIT && rmlen == 0) {
                     result.type = VT100_UNKNOWNCHAR;
                     result.u.code = datap[0];
                     rmlen = 1;
                 }
             } else {
+                // If the encoding is UTF-8 you shouldn't get here.
                 result.type = VT100_UNKNOWNCHAR;
                 result.u.code = datap[0];
                 rmlen = 1;
