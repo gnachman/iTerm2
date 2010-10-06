@@ -313,6 +313,14 @@ typedef struct PTYFontInfo PTYFontInfo;
 //
 @interface PTYTextView (Private)
 
+// Types of characters. Used when classifying characters for word selection.
+typedef enum {
+    CHARTYPE_WHITESPACE,  // whitespace chars or NUL
+    CHARTYPE_WORDCHAR,    // Any character considered part of a word, including user-defined chars.
+    CHARTYPE_DW_FILLER,   // Double-width character effluvia.
+    CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
+} PTYCharType;
+
 - (void)modifyFont:(NSFont*)font info:(PTYFontInfo*)fontInfo;
 - (void)releaseFontInfo:(PTYFontInfo*)fontInfo;
 
@@ -320,6 +328,8 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)_savePanelDidEnd:(NSSavePanel *)theSavePanel returnCode:(int)theReturnCode contextInfo:(void *)theContextInfo;
 
 - (void) _scrollToLine:(int)line;
+- (BOOL)shouldSelectCharForWord:(unichar) ch selectWordChars:(BOOL)selectWordChars;
+- (PTYCharType)classifyChar:(unichar)ch;
 - (NSString *)_getWordForX:(int)x
                     y:(int)y
                startX:(int *)startx

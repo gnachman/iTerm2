@@ -895,7 +895,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 }
                 DebugLog([NSString stringWithCString:dl]);
             }
-            
+
 #ifdef DEBUG_DRAWING
             screen_char_t* theLine = [dataSource getLineAtIndex:line-overflow];
             for (int i = 0; i < [dataSource width]; ++i) {
@@ -1466,7 +1466,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
         // double-click; select word
         selectMode = SELECT_WORD;
-        NSString *selectedWord = [self _getWordForX: x y: y startX: &tmpX1 startY: &tmpY1 endX: &tmpX2 endY: &tmpY2];
+        NSString *selectedWord = [self _getWordForX:x
+                                                  y:y
+                                             startX:&tmpX1
+                                             startY:&tmpY1
+                                               endX:&tmpX2
+                                               endY:&tmpY2];
         if ([self _findMatchingParenthesis:selectedWord withX:tmpX1 Y:tmpY1]) {
             // Found a matching paren
             ;
@@ -1969,7 +1974,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return [self contentFromX:0 Y:0 ToX:[dataSource width] Y:[dataSource numberOfLines]-1 pad: NO];
 }
 
-- (void) copy: (id) sender
+- (void)copy:(id)sender
 {
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
     NSString *copyString;
@@ -1978,11 +1983,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     NSLog(@"%s(%d):-[PTYTextView copy:%@]", __FILE__, __LINE__, sender );
 #endif
 
-    copyString=[self selectedText];
+    copyString = [self selectedText];
 
-    if (copyString && [copyString length]>0) {
-        [pboard declareTypes: [NSArray arrayWithObject: NSStringPboardType] owner: self];
-        [pboard setString: copyString forType: NSStringPboardType];
+    if (copyString) {
+        [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
+        [pboard setString:copyString forType:NSStringPboardType];
     }
 }
 
@@ -3223,14 +3228,49 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return theLine[x].ch;
 }
 
-- (NSString *)_getWordForX:(int) x
-                         y:(int) y
-                    startX:(int *) startx
-                    startY:(int *) starty
-                      endX:(int *) endx
-                      endY:(int *) endy
+- (PTYCharType)classifyChar:(unichar)ch
 {
-    NSString *wordChars;
+    NSString* aString = [NSString stringWithCharacters:&ch length:1];
+    if (ch == 0xffff || ch == DWC_SKIP) {
+        return CHARTYPE_DW_FILLER;
+    } else if (!ch || [aString rangeOfCharacterFromSet:[NSCharacterSet whitespaceCharacterSet]].length > 0) {
+        return CHARTYPE_WHITESPACE;
+    } else if ([aString rangeOfCharacterFromSet:[NSCharacterSet alphanumericCharacterSet]].length != 0 ||
+               [[[PreferencePanel sharedInstance] wordChars] rangeOfString:aString].length != 0) {
+        return CHARTYPE_WORDCHAR;
+    } else {
+        // Non-alphanumeric, non-whitespace, non-word, not double-width filler.
+        // Miscellaneous symbols, etc.
+        return CHARTYPE_OTHER;
+    }
+}
+
+- (BOOL)shouldSelectCharForWord:(unichar) ch selectWordChars:(BOOL)selectWordChars
+{
+    switch ([self classifyChar:ch]) {
+        case CHARTYPE_WHITESPACE:
+            return !selectWordChars;
+            break;
+
+        case CHARTYPE_WORDCHAR:
+        case CHARTYPE_DW_FILLER:
+            return selectWordChars;
+            break;
+
+        case CHARTYPE_OTHER:
+            return NO;
+            break;
+    };
+    return NO;
+}
+
+- (NSString *)_getWordForX:(int)x
+                         y:(int)y
+                    startX:(int *)startx
+                    startY:(int *)starty
+                      endX:(int *)endx
+                      endY:(int *)endy
+{
     int tmpX;
     int tmpY;
     int x1;
@@ -3239,37 +3279,34 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int y2;
     int width = [dataSource width];
 
-    // Grab the preference for extra characters to be included in a word.
-    wordChars = [[PreferencePanel sharedInstance] wordChars];
-    if (wordChars == nil) {
-        wordChars = @"";
-    }
-
     // Search backward from (x, y) to find the beginning of the word.
     tmpX = x;
     tmpY = y;
+    // If the char at (x,y) is not whitespace, then go into a mode where
+    // word characters are selected as blocks; else go into a mode where
+    // whitespace is selected as a block.
+    BOOL selectWordChars = [self classifyChar:[dataSource getLineAtIndex:tmpY][tmpX].ch] != CHARTYPE_WHITESPACE;
+
     while (tmpX >= 0) {
         screen_char_t* theLine = [dataSource getLineAtIndex:tmpY];
-        NSString* aString = [NSString stringWithCharacters:&theLine[tmpX].ch length:1];
-        if ([aString characterAtIndex:0] != 0xffff &&
-            ([aString rangeOfCharacterFromSet:[NSCharacterSet alphanumericCharacterSet]].length == 0) &&
-            [wordChars rangeOfString:aString].length == 0) {
-            // Found whitespace at this position.
-            break;
-        }
-        tmpX--;
-        if (tmpX < 0 && tmpY > 0) {
-            // Wrap tmpX, tmpY to the end of the previous line.
-            theLine = [dataSource getLineAtIndex:tmpY-1];
-            if (theLine[width].ch != EOL_HARD) {
-                // check if there's a hard line break
-                tmpY--;
-                tmpX = width - 1;
+
+        if ([self shouldSelectCharForWord:theLine[tmpX].ch selectWordChars:selectWordChars]) {
+            tmpX--;
+            if (tmpX < 0 && tmpY > 0) {
+                // Wrap tmpX, tmpY to the end of the previous line.
+                theLine = [dataSource getLineAtIndex:tmpY-1];
+                if (theLine[width].ch != EOL_HARD) {
+                    // check if there's a hard line break
+                    tmpY--;
+                    tmpX = width - 1;
+                }
             }
+        } else {
+            break;
         }
     }
     if (tmpX != x) {
-        // Advance back to the right of the whitespace that caused us to break.
+        // Advance back to the right of the char that caused us to break.
         tmpX++;
     }
 
@@ -3285,7 +3322,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         tmpX = 0;
         tmpY++;
     }
-
     if (tmpY >= [dataSource numberOfLines]) {
         tmpY = [dataSource numberOfLines] - 1;
     }
@@ -3306,24 +3342,21 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     tmpY = y;
     while (tmpX < width) {
         screen_char_t* theLine = [dataSource getLineAtIndex:tmpY];
-        NSString* aString = [NSString stringWithCharacters:&theLine[tmpX].ch length:1];
-        if ([aString characterAtIndex:0] != 0xffff &&
-            ([aString rangeOfCharacterFromSet:[NSCharacterSet alphanumericCharacterSet]].length == 0) &&
-            [wordChars rangeOfString:aString].length == 0) {
-            // Found whitespace at this position.
-            break;
-        }
-        tmpX++;
-        if (tmpX >= width && tmpY < [dataSource numberOfLines]) {
-            if (theLine[width].ch == EOL_HARD) {
-                // check if there's a hard line break
-                tmpY++;
-                tmpX = 0;
+        if ([self shouldSelectCharForWord:theLine[tmpX].ch selectWordChars:selectWordChars]) {
+            tmpX++;
+            if (tmpX >= width && tmpY < [dataSource numberOfLines]) {
+                if (theLine[width].ch != EOL_HARD) {
+                    // check if there's a hard line break
+                    tmpY++;
+                    tmpX = 0;
+                }
             }
+        } else {
+            break;
         }
     }
 
-    // Back off from trailing whitespace
+    // Back off from trailing char.
     if (tmpX != x) {
         tmpX--;
     }
