@@ -356,6 +356,7 @@
     [aDict setObject:[NSArray arrayWithObjects:@"bonjour",nil] forKey:KEY_TAGS];
     [aDict setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
     [aDict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
+    [aDict removeObjectForKey:KEY_SHORTCUT];
     [[BookmarkModel sharedInstance] addBookmark:aDict];
 
     // No bonjour service for sftp. Rides over ssh, so try to detect that

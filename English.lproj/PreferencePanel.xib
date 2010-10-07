@@ -2,17 +2,17 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="7.10">
 	<data>
 		<int key="IBDocument.SystemTarget">1050</int>
-		<string key="IBDocument.SystemVersion">10F569</string>
+		<string key="IBDocument.SystemVersion">10D2063a</string>
 		<string key="IBDocument.InterfaceBuilderVersion">788</string>
 		<string key="IBDocument.AppKitVersion">1038.29</string>
-		<string key="IBDocument.HIToolboxVersion">461.00</string>
+		<string key="IBDocument.HIToolboxVersion">460.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
 			<string key="NS.object.0">788</string>
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="2049"/>
+			<integer value="2104"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -799,7 +799,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 								<object class="NSTabViewItem" id="745611275">
 									<string key="NSIdentifier">2</string>
 									<object class="NSView" key="NSView" id="105539794">
-										<nil key="NSNextResponder"/>
+										<reference key="NSNextResponder" ref="415305200"/>
 										<int key="NSvFlags">256</int>
 										<object class="NSMutableArray" key="NSSubviews">
 											<bool key="EncodedWithXMLCoder">YES</bool>
@@ -813,7 +813,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 													<object class="NSTabViewItem" id="1020441673">
 														<string key="NSIdentifier">1</string>
 														<object class="NSView" key="NSView" id="63410958">
-															<nil key="NSNextResponder"/>
+															<reference key="NSNextResponder" ref="551361709"/>
 															<int key="NSvFlags">256</int>
 															<object class="NSMutableArray" key="NSSubviews">
 																<bool key="EncodedWithXMLCoder">YES</bool>
@@ -954,7 +954,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																<object class="NSPopUpButton" id="224614727">
 																	<reference key="NSNextResponder" ref="63410958"/>
 																	<int key="NSvFlags">256</int>
-																	<string key="NSFrame">{{155, 276}, {62, 26}}</string>
+																	<string key="NSFrame">{{155, 276}, {264, 26}}</string>
 																	<reference key="NSSuperview" ref="63410958"/>
 																	<bool key="NSEnabled">YES</bool>
 																	<object class="NSPopUpButtonCell" key="NSCell" id="419489537">
@@ -989,6 +989,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																				<string key="NSResourceName">NSMenuMixedState</string>
 																			</object>
 																			<string key="NSAction">_popUpItemAction:</string>
+																			<int key="NSTag">-1</int>
 																			<reference key="NSTarget" ref="419489537"/>
 																		</object>
 																		<bool key="NSMenuItemRespectAlignment">YES</bool>
@@ -1019,6 +1020,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">1</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="979028539">
@@ -1030,6 +1032,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">2</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="172742851">
@@ -1041,6 +1044,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">3</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="16174465">
@@ -1052,6 +1056,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">4</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="764358161">
@@ -1063,6 +1068,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">5</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="113117740">
@@ -1074,6 +1080,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">6</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="101728376">
@@ -1085,6 +1092,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">7</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="216199917">
@@ -1096,6 +1104,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">8</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="1062352461">
@@ -1107,6 +1116,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">9</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="678326559">
@@ -1118,6 +1128,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">10</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="482968606">
@@ -1129,6 +1140,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">11</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="278424183">
@@ -1140,6 +1152,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">12</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="29675326">
@@ -1151,6 +1164,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">13</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="342346667">
@@ -1162,6 +1176,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">14</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="532933868">
@@ -1173,6 +1188,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">15</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="421750540">
@@ -1184,6 +1200,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">16</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="396593034">
@@ -1195,6 +1212,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">17</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="611617181">
@@ -1206,6 +1224,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">18</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="777614446">
@@ -1217,6 +1236,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">19</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="189867641">
@@ -1228,6 +1248,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">20</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="381022412">
@@ -1239,6 +1260,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">21</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="1029808788">
@@ -1250,6 +1272,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">22</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="508131315">
@@ -1261,6 +1284,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">23</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="122713839">
@@ -1272,6 +1296,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">24</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="468080085">
@@ -1283,6 +1308,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">25</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="757090015">
@@ -1294,6 +1320,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">100</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="204216447">
@@ -1305,6 +1332,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">101</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="207253609">
@@ -1316,6 +1344,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">102</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="105526233">
@@ -1327,6 +1356,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">103</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="297102612">
@@ -1338,6 +1368,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">104</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="44040802">
@@ -1349,6 +1380,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">105</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="326542226">
@@ -1360,6 +1392,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">106</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="402296091">
@@ -1371,6 +1404,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">107</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="176013991">
@@ -1382,6 +1416,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">108</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																				<object class="NSMenuItem" id="769886414">
@@ -1393,6 +1428,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<reference key="NSOnImage" ref="18009973"/>
 																					<reference key="NSMixedImage" ref="467046814"/>
 																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">109</int>
 																					<reference key="NSTarget" ref="419489537"/>
 																				</object>
 																			</object>
@@ -1864,6 +1900,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																</object>
 															</object>
 															<string key="NSFrame">{{10, 33}, {433, 353}}</string>
+															<reference key="NSSuperview" ref="551361709"/>
 														</object>
 														<string key="NSLabel">General</string>
 														<reference key="NSColor" ref="303715562"/>
@@ -3947,7 +3984,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 													<object class="NSTabViewItem" id="457157559">
 														<string key="NSIdentifier">Item 3</string>
 														<object class="NSView" key="NSView" id="192458284">
-															<reference key="NSNextResponder" ref="551361709"/>
+															<nil key="NSNextResponder"/>
 															<int key="NSvFlags">256</int>
 															<object class="NSMutableArray" key="NSSubviews">
 																<bool key="EncodedWithXMLCoder">YES</bool>
@@ -4114,6 +4151,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																	<reference key="NSHScroller" ref="812569577"/>
 																	<reference key="NSContentView" ref="97511335"/>
 																	<reference key="NSHeaderClipView" ref="93498484"/>
+																	<reference key="NSCornerView" ref="905967772"/>
 																	<bytes key="NSScrollAmts">QSAAAEEgAABBmAAAQZgAAA</bytes>
 																</object>
 																<object class="NSButton" id="981472994">
@@ -4352,21 +4390,20 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																</object>
 															</object>
 															<string key="NSFrame">{{10, 33}, {433, 353}}</string>
-															<reference key="NSSuperview" ref="551361709"/>
 														</object>
 														<string key="NSLabel">Keyboard</string>
 														<reference key="NSColor" ref="303715562"/>
 														<reference key="NSTabView" ref="551361709"/>
 													</object>
 												</object>
-												<reference key="NSSelectedTabViewItem" ref="457157559"/>
+												<reference key="NSSelectedTabViewItem" ref="1020441673"/>
 												<reference key="NSFont" ref="966507434"/>
 												<int key="NSTvFlags">0</int>
 												<bool key="NSAllowTruncatedLabels">YES</bool>
 												<bool key="NSDrawsBackground">YES</bool>
 												<object class="NSMutableArray" key="NSSubviews">
 													<bool key="EncodedWithXMLCoder">YES</bool>
-													<reference ref="192458284"/>
+													<reference ref="63410958"/>
 												</object>
 											</object>
 											<object class="NSButton" id="1072403251">
@@ -4488,6 +4525,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 											</object>
 										</object>
 										<string key="NSFrameSize">{767, 383}</string>
+										<reference key="NSSuperview" ref="415305200"/>
 									</object>
 									<string key="NSLabel">Bookmarks</string>
 									<reference key="NSColor" ref="303715562"/>
@@ -4496,7 +4534,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 								<object class="NSTabViewItem" id="265838821">
 									<string key="NSIdentifier">Item 2</string>
 									<object class="NSView" key="NSView" id="965535712">
-										<reference key="NSNextResponder" ref="415305200"/>
+										<nil key="NSNextResponder"/>
 										<int key="NSvFlags">256</int>
 										<object class="NSMutableArray" key="NSSubviews">
 											<bool key="EncodedWithXMLCoder">YES</bool>
@@ -5137,21 +5175,20 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 											</object>
 										</object>
 										<string key="NSFrameSize">{767, 383}</string>
-										<reference key="NSSuperview" ref="415305200"/>
 									</object>
 									<string key="NSLabel">Advanced Settings</string>
 									<reference key="NSColor" ref="303715562"/>
 									<reference key="NSTabView" ref="415305200"/>
 								</object>
 							</object>
-							<reference key="NSSelectedTabViewItem" ref="265838821"/>
+							<reference key="NSSelectedTabViewItem" ref="745611275"/>
 							<reference key="NSFont" ref="966507434"/>
 							<int key="NSTvFlags">6</int>
 							<bool key="NSAllowTruncatedLabels">YES</bool>
 							<bool key="NSDrawsBackground">YES</bool>
 							<object class="NSMutableArray" key="NSSubviews">
 								<bool key="EncodedWithXMLCoder">YES</bool>
-								<reference ref="965535712"/>
+								<reference ref="105539794"/>
 							</object>
 						</object>
 					</object>
@@ -11695,9 +11732,9 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<bool key="EncodedWithXMLCoder">YES</bool>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{44, 289}, {800, 411}}</string>
+					<string>{{52, 289}, {800, 411}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{44, 289}, {800, 411}}</string>
+					<string>{{52, 289}, {800, 411}}</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>{{70, 532}, {616, 0}}</string>
@@ -11894,7 +11931,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{639, -273}, {86, 743}}</string>
+					<string>{{539, -129}, {86, 743}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>

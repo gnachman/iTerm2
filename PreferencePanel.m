@@ -878,6 +878,60 @@ static float versionNumber;
     }
 }
 
+- (int)shortcutTagForKey:(NSString*)key
+{
+    const char* chars = [key UTF8String];
+    if (!chars || !*chars) {
+        return -1;
+    }
+    char c = *chars;
+    if (c >= 'A' && c <= 'Z') {
+        return c - 'A';
+    }
+    if (c >= '0' && c <= '9') {
+        return 100 + c - '0';
+    }
+    NSLog(@"Unexpected shortcut key: '%@'", key);
+    return -1;
+}
+
+- (NSString*)shortcutKeyForTag:(int)tag
+{
+    if (tag == -1) {
+        return @"";
+    }
+    if (tag >= 0 && tag <= 25) {
+        return [NSString stringWithFormat:@"%c", 'A' + tag];
+    }
+    if (tag >= 100 && tag <= 109) {
+        return [NSString stringWithFormat:@"%c", '0' + tag];
+    }
+    return @"";
+}
+
+- (void)updateShortcutTitles
+{
+    // Reset titles of all shortcuts.
+    for (int i = 0; i < [bookmarkShortcutKey numberOfItems]; ++i) {
+        NSMenuItem* item = [bookmarkShortcutKey itemAtIndex:i];
+        [item setTitle:[self shortcutKeyForTag:[item tag]]];
+    }
+    
+    // Add bookmark names to shortcuts that are bound.
+    for (int i = 0; i < [dataSource numberOfBookmarks]; ++i) {
+        Bookmark* temp = [dataSource bookmarkAtIndex:i];
+        NSString* existingShortcut = [temp objectForKey:KEY_SHORTCUT];
+        const int tag = [self shortcutTagForKey:existingShortcut];
+        if (tag != -1) {
+            NSLog(@"Bookmark %@ has shortcut %@", [temp objectForKey:KEY_NAME], existingShortcut);
+            const int theIndex = [bookmarkShortcutKey indexOfItemWithTag:tag];
+            NSMenuItem* item = [bookmarkShortcutKey itemAtIndex:theIndex];
+            NSString* newTitle = [NSString stringWithFormat:@"%@ (%@)", existingShortcut, [temp objectForKey:KEY_NAME]];
+            [item setTitle:newTitle];
+        }
+    }
+}
+
 // Update the values in form fields to reflect the bookmark's state
 - (void)updateBookmarkFields:(NSDictionary *)dict
 {
@@ -896,37 +950,40 @@ static float versionNumber;
         [bookmarksPopup setEnabled:YES];
     }
 
-        NSString* name;
-        NSString* shortcut;
-        NSString* command;
-        NSString* dir;
-        NSString* customCommand;
-        NSString* customDir;
-        name = [dict objectForKey:KEY_NAME];
-        shortcut = [dict objectForKey:KEY_SHORTCUT];
-        command = [dict objectForKey:KEY_COMMAND];
-        dir = [dict objectForKey:KEY_WORKING_DIRECTORY];
-        customCommand = [dict objectForKey:KEY_CUSTOM_COMMAND];
-        customDir = [dict objectForKey:KEY_CUSTOM_DIRECTORY];
+    NSString* name;
+    NSString* shortcut;
+    NSString* command;
+    NSString* dir;
+    NSString* customCommand;
+    NSString* customDir;
+    name = [dict objectForKey:KEY_NAME];
+    shortcut = [dict objectForKey:KEY_SHORTCUT];
+    command = [dict objectForKey:KEY_COMMAND];
+    dir = [dict objectForKey:KEY_WORKING_DIRECTORY];
+    customCommand = [dict objectForKey:KEY_CUSTOM_COMMAND];
+    customDir = [dict objectForKey:KEY_CUSTOM_DIRECTORY];
 
-        [bookmarkName setStringValue:name];
-        [bookmarkShortcutKey selectItemWithTitle:shortcut];
-
-        if ([customCommand isEqualToString:@"Yes"]) {
-        [bookmarkCommandType selectCellWithTag:0];
-        } else {
-                [bookmarkCommandType selectCellWithTag:1];
-        }
-        [bookmarkCommand setStringValue:command];
-
-        if ([customDir isEqualToString:@"Yes"]) {
-                [bookmarkDirectoryType selectCellWithTag:0];
-        } else if ([customDir isEqualToString:@"Recycle"]) {
-                [bookmarkDirectoryType selectCellWithTag:2];
+    // General tab
+    [bookmarkName setStringValue:name];
+    [bookmarkShortcutKey selectItemWithTag:[self shortcutTagForKey:shortcut]];
+    
+    [self updateShortcutTitles];    
+    
+    if ([customCommand isEqualToString:@"Yes"]) {
+    [bookmarkCommandType selectCellWithTag:0];
     } else {
-                [bookmarkDirectoryType selectCellWithTag:1];
-        }
-        [bookmarkDirectory setStringValue:dir];
+            [bookmarkCommandType selectCellWithTag:1];
+    }
+    [bookmarkCommand setStringValue:command];
+
+    if ([customDir isEqualToString:@"Yes"]) {
+            [bookmarkDirectoryType selectCellWithTag:0];
+    } else if ([customDir isEqualToString:@"Recycle"]) {
+            [bookmarkDirectoryType selectCellWithTag:2];
+    } else {
+            [bookmarkDirectoryType selectCellWithTag:1];
+    }
+    [bookmarkDirectory setStringValue:dir];
 
         // Colors tab
     [ansi0Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_0_COLOR]]];
@@ -1100,7 +1157,7 @@ static float versionNumber;
 - (IBAction)bookmarkSettingChanged:(id)sender
 {
     NSString* name = [bookmarkName stringValue];
-    NSString* shortcut = [[bookmarkShortcutKey selectedItem] title];
+    NSString* shortcut = [self shortcutKeyForTag:[[bookmarkShortcutKey selectedItem] tag]];
     NSString* command = [bookmarkCommand stringValue];
     NSString* dir = [bookmarkDirectory stringValue];
 
@@ -1140,6 +1197,15 @@ static float versionNumber;
     [newDict setObject:name forKey:KEY_NAME];
     [newDict setObject:guid forKey:KEY_GUID];
     if (shortcut) {
+        // If any bookmark has this shortcut, clear its shortcut.
+        for (int i = 0; i < [dataSource numberOfBookmarks]; ++i) {
+            Bookmark* temp = [dataSource bookmarkAtIndex:i];
+            NSString* existingShortcut = [temp objectForKey:KEY_SHORTCUT];
+            if ([existingShortcut isEqualToString:shortcut] && temp != origBookmark) {
+                [dataSource setObject:nil forKey:KEY_SHORTCUT inBookmark:temp];
+            }
+        }
+        
         [newDict setObject:shortcut forKey:KEY_SHORTCUT];
     }
     [newDict setObject:command forKey:KEY_COMMAND];
@@ -1231,6 +1297,9 @@ static float versionNumber;
     [dataSource setBookmark:newDict withGuid:guid];
     [bookmarksTableView reloadData];
 
+    // Selectively update form fields.
+    [self updateShortcutTitles];
+    
     // Update existing sessions
     int n = [[iTermController sharedInstance] numberOfTerminals];
     for (int i = 0; i < n; ++i) {

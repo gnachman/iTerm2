@@ -409,7 +409,11 @@
 - (void)setObject:(id)object forKey:(NSString*)key inBookmark:(Bookmark*)bookmark
 {
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
-    [newDict setObject:object forKey:key];
+    if (object == nil) {
+        [newDict removeObjectForKey:key];
+    } else {
+        [newDict setObject:object forKey:key];
+    }
     NSString* guid = [bookmark objectForKey:KEY_GUID];
     [self setBookmark:[NSDictionary dictionaryWithDictionary:newDict]
              withGuid:guid];
