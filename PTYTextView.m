@@ -3024,8 +3024,15 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 }
 
-- (void)_drawCharacter:(unichar)c fgColor:(int)fg AtX:(float)X Y:(float)Y doubleWidth:(BOOL)dw overrideColor:(NSColor*)overrideColor
+- (void)_drawCharacter:(unichar)origChar fgColor:(int)fg AtX:(float)X Y:(float)Y doubleWidth:(BOOL)dw overrideColor:(NSColor*)overrideColor
 {
+    unichar c;
+    if (origChar == TAB_FILLER) {
+        c = ' ';
+    } else {
+        c = origChar;
+    }
+    
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
     CGContextSetTextDrawingMode(ctx, kCGTextFill);
     CGContextSetShouldAntialias(ctx, antiAlias);
