@@ -1628,10 +1628,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         }
     }
 
-    // if we are on an empty line, we select the current line to the end
-    //if([self _isBlankLine: y] && y >= 0)
-    //  endX = [dataSource width] - 1;
-
     if (startX > -1 && _delegate) {
         // if we want to copy our selection, do so
         if ([[PreferencePanel sharedInstance] copySelection]) {
@@ -1884,7 +1880,14 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         x1 = y == starty ? startx : 0;
         x2 = y == endy ? endx : width-1;
         for ( ; x1 <= x2; x1++) {
-            if (theLine[x1].ch != 0xffff && theLine[x1].ch != DWC_SKIP) {
+            if (theLine[x1].ch == TAB_FILLER) {
+                // Convert orphan tab fillers (those without a subsequent
+                // tab character) into spaces.
+                if ([self isTabFillerOrphanAtX:x1 Y:y]) {
+                    temp[j] = ' ';
+                }
+            } else if (theLine[x1].ch != 0xffff &&
+                       theLine[x1].ch != DWC_SKIP) {
                 temp[j] = theLine[x1].ch;
                 if (theLine[x1].ch == 0) { // end of line?
                     // If there is no text after this, insert a hard line break.
@@ -1943,35 +1946,48 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 }
 
-- (NSString *) selectedText
+- (NSString *)selectedText
 {
-    return [self selectedTextWithPad: NO];
+    return [self selectedTextWithPad:NO];
 }
 
-
-- (NSString *) selectedTextWithPad: (BOOL) pad
+- (NSString *)selectedTextWithPad:(BOOL)pad
 {
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s]", __PRETTY_FUNCTION__);
 #endif
 
-    if (startX <= -1) return nil;
+    if (startX <= -1) {
+        return nil;
+    }
     if (selectMode == SELECT_BOX) {
-        return [self contentInBoxFromX: startX Y: startY ToX: endX Y: endY pad: pad];
+        return [self contentInBoxFromX:startX
+                                     Y:startY
+                                   ToX:endX
+                                     Y:endY
+                                   pad:pad];
     } else {
-        return ([self contentFromX: startX Y: startY ToX: endX Y: endY pad: pad]);
+        return ([self contentFromX:startX
+                                 Y:startY
+                               ToX:endX
+                                 Y:endY
+                               pad:pad]);
     }
 }
 
-- (NSString *) content
+- (NSString *)content
 {
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PTYTextView content]", __FILE__, __LINE__);
 #endif
 
-    return [self contentFromX:0 Y:0 ToX:[dataSource width] Y:[dataSource numberOfLines]-1 pad: NO];
+    return [self contentFromX:0
+                            Y:0
+                          ToX:[dataSource width]
+                            Y:[dataSource numberOfLines] - 1
+                          pad:NO];
 }
 
 - (void)copy:(id)sender
@@ -2317,7 +2333,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 }
 
 // Print
-- (void) print: (id) sender
+- (void)print:(id)sender
 {
     NSRect visibleRect;
     int lineOffset, numLines;
@@ -2331,12 +2347,14 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             lineOffset = visibleRect.origin.y/lineHeight;
             // How many lines do we need to draw?
             numLines = visibleRect.size.height/lineHeight;
-            [self printContent: [self contentFromX: 0 Y: lineOffset
-                                               ToX: [dataSource width] Y: lineOffset + numLines - 1
-                                        pad: NO]];
+            [self printContent:[self contentFromX:0
+                                                Y:lineOffset
+                                              ToX:[dataSource width]
+                                                Y:lineOffset + numLines - 1
+                                       pad: NO]];
             break;
         case 1: // text selection
-            [self printContent: [self selectedTextWithPad: NO]];
+            [self printContent: [self selectedTextWithPad:NO]];
             break;
         case 2: // entire buffer
             [self printContent: [self content]];
@@ -2344,7 +2362,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 }
 
-- (void) printContent: (NSString *) aString
+- (void) printContent:(NSString *)aString
 {
     NSPrintInfo *aPrintInfo;
 
@@ -2353,11 +2371,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [aPrintInfo setVerticalPagination: NSAutoPagination];
     [aPrintInfo setVerticallyCentered: NO];
 
-    // create a temporary view with the contents, change to black on white, and print it
+    // Create a temporary view with the contents, change to black on white, and
+    // print it.
     NSTextView *tempView;
     NSMutableAttributedString *theContents;
 
-    tempView = [[NSTextView alloc] initWithFrame: [[self enclosingScrollView] documentVisibleRect]];
+    tempView = [[NSTextView alloc] initWithFrame:[[self enclosingScrollView] documentVisibleRect]];
     theContents = [[NSMutableAttributedString alloc] initWithString: aString];
     [theContents addAttributes: [NSDictionary dictionaryWithObjectsAndKeys:
         [NSColor textBackgroundColor], NSBackgroundColorAttributeName,
@@ -2367,8 +2386,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [[tempView textStorage] setAttributedString: theContents];
     [theContents release];
 
-    // now print the temporary view
-    [[NSPrintOperation printOperationWithView: tempView  printInfo: aPrintInfo] runOperation];
+    // Now print the temporary view.
+    [[NSPrintOperation printOperationWithView:tempView
+                                    printInfo:aPrintInfo] runOperation];
     [tempView release];
 }
 
@@ -2728,6 +2748,53 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return theFont;
 }
 
+// Returns true if the sequence of characters starting at (x, y) is not repeated
+// TAB_FILLERs followed by a tab.
+- (BOOL)isTabFillerOrphanAtX:(int)x Y:(int)y
+{
+    const int realWidth = [dataSource width] + 1;
+    screen_char_t buffer[realWidth];
+    screen_char_t* theLine = [dataSource getLineAtIndex:y withBuffer:buffer];
+    int maxSearch = [dataSource width];
+    while (maxSearch > 0) {
+        if (x == [dataSource width]) {
+            x = 0;
+            ++y;
+            if (y == [dataSource numberOfLines]) {
+                return YES;
+            }
+            theLine = [dataSource getLineAtIndex:y withBuffer:buffer];
+        }
+        if (theLine[x].ch != TAB_FILLER) {
+            if (theLine[x].ch == '\t') {
+                return NO;
+            } else {
+                return YES;
+            }
+        }
+        ++x;
+        --maxSearch;
+    }
+    return YES;
+}
+
+// Returns true iff the tab character after a run of TAB_FILLERs starting at
+// (x,y) is selected.
+- (BOOL)isFutureTabSelectedAfterX:(int)x Y:(int)y
+{
+    const int realWidth = [dataSource width] + 1;
+    screen_char_t buffer[realWidth];
+    screen_char_t* theLine = [dataSource getLineAtIndex:y withBuffer:buffer];
+    while (x < [dataSource width] && theLine[x].ch == TAB_FILLER) {
+        ++x;
+    }
+    if ([self _isCharSelectedInRow:y col:x checkOld:NO] &&
+        theLine[x].ch == '\t') {
+        return YES;
+    } else {
+        return NO;
+    }
+}
 
 - (void)_drawLine:(int)line AtY:(float)curY
 {
@@ -2794,6 +2861,14 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         BOOL selected;
         if (theLine[j].ch == DWC_SKIP) {
             selected = NO;
+        } else if (theLine[j].ch == TAB_FILLER) {
+            if ([self isTabFillerOrphanAtX:j Y:line]) {
+                // Treat orphaned tab fillers like spaces.
+                selected = [self _isCharSelectedInRow:line col:j checkOld:NO];
+            } else {
+                // Select all leading tab fillers iff the tab is selected.
+                selected = [self isFutureTabSelectedAfterX:j Y:line];
+            }
         } else {
             selected = [self _isCharSelectedInRow:line col:j checkOld:NO];
         }
@@ -2842,8 +2917,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 }
 
                 if (blinkShow || !(theLine[k].fg_color & BLINK_MASK)) {
-                    if (theLine[k].ch == 0) {
-                        // Skip nulls because they should display empty (not all fonts do, either).
+                    if (theLine[k].ch == 0 ||
+                        theLine[k].ch == '\t' ||
+                        theLine[k].ch == TAB_FILLER) {
+                        // Skip nulls and tabs because they should display empty
+                        // (not all fonts have an empty glpyh for these).
                         if (numGlyphs > 0) {
                             interruptedRun = YES;
                         }
@@ -3233,7 +3311,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     NSString* aString = [NSString stringWithCharacters:&ch length:1];
     if (ch == 0xffff || ch == DWC_SKIP) {
         return CHARTYPE_DW_FILLER;
-    } else if (!ch || [aString rangeOfCharacterFromSet:[NSCharacterSet whitespaceCharacterSet]].length > 0) {
+    } else if (!ch ||
+               [aString rangeOfCharacterFromSet:[NSCharacterSet whitespaceCharacterSet]].length > 0 ||
+               ch == TAB_FILLER) {
         return CHARTYPE_WHITESPACE;
     } else if ([aString rangeOfCharacterFromSet:[NSCharacterSet alphanumericCharacterSet]].length != 0 ||
                [[[PreferencePanel sharedInstance] wordChars] rangeOfString:aString].length != 0) {
@@ -3640,19 +3720,22 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [(NSData *)theContextInfo release];
 }
 
-- (BOOL) _isBlankLine: (int) y
+- (BOOL)_isBlankLine:(int)y
 {
-    NSString *lineContents, *blankLine;
-    char blankString[1024];
+    NSString *lineContents;
 
-
-    lineContents = [self contentFromX: 0 Y: y ToX: [dataSource width] Y: y pad: YES];
-    memset(blankString, ' ', 1024);
-    blankString[[dataSource width]] = 0;
-    blankLine = [NSString stringWithUTF8String: (const char*)blankString];
-
-    return ([lineContents isEqualToString: blankLine]);
-
+    lineContents = [self contentFromX:0
+                                    Y:y
+                                  ToX:[dataSource width]
+                                    Y:y
+                                  pad:YES];
+    const char* utf8 = [lineContents UTF8String];
+    for (int i = 0; utf8[i]; ++i) {
+        if (utf8[i] != ' ') {
+            return NO;
+        }
+    }
+    return YES;
 }
 
 - (void) _openURL: (NSString *) aURLString

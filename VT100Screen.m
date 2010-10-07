@@ -308,28 +308,33 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 // gets line at specified index starting from scrollback_top
 - (screen_char_t *)getLineAtIndex: (int) theIndex
 {
+    return [self getLineAtIndex:theIndex withBuffer:result_line];
+}
+
+- (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer
+{
     NSAssert([linebuffer numLinesWithWidth: WIDTH] == current_scrollback_lines, @"Scrollback mismatch");
     if (theIndex >= current_scrollback_lines) {
         // Get a line from the circular screen buffer
         return [self _getLineAtIndex:(theIndex - current_scrollback_lines) fromLine: screen_top];
     } else {
         // Get a line from the scrollback buffer.
-        memcpy(result_line, default_line, sizeof(screen_char_t) * WIDTH);
-        int cont = [linebuffer copyLineToBuffer:result_line width:WIDTH lineNum:theIndex];
+        memcpy(buffer, default_line, sizeof(screen_char_t) * WIDTH);
+        int cont = [linebuffer copyLineToBuffer:buffer width:WIDTH lineNum:theIndex];
         if (cont == EOL_SOFT && 
             theIndex == current_scrollback_lines - 1 &&
             screen_top[1].ch == 0xffff &&
-            result_line[WIDTH - 1].ch == 0) {
+            buffer[WIDTH - 1].ch == 0) {
             // The last line in the scrollback buffer is actually a split DWC
             // if the first line in the screen is double-width.
             cont = EOL_DWC;
         }
         if (cont == EOL_DWC) {
-            result_line[WIDTH - 1].ch = DWC_SKIP;
+            buffer[WIDTH - 1].ch = DWC_SKIP;
         }
-        result_line[WIDTH].ch = cont;
+        buffer[WIDTH].ch = cont;
 
-        return result_line;
+        return buffer;
     }
 }
 
@@ -432,6 +437,8 @@ static char* FormatCont(int c)
                     line[ox] = p[x].ch;
                 } else if (p[x].ch == 0xffff) {
                     line[ox] = '-';
+                } else if (p[x].ch == TAB_FILLER) {
+                    line[ox] = ' ';
                 } else if (p[x].ch == DWC_SKIP) {
                     line[ox] = '>';
                 } else {
@@ -496,7 +503,7 @@ static char* FormatCont(int c)
     }
 }
 
-- (int)_getLineLength: (screen_char_t*) line
+- (int)_getLineLength:(screen_char_t*)line
 {
     int line_length = 0;
     // Figure out the line length.
@@ -537,13 +544,13 @@ static char* FormatCont(int c)
     // loop doesn't call dropExcessLinesWithWidth.
     int next_line_length;
     if (used_height > 0) {
-        next_line_length  = [self _getLineLength: [self getLineAtScreenIndex: 0]];
+        next_line_length  = [self _getLineLength:[self getLineAtScreenIndex: 0]];
     }
     for (i = 0; i < used_height; ++i) {
         screen_char_t* line = [self getLineAtScreenIndex: i];
         int line_length = next_line_length;
         if (i+1 < HEIGHT) {
-            next_line_length = [self _getLineLength: [self getLineAtScreenIndex: i+1]];
+            next_line_length = [self _getLineLength:[self getLineAtScreenIndex:i+1]];
         } else {
             next_line_length = -1;
         }
@@ -1569,7 +1576,7 @@ static void DumpBuf(screen_char_t* p, int n) {
             dirty[screenIdx + CURSOR_X - 1] = 1;
         }
 
-        // copy charsToInsret characters into the line and set them dirty.
+        // copy charsToInsert characters into the line and set them dirty.
         memcpy(aLine + CURSOR_X,
                buffer + idx,
                charsToInsert * sizeof(screen_char_t));
@@ -1760,10 +1767,58 @@ static void DumpBuf(screen_char_t* p, int n) {
     NSLog(@"%s(%d):-[VT100Screen setTab]", __FILE__, __LINE__);
 #endif
 
-    CURSOR_X++; // ensure we go to the next tab in case we are already on one
-    for(;!tabStop[CURSOR_X]&&CURSOR_X<WIDTH; CURSOR_X++);
-    if (CURSOR_X >= WIDTH)
-        CURSOR_X =  WIDTH - 1;
+    screen_char_t* aLine = [self getLineAtScreenIndex:CURSOR_Y];
+    int positions = 0;
+    BOOL allNulls = YES;
+
+    // Advance cursor to next tab stop. Count the number of positions advanced
+    // and record whether they were all nulls.
+    if (aLine[CURSOR_X].ch != 0) {
+        allNulls = NO;
+    }
+
+    ++positions;
+    CURSOR_X++;  // ensure we go to the next tab in case we are already on one
+    for (; ; CURSOR_X++, ++positions) {
+        if (CURSOR_X == WIDTH) {
+            // Wrap around to the next line.
+            if (aLine[CURSOR_X].ch == EOL_HARD) {
+                aLine[CURSOR_X].ch = EOL_SOFT;
+            }
+            [self setNewLine];
+            CURSOR_X = 0;
+            aLine = [self getLineAtScreenIndex:CURSOR_Y];
+        }
+        if (tabStop[CURSOR_X]) {
+            break;
+        }
+        if (aLine[CURSOR_X].ch != 0) {
+            allNulls = NO;
+        }
+    }
+    dirty[CURSOR_X + CURSOR_Y * REAL_WIDTH] = 1;
+    if (allNulls) {
+        // If only nulls were advanced over, convert them to tab fillers
+        // and place a tab character at the end of the run.
+        int x = CURSOR_X;
+        int y = CURSOR_Y;
+        --x;
+        if (x < 0) {
+            x = WIDTH - 1;
+            --y;
+        }
+        unichar replacement = '\t';
+        while (positions--) {
+            aLine = [self getLineAtIndex:y];
+            aLine[x].ch = replacement;
+            replacement = TAB_FILLER;
+            --x;
+            if (x < 0) {
+                x = WIDTH - 1;
+                --y;
+            }
+        }
+    }
 }
 
 - (void)clearScreen
@@ -1789,8 +1844,8 @@ static void DumpBuf(screen_char_t* p, int n) {
     // copy the lines between that and the cursor to the top of the screen
     for (j = 0, i++; i <= CURSOR_Y; i++, j++) {
         aLine = [self getLineAtScreenIndex:i];
-        memcpy(screen_top + j * REAL_WIDTH, 
-               aLine, 
+        memcpy(screen_top + j * REAL_WIDTH,
+               aLine,
                REAL_WIDTH * sizeof(screen_char_t));
     }
 

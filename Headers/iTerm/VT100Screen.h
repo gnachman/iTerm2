@@ -42,6 +42,7 @@
 // character should always have EOL_DWC. These are stripped when adding a line
 // to the scrollback buffer.
 #define DWC_SKIP 0xf000
+#define TAB_FILLER 0xf001
 
 #define TABWINDOW    300
 
@@ -147,10 +148,15 @@
 - (void)setGrowlFlag:(BOOL)flag;
 
 // line access
+// This function is dangerous! It writes to an internal buffer and returns a
+// pointer to it. Better to use getLineAtIndex:withBuffer:.
 - (screen_char_t *) getLineAtIndex: (int) theIndex;
-- (screen_char_t *) getLineAtScreenIndex: (int) theIndex;
-- (char *) dirty;
-- (NSString *) getLineString: (screen_char_t *) theLine;
+
+// Provide a buffer as large as sizeof(screen_char_t*) * ([SCREEN width] + 1)
+- (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer;
+- (screen_char_t *)getLineAtScreenIndex:(int)theIndex;
+- (char *)dirty;
+- (NSString *)getLineString:(screen_char_t *)theLine;
 
 // edit screen buffer
 - (void)putToken:(VT100TCC)token;
