@@ -46,7 +46,7 @@ struct PTYFontInfo {
     NSFont* font;  // Toll-free bridged to CTFontRef
 
     // Metrics
-    int baselineOffset;
+    float baselineOffset;
 
     struct PTYFontInfo* boldVersion;  // may be NULL
 };

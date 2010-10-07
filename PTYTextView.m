@@ -2927,7 +2927,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             [color getComponents:components];
             CGContextSetFillColor(ctx, components);
         }
-        int y = curY + lineHeight + theFont->baselineOffset;
+        float y = curY + lineHeight + theFont->baselineOffset;
         int x = runX[i];
         // Flip vertically and translate to (x, y).
         CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
@@ -3832,7 +3832,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     fontInfo->font = font;
     [fontInfo->font retain];
-    fontInfo->baselineOffset = -floor([font leading] - [font descender]);
+    fontInfo->baselineOffset = -(floorf([font leading]) - floorf([font descender]));
     fontInfo->boldVersion = NULL;
 }
 
