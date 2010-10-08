@@ -1,5 +1,19 @@
 These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2.
 
+Alpha 11
+Bug fixes! Also brings back i386 and PPC support. Details:
+
+- Restore PPC and i386 support (bug 198).
+- In previous alphas, holding down Alt while making a selection would create a rectangular selection. This conflicted with an existing behavior where holding down Alt disables xterm mouse reporting. Now, you must hold down Cmd+Alt to select a rectang.e (bug 124).
+- Hopefully fixes a crash with entering and exiting fullscreen mode.
+- Improve reliability of opening a tab with the same working dir as the current tab (bug 75).
+- Copy now copies tabs properly instead of converting them to spaces (bug 90).
+- Prevent multiple bookmarks from having the same shortcut (bug 92).
+- When a you use the Finder to launch a script by doing Open With->Iterm and it starts a background process, the background process won't be killed when the script finished (bug 203).
+- When a window or tab is closed, send SIGHUP instead of SIGKILL so that login can shut down gracefully (bug 87).
+- The refresh rate slider had an insane max. (bug 202).
+- Debug logging performance improved.
+
 Alpha 10
 The focus of this release is bug fixes. It also features a major performance improvement as well as better internationalization support. This is the first 64-bit release.
 
