@@ -353,6 +353,8 @@ typedef enum {
 - (PTYFontInfo*)getOrAddFallbackFont:(NSFont*)font;
 - (void)releaseAllFallbackFonts;
 - (void)updateDirtyRects;
+- (BOOL)isFutureTabSelectedAfterX:(int)x Y:(int)y;
+- (BOOL)isTabFillerOrphanAtX:(int)x Y:(int)y;
 
 @end
 

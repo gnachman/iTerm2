@@ -1060,7 +1060,7 @@ static VT100TCC decode_utf8(unsigned char *datap,
     unsigned char *p = datap;
     size_t len = datalen;
     int utf8DecodeResult;
-    unsigned int theChar;
+    unsigned int theChar = 0;
 
     while (true) {
         utf8DecodeResult = decode_utf8_char(p, len, &theChar);
