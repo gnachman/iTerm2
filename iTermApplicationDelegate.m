@@ -124,8 +124,11 @@ int gDebugLogFile = -1;
                 BOOL isDir;
                 [[NSFileManager defaultManager] fileExistsAtPath:filename isDirectory:&isDir];
                 if (!isDir) {
-                        NSString *aString = [NSString stringWithFormat:@"\"%@\"", filename];
-                        [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil withCommand:aString];
+                    NSString *aString = [NSString stringWithFormat:@"%@; exit;\n", filename];
+                    [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil];
+                    // Sleeping a while waiting for the login.
+                    sleep(1);
+                    [[[[iTermController sharedInstance] currentTerminal] currentSession] insertText:aString];
                 }
                 else {
                         NSString *aString = [NSString stringWithFormat:@"cd \"%@\"\n", filename];
