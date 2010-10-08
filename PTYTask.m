@@ -402,10 +402,15 @@ setup_tty_param(
 }
 
 // Signal handler for SIGCHLD. Be careful changing this - there's very little
-// that can be safely done in a signal handler.
+// that can be safely done in a signal handler. For some reason, it sometimes
+// happens that there is no child to reap, so we use WNOHANG and reap everything
+// that is available.
 static void reapchild(int n)
 {
-    wait(NULL);
+    int statLoc;
+    while (waitpid(-1, &statLoc, WNOHANG) > 0) {
+        ;
+    }
 }
 
 - (void)launchWithPath:(NSString*)progpath
