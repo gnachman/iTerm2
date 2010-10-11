@@ -84,7 +84,7 @@
 						</object>
 						<object class="NSCustomView" id="43614728">
 							<reference key="NSNextResponder" ref="944403435"/>
-							<int key="NSvFlags">270</int>
+							<int key="NSvFlags">274</int>
 							<string key="NSFrame">{{21, 48}, {565, 254}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
 							<string key="NSClassName">BookmarkListView</string>
