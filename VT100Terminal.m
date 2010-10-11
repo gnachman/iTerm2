@@ -1458,6 +1458,8 @@ static VT100TCC decode_string(unsigned char *datap,
     saveBold=saveBlink=saveReversed=saveUnder = 0;
     FG_COLORCODE = DEFAULT_FG_COLOR_CODE;
     BG_COLORCODE = DEFAULT_BG_COLOR_CODE;
+    saveForeground = DEFAULT_FG_COLOR_CODE;
+    saveBackground = DEFAULT_BG_COLOR_CODE;
     MOUSE_MODE = MOUSE_REPORTING_NONE;
 
     TRACE = NO;
@@ -1550,6 +1552,8 @@ static VT100TCC decode_string(unsigned char *datap,
     saveBlink=blink;
     saveReversed=reversed;
     saveCHARSET=CHARSET;
+    saveForeground=FG_COLORCODE;
+    saveBackground=BG_COLORCODE;
 }
 
 - (void)restoreCursorAttributes
@@ -1559,6 +1563,8 @@ static VT100TCC decode_string(unsigned char *datap,
     blink=saveBlink;
     reversed=saveReversed;
     CHARSET=saveCHARSET;
+    FG_COLORCODE = saveForeground;
+    BG_COLORCODE = saveBackground;
 }
 
 - (void)reset
@@ -2298,7 +2304,13 @@ static VT100TCC decode_string(unsigned char *datap,
                 case 40: allowColumnMode = mode; break;
 
                 case 1049:
-                    // must save cursor position implicitly
+                    // From the xterm release log:
+                    // Implement new escape sequence, private mode 1049, which combines
+                    // the switch to/from alternate screen mode with screen clearing and
+                    // cursor save/restore.  Unlike the existing escape sequence, this
+                    // clears the alternate screen when switching to it rather than when
+                    // switching to the normal screen, thus retaining the alternate screen
+                    // contents for select/paste operations. 
                     if(mode) {
                         [self saveCursorAttributes];
                         [SCREEN saveCursorPosition];

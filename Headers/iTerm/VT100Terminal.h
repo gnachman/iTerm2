@@ -308,6 +308,8 @@ typedef enum {
 
     int saveBold, saveUnder, saveBlink, saveReversed;
     int saveCHARSET;
+    int saveForeground;
+    int saveBackground;
 
     BOOL TRACE;
 
