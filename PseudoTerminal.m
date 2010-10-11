@@ -102,9 +102,7 @@ NSString *sessionsKey = @"sessions";
     PTYWindow *myWindow;
 
     self = [super initWithWindowNibName:@"PseudoTerminal"];
-    if (self == nil) {
-        return nil;
-    }
+    NSAssert(self, @"initWithWindowNibName returned nil");
 
     // Force the nib to load
     [self window];
@@ -849,7 +847,6 @@ NSString *sessionsKey = @"sessions";
 {
     // Constructs the context menu for right-clicking on a terminal when
     // right click does not paste.
-    unsigned int modflag = 0;
     int nextIndex;
     NSMenuItem *aMenuItem;
 
@@ -860,8 +857,6 @@ NSString *sessionsKey = @"sessions";
     if (theMenu == nil) {
         return;
     }
-
-    modflag = [theEvent modifierFlags];
 
     // Bookmarks
     [theMenu insertItemWithTitle:NSLocalizedStringFromTableInBundle(@"New",
@@ -971,7 +966,9 @@ NSString *sessionsKey = @"sessions";
     if (![[self currentSession] exited]) {
         [[self currentSession] resetStatus];
     }
-
+    // If the user is currently select-dragging the text view, stop it so it
+    // doesn't keep going in the background.
+    [[[self currentSession] TEXTVIEW] aboutToHide];
 }
 
 - (void)enableBlur
@@ -1591,6 +1588,7 @@ NSString *sessionsKey = @"sessions";
     if (!cmdLine) {
         // We could not allocate enough memory for the cmdLine... bailing
         *path = [[NSArray alloc] init];
+        [mutableCmdArgs release];
         return;
     }
 
@@ -1996,15 +1994,11 @@ NSString *sessionsKey = @"sessions";
                title:(NSString *)title
 {
     NSDictionary *tempPrefs;
-    ITAddressBookMgr *bookmarkManager;
 
     PtyLog(@"%s(%d):-[PseudoTerminal setupSession]",
           __FILE__, __LINE__);
 
     NSParameterAssert(aSession != nil);
-
-    // get our shared managers
-    bookmarkManager = [ITAddressBookMgr sharedInstance];
 
     // Init the rest of the session
     [aSession setParent:self];

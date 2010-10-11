@@ -150,6 +150,19 @@ typedef struct PTYFontInfo PTYFontInfo;
     NSRect _trackingRect;
 
     NSMutableDictionary* fallbackFonts;
+
+    // Indicates if a selection that scrolls the window is in progress.
+    // Negative value: scroll up.
+    // Positive value: scroll down.
+    // Zero: don't scroll.
+    int selectionScrollDirection;
+
+    // Scrolls view when you drag a selection to top or bottom of view.
+    NSTimer* selectionScrollTimer;
+    float prevScrollDelay;
+    int scrollingX;
+    int scrollingY;
+    NSPoint scrollingLocation;
 }
 
 + (NSCursor *)textViewCursor;
@@ -306,6 +319,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (float)horizontalSpacing;
 - (float)verticalSpacing;
 
+// This textview is about to become invisible because another tab is selected.
+- (void)aboutToHide;
+
 @end
 
 //
@@ -355,6 +371,7 @@ typedef enum {
 - (void)updateDirtyRects;
 - (BOOL)isFutureTabSelectedAfterX:(int)x Y:(int)y;
 - (BOOL)isTabFillerOrphanAtX:(int)x Y:(int)y;
+- (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView;
 
 @end
 

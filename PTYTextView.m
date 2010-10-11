@@ -193,6 +193,7 @@ static NSCursor* textViewCursor =  nil;
 
     [self releaseAllFallbackFonts];
     [fallbackFonts release];
+    [selectionScrollTimer release];
 
     [super dealloc];
 
@@ -593,10 +594,64 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
            a->size.height == b->size.height;
 }
 
+- (void)scheduleSelectionScroll
+{
+    if (selectionScrollTimer) {
+        [selectionScrollTimer release];
+        if (prevScrollDelay > 0.01) {
+            // Maximum speed hasn't been reached so accelerate scrolling speed by 5%.
+            prevScrollDelay *= 0.95;
+        }
+    } else {
+        // Set a slow initial scrolling speed.
+        prevScrollDelay = 0.1;
+    }
+
+    selectionScrollTimer = [[NSTimer scheduledTimerWithTimeInterval:prevScrollDelay
+                                                             target:self 
+                                                           selector:@selector(updateSelectionScroll)
+                                                           userInfo:nil
+                                                            repeats:NO] retain];
+}
+
+// Scroll the screen up or down a line for a selection drag scroll.
+- (void)updateSelectionScroll
+{
+    NSRect visibleRect = [self visibleRect];
+
+    int y = 0;
+    if (!selectionScrollDirection) {
+        [selectionScrollTimer release];
+        selectionScrollTimer = nil;
+        return;
+    } else if (selectionScrollDirection < 0) {
+        visibleRect.origin.y -= [self lineHeight];
+        if (visibleRect.origin.y >= 0) {
+            [self scrollRectToVisible:visibleRect];
+        }
+        y = visibleRect.origin.y / lineHeight;
+    } else if (selectionScrollDirection > 0) {
+        visibleRect.origin.y += lineHeight;
+        if (visibleRect.origin.y + visibleRect.size.height < [self frame].size.height) {
+            [self scrollRectToVisible:visibleRect];
+        }
+        y = (visibleRect.origin.y + visibleRect.size.height - [self excess]) / lineHeight;
+    }
+
+    [self moveSelectionEndpointToX:scrollingX
+                                 Y:y
+                locationInTextView:scrollingLocation];
+
+    [self refresh];
+    [self scheduleSelectionScroll];
+}
+
 - (void)refresh
 {
     DebugLog(@"PTYTextView refresh called");
-    if(dataSource == nil) return;
+    if (dataSource == nil) {
+        return;
+    }
 
     // reset tracking rect
     NSRect visibleRect = [self visibleRect];
@@ -1547,7 +1602,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if (x>=width) {
         x = width - 1;
     }
-
+    selectionScrollDirection = 0;
     y = locationInTextView.y / lineHeight;
 
     // Send mouse up event to host if xterm mouse reporting is on
@@ -1652,7 +1707,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     NSPoint locationInWindow = [event locationInWindow];
     NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
     NSRect  rectInTextView = [self visibleRect];
-    int x, y, tmpX1, tmpX2, tmpY1, tmpY2;
+    int x, y;
     int width = [dataSource width];
     NSString *theSelectedText;
 
@@ -1726,118 +1781,26 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 
     // NSLog(@"(%f,%f)->(%f,%f)",locationInWindow.x,locationInWindow.y,locationInTextView.x,locationInTextView.y);
-    if (locationInTextView.y < rectInTextView.origin.y) {
-        // Scroll window up to show selection
-        rectInTextView.origin.y = locationInTextView.y;
-        [self scrollRectToVisible:rectInTextView];
-    } else if (locationInTextView.y > rectInTextView.origin.y + rectInTextView.size.height) {
-        // Scroll window down to show selection
-        rectInTextView.origin.y += locationInTextView.y - rectInTextView.origin.y - rectInTextView.size.height;
-        [self scrollRectToVisible:rectInTextView];
+    int prevScrolling = selectionScrollDirection;
+    if (locationInTextView.y <= rectInTextView.origin.y) {
+        selectionScrollDirection = -1;
+        scrollingX = x;
+        scrollingY = y;
+        scrollingLocation = locationInTextView;
+    } else if (locationInTextView.y >= rectInTextView.origin.y + rectInTextView.size.height) {
+        selectionScrollDirection = 1;
+        scrollingX = x;
+        scrollingY = y;
+        scrollingLocation = locationInTextView;
+    } else {
+        selectionScrollDirection = 0;
+    }
+    if (selectionScrollDirection && !prevScrolling) {
+        [self scheduleSelectionScroll];
     }
 
-    // if we are on an empty line, we select the current line to the end
-    if (y >= 0 && [self _isBlankLine: y]) {
-        x = width;
-    }
+    [self moveSelectionEndpointToX:x Y:y locationInTextView:locationInTextView];
 
-    if (locationInTextView.x < MARGIN && startY < y) {
-        // complete selection of previous line
-        x = width;
-        y--;
-    }
-    if (y < 0) {
-        y = 0;
-    }
-    if (y >= [dataSource numberOfLines]) {
-        y=[dataSource numberOfLines] - 1;
-    }
-
-    switch (selectMode) {
-        case SELECT_CHAR:
-        case SELECT_BOX:
-            endX = x + 1;
-            endY = y;
-            break;
-
-        case SELECT_WORD:
-            [self _getWordForX:x
-                             y:y
-                        startX:&tmpX1
-                        startY:&tmpY1
-                          endX:&tmpX2
-                          endY:&tmpY2];
-            if ((startX + (startY * width)) < (tmpX2 + (tmpY2 * width))) {
-                // We go forwards in our selection session... and...
-                if ((startX + (startY * width)) > (endX + (endY * width))) {
-                    // This will always be called, if the selection direction is changed from backwards to forwards,
-                    // that is the user changed his mind and now wants to select text AFTER the initial starting
-                    // word, AND we come back to the initial starting word.
-                    // In this case, our X starting and ending values will be SWAPPED, as swapping the values is
-                    // necessary for backwards selection (forward selection: start|(several) word(s)|end---->,
-                    //                                    backward selection: <----|end|(several) word(s)|start)
-                    // _getWordForX will report a word range with a half open interval (a <= x < b). b-1 will thus be
-                    // the LAST character of the current word. If we call the function again with new_a = b, it will
-                    // report the boundaries for the next word in line (which by definition will always be a white
-                    // space, iff we're in SELECT_WORD mode.)
-                    // Thus calling the function with b-1 will report the correct values for the CURRENT (read as in
-                    // NOT next word).
-                    // Afterwards, selecting will continue normally.
-                    int tx1, tx2, ty1, ty2;
-                    [self _getWordForX:startX-1
-                                     y:startY
-                                startX:&tx1
-                                startY:&ty1
-                                  endX:&tx2
-                                  endY:&ty2];
-                    startX = tx1;
-                    startY = ty1;
-                }
-                // This will update the ending coordinates to the new selected word's end boundaries.
-                // If we had to swap the starting and ending value (see above), the ending value is set
-                // to the new value gathered from above (initial double-clicked word).
-                // Else, just extend the selection.
-                endX = tmpX2;
-                endY = tmpY2;
-            } else {
-                // This time, the user wants to go backwards in his selection session.
-                if ((startX + (startY * width)) < (endX + (endY * width))) {
-                    // This branch will re-select the current word with both start and end values swapped,
-                    // whenever the initial double clicked word is reached again (that is, we were already
-                    // selecting backwards.)
-                    // For an explanation why, read the long comment above.
-                    int tx1, tx2, ty1, ty2;
-                    [self _getWordForX:startX
-                                     y:startY
-                                startX:&tx1
-                                startY:&ty1
-                                  endX:&tx2
-                                  endY:&ty2];
-                    startX = tx2;
-                    startY = ty2;
-                }
-                // Continue selecting text backwards. For a complete explanation see above, but read
-                // it upside-down. :p
-                endX = tmpX1;
-                endY = tmpY1;
-            }
-            break;
-
-        case SELECT_LINE:
-            if (startY <= y) {
-                startX = 0;
-                endX = [dataSource width];
-                endY = y;
-            } else {
-                endX = 0;
-                endY = y;
-                startX = [dataSource width];
-            }
-            break;
-    }
-
-    DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
-    [self refresh];
     //NSLog(@"(%d,%d)-(%d,%d)",startX,startY,endX,endY);
 }
 
@@ -2677,6 +2640,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 {
     //NSLog(@"%s", __PRETTY_FUNCTION__);
     return (NO);
+}
+
+// This textview is about to be hidden behind another tab.
+- (void)aboutToHide
+{
+    selectionScrollDirection = 0;
 }
 
 @end
@@ -4100,6 +4069,114 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [self appendDebug:dirtyDebug];
 #endif
     [dataSource resetDirty];
+}
+
+- (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView
+{
+    int width = [dataSource width];
+    // if we are on an empty line, we select the current line to the end
+    if (y >= 0 && [self _isBlankLine: y]) {
+        x = width;
+    }
+
+    if (locationInTextView.x < MARGIN && startY < y) {
+        // complete selection of previous line
+        x = width;
+        y--;
+    }
+    if (y < 0) {
+        y = 0;
+    }
+    if (y >= [dataSource numberOfLines]) {
+        y=[dataSource numberOfLines] - 1;
+    }
+
+    int tmpX1, tmpX2, tmpY1, tmpY2;
+    switch (selectMode) {
+        case SELECT_CHAR:
+        case SELECT_BOX:
+            endX = x + 1;
+            endY = y;
+            break;
+
+        case SELECT_WORD:
+            [self _getWordForX:x
+                             y:y
+                        startX:&tmpX1
+                        startY:&tmpY1
+                          endX:&tmpX2
+                          endY:&tmpY2];
+            if ((startX + (startY * width)) < (tmpX2 + (tmpY2 * width))) {
+                // We go forwards in our selection session... and...
+                if ((startX + (startY * width)) > (endX + (endY * width))) {
+                    // This will always be called, if the selection direction is changed from backwards to forwards,
+                    // that is the user changed his mind and now wants to select text AFTER the initial starting
+                    // word, AND we come back to the initial starting word.
+                    // In this case, our X starting and ending values will be SWAPPED, as swapping the values is
+                    // necessary for backwards selection (forward selection: start|(several) word(s)|end---->,
+                    //                                    backward selection: <----|end|(several) word(s)|start)
+                    // _getWordForX will report a word range with a half open interval (a <= x < b). b-1 will thus be
+                    // the LAST character of the current word. If we call the function again with new_a = b, it will
+                    // report the boundaries for the next word in line (which by definition will always be a white
+                    // space, iff we're in SELECT_WORD mode.)
+                    // Thus calling the function with b-1 will report the correct values for the CURRENT (read as in
+                    // NOT next word).
+                    // Afterwards, selecting will continue normally.
+                    int tx1, tx2, ty1, ty2;
+                    [self _getWordForX:startX-1
+                                     y:startY
+                                startX:&tx1
+                                startY:&ty1
+                                  endX:&tx2
+                                  endY:&ty2];
+                    startX = tx1;
+                    startY = ty1;
+                }
+                // This will update the ending coordinates to the new selected word's end boundaries.
+                // If we had to swap the starting and ending value (see above), the ending value is set
+                // to the new value gathered from above (initial double-clicked word).
+                // Else, just extend the selection.
+                endX = tmpX2;
+                endY = tmpY2;
+            } else {
+                // This time, the user wants to go backwards in his selection session.
+                if ((startX + (startY * width)) < (endX + (endY * width))) {
+                    // This branch will re-select the current word with both start and end values swapped,
+                    // whenever the initial double clicked word is reached again (that is, we were already
+                    // selecting backwards.)
+                    // For an explanation why, read the long comment above.
+                    int tx1, tx2, ty1, ty2;
+                    [self _getWordForX:startX
+                                     y:startY
+                                startX:&tx1
+                                startY:&ty1
+                                  endX:&tx2
+                                  endY:&ty2];
+                    startX = tx2;
+                    startY = ty2;
+                }
+                // Continue selecting text backwards. For a complete explanation see above, but read
+                // it upside-down. :p
+                endX = tmpX1;
+                endY = tmpY1;
+            }
+            break;
+
+        case SELECT_LINE:
+            if (startY <= y) {
+                startX = 0;
+                endX = [dataSource width];
+                endY = y;
+            } else {
+                endX = 0;
+                endY = y;
+                startX = [dataSource width];
+            }
+            break;
+    }
+
+    DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
+    [self refresh];
 }
 
 @end
