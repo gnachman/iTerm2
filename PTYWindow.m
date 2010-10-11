@@ -40,6 +40,11 @@
 #define DEBUG_METHOD_TRACE  0
 #define DEBUG_WINDOW_LAYOUT 0
 
+#ifdef PSEUDOTERMINAL_VERBOSE_LOGGING
+#define PtyLog NSLog
+#else
+#define PtyLog(args...)
+#endif
 
 @implementation PTYWindow
 
@@ -237,6 +242,8 @@ end:
         layoutDone = YES;
         [[self delegate] windowWillShowInitial];
     }
+    PtyLog(@"PTYWindow - calling makeKeyAndOrderFont, which triggers a window resize");
+    PtyLog(@"The current window frame is %fx%f", [self frame].size.width, [self frame].size.height);
     [super makeKeyAndOrderFront:sender];
 }
 
