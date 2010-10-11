@@ -1729,8 +1729,7 @@ static float versionNumber;
     [newDict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
     [dataSource addBookmark:newDict];
     [bookmarksTableView reloadData];
-    // TODO: Make sure the right thing is selected regardless of query
-    //[bookmarksTableView selectRowIndex:[bookmarksTableView numberOfRows]-1];
+    [bookmarksTableView selectRowByGuid:[newDict objectForKey:KEY_GUID]];
 }
 
 - (NSArray *)tokenField:(NSTokenField *)tokenField completionsForSubstring:(NSString *)substring indexOfToken:(NSInteger)tokenIndex indexOfSelectedItem:(NSInteger *)selectedIndex
