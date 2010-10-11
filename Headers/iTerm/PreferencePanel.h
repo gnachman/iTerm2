@@ -158,8 +158,9 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *checkTestRelease;
     BOOL defaultCheckTestRelease;
 
-    IBOutlet NSView* bookmarksSettingsTabViewParent;
-
+    IBOutlet NSTabView* bookmarksSettingsTabViewParent;
+    IBOutlet NSTabViewItem* bookmarkSettingsGeneralTab;
+    
     NSUserDefaults *prefs;
 
     IBOutlet NSToolbar* toolbar;

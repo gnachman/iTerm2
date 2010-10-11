@@ -1686,6 +1686,9 @@ static float versionNumber;
     [bookmarksTableView reloadData];
     [bookmarksTableView eraseQuery];
     [bookmarksTableView selectRowByGuid:guid];
+    [bookmarksSettingsTabViewParent selectTabViewItem:bookmarkSettingsGeneralTab];
+    [[self window] makeFirstResponder:bookmarkName];
+    [bookmarkName selectText:self];
 }
 
 - (IBAction)removeBookmark:(id)sender
