@@ -58,6 +58,7 @@
 
 #define CACHED_WINDOW_POSITIONS 100
 
+// #define PSEUDOTERMINAL_VERBOSE_LOGGING
 #ifdef PSEUDOTERMINAL_VERBOSE_LOGGING
 #define PtyLog NSLog
 #else
@@ -514,15 +515,15 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidResignKey:(NSNotification *)aNotification
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal windowDidResignKey:%@]",
+    PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignKey:%@]",
           __FILE__, __LINE__, aNotification);
-#endif
 
     //[self windowDidResignMain: aNotification];
 
     if (_fullScreen) {
-        [NSMenu setMenuBarVisible:YES];
+        if (!togglingFullScreen_) {
+            [NSMenu setMenuBarVisible:YES];
+        }
     } else {
         // update the cursor
         [[[self currentSession] TEXTVIEW] refresh];
@@ -531,11 +532,9 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidResignMain:(NSNotification *)aNotification
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal windowDidResignMain:%@]",
+    PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignMain:%@]",
           __FILE__, __LINE__, aNotification);
-#endif
-    if (_fullScreen) {
+    if (_fullScreen && !togglingFullScreen_) {
         [self toggleFullScreen:nil];
     }
 }
@@ -672,7 +671,7 @@ NSString *sessionsKey = @"sessions";
     // Save the current session so it can be made current after moving
     // tabs over to the new window.
     PTYSession *currentSession = [self currentSession];
-
+    NSAssert(currentSession, @"No current session");
     if (_fullScreen) {
         [newTerminal _drawFullScreenBlackBackground];
     }
@@ -713,7 +712,13 @@ NSString *sessionsKey = @"sessions";
     [[newTerminal tabView] selectTabViewItemWithIdentifier:currentSession];
     BOOL fs = _fullScreen;
     PtyLog(@"toggleFullScreen - close old window", i);
+    // The window close call below also releases the window controller (self).
+    // This causes havoc because we keep running for a while, so we'll retain a
+    // copy of ourselves and release it when we're all done.
+    [self retain];
+    togglingFullScreen_ = true;
     [[self window] close];
+    togglingFullScreen_ = false;
     if (!fs) {
         PtyLog(@"toggleFullScreen - set new frame to old frame: %fx%f", oldFrame_.size.width, oldFrame_.size.height);
         [[newTerminal window] setFrame:oldFrame_ display:YES];
@@ -757,6 +762,7 @@ NSString *sessionsKey = @"sessions";
     PtyLog(@"toggleFullScreen - calling window update");
     [[newTerminal window] update];
     PtyLog(@"toggleFullScreen returning");
+    [self release];
 }
 
 - (BOOL)fullScreen

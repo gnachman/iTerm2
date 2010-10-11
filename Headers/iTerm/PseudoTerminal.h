@@ -152,6 +152,10 @@
     // In the process of setting up a new session. Ignore calls to
     // fitWindowToSession due to setting the font.
     BOOL inSetup;
+
+    // This is set while toggling full screen. It prevents windowDidResignMain
+    // from trying to exit fullscreen mode in the midst of toggling it.
+    BOOL togglingFullScreen_;
 }
 
 // Initialize a new PseudoTerminal.
