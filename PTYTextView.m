@@ -922,12 +922,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 #ifdef DEBUG_DRAWING
     NSMutableString* lineDebug = [NSMutableString stringWithFormat:@"drawRect:%d,%d %dx%d drawing these lines with scrollback overflow of %d, iteration=%d:\n", (int)rect.origin.x, (int)rect.origin.y, (int)rect.size.width, (int)rect.size.height, (int)[dataSource scrollbackOverflow], iteration];
 #endif
-    for(int line = lineStart; line < lineEnd; line++) {
+    for (int line = lineStart; line < lineEnd; line++) {
         NSRect lineRect = [self visibleRect];
         lineRect.origin.y = line*lineHeight;
         lineRect.size.height = lineHeight;
         if([self needsToDrawRect:lineRect]) {
-///            NSLog(@"drawing %d", line);
             if (overflow <= line) {
                 // If overflow > 0 then the lines in the dataSource are not
                 // lined up in the normal way with the view. This happens when
@@ -957,7 +956,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 [lineDebug appendFormat:@"%c", theLine[i].ch];
             }
             [lineDebug appendString:@"\n"];
-            [[NSString stringWithFormat:@"Iter %d, line %d", iteration, line] drawInRect:NSMakeRect(rect.size.width-200, line*lineHeight, 200, lineHeight) withAttributes:dct];
+            [[NSString stringWithFormat:@"Iter %d, line %d, y=%d", iteration, line, (int)(line*lineHeight)] drawInRect:NSMakeRect(rect.size.width-200, line*lineHeight, 200, lineHeight) withAttributes:dct];
 #endif
         }
     }

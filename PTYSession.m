@@ -1815,6 +1815,13 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     }
 }
 
+- (void)updateScroll
+{
+    if (![(PTYScroller*)([SCROLLVIEW verticalScroller]) userScroll]) {
+        [TEXTVIEW scrollEnd];
+    }
+}
+
 - (void)updateDisplay
 {
     if ([[tabViewItem tabView] selectedTabViewItem] != tabViewItem) {
@@ -1835,9 +1842,7 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     }
 
     [TEXTVIEW refresh];
-    if (![(PTYScroller*)([SCROLLVIEW verticalScroller]) userScroll]) {
-        [TEXTVIEW scrollEnd];
-    }
+    [self updateScroll];
     [self scheduleUpdateSoon:NO];
 }
 

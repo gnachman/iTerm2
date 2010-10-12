@@ -247,6 +247,7 @@
 - (void)doAntiIdle;
 - (void)scheduleUpdateSoon:(BOOL)soon;
 - (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Bookmark*)aDict;
+- (void)updateScroll;
 
 - (int)columns;
 - (int)rows;

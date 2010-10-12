@@ -723,8 +723,8 @@ static char* FormatCont(int c)
     // An immediate refresh is needed so that the size of TEXTVIEW can be
     // adjusted to fit the new size
     DebugLog(@"resizeWidth setDirty");
-    [self setDirty];
-
+    [display refresh];
+    [SESSION updateScroll];
 #ifdef DEBUG_RESIZEDWIDTH
     NSLog(@"After resizeWidth\n");
     [self dumpScreen];
