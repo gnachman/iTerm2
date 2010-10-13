@@ -1915,6 +1915,8 @@ static float versionNumber;
     [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
     [self showBookmarks];
     [bookmarksTableView selectRowByGuid:guid];
+    [bookmarksSettingsTabViewParent selectTabViewItem:bookmarkSettingsGeneralTab];
+    [[self window] makeFirstResponder:bookmarkName];
 }
 
 - (id)tokenFieldCell:(NSTokenFieldCell *)tokenFieldCell representedObjectForEditingString:(NSString *)editingString
