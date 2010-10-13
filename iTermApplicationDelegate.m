@@ -57,7 +57,7 @@ int gDebugLogFile = -1;
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification
 {
     // Check the system version for minimum requirements.
-    SInt32 gSystemVersion;    
+    SInt32 gSystemVersion;
     Gestalt(gestaltSystemVersion, &gSystemVersion);
     if(gSystemVersion < 0x1020)
     {
@@ -96,9 +96,9 @@ int gDebugLogFile = -1;
         terminals = [[iTermController sharedInstance] terminals];
 
         // Display prompt if we need to
-    if ([[PreferencePanel sharedInstance] promptOnClose] && [terminals count] && (![[PreferencePanel sharedInstance] onlyWhenMoreTabs] || [terminals count] >1 || 
+    if ([[PreferencePanel sharedInstance] promptOnClose] && [terminals count] && (![[PreferencePanel sharedInstance] onlyWhenMoreTabs] || [terminals count] >1 ||
                                                              [[[[iTermController sharedInstance] currentTerminal] tabView] numberOfTabViewItems] > 1 )
-        && 
+        &&
             NSRunAlertPanel(NSLocalizedStringFromTableInBundle(@"Quit iTerm?",@"iTerm", [NSBundle bundleForClass: [self class]], @"Close window"),
                                            NSLocalizedStringFromTableInBundle(@"All sessions will be closed",@"iTerm", [NSBundle bundleForClass: [self class]], @"Close window"),
                                            NSLocalizedStringFromTableInBundle(@"OK",@"iTerm", [NSBundle bundleForClass: [self class]], @"OK"),
@@ -214,12 +214,12 @@ int gDebugLogFile = -1;
     [[NSNotificationCenter defaultCenter] addObserver: self
                                              selector: @selector(reloadSessionMenus:)
                                                  name: @"iTermSessionBecameKey"
-                                               object: nil];    
+                                               object: nil];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(nonTerminalWindowBecameKey:)
                                                  name:@"nonTerminalWindowBecameKey"
-                                               object:nil];    
+                                               object:nil];
 
         [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self andSelector:@selector(getUrl:withReplyEvent:) forEventClass:kInternetEventClass andEventID:kAEGetURL];
 
@@ -254,7 +254,7 @@ int gDebugLogFile = -1;
 }
 
 - (IBAction)newSession:(id)sender
-{       
+{
     [[iTermController sharedInstance] newSession:sender];
 }
 
@@ -287,28 +287,43 @@ int gDebugLogFile = -1;
 
     aMenu = [[NSMenu alloc] initWithTitle: @"Dock Menu"];
     //new session menu
-        newMenuItem = [[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"New",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu") action:nil keyEquivalent:@"" ]; 
+    newMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"New",
+                                                                                       @"iTerm",
+                                                                                       [NSBundle bundleForClass: [self class]],
+                                                                                       @"Context menu")
+                                             action:nil
+                                      keyEquivalent:@"" ];
     [aMenu addItem: newMenuItem];
     [newMenuItem release];
 
     // Create the bookmark submenus for new session
-        frontTerminal = [[iTermController sharedInstance] currentTerminal];
+    frontTerminal = [[iTermController sharedInstance] currentTerminal];
     // Build the bookmark menu
-        bookmarksMenu = [[[NSMenu alloc] init] autorelease];
+    bookmarksMenu = [[[NSMenu alloc] init] autorelease];
 
-    [[iTermController sharedInstance] addBookmarksToMenu:bookmarksMenu target:frontTerminal withShortcuts:NO];
-        [newMenuItem setSubmenu:bookmarksMenu];
+    [[iTermController sharedInstance] addBookmarksToMenu:bookmarksMenu
+                                                  target:frontTerminal
+                                           withShortcuts:NO];
+    [newMenuItem setSubmenu:bookmarksMenu];
 
-        [bookmarksMenu addItem:[NSMenuItem separatorItem]];
+    [bookmarksMenu addItem:[NSMenuItem separatorItem]];
 
-        NSMenuItem *tip = [[[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"Press Option for New Window",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item: New") action:@selector(xyz) keyEquivalent: @""] autorelease];
+    NSMenuItem *tip = [[[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"Press Option for New Window",
+                                                                                             @"iTerm",
+                                                                                             [NSBundle bundleForClass: [self class]],
+                                                                                             @"Toolbar Item: New")
+                                                  action:@selector(xyz)
+                                           keyEquivalent: @""] autorelease];
     [tip setKeyEquivalentModifierMask: 0];
-    [bookmarksMenu addItem: tip];
+    [bookmarksMenu addItem:tip];
     tip = [[tip copy] autorelease];
-    [tip setTitle:NSLocalizedStringFromTableInBundle(@"Open In New Window",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item: New")];
-    [tip setKeyEquivalentModifierMask: NSAlternateKeyMask];
+    [tip setTitle:NSLocalizedStringFromTableInBundle(@"Open In New Window",
+                                                     @"iTerm",
+                                                     [NSBundle bundleForClass:[self class]],
+                                                     @"Toolbar Item: New")];
+    [tip setKeyEquivalentModifierMask:NSAlternateKeyMask];
     [tip setAlternate:YES];
-    [bookmarksMenu addItem: tip];
+    [bookmarksMenu addItem:tip];
     return ([aMenu autorelease]);
 }
 
@@ -341,7 +356,7 @@ static void FlushDebugLog() {
 -(IBAction)debugLogging:(id)sender
 {
         if (!gDebugLogging) {
-                NSRunAlertPanel(@"Debug Logging Enabled", 
+                NSRunAlertPanel(@"Debug Logging Enabled",
                                                 @"Writing to /tmp/debuglog.txt",
                                                 @"OK", nil, nil);
                 gDebugLogFile = open("/tmp/debuglog.txt", O_TRUNC | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
@@ -357,7 +372,7 @@ static void FlushDebugLog() {
 
                 close(gDebugLogFile);
                 gDebugLogFile=-1;
-                NSRunAlertPanel(@"Debug Logging Stopped", 
+                NSRunAlertPanel(@"Debug Logging Stopped",
                                                 @"Please compress and send /tmp/debuglog.txt to the developers.",
                                                 @"OK", nil, nil);
                 [gDebugLogStr release];
@@ -425,7 +440,7 @@ void DebugLog(NSString* value)
     [[AUTHORS textStorage] appendAttributedString: [[NSAttributedString alloc] initWithString: @"\n"]];
     [[AUTHORS textStorage] appendAttributedString: bugsAString];
     [[AUTHORS textStorage] appendAttributedString: [[NSAttributedString alloc] initWithString: @"\n\n"]];
-    [[AUTHORS textStorage] appendAttributedString: creditsAString]; 
+    [[AUTHORS textStorage] appendAttributedString: creditsAString];
     [AUTHORS setAlignment: NSCenterTextAlignment range: NSMakeRange(0, [[AUTHORS textStorage] length])];
 
     aboutController = [[NSWindowController alloc] initWithWindow:ABOUT];
@@ -547,7 +562,7 @@ void DebugLog(NSString* value)
     for (; [bookmarkMenu numberOfItems] > kNumberOfStaticMenuItems;) [bookmarkMenu removeItemAtIndex:kNumberOfStaticMenuItems];
 
     // add bookmarks into Bookmark menu
-    [[iTermController sharedInstance] addBookmarksToMenu:bookmarkMenu 
+    [[iTermController sharedInstance] addBookmarksToMenu:bookmarkMenu
                                                   target:[[iTermController sharedInstance] currentTerminal]
                                            withShortcuts:YES];
 }
@@ -613,7 +628,7 @@ void DebugLog(NSString* value)
         if (count>0) {
                 [scriptMenu addItem:[NSMenuItem separatorItem]];
                 NSMenuItem *scriptItem = [[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"Refresh",@"iTerm", [NSBundle bundleForClass: [iTermController class]], @"Script")
-                                                                                                                        action: @selector(buildScriptMenu:) 
+                                                                                                                        action: @selector(buildScriptMenu:)
                                                                                                          keyEquivalent: @""];
                 [scriptItem setTarget: self];
                 [scriptMenu addItem: scriptItem];

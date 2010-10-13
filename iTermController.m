@@ -89,27 +89,27 @@ static BOOL initDone = NO;
           __FILE__, __LINE__);
 #endif
     self = [super init];
-    
-    
+
+
     // create the iTerm directory if it does not exist
     NSFileManager *fileManager = [NSFileManager defaultManager];
-    
+
     // create the "~/Library/Application Support" directory if it does not exist
     if([fileManager fileExistsAtPath: [APPLICATION_SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO)
         [fileManager createDirectoryAtPath: [APPLICATION_SUPPORT_DIRECTORY stringByExpandingTildeInPath] attributes: nil];
-    
+
     if([fileManager fileExistsAtPath: [SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO)
         [fileManager createDirectoryAtPath: [SUPPORT_DIRECTORY stringByExpandingTildeInPath] attributes: nil];
-    
+
     terminalWindows = [[NSMutableArray alloc] init];
-    
+
     // Activate Growl
     /*
      * Need to add routine in iTerm prefs for Growl support and
      * PLIST check here.
      */
     gd = [iTermGrowlDelegate sharedInstance];
-    
+
     return (self);
 }
 
@@ -163,7 +163,7 @@ static BOOL initDone = NO;
 // meant for action for menu items that have a submenu
 - (void) noAction: (id) sender
 {
-    
+
 }
 
 - (IBAction)newSession:(id)sender
@@ -190,7 +190,7 @@ static BOOL initDone = NO;
 {
     if(FRONT == theTerminalWindow)
         [self setCurrentTerminal: nil];
-    
+
     if(theTerminalWindow)
         [self removeFromTerminalsAtIndex: [terminalWindows indexOfObject: theTerminalWindow]];
 }
@@ -200,18 +200,18 @@ static BOOL initDone = NO;
 {
     NSStringEncoding const *p;
     NSMutableArray *tmp = [NSMutableArray array];
-    
+
     for (p = [NSString availableStringEncodings]; *p; ++p)
         [tmp addObject:[NSNumber numberWithUnsignedInt:*p]];
     [tmp sortUsingFunction: _compareEncodingByLocalizedName context:NULL];
-    
+
     return (tmp);
 }
 
 - (void)_addBookmark:(Bookmark*)bookmark toMenu:(NSMenu*)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts
 {
-    NSMenuItem* aMenuItem = [[[NSMenuItem alloc] initWithTitle:[bookmark objectForKey:KEY_NAME] 
-                                                        action:@selector(newSessionInTabAtIndex:) 
+    NSMenuItem* aMenuItem = [[[NSMenuItem alloc] initWithTitle:[bookmark objectForKey:KEY_NAME]
+                                                        action:@selector(newSessionInTabAtIndex:)
                                                  keyEquivalent:@""] autorelease];
     if (withShortcuts) {
         if ([bookmark objectForKey:KEY_SHORTCUT] != nil) {
@@ -220,13 +220,13 @@ static BOOL initDone = NO;
             [aMenuItem setKeyEquivalent:shortcut];
         }
     }
-    
+
     unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
     [aMenuItem setKeyEquivalentModifierMask:modifierMask];
     [aMenuItem setRepresentedObject:[bookmark objectForKey:KEY_GUID]];
     [aMenuItem setTarget:aTarget];
     [aMenu addItem:aMenuItem];
-    
+
     aMenuItem = [[aMenuItem copy] autorelease];
     [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSAlternateKeyMask];
     [aMenuItem setAlternate:YES];
@@ -259,25 +259,31 @@ static BOOL initDone = NO;
     NSArray* tags = [[BookmarkModel sharedInstance] allTags];
     int count = 0;
     for (int i = 0; i < [tags count]; ++i) {
-        [self _addBookmarksForTag:[tags objectAtIndex:i] toMenu:aMenu target:aTarget withShortcuts:withShortcuts];
+        [self _addBookmarksForTag:[tags objectAtIndex:i]
+                           toMenu:aMenu
+                           target:aTarget
+                    withShortcuts:withShortcuts];
         ++count;
     }
     for (int i = 0; i < [[BookmarkModel sharedInstance] numberOfBookmarks]; ++i) {
         Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkAtIndex:i];
         if ([[bookmark objectForKey:KEY_TAGS] count] == 0) {
             ++count;
-            [self _addBookmark:bookmark toMenu:aMenu target:aTarget withShortcuts:withShortcuts];
+            [self _addBookmark:bookmark
+                        toMenu:aMenu
+                        target:aTarget
+                 withShortcuts:withShortcuts];
         }
     }
-    
+
     if (count > 1) {
         [aMenu addItem:[NSMenuItem separatorItem]];
         NSMenuItem* aMenuItem = [[[NSMenuItem alloc] initWithTitle:
                                   NSLocalizedStringFromTableInBundle(@"Open All",
-                                                                     @"iTerm", 
-                                                                     [NSBundle bundleForClass: [iTermController class]], 
-                                                                     @"Context Menu") 
-                                                            action:@selector(newSessionsInWindow:) 
+                                                                     @"iTerm",
+                                                                     [NSBundle bundleForClass: [iTermController class]],
+                                                                     @"Context Menu")
+                                                            action:@selector(newSessionsInWindow:)
                                                      keyEquivalent:@""] autorelease];
         unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
         [aMenuItem setKeyEquivalentModifierMask:modifierMask];
@@ -298,7 +304,7 @@ static BOOL initDone = NO;
 {
     PseudoTerminal *term;
     NSDictionary *aDict;
-    
+
     aDict = bookmarkData;
     if (aDict == nil) {
         aDict = [[BookmarkModel sharedInstance] defaultBookmark];
@@ -308,26 +314,32 @@ static BOOL initDone = NO;
             aDict = temp;
         }
     }
-    
+
     // Where do we execute this command?
     if (theTerm == nil) {
         term = [[PseudoTerminal alloc] init];
         [term initWithSmartLayout:YES fullScreen:nil];
         [self addInTerminals:term];
         [term release];
-        
     } else {
         term = theTerm;
     }
-    
+
     [term addNewSession:aDict];
+
+    // This function is activated from the dock icon's context menu so make sure
+    // that the new window is on top of all other apps' windows. For some reason,
+    // makeKeyAndOrderFront does nothing.
+    if (![[term window] isKeyWindow]) {
+        [NSApp arrangeInFront:self];
+    }
 }
 
 - (void) launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm withCommand: (NSString *)command
 {
     PseudoTerminal *term;
     NSDictionary *aDict;
-    
+
     aDict = bookmarkData;
     if (aDict == nil) {
         aDict = [[BookmarkModel sharedInstance] defaultBookmark];
@@ -338,7 +350,7 @@ static BOOL initDone = NO;
             aDict = temp;
         }
     }
-    
+
     // Where do we execute this command?
     if (theTerm == nil) {
         term = [[PseudoTerminal alloc] init];
@@ -348,7 +360,7 @@ static BOOL initDone = NO;
     } else {
         term = theTerm;
     }
-    
+
     [term addNewSession: aDict withCommand: command];
 }
 
@@ -356,7 +368,7 @@ static BOOL initDone = NO;
 {
     PseudoTerminal *term;
     NSDictionary *aDict;
-    
+
     aDict = bookmarkData;
     // $$ is a prefix/suffix of a variabe.
     if (aDict == nil || [[ITAddressBookMgr bookmarkCommand:aDict] isEqualToString:@"$$"]) {
@@ -370,11 +382,11 @@ static BOOL initDone = NO;
             [temp autorelease];
             prototype = temp;
         }
-        
+
         NSMutableDictionary *tempDict = [NSMutableDictionary dictionaryWithDictionary:prototype];
         NSURL *urlRep = [NSURL URLWithString: url];
         NSString *urlType = [urlRep scheme];
-        
+
         if ([urlType compare:@"ssh" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
             NSMutableString *tempString = [NSMutableString stringWithString:@"ssh "];
             if ([urlRep user]) [tempString appendFormat:@"-l %@ ", [urlRep user]];
@@ -399,33 +411,33 @@ static BOOL initDone = NO;
             aDict = tempDict;
         }
     }
-    
+
     // Where do we execute this command?
     if (theTerm == nil) {
         term = [[PseudoTerminal alloc] init];
         [term initWithSmartLayout:YES fullScreen:nil];
         [self addInTerminals: term];
         [term release];
-        
+
     } else {
         term = theTerm;
     }
-    
+
     [term addNewSession: aDict withURL: url];
 }
 
 - (void) launchScript: (id) sender
 {
     NSString *fullPath = [NSString stringWithFormat: @"%@/%@", [SCRIPT_DIRECTORY stringByExpandingTildeInPath], [sender title]];
-    
+
     if ([[[sender title] pathExtension] isEqualToString: @"scpt"]) {
         NSAppleScript *script;
         NSDictionary *errorInfo = [NSDictionary dictionary];
         NSURL *aURL = [NSURL fileURLWithPath: fullPath];
-        
+
         // Make sure our script suite registry is loaded
         [NSScriptSuiteRegistry sharedScriptSuiteRegistry];
-        
+
         script = [[NSAppleScript alloc] initWithContentsOfURL: aURL error: &errorInfo];
         [script executeAndReturnError: &errorInfo];
         [script release];
@@ -433,7 +445,7 @@ static BOOL initDone = NO;
     else {
         [[NSWorkspace sharedWorkspace] launchApplication:fullPath];
     }
-    
+
 }
 
 - (PTYTextView *) frontTextView
@@ -491,14 +503,14 @@ NSString *terminalsKey = @"terminals";
 - (void) setCurrentTerminal: (PseudoTerminal *) thePseudoTerminal
 {
     FRONT = thePseudoTerminal;
-    
+
     // make sure this window is the key window
     if([thePseudoTerminal windowInited] && [[thePseudoTerminal window] isKeyWindow] == NO)
         [[thePseudoTerminal window] makeKeyAndOrderFront: self];
-    
+
     // Post a notification
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermWindowBecameKey" object: thePseudoTerminal userInfo: nil];    
-    
+    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermWindowBecameKey" object: thePseudoTerminal userInfo: nil];
+
 }
 
 -(void)replaceInTerminals:(PseudoTerminal *)object atIndex:(unsigned)theIndex
