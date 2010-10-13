@@ -515,15 +515,17 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidResignKey:(NSNotification *)aNotification
 {
+    if (togglingFullScreen_) {
+        PtyLog(@"windowDidResignKey returning because togglingFullScreen.");
+        return;
+    }
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignKey:%@]",
           __FILE__, __LINE__, aNotification);
 
     //[self windowDidResignMain: aNotification];
 
     if (_fullScreen) {
-        if (!togglingFullScreen_) {
-            [NSMenu setMenuBarVisible:YES];
-        }
+        [NSMenu setMenuBarVisible:YES];
     } else {
         // update the cursor
         [[[self currentSession] TEXTVIEW] refresh];
@@ -585,6 +587,10 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidResize:(NSNotification *)aNotification
 {
+    if (togglingFullScreen_) {
+        PtyLog(@"windowDidResize returning because togglingFullScreen.");
+        return;
+    }
     NSRect frame;
 
 
@@ -667,6 +673,8 @@ NSString *sessionsKey = @"sessions";
     }
 
     _fullScreen = !_fullScreen;
+    togglingFullScreen_ = true;
+    newTerminal->togglingFullScreen_ = YES;
 
     // Save the current session so it can be made current after moving
     // tabs over to the new window.
@@ -716,9 +724,7 @@ NSString *sessionsKey = @"sessions";
     // This causes havoc because we keep running for a while, so we'll retain a
     // copy of ourselves and release it when we're all done.
     [self retain];
-    togglingFullScreen_ = true;
     [[self window] close];
-    togglingFullScreen_ = false;
     if (!fs) {
         PtyLog(@"toggleFullScreen - set new frame to old frame: %fx%f", oldFrame_.size.width, oldFrame_.size.height);
         [[newTerminal window] setFrame:oldFrame_ display:YES];
@@ -753,6 +759,7 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"toggleFullScreen: calling fitWindowToSessionsWithWidth");
         [newTerminal fitWindowToSessionsWithWidth:width height:height charWidth:charWidth charHeight:charHeight];
     }
+    newTerminal->togglingFullScreen_ = NO;
     PtyLog(@"toggleFullScreen - calling fitSessionsToWindow");
     [newTerminal fitSessionsToWindow];
     PtyLog(@"toggleFullScreen - calling fitWindowToSessions");
@@ -762,6 +769,7 @@ NSString *sessionsKey = @"sessions";
     PtyLog(@"toggleFullScreen - calling window update");
     [[newTerminal window] update];
     PtyLog(@"toggleFullScreen returning");
+    togglingFullScreen_ = false;
     [self release];
 }
 
@@ -1079,6 +1087,7 @@ NSString *sessionsKey = @"sessions";
     PseudoTerminal *term = [aTabBarControl delegate];
 
     [[aSession SCREEN] resizeWidth:[aSession columns] height:[aSession rows]];
+    PtyLog(@"tabView:didDropTabViewItem - calling shell setWidth:%d height:%d", [aSession columns], [aSession rows]);
     [[aSession SHELL] setWidth:[aSession columns]  height:[aSession rows]];
     if ([[term tabView] numberOfTabViewItems] == 1) {
         PtyLog(@"didDropTabViewItem - calling fitWindowToSessions");
@@ -1664,6 +1673,10 @@ NSString *sessionsKey = @"sessions";
 // Assumes all sessions are reasonable sizes.
 - (void)fitWindowToSessions
 {
+    if (togglingFullScreen_) {
+        PtyLog(@"fitWindowToSessions returning because togglingFullScreen.");
+        return;
+    }
     int width;
     int height;
     float charHeight = [self tallestSessionHeight:&height];
@@ -1894,7 +1907,7 @@ NSString *sessionsKey = @"sessions";
 
         [[thisWindow contentView] setAutoresizesSubviews: NO];
         // This triggers a call to fitSessionsToWindow (via windowDidResize)
-        PtyLog(@"fitWindowToSessionsWithWidth - Set window frame size to %fx%f", frame.size.height, frame.size.width);
+        PtyLog(@"fitWindowToSessionsWithWidth - Set window frame size to %fx%f", frame.size.width, frame.size.height);
         [thisWindow setFrame: frame display:YES];
         PtyLog(@"fitWindowToSessionsWithWidth - [NSWindow setFrame] returned");
         [[thisWindow contentView] setAutoresizesSubviews: YES];
@@ -2096,6 +2109,7 @@ NSString *sessionsKey = @"sessions";
         }
         PtyLog(@"safelySetSessionSize - set to %dx%d", width, height);
         [[aSession SCREEN] resizeWidth:width height:height];
+        PtyLog(@"safelySetSessionSize -  calling shell setWidth:%d height:%d", width, height);
         [[aSession SHELL] setWidth:width  height:height];
         [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
         [[aSession SCROLLVIEW] setLineScroll:[[aSession TEXTVIEW] lineHeight]];
@@ -2108,16 +2122,25 @@ NSString *sessionsKey = @"sessions";
 
 - (void)fitSessionToWindow:(PTYSession*)aSession
 {
+    if (togglingFullScreen_) {
+        PtyLog(@"fitSessionToWindow returning because togglingFullScreen.");
+        return;
+    }
     PtyLog(@"fitSessionToWindow begins");
     BOOL hasScrollbar = !_fullScreen && ![[PreferencePanel sharedInstance] hideScrollbar];
+    [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
     NSSize size = [[[self currentSession] SCROLLVIEW] documentVisibleRect].size;
     int width = (size.width - MARGIN*2) / [[aSession TEXTVIEW] charWidth];
     int height = size.height / [[aSession TEXTVIEW] lineHeight];
+    if (width == [aSession columns] && height == [aSession rows]) {
+        PtyLog(@"fitSessionToWindow - terminating early because session size doesn't change");
+        return;
+    }
     PtyLog(@"fitSessionToWindow - Given a scrollview size of %fx%f, can fit %dx%d chars", size.width, size.height, width, height);
 
     [[aSession SCREEN] resizeWidth:width height:height];
+    PtyLog(@"fitSessionToWindow -  calling shell setWidth:%d height:%d", width, height);
     [[aSession SHELL] setWidth:width  height:height];
-    [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
     [[aSession SCROLLVIEW] setLineScroll:[[aSession TEXTVIEW] lineHeight]];
     [[aSession SCROLLVIEW] setPageScroll:height*[[aSession TEXTVIEW] lineHeight]];
     if ([aSession backgroundImagePath]) {
