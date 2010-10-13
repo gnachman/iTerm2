@@ -449,14 +449,14 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
 }
 
 static int Search(NSString* needle,
-                  screen_char_t* rawline, 
-                  int raw_line_length, 
-                  int start, 
-                  int end, 
+                  screen_char_t* rawline,
+                  int raw_line_length,
+                  int start,
+                  int end,
                   int options,
                   int* resultLength)
 {
-    char* charHaystack = malloc(raw_line_length + 1);
+    unichar* charHaystack = malloc(sizeof(unichar) * raw_line_length + 1);
     int* deltas = malloc(sizeof(int) * (raw_line_length + 1));
     // The 'deltas' array maps positions in the stripped haystack to
     // their offset from the original position in the buffer after removing
@@ -491,11 +491,22 @@ static int Search(NSString* needle,
         }
     }
     deltas[o] = delta;
-    NSString* haystack = [[[NSString alloc] initWithBytesNoCopy:charHaystack 
-                                                         length:o 
-                                                       encoding:NSUTF8StringEncoding 
+    // I have no idea why NSUnicodeStringEncoding doesn't work, but it has
+    // the wrong endianness on x86. Perhaps it's a relic of PPC days? Anyway,
+    // LittleEndian seems to work on my x86, and BigEndian works under Rosetta
+    // with a ppc-only binary. Oddly, testing for defined(LITTLE_ENDIAN) does
+    // not produce the correct results under ppc+Rosetta.
+    int encoding;
+#if defined(__ppc__) || defined(__ppc64__)
+    encoding = NSUTF16BigEndianStringEncoding;
+#else
+    encoding = NSUTF16LittleEndianStringEncoding;
+#endif
+    NSString* haystack = [[[NSString alloc] initWithBytesNoCopy:charHaystack
+                                                         length:o * sizeof(unichar)
+                                                       encoding:encoding
                                                    freeWhenDone:NO] autorelease];
-    
+
     int apiOptions = NSBackwardsSearch;
     if (options & FindOptCaseInsensitive) {
         apiOptions |= NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch | NSWidthInsensitiveSearch;
@@ -506,7 +517,7 @@ static int Search(NSString* needle,
         int adjustedLocation;
         int adjustedLength;
         adjustedLocation = range.location + deltas[range.location];
-        adjustedLength = range.length + deltas[range.location + range.length] - 
+        adjustedLength = range.length + deltas[range.location + range.length] -
             deltas[range.location];
         *resultLength = adjustedLength;
         result = adjustedLocation;
@@ -565,12 +576,12 @@ static int Search(NSString* needle,
         // Thus, the algorithm is to do a reverse search until a hit is found
         // that begins not before 'skip', which is the leftmost acceptable
         // position.
-        
+
         int limit = raw_line_length;
         int tempResultLength;
         int tempPosition;
         do {
-            tempPosition =  Search(needle, rawline, raw_line_length, 0, limit, 
+            tempPosition =  Search(needle, rawline, raw_line_length, 0, limit,
                                    options, &tempResultLength);
             limit = tempPosition + tempResultLength - 1;
         } while (tempPosition != -1 && tempPosition > skip);
@@ -579,7 +590,7 @@ static int Search(NSString* needle,
         }
         return tempPosition;
     } else {
-        return Search(needle, rawline, raw_line_length, skip, raw_line_length, 
+        return Search(needle, rawline, raw_line_length, skip, raw_line_length,
                       options, resultLength);
     }
 }
