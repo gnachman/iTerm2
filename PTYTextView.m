@@ -3834,7 +3834,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         }
     }
 
-    url = [NSURL URLWithString:trimmedURLString];
+    NSString* escapedString = [trimmedURLString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    url = [NSURL URLWithString:escapedString];
 
     Bookmark *bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:[url scheme]];
 
