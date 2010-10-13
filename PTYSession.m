@@ -133,6 +133,7 @@ static NSImage *warningImage;
     [antiIdleTimer release];
     [updateTimer invalidate];
     [updateTimer release];
+    [originalAddressBookEntry release];
 
     [SHELL release];
     SHELL = nil;
@@ -1786,6 +1787,10 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 
 - (void)setAddressBookEntry:(NSDictionary*)entry
 {
+    if (!originalAddressBookEntry) {
+        originalAddressBookEntry = [NSDictionary dictionaryWithDictionary:entry];
+        [originalAddressBookEntry retain];
+    }
     [addressBookEntry release];
     addressBookEntry = [entry retain];
 }
@@ -1793,6 +1798,11 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 - (NSDictionary *)addressBookEntry
 {
     return addressBookEntry;
+}
+
+- (NSDictionary *)originalAddressBookEntry
+{
+    return originalAddressBookEntry;
 }
 
 - (iTermGrowlDelegate*)growlDelegate

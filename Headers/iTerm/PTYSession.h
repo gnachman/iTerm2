@@ -77,6 +77,7 @@
 
     NSString* backgroundImagePath;
     NSDictionary* addressBookEntry;
+    Bookmark* originalAddressBookEntry;
 
     // Growl stuff
     iTermGrowlDelegate* gd;
@@ -188,6 +189,9 @@
 - (BOOL)xtermMouseReporting;
 - (void)setXtermMouseReporting:(BOOL)set;
 - (NSDictionary *)addressBookEntry;
+
+// Return the address book that the session was originally created with.
+- (Bookmark *)originalAddressBookEntry;
 - (void)setAddressBookEntry:(NSDictionary*)entry;
 - (int)number;
 - (int)objectCount;

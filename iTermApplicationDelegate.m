@@ -462,7 +462,7 @@ void DebugLog(NSString* value)
 - (IBAction) returnToDefaultSize: (id) sender
 {
     PseudoTerminal *frontTerminal = [[iTermController sharedInstance] currentTerminal];
-    NSDictionary *abEntry = [[frontTerminal currentSession] addressBookEntry];
+    NSDictionary *abEntry = [[frontTerminal currentSession] originalAddressBookEntry];
 
     NSString* fontDesc = [abEntry objectForKey:KEY_NORMAL_FONT];
     NSFont* font = [ITAddressBookMgr fontWithDesc:fontDesc];
@@ -473,6 +473,7 @@ void DebugLog(NSString* value)
     PTYTextView* textview = [session TEXTVIEW];
     [textview setFont:font nafont:nafont horizontalSpacing:hs verticalSpacing:vs];
     [session setWidth:[[abEntry objectForKey:KEY_COLUMNS] intValue] height:[[abEntry objectForKey:KEY_ROWS] intValue]];
+    [frontTerminal fitWindowToSession:session];
 }
 
 
