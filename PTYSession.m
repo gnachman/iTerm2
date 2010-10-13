@@ -2084,6 +2084,24 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     // Append the encoding
     CFStringEncoding cfEncoding = CFStringConvertNSStringEncodingToEncoding([self encoding]);
     NSString* ianaEncoding = (NSString*)CFStringConvertEncodingToIANACharSetName(cfEncoding);
+
+    static NSDictionary* lowerCaseEncodings;
+    if (!lowerCaseEncodings) {
+        NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"EncodingsWithLowerCase" ofType:@"plist"];   
+        lowerCaseEncodings = [NSDictionary dictionaryWithContentsOfFile:plistFile];
+        [lowerCaseEncodings retain];
+    }
+    if ([ianaEncoding rangeOfCharacterFromSet:[NSCharacterSet lowercaseLetterCharacterSet]].length) {
+        // Some encodings are improperly returned as lower case. For instance,
+        // "utf-8" instead of "UTF-8". If this isn't in the allowed list of
+        // lower-case encodings, then uppercase it.
+        if (lowerCaseEncodings) {
+            if (![lowerCaseEncodings objectForKey:ianaEncoding]) {
+                ianaEncoding = [ianaEncoding uppercaseString];
+            }
+        }
+    }
+
     if (ianaEncoding != nil) {
         // Mangle the names slightly
         NSMutableString* encoding = [[NSMutableString alloc] initWithString:ianaEncoding];

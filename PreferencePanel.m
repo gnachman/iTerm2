@@ -180,16 +180,17 @@ static float versionNumber;
     advancedToolbarId = [advancedToolbarItem itemIdentifier];
     [toolbar setSelectedItemIdentifier:globalToolbarId];
 
-        // add list of encodings
-        NSEnumerator *anEnumerator;
-        NSNumber *anEncoding;
+    // add list of encodings
+    NSEnumerator *anEnumerator;
+    NSNumber *anEncoding;
 
-        [characterEncoding removeAllItems];
-        anEnumerator = [[[iTermController sharedInstance] sortedEncodingList] objectEnumerator];
-        while ((anEncoding = [anEnumerator nextObject]) != NULL) {
-                [characterEncoding addItemWithTitle: [NSString localizedNameOfStringEncoding: [anEncoding unsignedIntValue]]];
-                [[characterEncoding lastItem] setTag: [anEncoding unsignedIntValue]];
-        }
+    [characterEncoding removeAllItems];
+    anEnumerator = [[[iTermController sharedInstance] sortedEncodingList] objectEnumerator];
+    while ((anEncoding = [anEnumerator nextObject]) != NULL) {
+        [characterEncoding addItemWithTitle:[NSString localizedNameOfStringEncoding:[anEncoding unsignedIntValue]]];
+        [[characterEncoding lastItem] setTag:[anEncoding unsignedIntValue]];
+    }
+
     [keyMappings setDoubleAction:@selector(editKeyMapping:)];
     keyString = nil;
     [bookmarksForUrlsTable setShowGraphic:NO];
