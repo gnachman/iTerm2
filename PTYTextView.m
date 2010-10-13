@@ -53,7 +53,7 @@ static NSCursor* textViewCursor =  nil;
 
 @implementation PTYTextView
 
-+ (void) initialize
++ (void)initialize
 {
     NSImage *ibeamImage = [[NSCursor IBeamCursor] image];
     NSPoint hotspot = [[NSCursor IBeamCursor] hotSpot];
@@ -115,7 +115,7 @@ static NSCursor* textViewCursor =  nil;
                                                object:nil];
 
     colorInvertedCursor = [[PreferencePanel sharedInstance] colorInvertedCursor];
-
+    imeOffset = 0;
     return (self);
 }
 
@@ -583,15 +583,15 @@ NSMutableArray* screens=0;
 - (void)setFrameSize:(NSSize)frameSize
 {
     // Force the height to always be correct
-    frameSize.height = [dataSource numberOfLines] * lineHeight + [self excess];
+    frameSize.height = [dataSource numberOfLines] * lineHeight + [self excess] + imeOffset * lineHeight;
     [super setFrameSize:frameSize];
 }
 
 static BOOL RectsEqual(NSRect* a, NSRect* b) {
         return a->origin.x == b->origin.x &&
-                   a->origin.y == b->origin.y &&
+               a->origin.y == b->origin.y &&
                a->size.width == b->size.width &&
-           a->size.height == b->size.height;
+               a->size.height == b->size.height;
 }
 
 - (void)scheduleSelectionScroll
@@ -608,7 +608,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 
     selectionScrollTimer = [[NSTimer scheduledTimerWithTimeInterval:prevScrollDelay
-                                                             target:self 
+                                                             target:self
                                                            selector:@selector(updateSelectionScroll)
                                                            userInfo:nil
                                                             repeats:NO] retain];
@@ -672,14 +672,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int height = [dataSource numberOfLines] * lineHeight;
     NSRect frame = [self frame];
 
-    NSRect visible = [self scrollViewContentSize];
-    int rows = visible.size.height / lineHeight;
-    float usablePixels = rows * lineHeight;
-    float excess = visible.size.height - usablePixels;
+    float excess = [self excess];
 
-    if ((int)(height + excess) != frame.size.height) {
+    if ((int)(height + excess + imeOffset * lineHeight) != frame.size.height) {
         // The old iTerm code had a comment about a hack at this location
-        // that worked around an (alleged) but in NSClipView not respecting
+        // that worked around an (alleged) bug in NSClipView not respecting
         // setCopiesOnScroll:YES and a gross workaround. The workaround caused
         // drawing bugs on Snow Leopard. It was a performance optimization, but
         // the penalty was too great.
@@ -693,7 +690,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         // being updated).
 
         // Resize the frame
-        frame.size.height = height;
+        frame.size.height = height + excess + imeOffset * lineHeight;
         [self setFrame:frame];
     } else if (scrollbackOverflow > 0) {
         // Some number of lines were lost from the head of the buffer.
@@ -831,7 +828,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
       return;
     }
     NSRect lastLine = [self visibleRect];
-    lastLine.origin.y = ([dataSource numberOfLines] - 1) * lineHeight + [self excess];
+    lastLine.origin.y = ([dataSource numberOfLines] - 1) * lineHeight + [self excess] + imeOffset * lineHeight;
     lastLine.size.height = lineHeight;
     [self scrollRectToVisible:lastLine];
 }
@@ -964,10 +961,24 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [self appendDebug:lineDebug];
 #endif
     NSRect excessRect;
-    excessRect.origin.x = 0;
-    excessRect.origin.y = lineEnd*lineHeight; //lineEnd * lineHeight;
-    excessRect.size.width = [[self enclosingScrollView] contentSize].width;
-    excessRect.size.height = 15; //[self excess];
+    if (imeOffset) {
+        // Draw a default-color rectangle from below the last line of text to
+        // the bottom of the frame to make sure that IME offset lines are
+        // cleared when the screen is scrolled up.
+        excessRect.origin.x = 0;
+        excessRect.origin.y = lineEnd * lineHeight;
+        excessRect.size.width = [[self enclosingScrollView] contentSize].width;
+        excessRect.size.height = [self frame].size.height - excessRect.origin.y;
+    } else  {
+        // Draw the excess bar at the bottom of the visible rect the in case
+        // that some other tab has a larger font and these lines don't fit
+        // evenly in the available space.
+        NSRect visibleRect = [self visibleRect];
+        excessRect.origin.x = 0;
+        excessRect.origin.y = visibleRect.origin.y + visibleRect.size.height - [self excess];
+        excessRect.size.width = [[self enclosingScrollView] contentSize].width;
+        excessRect.size.height = [self excess];
+    }
 #if 0
     // Draws the excess bar in a different color each time
     static int i;
@@ -1009,7 +1020,13 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
     [debug drawInRect:rect withAttributes:dct];
 #endif
-    // Draw cursor
+    // If the IME is in use, draw its contents over top of the "real" screen
+    // contents.
+    [self drawInputMethodEditorTextAt:[dataSource cursorX] - 1
+                                    y:[dataSource cursorY] - 1
+                                width:[dataSource width]
+                               height:[dataSource height]
+                         cursorHeight:[self cursorHeight]];
     [self _drawCursor];
 
 #ifdef DEBUG_DRAWING
@@ -2382,6 +2399,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         IM_INPUT_MARKEDRANGE = NSMakeRange(0, 0);
         [markedText release];
         markedText=nil;
+        imeOffset = 0;
     }
     if (startX == -1) {
         [self resetFindCursor];
@@ -2396,6 +2414,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         IM_INPUT_INSERT = YES;
     }
 
+    // In case imeOffset changed, the frame height must adjust.
+    [self refresh];
 }
 
 - (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange
@@ -2407,22 +2427,50 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 #endif
     [markedText release];
     if ([aString isKindOfClass:[NSAttributedString class]]) {
-        markedText=[[NSAttributedString alloc] initWithString:[aString string] attributes:[self markedTextAttributes]];
-    }
-    else {
-        markedText=[[NSAttributedString alloc] initWithString:aString attributes:[self markedTextAttributes]];
+        markedText = [[NSAttributedString alloc] initWithString:[aString string]
+                                                     attributes:[self markedTextAttributes]];
+    } else {
+        markedText = [[NSAttributedString alloc] initWithString:aString
+                                                     attributes:[self markedTextAttributes]];
     }
     IM_INPUT_MARKEDRANGE = NSMakeRange(0,[markedText length]);
     IM_INPUT_SELRANGE = selRange;
+
+    // Compute the proper imeOffset.
+    int dirtStart;
+    int dirtEnd;
+    int dirtMax;
+    imeOffset = 0;
+    do {
+        dirtStart = ([dataSource cursorY] - 1 - imeOffset) * [dataSource width] + [dataSource cursorX] - 1;
+        dirtEnd = dirtStart + [self inputMethodEditorLength];
+        dirtMax = [dataSource height] * [dataSource width];
+        if (dirtEnd > dirtMax) {
+            ++imeOffset;
+        }
+    } while (dirtEnd > dirtMax);
+
+    if (![markedText length]) {
+        // The call to refresh won't invalidate the IME rect because
+        // there is no IME any more. If the user backspaced over the only
+        // char in the IME buffer then this causes it be erased.
+        [self invalidateInputMethodEditorRect];
+    }
     [self refresh];
+    [self scrollEnd];
 }
 
 - (void)unmarkText
 {
+    // As far as I can tell this is never called.
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PTYTextView unmarkText]", __FILE__, __LINE__ );
 #endif
     IM_INPUT_MARKEDRANGE = NSMakeRange(0, 0);
+    imeOffset = 0;
+    [self invalidateInputMethodEditorRect];
+    [self refresh];
+    [self scrollEnd];
 }
 
 - (BOOL)hasMarkedText
@@ -3000,7 +3048,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     } else {
         c = origChar;
     }
-    
+
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
     CGContextSetTextDrawingMode(ctx, kCGTextFill);
     CGContextSetShouldAntialias(ctx, antiAlias);
@@ -3044,6 +3092,104 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 }
 
+// Compute the length, in charWidth cells, of the input method text.
+- (int)inputMethodEditorLength
+{
+    if (![self hasMarkedText]) {
+        return 0;
+    }
+    NSString* str = [markedText string];
+    int len = 0;
+    for (int i = 0; i < (int)[str length]; ++i) {
+        UniChar aChar = [str characterAtIndex:i];
+        BOOL doubleWidth = [NSString isDoubleWidthCharacter:aChar
+                                                   encoding:NSUTF32StringEncoding
+                                     ambiguousIsDoubleWidth:[[dataSource session] doubleWidth]];
+        len += doubleWidth ? 2 : 1;
+    }
+    return len;
+}
+
+- (BOOL)drawInputMethodEditorTextAt:(int)xStart y:(int)yStart width:(int)width height:(int)height cursorHeight:(float)cursorHeight
+{
+    // draw any text for NSTextInput
+    if ([self hasMarkedText]) {
+        // The following mod is brought to you by Zonble.
+        NSString* str = [markedText string];
+        int cursorX = 0;
+        int baseX = floor(xStart * charWidth + MARGIN);
+        int i;
+        int y = (yStart + [dataSource numberOfLines] - height) * lineHeight;
+        int cursorY = y;
+        int x = baseX;
+        for (i = 0; i < (int)[str length]; ++i) {
+            UniChar aChar = [str characterAtIndex:i];
+            BOOL doubleWidth = [NSString isDoubleWidthCharacter:aChar
+                                                       encoding:NSUTF32StringEncoding
+                                         ambiguousIsDoubleWidth:[[dataSource session] doubleWidth]];
+            float additionalWidth = doubleWidth ? charWidth : 0;
+            if (x + additionalWidth >= width * charWidth + MARGIN) {
+                x = MARGIN;
+                y += lineHeight;
+            }
+
+            NSRect r = NSMakeRect(x, y, charWidth + additionalWidth, lineHeight);
+            [defaultBGColor set];
+            NSRectFill(r);
+
+            [defaultFGColor set];
+            NSRect s = NSMakeRect(x,
+                                  y + lineHeight - 1,
+                                  charWidth + additionalWidth,
+                                  1);
+            NSRectFill(s);
+
+            [self _drawCharacter:aChar
+                         fgColor:0
+                             AtX:x
+                               Y:y
+                     doubleWidth:doubleWidth
+                   overrideColor:defaultFGColor];
+            if (i == (int)IM_INPUT_SELRANGE.location) {
+                cursorX = x;
+                cursorY = y;
+            }
+            x += r.size.width;
+        }
+        if (i == (int)IM_INPUT_SELRANGE.location) {
+            cursorX = x;
+            cursorY = y;
+        }
+        const float kCursorWidth = 2.0;
+        float rightMargin = MARGIN + [dataSource width] * charWidth;
+        if (cursorX + kCursorWidth >= rightMargin) {
+            // Make sure the cursor doesn't draw in the margin. Shove it left
+            // a little bit so it fits.
+            cursorX = rightMargin - kCursorWidth;
+        }
+        NSRect cursorFrame = NSMakeRect(cursorX,
+                                        cursorY,
+                                        2.0,
+                                        cursorHeight);
+        [[NSColor yellowColor] set];
+        NSRectFill(cursorFrame);
+
+        return TRUE;
+    }
+    return FALSE;
+}
+
+- (float)cursorHeight
+{
+    float cursorHeight;
+    if (lineHeight < charHeightWithoutSpacing) {
+        cursorHeight = lineHeight;
+    } else {
+        cursorHeight = charHeightWithoutSpacing;
+    }
+    return cursorHeight;
+}
+
 - (void)_drawCursor
 {
     int WIDTH, HEIGHT;
@@ -3073,11 +3219,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     } else {
         cursorWidth = charWidthWithoutSpacing;
     }
-    if (lineHeight < charHeightWithoutSpacing) {
-        cursorHeight = lineHeight;
-    } else {
-        cursorHeight = charHeightWithoutSpacing;
-    }
+    cursorHeight = [self cursorHeight];
+
 
     if ([self blinkingCursor] &&
         [[self window] isKeyWindow] &&
@@ -3088,76 +3231,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         showCursor = YES;
     }
 
-    // draw any text for NSTextInput
-    if ([self hasMarkedText]) {
-        // The following mod is brought to you by Zonble.
-        int len = [markedText length];
-        if (len > WIDTH - x1) {
-          len = WIDTH - x1;
-        }
-
-        NSString* str = [markedText string];
-        int offset = 0;
-        int cursorOffset = 0;
-        int baseX = floor(x1 * charWidth + MARGIN);
-        int i;
-        int y = (yStart + [dataSource numberOfLines] - HEIGHT) * lineHeight;
-        int cursorY = y;
-        for (i = 0; i < (int)[str length]; ++i) {
-            UniChar aChar = [str characterAtIndex:i];
-            int x = baseX + offset;
-            if (x >= WIDTH * charWidth + MARGIN) {
-                // TODO(georgen): Wrapping doesn't work. This code should be
-                // moved out of drawCursor and be part of the regular window
-                // drawing code. It should also scroll the screen as needed when
-                // the IME text is too large to fit on screen.
-                x = MARGIN;
-                y += lineHeight;
-            }
-            BOOL doubleWidth = [NSString isDoubleWidthCharacter:aChar
-                                                       encoding:NSUTF32StringEncoding
-                                         ambiguousIsDoubleWidth:[[dataSource session] doubleWidth]];
-
-            NSRect r = NSMakeRect(x, y, charWidth * (doubleWidth ? 2 : 1), lineHeight);
-            [defaultBGColor set];
-            NSRectFill(r);
-
-            [defaultFGColor set];
-            NSRect s = NSMakeRect(x, y + lineHeight - 1, charWidth * (doubleWidth ? 2 : 1), 1);
-            NSRectFill(s);
-
-            [self _drawCharacter:aChar
-                         fgColor:0
-                             AtX:x
-                               Y:y
-                     doubleWidth:doubleWidth
-                   overrideColor:defaultFGColor];
-            if (i == (int)IM_INPUT_SELRANGE.location) {
-                cursorOffset = offset;
-                cursorY = y;
-            }
-            offset += r.size.width;
-        }
-        if (i == (int)IM_INPUT_SELRANGE.location) {
-            cursorOffset = offset;
-            cursorY = y;
-        }
-
-        NSRect cursorFrame = NSMakeRect(floor(x1 * charWidth + MARGIN) + cursorOffset,
-                                        cursorY,
-                                        2.0,
-                                        cursorHeight);
-        [[NSColor yellowColor] set];
-        NSRectFill(cursorFrame);
-
-        memset([dataSource dirty] + yStart * WIDTH + x1,
-               1,
-               WIDTH - x1 > len*2 ? len*2 : WIDTH-x1); //len*2 is an over-estimation, but safe
-        return;
-    }
-
-
-    if (CURSOR) {
+    // Draw the regular cursor only if there's not an IME open as it draws its
+    // own cursor.
+    if (![self hasMarkedText] && CURSOR) {
         if (showCursor && x1 < WIDTH && x1 >= 0 && yStart >= 0 && yStart < HEIGHT) {
             // get the cursor line
             theLine = [dataSource getLineAtScreenIndex:yStart];
@@ -4063,11 +4139,25 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 #endif
         dirty += WIDTH;
     }
+    if ([self hasMarkedText]) {
+        [self invalidateInputMethodEditorRect];
+    }
     DebugLog(@"updateDirtyRects resetDirty");
 #ifdef DEBUG_DRAWING
     [self appendDebug:dirtyDebug];
 #endif
     [dataSource resetDirty];
+}
+
+- (void)invalidateInputMethodEditorRect
+{
+    int imeLines = ([dataSource cursorX] - 1 + [self inputMethodEditorLength] + 1) / [dataSource width] + 1;
+
+    NSRect imeRect = NSMakeRect(MARGIN,
+                                ([dataSource cursorY] - 1 + [dataSource numberOfLines] - [dataSource height]) * lineHeight,
+                                [dataSource width] * charWidth,
+                                imeLines * lineHeight);
+    [self setNeedsDisplayInRect:imeRect];
 }
 
 - (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView

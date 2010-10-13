@@ -163,6 +163,11 @@ typedef struct PTYFontInfo PTYFontInfo;
     int scrollingX;
     int scrollingY;
     NSPoint scrollingLocation;
+
+    // This gives the number of lines added to the bottom of the frame that do
+    // not correspond to a line in the dataSource. They are used solely for
+    // IME text.
+    int imeOffset;
 }
 
 + (NSCursor *)textViewCursor;
@@ -372,6 +377,23 @@ typedef enum {
 - (BOOL)isFutureTabSelectedAfterX:(int)x Y:(int)y;
 - (BOOL)isTabFillerOrphanAtX:(int)x Y:(int)y;
 - (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView;
+
+// Compute the number of single-wdith character spans that the input method
+// text takes up.
+- (int)inputMethodEditorLength;
+
+// Mark the entire input method editor text area as needing a redraw.
+- (void)invalidateInputMethodEditorRect;
+
+// Return the number of pixels tall to draw the cursor.
+- (float)cursorHeight;
+
+// Draw the contents of the input method editor beginning at some location, 
+// usually the cursor position.
+// xStart, yStart: cell coordinates
+// width, height: cell width, height of screen
+// cursorHeight: cursor height in pixels
+- (BOOL)drawInputMethodEditorTextAt:(int)xStart y:(int)yStart width:(int)width height:(int)height cursorHeight:(float)cursorHeight;
 
 @end
 

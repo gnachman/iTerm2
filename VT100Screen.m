@@ -413,7 +413,7 @@ static char* FormatCont(int c)
         int ox = 0;
         screen_char_t* p = [self getLineAtScreenIndex: y];
         if (p == buffer_lines) {
-            NSLog(@"--- top of buffer ---\n");
+            [result appendString:@"--- top of buffer ---\n"];
         }
         for (x = 0; x < WIDTH; ++x, ++ox) {
             if (dirty[y * WIDTH + x]) {
