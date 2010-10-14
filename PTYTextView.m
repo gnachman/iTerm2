@@ -3329,8 +3329,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                     break;
             }
         }
-
-        ([dataSource dirty] + yStart * WIDTH)[x1] = 1; //cursor loc is dirty
     }
 
     oldCursorX = x1;
@@ -3901,7 +3899,25 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 }
 
-- (BOOL) _isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old
+- (BOOL)_isAnyCharSelected
+{
+    if (startX <= -1 || (startY == endY && startX == endX)) {
+        return NO;
+    } else {
+        return YES;
+    }
+}
+
+- (BOOL)_wasAnyCharSelected
+{
+    if (oldStartX <= -1 || (oldStartY == oldEndY && oldStartX == oldEndX)) {
+        return NO;
+    } else {
+        return YES;
+    }
+}
+
+- (BOOL)_isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old
 {
     int tempStartX;
     int tempStartY;
@@ -4038,86 +4054,53 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [self appendDebug:[NSString stringWithFormat:@"updateDirtyRects called. Scrollback overflow is %d. Screen is: %@", [dataSource scrollbackOverflow], [dataSource debugString]]];
 #endif
     DebugLog(@"updateDirtyRects called");
-    int WIDTH = [dataSource width];
-    char* dirty;
-    int lineStart;
-    int lineEnd;
 
     // Check each line for dirty selected text
     // If any is found then deselect everything
-    dirty = [dataSource dirty];
-    lineStart = [dataSource numberOfLines] - [dataSource height];
-    lineEnd = [dataSource numberOfLines];
-    for (int y = lineStart; y < lineEnd && startX > -1; y++) {
-        for (int x = 0; x < WIDTH; x++) {
-            BOOL isSelected = [self _isCharSelectedInRow:y col:x checkOld:NO];
-            int cursorX = [dataSource cursorX] - 1;
-            int cursorY = [dataSource cursorY] + [dataSource numberOfLines] - [dataSource height] - 1;
-            BOOL isCursor = (x == cursorX && y == cursorY);
-            if (dirty[x] && isSelected && !isCursor) {
-                // Don't call [self deselect] as it would recurse back here
-                startX = -1;
-                DebugLog(@"found selected dirty noncursor");
-                break;
-            }
-        }
-        dirty += WIDTH;
-    }
+    [self _deselectDirtySelectedText];
 
-    // Time to redraw blinking text?
-    struct timeval now;
-    BOOL redrawBlink = NO;
-    gettimeofday(&now, NULL);
-    if(now.tv_sec*10+now.tv_usec/100000 >= lastBlink.tv_sec*10+lastBlink.tv_usec/100000+7) {
-        blinkShow = !blinkShow;
-        lastBlink = now;
-        redrawBlink = YES;
-        DebugLog(@"time to redraw blinking text");
-    }
+    // Flip blink bit if enough time has passed. Mark blinking cursor dirty
+    // when it blinks.
+    BOOL redrawBlink = [self _updateBlink];
+    int WIDTH = [dataSource width];
 
-    // Visible chars that have changed selection status are dirty
-    // Also mark blinking text as dirty if needed
-    lineStart = [self visibleRect].origin.y / lineHeight;
-    lineEnd = lineStart + ceil([self visibleRect].size.height / lineHeight);
-    if(lineStart < 0) lineStart = 0;
-    if(lineEnd > [dataSource numberOfLines]) lineEnd = [dataSource numberOfLines];
-    for(int y = lineStart; y < lineEnd; y++) {
-        screen_char_t* theLine = [dataSource getLineAtIndex:y];
-        for(int x = 0; x < WIDTH; x++) {
-            BOOL isSelected = [self _isCharSelectedInRow:y col:x checkOld:NO];
-            BOOL wasSelected = [self _isCharSelectedInRow:y col:x checkOld:YES];
-            BOOL blinked = redrawBlink && (theLine[x].fg_color & BLINK_MASK);
-            if (isSelected != wasSelected || blinked) {
-                NSRect dirtyRect = [self visibleRect];
-                dirtyRect.origin.y = y*lineHeight;
-                dirtyRect.size.height = lineHeight;
-                DebugLog([NSString stringWithFormat:@"found selection change/blink at %d,%d", x, y]);
-                [self setNeedsDisplayInRect:dirtyRect];
-                break;
-            }
-        }
-    }
-    oldStartX=startX; oldStartY=startY; oldEndX=endX; oldEndY=endY; oldSelectMode = selectMode;
+    // Any charactesr that changed selection status since the last update or
+    // are blinking should be set dirty.
+    [self _markChangedSelectionAndBlinkDirty:redrawBlink width:WIDTH];
+
+    // Copy selection position to detect change in selected chars next call.
+    oldStartX = startX; 
+    oldStartY = startY; 
+    oldEndX = endX; 
+    oldEndY = endY; 
+    oldSelectMode = selectMode;
 
     // Redraw lines with dirty characters
-    dirty = [dataSource dirty];
-    lineStart = [dataSource numberOfLines] - [dataSource height];
-    // lineStart = number of scrollback lines
-    lineEnd = [dataSource numberOfLines];
-    // lineEnd = number of scrollback lines + screen height
-    DebugLog([NSString stringWithFormat:@"Search lines [%d, %d) for dirty", lineStart, lineEnd]);
+    char* dirty = [dataSource dirty];
+    int lineStart = [dataSource numberOfLines] - [dataSource height];
+    int lineEnd = [dataSource numberOfLines];
+    // lineStart to lineEnd is the region that is the screen when the scrollbar
+    // is at the bottom of the frame.
+    if (gDebugLogging) {
+        DebugLog([NSString stringWithFormat:@"Search lines [%d, %d) for dirty", lineStart, lineEnd]);
+    }
+
 #ifdef DEBUG_DRAWING
     NSMutableString* dirtyDebug = [NSMutableString stringWithString:@"updateDirtyRects found these dirty lines:\n"];
     int screenindex=0;
 #endif
-    for(int y = lineStart; y < lineEnd; y++) {
-        for(int x = 0; x < WIDTH; x++) {
-            if(dirty[x]) {
+
+    for (int y = lineStart; y < lineEnd; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            if (dirty[x]) {
                 NSRect dirtyRect = [self visibleRect];
                 dirtyRect.origin.y = y*lineHeight;
                 dirtyRect.size.height = lineHeight;
-                DebugLog([NSString stringWithFormat:@"%d is dirty", y]);
+                if (gDebugLogging) {
+                    DebugLog([NSString stringWithFormat:@"%d is dirty", y]);
+                }
                 [self setNeedsDisplayInRect:dirtyRect];
+
 #ifdef DEBUG_DRAWING
                 char temp[100];
                 screen_char_t* p = [dataSource getLineAtScreenIndex:screenindex];
@@ -4140,9 +4123,13 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 #endif
         dirty += WIDTH;
     }
+
+    // Always mark the IME as needing to be drawn to keep things simple.
     if ([self hasMarkedText]) {
         [self invalidateInputMethodEditorRect];
     }
+
+    // Unset the dirty bit for all chars.
     DebugLog(@"updateDirtyRects resetDirty");
 #ifdef DEBUG_DRAWING
     [self appendDebug:dirtyDebug];
@@ -4267,6 +4254,108 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
     [self refresh];
+}
+
+- (void)_deselectDirtySelectedText
+{
+    if (![self _isAnyCharSelected]) {
+        return;
+    }
+
+    char* dirty = [dataSource dirty];
+    int width = [dataSource width];
+    int lineStart = [dataSource numberOfLines] - [dataSource height];
+    int lineEnd = [dataSource numberOfLines];
+    int cursorX = [dataSource cursorX] - 1;
+    int cursorY = [dataSource cursorY] + [dataSource numberOfLines] - [dataSource height] - 1;
+    for (int y = lineStart; y < lineEnd && startX > -1; y++) {
+        for (int x = 0; x < width; x++) {
+            BOOL isSelected = [self _isCharSelectedInRow:y col:x checkOld:NO];
+            BOOL isCursor = (x == cursorX && y == cursorY);
+            if (dirty[x] && isSelected && !isCursor) {
+                // Don't call [self deselect] as it would recurse back here
+                startX = -1;
+                DebugLog(@"found selected dirty noncursor");
+                break;
+            }
+        }
+        dirty += width;
+    }
+}
+
+- (BOOL) _updateBlink {
+    // Time to redraw blinking text or cursor?
+    struct timeval now;
+    BOOL redrawBlink = NO;
+    gettimeofday(&now, NULL);
+    long long nowTenths = now.tv_sec * 10 + now.tv_usec / 100000;
+    long long lastBlinkTenths = lastBlink.tv_sec * 10 + lastBlink.tv_usec / 100000;
+    if (nowTenths >= lastBlinkTenths + 7) {
+        blinkShow = !blinkShow;
+        lastBlink = now;
+        redrawBlink = YES;
+
+        if ([self blinkingCursor] &&
+            [[self window] isKeyWindow]) {
+            // Blink flag flipped and there is a blinking cursor. Mark it dirty.
+            int cursorX = [dataSource cursorX] - 1;
+            int cursorY = [dataSource cursorY] - 1;
+            [dataSource dirty][cursorY * [dataSource width] + cursorX] = 1;
+        }
+        DebugLog(@"time to redraw blinking text");
+    }
+  return redrawBlink;
+}
+
+- (void)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width
+{
+    // Visible chars that have changed selection status are dirty
+    // Also mark blinking text as dirty if needed
+    int lineStart = [self visibleRect].origin.y / lineHeight;
+    int lineEnd = lineStart + ceil([self visibleRect].size.height / lineHeight);
+    if (lineStart < 0) {
+        lineStart = 0;
+    }
+    if (lineEnd > [dataSource numberOfLines]) {
+        lineEnd = [dataSource numberOfLines];
+    }
+    if ([self _isAnyCharSelected] || [self _wasAnyCharSelected]) {
+        for (int y = lineStart; y < lineEnd; y++) {
+            screen_char_t* theLine = [dataSource getLineAtIndex:y];
+            for (int x = 0; x < width; x++) {
+                BOOL isSelected = [self _isCharSelectedInRow:y col:x checkOld:NO];
+                BOOL wasSelected = [self _isCharSelectedInRow:y col:x checkOld:YES];
+                BOOL blinked = redrawBlink && (theLine[x].fg_color & BLINK_MASK);
+                if (isSelected != wasSelected || blinked) {
+                    NSRect dirtyRect = [self visibleRect];
+                    dirtyRect.origin.y = y*lineHeight;
+                    dirtyRect.size.height = lineHeight;
+                    if (gDebugLogging) {
+                        DebugLog([NSString stringWithFormat:@"found selection change/blink at %d,%d", x, y]);
+                    }
+                    [self setNeedsDisplayInRect:dirtyRect];
+                    break;
+                }
+            }
+        }
+    } else {
+        for (int y = lineStart; y < lineEnd; y++) {
+            screen_char_t* theLine = [dataSource getLineAtIndex:y];
+            for (int x = 0; x < width; x++) {
+                BOOL blinked = redrawBlink && (theLine[x].fg_color & BLINK_MASK);
+                if (blinked) {
+                    NSRect dirtyRect = [self visibleRect];
+                    dirtyRect.origin.y = y*lineHeight;
+                    dirtyRect.size.height = lineHeight;
+                    if (gDebugLogging) {
+                        DebugLog([NSString stringWithFormat:@"found selection change/blink at %d,%d", x, y]);
+                    }
+                    [self setNeedsDisplayInRect:dirtyRect];
+                    break;
+                }
+            }
+        }
+    }
 }
 
 @end

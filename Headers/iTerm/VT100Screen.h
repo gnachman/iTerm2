@@ -50,8 +50,8 @@
 {
     int WIDTH; // width of screen
     int HEIGHT; // height of screen
-    int CURSOR_X;
-    int CURSOR_Y;
+    int cursorX;
+    int cursorY;
     int SAVE_CURSOR_X;
     int SAVE_CURSOR_Y;
     int ALT_SAVE_CURSOR_X;

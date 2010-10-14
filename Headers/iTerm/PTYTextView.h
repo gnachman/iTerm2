@@ -395,5 +395,13 @@ typedef enum {
 // cursorHeight: cursor height in pixels
 - (BOOL)drawInputMethodEditorTextAt:(int)xStart y:(int)yStart width:(int)width height:(int)height cursorHeight:(float)cursorHeight;
 
+// Returns true if any character in the buffer is selected.
+- (BOOL)_isAnyCharSelected;
+- (BOOL)_wasAnyCharSelected;
+
+- (void)_deselectDirtySelectedText;
+- (BOOL) _updateBlink;
+- (void)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width;
+
 @end
 
