@@ -1676,8 +1676,8 @@ static VT100TCC decode_string(unsigned char *datap,
         current_stream_length = 0;
 
         if (total_stream_length >= STANDARD_STREAM_SIZE * 2) {
-        // We are done with this stream. Get rid of it and allocate a new one
-        // to avoid allowing this to grow too big.
+            // We are done with this stream. Get rid of it and allocate a new one
+            // to avoid allowing this to grow too big.
             free(STREAM);
             total_stream_length = STANDARD_STREAM_SIZE;
             STREAM = malloc(total_stream_length);
@@ -1757,7 +1757,7 @@ static VT100TCC decode_string(unsigned char *datap,
             DebugLog([NSString stringWithFormat:@"Read %d bytes: %s", result.length, loginfo]);
         }
     }
-    
+
     return result;
 }
 

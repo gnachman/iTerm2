@@ -38,6 +38,7 @@
 #import <iTerm/iTermKeyBindingMgr.h>
 #import <iTerm/ITAddressBookMgr.h>
 #import <iTerm/iTermGrowlDelegate.h>
+#import "iTermApplicationDelegate.h"
 
 #include <unistd.h>
 #include <sys/wait.h>
@@ -62,6 +63,16 @@ static NSColor *newOutputStateColor;
 static NSColor *deadStateColor;
 
 static NSImage *warningImage;
+// Timer period when all we have to do is update blinking text/cursor.
+const float kBlinkTimerIntervalSec = 1.0 / 2.0;
+// Timer period when receiving lots of data.
+const float kSlowTimerIntervalSec = 1.0 / 10.0;
+// Timer period for interactive use.
+const float kFastTimerIntervalSec = 1.0 / 30.0;
+// Timer period for background sessions. If it ran too infrequently then
+// we'd probably hit weird edge cases.
+// TODO(georgen): There's room for improvement here.
+const float kBackgroundSessionIntervalSec = 10;
 
 + (void)initialize
 {
@@ -351,6 +362,11 @@ static NSImage *warningImage;
     if ([data length] == 0 || EXIT) {
         return;
     }
+    if (gDebugLogging) {
+      char* bytes = [data bytes];
+      int length = [data length];
+      DebugLog([NSString stringWithFormat:@"readTask called with %d bytes. The last byte is %d", (int)length, (int)bytes[length-1]]);
+    }
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PTYSession readTask:%@]", __FILE__, __LINE__,
@@ -381,7 +397,15 @@ static NSImage *warningImage;
     newOutput=YES;
 
     // Make sure the screen gets redrawn soonish
-    [self scheduleUpdateSoon:YES];
+    if ([parent currentSession] == self) {
+        if ([data length] < 1024) {
+            [self scheduleUpdateIn:kFastTimerIntervalSec];
+        } else {
+            [self scheduleUpdateIn:kSlowTimerIntervalSec];
+        }
+    } else {
+        [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
+    }
 }
 
 - (void)brokenPipe
@@ -806,9 +830,6 @@ static NSImage *warningImage;
     if (data != nil) {
         [self writeTask:data];
     }
-    // let the update thred update display if a key is being held down
-    /*if([TEXTVIEW keyIsARepeat] == NO)
-        [self updateDisplay];*/
 }
 
 - (void)insertNewline:(id)sender
@@ -1853,30 +1874,34 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 
     [TEXTVIEW refresh];
     [self updateScroll];
-    [self scheduleUpdateSoon:NO];
+
+    if ([parent currentSession] == self) {
+        [self scheduleUpdateIn:kBlinkTimerIntervalSec];
+    } else {
+        [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
+    }
 }
 
-- (void)scheduleUpdateSoon:(BOOL)soon
+- (void)scheduleUpdateIn:(NSTimeInterval)timeout
 {
     // This method ensures regular updates for text blinking, but allows
     // for quicker (soon=YES) updates to draw newly read text from PTYTask
+    BOOL soon = timeout < kBlinkTimerIntervalSec;
 
     if (soon && [updateTimer isValid] && [[updateTimer userInfo] intValue]) {
+        // A faster-than-blinking update is already scheduled. Let it come when
+        // it will. This prevents repeated calls to this function from pushing
+        // the timer back and reducing its frequency unfairly.
         return;
     }
 
     [updateTimer invalidate];
     [updateTimer release];
 
-    NSTimeInterval timeout = 0.5;
-    if (soon) {
-        timeout = (0.001 + 0.001*[[PreferencePanel sharedInstance] refreshRate]);
-    }
-
     updateTimer = [[NSTimer scheduledTimerWithTimeInterval:timeout
-            target:self selector:@selector(updateDisplay)
-            userInfo:[NSNumber numberWithInt:soon?1:0]
-            repeats:NO] retain];
+                                                    target:self selector:@selector(updateDisplay)
+                                                  userInfo:[NSNumber numberWithInt:soon ? 1 : 0]
+                                                   repeats:NO] retain];
 }
 
 - (void)doAntiIdle

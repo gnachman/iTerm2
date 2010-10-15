@@ -122,10 +122,6 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *openBookmark;
     BOOL defaultOpenBookmark;
 
-    // display refresh rate
-    IBOutlet NSSlider *refreshRate;
-    int  defaultRefreshRate;
-
     // quit when all windows are closed
     IBOutlet NSButton *quitWhenAllWindowsClosed;
     BOOL defaultQuitWhenAllWindowsClosed;
@@ -330,7 +326,6 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 - (BOOL)maxVertically;
 - (BOOL)useCompactLabel;
 - (BOOL)openBookmark;
-- (int)refreshRate;
 - (NSString *)wordChars;
 - (ITermCursorType)cursorType;
 - (BOOL)useBorder;

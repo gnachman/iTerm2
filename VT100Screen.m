@@ -375,6 +375,9 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     if (cursorX >= 0 && cursorX < WIDTH && cursorY >= 0 && cursorY < HEIGHT) {
         dirty[cursorX + cursorY * WIDTH] = 1;
     }
+    if (gDebugLogging) {
+      DebugLog([NSString stringWithFormat:@"Move cursor to %d,%d", x, y]);
+    }
     cursorX = x;
     cursorY = y;
     if (cursorX >= 0 && cursorX < WIDTH && cursorY >= 0 && cursorY < HEIGHT) {
@@ -1329,9 +1332,9 @@ static void DumpBuf(screen_char_t* p, int n) {
     screen_char_t *aLine;
 
     if (gDebugLogging) {
-        DebugLog([NSString stringWithFormat:@"setString: %d chars starting with %c at line %d",
+        DebugLog([NSString stringWithFormat:@"setString: %d chars starting with %c at x=%d, y=%d, line=%d",
                   [string length], [string characterAtIndex:0],
-                  cursorY + current_scrollback_lines]);
+                  cursorX, cursorY, cursorY + current_scrollback_lines]);
     }
 
 #if DEBUG_METHOD_TRACE
@@ -1638,10 +1641,6 @@ static void DumpBuf(screen_char_t* p, int n) {
     if (dynamicBuffer) {
         free(dynamicBuffer);
     }
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"setString done at %d", cursorX);
-#endif
 }
 
 - (void)setStringToX:(int)x

@@ -249,7 +249,6 @@
 // Display timer stuff
 - (void)updateDisplay;
 - (void)doAntiIdle;
-- (void)scheduleUpdateSoon:(BOOL)soon;
 - (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Bookmark*)aDict;
 - (void)updateScroll;
 
@@ -262,6 +261,9 @@
 // affect it. Returns the GUID of a divorced bookmark. Does nothing if already
 // divorced, but still returns the divorced GUID.
 - (NSString*)divorceAddressBookEntryFromPreferences;
+
+// Schedule the screen update timer to run in a specified number of seconds.
+- (void)scheduleUpdateIn:(NSTimeInterval)timeout;
 
 @end
 

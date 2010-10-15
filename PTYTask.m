@@ -33,7 +33,7 @@
 // Use this instead to debug this module:
 // #define PtyTaskDebugLog NSLog
 
-#define MAXRW 2048
+#define MAXRW 1024
 
 #import <Foundation/Foundation.h>
 
@@ -254,10 +254,10 @@ static TaskNotifier* taskNotifier = nil;
                 CFSetAddValue(handledFds, (void*)fd);
 
                 if (FD_ISSET(fd, &rfds)) {
-                    PtyTaskDebugLog(@"run/processREad: unlock");
+                    PtyTaskDebugLog(@"run/processRead: unlock");
                     [tasksLock unlock];
                     [task processRead];
-                    PtyTaskDebugLog(@"run/processREad: lock");
+                    PtyTaskDebugLog(@"run/processRead: lock");
                     [tasksLock lock];
                     if (tasksChanged) {
                         PtyTaskDebugLog(@"Restart iteration\n");
@@ -509,19 +509,39 @@ static void reapchild(int n)
     NSLog(@"%s(%d):+[PTYTask processRead]", __FILE__, __LINE__);
 #endif
 
-    // Only write up to MAXRW bytes, then release control
-    NSMutableData* data = [NSMutableData dataWithLength:MAXRW];
-    ssize_t bytesread = read(fd, [data mutableBytes], MAXRW);
+    int iterations = 10;
+    int bytesRead = 0;
 
-    // No data?
-    if ((bytesread < 0) && (!(errno == EAGAIN || errno == EINTR))) {
-        [self brokenPipe];
-        return;
+    NSMutableData* data = [NSMutableData dataWithLength:MAXRW * iterations];
+    for (int i = 0; i < iterations; ++i) {
+        // Only read up to MAXRW*iterations bytes, then release control
+        ssize_t n = read(fd, [data mutableBytes] + bytesRead, MAXRW);
+        if (n < 0) {
+            // There was a read error.
+            if (errno != EAGAIN && errno != EINTR) {
+                // It was a serious error.
+                [self brokenPipe];
+                return;
+            } else {
+                // We could read again in the case of EINTR but it would
+                // complicate the code with little advantage. Just bail out.
+                n = 0;
+            }
+        }
+        bytesRead += n;
+        if (n < MAXRW) {
+            // If we read fewer bytes than expected, return. For some apparently
+            // undocumented reason, read() never returns more than 1024 bytes
+            // (at least on OS 10.6), so that's what MAXRW is set to. If that
+            // ever goes down this'll break.
+            break;
+        }
     }
 
-    // Send data to the terminal
-    [data setLength:bytesread];
+    [data setLength:bytesRead];
     hasOutput = YES;
+
+    // Send data to the terminal
     [self readTask:data];
 }
 
@@ -588,7 +608,8 @@ static void reapchild(int n)
     // forward the data to our delegate
     if ([delegate respondsToSelector:@selector(readTask:)]) {
         [delegate performSelectorOnMainThread:@selector(readTask:)
-                  withObject:data waitUntilDone:YES];
+                                   withObject:data 
+                                waitUntilDone:YES];
     }
 }
 

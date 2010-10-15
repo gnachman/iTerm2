@@ -355,7 +355,6 @@ static float versionNumber;
     defaultCmdSelection = [prefs objectForKey:@"CommandSelection"]?[[prefs objectForKey:@"CommandSelection"] boolValue]: YES;
     defaultMaxVertically = [prefs objectForKey:@"MaxVertically"]?[[prefs objectForKey:@"MaxVertically"] boolValue]: YES;
     defaultUseCompactLabel = [prefs objectForKey:@"UseCompactLabel"]?[[prefs objectForKey:@"UseCompactLabel"] boolValue]: YES;
-    defaultRefreshRate = [prefs objectForKey:@"RefreshRate"]?[[prefs objectForKey:@"RefreshRate"] intValue]: 10;
     [defaultWordChars release];
     defaultWordChars = [prefs objectForKey: @"WordCharacters"]?[[prefs objectForKey: @"WordCharacters"] retain]:@"/-+\\~_.";
     defaultOpenBookmark = [prefs objectForKey:@"OpenBookmark"]?[[prefs objectForKey:@"OpenBookmark"] boolValue]: NO;
@@ -440,7 +439,6 @@ static float versionNumber;
     [prefs setBool:defaultCmdSelection forKey:@"CommandSelection"];
     [prefs setBool:defaultMaxVertically forKey:@"MaxVertically"];
     [prefs setBool:defaultUseCompactLabel forKey:@"UseCompactLabel"];
-    [prefs setInteger:defaultRefreshRate forKey:@"RefreshRate"];
     [prefs setObject: defaultWordChars forKey: @"WordCharacters"];
     [prefs setBool:defaultOpenBookmark forKey:@"OpenBookmark"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
@@ -485,7 +483,6 @@ static float versionNumber;
     [maxVertically setState: defaultMaxVertically?NSOnState:NSOffState];
     [useCompactLabel setState: defaultUseCompactLabel?NSOnState:NSOffState];
     [openBookmark setState: defaultOpenBookmark?NSOnState:NSOffState];
-    [refreshRate setIntValue: defaultRefreshRate];
     [wordChars setStringValue: ([defaultWordChars length] > 0)?defaultWordChars:@""];
     [quitWhenAllWindowsClosed setState: defaultQuitWhenAllWindowsClosed?NSOnState:NSOffState];
     [checkUpdate setState: defaultCheckUpdate?NSOnState:NSOffState];
@@ -547,7 +544,6 @@ static float versionNumber;
         defaultCmdSelection = ([cmdSelection state] == NSOnState);
         defaultMaxVertically = ([maxVertically state] == NSOnState);
         defaultOpenBookmark = ([openBookmark state] == NSOnState);
-        defaultRefreshRate = [refreshRate intValue];
         [defaultWordChars release];
         defaultWordChars = [[wordChars stringValue] retain];
         defaultQuitWhenAllWindowsClosed = ([quitWhenAllWindowsClosed state] == NSOnState);
@@ -673,11 +669,6 @@ static float versionNumber;
 - (BOOL)openBookmark
 {
     return defaultOpenBookmark;
-}
-
-- (int)refreshRate
-{
-    return defaultRefreshRate;
 }
 
 - (NSString *)wordChars
