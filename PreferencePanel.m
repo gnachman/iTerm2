@@ -896,7 +896,7 @@ static float versionNumber;
         return [NSString stringWithFormat:@"%c", 'A' + tag];
     }
     if (tag >= 100 && tag <= 109) {
-        return [NSString stringWithFormat:@"%c", '0' + tag];
+        return [NSString stringWithFormat:@"%c", '0' + tag - 100];
     }
     return @"";
 }
