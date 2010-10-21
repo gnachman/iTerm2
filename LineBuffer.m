@@ -507,7 +507,10 @@ static int Search(NSString* needle,
                                                        encoding:encoding
                                                    freeWhenDone:NO] autorelease];
 
-    int apiOptions = NSBackwardsSearch;
+    int apiOptions = 0;
+    if (options & FindOptBackwards) {
+        apiOptions |= NSBackwardsSearch;
+    }
     if (options & FindOptCaseInsensitive) {
         apiOptions |= NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch | NSWidthInsensitiveSearch;
     }
@@ -520,7 +523,7 @@ static int Search(NSString* needle,
         adjustedLength = range.length + deltas[range.location + range.length] -
             deltas[range.location];
         *resultLength = adjustedLength;
-        result = adjustedLocation;
+        result = adjustedLocation + start;
     }
     free(deltas);
     free(charHaystack);
