@@ -95,7 +95,8 @@
 #define KEY_ACTION_HEX_CODE				11
 #define KEY_ACTION_TEXT                 12
 #define KEY_ACTION_IGNORE				13
-
+#define KEY_ACTION_IR_FORWARD           14
+#define KEY_ACTION_IR_BACKWARD          15
 
 @interface iTermKeyBindingMgr : NSObject {
 }

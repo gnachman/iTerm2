@@ -181,18 +181,19 @@ static BOOL initDone = NO;
     [NSApp _cycleWindowsReversed:NO];
 }
 
-- (PseudoTerminal *) currentTerminal
+- (PseudoTerminal*)currentTerminal
 {
     return (FRONT);
 }
 
-- (void) terminalWillClose: (PseudoTerminal *) theTerminalWindow
+- (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow
 {
-    if(FRONT == theTerminalWindow)
+    if (FRONT == theTerminalWindow) {
         [self setCurrentTerminal: nil];
-
-    if(theTerminalWindow)
-        [self removeFromTerminalsAtIndex: [terminalWindows indexOfObject: theTerminalWindow]];
+    }
+    if (theTerminalWindow) {
+        [self removeFromTerminalsAtIndex:[terminalWindows indexOfObject:theTerminalWindow]];
+    }
 }
 
 // Build sorted list of encodings
@@ -297,6 +298,11 @@ static BOOL initDone = NO;
         [aMenuItem setTarget:self];
         [aMenu addItem:aMenuItem];
     }
+}
+
+- (void)irAdvance:(int)dir
+{
+    [FRONT irAdvance:dir];
 }
 
 // Executes an addressbook command in new window or tab

@@ -29,7 +29,6 @@
  */
 
 #import <iTerm/VT100Terminal.h>
-#import <iTerm/PseudoTerminal.h>
 #import <iTerm/PTYSession.h>
 #import <iTerm/VT100Screen.h>
 #import <iTerm/NSStringITerm.h>

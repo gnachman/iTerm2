@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
+		1D173859126C820A004622DC /* FakeWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D173857126C820A004622DC /* FakeWindow.h */; };
+		1D17385A126C820A004622DC /* FakeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D173858126C820A004622DC /* FakeWindow.m */; };
 		1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */; };
 		1D5FDD411208E8F000C46BA3 /* NSStringITerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 872EBC5304E42E320073D10E /* NSStringITerm.h */; };
 		1D5FDD421208E8F000C46BA3 /* PTYTextView.h in Headers */ = {isa = PBXBuildFile; fileRef = 872EBC5404E42E320073D10E /* PTYTextView.h */; };
@@ -133,6 +135,16 @@
 		1D72439011F416F300BD4924 /* LineBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72438F11F416F300BD4924 /* LineBuffer.h */; };
 		1D72477411F55E5700BD4924 /* LineBufferTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72477211F55E5700BD4924 /* LineBufferTest.h */; };
 		1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */; };
+		1D93D33512695442007F741B /* DVR.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D33312695442007F741B /* DVR.h */; };
+		1D93D33612695442007F741B /* DVR.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D93D33412695442007F741B /* DVR.m */; };
+		1D93D3471269741B007F741B /* DVRBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D3451269741B007F741B /* DVRBuffer.h */; };
+		1D93D34B1269746F007F741B /* DVRIndexEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D3491269746F007F741B /* DVRIndexEntry.h */; };
+		1D93D34F126974BC007F741B /* DVRDecoder.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D34D126974BC007F741B /* DVRDecoder.h */; };
+		1D93D350126974BC007F741B /* DVRDecoder.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D93D34E126974BC007F741B /* DVRDecoder.m */; };
+		1D93D35312697529007F741B /* DVREncoder.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D35112697529007F741B /* DVREncoder.h */; };
+		1D93D35412697529007F741B /* DVREncoder.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D93D35212697529007F741B /* DVREncoder.m */; };
+		1D93D35A1269778C007F741B /* DVRBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D93D3591269778C007F741B /* DVRBuffer.m */; };
+		1D93D3B112697D53007F741B /* DVRIndexEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D93D3B012697D53007F741B /* DVRIndexEntry.m */; };
 		1DA9BD0D122F1077002FCC65 /* star-gold24.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA9BD0C122F1077002FCC65 /* star-gold24.png */; };
 		1DCA8BA9121A1B8000ABDEB5 /* PrefsAdvanced.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA3121A1B8000ABDEB5 /* PrefsAdvanced.tiff */; };
 		1DCA8BAA121A1B8000ABDEB5 /* PrefsBookmarks.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA4121A1B8000ABDEB5 /* PrefsBookmarks.tiff */; };
@@ -140,6 +152,7 @@
 		1DCA8BAC121A1B8000ABDEB5 /* PrefsGeneral.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA6121A1B8000ABDEB5 /* PrefsGeneral.tiff */; };
 		1DCA8BAD121A1B8000ABDEB5 /* PrefsKeyboard.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA7121A1B8000ABDEB5 /* PrefsKeyboard.tiff */; };
 		1DCA8BAE121A1B8000ABDEB5 /* PrefsTerminal.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA8121A1B8000ABDEB5 /* PrefsTerminal.tiff */; };
+		1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */; };
 		1DCF3CB71222FF1400AD56F1 /* PresetKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */; };
 		1DCF3E8F122419D200AD56F1 /* BookmarkModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */; };
 		1DCF3EC61224D03D00AD56F1 /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
@@ -217,6 +230,8 @@
 		0464AB2F006CD2EC7F000001 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		0464AB30006CD2EC7F000001 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		1D13EADB12113A2D00909F9C /* libncurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libncurses.dylib; path = usr/lib/libncurses.dylib; sourceTree = SDKROOT; };
+		1D173857126C820A004622DC /* FakeWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FakeWindow.h; sourceTree = "<group>"; };
+		1D173858126C820A004622DC /* FakeWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FakeWindow.m; sourceTree = "<group>"; };
 		1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultGlobalKeyMap.plist; sourceTree = "<group>"; };
 		1D6C4D59122329F000E0AA3E /* ColorPresets.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ColorPresets.plist; sourceTree = "<group>"; };
 		1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkListView.h; sourceTree = "<group>"; };
@@ -226,6 +241,16 @@
 		1D72477211F55E5700BD4924 /* LineBufferTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferTest.h; sourceTree = "<group>"; };
 		1D72477311F55E5700BD4924 /* LineBufferTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferTest.m; sourceTree = "<group>"; };
 		1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = EncodingsWithLowerCase.plist; sourceTree = "<group>"; };
+		1D93D33312695442007F741B /* DVR.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DVR.h; sourceTree = "<group>"; };
+		1D93D33412695442007F741B /* DVR.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DVR.m; sourceTree = "<group>"; };
+		1D93D3451269741B007F741B /* DVRBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DVRBuffer.h; sourceTree = "<group>"; };
+		1D93D3491269746F007F741B /* DVRIndexEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DVRIndexEntry.h; sourceTree = "<group>"; };
+		1D93D34D126974BC007F741B /* DVRDecoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DVRDecoder.h; sourceTree = "<group>"; };
+		1D93D34E126974BC007F741B /* DVRDecoder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DVRDecoder.m; sourceTree = "<group>"; };
+		1D93D35112697529007F741B /* DVREncoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DVREncoder.h; sourceTree = "<group>"; };
+		1D93D35212697529007F741B /* DVREncoder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DVREncoder.m; sourceTree = "<group>"; };
+		1D93D3591269778C007F741B /* DVRBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DVRBuffer.m; sourceTree = "<group>"; };
+		1D93D3B012697D53007F741B /* DVRIndexEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DVRIndexEntry.m; sourceTree = "<group>"; };
 		1DA9BD0C122F1077002FCC65 /* star-gold24.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "star-gold24.png"; path = "images/star-gold24.png"; sourceTree = "<group>"; };
 		1DCA8BA3121A1B8000ABDEB5 /* PrefsAdvanced.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsAdvanced.tiff; path = images/PrefsAdvanced.tiff; sourceTree = "<group>"; };
 		1DCA8BA4121A1B8000ABDEB5 /* PrefsBookmarks.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsBookmarks.tiff; path = images/PrefsBookmarks.tiff; sourceTree = "<group>"; };
@@ -233,6 +258,7 @@
 		1DCA8BA6121A1B8000ABDEB5 /* PrefsGeneral.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsGeneral.tiff; path = images/PrefsGeneral.tiff; sourceTree = "<group>"; };
 		1DCA8BA7121A1B8000ABDEB5 /* PrefsKeyboard.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsKeyboard.tiff; path = images/PrefsKeyboard.tiff; sourceTree = "<group>"; };
 		1DCA8BA8121A1B8000ABDEB5 /* PrefsTerminal.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsTerminal.tiff; path = images/PrefsTerminal.tiff; sourceTree = "<group>"; };
+		1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WindowControllerInterface.h; sourceTree = "<group>"; };
 		1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = PresetKeyMappings.plist; sourceTree = "<group>"; };
 		1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarkModel.m; sourceTree = "<group>"; };
 		1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultBookmark.plist; sourceTree = "<group>"; };
@@ -449,6 +475,14 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */,
+				1D173857126C820A004622DC /* FakeWindow.h */,
+				1D173858126C820A004622DC /* FakeWindow.m */,
+				1D93D33412695442007F741B /* DVR.m */,
+				1D93D3591269778C007F741B /* DVRBuffer.m */,
+				1D93D34E126974BC007F741B /* DVRDecoder.m */,
+				1D93D35212697529007F741B /* DVREncoder.m */,
+				1D93D3B012697D53007F741B /* DVRIndexEntry.m */,
 				1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */,
 				1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */,
 				1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */,
@@ -480,6 +514,11 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				1D93D35112697529007F741B /* DVREncoder.h */,
+				1D93D3491269746F007F741B /* DVRIndexEntry.h */,
+				1D93D3451269741B007F741B /* DVRBuffer.h */,
+				1D93D33312695442007F741B /* DVR.h */,
+				1D93D34D126974BC007F741B /* DVRDecoder.h */,
 				1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */,
 				1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */,
 				1DE5EBE6122B892900C736B0 /* BookmarksWindow.h */,
@@ -825,6 +864,13 @@
 				1DCF3F4A1225F6F200AD56F1 /* BookmarkModel.h in Headers */,
 				1D6C50A71226EEFB00E0AA3E /* BookmarkListView.h in Headers */,
 				1DE5EBE8122B892900C736B0 /* BookmarksWindow.h in Headers */,
+				1D93D33512695442007F741B /* DVR.h in Headers */,
+				1D93D3471269741B007F741B /* DVRBuffer.h in Headers */,
+				1D93D34B1269746F007F741B /* DVRIndexEntry.h in Headers */,
+				1D93D34F126974BC007F741B /* DVRDecoder.h in Headers */,
+				1D93D35312697529007F741B /* DVREncoder.h in Headers */,
+				1D173859126C820A004622DC /* FakeWindow.h in Headers */,
+				1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1064,6 +1110,12 @@
 				1DCF3E8F122419D200AD56F1 /* BookmarkModel.m in Sources */,
 				1D6C50A81226EEFB00E0AA3E /* BookmarkListView.m in Sources */,
 				1DE5EBE9122B892900C736B0 /* BookmarksWindow.m in Sources */,
+				1D93D33612695442007F741B /* DVR.m in Sources */,
+				1D93D350126974BC007F741B /* DVRDecoder.m in Sources */,
+				1D93D35412697529007F741B /* DVREncoder.m in Sources */,
+				1D93D35A1269778C007F741B /* DVRBuffer.m in Sources */,
+				1D93D3B112697D53007F741B /* DVRIndexEntry.m in Sources */,
+				1D17385A126C820A004622DC /* FakeWindow.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1279,11 +1331,7 @@
 		BB024D3A096EE4080021E793 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					i386,
-					x86_64,
-					ppc,
-				);
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_1)",

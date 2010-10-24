@@ -31,21 +31,22 @@
 #import <iTerm/PTYTabView.h>
 #import <iTerm/PTYWindow.h>
 #import <BookmarkListView.h>
+#import "WindowControllerInterface.h"
 
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
 
-// The FindBar's view is of this class. It overrides drawing the background.
-@interface FindBarView : NSView
+// The BottomBar's view is of this class. It overrides drawing the background.
+@interface BottomBarView : NSView
 {
 }
 - (void)drawRect:(NSRect)dirtyRect;
 
 @end
 
-// This class is 1:1 with windows. It controls the tabs, findbar, toolbar,
+// This class is 1:1 with windows. It controls the tabs, bottombar, toolbar,
 // fullscreen, and coordinates resizing of sessions (either session-initiated
 // or window-initiated).
-@interface PseudoTerminal : NSWindowController <PTYTabViewDelegateProtocol, PTYWindowDelegateProtocol>
+@interface PseudoTerminal : NSWindowController <PTYTabViewDelegateProtocol, PTYWindowDelegateProtocol, WindowControllerInterface>
 {
     ////////////////////////////////////////////////////////////////////////////
     // Parameter Panel
@@ -58,11 +59,12 @@
     IBOutlet NSTextField *parameterPrompt;
 
     ////////////////////////////////////////////////////////////////////////////
-    // FindBar
+    // BottomBar
     // UI elements for searching the current session.
 
     // This contains all the other elements.
-    IBOutlet FindBarView* findBarSubview;
+    IBOutlet BottomBarView* findBarSubview;
+    IBOutlet BottomBarView* instantReplaySubview;
 
     // The text that is being searched for.
     IBOutlet NSTextField* findBarTextField;
@@ -80,9 +82,9 @@
     // Find happens incrementally. This remembers the string to search for.
     NSMutableString* previousFindString;
 
-    // Contains only findBarSubview. For whatever reason, adding the FindBarView
+    // Contains only bottomBarSubview. For whatever reason, adding the BottomBarView
     // directly to the window doesn't work.
-    NSView* findBar;
+    NSView* bottomBar;
 
     // Find runs out of a timer so that if you have a huge buffer then it
     // doesn't lock up. This timer runs the show.
@@ -156,6 +158,12 @@
     // This is set while toggling full screen. It prevents windowDidResignMain
     // from trying to exit fullscreen mode in the midst of toggling it.
     BOOL togglingFullScreen_;
+
+    // Instant Replay widgets.
+    IBOutlet NSSlider* irSlider;
+    IBOutlet NSTextField* earliestTime;
+    IBOutlet NSTextField* latestTime;
+    IBOutlet NSTextField* currentTime;
 }
 
 // Initialize a new PseudoTerminal.
@@ -256,17 +264,31 @@
 // Search for the currently selected text.
 - (void)findWithSelection;
 
-// Called when the findbar or the command text field changes.
+// Called when the bottomBar or the command text field changes.
 - (void)controlTextDidChange:(NSNotification *)aNotification;
 
-// Toggle findbar.
+// Toggle bottomBar.
+- (void)showHideBottomBar;
+
+// Toggle find bar.
 - (void)showHideFindBar;
 
+// Toggle IR bar.
+- (void)showHideInstantReplay;
+
+// Arrange IR and Find bar views within bottom bar.
+- (void)arrangeBottomBarSubviews;
+
+// Move backward/forward in time by one frame.
+- (void)irAdvance:(int)dir;
+
+// Called when next/prev frame button is clicked.
+- (IBAction)irButton:(id)sender;
 
 ////////////////////////////////////////////////////////////////////////////////
 // NSTextField Delegate Methods
 
-// Called when return or tab is pressed in the findbar text field or the command
+// Called when return or tab is pressed in the bottombar text field or the command
 // field.
 - (void)controlTextDidEndEditing:(NSNotification *)aNotification;
 
@@ -405,6 +427,41 @@
 
 // Called when the close button in the find bar is pressed.
 - (IBAction)closeFindBar:(id)sender;
+- (IBAction)closeInstantReplay:(id)sender;
+
+// Force the window size to change to be just large enough to fit this session.
+- (void)fitWindowToSession:(PTYSession*)session;
+
+// Replace a replay session with a live session.
+- (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession;
+
+// Update irBar.
+- (void)updateInstantReplay;
+
+// accessor
+- (BOOL)sendInputToAllSessions;
+
+-(void)replaySession:(PTYSession *)session;
+
+// WindowControllerInterface protocol
+- (void)windowSetFrameTopLeftPoint:(NSPoint)point;
+- (void)windowPerformMiniaturize:(id)sender;
+- (void)windowDeminiaturize:(id)sender;
+- (void)windowOrderFront:(id)sender;
+- (void)windowOrderBack:(id)sender;
+- (BOOL)windowIsMiniaturized;
+- (NSRect)windowFrame;
+- (NSScreen*)windowScreen;
+
+- (IBAction)irSliderMoved:(id)sender;
+
+// Show or hide as needed for current session.
+- (void)showOrHideInstantReplayBar;
+
+// Advance to next or previous time step
+- (IBAction)irPrev:(id)sender;
+- (IBAction)irNext:(id)sender;
+
 
 @end
 
@@ -463,9 +520,6 @@
           cmdPath:(NSString **)cmd
           cmdArgs:(NSArray **)path;
 
-// Force the window size to change to be just large enough to fit this session.
-- (void)fitWindowToSession:(PTYSession*)session;
-
 // Force the window size to change to be just large enough to fit the widest and
 // tallest sessions.
 - (void)fitWindowToSessions;
@@ -503,7 +557,7 @@
                title:(NSString *)title;
 
 // Returns the largest possible content rectangle that can fit on the screen
-// while leaving space for the toolbar, findbar, window decorations, etc.
+// while leaving space for the toolbar, bottombar, window decorations, etc.
 - (NSRect)maxContentRect;
 
 // Push a size change to a session (and on to its shell) but clamps the size to
@@ -522,6 +576,9 @@
 
 // Add a session to the tab view.
 - (void)insertSession:(PTYSession *)aSession atIndex:(int)anIndex;
+
+// Seamlessly change the session in a tab.
+- (void)replaceSession:(PTYSession *)aSession atIndex:(int)anIndex;
 
 // Reutrn the name of the foreground session.
 - (NSString *)currentSessionName;
@@ -557,9 +614,6 @@
 
 // Returns true if the given menu item is selectable.
 - (BOOL)validateMenuItem:(NSMenuItem *)item;
-
-// accessor
-- (BOOL)sendInputToAllSessions;
 
 // setter
 - (void)setSendInputToAllSessions:(BOOL)flag;
@@ -600,10 +654,16 @@
 
 // Grow or shrink the tabview to make room for the find bar in fullscreen mode
 // and then fit sessions to new window size.
-- (void)adjustFullScreenWindowForFindBarChange;
+- (void)adjustFullScreenWindowForBottomBarChange;
 
 // Adjust the find bar's width to match the window's.
-- (void)fitFindBarToWindow;
+- (void)fitBottomBarToWindow;
+
+// Show or hide instant replay bar.
+- (void)setInstantReplayBarVisible:(BOOL)visible;
+
+// Return the timestamp for a slider position in [0, 1] for the current session.
+- (long long)timestampForFraction:(float)f;
 
 @end
 

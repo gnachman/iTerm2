@@ -45,12 +45,14 @@
 #import <iTerm/iTermController.h>
 #import <iTerm/PTYTask.h>
 #import <iTerm/PTYTextView.h>
+#import <iTerm/PseudoTerminal.h>
 #import <iTerm/VT100Terminal.h>
 #import <iTerm/VT100Screen.h>
 #import <iTerm/PTYSession.h>
 #import <iTerm/PTToolbarController.h>
 #import <iTerm/FindCommandHandler.h>
 #import <iTerm/ITAddressBookMgr.h>
+#import "FakeWindow.h"
 #import <PSMTabBarControl.h>
 #import <PSMTabStyle.h>
 #import <iTerm/iTermGrowlDelegate.h>
@@ -86,11 +88,16 @@ NSString *sessionsKey = @"sessions";
 #define TABVIEW_LEFT_RIGHT_OFFSET        29
 #define TOOLBAR_OFFSET                    0
 
-@implementation FindBarView
+@implementation BottomBarView
 - (void)drawRect:(NSRect)dirtyRect
 {
     [[NSColor controlColor] setFill];
     NSRectFill(dirtyRect);
+
+    // Draw a black line at the top of the view.
+    [[NSColor blackColor] setFill];
+    NSRect r = [self frame];
+    NSRectFill(NSMakeRect(0, r.size.height - 1, r.size.width, 1));
 }
 
 @end
@@ -109,7 +116,7 @@ NSString *sessionsKey = @"sessions";
     [self window];
     [commandField retain];
     [commandField setDelegate:self];
-    [findBar retain];
+    [bottomBar retain];
 
     // create the window programmatically with appropriate style mask
     styleMask = NSTitledWindowMask |
@@ -167,19 +174,28 @@ NSString *sessionsKey = @"sessions";
     [[[self window] contentView] addSubview:tabBarControl];
     [tabBarControl release];
 
-    // Set up findbar
+    // Set up bottomBar
     NSRect fbFrame = [findBarSubview frame];
-    findBar = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, fbFrame.size.width, fbFrame.size.height)];
-    [findBar addSubview:findBarSubview];
-    [findBar setHidden:YES];
+    NSRect irFrame = [instantReplaySubview frame];
+    bottomBar = [[NSView alloc] initWithFrame:NSMakeRect(0,
+                                                         0,
+                                                         fbFrame.size.width,
+                                                         fbFrame.size.height + irFrame.size.height)];
+    [bottomBar addSubview:findBarSubview];
+    [bottomBar addSubview:instantReplaySubview];
+    fbFrame.origin.y = 0;
+    [findBarSubview setFrame:fbFrame];
+    irFrame.origin.y = fbFrame.size.height;
+    [instantReplaySubview setFrame:irFrame];
+    [bottomBar setHidden:YES];
+    [instantReplaySubview setHidden:YES];
+    [findBarSubview setHidden:YES];
 
     [findBarTextField setDelegate:self];
 
     // create the tabview
     aRect = [[[self window] contentView] bounds];
-    if (![findBar isHidden]) {
-        aRect.size.height -= [findBar frame].size.height;
-    }
+
     TABVIEW = [[PTYTabView alloc] initWithFrame: aRect];
     [TABVIEW setAutoresizingMask: NSViewWidthSizable|NSViewHeightSizable];
     [TABVIEW setAutoresizesSubviews: YES];
@@ -187,10 +203,10 @@ NSString *sessionsKey = @"sessions";
     [TABVIEW setControlSize: NSSmallControlSize];
     [TABVIEW setTabViewType: NSNoTabsNoBorder];
     // Add to the window
-    [[[self window] contentView] addSubview: TABVIEW];
+    [[[self window] contentView] addSubview:TABVIEW];
     [TABVIEW release];
 
-    [[[self window] contentView] addSubview: findBar];
+    [[[self window] contentView] addSubview:bottomBar];
 
     // assign tabview and delegates
     [tabBarControl setTabView: TABVIEW];
@@ -350,7 +366,7 @@ NSString *sessionsKey = @"sessions";
     }
 
     [commandField release];
-    [findBar release];
+    [bottomBar release];
     [_toolbarController release];
     if (_timer) {
         [_timer invalidate];
@@ -461,11 +477,14 @@ NSString *sessionsKey = @"sessions";
 
     // Save frame position for last window
     if ([[[iTermController sharedInstance] terminals] count] == 1) {
-        // Close the findbar because otherwise the wrong size
-        // frame is saved.  You wouldn't want the findbar to
+        // Close the bottomBar because otherwise the wrong size
+        // frame is saved.  You wouldn't want the bottomBar to
         // open automatically anyway.
-        if (![findBar isHidden]) {
-            [self showHideFindBar];
+        // TODO(georgen): There's a tiny bug here. If you're in instant replay
+        // then the window size for the IR window is saved instead of the live
+        // window.
+        if (![bottomBar isHidden]) {
+            [self showHideBottomBar];
         }
         if ([[PreferencePanel sharedInstance] smartPlacement]) {
             [[self window] saveFrameUsingName: [NSString stringWithFormat: WINDOW_NAME, 0]];
@@ -729,8 +748,8 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"toggleFullScreen - set new frame to old frame: %fx%f", oldFrame_.size.width, oldFrame_.size.height);
         [[newTerminal window] setFrame:oldFrame_ display:YES];
     } else {
-        PtyLog(@"toggleFullScreen - call adjustFullScreenWindowForFindBarChange");
-        [newTerminal adjustFullScreenWindowForFindBarChange];
+        PtyLog(@"toggleFullScreen - call adjustFullScreenWindowForBottomBarChange");
+        [newTerminal adjustFullScreenWindowForBottomBarChange];
         [newTerminal hideMenuBar];
     }
 
@@ -742,8 +761,8 @@ NSString *sessionsKey = @"sessions";
         NSRect visibleFrame = [[newTerminal window] frame];
         PtyLog(@"toggleFullScreen - new window's frame is %fx%f", visibleFrame.size.width, visibleFrame.size.height);
         NSRect contentRect = [[newTerminal window] contentRectForFrameRect:visibleFrame];
-        if (![newTerminal->findBar isHidden]) {
-            contentRect.size.height -= [newTerminal->findBar frame].size.height;
+        if (![newTerminal->bottomBar isHidden]) {
+            contentRect.size.height -= [newTerminal->bottomBar frame].size.height;
         }
         if (n > 1 || ![[PreferencePanel sharedInstance] hideTab]) {
             contentRect.size.height -= [newTerminal->tabBarControl frame].size.height;
@@ -1027,8 +1046,22 @@ NSString *sessionsKey = @"sessions";
         [self disableBlur];
     }
 
+    if (![instantReplaySubview isHidden]) {
+        [self updateInstantReplay];
+    }
     // Post notifications
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermSessionBecameKey" object: [tabViewItem identifier]];
+    [self showOrHideInstantReplayBar];
+}
+
+- (void)showOrHideInstantReplayBar
+{
+    PTYSession* aSession = [self currentSession];
+    if ([aSession liveSession]) {
+        [self setInstantReplayBarVisible:YES];
+    } else {
+        [self setInstantReplayBarVisible:NO];
+    }
 }
 
 - (void)tabView:(NSTabView *)tabView willRemoveTabViewItem:(NSTabViewItem *)tabViewItem
@@ -1099,6 +1132,10 @@ NSString *sessionsKey = @"sessions";
         PTYSession *currentSession = [[aTabView tabViewItemAtIndex:i] identifier];
         [currentSession setObjectCount:i+1];
     }
+    if ([aSession liveSession] && [term->instantReplaySubview isHidden]) {
+        [term showHideInstantReplay];
+    }
+    [self showOrHideInstantReplayBar];
 }
 
 - (void)tabView:(NSTabView *)aTabView closeWindowForLastTabViewItem:(NSTabViewItem *)tabViewItem
@@ -1436,9 +1473,186 @@ NSString *sessionsKey = @"sessions";
     return TABVIEW != nil;
 }
 
+// Toggle bottom bar.
+- (void)showHideBottomBar
+{
+    BOOL hide = ![bottomBar isHidden];
+    [bottomBar setHidden:hide];
+    [self arrangeBottomBarSubviews];
+    if (_fullScreen) {
+        [self adjustFullScreenWindowForBottomBarChange];
+    } else {
+        PtyLog(@"showHideFindBar - calling fitWindowToSessions");
+        [self fitWindowToSessions];
+    }
+
+    // On OS X 10.5.8, the scroll bar and resize indicator are messed up at this point. Resizing the tabview fixes it. This seems to be fixed in 10.6.
+    NSRect tvframe = [TABVIEW frame];
+    tvframe.size.height += 1;
+    [TABVIEW setFrame: tvframe];
+    tvframe.size.height -= 1;
+    [TABVIEW setFrame: tvframe];
+
+    if (hide) {
+        [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+    }
+}
+
+// Arrange find, instant replay subviews within bottom bar.
+- (void)arrangeBottomBarSubviews
+{
+    NSRect frame = NSMakeRect(0, 0, [[self window] frame].size.width, 0);
+    NSRect irFrame = [instantReplaySubview frame];
+    NSRect fbFrame = [findBarSubview frame];
+    if (![instantReplaySubview isHidden]) {
+        irFrame.origin.y = frame.size.height;
+        frame.size.height += irFrame.size.height;
+    }
+    if (![findBarSubview isHidden]) {
+        fbFrame.origin.y = frame.size.height;
+        frame.size.height += [findBarSubview frame].size.height;
+    }
+    [bottomBar setFrame:frame];
+    [instantReplaySubview setFrame:irFrame];
+    [findBarSubview setFrame:fbFrame];
+}
+
+- (NSString*)stringForTimestamp:(long long)timestamp
+{
+    time_t startTime = timestamp / 1000000;
+    time_t now = time(NULL);
+    struct tm startTimeParts;
+    struct tm nowParts;
+    localtime_r(&startTime, &startTimeParts);
+    localtime_r(&now, &nowParts);
+    NSDateFormatter* fmt = [[[NSDateFormatter alloc] init] autorelease];
+    [fmt setDateStyle:NSDateFormatterShortStyle];
+    if (startTimeParts.tm_year != nowParts.tm_year ||
+        startTimeParts.tm_yday != nowParts.tm_yday) {
+        [fmt setDateStyle:NSDateFormatterShortStyle];
+    } else {
+        [fmt setDateStyle:NSDateFormatterNoStyle];
+    }
+    [fmt setTimeStyle:NSDateFormatterMediumStyle];
+    NSDate* date = [NSDate dateWithTimeIntervalSince1970:startTime];
+    NSString* result = [fmt stringFromDate:date];
+    return result;
+}
+
+// Refresh the widgets in the instant replay bar.
+- (void)updateInstantReplay
+{
+    DVR* dvr = [[self currentSession] dvr];
+    DVRDecoder* decoder = nil;
+
+    if (dvr) {
+        decoder = [[self currentSession] dvrDecoder];
+    }
+    if (dvr && [decoder timestamp] != [dvr lastTimeStamp]) {
+        [currentTime setStringValue:[self stringForTimestamp:[decoder timestamp]]];
+        [currentTime sizeToFit];
+        float range = ((float)([dvr lastTimeStamp] - [dvr firstTimeStamp])) / 1000000.0;
+        if (range > 0) {
+            float offset = ((float)([decoder timestamp] - [dvr firstTimeStamp])) / 1000000.0;
+            float frac = offset / range;
+            [irSlider setFloatValue:frac];
+        }
+    } else {
+        // Live view
+        dvr = [[[self currentSession] SCREEN] dvr];
+        [irSlider setFloatValue:1.0];
+        [currentTime setStringValue:@"Live View"];
+        [currentTime sizeToFit];
+    }
+    [earliestTime setStringValue:[self stringForTimestamp:[dvr firstTimeStamp]]];
+    [earliestTime sizeToFit];
+    [latestTime setStringValue:@"Now"];
+
+    // Align the currentTime with the slider
+    NSRect f = [currentTime frame];
+    NSRect sf = [irSlider frame];
+    NSRect etf = [earliestTime frame];
+    float newSliderX = etf.origin.x + etf.size.width + 10;
+    float dx = newSliderX - sf.origin.x;
+    sf.origin.x = newSliderX;
+    sf.size.width -= dx;
+    [irSlider setFrame:sf];
+    float newX = [irSlider floatValue] * sf.size.width + sf.origin.x - f.size.width / 2;
+    if (newX + f.size.width > sf.origin.x + sf.size.width) {
+        newX = sf.origin.x + sf.size.width - f.size.width;
+    }
+    if (newX < sf.origin.x) {
+        newX = sf.origin.x;
+    }
+    [currentTime setFrameOrigin:NSMakePoint(newX, f.origin.y)];
+}
+
+- (IBAction)irButton:(id)sender
+{
+    switch ([sender selectedSegment]) {
+        case 0:
+            [self irAdvance:-1];
+            break;
+
+        case 1:
+            [self irAdvance:1];
+            break;
+
+    }
+    [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+}
+
+- (void)irAdvance:(int)dir
+{
+    if (![[self currentSession] liveSession]) {
+        if (dir > 0) {
+            // Can't go forward in time from live view (though that would be nice!)
+            NSBeep();
+            return;
+        }
+        [self replaySession:[self currentSession]];
+    }
+    [[self currentSession] irAdvance:dir];
+    if (![instantReplaySubview isHidden]) {
+        [self updateInstantReplay];
+    }
+}
+
+// Toggle instant replay bar.
+- (void)showHideInstantReplay
+{
+    BOOL hide = ![instantReplaySubview isHidden];
+    if (!hide) {
+        [self updateInstantReplay];
+    }
+    [instantReplaySubview setHidden:hide];
+    [self arrangeBottomBarSubviews];
+    if (_fullScreen) {
+        [self adjustFullScreenWindowForBottomBarChange];
+    } else {
+        PtyLog(@"showHideFindBar - calling fitWindowToSessions");
+        [self fitWindowToSessions];
+    }
+
+    // On OS X 10.5.8, the scroll bar and resize indicator are messed up at this point. Resizing the tabview fixes it. This seems to be fixed in 10.6.
+    NSRect tvframe = [TABVIEW frame];
+    tvframe.size.height += 1;
+    [TABVIEW setFrame: tvframe];
+    tvframe.size.height -= 1;
+    [TABVIEW setFrame: tvframe];
+
+    if (([findBarSubview isHidden] && [instantReplaySubview isHidden] && ![bottomBar isHidden]) ||
+        ((![findBarSubview isHidden] || ![instantReplaySubview isHidden]) && [bottomBar isHidden])) {
+        [self showHideBottomBar];
+    }
+    if (!hide) {
+        [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+    }
+}
+
 - (void)showHideFindBar
 {
-    BOOL hide = ![findBar isHidden];
+    BOOL hide = ![findBarSubview isHidden];
     NSObject* firstResponder = [[self window] firstResponder];
     NSText* currentEditor = [findBarTextField currentEditor];
     if (hide && (!currentEditor || currentEditor != firstResponder)) {
@@ -1451,9 +1665,10 @@ NSString *sessionsKey = @"sessions";
         _timer = nil;
         [findProgressIndicator setHidden:YES];
     }
-    [findBar setHidden:hide];
+    [findBarSubview setHidden:hide];
+    [self arrangeBottomBarSubviews];
     if (_fullScreen) {
-        [self adjustFullScreenWindowForFindBarChange];
+        [self adjustFullScreenWindowForBottomBarChange];
     } else {
         PtyLog(@"showHideFindBar - calling fitWindowToSessions");
         [self fitWindowToSessions];
@@ -1471,15 +1686,193 @@ NSString *sessionsKey = @"sessions";
     } else {
         [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
     }
+    if (([findBarSubview isHidden] &&
+         [instantReplaySubview isHidden] &&
+         ![bottomBar isHidden]) ||            // subviews hidden but parent view open.
+        ((![findBarSubview isHidden] ||
+          ![instantReplaySubview isHidden]) &&
+         [bottomBar isHidden])) {             // subview visible but parent view hidden.
+        [self showHideBottomBar];
+    }
 }
 
 - (IBAction)closeFindBar:(id)sender
 {
-    if (![findBar isHidden]) {
+    if (![findBarSubview isHidden]) {
         [self showHideFindBar];
     }
 }
 
+- (IBAction)closeInstantReplay:(id)sender
+{
+    if (![instantReplaySubview isHidden]) {
+        if ([[self currentSession] liveSession]) {
+            [self showLiveSession:[[self currentSession] liveSession] inPlaceOf:[self currentSession]];
+        }
+        [self showOrHideInstantReplayBar];
+    }
+}
+
+- (void)fitWindowToSession:(PTYSession*)session
+{
+    PtyLog(@"fitWindowToSession");
+    if (inSetup) {
+        PtyLog(@"fitWindowToSession - in setup");
+        return;
+    }
+    float charHeight = [[session TEXTVIEW] lineHeight];
+    float charWidth = [[session TEXTVIEW] charWidth];
+    int height = [session rows];
+    int width = [session columns];
+    PtyLog(@"fitWindowToSession calling fitWindowToSessionsWithWidth");
+    [self fitWindowToSessionsWithWidth:width height:height charWidth:charWidth charHeight:charHeight];
+}
+
+- (BOOL)sendInputToAllSessions
+{
+    return (sendInputToAllSessions);
+}
+
+-(void)replaySession:(PTYSession *)oldSession
+{
+    // NSLog(@"Enter instant replay. Live session is %@", oldSession);
+    NSTabViewItem* oldTabViewItem = [TABVIEW selectedTabViewItem];
+    if (!oldTabViewItem) {
+        return;
+    }
+
+    PTYSession *newSession;
+
+    // Initialize a new session
+    newSession = [[PTYSession alloc] init];
+    // NSLog(@"New session for IR view is at %p", newSession);
+
+    // set our preferences
+    [newSession setAddressBookEntry:[oldSession addressBookEntry]];
+    [[newSession SCREEN] setScrollback:0];
+
+    // Replace the contents of the tab view item.
+    int oldIndex = [TABVIEW indexOfTabViewItem:oldTabViewItem];
+
+    // Add this session to our term and make it current
+    PTYSession* liveSession = [oldTabViewItem identifier];
+    [liveSession retain];
+    [self replaceInSessions:newSession atIndex:oldIndex];
+
+    [newSession setName:[oldSession name]];
+    [newSession setDefaultName:[oldSession defaultName]];
+    [newSession release];
+
+    // Put the new session in DVR mode and pass it the old session, which it
+    // keeps a reference to.
+    [newSession setDvr:[[oldSession SCREEN] dvr] liveSession:liveSession];
+    [liveSession release];
+
+    // TODO(georgen): the hidden window can resize itself and the FakeWindow
+    // needs to pass that on to the SCREEN. Otherwise the DVR playback into the
+    // time after cmd-d was pressed (but before the present) has the wrong
+    // window size.
+    [oldSession setFakeParent:[[FakeWindow alloc] initFromRealWindow:self session:oldSession]];
+
+    // This starts the new session's update timer
+    [newSession updateDisplay];
+    if ([instantReplaySubview isHidden]) {
+        [self showHideInstantReplay];
+    }
+}
+
+- (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession
+{
+    // NSLog(@"Go live. IR session is %@, live is %@", replaySession, liveSession);
+
+    [replaySession cancelTimers];
+    int oldIndex = [TABVIEW indexOfTabViewItemWithIdentifier:replaySession];
+    assert(oldIndex >= 0);
+    NSTabViewItem* oldTabViewItem = [TABVIEW tabViewItemAtIndex:oldIndex];
+    assert(oldTabViewItem);
+    [liveSession setAddressBookEntry:[replaySession addressBookEntry]];
+    FakeWindow* fakeWindow = [liveSession fakeWindow];
+
+    [self replaceSession:liveSession atIndex:oldIndex];
+    [fakeWindow rejoin:self];
+    [self updateInstantReplay];
+    [self showHideInstantReplay];
+}
+
+- (void)windowSetFrameTopLeftPoint:(NSPoint)point
+{
+    [[self window] setFrameTopLeftPoint:point];
+}
+
+- (void)windowPerformMiniaturize:(id)sender
+{
+    [[self window] performMiniaturize:sender];
+}
+
+- (void)windowDeminiaturize:(id)sender
+{
+    [[self window] deminiaturize:sender];
+}
+
+- (void)windowOrderFront:(id)sender
+{
+    [[self window] orderFront:sender];
+}
+
+- (void)windowOrderBack:(id)sender
+{
+    [[self window] orderBack:sender];
+}
+
+- (BOOL)windowIsMiniaturized
+{
+    return [[self window] isMiniaturized];
+}
+
+- (NSRect)windowFrame
+{
+    return [[self window] frame];
+}
+
+- (NSScreen*)windowScreen
+{
+    return [[self window] screen];
+}
+
+- (IBAction)irSliderMoved:(id)sender
+{
+    if ([irSlider floatValue] == 1.0) {
+        if ([[self currentSession] liveSession]) {
+            [self showLiveSession:[[self currentSession] liveSession] inPlaceOf:[self currentSession]];
+        }
+    } else {
+        if (![[self currentSession] liveSession]) {
+            [self replaySession:[self currentSession]];
+        }
+        [[self currentSession] irSeekToAtLeast:[self timestampForFraction:[irSlider floatValue]]];
+    }
+    [self updateInstantReplay];
+}
+
+- (IBAction)irPrev:(id)sender
+{
+    if (![[PreferencePanel sharedInstance] instantReplay]) {
+        NSRunAlertPanel(@"Feature Disabled",
+                        @"Instant Replay is disabled. Please turn it on in Preferences under the General tab.",
+                        @"OK",
+                        nil,
+                        nil);
+        return;
+    }
+    [self irAdvance:-1];
+    [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+}
+
+- (IBAction)irNext:(id)sender
+{
+    [self irAdvance:1];
+    [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+}
 
 @end
 
@@ -1490,8 +1883,8 @@ NSString *sessionsKey = @"sessions";
     [[[self window] contentView] lockFocus];
     [[NSColor blackColor] set];
     NSRect frame = [[self window] frame];
-    if (![findBar isHidden]) {
-        int h = [findBar frame].size.height;
+    if (![bottomBar isHidden]) {
+        int h = [bottomBar frame].size.height;
         frame.origin.y += h;
         frame.size.height -= h;
     }
@@ -1687,13 +2080,13 @@ NSString *sessionsKey = @"sessions";
     PtyLog(@"fitWindowToSessions returning.");
 }
 
-- (void)adjustFullScreenWindowForFindBarChange
+- (void)adjustFullScreenWindowForBottomBarChange
 {
     if (!_fullScreen) {
         return;
     }
-    PtyLog(@"adjustFullScreenWindowForFindBarChange");
-    
+    PtyLog(@"adjustFullScreenWindowForBottomBarChange");
+
     int width;
     int height;
     float charHeight = [self maxCharHeight:&height];
@@ -1701,12 +2094,12 @@ NSString *sessionsKey = @"sessions";
 
     NSRect aRect = [[self window] frame];
     height = aRect.size.height / charHeight;
-    width = aRect.size.width / charWidth;
+    width = (aRect.size.width - MARGIN * 2) / charWidth;
     int yoffset=0;
-    if (![findBar isHidden]) {
-        int dh = [findBar frame].size.height / charHeight + 1;
+    if (![bottomBar isHidden]) {
+        int dh = [bottomBar frame].size.height / charHeight + 1;
         height -= dh;
-        yoffset = [findBar frame].size.height;
+        yoffset = [bottomBar frame].size.height;
     } else {
         yoffset = floor(aRect.size.height - charHeight * height)/2; // screen height minus one half character
     }
@@ -1715,21 +2108,41 @@ NSString *sessionsKey = @"sessions";
                        width * charWidth + MARGIN * 2,                        // enough width for width col plus two margins
                        charHeight * height);                                  // enough height for width rows
     [TABVIEW setFrame:aRect];
-    PtyLog(@"adjustFullScreenWindowForFindBarChange - call fitSessionsToWindow");
+    PtyLog(@"adjustFullScreenWindowForBottomBarChange - call fitSessionsToWindow");
     [self fitSessionsToWindow];
-    [self fitFindBarToWindow];
+    [self fitBottomBarToWindow];
 }
 
-- (void)fitFindBarToWindow
+- (void)fitBottomBarToWindow
 {
-    // Adjust the position of the findbar to fit properly below the tabview.
-    NSRect findBarFrame = [findBar frame];
-    findBarFrame.size.width = [TABVIEW frame].size.width;
-    findBarFrame.origin.x = [TABVIEW frame].origin.x;
-    [findBar setFrame: findBarFrame];
-    findBarFrame.size.width += findBarFrame.origin.x;
+    // Adjust the position of the bottom bar to fit properly below the tabview.
+    NSRect bottomBarFrame = [bottomBar frame];
+    bottomBarFrame.size.width = [TABVIEW frame].size.width;
+    bottomBarFrame.origin.x = [TABVIEW frame].origin.x;
+    [bottomBar setFrame: bottomBarFrame];
+
+    NSRect findBarFrame = [findBarSubview frame];
+    findBarFrame.size.width += bottomBarFrame.origin.x;
     findBarFrame.origin.x = 0;
     [findBarSubview setFrame: findBarFrame];
+
+    NSRect instantReplayFrame = [instantReplaySubview frame];
+    float dWidth = instantReplayFrame.size.width - bottomBarFrame.size.width;
+    NSRect sliderFrame = [irSlider frame];
+    sliderFrame.size.width -= dWidth;
+    instantReplayFrame.size.width = bottomBarFrame.size.width;
+    [instantReplaySubview setFrame:instantReplayFrame];
+    [irSlider setFrame:sliderFrame];
+
+    [self updateInstantReplay];
+}
+
+- (void)setInstantReplayBarVisible:(BOOL)visible
+{
+    BOOL hide = !visible;
+    if ([instantReplaySubview isHidden] != hide) {
+        [self showHideInstantReplay];
+    }
 }
 
 - (void)fitWindowToSessionsWithWidth:(int)width height:(int)height charWidth:(float)charWidth charHeight:(float)charHeight
@@ -1738,7 +2151,7 @@ NSString *sessionsKey = @"sessions";
     // position the tabview and control
     NSRect aRect;
     if (_fullScreen) {
-        [self adjustFullScreenWindowForFindBarChange];
+        [self adjustFullScreenWindowForBottomBarChange];
         PtyLog(@"fitWindowToSessionsWithWidth returning because in full screen mode");
         return;
     }
@@ -1762,9 +2175,9 @@ NSString *sessionsKey = @"sessions";
             aRect.size.height -= [tabBarControl frame].size.height;
         }
         // compute the max number of rows that fits in the remaining space
-        if (![findBar isHidden]) {
-            // reduce window height by size of findbar
-            aRect.size.height -= [findBar frame].size.height;
+        if (![bottomBar isHidden]) {
+            // reduce window height by size of bottomBar
+            aRect.size.height -= [bottomBar frame].size.height;
         }
 
         // set desired size of textview to enough pixels to fit WIDTH*HEIGHT
@@ -1801,23 +2214,23 @@ NSString *sessionsKey = @"sessions";
         // desired size of window content
         winSize = tabViewSize;
         PtyLog(@"fitWindowToSessionsWithWidth - Baseline window size is %fx%f", winSize.width, winSize.height);
-        if (![findBar isHidden]) {
-            winSize.height += [findBar frame].size.height;
-            PtyLog(@"fitWindowToSessionsWithWidth - Add findbar height to window. New window size is %fx%f", winSize.width, winSize.height);
+        if (![bottomBar isHidden]) {
+            winSize.height += [bottomBar frame].size.height;
+            PtyLog(@"fitWindowToSessionsWithWidth - Add bottomBar height to window. New window size is %fx%f", winSize.width, winSize.height);
         }
         if ([TABVIEW numberOfTabViewItems] == 1 &&
             [[PreferencePanel sharedInstance] hideTab]) {
             // The tabs are not visible at the top of the window. Set aRect appropriately.
             [tabBarControl setHidden: YES];
             aRect.origin.x = 0;
-            aRect.origin.y = ([findBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) ? VMARGIN : 0;
-            if (![findBar isHidden]) {
-                aRect.origin.y += [findBar frame].size.height;
+            aRect.origin.y = ([bottomBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) ? VMARGIN : 0;
+            if (![bottomBar isHidden]) {
+                aRect.origin.y += [bottomBar frame].size.height;
             }
             aRect.size = tabViewSize;
             PtyLog(@"fitWindwoToSessionWithWidth - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
             [TABVIEW setFrame: aRect];
-            if ([findBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) {
+            if ([bottomBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) {
                 winSize.height += VMARGIN;
                 PtyLog(@"fitWindowToSessionsWithWidth - Add lower margin to window. Window size is now %fx%f", winSize.width, winSize.height);
                 vmargin_added = YES;
@@ -1833,17 +2246,17 @@ NSString *sessionsKey = @"sessions";
             if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
                 // setup aRect to make room for the tabs at the top.
                 aRect.origin.x = 0;
-                aRect.origin.y = ([findBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) ? VMARGIN : 0;
+                aRect.origin.y = ([bottomBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) ? VMARGIN : 0;
                 aRect.size = tabViewSize;
-                if (![findBar isHidden]) {
-                    aRect.origin.y += [findBar frame].size.height;
+                if (![bottomBar isHidden]) {
+                    aRect.origin.y += [bottomBar frame].size.height;
                 }
                 PtyLog(@"fitWindowToSessionsWithWidth - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
                 [TABVIEW setFrame: aRect];
                 aRect.origin.y += aRect.size.height;
                 aRect.size.height = [tabBarControl frame].size.height;
                 [tabBarControl setFrame: aRect];
-                if ([findBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) {
+                if ([bottomBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) {
                     winSize.height += VMARGIN;
                     PtyLog(@"fitWindowToSessionsWithWidth - Add lower margin to window. Window size is now %fx%f", winSize.width, winSize.height);
                     vmargin_added = YES;
@@ -1855,13 +2268,13 @@ NSString *sessionsKey = @"sessions";
                 aRect.origin.y = 0;
                 aRect.size.width = tabViewSize.width;
                 aRect.size.height = [tabBarControl frame].size.height;
-                if (![findBar isHidden]) {
-                    aRect.origin.y += [findBar frame].size.height;
+                if (![bottomBar isHidden]) {
+                    aRect.origin.y += [bottomBar frame].size.height;
                 }
                 [tabBarControl setFrame: aRect];
                 aRect.origin.y = [tabBarControl frame].size.height;
-                if (![findBar isHidden]) {
-                    aRect.origin.y += [findBar frame].size.height;
+                if (![bottomBar isHidden]) {
+                    aRect.origin.y += [bottomBar frame].size.height;
                 }
                 aRect.size.height = tabViewSize.height;
                 PtyLog(@"fitWindowToSessionsWithWidth - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
@@ -1924,8 +2337,8 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"fitWindowToSessionsWithWidth - there was a resize in progress.");
     }
 
-    PtyLog(@"fitWindowToSessionsWithWidth - call fitFindBarToWindow");
-    [self fitFindBarToWindow];
+    PtyLog(@"fitWindowToSessionsWithWidth - call fitBottomBarToWindow");
+    [self fitBottomBarToWindow];
 
     PtyLog(@"fitWindowToSessionsWithWidth - refresh textview");
     [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
@@ -2006,7 +2419,15 @@ NSString *sessionsKey = @"sessions";
 
 - (void)copySettingsFrom:(PseudoTerminal*)other
 {
-    [findBar setHidden:[other->findBar isHidden]];
+    [findBarSubview setHidden:YES];
+    [instantReplaySubview setHidden:YES];
+    if (![other->findBarSubview isHidden]) {
+        [self showHideFindBar];
+    }
+    if (![other->instantReplaySubview isHidden]) {
+        [self showHideInstantReplay];
+    }
+    [bottomBar setHidden:[other->bottomBar isHidden]];
 }
 
 - (void)setupSession:(PTYSession *)aSession
@@ -2076,9 +2497,9 @@ NSString *sessionsKey = @"sessions";
     }
 
     // compute the max number of rows that fits in the remaining space
-    if (![findBar isHidden]) {
-        // reduce window height by size of findbar
-        maxContentRect.size.height -= [findBar frame].size.height;
+    if (![bottomBar isHidden]) {
+        // reduce window height by size of bottomBar
+        maxContentRect.size.height -= [bottomBar frame].size.height;
     }
     BOOL hasScrollbar = !_fullScreen && ![[PreferencePanel sharedInstance] hideScrollbar];
     if (hasScrollbar) {
@@ -2155,7 +2576,7 @@ NSString *sessionsKey = @"sessions";
 
 
     PtyLog(@"%s(%d):-[PseudoTerminal insertSession: 0x%x atIndex: %d]",
-          __FILE__, __LINE__, aSession, index);
+           __FILE__, __LINE__, aSession, index);
 
     if (aSession == nil) {
         return;
@@ -2180,6 +2601,41 @@ NSString *sessionsKey = @"sessions";
         }
         [[iTermController sharedInstance] setCurrentTerminal: self];
     }
+}
+
+- (void)replaceSession:(PTYSession *)aSession atIndex:(int)anIndex
+{
+    PtyLog(@"%s(%d):-[PseudoTerminal insertSession: 0x%x atIndex: %d]",
+           __FILE__, __LINE__, aSession, index);
+
+    if (aSession == nil) {
+        return;
+    }
+
+    assert([TABVIEW indexOfTabViewItemWithIdentifier:aSession] == NSNotFound);
+    NSTabViewItem *aTabViewItem = [TABVIEW tabViewItemAtIndex:anIndex];
+    assert(aTabViewItem);
+
+    // Tell the session at this index that it is no longer associated with this tab.
+    PTYSession* oldSession = [aTabViewItem identifier];
+    [oldSession setTabViewItem:nil];
+
+    // Replace the session for the tab view item.
+    [tabBarControl changeIdentifier:aSession atIndex:anIndex];
+
+    [aSession setTabViewItem:aTabViewItem];
+
+    // Set other tabviewitem attributes to match the new session.
+    [aTabViewItem setLabel:[aSession name]];
+    [aTabViewItem setView:[aSession view]];
+    [TABVIEW selectTabViewItemAtIndex:anIndex];
+
+    // Bring the window to the fore.
+    [self fitWindowToSessions];
+    if ([self windowInited] && !_fullScreen) {
+        [[self window] makeKeyAndOrderFront:self];
+    }
+    [[iTermController sharedInstance] setCurrentTerminal:self];
 }
 
 - (NSString *)currentSessionName
@@ -2295,6 +2751,10 @@ NSString *sessionsKey = @"sessions";
         result = logging == YES ? NO : YES;
     } else if ([item action] == @selector(logStop:)) {
         result = logging == NO ? NO : YES;
+    } else if ([item action] == @selector(irPrev:)) {
+        result = [[self currentSession] canInstantReplayPrev];
+    } else if ([item action] == @selector(irNext:)) {
+        result = [[self currentSession] canInstantReplayNext];
     }
     return result;
 }
@@ -2334,11 +2794,6 @@ NSString *sessionsKey = @"sessions";
     [self setWindowTitle];
 }
 
-- (BOOL)sendInputToAllSessions
-{
-    return (sendInputToAllSessions);
-}
-
 - (void)fitSessionsToWindow
 {
     PtyLog(@"fitSessionsToWindow begins");
@@ -2347,21 +2802,6 @@ NSString *sessionsKey = @"sessions";
         [self fitSessionToWindow:session];
     }
     PtyLog(@"fitSessionsToWindow returns");
-}
-
-- (void)fitWindowToSession:(PTYSession*)session
-{
-    PtyLog(@"fitWindowToSession");
-    if (inSetup) {
-        PtyLog(@"fitWindowToSession - in setup");
-        return;
-    }
-    float charHeight = [[session TEXTVIEW] lineHeight];
-    float charWidth = [[session TEXTVIEW] charWidth];
-    int height = [session rows];
-    int width = [session columns];
-    PtyLog(@"fitWindowToSession calling fitWindowToSessionsWithWidth");
-    [self fitWindowToSessionsWithWidth:width height:height charWidth:charWidth charHeight:charHeight];
 }
 
 // Close Window
@@ -2526,6 +2966,14 @@ NSString *sessionsKey = @"sessions";
         _timer = nil;
         [findProgressIndicator setHidden:YES];
     }
+}
+
+- (long long)timestampForFraction:(float)f
+{
+    DVR* dvr = [[self currentSession] dvr];
+    long long range = [dvr lastTimeStamp] - [dvr firstTimeStamp];
+    long long offset = range * f;
+    return [dvr firstTimeStamp] + offset;
 }
 
 @end
@@ -2786,8 +3234,11 @@ NSString *sessionsKey = @"sessions";
 
 -(void)replaceInSessions:(PTYSession *)object atIndex:(unsigned)anIndex
 {
-    // NSLog(@"PseudoTerminal: -replaceInSessions: 0x%x atIndex: %d", object, anIndex);
-    NSLog(@"Replace Sessions: not implemented.");
+    PtyLog(@"PseudoTerminal: -replaceInSessions: 0x%x atIndex: %d", object, anIndex);
+    [self setupSession:object title:nil];
+    if ([object SCREEN]) {  // screen initialized ok
+        [self replaceSession:object atIndex:anIndex];
+    }
 }
 
 -(void)addInSessions:(PTYSession *)object

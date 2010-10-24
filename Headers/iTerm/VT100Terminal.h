@@ -31,7 +31,6 @@
 //#include <term.h>
 
 @class VT100Screen;
-@class PseudoTerminal;
 
 // VT100TCC types
 #define VT100CC_NULL        0

@@ -4047,6 +4047,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 // [dataSource dirty] correctly.
 - (void)updateDirtyRects
 {
+    BOOL foundDirty = NO;
     if ([dataSource scrollbackOverflow] != 0) {
         NSAssert([dataSource scrollbackOverflow] == 0, @"updateDirtyRects called with nonzero overflow");
     }
@@ -4064,15 +4065,15 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     BOOL redrawBlink = [self _updateBlink];
     int WIDTH = [dataSource width];
 
-    // Any charactesr that changed selection status since the last update or
+    // Any characters that changed selection status since the last update or
     // are blinking should be set dirty.
     [self _markChangedSelectionAndBlinkDirty:redrawBlink width:WIDTH];
 
     // Copy selection position to detect change in selected chars next call.
-    oldStartX = startX; 
-    oldStartY = startY; 
-    oldEndX = endX; 
-    oldEndY = endY; 
+    oldStartX = startX;
+    oldStartY = startY;
+    oldEndX = endX;
+    oldEndY = endY;
     oldSelectMode = selectMode;
 
     // Redraw lines with dirty characters
@@ -4089,10 +4090,21 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     NSMutableString* dirtyDebug = [NSMutableString stringWithString:@"updateDirtyRects found these dirty lines:\n"];
     int screenindex=0;
 #endif
-
+    BOOL irEnabled = [[PreferencePanel sharedInstance] instantReplay];
     for (int y = lineStart; y < lineEnd; y++) {
         for (int x = 0; x < WIDTH; x++) {
             if (dirty[x]) {
+                if (irEnabled) {
+                    if (dirty[x] & 1) {
+                        foundDirty = YES;
+                    } else {
+                        for (int j = x+1; j < WIDTH; ++j) {
+                            if (dirty[j] & 1) {
+                                foundDirty = YES;
+                            }
+                        }
+                    }
+                }
                 NSRect dirtyRect = [self visibleRect];
                 dirtyRect.origin.y = y*lineHeight;
                 dirtyRect.size.height = lineHeight;
@@ -4135,6 +4147,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [self appendDebug:dirtyDebug];
 #endif
     [dataSource resetDirty];
+
+    if (irEnabled && foundDirty) {
+        [dataSource saveToDvr];
+    }
 }
 
 - (void)invalidateInputMethodEditorRect
@@ -4300,7 +4316,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             // Blink flag flipped and there is a blinking cursor. Mark it dirty.
             int cursorX = [dataSource cursorX] - 1;
             int cursorY = [dataSource cursorY] - 1;
-            [dataSource dirty][cursorY * [dataSource width] + cursorX] = 1;
+            // Set a different bit for the cursor's dirty position because we don't
+            // want to save an instant replay from when only the cursor is dirty.
+            [dataSource dirty][cursorY * [dataSource width] + cursorX] |= 2;
         }
         DebugLog(@"time to redraw blinking text");
     }

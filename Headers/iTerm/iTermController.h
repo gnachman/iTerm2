@@ -63,6 +63,8 @@
 - (PTYTextView *) frontTextView;
 -(int)numberOfTerminals;
 -(PseudoTerminal*)terminalAtIndex:(int)i;
+- (void)openInstantReplay:(id)sender;
+- (void)irAdvance:(int)dir;
 
 @end
 

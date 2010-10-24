@@ -519,6 +519,19 @@
     //[self update];
 }
 
+- (void)disconnectItem:(NSObjectController*)item fromCell:(PSMTabBarCell*)cell
+{
+    if ([item respondsToSelector:@selector(isProcessing)]) {
+        [item removeObserver:cell forKeyPath:@"isProcessing"];
+    }
+    if ([item respondsToSelector:@selector(icon)]) {
+        [item removeObserver:cell forKeyPath:@"icon"];
+    }
+    if ([item respondsToSelector:@selector(objectCount)]) {
+        [item removeObserver:cell forKeyPath:@"objectCount"];
+    }
+}
+
 - (void)removeTabForCell:(PSMTabBarCell *)cell
 {
     NSObjectController *item = [[cell representedObject] identifier];
@@ -531,16 +544,7 @@
     [cell unbind:@"count"];
 
     if (item != nil) {
-
-        if ([item respondsToSelector:@selector(isProcessing)]) {
-            [item removeObserver:cell forKeyPath:@"isProcessing"];
-        }
-        if ([item respondsToSelector:@selector(icon)]) {
-            [item removeObserver:cell forKeyPath:@"icon"];
-        }
-        if ([item respondsToSelector:@selector(objectCount)]) {
-            [item removeObserver:cell forKeyPath:@"objectCount"];
-        }
+        [self disconnectItem:item fromCell:cell];
     }
 
     // stop watching identifier
@@ -1983,6 +1987,24 @@
     // this is called any time the view is resized in IB
     [self setFrame:newFrame];
     [self update];
+}
+
+- (void)changeIdentifier:(id)newIdentifier atIndex:(int)theIndex
+{
+    PSMTabBarCell *cell;
+    NSTabViewItem* tabViewItem = [tabView tabViewItemAtIndex:theIndex];
+    assert(tabViewItem);
+    NSEnumerator *e = [_cells objectEnumerator];
+    while ( (cell = [e nextObject])) {
+        if ([cell representedObject] == tabViewItem) {
+            [self disconnectItem:[tabViewItem identifier] fromCell:cell];
+            [[cell representedObject] removeObserver:self forKeyPath:@"identifier"];
+            [tabViewItem setIdentifier:newIdentifier];
+            [self bindPropertiesForCell:cell andTabViewItem:tabViewItem];
+            return;
+        }
+    }
+    assert(false);
 }
 
 #pragma mark -

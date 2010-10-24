@@ -32,8 +32,10 @@
 #import <iTerm/VT100Screen.h>
 #import <iTerm/VT100Terminal.h>
 #import <iTerm/PreferencePanel.h>
-#import <iTerm/PseudoTerminal.h>
+#import <WindowControllerInterface.h>
 #import <iTerm/iTermController.h>
+#import <iTerm/PseudoTerminal.h>
+#import <FakeWindow.h>
 #import <iTerm/NSStringITerm.h>
 #import <iTerm/iTermKeyBindingMgr.h>
 #import <iTerm/ITAddressBookMgr.h>
@@ -155,10 +157,90 @@ const float kBackgroundSessionIntervalSec = 10;
 
     [[NSNotificationCenter defaultCenter] removeObserver: self];
 
+    if (dvrDecoder_) {
+        [dvr_ releaseDecoder:dvrDecoder_];
+        [dvr_ release];
+    }
+
     [super dealloc];
 #if DEBUG_ALLOC
     NSLog(@"%s: 0x%x, done", __PRETTY_FUNCTION__, self);
 #endif
+}
+
+- (void)cancelTimers
+{
+    [updateTimer invalidate];
+    [antiIdleTimer invalidate];
+}
+
+- (void)setDvr:(DVR*)dvr liveSession:(PTYSession*)liveSession
+{
+    assert(liveSession != self);
+
+    liveSession_ = liveSession;
+    [liveSession_ retain];
+    [SCREEN disableDvr];
+    dvr_ = dvr;
+    [dvr_ retain];
+    dvrDecoder_ = [dvr getDecoder];
+    long long t = [dvr_ lastTimeStamp];
+    if (t) {
+        [dvrDecoder_ seek:t];
+        [self setDvrFrame];
+    }
+}
+
+- (void)irAdvance:(int)dir
+{
+    if (!dvr_) {
+        if (dir < 0) {
+            [realParent replaySession:self];
+            [[realParent currentSession] irAdvance:dir];
+            return;
+        } else {
+            NSBeep();
+            return;
+        }
+
+    }
+    if (dir > 0) {
+        if (![dvrDecoder_ next] || [dvrDecoder_ timestamp] == [dvr_ lastTimeStamp]) {
+            // Switch to the live view
+            [realParent showLiveSession:liveSession_ inPlaceOf:self];
+            return;
+        }
+    } else {
+        if (![dvrDecoder_ prev]) {
+            NSBeep();
+        }
+    }
+    [self setDvrFrame];
+}
+
+- (long long)irSeekToAtLeast:(long long)timestamp
+{
+    assert(dvr_);
+    if (![dvrDecoder_ seek:timestamp]) {
+        [dvrDecoder_ seek:[dvr_ firstTimeStamp]];
+    }
+    [self setDvrFrame];
+    return [dvrDecoder_ timestamp];
+}
+
+- (DVR*)dvr
+{
+    return dvr_;
+}
+
+- (DVRDecoder*)dvrDecoder
+{
+    return dvrDecoder_;
+}
+
+- (PTYSession*)liveSession
+{
+    return liveSession_;
 }
 
 // Session specific methods
@@ -363,7 +445,7 @@ const float kBackgroundSessionIntervalSec = 10;
         return;
     }
     if (gDebugLogging) {
-      char* bytes = [data bytes];
+      const char* bytes = [data bytes];
       int length = [data length];
       DebugLog([NSString stringWithFormat:@"readTask called with %d bytes. The last byte is %d", (int)length, (int)bytes[length-1]]);
     }
@@ -480,7 +562,7 @@ const float kBackgroundSessionIntervalSec = 10;
     unichar unicode, unmodunicode;
 
 #if DEBUG_METHOD_TRACE || DEBUG_KEYDOWNDUMP
-    NSLog(@"%s(%d):-[PseudoTerminal keyDown:%@]",
+    NSLog(@"%s(%d):-[PTYSession keyDown:%@]",
           __FILE__, __LINE__, event);
 #endif
 
@@ -509,8 +591,7 @@ const float kBackgroundSessionIntervalSec = 10;
         unsigned char hexCode;
         int hexCodeTmp;
 
-        switch (keyBindingAction)
-        {
+        switch (keyBindingAction) {
             case KEY_ACTION_NEXT_SESSION:
                 [parent nextSession: nil];
                 break;
@@ -571,6 +652,12 @@ const float kBackgroundSessionIntervalSec = 10;
                 }
                 break;
             case KEY_ACTION_IGNORE:
+                break;
+            case KEY_ACTION_IR_FORWARD:
+                [[iTermController sharedInstance] irAdvance:1];
+                break;
+            case KEY_ACTION_IR_BACKWARD:
+                [[iTermController sharedInstance] irAdvance:-1];
                 break;
             default:
                 NSLog(@"Unknown key action %d", keyBindingAction);
@@ -1203,7 +1290,7 @@ const float kBackgroundSessionIntervalSec = 10;
 
     [self setFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NORMAL_FONT]]
            nafont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NON_ASCII_FONT]]
-horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
+    horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
   verticalSpacing:[[aDict objectForKey:KEY_VERTICAL_SPACING] floatValue]];
 }
 
@@ -1228,19 +1315,34 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     [aMenuItem release];
 
     // Ask the parent if it has anything to add
-    if ([[self parent] respondsToSelector:@selector(menuForEvent: menu:)]) {
-        [[self parent] menuForEvent:theEvent menu: theMenu];
+    if (realParent &&
+        [realParent respondsToSelector:@selector(menuForEvent: menu:)]) {
+        [realParent menuForEvent:theEvent menu: theMenu];
     }
 }
 
-- (PseudoTerminal *)parent
+- (id<WindowControllerInterface>)parent
 {
     return (parent);
 }
 
-- (void)setParent:(PseudoTerminal *)theParent
+- (void)setParent:(PseudoTerminal*)theParent
 {
     parent = theParent; // don't retain parent. parent retains self.
+    realParent = theParent;
+    fakeParent = nil;
+}
+
+- (void)setFakeParent:(FakeWindow*)theParent
+{
+    parent = theParent;
+    realParent = nil;
+    fakeParent = theParent;
+}
+
+- (FakeWindow*)fakeWindow
+{
+    return fakeParent;
 }
 
 - (NSTabViewItem *)tabViewItem
@@ -1452,7 +1554,7 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 - (void)setEncoding:(NSStringEncoding)encoding
 {
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal setEncoding:%d]",
+    NSLog(@"%s(%d):-[PTYSession setEncoding:%d]",
           __FILE__, __LINE__, encoding);
 #endif
     [TERMINAL setEncoding:encoding];
@@ -1915,6 +2017,23 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     }
 }
 
+- (BOOL)canInstantReplayPrev
+{
+    if (dvrDecoder_) {
+        return [dvrDecoder_ timestamp] != [dvr_ firstTimeStamp];
+    } else {
+        return YES;
+    }
+}
+
+- (BOOL)canInstantReplayNext
+{
+    if (dvrDecoder_) {
+        return YES;
+    } else {
+        return NO;
+    }
+}
 
 // Notification
 - (void) tabViewWillRedraw: (NSNotification *) aNotification
@@ -2012,11 +2131,14 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     id classDescription = nil;
 
     NSScriptObjectSpecifier *containerRef = nil;
-
-    theIndex = [[[self parent] tabView] indexOfTabViewItem: [self tabViewItem]];
+    if (!realParent) {
+        // TODO(georgen): scripting is broken while in instant replay.
+        return nil;
+    }
+    theIndex = [[realParent tabView] indexOfTabViewItem: [self tabViewItem]];
 
     if (theIndex != NSNotFound) {
-        containerRef = [[self parent] objectSpecifier];
+        containerRef = [realParent objectSpecifier];
         classDescription = [containerRef keyClassDescription];
         //create and return the specifier
         return [[[NSIndexSpecifier allocWithZone:[self zone]]
@@ -2122,7 +2244,7 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
 
     static NSDictionary* lowerCaseEncodings;
     if (!lowerCaseEncodings) {
-        NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"EncodingsWithLowerCase" ofType:@"plist"];   
+        NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"EncodingsWithLowerCase" ofType:@"plist"];
         lowerCaseEncodings = [NSDictionary dictionaryWithContentsOfFile:plistFile];
         [lowerCaseEncodings retain];
     }
@@ -2161,5 +2283,18 @@ horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
     return locale;
 }
 #endif
+
+- (void)setDvrFrame
+{
+    screen_char_t* s = (screen_char_t*)[dvrDecoder_ frame];
+    int len = [dvrDecoder_ length];
+    DVRFrameInfo info = [dvrDecoder_ info];
+    if (info.width != [SCREEN width] || info.height != [SCREEN height]) {
+        [parent sessionInitiatedResize:self width:info.width height:info.height];
+    }
+    [SCREEN setFromFrame:s len:len info:info];
+    [realParent resetTempTitle];
+    [realParent setWindowTitle];
+}
 
 @end

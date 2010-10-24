@@ -221,9 +221,9 @@ int gDebugLogFile = -1;
                                                  name:@"nonTerminalWindowBecameKey"
                                                object:nil];
 
-        [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self andSelector:@selector(getUrl:withReplyEvent:) forEventClass:kInternetEventClass andEventID:kAEGetURL];
+    [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self andSelector:@selector(getUrl:withReplyEvent:) forEventClass:kInternetEventClass andEventID:kAEGetURL];
 
-        aboutController = nil;
+    aboutController = nil;
 
     return self;
 }
@@ -279,11 +279,21 @@ int gDebugLogFile = -1;
     [[BookmarksWindow sharedInstance] showWindow:sender];
 }
 
+- (IBAction)instantReplayPrev:(id)sender
+{
+    [[iTermController sharedInstance] irAdvance:-1];
+}
+
+- (IBAction)instantReplayNext:(id)sender
+{
+    [[iTermController sharedInstance] irAdvance:1];
+}
+
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender
 {
     NSMenu *aMenu, *bookmarksMenu;
     NSMenuItem *newMenuItem;
-        PseudoTerminal *frontTerminal;
+    PseudoTerminal *frontTerminal;
 
     aMenu = [[NSMenu alloc] initWithTitle: @"Dock Menu"];
     //new session menu
@@ -521,35 +531,35 @@ void DebugLog(NSString* value)
 - (void) buildSessionSubmenu: (NSNotification *) aNotification
 {
         // build a submenu to select tabs
-        PseudoTerminal *currentTerminal = [self currentTerminal];
+    PseudoTerminal *currentTerminal = [self currentTerminal];
 
-        if (currentTerminal != [aNotification object] || ![[currentTerminal window] isKeyWindow]) return;
+    if (currentTerminal != [aNotification object] || ![[currentTerminal window] isKeyWindow]) return;
 
     NSMenu *aMenu = [[NSMenu alloc] initWithTitle: @"SessionMenu"];
     PTYTabView *aTabView = [currentTerminal tabView];
     PTYSession *aSession;
     NSArray *tabViewItemArray = [aTabView tabViewItems];
-        NSEnumerator *enumerator = [tabViewItemArray objectEnumerator];
-        NSTabViewItem *aTabViewItem;
-        int i=1;
+    NSEnumerator *enumerator = [tabViewItemArray objectEnumerator];
+    NSTabViewItem *aTabViewItem;
+    int i=1;
 
     // clear whatever menu we already have
     [selectTab setSubmenu: nil];
 
-        while ((aTabViewItem = [enumerator nextObject])) {
-                aSession = [aTabViewItem identifier];
-        NSMenuItem *aMenuItem;
+    while ((aTabViewItem = [enumerator nextObject])) {
+            aSession = [aTabViewItem identifier];
+    NSMenuItem *aMenuItem;
 
-        if(i < 10)
-        {
-            aMenuItem  = [[NSMenuItem alloc] initWithTitle: [aSession name] action: @selector(selectSessionAtIndexAction:) keyEquivalent:@""];
-            [aMenuItem setTag: i-1];
+    if(i < 10)
+    {
+        aMenuItem  = [[NSMenuItem alloc] initWithTitle: [aSession name] action: @selector(selectSessionAtIndexAction:) keyEquivalent:@""];
+        [aMenuItem setTag: i-1];
 
-            [aMenu addItem: aMenuItem];
-            [aMenuItem release];
-        }
-                i++;
-        }
+        [aMenu addItem: aMenuItem];
+        [aMenuItem release];
+    }
+            i++;
+    }
 
     [selectTab setSubmenu: aMenu];
 
@@ -568,21 +578,20 @@ void DebugLog(NSString* value)
                                            withShortcuts:YES];
 }
 
-- (void) reloadSessionMenus: (NSNotification *) aNotification
+- (void)reloadSessionMenus:(NSNotification *)aNotification
 {
-        PseudoTerminal *currentTerminal = [self currentTerminal];
+    PseudoTerminal *currentTerminal = [self currentTerminal];
     PTYSession *aSession = [aNotification object];
 
-        if (currentTerminal != [aSession parent] || ![[currentTerminal window] isKeyWindow]) return;
+    if (currentTerminal != [aSession parent] || ![[currentTerminal window] isKeyWindow]) return;
 
-    if(aSession == nil || [aSession exited]) {
-                [logStart setEnabled: NO];
-                [logStop setEnabled: NO];
-        }
-        else {
-                [logStart setEnabled: ![aSession logging]];
-                [logStop setEnabled: [aSession logging]];
-        }
+    if (aSession == nil || [aSession exited]) {
+        [logStart setEnabled: NO];
+        [logStop setEnabled: NO];
+    } else {
+        [logStart setEnabled: ![aSession logging]];
+        [logStop setEnabled: [aSession logging]];
+    }
 }
 
 - (BOOL) validateMenuItem: (NSMenuItem *) menuItem
@@ -592,8 +601,8 @@ void DebugLog(NSString* value)
 
 - (IBAction)buildScriptMenu:(id)sender
 {
-        if ([[[[NSApp mainMenu] itemAtIndex: 5] title] isEqualToString:NSLocalizedStringFromTableInBundle(@"Script",@"iTerm", [NSBundle bundleForClass: [iTermController class]], @"Script")])
-                [[NSApp mainMenu] removeItemAtIndex:5];
+    if ([[[[NSApp mainMenu] itemAtIndex: 5] title] isEqualToString:NSLocalizedStringFromTableInBundle(@"Script",@"iTerm", [NSBundle bundleForClass: [iTermController class]], @"Script")])
+            [[NSApp mainMenu] removeItemAtIndex:5];
 
         // add our script menu to the menu bar
     // get image

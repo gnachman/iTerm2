@@ -234,7 +234,7 @@ static float versionNumber;
         [keyString release];
     }
     keyString = [[[self keyComboAtIndex:rowIndex] copy] retain];
-    [action selectItemAtIndex:[[[self keyInfoAtIndex:rowIndex] objectForKey:@"Action"] intValue]];
+    [action selectItemWithTag:[[[self keyInfoAtIndex:rowIndex] objectForKey:@"Action"] intValue]];
     NSString* text = [[self keyInfoAtIndex:rowIndex] objectForKey:@"Text"];
     [valueToSend setStringValue:text ? text : @""];
 
@@ -256,7 +256,7 @@ static float versionNumber;
 
     [iTermKeyBindingMgr setMappingAtIndex:[keyMappings selectedRow]
                                    forKey:keyString
-                                   action:[action indexOfSelectedItem]
+                                   action:[[action selectedItem] tag]
                                     value:[valueToSend stringValue]
                                 createNew:newMapping
                                inBookmark:dict];
@@ -364,6 +364,8 @@ static float versionNumber;
     defaultUseBorder = [prefs objectForKey:@"UseBorder"]?[[prefs objectForKey:@"UseBorder"] boolValue]: NO;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultSmartPlacement = [prefs objectForKey:@"SmartPlacement"]?[[prefs objectForKey:@"SmartPlacement"] boolValue]: YES;
+    defaultInstantReplay = [prefs objectForKey:@"InstantReplay"]?[[prefs objectForKey:@"InstantReplay"] boolValue]: NO;
+    defaultIrMemory = [prefs objectForKey:@"IRMemory"]?[[prefs objectForKey:@"IRMemory"] intValue] : 4;
     defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
     defaultColorInvertedCursor = [prefs objectForKey:@"ColorInvertedCursor"]?[[prefs objectForKey:@"ColorInvertedCursor"] boolValue]: NO;
     NSString *appCast = defaultCheckTestRelease ?
@@ -448,6 +450,8 @@ static float versionNumber;
     [prefs setBool:defaultUseBorder forKey:@"UseBorder"];
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
     [prefs setBool:defaultSmartPlacement forKey:@"SmartPlacement"];
+    [prefs setBool:defaultInstantReplay forKey:@"InstantReplay"];
+    [prefs setInteger:defaultIrMemory forKey:@"IRMemory"];
     [prefs setBool:defaultCheckTestRelease forKey:@"CheckTestRelease"];
     [prefs setBool:defaultColorInvertedCursor forKey:@"ColorInvertedCursor"];
 
@@ -490,6 +494,8 @@ static float versionNumber;
     [useBorder setState: defaultUseBorder?NSOnState:NSOffState];
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [smartPlacement setState: defaultSmartPlacement?NSOnState:NSOffState];
+    [instantReplay setState: defaultInstantReplay?NSOnState:NSOffState];
+    [irMemory setIntValue:defaultIrMemory];
     [checkTestRelease setState: defaultCheckTestRelease?NSOnState:NSOffState];
     [checkColorInvertedCursor setState: defaultColorInvertedCursor?NSOnState:NSOffState];
 
@@ -549,6 +555,8 @@ static float versionNumber;
         defaultQuitWhenAllWindowsClosed = ([quitWhenAllWindowsClosed state] == NSOnState);
         defaultCheckUpdate = ([checkUpdate state] == NSOnState);
         defaultSmartPlacement = ([smartPlacement state] == NSOnState);
+        defaultInstantReplay = ([instantReplay state] == NSOnState);
+        defaultIrMemory = [irMemory intValue];
 
         if (prefs &&
             defaultCheckTestRelease != ([checkTestRelease state] == NSOnState)) {
@@ -571,6 +579,7 @@ static float versionNumber;
 
 - (void)windowWillClose:(NSNotification *)aNotification
 {
+    [self settingChanged:nil];
     [self savePreferences];
 }
 
@@ -697,6 +706,16 @@ static float versionNumber;
 - (BOOL)smartPlacement
 {
     return defaultSmartPlacement;
+}
+
+- (BOOL)instantReplay
+{
+    return defaultInstantReplay;
+}
+
+- (int)irMemory
+{
+    return defaultIrMemory;
 }
 
 - (BOOL)checkColorInvertedCursor
@@ -908,7 +927,7 @@ static float versionNumber;
         NSMenuItem* item = [bookmarkShortcutKey itemAtIndex:i];
         [item setTitle:[self shortcutKeyForTag:[item tag]]];
     }
-    
+
     // Add bookmark names to shortcuts that are bound.
     for (int i = 0; i < [dataSource numberOfBookmarks]; ++i) {
         Bookmark* temp = [dataSource bookmarkAtIndex:i];
@@ -958,9 +977,9 @@ static float versionNumber;
     // General tab
     [bookmarkName setStringValue:name];
     [bookmarkShortcutKey selectItemWithTag:[self shortcutTagForKey:shortcut]];
-    
-    [self updateShortcutTitles];    
-    
+
+    [self updateShortcutTitles];
+
     if ([customCommand isEqualToString:@"Yes"]) {
     [bookmarkCommandType selectCellWithTag:0];
     } else {
@@ -1024,11 +1043,11 @@ static float versionNumber;
 
     [self _updateFontsDisplay];
 
-        float horizontalSpacing = [[dict objectForKey:KEY_HORIZONTAL_SPACING] floatValue];
-        float verticalSpacing = [[dict objectForKey:KEY_VERTICAL_SPACING] floatValue];
+    float horizontalSpacing = [[dict objectForKey:KEY_HORIZONTAL_SPACING] floatValue];
+    float verticalSpacing = [[dict objectForKey:KEY_VERTICAL_SPACING] floatValue];
 
-        [displayFontSpacingWidth setFloatValue:horizontalSpacing];
-        [displayFontSpacingHeight setFloatValue:verticalSpacing];
+    [displayFontSpacingWidth setFloatValue:horizontalSpacing];
+    [displayFontSpacingHeight setFloatValue:verticalSpacing];
     [blinkingCursor setState:[[dict objectForKey:KEY_BLINKING_CURSOR] boolValue] ? NSOnState : NSOffState];
     [disableBold setState:[[dict objectForKey:KEY_DISABLE_BOLD] boolValue] ? NSOnState : NSOffState];
     [transparency setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
@@ -1197,7 +1216,7 @@ static float versionNumber;
                 [dataSource setObject:nil forKey:KEY_SHORTCUT inBookmark:temp];
             }
         }
-        
+
         [newDict setObject:shortcut forKey:KEY_SHORTCUT];
     }
     [newDict setObject:command forKey:KEY_COMMAND];
@@ -1291,7 +1310,7 @@ static float versionNumber;
 
     // Selectively update form fields.
     [self updateShortcutTitles];
-    
+
     // Update existing sessions
     int n = [[iTermController sharedInstance] numberOfTerminals];
     for (int i = 0; i < n; ++i) {
@@ -1529,15 +1548,15 @@ static float versionNumber;
 - (void)updateValueToSend
 {
     int tag = [[action selectedItem] tag];
-    if (tag == 1) {
+    if (tag == KEY_ACTION_HEX_CODE) {
         [valueToSend setHidden:NO];
         [[valueToSend cell] setPlaceholderString:@"ex: 0x7f"];
         [escPlus setHidden:YES];
-    } else if (tag == 2) {
+    } else if (tag == KEY_ACTION_TEXT) {
         [valueToSend setHidden:NO];
         [[valueToSend cell] setPlaceholderString:@"Enter value to send"];
         [escPlus setHidden:YES];
-    } else if (tag == 3) {
+    } else if (tag == KEY_ACTION_ESCAPE_SEQUENCE) {
         [valueToSend setHidden:NO];
         [[valueToSend cell] setPlaceholderString:@"characters to send"];
         [escPlus setHidden:NO];
@@ -1565,7 +1584,7 @@ static float versionNumber;
     }
     [keyPress setStringValue:@""];
     keyString = [[NSString alloc] init];
-    [action selectItemAtIndex:0];
+    [action selectItemWithTag:KEY_ACTION_IGNORE];
     [valueToSend setStringValue:@""];
     [self updateValueToSend];
     newMapping = YES;

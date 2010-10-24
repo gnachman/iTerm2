@@ -36,7 +36,7 @@
 #import <iTerm/iTerm.h>
 #import <iTerm/VT100Screen.h>
 #import <iTerm/NSStringITerm.h>
-#import <iTerm/PseudoTerminal.h>
+#import "WindowControllerInterface.h"
 #import <iTerm/PTYTextView.h>
 #import <iTerm/PTYScrollView.h>
 #import <iTerm/charmaps.h>
@@ -49,6 +49,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <LineBuffer.h>
+#import "DVRBuffer.h"
 
 #define MAX_SCROLLBACK_LINES 1000000
 
@@ -202,6 +203,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     // Need Growl plist stuff
     gd = [iTermGrowlDelegate sharedInstance];
 
+    dvr = [DVR alloc];
+    [dvr initWithBufferCapacity:[[PreferencePanel sharedInstance] irMemory] * 1024 * 1024];
     return self;
 }
 
@@ -211,24 +214,29 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
 #endif
     // free our character buffer
-    if(buffer_lines)
+    if (buffer_lines)
         free(buffer_lines);
 
     // free our "dirty flags" buffer
-    if(dirty)
+    if (dirty) {
         free(dirty);
-    if (result_line)
+    }
+    if (result_line) {
         free(result_line);
+    }
 
     // free our default line
-    if(default_line)
+    if (default_line) {
         free(default_line);
+    }
 
-    if (temp_buffer)
+    if (temp_buffer) {
         free(temp_buffer);
+    }
 
     [printToAnsiString release];
     [linebuffer release];
+    [dvr release];
 
     [super dealloc];
 #if DEBUG_ALLOC
@@ -1132,21 +1140,21 @@ static char* FormatCont(int c)
         //NSLog(@"setting window position to Y=%d, X=%d", token.u.csi.p[1], token.u.csi.p[2]);
         if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] &&
             ![[SESSION parent] fullScreen])
-            [[[SESSION parent] window] setFrameTopLeftPoint: NSMakePoint(token.u.csi.p[2], [[[[SESSION parent] window] screen] frame].size.height - token.u.csi.p[1])];
+            [[SESSION parent] windowSetFrameTopLeftPoint: NSMakePoint(token.u.csi.p[2], [[[SESSION parent] windowScreen] frame].size.height - token.u.csi.p[1])];
         break;
     case XTERMCC_ICONIFY:
         if (![[SESSION parent] fullScreen])
-            [[[SESSION parent] window] performMiniaturize: nil];
+            [[SESSION parent] windowPerformMiniaturize: nil];
         break;
     case XTERMCC_DEICONIFY:
-        [[[SESSION parent] window] deminiaturize: nil];
+        [[SESSION parent] windowDeminiaturize: nil];
         break;
     case XTERMCC_RAISE:
-        [[[SESSION parent] window] orderFront: nil];
+        [[SESSION parent] windowOrderFront: nil];
         break;
     case XTERMCC_LOWER:
         if (![[SESSION parent] fullScreen])
-            [[[SESSION parent] window] orderBack: nil];
+            [[SESSION parent] windowOrderBack: nil];
         break;
     case XTERMCC_SU:
         for (i=0; i<token.u.csi.p[0]; i++) [self scrollUp];
@@ -1157,14 +1165,14 @@ static char* FormatCont(int c)
     case XTERMCC_REPORT_WIN_STATE:
         {
             char buf[64];
-            snprintf(buf, sizeof(buf), "\033[%dt", [[[SESSION parent] window] isMiniaturized]?2:1);
+            snprintf(buf, sizeof(buf), "\033[%dt", [[SESSION parent] windowIsMiniaturized]?2:1);
             [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
         break;
     case XTERMCC_REPORT_WIN_POS:
         {
             char buf[64];
-            NSRect frame = [[[SESSION parent] window] frame];
+            NSRect frame = [[SESSION parent] windowFrame];
             snprintf(buf, sizeof(buf), "\033[3;%d;%dt", (int) frame.origin.x, (int) frame.origin.y);
             [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
@@ -1172,7 +1180,7 @@ static char* FormatCont(int c)
     case XTERMCC_REPORT_WIN_PIX_SIZE:
         {
             char buf[64];
-            NSRect frame = [[[SESSION parent] window] frame];
+            NSRect frame = [[SESSION parent] windowFrame];
             snprintf(buf, sizeof(buf), "\033[4;%d;%dt", (int) frame.size.height, (int) frame.size.width);
             [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
@@ -1187,9 +1195,9 @@ static char* FormatCont(int c)
     case XTERMCC_REPORT_SCREEN_SIZE:
         {
             char buf[64];
-            NSRect screenSize = [[[[SESSION parent] window] screen] frame];
-            float nch = [[[SESSION parent] window] frame].size.height - [[[[SESSION parent] currentSession] SCROLLVIEW] documentVisibleRect].size.height;
-            float wch = [[[SESSION parent] window] frame].size.width - [[[[SESSION parent] currentSession] SCROLLVIEW] documentVisibleRect].size.width;
+            NSRect screenSize = [[[SESSION parent] windowScreen] frame];
+            float nch = [[SESSION parent] windowFrame].size.height - [[[[SESSION parent] currentSession] SCROLLVIEW] documentVisibleRect].size.height;
+            float wch = [[SESSION parent] windowFrame].size.width - [[[[SESSION parent] currentSession] SCROLLVIEW] documentVisibleRect].size.width;
             int h = (screenSize.size.height - nch) / [display lineHeight];
             int w =  (screenSize.size.width - wch - MARGIN * 2) / [display charWidth];
 
@@ -2812,6 +2820,104 @@ static void DumpBuf(screen_char_t* p, int n) {
     [self _popScrollbackLines:linesPushed];
     return keepSearching;
 }
+
+- (void)saveToDvr
+{
+    if (!dvr || ![[PreferencePanel sharedInstance] instantReplay]) {
+        return;
+    }
+
+    DVRFrameInfo info;
+    info.cursorX = cursorX;
+    info.cursorY = cursorY;
+    info.height = HEIGHT;
+    info.width = WIDTH;
+    info.topOffset = screen_top - buffer_lines;
+
+    [dvr appendFrame:(char*)buffer_lines
+              length:sizeof(screen_char_t) * REAL_WIDTH * HEIGHT
+                info:&info];
+}
+
+- (void)disableDvr
+{
+    [dvr release];
+    dvr = nil;
+}
+
+- (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info
+{
+    int yo = 0;
+    if (info.width == WIDTH && info.height == HEIGHT) {
+        memcpy(buffer_lines, s, len);
+        screen_top = buffer_lines + info.topOffset;
+        [self setDirty];
+    } else {
+        yo = info.height - HEIGHT;
+        if (yo < 0) {
+            // Display is larger than history. Happens if you're in fullscreen.
+            yo = 0;
+        }
+        int widthToCopy = WIDTH;
+        if (info.width < WIDTH) {
+            // Display is larger than history. Happens if you're in fullscreen.
+            widthToCopy = info.width;
+        }
+
+        screen_char_t* lineOut;
+        screen_char_t* lineIn;
+
+        int truncateHistoryLines = 0;
+        if (HEIGHT < info.height) {
+            truncateHistoryLines = info.height - HEIGHT;
+        }
+
+        screen_top = buffer_lines;
+        for (int y = 0; y < HEIGHT && y < info.height; ++y) {
+            lineOut = buffer_lines + y * REAL_WIDTH;
+            lineIn = s + ((info.topOffset + (truncateHistoryLines + y) * (info.width + 1)) % (len / sizeof(screen_char_t)));
+            memcpy(lineOut, lineIn, widthToCopy * sizeof(screen_char_t));
+            if (WIDTH > info.width) {
+                // Display wider than history
+                memset(lineOut + widthToCopy, 0, (WIDTH - widthToCopy) * sizeof(screen_char_t));
+                lineOut[WIDTH].ch = 0;
+            } else {
+                // History too wide for screen
+                if (lineIn[widthToCopy].ch == 0xffff) {
+                    lineOut[widthToCopy - 1].ch = 0;
+                }
+                if (lineOut[widthToCopy - 1].ch == TAB_FILLER) {
+                    lineOut[widthToCopy - 1].ch = '\t';
+                }
+            }
+        }
+        for (int y = info.height; y < HEIGHT; ++y) {
+            lineOut = buffer_lines + y * REAL_WIDTH;
+            memset(lineOut, 0, REAL_WIDTH * sizeof(screen_char_t));
+        }
+        [self setDirty];
+    }
+    cursorX = info.cursorX;
+    cursorY = info.cursorY - yo;
+    if (cursorX < 0) {
+        cursorX = 0;
+    }
+    if (cursorY < 0) {
+        cursorY = 0;
+    }
+    if (cursorX >= WIDTH) {
+        cursorX = WIDTH - 1;
+    }
+    if (cursorY >= HEIGHT) {
+        cursorY = HEIGHT - 1;
+    }
+}
+
+- (DVR*)dvr
+{
+    return dvr;
+}
+
 
 @end
 

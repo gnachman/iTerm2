@@ -307,6 +307,12 @@
 															  [NSBundle bundleForClass: [self class]], 
 															  @"Key Binding Actions");
 			break;
+        case KEY_ACTION_IR_FORWARD:
+            actionString = @"forward in time";
+            break;
+        case KEY_ACTION_IR_BACKWARD:
+            actionString = @"backward in time";
+            break;
 		default:
 			actionString = [NSString stringWithFormat: @"%@ %d", 
 				NSLocalizedStringFromTableInBundle(@"unknown action ID",@"iTerm", 

@@ -27,6 +27,8 @@
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
 #import <iTerm/BookmarkModel.h>
+#import "DVR.h"
+#import "WindowControllerInterface.h"
 
 #include <sys/time.h>
 
@@ -36,9 +38,10 @@
 @class VT100Screen;
 @class VT100Terminal;
 @class PreferencePanel;
-@class PseudoTerminal;
 @class iTermController;
 @class iTermGrowlDelegate;
+@class FakeWindow;
+@class PseudoTerminal;
 
 @interface PTYSession : NSResponder
 {
@@ -48,7 +51,9 @@
     // tty device
     NSString* tty;
 
-    PseudoTerminal* parent;  // parent controller
+    id<WindowControllerInterface> parent;  // Parent controller. Always set. Equals one of realParent or fakeParent.
+    PseudoTerminal* realParent;  // non-nil only if parent is PseudoTerminal*
+    FakeWindow* fakeParent;  // non-nil only if parent is FakeWindow*
     NSString* name;
     NSString* defaultName;
     NSString* windowTitle;
@@ -90,11 +95,42 @@
     BOOL newOutput;
     BOOL growlIdle, growlNewOutput;
     bool isDivorced;
+    DVR* dvr_;
+    DVRDecoder* dvrDecoder_;
+
+    // Set only if this is not a live session. Is a pointer to the hidden live
+    // session while looking at the past.
+    PTYSession* liveSession_;
 }
 
 // init/dealloc
 - (id)init;
 - (void)dealloc;
+
+// accessor
+- (DVR*)dvr;
+
+// accessor
+- (DVRDecoder*)dvrDecoder;
+
+// Jump to a particular point in time.
+- (long long)irSeekToAtLeast:(long long)timestamp;
+
+// accessor. nil if this session is live.
+- (PTYSession*)liveSession;
+
+// test if we're at the beginning/end of time.
+- (BOOL)canInstantReplayPrev;
+- (BOOL)canInstantReplayNext;
+
+// Disable all timers.
+- (void)cancelTimers;
+
+// Begin showing DVR frames from some live session.
+- (void)setDvr:(DVR*)dvr liveSession:(PTYSession*)liveSession;
+
+// Go forward/back in time. Must call setDvr:liveSession: first.
+- (void)irAdvance:(int)dir;
 
 + (NSImage*)loadBackgroundImage:(NSString*)imageFilePath;
 
@@ -148,8 +184,10 @@
 
 
 // get/set methods
-- (PseudoTerminal *)parent;
-- (void)setParent: (PseudoTerminal *)theParent;
+- (id<WindowControllerInterface>)parent;
+- (void)setParent:(PseudoTerminal*)theParent;
+- (void)setFakeParent: (FakeWindow*)theParent;
+- (FakeWindow*)fakeWindow;
 - (NSTabViewItem *)tabViewItem;
 - (void)setTabViewItem: (NSTabViewItem *)theTabViewItem;
 - (NSString *)name;
@@ -281,5 +319,6 @@
 @interface PTYSession (Private)
 
 - (NSString*)_getLocale;
+- (void)setDvrFrame;
 
 @end

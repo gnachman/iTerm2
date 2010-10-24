@@ -51,6 +51,8 @@ void DebugLog(NSString* value);
     IBOutlet NSMenuItem *closeWindow;
     IBOutlet NSMenuItem *sendInputToAllSessions;
     IBOutlet NSMenuItem *toggleBookmarksView;
+    IBOutlet NSMenuItem *irNext;
+    IBOutlet NSMenuItem *irPrev;
 
 }
 
@@ -75,6 +77,8 @@ void DebugLog(NSString* value);
 
 - (IBAction)showPrefWindow:(id)sender;
 - (IBAction)showBookmarkWindow:(id)sender;
+- (IBAction)instantReplayPrev:(id)sender;
+- (IBAction)instantReplayNext:(id)sender;
 
     // navigation
 - (IBAction) previousTerminal: (id) sender;
@@ -94,7 +98,6 @@ void DebugLog(NSString* value);
 // size
 - (IBAction) returnToDefaultSize: (id) sender;
 - (IBAction)editCurrentSession:(id)sender;
-
 
 @end
 

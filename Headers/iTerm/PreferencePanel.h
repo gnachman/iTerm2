@@ -150,13 +150,21 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *smartPlacement;
     BOOL defaultSmartPlacement;
 
+    // instant replay
+    IBOutlet NSButton *instantReplay;
+    BOOL defaultInstantReplay;
+
+    // instant replay memory usage.
+    IBOutlet NSTextField* irMemory;
+    int defaultIrMemory;
+
     // prompt for test-release updates
     IBOutlet NSButton *checkTestRelease;
     BOOL defaultCheckTestRelease;
 
     IBOutlet NSTabView* bookmarksSettingsTabViewParent;
     IBOutlet NSTabViewItem* bookmarkSettingsGeneralTab;
-    
+
     NSUserDefaults *prefs;
 
     IBOutlet NSToolbar* toolbar;
@@ -331,6 +339,8 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 - (BOOL)useBorder;
 - (BOOL)hideScrollbar;
 - (BOOL)smartPlacement;
+- (BOOL)instantReplay;
+- (int)irMemory;
 - (BOOL)checkColorInvertedCursor;
 - (BOOL)checkTestRelease;
 - (BOOL)colorInvertedCursor;

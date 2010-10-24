@@ -30,6 +30,7 @@
 #import <Cocoa/Cocoa.h>
 #import <iTerm/VT100Terminal.h>
 #import <LineBuffer.h>
+#import "DVR.h"
 
 @class PTYTask;
 @class PTYSession;
@@ -59,7 +60,7 @@
     int SCROLL_TOP;
     int SCROLL_BOTTOM;
     BOOL tabStop[TABWINDOW];
-    
+
     VT100Terminal *TERMINAL;
     PTYTask *SHELL;
     PTYSession *SESSION;
@@ -69,28 +70,28 @@
     BOOL SHOWBELL;
     BOOL GROWL;
 
-    
+
     BOOL blinkingCursor;
     PTYTextView *display;
-    
+
     // A circular buffer exactly (WIDTH+1) * HEIGHT elements in size. This contains
     // only the contents of the screen. The scrollback buffer is stored in linebuffer.
     screen_char_t *buffer_lines;
-    
+
     // The position in buffer_lines of the first line in the screen. The logical lines
     // wrap around the circular buffer.
     screen_char_t *screen_top;
 
     // buffer holding flags for each char on whether it needs to be redrawn
     char *dirty;
-    
+
     // a single default line
     screen_char_t *default_line;
     screen_char_t *result_line;
-    
+
     // temporary buffer to store main buffer in SAVE_BUFFER/RESET_BUFFER mode
     screen_char_t *temp_buffer;
-        
+
     // default line stuff
     int default_bg_code;
     int default_fg_code;
@@ -103,17 +104,20 @@
     // how many scrollback lines have been lost due to overflow
     int scrollback_overflow;
     long long cumulative_scrollback_overflow;
-    
+
     // print to ansi...
     BOOL printToAnsi;        // YES=ON, NO=OFF, default=NO;
     NSMutableString *printToAnsiString;
-    
+
     // Growl stuff
     iTermGrowlDelegate* gd;
-    
+
     // Scrollback buffer
     LineBuffer* linebuffer;
     FindContext findContext;
+
+    // Used for recording instant replay.
+    DVR* dvr;
 }
 
 
@@ -186,7 +190,7 @@
 - (void)cursorUp:(int)n;
 - (void)cursorDown:(int)n;
 - (void)cursorToX: (int) x;
-- (void)cursorToX:(int)x Y:(int)y; 
+- (void)cursorToX:(int)x Y:(int)y;
 - (void)saveCursorPosition;
 - (void)restoreCursorPosition;
 - (void)setTopBottom:(VT100TCC)token;
@@ -232,4 +236,17 @@
 
 // Return a human-readable dump of the screen contents.
 - (NSString*)debugString;
+
+// Save the current state to a new frame in the dvr.
+- (void)saveToDvr;
+
+// Turn off DVR for this screen.
+- (void)disableDvr;
+
+// Accessor.
+- (DVR*)dvr;
+
+// Load a frame from a dvr decoder.
+- (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info;
+
 @end
