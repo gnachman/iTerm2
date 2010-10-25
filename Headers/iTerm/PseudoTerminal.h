@@ -69,10 +69,6 @@
     // The text that is being searched for.
     IBOutlet NSTextField* findBarTextField;
 
-    // Buttons to advance search forward or backwards.
-    IBOutlet NSButton*    findBarNextButton;
-    IBOutlet NSButton*    findBarPreviousButton;
-
     // Checkbox: ignore case?
     IBOutlet NSButton*    ignoreCase;
 
@@ -261,11 +257,17 @@
 // Search for the next occurrence of a string.
 - (IBAction)searchNext:(id)sender;
 
+// Called when next/prev capsule button is clicked.
+- (IBAction)searchNextPrev:(id)sender;
+
 // Search for the currently selected text.
 - (void)findWithSelection;
 
 // Called when the bottomBar or the command text field changes.
 - (void)controlTextDidChange:(NSNotification *)aNotification;
+
+// Invoked when users press keys with predefined bindings in a cell of the specified control.
+- (BOOL)control:(NSControl*)control textView:(NSTextView*)textView doCommandBySelector:(SEL)commandSelector;
 
 // Toggle bottomBar.
 - (void)showHideBottomBar;

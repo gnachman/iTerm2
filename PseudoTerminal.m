@@ -1409,6 +1409,16 @@ NSString *sessionsKey = @"sessions";
     [self _newSearch:[[FindCommandHandler sharedInstance] findNext]];
 }
 
+- (IBAction)searchNextPrev:(id)sender
+{
+    if ([sender selectedSegment] == 0) {
+        [self searchPrevious:sender];
+    } else {
+        [self searchNext:sender];
+    }
+    [sender setSelected:NO forSegment:[sender selectedSegment]];
+}
+
 - (void)findWithSelection
 {
     FindCommandHandler* fch = [FindCommandHandler sharedInstance];
@@ -1436,21 +1446,75 @@ NSString *sessionsKey = @"sessions";
     [self _newSearch:[[FindCommandHandler sharedInstance] findPreviousWithOffset:0]];
 };
 
+- (void)deselectFindBarTextField
+{
+    NSText* fieldEditor = [[self window] fieldEditor:YES forObject:findBarTextField];
+    [fieldEditor setSelectedRange:NSMakeRange([[fieldEditor string] length], 0)];
+    [fieldEditor setNeedsDisplay:YES];
+}
+
+- (BOOL)control:(NSControl*)control textView:(NSTextView*)textView doCommandBySelector:(SEL)commandSelector 
+{
+    if (control == findBarTextField && commandSelector == @selector(cancelOperation:)) {
+        // Have the esc key close the find bar instead of erasing its contents.
+        [self closeFindBar:self];
+        return YES;
+    } else if (control == findBarTextField && commandSelector == @selector(insertBacktab:)) {
+        [[[self currentSession] TEXTVIEW] growSelectionLeft];
+        NSString* text = [[[self currentSession] TEXTVIEW] selectedText];
+        if (text) {
+            [[[self currentSession] TEXTVIEW] copy:self];
+            [findBarTextField setStringValue:text];
+            [self deselectFindBarTextField];
+            [self searchPrevious:self];
+        }
+        return YES;
+    } else if (control == findBarTextField && commandSelector == @selector(insertTab:)) {
+        [[[self currentSession] TEXTVIEW] growSelectionRight];
+        NSString* text = [[[self currentSession] TEXTVIEW] selectedText];
+        if (text) {
+            [[[self currentSession] TEXTVIEW] copy:self];
+            [findBarTextField setStringValue:text];
+            [self deselectFindBarTextField];
+        }
+        return YES;
+    } else if (control == findBarTextField && commandSelector == @selector(insertNewlineIgnoringFieldEditor:)) {
+        // Alt-enter
+        PTYTextView* textview = [[self currentSession] TEXTVIEW];
+        [textview copy:nil];
+        NSString* text = [textview selectedTextWithPad:NO];
+        [[self currentSession] pasteString:text];
+        [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
 - (void)controlTextDidEndEditing:(NSNotification *)aNotification
 {
     int move = [[[aNotification userInfo] objectForKey:@"NSTextMovement"] intValue];
     NSControl *postingObject = [aNotification object];
     if (postingObject == findBarTextField) {
-        // This is handled elsewhere.
         [previousFindString setString:@""];
+        switch (move) {
+            case NSReturnTextMovement:
+                // Return key
+                if ([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask) {
+                    [self searchNext:self];
+                } else {
+                    [self searchPrevious:self];
+                }
+                break;
+        }
         return;
     }
 
     switch (move) {
-        case 16: // Return key
+        case NSReturnTextMovement:
             [self sendCommand: nil];
             break;
-        case 17: // Tab key
+        case NSTabTextMovement:
         {
             Bookmark* prototype = [[BookmarkModel sharedInstance] defaultBookmark];
             if (!prototype) {
@@ -1600,6 +1664,7 @@ NSString *sessionsKey = @"sessions";
 
     }
     [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+    [sender setSelected:NO forSegment:[sender selectedSegment]];
 }
 
 - (void)irAdvance:(int)dir
@@ -2122,7 +2187,7 @@ NSString *sessionsKey = @"sessions";
     [bottomBar setFrame: bottomBarFrame];
 
     NSRect findBarFrame = [findBarSubview frame];
-    findBarFrame.size.width += bottomBarFrame.origin.x;
+    findBarFrame.size.width = bottomBarFrame.size.width;
     findBarFrame.origin.x = 0;
     [findBarSubview setFrame: findBarFrame];
 

@@ -211,6 +211,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 // Cause the next find to start at the top/bottom of the buffer
 - (void)resetFindCursor;
 
+- (void)growSelectionLeft;
+- (void)growSelectionRight;
+
 //get/set methods
 - (NSFont *)font;
 - (NSFont *)nafont;

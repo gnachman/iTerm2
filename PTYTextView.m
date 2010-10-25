@@ -2568,8 +2568,73 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 {
     return _findInProgress;
 }
+- (void)growSelectionLeft
+{
+    if (startX == -1) {
+        return;
+    }
+    int x = startX;
+    int y = startY;
+    --x;
+    if (x < 0) {
+        x = [dataSource width] - 1;
+        --y;
+        if (y < 0) {
+            return;
+        }
+    }
 
-- (BOOL) continueFind
+    int tmpX1;
+    int tmpX2;
+    int tmpY1;
+    int tmpY2;
+
+    [self _getWordForX:x
+                     y:y
+                startX:&tmpX1
+                startY:&tmpY1
+                  endX:&tmpX2
+                  endY:&tmpY2];
+
+    startX = tmpX1;
+    startY = tmpY1;
+    [self refresh];
+}
+
+- (void)growSelectionRight
+{
+    if (startX == -1) {
+        return;
+    }
+    int x = endX;
+    int y = endY;
+    ++x;
+    if (x >= [dataSource width]) {
+        x = 0;
+        ++y;
+        if (y >= [dataSource numberOfLines]) {
+            return;
+        }
+    }
+
+    int tmpX1;
+    int tmpX2;
+    int tmpY1;
+    int tmpY2;
+
+    [self _getWordForX:x
+                     y:y
+                startX:&tmpX1
+                startY:&tmpY1
+                  endX:&tmpX2
+                  endY:&tmpY2];
+
+    endX = tmpX2;
+    endY = tmpY2;
+    [self refresh];
+}
+
+- (BOOL)continueFind
 {
     BOOL more;
     BOOL found;
