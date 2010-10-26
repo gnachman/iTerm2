@@ -65,16 +65,6 @@ static NSColor *newOutputStateColor;
 static NSColor *deadStateColor;
 
 static NSImage *warningImage;
-// Timer period when all we have to do is update blinking text/cursor.
-const float kBlinkTimerIntervalSec = 1.0 / 2.0;
-// Timer period when receiving lots of data.
-const float kSlowTimerIntervalSec = 1.0 / 10.0;
-// Timer period for interactive use.
-const float kFastTimerIntervalSec = 1.0 / 30.0;
-// Timer period for background sessions. If it ran too infrequently then
-// we'd probably hit weird edge cases.
-// TODO(georgen): There's room for improvement here.
-const float kBackgroundSessionIntervalSec = 10;
 
 + (void)initialize
 {
@@ -1986,14 +1976,10 @@ const float kBackgroundSessionIntervalSec = 10;
 
 - (void)scheduleUpdateIn:(NSTimeInterval)timeout
 {
-    // This method ensures regular updates for text blinking, but allows
-    // for quicker (soon=YES) updates to draw newly read text from PTYTask
-    BOOL soon = timeout < kBlinkTimerIntervalSec;
-
-    if (soon && [updateTimer isValid] && [[updateTimer userInfo] intValue]) {
-        // A faster-than-blinking update is already scheduled. Let it come when
-        // it will. This prevents repeated calls to this function from pushing
-        // the timer back and reducing its frequency unfairly.
+    float kEpsilon = 0.001;
+    if ([updateTimer isValid] && [[updateTimer userInfo] floatValue] - (float)timeout < kEpsilon) {
+        // An update of at least the current frequency is already scheduled. Let
+        // it run to avoid pushing it back repeatedly (which prevents it from firing).
         return;
     }
 
@@ -2002,7 +1988,7 @@ const float kBackgroundSessionIntervalSec = 10;
 
     updateTimer = [[NSTimer scheduledTimerWithTimeInterval:timeout
                                                     target:self selector:@selector(updateDisplay)
-                                                  userInfo:[NSNumber numberWithInt:soon ? 1 : 0]
+                                                  userInfo:[NSNumber numberWithFloat:(float)timeout]
                                                    repeats:NO] retain];
 }
 

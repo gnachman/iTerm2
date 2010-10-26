@@ -1036,7 +1036,13 @@ NSString *sessionsKey = @"sessions";
 #endif
 
     [[tabViewItem identifier] resetStatus];
-    [[[tabViewItem identifier] TEXTVIEW] setNeedsDisplay: YES];
+
+    // Background tabs' timers run infrequently so make sure the display is
+    // up to date to avoid a jump when it's shown.
+    [[[tabViewItem identifier] TEXTVIEW] setNeedsDisplay:YES];
+    [[tabViewItem identifier] updateDisplay];
+    [[tabViewItem identifier] scheduleUpdateIn:kFastTimerIntervalSec];
+
     if (_fullScreen) {
         [self _drawFullScreenBlackBackground];
     } else {
