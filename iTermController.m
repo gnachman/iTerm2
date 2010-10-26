@@ -39,7 +39,7 @@
 #import <iTerm/NSStringITerm.h>
 #import <iTerm/ITAddressBookMgr.h>
 #import <iTerm/iTermGrowlDelegate.h>
-
+#import "PasteboardHistory.h"
 
 @interface NSApplication (Undocumented)
 - (void)_cycleWindowsReversed:(BOOL)back;
@@ -82,7 +82,7 @@ static BOOL initDone = NO;
 
 
 // init
-- (id) init
+- (id)init
 {
 #if DEBUG_ALLOC
     NSLog(@"%s(%d):-[iTermController init]",
@@ -109,7 +109,8 @@ static BOOL initDone = NO;
      * PLIST check here.
      */
     gd = [iTermGrowlDelegate sharedInstance];
-
+    pbHistory = [[PasteboardHistory alloc] initWithMaxEntries:20];
+    
     return (self);
 }
 
@@ -184,6 +185,11 @@ static BOOL initDone = NO;
 - (PseudoTerminal*)currentTerminal
 {
     return (FRONT);
+}
+
+- (PasteboardHistory*)pbHistory
+{
+    return pbHistory;
 }
 
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow

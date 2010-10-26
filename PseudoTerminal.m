@@ -57,6 +57,7 @@
 #import <PSMTabStyle.h>
 #import <iTerm/iTermGrowlDelegate.h>
 #include <unistd.h>
+#import "PasteboardHistory.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -117,6 +118,9 @@ NSString *sessionsKey = @"sessions";
     [commandField retain];
     [commandField setDelegate:self];
     [bottomBar retain];
+
+    pbHistoryView = [[PasteboardHistoryView alloc] init];
+    [pbHistoryView setDataSource:[[iTermController sharedInstance] pbHistory]];
 
     // create the window programmatically with appropriate style mask
     styleMask = NSTitledWindowMask |
@@ -373,6 +377,7 @@ NSString *sessionsKey = @"sessions";
         [findProgressIndicator setHidden:YES];
         _timer = nil;
     }
+    [pbHistoryView dealloc];
 
     [super dealloc];
 }
@@ -1453,7 +1458,7 @@ NSString *sessionsKey = @"sessions";
     [fieldEditor setNeedsDisplay:YES];
 }
 
-- (BOOL)control:(NSControl*)control textView:(NSTextView*)textView doCommandBySelector:(SEL)commandSelector 
+- (BOOL)control:(NSControl*)control textView:(NSTextView*)textView doCommandBySelector:(SEL)commandSelector
 {
     if (control == findBarTextField && commandSelector == @selector(cancelOperation:)) {
         // Have the esc key close the find bar instead of erasing its contents.
@@ -1937,6 +1942,40 @@ NSString *sessionsKey = @"sessions";
 {
     [self irAdvance:1];
     [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+}
+
+- (void)popWindowAtCursor:(NSWindowController*)controller
+{
+    [controller showWindow:self];
+    [[controller window] makeKeyAndOrderFront:self];
+
+    VT100Screen* screen = [[self currentSession] SCREEN];
+    int cx = [screen cursorX] - 1;
+    int cy = [screen cursorY];
+
+    PTYTextView* tv = [[self currentSession] TEXTVIEW];
+
+    NSPoint p = NSMakePoint(MARGIN + cx * [tv charWidth], ([screen numberOfLines] - [screen height] + cy) * [tv lineHeight]);
+    p = [tv convertPoint:p toView:nil];
+    p = [[tv window] convertBaseToScreen:p];
+    p.y -= [[controller window] frame].size.height;
+
+    NSRect monitorFrame = [[[self window] screen] visibleFrame];
+    if (p.y < monitorFrame.origin.y) {
+        p.y += [[controller window] frame].size.height + [tv lineHeight];
+    }
+    float rightX = monitorFrame.origin.x + monitorFrame.size.width;
+    if (p.x + [[controller window] frame].size.width > rightX) {
+        float excess = p.x + [[controller window] frame].size.width - rightX;
+        p.x -= excess;
+    }
+
+    [[controller window] setFrameOrigin:p];
+}
+
+- (IBAction)openPasteHistory:(id)sender
+{
+    [self popWindowAtCursor:pbHistoryView];
 }
 
 @end

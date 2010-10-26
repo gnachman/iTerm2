@@ -73,18 +73,18 @@
 - (void)dealloc;
 - (void)setDataSource:(BookmarkModel*)dataSource;
 
-// DataSource methods
-- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex;
-- (BOOL)selectionShouldChangeInTableView:(NSTableView *)aTableView;
-- (NSDragOperation)tableView:(NSTableView *)aTableView validateDrop:(id < NSDraggingInfo >)info proposedRow:(NSInteger)row proposedDropOperation:(NSTableViewDropOperation)operation;
-
 // Drag drop
 - (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard*)pboard;
 - (NSDragOperation)tableView:(NSTableView*)tv validateDrop:(id <NSDraggingInfo>)info proposedRow:(NSInteger)row proposedDropOperation:(NSTableViewDropOperation)op;
 - (BOOL)tableView:(NSTableView *)aTableView acceptDrop:(id <NSDraggingInfo>)info
               row:(NSInteger)row dropOperation:(NSTableViewDropOperation)operation;
 
+
+// DataSource methods
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;
+- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex;
+- (BOOL)selectionShouldChangeInTableView:(NSTableView *)aTableView;
+- (NSDragOperation)tableView:(NSTableView *)aTableView validateDrop:(id < NSDraggingInfo >)info proposedRow:(NSInteger)row proposedDropOperation:(NSTableViewDropOperation)operation;
 
 // Delegate methods
 - (BOOL)selectionShouldChangeInTableView:(NSTableView *)aTableView;

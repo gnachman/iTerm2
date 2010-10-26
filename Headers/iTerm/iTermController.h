@@ -32,11 +32,13 @@
 @class PseudoTerminal;
 @class PTYTextView;
 @class ItermGrowlDelegate;
+@class PasteboardHistory;
 
 @interface iTermController : NSObject
 {
     // PseudoTerminal objects
     NSMutableArray *terminalWindows;
+    PasteboardHistory* pbHistory;
     id FRONT;
 	ItermGrowlDelegate *gd;
 }
@@ -63,8 +65,8 @@
 - (PTYTextView *) frontTextView;
 -(int)numberOfTerminals;
 -(PseudoTerminal*)terminalAtIndex:(int)i;
-- (void)openInstantReplay:(id)sender;
 - (void)irAdvance:(int)dir;
+- (PasteboardHistory*)pbHistory;
 
 @end
 

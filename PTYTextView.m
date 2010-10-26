@@ -45,6 +45,7 @@
 #import <iTerm/NSStringITerm.h>
 #import "iTermApplicationDelegate.h"
 #import "PreferencePanel.h"
+#import "PasteboardHistory.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -1984,6 +1985,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
         [pboard setString:copyString forType:NSStringPboardType];
     }
+
+    [[[iTermController sharedInstance] pbHistory] save:copyString];
 }
 
 - (void)paste:(id)sender
@@ -1991,6 +1994,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PTYTextView paste:%@]", __FILE__, __LINE__, sender );
 #endif
+    NSString *info = [[NSPasteboard generalPasteboard] stringForType:NSStringPboardType];
+    if (info) {
+        [[[iTermController sharedInstance] pbHistory] save:info];
+    }
 
     if ([_delegate respondsToSelector:@selector(paste:)])
         [_delegate paste:sender];

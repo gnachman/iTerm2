@@ -2610,7 +2610,7 @@ static void DumpBuf(screen_char_t* p, int n) {
     for(i=0;i<300;i++) tabStop[i]=NO;
 }
 
-- (int) numberOfLines
+- (int)numberOfLines
 {
     return current_scrollback_lines + HEIGHT;
 }

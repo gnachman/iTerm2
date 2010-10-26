@@ -134,6 +134,11 @@
 		1D6C50A81226EEFB00E0AA3E /* BookmarkListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */; };
 		1D72439011F416F300BD4924 /* LineBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72438F11F416F300BD4924 /* LineBuffer.h */; };
 		1D72477411F55E5700BD4924 /* LineBufferTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72477211F55E5700BD4924 /* LineBufferTest.h */; };
+		1D7C18811275D22900461E55 /* PasteboardHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7C187F1275D22900461E55 /* PasteboardHistory.h */; };
+		1D7C18821275D22900461E55 /* PasteboardHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C18801275D22900461E55 /* PasteboardHistory.m */; };
+		1D7C1AD31276FD6E00461E55 /* PasteboardHistory.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */; };
+		1D7C1D1212772ECC00461E55 /* NSDateFormatterExtras.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */; };
+		1D7C1D1312772ECC00461E55 /* NSDateFormatterExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */; };
 		1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */; };
 		1D93D33512695442007F741B /* DVR.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D33312695442007F741B /* DVR.h */; };
 		1D93D33612695442007F741B /* DVR.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D93D33412695442007F741B /* DVR.m */; };
@@ -240,6 +245,11 @@
 		1D72438F11F416F300BD4924 /* LineBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBuffer.h; sourceTree = "<group>"; };
 		1D72477211F55E5700BD4924 /* LineBufferTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferTest.h; sourceTree = "<group>"; };
 		1D72477311F55E5700BD4924 /* LineBufferTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferTest.m; sourceTree = "<group>"; };
+		1D7C187F1275D22900461E55 /* PasteboardHistory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PasteboardHistory.h; sourceTree = "<group>"; };
+		1D7C18801275D22900461E55 /* PasteboardHistory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PasteboardHistory.m; sourceTree = "<group>"; };
+		1D7C1AD21276FD6E00461E55 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/PasteboardHistory.xib; sourceTree = "<group>"; };
+		1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSDateFormatterExtras.h; sourceTree = "<group>"; };
+		1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSDateFormatterExtras.m; sourceTree = "<group>"; };
 		1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = EncodingsWithLowerCase.plist; sourceTree = "<group>"; };
 		1D93D33312695442007F741B /* DVR.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DVR.h; sourceTree = "<group>"; };
 		1D93D33412695442007F741B /* DVR.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DVR.m; sourceTree = "<group>"; };
@@ -468,6 +478,7 @@
 				0464AB32006CD2EC7F000001 /* Products */,
 				F69E774A0AB78CDB001EC0FF /* Growl-Info.plist */,
 				1D13EADB12113A2D00909F9C /* libncurses.dylib */,
+				1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */,
 			);
 			name = JTerminal;
 			sourceTree = "<group>";
@@ -475,8 +486,8 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */,
-				1D173857126C820A004622DC /* FakeWindow.h */,
+				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
+				1D7C18801275D22900461E55 /* PasteboardHistory.m */,
 				1D173858126C820A004622DC /* FakeWindow.m */,
 				1D93D33412695442007F741B /* DVR.m */,
 				1D93D3591269778C007F741B /* DVRBuffer.m */,
@@ -514,7 +525,11 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */,
 				1D93D35112697529007F741B /* DVREncoder.h */,
+				1D7C187F1275D22900461E55 /* PasteboardHistory.h */,
+				1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */,
+				1D173857126C820A004622DC /* FakeWindow.h */,
 				1D93D3491269746F007F741B /* DVRIndexEntry.h */,
 				1D93D3451269741B007F741B /* DVRBuffer.h */,
 				1D93D33312695442007F741B /* DVR.h */,
@@ -871,6 +886,8 @@
 				1D93D35312697529007F741B /* DVREncoder.h in Headers */,
 				1D173859126C820A004622DC /* FakeWindow.h in Headers */,
 				1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */,
+				1D7C18811275D22900461E55 /* PasteboardHistory.h in Headers */,
+				1D7C1D1212772ECC00461E55 /* NSDateFormatterExtras.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1029,6 +1046,7 @@
 				1DA9BD0D122F1077002FCC65 /* star-gold24.png in Resources */,
 				1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */,
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
+				1D7C1AD31276FD6E00461E55 /* PasteboardHistory.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1116,6 +1134,8 @@
 				1D93D35A1269778C007F741B /* DVRBuffer.m in Sources */,
 				1D93D3B112697D53007F741B /* DVRIndexEntry.m in Sources */,
 				1D17385A126C820A004622DC /* FakeWindow.m in Sources */,
+				1D7C18821275D22900461E55 /* PasteboardHistory.m in Sources */,
+				1D7C1D1312772ECC00461E55 /* NSDateFormatterExtras.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1144,6 +1164,14 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
+		1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1D7C1AD21276FD6E00461E55 /* English */,
+			);
+			name = PasteboardHistory.xib;
+			sourceTree = "<group>";
+		};
 		1DEE9FDB11FCA60F009E18C9 /* credits.rtf */ = {
 			isa = PBXVariantGroup;
 			children = (

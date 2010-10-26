@@ -32,6 +32,7 @@
 #import <iTerm/PTYWindow.h>
 #import <BookmarkListView.h>
 #import "WindowControllerInterface.h"
+#import "PasteboardHistory.h"
 
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
 
@@ -160,6 +161,8 @@
     IBOutlet NSTextField* earliestTime;
     IBOutlet NSTextField* latestTime;
     IBOutlet NSTextField* currentTime;
+
+    PasteboardHistoryView* pbHistoryView;
 }
 
 // Initialize a new PseudoTerminal.
@@ -189,6 +192,9 @@
 
 // Close the foreground session.
 - (IBAction)closeCurrentSession:(id)sender;
+
+// Show paste history window.
+- (IBAction)openPasteHistory:(id)sender;
 
 // Select the tab to the left of the foreground tab.
 - (IBAction)previousSession:(id)sender;

@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="29"/>
+			<integer value="169"/>
 			<integer value="499"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
@@ -509,6 +509,15 @@
 									<reference key="NSMenu" ref="1015598466"/>
 									<string key="NSTitle">Select All</string>
 									<string key="NSKeyEquiv">a</string>
+									<int key="NSKeyEquivModMask">1048576</int>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="643967552"/>
+									<reference key="NSMixedImage" ref="326707852"/>
+								</object>
+								<object class="NSMenuItem" id="1072514584">
+									<reference key="NSMenu" ref="1015598466"/>
+									<string key="NSTitle">Open Paste History...</string>
+									<string key="NSKeyEquiv">H</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
 									<reference key="NSOnImage" ref="643967552"/>
@@ -2237,6 +2246,14 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					</object>
 					<int key="connectionID">1064</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">openPasteHistory:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="1072514584"/>
+					</object>
+					<int key="connectionID">1143</int>
+				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<object class="NSArray" key="orderedObjects">
@@ -2692,6 +2709,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<reference ref="726957272"/>
 							<reference ref="76795287"/>
 							<reference ref="783979191"/>
+							<reference ref="1072514584"/>
 						</object>
 						<reference key="parent" ref="800408560"/>
 					</object>
@@ -3085,6 +3103,11 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 						<reference key="object" ref="76795287"/>
 						<reference key="parent" ref="1015598466"/>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1142</int>
+						<reference key="object" ref="1072514584"/>
+						<reference key="parent" ref="1015598466"/>
+					</object>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="flattenedProperties">
@@ -3102,6 +3125,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>111.IBPluginDependency</string>
 					<string>111.ImportedFromIB2</string>
 					<string>1141.IBPluginDependency</string>
+					<string>1142.IBPluginDependency</string>
 					<string>129.IBPluginDependency</string>
 					<string>129.ImportedFromIB2</string>
 					<string>130.IBEditorWindowLastContentRect</string>
@@ -3348,6 +3372,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>{{289, 657}, {64, 6}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -3372,7 +3397,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{156, 480}, {397, 283}}</string>
+					<string>{{156, 460}, {398, 303}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -3596,7 +3621,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">1141</int>
+			<int key="maxID">1143</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -4173,6 +4198,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>moveTabToNewWindowContextualMenuAction:</string>
 							<string>newSessionInTabAtIndex:</string>
 							<string>nextSession:</string>
+							<string>openPasteHistory:</string>
 							<string>parameterPanelEnd:</string>
 							<string>previousSession:</string>
 							<string>reset:</string>
@@ -4192,6 +4218,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -4248,6 +4275,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>moveTabToNewWindowContextualMenuAction:</string>
 							<string>newSessionInTabAtIndex:</string>
 							<string>nextSession:</string>
+							<string>openPasteHistory:</string>
 							<string>parameterPanelEnd:</string>
 							<string>previousSession:</string>
 							<string>reset:</string>
@@ -4336,6 +4364,10 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
+								<string key="name">openPasteHistory:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
 								<string key="name">parameterPanelEnd:</string>
 								<string key="candidateClassName">id</string>
 							</object>
@@ -4419,6 +4451,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>parameterPanel</string>
 							<string>parameterPrompt</string>
 							<string>parameterValue</string>
+							<string>pbHistoryView</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
@@ -4436,6 +4469,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>NSPanel</string>
 							<string>NSTextField</string>
 							<string>NSTextField</string>
+							<string>NSScrollView</string>
 						</object>
 					</object>
 					<object class="NSMutableDictionary" key="toOneOutletInfosByName">
@@ -4456,6 +4490,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>parameterPanel</string>
 							<string>parameterPrompt</string>
 							<string>parameterValue</string>
+							<string>pbHistoryView</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
@@ -4514,6 +4549,10 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<object class="IBToOneOutletInfo">
 								<string key="name">parameterValue</string>
 								<string key="candidateClassName">NSTextField</string>
+							</object>
+							<object class="IBToOneOutletInfo">
+								<string key="name">pbHistoryView</string>
+								<string key="candidateClassName">NSScrollView</string>
 							</object>
 						</object>
 					</object>
