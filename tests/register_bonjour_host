@@ -1,0 +1,1 @@
+dns-sd -R MyTestHost _ssh._tcp . 22
