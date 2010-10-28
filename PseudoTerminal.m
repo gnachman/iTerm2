@@ -1873,6 +1873,7 @@ NSString *sessionsKey = @"sessions";
     [fakeWindow rejoin:self];
     [self updateInstantReplay];
     [self showHideInstantReplay];
+    [liveSession setParent:self];
 }
 
 - (void)windowSetFrameTopLeftPoint:(NSPoint)point
@@ -2644,7 +2645,7 @@ NSString *sessionsKey = @"sessions";
         [[aSession SHELL] setWidth:width  height:height];
         [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
         [[aSession SCROLLVIEW] setLineScroll:[[aSession TEXTVIEW] lineHeight]];
-        [[aSession SCROLLVIEW] setPageScroll:height*[[aSession TEXTVIEW] lineHeight]];
+        [[aSession SCROLLVIEW] setPageScroll:2*[[aSession TEXTVIEW] lineHeight]];
         if ([aSession backgroundImagePath]) {
             [aSession setBackgroundImagePath:[aSession backgroundImagePath]];
         }
@@ -2673,7 +2674,7 @@ NSString *sessionsKey = @"sessions";
     PtyLog(@"fitSessionToWindow -  calling shell setWidth:%d height:%d", width, height);
     [[aSession SHELL] setWidth:width  height:height];
     [[aSession SCROLLVIEW] setLineScroll:[[aSession TEXTVIEW] lineHeight]];
-    [[aSession SCROLLVIEW] setPageScroll:height*[[aSession TEXTVIEW] lineHeight]];
+    [[aSession SCROLLVIEW] setPageScroll:2*[[aSession TEXTVIEW] lineHeight]];
     if ([aSession backgroundImagePath]) {
         [aSession setBackgroundImagePath:[aSession backgroundImagePath]];
     }
