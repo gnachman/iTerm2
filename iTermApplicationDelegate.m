@@ -570,7 +570,9 @@ void DebugLog(NSString* value)
 {
     // clear Bookmark menu
     const int kNumberOfStaticMenuItems = 5;
-    for (; [bookmarkMenu numberOfItems] > kNumberOfStaticMenuItems;) [bookmarkMenu removeItemAtIndex:kNumberOfStaticMenuItems];
+    for (; [bookmarkMenu numberOfItems] > kNumberOfStaticMenuItems;) {
+        [bookmarkMenu removeItemAtIndex:kNumberOfStaticMenuItems];
+    }
 
     // add bookmarks into Bookmark menu
     [[iTermController sharedInstance] addBookmarksToMenu:bookmarkMenu

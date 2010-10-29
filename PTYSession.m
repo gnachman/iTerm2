@@ -1947,6 +1947,7 @@ static NSImage *warningImage;
 
 - (void)updateDisplay
 {
+    timerRunning_ = YES;
     if ([[tabViewItem tabView] selectedTabViewItem] != tabViewItem) {
         [self setLabelAttribute];
     }
@@ -1972,12 +1973,15 @@ static NSImage *warningImage;
     } else {
         [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
     }
+    timerRunning_ = NO;
 }
 
 - (void)scheduleUpdateIn:(NSTimeInterval)timeout
 {
     float kEpsilon = 0.001;
-    if ([updateTimer isValid] && [[updateTimer userInfo] floatValue] - (float)timeout < kEpsilon) {
+    if (!timerRunning_ &&
+        [updateTimer isValid] && 
+        [[updateTimer userInfo] floatValue] - (float)timeout < kEpsilon) {
         // An update of at least the current frequency is already scheduled. Let
         // it run to avoid pushing it back repeatedly (which prevents it from firing).
         return;

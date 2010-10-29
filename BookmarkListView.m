@@ -62,8 +62,7 @@ const int kInterWidgetMargin = 10;
     unsigned short keycode;
     modflag = [theEvent modifierFlags];
     keycode = [theEvent keyCode];
-    NSLog(@"Keycode %d", keycode);
-    
+
     const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
     // TODO(georgen): Not getting normal keycodes here, but 125 and 126 are up and down arrows.
     // This is a pretty ugly hack. Also, calling keyDown from here is probably not cool.
@@ -229,14 +228,14 @@ const int kInterWidgetMargin = 10;
     NSMenu *cellMenu = [[[NSMenu alloc] initWithTitle:@"Search Menu"]
                         autorelease];
     NSMenuItem *item;
-    
+
     item = [[[NSMenuItem alloc] initWithTitle:@"Tags"
                                        action:nil
                                 keyEquivalent:@""] autorelease];
     [item setTarget:self];
     [item setTag:-1];
     [cellMenu insertItem:item atIndex:0];
-        
+
     for (int i = 0; i < [tags count]; ++i) {
         item = [[[NSMenuItem alloc] initWithTitle:[tags objectAtIndex:i]
                                            action:@selector(_addTag:)
@@ -245,7 +244,7 @@ const int kInterWidgetMargin = 10;
         [item setTag:i];
         [cellMenu insertItem:item atIndex:i+1];
     }
-    
+
     id searchCell = [searchField cell];
     [searchCell setSearchMenuTemplate:cellMenu];
 }

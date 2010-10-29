@@ -112,6 +112,9 @@ static const float kBackgroundSessionIntervalSec = 1;
     // Set only if this is not a live session. Is a pointer to the hidden live
     // session while looking at the past.
     PTYSession* liveSession_;
+
+    // Is the update timer's callback currently running?
+    BOOL timerRunning_;
 }
 
 // init/dealloc

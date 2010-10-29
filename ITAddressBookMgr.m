@@ -261,25 +261,18 @@
     }
 
     // remove host entry from this group
-    BOOL sshService = NO;
     NSMutableArray* toRemove = [[[NSMutableArray alloc] init] autorelease];
+    NSString* sftpName = [NSString stringWithFormat:@"%@-sftp", [aNetService name]];
     for (int i = 0; i < [[BookmarkModel sharedInstance] numberOfBookmarksWithFilter:@"bonjour"]; ++i) {
         Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkAtIndex:i withFilter:@"bonjour"];
-        if ([[bookmark objectForKey:KEY_NAME] isEqualToString:[aNetService name]]) {
-            if ([[bookmark objectForKey:KEY_BONJOUR_SERVICE] isEqualToString:@"ssh"]) {
-                sshService = YES;
-            }
+        NSString* bookmarkName = [bookmark objectForKey:KEY_NAME];
+        if ([bookmarkName isEqualToString:[aNetService name]] ||
+            [bookmarkName isEqualToString:sftpName]) {
             [toRemove addObject:[NSNumber numberWithInt:i]];
         }
     }
     for (int i = [toRemove count]-1; i >= 0; --i) {
         [[BookmarkModel sharedInstance] removeBookmarkAtIndex:[[toRemove objectAtIndex:i] intValue] withFilter:@"bonjour"];
-    }
-    if (sshService) {
-        int i = [[BookmarkModel sharedInstance] indexOfBookmarkWithName:[aNetService name]];
-        if (i >= 0) {
-            [toRemove addObject:[NSNumber numberWithInt:i]];
-        }
     }
     [toRemove removeAllObjects];
 }
