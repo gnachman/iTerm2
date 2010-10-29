@@ -52,6 +52,7 @@
 #import <iTerm/PTToolbarController.h>
 #import <iTerm/FindCommandHandler.h>
 #import <iTerm/ITAddressBookMgr.h>
+#import <iTerm/iTermApplicationDelegate.h>
 #import "FakeWindow.h"
 #import <PSMTabBarControl.h>
 #import <PSMTabStyle.h>
@@ -65,7 +66,12 @@
 #ifdef PSEUDOTERMINAL_VERBOSE_LOGGING
 #define PtyLog NSLog
 #else
-#define PtyLog(args...)
+#define PtyLog(args...) \
+    do { \
+        if (gDebugLogging) { \
+          DebugLog([NSString stringWithFormat:args]); \
+        } \
+    } while (0)
 #endif
 
 static BOOL windowPositions[CACHED_WINDOW_POSITIONS];
@@ -520,6 +526,9 @@ NSString *sessionsKey = @"sessions";
     NSLog(@"%s(%d):-[PseudoTerminal windowDidBecomeKey:%@]",
           __FILE__, __LINE__, aNotification);
 #endif
+    PtyLog(@"%s(%d):-[PseudoTerminal windowDidBecomeKey:%@]",
+          __FILE__, __LINE__, aNotification);
+
     //[self selectSessionAtIndex: [self currentSessionIndex]];
     [[iTermController sharedInstance] setCurrentTerminal: self];
 
