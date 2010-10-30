@@ -544,6 +544,7 @@ NSString *sessionsKey = @"sessions";
 
     // update the cursor
     [[[self currentSession] TEXTVIEW] refresh];
+    [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
 }
 
 - (void)windowDidResignKey:(NSNotification *)aNotification
@@ -559,10 +560,10 @@ NSString *sessionsKey = @"sessions";
 
     if (_fullScreen) {
         [NSMenu setMenuBarVisible:YES];
-    } else {
-        // update the cursor
-        [[[self currentSession] TEXTVIEW] refresh];
     }
+    // update the cursor
+    [[[self currentSession] TEXTVIEW] refresh];
+    [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
 }
 
 - (void)windowDidResignMain:(NSNotification *)aNotification
@@ -572,6 +573,9 @@ NSString *sessionsKey = @"sessions";
     if (_fullScreen && !togglingFullScreen_) {
         [self toggleFullScreen:nil];
     }
+    // update the cursor
+    [[[self currentSession] TEXTVIEW] refresh];
+    [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
 }
 
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)proposedFrameSize
