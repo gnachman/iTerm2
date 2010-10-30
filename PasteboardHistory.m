@@ -182,7 +182,18 @@
             break;
         }
     }
-    
+
+    // If the last value is a prefix of this value then remove it. This prevents
+    // pressing tab in the findbar from filling the history with various
+    // versions of the same thing.
+    PasteboardEntry* lastEntry;
+    if ([entries_ count] > 0) {
+        lastEntry = [entries_ objectAtIndex:[entries_ count] - 1];
+        if ([value hasPrefix:lastEntry->value]) {
+            [entries_ removeObjectAtIndex:[entries_ count] - 1];
+        }
+    }
+
     // Append this value.
     PasteboardEntry* entry = [[PasteboardEntry alloc] init];
     entry->value = value;
@@ -313,7 +324,7 @@
     [model_ clearFilter];
     [self refresh];
     if ([table_ numberOfRows] > 0) {
-        NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:0];
+        NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:[table_ numberOfRows] - 1];
         [table_ selectRowIndexes:indexes byExtendingSelection:NO];
     }
     // Redraw window once a minute so the time column is always correct.
