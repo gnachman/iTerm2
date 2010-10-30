@@ -151,6 +151,7 @@
 		1D93D35A1269778C007F741B /* DVRBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D93D3591269778C007F741B /* DVRBuffer.m */; };
 		1D93D3B112697D53007F741B /* DVRIndexEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D93D3B012697D53007F741B /* DVRIndexEntry.m */; };
 		1DA9BD0D122F1077002FCC65 /* star-gold24.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA9BD0C122F1077002FCC65 /* star-gold24.png */; };
+		1DC742A0127C96F90069594C /* IBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC7429F127C96F90069594C /* IBarCursor.png */; };
 		1DCA8BA9121A1B8000ABDEB5 /* PrefsAdvanced.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA3121A1B8000ABDEB5 /* PrefsAdvanced.tiff */; };
 		1DCA8BAA121A1B8000ABDEB5 /* PrefsBookmarks.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA4121A1B8000ABDEB5 /* PrefsBookmarks.tiff */; };
 		1DCA8BAB121A1B8000ABDEB5 /* PrefsDisplay.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA5121A1B8000ABDEB5 /* PrefsDisplay.tiff */; };
@@ -262,6 +263,7 @@
 		1D93D3591269778C007F741B /* DVRBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DVRBuffer.m; sourceTree = "<group>"; };
 		1D93D3B012697D53007F741B /* DVRIndexEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DVRIndexEntry.m; sourceTree = "<group>"; };
 		1DA9BD0C122F1077002FCC65 /* star-gold24.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "star-gold24.png"; path = "images/star-gold24.png"; sourceTree = "<group>"; };
+		1DC7429F127C96F90069594C /* IBarCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = IBarCursor.png; path = images/IBarCursor.png; sourceTree = "<group>"; };
 		1DCA8BA3121A1B8000ABDEB5 /* PrefsAdvanced.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsAdvanced.tiff; path = images/PrefsAdvanced.tiff; sourceTree = "<group>"; };
 		1DCA8BA4121A1B8000ABDEB5 /* PrefsBookmarks.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsBookmarks.tiff; path = images/PrefsBookmarks.tiff; sourceTree = "<group>"; };
 		1DCA8BA5121A1B8000ABDEB5 /* PrefsDisplay.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsDisplay.tiff; path = images/PrefsDisplay.tiff; sourceTree = "<group>"; };
@@ -635,6 +637,7 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1DC7429F127C96F90069594C /* IBarCursor.png */,
 				1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */,
 				1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */,
 				1DA9BD0C122F1077002FCC65 /* star-gold24.png */,
@@ -1047,6 +1050,7 @@
 				1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */,
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
 				1D7C1AD31276FD6E00461E55 /* PasteboardHistory.xib in Resources */,
+				1DC742A0127C96F90069594C /* IBarCursor.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

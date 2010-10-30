@@ -21,7 +21,7 @@
  **  but WITHOUT ANY WARRANTY; without even the implied warranty of
  **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  **  GNU General Public License for more details.
- **
+ **d
  **  You should have received a copy of the GNU General Public License
  **  along with this program; if not, write to the Free Software
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
@@ -56,21 +56,15 @@ static NSCursor* textViewCursor =  nil;
 
 + (void)initialize
 {
-    NSImage *ibeamImage = [[NSCursor IBeamCursor] image];
-    NSPoint hotspot = [[NSCursor IBeamCursor] hotSpot];
-    NSImage *aCursorImage = [ibeamImage copy];
-    NSImage *reverseCursorImage = [ibeamImage copy];
-    [reverseCursorImage lockFocus];
-    [[NSColor whiteColor] set];
-    NSRectFill(NSMakeRect(0,0,[reverseCursorImage size].width,[reverseCursorImage size].height));
-    [ibeamImage compositeToPoint:NSMakePoint(0,0) operation:NSCompositeDestinationIn];
-    [reverseCursorImage unlockFocus];
-    [aCursorImage lockFocus];
-    [reverseCursorImage compositeToPoint:NSMakePoint(2,0) operation:NSCompositePlusLighter];
-    [aCursorImage unlockFocus];
-    [reverseCursorImage release];
-    textViewCursor = [[NSCursor alloc] initWithImage:aCursorImage hotSpot:hotspot];
-    [aCursorImage release];
+    NSPoint hotspot = NSMakePoint(4, 5);
+
+    NSBundle* bundle = [NSBundle bundleForClass:[self class]];
+    NSString* ibarFile = [bundle
+                          pathForResource:@"IBarCursor" 
+                          ofType:@"png"];   
+    NSImage* image = [[NSImage alloc] initWithContentsOfFile:ibarFile];
+    
+    textViewCursor = [[NSCursor alloc] initWithImage:image hotSpot:hotspot];
 }
 
 + (NSCursor *) textViewCursor
