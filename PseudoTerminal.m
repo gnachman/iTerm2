@@ -2016,6 +2016,14 @@ NSString *sessionsKey = @"sessions";
 {
     PtyLog(@"_refreshTerminal - calling fitWindowToSessions");
     [self fitWindowToSessions];
+
+    // Assign counts to each session. This causes tabs to show their tab number,
+    // called an objectCount. When the "compact tab" pref is toggled, this makes
+    // formerly countless tabs show their counts.
+    for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
+        PTYSession *aSession = [[TABVIEW tabViewItemAtIndex:i] identifier];
+        [aSession setObjectCount:i+1];
+    }
 }
 
 - (void)_getSessionParameters:(NSMutableString *)command withName:(NSMutableString *)name

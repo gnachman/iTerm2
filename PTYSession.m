@@ -1564,7 +1564,7 @@ static NSImage *warningImage;
 
 - (int)objectCount
 {
-    return [[PreferencePanel sharedInstance] useCompactLabel]?0:objectCount;
+    return [[PreferencePanel sharedInstance] useCompactLabel] ? 0 : objectCount;
 }
 
 // This one is for purposes other than PSMTabBarControl
