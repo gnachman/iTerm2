@@ -266,20 +266,27 @@
 {
     [model_ reload];
     [table_ reloadData];
-    
+
     NSRect frame = [[self window] frame];
     float diff = frame.size.height;
     frame.size.height = [[table_ headerView] frame].size.height + [model_ numberOfEntries] * ([table_ rowHeight] + [table_ intercellSpacing].height);    
     diff -= frame.size.height;
-    frame.origin.y += diff;
+    if (!onTop_) {
+        frame.origin.y += diff;
+    }
     [[self window] setFrame:frame display:NO];
     [table_ sizeToFit];
     [[table_ enclosingScrollView] setHasHorizontalScroller:NO];
-    
+
     if ([table_ selectedRow] == -1 && [table_ numberOfRows] > 0) {
         NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:0];
         [table_ selectRowIndexes:indexes byExtendingSelection:NO];
-    }        
+    }
+}
+
+- (void)setOnTop:(BOOL)onTop
+{
+    onTop_ = onTop;
 }
 
 - (void)windowDidResignKey:(NSNotification *)aNotification

@@ -65,6 +65,7 @@
     NSTimer* timer_;
     NSTimer* minuteRefreshTimer_;
     BOOL clearFilterOnNextKeyDown_;
+    BOOL onTop_;
 }
 
 - (id)init;
@@ -74,6 +75,7 @@
 - (void)windowDidBecomeKey:(NSNotification *)aNotification;
 - (void)pasteboardHistoryDidChange:(id)sender;
 - (void)refresh;
+- (void)setOnTop:(BOOL)onTop;
 
 - (void)_setClearFilterOnNextKeyDownFlag:(id)sender;
 

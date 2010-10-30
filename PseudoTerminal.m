@@ -1965,8 +1965,9 @@ NSString *sessionsKey = @"sessions";
     [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
 }
 
-- (void)popWindowAtCursor:(NSWindowController*)controller
+- (BOOL)popWindowAtCursor:(NSWindowController*)controller
 {
+    BOOL onTop = NO;
     [controller showWindow:self];
     [[controller window] makeKeyAndOrderFront:self];
 
@@ -1984,6 +1985,7 @@ NSString *sessionsKey = @"sessions";
     NSRect monitorFrame = [[[self window] screen] visibleFrame];
     if (p.y < monitorFrame.origin.y) {
         p.y += [[controller window] frame].size.height + [tv lineHeight];
+        onTop = YES;
     }
     float rightX = monitorFrame.origin.x + monitorFrame.size.width;
     if (p.x + [[controller window] frame].size.width > rightX) {
@@ -1992,11 +1994,12 @@ NSString *sessionsKey = @"sessions";
     }
 
     [[controller window] setFrameOrigin:p];
+    return onTop;
 }
 
 - (IBAction)openPasteHistory:(id)sender
 {
-    [self popWindowAtCursor:pbHistoryView];
+    [pbHistoryView setOnTop:[self popWindowAtCursor:pbHistoryView]];
 }
 
 @end
