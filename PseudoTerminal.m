@@ -1484,13 +1484,14 @@ NSString *sessionsKey = @"sessions";
         [self closeFindBar:self];
         return YES;
     } else if (control == findBarTextField && commandSelector == @selector(insertBacktab:)) {
-        [[[self currentSession] TEXTVIEW] growSelectionLeft];
-        NSString* text = [[[self currentSession] TEXTVIEW] selectedText];
-        if (text) {
-            [[[self currentSession] TEXTVIEW] copy:self];
-            [findBarTextField setStringValue:text];
-            [self deselectFindBarTextField];
-            [self searchPrevious:self];
+        if ([[[self currentSession] TEXTVIEW] growSelectionLeft]) {
+            NSString* text = [[[self currentSession] TEXTVIEW] selectedText];
+            if (text) {
+                [[[self currentSession] TEXTVIEW] copy:self];
+                [findBarTextField setStringValue:text];
+                [self deselectFindBarTextField];
+                [self searchPrevious:self];
+            }
         }
         return YES;
     } else if (control == findBarTextField && commandSelector == @selector(insertTab:)) {

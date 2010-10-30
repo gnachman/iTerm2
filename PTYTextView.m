@@ -2569,10 +2569,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 {
     return _findInProgress;
 }
-- (void)growSelectionLeft
+
+- (BOOL)growSelectionLeft
 {
     if (startX == -1) {
-        return;
+        return NO;
     }
     int x = startX;
     int y = startY;
@@ -2581,7 +2582,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         x = [dataSource width] - 1;
         --y;
         if (y < 0) {
-            return;
+            return NO;
+        }
+        // Stop at a hard eol
+        screen_char_t* theLine = [dataSource getLineAtIndex:y];
+        if (theLine[[dataSource width]].ch == EOL_HARD) {
+            return NO;
         }
     }
 
@@ -2600,6 +2606,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     startX = tmpX1;
     startY = tmpY1;
     [self refresh];
+    return YES;
 }
 
 - (void)growSelectionRight
@@ -2611,6 +2618,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int y = endY;
     ++x;
     if (x >= [dataSource width]) {
+        // Stop at a hard eol
+        screen_char_t* theLine = [dataSource getLineAtIndex:y];
+        if (theLine[[dataSource width]].ch == EOL_HARD) {
+            return;
+        }
         x = 0;
         ++y;
         if (y >= [dataSource numberOfLines]) {
