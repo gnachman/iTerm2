@@ -92,21 +92,40 @@
     [super dealloc];
 }
 
-- (void) locateBonjourServices
+- (void)locateBonjourServices
 {
-    sshBonjourBrowser = [[NSNetServiceBrowser alloc] init];
-    ftpBonjourBrowser = [[NSNetServiceBrowser alloc] init];
-    telnetBonjourBrowser = [[NSNetServiceBrowser alloc] init];
+    if (!bonjourServices) {
+        sshBonjourBrowser = [[NSNetServiceBrowser alloc] init];
+        ftpBonjourBrowser = [[NSNetServiceBrowser alloc] init];
+        telnetBonjourBrowser = [[NSNetServiceBrowser alloc] init];
 
-    bonjourServices = [[NSMutableArray alloc] init];
+        bonjourServices = [[NSMutableArray alloc] init];
 
-    [sshBonjourBrowser setDelegate: self];
-    [ftpBonjourBrowser setDelegate: self];
-    [telnetBonjourBrowser setDelegate: self];
-    [sshBonjourBrowser searchForServicesOfType: @"_ssh._tcp." inDomain: @""];
-    [ftpBonjourBrowser searchForServicesOfType: @"_ftp._tcp." inDomain: @""];
-    [telnetBonjourBrowser searchForServicesOfType: @"_telnet._tcp." inDomain: @""];
+        [sshBonjourBrowser setDelegate: self];
+        [ftpBonjourBrowser setDelegate: self];
+        [telnetBonjourBrowser setDelegate: self];
+        [sshBonjourBrowser searchForServicesOfType: @"_ssh._tcp." inDomain: @""];
+        [ftpBonjourBrowser searchForServicesOfType: @"_ftp._tcp." inDomain: @""];
+        [telnetBonjourBrowser searchForServicesOfType: @"_telnet._tcp." inDomain: @""];
+    }
+}
 
+- (void)stopLocatingBonjourServices
+{
+    [sshBonjourBrowser stop];
+    [sshBonjourBrowser release];
+    sshBonjourBrowser = nil;
+
+    [ftpBonjourBrowser stop];
+    [ftpBonjourBrowser release];
+    ftpBonjourBrowser = nil;
+
+    [telnetBonjourBrowser stop];
+    [telnetBonjourBrowser release];
+    telnetBonjourBrowser = nil;
+
+    [bonjourServices release];
+    bonjourServices = nil;
 }
 
 + (NSArray*)encodeColor:(NSColor*)origColor

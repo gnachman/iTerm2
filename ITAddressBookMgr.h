@@ -140,6 +140,7 @@
 - (id)init;
 - (void)dealloc;
 - (void) locateBonjourServices;
+- (void)stopLocatingBonjourServices;
 - (void)copyProfileToBookmark:(NSMutableDictionary *)dict;
 - (void)recursiveMigrateBookmarks:(NSDictionary*)node path:(NSArray*)array;
 + (NSFont *)fontWithDesc:(NSString *)fontDesc;

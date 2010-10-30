@@ -545,7 +545,29 @@ static float versionNumber;
         defaultOnlyWhenMoreTabs = ([onlyWhenMoreTabs state] == NSOnState);
         [onlyWhenMoreTabs setEnabled: defaultPromptOnClose];
         defaultFocusFollowsMouse = ([focusFollowsMouse state] == NSOnState);
+        BOOL bonjourBefore = defaultEnableBonjour;
         defaultEnableBonjour = ([enableBonjour state] == NSOnState);
+        if (bonjourBefore != defaultEnableBonjour) {
+            if (defaultEnableBonjour == YES) {
+                [[ITAddressBookMgr sharedInstance] locateBonjourServices];
+            } else {
+                [[ITAddressBookMgr sharedInstance] stopLocatingBonjourServices];
+
+                // Remove existing bookmarks with the "bonjour" tag. Even if
+                // network browsing is re-enabled, these bookmarks would never
+                // be automatically removed.
+                BookmarkModel* model = [BookmarkModel sharedInstance];
+                NSString* kBonjourTag = @"bonjour";
+                int n = [model numberOfBookmarksWithFilter:kBonjourTag];
+                for (int i = n - 1; i >= 0; --i) {
+                    Bookmark* bookmark = [model bookmarkAtIndex:i withFilter:kBonjourTag];
+                    if ([model bookmark:bookmark hasTag:kBonjourTag]) {
+                        [model removeBookmarkAtIndex:i withFilter:kBonjourTag];
+                    }
+                }
+            }
+        }
+
         defaultEnableGrowl = ([enableGrowl state] == NSOnState);
         defaultCmdSelection = ([cmdSelection state] == NSOnState);
         defaultMaxVertically = ([maxVertically state] == NSOnState);
