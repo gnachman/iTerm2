@@ -1744,6 +1744,11 @@ static NSImage *warningImage;
 
 - (void)setTransparency:(float)transparency
 {
+    // Limit transparency because fully transparent windows can't be clicked on.
+    if (transparency > 0.9) {
+        transparency = 0.9;
+    }
+    
     if ([parent fullScreen]) {
         transparency = 0;
     }
