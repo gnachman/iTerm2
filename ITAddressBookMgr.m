@@ -330,6 +330,7 @@
     NSData  *address = nil;
     struct sockaddr_in  *socketAddress;
     NSString    *ipAddressString = nil;
+    char buffer[INET6_ADDRSTRLEN + 1];
 
     //NSLog(@"%s: %@", __PRETTY_FUNCTION__, sender);
 
@@ -346,7 +347,13 @@
     }
     address = [[sender addresses] objectAtIndex: 0];
     socketAddress = (struct sockaddr_in *)[address bytes];
-    ipAddressString = [NSString stringWithFormat:@"%s", inet_ntoa(socketAddress->sin_addr)];
+    const char* strAddr = inet_ntop(socketAddress->sin_family, socketAddress,
+                                    buffer, [address length]);
+    if (strAddr) {
+        ipAddressString = [NSString stringWithFormat:@"%s", strAddr];
+    } else {
+        return;
+    }
 
     Bookmark* prototype = [[BookmarkModel sharedInstance] defaultBookmark];
     if (prototype) {
