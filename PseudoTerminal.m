@@ -2625,7 +2625,11 @@ NSString *sessionsKey = @"sessions";
 
 - (NSRect)maxContentRect
 {
-    NSRect visibleFrame = [[[self window] screen] visibleFrame];
+    NSRect visibleFrame = NSZeroRect;
+    for (NSScreen* screen in [NSScreen screens]) {
+        visibleFrame = NSUnionRect(visibleFrame, [screen visibleFrame]);
+    }
+
     NSRect maxContentRect = [[self window] contentRectForFrameRect:visibleFrame];
     if (([TABVIEW numberOfTabViewItems] + tabViewItemsBeingAdded) > 1 || ![[PreferencePanel sharedInstance] hideTab]) {
         // reduce window size by hight of tabview
