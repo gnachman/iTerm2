@@ -1060,11 +1060,13 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     // Let the IME process key events
     IM_INPUT_INSERT = NO;
+    doCommandBySelectorCalled = NO;
     [self interpretKeyEvents:[NSArray arrayWithObject:event]];
 
     // If the IME didn't want it, pass it on to the delegate
     if (!prev &&
         !IM_INPUT_INSERT &&
+        doCommandBySelectorCalled &&
         ![self hasMarkedText]) {
         [delegate keyDown:event];
     }
@@ -2379,6 +2381,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     NSLog(@"%s(%d):-[PTYTextView doCommandBySelector:...]",
           __FILE__, __LINE__);
 #endif
+    doCommandBySelectorCalled = YES;
 
 #if GREED_KEYDOWN == 0
     id delegate = [self delegate];
