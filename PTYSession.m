@@ -356,15 +356,15 @@ static NSImage *warningImage;
         [env setObject:COLORFGBG_VALUE forKey:COLORFGBG_ENVNAME];
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-    NSString* locale = [self _getLocale];
-    if (locale != nil) {
-        [env setObject:locale forKey:@"LANG"];
-        [env setObject:locale forKey:@"LC_COLLATE"];
-        [env setObject:locale forKey:@"LC_CTYPE"];
-        [env setObject:locale forKey:@"LC_MESSAGES"];
-        [env setObject:locale forKey:@"LC_MONETARY"];
-        [env setObject:locale forKey:@"LC_NUMERIC"];
-        [env setObject:locale forKey:@"LC_TIME"];
+    [env setObject:[[NSLocale currentLocale] localeIdentifier] forKey:@"LANG"];
+    NSString* encoding = [self _getEncoding];
+    if (encoding) {
+        [env setObject:encoding forKey:@"LC_CTYPE"];
+        [env setObject:encoding forKey:@"LC_COLLATE"];
+        [env setObject:encoding forKey:@"LC_MESSAGES"];
+        [env setObject:encoding forKey:@"LC_MONETARY"];
+        [env setObject:encoding forKey:@"LC_NUMERIC"];
+        [env setObject:encoding forKey:@"LC_TIME"];
     }
 #endif
     if ([env objectForKey:PWD_ENVNAME] == nil)
@@ -2225,7 +2225,7 @@ static NSImage *warningImage;
 @implementation PTYSession (Private)
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-- (NSString*)_getLocale
+- (NSString*)_getEncoding
 {
     // Keep a copy of the current locale setting for this process
     char* backupLocale = setlocale(LC_CTYPE, NULL);
@@ -2236,6 +2236,7 @@ static NSImage *warningImage;
     // Append the encoding
     CFStringEncoding cfEncoding = CFStringConvertNSStringEncodingToEncoding([self encoding]);
     NSString* ianaEncoding = (NSString*)CFStringConvertEncodingToIANACharSetName(cfEncoding);
+    NSString* encoding = nil;
 
     static NSDictionary* lowerCaseEncodings;
     if (!lowerCaseEncodings) {
@@ -2256,26 +2257,32 @@ static NSImage *warningImage;
 
     if (ianaEncoding != nil) {
         // Mangle the names slightly
-        NSMutableString* encoding = [[NSMutableString alloc] initWithString:ianaEncoding];
-        [encoding replaceOccurrencesOfString:@"ISO-" withString:@"ISO" options:0 range:NSMakeRange(0, [encoding length])];
-        [encoding replaceOccurrencesOfString:@"EUC-" withString:@"euc" options:0 range:NSMakeRange(0, [encoding length])];
+        NSMutableString* temp = [[NSMutableString alloc] initWithString:ianaEncoding];
+        [temp replaceOccurrencesOfString:@"ISO-" withString:@"ISO" options:0 range:NSMakeRange(0, [temp length])];
+        [temp replaceOccurrencesOfString:@"EUC-" withString:@"euc" options:0 range:NSMakeRange(0, [temp length])];
 
-        NSString* test = [locale stringByAppendingFormat:@".%@", encoding];
+        // See if locale.encoding works.
+        NSString* test = [locale stringByAppendingFormat:@".%@", temp];
         if (NULL != setlocale(LC_CTYPE, [test UTF8String])) {
-            locale = test;
+            encoding = [NSString stringWithString:test];
         }
 
-        [encoding release];
+        [temp release];
+
+        // Try just the encoding.
+        if (!encoding && setlocale(LC_CTYPE, [ianaEncoding UTF8String])) {
+            encoding = ianaEncoding;
+        }
     }
 
-    // Check the locale is valid
-    if (NULL == setlocale(LC_CTYPE, [locale UTF8String])) {
-        locale = nil;
+    // Try just the language/country code
+    if (!encoding && setlocale(LC_CTYPE, [locale UTF8String])) {
+        encoding = locale;
     }
 
     // Restore locale and return
     setlocale(LC_CTYPE, backupLocale);
-    return locale;
+    return encoding;
 }
 #endif
 
