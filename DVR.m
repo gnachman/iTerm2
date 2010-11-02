@@ -58,6 +58,10 @@
 
 - (void)appendFrame:(char*)buffer length:(int)length info:(DVRFrameInfo*)info
 {
+    if (length > [buffer_ capacity] / 2) {
+        // Protect the buffer from overflowing if you have a really big window.
+        return;
+    }
     int prevFirst = [buffer_ firstKey];
     if ([encoder_ reserve:length]) {
         // Leading frames were freed. Invalidate them in all decoders.
