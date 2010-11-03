@@ -1,5 +1,44 @@
 These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2.
 
+Alpha 12
+Featurepalooza! And bug fixes, too.
+
+New features:
+- Instant Replay: This feature makes iTerm2 behave like TiVo. You can press cmd-opt-b to step back in time and cmd-opt-f to step forward in time. If something is erased from the screen, it's no longer lost forever. This feature can be turned off in Preferences as it does take a bit of extra memory and has a small performance impact (less than 1%).
+- Paste History: When you copy or paste text in iTerm2, it is now saved in the paste history. You can pop up a window at the cursor with cmd-shift-h which shows the last 20 strings in the clipboard. The list is searchable Quicksilver-style.
+- Mouseless Selection: Do you often copy-paste text within the same window? Now you can do it without using the mouse. Open the findbar with cmd-f and search for the text you wish to copy. When part of the text is matched, use the tab key to expand the selection to the right by a full word and shift-tab to expand it left to the previous word boundary. It's automatically copied to the clipboard, or you can use opt-Enter to paste the selection immediately.
+
+Enhancements:
+- Findbar appearance improved.
+- Add undo/redo to edit menu.
+- Add zoom shortcut for cmd-opt-=.
+- Read larger chunks from the network for better performance.
+- Idle CPU usage reduced.
+- Refresh rate adjustment removed, dynamic refresh rate added.
+- Input Method Editor wraps at end of line, scrolls window if necessary.
+- IPV6 support for Bonjour.
+
+Bug fixes:
+- Memory usage growth when Bonjour enabled (hopefully, 43).
+- Toggling Bonjour takes effect immediately (89)
+- Make resize look better (98)
+- Restore colors on exit of Vim (99)
+- Make bookmark window resize properly (114)
+- Select name field when copying/creating/editing bookmark (127, 128, 181)
+- Scroll by selection in fullscreen window (133)
+- IME improvements (163)
+- URLs with i18n chars can be selected now (174)
+- Tab lables updated when toggling compact tabs (196)
+- Better multi-monitor support (201)
+- Set localization vars better (204)
+- Fix return to default size (223)
+- Improve i-bar cursor appearance (235)
+- Numeric shortcuts displayed properly (241)
+- Prevent 100% transparency because it doesn't focus (250)
+- Fix bugs with AquaSKK (263)
+- Fix bug where page scrolling sometimes broke.
+- Fix creeping window size when toggling fullscreen.
+
 Alpha 11
 Bug fixes! Also brings back i386 and PPC support. Details:
 
