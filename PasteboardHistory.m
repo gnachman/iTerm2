@@ -221,6 +221,7 @@
                             styleMask:NSBorderlessWindowMask
                               backing:bufferingType
                                 defer:flag];
+    [self setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
 
     return self;
 }
