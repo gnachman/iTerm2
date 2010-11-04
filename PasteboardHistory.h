@@ -7,6 +7,8 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "VT100Screen.h"
+#import "PTYTextView.h"
 
 @interface PasteboardEntry : NSObject {
     @public
@@ -51,7 +53,7 @@
 - (void)appendString:(NSString*)string;
 - (void)clearFilter;
 - (int)numberOfEntries;
-- (PasteboardEntry*)entryAtIndex:(int)i;
+- (PasteboardEntry*)entryAtIndex:(int)i isReversed:(BOOL)rev;
 - (void)reload;
 - (NSString*)filter;
 - (BOOL)_entry:(PasteboardEntry*)entry matchesFilter:(NSString*)filter;
@@ -72,10 +74,11 @@
 - (void)dealloc;
 - (void)setDataSource:(PasteboardHistory*)dataSource;
 - (void)windowDidResignKey:(NSNotification *)aNotification;
-- (void)windowDidBecomeKey:(NSNotification *)aNotification;
+- (void)prepareToShowOnScreen:(VT100Screen*)screen textView:(PTYTextView*)tv;
 - (void)pasteboardHistoryDidChange:(id)sender;
 - (void)refresh;
 - (void)setOnTop:(BOOL)onTop;
+- (void)setPositionOnScreen:(VT100Screen*)screen textView:(PTYTextView*)tv;
 
 - (void)_setClearFilterOnNextKeyDownFlag:(id)sender;
 

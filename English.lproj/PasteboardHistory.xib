@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="117"/>
+			<integer value="113"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -46,6 +46,7 @@
 				<string key="NSWindowTitle">Window</string>
 				<string key="NSWindowClass">PasteboardHistoryWindow</string>
 				<nil key="NSViewClass"/>
+				<string key="NSWindowContentMaxSize">{1.79769e+308, 1.79769e+308}</string>
 				<object class="NSView" key="NSWindowView" id="404763210">
 					<reference key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
@@ -111,8 +112,8 @@
 														</object>
 													</object>
 													<object class="NSTextFieldCell" key="NSDataCell" id="351016188">
-														<int key="NSCellFlags">337772096</int>
-														<int key="NSCellFlags2">2048</int>
+														<int key="NSCellFlags">338820672</int>
+														<int key="NSCellFlags2">1024</int>
 														<string key="NSContents">Text Cell</string>
 														<object class="NSFont" key="NSSupport" id="10837316">
 															<string key="NSName">LucidaGrande</string>
@@ -154,8 +155,8 @@
 														<reference key="NSTextColor" ref="518748539"/>
 													</object>
 													<object class="NSTextFieldCell" key="NSDataCell" id="327924986">
-														<int key="NSCellFlags">337772096</int>
-														<int key="NSCellFlags2">2048</int>
+														<int key="NSCellFlags">338820672</int>
+														<int key="NSCellFlags2">1024</int>
 														<string key="NSContents">Text Cell</string>
 														<reference key="NSSupport" ref="10837316"/>
 														<reference key="NSControlView" ref="948103821"/>

@@ -2288,7 +2288,7 @@ static NSImage *warningImage;
 
 - (void)setDvrFrame
 {
-    screen_char_t* s = (screen_char_t*)[dvrDecoder_ frame];
+    screen_char_t* s = (screen_char_t*)[dvrDecoder_ decodedFrame];
     int len = [dvrDecoder_ length];
     DVRFrameInfo info = [dvrDecoder_ info];
     if (info.width != [SCREEN width] || info.height != [SCREEN height]) {

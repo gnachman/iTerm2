@@ -67,7 +67,7 @@
     return NO;
 }
 
-- (char*)frame
+- (char*)decodedFrame
 {
     return frame_;
 }

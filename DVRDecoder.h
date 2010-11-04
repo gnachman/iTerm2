@@ -57,7 +57,7 @@
 - (BOOL)seek:(long long)timestamp;
 
 // Accessors for the most recent frame.
-- (char*)frame;
+- (char*)decodedFrame;
 - (int)length;
 - (long long)timestamp;
 - (DVRFrameInfo)info;

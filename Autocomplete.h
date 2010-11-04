@@ -29,6 +29,8 @@
 
 #import <Cocoa/Cocoa.h>
 #import "iTerm/PTYSession.h"
+#import "LineBuffer.h"
+
 
 @interface AutocompleteWindow : NSWindow {
 }
@@ -44,16 +46,47 @@
 
 @interface AutocompleteView : NSWindowController
 {
+    // Table view that displays choices.
     IBOutlet NSTableView* table_;
+
+    // Word before cursor.
     NSMutableString* prefix_;
+
+    // What the user has typed so far to filter result set.
     NSMutableString* substring_;
+
+    // First 20 results beginning with prefix_, including those not matching
+    // substring_.
+    NSMutableArray* unfilteredModel_;
+
+    // Results currently being displayed.
     NSMutableArray* model_;
+
+    // Backing session.
     PTYSession* dataSource_;
+
+    // Timer to set clearFilterOnNextKeyDown_.
     NSTimer* timer_;
+
+    // If set, then next time a key is pressed erase substring_ before appending.
     BOOL clearFilterOnNextKeyDown_;
+
+    // If true then window is above cursor.
     BOOL onTop_;
+
+    // x,y coords where prefix occured.
     int startX_;
-    int startY_;
+    long long startY_;  // absolute coord
+
+    // Context for searches while populating unfilteredModel.
+    FindContext context_;
+
+    // Timer for doing asynch seraches for prefix.
+    NSTimer* populateTimer_;
+
+    // Cursor location to begin next search.
+    int x_;
+    long long y_;  // absolute coord
 }
 
 - (id)init;
@@ -64,9 +97,13 @@
 - (void)windowDidBecomeKey:(NSNotification *)aNotification;
 - (void)refresh;
 - (void)setOnTop:(BOOL)onTop;
+- (void)setPosition;
 
 - (void)_setClearFilterOnNextKeyDownFlag:(id)sender;
-- (void)_populateModel;
+- (void)_populateUnfilteredModel;
+- (void)_updateFilter;
+- (BOOL)_word:(NSString*)temp matchesFilter:(NSString*)filter;
+- (void)_populateMore:(id)sender;
 
 // DataSource methods
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;

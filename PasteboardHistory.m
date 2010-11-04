@@ -25,7 +25,7 @@
     entries_ = [[NSMutableArray alloc] init];
     filter_ = [[NSMutableString alloc] init];
     [self reload];
-    
+
     return self;
 }
 
@@ -54,9 +54,13 @@
     return [entries_ count];
 }
 
-- (PasteboardEntry*)entryAtIndex:(int)i
+- (PasteboardEntry*)entryAtIndex:(int)i isReversed:(BOOL)rev
 {
-    return [entries_ objectAtIndex:i];
+    if (rev) {
+        return [entries_ objectAtIndex:[entries_ count] - i - 1];
+    } else {
+        return [entries_ objectAtIndex:i];
+    }
 }
 
 - (NSString*)filter
@@ -90,22 +94,22 @@
             attributedSubstr = [[[NSAttributedString alloc] initWithString:substr attributes:plainAttributes] autorelease];
             [as appendAttributedString:attributedSubstr];
         }
-        
+
         unichar matchChar = [temp characterAtIndex:r.location];
         attributedSubstr = [[[NSAttributedString alloc] initWithString:[NSString stringWithCharacters:&matchChar length:1] attributes:boldAttributes] autorelease];
         [as appendAttributedString:attributedSubstr];
-        
+
         r.length = [temp length] - r.location - 1;
         ++r.location;
         temp = [temp substringWithRange:r];
     }
-    
+
     NSAttributedString* attributedSubstr;
     if ([temp length] > 0) {
         attributedSubstr = [[[NSAttributedString alloc] initWithString:temp attributes:plainAttributes] autorelease];
         [as appendAttributedString:attributedSubstr];
     }
-    
+
     return as;
 }
 
@@ -204,7 +208,7 @@
     if ([entries_ count] == maxEntries_) {
         [entries_ removeObjectAtIndex:0];
     }
-    [[NSNotificationCenter defaultCenter] postNotificationName:kPasteboardHistoryDidChange 
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPasteboardHistoryDidChange
                                                         object:self];
 }
 
@@ -257,9 +261,9 @@
 - (void)setDataSource:(PasteboardHistory*)dataSource
 {
     model_ = [[PasteboardModel alloc] initWithHistory:dataSource];
-    [[NSNotificationCenter defaultCenter] addObserver:self 
-                                             selector:@selector(pasteboardHistoryDidChange:) 
-                                                 name:kPasteboardHistoryDidChange 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(pasteboardHistoryDidChange:)
+                                                 name:kPasteboardHistoryDidChange
                                                object:nil];
 }
 
@@ -281,7 +285,7 @@
 
     NSRect frame = [[self window] frame];
     float diff = frame.size.height;
-    frame.size.height = [[table_ headerView] frame].size.height + [model_ numberOfEntries] * ([table_ rowHeight] + [table_ intercellSpacing].height);    
+    frame.size.height = [[table_ headerView] frame].size.height + [model_ numberOfEntries] * ([table_ rowHeight] + [table_ intercellSpacing].height);
     diff -= frame.size.height;
     if (!onTop_) {
         frame.origin.y += diff;
@@ -291,7 +295,7 @@
     [[table_ enclosingScrollView] setHasHorizontalScroller:NO];
 
     if ([table_ selectedRow] == -1 && [table_ numberOfRows] > 0) {
-        NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:0];
+        NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:onTop_ ? [table_ numberOfRows] - 1 : 0];
         [table_ selectRowIndexes:indexes byExtendingSelection:NO];
     }
 }
@@ -300,6 +304,41 @@
 {
     onTop_ = onTop;
 }
+
+- (void)setPositionOnScreen:(VT100Screen*)screen textView:(PTYTextView*)tv
+{
+    BOOL onTop = NO;
+
+    int cx = [screen cursorX] - 1;
+    int cy = [screen cursorY];
+
+    NSRect frame = [[self window] frame];
+    frame.size.height = [[table_ headerView] frame].size.height + [model_ numberOfEntries] * ([table_ rowHeight] + [table_ intercellSpacing].height);
+
+    NSPoint p = NSMakePoint(MARGIN + cx * [tv charWidth], ([screen numberOfLines] - [screen height] + cy) * [tv lineHeight]);
+    p = [tv convertPoint:p toView:nil];
+    p = [[tv window] convertBaseToScreen:p];
+    p.y -= frame.size.height;
+
+    // p.y gives the bottom of the frame relative to the bottom of the screen, assuming it's below the cursor.
+    NSRect monitorFrame = [[[self window] screen] visibleFrame];
+    float bottomOverflow = monitorFrame.origin.y - p.y;
+    float topOverflow = p.y + 2 * frame.size.height + [tv lineHeight] - (monitorFrame.origin.y + monitorFrame.size.height);
+    if (topOverflow < bottomOverflow) {
+        p.y += frame.size.height + [tv lineHeight];
+        onTop = YES;
+    }
+    float rightX = monitorFrame.origin.x + monitorFrame.size.width;
+    if (p.x + frame.size.width > rightX) {
+        float excess = p.x + frame.size.width - rightX;
+        p.x -= excess;
+    }
+
+    frame.origin = p;
+    [[self window] setFrame:frame display:NO];
+    [self setOnTop:onTop];
+}
+
 
 - (void)windowDidResignKey:(NSNotification *)aNotification
 {
@@ -315,7 +354,7 @@
     [model_ clearFilter];
 }
 
-- (void)windowDidBecomeKey:(NSNotification *)aNotification
+- (void)prepareToShowOnScreen:(VT100Screen*)screen textView:(PTYTextView*)tv
 {
     clearFilterOnNextKeyDown_ = NO;
     if (timer_) {
@@ -324,8 +363,9 @@
     }
     [model_ clearFilter];
     [self refresh];
+    [self setPositionOnScreen:screen textView:tv];
     if ([table_ numberOfRows] > 0) {
-        NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:[table_ numberOfRows] - 1];
+        NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:onTop_ ? [table_ numberOfRows] - 1 : 0];
         [table_ selectRowIndexes:indexes byExtendingSelection:NO];
     }
     // Redraw window once a minute so the time column is always correct.
@@ -345,7 +385,7 @@
 
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
 {
-    PasteboardEntry* entry = [model_ entryAtIndex:rowIndex];
+    PasteboardEntry* entry = [model_ entryAtIndex:rowIndex isReversed:!onTop_];
     if ([[aTableColumn identifier] isEqualToString:@"date"]) {
         // Date
         return [NSDateFormatter dateDifferenceStringFromDate:entry->timestamp];
@@ -358,7 +398,7 @@
 - (void)rowSelected:(id)sender;
 {
     if ([table_ selectedRow] >= 0) {
-        PasteboardEntry* entry = [model_ entryAtIndex:[table_ selectedRow]];
+        PasteboardEntry* entry = [model_ entryAtIndex:[table_ selectedRow] isReversed:!onTop_];
         NSPasteboard* thePasteboard = [NSPasteboard generalPasteboard];
         [thePasteboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
         [thePasteboard setString:entry->value forType:NSStringPboardType];

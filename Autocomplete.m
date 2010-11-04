@@ -45,7 +45,7 @@
                               backing:bufferingType
                                 defer:flag];
     [self setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
-    
+
     return self;
 }
 
@@ -72,9 +72,10 @@
     if (!self) {
         return nil;
     }
-    
+
     prefix_ = [[NSMutableString alloc] init];
     substring_ = [[NSMutableString alloc] init];
+    unfilteredModel_ = [[NSMutableArray alloc] init];
     model_ = [[NSMutableArray alloc] init];
     [self window];
     return self;
@@ -88,15 +89,15 @@
     if (x < 0) {
         [prefix_ setString:@""];
     } else {
-        NSString* s = [[dataSource_ TEXTVIEW] getWordForX:x 
-                                                        y:[screen cursorY] + [screen numberOfLines] - [screen height] - 1 
-                                                   startX:&tx1 
-                                                   startY:&ty1 
-                                                     endX:&tx2 
+        NSString* s = [[dataSource_ TEXTVIEW] getWordForX:x
+                                                        y:[screen cursorY] + [screen numberOfLines] - [screen height] - 1
+                                                   startX:&tx1
+                                                   startY:&ty1
+                                                     endX:&tx2
                                                      endY:&ty2];
         [prefix_ setString:s];
         startX_ = tx1;
-        startY_ = ty1;
+        startY_ = ty1 + [screen scrollbackOverflow];
     }
     [self refresh];
 }
@@ -108,28 +109,70 @@
 
 - (void)dealloc
 {
+    [unfilteredModel_ release];
     [model_ release];
     [prefix_ release];
     [substring_ release];
+    [populateTimer_ invalidate];
+    [populateTimer_ release];
     [super dealloc];
 }
 
 - (void)refresh
 {
-    [self _populateModel];
-    [table_ reloadData];
-    
+    [self _populateUnfilteredModel];
+}
+
+- (void)setPosition
+{
+    BOOL onTop = NO;
+
+    VT100Screen* screen = [dataSource_ SCREEN];
+    int cx = [screen cursorX] - 1;
+    int cy = [screen cursorY];
+
+    PTYTextView* tv = [dataSource_ TEXTVIEW];
+
     NSRect frame = [[self window] frame];
-    float diff = frame.size.height;
-    frame.size.height = [[table_ headerView] frame].size.height + [model_ count] * ([table_ rowHeight] + [table_ intercellSpacing].height);    
-    diff -= frame.size.height;
-    if (!onTop_) {
-        frame.origin.y += diff;
+    frame.size.height = [[table_ headerView] frame].size.height + [model_ count] * ([table_ rowHeight] + [table_ intercellSpacing].height);
+
+    NSPoint p = NSMakePoint(MARGIN + cx * [tv charWidth], ([screen numberOfLines] - [screen height] + cy) * [tv lineHeight]);
+    p = [tv convertPoint:p toView:nil];
+    p = [[tv window] convertBaseToScreen:p];
+    p.y -= frame.size.height;
+
+    // p.y gives the bottom of the frame relative to the bottom of the screen, assuming it's below the cursor.
+    NSRect monitorFrame = [[[self window] screen] visibleFrame];
+    float bottomOverflow = monitorFrame.origin.y - p.y;
+    float topOverflow = p.y + 2 * frame.size.height + [tv lineHeight] - (monitorFrame.origin.y + monitorFrame.size.height);
+    if (topOverflow < bottomOverflow) {
+        p.y += frame.size.height + [tv lineHeight];
+        onTop = YES;
     }
+    float rightX = monitorFrame.origin.x + monitorFrame.size.width;
+    if (p.x + frame.size.width > rightX) {
+        float excess = p.x + frame.size.width - rightX;
+        p.x -= excess;
+    }
+
+    frame.origin = p;
     [[self window] setFrame:frame display:NO];
+    [self setOnTop:onTop];
+}
+
+- (void)_updateFilter
+{
+    [model_ removeAllObjects];
+    for (NSString* s in unfilteredModel_) {
+        if ([self _word:s matchesFilter:substring_]) {
+            [model_ addObject:s];
+        }
+    }
+    [table_ reloadData];
+    [self setPosition];
     [table_ sizeToFit];
     [[table_ enclosingScrollView] setHasHorizontalScroller:NO];
-    
+
     if ([table_ selectedRow] == -1 && [table_ numberOfRows] > 0) {
         NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:0];
         [table_ selectRowIndexes:indexes byExtendingSelection:NO];
@@ -150,7 +193,6 @@
         timer_ = nil;
     }
     [substring_ setString:@""];
-    [self refresh];
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification
@@ -176,10 +218,60 @@
     return [model_ count];
 }
 
+- (NSAttributedString*)attributedStringForValue:(NSString*)value
+{
+    NSMutableAttributedString* as = [[[NSMutableAttributedString alloc] init] autorelease];
+    NSDictionary* lightAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
+                                     [NSFont systemFontOfSize:[NSFont systemFontSize]], NSFontAttributeName,
+                                     [NSColor grayColor], NSForegroundColorAttributeName,
+                                     nil];
+    NSDictionary* plainAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
+                                     [NSFont systemFontOfSize:[NSFont systemFontSize]], NSFontAttributeName,
+                                     nil];
+    NSDictionary* boldAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
+                                    [NSFont boldSystemFontOfSize:[NSFont systemFontSize]], NSFontAttributeName,
+                                    nil];
+    value = [value stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+    NSAttributedString* attributedSubstr;
+    attributedSubstr = [[[NSAttributedString alloc] initWithString:prefix_
+                                                        attributes:lightAttributes] autorelease];
+    [as appendAttributedString:attributedSubstr];
+    NSString* temp = value;
+    for (int i = 0; i < [substring_ length]; ++i) {
+        unichar wantChar = [substring_ characterAtIndex:i];
+        NSRange r = [temp rangeOfString:[NSString stringWithCharacters:&wantChar length:1] options:NSCaseInsensitiveSearch];
+        if (r.location == NSNotFound) {
+            return nil;
+        }
+        NSRange prefix;
+        prefix.location = 0;
+        prefix.length = r.location;
+        if (prefix.length > 0) {
+            NSString* substr = [temp substringWithRange:prefix];
+            attributedSubstr = [[[NSAttributedString alloc] initWithString:substr attributes:plainAttributes] autorelease];
+            [as appendAttributedString:attributedSubstr];
+        }
+
+        unichar matchChar = [temp characterAtIndex:r.location];
+        attributedSubstr = [[[NSAttributedString alloc] initWithString:[NSString stringWithCharacters:&matchChar length:1] attributes:boldAttributes] autorelease];
+        [as appendAttributedString:attributedSubstr];
+
+        r.length = [temp length] - r.location - 1;
+        ++r.location;
+        temp = [temp substringWithRange:r];
+    }
+
+    if ([temp length] > 0) {
+        attributedSubstr = [[[NSAttributedString alloc] initWithString:temp attributes:plainAttributes] autorelease];
+        [as appendAttributedString:attributedSubstr];
+    }
+
+    return as;
+}
+
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
 {
-    NSLog(@"Row %d is %@", rowIndex, [model_ objectAtIndex:rowIndex]);
-    return [NSString stringWithFormat:@"%@%@", prefix_, [model_ objectAtIndex:rowIndex]];
+    return [self attributedStringForValue:[model_ objectAtIndex:rowIndex]];
 }
 
 - (void)rowSelected:(id)sender;
@@ -203,14 +295,14 @@
         }
         clearFilterOnNextKeyDown_ = NO;
         [substring_ setString:@""];
-        [self refresh];
+        [self _updateFilter];
     } else if (!iswcntrl(c)) {
         if (clearFilterOnNextKeyDown_) {
             [substring_ setString:@""];
             clearFilterOnNextKeyDown_ = NO;
         }
         [substring_ appendString:[event characters]];
-        [self refresh];
+        [self _updateFilter];
         if (timer_) {
             [timer_ invalidate];
         }
@@ -246,65 +338,107 @@
     return YES;
 }
 
-- (void)_populateModel
+- (void)_populateUnfilteredModel
 {
-    [model_ removeAllObjects];
-    FindContext context;
-    context.substring = nil;
+    [unfilteredModel_ removeAllObjects];
+    context_.substring = nil;
     VT100Screen* screen = [dataSource_ SCREEN];
 
-    int x = startX_;
-    int y = startY_;
-    // TODO: not using absolute y positions. but if screen moves we should close autocomplete anyway.
-    
+    x_ = startX_;
+    y_ = startY_ - [screen scrollbackOverflow];
+
+    [screen initFindString:prefix_
+          forwardDirection:NO
+              ignoringCase:YES
+               startingAtX:x_
+               startingAtY:y_
+                withOffset:1
+                 inContext:&context_];
+
+    [self _populateMore:nil];
+}
+
+- (void)_populateMore:(id)sender
+{
+    VT100Screen* screen = [dataSource_ SCREEN];
+
+    int x = x_;
+    int y = y_ - [screen scrollbackOverflow];
+    const int kMaxOptions = 20;
     BOOL found;
+
+    struct timeval begintime;
+    gettimeofday(&begintime, NULL);
+
     do {
-        NSLog(@"Begin search at %d, %d", x, y);
-        [screen initFindString:prefix_ 
-              forwardDirection:NO 
-                  ignoringCase:YES 
-                   startingAtX:x
-                   startingAtY:y
-                    withOffset:1
-                     inContext:&context];
         BOOL more;
         int startX;
         int startY;
         int endX;
         int endY;
         found = NO;
-//        const int kMaxOptions = 20;
         do {
-            NSLog(@"execute search iteration...");
-            context.hasWrapped = YES;
-            more = [screen continueFindResultAtStartX:&startX 
-                                             atStartY:&startY 
-                                               atEndX:&endX 
-                                               atEndY:&endY 
+            context_.hasWrapped = YES;
+            more = [screen continueFindResultAtStartX:&startX
+                                             atStartY:&startY
+                                               atEndX:&endX
+                                               atEndY:&endY
                                                 found:&found
-                                            inContext:&context];
+                                            inContext:&context_];
             if (found) {
                 int tx1, ty1, tx2, ty2;
                 NSString* word = [[dataSource_ TEXTVIEW] getWordForX:endX y:endY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
-                NSLog(@"Found word %@ at %d,%d", word, startX, startY);
-                ++endX;
-                if (endX == [screen width]) {
-                    endX = 0;
-                    ++endY;
+                if (tx1 == startX && [word rangeOfString:prefix_ options:(NSCaseInsensitiveSearch | NSAnchoredSearch)].location == 0) {
+                    ++endX;
+                    if (endX > [screen width]) {
+                        endX = 1;
+                        ++endY;
+                    }
+
+                    // Grab the last part of the word after the prefix.
+                    NSString* result = [[dataSource_ TEXTVIEW] contentFromX:endX Y:endY ToX:tx2 Y:ty2 pad:NO];
+                    if ([result length] > 0 && [unfilteredModel_ indexOfObject:result] == NSNotFound) {
+                        [unfilteredModel_ addObject:result];
+                        NSLog(@"Add %@ in context %@ at %d,%d", result, word, startX, startY);
+                    }
                 }
-                // TODO: I think this breaks if the selection ends on the very last char on the screen.
-                NSString* result = [[dataSource_ TEXTVIEW] contentFromX:endX Y:endY ToX:tx2 Y:ty2 pad:NO];
-                if ([result length] > 0 &&
-                    [model_ indexOfObject:result] == NSNotFound &&
-                    [self _word:result matchesFilter:substring_]) {
-                    
-                    [model_ addObject:result];
-                }
-                x = startX;
+                x = x_ = startX;
                 y = startY;
+                y_ = y + [screen scrollbackOverflow];
             }
-        } while (more);
-    } while (found);
+        } while (more && [unfilteredModel_ count] < kMaxOptions);
+
+        if (found && [unfilteredModel_ count] < kMaxOptions) {
+            // Begin search again before the last hit.
+            [screen initFindString:prefix_
+                  forwardDirection:NO
+                      ignoringCase:YES
+                       startingAtX:x_
+                       startingAtY:y_
+                        withOffset:1
+                         inContext:&context_];
+        } else {
+            // All done.
+            break;
+        }
+
+        // Don't spend more than 100ms outside of event loop.
+        struct timeval endtime;
+        gettimeofday(&endtime, NULL);
+        int ms_diff = (endtime.tv_sec - begintime.tv_sec) * 1000 +
+            (endtime.tv_usec - begintime.tv_usec) / 1000;
+        if (ms_diff > 100) {
+            // Out of time. Reschedule and try again.
+            populateTimer_ = [NSTimer scheduledTimerWithTimeInterval:0.01
+                                                              target:self
+                                                            selector:@selector(_populateMore:)
+                                                            userInfo:nil
+                                                             repeats:NO];
+            break;
+        }
+    } while (found && [unfilteredModel_ count] < kMaxOptions);
+    populateTimer_ = nil;
+    [self _updateFilter];
 }
 
 @end

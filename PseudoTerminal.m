@@ -1022,6 +1022,10 @@ NSString *sessionsKey = @"sessions";
     // If the user is currently select-dragging the text view, stop it so it
     // doesn't keep going in the background.
     [[[self currentSession] TEXTVIEW] aboutToHide];
+
+    if ([[autocompleteView window] isVisible]) {
+        [autocompleteView close];
+    }
 }
 
 - (void)enableBlur
@@ -1967,48 +1971,20 @@ NSString *sessionsKey = @"sessions";
     [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
 }
 
-- (BOOL)popWindowAtCursor:(NSWindowController*)controller
-{
-    BOOL onTop = NO;
-    [controller showWindow:self];
-    [[controller window] makeKeyAndOrderFront:self];
-
-    VT100Screen* screen = [[self currentSession] SCREEN];
-    int cx = [screen cursorX] - 1;
-    int cy = [screen cursorY];
-
-    PTYTextView* tv = [[self currentSession] TEXTVIEW];
-
-    NSPoint p = NSMakePoint(MARGIN + cx * [tv charWidth], ([screen numberOfLines] - [screen height] + cy) * [tv lineHeight]);
-    p = [tv convertPoint:p toView:nil];
-    p = [[tv window] convertBaseToScreen:p];
-    p.y -= [[controller window] frame].size.height;
-
-    NSRect monitorFrame = [[[self window] screen] visibleFrame];
-    if (p.y < monitorFrame.origin.y) {
-        p.y += [[controller window] frame].size.height + [tv lineHeight];
-        onTop = YES;
-    }
-    float rightX = monitorFrame.origin.x + monitorFrame.size.width;
-    if (p.x + [[controller window] frame].size.width > rightX) {
-        float excess = p.x + [[controller window] frame].size.width - rightX;
-        p.x -= excess;
-    }
-
-    [[controller window] setFrameOrigin:p];
-    return onTop;
-}
-
 - (IBAction)openPasteHistory:(id)sender
 {
-    [pbHistoryView setOnTop:[self popWindowAtCursor:pbHistoryView]];
+    [pbHistoryView prepareToShowOnScreen:[[self currentSession] SCREEN] textView:[[self currentSession] TEXTVIEW]];
+    [pbHistoryView showWindow:self];
+    [[pbHistoryView window] makeKeyAndOrderFront:self];
 }
 
 - (IBAction)openAutocomplete:(id)sender
 {
     [autocompleteView setDataSource:[self currentSession]];
     [autocompleteView updatePrefix];
-    [autocompleteView setOnTop:[self popWindowAtCursor:autocompleteView]];
+    [autocompleteView setPosition];
+    [autocompleteView showWindow:self];
+    [[autocompleteView window] makeKeyAndOrderFront:self];
 }
 
 @end

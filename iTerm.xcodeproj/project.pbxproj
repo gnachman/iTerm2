@@ -496,7 +496,6 @@
 			isa = PBXGroup;
 			children = (
 				1DE214E0128212EE004E3ADF /* Autocomplete.m */,
-				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
 				1D7C18801275D22900461E55 /* PasteboardHistory.m */,
 				1D173858126C820A004622DC /* FakeWindow.m */,
 				1D93D33412695442007F741B /* DVR.m */,
@@ -516,6 +515,7 @@
 				DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */,
 				F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */,
 				1D72438C11F416E500BD4924 /* LineBuffer.m */,
+				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
 				FB019DE103670C6501F955DB /* PreferencePanel.m */,
 				FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */,
