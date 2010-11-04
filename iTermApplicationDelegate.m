@@ -81,12 +81,17 @@ int gDebugLogFile = -1;
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-        [self buildAddressBookMenu:nil];
+    // Prevent the input manager from swallowing control-q. See explanation here:
+    // http://b4winckler.wordpress.com/2009/07/19/coercing-the-cocoa-text-system/
+    CFPreferencesSetAppValue(CFSTR("NSQuotedKeystrokeBinding"),
+                             CFSTR(""),
+                             kCFPreferencesCurrentApplication);
 
-        // register for services
-        [NSApp registerServicesMenuSendTypes: [NSArray arrayWithObjects: NSStringPboardType, nil]
-                                                         returnTypes: [NSArray arrayWithObjects: NSFilenamesPboardType, NSStringPboardType, nil]];
+    [self buildAddressBookMenu:nil];
 
+    // register for services
+    [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
+                                                       returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];
 }
 
 - (BOOL) applicationShouldTerminate: (NSNotification *) theNotification
