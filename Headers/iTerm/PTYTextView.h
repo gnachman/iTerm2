@@ -356,12 +356,12 @@ typedef enum {
 - (void) _scrollToLine:(int)line;
 - (BOOL)shouldSelectCharForWord:(unichar) ch selectWordChars:(BOOL)selectWordChars;
 - (PTYCharType)classifyChar:(unichar)ch;
-- (NSString *)_getWordForX:(int)x
-                    y:(int)y
-               startX:(int *)startx
-               startY:(int *)starty
-                 endX:(int *)endx
-                 endY:(int *)endy;
+- (NSString *)getWordForX:(int)x
+                        y:(int)y
+                   startX:(int *)startx
+                   startY:(int *)starty
+                     endX:(int *)endx
+                     endY:(int *)endy;
 - (NSString *)_getURLForX:(int)x y:(int)y;
 - (void)_drawLine:(int)line AtY:(float)curY;
 - (void)_drawCursor;

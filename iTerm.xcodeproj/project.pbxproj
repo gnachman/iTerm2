@@ -164,6 +164,9 @@
 		1DCF3EC61224D03D00AD56F1 /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		1DCF3F001224EEBD00AD56F1 /* MigrationMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */; };
 		1DCF3F4A1225F6F200AD56F1 /* BookmarkModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */; };
+		1DE214E1128212EE004E3ADF /* Autocomplete.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE214DF128212EE004E3ADF /* Autocomplete.h */; };
+		1DE214E2128212EE004E3ADF /* Autocomplete.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE214E0128212EE004E3ADF /* Autocomplete.m */; };
+		1DE2154312821F1C004E3ADF /* Autocomplete.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DE2154112821F1C004E3ADF /* Autocomplete.xib */; };
 		1DE5EBE8122B892900C736B0 /* BookmarksWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* BookmarksWindow.h */; };
 		1DE5EBE9122B892900C736B0 /* BookmarksWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */; };
 		1DEE9FDD11FCA60F009E18C9 /* credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 1DEE9FDB11FCA60F009E18C9 /* credits.rtf */; };
@@ -276,6 +279,9 @@
 		1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultBookmark.plist; sourceTree = "<group>"; };
 		1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = MigrationMap.plist; sourceTree = "<group>"; };
 		1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BookmarkModel.h; path = Headers/iTerm/BookmarkModel.h; sourceTree = "<group>"; };
+		1DE214DF128212EE004E3ADF /* Autocomplete.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Autocomplete.h; sourceTree = "<group>"; };
+		1DE214E0128212EE004E3ADF /* Autocomplete.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Autocomplete.m; sourceTree = "<group>"; };
+		1DE2154212821F1C004E3ADF /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/Autocomplete.xib; sourceTree = "<group>"; };
 		1DE5EBE6122B892900C736B0 /* BookmarksWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarksWindow.h; sourceTree = "<group>"; };
 		1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarksWindow.m; sourceTree = "<group>"; };
 		1DEE9FDC11FCA60F009E18C9 /* English */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = English; path = English.lproj/credits.rtf; sourceTree = "<group>"; };
@@ -481,6 +487,7 @@
 				F69E774A0AB78CDB001EC0FF /* Growl-Info.plist */,
 				1D13EADB12113A2D00909F9C /* libncurses.dylib */,
 				1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */,
+				1DE2154112821F1C004E3ADF /* Autocomplete.xib */,
 			);
 			name = JTerminal;
 			sourceTree = "<group>";
@@ -488,6 +495,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				1DE214E0128212EE004E3ADF /* Autocomplete.m */,
 				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
 				1D7C18801275D22900461E55 /* PasteboardHistory.m */,
 				1D173858126C820A004622DC /* FakeWindow.m */,
@@ -527,6 +535,7 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				1DE214DF128212EE004E3ADF /* Autocomplete.h */,
 				1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */,
 				1D93D35112697529007F741B /* DVREncoder.h */,
 				1D7C187F1275D22900461E55 /* PasteboardHistory.h */,
@@ -891,6 +900,7 @@
 				1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */,
 				1D7C18811275D22900461E55 /* PasteboardHistory.h in Headers */,
 				1D7C1D1212772ECC00461E55 /* NSDateFormatterExtras.h in Headers */,
+				1DE214E1128212EE004E3ADF /* Autocomplete.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1051,6 +1061,7 @@
 				1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */,
 				1D7C1AD31276FD6E00461E55 /* PasteboardHistory.xib in Resources */,
 				1DC742A0127C96F90069594C /* IBarCursor.png in Resources */,
+				1DE2154312821F1C004E3ADF /* Autocomplete.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1140,6 +1151,7 @@
 				1D17385A126C820A004622DC /* FakeWindow.m in Sources */,
 				1D7C18821275D22900461E55 /* PasteboardHistory.m in Sources */,
 				1D7C1D1312772ECC00461E55 /* NSDateFormatterExtras.m in Sources */,
+				1DE214E2128212EE004E3ADF /* Autocomplete.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1174,6 +1186,14 @@
 				1D7C1AD21276FD6E00461E55 /* English */,
 			);
 			name = PasteboardHistory.xib;
+			sourceTree = "<group>";
+		};
+		1DE2154112821F1C004E3ADF /* Autocomplete.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1DE2154212821F1C004E3ADF /* English */,
+			);
+			name = Autocomplete.xib;
 			sourceTree = "<group>";
 		};
 		1DEE9FDB11FCA60F009E18C9 /* credits.rtf */ = {

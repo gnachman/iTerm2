@@ -228,9 +228,10 @@
 - (BOOL)isDoubleWidthCharacter:(unichar)c;
 
 // Initialize the find context.
-- (void)initFindString:(NSString*)aString forwardDirection:(BOOL)direction ignoringCase:(BOOL)ignoreCase startingAtX:(int)x startingAtY:(int)y withOffset:(int)offsetof;
-- (BOOL)continueFindResultAtStartX:(int*)startX atStartY:(int*)startY atEndX:(int*)endX atEndY:(int*)endY found:(BOOL*)found;
-- (void)cancelFind;
+- (FindContext*)findContext;
+- (void)initFindString:(NSString*)aString forwardDirection:(BOOL)direction ignoringCase:(BOOL)ignoreCase startingAtX:(int)x startingAtY:(int)y withOffset:(int)offsetof inContext:(FindContext*)context;
+- (BOOL)continueFindResultAtStartX:(int*)startX atStartY:(int*)startY atEndX:(int*)endX atEndY:(int*)endY found:(BOOL*)found inContext:(FindContext*)context;
+- (void)cancelFindInContext:(FindContext*)context;
 
 - (void) dumpDebugLog;
 

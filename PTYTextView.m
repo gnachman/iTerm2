@@ -1534,12 +1534,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
         // double-click; select word
         selectMode = SELECT_WORD;
-        NSString *selectedWord = [self _getWordForX:x
-                                                  y:y
-                                             startX:&tmpX1
-                                             startY:&tmpY1
-                                               endX:&tmpX2
-                                               endY:&tmpY2];
+        NSString *selectedWord = [self getWordForX:x
+                                                 y:y
+                                            startX:&tmpX1
+                                            startY:&tmpY1
+                                              endX:&tmpX2
+                                              endY:&tmpY2];
         if ([self _findMatchingParenthesis:selectedWord withX:tmpX1 Y:tmpY1]) {
             // Found a matching paren
             ;
@@ -2599,12 +2599,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int tmpY1;
     int tmpY2;
 
-    [self _getWordForX:x
-                     y:y
-                startX:&tmpX1
-                startY:&tmpY1
-                  endX:&tmpX2
-                  endY:&tmpY2];
+    [self getWordForX:x
+                    y:y
+               startX:&tmpX1
+               startY:&tmpY1
+                 endX:&tmpX2
+                 endY:&tmpY2];
 
     startX = tmpX1;
     startY = tmpY1;
@@ -2638,12 +2638,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int tmpY1;
     int tmpY2;
 
-    [self _getWordForX:x
-                     y:y
-                startX:&tmpX1
-                startY:&tmpY1
-                  endX:&tmpX2
-                  endY:&tmpY2];
+    [self getWordForX:x
+                    y:y
+               startX:&tmpX1
+               startY:&tmpY1
+                 endX:&tmpX2
+                 endY:&tmpY2];
 
     endX = tmpX2;
     endY = tmpY2;
@@ -2659,7 +2659,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                                          atStartY:&startY
                                            atEndX:&endX
                                            atEndY:&endY
-                                            found:&found];
+                                            found:&found 
+                                        inContext:[dataSource findContext]];
 
         if (found) {
             // Lock scrolling after finding text
@@ -2695,7 +2696,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         withOffset:(int)offset
 {
     if (_findInProgress) {
-        [dataSource cancelFind];
+        [dataSource cancelFindInContext:[dataSource findContext]];
     }
 
     if (lastFindX == -1) {
@@ -2708,7 +2709,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                   ignoringCase:ignoreCase
                    startingAtX:lastFindX
                    startingAtY:absLastFindY - [dataSource totalScrollbackOverflow]
-                    withOffset:offset];
+                    withOffset:offset 
+                     inContext:[dataSource findContext]];
     _findInProgress = YES;
 
     return [self continueFind];
@@ -3474,12 +3476,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return NO;
 }
 
-- (NSString *)_getWordForX:(int)x
-                         y:(int)y
-                    startX:(int *)startx
-                    startY:(int *)starty
-                      endX:(int *)endx
-                      endY:(int *)endy
+- (NSString *)getWordForX:(int)x
+                        y:(int)y
+                   startX:(int *)startx
+                   startY:(int *)starty
+                     endX:(int *)endx
+                     endY:(int *)endy
 {
     int tmpX;
     int tmpY;
@@ -4274,12 +4276,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             break;
 
         case SELECT_WORD:
-            [self _getWordForX:x
-                             y:y
-                        startX:&tmpX1
-                        startY:&tmpY1
-                          endX:&tmpX2
-                          endY:&tmpY2];
+            [self getWordForX:x
+                            y:y
+                       startX:&tmpX1
+                       startY:&tmpY1
+                         endX:&tmpX2
+                         endY:&tmpY2];
             if ((startX + (startY * width)) < (tmpX2 + (tmpY2 * width))) {
                 // We go forwards in our selection session... and...
                 if ((startX + (startY * width)) > (endX + (endY * width))) {
@@ -4289,7 +4291,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                     // In this case, our X starting and ending values will be SWAPPED, as swapping the values is
                     // necessary for backwards selection (forward selection: start|(several) word(s)|end---->,
                     //                                    backward selection: <----|end|(several) word(s)|start)
-                    // _getWordForX will report a word range with a half open interval (a <= x < b). b-1 will thus be
+                    // getWordForX will report a word range with a half open interval (a <= x < b). b-1 will thus be
                     // the LAST character of the current word. If we call the function again with new_a = b, it will
                     // report the boundaries for the next word in line (which by definition will always be a white
                     // space, iff we're in SELECT_WORD mode.)
@@ -4297,12 +4299,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                     // NOT next word).
                     // Afterwards, selecting will continue normally.
                     int tx1, tx2, ty1, ty2;
-                    [self _getWordForX:startX-1
-                                     y:startY
-                                startX:&tx1
-                                startY:&ty1
-                                  endX:&tx2
-                                  endY:&ty2];
+                    [self getWordForX:startX-1
+                                    y:startY
+                               startX:&tx1
+                               startY:&ty1
+                                 endX:&tx2
+                                 endY:&ty2];
                     startX = tx1;
                     startY = ty1;
                 }
@@ -4320,12 +4322,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                     // selecting backwards.)
                     // For an explanation why, read the long comment above.
                     int tx1, tx2, ty1, ty2;
-                    [self _getWordForX:startX
-                                     y:startY
-                                startX:&tx1
-                                startY:&ty1
-                                  endX:&tx2
-                                  endY:&ty2];
+                    [self getWordForX:startX
+                                    y:startY
+                               startX:&tx1
+                               startY:&ty1
+                                 endX:&tx2
+                                 endY:&ty2];
                     startX = tx2;
                     startY = ty2;
                 }

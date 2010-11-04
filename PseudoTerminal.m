@@ -128,6 +128,8 @@ NSString *sessionsKey = @"sessions";
     pbHistoryView = [[PasteboardHistoryView alloc] init];
     [pbHistoryView setDataSource:[[iTermController sharedInstance] pbHistory]];
 
+    autocompleteView = [[AutocompleteView alloc] init];
+
     // create the window programmatically with appropriate style mask
     styleMask = NSTitledWindowMask |
         NSClosableWindowMask |
@@ -2000,6 +2002,13 @@ NSString *sessionsKey = @"sessions";
 - (IBAction)openPasteHistory:(id)sender
 {
     [pbHistoryView setOnTop:[self popWindowAtCursor:pbHistoryView]];
+}
+
+- (IBAction)openAutocomplete:(id)sender
+{
+    [autocompleteView setDataSource:[self currentSession]];
+    [autocompleteView updatePrefix];
+    [autocompleteView setOnTop:[self popWindowAtCursor:autocompleteView]];
 }
 
 @end

@@ -33,6 +33,7 @@
 #import <BookmarkListView.h>
 #import "WindowControllerInterface.h"
 #import "PasteboardHistory.h"
+#import "Autocomplete.h"
 
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
 
@@ -163,6 +164,7 @@
     IBOutlet NSTextField* currentTime;
 
     PasteboardHistoryView* pbHistoryView;
+    AutocompleteView* autocompleteView;
 }
 
 // Initialize a new PseudoTerminal.
@@ -195,6 +197,9 @@
 
 // Show paste history window.
 - (IBAction)openPasteHistory:(id)sender;
+
+// Show autocomplete window.
+- (IBAction)openAutocomplete:(id)sender;
 
 // Select the tab to the left of the foreground tab.
 - (IBAction)previousSession:(id)sender;

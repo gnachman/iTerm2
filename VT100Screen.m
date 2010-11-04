@@ -2678,12 +2678,18 @@ static void DumpBuf(screen_char_t* p, int n) {
     free(dummy);
 }
 
+- (FindContext*)findContext
+{
+    return &findContext;
+}
+
 - (void)initFindString:(NSString*)aString
       forwardDirection:(BOOL)direction
           ignoringCase:(BOOL)ignoreCase
            startingAtX:(int)x
            startingAtY:(int)y
             withOffset:(int)offset
+             inContext:(FindContext*)context
 {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
@@ -2713,21 +2719,22 @@ static void DumpBuf(screen_char_t* p, int n) {
     if (ignoreCase) {
         opts |= FindOptCaseInsensitive;
     }
-    [linebuffer initFind:aString startingAt:startPos options:opts withContext:&findContext];
-    findContext.hasWrapped = NO;
+    [linebuffer initFind:aString startingAt:startPos options:opts withContext:context];
+    context->hasWrapped = NO;
     [self _popScrollbackLines:linesPushed];
 }
 
-- (void)cancelFind
+- (void)cancelFindInContext:(FindContext*)context
 {
-    [linebuffer releaseFind:&findContext];
+    [linebuffer releaseFind:context];
 }
 
 - (BOOL)continueFindResultAtStartX:(int*)startX
                           atStartY:(int*)startY
                             atEndX:(int*)endX
                             atEndY:(int*)endY
-                             found:(BOOL*)found
+                             found:(BOOL*)found 
+                         inContext:(FindContext*)context
 {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
@@ -2735,7 +2742,7 @@ static void DumpBuf(screen_char_t* p, int n) {
 
     // Search one block.
     int stopAt;
-    if (findContext.dir > 0) {
+    if (context->dir > 0) {
         stopAt = [linebuffer lastPos];
     } else {
         stopAt = [linebuffer firstPos];
@@ -2747,29 +2754,29 @@ static void DumpBuf(screen_char_t* p, int n) {
     int iterations = 0;
     int ms_diff = 0;
     do {
-        if (findContext.status == Searching) {
+        if (context->status == Searching) {
             // NSLog(@"VT100Screen: Search next block");
-            [linebuffer findSubstring:&findContext stopAt:stopAt];
+            [linebuffer findSubstring:context stopAt:stopAt];
         }
 
         // Handle the current state
         BOOL isOk;
-        switch (findContext.status) {
+        switch (context->status) {
             case Matched:
                 // NSLog(@"matched");
                 // Found a match in the text.
-                isOk = [linebuffer convertPosition:findContext.resultPosition
+                isOk = [linebuffer convertPosition:context->resultPosition
                                        withWidth:WIDTH
                                              toX:startX
                                              toY:startY];
                 NSAssert(isOk, @"Couldn't convert start position");
 
-                isOk = [linebuffer convertPosition:findContext.resultPosition + findContext.matchLength - 1
+                isOk = [linebuffer convertPosition:context->resultPosition + context->matchLength - 1
                                        withWidth:WIDTH
                                              toX:endX
                                              toY:endY];
                 NSAssert(isOk, @"Couldn't convert end position");
-                [linebuffer releaseFind:&findContext];
+                [linebuffer releaseFind:context];
                 keepSearching = NO;
                 *found = YES;
                 break;
@@ -2784,8 +2791,8 @@ static void DumpBuf(screen_char_t* p, int n) {
             case NotFound:
                 // NSLog(@"not found");
                 // Reached stopAt point with no match.
-                if (findContext.hasWrapped) {
-                    [linebuffer releaseFind:&findContext];
+                if (context->hasWrapped) {
+                    [linebuffer releaseFind:context];
                     keepSearching = NO;
                 } else {
                     // NSLog(@"...wrapping");
@@ -2796,8 +2803,8 @@ static void DumpBuf(screen_char_t* p, int n) {
                                  options:findContext.options
                              withContext:&temp];
                     [linebuffer releaseFind:&findContext];
-                    findContext = temp;
-                    findContext.hasWrapped = YES;
+                    *context = temp;
+                    context->hasWrapped = YES;
                     keepSearching = YES;
                 }
                 *found = NO;
