@@ -569,9 +569,12 @@
 - (void)setupSession:(PTYSession *)aSession
                title:(NSString *)title;
 
-// Returns the largest possible content rectangle that can fit on the screen
-// while leaving space for the toolbar, bottombar, window decorations, etc.
-- (NSRect)maxContentRect;
+// Returns the largest possible text view that fits on the screens while
+// leaving room for window decorations.
+- (NSSize)maxTextViewSize;
+
+// Max window frame size that fits on screens.
+- (NSRect)maxFrame;
 
 // Push a size change to a session (and on to its shell) but clamps the size to
 // reasonable minimum and maximum limits.
