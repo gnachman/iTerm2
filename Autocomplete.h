@@ -104,6 +104,7 @@
 - (void)_updateFilter;
 - (BOOL)_word:(NSString*)temp matchesFilter:(NSString*)filter;
 - (void)_populateMore:(id)sender;
+- (void)_doPopulateMore;
 
 // DataSource methods
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;

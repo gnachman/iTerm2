@@ -142,7 +142,7 @@
     p.y -= frame.size.height;
 
     // p.y gives the bottom of the frame relative to the bottom of the screen, assuming it's below the cursor.
-    NSRect monitorFrame = [[[self window] screen] visibleFrame];
+    NSRect monitorFrame = [[[[screen session] parent] windowScreen] visibleFrame];
     float bottomOverflow = monitorFrame.origin.y - p.y;
     float topOverflow = p.y + 2 * frame.size.height + [tv lineHeight] - (monitorFrame.origin.y + monitorFrame.size.height);
     if (topOverflow < bottomOverflow) {
@@ -184,15 +184,24 @@
     onTop_ = onTop;
 }
 
-- (void)windowDidResignKey:(NSNotification *)aNotification
+- (void)onClose
 {
-    [[self window] close];
     clearFilterOnNextKeyDown_ = NO;
     if (timer_) {
         [timer_ invalidate];
         timer_ = nil;
     }
+    if (populateTimer_) {
+        [populateTimer_ invalidate];
+        populateTimer_ = nil;
+    }
     [substring_ setString:@""];
+}
+
+- (void)windowDidResignKey:(NSNotification *)aNotification
+{
+    [[self window] close];
+    [self onClose];
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification
@@ -214,27 +223,24 @@
 // DataSource methods
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
 {
-    NSLog(@"Table view has %d rows", [model_ count]);
     return [model_ count];
 }
 
 - (NSAttributedString*)attributedStringForValue:(NSString*)value
 {
+    float size = [NSFont systemFontSize];
+    NSFont* sysFont = [NSFont systemFontOfSize:size];
     NSMutableAttributedString* as = [[[NSMutableAttributedString alloc] init] autorelease];
-    NSDictionary* lightAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
-                                     [NSFont systemFontOfSize:[NSFont systemFontSize]], NSFontAttributeName,
-                                     [NSColor grayColor], NSForegroundColorAttributeName,
-                                     nil];
     NSDictionary* plainAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
-                                     [NSFont systemFontOfSize:[NSFont systemFontSize]], NSFontAttributeName,
+                                     sysFont, NSFontAttributeName,
                                      nil];
     NSDictionary* boldAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
-                                    [NSFont boldSystemFontOfSize:[NSFont systemFontSize]], NSFontAttributeName,
+                                    [NSFont boldSystemFontOfSize:size], NSFontAttributeName,
                                     nil];
     value = [value stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
     NSAttributedString* attributedSubstr;
     attributedSubstr = [[[NSAttributedString alloc] initWithString:prefix_
-                                                        attributes:lightAttributes] autorelease];
+                                                        attributes:plainAttributes] autorelease];
     [as appendAttributedString:attributedSubstr];
     NSString* temp = value;
     for (int i = 0; i < [substring_ length]; ++i) {
@@ -279,6 +285,7 @@
     if ([table_ selectedRow] >= 0) {
         [dataSource_ insertText:[model_ objectAtIndex:[table_ selectedRow]]];
         [[self window] close];
+        [self onClose];
     }
 }
 
@@ -314,6 +321,7 @@
     } else if (c == 27) {
         // Escape
         [[self window] close];
+        [self onClose];
     }
 }
 
@@ -355,10 +363,19 @@
                 withOffset:1
                  inContext:&context_];
 
-    [self _populateMore:nil];
+    [self _doPopulateMore];
 }
 
 - (void)_populateMore:(id)sender
+{
+    if (populateTimer_ == nil) {
+        return;
+    }
+    populateTimer_ = nil;
+    [self _doPopulateMore];
+}
+
+- (void)_doPopulateMore
 {
     VT100Screen* screen = [dataSource_ SCREEN];
 
@@ -399,7 +416,6 @@
                     NSString* result = [[dataSource_ TEXTVIEW] contentFromX:endX Y:endY ToX:tx2 Y:ty2 pad:NO];
                     if ([result length] > 0 && [unfilteredModel_ indexOfObject:result] == NSNotFound) {
                         [unfilteredModel_ addObject:result];
-                        NSLog(@"Add %@ in context %@ at %d,%d", result, word, startX, startY);
                     }
                 }
                 x = x_ = startX;
@@ -409,6 +425,11 @@
         } while (more && [unfilteredModel_ count] < kMaxOptions);
 
         if (found && [unfilteredModel_ count] < kMaxOptions) {
+            if (x_ == 0 && y_ <= [screen scrollbackOverflow]) {
+                // Last match was on the first char of the screen. All done.
+                break;
+            }
+            
             // Begin search again before the last hit.
             [screen initFindString:prefix_
                   forwardDirection:NO
@@ -437,7 +458,6 @@
             break;
         }
     } while (found && [unfilteredModel_ count] < kMaxOptions);
-    populateTimer_ = nil;
     [self _updateFilter];
 }
 
