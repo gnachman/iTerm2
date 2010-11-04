@@ -321,7 +321,7 @@
     p.y -= frame.size.height;
 
     // p.y gives the bottom of the frame relative to the bottom of the screen, assuming it's below the cursor.
-    NSRect monitorFrame = [[[self window] screen] visibleFrame];
+    NSRect monitorFrame = [[[[screen session] parent] windowScreen] visibleFrame];
     float bottomOverflow = monitorFrame.origin.y - p.y;
     float topOverflow = p.y + 2 * frame.size.height + [tv lineHeight] - (monitorFrame.origin.y + monitorFrame.size.height);
     if (topOverflow < bottomOverflow) {
