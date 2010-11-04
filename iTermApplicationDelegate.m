@@ -86,7 +86,11 @@ int gDebugLogFile = -1;
     CFPreferencesSetAppValue(CFSTR("NSQuotedKeystrokeBinding"),
                              CFSTR(""),
                              kCFPreferencesCurrentApplication);
-
+    // This is off by default, but would wreack havoc if set globally.
+    CFPreferencesSetAppValue(CFSTR("NSRepeatCountBinding"),
+                             CFSTR(""),
+                             kCFPreferencesCurrentApplication);
+    
     [self buildAddressBookMenu:nil];
 
     // register for services
