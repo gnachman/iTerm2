@@ -848,7 +848,7 @@ static float versionNumber;
 
 - (NSString*)formattedKeyCombinationForRow:(int)rowIndex
 {
-    return [[iTermKeyBindingMgr formatKeyCombination:[self keyComboAtIndex:rowIndex]] autorelease];
+    return [iTermKeyBindingMgr formatKeyCombination:[self keyComboAtIndex:rowIndex]];
 }
 
 - (NSString*)formattedActionForRow:(int)rowIndex
@@ -870,7 +870,7 @@ static float versionNumber;
         NSAssert(bookmark, @"Can't find node");
 
         if (aTableColumn == keyCombinationColumn) {
-            return [[iTermKeyBindingMgr formatKeyCombination:[iTermKeyBindingMgr shortcutAtIndex:rowIndex forBookmark:bookmark]] autorelease];
+            return [iTermKeyBindingMgr formatKeyCombination:[iTermKeyBindingMgr shortcutAtIndex:rowIndex forBookmark:bookmark]];
         } else if (aTableColumn == actionColumn) {
             return [iTermKeyBindingMgr formatAction:[iTermKeyBindingMgr mappingAtIndex:rowIndex forBookmark:bookmark]];
         }
