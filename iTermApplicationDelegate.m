@@ -413,61 +413,47 @@ void DebugLog(NSString* value)
 
 /// About window
 
+- (NSAttributedString *)_linkTo:(NSString *)urlString title:(NSString *)title
+{
+    NSDictionary *linkAttributes = [NSDictionary dictionaryWithObject:[NSURL URLWithString:urlString]
+                                                               forKey:NSLinkAttributeName];
+    NSString *localizedTitle = NSLocalizedStringFromTableInBundle(title, @"iTerm",
+                                                                  [NSBundle bundleForClass:[self class]],
+                                                                  @"About");
+    
+    NSAttributedString *string = [[NSAttributedString alloc] initWithString:localizedTitle
+                                                                 attributes:linkAttributes];
+    return [string autorelease];
+}
+
 - (IBAction)showAbout:(id)sender
 {
-        // check if an About window is shown already
-        if (aboutController) return;
+    // check if an About window is shown already
+    if (aboutController) return;
 
-    NSURL *webURL, *bugsURL, *creditsURL;
-    NSAttributedString *webAString, *bugsAString, *creditsAString;
-    NSDictionary *linkTextViewAttributes, *linkAttributes;
-    NSString *web = @"http://sites.google.com/site/iterm2home/";
-    NSString *bugs = @"http://code.google.com/p/iterm2/issues/entry";
-    NSString *credits = @"http://code.google.com/p/iterm2/wiki/Credits";
-//    [NSApp orderFrontStandardAboutPanel:nil];
-
-    linkTextViewAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
-                              [NSNumber numberWithInt: NSSingleUnderlineStyle], NSUnderlineStyleAttributeName,
-                              [NSColor blueColor], NSForegroundColorAttributeName,
-                              [NSCursor pointingHandCursor], NSCursorAttributeName,
-                              NULL];
-
-    // Web URL
-    webURL = [NSURL URLWithString: web];
-    linkAttributes = [NSDictionary dictionaryWithObjectsAndKeys: webURL, NSLinkAttributeName, NULL];
-    webAString = [[NSAttributedString alloc] initWithString: NSLocalizedStringFromTableInBundle(@"Home Page", @"iTerm", [NSBundle bundleForClass: [self class]], @"About") attributes: linkAttributes];
-
-    // Bug report
-    bugsURL = [NSURL URLWithString: bugs];
-    linkAttributes = [NSDictionary dictionaryWithObjectsAndKeys: bugsURL, NSLinkAttributeName, NULL];
-    bugsAString= [[NSAttributedString alloc] initWithString: NSLocalizedStringFromTableInBundle(@"Report a bug", @"iTerm", [NSBundle bundleForClass: [self class]], @"About") attributes: linkAttributes];
-
-    // Credits
-    creditsURL = [NSURL URLWithString: credits];
-    linkAttributes = [NSDictionary dictionaryWithObjectsAndKeys: creditsURL, NSLinkAttributeName, NULL];
-    creditsAString = [[NSAttributedString alloc] initWithString: NSLocalizedStringFromTableInBundle(@"Credits", @"iTerm", [NSBundle bundleForClass: [self class]], @"About") attributes: linkAttributes];
-
-    // version number and mode
     NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
-    NSString *versionString = [@"Build " stringByAppendingString: (NSString *)[myDict objectForKey:@"CFBundleVersion"]];
+    NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n", [myDict objectForKey:@"CFBundleVersion"]];
+
+    NSAttributedString *webAString = [self _linkTo:@"http://sites.google.com/site/iterm2home/" title:@"Home Page\n"];
+    NSAttributedString *bugsAString = [self _linkTo:@"http://code.google.com/p/iterm2/issues/entry" title:@"Report a bug\n\n"];
+    NSAttributedString *creditsAString = [self _linkTo:@"http://code.google.com/p/iterm2/wiki/Credits" title:@"Credits"];
+    
+    NSDictionary *linkTextViewAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
+        [NSNumber numberWithInt: NSSingleUnderlineStyle], NSUnderlineStyleAttributeName,
+        [NSColor blueColor], NSForegroundColorAttributeName,
+        [NSCursor pointingHandCursor], NSCursorAttributeName,
+        NULL];
 
     [AUTHORS setLinkTextAttributes: linkTextViewAttributes];
     [[AUTHORS textStorage] deleteCharactersInRange: NSMakeRange(0, [[AUTHORS textStorage] length])];
-    [[AUTHORS textStorage] appendAttributedString: [[NSAttributedString alloc] initWithString: versionString]];
-    [[AUTHORS textStorage] appendAttributedString: [[NSAttributedString alloc] initWithString: @"\n\n"]];
+    [[AUTHORS textStorage] appendAttributedString:[[[NSAttributedString alloc] initWithString:versionString] autorelease]];
     [[AUTHORS textStorage] appendAttributedString: webAString];
-    [[AUTHORS textStorage] appendAttributedString: [[NSAttributedString alloc] initWithString: @"\n"]];
     [[AUTHORS textStorage] appendAttributedString: bugsAString];
-    [[AUTHORS textStorage] appendAttributedString: [[NSAttributedString alloc] initWithString: @"\n\n"]];
     [[AUTHORS textStorage] appendAttributedString: creditsAString];
     [AUTHORS setAlignment: NSCenterTextAlignment range: NSMakeRange(0, [[AUTHORS textStorage] length])];
 
     aboutController = [[NSWindowController alloc] initWithWindow:ABOUT];
     [aboutController showWindow:ABOUT];
-
-    [webAString release];
-    [bugsAString release];
-    [creditsAString release];
 }
 
 - (IBAction)aboutOK:(id)sender
