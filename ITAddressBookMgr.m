@@ -326,7 +326,6 @@
 // NSNetService delegate
 - (void)netServiceDidResolveAddress:(NSNetService *)sender
 {
-    NSMutableDictionary *aDict;
     NSData  *address = nil;
     struct sockaddr_in  *socketAddress;
     NSString    *ipAddressString = nil;
@@ -355,36 +354,37 @@
         return;
     }
 
+    NSMutableDictionary *newBookmark;
     Bookmark* prototype = [[BookmarkModel sharedInstance] defaultBookmark];
     if (prototype) {
-        aDict = [NSMutableDictionary dictionaryWithDictionary:prototype];
+        newBookmark = [NSMutableDictionary dictionaryWithDictionary:prototype];
     } else {
-        aDict = [[NSMutableDictionary alloc] init];
-        [ITAddressBookMgr setDefaultsInBookmark:aDict];
+        newBookmark = [NSMutableDictionary dictionaryWithCapacity:20];
+        [ITAddressBookMgr setDefaultsInBookmark:newBookmark];
     }
 
     NSString* serviceType = [self getBonjourServiceType:[sender type]];
 
-    [aDict setObject:[NSString stringWithFormat:@"%@", [sender name]] forKey:KEY_NAME];
-    [aDict setObject:[NSString stringWithFormat:@"%@", [sender name]] forKey:KEY_DESCRIPTION];
-    [aDict setObject:[NSString stringWithFormat:@"%@ %@", serviceType, ipAddressString] forKey:KEY_COMMAND];
-    [aDict setObject:@"" forKey:KEY_WORKING_DIRECTORY];
-    [aDict setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
-    [aDict setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
-    [aDict setObject:ipAddressString forKey:KEY_BONJOUR_SERVICE_ADDRESS];
-    [aDict setObject:[NSArray arrayWithObjects:@"bonjour",nil] forKey:KEY_TAGS];
-    [aDict setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
-    [aDict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
-    [aDict removeObjectForKey:KEY_SHORTCUT];
-    [[BookmarkModel sharedInstance] addBookmark:aDict];
+    [newBookmark setObject:[NSString stringWithFormat:@"%@", [sender name]] forKey:KEY_NAME];
+    [newBookmark setObject:[NSString stringWithFormat:@"%@", [sender name]] forKey:KEY_DESCRIPTION];
+    [newBookmark setObject:[NSString stringWithFormat:@"%@ %@", serviceType, ipAddressString] forKey:KEY_COMMAND];
+    [newBookmark setObject:@"" forKey:KEY_WORKING_DIRECTORY];
+    [newBookmark setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
+    [newBookmark setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
+    [newBookmark setObject:ipAddressString forKey:KEY_BONJOUR_SERVICE_ADDRESS];
+    [newBookmark setObject:[NSArray arrayWithObjects:@"bonjour",nil] forKey:KEY_TAGS];
+    [newBookmark setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
+    [newBookmark setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
+    [newBookmark removeObjectForKey:KEY_SHORTCUT];
+    [[BookmarkModel sharedInstance] addBookmark:newBookmark];
 
     // No bonjour service for sftp. Rides over ssh, so try to detect that
     if ([serviceType isEqualToString:@"ssh"]) {
-        [aDict setObject:[NSString stringWithFormat:@"%@-sftp", [sender name]] forKey:KEY_NAME];
-        [aDict setObject:[NSArray arrayWithObjects:@"bonjour", @"sftp", nil] forKey:KEY_TAGS];
-        [aDict setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
-        [aDict setObject:[NSString stringWithFormat:@"sftp %@", ipAddressString] forKey:KEY_COMMAND];
-        [[BookmarkModel sharedInstance] addBookmark:aDict];
+        [newBookmark setObject:[NSString stringWithFormat:@"%@-sftp", [sender name]] forKey:KEY_NAME];
+        [newBookmark setObject:[NSArray arrayWithObjects:@"bonjour", @"sftp", nil] forKey:KEY_TAGS];
+        [newBookmark setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
+        [newBookmark setObject:[NSString stringWithFormat:@"sftp %@", ipAddressString] forKey:KEY_COMMAND];
+        [[BookmarkModel sharedInstance] addBookmark:newBookmark];
     }
 
     // remove from array now that resolving is done
