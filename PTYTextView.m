@@ -1692,7 +1692,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         } else {
             lastFindX = endX;
             absLastFindY = endY + [dataSource totalScrollbackOverflow];
-            NSLog(@"Reset find position to %d,%d", lastFindX, absLastFindY);
         }
     }
 

@@ -125,8 +125,7 @@ NSString *sessionsKey = @"sessions";
     [commandField setDelegate:self];
     [bottomBar retain];
 
-    pbHistoryView = [[PasteboardHistoryView alloc] init];
-    [pbHistoryView setDataSource:[[iTermController sharedInstance] pbHistory]];
+    pbHistoryView = [[PasteboardHistoryView alloc] initWithDataSource:[[iTermController sharedInstance] pbHistory]];
 
     autocompleteView = [[AutocompleteView alloc] init];
 
@@ -1973,18 +1972,12 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)openPasteHistory:(id)sender
 {
-    [pbHistoryView prepareToShowOnScreen:[[self currentSession] SCREEN] textView:[[self currentSession] TEXTVIEW]];
-    [pbHistoryView showWindow:self];
-    [[pbHistoryView window] makeKeyAndOrderFront:self];
+    [pbHistoryView popInSession:[self currentSession]];
 }
 
 - (IBAction)openAutocomplete:(id)sender
 {
-    [autocompleteView setDataSource:[self currentSession]];
-    [autocompleteView updatePrefix];
-    [autocompleteView setPosition:YES];
-    [autocompleteView showWindow:self];
-    [[autocompleteView window] makeKeyAndOrderFront:self];
+    [autocompleteView popInSession:[self currentSession]];
 }
 
 @end

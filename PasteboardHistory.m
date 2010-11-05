@@ -1,10 +1,30 @@
-//
-//  PasteboardHistory.m
-//  iTerm
-//
-//  Created by George Nachman on 10/25/10.
-//  Copyright 2010 __MyCompanyName__. All rights reserved.
-//
+// -*- mode:objc -*-
+/*
+ **  PasteboardHistory.m
+ **
+ **  Copyright 2010
+ **
+ **  Author: George Nachman
+ **
+ **  Project: iTerm2
+ **
+ **  Description: Remembers pasteboard contents and offers a UI to access old
+ **  entries.
+ **
+ **  This program is free software; you can redistribute it and/or modify
+ **  it under the terms of the GNU General Public License as published by
+ **  the Free Software Foundation; either version 2 of the License, or
+ **  (at your option) any later version.
+ **
+ **  This program is distributed in the hope that it will be useful,
+ **  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ **  GNU General Public License for more details.
+ **
+ **  You should have received a copy of the GNU General Public License
+ **  along with this program; if not, write to the Free Software
+ **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 
 #include <wctype.h>
 #import "PasteboardHistory.h"
@@ -12,139 +32,14 @@
 #import "NSDateFormatterExtras.h"
 #define kPasteboardHistoryDidChange @"PasteboardHistoryDidChange"
 
-@implementation PasteboardModel
-
-- (id)initWithHistory:(PasteboardHistory*)history
-{
-    self = [super init];
-    if (!self) {
-        return nil;
-    }
-    history_ = history;
-    [history retain];
-    entries_ = [[NSMutableArray alloc] init];
-    filter_ = [[NSMutableString alloc] init];
-    [self reload];
-
-    return self;
-}
-
-- (void)dealloc
-{
-    [filter_ release];
-    [entries_ release];
-    [history_ release];
-    [super dealloc];
-}
-
-- (void)appendString:(NSString*)string
-{
-    [filter_ appendString:string];
-    [self reload];
-}
-
-- (void)clearFilter
-{
-    [filter_ setString:@""];
-    [self reload];
-}
-
-- (int)numberOfEntries
-{
-    return [entries_ count];
-}
-
-- (PasteboardEntry*)entryAtIndex:(int)i isReversed:(BOOL)rev
-{
-    if (rev) {
-        return [entries_ objectAtIndex:[entries_ count] - i - 1];
-    } else {
-        return [entries_ objectAtIndex:i];
-    }
-}
-
-- (NSString*)filter
-{
-    return filter_;
-}
-
-- (NSAttributedString*)attributedStringForValue:(NSString*)value
-{
-    NSMutableAttributedString* as = [[[NSMutableAttributedString alloc] init] autorelease];
-    NSDictionary* plainAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
-                                         [NSFont systemFontOfSize:[NSFont systemFontSize]], NSFontAttributeName,
-                                         nil];
-    NSDictionary* boldAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
-                                        [NSFont boldSystemFontOfSize:[NSFont systemFontSize]], NSFontAttributeName,
-                                        nil];
-    value = [value stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
-    NSString* temp = value;
-    for (int i = 0; i < [filter_ length]; ++i) {
-        unichar wantChar = [filter_ characterAtIndex:i];
-        NSRange r = [temp rangeOfString:[NSString stringWithCharacters:&wantChar length:1] options:NSCaseInsensitiveSearch];
-        if (r.location == NSNotFound) {
-            return nil;
-        }
-        NSRange prefix;
-        prefix.location = 0;
-        prefix.length = r.location;
-        NSAttributedString* attributedSubstr;
-        if (prefix.length > 0) {
-            NSString* substr = [temp substringWithRange:prefix];
-            attributedSubstr = [[[NSAttributedString alloc] initWithString:substr attributes:plainAttributes] autorelease];
-            [as appendAttributedString:attributedSubstr];
-        }
-
-        unichar matchChar = [temp characterAtIndex:r.location];
-        attributedSubstr = [[[NSAttributedString alloc] initWithString:[NSString stringWithCharacters:&matchChar length:1] attributes:boldAttributes] autorelease];
-        [as appendAttributedString:attributedSubstr];
-
-        r.length = [temp length] - r.location - 1;
-        ++r.location;
-        temp = [temp substringWithRange:r];
-    }
-
-    NSAttributedString* attributedSubstr;
-    if ([temp length] > 0) {
-        attributedSubstr = [[[NSAttributedString alloc] initWithString:temp attributes:plainAttributes] autorelease];
-        [as appendAttributedString:attributedSubstr];
-    }
-
-    return as;
-}
-
-- (void)reload
-{
-    [entries_ removeAllObjects];
-    NSArray* backingEntries = [history_ entries];
-    for (int i = 0; i < [backingEntries count]; ++i) {
-        PasteboardEntry* entry = [backingEntries objectAtIndex:i];
-        if ([self _entry:entry matchesFilter:filter_]) {
-            [entries_ addObject:entry];
-        }
-    }
-}
-
-- (BOOL)_entry:(PasteboardEntry*)entry matchesFilter:(NSString*)filter
-{
-    NSString* temp = entry->value;
-    for (int i = 0; i < [filter length]; ++i) {
-        unichar wantChar = [filter characterAtIndex:i];
-        NSRange r = [temp rangeOfString:[NSString stringWithCharacters:&wantChar length:1] options:NSCaseInsensitiveSearch];
-        if (r.location == NSNotFound) {
-            return NO;
-        }
-        r.length = [temp length] - r.location - 1;
-        ++r.location;
-        temp = [temp substringWithRange:r];
-    }
-    return YES;
-}
-
-
-@end
-
 @implementation PasteboardEntry
+
++ (PasteboardEntry*)entryWithString:(NSString *)s
+{
+    PasteboardEntry* e = [[[PasteboardEntry alloc] init] autorelease];
+    [e setMainValue:s];
+    return e;
+}
 
 @end
 
@@ -181,7 +76,7 @@
     // Remove existing duplicate value.
     for (int i = 0; i < [entries_ count]; ++i) {
         PasteboardEntry* entry = [entries_ objectAtIndex:i];
-        if ([entry->value isEqualToString:value]) {
+        if ([[entry mainValue] isEqualToString:value]) {
             [entries_ removeObjectAtIndex:i];
             break;
         }
@@ -193,18 +88,15 @@
     PasteboardEntry* lastEntry;
     if ([entries_ count] > 0) {
         lastEntry = [entries_ objectAtIndex:[entries_ count] - 1];
-        if ([value hasPrefix:lastEntry->value]) {
+        if ([value hasPrefix:[lastEntry mainValue]]) {
             [entries_ removeObjectAtIndex:[entries_ count] - 1];
         }
     }
 
     // Append this value.
-    PasteboardEntry* entry = [[PasteboardEntry alloc] init];
-    entry->value = value;
-    [entry->value retain];
+    PasteboardEntry* entry = [PasteboardEntry entryWithString:value];
     entry->timestamp = [[NSDate alloc] init];
     [entries_ addObject:entry];
-    [entry release];
     if ([entries_ count] == maxEntries_) {
         [entries_ removeObjectAtIndex:0];
     }
@@ -214,62 +106,27 @@
 
 @end
 
-@implementation PasteboardHistoryWindow
-
-- (id)initWithContentRect:(NSRect)contentRect
-                styleMask:(NSUInteger)aStyle
-                backing:(NSBackingStoreType)bufferingType
-                    defer:(BOOL)flag
-{
-    self = [super initWithContentRect:contentRect
-                            styleMask:NSBorderlessWindowMask
-                              backing:bufferingType
-                                defer:flag];
-    [self setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
-
-    return self;
-}
-
-- (BOOL)canBecomeKeyWindow
-{
-    return YES;
-}
-
-- (void)keyDown:(NSEvent *)event
-{
-    id cont = [self windowController];
-    if (cont && [cont respondsToSelector:@selector(keyDown:)]) {
-        [cont keyDown:event];
-    }
-}
-
-@end
-
 @implementation PasteboardHistoryView
 
-- (id)init
+- (id)initWithDataSource:(PasteboardHistory*)dataSource
 {
-    self = [super initWithWindowNibName:@"PasteboardHistory"];
+    self = [super initWithWindowNibName:@"PasteboardHistory" tablePtr:&table_ model:[[[PopupModel alloc] init] autorelease]];
     if (!self) {
         return nil;
     }
 
-    [self window];
-    return self;
-}
-
-- (void)setDataSource:(PasteboardHistory*)dataSource
-{
-    model_ = [[PasteboardModel alloc] initWithHistory:dataSource];
+    history_ = [dataSource retain];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(pasteboardHistoryDidChange:)
                                                  name:kPasteboardHistoryDidChange
                                                object:nil];
+
+    return self;
 }
 
 - (void)dealloc
 {
-    [model_ release];
+    [history_ release];
     [super dealloc];
 }
 
@@ -278,174 +135,62 @@
     [self refresh];
 }
 
+- (void)copyFromHistory
+{
+    [[self unfilteredModel] removeAllObjects];
+    for (PasteboardEntry* e in [history_ entries]) {
+        [[self unfilteredModel] addObject:e];
+    }
+}
+
 - (void)refresh
 {
-    [model_ reload];
-    [table_ reloadData];
+    [self copyFromHistory];
+    [self reloadData:YES];
+}
 
-    NSRect frame = [[self window] frame];
-    float diff = frame.size.height;
-    frame.size.height = [[table_ headerView] frame].size.height + [model_ numberOfEntries] * ([table_ rowHeight] + [table_ intercellSpacing].height);
-    diff -= frame.size.height;
-    if (!onTop_) {
-        frame.origin.y += diff;
-    }
-    [[self window] setFrame:frame display:NO];
-    [table_ sizeToFit];
-    [[table_ enclosingScrollView] setHasHorizontalScroller:NO];
-
-    if ([table_ selectedRow] == -1 && [table_ numberOfRows] > 0) {
-        NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:onTop_ ? [table_ numberOfRows] - 1 : 0];
-        [table_ selectRowIndexes:indexes byExtendingSelection:NO];
+- (void)onOpen
+{
+    [self copyFromHistory];
+    if (!minuteRefreshTimer_) {
+        minuteRefreshTimer_ = [NSTimer scheduledTimerWithTimeInterval:61
+                                                               target:self
+                                                             selector:@selector(pasteboardHistoryDidChange:)
+                                                             userInfo:nil
+                                                              repeats:YES];
     }
 }
 
-- (void)setOnTop:(BOOL)onTop
+- (void)onClose
 {
-    onTop_ = onTop;
-}
-
-- (void)setPositionOnScreen:(VT100Screen*)screen textView:(PTYTextView*)tv
-{
-    BOOL onTop = NO;
-
-    int cx = [screen cursorX] - 1;
-    int cy = [screen cursorY];
-
-    NSRect frame = [[self window] frame];
-    frame.size.height = [[table_ headerView] frame].size.height + [model_ numberOfEntries] * ([table_ rowHeight] + [table_ intercellSpacing].height);
-
-    NSPoint p = NSMakePoint(MARGIN + cx * [tv charWidth], ([screen numberOfLines] - [screen height] + cy) * [tv lineHeight]);
-    p = [tv convertPoint:p toView:nil];
-    p = [[tv window] convertBaseToScreen:p];
-    p.y -= frame.size.height;
-
-    // p.y gives the bottom of the frame relative to the bottom of the screen, assuming it's below the cursor.
-    NSRect monitorFrame = [[[[screen session] parent] windowScreen] visibleFrame];
-    float bottomOverflow = monitorFrame.origin.y - p.y;
-    float topOverflow = p.y + 2 * frame.size.height + [tv lineHeight] - (monitorFrame.origin.y + monitorFrame.size.height);
-    if (topOverflow < bottomOverflow) {
-        p.y += frame.size.height + [tv lineHeight];
-        onTop = YES;
+    if (minuteRefreshTimer_) {
+        [minuteRefreshTimer_ invalidate];
+        minuteRefreshTimer_ = nil;
     }
-    float rightX = monitorFrame.origin.x + monitorFrame.size.width;
-    if (p.x + frame.size.width > rightX) {
-        float excess = p.x + frame.size.width - rightX;
-        p.x -= excess;
-    }
-
-    frame.origin = p;
-    [[self window] setFrame:frame display:NO];
-    [self setOnTop:onTop];
-}
-
-
-- (void)windowDidResignKey:(NSNotification *)aNotification
-{
-    NSLog(@"resigned");
-    [[self window] close];
-    clearFilterOnNextKeyDown_ = NO;
-    if (timer_) {
-        [timer_ invalidate];
-        timer_ = nil;
-    }
-    [minuteRefreshTimer_ invalidate];
-    minuteRefreshTimer_ = nil;
-    [model_ clearFilter];
-}
-
-- (void)prepareToShowOnScreen:(VT100Screen*)screen textView:(PTYTextView*)tv
-{
-    clearFilterOnNextKeyDown_ = NO;
-    if (timer_) {
-        [timer_ invalidate];
-        timer_ = nil;
-    }
-    [model_ clearFilter];
-    [self refresh];
-    [self setPositionOnScreen:screen textView:tv];
-    if ([table_ numberOfRows] > 0) {
-        NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:onTop_ ? [table_ numberOfRows] - 1 : 0];
-        [table_ selectRowIndexes:indexes byExtendingSelection:NO];
-    }
-    // Redraw window once a minute so the time column is always correct.
-    minuteRefreshTimer_ = [NSTimer scheduledTimerWithTimeInterval:61
-                                                           target:self
-                                                         selector:@selector(pasteboardHistoryDidChange:)
-                                                         userInfo:nil
-                                                          repeats:YES];
-}
-
-
-// DataSource methods
-- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
-{
-    return [model_ numberOfEntries];
 }
 
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
 {
-    PasteboardEntry* entry = [model_ entryAtIndex:rowIndex isReversed:!onTop_];
+    PasteboardEntry* entry = [[self model] objectAtIndex:[self convertIndex:rowIndex]];
     if ([[aTableColumn identifier] isEqualToString:@"date"]) {
         // Date
         return [NSDateFormatter dateDifferenceStringFromDate:entry->timestamp];
     } else {
         // Contents
-        return [model_ attributedStringForValue:entry->value];
+        return [super tableView:aTableView objectValueForTableColumn:aTableColumn row:rowIndex];
     }
 }
 
 - (void)rowSelected:(id)sender;
 {
     if ([table_ selectedRow] >= 0) {
-        PasteboardEntry* entry = [model_ entryAtIndex:[table_ selectedRow] isReversed:!onTop_];
+        PasteboardEntry* entry = [[self model] objectAtIndex:[self convertIndex:[table_ selectedRow]]];
         NSPasteboard* thePasteboard = [NSPasteboard generalPasteboard];
         [thePasteboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
-        [thePasteboard setString:entry->value forType:NSStringPboardType];
-        [[self window] close];
+        [thePasteboard setString:[entry mainValue] forType:NSStringPboardType];
         [[[iTermController sharedInstance] frontTextView] paste:nil];
+        [super rowSelected:sender];
     }
-}
-
-- (void)keyDown:(NSEvent*)event
-{
-    unichar c = [[event characters] characterAtIndex:0];
-    if (c == '\r') {
-        [self rowSelected:self];
-    } else if (c == 8 || c == 127) {
-        // backspace
-        [model_ clearFilter];
-        if (timer_) {
-            [timer_ invalidate];
-            timer_ = nil;
-        }
-        clearFilterOnNextKeyDown_ = NO;
-        [self refresh];
-    } else if (!iswcntrl(c)) {
-        if (clearFilterOnNextKeyDown_) {
-            [model_ clearFilter];
-            clearFilterOnNextKeyDown_ = NO;
-        }
-        [model_ appendString:[event characters]];
-        [self refresh];
-        if (timer_) {
-            [timer_ invalidate];
-        }
-        timer_ = [NSTimer scheduledTimerWithTimeInterval:4
-                                                  target:self
-                                                selector:@selector(_setClearFilterOnNextKeyDownFlag:)
-                                                userInfo:nil
-                                                 repeats:NO];
-    } else if (c == 27) {
-        // Escape
-        [[self window] close];
-    }
-}
-
-- (void)_setClearFilterOnNextKeyDownFlag:(id)sender
-{
-    clearFilterOnNextKeyDown_ = YES;
-    timer_ = nil;
 }
 
 @end

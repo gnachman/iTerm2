@@ -30,49 +30,15 @@
 #import <Cocoa/Cocoa.h>
 #import "iTerm/PTYSession.h"
 #import "LineBuffer.h"
+#import "Popup.h"
 
-
-@interface AutocompleteWindow : NSWindow {
-}
-- (id)initWithContentRect:(NSRect)contentRect
-                styleMask:(NSUInteger)aStyle
-                  backing:(NSBackingStoreType)bufferingType
-                    defer:(BOOL)flag;
-
-- (BOOL)canBecomeKeyWindow;
-- (void)keyDown:(NSEvent *)event;
-
-@end
-
-@interface AutocompleteView : NSWindowController
+@interface AutocompleteView : Popup
 {
     // Table view that displays choices.
     IBOutlet NSTableView* table_;
 
     // Word before cursor.
     NSMutableString* prefix_;
-
-    // What the user has typed so far to filter result set.
-    NSMutableString* substring_;
-
-    // First 20 results beginning with prefix_, including those not matching
-    // substring_.
-    NSMutableArray* unfilteredModel_;
-
-    // Results currently being displayed.
-    NSMutableArray* model_;
-
-    // Backing session.
-    PTYSession* dataSource_;
-
-    // Timer to set clearFilterOnNextKeyDown_.
-    NSTimer* timer_;
-
-    // If set, then next time a key is pressed erase substring_ before appending.
-    BOOL clearFilterOnNextKeyDown_;
-
-    // If true then window is above cursor.
-    BOOL onTop_;
 
     // x,y coords where prefix occured.
     int startX_;
@@ -91,28 +57,14 @@
 
 - (id)init;
 - (void)dealloc;
-- (void)updatePrefix;
-- (void)setDataSource:(PTYSession*)dataSource;
-- (void)windowDidResignKey:(NSNotification *)aNotification;
-- (void)windowDidBecomeKey:(NSNotification *)aNotification;
-- (void)refresh;
-- (void)setOnTop:(BOOL)onTop;
-- (void)setPosition:(BOOL)canChangeSide;
-- (int)convertIndex:(int)i;
 
-- (void)_setClearFilterOnNextKeyDownFlag:(id)sender;
-- (void)_populateUnfilteredModel;
-- (void)_updateFilter:(BOOL)canChangeSide;
-- (BOOL)_word:(NSString*)temp matchesFilter:(NSString*)filter;
+- (void)onOpen;
+- (void)refresh;
+- (void)onClose;
+- (NSAttributedString*)attributedStringForValue:(NSString*)value;
+- (void)rowSelected:(id)sender;
 - (void)_populateMore:(id)sender;
 - (void)_doPopulateMore;
-
-// DataSource methods
-- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex;
-
-- (void)rowSelected:(id)sender;
-- (void)keyDown:(NSEvent*)event;
 
 @end
 

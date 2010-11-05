@@ -1,20 +1,45 @@
-//
-//  PasteboardHistory.h
-//  iTerm
-//
-//  Created by George Nachman on 10/25/10.
-//  Copyright 2010 __MyCompanyName__. All rights reserved.
-//
+// -*- mode:objc -*-
+/*
+ **  PasteboardHistory.h
+ **
+ **  Copyright 2010
+ **
+ **  Author: George Nachman
+ **
+ **  Project: iTerm2
+ **
+ **  Description: Remembers pasteboard contents and offers a UI to access old
+ **  entries.
+ **
+ **  This program is free software; you can redistribute it and/or modify
+ **  it under the terms of the GNU General Public License as published by
+ **  the Free Software Foundation; either version 2 of the License, or
+ **  (at your option) any later version.
+ **
+ **  This program is distributed in the hope that it will be useful,
+ **  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ **  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ **  GNU General Public License for more details.
+ **
+ **  You should have received a copy of the GNU General Public License
+ **  along with this program; if not, write to the Free Software
+ **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+
 
 #import <Cocoa/Cocoa.h>
 #import "VT100Screen.h"
 #import "PTYTextView.h"
+#import "Popup.h"
 
-@interface PasteboardEntry : NSObject {
+@interface PasteboardEntry : PopupEntry {
     @public
-    NSString* value;
     NSDate* timestamp;
 }
+
++ (PasteboardEntry*)entryWithString:(NSString *)s;
+
 @end
 
 @interface PasteboardHistory : NSObject {
@@ -29,65 +54,22 @@
 
 @end
 
-@interface PasteboardHistoryWindow : NSWindow {
-}
-- (id)initWithContentRect:(NSRect)contentRect
-                styleMask:(NSUInteger)aStyle
-                  backing:(NSBackingStoreType)bufferingType
-                    defer:(BOOL)flag;
-
-- (BOOL)canBecomeKeyWindow;
-- (void)keyDown:(NSEvent *)event;
-
-@end
-
-@interface PasteboardModel : NSObject
-{
-    PasteboardHistory* history_;
-    NSMutableString* filter_;
-    NSMutableArray* entries_;
-}
-
-- (id)initWithHistory:(PasteboardHistory*)history;
-- (void)dealloc;
-- (void)appendString:(NSString*)string;
-- (void)clearFilter;
-- (int)numberOfEntries;
-- (PasteboardEntry*)entryAtIndex:(int)i isReversed:(BOOL)rev;
-- (void)reload;
-- (NSString*)filter;
-- (BOOL)_entry:(PasteboardEntry*)entry matchesFilter:(NSString*)filter;
-
-@end
-
-@interface PasteboardHistoryView : NSWindowController
+@interface PasteboardHistoryView : Popup
 {
     IBOutlet NSTableView* table_;
-    PasteboardModel* model_;
-    NSTimer* timer_;
+    PasteboardHistory* history_;
     NSTimer* minuteRefreshTimer_;
-    BOOL clearFilterOnNextKeyDown_;
-    BOOL onTop_;
 }
 
-- (id)init;
+- (id)initWithDataSource:(PasteboardHistory*)dataSource;
 - (void)dealloc;
-- (void)setDataSource:(PasteboardHistory*)dataSource;
-- (void)windowDidResignKey:(NSNotification *)aNotification;
-- (void)prepareToShowOnScreen:(VT100Screen*)screen textView:(PTYTextView*)tv;
 - (void)pasteboardHistoryDidChange:(id)sender;
+- (void)copyFromHistory;
 - (void)refresh;
-- (void)setOnTop:(BOOL)onTop;
-- (void)setPositionOnScreen:(VT100Screen*)screen textView:(PTYTextView*)tv;
-
-- (void)_setClearFilterOnNextKeyDownFlag:(id)sender;
-
-// DataSource methods
-- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;
+- (void)onOpen;
+- (void)onClose;
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex;
-
-- (void)rowSelected:(id)sender;
-- (void)keyDown:(NSEvent*)event;
+- (void)rowSelected:(id)sender;;
 
 @end
 
