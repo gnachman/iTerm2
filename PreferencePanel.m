@@ -1768,25 +1768,43 @@ static float versionNumber;
     [bookmarksTableView selectRowByGuid:[newDict objectForKey:KEY_GUID]];
 }
 
+#pragma mark NSTokenField delegate
+
 - (NSArray *)tokenField:(NSTokenField *)tokenField completionsForSubstring:(NSString *)substring indexOfToken:(NSInteger)tokenIndex indexOfSelectedItem:(NSInteger *)selectedIndex
 {
-    if (tokenField == tags) {
-        NSArray* allTags = [[dataSource allTags] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
-        NSMutableArray* result = [[NSMutableArray alloc] init];
-        for (NSString* aTag in allTags) {
-            if ([aTag hasPrefix:substring]) {
-                [result addObject:[aTag retain]];
-            }
-        }
-        return result;
+    if (tokenField != tags) {
+        return nil;
     }
-    return nil;
+
+    NSArray *allTags = [[dataSource allTags] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+    NSMutableArray *result = [[[NSMutableArray alloc] init] autorelease];
+    for (NSString *aTag in allTags) {
+        if ([aTag hasPrefix:substring]) {
+            [result addObject:[aTag retain]];
+        }
+    }
+    return result;
 }
 
 - (id)tokenField:(NSTokenField *)tokenField representedObjectForEditingString:(NSString *)editingString
 {
     return [editingString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 }
+
+#pragma mark NSTokenFieldCell delegate
+
+- (id)tokenFieldCell:(NSTokenFieldCell *)tokenFieldCell representedObjectForEditingString:(NSString *)editingString
+{
+    static BOOL running;
+    if (!running) {
+        running = YES;
+        [self bookmarkSettingChanged:tags];
+        running = NO;
+    }
+    return [editingString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+}
+
+#pragma mark -
 
 - (IBAction)doCopyFrom:(id)sender
 {
@@ -1950,17 +1968,6 @@ static float versionNumber;
     [bookmarksTableView selectRowByGuid:guid];
     [bookmarksSettingsTabViewParent selectTabViewItem:bookmarkSettingsGeneralTab];
     [[self window] makeFirstResponder:bookmarkName];
-}
-
-- (id)tokenFieldCell:(NSTokenFieldCell *)tokenFieldCell representedObjectForEditingString:(NSString *)editingString
-{
-    static BOOL running;
-    if (!running) {
-        running = YES;
-        [self bookmarkSettingChanged:tags];
-        running = NO;
-    }
-    return [editingString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 }
 
 @end
