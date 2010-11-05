@@ -123,7 +123,7 @@
     [self _populateUnfilteredModel];
 }
 
-- (void)setPosition
+- (void)setPosition:(BOOL)canChangeSide
 {
     BOOL onTop = NO;
 
@@ -141,13 +141,20 @@
     p = [[tv window] convertBaseToScreen:p];
     p.y -= frame.size.height;
 
-    // p.y gives the bottom of the frame relative to the bottom of the screen, assuming it's below the cursor.
     NSRect monitorFrame = [[[[screen session] parent] windowScreen] visibleFrame];
-    float bottomOverflow = monitorFrame.origin.y - p.y;
-    float topOverflow = p.y + 2 * frame.size.height + [tv lineHeight] - (monitorFrame.origin.y + monitorFrame.size.height);
-    if (topOverflow < bottomOverflow) {
+
+    if (canChangeSide) {
+        // p.y gives the bottom of the frame relative to the bottom of the screen, assuming it's below the cursor.
+        float bottomOverflow = monitorFrame.origin.y - p.y;
+        float topOverflow = p.y + 2 * frame.size.height + [tv lineHeight] - (monitorFrame.origin.y + monitorFrame.size.height);
+        if (bottomOverflow > 0 && topOverflow < bottomOverflow) {
+            onTop = YES;
+        }
+    } else {
+        onTop = onTop_;
+    }
+    if (onTop) {
         p.y += frame.size.height + [tv lineHeight];
-        onTop = YES;
     }
     float rightX = monitorFrame.origin.x + monitorFrame.size.width;
     if (p.x + frame.size.width > rightX) {
@@ -157,10 +164,12 @@
 
     frame.origin = p;
     [[self window] setFrame:frame display:NO];
-    [self setOnTop:onTop];
+    if (canChangeSide) {
+        [self setOnTop:onTop];
+    }
 }
 
-- (void)_updateFilter
+- (void)_updateFilter:(BOOL)canChangeSide
 {
     [model_ removeAllObjects];
     for (NSString* s in unfilteredModel_) {
@@ -169,12 +178,12 @@
         }
     }
     [table_ reloadData];
-    [self setPosition];
+    [self setPosition:canChangeSide];
     [table_ sizeToFit];
     [[table_ enclosingScrollView] setHasHorizontalScroller:NO];
 
     if ([table_ selectedRow] == -1 && [table_ numberOfRows] > 0) {
-        NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:0];
+        NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:[self convertIndex:0]];
         [table_ selectRowIndexes:indexes byExtendingSelection:NO];
     }
 }
@@ -214,7 +223,7 @@
     [substring_ setString:@""];
     [self refresh];
     if ([table_ numberOfRows] > 0) {
-        NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:[table_ numberOfRows] - 1];
+        NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:[self convertIndex:0]];
         [table_ selectRowIndexes:indexes byExtendingSelection:NO];
     }
 }
@@ -275,15 +284,20 @@
     return as;
 }
 
+- (int)convertIndex:(int)i
+{
+    return onTop_ ? [model_ count] - i - 1 : i;
+}
+
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
 {
-    return [self attributedStringForValue:[model_ objectAtIndex:rowIndex]];
+    return [self attributedStringForValue:[model_ objectAtIndex:[self convertIndex:rowIndex]]];
 }
 
 - (void)rowSelected:(id)sender;
 {
     if ([table_ selectedRow] >= 0) {
-        [dataSource_ insertText:[model_ objectAtIndex:[table_ selectedRow]]];
+        [dataSource_ insertText:[model_ objectAtIndex:[self convertIndex:[table_ selectedRow]]]];
         [[self window] close];
         [self onClose];
     }
@@ -302,14 +316,14 @@
         }
         clearFilterOnNextKeyDown_ = NO;
         [substring_ setString:@""];
-        [self _updateFilter];
+        [self _updateFilter:NO];
     } else if (!iswcntrl(c)) {
         if (clearFilterOnNextKeyDown_) {
             [substring_ setString:@""];
             clearFilterOnNextKeyDown_ = NO;
         }
         [substring_ appendString:[event characters]];
-        [self _updateFilter];
+        [self _updateFilter:NO];
         if (timer_) {
             [timer_ invalidate];
         }
@@ -458,7 +472,7 @@
             break;
         }
     } while (found && [unfilteredModel_ count] < kMaxOptions);
-    [self _updateFilter];
+    [self _updateFilter:YES];
 }
 
 @end

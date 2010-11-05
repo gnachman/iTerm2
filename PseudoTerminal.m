@@ -1982,7 +1982,7 @@ NSString *sessionsKey = @"sessions";
 {
     [autocompleteView setDataSource:[self currentSession]];
     [autocompleteView updatePrefix];
-    [autocompleteView setPosition];
+    [autocompleteView setPosition:YES];
     [autocompleteView showWindow:self];
     [[autocompleteView window] makeKeyAndOrderFront:self];
 }

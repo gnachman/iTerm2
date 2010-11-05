@@ -97,11 +97,12 @@
 - (void)windowDidBecomeKey:(NSNotification *)aNotification;
 - (void)refresh;
 - (void)setOnTop:(BOOL)onTop;
-- (void)setPosition;
+- (void)setPosition:(BOOL)canChangeSide;
+- (int)convertIndex:(int)i;
 
 - (void)_setClearFilterOnNextKeyDownFlag:(id)sender;
 - (void)_populateUnfilteredModel;
-- (void)_updateFilter;
+- (void)_updateFilter:(BOOL)canChangeSide;
 - (BOOL)_word:(NSString*)temp matchesFilter:(NSString*)filter;
 - (void)_populateMore:(id)sender;
 - (void)_doPopulateMore;
