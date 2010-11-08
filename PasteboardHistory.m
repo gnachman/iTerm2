@@ -34,10 +34,12 @@
 
 @implementation PasteboardEntry
 
-+ (PasteboardEntry*)entryWithString:(NSString *)s
++ (PasteboardEntry*)entryWithString:(NSString *)s score:(double)score
 {
     PasteboardEntry* e = [[[PasteboardEntry alloc] init] autorelease];
     [e setMainValue:s];
+    [e setScore:score];
+    [e setPrefix:@""];
     return e;
 }
 
@@ -94,7 +96,7 @@
     }
 
     // Append this value.
-    PasteboardEntry* entry = [PasteboardEntry entryWithString:value];
+    PasteboardEntry* entry = [PasteboardEntry entryWithString:value score:-[entries_ count]];
     entry->timestamp = [[NSDate alloc] init];
     [entries_ addObject:entry];
     if ([entries_ count] == maxEntries_) {

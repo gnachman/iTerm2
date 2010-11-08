@@ -8,7 +8,7 @@
  **
  **  Project: iTerm2
  **
- **  Description: Base classes for popup windows like autocomplete and 
+ **  Description: Base classes for popup windows like autocomplete and
  **  pasteboardhistory.
  **
  **  This program is free software; you can redistribute it and/or modify
@@ -33,10 +33,12 @@
 
 @implementation PopupEntry
 
-+ (PopupEntry*)entryWithString:(NSString*)s
++ (PopupEntry*)entryWithString:(NSString*)s score:(double)score
 {
     PopupEntry* e = [[[PopupEntry alloc] init] autorelease];
     [e setMainValue:s];
+    [e setScore:score];
+    [e setPrefix:@""];
 
     return e;
 }
@@ -46,10 +48,20 @@
     return s_;
 }
 
+- (void)setScore:(double)score
+{
+    score_ = score;
+}
+
 - (void)setMainValue:(NSString*)s
 {
     [s_ autorelease];
     s_ = [s retain];
+}
+
+- (double)score
+{
+    return score_;
 }
 
 - (BOOL)isEqual:(id)o
@@ -59,6 +71,22 @@
     } else {
         return [super isEqual:o];
     }
+}
+
+- (NSComparisonResult)compare:(id)otherObject
+{
+    return [[NSNumber numberWithDouble:score_] compare:[NSNumber numberWithDouble:[otherObject score]]];
+}
+
+- (void)setPrefix:(NSString*)prefix
+{
+    [prefix_ autorelease];
+    prefix_ = [prefix retain];
+}
+
+- (NSString*)prefix
+{
+    return prefix_;
 }
 
 @end
@@ -75,7 +103,7 @@
                               backing:bufferingType
                                 defer:flag];
     [self setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
-    
+
     return self;
 }
 
@@ -102,7 +130,7 @@
     if (!self) {
         return self;
     }
-    
+
     values_ = [[NSMutableArray alloc] init];
     return self;
 }
@@ -128,6 +156,28 @@
     [values_ addObject:object];
 }
 
+- (PopupEntry*)entryEqualTo:(PopupEntry*)entry
+{
+    for (PopupEntry* candidate in values_) {
+        if ([candidate isEqual:entry]) {
+            return candidate;
+        }
+    }
+    return nil;
+}
+
+- (void)addHit:(PopupEntry*)object
+{
+    PopupEntry* entry = [self entryEqualTo:object];
+    if (entry) {
+        [entry setScore:[entry score] + [object score]];
+        //NSLog(@"Add additional hit for %@ bringing score to %lf", [entry mainValue], [entry score]);
+    } else {
+        [self addObject:object];
+        //NSLog(@"Add entry for %@ with score %lf", [object mainValue], [object score]);
+    }
+}
+
 - (id)objectAtIndex:(NSUInteger)i
 {
     return [values_ objectAtIndex:i];
@@ -143,6 +193,18 @@
     return [values_ indexOfObject:o];
 }
 
+- (void)sortByScore
+{
+    NSSortDescriptor *sortDescriptor;
+    sortDescriptor = [[[NSSortDescriptor alloc] initWithKey:@"score"
+                                                  ascending:NO] autorelease];
+    NSArray *sortDescriptors = [NSArray arrayWithObject:sortDescriptor];
+    NSArray *sortedArray;
+    sortedArray = [values_ sortedArrayUsingDescriptors:sortDescriptors];
+    [values_ release];
+    values_ = [[NSMutableArray arrayWithArray:sortedArray] retain];
+}
+
 @end
 
 
@@ -154,14 +216,14 @@
     if (!self) {
         return self;
     }
-    
+
     [self window];
 
     tableView_ = [*table retain];
     model_ = [[PopupModel alloc] init];
     substring_ = [[NSMutableString alloc] init];
     unfilteredModel_ = [model retain];
-    
+
     return self;
 }
 
@@ -219,6 +281,7 @@
 - (void)reloadData:(BOOL)canChangeSide
 {
     [model_ removeAllObjects];
+    [unfilteredModel_ sortByScore];
     for (PopupEntry* s in unfilteredModel_) {
         if ([self _word:[s mainValue] matchesFilter:substring_]) {
             [model_ addObject:s];
@@ -228,7 +291,7 @@
     [self setPosition:canChangeSide];
     [tableView_ sizeToFit];
     [[tableView_ enclosingScrollView] setHasHorizontalScroller:NO];
-    
+
     if ([tableView_ selectedRow] == -1 && [tableView_ numberOfRows] > 0) {
         NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:[self convertIndex:0]];
         [tableView_ selectRowIndexes:indexes byExtendingSelection:NO];
@@ -249,24 +312,24 @@
 - (void)setPosition:(BOOL)canChangeSide
 {
     BOOL onTop = NO;
-    
+
     VT100Screen* screen = [session_ SCREEN];
     int cx = [screen cursorX] - 1;
     int cy = [screen cursorY];
-    
+
     PTYTextView* tv = [session_ TEXTVIEW];
-    
+    [tv scrollEnd];
     NSRect frame = [[self window] frame];
     frame.size.height = [[tableView_ headerView] frame].size.height + [model_ count] * ([tableView_ rowHeight] + [tableView_ intercellSpacing].height);
-    
-    NSPoint p = NSMakePoint(MARGIN + cx * [tv charWidth], 
+
+    NSPoint p = NSMakePoint(MARGIN + cx * [tv charWidth],
                             ([screen numberOfLines] - [screen height] + cy) * [tv lineHeight]);
     p = [tv convertPoint:p toView:nil];
     p = [[tv window] convertBaseToScreen:p];
     p.y -= frame.size.height;
-    
+
     NSRect monitorFrame = [[[[screen session] parent] windowScreen] visibleFrame];
-    
+
     if (canChangeSide) {
         // p.y gives the bottom of the frame relative to the bottom of the screen, assuming it's below the cursor.
         float bottomOverflow = monitorFrame.origin.y - p.y;
@@ -285,11 +348,16 @@
         float excess = p.x + frame.size.width - rightX;
         p.x -= excess;
     }
-    
+
     frame.origin = p;
     [[self window] setFrame:frame display:NO];
     if (canChangeSide) {
+        BOOL flip = (onTop != onTop_);
         [self setOnTop:onTop];
+        if (flip) {
+            NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:[self convertIndex:[tableView_ selectedRow]]];
+            [tableView_ selectRowIndexes:indexes byExtendingSelection:NO];
+        }
     }
 }
 
@@ -341,18 +409,25 @@
     [self onClose];
 }
 
-- (NSAttributedString*)attributedStringForValue:(NSString*)value
+- (NSAttributedString*)attributedStringForEntry:(PopupEntry*)entry
 {
     float size = [NSFont systemFontSize];
     NSFont* sysFont = [NSFont systemFontOfSize:size];
     NSMutableAttributedString* as = [[[NSMutableAttributedString alloc] init] autorelease];
+    NSColor* lightColor = [[NSColor blackColor] colorWithAlphaComponent:0.4];
+    NSDictionary* lightAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
+                                     sysFont, NSFontAttributeName,
+                                     lightColor, NSForegroundColorAttributeName,
+                                     nil];
     NSDictionary* plainAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
                                      sysFont, NSFontAttributeName,
                                      nil];
     NSDictionary* boldAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
                                     [NSFont boldSystemFontOfSize:size], NSFontAttributeName,
                                     nil];
-    value = [value stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
+
+    [as appendAttributedString:[[[NSAttributedString alloc] initWithString:[entry prefix] attributes:lightAttributes] autorelease]];
+    NSString* value = [[entry mainValue] stringByReplacingOccurrencesOfString:@"\n" withString:@" "];
 
     NSString* temp = value;
     for (int i = 0; i < [substring_ length]; ++i) {
@@ -371,22 +446,22 @@
             attributedSubstr = [[[NSAttributedString alloc] initWithString:substr attributes:plainAttributes] autorelease];
             [as appendAttributedString:attributedSubstr];
         }
-        
+
         unichar matchChar = [temp characterAtIndex:r.location];
         attributedSubstr = [[[NSAttributedString alloc] initWithString:[NSString stringWithCharacters:&matchChar length:1] attributes:boldAttributes] autorelease];
         [as appendAttributedString:attributedSubstr];
-        
+
         r.length = [temp length] - r.location - 1;
         ++r.location;
         temp = [temp substringWithRange:r];
     }
-    
+
     if ([temp length] > 0) {
-        NSAttributedString* attributedSubstr = [[[NSAttributedString alloc] initWithString:temp 
+        NSAttributedString* attributedSubstr = [[[NSAttributedString alloc] initWithString:temp
                                                                                 attributes:plainAttributes] autorelease];
         [as appendAttributedString:attributedSubstr];
     }
-    
+
     return as;
 }
 
@@ -444,7 +519,7 @@
 {
     int i = [self convertIndex:rowIndex];
     PopupEntry* e = [[self model] objectAtIndex:i];
-    return [self attributedStringForValue:[e mainValue]];
+    return [self attributedStringForEntry:e];
 }
 
 

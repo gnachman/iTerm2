@@ -38,7 +38,7 @@
     NSDate* timestamp;
 }
 
-+ (PasteboardEntry*)entryWithString:(NSString *)s;
++ (PasteboardEntry*)entryWithString:(NSString *)s score:(double)score;
 
 @end
 

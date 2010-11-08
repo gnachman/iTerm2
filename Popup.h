@@ -24,12 +24,19 @@
 @interface PopupEntry : NSObject
 {
     NSString* s_;
+    NSString* prefix_;
+    double score_;
 }
 
-+ (PopupEntry*)entryWithString:(NSString*)s;
++ (PopupEntry*)entryWithString:(NSString*)s score:(double)score;
 - (void)setMainValue:(NSString*)s;
+- (void)setScore:(double)score;
+- (void)setPrefix:(NSString*)prefix;
+- (NSString*)prefix;
 - (NSString*)mainValue;
+- (double)score;
 - (BOOL)isEqual:(id)o;
+- (NSComparisonResult)compare:(id)otherObject;
 
 @end
 
@@ -44,9 +51,11 @@
 - (NSUInteger)count;
 - (void)removeAllObjects;
 - (void)addObject:(id)object;
+- (void)addHit:(PopupEntry*)object;
 - (id)objectAtIndex:(NSUInteger)index;
 - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(NSUInteger)len;
 - (NSUInteger)indexOfObject:(id)o;
+- (void)sortByScore;
 
 @end
 
@@ -97,7 +106,7 @@
 // Window is closing. Call this method when subclass is done.
 - (void)onClose;
 
-// Window is opening
+// Window is opening. -[refresh] will be called immediately after this returns.
 - (void)onOpen;
 
 // Get a value for a table cell. Always returns a value from the model.
@@ -112,7 +121,7 @@
 - (void)reloadData:(BOOL)canChangeSide;
 - (void)_setClearFilterOnNextKeyDownFlag:(id)sender;
 - (int)convertIndex:(int)i;
-- (NSAttributedString*)attributedStringForValue:(NSString*)value;
+- (NSAttributedString*)attributedStringForEntry:(PopupEntry*)entry;
 - (void)windowDidResignKey:(NSNotification *)aNotification;
 - (void)windowDidBecomeKey:(NSNotification *)aNotification;
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;

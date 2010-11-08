@@ -40,12 +40,15 @@
     // Word before cursor.
     NSMutableString* prefix_;
 
+    // Words before the word at the cursor.
+    NSMutableArray* context_;
+
     // x,y coords where prefix occured.
     int startX_;
     long long startY_;  // absolute coord
 
     // Context for searches while populating unfilteredModel.
-    FindContext context_;
+    FindContext findContext_;
 
     // Timer for doing asynch seraches for prefix.
     NSTimer* populateTimer_;
@@ -61,7 +64,6 @@
 - (void)onOpen;
 - (void)refresh;
 - (void)onClose;
-- (NSAttributedString*)attributedStringForValue:(NSString*)value;
 - (void)rowSelected:(id)sender;
 - (void)_populateMore:(id)sender;
 - (void)_doPopulateMore;
