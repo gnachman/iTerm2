@@ -1038,6 +1038,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 {
     id delegate = [self delegate];
     unsigned int modflag = [event modifierFlags];
+    unsigned short keyCode = [event keyCode];
     BOOL prev = [self hasMarkedText];
 
 #if DEBUG_METHOD_TRACE
@@ -1053,7 +1054,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if ((!prev) &&
         ([delegate hasKeyMappingForEvent:event highPriority:YES] ||
          (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)) ||
-         ((modflag & NSAlternateKeyMask) && [delegate optionKey] != OPT_NORMAL))) {
+         ((modflag & NSAlternateKeyMask) && [delegate optionKey] != OPT_NORMAL) ||
+         ((modflag & NSControlKeyMask) &&
+          (keyCode == 0x2c /* slash */ || keyCode == 0x2a /* backslash */)))) {
         [delegate keyDown:event];
         return;
     }

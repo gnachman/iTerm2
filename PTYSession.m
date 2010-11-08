@@ -751,7 +751,7 @@ static NSImage *warningImage;
             }
 
             // NSLog(@"modflag = 0x%x; send_strlen = %d; send_str[0] = '%c (0x%x)'", modflag, send_strlen, send_str[0]);
-            if (modflag & NSControlKeyMask &&
+            if ((modflag & NSControlKeyMask) &&
                 send_strlen == 1 &&
                 send_str[0] == '|')
             {
@@ -767,14 +767,14 @@ static NSImage *warningImage;
                 send_str = (unsigned char*)"\177"; // control-?
                 send_strlen = 1;
             }
-            else if (modflag & NSControlKeyMask &&
+            else if ((modflag & NSControlKeyMask) &&
                      send_strlen == 1 &&
                      send_str[0] == '/')
             {
                 send_str = (unsigned char*)"\037"; // control-/
                 send_strlen = 1;
             }
-            else if (modflag & NSShiftKeyMask &&
+            else if ((modflag & NSShiftKeyMask) &&
                      send_strlen == 1 &&
                      send_str[0] == '\031')
             {
