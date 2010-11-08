@@ -365,6 +365,10 @@ static float versionNumber;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultSmartPlacement = [prefs objectForKey:@"SmartPlacement"]?[[prefs objectForKey:@"SmartPlacement"] boolValue]: YES;
     defaultInstantReplay = [prefs objectForKey:@"InstantReplay"]?[[prefs objectForKey:@"InstantReplay"] boolValue]: YES;
+    defaultHotkey = [prefs objectForKey:@"Hotkey"]?[[prefs objectForKey:@"Hotkey"] boolValue]: NO;
+    defaultHotkeyCode = [prefs objectForKey:@"HotkeyCode"]?[[prefs objectForKey:@"HotkeyCode"] intValue]: 0;
+    defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
+    defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
     defaultIrMemory = [prefs objectForKey:@"IRMemory"]?[[prefs objectForKey:@"IRMemory"] intValue] : 4;
     defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
     defaultColorInvertedCursor = [prefs objectForKey:@"ColorInvertedCursor"]?[[prefs objectForKey:@"ColorInvertedCursor"] boolValue]: NO;
@@ -451,6 +455,10 @@ static float versionNumber;
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
     [prefs setBool:defaultSmartPlacement forKey:@"SmartPlacement"];
     [prefs setBool:defaultInstantReplay forKey:@"InstantReplay"];
+    [prefs setBool:defaultHotkey forKey:@"Hotkey"];
+    [prefs setInteger:defaultHotkeyCode forKey:@"HotkeyCode"];
+    [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
+    [prefs setInteger:defaultHotkeyModifiers forKey:@"HotkeyModifiers"];
     [prefs setInteger:defaultIrMemory forKey:@"IRMemory"];
     [prefs setBool:defaultCheckTestRelease forKey:@"CheckTestRelease"];
     [prefs setBool:defaultColorInvertedCursor forKey:@"ColorInvertedCursor"];
@@ -495,6 +503,12 @@ static float versionNumber;
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [smartPlacement setState: defaultSmartPlacement?NSOnState:NSOffState];
     [instantReplay setState: defaultInstantReplay?NSOnState:NSOffState];
+    [hotkey setState: defaultHotkey?NSOnState:NSOffState];
+    if (defaultHotkeyCode) {
+        [hotkeyField setStringValue:[iTermKeyBindingMgr formatKeyCombination:[NSString stringWithFormat:@"0x%x-0x%x", defaultHotkeyChar, defaultHotkeyModifiers]]];
+    } else {
+        [hotkeyField setStringValue:@""];
+    }
     [irMemory setIntValue:defaultIrMemory];
     [checkTestRelease setState: defaultCheckTestRelease?NSOnState:NSOffState];
     [checkColorInvertedCursor setState: defaultColorInvertedCursor?NSOnState:NSOffState];
@@ -579,7 +593,15 @@ static float versionNumber;
         defaultSmartPlacement = ([smartPlacement state] == NSOnState);
         defaultInstantReplay = ([instantReplay state] == NSOnState);
         defaultIrMemory = [irMemory intValue];
-
+        BOOL oldDefaultHotkey = defaultHotkey;
+        defaultHotkey = ([hotkey state] == NSOnState);
+        if (defaultHotkey != oldDefaultHotkey) {
+            if (defaultHotkey) {
+                [[iTermController sharedInstance] registerHotkey:defaultHotkeyCode modifiers:defaultHotkeyModifiers];
+            } else {
+                [[iTermController sharedInstance] unregisterHotkey];
+            }
+        }
         if (prefs &&
             defaultCheckTestRelease != ([checkTestRelease state] == NSOnState)) {
             defaultCheckTestRelease = ([checkTestRelease state] == NSOnState);
@@ -738,6 +760,26 @@ static float versionNumber;
 - (int)irMemory
 {
     return defaultIrMemory;
+}
+
+- (BOOL)hotkey
+{
+    return defaultHotkey;
+}
+
+- (int)hotkeyCode
+{
+    return defaultHotkeyCode;
+}
+
+- (int)hotkeyModifiers
+{
+    return defaultHotkeyModifiers;
+}
+
+- (NSTextField*)hotkeyField
+{
+    return hotkeyField;
 }
 
 - (BOOL)checkColorInvertedCursor
@@ -1565,6 +1607,33 @@ static float versionNumber;
                                theModifiers] retain];
 
     [keyPress setStringValue:[iTermKeyBindingMgr formatKeyCombination:keyString]];
+}
+
+- (void)hotkeyKeyDown:(NSEvent*)event
+{
+    unsigned int keyMods;
+    NSString *unmodkeystr;
+    
+    keyMods = [event modifierFlags];
+    unmodkeystr = [event charactersIgnoringModifiers];
+    unsigned short keyChar = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+    unsigned int keyCode = [event keyCode];
+    
+    // turn off all the other modifier bits we don't care about
+    unsigned int theModifiers = keyMods &
+    (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask |
+     NSCommandKeyMask | NSNumericPadKeyMask);
+    
+    // on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
+    if (keyChar >= NSUpArrowFunctionKey &&
+        keyChar <= NSRightArrowFunctionKey) {
+        theModifiers |= NSNumericPadKeyMask;
+    }
+    defaultHotkeyChar = keyChar;
+    defaultHotkeyCode = keyCode;
+    defaultHotkeyModifiers = keyMods;
+    [hotkeyField setStringValue:[iTermKeyBindingMgr formatKeyCombination:[NSString stringWithFormat:@"0x%x-0x%x", keyChar, keyMods]]];
+    [[iTermController sharedInstance] registerHotkey:keyCode modifiers:theModifiers];
 }
 
 - (void)updateValueToSend

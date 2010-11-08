@@ -93,6 +93,11 @@ int gDebugLogFile = -1;
     
     [self buildAddressBookMenu:nil];
 
+    PreferencePanel* ppanel = [PreferencePanel sharedInstance];
+    if ([ppanel hotkey]) {
+        [[iTermController sharedInstance] registerHotkey:[ppanel hotkeyCode] modifiers:[ppanel hotkeyModifiers]];
+    }
+    
     // register for services
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
                                                        returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];

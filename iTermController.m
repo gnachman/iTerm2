@@ -40,6 +40,7 @@
 #import <iTerm/ITAddressBookMgr.h>
 #import <iTerm/iTermGrowlDelegate.h>
 #import "PasteboardHistory.h"
+#import <Carbon/Carbon.h>
 
 @interface NSApplication (Undocumented)
 - (void)_cycleWindowsReversed:(BOOL)back;
@@ -475,6 +476,73 @@ static BOOL initDone = NO;
     return [terminalWindows objectAtIndex:i];
 }
 
+
+static unsigned int CocoaModifierFlagsToCarbonModifierFlags(unsigned int cocoaFlags) {
+    static const unsigned int carbon[] = { 
+        shiftKey, alphaLock, controlKey,
+        optionKey, cmdKey, kEventKeyModifierFnMask, 
+        kEventKeyModifierNumLockMask, 0 };
+    static const unsigned int cocoa[] = { 
+        NSShiftKeyMask, NSAlphaShiftKeyMask, NSControlKeyMask, 
+        NSAlternateKeyMask, NSCommandKeyMask, NSFunctionKeyMask, 
+        NSNumericPadKeyMask, 0 };
+
+    unsigned int carbonFlags = 0;
+    for (int i = 0; carbon[i]; ++i) {
+        if (cocoaFlags & cocoa[i]) {
+            carbonFlags |= carbon[i];
+        }
+    }
+    return carbonFlags;
+}
+
+static OSStatus OnHotKeyEvent(EventHandlerCallRef nextHandler,EventRef theEvent,void *userData)
+{
+    iTermController* controller = [iTermController sharedInstance];
+    int n = [controller numberOfTerminals];
+    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+    if (n == 0) {
+        [controller newWindow:nil];
+    }
+    return noErr;
+}
+
+- (void)unregisterHotkey
+{
+    if (haveHotKey) {
+        NSLog(@"Unregister hotkey");
+        UnregisterEventHotKey(hotKeyRef);
+    }
+    haveHotKey = NO;
+}
+
+- (void)registerHotkey:(int)keyCode modifiers:(int)modifiers
+{
+    EventHotKeyID hotKeyId;
+    EventTypeSpec eventType;
+    eventType.eventClass = kEventClassKeyboard;
+    eventType.eventKind = kEventHotKeyPressed;	
+    
+    static BOOL haveEventHandler;
+    if (!haveEventHandler) {
+        NSLog(@"Install event handler");
+        InstallApplicationEventHandler(&OnHotKeyEvent, 1, &eventType, (void *)self, NULL);
+        haveEventHandler = YES;
+    }
+    
+    hotKeyId.signature='htk1';
+    hotKeyId.id=1;
+    
+    [self unregisterHotkey];
+    NSLog(@"Register hotkey. keycode=%d, mods=%x (carbon=%x)", keyCode, modifiers, CocoaModifierFlagsToCarbonModifierFlags(modifiers));
+    haveHotKey = YES;
+    RegisterEventHotKey(keyCode,
+                        CocoaModifierFlagsToCarbonModifierFlags(modifiers),
+                        hotKeyId, 
+                        GetApplicationEventTarget(), 
+                        0,  // Want exclusive? Pass kEventHotKeyExclusive here.
+                        &hotKeyRef);	
+}
 
 @end
 

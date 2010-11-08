@@ -158,6 +158,16 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTextField* irMemory;
     int defaultIrMemory;
 
+    // hotkey
+    IBOutlet NSButton *hotkey;
+    BOOL defaultHotkey;
+    
+    // hotkey code
+    IBOutlet NSTextField* hotkeyField;
+    int defaultHotkeyChar;
+    int defaultHotkeyCode;
+    int defaultHotkeyModifiers;
+    
     // prompt for test-release updates
     IBOutlet NSButton *checkTestRelease;
     BOOL defaultCheckTestRelease;
@@ -341,6 +351,12 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 - (BOOL)smartPlacement;
 - (BOOL)instantReplay;
 - (int)irMemory;
+
+- (BOOL)hotkey;
+- (int)hotkeyCode;
+- (int)hotkeyModifiers;
+- (NSTextField*)hotkeyField;
+
 - (BOOL)checkColorInvertedCursor;
 - (BOOL)checkTestRelease;
 - (BOOL)colorInvertedCursor;
@@ -376,6 +392,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 - (BOOL)onScreen;
 - (NSTextField*)shortcutKeyTextField;
 - (void)shortcutKeyDown:(NSEvent*)event;
+- (void)hotkeyKeyDown:(NSEvent*)event;
 - (void)updateValueToSend;
 - (IBAction)actionChanged:(id)sender;
 - (NSWindow*)keySheet;

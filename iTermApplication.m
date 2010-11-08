@@ -73,6 +73,10 @@
                    [self isTextFieldInFocus:[privatePrefPanel shortcutKeyTextField]]) {
             [privatePrefPanel shortcutKeyDown:event];
             return;
+        } else if ([prefPanel window] == [self keyWindow] &&
+                   [self isTextFieldInFocus:[prefPanel hotkeyField]]) {
+            [prefPanel hotkeyKeyDown:event];
+            return;
         } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
             responder = [[self keyWindow] firstResponder];
             bool inTextView = [responder isKindOfClass:[PTYTextView class]];

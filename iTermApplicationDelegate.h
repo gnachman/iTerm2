@@ -28,6 +28,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import <Carbon/Carbon.h>
 
 @class PseudoTerminal;
 extern BOOL gDebugLogging;
@@ -53,7 +54,6 @@ void DebugLog(NSString* value);
     IBOutlet NSMenuItem *toggleBookmarksView;
     IBOutlet NSMenuItem *irNext;
     IBOutlet NSMenuItem *irPrev;
-
 }
 
 // NSApplication Delegate methods

@@ -171,6 +171,7 @@
 		1DE2154312821F1C004E3ADF /* Autocomplete.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DE2154112821F1C004E3ADF /* Autocomplete.xib */; };
 		1DE5EBE8122B892900C736B0 /* BookmarksWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* BookmarksWindow.h */; };
 		1DE5EBE9122B892900C736B0 /* BookmarksWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */; };
+		1DEB2AB01288BED600B2CB9F /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB293D1288899A00B2CB9F /* Carbon.framework */; };
 		1DEE9FDD11FCA60F009E18C9 /* credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 1DEE9FDB11FCA60F009E18C9 /* credits.rtf */; };
 		49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A6E4081211CC6000D9AD6F /* Compatability.h */; };
 		874206490564169600CFC3F1 /* iTermApplicationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */; };
@@ -288,6 +289,9 @@
 		1DE2154212821F1C004E3ADF /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/Autocomplete.xib; sourceTree = "<group>"; };
 		1DE5EBE6122B892900C736B0 /* BookmarksWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarksWindow.h; sourceTree = "<group>"; };
 		1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarksWindow.m; sourceTree = "<group>"; };
+		1DEB29301288885700B2CB9F /* Quartz.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Quartz.framework; path = System/Library/Frameworks/Quartz.framework; sourceTree = SDKROOT; };
+		1DEB29371288887100B2CB9F /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		1DEB293D1288899A00B2CB9F /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		1DEE9FDC11FCA60F009E18C9 /* English */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = English; path = English.lproj/credits.rtf; sourceTree = "<group>"; };
 		2076B15704E8817300000106 /* PTToolbarController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTToolbarController.h; sourceTree = "<group>"; };
 		2076B15804E8817300000106 /* PTToolbarController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTToolbarController.m; sourceTree = "<group>"; };
@@ -458,6 +462,7 @@
 				F69E80E70ABB46F2001EC0FF /* Growl.framework in Frameworks */,
 				F6E2DEDA0AE2F67200D20B3B /* Sparkle.framework in Frameworks */,
 				1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */,
+				1DEB2AB01288BED600B2CB9F /* Carbon.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -492,6 +497,9 @@
 				1D13EADB12113A2D00909F9C /* libncurses.dylib */,
 				1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */,
 				1DE2154112821F1C004E3ADF /* Autocomplete.xib */,
+				1DEB29301288885700B2CB9F /* Quartz.framework */,
+				1DEB29371288887100B2CB9F /* QuartzCore.framework */,
+				1DEB293D1288899A00B2CB9F /* Carbon.framework */,
 			);
 			name = JTerminal;
 			sourceTree = "<group>";

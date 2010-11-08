@@ -48,6 +48,7 @@
 
 #import "ITAddressBookMgr.h"
 #import <iTerm/iTermKeyBindingMgr.h>
+#import <Carbon/Carbon.h>
 
 @implementation iTermKeyBindingMgr
 
@@ -59,40 +60,36 @@
     NSMutableString *theKeyString;
     keyCode = keyMods = 0;
     sscanf([theKeyCombination UTF8String], "%x-%x", &keyCode, &keyMods);
-    
+    BOOL isArrow = NO;
     switch (keyCode) {
         case NSDownArrowFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"cursor down",@"iTerm", 
-                                                         [NSBundle bundleForClass: [self class]], 
-                                                         @"Key Names");
+            aString = @"↓";
+            isArrow = YES;
             break;
         case NSLeftArrowFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"cursor left",@"iTerm", 
-                                                         [NSBundle bundleForClass: [self class]], 
-                                                         @"Key Names");
+            aString = @"←";
+            isArrow = YES;
             break;
         case NSRightArrowFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"cursor right",@"iTerm", 
-                                                         [NSBundle bundleForClass: [self class]], 
-                                                         @"Key Names");
+            aString =@"→";
+            isArrow = YES;
             break;
         case NSUpArrowFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"cursor up",@"iTerm", 
-                                                         [NSBundle bundleForClass: [self class]], 
-                                                         @"Key Names");
+            aString = @"↑";
+            isArrow = YES;
             break;
         case NSDeleteFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"del",@"iTerm", 
+            aString = NSLocalizedStringFromTableInBundle(@"Del",@"iTerm", 
                                                          [NSBundle bundleForClass: [self class]], 
                                                          @"Key Names");
             break;
         case 0x7f:
-            aString = NSLocalizedStringFromTableInBundle(@"delete",@"iTerm", 
+            aString = NSLocalizedStringFromTableInBundle(@"Delete",@"iTerm", 
                                                          [NSBundle bundleForClass: [self class]], 
                                                          @"Key Names");
             break;
         case NSEndFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"end",@"iTerm", 
+            aString = NSLocalizedStringFromTableInBundle(@"End",@"iTerm", 
                                                          [NSBundle bundleForClass: [self class]], 
                                                          @"Key Names");
             break;
@@ -119,12 +116,12 @@
             aString = [NSString stringWithFormat: @"F%d", (keyCode - NSF1FunctionKey + 1)];
             break;
         case NSHelpFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"help",@"iTerm", 
+            aString = NSLocalizedStringFromTableInBundle(@"Help",@"iTerm", 
                                                          [NSBundle bundleForClass: [self class]], 
                                                          @"Key Names"); 
             break;
         case NSHomeFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"home",@"iTerm", 
+            aString = NSLocalizedStringFromTableInBundle(@"Home",@"iTerm", 
                                                          [NSBundle bundleForClass: [self class]], 
                                                          @"Key Names");
             break;
@@ -159,27 +156,25 @@
             aString = @".";
             break;
         case NSClearLineFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"numlock",@"iTerm", 
+            aString = NSLocalizedStringFromTableInBundle(@"Numlock",@"iTerm", 
                                                          [NSBundle bundleForClass: [self class]], 
                                                          @"Key Names");
             break;
         case NSPageDownFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"page down",@"iTerm", 
+            aString = NSLocalizedStringFromTableInBundle(@"Page Down",@"iTerm", 
                                                          [NSBundle bundleForClass: [self class]], 
                                                          @"Key Names");
             break;
         case NSPageUpFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"page up",@"iTerm", 
+            aString = NSLocalizedStringFromTableInBundle(@"Page Up",@"iTerm", 
                                                          [NSBundle bundleForClass: [self class]], 
                                                          @"Key Names");
             break;
         case 0x3: // 'enter' on numeric key pad
-            aString = NSLocalizedStringFromTableInBundle(@"enter",@"iTerm", 
-                                                         [NSBundle bundleForClass: [self class]], 
-                                                         @"Key Names");
+            aString = @"↩";
             break;
         case NSInsertCharFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"insert",@"iTerm", 
+            aString = NSLocalizedStringFromTableInBundle(@"iIsert",@"iTerm", 
                                                          [NSBundle bundleForClass: [self class]], 
                                                          @"Key Names");
             break;
@@ -188,29 +183,54 @@
             if (keyCode >= '!' && keyCode <= '~') {
                 aString = [NSString stringWithFormat:@"%c", keyCode];
             } else {
-                aString = [NSString stringWithFormat: @"%@ 0x%x", 
-                           NSLocalizedStringFromTableInBundle(@"hex code",@"iTerm", 
-                                                              [NSBundle bundleForClass: [self class]], 
-                                                              @"Key Names"),
-                           keyCode];
+                switch (keyCode) {
+                    case ' ':
+                        aString = @"Space";
+                        break;
+                        
+                    case '\r':
+                        aString = @"↩";
+                        break;
+                        
+                    case 27:
+                        aString = @"⎋";
+                        break;
+                        
+                    case '\t':
+                        aString = @"↦";
+                        break;
+                        
+                    case 0x19:
+                        // back-tab
+                        aString = @"↤";
+                        break;
+                        
+                    default:
+                        aString = [NSString stringWithFormat: @"%@ 0x%x", 
+                                   NSLocalizedStringFromTableInBundle(@"hex code",@"iTerm", 
+                                                                      [NSBundle bundleForClass: [self class]], 
+                                                                      @"Key Names"),
+                                   keyCode];
+                        break;
+                }
             }
             break;
     }
     
     theKeyString = [[NSMutableString alloc] initWithString: @""];
     if (keyMods & NSCommandKeyMask) {
-        [theKeyString appendString: @"cmd-"];
+        [theKeyString appendString: @"⌘"];
     }       
     if (keyMods & NSAlternateKeyMask) {
-        [theKeyString appendString: @"opt-"];
+        [theKeyString appendString: @"⌥"];
     }
     if (keyMods & NSControlKeyMask) {
-        [theKeyString appendString: @"ctrl-"];
+        [theKeyString appendString: @"^"];
     }
     if (keyMods & NSShiftKeyMask) {
-        [theKeyString appendString: @"shift-"];
+        [theKeyString appendString: @"⇧"];
     }
-    if (keyMods & NSNumericPadKeyMask) {
+    if ((keyMods & NSNumericPadKeyMask) && !isArrow) {
         [theKeyString appendString: @"num-"];
     }
     [theKeyString appendString: aString];
