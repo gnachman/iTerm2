@@ -2107,7 +2107,7 @@ static NSImage *warningImage;
     // than its bookmark. Changes to the bookmark will no longer affect this
     // session, and changes to this session won't affect its originating bookmark
     // (which may not evene exist any longer).
-    guid = [BookmarkModel newGuid];
+    guid = [BookmarkModel freshGuid];
     [[BookmarkModel sessionsInstance] setObject:guid
                                          forKey:KEY_GUID
                                      inBookmark:bookmark];

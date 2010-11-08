@@ -183,7 +183,7 @@
     }
     if (![bookmark objectForKey:KEY_GUID]) {
         NSMutableDictionary* aDict = [[NSMutableDictionary alloc] initWithDictionary:bookmark];
-        [aDict setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
+        [aDict setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
         bookmark = aDict;
     }
     if (![bookmark objectForKey:KEY_DEFAULT_BOOKMARK]) {
@@ -323,7 +323,7 @@
     [bookmarks_ retain];
 }
 
-+ (NSString*)newGuid
++ (NSString*)freshGuid
 {
     CFUUIDRef uuidObj = CFUUIDCreate(nil); //create a new UUID
     //get the string representation of the UUID

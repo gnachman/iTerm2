@@ -36,7 +36,7 @@ typedef NSDictionary Bookmark;
 
 + (BookmarkModel*)sharedInstance;
 + (BookmarkModel*)sessionsInstance;
-+ (NSString*)newGuid;
++ (NSString*)freshGuid;
 - (int)numberOfBookmarks;
 - (int)numberOfBookmarksWithFilter:(NSString*)filter;
 - (int)indexOfBookmarkWithGuid:(NSString*)guid;

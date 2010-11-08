@@ -1702,7 +1702,7 @@ static float versionNumber;
     }
     [newDict setObject:@"New Bookmark" forKey:KEY_NAME];
     [newDict setObject:@"" forKey:KEY_SHORTCUT];
-    NSString* guid = [BookmarkModel newGuid];
+    NSString* guid = [BookmarkModel freshGuid];
     [newDict setObject:guid forKey:KEY_GUID];
     [newDict removeObjectForKey:KEY_DEFAULT_BOOKMARK];  // remove depreated attribute with side effects
     [newDict setObject:[NSArray arrayWithObjects:nil] forKey:KEY_TAGS];
@@ -1761,7 +1761,7 @@ static float versionNumber;
     NSString* newName = [NSString stringWithFormat:@"Copy of %@", [newDict objectForKey:KEY_NAME]];
 
     [newDict setObject:newName forKey:KEY_NAME];
-    [newDict setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
+    [newDict setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
     [newDict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
     [dataSource addBookmark:newDict];
     [bookmarksTableView reloadData];

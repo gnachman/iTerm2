@@ -199,7 +199,7 @@
         // Not just a folder if it has a command.
         NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:data];
         [self copyProfileToBookmark:temp];
-        [temp setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
+        [temp setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
         [temp setObject:path forKey:KEY_TAGS];
         [temp setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
         NSString* dir = [data objectForKey:KEY_WORKING_DIRECTORY];
@@ -373,7 +373,7 @@
     [newBookmark setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
     [newBookmark setObject:ipAddressString forKey:KEY_BONJOUR_SERVICE_ADDRESS];
     [newBookmark setObject:[NSArray arrayWithObjects:@"bonjour",nil] forKey:KEY_TAGS];
-    [newBookmark setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
+    [newBookmark setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
     [newBookmark setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
     [newBookmark removeObjectForKey:KEY_SHORTCUT];
     [[BookmarkModel sharedInstance] addBookmark:newBookmark];
@@ -382,7 +382,7 @@
     if ([serviceType isEqualToString:@"ssh"]) {
         [newBookmark setObject:[NSString stringWithFormat:@"%@-sftp", [sender name]] forKey:KEY_NAME];
         [newBookmark setObject:[NSArray arrayWithObjects:@"bonjour", @"sftp", nil] forKey:KEY_TAGS];
-        [newBookmark setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
+        [newBookmark setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
         [newBookmark setObject:[NSString stringWithFormat:@"sftp %@", ipAddressString] forKey:KEY_COMMAND];
         [[BookmarkModel sharedInstance] addBookmark:newBookmark];
     }
