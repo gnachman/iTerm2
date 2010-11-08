@@ -62,6 +62,8 @@
 
 #define CACHED_WINDOW_POSITIONS 100
 
+#define ITLocalizedString(key) NSLocalizedStringFromTableInBundle(key, @"iTerm", [NSBundle bundleForClass:[self class]], @"Context menu")
+
 // #define PSEUDOTERMINAL_VERBOSE_LOGGING
 #ifdef PSEUDOTERMINAL_VERBOSE_LOGGING
 #define PtyLog NSLog
@@ -1306,50 +1308,51 @@ NSString *sessionsKey = @"sessions";
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
 
-- (NSMenu *)tabView:(NSTabView *)aTabView menuForTabViewItem:(NSTabViewItem *)tabViewItem
+- (NSMenu *)tabView:(NSTabView *)tabView menuForTabViewItem:(NSTabViewItem *)tabViewItem
 {
-    NSMenuItem *aMenuItem;
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PseudoTerminal tabViewContextualMenu]", __FILE__, __LINE__);
 #endif
-
-    NSMenu *theMenu = [[[NSMenu alloc] init] autorelease];
+    NSMenuItem *item;
+    NSMenu *rootMenu = [[[NSMenu alloc] init] autorelease];
 
     // Create a menu with a submenu to navigate between tabs if there are more than one
     if ([TABVIEW numberOfTabViewItems] > 1) {
-        int nextIndex = 0;
-        int i;
-
-        [theMenu insertItemWithTitle: NSLocalizedStringFromTableInBundle(@"Select",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu") action:nil keyEquivalent:@"" atIndex: nextIndex];
-        NSMenu *tabMenu = [[NSMenu alloc] initWithTitle:@""];
-
-        for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-            aMenuItem = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"%@ #%d", [[TABVIEW tabViewItemAtIndex: i] label], i+1]
-                                                   action:@selector(selectTab:) keyEquivalent:@""];
-            [aMenuItem setRepresentedObject: [[TABVIEW tabViewItemAtIndex: i] identifier]];
-            [aMenuItem setTarget: TABVIEW];
-            [tabMenu addItem: aMenuItem];
-            [aMenuItem release];
+        NSMenu *tabMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
+        NSUInteger count = 1;
+        for (NSTabViewItem *tab in [TABVIEW tabViewItems]) {
+            NSString *title = [NSString stringWithFormat:@"%@ #%d", [tab label], count++];
+            item = [[[NSMenuItem alloc] initWithTitle:title
+                                               action:@selector(selectTab:)
+                                        keyEquivalent:@""] autorelease];
+            [item setRepresentedObject:[tab identifier]];
+            [item setTarget:TABVIEW];
+            [tabMenu addItem: item];
         }
-        [theMenu setSubmenu: tabMenu forItem: [theMenu itemAtIndex: nextIndex]];
-        [tabMenu release];
-        ++nextIndex;
-        [theMenu addItem: [NSMenuItem separatorItem]];
+
+        [rootMenu addItemWithTitle:ITLocalizedString(@"Select")
+                            action:nil
+                     keyEquivalent:@""];
+        [rootMenu setSubmenu:tabMenu forItem:[rootMenu itemAtIndex:0]];
+        [rootMenu addItem: [NSMenuItem separatorItem]];
    }
 
     // add tasks
-    aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Close Tab",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context Menu") action:@selector(closeTabContextualMenuAction:) keyEquivalent:@""];
-    [aMenuItem setRepresentedObject: tabViewItem];
-    [theMenu addItem: aMenuItem];
-    [aMenuItem release];
+    item = [[[NSMenuItem alloc] initWithTitle:ITLocalizedString(@"Close Tab")
+                                       action:@selector(closeTabContextualMenuAction:)
+                                keyEquivalent:@""] autorelease];
+    [item setRepresentedObject:tabViewItem];
+    [rootMenu addItem:item];
+
     if ([TABVIEW numberOfTabViewItems] > 1) {
-        aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Move to new window",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context Menu") action:@selector(moveTabToNewWindowContextualMenuAction:) keyEquivalent:@""];
-        [aMenuItem setRepresentedObject: tabViewItem];
-        [theMenu addItem: aMenuItem];
-        [aMenuItem release];
+        item = [[[NSMenuItem alloc] initWithTitle:ITLocalizedString(@"Move to new window")
+                                           action:@selector(moveTabToNewWindowContextualMenuAction:)
+                                    keyEquivalent:@""] autorelease];
+        [item setRepresentedObject:tabViewItem];
+        [rootMenu addItem:item];
     }
 
-    return theMenu;
+    return rootMenu;
 }
 
 - (PSMTabBarControl *)tabView:(NSTabView *)aTabView newTabBarForDraggedTabViewItem:(NSTabViewItem *)tabViewItem atPoint:(NSPoint)point
