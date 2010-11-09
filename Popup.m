@@ -171,10 +171,10 @@
     PopupEntry* entry = [self entryEqualTo:object];
     if (entry) {
         [entry setScore:[entry score] + [object score]];
-        //NSLog(@"Add additional hit for %@ bringing score to %lf", [entry mainValue], [entry score]);
+        NSLog(@"Add additional hit for %@ bringing score to %lf", [entry mainValue], [entry score]);
     } else {
         [self addObject:object];
-        //NSLog(@"Add entry for %@ with score %lf", [object mainValue], [object score]);
+        NSLog(@"Add entry for %@ with score %lf", [object mainValue], [object score]);
     }
 }
 

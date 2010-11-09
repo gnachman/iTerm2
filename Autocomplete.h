@@ -40,6 +40,9 @@
     // Word before cursor.
     NSMutableString* prefix_;
 
+    // Is there whitespace before the cursor? If so, strip whitespace from before candidates.
+    BOOL whitespaceBeforeCursor_;
+
     // Words before the word at the cursor.
     NSMutableArray* context_;
 
