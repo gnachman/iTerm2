@@ -393,6 +393,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 - (NSTextField*)shortcutKeyTextField;
 - (void)shortcutKeyDown:(NSEvent*)event;
 - (void)hotkeyKeyDown:(NSEvent*)event;
+- (void)disableHotkey;
 - (void)updateValueToSend;
 - (IBAction)actionChanged:(id)sender;
 - (NSWindow*)keySheet;

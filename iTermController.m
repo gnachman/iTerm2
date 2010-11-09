@@ -534,6 +534,15 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                 CFRunLoopAddSource(CFRunLoopGetCurrent(), eventSrc, kCFRunLoopDefaultMode);
                 CFRelease(eventSrc);
             }
+        } else {            
+            if (NSRunAlertPanel(@"Could not enable hotkey.",
+                                @"You have assigned a \"hotkey\" that opens iTerm2 at any time. To use it, you must turn on \"access for assistive devices\" in the Universal Access preferences panel in System Preferences.",
+                                @"OK",
+                                @"Disable Hotkey",
+                                nil,
+                                nil) == NSAlertAlternateReturn) {
+                [[PreferencePanel sharedInstance] disableHotkey];
+            }
         }
     }
 }

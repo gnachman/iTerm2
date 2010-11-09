@@ -424,7 +424,7 @@ static float versionNumber;
     }
 }
 
-- (void) savePreferences
+- (void)savePreferences
 {
     if (!prefs) {
         // In one-bookmark mode there are no prefs but this function doesn't
@@ -780,6 +780,17 @@ static float versionNumber;
 - (NSTextField*)hotkeyField
 {
     return hotkeyField;
+}
+
+- (void)disableHotkey
+{
+    [hotkey setState:NSOffState];
+    BOOL oldDefaultHotkey = defaultHotkey;
+    defaultHotkey = NO;
+    if (defaultHotkey != oldDefaultHotkey) {
+        [[iTermController sharedInstance] unregisterHotkey];
+    }
+    [self savePreferences];
 }
 
 - (BOOL)checkColorInvertedCursor
