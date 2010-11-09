@@ -541,8 +541,8 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
             NSLog(@"Adding run loop source.");
             // Get the CFRunLoop primitive for the Carbon Main Event Loop, and add the new event souce
             CFRunLoopAddSource(CFRunLoopGetCurrent(), eventSrc, kCFRunLoopDefaultMode);
+            CFRelease(eventSrc);
         }
-        CFRelease(eventSrc);
     }
 }
 
