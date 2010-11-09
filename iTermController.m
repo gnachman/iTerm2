@@ -522,17 +522,18 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                                        CGEventMaskBit(kCGEventKeyDown),
                                        (CGEventTapCallBack)OnTappedEvent,
                                        self);
-
-        CFRunLoopSourceRef eventSrc;
-        
-        eventSrc = CFMachPortCreateRunLoopSource(NULL, machPortRef, 0);
-        if (eventSrc == NULL) {
-            NSLog(@"CFMachPortCreateRunLoopSource failed.");
-        } else {
-            NSLog(@"Adding run loop source.");
-            // Get the CFRunLoop primitive for the Carbon Main Event Loop, and add the new event souce
-            CFRunLoopAddSource(CFRunLoopGetCurrent(), eventSrc, kCFRunLoopDefaultMode);
-            CFRelease(eventSrc);
+        if (machPortRef) {
+            CFRunLoopSourceRef eventSrc;
+            
+            eventSrc = CFMachPortCreateRunLoopSource(NULL, machPortRef, 0);
+            if (eventSrc == NULL) {
+                NSLog(@"CFMachPortCreateRunLoopSource failed.");
+            } else {
+                NSLog(@"Adding run loop source.");
+                // Get the CFRunLoop primitive for the Carbon Main Event Loop, and add the new event souce
+                CFRunLoopAddSource(CFRunLoopGetCurrent(), eventSrc, kCFRunLoopDefaultMode);
+                CFRelease(eventSrc);
+            }
         }
     }
 }

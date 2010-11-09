@@ -26,6 +26,7 @@
     NSString* s_;
     NSString* prefix_;
     double score_;
+    double hitMultiplier_;
 }
 
 + (PopupEntry*)entryWithString:(NSString*)s score:(double)score;
@@ -37,6 +38,8 @@
 - (double)score;
 - (BOOL)isEqual:(id)o;
 - (NSComparisonResult)compare:(id)otherObject;
+// Update the hit multiplier for a new hit and return its new value
+- (double)advanceHitMult;
 
 @end
 
@@ -44,9 +47,11 @@
 {
     @private
     NSMutableArray* values_;
+    int maxEntries_;
 }
 
 - (id)init;
+- (id)initWithMaxEntries:(int)maxEntries;
 - (void)dealloc;
 - (NSUInteger)count;
 - (void)removeAllObjects;
@@ -84,6 +89,12 @@
 
     // If true then window is above cursor.
     BOOL onTop_;
+    
+    // Set to true when the user changes the selected row.
+    BOOL haveChangedSelection_;
+    
+    // True while reloading data.
+    BOOL reloading_;
 }
 
 - (id)initWithWindowNibName:(NSString*)nibName tablePtr:(NSTableView**)table model:(PopupModel*)model;
@@ -111,6 +122,7 @@
 
 // Get a value for a table cell. Always returns a value from the model.
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex;
+- (void)tableViewSelectionDidChange:(NSNotification *)aNotification;
 
 - (void)setSession:(PTYSession*)session;
 - (void)setOnTop:(BOOL)onTop;

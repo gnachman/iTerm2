@@ -40,9 +40,10 @@ const int kMaxContextWords = 2;
 
 - (id)init
 {
+    const int kMaxOptions = 20;
     self = [super initWithWindowNibName:@"Autocomplete"
                                tablePtr:&table_
-                                  model:[[[PopupModel alloc] init] autorelease]];
+                                  model:[[[PopupModel alloc] initWithMaxEntries:kMaxOptions] autorelease]];
     if (!self) {
         return nil;
     }
@@ -249,7 +250,6 @@ const int kMaxContextWords = 2;
 - (void)_doPopulateMore
 {
     VT100Screen* screen = [[self session] SCREEN];
-    const int kMaxOptions = 20;
     BOOL found;
 
     struct timeval begintime;
@@ -350,9 +350,9 @@ const int kMaxContextWords = 2;
                     y_ = startY + [screen scrollbackOverflow];
                 }
             }
-        } while (more && [[self unfilteredModel] count] < kMaxOptions);
+        } while (more);
 
-        if (found && [[self unfilteredModel] count] < kMaxOptions) {
+        if (found) {
             if (y_ < [screen scrollbackOverflow] ||
                 (x_ <= 0 && y_ == [screen scrollbackOverflow])) {
                 // Last match was on the first char of the screen. All done.
@@ -371,7 +371,7 @@ const int kMaxContextWords = 2;
                          inContext:&findContext_];
         } else {
             // All done.
-            NSLog(@"BREAK: Didn't find anything or hit max");
+            NSLog(@"BREAK: Didn't find anything");
             break;
         }
 
@@ -389,7 +389,7 @@ const int kMaxContextWords = 2;
                                                              repeats:NO];
             break;
         }
-    } while (found && [[self unfilteredModel] count] < kMaxOptions);
+    } while (found);
     [self reloadData:YES];
 }
 

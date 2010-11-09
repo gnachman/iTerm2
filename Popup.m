@@ -33,12 +33,31 @@
 
 @implementation PopupEntry
 
+- (void)_setDefaultValues
+{
+    hitMultiplier_ = 1;
+    [self setMainValue:@""];
+    [self setScore:0];
+    [self setPrefix:@""];
+}
+
+- (id)init
+{
+    self = [super init];
+    if (!self) {
+        return self;
+    }
+    [self _setDefaultValues];
+    
+    return self;
+}
+
 + (PopupEntry*)entryWithString:(NSString*)s score:(double)score
 {
     PopupEntry* e = [[[PopupEntry alloc] init] autorelease];
+    [e _setDefaultValues];
     [e setMainValue:s];
     [e setScore:score];
-    [e setPrefix:@""];
 
     return e;
 }
@@ -57,6 +76,12 @@
 {
     [s_ autorelease];
     s_ = [s retain];
+}
+
+- (double)advanceHitMult
+{
+    hitMultiplier_ *= 0.8;
+    return hitMultiplier_;
 }
 
 - (double)score
@@ -131,7 +156,18 @@
         return self;
     }
 
+    maxEntries_ = -1;
     values_ = [[NSMutableArray alloc] init];
+    return self;
+}
+
+- (id)initWithMaxEntries:(int)maxEntries
+{
+    self = [super init];
+    if (!self) {
+        return self;
+    }
+    maxEntries_ = maxEntries;
     return self;
 }
 
@@ -170,11 +206,13 @@
 {
     PopupEntry* entry = [self entryEqualTo:object];
     if (entry) {
-        [entry setScore:[entry score] + [object score]];
+        [entry setScore:[entry score] + [object score] * [entry advanceHitMult]];
         NSLog(@"Add additional hit for %@ bringing score to %lf", [entry mainValue], [entry score]);
-    } else {
+    } else if (maxEntries_ < 0 || [self count] < maxEntries_) {
         [self addObject:object];
         NSLog(@"Add entry for %@ with score %lf", [object mainValue], [object score]);
+    } else {
+        NSLog(@"Not adding entry because max of %u hit", maxEntries_);
     }
 }
 
@@ -287,15 +325,18 @@
             [model_ addObject:s];
         }
     }
+    BOOL oldReloading = reloading_;
+    reloading_ = YES;
     [tableView_ reloadData];
     [self setPosition:canChangeSide];
     [tableView_ sizeToFit];
     [[tableView_ enclosingScrollView] setHasHorizontalScroller:NO];
 
-    if ([tableView_ selectedRow] == -1 && [tableView_ numberOfRows] > 0) {
+    if (!haveChangedSelection_ && [tableView_ numberOfRows] > 0) {
         NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:[self convertIndex:0]];
         [tableView_ selectRowIndexes:indexes byExtendingSelection:NO];
     }
+    reloading_ = oldReloading;
 }
 
 - (int)convertIndex:(int)i
@@ -355,8 +396,11 @@
         BOOL flip = (onTop != onTop_);
         [self setOnTop:onTop];
         if (flip) {
+            BOOL oldReloading = reloading_;
+            reloading_ = YES;
             NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:[self convertIndex:[tableView_ selectedRow]]];
             [tableView_ selectRowIndexes:indexes byExtendingSelection:NO];
+            reloading_ = oldReloading;
         }
     }
 }
@@ -462,6 +506,7 @@
         [as appendAttributedString:attributedSubstr];
     }
 
+    [as appendAttributedString:[[[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@" (%f)", (float)[entry score]] attributes:plainAttributes] autorelease]];
     return as;
 }
 
@@ -497,10 +542,14 @@
     }
     [substring_ setString:@""];
     [self onOpen];
+    haveChangedSelection_ = NO;
     [self refresh];
     if ([tableView_ numberOfRows] > 0) {
+        BOOL oldReloading = reloading_;
+        reloading_ = YES;
         NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:[self convertIndex:0]];
         [tableView_ selectRowIndexes:indexes byExtendingSelection:NO];
+        reloading_ = oldReloading;
     }
 }
 
@@ -522,5 +571,11 @@
     return [self attributedStringForEntry:e];
 }
 
+- (void)tableViewSelectionDidChange:(NSNotification *)aNotification
+{
+    if (!reloading_) {
+        haveChangedSelection_ = YES;
+    }
+}
 
 @end
