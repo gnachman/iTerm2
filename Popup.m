@@ -168,6 +168,7 @@
         return self;
     }
     maxEntries_ = maxEntries;
+    values_ = [[NSMutableArray alloc] init];
     return self;
 }
 

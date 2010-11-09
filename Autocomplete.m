@@ -243,6 +243,11 @@ const int kMaxContextWords = 2;
         NSLog(@"Apply length multiplier of %lf", length/50.0);
     }
     
+    // Prefer suffixes to full words
+    if (joiningPrefixLength == 0) {
+        score /= 2;
+    }
+    
     NSLog(@"Final score is %lf", score);
     return score;
 }
@@ -335,6 +340,8 @@ const int kMaxContextWords = 2;
                                                                                                   word:word]];
                         if (!fullMatch) {
                             [e setPrefix:prefix_];
+                        } else {
+                            [e setPrefix:[NSString stringWithFormat:@"%@ ", prefix_]];
                         }
                         [[self unfilteredModel] addHit:e];
                     } else {
