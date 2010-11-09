@@ -1365,16 +1365,14 @@ NSString *sessionsKey = @"sessions";
     }
 
     // create a new terminal window
-    term = [[PseudoTerminal alloc] init];
+    term = [[[PseudoTerminal alloc] initWithSmartLayout:NO fullScreen:nil] autorelease];
     if (term == nil) {
         return nil;
     }
 
-    [term initWithSmartLayout:NO fullScreen:nil];
     [term copySettingsFrom:self];
 
     [[iTermController sharedInstance] addInTerminals: term];
-    [term release];
 
     if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
         [[term window] setFrameTopLeftPoint:point];
@@ -3031,15 +3029,12 @@ NSString *sessionsKey = @"sessions";
     }
 
     // create a new terminal window
-    term = [[PseudoTerminal alloc] init];
+    term = [[[PseudoTerminal alloc] initWithSmartLayout:NO fullScreen:nil] autorelease];
     if (term == nil) {
         return;
     }
 
-    [term initWithSmartLayout:NO fullScreen:nil];
-
     [[iTermController sharedInstance] addInTerminals: term];
-    [term release];
 
 
     // temporarily retain the tabViewItem

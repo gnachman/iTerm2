@@ -93,7 +93,7 @@
 
 - (float)topMarginForTabBarControl
 {
-	return 0.0f;
+    return 0.0f;
 }
 
 #pragma mark -
@@ -119,13 +119,13 @@
 
 - (NSRect)dragRectForTabCell:(PSMTabBarCell *)cell orientation:(PSMTabBarOrientation)orientation
 {
-	return [cell frame];
+    return [cell frame];
 }
 
 - (NSRect)closeButtonRectForTabCell:(PSMTabBarCell *)cell
 {
     NSRect cellFrame = [cell frame];
-    
+
     if ([cell hasCloseButton] == NO) {
         return NSZeroRect;
     }
@@ -304,8 +304,8 @@
         [TruncatingTailParagraphStyle setAlignment:NSCenterTextAlignment];
     }
     [attrStr addAttribute:NSParagraphStyleAttributeName value:TruncatingTailParagraphStyle range:range];
-    
-    return attrStr;	
+
+    return attrStr;
 }
 
 #pragma mark -
@@ -373,42 +373,38 @@
 
 - (void)drawBackgroundInRect:(NSRect)rect
 {
-	[aquaTabBg drawInRect:rect fromRect:NSMakeRect(0.0, 0.0, 1.0, 22.0) operation:NSCompositeSourceOver fraction:1.0];
+    [aquaTabBg drawInRect:rect fromRect:NSMakeRect(0.0, 0.0, 1.0, 22.0) operation:NSCompositeSourceOver fraction:1.0];
 }
 
 - (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect
 {
-	[self drawBackgroundInRect:rect];
-    
+    [self drawBackgroundInRect:rect];
+
     // no tab view == not connected
     if(![bar tabView]){
         NSRect labelRect = rect;
         labelRect.size.height -= 4.0;
         labelRect.origin.y += 4.0;
-        NSMutableAttributedString *attrStr;
         NSString *contents = @"PSMTabBarControl";
-        attrStr = [[[NSMutableAttributedString alloc] initWithString:contents] autorelease];
+        NSMutableAttributedString *attrStr = [[[NSMutableAttributedString alloc] initWithString:contents] autorelease];
         NSRange range = NSMakeRange(0, [contents length]);
         [attrStr addAttribute:NSFontAttributeName value:[NSFont systemFontOfSize:11.0] range:range];
-        NSMutableParagraphStyle *centeredParagraphStyle = nil;
-        if (!centeredParagraphStyle) {
-            centeredParagraphStyle = [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] retain];
-            [centeredParagraphStyle setAlignment:NSCenterTextAlignment];
-        }
+
+        NSMutableParagraphStyle *centeredParagraphStyle = [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
+        [centeredParagraphStyle setAlignment:NSCenterTextAlignment];
+
         [attrStr addAttribute:NSParagraphStyleAttributeName value:centeredParagraphStyle range:range];
         [attrStr drawInRect:labelRect];
         return;
     }
-    
+
     // Draw cells
-    NSEnumerator *e = [[bar cells] objectEnumerator];
-    PSMTabBarCell *cell;
-    while ( (cell = [e nextObject]) ) {
+    for (PSMTabBarCell *cell in [bar cells] ) {
         if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], rect)) {
             [cell drawWithFrame:[cell frame] inView:bar];
         }
     }
-}   	
+}
 
 - (void)drawInteriorWithTabCell:(PSMTabBarCell *)cell inView:(NSView*)controlView
 {

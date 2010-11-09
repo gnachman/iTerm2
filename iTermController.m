@@ -330,10 +330,8 @@ static BOOL initDone = NO;
 
     // Where do we execute this command?
     if (theTerm == nil) {
-        term = [[PseudoTerminal alloc] init];
-        [term initWithSmartLayout:YES fullScreen:nil];
+        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES fullScreen:nil] autorelease];
         [self addInTerminals:term];
-        [term release];
     } else {
         term = theTerm;
     }
@@ -357,19 +355,16 @@ static BOOL initDone = NO;
     if (aDict == nil) {
         aDict = [[BookmarkModel sharedInstance] defaultBookmark];
         if (!aDict) {
-            NSMutableDictionary* temp = [[NSMutableDictionary alloc] init];
+            NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
             [ITAddressBookMgr setDefaultsInBookmark:temp];
-            [temp autorelease];
             aDict = temp;
         }
     }
 
     // Where do we execute this command?
     if (theTerm == nil) {
-        term = [[PseudoTerminal alloc] init];
-        [term initWithSmartLayout:YES fullScreen:nil];
+        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES fullScreen:nil] autorelease];
         [self addInTerminals: term];
-        [term release];
     } else {
         term = theTerm;
     }
@@ -390,9 +385,8 @@ static BOOL initDone = NO;
             prototype = [[BookmarkModel sharedInstance] defaultBookmark];
         }
         if (!prototype) {
-            NSMutableDictionary* temp = [[NSMutableDictionary alloc] init];
+            NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
             [ITAddressBookMgr setDefaultsInBookmark:temp];
-            [temp autorelease];
             prototype = temp;
         }
 
@@ -427,11 +421,8 @@ static BOOL initDone = NO;
 
     // Where do we execute this command?
     if (theTerm == nil) {
-        term = [[PseudoTerminal alloc] init];
-        [term initWithSmartLayout:YES fullScreen:nil];
+        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES fullScreen:nil] autorelease];
         [self addInTerminals: term];
-        [term release];
-
     } else {
         term = theTerm;
     }

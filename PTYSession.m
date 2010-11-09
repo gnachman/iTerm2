@@ -1603,18 +1603,6 @@ static NSImage *warningImage;
     return backgroundImagePath;
 }
 
-+ (NSImage*)loadBackgroundImage:(NSString*)imageFilePath
-{
-    NSString* actualPath;
-    if ([imageFilePath isAbsolutePath] == NO) {
-        NSBundle *myBundle = [NSBundle bundleForClass:[PTYSession class]];
-        actualPath = [myBundle pathForResource:imageFilePath ofType:@""];
-    } else {
-        actualPath = imageFilePath;
-    }
-    return [[NSImage alloc] initWithContentsOfFile:actualPath];
-}
-
 - (void)setBackgroundImagePath:(NSString *)imageFilePath
 {
     if ([imageFilePath length]) {

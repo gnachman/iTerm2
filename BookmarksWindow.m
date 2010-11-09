@@ -135,12 +135,12 @@
 
 - (NSMenu*)bookmarkTable:(id)bookmarkTable menuForEvent:(NSEvent*)theEvent
 {
-    NSMenu* menu =[[NSMenu alloc] initWithTitle:@"Contextual Menu"];
+    NSMenu* menu =[[[NSMenu alloc] initWithTitle:@"Contextual Menu"] autorelease];
 
     int count = [[bookmarkTable selectedGuids] count];
     if (count == 1) {
         [menu addItemWithTitle:@"Edit Bookmark..."
-                        action:@selector(editSelectedBookmark:) 
+                        action:@selector(editSelectedBookmark:)
                  keyEquivalent:@""];
         [menu addItemWithTitle:@"Open in New Tab"
                         action:@selector(openBookmarkInTab:) 

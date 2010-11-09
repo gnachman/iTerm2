@@ -50,6 +50,7 @@
 #include <sys/time.h>
 #include <math.h>
 
+// FIXME: Looks like this is leaked.
 static NSCursor* textViewCursor =  nil;
 
 @implementation PTYTextView
@@ -60,10 +61,10 @@ static NSCursor* textViewCursor =  nil;
 
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
     NSString* ibarFile = [bundle
-                          pathForResource:@"IBarCursor" 
-                          ofType:@"png"];   
-    NSImage* image = [[NSImage alloc] initWithContentsOfFile:ibarFile];
-    
+                          pathForResource:@"IBarCursor"
+                          ofType:@"png"];
+    NSImage* image = [[[NSImage alloc] initWithContentsOfFile:ibarFile] autorelease];
+
     textViewCursor = [[NSCursor alloc] initWithImage:image hotSpot:hotspot];
 }
 
