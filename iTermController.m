@@ -477,26 +477,7 @@ static BOOL initDone = NO;
 }
 
 
-static unsigned int CocoaModifierFlagsToCarbonModifierFlags(unsigned int cocoaFlags) {
-    static const unsigned int carbon[] = { 
-        shiftKey, alphaLock, controlKey,
-        optionKey, cmdKey, kEventKeyModifierFnMask, 
-        kEventKeyModifierNumLockMask, 0 };
-    static const unsigned int cocoa[] = { 
-        NSShiftKeyMask, NSAlphaShiftKeyMask, NSControlKeyMask, 
-        NSAlternateKeyMask, NSCommandKeyMask, NSFunctionKeyMask, 
-        NSNumericPadKeyMask, 0 };
-
-    unsigned int carbonFlags = 0;
-    for (int i = 0; carbon[i]; ++i) {
-        if (cocoaFlags & cocoa[i]) {
-            carbonFlags |= carbon[i];
-        }
-    }
-    return carbonFlags;
-}
-
-static OSStatus OnHotKeyEvent(EventHandlerCallRef nextHandler,EventRef theEvent,void *userData)
+static void OnHotKeyEvent()
 {
     iTermController* controller = [iTermController sharedInstance];
     int n = [controller numberOfTerminals];
@@ -504,44 +485,65 @@ static OSStatus OnHotKeyEvent(EventHandlerCallRef nextHandler,EventRef theEvent,
     if (n == 0) {
         [controller newWindow:nil];
     }
-    return noErr;
+}
+
+/*
+ * The callback is passed a proxy for the tap, the event type, the incoming event,
+ * and the refcon the callback was registered with.
+ * The function should return the (possibly modified) passed in event,
+ * a newly constructed event, or NULL if the event is to be deleted.
+ *
+ * The CGEventRef passed into the callback is retained by the calling code, and is
+ * released after the callback returns and the data is passed back to the event 
+ * system.  If a different event is returned by the callback function, then that
+ * event will be released by the calling code along with the original event, after
+ * the event data has been passed back to the event system.
+ */
+static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon)
+{
+    iTermController* cont = refcon;
+    NSEvent* e = [NSEvent eventWithCGEvent:event];
+    if (cont->hotkeyCode_ &&
+        ([e modifierFlags] & cont->hotkeyModifiers_) == cont->hotkeyModifiers_ &&
+        [e keyCode] == cont->hotkeyCode_) {
+        OnHotKeyEvent();
+    }
+    
+    return event;
 }
 
 - (void)unregisterHotkey
 {
-    if (haveHotKey) {
-        NSLog(@"Unregister hotkey");
-        UnregisterEventHotKey(hotKeyRef);
-    }
-    haveHotKey = NO;
+    hotkeyCode_ = 0;
+    hotkeyModifiers_ = 0;
 }
 
 - (void)registerHotkey:(int)keyCode modifiers:(int)modifiers
 {
-    EventHotKeyID hotKeyId;
-    EventTypeSpec eventType;
-    eventType.eventClass = kEventClassKeyboard;
-    eventType.eventKind = kEventHotKeyPressed;	
-    
-    static BOOL haveEventHandler;
-    if (!haveEventHandler) {
-        NSLog(@"Install event handler");
-        InstallApplicationEventHandler(&OnHotKeyEvent, 1, &eventType, (void *)self, NULL);
-        haveEventHandler = YES;
+    hotkeyCode_ = keyCode;
+    hotkeyModifiers_ = modifiers;
+    static CFMachPortRef machPortRef;
+    if (!machPortRef) {
+        NSLog(@"Register event tap.");
+        machPortRef = CGEventTapCreate(kCGHIDEventTap,
+                                       kCGHeadInsertEventTap,
+                                       kCGEventTapOptionListenOnly,
+                                       CGEventMaskBit(kCGEventKeyDown),
+                                       (CGEventTapCallBack)OnTappedEvent,
+                                       self);
+
+        CFRunLoopSourceRef eventSrc;
+        
+        eventSrc = CFMachPortCreateRunLoopSource(NULL, machPortRef, 0);
+        if (eventSrc == NULL) {
+            NSLog(@"CFMachPortCreateRunLoopSource failed.");
+        } else {
+            NSLog(@"Adding run loop source.");
+            // Get the CFRunLoop primitive for the Carbon Main Event Loop, and add the new event souce
+            CFRunLoopAddSource(CFRunLoopGetCurrent(), eventSrc, kCFRunLoopDefaultMode);
+        }
+        CFRelease(eventSrc);
     }
-    
-    hotKeyId.signature='htk1';
-    hotKeyId.id=1;
-    
-    [self unregisterHotkey];
-    NSLog(@"Register hotkey. keycode=%d, mods=%x (carbon=%x)", keyCode, modifiers, CocoaModifierFlagsToCarbonModifierFlags(modifiers));
-    haveHotKey = YES;
-    RegisterEventHotKey(keyCode,
-                        CocoaModifierFlagsToCarbonModifierFlags(modifiers),
-                        hotKeyId, 
-                        GetApplicationEventTarget(), 
-                        0,  // Want exclusive? Pass kEventHotKeyExclusive here.
-                        &hotKeyRef);	
 }
 
 @end

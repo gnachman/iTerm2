@@ -6,7 +6,7 @@
  **  Copyright (c) 2002, 2003
  **
  **  Author: Fabian, Ujwal S. Setlur
- **	     Initial code by Kiichi Kusama
+ **          Initial code by Kiichi Kusama
  **
  **  Project: iTerm
  **
@@ -41,11 +41,11 @@
     NSMutableArray *terminalWindows;
     PasteboardHistory* pbHistory;
     id FRONT;
-	ItermGrowlDelegate *gd;
-    
+    ItermGrowlDelegate *gd;
+
     // App-wide hotkey
-    BOOL haveHotKey;
-    EventHotKeyRef hotKeyRef;
+    int hotkeyCode_;
+    int hotkeyModifiers_;
 }
 
 + (iTermController*)sharedInstance;
