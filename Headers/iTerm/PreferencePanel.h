@@ -118,6 +118,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *useCompactLabel;
     BOOL defaultUseCompactLabel;
 
+    // Highlight tab labels on activity
+    IBOutlet NSButton *highlightTabLabels;
+    BOOL defaultHighlightTabLabels;
+
     // open bookmarks when iterm starts
     IBOutlet NSButton *openBookmark;
     BOOL defaultOpenBookmark;
@@ -347,6 +351,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 - (BOOL)cmdSelection;
 - (BOOL)maxVertically;
 - (BOOL)useCompactLabel;
+- (BOOL)highlightTabLabels;
 - (BOOL)openBookmark;
 - (NSString *)wordChars;
 - (ITermCursorType)cursorType;

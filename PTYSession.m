@@ -1149,12 +1149,12 @@ static NSImage *warningImage;
     }
 }
 
-- (BOOL) isProcessing
+- (BOOL)isProcessing
 {
-    return (isProcessing);
+    return [[PreferencePanel sharedInstance] highlightTabLabels] && (isProcessing);
 }
 
-- (void) setIsProcessing: (BOOL) aFlag
+- (void)setIsProcessing: (BOOL) aFlag
 {
     isProcessing = aFlag;
 }

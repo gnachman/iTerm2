@@ -356,6 +356,7 @@ static float versionNumber;
     defaultCmdSelection = [prefs objectForKey:@"CommandSelection"]?[[prefs objectForKey:@"CommandSelection"] boolValue]: YES;
     defaultMaxVertically = [prefs objectForKey:@"MaxVertically"]?[[prefs objectForKey:@"MaxVertically"] boolValue]: YES;
     defaultUseCompactLabel = [prefs objectForKey:@"UseCompactLabel"]?[[prefs objectForKey:@"UseCompactLabel"] boolValue]: YES;
+    defaultHighlightTabLabels = [prefs objectForKey:@"HighlightTabLabels"]?[[prefs objectForKey:@"HighlightTabLabels"] boolValue]: YES;
     [defaultWordChars release];
     defaultWordChars = [prefs objectForKey: @"WordCharacters"]?[[prefs objectForKey: @"WordCharacters"] retain]:@"/-+\\~_.";
     defaultOpenBookmark = [prefs objectForKey:@"OpenBookmark"]?[[prefs objectForKey:@"OpenBookmark"] boolValue]: NO;
@@ -447,6 +448,7 @@ static float versionNumber;
     [prefs setBool:defaultCmdSelection forKey:@"CommandSelection"];
     [prefs setBool:defaultMaxVertically forKey:@"MaxVertically"];
     [prefs setBool:defaultUseCompactLabel forKey:@"UseCompactLabel"];
+    [prefs setBool:defaultHighlightTabLabels forKey:@"HighlightTabLabels"];
     [prefs setObject: defaultWordChars forKey: @"WordCharacters"];
     [prefs setBool:defaultOpenBookmark forKey:@"OpenBookmark"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
@@ -497,6 +499,7 @@ static float versionNumber;
     [cmdSelection setState: defaultCmdSelection?NSOnState:NSOffState];
     [maxVertically setState: defaultMaxVertically?NSOnState:NSOffState];
     [useCompactLabel setState: defaultUseCompactLabel?NSOnState:NSOffState];
+    [highlightTabLabels setState: defaultHighlightTabLabels?NSOnState:NSOffState];
     [openBookmark setState: defaultOpenBookmark?NSOnState:NSOffState];
     [wordChars setStringValue: ([defaultWordChars length] > 0)?defaultWordChars:@""];
     [quitWhenAllWindowsClosed setState: defaultQuitWhenAllWindowsClosed?NSOnState:NSOffState];
@@ -543,6 +546,7 @@ static float versionNumber;
         sender == tabPosition ||
         sender == hideTab ||
         sender == useCompactLabel ||
+        sender == highlightTabLabels ||
         sender == cursorType ||
         sender == useBorder ||
         sender == hideScrollbar ||
@@ -550,6 +554,7 @@ static float versionNumber;
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
         defaultTabViewType=[tabPosition indexOfSelectedItem];
         defaultUseCompactLabel = ([useCompactLabel state] == NSOnState);
+        defaultHighlightTabLabels = ([highlightTabLabels state] == NSOnState);
         defaultHideTab=([hideTab state]==NSOnState);
         defaultCursorType = [[cursorType selectedCell] tag];
         defaultColorInvertedCursor = ([checkColorInvertedCursor state] == NSOnState);
@@ -725,6 +730,11 @@ static float versionNumber;
 - (BOOL)useCompactLabel
 {
     return defaultUseCompactLabel;
+}
+
+- (BOOL)highlightTabLabels
+{
+    return defaultHighlightTabLabels;
 }
 
 - (BOOL)openBookmark

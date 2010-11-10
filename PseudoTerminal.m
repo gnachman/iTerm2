@@ -1417,7 +1417,12 @@ NSString *sessionsKey = @"sessions";
 
 - (void)setLabelColor:(NSColor *)color forTabViewItem:tabViewItem
 {
-    [tabBarControl setLabelColor:color forTabViewItem:tabViewItem];
+    if ([[PreferencePanel sharedInstance] highlightTabLabels]) {
+        [tabBarControl setLabelColor:color forTabViewItem:tabViewItem];
+    } else {
+        [tabBarControl setLabelColor:[NSColor blackColor] forTabViewItem:tabViewItem];
+    }
+
 }
 
 - (PTYTabView *)tabView
