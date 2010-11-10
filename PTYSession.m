@@ -355,20 +355,10 @@ static NSImage *warningImage;
     if ([env objectForKey:COLORFGBG_ENVNAME] == nil && COLORFGBG_VALUE != nil)
         [env setObject:COLORFGBG_VALUE forKey:COLORFGBG_ENVNAME];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-    [env setObject:[[NSLocale currentLocale] localeIdentifier] forKey:@"LANG"];
     NSString* encoding = [self _getEncoding];
     if (encoding) {
-        [env setObject:encoding forKey:@"LC_CTYPE"];
-#if 0
-        [env setObject:encoding forKey:@"LC_COLLATE"];
-        [env setObject:encoding forKey:@"LC_MESSAGES"];
-        [env setObject:encoding forKey:@"LC_MONETARY"];
-        [env setObject:encoding forKey:@"LC_NUMERIC"];
-        [env setObject:encoding forKey:@"LC_TIME"];
-#endif
+        [env setObject:encoding forKey:@"LANG"];
     }
-#endif
 
     if ([env objectForKey:PWD_ENVNAME] == nil)
         [env setObject:[PWD_ENVVALUE stringByExpandingTildeInPath] forKey:PWD_ENVNAME];
@@ -2215,7 +2205,6 @@ static NSImage *warningImage;
 
 @implementation PTYSession (Private)
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
 - (NSString*)_getEncoding
 {
     // Get the encoding
@@ -2248,9 +2237,8 @@ static NSImage *warningImage;
         encoding = [NSString stringWithString:temp];
     }
 
-    return encoding;
+    return [NSString stringWithFormat:@"%@.%@", [[NSLocale currentLocale] localeIdentifier], encoding];
 }
-#endif
 
 - (void)setDvrFrame
 {
