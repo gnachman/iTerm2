@@ -3606,17 +3606,31 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return ([self contentFromX:x1 Y:yStart ToX:x2 Y:y2 pad: YES]);
 }
 
+static bool IsCharInSet(unichar theChar, NSCharacterSet* charSet)
+{
+    return [[NSString stringWithCharacters:&theChar length:1] rangeOfCharacterFromSet:charSet].location != NSNotFound;
+}
+
+static bool IsUrlChar(unichar theChar)
+{
+    static NSCharacterSet* urlChars;
+    if (!urlChars) {
+        urlChars = [[NSCharacterSet characterSetWithCharactersInString:@".?/:;%=&_-,+~#@!*'()"] retain];
+    }
+    return IsCharInSet(theChar, urlChars) || IsCharInSet(theChar, [NSCharacterSet alphanumericCharacterSet]);
+}
+
 - (NSString *) _getURLForX: (int) x
                     y: (int) y
 {
-    static char *urlSet = ".?/:;%=&_-,+~#@!*'()";
     int w = [dataSource width];
     int h = [dataSource numberOfLines];
     NSMutableString *url = [NSMutableString string];
     unichar theChar = [self _getCharacterAtX:x Y:y];
 
-    if (theChar == '\0' || !(isalnum(theChar) || strchr(urlSet, theChar)))
+    if (theChar == '\0' || !IsUrlChar(theChar)) {
         return url;
+    }
 
     // Look for a left and right edge bracketed by | characters
     // Look for a left edge
@@ -3651,7 +3665,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         int endx = x-1;
         for (int xi = endx, yi = y; xi >= leftx && 0 <= yi; xi--) {
             unichar curChar = [self _getCharacterAtX:xi Y:yi];
-            if (curChar == '\0' || !(isalnum(curChar) || strchr(urlSet, curChar))) {
+            if (curChar == '\0' || !IsUrlChar(curChar)) {
                 // Found a non-url character so append the left part of the URL.
                 [url insertString:[self contentFromX:xi+1 Y:yi ToX:endx+1 Y:yi pad: YES]
                      atIndex:0];
@@ -3686,7 +3700,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         int startx = x;
         for (int xi = startx+1, yi = y; xi <= rightx && yi < h; xi++) {
             unichar curChar = [self _getCharacterAtX:xi Y:yi];
-            if (curChar == '\0' || !(isalnum(curChar) || strchr(urlSet, curChar))) {
+            if (curChar == '\0' || !IsUrlChar(curChar)) {
                 // Found something non-urly. Append what we have so far.
                 [url appendString:[self contentFromX:startx Y:yi ToX:xi Y:yi pad: YES]];
                 // skip backslahes that indicate wrapping
@@ -3873,7 +3887,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return YES;
 }
 
-- (void) _openURL: (NSString *) aURLString
+- (void)_openURL:(NSString *)aURLString
 {
     NSURL *url;
     NSString* trimmedURLString;
@@ -3881,8 +3895,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
     // length returns an unsigned value, so couldn't this just be ==? [TRE]
-    if([trimmedURLString length] <= 0)
+    if ([trimmedURLString length] <= 0) {
         return;
+    }
 
     // Check for common types of URLs
 
@@ -3918,7 +3933,13 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         }
     }
 
-    NSString* escapedString = [trimmedURLString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+    NSString* escapedString =
+        (NSString *)CFURLCreateStringByAddingPercentEscapes(NULL,
+                                                            (CFStringRef)trimmedURLString,
+                                                            (CFStringRef)@"!*'();:@&=+$,/?%#[]",
+                                                            NULL,
+                                                            kCFStringEncodingUTF8 );
+
     url = [NSURL URLWithString:escapedString];
 
     Bookmark *bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:[url scheme]];
