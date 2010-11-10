@@ -33,6 +33,7 @@
 #import <iTerm/PTYSession.h>
 #import <iTerm/PseudoTerminal.h>
 #import <iTerm/BookmarkModel.h>
+#import "PasteboardHistory.h"
 
 static float versionNumber;
 
@@ -369,6 +370,7 @@ static float versionNumber;
     defaultHotkeyCode = [prefs objectForKey:@"HotkeyCode"]?[[prefs objectForKey:@"HotkeyCode"] intValue]: 0;
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
     defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
+    defaultSavePasteHistory = [prefs objectForKey:@"SavePasteHistory"]?[[prefs objectForKey:@"SavePasteHistory"] boolValue]: NO;
     defaultIrMemory = [prefs objectForKey:@"IRMemory"]?[[prefs objectForKey:@"IRMemory"] intValue] : 4;
     defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
     defaultColorInvertedCursor = [prefs objectForKey:@"ColorInvertedCursor"]?[[prefs objectForKey:@"ColorInvertedCursor"] boolValue]: NO;
@@ -459,6 +461,7 @@ static float versionNumber;
     [prefs setInteger:defaultHotkeyCode forKey:@"HotkeyCode"];
     [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
     [prefs setInteger:defaultHotkeyModifiers forKey:@"HotkeyModifiers"];
+    [prefs setBool:defaultSavePasteHistory forKey:@"SavePasteHistory"];
     [prefs setInteger:defaultIrMemory forKey:@"IRMemory"];
     [prefs setBool:defaultCheckTestRelease forKey:@"CheckTestRelease"];
     [prefs setBool:defaultColorInvertedCursor forKey:@"ColorInvertedCursor"];
@@ -503,6 +506,7 @@ static float versionNumber;
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [smartPlacement setState: defaultSmartPlacement?NSOnState:NSOffState];
     [instantReplay setState: defaultInstantReplay?NSOnState:NSOffState];
+    [savePasteHistory setState: defaultSavePasteHistory?NSOnState:NSOffState];
     [hotkey setState: defaultHotkey?NSOnState:NSOffState];
     if (defaultHotkeyCode) {
         [hotkeyField setStringValue:[iTermKeyBindingMgr formatKeyCombination:[NSString stringWithFormat:@"0x%x-0x%x", defaultHotkeyChar, defaultHotkeyModifiers]]];
@@ -592,6 +596,10 @@ static float versionNumber;
         defaultCheckUpdate = ([checkUpdate state] == NSOnState);
         defaultSmartPlacement = ([smartPlacement state] == NSOnState);
         defaultInstantReplay = ([instantReplay state] == NSOnState);
+        defaultSavePasteHistory = ([savePasteHistory state] == NSOnState);
+        if (!defaultSavePasteHistory) {
+            [[PasteboardHistory sharedInstance] eraseHistory];
+        }
         defaultIrMemory = [irMemory intValue];
         BOOL oldDefaultHotkey = defaultHotkey;
         defaultHotkey = ([hotkey state] == NSOnState);
@@ -755,6 +763,11 @@ static float versionNumber;
 - (BOOL)instantReplay
 {
     return defaultInstantReplay;
+}
+
+- (BOOL)savePasteHistory
+{
+    return defaultSavePasteHistory;
 }
 
 - (int)irMemory

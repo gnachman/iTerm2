@@ -30,7 +30,11 @@
 #import "PasteboardHistory.h"
 #import "iTerm/iTermController.h"
 #import "NSDateFormatterExtras.h"
+#import "PreferencePanel.h"
 #define kPasteboardHistoryDidChange @"PasteboardHistoryDidChange"
+#define PBHKEY_ENTRIES @"Entries"
+#define PBHKEY_VALUE @"Value"
+#define PBHKEY_TIMESTAMP @"Timestamp"
 
 @implementation PasteboardEntry
 
@@ -68,6 +72,17 @@
     }
     maxEntries_ = maxEntries;
     entries_ = [[NSMutableArray alloc] init];
+
+
+    path_ = [NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) lastObject];
+    NSString *appname = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString *)kCFBundleNameKey];
+    path_ = [path_ stringByAppendingPathComponent:appname];
+    [[NSFileManager defaultManager] createDirectoryAtPath:path_ withIntermediateDirectories:YES attributes:nil error:NULL];
+    path_ = [[path_ stringByAppendingPathComponent:@"pbhistory.plist"] copyWithZone:[self zone]];
+    [path_ retain];
+
+    [self _loadHistoryFromDisk];
+
     return self;
 }
 
@@ -80,6 +95,47 @@
 - (NSArray*)entries
 {
     return entries_;
+}
+
+- (NSDictionary*)_entriesToDict
+{
+    NSMutableArray* a = [[[NSMutableArray alloc] init] autorelease];
+
+    for (PasteboardEntry* entry in entries_) {
+        [a addObject:[NSDictionary dictionaryWithObjectsAndKeys:[entry mainValue], PBHKEY_VALUE,
+                      [NSNumber numberWithDouble:[entry->timestamp timeIntervalSinceReferenceDate]], PBHKEY_TIMESTAMP,
+                      nil]];
+    }
+    return [NSDictionary dictionaryWithObject:a forKey:PBHKEY_ENTRIES];
+}
+
+- (void)_addDictToEntries:(NSDictionary*)dict
+{
+    NSArray* a = [dict objectForKey:PBHKEY_ENTRIES];
+    for (NSDictionary* d in a) {
+        double timestamp = [[d objectForKey:PBHKEY_TIMESTAMP] doubleValue];
+        PasteboardEntry* entry = [PasteboardEntry entryWithString:[d objectForKey:PBHKEY_VALUE] score:timestamp];
+        entry->timestamp = [[NSDate alloc] initWithTimeIntervalSinceReferenceDate:timestamp];
+        [entries_ addObject:entry];
+    }
+}
+
+- (void)eraseHistory
+{
+    [[NSFileManager defaultManager] removeItemAtPath:path_ error:NULL];
+}
+
+- (void)_writeHistoryToDisk
+{
+    if ([[PreferencePanel sharedInstance] savePasteHistory]) {
+        [NSKeyedArchiver archiveRootObject:[self _entriesToDict] toFile:path_];
+    }
+}
+
+- (void)_loadHistoryFromDisk
+{
+    [entries_ removeAllObjects];
+    [self _addDictToEntries:[NSKeyedUnarchiver unarchiveObjectWithFile:path_]];
 }
 
 - (void)save:(NSString*)value
@@ -116,6 +172,9 @@
     if ([entries_ count] == maxEntries_) {
         [entries_ removeObjectAtIndex:0];
     }
+
+    [self _writeHistoryToDisk];
+
     [[NSNotificationCenter defaultCenter] postNotificationName:kPasteboardHistoryDidChange
                                                         object:self];
 }

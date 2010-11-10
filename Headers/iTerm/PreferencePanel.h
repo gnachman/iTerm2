@@ -167,7 +167,11 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     int defaultHotkeyChar;
     int defaultHotkeyCode;
     int defaultHotkeyModifiers;
-    
+
+    // Save copy paste history
+    IBOutlet NSButton *savePasteHistory;
+    BOOL defaultSavePasteHistory;
+
     // prompt for test-release updates
     IBOutlet NSButton *checkTestRelease;
     BOOL defaultCheckTestRelease;
@@ -350,6 +354,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 - (BOOL)hideScrollbar;
 - (BOOL)smartPlacement;
 - (BOOL)instantReplay;
+- (BOOL)savePasteHistory;
 - (int)irMemory;
 
 - (BOOL)hotkey;

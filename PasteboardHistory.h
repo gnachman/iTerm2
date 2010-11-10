@@ -46,6 +46,7 @@
 @interface PasteboardHistory : NSObject {
     NSMutableArray* entries_;
     int maxEntries_;
+    NSString* path_;
 }
 
 + (PasteboardHistory*)sharedInstance;
@@ -53,6 +54,10 @@
 - (void)dealloc;
 - (NSArray*)entries;
 - (void)save:(NSString*)value;
+- (void)eraseHistory;
+
+- (void)_loadHistoryFromDisk;
+- (void)_writeHistoryToDisk;
 
 @end
 
