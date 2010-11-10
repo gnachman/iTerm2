@@ -110,7 +110,7 @@
     }
 
     // Append this value.
-    PasteboardEntry* entry = [PasteboardEntry entryWithString:value score:-[entries_ count]];
+    PasteboardEntry* entry = [PasteboardEntry entryWithString:value score:[[NSDate date] timeIntervalSince1970]];
     entry->timestamp = [[NSDate alloc] init];
     [entries_ addObject:entry];
     if ([entries_ count] == maxEntries_) {

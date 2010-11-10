@@ -136,7 +136,7 @@
 - (void)reloadData:(BOOL)canChangeSide;
 - (void)_setClearFilterOnNextKeyDownFlag:(id)sender;
 - (int)convertIndex:(int)i;
-- (NSAttributedString*)attributedStringForEntry:(PopupEntry*)entry;
+- (NSAttributedString*)attributedStringForEntry:(PopupEntry*)entry isSelected:(BOOL)isSelected;
 - (void)windowDidResignKey:(NSNotification *)aNotification;
 - (void)windowDidBecomeKey:(NSNotification *)aNotification;
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;

@@ -473,21 +473,29 @@
     [self onClose];
 }
 
-- (NSAttributedString*)attributedStringForEntry:(PopupEntry*)entry
+- (NSAttributedString*)attributedStringForEntry:(PopupEntry*)entry isSelected:(BOOL)isSelected
 {
     float size = [NSFont systemFontSize];
     NSFont* sysFont = [NSFont systemFontOfSize:size];
     NSMutableAttributedString* as = [[[NSMutableAttributedString alloc] init] autorelease];
-    NSColor* lightColor = [[NSColor blackColor] colorWithAlphaComponent:0.4];
+    NSColor* textColor;
+    if (isSelected) {
+        textColor = [NSColor whiteColor];
+    } else {
+        textColor = [NSColor blackColor];
+    }
+    NSColor* lightColor = [textColor colorWithAlphaComponent:0.4];
     NSDictionary* lightAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
                                      sysFont, NSFontAttributeName,
                                      lightColor, NSForegroundColorAttributeName,
                                      nil];
     NSDictionary* plainAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
                                      sysFont, NSFontAttributeName,
+                                     textColor, NSForegroundColorAttributeName,
                                      nil];
     NSDictionary* boldAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
                                     [NSFont boldSystemFontOfSize:size], NSFontAttributeName,
+                                    textColor, NSForegroundColorAttributeName,
                                     nil];
 
     [as appendAttributedString:[[[NSAttributedString alloc] initWithString:[entry prefix] attributes:lightAttributes] autorelease]];
@@ -526,7 +534,7 @@
         [as appendAttributedString:attributedSubstr];
     }
 
-    [as appendAttributedString:[[[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@" (%f)", (float)[entry score]] attributes:plainAttributes] autorelease]];
+    [as appendAttributedString:[[[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@" (%lf)", [entry score]] attributes:plainAttributes] autorelease]];
     return as;
 }
 
@@ -589,7 +597,7 @@
 {
     int i = [self convertIndex:rowIndex];
     PopupEntry* e = [[self model] objectAtIndex:i];
-    return [self attributedStringForEntry:e];
+    return [self attributedStringForEntry:e isSelected:[aTableView selectedRow]==rowIndex];
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
