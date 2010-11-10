@@ -1912,7 +1912,7 @@ static float versionNumber;
         NSBeep();
         [self cancelCopyFrom:self];
     }
-    Bookmark* src = [dataSource bookmarkWithGuid:guid];
+    Bookmark* src = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
     NSMutableDictionary* newDict = [[NSMutableDictionary alloc] initWithDictionary:dest];
     NSString** keys = nil;
     if ([copyTo isEqualToString:@"colors"]) {
@@ -1996,8 +1996,7 @@ static float versionNumber;
             }
         }
     }
-    [dataSource setBookmark:newDict
-                                       withGuid:[bookmarksTableView selectedGuid]];
+    [dataSource setBookmark:newDict withGuid:[bookmarksTableView selectedGuid]];
     [self updateBookmarkFields:newDict];
     [NSApp endSheet:copyFromView];
 }
