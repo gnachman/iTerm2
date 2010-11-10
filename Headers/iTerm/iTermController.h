@@ -39,7 +39,6 @@
 {
     // PseudoTerminal objects
     NSMutableArray *terminalWindows;
-    PasteboardHistory* pbHistory;
     id FRONT;
     ItermGrowlDelegate *gd;
 
@@ -71,7 +70,6 @@
 -(int)numberOfTerminals;
 -(PseudoTerminal*)terminalAtIndex:(int)i;
 - (void)irAdvance:(int)dir;
-- (PasteboardHistory*)pbHistory;
 
 - (void)unregisterHotkey;
 - (void)registerHotkey:(int)keyCode modifiers:(int)modifiers;

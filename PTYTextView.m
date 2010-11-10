@@ -1985,7 +1985,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         [pboard setString:copyString forType:NSStringPboardType];
     }
 
-    [[[iTermController sharedInstance] pbHistory] save:copyString];
+    [[PasteboardHistory sharedInstance] save:copyString];
 }
 
 - (void)paste:(id)sender
@@ -1995,7 +1995,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 #endif
     NSString *info = [[NSPasteboard generalPasteboard] stringForType:NSStringPboardType];
     if (info) {
-        [[[iTermController sharedInstance] pbHistory] save:info];
+        [[PasteboardHistory sharedInstance] save:info];
     }
 
     if ([_delegate respondsToSelector:@selector(paste:)])

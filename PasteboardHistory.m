@@ -47,6 +47,15 @@
 
 @implementation PasteboardHistory
 
++ (PasteboardHistory*)sharedInstance
+{
+    static PasteboardHistory* instance;
+    if (!instance) {
+        instance = [[PasteboardHistory alloc] initWithMaxEntries:20];
+    }
+    return instance;
+}
+
 - (id)initWithMaxEntries:(int)maxEntries
 {
     if (![super init]) {
@@ -110,14 +119,13 @@
 
 @implementation PasteboardHistoryView
 
-- (id)initWithDataSource:(PasteboardHistory*)dataSource
+- (id)init
 {
     self = [super initWithWindowNibName:@"PasteboardHistory" tablePtr:&table_ model:[[[PopupModel alloc] init] autorelease]];
     if (!self) {
         return nil;
     }
 
-    history_ = [dataSource retain];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(pasteboardHistoryDidChange:)
                                                  name:kPasteboardHistoryDidChange
@@ -128,7 +136,6 @@
 
 - (void)dealloc
 {
-    [history_ release];
     [super dealloc];
 }
 
@@ -140,7 +147,7 @@
 - (void)copyFromHistory
 {
     [[self unfilteredModel] removeAllObjects];
-    for (PasteboardEntry* e in [history_ entries]) {
+    for (PasteboardEntry* e in [[PasteboardHistory sharedInstance] entries]) {
         [[self unfilteredModel] addObject:e];
     }
 }

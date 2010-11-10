@@ -127,7 +127,7 @@ NSString *sessionsKey = @"sessions";
     [commandField setDelegate:self];
     [bottomBar retain];
 
-    pbHistoryView = [[PasteboardHistoryView alloc] initWithDataSource:[[iTermController sharedInstance] pbHistory]];
+    pbHistoryView = [[PasteboardHistoryView alloc] init];
 
     autocompleteView = [[AutocompleteView alloc] init];
 

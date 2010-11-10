@@ -47,6 +47,7 @@
     int maxEntries_;
 }
 
++ (PasteboardHistory*)sharedInstance;
 - (id)initWithMaxEntries:(int)maxEntries;
 - (void)dealloc;
 - (NSArray*)entries;
@@ -57,11 +58,10 @@
 @interface PasteboardHistoryView : Popup
 {
     IBOutlet NSTableView* table_;
-    PasteboardHistory* history_;
     NSTimer* minuteRefreshTimer_;
 }
 
-- (id)initWithDataSource:(PasteboardHistory*)dataSource;
+- (id)init;
 - (void)dealloc;
 - (void)pasteboardHistoryDidChange:(id)sender;
 - (void)copyFromHistory;

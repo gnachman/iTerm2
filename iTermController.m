@@ -110,8 +110,7 @@ static BOOL initDone = NO;
      * PLIST check here.
      */
     gd = [iTermGrowlDelegate sharedInstance];
-    pbHistory = [[PasteboardHistory alloc] initWithMaxEntries:20];
-    
+
     return (self);
 }
 
@@ -186,11 +185,6 @@ static BOOL initDone = NO;
 - (PseudoTerminal*)currentTerminal
 {
     return (FRONT);
-}
-
-- (PasteboardHistory*)pbHistory
-{
-    return pbHistory;
 }
 
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow
