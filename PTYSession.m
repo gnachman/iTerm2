@@ -355,9 +355,9 @@ static NSImage *warningImage;
     if ([env objectForKey:COLORFGBG_ENVNAME] == nil && COLORFGBG_VALUE != nil)
         [env setObject:COLORFGBG_VALUE forKey:COLORFGBG_ENVNAME];
 
-    NSString* encoding = [self _getEncoding];
-    if (encoding) {
-        [env setObject:encoding forKey:@"LANG"];
+    NSString* locale = [self _getLocale];
+    if (locale) {
+        [env setObject:locale forKey:@"LANG"];
     }
 
     if ([env objectForKey:PWD_ENVNAME] == nil)
@@ -2205,12 +2205,17 @@ static NSImage *warningImage;
 
 @implementation PTYSession (Private)
 
-- (NSString*)_getEncoding
+- (NSString*)_getLocale
 {
-    // Get the encoding
+    // Keep a copy of the current locale setting for this process
+    char* backupLocale = setlocale(LC_CTYPE, NULL);
+    
+    // Start with the locale
+    NSString* locale = [[NSLocale currentLocale] localeIdentifier];
+    
+    // Append the encoding
     CFStringEncoding cfEncoding = CFStringConvertNSStringEncodingToEncoding([self encoding]);
     NSString* ianaEncoding = (NSString*)CFStringConvertEncodingToIANACharSetName(cfEncoding);
-    NSString* encoding = nil;
 
     static NSDictionary* lowerCaseEncodings;
     if (!lowerCaseEncodings) {
@@ -2228,17 +2233,31 @@ static NSImage *warningImage;
             }
         }
     }
-
+        
     if (ianaEncoding != nil) {
         // Mangle the names slightly
-        NSMutableString* temp = [[NSMutableString alloc] initWithString:ianaEncoding];
-        [temp replaceOccurrencesOfString:@"ISO-" withString:@"ISO" options:0 range:NSMakeRange(0, [temp length])];
-        [temp replaceOccurrencesOfString:@"EUC-" withString:@"euc" options:0 range:NSMakeRange(0, [temp length])];
-        encoding = [NSString stringWithString:temp];
+        NSMutableString* encoding = [[NSMutableString alloc] initWithString:ianaEncoding];
+        [encoding replaceOccurrencesOfString:@"ISO-" withString:@"ISO" options:0 range:NSMakeRange(0, [encoding length])];
+        [encoding replaceOccurrencesOfString:@"EUC-" withString:@"euc" options:0 range:NSMakeRange(0, [encoding length])];
+        
+        NSString* test = [locale stringByAppendingFormat:@".%@", encoding];
+        if (NULL != setlocale(LC_CTYPE, [test UTF8String])) {
+            locale = test;
+        }
+        
+        [encoding release];
     }
-
-    return [NSString stringWithFormat:@"%@.%@", [[NSLocale currentLocale] localeIdentifier], encoding];
+    
+    // Check the locale is valid
+    if (NULL == setlocale(LC_CTYPE, [locale UTF8String])) {
+        locale = nil;
+    }
+    
+    // Restore locale and return
+    setlocale(LC_CTYPE, backupLocale);
+    return locale;
 }
+
 
 - (void)setDvrFrame
 {
