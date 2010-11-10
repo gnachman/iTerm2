@@ -952,17 +952,17 @@ static float versionNumber;
         // load the fonts
         NSString *fontName;
     if (normalFont != nil) {
-                fontName = [NSString stringWithFormat: @"%gpt %s", [normalFont pointSize], [[normalFont displayName] UTF8String]];
-        } else {
-                fontName = @"Unknown Font";
-        }
+            fontName = [NSString stringWithFormat: @"%gpt %@", [normalFont pointSize], [normalFont displayName]];
+    } else {
+       fontName = @"Unknown Font";
+    }
     [normalFontField setStringValue: fontName];
 
     if (nonAsciiFont != nil) {
-                fontName = [NSString stringWithFormat: @"%gpt %s", [nonAsciiFont pointSize], [[nonAsciiFont displayName] UTF8String]];
-        } else {
-                fontName = @"Unknown Font";
-        }
+        fontName = [NSString stringWithFormat: @"%gpt %@", [nonAsciiFont pointSize], [nonAsciiFont displayName]];
+    } else {
+        fontName = @"Unknown Font";
+    }
     [nonAsciiFontField setStringValue: fontName];
 }
 
