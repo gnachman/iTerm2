@@ -35,7 +35,8 @@
 #import "LineBuffer.h"
 #import "PasteboardHistory.h"
 
-const int kMaxContextWords = 2;
+const int kMaxQueryContextWords = 4;
+const int kMaxResultContextWords = 4;
 
 @implementation AutocompleteView
 
@@ -118,7 +119,7 @@ const int kMaxContextWords = 2;
                                                       startY:&ty1
                                                         endX:&tx2
                                                         endY:&ty2];
-        int maxWords = kMaxContextWords;
+        int maxWords = kMaxQueryContextWords;
         if ([s rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
             ++maxWords;
         } else {
@@ -129,7 +130,7 @@ const int kMaxContextWords = 2;
         startY_ = ty1 + [screen scrollbackOverflow];
 
         [self appendContextAtX:tx1 y:ty1 into:context_ maxWords:maxWords];
-        if (maxWords > kMaxContextWords) {
+        if (maxWords > kMaxQueryContextWords) {
             if ([context_ count] > 0) {
                 [prefix_ setString:[context_ objectAtIndex:0]];
                 [context_ removeObjectAtIndex:0];
@@ -167,13 +168,19 @@ const int kMaxContextWords = 2;
     NSLog(@"  Determining similarity score. Initialized to 0.");
     for (int i = 0; i < [queryContext count]; ++i) {
         NSString* qs = [queryContext objectAtIndex:i];
+        double lengthFactor = 1.0;
+        if ([qs length] == 1) {
+            // One-character matches have less significance.
+            lengthFactor = 5.0;
+        }
         NSLog(@"  Looking for match for query string '%@'", qs);
         for (int j = 0; j < [scratch count]; ++j) {
             NSString* rs = [scratch objectAtIndex:j];
             // Distance is a measure of how far a word in the query context is from
             // a word in the result context. Higher distances hurt the similarity
             // score.
-            double distance = abs(i - j) + 1;
+            double distance = (abs(i - j) + 1) * lengthFactor;
+
             if ([qs localizedCompare:rs] == NSOrderedSame) {
                 NSLog(@"  Exact match %@ = %@. Incr similarity by %lf", rs, qs, (1.0/distance));
                 similarity += 1.0 / distance;
@@ -187,7 +194,9 @@ const int kMaxContextWords = 2;
             }
         }
     }
-    NSLog(@"  Final similarity score is %lf", similarity);
+    // Boost similarity. This is applied in quadrature.
+    similarity *= 1.5;
+    NSLog(@"  Final similarity score with boost is %lf", similarity);
     return similarity;
 }
 
@@ -199,14 +208,14 @@ const int kMaxContextWords = 2;
     // is found. Likewise, add 3 to the denominator so that the result number has
     // a small influence when it's close to 0.
     double score = (1.0 + similarity * similarity)/(double)(resultNumber + 3);
-    
-    // Strongly penalize very short candidates, because they're not worth completing.
+
+    // Strongly penalize very short candidates, because they're not worth completing, unless the context similarity is very strong.
     double length = [word length] + joiningPrefixLength;
-    if (length < 4) {
+    if (length < 4 && similarity < 2) {
         score *= length / 50.0;
         NSLog(@"Apply length multiplier of %lf", length/50.0);
     }
-    
+
     // Prefer suffixes to full words
     if (joiningPrefixLength == 0) {
         score /= 2;
@@ -332,12 +341,13 @@ const int kMaxContextWords = 2;
                 NSRange range = [word rangeOfString:prefix_ options:(NSCaseInsensitiveSearch|NSAnchoredSearch)];
                 if (range.location == 0) {
                     // Result has prefix_ as prefix.
+                    // Set fullMatch to true if the word we found is equal to prefix, or false if word just has prefix as its prefix.
                     BOOL fullMatch = (range.length == [word length]);
 
                     // Grab the context before the match.
-                    NSMutableArray* resultContext = [NSMutableArray arrayWithCapacity:2];
+                    NSMutableArray* resultContext = [NSMutableArray arrayWithCapacity:kMaxResultContextWords];
                     NSLog(@"Word before what we want is in x=[%d to %d]", startX, endX);
-                    [self appendContextAtX:startX y:(int)startY into:resultContext maxWords:kMaxContextWords];
+                    [self appendContextAtX:startX y:(int)startY into:resultContext maxWords:kMaxResultContextWords];
 
                     if (fullMatch) {
                         // Grab the word after the match (presumably containing non-word characters)
@@ -365,9 +375,13 @@ const int kMaxContextWords = 2;
                                 NSLog(@"Hit end of screen.");
                             }
                         }
-                    } else {
-                        // Get suffix of word after match.
+                    } else if (!whitespaceBeforeCursor_) {
+                        // Get suffix of word after match. If there's whitespace before the cursor then only
+                        // full matches are interesting.
                         word = [word substringWithRange:NSMakeRange(range.length, [word length] - range.length)];
+                    } else {
+                        // Not a full match and there is whitespace before the cursor.
+                        word = @"";
                     }
 
                     if ([word rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
@@ -384,10 +398,10 @@ const int kMaxContextWords = 2;
                                                                                          resultContext:resultContext
                                                                                    joiningPrefixLength:joiningPrefixLength
                                                                                                   word:word]];
-                        if (!fullMatch) {
-                            [e setPrefix:prefix_];
-                        } else {
+                        if (whitespaceBeforeCursor_) {
                             [e setPrefix:[NSString stringWithFormat:@"%@ ", prefix_]];
+                        } else {
+                            [e setPrefix:prefix_];
                         }
                         [[self unfilteredModel] addHit:e];
                     } else {
