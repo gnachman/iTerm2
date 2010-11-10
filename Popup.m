@@ -80,7 +80,7 @@
 
 - (double)advanceHitMult
 {
-    hitMultiplier_ *= 0.8;
+    hitMultiplier_ *= 0.95;
     return hitMultiplier_;
 }
 

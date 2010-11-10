@@ -43,6 +43,11 @@
     return e;
 }
 
+- (NSDate*)timestamp
+{
+    return timestamp;
+}
+
 @end
 
 @implementation PasteboardHistory

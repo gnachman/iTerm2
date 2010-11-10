@@ -33,6 +33,7 @@
 #import "iTerm/VT100Screen.h"
 #import "iTerm/PTYTextView.h"
 #import "LineBuffer.h"
+#import "PasteboardHistory.h"
 
 const int kMaxContextWords = 2;
 
@@ -139,6 +140,113 @@ const int kMaxContextWords = 2;
     }
 }
 
+- (int)_timestampToResultNumber:(NSDate*)timestamp
+{
+    NSDate *now = [NSDate date];
+    double x = -[timestamp timeIntervalSinceDate:now];
+    x = sqrt(x / 60);
+    if (x > 20) {
+        x = 20;
+    }
+    return x;
+}
+
+- (NSString*)formatContext:(NSArray*)context
+{
+    NSMutableString* s = [NSMutableString stringWithString:@""];
+    for (int i = 0; i < [context count]; ++i) {
+        [s appendFormat:@"'%@' ", [context objectAtIndex:i]];
+    }
+    return s;
+}
+
+- (double)contextSimilarityBetweenQuery:(NSArray*)queryContext andResult:(NSArray*)resultContext
+{
+    NSMutableArray* scratch = [NSMutableArray arrayWithArray:resultContext];
+    double similarity = 0;
+    NSLog(@"  Determining similarity score. Initialized to 0.");
+    for (int i = 0; i < [queryContext count]; ++i) {
+        NSString* qs = [queryContext objectAtIndex:i];
+        NSLog(@"  Looking for match for query string '%@'", qs);
+        for (int j = 0; j < [scratch count]; ++j) {
+            NSString* rs = [scratch objectAtIndex:j];
+            // Distance is a measure of how far a word in the query context is from
+            // a word in the result context. Higher distances hurt the similarity
+            // score.
+            double distance = abs(i - j) + 1;
+            if ([qs localizedCompare:rs] == NSOrderedSame) {
+                NSLog(@"  Exact match %@ = %@. Incr similarity by %lf", rs, qs, (1.0/distance));
+                similarity += 1.0 / distance;
+                [scratch replaceObjectAtIndex:j withObject:@""];
+                break;
+            } else if ([qs localizedCaseInsensitiveCompare:rs] == NSOrderedSame) {
+                NSLog(@"  Approximate match of %@ = %@. Incr similarity by %lf", rs, qs, (0.9/distance));
+                similarity += 0.9 / distance;
+                [scratch replaceObjectAtIndex:j withObject:@""];
+                break;
+            }
+        }
+    }
+    NSLog(@"  Final similarity score is %lf", similarity);
+    return similarity;
+}
+
+- (double)scoreResultNumber:(int)resultNumber queryContext:(NSArray*)queryContext resultContext:(NSArray*)resultContext joiningPrefixLength:(int)joiningPrefixLength word:(NSString*)word
+{
+    NSLog(@"Score result #%d with queryContext:%@ and resultContext:%@", resultNumber, [self formatContext:queryContext], [self formatContext:resultContext]);
+    double similarity = [self contextSimilarityBetweenQuery:queryContext andResult:resultContext] * 2;
+    // Square similarity so that it has a strong effect if a full context match
+    // is found. Likewise, add 3 to the denominator so that the result number has
+    // a small influence when it's close to 0.
+    double score = (1.0 + similarity * similarity)/(double)(resultNumber + 3);
+    
+    // Strongly penalize very short candidates, because they're not worth completing.
+    double length = [word length] + joiningPrefixLength;
+    if (length < 4) {
+        score *= length / 50.0;
+        NSLog(@"Apply length multiplier of %lf", length/50.0);
+    }
+    
+    // Prefer suffixes to full words
+    if (joiningPrefixLength == 0) {
+        score /= 2;
+    }
+    
+    NSLog(@"Final score is %lf", score);
+    return score;
+}
+
+
+- (void)_processPasteboardEntry:(PasteboardEntry*)entry
+{
+    NSString* value = [entry mainValue];
+    NSRange range = [value rangeOfString:prefix_ options:(NSCaseInsensitiveSearch)];
+    if (range.location != NSNotFound) {
+        NSRange suffixRange;
+        suffixRange.location = range.length + range.location;
+        suffixRange.length = [value length] - suffixRange.location;
+        NSString* word = [value substringWithRange:suffixRange];
+        // TODO: This is kind of sketchy. We need to look at text before the prefix and lower the score if not much of the prefix was matched.
+        double score = [self scoreResultNumber:[self _timestampToResultNumber:[entry timestamp]]
+                                  queryContext:context_
+                                 resultContext:[NSArray arrayWithObjects:nil]
+                           joiningPrefixLength:[prefix_ length]
+                                          word:word];
+        PopupEntry* e = [PopupEntry entryWithString:word 
+                                              score:score];
+        [e setPrefix:prefix_];
+        [[self unfilteredModel] addHit:e];
+    }
+}
+
+- (void)_processPasteboardHistory
+{
+    NSArray* entries = [[PasteboardHistory sharedInstance] entries];
+    for (PasteboardEntry* entry in entries) {
+        [self _processPasteboardEntry:entry];
+    }
+}
+
 - (void)refresh
 {
     [[self unfilteredModel] removeAllObjects];
@@ -148,7 +256,10 @@ const int kMaxContextWords = 2;
     x_ = startX_;
     y_ = startY_ - [screen scrollbackOverflow];
 
+    [self _processPasteboardHistory];
+    
     NSLog(@"Searching for '%@'", prefix_);
+    matchCount_ = 0;
     [screen initFindString:prefix_
           forwardDirection:NO
               ignoringCase:YES
@@ -185,71 +296,6 @@ const int kMaxContextWords = 2;
     }
     populateTimer_ = nil;
     [self _doPopulateMore];
-}
-
-- (double)contextSimilarityBetweenQuery:(NSArray*)queryContext andResult:(NSArray*)resultContext
-{
-    NSMutableArray* scratch = [NSMutableArray arrayWithArray:resultContext];
-    double similarity = 0;
-    NSLog(@"  Determining similarity score. Initialized to 0.");
-    for (int i = 0; i < [queryContext count]; ++i) {
-        NSString* qs = [queryContext objectAtIndex:i];
-        NSLog(@"  Looking for match for query string '%@'", qs);
-        for (int j = 0; j < [scratch count]; ++j) {
-            NSString* rs = [scratch objectAtIndex:j];
-            // Distance is a measure of how far a word in the query context is from
-            // a word in the result context. Higher distances hurt the similarity
-            // score.
-            double distance = abs(i - j) + 1;
-            if ([qs localizedCompare:rs] == NSOrderedSame) {
-                NSLog(@"  Exact match %@ = %@. Incr similarity by %lf", rs, qs, (1.0/distance));
-                similarity += 1.0 / distance;
-                [scratch replaceObjectAtIndex:j withObject:@""];
-                break;
-            } else if ([qs localizedCaseInsensitiveCompare:rs] == NSOrderedSame) {
-                NSLog(@"  Approximate match of %@ = %@. Incr similarity by %lf", rs, qs, (0.9/distance));
-                similarity += 0.9 / distance;
-                [scratch replaceObjectAtIndex:j withObject:@""];
-                break;
-            }
-        }
-    }
-    NSLog(@"  Final similarity score is %lf", similarity);
-    return similarity;
-}
-
-- (NSString*)formatContext:(NSArray*)context
-{
-    NSMutableString* s = [NSMutableString stringWithString:@""];
-    for (int i = 0; i < [context count]; ++i) {
-        [s appendFormat:@"'%@' ", [context objectAtIndex:i]];
-    }
-    return s;
-}
-
-- (double)scoreResultNumber:(int)resultNumber queryContext:(NSArray*)queryContext resultContext:(NSArray*)resultContext joiningPrefixLength:(int)joiningPrefixLength word:(NSString*)word
-{
-    NSLog(@"Score result #%d with queryContext:%@ and resultContext:%@", resultNumber, [self formatContext:queryContext], [self formatContext:resultContext]);
-    double similarity = [self contextSimilarityBetweenQuery:queryContext andResult:resultContext] * 2;
-    // Square similarity so that it has a strong effect if a full context match
-    // is found. Likewise, add 3 to the denominator so that the result number has
-    // a small influence when it's close to 0.
-    double score = (1.0 + similarity * similarity)/(double)(resultNumber + 3);
-    
-    // Strongly penalize very short candidates, because they're not worth completing.
-    double length = [word length] + joiningPrefixLength;
-    if (length < 4) {
-        score *= length / 50.0;
-        NSLog(@"Apply length multiplier of %lf", length/50.0);
-    }
-    
-    // Prefer suffixes to full words
-    if (joiningPrefixLength == 0) {
-        score /= 2;
-    }
-    
-    NSLog(@"Final score is %lf", score);
-    return score;
 }
 
 - (void)_doPopulateMore
@@ -333,7 +379,7 @@ const int kMaxContextWords = 2;
                         } else {
                             joiningPrefixLength = [prefix_ length];
                         }
-                        PopupEntry* e = [PopupEntry entryWithString:word score:[self scoreResultNumber:[[self unfilteredModel] count]
+                        PopupEntry* e = [PopupEntry entryWithString:word score:[self scoreResultNumber:matchCount_++
                                                                                           queryContext:context_
                                                                                          resultContext:resultContext
                                                                                    joiningPrefixLength:joiningPrefixLength
