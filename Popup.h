@@ -61,6 +61,7 @@
 - (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id *)stackbuf count:(NSUInteger)len;
 - (NSUInteger)indexOfObject:(id)o;
 - (void)sortByScore;
+- (int)indexOfObjectWithMainValue:(NSString*)value;
 
 @end
 
@@ -89,10 +90,12 @@
 
     // If true then window is above cursor.
     BOOL onTop_;
-    
+
     // Set to true when the user changes the selected row.
     BOOL haveChangedSelection_;
-    
+    // String that the user has selected.
+    NSMutableString* selectionMainValue_;
+
     // True while reloading data.
     BOOL reloading_;
 }

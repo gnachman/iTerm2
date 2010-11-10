@@ -244,6 +244,17 @@
     values_ = [[NSMutableArray arrayWithArray:sortedArray] retain];
 }
 
+- (int)indexOfObjectWithMainValue:(NSString*)value
+{
+    for (int i = 0; i < [values_ count]; ++i) {
+        PopupEntry* entry = [values_ objectAtIndex:i];
+        if ([[entry mainValue] isEqualToString:value]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 @end
 
 
@@ -262,12 +273,14 @@
     model_ = [[PopupModel alloc] init];
     substring_ = [[NSMutableString alloc] init];
     unfilteredModel_ = [model retain];
+    selectionMainValue_ = [[NSMutableString alloc] init];
 
     return self;
 }
 
 - (void)dealloc
 {
+    [selectionMainValue_ release];
     [substring_ release];
     [model_ release];
     [tableView_ release];
@@ -336,6 +349,12 @@
     if (!haveChangedSelection_ && [tableView_ numberOfRows] > 0) {
         NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:[self convertIndex:0]];
         [tableView_ selectRowIndexes:indexes byExtendingSelection:NO];
+    } else if (haveChangedSelection_ && [tableView_ numberOfRows] > 0) {
+        int i = [model_ indexOfObjectWithMainValue:selectionMainValue_];
+        if (i >= 0) {
+            NSIndexSet* indexes = [NSIndexSet indexSetWithIndex:[self convertIndex:i]];
+            [tableView_ selectRowIndexes:indexes byExtendingSelection:NO];
+        }
     }
     reloading_ = oldReloading;
 }
@@ -544,6 +563,7 @@
     [substring_ setString:@""];
     [self onOpen];
     haveChangedSelection_ = NO;
+    [selectionMainValue_ setString:@""];
     [self refresh];
     if ([tableView_ numberOfRows] > 0) {
         BOOL oldReloading = reloading_;
@@ -576,6 +596,15 @@
 {
     if (!reloading_) {
         haveChangedSelection_ = YES;
+        int rowNum = [tableView_ selectedRow];
+        NSString* s = nil;
+        if (rowNum >= 0) {
+            s = [[model_ objectAtIndex:rowNum] mainValue];
+        }
+        if (!s) {
+            s = @"";
+        }
+        [selectionMainValue_ setString:s];
     }
 }
 
