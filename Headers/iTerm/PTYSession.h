@@ -330,7 +330,7 @@ static const float kBackgroundSessionIntervalSec = 1;
 
 @interface PTYSession (Private)
 
-- (NSString*)_getEncoding;
+- (NSString*)_getLocale;
 - (void)setDvrFrame;
 
 @end

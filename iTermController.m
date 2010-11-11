@@ -41,6 +41,7 @@
 #import <iTerm/iTermGrowlDelegate.h>
 #import "PasteboardHistory.h"
 #import <Carbon/Carbon.h>
+#import "iTermApplicationDelegate.h"
 
 @interface NSApplication (Undocumented)
 - (void)_cycleWindowsReversed:(BOOL)back;

@@ -30,6 +30,18 @@
 #import "VT100Screen.h"
 #import "PTYTextView.h"
 #include <wctype.h>
+#import "iTermApplicationDelegate.h"
+
+#ifdef POPUP_VERBOSE_LOGGING
+#define PopLog NSLog
+#else
+#define PopLog(args...) \
+do { \
+if (gDebugLogging) { \
+DebugLog([NSString stringWithFormat:args]); \
+} \
+} while (0)
+#endif
 
 @implementation PopupEntry
 
@@ -208,12 +220,12 @@
     PopupEntry* entry = [self entryEqualTo:object];
     if (entry) {
         [entry setScore:[entry score] + [object score] * [entry advanceHitMult]];
-        DebugLog(@"Add additional hit for %@ bringing score to %lf", [entry mainValue], [entry score]);
+        PopLog(@"Add additional hit for %@ bringing score to %lf", [entry mainValue], [entry score]);
     } else if (maxEntries_ < 0 || [self count] < maxEntries_) {
         [self addObject:object];
-        DebugLog(@"Add entry for %@ with score %lf", [object mainValue], [object score]);
+        PopLog(@"Add entry for %@ with score %lf", [object mainValue], [object score]);
     } else {
-        DebugLog(@"Not adding entry because max of %u hit", maxEntries_);
+        PopLog(@"Not adding entry because max of %u hit", maxEntries_);
     }
 }
 
