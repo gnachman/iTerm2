@@ -208,12 +208,12 @@
     PopupEntry* entry = [self entryEqualTo:object];
     if (entry) {
         [entry setScore:[entry score] + [object score] * [entry advanceHitMult]];
-        NSLog(@"Add additional hit for %@ bringing score to %lf", [entry mainValue], [entry score]);
+        DebugLog(@"Add additional hit for %@ bringing score to %lf", [entry mainValue], [entry score]);
     } else if (maxEntries_ < 0 || [self count] < maxEntries_) {
         [self addObject:object];
-        NSLog(@"Add entry for %@ with score %lf", [object mainValue], [object score]);
+        DebugLog(@"Add entry for %@ with score %lf", [object mainValue], [object score]);
     } else {
-        NSLog(@"Not adding entry because max of %u hit", maxEntries_);
+        DebugLog(@"Not adding entry because max of %u hit", maxEntries_);
     }
 }
 
@@ -534,7 +534,7 @@
         [as appendAttributedString:attributedSubstr];
     }
 
-    [as appendAttributedString:[[[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@" (%lf)", [entry score]] attributes:plainAttributes] autorelease]];
+    //[as appendAttributedString:[[[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@" (%lf)", [entry score]] attributes:plainAttributes] autorelease]];
     return as;
 }
 

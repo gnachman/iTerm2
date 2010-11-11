@@ -90,7 +90,7 @@ const int kMaxResultContextWords = 4;
                                                         endY:&ty2];
         if ([s rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
             // Add only if not whitespace.
-            NSLog(@"Add to context (%d/%d): %@", [context count], maxWords, s);
+            DebugLog(@"Add to context (%d/%d): %@", [context count], maxWords, s);
             [context addObject:s];
         }
         x = tx1;
@@ -107,7 +107,7 @@ const int kMaxResultContextWords = 4;
     screen_char_t* sct = [screen getLineAtIndex:y];
     [context_ removeAllObjects];
     NSString* charBeforeCursor = [NSString stringWithCharacters:&sct[x].ch length:1];
-    NSLog(@"Char before cursor is '%@'", charBeforeCursor);
+    DebugLog(@"Char before cursor is '%@'", charBeforeCursor);
     whitespaceBeforeCursor_ = ([charBeforeCursor rangeOfCharacterFromSet:[NSCharacterSet whitespaceCharacterSet]].location != NSNotFound);
     NSCharacterSet* nonWhitespace = [[NSCharacterSet whitespaceCharacterSet] invertedSet];
     if (x < 0) {
@@ -125,7 +125,7 @@ const int kMaxResultContextWords = 4;
         } else {
             [prefix_ setString:s];
         }
-        NSLog(@"Prefix is %@ starting at %d", s, tx1);
+        DebugLog(@"Prefix is %@ starting at %d", s, tx1);
         startX_ = tx1;
         startY_ = ty1 + [screen scrollbackOverflow];
 
@@ -165,7 +165,7 @@ const int kMaxResultContextWords = 4;
 {
     NSMutableArray* scratch = [NSMutableArray arrayWithArray:resultContext];
     double similarity = 0;
-    NSLog(@"  Determining similarity score. Initialized to 0.");
+    DebugLog(@"  Determining similarity score. Initialized to 0.");
     for (int i = 0; i < [queryContext count]; ++i) {
         NSString* qs = [queryContext objectAtIndex:i];
         double lengthFactor = 1.0;
@@ -173,7 +173,7 @@ const int kMaxResultContextWords = 4;
             // One-character matches have less significance.
             lengthFactor = 5.0;
         }
-        NSLog(@"  Looking for match for query string '%@'", qs);
+        DebugLog(@"  Looking for match for query string '%@'", qs);
         for (int j = 0; j < [scratch count]; ++j) {
             NSString* rs = [scratch objectAtIndex:j];
             // Distance is a measure of how far a word in the query context is from
@@ -182,12 +182,12 @@ const int kMaxResultContextWords = 4;
             double distance = (abs(i - j) + 1) * lengthFactor;
 
             if ([qs localizedCompare:rs] == NSOrderedSame) {
-                NSLog(@"  Exact match %@ = %@. Incr similarity by %lf", rs, qs, (1.0/distance));
+                DebugLog(@"  Exact match %@ = %@. Incr similarity by %lf", rs, qs, (1.0/distance));
                 similarity += 1.0 / distance;
                 [scratch replaceObjectAtIndex:j withObject:@""];
                 break;
             } else if ([qs localizedCaseInsensitiveCompare:rs] == NSOrderedSame) {
-                NSLog(@"  Approximate match of %@ = %@. Incr similarity by %lf", rs, qs, (0.9/distance));
+                DebugLog(@"  Approximate match of %@ = %@. Incr similarity by %lf", rs, qs, (0.9/distance));
                 similarity += 0.9 / distance;
                 [scratch replaceObjectAtIndex:j withObject:@""];
                 break;
@@ -196,13 +196,13 @@ const int kMaxResultContextWords = 4;
     }
     // Boost similarity. This is applied in quadrature.
     similarity *= 1.5;
-    NSLog(@"  Final similarity score with boost is %lf", similarity);
+    DebugLog(@"  Final similarity score with boost is %lf", similarity);
     return similarity;
 }
 
 - (double)scoreResultNumber:(int)resultNumber queryContext:(NSArray*)queryContext resultContext:(NSArray*)resultContext joiningPrefixLength:(int)joiningPrefixLength word:(NSString*)word
 {
-    NSLog(@"Score result #%d with queryContext:%@ and resultContext:%@", resultNumber, [self formatContext:queryContext], [self formatContext:resultContext]);
+    DebugLog(@"Score result #%d with queryContext:%@ and resultContext:%@", resultNumber, [self formatContext:queryContext], [self formatContext:resultContext]);
     double similarity = [self contextSimilarityBetweenQuery:queryContext andResult:resultContext] * 2;
     // Square similarity so that it has a strong effect if a full context match
     // is found. Likewise, add 3 to the denominator so that the result number has
@@ -213,7 +213,7 @@ const int kMaxResultContextWords = 4;
     double length = [word length] + joiningPrefixLength;
     if (length < 4 && similarity < 2) {
         score *= length / 50.0;
-        NSLog(@"Apply length multiplier of %lf", length/50.0);
+        DebugLog(@"Apply length multiplier of %lf", length/50.0);
     }
 
     // Prefer suffixes to full words
@@ -221,7 +221,7 @@ const int kMaxResultContextWords = 4;
         score /= 2;
     }
     
-    NSLog(@"Final score is %lf", score);
+    DebugLog(@"Final score is %lf", score);
     return score;
 }
 
@@ -267,7 +267,7 @@ const int kMaxResultContextWords = 4;
 
     [self _processPasteboardHistory];
     
-    NSLog(@"Searching for '%@'", prefix_);
+    DebugLog(@"Searching for '%@'", prefix_);
     matchCount_ = 0;
     [screen initFindString:prefix_
           forwardDirection:NO
@@ -325,7 +325,7 @@ const int kMaxResultContextWords = 4;
         found = NO;
         do {
             findContext_.hasWrapped = YES;
-            NSLog(@"Continue search...");
+            DebugLog(@"Continue search...");
             more = [screen continueFindResultAtStartX:&startX
                                              atStartY:&startY
                                                atEndX:&endX
@@ -333,11 +333,11 @@ const int kMaxResultContextWords = 4;
                                                 found:&found
                                             inContext:&findContext_];
             if (found) {
-                NSLog(@"Found match at %d-%d, line %d", startX, endX, startY);
+                DebugLog(@"Found match at %d-%d, line %d", startX, endX, startY);
                 int tx1, ty1, tx2, ty2;
                 // Get the word that includes the match.
                 NSString* word = [[[self session] TEXTVIEW] getWordForX:startX y:startY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
-                NSLog(@"Matching word is %@", word);
+                DebugLog(@"Matching word is %@", word);
                 NSRange range = [word rangeOfString:prefix_ options:(NSCaseInsensitiveSearch|NSAnchoredSearch)];
                 if (range.location == 0) {
                     // Result has prefix_ as prefix.
@@ -346,7 +346,7 @@ const int kMaxResultContextWords = 4;
 
                     // Grab the context before the match.
                     NSMutableArray* resultContext = [NSMutableArray arrayWithCapacity:kMaxResultContextWords];
-                    NSLog(@"Word before what we want is in x=[%d to %d]", startX, endX);
+                    DebugLog(@"Word before what we want is in x=[%d to %d]", startX, endX);
                     [self appendContextAtX:startX y:(int)startY into:resultContext maxWords:kMaxResultContextWords];
 
                     if (fullMatch) {
@@ -357,7 +357,7 @@ const int kMaxResultContextWords = 4;
                             ++endY;
                         }
                         word = [[[self session] TEXTVIEW] getWordForX:endX y:endY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
-                        NSLog(@"First candidate is at %d-%d, %d: '%@'", tx1, tx2, ty1, word);
+                        DebugLog(@"First candidate is at %d-%d, %d: '%@'", tx1, tx2, ty1, word);
                         if ([word rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
                             // word after match is all whitespace. Grab the next word.
                             if (tx2 == [screen width]) {
@@ -370,9 +370,9 @@ const int kMaxResultContextWords = 4;
                                     // Prepend a space if one is needed
                                     word = [NSString stringWithFormat:@" %@", word];
                                 }
-                                NSLog(@"Replacement candidate is at %d-%d, %d: '%@'", tx1, tx2, ty1, word);
+                                DebugLog(@"Replacement candidate is at %d-%d, %d: '%@'", tx1, tx2, ty1, word);
                             } else {
-                                NSLog(@"Hit end of screen.");
+                                DebugLog(@"Hit end of screen.");
                             }
                         }
                     } else if (!whitespaceBeforeCursor_) {
@@ -386,7 +386,7 @@ const int kMaxResultContextWords = 4;
 
                     if ([word rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
                         // Found a non-whitespace word after the match.
-                        NSLog(@"Candidate suffix is '%@'", word);
+                        DebugLog(@"Candidate suffix is '%@'", word);
                         int joiningPrefixLength;
                         if (fullMatch) {
                             joiningPrefixLength = 0;
@@ -405,14 +405,14 @@ const int kMaxResultContextWords = 4;
                         }
                         [[self unfilteredModel] addHit:e];
                     } else {
-                        NSLog(@"No candidate here.");
+                        DebugLog(@"No candidate here.");
                     }
                     x_ = startX;
                     y_ = startY + [screen scrollbackOverflow];
-                    NSLog(@"Update x,y to %d,%d", x_, y_);
+                    DebugLog(@"Update x,y to %d,%d", x_, y_);
                 } else {
                     // Match started in the middle of a word.
-                    NSLog(@"Search found %@ which doesn't start the same as our search term %@", word, prefix_);
+                    DebugLog(@"Search found %@ which doesn't start the same as our search term %@", word, prefix_);
                     x_ = startX;
                     y_ = startY + [screen scrollbackOverflow];
                 }
@@ -423,12 +423,12 @@ const int kMaxResultContextWords = 4;
             if (y_ < [screen scrollbackOverflow] ||
                 (x_ <= 0 && y_ == [screen scrollbackOverflow])) {
                 // Last match was on the first char of the screen. All done.
-                NSLog(@"BREAK: Last match on first char");
+                DebugLog(@"BREAK: Last match on first char");
                 break;
             }
 
             // Begin search again before the last hit.
-            NSLog(@"Continue search at %d,%d", x_, y_);
+            DebugLog(@"Continue search at %d,%d", x_, y_);
             [screen initFindString:prefix_
                   forwardDirection:NO
                       ignoringCase:YES
@@ -438,7 +438,7 @@ const int kMaxResultContextWords = 4;
                          inContext:&findContext_];
         } else {
             // All done.
-            NSLog(@"BREAK: Didn't find anything");
+            DebugLog(@"BREAK: Didn't find anything");
             break;
         }
 

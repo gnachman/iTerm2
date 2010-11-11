@@ -509,7 +509,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     hotkeyModifiers_ = modifiers;
     static CFMachPortRef machPortRef;
     if (!machPortRef) {
-        NSLog(@"Register event tap.");
+        DebugLog(@"Register event tap.");
         machPortRef = CGEventTapCreate(kCGHIDEventTap,
                                        kCGHeadInsertEventTap,
                                        kCGEventTapOptionListenOnly,
@@ -518,12 +518,12 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                                        self);
         if (machPortRef) {
             CFRunLoopSourceRef eventSrc;
-            
+
             eventSrc = CFMachPortCreateRunLoopSource(NULL, machPortRef, 0);
             if (eventSrc == NULL) {
-                NSLog(@"CFMachPortCreateRunLoopSource failed.");
+                DebugLog(@"CFMachPortCreateRunLoopSource failed.");
             } else {
-                NSLog(@"Adding run loop source.");
+                DebugLog(@"Adding run loop source.");
                 // Get the CFRunLoop primitive for the Carbon Main Event Loop, and add the new event souce
                 CFRunLoopAddSource(CFRunLoopGetCurrent(), eventSrc, kCFRunLoopDefaultMode);
                 CFRelease(eventSrc);
@@ -538,7 +538,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                 case NSAlertOtherReturn:
                     [[PreferencePanel sharedInstance] disableHotkey];
                     break;
-                    
+
                 case NSAlertAlternateReturn:
                     [[NSWorkspace sharedWorkspace] openFile:@"/System/Library/PreferencePanes/UniversalAccessPref.prefPane"];
                     break;
