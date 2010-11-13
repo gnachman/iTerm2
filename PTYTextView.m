@@ -53,6 +53,61 @@
 // FIXME: Looks like this is leaked.
 static NSCursor* textViewCursor =  nil;
 
+@interface FlashingView : NSView
+{
+    NSTimer* t;
+    int iteration;
+}
+- (id)initWithFrame:(NSRect)frame iterations:(int)i;
+- (void)dealloc;
+- (void)drawRect:(NSRect)rect;
+- (void)onTimer:(id)sender;
+@end
+
+@implementation FlashingView
+- (id)initWithFrame:(NSRect)frame iterations:(int)i
+{
+    self = [super initWithFrame:frame];
+    if (!self) {
+        return self;
+    }
+    t = [NSTimer scheduledTimerWithTimeInterval:(1.0/30.0) target:self selector:@selector(onTimer:) userInfo:nil repeats:YES];
+    iteration = i;
+    return self;
+}
+
+- (void)dealloc
+{
+    if (t) {
+      [t invalidate];
+    }
+    [super dealloc];
+}
+
+- (void)drawRect:(NSRect)rect
+{
+    if (iteration % 2) {
+        [[NSColor whiteColor] set];
+    } else {
+        [[NSColor blackColor] set];
+    }
+    NSRectFill(rect);
+}
+
+- (void)onTimer:(id)sender
+{
+    if (--iteration == 0) {
+        [self removeFromSuperview];
+        [t invalidate];
+        t = nil;
+    } else {
+        [self setFrame:[[self superview] frame]];
+        [self setNeedsDisplay:YES];
+    }
+}
+
+@end
+
 @implementation PTYTextView
 
 + (void)initialize
@@ -594,7 +649,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 {
     if (selectionScrollTimer) {
         [selectionScrollTimer release];
-        if (prevScrollDelay > 0.01) {
+        if (prevScrollDelay > 0.001) {
             // Maximum speed hasn't been reached so accelerate scrolling speed by 5%.
             prevScrollDelay *= 0.95;
         }
@@ -628,9 +683,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         y = visibleRect.origin.y / lineHeight;
     } else if (selectionScrollDirection > 0) {
         visibleRect.origin.y += lineHeight;
-        if (visibleRect.origin.y + visibleRect.size.height < [self frame].size.height) {
-            [self scrollRectToVisible:visibleRect];
+        if (visibleRect.origin.y + visibleRect.size.height > [self frame].size.height) {
+            visibleRect.origin.y = [self frame].size.height - visibleRect.size.height;
         }
+        [self scrollRectToVisible:visibleRect];
         y = (visibleRect.origin.y + visibleRect.size.height - [self excess]) / lineHeight;
     }
 
@@ -2779,6 +2835,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 - (void)aboutToHide
 {
     selectionScrollDirection = 0;
+}
+
+- (void)beginFlash
+{
+    [self addSubview:[[[FlashingView alloc] initWithFrame:[self frame] iterations:4] autorelease]];
 }
 
 @end

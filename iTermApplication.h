@@ -35,6 +35,7 @@
 
 }
 
++ (BOOL)isTextFieldInFocus:(NSTextField *)textField;
 - (void)sendEvent:(NSEvent *)anEvent;
 
 @end

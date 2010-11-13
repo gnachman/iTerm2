@@ -115,6 +115,7 @@ static NSImage *warningImage;
     gd = [iTermGrowlDelegate sharedInstance];
     growlIdle = growlNewOutput = NO;
 
+    slowPasteBuffer = [[NSMutableString alloc] init];
     return (self);
 }
 
@@ -123,7 +124,10 @@ static NSImage *warningImage;
 #if DEBUG_ALLOC
     NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
 #endif
-
+    [slowPasteBuffer release];
+    if (slowPasteTimer) {
+        [slowPasteTimer invalidate];
+    }
     [icon release];
     [TERM_VALUE release];
     [COLORFGBG_VALUE release];
@@ -249,7 +253,7 @@ static NSImage *warningImage;
     [view retain];
 
     // Allocate a scrollview
-    SCROLLVIEW = [[PTYScrollView alloc] initWithFrame: NSMakeRect(0, 0, aRect.size.width, aRect.size.height - vmargin)];
+    SCROLLVIEW = [[PTYScrollView alloc] initWithFrame: NSMakeRect(0, vmargin, aRect.size.width, aRect.size.height - vmargin*2)];
     [SCROLLVIEW setHasVerticalScroller:![parent fullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar]];
     NSParameterAssert(SCROLLVIEW != nil);
     [SCROLLVIEW setAutoresizingMask: NSViewWidthSizable|NSViewHeightSizable];
@@ -986,14 +990,44 @@ static NSImage *warningImage;
     board = [NSPasteboard generalPasteboard];
     NSParameterAssert(board != nil );
     str = [[[NSMutableString alloc] initWithString:[board stringForType:NSStringPboardType]] autorelease];
-    if ([sender tag]) {
+    if ([sender tag] & 1) {
         // paste with escape;
         [str replaceOccurrencesOfString:@"\\" withString:@"\\\\" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
         [str replaceOccurrencesOfString:@"'" withString:@"\\'" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
         [str replaceOccurrencesOfString:@"\"" withString:@"\\\"" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
         [str replaceOccurrencesOfString:@" " withString:@"\\ " options:NSLiteralSearch range:NSMakeRange(0, [str length])];
     }
-    [self pasteString: str];
+    if ([sender tag] & 2) {
+        [slowPasteBuffer setString:str];
+        [self pasteSlowly:nil];
+    } else {
+        [self pasteString: str];
+    }
+}
+
+// Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
+// Override the constnats by setting defaults SlowPasteBytesPerCall and SlowPasteDelayBetweenCalls
+- (void)pasteSlowly:(id)sender
+{
+    NSRange range;
+    range.location = 0;
+    NSNumber* pref = [[NSUserDefaults standardUserDefaults] valueForKey:@"SlowPasteBytesPerCall"];
+    NSNumber* delay = [[NSUserDefaults standardUserDefaults] valueForKey:@"SlowPasteDelayBetweenCalls"];
+    const int kBatchSize = pref ? [pref intValue] : 16;
+    if ([slowPasteBuffer length] > kBatchSize) {
+        range.length = kBatchSize;
+    } else {
+        range.length = [slowPasteBuffer length];
+    }
+    [self pasteString:[slowPasteBuffer substringWithRange:range]];
+    [slowPasteBuffer deleteCharactersInRange:range];
+    if ([slowPasteBuffer length] > 0) {
+        slowPasteTimer = [NSTimer scheduledTimerWithTimeInterval:delay ? [delay floatValue] : 0.125
+                                                          target:self
+                                                        selector:@selector(pasteSlowly:)
+                                                        userInfo:nil
+                                                         repeats:NO];
+    }
 }
 
 - (void) pasteString: (NSString *) aString
@@ -1729,7 +1763,7 @@ static NSImage *warningImage;
     if (transparency > 0.9) {
         transparency = 0.9;
     }
-    
+
     if ([parent fullScreen]) {
         transparency = 0;
     }
@@ -1966,7 +2000,7 @@ static NSImage *warningImage;
 {
     float kEpsilon = 0.001;
     if (!timerRunning_ &&
-        [updateTimer isValid] && 
+        [updateTimer isValid] &&
         [[updateTimer userInfo] floatValue] - (float)timeout < kEpsilon) {
         // An update of at least the current frequency is already scheduled. Let
         // it run to avoid pushing it back repeatedly (which prevents it from firing).
@@ -1977,7 +2011,8 @@ static NSImage *warningImage;
     [updateTimer release];
 
     updateTimer = [[NSTimer scheduledTimerWithTimeInterval:timeout
-                                                    target:self selector:@selector(updateDisplay)
+                                                    target:self
+                                                  selector:@selector(updateDisplay)
                                                   userInfo:[NSNumber numberWithFloat:(float)timeout]
                                                    repeats:NO] retain];
 }
@@ -2209,10 +2244,10 @@ static NSImage *warningImage;
 {
     // Keep a copy of the current locale setting for this process
     char* backupLocale = setlocale(LC_CTYPE, NULL);
-    
+
     // Start with the locale
     NSString* locale = [[NSLocale currentLocale] localeIdentifier];
-    
+
     // Append the encoding
     CFStringEncoding cfEncoding = CFStringConvertNSStringEncodingToEncoding([self encoding]);
     NSString* ianaEncoding = (NSString*)CFStringConvertEncodingToIANACharSetName(cfEncoding);
@@ -2233,26 +2268,26 @@ static NSImage *warningImage;
             }
         }
     }
-        
+
     if (ianaEncoding != nil) {
         // Mangle the names slightly
         NSMutableString* encoding = [[NSMutableString alloc] initWithString:ianaEncoding];
         [encoding replaceOccurrencesOfString:@"ISO-" withString:@"ISO" options:0 range:NSMakeRange(0, [encoding length])];
         [encoding replaceOccurrencesOfString:@"EUC-" withString:@"euc" options:0 range:NSMakeRange(0, [encoding length])];
-        
+
         NSString* test = [locale stringByAppendingFormat:@".%@", encoding];
         if (NULL != setlocale(LC_CTYPE, [test UTF8String])) {
             locale = test;
         }
-        
+
         [encoding release];
     }
-    
+
     // Check the locale is valid
     if (NULL == setlocale(LC_CTYPE, [locale UTF8String])) {
         locale = nil;
     }
-    
+
     // Restore locale and return
     setlocale(LC_CTYPE, backupLocale);
     return locale;

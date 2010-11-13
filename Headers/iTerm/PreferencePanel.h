@@ -302,13 +302,21 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     NSString* keyString;  // hexcode-hexcode rep of keystring in current sheet
     BOOL newMapping;  // true if the keymap sheet is open for adding a new entry
 
-    // Copy from...
-    IBOutlet BookmarkListView *copyFromBookmarks;
-    IBOutlet NSPanel* copyFromView;
     IBOutlet NSPopUpButton* bookmarksPopup;
-    NSString* copyTo;
+
+    // Copy Bookmark Settings...
+    IBOutlet NSTextField* bulkCopyLabel;
+    IBOutlet NSPanel* copyPanel;
+    IBOutlet NSButton* copyColors;
+    IBOutlet NSButton* copyDisplay;
+    IBOutlet NSButton* copyTerminal;
+    IBOutlet NSButton* copyKeyboard;
+    IBOutlet BookmarkListView* copyTo;
+    IBOutlet NSButton* copyButton;
 
 }
+
+typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboard } BulkCopySettings;
 
 + (PreferencePanel*)sharedInstance;
 + (PreferencePanel*)sessionsInstance;
@@ -424,16 +432,15 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable;
 - (void)bookmarkTableSelectionWillChange:(id)aBookmarkTableView;
 - (void)bookmarkTableRowSelected:(id)bookmarkTable;
-- (IBAction)doCopyFrom:(id)sender;
-- (IBAction)cancelCopyFrom:(id)sender;
-- (IBAction)openCopyFromColors:(id)sender;
-- (IBAction)openCopyFromDisplay:(id)sender;
-- (IBAction)openCopyFromTerminal:(id)sender;
-- (IBAction)openCopyFromKeyboard:(id)sender;
 - (void)showBookmarks;
 - (void)openToBookmark:(NSString*)guid;
 - (id)tokenFieldCell:(NSTokenFieldCell *)tokenFieldCell representedObjectForEditingString:(NSString *)editingString;
 - (void)underlyingBookmarkDidChange;
+
+- (IBAction)openCopyBookmarks:(id)sender;
+- (IBAction)copyBookmarks:(id)sender;
+- (IBAction)cancelCopyBookmarks:(id)sender;
+- (void)copyAttributes:(BulkCopySettings)attributes fromBookmark:(NSString*)guid toBookmark:(NSString*)destGuid;
 
 @end
 

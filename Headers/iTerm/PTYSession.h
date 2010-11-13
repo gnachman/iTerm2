@@ -115,6 +115,10 @@ static const float kBackgroundSessionIntervalSec = 1;
 
     // Is the update timer's callback currently running?
     BOOL timerRunning_;
+
+    // Paste from the head of this string from a timer until it's empty.
+    NSMutableString* slowPasteBuffer;
+    NSTimer* slowPasteTimer;
 }
 
 // init/dealloc
@@ -179,6 +183,7 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (void)pageDown:(id)sender;
 - (void)paste:(id)sender;
 - (void)pasteString: (NSString *)aString;
+- (void)pasteSlowly:(id)sender;
 - (void)deleteBackward:(id)sender;
 - (void)deleteForward:(id)sender;
 - (void)textViewDidChangeSelection: (NSNotification *)aNotification;

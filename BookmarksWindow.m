@@ -56,37 +56,51 @@
     [[self window] setDelegate:self];
     [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     [tableView_ setDelegate:self];
-    [tableView_ allowMultipleSelection];
+    [tableView_ allowMultipleSelections];
     [tableView_ multiColumns];
+
+    NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
+    NSNumber* n = [prefs objectForKey:@"CloseBookmarksWindowAfterOpening"];
+    [closeAfterOpeningBookmark_ setState:[n boolValue] ? NSOnState : NSOffState];
+
     return self;
 }
 
-- (void)_openBookmarkInTab:(BOOL)inTab
+- (void)_openBookmarkInTab:(BOOL)inTab firstInWindow:(BOOL)firstInWindow
 {
     NSSet* guids = [tableView_ selectedGuids];
     if (![guids count]) {
         NSBeep();
         return;
     }
+    BOOL isFirst = YES;
     for (NSString* guid in guids) {
         PseudoTerminal* terminal = nil;
-        if (inTab) {
+        BOOL openInTab = inTab & !(isFirst && firstInWindow);
+        if (openInTab) {
             terminal = [[iTermController sharedInstance] currentTerminal];
         }
         Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
-        [[iTermController sharedInstance] launchBookmark:bookmark 
+        [[iTermController sharedInstance] launchBookmark:bookmark
                                               inTerminal:terminal];
+        isFirst = NO;
     }
 }
 
 - (IBAction)openBookmarkInTab:(id)sender
 {
-    [self _openBookmarkInTab:YES];
+    [self _openBookmarkInTab:YES firstInWindow:NO];
+    if ([closeAfterOpeningBookmark_ state] == NSOnState) {
+        [[self window] close];
+    }
 }
 
 - (IBAction)openBookmarkInWindow:(id)sender
 {
-    [self _openBookmarkInTab:NO];
+    [self _openBookmarkInTab:NO firstInWindow:NO];
+    if ([closeAfterOpeningBookmark_ state] == NSOnState) {
+        [[self window] close];
+    }
 }
 
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable
@@ -95,6 +109,11 @@
     if ([guids count]) {
         [tabButton_ setEnabled:YES];
         [windowButton_ setEnabled:YES];
+        if ([guids count] > 1) {
+            [newTabsInNewWindowButton_ setHidden:NO];
+        } else {
+            [newTabsInNewWindowButton_ setHidden:YES];
+        }
     } else {
         [tabButton_ setEnabled:NO];
         [windowButton_ setEnabled:NO];
@@ -114,8 +133,11 @@
     for (NSString* guid in guids) {
         PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
         Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
-        [[iTermController sharedInstance] launchBookmark:bookmark 
+        [[iTermController sharedInstance] launchBookmark:bookmark
                                               inTerminal:terminal];
+    }
+    if ([closeAfterOpeningBookmark_ state] == NSOnState) {
+        [[self window] close];
     }
 }
 
@@ -143,14 +165,14 @@
                         action:@selector(editSelectedBookmark:)
                  keyEquivalent:@""];
         [menu addItemWithTitle:@"Open in New Tab"
-                        action:@selector(openBookmarkInTab:) 
+                        action:@selector(openBookmarkInTab:)
                  keyEquivalent:@""];
         [menu addItemWithTitle:@"Open in New Window"
-                        action:@selector(openBookmarkInWindow:) 
+                        action:@selector(openBookmarkInWindow:)
                  keyEquivalent:@""];
     } else if (count > 1) {
         [menu addItemWithTitle:@"Open in New Tabs"
-                        action:@selector(openBookmarkInTab:) 
+                        action:@selector(openBookmarkInTab:)
                  keyEquivalent:@""];
         [menu addItemWithTitle:@"Open in New Windows"
                         action:@selector(openBookmarkInWindow:)
@@ -161,9 +183,24 @@
 
 - (void)windowDidBecomeKey:(NSNotification *)notification
 {
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"nonTerminalWindowBecameKey" 
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"nonTerminalWindowBecameKey"
                                                         object:nil
                                                       userInfo:nil];
+}
+
+- (IBAction)closeAfterOpeningChanged:(id)sender
+{
+    NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
+    [prefs setObject:[NSNumber numberWithBool:[closeAfterOpeningBookmark_ state] == NSOnState]
+              forKey:@"CloseBookmarksWindowAfterOpening"];
+}
+
+- (IBAction)newTabsInNewWindow:(id)sender
+{
+    [self _openBookmarkInTab:YES firstInWindow:YES];
+    if ([closeAfterOpeningBookmark_ state] == NSOnState) {
+        [[self window] close];
+    }
 }
 
 @end

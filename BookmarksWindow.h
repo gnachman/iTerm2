@@ -30,6 +30,8 @@
     IBOutlet NSSegmentedControl* actions_;
     IBOutlet NSButton* tabButton_;
     IBOutlet NSButton* windowButton_;
+	IBOutlet NSButton* closeAfterOpeningBookmark_;
+	IBOutlet NSButton* newTabsInNewWindowButton_;
 }
 
 + (BookmarksWindow*)sharedInstance;
@@ -42,6 +44,8 @@
 - (void)bookmarkTableRowSelected:(id)bookmarkTable;
 - (NSMenu*)bookmarkTable:(id)bookmarkTable menuForEvent:(NSEvent*)theEvent;
 - (IBAction)editBookmarks:(id)sender;
+- (IBAction)closeAfterOpeningChanged:(id)sender;
+- (IBAction)newTabsInNewWindow:(id)sender;
 
 // NSWindow Delegate
 - (void)windowDidBecomeKey:(NSNotification *)notification;

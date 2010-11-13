@@ -147,7 +147,7 @@ static float versionNumber;
     [addBookmarkButton setHidden:YES];
     [removeBookmarkButton setHidden:YES];
     [bookmarksPopup setHidden:YES];
-        [bookmarkDirectory setHidden:YES];
+    [bookmarkDirectory setHidden:YES];
     [bookmarkShortcutKeyLabel setHidden:YES];
     [bookmarkShortcutKeyModifiersLabel setHidden:YES];
     [bookmarkTagsLabel setHidden:YES];
@@ -201,6 +201,9 @@ static float versionNumber;
     [bookmarksForUrlsTable setDelegate:self];
 
     [bookmarksTableView setDelegate:self];
+    [bookmarksTableView allowMultipleSelections];
+
+    [copyTo allowMultipleSelections];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(handleWindowWillCloseNotification:)
@@ -523,12 +526,19 @@ static float versionNumber;
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];
     NSString* guid = [bookmarksTableView selectedGuid];
-    if (guid) {
+    if ([[bookmarksTableView selectedGuids] count] == 1) {
         Bookmark* dict = [dataSource bookmarkWithGuid:guid];
         [bookmarksSettingsTabViewParent setHidden:NO];
+        [bookmarksPopup setEnabled:NO];
         [self updateBookmarkFields:dict];
     } else {
+        [bookmarksPopup setEnabled:YES];
         [bookmarksSettingsTabViewParent setHidden:YES];
+        if ([[bookmarksTableView selectedGuids] count] == 0) {
+            [removeBookmarkButton setEnabled:NO];
+        } else {
+            [removeBookmarkButton setEnabled:[[bookmarksTableView selectedGuids] count] < [[bookmarksTableView dataSource] numberOfBookmarks]];
+        }
         [self updateBookmarkFields:nil];
     }
 
@@ -1047,12 +1057,11 @@ static float versionNumber;
     if ([dataSource numberOfBookmarks] < 2 || !dict) {
         [removeBookmarkButton setEnabled:NO];
     } else {
-        [removeBookmarkButton setEnabled:YES];
+        [removeBookmarkButton setEnabled:[[bookmarksTableView selectedGuids] count] < [[bookmarksTableView dataSource] numberOfBookmarks]];
     }
     if (!dict) {
         [bookmarksSettingsTabViewParent setHidden:YES];
         [bookmarksPopup setEnabled:NO];
-        [removeBookmarkButton setEnabled:NO];
         return;
     } else {
         [bookmarksSettingsTabViewParent setHidden:NO];
@@ -1187,7 +1196,7 @@ static float versionNumber;
 
     // Epilogue
     [bookmarksTableView reloadData];
-    [copyFromBookmarks reloadData];
+    [copyTo reloadData];
 }
 
 - (void)_commonDisplaySelectFont:(id)sender
@@ -1428,21 +1437,30 @@ static float versionNumber;
 
 - (void)bookmarkTableSelectionWillChange:(id)aBookmarkTableView
 {
-    [self bookmarkSettingChanged:nil];
+    if ([[bookmarksTableView selectedGuids] count] == 1) {
+        [self bookmarkSettingChanged:nil];
+    }
 }
 
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable
 {
-    // General tab
-    // Save everything just to be sure.
-    NSString* guid = [bookmarksTableView selectedGuid];
-    if (!guid) {
+    if ([[bookmarksTableView selectedGuids] count] != 1) {
         [bookmarksSettingsTabViewParent setHidden:YES];
+        [bookmarksPopup setEnabled:NO];
+
+        if ([[bookmarksTableView selectedGuids] count] == 0) {
+            [removeBookmarkButton setEnabled:NO];
+        } else {
+            [removeBookmarkButton setEnabled:[[bookmarksTableView selectedGuids] count] < [[bookmarksTableView dataSource] numberOfBookmarks]];
+        }
     } else {
         [bookmarksSettingsTabViewParent setHidden:NO];
-    }
-    if (bookmarkTable == bookmarksTableView) {
-        [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
+        [bookmarksPopup setEnabled:YES];
+        [removeBookmarkButton setEnabled:NO];
+        if (bookmarkTable == bookmarksTableView) {
+            NSString* guid = [bookmarksTableView selectedGuid];
+            [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
+        }
     }
 }
 
@@ -1647,17 +1665,17 @@ static float versionNumber;
 {
     unsigned int keyMods;
     NSString *unmodkeystr;
-    
+
     keyMods = [event modifierFlags];
     unmodkeystr = [event charactersIgnoringModifiers];
     unsigned short keyChar = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
     unsigned int keyCode = [event keyCode];
-    
+
     // turn off all the other modifier bits we don't care about
     unsigned int theModifiers = keyMods &
     (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask |
      NSCommandKeyMask | NSNumericPadKeyMask);
-    
+
     // on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
     if (keyChar >= NSUpArrowFunctionKey &&
         keyChar <= NSRightArrowFunctionKey) {
@@ -1832,13 +1850,27 @@ static float versionNumber;
     if ([dataSource numberOfBookmarks] == 1) {
         NSBeep();
     } else {
-        NSString* guid = [bookmarksTableView selectedGuid];
-        if (!guid) {
-            NSBeep();
-            return;
+        BOOL found = NO;
+        int lastIndex = 0;
+        int numRemoved = 0;
+        for (NSString* guid in [bookmarksTableView selectedGuids]) {
+            found = YES;
+            int i = [bookmarksTableView selectedRow];
+            if (i > lastIndex) {
+                lastIndex = i;
+            }
+            ++numRemoved;
+            [dataSource removeBookmarkWithGuid:guid];
         }
-        [dataSource removeBookmarkWithGuid:guid];
         [bookmarksTableView reloadData];
+        int toSelect = lastIndex - numRemoved;
+        if (toSelect < 0) {
+            toSelect = 0;
+        }
+        [bookmarksTableView selectRowIndex:toSelect];
+        if (!found) {
+            NSBeep();
+        }
     }
 }
 
@@ -1909,153 +1941,6 @@ static float versionNumber;
 
 #pragma mark -
 
-- (IBAction)doCopyFrom:(id)sender
-{
-    NSString* guid = [bookmarksTableView selectedGuid];
-    if (!guid) {
-        NSBeep();
-        return;
-    }
-    Bookmark* dest = [dataSource bookmarkWithGuid:guid];
-    guid = [copyFromBookmarks selectedGuid];
-    if (!guid) {
-        NSBeep();
-        [self cancelCopyFrom:self];
-    }
-    Bookmark* src = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
-    NSMutableDictionary* newDict = [[NSMutableDictionary alloc] initWithDictionary:dest];
-    NSString** keys = nil;
-    if ([copyTo isEqualToString:@"colors"]) {
-        NSString* colorsKeys[] = {
-            KEY_FOREGROUND_COLOR,
-            KEY_BACKGROUND_COLOR,
-            KEY_BOLD_COLOR,
-            KEY_SELECTION_COLOR,
-            KEY_SELECTED_TEXT_COLOR,
-            KEY_CURSOR_COLOR,
-            KEY_CURSOR_TEXT_COLOR,
-            KEY_ANSI_0_COLOR,
-            KEY_ANSI_1_COLOR,
-            KEY_ANSI_2_COLOR,
-            KEY_ANSI_3_COLOR,
-            KEY_ANSI_4_COLOR,
-            KEY_ANSI_5_COLOR,
-            KEY_ANSI_6_COLOR,
-            KEY_ANSI_7_COLOR,
-            KEY_ANSI_8_COLOR,
-            KEY_ANSI_9_COLOR,
-            KEY_ANSI_10_COLOR,
-            KEY_ANSI_11_COLOR,
-            KEY_ANSI_12_COLOR,
-            KEY_ANSI_13_COLOR,
-            KEY_ANSI_14_COLOR,
-            KEY_ANSI_15_COLOR,
-            nil
-        };
-        keys = colorsKeys;
-    } else if ([copyTo isEqualToString:@"display"]) {
-        NSString* displayKeys[] = {
-            KEY_ROWS,
-            KEY_COLUMNS,
-            KEY_NORMAL_FONT,
-            KEY_NON_ASCII_FONT,
-            KEY_HORIZONTAL_SPACING,
-            KEY_VERTICAL_SPACING,
-            KEY_BLINKING_CURSOR,
-            KEY_DISABLE_BOLD,
-            KEY_TRANSPARENCY,
-            KEY_BLUR,
-            KEY_ANTI_ALIASING,
-            KEY_BACKGROUND_IMAGE_LOCATION,
-            nil
-        };
-        keys = displayKeys;
-    } else if ([copyTo isEqualToString:@"terminal"]) {
-        NSString* terminalKeys[] = {
-            KEY_DISABLE_WINDOW_RESIZING,
-            KEY_SYNC_TITLE,
-            KEY_CLOSE_SESSIONS_ON_END,
-            KEY_AMBIGUOUS_DOUBLE_WIDTH,
-            KEY_SILENCE_BELL,
-            KEY_VISUAL_BELL,
-            KEY_XTERM_MOUSE_REPORTING,
-            KEY_BOOKMARK_GROWL_NOTIFICATIONS,
-            KEY_CHARACTER_ENCODING,
-            KEY_SCROLLBACK_LINES,
-            KEY_TERMINAL_TYPE,
-            KEY_SEND_CODE_WHEN_IDLE,
-            KEY_IDLE_CODE,
-            nil
-        };
-        keys = terminalKeys;
-    } else if ([copyTo isEqualToString:@"keyboard"]) {
-        NSString* keyboardKeys[] = {
-            KEY_KEYBOARD_MAP,
-            KEY_OPTION_KEY_SENDS,
-            nil
-        };
-        keys = keyboardKeys;
-    }
-    if (keys) {
-        for (int i = 0; keys[i]; ++i) {
-            id srcValue = [src objectForKey:keys[i]];
-            if (srcValue) {
-                [newDict setObject:srcValue forKey:keys[i]];
-            } else {
-                [newDict removeObjectForKey:keys[i]];
-            }
-        }
-    }
-    [dataSource setBookmark:newDict withGuid:[bookmarksTableView selectedGuid]];
-    [self updateBookmarkFields:newDict];
-    [NSApp endSheet:copyFromView];
-}
-
-- (IBAction)cancelCopyFrom:(id)sender
-{
-    [NSApp endSheet:copyFromView];
-}
-
-- (IBAction)openCopyFromColors:(id)sender
-{
-    copyTo = @"colors";
-    [NSApp beginSheet:copyFromView
-       modalForWindow:[self window]
-        modalDelegate:self
-       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
-          contextInfo:nil];
-}
-
-- (IBAction)openCopyFromDisplay:(id)sender
-{
-    copyTo = @"display";
-    [NSApp beginSheet:copyFromView
-       modalForWindow:[self window]
-        modalDelegate:self
-       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
-          contextInfo:nil];
-}
-
-- (IBAction)openCopyFromTerminal:(id)sender
-{
-    copyTo = @"terminal";
-    [NSApp beginSheet:copyFromView
-       modalForWindow:[self window]
-        modalDelegate:self
-       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
-          contextInfo:nil];
-}
-
-- (IBAction)openCopyFromKeyboard:(id)sender
-{
-    copyTo = @"keyboard";
-    [NSApp beginSheet:copyFromView
-       modalForWindow:[self window]
-        modalDelegate:self
-       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
-          contextInfo:nil];
-}
-
 - (void)showBookmarks
 {
     [tabView selectTabViewItem:bookmarksTabViewItem];
@@ -2070,6 +1955,154 @@ static float versionNumber;
     [bookmarksTableView selectRowByGuid:guid];
     [bookmarksSettingsTabViewParent selectTabViewItem:bookmarkSettingsGeneralTab];
     [[self window] makeFirstResponder:bookmarkName];
+}
+
+- (IBAction)openCopyBookmarks:(id)sender
+{
+    [bulkCopyLabel setStringValue:[NSString stringWithFormat:@"From bookmark \"%@\", copy these settings:", [[dataSource bookmarkWithGuid:[bookmarksTableView selectedGuid]] objectForKey:KEY_NAME]]];
+    [NSApp beginSheet:copyPanel
+       modalForWindow:[self window]
+        modalDelegate:self
+       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
+          contextInfo:nil];
+}
+
+- (IBAction)copyBookmarks:(id)sender
+{
+    NSString* srcGuid = [bookmarksTableView selectedGuid];
+    if (!srcGuid) {
+        NSBeep();
+        return;
+    }
+
+    NSSet* destGuids = [copyTo selectedGuids];
+    for (NSString* destGuid in destGuids) {
+        if ([destGuid isEqualToString:srcGuid]) {
+            continue;
+        }
+
+        if (![dataSource bookmarkWithGuid:destGuid]) {
+            NSLog(@"Selected bookmark %@ doesn't exist", destGuid);
+            continue;
+        }
+
+        if ([copyColors state] == NSOnState) {
+            [self copyAttributes:BulkCopyColors fromBookmark:srcGuid toBookmark:destGuid];
+        }
+        if ([copyDisplay state] == NSOnState) {
+            [self copyAttributes:BulkCopyDisplay fromBookmark:srcGuid toBookmark:destGuid];
+        }
+        if ([copyTerminal state] == NSOnState) {
+            [self copyAttributes:BulkCopyTerminal fromBookmark:srcGuid toBookmark:destGuid];
+        }
+        if ([copyKeyboard state] == NSOnState) {
+            [self copyAttributes:BulkCopyKeyboard fromBookmark:srcGuid toBookmark:destGuid];
+        }
+    }
+    [NSApp endSheet:copyPanel];
+}
+
+- (void)copyAttributes:(BulkCopySettings)attributes fromBookmark:(NSString*)guid toBookmark:(NSString*)destGuid
+{
+    Bookmark* dest = [dataSource bookmarkWithGuid:destGuid];
+    Bookmark* src = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+    NSMutableDictionary* newDict = [[NSMutableDictionary alloc] initWithDictionary:dest];
+    NSString** keys = NULL;
+    NSString* colorsKeys[] = {
+        KEY_FOREGROUND_COLOR,
+        KEY_BACKGROUND_COLOR,
+        KEY_BOLD_COLOR,
+        KEY_SELECTION_COLOR,
+        KEY_SELECTED_TEXT_COLOR,
+        KEY_CURSOR_COLOR,
+        KEY_CURSOR_TEXT_COLOR,
+        KEY_ANSI_0_COLOR,
+        KEY_ANSI_1_COLOR,
+        KEY_ANSI_2_COLOR,
+        KEY_ANSI_3_COLOR,
+        KEY_ANSI_4_COLOR,
+        KEY_ANSI_5_COLOR,
+        KEY_ANSI_6_COLOR,
+        KEY_ANSI_7_COLOR,
+        KEY_ANSI_8_COLOR,
+        KEY_ANSI_9_COLOR,
+        KEY_ANSI_10_COLOR,
+        KEY_ANSI_11_COLOR,
+        KEY_ANSI_12_COLOR,
+        KEY_ANSI_13_COLOR,
+        KEY_ANSI_14_COLOR,
+        KEY_ANSI_15_COLOR,
+        nil
+    };
+    NSString* displayKeys[] = {
+        KEY_ROWS,
+        KEY_COLUMNS,
+        KEY_NORMAL_FONT,
+        KEY_NON_ASCII_FONT,
+        KEY_HORIZONTAL_SPACING,
+        KEY_VERTICAL_SPACING,
+        KEY_BLINKING_CURSOR,
+        KEY_DISABLE_BOLD,
+        KEY_TRANSPARENCY,
+        KEY_BLUR,
+        KEY_ANTI_ALIASING,
+        KEY_BACKGROUND_IMAGE_LOCATION,
+        nil
+    };
+    NSString* terminalKeys[] = {
+        KEY_DISABLE_WINDOW_RESIZING,
+        KEY_SYNC_TITLE,
+        KEY_CLOSE_SESSIONS_ON_END,
+        KEY_AMBIGUOUS_DOUBLE_WIDTH,
+        KEY_SILENCE_BELL,
+        KEY_VISUAL_BELL,
+        KEY_XTERM_MOUSE_REPORTING,
+        KEY_BOOKMARK_GROWL_NOTIFICATIONS,
+        KEY_CHARACTER_ENCODING,
+        KEY_SCROLLBACK_LINES,
+        KEY_TERMINAL_TYPE,
+        KEY_SEND_CODE_WHEN_IDLE,
+        KEY_IDLE_CODE,
+        nil
+    };
+    NSString* keyboardKeys[] = {
+        KEY_KEYBOARD_MAP,
+        KEY_OPTION_KEY_SENDS,
+        nil
+    };
+    switch (attributes) {
+        case BulkCopyColors:
+            keys = colorsKeys;
+            break;
+        case BulkCopyDisplay:
+            keys = displayKeys;
+            break;
+        case BulkCopyTerminal:
+            keys = terminalKeys;
+            break;
+        case BulkCopyKeyboard:
+            keys = keyboardKeys;
+            break;
+        default:
+            NSLog(@"Unexpected copy attribute %d", (int)attributes);
+            return;
+    }
+
+    for (int i = 0; keys[i]; ++i) {
+        id srcValue = [src objectForKey:keys[i]];
+        if (srcValue) {
+            [newDict setObject:srcValue forKey:keys[i]];
+        } else {
+            [newDict removeObjectForKey:keys[i]];
+        }
+    }
+
+    [dataSource setBookmark:newDict withGuid:[dest objectForKey:KEY_GUID]];
+}
+
+- (IBAction)cancelCopyBookmarks:(id)sender
+{
+    [NSApp endSheet:copyPanel];
 }
 
 @end

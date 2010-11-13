@@ -70,7 +70,7 @@ const int kInterWidgetMargin = 10;
     if (!(mask & modflag) && (keycode == 125 || keycode == 126)) {
         [arrowHandler_ keyDown:theEvent];
         handled = YES;
-        
+
     } else {
         handled = [super performKeyEquivalent:theEvent];
     }
@@ -146,7 +146,7 @@ const int kInterWidgetMargin = 10;
         [guids addObject:guid];
         rowIndex = [rowIndexes indexGreaterThanIndex:rowIndex];
     }
-    
+
     NSData *data = [NSKeyedArchiver archivedDataWithRootObject:guids];
     [pboard declareTypes:[NSArray arrayWithObject:BookmarkTableViewDataType] owner:self];
     [pboard setData:data forType:BookmarkTableViewDataType];
@@ -158,12 +158,12 @@ const int kInterWidgetMargin = 10;
     if ([info draggingSource] != aTableView) {
         return NSDragOperationNone;
     }
-    
+
     // Add code here to validate the drop
     switch (operation) {
         case NSTableViewDropOn:
             return NSDragOperationNone;
-            
+
         case NSTableViewDropAbove:
             return NSDragOperationMove;
 
@@ -204,7 +204,7 @@ const int kInterWidgetMargin = 10;
         [newIndexes addIndex:row];
     }
     [tableView_ selectRowIndexes:newIndexes byExtendingSelection:NO];
-    
+
     [self reloadData];
     return YES;
 }
@@ -216,9 +216,9 @@ const int kInterWidgetMargin = 10;
     int itemTag = [sender tag];
     NSArray* allTags = [dataSource_ allTags];
     NSString* tag = [allTags objectAtIndex:itemTag];
-    
-    [searchField_ setStringValue:[[NSString stringWithFormat:@"%@ %@", 
-                                   [[searchField_ stringValue] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]], 
+
+    [searchField_ setStringValue:[[NSString stringWithFormat:@"%@ %@",
+                                   [[searchField_ stringValue] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]],
                                    tag] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]];
     [self controlTextDidChange:nil];
 }
@@ -255,7 +255,7 @@ const int kInterWidgetMargin = 10;
     self = [super initWithFrame:frameRect];
     dataSource_ = [BookmarkModel sharedInstance];
     debug=NO;
-    
+
     NSRect frame = [self frame];
     NSRect searchFieldFrame;
     searchFieldFrame.origin.x = 0;
@@ -267,33 +267,33 @@ const int kInterWidgetMargin = 10;
     [searchField_ setDelegate:self];
     [self addSubview:searchField_];
     delegate_ = nil;
-    
+
     NSRect scrollViewFrame;
     scrollViewFrame.origin.x = 0;
     scrollViewFrame.origin.y = 0;
     scrollViewFrame.size.width = frame.size.width;
-    scrollViewFrame.size.height = 
+    scrollViewFrame.size.height =
         frame.size.height - kSearchWidgetHeight - kInterWidgetMargin;
     scrollView_ = [[NSScrollView alloc] initWithFrame:scrollViewFrame];
     [scrollView_ setHasVerticalScroller:YES];
     [self addSubview:scrollView_];
-    
+
     NSRect tableViewFrame;
     tableViewFrame.origin.x = 0;
     tableViewFrame.origin.y = 0;;
-    tableViewFrame.size = 
-        [NSScrollView contentSizeForFrameSize:scrollViewFrame.size 
-                        hasHorizontalScroller:NO 
-                          hasVerticalScroller:YES 
+    tableViewFrame.size =
+        [NSScrollView contentSizeForFrameSize:scrollViewFrame.size
+                        hasHorizontalScroller:NO
+                          hasVerticalScroller:YES
                                    borderType:[scrollView_ borderType]];
-    
+
     tableView_ = [[BookmarkTableView alloc] initWithFrame:tableViewFrame];
     [tableView_ setParent:self];
     [tableView_ registerForDraggedTypes:[NSArray arrayWithObject:BookmarkTableViewDataType]];
-    rowHeight_ = 21;
+    rowHeight_ = 29;
     showGraphic_ = YES;
     [tableView_ setRowHeight:rowHeight_];
-    [tableView_ 
+    [tableView_
          setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleSourceList];
     [tableView_ setAllowsColumnResizing:YES];
     [tableView_ setAllowsColumnReordering:YES];
@@ -302,39 +302,34 @@ const int kInterWidgetMargin = 10;
     [tableView_ setAllowsMultipleSelection:NO];
     [tableView_ setAllowsTypeSelect:NO];
     [tableView_ setBackgroundColor:[NSColor whiteColor]];
-    
+
     starColumn_ = [[NSTableColumn alloc] initWithIdentifier:@"default"];
     [starColumn_ setEditable:NO];
     [starColumn_ setDataCell:[[NSImageCell alloc] initImageCell:nil]];
     [starColumn_ setWidth:34];
     [tableView_ addTableColumn:starColumn_];
 
-    tableColumn_ = 
+    tableColumn_ =
         [[NSTableColumn alloc] initWithIdentifier:@"name"];
     [tableColumn_ setEditable:NO];
     [tableView_ addTableColumn:tableColumn_];
-    
-    tagsColumn_ = [[NSTableColumn alloc] initWithIdentifier:@"tags"];
-    [tagsColumn_ setEditable:NO];
-    [tableView_ addTableColumn:tagsColumn_];
-    
+
     [scrollView_ setDocumentView:tableView_];
 
     [tableView_ setDelegate:self];
-    [tableView_ setDataSource:self];    
+    [tableView_ setDataSource:self];
     selectedGuids_ = [[NSMutableSet alloc] init];
 
-    [tableView_ setDoubleAction:@selector(onDoubleClick:)];    
+    [tableView_ setDoubleAction:@selector(onDoubleClick:)];
 
     NSTableHeaderView* header = [[NSTableHeaderView alloc] init];
     [tableView_ setHeaderView:header];
     [[tableColumn_ headerCell] setStringValue:@"Name"];
     [[starColumn_ headerCell] setStringValue:@"Default"];
     [starColumn_ setWidth:[[starColumn_ headerCell] cellSize].width];
-    [[tagsColumn_ headerCell] setStringValue:@"Tags"];
 
     [tableView_ sizeLastColumnToFit];
-    
+
     [searchField_ setArrowHandler:tableView_];
 
     [[NSNotificationCenter defaultCenter] addObserver: self
@@ -348,6 +343,11 @@ const int kInterWidgetMargin = 10;
 {
     dataSource_ = dataSource;
     [self reloadData];
+}
+
+- (BookmarkModel*)dataSource
+{
+    return dataSource_;
 }
 
 - (void)dealloc
@@ -368,14 +368,50 @@ const int kInterWidgetMargin = 10;
     return [dataSource_ numberOfBookmarksWithFilter:[searchField_ stringValue]];
 }
 
+- (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)rowIndex
+{
+    Bookmark* bookmark =
+        [dataSource_ bookmarkAtIndex:rowIndex
+                          withFilter:[searchField_ stringValue]];
+    NSArray* tags = [bookmark objectForKey:KEY_TAGS];
+    if ([tags count] == 0) {
+        return 21;
+    } else {
+        return 29;
+    }
+}
+
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
 {
-    Bookmark* bookmark = 
-        [dataSource_ bookmarkAtIndex:rowIndex 
+    Bookmark* bookmark =
+        [dataSource_ bookmarkAtIndex:rowIndex
                           withFilter:[searchField_ stringValue]];
 
     if (aTableColumn == tableColumn_) {
-        return [bookmark objectForKey:KEY_NAME];
+        NSMutableAttributedString* as = [[[NSMutableAttributedString alloc] init] autorelease];
+        NSColor* textColor;
+        if ([[tableView_ selectedRowIndexes] containsIndex:rowIndex]) {
+            textColor = [NSColor whiteColor];
+        } else {
+            textColor = [NSColor blackColor];
+        }
+        NSFont* smallFont = [NSFont systemFontOfSize:10];
+        NSDictionary* plainAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
+                                         textColor, NSForegroundColorAttributeName,
+                                         nil];
+        NSDictionary* smallAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
+                                         textColor, NSForegroundColorAttributeName,
+                                         smallFont, NSFontAttributeName,
+                                         nil];
+
+        [as appendAttributedString:[[[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\n", [bookmark objectForKey:KEY_NAME]]
+                                                                    attributes:plainAttributes] autorelease]];
+        NSArray* tags = [bookmark objectForKey:KEY_TAGS];
+        NSString* tagsString = [NSString stringWithString:[tags componentsJoinedByString:@", "]];
+        [as appendAttributedString:[[[NSAttributedString alloc] initWithString:tagsString
+                                                                    attributes:smallAttributes] autorelease]];
+
+        return as;
     } else if (aTableColumn == commandColumn_) {
         if (![[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
             return @"Login shell";
@@ -389,15 +425,12 @@ const int kInterWidgetMargin = 10;
         } else {
             return @"";
         }
-    } else if (aTableColumn == tagsColumn_) {
-        NSArray* tags = [bookmark objectForKey:KEY_TAGS];
-        return [NSString stringWithString:[tags componentsJoinedByString:@", "]];
     } else if (aTableColumn == starColumn_) {
         static NSImage* starImage;
         if (!starImage) {
-            NSString* starFile = [[NSBundle bundleForClass:[self class]] 
-                                  pathForResource:@"star-gold24" 
-                                  ofType:@"png"];   
+            NSString* starFile = [[NSBundle bundleForClass:[self class]]
+                                  pathForResource:@"star-gold24"
+                                  ofType:@"png"];
             starImage = [[NSImage alloc] initWithContentsOfFile:starFile];
             [starImage retain];
         }
@@ -406,7 +439,7 @@ const int kInterWidgetMargin = 10;
         size.width = [aTableColumn width];
         size.height = rowHeight_;
         [image setSize:size];
-        
+
         NSRect rect;
         rect.origin.x = 0;
         rect.origin.y = 0;
@@ -421,7 +454,7 @@ const int kInterWidgetMargin = 10;
         [image unlockFocus];
         return image;
     }
-    
+
     return @"";
 }
 
@@ -482,7 +515,7 @@ const int kInterWidgetMargin = 10;
 
 - (void)selectRowByGuid:(NSString*)guid
 {
-    int theRow = [dataSource_ indexOfBookmarkWithGuid:guid 
+    int theRow = [dataSource_ indexOfBookmarkWithGuid:guid
                                            withFilter:[searchField_ stringValue]];
     if (theRow == -1) {
         [self deselectAll];
@@ -511,10 +544,10 @@ const int kInterWidgetMargin = 10;
     NSRect tableViewFrame;
     tableViewFrame.origin.x = 0;
     tableViewFrame.origin.y = 0;;
-    tableViewFrame.size = 
-        [NSScrollView contentSizeForFrameSize:scrollViewFrame.size 
-                        hasHorizontalScroller:NO 
-                          hasVerticalScroller:YES 
+    tableViewFrame.size =
+        [NSScrollView contentSizeForFrameSize:scrollViewFrame.size
+                        hasHorizontalScroller:NO
+                          hasVerticalScroller:YES
                                    borderType:[scrollView_ borderType]];
     [tableView_ setFrame:tableViewFrame];
     [tableView_ sizeLastColumnToFit];
@@ -533,16 +566,16 @@ const int kInterWidgetMargin = 10;
 
     if (!showGraphic) {
         [tableView_ setUsesAlternatingRowBackgroundColors:YES];
-        [tableView_ 
+        [tableView_
          setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleRegular];
         [tableView_ removeTableColumn:starColumn_];
         [tableColumn_ setDataCell:[[NSTextFieldCell alloc] initTextCell:@""]];
     } else {
         [tableView_ setUsesAlternatingRowBackgroundColors:NO];
-        [tableView_ 
+        [tableView_
              setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleSourceList];
         [tableView_ removeTableColumn:tableColumn_];
-        tableColumn_ = 
+        tableColumn_ =
             [[NSTableColumn alloc] initWithIdentifier:@"name"];
         [tableColumn_ setEditable:NO];
 
@@ -571,7 +604,7 @@ const int kInterWidgetMargin = 10;
     if (row < 0) {
         return nil;
     }
-    Bookmark* bookmark = [dataSource_ bookmarkAtIndex:row 
+    Bookmark* bookmark = [dataSource_ bookmarkAtIndex:row
                                            withFilter:[searchField_ stringValue]];
     if (!bookmark) {
         return nil;
@@ -585,12 +618,12 @@ const int kInterWidgetMargin = 10;
     NSIndexSet* indexes = [tableView_ selectedRowIndexes];
     NSUInteger theIndex = [indexes firstIndex];
     while (theIndex != NSNotFound) {
-        Bookmark* bookmark = [dataSource_ bookmarkAtIndex:theIndex 
+        Bookmark* bookmark = [dataSource_ bookmarkAtIndex:theIndex
                                                withFilter:[searchField_ stringValue]];
         if (bookmark) {
             [result addObject:[bookmark objectForKey:KEY_GUID]];
         }
-        
+
         theIndex = [indexes indexGreaterThanIndex:theIndex];
     }
     return result;
@@ -612,13 +645,12 @@ const int kInterWidgetMargin = 10;
     [shortcutColumn_ setEditable:NO];
     [shortcutColumn_ setWidth:50];
     [tableView_ addTableColumn:shortcutColumn_];
-    
+
     commandColumn_ = [[NSTableColumn alloc] initWithIdentifier:@"command"];
     [commandColumn_ setEditable:NO];
     [tableView_ addTableColumn:commandColumn_];
 
-    [tableColumn_ setWidth:150];
-    [tagsColumn_ setWidth:150];
+    [tableColumn_ setWidth:250];
 
     [[shortcutColumn_ headerCell] setStringValue:@"Shortcut"];
     [[commandColumn_ headerCell] setStringValue:@"Command"];
@@ -646,7 +678,7 @@ const int kInterWidgetMargin = 10;
 - (void)resizeSubviewsWithOldSize:(NSSize)oldBoundsSize
 {
     NSRect frame = [self frame];
-    
+
     NSRect searchFieldFrame;
     searchFieldFrame.origin.x = 0;
     searchFieldFrame.origin.y = frame.size.height - kSearchWidgetHeight;
@@ -658,17 +690,17 @@ const int kInterWidgetMargin = 10;
     scrollViewFrame.origin.x = 0;
     scrollViewFrame.origin.y = 0;
     scrollViewFrame.size.width = frame.size.width;
-    scrollViewFrame.size.height = 
+    scrollViewFrame.size.height =
         frame.size.height - kSearchWidgetHeight - kInterWidgetMargin;
     [scrollView_ setFrame:scrollViewFrame];
 
     NSRect tableViewFrame = [tableView_ frame];
     tableViewFrame.origin.x = 0;
     tableViewFrame.origin.y = 0;;
-    NSSize temp = 
-        [NSScrollView contentSizeForFrameSize:scrollViewFrame.size 
-                        hasHorizontalScroller:NO 
-                          hasVerticalScroller:YES 
+    NSSize temp =
+        [NSScrollView contentSizeForFrameSize:scrollViewFrame.size
+                        hasHorizontalScroller:NO
+                          hasVerticalScroller:YES
                                    borderType:[scrollView_ borderType]];
     tableViewFrame.size.width = temp.width;
     [tableView_ setFrame:tableViewFrame];
@@ -691,11 +723,6 @@ const int kInterWidgetMargin = 10;
 {
     NSLog(@"Debugging object at %x. Current count is %d", (void*)self, [self retainCount]);
     debug=YES;
-}
-
-- (void)allowMultipleSelection
-{
-    [tableView_ setAllowsMultipleSelection:YES];
 }
 
 - (NSTableView*)tableView

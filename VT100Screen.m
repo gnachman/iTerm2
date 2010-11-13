@@ -2498,9 +2498,9 @@ static void DumpBuf(screen_char_t* p, int n) {
     if (PLAYBELL) {
         NSBeep();
     }
-    if (SHOWBELL)
-    {
+    if (SHOWBELL) {
         [SESSION setBell:YES];
+		[display beginFlash];
     }
 }
 

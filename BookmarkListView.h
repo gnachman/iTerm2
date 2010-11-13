@@ -72,6 +72,7 @@
 - (void)setDelegate:(id<BookmarkTableDelegate>)delegate;
 - (void)dealloc;
 - (void)setDataSource:(BookmarkModel*)dataSource;
+- (BookmarkModel*)dataSource;
 
 // Drag drop
 - (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard*)pboard;
@@ -82,6 +83,7 @@
 
 // DataSource methods
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;
+- (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)rowIndex;
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex;
 - (BOOL)selectionShouldChangeInTableView:(NSTableView *)aTableView;
 - (NSDragOperation)tableView:(NSTableView *)aTableView validateDrop:(id < NSDraggingInfo >)info proposedRow:(NSInteger)row proposedDropOperation:(NSTableViewDropOperation)operation;
@@ -90,7 +92,7 @@
 - (BOOL)selectionShouldChangeInTableView:(NSTableView *)aTableView;
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification;
 
-// Don't use this if you've called allowMultipleSelection.
+// Don't use this if you've called allowMultipleSelections.
 - (int)selectedRow;
 - (void)reloadData;
 - (void)selectRowIndex:(int)theIndex;
@@ -103,7 +105,7 @@
 - (void)deselectAll;
 - (void)multiColumns;
 
-// Dont' use this if you've called allowMultipleSelection
+// Dont' use this if you've called allowMultipleSelections
 - (NSString*)selectedGuid;
 - (NSSet*)selectedGuids;
 - (void)dataChangeNotification:(id)sender;
@@ -113,7 +115,6 @@
 - (id)retain;
 - (oneway void)release;
 - (void)turnOnDebug;
-- (void)allowMultipleSelection;
 - (NSTableView*)tableView;
 - (id)delegate;
 

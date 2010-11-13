@@ -42,6 +42,7 @@
 #import "PasteboardHistory.h"
 #import <Carbon/Carbon.h>
 #import "iTermApplicationDelegate.h"
+#import "iTermApplication.h"
 
 @interface NSApplication (Undocumented)
 - (void)_cycleWindowsReversed:(BOOL)back;
@@ -465,12 +466,22 @@ static BOOL initDone = NO;
 
 static void OnHotKeyEvent()
 {
-    iTermController* controller = [iTermController sharedInstance];
-    int n = [controller numberOfTerminals];
-    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-    if (n == 0) {
-        [controller newWindow:nil];
-    }
+	if ([NSApp isActive]) {
+        PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
+		NSWindow* prefWindow = [prefPanel window];
+		NSWindow* appKeyWindow = [[NSApplication sharedApplication] keyWindow];
+		if (prefWindow != appKeyWindow ||
+			![iTermApplication isTextFieldInFocus:[prefPanel hotkeyField]]) {
+			[NSApp hide:nil];
+		}
+	} else {
+		iTermController* controller = [iTermController sharedInstance];
+		int n = [controller numberOfTerminals];
+		[[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+		if (n == 0) {
+			[controller newWindow:nil];
+		}
+	}
 }
 
 /*

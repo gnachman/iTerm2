@@ -38,10 +38,10 @@
 
 @implementation iTermApplication
 
-- (BOOL)isTextFieldInFocus:(NSTextField *)textField
++ (BOOL)isTextFieldInFocus:(NSTextField *)textField
 {
     BOOL inFocus = NO;
-    
+
     // If the textfield's widow's first responder is a text view and
     // the default editor for the text field exists and
     // the textfield is the textfield's window's first responder's delegate
@@ -62,19 +62,19 @@
         PTYTabView* tabView = [currentTerminal tabView];
         PTYSession* currentSession = [currentTerminal currentSession];
         NSResponder *responder;
-        
+
         if ([prefPanel keySheet] == [self keyWindow] &&
             [prefPanel keySheetIsOpen] &&
-            [self isTextFieldInFocus:[prefPanel shortcutKeyTextField]]) {
+            [iTermApplication isTextFieldInFocus:[prefPanel shortcutKeyTextField]]) {
             [prefPanel shortcutKeyDown:event];
             return;
         } else if ([privatePrefPanel keySheet] == [self keyWindow] &&
                    [privatePrefPanel keySheetIsOpen] &&
-                   [self isTextFieldInFocus:[privatePrefPanel shortcutKeyTextField]]) {
+                   [iTermApplication isTextFieldInFocus:[privatePrefPanel shortcutKeyTextField]]) {
             [privatePrefPanel shortcutKeyDown:event];
             return;
         } else if ([prefPanel window] == [self keyWindow] &&
-                   [self isTextFieldInFocus:[prefPanel hotkeyField]]) {
+                   [iTermApplication isTextFieldInFocus:[prefPanel hotkeyField]]) {
             [prefPanel hotkeyKeyDown:event];
             return;
         } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {

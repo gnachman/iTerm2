@@ -332,6 +332,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 // This textview is about to become invisible because another tab is selected.
 - (void)aboutToHide;
 
+// Visual bell
+- (void)beginFlash;
+
 @end
 
 //

@@ -70,9 +70,7 @@
     if ((self = [super initWithContentRect:contentRect
                  styleMask:aStyle
                    backing:bufferingType
-                     defer:flag])
-    != nil)
-    {
+                     defer:flag]) != nil) {
         [self setAlphaValue:0.9999];
         blurFilter = 0;
         layoutDone = NO;
