@@ -608,7 +608,7 @@ NSString *sessionsKey = @"sessions";
     float westChange = [sender frame].size.width -
         [[[self currentSession] SCROLLVIEW] documentVisibleRect].size.width;
     //NSLog(@"Change change: %f,%f", northChange, westChange);
-    int old_height = (proposedFrameSize.height - northChange) / charHeight + 0.5;
+    int old_height = (proposedFrameSize.height - northChange - VMARGIN*2) / charHeight + 0.5;
     int old_width = (proposedFrameSize.width - westChange - MARGIN*2) / charWidth + 0.5;
     if (old_height < 2) {
         old_height = 2;
@@ -616,7 +616,7 @@ NSString *sessionsKey = @"sessions";
     if (old_width < 20) {
         old_width = 20;
     }
-    proposedFrameSize.height = charHeight * old_height + northChange;
+    proposedFrameSize.height = charHeight * old_height + northChange + VMARGIN*2;
     proposedFrameSize.width = charWidth * old_width + westChange + MARGIN * 2;
     //int h = proposedFrameSize.height / charHeight;
     //int w = proposedFrameSize.width / charWidth;
@@ -825,30 +825,35 @@ NSString *sessionsKey = @"sessions";
     NSLog(@"%s(%d):-[PseudoTerminal windowWillUseStandardFrame:defaultFramewidth = %f, height = %f]",
           __FILE__, __LINE__, defaultFrame.size.width, defaultFrame.size.height);
 #endif
-    float nch = [sender frame].size.height -
+    float decorationHeight = [sender frame].size.height -
         [[[self currentSession] SCROLLVIEW] documentVisibleRect].size.height;
-    float wch = [sender frame].size.width -
+    float decorationWidth = [sender frame].size.width -
         [[[self currentSession] SCROLLVIEW] documentVisibleRect].size.width;
 
-    defaultFrame.origin.x = [sender frame].origin.x;
     float charHeight = [self maxCharHeight:nil];
     float charWidth = [self maxCharWidth:nil];
-    int new_height = (defaultFrame.size.height - nch) / charHeight;
-    int new_width = (defaultFrame.size.width - wch - MARGIN * 2) /charWidth;
 
-    defaultFrame.size.height = charHeight * new_height + nch;
-    defaultFrame.origin.y = [sender frame].size.height;
+    NSRect proposedFrame;
+    proposedFrame.origin.x = [sender frame].origin.x;
+    proposedFrame.origin.y = [sender frame].size.height;;
     BOOL verticalOnly = NO;
 
     if ([[PreferencePanel sharedInstance] maxVertically] &&
         !([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask)) {
         verticalOnly = YES;
     }
+    if (verticalOnly) {
+        proposedFrame.size.width = [sender frame].size.width;
+    } else {
+        proposedFrame.size.width = decorationWidth + floor(defaultFrame.size.width / charWidth) * charWidth;
+    }
+    proposedFrame.size.height = decorationHeight + floor(defaultFrame.size.height / charHeight) * charHeight;
 
-    defaultFrame.size.width = (verticalOnly ? [sender frame].size.width : new_width*charWidth+wch+MARGIN*2);
-    //NSLog(@"actual width: %f, height: %f",defaultFrame.size.width,defaultFrame.size.height);
-
-    return defaultFrame;
+    PtyLog(@"For zoom, default frame is %fx%f, proposed frame is %f,%f %fx%f", 
+           defaultFrame.size.width, defaultFrame.size.height,
+           proposedFrame.origin.x, proposedFrame.origin.y,
+           proposedFrame.size.width, proposedFrame.size.height);
+    return proposedFrame;
 }
 
 - (void)windowWillShowInitial
@@ -1822,12 +1827,28 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"fitWindowToSession - in setup");
         return;
     }
-    float charHeight = [[session TEXTVIEW] lineHeight];
-    float charWidth = [[session TEXTVIEW] charWidth];
-    int height = [session rows];
-    int width = [session columns];
+
+    // Pick a new window size that is a multiple of the widest/tallest character in any tab but is
+    // just large enough to fit this session.
+    float myCharHeight = [[session TEXTVIEW] lineHeight];
+    float myCharWidth = [[session TEXTVIEW] charWidth];
+    int myHeight = [session rows];
+    int myWidth = [session columns];
+
+    int biggestWidth;
+    int biggestHeight;
+    float biggestCharHeight = [self tallestSessionHeight:&biggestHeight];
+    float biggestCharWidth = [self widestSessionWidth:&biggestWidth];
+
+    // Pick a new width and height. Quite posibly no session is this size.
+    int width = (myWidth * myCharWidth) / biggestCharWidth;
+    int height = ceil(((float)myHeight * myCharHeight) / biggestCharHeight);
+
     PtyLog(@"fitWindowToSession calling fitWindowToSessionsWithWidth");
-    [self fitWindowToSessionsWithWidth:width height:height charWidth:charWidth charHeight:charHeight];
+    [self fitWindowToSessionsWithWidth:width
+                                height:height
+                             charWidth:biggestCharWidth
+                            charHeight:biggestCharHeight];
 }
 
 - (BOOL)sendInputToAllSessions
@@ -2307,23 +2328,14 @@ NSString *sessionsKey = @"sessions";
     rect.origin.y = 0;
     rect.size = tabViewSize;
     winSizeForTabViewSize = [PTYWindow frameRectForContentRect:rect styleMask:[[self window] styleMask]].size;
-    
+
     result.height += winSizeForTabViewSize.height - textViewSize.height;
     result.width += winSizeForTabViewSize.width - textViewSize.width;
-    
-    if ([TABVIEW numberOfTabViewItems] == 1 &&
-        [[PreferencePanel sharedInstance] hideTab]) {
-        if ([bottomBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) {
-            result.height += VMARGIN;
-        }
-    } else {
+
+    if ([TABVIEW numberOfTabViewItems] != 1 ||
+        ![[PreferencePanel sharedInstance] hideTab]) {
         // The tabs are visible at the top of the window.
         result.height += [tabBarControl frame].size.height;
-        if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
-            if ([bottomBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) {
-                result.height += VMARGIN;
-            }
-        }
     }
 
     return result;
@@ -2342,13 +2354,12 @@ NSString *sessionsKey = @"sessions";
 
     NSSize decorationSize = [self getWindowDecorationSize:width height:height charWidth:charWidth charHeight:charHeight];
     PtyLog(@"Window decoration takes %1.0fx%1.0f", decorationSize.width, decorationSize.height);
-    
+
     NSRect visibleFrame = [[[self window] screen] visibleFrame];
 
     NSSize size, vsize, winSize, tabViewSize;
     NSWindow *thisWindow = [self window];
     NSPoint topLeft;
-    BOOL vmargin_added = NO;
     BOOL hasScrollbar = !_fullScreen && ![[PreferencePanel sharedInstance] hideScrollbar];
 
     // This code sets up aRect to be the new size of the window.
@@ -2369,18 +2380,18 @@ NSString *sessionsKey = @"sessions";
 
         // set desired size of textview to enough pixels to fit WIDTH*HEIGHT
         vsize.width = (int)ceil(charWidth * width + MARGIN * 2);
-        vsize.height = (int)ceil(charHeight * height);
+        vsize.height = (int)ceil(charHeight * height + VMARGIN*2);
 
         PtyLog(@"Existing session would take %1.0fx%1.0f", vsize.width, vsize.height);
-        
+
         NSSize maxFrameSize = [self maxFrame].size;
         PtyLog(@"Max frame size is %1.0fx%1.0f", maxFrameSize.width, maxFrameSize.height);
-        
+
         if (vsize.width + decorationSize.width > maxFrameSize.width) {
             vsize.width = (int)((maxFrameSize.width - decorationSize.width) / charWidth) * (int)charWidth;
         }
         if (vsize.height + decorationSize.height > maxFrameSize.height) {
-            vsize.height = (int)((maxFrameSize.height - decorationSize.height) / charHeight) * (int)charHeight;
+            vsize.height = (int)((maxFrameSize.height - decorationSize.height - VMARGIN*2) / charHeight) * (int)charHeight + VMARGIN*2;
         }
 
         PtyLog(@"After constraining window to max content size, vsize is %1.0fx%1.0f", vsize.width, vsize.height);
@@ -2416,18 +2427,13 @@ NSString *sessionsKey = @"sessions";
             // The tabs are not visible at the top of the window. Set aRect appropriately.
             [tabBarControl setHidden: YES];
             aRect.origin.x = 0;
-            aRect.origin.y = ([bottomBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) ? VMARGIN : 0;
+            aRect.origin.y = 0;
             if (![bottomBar isHidden]) {
                 aRect.origin.y += [bottomBar frame].size.height;
             }
             aRect.size = tabViewSize;
             PtyLog(@"fitWindwoToSessionWithWidth - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
             [TABVIEW setFrame: aRect];
-            if ([bottomBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) {
-                winSize.height += VMARGIN;
-                PtyLog(@"fitWindowToSessionsWithWidth - Add lower margin to window. Window size is now %fx%f", winSize.width, winSize.height);
-                vmargin_added = YES;
-            }
         } else {
             // The tabs are visible at the top of the window.
             PtyLog(@"fitWindowToSessionsWithWidth - tabs are visible. Adjusting window size...");
@@ -2439,7 +2445,7 @@ NSString *sessionsKey = @"sessions";
             if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
                 // setup aRect to make room for the tabs at the top.
                 aRect.origin.x = 0;
-                aRect.origin.y = ([bottomBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) ? VMARGIN : 0;
+                aRect.origin.y = 0;
                 aRect.size = tabViewSize;
                 if (![bottomBar isHidden]) {
                     aRect.origin.y += [bottomBar frame].size.height;
@@ -2449,11 +2455,6 @@ NSString *sessionsKey = @"sessions";
                 aRect.origin.y += aRect.size.height;
                 aRect.size.height = [tabBarControl frame].size.height;
                 [tabBarControl setFrame: aRect];
-                if ([bottomBar isHidden] && [[PreferencePanel sharedInstance] useBorder]) {
-                    winSize.height += VMARGIN;
-                    PtyLog(@"fitWindowToSessionsWithWidth - Add lower margin to window. Window size is now %fx%f", winSize.width, winSize.height);
-                    vmargin_added = YES;
-                }
             } else {
                 PtyLog(@"fitWindowToSessionsWithWidth - putting tabs at bottom");
                 // setup aRect to make room for the tabs at the bottom.
@@ -2493,8 +2494,8 @@ NSString *sessionsKey = @"sessions";
 
         [tabBarControl setDisableTabClose:[[PreferencePanel sharedInstance] useCompactLabel]];
         [tabBarControl setCellMinWidth: [[PreferencePanel sharedInstance] useCompactLabel]?
-         [[PreferencePanel sharedInstance] minCompactTabWidth]:
-         [[PreferencePanel sharedInstance] minTabWidth]];
+        [[PreferencePanel sharedInstance] minCompactTabWidth]:
+        [[PreferencePanel sharedInstance] minTabWidth]];
         [tabBarControl setSizeCellsToFit: [[PreferencePanel sharedInstance] useUnevenTabs]];
         [tabBarControl setCellOptimumWidth:  [[PreferencePanel sharedInstance] optimumTabWidth]];
 
@@ -2519,13 +2520,6 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"Window size is now %1.0fx%1.0f", [thisWindow frame].size.width, [thisWindow frame].size.height);
         PtyLog(@"fitWindowToSessionsWithWidth - [NSWindow setFrame] returned");
         [[thisWindow contentView] setAutoresizesSubviews: YES];
-
-        if (vmargin_added) {
-            [[thisWindow contentView] lockFocus];
-            [[NSColor windowFrameColor] set];
-            NSRectFill(NSMakeRect(0,0,vsize.width,VMARGIN));
-            [[thisWindow contentView] unlockFocus];
-        }
 
         _resizeInProgressFlag = NO;
     } else {
@@ -2658,13 +2652,13 @@ NSString *sessionsKey = @"sessions";
 
     if ([TABVIEW numberOfTabViewItems] != 0) {
         NSSize contentSize = [[[self currentSession] SCROLLVIEW] documentVisibleRect].size;
-        rows = contentSize.height / charSize.height;
+        rows = (contentSize.height - VMARGIN*2) / charSize.height;
         columns = (contentSize.width - MARGIN*2) / charSize.width;
     }
 
     NSRect marginlessRect = NSMakeRect(0, 0, columns * charSize.width, rows * charSize.height);
 
-    if ([aSession initScreen:marginlessRect vmargin:0]) {
+    if ([aSession initScreen:marginlessRect]) {
         PtyLog(@"setupSession - call safelySetSessionSize");
         [self safelySetSessionSize:aSession rows:rows columns:columns];
         inSetup = YES;
@@ -2716,7 +2710,7 @@ NSString *sessionsKey = @"sessions";
             height = 2;
         }
 
-        int max_height = [self maxTextViewSize].height / [[aSession TEXTVIEW] lineHeight];
+        int max_height = ([self maxTextViewSize].height - VMARGIN*2) / [[aSession TEXTVIEW] lineHeight];
 
         if (height > max_height) {
             height = max_height;
@@ -2745,7 +2739,12 @@ NSString *sessionsKey = @"sessions";
     [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
     NSSize size = [[[self currentSession] SCROLLVIEW] documentVisibleRect].size;
     int width = (size.width - MARGIN*2) / [[aSession TEXTVIEW] charWidth];
-    int height = size.height / [[aSession TEXTVIEW] lineHeight];
+    int height = (size.height - VMARGIN*2) / [[aSession TEXTVIEW] lineHeight];
+    if (width <= 0 || height <= 0) {
+        // We can be called before the window is initialized, but we'll fail spectacularly
+        // if we keep going.
+        return;
+    }
     PtyLog(@"fitSessionToWindow: given a height of %1.0f can fit %d rows", size.height, height);
     if (width == [aSession columns] && height == [aSession rows]) {
         PtyLog(@"fitSessionToWindow - terminating early because session size doesn't change");

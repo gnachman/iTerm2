@@ -1840,7 +1840,7 @@ static void DumpBuf(screen_char_t* p, int n) {
         }
         unichar replacement = '\t';
         while (positions--) {
-            aLine = [self getLineAtIndex:y];
+            aLine = [self getLineAtScreenIndex:y];
             aLine[x].ch = replacement;
             replacement = TAB_FILLER;
             --x;
@@ -2500,7 +2500,7 @@ static void DumpBuf(screen_char_t* p, int n) {
     }
     if (SHOWBELL) {
         [SESSION setBell:YES];
-		[display beginFlash];
+        [display beginFlash];
     }
 }
 

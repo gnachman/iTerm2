@@ -238,7 +238,7 @@ static NSImage *warningImage;
 }
 
 // Session specific methods
-- (BOOL)initScreen:(NSRect)aRect vmargin:(float)vmargin
+- (BOOL)initScreen:(NSRect)aRect
 {
     NSSize aSize;
 
@@ -253,7 +253,7 @@ static NSImage *warningImage;
     [view retain];
 
     // Allocate a scrollview
-    SCROLLVIEW = [[PTYScrollView alloc] initWithFrame: NSMakeRect(0, vmargin, aRect.size.width, aRect.size.height - vmargin*2)];
+    SCROLLVIEW = [[PTYScrollView alloc] initWithFrame: NSMakeRect(0, 0, aRect.size.width, aRect.size.height)];
     [SCROLLVIEW setHasVerticalScroller:![parent fullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar]];
     NSParameterAssert(SCROLLVIEW != nil);
     [SCROLLVIEW setAutoresizingMask: NSViewWidthSizable|NSViewHeightSizable];
@@ -272,13 +272,20 @@ static NSImage *warningImage;
 
     // Allocate a text view
     aSize = [SCROLLVIEW contentSize];
-    TEXTVIEW = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, 0, aSize.width, aSize.height)];
+    WRAPPER = [[TextViewWrapper alloc] initWithFrame:NSMakeRect(0, 0, aSize.width, aSize.height)];
+    [WRAPPER setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+
+    TEXTVIEW = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, VMARGIN, aSize.width, aSize.height)];
     [TEXTVIEW setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [TEXTVIEW setFont:[ITAddressBookMgr fontWithDesc:[addressBookEntry objectForKey:KEY_NORMAL_FONT]]
                nafont:[ITAddressBookMgr fontWithDesc:[addressBookEntry objectForKey:KEY_NON_ASCII_FONT]]
     horizontalSpacing:[[addressBookEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
       verticalSpacing:[[addressBookEntry objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [self setTransparency:[[addressBookEntry objectForKey:KEY_TRANSPARENCY] floatValue]];
+
+    [WRAPPER addSubview:TEXTVIEW];
+    [TEXTVIEW setFrame:NSMakeRect(0, VMARGIN, aSize.width, aSize.height - VMARGIN)];
+    [TEXTVIEW release];
 
     // assign terminal and task objects
     [SCREEN setShellTask:SHELL];
@@ -295,8 +302,8 @@ static NSImage *warningImage;
 
         [TEXTVIEW setDataSource: SCREEN];
         [TEXTVIEW setDelegate: self];
-        [SCROLLVIEW setDocumentView:TEXTVIEW];
-        [TEXTVIEW release];
+        [SCROLLVIEW setDocumentView:WRAPPER];
+        [WRAPPER release];
         [SCROLLVIEW setDocumentCursor: [PTYTextView textViewCursor]];
         [SCROLLVIEW setLineScroll:[TEXTVIEW lineHeight]];
         [SCROLLVIEW setPageScroll:2*[TEXTVIEW lineHeight]];
@@ -1203,7 +1210,7 @@ static NSImage *warningImage;
     int bgNum = -1;
     int fgNum = -1;
     for(int i = 0; i < 16; ++i) {
-        NSString* key = [NSString stringWithFormat:@"KEY_ANSI_%d_COLOR", i];
+        NSString* key = [NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i];
         if ([fgColor isEqual: [ITAddressBookMgr decodeColor:[aDict objectForKey:key]]]) {
             fgNum = i;
         }
@@ -2079,6 +2086,11 @@ static NSImage *warningImage;
 - (void)setFont:(NSFont*)font nafont:(NSFont*)nafont horizontalSpacing:(float)horizontalSpacing verticalSpacing:(float)verticalSpacing
 {
     [TEXTVIEW setFont:font nafont:nafont horizontalSpacing:horizontalSpacing verticalSpacing:verticalSpacing];
+    // Calling fitWindowToSession:self works but causes window size to change if self has an excess margin.
+    // fitWIndowToSessions doesn't work because it may leave self too small (# rows) for the window when shrinking the font.
+
+    // Adjust the window size to perfectly fit this session. But this may cause the excess margin to
+    // be too small if another tab has a larger font.
     [parent fitWindowToSession:self];
 }
 

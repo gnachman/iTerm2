@@ -366,7 +366,6 @@ static float versionNumber;
     defaultQuitWhenAllWindowsClosed = [prefs objectForKey:@"QuitWhenAllWindowsClosed"]?[[prefs objectForKey:@"QuitWhenAllWindowsClosed"] boolValue]: NO;
     defaultCursorType=[prefs objectForKey:@"CursorType"]?[prefs integerForKey:@"CursorType"]:2;
     defaultCheckUpdate = [prefs objectForKey:@"SUEnableAutomaticChecks"]?[[prefs objectForKey:@"SUEnableAutomaticChecks"] boolValue]: YES;
-    defaultUseBorder = [prefs objectForKey:@"UseBorder"]?[[prefs objectForKey:@"UseBorder"] boolValue]: NO;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultSmartPlacement = [prefs objectForKey:@"SmartPlacement"]?[[prefs objectForKey:@"SmartPlacement"] boolValue]: YES;
     defaultInstantReplay = [prefs objectForKey:@"InstantReplay"]?[[prefs objectForKey:@"InstantReplay"] boolValue]: YES;
@@ -458,7 +457,6 @@ static float versionNumber;
     [prefs setBool:defaultQuitWhenAllWindowsClosed forKey:@"QuitWhenAllWindowsClosed"];
     [prefs setBool:defaultCheckUpdate forKey:@"SUEnableAutomaticChecks"];
     [prefs setInteger:defaultCursorType forKey:@"CursorType"];
-    [prefs setBool:defaultUseBorder forKey:@"UseBorder"];
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
     [prefs setBool:defaultSmartPlacement forKey:@"SmartPlacement"];
     [prefs setBool:defaultInstantReplay forKey:@"InstantReplay"];
@@ -508,7 +506,6 @@ static float versionNumber;
     [quitWhenAllWindowsClosed setState: defaultQuitWhenAllWindowsClosed?NSOnState:NSOffState];
     [checkUpdate setState: defaultCheckUpdate?NSOnState:NSOffState];
     [cursorType selectCellWithTag:defaultCursorType];
-    [useBorder setState: defaultUseBorder?NSOnState:NSOffState];
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [smartPlacement setState: defaultSmartPlacement?NSOnState:NSOffState];
     [instantReplay setState: defaultInstantReplay?NSOnState:NSOffState];
@@ -558,7 +555,6 @@ static float versionNumber;
         sender == useCompactLabel ||
         sender == highlightTabLabels ||
         sender == cursorType ||
-        sender == useBorder ||
         sender == hideScrollbar ||
         sender == checkColorInvertedCursor) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
@@ -568,7 +564,6 @@ static float versionNumber;
         defaultHideTab=([hideTab state]==NSOnState);
         defaultCursorType = [[cursorType selectedCell] tag];
         defaultColorInvertedCursor = ([checkColorInvertedCursor state] == NSOnState);
-        defaultUseBorder = ([useBorder state] == NSOnState);
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermRefreshTerminal" object: nil userInfo: nil];
     } else {
@@ -763,11 +758,6 @@ static float versionNumber;
 - (ITermCursorType)cursorType
 {
     return defaultCursorType;
-}
-
-- (BOOL)useBorder
-{
-    return (defaultUseBorder);
 }
 
 - (BOOL)hideScrollbar

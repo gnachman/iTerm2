@@ -29,6 +29,7 @@
 #import <iTerm/BookmarkModel.h>
 #import "DVR.h"
 #import "WindowControllerInterface.h"
+#import "TextViewWrapper.h"
 
 #include <sys/time.h>
 
@@ -77,6 +78,7 @@ static const float kBackgroundSessionIntervalSec = 1;
     BOOL EXIT;
     NSView* view;
     PTYScrollView* SCROLLVIEW;
+    TextViewWrapper* WRAPPER;
     PTYTextView* TEXTVIEW;
     NSTimer *updateTimer;
 
@@ -151,7 +153,8 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (void)irAdvance:(int)dir;
 
 // Session specific methods
-- (BOOL)initScreen:(NSRect)aRect vmargin:(float)vmargin;
+- (BOOL)initScreen:(NSRect)aRect;
+
 - (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv
          environment:(NSDictionary *)prog_env

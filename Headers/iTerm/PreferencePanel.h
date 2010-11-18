@@ -142,10 +142,6 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *checkColorInvertedCursor;
     BOOL defaultColorInvertedCursor;
 
-    // border at bottom
-    IBOutlet NSButton *useBorder;
-    BOOL defaultUseBorder;
-
     // hide scrollbar and resize
     IBOutlet NSButton *hideScrollbar;
     BOOL defaultHideScrollbar;
@@ -363,7 +359,6 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (BOOL)openBookmark;
 - (NSString *)wordChars;
 - (ITermCursorType)cursorType;
-- (BOOL)useBorder;
 - (BOOL)hideScrollbar;
 - (BOOL)smartPlacement;
 - (BOOL)instantReplay;

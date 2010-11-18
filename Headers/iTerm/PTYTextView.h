@@ -35,7 +35,7 @@
 #define PRETTY_BOLD
 
 #define MARGIN  5
-#define VMARGIN 5
+#define VMARGIN 2
 
 @class VT100Screen;
 
@@ -246,6 +246,8 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)setSelectedTextColor:(NSColor *)aColor;
 - (void)setCursorTextColor:(NSColor*)color;
 
+- (float)excess;
+
 
 - (NSDictionary*)markedTextAttributes;
 - (void)setMarkedTextAttributes:(NSDictionary*)attr;
@@ -334,6 +336,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 
 // Visual bell
 - (void)beginFlash;
+
+- (void)drawBackground:(NSRect)bgRect;
+- (void)drawBackground:(NSRect)bgRect toPoint:(NSPoint)dest;
 
 @end
 
