@@ -376,6 +376,38 @@ static void FlushDebugLog() {
         [gDebugLogStr setString:@""];
 }
 
+- (IBAction)toggleSecureInput:(id)sender
+{
+    [secureInput setState:[secureInput state] == NSOnState ? NSOffState : NSOnState];
+    if ([secureInput state] == NSOnState) {
+        if (EnableSecureEventInput() != noErr) {
+            NSLog(@"Failed to enable secure input.");
+        }
+    } else {
+        if (DisableSecureEventInput() != noErr) {
+            NSLog(@"Failed to disable secure input.");
+        }
+    }
+}
+
+- (void)applicationDidBecomeActive:(NSNotification *)aNotification
+{
+    if ([secureInput state] == NSOnState) {
+        if (EnableSecureEventInput() != noErr) {
+            NSLog(@"Failed to enable secure input.");
+        }
+    }
+}
+
+- (void)applicationDidResignActive:(NSNotification *)aNotification
+{
+    if ([secureInput state] == NSOnState) {
+        if (DisableSecureEventInput() != noErr) {
+            NSLog(@"Failed to disable secure input.");
+        }
+    }
+}
+
 // Debug logging
 -(IBAction)debugLogging:(id)sender
 {

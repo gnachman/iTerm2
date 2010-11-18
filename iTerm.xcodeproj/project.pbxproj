@@ -131,6 +131,7 @@
 		1D5FDDC61208E93600C46BA3 /* PSMTabDragWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F62D15F10AA64B2F0075A287 /* PSMTabDragWindow.m */; };
 		1D5FDDC71208E93600C46BA3 /* iTermGrowlDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */; };
 		1D5FDDC91208E93600C46BA3 /* LineBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D72438C11F416E500BD4924 /* LineBuffer.m */; };
+		1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB293D1288899A00B2CB9F /* Carbon.framework */; };
 		1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D6C4D59122329F000E0AA3E /* ColorPresets.plist */; };
 		1D6C50A71226EEFB00E0AA3E /* BookmarkListView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */; };
 		1D6C50A81226EEFB00E0AA3E /* BookmarkListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */; };
@@ -465,6 +466,7 @@
 				F69E80E70ABB46F2001EC0FF /* Growl.framework in Frameworks */,
 				F6E2DEDA0AE2F67200D20B3B /* Sparkle.framework in Frameworks */,
 				1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */,
+				1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
