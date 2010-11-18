@@ -2490,6 +2490,15 @@ static void DumpBuf(screen_char_t* p, int n) {
     SHOWBELL = flag;
 }
 
+- (void)setFlashBellFlag:(BOOL)flag
+{
+#if DEBUG_METHOD_TRACE
+    NSLog(@"%s(%d):+[VT100Screen setFlashBellFlag:%s]",
+          __FILE__, __LINE__, flag == YES ? "YES" : "NO");
+#endif
+    FLASHBELL = flag;
+}
+
 - (void)activateBell
 {
 #if DEBUG_METHOD_TRACE
@@ -2500,6 +2509,8 @@ static void DumpBuf(screen_char_t* p, int n) {
     }
     if (SHOWBELL) {
         [SESSION setBell:YES];
+    }
+    if (FLASHBELL) {
         [display beginFlash];
     }
 }

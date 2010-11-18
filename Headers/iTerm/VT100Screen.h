@@ -68,6 +68,7 @@
     BOOL blinkShow;
     BOOL PLAYBELL;
     BOOL SHOWBELL;
+    BOOL FLASHBELL;
     BOOL GROWL;
 
 
@@ -149,6 +150,7 @@
 - (void)showCursor:(BOOL)show;
 - (void)setPlayBellFlag:(BOOL)flag;
 - (void)setShowBellFlag:(BOOL)flag;
+- (void)setFlashBellFlag:(BOOL)flag;
 - (void)setGrowlFlag:(BOOL)flag;
 
 // line access

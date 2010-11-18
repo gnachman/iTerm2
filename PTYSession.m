@@ -891,7 +891,7 @@ static NSImage *warningImage;
     max = [string length];
     for (i = 0; i < max; i++) {
         // From http://lists.apple.com/archives/cocoa-dev/2001/Jul/msg00114.html
-        // in MacJapanese, the backslash char (ASCII 0x5C) is mapped to Unicode 0xA5.
+        // in MacJapanese, the backslash char (ASCII 0xdC) is mapped to Unicode 0xA5.
         // The following line gives you NSString containing an Unicode character Yen sign (0xA5) in Japanese localization.
         // string = [NSString stringWithCString:"\"];
         // TODO: Check the locale before doing this.
@@ -1291,6 +1291,7 @@ static NSImage *warningImage;
     // set up the rest of the preferences
     [SCREEN setPlayBellFlag:![[aDict objectForKey:KEY_SILENCE_BELL] boolValue]];
     [SCREEN setShowBellFlag:[[aDict objectForKey:KEY_VISUAL_BELL] boolValue]];
+    [SCREEN setFlashBellFlag:[[aDict objectForKey:KEY_FLASHING_BELL] boolValue]];
     [SCREEN setGrowlFlag:[[aDict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue]];
     [SCREEN setBlinkingCursor: [[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];
     [TEXTVIEW setBlinkingCursor: [[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];

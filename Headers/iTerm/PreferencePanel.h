@@ -274,6 +274,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* nonAsciiDoubleWidth;
     IBOutlet NSButton* silenceBell;
     IBOutlet NSButton* visualBell;
+    IBOutlet NSButton* flashingBell;
     IBOutlet NSButton* xtermMouseReporting;
     IBOutlet NSButton* bookmarkGrowlNotifications;
     IBOutlet NSTextField* scrollbackLines;

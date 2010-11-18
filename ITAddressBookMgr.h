@@ -106,6 +106,7 @@
 #define KEY_AMBIGUOUS_DOUBLE_WIDTH            @"Ambiguous Double Width"
 #define KEY_SILENCE_BELL                      @"Silence Bell"
 #define KEY_VISUAL_BELL                       @"Visual Bell"
+#define KEY_FLASHING_BELL                     @"Flashing Bell"
 #define KEY_XTERM_MOUSE_REPORTING             @"Mouse Reporting"
 #define KEY_BOOKMARK_GROWL_NOTIFICATIONS      @"BM Growl"
 #define KEY_CHARACTER_ENCODING                @"Character Encoding"
