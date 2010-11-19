@@ -79,7 +79,6 @@
     path_ = [path_ stringByAppendingPathComponent:appname];
     [[NSFileManager defaultManager] createDirectoryAtPath:path_ withIntermediateDirectories:YES attributes:nil error:NULL];
     path_ = [[path_ stringByAppendingPathComponent:@"pbhistory.plist"] copyWithZone:[self zone]];
-    [path_ retain];
 
     [self _loadHistoryFromDisk];
 
@@ -88,6 +87,7 @@
 
 - (void)dealloc
 {
+    [path_ release];
     [entries_ release];
     [super dealloc];
 }
