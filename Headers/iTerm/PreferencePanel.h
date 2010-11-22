@@ -241,6 +241,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSColorWell *selectedTextColor;
     IBOutlet NSColorWell *cursorColor;
     IBOutlet NSColorWell *cursorTextColor;
+    IBOutlet NSMenu *presetsMenu;
 
     // Display tab
     IBOutlet NSView *displayFontAccessoryView;
@@ -417,8 +418,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (IBAction)useBasicKeyMappings:(id)sender;
 - (IBAction)useXtermKeyMappings:(id)sender;
 - (void)_loadPresetColors:(NSString*)presetName;
-- (IBAction)loadLightBackgroundPreset:(id)sender;
-- (IBAction)loadDarkBackgroundPreset:(id)sender;
+- (void)loadColorPreset:(id)sender;
 - (IBAction)addBookmark:(id)sender;
 - (IBAction)removeBookmark:(id)sender;
 - (IBAction)duplicateBookmark:(id)sender;

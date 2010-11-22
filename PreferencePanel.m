@@ -205,6 +205,15 @@ static float versionNumber;
 
     [copyTo allowMultipleSelections];
 
+    // Add presets to preset color selection.
+    NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"ColorPresets"
+                                                                            ofType:@"plist"];
+    NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
+    for (NSString* key in  [[presetsDict allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
+        NSMenuItem* presetItem = [[NSMenuItem alloc] initWithTitle:key action:@selector(loadColorPreset:) keyEquivalent:@""];
+        [presetsMenu addItem:presetItem];
+    }
+
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(handleWindowWillCloseNotification:)
                                                  name:NSWindowWillCloseNotification object: [self window]];
@@ -1772,8 +1781,8 @@ static float versionNumber;
     NSString* guid = [bookmarksTableView selectedGuid];
     NSAssert(guid, @"Null guid unexpected here");
 
-        NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"ColorPresets"
-                                                                            ofType:@"plist"];
+    NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"ColorPresets"
+                                                                        ofType:@"plist"];
     NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
     NSDictionary* settings = [presetsDict objectForKey:presetName];
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:[dataSource bookmarkWithGuid:guid]];
@@ -1793,14 +1802,9 @@ static float versionNumber;
     [self bookmarkSettingChanged:self];  // this causes existing sessions to be updated
 }
 
-- (IBAction)loadLightBackgroundPreset:(id)sender
+- (void)loadColorPreset:(id)sender;
 {
-    [self _loadPresetColors:@"Light Background"];
-}
-
-- (IBAction)loadDarkBackgroundPreset:(id)sender
-{
-    [self _loadPresetColors:@"Dark Background"];
+    [self _loadPresetColors:[sender title]];
 }
 
 - (IBAction)addBookmark:(id)sender
