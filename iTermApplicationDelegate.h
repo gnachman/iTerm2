@@ -91,6 +91,7 @@ void DebugLog(NSString* value);
     // navigation
 - (IBAction) previousTerminal: (id) sender;
 - (IBAction) nextTerminal: (id) sender;
+- (IBAction)arrangeHorizontally:(id)sender;
 
 // Notifications
 - (void) reloadMenus: (NSNotification *) aNotification;

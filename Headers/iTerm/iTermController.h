@@ -55,6 +55,7 @@
 - (IBAction)newSession:(id)sender;
 - (IBAction) previousTerminal: (id) sender;
 - (IBAction) nextTerminal: (id) sender;
+- (void)arrangeHorizontally;
 - (void)newSessionInTabAtIndex: (id) sender;
 - (void)newSessionInWindowAtIndex: (id) sender;
 - (void)showHideFindBar;

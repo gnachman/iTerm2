@@ -184,6 +184,150 @@ static BOOL initDone = NO;
     [NSApp _cycleWindowsReversed:NO];
 }
 
+// Return all the terminals in the given screen.
+- (NSArray*)_terminalsInScreen:(NSScreen*)screen
+{
+    NSMutableArray* result = [NSMutableArray arrayWithCapacity:0];
+    for (PseudoTerminal* term in terminalWindows) {
+        if ([[term window] deepestScreen] == screen) {
+            [result addObject:term];
+        }
+    }
+    return result;
+}
+
+// Arrange terminals horizontally, in multiple rows if needed.
+- (void)arrangeTerminals:(NSArray*)terminals inFrame:(NSRect)frame
+{
+    if ([terminals count] == 0) {
+        return;
+    }
+
+    // Determine the new width for all windows, not less than some minimum.
+    float x = 0;
+    float w = frame.size.width / [terminals count];
+    const float kMinWidth = 400;
+    if (w < kMinWidth) {
+        // Width would be too narrow. Pick the smallest width larger than kMinWidth
+        // that evenly  divides the screen up horizontally.
+        int maxWindowsInOneRow = floor(frame.size.width / kMinWidth);
+        w = frame.size.width / maxWindowsInOneRow;
+    }
+
+    // Find the window whose top is nearest the top of the screen. That will be the
+    // new top of all the windows in the first row.
+    float highestTop = 0;
+    for (PseudoTerminal* terminal in terminals) {
+        NSRect r = [[terminal window] frame];
+        if (r.origin.y < frame.origin.y) {
+            // Bottom of window is below dock. Pretend its bottom abuts the dock.
+            r.origin.y = frame.origin.y;
+        }
+        float top = r.origin.y + r.size.height;
+        if (top > highestTop) {
+            highestTop = top;
+        }
+    }
+
+    // Ensure the bottom of the last row of windows will be above the bottom of the screen.
+    int rows = ceil((w * (float)[terminals count]) / frame.size.width);
+    float maxHeight = frame.size.height / rows;
+    if (rows > 1 && highestTop - maxHeight * rows < frame.origin.y) {
+        highestTop = frame.origin.y + maxHeight * rows;
+    }
+
+    if (highestTop > frame.origin.y + frame.size.height) {
+        // Don't let the top of the first row go above the top of the screen. This is just
+        // paranoia.
+        highestTop = frame.origin.y + frame.size.height;
+    }
+
+    float yOffset = 0;
+    NSMutableArray *terminalsCopy = [NSMutableArray arrayWithArray:terminals];
+
+    // Grab the window that would move the least and move it. This isn't a global
+    // optimum, but it is reasonably stable.
+    while ([terminalsCopy count] > 0) {
+        // Find the leftmost terminal.
+        PseudoTerminal* terminal = nil;
+        float bestDistance;
+        int bestIndex;
+
+        for (int j = 0; j < [terminalsCopy count]; ++j) {
+            PseudoTerminal* t = [terminalsCopy objectAtIndex:j];
+            if (t) {
+                NSRect r = [[t window] frame];
+                float y = highestTop - r.size.height + yOffset;
+                float dx = x - r.origin.x;
+                float dy = y - r.origin.y;
+                float distance = dx*dx + dy*dy;
+                if (terminal == nil || distance < bestDistance) {
+                    bestDistance = distance;
+                    terminal = t;
+                    bestIndex = j;
+                }
+            }
+        }
+
+        // Remove it from terminalsCopy.
+        [terminalsCopy removeObjectAtIndex:bestIndex];
+
+        // Create an animation to move it to its new position.
+        NSMutableDictionary* dict = [NSMutableDictionary dictionaryWithCapacity:3];
+
+        [dict setObject:[terminal window] forKey:NSViewAnimationTargetKey];
+        [dict setObject:[NSValue valueWithRect:[[terminal window] frame]]
+                 forKey:NSViewAnimationStartFrameKey];
+        float y = highestTop - [[terminal window] frame].size.height;
+        float h = MIN(maxHeight, [[terminal window] frame].size.height);
+        if (rows > 1) {
+            // The first row can be a bit ragged vertically but subsequent rows line up
+            // at the tops of the windows.
+            y = frame.origin.y + frame.size.height - h;
+        }
+        [dict setObject:[NSValue valueWithRect:NSMakeRect(x, 
+                                                          y + yOffset,
+                                                          w, 
+                                                          h)]
+                 forKey:NSViewAnimationEndFrameKey];
+        x += w;
+        if (x > frame.size.width - w) {
+            // Wrap around to the next row of windows.
+            x = 0;
+            yOffset -= maxHeight;
+        }
+        NSViewAnimation* theAnim = [[NSViewAnimation alloc] initWithViewAnimations:[NSArray arrayWithObjects:dict, nil]];
+
+        // Set some additional attributes for the animation.
+        [theAnim setDuration:0.75];
+        [theAnim setAnimationCurve:NSAnimationEaseInOut];
+
+        // Run the animation.
+        [theAnim startAnimation];
+
+        // The animation has finished, so go ahead and release it.
+        [theAnim release];
+    }
+}
+
+- (void)arrangeHorizontally
+{
+    // Un-full-screen each window. This is done in two steps because
+    // toggleFullScreen deallocs self.
+    for (PseudoTerminal* t in terminalWindows) {
+        if ([t fullScreen]) {
+            [t toggleFullScreen:self];
+        }
+    }
+
+    // For each screen, find the terminals in it and arrange them. This way
+    // terminals don't move from screen to screen in this operation.
+    for (NSScreen* screen in [NSScreen screens]) {
+        [self arrangeTerminals:[self _terminalsInScreen:screen]
+                       inFrame:[screen visibleFrame]];
+    }
+}
+
 - (PseudoTerminal*)currentTerminal
 {
     return (FRONT);
@@ -466,22 +610,22 @@ static BOOL initDone = NO;
 
 static void OnHotKeyEvent()
 {
-	if ([NSApp isActive]) {
+    if ([NSApp isActive]) {
         PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
-		NSWindow* prefWindow = [prefPanel window];
-		NSWindow* appKeyWindow = [[NSApplication sharedApplication] keyWindow];
-		if (prefWindow != appKeyWindow ||
-			![iTermApplication isTextFieldInFocus:[prefPanel hotkeyField]]) {
-			[NSApp hide:nil];
-		}
-	} else {
-		iTermController* controller = [iTermController sharedInstance];
-		int n = [controller numberOfTerminals];
-		[[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
-		if (n == 0) {
-			[controller newWindow:nil];
-		}
-	}
+        NSWindow* prefWindow = [prefPanel window];
+        NSWindow* appKeyWindow = [[NSApplication sharedApplication] keyWindow];
+        if (prefWindow != appKeyWindow ||
+            ![iTermApplication isTextFieldInFocus:[prefPanel hotkeyField]]) {
+            [NSApp hide:nil];
+        }
+    } else {
+        iTermController* controller = [iTermController sharedInstance];
+        int n = [controller numberOfTerminals];
+        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+        if (n == 0) {
+            [controller newWindow:nil];
+        }
+    }
 }
 
 /*

@@ -283,6 +283,11 @@ int gDebugLogFile = -1;
     [[iTermController sharedInstance] nextTerminal:sender];
 }
 
+- (IBAction)arrangeHorizontally:(id)sender
+{
+    [[iTermController sharedInstance] arrangeHorizontally];
+}
+
 - (IBAction)showPrefWindow:(id)sender
 {
     [[PreferencePanel sharedInstance] run];
