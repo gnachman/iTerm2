@@ -64,9 +64,9 @@
 - (void) terminalWillClose: (PseudoTerminal *) theTerminalWindow;
 - (NSArray *) sortedEncodingList;
 - (void)addBookmarksToMenu:(NSMenu *)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts;
-- (void) launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm;
-- (void) launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm withCommand: (NSString *)command;
-- (void) launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm withURL: (NSString *)url;
+- (id)launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm;
+- (id)launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm withCommand: (NSString *)command;
+- (id)launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm withURL: (NSString *)url;
 - (PTYTextView *) frontTextView;
 -(int)numberOfTerminals;
 -(PseudoTerminal*)terminalAtIndex:(int)i;

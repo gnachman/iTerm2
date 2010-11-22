@@ -3300,7 +3300,7 @@ NSString *sessionsKey = @"sessions";
     [self sessionInitiatedResize:[self currentSession] width:[[self currentSession] columns] height:rows];
 }
 
--(void)addNewSession:(NSDictionary *)addressbookEntry
+-(id)addNewSession:(NSDictionary *)addressbookEntry
 {
     NSAssert(addressbookEntry, @"Null address book entry");
     // NSLog(@"PseudoTerminal: -addInSessions: 0x%x", object);
@@ -3352,6 +3352,7 @@ NSString *sessionsKey = @"sessions";
     }
 
     [aSession release];
+    return aSession;
 }
 
 
@@ -3418,7 +3419,7 @@ NSString *sessionsKey = @"sessions";
     return result;
 }
 
--(void)addNewSession:(NSDictionary *)addressbookEntry withURL:(NSString *)url
+-(id)addNewSession:(NSDictionary *)addressbookEntry withURL:(NSString *)url
 {
     PtyLog(@"PseudoTerminal: -addNewSession");
     PTYSession *aSession;
@@ -3474,9 +3475,10 @@ NSString *sessionsKey = @"sessions";
         [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8];
     }
     [aSession release];
+    return aSession;
 }
 
--(void)addNewSession:(NSDictionary *)addressbookEntry withCommand:(NSString *)command
+-(id)addNewSession:(NSDictionary *)addressbookEntry withCommand:(NSString *)command
 {
     PtyLog(@"PseudoTerminal: addNewSession 2");
     PTYSession *aSession;
@@ -3516,6 +3518,7 @@ NSString *sessionsKey = @"sessions";
     }
 
     [aSession release];
+    return aSession;
 }
 
 -(void)appendSession:(PTYSession *)object
@@ -3627,7 +3630,7 @@ NSString *sessionsKey = @"sessions";
     [[iTermController sharedInstance] setCurrentTerminal: self];
 }
 
--(void)handleLaunchScriptCommand: (NSScriptCommand *)command
+-(id)handleLaunchScriptCommand: (NSScriptCommand *)command
 {
     // Get the command's arguments:
     NSDictionary *args = [command evaluatedArguments];
@@ -3651,9 +3654,9 @@ NSString *sessionsKey = @"sessions";
 
     // TODO(georgen): test this
     // launch the session!
-    [[iTermController sharedInstance] launchBookmark: abEntry inTerminal: self];
-
-    return;
+    id rv = [[iTermController sharedInstance] launchBookmark:abEntry 
+                                                 inTerminal:self];
+    return rv;
 }
 
 @end

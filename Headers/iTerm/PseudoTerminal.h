@@ -512,8 +512,8 @@
 -(id)valueInSessionsAtIndex:(unsigned)index;
 -(id)valueWithName: (NSString *)uniqueName inPropertyWithKey: (NSString*)propertyKey;
 -(id)valueWithID: (NSString *)uniqueID inPropertyWithKey: (NSString*)propertyKey;
--(void)addNewSession:(NSDictionary *)addressbookEntry withURL: (NSString *)url;
--(void)addNewSession:(NSDictionary *) addressbookEntry withCommand: (NSString *)command;
+-(id)addNewSession:(NSDictionary *)addressbookEntry withURL: (NSString *)url;
+-(id)addNewSession:(NSDictionary *) addressbookEntry withCommand: (NSString *)command;
 -(void)appendSession:(PTYSession *)object;
 -(void)removeFromSessionsAtIndex:(unsigned)index;
 -(NSArray*)sessions;
@@ -523,7 +523,7 @@
 -(void)insertInSessions:(PTYSession *)object;
 -(void)insertInSessions:(PTYSession *)object atIndex:(unsigned)index;
 // Add a new session to this window with the given addressbook entry.
-- (void)addNewSession:(NSDictionary *)addressbookEntry;
+- (id)addNewSession:(NSDictionary *)addressbookEntry;
 
 
 - (BOOL)windowInited;
@@ -705,7 +705,7 @@
 
 -(void)handleSelectScriptCommand: (NSScriptCommand *)command;
 
--(void)handleLaunchScriptCommand: (NSScriptCommand *)command;
+-(id)handleLaunchScriptCommand: (NSScriptCommand *)command;
 
 @end
 

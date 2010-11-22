@@ -453,7 +453,7 @@ static BOOL initDone = NO;
 }
 
 // Executes an addressbook command in new window or tab
-- (void)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm
+- (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm
 {
     PseudoTerminal *term;
     NSDictionary *aDict;
@@ -476,7 +476,7 @@ static BOOL initDone = NO;
         term = theTerm;
     }
 
-    [term addNewSession:aDict];
+    PTYSession* session = [term addNewSession:aDict];
 
     // This function is activated from the dock icon's context menu so make sure
     // that the new window is on top of all other apps' windows. For some reason,
@@ -484,9 +484,11 @@ static BOOL initDone = NO;
     if (![[term window] isKeyWindow]) {
         [NSApp arrangeInFront:self];
     }
+
+    return session;
 }
 
-- (void) launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm withCommand: (NSString *)command
+- (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm withCommand:(NSString *)command
 {
     PseudoTerminal *term;
     NSDictionary *aDict;
@@ -509,10 +511,10 @@ static BOOL initDone = NO;
         term = theTerm;
     }
 
-    [term addNewSession: aDict withCommand: command];
+    return [term addNewSession: aDict withCommand: command];
 }
 
-- (void) launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm withURL: (NSString *)url
+- (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm withURL:(NSString *)url
 {
     PseudoTerminal *term;
     NSDictionary *aDict;
@@ -567,7 +569,7 @@ static BOOL initDone = NO;
         term = theTerm;
     }
 
-    [term addNewSession: aDict withURL: url];
+    return [term addNewSession: aDict withURL: url];
 }
 
 - (void) launchScript: (id) sender
