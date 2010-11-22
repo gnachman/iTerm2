@@ -98,6 +98,36 @@ NSString *sessionsKey = @"sessions";
 #define TABVIEW_LEFT_RIGHT_OFFSET        29
 #define TOOLBAR_OFFSET                    0
 
+@class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
+
+@implementation SolidColorView
+- (id)initWithFrame:(NSRect)frame color:(NSColor*)color
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        color_ = [color retain];
+    }
+    return self;
+}
+
+- (void)drawRect:(NSRect)dirtyRect
+{
+    [color_ setFill];
+    NSRectFill(dirtyRect);
+}
+
+- (void)setColor:(NSColor*)color
+{
+    [color_ autorelease];
+    color_ = [color retain];
+}
+
+- (NSColor*)color
+{
+    return color_;
+}
+
+@end
 @implementation BottomBarView
 - (void)drawRect:(NSRect)dirtyRect
 {
@@ -157,12 +187,13 @@ NSString *sessionsKey = @"sessions";
     _fullScreen = (fullScreen != nil);
     previousFindString = [[NSMutableString alloc] init];
     if (fullScreen) {
-        [[self window] setBackgroundColor:[NSColor blackColor]];
+        background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor blackColor]];
         [[self window] setAlphaValue:1];
     } else {
-        [[self window] setAlphaValue:0.9999];
+        background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor windowBackgroundColor]];
+        [[self window] setAlphaValue:0.9999];  // Why is this not 1.0?
     }
-    normalBackgroundColor = [[self window] backgroundColor];
+    normalBackgroundColor = [background_ color];
 
 #if DEBUG_ALLOC
     NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
@@ -181,12 +212,17 @@ NSString *sessionsKey = @"sessions";
     }
 
     // create the tab bar control
+    [[self window] setContentView:background_];
+    [background_ release];
+
     NSRect aRect = [[[self window] contentView] bounds];
     aRect.size.height = 22;
     tabBarControl = [[PSMTabBarControl alloc] initWithFrame:aRect];
     [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMinYMargin)];
-    [[[self window] contentView] addSubview:tabBarControl];
-    [tabBarControl release];
+    if (!_fullScreen) {
+        [[[self window] contentView] addSubview:tabBarControl];
+        [tabBarControl release];
+    }
 
     // Set up bottomBar
     NSRect fbFrame = [findBarSubview frame];
@@ -221,6 +257,15 @@ NSString *sessionsKey = @"sessions";
     [TABVIEW release];
 
     [[[self window] contentView] addSubview:bottomBar];
+
+    if (_fullScreen) {
+        // Put tab bar control inside of a solid-colored background for fullscreen mode and hide it
+        // just above the top of the screen.
+        tabBarBackground = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, -[tabBarControl frame].size.height, [TABVIEW frame].size.width, [tabBarControl frame].size.height) color:[NSColor windowBackgroundColor]];
+        [tabBarBackground addSubview:tabBarControl];
+        [tabBarControl setFrameOrigin:NSMakePoint(0, 0)];
+        [tabBarControl release];
+    }
 
     // assign tabview and delegates
     [tabBarControl setTabView: TABVIEW];
@@ -389,6 +434,9 @@ NSString *sessionsKey = @"sessions";
     }
     [pbHistoryView dealloc];
 
+    if (fullScreenTabviewTimer_) {
+        [fullScreenTabviewTimer_ invalidate];
+    }
     [super dealloc];
 }
 
@@ -563,6 +611,7 @@ NSString *sessionsKey = @"sessions";
     //[self windowDidResignMain: aNotification];
 
     if (_fullScreen) {
+        [self hideFullScreenTabControl];
         [NSMenu setMenuBarVisible:YES];
     }
     // update the cursor
@@ -849,7 +898,7 @@ NSString *sessionsKey = @"sessions";
     }
     proposedFrame.size.height = decorationHeight + floor(defaultFrame.size.height / charHeight) * charHeight;
 
-    PtyLog(@"For zoom, default frame is %fx%f, proposed frame is %f,%f %fx%f", 
+    PtyLog(@"For zoom, default frame is %fx%f, proposed frame is %f,%f %fx%f",
            defaultFrame.size.width, defaultFrame.size.height,
            proposedFrame.origin.x, proposedFrame.origin.y,
            proposedFrame.size.width, proposedFrame.size.height);
@@ -2294,7 +2343,7 @@ NSString *sessionsKey = @"sessions";
     NSSize result;
     result.height = 0;
     result.width = 0;
-    
+
     if ([TABVIEW numberOfTabViewItems] + tabViewItemsBeingAdded > 1 ||
         ![[PreferencePanel sharedInstance] hideTab]) {
         result.height += [tabBarControl frame].size.height;
@@ -2307,7 +2356,7 @@ NSString *sessionsKey = @"sessions";
     // set desired size of textview to enough pixels to fit WIDTH*HEIGHT
     textViewSize.width = (int)ceil(charWidth * width + MARGIN * 2);
     textViewSize.height = (int)ceil(charHeight * height);
-    
+
     // figure out how big the scrollview should be to achieve the desired textview size of vsize.
     NSSize scrollViewSize;
     BOOL hasScrollbar = !_fullScreen && ![[PreferencePanel sharedInstance] hideScrollbar];
@@ -2315,13 +2364,13 @@ NSString *sessionsKey = @"sessions";
                                       hasHorizontalScroller:NO
                                         hasVerticalScroller:hasScrollbar
                                                  borderType:NSNoBorder];
-                
+
     // figure out how big the tabview should be to fit the scrollview.
     NSSize tabViewSize;
     tabViewSize = [PTYTabView frameSizeForContentSize:scrollViewSize
                                       tabViewType:[TABVIEW tabViewType]
                                       controlSize:[TABVIEW controlSize]];
-    
+
     NSSize winSizeForTabViewSize;
     NSRect rect;
     rect.origin.x = 0;
@@ -2340,6 +2389,64 @@ NSString *sessionsKey = @"sessions";
 
     return result;
 }
+
+- (void)showFullScreenTabControl
+{
+    [tabBarControl setHidden:NO];
+
+    // Ensure the tab bar is on top of all other views.
+    if ([tabBarBackground superview] != nil) {
+        [tabBarBackground removeFromSuperview];
+    }
+    [[[self window] contentView] addSubview:tabBarBackground];
+
+    if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+        [tabBarBackground setFrameOrigin:NSMakePoint(0, [[[self window] contentView] frame].size.height -  [tabBarBackground frame].size.height)];
+        [tabBarBackground setAlphaValue:0];
+        [[tabBarBackground animator] setAlphaValue:1];
+    } else {
+        [tabBarBackground setFrameOrigin:NSMakePoint(0, 0)];
+        [tabBarBackground setAlphaValue:0];
+        [[tabBarBackground animator] setAlphaValue:1];
+    }
+}
+
+- (void)hideFullScreenTabControl
+{
+    [[tabBarBackground animator] setAlphaValue:0];
+}
+
+- (void)flagsChanged:(NSEvent *)theEvent
+{
+    if (!_fullScreen) {
+        return;
+    }
+    const float kCmdHoldTime = 1;
+    NSUInteger modifierFlags = [theEvent modifierFlags];
+    if ((modifierFlags & NSCommandKeyMask) && fullScreenTabviewTimer_ == nil) {
+        fullScreenTabviewTimer_ = [[NSTimer scheduledTimerWithTimeInterval:kCmdHoldTime
+                                                                    target:self
+                                                                  selector:@selector(cmdHeld:)
+                                                                  userInfo:nil
+                                                                    repeats:NO] retain];
+    } else if (!(modifierFlags & NSCommandKeyMask) && fullScreenTabviewTimer_ != nil) {
+        [fullScreenTabviewTimer_ invalidate];
+        fullScreenTabviewTimer_ = nil;
+    }
+    if (!(modifierFlags & NSCommandKeyMask)) {
+        [self hideFullScreenTabControl];
+    }
+}
+
+- (void)cmdHeld:(id)sender
+{
+    [fullScreenTabviewTimer_ release];
+    fullScreenTabviewTimer_ = nil;
+    if (_fullScreen) {
+        [self showFullScreenTabControl];
+    }
+}
+
 
 - (void)fitWindowToSessionsWithWidth:(int)width height:(int)height charWidth:(float)charWidth charHeight:(float)charHeight
 {
@@ -2435,7 +2542,7 @@ NSString *sessionsKey = @"sessions";
             PtyLog(@"fitWindwoToSessionWithWidth - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
             [TABVIEW setFrame: aRect];
         } else {
-            // The tabs are visible at the top of the window.
+            // The tabBar control is visible.
             PtyLog(@"fitWindowToSessionsWithWidth - tabs are visible. Adjusting window size...");
             [tabBarControl setHidden:NO];
             [tabBarControl setTabLocation:[[PreferencePanel sharedInstance] tabViewType]];
@@ -2967,8 +3074,10 @@ NSString *sessionsKey = @"sessions";
     }
     if (sendInputToAllSessions) {
         [[self window] setBackgroundColor: [NSColor highlightColor]];
+        [background_ setColor:[NSColor highlightColor]];
     } else {
         [[self window] setBackgroundColor: normalBackgroundColor];
+        [background_ setColor:normalBackgroundColor];
     }
 }
 
