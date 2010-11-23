@@ -65,4 +65,7 @@ typedef NSDictionary Bookmark;
 // Return the absolute index of a bookmark given its index with the filter applied.
 - (int)convertFilteredIndex:(int)theIndex withFilter:(NSString*)filter;
 - (void)dump;
+
+// Tell all listeners that the model has changed.
+- (void)postChangeNotification;
 @end

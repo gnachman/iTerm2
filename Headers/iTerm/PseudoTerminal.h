@@ -696,6 +696,10 @@
 // Return the timestamp for a slider position in [0, 1] for the current session.
 - (long long)timestampForFraction:(float)f;
 
+// Change visiblity of tabBarControl in fullscreen mode.
+- (void)showFullScreenTabControl;
+- (void)hideFullScreenTabControl;
+
 @end
 
 @interface PseudoTerminal (ScriptingSupport)

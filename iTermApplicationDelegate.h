@@ -77,6 +77,8 @@ void DebugLog(NSString* value);
 
 - (IBAction)debugLogging:(id)sender;
 
+- (IBAction)toggleSecureInput:(id)sender;
+
     // About window
 - (IBAction)showAbout:(id)sender;
 - (IBAction)aboutOK:(id)sender;
@@ -85,8 +87,6 @@ void DebugLog(NSString* value);
 - (IBAction)showBookmarkWindow:(id)sender;
 - (IBAction)instantReplayPrev:(id)sender;
 - (IBAction)instantReplayNext:(id)sender;
-
-- (NSMenuItem*)secureInput;
 
     // navigation
 - (IBAction) previousTerminal: (id) sender;

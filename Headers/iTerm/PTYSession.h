@@ -197,7 +197,6 @@ static const float kBackgroundSessionIntervalSec = 1;
 
 
 // misc
-- (void)handleOptionClick: (NSEvent *)theEvent;
 - (void)setWidth:(int)width height:(int)height;
 
 

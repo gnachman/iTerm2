@@ -32,6 +32,210 @@
 const int kSearchWidgetHeight = 22;
 const int kInterWidgetMargin = 10;
 
+// This wraps a single bookmark and adds a KeyValueCoding. To keep things simple
+// it will hold only the bookmark's GUID, since bookmark dictionaries themselves
+// are evanescent.
+//
+// It implements a KeyValueCoding so that sort descriptors will work.
+@interface BookmarkRow : NSObject
+{
+    NSString* guid;
+}
+
+- (id)initWithBookmark:(Bookmark*)bookmark;
+- (void)dealloc;
+- (Bookmark*)bookmark;
+
+@end
+
+@interface BookmarkRow (KeyValueCoding)
+// We need ascending order to sort default before not-default so we can't use
+// anything senible like BOOL or "Yes"/"No" because they'd sort wrong.
+typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
+- (NSNumber*)default;
+- (NSString*)name;
+- (NSString*)shortcut;
+- (NSString*)command;
+- (NSString*)guid;
+@end
+
+@implementation BookmarkRow
+
+- (id)initWithBookmark:(Bookmark*)bookmark
+{
+    self = [super init];
+    if (self) {
+        guid = [[bookmark objectForKey:KEY_GUID] retain];
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [guid release];
+    [super dealloc];
+}
+
+- (Bookmark*)bookmark
+{
+    return [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+}
+
+@end
+
+@implementation BookmarkRow (KeyValueCoding)
+
+- (NSNumber*)default
+{
+    BOOL isDefault = [[[self bookmark] objectForKey:KEY_GUID] isEqualToString:[[[BookmarkModel sharedInstance] defaultBookmark] objectForKey:KEY_GUID]];
+    return [NSNumber numberWithInt:isDefault ? IsDefault : IsNotDefault];
+}
+
+- (NSString*)name
+{
+    return [[self bookmark] objectForKey:KEY_NAME];
+}
+
+- (NSString*)shortcut
+{
+    return [[self bookmark] objectForKey:KEY_SHORTCUT];
+}
+
+- (NSString*)command
+{
+    return [[self bookmark] objectForKey:KEY_COMMAND];
+}
+
+- (NSString*)guid
+{
+    return [[self bookmark] objectForKey:KEY_GUID];
+}
+
+@end
+
+@implementation BookmarkModelWrapper
+
+- (id)initWithModel:(BookmarkModel*)model
+{
+    self = [super init];
+    if (self) {
+        underlyingModel = model;
+        bookmarks = [[NSMutableArray alloc] init];
+        filter = [[NSMutableString alloc] init];
+        [self sync];
+    }
+    return self;
+}
+
+- (void)dealloc
+{
+    [bookmarks release];
+    [filter release];
+    [super dealloc];
+}
+
+- (void)setSortDescriptors:(NSArray*)newSortDescriptors
+{
+    [sortDescriptors autorelease];
+    sortDescriptors = [newSortDescriptors retain];
+}
+
+- (void)dump
+{
+    for (int i = 0; i < [self numberOfBookmarks]; ++i) {
+        NSLog(@"Dump of %p: At %d: %@", self, i, [[self bookmarkRowAtIndex:i] name]);
+    }
+}
+
+- (void)sort
+{
+    if ([sortDescriptors count] > 0) {
+        [bookmarks sortUsingDescriptors:sortDescriptors];
+    }
+}
+
+- (int)numberOfBookmarks
+{
+    return [bookmarks count];
+}
+
+- (BookmarkRow*)bookmarkRowAtIndex:(int)i
+{
+    return [bookmarks objectAtIndex:i];
+}
+
+- (Bookmark*)bookmarkAtIndex:(int)i
+{
+    return [[bookmarks objectAtIndex:i] bookmark];
+}
+
+- (int)indexOfBookmarkWithGuid:(NSString*)guid
+{
+    for (int i = 0; i < [bookmarks count]; ++i) {
+        if ([[[bookmarks objectAtIndex:i] guid] isEqualToString:guid]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+- (BookmarkModel*)underlyingModel
+{
+    return underlyingModel;
+}
+
+- (void)sync
+{
+    [bookmarks removeAllObjects];
+    int n = [underlyingModel numberOfBookmarksWithFilter:filter];
+    for (int i = 0; i < n; ++i) {
+        //NSLog(@"Wrapper at %p add bookmark %@ at index %d", self, [[underlyingModel bookmarkAtIndex:i] objectForKey:KEY_NAME], i);
+        [bookmarks addObject:[[[BookmarkRow alloc] initWithBookmark:[underlyingModel bookmarkAtIndex:i withFilter:filter]] autorelease]];
+    }
+    [self sort];
+}
+
+- (void)moveBookmarkWithGuid:(NSString*)guid toIndex:(int)row
+{
+    // Make the change locally.
+    int origRow = [self indexOfBookmarkWithGuid:guid];
+    if (origRow < row) {
+        [bookmarks insertObject:[bookmarks objectAtIndex:origRow] atIndex:row];
+        [bookmarks removeObjectAtIndex:origRow];
+    } else if (origRow > row) {
+        BookmarkRow* temp = [[bookmarks objectAtIndex:origRow] retain];
+        [bookmarks removeObjectAtIndex:origRow];
+        [bookmarks insertObject:temp atIndex:row];
+        [temp release];
+    }
+}
+
+- (void)pushOrderToUnderlyingModel
+{
+    // Since we may have a filter, let's ensure that the visible bookmarks occur
+    // in the same order in the underlying model without regard to how invisible
+    // bookmarks fit into the order. This also prevents instability when the
+    // reload happens.
+    int i = 0;
+    for (BookmarkRow* theRow in bookmarks) {
+        [underlyingModel moveGuid:[theRow guid] toRow:i++];
+    }
+}
+
+- (NSArray*)sortDescriptors
+{
+    return sortDescriptors;
+}
+
+- (void)setFilter:(NSString*)newFilter
+{
+    [filter release];
+    filter = [[NSString stringWithString:newFilter] retain];
+}
+
+@end
+
+
 @implementation BookmarkTableView
 
 - (void)setParent:(id)parent
@@ -79,53 +283,6 @@ const int kInterWidgetMargin = 10;
 
 @end
 
-@interface ComparableImage : NSImage {
-    NSString* key_;
-}
-
-- (ComparableImage*)init;
-- (void)dealloc;
-- (void)setKey:(NSString*)key;
-- (NSComparisonResult)compare:(ComparableImage*)aString;
-- (NSString*) key;
-
-@end
-
-@implementation ComparableImage
-
-- (ComparableImage*)init
-{
-    self = [super init];
-    key_ = nil;
-    return self;
-}
-
-- (void)dealloc
-{
-    [key_ release];
-    [super dealloc];
-}
-
-- (void)setKey:(NSString*)key
-{
-    [key_ release];
-    key_ = key;
-    [key_ retain];
-}
-
-- (NSComparisonResult)compare:(ComparableImage*)other
-{
-    return [key_ localizedCaseInsensitiveCompare:[other key]];
-}
-
-- (NSString*) key
-{
-    return key_;
-}
-
-@end
-
-
 @implementation BookmarkListView
 
 
@@ -140,8 +297,7 @@ const int kInterWidgetMargin = 10;
     NSInteger rowIndex = [rowIndexes firstIndex];
     NSMutableSet* guids = [[[NSMutableSet alloc] init] autorelease];
     while (rowIndex != NSNotFound) {
-        Bookmark* bookmark = [dataSource_ bookmarkAtIndex:rowIndex
-                                               withFilter:[searchField_ stringValue]];
+        Bookmark* bookmark = [dataSource_ bookmarkAtIndex:rowIndex];
         NSString* guid = [bookmark objectForKey:KEY_GUID];
         [guids addObject:guid];
         rowIndex = [rowIndexes indexGreaterThanIndex:rowIndex];
@@ -188,19 +344,29 @@ const int kInterWidgetMargin = 10;
     for (NSNumber* mapIndex in sortedIndexes) {
         NSString* guid = [map objectForKey:mapIndex];
 
-        int absRow;
-        if (row < [dataSource_ numberOfBookmarks]) {
-            absRow = [dataSource_ convertFilteredIndex:row withFilter:[searchField_ stringValue]];
-        } else {
-            // convertFilteredIndex can't handle this case. Would only happen w/o a filter.
-            absRow = row;
-        }
-        [dataSource_ moveGuid:guid toRow:absRow];
-        row = [dataSource_ indexOfBookmarkWithGuid:guid withFilter:[searchField_ stringValue]] + 1;
+        [dataSource_ moveBookmarkWithGuid:guid toIndex:row];
+        row = [dataSource_ indexOfBookmarkWithGuid:guid] + 1;
     }
+
+    // Save the (perhaps partial) order of the current view in the underlying
+    // model.
+    [dataSource_ pushOrderToUnderlyingModel];
+
+    // Remove the sorting order so that our change is not lost when data is
+    // reloaded. This will cause a sync so it must be done after pushing the
+    // local ordering to the underlying model.
+    if ([[tableView_ sortDescriptors] count] > 0) {
+        [tableView_ setSortDescriptors:[NSArray arrayWithObjects:nil]];
+    }
+
+    // The underlying model doesn't post a change notification for each bookmark
+    // move because it would be overwhelming so we must do it ourselves. This
+    // makes all other table views sync with the new order.
+    [[dataSource_ underlyingModel] postChangeNotification];
+
     NSMutableIndexSet* newIndexes = [[[NSMutableIndexSet alloc] init] autorelease];
     for (NSString* guid in guids) {
-        row = [dataSource_ indexOfBookmarkWithGuid:guid withFilter:[searchField_ stringValue]];
+        row = [dataSource_ indexOfBookmarkWithGuid:guid];
         [newIndexes addIndex:row];
     }
     [tableView_ selectRowIndexes:newIndexes byExtendingSelection:NO];
@@ -214,7 +380,7 @@ const int kInterWidgetMargin = 10;
 - (void)_addTag:(id)sender
 {
     int itemTag = [sender tag];
-    NSArray* allTags = [dataSource_ allTags];
+    NSArray* allTags = [[dataSource_ underlyingModel] allTags];
     NSString* tag = [allTags objectAtIndex:itemTag];
 
     [searchField_ setStringValue:[[NSString stringWithFormat:@"%@ %@",
@@ -253,7 +419,7 @@ const int kInterWidgetMargin = 10;
 - (id)initWithFrame:(NSRect)frameRect
 {
     self = [super initWithFrame:frameRect];
-    dataSource_ = [BookmarkModel sharedInstance];
+    dataSource_ = [[BookmarkModelWrapper alloc] initWithModel:[BookmarkModel sharedInstance]];
     debug=NO;
 
     NSRect frame = [self frame];
@@ -263,7 +429,7 @@ const int kInterWidgetMargin = 10;
     searchFieldFrame.size.height = kSearchWidgetHeight;
     searchFieldFrame.size.width = frame.size.width;
     searchField_ = [[BookmarkSearchField alloc] initWithFrame:searchFieldFrame];
-    [self _addTags:[dataSource_ allTags] toSearchField:searchField_];
+    [self _addTags:[[dataSource_ underlyingModel] allTags] toSearchField:searchField_];
     [searchField_ setDelegate:self];
     [self addSubview:searchField_];
     delegate_ = nil;
@@ -339,13 +505,7 @@ const int kInterWidgetMargin = 10;
     return self;
 }
 
-- (void)setDataSource:(BookmarkModel*)dataSource
-{
-    dataSource_ = dataSource;
-    [self reloadData];
-}
-
-- (BookmarkModel*)dataSource
+- (BookmarkModelWrapper*)dataSource
 {
     return dataSource_;
 }
@@ -353,6 +513,7 @@ const int kInterWidgetMargin = 10;
 - (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [dataSource_ release];
     [selectedGuids_ release];
     [super dealloc];
 }
@@ -365,14 +526,33 @@ const int kInterWidgetMargin = 10;
 // DataSource methods
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
 {
-    return [dataSource_ numberOfBookmarksWithFilter:[searchField_ stringValue]];
+    return [dataSource_ numberOfBookmarks];
+}
+
+- (void)tableView:(NSTableView *)aTableView sortDescriptorsDidChange:(NSArray *)oldDescriptors
+{
+    [dataSource_ setSortDescriptors:[aTableView sortDescriptors]];
+    [dataSource_ sort];
+
+    // Update the sort indicator image for all columns.
+    NSArray* sortDescriptors = [dataSource_ sortDescriptors];
+    for (NSTableColumn* col in [aTableView tableColumns]) {
+        [aTableView setIndicatorImage:nil inTableColumn:col];
+    }
+    if ([sortDescriptors count] > 0) {
+        NSSortDescriptor* primarySortDesc = [sortDescriptors objectAtIndex:0];
+        [aTableView setIndicatorImage:([primarySortDesc ascending] ? 
+                                       [NSImage imageNamed:@"NSAscendingSortIndicator"] :
+                                       [NSImage imageNamed:@"NSDescendingSortIndicator"])
+                        inTableColumn:[aTableView tableColumnWithIdentifier:[primarySortDesc key]]];
+    }
+
+    [self reloadData];
 }
 
 - (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)rowIndex
 {
-    Bookmark* bookmark =
-        [dataSource_ bookmarkAtIndex:rowIndex
-                          withFilter:[searchField_ stringValue]];
+    Bookmark* bookmark = [dataSource_ bookmarkAtIndex:rowIndex];
     NSArray* tags = [bookmark objectForKey:KEY_TAGS];
     if ([tags count] == 0) {
         return 21;
@@ -383,9 +563,7 @@ const int kInterWidgetMargin = 10;
 
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
 {
-    Bookmark* bookmark =
-        [dataSource_ bookmarkAtIndex:rowIndex
-                          withFilter:[searchField_ stringValue]];
+    Bookmark* bookmark = [dataSource_ bookmarkAtIndex:rowIndex];
 
     if (aTableColumn == tableColumn_) {
         NSMutableAttributedString* as = [[[NSMutableAttributedString alloc] init] autorelease];
@@ -404,6 +582,7 @@ const int kInterWidgetMargin = 10;
                                          smallFont, NSFontAttributeName,
                                          nil];
 
+        //NSLog(@"Returning %@ at row %d for %p", [bookmark objectForKey:KEY_NAME], rowIndex, self);
         [as appendAttributedString:[[[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\n", [bookmark objectForKey:KEY_NAME]]
                                                                     attributes:plainAttributes] autorelease]];
         NSArray* tags = [bookmark objectForKey:KEY_TAGS];
@@ -459,6 +638,37 @@ const int kInterWidgetMargin = 10;
 }
 
 // Delegate methods
+- (void)tableView:(NSTableView *)aTableView didClickTableColumn:(NSTableColumn *)aTableColumn 
+{
+    NSMutableArray* newSortDescriptors = [NSMutableArray arrayWithArray:[tableView_ sortDescriptors]];
+    BOOL done = NO;
+    BOOL ascending = YES;
+    // Find the existing sort descriptor for the clicked-on column and move it
+    // to the front.
+    for (int i = 0; i < [newSortDescriptors count]; ++i) {
+        NSSortDescriptor* desc = [newSortDescriptors objectAtIndex:i];
+        if ([[desc key] isEqualToString:[aTableColumn identifier]]) {
+            ascending = ![desc ascending];
+            [newSortDescriptors removeObjectAtIndex:i];
+            [newSortDescriptors insertObject:[[[NSSortDescriptor alloc] initWithKey:[aTableColumn identifier]
+                                                                          ascending:ascending] autorelease]
+                                     atIndex:0];
+            done = YES;
+            break;
+        }
+    }
+
+    if (!done) {
+        // This column was not previously sorted. Add it to the head of the array.
+        [newSortDescriptors insertObject:[[[NSSortDescriptor alloc] initWithKey:[aTableColumn identifier]
+                                                                      ascending:YES] autorelease] 
+                                 atIndex:0];
+    }
+    [tableView_ setSortDescriptors:newSortDescriptors];
+
+    [aTableView reloadData];
+}
+
 - (BOOL)selectionShouldChangeInTableView:(NSTableView *)aTableView
 {
     if (delegate_) {
@@ -496,7 +706,8 @@ const int kInterWidgetMargin = 10;
 
 - (void)reloadData
 {
-    [self _addTags:[dataSource_ allTags] toSearchField:searchField_];
+    [self _addTags:[[dataSource_ underlyingModel] allTags] toSearchField:searchField_];
+    [dataSource_ sync];
     [tableView_ reloadData];
     if (delegate_ && ![selectedGuids_ isEqualToSet:[self selectedGuids]]) {
         [selectedGuids_ release];
@@ -515,8 +726,7 @@ const int kInterWidgetMargin = 10;
 
 - (void)selectRowByGuid:(NSString*)guid
 {
-    int theRow = [dataSource_ indexOfBookmarkWithGuid:guid
-                                           withFilter:[searchField_ stringValue]];
+    int theRow = [dataSource_ indexOfBookmarkWithGuid:guid];
     if (theRow == -1) {
         [self deselectAll];
         return;
@@ -526,7 +736,7 @@ const int kInterWidgetMargin = 10;
 
 - (int)numberOfRows
 {
-    return [dataSource_ numberOfBookmarksWithFilter:[searchField_ stringValue]];
+    return [dataSource_ numberOfBookmarks];
 }
 
 - (void)hideSearch
@@ -569,7 +779,7 @@ const int kInterWidgetMargin = 10;
         [tableView_
          setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleRegular];
         [tableView_ removeTableColumn:starColumn_];
-        [tableColumn_ setDataCell:[[NSTextFieldCell alloc] initTextCell:@""]];
+        [tableColumn_ setDataCell:[[[NSTextFieldCell alloc] initTextCell:@""] autorelease]];
     } else {
         [tableView_ setUsesAlternatingRowBackgroundColors:NO];
         [tableView_
@@ -604,8 +814,7 @@ const int kInterWidgetMargin = 10;
     if (row < 0) {
         return nil;
     }
-    Bookmark* bookmark = [dataSource_ bookmarkAtIndex:row
-                                           withFilter:[searchField_ stringValue]];
+    Bookmark* bookmark = [dataSource_ bookmarkAtIndex:row];
     if (!bookmark) {
         return nil;
     }
@@ -618,8 +827,7 @@ const int kInterWidgetMargin = 10;
     NSIndexSet* indexes = [tableView_ selectedRowIndexes];
     NSUInteger theIndex = [indexes firstIndex];
     while (theIndex != NSNotFound) {
-        Bookmark* bookmark = [dataSource_ bookmarkAtIndex:theIndex
-                                               withFilter:[searchField_ stringValue]];
+        Bookmark* bookmark = [dataSource_ bookmarkAtIndex:theIndex];
         if (bookmark) {
             [result addObject:[bookmark objectForKey:KEY_GUID]];
         }
@@ -632,6 +840,7 @@ const int kInterWidgetMargin = 10;
 - (void)controlTextDidChange:(NSNotification *)aNotification
 {
     // search field changed
+    [dataSource_ setFilter:[searchField_ stringValue]];
     [self reloadData];
     if ([self selectedRow] < 0 && [self numberOfRows] > 0) {
         [self selectRowIndex:0];
