@@ -246,6 +246,11 @@ static float versionNumber;
     if (keyString) {
         [keyString release];
     }
+    // For some reason, the first item is checked by default. Make sure every
+    // item is unchecked before making a selection.
+    for (NSMenuItem* item in [action itemArray]) {
+        [item setState:NSOffState];
+    }
     keyString = [[[self keyComboAtIndex:rowIndex] copy] retain];
     [action selectItemWithTag:[[[self keyInfoAtIndex:rowIndex] objectForKey:@"Action"] intValue]];
     NSString* text = [[self keyInfoAtIndex:rowIndex] objectForKey:@"Text"];
@@ -1734,6 +1739,11 @@ static float versionNumber;
     }
     [keyPress setStringValue:@""];
     keyString = [[NSString alloc] init];
+    // For some reason, the first item is checked by default. Make sure every
+    // item is unchecked before making a selection.
+    for (NSMenuItem* item in [action itemArray]) {
+        [item setState:NSOffState];
+    }
     [action selectItemWithTag:KEY_ACTION_IGNORE];
     [valueToSend setStringValue:@""];
     [self updateValueToSend];

@@ -322,6 +322,12 @@
                                                    @"Key Binding Actions"),
                 auxText];
             break;
+        case KEY_ACTION_SEND_C_H_BACKSPACE:
+            actionString = @"send ^H backspace";
+            break;
+        case KEY_ACTION_SEND_C_QM_BACKSPACE:
+            actionString = @"send ^? backspace";
+            break;
         case KEY_ACTION_IGNORE:
             actionString = NSLocalizedStringFromTableInBundle(@"ignore",@"iTerm", 
                                                               [NSBundle bundleForClass: [self class]], 

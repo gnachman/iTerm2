@@ -97,6 +97,8 @@
 #define KEY_ACTION_IGNORE				13
 #define KEY_ACTION_IR_FORWARD           14
 #define KEY_ACTION_IR_BACKWARD          15
+#define KEY_ACTION_SEND_C_H_BACKSPACE   16
+#define KEY_ACTION_SEND_C_QM_BACKSPACE  17
 
 @interface iTermKeyBindingMgr : NSObject {
 }

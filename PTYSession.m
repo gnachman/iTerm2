@@ -646,6 +646,12 @@ static NSImage *warningImage;
                     [self writeTask: [bindingText dataUsingEncoding: NSUTF8StringEncoding]];
                 }
                 break;
+            case KEY_ACTION_SEND_C_H_BACKSPACE:
+                [self writeTask:[@"\010" dataUsingEncoding:NSUTF8StringEncoding]];
+                break;
+            case KEY_ACTION_SEND_C_QM_BACKSPACE:
+                [self writeTask:[@"\177" dataUsingEncoding:NSUTF8StringEncoding]]; // decimal 127
+                break;
             case KEY_ACTION_IGNORE:
                 break;
             case KEY_ACTION_IR_FORWARD:
