@@ -810,69 +810,11 @@ static NSImage *warningImage;
 
 - (BOOL)willHandleEvent: (NSEvent *) theEvent
 {
-    // Handle the option-click event
-    return 0;
-/*  return (([theEvent type] == NSLeftMouseDown) &&
-            ([theEvent modifierFlags] & NSAlternateKeyMask));   */
+    return NO;
 }
 
 - (void)handleEvent: (NSEvent *) theEvent
 {
-    // We handle option-click to position the cursor...
-    /*if(([theEvent type] == NSLeftMouseDown) &&
-       ([theEvent modifierFlags] & NSAlternateKeyMask))
-        [self handleOptionClick: theEvent]; */
-}
-
-- (void) handleOptionClick: (NSEvent *) theEvent
-{
-    if (EXIT) return;
-
-    // Here we will attempt to position the cursor to the mouse-click
-
-    NSPoint locationInWindow, locationInTextView, locationInScrollView;
-    int x, y;
-    float w = [TEXTVIEW charWidth], h = [TEXTVIEW lineHeight];
-
-    locationInWindow = [theEvent locationInWindow];
-    locationInTextView = [TEXTVIEW convertPoint: locationInWindow fromView: nil];
-    locationInScrollView = [SCROLLVIEW convertPoint: locationInWindow fromView: nil];
-
-    x = locationInTextView.x/w;
-    y = locationInScrollView.y/h + 1;
-
-    // NSLog(@"loc_x = %f; loc_y = %f", locationInTextView.x, locationInScrollView.y);
-    // NSLog(@"font width = %f, font height = %f", fontSize.width, fontSize.height);
-    // NSLog(@"x = %d; y = %d", x, y);
-
-
-    if (x == [SCREEN cursorX] && y == [SCREEN cursorY]) {
-        return;
-    }
-
-    NSData *data;
-    int i;
-    // now move the cursor up or down
-    for (i = 0; i < abs(y - [SCREEN cursorY]); i++) {
-        if (y < [SCREEN cursorY]) {
-            data = [TERMINAL keyArrowUp:0];
-        } else {
-            data = [TERMINAL keyArrowDown:0];
-        }
-        [self writeTask:[NSData dataWithBytes:[data bytes] length:[data length]]];
-    }
-    // now move the cursor left or right
-    for (i = 0; i < abs(x - [SCREEN cursorX]); i++) {
-        if (x < [SCREEN cursorX]) {
-            data = [TERMINAL keyArrowLeft:0];
-        } else {
-            data = [TERMINAL keyArrowRight:0];
-        }
-        [self writeTask:[NSData dataWithBytes:[data bytes] length:[data length]]];
-    }
-
-    // trigger an update of the display.
-    [TEXTVIEW setNeedsDisplay:YES];
 }
 
 - (void)insertText:(NSString *)string
@@ -1392,7 +1334,11 @@ static NSImage *warningImage;
 
 - (NSString*)defaultName
 {
-    return defaultName;
+    if (jobName_) {
+        return [NSString stringWithFormat:@"%@ (%@)", defaultName, [self jobName]];
+    } else {
+        return defaultName;
+    }
 }
 
 - (void)setDefaultName:(NSString*)theName
@@ -1421,7 +1367,11 @@ static NSImage *warningImage;
 
 - (NSString*)name
 {
-    return name;
+    if (jobName_) {
+        return [NSString stringWithFormat:@"%@ (%@)", name, [self jobName]];
+    } else {
+        return name;
+    }
 }
 
 - (void)setName:(NSString*)theName
@@ -1451,7 +1401,7 @@ static NSImage *warningImage;
         [self setWindowTitle:theName];
     }
 
-    [tabViewItem setLabel:name];
+    [tabViewItem setLabel:[self name]];
     [self setBell:NO];
 
     // get the session submenu to be rebuilt
@@ -1464,7 +1414,15 @@ static NSImage *warningImage;
 
 - (NSString*)windowTitle
 {
-    return windowTitle;
+    if (!windowTitle) {
+        return nil;
+    }
+    NSString* jobName = [self jobName];
+    if (jobName) {
+        return [NSString stringWithFormat:@"%@ (%@)", windowTitle, [self jobName]];
+    } else {
+        return windowTitle;
+    }
 }
 
 - (void)setWindowTitle:(NSString*)theTitle
@@ -1804,7 +1762,9 @@ static NSImage *warningImage;
 
     if (set) {
         antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:30
-                target:self selector:@selector(doAntiIdle) userInfo:nil
+                                                          target:self 
+                                                        selector:@selector(doAntiIdle) 
+                                                        userInfo:nil
                 repeats:YES] retain];
     } else {
         [antiIdleTimer invalidate];
@@ -1988,6 +1948,15 @@ static NSImage *warningImage;
             if ([parent tempTitle]) {
                 [parent setWindowTitle];
                 [parent resetTempTitle];
+            } else {
+                NSString* oldName = jobName_;
+                jobName_ = [[SHELL currentJob] copy];
+                [jobName_ retain];
+                if (![oldName isEqualToString:jobName_]) {
+                    [tabViewItem setLabel:[self name]];
+                    [parent setWindowTitle];
+                }
+                [oldName release];
             }
             lastBlink = now;
         }
@@ -2142,6 +2111,11 @@ static NSImage *warningImage;
                                      inBookmark:bookmark];
     [self setAddressBookEntry:[[BookmarkModel sessionsInstance] bookmarkWithGuid:guid]];
     return guid;
+}
+
+- (NSString*)jobName
+{
+    return jobName_;
 }
 
 @end

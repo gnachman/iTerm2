@@ -212,6 +212,7 @@ static float versionNumber;
     for (NSString* key in  [[presetsDict allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         NSMenuItem* presetItem = [[NSMenuItem alloc] initWithTitle:key action:@selector(loadColorPreset:) keyEquivalent:@""];
         [presetsMenu addItem:presetItem];
+        [presetItem release];
     }
 
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -1164,7 +1165,7 @@ static float versionNumber;
         imageFilename = @"";
     }
     [backgroundImage setState:[imageFilename length] > 0 ? NSOnState : NSOffState];
-    [backgroundImagePreview setImage:[[NSImage alloc] initByReferencingFile:imageFilename]];
+    [backgroundImagePreview setImage:[[[NSImage alloc] initByReferencingFile:imageFilename] autorelease]];
     backgroundImageFilename = imageFilename;
 
     // Terminal tab

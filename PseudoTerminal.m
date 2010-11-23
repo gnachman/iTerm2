@@ -2381,12 +2381,6 @@ NSString *sessionsKey = @"sessions";
     result.height += winSizeForTabViewSize.height - textViewSize.height;
     result.width += winSizeForTabViewSize.width - textViewSize.width;
 
-    if ([TABVIEW numberOfTabViewItems] != 1 ||
-        ![[PreferencePanel sharedInstance] hideTab]) {
-        // The tabs are visible at the top of the window.
-        result.height += [tabBarControl frame].size.height;
-    }
-
     return result;
 }
 

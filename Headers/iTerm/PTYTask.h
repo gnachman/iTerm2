@@ -70,6 +70,8 @@
                 height:(int)height
                 isUTF8:(BOOL)isUTF8;
 
+- (NSString*)currentJob;
+
 - (void)setDelegate:(id)object;
 - (id)delegate;
 - (void)readTask:(NSData*)data;
@@ -98,6 +100,8 @@
 - (void)brokenPipe;
 - (void)processRead;
 - (void)processWrite;
+
+- (void)refreshProcessCache:(NSMutableDictionary*)cache;
 
 @end
 

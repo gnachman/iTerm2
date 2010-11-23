@@ -121,6 +121,8 @@ static const float kBackgroundSessionIntervalSec = 1;
     // Paste from the head of this string from a timer until it's empty.
     NSMutableString* slowPasteBuffer;
     NSTimer* slowPasteTimer;
+
+    NSString* jobName_;
 }
 
 // init/dealloc
@@ -322,6 +324,8 @@ static const float kBackgroundSessionIntervalSec = 1;
 
 // Schedule the screen update timer to run in a specified number of seconds.
 - (void)scheduleUpdateIn:(NSTimeInterval)timeout;
+
+- (NSString*)jobName;
 
 @end
 

@@ -4050,6 +4050,7 @@ static bool IsUrlChar(unichar theChar)
                                                             kCFStringEncodingUTF8 );
 
     url = [NSURL URLWithString:escapedString];
+    [escapedString release];
 
     Bookmark *bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:[url scheme]];
 

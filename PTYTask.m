@@ -26,6 +26,45 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+/* Some portions of this code were adapated from Apple's implementation of "ps".
+ * It appears to be BSD-derived. Their copyright message follows: */
+
+/*-
+ * Copyright (c) 1990, 1993, 1994
+ *  The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ------+---------+---------+-------- + --------+---------+---------+---------*
+ * Copyright (c) 2004  - Garance Alistair Drosehn <gad@FreeBSD.org>.
+ * All rights reserved.
+ *
+ * Significant modifications made to bring `ps' options somewhat closer
+ * to the standard for `ps' as described in SingleUnixSpec-v3.
+ * ------+---------+---------+-------- + --------+---------+---------+---------*
+ */
+
 // Debug option
 #define DEBUG_ALLOC         0
 #define DEBUG_METHOD_TRACE  0
@@ -48,6 +87,12 @@
 
 #include <dlfcn.h>
 #include <sys/mount.h>
+
+#include <sys/time.h>
+#include <sys/user.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 @interface TaskNotifier : NSObject
 {
@@ -788,6 +833,114 @@ static void reapchild(int n)
 
     free(pids);
     return oldestPid;
+}
+
+// Use sysctl magic to get the name of a process and whether it is controlling
+// the tty. This code was adapted from ps, here:
+// http://opensource.apple.com/source/adv_cmds/adv_cmds-138.1/ps/
+//
+// The equivalent in ps would be:
+//   ps -aef -o stat
+// If a + occurs in the STAT column then it is considered to be a foreground
+// job.
+- (NSString*)getNameOfPid:(pid_t)thePid isForeground:(BOOL*)isForeground
+{
+    int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, thePid };
+    struct kinfo_proc kp;
+    size_t bufSize = sizeof(kp);
+
+    kp.kp_proc.p_comm[0] = 0;
+    if (sysctl(mib, 4, &kp, &bufSize, NULL, 0) < 0) {
+        return 0;
+    }
+
+    // has a controlling terminal and
+    // process group id = tty process group id
+    *isForeground = ((kp.kp_proc.p_flag & P_CONTROLT) &&
+                     kp.kp_eproc.e_pgid == kp.kp_eproc.e_tpgid);
+
+    if (kp.kp_proc.p_comm[0]) {
+        return [NSString stringWithUTF8String:kp.kp_proc.p_comm];
+    } else {
+        return nil;
+    }
+}
+
+// Get the name of this task's current job. It is quite approximate! Any
+// arbitrary tty-controller in the tty's pgid that has this task as an ancestor
+// may be chosen. This function also implements a chache to avoid doing the
+// potentially expensive system calls too often.
+- (NSString*)currentJob
+{
+    static NSMutableDictionary* pidInfoCache;
+    static NSDate* lastCacheUpdate;
+
+    const double kMaxCacheAge = 0.5;
+    if (lastCacheUpdate == nil ||
+        [lastCacheUpdate timeIntervalSinceNow] < -kMaxCacheAge) {
+        if (pidInfoCache == nil) {
+            pidInfoCache = [[NSMutableDictionary alloc] init];
+        }
+        [self refreshProcessCache:pidInfoCache];
+        [lastCacheUpdate release];
+        lastCacheUpdate = [[NSDate date] retain];
+    }
+
+    return [pidInfoCache objectForKey:[NSNumber numberWithInt:pid]];
+}
+
+// Constructs a map of pid -> name of tty controller where pid is the tty
+// controller or any ancestor of the tty controller.
+- (void)refreshProcessCache:(NSMutableDictionary*)cache
+{
+    [cache removeAllObjects];
+    int numPids;
+    numPids = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    if (numPids <= 0) {
+        return;
+    }
+
+    int* pids = (int*) malloc(sizeof(int) * numPids);
+    numPids = proc_listpids(PROC_ALL_PIDS, 0, pids, numPids);
+    if (numPids <= 0) {
+        free(pids);
+        return;
+    }
+
+    NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithCapacity:numPids];
+    NSMutableDictionary* ancestry = [NSMutableDictionary dictionaryWithCapacity:numPids];
+    for (int i = 0; i < numPids; ++i) {
+        struct proc_taskallinfo taskAllInfo;
+        int rc = proc_pidinfo(pids[i],
+                              PROC_PIDTASKALLINFO,
+                              0,
+                              &taskAllInfo,
+                              sizeof(taskAllInfo));
+        if (rc <= 0) {
+            continue;
+        }
+
+        pid_t ppid = taskAllInfo.pbsd.pbi_ppid;
+        BOOL isForeground;
+        NSString* name = [self getNameOfPid:pids[i] isForeground:&isForeground];
+        if (isForeground) {
+            [temp setObject:name forKey:[NSNumber numberWithInt:pids[i]]];
+        }
+        [ancestry setObject:[NSNumber numberWithInt:ppid] forKey:[NSNumber numberWithInt:pids[i]]];
+    }
+
+    for (NSNumber* tempPid in temp) {
+        NSString* value = [temp objectForKey:tempPid];
+        [cache setObject:value forKey:tempPid];
+
+        NSNumber* parent = [ancestry objectForKey:tempPid];
+        while (parent != nil) {
+            [cache setObject:value forKey:parent];
+            parent = [ancestry objectForKey:parent];
+        }
+    }
+
+    free(pids);
 }
 
 - (NSString*)getWorkingDirectory
