@@ -68,9 +68,10 @@
 - (id)launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm withCommand: (NSString *)command;
 - (id)launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm withURL: (NSString *)url;
 - (PTYTextView *) frontTextView;
--(int)numberOfTerminals;
--(PseudoTerminal*)terminalAtIndex:(int)i;
+- (int)numberOfTerminals;
+- (PseudoTerminal*)terminalAtIndex:(int)i;
 - (void)irAdvance:(int)dir;
+- (NSUInteger)indexOfTerminal:(PseudoTerminal*)terminal;
 
 - (void)unregisterHotkey;
 - (void)registerHotkey:(int)keyCode modifiers:(int)modifiers;

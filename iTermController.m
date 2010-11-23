@@ -136,6 +136,15 @@ static BOOL initDone = NO;
     [super dealloc];
 }
 
+- (void)updateWindowTitles
+{
+    for (PseudoTerminal* terminal in terminalWindows) {
+        if ([terminal currentSessionName]) {
+            [terminal setWindowTitle];
+        }
+    }
+}
+
 // Action methods
 - (IBAction)newWindow:(id)sender
 {
@@ -604,6 +613,11 @@ static BOOL initDone = NO;
     return [terminalWindows count];
 }
 
+- (NSUInteger)indexOfTerminal:(PseudoTerminal*)terminal
+{
+    return [terminalWindows indexOfObject:terminal];
+}
+
 -(PseudoTerminal*)terminalAtIndex:(int)i
 {
     return [terminalWindows objectAtIndex:i];
@@ -758,18 +772,21 @@ NSString *terminalsKey = @"terminals";
 {
     // NSLog(@"iTerm: replaceInTerminals 0x%x atIndex %d", object, theIndex);
     [terminalWindows replaceObjectAtIndex: theIndex withObject: object];
+    [self updateWindowTitles];
 }
 
 - (void) addInTerminals: (PseudoTerminal *) object
 {
     // NSLog(@"iTerm: addInTerminals 0x%x", object);
     [self insertInTerminals: object atIndex: [terminalWindows count]];
+    [self updateWindowTitles];
 }
 
 - (void) insertInTerminals: (PseudoTerminal *) object
 {
     // NSLog(@"iTerm: insertInTerminals 0x%x", object);
     [self insertInTerminals: object atIndex: [terminalWindows count]];
+    [self updateWindowTitles];
 }
 
 -(void)insertInTerminals:(PseudoTerminal *)object atIndex:(unsigned)theIndex
@@ -779,6 +796,7 @@ NSString *terminalsKey = @"terminals";
     }
 
     [terminalWindows insertObject: object atIndex: theIndex];
+    [self updateWindowTitles];
     if (![object isInitialized]) {
         [object initWithSmartLayout:YES fullScreen:nil];
     }
@@ -788,6 +806,7 @@ NSString *terminalsKey = @"terminals";
 {
     // NSLog(@"iTerm: removeFromTerminalsAtInde %d", theIndex);
     [terminalWindows removeObjectAtIndex: theIndex];
+    [self updateWindowTitles];
 }
 
 // a class method to provide the keys for KVC:

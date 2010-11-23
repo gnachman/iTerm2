@@ -461,7 +461,12 @@ NSString *sessionsKey = @"sessions";
         title = [NSString stringWithFormat:@"☛%@", title];
     }
 
-    [[self window] setTitle: title];
+    NSUInteger number = [[iTermController sharedInstance] indexOfTerminal:self];
+    if (number >= 0 && number < 9) {
+        [[self window] setTitle:[NSString stringWithFormat:@"%d. %@", number+1, title]];
+    } else {
+        [[self window] setTitle:title];
+    }
 }
 
 - (BOOL)tempTitle

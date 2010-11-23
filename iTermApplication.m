@@ -63,6 +63,14 @@
         PTYSession* currentSession = [currentTerminal currentSession];
         NSResponder *responder;
 
+        if (([event modifierFlags] & (NSCommandKeyMask | NSAlternateKeyMask)) == (NSCommandKeyMask | NSAlternateKeyMask)) {
+            int digit = [[event charactersIgnoringModifiers] intValue];
+            if (digit >= 1 && digit <= 9 && [[iTermController sharedInstance] numberOfTerminals] >= digit) {
+                PseudoTerminal* termWithNumber = [[iTermController sharedInstance] terminalAtIndex:(digit - 1)];
+                [[termWithNumber window] makeKeyAndOrderFront:self];
+                return;
+            }
+        }
         if ([prefPanel keySheet] == [self keyWindow] &&
             [prefPanel keySheetIsOpen] &&
             [iTermApplication isTextFieldInFocus:[prefPanel shortcutKeyTextField]]) {
