@@ -295,6 +295,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* removeMappingButton;
     IBOutlet NSTextField* escPlus;
     IBOutlet NSMatrix *optionKeySends;
+    IBOutlet NSMatrix *rightOptionKeySends;
     IBOutlet NSTokenField* tags;
 
     NSString* keyString;  // hexcode-hexcode rep of keystring in current sheet

@@ -1192,6 +1192,11 @@ static float versionNumber;
     }
     [keyMappings reloadData];
     [optionKeySends selectCellWithTag:[[dict objectForKey:KEY_OPTION_KEY_SENDS] intValue]];
+    id rightOptPref = [dict objectForKey:KEY_RIGHT_OPTION_KEY_SENDS];
+    if (!rightOptPref) {
+        rightOptPref = [dict objectForKey:KEY_OPTION_KEY_SENDS];
+    }
+    [rightOptionKeySends selectCellWithTag:[rightOptPref intValue]];
     [tags setObjectValue:[dict objectForKey:KEY_TAGS]];
 
     // Epilogue
@@ -1410,6 +1415,7 @@ static float versionNumber;
     // Keyboard tab
     [newDict setObject:[origBookmark objectForKey:KEY_KEYBOARD_MAP] forKey:KEY_KEYBOARD_MAP];
     [newDict setObject:[NSNumber numberWithInt:[[optionKeySends selectedCell] tag]] forKey:KEY_OPTION_KEY_SENDS];
+    [newDict setObject:[NSNumber numberWithInt:[[rightOptionKeySends selectedCell] tag]] forKey:KEY_RIGHT_OPTION_KEY_SENDS];
     [newDict setObject:[tags objectValue] forKey:KEY_TAGS];
 
     // Epilogue

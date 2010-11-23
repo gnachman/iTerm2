@@ -64,6 +64,7 @@
         NSResponder *responder;
 
         if (([event modifierFlags] & (NSCommandKeyMask | NSAlternateKeyMask)) == (NSCommandKeyMask | NSAlternateKeyMask)) {
+            // Command-Alt number: Switch to window by number.
             int digit = [[event charactersIgnoringModifiers] intValue];
             if (digit >= 1 && digit <= 9 && [[iTermController sharedInstance] numberOfTerminals] >= digit) {
                 PseudoTerminal* termWithNumber = [[iTermController sharedInstance] terminalAtIndex:(digit - 1)];
@@ -74,18 +75,22 @@
         if ([prefPanel keySheet] == [self keyWindow] &&
             [prefPanel keySheetIsOpen] &&
             [iTermApplication isTextFieldInFocus:[prefPanel shortcutKeyTextField]]) {
+            // Focus is in the shortcut field in prefspanel. Pass events directly to it.
             [prefPanel shortcutKeyDown:event];
             return;
         } else if ([privatePrefPanel keySheet] == [self keyWindow] &&
                    [privatePrefPanel keySheetIsOpen] &&
                    [iTermApplication isTextFieldInFocus:[privatePrefPanel shortcutKeyTextField]]) {
+            // Focus is in the shortcut field in sessions prefspanel. Pass events directly to it.
             [privatePrefPanel shortcutKeyDown:event];
             return;
         } else if ([prefPanel window] == [self keyWindow] &&
                    [iTermApplication isTextFieldInFocus:[prefPanel hotkeyField]]) {
+            // Focus is in the hotkey field in prefspanel. Pass events directly to it.
             [prefPanel hotkeyKeyDown:event];
             return;
         } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
+            // Focus is in a terminal window.
             responder = [[self keyWindow] firstResponder];
             bool inTextView = [responder isKindOfClass:[PTYTextView class]];
 
@@ -97,16 +102,18 @@
             }
 
             const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
-            if(([event modifierFlags] & mask) == NSCommandKeyMask) {
+            if (([event modifierFlags] & mask) == NSCommandKeyMask) {
                 int digit = [[event charactersIgnoringModifiers] intValue];
                 if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
+                    // Command+number: Switch to tab by number.
                     [tabView selectTabViewItemAtIndex:digit-1];
                     return;
                 }
             }
 
-            if (inTextView && 
+            if (inTextView &&
                 [currentSession hasKeyMappingForEvent:event highPriority:YES]) {
+                // Remap key.
                 [currentSession keyDown:event];
                 return;
             }

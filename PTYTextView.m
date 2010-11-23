@@ -1132,7 +1132,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if ((!prev) &&
         ([delegate hasKeyMappingForEvent:event highPriority:YES] ||
          (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)) ||
-         ((modflag & NSAlternateKeyMask) && [delegate optionKey] != OPT_NORMAL) ||
+         ((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL) ||
+         ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL) ||
          ((modflag & NSControlKeyMask) &&
           (keyCode == 0x2c /* slash */ || keyCode == 0x2a /* backslash */)))) {
         [delegate keyDown:event];

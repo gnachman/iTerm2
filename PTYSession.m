@@ -581,6 +581,7 @@ static NSImage *warningImage;
                                                 keyMappings:[[self addressBookEntry] objectForKey:KEY_KEYBOARD_MAP]];
 
     if (keyBindingAction >= 0) {
+        // A special action was bound to this key combination.
         NSString *aString;
         unsigned char hexCode;
         int hexCodeTmp;
@@ -657,86 +658,100 @@ static NSImage *warningImage;
                 NSLog(@"Unknown key action %d", keyBindingAction);
                 break;
         }
-    }
-    // else do standard handling of event
-    else
-    {
-        if (modflag & NSFunctionKeyMask)
-        {
+    } else {
+        // No special binding for this key combination.
+        if (modflag & NSFunctionKeyMask) {
+            // Handle all "special" keys (arrows, etc.)
             NSData *data = nil;
 
-            switch(unicode)
-            {
-                case NSUpArrowFunctionKey: data = [TERMINAL keyArrowUp:modflag]; break;
-                case NSDownArrowFunctionKey: data = [TERMINAL keyArrowDown:modflag]; break;
-                case NSLeftArrowFunctionKey: data = [TERMINAL keyArrowLeft:modflag]; break;
-                case NSRightArrowFunctionKey: data = [TERMINAL keyArrowRight:modflag]; break;
-
-                case NSInsertFunctionKey:
-                    // case NSHelpFunctionKey:
-                    data = [TERMINAL keyInsert]; break;
-                case NSDeleteFunctionKey:
-                    data = [TERMINAL keyDelete]; break;
-                case NSHomeFunctionKey: data = [TERMINAL keyHome:modflag]; break;
-                case NSEndFunctionKey: data = [TERMINAL keyEnd:modflag]; break;
-                case NSPageUpFunctionKey: data = [TERMINAL keyPageUp]; break;
-                case NSPageDownFunctionKey: data = [TERMINAL keyPageDown]; break;
-
-                case NSPrintScreenFunctionKey:
+            switch (unicode) {
+                case NSUpArrowFunctionKey:
+                    data = [TERMINAL keyArrowUp:modflag]; 
                     break;
-                case NSScrollLockFunctionKey:
-                case NSPauseFunctionKey:
+                case NSDownArrowFunctionKey: 
+                    data = [TERMINAL keyArrowDown:modflag]; 
+                    break;
+                case NSLeftArrowFunctionKey: 
+                    data = [TERMINAL keyArrowLeft:modflag]; 
+                    break;
+                case NSRightArrowFunctionKey: 
+                    data = [TERMINAL keyArrowRight:modflag]; 
+                    break;
+                case NSInsertFunctionKey:
+                    data = [TERMINAL keyInsert]; 
+                    break;
+                case NSDeleteFunctionKey:
+                    data = [TERMINAL keyDelete]; 
+                    break;
+                case NSHomeFunctionKey: 
+                    data = [TERMINAL keyHome:modflag]; 
+                    break;
+                case NSEndFunctionKey: 
+                    data = [TERMINAL keyEnd:modflag]; 
+                    break;
+                case NSPageUpFunctionKey: 
+                    data = [TERMINAL keyPageUp]; 
+                    break;
+                case NSPageDownFunctionKey: 
+                    data = [TERMINAL keyPageDown]; 
                     break;
                 case NSClearLineFunctionKey:
                     data = [@"\e" dataUsingEncoding: NSUTF8StringEncoding];
                     break;
             }
 
-            if (NSF1FunctionKey<=unicode&&unicode<=NSF35FunctionKey)
-                data = [TERMINAL keyFunction:unicode-NSF1FunctionKey+1];
+            if (NSF1FunctionKey <= unicode && unicode <= NSF35FunctionKey) {
+                data = [TERMINAL keyFunction:unicode - NSF1FunctionKey + 1];
+            }
 
             if (data != nil) {
                 send_str = (unsigned char *)[data bytes];
                 send_strlen = [data length];
-            }
-            else if (keystr != nil) {
-                NSData *keydat = ((modflag & NSControlKeyMask) && unicode>0)?
-                    [keystr dataUsingEncoding:NSUTF8StringEncoding]:
+            } else if (keystr != nil) {
+                NSData *keydat = ((modflag & NSControlKeyMask) && unicode > 0) ?
+                    [keystr dataUsingEncoding:NSUTF8StringEncoding] :
                     [unmodkeystr dataUsingEncoding:NSUTF8StringEncoding];
                 send_str = (unsigned char *)[keydat bytes];
                 send_strlen = [keydat length];
             }
-        }
-        else if ((modflag & NSAlternateKeyMask) &&
-                 ([self optionKey] != OPT_NORMAL))
-        {
-            NSData *keydat = ((modflag & NSControlKeyMask) && unicode>0)?
+        } else if (((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask &&
+                    ([self optionKey] != OPT_NORMAL)) ||
+                   ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask &&
+                    ([self rightOptionKey] != OPT_NORMAL))) {
+            // A key was pressed while holding down option and the option key
+            // is not behaving normally. Apply the modified behavior.
+            int mode;  // The modified behavior based on which modifier is pressed.
+            if ((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask) {
+                mode = [self optionKey];
+            } else {
+                mode = [self rightOptionKey];
+            }
+
+            NSData *keydat = ((modflag & NSControlKeyMask) && unicode > 0)?
                 [keystr dataUsingEncoding:NSUTF8StringEncoding]:
-                [unmodkeystr dataUsingEncoding:NSUTF8StringEncoding];
-            // META combination
+                [unmodkeystr dataUsingEncoding:NSUTF8StringEncoding]; 
             if (keydat != nil) {
                 send_str = (unsigned char *)[keydat bytes];
                 send_strlen = [keydat length];
             }
-            if ([self optionKey] == OPT_ESC) {
+            if (mode == OPT_ESC) {
                 send_pchr = '\e';
-            }
-            else if ([self optionKey] == OPT_META && send_str != NULL)
-            {
+            } else if (mode == OPT_META && send_str != NULL) {
                 int i;
-                for (i = 0; i < send_strlen; ++i)
+                for (i = 0; i < send_strlen; ++i) {
                     send_str[i] |= 0x80;
+                }
             }
-        }
-        else
-        {
+        } else {
+            // Regular path for inserting a character from a keypress.
             int max = [keystr length];
             NSData *data=nil;
 
-            if (max!=1||[keystr characterAtIndex:0] > 0x7f)
+            if (max != 1||[keystr characterAtIndex:0] > 0x7f) {
                 data = [keystr dataUsingEncoding:[TERMINAL encoding]];
-            else
+            } else {
                 data = [keystr dataUsingEncoding:NSUTF8StringEncoding];
+            }
 
             // Enter key is on numeric keypad, but not marked as such
             if (unicode == NSEnterCharacter && unmodunicode == NSEnterCharacter) {
@@ -748,49 +763,44 @@ static NSImage *warningImage;
                 data = [TERMINAL keypadData: unicode keystr: keystr];
             }
 
-
             if (data != nil ) {
                 send_str = (unsigned char *)[data bytes];
                 send_strlen = [data length];
             }
 
-            // NSLog(@"modflag = 0x%x; send_strlen = %d; send_str[0] = '%c (0x%x)'", modflag, send_strlen, send_str[0]);
+            DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %d; send_str[0] = '%c (0x%x)'", modflag, send_strlen, send_str[0]]);
             if ((modflag & NSControlKeyMask) &&
                 send_strlen == 1 &&
-                send_str[0] == '|')
-            {
-                send_str = (unsigned char*)"\034"; // control-backslash
+                send_str[0] == '|') {
+                // Control-| is sent as Control-backslash
+                send_str = (unsigned char*)"\034";
                 send_strlen = 1;
-            }
-
-            else if ((modflag & NSControlKeyMask) &&
-                (modflag & NSShiftKeyMask) &&
-                send_strlen == 1 &&
-                send_str[0] == '/')
-            {
-                send_str = (unsigned char*)"\177"; // control-?
+            } else if ((modflag & NSControlKeyMask) &&
+                       (modflag & NSShiftKeyMask) &&
+                       send_strlen == 1 &&
+                       send_str[0] == '/') {
+                // Control-shift-/ is sent as Control-?
+                send_str = (unsigned char*)"\177";
                 send_strlen = 1;
-            }
-            else if ((modflag & NSControlKeyMask) &&
-                     send_strlen == 1 &&
-                     send_str[0] == '/')
-            {
+            } else if ((modflag & NSControlKeyMask) &&
+                       send_strlen == 1 &&
+                       send_str[0] == '/') {
+                // Control-/ is sent as Control-/, but needs some help to do so.
                 send_str = (unsigned char*)"\037"; // control-/
                 send_strlen = 1;
-            }
-            else if ((modflag & NSShiftKeyMask) &&
-                     send_strlen == 1 &&
-                     send_str[0] == '\031')
-            {
-                send_str = (unsigned char*)"\033[Z"; // backtab
+            } else if ((modflag & NSShiftKeyMask) &&
+                       send_strlen == 1 &&
+                       send_str[0] == '\031') {
+                // Shift-tab is sent as Esc-[Z (or "backtab")
+                send_str = (unsigned char*)"\033[Z";
                 send_strlen = 3;
             }
 
         }
 
-        if (EXIT == NO )
-        {
+        if (EXIT == NO) {
             if (send_pchr >= 0) {
+                // Send a prefix character (e.g., esc).
                 char c = send_pchr;
                 dataPtr = (unsigned char*)&c;
                 dataLength = 1;
@@ -1884,6 +1894,15 @@ static NSImage *warningImage;
 - (int)optionKey
 {
     return [[[self addressBookEntry] objectForKey:KEY_OPTION_KEY_SENDS] intValue];
+}
+
+- (int)rightOptionKey
+{
+    NSNumber* rightOptPref = [[self addressBookEntry] objectForKey:KEY_RIGHT_OPTION_KEY_SENDS];
+    if (rightOptPref == nil) {
+        return [self optionKey];
+    }
+    return [rightOptPref intValue];
 }
 
 - (void)setAddressBookEntry:(NSDictionary*)entry

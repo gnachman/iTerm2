@@ -33,6 +33,9 @@
 
 #include <sys/time.h>
 
+#define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
+#define NSRightAlternateKeyMask (0x000040 | NSAlternateKeyMask)
+
 @class PTYTask;
 @class PTYTextView;
 @class PTYScrollView;
@@ -292,6 +295,7 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (void)setDisableBold: (BOOL)boldFlag;
 - (void)setColorTable:(int)index color:(NSColor *)c;
 - (int)optionKey;
+- (int)rightOptionKey;
 
 // Session status
 
