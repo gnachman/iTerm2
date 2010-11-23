@@ -380,7 +380,7 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
 - (void)_addTag:(id)sender
 {
     int itemTag = [sender tag];
-    NSArray* allTags = [[dataSource_ underlyingModel] allTags];
+    NSArray* allTags = [[[dataSource_ underlyingModel] allTags] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
     NSString* tag = [allTags objectAtIndex:itemTag];
 
     [searchField_ setStringValue:[[NSString stringWithFormat:@"%@ %@",
@@ -402,8 +402,9 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     [item setTag:-1];
     [cellMenu insertItem:item atIndex:0];
 
-    for (int i = 0; i < [tags count]; ++i) {
-        item = [[[NSMenuItem alloc] initWithTitle:[tags objectAtIndex:i]
+    NSArray* sortedTags = [tags sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+    for (int i = 0; i < [sortedTags count]; ++i) {
+        item = [[[NSMenuItem alloc] initWithTitle:[sortedTags objectAtIndex:i]
                                            action:@selector(_addTag:)
                                     keyEquivalent:@""] autorelease];
         [item setTarget:self];
