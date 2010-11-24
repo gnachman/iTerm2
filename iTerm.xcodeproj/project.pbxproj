@@ -512,14 +512,14 @@
 			isa = PBXGroup;
 			children = (
 				1DE214E0128212EE004E3ADF /* Autocomplete.m */,
+				1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */,
+				1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */,
+				1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */,
 				1D93D33412695442007F741B /* DVR.m */,
 				1D93D3591269778C007F741B /* DVRBuffer.m */,
 				1D93D34E126974BC007F741B /* DVRDecoder.m */,
 				1D93D35212697529007F741B /* DVREncoder.m */,
 				1D93D3B012697D53007F741B /* DVRIndexEntry.m */,
-				1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */,
-				1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */,
-				1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */,
 				1D173858126C820A004622DC /* FakeWindow.m */,
 				DD4BAB7C0470C44C00A8A065 /* FindCommandHandler.m */,
 				20E74F4904E9089700000106 /* ITAddressBookMgr.m */,

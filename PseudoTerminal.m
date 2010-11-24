@@ -264,6 +264,7 @@ NSString *sessionsKey = @"sessions";
         tabBarBackground = [[SolidColorView alloc] initWithFrame:NSMakeRect(0, -[tabBarControl frame].size.height, [TABVIEW frame].size.width, [tabBarControl frame].size.height) color:[NSColor windowBackgroundColor]];
         [tabBarBackground addSubview:tabBarControl];
         [tabBarControl setFrameOrigin:NSMakePoint(0, 0)];
+        [tabBarBackground setHidden:YES];
         [tabBarControl release];
     }
 
@@ -432,7 +433,8 @@ NSString *sessionsKey = @"sessions";
         [findProgressIndicator setHidden:YES];
         _timer = nil;
     }
-    [pbHistoryView dealloc];
+    [pbHistoryView release];
+    [autocompleteView release];
 
     if (fullScreenTabviewTimer_) {
         [fullScreenTabviewTimer_ invalidate];
@@ -610,6 +612,24 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"windowDidResignKey returning because togglingFullScreen.");
         return;
     }
+    if (fullScreenTabviewTimer_) {
+        // If the window has been closed then it's possible that the
+        // timer is the only object left that is holding a reference to
+        // self. Retain and autorelease so that invalidating the timer
+        // doesn't free self while there's still stuff going on in this
+        // function.
+        [self retain];
+        [self autorelease];
+        [fullScreenTabviewTimer_ invalidate];
+        fullScreenTabviewTimer_ = nil;
+    } else {
+        [self hideFullScreenTabControl];
+    }
+    if ([[pbHistoryView window] isVisible] ||
+        [[autocompleteView window] isVisible]) {
+        return;
+    }
+
     PtyLog(@"%s(%d):-[PseudoTerminal windowDidResignKey:%@]",
           __FILE__, __LINE__, aNotification);
 
@@ -2391,6 +2411,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)showFullScreenTabControl
 {
+    [tabBarBackground setHidden:NO];
     [tabBarControl setHidden:NO];
 
     // Ensure the tab bar is on top of all other views.
@@ -2410,9 +2431,21 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (void)immediatelyHideFullScreenTabControl
+{
+    [tabBarBackground setHidden:YES];
+}
+
 - (void)hideFullScreenTabControl
 {
+    if ([tabBarBackground isHidden]) {
+        return;
+    }
+    // Fade out and then hide the tab control.
     [[tabBarBackground animator] setAlphaValue:0];
+    [self performSelector:@selector(immediatelyHideFullScreenTabControl) 
+               withObject:nil 
+               afterDelay:[[NSAnimationContext currentContext] duration]];
 }
 
 - (void)flagsChanged:(NSEvent *)theEvent

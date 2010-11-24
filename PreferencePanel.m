@@ -174,6 +174,7 @@ static float versionNumber;
     [self window];
     [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     NSAssert(bookmarksTableView, @"Null table view");
+    [bookmarksTableView setUnderlyingDatasource:dataSource];
 
     bookmarksToolbarId = [bookmarksToolbarItem itemIdentifier];
     globalToolbarId = [globalToolbarItem itemIdentifier];
@@ -537,6 +538,7 @@ static float versionNumber;
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];
     NSString* guid = [bookmarksTableView selectedGuid];
+    [bookmarksTableView reloadData];
     if ([[bookmarksTableView selectedGuids] count] == 1) {
         Bookmark* dict = [dataSource bookmarkWithGuid:guid];
         [bookmarksSettingsTabViewParent setHidden:NO];
@@ -1092,9 +1094,9 @@ static float versionNumber;
     [self updateShortcutTitles];
 
     if ([customCommand isEqualToString:@"Yes"]) {
-    [bookmarkCommandType selectCellWithTag:0];
+        [bookmarkCommandType selectCellWithTag:0];
     } else {
-            [bookmarkCommandType selectCellWithTag:1];
+        [bookmarkCommandType selectCellWithTag:1];
     }
     [bookmarkCommand setStringValue:command];
 
@@ -1132,7 +1134,7 @@ static float versionNumber;
     [cursorColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_CURSOR_COLOR]]];
     [cursorTextColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_CURSOR_TEXT_COLOR]]];
 
-        // Display tab
+    // Display tab
     int cols = [[dict objectForKey:KEY_COLUMNS] intValue];
     [columnsField setStringValue:[NSString stringWithFormat:@"%d", cols]];
     int rows = [[dict objectForKey:KEY_ROWS] intValue];

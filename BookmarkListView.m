@@ -40,9 +40,10 @@ const int kInterWidgetMargin = 10;
 @interface BookmarkRow : NSObject
 {
     NSString* guid;
+    BookmarkModel* underlyingModel;
 }
 
-- (id)initWithBookmark:(Bookmark*)bookmark;
+- (id)initWithBookmark:(Bookmark*)bookmark underlyingModel:(BookmarkModel*)underlyingModel;
 - (void)dealloc;
 - (Bookmark*)bookmark;
 
@@ -61,24 +62,26 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
 
 @implementation BookmarkRow
 
-- (id)initWithBookmark:(Bookmark*)bookmark
+- (id)initWithBookmark:(Bookmark*)bookmark underlyingModel:(BookmarkModel*)newUnderlyingModel;
 {
     self = [super init];
     if (self) {
         guid = [[bookmark objectForKey:KEY_GUID] retain];
+        self->underlyingModel = [newUnderlyingModel retain];
     }
     return self;
 }
 
 - (void)dealloc
 {
+    [underlyingModel release];
     [guid release];
     [super dealloc];
 }
 
 - (Bookmark*)bookmark
 {
-    return [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+    return [underlyingModel bookmarkWithGuid:guid];
 }
 
 @end
@@ -190,7 +193,8 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     int n = [underlyingModel numberOfBookmarksWithFilter:filter];
     for (int i = 0; i < n; ++i) {
         //NSLog(@"Wrapper at %p add bookmark %@ at index %d", self, [[underlyingModel bookmarkAtIndex:i] objectForKey:KEY_NAME], i);
-        [bookmarks addObject:[[[BookmarkRow alloc] initWithBookmark:[underlyingModel bookmarkAtIndex:i withFilter:filter]] autorelease]];
+        [bookmarks addObject:[[[BookmarkRow alloc] initWithBookmark:[underlyingModel bookmarkAtIndex:i withFilter:filter] 
+                                                    underlyingModel:underlyingModel] autorelease]];
     }
     [self sort];
 }
@@ -416,12 +420,22 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     [searchCell setSearchMenuTemplate:cellMenu];
 }
 
+- (void)setUnderlyingDatasource:(BookmarkModel*)dataSource
+{
+    [dataSource_ autorelease];
+    dataSource_ = [[BookmarkModelWrapper alloc] initWithModel:dataSource];
+}
 
 - (id)initWithFrame:(NSRect)frameRect
 {
+    return [self initWithFrame:frameRect model:[BookmarkModel sharedInstance]];
+}
+
+- (id)initWithFrame:(NSRect)frameRect model:(BookmarkModel*)dataSource
+{
     self = [super initWithFrame:frameRect];
-    dataSource_ = [[BookmarkModelWrapper alloc] initWithModel:[BookmarkModel sharedInstance]];
-    debug=NO;
+    [self setUnderlyingDatasource:dataSource];
+    debug = NO;
 
     NSRect frame = [self frame];
     NSRect searchFieldFrame;

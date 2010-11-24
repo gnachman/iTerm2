@@ -112,9 +112,11 @@
 
 - (void)awakeFromNib;
 - (id)initWithFrame:(NSRect)frameRect;
+- (id)initWithFrame:(NSRect)frameRect model:(BookmarkModel*)dataSource;
 - (void)setDelegate:(id<BookmarkTableDelegate>)delegate;
 - (void)dealloc;
 - (BookmarkModelWrapper*)dataSource;
+- (void)setUnderlyingDatasource:(BookmarkModel*)dataSource;
 
 // Drag drop
 - (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard*)pboard;
