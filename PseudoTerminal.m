@@ -1490,6 +1490,7 @@ NSString *sessionsKey = @"sessions";
     if (!prototype) {
         NSMutableDictionary* aDict = [[[NSMutableDictionary alloc] init] autorelease];
         [ITAddressBookMgr setDefaultsInBookmark:aDict];
+        [aDict setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
         prototype = aDict;
     }
     [self addNewSession:prototype];
@@ -1636,6 +1637,7 @@ NSString *sessionsKey = @"sessions";
             if (!prototype) {
                 NSMutableDictionary* aDict = [[[NSMutableDictionary alloc] init] autorelease];
                 [ITAddressBookMgr setDefaultsInBookmark:aDict];
+                [aDict setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
                 prototype = aDict;
             }
 
@@ -2776,6 +2778,7 @@ NSString *sessionsKey = @"sessions";
         // get the default entry
         NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
         [ITAddressBookMgr setDefaultsInBookmark:dict];
+        [dict setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
         [aSession setAddressBookEntry:dict];
         tempPrefs = dict;
     } else {
@@ -3676,6 +3679,7 @@ NSString *sessionsKey = @"sessions";
     if (abEntry == nil) {
         NSMutableDictionary* aDict = [[[NSMutableDictionary alloc] init] autorelease];
         [ITAddressBookMgr setDefaultsInBookmark:aDict];
+        [aDict setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
         abEntry = aDict;
     }
 

@@ -473,6 +473,7 @@ static BOOL initDone = NO;
         if (!aDict) {
             NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
             [ITAddressBookMgr setDefaultsInBookmark:temp];
+            [temp setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
             aDict = temp;
         }
     }
@@ -508,6 +509,7 @@ static BOOL initDone = NO;
         if (!aDict) {
             NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
             [ITAddressBookMgr setDefaultsInBookmark:temp];
+            [temp setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
             aDict = temp;
         }
     }
@@ -538,6 +540,7 @@ static BOOL initDone = NO;
         if (!prototype) {
             NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
             [ITAddressBookMgr setDefaultsInBookmark:temp];
+            [temp setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
             prototype = temp;
         }
 
