@@ -1244,8 +1244,18 @@ static NSImage *warningImage;
     [self setTransparency:[[aDict objectForKey:KEY_TRANSPARENCY] floatValue]];
 
     // bold
-    [self setDisableBold:[[aDict objectForKey:KEY_DISABLE_BOLD] boolValue]];
-
+    NSNumber* useBoldFontEntry = [aDict objectForKey:KEY_USE_BOLD_FONT];
+    NSNumber* disableBoldEntry = [aDict objectForKey:KEY_DISABLE_BOLD];
+    if (useBoldFontEntry) {
+        [self setUseBoldFont:[useBoldFontEntry boolValue]];
+    } else if (disableBoldEntry) {
+        // Only deprecated option is set.
+        [self setUseBoldFont:![disableBoldEntry boolValue]];
+    } else {
+        [self setUseBoldFont:YES];
+    }
+    [TEXTVIEW setUseBrightBold:[aDict objectForKey:KEY_USE_BRIGHT_BOLD] ? [[aDict objectForKey:KEY_USE_BRIGHT_BOLD] boolValue] : YES];
+    
     // set up the rest of the preferences
     [SCREEN setPlayBellFlag:![[aDict objectForKey:KEY_SILENCE_BELL] boolValue]];
     [SCREEN setShowBellFlag:[[aDict objectForKey:KEY_VISUAL_BELL] boolValue]];
@@ -1804,16 +1814,15 @@ static NSImage *warningImage;
     autoClose = set;
 }
 
-- (BOOL)disableBold
+- (BOOL)useBoldFont
 {
-    return [TEXTVIEW disableBold];
+    return [TEXTVIEW useBoldFont];
 }
 
-- (void)setDisableBold:(BOOL)boldFlag
+- (void)setUseBoldFont:(BOOL)boldFlag
 {
-    [TEXTVIEW setDisableBold:boldFlag];
+    [TEXTVIEW setUseBoldFont:boldFlag];
 }
-
 
 - (BOOL)doubleWidth
 {

@@ -288,17 +288,22 @@ static NSCursor* textViewCursor =  nil;
     [self setNeedsDisplay:YES];
 }
 
-- (BOOL) disableBold
+- (BOOL)useBoldFont
 {
-    return (disableBold);
+    return useBoldFont;
 }
 
-- (void) setDisableBold: (BOOL) boldFlag
+- (void)setUseBoldFont:(BOOL)boldFlag
 {
-    disableBold = boldFlag;
+    useBoldFont = boldFlag;
     [self setNeedsDisplay:YES];
 }
 
+- (void)setUseBrightBold:(BOOL)flag
+{
+    useBrightBold = flag;
+    [self setNeedsDisplay:YES];
+}
 
 - (BOOL) blinkingCursor
 {
@@ -426,31 +431,30 @@ static NSCursor* textViewCursor =  nil;
     if (theIndex & DEFAULT_FG_COLOR_CODE) {
         // special colors?
         switch (theIndex) {
-            case SELECTED_TEXT:
-                color = selectedTextColor;
-                break;
-            case CURSOR_TEXT:
-                color = cursorTextColor;
-                break;
-            case DEFAULT_BG_COLOR_CODE:
-                color = defaultBGColor;
-                break;
-            default:
-                if(theIndex & BOLD_MASK) {
-                    color = theIndex-BOLD_MASK == DEFAULT_BG_COLOR_CODE ? defaultBGColor : [self defaultBoldColor];
-                }
-                else {
-                    color = defaultFGColor;
-                }
+        case SELECTED_TEXT:
+            color = selectedTextColor;
+            break;
+        case CURSOR_TEXT:
+            color = cursorTextColor;
+            break;
+        case DEFAULT_BG_COLOR_CODE:
+            color = defaultBGColor;
+            break;
+        default:
+            if ((theIndex & BOLD_MASK) && useBrightBold) {
+                color = theIndex-BOLD_MASK == DEFAULT_BG_COLOR_CODE ? defaultBGColor : [self defaultBoldColor];
+            }
+            else {
+                color = defaultFGColor;
+            }
+            break;
         }
-    }
-    else {
+    } else {
         // Render bold text as bright. The spec (ECMA-48) describes the intense
-        // display setting (esc[1m) as "bold or bright". One user complained that
-        // bold black on black bg didn't show up. Let's try making all bold text
-        // also bright and see how that works.
-        // If this is unpopular, make it bright iff the foreground=background.
+        // display setting (esc[1m) as "bold or bright". We make it a
+        // preference.
         if ((theIndex & BOLD_MASK) &&
+            useBrightBold &&
             (theIndex % 256 < 8)) {
             theIndex = (theIndex & ~BOLD_MASK) + 8;
         }
@@ -2901,7 +2905,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                        fgColor:(int)fgColor
                     renderBold:(BOOL*)renderBold
 {
-    BOOL isBold = (fgColor & BOLD_MASK) && !disableBold;
+    BOOL isBold = (fgColor & BOLD_MASK) && useBoldFont;
     *renderBold = NO;
     PTYFontInfo* theFont;
     BOOL usePrimary = (ch < 128);

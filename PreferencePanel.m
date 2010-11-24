@@ -1162,7 +1162,23 @@ static float versionNumber;
     [displayFontSpacingWidth setFloatValue:horizontalSpacing];
     [displayFontSpacingHeight setFloatValue:verticalSpacing];
     [blinkingCursor setState:[[dict objectForKey:KEY_BLINKING_CURSOR] boolValue] ? NSOnState : NSOffState];
-    [disableBold setState:[[dict objectForKey:KEY_DISABLE_BOLD] boolValue] ? NSOnState : NSOffState];
+    NSNumber* useBoldFontEntry = [dict objectForKey:KEY_USE_BOLD_FONT];
+    NSNumber* disableBoldEntry = [dict objectForKey:KEY_DISABLE_BOLD];
+    if (useBoldFontEntry) {
+        [useBoldFont setState:[useBoldFontEntry boolValue] ? NSOnState : NSOffState];
+    } else if (disableBoldEntry) {
+        // Only deprecated option is set.
+        [useBoldFont setState:[disableBoldEntry boolValue] ? NSOffState : NSOnState];
+    } else {
+        [useBoldFont setState:NSOnState];
+    }
+    
+    if ([dict objectForKey:KEY_USE_BRIGHT_BOLD] != nil) {
+        [useBrightBold setState:[dict objectForKey:KEY_USE_BRIGHT_BOLD] ? NSOnState : NSOffState];
+    } else {
+        [useBrightBold setState:NSOnState];
+    }
+    
     [transparency setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
     [blur setState:[[dict objectForKey:KEY_BLUR] boolValue] ? NSOnState : NSOffState];
     [antiAliasing setState:[[dict objectForKey:KEY_ANTI_ALIASING] boolValue] ? NSOnState : NSOffState];
@@ -1384,7 +1400,8 @@ static float versionNumber;
     [newDict setObject:[NSNumber numberWithFloat:[displayFontSpacingWidth floatValue]] forKey:KEY_HORIZONTAL_SPACING];
     [newDict setObject:[NSNumber numberWithFloat:[displayFontSpacingHeight floatValue]] forKey:KEY_VERTICAL_SPACING];
     [newDict setObject:[NSNumber numberWithBool:([blinkingCursor state]==NSOnState)] forKey:KEY_BLINKING_CURSOR];
-    [newDict setObject:[NSNumber numberWithBool:([disableBold state]==NSOnState)] forKey:KEY_DISABLE_BOLD];
+    [newDict setObject:[NSNumber numberWithBool:([useBoldFont state]==NSOnState)] forKey:KEY_USE_BOLD_FONT];
+    [newDict setObject:[NSNumber numberWithBool:([useBrightBold state]==NSOnState)] forKey:KEY_USE_BRIGHT_BOLD];
     [newDict setObject:[NSNumber numberWithFloat:[transparency floatValue]] forKey:KEY_TRANSPARENCY];
     [newDict setObject:[NSNumber numberWithBool:([blur state]==NSOnState)] forKey:KEY_BLUR];
     [newDict setObject:[NSNumber numberWithBool:([antiAliasing state]==NSOnState)] forKey:KEY_ANTI_ALIASING];
@@ -2056,7 +2073,8 @@ static float versionNumber;
         KEY_HORIZONTAL_SPACING,
         KEY_VERTICAL_SPACING,
         KEY_BLINKING_CURSOR,
-        KEY_DISABLE_BOLD,
+        KEY_USE_BOLD_FONT,
+        KEY_USE_BRIGHT_BOLD,
         KEY_TRANSPARENCY,
         KEY_BLUR,
         KEY_ANTI_ALIASING,

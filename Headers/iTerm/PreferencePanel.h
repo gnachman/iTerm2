@@ -253,7 +253,8 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTextField *nonAsciiFontField;
 
     IBOutlet NSButton* blinkingCursor;
-    IBOutlet NSButton* disableBold;
+    IBOutlet NSButton* useBoldFont;
+    IBOutlet NSButton* useBrightBold;
     IBOutlet NSSlider *transparency;
     IBOutlet NSButton* blur;
     IBOutlet NSButton* antiAliasing;

@@ -71,8 +71,11 @@ typedef struct PTYFontInfo PTYFontInfo;
     BOOL antiAlias;
 
     // option to not render in bold
-    BOOL disableBold;
-
+    BOOL useBoldFont;
+    
+    // Option to draw bold text as brighter colors.
+    BOOL useBrightBold;
+    
     // NSTextInput support
     BOOL IM_INPUT_INSERT;
     NSRange IM_INPUT_SELRANGE;
@@ -223,8 +226,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (NSRect)scrollViewContentSize;
 - (BOOL)antiAlias;
 - (void)setAntiAlias:(BOOL)antiAliasFlag;
-- (BOOL)disableBold;
-- (void)setDisableBold:(BOOL)boldFlag;
+- (BOOL)useBoldFont;
+- (void)setUseBoldFont:(BOOL)boldFlag;
+- (void)setUseBrightBold:(BOOL)flag;
 - (BOOL)blinkingCursor;
 - (void)setBlinkingCursor:(BOOL)bFlag;
 

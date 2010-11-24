@@ -830,7 +830,7 @@ static VT100TCC decode_other(unsigned char *datap,
             }
             else {
                 result.type = VT100CSI_SCS0;
-                result.u.code=c2;
+                result.u.code = c2;
                 *rmlen = 3;
             }
             break;
