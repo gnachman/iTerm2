@@ -2775,12 +2775,19 @@ NSString *sessionsKey = @"sessions";
 
     // set some default parameters
     if ([aSession addressBookEntry] == nil) {
-        // get the default entry
-        NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
-        [ITAddressBookMgr setDefaultsInBookmark:dict];
-        [dict setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
-        [aSession setAddressBookEntry:dict];
-        tempPrefs = dict;
+        tempPrefs = [[BookmarkModel sharedInstance] defaultBookmark];
+        if (tempPrefs != nil) {
+            // Use the default bookmark. This path is taken with applescript's
+            // "make new session at the end of sessions" command.
+            [aSession setAddressBookEntry:tempPrefs];
+        } else {
+            // get the hardcoded defaults
+            NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
+            [ITAddressBookMgr setDefaultsInBookmark:dict];
+            [dict setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
+            [aSession setAddressBookEntry:dict];
+            tempPrefs = dict;
+        }
     } else {
         tempPrefs = [aSession addressBookEntry];
     }
