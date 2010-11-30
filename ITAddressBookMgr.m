@@ -426,16 +426,16 @@
 
 + (NSString*)loginShellCommandForBookmark:(Bookmark*)bookmark
 {
-    char* thisUser = getenv("USER");
+    NSString* thisUser = NSUserName();
     char* userShell = getenv("SHELL");
     if (thisUser) {
         if (![[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"No"]) {
             // -l specifies a login shell which goes to the home dir
             // there is either a custom dir or we're recycling the last tab's dir
-            return [NSString stringWithFormat:@"login -fpl %s", thisUser];
+            return [NSString stringWithFormat:@"login -fpl \"%@\"", thisUser];
         } else {
             // Using either a custom dir or recycling the last tab's dir. Caller will set CWD appropriately.
-            return [NSString stringWithFormat:@"login -fp %s", thisUser];
+            return [NSString stringWithFormat:@"login -fp \"%@\"", thisUser];
         }
     } else if (userShell) {
         return [NSString stringWithCString:userShell];
