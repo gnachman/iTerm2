@@ -1,4 +1,43 @@
-These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2.
+These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2. Alpha 13 is known to be quite reliable, though.
+
+Alpha 14
+This release has a passel of incremental improvements that make your life a happier place. 
+
+Headliners
+- Assign numbers to windows. You can switch between windows with cmd-option-number (bug 110).
+- Add a preference to display bold text in bright colors.
+- Added a bookmark preference to treat right option key differently than left option key (bug 115).
+- Hotkey toggles iTerm instead of only opening it.
+- Add flashing visual bell and an option to turn it off (bug 104).
+- Put current job name in tab title (bug 83).
+- Add "secure input" feature to prevent other apps from being able to see what you're typing (bug 265).
+- Add "arrange horizontally" option to Window menu (bug 112).
+
+Small Enhancements
+- Bookmarks can be sorted by clicking on column headers (bug 113).
+- Make it easier to assign ^H or ^? to delete key for a bookmark.
+- Holding down the cmd key in fullscreen mode will show the tab bar (bug 67).
+- Add new color presets.
+- Improve appearance of tags in prefs and bookmarks window.
+- New UI for batch copying bookmark attributes.
+- Increase speed of selection scrolling.
+- Add an option to close the bookmark window after opening a bookmark (bug 95).
+- Add "open as tabs in new window" option to bookmark window when there are multiple bookmarks selected (bug 126)
+- Add a few pixels' margin at the top of the textview (bug 137)
+- Simplified prefs panel by eliminating bottom margin option.
+
+Bugs Fixed
+- Allow multiple bookmarks to be selected in preferences window (bug 120).
+- Fix a bug where scrolling by dragging wouldn't reach the last line.
+- Fix bug where tab characters were inserted in the wrong place.
+- Fix bug where COLORFGBG environment variable wasn't set.
+- Fix bug where a window wouldn't fill the screen vertically.
+- Several rare crashes fixed.
+- Autocomplete in fullscreen mode no longer shows the dock an menu bar (bug 295).
+- Fix bug where Cmd-I opens an empty window (bug 302).
+- Use default bookmark with "make new window" Applescript (bug 301).
+- Quote multiword user names in login command (bug 293).
+
 
 Alpha 13
 This release includes the much-requested Visor-like hotkey feature plus an innovative new Autocomplete feature. There are plenty of bug fixes, too.
