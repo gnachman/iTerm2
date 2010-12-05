@@ -53,6 +53,7 @@
 {
     [decoders_ release];
     [encoder_ release];
+    [buffer_ release];
     [super dealloc];
 }
 

@@ -38,6 +38,7 @@
 #import <iTerm/PTYWindow.h>
 #import <iTerm/PTYTextView.h>
 #import <BookmarksWindow.h>
+#import "PTYTab.h"
 
 #include <unistd.h>
 
@@ -90,14 +91,14 @@ int gDebugLogFile = -1;
     CFPreferencesSetAppValue(CFSTR("NSRepeatCountBinding"),
                              CFSTR(""),
                              kCFPreferencesCurrentApplication);
-    
+
     [self buildAddressBookMenu:nil];
 
     PreferencePanel* ppanel = [PreferencePanel sharedInstance];
     if ([ppanel hotkey]) {
         [[iTermController sharedInstance] registerHotkey:[ppanel hotkeyCode] modifiers:[ppanel hotkeyModifiers]];
     }
-    
+
     // register for services
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
                                                        returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];
@@ -105,28 +106,54 @@ int gDebugLogFile = -1;
 
 - (BOOL) applicationShouldTerminate: (NSNotification *) theNotification
 {
-        NSArray *terminals;
+    NSArray *terminals;
 
-        terminals = [[iTermController sharedInstance] terminals];
+    terminals = [[iTermController sharedInstance] terminals];
 
-        // Display prompt if we need to
-    if ([[PreferencePanel sharedInstance] promptOnClose] && [terminals count] && (![[PreferencePanel sharedInstance] onlyWhenMoreTabs] || [terminals count] >1 ||
-                                                             [[[[iTermController sharedInstance] currentTerminal] tabView] numberOfTabViewItems] > 1 )
-        &&
-            NSRunAlertPanel(NSLocalizedStringFromTableInBundle(@"Quit iTerm?",@"iTerm", [NSBundle bundleForClass: [self class]], @"Close window"),
-                                           NSLocalizedStringFromTableInBundle(@"All sessions will be closed",@"iTerm", [NSBundle bundleForClass: [self class]], @"Close window"),
-                                           NSLocalizedStringFromTableInBundle(@"OK",@"iTerm", [NSBundle bundleForClass: [self class]], @"OK"),
-                                           NSLocalizedStringFromTableInBundle(@"Cancel",@"iTerm", [NSBundle bundleForClass: [self class]], @"Cancel")
-                                           ,nil)!=NSAlertDefaultReturn)
-                return (NO);
+    // Display prompt if we need to
 
-        // Ensure [iTermController dealloc] is called before prefs are saved
-        [iTermController sharedInstanceRelease];
+    BOOL promptOnClose = [[PreferencePanel sharedInstance] promptOnClose];
+    int numTerminals = [terminals count];
+    BOOL onlyWhenMoreTabs = [[PreferencePanel sharedInstance] onlyWhenMoreTabs];
+    int numTabs = 0;
+    if (numTerminals > 0) {
+        numTabs = [[[[iTermController sharedInstance] currentTerminal] tabView] numberOfTabViewItems];
+    }
+    BOOL shouldShowAlert = (!onlyWhenMoreTabs || 
+                            numTerminals > 1 ||
+                            numTabs > 1);
+    if (promptOnClose && 
+        numTerminals && 
+        shouldShowAlert) {
+        BOOL stayput = NSRunAlertPanel(NSLocalizedStringFromTableInBundle(@"Quit iTerm?",
+                                                                         @"iTerm", 
+                                                                         [NSBundle bundleForClass:[self class]], 
+                                                                         @"Close window"),
+                                      NSLocalizedStringFromTableInBundle(@"All sessions will be closed",
+                                                                         @"iTerm", 
+                                                                         [NSBundle bundleForClass:[self class]], 
+                                                                         @"Close window"),
+                                      NSLocalizedStringFromTableInBundle(@"OK",
+                                                                         @"iTerm", 
+                                                                         [NSBundle bundleForClass:[self class]], 
+                                                                         @"OK"),
+                                      NSLocalizedStringFromTableInBundle(@"Cancel",
+                                                                         @"iTerm", 
+                                                                         [NSBundle bundleForClass:[self class]], 
+                                                                         @"Cancel"),
+                                      nil) != NSAlertDefaultReturn;
+        if (stayput) {
+            return NO;
+        }
+    }
 
-        // save preferences
-        [[PreferencePanel sharedInstance] savePreferences];
+    // Ensure [iTermController dealloc] is called before prefs are saved
+    [iTermController sharedInstanceRelease];
 
-        return (YES);
+    // save preferences
+    [[PreferencePanel sharedInstance] savePreferences];
+
+    return YES;
 }
 
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
@@ -462,7 +489,7 @@ void DebugLog(NSString* value)
     NSString *localizedTitle = NSLocalizedStringFromTableInBundle(title, @"iTerm",
                                                                   [NSBundle bundleForClass:[self class]],
                                                                   @"About");
-    
+
     NSAttributedString *string = [[NSAttributedString alloc] initWithString:localizedTitle
                                                                  attributes:linkAttributes];
     return [string autorelease];
@@ -479,7 +506,7 @@ void DebugLog(NSString* value)
     NSAttributedString *webAString = [self _linkTo:@"http://sites.google.com/site/iterm2home/" title:@"Home Page\n"];
     NSAttributedString *bugsAString = [self _linkTo:@"http://code.google.com/p/iterm2/issues/entry" title:@"Report a bug\n\n"];
     NSAttributedString *creditsAString = [self _linkTo:@"http://code.google.com/p/iterm2/wiki/Credits" title:@"Credits"];
-    
+
     NSDictionary *linkTextViewAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
         [NSNumber numberWithInt: NSSingleUnderlineStyle], NSUnderlineStyleAttributeName,
         [NSColor blueColor], NSForegroundColorAttributeName,
@@ -565,16 +592,18 @@ void DebugLog(NSString* value)
     [closeWindow setKeyEquivalentModifierMask: NSCommandKeyMask];
 }
 
-- (void) buildSessionSubmenu: (NSNotification *) aNotification
+- (void)buildSessionSubmenu:(NSNotification *)aNotification
 {
-        // build a submenu to select tabs
+    // build a submenu to select tabs
     PseudoTerminal *currentTerminal = [self currentTerminal];
 
-    if (currentTerminal != [aNotification object] || ![[currentTerminal window] isKeyWindow]) return;
+    if (currentTerminal != [aNotification object] ||
+        ![[currentTerminal window] isKeyWindow]) {
+        return;
+    }
 
     NSMenu *aMenu = [[NSMenu alloc] initWithTitle: @"SessionMenu"];
     PTYTabView *aTabView = [currentTerminal tabView];
-    PTYSession *aSession;
     NSArray *tabViewItemArray = [aTabView tabViewItems];
     NSEnumerator *enumerator = [tabViewItemArray objectEnumerator];
     NSTabViewItem *aTabViewItem;
@@ -584,21 +613,21 @@ void DebugLog(NSString* value)
     [selectTab setSubmenu: nil];
 
     while ((aTabViewItem = [enumerator nextObject])) {
-            aSession = [aTabViewItem identifier];
-    NSMenuItem *aMenuItem;
+        PTYTab *aTab = [aTabViewItem identifier];
+        NSMenuItem *aMenuItem;
 
-    if(i < 10)
-    {
-        aMenuItem  = [[NSMenuItem alloc] initWithTitle: [aSession name] action: @selector(selectSessionAtIndexAction:) keyEquivalent:@""];
-        [aMenuItem setTag: i-1];
-
-        [aMenu addItem: aMenuItem];
-        [aMenuItem release];
+        if (i < 10) {
+            aMenuItem  = [[NSMenuItem alloc] initWithTitle:[[aTab activeSession] name]
+                                                    action:@selector(selectSessionAtIndexAction:)
+                                             keyEquivalent:@""];
+            [aMenuItem setTag:i-1];
+            [aMenu addItem:aMenuItem];
+            [aMenuItem release];
+        }
+        i++;
     }
-            i++;
-    }
 
-    [selectTab setSubmenu: aMenu];
+    [selectTab setSubmenu:aMenu];
 
     [aMenu release];
 }
@@ -617,12 +646,16 @@ void DebugLog(NSString* value)
                                            withShortcuts:YES];
 }
 
+// This is called whenever a tab becomes key or logging starts/stops.
 - (void)reloadSessionMenus:(NSNotification *)aNotification
 {
     PseudoTerminal *currentTerminal = [self currentTerminal];
-    PTYSession *aSession = [aNotification object];
+    PTYSession* aSession = [aNotification object];
 
-    if (currentTerminal != [aSession parent] || ![[currentTerminal window] isKeyWindow]) return;
+    if (currentTerminal != [[aSession tab] parentWindow] ||
+        ![[currentTerminal window] isKeyWindow]) {
+        return;
+    }
 
     if (aSession == nil || [aSession exited]) {
         [logStart setEnabled: NO];

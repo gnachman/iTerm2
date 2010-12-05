@@ -31,6 +31,7 @@
 #import "PTYTextView.h"
 #include <wctype.h>
 #import "iTermApplicationDelegate.h"
+#import "PTYTab.h"
 
 #ifdef POPUP_VERBOSE_LOGGING
 #define PopLog NSLog
@@ -293,6 +294,7 @@ DebugLog([NSString stringWithFormat:args]); \
 - (void)dealloc
 {
     [selectionMainValue_ release];
+    [unfilteredModel_ release];
     [substring_ release];
     [model_ release];
     [tableView_ release];
@@ -303,8 +305,8 @@ DebugLog([NSString stringWithFormat:args]); \
 - (void)popInSession:(PTYSession*)session
 {
     [self setSession:session];
-    [self showWindow:[session parent]];
-    [[self window] makeKeyAndOrderFront:[session parent]];
+    [self showWindow:[[session tab] parentWindow]];
+    [[self window] makeKeyAndOrderFront:[[session tab] parentWindow]];
 }
 
 - (void)setSession:(PTYSession*)session
@@ -401,7 +403,7 @@ DebugLog([NSString stringWithFormat:args]); \
     p = [[tv window] convertBaseToScreen:p];
     p.y -= frame.size.height;
 
-    NSRect monitorFrame = [[[[screen session] parent] windowScreen] visibleFrame];
+    NSRect monitorFrame = [[[[[screen session] tab] parentWindow] windowScreen] visibleFrame];
 
     if (canChangeSide) {
         // p.y gives the bottom of the frame relative to the bottom of the screen, assuming it's below the cursor.

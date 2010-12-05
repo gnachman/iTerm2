@@ -28,6 +28,7 @@
 
 #import "FakeWindow.h"
 #import "iTerm/PTYSession.h"
+#import "PTYTab.h"
 
 @implementation FakeWindow
 
@@ -77,7 +78,7 @@
         [aTerm fitWindowToSession:session];
     }
     if (pendingLabelColor) {
-        [aTerm setLabelColor:pendingLabelColor forTabViewItem:[session tabViewItem]];
+        [aTerm setLabelColor:pendingLabelColor forTabViewItem:[[session tab] tabViewItem]];
     }
     if (hasPendingSetWindowTitle) {
         [aTerm setWindowTitle];
@@ -112,6 +113,11 @@
 }
 
 - (void)closeSession:(PTYSession*)aSession
+{
+    hasPendingClose = YES;  // TODO: This isn't right with panes.
+}
+
+- (void)closeTab:(PTYTab*)theTab
 {
     hasPendingClose = YES;
 }
@@ -167,6 +173,12 @@
 {
     hasPendingResetTempTitle = YES;
 }
+
+- (PTYTab*)currentTab
+{
+    return nil;
+}
+
 
 - (void)sendInputToAllSessions:(NSData *)data
 {

@@ -51,7 +51,7 @@ static long long now()
         return nil;
     }
 
-    buffer_ = buffer;
+    buffer_ = [buffer retain];
     lastFrame_ = nil;
     count_ = 0;
     haveReservation_ = NO;
@@ -61,6 +61,7 @@ static long long now()
 - (void)dealloc
 {
     [lastFrame_ release];
+    [buffer_ release];
     [super dealloc];
 }
 

@@ -760,6 +760,12 @@ static int Search(NSString* needle,
     return self;
 }
 
+- (void)dealloc
+{
+    [blocks release];
+    [super dealloc];
+}
+
 // This is called a lot so it's a C function to avoid obj_msgSend
 static int RawNumLines(LineBuffer* buffer, int width) {
     if (buffer->num_wrapped_lines_width == width) {

@@ -50,6 +50,7 @@
 #include <unistd.h>
 #include <LineBuffer.h>
 #import "DVRBuffer.h"
+#import "PTYTab.h"
 
 #define MAX_SCROLLBACK_LINES 1000000
 
@@ -601,7 +602,7 @@ static char* FormatCont(int c)
 
 - (void)resizeWidth:(int)new_width height:(int)new_height
 {
-    int i, total_height;
+    int i;
     screen_char_t *new_buffer_lines;
 
 #ifdef DEBUG_RESIZEDWIDTH
@@ -616,7 +617,6 @@ static char* FormatCont(int c)
     if (WIDTH == 0 || HEIGHT == 0 || (new_width==WIDTH && new_height==HEIGHT)) {
         return;
     }
-    total_height = max_scrollback_lines + HEIGHT;
 
     // create a new buffer and fill it with the default line.
     new_buffer_lines = (screen_char_t*)malloc(new_height*(new_width+1)*sizeof(screen_char_t));
@@ -1016,10 +1016,13 @@ static char* FormatCont(int c)
 
     case VT100CSI_DECSET:
     case VT100CSI_DECRST:
-        if (token.u.csi.p[0]==3 && [TERMINAL allowColumnMode] == YES &&
+        if (token.u.csi.p[0] == 3 && 
+            [TERMINAL allowColumnMode] == YES &&
             ![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue]) {
             // set the column
-            [[SESSION parent] sessionInitiatedResize:SESSION width:([TERMINAL columnMode]?132:80) height:HEIGHT];
+            [[SESSION tab] sessionInitiatedResize:SESSION 
+                                            width:([TERMINAL columnMode] ? 132 : 80) 
+                                           height:HEIGHT];
             token.u.csi.p[0]=2; [self eraseInDisplay:token]; //erase the screen
             token.u.csi.p[0]=token.u.csi.p[1]=0; [self setTopBottom:token]; // reset scroll;
         }
@@ -1094,14 +1097,14 @@ static char* FormatCont(int c)
     case XTERMCC_WIN_TITLE:
         newTitle = [[token.u.string copy] autorelease];
         if ([[[SESSION addressBookEntry] objectForKey:KEY_SYNC_TITLE] boolValue]) {
-            newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION defaultName], newTitle];
+            newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION joblessDefaultName], newTitle];
         }
-        [SESSION setWindowTitle: newTitle];
+        [SESSION setWindowTitle:newTitle];
         break;
     case XTERMCC_WINICON_TITLE:
         newTitle = [[token.u.string copy] autorelease];
         if ([[[SESSION addressBookEntry] objectForKey:KEY_SYNC_TITLE] boolValue]) {
-            newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION defaultName], newTitle];
+            newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION joblessDefaultName], newTitle];
         }
         [SESSION setWindowTitle: newTitle];
         [SESSION setName: newTitle];
@@ -1109,7 +1112,7 @@ static char* FormatCont(int c)
     case XTERMCC_ICON_TITLE:
         newTitle = [[token.u.string copy] autorelease];
         if ([[[SESSION addressBookEntry] objectForKey:KEY_SYNC_TITLE] boolValue]) {
-            newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION defaultName], newTitle];
+            newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION joblessDefaultName], newTitle];
         }
         [SESSION setName: newTitle];
         break;
@@ -1120,41 +1123,48 @@ static char* FormatCont(int c)
     case XTERMCC_WINDOWSIZE:
         //NSLog(@"setting window size from (%d, %d) to (%d, %d)", WIDTH, HEIGHT, token.u.csi.p[1], token.u.csi.p[2]);
         if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] &&
-            ![[SESSION parent] fullScreen]) {
+            ![[[SESSION tab] parentWindow] fullScreen]) {
             // set the column
-            [[SESSION parent] sessionInitiatedResize:SESSION
-                                               width:token.u.csi.p[2]
-                                              height:token.u.csi.p[1]];
+            [[SESSION tab] sessionInitiatedResize:SESSION
+                                            width:token.u.csi.p[2]
+                                           height:token.u.csi.p[1]];
 
         }
         break;
     case XTERMCC_WINDOWSIZE_PIXEL:
         if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] &&
-            ![[SESSION parent] fullScreen]) {
-            [[SESSION parent] sessionInitiatedResize:SESSION
-                                               width:(token.u.csi.p[2] / [display charWidth])
-                                              height:(token.u.csi.p[1] / [display lineHeight])];
+            ![[[SESSION tab] parentWindow] fullScreen]) {
+            // TODO: Only allow this if there is a single session in the tab.
+            [[SESSION tab] sessionInitiatedResize:SESSION
+                                            width:(token.u.csi.p[2] / [display charWidth])
+                                           height:(token.u.csi.p[1] / [display lineHeight])];
         }
         break;
     case XTERMCC_WINDOWPOS:
         //NSLog(@"setting window position to Y=%d, X=%d", token.u.csi.p[1], token.u.csi.p[2]);
         if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] &&
-            ![[SESSION parent] fullScreen])
-            [[SESSION parent] windowSetFrameTopLeftPoint: NSMakePoint(token.u.csi.p[2], [[[SESSION parent] windowScreen] frame].size.height - token.u.csi.p[1])];
+            ![[[SESSION tab] parentWindow] fullScreen])
+            // TODO: Only allow this if there is a single session in the tab.
+            [[[SESSION tab] parentWindow] windowSetFrameTopLeftPoint:NSMakePoint(token.u.csi.p[2], 
+                                                                                 [[[[SESSION tab] parentWindow] windowScreen] frame].size.height - token.u.csi.p[1])];
         break;
     case XTERMCC_ICONIFY:
-        if (![[SESSION parent] fullScreen])
-            [[SESSION parent] windowPerformMiniaturize: nil];
+        // TODO: Only allow this if there is a single session in the tab.
+        if (![[[SESSION tab] parentWindow] fullScreen])
+            [[[SESSION tab] parentWindow] windowPerformMiniaturize:nil];
         break;
     case XTERMCC_DEICONIFY:
-        [[SESSION parent] windowDeminiaturize: nil];
+        // TODO: Only allow this if there is a single session in the tab.
+        [[[SESSION tab] parentWindow] windowDeminiaturize:nil];
         break;
     case XTERMCC_RAISE:
-        [[SESSION parent] windowOrderFront: nil];
+        // TODO: Only allow this if there is a single session in the tab.
+        [[[SESSION tab] parentWindow] windowOrderFront:nil];
         break;
     case XTERMCC_LOWER:
-        if (![[SESSION parent] fullScreen])
-            [[SESSION parent] windowOrderBack: nil];
+        // TODO: Only allow this if there is a single session in the tab.
+        if (![[[SESSION tab] parentWindow] fullScreen])
+            [[[SESSION tab] parentWindow] windowOrderBack: nil];
         break;
     case XTERMCC_SU:
         for (i=0; i<token.u.csi.p[0]; i++) [self scrollUp];
@@ -1165,14 +1175,16 @@ static char* FormatCont(int c)
     case XTERMCC_REPORT_WIN_STATE:
         {
             char buf[64];
-            snprintf(buf, sizeof(buf), "\033[%dt", [[SESSION parent] windowIsMiniaturized]?2:1);
-            [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
+            snprintf(buf, sizeof(buf), "\033[%dt", [[[SESSION tab] parentWindow] windowIsMiniaturized] ? 2 : 1);
+            [SHELL writeTask:[NSData dataWithBytes:buf 
+                                            length:strlen(buf)]];
         }
         break;
     case XTERMCC_REPORT_WIN_POS:
         {
             char buf[64];
-            NSRect frame = [[SESSION parent] windowFrame];
+            NSRect frame = [[[SESSION tab] parentWindow] windowFrame];
+            // TODO: Figure out wtf to do if there are multiple sessions in one tab.
             snprintf(buf, sizeof(buf), "\033[3;%d;%dt", (int) frame.origin.x, (int) frame.origin.y);
             [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
@@ -1180,7 +1192,8 @@ static char* FormatCont(int c)
     case XTERMCC_REPORT_WIN_PIX_SIZE:
         {
             char buf[64];
-            NSRect frame = [[SESSION parent] windowFrame];
+            NSRect frame = [[[SESSION tab] parentWindow] windowFrame];
+            // TODO: Some kind of adjustment for panes?
             snprintf(buf, sizeof(buf), "\033[4;%d;%dt", (int) frame.size.height, (int) frame.size.width);
             [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
@@ -1188,6 +1201,7 @@ static char* FormatCont(int c)
     case XTERMCC_REPORT_WIN_SIZE:
         {
             char buf[64];
+            // TODO: Some kind of adjustment for panes
             snprintf(buf, sizeof(buf), "\033[8;%d;%dt", HEIGHT, WIDTH);
             [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
@@ -1195,9 +1209,12 @@ static char* FormatCont(int c)
     case XTERMCC_REPORT_SCREEN_SIZE:
         {
             char buf[64];
-            NSRect screenSize = [[[SESSION parent] windowScreen] frame];
-            float nch = [[SESSION parent] windowFrame].size.height - [[[[SESSION parent] currentSession] SCROLLVIEW] documentVisibleRect].size.height;
-            float wch = [[SESSION parent] windowFrame].size.width - [[[[SESSION parent] currentSession] SCROLLVIEW] documentVisibleRect].size.width;
+            // TODO: This isn't really right since a window couldn't be made this large given the
+            // window decorations.
+            NSRect screenSize = [[[[SESSION tab] parentWindow] windowScreen] frame];
+            //  TODO: WTF do we do with panes here?
+            float nch = [[[SESSION tab] parentWindow] windowFrame].size.height - [[[[[SESSION tab] parentWindow] currentSession] SCROLLVIEW] documentVisibleRect].size.height;
+            float wch = [[[SESSION tab] parentWindow] windowFrame].size.width - [[[[[SESSION tab] parentWindow] currentSession] SCROLLVIEW] documentVisibleRect].size.width;
             int h = (screenSize.size.height - nch) / [display lineHeight];
             int w =  (screenSize.size.width - wch - MARGIN * 2) / [display charWidth];
 
@@ -1223,8 +1240,14 @@ static char* FormatCont(int c)
     // Our iTerm specific codes
     case ITERM_GROWL:
         if (GROWL) {
-            [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Alert",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts")
-            withDescription:[NSString stringWithFormat:@"Session %@ #%d: %@", [SESSION name], [SESSION realObjectCount], token.u.string]
+            [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Alert",
+                                                               @"iTerm", 
+                                                               [NSBundle bundleForClass:[self class]], 
+                                                               @"Growl Alerts")
+            withDescription:[NSString stringWithFormat:@"Session %@ #%d: %@", 
+                             [SESSION name], 
+                             [[SESSION tab] realObjectCount], 
+                             token.u.string]
             andNotification:@"Customized Message"];
         }
         break;

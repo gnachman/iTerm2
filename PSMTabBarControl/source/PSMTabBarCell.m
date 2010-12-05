@@ -32,6 +32,7 @@
         _indicator = [[PSMProgressIndicator alloc] initWithFrame:NSMakeRect(0.0,0.0,kPSMTabBarIndicatorWidth,kPSMTabBarIndicatorWidth)];
         [_indicator setStyle:NSProgressIndicatorSpinningStyle];
         [_indicator setAutoresizingMask:NSViewMinYMargin];
+        [_indicator setControlSize:NSSmallControlSize];
         _hasCloseButton = YES;
         _isCloseButtonSuppressed = NO;
         _count = 0;

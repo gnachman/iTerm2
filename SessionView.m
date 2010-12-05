@@ -1,6 +1,6 @@
 // -*- mode:objc -*-
 /*
- **  TextViewWrapper.h
+ **  SessionView.m
  **
  **  Copyright (c) 2010
  **
@@ -8,8 +8,7 @@
  **
  **  Project: iTerm2
  **
- **  Description: This wraps a textview and adds a border at the top of
- **  the visible area.
+ **  Description: This view contains a session's scrollview.
  **
  **  This program is free software; you can redistribute it and/or modify
  **  it under the terms of the GNU General Public License as published by
@@ -26,14 +25,23 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <Cocoa/Cocoa.h>
+#import "SessionView.h"
 
-@class PTYTextView;
-@interface TextViewWrapper : NSView {
-    PTYTextView* child_;
+
+@implementation SessionView
+
+- (id)initWithFrame:(NSRect)frame session:(PTYSession*)session
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        session_ = session;
+    }
+    return self;
 }
 
-- (void)addSubview:(PTYTextView*)child;
-- (NSRect)adjustScroll:(NSRect)proposedVisibleRect;
+- (PTYSession*)session
+{
+    return session_;
+}
 
 @end

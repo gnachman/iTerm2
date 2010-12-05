@@ -37,10 +37,10 @@
 #import <Foundation/Foundation.h>
 
 // Silence a few warnings.
-@class PTYSession;
+@class PTYTab;
 
 @protocol PTYTaskDelegate
-- (void) closeSession: (PTYSession*) aSession;
+- (void) closeTab:(PTYTab*)aSession;
 @end
 
 @interface PTYTask : NSObject

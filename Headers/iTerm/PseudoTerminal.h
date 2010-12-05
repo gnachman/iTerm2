@@ -205,7 +205,10 @@
 - (void)newSessionInTabAtIndex:(id)sender;
 
 // Close a tab and resize/close the window if needed.
-- (void)closeSession:(PTYSession*)aSession;
+- (void)closeTab:(PTYTab*)aTab;
+
+// Close a session (TODO: currently just closes the tab the session is in).
+- (void)closeSession:(PTYSession *)aSession;
 
 // Close the foreground session.
 - (IBAction)closeCurrentSession:(id)sender;
@@ -227,6 +230,9 @@
 
 // Accessor for a session.
 - (PTYSession*)sessionAtIndex:(int)i;
+
+// Return the foreground tab
+- (PTYTab*)currentTab;
 
 // accessor for foreground session.
 - (PTYSession *)currentSession;
@@ -603,7 +609,7 @@
 
 // Push size changes to all sessions so they are all as large as possible while
 // still fitting in the window.
-- (void)fitSessionsToWindow;
+- (void)fitTabsToWindow;
 
 // Add a session to the tab view.
 - (void)insertSession:(PTYSession *)aSession atIndex:(int)anIndex;
@@ -695,6 +701,9 @@
 
 // Return the timestamp for a slider position in [0, 1] for the current session.
 - (long long)timestampForFraction:(float)f;
+
+// Return all sessions in all tabs.
+- (NSArray*)allSessions;
 
 // Change visiblity of tabBarControl in fullscreen mode.
 - (void)showFullScreenTabControl;

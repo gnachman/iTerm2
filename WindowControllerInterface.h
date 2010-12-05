@@ -28,6 +28,7 @@
 #import <Cocoa/Cocoa.h>
 @class PTYSession;
 @class PTYTabView;
+@class PTYTab;
 
 @protocol WindowControllerInterface <NSObject>
 
@@ -47,6 +48,8 @@
 - (void)sendInputToAllSessions:(NSData *)data;
 - (void)setWindowTitle;
 - (void)resetTempTitle;
+- (PTYTab*)currentTab;
+- (void)closeTab:(PTYTab*)theTab;
 
 - (void)windowSetFrameTopLeftPoint:(NSPoint)point;
 - (void)windowPerformMiniaturize:(id)sender;

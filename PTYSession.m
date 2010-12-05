@@ -41,6 +41,8 @@
 #import <iTerm/ITAddressBookMgr.h>
 #import <iTerm/iTermGrowlDelegate.h>
 #import "iTermApplicationDelegate.h"
+#import "SessionView.h"
+#import "PTYTab.h"
 
 #include <unistd.h>
 #include <sys/wait.h>
@@ -57,34 +59,6 @@ static NSString *COLORFGBG_ENVNAME = @"COLORFGBG";
 static NSString *PWD_ENVNAME = @"PWD";
 static NSString *PWD_ENVVALUE = @"~";
 
-// tab label attributes
-static NSColor *normalStateColor;
-static NSColor *chosenStateColor;
-static NSColor *idleStateColor;
-static NSColor *newOutputStateColor;
-static NSColor *deadStateColor;
-
-static NSImage *warningImage;
-
-+ (void)initialize
-{
-    NSBundle *thisBundle;
-    NSString *imagePath;
-
-    thisBundle = [NSBundle bundleForClass: [self class]];
-    imagePath = [thisBundle pathForResource:@"important" ofType:@"png"];
-    if (imagePath) {
-        warningImage = [[NSImage alloc] initByReferencingFile: imagePath];
-        //NSLog(@"%@\n%@",imagePath,warningImage);
-    }
-
-    normalStateColor = [NSColor blackColor];
-    chosenStateColor = [NSColor blackColor];
-    idleStateColor = [NSColor redColor];
-    newOutputStateColor = [NSColor purpleColor];
-    deadStateColor = [NSColor grayColor];
-}
-
 // init/dealloc
 - (id)init
 {
@@ -94,7 +68,8 @@ static NSImage *warningImage;
 
     isDivorced = NO;
     gettimeofday(&lastInput, NULL);
-    lastOutput = lastBlink = lastInput;
+    lastOutput = lastInput;
+    lastUpdate = lastInput;
     EXIT=NO;
 
     updateTimer = nil;
@@ -128,7 +103,6 @@ static NSImage *warningImage;
     if (slowPasteTimer) {
         [slowPasteTimer invalidate];
     }
-    [icon release];
     [TERM_VALUE release];
     [COLORFGBG_VALUE release];
     [view release];
@@ -141,7 +115,8 @@ static NSImage *warningImage;
     [updateTimer invalidate];
     [updateTimer release];
     [originalAddressBookEntry release];
-
+    [liveSession_ release];
+    
     [SHELL release];
     SHELL = nil;
     [SCREEN release];
@@ -189,8 +164,12 @@ static NSImage *warningImage;
 {
     if (!dvr_) {
         if (dir < 0) {
-            [realParent replaySession:self];
-            [[realParent currentSession] irAdvance:dir];
+            [[[self tab] realParentWindow] replaySession:self];
+            PTYSession* irSession = [[[self tab] realParentWindow] currentSession];
+             if (irSession != self) {
+                 // Failed to enter replay mode (perhaps nothing to replay?)
+                [irSession irAdvance:dir];
+             }
             return;
         } else {
             NSBeep();
@@ -201,7 +180,7 @@ static NSImage *warningImage;
     if (dir > 0) {
         if (![dvrDecoder_ next] || [dvrDecoder_ timestamp] == [dvr_ lastTimeStamp]) {
             // Switch to the live view
-            [realParent showLiveSession:liveSession_ inPlaceOf:self];
+            [[[self tab] realParentWindow] showLiveSession:liveSession_ inPlaceOf:self];
             return;
         }
     } else {
@@ -238,23 +217,25 @@ static NSImage *warningImage;
 }
 
 // Session specific methods
-- (BOOL)initScreen:(NSRect)aRect
+- (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent
 {
     NSSize aSize;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession initScreen]", __FILE__, __LINE__);
+    NSLog(@"%s(%d):-[PTYSession setScreenSize:parent:]", __FILE__, __LINE__);
 #endif
 
     [SCREEN setSession:self];
 
     // Allocate a container to hold the scrollview
-    view = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, aRect.size.width, aRect.size.height)];
+    view = [[SessionView alloc] initWithFrame:NSMakeRect(0, 0, aRect.size.width, aRect.size.height)
+                                      session:self];
     [view retain];
 
     // Allocate a scrollview
     SCROLLVIEW = [[PTYScrollView alloc] initWithFrame: NSMakeRect(0, 0, aRect.size.width, aRect.size.height)];
-    [SCROLLVIEW setHasVerticalScroller:![parent fullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar]];
+    [SCROLLVIEW setHasVerticalScroller:(![parent fullScreen] &&
+                                        ![[PreferencePanel sharedInstance] hideScrollbar])];
     NSParameterAssert(SCROLLVIEW != nil);
     [SCROLLVIEW setAutoresizingMask: NSViewWidthSizable|NSViewHeightSizable];
 
@@ -307,8 +288,8 @@ static NSImage *warningImage;
         [SCROLLVIEW setDocumentCursor: [PTYTextView textViewCursor]];
         [SCROLLVIEW setLineScroll:[TEXTVIEW lineHeight]];
         [SCROLLVIEW setPageScroll:2*[TEXTVIEW lineHeight]];
-        [SCROLLVIEW setHasVerticalScroller:![parent fullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar]];
-
+        [SCROLLVIEW setHasVerticalScroller:(![parent fullScreen] &&
+                                            ![[PreferencePanel sharedInstance] hideScrollbar])];
 
         ai_code=0;
         [antiIdleTimer release];
@@ -317,12 +298,12 @@ static NSImage *warningImage;
 
         // register for some notifications
         [[NSNotificationCenter defaultCenter] addObserver:self
-                selector:@selector(tabViewWillRedraw:)
-                name:@"iTermTabViewWillRedraw" object:nil];
+                                                 selector:@selector(tabViewWillRedraw:)
+                                                     name:@"iTermTabViewWillRedraw"
+                                                   object:nil];
 
         return YES;
-    }
-    else {
+    } else {
         [SCREEN release];
         SCREEN = nil;
         [TEXTVIEW release];
@@ -341,9 +322,14 @@ static NSImage *warningImage;
     [SHELL setWidth:width height:height];
 }
 
-- (BOOL) isActiveSession
+- (void)setNewOutput:(BOOL)value
 {
-    return ([[[self tabViewItem] tabView] selectedTabViewItem] == [self tabViewItem]);
+    newOutput = value;
+}
+
+- (BOOL)newOutput
+{
+    return newOutput;
 }
 
 - (void)startProgram:(NSString *)program
@@ -385,10 +371,14 @@ static NSImage *warningImage;
 }
 
 
-- (void) terminate
+- (void)terminate
 {
     // deregister from the notification center
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    if (liveSession_) {
+        [liveSession_ terminate];
+    }
 
     EXIT = YES;
     [SHELL stop];
@@ -412,13 +402,12 @@ static NSImage *warningImage;
     [updateTimer invalidate];
     [updateTimer release];
     updateTimer = nil;
-
-    parent = nil;
 }
 
 - (void)writeTask:(NSData*)data
 {
     // check if we want to send this input to all the sessions
+    id<WindowControllerInterface> parent = [[self tab] parentWindow];
     if ([parent sendInputToAllSessions] == NO) {
         if (!EXIT) {
             [self setBell: NO];
@@ -426,10 +415,9 @@ static NSImage *warningImage;
             [SHELL writeTask: data];
             [ptys setUserScroll:NO];
         }
-    }
-    else {
+    } else {
         // send to all sessions
-        [parent sendInputToAllSessions: data];
+        [parent sendInputToAllSessions:data];
     }
 }
 
@@ -470,10 +458,10 @@ static NSImage *warningImage;
     } // end token processing loop
 
     gettimeofday(&lastOutput, NULL);
-    newOutput=YES;
+    newOutput = YES;
 
     // Make sure the screen gets redrawn soonish
-    if ([parent currentSession] == self) {
+    if ([[[self tab] parentWindow] currentTab] == [self tab]) {
         if ([data length] < 1024) {
             [self scheduleUpdateIn:kFastTimerIntervalSec];
         } else {
@@ -489,41 +477,47 @@ static NSImage *warningImage;
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PTYSession brokenPipe]", __FILE__, __LINE__);
 #endif
-    [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Broken Pipe",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts")
-    withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Session %@ #%d just terminated.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts"),[self name],[self realObjectCount]]
+    [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Broken Pipe",
+                                                       @"iTerm",
+                                                       [NSBundle bundleForClass:[self class]],
+                                                       @"Growl Alerts")
+    withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Session %@ #%d just terminated.",
+                                                                                  @"iTerm",
+                                                                                  [NSBundle bundleForClass:[self class]],
+                                                                                  @"Growl Alerts"),
+                     [self name],
+                     [[self tab] realObjectCount]]
     andNotification:@"Broken Pipes"];
 
     EXIT=YES;
-    [self setLabelAttribute];
+    [[self tab] setLabelAttributes];
 
     if ([self autoClose]) {
-        [parent closeSession: self];
-    }
-    else
-    {
+        [[self tab] closeSession:self];
+    } else {
         [self updateDisplay];
     }
 }
 
-- (BOOL) hasKeyMappingForEvent: (NSEvent *) event highPriority: (BOOL) priority
+- (BOOL)hasKeyMappingForEvent:(NSEvent *)event highPriority:(BOOL)priority
 {
     unsigned int modflag;
-    unsigned short keycode;
-    NSString *keystr;
     NSString *unmodkeystr;
-    unichar unicode, unmodunicode;
+    unichar unmodunicode;
     int keyBindingAction;
     NSString *keyBindingText;
     BOOL keyBindingPriority;
 
     modflag = [event modifierFlags];
-    keycode = [event keyCode];
-    keystr  = [event characters];
     unmodkeystr = [event charactersIgnoringModifiers];
-    unicode = [keystr length]>0?[keystr characterAtIndex:0]:0;
     unmodunicode = [unmodkeystr length]>0?[unmodkeystr characterAtIndex:0]:0;
 
-    //NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
+    /*
+    unsigned short keycode = [event keyCode];
+    NSString *keystr = [event characters];
+    unichar unicode = [keystr length] > 0 ? [keystr characterAtIndex:0] : 0;
+    NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
+    */
 
     // Check if we have a custom key mapping for this event
 
@@ -550,7 +544,6 @@ static NSImage *warningImage;
     BOOL priority;
 
     unsigned int modflag;
-    unsigned short keycode;
     NSString *keystr;
     NSString *unmodkeystr;
     unichar unicode, unmodunicode;
@@ -560,10 +553,11 @@ static NSImage *warningImage;
           __FILE__, __LINE__, event);
 #endif
 
-    if (EXIT) return;
+    if (EXIT) {
+      return;
+    }
 
     modflag = [event modifierFlags];
-    keycode = [event keyCode];
     keystr  = [event characters];
     unmodkeystr = [event charactersIgnoringModifiers];
     unicode = [keystr length]>0?[keystr characterAtIndex:0]:0;
@@ -571,7 +565,10 @@ static NSImage *warningImage;
 
     gettimeofday(&lastInput, NULL);
 
-    //NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
+    /*
+    unsigned short keycode = [event keyCode];
+    NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
+    */
 
     // Check if we have a custom key mapping for this event
     keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
@@ -588,13 +585,13 @@ static NSImage *warningImage;
 
         switch (keyBindingAction) {
             case KEY_ACTION_NEXT_SESSION:
-                [parent nextSession: nil];
+                [[[self tab] parentWindow] nextSession: nil];
                 break;
             case KEY_ACTION_NEXT_WINDOW:
                 [[iTermController sharedInstance] nextTerminal: nil];
                 break;
             case KEY_ACTION_PREVIOUS_SESSION:
-                [parent previousSession: nil];
+                [[[self tab] parentWindow] previousSession: nil];
                 break;
             case KEY_ACTION_PREVIOUS_WINDOW:
                 [[iTermController sharedInstance] previousTerminal: nil];
@@ -672,34 +669,34 @@ static NSImage *warningImage;
 
             switch (unicode) {
                 case NSUpArrowFunctionKey:
-                    data = [TERMINAL keyArrowUp:modflag]; 
+                    data = [TERMINAL keyArrowUp:modflag];
                     break;
-                case NSDownArrowFunctionKey: 
-                    data = [TERMINAL keyArrowDown:modflag]; 
+                case NSDownArrowFunctionKey:
+                    data = [TERMINAL keyArrowDown:modflag];
                     break;
-                case NSLeftArrowFunctionKey: 
-                    data = [TERMINAL keyArrowLeft:modflag]; 
+                case NSLeftArrowFunctionKey:
+                    data = [TERMINAL keyArrowLeft:modflag];
                     break;
-                case NSRightArrowFunctionKey: 
-                    data = [TERMINAL keyArrowRight:modflag]; 
+                case NSRightArrowFunctionKey:
+                    data = [TERMINAL keyArrowRight:modflag];
                     break;
                 case NSInsertFunctionKey:
-                    data = [TERMINAL keyInsert]; 
+                    data = [TERMINAL keyInsert];
                     break;
                 case NSDeleteFunctionKey:
-                    data = [TERMINAL keyDelete]; 
+                    data = [TERMINAL keyDelete];
                     break;
-                case NSHomeFunctionKey: 
-                    data = [TERMINAL keyHome:modflag]; 
+                case NSHomeFunctionKey:
+                    data = [TERMINAL keyHome:modflag];
                     break;
-                case NSEndFunctionKey: 
-                    data = [TERMINAL keyEnd:modflag]; 
+                case NSEndFunctionKey:
+                    data = [TERMINAL keyEnd:modflag];
                     break;
-                case NSPageUpFunctionKey: 
-                    data = [TERMINAL keyPageUp]; 
+                case NSPageUpFunctionKey:
+                    data = [TERMINAL keyPageUp];
                     break;
-                case NSPageDownFunctionKey: 
-                    data = [TERMINAL keyPageDown]; 
+                case NSPageDownFunctionKey:
+                    data = [TERMINAL keyPageDown];
                     break;
                 case NSClearLineFunctionKey:
                     data = [@"\e" dataUsingEncoding: NSUTF8StringEncoding];
@@ -735,7 +732,7 @@ static NSImage *warningImage;
 
             NSData *keydat = ((modflag & NSControlKeyMask) && unicode > 0)?
                 [keystr dataUsingEncoding:NSUTF8StringEncoding]:
-                [unmodkeystr dataUsingEncoding:NSUTF8StringEncoding]; 
+                [unmodkeystr dataUsingEncoding:NSUTF8StringEncoding];
             if (keydat != nil) {
                 send_str = (unsigned char *)[keydat bytes];
                 send_strlen = [keydat length];
@@ -1060,64 +1057,6 @@ static NSImage *warningImage;
 
 }
 
-- (void)setLabelAttribute
-{
-    struct timeval now;
-
-    gettimeofday(&now, NULL);
-    if ([self exited]) {
-        // dead
-        [parent setLabelColor: deadStateColor forTabViewItem: tabViewItem];
-        if (isProcessing) {
-            [self setIsProcessing: NO];
-        }
-    } else if ([[tabViewItem tabView] selectedTabViewItem] != tabViewItem) {
-        if (now.tv_sec > lastOutput.tv_sec+2) {
-            if (isProcessing) {
-                [self setIsProcessing: NO];
-            }
-
-            if (newOutput) {
-                // Idle after new output
-                if (!growlIdle && now.tv_sec > lastOutput.tv_sec+1) {
-                    [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Idle",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts")
-                    withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Session %@ #%d becomes idle.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts"),[self name],[self realObjectCount]]
-                    andNotification:@"Idle"];
-                    growlIdle = YES;
-                    growlNewOutput = NO;
-                }
-                [parent setLabelColor: idleStateColor forTabViewItem: tabViewItem];
-            } else {
-                // normal state
-                [parent setLabelColor: normalStateColor forTabViewItem: tabViewItem];
-            }
-        } else {
-            if (newOutput) {
-                if (isProcessing == NO && ![[PreferencePanel sharedInstance] useCompactLabel]) {
-                    [self setIsProcessing: YES];
-                }
-
-                if (!growlNewOutput && ![parent sendInputToAllSessions]) {
-                    [gd growlNotify:NSLocalizedStringFromTableInBundle(@"New Output",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts")
-                    withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"New Output was received in %@ #%d.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Growl Alerts"),[self name],[self realObjectCount]]
-                    andNotification:@"New Output"];
-                    growlNewOutput = YES;
-                }
-
-                [parent setLabelColor: newOutputStateColor forTabViewItem: tabViewItem];
-            }
-        }
-    } else {
-        // front tab
-        if (isProcessing) {
-            [self setIsProcessing: NO];
-        }
-        growlNewOutput = NO;
-        newOutput = NO;
-        [parent setLabelColor: chosenStateColor forTabViewItem: tabViewItem];
-    }
-}
-
 - (BOOL) bell
 {
     return bell;
@@ -1127,8 +1066,8 @@ static NSImage *warningImage;
 {
     if (flag != bell) {
         bell = flag;
+        [[self tab] setBell:flag];
         if (bell) {
-            [self setIcon: warningImage];
             if ([TEXTVIEW keyIsARepeat] == NO && ![[TEXTVIEW window] isKeyWindow]) {
                 [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Bell",
                                                                    @"iTerm",
@@ -1139,23 +1078,11 @@ static NSImage *warningImage;
                                                                                               [NSBundle bundleForClass:[self class]],
                                                                                               @"Growl Alerts"),
                                  [self name],
-                                 [self realObjectCount]]
+                                 [[self tab] realObjectCount]]
                 andNotification:@"Bells"];
             }
-        } else {
-            [self setIcon: nil];
         }
     }
-}
-
-- (BOOL)isProcessing
-{
-    return [[PreferencePanel sharedInstance] highlightTabLabels] && (isProcessing);
-}
-
-- (void)setIsProcessing: (BOOL) aFlag
-{
-    isProcessing = aFlag;
 }
 
 - (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Bookmark*)aDict
@@ -1194,10 +1121,6 @@ static NSImage *warningImage;
     NSColor *colorTable[2][8];
     int i;
     NSDictionary *aDict;
-    ITAddressBookMgr *bookmarkManager;
-
-    // get our shared managers
-    bookmarkManager = [ITAddressBookMgr sharedInstance];
 
     aDict = aePrefs;
     if (aDict == nil) {
@@ -1255,7 +1178,7 @@ static NSImage *warningImage;
         [self setUseBoldFont:YES];
     }
     [TEXTVIEW setUseBrightBold:[aDict objectForKey:KEY_USE_BRIGHT_BOLD] ? [[aDict objectForKey:KEY_USE_BRIGHT_BOLD] boolValue] : YES];
-    
+
     // set up the rest of the preferences
     [SCREEN setPlayBellFlag:![[aDict objectForKey:KEY_SILENCE_BELL] boolValue]];
     [SCREEN setShowBellFlag:[[aDict objectForKey:KEY_VISUAL_BELL] boolValue]];
@@ -1264,11 +1187,12 @@ static NSImage *warningImage;
     [SCREEN setBlinkingCursor: [[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];
     [TEXTVIEW setBlinkingCursor: [[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];
     [TEXTVIEW setUseTransparency:[[aDict objectForKey:KEY_TRANSPARENCY] boolValue]];
-    if ([parent currentSession] == self) {
+    PTYTab* currentTab = [[[self tab] parentWindow] currentTab];
+    if (currentTab == nil || currentTab == [self tab]) {
         if ([[aDict objectForKey:KEY_BLUR] boolValue]) {
-            [parent enableBlur];
+            [[[self tab] parentWindow] enableBlur];
         } else {
-            [parent disableBlur];
+            [[[self tab] parentWindow] disableBlur];
         }
     }
     [TEXTVIEW setAntiAlias:[[aDict objectForKey:KEY_ANTI_ALIASING] boolValue]];
@@ -1288,7 +1212,7 @@ static NSImage *warningImage;
 }
 
 // Contextual menu
-- (void) menuForEvent:(NSEvent *)theEvent menu: (NSMenu *) theMenu
+- (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu
 {
     NSMenuItem *aMenuItem;
 
@@ -1303,49 +1227,15 @@ static NSImage *warningImage;
                                                                                      @"Context menu")
                                            action:@selector(clearBuffer:)
                                     keyEquivalent:@""];
-    [aMenuItem setTarget: [self parent]];
+    [aMenuItem setTarget:[[self tab] parentWindow]];
     [theMenu addItem: aMenuItem];
     [aMenuItem release];
 
     // Ask the parent if it has anything to add
-    if (realParent &&
-        [realParent respondsToSelector:@selector(menuForEvent: menu:)]) {
-        [realParent menuForEvent:theEvent menu: theMenu];
+    if ([[self tab] realParentWindow] &&
+        [[[self tab] realParentWindow] respondsToSelector:@selector(menuForEvent: menu:)]) {
+        [[[self tab] realParentWindow] menuForEvent:theEvent menu: theMenu];
     }
-}
-
-- (id<WindowControllerInterface>)parent
-{
-    return (parent);
-}
-
-- (void)setParent:(PseudoTerminal*)theParent
-{
-    parent = theParent; // don't retain parent. parent retains self.
-    realParent = theParent;
-    fakeParent = nil;
-}
-
-- (void)setFakeParent:(FakeWindow*)theParent
-{
-    parent = theParent;
-    realParent = nil;
-    fakeParent = theParent;
-}
-
-- (FakeWindow*)fakeWindow
-{
-    return fakeParent;
-}
-
-- (NSTabViewItem *)tabViewItem
-{
-    return (tabViewItem);
-}
-
-- (void)setTabViewItem:(NSTabViewItem *)theTabViewItem
-{
-    tabViewItem = theTabViewItem;
 }
 
 - (NSString *)uniqueID
@@ -1365,6 +1255,11 @@ static NSImage *warningImage;
     } else {
         return defaultName;
     }
+}
+
+- (NSString*)joblessDefaultName
+{
+    return defaultName;
 }
 
 - (void)setDefaultName:(NSString*)theName
@@ -1389,6 +1284,41 @@ static NSImage *warningImage;
     }
 
     defaultName = [theName retain];
+}
+
+- (PTYTab*)tab
+{
+    return tab_;
+}
+
+- (void)setTab:(PTYTab*)tab
+{
+    tab_ = tab;
+}
+
+- (struct timeval)lastOutput
+{
+    return lastOutput;
+}
+
+- (void)setGrowlIdle:(BOOL)value
+{
+    growlIdle = value;
+}
+
+- (BOOL)growlIdle
+{
+    return growlIdle;
+}
+
+- (void)setGrowlNewOutput:(BOOL)value
+{
+    growlNewOutput = value;
+}
+
+- (BOOL)growlNewOutput
+{
+    return growlNewOutput;
 }
 
 - (NSString*)name
@@ -1427,13 +1357,13 @@ static NSImage *warningImage;
         [self setWindowTitle:theName];
     }
 
-    [tabViewItem setLabel:[self name]];
+    [[self tab] nameOfSession:self didChangeTo:[self name]];
     [self setBell:NO];
 
     // get the session submenu to be rebuilt
-    if ([[iTermController sharedInstance] currentTerminal] == [self parent]) {
+    if ([[iTermController sharedInstance] currentTerminal] == [[self tab] parentWindow]) {
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNameOfSessionDidChange"
-                                                            object:[self parent]
+                                                            object:[[self tab] parentWindow]
                                                           userInfo:nil];
     }
 }
@@ -1453,7 +1383,9 @@ static NSImage *warningImage;
 
 - (void)setWindowTitle:(NSString*)theTitle
 {
-    if([theTitle isEqualToString:windowTitle]) return;
+    if ([theTitle isEqualToString:windowTitle]) {
+        return;
+    }
 
     [windowTitle autorelease];
     windowTitle = nil;
@@ -1462,8 +1394,8 @@ static NSImage *warningImage;
         windowTitle = [theTitle retain];
     }
 
-    if ([[self parent] currentSession] == self) {
-        [[self parent] setWindowTitle];
+    if ([[[self tab] parentWindow] currentTab] == [self tab]) {
+        [[[self tab] parentWindow] setWindowTitle];
     }
 }
 
@@ -1528,9 +1460,15 @@ static NSImage *warningImage;
     return [SCROLLVIEW backgroundImage];
 }
 
-- (NSView *)view
+- (SessionView *)view
 {
     return view;
+}
+
+- (void)setView:(SessionView*)newView
+{
+    [view autorelease];
+    view = [newView retain];
 }
 
 - (PTYTextView *)TEXTVIEW
@@ -1573,40 +1511,6 @@ static NSImage *warningImage;
 - (NSString *)tty
 {
     return [SHELL tty];
-}
-
-// I think Applescript needs this method; need to check
-- (int)number
-{
-    return [[tabViewItem tabView] indexOfTabViewItem: tabViewItem];
-}
-
-- (int)objectCount
-{
-    return [[PreferencePanel sharedInstance] useCompactLabel] ? 0 : objectCount;
-}
-
-// This one is for purposes other than PSMTabBarControl
-- (int)realObjectCount
-{
-    return objectCount;
-}
-
-- (void)setObjectCount:(int)value
-{
-    objectCount = value;
-}
-
-- (NSImage *)icon
-{
-    return icon;
-}
-
-- (void)setIcon:(NSImage *)anIcon
-{
-    [anIcon retain];
-    [icon release];
-    icon = anIcon;
 }
 
 - (NSString *)contents
@@ -1756,7 +1660,7 @@ static NSImage *warningImage;
         transparency = 0.9;
     }
 
-    if ([parent fullScreen]) {
+    if ([[[self tab] parentWindow] fullScreen]) {
         transparency = 0;
     }
     // set transparency of background image
@@ -1788,8 +1692,8 @@ static NSImage *warningImage;
 
     if (set) {
         antiIdleTimer = [[NSTimer scheduledTimerWithTimeInterval:30
-                                                          target:self 
-                                                        selector:@selector(doAntiIdle) 
+                                                          target:self
+                                                        selector:@selector(doAntiIdle)
                                                         userInfo:nil
                 repeats:YES] retain];
     } else {
@@ -1896,11 +1800,6 @@ static NSImage *warningImage;
     [SCREEN clearScrollbackBuffer];
 }
 
-- (void) resetStatus;
-{
-    newOutput = NO;
-}
-
 - (BOOL)exited
 {
     return EXIT;
@@ -1967,39 +1866,47 @@ static NSImage *warningImage;
     }
 }
 
+static long long timeInTenthsOfSeconds(struct timeval t)
+{
+    return t.tv_sec * 10 + t.tv_usec / 100000;
+}
+
 - (void)updateDisplay
 {
     timerRunning_ = YES;
-    if ([[tabViewItem tabView] selectedTabViewItem] != tabViewItem) {
-        [self setLabelAttribute];
-    }
 
-    if ([parent currentSession] == self) {
+    if (![[self tab] isForegroundTab]) {
+        // Set color, other attributes of a background tab.
+        [[self tab] setLabelAttributes];
+    } else if ([[self tab] activeSession] == self) {
+        // Update window info for the active tab.
         struct timeval now;
         gettimeofday(&now, NULL);
-
-        if (now.tv_sec*10+now.tv_usec/100000 >= lastBlink.tv_sec*10+lastBlink.tv_usec/100000+7) {
-            if ([parent tempTitle]) {
-                [parent setWindowTitle];
-                [parent resetTempTitle];
+        if (timeInTenthsOfSeconds(now) >= timeInTenthsOfSeconds(lastUpdate) + 7) {
+            // It has been more than 700ms since the last time we were here.
+            if ([[[self tab] parentWindow] tempTitle]) {
+                // Revert to the permanent tab title.
+                [[[self tab] parentWindow] setWindowTitle];
+                [[[self tab] parentWindow] resetTempTitle];
             } else {
+                // Update the job name in the tab title.
                 NSString* oldName = jobName_;
                 jobName_ = [[SHELL currentJob] copy];
                 [jobName_ retain];
                 if (![oldName isEqualToString:jobName_]) {
-                    [tabViewItem setLabel:[self name]];
-                    [parent setWindowTitle];
+                    [[self tab] nameOfSession:self didChangeTo:[self name]];
+                    [[[self tab] parentWindow] setWindowTitle];
                 }
                 [oldName release];
             }
-            lastBlink = now;
+            lastUpdate = now;
         }
     }
 
     [TEXTVIEW refresh];
     [self updateScroll];
 
-    if ([parent currentSession] == self) {
+    if ([[[self tab] parentWindow] currentTab] == [self tab]) {
         [self scheduleUpdateIn:kBlinkTimerIntervalSec];
     } else {
         [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
@@ -2058,9 +1965,9 @@ static NSImage *warningImage;
 }
 
 // Notification
-- (void) tabViewWillRedraw: (NSNotification *) aNotification
+- (void)tabViewWillRedraw:(NSNotification *)aNotification
 {
-    if ([aNotification object] == [[self tabViewItem] tabView]) {
+    if ([aNotification object] == [[[self tab] tabViewItem] tabView]) {
         [TEXTVIEW setNeedsDisplay:YES];
     }
 }
@@ -2095,7 +2002,7 @@ static NSImage *warningImage;
 
     // Adjust the window size to perfectly fit this session. But this may cause the excess margin to
     // be too small if another tab has a larger font.
-    [parent fitWindowToSession:self];
+    [[[self tab] parentWindow] fitWindowToSession:self];
 }
 
 - (void)changeFontSizeDirection:(int)dir
@@ -2163,14 +2070,15 @@ static NSImage *warningImage;
     id classDescription = nil;
 
     NSScriptObjectSpecifier *containerRef = nil;
-    if (!realParent) {
+    if (![[self tab] realParentWindow]) {
         // TODO(georgen): scripting is broken while in instant replay.
         return nil;
     }
-    theIndex = [[realParent tabView] indexOfTabViewItem: [self tabViewItem]];
+    // TODO: Test this with multiple panes per tab.
+    theIndex = [[[[self tab] realParentWindow] tabView] indexOfTabViewItem:[[self tab] tabViewItem]];
 
     if (theIndex != NSNotFound) {
-        containerRef = [realParent objectSpecifier];
+        containerRef = [[[self tab] realParentWindow] objectSpecifier];
         classDescription = [containerRef keyClassDescription];
         //create and return the specifier
         return [[[NSIndexSpecifier allocWithZone:[self zone]]
@@ -2209,9 +2117,9 @@ static NSImage *warningImage;
     return;
 }
 
--(void)handleSelectScriptCommand: (NSScriptCommand *)command
+-(void)handleSelectScriptCommand:(NSScriptCommand *)command
 {
-    [[parent tabView] selectTabViewItemWithIdentifier: self];
+    [[[[self tab] parentWindow] tabView] selectTabViewItemWithIdentifier:self];
 }
 
 -(void)handleWriteScriptCommand: (NSScriptCommand *)command
@@ -2254,7 +2162,7 @@ static NSImage *warningImage;
 
 - (void)handleTerminateScriptCommand:(NSScriptCommand *)command
 {
-    [parent closeSession: self];
+    [[self tab] closeSession:self];
 }
 
 @end
@@ -2321,11 +2229,13 @@ static NSImage *warningImage;
     int len = [dvrDecoder_ length];
     DVRFrameInfo info = [dvrDecoder_ info];
     if (info.width != [SCREEN width] || info.height != [SCREEN height]) {
-        [parent sessionInitiatedResize:self width:info.width height:info.height];
+        [[[self tab] realParentWindow] sessionInitiatedResize:self
+                                                        width:info.width
+                                                       height:info.height];
     }
     [SCREEN setFromFrame:s len:len info:info];
-    [realParent resetTempTitle];
-    [realParent setWindowTitle];
+    [[[self tab] realParentWindow] resetTempTitle];
+    [[[self tab] realParentWindow] setWindowTitle];
 }
 
 @end

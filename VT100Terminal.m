@@ -764,7 +764,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
             case 2:
                 result.type = XTERMCC_WIN_TITLE;
                 break;
-                case 4:
+            case 4:
                 result.type = XTERMCC_SET_RGB;
                 break;
             default:

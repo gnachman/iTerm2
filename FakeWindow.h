@@ -58,6 +58,7 @@
 - (void)sendInputToAllSessions:(NSData *)data;
 - (void)setWindowTitle;
 - (void)resetTempTitle;
+- (PTYTab*)currentTab;
 
 - (void)windowSetFrameTopLeftPoint:(NSPoint)point;
 - (void)windowPerformMiniaturize:(id)sender;

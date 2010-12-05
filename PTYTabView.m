@@ -121,13 +121,11 @@
     return (NO);
 }
 
-- (void) drawRect: (NSRect) rect
+- (void)drawRect:(NSRect)rect
 {
-    //NSLog(@"%s", __PRETTY_FUNCTION__);
-
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermTabViewWillRedraw" object: self];
-    [super drawRect: rect];
-
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabViewWillRedraw" 
+                                                        object:self];
+    [super drawRect:rect];
 }
 
 
@@ -189,9 +187,9 @@
 }
 
 // selects a tab from the contextual menu
-- (void) selectTab: (id) sender
+- (void)selectTab:(id)sender
 {
-    [self selectTabViewItemWithIdentifier: [sender representedObject]];
+    [self selectTabViewItemWithIdentifier:[sender representedObject]];
 }
 
 @end

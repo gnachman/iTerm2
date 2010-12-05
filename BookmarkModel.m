@@ -160,37 +160,30 @@
 
 - (void)addBookmark:(Bookmark*)bookmark inSortedOrder:(BOOL)sort
 {
+
+    NSMutableDictionary *newBookmark = [[bookmark mutableCopy] autorelease];
+
     // Ensure required fields are present
-    if (![bookmark objectForKey:KEY_NAME]) {
-        NSMutableDictionary* aDict = [[NSMutableDictionary alloc] initWithDictionary:bookmark];
-        [aDict setObject:@"Bookmark" forKey:KEY_NAME];
-        bookmark = aDict;
+    if (![newBookmark objectForKey:KEY_NAME]) {
+        [newBookmark setObject:@"Bookmark" forKey:KEY_NAME];
     }
-    if (![bookmark objectForKey:KEY_TAGS]) {
-        NSMutableDictionary* aDict = [[NSMutableDictionary alloc] initWithDictionary:bookmark];
-        [aDict setObject:[NSArray arrayWithObjects:nil] forKey:KEY_TAGS];
-        bookmark = aDict;
+    if (![newBookmark objectForKey:KEY_TAGS]) {
+        [newBookmark setObject:[NSArray arrayWithObjects:nil] forKey:KEY_TAGS];
     }
-    if (![bookmark objectForKey:KEY_CUSTOM_COMMAND]) {
-        NSMutableDictionary* aDict = [[NSMutableDictionary alloc] initWithDictionary:bookmark];
-        [aDict setObject:@"No" forKey:KEY_CUSTOM_COMMAND];
-        bookmark = aDict;
+    if (![newBookmark objectForKey:KEY_CUSTOM_COMMAND]) {
+        [newBookmark setObject:@"No" forKey:KEY_CUSTOM_COMMAND];
     }
-    if (![bookmark objectForKey:KEY_COMMAND]) {
-        NSMutableDictionary* aDict = [[NSMutableDictionary alloc] initWithDictionary:bookmark];
-        [aDict setObject:@"/bin/bash --login" forKey:KEY_COMMAND];
-        bookmark = aDict;
+    if (![newBookmark objectForKey:KEY_COMMAND]) {
+        [newBookmark setObject:@"/bin/bash --login" forKey:KEY_COMMAND];
     }
-    if (![bookmark objectForKey:KEY_GUID]) {
-        NSMutableDictionary* aDict = [[NSMutableDictionary alloc] initWithDictionary:bookmark];
-        [aDict setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
-        bookmark = aDict;
+    if (![newBookmark objectForKey:KEY_GUID]) {
+        [newBookmark setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
     }
-    if (![bookmark objectForKey:KEY_DEFAULT_BOOKMARK]) {
-        NSMutableDictionary* aDict = [[NSMutableDictionary alloc] initWithDictionary:bookmark];
-        [aDict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
-        bookmark = aDict;
+    if (![newBookmark objectForKey:KEY_DEFAULT_BOOKMARK]) {
+        [newBookmark setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
     }
+
+    bookmark = [[newBookmark copy] autorelease];
 
     if (sort) {
         // Insert alphabetically. Sort so that objects with the "bonjour" tag come after objects without.

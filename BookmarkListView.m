@@ -1,5 +1,5 @@
 /*
- **  BookmarkTableController.m
+ **  BookmarkListView.m
  **  iTerm
  **
  **  Created by George Nachman on 8/26/10.
@@ -538,7 +538,7 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     delegate_ = delegate;
 }
 
-// DataSource methods
+#pragma mark NSTableView data source
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
 {
     return [dataSource_ numberOfBookmarks];
@@ -581,31 +581,29 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     Bookmark* bookmark = [dataSource_ bookmarkAtIndex:rowIndex];
 
     if (aTableColumn == tableColumn_) {
-        NSMutableAttributedString* as = [[[NSMutableAttributedString alloc] init] autorelease];
         NSColor* textColor;
         if ([[tableView_ selectedRowIndexes] containsIndex:rowIndex]) {
             textColor = [NSColor whiteColor];
         } else {
             textColor = [NSColor blackColor];
         }
-        NSFont* smallFont = [NSFont systemFontOfSize:10];
         NSDictionary* plainAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
                                          textColor, NSForegroundColorAttributeName,
                                          nil];
         NSDictionary* smallAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
                                          textColor, NSForegroundColorAttributeName,
-                                         smallFont, NSFontAttributeName,
+                                         [NSFont systemFontOfSize:10], NSFontAttributeName,
                                          nil];
 
-        //NSLog(@"Returning %@ at row %d for %p", [bookmark objectForKey:KEY_NAME], rowIndex, self);
-        [as appendAttributedString:[[[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@\n", [bookmark objectForKey:KEY_NAME]]
-                                                                    attributes:plainAttributes] autorelease]];
-        NSArray* tags = [bookmark objectForKey:KEY_TAGS];
-        NSString* tagsString = [NSString stringWithString:[tags componentsJoinedByString:@", "]];
-        [as appendAttributedString:[[[NSAttributedString alloc] initWithString:tagsString
-                                                                    attributes:smallAttributes] autorelease]];
+        NSString *name = [NSString stringWithFormat:@"%@\n", [bookmark objectForKey:KEY_NAME]];
+        NSString* tags = [[bookmark objectForKey:KEY_TAGS] componentsJoinedByString:@", "];
 
-        return as;
+        NSMutableAttributedString *theAttributedString = [[[NSMutableAttributedString alloc] initWithString:name
+                                                                                                 attributes:plainAttributes] autorelease];
+
+        [theAttributedString appendAttributedString:[[[NSAttributedString alloc] initWithString:tags
+                                                                                     attributes:smallAttributes] autorelease]];
+        return theAttributedString;
     } else if (aTableColumn == commandColumn_) {
         if (![[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
             return @"Login shell";
@@ -620,15 +618,15 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
             return @"";
         }
     } else if (aTableColumn == starColumn_) {
+        // FIXME: use imageNamed and clean up drawing code
         static NSImage* starImage;
         if (!starImage) {
             NSString* starFile = [[NSBundle bundleForClass:[self class]]
                                   pathForResource:@"star-gold24"
                                   ofType:@"png"];
             starImage = [[NSImage alloc] initWithContentsOfFile:starFile];
-            [starImage retain];
         }
-        NSImage *image = [[NSImage alloc] init];
+        NSImage *image = [[[NSImage alloc] init] autorelease];
         NSSize size;
         size.width = [aTableColumn width];
         size.height = rowHeight_;

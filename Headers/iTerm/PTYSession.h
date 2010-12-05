@@ -58,64 +58,120 @@ static const float kFastTimerIntervalSec = 1.0 / 30.0;
 // TODO(georgen): There's room for improvement here.
 static const float kBackgroundSessionIntervalSec = 1;
 
+@class PTYTab;
+@class SessionView;
 @interface PTYSession : NSResponder
 {
-    // Owning tab view item
-    NSTabViewItem* tabViewItem;
+    // Owning tab.
+    PTYTab* tab_;
 
     // tty device
     NSString* tty;
 
-    id<WindowControllerInterface> parent;  // Parent controller. Always set. Equals one of realParent or fakeParent.
-    PseudoTerminal* realParent;  // non-nil only if parent is PseudoTerminal*
-    FakeWindow* fakeParent;  // non-nil only if parent is FakeWindow*
+    // name can be changed by the host.
     NSString* name;
+
+    // defaultName cannot be changed by the host.
     NSString* defaultName;
+
+    // The window title that should be used when this session is current. Otherwise defaultName
+    // should be used.
     NSString* windowTitle;
 
+    // Shell wraps the underlying file descriptor pair.
     PTYTask* SHELL;
+
+    // Terminal processes vt100 codes.
     VT100Terminal* TERMINAL;
+
+    // The value of the $TERM environment var.
     NSString* TERM_VALUE;
+
+    // The value of the $COLORFGBG environment var.
     NSString* COLORFGBG_VALUE;
+
+    // The current screen contents.
     VT100Screen* SCREEN;
+
+    // Has the underlying connection been closed?
     BOOL EXIT;
-    NSView* view;
+
+    // The view in which this session's objects live.
+    SessionView* view;
+
+    // The scrollview in which this session's contents are displayed.
     PTYScrollView* SCROLLVIEW;
+
+    // A view that wraps the textview. It is the scrollview's document. This exists to provide a
+    // top margin above the textview.
     TextViewWrapper* WRAPPER;
+
+    // The view that contains all the visible text in this session.
     PTYTextView* TEXTVIEW;
+
+    // This timer fires periodically to redraw TEXTVIEW, update the scroll position, tab appearance,
+    // etc.
     NSTimer *updateTimer;
 
-    // anti-idle
+    // Anti-idle timer that sends a character every so often to the host.
     NSTimer* antiIdleTimer;
+
+    // The code to send in the anti idle timer.
     char ai_code;
 
+    // If true, close the tab when the session ends.
     BOOL autoClose;
 
     // True if ambiguous-width characters are double-width.
     BOOL doubleWidth;
+
+    // True if mouse movements are sent to the host.
     BOOL xtermMouseReporting;
+
+    // This is not used as far as I can tell.
     int bell;
 
+    // Filename of background image.
     NSString* backgroundImagePath;
+
+    // Bookmark currently in use.
     NSDictionary* addressBookEntry;
+
+    // The bookmark the session was originally created with so those settings can be restored if
+    // needed.
     Bookmark* originalAddressBookEntry;
 
     // Growl stuff
     iTermGrowlDelegate* gd;
 
     // Status reporting
-    struct timeval lastInput, lastOutput, lastBlink;
-    int objectCount;
-    NSImage* icon;
-    BOOL isProcessing;
+    struct timeval lastInput, lastOutput;
+
+    // Time that the tab label was last updated.
+    struct timeval lastUpdate;
+
+    // Does the session have new output? Used by -[PTYTab setLabelAttributes] to color the tab's title
+    // appropriately.
     BOOL newOutput;
-    BOOL growlIdle, growlNewOutput;
+
+    // Is the session idle? Used by setLableAttribute to send a growl message when processing ends.
+    BOOL growlIdle;
+
+    // Is there new output for the purposes of growl notifications? They run on a different schedule
+    // than tab colors.
+    BOOL growlNewOutput;
+
+    // Has this session's bookmark been divorced from the bookmark in the BookmarkModel? Changes
+    // in this bookmark may happen indepentendly of the persistent bookmark.
     bool isDivorced;
+
+    // A digital video recorder for this session that implements the instant replay feature. These
+    // are non-null while showing instant replay.
     DVR* dvr_;
     DVRDecoder* dvrDecoder_;
 
-    // Set only if this is not a live session. Is a pointer to the hidden live
-    // session while looking at the past.
+    // Set only if this is not a live session (we are showing instant replay). Is a pointer to the
+    // hidden live session while looking at the past.
     PTYSession* liveSession_;
 
     // Is the update timer's callback currently running?
@@ -125,6 +181,7 @@ static const float kBackgroundSessionIntervalSec = 1;
     NSMutableString* slowPasteBuffer;
     NSTimer* slowPasteTimer;
 
+    // The name of the foreground job at the moment as best we can tell.
     NSString* jobName_;
 }
 
@@ -158,14 +215,16 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (void)irAdvance:(int)dir;
 
 // Session specific methods
-- (BOOL)initScreen:(NSRect)aRect;
+- (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent;
 
 - (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv
          environment:(NSDictionary *)prog_env
               isUTF8:(BOOL)isUTF8;
 - (void)terminate;
-- (BOOL)isActiveSession;
+
+- (void)setNewOutput:(BOOL)value;
+- (BOOL)newOutput;
 
 // Preferences
 - (void)setPreferencesFromAddressBookEntry: (NSDictionary *)aePrefs;
@@ -208,15 +267,18 @@ static const float kBackgroundSessionIntervalSec = 1;
 
 
 // get/set methods
-- (id<WindowControllerInterface>)parent;
-- (void)setParent:(PseudoTerminal*)theParent;
-- (void)setFakeParent: (FakeWindow*)theParent;
-- (FakeWindow*)fakeWindow;
-- (NSTabViewItem *)tabViewItem;
-- (void)setTabViewItem: (NSTabViewItem *)theTabViewItem;
+- (PTYTab*)tab;
+- (void)setTab:(PTYTab*)tab;
+- (struct timeval)lastOutput;
+- (void)setGrowlIdle:(BOOL)value;
+- (BOOL)growlIdle;
+- (void)setGrowlNewOutput:(BOOL)value;
+- (BOOL)growlNewOutput;
+
 - (NSString *)name;
 - (void)setName: (NSString *)theName;
 - (NSString *)defaultName;
+- (NSString*)joblessDefaultName;
 - (void)setDefaultName: (NSString *)theName;
 - (NSString *)uniqueID;
 - (void)setUniqueID: (NSString *)uniqueID;
@@ -233,7 +295,8 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (VT100Screen *)SCREEN;
 - (void)setSCREEN: (VT100Screen *)theSCREEN;
 - (NSImage *)image;
-- (NSView *)view;
+- (SessionView *)view;
+- (void)setView:(SessionView*)newView;
 - (PTYTextView *)TEXTVIEW;
 - (void)setTEXTVIEW: (PTYTextView *)theTEXTVIEW;
 - (PTYScrollView *)SCROLLVIEW;
@@ -255,14 +318,8 @@ static const float kBackgroundSessionIntervalSec = 1;
 // Return the address book that the session was originally created with.
 - (Bookmark *)originalAddressBookEntry;
 - (void)setAddressBookEntry:(NSDictionary*)entry;
-- (int)number;
-- (int)objectCount;
-- (int)realObjectCount;
-- (void)setObjectCount:(int)value;
 - (NSString *)tty;
 - (NSString *)contents;
-- (NSImage *)icon;
-- (void)setIcon: (NSImage *)anIcon;
 - (iTermGrowlDelegate*)growlDelegate;
 
 
@@ -297,13 +354,9 @@ static const float kBackgroundSessionIntervalSec = 1;
 
 // Session status
 
-- (void)resetStatus;
 - (BOOL)exited;
-- (void)setLabelAttribute;
 - (BOOL)bell;
 - (void)setBell: (BOOL)flag;
-- (BOOL)isProcessing;
-- (void)setIsProcessing: (BOOL)aFlag;
 
 - (void)sendCommand: (NSString *)command;
 

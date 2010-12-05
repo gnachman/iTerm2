@@ -1612,8 +1612,8 @@
     }
 
     [item retain];
-    if(([self delegate]) && ([[self delegate] respondsToSelector:@selector(closeSession:)])){
-        [(id<PTYTaskDelegate>)[self delegate] closeSession: [item identifier]];
+    if(([self delegate]) && ([[self delegate] respondsToSelector:@selector(closeTab:)])){
+        [(id<PTYTaskDelegate>)[self delegate] closeTab:[item identifier]];
     }
 
     [item release];

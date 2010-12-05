@@ -2037,7 +2037,7 @@ static float versionNumber;
 {
     Bookmark* dest = [dataSource bookmarkWithGuid:destGuid];
     Bookmark* src = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
-    NSMutableDictionary* newDict = [[NSMutableDictionary alloc] initWithDictionary:dest];
+    NSMutableDictionary* newDict = [[[NSMutableDictionary alloc] initWithDictionary:dest] autorelease];
     NSString** keys = NULL;
     NSString* colorsKeys[] = {
         KEY_FOREGROUND_COLOR,

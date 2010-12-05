@@ -1,4 +1,3 @@
-
 // -*- mode:objc -*-
 // $Id: PseudoTerminal.m,v 1.437 2009-02-06 15:07:23 delx Exp $
 //
@@ -60,6 +59,8 @@
 #import <iTerm/iTermGrowlDelegate.h>
 #include <unistd.h>
 #import "PasteboardHistory.h"
+#import "PTYTab.h"
+#import "SessionView.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -325,16 +326,17 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
-- (void)closeSession:(PTYSession*)aSession
+- (void)closeSession:(PTYSession *)aSession
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, aSession);
-#endif
+    [self closeTab:[aSession tab]];
+}
 
+- (void)closeTab:(PTYTab*)aTab
+{
     NSTabViewItem *aTabViewItem;
     int numberOfSessions;
 
-    if ([TABVIEW indexOfTabViewItemWithIdentifier:aSession] == NSNotFound) {
+    if ([TABVIEW indexOfTabViewItemWithIdentifier:aTab] == NSNotFound) {
         return;
     }
 
@@ -343,8 +345,8 @@ NSString *sessionsKey = @"sessions";
         [[self window] close];
     } else {
         // now get rid of this session
-        aTabViewItem = [aSession tabViewItem];
-        [aSession terminate];
+        aTabViewItem = [aTab tabViewItem];
+        [[aTab activeSession] terminate];
         [TABVIEW removeTabViewItem:aTabViewItem];
         PtyLog(@"closeSession - calling fitWindowToSessions");
         [self fitWindowToSessions];
@@ -353,23 +355,32 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)closeCurrentSession:(id)sender
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal closeCurrentSession]",
-          __FILE__, __LINE__);
-#endif
-    PTYSession *aSession = [[TABVIEW selectedTabViewItem] identifier];
+    PTYSession *aSession = [[[TABVIEW selectedTabViewItem] identifier] activeSession];
 
     if ([aSession exited] ||
-        ![[PreferencePanel sharedInstance] promptOnClose] || [[PreferencePanel sharedInstance] onlyWhenMoreTabs] ||
-        (NSRunAlertPanel([NSString stringWithFormat:@"%@ #%d", [aSession name], [aSession realObjectCount]],
-                     NSLocalizedStringFromTableInBundle(@"This session will be closed.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Close Session"),
-                     NSLocalizedStringFromTableInBundle(@"OK",@"iTerm", [NSBundle bundleForClass: [self class]], @"OK"),
-                     NSLocalizedStringFromTableInBundle(@"Cancel",@"iTerm", [NSBundle bundleForClass: [self class]], @"Cancel")
-                         ,nil) == NSAlertDefaultReturn)) {
-        [self closeSession:[[TABVIEW selectedTabViewItem] identifier]];
+        ![[PreferencePanel sharedInstance] promptOnClose] || 
+        [[PreferencePanel sharedInstance] onlyWhenMoreTabs] ||
+        (NSRunAlertPanel([NSString stringWithFormat:@"%@ #%d", 
+                            [aSession name], 
+                            [[aSession tab] realObjectCount]],
+                         NSLocalizedStringFromTableInBundle(@"This session will be closed.",
+                                                            @"iTerm", 
+                                                            [NSBundle bundleForClass:[self class]], 
+                                                            @"Close Session"),
+                         NSLocalizedStringFromTableInBundle(@"OK",
+                                                            @"iTerm", 
+                                                            [NSBundle bundleForClass:[self class]], 
+                                                            @"OK"),
+                         NSLocalizedStringFromTableInBundle(@"Cancel",
+                                                            @"iTerm", 
+                                                            [NSBundle bundleForClass:[self class]], 
+                                                            @"Cancel"),
+                         nil) == NSAlertDefaultReturn)) {
+        [self closeTab:[[TABVIEW selectedTabViewItem] identifier]];
     }
 }
 
+// TODO: rename this to nextTab and change in interfacebuilder
 - (IBAction)previousSession:(id)sender
 {
     NSTabViewItem *tvi = [TABVIEW selectedTabViewItem];
@@ -379,32 +390,41 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+// TODO: rename this to nextTab and change in interfaceBuilder
 - (IBAction)nextSession:(id)sender
 {
     NSTabViewItem *tvi = [TABVIEW selectedTabViewItem];
     [TABVIEW selectNextTabViewItem: sender];
     if (tvi == [TABVIEW selectedTabViewItem]) {
-        [TABVIEW selectTabViewItemAtIndex: 0];
+        [TABVIEW selectTabViewItemAtIndex:0];
     }
 }
 
+// TODO: change to numberOfTabs
 - (int)numberOfSessions
 {
     return [TABVIEW numberOfTabViewItems];
 }
 
+// TODO: change this to tabAtIndex
 - (PTYSession*)sessionAtIndex:(int)i
 {
     NSTabViewItem* tvi = [TABVIEW tabViewItemAtIndex:i];
-    return [tvi identifier];
+    return [[tvi identifier] activeSession];
 }
 
 
-- (PTYSession *)currentSession
+- (PTYTab*)currentTab
 {
     return [[TABVIEW selectedTabViewItem] identifier];
 }
 
+- (PTYSession *)currentSession
+{
+    return [[[TABVIEW selectedTabViewItem] identifier] activeSession];
+}
+
+// TODO: rename this to currentTabIndex
 - (int)currentSessionIndex
 {
     return ([TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]]);
@@ -421,8 +441,8 @@ NSString *sessionsKey = @"sessions";
     NSTabViewItem *aTabViewItem;
     for (; [TABVIEW numberOfTabViewItems]; )  {
         aTabViewItem = [TABVIEW tabViewItemAtIndex:0];
-        [[aTabViewItem identifier] terminate];
-        [TABVIEW removeTabViewItem: aTabViewItem];
+        [[aTabViewItem identifier] terminateAllSessions];
+        [TABVIEW removeTabViewItem:aTabViewItem];
     }
 
     [commandField release];
@@ -483,19 +503,14 @@ NSString *sessionsKey = @"sessions";
 
 - (void)sendInputToAllSessions:(NSData *)data
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal sendDataToAllSessions:]",
-          __FILE__, __LINE__);
-#endif
-    PTYSession *aSession;
     int i;
 
     int n = [TABVIEW numberOfTabViewItems];
     for (i = 0; i < n; ++i) {
-        aSession = [[TABVIEW tabViewItemAtIndex: i] identifier];
-
-        if (![aSession exited]) {
-            [[aSession SHELL] writeTask:data];
+        for (PTYSession* aSession in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
+            if (![aSession exited]) {
+                [[aSession SHELL] writeTask:data];
+            }
         }
     }
 }
@@ -731,8 +746,8 @@ NSString *sessionsKey = @"sessions";
     }
 
     // Adjust the size of all the sessions.
-    PtyLog(@"windowDidResize - call fitSessionsToWindow");
-    [self fitSessionsToWindow];
+    PtyLog(@"windowDidResize - call fitTabsToWindow");
+    [self fitTabsToWindow];
 
     // Move window widgets around.
     int width, height;
@@ -813,7 +828,7 @@ NSString *sessionsKey = @"sessions";
     newTerminal->_resizeInProgressFlag = YES;
     for (i = 0; i < n; ++i) {
         aTabViewItem = [[TABVIEW tabViewItemAtIndex:0] retain];
-        aSession = [aTabViewItem identifier];
+        aSession = [[aTabViewItem identifier] activeSession];
         if (_fullScreen) {
             [aSession setTransparency:0];
         } else {
@@ -832,7 +847,7 @@ NSString *sessionsKey = @"sessions";
         [aTabViewItem release];
     }
     newTerminal->_resizeInProgressFlag = NO;
-    [[newTerminal tabView] selectTabViewItemWithIdentifier:currentSession];
+    [[newTerminal tabView] selectTabViewItemWithIdentifier:[currentSession tab]];
     BOOL fs = _fullScreen;
     PtyLog(@"toggleFullScreen - close old window", i);
     // The window close call below also releases the window controller (self).
@@ -875,8 +890,8 @@ NSString *sessionsKey = @"sessions";
         [newTerminal fitWindowToSessionsWithWidth:width height:height charWidth:charWidth charHeight:charHeight];
     }
     newTerminal->togglingFullScreen_ = NO;
-    PtyLog(@"toggleFullScreen - calling fitSessionsToWindow");
-    [newTerminal fitSessionsToWindow];
+    PtyLog(@"toggleFullScreen - calling fitTabsToWindow");
+    [newTerminal fitTabsToWindow];
     PtyLog(@"toggleFullScreen - calling fitWindowToSessions");
     [newTerminal fitWindowToSessions];
     PtyLog(@"toggleFullScreen - calling setWindowTitle");
@@ -958,8 +973,8 @@ NSString *sessionsKey = @"sessions";
     [self safelySetSessionSize:session rows:height columns:width];
     PtyLog(@"sessionInitiatedResize - calling fitWindowToSession");
     [self fitWindowToSession:session];
-    PtyLog(@"sessionInitiatedResize - calling fitSessionsToWindow");
-    [self fitSessionsToWindow];
+    PtyLog(@"sessionInitiatedResize - calling fitTabsToWindow");
+    [self fitTabsToWindow];
 }
 
 // Contextual menu
@@ -1097,8 +1112,9 @@ NSString *sessionsKey = @"sessions";
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PseudoTerminal tabView: willSelectTabViewItem]", __FILE__, __LINE__);
 #endif
+    // TODO: This isn't quite right if there is more than one session per tab. Figure out what to do with tab status when sessions exit.
     if (![[self currentSession] exited]) {
-        [[self currentSession] resetStatus];
+        [[self currentSession] setNewOutput:NO];
     }
     // If the user is currently select-dragging the text view, stop it so it
     // doesn't keep going in the background.
@@ -1131,27 +1147,26 @@ NSString *sessionsKey = @"sessions";
 
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal tabView: didSelectTabViewItem]", __FILE__, __LINE__);
-#endif
+    for (PTYSession* aSession in [[tabViewItem identifier] sessions]) {
+        [aSession setNewOutput:NO];
 
-    [[tabViewItem identifier] resetStatus];
+        // Background tabs' timers run infrequently so make sure the display is
+        // up to date to avoid a jump when it's shown.
+        [[aSession TEXTVIEW] setNeedsDisplay:YES];
+        [aSession updateDisplay];
+        [aSession scheduleUpdateIn:kFastTimerIntervalSec];
+    }
 
-    // Background tabs' timers run infrequently so make sure the display is
-    // up to date to avoid a jump when it's shown.
-    [[[tabViewItem identifier] TEXTVIEW] setNeedsDisplay:YES];
-    [[tabViewItem identifier] updateDisplay];
-    [[tabViewItem identifier] scheduleUpdateIn:kFastTimerIntervalSec];
-
+    PTYSession* aSession = [[tabViewItem identifier] activeSession];
     if (_fullScreen) {
         [self _drawFullScreenBlackBackground];
     } else {
-        [[tabViewItem identifier] setLabelAttribute];
+        [[aSession tab] setLabelAttributes];
         [self setWindowTitle];
     }
 
-    [[self window] makeFirstResponder:[[tabViewItem identifier] TEXTVIEW]];
-    if ([[[[tabViewItem identifier] addressBookEntry] objectForKey:KEY_BLUR] boolValue]) {
+    [[self window] makeFirstResponder:[[[tabViewItem identifier] activeSession] TEXTVIEW]];
+    if ([[[aSession addressBookEntry] objectForKey:KEY_BLUR] boolValue]) {
         [self enableBlur];
     } else {
         [self disableBlur];
@@ -1161,7 +1176,8 @@ NSString *sessionsKey = @"sessions";
         [self updateInstantReplay];
     }
     // Post notifications
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermSessionBecameKey" object: [tabViewItem identifier]];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey" 
+                                                        object:[[tabViewItem identifier] activeSession]];
     [self showOrHideInstantReplayBar];
 }
 
@@ -1196,20 +1212,33 @@ NSString *sessionsKey = @"sessions";
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PseudoTerminal tabView:willInsertTabViewItem:atIndex:%d]", __FILE__, __LINE__, anIndex);
 #endif
-    [[tabViewItem identifier] setParent:self];
+    PTYTab* theTab = [tabViewItem identifier];
+    [theTab setParentWindow:self];
 }
 
 - (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem
 {
-    PTYSession *aSession = [tabViewItem identifier];
+    PTYTab *aTab = [tabViewItem identifier];
 
-    return [aSession exited] ||
-        ![[PreferencePanel sharedInstance] promptOnClose] || [[PreferencePanel sharedInstance] onlyWhenMoreTabs] ||
-        (NSRunAlertPanel([NSString stringWithFormat:@"%@ #%d", [aSession name], [aSession realObjectCount]],
-                        NSLocalizedStringFromTableInBundle(@"This session will be closed.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Close Session"),
-                        NSLocalizedStringFromTableInBundle(@"OK",@"iTerm", [NSBundle bundleForClass: [self class]], @"OK"),
-                        NSLocalizedStringFromTableInBundle(@"Cancel",@"iTerm", [NSBundle bundleForClass: [self class]], @"Cancel")
-                        ,nil) == NSAlertDefaultReturn);
+    return ([aTab allSessionsExited] ||
+            ![[PreferencePanel sharedInstance] promptOnClose] || 
+            [[PreferencePanel sharedInstance] onlyWhenMoreTabs] ||
+            (NSRunAlertPanel([NSString stringWithFormat:@"%@ #%d", 
+                              [[aTab activeSession] name], 
+                              [[[aTab activeSession] tab] realObjectCount]],
+                             NSLocalizedStringFromTableInBundle(@"This session will be closed.",
+                                                                @"iTerm", 
+                                                                [NSBundle bundleForClass:[self class]], 
+                                                                @"Close Session"),
+                        NSLocalizedStringFromTableInBundle(@"OK",
+                                                           @"iTerm", 
+                                                           [NSBundle bundleForClass:[self class]], 
+                                                           @"OK"),
+                        NSLocalizedStringFromTableInBundle(@"Cancel",
+                                                           @"iTerm", 
+                                                           [NSBundle bundleForClass:[self class]], 
+                                                           @"Cancel"),
+                        nil) == NSAlertDefaultReturn));
 
 }
 
@@ -1227,7 +1256,8 @@ NSString *sessionsKey = @"sessions";
 - (void)tabView:(NSTabView*)aTabView didDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)aTabBarControl
 {
     //NSLog(@"didDropTabViewItem: %@ inTabBar: %@", [tabViewItem label], aTabBarControl);
-    PTYSession *aSession = [tabViewItem identifier];
+    PTYTab *aTab = [tabViewItem identifier];
+    PTYSession* aSession = [aTab activeSession]; // TODO: make this work with more than one session per tab
     PseudoTerminal *term = [aTabBarControl delegate];
 
     [[aSession SCREEN] resizeWidth:[aSession columns] height:[aSession rows]];
@@ -1240,8 +1270,8 @@ NSString *sessionsKey = @"sessions";
 
     int i;
     for (i=0; i < [aTabView numberOfTabViewItems]; ++i) {
-        PTYSession *currentSession = [[aTabView tabViewItemAtIndex:i] identifier];
-        [currentSession setObjectCount:i+1];
+        PTYTab *theTab = [[aTabView tabViewItemAtIndex:i] identifier];  // TODO: make this work with multiple sessions per tab
+        [theTab setObjectCount:i+1];
     }
     if ([aSession liveSession] && [term->instantReplaySubview isHidden]) {
         [term showHideInstantReplay];
@@ -1326,7 +1356,7 @@ NSString *sessionsKey = @"sessions";
         [textviewImage setFlipped: YES];
         [textviewImage lockFocus];
         //draw the background flipped, which is actually the right way up
-        [[[tabViewItem identifier] TEXTVIEW] drawRect:viewRect];
+        [[[[tabViewItem identifier] activeSession] TEXTVIEW] drawRect:viewRect];  // TODO: make this work with more than one session per tab
         [textviewImage unlockFocus];
 
         [viewImage lockFocus];
@@ -1381,8 +1411,8 @@ NSString *sessionsKey = @"sessions";
 
     int i;
     for (i=0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        PTYSession *aSession = [[TABVIEW tabViewItemAtIndex: i] identifier];
-        [aSession setObjectCount:i+1];
+        PTYTab *aTab = [[TABVIEW tabViewItemAtIndex: i] identifier];
+        [aTab setObjectCount:i+1];
     }
 
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
@@ -1400,14 +1430,14 @@ NSString *sessionsKey = @"sessions";
     if ([TABVIEW numberOfTabViewItems] > 1) {
         NSMenu *tabMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
         NSUInteger count = 1;
-        for (NSTabViewItem *tab in [TABVIEW tabViewItems]) {
-            NSString *title = [NSString stringWithFormat:@"%@ #%d", [tab label], count++];
+        for (NSTabViewItem *aTabViewItem in [TABVIEW tabViewItems]) {
+            NSString *title = [NSString stringWithFormat:@"%@ #%d", [aTabViewItem label], count++];
             item = [[[NSMenuItem alloc] initWithTitle:title
                                                action:@selector(selectTab:)
                                         keyEquivalent:@""] autorelease];
-            [item setRepresentedObject:[tab identifier]];
+            [item setRepresentedObject:[aTabViewItem identifier]];
             [item setTarget:TABVIEW];
-            [tabMenu addItem: item];
+            [tabMenu addItem:item];
         }
 
         [rootMenu addItemWithTitle:ITLocalizedString(@"Select")
@@ -1438,9 +1468,9 @@ NSString *sessionsKey = @"sessions";
 - (PSMTabBarControl *)tabView:(NSTabView *)aTabView newTabBarForDraggedTabViewItem:(NSTabViewItem *)tabViewItem atPoint:(NSPoint)point
 {
     PseudoTerminal *term;
-    PTYSession *aSession = [tabViewItem identifier];
+    PTYTab *aTab = [tabViewItem identifier];
 
-    if (aSession == nil) {
+    if (aTab == nil) {
         return nil;
     }
 
@@ -1465,7 +1495,7 @@ NSString *sessionsKey = @"sessions";
 
 - (NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem
 {
-    NSDictionary *ade = [[aTabViewItem identifier] addressBookEntry];
+    NSDictionary *ade = [[[aTabViewItem identifier] activeSession] addressBookEntry];
 
     NSString *temp = [NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Name: %@\nCommand: %@",
                                                                                    @"iTerm",
@@ -1939,7 +1969,10 @@ NSString *sessionsKey = @"sessions";
     if (!oldTabViewItem) {
         return;
     }
-
+    if ([[[oldSession SCREEN] dvr] lastTimeStamp] == 0) {
+        // Nothing recorded (not enough memory for one frame, perhaps?).
+        return;
+    }
     PTYSession *newSession;
 
     // Initialize a new session
@@ -1949,32 +1982,13 @@ NSString *sessionsKey = @"sessions";
     // set our preferences
     [newSession setAddressBookEntry:[oldSession addressBookEntry]];
     [[newSession SCREEN] setScrollback:0];
-
-    // Replace the contents of the tab view item.
-    int oldIndex = [TABVIEW indexOfTabViewItem:oldTabViewItem];
+    [self setupSession:newSession title:nil];
 
     // Add this session to our term and make it current
-    PTYSession* liveSession = [oldTabViewItem identifier];
-    [liveSession retain];
-    [self replaceInSessions:newSession atIndex:oldIndex];
-
-    [newSession setName:[oldSession name]];
-    [newSession setDefaultName:[oldSession defaultName]];
+    PTYTab* theTab = [oldTabViewItem identifier];
+    [newSession setTab:theTab];
+    [theTab setDvrInSession:newSession];
     [newSession release];
-
-    // Put the new session in DVR mode and pass it the old session, which it
-    // keeps a reference to.
-    [newSession setDvr:[[oldSession SCREEN] dvr] liveSession:liveSession];
-    [liveSession release];
-
-    // TODO(georgen): the hidden window can resize itself and the FakeWindow
-    // needs to pass that on to the SCREEN. Otherwise the DVR playback into the
-    // time after cmd-d was pressed (but before the present) has the wrong
-    // window size.
-    [oldSession setFakeParent:[[FakeWindow alloc] initFromRealWindow:self session:oldSession]];
-
-    // This starts the new session's update timer
-    [newSession updateDisplay];
     if ([instantReplaySubview isHidden]) {
         [self showHideInstantReplay];
     }
@@ -1982,21 +1996,12 @@ NSString *sessionsKey = @"sessions";
 
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession
 {
-    // NSLog(@"Go live. IR session is %@, live is %@", replaySession, liveSession);
-
-    [replaySession cancelTimers];
-    int oldIndex = [TABVIEW indexOfTabViewItemWithIdentifier:replaySession];
-    assert(oldIndex >= 0);
-    NSTabViewItem* oldTabViewItem = [TABVIEW tabViewItemAtIndex:oldIndex];
-    assert(oldTabViewItem);
-    [liveSession setAddressBookEntry:[replaySession addressBookEntry]];
-    FakeWindow* fakeWindow = [liveSession fakeWindow];
-
-    [self replaceSession:liveSession atIndex:oldIndex];
-    [fakeWindow rejoin:self];
+    PTYTab* theTab = [replaySession tab];
+    [theTab showLiveSession:liveSession inPlaceOf:replaySession];
     [self updateInstantReplay];
     [self showHideInstantReplay];
-    [liveSession setParent:self];
+    [theTab setParentWindow:self];
+    [[self window] makeFirstResponder:[[theTab activeSession] TEXTVIEW]];
 }
 
 - (void)windowSetFrameTopLeftPoint:(NSPoint)point
@@ -2111,8 +2116,8 @@ NSString *sessionsKey = @"sessions";
     // called an objectCount. When the "compact tab" pref is toggled, this makes
     // formerly countless tabs show their counts.
     for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        PTYSession *aSession = [[TABVIEW tabViewItemAtIndex:i] identifier];
-        [aSession setObjectCount:i+1];
+        PTYTab *aTab = [[TABVIEW tabViewItemAtIndex:i] identifier];
+        [aTab setObjectCount:i+1];
     }
 }
 
@@ -2326,8 +2331,8 @@ NSString *sessionsKey = @"sessions";
                        width * charWidth + MARGIN * 2,                        // enough width for width col plus two margins
                        charHeight * height);                                  // enough height for width rows
     [TABVIEW setFrame:aRect];
-    PtyLog(@"adjustFullScreenWindowForBottomBarChange - call fitSessionsToWindow");
-    [self fitSessionsToWindow];
+    PtyLog(@"adjustFullScreenWindowForBottomBarChange - call fitTabsToWindow");
+    [self fitTabsToWindow];
     [self fitBottomBarToWindow];
 }
 
@@ -2457,17 +2462,19 @@ NSString *sessionsKey = @"sessions";
     }
     const float kCmdHoldTime = 1;
     NSUInteger modifierFlags = [theEvent modifierFlags];
-    if ((modifierFlags & NSCommandKeyMask) && fullScreenTabviewTimer_ == nil) {
+    if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) == NSCommandKeyMask && 
+        fullScreenTabviewTimer_ == nil) {
         fullScreenTabviewTimer_ = [[NSTimer scheduledTimerWithTimeInterval:kCmdHoldTime
                                                                     target:self
                                                                   selector:@selector(cmdHeld:)
                                                                   userInfo:nil
                                                                     repeats:NO] retain];
-    } else if (!(modifierFlags & NSCommandKeyMask) && fullScreenTabviewTimer_ != nil) {
+    } else if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) != NSCommandKeyMask && 
+               fullScreenTabviewTimer_ != nil) {
         [fullScreenTabviewTimer_ invalidate];
         fullScreenTabviewTimer_ = nil;
     }
-    if (!(modifierFlags & NSCommandKeyMask)) {
+    if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) != NSCommandKeyMask) {
         [self hideFullScreenTabControl];
     }
 }
@@ -2480,7 +2487,6 @@ NSString *sessionsKey = @"sessions";
         [self showFullScreenTabControl];
     }
 }
-
 
 - (void)fitWindowToSessionsWithWidth:(int)width height:(int)height charWidth:(float)charWidth charHeight:(float)charHeight
 {
@@ -2654,10 +2660,10 @@ NSString *sessionsKey = @"sessions";
         frame.origin.y = topLeft.y - frame.size.height;
 
         [[thisWindow contentView] setAutoresizesSubviews: NO];
-        // This triggers a call to fitSessionsToWindow (via windowDidResize)
+        // This triggers a call to fitTabsToWindow (via windowDidResize)
         PtyLog(@"fitWindowToSessionsWithWidth - Set window frame size to %fx%f", frame.size.width, frame.size.height);
         PtyLog(@"Set window to %1.0fx%1.0f", frame.size.width, frame.size.height);
-        [thisWindow setFrame: frame display:YES];
+        [thisWindow setFrame:frame display:YES];
         PtyLog(@"Window size is now %1.0fx%1.0f", [thisWindow frame].size.width, [thisWindow frame].size.height);
         PtyLog(@"fitWindowToSessionsWithWidth - [NSWindow setFrame] returned");
         [[thisWindow contentView] setAutoresizesSubviews: YES];
@@ -2683,13 +2689,16 @@ NSString *sessionsKey = @"sessions";
 {
     float max=0;
     for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        PTYSession* session = [[TABVIEW tabViewItemAtIndex:i] identifier];
-        float w =[[session TEXTVIEW] charWidth];
-        PtyLog(@"maxCharWidth - session %d has %dx%d, chars are %fx%f", i, [session columns], [session rows], [[session TEXTVIEW] charWidth], [[session TEXTVIEW] lineHeight]);
-        if (w > max) {
-            max = w;
-            if (numChars) {
-                *numChars = [session columns];
+        for (PTYSession* session in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
+            float w =[[session TEXTVIEW] charWidth];
+            PtyLog(@"maxCharWidth - session %d has %dx%d, chars are %fx%f", 
+                   i, [session columns], [session rows], [[session TEXTVIEW] charWidth], 
+                   [[session TEXTVIEW] lineHeight]);
+            if (w > max) {
+                max = w;
+                if (numChars) {
+                    *numChars = [session columns];
+                }
             }
         }
     }
@@ -2700,13 +2709,15 @@ NSString *sessionsKey = @"sessions";
 {
     float max=0;
     for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        PTYSession* session = [[TABVIEW tabViewItemAtIndex:i] identifier];
-        float h =[[session TEXTVIEW] lineHeight];
-        PtyLog(@"maxCharHeight - session %d has %dx%d, chars are %fx%f", i, [session columns], [session rows], [[session TEXTVIEW] charWidth], [[session TEXTVIEW] lineHeight]);
-        if (h > max) {
-            max = h;
-            if (numChars) {
-                *numChars = [session rows];
+        for (PTYSession* session in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
+            float h =[[session TEXTVIEW] lineHeight];
+            PtyLog(@"maxCharHeight - session %d has %dx%d, chars are %fx%f", i, [session columns],
+                   [session rows], [[session TEXTVIEW] charWidth], [[session TEXTVIEW] lineHeight]);
+            if (h > max) {
+                max = h;
+                if (numChars) {
+                    *numChars = [session rows];
+                }
             }
         }
     }
@@ -2718,13 +2729,16 @@ NSString *sessionsKey = @"sessions";
     float max=0;
     float ch=0;
     for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        PTYSession* session = [[TABVIEW tabViewItemAtIndex:i] identifier];
-        float w = [[session TEXTVIEW] charWidth];
-        PtyLog(@"widestSessionWidth - session %d has %dx%d, chars are %fx%f", i, [session columns], [session rows], [[session TEXTVIEW] charWidth], [[session TEXTVIEW] lineHeight]);
-        if (w * [session columns] > max) {
-            max = w;
-            ch = [[session TEXTVIEW] charWidth];
-            *numChars = [session columns];
+        for (PTYSession* session in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
+            float w = [[session TEXTVIEW] charWidth];
+            PtyLog(@"widestSessionWidth - session %d has %dx%d, chars are %fx%f", i,
+                   [session columns], [session rows], [[session TEXTVIEW] charWidth],
+                   [[session TEXTVIEW] lineHeight]);
+            if (w * [session columns] > max) {
+                max = w;
+                ch = [[session TEXTVIEW] charWidth];
+                *numChars = [session columns];
+            }
         }
     }
     return ch;
@@ -2735,13 +2749,14 @@ NSString *sessionsKey = @"sessions";
     float max=0;
     float ch=0;
     for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        PTYSession* session = [[TABVIEW tabViewItemAtIndex:i] identifier];
-        float h = [[session TEXTVIEW] lineHeight];
-        PtyLog(@"tallestSessionheight - session %d has %dx%d, chars are %fx%f", i, [session columns], [session rows], [[session TEXTVIEW] charWidth], [[session TEXTVIEW] lineHeight]);
-        if (h * [session rows] > max) {
-            max = h * [session rows];
-            ch = [[session TEXTVIEW] lineHeight];
-            *numChars = [session rows];
+        for (PTYSession* session in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
+            float h = [[session TEXTVIEW] lineHeight];
+            PtyLog(@"tallestSessionheight - session %d has %dx%d, chars are %fx%f", i, [session columns], [session rows], [[session TEXTVIEW] charWidth], [[session TEXTVIEW] lineHeight]);
+            if (h * [session rows] > max) {
+                max = h * [session rows];
+                ch = [[session TEXTVIEW] lineHeight];
+                *numChars = [session rows];
+            }
         }
     }
     return ch;
@@ -2769,9 +2784,6 @@ NSString *sessionsKey = @"sessions";
           __FILE__, __LINE__);
 
     NSParameterAssert(aSession != nil);
-
-    // Init the rest of the session
-    [aSession setParent:self];
 
     // set some default parameters
     if ([aSession addressBookEntry] == nil) {
@@ -2807,7 +2819,7 @@ NSString *sessionsKey = @"sessions";
 
     NSRect marginlessRect = NSMakeRect(0, 0, columns * charSize.width, rows * charSize.height);
 
-    if ([aSession initScreen:marginlessRect]) {
+    if ([aSession setScreenSize:marginlessRect parent:self]) {
         PtyLog(@"setupSession - call safelySetSessionSize");
         [self safelySetSessionSize:aSession rows:rows columns:columns];
         inSetup = YES;
@@ -2859,6 +2871,7 @@ NSString *sessionsKey = @"sessions";
             height = 2;
         }
 
+        // TODO: With panes, the max size is a tricky thing to compute. But this will definitely be wrong.
         int max_height = ([self maxTextViewSize].height - VMARGIN*2) / [[aSession TEXTVIEW] lineHeight];
 
         if (height > max_height) {
@@ -2912,11 +2925,9 @@ NSString *sessionsKey = @"sessions";
     PtyLog(@"fitSessionToWindow returns");
 }
 
+// TODO: This is really inserting a session in a tab at some index, but it's in KVC so we must be delecate with names.
 - (void)insertSession:(PTYSession *)aSession atIndex:(int)anIndex
 {
-    NSTabViewItem *aTabViewItem;
-
-
     PtyLog(@"%s(%d):-[PseudoTerminal insertSession: 0x%x atIndex: %d]",
            __FILE__, __LINE__, aSession, index);
 
@@ -2924,24 +2935,26 @@ NSString *sessionsKey = @"sessions";
         return;
     }
 
-    if ([TABVIEW indexOfTabViewItemWithIdentifier:aSession] == NSNotFound) {
+    if ([[self allSessions] indexOfObject:aSession] == NSNotFound) {
         // create a new tab
-        aTabViewItem = [[NSTabViewItem alloc] initWithIdentifier: aSession];
-        [aSession setTabViewItem:aTabViewItem];
+        PTYTab* aTab = [[PTYTab alloc] initWithSession:aSession];
+        NSTabViewItem *aTabViewItem = [[NSTabViewItem alloc] initWithIdentifier:aTab];
+        [aTab release];
+        [aTab setTabViewItem:aTabViewItem];
         NSParameterAssert(aTabViewItem != nil);
         [aTabViewItem setLabel:[aSession name]];
         [aTabViewItem setView:[aSession view]];
         // This triggers a call to fitWindowToSessions
         PtyLog(@"insertSession - calling insertTabViewItem");
-        [TABVIEW insertTabViewItem: aTabViewItem atIndex: anIndex];
+        [TABVIEW insertTabViewItem:aTabViewItem atIndex:anIndex];
 
         [aTabViewItem release];
         [TABVIEW selectTabViewItemAtIndex:anIndex];
 
         if ([self windowInited] && !_fullScreen) {
-            [[self window] makeKeyAndOrderFront: self];
+            [[self window] makeKeyAndOrderFront:self];
         }
-        [[iTermController sharedInstance] setCurrentTerminal: self];
+        [[iTermController sharedInstance] setCurrentTerminal:self];
     }
 }
 
@@ -2959,13 +2972,14 @@ NSString *sessionsKey = @"sessions";
     assert(aTabViewItem);
 
     // Tell the session at this index that it is no longer associated with this tab.
-    PTYSession* oldSession = [aTabViewItem identifier];
-    [oldSession setTabViewItem:nil];
+    PTYTab* oldTab = [aTabViewItem identifier];
+    [oldTab setTabViewItem:nil];
 
     // Replace the session for the tab view item.
-    [tabBarControl changeIdentifier:aSession atIndex:anIndex];
+    PTYTab* newTab = [[PTYTab alloc] initWithSession:aSession];
+    [tabBarControl changeIdentifier:newTab atIndex:anIndex];
 
-    [aSession setTabViewItem:aTabViewItem];
+    [newTab setTabViewItem:aTabViewItem];
 
     // Set other tabviewitem attributes to match the new session.
     [aTabViewItem setLabel:[aSession name]];
@@ -2988,11 +3002,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)setCurrentSessionName:(NSString *)theSessionName
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal setCurrentSessionName]",
-          __FILE__, __LINE__);
-#endif
-    PTYSession *aSession = [[TABVIEW selectedTabViewItem] identifier];
+    PTYSession *aSession = [[[TABVIEW selectedTabViewItem] identifier] activeSession];
 
     if (theSessionName != nil) {
         [aSession setName:theSessionName];
@@ -3067,7 +3077,8 @@ NSString *sessionsKey = @"sessions";
         [[self currentSession] logStart];
     }
     // send a notification
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermSessionBecameKey" object: [self currentSession]];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey" 
+                                                        object:[self currentSession]];
 }
 
 - (IBAction)logStop:(id)sender
@@ -3076,7 +3087,8 @@ NSString *sessionsKey = @"sessions";
         [[self currentSession] logStop];
     }
     // send a notification
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermSessionBecameKey" object: [self currentSession]];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey" 
+                                                        object:[self currentSession]];
 }
 
 - (BOOL)validateMenuItem:(NSMenuItem *)item
@@ -3138,14 +3150,15 @@ NSString *sessionsKey = @"sessions";
     [self setWindowTitle];
 }
 
-- (void)fitSessionsToWindow
+- (void)fitTabsToWindow
 {
-    PtyLog(@"fitSessionsToWindow begins");
+    PtyLog(@"fitTabsToWindow begins");
     for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        PTYSession* session = (PTYSession*) [[TABVIEW tabViewItemAtIndex:i] identifier];
+        // TODO: Make this sensible with many sessions in one tab.
+        PTYSession* session = (PTYSession*) [[[TABVIEW tabViewItemAtIndex:i] identifier] activeSession];
         [self fitSessionToWindow:session];
     }
-    PtyLog(@"fitSessionsToWindow returns");
+    PtyLog(@"fitTabsToWindow returns");
 }
 
 // Close Window
@@ -3170,7 +3183,7 @@ NSString *sessionsKey = @"sessions";
 // closes a tab
 - (void) closeTabContextualMenuAction: (id) sender
 {
-    [self closeSession:[[sender representedObject] identifier]];
+    [self closeTab:[[sender representedObject] identifier]];
 }
 
 // moves a tab with its session to a new window
@@ -3178,9 +3191,9 @@ NSString *sessionsKey = @"sessions";
 {
     PseudoTerminal *term;
     NSTabViewItem *aTabViewItem = [sender representedObject];
-    PTYSession *aSession = [aTabViewItem identifier];
+    PTYTab *aTab = [aTabViewItem identifier];
 
-    if (aSession == nil) {
+    if (aTab == nil) {
         return;
     }
 
@@ -3200,9 +3213,9 @@ NSString *sessionsKey = @"sessions";
     [TABVIEW removeTabViewItem: aTabViewItem];
 
     // add the session to the new terminal
-    [term insertSession: aSession atIndex: 0];
-    PtyLog(@"mvoeTabToNewWindowContextMenuAction - call fitSessionsToWindow");
-    [term fitSessionsToWindow];
+    [term insertSession:[aTab activeSession] atIndex: 0];
+    PtyLog(@"mvoeTabToNewWindowContextMenuAction - call fitTabsToWindow");
+    [term fitTabsToWindow];
 
     // release the tabViewItem
     [aTabViewItem release];
@@ -3246,8 +3259,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)reloadBookmarks
 {
-    for (int j = 0; j < [self numberOfSessions]; ++j) {
-        PTYSession* session = [self sessionAtIndex:j];
+    for (PTYSession* session in [self allSessions]) {
         Bookmark *oldBookmark = [session addressBookEntry];
         NSString* oldName = [oldBookmark objectForKey:KEY_NAME];
         [oldName retain];
@@ -3258,11 +3270,14 @@ NSString *sessionsKey = @"sessions";
         }
         if (newBookmark && newBookmark != oldBookmark) {
             // Same guid but different pointer means it has changed.
-            // The test can have false negatives but it should be harmless.
+            // The test can have false positives but it should be harmless.
             [session setPreferencesFromAddressBookEntry:newBookmark];
             [session setAddressBookEntry:newBookmark];
             if (![[newBookmark objectForKey:KEY_NAME] isEqualToString:oldName]) {
+                // Set name, which overrides any session-set icon name.
                 [session setName:[newBookmark objectForKey:KEY_NAME]];
+                // set default name, which will appear as a prefix if the session changes the name.
+                [session setDefaultName:[newBookmark objectForKey:KEY_NAME]];
             }
         }
         [oldName release];
@@ -3317,6 +3332,15 @@ NSString *sessionsKey = @"sessions";
     return [dvr firstTimeStamp] + offset;
 }
 
+- (NSArray*)allSessions
+{
+    NSMutableArray* result = [NSMutableArray arrayWithCapacity:[TABVIEW numberOfTabViewItems]];
+    for (NSTabViewItem* item in [TABVIEW tabViewItems]) {
+        [result addObjectsFromArray:[[item identifier] sessions]];
+    }
+    return result;
+}
+
 @end
 
 
@@ -3361,7 +3385,7 @@ NSString *sessionsKey = @"sessions";
     // set our preferences
     [aSession setAddressBookEntry: addressbookEntry];
     // Add this session to our term and make it current
-    [self appendSession: aSession];
+    [self appendSession:aSession];
     if ([aSession SCREEN]) {
         NSMutableString *cmd, *name;
         NSArray *arg;
@@ -3403,23 +3427,27 @@ NSString *sessionsKey = @"sessions";
 -(id)valueInSessionsAtIndex:(unsigned)anIndex
 {
     // NSLog(@"PseudoTerminal: -valueInSessionsAtIndex: %d", anIndex);
-    return ([[TABVIEW tabViewItemAtIndex:anIndex] identifier]);
+    return [[[TABVIEW tabViewItemAtIndex:anIndex] identifier] activeSession];
 }
 
 -(NSArray*)sessions
 {
     int n = [TABVIEW numberOfTabViewItems];
-    NSMutableArray *sessions = [NSMutableArray arrayWithCapacity: n];
+    NSMutableArray *sessions = [NSMutableArray arrayWithCapacity:n];
     int i;
 
     for (i = 0; i < n; ++i) {
-        [sessions addObject: [[TABVIEW tabViewItemAtIndex:i] identifier]];
+        // TODO: Rationalize this for panes. Other funcs in KVC should use the same scheme of only recognizing the active session in each tab.
+        PTYSession* aSession = [[[TABVIEW tabViewItemAtIndex:i] identifier] activeSession];
+        [sessions addObject:aSession];
     }
 
     return sessions;
 }
 
--(void)setSessions: (NSArray*)sessions {}
+-(void)setSessions: (NSArray*)sessions
+{
+}
 
 -(id)valueWithName: (NSString *)uniqueName inPropertyWithKey: (NSString*)propertyKey
 {
@@ -3431,7 +3459,7 @@ NSString *sessionsKey = @"sessions";
         PTYSession *aSession;
 
         for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-            aSession = [[TABVIEW tabViewItemAtIndex:i] identifier];
+            aSession = [[[TABVIEW tabViewItemAtIndex:i] identifier] activeSession];
             if ([[aSession name] isEqualToString: uniqueName] == YES) {
                 return (aSession);
             }
@@ -3451,7 +3479,7 @@ NSString *sessionsKey = @"sessions";
         PTYSession *aSession;
 
         for (i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-            aSession = [[TABVIEW tabViewItemAtIndex:i] identifier];
+            aSession = [[[TABVIEW tabViewItemAtIndex:i] identifier] activeSession];
             if ([[aSession tty] isEqualToString: uniqueID] == YES) {
                 return (aSession);
             }
@@ -3569,10 +3597,10 @@ NSString *sessionsKey = @"sessions";
     // Increment tabViewItemsBeingAdded so that the maximum content size will
     // be calculated with the tab bar if it's about to open.
     ++tabViewItemsBeingAdded;
-    [self setupSession: object title: nil];
+    [self setupSession:object title:nil];
     tabViewItemsBeingAdded--;
     if ([object SCREEN]) {  // screen initialized ok
-        [self insertSession: object atIndex:[TABVIEW numberOfTabViewItems]];
+        [self insertSession:object atIndex:[TABVIEW numberOfTabViewItems]];
     }
 }
 
@@ -3610,8 +3638,8 @@ NSString *sessionsKey = @"sessions";
 {
     // NSLog(@"PseudoTerminal: -removeFromSessionsAtIndex: %d", anIndex);
     if (anIndex < [TABVIEW numberOfTabViewItems]) {
-        PTYSession *aSession = [[TABVIEW tabViewItemAtIndex:anIndex] identifier];
-        [self closeSession: aSession];
+        PTYSession *aSession = [[[TABVIEW tabViewItemAtIndex:anIndex] identifier] activeSession];
+        [self closeSession:aSession];
     }
 }
 
