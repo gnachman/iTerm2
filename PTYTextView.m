@@ -3424,8 +3424,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     if ([self blinkingCursor] &&
         [[self window] isKeyWindow] &&
+        [[[dataSource session] tab] activeSession] == [dataSource session] &&
         x1 == oldCursorX &&
         yStart == oldCursorY) {
+        // Allow the cursor to blink if it is configured, the window is key, this session is active
+        // in the tab, and the cursor has not moved since the last draw.
         showCursor = blinkShow;
     } else {
         showCursor = YES;
