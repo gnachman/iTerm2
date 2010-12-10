@@ -183,6 +183,11 @@ static const float kBackgroundSessionIntervalSec = 1;
 
     // The name of the foreground job at the moment as best we can tell.
     NSString* jobName_;
+
+    // Ignore resize notifications. This would be set because the session's size musn't be changed
+    // due to temporary changes in the window size, as code later on may need to know the session's
+    // size to set the window size properly.
+    BOOL ignoreResizeNotifications_;
 }
 
 // init/dealloc
@@ -380,6 +385,9 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (void)scheduleUpdateIn:(NSTimeInterval)timeout;
 
 - (NSString*)jobName;
+
+- (void)setIgnoreResizeNotifications:(BOOL)ignore;
+- (BOOL)ignoreResizeNotifications;
 
 @end
 

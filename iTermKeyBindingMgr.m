@@ -339,6 +339,12 @@
         case KEY_ACTION_IR_BACKWARD:
             actionString = @"backward in time";
             break;
+        case KEY_ACTION_SELECT_PANE_LEFT:
+            actionString = @"select pane on left";
+            break;
+        case KEY_ACTION_SELECT_PANE_RIGHT:
+            actionString = @"select pane on right";
+            break;
         default:
             actionString = [NSString stringWithFormat: @"%@ %d", 
                 NSLocalizedStringFromTableInBundle(@"unknown action ID",@"iTerm", 
@@ -513,4 +519,3 @@
 }
 
 @end
-

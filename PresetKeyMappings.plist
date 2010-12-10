@@ -19,17 +19,7 @@
                         <key>Action</key>
                         <integer>2</integer>
                 </dict>
-                <key>0xf702-0x380000</key>
-                <dict>
-                        <key>Action</key>
-                        <integer>2</integer>
-                </dict>
                 <key>0xf703-0x320000</key>
-                <dict>
-                        <key>Action</key>
-                        <integer>0</integer>
-                </dict>
-                <key>0xf703-0x380000</key>
                 <dict>
                         <key>Action</key>
                         <integer>0</integer>

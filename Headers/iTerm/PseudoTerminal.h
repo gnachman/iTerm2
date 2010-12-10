@@ -159,13 +159,6 @@
     // includes its unique number. framePos gives this window's number.
     int framePos;
 
-    // In the process of toggling full screen.
-    BOOL _togglingFullScreen;
-
-    // In the process of setting up a new session. Ignore calls to
-    // fitWindowToSession due to setting the font.
-    BOOL inSetup;
-
     // This is set while toggling full screen. It prevents windowDidResignMain
     // from trying to exit fullscreen mode in the midst of toggling it.
     BOOL togglingFullScreen_;
@@ -180,6 +173,12 @@
     AutocompleteView* autocompleteView;
 
     NSTimer* fullScreenTabviewTimer_;
+
+    // This is a hack to support old applescript code that set the window size
+    // before adding a session to it, which doesn't really make sense now that
+    // textviews and windows are loosely coupled.
+    int nextSessionRows_;
+    int nextSessionColumns_;
 }
 
 // Initialize a new PseudoTerminal.
@@ -210,8 +209,11 @@
 // Close a session (TODO: currently just closes the tab the session is in).
 - (void)closeSession:(PTYSession *)aSession;
 
-// Close the foreground session.
+// Close the active session.
 - (IBAction)closeCurrentSession:(id)sender;
+
+// Close foreground tab.
+- (IBAction)closeCurrentTab:(id)sender;
 
 // Show paste history window.
 - (IBAction)openPasteHistory:(id)sender;
@@ -220,25 +222,19 @@
 - (IBAction)openAutocomplete:(id)sender;
 
 // Select the tab to the left of the foreground tab.
-- (IBAction)previousSession:(id)sender;
+- (IBAction)previousTab:(id)sender;
 
 // Select the tab to the right of the foreground tab.
-- (IBAction)nextSession:(id)sender;
+- (IBAction)nextTab:(id)sender;
 
 // Return the number of sessions in this window.
-- (int)numberOfSessions;
-
-// Accessor for a session.
-- (PTYSession*)sessionAtIndex:(int)i;
+- (int)numberOfTabs;
 
 // Return the foreground tab
 - (PTYTab*)currentTab;
 
 // accessor for foreground session.
 - (PTYSession *)currentSession;
-
-// tab number of current session.
-- (int)currentSessionIndex;
 
 // Set the window title to the name of the current session.
 - (void)setWindowTitle;
@@ -418,9 +414,14 @@
     shouldDropTabViewItem:(NSTabViewItem *)tabViewItem
        inTabBar:(PSMTabBarControl *)tabBarControl;
 
-// Called after droping a tab in this window.
+// Called after dropping a tab in this window.
 - (void)tabView:(NSTabView*)aTabView
     didDropTabViewItem:(NSTabViewItem *)tabViewItem
+       inTabBar:(PSMTabBarControl *)aTabBarControl;
+
+// Called just before dropping a tab in this window.
+- (void)tabView:(NSTabView*)aTabView
+    willDropTabViewItem:(NSTabViewItem *)tabViewItem
        inTabBar:(PSMTabBarControl *)aTabBarControl;
 
 // Called after the last tab in a window is closed.
@@ -463,8 +464,17 @@
 - (IBAction)closeFindBar:(id)sender;
 - (IBAction)closeInstantReplay:(id)sender;
 
+// Resize the window to exactly fit this tab.
+- (void)fitWindowToTab:(PTYTab*)tab;
+
+// Resize window to be just large enough to fit the largest tab without changing session sizes.
+- (void)fitWindowToTabs;
+
+// Fit the window to exactly fit a tab of the given size.
+- (void)fitWindowToTabSize:(NSSize)tabSize;
+
 // Force the window size to change to be just large enough to fit this session.
-- (void)fitWindowToSession:(PTYSession*)session;
+- (void)fitWindowToTab:(PTYTab*)tab;
 
 // Replace a replay session with a live session.
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession;
@@ -496,6 +506,13 @@
 - (IBAction)irPrev:(id)sender;
 - (IBAction)irNext:(id)sender;
 
+// selector for menu item to split current session vertically.
+- (IBAction)splitVertically:(id)sender;
+- (void)splitVerticallyWithBookmark:(Bookmark*)theBookmark;
+
+// Change active pane.
+- (void)selectPaneLeft;
+- (void)selectPaneRight;
 
 @end
 
@@ -542,6 +559,12 @@
 
 @interface PseudoTerminal (Private)
 
+// Allocate a new session and assign it a bookmark.
+- (PTYSession*)newSessionWithBookmark:(Bookmark*)bookmark;
+
+// Execute the bookmark command in this session.
+- (void)runCommandInSession:(PTYSession*)aSession inCwd:(NSString*)oldCWD;
+
 // For full screen mode, draw the window contents in black except for the find
 // bar area.
 - (void)_drawFullScreenBlackBackground;
@@ -553,10 +576,6 @@
 + (void)breakDown:(NSString *)cmdl
           cmdPath:(NSString **)cmd
           cmdArgs:(NSArray **)path;
-
-// Force the window size to change to be just large enough to fit the widest and
-// tallest sessions.
-- (void)fitWindowToSessions;
 
 // Returns the width of characters in pixels in the session with the widest
 // characters. Fills in *numChars with the number of columns in that session.
@@ -574,21 +593,20 @@
 // Fills in *numChars with the number of rows in that session.
 - (float)tallestSessionHeight:(int*)numChars;
 
-// Force the window to fit a hypothetical session with a given number of rows,
-// columns, character width, and line height.
-- (void)fitWindowToSessionsWithWidth:(int)width
-                              height:(int)height
-                           charWidth:(float)charWidth
-                          charHeight:(float)charHeight;
-
 // Copy state from 'other' to this terminal.
 - (void)copySettingsFrom:(PseudoTerminal*)other;
 
 
 // Set the session's address book and initialize its screen and name. Sets the
-// window title to the session's name.
+// window title to the session's name. If size is not nil then the session is initialized to fit
+// a view of that size; otherwise the size is derived from the existing window if there is already
+// an open tab, or its bookmark's preference if it's the first session in the window.
 - (void)setupSession:(PTYSession *)aSession
-               title:(NSString *)title;
+               title:(NSString *)title
+            withSize:(NSSize*)size;
+
+// Returns the size of the stuff outside the tabview.
+- (NSSize)windowDecorationSize;
 
 // Returns the largest possible text view that fits on the screens while
 // leaving room for window decorations.
@@ -603,13 +621,18 @@
                         rows:(int)rows
                      columns:(int)columns;
 
-// Push a size change to a session so that it is as large as possible while
-// still fitting in the window.
-- (void)fitSessionToWindow:(PTYSession*)aSession;
+// Change position of window widgets.
+- (void)repositionWidgets;
+
+// Adjust the tab's size for a new window size.
+- (void)fitTabToWindow:(PTYTab*)aTab;
 
 // Push size changes to all sessions so they are all as large as possible while
 // still fitting in the window.
 - (void)fitTabsToWindow;
+
+// Add a tab to the tabview.
+- (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex;
 
 // Add a session to the tab view.
 - (void)insertSession:(PTYSession *)aSession atIndex:(int)anIndex;
@@ -622,7 +645,7 @@
 
 // Set the session name. If theSessionName is nil then set it to the pathname
 // or "Finish" if it's closed.
-- (void)setCurrentSessionName:(NSString *)theSessionName;
+- (void)setName:(NSString*)theName forSession:(PTYSession*)aSession;
 
 // Assign a value to the 'framePos' member variable which is used for storing
 // window frame positions between invocations of iTerm.
@@ -632,7 +655,8 @@
 - (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv
          environment:(NSDictionary *)prog_env
-              isUTF8:(BOOL)isUTF8;
+              isUTF8:(BOOL)isUTF8
+           inSession:(PTYSession*)theSession;
 
 // Send a reset to the current session's terminal.
 - (void)reset:(id)sender;

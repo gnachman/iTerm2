@@ -36,13 +36,13 @@
 - (BOOL)fullScreen;
 - (BOOL)sendInputToAllSessions;
 - (void)closeSession:(PTYSession*)aSession;
-- (IBAction)nextSession:(id)sender;
-- (IBAction)previousSession:(id)sender;
+- (IBAction)nextTab:(id)sender;
+- (IBAction)previousTab:(id)sender;
 - (void)setLabelColor:(NSColor *)color forTabViewItem:tabViewItem;
 - (void)enableBlur;
 - (void)disableBlur;
 - (BOOL)tempTitle;
-- (void)fitWindowToSession:(PTYSession*)session;
+- (void)fitWindowToTab:(PTYTab*)tab;
 - (PTYTabView *)tabView;
 - (PTYSession *)currentSession;
 - (void)sendInputToAllSessions:(NSData *)data;

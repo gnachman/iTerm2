@@ -162,7 +162,7 @@
     [super removeTabViewItem: aTabViewItem];
 }
 
-- (void) insertTabViewItem: (NSTabViewItem *) tabViewItem atIndex: (int) theIndex
+- (void)insertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int)theIndex
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"PTYTabView: -insertTabViewItem atIndex: %d", theIndex);
@@ -180,7 +180,7 @@
     if([delegate conformsToProtocol: @protocol(PTYTabViewDelegateProtocol)])
         [delegate tabView: self willInsertTabViewItem: tabViewItem atIndex: theIndex];
 
-    [super insertTabViewItem: tabViewItem atIndex: theIndex];
+    [super insertTabViewItem:tabViewItem atIndex:theIndex];
 #if DEBUG_METHOD_TRACE
     NSLog(@"PTYTabView: -insertTabViewItem atIndex: %d, done", theIndex);
 #endif

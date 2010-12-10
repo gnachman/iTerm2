@@ -74,8 +74,8 @@
     if (hasPendingSizeChange) {
         [aTerm sessionInitiatedResize:session width:pendingW height:pendingH];
     }
-    if (hasPendingFitWindowToSession) {
-        [aTerm fitWindowToSession:session];
+    if (hasPendingFitWindowToTab) {
+        [aTerm fitWindowToTab:[session tab]];
     }
     if (pendingLabelColor) {
         [aTerm setLabelColor:pendingLabelColor forTabViewItem:[[session tab] tabViewItem]];
@@ -122,11 +122,11 @@
     hasPendingClose = YES;
 }
 
-- (IBAction)nextSession:(id)sender
+- (IBAction)nextTab:(id)sender
 {
 }
 
-- (IBAction)previousSession:(id)sender
+- (IBAction)previousTab:(id)sender
 {
 }
 
@@ -154,9 +154,9 @@
     return NO;
 }
 
-- (void)fitWindowToSession:(PTYSession*)session
+- (void)fitWindowToTab:(PTYTab*)tab
 {
-    hasPendingFitWindowToSession = YES;
+    hasPendingFitWindowToTab = YES;
 }
 
 - (PTYTabView *)tabView

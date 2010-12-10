@@ -46,6 +46,7 @@
 #import "iTermApplicationDelegate.h"
 #import "PreferencePanel.h"
 #import "PasteboardHistory.h"
+#import "PTYTab.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -170,7 +171,7 @@ static NSCursor* textViewCursor =  nil;
     return (self);
 }
 
-- (BOOL) resignFirstResponder
+- (BOOL)resignFirstResponder
 {
 
     //NSLog(@"0x%x: %s", self, __PRETTY_FUNCTION__);
@@ -178,12 +179,11 @@ static NSCursor* textViewCursor =  nil;
     return (YES);
 }
 
-- (BOOL) becomeFirstResponder
+- (BOOL)becomeFirstResponder
 {
-
-    //NSLog(@"0x%x: %s", self, __PRETTY_FUNCTION__);
-
-    return (YES);
+    PTYSession* mySession = [dataSource session];
+    [[mySession tab] setActiveSession:mySession];
+    return YES;
 }
 
 - (void)viewWillMoveToWindow:(NSWindow *)win
@@ -593,12 +593,12 @@ static NSCursor* textViewCursor =  nil;
     lineHeight = aLineHeight;
 }
 
-- (float) charWidth
+- (float)charWidth
 {
     return ceil(charWidth);
 }
 
-- (void) setCharWidth: (float) width
+- (void)setCharWidth: (float) width
 {
     charWidth = width;
 }
@@ -2807,7 +2807,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return (transparency);
 }
 
-- (void) setTransparency: (float) fVal
+- (void)setTransparency:(float)fVal
 {
     transparency = fVal;
     [self setNeedsDisplay:YES];
@@ -3462,7 +3462,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             switch ([[PreferencePanel sharedInstance] cursorType]) {
                 case CURSOR_BOX:
                     // draw the box
-                    if([[self window] isKeyWindow]) {
+                    if ([[self window] isKeyWindow] &&
+                        [[[dataSource session] tab] activeSession] == [dataSource session]) {
                         NSRectFill(NSMakeRect(curX,
                                               curY,
                                               ceil(cursorWidth * (double_width ? 2 : 1)),

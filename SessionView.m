@@ -34,14 +34,26 @@
 {
     self = [super initWithFrame:frame];
     if (self) {
-        session_ = session;
+        session_ = [session retain];
     }
     return self;
+}
+
+- (void)dealloc
+{
+    [session_ release];
+    [super dealloc];
 }
 
 - (PTYSession*)session
 {
     return session_;
+}
+
+- (void)setSession:(PTYSession*)session
+{
+    [session_ autorelease];
+    session_ = [session retain];
 }
 
 @end

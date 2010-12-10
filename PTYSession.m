@@ -105,7 +105,6 @@ static NSString *PWD_ENVVALUE = @"~";
     }
     [TERM_VALUE release];
     [COLORFGBG_VALUE release];
-    [view release];
     [name release];
     [windowTitle release];
     [addressBookEntry release];
@@ -228,9 +227,8 @@ static NSString *PWD_ENVVALUE = @"~";
     [SCREEN setSession:self];
 
     // Allocate a container to hold the scrollview
-    view = [[SessionView alloc] initWithFrame:NSMakeRect(0, 0, aRect.size.width, aRect.size.height)
-                                      session:self];
-    [view retain];
+    view = [[[SessionView alloc] initWithFrame:NSMakeRect(0, 0, aRect.size.width, aRect.size.height)
+                                      session:self] autorelease];
 
     // Allocate a scrollview
     SCROLLVIEW = [[PTYScrollView alloc] initWithFrame: NSMakeRect(0, 0, aRect.size.width, aRect.size.height)];
@@ -241,6 +239,7 @@ static NSString *PWD_ENVVALUE = @"~";
 
     // assign the main view
     [view addSubview:SCROLLVIEW];
+    [view setAutoresizesSubviews:YES];
     // TODO(georgen): I disabled setCopiesOnScroll because there is a vertical margin in the PTYTextView and
     // we would not want that copied. This is obviously bad for performance when scrolling, but it's unclear
     // whether the difference will ever be noticable. I believe it could be worked around (painfully) by
@@ -386,22 +385,21 @@ static NSString *PWD_ENVVALUE = @"~";
     // final update of display
     [self updateDisplay];
 
-    [addressBookEntry release];
-    addressBookEntry = nil;
-
     [TEXTVIEW setDataSource: nil];
     [TEXTVIEW setDelegate: nil];
     [TEXTVIEW removeFromSuperview];
 
     [SHELL setDelegate:nil];
     [SCREEN setShellTask:nil];
-    [SCREEN setSession: nil];
-    [SCREEN setTerminal: nil];
-    [TERMINAL setScreen: nil];
+    [SCREEN setSession:nil];
+    [SCREEN setTerminal:nil];
+    [TERMINAL setScreen:nil];
 
     [updateTimer invalidate];
     [updateTimer release];
     updateTimer = nil;
+
+    [tab_ removeSession:self];
 }
 
 - (void)writeTask:(NSData*)data
@@ -489,7 +487,7 @@ static NSString *PWD_ENVVALUE = @"~";
                      [[self tab] realObjectCount]]
     andNotification:@"Broken Pipes"];
 
-    EXIT=YES;
+    EXIT = YES;
     [[self tab] setLabelAttributes];
 
     if ([self autoClose]) {
@@ -531,7 +529,8 @@ static NSString *PWD_ENVVALUE = @"~";
     return (keyBindingAction >= 0);
 }
 
-// Screen for special keys
+// Handle bookmark- and global-scope keybindings. If there is no keybinding then
+// pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event
 {
     unsigned char *send_str = NULL;
@@ -552,10 +551,6 @@ static NSString *PWD_ENVVALUE = @"~";
     NSLog(@"%s(%d):-[PTYSession keyDown:%@]",
           __FILE__, __LINE__, event);
 #endif
-
-    if (EXIT) {
-      return;
-    }
 
     modflag = [event modifierFlags];
     keystr  = [event characters];
@@ -585,16 +580,16 @@ static NSString *PWD_ENVVALUE = @"~";
 
         switch (keyBindingAction) {
             case KEY_ACTION_NEXT_SESSION:
-                [[[self tab] parentWindow] nextSession: nil];
+                [[[self tab] parentWindow] nextTab:nil];
                 break;
             case KEY_ACTION_NEXT_WINDOW:
-                [[iTermController sharedInstance] nextTerminal: nil];
+                [[iTermController sharedInstance] nextTerminal:nil];
                 break;
             case KEY_ACTION_PREVIOUS_SESSION:
-                [[[self tab] parentWindow] previousSession: nil];
+                [[[self tab] parentWindow] previousTab:nil];
                 break;
             case KEY_ACTION_PREVIOUS_WINDOW:
-                [[iTermController sharedInstance] previousTerminal: nil];
+                [[iTermController sharedInstance] previousTerminal:nil];
                 break;
             case KEY_ACTION_SCROLL_END:
                 [TEXTVIEW scrollEnd];
@@ -605,48 +600,63 @@ static NSString *PWD_ENVVALUE = @"~";
                 [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll];
                 break;
             case KEY_ACTION_SCROLL_LINE_DOWN:
-                [TEXTVIEW scrollLineDown: self];
+                [TEXTVIEW scrollLineDown:self];
                 [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll];
                 break;
             case KEY_ACTION_SCROLL_LINE_UP:
-                [TEXTVIEW scrollLineUp: self];
+                [TEXTVIEW scrollLineUp:self];
                 [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll];
                 break;
             case KEY_ACTION_SCROLL_PAGE_DOWN:
-                [TEXTVIEW scrollPageDown: self];
+                [TEXTVIEW scrollPageDown:self];
                 [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll];
                 break;
             case KEY_ACTION_SCROLL_PAGE_UP:
-                [TEXTVIEW scrollPageUp: self];
+                [TEXTVIEW scrollPageUp:self];
                 [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll];
                 break;
             case KEY_ACTION_ESCAPE_SEQUENCE:
+                if (EXIT) {
+                    return;
+                }
                 if ([keyBindingText length] > 0) {
                     aString = [NSString stringWithFormat:@"\e%@", keyBindingText];
-                    [self writeTask: [aString dataUsingEncoding: NSUTF8StringEncoding]];
+                    [self writeTask:[aString dataUsingEncoding:NSUTF8StringEncoding]];
                 }
                 break;
             case KEY_ACTION_HEX_CODE:
+                if (EXIT) {
+                    return;
+                }
                 if ([keyBindingText length] > 0 &&
                     sscanf([keyBindingText UTF8String], "%x", &hexCodeTmp) == 1) {
                     hexCode = (unsigned char) hexCodeTmp;
-                    [self writeTask:[NSData dataWithBytes:&hexCode length: sizeof(hexCode)]];
+                    [self writeTask:[NSData dataWithBytes:&hexCode length:sizeof(hexCode)]];
                 }
                 break;
             case KEY_ACTION_TEXT:
+                if (EXIT) {
+                    return;
+                }
                 if([keyBindingText length] > 0) {
-                    NSMutableString *bindingText = [NSMutableString stringWithString: keyBindingText];
+                    NSMutableString *bindingText = [NSMutableString stringWithString:keyBindingText];
                     [bindingText replaceOccurrencesOfString:@"\\n" withString:@"\n" options:NSLiteralSearch range:NSMakeRange(0,[bindingText length])];
                     [bindingText replaceOccurrencesOfString:@"\\e" withString:@"\e" options:NSLiteralSearch range:NSMakeRange(0,[bindingText length])];
                     [bindingText replaceOccurrencesOfString:@"\\a" withString:@"\a" options:NSLiteralSearch range:NSMakeRange(0,[bindingText length])];
                     [bindingText replaceOccurrencesOfString:@"\\t" withString:@"\t" options:NSLiteralSearch range:NSMakeRange(0,[bindingText length])];
-                    [self writeTask: [bindingText dataUsingEncoding: NSUTF8StringEncoding]];
+                    [self writeTask:[bindingText dataUsingEncoding:NSUTF8StringEncoding]];
                 }
                 break;
             case KEY_ACTION_SEND_C_H_BACKSPACE:
+                if (EXIT) {
+                    return;
+                }
                 [self writeTask:[@"\010" dataUsingEncoding:NSUTF8StringEncoding]];
                 break;
             case KEY_ACTION_SEND_C_QM_BACKSPACE:
+                if (EXIT) {
+                    return;
+                }
                 [self writeTask:[@"\177" dataUsingEncoding:NSUTF8StringEncoding]]; // decimal 127
                 break;
             case KEY_ACTION_IGNORE:
@@ -657,11 +667,21 @@ static NSString *PWD_ENVVALUE = @"~";
             case KEY_ACTION_IR_BACKWARD:
                 [[iTermController sharedInstance] irAdvance:-1];
                 break;
+            case KEY_ACTION_SELECT_PANE_LEFT:
+                [[[iTermController sharedInstance] currentTerminal] selectPaneLeft];
+                break;
+            case KEY_ACTION_SELECT_PANE_RIGHT:
+                [[[iTermController sharedInstance] currentTerminal] selectPaneRight];
+                break;
+
             default:
                 NSLog(@"Unknown key action %d", keyBindingAction);
                 break;
         }
     } else {
+        if (EXIT) {
+            return;
+        }
         // No special binding for this key combination.
         if (modflag & NSFunctionKeyMask) {
             // Handle all "special" keys (arrows, etc.)
@@ -699,7 +719,7 @@ static NSString *PWD_ENVVALUE = @"~";
                     data = [TERMINAL keyPageDown];
                     break;
                 case NSClearLineFunctionKey:
-                    data = [@"\e" dataUsingEncoding: NSUTF8StringEncoding];
+                    data = [@"\e" dataUsingEncoding:NSUTF8StringEncoding];
                     break;
             }
 
@@ -763,7 +783,7 @@ static NSString *PWD_ENVVALUE = @"~";
             }
             // Check if we are in keypad mode
             if (modflag & NSNumericPadKeyMask) {
-                data = [TERMINAL keypadData: unicode keystr: keystr];
+                data = [TERMINAL keypadData:unicode keystr:keystr];
             }
 
             if (data != nil ) {
@@ -821,12 +841,12 @@ static NSString *PWD_ENVVALUE = @"~";
 
 }
 
-- (BOOL)willHandleEvent: (NSEvent *) theEvent
+- (BOOL)willHandleEvent:(NSEvent *) theEvent
 {
     return NO;
 }
 
-- (void)handleEvent: (NSEvent *) theEvent
+- (void)handleEvent:(NSEvent *) theEvent
 {
 }
 
@@ -841,7 +861,7 @@ static NSString *PWD_ENVVALUE = @"~";
         return;
     }
 
-    //    NSLog(@"insertText: %@",string);
+    //    NSLog(@"insertText:%@",string);
     mstring = [NSMutableString stringWithString:string];
     max = [string length];
     for (i = 0; i < max; i++) {
@@ -963,7 +983,7 @@ static NSString *PWD_ENVVALUE = @"~";
         [slowPasteBuffer setString:str];
         [self pasteSlowly:nil];
     } else {
-        [self pasteString: str];
+        [self pasteString:str];
     }
 }
 
@@ -992,7 +1012,7 @@ static NSString *PWD_ENVVALUE = @"~";
     }
 }
 
-- (void) pasteString: (NSString *) aString
+- (void)pasteString:(NSString *)aString
 {
 
     if ([aString length] > 0) {
@@ -1184,16 +1204,12 @@ static NSString *PWD_ENVVALUE = @"~";
     [SCREEN setShowBellFlag:[[aDict objectForKey:KEY_VISUAL_BELL] boolValue]];
     [SCREEN setFlashBellFlag:[[aDict objectForKey:KEY_FLASHING_BELL] boolValue]];
     [SCREEN setGrowlFlag:[[aDict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue]];
-    [SCREEN setBlinkingCursor: [[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];
-    [TEXTVIEW setBlinkingCursor: [[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];
-    [TEXTVIEW setUseTransparency:[[aDict objectForKey:KEY_TRANSPARENCY] boolValue]];
+    [SCREEN setBlinkingCursor:[[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];
+    [TEXTVIEW setBlinkingCursor:[[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];
+    [TEXTVIEW setUseTransparency:YES];
     PTYTab* currentTab = [[[self tab] parentWindow] currentTab];
     if (currentTab == nil || currentTab == [self tab]) {
-        if ([[aDict objectForKey:KEY_BLUR] boolValue]) {
-            [[[self tab] parentWindow] enableBlur];
-        } else {
-            [[[self tab] parentWindow] disableBlur];
-        }
+        [[self tab] recheckBlur];
     }
     [TEXTVIEW setAntiAlias:[[aDict objectForKey:KEY_ANTI_ALIASING] boolValue]];
     [self setEncoding:[[aDict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]];
@@ -1467,8 +1483,8 @@ static NSString *PWD_ENVVALUE = @"~";
 
 - (void)setView:(SessionView*)newView
 {
-    [view autorelease];
-    view = [newView retain];
+    // View holds a reference to us so we don't hold a reference to it.
+    view = newView;
 }
 
 - (PTYTextView *)TEXTVIEW
@@ -1664,9 +1680,8 @@ static NSString *PWD_ENVVALUE = @"~";
         transparency = 0;
     }
     // set transparency of background image
-    [SCROLLVIEW setTransparency: transparency];
-    [TEXTVIEW setTransparency: transparency];
-
+    [SCROLLVIEW setTransparency:transparency];
+    [TEXTVIEW setTransparency:transparency];
 }
 
 - (void)setColorTable:(int)theIndex color:(NSColor *)theColor
@@ -1997,12 +2012,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)setFont:(NSFont*)font nafont:(NSFont*)nafont horizontalSpacing:(float)horizontalSpacing verticalSpacing:(float)verticalSpacing
 {
     [TEXTVIEW setFont:font nafont:nafont horizontalSpacing:horizontalSpacing verticalSpacing:verticalSpacing];
-    // Calling fitWindowToSession:self works but causes window size to change if self has an excess margin.
-    // fitWIndowToSessions doesn't work because it may leave self too small (# rows) for the window when shrinking the font.
+    [[[self tab] parentWindow] fitWindowToTab:[self tab]];
+}
 
-    // Adjust the window size to perfectly fit this session. But this may cause the excess margin to
-    // be too small if another tab has a larger font.
-    [[[self tab] parentWindow] fitWindowToSession:self];
+- (void)setIgnoreResizeNotifications:(BOOL)ignore
+{
+    ignoreResizeNotifications_ = ignore;
+}
+
+- (BOOL)ignoreResizeNotifications
+{
+    return ignoreResizeNotifications_;
 }
 
 - (void)changeFontSizeDirection:(int)dir
@@ -2119,7 +2139,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 -(void)handleSelectScriptCommand:(NSScriptCommand *)command
 {
-    [[[[self tab] parentWindow] tabView] selectTabViewItemWithIdentifier:self];
+    [[[[self tab] parentWindow] tabView] selectTabViewItemWithIdentifier:[self tab]];
 }
 
 -(void)handleWriteScriptCommand: (NSScriptCommand *)command
@@ -2135,16 +2155,16 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
     if (text != nil) {
         if ([text characterAtIndex:[text length]-1]==' ') {
-            data = [text dataUsingEncoding: [TERMINAL encoding]];
+            data = [text dataUsingEncoding:[TERMINAL encoding]];
         } else {
             aString = [NSString stringWithFormat:@"%@\n", text];
-            data = [aString dataUsingEncoding: [TERMINAL encoding]];
+            data = [aString dataUsingEncoding:[TERMINAL encoding]];
         }
     }
 
     if (contentsOfFile != nil) {
-        aString = [NSString stringWithContentsOfFile: contentsOfFile];
-        data = [aString dataUsingEncoding: [TERMINAL encoding]];
+        aString = [NSString stringWithContentsOfFile:contentsOfFile];
+        data = [aString dataUsingEncoding:[TERMINAL encoding]];
     }
 
     if (data != nil && [SHELL pid] > 0) {
@@ -2155,7 +2175,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             i += 50000;
         }
 
-        [self writeTask: data];
+        [self writeTask:data];
     }
 }
 

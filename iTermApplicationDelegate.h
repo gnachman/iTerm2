@@ -64,7 +64,6 @@ void DebugLog(NSString* value);
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename;
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)app;
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender;
-- (void)applicationDidUnhide:(NSNotification *)aNotification;
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app;
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification;
 - (void)applicationDidResignActive:(NSNotification *)aNotification;

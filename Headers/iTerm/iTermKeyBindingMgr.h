@@ -99,6 +99,8 @@
 #define KEY_ACTION_IR_BACKWARD          15
 #define KEY_ACTION_SEND_C_H_BACKSPACE   16
 #define KEY_ACTION_SEND_C_QM_BACKSPACE  17
+#define KEY_ACTION_SELECT_PANE_LEFT     18
+#define KEY_ACTION_SELECT_PANE_RIGHT    19
 
 @interface iTermKeyBindingMgr : NSObject {
 }

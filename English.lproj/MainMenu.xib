@@ -2,18 +2,18 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="7.10">
 	<data>
 		<int key="IBDocument.SystemTarget">1050</int>
-		<string key="IBDocument.SystemVersion">10F3061</string>
-		<string key="IBDocument.InterfaceBuilderVersion">804</string>
+		<string key="IBDocument.SystemVersion">10D2063a</string>
+		<string key="IBDocument.InterfaceBuilderVersion">788</string>
 		<string key="IBDocument.AppKitVersion">1038.29</string>
-		<string key="IBDocument.HIToolboxVersion">461.00</string>
+		<string key="IBDocument.HIToolboxVersion">460.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
-			<string key="NS.object.0">804</string>
+			<string key="NS.object.0">788</string>
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
 			<integer value="499"/>
-			<integer value="760"/>
+			<integer value="24"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -291,6 +291,15 @@
 									<string key="NSTitle">Close Window</string>
 									<string key="NSKeyEquiv">W</string>
 									<int key="NSKeyEquivModMask">1048576</int>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="643967552"/>
+									<reference key="NSMixedImage" ref="326707852"/>
+								</object>
+								<object class="NSMenuItem" id="619695518">
+									<reference key="NSMenu" ref="360861402"/>
+									<string key="NSTitle">Close Pane</string>
+									<string key="NSKeyEquiv">w</string>
+									<int key="NSKeyEquivModMask">1572864</int>
 									<int key="NSMnemonicLoc">2147483647</int>
 									<reference key="NSOnImage" ref="643967552"/>
 									<reference key="NSMixedImage" ref="326707852"/>
@@ -844,6 +853,34 @@
 									<reference key="NSOnImage" ref="643967552"/>
 									<reference key="NSMixedImage" ref="326707852"/>
 								</object>
+								<object class="NSMenuItem" id="551864353">
+									<reference key="NSMenu" ref="203853260"/>
+									<bool key="NSIsDisabled">YES</bool>
+									<bool key="NSIsSeparator">YES</bool>
+									<string key="NSTitle"/>
+									<string key="NSKeyEquiv"/>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="643967552"/>
+									<reference key="NSMixedImage" ref="326707852"/>
+								</object>
+								<object class="NSMenuItem" id="556729637">
+									<reference key="NSMenu" ref="203853260"/>
+									<string key="NSTitle">Split Vertically</string>
+									<string key="NSKeyEquiv">d</string>
+									<int key="NSKeyEquivModMask">1048576</int>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="643967552"/>
+									<reference key="NSMixedImage" ref="326707852"/>
+								</object>
+								<object class="NSMenuItem" id="143085569">
+									<reference key="NSMenu" ref="203853260"/>
+									<string key="NSTitle">Split Horizontally</string>
+									<string key="NSKeyEquiv">D</string>
+									<int key="NSKeyEquivModMask">1048576</int>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="643967552"/>
+									<reference key="NSMixedImage" ref="326707852"/>
+								</object>
 							</object>
 						</object>
 					</object>
@@ -957,7 +994,7 @@
 								</object>
 								<object class="NSMenuItem" id="135837852">
 									<reference key="NSMenu" ref="704295309"/>
-									<string key="NSTitle">Return to Default Size</string>
+									<string key="NSTitle">Return Session to Default Size</string>
 									<string key="NSKeyEquiv">r</string>
 									<int key="NSKeyEquivModMask">1572864</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -1950,14 +1987,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<int key="connectionID">599</int>
 				</object>
 				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
-						<string key="label">closeCurrentSession:</string>
-						<reference key="source" ref="620772211"/>
-						<reference key="destination" ref="549350617"/>
-					</object>
-					<int key="connectionID">637</int>
-				</object>
-				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
 						<string key="label">AUTHORS</string>
 						<reference key="source" ref="608955146"/>
@@ -2140,22 +2169,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 						<reference key="destination" ref="333391578"/>
 					</object>
 					<int key="connectionID">829</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
-						<string key="label">previousSession:</string>
-						<reference key="source" ref="620772211"/>
-						<reference key="destination" ref="839254411"/>
-					</object>
-					<int key="connectionID">844</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
-						<string key="label">nextSession:</string>
-						<reference key="source" ref="620772211"/>
-						<reference key="destination" ref="48039160"/>
-					</object>
-					<int key="connectionID">846</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBActionConnection" key="connection">
@@ -2388,6 +2401,46 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 						<reference key="destination" ref="658343397"/>
 					</object>
 					<int key="connectionID">1179</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">splitVertically:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="556729637"/>
+					</object>
+					<int key="connectionID">1183</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">closeCurrentSession:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="619695518"/>
+					</object>
+					<int key="connectionID">1185</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">closeCurrentTab:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="549350617"/>
+					</object>
+					<int key="connectionID">1186</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">previousTab:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="839254411"/>
+					</object>
+					<int key="connectionID">1187</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">nextTab:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="48039160"/>
+					</object>
+					<int key="connectionID">1188</int>
 				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -2669,6 +2722,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<reference ref="983811310"/>
 							<reference ref="39047848"/>
 							<reference ref="205523462"/>
+							<reference ref="619695518"/>
 						</object>
 						<reference key="parent" ref="1015666104"/>
 					</object>
@@ -3015,6 +3069,9 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<reference ref="65439116"/>
 							<reference ref="994225509"/>
 							<reference ref="699250554"/>
+							<reference ref="556729637"/>
+							<reference ref="551864353"/>
+							<reference ref="143085569"/>
 						</object>
 						<reference key="parent" ref="549291896"/>
 					</object>
@@ -3329,6 +3386,26 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 						<reference key="object" ref="658343397"/>
 						<reference key="parent" ref="704295309"/>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1180</int>
+						<reference key="object" ref="556729637"/>
+						<reference key="parent" ref="203853260"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1181</int>
+						<reference key="object" ref="551864353"/>
+						<reference key="parent" ref="203853260"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1182</int>
+						<reference key="object" ref="143085569"/>
+						<reference key="parent" ref="203853260"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1184</int>
+						<reference key="object" ref="619695518"/>
+						<reference key="parent" ref="360861402"/>
+					</object>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="flattenedProperties">
@@ -3367,6 +3444,10 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>1174.IBPluginDependency</string>
 					<string>1176.IBPluginDependency</string>
 					<string>1178.IBPluginDependency</string>
+					<string>1180.IBPluginDependency</string>
+					<string>1181.IBPluginDependency</string>
+					<string>1182.IBPluginDependency</string>
+					<string>1184.IBPluginDependency</string>
 					<string>129.IBPluginDependency</string>
 					<string>129.ImportedFromIB2</string>
 					<string>130.IBEditorWindowLastContentRect</string>
@@ -3532,6 +3613,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>845.ImportedFromIB2</string>
 					<string>847.IBPluginDependency</string>
 					<string>847.ImportedFromIB2</string>
+					<string>848.IBEditorWindowLastContentRect</string>
 					<string>848.IBPluginDependency</string>
 					<string>848.ImportedFromIB2</string>
 					<string>849.IBPluginDependency</string>
@@ -3599,7 +3681,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{721, 710}, {146, 23}}</string>
+					<string>{{749, 796}, {146, 23}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -3615,7 +3697,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{860, 560}, {397, 83}}</string>
+					<string>{{733, 647}, {397, 83}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
@@ -3628,8 +3710,12 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{289, 657}, {64, 6}}</string>
+					<string>{{614, 714}, {64, 6}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -3672,7 +3758,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{651, 480}, {98, 43}}</string>
+					<string>{{679, 567}, {98, 43}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -3683,16 +3769,16 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{678, 577}, {300, 243}}</string>
+					<string>{{476, 465}, {300, 243}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<boolean value="YES"/>
-					<string>{{357, 820}, {453, 20}}</string>
+					<string>{{155, 708}, {453, 20}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{329, 400}, {354, 211}}</string>
+					<string>{{297, 400}, {354, 211}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{329, 400}, {354, 211}}</string>
+					<string>{{297, 400}, {354, 211}}</string>
 					<boolean value="YES"/>
 					<boolean value="YES"/>
 					<string>{213, 107}</string>
@@ -3706,12 +3792,12 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{341, 480}, {245, 253}}</string>
+					<string>{{369, 567}, {245, 253}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{556, 650}, {289, 83}}</string>
+					<string>{{584, 736}, {289, 83}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -3759,7 +3845,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{534, 647}, {245, 173}}</string>
+					<string>{{572, 577}, {245, 223}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -3770,14 +3856,14 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{411, 500}, {240, 233}}</string>
+					<string>{{477, 483}, {240, 253}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{651, 490}, {162, 63}}</string>
+					<string>{{679, 577}, {162, 63}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -3792,6 +3878,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
+					<string>{{978, 623}, {64, 6}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -3870,7 +3957,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">1179</int>
+			<int key="maxID">1188</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -3881,74 +3968,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<object class="IBClassDescriptionSource" key="sourceIdentifier" id="792261416">
 						<string key="majorKey">IBProjectSource</string>
 						<string key="minorKey">Headers/iTerm/PseudoTerminal.h</string>
-					</object>
-				</object>
-				<object class="IBPartialClassDescription">
-					<string key="className">FakeWindow</string>
-					<string key="superclassName">NSObject</string>
-					<object class="NSMutableDictionary" key="actions">
-						<bool key="EncodedWithXMLCoder">YES</bool>
-						<object class="NSArray" key="dict.sortedKeys">
-							<bool key="EncodedWithXMLCoder">YES</bool>
-							<string>nextSession:</string>
-							<string>previousSession:</string>
-							<string>windowDeminiaturize:</string>
-							<string>windowOrderBack:</string>
-							<string>windowOrderFront:</string>
-							<string>windowPerformMiniaturize:</string>
-						</object>
-						<object class="NSMutableArray" key="dict.values">
-							<bool key="EncodedWithXMLCoder">YES</bool>
-							<string>id</string>
-							<string>id</string>
-							<string>id</string>
-							<string>id</string>
-							<string>id</string>
-							<string>id</string>
-						</object>
-					</object>
-					<object class="NSMutableDictionary" key="actionInfosByName">
-						<bool key="EncodedWithXMLCoder">YES</bool>
-						<object class="NSArray" key="dict.sortedKeys">
-							<bool key="EncodedWithXMLCoder">YES</bool>
-							<string>nextSession:</string>
-							<string>previousSession:</string>
-							<string>windowDeminiaturize:</string>
-							<string>windowOrderBack:</string>
-							<string>windowOrderFront:</string>
-							<string>windowPerformMiniaturize:</string>
-						</object>
-						<object class="NSMutableArray" key="dict.values">
-							<bool key="EncodedWithXMLCoder">YES</bool>
-							<object class="IBActionInfo">
-								<string key="name">nextSession:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-							<object class="IBActionInfo">
-								<string key="name">previousSession:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-							<object class="IBActionInfo">
-								<string key="name">windowDeminiaturize:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-							<object class="IBActionInfo">
-								<string key="name">windowOrderBack:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-							<object class="IBActionInfo">
-								<string key="name">windowOrderFront:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-							<object class="IBActionInfo">
-								<string key="name">windowPerformMiniaturize:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-						</object>
-					</object>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">FakeWindow.h</string>
 					</object>
 				</object>
 				<object class="IBPartialClassDescription">
@@ -4429,6 +4448,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>clearBuffer:</string>
 							<string>clearScrollbackBuffer:</string>
 							<string>closeCurrentSession:</string>
+							<string>closeCurrentTab:</string>
 							<string>closeFindBar:</string>
 							<string>closeInstantReplay:</string>
 							<string>closeTabContextualMenuAction:</string>
@@ -4442,17 +4462,18 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>logStop:</string>
 							<string>moveTabToNewWindowContextualMenuAction:</string>
 							<string>newSessionInTabAtIndex:</string>
-							<string>nextSession:</string>
+							<string>nextTab:</string>
 							<string>openAutocomplete:</string>
 							<string>openPasteHistory:</string>
 							<string>parameterPanelEnd:</string>
-							<string>previousSession:</string>
+							<string>previousTab:</string>
 							<string>reset:</string>
 							<string>searchNext:</string>
 							<string>searchNextPrev:</string>
 							<string>searchPrevious:</string>
 							<string>selectSessionAtIndexAction:</string>
 							<string>sendCommand:</string>
+							<string>splitVertically:</string>
 							<string>toggleFullScreen:</string>
 							<string>toggleInputToAllSessions:</string>
 							<string>windowDeminiaturize:</string>
@@ -4464,6 +4485,8 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>id</string>
+							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -4508,6 +4531,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>clearBuffer:</string>
 							<string>clearScrollbackBuffer:</string>
 							<string>closeCurrentSession:</string>
+							<string>closeCurrentTab:</string>
 							<string>closeFindBar:</string>
 							<string>closeInstantReplay:</string>
 							<string>closeTabContextualMenuAction:</string>
@@ -4521,17 +4545,18 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>logStop:</string>
 							<string>moveTabToNewWindowContextualMenuAction:</string>
 							<string>newSessionInTabAtIndex:</string>
-							<string>nextSession:</string>
+							<string>nextTab:</string>
 							<string>openAutocomplete:</string>
 							<string>openPasteHistory:</string>
 							<string>parameterPanelEnd:</string>
-							<string>previousSession:</string>
+							<string>previousTab:</string>
 							<string>reset:</string>
 							<string>searchNext:</string>
 							<string>searchNextPrev:</string>
 							<string>searchPrevious:</string>
 							<string>selectSessionAtIndexAction:</string>
 							<string>sendCommand:</string>
+							<string>splitVertically:</string>
 							<string>toggleFullScreen:</string>
 							<string>toggleInputToAllSessions:</string>
 							<string>windowDeminiaturize:</string>
@@ -4553,6 +4578,10 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							</object>
 							<object class="IBActionInfo">
 								<string key="name">closeCurrentSession:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
+								<string key="name">closeCurrentTab:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
@@ -4608,7 +4637,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
-								<string key="name">nextSession:</string>
+								<string key="name">nextTab:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
@@ -4624,7 +4653,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
-								<string key="name">previousSession:</string>
+								<string key="name">previousTab:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
@@ -4649,6 +4678,10 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							</object>
 							<object class="IBActionInfo">
 								<string key="name">sendCommand:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
+								<string key="name">splitVertically:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">

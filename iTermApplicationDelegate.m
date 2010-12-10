@@ -212,15 +212,6 @@ int gDebugLogFile = -1;
     return YES;
 }
 
-// sent when application is made visible after a hide operation. Should not really need to implement this,
-// but some users reported that keyboard input is blocked after a hide/unhide operation.
-- (void)applicationDidUnhide:(NSNotification *)aNotification
-{
-        // PseudoTerminal *frontTerminal = [[iTermController sharedInstance] currentTerminal];
-    // Make sure that the first responder stuff is set up OK.
-    // [frontTerminal selectSessionAtIndex: [frontTerminal currentSessionIndex]];
-}
-
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app
 {
     return [[PreferencePanel sharedInstance] quitWhenAllWindowsClosed];
@@ -533,10 +524,13 @@ void DebugLog(NSString* value)
 }
 
 // size
-- (IBAction) returnToDefaultSize: (id) sender
+- (IBAction)returnToDefaultSize:(id)sender
 {
     PseudoTerminal *frontTerminal = [[iTermController sharedInstance] currentTerminal];
-    NSDictionary *abEntry = [[frontTerminal currentSession] originalAddressBookEntry];
+    PTYTab* theTab = [frontTerminal currentTab];
+    PTYSession* aSession = [theTab activeSession];
+
+    NSDictionary *abEntry = [aSession originalAddressBookEntry];
 
     NSString* fontDesc = [abEntry objectForKey:KEY_NORMAL_FONT];
     NSFont* font = [ITAddressBookMgr fontWithDesc:fontDesc];
@@ -546,50 +540,53 @@ void DebugLog(NSString* value)
     PTYSession* session = [frontTerminal currentSession];
     PTYTextView* textview = [session TEXTVIEW];
     [textview setFont:font nafont:nafont horizontalSpacing:hs verticalSpacing:vs];
-    [session setWidth:[[abEntry objectForKey:KEY_COLUMNS] intValue] height:[[abEntry objectForKey:KEY_ROWS] intValue]];
-    [frontTerminal fitWindowToSession:session];
+    [frontTerminal sessionInitiatedResize:session
+                                    width:[[abEntry objectForKey:KEY_COLUMNS] intValue] 
+                                   height:[[abEntry objectForKey:KEY_ROWS] intValue]];
 }
 
 
 // Notifications
-- (void) reloadMenus: (NSNotification *) aNotification
+- (void)reloadMenus:(NSNotification *)aNotification
 {
-        PseudoTerminal *frontTerminal = [self currentTerminal];
-    if (frontTerminal != [aNotification object]) return;
-        [previousTerminal setAction: (frontTerminal?@selector(previousTerminal:):nil)];
-        [nextTerminal setAction: (frontTerminal?@selector(nextTerminal:):nil)];
+    PseudoTerminal *frontTerminal = [self currentTerminal];
+    if (frontTerminal != [aNotification object]) {
+        return;
+    }
+    [previousTerminal setAction: (frontTerminal ? @selector(previousTerminal:) : nil)];
+    [nextTerminal setAction: (frontTerminal ? @selector(nextTerminal:) : nil)];
 
-        [self buildSessionSubmenu: aNotification];
-        [self buildAddressBookMenu: aNotification];
-        // reset the close tab/window shortcuts
-        [closeTab setAction: @selector(closeCurrentSession:)];
-        [closeTab setTarget: frontTerminal];
-        [closeTab setKeyEquivalent: @"w"];
-        [closeWindow setKeyEquivalent: @"W"];
-        [closeWindow setKeyEquivalentModifierMask: NSCommandKeyMask];
+    [self buildSessionSubmenu: aNotification];
+    [self buildAddressBookMenu: aNotification];
+    // reset the close tab/window shortcuts
+    [closeTab setAction:@selector(closeCurrentTab:)];
+    [closeTab setTarget:frontTerminal];
+    [closeTab setKeyEquivalent:@"w"];
+    [closeWindow setKeyEquivalent:@"W"];
+    [closeWindow setKeyEquivalentModifierMask: NSCommandKeyMask];
 
 
-        // set some menu item states
-        if (frontTerminal && [[frontTerminal tabView] numberOfTabViewItems]) {
-            [toggleBookmarksView setEnabled:YES];
-            [sendInputToAllSessions setEnabled:YES];
-            if ([frontTerminal sendInputToAllSessions] == YES) {
-                [sendInputToAllSessions setState: NSOnState];
-            } else {
-                [sendInputToAllSessions setState: NSOffState];
-            }
+    // set some menu item states
+    if (frontTerminal && [[frontTerminal tabView] numberOfTabViewItems]) {
+        [toggleBookmarksView setEnabled:YES];
+        [sendInputToAllSessions setEnabled:YES];
+        if ([frontTerminal sendInputToAllSessions] == YES) {
+            [sendInputToAllSessions setState: NSOnState];
         } else {
-            [toggleBookmarksView setEnabled:NO];
-            [sendInputToAllSessions setEnabled:NO];
+            [sendInputToAllSessions setState: NSOffState];
         }
+    } else {
+        [toggleBookmarksView setEnabled:NO];
+        [sendInputToAllSessions setEnabled:NO];
+    }
 }
 
 - (void) nonTerminalWindowBecameKey: (NSNotification *) aNotification
 {
-    [closeTab setAction: nil];
-    [closeTab setKeyEquivalent: @""];
-    [closeWindow setKeyEquivalent: @"w"];
-    [closeWindow setKeyEquivalentModifierMask: NSCommandKeyMask];
+    [closeTab setAction:nil];
+    [closeTab setKeyEquivalent:@""];
+    [closeWindow setKeyEquivalent:@"w"];
+    [closeWindow setKeyEquivalentModifierMask:NSCommandKeyMask];
 }
 
 - (void)buildSessionSubmenu:(NSNotification *)aNotification

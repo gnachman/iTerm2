@@ -44,5 +44,19 @@
 		<key>Text</key>
 		<string></string>
 	</dict>
+    <key>0xf702-0x380000</key>
+    <dict>
+        <key>Action</key>
+        <integer>18</integer>
+		<key>Text</key>
+		<string></string>
+    </dict>
+    <key>0xf703-0x380000</key>
+    <dict>
+        <key>Action</key>
+        <integer>19</integer>
+		<key>Text</key>
+		<string></string>
+    </dict>
 </dict>
 </plist>

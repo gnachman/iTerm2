@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="6"/>
+			<integer value="343"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -36,7 +36,7 @@
 			<object class="NSWindowTemplate" id="442949890">
 				<int key="NSWindowStyleMask">11</int>
 				<int key="NSWindowBacking">2</int>
-				<string key="NSWindowRect">{{252, 573}, {606, 360}}</string>
+				<string key="NSWindowRect">{{252, 573}, {707, 360}}</string>
 				<int key="NSWTFlags">1618477056</int>
 				<string key="NSWindowTitle">Bookmarks</string>
 				<object class="NSMutableString" key="NSWindowClass">
@@ -55,7 +55,7 @@
 						<object class="NSCustomView" id="43614728">
 							<reference key="NSNextResponder" ref="944403435"/>
 							<int key="NSvFlags">274</int>
-							<string key="NSFrame">{{21, 86}, {565, 254}}</string>
+							<string key="NSFrame">{{21, 86}, {666, 254}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
 							<string key="NSClassName">BookmarkListView</string>
 						</object>
@@ -86,7 +86,7 @@
 						<object class="NSButton" id="113789196">
 							<reference key="NSNextResponder" ref="944403435"/>
 							<int key="NSvFlags">289</int>
-							<string key="NSFrame">{{376, 12}, {96, 32}}</string>
+							<string key="NSFrame">{{477, 12}, {96, 32}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="1056452351">
@@ -103,10 +103,30 @@
 								<int key="NSPeriodicInterval">25</int>
 							</object>
 						</object>
+						<object class="NSButton" id="876045723">
+							<reference key="NSNextResponder" ref="944403435"/>
+							<int key="NSvFlags">289</int>
+							<string key="NSFrame">{{376, 12}, {101, 32}}</string>
+							<reference key="NSSuperview" ref="944403435"/>
+							<bool key="NSEnabled">YES</bool>
+							<object class="NSButtonCell" key="NSCell" id="839074316">
+								<int key="NSCellFlags">604110336</int>
+								<int key="NSCellFlags2">134217728</int>
+								<string key="NSContents">New Pane</string>
+								<reference key="NSSupport" ref="981454797"/>
+								<reference key="NSControlView" ref="876045723"/>
+								<int key="NSButtonFlags">-2038284033</int>
+								<int key="NSButtonFlags2">129</int>
+								<string key="NSAlternateContents"/>
+								<string key="NSKeyEquivalent"/>
+								<int key="NSPeriodicDelay">200</int>
+								<int key="NSPeriodicInterval">25</int>
+							</object>
+						</object>
 						<object class="NSButton" id="619839802">
 							<reference key="NSNextResponder" ref="944403435"/>
 							<int key="NSvFlags">289</int>
-							<string key="NSFrame">{{472, 12}, {120, 32}}</string>
+							<string key="NSFrame">{{573, 12}, {120, 32}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="153751991">
@@ -171,7 +191,7 @@
 							</object>
 						</object>
 					</object>
-					<string key="NSFrameSize">{606, 360}</string>
+					<string key="NSFrameSize">{707, 360}</string>
 					<reference key="NSSuperview"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {1600, 1002}}</string>
@@ -270,6 +290,22 @@
 					</object>
 					<int key="connectionID">342</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">openBookmarkInPane:</string>
+						<reference key="source" ref="702893507"/>
+						<reference key="destination" ref="876045723"/>
+					</object>
+					<int key="connectionID">346</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">paneButton_</string>
+						<reference key="source" ref="702893507"/>
+						<reference key="destination" ref="876045723"/>
+					</object>
+					<int key="connectionID">347</int>
+				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<object class="NSArray" key="orderedObjects">
@@ -316,11 +352,12 @@
 						<object class="NSMutableArray" key="children">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<reference ref="43614728"/>
-							<reference ref="113789196"/>
-							<reference ref="619839802"/>
 							<reference ref="705416951"/>
 							<reference ref="627943894"/>
 							<reference ref="844383526"/>
+							<reference ref="113789196"/>
+							<reference ref="876045723"/>
+							<reference ref="619839802"/>
 						</object>
 						<reference key="parent" ref="442949890"/>
 					</object>
@@ -399,6 +436,20 @@
 						<reference key="object" ref="312823858"/>
 						<reference key="parent" ref="844383526"/>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">343</int>
+						<reference key="object" ref="876045723"/>
+						<object class="NSMutableArray" key="children">
+							<bool key="EncodedWithXMLCoder">YES</bool>
+							<reference ref="839074316"/>
+						</object>
+						<reference key="parent" ref="944403435"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">344</int>
+						<reference key="object" ref="839074316"/>
+						<reference key="parent" ref="876045723"/>
+					</object>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="flattenedProperties">
@@ -423,6 +474,9 @@
 					<string>339.IBPluginDependency</string>
 					<string>339.IBViewBoundsToFrameTransform</string>
 					<string>340.IBPluginDependency</string>
+					<string>343.IBPluginDependency</string>
+					<string>343.IBViewBoundsToFrameTransform</string>
+					<string>344.IBPluginDependency</string>
 					<string>5.IBEditorWindowLastContentRect</string>
 					<string>5.IBPluginDependency</string>
 					<string>5.IBWindowTemplateEditedContentRect</string>
@@ -444,12 +498,12 @@
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<object class="NSAffineTransform">
-						<bytes key="NSTransformStruct">P4AAAL+AAABDvAAAwtoAAA</bytes>
+						<bytes key="NSTransformStruct">P4AAAL+AAABD/gAAwigAAA</bytes>
 					</object>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<object class="NSAffineTransform">
-						<bytes key="NSTransformStruct">P4AAAL+AAABD7AAAwtoAAA</bytes>
+						<bytes key="NSTransformStruct">P4AAAL+AAABEFwAAwigAAA</bytes>
 					</object>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -462,9 +516,14 @@
 						<bytes key="NSTransformStruct">P4AAAL+AAABDjAAAwigAAA</bytes>
 					</object>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{329, 362}, {606, 360}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{329, 362}, {606, 360}}</string>
+					<object class="NSAffineTransform">
+						<bytes key="NSTransformStruct">P4AAAL+AAABDy4AAwigAAA</bytes>
+					</object>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>{{332, 288}, {707, 360}}</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>{{332, 288}, {707, 360}}</string>
 					<boolean value="YES"/>
 					<boolean value="YES"/>
 					<string>{606, 360}</string>
@@ -488,7 +547,7 @@
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">342</int>
+			<int key="maxID">347</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -562,11 +621,13 @@
 							<string>closeAfterOpeningChanged:</string>
 							<string>editBookmarks:</string>
 							<string>newTabsInNewWindow:</string>
+							<string>openBookmarkInPane:</string>
 							<string>openBookmarkInTab:</string>
 							<string>openBookmarkInWindow:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -581,6 +642,7 @@
 							<string>closeAfterOpeningChanged:</string>
 							<string>editBookmarks:</string>
 							<string>newTabsInNewWindow:</string>
+							<string>openBookmarkInPane:</string>
 							<string>openBookmarkInTab:</string>
 							<string>openBookmarkInWindow:</string>
 						</object>
@@ -596,6 +658,10 @@
 							</object>
 							<object class="IBActionInfo">
 								<string key="name">newTabsInNewWindow:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
+								<string key="name">openBookmarkInPane:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
@@ -615,6 +681,7 @@
 							<string>actions_</string>
 							<string>closeAfterOpeningBookmark_</string>
 							<string>newTabsInNewWindowButton_</string>
+							<string>paneButton_</string>
 							<string>tabButton_</string>
 							<string>tableView_</string>
 							<string>windowButton_</string>
@@ -622,6 +689,7 @@
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>NSSegmentedControl</string>
+							<string>NSButton</string>
 							<string>NSButton</string>
 							<string>NSButton</string>
 							<string>NSButton</string>
@@ -636,6 +704,7 @@
 							<string>actions_</string>
 							<string>closeAfterOpeningBookmark_</string>
 							<string>newTabsInNewWindowButton_</string>
+							<string>paneButton_</string>
 							<string>tabButton_</string>
 							<string>tableView_</string>
 							<string>windowButton_</string>
@@ -652,6 +721,10 @@
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">newTabsInNewWindowButton_</string>
+								<string key="candidateClassName">NSButton</string>
+							</object>
+							<object class="IBToOneOutletInfo">
+								<string key="name">paneButton_</string>
 								<string key="candidateClassName">NSButton</string>
 							</object>
 							<object class="IBToOneOutletInfo">

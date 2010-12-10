@@ -20,19 +20,19 @@
     BOOL isMiniaturized;
     NSRect frame;
     NSScreen* screen;
-    
+
     // Changes the session has initiated that will be delayed and performed
     // in -[rejoin:].
     BOOL hasPendingBlurChange;
     BOOL pendingBlur;
     BOOL hasPendingClose;
-    BOOL hasPendingFitWindowToSession;
+    BOOL hasPendingFitWindowToTab;
     BOOL hasPendingSizeChange;
     int pendingW;
     int pendingH;
     BOOL hasPendingSetWindowTitle;
     BOOL hasPendingResetTempTitle;
-    
+
     NSColor* pendingLabelColor;
 }
 
@@ -46,13 +46,12 @@
 - (BOOL)fullScreen;
 - (BOOL)sendInputToAllSessions;
 - (void)closeSession:(PTYSession*)aSession;
-- (IBAction)nextSession:(id)sender;
-- (IBAction)previousSession:(id)sender;
+- (IBAction)nextTab:(id)sender;
+- (IBAction)previousTab:(id)sender;
 - (void)setLabelColor:(NSColor *)color forTabViewItem:tabViewItem;
 - (void)enableBlur;
 - (void)disableBlur;
 - (BOOL)tempTitle;
-- (void)fitWindowToSession:(PTYSession*)session;
 - (PTYTabView *)tabView;
 - (PTYSession *)currentSession;
 - (void)sendInputToAllSessions:(NSData *)data;

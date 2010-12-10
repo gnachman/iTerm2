@@ -33,6 +33,8 @@
 }
 
 - (id)initWithFrame:(NSRect)frame session:(PTYSession*)session;
+- (void)dealloc;
 - (PTYSession*)session;
+- (void)setSession:(PTYSession*)session;
 
 @end

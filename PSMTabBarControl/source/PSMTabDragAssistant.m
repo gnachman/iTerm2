@@ -331,6 +331,12 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
             }
         }
 
+        if ([[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:willDropTabViewItem:inTabBar:)]) {
+            [[[self sourceTabBar] delegate] tabView:[[self sourceTabBar] tabView] 
+                                willDropTabViewItem:[[self draggedCell] representedObject] 
+                                           inTabBar:[self destinationTabBar]];
+        }
+        
         [[[self sourceTabBar] tabView] removeTabViewItem:[[self draggedCell] representedObject]];
         [[[self destinationTabBar] tabView] insertTabViewItem:[[self draggedCell] representedObject] atIndex:insertIndex];
 
@@ -353,6 +359,13 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
         //find the index of where the dragged cell was just dropped
         for (theIndex = 0; theIndex < [cells count] && [cells objectAtIndex:theIndex] != [self draggedCell]; theIndex++);
 
+        if ([[[self sourceTabBar] cells] indexOfObject:[self draggedCell]] != _draggedCellIndex &&
+            [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:willDropTabViewItem:inTabBar:)]) {
+            
+            [[[self sourceTabBar] delegate] tabView:[[self sourceTabBar] tabView] 
+                                willDropTabViewItem:[[self draggedCell] representedObject] 
+                                           inTabBar:[self destinationTabBar]];
+        }
         //temporarily disable the delegate in order to move the tab to a different index
         id tempDelegate = [tabView delegate];
         [tabView setDelegate:nil];
@@ -365,8 +378,13 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
         [tabView setDelegate:tempDelegate];
     }
 
-    if (([self sourceTabBar] != [self destinationTabBar] || [[[self sourceTabBar] cells] indexOfObject:[self draggedCell]] != _draggedCellIndex) && [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:)]) {
-        [[[self sourceTabBar] delegate] tabView:[[self sourceTabBar] tabView] didDropTabViewItem:[[self draggedCell] representedObject] inTabBar:[self destinationTabBar]];
+    if (([self sourceTabBar] != [self destinationTabBar] || 
+         [[[self sourceTabBar] cells] indexOfObject:[self draggedCell]] != _draggedCellIndex) && 
+        [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:)]) {
+        
+        [[[self sourceTabBar] delegate] tabView:[[self sourceTabBar] tabView] 
+                             didDropTabViewItem:[[self draggedCell] representedObject] 
+                                       inTabBar:[self destinationTabBar]];
     }
 
     [[NSNotificationCenter defaultCenter] postNotificationName:PSMTabDragDidEndNotification object:nil];
@@ -387,6 +405,11 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
             PSMTabBarControl *control = [sourceDelegate tabView:[[self sourceTabBar] tabView] newTabBarForDraggedTabViewItem:[[self draggedCell] representedObject] atPoint:aPoint];
 
             if (control) {
+                if ([sourceDelegate respondsToSelector:@selector(tabView:willDropTabViewItem:inTabBar:)]) {
+                    [sourceDelegate tabView:[[self sourceTabBar] tabView] 
+                        willDropTabViewItem:[[self draggedCell] representedObject] 
+                                   inTabBar:control];
+                }
                 //add the dragged tab to the new window
                 [[control cells] insertObject:[self draggedCell] atIndex:0];
 
@@ -406,7 +429,9 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
                 [[control window] makeKeyAndOrderFront:nil];
 
                 if ([sourceDelegate respondsToSelector:@selector(tabView:didDropTabViewItem:inTabBar:)]) {
-                    [sourceDelegate tabView:[[self sourceTabBar] tabView] didDropTabViewItem:[[self draggedCell] representedObject] inTabBar:control];
+                    [sourceDelegate tabView:[[self sourceTabBar] tabView] 
+                         didDropTabViewItem:[[self draggedCell] representedObject] 
+                                   inTabBar:control];
                 }
             } else {
                 NSLog(@"Delegate returned no control to add to.");

@@ -209,12 +209,11 @@
     return (transparency);
 }
 
-- (void) setTransparency: (float) theTransparency
+- (void)setTransparency:(float)theTransparency
 {
-    if(theTransparency >= 0 && theTransparency <= 1)
-    {
+    if (theTransparency >= 0 && theTransparency <= 1) {
         transparency = theTransparency;
-        [self setNeedsDisplay: YES];
+        [self setNeedsDisplay:YES];
     }
 }
 

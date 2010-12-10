@@ -26,6 +26,7 @@
 #import <iTerm/BookmarkModel.h>
 #import <iTerm/iTermController.h>
 #import <iTerm/PreferencePanel.h>
+#import <iTerm/PseudoTerminal.h>
 
 @implementation BookmarksWindow
 
@@ -66,7 +67,7 @@
     return self;
 }
 
-- (void)_openBookmarkInTab:(BOOL)inTab firstInWindow:(BOOL)firstInWindow
+- (void)_openBookmarkInTab:(BOOL)inTab firstInWindow:(BOOL)firstInWindow inPane:(BOOL)inPane
 {
     NSSet* guids = [tableView_ selectedGuids];
     if (![guids count]) {
@@ -81,15 +82,27 @@
             terminal = [[iTermController sharedInstance] currentTerminal];
         }
         Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
-        [[iTermController sharedInstance] launchBookmark:bookmark
-                                              inTerminal:terminal];
+        if (inPane && terminal != nil) {
+            [terminal splitVerticallyWithBookmark:bookmark];
+        } else {
+            [[iTermController sharedInstance] launchBookmark:bookmark
+                                                  inTerminal:terminal];
+        }
         isFirst = NO;
+    }
+}
+
+- (IBAction)openBookmarkInPane:(id)sender
+{
+    [self _openBookmarkInTab:YES firstInWindow:NO inPane:YES];
+    if ([closeAfterOpeningBookmark_ state] == NSOnState) {
+        [[self window] close];
     }
 }
 
 - (IBAction)openBookmarkInTab:(id)sender
 {
-    [self _openBookmarkInTab:YES firstInWindow:NO];
+    [self _openBookmarkInTab:YES firstInWindow:NO inPane:NO];
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];
     }
@@ -97,7 +110,7 @@
 
 - (IBAction)openBookmarkInWindow:(id)sender
 {
-    [self _openBookmarkInTab:NO firstInWindow:NO];
+    [self _openBookmarkInTab:NO firstInWindow:NO inPane:NO];
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];
     }
@@ -107,6 +120,7 @@
 {
     NSSet* guids = [tableView_ selectedGuids];
     if ([guids count]) {
+        [paneButton_ setEnabled:YES];
         [tabButton_ setEnabled:YES];
         [windowButton_ setEnabled:YES];
         if ([guids count] > 1) {
@@ -115,6 +129,7 @@
             [newTabsInNewWindowButton_ setHidden:YES];
         }
     } else {
+        [paneButton_ setEnabled:NO];
         [tabButton_ setEnabled:NO];
         [windowButton_ setEnabled:NO];
     }
@@ -197,7 +212,7 @@
 
 - (IBAction)newTabsInNewWindow:(id)sender
 {
-    [self _openBookmarkInTab:YES firstInWindow:YES];
+    [self _openBookmarkInTab:YES firstInWindow:YES inPane:NO];
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];
     }

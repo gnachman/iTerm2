@@ -34,9 +34,12 @@
 @class PTYSession;
 @class PseudoTerminal;
 @class FakeWindow;
+@class SessionView;
 
+// This implements NSSplitViewDelegate but it was an informal protocol in 10.5. If 10.5 support
+// is eventually dropped, change this to make it official.
 @interface PTYTab : NSObject {
-    PTYSession* session_;
+    PTYSession* activeSession_;
 
     // Owning tab view item
     NSTabViewItem* tabViewItem_;
@@ -56,6 +59,15 @@
 
     // Does any session have new output?
     BOOL newOutput_;
+
+    // The root of a tree of split views whose leaves are SessionViews. The root is the view of the
+    // NSTabViewItem.
+    //
+    // NSTabView -> NSTabViewItem -> NSSplitView (root) -> ... -> SessionView -> PTYScrollView -> etc.
+    NSSplitView* root_;
+
+    // If non-nil, this session may not change size.
+    PTYSession* lockedSession_;
 }
 
 // init/dealloc
@@ -63,9 +75,11 @@
 - (void)dealloc;
 
 - (PTYSession*)activeSession;
+- (void)setActiveSession:(PTYSession*)session;
 - (NSTabViewItem *)tabViewItem;
 - (void)setTabViewItem:(NSTabViewItem *)theTabViewItem;
 
+- (void)setLockedSession:(PTYSession*)lockedSession;
 - (PTYSession*)activeSession;
 - (id<WindowControllerInterface>)parentWindow;
 - (PseudoTerminal*)realParentWindow;
@@ -104,6 +118,35 @@
 - (BOOL)allSessionsExited;
 - (void)setDvrInSession:(PTYSession*)newSession;
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession;
+- (BOOL)hasMultipleSessions;
+- (NSSize)size;
+- (NSSize)minSize;
+- (void)setSize:(NSSize)newSize;
+- (PTYSession*)sessionBefore:(PTYSession*)session;
+- (PTYSession*)sessionAfter:(PTYSession*)session;
+- (BOOL)canSplitVertically;
+- (NSImage*)image;
+- (bool)blur;
+- (void)recheckBlur;
+
+- (NSSize)_minSessionSize:(SessionView*)sessionView;
+- (NSSize)_sessionSize:(SessionView*)sessionView;
+
+// Remove a dead session. This should be called from [session terminate] only.
+- (void)removeSession:(PTYSession*)aSession;
+
+// If the active session's parent splitview has:
+//   only one child: make its orientation vertical and add a new subview.
+//   more than one child and a vertical orientation: add a new subview and return it.
+//   more than one child and a horizontal orientation: add a new split subview with vertical orientation and add a sessionview subview to it and return that sessionview.
+- (SessionView*)splitVertically;
+
+#pragma mark NSSplitView delegate methods
+- (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;
+// This is the implementation of splitViewDidResizeSubviews. The delegate method isn't called when
+// views are added or adjusted, so we often have to call this ourselves.
+- (void)_splitViewDidResizeSubviews:(NSSplitView*)splitView;
+- (CGFloat)splitView:(NSSplitView *)splitView constrainSplitPosition:(CGFloat)proposedPosition ofSubviewAt:(NSInteger)dividerIndex;
 
 @end
 

@@ -260,7 +260,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     return result;
 }
 
--(screen_char_t *) initScreenWithWidth:(int)width Height:(int)height
+-(screen_char_t *)initScreenWithWidth:(int)width Height:(int)height
 {
     int i;
     screen_char_t *aDefaultLine;
@@ -814,9 +814,9 @@ static char* FormatCont(int c)
     current_scrollback_lines = [linebuffer numLinesWithWidth: WIDTH];
 }
 
-- (PTYSession *) session
+- (PTYSession *)session
 {
-    return (SESSION);
+    return SESSION;
 }
 
 - (void)setSession:(PTYSession *)session
