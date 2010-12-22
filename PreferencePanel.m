@@ -1021,7 +1021,7 @@ static float versionNumber;
     if (c >= '0' && c <= '9') {
         return 100 + c - '0';
     }
-    NSLog(@"Unexpected shortcut key: '%@'", key);
+    // NSLog(@"Unexpected shortcut key: '%@'", key);
     return -1;
 }
 
@@ -1053,7 +1053,7 @@ static float versionNumber;
         NSString* existingShortcut = [temp objectForKey:KEY_SHORTCUT];
         const int tag = [self shortcutTagForKey:existingShortcut];
         if (tag != -1) {
-            NSLog(@"Bookmark %@ has shortcut %@", [temp objectForKey:KEY_NAME], existingShortcut);
+            //NSLog(@"Bookmark %@ has shortcut %@", [temp objectForKey:KEY_NAME], existingShortcut);
             const int theIndex = [bookmarkShortcutKey indexOfItemWithTag:tag];
             NSMenuItem* item = [bookmarkShortcutKey itemAtIndex:theIndex];
             NSString* newTitle = [NSString stringWithFormat:@"%@ (%@)", existingShortcut, [temp objectForKey:KEY_NAME]];

@@ -588,7 +588,7 @@ static BOOL initDone = NO;
     return [term addNewSession: aDict withURL: url];
 }
 
-- (void) launchScript: (id) sender
+- (void)launchScript:(id)sender
 {
     NSString *fullPath = [NSString stringWithFormat: @"%@/%@", [SCRIPT_DIRECTORY stringByExpandingTildeInPath], [sender title]];
 
@@ -666,6 +666,15 @@ static void OnHotKeyEvent()
 static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEventRef event, void *refcon)
 {
     iTermController* cont = refcon;
+    if (type == kCGEventTapDisabledByTimeout) {
+        if (cont->machPortRef) {
+            CGEventTapEnable(cont->machPortRef, true);
+        }
+        return NULL;
+    } else if (type == kCGEventTapDisabledByUserInput) {
+        return NULL;
+    }
+
     NSEvent* e = [NSEvent eventWithCGEvent:event];
     if (cont->hotkeyCode_ &&
         ([e modifierFlags] & cont->hotkeyModifiers_) == cont->hotkeyModifiers_ &&
@@ -687,7 +696,6 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 {
     hotkeyCode_ = keyCode;
     hotkeyModifiers_ = modifiers;
-    static CFMachPortRef machPortRef;
     if (!machPortRef) {
         DebugLog(@"Register event tap.");
         machPortRef = CGEventTapCreate(kCGHIDEventTap,

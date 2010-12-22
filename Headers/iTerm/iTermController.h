@@ -45,6 +45,7 @@
     // App-wide hotkey
     int hotkeyCode_;
     int hotkeyModifiers_;
+    CFMachPortRef machPortRef;
 }
 
 + (iTermController*)sharedInstance;
