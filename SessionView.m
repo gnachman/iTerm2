@@ -158,12 +158,25 @@ static const float kTargetFrameRate = 1.0/60.0;
     if (currentAlpha_ == 0 && [shade_ isHidden]) {
         [shade_ setHidden:NO];
     }
-    changePerSecond_ = (targetAlpha_ - currentAlpha_) / 0.25;
+    const double kAnimationDuration = 0.250;
+    changePerSecond_ = (targetAlpha_ - currentAlpha_) / kAnimationDuration;
     if (timer_) {
         [timer_ invalidate];
         timer_ = nil;
     }
     [self fadeAnimation];
+}
+
+- (double)dimmedAlpha
+{
+    NSColor* backgroundColor = [session_ backgroundColor];
+    NSColor* rgb = [backgroundColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+    double brightness = [rgb brightnessComponent];
+    // Map brightness onto alpha.
+    const double kMaxAlpha = 0.35;
+    const double kMinAlpha = 0.1;
+    const double kSpan = kMaxAlpha - kMinAlpha;
+    return kSpan * (1 - brightness) + kMinAlpha;
 }
 
 - (void)setDimmed:(BOOL)isDimmed
@@ -179,7 +192,7 @@ static const float kTargetFrameRate = 1.0/60.0;
         currentAlpha_ = 0;
         [shade_ setAlphaValue:0];
         [shade_ setHidden:NO];
-        [self _dimShadeToAlpha:0.25];
+        [self _dimShadeToAlpha:[self dimmedAlpha]];
     } else {
         [self _dimShadeToAlpha:0];
     }
