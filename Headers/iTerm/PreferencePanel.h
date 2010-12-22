@@ -160,6 +160,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 
     // hotkey
     IBOutlet NSButton *hotkey;
+    IBOutlet NSTextField* hotkeyLabel;
     BOOL defaultHotkey;
     
     // hotkey code

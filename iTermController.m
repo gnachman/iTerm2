@@ -658,7 +658,7 @@ static void OnHotKeyEvent()
  * a newly constructed event, or NULL if the event is to be deleted.
  *
  * The CGEventRef passed into the callback is retained by the calling code, and is
- * released after the callback returns and the data is passed back to the event 
+ * released after the callback returns and the data is passed back to the event
  * system.  If a different event is returned by the callback function, then that
  * event will be released by the calling code along with the original event, after
  * the event data has been passed back to the event system.
@@ -671,6 +671,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         ([e modifierFlags] & cont->hotkeyModifiers_) == cont->hotkeyModifiers_ &&
         [e keyCode] == cont->hotkeyCode_) {
         OnHotKeyEvent();
+        return NULL;
     }
     
     return event;
@@ -691,7 +692,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         DebugLog(@"Register event tap.");
         machPortRef = CGEventTapCreate(kCGHIDEventTap,
                                        kCGHeadInsertEventTap,
-                                       kCGEventTapOptionListenOnly,
+                                       kCGEventTapOptionDefault,
                                        CGEventMaskBit(kCGEventKeyDown),
                                        (CGEventTapCallBack)OnTappedEvent,
                                        self);

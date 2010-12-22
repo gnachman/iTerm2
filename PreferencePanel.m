@@ -531,6 +531,9 @@ static float versionNumber;
     } else {
         [hotkeyField setStringValue:@""];
     }
+    [hotkeyField setEnabled:defaultHotkey];
+    [hotkeyLabel setTextColor:defaultHotkey ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
+    
     [irMemory setIntValue:defaultIrMemory];
     [checkTestRelease setState: defaultCheckTestRelease?NSOnState:NSOffState];
     [checkColorInvertedCursor setState: defaultColorInvertedCursor?NSOnState:NSOffState];
@@ -636,6 +639,8 @@ static float versionNumber;
                 [[iTermController sharedInstance] unregisterHotkey];
             }
         }
+        [hotkeyField setEnabled:defaultHotkey];
+        [hotkeyLabel setTextColor:defaultHotkey ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
         if (prefs &&
             defaultCheckTestRelease != ([checkTestRelease state] == NSOnState)) {
             defaultCheckTestRelease = ([checkTestRelease state] == NSOnState);
@@ -1712,11 +1717,18 @@ static float versionNumber;
         keyChar <= NSRightArrowFunctionKey) {
         theModifiers |= NSNumericPadKeyMask;
     }
+    
     defaultHotkeyChar = keyChar;
     defaultHotkeyCode = keyCode;
     defaultHotkeyModifiers = keyMods;
+    [[[PreferencePanel sharedInstance] window] makeFirstResponder:[[PreferencePanel sharedInstance] window]];
     [hotkeyField setStringValue:[iTermKeyBindingMgr formatKeyCombination:[NSString stringWithFormat:@"0x%x-0x%x", keyChar, keyMods]]];
-    [[iTermController sharedInstance] registerHotkey:keyCode modifiers:theModifiers];
+    [self performSelector:@selector(setHotKey) withObject:self afterDelay:0.01];
+}
+
+- (void)setHotKey
+{
+    [[iTermController sharedInstance] registerHotkey:defaultHotkeyCode modifiers:defaultHotkeyModifiers];
 }
 
 - (void)updateValueToSend

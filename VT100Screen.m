@@ -1355,6 +1355,8 @@ static void DumpBuf(screen_char_t* p, int n) {
 // ascii: True if string contains only ascii characters.
 - (void)setString:(NSString *)string ascii:(BOOL)ascii
 {
+    assert(self);
+    assert(string);
     int idx, screenIdx;
     int charsToInsert;
     int len;
@@ -1391,6 +1393,7 @@ static void DumpBuf(screen_char_t* p, int n) {
         unichar *sc;
         if ([string length] > kStaticTempElements) {
             dynamicTemp = sc = (unichar *) malloc(len*sizeof(unichar));
+            assert(dynamicTemp);
         } else {
             sc = staticTemp;
         }
@@ -1399,6 +1402,7 @@ static void DumpBuf(screen_char_t* p, int n) {
 
         if ([string length] > kStaticBufferElements) {
             buffer = dynamicBuffer = (screen_char_t *) malloc([string length] * sizeof(screen_char_t));
+            assert(dynamicBuffer);
             if (!buffer) {
                 NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
                 return;
@@ -1427,6 +1431,7 @@ static void DumpBuf(screen_char_t* p, int n) {
         len = [string length];
         if (2 * len > kStaticBufferElements) {
             buffer = dynamicBuffer = (screen_char_t *) malloc(2 * len * sizeof(screen_char_t) );
+            assert(buffer);
             if (!buffer) {
                 NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
                 return;
@@ -1436,6 +1441,7 @@ static void DumpBuf(screen_char_t* p, int n) {
         }
 
         // Add 0xffff after each double-byte character.
+        assert(TERMINAL);
         padString(string, buffer,
                   [TERMINAL foregroundColorCode],
                   [TERMINAL backgroundColorCode],
