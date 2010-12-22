@@ -179,6 +179,8 @@
     // textviews and windows are loosely coupled.
     int nextSessionRows_;
     int nextSessionColumns_;
+
+    BOOL tempDisableProgressIndicators_;
 }
 
 // Initialize a new PseudoTerminal.
@@ -314,6 +316,9 @@
 
 // Called when next/prev frame button is clicked.
 - (IBAction)irButton:(id)sender;
+
+// Can progress indicators be shown? They're turned off during animation of the tabbar.
+- (BOOL)disableProgressIndicators;
 
 ////////////////////////////////////////////////////////////////////////////////
 // NSTextField Delegate Methods
@@ -508,11 +513,17 @@
 
 // selector for menu item to split current session vertically.
 - (IBAction)splitVertically:(id)sender;
-- (void)splitVerticallyWithBookmark:(Bookmark*)theBookmark;
+- (IBAction)splitHorizontally:(id)sender;
+- (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark;
 
 // Change active pane.
-- (void)selectPaneLeft;
-- (void)selectPaneRight;
+- (IBAction)selectPaneLeft:(id)sender;
+- (IBAction)selectPaneRight:(id)sender;
+- (IBAction)selectPaneUp:(id)sender;
+- (IBAction)selectPaneDown:(id)sender;
+
+// Return the smallest allowable width for this terminal.
+- (float)minWidth;
 
 @end
 
@@ -607,10 +618,6 @@
 
 // Returns the size of the stuff outside the tabview.
 - (NSSize)windowDecorationSize;
-
-// Returns the largest possible text view that fits on the screens while
-// leaving room for window decorations.
-- (NSSize)maxTextViewSize;
 
 // Max window frame size that fits on screens.
 - (NSRect)maxFrame;

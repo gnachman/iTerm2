@@ -92,6 +92,11 @@ void DebugLog(NSString* value);
 - (IBAction) nextTerminal: (id) sender;
 - (IBAction)arrangeHorizontally:(id)sender;
 
+- (IBAction)selectPaneLeft:(id)sender;
+- (IBAction)selectPaneRight:(id)sender;
+- (IBAction)selectPaneUp:(id)sender;
+- (IBAction)selectPaneDown:(id)sender;
+
 // Notifications
 - (void) reloadMenus: (NSNotification *) aNotification;
 - (void) buildSessionSubmenu: (NSNotification *) aNotification;

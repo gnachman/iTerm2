@@ -489,10 +489,12 @@ NSString *sessionsKey = @"sessions";
 
 - (void)dealloc
 {
-#if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
-#endif
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    // Cancel any SessionView timers.
+    for (PTYSession* aSession in [self sessions]) {
+        [[aSession view] cancelTimers];
+    }
 
     // Release all our sessions
     NSTabViewItem *aTabViewItem;
@@ -643,6 +645,14 @@ NSString *sessionsKey = @"sessions";
         }
     }
 
+    // Cancel all sessions' timers. We don't want timers running after the window has closed.
+    for (PTYSession* session in [self sessions]) {
+        if (![session exited]) {
+            [session cancelTimers];
+        }
+    }
+
+    // This releases the last reference to self.
     [[iTermController sharedInstance] terminalWillClose:self];
 }
 
@@ -763,10 +773,6 @@ NSString *sessionsKey = @"sessions";
     }
     proposedFrameSize.height = charHeight * old_height + northChange + VMARGIN*2;
     proposedFrameSize.width = charWidth * old_width + westChange + MARGIN * 2;
-    //int h = proposedFrameSize.height / charHeight;
-    //int w = proposedFrameSize.width / charWidth;
-    //NSLog(@"New height x width is %dx%d", h, w);
-    PtyLog(@"Accepted size: %fx%f", proposedFrameSize.width, proposedFrameSize.height);
 
     NSSize decorationSize = [self windowDecorationSize];
     for (NSTabViewItem* tabViewItem in [TABVIEW tabViewItems]) {
@@ -776,11 +782,17 @@ NSString *sessionsKey = @"sessions";
         proposedFrameSize.height = MAX(proposedFrameSize.height, s.height + decorationSize.height);
     }
 
+    NSSize theMax = [self maxFrame].size;
+    proposedFrameSize.width = MIN(theMax.width, proposedFrameSize.width);
+    proposedFrameSize.height = MIN(theMax.height, proposedFrameSize.height);
+    PtyLog(@"Accepted size: %fx%f", proposedFrameSize.width, proposedFrameSize.height);
+
     return proposedFrameSize;
 }
 
 - (void)windowDidResize:(NSNotification *)aNotification
 {
+    PtyLog(@"windowDidResize to: %fx%f", [[self window] frame].size.width, [[self window] frame].size.height);
     if (togglingFullScreen_) {
         PtyLog(@"windowDidResize returning because togglingFullScreen.");
         return;
@@ -911,6 +923,7 @@ NSString *sessionsKey = @"sessions";
     }
     newTerminal->togglingFullScreen_ = NO;
     PtyLog(@"toggleFullScreen - calling fitTabsToWindow");
+    [newTerminal repositionWidgets];
     [newTerminal fitTabsToWindow];
     if (fs) {
         PtyLog(@"toggleFullScreen - calling adjustFullScreenWindowForBottomBarChange");
@@ -1302,6 +1315,10 @@ NSString *sessionsKey = @"sessions";
         PTYTab *theTab = [[aTabView tabViewItemAtIndex:i] identifier];
         [theTab setObjectCount:i+1];
     }
+
+    // In fullscreen mode reordering the tabs causes the tabview not to be displayed properly.
+    // This seems to fix it.
+    [TABVIEW display];
 }
 
 - (void)tabView:(NSTabView *)aTabView closeWindowForLastTabViewItem:(NSTabViewItem *)tabViewItem
@@ -2051,24 +2068,27 @@ NSString *sessionsKey = @"sessions";
     [autocompleteView popInSession:[self currentSession]];
 }
 
-- (BOOL)canSplitPaneVerticallyWithBookmark:(Bookmark*)theBookmark
+- (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark
 {
-    if (![[self currentTab] canSplitVertically]) {
+    NSFont* asciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NORMAL_FONT]];
+    NSFont* nonAsciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NON_ASCII_FONT]];
+    NSSize asciiCharSize = [PTYTextView charSizeForFont:asciiFont
+                                      horizontalSpacing:[[theBookmark objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
+                                        verticalSpacing:[[theBookmark objectForKey:KEY_VERTICAL_SPACING] floatValue]];
+    NSSize nonAsciiCharSize = [PTYTextView charSizeForFont:nonAsciiFont
+                                         horizontalSpacing:[[theBookmark objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
+                                           verticalSpacing:[[theBookmark objectForKey:KEY_VERTICAL_SPACING] floatValue]];
+    NSSize charSize = NSMakeSize(MAX(asciiCharSize.width, nonAsciiCharSize.width),
+                                 MAX(asciiCharSize.height, nonAsciiCharSize.height));
+    NSSize newSessionSize = NSMakeSize(charSize.width * 20 + MARGIN * 2, 
+                                       charSize.height * 10 + VMARGIN * 2);
+
+    if (![[self currentTab] canSplitVertically:isVertical withSize:newSessionSize]) {
         // Test if the window can afford to grow. First, compute the minimum growth possible based on
         // the font size of the new pane.
-        NSFont* asciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NORMAL_FONT]];
-        NSFont* nonAsciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NON_ASCII_FONT]];
-        NSSize asciiCharSize = [PTYTextView charSizeForFont:asciiFont
-                                          horizontalSpacing:[[theBookmark objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
-                                            verticalSpacing:[[theBookmark objectForKey:KEY_VERTICAL_SPACING] floatValue]];
-        NSSize nonAsciiCharSize = [PTYTextView charSizeForFont:nonAsciiFont
-                                             horizontalSpacing:[[theBookmark objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
-                                               verticalSpacing:[[theBookmark objectForKey:KEY_VERTICAL_SPACING] floatValue]];
-        NSSize charSize = NSMakeSize(MAX(asciiCharSize.width, nonAsciiCharSize.width),
-                                     MAX(asciiCharSize.height, nonAsciiCharSize.height));
-        NSSize growth = NSMakeSize(charSize.width * 20 + MARGIN * 2,
-                                   charSize.height * 10 + VMARGIN * 2);
         BOOL hasScrollbar = !_fullScreen && ![[PreferencePanel sharedInstance] hideScrollbar];
+        NSSize growth = NSMakeSize(isVertical ? newSessionSize.width : 0,
+                                   isVertical ? 0 : newSessionSize.height);
         growth = [PTYScrollView frameSizeForContentSize:growth
                                   hasHorizontalScroller:NO
                                     hasVerticalScroller:hasScrollbar
@@ -2088,7 +2108,7 @@ NSString *sessionsKey = @"sessions";
         windowSize.width += growth.width;
         windowSize.height += growth.height;
 
-        // See if it fits on the screen. Beep and abort if not.
+        // Finally, check if the new window size would fit on the screen.
         NSSize maxFrameSize = [self maxFrame].size;
         if (windowSize.width > maxFrameSize.width || windowSize.height > maxFrameSize.height) {
             return NO;
@@ -2097,9 +2117,10 @@ NSString *sessionsKey = @"sessions";
     return YES;
 }
 
-- (void)splitVerticallyWithBookmark:(Bookmark*)theBookmark
+- (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark
 {
-    if (![self canSplitPaneVerticallyWithBookmark:theBookmark]) {
+    PtyLog(@"--------- splitVertically -----------");
+    if (![self canSplitPaneVertically:isVertical withBookmark:theBookmark]) {
         NSBeep();
         return;
     }
@@ -2111,7 +2132,10 @@ NSString *sessionsKey = @"sessions";
     }
 
     PTYSession* newSession = [self newSessionWithBookmark:theBookmark];
-    SessionView* sessionView = [[self currentTab] splitVertically];
+    SessionView* sessionView = [[self currentTab] splitVertically:isVertical];
+    [sessionView setSession:newSession];
+    [newSession setTab:[self currentTab]];
+    [newSession setView:sessionView];
     NSSize size = [sessionView frame].size;
     [self setupSession:newSession title:nil withSize:&size];
 
@@ -2122,20 +2146,24 @@ NSString *sessionsKey = @"sessions";
     [sessionView addSubview:scrollView];
     [scrollView release];
 
-    [newSession setView:sessionView];
 
-    [sessionView setSession:newSession];
-    [newSession setTab:[self currentTab]];
     [self fitWindowToTabs];
 
     [self runCommandInSession:newSession inCwd:oldCWD];
+    [[self currentTab] setActiveSession:newSession];
     [[self currentTab] recheckBlur];
 }
 
 - (IBAction)splitVertically:(id)sender
 {
     Bookmark* theBookmark = [[BookmarkModel sharedInstance] defaultBookmark];
-    [self splitVerticallyWithBookmark:theBookmark];
+    [self splitVertically:YES withBookmark:theBookmark];
+}
+
+- (IBAction)splitHorizontally:(id)sender
+{
+    Bookmark* theBookmark = [[BookmarkModel sharedInstance] defaultBookmark];
+    [self splitVertically:NO withBookmark:theBookmark];
 }
 
 - (void)fitWindowToTabs
@@ -2216,24 +2244,52 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
-- (void)selectPaneLeft
+- (void)selectPaneLeft:(id)sender
 {
-    // TODO: Since there are only vertical splits currently this is easy. With vertical and horizontal
-    // it is more complex.
-    PTYSession* session = [[self currentTab] sessionBefore:[[self currentTab] activeSession]];
+    PTYSession* session = [[self currentTab] sessionLeftOf:[[self currentTab] activeSession]];
     if (session) {
         [[self currentTab] setActiveSession:session];
     }
 }
 
-- (void)selectPaneRight
+- (void)selectPaneRight:(id)sender
 {
-    // TODO: Since there are only vertical splits currently this is easy. With vertical and horizontal
-    // it is more complex.
-    PTYSession* session = [[self currentTab] sessionAfter:[[self currentTab] activeSession]];
+    PTYSession* session = [[self currentTab] sessionRightOf:[[self currentTab] activeSession]];
     if (session) {
         [[self currentTab] setActiveSession:session];
     }
+}
+
+- (void)selectPaneUp:(id)sender
+{
+    PTYSession* session = [[self currentTab] sessionAbove:[[self currentTab] activeSession]];
+    if (session) {
+        [[self currentTab] setActiveSession:session];
+    }
+}
+
+- (void)selectPaneDown:(id)sender
+{
+    PTYSession* session = [[self currentTab] sessionBelow:[[self currentTab] activeSession]];
+    if (session) {
+        [[self currentTab] setActiveSession:session];
+    }
+}
+
+- (float)minWidth
+{
+    // Pick 400 as an absolute minimum just to be safe. This is rather arbitrary and hacky.
+    float minWidth = 400;
+    for (NSTabViewItem* tabViewItem in [TABVIEW tabViewItems]) {
+        PTYTab* theTab = [tabViewItem identifier];
+        minWidth = MAX(minWidth, [theTab minSize].width);
+    }
+    return minWidth;
+}
+
+- (BOOL)disableProgressIndicators
+{
+    return tempDisableProgressIndicators_;
 }
 
 @end
@@ -2513,6 +2569,14 @@ NSString *sessionsKey = @"sessions";
     return [[self window] frameRectForContentRect:NSMakeRect(0, 0, contentSize.width, contentSize.height)].size;
 }
 
+- (void)_setDisableProgressIndicators:(BOOL)value
+{
+    tempDisableProgressIndicators_ = value;
+    for (NSTabViewItem* anItem in [TABVIEW tabViewItems]) {
+        PTYTab* theTab = [anItem identifier];
+        [theTab setIsProcessing:[theTab realIsProcessing]];
+    }
+}
 
 - (void)showFullScreenTabControl
 {
@@ -2534,6 +2598,18 @@ NSString *sessionsKey = @"sessions";
         [tabBarBackground setAlphaValue:0];
         [[tabBarBackground animator] setAlphaValue:1];
     }
+
+    // This is a little hack because the progress indicators in the tabbar control crash if they
+    // try to draw while fading.
+    [self _setDisableProgressIndicators:YES];
+    [self performSelector:@selector(enableProgressIndicators)
+               withObject:nil
+               afterDelay:[[NSAnimationContext currentContext] duration]];
+}
+
+- (void)enableProgressIndicators
+{
+    [self _setDisableProgressIndicators:NO];
 }
 
 - (void)immediatelyHideFullScreenTabControl
@@ -2832,7 +2908,7 @@ NSString *sessionsKey = @"sessions";
         rows = (contentSize.height - VMARGIN*2) / charSize.height;
         columns = (contentSize.width - MARGIN*2) / charSize.width;
     }
-    NSRect marginlessRect;
+    NSRect sessionRect;
     if (size != nil) {
         BOOL hasScrollbar = !_fullScreen && ![[PreferencePanel sharedInstance] hideScrollbar];
         NSSize contentSize = [PTYScrollView contentSizeForFrameSize:*size
@@ -2841,13 +2917,13 @@ NSString *sessionsKey = @"sessions";
                                                          borderType:NSNoBorder];
         rows = (contentSize.height - VMARGIN*2) / charSize.height;
         columns = (contentSize.width - MARGIN*2) / charSize.width;
-        marginlessRect.origin = NSZeroPoint;
-        marginlessRect.size = *size;
+        sessionRect.origin = NSZeroPoint;
+        sessionRect.size = *size;
     } else {
-        marginlessRect = NSMakeRect(0, 0, columns * charSize.width, rows * charSize.height);
+        sessionRect = NSMakeRect(0, 0, columns * charSize.width + MARGIN * 2, rows * charSize.height + VMARGIN * 2);
     }
 
-    if ([aSession setScreenSize:marginlessRect parent:self]) {
+    if ([aSession setScreenSize:sessionRect parent:self]) {
         PtyLog(@"setupSession - call safelySetSessionSize");
         [self safelySetSessionSize:aSession rows:rows columns:columns];
         PtyLog(@"setupSession - call setPreferencesFromAddressBookEntry");
@@ -3529,8 +3605,9 @@ NSString *sessionsKey = @"sessions";
     int i;
 
     for (i = 0; i < n; ++i) {
-        PTYSession* aSession = [[[TABVIEW tabViewItemAtIndex:i] identifier] activeSession];
-        [sessions addObject:aSession];
+        for (PTYSession* aSession in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
+            [sessions addObject:aSession];
+        }
     }
 
     return sessions;

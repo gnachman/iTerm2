@@ -96,9 +96,6 @@ static NSString *PWD_ENVVALUE = @"~";
 
 - (void)dealloc
 {
-#if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
-#endif
     [slowPasteBuffer release];
     if (slowPasteTimer) {
         [slowPasteTimer invalidate];
@@ -115,7 +112,7 @@ static NSString *PWD_ENVVALUE = @"~";
     [updateTimer release];
     [originalAddressBookEntry release];
     [liveSession_ release];
-    
+
     [SHELL release];
     SHELL = nil;
     [SCREEN release];
@@ -138,6 +135,7 @@ static NSString *PWD_ENVVALUE = @"~";
 
 - (void)cancelTimers
 {
+    [view cancelTimers];
     [updateTimer invalidate];
     [antiIdleTimer invalidate];
 }
@@ -227,8 +225,10 @@ static NSString *PWD_ENVVALUE = @"~";
     [SCREEN setSession:self];
 
     // Allocate a container to hold the scrollview
-    view = [[[SessionView alloc] initWithFrame:NSMakeRect(0, 0, aRect.size.width, aRect.size.height)
-                                      session:self] autorelease];
+    if (!view) {
+        view = [[[SessionView alloc] initWithFrame:NSMakeRect(0, 0, aRect.size.width, aRect.size.height)
+                                          session:self] autorelease];
+    }
 
     // Allocate a scrollview
     SCROLLVIEW = [[PTYScrollView alloc] initWithFrame: NSMakeRect(0, 0, aRect.size.width, aRect.size.height)];
@@ -274,8 +274,8 @@ static NSString *PWD_ENVVALUE = @"~";
     [SHELL setDelegate:self];
 
     // initialize the screen
-    int width = aRect.size.width / [TEXTVIEW charWidth];
-    int height = aRect.size.height / [TEXTVIEW lineHeight];
+    int width = (aRect.size.width - MARGIN*2) / [TEXTVIEW charWidth];
+    int height = (aRect.size.height - VMARGIN*2) / [TEXTVIEW lineHeight];
     if ([SCREEN initScreenWithWidth:width Height:height]) {
         [self setName:@"Shell"];
         [self setDefaultName:@"Shell"];
@@ -472,9 +472,6 @@ static NSString *PWD_ENVVALUE = @"~";
 
 - (void)brokenPipe
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession brokenPipe]", __FILE__, __LINE__);
-#endif
     [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Broken Pipe",
                                                        @"iTerm",
                                                        [NSBundle bundleForClass:[self class]],
@@ -668,10 +665,10 @@ static NSString *PWD_ENVVALUE = @"~";
                 [[iTermController sharedInstance] irAdvance:-1];
                 break;
             case KEY_ACTION_SELECT_PANE_LEFT:
-                [[[iTermController sharedInstance] currentTerminal] selectPaneLeft];
+                [[[iTermController sharedInstance] currentTerminal] selectPaneLeft:nil];
                 break;
             case KEY_ACTION_SELECT_PANE_RIGHT:
-                [[[iTermController sharedInstance] currentTerminal] selectPaneRight];
+                [[[iTermController sharedInstance] currentTerminal] selectPaneRight:nil];
                 break;
 
             default:
@@ -1133,11 +1130,6 @@ static NSString *PWD_ENVVALUE = @"~";
 
 - (void)setPreferencesFromAddressBookEntry:(NSDictionary *) aePrefs
 {
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession setPreferencesFromAddressBookEntry:");
-#endif
-
     NSColor *colorTable[2][8];
     int i;
     NSDictionary *aDict;
@@ -1231,10 +1223,6 @@ static NSString *PWD_ENVVALUE = @"~";
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu
 {
     NSMenuItem *aMenuItem;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession menuForEvent]", __FILE__, __LINE__);
-#endif
 
     // Clear buffer
     aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Clear Buffer",

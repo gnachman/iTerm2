@@ -39,6 +39,7 @@
 #import "PSMTabStyle.h"
 #import "ITAddressBookMgr.h"
 #import "iTermApplicationDelegate.h"
+#import "iTerm/iTermController.h"
 
 // #define PTYTAB_VERBOSE_LOGGING
 #ifdef PTYTAB_VERBOSE_LOGGING
@@ -102,6 +103,9 @@ static NSImage *warningImage;
 - (void)dealloc
 {
     PtyLog(@"PTYTab dealloc");
+    for (PTYSession* aSession in [self sessions]) {
+        [[aSession view] cancelTimers];
+    }
     [root_ release];
     [fakeParentWindow_ release];
     [icon_ release];
@@ -152,11 +156,16 @@ static NSImage *warningImage;
         [realParentWindow_ closeInstantReplay:self];
     }
     BOOL changed = session != activeSession_;
+    PTYSession* oldSession = activeSession_;
     activeSession_ = session;
     if (changed) {
         [parentWindow_ setWindowTitle];
         [tabViewItem_ setLabel:[[self activeSession] name]];
         [[realParentWindow_ window] makeFirstResponder:[session TEXTVIEW]];
+        [[session view] setDimmed:NO];
+        if (oldSession) {
+            [[oldSession view] setDimmed:YES];
+        }
     }
     for (PTYSession* aSession in [self sessions]) {
         [[aSession TEXTVIEW] refresh];
@@ -243,9 +252,14 @@ static NSImage *warningImage;
     icon_ = [anIcon retain];
 }
 
-- (BOOL)isProcessing
+- (BOOL)realIsProcessing
 {
     return isProcessing_;
+}
+
+- (BOOL)isProcessing
+{
+    return isProcessing_ && ![realParentWindow_ disableProgressIndicators];
 }
 
 - (void)setIsProcessing:(BOOL)aFlag
@@ -268,37 +282,92 @@ static NSImage *warningImage;
     return NO;
 }
 
-// TODO: These methods are special purpose and brittle.
-- (PTYSession*)sessionBefore:(PTYSession*)session
-{
-    NSSplitView* split = (NSSplitView*)[[session view] superview];
-    NSArray* siblings = [split subviews];
-    NSUInteger i = [siblings indexOfObjectIdenticalTo:[session view]];
-    if (i == NSNotFound) {
-        return nil;
-    }
-    if (i == 0) {
-        return nil;
-    }
-    SessionView* parentView = (SessionView*)[siblings objectAtIndex:i-1];
-    assert([parentView isKindOfClass:[SessionView class]]);
-    return [parentView session];
+static void SwapSize(NSSize* size) {
+    NSSize temp = *size;
+    size->height = temp.width;
+    size->width = temp.height;
 }
 
-- (PTYSession*)sessionAfter:(PTYSession*)session
+static void SwapPoint(NSPoint* point) {
+    NSPoint temp = *point;
+    point->x = temp.y;
+    point->y = temp.x;
+}
+
+- (PTYSession*)_sessionAdjacentTo:(PTYSession*)session verticalDir:(BOOL)verticalDir after:(BOOL)after
 {
-    NSSplitView* split = (NSSplitView*)[[session view] superview];
-    NSArray* siblings = [split subviews];
-    NSUInteger i = [siblings indexOfObjectIdenticalTo:[session view]];
-    if (i == NSNotFound) {
-        return nil;
+    NSRect myRect = [root_ convertRect:[[session view] frame] fromView:[[session view] superview]];
+    NSPoint targetPoint = myRect.origin;
+    NSSize rootSize = [root_ frame].size;
+
+    if (verticalDir) {
+        SwapSize(&myRect.size);
+        SwapPoint(&myRect.origin);
+        SwapPoint(&targetPoint);
+        SwapSize(&rootSize);
     }
-    if (i == [siblings count] - 1) {
-        return nil;
+
+    int sign = after ? 1 : -1;
+    if (after) {
+        targetPoint.x += myRect.size.width;
     }
-    SessionView* parentView = (SessionView*)[siblings objectAtIndex:i+1];
-    assert([parentView isKindOfClass:[SessionView class]]);
-    return [parentView session];
+    targetPoint.x += sign * ([root_ dividerThickness] + 1);
+    const CGFloat maxAllowed = after ? rootSize.width : 0;
+    if (sign * targetPoint.x > maxAllowed) {
+        targetPoint.x -= sign * rootSize.width;
+    }
+    targetPoint.y += myRect.size.height / 2;
+    PTYSession* result;
+    if (verticalDir) {
+        SwapPoint(&targetPoint);
+    }
+    result = [self _recursiveSessionAtPoint:targetPoint relativeTo:root_];
+    if (verticalDir) {
+        SwapPoint(&targetPoint);
+    }
+    if (!result) {
+        targetPoint.y += [root_ dividerThickness];
+        if (verticalDir) {
+            SwapPoint(&targetPoint);
+        }
+        result = [self _recursiveSessionAtPoint:targetPoint relativeTo:root_];
+        if (verticalDir) {
+            SwapPoint(&targetPoint);
+        }
+        targetPoint.y -= [root_ dividerThickness];
+    }
+    if (!result) {
+        targetPoint.y -= [root_ dividerThickness];
+        if (verticalDir) {
+            SwapPoint(&targetPoint);
+        }
+        result = [self _recursiveSessionAtPoint:targetPoint relativeTo:root_];
+        if (verticalDir) {
+            SwapPoint(&targetPoint);
+        }
+        targetPoint.y += [root_ dividerThickness];
+    }
+    return result;
+}
+
+- (PTYSession*)sessionLeftOf:(PTYSession*)session
+{
+    return [self _sessionAdjacentTo:session verticalDir:NO after:NO];
+}
+
+- (PTYSession*)sessionRightOf:(PTYSession*)session
+{
+    return [self _sessionAdjacentTo:session verticalDir:NO after:YES];
+}
+
+- (PTYSession*)sessionAbove:(PTYSession*)session
+{
+    return [self _sessionAdjacentTo:session verticalDir:YES after:NO];
+}
+
+- (PTYSession*)sessionBelow:(PTYSession*)session
+{
+    return [self _sessionAdjacentTo:session verticalDir:YES after:YES];
 }
 
 - (void)setLabelAttributes
@@ -431,68 +500,240 @@ static NSImage *warningImage;
     }
 }
 
-- (void)_recursiveRemoveView:(NSView*)theView
+// When removing a view some invariants must be maintained:
+// 1. A non-root splitview must have at least two children.
+// 2. The root splitview may have exactly one child iff that child is a SessionView
+// 3. A non-root splitview's orientation must be the opposite of its parent's.
+//
+// The algorithm is:
+// Remove the view from its parent.
+// Clean up the parent.
+//
+// Where "clean up splitView" consists of:
+// If splitView (orientation -1^n) has one child
+//   If that child (orientation -1^(n+1) is a splitview
+//     If splitView is root:
+//       Remove only child
+//       swap splitView's orientation (to -1^(n+1), matching child's)
+//       move grandchildren into splitView
+//     else if splitView is not root:
+//       Move grandchildren into splitView's parent (orientation -1^(n-1), same as child)
+//   else if only child is a session:
+//     If splitView is root:
+//       Do nothing. This is allowed.
+//     else if splitView is not root:
+//       Replace splitView with child in its parent.
+// else if splitView has no children:
+//   Remove splitView from its parent
+
+- (void)_checkInvariants:(NSSplitView*)node
 {
-   if ([theView isKindOfClass:[SessionView class]]) {
-        NSSplitView* split = (NSSplitView*)[theView superview];
-        if ([[split subviews] count] == 1) {
-            [self _recursiveRemoveView:split];
+    if (node != root_) {
+        if ([node isKindOfClass:[NSSplitView class]]) {
+            // 1. A non-root splitview must have at least two children.
+            assert([[node subviews] count] > 1);
+            NSSplitView* parentSplit = (NSSplitView*)[node superview];
+            // 3. A non-root splitview's orientation must be the opposite of its parent's.
+            assert([node isVertical] != [parentSplit isVertical]);
         } else {
-            [theView removeFromSuperview];
-            [split adjustSubviews];
-            [self _splitViewDidResizeSubviews:split];
-        }
-    } else {
-        NSSplitView* split = (NSSplitView*)theView;
-        if (split == root_) {
-            // Never remove the root from its superview. Remove all its children.
-            for (NSView* subview in [root_ subviews]) {
-                [subview removeFromSuperview];
-            }
-        } else {
-            NSSplitView* parent = (NSSplitView*)[split superview];
-            if ([[parent subviews] count] > 1) {
-                [split removeFromSuperview];
-                [parent adjustSubviews];
-                [self _splitViewDidResizeSubviews:parent];
-            } else {
-                [self _recursiveRemoveView:parent];
+            if ([[node subviews] count] == 1) {
+                NSView* onlyChild = [[node subviews] objectAtIndex:0];
+                // The root splitview may have exactly one child iff that child is a SessionView.
+                assert([onlyChild isKindOfClass:[SessionView class]]);
             }
         }
     }
+
+    if ([node isKindOfClass:[NSSplitView class]]) {
+        for (NSView* subView in [node subviews]) {
+            if ([subView isKindOfClass:[NSSplitView class]]) {
+                [self _checkInvariants:(NSSplitView*)subView];
+            }
+        }
+    }
+}
+
+- (void)_cleanupAfterRemove:(NSSplitView*)splitView
+{
+    const int initialNumberOfSubviews = [[splitView subviews] count];
+    if (initialNumberOfSubviews == 1) {
+        NSView* onlyChild = [[splitView subviews] objectAtIndex:0];
+        if ([onlyChild isKindOfClass:[NSSplitView class]]) {
+            if (splitView == root_) {
+                PtyLog(@"Case 1");
+                // Remove only child.
+                [onlyChild retain];
+                [onlyChild removeFromSuperview];
+
+                // Swap splitView's orientation to match child's
+                [splitView setVertical:![splitView isVertical]];
+
+                // Move grandchildren into splitView
+                for (NSView* grandchild in [[onlyChild subviews] copy]) {
+                    [splitView addSubview:grandchild];
+                }
+                [onlyChild release];
+            } else {
+                PtyLog(@"Case 2");
+                // splitView is not root
+                NSSplitView* splitViewParent = (NSSplitView*)[splitView superview];
+
+                NSUInteger splitViewIndex = [[splitViewParent subviews] indexOfObjectIdenticalTo:splitView];
+                assert(splitViewIndex != NSNotFound);
+                NSView* referencePoint = splitViewIndex > 0 ? [[splitViewParent subviews] objectAtIndex:splitViewIndex - 1] : nil;
+
+                // Remove splitView
+                [splitView retain];
+                [splitView removeFromSuperview];
+
+                // Move grandchildren into grandparent.
+                for (NSView* grandchild in [[onlyChild subviews] copy]) {
+                    [splitViewParent addSubview:grandchild positioned:NSWindowAbove relativeTo:referencePoint];
+                    ++splitViewIndex;
+                    referencePoint = [[splitViewParent subviews] objectAtIndex:splitViewIndex - 1];
+                }
+            }
+        } else {
+            // onlyChild is a session
+            if (splitView != root_) {
+                PtyLog(@"Case 3");
+                // Replace splitView with child in its parent.
+                NSSplitView* splitViewParent = (NSSplitView*)[splitView superview];
+                [splitViewParent replaceSubview:splitView with:onlyChild];
+            }
+        }
+    } else if (initialNumberOfSubviews == 0) {
+        if (splitView != root_) {
+            PtyLog(@"Case 4");
+            [self _recursiveRemoveView:splitView];
+        }
+    }
+}
+- (void)_recursiveRemoveView:(NSView*)theView
+{
+    NSSplitView* parentSplit = (NSSplitView*)[theView superview];
+    [self _checkInvariants:root_];
+    [theView removeFromSuperview];
+    [self _cleanupAfterRemove:parentSplit];
+    [self _checkInvariants:root_];
+}
+
+- (NSRect)_recursiveViewFrame:(NSView*)aView
+{
+    NSRect localFrame = [aView frame];
+    if (aView != root_) {
+        NSRect parentFrame = [self _recursiveViewFrame:[aView superview]];
+        localFrame.origin.x += parentFrame.origin.x;
+        localFrame.origin.y += parentFrame.origin.y;
+    } else {
+        localFrame.origin.x = 0;
+        localFrame.origin.y = 0;
+    }
+    return localFrame;
+}
+
+- (PTYSession*)_recursiveSessionAtPoint:(NSPoint)point relativeTo:(NSView*)node
+{
+    NSRect nodeFrame = [node frame];
+    if (point.x < nodeFrame.origin.x ||
+        point.y < nodeFrame.origin.y ||
+        point.x >= nodeFrame.origin.x + nodeFrame.size.width ||
+        point.y >= nodeFrame.origin.y + nodeFrame.size.height) {
+        return nil;
+    }
+    if ([node isKindOfClass:[SessionView class]]) {
+        SessionView* sessionView = (SessionView*)node;
+        return [sessionView session];
+    } else {
+        NSSplitView* splitView = (NSSplitView*)node;
+        if (node != root_) {
+            point.x -= nodeFrame.origin.x;
+            point.y -= nodeFrame.origin.y;
+        }
+        for (NSView* child in [splitView subviews]) {
+            PTYSession* theSession = [self _recursiveSessionAtPoint:point relativeTo:child];
+            if (theSession) {
+                return theSession;
+            }
+        }
+    }
+    return nil;
 }
 
 - (void)removeSession:(PTYSession*)aSession
 {
     PtyLog(@"PTYTab removeSession:%p", aSession);
-    [self _recursiveRemoveView:[aSession view]];
-    if (aSession == activeSession_) {
-        if ([[root_ subviews] count]) {
-            NSView* current = root_;
-            // TODO: pick a better successor.
-            while ([current isKindOfClass:[NSSplitView class]]) {
-                current = [[current subviews] objectAtIndex:0];
-            }
-            [self setActiveSession:[(SessionView*)current session]];
-        } else {
-            activeSession_ = nil;
+    // Grab the nearest neighbor (arbitrarily, the subview before if there is on or after if not)
+    // to make its earliest descendent that is a session active.
+    NSSplitView* parentSplit = (NSSplitView*)[[aSession view] superview];
+    NSView* nearestNeighbor;
+    if ([[parentSplit subviews] count] > 1) {
+        // Do a depth-first search to find the first descendent of the neighbor that is a
+        // SessionView and make it active.
+        int theIndex = [[parentSplit subviews] indexOfObjectIdenticalTo:[aSession view]];
+        int neighborIndex = theIndex > 0 ? theIndex - 1 : theIndex + 1;
+        nearestNeighbor = [[parentSplit subviews] objectAtIndex:neighborIndex];
+        while ([nearestNeighbor isKindOfClass:[NSSplitView class]]) {
+            nearestNeighbor = [[nearestNeighbor subviews] objectAtIndex:0];
         }
+    } else {
+        // The window is about to close.
+        nearestNeighbor = nil;
+    }
+
+    // Remove the session.
+    [self _recursiveRemoveView:[aSession view]];
+
+    if (aSession == activeSession_ && nearestNeighbor != nil) {
+        [self setActiveSession:[(SessionView*)nearestNeighbor session]];
+    } else {
+        activeSession_ = nil;
     }
     [self recheckBlur];
 }
 
-- (BOOL)canSplitVertically
+- (BOOL)canSplitVertically:(BOOL)isVertical withSize:(NSSize)newSessionSize
 {
-    PtyLog(@"PTYTab canSplitVertically");
-    NSSize minPostSplitSize;
-    minPostSplitSize = [self _minSessionSize:[activeSession_ view]];
-    minPostSplitSize.width *= 2;
-    minPostSplitSize.width += [(NSSplitView*)[[activeSession_ view] superview] dividerThickness];
-    NSSize availableSpace = [self _sessionSize:[activeSession_ view]];
-    return minPostSplitSize.width < availableSpace.width;
+    NSSplitView* parentSplit = (NSSplitView*)[[activeSession_ view] superview];
+    if (isVertical == [parentSplit isVertical]) {
+        // Add a child to parentSplit.
+        // This is a slightly bogus heuristic: if any sibling of the active session has a violated min
+        // size constraint then splits are no longer possible.
+        for (NSView* aView in [parentSplit subviews]) {
+            NSSize actualSize = [aView frame].size;
+            NSSize minSize;
+            if ([aView isKindOfClass:[NSSplitView class]]) {
+                NSSplitView* splitView = (NSSplitView*)aView;
+                minSize = [self _recursiveMinSize:splitView];
+            } else {
+                SessionView* sessionView = (SessionView*)aView;
+                minSize = [self _minSessionSize:sessionView];
+            }
+            if (isVertical && actualSize.width < minSize.width) {
+                return NO;
+            }
+            if (!isVertical && actualSize.height < minSize.height) {
+                return NO;
+            }
+        }
+        return YES;
+    } else {
+        // Active session will be replaced with a splitter.
+        // Another bogus heuristic: if the active session's constraints have been violated then you
+        // can't split.
+        NSSize actualSize = [[activeSession_ view] frame].size;
+        NSSize minSize = [self _minSessionSize:[activeSession_ view]];
+        if (isVertical && actualSize.width < minSize.width) {
+            return NO;
+        }
+        if (!isVertical && actualSize.height < minSize.height) {
+            return NO;
+        }
+        return YES;
+    }
 }
 
-- (SessionView*)splitVertically
+- (SessionView*)splitVertically:(BOOL)isVertical
 {
     PtyLog(@"PTYTab splitVertically");
     PTYSession* activeSession = [self activeSession];
@@ -510,34 +751,37 @@ static NSImage *warningImage;
         assert(parentSplit == root_);
 
         // Set its orientation to vertical and add the new view.
-        [parentSplit setVertical:YES];
-        [parentSplit addSubview:newView];
+        [parentSplit setVertical:isVertical];
+        [parentSplit addSubview:newView positioned:NSWindowAbove relativeTo:activeSessionView];
 
         // Resize all subviews the same size to accommodate the new view.
         [parentSplit adjustSubviews];
         [self _splitViewDidResizeSubviews:parentSplit];
-    } else if (![parentSplit isVertical]) {
-        PtyLog(@"PTYTab splitVertically not vertical");
-        // The parent has vertical splits and has many children. We need to do this:
+    } else if ([parentSplit isVertical] != isVertical) {
+        PtyLog(@"PTYTab splitVertically parent has opposite orientation");
+        // The parent has the opposite orientation splits and has many children. We need to do this:
         // 1. Remove the active SessionView from its parent
-        // 2. Replace it with a vertical NSSplitView
-        // 3. Add two children to the vertical NSSplitView: the active session and the new view.
+        // 2. Replace it with an 'isVertical'-orientation NSSplitView
+        // 3. Add two children to the 'isVertical'-orientation NSSplitView: the active session and the new view.
         [activeSessionView retain];
-        NSSplitView* verticalSplit = [[NSSplitView alloc] init];
-        [activeSessionView replaceSubview:activeSessionView with:verticalSplit];
-        [verticalSplit release];
-        [verticalSplit addSubview:activeSessionView];
+        NSSplitView* newSplit = [[NSSplitView alloc] initWithFrame:[activeSessionView frame]];
+        [newSplit setAutoresizesSubviews:YES];
+        [newSplit setDelegate:self];
+        [newSplit setVertical:isVertical];
+        [[activeSessionView superview] replaceSubview:activeSessionView with:newSplit];
+        [newSplit release];
+        [newSplit addSubview:activeSessionView];
         [activeSessionView release];
-        [verticalSplit addSubview:newView];
+        [newSplit addSubview:newView];
 
         // Resize all subviews the same size to accommodate the new view.
         [parentSplit adjustSubviews];
-        [verticalSplit adjustSubviews];
-        [self _splitViewDidResizeSubviews:verticalSplit];
+        [newSplit adjustSubviews];
+        [self _splitViewDidResizeSubviews:newSplit];
     } else {
-        PtyLog(@"PTYTab splitVertically vertical multiple children");
-        // The parent has vertical splits and there is more than one child.
-        [parentSplit addSubview:newView];
+        PtyLog(@"PTYTab splitVertically multiple children");
+        // The parent has same-orientation splits and there is more than one child.
+        [parentSplit addSubview:newView positioned:NSWindowAbove relativeTo:activeSessionView];
 
         // Resize all subviews the same size to accommodate the new view.
         [parentSplit adjustSubviews];
@@ -745,7 +989,7 @@ static NSImage *warningImage;
 - (void)setSize:(NSSize)newSize
 {
     PtyLog(@"PTYTab setSize:%fx%f", (float)newSize.width, (float)newSize.height);
-    NSSize currentSize = [self size];
+    NSSize currentSize = [root_ frame].size;
     if ((int)newSize.width == (int)currentSize.width &&
         (int)newSize.height == (int)currentSize.height) {
         // No-op
@@ -992,71 +1236,518 @@ static NSImage *warningImage;
     return [self _positionOfDivider:dividerIndex+1 inSplitView:splitView] - dim - [splitView dividerThickness];
 }
 
+// The "grain" runs perpindicular to the splitters. An example with isVertical==YES:
+// +----------------+
+// |     |     |    |
+// |     |     |    |
+// |     |     |    |
+// +----------------+
+//
+// <------grain----->
+
+static CGFloat WithGrainDim(BOOL isVertical, NSSize size)
+{
+    return isVertical ? size.width : size.height;
+}
+
+static CGFloat AgainstGrainDim(BOOL isVertical, NSSize size)
+{
+    return WithGrainDim(!isVertical, size);
+}
+
+static void SetWithGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
+{
+    if (isVertical) {
+        dest->width = value;
+    } else {
+        dest->height = value;
+    }
+}
+
+static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
+{
+    SetWithGrainDim(!isVertical, dest, value);
+}
+
+- (void)_resizeSubviewsOfSplitViewWithLockedGrandchild:(NSSplitView *)splitView
+{
+    BOOL isVertical = [splitView isVertical];
+    double unlockedSize = 0;
+    double minUnlockedSize = 0;
+    double lockedSize = WithGrainDim(isVertical, [self _sessionSize:[lockedSession_ view]]);
+
+    // In comments, wgd = with-grain dimension
+    // Add up the wgd of the unlocked subviews. Also add up their minimum wgds.
+    for (NSView* subview in [splitView subviews]) {
+        if ([[lockedSession_ view] superview] != subview) {
+            unlockedSize += WithGrainDim(isVertical, [subview frame].size);
+            if ([subview isKindOfClass:[NSSplitView class]]) {
+                // Get size of child tree at this subview.
+                minUnlockedSize += WithGrainDim(isVertical, [self _recursiveMinSize:(NSSplitView*)subview]);
+            } else {
+                // Get size of session at this subview.
+                SessionView* sessionView = (SessionView*)subview;
+                minUnlockedSize += WithGrainDim(isVertical, [self _minSessionSize:sessionView]);
+            }
+        }
+    }
+
+    // Check that we can respect the lock without allowing any subview to become smaller
+    // than its minimum wgd.
+    double overflow = minUnlockedSize + lockedSize - WithGrainDim(isVertical, [splitView frame].size);
+    if (overflow > 0) {
+        // We can't maintain the locked size without making some other subview smaller than
+        // its allowed min. Ignore the lockedness of the session.
+        NSLog(@"Warning: locked session doesn't leave enough space for other views. overflow=%lf", overflow);
+        [splitView adjustSubviews];
+        [self _splitViewDidResizeSubviews:splitView];
+    } else {
+        // Locked size can be respected. Adjust the size of every subview so that unlocked ones keep
+        // their original relative proportions and the locked subview takes on its mandated size.
+        double x = 0;
+        double overage = 0;  // If subviews ended up larger than their proportional size would give, this is the sum of the extra wgds.
+        double newSize = WithGrainDim(isVertical, [splitView frame].size) - [splitView dividerThickness] * ([[splitView subviews] count] - 1);
+        for (NSView* subview in [splitView subviews]) {
+            NSRect newRect = NSZeroRect;
+            if (isVertical) {
+                newRect.origin.x = x;
+            } else {
+                newRect.origin.y = x;
+            }
+
+            SetAgainstGrainDim(isVertical,
+                               &newRect.size,
+                               AgainstGrainDim(isVertical, [splitView frame].size));
+            if ([[lockedSession_ view] superview] != subview) {
+                double fractionOfUnlockedSpace = WithGrainDim(isVertical,
+                                                              [subview frame].size) / unlockedSize;
+                SetWithGrainDim(isVertical,
+                                &newRect.size,
+                                (newSize - lockedSize - overage) * fractionOfUnlockedSpace);
+            } else {
+                SetWithGrainDim(isVertical,
+                                &newRect.size,
+                                lockedSize);
+            }
+            double minSize;
+            if ([subview isKindOfClass:[NSSplitView class]]) {
+                // Get size of child tree at this subview.
+                minSize = WithGrainDim(isVertical, [self _recursiveMinSize:(NSSplitView*)subview]);
+            } else {
+                // Get size of session at this subview.
+                SessionView* sessionView = (SessionView*)subview;
+                minSize = WithGrainDim(isVertical, [self _minSessionSize:sessionView]);
+            }
+            if (WithGrainDim(isVertical, newRect.size) < minSize) {
+                overage += minSize - WithGrainDim(isVertical, newRect.size);
+                SetWithGrainDim(isVertical, &newRect.size, minSize);
+            }
+            [subview setFrame:newRect];
+            x += WithGrainDim(isVertical, newRect.size);
+            x += [splitView dividerThickness];
+        }
+    }
+}
+
+- (void)_resizeSubviewsOfSplitViewWithLockedChild:(NSSplitView *)splitView oldSize:(NSSize)oldSize
+{
+    if ([[splitView subviews] count] == 1) {
+        PtyLog(@"PTYTab splitView:resizeSubviewsWithOldSize: case 2");
+        // Case 2
+        [splitView adjustSubviews];
+    } else {
+        PtyLog(@"PTYTab splitView:resizeSubviewsWithOldSize: case 3");
+        // Case 3
+        if ([splitView isVertical]) {
+            // Vertical dividers so children are arranged horizontally.
+            // Set width of locked session and then resize all others proportionately.
+            CGFloat availableSize = [splitView frame].size.width;
+
+            // This also does not include dividers.
+            double originalSizeWithoutLockedSession = oldSize.width - [[lockedSession_ view] frame].size.width - ([[splitView subviews] count] - 1) * [splitView dividerThickness];
+            NSArray* mySubviews = [splitView subviews];
+            NSSize lockedSize = [self _sessionSize:[lockedSession_ view]];
+            availableSize -= lockedSize.width;
+            availableSize -= [splitView dividerThickness];
+
+            // Resize each child's width so that the space left excluding the locked session is
+            // divided up in the same proportions as it was before the resize.
+            NSRect newFrame = NSZeroRect;
+            newFrame.size.height = lockedSize.height;
+            for (id subview in mySubviews) {
+                if (subview != [lockedSession_ view]) {
+                    // Resizing a non-locked child.
+                    NSSize subviewSize = [subview frame].size;
+                    double fractionOfOriginalSize = subviewSize.width / originalSizeWithoutLockedSession;
+                    newFrame.size.width = availableSize * fractionOfOriginalSize;;
+                } else {
+                    newFrame.size.width = lockedSize.width;
+                }
+                [subview setFrame:newFrame];
+                newFrame.origin.x += newFrame.size.width + [splitView dividerThickness];
+            }
+        } else {
+            // Horizontal dividers so children are arranged vertically.
+            // Set height of locked session and then resize all others proportionately.
+            CGFloat availableSize = [splitView frame].size.height;
+
+            // This also does not include dividers.
+            double originalSizeWithoutLockedSession = oldSize.height - [[lockedSession_ view] frame].size.height - ([[splitView subviews] count] - 1) * [splitView dividerThickness];
+            NSArray* mySubviews = [splitView subviews];
+            NSSize lockedSize = [self _sessionSize:[lockedSession_ view]];
+            availableSize -= lockedSize.height;
+            availableSize -= [splitView dividerThickness];
+
+            // Resize each child's height so that the space left excluding the locked session is
+            // divided up in the same proportions as it was before the resize.
+            NSRect newFrame = NSZeroRect;
+            newFrame.size.width = lockedSize.width;
+            for (id subview in mySubviews) {
+                if (subview != [lockedSession_ view]) {
+                    // Resizing a non-locked child.
+                    NSSize subviewSize = [subview frame].size;
+                    double fractionOfOriginalSize = subviewSize.height / originalSizeWithoutLockedSession;
+                    newFrame.size.height = availableSize * fractionOfOriginalSize;
+                } else {
+                    newFrame.size.height = lockedSize.height;
+                }
+                [subview setFrame:newFrame];
+                newFrame.origin.y += newFrame.size.height + [splitView dividerThickness];
+            }
+        }
+    }
+}
+
+- (NSSet*)_ancestorsOfLockedSession
+{
+    NSMutableSet* result = [NSMutableSet setWithCapacity:1];
+    id current = [[lockedSession_ view  ]superview];
+    while (current != nil) {
+        [result addObject:current];
+        if (current == root_) {
+            break;
+        }
+        current = [current superview];
+    }
+    return result;
+}
+
+// min of unlocked session x = minSize(x)
+// max of unlocked session x = inf
+//
+// min of locked session x = sessionSize of x
+// max of locked session x = sessionSize of x
+//
+// min of splitter with locked session s[x] = wtg: sum(minSize(i) for i != x) + sessionSize(x)
+//                                            atg: sessionSize(x)
+// max of splitter with locked session s[x] = wtg: sum(maxSize(i))
+//                                            atg: sessionSize(x)
+//
+// +--------+
+// |   |    |
+// |   +----+
+// |   |xxxx|
+// +---+----+
+//
+// ** this is a generalizable version of all the above: **
+// min of splitter with locked grandchild s[x1][x2] = wtg: sum(minSize(i) for all i)
+//                                                    atg: max(minSize(i) for all i)
+// max of splitter with locked grandchild s[x1][x2] = wtg: sum(maxSize(i))
+//                                                    atg: min(maxSize(i) for all i)
+
+
+- (void)_recursiveLockedSize:(NSView*)theSubview ancestors:(NSSet*)ancestors minSize:(NSSize*)minSize maxSize:(NSSize*)maxSizeOut
+{
+    if ([theSubview isKindOfClass:[SessionView class]]) {
+        // This must be the locked session. Its min and max size are exactly its ideal size.
+        assert(theSubview == [lockedSession_ view]);
+        NSSize size = [self _sessionSize:(SessionView*)theSubview];
+        *minSize = *maxSizeOut = size;
+    } else {
+        // This is some ancestor of the locked session.
+        NSSplitView* splitView = (NSSplitView*)theSubview;
+        *minSize = NSZeroSize;
+        BOOL isVertical = [splitView isVertical];
+        SetAgainstGrainDim(isVertical, maxSizeOut, INFINITY);
+        SetWithGrainDim(isVertical, maxSizeOut, 0);
+        BOOL first = YES;
+        for (NSView* aView in [splitView subviews]) {
+            NSSize viewMin;
+            NSSize viewMax;
+            if (aView == [lockedSession_ view] || [ancestors containsObject:aView]) {
+                [self _recursiveLockedSize:aView ancestors:ancestors minSize:&viewMin maxSize:&viewMax];
+            } else {
+                viewMin = [self _minSizeOfView:aView];
+                viewMax.width = INFINITY;
+                viewMax.height = INFINITY;
+            }
+            double thickness;
+            if (first) {
+                first = NO;
+                thickness = 0;
+            } else {
+                thickness = [splitView dividerThickness];
+            }
+            // minSize.wtg := sum(viewMin)
+            SetWithGrainDim(isVertical,
+                            minSize,
+                            WithGrainDim(isVertical, *minSize) + WithGrainDim(isVertical, viewMin) + thickness);
+            // minSize.atg := MAX(viewMin)
+            SetAgainstGrainDim(isVertical,
+                               minSize,
+                               MAX(AgainstGrainDim(isVertical, *minSize), AgainstGrainDim(isVertical, viewMin)));
+            // maxSizeOut.wtg := sum(viewMax)
+            SetWithGrainDim(isVertical,
+                            maxSizeOut,
+                            WithGrainDim(isVertical, *maxSizeOut) + WithGrainDim(isVertical, viewMax) + thickness);
+            // maxSizeOut.atg := MIN(viewMax)
+            SetAgainstGrainDim(isVertical,
+                               maxSizeOut,
+                               MIN(AgainstGrainDim(isVertical, *maxSizeOut), AgainstGrainDim(isVertical, viewMax)));
+        }
+    }
+}
+
+- (void)_redistributeQuantizationError:(const double)targetSize
+                     currentSumOfSizes:(double)currentSumOfSizes
+                                 sizes:(NSMutableArray *)sizes
+                              minSizes:(NSArray*)minSizes
+                              maxSizes:(NSArray*)maxSizes
+{
+    // In case quantization caused some rounding error, randomly adjust subviews by plus or minus
+    // one pixel.
+    int error = currentSumOfSizes - targetSize;
+    int change;
+    if (error > 0) {
+        change = -1;
+    } else {
+        change = 1;
+    }
+    // First redistribute error while respecting min and max constraints until that is no longer
+    // possible.
+    while (error != 0) {
+        BOOL anyChange = NO;
+        for (int i = 0; i < [sizes count] && error != 0; ++i) {
+            const double size = [[sizes objectAtIndex:i] doubleValue];
+            const double theMin = [[minSizes objectAtIndex:i] doubleValue];
+            const double theMax = [[maxSizes objectAtIndex:i] doubleValue];
+            const double proposedSize = size + change;
+            if (proposedSize >= theMin && proposedSize <= theMax) {
+                [sizes replaceObjectAtIndex:i withObject:[NSNumber numberWithDouble:proposedSize]];
+                error += change;
+                anyChange = YES;
+            }
+        }
+        if (!anyChange) {
+            break;
+        }
+    }
+
+    // As long as there is still some error left, use 1 for min and disregard max.
+    while (error != 0) {
+        BOOL anyChange = NO;
+        for (int i = 0; i < [sizes count] && error != 0; ++i) {
+            const double size = [[sizes objectAtIndex:i] doubleValue];
+            if (size + change > 0) {
+                [sizes replaceObjectAtIndex:i withObject:[NSNumber numberWithDouble:size + change]];
+                error += change;
+                anyChange = YES;
+            }
+        }
+        if (!anyChange) {
+            PtyLog(@"Failed to redistribute quantization error. Everything is 1 pixel.");
+            NSLog(@"Failed to redistribute quantization error. Everything is 1 pixel.");
+            return;
+        }
+    }
+}
+
 // Called after a splitter has been resized. This adjusts session sizes appropriately,
 // with special attention paid to the "locked" session, which never resizes.
 - (void)splitView:(NSSplitView *)splitView resizeSubviewsWithOldSize:(NSSize)oldSize
 {
-    PtyLog(@"PTYTab splitView:resizeSubviewsWithOldSize:");
-    NSRect currentFrame = [splitView frame];
-    if ((int)currentFrame.size.width == (int)oldSize.width &&
-        (int)currentFrame.size.height == (int)oldSize.height) {
-        // This is a no-op that can only cause confusion.
-        return;
+    PtyLog(@"splitView:resizeSubviewsWithOldSize for %p", splitView);
+    BOOL isVertical = [splitView isVertical];
+    NSSet* ancestors = [self _ancestorsOfLockedSession];
+    NSSize minLockedSize = NSZeroSize;
+    NSSize maxLockedSize = NSZeroSize;
+    const double n = [[splitView subviews] count];
+
+    // Find the min, max, and ideal proportionate size for each subview.
+    NSMutableArray* sizes = [NSMutableArray arrayWithCapacity:[[splitView subviews] count]];
+    NSMutableArray* minSizes = [NSMutableArray arrayWithCapacity:[[splitView subviews] count]];
+    NSMutableArray* maxSizes = [NSMutableArray arrayWithCapacity:[[splitView subviews] count]];
+
+    // This is the sum of the with-the-grain sizes excluding dividers that we need to attain.
+    const double targetSize = WithGrainDim(isVertical, [splitView frame].size) - ([splitView dividerThickness] * (n - 1));
+    PtyLog(@"splitView:resizeSubviewsWithOldSize - target size is %lf", targetSize);
+
+    // Add up the existing subview sizes to come up with the previous total size excluding dividers.
+    double oldTotalSize = 0;
+    for (NSView* aSubview in [splitView subviews]) {
+        oldTotalSize += WithGrainDim(isVertical, [aSubview frame].size);
     }
-    // Possibilities:
-    // 1. No subview is locked. Then just adjustSubviews normally.
-    // 2. My only child is locked. Just resize it. If the caller is well behaved then it will go to the right size.
-    // 3. My child is locked but I have other children. Set the locked child to its canonical size ("with the grain" only) and then adjust the size of the other children to fit.
-    // 4. My grandchild is locked. If I have grandchildren then I must have more than one child. Adjust the parent of the locked session with my grain and change other children to fit.
-    if (lockedSession_ == nil) {
-        PtyLog(@"PTYTab splitView:resizeSubviewsWithOldSize: case 1");
-        // Case 1
-        [splitView adjustSubviews];
-    } else if ([[lockedSession_ view] superview] == splitView) {
-        if ([[splitView subviews] count] == 1) {
-            PtyLog(@"PTYTab splitView:resizeSubviewsWithOldSize: case 2");
-            // Case 2
-            [splitView adjustSubviews];
-        } else {
-            PtyLog(@"PTYTab splitView:resizeSubviewsWithOldSize: case 3");
-            // Case 3
-            if ([splitView isVertical]) {
-                // Vertical dividers so children are arranged horizontally.
-                // Set width of locked session and then resize all others proportionately.
-                CGFloat availableSize = [splitView frame].size.width;
-
-                // This also does not include dividers.
-                double originalSizeWithoutLockedSession = oldSize.width - [[lockedSession_ view] frame].size.width - ([[splitView subviews] count] - 1) * [splitView dividerThickness];
-                NSArray* mySubviews = [splitView subviews];
-                NSSize lockedSize = [self _sessionSize:[lockedSession_ view]];
-                availableSize -= lockedSize.width;
-                availableSize -= [splitView dividerThickness];
-
-                // Resize each child's width so that the space left excluding the locked session is
-                // divided up in the same proportions as it was before the resize.
-                NSRect newFrame = NSZeroRect;
-                newFrame.size.height = lockedSize.height;
-                for (id subview in mySubviews) {
-                    if (subview != [lockedSession_ view]) {
-                        // Resizing a non-locked child.
-                        NSSize subviewSize = [subview frame].size;
-                        double fractionOfOriginalSize = subviewSize.width / originalSizeWithoutLockedSession;
-                        newFrame.size.width = availableSize * fractionOfOriginalSize;;
-                    } else {
-                        newFrame.size.width = lockedSize.width;
-                    }
-                    [subview setFrame:newFrame];
-                    newFrame.origin.x += newFrame.size.width + [splitView dividerThickness];
-                }
+    double sizeChangeCoeff = 0;
+    BOOL ignoreConstraints = NO;
+    if (oldTotalSize == 0) {
+        // Nothing to go by. Just set all subviews to the same size.
+        PtyLog(@"splitView:resizeSubviewsWithOldSize: old size was 0");
+        ignoreConstraints = YES;
+    } else {
+        sizeChangeCoeff = targetSize / oldTotalSize;
+        PtyLog(@"splitView:resizeSubviewsWithOldSize. initial coeff=%lf", sizeChangeCoeff);
+    }
+    if (!ignoreConstraints) {
+        // Set the min and max size for each subview. Assign an initial guess to sizes.
+        double currentSumOfSizes = 0;
+        double currentSumOfMinClamped = 0;
+        double currentSumOfMaxClamped = 0;
+        for (NSView* aSubview in [splitView subviews]) {
+            double theMinSize;
+            double theMaxSize;
+            if (aSubview == [lockedSession_ view] || [ancestors containsObject:aSubview]) {
+                [self _recursiveLockedSize:aSubview
+                                 ancestors:ancestors
+                                   minSize:&minLockedSize
+                                   maxSize:&maxLockedSize];
+                theMinSize = WithGrainDim(isVertical, minLockedSize);
+                theMaxSize = WithGrainDim(isVertical, maxLockedSize);
+                PtyLog(@"splitView:resizeSubviewsWithOldSize - this subview is LOCKED");
             } else {
-                PtyLog(@"PTYTab splitView:resizeSubviewsWithOldSize: TODO");
-                // TODO
+                if ([aSubview isKindOfClass:[NSSplitView class]]) {
+                    theMinSize = WithGrainDim(isVertical, [self _recursiveMinSize:(NSSplitView*)aSubview]);
+                } else {
+                    theMinSize = WithGrainDim(isVertical, [self _minSessionSize:(SessionView*)aSubview]);
+                }
+                theMaxSize = targetSize;
+                PtyLog(@"splitView:resizeSubviewsWithOldSize - this subview is unlocked");
+            }
+            PtyLog(@"splitView:resizeSubviewsWithOldSize - range of %p is [%lf,%lf]", aSubview, theMinSize, theMaxSize);
+            [minSizes addObject:[NSNumber numberWithDouble:theMinSize]];
+            [maxSizes addObject:[NSNumber numberWithDouble:theMaxSize]];
+            const double initialGuess = sizeChangeCoeff * WithGrainDim(isVertical, [aSubview frame].size);
+            const double size = lround(MIN(MAX(initialGuess, theMinSize), theMaxSize));
+            PtyLog(@"splitView:resizeSubviewsWithOldSize - initial guess of %p is %lf, clamped is %lf", aSubview, initialGuess, size);
+            [sizes addObject:[NSNumber numberWithDouble:size]];
+            currentSumOfSizes += size;
+            if (size == theMinSize) {
+                currentSumOfMinClamped += size;
+            }
+            if (size == theMaxSize) {
+                currentSumOfMaxClamped += size;
             }
         }
-    } else if ([[[lockedSession_ view] superview] superview] == splitView) {
-        PtyLog(@"PTYTab splitView:resizeSubviewsWithOldSize: case 4");
-        // Case 4
-        // TODO
+
+        // Refine sizes while we're more than half a pixel away from the target size.
+        const double kEpsilon = 0.5;
+        while (fabs(currentSumOfSizes - targetSize) > kEpsilon) {
+            PtyLog(@"splitView:resizeSubviewsWithOldSize - refining. currentSumOfSizes=%lf vs target %lf", currentSumOfSizes, targetSize);
+            double currentSumOfUnclamped;
+            double desiredNewSizeForUnclamped;
+            if (currentSumOfSizes < targetSize) {
+                currentSumOfUnclamped = currentSumOfSizes - currentSumOfMaxClamped;
+                desiredNewSizeForUnclamped = targetSize - currentSumOfMaxClamped;
+            } else {
+                currentSumOfUnclamped = currentSumOfSizes - currentSumOfMinClamped;
+                desiredNewSizeForUnclamped = targetSize - currentSumOfMinClamped;
+            }
+            if (currentSumOfUnclamped < kEpsilon) {
+                // Not enough unclamped space to make any change.
+                ignoreConstraints = YES;
+                break;
+            }
+            // Set a coefficient that will be applied only to subviews that aren't clamped. If we're
+            // able to resize all currently unclamped subviews by this coefficient then we should
+            // hit exactly the target size.
+            const double coeff = desiredNewSizeForUnclamped / currentSumOfUnclamped;
+            PtyLog(@"splitView:resizeSubviewsWithOldSize - coeff %lf to bring current %lf unclamped size to %lf", coeff, currentSumOfUnclamped, desiredNewSizeForUnclamped);
+
+            // Try to resize every subview by the coefficient. Clamped subviews won't be able to
+            // change.
+            currentSumOfSizes = 0;
+            currentSumOfMinClamped = 0;
+            currentSumOfMaxClamped = 0;
+            BOOL anyChanges = NO;
+            for (int i = 0; i < [sizes count]; ++i) {
+                const double preferredSize = [[sizes objectAtIndex:i] doubleValue] * coeff;
+                const double theMinSize = [[minSizes objectAtIndex:i] doubleValue];
+                const double theMaxSize = [[maxSizes objectAtIndex:i] doubleValue];
+                const double size = lround(MIN(MAX(preferredSize, theMinSize), theMaxSize));
+                if (!anyChanges && size != [[sizes objectAtIndex:i] doubleValue]) {
+                    anyChanges = YES;
+                }
+                PtyLog(@"splitView:resizeSubviewsWithOldSize - change %lf to %lf (would be %lf unclamped)", [[sizes objectAtIndex:i] doubleValue], size, preferredSize);
+                [sizes replaceObjectAtIndex:i withObject:[NSNumber numberWithDouble:size]];
+
+                currentSumOfSizes += size;
+                if (size == theMinSize) {
+                    currentSumOfMinClamped += size;
+                }
+                if (size == theMaxSize) {
+                    currentSumOfMaxClamped += size;
+                }
+            }
+            if (!anyChanges) {
+                PtyLog(@"splitView:resizeSubviewsWithOldSize - nothing changed in this round");
+                if (fabs(currentSumOfSizes - targetSize) > [[splitView subviews] count]) {
+                    // I'm not sure this will ever happen, but just in case quantization prevents us
+                    // from converging give up and ignore constraints.
+                    NSLog(@"No changes! Ignoring constraints!");
+                    PtyLog(@"splitView:resizeSubviewsWithOldSize - No changes! Ignoring constraints!");
+                    ignoreConstraints = YES;
+                } else {
+                    PtyLog(@"splitView:resizeSubviewsWithOldSize - redistribute quantization error");
+                    [self _redistributeQuantizationError:targetSize
+                                       currentSumOfSizes:currentSumOfSizes
+                                                   sizes:sizes
+                                                minSizes:minSizes
+                                                maxSizes:maxSizes];
+                }
+                break;
+            }
+        }
+    }
+
+    if (ignoreConstraints) {
+        PtyLog(@"splitView:resizeSubviewsWithOldSize - ignoring constraints");
+        // Not all the constraints could be satisfied. Set every subview to its ideal size and hope
+        // for the best.
+        double currentSumOfSizes = 0;
+        if (sizeChangeCoeff == 0) {
+            // Original size was 0 so make all subviews equal.
+            for (NSView* aSubview in [splitView subviews]) {
+                const double size = lround(targetSize / n);
+                currentSumOfSizes += size;
+                [sizes addObject:[NSNumber numberWithDouble:size]];
+            }
+        } else {
+            // Resize everything proportionately.
+            for (int i = 0; i < [sizes count]; ++i) {
+                NSView* aSubview = [[splitView subviews] objectAtIndex:i];
+                const double size = lround(sizeChangeCoeff * WithGrainDim(isVertical, [aSubview frame].size));
+                currentSumOfSizes += size;
+                [sizes replaceObjectAtIndex:i withObject:[NSNumber numberWithDouble:size]];
+            }
+        }
+
+        [self _redistributeQuantizationError:targetSize
+                           currentSumOfSizes:currentSumOfSizes
+                                       sizes:sizes
+                                    minSizes:minSizes
+                                    maxSizes:maxSizes];
+    }
+
+    // Set subview frames to computed sizes.
+    NSRect frame = NSZeroRect;
+    SetAgainstGrainDim(isVertical, &frame.size, AgainstGrainDim(isVertical, [splitView frame].size));
+    for (int i = 0; i < [sizes count]; ++i) {
+        SetWithGrainDim(isVertical, &frame.size, [[sizes objectAtIndex:i] doubleValue]);
+        [[[splitView subviews] objectAtIndex:i] setFrame:frame];
+        if (isVertical) {
+            frame.origin.x += frame.size.width + [splitView dividerThickness];
+        } else {
+            frame.origin.y += frame.size.height + [splitView dividerThickness];
+        }
     }
 }
 
@@ -1082,6 +1773,8 @@ static NSImage *warningImage;
                     [self fitSessionToCurrentViewSize:session];
                 }
             }
+        } else {
+            [self _splitViewDidResizeSubviews:(NSSplitView*)subview];
         }
     }
 }

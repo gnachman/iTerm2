@@ -108,6 +108,7 @@
 - (void)setIcon:(NSImage *)anIcon;
 // Should show busy indicator in tab?
 - (BOOL)isProcessing;
+- (BOOL)realIsProcessing;
 - (void)setIsProcessing:(BOOL)aFlag;
 - (BOOL)isActiveSession;
 - (BOOL)anySessionHasNewOutput;
@@ -122,9 +123,9 @@
 - (NSSize)size;
 - (NSSize)minSize;
 - (void)setSize:(NSSize)newSize;
-- (PTYSession*)sessionBefore:(PTYSession*)session;
-- (PTYSession*)sessionAfter:(PTYSession*)session;
-- (BOOL)canSplitVertically;
+- (PTYSession*)sessionLeftOf:(PTYSession*)session;
+- (PTYSession*)sessionRightOf:(PTYSession*)session;
+- (BOOL)canSplitVertically:(BOOL)isVertical withSize:(NSSize)newSessionSize;
 - (NSImage*)image;
 - (bool)blur;
 - (void)recheckBlur;
@@ -139,7 +140,9 @@
 //   only one child: make its orientation vertical and add a new subview.
 //   more than one child and a vertical orientation: add a new subview and return it.
 //   more than one child and a horizontal orientation: add a new split subview with vertical orientation and add a sessionview subview to it and return that sessionview.
-- (SessionView*)splitVertically;
+- (SessionView*)splitVertically:(BOOL)isVertical;
+- (NSSize)_recursiveMinSize:(NSSplitView*)node;
+- (PTYSession*)_recursiveSessionAtPoint:(NSPoint)point relativeTo:(NSView*)node;
 
 #pragma mark NSSplitView delegate methods
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;
@@ -147,6 +150,7 @@
 // views are added or adjusted, so we often have to call this ourselves.
 - (void)_splitViewDidResizeSubviews:(NSSplitView*)splitView;
 - (CGFloat)splitView:(NSSplitView *)splitView constrainSplitPosition:(CGFloat)proposedPosition ofSubviewAt:(NSInteger)dividerIndex;
+- (void)_recursiveRemoveView:(NSView*)theView;
 
 @end
 

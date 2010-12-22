@@ -1188,7 +1188,7 @@ static char* FormatCont(int c)
             snprintf(buf, sizeof(buf), "\033[3;%d;%dt", (int) frame.origin.x, (int) frame.origin.y);
             [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
-            break;
+        break;
     case XTERMCC_REPORT_WIN_PIX_SIZE:
         {
             char buf[64];
@@ -1197,7 +1197,7 @@ static char* FormatCont(int c)
             snprintf(buf, sizeof(buf), "\033[4;%d;%dt", (int) frame.size.height, (int) frame.size.width);
             [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
-            break;
+        break;
     case XTERMCC_REPORT_WIN_SIZE:
         {
             char buf[64];
@@ -1205,7 +1205,7 @@ static char* FormatCont(int c)
             snprintf(buf, sizeof(buf), "\033[8;%d;%dt", HEIGHT, WIDTH);
             [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
-            break;
+        break;
     case XTERMCC_REPORT_SCREEN_SIZE:
         {
             char buf[64];

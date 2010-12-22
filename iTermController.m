@@ -215,11 +215,15 @@ static BOOL initDone = NO;
     // Determine the new width for all windows, not less than some minimum.
     float x = 0;
     float w = frame.size.width / [terminals count];
-    const float kMinWidth = 400;
-    if (w < kMinWidth) {
-        // Width would be too narrow. Pick the smallest width larger than kMinWidth
+    float minWidth = 400;
+    for (PseudoTerminal* term in terminals) {
+        float termMinWidth = [term minWidth];
+        minWidth = MAX(minWidth, termMinWidth);
+    }
+    if (w < minWidth) {
+        // Width would be too narrow. Pick the smallest width larger than minWidth
         // that evenly  divides the screen up horizontally.
-        int maxWindowsInOneRow = floor(frame.size.width / kMinWidth);
+        int maxWindowsInOneRow = floor(frame.size.width / minWidth);
         w = frame.size.width / maxWindowsInOneRow;
     }
 

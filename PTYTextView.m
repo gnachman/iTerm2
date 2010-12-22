@@ -1509,6 +1509,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     NSLog(@"%s(%d):-[PTYTextView mouseDown:%@]",
           __FILE__, __LINE__, event );
 #endif
+    if ([[iTermController sharedInstance] frontTextView] != self) {
+        // Mouse clicks in inactive tab are always handled by superclass.
+        [super mouseDown:event];
+        return;
+    }
 
     NSPoint locationInWindow, locationInTextView;
     int x, y;
@@ -1608,7 +1613,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             // not holding down shift key but there is an existing selection.
             // Possibly a drag coming up.
             mouseDownOnSelection = YES;
-            [super mouseDown: event];
+            [super mouseDown:event];
             return;
         } else if (!cmdPressed || altPressed) {
             // start a new selection
@@ -1689,6 +1694,13 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     NSLog(@"%s(%d):-[PTYTextView mouseUp:%@]",
           __FILE__, __LINE__, event );
 #endif
+    if ([[iTermController sharedInstance] frontTextView] != self) {
+        // Mouse clicks in inactive tab are always handled by superclass but make it first responder.
+        [[self window] makeFirstResponder: self];
+        [super mouseUp:event];
+        return;
+    }
+
     NSPoint locationInWindow = [event locationInWindow];
     NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
     int x, y;

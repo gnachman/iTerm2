@@ -385,6 +385,28 @@ int gDebugLogFile = -1;
     [[[[iTermController sharedInstance] currentTerminal] currentSession] changeFontSizeDirection:-1];
 }
 
+
+- (IBAction)selectPaneLeft:(id)sender
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneLeft:nil];
+}
+
+- (IBAction)selectPaneRight:(id)sender
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneRight:nil];
+}
+
+- (IBAction)selectPaneUp:(id)sender
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneUp:nil];
+}
+
+- (IBAction)selectPaneDown:(id)sender
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
+}
+
+
 static void SwapDebugLog() {
         NSMutableString* temp;
         temp = gDebugLogStr;

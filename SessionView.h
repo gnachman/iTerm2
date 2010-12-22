@@ -27,14 +27,35 @@
 
 #import <Cocoa/Cocoa.h>
 
+@interface ShadeView : NSView {
+    float alpha;
+}
+
+- (void)setAlpha:(float)newAlpha;
+- (void)drawRect:(NSRect)frame;
+
+@end
+
+
 @class PTYSession;
 @interface SessionView : NSView {
     PTYSession* session_;
+    ShadeView* shade_;
+    BOOL dim_;
+
+    float currentAlpha_;
+    NSDate* previousUpdate_;
+    float changePerSecond_;
+    float targetAlpha_;
+    NSTimer* timer_;
+    BOOL shuttingDown_;
 }
 
 - (id)initWithFrame:(NSRect)frame session:(PTYSession*)session;
 - (void)dealloc;
 - (PTYSession*)session;
 - (void)setSession:(PTYSession*)session;
+- (void)setDimmed:(BOOL)isDimmed;
+- (void)cancelTimers;
 
 @end

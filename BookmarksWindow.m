@@ -83,7 +83,8 @@
         }
         Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
         if (inPane && terminal != nil) {
-            [terminal splitVerticallyWithBookmark:bookmark];
+            // TODO: Intelligently decide if the split should be vertical or horizontal
+            [terminal splitVertically:YES withBookmark:bookmark];
         } else {
             [[iTermController sharedInstance] launchBookmark:bookmark
                                                   inTerminal:terminal];
