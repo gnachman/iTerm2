@@ -2152,12 +2152,19 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     theMenu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
 
     // Menu items for acting on text selections
-    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"-> Browser",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
+    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Open Selection as URL",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(browse:) keyEquivalent:@""];
-    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"-> Google",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
+    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Search Google for Selection",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(searchInBrowser:) keyEquivalent:@""];
-    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"-> Mail",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
+    [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Send Email to Selected Address",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(mail:) keyEquivalent:@""];
+
+    // Separator
+    [theMenu addItem:[NSMenuItem separatorItem]];
+
+    // Split pane options
+    [theMenu addItemWithTitle:@"Split Pane Vertically" action:@selector(splitVertically:) keyEquivalent:@""];
+    [theMenu addItemWithTitle:@"Split Pane Horizontally" action:@selector(splitHorizontally:) keyEquivalent:@""];
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
@@ -2185,19 +2192,37 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return [theMenu autorelease];
 }
 
-- (void) mail:(id)sender
+- (void)mail:(id)sender
+{
+    NSString* mailto;
+    
+    if ([[self selectedText] hasPrefix:@"mailto:"]) {
+        mailto = [NSString stringWithString:[self selectedText]];
+    } else {
+        mailto = [NSString stringWithFormat:@"mailto:%@", [self selectedText]];
+    }
+    
+    NSString* escapedString = (NSString *)CFURLCreateStringByAddingPercentEscapes(NULL,
+                                                                                  (CFStringRef)mailto,
+                                                                                  (CFStringRef)@"!*'();:@&=+$,/?%#[]",
+                                                                                  NULL,
+                                                                                  kCFStringEncodingUTF8 );
+    
+    NSURL* url = [NSURL URLWithString:escapedString];
+    [escapedString release];
+    
+    [[NSWorkspace sharedWorkspace] openURL:url];    
+}
+
+- (void)browse:(id)sender
 {
     [self _openURL: [self selectedText]];
 }
 
-- (void) browse:(id)sender
+- (void)searchInBrowser:(id)sender
 {
-    [self _openURL: [self selectedText]];
-}
-
-- (void) searchInBrowser:(id)sender
-{
-    [self _openURL: [[NSString stringWithFormat:[[PreferencePanel sharedInstance] searchCommand], [self selectedText]] stringByAddingPercentEscapesUsingEncoding: NSUTF8StringEncoding]];
+    [self _openURL:[[NSString stringWithFormat:[[PreferencePanel sharedInstance] searchCommand], [self selectedText]] 
+                    stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
 }
 
 //

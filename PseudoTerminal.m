@@ -1122,7 +1122,7 @@ NSString *sessionsKey = @"sessions";
     [theMenu addItem:[NSMenuItem separatorItem]];
 
     // Info
-    aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Info...",
+    aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Edit Session...",
                                                                                      @"iTerm",
                                                                                      [NSBundle bundleForClass: [self class]],
                                                                                      @"Context menu")
