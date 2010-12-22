@@ -44,6 +44,11 @@ static const float kTargetFrameRate = 1.0/60.0;
     NSRectFill(rect);
 }
 
+- (void)rightMouseDown:(NSEvent*)event
+{
+    [[self superview] rightMouseDown:event];
+}
+
 @end
 
 @implementation SessionView
@@ -131,6 +136,9 @@ static const float kTargetFrameRate = 1.0/60.0;
         (changePerSecond_ < 0 && newAlpha < targetAlpha_)) {
         currentAlpha_ = targetAlpha_;
         [shade_ setAlphaValue:targetAlpha_];
+        if (targetAlpha_ == 0) {
+            [shade_ setHidden:YES];
+        }
     } else {
         [shade_ setAlphaValue:newAlpha];
         currentAlpha_ = newAlpha;
@@ -147,6 +155,9 @@ static const float kTargetFrameRate = 1.0/60.0;
 {
     targetAlpha_ = newAlpha;
     previousUpdate_ = [[NSDate date] retain];
+    if (currentAlpha_ == 0 && [shade_ isHidden]) {
+        [shade_ setHidden:NO];
+    }
     changePerSecond_ = (targetAlpha_ - currentAlpha_) / 0.25;
     if (timer_) {
         [timer_ invalidate];
@@ -178,6 +189,11 @@ static const float kTargetFrameRate = 1.0/60.0;
 {
     shuttingDown_ = YES;
     [timer_ invalidate];
+}
+
+- (void)rightMouseDown:(NSEvent*)event
+{
+    [[[self session] TEXTVIEW] rightMouseDown:event];
 }
 
 @end

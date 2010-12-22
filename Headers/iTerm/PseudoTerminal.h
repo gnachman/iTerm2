@@ -213,6 +213,7 @@
 
 // Close the active session.
 - (IBAction)closeCurrentSession:(id)sender;
+- (void)closeSessionWithConfirmation:(PTYSession *)aSession;
 
 // Close foreground tab.
 - (IBAction)closeCurrentTab:(id)sender;
@@ -267,6 +268,7 @@
 
 // Open the session preference panel.
 - (void)editCurrentSession:(id)sender;
+- (void)editSession:(PTYSession*)session;
 
 // Construct the right-click context menu.
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu;
@@ -514,7 +516,7 @@
 // selector for menu item to split current session vertically.
 - (IBAction)splitVertically:(id)sender;
 - (IBAction)splitHorizontally:(id)sender;
-- (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark;
+- (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark targetSession:(PTYSession*)targetSession;
 
 // Change active pane.
 - (IBAction)selectPaneLeft:(id)sender;

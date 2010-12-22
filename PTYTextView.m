@@ -1310,7 +1310,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [super otherMouseDragged:event];
 }
 
-- (void)rightMouseDown: (NSEvent *) event
+- (void)rightMouseDown:(NSEvent*)event
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s: %@]", __PRETTY_FUNCTION__, event);
@@ -2063,6 +2063,35 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                           pad:NO];
 }
 
+- (void)splitTextViewVertically:(id)sender
+{
+    [[[[dataSource session] tab] realParentWindow] splitVertically:YES 
+                                                      withBookmark:[[BookmarkModel sharedInstance] defaultBookmark] 
+                                                     targetSession:[dataSource session]];
+}
+
+- (void)splitTextViewHorizontally:(id)sender
+{
+    [[[[dataSource session] tab] realParentWindow] splitVertically:NO 
+                                                      withBookmark:[[BookmarkModel sharedInstance] defaultBookmark] 
+                                                     targetSession:[dataSource session]];
+}
+
+- (void)clearTextViewBuffer:(id)sender
+{
+    [[dataSource session] clearBuffer];
+}
+
+- (void)editTextViewSession:(id)sender
+{
+    [[[[dataSource session] tab] realParentWindow] editSession:[dataSource session]];
+}
+
+- (void)closeTextViewSession:(id)sender
+{
+    [[[[dataSource session] tab] realParentWindow] closeSessionWithConfirmation:[dataSource session]];
+} 
+
 - (void)copy:(id)sender
 {
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
@@ -2114,34 +2143,37 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     NSLog(@"%s(%d):-[PTYTextView validateMenuItem:%@; supermenu = %@]", __FILE__, __LINE__, item, [[item menu] supermenu] );
 #endif
 
-    if ([item action] == @selector(paste:))
-    {
+    if ([item action] == @selector(paste:)) {
         NSPasteboard *pboard = [NSPasteboard generalPasteboard];
-
         // Check if there is a string type on the pasteboard
         return ([pboard stringForType:NSStringPboardType] != nil);
     }
-    else if ([item action ] == @selector(cut:))
+    if ([item action ] == @selector(cut:)) {
+        // Never allow cut.
         return NO;
-    else if ([item action]==@selector(saveDocumentAs:) ||
-             [item action] == @selector(selectAll:) ||
-             ([item action] == @selector(print:) && [item tag] != 1))
-    {
+    }
+    if ([item action]==@selector(saveDocumentAs:) ||
+        [item action] == @selector(selectAll:) ||
+        [item action]==@selector(splitTextViewVertically:) ||
+        [item action]==@selector(splitTextViewHorizontally:) ||
+        [item action]==@selector(clearTextViewBuffer:) ||
+        [item action]==@selector(editTextViewSession:) ||
+        [item action]==@selector(closeTextViewSession:) ||
+        ([item action] == @selector(print:) && [item tag] != 1)) {
         // We always validate the above commands
-        return (YES);
+        return YES;
     }
-    else if ([item action]==@selector(mail:) ||
-             [item action]==@selector(browse:) ||
-             [item action]==@selector(searchInBrowser:) ||
-             [item action]==@selector(copy:) ||
-             [item action]==@selector(pasteSelection:) ||
-             ([item action]==@selector(print:) && [item tag] == 1)) // print selection
-    {
-        //        NSLog(@"selected range:%d",[self selectedRange].length);
-        return (startX > -1);
+    if ([item action]==@selector(mail:) ||
+        [item action]==@selector(browse:) ||
+        [item action]==@selector(searchInBrowser:) ||
+        [item action]==@selector(copy:) ||
+        [item action]==@selector(pasteSelection:) ||
+        ([item action]==@selector(print:) && [item tag] == 1)) { // print selection
+        // These commands are allowed only if there is a selection.
+        return startX > -1;
     }
-    else
-        return NO;
+    
+    return NO;
 }
 
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
@@ -2163,8 +2195,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [theMenu addItem:[NSMenuItem separatorItem]];
 
     // Split pane options
-    [theMenu addItemWithTitle:@"Split Pane Vertically" action:@selector(splitVertically:) keyEquivalent:@""];
-    [theMenu addItemWithTitle:@"Split Pane Horizontally" action:@selector(splitHorizontally:) keyEquivalent:@""];
+    [theMenu addItemWithTitle:@"Split Pane Vertically" action:@selector(splitTextViewVertically:) keyEquivalent:@""];
+    [theMenu addItemWithTitle:@"Split Pane Horizontally" action:@selector(splitTextViewHorizontally:) keyEquivalent:@""];
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
@@ -2184,7 +2216,27 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Select All",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(selectAll:) keyEquivalent:@""];
 
-
+    // Clear buffer
+    [theMenu addItemWithTitle:@"Clear Buffer" 
+                       action:@selector(clearTextViewBuffer:) 
+                keyEquivalent:@""];    
+    
+    // Separator
+    [theMenu addItem:[NSMenuItem separatorItem]];
+    
+    // Edit Session
+    [theMenu addItemWithTitle:@"Edit Session..."
+                       action:@selector(editTextViewSession:)
+                keyEquivalent:@""];
+    
+    // Separator
+    [theMenu addItem:[NSMenuItem separatorItem]];
+    
+    // Close current pane
+    [theMenu addItemWithTitle:@"Close" 
+                       action:@selector(closeTextViewSession:) 
+                keyEquivalent:@""];
+    
     // Ask the delegae if there is anything to be added
     if ([[self delegate] respondsToSelector:@selector(menuForEvent: menu:)])
         [[self delegate] menuForEvent:theEvent menu: theMenu];

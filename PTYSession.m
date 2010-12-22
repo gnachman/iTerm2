@@ -1222,19 +1222,6 @@ static NSString *PWD_ENVVALUE = @"~";
 // Contextual menu
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu
 {
-    NSMenuItem *aMenuItem;
-
-    // Clear buffer
-    aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Clear Buffer",
-                                                                                     @"iTerm",
-                                                                                     [NSBundle bundleForClass: [self class]],
-                                                                                     @"Context menu")
-                                           action:@selector(clearBuffer:)
-                                    keyEquivalent:@""];
-    [aMenuItem setTarget:[[self tab] parentWindow]];
-    [theMenu addItem: aMenuItem];
-    [aMenuItem release];
-
     // Ask the parent if it has anything to add
     if ([[self tab] realParentWindow] &&
         [[[self tab] realParentWindow] respondsToSelector:@selector(menuForEvent: menu:)]) {

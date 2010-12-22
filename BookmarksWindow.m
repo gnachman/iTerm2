@@ -27,6 +27,7 @@
 #import <iTerm/iTermController.h>
 #import <iTerm/PreferencePanel.h>
 #import <iTerm/PseudoTerminal.h>
+#import "PTYTab.h"
 
 @implementation BookmarksWindow
 
@@ -84,7 +85,7 @@
         Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
         if (inPane && terminal != nil) {
             // TODO: Intelligently decide if the split should be vertical or horizontal
-            [terminal splitVertically:YES withBookmark:bookmark];
+            [terminal splitVertically:YES withBookmark:bookmark targetSession:[[terminal currentTab] activeSession]];
         } else {
             [[iTermController sharedInstance] launchBookmark:bookmark
                                                   inTerminal:terminal];

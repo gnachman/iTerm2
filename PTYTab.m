@@ -741,13 +741,12 @@ static void SwapPoint(NSPoint* point) {
     }
 }
 
-- (SessionView*)splitVertically:(BOOL)isVertical
+- (SessionView*)splitVertically:(BOOL)isVertical targetSession:(PTYSession*)targetSession
 {
     PtyLog(@"PTYTab splitVertically");
-    PTYSession* activeSession = [self activeSession];
-    SessionView* activeSessionView = [activeSession view];
-    NSSplitView* parentSplit = (NSSplitView*) [activeSessionView superview];
-    SessionView* newView = [[[SessionView alloc] initWithFrame:[activeSessionView frame]] autorelease];
+    SessionView* targetSessionView = [targetSession view];
+    NSSplitView* parentSplit = (NSSplitView*) [targetSessionView superview];
+    SessionView* newView = [[[SessionView alloc] initWithFrame:[targetSessionView frame]] autorelease];
 
     // There has to be an active session, so the parent must have one child.
     assert([[parentSplit subviews] count] != 0);
@@ -760,7 +759,7 @@ static void SwapPoint(NSPoint* point) {
 
         // Set its orientation to vertical and add the new view.
         [parentSplit setVertical:isVertical];
-        [parentSplit addSubview:newView positioned:NSWindowAbove relativeTo:activeSessionView];
+        [parentSplit addSubview:newView positioned:NSWindowAbove relativeTo:targetSessionView];
 
         // Resize all subviews the same size to accommodate the new view.
         [parentSplit adjustSubviews];
@@ -771,15 +770,15 @@ static void SwapPoint(NSPoint* point) {
         // 1. Remove the active SessionView from its parent
         // 2. Replace it with an 'isVertical'-orientation NSSplitView
         // 3. Add two children to the 'isVertical'-orientation NSSplitView: the active session and the new view.
-        [activeSessionView retain];
-        NSSplitView* newSplit = [[NSSplitView alloc] initWithFrame:[activeSessionView frame]];
+        [targetSessionView retain];
+        NSSplitView* newSplit = [[NSSplitView alloc] initWithFrame:[targetSessionView frame]];
         [newSplit setAutoresizesSubviews:YES];
         [newSplit setDelegate:self];
         [newSplit setVertical:isVertical];
-        [[activeSessionView superview] replaceSubview:activeSessionView with:newSplit];
+        [[targetSessionView superview] replaceSubview:targetSessionView with:newSplit];
         [newSplit release];
-        [newSplit addSubview:activeSessionView];
-        [activeSessionView release];
+        [newSplit addSubview:targetSessionView];
+        [targetSessionView release];
         [newSplit addSubview:newView];
 
         // Resize all subviews the same size to accommodate the new view.
@@ -789,7 +788,7 @@ static void SwapPoint(NSPoint* point) {
     } else {
         PtyLog(@"PTYTab splitVertically multiple children");
         // The parent has same-orientation splits and there is more than one child.
-        [parentSplit addSubview:newView positioned:NSWindowAbove relativeTo:activeSessionView];
+        [parentSplit addSubview:newView positioned:NSWindowAbove relativeTo:targetSessionView];
 
         // Resize all subviews the same size to accommodate the new view.
         [parentSplit adjustSubviews];

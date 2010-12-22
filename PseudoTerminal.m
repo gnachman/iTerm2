@@ -427,6 +427,11 @@ NSString *sessionsKey = @"sessions";
 - (IBAction)closeCurrentSession:(id)sender
 {
     PTYSession *aSession = [[[TABVIEW selectedTabViewItem] identifier] activeSession];
+    [self closeSessionWithConfirmation:aSession];
+}
+
+- (void)closeSessionWithConfirmation:(PTYSession *)aSession
+{
     if ([[[aSession tab] sessions] count] == 1) {
         [self closeCurrentTab:self];
         return;
@@ -1026,6 +1031,11 @@ NSString *sessionsKey = @"sessions";
     if (!session) {
         return;
     }
+    [self editSession:session];
+}
+
+- (void)editSession:(PTYSession*)session
+{
     Bookmark* bookmark = [session addressBookEntry];
     if (!bookmark) {
         return;
@@ -1117,34 +1127,6 @@ NSString *sessionsKey = @"sessions";
     [aMenu addItem: tip];
 
     [theMenu setSubmenu: aMenu forItem: [theMenu itemAtIndex: 0]];
-
-    // Separator
-    [theMenu addItem:[NSMenuItem separatorItem]];
-
-    // Info
-    aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Edit Session...",
-                                                                                     @"iTerm",
-                                                                                     [NSBundle bundleForClass: [self class]],
-                                                                                     @"Context menu")
-                                           action:@selector(editCurrentSession:)
-                                    keyEquivalent:@""];
-    [aMenuItem setTarget: self];
-    [theMenu addItem: aMenuItem];
-    [aMenuItem release];
-
-    // Separator
-    [theMenu addItem:[NSMenuItem separatorItem]];
-
-    // Close current session
-    aMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Close",
-                                                                                     @"iTerm",
-                                                                                     [NSBundle bundleForClass:[self class]],
-                                                                                     @"Context menu")
-                                           action:@selector(closeCurrentSession:)
-                                    keyEquivalent:@""];
-    [aMenuItem setTarget: self];
-    [theMenu addItem: aMenuItem];
-    [aMenuItem release];
 
 }
 
@@ -2119,7 +2101,7 @@ NSString *sessionsKey = @"sessions";
     return YES;
 }
 
-- (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark
+- (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark targetSession:(PTYSession*)targetSession
 {
     PtyLog(@"--------- splitVertically -----------");
     if (![self canSplitPaneVertically:isVertical withBookmark:theBookmark]) {
@@ -2134,7 +2116,7 @@ NSString *sessionsKey = @"sessions";
     }
 
     PTYSession* newSession = [self newSessionWithBookmark:theBookmark];
-    SessionView* sessionView = [[self currentTab] splitVertically:isVertical];
+    SessionView* sessionView = [[self currentTab] splitVertically:isVertical targetSession:targetSession];
     [sessionView setSession:newSession];
     [newSession setTab:[self currentTab]];
     [newSession setView:sessionView];
@@ -2152,20 +2134,22 @@ NSString *sessionsKey = @"sessions";
     [self fitWindowToTabs];
 
     [self runCommandInSession:newSession inCwd:oldCWD];
-    [[self currentTab] setActiveSession:newSession];
+    if (targetSession == [[self currentTab] activeSession]) {
+        [[self currentTab] setActiveSession:newSession];
+    }
     [[self currentTab] recheckBlur];
 }
 
 - (IBAction)splitVertically:(id)sender
 {
     Bookmark* theBookmark = [[BookmarkModel sharedInstance] defaultBookmark];
-    [self splitVertically:YES withBookmark:theBookmark];
+    [self splitVertically:YES withBookmark:theBookmark targetSession:[[self currentTab] activeSession]];
 }
 
 - (IBAction)splitHorizontally:(id)sender
 {
     Bookmark* theBookmark = [[BookmarkModel sharedInstance] defaultBookmark];
-    [self splitVertically:NO withBookmark:theBookmark];
+    [self splitVertically:NO withBookmark:theBookmark targetSession:[[self currentTab] activeSession]];
 }
 
 - (void)fitWindowToTabs
