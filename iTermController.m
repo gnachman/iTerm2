@@ -263,8 +263,8 @@ static BOOL initDone = NO;
     while ([terminalsCopy count] > 0) {
         // Find the leftmost terminal.
         PseudoTerminal* terminal = nil;
-        float bestDistance;
-        int bestIndex;
+        float bestDistance = 0;
+        int bestIndex = 0;
 
         for (int j = 0; j < [terminalsCopy count]; ++j) {
             PseudoTerminal* t = [terminalsCopy objectAtIndex:j];

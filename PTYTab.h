@@ -125,6 +125,8 @@
 - (void)setSize:(NSSize)newSize;
 - (PTYSession*)sessionLeftOf:(PTYSession*)session;
 - (PTYSession*)sessionRightOf:(PTYSession*)session;
+- (PTYSession*)sessionAbove:(PTYSession*)session;
+- (PTYSession*)sessionBelow:(PTYSession*)session;
 - (BOOL)canSplitVertically:(BOOL)isVertical withSize:(NSSize)newSessionSize;
 - (NSImage*)image;
 - (bool)blur;
