@@ -522,6 +522,9 @@
 - (IBAction)selectPaneUp:(id)sender;
 - (IBAction)selectPaneDown:(id)sender;
 
+// Do some cleanup after a session is removed.
+- (void)sessionWasRemoved;
+
 // Return the smallest allowable width for this terminal.
 - (float)minWidth;
 

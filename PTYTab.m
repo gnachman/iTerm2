@@ -158,6 +158,9 @@ static NSImage *warningImage;
     BOOL changed = session != activeSession_;
     PTYSession* oldSession = activeSession_;
     activeSession_ = session;
+    if (activeSession_ == nil) {
+        return;
+    }
     if (changed) {
         [parentWindow_ setWindowTitle];
         [tabViewItem_ setLabel:[[self activeSession] name]];
@@ -612,10 +615,16 @@ static void SwapPoint(NSPoint* point) {
 - (void)_recursiveRemoveView:(NSView*)theView
 {
     NSSplitView* parentSplit = (NSSplitView*)[theView superview];
-    [self _checkInvariants:root_];
-    [theView removeFromSuperview];
-    [self _cleanupAfterRemove:parentSplit];
-    [self _checkInvariants:root_];
+    if (parentSplit) {
+        // When a session is in instant replay, both the live session (which has no superview)
+        // and the fakey DVR session are called here. If parentSplit is null the it's the live
+        // session and there's nothing to do here. Otherwise, it's the one that is visible and
+        // we take this path.
+        [self _checkInvariants:root_];
+        [theView removeFromSuperview];
+        [self _cleanupAfterRemove:parentSplit];
+        [self _checkInvariants:root_];
+    }
 }
 
 - (NSRect)_recursiveViewFrame:(NSView*)aView
@@ -684,12 +693,11 @@ static void SwapPoint(NSPoint* point) {
     // Remove the session.
     [self _recursiveRemoveView:[aSession view]];
 
-    if (aSession == activeSession_ && nearestNeighbor != nil) {
+    if (aSession == activeSession_) {
         [self setActiveSession:[(SessionView*)nearestNeighbor session]];
-    } else {
-        activeSession_ = nil;
     }
     [self recheckBlur];
+    [realParentWindow_ sessionWasRemoved];
 }
 
 - (BOOL)canSplitVertically:(BOOL)isVertical withSize:(NSSize)newSessionSize

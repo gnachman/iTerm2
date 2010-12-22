@@ -450,6 +450,8 @@ NSString *sessionsKey = @"sessions";
                                                             [NSBundle bundleForClass:[self class]],
                                                             @"Cancel"),
                          nil) == NSAlertDefaultReturn)) {
+        // Just in case IR is open, close it first.
+        [self closeInstantReplay:self];
         [self closeSession:aSession];
     }
 }
@@ -2274,6 +2276,13 @@ NSString *sessionsKey = @"sessions";
     if (session) {
         [[self currentTab] setActiveSession:session];
     }
+}
+
+- (void)sessionWasRemoved
+{
+    // This works around an apparent bug in NSSplitView that causes dividers'
+    // cursor rects to survive after the divider is gone.
+    [[self window] resetCursorRects];
 }
 
 - (float)minWidth
