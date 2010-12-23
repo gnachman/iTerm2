@@ -546,11 +546,12 @@ static char* FormatCont(int c)
 }
 
 // Returns the number of lines appended.
-- (int) _appendScreenToScrollback
+- (int)_appendScreenToScrollback
 {
     // Set used_height to the number of lines on the screen that are in use.
-      int i;
-  int used_height = HEIGHT;
+    int i;
+    int used_height = HEIGHT;
+
     for(; used_height > cursorY + 1; used_height--) {
         screen_char_t* aLine = [self getLineAtScreenIndex: used_height-1];
         for (i = 0; i < WIDTH; i++)
@@ -577,7 +578,6 @@ static char* FormatCont(int c)
         } else {
             next_line_length = -1;
         }
-
 
         int continuation = line[WIDTH].ch;
         if (i == cursorY) {
@@ -679,7 +679,7 @@ static char* FormatCont(int c)
             }
         }
         int cont;
-        [linebuffer popAndCopyLastLineInto:dest width: WIDTH includesEndOfLine: &cont];
+        [linebuffer popAndCopyLastLineInto:dest width:WIDTH includesEndOfLine:&cont];
         if (cont && dest[WIDTH - 1].ch == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the
             // line below it starts with a DWC, it's safe to conclude that a DWC

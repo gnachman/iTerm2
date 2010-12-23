@@ -343,7 +343,7 @@ static BOOL initDone = NO;
 
 - (PseudoTerminal*)currentTerminal
 {
-    return (FRONT);
+    return FRONT;
 }
 
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow
@@ -771,16 +771,19 @@ NSString *terminalsKey = @"terminals";
     return ([terminalWindows objectAtIndex: theIndex]);
 }
 
-- (void) setCurrentTerminal: (PseudoTerminal *) thePseudoTerminal
+- (void)setCurrentTerminal:(PseudoTerminal*)thePseudoTerminal
 {
     FRONT = thePseudoTerminal;
 
     // make sure this window is the key window
-    if([thePseudoTerminal windowInited] && [[thePseudoTerminal window] isKeyWindow] == NO)
+    if ([thePseudoTerminal windowInited] && [[thePseudoTerminal window] isKeyWindow] == NO) {
         [[thePseudoTerminal window] makeKeyAndOrderFront: self];
-
+    }
+    
     // Post a notification
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermWindowBecameKey" object: thePseudoTerminal userInfo: nil];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowBecameKey" 
+                                                        object:thePseudoTerminal 
+                                                      userInfo:nil];
 
 }
 

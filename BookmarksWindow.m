@@ -29,6 +29,12 @@
 #import <iTerm/PseudoTerminal.h>
 #import "PTYTab.h"
 
+typedef enum {
+    HORIZONTAL_PANE,
+    VERTICAL_PANE,
+    NO_PANE // no gane
+} PaneMode;
+
 @implementation BookmarksWindow
 
 + (BookmarksWindow*)sharedInstance
@@ -65,10 +71,15 @@
     NSNumber* n = [prefs objectForKey:@"CloseBookmarksWindowAfterOpening"];
     [closeAfterOpeningBookmark_ setState:[n boolValue] ? NSOnState : NSOffState];
 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(updatePaneButtons:)
+                                                 name:@"iTermWindowBecameKey"
+                                               object:nil];
+
     return self;
 }
 
-- (void)_openBookmarkInTab:(BOOL)inTab firstInWindow:(BOOL)firstInWindow inPane:(BOOL)inPane
+- (void)_openBookmarkInTab:(BOOL)inTab firstInWindow:(BOOL)firstInWindow inPane:(PaneMode)inPane
 {
     NSSet* guids = [tableView_ selectedGuids];
     if (![guids count]) {
@@ -83,9 +94,8 @@
             terminal = [[iTermController sharedInstance] currentTerminal];
         }
         Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
-        if (inPane && terminal != nil) {
-            // TODO: Intelligently decide if the split should be vertical or horizontal
-            [terminal splitVertically:YES withBookmark:bookmark targetSession:[[terminal currentTab] activeSession]];
+        if (inPane != NO_PANE && terminal != nil) {
+            [terminal splitVertically:(inPane == VERTICAL_PANE) withBookmark:bookmark targetSession:[[terminal currentTab] activeSession]];
         } else {
             [[iTermController sharedInstance] launchBookmark:bookmark
                                                   inTerminal:terminal];
@@ -94,9 +104,17 @@
     }
 }
 
-- (IBAction)openBookmarkInPane:(id)sender
+- (IBAction)openBookmarkInVerticalPane:(id)sender
 {
-    [self _openBookmarkInTab:YES firstInWindow:NO inPane:YES];
+    [self _openBookmarkInTab:YES firstInWindow:NO inPane:VERTICAL_PANE];
+    if ([closeAfterOpeningBookmark_ state] == NSOnState) {
+        [[self window] close];
+    }
+}
+
+- (IBAction)openBookmarkInHorizontalPane:(id)sender
+{
+    [self _openBookmarkInTab:YES firstInWindow:NO inPane:HORIZONTAL_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];
     }
@@ -104,7 +122,7 @@
 
 - (IBAction)openBookmarkInTab:(id)sender
 {
-    [self _openBookmarkInTab:YES firstInWindow:NO inPane:NO];
+    [self _openBookmarkInTab:YES firstInWindow:NO inPane:NO_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];
     }
@@ -112,26 +130,37 @@
 
 - (IBAction)openBookmarkInWindow:(id)sender
 {
-    [self _openBookmarkInTab:NO firstInWindow:NO inPane:NO];
+    [self _openBookmarkInTab:NO firstInWindow:NO inPane:NO_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];
     }
 }
 
+- (void)updatePaneButtons:(id)sender
+{
+    [self bookmarkTableSelectionDidChange:tableView_];
+}
+
+
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable
 {
     NSSet* guids = [tableView_ selectedGuids];
     if ([guids count]) {
-        [paneButton_ setEnabled:YES];
+        BOOL windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
+        [horizontalPaneButton_ setEnabled:windowExists];
+        [verticalPaneButton_ setEnabled:windowExists];
+        // tabButton is enabled even if windowExists==false because its shortcut is enter and we
+        // don't want to break that.
         [tabButton_ setEnabled:YES];
         [windowButton_ setEnabled:YES];
         if ([guids count] > 1) {
-            [newTabsInNewWindowButton_ setHidden:NO];
+            [newTabsInNewWindowButton_ setEnabled:YES];
         } else {
-            [newTabsInNewWindowButton_ setHidden:YES];
+            [newTabsInNewWindowButton_ setEnabled:NO];
         }
     } else {
-        [paneButton_ setEnabled:NO];
+        [horizontalPaneButton_ setEnabled:NO];
+        [verticalPaneButton_ setEnabled:NO];
         [tabButton_ setEnabled:NO];
         [windowButton_ setEnabled:NO];
     }
@@ -214,7 +243,7 @@
 
 - (IBAction)newTabsInNewWindow:(id)sender
 {
-    [self _openBookmarkInTab:YES firstInWindow:YES inPane:NO];
+    [self _openBookmarkInTab:YES firstInWindow:YES inPane:NO_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];
     }
