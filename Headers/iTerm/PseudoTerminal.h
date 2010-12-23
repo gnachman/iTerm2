@@ -61,6 +61,7 @@
 // or window-initiated).
 @interface PseudoTerminal : NSWindowController <PTYTabViewDelegateProtocol, PTYWindowDelegateProtocol, WindowControllerInterface>
 {
+    NSPoint preferredOrigin_;
     SolidColorView* background_;
     ////////////////////////////////////////////////////////////////////////////
     // Parameter Panel

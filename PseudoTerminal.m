@@ -175,12 +175,22 @@ NSString *sessionsKey = @"sessions";
     } else if ([[PreferencePanel sharedInstance] windowStyle] == 2) {
         styleMask |= NSUnifiedTitleAndToolbarWindowMask;
     }
-    NSScreen* screen = fullScreen ? fullScreen : [NSScreen mainScreen];
-    PtyLog(@"initWithSmartLayout - initWithContentRect:%fx%f", [screen frame].size.width, [screen frame].size.height);
-    myWindow = [[PTYWindow alloc] initWithContentRect:[screen frame]
+    NSRect initialFrame;
+    if (fullScreen) {
+        initialFrame = [fullScreen frame];
+    } else {
+        // Use the system-supplied frame which has a reasonable origin. It may
+        // be overridden by smart window placement or a saved window location.
+        initialFrame = [[self window] frame];
+    }
+    preferredOrigin_ = initialFrame.origin;
+
+    PtyLog(@"initWithSmartLayout - initWithContentRect");
+    myWindow = [[PTYWindow alloc] initWithContentRect:initialFrame
                                             styleMask:fullScreen ? NSBorderlessWindowMask : styleMask
                                               backing:NSBackingStoreBuffered
                                                 defer:NO];
+    
     PtyLog(@"initWithSmartLayout - new window is at %d", myWindow);
     [self setWindow:myWindow];
     [myWindow release];
@@ -997,9 +1007,12 @@ NSString *sessionsKey = @"sessions";
         (![[PreferencePanel sharedInstance] smartPlacement])) {
         NSRect frame = [window frame];
         [self setFramePos];
-        [window setFrameUsingName:[NSString stringWithFormat:WINDOW_NAME, framePos]];
-        frame.origin = [window frame].origin;
-        frame.origin.y += [window frame].size.height - frame.size.height;
+        if ([window setFrameUsingName:[NSString stringWithFormat:WINDOW_NAME, framePos]]) {
+            frame.origin = [window frame].origin;
+            frame.origin.y += [window frame].size.height - frame.size.height;
+        } else {
+            frame.origin = preferredOrigin_;
+        }
         [window setFrame:frame display:NO];
     } else {
         [window smartLayout];
@@ -1554,8 +1567,13 @@ NSString *sessionsKey = @"sessions";
 
 - (void)findWithSelection
 {
-    FindCommandHandler* fch = [FindCommandHandler sharedInstance];
-    [self _newSearch:[fch findWithSelection]];
+    PTYTextView* textView = [[self currentSession] TEXTVIEW];
+    if ([textView selectedText]) {
+        [findBarTextField setStringValue:[textView selectedText]];
+        if ([findBarSubview isHidden]) {
+            [self showHideFindBar];
+        }
+    }
 }
 
 - (void)controlTextDidChange:(NSNotification *)aNotification

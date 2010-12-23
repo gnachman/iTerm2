@@ -39,7 +39,6 @@
 
 - (BOOL)findNext;
 - (BOOL)findPreviousWithOffset:(int)offset;
-- (BOOL)findWithSelection;
 - (void)jumpToSelection;
 - (BOOL) findSubString:(NSString *) subString forwardDirection: (BOOL) direction ignoringCase: (BOOL) caseCheck withOffset:(int)offset;
 - (void)setSearchString:(NSString*)searchString;

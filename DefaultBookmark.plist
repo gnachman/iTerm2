@@ -440,7 +440,7 @@
     <key>Normal Font</key>
     <string>Monaco 12</string>
     <key>Rows</key>
-    <integer>80</integer>
+    <integer>25</integer>
     <key>Scrollback Lines</key>
     <integer>1000</integer>
     <key>Send Code When Idle</key>

@@ -76,24 +76,6 @@
     return [self findSubString: _searchString forwardDirection: NO ignoringCase: _ignoresCase withOffset:offset];
 }
 
-- (BOOL)findWithSelection
-{
-    PTYTextView* textView = [self currentTextView];
-    if (textView) {
-        // get the selected text
-        NSString *contentString = [textView selectedText];
-        if (!contentString) {
-            NSBeep();
-            return NO;
-        }
-        [self setSearchString: contentString];
-        return [self findNext];
-    } else {
-        NSBeep();
-        return NO;
-    }
-}
-
 - (void)jumpToSelection
 {
     PTYTextView* textView = [self currentTextView];
