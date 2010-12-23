@@ -746,6 +746,9 @@
 - (void)showFullScreenTabControl;
 - (void)hideFullScreenTabControl;
 
+- (void)_loadFindStringFromSharedPasteboard;
+- (void)_loadFindStringIntoSharedPasteboard;
+
 @end
 
 @interface PseudoTerminal (ScriptingSupport)

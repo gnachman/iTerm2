@@ -61,6 +61,7 @@
 #import "PasteboardHistory.h"
 #import "PTYTab.h"
 #import "SessionView.h"
+#import "iTerm/iTermApplication.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -702,6 +703,7 @@ NSString *sessionsKey = @"sessions";
     // update the cursor
     [[[self currentSession] TEXTVIEW] refresh];
     [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
+    [self _loadFindStringFromSharedPasteboard];
 }
 
 - (void)windowDidResignKey:(NSNotification *)aNotification
@@ -1570,6 +1572,7 @@ NSString *sessionsKey = @"sessions";
     PTYTextView* textView = [[self currentSession] TEXTVIEW];
     if ([textView selectedText]) {
         [findBarTextField setStringValue:[textView selectedText]];
+        [self _loadFindStringIntoSharedPasteboard];
         if ([findBarSubview isHidden]) {
             [self showHideFindBar];
         }
@@ -1583,6 +1586,9 @@ NSString *sessionsKey = @"sessions";
         return;
     }
 
+    [self _loadFindStringIntoSharedPasteboard];
+
+    // Search.
     if ([previousFindString length] == 0) {
         [[[self currentSession] TEXTVIEW] resetFindCursor];
     } else {
@@ -1616,6 +1622,7 @@ NSString *sessionsKey = @"sessions";
             if (text) {
                 [[[self currentSession] TEXTVIEW] copy:self];
                 [findBarTextField setStringValue:text];
+                [self _loadFindStringIntoSharedPasteboard];
                 [self deselectFindBarTextField];
                 [self searchPrevious:self];
             }
@@ -1627,6 +1634,7 @@ NSString *sessionsKey = @"sessions";
         if (text) {
             [[[self currentSession] TEXTVIEW] copy:self];
             [findBarTextField setStringValue:text];
+            [self _loadFindStringIntoSharedPasteboard];
             [self deselectFindBarTextField];
         }
         return YES;
@@ -3505,6 +3513,29 @@ NSString *sessionsKey = @"sessions";
 
         // Start the command
         [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession];
+    }
+}
+
+- (void)_loadFindStringFromSharedPasteboard
+{
+    if (![iTermApplication isTextFieldInFocus:findBarTextField]) {
+        NSPasteboard* findBoard = [NSPasteboard pasteboardWithName:NSFindPboard];
+        if ([[findBoard types] containsObject:NSStringPboardType]) {
+            NSString *value = [findBoard stringForType:NSStringPboardType];
+            if (value && [value length] > 0) {
+                [findBarTextField setStringValue:value];
+            }
+        }
+    }
+}
+
+- (void)_loadFindStringIntoSharedPasteboard
+{
+    // Copy into the NSFindPboard
+    NSPasteboard *findPB = [NSPasteboard pasteboardWithName: NSFindPboard];
+    if (findPB) {
+        [findPB declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
+        [findPB setString:[findBarTextField stringValue] forType:NSStringPboardType];
     }
 }
 
