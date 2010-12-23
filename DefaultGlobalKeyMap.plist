@@ -2,48 +2,48 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>0x2d-0x40000</key>
-	<dict>
-		<key>Action</key>
-		<integer>11</integer>
-		<key>Text</key>
-		<string>0x1f</string>
-	</dict>
-	<key>0x36-0x40000</key>
-	<dict>
-		<key>Action</key>
-		<integer>11</integer>
-		<key>Text</key>
-		<string>0x1e</string>
-	</dict>
-	<key>0x7b-0x120000</key>
-	<dict>
-		<key>Action</key>
-		<integer>2</integer>
-		<key>Text</key>
-		<string></string>
-	</dict>
-	<key>0xf702-0x320000</key>
-	<dict>
-		<key>Action</key>
-		<integer>2</integer>
-		<key>Text</key>
-		<string></string>
-	</dict>
-	<key>0x7d-0x120000</key>
-	<dict>
-		<key>Action</key>
-		<integer>0</integer>
-		<key>Text</key>
-		<string></string>
-	</dict>
-	<key>0xf703-0x320000</key>
-	<dict>
-		<key>Action</key>
-		<integer>0</integer>
-		<key>Text</key>
-		<string></string>
-	</dict>
+    <key>0x2d-0x40000</key>
+    <dict>
+        <key>Action</key>
+        <integer>11</integer>
+        <key>Text</key>
+        <string>0x1f</string>
+    </dict>
+    <key>0x36-0x40000</key>
+    <dict>
+        <key>Action</key>
+        <integer>11</integer>
+        <key>Text</key>
+        <string>0x1e</string>
+    </dict>
+    <key>0x7b-0x120000</key>
+    <dict>
+        <key>Action</key>
+        <integer>2</integer>
+        <key>Text</key>
+        <string></string>
+    </dict>
+    <key>0xf702-0x320000</key>
+    <dict>
+        <key>Action</key>
+        <integer>2</integer>
+        <key>Text</key>
+        <string></string>
+    </dict>
+    <key>0x7d-0x120000</key>
+    <dict>
+        <key>Action</key>
+        <integer>0</integer>
+        <key>Text</key>
+        <string></string>
+    </dict>
+    <key>0xf703-0x320000</key>
+    <dict>
+        <key>Action</key>
+        <integer>0</integer>
+        <key>Text</key>
+        <string></string>
+    </dict>
     <key>0xf700-0x300000</key>
     <dict>
         <key>Action</key>
@@ -58,14 +58,14 @@
         <key>Text</key>
         <string></string>
     </dict>
-    <key>0xf729-0x0</key>
+    <key>0xf729-0x100000</key>
     <dict>
         <key>Action</key>
         <integer>5</integer>
         <key>Text</key>
         <string></string>
     </dict>
-    <key>0xf72b-0x0</key>
+    <key>0xf72b-0x100000</key>
     <dict>
         <key>Action</key>
         <integer>4</integer>
