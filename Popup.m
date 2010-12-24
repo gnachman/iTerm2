@@ -621,7 +621,7 @@ DebugLog([NSString stringWithFormat:args]); \
         int rowNum = [tableView_ selectedRow];
         NSString* s = nil;
         if (rowNum >= 0) {
-            s = [[model_ objectAtIndex:rowNum] mainValue];
+            s = [[model_ objectAtIndex:[self convertIndex:rowNum]] mainValue];
         }
         if (!s) {
             s = @"";
