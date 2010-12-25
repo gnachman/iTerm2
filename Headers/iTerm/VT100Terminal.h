@@ -361,8 +361,8 @@ typedef enum {
 - (NSData *)keyInsert;
 - (NSData *)keyDelete;
 - (NSData *)keyBackspace;
-- (NSData *)keyPageUp;
-- (NSData *)keyPageDown;
+- (NSData *)keyPageUp:(unsigned int)modflag;
+- (NSData *)keyPageDown:(unsigned int)modflag;
 - (NSData *)keyFunction:(int)no;
 - (NSData *)keypadData: (unichar) unicode keystr: (NSString *) keystr;
 

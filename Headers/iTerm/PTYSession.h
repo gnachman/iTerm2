@@ -356,6 +356,7 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (void)setColorTable:(int)index color:(NSColor *)c;
 - (int)optionKey;
 - (int)rightOptionKey;
+- (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask;
 
 // Session status
 

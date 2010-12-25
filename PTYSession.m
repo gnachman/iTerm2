@@ -408,9 +408,9 @@ static NSString *PWD_ENVVALUE = @"~";
     id<WindowControllerInterface> parent = [[self tab] parentWindow];
     if ([parent sendInputToAllSessions] == NO) {
         if (!EXIT) {
-            [self setBell: NO];
-            PTYScroller* ptys=(PTYScroller*)[SCROLLVIEW verticalScroller];
-            [SHELL writeTask: data];
+            [self setBell:NO];
+            PTYScroller* ptys = (PTYScroller*)[SCROLLVIEW verticalScroller];
+            [SHELL writeTask:data];
             [ptys setUserScroll:NO];
         }
     } else {
@@ -684,18 +684,25 @@ static NSString *PWD_ENVVALUE = @"~";
             // Handle all "special" keys (arrows, etc.)
             NSData *data = nil;
 
+            // Set the alternate key mask iff an esc-generating modifier is
+            // pressed.
+            unsigned int hackedModflag = modflag & (~NSAlternateKeyMask);
+            if ([self shouldSendEscPrefixForModifier:modflag]) {
+                hackedModflag |= NSAlternateKeyMask;
+            }
+
             switch (unicode) {
                 case NSUpArrowFunctionKey:
-                    data = [TERMINAL keyArrowUp:modflag];
+                    data = [TERMINAL keyArrowUp:hackedModflag];
                     break;
                 case NSDownArrowFunctionKey:
-                    data = [TERMINAL keyArrowDown:modflag];
+                    data = [TERMINAL keyArrowDown:hackedModflag];
                     break;
                 case NSLeftArrowFunctionKey:
-                    data = [TERMINAL keyArrowLeft:modflag];
+                    data = [TERMINAL keyArrowLeft:hackedModflag];
                     break;
                 case NSRightArrowFunctionKey:
-                    data = [TERMINAL keyArrowRight:modflag];
+                    data = [TERMINAL keyArrowRight:hackedModflag];
                     break;
                 case NSInsertFunctionKey:
                     data = [TERMINAL keyInsert];
@@ -704,16 +711,16 @@ static NSString *PWD_ENVVALUE = @"~";
                     data = [TERMINAL keyDelete];
                     break;
                 case NSHomeFunctionKey:
-                    data = [TERMINAL keyHome:modflag];
+                    data = [TERMINAL keyHome:hackedModflag];
                     break;
                 case NSEndFunctionKey:
-                    data = [TERMINAL keyEnd:modflag];
+                    data = [TERMINAL keyEnd:hackedModflag];
                     break;
                 case NSPageUpFunctionKey:
-                    data = [TERMINAL keyPageUp];
+                    data = [TERMINAL keyPageUp:hackedModflag];
                     break;
                 case NSPageDownFunctionKey:
-                    data = [TERMINAL keyPageDown];
+                    data = [TERMINAL keyPageDown:hackedModflag];
                     break;
                 case NSClearLineFunctionKey:
                     data = [@"\e" dataUsingEncoding:NSUTF8StringEncoding];
@@ -945,7 +952,7 @@ static NSString *PWD_ENVVALUE = @"~";
     NSLog(@"%s(%d):-[PTYSession pageUp:%@]",
           __FILE__, __LINE__, sender);
 #endif
-    [self writeTask:[TERMINAL keyPageUp]];
+    [self writeTask:[TERMINAL keyPageUp:0]];
 }
 
 - (void)pageDown:(id)sender
@@ -954,7 +961,7 @@ static NSString *PWD_ENVVALUE = @"~";
     NSLog(@"%s(%d):-[PTYSession pageDown:%@]",
           __FILE__, __LINE__, sender);
 #endif
-    [self writeTask:[TERMINAL keyPageDown]];
+    [self writeTask:[TERMINAL keyPageDown:0]];
 }
 
 - (void)paste:(id)sender
@@ -1793,6 +1800,21 @@ static NSString *PWD_ENVVALUE = @"~";
 - (BOOL)exited
 {
     return EXIT;
+}
+
+- (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask
+{
+    if ([self optionKey] == OPT_ESC) {
+        if ((modmask & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask) {
+            return YES;
+        }
+    }
+    if ([self rightOptionKey] == OPT_ESC) {
+        if ((modmask & NSRightAlternateKeyMask) == NSRightAlternateKeyMask) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (int)optionKey
