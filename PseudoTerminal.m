@@ -81,6 +81,20 @@
 
 static BOOL windowPositions[CACHED_WINDOW_POSITIONS];
 
+// Constants for saved window arrangement key names.
+static NSString* TERMINAL_ARRANGEMENT_OLD_X_ORIGIN = @"Old X Origin";
+static NSString* TERMINAL_ARRANGEMENT_OLD_Y_ORIGIN = @"Old Y Origin";
+static NSString* TERMINAL_ARRANGEMENT_OLD_WIDTH = @"Old Width";
+static NSString* TERMINAL_ARRANGEMENT_OLD_HEIGHT = @"Old Height";
+
+static NSString* TERMINAL_ARRANGEMENT_X_ORIGIN = @"X Origin";
+static NSString* TERMINAL_ARRANGEMENT_Y_ORIGIN = @"Y Origin";
+static NSString* TERMINAL_ARRANGEMENT_WIDTH = @"Width";
+static NSString* TERMINAL_ARRANGEMENT_HEIGHT = @"Height";
+static NSString* TERMINAL_ARRANGEMENT_TABS = @"Tabs";
+static NSString* TERMINAL_ARRANGEMENT_FULLSCREEN = @"Fullscreen";
+static NSString* TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX = @"Selected Tab Index";
+
 @interface PSMTabBarControl (Private)
 - (void)update;
 @end
@@ -191,7 +205,7 @@ NSString *sessionsKey = @"sessions";
                                             styleMask:fullScreen ? NSBorderlessWindowMask : styleMask
                                               backing:NSBackingStoreBuffered
                                                 defer:NO];
-    
+
     PtyLog(@"initWithSmartLayout - new window is at %d", myWindow);
     [self setWindow:myWindow];
     [myWindow release];
@@ -258,7 +272,7 @@ NSString *sessionsKey = @"sessions";
     // create the tabview
     aRect = [[[self window] contentView] bounds];
 
-    TABVIEW = [[PTYTabView alloc] initWithFrame: aRect];
+    TABVIEW = [[PTYTabView alloc] initWithFrame:aRect];
     [TABVIEW setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
     [TABVIEW setAutoresizesSubviews:YES];
     [TABVIEW setAllowsTruncatedLabels:NO];
@@ -554,7 +568,10 @@ NSString *sessionsKey = @"sessions";
     NSLog(@"%s(%d):-[PseudoTerminal setWindowTitle:%@]",
           __FILE__, __LINE__, title);
 #endif
-    NSParameterAssert([title length] > 0);
+    if (title == nil) {
+        // title can be nil during loadWindowArrangement
+        title = @"";
+    }
 
     if ([self sendInputToAllSessions]) {
         title = [NSString stringWithFormat:@"☛%@", title];
@@ -590,6 +607,92 @@ NSString *sessionsKey = @"sessions";
             }
         }
     }
+}
+
++ (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement
+{
+    PseudoTerminal* term;
+    if ([[arrangement objectForKey:TERMINAL_ARRANGEMENT_FULLSCREEN] boolValue]) {
+        NSScreen *currentScreen;
+        if ([[iTermController sharedInstance] currentTerminal]) {
+            currentScreen = [[[[iTermController sharedInstance] currentTerminal] window] screen];
+        } else {
+            currentScreen = [NSScreen mainScreen];
+        }
+        term = [[[PseudoTerminal alloc] initWithSmartLayout:NO fullScreen:currentScreen] autorelease];
+
+        NSRect rect;
+        rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_X_ORIGIN] doubleValue];
+        rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_Y_ORIGIN] doubleValue];
+        rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_WIDTH] doubleValue];
+        rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_HEIGHT] doubleValue];
+        term->oldFrame_ = rect;
+    } else {
+        term = [[[PseudoTerminal alloc] initWithSmartLayout:NO fullScreen:nil] autorelease];
+        NSRect rect;
+        rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
+        rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
+        rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+        rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+        [[term window] setFrame:rect display:NO];
+    }
+    for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
+        [PTYTab openTabWithArrangement:tabArrangement inTerminal:term];
+    }
+    [term->TABVIEW selectTabViewItemAtIndex:[[arrangement objectForKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] intValue]];
+
+    return term;
+}
+
+- (NSDictionary*)arrangement
+{
+    NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:7];
+    NSRect rect = [[self window] frame];
+    int screenNumber = 0;
+    for (NSScreen* screen in [NSScreen screens]) {
+        if (screen == [[self window] deepestScreen]) {
+            break;
+        }
+        ++screenNumber;
+    }
+
+    // Save window frame
+    [result setObject:[NSNumber numberWithDouble:rect.origin.x]
+               forKey:TERMINAL_ARRANGEMENT_X_ORIGIN];
+    [result setObject:[NSNumber numberWithDouble:rect.origin.y]
+               forKey:TERMINAL_ARRANGEMENT_Y_ORIGIN];
+    [result setObject:[NSNumber numberWithDouble:rect.size.width]
+               forKey:TERMINAL_ARRANGEMENT_WIDTH];
+    [result setObject:[NSNumber numberWithDouble:rect.size.height]
+               forKey:TERMINAL_ARRANGEMENT_HEIGHT];
+
+    if (_fullScreen) {
+        // Save old window frame
+        [result setObject:[NSNumber numberWithDouble:oldFrame_.origin.x]
+                   forKey:TERMINAL_ARRANGEMENT_OLD_X_ORIGIN];
+        [result setObject:[NSNumber numberWithDouble:oldFrame_.origin.y]
+                   forKey:TERMINAL_ARRANGEMENT_OLD_Y_ORIGIN];
+        [result setObject:[NSNumber numberWithDouble:oldFrame_.size.width]
+                   forKey:TERMINAL_ARRANGEMENT_OLD_WIDTH];
+        [result setObject:[NSNumber numberWithDouble:oldFrame_.size.height]
+                   forKey:TERMINAL_ARRANGEMENT_OLD_HEIGHT];
+    }
+
+    [result setObject:[NSNumber numberWithBool:_fullScreen]
+               forKey:TERMINAL_ARRANGEMENT_FULLSCREEN];
+
+    // Save tabs.
+    NSMutableArray* tabs = [NSMutableArray arrayWithCapacity:[self numberOfTabs]];
+    for (NSTabViewItem* tabViewItem in [TABVIEW tabViewItems]) {
+        [tabs addObject:[[tabViewItem identifier] arrangement]];
+    }
+    [result setObject:tabs forKey:TERMINAL_ARRANGEMENT_TABS];
+
+    // Save index of selected tab.
+    [result setObject:[NSNumber numberWithInt:[TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]]]
+               forKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX];
+
+    return result;
 }
 
 // NSWindow delegate methods
@@ -663,10 +766,10 @@ NSString *sessionsKey = @"sessions";
         }
     }
 
-    // Cancel all sessions' timers. We don't want timers running after the window has closed.
+    // Kill sessions so their timers stop and they are freed.
     for (PTYSession* session in [self sessions]) {
         if (![session exited]) {
-            [session cancelTimers];
+            [session terminate];
         }
     }
 
@@ -2090,7 +2193,7 @@ NSString *sessionsKey = @"sessions";
                                            verticalSpacing:[[theBookmark objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     NSSize charSize = NSMakeSize(MAX(asciiCharSize.width, nonAsciiCharSize.width),
                                  MAX(asciiCharSize.height, nonAsciiCharSize.height));
-    NSSize newSessionSize = NSMakeSize(charSize.width * 20 + MARGIN * 2, 
+    NSSize newSessionSize = NSMakeSize(charSize.width * 20 + MARGIN * 2,
                                        charSize.height * 10 + VMARGIN * 2);
 
     if (![[self currentTab] canSplitVertically:isVertical withSize:newSessionSize]) {
@@ -2311,39 +2414,12 @@ NSString *sessionsKey = @"sessions";
     return tempDisableProgressIndicators_;
 }
 
-@end
-
-@implementation PseudoTerminal (Private)
-
-- (void)_drawFullScreenBlackBackground
+- (void)appendTab:(PTYTab*)aTab
 {
-    [[[self window] contentView] lockFocus];
-    [[NSColor blackColor] set];
-    NSRect frame = [[self window] frame];
-    if (![bottomBar isHidden]) {
-        int h = [bottomBar frame].size.height;
-        frame.origin.y += h;
-        frame.size.height -= h;
-    }
-    NSRectFill(frame);
-    [[[self window] contentView] unlockFocus];
+    [self insertTab:aTab atIndex:[TABVIEW numberOfTabViewItems]];
 }
 
-- (void)_refreshTerminal:(NSNotification *)aNotification
-{
-    PtyLog(@"_refreshTerminal - calling fitWindowToTabs");
-    [self fitWindowToTabs];
-
-    // Assign counts to each session. This causes tabs to show their tab number,
-    // called an objectCount. When the "compact tab" pref is toggled, this makes
-    // formerly countless tabs show their counts.
-    for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        PTYTab *aTab = [[TABVIEW tabViewItemAtIndex:i] identifier];
-        [aTab setObjectCount:i+1];
-    }
-}
-
-- (void)_getSessionParameters:(NSMutableString *)command withName:(NSMutableString *)name
+- (void)getSessionParameters:(NSMutableString *)command withName:(NSMutableString *)name
 {
     NSRange r1, r2, currentRange;
 
@@ -2398,6 +2474,38 @@ NSString *sessionsKey = @"sessions";
         [name replaceOccurrencesOfString:[name  substringWithRange:NSMakeRange(r1.location, r2.location - r1.location+2)] withString:[parameterValue stringValue] options:NSLiteralSearch range:NSMakeRange(0,[name length])];
     }
 
+}
+
+@end
+
+@implementation PseudoTerminal (Private)
+
+- (void)_drawFullScreenBlackBackground
+{
+    [[[self window] contentView] lockFocus];
+    [[NSColor blackColor] set];
+    NSRect frame = [[self window] frame];
+    if (![bottomBar isHidden]) {
+        int h = [bottomBar frame].size.height;
+        frame.origin.y += h;
+        frame.size.height -= h;
+    }
+    NSRectFill(frame);
+    [[[self window] contentView] unlockFocus];
+}
+
+- (void)_refreshTerminal:(NSNotification *)aNotification
+{
+    PtyLog(@"_refreshTerminal - calling fitWindowToTabs");
+    [self fitWindowToTabs];
+
+    // Assign counts to each session. This causes tabs to show their tab number,
+    // called an objectCount. When the "compact tab" pref is toggled, this makes
+    // formerly countless tabs show their counts.
+    for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
+        PTYTab *aTab = [[TABVIEW tabViewItemAtIndex:i] identifier];
+        [aTab setObjectCount:i+1];
+    }
 }
 
 - (void)hideMenuBar
@@ -3047,6 +3155,7 @@ NSString *sessionsKey = @"sessions";
             [aSession setIgnoreResizeNotifications:YES];
         }
         NSTabViewItem* aTabViewItem = [[NSTabViewItem alloc] initWithIdentifier:aTab];
+        [aTabViewItem setLabel:@""];
         assert(aTabViewItem);
         [aTab setTabViewItem:aTabViewItem];
         PtyLog(@"insertTab:atIndex - calling [TABVIEW insertTabViewItem:atIndex]");
@@ -3072,22 +3181,9 @@ NSString *sessionsKey = @"sessions";
     if ([[self allSessions] indexOfObject:aSession] == NSNotFound) {
         // create a new tab
         PTYTab* aTab = [[PTYTab alloc] initWithSession:aSession];
-        NSTabViewItem *aTabViewItem = [[NSTabViewItem alloc] initWithIdentifier:aTab];
-        [aTab release];
-        [aTab setTabViewItem:aTabViewItem];
-        NSParameterAssert(aTabViewItem != nil);
-        // This triggers a call to fitWindowToTabs
-        PtyLog(@"insertSession - calling insertTabViewItem");
         [aSession setIgnoreResizeNotifications:YES];
-        [TABVIEW insertTabViewItem:aTabViewItem atIndex:anIndex];
-
-        [aTabViewItem release];
-        [TABVIEW selectTabViewItemAtIndex:anIndex];
-
-        if ([self windowInited] && !_fullScreen) {
-            [[self window] makeKeyAndOrderFront:self];
-        }
-        [[iTermController sharedInstance] setCurrentTerminal:self];
+        [self insertTab:aTab atIndex:anIndex];
+        [aTab release];
     }
 }
 
@@ -3495,7 +3591,7 @@ NSString *sessionsKey = @"sessions";
         cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry]] autorelease];
         name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
         // Get session parameters
-        [self _getSessionParameters:cmd withName:name];
+        [self getSessionParameters:cmd withName:name];
 
         [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
 
@@ -3593,38 +3689,14 @@ NSString *sessionsKey = @"sessions";
     [[aSession SCREEN] setScrollback:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
     // set our preferences
-    [aSession setAddressBookEntry: addressbookEntry];
+    [aSession setAddressBookEntry:addressbookEntry];
     // Add this session to our term and make it current
     [self appendSession:aSession];
     if ([aSession SCREEN]) {
-        NSMutableString *cmd, *name;
-        NSArray *arg;
-        NSString *pwd;
-        BOOL isUTF8;
-
-        // Grab the addressbook command
-        cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry]] autorelease];
-        name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
-        // Get session parameters
-        [self _getSessionParameters:cmd withName:name];
-
-        [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
-
-        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
-        if ([pwd length] == 0) {
-            if (oldCWD) {
-                pwd = oldCWD;
-            } else {
-                pwd = NSHomeDirectory();
-            }
+        [aSession runCommandWithOldCwd:oldCWD];
+        if ([[[self window] title] compare:@"Window"] == NSOrderedSame) {
+            [self setWindowTitle];
         }
-        NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
-        isUTF8 = ([[addressbookEntry objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
-
-        [self setName:name forSession:aSession];
-
-        // Start the command
-        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession];
     }
 
     [aSession release];
@@ -3735,7 +3807,7 @@ NSString *sessionsKey = @"sessions";
         [name replaceOccurrencesOfString:@"$$PATH$$" withString:[urlRep path]?[urlRep path]:@"" options:NSLiteralSearch range:NSMakeRange(0, [name length])];
 
         // Get remaining session parameters
-        [self _getSessionParameters: cmd withName:name];
+        [self getSessionParameters:cmd withName:name];
 
         NSArray *arg;
         NSString *pwd;
@@ -3780,7 +3852,7 @@ NSString *sessionsKey = @"sessions";
         cmd = [[[NSMutableString alloc] initWithString:command] autorelease];
         name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey: KEY_NAME]] autorelease];
         // Get session parameters
-        [self _getSessionParameters: cmd withName:name];
+        [self getSessionParameters:cmd withName:name];
 
         [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
 

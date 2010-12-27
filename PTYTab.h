@@ -72,6 +72,7 @@
 
 // init/dealloc
 - (id)initWithSession:(PTYSession*)session;
+- (id)initWithRoot:(NSSplitView*)root;
 - (void)dealloc;
 
 - (PTYSession*)activeSession;
@@ -145,6 +146,9 @@
 - (SessionView*)splitVertically:(BOOL)isVertical targetSession:(PTYSession*)targetSession;
 - (NSSize)_recursiveMinSize:(NSSplitView*)node;
 - (PTYSession*)_recursiveSessionAtPoint:(NSPoint)point relativeTo:(NSView*)node;
+
++ (void)openTabWithArrangement:(NSDictionary*)arrangement inTerminal:(PseudoTerminal*)term;
+- (NSDictionary*)arrangement;
 
 #pragma mark NSSplitView delegate methods
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;

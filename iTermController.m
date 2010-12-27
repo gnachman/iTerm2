@@ -48,10 +48,12 @@
 - (void)_cycleWindowsReversed:(BOOL)back;
 @end
 
-
+// Constants for saved window arrangement key names.
+static NSString* DEFAULT_ARRANGEMENT_NAME = @"Default";
 static NSString* APPLICATION_SUPPORT_DIRECTORY = @"~/Library/Application Support";
 static NSString *SUPPORT_DIRECTORY = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
+static NSString* WINDOW_ARRANGEMENTS = @"Window Arrangements";
 
 // Comparator for sorting encodings
 static NSInteger _compareEncodingByLocalizedName(id a, id b, void *unused)
@@ -184,13 +186,44 @@ static BOOL initDone = NO;
 }
 
 // navigation
-- (IBAction) previousTerminal:(id)sender
+- (IBAction)previousTerminal:(id)sender
 {
     [NSApp _cycleWindowsReversed:YES];
 }
 - (IBAction)nextTerminal:(id)sender
 {
     [NSApp _cycleWindowsReversed:NO];
+}
+
+- (BOOL)hasWindowArrangement
+{
+    return [[[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS] objectForKey:DEFAULT_ARRANGEMENT_NAME] != nil;
+}
+
+- (void)saveWindowArrangement
+{
+    NSMutableArray* terminalArrangements = [NSMutableArray arrayWithCapacity:[terminalWindows count]];
+    for (PseudoTerminal* terminal in terminalWindows) {
+        [terminalArrangements addObject:[terminal arrangement]];
+    }
+    NSMutableDictionary* arrangements = [NSMutableDictionary dictionaryWithObject:terminalArrangements
+                                                                           forKey:DEFAULT_ARRANGEMENT_NAME];
+    [[NSUserDefaults standardUserDefaults] setObject:arrangements forKey:WINDOW_ARRANGEMENTS];
+
+    // Post a notification
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSavedArrangementChanged"
+                                                        object:nil
+                                                      userInfo:nil];
+}
+
+- (void)loadWindowArrangement
+{
+    NSDictionary* arrangements = [[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS];
+    NSArray* terminalArrangements = [arrangements objectForKey:DEFAULT_ARRANGEMENT_NAME];
+    for (NSDictionary* terminalArrangement in terminalArrangements) {
+        PseudoTerminal* term = [PseudoTerminal terminalWithArrangement:terminalArrangement];
+        [self addInTerminals:term];
+    }
 }
 
 // Return all the terminals in the given screen.
@@ -298,9 +331,9 @@ static BOOL initDone = NO;
             // at the tops of the windows.
             y = frame.origin.y + frame.size.height - h;
         }
-        [dict setObject:[NSValue valueWithRect:NSMakeRect(x, 
+        [dict setObject:[NSValue valueWithRect:NSMakeRect(x,
                                                           y + yOffset,
-                                                          w, 
+                                                          w,
                                                           h)]
                  forKey:NSViewAnimationEndFrameKey];
         x += w;
@@ -521,7 +554,7 @@ static BOOL initDone = NO;
     // Where do we execute this command?
     if (theTerm == nil) {
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES fullScreen:nil] autorelease];
-        [self addInTerminals: term];
+        [self addInTerminals:term];
     } else {
         term = theTerm;
     }
@@ -682,7 +715,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         OnHotKeyEvent();
         return NULL;
     }
-    
+
     return event;
 }
 
@@ -716,7 +749,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                 CFRunLoopAddSource(CFRunLoopGetCurrent(), eventSrc, kCFRunLoopDefaultMode);
                 CFRelease(eventSrc);
             }
-        } else {            
+        } else {
             switch (NSRunAlertPanel(@"Could not enable hotkey.",
                                     @"You have assigned a \"hotkey\" that opens iTerm2 at any time. To use it, you must turn on \"access for assistive devices\" in the Universal Access preferences panel in System Preferences and restart iTerm2.",
                                     @"OK",
@@ -752,13 +785,13 @@ NSString *terminalsKey = @"terminals";
 }
 
 // accessors for to-many relationships:
--(NSArray*)terminals
+- (NSArray*)terminals
 {
     // NSLog(@"iTerm: -terminals");
     return (terminalWindows);
 }
 
--(void)setTerminals: (NSArray*)terminals
+- (void)setTerminals:(NSArray*)terminals
 {
     // no-op
 }
@@ -779,10 +812,10 @@ NSString *terminalsKey = @"terminals";
     if ([thePseudoTerminal windowInited] && [[thePseudoTerminal window] isKeyWindow] == NO) {
         [[thePseudoTerminal window] makeKeyAndOrderFront: self];
     }
-    
+
     // Post a notification
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowBecameKey" 
-                                                        object:thePseudoTerminal 
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowBecameKey"
+                                                        object:thePseudoTerminal
                                                       userInfo:nil];
 
 }
@@ -794,17 +827,17 @@ NSString *terminalsKey = @"terminals";
     [self updateWindowTitles];
 }
 
-- (void) addInTerminals: (PseudoTerminal *) object
+- (void)addInTerminals:(PseudoTerminal*)object
 {
     // NSLog(@"iTerm: addInTerminals 0x%x", object);
-    [self insertInTerminals: object atIndex: [terminalWindows count]];
+    [self insertInTerminals:object atIndex:[terminalWindows count]];
     [self updateWindowTitles];
 }
 
-- (void) insertInTerminals: (PseudoTerminal *) object
+- (void)insertInTerminals:(PseudoTerminal*)object
 {
     // NSLog(@"iTerm: insertInTerminals 0x%x", object);
-    [self insertInTerminals: object atIndex: [terminalWindows count]];
+    [self insertInTerminals:object atIndex:[terminalWindows count]];
     [self updateWindowTitles];
 }
 
@@ -814,7 +847,7 @@ NSString *terminalsKey = @"terminals";
         return;
     }
 
-    [terminalWindows insertObject: object atIndex: theIndex];
+    [terminalWindows insertObject:object atIndex:theIndex];
     [self updateWindowTitles];
     if (![object isInitialized]) {
         [object initWithSmartLayout:YES fullScreen:nil];

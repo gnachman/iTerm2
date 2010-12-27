@@ -173,6 +173,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *savePasteHistory;
     BOOL defaultSavePasteHistory;
 
+    // Open saved window arrangement at startup
+    IBOutlet NSButton *openArrangementAtStartup;
+    BOOL defaultOpenArrangementAtStartup;
+
     // prompt for test-release updates
     IBOutlet NSButton *checkTestRelease;
     BOOL defaultCheckTestRelease;
@@ -368,6 +372,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (BOOL)smartPlacement;
 - (BOOL)instantReplay;
 - (BOOL)savePasteHistory;
+- (BOOL)openArrangementAtStartup;
 - (int)irMemory;
 
 - (BOOL)hotkey;

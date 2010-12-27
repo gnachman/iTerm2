@@ -222,6 +222,10 @@ static const float kBackgroundSessionIntervalSec = 1;
 // Session specific methods
 - (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent;
 
++ (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement inView:(SessionView*)sessionView inTab:(PTYTab*)theTab;
+
+- (void)runCommandWithOldCwd:(NSString*)oldCWD;
+
 - (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv
          environment:(NSDictionary *)prog_env
@@ -362,9 +366,11 @@ static const float kBackgroundSessionIntervalSec = 1;
 
 - (BOOL)exited;
 - (BOOL)bell;
-- (void)setBell: (BOOL)flag;
+- (void)setBell:(BOOL)flag;
 
-- (void)sendCommand: (NSString *)command;
+- (void)sendCommand:(NSString *)command;
+
+- (NSDictionary*)arrangement;
 
 // Display timer stuff
 - (void)updateDisplay;

@@ -135,7 +135,21 @@ static float versionNumber;
                                                  name:@"iTermReloadAddressBook"
                                                object:nil];
 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_savedArrangementChanged:)
+                                                 name:@"iTermSavedArrangementChanged"
+                                               object:nil];
+
     return (self);
+}
+
+- (void)_savedArrangementChanged:(id)sender
+{
+    [openArrangementAtStartup setState:defaultOpenArrangementAtStartup ? NSOnState : NSOffState];
+    [openArrangementAtStartup setEnabled:[[iTermController sharedInstance] hasWindowArrangement]];
+    if (![[iTermController sharedInstance] hasWindowArrangement]) {
+        [openArrangementAtStartup setState:NO];
+    }
 }
 
 - (void)setOneBokmarkOnly
@@ -389,6 +403,11 @@ static float versionNumber;
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
     defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
     defaultSavePasteHistory = [prefs objectForKey:@"SavePasteHistory"]?[[prefs objectForKey:@"SavePasteHistory"] boolValue]: NO;
+    if ([[iTermController sharedInstance] hasWindowArrangement]) {
+        defaultOpenArrangementAtStartup = [prefs objectForKey:@"OpenArrangementAtStartup"]?[[prefs objectForKey:@"OpenArrangementAtStartup"] boolValue]: NO;
+    } else {
+        defaultOpenArrangementAtStartup = NO;
+    }
     defaultIrMemory = [prefs objectForKey:@"IRMemory"]?[[prefs objectForKey:@"IRMemory"] intValue] : 4;
     defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
     defaultColorInvertedCursor = [prefs objectForKey:@"ColorInvertedCursor"]?[[prefs objectForKey:@"ColorInvertedCursor"] boolValue]: NO;
@@ -480,6 +499,7 @@ static float versionNumber;
     [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
     [prefs setInteger:defaultHotkeyModifiers forKey:@"HotkeyModifiers"];
     [prefs setBool:defaultSavePasteHistory forKey:@"SavePasteHistory"];
+    [prefs setBool:defaultOpenArrangementAtStartup forKey:@"OpenArrangementAtStartup"];
     [prefs setInteger:defaultIrMemory forKey:@"IRMemory"];
     [prefs setBool:defaultCheckTestRelease forKey:@"CheckTestRelease"];
     [prefs setBool:defaultColorInvertedCursor forKey:@"ColorInvertedCursor"];
@@ -525,6 +545,11 @@ static float versionNumber;
     [smartPlacement setState: defaultSmartPlacement?NSOnState:NSOffState];
     [instantReplay setState: defaultInstantReplay?NSOnState:NSOffState];
     [savePasteHistory setState: defaultSavePasteHistory?NSOnState:NSOffState];
+    [openArrangementAtStartup setState:defaultOpenArrangementAtStartup ? NSOnState : NSOffState];
+    [openArrangementAtStartup setEnabled:[[iTermController sharedInstance] hasWindowArrangement]];
+    if (![[iTermController sharedInstance] hasWindowArrangement]) {
+        [openArrangementAtStartup setState:NO];
+    }
     [hotkey setState: defaultHotkey?NSOnState:NSOffState];
     if (defaultHotkeyCode) {
         [hotkeyField setStringValue:[iTermKeyBindingMgr formatKeyCombination:[NSString stringWithFormat:@"0x%x-0x%x", defaultHotkeyChar, defaultHotkeyModifiers]]];
@@ -533,7 +558,7 @@ static float versionNumber;
     }
     [hotkeyField setEnabled:defaultHotkey];
     [hotkeyLabel setTextColor:defaultHotkey ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-    
+
     [irMemory setIntValue:defaultIrMemory];
     [checkTestRelease setState: defaultCheckTestRelease?NSOnState:NSOffState];
     [checkColorInvertedCursor setState: defaultColorInvertedCursor?NSOnState:NSOffState];
@@ -629,6 +654,8 @@ static float versionNumber;
         if (!defaultSavePasteHistory) {
             [[PasteboardHistory sharedInstance] eraseHistory];
         }
+        defaultOpenArrangementAtStartup = ([openArrangementAtStartup state] == NSOnState);
+
         defaultIrMemory = [irMemory intValue];
         BOOL oldDefaultHotkey = defaultHotkey;
         defaultHotkey = ([hotkey state] == NSOnState);
@@ -799,6 +826,11 @@ static float versionNumber;
 - (BOOL)savePasteHistory
 {
     return defaultSavePasteHistory;
+}
+
+- (BOOL)openArrangementAtStartup
+{
+    return defaultOpenArrangementAtStartup;
 }
 
 - (int)irMemory
@@ -1177,13 +1209,13 @@ static float versionNumber;
     } else {
         [useBoldFont setState:NSOnState];
     }
-    
+
     if ([dict objectForKey:KEY_USE_BRIGHT_BOLD] != nil) {
         [useBrightBold setState:[dict objectForKey:KEY_USE_BRIGHT_BOLD] ? NSOnState : NSOffState];
     } else {
         [useBrightBold setState:NSOnState];
     }
-    
+
     [transparency setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
     [blur setState:[[dict objectForKey:KEY_BLUR] boolValue] ? NSOnState : NSOffState];
     [antiAliasing setState:[[dict objectForKey:KEY_ANTI_ALIASING] boolValue] ? NSOnState : NSOffState];
@@ -1717,7 +1749,7 @@ static float versionNumber;
         keyChar <= NSRightArrowFunctionKey) {
         theModifiers |= NSNumericPadKeyMask;
     }
-    
+
     defaultHotkeyChar = keyChar;
     defaultHotkeyCode = keyCode;
     defaultHotkeyModifiers = keyMods;

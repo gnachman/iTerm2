@@ -64,6 +64,22 @@ static NSColor *deadStateColor;
 
 static NSImage *warningImage;
 
+// Constants for saved window arrangement keys.
+static NSString* TAB_ARRANGEMENT_ROOT = @"Root";
+static NSString* TAB_ARRANGEMENT_VIEW_TYPE = @"View Type";
+static NSString* VIEW_TYPE_SPLITTER = @"Splitter";
+static NSString* VIEW_TYPE_SESSIONVIEW = @"SessionView";
+static NSString* SPLITTER_IS_VERTICAL = @"isVertical";
+static NSString* TAB_ARRANGEMENT_SPLIITER_FRAME = @"frame";
+static NSString* TAB_ARRANGEMENT_SESSIONVIEW_FRAME = @"frame";
+static NSString* TAB_WIDTH = @"width";
+static NSString* TAB_HEIGHT = @"height";
+static NSString* TAB_X = @"x";
+static NSString* TAB_Y = @"y";
+static NSString* SUBVIEWS = @"Subviews";
+static NSString* TAB_ARRANGEMENT_SESSION = @"Session";
+static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
+
 + (void)initialize
 {
     NSBundle *thisBundle;
@@ -95,6 +111,22 @@ static NSImage *warningImage;
         [root_ setDelegate:self];
         [session setTab:self];
         [root_ addSubview:[session view]];
+
+    }
+    return self;
+}
+
+// This is used when restoring a window arrangement. A tree of splits and
+// sessionviews is passed in but the sessionviews don't have sessions yet.
+- (id)initWithRoot:(NSSplitView*)root
+{
+    self = [super init];
+    PtyLog(@"PTYTab initWithRoot %p", self);
+    if (self) {
+        activeSession_ = nil;
+        root_ = [root retain];
+        [root_ setAutoresizesSubviews:YES];
+        [root_ setDelegate:self];
 
     }
     return self;
@@ -416,7 +448,8 @@ static void SwapPoint(NSPoint* point) {
             [self _recursiveSessions:sessions atNode:(NSSplitView*)subview];
         } else {
             SessionView* sessionView = (SessionView*)subview;
-            [sessions addObject:[sessionView session]];
+            PTYSession* session = [sessionView session];
+            [sessions addObject:session];
         }
     }
     return sessions;
@@ -1209,6 +1242,139 @@ static void SwapPoint(NSPoint* point) {
             [parentWindow_ disableBlur];
         }
     }
+}
+
++ (NSDictionary*)frameToDict:(NSRect)frame
+{
+    return [NSDictionary dictionaryWithObjectsAndKeys:
+            [NSNumber numberWithDouble:frame.origin.x],
+            TAB_X,
+            [NSNumber numberWithDouble:frame.origin.y],
+            TAB_Y,
+            [NSNumber numberWithDouble:frame.size.width],
+            TAB_WIDTH,
+            [NSNumber numberWithDouble:frame.size.height],
+            TAB_HEIGHT,
+            nil];
+}
+
++ (NSRect)dictToFrame:(NSDictionary*)dict
+{
+    return NSMakeRect([[dict objectForKey:TAB_X] doubleValue],
+                      [[dict objectForKey:TAB_Y] doubleValue],
+                      [[dict objectForKey:TAB_WIDTH] doubleValue],
+                      [[dict objectForKey:TAB_HEIGHT] doubleValue]);
+}
+
+- (NSDictionary*)_recursiveArrangement:(NSView*)view
+{
+    NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
+    if ([view isKindOfClass:[NSSplitView class]]) {
+        NSSplitView* splitView = (NSSplitView*)view;
+        [result setObject:VIEW_TYPE_SPLITTER forKey:TAB_ARRANGEMENT_VIEW_TYPE];
+        [result setObject:[PTYTab frameToDict:[view frame]] forKey:TAB_ARRANGEMENT_SPLIITER_FRAME];
+        [result setObject:[NSNumber numberWithBool:[splitView isVertical]] forKey:SPLITTER_IS_VERTICAL];
+        NSMutableArray* subviews = [NSMutableArray arrayWithCapacity:[[splitView subviews] count]];
+        for (NSView* subview in [splitView subviews]) {
+            [subviews addObject:[self _recursiveArrangement:subview]];
+        }
+        [result setObject:subviews forKey:SUBVIEWS];
+    } else {
+        SessionView* sessionView = (SessionView*)view;
+        [result setObject:VIEW_TYPE_SESSIONVIEW
+                   forKey:TAB_ARRANGEMENT_VIEW_TYPE];
+        [result setObject:[PTYTab frameToDict:[view frame]]
+                   forKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME];
+        [result setObject:[[sessionView session] arrangement]
+                   forKey:TAB_ARRANGEMENT_SESSION];
+        [result setObject:[NSNumber numberWithBool:([sessionView session] == [self activeSession])]
+                   forKey:TAB_ARRANGEMENT_IS_ACTIVE];
+    }
+    return result;
+}
+
++ (NSView*)_recusiveRestoreSplitters:(NSDictionary*)arrangement
+{
+    if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
+        NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SPLIITER_FRAME]];
+        NSSplitView *splitter = [[NSSplitView alloc] initWithFrame:frame];
+        [splitter setVertical:[[arrangement objectForKey:SPLITTER_IS_VERTICAL] boolValue]];
+
+        NSArray* subviews = [arrangement objectForKey:SUBVIEWS];
+        for (NSDictionary* subArrangement in subviews) {
+            NSView* subView = [PTYTab _recusiveRestoreSplitters:(NSDictionary*)subArrangement];
+            if (subView) {
+                [splitter addSubview:subView];
+            }
+        }
+        return splitter;
+    } else {
+        return [[SessionView alloc] initWithFrame:[PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]]];
+    }
+}
+
+- (PTYSession*)_recursiveRestoreSessions:(NSDictionary*)arrangement atNode:(NSView*)view inTab:(PTYTab*)theTab
+{
+    if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
+        assert([view isKindOfClass:[NSSplitView class]]);
+        NSSplitView* splitter = (NSSplitView*)view;
+        NSArray* subArrangements = [arrangement objectForKey:SUBVIEWS];
+        PTYSession* active = nil;
+        for (int i = 0; i < [subArrangements count]; ++i) {
+            NSDictionary* subArrangement = [subArrangements objectAtIndex:i];
+            PTYSession* session = [self _recursiveRestoreSessions:subArrangement
+                                                           atNode:[[splitter subviews] objectAtIndex:i]
+                                                            inTab:theTab];
+            if (session) {
+                active = session;
+            }
+        }
+        return active;
+    } else {
+        assert([view isKindOfClass:[SessionView class]]);
+        SessionView* sessionView = (SessionView*)view;
+        PTYSession* session = [PTYSession sessionFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]
+                                                                                    inView:(SessionView*)view
+                                                                                     inTab:theTab];
+        [sessionView setSession:session];
+        if ([[arrangement objectForKey:TAB_ARRANGEMENT_IS_ACTIVE] boolValue]) {
+            [sessionView setDimmed:NO];
+            return session;
+        } else {
+            [sessionView setDimmed:YES];
+            return nil;
+        }
+    }
+}
+
++ (void)openTabWithArrangement:(NSDictionary*)arrangement inTerminal:(PseudoTerminal*)term
+{
+    PTYTab* theTab;
+    // Build a tree with splitters and SessionViews but no PTYSessions.
+    NSSplitView* newRoot = (NSSplitView*)[PTYTab _recusiveRestoreSplitters:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]];
+
+    // Create a tab.
+    theTab = [[PTYTab alloc] initWithRoot:newRoot];
+    [theTab setParentWindow:term];
+    [theTab->tabViewItem_ setLabel:@"Restoring..."];
+    [newRoot release];
+
+    // Instantiate sessions in the skeleton view tree.
+    [theTab setActiveSession:[theTab _recursiveRestoreSessions:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
+                                                        atNode:theTab->root_
+                                                         inTab:theTab]];
+
+    // Add the existing tab, which is now fully populated, to the term.
+    [term appendTab:theTab];
+}
+
+- (NSDictionary*)arrangement
+{
+    NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:1];
+
+    [result setObject:[self _recursiveArrangement:root_] forKey:TAB_ARRANGEMENT_ROOT];
+
+    return result;
 }
 
 #pragma mark NSSplitView delegate methods

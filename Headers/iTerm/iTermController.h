@@ -51,24 +51,28 @@
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;
 
-// actions are forwarded form application
+// actions are forwarded from application
 - (IBAction)newWindow:(id)sender;
 - (IBAction)newSession:(id)sender;
-- (IBAction) previousTerminal: (id) sender;
-- (IBAction) nextTerminal: (id) sender;
+- (IBAction) previousTerminal:(id)sender;
+- (IBAction) nextTerminal:(id)sender;
 - (void)arrangeHorizontally;
-- (void)newSessionInTabAtIndex: (id) sender;
-- (void)newSessionInWindowAtIndex: (id) sender;
+- (void)newSessionInTabAtIndex:(id)sender;
+- (void)newSessionInWindowAtIndex:(id)sender;
 - (void)showHideFindBar;
 
-- (PseudoTerminal *) currentTerminal;
-- (void) terminalWillClose: (PseudoTerminal *) theTerminalWindow;
-- (NSArray *) sortedEncodingList;
-- (void)addBookmarksToMenu:(NSMenu *)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts;
-- (id)launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm;
-- (id)launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm withCommand: (NSString *)command;
-- (id)launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm withURL: (NSString *)url;
-- (PTYTextView *) frontTextView;
+- (BOOL)hasWindowArrangement;
+- (void)saveWindowArrangement;
+- (void)loadWindowArrangement;
+
+- (PseudoTerminal *)currentTerminal;
+- (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
+- (NSArray*)sortedEncodingList;
+- (void)addBookmarksToMenu:(NSMenu*)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts;
+- (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm;
+- (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm withCommand:(NSString*)command;
+- (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm withURL:(NSString*)url;
+- (PTYTextView*)frontTextView;
 - (int)numberOfTerminals;
 - (PseudoTerminal*)terminalAtIndex:(int)i;
 - (void)irAdvance:(int)dir;

@@ -531,6 +531,13 @@
 // Return the smallest allowable width for this terminal.
 - (float)minWidth;
 
++ (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement;
+- (NSDictionary*)arrangement;
+
+- (void)appendTab:(PTYTab*)theTab;
+
+- (void)getSessionParameters:(NSMutableString *)command withName:(NSMutableString *)name;
+
 @end
 
 @interface PseudoTerminal (KeyValueCoding)

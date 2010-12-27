@@ -185,27 +185,32 @@ int gDebugLogFile = -1;
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)app
 {
     // Check if we have an autolauch script to execute. Do it only once, i.e. at application launch.
-    if(usingAutoLaunchScript == NO &&
-       [[NSFileManager defaultManager] fileExistsAtPath: [AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]])
-    {
-                usingAutoLaunchScript = YES;
+    if (usingAutoLaunchScript == NO &&
+        [[NSFileManager defaultManager] fileExistsAtPath:[AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]]) {
+        usingAutoLaunchScript = YES;
 
-                NSAppleScript *autoLaunchScript;
-                NSDictionary *errorInfo = [NSDictionary dictionary];
-                NSURL *aURL = [NSURL fileURLWithPath: [AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]];
+        NSAppleScript *autoLaunchScript;
+        NSDictionary *errorInfo = [NSDictionary dictionary];
+        NSURL *aURL = [NSURL fileURLWithPath: [AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]];
 
-                // Make sure our script suite registry is loaded
-                [NSScriptSuiteRegistry sharedScriptSuiteRegistry];
+        // Make sure our script suite registry is loaded
+        [NSScriptSuiteRegistry sharedScriptSuiteRegistry];
 
-                autoLaunchScript = [[NSAppleScript alloc] initWithContentsOfURL: aURL error: &errorInfo];
-                [autoLaunchScript executeAndReturnError: &errorInfo];
-                [autoLaunchScript release];
-    }
-    else {
-        if ([[PreferencePanel sharedInstance] openBookmark])
+        autoLaunchScript = [[NSAppleScript alloc] initWithContentsOfURL: aURL error: &errorInfo];
+        [autoLaunchScript executeAndReturnError: &errorInfo];
+        [autoLaunchScript release];
+    } else {
+        if ([[PreferencePanel sharedInstance] openBookmark]) {
             [self showBookmarkWindow:nil];
-        else
+            if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
+                // Open both bookmark window and arrangement!
+                [[iTermController sharedInstance] loadWindowArrangement];
+            }
+        } else if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
+            [[iTermController sharedInstance] loadWindowArrangement];
+        } else {
             [self newWindow:nil];
+        }
     }
     usingAutoLaunchScript = YES;
 
@@ -713,37 +718,57 @@ void DebugLog(NSString* value)
     NSDirectoryEnumerator *directoryEnumerator = [[NSFileManager defaultManager] enumeratorAtPath: [SCRIPT_DIRECTORY stringByExpandingTildeInPath]];
     NSString *file;
 
-    while ((file = [directoryEnumerator nextObject]))
-    {
-                if ([[NSWorkspace sharedWorkspace] isFilePackageAtPath: [NSString stringWithFormat: @"%@/%@", [SCRIPT_DIRECTORY stringByExpandingTildeInPath], file]])
-                        [directoryEnumerator skipDescendents];
-
-                if ([[file pathExtension] isEqualToString: @"scpt"] || [[file pathExtension] isEqualToString: @"app"] ) {
-                        NSMenuItem *scriptItem = [[NSMenuItem alloc] initWithTitle: file action: @selector(launchScript:) keyEquivalent: @""];
-                        [scriptItem setTarget: [iTermController sharedInstance]];
-                        [scriptMenu addItem: scriptItem];
-                        count ++;
-                        [scriptItem release];
-                }
-    }
-        if (count>0) {
-                [scriptMenu addItem:[NSMenuItem separatorItem]];
-                NSMenuItem *scriptItem = [[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"Refresh",@"iTerm", [NSBundle bundleForClass: [iTermController class]], @"Script")
-                                                                                                                        action: @selector(buildScriptMenu:)
-                                                                                                         keyEquivalent: @""];
-                [scriptItem setTarget: self];
-                [scriptMenu addItem: scriptItem];
-                count ++;
-                [scriptItem release];
+    while ((file = [directoryEnumerator nextObject])) {
+        if ([[NSWorkspace sharedWorkspace] isFilePackageAtPath:[NSString stringWithFormat:@"%@/%@",
+                                                                [SCRIPT_DIRECTORY stringByExpandingTildeInPath],
+                                                                file]]) {
+                [directoryEnumerator skipDescendents];
         }
-        [scriptMenu release];
+        if ([[file pathExtension] isEqualToString: @"scpt"] ||
+            [[file pathExtension] isEqualToString: @"app"] ) {
+            NSMenuItem *scriptItem = [[NSMenuItem alloc] initWithTitle:file 
+                                                                action:@selector(launchScript:) 
+                                                         keyEquivalent:@""];
+            [scriptItem setTarget:[iTermController sharedInstance]];
+            [scriptMenu addItem:scriptItem];
+            count++;
+            [scriptItem release];
+        }
+    }
+    if (count > 0) {
+            [scriptMenu addItem:[NSMenuItem separatorItem]];
+            NSMenuItem *scriptItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Refresh",
+                                                                                                          @"iTerm",
+                                                                                                          [NSBundle bundleForClass:[iTermController class]],
+                                                                                                          @"Script")
+                                                                action:@selector(buildScriptMenu:)
+                                                         keyEquivalent:@""];
+            [scriptItem setTarget:self];
+            [scriptMenu addItem:scriptItem];
+            count++;
+            [scriptItem release];
+    }
+    [scriptMenu release];
 
     // add new menu item
     if (count) {
-        [[NSApp mainMenu] insertItem: scriptMenuItem atIndex: 5];
+        [[NSApp mainMenu] insertItem:scriptMenuItem atIndex:5];
         [scriptMenuItem release];
-        [scriptMenuItem setTitle: NSLocalizedStringFromTableInBundle(@"Script",@"iTerm", [NSBundle bundleForClass: [iTermController class]], @"Script")];
+        [scriptMenuItem setTitle:NSLocalizedStringFromTableInBundle(@"Script",
+                                                                    @"iTerm",
+                                                                    [NSBundle bundleForClass:[iTermController class]],
+                                                                    @"Script")];
     }
+}
+
+- (IBAction)saveWindowArrangement:(id)sender
+{
+    [[iTermController sharedInstance] saveWindowArrangement];
+}
+
+- (IBAction)loadWindowArrangement:(id)sender
+{
+    [[iTermController sharedInstance] loadWindowArrangement];
 }
 
 // TODO(georgen): Disable "Edit Current Session..." when there are no current sessions.

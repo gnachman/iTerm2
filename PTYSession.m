@@ -59,6 +59,11 @@ static NSString *COLORFGBG_ENVNAME = @"COLORFGBG";
 static NSString *PWD_ENVNAME = @"PWD";
 static NSString *PWD_ENVVALUE = @"~";
 
+// Constants for saved window arrangement keys.
+static NSString* SESSION_ARRANGEMENT_COLUMNS = @"Columns";
+static NSString* SESSION_ARRANGEMENT_ROWS = @"Rows";
+static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
+
 // init/dealloc
 - (id)init
 {
@@ -213,6 +218,39 @@ static NSString *PWD_ENVVALUE = @"~";
     return liveSession_;
 }
 
++ (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement inView:(SessionView*)sessionView inTab:(PTYTab*)theTab
+{
+    PTYSession* aSession = [[[PTYSession alloc] init] autorelease];
+    aSession->view = sessionView;
+
+    Bookmark* theBookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:[[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK] objectForKey:KEY_GUID]];
+    BOOL needDivorce = NO;
+    if (!theBookmark) {
+        theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
+        needDivorce = YES;
+    }
+    [[aSession SCREEN] setScrollback:[[theBookmark objectForKey:KEY_SCROLLBACK_LINES] intValue]];
+
+     // set our preferences
+    [aSession setAddressBookEntry:theBookmark];
+
+    [aSession setScreenSize:[sessionView frame] parent:[theTab realParentWindow]];
+
+    [aSession setPreferencesFromAddressBookEntry:theBookmark];
+    [[aSession SCREEN] setDisplay:[aSession TEXTVIEW]];
+    [aSession runCommandWithOldCwd:nil];
+    if ([[[[theTab realParentWindow] window] title] compare:@"Window"] == NSOrderedSame) {
+        [[theTab realParentWindow] setWindowTitle];
+    }
+    [aSession setTab:theTab];
+
+    if (needDivorce) {
+        [aSession divorceAddressBookEntryFromPreferences];
+    }
+
+    return aSession;
+}
+
 // Session specific methods
 - (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent
 {
@@ -313,6 +351,39 @@ static NSString *PWD_ENVVALUE = @"~";
 
         return NO;
     }
+}
+
+- (void)runCommandWithOldCwd:(NSString*)oldCWD
+{
+    NSMutableString *cmd;
+    NSArray *arg;
+    NSString *pwd;
+    BOOL isUTF8;
+
+    // Grab the addressbook command
+    Bookmark* addressbookEntry = [self addressBookEntry];
+    cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry]] autorelease];
+    NSMutableString* theName = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
+    // Get session parameters
+    [[[self tab] realParentWindow] getSessionParameters:cmd withName:theName];
+
+    [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
+
+    pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
+    if ([pwd length] == 0) {
+        if (oldCWD) {
+            pwd = oldCWD;
+        } else {
+            pwd = NSHomeDirectory();
+        }
+    }
+    NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
+    isUTF8 = ([[addressbookEntry objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
+
+    [[[self tab] realParentWindow] setName:theName forSession:self];
+
+    // Start the command
+    [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8];
 }
 
 - (void)setWidth:(int)width height:(int)height
@@ -1856,7 +1927,7 @@ static NSString *PWD_ENVVALUE = @"~";
     return gd;
 }
 
--(void)sendCommand:(NSString *)command
+- (void)sendCommand:(NSString *)command
 {
     NSData *data = nil;
     NSString *aString = nil;
@@ -1869,6 +1940,15 @@ static NSString *PWD_ENVVALUE = @"~";
     if (data != nil) {
         [self writeTask:data];
     }
+}
+
+- (NSDictionary*)arrangement
+{
+    NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
+    [result setObject:[NSNumber numberWithInt:[SCREEN width]] forKey:SESSION_ARRANGEMENT_COLUMNS];
+    [result setObject:[NSNumber numberWithInt:[SCREEN height]] forKey:SESSION_ARRANGEMENT_ROWS];
+    [result setObject:addressBookEntry forKey:SESSION_ARRANGEMENT_BOOKMARK];
+    return result;
 }
 
 - (void)updateScroll
