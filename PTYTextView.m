@@ -1495,10 +1495,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)mouseEntered:(NSEvent *)event
 {
-    //NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
-
+    // NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
     if ([[PreferencePanel sharedInstance] focusFollowsMouse]) {
         [[self window] makeKeyWindow];
+        [[[dataSource session] tab] setActiveSession:[dataSource session]];
     }
 }
 
