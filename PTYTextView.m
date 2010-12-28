@@ -1509,7 +1509,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     NSLog(@"%s(%d):-[PTYTextView mouseDown:%@]",
           __FILE__, __LINE__, event );
 #endif
-    if ([[iTermController sharedInstance] frontTextView] != self) {
+    PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
+    if ([[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
         // Mouse clicks in inactive tab are always handled by superclass.
         [super mouseDown:event];
         return;
@@ -1694,7 +1695,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     NSLog(@"%s(%d):-[PTYTextView mouseUp:%@]",
           __FILE__, __LINE__, event );
 #endif
-    if ([[iTermController sharedInstance] frontTextView] != self) {
+    PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
+    if ([[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
         // Mouse clicks in inactive tab are always handled by superclass but make it first responder.
         [[self window] makeFirstResponder: self];
         [super mouseUp:event];
