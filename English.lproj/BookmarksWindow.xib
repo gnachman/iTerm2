@@ -121,18 +121,18 @@
 								<int key="NSPeriodicInterval">25</int>
 							</object>
 						</object>
-						<object class="NSButton" id="670684632">
+						<object class="NSButton" id="450371780">
 							<reference key="NSNextResponder" ref="944403435"/>
 							<int key="NSvFlags">289</int>
 							<string key="NSFrame">{{365, 12}, {140, 32}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
 							<bool key="NSEnabled">YES</bool>
-							<object class="NSButtonCell" key="NSCell" id="652300668">
+							<object class="NSButtonCell" key="NSCell" id="506680054">
 								<int key="NSCellFlags">604110336</int>
 								<int key="NSCellFlags2">134217728</int>
 								<string key="NSContents">Split Vertically</string>
 								<reference key="NSSupport" ref="981454797"/>
-								<reference key="NSControlView" ref="670684632"/>
+								<reference key="NSControlView" ref="450371780"/>
 								<int key="NSButtonFlags">-2038284033</int>
 								<int key="NSButtonFlags2">129</int>
 								<string key="NSAlternateContents"/>
@@ -144,7 +144,7 @@
 						<object class="NSButton" id="619839802">
 							<reference key="NSNextResponder" ref="944403435"/>
 							<int key="NSvFlags">289</int>
-							<string key="NSFrame">{{601, 11}, {120, 32}}</string>
+							<string key="NSFrame">{{601, 12}, {120, 32}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="153751991">
@@ -320,7 +320,7 @@
 					<object class="IBActionConnection" key="connection">
 						<string key="label">openBookmarkInVerticalPane:</string>
 						<reference key="source" ref="702893507"/>
-						<reference key="destination" ref="670684632"/>
+						<reference key="destination" ref="450371780"/>
 					</object>
 					<int key="connectionID">354</int>
 				</object>
@@ -336,7 +336,7 @@
 					<object class="IBOutletConnection" key="connection">
 						<string key="label">verticalPaneButton_</string>
 						<reference key="source" ref="702893507"/>
-						<reference key="destination" ref="670684632"/>
+						<reference key="destination" ref="450371780"/>
 					</object>
 					<int key="connectionID">356</int>
 				</object>
@@ -390,7 +390,7 @@
 							<reference ref="627943894"/>
 							<reference ref="113789196"/>
 							<reference ref="876045723"/>
-							<reference ref="670684632"/>
+							<reference ref="450371780"/>
 							<reference ref="844383526"/>
 							<reference ref="619839802"/>
 						</object>
@@ -487,17 +487,17 @@
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">350</int>
-						<reference key="object" ref="670684632"/>
+						<reference key="object" ref="450371780"/>
 						<object class="NSMutableArray" key="children">
 							<bool key="EncodedWithXMLCoder">YES</bool>
-							<reference ref="652300668"/>
+							<reference ref="506680054"/>
 						</object>
 						<reference key="parent" ref="944403435"/>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">351</int>
-						<reference key="object" ref="652300668"/>
-						<reference key="parent" ref="670684632"/>
+						<reference key="object" ref="506680054"/>
+						<reference key="parent" ref="450371780"/>
 					</object>
 				</object>
 			</object>
