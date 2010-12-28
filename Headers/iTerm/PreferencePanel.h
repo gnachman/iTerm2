@@ -150,6 +150,13 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *smartPlacement;
     BOOL defaultSmartPlacement;
 
+    // Window/tab title customization
+    IBOutlet NSButton* windowNumber;
+    BOOL defaultWindowNumber;
+
+    IBOutlet NSButton* jobName;
+    BOOL defaultJobName;
+
     // instant replay
     IBOutlet NSButton *instantReplay;
     BOOL defaultInstantReplay;
@@ -370,6 +377,8 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (ITermCursorType)cursorType;
 - (BOOL)hideScrollbar;
 - (BOOL)smartPlacement;
+- (BOOL)windowNumber;
+- (BOOL)jobName;
 - (BOOL)instantReplay;
 - (BOOL)savePasteHistory;
 - (BOOL)openArrangementAtStartup;

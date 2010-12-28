@@ -397,6 +397,8 @@ static float versionNumber;
     defaultCheckUpdate = [prefs objectForKey:@"SUEnableAutomaticChecks"]?[[prefs objectForKey:@"SUEnableAutomaticChecks"] boolValue]: YES;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultSmartPlacement = [prefs objectForKey:@"SmartPlacement"]?[[prefs objectForKey:@"SmartPlacement"] boolValue]: NO;
+    defaultWindowNumber = [prefs objectForKey:@"WindowNumber"]?[[prefs objectForKey:@"WindowNumber"] boolValue]: YES;
+    defaultJobName = [prefs objectForKey:@"JobName"]?[[prefs objectForKey:@"JobName"] boolValue]: NO;
     defaultInstantReplay = [prefs objectForKey:@"InstantReplay"]?[[prefs objectForKey:@"InstantReplay"] boolValue]: YES;
     defaultHotkey = [prefs objectForKey:@"Hotkey"]?[[prefs objectForKey:@"Hotkey"] boolValue]: NO;
     defaultHotkeyCode = [prefs objectForKey:@"HotkeyCode"]?[[prefs objectForKey:@"HotkeyCode"] intValue]: 0;
@@ -493,6 +495,8 @@ static float versionNumber;
     [prefs setInteger:defaultCursorType forKey:@"CursorType"];
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
     [prefs setBool:defaultSmartPlacement forKey:@"SmartPlacement"];
+    [prefs setBool:defaultWindowNumber forKey:@"WindowNumber"];
+    [prefs setBool:defaultJobName forKey:@"JobName"];
     [prefs setBool:defaultInstantReplay forKey:@"InstantReplay"];
     [prefs setBool:defaultHotkey forKey:@"Hotkey"];
     [prefs setInteger:defaultHotkeyCode forKey:@"HotkeyCode"];
@@ -543,6 +547,8 @@ static float versionNumber;
     [cursorType selectCellWithTag:defaultCursorType];
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [smartPlacement setState: defaultSmartPlacement?NSOnState:NSOffState];
+    [windowNumber setState: defaultWindowNumber?NSOnState:NSOffState];
+    [jobName setState: defaultJobName?NSOnState:NSOffState];
     [instantReplay setState: defaultInstantReplay?NSOnState:NSOffState];
     [savePasteHistory setState: defaultSavePasteHistory?NSOnState:NSOffState];
     [openArrangementAtStartup setState:defaultOpenArrangementAtStartup ? NSOnState : NSOffState];
@@ -592,7 +598,6 @@ static float versionNumber;
 
 - (IBAction)settingChanged:(id)sender
 {
-
     if (sender == windowStyle ||
         sender == tabPosition ||
         sender == hideTab ||
@@ -610,6 +615,12 @@ static float versionNumber;
         defaultColorInvertedCursor = ([checkColorInvertedCursor state] == NSOnState);
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermRefreshTerminal" object: nil userInfo: nil];
+    } else if (sender == windowNumber || sender == jobName) {
+        defaultWindowNumber = ([windowNumber state] == NSOnState);
+        defaultJobName = ([jobName state] == NSOnState);
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermUpdateLabels"
+                                                            object:nil
+                                                          userInfo:nil];
     } else {
         defaultCopySelection=([selectionCopiesText state]==NSOnState);
         defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
@@ -816,6 +827,16 @@ static float versionNumber;
 - (BOOL)smartPlacement
 {
     return defaultSmartPlacement;
+}
+
+- (BOOL)windowNumber
+{
+    return defaultWindowNumber;
+}
+
+- (BOOL)jobName
+{
+    return defaultJobName;
 }
 
 - (BOOL)instantReplay

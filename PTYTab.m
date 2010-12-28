@@ -113,6 +113,10 @@ static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
         [root_ addSubview:[session view]];
 
     }
+    [[NSNotificationCenter defaultCenter] addObserver: self
+                                             selector: @selector(_refreshLabels:)
+                                                 name: @"iTermUpdateLabels"
+                                               object: nil];
     return self;
 }
 
@@ -129,12 +133,17 @@ static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
         [root_ setDelegate:self];
 
     }
+    [[NSNotificationCenter defaultCenter] addObserver: self
+                                             selector: @selector(_refreshLabels:)
+                                                 name: @"iTermUpdateLabels"
+                                               object: nil];
     return self;
 }
 
 - (void)dealloc
 {
     PtyLog(@"PTYTab dealloc");
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     for (PTYSession* aSession in [self sessions]) {
         [[aSession view] cancelTimers];
     }
@@ -142,6 +151,12 @@ static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
     [fakeParentWindow_ release];
     [icon_ release];
     [super dealloc];
+}
+
+- (void)_refreshLabels:(id)sender
+{
+    [tabViewItem_ setLabel:[[self activeSession] name]];
+    [parentWindow_ setWindowTitle];
 }
 
 - (NSTabViewItem *)tabViewItem
@@ -1366,6 +1381,7 @@ static void SwapPoint(NSPoint* point) {
 
     // Add the existing tab, which is now fully populated, to the term.
     [term appendTab:theTab];
+    [theTab release];
 }
 
 - (NSDictionary*)arrangement

@@ -96,7 +96,7 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     growlIdle = growlNewOutput = NO;
 
     slowPasteBuffer = [[NSMutableString alloc] init];
-    return (self);
+    return self;
 }
 
 - (void)dealloc
@@ -1317,13 +1317,19 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     NSLog(@"Not allowed to set unique ID");
 }
 
+- (NSString*)formattedName:(NSString*)base
+{
+    PreferencePanel* panel = [PreferencePanel sharedInstance];
+    if ([panel jobName] && jobName_) {
+        return [NSString stringWithFormat:@"%@ (%@)", base, [self jobName]];
+    } else {
+        return base;
+    }
+}
+
 - (NSString*)defaultName
 {
-    if (jobName_) {
-        return [NSString stringWithFormat:@"%@ (%@)", defaultName, [self jobName]];
-    } else {
-        return defaultName;
-    }
+    return [self formattedName:defaultName];
 }
 
 - (NSString*)joblessDefaultName
@@ -1392,11 +1398,7 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
 
 - (NSString*)name
 {
-    if (jobName_) {
-        return [NSString stringWithFormat:@"%@ (%@)", name, [self jobName]];
-    } else {
-        return name;
-    }
+    return [self formattedName:name];
 }
 
 - (void)setName:(NSString*)theName
@@ -1442,12 +1444,7 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     if (!windowTitle) {
         return nil;
     }
-    NSString* jobName = [self jobName];
-    if (jobName) {
-        return [NSString stringWithFormat:@"%@ (%@)", windowTitle, [self jobName]];
-    } else {
-        return windowTitle;
-    }
+    return [self formattedName:windowTitle];
 }
 
 - (void)setWindowTitle:(NSString*)theTitle
@@ -2088,6 +2085,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)setFont:(NSFont*)font nafont:(NSFont*)nafont horizontalSpacing:(float)horizontalSpacing verticalSpacing:(float)verticalSpacing
 {
+    if ([[TEXTVIEW font] isEqualTo:font] &&
+        [[TEXTVIEW nafont] isEqualTo:nafont] &&
+        [TEXTVIEW horizontalSpacing] == horizontalSpacing &&
+        [TEXTVIEW verticalSpacing] == verticalSpacing) {
+        return;
+    }
     [TEXTVIEW setFont:font nafont:nafont horizontalSpacing:horizontalSpacing verticalSpacing:verticalSpacing];
     [[[self tab] parentWindow] fitWindowToTab:[self tab]];
 }

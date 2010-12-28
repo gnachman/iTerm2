@@ -321,6 +321,11 @@ NSString *sessionsKey = @"sessions";
     [[self window] setDelegate: self];
 
     [[NSNotificationCenter defaultCenter] addObserver: self
+                                             selector: @selector(_refreshTitle:)
+                                                 name: @"iTermUpdateLabels"
+                                               object: nil];
+
+    [[NSNotificationCenter defaultCenter] addObserver: self
                                              selector: @selector(_refreshTerminal:)
                                                  name: @"iTermRefreshTerminal"
                                                object: nil];
@@ -578,7 +583,7 @@ NSString *sessionsKey = @"sessions";
     }
 
     NSUInteger number = [[iTermController sharedInstance] indexOfTerminal:self];
-    if (number >= 0 && number < 9) {
+    if ([[PreferencePanel sharedInstance] windowNumber] && number >= 0 && number < 9) {
         [[self window] setTitle:[NSString stringWithFormat:@"%d. %@", number+1, title]];
     } else {
         [[self window] setTitle:title];
@@ -2492,6 +2497,12 @@ NSString *sessionsKey = @"sessions";
     }
     NSRectFill(frame);
     [[[self window] contentView] unlockFocus];
+}
+
+- (void)_refreshTitle:(NSNotification*)aNotification
+{
+    // This is if displaying of window number was toggled in prefs.
+    [self setWindowTitle];
 }
 
 - (void)_refreshTerminal:(NSNotification *)aNotification
