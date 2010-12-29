@@ -113,10 +113,10 @@ static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
         [root_ addSubview:[session view]];
 
     }
-    [[NSNotificationCenter defaultCenter] addObserver: self
-                                             selector: @selector(_refreshLabels:)
-                                                 name: @"iTermUpdateLabels"
-                                               object: nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_refreshLabels:)
+                                                 name:@"iTermUpdateLabels"
+                                               object:nil];
     return self;
 }
 
@@ -133,10 +133,10 @@ static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
         [root_ setDelegate:self];
 
     }
-    [[NSNotificationCenter defaultCenter] addObserver: self
-                                             selector: @selector(_refreshLabels:)
-                                                 name: @"iTermUpdateLabels"
-                                               object: nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_refreshLabels:)
+                                                 name:@"iTermUpdateLabels"
+                                               object:nil];
     return self;
 }
 
@@ -213,7 +213,7 @@ static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
         [tabViewItem_ setLabel:[[self activeSession] name]];
         [[realParentWindow_ window] makeFirstResponder:[session TEXTVIEW]];
         [[session view] setDimmed:NO];
-        if (oldSession) {
+        if (oldSession && [[PreferencePanel sharedInstance] dimInactiveSplitPanes]) {
             [[oldSession view] setDimmed:YES];
         }
     }

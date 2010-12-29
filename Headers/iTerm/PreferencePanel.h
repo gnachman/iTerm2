@@ -142,6 +142,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *checkColorInvertedCursor;
     BOOL defaultColorInvertedCursor;
 
+    // Dim inactive split panes
+    IBOutlet NSButton* dimInactiveSplitPanes;
+    BOOL defaultDimInactiveSplitPanes;
+
     // hide scrollbar and resize
     IBOutlet NSButton *hideScrollbar;
     BOOL defaultHideScrollbar;
@@ -390,6 +394,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (NSTextField*)hotkeyField;
 
 - (BOOL)checkColorInvertedCursor;
+- (BOOL)dimInactiveSplitPanes;
 - (BOOL)checkTestRelease;
 - (BOOL)colorInvertedCursor;
 - (BOOL)quitWhenAllWindowsClosed;

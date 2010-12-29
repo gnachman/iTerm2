@@ -360,7 +360,7 @@ static float versionNumber;
     [super dealloc];
 }
 
-- (void) readPreferences
+- (void)readPreferences
 {
     if (!prefs) {
         // In one-bookmark mode there are no prefs, but this function only reads
@@ -413,6 +413,8 @@ static float versionNumber;
     defaultIrMemory = [prefs objectForKey:@"IRMemory"]?[[prefs objectForKey:@"IRMemory"] intValue] : 4;
     defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
     defaultColorInvertedCursor = [prefs objectForKey:@"ColorInvertedCursor"]?[[prefs objectForKey:@"ColorInvertedCursor"] boolValue]: NO;
+    defaultDimInactiveSplitPanes = [prefs objectForKey:@"DimInactiveSplitPanes"]?[[prefs objectForKey:@"DimInactiveSplitPanes"] boolValue]: YES;
+
     NSString *appCast = defaultCheckTestRelease ?
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
@@ -507,6 +509,7 @@ static float versionNumber;
     [prefs setInteger:defaultIrMemory forKey:@"IRMemory"];
     [prefs setBool:defaultCheckTestRelease forKey:@"CheckTestRelease"];
     [prefs setBool:defaultColorInvertedCursor forKey:@"ColorInvertedCursor"];
+    [prefs setBool:defaultDimInactiveSplitPanes forKey:@"DimInactiveSplitPanes"];
 
     // save the handlers by converting the bookmark into an index
     [prefs setObject:urlHandlersByGuid forKey:@"URLHandlersByGuid"];
@@ -566,8 +569,9 @@ static float versionNumber;
     [hotkeyLabel setTextColor:defaultHotkey ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
 
     [irMemory setIntValue:defaultIrMemory];
-    [checkTestRelease setState: defaultCheckTestRelease?NSOnState:NSOffState];
-    [checkColorInvertedCursor setState: defaultColorInvertedCursor?NSOnState:NSOffState];
+    [checkTestRelease setState:defaultCheckTestRelease?NSOnState:NSOffState];
+    [checkColorInvertedCursor setState:defaultColorInvertedCursor?NSOnState:NSOffState];
+    [dimInactiveSplitPanes setState:defaultDimInactiveSplitPanes?NSOnState:NSOffState];
 
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];
@@ -605,7 +609,8 @@ static float versionNumber;
         sender == highlightTabLabels ||
         sender == cursorType ||
         sender == hideScrollbar ||
-        sender == checkColorInvertedCursor) {
+        sender == checkColorInvertedCursor ||
+        sender == dimInactiveSplitPanes) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
         defaultTabViewType=[tabPosition indexOfSelectedItem];
         defaultUseCompactLabel = ([useCompactLabel state] == NSOnState);
@@ -613,6 +618,7 @@ static float versionNumber;
         defaultHideTab=([hideTab state]==NSOnState);
         defaultCursorType = [[cursorType selectedCell] tag];
         defaultColorInvertedCursor = ([checkColorInvertedCursor state] == NSOnState);
+        defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermRefreshTerminal" object: nil userInfo: nil];
     } else if (sender == windowNumber || sender == jobName) {
@@ -893,6 +899,11 @@ static float versionNumber;
 - (BOOL)checkColorInvertedCursor
 {
     return defaultColorInvertedCursor;
+}
+
+- (BOOL)dimInactiveSplitPanes
+{
+    return defaultDimInactiveSplitPanes;
 }
 
 - (BOOL)checkTestRelease

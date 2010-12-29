@@ -2510,12 +2510,24 @@ NSString *sessionsKey = @"sessions";
     PtyLog(@"_refreshTerminal - calling fitWindowToTabs");
     [self fitWindowToTabs];
 
+    BOOL canDim = [[PreferencePanel sharedInstance] dimInactiveSplitPanes];
     // Assign counts to each session. This causes tabs to show their tab number,
     // called an objectCount. When the "compact tab" pref is toggled, this makes
     // formerly countless tabs show their counts.
     for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
         PTYTab *aTab = [[TABVIEW tabViewItemAtIndex:i] identifier];
         [aTab setObjectCount:i+1];
+
+        // Update dimmed status of inactive sessions in split panes in case the preference changed.
+        for (PTYSession* aSession in [aTab sessions]) {
+            if (canDim) {
+                if (aSession != [aTab activeSession]) {
+                    [[aSession view] setDimmed:YES];
+                }
+            } else {
+                [[aSession view] setDimmed:NO];
+            }
+        }
     }
 }
 
