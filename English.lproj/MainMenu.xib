@@ -13,7 +13,7 @@
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
 			<integer value="499"/>
-			<integer value="24"/>
+			<integer value="1210"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -1049,7 +1049,7 @@
 									<reference key="NSOnImage" ref="643967552"/>
 									<reference key="NSMixedImage" ref="326707852"/>
 								</object>
-								<object class="NSMenuItem" id="821940035">
+								<object class="NSMenuItem" id="858887472">
 									<reference key="NSMenu" ref="704295309"/>
 									<string key="NSTitle">Save Window Arrangement</string>
 									<string key="NSKeyEquiv">S</string>
@@ -1058,7 +1058,7 @@
 									<reference key="NSOnImage" ref="643967552"/>
 									<reference key="NSMixedImage" ref="326707852"/>
 								</object>
-								<object class="NSMenuItem" id="705850928">
+								<object class="NSMenuItem" id="225659727">
 									<reference key="NSMenu" ref="704295309"/>
 									<string key="NSTitle">Restore Window Arrangement</string>
 									<string key="NSKeyEquiv">R</string>
@@ -1067,7 +1067,7 @@
 									<reference key="NSOnImage" ref="643967552"/>
 									<reference key="NSMixedImage" ref="326707852"/>
 								</object>
-								<object class="NSMenuItem" id="892849340">
+								<object class="NSMenuItem" id="989661074">
 									<reference key="NSMenu" ref="704295309"/>
 									<bool key="NSIsDisabled">YES</bool>
 									<bool key="NSIsSeparator">YES</bool>
@@ -1078,41 +1078,56 @@
 									<reference key="NSOnImage" ref="643967552"/>
 									<reference key="NSMixedImage" ref="326707852"/>
 								</object>
-								<object class="NSMenuItem" id="257429436">
+								<object class="NSMenuItem" id="667737648">
 									<reference key="NSMenu" ref="704295309"/>
-									<string key="NSTitle">Select Pane Above</string>
-									<string key="NSKeyEquiv"></string>
-									<int key="NSKeyEquivModMask">1572864</int>
+									<string key="NSTitle">Select Split Pane</string>
+									<string key="NSKeyEquiv"/>
 									<int key="NSMnemonicLoc">2147483647</int>
 									<reference key="NSOnImage" ref="643967552"/>
 									<reference key="NSMixedImage" ref="326707852"/>
-								</object>
-								<object class="NSMenuItem" id="729181571">
-									<reference key="NSMenu" ref="704295309"/>
-									<string key="NSTitle">Select Pane Below</string>
-									<string key="NSKeyEquiv"></string>
-									<int key="NSKeyEquivModMask">1572864</int>
-									<int key="NSMnemonicLoc">2147483647</int>
-									<reference key="NSOnImage" ref="643967552"/>
-									<reference key="NSMixedImage" ref="326707852"/>
-								</object>
-								<object class="NSMenuItem" id="1014161416">
-									<reference key="NSMenu" ref="704295309"/>
-									<string key="NSTitle">Select Pane Left</string>
-									<string key="NSKeyEquiv"></string>
-									<int key="NSKeyEquivModMask">1572864</int>
-									<int key="NSMnemonicLoc">2147483647</int>
-									<reference key="NSOnImage" ref="643967552"/>
-									<reference key="NSMixedImage" ref="326707852"/>
-								</object>
-								<object class="NSMenuItem" id="827707971">
-									<reference key="NSMenu" ref="704295309"/>
-									<string key="NSTitle">Select Pane Right</string>
-									<string key="NSKeyEquiv"></string>
-									<int key="NSKeyEquivModMask">1572864</int>
-									<int key="NSMnemonicLoc">2147483647</int>
-									<reference key="NSOnImage" ref="643967552"/>
-									<reference key="NSMixedImage" ref="326707852"/>
+									<string key="NSAction">submenuAction:</string>
+									<object class="NSMenu" key="NSSubmenu" id="265908405">
+										<string key="NSTitle">Select Split Pane</string>
+										<object class="NSMutableArray" key="NSMenuItems">
+											<bool key="EncodedWithXMLCoder">YES</bool>
+											<object class="NSMenuItem" id="822853240">
+												<reference key="NSMenu" ref="265908405"/>
+												<string key="NSTitle">Select Pane Above</string>
+												<string key="NSKeyEquiv"></string>
+												<int key="NSKeyEquivModMask">1572864</int>
+												<int key="NSMnemonicLoc">2147483647</int>
+												<reference key="NSOnImage" ref="643967552"/>
+												<reference key="NSMixedImage" ref="326707852"/>
+											</object>
+											<object class="NSMenuItem" id="456490896">
+												<reference key="NSMenu" ref="265908405"/>
+												<string key="NSTitle">Select Pane Below</string>
+												<string key="NSKeyEquiv"></string>
+												<int key="NSKeyEquivModMask">1572864</int>
+												<int key="NSMnemonicLoc">2147483647</int>
+												<reference key="NSOnImage" ref="643967552"/>
+												<reference key="NSMixedImage" ref="326707852"/>
+											</object>
+											<object class="NSMenuItem" id="70665414">
+												<reference key="NSMenu" ref="265908405"/>
+												<string key="NSTitle">Select Pane Left</string>
+												<string key="NSKeyEquiv"></string>
+												<int key="NSKeyEquivModMask">1572864</int>
+												<int key="NSMnemonicLoc">2147483647</int>
+												<reference key="NSOnImage" ref="643967552"/>
+												<reference key="NSMixedImage" ref="326707852"/>
+											</object>
+											<object class="NSMenuItem" id="92579373">
+												<reference key="NSMenu" ref="265908405"/>
+												<string key="NSTitle">Select Pane Right</string>
+												<string key="NSKeyEquiv"></string>
+												<int key="NSKeyEquivModMask">1572864</int>
+												<int key="NSMnemonicLoc">2147483647</int>
+												<reference key="NSOnImage" ref="643967552"/>
+												<reference key="NSMixedImage" ref="326707852"/>
+											</object>
+										</object>
+									</object>
 								</object>
 								<object class="NSMenuItem" id="209335888">
 									<reference key="NSMenu" ref="704295309"/>
@@ -2511,38 +2526,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBActionConnection" key="connection">
-						<string key="label">selectPaneDown:</string>
-						<reference key="source" ref="608955146"/>
-						<reference key="destination" ref="729181571"/>
-					</object>
-					<int key="connectionID">1195</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
-						<string key="label">selectPaneLeft:</string>
-						<reference key="source" ref="608955146"/>
-						<reference key="destination" ref="1014161416"/>
-					</object>
-					<int key="connectionID">1196</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
-						<string key="label">selectPaneRight:</string>
-						<reference key="source" ref="608955146"/>
-						<reference key="destination" ref="827707971"/>
-					</object>
-					<int key="connectionID">1197</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
-						<string key="label">selectPaneUp:</string>
-						<reference key="source" ref="608955146"/>
-						<reference key="destination" ref="257429436"/>
-					</object>
-					<int key="connectionID">1198</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
 						<string key="label">splitVertically:</string>
 						<reference key="source" ref="620772211"/>
 						<reference key="destination" ref="250043371"/>
@@ -2561,7 +2544,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<object class="IBActionConnection" key="connection">
 						<string key="label">saveWindowArrangement:</string>
 						<reference key="source" ref="608955146"/>
-						<reference key="destination" ref="821940035"/>
+						<reference key="destination" ref="858887472"/>
 					</object>
 					<int key="connectionID">1206</int>
 				</object>
@@ -2569,9 +2552,41 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<object class="IBActionConnection" key="connection">
 						<string key="label">loadWindowArrangement:</string>
 						<reference key="source" ref="608955146"/>
-						<reference key="destination" ref="705850928"/>
+						<reference key="destination" ref="225659727"/>
 					</object>
 					<int key="connectionID">1208</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">selectPaneDown:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="456490896"/>
+					</object>
+					<int key="connectionID">1224</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">selectPaneLeft:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="70665414"/>
+					</object>
+					<int key="connectionID">1225</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">selectPaneRight:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="92579373"/>
+					</object>
+					<int key="connectionID">1226</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">selectPaneUp:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="822853240"/>
+					</object>
+					<int key="connectionID">1227</int>
 				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -2647,14 +2662,11 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<reference ref="135837852"/>
 							<reference ref="249023174"/>
 							<reference ref="658343397"/>
-							<reference ref="257429436"/>
 							<reference ref="209335888"/>
-							<reference ref="729181571"/>
-							<reference ref="827707971"/>
-							<reference ref="1014161416"/>
-							<reference ref="892849340"/>
-							<reference ref="821940035"/>
-							<reference ref="705850928"/>
+							<reference ref="989661074"/>
+							<reference ref="858887472"/>
+							<reference ref="225659727"/>
+							<reference ref="667737648"/>
 						</object>
 						<reference key="parent" ref="914464345"/>
 					</object>
@@ -3536,26 +3548,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 						<reference key="parent" ref="704295309"/>
 					</object>
 					<object class="IBObjectRecord">
-						<int key="objectID">1191</int>
-						<reference key="object" ref="257429436"/>
-						<reference key="parent" ref="704295309"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">1192</int>
-						<reference key="object" ref="729181571"/>
-						<reference key="parent" ref="704295309"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">1193</int>
-						<reference key="object" ref="827707971"/>
-						<reference key="parent" ref="704295309"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">1194</int>
-						<reference key="object" ref="1014161416"/>
-						<reference key="parent" ref="704295309"/>
-					</object>
-					<object class="IBObjectRecord">
 						<int key="objectID">1199</int>
 						<reference key="object" ref="3000"/>
 						<reference key="parent" ref="360861402"/>
@@ -3572,18 +3564,59 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">1204</int>
-						<reference key="object" ref="892849340"/>
+						<reference key="object" ref="989661074"/>
 						<reference key="parent" ref="704295309"/>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">1205</int>
-						<reference key="object" ref="821940035"/>
+						<reference key="object" ref="858887472"/>
 						<reference key="parent" ref="704295309"/>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">1207</int>
-						<reference key="object" ref="705850928"/>
+						<reference key="object" ref="225659727"/>
 						<reference key="parent" ref="704295309"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1209</int>
+						<reference key="object" ref="667737648"/>
+						<object class="NSMutableArray" key="children">
+							<bool key="EncodedWithXMLCoder">YES</bool>
+							<reference ref="265908405"/>
+						</object>
+						<reference key="parent" ref="704295309"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1210</int>
+						<reference key="object" ref="265908405"/>
+						<object class="NSMutableArray" key="children">
+							<bool key="EncodedWithXMLCoder">YES</bool>
+							<reference ref="822853240"/>
+							<reference ref="456490896"/>
+							<reference ref="70665414"/>
+							<reference ref="92579373"/>
+						</object>
+						<reference key="parent" ref="667737648"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1212</int>
+						<reference key="object" ref="822853240"/>
+						<reference key="parent" ref="265908405"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1213</int>
+						<reference key="object" ref="456490896"/>
+						<reference key="parent" ref="265908405"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1214</int>
+						<reference key="object" ref="70665414"/>
+						<reference key="parent" ref="265908405"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1215</int>
+						<reference key="object" ref="92579373"/>
+						<reference key="parent" ref="265908405"/>
 					</object>
 				</object>
 			</object>
@@ -3625,10 +3658,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>1178.IBPluginDependency</string>
 					<string>1184.IBPluginDependency</string>
 					<string>1190.IBPluginDependency</string>
-					<string>1191.IBPluginDependency</string>
-					<string>1192.IBPluginDependency</string>
-					<string>1193.IBPluginDependency</string>
-					<string>1194.IBPluginDependency</string>
 					<string>1199.IBPluginDependency</string>
 					<string>1200.IBPluginDependency</string>
 					<string>1201.IBPluginDependency</string>
@@ -3636,6 +3665,13 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>1204.ImportedFromIB2</string>
 					<string>1205.IBPluginDependency</string>
 					<string>1207.IBPluginDependency</string>
+					<string>1209.IBPluginDependency</string>
+					<string>1210.IBEditorWindowLastContentRect</string>
+					<string>1210.IBPluginDependency</string>
+					<string>1212.IBPluginDependency</string>
+					<string>1213.IBPluginDependency</string>
+					<string>1214.IBPluginDependency</string>
+					<string>1215.IBPluginDependency</string>
 					<string>129.IBPluginDependency</string>
 					<string>129.ImportedFromIB2</string>
 					<string>130.IBEditorWindowLastContentRect</string>
@@ -3903,11 +3939,14 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>{{961, 486}, {217, 83}}</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -3966,11 +4005,11 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{723, 347}, {300, 383}}</string>
+					<string>{{661, 446}, {300, 323}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<boolean value="YES"/>
-					<string>{{402, 730}, {453, 20}}</string>
+					<string>{{340, 769}, {453, 20}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>{{329, 400}, {354, 211}}</string>
@@ -4042,7 +4081,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{502, 552}, {245, 173}}</string>
+					<string>{{517, 596}, {245, 173}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -4053,7 +4092,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{407, 422}, {240, 303}}</string>
+					<string>{{422, 466}, {240, 303}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -4154,7 +4193,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">1208</int>
+			<int key="maxID">1227</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -5166,10 +5205,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>previousTerminal:</string>
 							<string>returnToDefaultSize:</string>
 							<string>saveWindowArrangement:</string>
-							<string>selectPaneDown:</string>
-							<string>selectPaneLeft:</string>
-							<string>selectPaneRight:</string>
-							<string>selectPaneUp:</string>
 							<string>showAbout:</string>
 							<string>showBookmarkWindow:</string>
 							<string>showPrefWindow:</string>
@@ -5178,10 +5213,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
-							<string>id</string>
-							<string>id</string>
-							<string>id</string>
-							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -5223,10 +5254,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>previousTerminal:</string>
 							<string>returnToDefaultSize:</string>
 							<string>saveWindowArrangement:</string>
-							<string>selectPaneDown:</string>
-							<string>selectPaneLeft:</string>
-							<string>selectPaneRight:</string>
-							<string>selectPaneUp:</string>
 							<string>showAbout:</string>
 							<string>showBookmarkWindow:</string>
 							<string>showPrefWindow:</string>
@@ -5293,22 +5320,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							</object>
 							<object class="IBActionInfo">
 								<string key="name">saveWindowArrangement:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-							<object class="IBActionInfo">
-								<string key="name">selectPaneDown:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-							<object class="IBActionInfo">
-								<string key="name">selectPaneLeft:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-							<object class="IBActionInfo">
-								<string key="name">selectPaneRight:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-							<object class="IBActionInfo">
-								<string key="name">selectPaneUp:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">

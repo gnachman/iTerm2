@@ -3345,6 +3345,11 @@ NSString *sessionsKey = @"sessions";
         result = [[self currentSession] canInstantReplayPrev];
     } else if ([item action] == @selector(irNext:)) {
         result = [[self currentSession] canInstantReplayNext];
+    } else if ([item action] == @selector(selectPaneUp:) ||
+               [item action] == @selector(selectPaneDown:) ||
+               [item action] == @selector(selectPaneLeft:) ||
+               [item action] == @selector(selectPaneRight:)) {
+        result = ([[[self currentTab] sessions] count] > 1);
     }
     return result;
 }

@@ -60,7 +60,7 @@ void DebugLog(NSString* value);
 
 // NSApplication Delegate methods
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification;
-- (BOOL) applicationShouldTerminate: (NSNotification *) theNotification;
+- (BOOL)applicationShouldTerminate: (NSNotification *) theNotification;
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename;
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)app;
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender;
@@ -91,14 +91,9 @@ void DebugLog(NSString* value);
 - (IBAction)instantReplayNext:(id)sender;
 
     // navigation
-- (IBAction) previousTerminal: (id) sender;
-- (IBAction) nextTerminal: (id) sender;
+- (IBAction)previousTerminal: (id) sender;
+- (IBAction)nextTerminal: (id) sender;
 - (IBAction)arrangeHorizontally:(id)sender;
-
-- (IBAction)selectPaneLeft:(id)sender;
-- (IBAction)selectPaneRight:(id)sender;
-- (IBAction)selectPaneUp:(id)sender;
-- (IBAction)selectPaneDown:(id)sender;
 
 // Notifications
 - (void) reloadMenus: (NSNotification *) aNotification;
