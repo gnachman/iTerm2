@@ -1,4 +1,28 @@
-These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2. Alpha 13 is known to be quite reliable, though.
+These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2. Alpha 14 is known to be quite reliable, though.
+
+Alpha 15
+This release has one big feature: split panes! You can divide a tab into rectangular regions, each showing a different session. Also, you can now save your window arrangement and have it automatically restored when you start iTerm2.
+
+Big new features
+- Horizontal and vertical split panes. Use Cmd-D to split vertically, Cmd-Shift-D to split horizontally, and Cmd-Opt-W to close a pane. Navigate panes with Cmd-Opt-Arrow keys (but note that you may have conflicting key mappings in your bookmark, as this had been a default setting).
+- Save your window arrangement including window positions, size, tabs, and split panes. You can open new windows with the saved arrangement with a keypress or use a new preference ("Open saved window arrangement at startup") to do it automatically.
+
+Small Enhancements
+- Make window title and tab labels more configurable so you can remove window number and job name.
+- Add global keybindings for cmd-arrow, cmd-pageup/pagedown, cmd-home/end to scroll.
+- Make opt-arrowkey send proper escape codes.
+- Preferences and Bookmarks windows can now be closed with Esc key.
+- When the "hotkey" is pressed, prevent the running app from getting the keypress.
+- Made Find With Selection (cmd-E) behave like a normal cocoa app.
+- Allow the OS to pick the initial window position if smart placement is off and no saved location exists.
+- Improved wording of context menus.
+- Fixed context menu's "send email" feature.
+
+Bugs fixed
+- Fix arrow key behavior in paste history and autocomplete windows (bug 407)
+- Various memory leaks fixed.
+- Improved behavior of full-screen tab bar display.
+- Fixed applescript bug with setting window size before adding session.
 
 Alpha 14
 This release has a passel of incremental improvements that make your life a happier place. 
