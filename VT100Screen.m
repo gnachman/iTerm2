@@ -63,20 +63,23 @@ static void translate(screen_char_t *s, int len)
     int i;
 
     for (i = 0; i < len; i++) {
-        s[i].ch = charmap[(int)(s[i].ch)];
+        assert(!s[i].complexChar);
+        s[i].code = charmap[(int)(s[i].code)];
     }
 }
 
-/* pad the source string whenever double width character appears */
-static void padString(NSString *s,
-                      screen_char_t *buf,
-                      int fg,
-                      int bg,
-                      int *len,
-                      NSStringEncoding encoding,
-                      BOOL ambiguousIsDoubleWidth) {
+// Convert a string into an array of screen characters, dealing with surrogate
+// pairs, combining marks, nonspacing marks, and double-width characters.
+void StringToScreenChars(NSString *s,
+                         screen_char_t *buf,
+                         screen_char_t fg,
+                         screen_char_t bg,
+                         int *len,
+                         NSStringEncoding encoding,
+                         BOOL ambiguousIsDoubleWidth,
+                         int* cursorIndex) {
     unichar *sc;
-    int l = *len;
+    int l = [s length];
     int i;
     int j;
 
@@ -88,27 +91,103 @@ static void padString(NSString *s,
     } else {
         sc = staticBuffer;
     }
-    [s getCharacters: sc];
-    for(i = j = 0; i < l; i++, j++) {
-        buf[j].ch = sc[i];
-        buf[j].fg_color = fg;
-        buf[j].bg_color = bg;
-        if (sc[i] > 0xa0 && [NSString isDoubleWidthCharacter:sc[i]
-                                                    encoding:encoding
-                                      ambiguousIsDoubleWidth:ambiguousIsDoubleWidth]) {
+
+    [s getCharacters:sc];
+    int lastInitializedChar = -1;
+    BOOL foundCursor = NO;
+    for (i = j = 0; i < l; i++, j++) {
+        // j may repeat in consecutive iterations of the loop but i increases
+        // monotonically, so initialize complexChar with i instead of j.
+        buf[i].complexChar = NO;
+
+        if (cursorIndex && !foundCursor && *cursorIndex == i) {
+            foundCursor = YES;
+            *cursorIndex = j;
+        }
+        if (j > lastInitializedChar) {
+            buf[j].code = sc[i];
+            buf[j].complexChar = NO;
+
+            buf[j].foregroundColor = fg.foregroundColor;
+            buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
+            buf[j].bold = fg.bold;
+            buf[j].blink = fg.blink;
+            buf[j].underline = fg.underline;
+
+            buf[j].backgroundColor = bg.backgroundColor;
+            buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
+
+            lastInitializedChar = j;
+        }
+
+        if ((sc[i] >= 0xe000 && sc[i] <= 0xf8ff) ||
+            sc[i] >= 0xfffd) {
+            // Translate private-use characters into a replacement char.
+            // Unfortunately, the proper replacement char U+fffd is double-width
+            // (at least for some fonts) which screws up formatting.
+            buf[j].code = '?';
+        } else if (sc[i] > 0xa0 && [NSString isDoubleWidthCharacter:sc[i]
+                                                           encoding:encoding
+                                             ambiguousIsDoubleWidth:ambiguousIsDoubleWidth]) {
+            // This code path is for double-width characters in BMP only.
             j++;
-            buf[j].ch = 0xffff;
-            buf[j].fg_color = fg;
-            buf[j].bg_color = bg;
-        } else if (buf[j].ch == 0xfeff ||
-                   buf[j].ch == 0x200b ||
-                   buf[j].ch == 0x200c ||
-                   buf[j].ch == 0x200d) {
-            // zero width space
+            buf[j].code = DWC_RIGHT;
+            buf[j].complexChar = NO;
+
+            buf[j].foregroundColor = fg.foregroundColor;
+            buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
+            buf[j].bold = fg.bold;
+            buf[j].blink = fg.blink;
+            buf[j].underline = fg.underline;
+
+            buf[j].backgroundColor = bg.backgroundColor;
+            buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
+        } else if (sc[i] == 0xfeff ||
+                   sc[i] == 0x200b ||
+                   sc[i] == 0x200c ||
+                   sc[i] == 0x200d) {
             j--;
+            lastInitializedChar--;
+        } else if (IsCombiningMark(sc[i]) || IsLowSurrogate(sc[i])) {
+            if (j > 0) {
+                j--;
+                lastInitializedChar--;
+                if (buf[j].complexChar) {
+                    // Adding a combining mark to a char that already has one or was
+                    // built by surrogates.
+                    buf[j].code = AppendToComplexChar(buf[j].code, sc[i]);
+                } else {
+                    buf[j].code = BeginComplexChar(buf[j].code, sc[i]);
+                    buf[j].complexChar = YES;
+                }
+                if (IsLowSurrogate(sc[i])) {
+                    NSString* str = ComplexCharToStr(buf[j].code);
+                    if ([NSString isDoubleWidthCharacter:DecodeSurrogatePair([str characterAtIndex:0], [str characterAtIndex:1])
+                                                encoding:encoding
+                                  ambiguousIsDoubleWidth:ambiguousIsDoubleWidth]) {
+                        j++;
+                        buf[j].code = DWC_RIGHT;
+                        buf[j].complexChar = NO;
+
+                        buf[j].foregroundColor = fg.foregroundColor;
+                        buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
+                        buf[j].bold = fg.bold;
+                        buf[j].blink = fg.blink;
+                        buf[j].underline = fg.underline;
+
+                        buf[j].backgroundColor = bg.backgroundColor;
+                        buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
+                    }
+                }
+            }
         }
     }
-    *len=j;
+    *len = j;
+    if (cursorIndex && !foundCursor && *cursorIndex >= i) {
+        // We were asked for the position of the cursor to the right
+        // of the last character.
+        *cursorIndex = j;
+    }
     if (dynamicBuffer) {
         free(dynamicBuffer);
     }
@@ -332,16 +411,17 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         int cont = [linebuffer copyLineToBuffer:buffer width:WIDTH lineNum:theIndex];
         if (cont == EOL_SOFT &&
             theIndex == current_scrollback_lines - 1 &&
-            screen_top[1].ch == 0xffff &&
-            buffer[WIDTH - 1].ch == 0) {
+            screen_top[1].code == DWC_RIGHT &&
+            buffer[WIDTH - 1].code == 0) {
             // The last line in the scrollback buffer is actually a split DWC
             // if the first line in the screen is double-width.
             cont = EOL_DWC;
         }
         if (cont == EOL_DWC) {
-            buffer[WIDTH - 1].ch = DWC_SKIP;
+            buffer[WIDTH - 1].code = DWC_SKIP;
+            buffer[WIDTH - 1].complexChar = NO;
         }
-        buffer[WIDTH].ch = cont;
+        buffer[WIDTH].code = cont;
 
         return buffer;
     }
@@ -354,29 +434,19 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 }
 
 // returns NSString representation of line
-- (NSString *) getLineString: (screen_char_t *) theLine
+- (NSString *)getLineString:(screen_char_t *)theLine
 {
-    unichar *char_buf;
-    NSString *theString;
-    int i;
+    NSMutableString* result = [NSMutableString stringWithCapacity:REAL_WIDTH];
 
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s", __PRETTY_FUNCTION__);
-#endif
-
-    char_buf = malloc(REAL_WIDTH*sizeof(unichar));
-
-    for(i = 0; i < WIDTH; i++)
-        char_buf[i] = theLine[i].ch;
-
-    if (theLine[i].ch) {
-        char_buf[WIDTH]='\n';
-        theString = [NSString stringWithCharacters: char_buf length: REAL_WIDTH];
+    for (int i = 0; i < WIDTH; i++) {
+        [result appendString:ScreenCharToStr(&theLine[i])];
     }
-    else
-        theString = [NSString stringWithCharacters: char_buf length: WIDTH];
 
-    return (theString);
+    if (theLine[WIDTH].code) {
+        [result appendString:@"\n"];
+    }
+
+    return result;
 }
 
 - (void)setCursorX:(int)x Y:(int)y
@@ -455,14 +525,14 @@ static char* FormatCont(int c)
             if (p+x > buffer_lines + HEIGHT*REAL_WIDTH) {
                 line[ox++] = '!';
             }
-            if (p[x].ch) {
-                if (p[x].ch > 0 && p[x].ch < 128) {
-                    line[ox] = p[x].ch;
-                } else if (p[x].ch == 0xffff) {
+            if (p[x].code && !p[x].complexChar) {
+                if (p[x].code > 0 && p[x].code < 128) {
+                    line[ox] = p[x].code;
+                } else if (p[x].code == DWC_RIGHT) {
                     line[ox] = '-';
-                } else if (p[x].ch == TAB_FILLER) {
+                } else if (p[x].code == TAB_FILLER) {
                     line[ox] = ' ';
-                } else if (p[x].ch == DWC_SKIP) {
+                } else if (p[x].code == DWC_SKIP) {
                     line[ox] = '>';
                 } else {
                     line[ox] = '?';
@@ -473,7 +543,7 @@ static char* FormatCont(int c)
         }
         line[x] = 0;
         dirtyline[x] = 0;
-        [result appendFormat:@"%04d @ buffer+%2d lines: %s %s\n", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].ch)];
+        [result appendFormat:@"%04d @ buffer+%2d lines: %s %s\n", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)];
         [result appendFormat:@"%04d @ buffer+%2d dirty: %s\n", y, ((p - buffer_lines) / REAL_WIDTH), dirtyline];
     }
     return result;
@@ -508,8 +578,8 @@ static char* FormatCont(int c)
             if (p+x > buffer_lines + HEIGHT*REAL_WIDTH) {
                 line[ox++] = '!';
             }
-            if (p[x].ch) {
-                line[ox] = p[x].ch;
+            if (p[x].code && !p[x].complexChar) {
+                line[ox] = p[x].code;
             } else {
                 line[ox] = '.';
             }
@@ -521,7 +591,7 @@ static char* FormatCont(int c)
         }
         dirtyline[x] = 0;
         line[x] = 0;
-        DebugLog([NSString stringWithFormat:@"%04d @ buffer+%2d lines: %s %s", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].ch)]);
+        DebugLog([NSString stringWithFormat:@"%04d @ buffer+%2d lines: %s %s", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)]);
         DebugLog([NSString stringWithFormat:@"                 dirty: %s", dirtyline]);
     }
 }
@@ -530,13 +600,13 @@ static char* FormatCont(int c)
 {
     int line_length = 0;
     // Figure out the line length.
-    if (line[WIDTH].ch == EOL_SOFT) {
+    if (line[WIDTH].code == EOL_SOFT) {
         line_length = WIDTH;
-    } else if (line[WIDTH].ch == EOL_DWC) {
+    } else if (line[WIDTH].code == EOL_DWC) {
         line_length = WIDTH - 1;
     } else {
         for (line_length = WIDTH - 1; line_length >= 0; --line_length) {
-            if (line[line_length].ch && line[line_length].ch != DWC_SKIP) {
+            if (line[line_length].code && line[line_length].code != DWC_SKIP) {
                 break;
             }
         }
@@ -555,7 +625,7 @@ static char* FormatCont(int c)
     for(; used_height > cursorY + 1; used_height--) {
         screen_char_t* aLine = [self getLineAtScreenIndex: used_height-1];
         for (i = 0; i < WIDTH; i++)
-            if (aLine[i].ch) {
+            if (aLine[i].code) {
                 break;
             }
         if (i < WIDTH) {
@@ -579,13 +649,13 @@ static char* FormatCont(int c)
             next_line_length = -1;
         }
 
-        int continuation = line[WIDTH].ch;
+        int continuation = line[WIDTH].code;
         if (i == cursorY) {
             [linebuffer setCursor:cursorX];
         } else if ((cursorX == 0) &&
                    (i == cursorY - 1) &&
                    (next_line_length == 0) &&
-                   line[WIDTH].ch != EOL_HARD) {
+                   line[WIDTH].code != EOL_HARD) {
             // This line is continued, the next line is empty, and the cursor is
             // on the first column of the next line. Pull it up.
             [linebuffer setCursor:cursorX + 1];
@@ -680,21 +750,21 @@ static char* FormatCont(int c)
         }
         int cont;
         [linebuffer popAndCopyLastLineInto:dest width:WIDTH includesEndOfLine:&cont];
-        if (cont && dest[WIDTH - 1].ch == 0 && prevLineStartsWithDoubleWidth) {
+        if (cont && dest[WIDTH - 1].code == 0 && prevLineStartsWithDoubleWidth) {
             // If you pop a soft-wrapped line that's a character short and the
             // line below it starts with a DWC, it's safe to conclude that a DWC
             // was wrapped.
-            dest[WIDTH - 1].ch = DWC_SKIP;
+            dest[WIDTH - 1].code = DWC_SKIP;
             cont = EOL_DWC;
         }
-        if (dest[1].ch == 0xffff) {
+        if (dest[1].code == DWC_RIGHT) {
             prevLineStartsWithDoubleWidth = YES;
         } else {
             prevLineStartsWithDoubleWidth = NO;
         }
-        dest[WIDTH].ch = cont;
+        dest[WIDTH].code = cont;
         if (cont == EOL_DWC) {
-            dest[WIDTH - 1].ch = DWC_SKIP;
+            dest[WIDTH - 1].code = DWC_SKIP;
         }
         --dest_y;
         --source_line_num;
@@ -895,7 +965,7 @@ static char* FormatCont(int c)
     case VT100_ASCIISTRING:
         // check if we are in print mode
         if ([self printToAnsi] == YES) {
-            [self printStringToAnsi: token.u.string];
+            [self printStringToAnsi:token.u.string];
         } else {
             // else display string on screen
             [self setString:token.u.string ascii:(token.type == VT100_ASCIISTRING)];
@@ -938,16 +1008,15 @@ static char* FormatCont(int c)
     case VT100CSI_CUU: [self cursorUp:token.u.csi.p[0]]; break;
     case VT100CSI_DA:   [self deviceAttribute:token]; break;
     case VT100CSI_DECALN:
-        for (i = 0; i < HEIGHT; i++)
-        {
-            aLine = [self getLineAtScreenIndex: i];
-            for(j = 0; j < WIDTH; j++)
-            {
-                aLine[j].ch ='E';
-                aLine[j].fg_color = [TERMINAL foregroundColorCodeReal];
-                aLine[j].bg_color = [TERMINAL backgroundColorCodeReal];
+        for (i = 0; i < HEIGHT; i++) {
+            aLine = [self getLineAtScreenIndex:i];
+            for (j = 0; j < WIDTH; j++) {
+                aLine[j].code ='E';
+                aLine[j].complexChar = NO;
+                CopyForegroundColor(&aLine[j], [TERMINAL foregroundColorCodeReal]);
+                CopyBackgroundColor(&aLine[j], [TERMINAL backgroundColorCodeReal]);
             }
-            aLine[WIDTH].ch = EOL_HARD;
+            aLine[WIDTH].code = EOL_HARD;
         }
         DebugLog(@"putToken DECALN");
         [self setDirty];
@@ -1016,12 +1085,12 @@ static char* FormatCont(int c)
 
     case VT100CSI_DECSET:
     case VT100CSI_DECRST:
-        if (token.u.csi.p[0] == 3 && 
+        if (token.u.csi.p[0] == 3 &&
             [TERMINAL allowColumnMode] == YES &&
             ![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue]) {
             // set the column
-            [[SESSION tab] sessionInitiatedResize:SESSION 
-                                            width:([TERMINAL columnMode] ? 132 : 80) 
+            [[SESSION tab] sessionInitiatedResize:SESSION
+                                            width:([TERMINAL columnMode] ? 132 : 80)
                                            height:HEIGHT];
             token.u.csi.p[0]=2; [self eraseInDisplay:token]; //erase the screen
             token.u.csi.p[0]=token.u.csi.p[1]=0; [self setTopBottom:token]; // reset scroll;
@@ -1051,9 +1120,9 @@ static char* FormatCont(int c)
             }
             aLine = [self getLineAtScreenIndex:cursorY];
             for (k = 0; k < j; k++) {
-                aLine[cursorX + k].ch = 0;
-                aLine[cursorX + k].fg_color = [TERMINAL foregroundColorCodeReal];
-                aLine[cursorX + k].bg_color = [TERMINAL backgroundColorCodeReal];
+                aLine[cursorX + k].code = 0;
+                CopyForegroundColor(&aLine[cursorX + k], [TERMINAL foregroundColorCodeReal]);
+                CopyBackgroundColor(&aLine[cursorX + k], [TERMINAL backgroundColorCodeReal]);
             }
             memset(dirty+i,1,j);
             DebugLog(@"putToken ECH");
@@ -1145,7 +1214,7 @@ static char* FormatCont(int c)
         if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] &&
             ![[[SESSION tab] parentWindow] fullScreen])
             // TODO: Only allow this if there is a single session in the tab.
-            [[[SESSION tab] parentWindow] windowSetFrameTopLeftPoint:NSMakePoint(token.u.csi.p[2], 
+            [[[SESSION tab] parentWindow] windowSetFrameTopLeftPoint:NSMakePoint(token.u.csi.p[2],
                                                                                  [[[[SESSION tab] parentWindow] windowScreen] frame].size.height - token.u.csi.p[1])];
         break;
     case XTERMCC_ICONIFY:
@@ -1176,7 +1245,7 @@ static char* FormatCont(int c)
         {
             char buf[64];
             snprintf(buf, sizeof(buf), "\033[%dt", [[[SESSION tab] parentWindow] windowIsMiniaturized] ? 2 : 1);
-            [SHELL writeTask:[NSData dataWithBytes:buf 
+            [SHELL writeTask:[NSData dataWithBytes:buf
                                             length:strlen(buf)]];
         }
         break;
@@ -1241,12 +1310,12 @@ static char* FormatCont(int c)
     case ITERM_GROWL:
         if (GROWL) {
             [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Alert",
-                                                               @"iTerm", 
-                                                               [NSBundle bundleForClass:[self class]], 
+                                                               @"iTerm",
+                                                               [NSBundle bundleForClass:[self class]],
                                                                @"Growl Alerts")
-            withDescription:[NSString stringWithFormat:@"Session %@ #%d: %@", 
-                             [SESSION name], 
-                             [[SESSION tab] realObjectCount], 
+            withDescription:[NSString stringWithFormat:@"Session %@ #%d: %@",
+                             [SESSION name],
+                             [[SESSION tab] realObjectCount],
                              token.u.string]
             andNotification:@"Customized Message"];
         }
@@ -1348,8 +1417,40 @@ static char* FormatCont(int c)
 
 static void DumpBuf(screen_char_t* p, int n) {
     for (int i = 0; i < n; ++i) {
-        NSLog(@"%3d: \"%@\" (0x%04x)", i, [NSString stringWithCharacters:&p[i].ch length:1], (int)p[i].ch);
+        NSLog(@"%3d: \"%@\" (0x%04x)", i, ScreenCharToStr(&p[i]), (int)p[i].code);
     }
+}
+
+// Add a combining char to the cell at the cursor position if possible. Returns
+// YES if it is able to and NO if there is no base character to combine with.
+- (BOOL)addCombiningCharAtCursor:(unichar)combiningChar
+{
+    // set cx, cy to the char before the cursor.
+    int cx = cursorX;
+    int cy = cursorY;
+    if (cx == 0) {
+        cx = WIDTH;
+        --cy;
+    }
+    --cx;
+    if (cy < 0) {
+        // can't affect characters above screen so have it stand alone.
+        return NO;
+    }
+    screen_char_t* theLine = [self getLineAtScreenIndex:cy];
+    if (theLine[cx].code == 0) {
+        // Mark is preceeded by an unset char, so make it stand alone.
+        return NO;
+    }
+    if (theLine[cx].complexChar) {
+        theLine[cx].code = AppendToComplexChar(theLine[cx].code,
+                                               combiningChar);
+    } else {
+        theLine[cx].code = BeginComplexChar(theLine[cx].code,
+                                            combiningChar);
+        theLine[cx].complexChar = YES;
+    }
+    return YES;
 }
 
 // ascii: True if string contains only ascii characters.
@@ -1397,8 +1498,8 @@ static void DumpBuf(screen_char_t* p, int n) {
         } else {
             sc = staticTemp;
         }
-        int fg = [TERMINAL foregroundColorCode];
-        int bg = [TERMINAL backgroundColorCode];
+        screen_char_t fg = [TERMINAL foregroundColorCode];
+        screen_char_t bg = [TERMINAL backgroundColorCode];
 
         if ([string length] > kStaticBufferElements) {
             buffer = dynamicBuffer = (screen_char_t *) malloc([string length] * sizeof(screen_char_t));
@@ -1413,9 +1514,10 @@ static void DumpBuf(screen_char_t* p, int n) {
 
         [string getCharacters:sc];
         for (int i = 0; i < len; i++) {
-            buffer[i].ch = sc[i];
-            buffer[i].fg_color = fg;
-            buffer[i].bg_color = bg;
+            buffer[i].code = sc[i];
+            buffer[i].complexChar = NO;
+            CopyForegroundColor(&buffer[i], fg);
+            CopyBackgroundColor(&buffer[i], bg);
         }
 
         // If a graphics character set was selected then translate buffer
@@ -1440,14 +1542,47 @@ static void DumpBuf(screen_char_t* p, int n) {
             buffer = staticBuffer;
         }
 
-        // Add 0xffff after each double-byte character.
+        // Pick off leading combining marks and low surrogates and modify the
+        // character at the cursor position with them.
+        unichar firstChar = [string characterAtIndex:0];
+        while ([string length] > 0 &&
+               (IsCombiningMark(firstChar) || IsLowSurrogate(firstChar))) {
+            if (![self addCombiningCharAtCursor:firstChar]) {
+                // Combining mark will need to stand alone rather than combine
+                // because nothing precedes it.
+                if (IsCombiningMark(firstChar)) {
+                    // Prepend a space to it so the combining mark has something
+                    // to combine with.
+                    string = [NSString stringWithFormat:@" %@", string];
+                } else {
+                    // Got a low surrogate but can't find the matching high
+                    // surrogate. Turn the low surrogate into a replacement
+                    // char. This should never happen because decode_string
+                    // ought to detect the broken unicode and substitute a
+                    // replacement char.
+                    string = [NSString stringWithFormat:@"%@%@",
+                              ReplacementString(),
+                              [string substringFromIndex:1]];
+                }
+                len = [string length];
+                break;
+            }
+            string = [string substringFromIndex:1];
+            if ([string length] > 0) {
+                firstChar = [string characterAtIndex:0];
+            }
+        }
+
+        // Add DWC_RIGHT after each double-byte character.
         assert(TERMINAL);
-        padString(string, buffer,
-                  [TERMINAL foregroundColorCode],
-                  [TERMINAL backgroundColorCode],
-                  &len,
-                  [TERMINAL encoding],
-                  [SESSION doubleWidth]);
+        StringToScreenChars(string,
+                            buffer,
+                            [TERMINAL foregroundColorCode],
+                            [TERMINAL backgroundColorCode],
+                            &len,
+                            [TERMINAL encoding],
+                            [SESSION doubleWidth],
+                            NULL);
     }
 
     if (len < 1) {
@@ -1466,15 +1601,15 @@ static void DumpBuf(screen_char_t* p, int n) {
 #ifdef VERBOSE_STRING
         NSLog(@"Begin inserting line. cursorX=%d, WIDTH=%d", cursorX, WIDTH);
 #endif
-        NSAssert(buffer[idx].ch != 0xffff, @"DWC cut off");
+        NSAssert(buffer[idx].code != DWC_RIGHT, @"DWC cut off");
 
-        if (buffer[idx].ch == DWC_SKIP) {
+        if (buffer[idx].code == DWC_SKIP) {
             // This is an invalid unicode character that iTerm2 has appropriated
             // for internal use. Change it to something invalid but safe.
-            buffer[idx].ch++;
+            buffer[idx].code = BOGUS_CHAR;
         }
         int widthOffset;
-        if (idx + 1 < len && buffer[idx + 1].ch == 0xffff) {
+        if (idx + 1 < len && buffer[idx + 1].code == DWC_RIGHT) {
             // If we're about to insert a double width character then reduce the
             // line width for the purposes of testing if the cursor is in the
             // rightmost position.
@@ -1490,10 +1625,10 @@ static void DumpBuf(screen_char_t* p, int n) {
                 // Set the continuation marker
                 screen_char_t* prevLine = [self getLineAtScreenIndex:cursorY];
                 BOOL splitDwc = (cursorX == WIDTH - 1);
-                prevLine[WIDTH].ch = (splitDwc ? EOL_DWC : EOL_SOFT);
+                prevLine[WIDTH].code = (splitDwc ? EOL_DWC : EOL_SOFT);
                 if (splitDwc) {
-                    prevLine[WIDTH].ch = EOL_DWC;
-                    prevLine[WIDTH-1].ch = DWC_SKIP;
+                    prevLine[WIDTH].code = EOL_DWC;
+                    prevLine[WIDTH-1].code = DWC_SKIP;
                 }
                 [self setCursorX:0 Y:cursorY];
                 // Advance to the next line
@@ -1508,12 +1643,12 @@ static void DumpBuf(screen_char_t* p, int n) {
                 // and insert the last character there.
 
                 // Clear the continuation marker
-                [self getLineAtScreenIndex:cursorY][WIDTH].ch = EOL_HARD;
+                [self getLineAtScreenIndex:cursorY][WIDTH].code = EOL_HARD;
                 // Cause the loop to end after this character.
                 int ncx = WIDTH - 1;
 
                 idx = len-1;
-                if (buffer[idx].ch == 0xffff && idx > startIdx) {
+                if (buffer[idx].code == DWC_RIGHT && idx > startIdx) {
                     // The last character to insert is double width. Back up one
                     // byte in buffer and move the cursor left one position.
                     idx--;
@@ -1524,10 +1659,11 @@ static void DumpBuf(screen_char_t* p, int n) {
                 }
                 [self setCursorX:ncx Y:cursorY];
                 screen_char_t* line = [self getLineAtScreenIndex:cursorY];
-                if (line[cursorX].ch == 0xffff) {
+                if (line[cursorX].code == DWC_RIGHT) {
                     // This would cause us to overwrite the second part of a
                     // double-width character. Convert it to a space.
-                    line[cursorX - 1].ch = ' ';
+                    line[cursorX - 1].code = ' ';
+                    line[cursorX - 1].complexChar = NO;
                 }
 
 #ifdef VERBOSE_STRING
@@ -1555,7 +1691,7 @@ static void DumpBuf(screen_char_t* p, int n) {
             // at the end of the line.
             int potentialCharsToInsert = spaceRemainingInLine;
             if (idx + potentialCharsToInsert < len &&
-                buffer[idx + potentialCharsToInsert].ch == 0xffff) {
+                buffer[idx + potentialCharsToInsert].code == DWC_RIGHT) {
                 // If we filled the line all the way out to WIDTH a DWC would be
                 // split. Wrap the DWC around to the next line.
 #ifdef VERBOSE_STRING
@@ -1603,18 +1739,21 @@ static void DumpBuf(screen_char_t* p, int n) {
                 screen_char_t* src = aLine + cursorX;
                 screen_char_t* dst = aLine + cursorX + charsToInsert;
                 int elements = WIDTH - cursorX - charsToInsert;
-                if (cursorX > 0 && src[0].ch == 0xffff) {
+                if (cursorX > 0 && src[0].code == DWC_RIGHT) {
                     // The insert occurred in the middle of a DWC.
-                    src[-1].ch = ' ';
-                    src[0].ch = ' ';
+                    src[-1].code = ' ';
+                    src[-1].complexChar = NO;
+                    src[0].code = ' ';
+                    src[0].complexChar = NO;
                 }
-                if (src[elements].ch == 0xffff) {
+                if (src[elements].code == DWC_RIGHT) {
                     // Moving a DWC on top of its right half. Erase the DWC.
-                    src[elements - 1].ch = ' ';
-                } else if (src[elements].ch == DWC_SKIP &&
-                           aLine[WIDTH].ch == EOL_DWC) {
+                    src[elements - 1].code = ' ';
+                    src[elements - 1].complexChar = NO;
+                } else if (src[elements].code == DWC_SKIP &&
+                           aLine[WIDTH].code == EOL_DWC) {
                     // Stomping on a DWC_SKIP. Join the lines normally.
-                    aLine[WIDTH].ch = EOL_SOFT;
+                    aLine[WIDTH].code = EOL_SOFT;
                 }
                 memmove(dst, src, elements * sizeof(screen_char_t));
                 memset(dirty + screenIdx + cursorX,
@@ -1625,13 +1764,15 @@ static void DumpBuf(screen_char_t* p, int n) {
 
         // Overwriting the second-half of a double-width character so turn the
         // DWC into a space.
-        if (aLine[cursorX].ch == 0xffff) {
+        if (aLine[cursorX].code == DWC_RIGHT) {
 #ifdef VERBOSE_STRING
             NSLog(@"Wiping out the right-half DWC at the cursor before writing to screen");
 #endif
             NSAssert(cursorX > 0, @"DWC split");  // there should never be the second half of a DWC at x=0
-            aLine[cursorX].ch = ' ';
-            aLine[cursorX-1].ch = ' ';
+            aLine[cursorX].code = ' ';
+            aLine[cursorX].complexChar = NO;
+            aLine[cursorX-1].code = ' ';
+            aLine[cursorX-1].complexChar = NO;
             dirty[screenIdx + cursorX] = 1;
             dirty[screenIdx + cursorX - 1] = 1;
         }
@@ -1644,19 +1785,21 @@ static void DumpBuf(screen_char_t* p, int n) {
                1,
                charsToInsert);
         if (wrapDwc) {
-            aLine[cursorX + charsToInsert].ch = DWC_SKIP;
+            aLine[cursorX + charsToInsert].code = DWC_SKIP;
         }
         [self setCursorX:newx Y:cursorY];
         idx += charsToInsert;
 
         // Overwrote some stuff that was already on the screen leaving behind the
         // second half of a DWC
-        if (cursorX < WIDTH-1 && aLine[cursorX].ch == 0xffff) {
-            aLine[cursorX].ch = ' ';
+        if (cursorX < WIDTH-1 && aLine[cursorX].code == DWC_RIGHT) {
+            aLine[cursorX].code = ' ';
+            aLine[cursorX].complexChar = NO;
         }
 
-        // The next char in the buffer shouldn't be 0xffff because we wouldn't have inserted its first half due to a check at the top.
-        NSAssert(!(idx < len && buffer[idx].ch == 0xffff), @"Truncated DWC in buffer after insert");
+        // The next char in the buffer shouldn't be DWC_RIGHT because we
+        // wouldn't have inserted its first half due to a check at the top.
+        assert(!(idx < len && buffer[idx].code == DWC_RIGHT));
 
         // ANSI terminals will go to a new line after displaying a character at
         // the rightmost column.
@@ -1664,7 +1807,7 @@ static void DumpBuf(screen_char_t* p, int n) {
             [[TERMINAL termtype] rangeOfString:@"ANSI" options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location != NSNotFound) {
             if ([TERMINAL wraparoundMode]) {
                 //set the wrapping flag
-                aLine[WIDTH].ch = ((effective_width == WIDTH) ? EOL_SOFT : EOL_DWC);
+                aLine[WIDTH].code = ((effective_width == WIDTH) ? EOL_SOFT : EOL_DWC);
                 [self setCursorX:0 Y:cursorY];
                 [self setNewLine];
             } else {
@@ -1779,9 +1922,9 @@ static void DumpBuf(screen_char_t* p, int n) {
                     (WIDTH - cursorX - n) * sizeof(screen_char_t));
         }
         for (i = 0; i < n; i++) {
-            aLine[WIDTH-n+i].ch = 0;
-            aLine[WIDTH-n+i].fg_color = [TERMINAL foregroundColorCodeReal];
-            aLine[WIDTH-n+i].bg_color = [TERMINAL backgroundColorCodeReal];
+            aLine[WIDTH-n+i].code = 0;
+            CopyForegroundColor(&aLine[WIDTH-n+i], [TERMINAL foregroundColorCodeReal]);
+            CopyBackgroundColor(&aLine[WIDTH-n+i], [TERMINAL backgroundColorCodeReal]);
         }
         DebugLog(@"deleteCharacters");
 
@@ -1832,7 +1975,7 @@ static void DumpBuf(screen_char_t* p, int n) {
 
     // Advance cursor to next tab stop. Count the number of positions advanced
     // and record whether they were all nulls.
-    if (aLine[cursorX].ch != 0) {
+    if (aLine[cursorX].code != 0) {
         allNulls = NO;
     }
 
@@ -1842,8 +1985,8 @@ static void DumpBuf(screen_char_t* p, int n) {
     for (; ; [self setCursorX:cursorX + 1 Y:cursorY], ++positions) {
         if (cursorX == WIDTH) {
             // Wrap around to the next line.
-            if (aLine[cursorX].ch == EOL_HARD) {
-                aLine[cursorX].ch = EOL_SOFT;
+            if (aLine[cursorX].code == EOL_HARD) {
+                aLine[cursorX].code = EOL_SOFT;
             }
             [self setNewLine];
             [self setCursorX:0 Y:cursorY];
@@ -1852,7 +1995,7 @@ static void DumpBuf(screen_char_t* p, int n) {
         if (tabStop[cursorX]) {
             break;
         }
-        if (aLine[cursorX].ch != 0) {
+        if (aLine[cursorX].code != 0) {
             allNulls = NO;
         }
     }
@@ -1870,7 +2013,7 @@ static void DumpBuf(screen_char_t* p, int n) {
         unichar replacement = '\t';
         while (positions--) {
             aLine = [self getLineAtScreenIndex:y];
-            aLine[x].ch = replacement;
+            aLine[x].code = replacement;
             replacement = TAB_FILLER;
             --x;
             if (x < 0) {
@@ -1897,7 +2040,7 @@ static void DumpBuf(screen_char_t* p, int n) {
     // make the current line the first line and clear everything else
     for (i = cursorY - 1; i >= 0; i--) {
         aLine = [self getLineAtScreenIndex:i];
-        if (aLine[WIDTH].ch == EOL_HARD) {
+        if (aLine[WIDTH].code == EOL_HARD) {
             break;
         }
     }
@@ -1924,14 +2067,14 @@ static void DumpBuf(screen_char_t* p, int n) {
 
 }
 
-- (int) _lastNonEmptyLine
+- (int)_lastNonEmptyLine
 {
     int y;
     int x;
     for (y = HEIGHT - 1; y >= 0; --y) {
         screen_char_t* aLine = [self getLineAtScreenIndex: y];
         for (x = 0; x < WIDTH; ++x) {
-            if (aLine[x].ch) {
+            if (aLine[x].code) {
                 return y;
             }
         }
@@ -2001,18 +2144,19 @@ static void DumpBuf(screen_char_t* p, int n) {
     idx2=y2*REAL_WIDTH+x2;
 
     // clear the contents between idx1 and idx2
-    for(i = idx1, aScreenChar = screen_top + idx1; i < idx2; i++, aScreenChar++)
-    {
+    for(i = idx1, aScreenChar = screen_top + idx1; i < idx2; i++, aScreenChar++) {
         if (aScreenChar >= (buffer_lines + HEIGHT*REAL_WIDTH)) {
             aScreenChar -= HEIGHT * REAL_WIDTH; // wrap around to top of buffer
-            NSAssert(aScreenChar < (buffer_lines + HEIGHT*REAL_WIDTH), @"Tried to go way past the end of the screen");
+            assert(aScreenChar < (buffer_lines + HEIGHT*REAL_WIDTH));  // Tried to go way past the end of the screen
         }
-        aScreenChar->ch = 0;
-        aScreenChar->fg_color = [TERMINAL foregroundColorCodeReal];
-        aScreenChar->bg_color = [TERMINAL backgroundColorCodeReal];
+        aScreenChar->code = 0;
+        CopyForegroundColor(aScreenChar, [TERMINAL foregroundColorCodeReal]);
+        CopyBackgroundColor(aScreenChar, [TERMINAL backgroundColorCodeReal]);
     }
 
-    memset(dirty+yStart*WIDTH+x1,1,((y2-yStart)*WIDTH+(x2-x1))*sizeof(char));
+    memset(dirty + yStart * WIDTH + x1,
+           1,
+           ((y2 - yStart) * WIDTH + (x2 - x1)) * sizeof(char));
     DebugLog(@"eraseInDisplay");
 }
 
@@ -2021,53 +2165,34 @@ static void DumpBuf(screen_char_t* p, int n) {
     screen_char_t *aLine;
     int i;
     int idx, x1 ,x2;
-    int fgCode, bgCode;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen eraseInLine:(param=%d); X = %d; Y = %d]",
-          __FILE__, __LINE__, token.u.csi.p[0], cursorX, cursorY);
-#endif
-
+    screen_char_t fgCode;
+    screen_char_t bgCode;
 
     x1 = x2 = 0;
     switch (token.u.csi.p[0]) {
-    case 1:
-        x1 = 0;
-        x2 = cursorX < WIDTH ? cursorX + 1 : WIDTH;
-        break;
-    case 2:
-        x1 = 0;
-        x2 = WIDTH;
-        break;
-    case 0:
-        x1 = cursorX;
-        x2 = WIDTH;
-        break;
+        case 1:
+            x1 = 0;
+            x2 = cursorX < WIDTH ? cursorX + 1 : WIDTH;
+            break;
+        case 2:
+            x1 = 0;
+            x2 = WIDTH;
+            break;
+        case 0:
+            x1 = cursorX;
+            x2 = WIDTH;
+            break;
     }
     aLine = [self getLineAtScreenIndex:cursorY];
 
-    // I'm commenting out the following code. I'm not sure about OpenVMS, but this code produces wrong result
-    // when I use vttest program for testing the color features. --fabian
+    fgCode = [TERMINAL foregroundColorCodeReal];
+    bgCode = [TERMINAL backgroundColorCodeReal];
 
-    // if we erasing entire lines, set to default foreground and background colors. Some systems (like OpenVMS)
-    // do not send explicit video information
-    //if(x1 == 0 && x2 == WIDTH)
-    //{
-    //    fgCode = DEFAULT_FG_COLOR_CODE;
-    //    bgCode = DEFAULT_BG_COLOR_CODE;
-    //}
-    //else
-    //{
-        fgCode = [TERMINAL foregroundColorCodeReal];
-        bgCode = [TERMINAL backgroundColorCodeReal];
-    //}
-
-
-    for(i = x1; i < x2; i++)
-    {
-        aLine[i].ch = 0;
-        aLine[i].fg_color = fgCode;
-        aLine[i].bg_color = bgCode;
+    for (i = x1; i < x2; i++) {
+        aLine[i].code = 0;
+        aLine[i].complexChar = NO;
+        CopyForegroundColor(&aLine[i], fgCode);
+        CopyBackgroundColor(&aLine[i], bgCode);
     }
 
     idx = cursorY * WIDTH + x1;
@@ -2415,9 +2540,10 @@ static void DumpBuf(screen_char_t* p, int n) {
             (WIDTH - cursorX - n) * sizeof(screen_char_t));
 
     for (i = 0; i < n; i++) {
-        aLine[cursorX + i].ch = 0;
-        aLine[cursorX + i].fg_color = [TERMINAL foregroundColorCode];
-        aLine[cursorX + i].bg_color = [TERMINAL backgroundColorCode];
+        aLine[cursorX + i].code = 0;
+        aLine[cursorX + i].complexChar = NO;
+        CopyForegroundColor(&aLine[cursorX + i], [TERMINAL foregroundColorCode]);
+        CopyBackgroundColor(&aLine[cursorX + i], [TERMINAL backgroundColorCode]);
     }
 
     // everything from cursorX to end of line is dirty
@@ -2698,7 +2824,7 @@ static void DumpBuf(screen_char_t* p, int n) {
     [self setPrintToAnsi: NO];
 }
 
-- (BOOL) isDoubleWidthCharacter:(unichar) c
+- (BOOL)isDoubleWidthCharacter:(unichar)c
 {
     return [NSString isDoubleWidthCharacter:c
                                    encoding:[TERMINAL encoding]
@@ -2773,7 +2899,7 @@ static void DumpBuf(screen_char_t* p, int n) {
                           atStartY:(int*)startY
                             atEndX:(int*)endX
                             atEndY:(int*)endY
-                             found:(BOOL*)found 
+                             found:(BOOL*)found
                          inContext:(FindContext*)context
 {
     // Append the screen contents to the scrollback buffer so they are included in the search.
@@ -2927,14 +3053,17 @@ static void DumpBuf(screen_char_t* p, int n) {
             if (WIDTH > info.width) {
                 // Display wider than history
                 memset(lineOut + widthToCopy, 0, (WIDTH - widthToCopy) * sizeof(screen_char_t));
-                lineOut[WIDTH].ch = 0;
+                lineOut[WIDTH].code = 0;
+                lineOut[WIDTH].complexChar = NO;
             } else {
                 // History too wide for screen
-                if (lineIn[widthToCopy].ch == 0xffff) {
-                    lineOut[widthToCopy - 1].ch = 0;
+                if (lineIn[widthToCopy].code == DWC_RIGHT) {
+                    lineOut[widthToCopy - 1].code = 0;
+                    lineOut[widthToCopy - 1].complexChar = NO;
                 }
-                if (lineOut[widthToCopy - 1].ch == TAB_FILLER) {
-                    lineOut[widthToCopy - 1].ch = '\t';
+                if (lineOut[widthToCopy - 1].code == TAB_FILLER) {
+                    lineOut[widthToCopy - 1].code = '\t';
+                    lineOut[widthToCopy - 1].complexChar = NO;
                 }
             }
         }
@@ -2995,10 +3124,10 @@ static void DumpBuf(screen_char_t* p, int n) {
 - (screen_char_t*)_getDefaultLineWithWidth:(int)width
 {
     // check if we have to generate a new line
-    if(default_line && default_line_width >= width &&
-        default_fg_code == [TERMINAL foregroundColorCodeReal] &&
-        default_bg_code == [TERMINAL backgroundColorCodeReal])
-    {
+    if (default_line &&
+        default_line_width >= width &&
+        ForegroundColorsEqual(default_fg_code, [TERMINAL foregroundColorCodeReal]) &&
+        BackgroundColorsEqual(default_bg_code, [TERMINAL backgroundColorCodeReal])) {
         return default_line;
     }
 
@@ -3006,43 +3135,44 @@ static void DumpBuf(screen_char_t* p, int n) {
     default_bg_code = [TERMINAL backgroundColorCodeReal];
     default_line_width = width;
 
-    if(default_line)
+    if (default_line) {
         free(default_line);
+    }
     default_line = (screen_char_t*)malloc((width+1)*sizeof(screen_char_t));
 
-    for(int i = 0; i < width; i++) {
-        default_line[i].ch = 0;
-        default_line[i].fg_color = default_fg_code;
-        default_line[i].bg_color = default_bg_code;
+    for (int i = 0; i < width; i++) {
+        default_line[i].code = 0;
+        default_line[i].complexChar = NO;
+        CopyForegroundColor(&default_line[i], default_fg_code);
+        CopyBackgroundColor(&default_line[i], default_bg_code);
     }
-    //Not wrapped by default
-    default_line[width].ch = EOL_HARD;
-    default_line[width].bg_color = 0;
-    default_line[width].fg_color = 0;
+
+    // Not wrapped by default
+    default_line[width].code = EOL_HARD;
 
     return default_line;
 }
 
 
 // adds a line to scrollback area. Returns YES if oldest line is lost, NO otherwise
-- (int) _addLineToScrollback
+- (int)_addLineToScrollback
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s", __PRETTY_FUNCTION__);
 #endif
 
     int len = WIDTH;
-    if (screen_top[WIDTH].ch == EOL_HARD) {
+    if (screen_top[WIDTH].code == EOL_HARD) {
         // The line is not continued. Figure out its length by finding the last nonnull char.
-        while (len > 0 && (screen_top[len - 1].ch == 0)) {
-            NSAssert(screen_top[len - 1].ch != DWC_SKIP, @"Impossible to have a dwc skip here");
+        while (len > 0 && (screen_top[len - 1].code == 0)) {
+            assert(screen_top[len - 1].code != DWC_SKIP); // Impossible to have a dwc skip here.
             --len;
         }
     }
-    if (screen_top[WIDTH].ch == EOL_DWC && len == WIDTH) {
+    if (screen_top[WIDTH].code == EOL_DWC && len == WIDTH) {
         --len;
     }
-    [linebuffer appendLine:screen_top length:len partial:(screen_top[WIDTH].ch != EOL_HARD) width:WIDTH];
+    [linebuffer appendLine:screen_top length:len partial:(screen_top[WIDTH].code != EOL_HARD) width:WIDTH];
     int dropped = [linebuffer dropExcessLinesWithWidth: WIDTH];
     current_scrollback_lines = [linebuffer numLinesWithWidth: WIDTH];
 

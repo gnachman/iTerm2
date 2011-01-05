@@ -1231,17 +1231,18 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
         colorTable[0][i] = [ITAddressBookMgr decodeColor:[aDict objectForKey:[NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i]]];
         colorTable[1][i] = [ITAddressBookMgr decodeColor:[aDict objectForKey:[NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i + 8]]];
     }
-    for(i=0;i<8;i++) {
+    for(i = 0; i < 8; i++) {
         [self setColorTable:i color:colorTable[0][i]];
         [self setColorTable:i+8 color:colorTable[1][i]];
     }
-    for (i=0;i<216;++i) {
-        [self setColorTable:i+16 color:[NSColor colorWithCalibratedRed:(i/36) ? ((i/36)*40+55)/256.0:0
-                                                  green:(i%36)/6 ? (((i%36)/6)*40+55)/256.0:0
-                                                    blue:(i%6) ?((i%6)*40+55)/256.0:0
-                                                  alpha:1]];
+    for (i = 0; i < 216; i++) {
+        [self setColorTable:i+16 
+                      color:[NSColor colorWithCalibratedRed:(i/36) ? ((i/36)*40+55)/256.0 : 0
+                                                      green:(i%36)/6 ? (((i%36)/6)*40+55)/256.0:0
+                                                       blue:(i%6) ?((i%6)*40+55)/256.0:0
+                                                      alpha:1]];
     }
-    for (i=0;i<24;++i) {
+    for (i = 0; i < 24; i++) {
         [self setColorTable:i+232 color:[NSColor colorWithCalibratedWhite:(i*10+8)/256.0 alpha:1]];
     }
 

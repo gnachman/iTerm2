@@ -38,7 +38,6 @@
 #define DEBUG_ALLOC 0
 #define LOG_UNKNOWN 0
 #define STANDARD_STREAM_SIZE 100000
-#define UNKNOWN ('#')
 
 @implementation VT100Terminal
 
@@ -795,8 +794,7 @@ static VT100TCC decode_other(unsigned char *datap,
         case '#':
             if (c2 < 0) {
                 result.type = VT100_WAIT;
-            }
-            else {
+            } else {
                 switch (c2) {
                     case '8': result.type=VT100CSI_DECALN; break;
                     default:
@@ -827,8 +825,7 @@ static VT100TCC decode_other(unsigned char *datap,
         case '(':
             if (c2 < 0) {
                 result.type = VT100_WAIT;
-            }
-            else {
+            } else {
                 result.type = VT100CSI_SCS0;
                 result.u.code = c2;
                 *rmlen = 3;
@@ -837,8 +834,7 @@ static VT100TCC decode_other(unsigned char *datap,
         case ')':
             if (c2 < 0) {
                 result.type = VT100_WAIT;
-            }
-            else {
+            } else {
                 result.type = VT100CSI_SCS1;
                 result.u.code=c2;
                 *rmlen = 3;
@@ -847,8 +843,7 @@ static VT100TCC decode_other(unsigned char *datap,
         case '*':
             if (c2 < 0) {
                 result.type = VT100_WAIT;
-            }
-            else {
+            } else {
                 result.type = VT100CSI_SCS2;
                 result.u.code=c2;
                 *rmlen = 3;
@@ -857,8 +852,7 @@ static VT100TCC decode_other(unsigned char *datap,
         case '+':
             if (c2 < 0) {
                 result.type = VT100_WAIT;
-            }
-            else {
+            } else {
                 result.type = VT100CSI_SCS3;
                 result.u.code=c2;
                 *rmlen = 3;
@@ -907,8 +901,7 @@ static VT100TCC decode_other(unsigned char *datap,
         case ' ':
             if (c2<0) {
                 result.type = VT100_WAIT;
-            }
-            else {
+            } else {
                 switch (c2) {
                     case 'L':
                     case 'M':
@@ -1122,7 +1115,7 @@ static VT100TCC decode_euccn(unsigned char *datap,
                 len -= 2;
             }
             else {
-                *p=UNKNOWN;
+                *p = ONECHAR_UNKNOWN;
                 p++;
                 len--;
             }
@@ -1159,7 +1152,7 @@ static VT100TCC decode_big5(unsigned char *datap,
                 len -= 2;
             }
             else {
-                *p=UNKNOWN;
+                *p = ONECHAR_UNKNOWN;
                 p++;
                 len--;
             }
@@ -1341,6 +1334,25 @@ static VT100TCC decode_ascii_string(unsigned char *datap,
     return result;
 }
 
+// The datap buffer must be two bytes larger than *lenPtr.
+// Returns a string or nil if the array is not well formed UTF-8.
+static NSString* SetReplacementCharInArray(unsigned char* datap, int* lenPtr, int badIndex)
+{
+    // Example: "q?x" with badIndex==1.
+    // 01234
+    // q?x
+    memmove(datap + badIndex + 3, datap + badIndex + 1, *lenPtr - badIndex - 1);
+    // 01234
+    // q?  x
+    const char kUtf8Replacement[] = { 0xEF, 0xBF, 0xBD };
+    memmove(datap + badIndex, kUtf8Replacement, 3);
+    // q###x
+    *lenPtr += 2;
+    return [[[NSString alloc] initWithBytes:datap
+                                     length:*lenPtr
+                                   encoding:NSUTF8StringEncoding] autorelease];
+}
+
 static VT100TCC decode_string(unsigned char *datap,
                               size_t datalen,
                               size_t *rmlen,
@@ -1383,8 +1395,8 @@ static VT100TCC decode_string(unsigned char *datap,
 
     if (result.type == VT100_INVALID_SEQUENCE) {
         // Output only one replacement symbol, even if rmlen is higher.
-        datap[0] = UNKNOWN;
-        result.u.string = [[[NSString alloc] initWithBytes:datap length:1 encoding:encoding] autorelease];
+        datap[0] = ONECHAR_UNKNOWN;
+        result.u.string = ReplacementString();
         result.type = VT100_STRING;
     } else if (result.type != VT100_WAIT) {
         /*data = [NSData dataWithBytes:datap length:*rmlen];
@@ -1398,17 +1410,21 @@ static VT100TCC decode_string(unsigned char *datap,
                                        encoding:encoding]
             autorelease];
 
-        if (result.u.string==nil) {
+        if (result.u.string == nil) {
             int i;
-            for(i=*rmlen-1;i>=0&&!result.u.string;i--) {
-                datap[i]=UNKNOWN;
-                result.u.string = [[[NSString alloc] initWithBytes:datap length:*rmlen encoding:encoding] autorelease];
+            if (encoding == NSUTF8StringEncoding) {
+                unsigned char temp[*rmlen * 3];
+                memcpy(temp, datap, *rmlen);
+                int length = *rmlen;
+                for (i = *rmlen - 1; i >= 0 && !result.u.string; i--) {
+                    result.u.string = SetReplacementCharInArray(temp, &length, i);
+                }
+            } else {
+                for (i = *rmlen - 1; i >= 0 && !result.u.string; i--) {
+                    datap[i] = ONECHAR_UNKNOWN;
+                    result.u.string = [[[NSString alloc] initWithBytes:datap length:*rmlen encoding:encoding] autorelease];
+                }
             }
-            //NSLog(@"Null(%d bytes)",*rmlen);
-            /*
-            *rmlen = 0;
-            result.type = VT100_UNKNOWNCHAR;
-            result.u.code = datap[0]; */
         }
     }
     return result;
@@ -1453,12 +1469,16 @@ static VT100TCC decode_string(unsigned char *datap,
     INSERT_MODE = NO;
     saveCHARSET=CHARSET = NO;
     XON = YES;
-    bold=blink=reversed=under=0;
-    saveBold=saveBlink=saveReversed=saveUnder = 0;
-    FG_COLORCODE = DEFAULT_FG_COLOR_CODE;
-    BG_COLORCODE = DEFAULT_BG_COLOR_CODE;
-    saveForeground = DEFAULT_FG_COLOR_CODE;
-    saveBackground = DEFAULT_BG_COLOR_CODE;
+    bold = blink = reversed = under = NO;
+    saveBold = saveBlink = saveReversed = saveUnder = NO;
+    FG_COLORCODE = ALTSEM_FG_DEFAULT;
+    alternateForegroundSemantics = YES;
+    BG_COLORCODE = ALTSEM_BG_DEFAULT;
+    alternateBackgroundSemantics = YES;
+    saveForeground = FG_COLORCODE;
+    saveAltForeground = alternateForegroundSemantics;
+    saveBackground = BG_COLORCODE;
+    saveAltBackground = alternateBackgroundSemantics;
     MOUSE_MODE = MOUSE_REPORTING_NONE;
 
     TRACE = NO;
@@ -1551,13 +1571,15 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)saveCursorAttributes
 {
-    saveBold=bold;
-    saveUnder=under;
-    saveBlink=blink;
-    saveReversed=reversed;
-    saveCHARSET=CHARSET;
-    saveForeground=FG_COLORCODE;
-    saveBackground=BG_COLORCODE;
+    saveBold = bold;
+    saveUnder = under;
+    saveBlink = blink;
+    saveReversed = reversed;
+    saveCHARSET = CHARSET;
+    saveForeground = FG_COLORCODE;
+    saveAltForeground = alternateForegroundSemantics;
+    saveBackground = BG_COLORCODE;
+    saveAltBackground = alternateBackgroundSemantics;
 }
 
 - (void)restoreCursorAttributes
@@ -1568,7 +1590,9 @@ static VT100TCC decode_string(unsigned char *datap,
     reversed=saveReversed;
     CHARSET=saveCHARSET;
     FG_COLORCODE = saveForeground;
+    alternateForegroundSemantics = saveAltForeground;
     BG_COLORCODE = saveBackground;
+    alternateBackgroundSemantics = saveAltBackground;
 }
 
 - (void)reset
@@ -1586,10 +1610,12 @@ static VT100TCC decode_string(unsigned char *datap,
     INSERT_MODE = NO;
     saveCHARSET=CHARSET = NO;
     XON = YES;
-    bold=blink=reversed=under=0;
-    saveBold=saveBlink=saveReversed=saveUnder = 0;
-    FG_COLORCODE = DEFAULT_FG_COLOR_CODE;
-    BG_COLORCODE = DEFAULT_BG_COLOR_CODE;
+    bold = blink = reversed = under = NO;
+    saveBold = saveBlink = saveReversed = saveUnder = NO;
+    FG_COLORCODE = ALTSEM_FG_DEFAULT;
+    alternateForegroundSemantics = NO;
+    BG_COLORCODE = ALTSEM_BG_DEFAULT;
+    alternateBackgroundSemantics = NO;
     MOUSE_MODE = MOUSE_REPORTING_NONE;
 
     TRACE = NO;
@@ -2172,24 +2198,50 @@ static VT100TCC decode_string(unsigned char *datap,
     return MOUSE_MODE;
 }
 
-- (int)foregroundColorCode
+- (screen_char_t)foregroundColorCode
 {
-    return (reversed?BG_COLORCODE:FG_COLORCODE)+bold*BOLD_MASK+under*UNDER_MASK+blink*BLINK_MASK;
+    screen_char_t result;
+    if (reversed) {
+        result.foregroundColor = BG_COLORCODE;
+    } else {
+        result.foregroundColor = FG_COLORCODE;
+    }
+    result.alternateForegroundSemantics = alternateForegroundSemantics;
+    result.bold = bold;
+    result.underline = under;
+    result.blink = blink;
+    return result;
 }
 
-- (int)backgroundColorCode
+- (screen_char_t)backgroundColorCode
 {
-    return (reversed?FG_COLORCODE:BG_COLORCODE);
+    screen_char_t result;
+    if (reversed) {
+        result.backgroundColor = FG_COLORCODE;
+    } else {
+        result.backgroundColor = BG_COLORCODE;
+    }
+    result.alternateBackgroundSemantics = alternateBackgroundSemantics;
+    return result;
 }
 
-- (int)foregroundColorCodeReal
+- (screen_char_t)foregroundColorCodeReal
 {
-    return FG_COLORCODE+bold*BOLD_MASK+under*UNDER_MASK+blink*BLINK_MASK;
+    screen_char_t result;
+    result.foregroundColor = FG_COLORCODE;
+    result.alternateForegroundSemantics = alternateForegroundSemantics;
+    result.bold = bold;
+    result.underline = under;
+    result.blink = blink;
+    return result;
 }
 
-- (int)backgroundColorCodeReal
+- (screen_char_t)backgroundColorCodeReal
 {
-    return BG_COLORCODE;
+    screen_char_t result;
+    result.backgroundColor = BG_COLORCODE;
+    result.alternateBackgroundSemantics = alternateBackgroundSemantics;
+    return result;
 }
 
 - (NSData *)reportActivePositionWithX:(int)x Y:(int)y withQuestion:(BOOL)q
@@ -2321,81 +2373,93 @@ static VT100TCC decode_string(unsigned char *datap,
 - (void)_setCharAttr:(VT100TCC)token
 {
     if (token.type == VT100CSI_SGR) {
-
         if (token.u.csi.count == 0) {
             // all attribute off
-            bold=under=blink=reversed=0;
-            FG_COLORCODE = DEFAULT_FG_COLOR_CODE;
-            BG_COLORCODE = DEFAULT_BG_COLOR_CODE;
-        }
-        else {
+            bold = under = blink = reversed = NO;
+            FG_COLORCODE = ALTSEM_FG_DEFAULT;
+            alternateForegroundSemantics = YES;
+            BG_COLORCODE = ALTSEM_BG_DEFAULT;
+            alternateBackgroundSemantics = YES;
+        } else {
             int i;
             for (i = 0; i < token.u.csi.count; ++i) {
                 int n = token.u.csi.p[i];
                 switch (n) {
                     case VT100CHARATTR_ALLOFF:
                         // all attribute off
-                        bold=under=blink=reversed=0;
-                        FG_COLORCODE = DEFAULT_FG_COLOR_CODE;
-                        BG_COLORCODE = DEFAULT_BG_COLOR_CODE;
+                        bold = under = blink = reversed = NO;
+                        FG_COLORCODE = ALTSEM_FG_DEFAULT;
+                        alternateForegroundSemantics = YES;
+                        BG_COLORCODE = ALTSEM_BG_DEFAULT;
+                        alternateBackgroundSemantics = YES;
                         break;
 
                     case VT100CHARATTR_BOLD:
-                        bold=1;
+                        bold = YES;
                         break;
                     case VT100CHARATTR_NORMAL:
-                        bold=0;
+                        bold = NO;
                         break;
                     case VT100CHARATTR_UNDER:
-                        under=1;
+                        under = YES;
                         break;
                     case VT100CHARATTR_NOT_UNDER:
-                        under=0;
+                        under = NO;
                         break;
                     case VT100CHARATTR_BLINK:
-                        blink=1;
+                        blink = YES;
                         break;
                     case VT100CHARATTR_STEADY:
-                        blink=0;
+                        blink = NO;
                         break;
                     case VT100CHARATTR_REVERSE:
-                        reversed=1;
+                        reversed = YES;
                         break;
                     case VT100CHARATTR_POSITIVE:
-                        reversed=0;
+                        reversed = NO;
                         break;
                     case VT100CHARATTR_FG_DEFAULT:
-                        FG_COLORCODE = DEFAULT_FG_COLOR_CODE;
+                        FG_COLORCODE = ALTSEM_FG_DEFAULT;
+                        alternateForegroundSemantics = YES;
                         break;
                     case VT100CHARATTR_BG_DEFAULT:
-                        BG_COLORCODE = DEFAULT_BG_COLOR_CODE;
+                        BG_COLORCODE = ALTSEM_BG_DEFAULT;
+                        alternateBackgroundSemantics = YES;
                         break;
                     case VT100CHARATTR_FG_256:
-                        if (token.u.csi.count==3 && i==0 && token.u.csi.p[1]==5) {
+                        if (token.u.csi.count == 3 && i == 0 && token.u.csi.p[1] == 5) {
                             FG_COLORCODE = token.u.csi.p[2];
-                            i =2;
+                            alternateForegroundSemantics = NO;
+                            i = 2;
                         }
                         break;
                     case VT100CHARATTR_BG_256:
                         if (token.u.csi.count==3 && i==0 && token.u.csi.p[1]==5) {
                             BG_COLORCODE = token.u.csi.p[2];
-                            i=2;
+                            alternateBackgroundSemantics = NO;
+                            i = 2;
                         }
                         break;
                     default:
                         // 8 color support
-                        if (n>=VT100CHARATTR_FG_BLACK&&n<=VT100CHARATTR_FG_WHITE) {
+                        if (n >= VT100CHARATTR_FG_BLACK &&
+                            n <= VT100CHARATTR_FG_WHITE) {
                             FG_COLORCODE = n - VT100CHARATTR_FG_BASE - COLORCODE_BLACK;
-                        }
-                        else if (n>=VT100CHARATTR_BG_BLACK&&n<=VT100CHARATTR_BG_WHITE) {
+                            alternateForegroundSemantics = NO;
+                        } else if (n >= VT100CHARATTR_BG_BLACK &&
+                                   n <= VT100CHARATTR_BG_WHITE) {
                             BG_COLORCODE = n - VT100CHARATTR_BG_BASE - COLORCODE_BLACK;
+                            alternateBackgroundSemantics = NO;
                         }
                         // 16 color support
-                        if (n>=VT100CHARATTR_FG_HI_BLACK&&n<=VT100CHARATTR_FG_HI_WHITE) {
+                        if (n >= VT100CHARATTR_FG_HI_BLACK &&
+                            n <= VT100CHARATTR_FG_HI_WHITE) {
                             FG_COLORCODE = n - VT100CHARATTR_FG_HI_BASE - COLORCODE_BLACK + 8;
-                        }
-                        else if (n>=VT100CHARATTR_BG_HI_BLACK&&n<=VT100CHARATTR_BG_HI_WHITE) {
+                            alternateForegroundSemantics = NO;
+                        } else if (n >= VT100CHARATTR_BG_HI_BLACK &&
+                                   n <= VT100CHARATTR_BG_HI_WHITE) {
                             BG_COLORCODE = n - VT100CHARATTR_BG_HI_BASE - COLORCODE_BLACK + 8;
+                            alternateBackgroundSemantics = NO;
                         }
                 }
             }

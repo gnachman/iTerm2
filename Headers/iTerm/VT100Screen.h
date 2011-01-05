@@ -37,15 +37,27 @@
 @class PTYTextView;
 @class iTermGrowlDelegate;
 
-// This is used in the rightmost column when a double-width character would
-// have been split in half and was wrapped to the next line. It is nonprintable
-// and not selectable. It is not copied into the clipboard. A line ending in this
-// character should always have EOL_DWC. These are stripped when adding a line
-// to the scrollback buffer.
-#define DWC_SKIP 0xf000
-#define TAB_FILLER 0xf001
-
 #define TABWINDOW    300
+
+// Convert a string into screen_char_t. This deals with padding out double-
+// width characters, joining combining marks, and skipping zero-width spaces.
+//
+// The buffer size must be at least twice the length of the string (worst case:
+//   every character is double-width).
+// Pass prototype foreground and background colors in fg and bg.
+// *len is filled in with the number of elements of *buf that were set.
+// encoding is currently ignored and it's assumed to be UTF-16.
+// A good choice for ambiguousIsDoubleWidth is [SESSION doubleWidth].
+// If not null, *cursorIndex gives an index into s and is changed into the
+//   corresponding index into buf.
+void StringToScreenChars(NSString *s,
+                         screen_char_t *buf,
+                         screen_char_t fg,
+                         screen_char_t bg,
+                         int *len,
+                         NSStringEncoding encoding,
+                         BOOL ambiguousIsDoubleWidth,
+                         int* cursorIndex);
 
 @interface VT100Screen : NSObject
 {
@@ -94,8 +106,8 @@
     screen_char_t *temp_buffer;
 
     // default line stuff
-    int default_bg_code;
-    int default_fg_code;
+    screen_char_t default_bg_code;
+    screen_char_t default_fg_code;
     int default_line_width;
 
     // max size of scrollback buffer

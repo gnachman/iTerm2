@@ -113,12 +113,12 @@ const int kMaxResultContextWords = 4;
 {
     int tx1, ty1, tx2, ty2;
     VT100Screen* screen = [[self session] SCREEN];
-    
+
     int x = [screen cursorX]-2;
     int y = [screen cursorY] + [screen numberOfLines] - [screen height] - 1;
     screen_char_t* sct = [screen getLineAtIndex:y];
     [context_ removeAllObjects];
-    NSString* charBeforeCursor = [NSString stringWithCharacters:&sct[x].ch length:1];
+    NSString* charBeforeCursor = ScreenCharToStr(&sct[x]);
     AcLog(@"Char before cursor is '%@'", charBeforeCursor);
     whitespaceBeforeCursor_ = ([charBeforeCursor rangeOfCharacterFromSet:[NSCharacterSet whitespaceCharacterSet]].location != NSNotFound);
     NSCharacterSet* nonWhitespace = [[NSCharacterSet whitespaceCharacterSet] invertedSet];

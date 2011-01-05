@@ -83,7 +83,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     if (len > 999) len = 999;
     int i;
     for (i = 0; i < len; ++i) {
-        dest[i] = src[i].ch ? src[i].ch : '.';
+        dest[i] = (src[i].code && !src[i].complexChar) ? src[i].code : '.';
     }
     dest[i] = 0;
     return dest;
@@ -157,7 +157,7 @@ static int NumberOfFullLines(screen_char_t* buffer, int length, int width)
     // In the all-single-width case, it should return (length - 1) / width.
     int fullLines = 0;
     for (int i = width; i < length; i += width) {
-        if (buffer[i].ch == 0xffff) {
+        if (buffer[i].code == DWC_RIGHT) {
             --i;
         }
         ++fullLines;
@@ -186,7 +186,7 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
         i += width;
         ++lines;
         assert(i < length);
-        if (p[i].ch == 0xffff) {
+        if (p[i].code == DWC_RIGHT) {
             // Oops, the line starts with the second half of a double-width
             // character. Wrap the last character of the previous line on to
             // this line.
@@ -224,7 +224,7 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
             *lineLength = length - offset;  // the length of the suffix of the raw line, beginning at the wrapped line we want
             if (*lineLength > width) {
                 // return an infix of the full line
-                if (buffer_start[prev + offset + width].ch == 0xffff) {
+                if (buffer_start[prev + offset + width].code == DWC_RIGHT) {
                     // Result would end with the first half of a double-width character
                     *lineLength = width - 1;
                     *includesEndOfLine = EOL_DWC;
@@ -456,38 +456,52 @@ static int Search(NSString* needle,
                   int options,
                   int* resultLength)
 {
-    unichar* charHaystack = malloc(sizeof(unichar) * raw_line_length + 1);
-    int* deltas = malloc(sizeof(int) * (raw_line_length + 1));
-    // The 'deltas' array maps positions in the stripped haystack to
-    // their offset from the original position in the buffer after removing
-    // 0xffff characters.
+    unichar* charHaystack = malloc(sizeof(unichar) * raw_line_length * kMaxParts + 1);
+    int* deltas = malloc(sizeof(int) * (raw_line_length * kMaxParts + 1));
+    // The 'deltas' array gives the difference in position between the rawline
+    // and the charHaystack. The formula to convert an index in the charHaystack
+    // 'i' into an index in the rawline 'r' is:
+    //     r = i + deltas[i]
     //
-    // Original string with some double-width characters. 0xfff shown as '-':
+    // Original string with some double-width characters, where DWC_RIGHT is
+    // shown as '-':
     // 0123456789
     // ab-c-de-fg
     //
-    // Stripped string:
-    // 0123456
-    // abcdefg
+    // charHaystack, with combining marks/low surrogates shown as '*':
+    // 0123456789A
+    // abcd**ef**g
     //
     // Mapping:
-    // new -> orig    delta
-    // 0 -> 0         0
-    // 1 -> 2         1
-    // 2 -> 3         1
-    // 3 -> 5         2
-    // 4 -> 6         2
-    // 5 -> 8         3
-    // 6 -> 9         3
+    // charHaystack index i -> rawline index  deltas[i]
+    // 0 -> 0   (a@0->a@0)                    0
+    // 1 -> 1   (b@1->b-@1)                   0
+    // 2 -> 3   (c@2->c-@3)                   1
+    // 3 -> 5   (d@3->d@5)                    2
+    // 4 -> 5   (*@4->d@5)                    1
+    // 5 -> 5   (*@5->d@5)                    0
+    // 6 -> 6   (e@6->e-@6)                   0
+    // 7 -> 8   (f@7->f@8)                    1
+    // 8 -> 8   (*@8->f@8)                    0
+    // 9 -> 8   (*@9->f@8)                   -1
+    // A -> 9   (g@A->g@9)                   -1
+    //
+    // Note that delta is just the difference of the indices.
     int delta = 0;
     int o = 0;
     for (int i = start; i < end; ++i) {
-        unichar c = rawline[i].ch;
-        if (c == 0xffff) {
+        unichar c = rawline[i].code;
+        if (c == DWC_RIGHT) {
             ++delta;
         } else {
-            deltas[o] = delta;
-            charHaystack[o++] = c;
+            NSString* charStr = ScreenCharToStr(&rawline[i]);
+            [charStr getCharacters:charHaystack + o];
+            const int len = [charStr length];
+            ++delta;
+            for (int j = o; j < o + len; ++j) {
+                deltas[j] = --delta;
+            }
+            o += len;
         }
     }
     deltas[o] = delta;
@@ -678,7 +692,7 @@ static int Search(NSString* needle,
             int bytes_to_consume_in_this_line = position - prev;
             int dwc_peek = 0;
             if (bytes_to_consume_in_this_line < line_length &&
-                buffer_start[prev + bytes_to_consume_in_this_line + 1].ch == 0xffff) {
+                buffer_start[prev + bytes_to_consume_in_this_line + 1].code == DWC_RIGHT) {
                 // It doesn't make sense to ask for the number of lines that end
                 // in the middle of a DWC. Add one extra char to look at if that
                 // is the case.
@@ -860,7 +874,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         char a[1000];
         int i;
         for (i = 0; i < length; i++) {
-            a[i] = buffer[i].ch ? buffer[i].ch : '.';
+            a[i] = (buffer[i].code && !buffer[i].complex) ? buffer[i].code : '.';
         }
         a[i] = '\0';
         NSLog(@"Append: %s\n", a);
@@ -1013,7 +1027,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         char a[1000];
         int i;
         for (i = 0; i < width; i++) {
-            a[i] = ptr[i].ch ? ptr[i].ch : '.';
+            a[i] = (ptr[i].code && !ptr[i].complexChar) ? ptr[i].code : '.';
         }
         a[i] = '\0';
         NSLog(@"Pop: %s\n", a);

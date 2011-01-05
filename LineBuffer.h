@@ -1,5 +1,4 @@
 // -*- mode:objc -*-
-// $Id: $
 /*
  **  LineBuffer.h
  **
@@ -28,12 +27,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
-
-// These codes go in the continuation character to the right of the
-// rightmost column.
-#define EOL_HARD 0 // Hard line break (explicit newline)
-#define EOL_SOFT 1 // Soft line break (a long line was wrapped)
-#define EOL_DWC  2 // Double-width character wrapped to next line
+#import "ScreenChar.h"
 
 typedef struct FindContext {
     int absBlockNum;
@@ -47,18 +41,6 @@ typedef struct FindContext {
     int matchLength;
     BOOL hasWrapped;   // for client use. Not read or written by LineBuffer.
 } FindContext;
-
-typedef struct screen_char_t
-{
-    // ch has some special meanings:
-    //   0: Signifies no character was ever set at this location. Not selectable.
-    //   0xffff: The next character is a double-width character.
-    // In the WIDTH+1 position on a line, this takes the value of 0 or 1. If 1, then the
-    // next line is a continuation of this one (it's a long line that wrapped).
-    unichar ch;            // the actual character.
-    unsigned int bg_color; // background color
-    unsigned int fg_color; // foreground color
-} screen_char_t;
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.

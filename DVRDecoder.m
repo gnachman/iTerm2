@@ -130,8 +130,8 @@
     int i;
     for (i = 0; i * sizeof(screen_char_t) < length; i++) {
         screen_char_t s = ((screen_char_t*)buffer)[i];
-        if (s.ch) {
-            d[i] = s.ch;
+        if (s.code && s.complexChar) {
+            d[i] = s.code;
         } else {
             d[i] = ' ';
         }

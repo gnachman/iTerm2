@@ -14,6 +14,8 @@
 		1D2E802F129DA45A00F3D71E /* PTYTab.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E802D129DA45A00F3D71E /* PTYTab.m */; };
 		1D2E813112A18F7500F3D71E /* SessionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E812F12A18F7500F3D71E /* SessionView.h */; };
 		1D2E813212A18F7500F3D71E /* SessionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E813012A18F7500F3D71E /* SessionView.m */; };
+		1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D36155312CBF33E00803EA9 /* ScreenChar.h */; };
+		1D36155612CBF33E00803EA9 /* ScreenChar.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D36155412CBF33E00803EA9 /* ScreenChar.m */; };
 		1D44218C1290B34500891504 /* TextViewWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D44218A1290B34500891504 /* TextViewWrapper.h */; };
 		1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D44218B1290B34500891504 /* TextViewWrapper.m */; };
 		1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */; };
@@ -254,6 +256,8 @@
 		1D2E802D129DA45A00F3D71E /* PTYTab.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYTab.m; sourceTree = "<group>"; };
 		1D2E812F12A18F7500F3D71E /* SessionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SessionView.h; sourceTree = "<group>"; };
 		1D2E813012A18F7500F3D71E /* SessionView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SessionView.m; sourceTree = "<group>"; };
+		1D36155312CBF33E00803EA9 /* ScreenChar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScreenChar.h; sourceTree = "<group>"; };
+		1D36155412CBF33E00803EA9 /* ScreenChar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ScreenChar.m; sourceTree = "<group>"; };
 		1D44218A1290B34500891504 /* TextViewWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextViewWrapper.h; sourceTree = "<group>"; };
 		1D44218B1290B34500891504 /* TextViewWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TextViewWrapper.m; sourceTree = "<group>"; };
 		1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultGlobalKeyMap.plist; sourceTree = "<group>"; };
@@ -552,6 +556,7 @@
 				E8CF7561026DDA6303A80106 /* PTYTextView.m */,
 				F5E533B403B2959201A8A066 /* PTYTabView.m */,
 				F56B230B03A1B36701A8A066 /* PTYWindow.m */,
+				1D36155412CBF33E00803EA9 /* ScreenChar.m */,
 				1D2E813012A18F7500F3D71E /* SessionView.m */,
 				1D44218B1290B34500891504 /* TextViewWrapper.m */,
 				E8CF7562026DDA6303A80106 /* VT100Screen.m */,
@@ -598,6 +603,7 @@
 				872EBC5404E42E320073D10E /* PTYTextView.h */,
 				872EBC5B04E42E320073D10E /* PTYWindow.h */,
 				2076B15704E8817300000106 /* PTToolbarController.h */,
+				1D36155312CBF33E00803EA9 /* ScreenChar.h */,
 				1D2E812F12A18F7500F3D71E /* SessionView.h */,
 				1D44218A1290B34500891504 /* TextViewWrapper.h */,
 				872EBC5A04E42E320073D10E /* VT100Screen.h */,
@@ -937,6 +943,7 @@
 				1D44218C1290B34500891504 /* TextViewWrapper.h in Headers */,
 				1D2E802E129DA45A00F3D71E /* PTYTab.h in Headers */,
 				1D2E813112A18F7500F3D71E /* SessionView.h in Headers */,
+				1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1010,7 +1017,6 @@
 			isa = PBXProject;
 			buildConfigurationList = BB024D39096EE4080021E793 /* Build configuration list for PBXProject "iTerm" */;
 			compatibilityVersion = "Xcode 3.1";
-			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,
@@ -1193,6 +1199,7 @@
 				1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */,
 				1D2E802F129DA45A00F3D71E /* PTYTab.m in Sources */,
 				1D2E813212A18F7500F3D71E /* SessionView.m in Sources */,
+				1D36155612CBF33E00803EA9 /* ScreenChar.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -28,7 +28,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
-//#include <term.h>
+#import "ScreenChar.h"
 
 @class VT100Screen;
 
@@ -235,18 +235,6 @@ typedef enum {
 #define VT100CHARATTR_BG_HI_WATER     (VT100CHARATTR_BG_HI_BASE + COLORCODE_WATER)
 #define VT100CHARATTR_BG_HI_WHITE     (VT100CHARATTR_BG_HI_BASE + COLORCODE_WHITE)
 
-
-// for foreground colors
-#define DEFAULT_FG_COLOR_CODE   0x100
-#define BOLD_MASK 0x200
-#define BLINK_MASK 0x400
-#define UNDER_MASK 0x800
-#define SELECTED_TEXT   0x102
-#define CURSOR_TEXT     0x103
-
-// for background colors
-#define DEFAULT_BG_COLOR_CODE   0x101
-
 // terminfo stuff
 enum {
     TERMINFO_KEY_LEFT, TERMINFO_KEY_RIGHT, TERMINFO_KEY_UP, TERMINFO_KEY_DOWN,
@@ -302,13 +290,17 @@ typedef enum {
     mouseMode MOUSE_MODE;
 
     int FG_COLORCODE;
+    BOOL alternateForegroundSemantics;
     int BG_COLORCODE;
+    BOOL alternateBackgroundSemantics;
     int bold, under, blink, reversed;
 
     int saveBold, saveUnder, saveBlink, saveReversed;
     int saveCHARSET;
     int saveForeground;
+    BOOL saveAltForeground;
     int saveBackground;
+    BOOL saveAltBackground;
 
     BOOL TRACE;
 
@@ -385,10 +377,10 @@ typedef enum {
 - (BOOL)xon;
 - (mouseMode)mouseMode;
 
-- (int)foregroundColorCode;
-- (int)backgroundColorCode;
-- (int)foregroundColorCodeReal;
-- (int)backgroundColorCodeReal;
+- (screen_char_t)foregroundColorCode;
+- (screen_char_t)backgroundColorCode;
+- (screen_char_t)foregroundColorCodeReal;
+- (screen_char_t)backgroundColorCodeReal;
 
 - (NSData *)reportActivePositionWithX:(int)x Y:(int)y withQuestion:(BOOL)q;
 - (NSData *)reportStatus;

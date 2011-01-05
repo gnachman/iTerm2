@@ -1,6 +1,4 @@
 // -*- mode:objc -*-
-// $Id: PTYTextView.h,v 1.70 2008-10-21 05:43:52 yfabian Exp $
-//
 /*
  **  PTYTextView.h
  **
@@ -30,12 +28,14 @@
 
 #import <Cocoa/Cocoa.h>
 #import <iTerm/iTerm.h>
+#import "ScreenChar.h"
 
 #include <sys/time.h>
 #define PRETTY_BOLD
 
 #define MARGIN  5
 #define VMARGIN 2
+#define COLOR_KEY_SIZE 4
 
 @class VT100Screen;
 
@@ -145,9 +145,6 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     BOOL keyIsARepeat;
 
-    // Needed for determining font size.
-    NSLayoutManager *layoutManager;
-
     // Is a find currently executing?
     BOOL _findInProgress;
 
@@ -233,14 +230,14 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)setBlinkingCursor:(BOOL)bFlag;
 
 //color stuff
-- (NSColor *)defaultFGColor;
-- (NSColor *)defaultBGColor;
-- (NSColor *)defaultBoldColor;
-- (NSColor *)colorForCode:(int) index;
-- (NSColor *)selectionColor;
-- (NSColor *)defaultCursorColor;
-- (NSColor *)selectedTextColor;
-- (NSColor *)cursorTextColor;
+- (NSColor*)defaultFGColor;
+- (NSColor*)defaultBGColor;
+- (NSColor*)defaultBoldColor;
+- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold;
+- (NSColor*)selectionColor;
+- (NSColor*)defaultCursorColor;
+- (NSColor*)selectedTextColor;
+- (NSColor*)cursorTextColor;
 - (void)setFGColor:(NSColor*)color;
 - (void)setBGColor:(NSColor*)color;
 - (void)setBoldColor:(NSColor*)color;
@@ -366,8 +363,13 @@ typedef enum {
 - (void)_savePanelDidEnd:(NSSavePanel *)theSavePanel returnCode:(int)theReturnCode contextInfo:(void *)theContextInfo;
 
 - (void) _scrollToLine:(int)line;
-- (BOOL)shouldSelectCharForWord:(unichar) ch selectWordChars:(BOOL)selectWordChars;
-- (PTYCharType)classifyChar:(unichar)ch;
+- (BOOL)shouldSelectCharForWord:(unichar)ch
+                      isComplex:(BOOL)compled
+                selectWordChars:(BOOL)selectWordChars;
+
+- (PTYCharType)classifyChar:(unichar)ch
+                  isComplex:(BOOL)complex;
+
 - (NSString *)getWordForX:(int)x
                         y:(int)y
                    startX:(int *)startx
@@ -377,7 +379,15 @@ typedef enum {
 - (NSString *)_getURLForX:(int)x y:(int)y;
 - (void)_drawLine:(int)line AtY:(float)curY;
 - (void)_drawCursor;
-- (void)_drawCharacter:(unichar)c fgColor:(int)fg AtX:(float)X Y:(float)Y doubleWidth:(BOOL)dw overrideColor:(NSColor*)overrideColor;
+- (void)_drawCharacter:(screen_char_t)screenChar
+               fgColor:(int)fgColor
+    alternateSemantics:(BOOL)fgAlt
+                fgBold:(BOOL)fgBold
+                   AtX:(float)X
+                     Y:(float)Y
+           doubleWidth:(BOOL)double_width
+         overrideColor:(NSColor*)overrideColor;
+
 - (BOOL)_isBlankLine:(int)y;
 - (void)_openURL:(NSString *)aURLString;
 - (BOOL)_findMatchingParenthesis:(NSString *)parenthesis withX:(int)X Y:(int)Y;
@@ -386,8 +396,10 @@ typedef enum {
 - (void)_settingsChanged:(NSNotification *)notification;
 - (void)_modifyFont:(NSFont*)font into:(PTYFontInfo*)fontInfo;
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
+                     isComplex:(BOOL)complex
                        fgColor:(int)fgColor
                     renderBold:(BOOL*)renderBold;
+
 - (PTYFontInfo*)getOrAddFallbackFont:(NSFont*)font;
 - (void)releaseAllFallbackFonts;
 - (void)updateDirtyRects;
