@@ -1152,6 +1152,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return (keyIsARepeat);
 }
 
+// TODO: disable other, right mouse for inactive panes
 - (void)otherMouseDown: (NSEvent *) event
 {
     NSPoint locationInWindow, locationInTextView;
@@ -1504,7 +1505,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([[self delegate] xtermMouseReporting]) &&
+    if (frontTextView == self &&
+        ([[self delegate] xtermMouseReporting]) &&
         (locationInTextView.y > visibleRect.origin.y) &&
         !([event modifierFlags] & NSAlternateKeyMask)) {
         // Mouse reporting is on.
@@ -1684,7 +1686,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     y = locationInTextView.y / lineHeight;
 
     // Send mouse up event to host if xterm mouse reporting is on
-    if ([[self delegate] xtermMouseReporting] &&
+    if (frontTextView == self &&
+        [[self delegate] xtermMouseReporting] &&
         reportingMouseDown &&
         !([event modifierFlags] & NSAlternateKeyMask)) {
         // Mouse reporting is on.
@@ -1729,7 +1732,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     mouseDown = NO;
 
     // make sure we have key focus
-    [[self window] makeFirstResponder: self];
+    [[self window] makeFirstResponder:self];
 
     if (startY > endY ||
         (startY == endY && startX > endX)) {
