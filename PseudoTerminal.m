@@ -3737,7 +3737,7 @@ NSString *sessionsKey = @"sessions";
 -(id)valueInSessionsAtIndex:(unsigned)anIndex
 {
     // NSLog(@"PseudoTerminal: -valueInSessionsAtIndex: %d", anIndex);
-    return [[[TABVIEW tabViewItemAtIndex:anIndex] identifier] activeSession];
+    return [[self sessions] objectAtIndex:anIndex];
 }
 
 -(NSArray*)sessions
