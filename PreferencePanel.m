@@ -1243,7 +1243,7 @@ static float versionNumber;
     }
 
     if ([dict objectForKey:KEY_USE_BRIGHT_BOLD] != nil) {
-        [useBrightBold setState:[dict objectForKey:KEY_USE_BRIGHT_BOLD] ? NSOnState : NSOffState];
+        [useBrightBold setState:[[dict objectForKey:KEY_USE_BRIGHT_BOLD] boolValue] ? NSOnState : NSOffState];
     } else {
         [useBrightBold setState:NSOnState];
     }
