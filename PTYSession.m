@@ -2182,11 +2182,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         return;
     }
     [TEXTVIEW setFont:font nafont:nafont horizontalSpacing:horizontalSpacing verticalSpacing:verticalSpacing];
-    if ([[[self tab] parentWindow] fullScreen]) {
-        [[self tab] fitSessionToCurrentViewSize:self];
-    } else {
+    if (![[[self tab] parentWindow] fullScreen]) {
         [[[self tab] parentWindow] fitWindowToTab:[self tab]];
     }
+    // If the window isn't able to adjust, or adjust enough, make the session
+    // work with whatever size we ended up having.
+    [[self tab] fitSessionToCurrentViewSize:self];
 }
 
 - (void)setIgnoreResizeNotifications:(BOOL)ignore
