@@ -1,0 +1,38 @@
+/* Title of alert window when we had a crash: */
+"WANT_TO_SEND_CRASH_TITLE" = "Do you want to report the last crash?";
+
+/* Message for alert window when we had a crash: */
+"WANT_TO_SEND_CRASH" = "The application %@ has recently crashed. To help improve it, you can send the system's crash log and a copy of the preferences file to the programmers working on this program so they can use the information in it to fix the bug. Do you want to send the log?";
+
+/* Name of OK button in alert window: */
+"WANT_TO_SEND_CRASH_SEND" = "Send";
+
+/* Name of Cancel button in alert window: */
+"WANT_TO_SEND_CRASH_DONT_SEND" = "Don't Send";
+
+/* Name of "Later" button in alert window: */
+"WANT_TO_SEND_CRASH_SEND_LATER" = "Send Later";
+
+/* URL of CGI script which we'll send the log to: */
+"CRASH_REPORT_CGI_URL" = "http://www.iterm2.com/crashreportform.php";
+
+/* Title of error window: */
+"COULDNT_SEND_CRASH_REPORT_ERROR" = "Couldn't submit crash report";
+
+/* Title of error window for feedback messages: */
+"COULDNT_SEND_FEEDBACK_ERROR" = "Couldn't send out your message.";
+
+/* OK button of error window: */
+"COULDNT_SEND_CRASH_REPORT_ERROR_OK" = "OK";
+
+/* Text for feedback messages: */
+"FEEDBACK_MESSAGE_TEXT" = "Hi iTerm2 Developers,\n\nhere's what I'd like to tell you:\n\n\t...\n\n-- %%LONGUSERNAME\n\nReply to me at %%EMAILADDRESS";
+
+/* String to substitute if we can't determine user's e-mail address: */
+"MISSING_EMAIL_ADDRESS" = "<Your E-Mail Address here>";
+
+/* Text at the top of the window for feedback messages: */
+"FEEDBACK_EXPLANATION_TEXT" = "Enter your message below. If you are reporting a bug, please include information about your Mac and operating system version and a list of steps to help reproduce the problem.\n\nBe sure to include your email address or we won't be able to get back to you.";
+
+/* Name of "Crash Log" tab for feedback messages: */
+"SYSTEM_INFO_TAB_NAME" = "System Information";

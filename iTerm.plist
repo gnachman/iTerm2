@@ -179,9 +179,5 @@
 	<string>http://iterm2.googlecode.com/svn/trunk/appcasts/testing.xml</string>
 	<key>SUFeedURLForFinal</key>
 	<string>http://iterm2.googlecode.com/svn/trunk/appcasts/final.xml</string>
-	<key>SmartCrashReports_CompanyName</key>
-	<string>iTerm</string>
-	<key>SmartCrashReports_EmailTicket</key>
-	<string>SCR-73C32475CB</string>
 </dict>
 </plist>

@@ -43,6 +43,7 @@
 #import <Carbon/Carbon.h>
 #import "iTermApplicationDelegate.h"
 #import "iTermApplication.h"
+#import "UKCrashReporter/UKCrashReporter.h"
 
 @interface NSApplication (Undocumented)
 - (void)_cycleWindowsReversed:(BOOL)back;
@@ -95,6 +96,7 @@ static BOOL initDone = NO;
 #endif
     self = [super init];
 
+    UKCrashReporterCheckForCrash();
 
     // create the iTerm directory if it does not exist
     NSFileManager *fileManager = [NSFileManager defaultManager];
