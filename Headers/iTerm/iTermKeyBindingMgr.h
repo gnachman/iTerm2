@@ -123,7 +123,7 @@
 + (NSString*)shortcutAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark;
 + (NSDictionary*)mappingAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark;
 + (int)numberOfMappingsForBookmark:(Bookmark*)bmDict;
-
++ (void)removeMappingWithCode:(unichar)keyCode modifiers:(unsigned int)mods inBookmark:(NSMutableDictionary*)bookmark;
 + (int) _actionForKeyCode:(unichar)keyCode 
                 modifiers:(unsigned int) keyMods 
              highPriority:(BOOL *) highPriority 

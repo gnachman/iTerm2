@@ -518,4 +518,12 @@
     return [keyMapDict count];
 }
 
++ (void)removeMappingWithCode:(unichar)keyCode modifiers:(unsigned int)mods inBookmark:(NSMutableDictionary*)bookmark
+{
+    NSMutableDictionary* km = [NSMutableDictionary dictionaryWithDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]];
+    NSString* keyString = [NSString stringWithFormat:@"0x%x-0x%x", keyCode, mods];
+    [km removeObjectForKey:keyString];
+    [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
+}
+
 @end

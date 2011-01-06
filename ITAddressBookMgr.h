@@ -48,12 +48,13 @@
 #define KEY_KEYBOARD_PROFILE            @"Keyboard Profile"
 #define KEY_DISPLAY_PROFILE             @"Display Profile"
 #define KEY_SHORTCUT                    @"Shortcut"
-#define KEY_BONJOUR_GROUP           @"Bonjour Group"
-#define KEY_BONJOUR_SERVICE         @"Bonjour Service"
-#define KEY_BONJOUR_SERVICE_ADDRESS  @"Bonjour Service Address"
-#define KEY_TAGS                              @"Tags"
-#define KEY_GUID                              @"Guid"
+#define KEY_BONJOUR_GROUP               @"Bonjour Group"
+#define KEY_BONJOUR_SERVICE             @"Bonjour Service"
+#define KEY_BONJOUR_SERVICE_ADDRESS     @"Bonjour Service Address"
+#define KEY_TAGS                        @"Tags"
+#define KEY_GUID                        @"Guid"
 #define KEY_DEFAULT_BOOKMARK            @"Default Bookmark"  // deprecated
+#define KEY_ASK_ABOUT_OUTDATED_KEYMAPS  @"Ask About Outdated Keymaps"
 
 // Per-bookmark keys ----------------------------------------------------------
 // IMPORATANT: If you add keys, also modify doCopyFrom in PreferencePanel.m.

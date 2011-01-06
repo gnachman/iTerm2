@@ -597,6 +597,54 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     return (keyBindingAction >= 0);
 }
 
++ (void)reloadAllBookmarks
+{
+    int n = [[iTermController sharedInstance] numberOfTerminals];
+    for (int i = 0; i < n; ++i) {
+        PseudoTerminal* pty = [[iTermController sharedInstance] terminalAtIndex:i];
+        [pty reloadBookmarks];
+    }
+}
+
+- (BOOL)_askAboutOutdatedKeyMappings
+{
+    NSNumber* n = [addressBookEntry objectForKey:KEY_ASK_ABOUT_OUTDATED_KEYMAPS];
+    return n ? [n boolValue] : YES;
+}
+
+- (void)_removeOutdatedKeyMapping
+{
+    NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:addressBookEntry];
+    [iTermKeyBindingMgr removeMappingWithCode:0xf702
+                                    modifiers:NSCommandKeyMask | NSAlternateKeyMask | NSNumericPadKeyMask
+                                   inBookmark:temp];
+    [iTermKeyBindingMgr removeMappingWithCode:0xf703
+                                    modifiers:NSCommandKeyMask | NSAlternateKeyMask | NSNumericPadKeyMask
+                                   inBookmark:temp];
+    BookmarkModel* model;
+    if (isDivorced) {
+        model = [BookmarkModel sessionsInstance];
+    } else {
+        model = [BookmarkModel sharedInstance];
+    }
+    [model setBookmark:temp withGuid:[temp objectForKey:KEY_GUID]];
+    [PTYSession reloadAllBookmarks];
+}
+
+- (void)_setKeepOutdatedKeyMapping
+{
+    BookmarkModel* model;
+    if (isDivorced) {
+        model = [BookmarkModel sessionsInstance];
+    } else {
+        model = [BookmarkModel sharedInstance];
+    }
+    [model setObject:[NSNumber numberWithBool:NO]
+                                       forKey:KEY_ASK_ABOUT_OUTDATED_KEYMAPS
+                                   inBookmark:addressBookEntry];
+    [PTYSession reloadAllBookmarks];
+}
+
 // Handle bookmark- and global-scope keybindings. If there is no keybinding then
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event
@@ -646,6 +694,40 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
         unsigned char hexCode;
         int hexCodeTmp;
 
+        if (keyBindingAction == KEY_ACTION_NEXT_SESSION ||
+            keyBindingAction == KEY_ACTION_PREVIOUS_SESSION) {
+            // Warn users about outdated default key bindings.
+            int tempMods = modflag & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask);
+            int tempKeyCode = unmodunicode;
+            if (tempMods == (NSCommandKeyMask | NSAlternateKeyMask) &&
+                (tempKeyCode == 0xf702 || tempKeyCode == 0xf703) &&
+                [[[self tab] sessions] count] > 1) {
+                if ([self _askAboutOutdatedKeyMappings]) {
+                    int result = NSRunAlertPanel(@"Outdated Key Mapping Found",
+                                                 @"It looks like you're trying to switch split panes but you have a key mapping from an old iTerm installation for ⌘⌥← or ⌘⌥→ that switches tabs instead. What would you like to do?",
+                                                 @"Remove it", 
+                                                 @"Remind me later",
+                                                 @"Keep it");
+                    switch (result) {
+                        case NSAlertDefaultReturn:
+                            // Remove it
+                            [self _removeOutdatedKeyMapping];
+                            return;
+                            break;
+                        case NSAlertAlternateReturn:
+                            // Remind me later
+                            break;
+                        case NSAlertOtherReturn:
+                            // Keep it
+                            [self _setKeepOutdatedKeyMapping];
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+        
         switch (keyBindingAction) {
             case KEY_ACTION_NEXT_SESSION:
                 [[[self tab] parentWindow] nextTab:nil];
@@ -919,10 +1001,8 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
                 dataLength = send_strlen;
                 [self writeTask:[NSData dataWithBytes:dataPtr length:dataLength]];
             }
-
         }
     }
-
 }
 
 - (BOOL)willHandleEvent:(NSEvent *) theEvent
