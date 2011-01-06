@@ -861,12 +861,21 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
                 data = [TERMINAL keypadData:unicode keystr:keystr];
             }
 
-            if (data != nil ) {
+            int indMask = modflag & NSDeviceIndependentModifierFlagsMask;
+            if ((indMask & NSCommandKeyMask) &&   // pressing cmd
+                ([keystr isEqualToString:@"0"] ||  // pressed 0 key
+                 ([keystr intValue] > 0 && [keystr intValue] <= 9))) {   // or any other digit key
+                // Do not send anything for cmd+number because the user probably
+                // fat-fingered switching of tabs/windows.
+                data = nil;
+            }
+            if (data != nil) {
                 send_str = (unsigned char *)[data bytes];
                 send_strlen = [data length];
+                DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %d; send_str[0] = '%c (0x%x)'",
+                          modflag, send_strlen, send_str[0]]);
             }
 
-            DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %d; send_str[0] = '%c (0x%x)'", modflag, send_strlen, send_str[0]]);
             if ((modflag & NSControlKeyMask) &&
                 send_strlen == 1 &&
                 send_str[0] == '|') {
