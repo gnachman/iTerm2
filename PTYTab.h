@@ -95,6 +95,7 @@
 
 - (BOOL)isForegroundTab;
 - (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
+- (void)fitSessionToCurrentViewSize:(PTYSession*)aSession;
 
 // Tab index.
 - (int)number;

@@ -2182,7 +2182,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         return;
     }
     [TEXTVIEW setFont:font nafont:nafont horizontalSpacing:horizontalSpacing verticalSpacing:verticalSpacing];
-    [[[self tab] parentWindow] fitWindowToTab:[self tab]];
+    if ([[[self tab] parentWindow] fullScreen]) {
+        [[self tab] fitSessionToCurrentViewSize:self];
+    } else {
+        [[[self tab] parentWindow] fitWindowToTab:[self tab]];
+    }
 }
 
 - (void)setIgnoreResizeNotifications:(BOOL)ignore
