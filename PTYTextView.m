@@ -4138,32 +4138,44 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return ([self contentFromX:x1 Y:yStart ToX:x2 Y:y2 pad: YES]);
 }
 
-static bool IsCharInSet(unichar theChar, NSCharacterSet* charSet)
+static bool IsUrlChar(NSString* str)
 {
-    return [[NSString stringWithCharacters:&theChar length:1] rangeOfCharacterFromSet:charSet].location != NSNotFound;
-}
-
-static bool IsUrlChar(unichar theChar)
-{
+    if ([str length] == 0) {
+        return NO;
+    }
+    UTF32Char theChar;
+    if ([str length] == 1) {
+        theChar = [str characterAtIndex:0];
+    } else {
+        unichar first = [str characterAtIndex:0];
+        if (IsHighSurrogate(first)) {
+            theChar = DecodeSurrogatePair(first, [str characterAtIndex:1]);
+        } else {
+            // Use the base character; combining marks won't affect the outcome.
+            theChar = first;
+        }
+    }
+    if (!theChar) {
+        return NO;
+    }
+    
     static NSCharacterSet* urlChars;
     if (!urlChars) {
         urlChars = [[NSCharacterSet characterSetWithCharactersInString:@".?/:;%=&_-,+~#@!*'()"] retain];
     }
-    return IsCharInSet(theChar, urlChars) || IsCharInSet(theChar, [NSCharacterSet alphanumericCharacterSet]);
+    return ([urlChars longCharacterIsMember:theChar] ||
+            [[NSCharacterSet alphanumericCharacterSet] longCharacterIsMember:theChar]);
 }
 
-- (NSString *) _getURLForX: (int) x
-                    y: (int) y
+- (NSString *)_getURLForX:(int)x
+                        y:(int)y
 {
     int w = [dataSource width];
     int h = [dataSource numberOfLines];
     NSMutableString *url = [NSMutableString string];
-    NSString* chars = [self _getCharacterAtX:x Y:y];
-    unichar theChar = 0;
-    BOOL isComplex = [chars length] > 1;
-    [chars getCharacters:&theChar range:NSMakeRange(0, 1)];
+    NSString* theChar = [self _getCharacterAtX:x Y:y];
 
-    if (isComplex || theChar == '\0' || !IsUrlChar(theChar)) {
+    if (!IsUrlChar(theChar)) {
         return url;
     }
 
@@ -4197,9 +4209,7 @@ static bool IsUrlChar(unichar theChar)
         int endx = x-1;
         for (int xi = endx, yi = y; xi >= leftx && 0 <= yi; xi--) {
             NSString* curChar = [self _getCharacterAtX:xi Y:yi];
-            if ([curChar length] > 0 ||
-                [curChar characterAtIndex:0] == '\0' ||
-                !IsUrlChar([curChar characterAtIndex:0])) {
+            if (!IsUrlChar(curChar)) {
                 // Found a non-url character so append the left part of the URL.
                 [url insertString:[self contentFromX:xi+1 Y:yi ToX:endx+1 Y:yi pad: YES]
                      atIndex:0];
@@ -4233,9 +4243,7 @@ static bool IsUrlChar(unichar theChar)
         int startx = x;
         for (int xi = startx+1, yi = y; xi <= rightx && yi < h; xi++) {
             NSString* curChar = [self _getCharacterAtX:xi Y:yi];
-            if ([curChar length] > 1 ||
-                [curChar characterAtIndex:0] == '\0' ||
-                !IsUrlChar([curChar characterAtIndex:0])) {
+            if (!IsUrlChar(curChar)) {
                 // Found something non-urly. Append what we have so far.
                 [url appendString:[self contentFromX:startx Y:yi ToX:xi Y:yi pad: YES]];
                 // skip backslahes that indicate wrapping
