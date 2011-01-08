@@ -666,6 +666,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         prevScrollDelay = 0.1;
     }
 
+    lastSelectionScroll = [[NSDate date] timeIntervalSince1970];
     selectionScrollTimer = [[NSTimer scheduledTimerWithTimeInterval:prevScrollDelay
                                                              target:self
                                                            selector:@selector(updateSelectionScroll)
@@ -676,6 +677,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 // Scroll the screen up or down a line for a selection drag scroll.
 - (void)updateSelectionScroll
 {
+    double actualDelay = [[NSDate date] timeIntervalSince1970] - lastSelectionScroll;
+    const int kMaxLines = 100;
+    int numLines = MIN(kMaxLines, MAX(1, actualDelay / prevScrollDelay));
     NSRect visibleRect = [self visibleRect];
 
     int y = 0;
@@ -684,7 +688,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         selectionScrollTimer = nil;
         return;
     } else if (selectionScrollDirection < 0) {
-        visibleRect.origin.y -= [self lineHeight];
+        visibleRect.origin.y -= [self lineHeight] * numLines;
         // Allow the origin to go as far as y=-VMARGIN so the top border is shown when the first line is
         // on screen.
         if (visibleRect.origin.y >= -VMARGIN) {
@@ -692,7 +696,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         }
         y = visibleRect.origin.y / lineHeight;
     } else if (selectionScrollDirection > 0) {
-        visibleRect.origin.y += lineHeight;
+        visibleRect.origin.y += lineHeight * numLines;
         if (visibleRect.origin.y + visibleRect.size.height > [self frame].size.height) {
             visibleRect.origin.y = [self frame].size.height - visibleRect.size.height;
         }
