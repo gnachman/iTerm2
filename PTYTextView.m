@@ -1901,13 +1901,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int width = [dataSource width];
     const int estimatedSize = (endy - starty + 1) * (width + 1) + (endx - startx + 1);
     NSMutableString* result = [NSMutableString stringWithCapacity:estimatedSize];
-    int j;
     int y, x1, x2;
     screen_char_t *theLine;
     BOOL endOfLine;
     int i;
 
-    j = 0;
     for (y = starty; y <= endy; y++) {
         theLine = [dataSource getLineAtIndex:y];
 
@@ -3600,7 +3598,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         NSString* str = [markedText string];
         const int maxLen = [str length] * kMaxParts;
         screen_char_t buf[maxLen];
-        screen_char_t fg, bg;
+        screen_char_t fg = {0}, bg = {0};
         fg.foregroundColor = ALTSEM_FG_DEFAULT;
         fg.alternateForegroundSemantics = YES;
         fg.bold = NO;
@@ -3791,13 +3789,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             double_width = 0;
             screen_char_t screenChar = theLine[x1];
             int aChar = screenChar.code;
-            BOOL isComplex = screenChar.complexChar;
             if (aChar) {
                 if (aChar == DWC_RIGHT && x1 > 0) {
                     x1--;
                     screenChar = theLine[x1];
                     aChar = screenChar.code;
-                    isComplex = screenChar.complexChar;
                 }
                 double_width = (x1 < WIDTH-1) && (theLine[x1+1].code == DWC_RIGHT);
             }
@@ -3847,19 +3843,16 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                         if (colorInvertedCursor) {
                             int fgColor;
                             BOOL fgAlt;
-                            BOOL fgBold;
                             if ([[self window] isKeyWindow]) {
                                 // Draw a character in background color when
                                 // window is key.
                                 fgColor = screenChar.backgroundColor;
                                 fgAlt = screenChar.alternateBackgroundSemantics;
-                                fgBold = NO;
                             } else {
                                 // Draw character in foreground color when there
                                 // is just a frame around it.
                                 fgColor = screenChar.foregroundColor;
                                 fgAlt = screenChar.alternateForegroundSemantics;
-                                fgBold = screenChar.bold;
                             }
                             NSColor* proposedForeground = [[self colorForCode:fgColor
                                                            alternateSemantics:fgAlt

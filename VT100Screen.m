@@ -904,7 +904,6 @@ static char* FormatCont(int c)
       __FILE__, __LINE__, terminal);
 #endif
     TERMINAL = terminal;
-
 }
 
 - (VT100Terminal *)terminal
@@ -1498,6 +1497,7 @@ static void DumpBuf(screen_char_t* p, int n) {
         } else {
             sc = staticTemp;
         }
+        assert(TERMINAL);
         screen_char_t fg = [TERMINAL foregroundColorCode];
         screen_char_t bg = [TERMINAL backgroundColorCode];
 
