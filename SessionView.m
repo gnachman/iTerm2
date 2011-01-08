@@ -186,7 +186,8 @@ static const float kTargetFrameRate = 1.0/60.0;
         SInt32 macVersion;
 
         if (Gestalt(gestaltSystemVersion, &macVersion) == noErr) {
-            if (macVersion <= 0x1050) {
+            NSLog(@"You are running mac os %x", (int)macVersion);
+            if (macVersion < 0x1060) {
                 cachedResult = DIMMING_BROKEN;
             } else {
                 cachedResult = DIMMING_OK;

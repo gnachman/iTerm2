@@ -576,9 +576,6 @@ static float versionNumber;
     [checkTestRelease setState:defaultCheckTestRelease?NSOnState:NSOffState];
     [checkColorInvertedCursor setState:defaultColorInvertedCursor?NSOnState:NSOffState];
     [dimInactiveSplitPanes setState:defaultDimInactiveSplitPanes?NSOnState:NSOffState];
-    if (![SessionView dimmingSupported]) {
-        [dimInactiveSplitPanes setEnabled:NO];
-    }
 
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];
@@ -625,7 +622,17 @@ static float versionNumber;
         defaultHideTab=([hideTab state]==NSOnState);
         defaultCursorType = [[cursorType selectedCell] tag];
         defaultColorInvertedCursor = ([checkColorInvertedCursor state] == NSOnState);
-        defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
+        if ([dimInactiveSplitPanes state] == NSOnState && ! [SessionView dimmingSupported]) {
+            NSRunAlertPanel(@"Dimming Not Supported.",
+                            @"Sorry, dimming inactive split panes requires OS X 10.6 or later.",
+                            @"OK",
+                            nil,
+                            nil,
+                            nil);
+            [dimInactiveSplitPanes setState:NSOffState];
+        } else {
+            defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
+        }
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermRefreshTerminal" object: nil userInfo: nil];
     } else if (sender == windowNumber || sender == jobName) {
