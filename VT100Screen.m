@@ -1803,8 +1803,7 @@ static void DumpBuf(screen_char_t* p, int n) {
 
         // ANSI terminals will go to a new line after displaying a character at
         // the rightmost column.
-        if (cursorX >= effective_width &&
-            [[TERMINAL termtype] rangeOfString:@"ANSI" options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location != NSNotFound) {
+        if (cursorX >= effective_width && [TERMINAL isAnsi]) {
             if ([TERMINAL wraparoundMode]) {
                 //set the wrapping flag
                 aLine[WIDTH].code = ((effective_width == WIDTH) ? EOL_SOFT : EOL_DWC);
@@ -1813,7 +1812,14 @@ static void DumpBuf(screen_char_t* p, int n) {
             } else {
                 [self setCursorX:WIDTH - 1
                                Y:cursorY];
-                idx = len - 1;
+                if (idx < len - 1) {
+                    // Iterate once more to draw the last character at the end
+                    // of the line.
+                    idx = len - 1;
+                } else {
+                    // Break out of the loop after the last character is drawn.
+                    idx = len;
+                }
             }
         }
     }

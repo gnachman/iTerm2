@@ -311,6 +311,8 @@ typedef enum {
 
     unsigned int streamOffset;
 
+    BOOL IS_ANSI;
+
     //terminfo
     char  *key_strings[TERMINFO_KEYS];
 }
@@ -369,6 +371,7 @@ typedef enum {
 - (BOOL)screenMode;
 - (BOOL)originMode;
 - (BOOL)wraparoundMode;
+- (BOOL)isAnsi;
 - (BOOL)autorepeatMode;
 - (BOOL)interlaceMode;
 - (BOOL)keypadMode;

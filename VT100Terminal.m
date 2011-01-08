@@ -1524,7 +1524,9 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)setTermType:(NSString *)termtype
 {
-    if (termType) [termType release];
+    if (termType) {
+        [termType autorelease];
+    }
     termType = [termtype retain];
 
     allowKeypadMode = [termType rangeOfString:@"xterm"].location != NSNotFound;
@@ -1567,6 +1569,9 @@ static VT100TCC decode_string(unsigned char *datap,
             key_strings[i] = key_names[i] ? strdup(key_names[i]) : NULL;
         }
     }
+
+    IS_ANSI = [termType rangeOfString:@"ANSI"
+                              options:NSCaseInsensitiveSearch | NSAnchoredSearch ].location != NSNotFound;
 }
 
 - (void)saveCursorAttributes
@@ -2162,6 +2167,12 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     return WRAPAROUND_MODE;
 }
+
+- (BOOL)isAnsi
+{
+    return IS_ANSI;
+}
+
 
 - (BOOL)autorepeatMode
 {
