@@ -34,6 +34,7 @@
 #import <iTerm/PseudoTerminal.h>
 #import <iTerm/BookmarkModel.h>
 #import "PasteboardHistory.h"
+#import "SessionView.h"
 
 static float versionNumber;
 
@@ -414,6 +415,9 @@ static float versionNumber;
     defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
     defaultColorInvertedCursor = [prefs objectForKey:@"ColorInvertedCursor"]?[[prefs objectForKey:@"ColorInvertedCursor"] boolValue]: NO;
     defaultDimInactiveSplitPanes = [prefs objectForKey:@"DimInactiveSplitPanes"]?[[prefs objectForKey:@"DimInactiveSplitPanes"] boolValue]: YES;
+    if (![SessionView dimmingSupported]) {
+        defaultDimInactiveSplitPanes = NO;
+    }
 
     NSString *appCast = defaultCheckTestRelease ?
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
@@ -572,6 +576,9 @@ static float versionNumber;
     [checkTestRelease setState:defaultCheckTestRelease?NSOnState:NSOffState];
     [checkColorInvertedCursor setState:defaultColorInvertedCursor?NSOnState:NSOffState];
     [dimInactiveSplitPanes setState:defaultDimInactiveSplitPanes?NSOnState:NSOffState];
+    if (![SessionView dimmingSupported]) {
+        [dimInactiveSplitPanes setEnabled:NO];
+    }
 
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];

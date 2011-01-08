@@ -51,6 +51,7 @@
     BOOL shuttingDown_;
 }
 
++ (BOOL)dimmingSupported;
 - (id)initWithFrame:(NSRect)frame session:(PTYSession*)session;
 - (void)dealloc;
 - (PTYSession*)session;

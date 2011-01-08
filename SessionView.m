@@ -179,8 +179,31 @@ static const float kTargetFrameRate = 1.0/60.0;
     return kSpan * (1 - brightness) + kMinAlpha;
 }
 
++ (BOOL)dimmingSupported
+{
+    static enum { DIMMING_OK, DIMMING_BROKEN, DIMMING_UNKNOWN } cachedResult = DIMMING_UNKNOWN;
+    if (cachedResult == DIMMING_UNKNOWN) {
+        SInt32 macVersion;
+
+        if (Gestalt(gestaltSystemVersion, &macVersion) == noErr) {
+            if (macVersion <= 0x1050) {
+                cachedResult = DIMMING_BROKEN;
+            } else {
+                cachedResult = DIMMING_OK;
+            }
+        } else {
+            NSLog(@"Gestalt(gestaltSystemVersion) failed. Assuming 10.6 or greater.");
+            cachedResult = DIMMING_OK;
+        }
+    }
+    return cachedResult == DIMMING_OK;
+}
+
 - (void)setDimmed:(BOOL)isDimmed
 {
+    if (![SessionView dimmingSupported]) {
+        return;
+    }
     if (shuttingDown_) {
         return;
     }
