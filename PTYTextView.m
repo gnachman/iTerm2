@@ -3216,7 +3216,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         } else {
             havePrevChar = NO;
         }
-        curX += thisCharAdvance;
 
         // draw underline
         if (theLine[i].underline && drawable) {
@@ -3226,6 +3225,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                                   doubleWidth ? charWidth * 2 : charWidth,
                                   1));
         }
+        curX += thisCharAdvance;
         prevCharRunType = thisCharRunType;
         prevCharFont = thisCharFont;
         prevCharColor = thisCharColor;
@@ -3789,13 +3789,15 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             // get the cursor line
             theLine = [dataSource getLineAtScreenIndex:yStart];
             double_width = 0;
-            int aChar = theLine[x1].code;
-            BOOL isComplex = theLine[x1].complexChar;
+            screen_char_t screenChar = theLine[x1];
+            int aChar = screenChar.code;
+            BOOL isComplex = screenChar.complexChar;
             if (aChar) {
                 if (aChar == DWC_RIGHT && x1 > 0) {
                     x1--;
-                    aChar = theLine[x1].code;
-                    isComplex = theLine[x1].complexChar;
+                    screenChar = theLine[x1];
+                    aChar = screenChar.code;
+                    isComplex = screenChar.complexChar;
                 }
                 double_width = (x1 < WIDTH-1) && (theLine[x1+1].code == DWC_RIGHT);
             }
@@ -3805,14 +3807,14 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             NSColor *bgColor;
             if (colorInvertedCursor) {
                 if (reversed) {
-                    bgColor = [self colorForCode:theLine[x1].backgroundColor
-                              alternateSemantics:theLine[x1].alternateBackgroundSemantics
-                                            bold:theLine[x1].bold];
+                    bgColor = [self colorForCode:screenChar.backgroundColor
+                              alternateSemantics:screenChar.alternateBackgroundSemantics
+                                            bold:screenChar.bold];
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 } else {
-                    bgColor = [self colorForCode:theLine[x1].foregroundColor
-                              alternateSemantics:theLine[x1].alternateForegroundSemantics
-                                            bold:theLine[x1].bold];
+                    bgColor = [self colorForCode:screenChar.foregroundColor
+                              alternateSemantics:screenChar.alternateForegroundSemantics
+                                            bold:screenChar.bold];
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 }
                 [bgColor set];
@@ -3849,19 +3851,19 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                             if ([[self window] isKeyWindow]) {
                                 // Draw a character in background color when
                                 // window is key.
-                                fgColor = theLine[x1].backgroundColor;
-                                fgAlt = theLine[x1].alternateBackgroundSemantics;
+                                fgColor = screenChar.backgroundColor;
+                                fgAlt = screenChar.alternateBackgroundSemantics;
                                 fgBold = NO;
                             } else {
                                 // Draw character in foreground color when there
                                 // is just a frame around it.
-                                fgColor = theLine[x1].foregroundColor;
-                                fgAlt = theLine[x1].alternateForegroundSemantics;
-                                fgBold = theLine[x1].bold;
+                                fgColor = screenChar.foregroundColor;
+                                fgAlt = screenChar.alternateForegroundSemantics;
+                                fgBold = screenChar.bold;
                             }
                             NSColor* proposedForeground = [[self colorForCode:fgColor
                                                            alternateSemantics:fgAlt
-                                                                         bold:theLine[x1].bold] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+                                                                         bold:screenChar.bold] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
                             CGFloat fgBrightness = [proposedForeground brightnessComponent];
                             CGFloat bgBrightness = [[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace] brightnessComponent];
                             NSColor* overrideColor = nil;
@@ -3878,18 +3880,15 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                             BOOL alt;
                             BOOL isBold;
                             if ([[self window] isKeyWindow]) {
-                                theColor = theLine[x1].backgroundColor;
-                                alt = theLine[x1].alternateBackgroundSemantics;
-                                isBold = theLine[x1].bold;
+                                theColor = screenChar.backgroundColor;
+                                alt = screenChar.alternateBackgroundSemantics;
+                                isBold = screenChar.bold;
                             } else {
-                                theColor = theLine[x1].foregroundColor;
-                                alt = theLine[x1].alternateForegroundSemantics;
-                                isBold = theLine[x1].bold;
+                                theColor = screenChar.foregroundColor;
+                                alt = screenChar.alternateForegroundSemantics;
+                                isBold = screenChar.bold;
                             }
-                            screen_char_t sct;
-                            sct.code = aChar;
-                            sct.complexChar = isComplex;
-                            [self _drawCharacter:sct
+                            [self _drawCharacter:screenChar
                                          fgColor:theColor
                               alternateSemantics:alt
                                           fgBold:isBold
@@ -3905,16 +3904,13 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                             if ([[self window] isKeyWindow]) {
                                 theColor = ALTSEM_CURSOR;
                                 alt = YES;
-                                isBold = theLine[x1].bold;
+                                isBold = screenChar.bold;
                             } else {
-                                theColor = theLine[x1].foregroundColor;
-                                alt = theLine[x1].alternateForegroundSemantics;
-                                isBold = theLine[x1].bold;
+                                theColor = screenChar.foregroundColor;
+                                alt = screenChar.alternateForegroundSemantics;
+                                isBold = screenChar.bold;
                             }
-                            screen_char_t sct;
-                            sct.code = aChar;
-                            sct.complexChar = isComplex;
-                            [self _drawCharacter:sct
+                            [self _drawCharacter:screenChar
                                          fgColor:theColor
                               alternateSemantics:alt
                                           fgBold:isBold
