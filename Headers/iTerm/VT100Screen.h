@@ -37,8 +37,6 @@
 @class PTYTextView;
 @class iTermGrowlDelegate;
 
-#define TABWINDOW    300
-
 // Convert a string into screen_char_t. This deals with padding out double-
 // width characters, joining combining marks, and skipping zero-width spaces.
 //
@@ -71,7 +69,7 @@ void StringToScreenChars(NSString *s,
     int ALT_SAVE_CURSOR_Y;
     int SCROLL_TOP;
     int SCROLL_BOTTOM;
-    BOOL tabStop[TABWINDOW];
+    NSMutableSet* tabStops;
 
     VT100Terminal *TERMINAL;
     PTYTask *SHELL;
@@ -195,6 +193,9 @@ void StringToScreenChars(NSString *s,
 - (void)backTab;
 - (void)setTab;
 - (void)clearTabStop;
+- (BOOL)haveTabStopAt:(int)x;
+- (void)setTabStopAt:(int)x;
+- (void)removeTabStopAt:(int)x;
 - (void)clearScreen;
 - (void)eraseInDisplay:(VT100TCC)token;
 - (void)eraseInLine:(VT100TCC)token;
@@ -265,3 +266,4 @@ void StringToScreenChars(NSString *s,
 - (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info;
 
 @end
+

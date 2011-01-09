@@ -1044,7 +1044,6 @@ static void SwapPoint(NSPoint* point) {
 - (void)setSize:(NSSize)newSize
 {
     PtyLog(@"PTYTab setSize:%fx%f", (float)newSize.width, (float)newSize.height);
-    NSSize currentSize = [root_ frame].size;
     [root_ setFrameSize:newSize];
     [root_ adjustSubviews];
     [self _splitViewDidResizeSubviews:root_];

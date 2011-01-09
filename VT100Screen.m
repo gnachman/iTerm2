@@ -218,9 +218,10 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 @interface VT100Screen (Private)
 
-- (screen_char_t *) _getLineAtIndex: (int) anIndex fromLine: (screen_char_t *) aLine;
-- (screen_char_t *) _getDefaultLineWithWidth: (int) width;
-- (int) _addLineToScrollback;
+- (screen_char_t *)_getLineAtIndex:(int)anIndex fromLine:(screen_char_t *)aLine;
+- (screen_char_t*)_getDefaultLineWithWidth:(int)width;
+- (int)_addLineToScrollback;
+- (void)_setInitialTabStops;
 
 @end
 
@@ -269,16 +270,13 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
     max_scrollback_lines = DEFAULT_SCROLLBACK;
     scrollback_overflow = 0;
-    [self clearTabStop];
-
+    tabStops = [[NSMutableSet alloc] init];
+    [self _setInitialTabStops];
     linebuffer = [[LineBuffer alloc] init];
 
-    // set initial tabs
-    int i;
-    for(i = TABSIZE; i < TABWINDOW; i += TABSIZE)
-        tabStop[i] = YES;
-
-    for(i=0;i<4;i++) saveCharset[i]=charset[i]=0;
+    for (int i = 0; i < 4; i++) {
+        saveCharset[i] = charset[i] = 0;
+    }
 
     // Need Growl plist stuff
     gd = [iTermGrowlDelegate sharedInstance];
@@ -314,6 +312,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         free(temp_buffer);
     }
 
+    [tabStops release];
     [printToAnsiString release];
     [linebuffer release];
     [dvr release];
@@ -373,7 +372,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     default_fg_code = [TERMINAL foregroundColorCodeReal];
     default_bg_code = [TERMINAL backgroundColorCodeReal];
     default_line_width = WIDTH;
-    aDefaultLine = [self _getDefaultLineWithWidth: WIDTH];
+    aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
     for(i = 0; i < HEIGHT; i++) {
         memcpy([self getLineAtScreenIndex: i],
                aDefaultLine,
@@ -404,7 +403,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     NSAssert([linebuffer numLinesWithWidth: WIDTH] == current_scrollback_lines, @"Scrollback mismatch");
     if (theIndex >= current_scrollback_lines) {
         // Get a line from the circular screen buffer
-        return [self _getLineAtIndex:(theIndex - current_scrollback_lines) fromLine: screen_top];
+        return [self _getLineAtIndex:(theIndex - current_scrollback_lines)
+                            fromLine:screen_top];
     } else {
         // Get a line from the scrollback buffer.
         memcpy(buffer, default_line, sizeof(screen_char_t) * WIDTH);
@@ -693,7 +693,7 @@ static char* FormatCont(int c)
 #ifdef DEBUG_CORRUPTION
     memset(new_buffer_lines, -1, new_height*(new_width+1)*sizeof(screen_char_t));
 #endif
-    screen_char_t* defaultLine = [self _getDefaultLineWithWidth: new_width];
+    screen_char_t* defaultLine = [self _getDefaultLineWithWidth:new_width];
     for (i = 0; i < new_height; ++i) {
         memcpy(new_buffer_lines + (new_width + 1) * i, defaultLine, sizeof(screen_char_t) * (new_width+1));
     }
@@ -880,17 +880,12 @@ static char* FormatCont(int c)
     SCROLL_BOTTOM = HEIGHT - 1;
 
     [self clearScreen];
-    [self clearTabStop];
+    [self _setInitialTabStops];
     SAVE_CURSOR_X = 0;
     ALT_SAVE_CURSOR_X = 0;
     [self setCursorX:cursorX Y:0];
     SAVE_CURSOR_Y = 0;
     ALT_SAVE_CURSOR_Y = 0;
-
-    // set initial tabs
-    for (int i = TABSIZE; i < TABWINDOW; i += TABSIZE) {
-        tabStop[i] = YES;
-    }
 
     for (int i = 0; i < 4; i++) {
         saveCharset[i] = charset[i] = 0;
@@ -1077,7 +1072,7 @@ static char* FormatCont(int c)
     case VT100CSI_EL:   [self eraseInLine:token]; break;
     case VT100CSI_HTS:
         if (cursorX < WIDTH) {
-            tabStop[cursorX] = YES;
+            [self setTabStopAt:cursorX];
         }
         break;
     case VT100CSI_HVP: [self cursorToX:token.u.csi.p[1]
@@ -1116,8 +1111,14 @@ static char* FormatCont(int c)
     case VT100CSI_SM: break;
     case VT100CSI_TBC:
         switch (token.u.csi.p[0]) {
-            case 3: [self clearTabStop]; break;
-            case 0: if (cursorX < WIDTH) tabStop[cursorX] = NO;
+            case 3:
+                [self clearTabStop];
+                break;
+
+            case 0:
+                if (cursorX < WIDTH) {
+                    [self removeTabStopAt:cursorX];
+                }
         }
         break;
 
@@ -1925,7 +1926,9 @@ static void DumpBuf(screen_char_t* p, int n) {
 
         // set last screen line default
         aLine = [self getLineAtScreenIndex: (HEIGHT - 1)];
-        memcpy(aLine, [self _getDefaultLineWithWidth: WIDTH], REAL_WIDTH*sizeof(screen_char_t));
+        memcpy(aLine,
+               [self _getDefaultLineWithWidth:WIDTH],
+               REAL_WIDTH*sizeof(screen_char_t));
         DebugLog(@"setNewline scroll screen");
     }
     else
@@ -1998,7 +2001,9 @@ static void DumpBuf(screen_char_t* p, int n) {
 #endif
 
     [self setCursorX:cursorX - 1 Y:cursorY];
-    for (; !tabStop[cursorX] && cursorX > 0; [self setCursorX:cursorX - 1 Y:cursorY]) {
+    for (;
+         ![self haveTabStopAt:cursorX] && cursorX > 0;
+         [self setCursorX:cursorX - 1 Y:cursorY]) {
         ;
     }
 
@@ -2037,7 +2042,7 @@ static void DumpBuf(screen_char_t* p, int n) {
             [self setCursorX:0 Y:cursorY];
             aLine = [self getLineAtScreenIndex:cursorY];
         }
-        if (tabStop[cursorX]) {
+        if ([self haveTabStopAt:cursorX]) {
             break;
         }
         if (aLine[cursorX].code != 0) {
@@ -2505,7 +2510,9 @@ static void DumpBuf(screen_char_t* p, int n) {
         }
         // new line at SCROLL_BOTTOM with default settings
         targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
-        memcpy(targetLine, [self _getDefaultLineWithWidth: WIDTH], REAL_WIDTH*sizeof(screen_char_t));
+        memcpy(targetLine,
+               [self _getDefaultLineWithWidth:WIDTH],
+               REAL_WIDTH*sizeof(screen_char_t));
 
         // everything between SCROLL_TOP and SCROLL_BOTTOM is dirty
         memset(dirty+SCROLL_TOP*WIDTH,1,(SCROLL_BOTTOM-SCROLL_TOP+1)*WIDTH*sizeof(char));
@@ -2550,7 +2557,9 @@ static void DumpBuf(screen_char_t* p, int n) {
     }
     // new line at SCROLL_TOP with default settings
     targetLine = [self getLineAtScreenIndex:SCROLL_TOP];
-    memcpy(targetLine, [self _getDefaultLineWithWidth: WIDTH], REAL_WIDTH*sizeof(screen_char_t));
+    memcpy(targetLine,
+           [self _getDefaultLineWithWidth:WIDTH],
+           REAL_WIDTH*sizeof(screen_char_t));
 
     // everything between SCROLL_TOP and SCROLL_BOTTOM is dirty
     memset(dirty+SCROLL_TOP*WIDTH,1,(SCROLL_BOTTOM-SCROLL_TOP+1)*WIDTH*sizeof(char));
@@ -2624,7 +2633,7 @@ static void DumpBuf(screen_char_t* p, int n) {
     }
 
     // clear the n lines
-    aDefaultLine = [self _getDefaultLineWithWidth: WIDTH];
+    aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
     for (i = 0; i < n; i++) {
         sourceLine = [self getLineAtScreenIndex:cursorY + i];
         memcpy(sourceLine, aDefaultLine, REAL_WIDTH*sizeof(screen_char_t));
@@ -2815,10 +2824,24 @@ static void DumpBuf(screen_char_t* p, int n) {
     return cursorY+1;
 }
 
-- (void) clearTabStop
+- (void)clearTabStop
 {
-    int i;
-    for(i=0;i<300;i++) tabStop[i]=NO;
+    [tabStops removeAllObjects];
+}
+
+- (BOOL)haveTabStopAt:(int)x
+{
+    return [tabStops containsObject:[NSNumber numberWithInt:x]];
+}
+
+- (void)setTabStopAt:(int)x
+{
+    [tabStops addObject:[NSNumber numberWithInt:x]];
+}
+
+- (void)removeTabStopAt:(int)x
+{
+    [tabStops removeObject:[NSNumber numberWithInt:x]];
 }
 
 - (int)numberOfLines
@@ -2836,7 +2859,7 @@ static void DumpBuf(screen_char_t* p, int n) {
     scrollback_overflow = 0;
 }
 
-- (char    *)dirty
+- (char *)dirty
 {
     return dirty;
 }
@@ -3145,7 +3168,7 @@ static void DumpBuf(screen_char_t* p, int n) {
 @implementation VT100Screen (Private)
 
 // gets line offset by specified index from specified line poiner; accounts for buffer wrap
-- (screen_char_t *)_getLineAtIndex: (int) anIndex fromLine: (screen_char_t *) aLine
+- (screen_char_t *)_getLineAtIndex:(int)anIndex fromLine:(screen_char_t *)aLine
 {
     screen_char_t *the_line = NULL;
 
@@ -3226,6 +3249,14 @@ static void DumpBuf(screen_char_t* p, int n) {
     return dropped;
 }
 
+- (void)_setInitialTabStops
+{
+    [self clearTabStop];
+    const int kInitialTabWindow = 1000;
+    for (int i = 0; i < kInitialTabWindow; i += TABSIZE) {
+        [tabStops addObject:[NSNumber numberWithInt:i]];
+    }
+}
 
 @end
 
