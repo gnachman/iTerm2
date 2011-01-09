@@ -56,7 +56,10 @@ void DebugLog(NSString* value);
     IBOutlet NSMenuItem *irPrev;
 
     IBOutlet NSMenuItem *secureInput;
+    BOOL secureInputDesired_;
 }
+
+- (void)awakeFromNib;
 
 // NSApplication Delegate methods
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification;

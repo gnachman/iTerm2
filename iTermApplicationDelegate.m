@@ -258,11 +258,19 @@ int gDebugLogFile = -1;
                                                  name:@"nonTerminalWindowBecameKey"
                                                object:nil];
 
-    [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self andSelector:@selector(getUrl:withReplyEvent:) forEventClass:kInternetEventClass andEventID:kAEGetURL];
+    [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self
+                                                       andSelector:@selector(getUrl:withReplyEvent:)
+                                                     forEventClass:kInternetEventClass
+                                                        andEventID:kAEGetURL];
 
     aboutController = nil;
 
     return self;
+}
+
+- (void)awakeFromNib
+{
+    secureInputDesired_ = [[[NSUserDefaults standardUserDefaults] objectForKey:@"Secure Input"] boolValue];
 }
 
 - (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent
@@ -408,8 +416,11 @@ static void FlushDebugLog() {
 
 - (IBAction)toggleSecureInput:(id)sender
 {
-    [secureInput setState:[secureInput state] == NSOnState ? NSOffState : NSOnState];
-    if ([secureInput state] == NSOnState) {
+    // Set secureInputDesired_ to the opposite of the current state.
+    secureInputDesired_ = [secureInput state] == NSOffState;
+
+    // Try to set the system's state of secure input to the desired state.
+    if (secureInputDesired_) {
         if (EnableSecureEventInput() != noErr) {
             NSLog(@"Failed to enable secure input.");
         }
@@ -418,24 +429,35 @@ static void FlushDebugLog() {
             NSLog(@"Failed to disable secure input.");
         }
     }
+
+    // Set the state of the control to the new true state.
+    [secureInput setState:IsSecureEventInputEnabled() ? NSOnState : NSOffState];
+
+    // Save the preference, independent of whether it succeeded or not.
+    [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:secureInputDesired_]
+                                              forKey:@"Secure Input"];
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification
 {
-    if ([secureInput state] == NSOnState) {
+    if (secureInputDesired_) {
         if (EnableSecureEventInput() != noErr) {
             NSLog(@"Failed to enable secure input.");
         }
     }
+    // Set the state of the control to the new true state.
+    [secureInput setState:IsSecureEventInputEnabled() ? NSOnState : NSOffState];
 }
 
 - (void)applicationDidResignActive:(NSNotification *)aNotification
 {
-    if ([secureInput state] == NSOnState) {
+    if (secureInputDesired_) {
         if (DisableSecureEventInput() != noErr) {
             NSLog(@"Failed to disable secure input.");
         }
     }
+    // Set the state of the control to the new true state.
+    [secureInput setState:IsSecureEventInputEnabled() ? NSOnState : NSOffState];
 }
 
 // Debug logging
