@@ -665,8 +665,7 @@ static BOOL initDone = NO;
     return [terminalWindows objectAtIndex:i];
 }
 
-
-static void OnHotKeyEvent()
+void OnHotKeyEvent(void)
 {
     if ([NSApp isActive]) {
         PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
@@ -684,6 +683,13 @@ static void OnHotKeyEvent()
             [controller newWindow:nil];
         }
     }
+}
+
+- (BOOL)eventIsHotkey:(NSEvent*)e
+{
+    return (hotkeyCode_ &&
+            ([e modifierFlags] & hotkeyModifiers_) == hotkeyModifiers_ &&
+            [e keyCode] == hotkeyCode_);
 }
 
 /*
@@ -711,9 +717,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     }
 
     NSEvent* e = [NSEvent eventWithCGEvent:event];
-    if (cont->hotkeyCode_ &&
-        ([e modifierFlags] & cont->hotkeyModifiers_) == cont->hotkeyModifiers_ &&
-        [e keyCode] == cont->hotkeyCode_) {
+    if ([cont eventIsHotkey:e]) {
         OnHotKeyEvent();
         return NULL;
     }

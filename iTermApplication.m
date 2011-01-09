@@ -56,6 +56,13 @@
 - (void)sendEvent:(NSEvent*)event
 {
     if ([event type] == NSKeyDown) {
+        if (IsSecureEventInputEnabled() &&
+            [[iTermController sharedInstance] eventIsHotkey:event]) {
+            // User pressed the hotkey while secure input is enabled so the event
+            // tap won't get it. Do what the event tap would do in this case.
+            OnHotKeyEvent();
+            return;
+        }
         PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
         PreferencePanel* privatePrefPanel = [PreferencePanel sessionsInstance];
         PseudoTerminal* currentTerminal = [[iTermController sharedInstance] currentTerminal];

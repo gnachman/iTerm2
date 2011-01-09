@@ -78,6 +78,7 @@
 - (void)irAdvance:(int)dir;
 - (NSUInteger)indexOfTerminal:(PseudoTerminal*)terminal;
 
+- (BOOL)eventIsHotkey:(NSEvent*)e;
 - (void)unregisterHotkey;
 - (void)registerHotkey:(int)keyCode modifiers:(int)modifiers;
 
@@ -102,6 +103,8 @@
 
 // a class method to provide the keys for KVC:
 - (NSArray*)kvcKeys;
+
+void OnHotKeyEvent(void);
 
 @end
 
