@@ -240,6 +240,7 @@
         [minuteRefreshTimer_ invalidate];
         minuteRefreshTimer_ = nil;
     }
+    [self setSession:nil];
 }
 
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex

@@ -737,6 +737,10 @@ NSString *sessionsKey = @"sessions";
           __FILE__, __LINE__, aNotification);
 #endif
 
+    // Close popups.
+    [pbHistoryView close];
+    [autocompleteView close];
+
     // tabBarControl is holding on to us, so we have to tell it to let go
     [tabBarControl setDelegate:nil];
 

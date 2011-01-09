@@ -338,6 +338,7 @@ DebugLog([NSString stringWithFormat:args]); \
         timer_ = nil;
     }
     [substring_ setString:@""];
+    [self setSession:nil];
 }
 
 - (void)onOpen
