@@ -698,7 +698,35 @@ static char* FormatCont(int c)
         memcpy(new_buffer_lines + (new_width + 1) * i, defaultLine, sizeof(screen_char_t) * (new_width+1));
     }
 
+    int selectionStartPosition = -1;
+    int selectionEndPosition = -1;
+    BOOL hasSelection = [display selectionStartX] != -1;
     [self _appendScreenToScrollback];
+    if (hasSelection) {
+        [linebuffer convertCoordinatesAtX:[display selectionStartX]
+                                      atY:[display selectionStartY]
+                                withWidth:WIDTH
+                               toPosition:&selectionStartPosition
+                                   offset:0];
+        [linebuffer convertCoordinatesAtX:[display selectionEndX]
+                                      atY:[display selectionEndY]
+                                withWidth:WIDTH
+                               toPosition:&selectionEndPosition
+                                   offset:0];
+    }
+
+    int newSelStartX = -1, newSelStartY = -1;
+    int newSelEndX = -1, newSelEndY = -1;
+    if (hasSelection) {
+        [linebuffer convertPosition:selectionStartPosition
+                          withWidth:new_width
+                                toX:&newSelStartX
+                                toY:&newSelStartY];
+        [linebuffer convertPosition:selectionEndPosition
+                          withWidth:new_width
+                                toX:&newSelEndX
+                                toY:&newSelEndY];
+    }
 
 #ifdef DEBUG_RESIZEDWIDTH
     NSLog(@"After push:\n");
@@ -813,16 +841,27 @@ static char* FormatCont(int c)
 #ifdef DEBUG_RESIZEDWIDTH
     NSLog(@"Before dropExcessLines have %d\n", [linebuffer numLinesWithWidth: WIDTH]);
 #endif
-    [linebuffer dropExcessLinesWithWidth: WIDTH];
+    int linesDropped = [linebuffer dropExcessLinesWithWidth: WIDTH];
     int lines = [linebuffer numLinesWithWidth: WIDTH];
     NSAssert(lines >= 0, @"Negative lines");
     current_scrollback_lines = lines;
-
 
     // An immediate refresh is needed so that the size of TEXTVIEW can be
     // adjusted to fit the new size
     DebugLog(@"resizeWidth setDirty");
     [display refresh];
+
+    if (hasSelection &&
+        newSelStartY >= linesDropped &&
+        newSelEndY >= linesDropped) {
+        [display setSelectionFromX:newSelStartX
+                             fromY:newSelStartY - linesDropped
+                               toX:newSelEndX
+                               toY:newSelEndY - linesDropped];
+    } else {
+        [display deselect];
+    }
+
     [SESSION updateScroll];
 #ifdef DEBUG_RESIZEDWIDTH
     NSLog(@"After resizeWidth\n");

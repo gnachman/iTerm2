@@ -248,6 +248,12 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)setSelectedTextColor:(NSColor *)aColor;
 - (void)setCursorTextColor:(NSColor*)color;
 
+- (int)selectionStartX;
+- (int)selectionStartY;
+- (int)selectionEndX;
+- (int)selectionEndY;
+- (void)setSelectionFromX:(int)fromX fromY:(int)fromY toX:(int)toX toY:(int)toY;
+
 - (float)excess;
 
 

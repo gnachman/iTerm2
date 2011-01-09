@@ -341,6 +341,34 @@ static NSCursor* textViewCursor =  nil;
     markedTextAttributes=attr;
 }
 
+- (int)selectionStartX
+{
+    return startX;
+}
+
+- (int)selectionStartY
+{
+    return startY;
+}
+
+- (int)selectionEndX
+{
+    return endX;
+}
+
+- (int)selectionEndY
+{
+    return endY;
+}
+
+- (void)setSelectionFromX:(int)fromX fromY:(int)fromY toX:(int)toX toY:(int)toY
+{
+    startX = fromX;
+    startY = fromY;
+    endX = toX;
+    endY = toY;
+}
+    
 - (void)setFGColor:(NSColor*)color
 {
     [defaultFGColor release];
