@@ -634,7 +634,9 @@ static float versionNumber;
             defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
         }
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
-        [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermRefreshTerminal" object: nil userInfo: nil];
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermRefreshTerminal"
+                                                            object:nil
+                                                          userInfo:nil];
     } else if (sender == windowNumber || sender == jobName) {
         defaultWindowNumber = ([windowNumber state] == NSOnState);
         defaultJobName = ([jobName state] == NSOnState);

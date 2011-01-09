@@ -173,6 +173,11 @@
     PasteboardHistoryView* pbHistoryView;
     AutocompleteView* autocompleteView;
 
+    // Size of window before opening bottom bar frame.
+    NSRect preBottomBarFrame;
+    // True if preBottomBarFrame is valid.
+    BOOL pbbfValid;
+
     NSTimer* fullScreenTabviewTimer_;
 
     // This is a hack to support old applescript code that set the window size
