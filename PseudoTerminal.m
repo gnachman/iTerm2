@@ -980,6 +980,8 @@ NSString *sessionsKey = @"sessions";
         [NSMenu setMenuBarVisible:YES];
         PtyLog(@"toggleFullScreen - allocate new terminal");
         newTerminal = [[PseudoTerminal alloc] initWithSmartLayout:NO fullScreen:nil];
+        PtyLog(@"toggleFullScreen - set new frame to old frame: %fx%f", oldFrame_.size.width, oldFrame_.size.height);
+        [[newTerminal window] setFrame:oldFrame_ display:YES];
     }
 
     _fullScreen = !_fullScreen;
@@ -1036,10 +1038,7 @@ NSString *sessionsKey = @"sessions";
     // copy of ourselves and release it when we're all done.
     [self retain];
     [[self window] close];
-    if (!fs) {
-        PtyLog(@"toggleFullScreen - set new frame to old frame: %fx%f", oldFrame_.size.width, oldFrame_.size.height);
-        [[newTerminal window] setFrame:oldFrame_ display:YES];
-    } else {
+    if (fs) {
         PtyLog(@"toggleFullScreen - call adjustFullScreenWindowForBottomBarChange");
         [newTerminal adjustFullScreenWindowForBottomBarChange];
         [newTerminal hideMenuBar];

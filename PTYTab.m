@@ -1045,11 +1045,6 @@ static void SwapPoint(NSPoint* point) {
 {
     PtyLog(@"PTYTab setSize:%fx%f", (float)newSize.width, (float)newSize.height);
     NSSize currentSize = [root_ frame].size;
-    if ((int)newSize.width == (int)currentSize.width &&
-        (int)newSize.height == (int)currentSize.height) {
-        // No-op
-        return;
-    }
     [root_ setFrameSize:newSize];
     [root_ adjustSubviews];
     [self _splitViewDidResizeSubviews:root_];

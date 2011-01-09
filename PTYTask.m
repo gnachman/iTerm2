@@ -690,6 +690,7 @@ static void reapchild(int n)
 
 - (void)setWidth:(int)width height:(int)height
 {
+    PtyTaskDebugLog(@"Set terminal size to %dx%d", width, height);
     struct winsize winsize;
 
     if (fd == -1) {
