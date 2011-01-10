@@ -1,5 +1,36 @@
 These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2. Alpha 14 is known to be quite reliable, though.
 
+Alpha 16
+This release brings Unicode support for combining marks and code points beyond the Basic Multilingual Plane. Non-English users may notice that text lines up better, characters render properly, and many formerly invisible CJK ideograms now work correctly. This release also features a large number of bug fixes.
+
+Big features
+- Support for combining marks, surrogate pairs.
+- Glyphs not in either selected font will be drawn from other fonts.
+
+Enhancements
+- Make scrolling by selecting text go much faster.
+- Secure input state is saved when you restart iTerm2.
+- Added crash reporting.
+- Defaults for new users changed: Bonjour is off by default, windows zoom fullscreen, warn when closing multiple tabs, smart cursor on by default (bug 436, 448)
+
+Bug fixes
+- Fixed applescript session lookup (bug 439).
+- Don't output a digit if you press cmd-number but no tab exists with that number (bug 434).
+- Fix "draw bold text in bright colors" preference which wouldn't stay unchecked (bug 429).
+- Prompt the user about outdated key mappings that are now for switching panes (bug 427).
+- Handle changing font size in fullscreen mode correctly (bug 426).
+- Fixed bug where xterm mouse reporting prevented clicking in a pane from giving it focused (bug 419).
+- Improve behavior when increasing font size and window is already as big as it can get (bug 446).
+- Fix cmd-click on URLs with non-ASCII characters (bug 442).
+- Fix infinite loop when using ANSI terminal and no-wrap mode (bug 454).
+- Disabled dimming inactive panes in os 10.5 where it doesn't work (bug 440).
+- Fix crash that happened after closing a session that had used the paste history.
+- Preserve text selection when resizing (bug 414).
+- Restore window size when closing find bar (bug 425).
+- Avoid multiple rapid session resizings when exiting fullscreen (bug 191).
+- Fix crash when setting tab stops in huge windows (bug 382).
+- Make hotkey work when secure input is on (bug 450).
+
 Alpha 15
 This release has one big feature: split panes! You can divide a tab into rectangular regions, each showing a different session. Also, you can now save your window arrangement and have it automatically restored when you start iTerm2.
 
