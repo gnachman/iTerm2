@@ -414,6 +414,12 @@ static void FlushDebugLog() {
         [gDebugLogStr setString:@""];
 }
 
+- (IBAction)toggleUseTransparency:(id)sender
+{
+    [[[iTermController sharedInstance] currentTerminal] toggleUseTransparency:sender];
+    [self updateUseTransparencyMenuItem];
+}
+
 - (IBAction)toggleSecureInput:(id)sender
 {
     // Set secureInputDesired_ to the opposite of the current state.
@@ -688,9 +694,14 @@ void DebugLog(NSString* value)
     }
 }
 
+- (void)updateUseTransparencyMenuItem
+{
+    [useTransparency setState:[[[iTermController sharedInstance] currentTerminal] useTransparency] ? NSOnState : NSOffState];
+}
+
 - (BOOL) validateMenuItem: (NSMenuItem *) menuItem
 {
-  return YES;
+    return YES;
 }
 
 - (IBAction)buildScriptMenu:(id)sender

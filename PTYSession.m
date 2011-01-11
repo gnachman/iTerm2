@@ -1366,7 +1366,6 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     [SCREEN setGrowlFlag:[[aDict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue]];
     [SCREEN setBlinkingCursor:[[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];
     [TEXTVIEW setBlinkingCursor:[[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];
-    [TEXTVIEW setUseTransparency:YES];
     PTYTab* currentTab = [[[self tab] parentWindow] currentTab];
     if (currentTab == nil || currentTab == [self tab]) {
         [[self tab] recheckBlur];
@@ -1816,9 +1815,6 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
         transparency = 0.9;
     }
 
-    if ([[[self tab] parentWindow] fullScreen]) {
-        transparency = 0;
-    }
     // set transparency of background image
     [SCROLLVIEW setTransparency:transparency];
     [TEXTVIEW setTransparency:transparency];

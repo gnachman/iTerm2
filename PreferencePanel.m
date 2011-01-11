@@ -1058,10 +1058,10 @@ static float versionNumber;
     return nil;
 }
 
-- (void) _updateFontsDisplay
+- (void)_updateFontsDisplay
 {
-        // load the fonts
-        NSString *fontName;
+    // load the fonts
+    NSString *fontName;
     if (normalFont != nil) {
             fontName = [NSString stringWithFormat: @"%gpt %@", [normalFont pointSize], [normalFont displayName]];
     } else {

@@ -110,7 +110,6 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // transparency
     float transparency;
-    BOOL useTransparency;
 
     // data source
     VT100Screen *dataSource;
@@ -282,7 +281,6 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (float)transparency;
 - (void)setTransparency:(float)fVal;
 - (BOOL)useTransparency;
-- (void)setUseTransparency:(BOOL)flag;
 
 //
 // Drag and Drop methods for our text view

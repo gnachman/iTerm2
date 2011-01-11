@@ -2797,13 +2797,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (BOOL)useTransparency
 {
-    return useTransparency;
-}
-
-- (void)setUseTransparency: (BOOL) flag
-{
-    useTransparency = flag;
-    [self setNeedsDisplay:YES];
+    return [[[[dataSource session] tab] realParentWindow] useTransparency];
 }
 
 // service stuff
@@ -2852,7 +2846,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
     BOOL hasBGImage = [scrollView backgroundImage] != nil;
-    float alpha = useTransparency ? 1.0 - transparency : 1.0;
+    float alpha = [self useTransparency] ? 1.0 - transparency : 1.0;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                                      toPoint:dest];
@@ -2867,7 +2861,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
     BOOL hasBGImage = [scrollView backgroundImage] != nil;
-    float alpha = useTransparency ? 1.0 - transparency : 1.0;
+    float alpha = [self useTransparency] ? 1.0 - transparency : 1.0;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect];
     } else {
@@ -3395,7 +3389,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     screen_char_t* theLine = [dataSource getLineAtIndex:line];
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
     BOOL hasBGImage = [scrollView backgroundImage] != nil;
-    float alpha = useTransparency ? 1.0 - transparency : 1.0;
+    float alpha = [self useTransparency] ? 1.0 - transparency : 1.0;
     BOOL reversed = [[dataSource terminal] screenMode];
     NSColor *aColor = nil;
 
@@ -3774,7 +3768,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     float cursorWidth, cursorHeight;
     float curX, curY;
     BOOL double_width;
-    float alpha = useTransparency ? 1.0 - transparency : 1.0;
+    float alpha = [self useTransparency] ? 1.0 - transparency : 1.0;
     const BOOL reversed = [[dataSource terminal] screenMode];
 
     WIDTH = [dataSource width];

@@ -131,6 +131,9 @@
     ////////////////////////////////////////////////////////////////////////////
     // Miscellaneous
 
+    // Is the transparency setting respected?
+    BOOL useTransparency_;
+    
     // Is this a full screenw indow?
     BOOL _fullScreen;
 
@@ -259,6 +262,10 @@
 
 // Call writeTask: for each session's shell with the given data.
 - (void)sendInputToAllSessions:(NSData *)data;
+
+// Toggle whether transparency is allowed in this terminal.
+- (IBAction)toggleUseTransparency:(id)sender;
+- (BOOL)useTransparency;
 
 // Turn full-screen mode on or off. Creates a new PseudoTerminal and moves this
 // one's state into it.

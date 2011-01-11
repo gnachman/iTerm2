@@ -56,6 +56,7 @@ void DebugLog(NSString* value);
     IBOutlet NSMenuItem *irPrev;
 
     IBOutlet NSMenuItem *secureInput;
+    IBOutlet NSMenuItem *useTransparency;
     BOOL secureInputDesired_;
 }
 
@@ -71,6 +72,7 @@ void DebugLog(NSString* value);
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification;
 - (void)applicationDidResignActive:(NSNotification *)aNotification;
 
+- (IBAction)toggleUseTransparency:(id)sender;
 - (IBAction)toggleSecureInput:(id)sender;
 
 - (IBAction)newWindow:(id)sender;
@@ -80,6 +82,7 @@ void DebugLog(NSString* value);
 - (IBAction)debugLogging:(id)sender;
 
 - (IBAction)toggleSecureInput:(id)sender;
+- (void)updateUseTransparencyMenuItem;
 
     // About window
 - (IBAction)showAbout:(id)sender;

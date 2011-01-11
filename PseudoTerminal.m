@@ -214,11 +214,10 @@ NSString *sessionsKey = @"sessions";
     previousFindString = [[NSMutableString alloc] init];
     if (fullScreen) {
         background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor blackColor]];
-        [[self window] setAlphaValue:1];
     } else {
         background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor windowBackgroundColor]];
-        [[self window] setAlphaValue:0.9999];  // Why is this not 1.0?
     }
+    [[self window] setAlphaValue:0.9999];  // Why is this not 1.0?
     normalBackgroundColor = [background_ color];
 
 #if DEBUG_ALLOC
@@ -334,7 +333,8 @@ NSString *sessionsKey = @"sessions";
     if (fullScreen) {
         [self hideMenuBar];
     }
-
+    useTransparency_ = YES;
+    
     return self;
 }
 
@@ -802,7 +802,7 @@ NSString *sessionsKey = @"sessions";
           __FILE__, __LINE__, aNotification);
 
     [[iTermController sharedInstance] setCurrentTerminal:self];
-
+    [[[NSApplication sharedApplication] delegate] updateUseTransparencyMenuItem];
     if (_fullScreen) {
         [self hideMenuBar];
     }
@@ -961,7 +961,20 @@ NSString *sessionsKey = @"sessions";
     [self fitWindowToTabs];
 }
 
-// Bookmarks
+- (IBAction)toggleUseTransparency:(id)sender
+{
+    useTransparency_ = !useTransparency_;
+    [[[NSApplication sharedApplication] delegate] updateUseTransparencyMenuItem];
+    for (PTYSession* aSession in [self sessions]) {
+        [[aSession TEXTVIEW] setNeedsDisplay:YES];
+    }
+}
+
+- (BOOL)useTransparency
+{
+    return useTransparency_;
+}
+
 - (IBAction)toggleFullScreen:(id)sender
 {
     PtyLog(@"toggleFullScreen called");
@@ -971,6 +984,8 @@ NSString *sessionsKey = @"sessions";
         NSScreen *currentScreen = [[[[iTermController sharedInstance] currentTerminal] window]screen];
         newTerminal = [[PseudoTerminal alloc] initWithSmartLayout:NO fullScreen:currentScreen];
         newTerminal->oldFrame_ = [[self window] frame];
+        newTerminal->useTransparency_ = NO;
+        [[newTerminal window] setOpaque:NO];
     } else {
         // If a window is created while the menu bar is hidden then its
         // miniaturize button will be disabled, even if the menu bar is later
@@ -1011,11 +1026,7 @@ NSString *sessionsKey = @"sessions";
         aTabViewItem = [[TABVIEW tabViewItemAtIndex:0] retain];
         PTYTab* theTab = [aTabViewItem identifier];
         for (PTYSession* aSession in [theTab sessions]) {
-            if (_fullScreen) {
-                [aSession setTransparency:0];
-            } else {
-                [aSession setTransparency:[[[aSession addressBookEntry] objectForKey:KEY_TRANSPARENCY] floatValue]];
-            }
+            [aSession setTransparency:[[[aSession addressBookEntry] objectForKey:KEY_TRANSPARENCY] floatValue]];
         }
         // remove from our window
         PtyLog(@"toggleFullScreen - remove tab %d from old window", i);
@@ -1283,8 +1294,7 @@ NSString *sessionsKey = @"sessions";
 - (void)enableBlur
 {
     id window = [self window];
-    if (!_fullScreen &&
-        nil != window &&
+    if (nil != window &&
         [window respondsToSelector:@selector(enableBlur)]) {
         [window enableBlur];
     }
@@ -1293,8 +1303,7 @@ NSString *sessionsKey = @"sessions";
 - (void)disableBlur
 {
     id window = [self window];
-    if (!_fullScreen &&
-        nil != window &&
+    if (nil != window &&
         [window respondsToSelector:@selector(disableBlur)]) {
         [window disableBlur];
     }
@@ -3549,6 +3558,7 @@ NSString *sessionsKey = @"sessions";
             // The test can have false positives but it should be harmless.
             [session setPreferencesFromAddressBookEntry:newBookmark];
             [session setAddressBookEntry:newBookmark];
+            [[session tab] recheckBlur];
             if (![[newBookmark objectForKey:KEY_NAME] isEqualToString:oldName]) {
                 // Set name, which overrides any session-set icon name.
                 [session setName:[newBookmark objectForKey:KEY_NAME]];
