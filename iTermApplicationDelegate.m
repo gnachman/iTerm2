@@ -518,8 +518,11 @@ void DebugLog(NSString* value)
 - (IBAction)showAbout:(id)sender
 {
     // check if an About window is shown already
-    if (aboutController) return;
-
+    if (aboutController) {
+        [aboutController showWindow:self];
+        return;
+    }
+    
     NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
     NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n", [myDict objectForKey:@"CFBundleVersion"]];
 
@@ -543,13 +546,6 @@ void DebugLog(NSString* value)
 
     aboutController = [[NSWindowController alloc] initWithWindow:ABOUT];
     [aboutController showWindow:ABOUT];
-}
-
-- (IBAction)aboutOK:(id)sender
-{
-    [ABOUT close];
-    [aboutController release];
-    aboutController = nil;
 }
 
 // size
