@@ -310,7 +310,7 @@
             break;
         case KEY_ACTION_HEX_CODE:
             actionString = [NSString stringWithFormat: @"%@ %@", 
-                NSLocalizedStringFromTableInBundle(@"send hex code",@"iTerm", 
+                NSLocalizedStringFromTableInBundle(@"send hex codes",@"iTerm", 
                                                               [NSBundle bundleForClass: [self class]], 
                                                               @"Key Binding Actions"),
                 auxText];

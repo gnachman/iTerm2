@@ -2037,7 +2037,7 @@ static float versionNumber;
     int tag = [[action selectedItem] tag];
     if (tag == KEY_ACTION_HEX_CODE) {
         [valueToSend setHidden:NO];
-        [[valueToSend cell] setPlaceholderString:@"ex: 0x7f"];
+        [[valueToSend cell] setPlaceholderString:@"ex: 0x7f 0x20"];
         [escPlus setHidden:YES];
     } else if (tag == KEY_ACTION_TEXT) {
         [valueToSend setHidden:NO];

@@ -691,8 +691,6 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     if (keyBindingAction >= 0) {
         // A special action was bound to this key combination.
         NSString *aString;
-        unsigned char hexCode;
-        int hexCodeTmp;
 
         if (keyBindingAction == KEY_ACTION_NEXT_SESSION ||
             keyBindingAction == KEY_ACTION_PREVIOUS_SESSION) {
@@ -778,10 +776,16 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
                 if (EXIT) {
                     return;
                 }
-                if ([keyBindingText length] > 0 &&
-                    sscanf([keyBindingText UTF8String], "%x", &hexCodeTmp) == 1) {
-                    hexCode = (unsigned char) hexCodeTmp;
-                    [self writeTask:[NSData dataWithBytes:&hexCode length:sizeof(hexCode)]];
+                if ([keyBindingText length]) {
+                    NSArray* components = [keyBindingText componentsSeparatedByString:@" "];
+                    for (NSString* part in components) {
+                        const char* utf8 = [part UTF8String];
+                        char* endPtr;
+                        unsigned char c = strtol(utf8, &endPtr, 16);
+                        if (endPtr != utf8) {
+                            [self writeTask:[NSData dataWithBytes:&c length:sizeof(c)]];
+                        }
+                    }
                 }
                 break;
             case KEY_ACTION_TEXT:
