@@ -107,6 +107,7 @@ typedef struct screen_char_t
     // With alternate background semantics:
     //   ALTSEM_xxx (see comments above)
     unsigned int backgroundColor : 8;
+    unsigned int foregroundColor : 8;
 
     // This flag determines the interpretation of backgroundColor.
     unsigned int alternateBackgroundSemantics : 1;
@@ -118,7 +119,6 @@ typedef struct screen_char_t
     unsigned int complexChar : 1;
 
     // Foreground color has the same definition as background color.
-    unsigned int foregroundColor : 8;
     unsigned int alternateForegroundSemantics : 1;
 
     // Various bits affecting text appearance. The bold flag here is semantic
@@ -127,6 +127,10 @@ typedef struct screen_char_t
     unsigned int bold : 1;
     unsigned int blink : 1;
     unsigned int underline : 1;
+   
+    // These bits aren't used by are defined here so that the entire memory
+    // region can be initialized.
+    unsigned int unused : 26;
 } screen_char_t;
 
 // Standard unicode replacement string. Is a double-width character.
