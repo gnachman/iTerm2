@@ -87,7 +87,7 @@ void StringToScreenChars(NSString *s,
     unichar staticBuffer[kBufferElements];
     unichar* dynamicBuffer = 0;
     if ([s length] > kBufferElements) {
-        sc = dynamicBuffer = (unichar *) malloc(l * sizeof(unichar));
+        sc = dynamicBuffer = (unichar *) calloc(l, sizeof(unichar));
     } else {
         sc = staticBuffer;
     }
@@ -359,12 +359,14 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     blinkShow=YES;
     findContext.substring = nil;
     // allocate our buffer to hold both scrollback and screen contents
-    buffer_lines = (screen_char_t *)malloc(HEIGHT*REAL_WIDTH*sizeof(screen_char_t));
+    buffer_lines = (screen_char_t *)calloc(HEIGHT * REAL_WIDTH, sizeof(screen_char_t));
 #ifdef DEBUG_CORRUPTION
     memset(buffer_lines, -1, HEIGHT*REAL_WIDTH*sizeof(screen_char_t));
 #endif
-    if (!buffer_lines) return NULL;
-
+    if (!buffer_lines) {
+        return NULL;
+    }
+    
     // set up our pointers
     screen_top = buffer_lines;
 
@@ -383,8 +385,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     current_scrollback_lines = 0;
 
     // set up our dirty flags buffer
-    dirty=(char*)malloc(HEIGHT*WIDTH*sizeof(char));
-    result_line = (screen_char_t*) malloc(REAL_WIDTH * sizeof(screen_char_t));
+    dirty = (char*)calloc(HEIGHT * WIDTH, sizeof(char));
+    result_line = (screen_char_t*) calloc(REAL_WIDTH, sizeof(screen_char_t));
 
     // force a redraw
     [self setDirty];
@@ -689,7 +691,8 @@ static char* FormatCont(int c)
     }
 
     // create a new buffer and fill it with the default line.
-    new_buffer_lines = (screen_char_t*)malloc(new_height*(new_width+1)*sizeof(screen_char_t));
+    new_buffer_lines = (screen_char_t*)calloc(new_height * (new_width+1),
+                                              sizeof(screen_char_t));
 #ifdef DEBUG_CORRUPTION
     memset(new_buffer_lines, -1, new_height*(new_width+1)*sizeof(screen_char_t));
 #endif
@@ -745,8 +748,9 @@ static char* FormatCont(int c)
     if (result_line) {
         free(result_line);
     }
-    dirty = (char*)malloc(new_height*new_width*sizeof(char));
-    result_line = (screen_char_t*)malloc((new_width + 1) * sizeof(screen_char_t));
+    dirty = (char*)malloc(new_height * new_width * sizeof(char));
+    memset(dirty, 1, new_height * new_width * sizeof(char));
+    result_line = (screen_char_t*)calloc((new_width + 1), sizeof(screen_char_t));
 
     // Move scrollback lines into screen
     int num_lines_in_scrollback = [linebuffer numLinesWithWidth: new_width];
@@ -831,7 +835,7 @@ static char* FormatCont(int c)
     if (temp_buffer) {
         screen_char_t* aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
         free(temp_buffer);
-        temp_buffer = (screen_char_t*)malloc(REAL_WIDTH * HEIGHT * (sizeof(screen_char_t)));
+        temp_buffer = (screen_char_t*)calloc(REAL_WIDTH * HEIGHT, (sizeof(screen_char_t)));
         for(i = 0; i < HEIGHT; i++) {
             memcpy(temp_buffer+i*REAL_WIDTH, aDefaultLine, REAL_WIDTH*sizeof(screen_char_t));
         }
@@ -1406,10 +1410,10 @@ static char* FormatCont(int c)
 
     int size = REAL_WIDTH*HEIGHT;
     int n = (screen_top - buffer_lines)/REAL_WIDTH;
-    temp_buffer = (screen_char_t*)malloc(size*(sizeof(screen_char_t)));
-    if (n <= 0)
+    temp_buffer = (screen_char_t*)calloc(size, (sizeof(screen_char_t)));
+    if (n <= 0) {
         memcpy(temp_buffer, screen_top, size*sizeof(screen_char_t));
-    else {
+    } else {
         memcpy(temp_buffer, screen_top, (HEIGHT-n)*REAL_WIDTH*sizeof(screen_char_t));
         memcpy(temp_buffer+(HEIGHT-n)*REAL_WIDTH, buffer_lines, n*REAL_WIDTH*sizeof(screen_char_t));
     }
@@ -1532,7 +1536,7 @@ static void DumpBuf(screen_char_t* p, int n) {
         unichar* dynamicTemp = 0;
         unichar *sc;
         if ([string length] > kStaticTempElements) {
-            dynamicTemp = sc = (unichar *) malloc(len*sizeof(unichar));
+            dynamicTemp = sc = (unichar *) calloc(len, sizeof(unichar));
             assert(dynamicTemp);
         } else {
             sc = staticTemp;
@@ -1542,7 +1546,8 @@ static void DumpBuf(screen_char_t* p, int n) {
         screen_char_t bg = [TERMINAL backgroundColorCode];
 
         if ([string length] > kStaticBufferElements) {
-            buffer = dynamicBuffer = (screen_char_t *) malloc([string length] * sizeof(screen_char_t));
+            buffer = dynamicBuffer = (screen_char_t *) calloc([string length],
+                                                              sizeof(screen_char_t));
             assert(dynamicBuffer);
             if (!buffer) {
                 NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
@@ -1554,7 +1559,7 @@ static void DumpBuf(screen_char_t* p, int n) {
 
         [string getCharacters:sc];
         for (int i = 0; i < len; i++) {
-            buffer[i].code = sc[i];
+            buffer[i].code = sc[i] = 'A';
             buffer[i].complexChar = NO;
             CopyForegroundColor(&buffer[i], fg);
             CopyBackgroundColor(&buffer[i], bg);
@@ -1572,7 +1577,8 @@ static void DumpBuf(screen_char_t* p, int n) {
         string = [string precomposedStringWithCanonicalMapping];
         len = [string length];
         if (2 * len > kStaticBufferElements) {
-            buffer = dynamicBuffer = (screen_char_t *) malloc(2 * len * sizeof(screen_char_t) );
+            buffer = dynamicBuffer = (screen_char_t *) calloc(2 * len,
+                                                              sizeof(screen_char_t));
             assert(buffer);
             if (!buffer) {
                 NSLog(@"%s: Out of memory", __PRETTY_FUNCTION__);
@@ -2903,10 +2909,12 @@ static void DumpBuf(screen_char_t* p, int n) {
 {
     // Undo the appending of the screen to scrollback
     int i;
-    screen_char_t* dummy = malloc(WIDTH * sizeof(screen_char_t));
+    screen_char_t* dummy = calloc(WIDTH, sizeof(screen_char_t));
     for (i = 0; i < linesPushed; ++i) {
         int cont;
-        BOOL isOk = [linebuffer popAndCopyLastLineInto: dummy width: WIDTH includesEndOfLine: &cont];
+        BOOL isOk = [linebuffer popAndCopyLastLineInto:dummy
+                                                 width:WIDTH
+                                     includesEndOfLine:&cont];
         NSAssert(isOk, @"Pop shouldn't fail");
     }
     free(dummy);
@@ -3206,7 +3214,7 @@ static void DumpBuf(screen_char_t* p, int n) {
     if (default_line) {
         free(default_line);
     }
-    default_line = (screen_char_t*)malloc((width+1)*sizeof(screen_char_t));
+    default_line = (screen_char_t*)calloc((width+1), sizeof(screen_char_t));
 
     for (int i = 0; i < width; i++) {
         default_line[i].code = 0;

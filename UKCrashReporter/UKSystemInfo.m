@@ -51,7 +51,7 @@ void	UKGetSystemVersionComponents( long* outMajor, long* outMinor, long* outBugf
 
 long	UKSystemVersion()
 {
-	long		sysVersion;
+	long		sysVersion = 0;
 	
 	if( Gestalt( gestaltSystemVersion, &sysVersion ) != noErr )
 		return 0;

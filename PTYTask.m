@@ -895,23 +895,25 @@ static void reapchild(int n)
 - (void)refreshProcessCache:(NSMutableDictionary*)cache
 {
     [cache removeAllObjects];
-    int numPids;
-    numPids = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
-    if (numPids <= 0) {
+    int numBytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    if (numBytes <= 0) {
         return;
     }
 
-    int* pids = (int*) malloc(sizeof(int) * numPids);
-    numPids = proc_listpids(PROC_ALL_PIDS, 0, pids, numPids);
-    if (numPids <= 0) {
+    int* pids = (int*) malloc(numBytes);
+    numBytes = proc_listpids(PROC_ALL_PIDS, 0, pids, numBytes);
+    if (numBytes <= 0) {
         free(pids);
         return;
     }
 
+    int numPids = numBytes / sizeof(int);
+    
     NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithCapacity:numPids];
     NSMutableDictionary* ancestry = [NSMutableDictionary dictionaryWithCapacity:numPids];
     for (int i = 0; i < numPids; ++i) {
         struct proc_taskallinfo taskAllInfo;
+        memset(&taskAllInfo, 0, sizeof(taskAllInfo));
         int rc = proc_pidinfo(pids[i],
                               PROC_PIDTASKALLINFO,
                               0,
