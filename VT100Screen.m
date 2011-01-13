@@ -348,7 +348,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     NSLog(@"%s(%d):-[VT100Screen initScreenWithWidth:%d Height:%d]", __FILE__, __LINE__, width, height );
 #endif
 
-    NSParameterAssert(width > 0 && height > 0);
+    width = MAX(width, MIN_SESSION_COLUMNS);
+    height = MAX(height, MIN_SESSION_ROWS);
 
     WIDTH = width;
     HEIGHT = height;

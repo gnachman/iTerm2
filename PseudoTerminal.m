@@ -890,10 +890,8 @@ NSString *sessionsKey = @"sessions";
         return proposedFrameSize;
     }
 
-    float northChange = [sender frame].size.height -
-        [[[self currentSession] SCROLLVIEW] documentVisibleRect].size.height;
-    float westChange = [sender frame].size.width -
-        [[[self currentSession] SCROLLVIEW] documentVisibleRect].size.width;
+    float northChange = [sender frame].size.height - proposedFrameSize.height;
+    float westChange = [sender frame].size.width - proposedFrameSize.width;
     //NSLog(@"Change change: %f,%f", northChange, westChange);
     int old_height = (proposedFrameSize.height - northChange - VMARGIN*2) / charHeight + 0.5;
     int old_width = (proposedFrameSize.width - westChange - MARGIN*2) / charWidth + 0.5;
@@ -2229,8 +2227,8 @@ NSString *sessionsKey = @"sessions";
                                            verticalSpacing:[[theBookmark objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     NSSize charSize = NSMakeSize(MAX(asciiCharSize.width, nonAsciiCharSize.width),
                                  MAX(asciiCharSize.height, nonAsciiCharSize.height));
-    NSSize newSessionSize = NSMakeSize(charSize.width * 20 + MARGIN * 2,
-                                       charSize.height * 10 + VMARGIN * 2);
+    NSSize newSessionSize = NSMakeSize(charSize.width * MIN_SESSION_COLUMNS + MARGIN * 2,
+                                       charSize.height * MIN_SESSION_ROWS + VMARGIN * 2);
 
     if (![[self currentTab] canSplitVertically:isVertical withSize:newSessionSize]) {
         // Test if the window can afford to grow. First, compute the minimum growth possible based on

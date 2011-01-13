@@ -107,6 +107,7 @@ static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
     if (self) {
         activeSession_ = session;
         root_ = [[NSSplitView alloc] init];
+//        [root_ setDividerStyle:NSSplitViewDividerStyleThin];
         [root_ setAutoresizesSubviews:YES];
         [root_ setDelegate:self];
         [session setTab:self];
@@ -820,6 +821,7 @@ static void SwapPoint(NSPoint* point) {
         // 3. Add two children to the 'isVertical'-orientation NSSplitView: the active session and the new view.
         [targetSessionView retain];
         NSSplitView* newSplit = [[NSSplitView alloc] initWithFrame:[targetSessionView frame]];
+//        [newSplit setDividerStyle:NSSplitViewDividerStyleThin];
         [newSplit setAutoresizesSubviews:YES];
         [newSplit setDelegate:self];
         [newSplit setVertical:isVertical];
@@ -867,8 +869,8 @@ static void SwapPoint(NSPoint* point) {
 {
     NSSize size;
     PTYSession* session = [sessionView session];
-    size.width = 20 * [[session TEXTVIEW] charWidth] + MARGIN * 2;
-    size.height = 10 * [[session TEXTVIEW] lineHeight] + VMARGIN * 2;
+    size.width = MIN_SESSION_COLUMNS * [[session TEXTVIEW] charWidth] + MARGIN * 2;
+    size.height = MIN_SESSION_ROWS * [[session TEXTVIEW] lineHeight] + VMARGIN * 2;
 
     BOOL hasScrollbar = ![parentWindow_ fullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
     NSSize scrollViewSize = [PTYScrollView frameSizeForContentSize:size
@@ -969,7 +971,7 @@ static void SwapPoint(NSPoint* point) {
 }
 
 // Return the minimum size of a tree of splits so that no session is smaller than
-// 20 columns by 10 rows.
+// MIN_SESSION_COLUMNS columns by MIN_SESSION_ROWS rows.
 - (NSSize)_recursiveMinSize:(NSSplitView*)node
 {
     NSSize size;
@@ -1307,6 +1309,7 @@ static void SwapPoint(NSPoint* point) {
     if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
         NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SPLIITER_FRAME]];
         NSSplitView *splitter = [[NSSplitView alloc] initWithFrame:frame];
+//        [splitter setDividerStyle:NSSplitViewDividerStyleThin];
         [splitter setVertical:[[arrangement objectForKey:SPLITTER_IS_VERTICAL] boolValue]];
 
         NSArray* subviews = [arrangement objectForKey:SUBVIEWS];
