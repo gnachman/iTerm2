@@ -671,6 +671,9 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     modflag = [event modifierFlags];
     keystr  = [event characters];
     unmodkeystr = [event charactersIgnoringModifiers];
+    if ([unmodkeystr length] == 0) {
+        return;
+    }
     unicode = [keystr length]>0?[keystr characterAtIndex:0]:0;
     unmodunicode = [unmodkeystr length]>0?[unmodkeystr characterAtIndex:0]:0;
 
