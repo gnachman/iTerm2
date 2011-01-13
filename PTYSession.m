@@ -1374,7 +1374,19 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     if (currentTab == nil || currentTab == [self tab]) {
         [[self tab] recheckBlur];
     }
-    [TEXTVIEW setAntiAlias:[[aDict objectForKey:KEY_ANTI_ALIASING] boolValue]];
+    BOOL asciiAA;
+    BOOL nonasciiAA;
+    if ([aDict objectForKey:KEY_ASCII_ANTI_ALIASED]) {
+        asciiAA = [[aDict objectForKey:KEY_ASCII_ANTI_ALIASED] boolValue];
+    } else {
+        asciiAA = [[aDict objectForKey:KEY_ANTI_ALIASING] boolValue];
+    }
+    if ([aDict objectForKey:KEY_NONASCII_ANTI_ALIASED]) {
+        nonasciiAA = [[aDict objectForKey:KEY_NONASCII_ANTI_ALIASED] boolValue];
+    } else {
+        nonasciiAA = [[aDict objectForKey:KEY_ANTI_ALIASING] boolValue];
+    }
+    [TEXTVIEW setAntiAlias:asciiAA nonAscii:nonasciiAA];
     [self setEncoding:[[aDict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]];
     [self setTERM_VALUE:[aDict objectForKey:KEY_TERMINAL_TYPE]];
     [self setAntiCode:[[aDict objectForKey:KEY_IDLE_CODE] intValue]];

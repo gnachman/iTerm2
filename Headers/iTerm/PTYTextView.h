@@ -67,8 +67,9 @@ typedef struct PTYFontInfo PTYFontInfo;
     // seem to return a real status, based on which we can set this flag.
     BOOL bExtendedDragNDrop;
 
-    // anti-alias flag
-    BOOL antiAlias;
+    // anti-alias flags
+    BOOL asciiAntiAlias;
+    BOOL nonasciiAntiAlias;
 
     // option to not render in bold
     BOOL useBoldFont;
@@ -221,8 +222,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (NSFont *)nafont;
 - (void)setFont:(NSFont*)aFont nafont:(NSFont *)naFont horizontalSpacing:(float)horizontalSpacing verticalSpacing:(float)verticalSpacing;
 - (NSRect)scrollViewContentSize;
-- (BOOL)antiAlias;
-- (void)setAntiAlias:(BOOL)antiAliasFlag;
+- (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
 - (BOOL)useBoldFont;
 - (void)setUseBoldFont:(BOOL)boldFlag;
 - (void)setUseBrightBold:(BOOL)flag;

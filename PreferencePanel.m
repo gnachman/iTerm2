@@ -1487,7 +1487,16 @@ static float versionNumber;
 
     [transparency setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
     [blur setState:[[dict objectForKey:KEY_BLUR] boolValue] ? NSOnState : NSOffState];
-    [antiAliasing setState:[[dict objectForKey:KEY_ANTI_ALIASING] boolValue] ? NSOnState : NSOffState];
+    if ([dict objectForKey:KEY_ASCII_ANTI_ALIASED]) {
+        [asciiAntiAliased setState:[[dict objectForKey:KEY_ASCII_ANTI_ALIASED] boolValue] ? NSOnState : NSOffState];
+    } else {
+        [asciiAntiAliased setState:[[dict objectForKey:KEY_ANTI_ALIASING] boolValue] ? NSOnState : NSOffState];
+    }
+    if ([dict objectForKey:KEY_NONASCII_ANTI_ALIASED]) {
+        [nonasciiAntiAliased setState:[[dict objectForKey:KEY_NONASCII_ANTI_ALIASED] boolValue] ? NSOnState : NSOffState];
+    } else {
+        [nonasciiAntiAliased setState:[[dict objectForKey:KEY_ANTI_ALIASING] boolValue] ? NSOnState : NSOffState];
+    }
     NSString* imageFilename = [dict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION];
     if (!imageFilename) {
         imageFilename = @"";
@@ -1710,7 +1719,8 @@ static float versionNumber;
     [newDict setObject:[NSNumber numberWithBool:([useBrightBold state]==NSOnState)] forKey:KEY_USE_BRIGHT_BOLD];
     [newDict setObject:[NSNumber numberWithFloat:[transparency floatValue]] forKey:KEY_TRANSPARENCY];
     [newDict setObject:[NSNumber numberWithBool:([blur state]==NSOnState)] forKey:KEY_BLUR];
-    [newDict setObject:[NSNumber numberWithBool:([antiAliasing state]==NSOnState)] forKey:KEY_ANTI_ALIASING];
+    [newDict setObject:[NSNumber numberWithBool:([asciiAntiAliased state]==NSOnState)] forKey:KEY_ASCII_ANTI_ALIASED];
+    [newDict setObject:[NSNumber numberWithBool:([nonasciiAntiAliased state]==NSOnState)] forKey:KEY_NONASCII_ANTI_ALIASED];
     [self _updateFontsDisplay];
 
     if (sender == backgroundImage) {
@@ -2394,6 +2404,8 @@ static float versionNumber;
         KEY_USE_BRIGHT_BOLD,
         KEY_TRANSPARENCY,
         KEY_BLUR,
+        KEY_ASCII_ANTI_ALIASED,
+        KEY_NONASCII_ANTI_ALIASED,
         KEY_ANTI_ALIASING,
         KEY_BACKGROUND_IMAGE_LOCATION,
         nil

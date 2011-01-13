@@ -86,6 +86,9 @@ typedef struct {
 
     // Number of glyphs.
     int numGlyphs;
+    
+    // Should this run be anti-aliased.
+    BOOL antiAlias;
 } CharRun;
 
 // FIXME: Looks like this is leaked.
@@ -291,14 +294,10 @@ static NSCursor* textViewCursor =  nil;
     return YES;
 }
 
-- (BOOL)antiAlias
+- (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA
 {
-    return antiAlias;
-}
-
-- (void)setAntiAlias:(BOOL)antiAliasFlag
-{
-    antiAlias = antiAliasFlag;
+    asciiAntiAlias = asciiAA;
+    nonasciiAntiAlias = nonAsciiAA;
     [self setNeedsDisplay:YES];
 }
 
@@ -967,7 +966,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 
     // Configure graphics
-    [[NSGraphicsContext currentContext] setShouldAntialias:antiAlias];
     [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
 
     // Where to start drawing?
@@ -3109,7 +3107,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     PTYFontInfo* prevCharFont = nil;
     BOOL havePrevChar = NO;
     CGFloat curX = initialPoint.x;
-
+    BOOL prevCharAntiAlias = NO;
+    
     for (int i = indexRange.location;
          i < indexRange.location + indexRange.length;
          i++) {
@@ -3125,7 +3124,14 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         CGFloat thisCharAdvance;
         BOOL thisCharFakeBold;
         PTYFontInfo* thisCharFont;
-
+        BOOL thisCharAntiAlias;
+        
+        if (theLine[i].code < 128 && !theLine[i].complexChar) {
+            thisCharAntiAlias = asciiAntiAlias;
+        } else {
+            thisCharAntiAlias = nonasciiAntiAlias;
+        }
+        
         // Figure out the color for this char.
         if (bgselected &&
             theLine[i].alternateForegroundSemantics &&
@@ -3198,7 +3204,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 thisCharRunType == MULTIPLE_CODE_POINT_RUN ||
                 thisCharFont != prevCharFont ||
                 thisCharColor != prevCharColor ||
-                thisCharFakeBold != prevCharFakeBold) {
+                thisCharFakeBold != prevCharFakeBold ||
+                thisCharAntiAlias != prevCharAntiAlias) {
                 beginNewRun = YES;
                 havePrevChar = YES;
             }
@@ -3222,6 +3229,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 currentRun->glyphs = glyphStorage + nextFreeGlyph;
                 currentRun->numGlyphs = 0;
                 currentRun->x = curX;
+                currentRun->antiAlias = thisCharAntiAlias;
             }
 
             if (thisCharRunType == SINGLE_CODE_POINT_RUN) {
@@ -3254,6 +3262,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         prevCharFont = thisCharFont;
         prevCharColor = thisCharColor;
         prevCharFakeBold = thisCharFakeBold;
+        prevCharAntiAlias = thisCharAntiAlias;
     }
 
     if (currentRun) {
@@ -3300,11 +3309,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     CharRun *currentRun;
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
     CGContextSetTextDrawingMode(ctx, kCGTextFill);
-    CGContextSetShouldAntialias(ctx, antiAlias);
     const int width = [dataSource width];
 
     for (int i = 0; i < numRuns; ++i) {
         currentRun = &runs[i];
+        CGContextSetShouldAntialias(ctx, currentRun->antiAlias);
 
         if (currentRun->runType == SINGLE_CODE_POINT_RUN) {
             CGGlyph glyphs[width];

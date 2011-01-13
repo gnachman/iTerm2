@@ -98,7 +98,9 @@
 #define KEY_USE_BRIGHT_BOLD        @"Use Bright Bold"
 #define KEY_TRANSPARENCY           @"Transparency"
 #define KEY_BLUR                   @"Blur"
-#define KEY_ANTI_ALIASING          @"Anti Aliasing"
+#define KEY_ANTI_ALIASING          @"Anti Aliasing"  // DEPRECATED
+#define KEY_ASCII_ANTI_ALIASED     @"ASCII Anti Aliased"
+#define KEY_NONASCII_ANTI_ALIASED  @"Non-ASCII Anti Aliased"
 #define KEY_BACKGROUND_IMAGE_LOCATION @"Background Image Location"
 
 // Terminal
