@@ -200,27 +200,30 @@ static float versionNumber;
     while ([presetsMenu numberOfItems] > 1) {
         [presetsMenu removeItemAtIndex:1];
     }
-    
+
     NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"ColorPresets"
                                                                             ofType:@"plist"];
     NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
     [self _addColorPresetsInDict:presetsDict toMenu:presetsMenu];
-    
+
     NSDictionary* customPresets = [[NSUserDefaults standardUserDefaults] objectForKey:CUSTOM_COLOR_PRESETS];
     if (customPresets && [customPresets count] > 0) {
         [presetsMenu addItem:[NSMenuItem separatorItem]];
         [self _addColorPresetsInDict:customPresets toMenu:presetsMenu];
     }
-    
+
     [presetsMenu addItem:[NSMenuItem separatorItem]];
     [presetsMenu addItem:[[[NSMenuItem alloc] initWithTitle:@"Import..."
                                                      action:@selector(importColorPreset:)
                                               keyEquivalent:@""] autorelease]];
     [presetsMenu addItem:[[[NSMenuItem alloc] initWithTitle:@"Export..."
                                                      action:@selector(exportColorPreset:)
-                                              keyEquivalent:@""] autorelease]]; 
+                                              keyEquivalent:@""] autorelease]];
     [presetsMenu addItem:[[[NSMenuItem alloc] initWithTitle:@"Delete Preset..."
                                                      action:@selector(deleteColorPreset:)
+                                              keyEquivalent:@""] autorelease]];
+    [presetsMenu addItem:[[[NSMenuItem alloc] initWithTitle:@"Visit Online Gallery"
+                                                     action:@selector(visitGallery:)
                                               keyEquivalent:@""] autorelease]];
 }
 
@@ -238,7 +241,7 @@ static float versionNumber;
     }
     [customPresets setObject:theDict forKey:temp];
     [[NSUserDefaults standardUserDefaults] setObject:customPresets forKey:CUSTOM_COLOR_PRESETS];
-    
+
     [self _rebuildColorPresetsMenu];
 }
 
@@ -267,21 +270,19 @@ static float versionNumber;
 {
     // Create the File Open Dialog class.
     NSOpenPanel* openDlg = [NSOpenPanel openPanel];
-    
+
     // Set options.
     [openDlg setCanChooseFiles:YES];
     [openDlg setCanChooseDirectories:NO];
-    [openDlg setAllowsMultipleSelection:NO];
+    [openDlg setAllowsMultipleSelection:YES];
     [openDlg setAllowedFileTypes:[NSArray arrayWithObject:@"itermcolors"]];
-    
+
     // Display the dialog.  If the OK button was pressed,
     // process the files.
     if ([openDlg runModalForDirectory:nil file:nil] == NSOKButton) {
         // Get an array containing the full filenames of all
         // files and directories selected.
-        NSArray* files = [openDlg filenames];
-        if ([files count] > 0) {
-            NSString* filename = [files objectAtIndex:0];
+        for (NSString* filename in [openDlg filenames]) {
             [self _importColorPresetFromFile:filename];
         }
     }
@@ -338,7 +339,7 @@ static float versionNumber;
         selectedTextColor,
         cursorColor,
         cursorTextColor
-    };        
+    };
     NSMutableDictionary* theDict = [NSMutableDictionary dictionaryWithCapacity:24];
     int i = 0;
     for (NSString* colorKey in colorKeys) {
@@ -368,10 +369,10 @@ static float versionNumber;
 {
     // Create the File Open Dialog class.
     NSSavePanel* saveDlg = [NSSavePanel savePanel];
-    
+
     // Set options.
     [saveDlg setAllowedFileTypes:[NSArray arrayWithObject:@"itermcolors"]];
-    
+
     if ([saveDlg runModalForDirectory:nil file:nil] == NSOKButton) {
         [self _exportColorPresetToFile:[saveDlg filename]];
     }
@@ -383,18 +384,18 @@ static float versionNumber;
     if (!customPresets || [customPresets count] == 0) {
         NSRunAlertPanel(@"No deletable color presets.",
                         @"You cannot erase the built-in presets and no custom presets have been imported.",
-                        @"OK", 
+                        @"OK",
                         nil,
                         nil);
         return;
     }
-        
+
     NSAlert *alert = [NSAlert alertWithMessageText:@"Select a preset to delete:"
                                      defaultButton:@"OK"
                                    alternateButton:@"Cancel"
                                        otherButton:nil
                          informativeTextWithFormat:@""];
-    
+
     NSPopUpButton* pub = [[[NSPopUpButton alloc] init] autorelease];
     for (NSString* key in [[customPresets allKeys] sortedArrayUsingSelector:@selector(compare:)]) {
         [pub addItemWithTitle:key];
@@ -409,6 +410,12 @@ static float versionNumber;
                                                   forKey:CUSTOM_COLOR_PRESETS];
         [self _rebuildColorPresetsMenu];
     }
+}
+
+- (void)visitGallery:(id)sender
+{
+    const NSString* COLOR_GALLERY_URL = @"http://www.iterm2.com/colorgallery";
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:COLOR_GALLERY_URL]];
 }
 
 - (void)awakeFromNib
@@ -449,7 +456,7 @@ static float versionNumber;
 
     // Add presets to preset color selection.
     [self _rebuildColorPresetsMenu];
-    
+
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(handleWindowWillCloseNotification:)
                                                  name:NSWindowWillCloseNotification object: [self window]];
