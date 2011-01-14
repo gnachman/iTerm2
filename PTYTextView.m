@@ -32,6 +32,8 @@
 #define GREED_KEYDOWN         1
 //#define DEBUG_DRAWING
 
+#define SWAPINT(a, b) { int temp; temp = a; a = b; b = temp; }
+
 #import <iTerm/iTerm.h>
 #import <iTerm/PTYTextView.h>
 #import <iTerm/PseudoTerminal.h>
@@ -737,6 +739,58 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     [self refresh];
     [self scheduleSelectionScroll];
+}
+
+- (BOOL)accessibilityIsIgnored
+{
+    return NO;
+}
+
+- (NSArray *)accessibilityAttributeNames
+{
+    static NSArray *names = nil;
+    if (names == nil) {
+        names = [[[super accessibilityAttributeNames] arrayByAddingObject:NSAccessibilityValueDescriptionAttribute] retain];
+    }
+    
+    return names;
+}
+
+- (id)accessibilityAttributeValue:(NSString *)attribute
+{
+    if ([attribute isEqualToString:NSAccessibilityValueDescriptionAttribute]) {
+        int accStartX = accX;
+        int accStartY = MAX(0, accY - [dataSource totalScrollbackOverflow]);
+        int accEndX = [dataSource cursorX] - 1;
+        int accEndY = [dataSource cursorY] + [dataSource numberOfLines] - [dataSource height] - 1;
+        int begin = accStartX + accStartY * [dataSource width];
+        int accEnd = accEndX + accEndY * [dataSource width];
+        NSString* result = nil;
+        if (begin > accEnd) {
+            SWAPINT(accStartX, accEndX);
+            SWAPINT(accStartY, accEndY);
+            if (accEnd - begin != 1) {
+                result = [self getWordForX:accStartX y:accStartY startX:nil startY:nil endX:nil endY:nil];
+            }
+        }
+        if (!result) {
+            result = [self contentFromX:accStartX
+                                      Y:accStartY
+                                    ToX:accEndX
+                                      Y:accEndY
+                                    pad:NO];
+        }
+        accX = [dataSource cursorX] - 1;
+        accY = [dataSource cursorY] + [dataSource numberOfLines] - [dataSource height] + [dataSource totalScrollbackOverflow] - 1;
+        NSLog(@"Returning %@: %@", NSAccessibilityValueDescriptionAttribute, result);
+        return result;
+    } else if ([attribute isEqualToString:NSAccessibilityRoleAttribute]) {
+        return NSAccessibilityValueIndicatorRole;
+    } else if ([attribute isEqualToString:NSAccessibilityRoleDescriptionAttribute]) {
+        return @"terminal text area";
+    } else {
+        return [super accessibilityAttributeValue:attribute];
+    }
 }
 
 - (void)refresh
@@ -4839,6 +4893,13 @@ static bool IsUrlChar(NSString* str)
 
     if (irEnabled && foundDirty) {
         [dataSource saveToDvr];
+    }
+
+    // Check if the cursor has moved and tell accessibility about it.
+    if ([dataSource cursorX] - 1 != accX ||
+        [dataSource cursorY] + [dataSource numberOfLines] - [dataSource height] + [dataSource totalScrollbackOverflow] - 1 != accY) {
+        NSAccessibilityPostNotification(self,
+                                        NSAccessibilityValueChangedNotification);
     }
 }
 

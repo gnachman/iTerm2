@@ -171,6 +171,10 @@ typedef struct PTYFontInfo PTYFontInfo;
     // not correspond to a line in the dataSource. They are used solely for
     // IME text.
     int imeOffset;
+
+    // Last position that accessibility was read up to.
+    int accX;
+    int accY;
 }
 
 + (NSCursor *)textViewCursor;
