@@ -80,6 +80,8 @@ static NSString* SUBVIEWS = @"Subviews";
 static NSString* TAB_ARRANGEMENT_SESSION = @"Session";
 static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
 
+static const BOOL USE_THIN_SPLITTERS = YES;
+
 + (void)initialize
 {
     NSBundle *thisBundle;
@@ -107,7 +109,9 @@ static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
     if (self) {
         activeSession_ = session;
         root_ = [[NSSplitView alloc] init];
-//        [root_ setDividerStyle:NSSplitViewDividerStyleThin];
+        if (USE_THIN_SPLITTERS) {
+            [root_ setDividerStyle:NSSplitViewDividerStyleThin];
+        }
         [root_ setAutoresizesSubviews:YES];
         [root_ setDelegate:self];
         [session setTab:self];
@@ -821,7 +825,9 @@ static void SwapPoint(NSPoint* point) {
         // 3. Add two children to the 'isVertical'-orientation NSSplitView: the active session and the new view.
         [targetSessionView retain];
         NSSplitView* newSplit = [[NSSplitView alloc] initWithFrame:[targetSessionView frame]];
-//        [newSplit setDividerStyle:NSSplitViewDividerStyleThin];
+        if (USE_THIN_SPLITTERS) {
+            [newSplit setDividerStyle:NSSplitViewDividerStyleThin];
+        }
         [newSplit setAutoresizesSubviews:YES];
         [newSplit setDelegate:self];
         [newSplit setVertical:isVertical];
@@ -1309,7 +1315,9 @@ static void SwapPoint(NSPoint* point) {
     if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
         NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SPLIITER_FRAME]];
         NSSplitView *splitter = [[NSSplitView alloc] initWithFrame:frame];
-//        [splitter setDividerStyle:NSSplitViewDividerStyleThin];
+        if (USE_THIN_SPLITTERS) {
+            [splitter setDividerStyle:NSSplitViewDividerStyleThin];
+        }
         [splitter setVertical:[[arrangement objectForKey:SPLITTER_IS_VERTICAL] boolValue]];
 
         NSArray* subviews = [arrangement objectForKey:SUBVIEWS];
