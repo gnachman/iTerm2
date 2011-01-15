@@ -3325,18 +3325,30 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return numRuns;
 }
 
-- (void)_drawComplexCharRun:(CharRun *)currentRun
-                        ctx:(CGContextRef)ctx
-               initialPoint:(NSPoint)initialPoint
-                 canRecurse:(BOOL)canRecurse
+- (void)_advancedDrawChar:(unichar*)codes
+                 numCodes:(int)numCodes
+                 fontInfo:(PTYFontInfo*)fontInfo
+                    color:(NSColor*)color
+                       at:(NSPoint)pos
+                    width:(CGFloat)width
+                 fakeBold:(BOOL)fakeBold
+                antiAlias:(BOOL)antiAlias
 {
-    // This approach doesn't work because attributedString draws a few pixels lower than CGContextShowGLyphsWithAdvancs.
-    NSString* str = [NSString stringWithCharacters:currentRun->codes
-                                            length:currentRun->numCodes];
-    NSDictionary* attrs = [NSDictionary dictionaryWithObjectsAndKeys:
-                           currentRun->fontInfo->font, NSFontAttributeName,
-                           currentRun->color, NSForegroundColorAttributeName,
-                           nil];
+    NSString* str = [NSString stringWithCharacters:codes
+                                            length:numCodes];
+    NSDictionary* attrs; 
+    if (advancedFontRendering && antiAlias) {
+        attrs = [NSDictionary dictionaryWithObjectsAndKeys:
+                               fontInfo->font, NSFontAttributeName,
+                               color, NSForegroundColorAttributeName,
+                               [NSNumber numberWithFloat:strokeThickness], NSStrokeWidthAttributeName,
+                               nil];
+    } else {
+        attrs = [NSDictionary dictionaryWithObjectsAndKeys:
+                 fontInfo->font, NSFontAttributeName,
+                 color, NSForegroundColorAttributeName,
+                 nil];
+    }
     NSMutableAttributedString* attributedString = [[[NSMutableAttributedString alloc] initWithString:str
                                                                                           attributes:attrs] autorelease];
     // Note that drawInRect doesn't use the right baseline, but drawWithRect
@@ -3351,11 +3363,95 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     // Other rejected approaches include dusing CTFontGetGlyphsForCharacters+
     // CGContextShowGlyphsWithAdvances, which doesn't render thai characters
     // correctly in UTF-8-demo.txt.
-    [attributedString drawWithRect:NSMakeRect(currentRun->x,
-                                              initialPoint.y + currentRun->fontInfo->baselineOffset + lineHeight,
-                                              currentRun->advances[0].width,
+    [attributedString drawWithRect:NSMakeRect(pos.x,
+                                              pos.y + fontInfo->baselineOffset + lineHeight,
+                                              width,
                                               lineHeight)
                            options:0];  // NSStringDrawingUsesLineFragmentOrigin
+    if (fakeBold) {
+        [attributedString drawWithRect:NSMakeRect(pos.x + 1,
+                                                  pos.y + fontInfo->baselineOffset + lineHeight,
+                                                  width,
+                                                  lineHeight)
+                               options:0];  // NSStringDrawingUsesLineFragmentOrigin
+    }
+}
+
+- (void)_drawComplexCharRun:(CharRun *)currentRun
+                        ctx:(CGContextRef)ctx
+               initialPoint:(NSPoint)initialPoint
+                  antiAlias:(BOOL)antiAlias
+{
+    [self _advancedDrawChar:currentRun->codes
+                   numCodes:currentRun->numCodes
+                   fontInfo:currentRun->fontInfo
+                      color:currentRun->color
+                         at:NSMakePoint(currentRun->x,
+                                        initialPoint.y)
+                      width:currentRun->advances[0].width
+                   fakeBold:currentRun->fakeBold
+                  antiAlias:antiAlias];
+}
+
+- (void)_drawBasicCharRunAdvanced:(CharRun *)currentRun ctx:(CGContextRef)ctx initialPoint:(NSPoint)initialPoint
+{
+    CGFloat x = currentRun->x;
+    for (int i = 0; i < currentRun->numCodes; i++) {
+        [self _advancedDrawChar:&currentRun->codes[i]
+                       numCodes:1
+                       fontInfo:currentRun->fontInfo
+                          color:currentRun->color
+                             at:NSMakePoint(x,
+                                            initialPoint.y)
+                          width:currentRun->advances[i].width
+                       fakeBold:currentRun->fakeBold
+                      antiAlias:currentRun->antiAlias];
+        x += currentRun->advances[i].width;
+    }
+}
+
+- (void)_drawBasicCharRun:(CharRun *)currentRun ctx:(CGContextRef)ctx initialPoint:(NSPoint)initialPoint  
+{
+    const int width = [dataSource width];
+    CGGlyph glyphs[width];
+
+    if (!CTFontGetGlyphsForCharacters((CTFontRef)currentRun->fontInfo->font,
+                                      currentRun->codes,
+                                      glyphs,
+                                      currentRun->numCodes)) {
+        // TODO
+        // One or more glyphs could not be found in this font. Try to
+        // find a font that can render them.
+    }
+    CGContextSelectFont(ctx,
+                        [[currentRun->fontInfo->font fontName] UTF8String],
+                        [currentRun->fontInfo->font pointSize],
+                        kCGEncodingMacRoman);
+    CGContextSetFillColorSpace(ctx, [[currentRun->color colorSpace] CGColorSpace]);
+    int componentCount = [currentRun->color numberOfComponents];
+
+    CGFloat components[componentCount];
+    [currentRun->color getComponents:components];
+    CGContextSetFillColor(ctx, components);
+
+    float y = initialPoint.y + lineHeight + currentRun->fontInfo->baselineOffset;
+    int x = currentRun->x;
+    // Flip vertically and translate to (x, y).
+    CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
+                                                      0.0, -1.0,
+                                                      x,    y));
+
+    CGContextShowGlyphsWithAdvances(ctx, glyphs, currentRun->advances,
+                                    currentRun->numCodes);
+
+    if (currentRun->fakeBold) {
+        CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
+                                                          0.0, -1.0,
+                                                          x + 1, y));
+
+        CGContextShowGlyphsWithAdvances(ctx, glyphs, currentRun->advances,
+                                        currentRun->numCodes);
+    }
 }
 
 - (void)_drawRuns:(NSPoint)initialPoint runs:(CharRun*)runs numRuns:(int)numRuns
@@ -3363,57 +3459,26 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     CharRun *currentRun;
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
     CGContextSetTextDrawingMode(ctx, kCGTextFill);
-    const int width = [dataSource width];
 
     for (int i = 0; i < numRuns; ++i) {
         currentRun = &runs[i];
         CGContextSetShouldAntialias(ctx, currentRun->antiAlias);
 
         if (currentRun->runType == SINGLE_CODE_POINT_RUN) {
-            CGGlyph glyphs[width];
-
-            if (!CTFontGetGlyphsForCharacters((CTFontRef)currentRun->fontInfo->font,
-                                              currentRun->codes,
-                                              glyphs,
-                                              currentRun->numCodes)) {
-                // TODO
-                // One or more glyphs could not be found in this font. Try to
-                // find a font that can render them.
-            }
-            CGContextSelectFont(ctx,
-                                [[currentRun->fontInfo->font fontName] UTF8String],
-                                [currentRun->fontInfo->font pointSize],
-                                kCGEncodingMacRoman);
-            CGContextSetFillColorSpace(ctx, [[currentRun->color colorSpace] CGColorSpace]);
-            int componentCount = [currentRun->color numberOfComponents];
-
-            CGFloat components[componentCount];
-            [currentRun->color getComponents:components];
-            CGContextSetFillColor(ctx, components);
-
-            float y = initialPoint.y + lineHeight + currentRun->fontInfo->baselineOffset;
-            int x = currentRun->x;
-            // Flip vertically and translate to (x, y).
-            CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
-                                                              0.0, -1.0,
-                                                              x,    y));
-
-            CGContextShowGlyphsWithAdvances(ctx, glyphs, currentRun->advances,
-                                            currentRun->numCodes);
-
-            if (currentRun->fakeBold) {
-                CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
-                                                                  0.0, -1.0,
-                                                                  x + 1, y));
-
-                CGContextShowGlyphsWithAdvances(ctx, glyphs, currentRun->advances,
-                                                currentRun->numCodes);
+            if (currentRun->antiAlias && advancedFontRendering) {
+                [self _drawBasicCharRunAdvanced:currentRun
+                                            ctx:ctx
+                                   initialPoint:initialPoint];
+            } else {
+                [self _drawBasicCharRun:currentRun
+                                    ctx:ctx
+                           initialPoint:initialPoint];
             }
         } else {
             [self _drawComplexCharRun:currentRun
                                   ctx:ctx
                          initialPoint:initialPoint
-                           canRecurse:YES];
+                            antiAlias:currentRun->antiAlias];
         }
     }
 }
@@ -4715,6 +4780,8 @@ static bool IsUrlChar(NSString* str)
 - (void) _settingsChanged:(NSNotification *)notification
 {
     colorInvertedCursor = [[PreferencePanel sharedInstance] colorInvertedCursor];
+    advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
+    strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
     [self setNeedsDisplay:YES];
 }
 

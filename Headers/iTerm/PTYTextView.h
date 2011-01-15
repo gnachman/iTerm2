@@ -175,6 +175,9 @@ typedef struct PTYFontInfo PTYFontInfo;
     // Last position that accessibility was read up to.
     int accX;
     int accY;
+
+    BOOL advancedFontRendering;
+    float strokeThickness;
 }
 
 + (NSCursor *)textViewCursor;

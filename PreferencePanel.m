@@ -414,7 +414,7 @@ static float versionNumber;
 
 - (void)visitGallery:(id)sender
 {
-    const NSString* COLOR_GALLERY_URL = @"http://www.iterm2.com/colorgallery";
+    NSString* COLOR_GALLERY_URL = @"http://www.iterm2.com/colorgallery";
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:COLOR_GALLERY_URL]];
 }
 
@@ -618,6 +618,8 @@ static float versionNumber;
     defaultMaxVertically = [prefs objectForKey:@"MaxVertically"] ? [[prefs objectForKey:@"MaxVertically"] boolValue] : NO;
     defaultUseCompactLabel = [prefs objectForKey:@"UseCompactLabel"]?[[prefs objectForKey:@"UseCompactLabel"] boolValue]: YES;
     defaultHighlightTabLabels = [prefs objectForKey:@"HighlightTabLabels"]?[[prefs objectForKey:@"HighlightTabLabels"] boolValue]: YES;
+    defaultAdvancedFontRendering = [prefs objectForKey:@"AdvancedFontRendering"]?[[prefs objectForKey:@"AdvancedFontRendering"] boolValue] : NO;
+    defaultStrokeThickness = [prefs objectForKey:@"AFRStrokeThickness"] ? [[prefs objectForKey:@"AFRStrokeThickness"] floatValue] : 0;
     [defaultWordChars release];
     defaultWordChars = [prefs objectForKey: @"WordCharacters"]?[[prefs objectForKey: @"WordCharacters"] retain]:@"/-+\\~_.";
     defaultOpenBookmark = [prefs objectForKey:@"OpenBookmark"]?[[prefs objectForKey:@"OpenBookmark"] boolValue]: NO;
@@ -721,6 +723,8 @@ static float versionNumber;
     [prefs setBool:defaultMaxVertically forKey:@"MaxVertically"];
     [prefs setBool:defaultUseCompactLabel forKey:@"UseCompactLabel"];
     [prefs setBool:defaultHighlightTabLabels forKey:@"HighlightTabLabels"];
+    [prefs setBool:defaultAdvancedFontRendering forKey:@"AdvancedFontRendering"];
+    [prefs setFloat:defaultStrokeThickness forKey:@"AFRStrokeThickness"];
     [prefs setObject: defaultWordChars forKey: @"WordCharacters"];
     [prefs setBool:defaultOpenBookmark forKey:@"OpenBookmark"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
@@ -775,6 +779,13 @@ static float versionNumber;
     [maxVertically setState: defaultMaxVertically?NSOnState:NSOffState];
     [useCompactLabel setState: defaultUseCompactLabel?NSOnState:NSOffState];
     [highlightTabLabels setState: defaultHighlightTabLabels?NSOnState:NSOffState];
+    [advancedFontRendering setState: defaultAdvancedFontRendering?NSOnState:NSOffState];
+    [strokeThickness setEnabled:defaultAdvancedFontRendering];
+    [strokeThicknessLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
+    [strokeThicknessMinLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
+    [strokeThicknessMaxLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
+    [strokeThickness setFloatValue:defaultStrokeThickness];
+
     [openBookmark setState: defaultOpenBookmark?NSOnState:NSOffState];
     [wordChars setStringValue: ([defaultWordChars length] > 0)?defaultWordChars:@""];
     [quitWhenAllWindowsClosed setState: defaultQuitWhenAllWindowsClosed?NSOnState:NSOffState];
@@ -832,6 +843,16 @@ static float versionNumber;
     [[self window] makeKeyAndOrderFront:self];
 }
 
+- (BOOL)advancedFontRendering
+{
+    return defaultAdvancedFontRendering;
+}
+
+- (float)strokeThickness
+{
+    return defaultStrokeThickness;
+}
+
 - (IBAction)settingChanged:(id)sender
 {
     if (sender == windowStyle ||
@@ -842,12 +863,21 @@ static float versionNumber;
         sender == cursorType ||
         sender == hideScrollbar ||
         sender == checkColorInvertedCursor ||
+        sender == advancedFontRendering ||
+        sender == strokeThickness ||
         sender == dimInactiveSplitPanes) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
         defaultTabViewType=[tabPosition indexOfSelectedItem];
         defaultUseCompactLabel = ([useCompactLabel state] == NSOnState);
         defaultHighlightTabLabels = ([highlightTabLabels state] == NSOnState);
-        defaultHideTab=([hideTab state]==NSOnState);
+        defaultAdvancedFontRendering = ([advancedFontRendering state] == NSOnState);
+        [strokeThickness setEnabled:defaultAdvancedFontRendering];
+        [strokeThicknessLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
+        [strokeThicknessMinLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
+        [strokeThicknessMaxLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
+
+        defaultStrokeThickness = [strokeThickness floatValue];
+        defaultHideTab = ([hideTab state] == NSOnState);
         defaultCursorType = [[cursorType selectedCell] tag];
         defaultColorInvertedCursor = ([checkColorInvertedCursor state] == NSOnState);
         if ([dimInactiveSplitPanes state] == NSOnState && ! [SessionView dimmingSupported]) {
