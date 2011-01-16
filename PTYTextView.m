@@ -88,7 +88,7 @@ typedef struct {
 
     // Number of glyphs.
     int numGlyphs;
-    
+
     // Should this run be anti-aliased.
     BOOL antiAlias;
 } CharRun;
@@ -209,6 +209,9 @@ static NSCursor* textViewCursor =  nil;
                                                object:nil];
 
     colorInvertedCursor = [[PreferencePanel sharedInstance] colorInvertedCursor];
+    advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
+    strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
+    minimumContrast_ = [[PreferencePanel sharedInstance] minimumContrast];
     imeOffset = 0;
 
     return self;
@@ -369,7 +372,7 @@ static NSCursor* textViewCursor =  nil;
     endX = toX;
     endY = toY;
 }
-    
+
 - (void)setFGColor:(NSColor*)color
 {
     [defaultFGColor release];
@@ -752,7 +755,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if (names == nil) {
         names = [[[super accessibilityAttributeNames] arrayByAddingObject:NSAccessibilityValueDescriptionAttribute] retain];
     }
-    
+
     return names;
 }
 
@@ -1132,7 +1135,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     float rc = ((float)((i + 0) % 100)) / 100;
     float gc = ((float)((i + 33) % 100)) / 100;
     float bc = ((float)((i + 66) % 100)) / 100;
-    [[NSColor colorWithDeviceRed:rc green:gc blue:bc alpha:1] set];
+    [[NSColor colorWithCalibratedRed:rc green:gc blue:bc alpha:1] set];
     [[defaultBGColor colorWithAlphaComponent:[self useTransparency] ? [self transparency] : 1.0] setFill];
     NSRectFill(excessRect);
 #else
@@ -1154,7 +1157,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     float red = sin(it);
     float green = sin(it + 1*2*3.14/3);
     float blue = sin(it + 2*2*3.14/3);
-    NSColor* c = [NSColor colorWithDeviceRed:red green:green blue:blue alpha:1];
+    NSColor* c = [NSColor colorWithCalibratedRed:red green:green blue:blue alpha:1];
     [c set];
     NSRect r = rect;
     r.origin.y++;
@@ -3138,6 +3141,119 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return newRuns;
 }
 
+static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
+    return (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
+}
+
+- (NSColor*)colorWithRed:(float)r green:(float)g blue:(float)b alpha:(float)a withPerceivedBrightness:(CGFloat)t
+{
+    /*
+     Given:
+     a vector c [c1, c2, c3] (the starting color)
+     a vector e [e1, e2, e3] (an extreme color we are moving to, normally black or white)
+     a vector A [a1, a2, a3] (the perceived brightness transform)
+     a linear function f(Y)=AY (perceived brightness for color Y)
+     a constant t (target perceived brightness)
+     find a vector X such that F(X)=t
+     and X lies on a straight line between c and e
+
+     Define a parametric vector x(p) = [x1(p), x2(p), x3(p)]:
+     x1(p) = p*e1 + (1-p)*c1
+     x2(p) = p*e2 + (1-p)*c2
+     x3(p) = p*e3 + (1-p)*c3
+
+     when p=0, x=c
+     when p=1, x=e
+
+     the line formed by x(p) from p=0 to p=1 is the line from c to e.
+
+     Our goal: find the value of p where f(x(p))=t
+
+     We know that:
+                            [x1(p)]
+     f(X) = AX = [a1 a2 a3] [x2(p)] = a1x1(p) + a2x2(p) + a3x3(p)
+                            [x3(p)]
+     Expand and solve for p:
+        t = a1*(p*e1 + (1-p)*c1) + a2*(p*e2 + (1-p)*c2) + a3*(p*e3 + (1-p)*c3)
+        t = a1*(p*e1 + c1 - p*c1) + a2*(p*e2 + c2 - p*c2) + a3*(p*e3 + c3 - p*c3)
+        t = a1*p*e1 + a1*c1 - a1*p*c1 + a2*p*e2 + a2*c2 - a2*p*c2 + a3*p*e3 + a3*c3 - a3*p*c3
+        t = a1*p*e1 - a1*p*c1 + a2*p*e2 - a2*p*c2 + a3*p*e3 - a3*p*c3 + a1*c1 + a2*c2 + a3*c3
+        t = p*(a2*e1 - a1*c1 + a2*e2 - a2*c2 + a3*e3 - a3*c3) + a1*c1 + a2*c2 + a3*c3
+        t - (a1*c1 + a2*c2 + a3*c3) = p*(a1*e1 - a1*c1 + a2*e2 - a2*c2 + a3*e3 - a3*c3)
+        p = (t - (a1*c1 + a2*c2 + a3*c3)) / (a1*e1 - a1*c1 + a2*e2 - a2*c2 + a3*e3 - a3*c3)
+     */
+    const CGFloat c1 = r;
+    const CGFloat c2 = g;
+    const CGFloat c3 = b;
+
+    CGFloat k;
+    if (PerceivedBrightness(r, g, b) < t) {
+        k = 1;
+    } else {
+        k = 0;
+    }
+    const CGFloat e1 = k;
+    const CGFloat e2 = k;
+    const CGFloat e3 = k;
+
+    const CGFloat a1 = 0.2126;
+    const CGFloat a2 = 0.7152;
+    const CGFloat a3 = 0.0722;
+
+    const CGFloat p = (t - (a1*c1 + a2*c2 + a3*c3)) / (a1*(e1 - c1) + a2*(e2 - c2) + a3*(e3 - c3));
+
+    const CGFloat x1 = p * e1 + (1 - p) * c1;
+    const CGFloat x2 = p * e2 + (1 - p) * c2;
+    const CGFloat x3 = p * e3 + (1 - p) * c3;
+
+    return [NSColor colorWithCalibratedRed:x1 green:x2 blue:x3 alpha:a];
+}
+
+- (NSColor*)color:(NSColor*)mainColor withContrastAgainst:(NSColor*)otherColor
+{
+    float r = [mainColor redComponent];
+    float g = [mainColor greenComponent];
+    float b = [mainColor blueComponent];
+    float mainBrightness = PerceivedBrightness(r, g, b);
+    float otherBrightness = PerceivedBrightness([otherColor redComponent],
+                                                [otherColor greenComponent],
+                                                [otherColor blueComponent]);
+    CGFloat brightnessDiff = fabs(mainBrightness - otherBrightness);
+    if (brightnessDiff < minimumContrast_) {
+        CGFloat error = fabs(brightnessDiff - minimumContrast_);
+        CGFloat targetBrightness = mainBrightness;
+        if (mainBrightness < otherBrightness) {
+            targetBrightness -= error;
+            if (targetBrightness < 0) {
+                const float alternative = otherBrightness + minimumContrast_;
+                const float baseContrast = otherBrightness;
+                const float altContrast = MIN(alternative, 1) - otherBrightness;
+                if (altContrast > baseContrast) {
+                    targetBrightness = alternative;
+                }
+            }
+        } else {
+            targetBrightness += error;
+            if (targetBrightness > 1) {
+                const float alternative = otherBrightness - minimumContrast_;
+                const float baseContrast = 1 - otherBrightness;
+                const float altContrast = otherBrightness - MAX(alternative, 0);
+                if (altContrast > baseContrast) {
+                    targetBrightness = alternative;
+                }
+            }
+        }
+        targetBrightness = MIN(MAX(0, targetBrightness), 1);
+        return [self colorWithRed:r
+                            green:g
+                             blue:b
+                            alpha:[mainColor alphaComponent]
+                    withPerceivedBrightness:targetBrightness];
+    } else {
+        return mainColor;
+    }
+}
+
 - (int)_constructRuns:(NSPoint)initialPoint
               theLine:(screen_char_t *)theLine
       advancesStorage:(CGSize*)advancesStorage
@@ -3148,6 +3264,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
            bgselected:(BOOL)bgselected
                 width:(const int)width
            indexRange:(NSRange)indexRange
+              bgColor:(NSColor*)bgColor
 {
     int numRuns = 0;
     CharRun* currentRun = NULL;
@@ -3162,7 +3279,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     BOOL havePrevChar = NO;
     CGFloat curX = initialPoint.x;
     BOOL prevCharAntiAlias = NO;
-    
+
     for (int i = indexRange.location;
          i < indexRange.location + indexRange.length;
          i++) {
@@ -3177,15 +3294,15 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         NSString* thisCharString = nil;
         CGFloat thisCharAdvance;
         BOOL thisCharFakeBold;
-        PTYFontInfo* thisCharFont;
+        PTYFontInfo* thisCharFont = 0;
         BOOL thisCharAntiAlias;
-        
+
         if (theLine[i].code < 128 && !theLine[i].complexChar) {
             thisCharAntiAlias = asciiAntiAlias;
         } else {
             thisCharAntiAlias = nonasciiAntiAlias;
         }
-        
+
         // Figure out the color for this char.
         if (bgselected &&
             theLine[i].alternateForegroundSemantics &&
@@ -3208,6 +3325,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             }
         }
 
+        if (minimumContrast_ > 0.001 && bgColor) {
+            thisCharColor = [self color:thisCharColor withContrastAgainst:bgColor];
+        }
         BOOL drawable;
         if (blinkShow || !theLine[i].blink) {
             // This char is either not blinking or during the "on" cycle of the
@@ -3336,7 +3456,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 {
     NSString* str = [NSString stringWithCharacters:codes
                                             length:numCodes];
-    NSDictionary* attrs; 
+    NSDictionary* attrs;
     if (advancedFontRendering && antiAlias) {
         attrs = [NSDictionary dictionaryWithObjectsAndKeys:
                                fontInfo->font, NSFontAttributeName,
@@ -3410,7 +3530,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 }
 
-- (void)_drawBasicCharRun:(CharRun *)currentRun ctx:(CGContextRef)ctx initialPoint:(NSPoint)initialPoint  
+- (void)_drawBasicCharRun:(CharRun *)currentRun ctx:(CGContextRef)ctx initialPoint:(NSPoint)initialPoint
 {
     const int width = [dataSource width];
     CGGlyph glyphs[width];
@@ -3488,6 +3608,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
               startingAtPoint:(NSPoint)initialPoint
                    bgselected:(BOOL)bgselected
                      reversed:(BOOL)reversed
+                      bgColor:(NSColor*)bgColor
 {
     const int width = [dataSource width];
     unichar codeStorage[width * kMaxParts];
@@ -3503,7 +3624,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                               reversed:reversed
                             bgselected:bgselected
                                  width:width
-                            indexRange:indexRange];
+                            indexRange:indexRange
+                               bgColor:bgColor];
 
     [self _drawRuns:initialPoint runs:runs numRuns:numRuns];
 }
@@ -3635,7 +3757,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                         startingAtPoint:NSMakePoint(MARGIN + bgstart*charWidth,
                                                     curY)
                              bgselected:bgselected
-                               reversed:reversed];
+                               reversed:reversed
+                                bgColor:aColor];
             bgstart = -1;
             // Return to top of loop without incrementing j so this
             // character gets the chance to start its own run
@@ -3675,7 +3798,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                               reversed:NO
                             bgselected:NO
                                  width:[dataSource width]
-                            indexRange:NSMakeRange(0, 1)];
+                            indexRange:NSMakeRange(0, 1)
+                               bgColor:nil];
     // If an override color is given, change the runs' colors.
     if (overrideColor) {
         for (int i = 0; i < numRuns; ++i) {
@@ -3775,7 +3899,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         int y = (yStart + [dataSource numberOfLines] - height) * lineHeight;
         int cursorY = y;
         int x = baseX;
-        int preWrapY;
+        int preWrapY = 0;
         BOOL justWrapped = NO;
         BOOL foundCursor = NO;
         for (i = 0; i < len; ) {
@@ -3814,7 +3938,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                                       reversed:NO
                                     bgselected:NO
                                          width:[dataSource width]
-                                    indexRange:NSMakeRange(i, charsInLine)];
+                                    indexRange:NSMakeRange(i, charsInLine)
+                                       bgColor:nil];
             [self _drawRuns:NSMakePoint(x, y) runs:runs numRuns:numRuns];
 
             // Draw an underline.
@@ -4301,7 +4426,7 @@ static bool IsUrlChar(NSString* str)
     if (!theChar) {
         return NO;
     }
-    
+
     static NSCharacterSet* urlChars;
     if (!urlChars) {
         urlChars = [[NSCharacterSet characterSetWithCharactersInString:@".?/:;%=&_-,+~#@!*'()"] retain];
@@ -4782,6 +4907,7 @@ static bool IsUrlChar(NSString* str)
     colorInvertedCursor = [[PreferencePanel sharedInstance] colorInvertedCursor];
     advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
+    minimumContrast_ = [[PreferencePanel sharedInstance] minimumContrast];
     [self setNeedsDisplay:YES];
 }
 

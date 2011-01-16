@@ -131,6 +131,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTextField* strokeThicknessMinLabel;
     IBOutlet NSTextField* strokeThicknessMaxLabel;
 
+    // Minimum contrast
+    IBOutlet NSSlider* minimumContrast;
+    float defaultMinimumContrast;
+
     // open bookmarks when iterm starts
     IBOutlet NSButton *openBookmark;
     BOOL defaultOpenBookmark;
@@ -368,6 +372,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (IBAction)settingChanged:(id)sender;
 - (BOOL)advancedFontRendering;
 - (float)strokeThickness;
+- (float)minimumContrast;
 - (void)windowWillLoad;
 - (void)windowWillClose:(NSNotification *)aNotification;
 - (void)windowDidBecomeKey:(NSNotification *)aNotification;

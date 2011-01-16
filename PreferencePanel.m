@@ -620,6 +620,7 @@ static float versionNumber;
     defaultHighlightTabLabels = [prefs objectForKey:@"HighlightTabLabels"]?[[prefs objectForKey:@"HighlightTabLabels"] boolValue]: YES;
     defaultAdvancedFontRendering = [prefs objectForKey:@"AdvancedFontRendering"]?[[prefs objectForKey:@"AdvancedFontRendering"] boolValue] : NO;
     defaultStrokeThickness = [prefs objectForKey:@"AFRStrokeThickness"] ? [[prefs objectForKey:@"AFRStrokeThickness"] floatValue] : 0;
+    defaultMinimumContrast = [prefs objectForKey:@"MinimumContrast"] ? [[prefs objectForKey:@"MinimumContrast"] floatValue] : 0;
     [defaultWordChars release];
     defaultWordChars = [prefs objectForKey: @"WordCharacters"]?[[prefs objectForKey: @"WordCharacters"] retain]:@"/-+\\~_.";
     defaultOpenBookmark = [prefs objectForKey:@"OpenBookmark"]?[[prefs objectForKey:@"OpenBookmark"] boolValue]: NO;
@@ -725,6 +726,7 @@ static float versionNumber;
     [prefs setBool:defaultHighlightTabLabels forKey:@"HighlightTabLabels"];
     [prefs setBool:defaultAdvancedFontRendering forKey:@"AdvancedFontRendering"];
     [prefs setFloat:defaultStrokeThickness forKey:@"AFRStrokeThickness"];
+    [prefs setFloat:defaultMinimumContrast forKey:@"MinimumContrast"];
     [prefs setObject: defaultWordChars forKey: @"WordCharacters"];
     [prefs setBool:defaultOpenBookmark forKey:@"OpenBookmark"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
@@ -785,7 +787,8 @@ static float versionNumber;
     [strokeThicknessMinLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
     [strokeThicknessMaxLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
     [strokeThickness setFloatValue:defaultStrokeThickness];
-
+    [minimumContrast setFloatValue:defaultMinimumContrast];
+    
     [openBookmark setState: defaultOpenBookmark?NSOnState:NSOffState];
     [wordChars setStringValue: ([defaultWordChars length] > 0)?defaultWordChars:@""];
     [quitWhenAllWindowsClosed setState: defaultQuitWhenAllWindowsClosed?NSOnState:NSOffState];
@@ -853,6 +856,11 @@ static float versionNumber;
     return defaultStrokeThickness;
 }
 
+- (float)minimumContrast
+{
+    return defaultMinimumContrast;
+}
+
 - (IBAction)settingChanged:(id)sender
 {
     if (sender == windowStyle ||
@@ -865,6 +873,7 @@ static float versionNumber;
         sender == checkColorInvertedCursor ||
         sender == advancedFontRendering ||
         sender == strokeThickness ||
+        sender == minimumContrast ||
         sender == dimInactiveSplitPanes) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
         defaultTabViewType=[tabPosition indexOfSelectedItem];
@@ -875,8 +884,8 @@ static float versionNumber;
         [strokeThicknessLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
         [strokeThicknessMinLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
         [strokeThicknessMaxLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
-
         defaultStrokeThickness = [strokeThickness floatValue];
+        defaultMinimumContrast = [minimumContrast floatValue];
         defaultHideTab = ([hideTab state] == NSOnState);
         defaultCursorType = [[cursorType selectedCell] tag];
         defaultColorInvertedCursor = ([checkColorInvertedCursor state] == NSOnState);

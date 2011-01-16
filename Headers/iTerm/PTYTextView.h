@@ -178,6 +178,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     BOOL advancedFontRendering;
     float strokeThickness;
+    float minimumContrast_;
 }
 
 + (NSCursor *)textViewCursor;
