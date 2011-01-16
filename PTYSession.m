@@ -239,6 +239,7 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     [aSession setPreferencesFromAddressBookEntry:theBookmark];
     [[aSession SCREEN] setDisplay:[aSession TEXTVIEW]];
     [aSession runCommandWithOldCwd:nil];
+    [aSession setName:[theBookmark objectForKey:KEY_NAME]];
     if ([[[[theTab realParentWindow] window] title] compare:@"Window"] == NSOrderedSame) {
         [[theTab realParentWindow] setWindowTitle];
     }
