@@ -112,7 +112,8 @@ void DebugLog(NSString* value);
 - (IBAction) smallerFont: (id) sender;
 
 // size
-- (IBAction) returnToDefaultSize: (id) sender;
+- (IBAction)returnToDefaultSize:(id)sender;
+- (IBAction)exposeForTabs:(id)sender;
 - (IBAction)editCurrentSession:(id)sender;
 
 @end

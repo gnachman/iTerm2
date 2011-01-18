@@ -70,7 +70,7 @@
                 height:(int)height
                 isUTF8:(BOOL)isUTF8;
 
-- (NSString*)currentJob;
+- (NSString*)currentJob:(BOOL)forceRefresh;
 
 - (void)setDelegate:(id)object;
 - (id)delegate;

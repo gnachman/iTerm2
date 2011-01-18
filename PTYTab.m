@@ -158,6 +158,15 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     [super dealloc];
 }
 
+- (NSRect)absoluteFrame
+{
+    NSRect result;
+    result.origin = [root_ convertPoint:NSMakePoint(0, 0) toView:nil];
+    result.origin = [[root_ window] convertBaseToScreen:result.origin];
+    result.size = [root_ frame].size;
+    return result;
+}
+
 - (void)_refreshLabels:(id)sender
 {
     [tabViewItem_ setLabel:[[self activeSession] name]];
@@ -1059,13 +1068,16 @@ static void SwapPoint(NSPoint* point) {
 
 - (void)_drawSession:(PTYSession*)session inImage:(NSImage*)viewImage atOrigin:(NSPoint)origin
 {
-    NSImage *textviewImage = [[[NSImage alloc] initWithSize:[[session TEXTVIEW] frame].size] autorelease];
+    [[session TEXTVIEW] refresh];
+    NSImage *textviewImage = [[[NSImage alloc] initWithSize:[[session TEXTVIEW] visibleRect].size] autorelease];
 
     [textviewImage setFlipped:YES];
     [textviewImage lockFocus];
     // Draw the background flipped, which is actually the right way up.
     NSSize viewSize = [textviewImage size];
-    [[session TEXTVIEW] drawRect:NSMakeRect(0, 0, viewSize.width, viewSize.height)];
+    NSSize tvSize = [[session TEXTVIEW] frame].size;
+    NSPoint temp = NSMakePoint(0, 0);
+    [[session TEXTVIEW] drawRect:[[session SCROLLVIEW] documentVisibleRect] to:&temp];
     [textviewImage unlockFocus];
 
     [viewImage lockFocus];
@@ -1119,17 +1131,25 @@ static void SwapPoint(NSPoint* point) {
     }
 }
 
-- (NSImage*)image
+- (NSImage*)image:(BOOL)withSpaceForFrame
 {
     PtyLog(@"PTYTab image");
     NSRect tabFrame = [[realParentWindow_ tabBarControl] frame];
     NSSize viewSize = [root_ frame].size;
-    viewSize.height += tabFrame.size.height;
+    if (withSpaceForFrame) {
+        viewSize.height += tabFrame.size.height;
+    }
 
     NSImage* viewImage = [[[NSImage alloc] initWithSize:viewSize] autorelease];
+    [viewImage lockFocus];
+    [[NSColor windowBackgroundColor] set];
+    // The top two pixels are a margin.
+    NSRectFill(NSMakeRect(0, 0, viewSize.width, viewSize.height - 2));
+    [viewImage unlockFocus];
 
     float yOrigin = 0;
-    if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
+    if (withSpaceForFrame && 
+        [[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
         yOrigin += tabFrame.size.height;
     }
 
@@ -1138,20 +1158,22 @@ static void SwapPoint(NSPoint* point) {
     // Draw over where the tab bar would usually be
     [viewImage lockFocus];
     [[NSColor windowBackgroundColor] set];
-    if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+    if (withSpaceForFrame &&
+        [[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
         tabFrame.origin.y += [viewImage size].height;
     }
-    NSRectFill(tabFrame);
+    if (withSpaceForFrame) {
+        NSRectFill(tabFrame);
 
-    // Draw the background flipped, which is actually the right way up
-    NSAffineTransform *transform = [NSAffineTransform transform];
-    [transform scaleXBy:1.0 yBy:-1.0];
-    [transform concat];
-    tabFrame.origin.y = -tabFrame.origin.y - tabFrame.size.height;
-    [(id <PSMTabStyle>)[[[realParentWindow_ tabView] delegate] style] drawBackgroundInRect:tabFrame];
-    [transform invert];
-    [transform concat];
-
+        // Draw the background flipped, which is actually the right way up
+        NSAffineTransform *transform = [NSAffineTransform transform];
+        [transform scaleXBy:1.0 yBy:-1.0];
+        [transform concat];
+        tabFrame.origin.y = -tabFrame.origin.y - tabFrame.size.height;
+        [(id <PSMTabStyle>)[[[realParentWindow_ tabView] delegate] style] drawBackgroundInRect:tabFrame];
+        [transform invert];
+        [transform concat];
+    }
     [viewImage unlockFocus];
 
     return viewImage;

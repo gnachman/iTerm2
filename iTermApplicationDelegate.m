@@ -39,7 +39,7 @@
 #import <iTerm/PTYTextView.h>
 #import <BookmarksWindow.h>
 #import "PTYTab.h"
-
+#import "iTermExpose.h"
 #include <unistd.h>
 
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
@@ -576,6 +576,10 @@ void DebugLog(NSString* value)
                                    height:[[abEntry objectForKey:KEY_ROWS] intValue]];
 }
 
+- (IBAction)exposeForTabs:(id)sender
+{
+    [iTermExpose toggle];
+}
 
 // Notifications
 - (void)reloadMenus:(NSNotification *)aNotification

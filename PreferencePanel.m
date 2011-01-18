@@ -2064,17 +2064,6 @@ static float versionNumber;
     unsigned short keyChar = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
     unsigned int keyCode = [event keyCode];
 
-    // turn off all the other modifier bits we don't care about
-    unsigned int theModifiers = keyMods &
-    (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask |
-     NSCommandKeyMask | NSNumericPadKeyMask);
-
-    // on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
-    if (keyChar >= NSUpArrowFunctionKey &&
-        keyChar <= NSRightArrowFunctionKey) {
-        theModifiers |= NSNumericPadKeyMask;
-    }
-
     defaultHotkeyChar = keyChar;
     defaultHotkeyCode = keyCode;
     defaultHotkeyModifiers = keyMods;

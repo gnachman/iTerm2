@@ -210,6 +210,9 @@
 // Make the tab at [sender tag] the foreground tab.
 - (void)selectSessionAtIndexAction:(id)sender;
 
+// Return the index of a tab or NSNotFound.
+- (NSInteger)indexOfTab:(PTYTab*)aTab;
+
 // Open a new tab with the bookmark given by the guid in
 // [sender representedObject]. Used by menu items in the Bookmarks menu.
 - (void)newSessionInTabAtIndex:(id)sender;
@@ -549,6 +552,8 @@
 - (void)appendTab:(PTYTab*)theTab;
 
 - (void)getSessionParameters:(NSMutableString *)command withName:(NSMutableString *)name;
+
+- (NSArray*)tabs;
 
 @end
 

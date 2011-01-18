@@ -2211,7 +2211,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (screen_char_t)foregroundColorCode
 {
-    screen_char_t result;
+    screen_char_t result = { 0 };
     if (reversed) {
         result.foregroundColor = BG_COLORCODE;
     } else {
@@ -2226,7 +2226,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (screen_char_t)backgroundColorCode
 {
-    screen_char_t result;
+    screen_char_t result = { 0 };
     if (reversed) {
         result.backgroundColor = FG_COLORCODE;
     } else {
@@ -2238,7 +2238,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (screen_char_t)foregroundColorCodeReal
 {
-    screen_char_t result;
+    screen_char_t result = { 0 };
     result.foregroundColor = FG_COLORCODE;
     result.alternateForegroundSemantics = alternateForegroundSemantics;
     result.bold = bold;
@@ -2249,7 +2249,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (screen_char_t)backgroundColorCodeReal
 {
-    screen_char_t result;
+    screen_char_t result = { 0 };
     result.backgroundColor = BG_COLORCODE;
     result.alternateBackgroundSemantics = alternateBackgroundSemantics;
     return result;

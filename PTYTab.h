@@ -78,6 +78,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (id)initWithRoot:(NSSplitView*)root;
 - (void)dealloc;
 
+- (NSRect)absoluteFrame;
 - (PTYSession*)activeSession;
 - (void)setActiveSession:(PTYSession*)session;
 - (NSTabViewItem *)tabViewItem;
@@ -133,7 +134,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (PTYSession*)sessionAbove:(PTYSession*)session;
 - (PTYSession*)sessionBelow:(PTYSession*)session;
 - (BOOL)canSplitVertically:(BOOL)isVertical withSize:(NSSize)newSessionSize;
-- (NSImage*)image;
+- (NSImage*)image:(BOOL)withSpaceForFrame;
 - (bool)blur;
 - (void)recheckBlur;
 

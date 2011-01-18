@@ -285,6 +285,7 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (BOOL)growlNewOutput;
 
 - (NSString *)name;
+- (NSString*)rawName;
 - (void)setName: (NSString *)theName;
 - (NSString *)defaultName;
 - (NSString*)joblessDefaultName;
@@ -392,6 +393,7 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (void)scheduleUpdateIn:(NSTimeInterval)timeout;
 
 - (NSString*)jobName;
+- (NSString*)uncachedJobName;
 
 - (void)setIgnoreResizeNotifications:(BOOL)ignore;
 - (BOOL)ignoreResizeNotifications;

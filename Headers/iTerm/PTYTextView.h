@@ -179,6 +179,8 @@ typedef struct PTYFontInfo PTYFontInfo;
     BOOL advancedFontRendering;
     float strokeThickness;
     float minimumContrast_;
+
+    BOOL changedSinceLastExpose_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -189,8 +191,10 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (BOOL)resignFirstResponder;
 - (BOOL)isFlipped;
 - (BOOL)isOpaque;
+- (BOOL)getAndResetChangedSinceLastExpose;
 - (BOOL)shouldDrawInsertionPoint;
 - (void)drawRect:(NSRect)rect;
+- (void)drawRect:(NSRect)rect to:(NSPoint*)toOrigin;
 - (void)keyDown:(NSEvent *)event;
 - (BOOL)keyIsARepeat;
 - (void)mouseExited:(NSEvent *)event;

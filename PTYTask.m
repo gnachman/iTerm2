@@ -871,13 +871,14 @@ static void reapchild(int n)
 // arbitrary tty-controller in the tty's pgid that has this task as an ancestor
 // may be chosen. This function also implements a chache to avoid doing the
 // potentially expensive system calls too often.
-- (NSString*)currentJob
+- (NSString*)currentJob:(BOOL)forceRefresh
 {
     static NSMutableDictionary* pidInfoCache;
     static NSDate* lastCacheUpdate;
 
     const double kMaxCacheAge = 0.5;
-    if (lastCacheUpdate == nil ||
+    if (forceRefresh ||
+        lastCacheUpdate == nil ||
         [lastCacheUpdate timeIntervalSinceNow] < -kMaxCacheAge) {
         if (pidInfoCache == nil) {
             pidInfoCache = [[NSMutableDictionary alloc] init];

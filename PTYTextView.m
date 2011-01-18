@@ -49,6 +49,7 @@
 #import "PreferencePanel.h"
 #import "PasteboardHistory.h"
 #import "PTYTab.h"
+#import "iTermExpose.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -1002,6 +1003,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)drawRect:(NSRect)rect
 {
+    [self drawRect:rect to:nil];
+}
+
+- (void)drawRect:(NSRect)rect to:(NSPoint*)toOrigin
+{
 #ifdef DEBUG_DRAWING
     static int iteration=0;
     static BOOL prevBad=NO;
@@ -1030,7 +1036,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int lineEnd = ceil((rect.origin.y + rect.size.height) / lineHeight);
 
     // Ensure valid line ranges
-    if(lineStart < 0) {
+    if (lineStart < 0) {
         lineStart = 0;
     }
     if (lineEnd > [dataSource numberOfLines]) {
@@ -1060,6 +1066,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 #ifdef DEBUG_DRAWING
     NSMutableString* lineDebug = [NSMutableString stringWithFormat:@"drawRect:%d,%d %dx%d drawing these lines with scrollback overflow of %d, iteration=%d:\n", (int)rect.origin.x, (int)rect.origin.y, (int)rect.size.width, (int)rect.size.height, (int)[dataSource scrollbackOverflow], iteration];
 #endif
+    float y = toOrigin ? toOrigin->y : lineStart * lineHeight;
     for (int line = lineStart; line < lineEnd; line++) {
         NSRect lineRect = [self visibleRect];
         lineRect.origin.y = line*lineHeight;
@@ -1074,7 +1081,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 // view is what the first line of the datasource was before
                 // it overflowed. Continue to draw text in this out-of-alignment
                 // manner until refresh is called and gets things in sync again.
-                [self _drawLine:line-overflow AtY:line*lineHeight];
+                [self _drawLine:line-overflow AtY:y];
             }
             // if overflow > line then the requested line cannot be drawn
             // because it has been lost to the sands of time.
@@ -1098,13 +1105,15 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 [lineDebug appendFormat:@"%@", ScreenCharToStr(&theLine[i])];
             }
             [lineDebug appendString:@"\n"];
-            [[NSString stringWithFormat:@"Iter %d, line %d, y=%d", iteration, line, (int)(line*lineHeight)] drawInRect:NSMakeRect(rect.size.width-200,
-                                                                                                                                  line*lineHeight,
-                                                                                                                                  200,
-                                                                                                                                  lineHeight)
-                                                                                                        withAttributes:dct];
+            [[NSString stringWithFormat:@"Iter %d, line %d, y=%d",
+              iteration, line, (int)(y)] drawInRect:NSMakeRect(rect.size.width-200,
+                                                               y,
+                                                               200,
+                                                               lineHeight)
+             withAttributes:dct];
 #endif
         }
+        y += lineHeight;
     }
 #ifdef DEBUG_DRAWING
     [self appendDebug:lineDebug];
@@ -1128,7 +1137,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         excessRect.size.width = [[self enclosingScrollView] contentSize].width;
         excessRect.size.height = [self excess];
     }
-#if 0
+#ifdef DEBUG_DRAWING
     // Draws the excess bar in a different color each time
     static int i;
     i++;
@@ -2925,6 +2934,13 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 }
 
+- (BOOL)getAndResetChangedSinceLastExpose
+{
+    BOOL temp = changedSinceLastExpose_;
+    changedSinceLastExpose_ = NO;
+    return temp;
+}
+
 @end
 
 //
@@ -3293,7 +3309,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         unichar thisCharUnichar = 0;
         NSString* thisCharString = nil;
         CGFloat thisCharAdvance;
-        BOOL thisCharFakeBold;
+        BOOL thisCharFakeBold = NO;
         PTYFontInfo* thisCharFont = 0;
         BOOL thisCharAntiAlias;
 
@@ -5093,6 +5109,13 @@ static bool IsUrlChar(NSString* str)
         [dataSource cursorY] + [dataSource numberOfLines] - [dataSource height] + [dataSource totalScrollbackOverflow] - 1 != accY) {
         NSAccessibilityPostNotification(self,
                                         NSAccessibilityValueChangedNotification);
+    }
+
+    if (foundDirty && [[iTermExpose sharedInstance] isVisible]) {
+        changedSinceLastExpose_ = YES;
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabContentsChanged"
+                                                            object:nil
+                                                          userInfo:nil];
     }
 }
 

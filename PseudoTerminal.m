@@ -348,6 +348,17 @@ NSString *sessionsKey = @"sessions";
     [TABVIEW selectTabViewItemAtIndex:[sender tag]];
 }
 
+- (NSInteger)indexOfTab:(PTYTab*)aTab
+{
+    NSArray* items = [TABVIEW tabViewItems];
+    for (int i = 0; i < [items count]; i++) {
+        if ([[items objectAtIndex:i] identifier] == aTab) {
+            return i;
+        }
+    }
+    return NSNotFound;
+}
+
 - (void)newSessionInTabAtIndex:(id)sender
 {
     Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
@@ -713,6 +724,9 @@ NSString *sessionsKey = @"sessions";
     } else {
         [self disableBlur];
     }
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowDidDeminiaturize"
+                                                        object:self
+                                                      userInfo:nil];
 }
 
 - (BOOL)windowShouldClose:(NSNotification *)aNotification
@@ -783,6 +797,11 @@ NSString *sessionsKey = @"sessions";
         }
     }
 
+    // Post a notification
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowWillClose"
+                                                        object:nil
+                                                      userInfo:nil];
+
     // This releases the last reference to self.
     [[iTermController sharedInstance] terminalWillClose:self];
 }
@@ -790,6 +809,9 @@ NSString *sessionsKey = @"sessions";
 - (void)windowWillMiniaturize:(NSNotification *)aNotification
 {
     [self disableBlur];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowWillMiniaturize"
+                                                        object:self
+                                                      userInfo:nil];
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification
@@ -1507,7 +1529,7 @@ NSString *sessionsKey = @"sessions";
         *styleMask = NSBorderlessWindowMask;
     } else {
         // grabs whole tabview image
-        viewImage = [[tabViewItem identifier] image];
+        viewImage = [[tabViewItem identifier] image:YES];
 
         offset->width = [(id <PSMTabStyle>)[tabBarControl style] leftMarginForTabBarControl];
         if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
@@ -2508,6 +2530,17 @@ NSString *sessionsKey = @"sessions";
         [name replaceOccurrencesOfString:[name  substringWithRange:NSMakeRange(r1.location, r2.location - r1.location+2)] withString:[parameterValue stringValue] options:NSLiteralSearch range:NSMakeRange(0,[name length])];
     }
 
+}
+
+- (NSArray*)tabs
+{
+    int n = [TABVIEW numberOfTabViewItems];
+    NSMutableArray *tabs = [NSMutableArray arrayWithCapacity:n];
+    for (int i = 0; i < n; ++i) {
+        NSTabViewItem* theItem = [TABVIEW tabViewItemAtIndex:i];
+        [tabs addObject:[theItem identifier]];
+    }
+    return tabs;
 }
 
 @end

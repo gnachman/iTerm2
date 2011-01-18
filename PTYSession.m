@@ -1510,6 +1510,11 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     return [self formattedName:name];
 }
 
+- (NSString*)rawName
+{
+    return name;
+}
+
 - (void)setName:(NSString*)theName
 {
     if ([name isEqualToString:theName]) {
@@ -2086,7 +2091,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             } else {
                 // Update the job name in the tab title.
                 NSString* oldName = jobName_;
-                jobName_ = [[SHELL currentJob] copy];
+                jobName_ = [[SHELL currentJob:NO] copy];
                 [jobName_ retain];
                 if (![oldName isEqualToString:jobName_]) {
                     [[self tab] nameOfSession:self didChangeTo:[self name]];
@@ -2268,6 +2273,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (NSString*)jobName
 {
     return jobName_;
+}
+
+- (NSString*)uncachedJobName
+{
+    return [SHELL currentJob:YES];
 }
 
 @end
