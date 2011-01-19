@@ -797,13 +797,12 @@ NSString *sessionsKey = @"sessions";
         }
     }
 
-    // Post a notification
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowWillClose"
-                                                        object:nil
-                                                      userInfo:nil];
-
     // This releases the last reference to self.
     [[iTermController sharedInstance] terminalWillClose:self];
+
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowDidClose"
+                                                        object:nil
+                                                      userInfo:nil];
 }
 
 - (void)windowWillMiniaturize:(NSNotification *)aNotification

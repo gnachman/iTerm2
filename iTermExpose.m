@@ -80,9 +80,12 @@ static const float THUMB_MARGIN = 25;
     NSRect normalFrame_;
     NSTrackingRectTag trackingRectTag_;
     BOOL highlight_;
+    id tabObject_;
     id<iTermExposeTabViewDelegate> delegate_;
+    BOOL dirty_;
 }
 
++ (NSString*)labelForTab:(PTYTab*)aTab windowNumber:(int)i;
 - (id)initWithImage:(NSImage*)image label:(NSString*)label tab:(PTYTab*)tab frame:(NSRect)frame fullSizeFrame:(NSRect)fullSizeFrame normalFrame:(NSRect)normalFrame delegate:(id<iTermExposeTabViewDelegate>)delegate;
 - (void)dealloc;
 - (NSRect)imageFrame:(NSSize)thumbSize;
@@ -96,10 +99,29 @@ static const float THUMB_MARGIN = 25;
 - (NSInteger)tabIndex;
 - (NSInteger)windowIndex;
 - (void)setImage:(NSImage*)newImage;
+- (void)setLabel:(NSString*)newLabel;
+- (id)tabObject;
+- (void)clear;
+- (void)setDirty:(BOOL)dirty;
+- (BOOL)dirty;
+- (void)setWindowIndex:(int)windowIndex tabIndex:(int)tabIndex;
 
 @end
 
 @implementation iTermExposeTabView
+
++ (NSString*)labelForTab:(PTYTab*)aTab windowNumber:(int)i
+{
+    if (i == 0) {
+        return @"Defunct Tab";
+    }
+    NSString* jobName = [[aTab activeSession] jobName];
+    if (jobName) {
+        return [NSString stringWithFormat:@"%d. %@ (%@)", i, [[aTab activeSession] rawName], [[aTab activeSession] jobName]];
+    } else {
+        return [NSString stringWithFormat:@"%d. %@", i, [[aTab activeSession] rawName]];
+    }
+}
 
 - (id)initWithImage:(NSImage*)image label:(NSString*)label tab:(PTYTab*)tab frame:(NSRect)frame fullSizeFrame:(NSRect)fullSizeFrame normalFrame:(NSRect)normalFrame delegate:(id<iTermExposeTabViewDelegate>)delegate
 {
@@ -115,6 +137,7 @@ static const float THUMB_MARGIN = 25;
         showLabel_ = NO;
         originalFrame_ = frame;
         delegate_ = delegate;
+        tabObject_ = tab;
     }
     return self;
 }
@@ -127,9 +150,43 @@ static const float THUMB_MARGIN = 25;
     [super dealloc];
 }
 
+- (id)tabObject
+{
+    return tabObject_;
+}
+
+- (void)setDirty:(BOOL)dirty
+{
+    dirty_ = dirty;
+}
+
+- (BOOL)dirty
+{
+    return dirty_;
+}
+
+- (void)setWindowIndex:(int)windowIndex tabIndex:(int)tabIndex
+{
+    windowIndex_ = windowIndex;
+    tabIndex_ = tabIndex;
+}
+
 - (NSRect)originalFrame
 {
     return originalFrame_;
+}
+
+- (void)clear
+{
+    windowIndex_ = -1;
+    tabIndex_ = -1;
+    NSSize size = [image_ size];
+    [image_ release];
+    image_ = [[NSImage alloc] initWithSize:size];
+    [image_ lockFocus];
+    [[[NSColor whiteColor] colorWithAlphaComponent:0] set];
+    NSRectFill(NSMakeRect(0, 0, size.width, size.height));
+    [image_ unlockFocus];
 }
 
 - (NSTrackingRectTag)trackingRectTag
@@ -176,26 +233,34 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
 
 - (void)onMouseEnter
 {
-    highlight_ = YES;
-    if (!RectsApproxEqual([self frame], fullSizeFrame_)) {
-        [[self animator] setFrame:fullSizeFrame_];
+    if (windowIndex_ >= 0 && tabIndex_ >= 0) {
+        highlight_ = YES;
+        if (!RectsApproxEqual([self frame], fullSizeFrame_)) {
+            [[self animator] setFrame:fullSizeFrame_];
+        }
+        
+        [self moveToTop];
     }
-    
-    [self moveToTop];
 }
 
 - (void)mouseDown:(NSEvent *)event
 {
-    [delegate_ onSelection:self];
+    if (windowIndex_ >= 0 && tabIndex_ >= 0) {
+        [delegate_ onSelection:self];
+    }
 }
 
 - (void)bringTabToFore
 {
-    iTermController* controller = [iTermController sharedInstance];
-    PseudoTerminal* terminal = [[controller terminals] objectAtIndex:windowIndex_];
-    [controller setCurrentTerminal:terminal];
-    [[terminal window] makeKeyAndOrderFront:self];
-    [[terminal tabView] selectTabViewItemAtIndex:tabIndex_];     
+    if (windowIndex_ >= 0 && tabIndex_ >= 0) {
+        iTermController* controller = [iTermController sharedInstance];
+        PseudoTerminal* terminal = [[controller terminals] objectAtIndex:windowIndex_];
+        [controller setCurrentTerminal:terminal];
+        [[terminal window] makeKeyAndOrderFront:self];
+        [[terminal tabView] selectTabViewItemAtIndex:tabIndex_];     
+    } else {
+        NSBeep();
+    }
 }
 
 - (NSInteger)tabIndex
@@ -212,6 +277,13 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
 {
     [image_ autorelease];
     image_ = [newImage retain];
+    [self setNeedsDisplay:YES];
+}
+
+- (void)setLabel:(NSString*)newLabel
+{
+    [label_ autorelease];
+    label_ = [newLabel retain];
     [self setNeedsDisplay:YES];
 }
 
@@ -311,18 +383,22 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
 {
     NSImage* image = [[image_ copy] autorelease];
     NSRect imageFrame = [self imageFrame:[self frame].size];
+ 
+    if (windowIndex_ >= 0 && tabIndex_ >= 0) {
+        [self _drawDropShadow:imageFrame];
+    }
     
-    [self _drawDropShadow:imageFrame];
-
     [image setScalesWhenResized:YES];
     [image setSize:imageFrame.size];
     [image compositeToPoint:imageFrame.origin operation:NSCompositeSourceOver];
     
-    if (highlight_) {
-        [self _drawFocusRing:imageFrame];
-    }
-    if (showLabel_) {
-        [self _drawLabel];
+    if (windowIndex_ >= 0 && tabIndex_ >= 0) {
+        if (highlight_) {
+            [self _drawFocusRing:imageFrame];
+        }
+        if (showLabel_) {
+            [self _drawLabel];
+        }
     }
 }
 
@@ -361,6 +437,7 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
      thumbSize:(NSSize)thumbSize;
 // Delegate methods
 - (void)onSelection:(iTermExposeTabView*)theView;
+- (BOOL)recomputeIndices;
 
 @end
 
@@ -411,6 +488,45 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     }
     [cache_ release];
     [super dealloc];
+}
+
+- (iTermExposeTabView*)_tabViewForTab:(PTYTab*)theTab
+{
+    for (iTermExposeTabView* tabView in [self subviews]) {
+        if ([tabView tabObject] == theTab) {
+            return tabView;
+        }
+    }
+    return nil;
+}
+
+- (BOOL)recomputeIndices
+{
+    for (iTermExposeTabView* tabView in [self subviews]) {
+        [tabView setDirty:YES];
+    }
+    
+    BOOL anythingLeft = NO;
+    int w = 0;
+    for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
+        int t = 0;
+        for (PTYTab* aTab in [term tabs]) {
+            iTermExposeTabView* tabView = [self _tabViewForTab:aTab];
+            if (tabView) {
+                [tabView setWindowIndex:w tabIndex:t];
+                [tabView setDirty:NO];
+                anythingLeft = YES;
+            }
+            ++t;
+        }
+        ++w;
+    }
+    for (iTermExposeTabView* tabView in [self subviews]) {
+        if ([tabView dirty]) {
+            [tabView clear];
+        }
+    }
+    return anythingLeft;
 }
 
 - (NSRect)tabOrigin:(PTYTab *)theTab visibleScreenFrame:(NSRect)visibleScreenFrame screenFrame:(NSRect)screenFrame
@@ -529,13 +645,13 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     NSInteger tabIndex, windowIndex;
     tabIndex = [[theTab realParentWindow] indexOfTab:theTab];
     assert(tabIndex != NSNotFound);
-    windowIndex = [[[iTermController sharedInstance] terminals] indexOfObjectIdenticalTo:[theTab realParentWindow]];
-    
+    windowIndex = [[[iTermController sharedInstance] terminals] indexOfObjectIdenticalTo:[theTab realParentWindow]]; 
     for (iTermExposeTabView* aView in [self subviews]) {
         if ([aView isKindOfClass:[iTermExposeTabView class]]) {
             if ([aView tabIndex] == tabIndex &&
                 [aView windowIndex] == windowIndex) {
                 [aView setImage:[theTab image:NO]];
+                [aView setLabel:[iTermExposeTabView labelForTab:theTab windowNumber:[aView windowIndex] + 1]];
             }
         }
     }
@@ -549,6 +665,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
             [[aView animator] setFrame:[aView originalFrame]];
         }
     }
+    [[self animator] setAlphaValue:0];
     [self performSelector:@selector(bringTabToFore:)
                withObject:theView
                afterDelay:[[NSAnimationContext currentContext] duration]];
@@ -679,20 +796,12 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
                                                      name:@"iTermTabContentsChanged"
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(closeExposeIfOpen)
-                                                     name:@"iTermWindowDidResize"
+                                                 selector:@selector(recomputeIndices:)
+                                                     name:@"iTermNumberOfSessionsDidChange"
                                                    object:nil];
         [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(closeExposeIfOpen)
-                                                     name:@"iTermWindowWillClose"
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(closeExposeIfOpen)
-                                                     name:@"iTermWindowWillMiniaturize"
-                                                   object:nil];
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(closeExposeIfOpen)
-                                                     name:@"iTermWindowDidDeminiaturize"
+                                                 selector:@selector(recomputeIndices:)
+                                                     name:@"iTermWindowDidClose"
                                                    object:nil];
     }
     return self;
@@ -860,12 +969,8 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
             }
             [images addObject:[aTab image:NO]];
             [tabs addObject:aTab];
-            NSString* jobName = [[aTab activeSession] jobName];
-            if (jobName) {
-                [labels addObject:[NSString stringWithFormat:@"%d. %@ (%@)", i, [[aTab activeSession] rawName], [[aTab activeSession] jobName]]];
-            } else {
-                [labels addObject:[NSString stringWithFormat:@"%d. %@", i, [[aTab activeSession] rawName]]];
-            }
+            NSString* label = [iTermExposeTabView labelForTab:aTab windowNumber:i];
+            [labels addObject:label];
         }
         assert(selectedIndex >= 0);
         // Move the current tab to the end so its view will be above all the other tabs' views.
@@ -877,10 +982,10 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     }
 }
 
-- (void)closeExposeIfOpen
+- (void)recomputeIndices:(NSNotification*)notification
 {
-    if ([[iTermExpose sharedInstance] isVisible]) {
-        [iTermExpose toggle];
+    if (![view_ recomputeIndices]) {
+        [self _toggleOff];
     }
 }
 

@@ -147,6 +147,10 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 - (void)dealloc
 {
+    // Post a notification
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabClosing"
+                                                        object:self
+                                                      userInfo:nil];
     PtyLog(@"PTYTab dealloc");
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     for (PTYSession* aSession in [self sessions]) {
