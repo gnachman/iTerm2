@@ -255,8 +255,6 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
 // Session specific methods
 - (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent
 {
-    NSSize aSize;
-
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PTYSession setScreenSize:parent:]", __FILE__, __LINE__);
 #endif
@@ -290,7 +288,7 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     [[SCROLLVIEW contentView] setCopiesOnScroll:NO];
 
     // Allocate a text view
-    aSize = [SCROLLVIEW contentSize];
+    NSSize aSize = [SCROLLVIEW contentSize];
     WRAPPER = [[TextViewWrapper alloc] initWithFrame:NSMakeRect(0, 0, aSize.width, aSize.height)];
     [WRAPPER setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
@@ -313,8 +311,8 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     [SHELL setDelegate:self];
 
     // initialize the screen
-    int width = (aRect.size.width - MARGIN*2) / [TEXTVIEW charWidth];
-    int height = (aRect.size.height - VMARGIN*2) / [TEXTVIEW lineHeight];
+    int width = (aSize.width - MARGIN*2) / [TEXTVIEW charWidth];
+    int height = (aSize.height - VMARGIN*2) / [TEXTVIEW lineHeight];
     if ([SCREEN initScreenWithWidth:width Height:height]) {
         [self setName:@"Shell"];
         [self setDefaultName:@"Shell"];
