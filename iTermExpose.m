@@ -546,10 +546,10 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
 {
     NSSize origSize = origin;
     origSize.width = MAX(thumbSize.width,
-                         MIN(origSize.width + THUMB_MARGIN * 2,
+                         MIN(origSize.width,
                              screenFrame.size.width * 0.9));
     origSize.height = MAX(thumbSize.height,
-                          MIN(origSize.height + THUMB_MARGIN * 2,
+                          MIN(origSize.height,
                               screenFrame.size.height * 0.9));
     return origSize;
 }
@@ -969,7 +969,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
             }
             [images addObject:[aTab image:NO]];
             [tabs addObject:aTab];
-            NSString* label = [iTermExposeTabView labelForTab:aTab windowNumber:i];
+            NSString* label = [iTermExposeTabView labelForTab:aTab windowNumber:i+1];
             [labels addObject:label];
         }
         assert(selectedIndex >= 0);
