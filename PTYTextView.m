@@ -1193,7 +1193,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                                 width:[dataSource width]
                                height:[dataSource height]
                          cursorHeight:[self cursorHeight]];
-    [self _drawCursor];
+    [self _drawCursorTo:toOrigin];
 
 #ifdef DEBUG_DRAWING
     if (overflow) {
@@ -4031,6 +4031,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)_drawCursor
 {
+    [self _drawCursorTo:nil];
+}
+
+- (void)_drawCursorTo:(NSPoint*)toOrigin
+{
     int WIDTH, HEIGHT;
     screen_char_t* theLine;
     int yStart, x1;
@@ -4093,7 +4098,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 double_width = (x1 < WIDTH-1) && (theLine[x1+1].code == DWC_RIGHT);
             }
             curX = floor(x1 * charWidth + MARGIN);
-            curY = (yStart + [dataSource numberOfLines] - HEIGHT + 1) * lineHeight - cursorHeight;
+            curY = toOrigin ? toOrigin->y + (yStart + 1) * lineHeight - cursorHeight :
+                (yStart + [dataSource numberOfLines] - HEIGHT + 1) * lineHeight - cursorHeight;
 
             NSColor *bgColor;
             if (colorInvertedCursor) {
@@ -4181,7 +4187,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                               alternateSemantics:alt
                                           fgBold:isBold
                                              AtX:x1 * charWidth + MARGIN
-                                               Y:(yStart + [dataSource numberOfLines] - HEIGHT) * lineHeight
+                                               Y:curY + cursorHeight - lineHeight
                                      doubleWidth:double_width
                                    overrideColor:overrideColor];
                         } else {
@@ -4203,7 +4209,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                               alternateSemantics:alt
                                           fgBold:isBold
                                              AtX:x1 * charWidth + MARGIN
-                                               Y:(yStart + [dataSource numberOfLines] - HEIGHT) * lineHeight
+                                               Y:curY + cursorHeight - lineHeight
                                      doubleWidth:double_width
                                    overrideColor:nil];
                         }

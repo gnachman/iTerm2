@@ -1078,8 +1078,6 @@ static void SwapPoint(NSPoint* point) {
     [textviewImage setFlipped:YES];
     [textviewImage lockFocus];
     // Draw the background flipped, which is actually the right way up.
-    NSSize viewSize = [textviewImage size];
-    NSSize tvSize = [[session TEXTVIEW] frame].size;
     NSPoint temp = NSMakePoint(0, 0);
     [[session TEXTVIEW] drawRect:[[session SCROLLVIEW] documentVisibleRect] to:&temp];
     [textviewImage unlockFocus];
