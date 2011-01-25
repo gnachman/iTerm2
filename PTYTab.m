@@ -865,7 +865,6 @@ static void SwapPoint(NSPoint* point) {
     }
     PtyLog(@"After:");
     [self dump];
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 
     return newView;
 }
@@ -1093,6 +1092,7 @@ static void SwapPoint(NSPoint* point) {
 - (void)_recursiveDrawSplit:(NSSplitView*)splitView inImage:(NSImage*)viewImage atOrigin:(NSPoint)splitOrigin
 {
     NSPoint origin = splitOrigin;
+    CGFloat myHeight = [viewImage size].height;
     BOOL first = YES;
     for (NSView* subview in [splitView subviews]) {
         if (first) {
@@ -1114,7 +1114,9 @@ static void SwapPoint(NSPoint* point) {
                 dy = thickness;
                 hx = [subview frame].size.width;
             }
-            NSRectFill(NSMakeRect(origin.x, origin.y, dx + hx, dy + hy));
+            // flip the y coordinate for drawing
+            NSRectFill(NSMakeRect(origin.x, myHeight - origin.y - (dy + hy),
+                                  dx + hx, dy + hy));
             [viewImage unlockFocus];
 
             // Advance the origin past the divider.
@@ -1126,7 +1128,10 @@ static void SwapPoint(NSPoint* point) {
             [self _recursiveDrawSplit:(NSSplitView*)subview inImage:viewImage atOrigin:origin];
         } else {
             SessionView* sessionView = (SessionView*)subview;
-            [self _drawSession:[sessionView session] inImage:viewImage atOrigin:origin];
+            // flip the y coordinate for drawing
+            CGFloat y = myHeight - origin.y - [subview frame].size.height;
+            [self _drawSession:[sessionView session] inImage:viewImage atOrigin:NSMakePoint(origin.x,
+                                                                                            y)];
         }
         if ([splitView isVertical]) {
             origin.x += [subview frame].size.width;

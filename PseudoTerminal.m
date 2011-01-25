@@ -2322,6 +2322,7 @@ NSString *sessionsKey = @"sessions";
         [[self currentTab] setActiveSession:newSession];
     }
     [[self currentTab] recheckBlur];
+    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
 
 - (IBAction)splitVertically:(id)sender
