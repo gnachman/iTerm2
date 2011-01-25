@@ -394,7 +394,7 @@ typedef enum {
                      endX:(int *)endx
                      endY:(int *)endy;
 - (NSString *)_getURLForX:(int)x y:(int)y;
-- (void)_drawLine:(int)line AtY:(float)curY;
+- (void)_drawLine:(int)line AtY:(float)curY toPoint:(NSPoint*)toPoint;
 - (void)_drawCursor;
 - (void)_drawCursorTo:(NSPoint*)toOrigin;
 - (void)_drawCharacter:(screen_char_t)screenChar

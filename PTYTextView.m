@@ -596,7 +596,7 @@ static NSCursor* textViewCursor =  nil;
     }
 }
 
-- (id) dataSource
+- (id)dataSource
 {
     return dataSource;
 }
@@ -1066,7 +1066,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 #ifdef DEBUG_DRAWING
     NSMutableString* lineDebug = [NSMutableString stringWithFormat:@"drawRect:%d,%d %dx%d drawing these lines with scrollback overflow of %d, iteration=%d:\n", (int)rect.origin.x, (int)rect.origin.y, (int)rect.size.width, (int)rect.size.height, (int)[dataSource scrollbackOverflow], iteration];
 #endif
-    float y = toOrigin ? toOrigin->y : lineStart * lineHeight;
+    float y = lineStart * lineHeight;
+    const float initialY = y;
     for (int line = lineStart; line < lineEnd; line++) {
         NSRect lineRect = [self visibleRect];
         lineRect.origin.y = line*lineHeight;
@@ -1081,7 +1082,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 // view is what the first line of the datasource was before
                 // it overflowed. Continue to draw text in this out-of-alignment
                 // manner until refresh is called and gets things in sync again.
-                [self _drawLine:line-overflow AtY:y];
+                NSPoint temp;
+                if (toOrigin) {
+                    const CGFloat offsetFromTopOfScreen = y - initialY;
+                    temp = NSMakePoint(toOrigin->x, toOrigin->y + offsetFromTopOfScreen);
+                }
+                [self _drawLine:line-overflow AtY:y toPoint:toOrigin ? &temp : nil];
             }
             // if overflow > line then the requested line cannot be drawn
             // because it has been lost to the sands of time.
@@ -1145,17 +1151,24 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     float gc = ((float)((i + 33) % 100)) / 100;
     float bc = ((float)((i + 66) % 100)) / 100;
     [[NSColor colorWithCalibratedRed:rc green:gc blue:bc alpha:1] set];
-    [[defaultBGColor colorWithAlphaComponent:[self useTransparency] ? [self transparency] : 1.0] setFill];
     NSRectFill(excessRect);
 #else
-    [self drawBackground:excessRect];
+    if (toOrigin) {
+        [self drawBackground:excessRect toPoint:*toOrigin];
+    } else {
+        [self drawBackground:excessRect];
+    }
 #endif
 
     // Draw a margin at the top of the visible area.
     NSRect topMarginRect = [self visibleRect];
     if (topMarginRect.origin.y > 0) {
         topMarginRect.size.height = VMARGIN;
-        [self drawBackground:topMarginRect];
+        if (toOrigin) {
+            [self drawBackground:topMarginRect toPoint:*toOrigin];
+        } else {
+            [self drawBackground:topMarginRect];
+        }
     }
 
 #ifdef DEBUG_DRAWING
@@ -3646,7 +3659,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [self _drawRuns:initialPoint runs:runs numRuns:numRuns];
 }
 
-- (void)_drawLine:(int)line AtY:(float)curY
+- (void)_drawLine:(int)line AtY:(float)curY toPoint:(NSPoint*)toPoint
 {
     int screenstartline = [self frame].origin.y / lineHeight;
     DebugLog([NSString stringWithFormat:@"Draw line %d (%d on screen)", line, (line - screenstartline)]);
@@ -3675,11 +3688,27 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     aColor = [aColor colorWithAlphaComponent:alpha];
     [aColor set];
     if (hasBGImage) {
-        [scrollView drawBackgroundImageRect:leftMargin];
-        [scrollView drawBackgroundImageRect:rightMargin];
+        if (toPoint) {
+            [scrollView drawBackgroundImageRect:leftMargin toPoint:NSMakePoint(toPoint->x + leftMargin.origin.x, toPoint->y + leftMargin.size.height)];
+            [scrollView drawBackgroundImageRect:rightMargin toPoint:NSMakePoint(toPoint->x + rightMargin.origin.x, toPoint->y + rightMargin.size.height)];
+        } else {
+            [scrollView drawBackgroundImageRect:leftMargin];
+            [scrollView drawBackgroundImageRect:rightMargin];
+        }
     } else {
-        NSRectFill(leftMargin);
-        NSRectFill(rightMargin);
+        if (toPoint) {
+            NSRectFill(NSMakeRect(toPoint->x + leftMargin.origin.x,
+                                  toPoint->y,
+                                  leftMargin.size.width,
+                                  leftMargin.size.height));
+            NSRectFill(NSMakeRect(toPoint->x + rightMargin.origin.x,
+                                  toPoint->y,
+                                  rightMargin.size.width,
+                                  rightMargin.size.height));
+        } else {
+            NSRectFill(leftMargin);
+            NSRectFill(rightMargin);
+        }
     }
     [aColor set];
 
@@ -3737,7 +3766,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                        lineHeight);
 
             if (hasBGImage) {
-                [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect];
+                if (toPoint) {
+                    [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
+                                                                                 toPoint:NSMakePoint(toPoint->x + bgRect.origin.x,
+                                                                                                     toPoint->y + bgRect.size.height)];
+                } else {
+                    [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect];
+                }
             }
             if (!hasBGImage ||
                 !(bgColor == ALTSEM_BG_DEFAULT && bgAlt) ||
@@ -3764,14 +3799,25 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 }
                 aColor = [aColor colorWithAlphaComponent:alpha];
                 [aColor set];
+                if (toPoint) {
+                    bgRect.origin.x += toPoint->x;
+                    bgRect.origin.y = toPoint->y;
+                }
                 NSRectFillUsingOperation(bgRect,
                                          hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
             }
 
+            NSPoint textOrigin;
+            if (toPoint) {
+                textOrigin = NSMakePoint(toPoint->x + MARGIN + bgstart * charWidth,
+                                         toPoint->y);
+            } else {
+                textOrigin = NSMakePoint(MARGIN + bgstart*charWidth,
+                                         curY);
+            }
             [self _drawCharactersInLine:theLine
                                 inRange:NSMakeRange(bgstart, j - bgstart)
-                        startingAtPoint:NSMakePoint(MARGIN + bgstart*charWidth,
-                                                    curY)
+                        startingAtPoint:textOrigin
                              bgselected:bgselected
                                reversed:reversed
                                 bgColor:aColor];

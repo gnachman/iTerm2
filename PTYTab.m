@@ -1073,13 +1073,15 @@ static void SwapPoint(NSPoint* point) {
 - (void)_drawSession:(PTYSession*)session inImage:(NSImage*)viewImage atOrigin:(NSPoint)origin
 {
     [[session TEXTVIEW] refresh];
-    NSImage *textviewImage = [[[NSImage alloc] initWithSize:[[session TEXTVIEW] visibleRect].size] autorelease];
+    NSRect theRect = [[session SCROLLVIEW] documentVisibleRect];
+    NSImage *textviewImage = [[[NSImage alloc] initWithSize:theRect.size] autorelease];
 
     [textviewImage setFlipped:YES];
     [textviewImage lockFocus];
+    [[session TEXTVIEW] drawBackground:theRect toPoint:NSMakePoint(0, 0)];
     // Draw the background flipped, which is actually the right way up.
     NSPoint temp = NSMakePoint(0, 0);
-    [[session TEXTVIEW] drawRect:[[session SCROLLVIEW] documentVisibleRect] to:&temp];
+    [[session TEXTVIEW] drawRect:theRect to:&temp];
     [textviewImage unlockFocus];
 
     [viewImage lockFocus];
@@ -1145,8 +1147,7 @@ static void SwapPoint(NSPoint* point) {
     NSImage* viewImage = [[[NSImage alloc] initWithSize:viewSize] autorelease];
     [viewImage lockFocus];
     [[NSColor windowBackgroundColor] set];
-    // The top two pixels are a margin.
-    NSRectFill(NSMakeRect(0, 0, viewSize.width, viewSize.height - 2));
+    NSRectFill(NSMakeRect(0, 0, viewSize.width, viewSize.height));
     [viewImage unlockFocus];
 
     float yOrigin = 0;

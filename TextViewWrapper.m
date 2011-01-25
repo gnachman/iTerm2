@@ -38,7 +38,7 @@
                                       [[child_ enclosingScrollView] documentVisibleRect].origin.y - VMARGIN,
                                       [self frame].size.width,
                                       VMARGIN)
-                   toPoint:NSMakePoint(0, VMARGIN)];
+                   toPoint:NSMakePoint(0, 0)];
 }
 
 - (void)addSubview:(PTYTextView*)child

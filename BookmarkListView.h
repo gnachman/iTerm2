@@ -25,6 +25,7 @@
 #import <Cocoa/Cocoa.h>
 #import "BookmarkModel.h"
 
+@class iTermSearchField;
 @class BookmarkRow;
 // This is an intermediate model that wraps BookmarkModel and allows
 // each BookmarkListView to have a different ordering of bookmarks.
@@ -68,16 +69,6 @@
 
 @end
 
-@interface BookmarkSearchField : NSSearchField
-{
-    id arrowHandler_;
-}
-
-- (BOOL)performKeyEquivalent:(NSEvent *)theEvent;
-- (void)setArrowHandler:(id)handler;
-
-@end
-
 @interface BookmarkTableView : NSTableView
 {
     id parent_;
@@ -96,7 +87,7 @@
 @interface BookmarkListView : NSView {
     int rowHeight_;
     NSScrollView* scrollView_;
-    BookmarkSearchField* searchField_;
+    iTermSearchField* searchField_;
     BookmarkTableView* tableView_;
     NSTableColumn* tableColumn_;
     NSTableColumn* commandColumn_;

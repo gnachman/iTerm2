@@ -34,12 +34,16 @@
     iTermExposeView* view_;
 }
 
++ (NSString*)labelForTab:(PTYTab*)aTab windowNumber:(int)i tabNumber:(int)j;
 + (void)toggle;
 + (iTermExpose*)sharedInstance;
 - (void)showWindows:(BOOL)fade;
 - (NSWindow*)window;
 - (BOOL)isVisible;
 - (void)updateTab:(PTYTab*)theTab;
+- (void)computeLayout:(NSMutableArray *)images
+               frames:(NSRect*)frames
+          screenFrame:(NSRect)screenFrame;
 
 // NSWindowDelegate protocol (informal prior to 10.6)
 - (void)windowDidResignKey:(NSNotification *)notification;

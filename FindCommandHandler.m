@@ -79,12 +79,11 @@
 - (void)jumpToSelection
 {
     PTYTextView* textView = [self currentTextView];
-    if (textView)
-    {        
-                [textView scrollToSelection];
-    }
-    else
+    if (textView) {        
+        [textView scrollToSelection];
+    } else {
         NSBeep();
+    }
 }
 
 - (BOOL)findSubString: (NSString *) subString forwardDirection: (BOOL) direction ignoringCase: (BOOL) caseCheck withOffset:(int)offset

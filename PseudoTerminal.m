@@ -1748,7 +1748,7 @@ NSString *sessionsKey = @"sessions";
     [[FindCommandHandler sharedInstance] setSearchString:[findBarTextField stringValue]];
     [[FindCommandHandler sharedInstance] setIgnoresCase: [ignoreCase state]];
     [self _newSearch:[[FindCommandHandler sharedInstance] findPreviousWithOffset:0]];
-};
+}
 
 - (void)deselectFindBarTextField
 {
