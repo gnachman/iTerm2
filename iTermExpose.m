@@ -1188,16 +1188,16 @@ static int CompareFrames(const void* aPtr, const void* bPtr)
                frames:(NSRect*)frames
           screenFrame:(NSRect)screenFrame
 {
-    //NSLog(@"**computeLayout with screen frame %lf,%lf %lfx%lf", 
+    /*NSLog(@"**computeLayout with screen frame %lf,%lf %lfx%lf", 
           screenFrame.origin.x,
           screenFrame.origin.y,
           screenFrame.size.width,
           screenFrame.size.height);
-          
+      */    
     float n = [images count];
     int rows = 1, cols = 1;
     const float aspectRatio = screenFrame.size.width / screenFrame.size.height;
-    
+
     // Computing the optimal grid size is O(n^2). Limit the number of iterations
     // to 30^2=900.
     const int maxWindowsToOptimize = 100;
@@ -1342,9 +1342,10 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
             frames[i] = frames[i + skip];
         }
         if (NSIntersectsRect(searchFrame, frames[i])) {
-            //NSLog(@"Frame %lf,%lf %lfx%lf intersects search frame %lf,%lf %lfx%lf.",
+            /*NSLog(@"Frame %lf,%lf %lfx%lf intersects search frame %lf,%lf %lfx%lf.",
                   frames[i].origin.x, frames[i].origin.y, frames[i].size.width, frames[i].size.height,
                   searchFrame.origin.x, searchFrame.origin.y, searchFrame.size.width, searchFrame.size.height);
+             */
             NSRect intersection = NSIntersectionRect(searchFrame, frames[i]);
             if (intersection.size.height > maxThumbSize.height / 3 ||
                 maxThumbSize.height < 50) {
