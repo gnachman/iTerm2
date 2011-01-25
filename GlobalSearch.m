@@ -42,6 +42,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 {
     PTYTextView* textView_;
     VT100Screen* theScreen_;
+    PTYSession* theSession_;
     NSMutableArray* results_;
     BOOL more_;
     NSString* findString_;
@@ -58,6 +59,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
 - (NSArray*)results;
 - (NSString*)label;
 - (PTYTextView*)textView;
+- (PTYSession*)session;
 
 @end
 
@@ -177,6 +179,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
         more_ = YES;
         textView_ = textView;
         theScreen_ = [textView dataSource];  // TODO: this is a weak ref. Be on the lookout for its death.
+        theSession_ = [theScreen_ session];
         label_ = [label retain];
         [theScreen_ initFindString:findString_
                   forwardDirection:NO
@@ -287,6 +290,11 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     return textView_;
 }
 
+- (PTYSession*)session
+{
+    return theSession_;
+}
+
 @end
 
 @implementation GlobalSearchView
@@ -333,6 +341,8 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     [searchField_ setArrowHandler:tableView_];
     [tableView_ setDataSource:self];
     [tableView_ setDelegate:self];
+    [tableView_ setDoubleAction:@selector(onDoubleClick:)];
+    [tableView_ setTarget:self];
     for (NSTableColumn* aCol in [tableView_ tableColumns]) {
         [aCol setEditable:NO];
     }
@@ -344,12 +354,21 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     if (self) {
         searches_ = [[NSMutableArray alloc] init];
         combinedResults_ = [[NSMutableArray alloc] init];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(removeDanglers)
+                                                     name:@"iTermWindowDidClose"
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(removeDanglers)
+                                                     name:@"iTermNumberOfSessionsDidChange"
+                                                   object:nil];
     }
     return self;
 }
 
 - (void)dealloc
 {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [combinedResults_ release];
     [timer_ invalidate];
     [searches_ release];
@@ -374,8 +393,32 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     dh -= viewFrame.size.height;
     viewFrame.origin.y += dh;
     
-    [[self view] setFrame:viewFrame];
-    [delegate_ globalSearchViewDidResize:origViewFrame];
+    if (!NSEqualRects(viewFrame, [[self view] frame])) {
+        [[self view] setFrame:viewFrame];
+        [delegate_ globalSearchViewDidResize:origViewFrame];
+    }
+}
+
+- (void)removeDanglers
+{
+    NSMutableArray* allSessions = [NSMutableArray arrayWithCapacity:100];
+    for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
+        [allSessions addObjectsFromArray:[term allSessions]];
+    }
+    for (int i = [searches_ count] - 1; i >= 0; i--) {
+        GlobalSearchInstance* inst = [searches_ objectAtIndex:i];
+        if ([allSessions indexOfObjectIdenticalTo:[inst session]] == NSNotFound) {
+            [searches_ removeObjectAtIndex:i];
+        }
+    }
+    
+    for (int i = [combinedResults_ count] - 1; i >= 0; i--) {
+        if ([searches_ indexOfObjectIdenticalTo:[[combinedResults_ objectAtIndex:i] instance]] == NSNotFound) {
+            [combinedResults_ removeObjectAtIndex:i];
+        }
+    }
+    [self _resizeView];
+    [tableView_ reloadData];
 }
 
 - (void)_startSearches
@@ -449,6 +492,11 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     [timer_ invalidate];
     timer_ = nil;
     [searches_ removeAllObjects];
+}
+
+- (IBAction)onDoubleClick:(id)sender
+{
+    [delegate_ globalSearchOpenSelection];
 }
 
 #pragma mark Search field delegate

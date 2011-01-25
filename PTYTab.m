@@ -865,6 +865,7 @@ static void SwapPoint(NSPoint* point) {
     }
     PtyLog(@"After:");
     [self dump];
+    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 
     return newView;
 }

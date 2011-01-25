@@ -648,7 +648,7 @@ void DebugLog(NSString* value)
         PTYTab *aTab = [aTabViewItem identifier];
         NSMenuItem *aMenuItem;
 
-        if (i < 10) {
+        if (i < 10 && [aTab activeSession]) {
             aMenuItem  = [[NSMenuItem alloc] initWithTitle:[[aTab activeSession] name]
                                                     action:@selector(selectSessionAtIndexAction:)
                                              keyEquivalent:@""];

@@ -32,10 +32,11 @@
 #import "GlobalSearch.h"
 
 static const float THUMB_MARGIN = 25;
+/*
 static NSString* FormatRect(NSRect r) {
     return [NSString stringWithFormat:@"%lf,%lf %lfx%lf", r.origin.x, r.origin.y,
             r.size.width, r.size.height];
-}
+}*/
 
 // This subclass of NSWindow is used for the fullscreen borderless window.
 @interface iTermExposeWindow : NSWindow
@@ -50,7 +51,7 @@ static NSString* FormatRect(NSRect r) {
 @class iTermExposeTabView;
 @protocol iTermExposeTabViewDelegate
 
-- (void)onSelection:(iTermExposeTabView*)theView;
+- (void)onSelection:(iTermExposeTabView*)theView session:(PTYSession*)theSession;
 
 @end
 
@@ -78,7 +79,7 @@ static NSString* FormatRect(NSRect r) {
                         frame:(NSRect)frame
                         index:(int)theIndex;
 // Delegate methods
-- (void)onSelection:(iTermExposeTabView*)theView;
+- (void)onSelection:(iTermExposeTabView*)theView session:(PTYSession*)theSession;
 - (BOOL)recomputeIndices;
 - (void)setFrames:(NSRect*)frames screenFrame:(NSRect)visibleScreenFrame;
 - (void)updateTrackingRectForView:(iTermExposeTabView*)aView;
@@ -128,6 +129,7 @@ static NSString* FormatRect(NSRect r) {
 - (void)setImage:(NSImage*)newImage;
 - (void)setLabel:(NSString*)newLabel;
 - (NSString*)label;
+- (void)setTabObject:(id)tab;
 - (id)tabObject;
 - (void)clear;
 - (void)setDirty:(BOOL)dirty;
@@ -165,6 +167,7 @@ static NSString* FormatRect(NSRect r) {
     iTermExposeGridView* grid_;
     GlobalSearch* search_;
     iTermExposeTabView* resultView_;
+    PTYSession* resultSession_;
     double prevSearchHeight_;
 }
 
@@ -174,6 +177,7 @@ static NSString* FormatRect(NSRect r) {
 - (iTermExposeGridView*)grid;
 - (NSRect)searchFrame;
 - (iTermExposeTabView*)resultView;
+- (PTYSession*)resultSession;
 
 #pragma mark GlobalSearchDelegate
 - (void)globalSearchSelectionChangedToSession:(PTYSession*)theSession;
@@ -245,6 +249,11 @@ static NSString* FormatRect(NSRect r) {
 - (id)tabObject
 {
     return tabObject_;
+}
+
+- (void)setTabObject:(id)tab
+{
+    tabObject_ = tab;
 }
 
 - (void)setDirty:(BOOL)dirty
@@ -349,9 +358,9 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
 {
     NSPoint locInWin = [event locationInWindow];
     NSPoint loc = [self convertPoint:locInWin fromView:nil];
-    if (NSPointInRect(loc, [self imageFrame:[self frame].size])) {
+    if ([self tabObject] && NSPointInRect(loc, [self imageFrame:[self frame].size])) {
         if (windowIndex_ >= 0 && tabIndex_ >= 0) {
-            [delegate_ onSelection:self];
+            [delegate_ onSelection:self session:[[self tabObject] activeSession]];
         }
     } else {
         [[self superview] mouseDown:event];
@@ -829,13 +838,19 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     }
 }
 
-- (void)onSelection:(iTermExposeTabView*)theView
+- (void)onSelection:(iTermExposeTabView*)theView session:(PTYSession*)theSession
 {
+    if (theView && ![theView tabObject]) {
+        return;
+    }
     [theView moveToTop];
     for (iTermExposeTabView* aView in [self subviews]) {
         if ([aView isKindOfClass:[iTermExposeTabView class]]) {
             [[aView animator] setFrame:[aView originalFrame]];
         }
+    }
+    if (theView) {
+        [[theView tabObject] setActiveSession:theSession];
     }
     [[self animator] setAlphaValue:0];
     [self performSelector:@selector(bringTabToFore:)
@@ -864,10 +879,12 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     if (oldTag) {
         [self removeTrackingRect:oldTag];
     }
-    [aView setTrackingRectTag:[self addTrackingRect:rect
-                                              owner:self
-                                           userData:aView
-                                       assumeInside:NO]];
+    if ([aView tabObject]) {
+        [aView setTrackingRectTag:[self addTrackingRect:rect
+                                                  owner:self
+                                               userData:aView
+                                           assumeInside:NO]];
+    }
 }
 
 - (void)viewIsReady:(iTermExposeTabView*)aView
@@ -967,12 +984,14 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
 {
     [resultView_ setHasResult:NO];
     resultView_ = nil;
+    resultSession_ = nil;
     PTYTab* changedTab = [theSession tab];
     for (iTermExposeTabView* aView in [grid_ subviews]) {
         if ([aView isKindOfClass:[iTermExposeTabView class]]) {
             PTYTab* theTab = [aView tabObject];
-            if (theTab == changedTab) {
+            if (theTab && theTab == changedTab) {
                 resultView_ = aView;
+                resultSession_ = theSession;
             }
             [aView setNeedsDisplay:YES];
         }
@@ -985,7 +1004,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
 
 - (void)globalSearchOpenSelection
 {
-    [grid_ onSelection:resultView_];
+    [grid_ onSelection:resultView_ session:resultSession_];
 }
 
 - (void)globalSearchCanceled
@@ -995,6 +1014,10 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
 
 - (void)globalSearchViewDidResize:(NSRect)origSize;
 {
+    // If we were called because a window closed, make sure we're up to date (there's a race where
+    // GlobalSearch's notification may be run before ours).
+    [[iTermExpose sharedInstance] recomputeIndices:nil];
+
     if ([search_ numResults] > 0 &&
         [[search_ view] frame].size.height <= prevSearchHeight_) {
         return;
@@ -1023,12 +1046,18 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
         if ([tabView isKindOfClass:[iTermExposeTabView class]]) {
             [permutation addObject:[NSNumber numberWithInt:[tabView index]]];
             i++;
-            [images replaceObjectAtIndex:[tabView index]
-                              withObject:[[tabView tabObject] image:NO]];
+            if ([tabView tabObject]) {
+                [images replaceObjectAtIndex:[tabView index]
+                                  withObject:[[tabView tabObject] image:NO]];
+            } else {
+                // TODO: test this
+                [images replaceObjectAtIndex:[tabView index]
+                                  withObject:[tabView image]];
+            }
             //NSLog(@"Place %@ at index %d", [tabView label], [tabView index]);
         }
     }
-    
+
     NSRect* frames = (NSRect*)calloc([images count], sizeof(NSRect));
     NSScreen* theScreen = [NSScreen deepestScreen];
     NSRect screenFrame = [theScreen visibleFrame];
@@ -1051,6 +1080,11 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
 - (iTermExposeTabView*)resultView
 {
     return resultView_;
+}
+
+- (PTYSession*)resultSession
+{
+    return resultSession_;
 }
 
 @end
@@ -1237,6 +1271,33 @@ static int CompareFrames(const void* aPtr, const void* bPtr)
         //NSLog(@"After sorting frame %d is at %@", i, FormatRect(frames[i]));
     }
 }
+
+- (void)recomputeIndices:(NSNotification*)notification
+{
+    if (![[view_ grid] recomputeIndices]) {
+        [self _toggleOff];
+    }
+    NSMutableArray* allSessions = [NSMutableArray arrayWithCapacity:100];
+    NSMutableArray* allTabs = [NSMutableArray arrayWithCapacity:100];
+    for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
+        [allSessions addObjectsFromArray:[term allSessions]];
+        [allTabs addObjectsFromArray:[term tabs]];
+    }
+    if ([view_ resultView] &&
+        [allSessions indexOfObjectIdenticalTo:[view_ resultSession]] != NSNotFound) {
+        [view_ globalSearchSelectionChangedToSession:nil];
+    }
+    for (iTermExposeTabView* tabView in [[view_ grid] subviews]) {
+        if ([tabView isKindOfClass:[iTermExposeTabView class]]) {
+            PTYTab* tab = [tabView tabObject];
+            if (tab && [allTabs indexOfObjectIdenticalTo:tab] == NSNotFound) {
+                [tabView setTabObject:nil];
+                [[view_ grid] updateTrackingRectForView:tabView];
+            }
+        }
+    }
+}
+
 
 @end
 
@@ -1482,13 +1543,6 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     return selectedIndex;
 }
 
-- (void)recomputeIndices:(NSNotification*)notification
-{
-    if (![[view_ grid] recomputeIndices]) {
-        [self _toggleOff];
-    }
-}
-
 - (void)tabChangedSinceLastExpose
 {
     for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
@@ -1506,7 +1560,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
 
 - (void)_toggleOff
 {
-    [[view_ grid] onSelection:nil];
+    [[view_ grid] onSelection:nil session:nil];
 }
 
 - (void)_squareThumbGridSize:(float)aspectRatio n:(float)n cols_p:(int *)cols_p rows_p:(int *)rows_p

@@ -531,7 +531,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				1D99785112EEB3D600F0794D /* GlobalSearch.xib */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1DEE9FDB11FCA60F009E18C9 /* credits.rtf */,
@@ -550,6 +549,7 @@
 				1D13EADB12113A2D00909F9C /* libncurses.dylib */,
 				1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */,
 				1DE2154112821F1C004E3ADF /* Autocomplete.xib */,
+				1D99785112EEB3D600F0794D /* GlobalSearch.xib */,
 				1DEB29301288885700B2CB9F /* Quartz.framework */,
 				1DEB29371288887100B2CB9F /* QuartzCore.framework */,
 				1DEB293D1288899A00B2CB9F /* Carbon.framework */,

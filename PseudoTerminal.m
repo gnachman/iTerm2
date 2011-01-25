@@ -2451,6 +2451,7 @@ NSString *sessionsKey = @"sessions";
     // This works around an apparent bug in NSSplitView that causes dividers'
     // cursor rects to survive after the divider is gone.
     [[self window] resetCursorRects];
+    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
 
 - (float)minWidth

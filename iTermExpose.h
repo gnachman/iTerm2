@@ -44,6 +44,7 @@
 - (void)computeLayout:(NSMutableArray *)images
                frames:(NSRect*)frames
           screenFrame:(NSRect)screenFrame;
+- (void)recomputeIndices:(NSNotification*)notification;
 
 // NSWindowDelegate protocol (informal prior to 10.6)
 - (void)windowDidResignKey:(NSNotification *)notification;
