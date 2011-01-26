@@ -44,6 +44,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermApplication.h"
 #import "UKCrashReporter/UKCrashReporter.h"
+#import "PTYTab.h"
 
 @interface NSApplication (Undocumented)
 - (void)_cycleWindowsReversed:(BOOL)back;
@@ -404,10 +405,10 @@ static BOOL initDone = NO;
     return (tmp);
 }
 
-- (void)_addBookmark:(Bookmark*)bookmark toMenu:(NSMenu*)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts
+- (void)_addBookmark:(Bookmark*)bookmark toMenu:(NSMenu*)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts selector:(SEL)selector alternateSelector:(SEL)alternateSelector
 {
     NSMenuItem* aMenuItem = [[[NSMenuItem alloc] initWithTitle:[bookmark objectForKey:KEY_NAME]
-                                                        action:@selector(newSessionInTabAtIndex:)
+                                                        action:selector
                                                  keyEquivalent:@""] autorelease];
     if (withShortcuts) {
         if ([bookmark objectForKey:KEY_SHORTCUT] != nil) {
@@ -423,15 +424,17 @@ static BOOL initDone = NO;
     [aMenuItem setTarget:aTarget];
     [aMenu addItem:aMenuItem];
 
-    aMenuItem = [[aMenuItem copy] autorelease];
-    [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSAlternateKeyMask];
-    [aMenuItem setAlternate:YES];
-    [aMenuItem setAction:@selector(newSessionInWindowAtIndex:)];
-    [aMenuItem setTarget:self];
-    [aMenu addItem:aMenuItem];
+    if (alternateSelector) {
+        aMenuItem = [[aMenuItem copy] autorelease];
+        [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSAlternateKeyMask];
+        [aMenuItem setAlternate:YES];
+        [aMenuItem setAction:alternateSelector];
+        [aMenuItem setTarget:self];
+        [aMenu addItem:aMenuItem];
+    }
 }
 
-- (void)_addBookmarksForTag:(NSString*)tag toMenu:(NSMenu*)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts
+- (void)_addBookmarksForTag:(NSString*)tag toMenu:(NSMenu*)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts selector:(SEL)selector alternateSelector:(SEL)alternateSelector
 {
     NSMenuItem* aMenuItem = [[[NSMenuItem alloc] initWithTitle:tag action:@selector(noAction:) keyEquivalent:@""] autorelease];
     NSMenu* subMenu = [[[NSMenu alloc] init] autorelease];
@@ -440,7 +443,12 @@ static BOOL initDone = NO;
         NSArray* tags = [bookmark objectForKey:KEY_TAGS];
         for (int j = 0; j < [tags count]; ++j) {
             if ([tag localizedCaseInsensitiveCompare:[tags objectAtIndex:j]] == NSOrderedSame) {
-                [self _addBookmark:bookmark toMenu:subMenu target:aTarget withShortcuts:withShortcuts];
+                    [self _addBookmark:bookmark
+                                toMenu:subMenu
+                                target:aTarget
+                         withShortcuts:withShortcuts
+                              selector:selector
+                     alternateSelector:alternateSelector];
                 break;
             }
         }
@@ -450,7 +458,41 @@ static BOOL initDone = NO;
     [aMenu addItem:aMenuItem];
 }
 
-- (void)addBookmarksToMenu:(NSMenu *)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts
+- (void)newSessionsInManyWindows:(id)sender
+{
+    NSMenu* parent = [sender representedObject];
+    for (NSMenuItem* item in [parent itemArray]) {
+        if (![item isSeparatorItem] && ![item submenu]) {
+            NSString* guid = [item representedObject];
+            Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+            if (bookmark) {
+                [self launchBookmark:bookmark inTerminal:nil];
+            }
+        }
+    }
+}
+
+- (void)newSessionsInWindow:(id)sender
+{
+    PseudoTerminal* term = [self currentTerminal];
+    NSMenu* parent = [sender representedObject];
+    for (NSMenuItem* item in [parent itemArray]) {
+        if (![item isSeparatorItem] && ![item submenu] && ![item isAlternate]) {
+            NSString* guid = [item representedObject];
+            Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+            if (bookmark) {
+                if (!term) {
+                    PTYSession* session = [self launchBookmark:bookmark inTerminal:nil];
+                    term = [[session tab] realParentWindow];
+                } else {
+                    [self launchBookmark:bookmark inTerminal:term];
+                }
+            }
+        }
+    }
+}
+
+- (void)addBookmarksToMenu:(NSMenu *)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts selector:(SEL)selector openAllSelector:(SEL)openAllSelector alternateSelector:(SEL)alternateSelector
 {
     NSArray* tags = [[BookmarkModel sharedInstance] allTags];
     int count = 0;
@@ -458,7 +500,9 @@ static BOOL initDone = NO;
         [self _addBookmarksForTag:[tags objectAtIndex:i]
                            toMenu:aMenu
                            target:aTarget
-                    withShortcuts:withShortcuts];
+                    withShortcuts:withShortcuts
+                         selector:selector
+                alternateSelector:alternateSelector];
         ++count;
     }
     for (int i = 0; i < [[BookmarkModel sharedInstance] numberOfBookmarks]; ++i) {
@@ -468,7 +512,9 @@ static BOOL initDone = NO;
             [self _addBookmark:bookmark
                         toMenu:aMenu
                         target:aTarget
-                 withShortcuts:withShortcuts];
+                 withShortcuts:withShortcuts
+                      selector:selector
+             alternateSelector:alternateSelector];
         }
     }
 
@@ -479,19 +525,19 @@ static BOOL initDone = NO;
                                                                      @"iTerm",
                                                                      [NSBundle bundleForClass: [iTermController class]],
                                                                      @"Context Menu")
-                                                            action:@selector(newSessionsInWindow:)
+                                                            action:openAllSelector
                                                      keyEquivalent:@""] autorelease];
         unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
         [aMenuItem setKeyEquivalentModifierMask:modifierMask];
-        [aMenuItem setRepresentedObject:@""];
-        [aMenuItem setTarget:self];
+        [aMenuItem setRepresentedObject:aMenu];
+        if ([self respondsToSelector:openAllSelector]) {
+            [aMenuItem setTarget:self];
+        } else {
+            assert([aTarget respondsToSelector:openAllSelector]);
+            [aMenuItem setTarget:aTarget];
+        }
         [aMenu addItem:aMenuItem];
         aMenuItem = [[aMenuItem copy] autorelease];
-        [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSAlternateKeyMask];
-        [aMenuItem setAlternate:YES];
-        [aMenuItem setAction:@selector(newSessionsInNewWindow:)];
-        [aMenuItem setTarget:self];
-        [aMenu addItem:aMenuItem];
     }
 }
 

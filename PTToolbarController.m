@@ -29,6 +29,7 @@
 #import "iTermController.h"
 #import "PseudoTerminal.h"
 #import "ITAddressBookMgr.h"
+#import "BookmarksWindow.h"
 
 NSString *NewToolbarItem = @"New";
 NSString *BookmarksToolbarItem = @"Bookmarks";
@@ -142,7 +143,7 @@ NSString *CommandToolbarItem = @"Command";
         anImage = [[NSImage alloc] initByReferencingFile: imagePath];
         [toolbarItem setImage: anImage];
         [anImage release];
-        [toolbarItem setTarget: nil];
+        [toolbarItem setTarget: self];
         [toolbarItem setAction: @selector(toggleBookmarksView:)];
     }
     else if ([itemIdent isEqual: NewToolbarItem])
@@ -191,6 +192,11 @@ NSString *CommandToolbarItem = @"Command";
     return toolbarItem;
 }
 
+- (IBAction)toggleBookmarksView:(id)sender
+{
+    [[BookmarksWindow sharedInstance] showWindow:self];
+}
+
 @end
 
 @implementation PTToolbarController (Private)
@@ -223,7 +229,7 @@ NSString *CommandToolbarItem = @"Command";
 - (void)buildToolbarItemPopUpMenu:(NSToolbarItem *)toolbarItem forToolbar:(NSToolbar *)toolbar
 {
     NSPopUpButton *aPopUpButton;
-    NSMenuItem *item, *tip;
+    NSMenuItem *item;
     NSMenu *aMenu;
     NSString *imagePath;
     NSImage *anImage;
@@ -243,17 +249,13 @@ NSString *CommandToolbarItem = @"Command";
     [aMenu addItem: [[[NSMenuItem alloc] initWithTitle: @"AAA" action:@selector(newSessionInTabAtIndex:) keyEquivalent:@""] autorelease]];
     [[iTermController sharedInstance] addBookmarksToMenu:aMenu
                                                   target:_pseudoTerminal
-                                           withShortcuts:NO];
+                                           withShortcuts:NO
+                                                selector:@selector(newSessionInTabAtIndex:) 
+                                         openAllSelector:@selector(newSessionsInWindow:)
+                                       alternateSelector:nil];
 
     [aMenu addItem: [NSMenuItem separatorItem]];
-    tip = [[[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"Press Option for New Window",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item: New") action:@selector(xyz) keyEquivalent: @""] autorelease];
-    [tip setKeyEquivalentModifierMask: NSCommandKeyMask];
-    [aMenu addItem: tip];
-    tip = [[tip copy] autorelease];
-    [tip setTitle:NSLocalizedStringFromTableInBundle(@"Open In New Window",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item: New")];
-    [tip setKeyEquivalentModifierMask: NSCommandKeyMask | NSAlternateKeyMask];
-    [tip setAlternate:YES];
-    [aMenu addItem: tip];
+
     [aPopUpButton setMenu: aMenu];
     [aMenu release];
 
@@ -277,21 +279,17 @@ NSString *CommandToolbarItem = @"Command";
     // Used to set horizontal edge padding to 0 in 32-bit version.
 
     // build a menu representation for text only.
-    item = [[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"New",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item:New") action: nil keyEquivalent: @""];
+    // TODO: test this
+    item = [[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"New Tab",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item:New") action: nil keyEquivalent: @""];
     aMenu = [[NSMenu alloc] init];
     [[iTermController sharedInstance] addBookmarksToMenu:aMenu
                                                   target:_pseudoTerminal
-                                           withShortcuts:NO];
+                                           withShortcuts:NO
+                                                selector:@selector(newSessionInTabAtIndex:) 
+                                         openAllSelector:@selector(newSessionsInWindow:)
+                                       alternateSelector:nil];
 
     [aMenu addItem: [NSMenuItem separatorItem]];
-    tip = [[[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"Press Option for New Window",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item: New") action:@selector(xyz) keyEquivalent: @""] autorelease];
-    [tip setKeyEquivalentModifierMask: NSCommandKeyMask];
-    [aMenu addItem: tip];
-    tip = [[tip copy] autorelease];
-    [tip setTitle:NSLocalizedStringFromTableInBundle(@"Open In New Window",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item: New")];
-    [tip setKeyEquivalentModifierMask: NSCommandKeyMask | NSAlternateKeyMask];
-    [tip setAlternate:YES];
-    [aMenu addItem: tip];
     [item setSubmenu: aMenu];
     [aMenu release];
 

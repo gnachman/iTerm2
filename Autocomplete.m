@@ -36,6 +36,7 @@
 #import "PasteboardHistory.h"
 #import "iTermApplicationDelegate.h"
 
+//#define AUTOCOMPLETE_VERBOSE_LOGGING
 #ifdef AUTOCOMPLETE_VERBOSE_LOGGING
 #define AcLog NSLog
 #else
@@ -64,12 +65,14 @@ const int kMaxResultContextWords = 4;
 
     prefix_ = [[NSMutableString alloc] init];
     context_ = [[NSMutableArray alloc] init];
-
+    stack_ = [[NSMutableArray alloc] init];
     return self;
 }
 
 - (void)dealloc
 {
+    [stack_ release];
+    [moreText_ release];
     [context_ release];
     [prefix_ release];
     [populateTimer_ invalidate];
@@ -295,6 +298,7 @@ const int kMaxResultContextWords = 4;
 - (void)onClose
 {
     if (populateTimer_) {
+        [stack_ removeAllObjects];
         [populateTimer_ invalidate];
         populateTimer_ = nil;
     }
@@ -305,8 +309,88 @@ const int kMaxResultContextWords = 4;
 {
     if ([table_ selectedRow] >= 0) {
         PopupEntry* e = [[self model] objectAtIndex:[self convertIndex:[table_ selectedRow]]];
+        [stack_ removeAllObjects];
+        if (moreText_) {
+            [[self session] insertText:moreText_];
+            [moreText_ release];
+            moreText_ = nil;
+        }
         [[self session] insertText:[e mainValue]];
         [super rowSelected:sender];
+    }
+}
+
+- (void)keyDown:(NSEvent*)event
+{
+    NSString* keystr = [event characters];
+    if ([keystr length] == 1) {
+        unichar c = [keystr characterAtIndex:0];
+        AcLog(@"c=%d", (int)c);
+        unsigned int modflag = [event modifierFlags];
+        if ((modflag & NSShiftKeyMask) && c == 25) {
+            // backtab
+            [self less];
+            return;
+        } else if (c == '\t') {
+            // tab
+            [self more];
+        }
+    }
+    [super keyDown:event];
+}
+
+- (void)_pushStackObject
+{
+    NSArray* value = [NSArray arrayWithObjects:
+                      [[moreText_ ? moreText_ : @"" copy] autorelease],
+                      [[prefix_ copy] autorelease],
+                      [NSNumber numberWithBool:whitespaceBeforeCursor_],
+                      nil];
+    assert([value count] == 3);
+    [stack_ addObject:value];
+}
+
+- (void)_popStackObject
+{
+    NSArray* value = [stack_ lastObject];
+    assert([value count] == 3);
+    if (moreText_) {
+        [moreText_ release];
+    }
+    moreText_ = [[NSMutableString stringWithString:[value objectAtIndex:0]] retain];
+    prefix_ = [[NSMutableString stringWithString:[value objectAtIndex:1]] retain];
+    whitespaceBeforeCursor_ = [[value objectAtIndex:2] boolValue];
+    [stack_ removeLastObject];
+}
+
+- (void)less
+{
+    AcLog(@"Less");
+    if ([stack_ count] == 0) {
+        return;
+    }
+    [self _popStackObject];
+    [self refresh];
+}
+
+- (void)more
+{
+    AcLog(@"More");
+    if ([table_ selectedRow] >= 0) {
+        PopupEntry* e = [[self model] objectAtIndex:[self convertIndex:[table_ selectedRow]]];
+        NSString* selectedValue = [e mainValue];
+        [self _pushStackObject];
+        if (!moreText_) {
+            moreText_ = [[NSMutableString alloc] initWithString:selectedValue];
+        } else {
+            [moreText_ appendString:selectedValue];
+        }
+        if (whitespaceBeforeCursor_) {
+            [prefix_ appendString:@" "];
+            whitespaceBeforeCursor_ = NO;
+        }
+        [prefix_ appendString:selectedValue];
+        [self refresh];
     }
 }
 
@@ -348,7 +432,25 @@ const int kMaxResultContextWords = 4;
                 AcLog(@"Found match at %d-%d, line %d", startX, endX, startY);
                 int tx1, ty1, tx2, ty2;
                 // Get the word that includes the match.
-                NSString* word = [[[self session] TEXTVIEW] getWordForX:startX y:startY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
+                NSMutableString* firstWord = [NSMutableString stringWithString:[[[self session] TEXTVIEW] getWordForX:startX
+                                                                                                                    y:startY
+                                                                                                               startX:&tx1
+                                                                                                               startY:&ty1
+                                                                                                                 endX:&tx2
+                                                                                                                 endY:&ty2]];
+                while ([firstWord length] < [prefix_ length]) {
+                    NSString* part = [[[self session] TEXTVIEW] getWordForX:tx2
+                                                                          y:ty2
+                                                                     startX:&tx1
+                                                                     startY:&ty1
+                                                                       endX:&tx2
+                                                                       endY:&ty2];
+                    if ([part length] == 0) {
+                        break;
+                    }
+                    [firstWord appendString:part];
+                }
+                NSString* word = firstWord;
                 AcLog(@"Matching word is %@", word);
                 NSRange range = [word rangeOfString:prefix_ options:(NSCaseInsensitiveSearch|NSAnchoredSearch)];
                 if (range.location == 0) {

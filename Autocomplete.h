@@ -59,9 +59,15 @@
     // Cursor location to begin next search.
     int x_;
     long long y_;  // absolute coord
-    
+
     // Number of matches found so far
     int matchCount_;
+
+    // Text from previous autocompletes that were followed by -[more];
+    NSMutableString* moreText_;
+
+    // Previous state from calls to -[more] so that -[less] can go back in time.
+    NSMutableArray* stack_;
 }
 
 - (id)init;
@@ -71,6 +77,8 @@
 - (void)refresh;
 - (void)onClose;
 - (void)rowSelected:(id)sender;
+- (void)more;
+- (void)less;
 - (void)_populateMore:(id)sender;
 - (void)_doPopulateMore;
 

@@ -367,6 +367,20 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (void)newSessionsInManyTabsAtIndex:(id)sender
+{
+    NSMenu* parent = [sender representedObject];
+    for (NSMenuItem* item in [parent itemArray]) {
+        if (![item isSeparatorItem] && ![item submenu]) {
+            NSString* guid = [item representedObject];
+            Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+            if (bookmark) {
+                [self addNewSession:bookmark];
+            }
+        }
+    }
+}
+
 - (void)closeSession:(PTYSession *)aSession
 {
     if ([[[aSession tab] sessions] count] == 1) {
@@ -1210,7 +1224,7 @@ NSString *sessionsKey = @"sessions";
 {
     // Constructs the context menu for right-clicking on a terminal when
     // right click does not paste.
-    int nextIndex;
+    int nextIndex = 0;
     NSMenuItem *aMenuItem;
 
 #if DEBUG_METHOD_TRACE
@@ -1222,14 +1236,20 @@ NSString *sessionsKey = @"sessions";
     }
 
     // Bookmarks
-    [theMenu insertItemWithTitle:NSLocalizedStringFromTableInBundle(@"New",
+    [theMenu insertItemWithTitle:NSLocalizedStringFromTableInBundle(@"New Window",
                                                                     @"iTerm",
                                                                     [NSBundle bundleForClass:[self class]],
                                                                     @"Context menu")
                           action:nil
                    keyEquivalent:@""
-                         atIndex:0];
-    nextIndex = 1;
+                         atIndex:nextIndex++];
+    [theMenu insertItemWithTitle:NSLocalizedStringFromTableInBundle(@"New Tab",
+                                                                    @"iTerm",
+                                                                    [NSBundle bundleForClass:[self class]],
+                                                                    @"Context menu")
+                          action:nil
+                   keyEquivalent:@""
+                         atIndex:nextIndex++];
 
     // Create a menu with a submenu to navigate between tabs if there are more than one
     if ([TABVIEW numberOfTabViewItems] > 1) {
@@ -1266,30 +1286,27 @@ NSString *sessionsKey = @"sessions";
     // Build the bookmarks menu
     NSMenu *aMenu = [[[NSMenu alloc] init] autorelease];
 
+    // TODO: test this
+    [[iTermController sharedInstance] addBookmarksToMenu:aMenu
+                                                  target:[iTermController sharedInstance]
+                                           withShortcuts:NO
+                                                selector:@selector(newSessionInWindowAtIndex:)
+                                         openAllSelector:@selector(newSessionsInManyWindows:)
+                                       alternateSelector:nil];
+    [aMenu addItem: [NSMenuItem separatorItem]];
+
+    [theMenu setSubmenu:aMenu forItem:[theMenu itemAtIndex:0]];
+
+    aMenu = [[[NSMenu alloc] init] autorelease];
     [[iTermController sharedInstance] addBookmarksToMenu:aMenu
                                                   target:self
-                                           withShortcuts:NO];
+                                           withShortcuts:NO
+                                                selector:@selector(newSessionInTabAtIndex:)
+                                         openAllSelector:@selector(newSessionsInManyTabsAtIndex:)
+                                       alternateSelector:nil];
     [aMenu addItem: [NSMenuItem separatorItem]];
-    NSMenuItem *tip = [[[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"Press Option for New Window",
-                                                                                            @"iTerm",
-                                                                                            [NSBundle bundleForClass: [self class]],
-                                                                                            @"Toolbar Item: New")
-                                                  action:@selector(bogusSelector)
-                                           keyEquivalent: @""]
-                       autorelease];
-    [tip setKeyEquivalentModifierMask: NSCommandKeyMask];
-    [aMenu addItem: tip];
-    tip = [[tip copy] autorelease];
-    [tip setTitle:NSLocalizedStringFromTableInBundle(@"Open In New Window",
-                                                     @"iTerm",
-                                                     [NSBundle bundleForClass: [self class]],
-                                                     @"Toolbar Item: New")];
-    [tip setKeyEquivalentModifierMask: NSCommandKeyMask | NSAlternateKeyMask];
-    [tip setAlternate:YES];
-    [aMenu addItem: tip];
 
-    [theMenu setSubmenu: aMenu forItem: [theMenu itemAtIndex: 0]];
-
+    [theMenu setSubmenu:aMenu forItem:[theMenu itemAtIndex:1]];
 }
 
 // NSTabView
@@ -2233,7 +2250,11 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)openAutocomplete:(id)sender
 {
-    [autocompleteView popInSession:[self currentSession]];
+    if ([[autocompleteView window] isVisible]) {
+        [autocompleteView more];
+    } else {
+        [autocompleteView popInSession:[self currentSession]];
+    }
 }
 
 - (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark

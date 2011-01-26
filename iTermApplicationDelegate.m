@@ -339,51 +339,50 @@ int gDebugLogFile = -1;
     [[iTermController sharedInstance] irAdvance:1];
 }
 
-- (NSMenu *)applicationDockMenu:(NSApplication *)sender
+- (void)_newSessionMenu:(NSMenu*)superMenu title:(NSString*)title target:(id)aTarget selector:(SEL)selector openAllSelector:(SEL)openAllSelector
 {
-    NSMenu *aMenu, *bookmarksMenu;
+    //new window menu
     NSMenuItem *newMenuItem;
-    PseudoTerminal *frontTerminal;
-
-    aMenu = [[NSMenu alloc] initWithTitle: @"Dock Menu"];
-    //new session menu
-    newMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(@"New",
+    NSMenu *bookmarksMenu;
+    newMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(title,
                                                                                        @"iTerm",
-                                                                                       [NSBundle bundleForClass: [self class]],
+                                                                                       [NSBundle bundleForClass:[self class]],
                                                                                        @"Context menu")
                                              action:nil
-                                      keyEquivalent:@"" ];
-    [aMenu addItem: newMenuItem];
+                                      keyEquivalent:@""];
+    [superMenu addItem:newMenuItem];
     [newMenuItem release];
 
     // Create the bookmark submenus for new session
-    frontTerminal = [[iTermController sharedInstance] currentTerminal];
     // Build the bookmark menu
     bookmarksMenu = [[[NSMenu alloc] init] autorelease];
 
     [[iTermController sharedInstance] addBookmarksToMenu:bookmarksMenu
-                                                  target:frontTerminal
-                                           withShortcuts:NO];
+                                                  target:aTarget
+                                           withShortcuts:NO
+                                                selector:selector 
+                                         openAllSelector:openAllSelector 
+                                       alternateSelector:nil];
     [newMenuItem setSubmenu:bookmarksMenu];
 
     [bookmarksMenu addItem:[NSMenuItem separatorItem]];
+}
 
-    NSMenuItem *tip = [[[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"Press Option for New Window",
-                                                                                             @"iTerm",
-                                                                                             [NSBundle bundleForClass: [self class]],
-                                                                                             @"Toolbar Item: New")
-                                                  action:@selector(xyz)
-                                           keyEquivalent: @""] autorelease];
-    [tip setKeyEquivalentModifierMask: 0];
-    [bookmarksMenu addItem:tip];
-    tip = [[tip copy] autorelease];
-    [tip setTitle:NSLocalizedStringFromTableInBundle(@"Open In New Window",
-                                                     @"iTerm",
-                                                     [NSBundle bundleForClass:[self class]],
-                                                     @"Toolbar Item: New")];
-    [tip setKeyEquivalentModifierMask:NSAlternateKeyMask];
-    [tip setAlternate:YES];
-    [bookmarksMenu addItem:tip];
+- (NSMenu *)applicationDockMenu:(NSApplication *)sender
+{
+    NSMenu* aMenu = [[NSMenu alloc] initWithTitle: @"Dock Menu"];
+
+    PseudoTerminal *frontTerminal;
+    frontTerminal = [[iTermController sharedInstance] currentTerminal];
+    [self _newSessionMenu:aMenu title:@"New Window"
+                   target:[iTermController sharedInstance]
+                 selector:@selector(newSessionInWindowAtIndex:)
+          openAllSelector:@selector(newSessionsInManyWindows:)];
+    [self _newSessionMenu:aMenu title:@"New Tab"
+                   target:frontTerminal
+                 selector:@selector(newSessionInTabAtIndex:)
+          openAllSelector:@selector(newSessionsInWindow:)];
+
     return ([aMenu autorelease]);
 }
 
@@ -675,7 +674,10 @@ void DebugLog(NSString* value)
     // add bookmarks into Bookmark menu
     [[iTermController sharedInstance] addBookmarksToMenu:bookmarkMenu
                                                   target:[[iTermController sharedInstance] currentTerminal]
-                                           withShortcuts:YES];
+                                           withShortcuts:YES
+                                                selector:@selector(newSessionInTabAtIndex:)
+                                         openAllSelector:@selector(newSessionsInWindow:)
+                                       alternateSelector:@selector(newSessionInWindowAtIndex:)];
 }
 
 // This is called whenever a tab becomes key or logging starts/stops.
