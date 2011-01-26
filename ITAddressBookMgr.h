@@ -116,6 +116,7 @@
 #define KEY_BOOKMARK_GROWL_NOTIFICATIONS      @"BM Growl"
 #define KEY_CHARACTER_ENCODING                @"Character Encoding"
 #define KEY_SCROLLBACK_LINES                  @"Scrollback Lines"
+#define KEY_UNLIMITED_SCROLLBACK              @"Unlimited Scrollback"
 #define KEY_TERMINAL_TYPE                     @"Terminal Type"
 #define KEY_SEND_CODE_WHEN_IDLE               @"Send Code When Idle"
 #define KEY_IDLE_CODE                         @"Idle Code"

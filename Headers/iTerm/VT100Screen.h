@@ -108,8 +108,10 @@ void StringToScreenChars(NSString *s,
     screen_char_t default_fg_code;
     int default_line_width;
 
-    // max size of scrollback buffer
+    // Max size of scrollback buffer
     unsigned int  max_scrollback_lines;
+    // This flag overrides max_scrollback_lines:
+    BOOL unlimitedScrollback_;
     // current number of lines in scrollback buffer (not including what is on screen)
     unsigned int current_scrollback_lines;
     // how many scrollback lines have been lost due to overflow
@@ -143,8 +145,8 @@ void StringToScreenChars(NSString *s,
 - (void)setWidth:(int)width height:(int)height;
 - (int)width;
 - (int)height;
-- (unsigned int)scrollbackLines;
 - (void)setScrollback:(unsigned int)lines;
+- (void)setUnlimitedScrollback:(BOOL)enable;
 - (void)setTerminal:(VT100Terminal *)terminal;
 - (VT100Terminal *)terminal;
 - (void)setShellTask:(PTYTask *)shell;

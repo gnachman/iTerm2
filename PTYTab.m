@@ -1780,8 +1780,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
             }
         }
         if (!anyChange) {
-            PtyLog(@"Failed to redistribute quantization error. Everything is 1 pixel.");
-            NSLog(@"Failed to redistribute quantization error. Everything is 1 pixel.");
+            PtyLog(@"Failed to redistribute quantization error. Change=%d, sizes=%@.", change, sizes);
+            NSLog(@"Failed to redistribute quantization error. Change=%d, sizes=%@.", change, sizes);
             return;
         }
     }
@@ -1791,6 +1791,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 // with special attention paid to the "locked" session, which never resizes.
 - (void)splitView:(NSSplitView *)splitView resizeSubviewsWithOldSize:(NSSize)oldSize
 {
+    if ([[splitView subviews] count] == 0) {
+        // nothing to do!
+        return;
+    }
     PtyLog(@"splitView:resizeSubviewsWithOldSize for %p", splitView);
     BOOL isVertical = [splitView isVertical];
     NSSet* ancestors = [self _ancestorsOfLockedSession];

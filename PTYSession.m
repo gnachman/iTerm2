@@ -229,6 +229,7 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
         theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
         needDivorce = YES;
     }
+    [[aSession SCREEN] setUnlimitedScrollback:[[theBookmark objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession SCREEN] setScrollback:[[theBookmark objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
      // set our preferences
@@ -1396,6 +1397,7 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     [self setAutoClose:[[aDict objectForKey:KEY_CLOSE_SESSIONS_ON_END] boolValue]];
     [self setDoubleWidth:[[aDict objectForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH] boolValue]];
     [self setXtermMouseReporting:[[aDict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue]];
+    [SCREEN setUnlimitedScrollback:[[aDict objectForKey:KEY_UNLIMITED_SCROLLBACK] intValue]];
     [SCREEN setScrollback:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
     [self setFont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NORMAL_FONT]]

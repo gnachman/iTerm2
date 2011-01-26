@@ -847,7 +847,10 @@ static char* FormatCont(int c)
 #ifdef DEBUG_RESIZEDWIDTH
     NSLog(@"Before dropExcessLines have %d\n", [linebuffer numLinesWithWidth: WIDTH]);
 #endif
-    int linesDropped = [linebuffer dropExcessLinesWithWidth: WIDTH];
+    int linesDropped = 0;
+    if (!unlimitedScrollback_) {
+        linesDropped = [linebuffer dropExcessLinesWithWidth: WIDTH];
+    }
     int lines = [linebuffer numLinesWithWidth: WIDTH];
     NSAssert(lines >= 0, @"Negative lines");
     current_scrollback_lines = lines;
@@ -910,18 +913,20 @@ static char* FormatCont(int c)
     return HEIGHT;
 }
 
-- (unsigned int)scrollbackLines
-{
-    return max_scrollback_lines;
-}
-
 // sets scrollback lines.
 - (void)setScrollback:(unsigned int)lines;
 {
     max_scrollback_lines = lines;
     [linebuffer setMaxLines: lines];
-    [linebuffer dropExcessLinesWithWidth: WIDTH];
+    if (!unlimitedScrollback_) {
+        [linebuffer dropExcessLinesWithWidth: WIDTH];
+    }
     current_scrollback_lines = [linebuffer numLinesWithWidth: WIDTH];
+}
+
+- (void)setUnlimitedScrollback:(BOOL)enable
+{
+    unlimitedScrollback_ = enable;
 }
 
 - (PTYSession *)session
@@ -3252,7 +3257,12 @@ static void DumpBuf(screen_char_t* p, int n) {
         --len;
     }
     [linebuffer appendLine:screen_top length:len partial:(screen_top[WIDTH].code != EOL_HARD) width:WIDTH];
-    int dropped = [linebuffer dropExcessLinesWithWidth: WIDTH];
+    int dropped;
+    if (!unlimitedScrollback_) {
+        dropped = [linebuffer dropExcessLinesWithWidth: WIDTH];
+    } else {
+        dropped = 0;
+    }
     current_scrollback_lines = [linebuffer numLinesWithWidth: WIDTH];
 
     NSAssert(dropped == 0 || dropped == 1, @"Unexpected number of lines dropped");

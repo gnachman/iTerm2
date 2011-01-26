@@ -3687,6 +3687,8 @@ NSString *sessionsKey = @"sessions";
 
     // Initialize a new session
     aSession = [[PTYSession alloc] init];
+
+    [[aSession SCREEN] setUnlimitedScrollback:[[bookmark objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession SCREEN] setScrollback:[[bookmark objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
     // set our preferences
@@ -3802,6 +3804,7 @@ NSString *sessionsKey = @"sessions";
 
     // Initialize a new session
     aSession = [[PTYSession alloc] init];
+    [[aSession SCREEN] setUnlimitedScrollback:[[addressbookEntry objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession SCREEN] setScrollback:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
     // set our preferences
@@ -3894,6 +3897,7 @@ NSString *sessionsKey = @"sessions";
 
     // Initialize a new session
     aSession = [[PTYSession alloc] init];
+    [[aSession SCREEN] setUnlimitedScrollback:[[addressbookEntry objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession SCREEN] setScrollback:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
     // set our preferences
     [aSession setAddressBookEntry: addressbookEntry];
@@ -3953,6 +3957,7 @@ NSString *sessionsKey = @"sessions";
 
     // Initialize a new session
     aSession = [[PTYSession alloc] init];
+    [[aSession SCREEN] setUnlimitedScrollback:[[addressbookEntry objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]];
     [[aSession SCREEN] setScrollback:[[addressbookEntry objectForKey:KEY_SCROLLBACK_LINES] intValue]];
     // set our preferences
     [aSession setAddressBookEntry: addressbookEntry];

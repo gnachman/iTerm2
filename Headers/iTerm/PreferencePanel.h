@@ -310,6 +310,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* xtermMouseReporting;
     IBOutlet NSButton* bookmarkGrowlNotifications;
     IBOutlet NSTextField* scrollbackLines;
+    IBOutlet NSButton* unlimitedScrollback;
     IBOutlet NSComboBox* terminalType;
     IBOutlet NSButton* sendCodeWhenIdle;
     IBOutlet NSTextField* idleCode;
