@@ -3163,6 +3163,7 @@ NSString *sessionsKey = @"sessions";
         [self safelySetSessionSize:aSession rows:rows columns:columns];
         PtyLog(@"setupSession - call setPreferencesFromAddressBookEntry");
         [aSession setPreferencesFromAddressBookEntry:tempPrefs];
+        [aSession setBookmarkName:[tempPrefs objectForKey:KEY_NAME]];
         [[aSession SCREEN] setDisplay:[aSession TEXTVIEW]];
         [[aSession TERMINAL] setTrace:YES];    // debug vt100 escape sequence decode
 
@@ -3338,8 +3339,8 @@ NSString *sessionsKey = @"sessions";
 - (void)setName:(NSString *)theSessionName forSession:(PTYSession*)aSession
 {
     if (theSessionName != nil) {
-        [aSession setName:theSessionName];
         [aSession setDefaultName:theSessionName];
+        [aSession setName:theSessionName];
     } else {
         NSMutableString *title = [NSMutableString string];
         NSString *progpath = [NSString stringWithFormat: @"%@ #%d",

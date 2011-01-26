@@ -105,6 +105,7 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     if (slowPasteTimer) {
         [slowPasteTimer invalidate];
     }
+    [bookmarkName release];
     [TERM_VALUE release];
     [COLORFGBG_VALUE release];
     [name release];
@@ -1428,11 +1429,20 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
 
 - (NSString*)formattedName:(NSString*)base
 {
+    BOOL baseIsBookmarkName = [base isEqualToString:bookmarkName];
     PreferencePanel* panel = [PreferencePanel sharedInstance];
     if ([panel jobName] && jobName_) {
-        return [NSString stringWithFormat:@"%@ (%@)", base, [self jobName]];
+        if (baseIsBookmarkName && ![panel showBookmarkName]) {
+            return [NSString stringWithString:[self jobName]];
+        } else {
+            return [NSString stringWithFormat:@"%@ (%@)", base, [self jobName]];
+        }
     } else {
-        return base;
+        if (baseIsBookmarkName && ![panel showBookmarkName]) {
+            return @"Shell";
+        } else {
+            return base;
+        }
     }
 }
 
@@ -1515,8 +1525,17 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     return name;
 }
 
+- (void)setBookmarkName:(NSString*)theName
+{
+    [bookmarkName release];
+    bookmarkName = [theName copy];
+}
+
 - (void)setName:(NSString*)theName
 {
+    if (!bookmarkName) {
+        bookmarkName = [theName copy];
+    }
     if ([name isEqualToString:theName]) {
         return;
     }
@@ -2074,17 +2093,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)updateDisplay
 {
     timerRunning_ = YES;
-
-    if (![[self tab] isForegroundTab]) {
+    BOOL isForegroundTab = [[self tab] isForegroundTab];
+    if (!isForegroundTab) {
         // Set color, other attributes of a background tab.
         [[self tab] setLabelAttributes];
-    } else if ([[self tab] activeSession] == self) {
+    }
+    if ([[self tab] activeSession] == self) {
         // Update window info for the active tab.
         struct timeval now;
         gettimeofday(&now, NULL);
-        if (timeInTenthsOfSeconds(now) >= timeInTenthsOfSeconds(lastUpdate) + 7) {
-            // It has been more than 700ms since the last time we were here.
-            if ([[[self tab] parentWindow] tempTitle]) {
+        if (!jobName_ ||
+            timeInTenthsOfSeconds(now) >= timeInTenthsOfSeconds(lastUpdate) + 7) {
+            // It has been more than 700ms since the last time we were here or
+            // the job doesn't ahve a name
+            if (isForegroundTab && [[[self tab] parentWindow] tempTitle]) {
                 // Revert to the permanent tab title.
                 [[[self tab] parentWindow] setWindowTitle];
                 [[[self tab] parentWindow] resetTempTitle];

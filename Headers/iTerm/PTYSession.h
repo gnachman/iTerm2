@@ -78,6 +78,9 @@ static const float kBackgroundSessionIntervalSec = 1;
     // should be used.
     NSString* windowTitle;
 
+    // The original bookmark name.
+    NSString* bookmarkName;
+    
     // Shell wraps the underlying file descriptor pair.
     PTYTask* SHELL;
 
@@ -292,6 +295,7 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (void)setDefaultName: (NSString *)theName;
 - (NSString *)uniqueID;
 - (void)setUniqueID: (NSString *)uniqueID;
+- (NSString*)formattedName:(NSString*)base;
 - (NSString *)windowTitle;
 - (void)setWindowTitle: (NSString *)theTitle;
 - (PTYTask *)SHELL;

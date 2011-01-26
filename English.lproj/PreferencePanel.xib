@@ -13,7 +13,7 @@
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
 			<integer value="3079"/>
-			<integer value="2108"/>
+			<integer value="1947"/>
 			<integer value="3588"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
@@ -170,7 +170,7 @@
 								<object class="NSTabViewItem" id="403608584">
 									<string key="NSIdentifier">1</string>
 									<object class="NSView" key="NSView" id="505411774">
-										<nil key="NSNextResponder"/>
+										<reference key="NSNextResponder" ref="415305200"/>
 										<int key="NSvFlags">256</int>
 										<object class="NSMutableArray" key="NSSubviews">
 											<bool key="EncodedWithXMLCoder">YES</bool>
@@ -1102,8 +1102,31 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 													<int key="NSPeriodicInterval">25</int>
 												</object>
 											</object>
+											<object class="NSButton" id="90601343">
+												<reference key="NSNextResponder" ref="505411774"/>
+												<int key="NSvFlags">268</int>
+												<string key="NSFrame">{{86, 202}, {213, 18}}</string>
+												<reference key="NSSuperview" ref="505411774"/>
+												<bool key="NSEnabled">YES</bool>
+												<object class="NSButtonCell" key="NSCell" id="120147830">
+													<int key="NSCellFlags">-2080244224</int>
+													<int key="NSCellFlags2">0</int>
+													<string key="NSContents">Show bookmark name in title</string>
+													<reference key="NSSupport" ref="966507434"/>
+													<reference key="NSControlView" ref="90601343"/>
+													<int key="NSButtonFlags">1211912703</int>
+													<int key="NSButtonFlags2">2</int>
+													<reference key="NSNormalImage" ref="93419583"/>
+													<reference key="NSAlternateImage" ref="573748959"/>
+													<string key="NSAlternateContents"/>
+													<string key="NSKeyEquivalent"/>
+													<int key="NSPeriodicDelay">200</int>
+													<int key="NSPeriodicInterval">25</int>
+												</object>
+											</object>
 										</object>
 										<string key="NSFrameSize">{767, 383}</string>
+										<reference key="NSSuperview" ref="415305200"/>
 									</object>
 									<string key="NSLabel">Global Settings</string>
 									<reference key="NSColor" ref="303715562"/>
@@ -1112,7 +1135,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 								<object class="NSTabViewItem" id="745611275">
 									<string key="NSIdentifier">2</string>
 									<object class="NSView" key="NSView" id="105539794">
-										<reference key="NSNextResponder" ref="415305200"/>
+										<nil key="NSNextResponder"/>
 										<int key="NSvFlags">256</int>
 										<object class="NSMutableArray" key="NSSubviews">
 											<bool key="EncodedWithXMLCoder">YES</bool>
@@ -4258,18 +4281,18 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																		<reference key="NSTextColor" ref="1014689419"/>
 																	</object>
 																</object>
-																<object class="NSButton" id="225474736">
+																<object class="NSButton" id="434885424">
 																	<reference key="NSNextResponder" ref="974784023"/>
 																	<int key="NSvFlags">268</int>
 																	<string key="NSFrame">{{188, 153}, {151, 18}}</string>
 																	<reference key="NSSuperview" ref="974784023"/>
 																	<bool key="NSEnabled">YES</bool>
-																	<object class="NSButtonCell" key="NSCell" id="312079793">
+																	<object class="NSButtonCell" key="NSCell" id="483520615">
 																		<int key="NSCellFlags">-2080244224</int>
 																		<int key="NSCellFlags2">0</int>
 																		<string key="NSContents">Unlimited scrollback</string>
 																		<reference key="NSSupport" ref="966507434"/>
-																		<reference key="NSControlView" ref="225474736"/>
+																		<reference key="NSControlView" ref="434885424"/>
 																		<int key="NSButtonFlags">1211912703</int>
 																		<int key="NSButtonFlags2">2</int>
 																		<reference key="NSNormalImage" ref="93419583"/>
@@ -4909,7 +4932,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 											</object>
 										</object>
 										<string key="NSFrameSize">{767, 383}</string>
-										<reference key="NSSuperview" ref="415305200"/>
 									</object>
 									<string key="NSLabel">Bookmarks</string>
 									<reference key="NSColor" ref="303715562"/>
@@ -5673,14 +5695,14 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 									<reference key="NSTabView" ref="415305200"/>
 								</object>
 							</object>
-							<reference key="NSSelectedTabViewItem" ref="745611275"/>
+							<reference key="NSSelectedTabViewItem" ref="403608584"/>
 							<reference key="NSFont" ref="966507434"/>
 							<int key="NSTvFlags">6</int>
 							<bool key="NSAllowTruncatedLabels">YES</bool>
 							<bool key="NSDrawsBackground">YES</bool>
 							<object class="NSMutableArray" key="NSSubviews">
 								<bool key="EncodedWithXMLCoder">YES</bool>
-								<reference ref="105539794"/>
+								<reference ref="505411774"/>
 							</object>
 						</object>
 					</object>
@@ -8644,7 +8666,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<object class="IBActionConnection" key="connection">
 						<string key="label">bookmarkSettingChanged:</string>
 						<reference key="source" ref="155244235"/>
-						<reference key="destination" ref="225474736"/>
+						<reference key="destination" ref="434885424"/>
 					</object>
 					<int key="connectionID">3649</int>
 				</object>
@@ -8652,9 +8674,25 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<object class="IBOutletConnection" key="connection">
 						<string key="label">unlimitedScrollback</string>
 						<reference key="source" ref="155244235"/>
-						<reference key="destination" ref="225474736"/>
+						<reference key="destination" ref="434885424"/>
 					</object>
 					<int key="connectionID">3650</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">settingChanged:</string>
+						<reference key="source" ref="155244235"/>
+						<reference key="destination" ref="90601343"/>
+					</object>
+					<int key="connectionID">3653</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">showBookmarkName</string>
+						<reference key="source" ref="155244235"/>
+						<reference key="destination" ref="90601343"/>
+					</object>
+					<int key="connectionID">3654</int>
 				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -8807,6 +8845,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<reference ref="678068823"/>
 							<reference ref="1061258474"/>
 							<reference ref="293870724"/>
+							<reference ref="90601343"/>
 						</object>
 						<reference key="parent" ref="403608584"/>
 					</object>
@@ -9596,7 +9635,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<reference ref="919672904"/>
 							<reference ref="813310342"/>
 							<reference ref="1007428362"/>
-							<reference ref="225474736"/>
+							<reference ref="434885424"/>
 						</object>
 						<reference key="parent" ref="1033690595"/>
 					</object>
@@ -12432,17 +12471,31 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">3647</int>
-						<reference key="object" ref="225474736"/>
+						<reference key="object" ref="434885424"/>
 						<object class="NSMutableArray" key="children">
 							<bool key="EncodedWithXMLCoder">YES</bool>
-							<reference ref="312079793"/>
+							<reference ref="483520615"/>
 						</object>
 						<reference key="parent" ref="974784023"/>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">3648</int>
-						<reference key="object" ref="312079793"/>
-						<reference key="parent" ref="225474736"/>
+						<reference key="object" ref="483520615"/>
+						<reference key="parent" ref="434885424"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">3651</int>
+						<reference key="object" ref="90601343"/>
+						<object class="NSMutableArray" key="children">
+							<bool key="EncodedWithXMLCoder">YES</bool>
+							<reference ref="120147830"/>
+						</object>
+						<reference key="parent" ref="505411774"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">3652</int>
+						<reference key="object" ref="120147830"/>
+						<reference key="parent" ref="90601343"/>
 					</object>
 				</object>
 			</object>
@@ -13228,6 +13281,8 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<string>3643.IBPluginDependency</string>
 					<string>3647.IBPluginDependency</string>
 					<string>3648.IBPluginDependency</string>
+					<string>3651.IBPluginDependency</string>
+					<string>3652.IBPluginDependency</string>
 				</object>
 				<object class="NSMutableArray" key="dict.values">
 					<bool key="EncodedWithXMLCoder">YES</bool>
@@ -14079,6 +14134,8 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="unlocalizedProperties">
@@ -14097,7 +14154,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">3650</int>
+			<int key="maxID">3654</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -14504,6 +14561,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>selectionCopiesText</string>
 							<string>sendCodeWhenIdle</string>
 							<string>shellImageColumn</string>
+							<string>showBookmarkName</string>
 							<string>silenceBell</string>
 							<string>smartPlacement</string>
 							<string>strokeThickness</string>
@@ -14654,6 +14712,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>NSButton</string>
 							<string>NSButton</string>
 							<string>NSTableColumn</string>
+							<string>NSButton</string>
 							<string>NSButton</string>
 							<string>NSButton</string>
 							<string>NSSlider</string>
@@ -14807,6 +14866,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>selectionCopiesText</string>
 							<string>sendCodeWhenIdle</string>
 							<string>shellImageColumn</string>
+							<string>showBookmarkName</string>
 							<string>silenceBell</string>
 							<string>smartPlacement</string>
 							<string>strokeThickness</string>
@@ -15322,6 +15382,10 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<object class="IBToOneOutletInfo">
 								<string key="name">shellImageColumn</string>
 								<string key="candidateClassName">NSTableColumn</string>
+							</object>
+							<object class="IBToOneOutletInfo">
+								<string key="name">showBookmarkName</string>
+								<string key="candidateClassName">NSButton</string>
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">silenceBell</string>

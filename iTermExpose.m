@@ -1098,9 +1098,9 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     }
     NSString* jobName = [[aTab activeSession] jobName];
     if (jobName) {
-        return [NSString stringWithFormat:@"%d/%d. %@ (%@)", i, j, [[aTab activeSession] rawName], [[aTab activeSession] jobName]];
+        return [NSString stringWithFormat:@"%d/%d. %@", i, j, [[aTab activeSession] name]];
     } else {
-        return [NSString stringWithFormat:@"%d/%d. %@", i, j, [[aTab activeSession] rawName]];
+        return [NSString stringWithFormat:@"%d/%d. %@", i, j, [[aTab activeSession] name]];
     }
 }
 

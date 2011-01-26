@@ -631,6 +631,7 @@ static float versionNumber;
     defaultSmartPlacement = [prefs objectForKey:@"SmartPlacement"]?[[prefs objectForKey:@"SmartPlacement"] boolValue]: NO;
     defaultWindowNumber = [prefs objectForKey:@"WindowNumber"]?[[prefs objectForKey:@"WindowNumber"] boolValue]: YES;
     defaultJobName = [prefs objectForKey:@"JobName"]?[[prefs objectForKey:@"JobName"] boolValue]: NO;
+    defaultShowBookmarkName = [prefs objectForKey:@"ShowBookmarkName"]?[[prefs objectForKey:@"ShowBookmarkName"] boolValue] : NO;
     defaultInstantReplay = [prefs objectForKey:@"InstantReplay"]?[[prefs objectForKey:@"InstantReplay"] boolValue]: YES;
     defaultHotkey = [prefs objectForKey:@"Hotkey"]?[[prefs objectForKey:@"Hotkey"] boolValue]: NO;
     defaultHotkeyCode = [prefs objectForKey:@"HotkeyCode"]?[[prefs objectForKey:@"HotkeyCode"] intValue]: 0;
@@ -737,6 +738,7 @@ static float versionNumber;
     [prefs setBool:defaultSmartPlacement forKey:@"SmartPlacement"];
     [prefs setBool:defaultWindowNumber forKey:@"WindowNumber"];
     [prefs setBool:defaultJobName forKey:@"JobName"];
+    [prefs setBool:defaultShowBookmarkName forKey:@"ShowBookmarkName"];
     [prefs setBool:defaultInstantReplay forKey:@"InstantReplay"];
     [prefs setBool:defaultHotkey forKey:@"Hotkey"];
     [prefs setInteger:defaultHotkeyCode forKey:@"HotkeyCode"];
@@ -798,6 +800,7 @@ static float versionNumber;
     [smartPlacement setState: defaultSmartPlacement?NSOnState:NSOffState];
     [windowNumber setState: defaultWindowNumber?NSOnState:NSOffState];
     [jobName setState: defaultJobName?NSOnState:NSOffState];
+    [showBookmarkName setState: defaultShowBookmarkName?NSOnState:NSOffState];
     [instantReplay setState: defaultInstantReplay?NSOnState:NSOffState];
     [savePasteHistory setState: defaultSavePasteHistory?NSOnState:NSOffState];
     [openArrangementAtStartup setState:defaultOpenArrangementAtStartup ? NSOnState : NSOffState];
@@ -904,9 +907,12 @@ static float versionNumber;
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermRefreshTerminal"
                                                             object:nil
                                                           userInfo:nil];
-    } else if (sender == windowNumber || sender == jobName) {
+    } else if (sender == windowNumber ||
+               sender == jobName ||
+               sender == showBookmarkName) {
         defaultWindowNumber = ([windowNumber state] == NSOnState);
         defaultJobName = ([jobName state] == NSOnState);
+        defaultShowBookmarkName = ([showBookmarkName state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermUpdateLabels"
                                                             object:nil
                                                           userInfo:nil];
@@ -1126,6 +1132,11 @@ static float versionNumber;
 - (BOOL)jobName
 {
     return defaultJobName;
+}
+
+- (BOOL)showBookmarkName
+{
+    return defaultShowBookmarkName;
 }
 
 - (BOOL)instantReplay
