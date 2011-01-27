@@ -1154,7 +1154,8 @@ NSString *sessionsKey = @"sessions";
     } else {
         proposedFrame.size.width = decorationWidth + floor(defaultFrame.size.width / charWidth) * charWidth;
     }
-    proposedFrame.size.height = decorationHeight + floor(defaultFrame.size.height / charHeight) * charHeight;
+    // TODO: This doesn't make any sense with horizontal split panes.
+    proposedFrame.size.height = floor((defaultFrame.size.height - decorationHeight - VMARGIN * 2) / charHeight) * charHeight + decorationHeight + VMARGIN*2;
 
     PtyLog(@"For zoom, default frame is %fx%f, proposed frame is %f,%f %fx%f",
            defaultFrame.size.width, defaultFrame.size.height,
