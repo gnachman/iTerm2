@@ -27,109 +27,128 @@
 #import <Cocoa/Cocoa.h>
 
 // Key Definitions
-#define KEY_CURSOR_DOWN					0
-#define KEY_CURSOR_LEFT					1
-#define KEY_CURSOR_RIGHT				2
-#define KEY_CURSOR_UP					3
-#define KEY_DEL							4
-#define KEY_DELETE						5
-#define KEY_END							6
-#define KEY_F1							7
-#define KEY_F2							8
-#define KEY_F3							9
-#define KEY_F4							10
-#define KEY_F5							11
-#define KEY_F6							12
-#define KEY_F7							13
-#define KEY_F8							14
-#define KEY_F9							15
-#define KEY_F10							16
-#define KEY_F11							17
-#define KEY_F12							18
-#define KEY_F13							19
-#define KEY_F14							20
-#define KEY_F15							21
-#define KEY_F16							22
-#define KEY_F17							23
-#define KEY_F18							24
-#define KEY_F19							25
-#define KEY_F20							26
-#define KEY_HELP						27
-#define KEY_HEX_CODE					28
-#define KEY_HOME						29
-#define KEY_NUMERIC_0					30
-#define KEY_NUMERIC_1					31
-#define KEY_NUMERIC_2					32
-#define KEY_NUMERIC_3					33
-#define KEY_NUMERIC_4					34
-#define KEY_NUMERIC_5					35
-#define KEY_NUMERIC_6					36
-#define KEY_NUMERIC_7					37
-#define KEY_NUMERIC_8					38
-#define KEY_NUMERIC_9					39
-#define KEY_NUMERIC_ENTER				40
-#define KEY_NUMERIC_EQUAL				41
-#define KEY_NUMERIC_DIVIDE				42
-#define KEY_NUMERIC_MULTIPLY			43
-#define KEY_NUMERIC_MINUS				44
-#define KEY_NUMERIC_PLUS				45
-#define KEY_NUMERIC_PERIOD				46
-#define KEY_NUMLOCK						47
-#define KEY_PAGE_DOWN					48
-#define KEY_PAGE_UP						49
-#define KEY_INS							50
+#define KEY_CURSOR_DOWN                 0
+#define KEY_CURSOR_LEFT                 1
+#define KEY_CURSOR_RIGHT                2
+#define KEY_CURSOR_UP                   3
+#define KEY_DEL                         4
+#define KEY_DELETE                      5
+#define KEY_END                         6
+#define KEY_F1                          7
+#define KEY_F2                          8
+#define KEY_F3                          9
+#define KEY_F4                          10
+#define KEY_F5                          11
+#define KEY_F6                          12
+#define KEY_F7                          13
+#define KEY_F8                          14
+#define KEY_F9                          15
+#define KEY_F10                         16
+#define KEY_F11                         17
+#define KEY_F12                         18
+#define KEY_F13                         19
+#define KEY_F14                         20
+#define KEY_F15                         21
+#define KEY_F16                         22
+#define KEY_F17                         23
+#define KEY_F18                         24
+#define KEY_F19                         25
+#define KEY_F20                         26
+#define KEY_HELP                        27
+#define KEY_HEX_CODE                    28
+#define KEY_HOME                        29
+#define KEY_NUMERIC_0                   30
+#define KEY_NUMERIC_1                   31
+#define KEY_NUMERIC_2                   32
+#define KEY_NUMERIC_3                   33
+#define KEY_NUMERIC_4                   34
+#define KEY_NUMERIC_5                   35
+#define KEY_NUMERIC_6                   36
+#define KEY_NUMERIC_7                   37
+#define KEY_NUMERIC_8                   38
+#define KEY_NUMERIC_9                   39
+#define KEY_NUMERIC_ENTER               40
+#define KEY_NUMERIC_EQUAL               41
+#define KEY_NUMERIC_DIVIDE              42
+#define KEY_NUMERIC_MULTIPLY            43
+#define KEY_NUMERIC_MINUS               44
+#define KEY_NUMERIC_PLUS                45
+#define KEY_NUMERIC_PERIOD              46
+#define KEY_NUMLOCK                     47
+#define KEY_PAGE_DOWN                   48
+#define KEY_PAGE_UP                     49
+#define KEY_INS                         50
 
 
 // Actions for key bindings
-#define KEY_ACTION_NEXT_SESSION			0
-#define KEY_ACTION_NEXT_WINDOW			1
-#define KEY_ACTION_PREVIOUS_SESSION		2
-#define KEY_ACTION_PREVIOUS_WINDOW		3
-#define KEY_ACTION_SCROLL_END			4
-#define KEY_ACTION_SCROLL_HOME			5
-#define KEY_ACTION_SCROLL_LINE_DOWN		6
-#define KEY_ACTION_SCROLL_LINE_UP		7
-#define KEY_ACTION_SCROLL_PAGE_DOWN		8
-#define KEY_ACTION_SCROLL_PAGE_UP		9
-#define KEY_ACTION_ESCAPE_SEQUENCE		10
-#define KEY_ACTION_HEX_CODE				11
+#define KEY_ACTION_NEXT_SESSION         0
+#define KEY_ACTION_NEXT_WINDOW          1
+#define KEY_ACTION_PREVIOUS_SESSION     2
+#define KEY_ACTION_PREVIOUS_WINDOW      3
+#define KEY_ACTION_SCROLL_END           4
+#define KEY_ACTION_SCROLL_HOME          5
+#define KEY_ACTION_SCROLL_LINE_DOWN     6
+#define KEY_ACTION_SCROLL_LINE_UP       7
+#define KEY_ACTION_SCROLL_PAGE_DOWN     8
+#define KEY_ACTION_SCROLL_PAGE_UP       9
+#define KEY_ACTION_ESCAPE_SEQUENCE      10
+#define KEY_ACTION_HEX_CODE             11
 #define KEY_ACTION_TEXT                 12
-#define KEY_ACTION_IGNORE				13
+#define KEY_ACTION_IGNORE               13
 #define KEY_ACTION_IR_FORWARD           14
 #define KEY_ACTION_IR_BACKWARD          15
 #define KEY_ACTION_SEND_C_H_BACKSPACE   16
 #define KEY_ACTION_SEND_C_QM_BACKSPACE  17
 #define KEY_ACTION_SELECT_PANE_LEFT     18
 #define KEY_ACTION_SELECT_PANE_RIGHT    19
+#define KEY_ACTION_SELECT_PANE_ABOVE    20
+#define KEY_ACTION_SELECT_PANE_BELOW    21
 
+@class PreferencePanel;
 @interface iTermKeyBindingMgr : NSObject {
 }
 
 + (NSString *) formatKeyCombination:(NSString *)theKeyCombination;
 + (NSString *)formatAction:(NSDictionary *)keyInfo;
-+ (int) actionForKeyCode: (unichar)keyCode 
-                 modifiers: (unsigned int) keyMods 
-              highPriority: (BOOL *) highPriority 
-                      text: (NSString **) text 
++ (int) actionForKeyCode:(unichar)keyCode
+               modifiers:(unsigned int)keyMods
+                    text:(NSString **)text
                keyMappings:(NSDictionary *)keyMappings;
 + (void)removeMappingAtIndex:(int)rowIndex inBookmark:(NSMutableDictionary*)bookmark;
++ (NSDictionary*)removeMappingAtIndex:(int)rowIndex inDictionary:(NSDictionary*)dict;
 + (void)setKeyMappingsToPreset:(NSString*)presetName inBookmark:(NSMutableDictionary*)bookmark;
-+ (void)setMappingAtIndex:(int)rowIndex 
-                   forKey:(NSString*)keyString 
-                   action:(int)actionIndex 
-                    value:(NSString*)valueToSend 
-                createNew:(BOOL)newMapping 
++ (void)setGlobalKeyMappingsToPreset:(NSString*)presetName;
++ (void)setMappingAtIndex:(int)rowIndex
+                   forKey:(NSString*)keyString
+                   action:(int)actionIndex
+                    value:(NSString*)valueToSend
+                createNew:(BOOL)newMapping
                inBookmark:(NSMutableDictionary*)bookmark;
++ (void)setMappingAtIndex:(int)rowIndex
+                   forKey:(NSString*)keyString
+                   action:(int)actionIndex
+                    value:(NSString*)valueToSend
+                createNew:(BOOL)newMapping
+             inDictionary:(NSMutableDictionary*)km;
 + (NSString*)shortcutAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark;
++ (NSString*)globalShortcutAtIndex:(int)rowIndex;
 + (NSDictionary*)mappingAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark;
++ (NSDictionary*)globalMappingAtIndex:(int)rowIndex;
 + (int)numberOfMappingsForBookmark:(Bookmark*)bmDict;
 + (void)removeMappingWithCode:(unichar)keyCode modifiers:(unsigned int)mods inBookmark:(NSMutableDictionary*)bookmark;
-+ (int) _actionForKeyCode:(unichar)keyCode 
-                modifiers:(unsigned int) keyMods 
-             highPriority:(BOOL *) highPriority 
-                     text:(NSString **) text 
++ (int) _actionForKeyCode:(unichar)keyCode
+                modifiers:(unsigned int)keyMods
+                     text:(NSString **)text
               keyMappings:(NSDictionary *)keyMappings;
 
++ (NSInteger)switchToWindowMask:(PreferencePanel*)pp;
++ (NSInteger)switchToTabMask:(PreferencePanel*)pp;
++ (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent prefPanel:(PreferencePanel*)pp;
++ (NSEvent*)remapModifiers:(NSEvent*)event prefPanel:(PreferencePanel*)pp;
++ (NSDictionary*)globalKeyMap;
++ (void)setGlobalKeyMap:(NSDictionary*)src;
++ (BOOL)haveGlobalKeyMappingForKeyString:(NSString*)keyString;
++ (BOOL)haveKeyMappingForKeyString:(NSString*)keyString inBookmark:(Bookmark*)bookmark;
 
 @end
 

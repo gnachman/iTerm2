@@ -454,4 +454,9 @@
     }
 }
 
+- (NSArray*)bookmarks
+{
+    return bookmarks_;
+}
+
 @end

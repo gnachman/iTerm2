@@ -37,6 +37,7 @@
 #import "SessionView.h"
 
 #define CUSTOM_COLOR_PRESETS @"Custom Color Presets"
+NSString* kDeleteKeyString = @"0x7f-0x0";
 
 static float versionNumber;
 
@@ -427,6 +428,7 @@ static float versionNumber;
 
     bookmarksToolbarId = [bookmarksToolbarItem itemIdentifier];
     globalToolbarId = [globalToolbarItem itemIdentifier];
+    keyboardToolbarId = [keyboardToolbarItem itemIdentifier];
     advancedToolbarId = [advancedToolbarItem itemIdentifier];
     [toolbar setSelectedItemIdentifier:globalToolbarId];
 
@@ -442,6 +444,7 @@ static float versionNumber;
     }
 
     [keyMappings setDoubleAction:@selector(editKeyMapping:)];
+    [globalKeyMappings setDoubleAction:@selector(editKeyMapping:)];
     keyString = nil;
     [bookmarksForUrlsTable setShowGraphic:NO];
     [bookmarksForUrlsTable hideSearch];
@@ -479,14 +482,26 @@ static float versionNumber;
     [sheet close];
 }
 
+- (BOOL)_originatorIsBookmark:(id)originator
+{
+    return originator == addNewMapping || originator == keyMappings;
+}
+
+
 - (void)editKeyMapping:(id)sender
 {
-    int rowIndex = [keyMappings selectedRow];
+    int rowIndex;
+    modifyMappingOriginator = sender;
+    if ([self _originatorIsBookmark:sender]) {
+        rowIndex = [keyMappings selectedRow];
+    } else {
+        rowIndex = [globalKeyMappings selectedRow];
+    }
     if (rowIndex < 0) {
-        [self addNewMapping:self];
+        [self addNewMapping:sender];
         return;
     }
-    [keyPress setStringValue:[self formattedKeyCombinationForRow:rowIndex]];
+    [keyPress setStringValue:[self formattedKeyCombinationForRow:rowIndex originator:sender]];
     if (keyString) {
         [keyString release];
     }
@@ -495,9 +510,9 @@ static float versionNumber;
     for (NSMenuItem* item in [action itemArray]) {
         [item setState:NSOffState];
     }
-    keyString = [[[self keyComboAtIndex:rowIndex] copy] retain];
-    [action selectItemWithTag:[[[self keyInfoAtIndex:rowIndex] objectForKey:@"Action"] intValue]];
-    NSString* text = [[self keyInfoAtIndex:rowIndex] objectForKey:@"Text"];
+    keyString = [[[self keyComboAtIndex:rowIndex originator:sender] copy] retain];
+    [action selectItemWithTag:[[[self keyInfoAtIndex:rowIndex originator:sender] objectForKey:@"Action"] intValue]];
+    NSString* text = [[self keyInfoAtIndex:rowIndex originator:sender] objectForKey:@"Text"];
     [valueToSend setStringValue:text ? text : @""];
 
     [self updateValueToSend];
@@ -509,24 +524,158 @@ static float versionNumber;
           contextInfo:nil];
 }
 
+- (BOOL)_warnAboutCtrlHOverride
+{
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutCtrlHOverrides"] != nil) {
+        return YES;
+    }
+    if (![self deleteSendsCtrlH]) {
+        return YES;
+    }
+    switch (NSRunAlertPanel(@"Overriding Global Delete Setting",
+                            @"The \"Delete Sends ^H\" preference in global keyboard settings is on. This change will override that preference (but only for this bookmark).",
+                            @"OK",
+                            @"Never warn me again",
+                            @"Cancel",
+                            nil)) {
+        case NSAlertDefaultReturn:
+            return YES;
+        case NSAlertAlternateReturn:
+            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:@"NeverWarnAboutCtrlHOverrides"];
+            return YES;
+        case NSAlertOtherReturn:
+            return NO;
+    }
+
+    return YES;
+}
+
+- (BOOL)_warnAboutDeleteOverride
+{
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutDeleteOverride"] != nil) {
+        return YES;
+    }
+    switch (NSRunAlertPanel(@"Some Bookmark Overrides the Delete Key",
+                            @"Careful! You have at least one bookmark that has a key mapping for the Delete key. It will take precedence over this setting. Check your bookmarks' keyboard settings if Delete does not work as expected.",
+                            @"OK",
+                            @"Never warn me again",
+                            @"Cancel",
+                            nil)) {
+        case NSAlertDefaultReturn:
+            return YES;
+        case NSAlertAlternateReturn:
+            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:@"NeverWarnAboutDeleteOverride"];
+            return YES;
+        case NSAlertOtherReturn:
+            return NO;
+    }
+
+    return YES;
+}
+
+- (BOOL)_warnAboutOverride
+{
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutOverrides"] != nil) {
+        return YES;
+    }
+    switch (NSRunAlertPanel(@"Overriding Global Shortcut",
+                            @"The keyboard shortcut you have set for this bookmark will take precedence over an existing shortcut for the same key combination in a global shortcut.",
+                            @"OK",
+                            @"Never warn me again",
+                            @"Cancel",
+                            nil)) {
+        case NSAlertDefaultReturn:
+            return YES;
+        case NSAlertAlternateReturn:
+            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:@"NeverWarnAboutOverrides"];
+            return YES;
+        case NSAlertOtherReturn:
+            return NO;
+    }
+
+    return YES;
+}
+
+- (BOOL)_warnAboutPossibleOverride
+{
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutPossibleOverrides"] != nil) {
+        return YES;
+    }
+    switch (NSRunAlertPanel(@"Some Bookmark Overrides this Shortcut",
+                            @"The global keyboard shortcut you have set is overridden by at least one bookmark. Check your bookmarks' keyboard settings if it does not work as expected.",
+                            @"OK",
+                            @"Never warn me again",
+                            @"Cancel",
+                            nil)) {
+        case NSAlertDefaultReturn:
+            return YES;
+        case NSAlertAlternateReturn:
+            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:@"NeverWarnAboutPossibleOverrides"];
+            return YES;
+        case NSAlertOtherReturn:
+            return NO;
+    }
+
+    return YES;
+}
+
+- (BOOL)_anyBookmarkHasKeyMapping:(NSString*)theString
+{
+    for (Bookmark* bookmark in [[BookmarkModel sharedInstance] bookmarks]) {
+        if ([iTermKeyBindingMgr haveKeyMappingForKeyString:theString inBookmark:bookmark]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (IBAction)saveKeyMapping:(id)sender
 {
-    NSString* guid = [bookmarksTableView selectedGuid];
-    NSAssert(guid, @"Null guid unexpected here");
-    NSMutableDictionary* dict = [NSMutableDictionary dictionaryWithDictionary:[dataSource bookmarkWithGuid:guid]];
-    NSAssert(dict, @"Can't find node");
+    NSMutableDictionary* dict;
+    if ([self _originatorIsBookmark:modifyMappingOriginator]) {
+        NSString* guid = [bookmarksTableView selectedGuid];
+        NSAssert(guid, @"Null guid unexpected here");
+        dict = [NSMutableDictionary dictionaryWithDictionary:[dataSource bookmarkWithGuid:guid]];
+        NSAssert(dict, @"Can't find node");
+        if ([iTermKeyBindingMgr haveGlobalKeyMappingForKeyString:keyString]) {
+            if (![self _warnAboutOverride]) {
+                return;
+            }
+        }
+        if ([keyString isEqualToString:kDeleteKeyString]) {
+            if (![self _warnAboutCtrlHOverride]) {
+                return;
+            }
+        }
 
-    [iTermKeyBindingMgr setMappingAtIndex:[keyMappings selectedRow]
-                                   forKey:keyString
-                                   action:[[action selectedItem] tag]
-                                    value:[valueToSend stringValue]
-                                createNew:newMapping
-                               inBookmark:dict];
+        [iTermKeyBindingMgr setMappingAtIndex:[keyMappings selectedRow]
+                                       forKey:keyString
+                                       action:[[action selectedItem] tag]
+                                        value:[valueToSend stringValue]
+                                    createNew:newMapping
+                                   inBookmark:dict];
+        [dataSource setBookmark:dict withGuid:guid];
+        [keyMappings reloadData];
+        [self bookmarkSettingChanged:sender];
+    } else {
+        dict = [NSMutableDictionary dictionaryWithDictionary:[iTermKeyBindingMgr globalKeyMap]];
+        if ([self _anyBookmarkHasKeyMapping:keyString]) {
+            if (![self _warnAboutPossibleOverride]) {
+                return;
+            }
+        }
+        [iTermKeyBindingMgr setMappingAtIndex:[globalKeyMappings selectedRow]
+                                       forKey:keyString
+                                       action:[[action selectedItem] tag]
+                                        value:[valueToSend stringValue]
+                                    createNew:newMapping
+                                 inDictionary:dict];
+        [iTermKeyBindingMgr setGlobalKeyMap:dict];
+        [globalKeyMappings reloadData];
+        [self settingChanged:nil];
+    }
 
-    [dataSource setBookmark:dict withGuid:guid];
-    [keyMappings reloadData];
     [self closeKeyMapping:sender];
-    [self bookmarkSettingChanged:sender];
 }
 
 - (BOOL)keySheetIsOpen
@@ -553,6 +702,8 @@ static float versionNumber;
         return globalToolbarItem;
     } else if ([itemIdentifier isEqual:bookmarksToolbarId]) {
         return bookmarksToolbarItem;
+    } else if ([itemIdentifier isEqual:keyboardToolbarId]) {
+        return keyboardToolbarItem;
     } else if ([itemIdentifier isEqual:advancedToolbarId]) {
         return advancedToolbarItem;
     } else {
@@ -564,13 +715,14 @@ static float versionNumber;
 {
     return [NSArray arrayWithObjects:globalToolbarId,
                                      bookmarksToolbarId,
+                                     keyboardToolbarId,
                                      advancedToolbarId,
                                      nil];
 }
 
 - (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar
 {
-    return [NSArray arrayWithObjects:globalToolbarId, bookmarksToolbarId, advancedToolbarId, nil];
+    return [NSArray arrayWithObjects:globalToolbarId, bookmarksToolbarId, keyboardToolbarId, advancedToolbarId, nil];
 }
 
 - (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar
@@ -579,6 +731,7 @@ static float versionNumber;
     // toolbar items that are selectable.
     return [NSArray arrayWithObjects:globalToolbarId,
                                      bookmarksToolbarId,
+                                     keyboardToolbarId,
                                      advancedToolbarId,
                                      nil];
 }
@@ -650,6 +803,16 @@ static float versionNumber;
     if (![SessionView dimmingSupported]) {
         defaultDimInactiveSplitPanes = NO;
     }
+
+    defaultControl = [prefs objectForKey:@"Control"] ? [[prefs objectForKey:@"Control"] intValue] : MOD_TAG_CONTROL;
+    defaultLeftOption = [prefs objectForKey:@"LeftOption"] ? [[prefs objectForKey:@"LeftOption"] intValue] : MOD_TAG_LEFT_OPTION;
+    defaultRightOption = [prefs objectForKey:@"RightOption"] ? [[prefs objectForKey:@"RightOption"] intValue] : MOD_TAG_RIGHT_OPTION;
+    defaultCommand = [prefs objectForKey:@"Command"] ? [[prefs objectForKey:@"Command"] intValue] : MOD_TAG_COMMAND;
+    defaultSwitchTabModifier = [prefs objectForKey:@"SwitchTabModifier"] ? [[prefs objectForKey:@"SwitchTabModifier"] intValue] : MOD_TAG_COMMAND;
+    defaultSwitchWindowModifier = [prefs objectForKey:@"SwitchWindowModifier"] ? [[prefs objectForKey:@"SwitchWindowModifier"] intValue] : MOD_TAG_CMD_OPT;
+
+    defaultDeleteSendsCtrlH = [prefs objectForKey:@"DeleteSendsCtrlH"] ? [[prefs objectForKey:@"DeleteSendsCtrlH"] boolValue] : false;
+
 
     NSString *appCast = defaultCheckTestRelease ?
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
@@ -751,6 +914,14 @@ static float versionNumber;
     [prefs setBool:defaultColorInvertedCursor forKey:@"ColorInvertedCursor"];
     [prefs setBool:defaultDimInactiveSplitPanes forKey:@"DimInactiveSplitPanes"];
 
+    [prefs setInteger:defaultControl forKey:@"Control"];
+    [prefs setInteger:defaultLeftOption forKey:@"LeftOption"];
+    [prefs setInteger:defaultRightOption forKey:@"RightOption"];
+    [prefs setInteger:defaultCommand forKey:@"Command"];
+    [prefs setInteger:defaultSwitchTabModifier forKey:@"SwitchTabModifier"];
+    [prefs setInteger:defaultSwitchWindowModifier forKey:@"SwitchWindowModifier"];
+    [prefs setBool:defaultDeleteSendsCtrlH forKey:@"DeleteSendsCtrlH"];
+
     // save the handlers by converting the bookmark into an index
     [prefs setObject:urlHandlersByGuid forKey:@"URLHandlersByGuid"];
 
@@ -790,7 +961,7 @@ static float versionNumber;
     [strokeThicknessMaxLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
     [strokeThickness setFloatValue:defaultStrokeThickness];
     [minimumContrast setFloatValue:defaultMinimumContrast];
-    
+
     [openBookmark setState: defaultOpenBookmark?NSOnState:NSOffState];
     [wordChars setStringValue: ([defaultWordChars length] > 0)?defaultWordChars:@""];
     [quitWhenAllWindowsClosed setState: defaultQuitWhenAllWindowsClosed?NSOnState:NSOffState];
@@ -845,6 +1016,24 @@ static float versionNumber;
     if (![bookmarksTableView selectedGuid] && [bookmarksTableView numberOfRows]) {
         [bookmarksTableView selectRowIndex:0];
     }
+
+    [controlButton selectItemWithTag:defaultControl];
+    [leftOptionButton selectItemWithTag:defaultLeftOption];
+    [rightOptionButton selectItemWithTag:defaultRightOption];
+    [commandButton selectItemWithTag:defaultCommand];
+
+    [switchTabModifierButton selectItemWithTag:defaultSwitchTabModifier];
+    [switchWindowModifierButton selectItemWithTag:defaultSwitchWindowModifier];
+
+    [deleteSendsCtrlHButton setState:defaultDeleteSendsCtrlH ? NSOnState : NSOffState];
+    int rowIndex = [globalKeyMappings selectedRow];
+    if (rowIndex >= 0) {
+        [globalRemoveMappingButton setEnabled:YES];
+    } else {
+        [globalRemoveMappingButton setEnabled:NO];
+    }
+    [globalKeyMappings reloadData];
+
     // Show the window.
     [[self window] makeKeyAndOrderFront:self];
 }
@@ -984,6 +1173,33 @@ static float versionNumber;
             [prefs setObject: appCast forKey:@"SUFeedURL"];
         }
     }
+
+    // Keyboard tab
+    defaultControl = [controlButton selectedTag];
+    defaultLeftOption = [leftOptionButton selectedTag];
+    defaultRightOption = [rightOptionButton selectedTag];
+    defaultCommand = [commandButton selectedTag];
+
+    defaultSwitchTabModifier = [switchTabModifierButton selectedTag];
+    defaultSwitchWindowModifier = [switchWindowModifierButton selectedTag];
+
+    if (sender == deleteSendsCtrlHButton) {
+        BOOL sendCtrlH = ([deleteSendsCtrlHButton state] == NSOnState);
+        if ([self _anyBookmarkHasKeyMapping:kDeleteKeyString]) {
+            if (![self _warnAboutDeleteOverride]) {
+                [deleteSendsCtrlHButton setState:sendCtrlH ? NSOffState : NSOnState];
+            }
+        }
+    }
+    defaultDeleteSendsCtrlH = ([deleteSendsCtrlHButton state] == NSOnState);
+
+    int rowIndex = [globalKeyMappings selectedRow];
+    if (rowIndex >= 0) {
+        [globalRemoveMappingButton setEnabled:YES];
+    } else {
+        [globalRemoveMappingButton setEnabled:NO];
+    }
+    [globalKeyMappings reloadData];
 }
 
 // NSWindow delegate
@@ -1149,6 +1365,41 @@ static float versionNumber;
     return defaultSavePasteHistory;
 }
 
+- (int)control
+{
+    return defaultControl;
+}
+
+- (int)leftOption
+{
+    return defaultLeftOption;
+}
+
+- (int)rightOption
+{
+    return defaultRightOption;
+}
+
+- (int)command
+{
+    return defaultCommand;
+}
+
+- (int)switchTabModifier
+{
+    return defaultSwitchTabModifier;
+}
+
+- (int)switchWindowModifier
+{
+    return defaultSwitchWindowModifier;
+}
+
+- (BOOL)deleteSendsCtrlH
+{
+    return defaultDeleteSendsCtrlH;
+}
+
 - (BOOL)openArrangementAtStartup
 {
     return defaultOpenArrangementAtStartup;
@@ -1277,43 +1528,52 @@ static float versionNumber;
         Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
         NSAssert(bookmark, @"Null node");
         return [iTermKeyBindingMgr numberOfMappingsForBookmark:bookmark];
-    } else {
+    } else if (aTableView == globalKeyMappings) {
+        return [[iTermKeyBindingMgr globalKeyMap] count];
+    } else if (aTableView == urlTable) {
         return [urlTypes count];
+    }
+    // Should never get here.
+    assert(false);
+    return 0;
+}
+
+
+- (NSString*)keyComboAtIndex:(int)rowIndex originator:(id)originator
+{
+    if ([self _originatorIsBookmark:originator]) {
+        NSString* guid = [bookmarksTableView selectedGuid];
+        NSAssert(guid, @"Null guid unexpected here");
+        Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
+        NSAssert(bookmark, @"Can't find node");
+        return [iTermKeyBindingMgr shortcutAtIndex:rowIndex forBookmark:bookmark];
+    } else {
+        return [iTermKeyBindingMgr globalShortcutAtIndex:rowIndex];
     }
 }
 
-
-- (NSString*)keyComboAtIndex:(int)rowIndex
+- (NSDictionary*)keyInfoAtIndex:(int)rowIndex originator:(id)originator
 {
-    NSString* guid = [bookmarksTableView selectedGuid];
-    NSAssert(guid, @"Null guid unexpected here");
-    Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
-    NSAssert(bookmark, @"Can't find node");
-    return [iTermKeyBindingMgr shortcutAtIndex:rowIndex forBookmark:bookmark];
+    if ([self _originatorIsBookmark:originator]) {
+        NSString* guid = [bookmarksTableView selectedGuid];
+        NSAssert(guid, @"Null guid unexpected here");
+        Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
+        NSAssert(bookmark, @"Can't find node");
+        return [iTermKeyBindingMgr mappingAtIndex:rowIndex forBookmark:bookmark];
+    } else {
+        return [iTermKeyBindingMgr globalMappingAtIndex:rowIndex];
+    }
 }
 
-- (NSDictionary*)keyInfoAtIndex:(int)rowIndex
+- (NSString*)formattedKeyCombinationForRow:(int)rowIndex originator:(id)originator
 {
-    NSString* guid = [bookmarksTableView selectedGuid];
-    NSAssert(guid, @"Null guid unexpected here");
-    Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
-    NSAssert(bookmark, @"Can't find node");
-    return [iTermKeyBindingMgr mappingAtIndex:rowIndex forBookmark:bookmark];
+    return [iTermKeyBindingMgr formatKeyCombination:[self keyComboAtIndex:rowIndex
+                                                               originator:originator]];
 }
 
-- (NSString*)formattedKeyCombinationForRow:(int)rowIndex
+- (NSString*)formattedActionForRow:(int)rowIndex originator:(id)originator
 {
-    return [iTermKeyBindingMgr formatKeyCombination:[self keyComboAtIndex:rowIndex]];
-}
-
-- (NSString*)formattedActionForRow:(int)rowIndex
-{
-    return [iTermKeyBindingMgr formatAction:[self keyInfoAtIndex:rowIndex]];
-}
-
-- (NSString*)valueToSendForRow:(int)rowIndex
-{
-    return [[self keyInfoAtIndex:rowIndex] objectForKey:@"Text"];
+    return [iTermKeyBindingMgr formatAction:[self keyInfoAtIndex:rowIndex originator:originator]];
 }
 
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(int)rowIndex
@@ -1329,8 +1589,14 @@ static float versionNumber;
         } else if (aTableColumn == actionColumn) {
             return [iTermKeyBindingMgr formatAction:[iTermKeyBindingMgr mappingAtIndex:rowIndex forBookmark:bookmark]];
         }
-    } else {
+    } else if (aTableView == urlTable) {
         return [urlTypes objectAtIndex:rowIndex];
+    } else if (aTableView == globalKeyMappings) {
+        if (aTableColumn == globalKeyCombinationColumn) {
+            return [iTermKeyBindingMgr formatKeyCombination:[iTermKeyBindingMgr globalShortcutAtIndex:rowIndex]];
+        } else if (aTableColumn == globalActionColumn) {
+            return [iTermKeyBindingMgr formatAction:[iTermKeyBindingMgr globalMappingAtIndex:rowIndex]];
+        }
     }
     // Shouldn't get here but must return something to avoid a warning.
     return nil;
@@ -1900,6 +2166,13 @@ static float versionNumber;
                 [bookmarksForUrlsTable deselectAll];
             }
         }
+    } else if ([aNotification object] == globalKeyMappings) {
+        int rowIndex = [globalKeyMappings selectedRow];
+        if (rowIndex >= 0) {
+            [globalRemoveMappingButton setEnabled:YES];
+        } else {
+            [globalRemoveMappingButton setEnabled:NO];
+        }
     }
 }
 
@@ -1911,6 +2184,11 @@ static float versionNumber;
 - (IBAction)showBookmarksTabView:(id)sender
 {
     [tabView selectTabViewItem:bookmarksTabViewItem];
+}
+
+- (IBAction)showKeyboardTabView:(id)sender
+{
+    [tabView selectTabViewItem:keyboardTabViewItem];
 }
 
 - (IBAction)showAdvancedTabView:(id)sender
@@ -2124,7 +2402,8 @@ static float versionNumber;
     return editKeyMappingWindow;
 }
 
-- (IBAction)addNewMapping:(id)sender
+
+- (void)_addMappingWithContextInfo:(id)info
 {
     if (keyString) {
         [keyString release];
@@ -2141,11 +2420,17 @@ static float versionNumber;
     [self updateValueToSend];
     newMapping = YES;
 
+    modifyMappingOriginator = info;
     [NSApp beginSheet:editKeyMappingWindow
        modalForWindow:[self window]
         modalDelegate:self
        didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
-          contextInfo:nil];
+          contextInfo:info];
+}
+
+- (IBAction)addNewMapping:(id)sender
+{
+    [self _addMappingWithContextInfo:sender];
 }
 
 - (IBAction)removeMapping:(id)sender
@@ -2162,6 +2447,14 @@ static float versionNumber;
     [keyMappings reloadData];
 }
 
+- (IBAction)globalRemoveMapping:(id)sender
+{
+    [iTermKeyBindingMgr setGlobalKeyMap:[iTermKeyBindingMgr removeMappingAtIndex:[globalKeyMappings selectedRow]
+                                                                    inDictionary:[iTermKeyBindingMgr globalKeyMap]]];
+    [self settingChanged:nil];
+    [keyMappings reloadData];
+}
+
 - (void)setKeyMappingsToPreset:(NSString*)presetName
 {
     NSString* guid = [bookmarksTableView selectedGuid];
@@ -2174,6 +2467,13 @@ static float versionNumber;
     [self bookmarkSettingChanged:nil];
 }
 
+- (void)setGlobalKeyMappingsToPreset:(NSString*)presetName
+{
+    [iTermKeyBindingMgr setGlobalKeyMappingsToPreset:presetName];
+    [globalKeyMappings reloadData];
+    [self settingChanged:nil];
+}
+
 - (IBAction)useBasicKeyMappings:(id)sender
 {
     [self setKeyMappingsToPreset:@"Basic Defaults"];
@@ -2182,6 +2482,11 @@ static float versionNumber;
 - (IBAction)useXtermKeyMappings:(id)sender
 {
     [self setKeyMappingsToPreset:@"xterm Defaults"];
+}
+
+- (IBAction)useFactoryGlobalKeyMappings:(id)sender
+{
+    [self setGlobalKeyMappingsToPreset:@"Factory Defaults"];
 }
 
 - (void)_loadPresetColors:(NSString*)presetName

@@ -35,6 +35,7 @@
 #import <iTerm/PTYSession.h>
 #import <iTerm/PreferencePanel.h>
 #import <iTerm/PTYTextView.h>
+#import "iTermKeyBindingMgr.h"
 
 @implementation iTermApplication
 
@@ -56,6 +57,8 @@
 - (void)sendEvent:(NSEvent*)event
 {
     if ([event type] == NSKeyDown) {
+        PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
+        event = [iTermKeyBindingMgr remapModifiers:event prefPanel:prefPanel];
         if (IsSecureEventInputEnabled() &&
             [[iTermController sharedInstance] eventIsHotkey:event]) {
             // User pressed the hotkey while secure input is enabled so the event
@@ -63,14 +66,13 @@
             OnHotKeyEvent();
             return;
         }
-        PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
         PreferencePanel* privatePrefPanel = [PreferencePanel sessionsInstance];
         PseudoTerminal* currentTerminal = [[iTermController sharedInstance] currentTerminal];
         PTYTabView* tabView = [currentTerminal tabView];
         PTYSession* currentSession = [currentTerminal currentSession];
         NSResponder *responder;
 
-        if (([event modifierFlags] & (NSCommandKeyMask | NSAlternateKeyMask | NSControlKeyMask)) == (NSCommandKeyMask | NSAlternateKeyMask)) {
+        if (([event modifierFlags] & (NSCommandKeyMask | NSAlternateKeyMask | NSControlKeyMask)) == [iTermKeyBindingMgr switchToWindowMask:prefPanel]) {
             // Command-Alt number: Switch to window by number.
             int digit = [[event charactersIgnoringModifiers] intValue];
             if (digit >= 1 && digit <= 9 && [[iTermController sharedInstance] numberOfTerminals] >= digit) {
@@ -109,17 +111,22 @@
             }
 
             const int mask = NSShiftKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSCommandKeyMask;
-            if (([event modifierFlags] & mask) == NSCommandKeyMask) {
+            if (([event modifierFlags] & mask) == [iTermKeyBindingMgr switchToTabMask:prefPanel]) {
                 int digit = [[event charactersIgnoringModifiers] intValue];
                 if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
                     // Command+number: Switch to tab by number.
                     [tabView selectTabViewItemAtIndex:digit-1];
                     return;
                 }
+                if (digit == 9 && [tabView numberOfTabViewItems] > 0) {
+                    // Command+9: Switch to last tab if there are fewer than 9.
+                    [tabView selectTabViewItemAtIndex:[tabView numberOfTabViewItems]-1];
+                    return;
+                }
             }
 
             if (inTextView &&
-                [currentSession hasKeyMappingForEvent:event highPriority:YES]) {
+                [currentSession hasKeyMappingForEvent:event]) {
                 // Remap key.
                 [currentSession keyDown:event];
                 return;

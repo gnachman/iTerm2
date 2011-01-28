@@ -45,6 +45,7 @@
 #import "iTermApplication.h"
 #import "UKCrashReporter/UKCrashReporter.h"
 #import "PTYTab.h"
+#import "iTermKeyBindingMgr.h"
 
 @interface NSApplication (Undocumented)
 - (void)_cycleWindowsReversed:(BOOL)back;
@@ -754,19 +755,30 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 {
     iTermController* cont = refcon;
     if (type == kCGEventTapDisabledByTimeout) {
+        NSLog(@"kCGEventTapDisabledByTimeout");
         if (cont->machPortRef) {
+            NSLog(@"Re-enabling event tap");
             CGEventTapEnable(cont->machPortRef, true);
         }
         return NULL;
     } else if (type == kCGEventTapDisabledByUserInput) {
+        NSLog(@"kCGEventTapDisabledByUserInput");
+        if (cont->machPortRef) {
+            NSLog(@"Re-enabling event tap");
+            CGEventTapEnable(cont->machPortRef, true);
+        }
         return NULL;
     }
 
-    NSEvent* e = [NSEvent eventWithCGEvent:event];
+    CGEventRef eventCopy = CGEventCreateCopy(event);
+    [iTermKeyBindingMgr remapModifiersInCGEvent:eventCopy
+                                      prefPanel:[PreferencePanel sharedInstance]];
+    NSEvent* e = [NSEvent eventWithCGEvent:eventCopy];
     if ([cont eventIsHotkey:e]) {
         OnHotKeyEvent();
         return NULL;
     }
+    CFRelease(eventCopy);
 
     return event;
 }
@@ -780,7 +792,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 - (void)registerHotkey:(int)keyCode modifiers:(int)modifiers
 {
     hotkeyCode_ = keyCode;
-    hotkeyModifiers_ = modifiers;
+    hotkeyModifiers_ = modifiers & (NSCommandKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSShiftKeyMask);
     if (!machPortRef) {
         DebugLog(@"Register event tap.");
         machPortRef = CGEventTapCreate(kCGHIDEventTap,

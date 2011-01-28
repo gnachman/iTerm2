@@ -247,7 +247,7 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (void)brokenPipe;
 
 // PTYTextView
-- (BOOL)hasKeyMappingForEvent: (NSEvent *)event highPriority: (BOOL)priority;
+- (BOOL)hasKeyMappingForEvent: (NSEvent *)event;
 - (void)keyDown:(NSEvent *)event;
 - (BOOL)willHandleEvent: (NSEvent *)theEvent;
 - (void)handleEvent: (NSEvent *)theEvent;
@@ -289,6 +289,7 @@ static const float kBackgroundSessionIntervalSec = 1;
 
 - (NSString *)name;
 - (NSString*)rawName;
+- (void)setBookmarkName:(NSString*)theName;
 - (void)setName: (NSString *)theName;
 - (NSString *)defaultName;
 - (NSString*)joblessDefaultName;

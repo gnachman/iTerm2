@@ -566,14 +566,13 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     }
 }
 
-- (BOOL)hasKeyMappingForEvent:(NSEvent *)event highPriority:(BOOL)priority
+- (BOOL)hasKeyMappingForEvent:(NSEvent *)event
 {
     unsigned int modflag;
     NSString *unmodkeystr;
     unichar unmodunicode;
     int keyBindingAction;
     NSString *keyBindingText;
-    BOOL keyBindingPriority;
 
     modflag = [event modifierFlags];
     unmodkeystr = [event charactersIgnoringModifiers];
@@ -590,7 +589,6 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
 
     keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
                                                   modifiers:modflag
-                                               highPriority:&keyBindingPriority
                                                        text:&keyBindingText
                                                 keyMappings:[[self addressBookEntry] objectForKey: KEY_KEYBOARD_MAP]];
 
@@ -657,7 +655,6 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     int send_pchr = -1;
     int keyBindingAction;
     NSString *keyBindingText;
-    BOOL priority;
 
     unsigned int modflag;
     NSString *keystr;
@@ -688,7 +685,6 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     // Check if we have a custom key mapping for this event
     keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
                                                   modifiers:modflag
-                                               highPriority:&priority
                                                        text:&keyBindingText
                                                 keyMappings:[[self addressBookEntry] objectForKey:KEY_KEYBOARD_MAP]];
 
@@ -831,7 +827,12 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
             case KEY_ACTION_SELECT_PANE_RIGHT:
                 [[[iTermController sharedInstance] currentTerminal] selectPaneRight:nil];
                 break;
-
+            case KEY_ACTION_SELECT_PANE_ABOVE:
+                [[[iTermController sharedInstance] currentTerminal] selectPaneUp:nil];
+                break;
+            case KEY_ACTION_SELECT_PANE_BELOW:
+                [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
+                break;
             default:
                 NSLog(@"Unknown key action %d", keyBindingAction);
                 break;
@@ -949,6 +950,13 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
             // Check if we are in keypad mode
             if (modflag & NSNumericPadKeyMask) {
                 data = [TERMINAL keypadData:unicode keystr:keystr];
+            }
+            if (((modflag & (NSCommandKeyMask | NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask)) == 0) &&
+                [event keyCode] == 51) {  // delete key with no modifiers
+                if ([[PreferencePanel sharedInstance] deleteSendsCtrlH]) {
+                    unichar ch = 8;  // control-h
+                    data = [NSData dataWithBytes:&ch length:1];
+                }
             }
 
             int indMask = modflag & NSDeviceIndependentModifierFlagsMask;

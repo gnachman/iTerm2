@@ -23,7 +23,32 @@
  **  along with this program; if not, write to the Free Software
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
+// The remapModifiers function has code with this license:
+/*
+ * Copyright (c) 2009, 2010 <andrew iain mcdermott via gmail>
+ *
+ * Source can be cloned from:
+ *
+ *  git://github.com/aim-stuff/cmd-key-happy.git
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
 /*
  * Note: xterm reports new escape codes for modifiers like Shift + any key,
  * like, for instance, the cursor keys as of 2006.
@@ -49,10 +74,13 @@
 #import "ITAddressBookMgr.h"
 #import <iTerm/iTermKeyBindingMgr.h>
 #import <Carbon/Carbon.h>
+#import "PreferencePanel.h"
+
+static NSDictionary* globalKeyMap;
 
 @implementation iTermKeyBindingMgr
 
-+ (NSString *) formatKeyCombination:(NSString *)theKeyCombination  
++ (NSString *) formatKeyCombination:(NSString *)theKeyCombination
 {
     unsigned int keyMods;
     unsigned int keyCode;
@@ -79,18 +107,21 @@
             isArrow = YES;
             break;
         case NSDeleteFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"Del",@"iTerm", 
-                                                         [NSBundle bundleForClass: [self class]], 
+            aString = NSLocalizedStringFromTableInBundle(@"Del",
+                                                         @"iTerm",
+                                                         [NSBundle bundleForClass:[self class]],
                                                          @"Key Names");
             break;
         case 0x7f:
-            aString = NSLocalizedStringFromTableInBundle(@"Delete",@"iTerm", 
-                                                         [NSBundle bundleForClass: [self class]], 
+            aString = NSLocalizedStringFromTableInBundle(@"Delete",
+                                                         @"iTerm",
+                                                         [NSBundle bundleForClass:[self class]],
                                                          @"Key Names");
             break;
         case NSEndFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"End",@"iTerm", 
-                                                         [NSBundle bundleForClass: [self class]], 
+            aString = NSLocalizedStringFromTableInBundle(@"End",
+                                                         @"iTerm",
+                                                         [NSBundle bundleForClass:[self class]],
                                                          @"Key Names");
             break;
         case NSF1FunctionKey:
@@ -116,13 +147,15 @@
             aString = [NSString stringWithFormat: @"F%d", (keyCode - NSF1FunctionKey + 1)];
             break;
         case NSHelpFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"Help",@"iTerm", 
-                                                         [NSBundle bundleForClass: [self class]], 
-                                                         @"Key Names"); 
+            aString = NSLocalizedStringFromTableInBundle(@"Help",
+                                                         @"iTerm",
+                                                         [NSBundle bundleForClass:[self class]],
+                                                         @"Key Names");
             break;
         case NSHomeFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"Home",@"iTerm", 
-                                                         [NSBundle bundleForClass: [self class]], 
+            aString = NSLocalizedStringFromTableInBundle(@"Home",
+                                                         @"iTerm",
+                                                         [NSBundle bundleForClass:[self class]],
                                                          @"Key Names");
             break;
         case '0':
@@ -156,29 +189,33 @@
             aString = @".";
             break;
         case NSClearLineFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"Numlock",@"iTerm", 
-                                                         [NSBundle bundleForClass: [self class]], 
+            aString = NSLocalizedStringFromTableInBundle(@"Numlock",
+                                                         @"iTerm",
+                                                         [NSBundle bundleForClass: [self class]],
                                                          @"Key Names");
             break;
         case NSPageDownFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"Page Down",@"iTerm", 
-                                                         [NSBundle bundleForClass: [self class]], 
+            aString = NSLocalizedStringFromTableInBundle(@"Page Down",
+                                                         @"iTerm",
+                                                         [NSBundle bundleForClass: [self class]],
                                                          @"Key Names");
             break;
         case NSPageUpFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"Page Up",@"iTerm", 
-                                                         [NSBundle bundleForClass: [self class]], 
+            aString = NSLocalizedStringFromTableInBundle(@"Page Up",
+                                                         @"iTerm",
+                                                         [NSBundle bundleForClass: [self class]],
                                                          @"Key Names");
             break;
         case 0x3: // 'enter' on numeric key pad
             aString = @"↩";
             break;
         case NSInsertCharFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"iIsert",@"iTerm", 
-                                                         [NSBundle bundleForClass: [self class]], 
+            aString = NSLocalizedStringFromTableInBundle(@"Insert",
+                                                         @"iTerm",
+                                                         [NSBundle bundleForClass: [self class]],
                                                          @"Key Names");
             break;
-            
+
         default:
             if (keyCode >= '!' && keyCode <= '~') {
                 aString = [NSString stringWithFormat:@"%c", keyCode];
@@ -187,28 +224,29 @@
                     case ' ':
                         aString = @"Space";
                         break;
-                        
+
                     case '\r':
                         aString = @"↩";
                         break;
-                        
+
                     case 27:
                         aString = @"⎋";
                         break;
-                        
+
                     case '\t':
                         aString = @"↦";
                         break;
-                        
+
                     case 0x19:
                         // back-tab
                         aString = @"↤";
                         break;
-                        
+
                     default:
-                        aString = [NSString stringWithFormat: @"%@ 0x%x", 
-                                   NSLocalizedStringFromTableInBundle(@"hex code",@"iTerm", 
-                                                                      [NSBundle bundleForClass: [self class]], 
+                        aString = [NSString stringWithFormat: @"%@ 0x%x",
+                                   NSLocalizedStringFromTableInBundle(@"Hex Code",
+                                                                      @"iTerm",
+                                                                      [NSBundle bundleForClass: [self class]],
                                                                       @"Key Names"),
                                    keyCode];
                         break;
@@ -216,11 +254,11 @@
             }
             break;
     }
-    
+
     theKeyString = [[NSMutableString alloc] initWithString: @""];
     if (keyMods & NSCommandKeyMask) {
         [theKeyString appendString: @"⌘"];
-    }       
+    }
     if (keyMods & NSAlternateKeyMask) {
         [theKeyString appendString: @"⌥"];
     }
@@ -243,139 +281,167 @@
     NSString *actionString;
     int action;
     NSString *auxText;
-    BOOL priority;
 
     action = [[keyInfo objectForKey: @"Action"] intValue];
     auxText = [keyInfo objectForKey: @"Text"];
-    priority = [keyInfo objectForKey: @"Priority"] ? 
-        [[keyInfo objectForKey: @"Priority"] boolValue] : NO;
-    
+
     switch (action) {
         case KEY_ACTION_NEXT_SESSION:
-            actionString = NSLocalizedStringFromTableInBundle(@"next tab",@"iTerm", 
-                                                              [NSBundle bundleForClass: [self class]], 
+            actionString = NSLocalizedStringFromTableInBundle(@"Next Tab",
+                                                              @"iTerm",
+                                                              [NSBundle bundleForClass: [self class]],
                                                               @"Key Binding Actions");
             break;
         case KEY_ACTION_NEXT_WINDOW:
-            actionString = NSLocalizedStringFromTableInBundle(@"next window",@"iTerm", 
-                                                              [NSBundle bundleForClass: [self class]], 
+            actionString = NSLocalizedStringFromTableInBundle(@"Next Window",
+                                                              @"iTerm",
+                                                              [NSBundle bundleForClass: [self class]],
                                                               @"Key Binding Actions");
             break;
         case KEY_ACTION_PREVIOUS_SESSION:
-            actionString = NSLocalizedStringFromTableInBundle(@"previous tab",@"iTerm", 
-                                                              [NSBundle bundleForClass: [self class]], 
+            actionString = NSLocalizedStringFromTableInBundle(@"Previous Tab",
+                                                              @"iTerm",
+                                                              [NSBundle bundleForClass: [self class]],
                                                               @"Key Binding Actions");
             break;
         case KEY_ACTION_PREVIOUS_WINDOW:
-            actionString = NSLocalizedStringFromTableInBundle(@"previous window",@"iTerm", 
-                                                              [NSBundle bundleForClass: [self class]], 
+            actionString = NSLocalizedStringFromTableInBundle(@"Previous Window",
+                                                              @"iTerm",
+                                                              [NSBundle bundleForClass: [self class]],
                                                               @"Key Binding Actions");
             break;
         case KEY_ACTION_SCROLL_END:
-            actionString = NSLocalizedStringFromTableInBundle(@"scroll end",@"iTerm", 
-                                                              [NSBundle bundleForClass: [self class]], 
+            actionString = NSLocalizedStringFromTableInBundle(@"Scroll To End",
+                                                              @"iTerm",
+                                                              [NSBundle bundleForClass: [self class]],
                                                               @"Key Binding Actions");
             break;
         case KEY_ACTION_SCROLL_HOME:
-            actionString = NSLocalizedStringFromTableInBundle(@"scroll home",@"iTerm", 
-                                                              [NSBundle bundleForClass: [self class]], 
+            actionString = NSLocalizedStringFromTableInBundle(@"Scroll To Top",
+                                                              @"iTerm",
+                                                              [NSBundle bundleForClass: [self class]],
                                                               @"Key Binding Actions");
-            break;          
+            break;
         case KEY_ACTION_SCROLL_LINE_DOWN:
-            actionString = NSLocalizedStringFromTableInBundle(@"scroll line down",@"iTerm", 
-                                                              [NSBundle bundleForClass: [self class]], 
+            actionString = NSLocalizedStringFromTableInBundle(@"Scroll One Line Down",
+                                                              @"iTerm",
+                                                              [NSBundle bundleForClass: [self class]],
                                                               @"Key Binding Actions");
             break;
         case KEY_ACTION_SCROLL_LINE_UP:
-            actionString = NSLocalizedStringFromTableInBundle(@"scroll line up",@"iTerm", 
-                                                              [NSBundle bundleForClass: [self class]], 
+            actionString = NSLocalizedStringFromTableInBundle(@"Scroll One Line Up",
+                                                              @"iTerm",
+                                                              [NSBundle bundleForClass: [self class]],
                                                               @"Key Binding Actions");
             break;
         case KEY_ACTION_SCROLL_PAGE_DOWN:
-            actionString = NSLocalizedStringFromTableInBundle(@"scroll page down",@"iTerm", 
-                                                              [NSBundle bundleForClass: [self class]], 
+            actionString = NSLocalizedStringFromTableInBundle(@"Scroll One Page Down",
+                                                              @"iTerm",
+                                                              [NSBundle bundleForClass: [self class]],
                                                               @"Key Binding Actions");
             break;
         case KEY_ACTION_SCROLL_PAGE_UP:
-            actionString = NSLocalizedStringFromTableInBundle(@"scroll page up",@"iTerm", 
-                                                              [NSBundle bundleForClass: [self class]], 
+            actionString = NSLocalizedStringFromTableInBundle(@"Scroll One Page Up",
+                                                              @"iTerm",
+                                                              [NSBundle bundleForClass: [self class]],
                                                               @"Key Binding Actions");
             break;
         case KEY_ACTION_ESCAPE_SEQUENCE:
-            actionString = [NSString stringWithFormat:@"%@ %@", 
-                NSLocalizedStringFromTableInBundle(@"send ^[",@"iTerm", 
-                                                              [NSBundle bundleForClass: [self class]], 
-                                                              @"Key Binding Actions"),
+            actionString = [NSString stringWithFormat:@"%@ %@",
+                NSLocalizedStringFromTableInBundle(@"Send ^[",
+                                                   @"iTerm",
+                                                   [NSBundle bundleForClass: [self class]],
+                                                   @"Key Binding Actions"),
                 auxText];
             break;
         case KEY_ACTION_HEX_CODE:
-            actionString = [NSString stringWithFormat: @"%@ %@", 
-                NSLocalizedStringFromTableInBundle(@"send hex codes",@"iTerm", 
-                                                              [NSBundle bundleForClass: [self class]], 
-                                                              @"Key Binding Actions"),
+            actionString = [NSString stringWithFormat: @"%@ %@",
+                NSLocalizedStringFromTableInBundle(@"Send Hex Codes:",
+                                                   @"iTerm",
+                                                   [NSBundle bundleForClass: [self class]],
+                                                   @"Key Binding Actions"),
                 auxText];
-            break;          
+            break;
         case KEY_ACTION_TEXT:
-            actionString = [NSString stringWithFormat:@"%@ \"%@\"", 
-                NSLocalizedStringFromTableInBundle(@"send",@"iTerm", 
-                                                   [NSBundle bundleForClass: [self class]], 
+            actionString = [NSString stringWithFormat:@"%@ \"%@\"",
+                NSLocalizedStringFromTableInBundle(@"Send:",
+                                                   @"iTerm",
+                                                   [NSBundle bundleForClass: [self class]],
                                                    @"Key Binding Actions"),
                 auxText];
             break;
         case KEY_ACTION_SEND_C_H_BACKSPACE:
-            actionString = @"send ^H backspace";
+            actionString = @"Send ^H Backspace";
             break;
         case KEY_ACTION_SEND_C_QM_BACKSPACE:
-            actionString = @"send ^? backspace";
+            actionString = @"Send ^? Backspace";
             break;
         case KEY_ACTION_IGNORE:
-            actionString = NSLocalizedStringFromTableInBundle(@"ignore",@"iTerm", 
-                                                              [NSBundle bundleForClass: [self class]], 
+            actionString = NSLocalizedStringFromTableInBundle(@"Ignore",
+                                                              @"iTerm",
+                                                              [NSBundle bundleForClass:[self class]],
                                                               @"Key Binding Actions");
             break;
         case KEY_ACTION_IR_FORWARD:
-            actionString = @"forward in time";
+            actionString = @"Forward in Time";
             break;
         case KEY_ACTION_IR_BACKWARD:
-            actionString = @"backward in time";
+            actionString = @"Backward in Time";
             break;
         case KEY_ACTION_SELECT_PANE_LEFT:
-            actionString = @"select pane on left";
+            actionString = @"Select Split Pane on Left";
             break;
         case KEY_ACTION_SELECT_PANE_RIGHT:
-            actionString = @"select pane on right";
+            actionString = @"Select Split Pane on Right";
+            break;
+        case KEY_ACTION_SELECT_PANE_ABOVE:
+            actionString = @"Select Split Pane Above";
+            break;
+        case KEY_ACTION_SELECT_PANE_BELOW:
+            actionString = @"Select Split Pane Below";
             break;
         default:
-            actionString = [NSString stringWithFormat: @"%@ %d", 
-                NSLocalizedStringFromTableInBundle(@"unknown action ID",@"iTerm", 
-                                                              [NSBundle bundleForClass: [self class]], 
-                                                              @"Key Binding Actions"),
+            actionString = [NSString stringWithFormat: @"%@ %d",
+                NSLocalizedStringFromTableInBundle(@"Unknown Action ID",
+                                                   @"iTerm",
+                                                   [NSBundle bundleForClass:[self class]],
+                                                   @"Key Binding Actions"),
                 action];
             break;
     }
-    
-    return (priority?[actionString stringByAppendingString:@" (!)"] : actionString);
+
+    return actionString;
 }
 
-+ (int) _actionForKeyCode:(unichar)keyCode 
-                modifiers:(unsigned int) keyMods 
-             highPriority:(BOOL *) highPriority 
-                     text:(NSString **) text 
++ (BOOL)haveGlobalKeyMappingForKeyString:(NSString*)keyString
+{
+    return [[self globalKeyMap] objectForKey:keyString] != nil;
+}
+
++ (BOOL)haveKeyMappingForKeyString:(NSString*)keyString inBookmark:(Bookmark*)bookmark
+{
+    NSDictionary *dict = [bookmark objectForKey:KEY_KEYBOARD_MAP];
+    return [dict objectForKey:keyString] != nil;
+}
+
++ (int) _actionForKeyCode:(unichar)keyCode
+                modifiers:(unsigned int) keyMods
+                     text:(NSString **) text
               keyMappings:(NSDictionary *)keyMappings
 {
     NSString *keyString;
     NSDictionary *theKeyMapping;
     int retCode = -1;
     unsigned int theModifiers;
-    
+
     // turn off all the other modifier bits we don't care about
     theModifiers = keyMods & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask | NSNumericPadKeyMask);
-    
+
     // on some keyboards, arrow keys have NSNumericPadKeyMask bit set; manually set it for keyboards that don't
     if (keyCode >= NSUpArrowFunctionKey && keyCode <= NSRightArrowFunctionKey) {
         theModifiers |= NSNumericPadKeyMask;
     }
-    
+
     keyString = [NSString stringWithFormat: @"0x%x-0x%x", keyCode, theModifiers];
     theKeyMapping = [keyMappings objectForKey: keyString];
     if (theKeyMapping == nil)
@@ -384,86 +450,103 @@
             *text = nil;
         return (-1);
     }
-    
+
     // parse the mapping
     retCode = [[theKeyMapping objectForKey: @"Action"] intValue];
     if(text != nil)
         *text = [theKeyMapping objectForKey: @"Text"];
-    *highPriority = [theKeyMapping objectForKey: @"Priority"] ? [[theKeyMapping objectForKey: @"Priority"] boolValue] : NO;
-    
+
     return (retCode);
 }
 
-+ (int) actionForKeyCode:(unichar)keyCode 
-               modifiers:(unsigned int) keyMods 
-            highPriority:(BOOL *) highPriority 
-                    text:(NSString **) text 
++ (void)_loadGlobalKeyMap
+{
+    NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"DefaultGlobalKeyMap" ofType:@"plist"];
+    globalKeyMap = [NSDictionary dictionaryWithContentsOfFile:plistFile];
+    [globalKeyMap retain];
+}
+
++ (NSDictionary*)globalKeyMap
+{
+    if (!globalKeyMap) {
+        [iTermKeyBindingMgr _loadGlobalKeyMap];
+    }
+    return globalKeyMap;
+}
+
++ (void)setGlobalKeyMap:(NSDictionary*)src
+{
+    [globalKeyMap release];
+    globalKeyMap = [src copy];
+}
+
++ (int) actionForKeyCode:(unichar)keyCode
+               modifiers:(unsigned int) keyMods
+                    text:(NSString **) text
              keyMappings:(NSDictionary *)keyMappings
 {
-    int keyBindingAction = [iTermKeyBindingMgr _actionForKeyCode:keyCode 
-                                                       modifiers:keyMods 
-                                                    highPriority:highPriority 
-                                                            text:text 
+    int keyBindingAction = [iTermKeyBindingMgr _actionForKeyCode:keyCode
+                                                       modifiers:keyMods
+                                                            text:text
                                                      keyMappings:keyMappings];
     if (keyBindingAction < 0) {
-        static NSDictionary* globalKeyMap;
-        if (!globalKeyMap) {
-            NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"DefaultGlobalKeyMap" ofType:@"plist"];   
-            globalKeyMap = [NSDictionary dictionaryWithContentsOfFile:plistFile];
-            [globalKeyMap retain];
-        }
-        if (globalKeyMap) {
-            keyBindingAction = [iTermKeyBindingMgr _actionForKeyCode:keyCode 
-                                                           modifiers:keyMods 
-                                                        highPriority:highPriority 
-                                                                text:text 
-                                                         keyMappings:globalKeyMap];
-        }
+        keyBindingAction = [iTermKeyBindingMgr _actionForKeyCode:keyCode
+                                                       modifiers:keyMods
+                                                            text:text
+                                                     keyMappings:[self globalKeyMap]];
     }
     return keyBindingAction;
 }
 
-+ (void)removeMappingAtIndex:(int)rowIndex inBookmark:(NSMutableDictionary*)bookmark
++ (NSDictionary*)removeMappingAtIndex:(int)rowIndex inDictionary:(NSDictionary*)dict
 {
-    NSMutableDictionary* km = [NSMutableDictionary dictionaryWithDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]];
+    NSMutableDictionary* km = [NSMutableDictionary dictionaryWithDictionary:dict];
     NSArray* allKeys = [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
     if (rowIndex >= 0 && rowIndex < [allKeys count]) {
         [km removeObjectForKey:[allKeys objectAtIndex:rowIndex]];
-        [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
-    } else {
-        return;
     }
-    
+    return km;
+}
+
++ (void)removeMappingAtIndex:(int)rowIndex inBookmark:(NSMutableDictionary*)bookmark
+{
+    [bookmark setObject:[iTermKeyBindingMgr removeMappingAtIndex:rowIndex inDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]]
+                 forKey:KEY_KEYBOARD_MAP];
+}
+
++ (void)setGlobalKeyMappingsToPreset:(NSString*)presetName
+{
+    assert([presetName isEqualToString:@"Factory Defaults"]);
+    if (globalKeyMap) {
+        [globalKeyMap release];
+    }
+    [self _loadGlobalKeyMap];
 }
 
 + (void)setKeyMappingsToPreset:(NSString*)presetName inBookmark:(NSMutableDictionary*)bookmark
 {
     NSMutableDictionary* km = [NSMutableDictionary dictionaryWithDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]];
-    
+
     [km removeAllObjects];
-    
-    NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"PresetKeyMappings" ofType:@"plist"];   
+
+    NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"PresetKeyMappings" ofType:@"plist"];
     NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile: plistFile];
     NSDictionary* settings = [presetsDict objectForKey:presetName];
     [km setDictionary:settings];
-    
+
     [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
 }
 
-
-+ (void)setMappingAtIndex:(int)rowIndex 
-                   forKey:(NSString*)keyString 
-                   action:(int)actionIndex 
-                    value:(NSString*)valueToSend 
-                createNew:(BOOL)newMapping 
-               inBookmark:(NSMutableDictionary*)bookmark
++ (void)setMappingAtIndex:(int)rowIndex
+                   forKey:(NSString*)keyString
+                   action:(int)actionIndex
+                    value:(NSString*)valueToSend
+                createNew:(BOOL)newMapping
+             inDictionary:(NSMutableDictionary*)km
 {
     NSString* origKeyCombo = nil;
-
-    NSMutableDictionary* km = 
-        [NSMutableDictionary dictionaryWithDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]];
-    NSArray* allKeys = 
-        [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+    NSArray* allKeys =
+    [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
     if (!newMapping) {
         if (rowIndex >= 0 && rowIndex < [allKeys count]) {
             origKeyCombo = [allKeys objectAtIndex:rowIndex];
@@ -477,16 +560,29 @@
         // creating a new mapping and it doesn't collide with an existing one
         origKeyCombo = nil;
     }
-    
-    NSMutableDictionary* keyBinding = 
-        [[[NSMutableDictionary alloc] init] autorelease];
-    [keyBinding setObject:[NSNumber numberWithInt:actionIndex] 
+
+    NSMutableDictionary* keyBinding =
+    [[[NSMutableDictionary alloc] init] autorelease];
+    [keyBinding setObject:[NSNumber numberWithInt:actionIndex]
                    forKey:@"Action"];
     [keyBinding setObject:[[valueToSend copy] autorelease] forKey:@"Text"];
     if (origKeyCombo) {
         [km removeObjectForKey:origKeyCombo];
     }
     [km setObject:keyBinding forKey:keyString];
+}
+
++ (void)setMappingAtIndex:(int)rowIndex
+                   forKey:(NSString*)keyString
+                   action:(int)actionIndex
+                    value:(NSString*)valueToSend
+                createNew:(BOOL)newMapping
+               inBookmark:(NSMutableDictionary*)bookmark
+{
+
+    NSMutableDictionary* km =
+        [NSMutableDictionary dictionaryWithDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]];
+    [iTermKeyBindingMgr setMappingAtIndex:rowIndex forKey:keyString action:actionIndex value:valueToSend createNew:newMapping inDictionary:km];
     [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
 }
 
@@ -501,9 +597,31 @@
     }
 }
 
++ (NSString*)globalShortcutAtIndex:(int)rowIndex
+{
+    NSDictionary* km = [self globalKeyMap];
+    NSArray* allKeys = [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+    if (rowIndex >= 0 && rowIndex < [allKeys count]) {
+        return [allKeys objectAtIndex:rowIndex];
+    } else {
+        return nil;
+    }
+}
+
 + (NSDictionary*)mappingAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark
 {
     NSDictionary* km = [bookmark objectForKey:KEY_KEYBOARD_MAP];
+    NSArray* allKeys = [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+    if (rowIndex >= 0 && rowIndex < [allKeys count]) {
+        return [km objectForKey:[allKeys objectAtIndex:rowIndex]];
+    } else {
+        return nil;
+    }
+}
+
++ (NSDictionary*)globalMappingAtIndex:(int)rowIndex
+{
+    NSDictionary* km = [self globalKeyMap];
     NSArray* allKeys = [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
     if (rowIndex >= 0 && rowIndex < [allKeys count]) {
         return [km objectForKey:[allKeys objectAtIndex:rowIndex]];
@@ -525,5 +643,227 @@
     [km removeObjectForKey:keyString];
     [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
 }
+
++ (NSInteger)switchToWindowMask:(PreferencePanel*)pp
+{
+    switch ([pp switchWindowModifier]) {
+        case MOD_TAG_COMMAND:
+            return NSCommandKeyMask;
+
+        case MOD_TAG_CMD_OPT:
+            return NSCommandKeyMask | NSAlternateKeyMask;
+
+        case MOD_TAG_OPTION:
+            return NSAlternateKeyMask;
+
+        default:
+            NSLog(@"Unexpected value for switchWindowModifier: %d", (int)[pp switchWindowModifier]);
+            return NSCommandKeyMask | NSAlternateKeyMask;
+    }
+}
+
++ (NSInteger)switchToTabMask:(PreferencePanel*)pp
+{
+    switch ([pp switchTabModifier]) {
+        case MOD_TAG_COMMAND:
+            return NSCommandKeyMask;
+
+        case MOD_TAG_CMD_OPT:
+            return NSCommandKeyMask | NSAlternateKeyMask;
+
+        case MOD_TAG_OPTION:
+            return NSAlternateKeyMask;
+
+        default:
+            NSLog(@"Unexpected value for switchTabModifier: %d", (int)[pp switchTabModifier]);
+            return NSCommandKeyMask | NSAlternateKeyMask;
+    }
+}
+
++ (NSInteger)_cgMaskForMod:(int)mod
+{
+    switch (mod) {
+        case MOD_TAG_CONTROL:
+            return kCGEventFlagMaskControl;
+
+        case MOD_TAG_LEFT_OPTION:
+        case MOD_TAG_RIGHT_OPTION:
+        case MOD_TAG_OPTION:
+            return kCGEventFlagMaskAlternate;
+
+        case MOD_TAG_COMMAND:
+            return kCGEventFlagMaskCommand;
+
+        case MOD_TAG_CMD_OPT:
+            return kCGEventFlagMaskCommand | kCGEventFlagMaskAlternate;
+
+        default:
+            return 0;
+    }
+}
+
++ (NSInteger)_nxMaskForLeftMod:(int)mod
+{
+    switch (mod) {
+        case MOD_TAG_CONTROL:
+            return NX_DEVICELCTLKEYMASK;
+
+        case MOD_TAG_LEFT_OPTION:
+            return NX_DEVICELALTKEYMASK;
+
+        case MOD_TAG_RIGHT_OPTION:
+            return NX_DEVICERALTKEYMASK;
+
+        case MOD_TAG_OPTION:
+            return NX_DEVICELALTKEYMASK;
+
+        case MOD_TAG_COMMAND:
+            return NX_DEVICELCMDKEYMASK;
+
+        case MOD_TAG_CMD_OPT:
+            return NX_DEVICELCMDKEYMASK | NX_DEVICELALTKEYMASK;
+
+        default:
+            return 0;
+    }
+}
+
++ (NSInteger)_nxMaskForRightMod:(int)mod
+{
+    switch (mod) {
+        case MOD_TAG_CONTROL:
+            return NX_DEVICERCTLKEYMASK;
+
+        case MOD_TAG_LEFT_OPTION:
+            return NX_DEVICELALTKEYMASK;
+
+        case MOD_TAG_RIGHT_OPTION:
+            return NX_DEVICERALTKEYMASK;
+
+        case MOD_TAG_OPTION:
+            return NX_DEVICERALTKEYMASK;
+
+        case MOD_TAG_COMMAND:
+            return NX_DEVICERCMDKEYMASK;
+
+        case MOD_TAG_CMD_OPT:
+            return NX_DEVICERCMDKEYMASK | NX_DEVICERALTKEYMASK;
+
+        default:
+            return 0;
+    }
+}
+
++ (NSInteger)_cgMaskForCommandKey:(PreferencePanel*)pp
+{
+    return [self _cgMaskForMod:[pp command]];
+}
+
++ (NSInteger)_nxMaskForLeftCommandKey:(PreferencePanel*)pp
+{
+    return [self _nxMaskForLeftMod:[pp command]];
+}
+
++ (NSInteger)_nxMaskForRightCommandKey:(PreferencePanel*)pp
+{
+    return [self _nxMaskForRightMod:[pp command]];
+}
+
++ (NSInteger)_cgMaskForLeftAlternateKey:(PreferencePanel*)pp
+{
+    return [self _cgMaskForMod:[pp leftOption]];
+}
+
++ (NSInteger)_cgMaskForRightAlternateKey:(PreferencePanel*)pp
+{
+    return [self _cgMaskForMod:[pp rightOption]];
+}
+
++ (NSInteger)_nxMaskForLeftAlternateKey:(PreferencePanel*)pp
+{
+    return [self _nxMaskForLeftMod:[pp leftOption]];
+}
+
++ (NSInteger)_nxMaskForRightAlternateKey:(PreferencePanel*)pp
+{
+    return [self _nxMaskForRightMod:[pp rightOption]];
+}
+
++ (NSInteger)_cgMaskForLeftControlKey:(PreferencePanel*)pp
+{
+    return [self _cgMaskForMod:[pp control]];
+}
+
++ (NSInteger)_cgMaskForRightControlKey:(PreferencePanel*)pp
+{
+    return [self _cgMaskForMod:[pp control]];
+}
+
++ (NSInteger)_nxMaskForLeftControlKey:(PreferencePanel*)pp
+{
+    return [self _nxMaskForLeftMod:[pp control]];
+}
+
++ (NSInteger)_nxMaskForRightControlKey:(PreferencePanel*)pp
+{
+    return [self _nxMaskForRightMod:[pp control]];
+}
+
++ (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent prefPanel:(PreferencePanel*)pp
+{
+    // This function copied from cmd-key happy. See copyright notice at top.
+    CGEventFlags flags = CGEventGetFlags(cgEvent);
+    const CGEventFlags origFlags = flags;
+    CGEventFlags andMask = -1;
+    CGEventFlags orMask = 0;
+    if (origFlags & kCGEventFlagMaskCommand) {
+        andMask &= ~kCGEventFlagMaskCommand;
+        orMask |= [self _cgMaskForCommandKey:pp];
+        if (flags & NX_DEVICELCMDKEYMASK) {
+            andMask &= ~NX_DEVICELCMDKEYMASK;
+            orMask |= [self _nxMaskForLeftCommandKey:pp];
+        }
+        if (flags & NX_DEVICERCMDKEYMASK) {
+            andMask &= ~NX_DEVICERCMDKEYMASK;
+            orMask |= [self _nxMaskForRightCommandKey:pp];
+        }
+    }
+    if (origFlags & kCGEventFlagMaskAlternate) {
+        andMask &= ~kCGEventFlagMaskAlternate;
+        if (flags & NX_DEVICELALTKEYMASK) {
+            andMask &= ~NX_DEVICELALTKEYMASK;
+            orMask |= [self _cgMaskForLeftAlternateKey:pp];
+            orMask |= [self _nxMaskForLeftAlternateKey:pp];
+        }
+        if (flags & NX_DEVICERALTKEYMASK) {
+            andMask &= ~NX_DEVICERALTKEYMASK;
+            orMask |= [self _cgMaskForRightAlternateKey:pp];
+            orMask |= [self _nxMaskForRightAlternateKey:pp];
+        }
+    }
+    if (origFlags & kCGEventFlagMaskControl) {
+        andMask &= ~kCGEventFlagMaskControl;
+        if (flags & NX_DEVICELCTLKEYMASK) {
+            andMask &= ~NX_DEVICELCTLKEYMASK;
+            orMask |= [self _cgMaskForLeftControlKey:pp];
+            orMask |= [self _nxMaskForLeftControlKey:pp];
+        }
+        if (flags & NX_DEVICERCTLKEYMASK) {
+            andMask &= ~NX_DEVICERCTLKEYMASK;
+            orMask |= [self _cgMaskForRightControlKey:pp];
+            orMask |= [self _nxMaskForRightControlKey:pp];
+        }
+    }
+
+    CGEventSetFlags(cgEvent, (flags & andMask) | orMask);
+    return cgEvent;
+}
+
++ (NSEvent*)remapModifiers:(NSEvent*)event prefPanel:(PreferencePanel*)pp
+{
+    return [NSEvent eventWithCGEvent:[iTermKeyBindingMgr remapModifiersInCGEvent:[event CGEvent]
+                                                                       prefPanel:pp]];
+}
+
 
 @end

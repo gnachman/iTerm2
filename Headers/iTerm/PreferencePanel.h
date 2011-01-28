@@ -32,6 +32,14 @@
 #define OPT_META   1
 #define OPT_ESC    2
 
+// Modifier tags
+#define MOD_TAG_CONTROL 1
+#define MOD_TAG_LEFT_OPTION 2
+#define MOD_TAG_RIGHT_OPTION 3
+#define MOD_TAG_COMMAND 4
+#define MOD_TAG_OPTION 5  // refers to any option key
+#define MOD_TAG_CMD_OPT 6  // both cmd and opt at the same time
+
 @class iTermController;
 
 typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
@@ -174,7 +182,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     // Show job name in title
     IBOutlet NSButton* jobName;
     BOOL defaultJobName;
-    
+
     // Show bookmark name in title
     IBOutlet NSButton* showBookmarkName;
     BOOL defaultShowBookmarkName;
@@ -191,7 +199,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *hotkey;
     IBOutlet NSTextField* hotkeyLabel;
     BOOL defaultHotkey;
-    
+
     // hotkey code
     IBOutlet NSTextField* hotkeyField;
     int defaultHotkeyChar;
@@ -219,11 +227,14 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTabView* tabView;
     IBOutlet NSToolbarItem* globalToolbarItem;
     IBOutlet NSTabViewItem* globalTabViewItem;
+    IBOutlet NSToolbarItem* keyboardToolbarItem;
+    IBOutlet NSTabViewItem* keyboardTabViewItem;
     IBOutlet NSToolbarItem* bookmarksToolbarItem;
     IBOutlet NSTabViewItem* bookmarksTabViewItem;
     IBOutlet NSToolbarItem* advancedToolbarItem;
     IBOutlet NSTabViewItem* advancedTabViewItem;
     NSString* globalToolbarId;
+    NSString* keyboardToolbarId;
     NSString* bookmarksToolbarId;
     NSString* advancedToolbarId;
 
@@ -337,8 +348,9 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 
     NSString* keyString;  // hexcode-hexcode rep of keystring in current sheet
     BOOL newMapping;  // true if the keymap sheet is open for adding a new entry
-
+    id modifyMappingOriginator;  // widget that caused add new mapping window to open
     IBOutlet NSPopUpButton* bookmarksPopup;
+    IBOutlet NSButton* addNewMapping;
 
     // Copy Bookmark Settings...
     IBOutlet NSTextField* bulkCopyLabel;
@@ -350,6 +362,29 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet BookmarkListView* copyTo;
     IBOutlet NSButton* copyButton;
 
+    // Keyboard ------------------------------
+    int defaultControl;
+    IBOutlet NSPopUpButton* controlButton;
+    int defaultLeftOption;
+    IBOutlet NSPopUpButton* leftOptionButton;
+    int defaultRightOption;
+    IBOutlet NSPopUpButton* rightOptionButton;
+    int defaultCommand;
+    IBOutlet NSPopUpButton* commandButton;
+
+    int defaultSwitchTabModifier;
+    IBOutlet NSPopUpButton* switchTabModifierButton;
+    int defaultSwitchWindowModifier;
+    IBOutlet NSPopUpButton* switchWindowModifierButton;
+
+    BOOL defaultDeleteSendsCtrlH;
+    IBOutlet NSButton* deleteSendsCtrlHButton;
+
+    IBOutlet NSTableView* globalKeyMappings;
+    IBOutlet NSTableColumn* globalKeyCombinationColumn;
+    IBOutlet NSTableColumn* globalActionColumn;
+    IBOutlet NSButton* globalRemoveMappingButton;
+    IBOutlet NSButton* globalAddNewMapping;
 }
 
 typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboard } BulkCopySettings;
@@ -411,7 +446,6 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (BOOL)savePasteHistory;
 - (BOOL)openArrangementAtStartup;
 - (int)irMemory;
-
 - (BOOL)hotkey;
 - (int)hotkeyCode;
 - (int)hotkeyModifiers;
@@ -429,11 +463,10 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (NSString *)searchCommand;
 - (Bookmark *)handlerBookmarkForURL:(NSString *)url;
 - (int)numberOfRowsInTableView: (NSTableView *)aTableView;
-- (NSString*)keyComboAtIndex:(int)rowIndex;
-- (NSDictionary*)keyInfoAtIndex:(int)rowIndex;
-- (NSString*)formattedKeyCombinationForRow:(int)rowIndex;
-- (NSString*)formattedActionForRow:(int)rowIndex;
-- (NSString*)valueToSendForRow:(int)rowIndex;
+- (NSString*)keyComboAtIndex:(int)rowIndex originator:(id)originator;
+- (NSDictionary*)keyInfoAtIndex:(int)rowIndex originator:(id)originator;
+- (NSString*)formattedKeyCombinationForRow:(int)rowIndex originator:(id)originator;
+- (NSString*)formattedActionForRow:(int)rowIndex originator:(id)originator;
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(int)rowIndex;
 - (void)_updateFontsDisplay;
 - (void)updateBookmarkFields:(NSDictionary *)dict  ;
@@ -445,6 +478,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification;
 - (IBAction)showGlobalTabView:(id)sender;
 - (IBAction)showBookmarksTabView:(id)sender;
+- (IBAction)showKeyboardTabView:(id)sender;
 - (IBAction)showAdvancedTabView:(id)sender;
 - (IBAction)connectURL:(id)sender;
 - (IBAction)closeWindow:(id)sender;
@@ -460,9 +494,11 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (NSWindow*)keySheet;
 - (IBAction)addNewMapping:(id)sender;
 - (IBAction)removeMapping:(id)sender;
+- (IBAction)globalRemoveMapping:(id)sender;
 - (void)setKeyMappingsToPreset:(NSString*)presetName;
 - (IBAction)useBasicKeyMappings:(id)sender;
 - (IBAction)useXtermKeyMappings:(id)sender;
+- (IBAction)useFactoryGlobalKeyMappings:(id)sender;
 - (void)_loadPresetColors:(NSString*)presetName;
 - (void)loadColorPreset:(id)sender;
 - (IBAction)addBookmark:(id)sender;
@@ -483,6 +519,15 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (IBAction)copyBookmarks:(id)sender;
 - (IBAction)cancelCopyBookmarks:(id)sender;
 - (void)copyAttributes:(BulkCopySettings)attributes fromBookmark:(NSString*)guid toBookmark:(NSString*)destGuid;
+
+- (int)control;
+- (int)leftOption;
+- (int)rightOption;
+- (int)command;
+- (int)switchTabModifier;
+- (int)switchWindowModifier;
+- (BOOL)deleteSendsCtrlH;
+
 
 @end
 
