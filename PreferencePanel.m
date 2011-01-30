@@ -807,8 +807,12 @@ static float versionNumber;
     defaultControl = [prefs objectForKey:@"Control"] ? [[prefs objectForKey:@"Control"] intValue] : MOD_TAG_CONTROL;
     defaultLeftOption = [prefs objectForKey:@"LeftOption"] ? [[prefs objectForKey:@"LeftOption"] intValue] : MOD_TAG_LEFT_OPTION;
     defaultRightOption = [prefs objectForKey:@"RightOption"] ? [[prefs objectForKey:@"RightOption"] intValue] : MOD_TAG_RIGHT_OPTION;
-    defaultCommand = [prefs objectForKey:@"Command"] ? [[prefs objectForKey:@"Command"] intValue] : MOD_TAG_COMMAND;
-    defaultSwitchTabModifier = [prefs objectForKey:@"SwitchTabModifier"] ? [[prefs objectForKey:@"SwitchTabModifier"] intValue] : MOD_TAG_COMMAND;
+    defaultLeftCommand = [prefs objectForKey:@"LeftCommand"] ? [[prefs objectForKey:@"LeftCommand"] intValue] : MOD_TAG_LEFT_COMMAND;
+    defaultRightCommand = [prefs objectForKey:@"RightCommand"] ? [[prefs objectForKey:@"RightCommand"] intValue] : MOD_TAG_RIGHT_COMMAND;
+    if ([self isAnyModifierRemapped]) {
+        [[iTermController sharedInstance] beginRemappingModifiers];
+    }
+    defaultSwitchTabModifier = [prefs objectForKey:@"SwitchTabModifier"] ? [[prefs objectForKey:@"SwitchTabModifier"] intValue] : MOD_TAG_ANY_COMMAND;
     defaultSwitchWindowModifier = [prefs objectForKey:@"SwitchWindowModifier"] ? [[prefs objectForKey:@"SwitchWindowModifier"] intValue] : MOD_TAG_CMD_OPT;
 
     defaultDeleteSendsCtrlH = [prefs objectForKey:@"DeleteSendsCtrlH"] ? [[prefs objectForKey:@"DeleteSendsCtrlH"] boolValue] : false;
@@ -917,7 +921,8 @@ static float versionNumber;
     [prefs setInteger:defaultControl forKey:@"Control"];
     [prefs setInteger:defaultLeftOption forKey:@"LeftOption"];
     [prefs setInteger:defaultRightOption forKey:@"RightOption"];
-    [prefs setInteger:defaultCommand forKey:@"Command"];
+    [prefs setInteger:defaultLeftCommand forKey:@"LeftCommand"];
+    [prefs setInteger:defaultRightCommand forKey:@"RightCommand"];
     [prefs setInteger:defaultSwitchTabModifier forKey:@"SwitchTabModifier"];
     [prefs setInteger:defaultSwitchWindowModifier forKey:@"SwitchWindowModifier"];
     [prefs setBool:defaultDeleteSendsCtrlH forKey:@"DeleteSendsCtrlH"];
@@ -1020,7 +1025,8 @@ static float versionNumber;
     [controlButton selectItemWithTag:defaultControl];
     [leftOptionButton selectItemWithTag:defaultLeftOption];
     [rightOptionButton selectItemWithTag:defaultRightOption];
-    [commandButton selectItemWithTag:defaultCommand];
+    [leftCommandButton selectItemWithTag:defaultLeftCommand];
+    [rightCommandButton selectItemWithTag:defaultRightCommand];
 
     [switchTabModifierButton selectItemWithTag:defaultSwitchTabModifier];
     [switchWindowModifierButton selectItemWithTag:defaultSwitchWindowModifier];
@@ -1175,10 +1181,16 @@ static float versionNumber;
     }
 
     // Keyboard tab
+    BOOL wasAnyModifierRemapped = [self isAnyModifierRemapped];
     defaultControl = [controlButton selectedTag];
     defaultLeftOption = [leftOptionButton selectedTag];
     defaultRightOption = [rightOptionButton selectedTag];
-    defaultCommand = [commandButton selectedTag];
+    defaultLeftCommand = [leftCommandButton selectedTag];
+    defaultRightCommand = [rightCommandButton selectedTag];
+    if ((!wasAnyModifierRemapped && [self isAnyModifierRemapped]) ||
+        ([self isAnyModifierRemapped] && ![[iTermController sharedInstance] haveEventTap])) {
+        [[iTermController sharedInstance] beginRemappingModifiers];
+    }
 
     defaultSwitchTabModifier = [switchTabModifierButton selectedTag];
     defaultSwitchWindowModifier = [switchWindowModifierButton selectedTag];
@@ -1380,9 +1392,23 @@ static float versionNumber;
     return defaultRightOption;
 }
 
-- (int)command
+- (int)leftCommand
 {
-    return defaultCommand;
+    return defaultLeftCommand;
+}
+
+- (int)rightCommand
+{
+    return defaultRightCommand;
+}
+
+- (BOOL)isAnyModifierRemapped
+{
+    return ([self control] != MOD_TAG_CONTROL ||
+            [self leftOption] != MOD_TAG_LEFT_OPTION ||
+            [self rightOption] != MOD_TAG_RIGHT_OPTION ||
+            [self leftCommand] != MOD_TAG_LEFT_COMMAND ||
+            [self rightCommand] != MOD_TAG_RIGHT_COMMAND);
 }
 
 - (int)switchTabModifier

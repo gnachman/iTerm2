@@ -647,7 +647,7 @@ static NSDictionary* globalKeyMap;
 + (NSInteger)switchToWindowMask:(PreferencePanel*)pp
 {
     switch ([pp switchWindowModifier]) {
-        case MOD_TAG_COMMAND:
+        case MOD_TAG_ANY_COMMAND:
             return NSCommandKeyMask;
 
         case MOD_TAG_CMD_OPT:
@@ -665,7 +665,7 @@ static NSDictionary* globalKeyMap;
 + (NSInteger)switchToTabMask:(PreferencePanel*)pp
 {
     switch ([pp switchTabModifier]) {
-        case MOD_TAG_COMMAND:
+        case MOD_TAG_ANY_COMMAND:
             return NSCommandKeyMask;
 
         case MOD_TAG_CMD_OPT:
@@ -691,7 +691,9 @@ static NSDictionary* globalKeyMap;
         case MOD_TAG_OPTION:
             return kCGEventFlagMaskAlternate;
 
-        case MOD_TAG_COMMAND:
+        case MOD_TAG_ANY_COMMAND:
+        case MOD_TAG_LEFT_COMMAND:
+        case MOD_TAG_RIGHT_COMMAND:
             return kCGEventFlagMaskCommand;
 
         case MOD_TAG_CMD_OPT:
@@ -717,7 +719,11 @@ static NSDictionary* globalKeyMap;
         case MOD_TAG_OPTION:
             return NX_DEVICELALTKEYMASK;
 
-        case MOD_TAG_COMMAND:
+        case MOD_TAG_RIGHT_COMMAND:
+            return NX_DEVICERCMDKEYMASK;
+
+        case MOD_TAG_LEFT_COMMAND:
+        case MOD_TAG_ANY_COMMAND:
             return NX_DEVICELCMDKEYMASK;
 
         case MOD_TAG_CMD_OPT:
@@ -743,7 +749,11 @@ static NSDictionary* globalKeyMap;
         case MOD_TAG_OPTION:
             return NX_DEVICERALTKEYMASK;
 
-        case MOD_TAG_COMMAND:
+        case MOD_TAG_LEFT_COMMAND:
+            return NX_DEVICELCMDKEYMASK;
+
+        case MOD_TAG_RIGHT_COMMAND:
+        case MOD_TAG_ANY_COMMAND:
             return NX_DEVICERCMDKEYMASK;
 
         case MOD_TAG_CMD_OPT:
@@ -754,19 +764,24 @@ static NSDictionary* globalKeyMap;
     }
 }
 
-+ (NSInteger)_cgMaskForCommandKey:(PreferencePanel*)pp
++ (NSInteger)_cgMaskForLeftCommandKey:(PreferencePanel*)pp
 {
-    return [self _cgMaskForMod:[pp command]];
+    return [self _cgMaskForMod:[pp leftCommand]];
+}
+
++ (NSInteger)_cgMaskForRightCommandKey:(PreferencePanel*)pp
+{
+    return [self _cgMaskForMod:[pp rightCommand]];
 }
 
 + (NSInteger)_nxMaskForLeftCommandKey:(PreferencePanel*)pp
 {
-    return [self _nxMaskForLeftMod:[pp command]];
+    return [self _nxMaskForLeftMod:[pp leftCommand]];
 }
 
 + (NSInteger)_nxMaskForRightCommandKey:(PreferencePanel*)pp
 {
-    return [self _nxMaskForRightMod:[pp command]];
+    return [self _nxMaskForRightMod:[pp rightCommand]];
 }
 
 + (NSInteger)_cgMaskForLeftAlternateKey:(PreferencePanel*)pp
@@ -818,13 +833,14 @@ static NSDictionary* globalKeyMap;
     CGEventFlags orMask = 0;
     if (origFlags & kCGEventFlagMaskCommand) {
         andMask &= ~kCGEventFlagMaskCommand;
-        orMask |= [self _cgMaskForCommandKey:pp];
         if (flags & NX_DEVICELCMDKEYMASK) {
             andMask &= ~NX_DEVICELCMDKEYMASK;
+            orMask |= [self _cgMaskForLeftCommandKey:pp];
             orMask |= [self _nxMaskForLeftCommandKey:pp];
         }
         if (flags & NX_DEVICERCMDKEYMASK) {
             andMask &= ~NX_DEVICERCMDKEYMASK;
+            orMask |= [self _cgMaskForRightCommandKey:pp];
             orMask |= [self _nxMaskForRightCommandKey:pp];
         }
     }

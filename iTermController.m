@@ -770,15 +770,17 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         return NULL;
     }
 
-    CGEventRef eventCopy = CGEventCreateCopy(event);
-    [iTermKeyBindingMgr remapModifiersInCGEvent:eventCopy
-                                      prefPanel:[PreferencePanel sharedInstance]];
-    NSEvent* e = [NSEvent eventWithCGEvent:eventCopy];
-    if ([cont eventIsHotkey:e]) {
+    if ([NSApp isActive]) {
+        // Remap modifier keys only while iTerm2 is active; otherwise you could just use the
+        // OS's remap feature.
+        [iTermKeyBindingMgr remapModifiersInCGEvent:event
+                                          prefPanel:[PreferencePanel sharedInstance]];
+    }
+    NSEvent* cocoaEvent = [NSEvent eventWithCGEvent:event];
+    if ([cont eventIsHotkey:cocoaEvent]) {
         OnHotKeyEvent();
         return NULL;
     }
-    CFRelease(eventCopy);
 
     return event;
 }
@@ -789,11 +791,14 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     hotkeyModifiers_ = 0;
 }
 
-- (void)registerHotkey:(int)keyCode modifiers:(int)modifiers
+- (BOOL)haveEventTap
 {
-    hotkeyCode_ = keyCode;
-    hotkeyModifiers_ = modifiers & (NSCommandKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSShiftKeyMask);
-    if (!machPortRef) {
+    return machPortRef != 0;
+}
+
+- (BOOL)startEventTap
+{
+    if (![self haveEventTap]) {
         DebugLog(@"Register event tap.");
         machPortRef = CGEventTapCreate(kCGHIDEventTap,
                                        kCGHeadInsertEventTap,
@@ -807,27 +812,60 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
             eventSrc = CFMachPortCreateRunLoopSource(NULL, machPortRef, 0);
             if (eventSrc == NULL) {
                 DebugLog(@"CFMachPortCreateRunLoopSource failed.");
+                NSLog(@"CFMachPortCreateRunLoopSource failed.");
+                CFRelease(machPortRef);
+                machPortRef = 0;
+                return NO;
             } else {
                 DebugLog(@"Adding run loop source.");
                 // Get the CFRunLoop primitive for the Carbon Main Event Loop, and add the new event souce
                 CFRunLoopAddSource(CFRunLoopGetCurrent(), eventSrc, kCFRunLoopDefaultMode);
                 CFRelease(eventSrc);
             }
+            return YES;
         } else {
-            switch (NSRunAlertPanel(@"Could not enable hotkey.",
-                                    @"You have assigned a \"hotkey\" that opens iTerm2 at any time. To use it, you must turn on \"access for assistive devices\" in the Universal Access preferences panel in System Preferences and restart iTerm2.",
-                                    @"OK",
-                                    @"Open System Preferences",
-                                    @"Disable Hotkey",
-                                    nil)) {
-                case NSAlertOtherReturn:
-                    [[PreferencePanel sharedInstance] disableHotkey];
-                    break;
+            return NO;
+        }
+    } else {
+        return YES;
+    }
+}
 
-                case NSAlertAlternateReturn:
-                    [[NSWorkspace sharedWorkspace] openFile:@"/System/Library/PreferencePanes/UniversalAccessPref.prefPane"];
-                    break;
-            }
+- (BOOL)registerHotkey:(int)keyCode modifiers:(int)modifiers
+{
+    hotkeyCode_ = keyCode;
+    hotkeyModifiers_ = modifiers & (NSCommandKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSShiftKeyMask);
+    if (![self startEventTap]) {
+        switch (NSRunAlertPanel(@"Could not enable hotkey",
+                                @"You have assigned a \"hotkey\" that opens iTerm2 at any time. To use it, you must turn on \"access for assistive devices\" in the Universal Access preferences panel in System Preferences and restart iTerm2.",
+                                @"OK",
+                                @"Open System Preferences",
+                                @"Disable Hotkey",
+                                nil)) {
+            case NSAlertOtherReturn:
+                [[PreferencePanel sharedInstance] disableHotkey];
+                break;
+
+            case NSAlertAlternateReturn:
+                [[NSWorkspace sharedWorkspace] openFile:@"/System/Library/PreferencePanes/UniversalAccessPref.prefPane"];
+                return NO;
+        }
+    }
+    return YES;
+}
+
+- (void)beginRemappingModifiers
+{
+    if (![self startEventTap]) {
+        switch (NSRunAlertPanel(@"Could not remap modifiers",
+                                @"You have chosen to remap certain modifier keys. For this to work for all key combinations (such as cmd-tab), you must turn on \"access for assistive devices\" in the Universal Access preferences panel in System Preferences and restart iTerm2.",
+                                @"OK",
+                                @"Open System Preferences",
+                                nil,
+                                nil)) {
+            case NSAlertAlternateReturn:
+                [[NSWorkspace sharedWorkspace] openFile:@"/System/Library/PreferencePanes/UniversalAccessPref.prefPane"];
+                break;
         }
     }
 }

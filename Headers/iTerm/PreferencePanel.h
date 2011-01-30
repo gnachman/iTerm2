@@ -1,4 +1,4 @@
-/*
+		/*
  **  PreferencePanel.h
  **
  **  Copyright (c) 2002, 2003
@@ -36,9 +36,11 @@
 #define MOD_TAG_CONTROL 1
 #define MOD_TAG_LEFT_OPTION 2
 #define MOD_TAG_RIGHT_OPTION 3
-#define MOD_TAG_COMMAND 4
+#define MOD_TAG_ANY_COMMAND 4
 #define MOD_TAG_OPTION 5  // refers to any option key
 #define MOD_TAG_CMD_OPT 6  // both cmd and opt at the same time
+#define MOD_TAG_LEFT_COMMAND 7
+#define MOD_TAG_RIGHT_COMMAND 8
 
 @class iTermController;
 
@@ -369,8 +371,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSPopUpButton* leftOptionButton;
     int defaultRightOption;
     IBOutlet NSPopUpButton* rightOptionButton;
-    int defaultCommand;
-    IBOutlet NSPopUpButton* commandButton;
+    int defaultLeftCommand;
+    IBOutlet NSPopUpButton* leftCommandButton;
+    int defaultRightCommand;
+    IBOutlet NSPopUpButton* rightCommandButton;
 
     int defaultSwitchTabModifier;
     IBOutlet NSPopUpButton* switchTabModifierButton;
@@ -523,7 +527,9 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (int)control;
 - (int)leftOption;
 - (int)rightOption;
-- (int)command;
+- (int)leftCommand;
+- (int)rightCommand;
+- (BOOL)isAnyModifierRemapped;
 - (int)switchTabModifier;
 - (int)switchWindowModifier;
 - (BOOL)deleteSendsCtrlH;
