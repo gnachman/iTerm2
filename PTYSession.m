@@ -63,6 +63,7 @@ static NSString *PWD_ENVVALUE = @"~";
 static NSString* SESSION_ARRANGEMENT_COLUMNS = @"Columns";
 static NSString* SESSION_ARRANGEMENT_ROWS = @"Rows";
 static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
+static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 // init/dealloc
 - (id)init
@@ -240,7 +241,7 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
 
     [aSession setPreferencesFromAddressBookEntry:theBookmark];
     [[aSession SCREEN] setDisplay:[aSession TEXTVIEW]];
-    [aSession runCommandWithOldCwd:nil];
+    [aSession runCommandWithOldCwd:[arrangement objectForKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY]];
     [aSession setName:[theBookmark objectForKey:KEY_NAME]];
     if ([[[[theTab realParentWindow] window] title] compare:@"Window"] == NSOrderedSame) {
         [[theTab realParentWindow] setWindowTitle];
@@ -2083,6 +2084,7 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
     [result setObject:[NSNumber numberWithInt:[SCREEN width]] forKey:SESSION_ARRANGEMENT_COLUMNS];
     [result setObject:[NSNumber numberWithInt:[SCREEN height]] forKey:SESSION_ARRANGEMENT_ROWS];
     [result setObject:addressBookEntry forKey:SESSION_ARRANGEMENT_BOOKMARK];
+    [result setObject:[SHELL getWorkingDirectory] forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
     return result;
 }
 
