@@ -108,6 +108,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     PtyLog(@"PTYTab initWithSession %p", self);
     if (self) {
         activeSession_ = session;
+        [session setLastActiveAt:[NSDate date]];
         root_ = [[NSSplitView alloc] init];
         if (USE_THIN_SPLITTERS) {
             [root_ setDividerStyle:NSSplitViewDividerStyleThin];
@@ -223,6 +224,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     BOOL changed = session != activeSession_;
     PTYSession* oldSession = activeSession_;
     activeSession_ = session;
+    [session setLastActiveAt:[NSDate date]];
     if (activeSession_ == nil) {
         return;
     }
@@ -362,12 +364,20 @@ static void SwapPoint(NSPoint* point) {
     point->y = temp.x;
 }
 
+static NSString* FormatRect(NSRect r) {
+    return [NSString stringWithFormat:@"%lf,%lf %lfx%lf", r.origin.x, r.origin.y,
+            r.size.width, r.size.height];
+}
+
 - (PTYSession*)_sessionAdjacentTo:(PTYSession*)session verticalDir:(BOOL)verticalDir after:(BOOL)after
 {
     NSRect myRect = [root_ convertRect:[[session view] frame] fromView:[[session view] superview]];
+    PtyLog(@"origin is %@", FormatRect(myRect));
     NSPoint targetPoint = myRect.origin;
     NSSize rootSize = [root_ frame].size;
 
+    // Rearrange coordinates so that the rest of this function can be written to find the session
+    // to the right or left (depending on 'after') of this one.
     if (verticalDir) {
         SwapSize(&myRect.size);
         SwapPoint(&myRect.origin);
@@ -384,38 +394,82 @@ static void SwapPoint(NSPoint* point) {
     if (sign * targetPoint.x > maxAllowed) {
         targetPoint.x -= sign * rootSize.width;
     }
-    targetPoint.y += myRect.size.height / 2;
-    PTYSession* result;
-    if (verticalDir) {
-        SwapPoint(&targetPoint);
-    }
-    result = [self _recursiveSessionAtPoint:targetPoint relativeTo:root_];
-    if (verticalDir) {
-        SwapPoint(&targetPoint);
-    }
-    if (!result) {
-        targetPoint.y += [root_ dividerThickness];
+    int offset = 0;
+    int defaultOffset = myRect.size.height / 2;
+    NSPoint origPoint = targetPoint;
+    PtyLog(@"OrigPoint is %lf,%lf", origPoint.x, origPoint.y);
+    PTYSession* bestResult = nil;
+    PTYSession* defaultResult = nil;
+    NSDate* bestDate = nil;
+    // Iterate over every possible adjacent session and select the most recently active one.
+    while (offset < myRect.size.height) {
+        targetPoint = origPoint;
+        targetPoint.y += offset;
+        PTYSession* result;
+
+        // First, get the session at the target point.
         if (verticalDir) {
             SwapPoint(&targetPoint);
         }
+        PtyLog(@"Check session at %lf,%lf", targetPoint.x, targetPoint.y);
         result = [self _recursiveSessionAtPoint:targetPoint relativeTo:root_];
         if (verticalDir) {
             SwapPoint(&targetPoint);
         }
-        targetPoint.y -= [root_ dividerThickness];
-    }
-    if (!result) {
-        targetPoint.y -= [root_ dividerThickness];
-        if (verticalDir) {
-            SwapPoint(&targetPoint);
+        if (!result) {
+            // Oops, targetPoint must have landed right on a divider. Advance by
+            // one divider's width.
+            targetPoint.y += [root_ dividerThickness];
+            if (verticalDir) {
+                SwapPoint(&targetPoint);
+            }
+            result = [self _recursiveSessionAtPoint:targetPoint relativeTo:root_];
+            if (verticalDir) {
+                SwapPoint(&targetPoint);
+            }
+            targetPoint.y -= [root_ dividerThickness];
         }
-        result = [self _recursiveSessionAtPoint:targetPoint relativeTo:root_];
-        if (verticalDir) {
-            SwapPoint(&targetPoint);
+        if (!result) {
+            // Maybe we fell off the end of the window? Try going the other direction.
+            targetPoint.y -= [root_ dividerThickness];
+            if (verticalDir) {
+                SwapPoint(&targetPoint);
+            }
+            result = [self _recursiveSessionAtPoint:targetPoint relativeTo:root_];
+            if (verticalDir) {
+                SwapPoint(&targetPoint);
+            }
+            targetPoint.y += [root_ dividerThickness];
         }
-        targetPoint.y += [root_ dividerThickness];
+
+        // Advance offset to next sibling's origin.
+        NSRect rootRelativeResultRect = [root_ convertRect:[[result view] frame]
+                                                  fromView:[[result view] superview]];
+        PtyLog(@"Result is at %@", FormatRect(rootRelativeResultRect));
+        if (verticalDir) {
+            SwapPoint(&rootRelativeResultRect.origin);
+            SwapSize(&rootRelativeResultRect.size);
+        }
+        offset = rootRelativeResultRect.origin.y - origPoint.y + rootRelativeResultRect.size.height;
+        PtyLog(@"set offset to %d", offset);
+        if (verticalDir) {
+            SwapPoint(&rootRelativeResultRect.origin);
+            SwapSize(&rootRelativeResultRect.size);
+        }
+
+        if ((!bestDate && [result lastActiveAt]) ||
+            (bestDate && [[result lastActiveAt] isGreaterThan:bestDate])) {
+            // Found a more recently used session.
+            bestResult = result;
+            bestDate = [result lastActiveAt];
+        }
+        if (!bestResult && offset > defaultOffset) {
+            // Haven't found a used session yet but this one is centered so we might pick it.
+            defaultResult = result;
+        }
     }
-    return result;
+
+    return bestResult ? bestResult : defaultResult;
 }
 
 - (PTYSession*)sessionLeftOf:(PTYSession*)session

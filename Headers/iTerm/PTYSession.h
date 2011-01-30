@@ -191,6 +191,9 @@ static const float kBackgroundSessionIntervalSec = 1;
     // due to temporary changes in the window size, as code later on may need to know the session's
     // size to set the window size properly.
     BOOL ignoreResizeNotifications_;
+
+    // Last time this session became active
+    NSDate* lastActiveAt_;
 }
 
 // init/dealloc
@@ -402,6 +405,9 @@ static const float kBackgroundSessionIntervalSec = 1;
 
 - (void)setIgnoreResizeNotifications:(BOOL)ignore;
 - (BOOL)ignoreResizeNotifications;
+
+- (void)setLastActiveAt:(NSDate*)date;
+- (NSDate*)lastActiveAt;
 
 @end
 

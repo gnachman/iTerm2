@@ -106,6 +106,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     if (slowPasteTimer) {
         [slowPasteTimer invalidate];
     }
+    [lastActiveAt_ release];
     [bookmarkName release];
     [TERM_VALUE release];
     [COLORFGBG_VALUE release];
@@ -2310,6 +2311,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (NSString*)uncachedJobName
 {
     return [SHELL currentJob:YES];
+}
+
+- (void)setLastActiveAt:(NSDate*)date
+{
+    [lastActiveAt_ release];
+    lastActiveAt_ = [date copy];
+}
+
+- (NSDate*)lastActiveAt
+{
+    return lastActiveAt_;
 }
 
 @end
