@@ -1559,8 +1559,8 @@ static float versionNumber;
     } else if (aTableView == urlTable) {
         return [urlTypes count];
     }
-    // Should never get here.
-    assert(false);
+    // We can only get here while loading the nib (on some machines, this function is called
+    // before the IBOutlets are populated).
     return 0;
 }
 
