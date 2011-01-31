@@ -2218,6 +2218,26 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
 {
+    PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
+    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+    NSPoint locationInWindow = [theEvent locationInWindow];
+    NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
+    VT100Terminal *terminal = [dataSource terminal];
+    mouseMode mm = [terminal mouseMode];
+    if (frontTextView == self &&
+        ([[self delegate] xtermMouseReporting]) &&
+        (mm == MOUSE_REPORTING_NORMAL ||
+         mm == MOUSE_REPORTING_BUTTON_MOTION ||
+         mm == MOUSE_REPORTING_ALL_MOTION) &&
+        (locationInTextView.y > visibleRect.origin.y) &&
+        !([theEvent modifierFlags] & NSAlternateKeyMask) &&
+        [[frontTextView->dataSource session] tab] == [[dataSource session] tab] &&
+        [theEvent type] == NSLeftMouseDown &&
+        ([theEvent modifierFlags] & NSControlKeyMask) &&
+        [[PreferencePanel sharedInstance] passOnControlLeftClick]) {
+        // All the many conditions are met for having the click passed on via xterm mouse reporting.
+        return nil;
+    }
     NSMenu *theMenu;
 
     // Allocate a menu

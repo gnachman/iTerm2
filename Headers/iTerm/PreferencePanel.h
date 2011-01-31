@@ -1,4 +1,4 @@
-		/*
+        /*
  **  PreferencePanel.h
  **
  **  Copyright (c) 2002, 2003
@@ -119,6 +119,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     // cmd-click to launch url
     IBOutlet NSButton *cmdSelection;
     BOOL defaultCmdSelection;
+
+    // pass on ctrl-click
+    IBOutlet NSButton* passOnControlLeftClick;
+    BOOL defaultPassOnControlLeftClick;
 
     // Zoom vertically only
     IBOutlet NSButton *maxVertically;
@@ -435,6 +439,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (BOOL)enableBonjour;
 - (BOOL)enableGrowl;
 - (BOOL)cmdSelection;
+- (BOOL)passOnControlLeftClick;
 - (BOOL)maxVertically;
 - (BOOL)useCompactLabel;
 - (BOOL)highlightTabLabels;
