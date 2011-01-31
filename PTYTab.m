@@ -1233,7 +1233,7 @@ static NSString* FormatRect(NSRect r) {
         [transform scaleXBy:1.0 yBy:-1.0];
         [transform concat];
         tabFrame.origin.y = -tabFrame.origin.y - tabFrame.size.height;
-        [(id <PSMTabStyle>)[[[realParentWindow_ tabView] delegate] style] drawBackgroundInRect:tabFrame];
+        [(id <PSMTabStyle>)[[[realParentWindow_ tabView] delegate] style] drawBackgroundInRect:tabFrame color:nil];  // TODO: use the right color
         [transform invert];
         [transform concat];
     }

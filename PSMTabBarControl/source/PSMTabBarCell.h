@@ -34,6 +34,7 @@
 
     //iTerm add-on
     NSColor             *_labelColor;
+    NSColor             *_tabColor;
 }
 
 // creation/destruction
@@ -99,6 +100,8 @@
 // iTerm add-on
 - (NSColor *)labelColor;
 - (void)setLabelColor:(NSColor *)aColor;
+- (NSColor *)tabColor;
+- (void)setTabColor:(NSColor *)aColor;
 
 @end
 

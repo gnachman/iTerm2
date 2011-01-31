@@ -1495,6 +1495,11 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     return tab_;
 }
 
+- (PTYTab*)ptytab
+{
+    return tab_;
+}
+
 - (void)setTab:(PTYTab*)tab
 {
     tab_ = tab;

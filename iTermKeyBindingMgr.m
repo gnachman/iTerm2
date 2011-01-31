@@ -461,8 +461,11 @@ static NSDictionary* globalKeyMap;
 
 + (void)_loadGlobalKeyMap
 {
-    NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"DefaultGlobalKeyMap" ofType:@"plist"];
-    globalKeyMap = [NSDictionary dictionaryWithContentsOfFile:plistFile];
+    globalKeyMap = [[NSUserDefaults standardUserDefaults] objectForKey:@"GlobalKeyMap"];
+    if (!globalKeyMap) {
+        NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"DefaultGlobalKeyMap" ofType:@"plist"];
+        globalKeyMap = [NSDictionary dictionaryWithContentsOfFile:plistFile];
+    }
     [globalKeyMap retain];
 }
 
@@ -478,6 +481,7 @@ static NSDictionary* globalKeyMap;
 {
     [globalKeyMap release];
     globalKeyMap = [src copy];
+    [[NSUserDefaults standardUserDefaults] setObject:globalKeyMap forKey:@"GlobalKeyMap"];
 }
 
 + (int) actionForKeyCode:(unichar)keyCode

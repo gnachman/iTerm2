@@ -1326,6 +1326,17 @@ NSString *sessionsKey = @"sessions";
     if ([[autocompleteView window] isVisible]) {
         [autocompleteView close];
     }
+    NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:tabViewItem];
+    if (newTabColor && !sendInputToAllSessions) {
+        [[self window] setBackgroundColor:newTabColor];
+        [background_ setColor:newTabColor];
+    } else if (sendInputToAllSessions) {
+        [[self window] setBackgroundColor: [NSColor highlightColor]];
+        [background_ setColor:[NSColor highlightColor]];
+    } else {
+        [[self window] setBackgroundColor:normalBackgroundColor];
+        [background_ setColor:normalBackgroundColor];
+    }
 }
 
 - (void)enableBlur
@@ -1531,7 +1542,7 @@ NSString *sessionsKey = @"sessions";
         [transform scaleXBy:1.0 yBy:-1.0];
         [transform concat];
         tabFrame.origin.y = -tabFrame.origin.y - tabFrame.size.height;
-        [(id <PSMTabStyle>)[[aTabView delegate] style] drawBackgroundInRect:tabFrame];
+        [(id <PSMTabStyle>)[[aTabView delegate] style] drawBackgroundInRect:tabFrame color:nil];
         [transform invert];
         [transform concat];
 
@@ -1700,7 +1711,23 @@ NSString *sessionsKey = @"sessions";
     } else {
         [tabBarControl setLabelColor:[NSColor blackColor] forTabViewItem:tabViewItem];
     }
+}
 
+- (void)setTabColor:(NSColor*)color forTabViewItem:(NSTabViewItem*)tabViewItem
+{
+    [tabBarControl setTabColor:color forTabViewItem:tabViewItem];
+    if ([TABVIEW selectedTabViewItem] == tabViewItem) {
+        NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:tabViewItem];
+        if (newTabColor && !sendInputToAllSessions) {
+            [[self window] setBackgroundColor:newTabColor];
+            [background_ setColor:newTabColor];
+        }
+    }
+}
+
+- (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem
+{
+    return [tabBarControl tabColorForTabViewItem:tabViewItem];
 }
 
 - (PTYTabView *)tabView
@@ -3471,8 +3498,14 @@ NSString *sessionsKey = @"sessions";
         [[self window] setBackgroundColor: [NSColor highlightColor]];
         [background_ setColor:[NSColor highlightColor]];
     } else {
-        [[self window] setBackgroundColor: normalBackgroundColor];
-        [background_ setColor:normalBackgroundColor];
+        NSColor* tabColor = [tabBarControl tabColorForTabViewItem:[TABVIEW selectedTabViewItem]];
+        if (tabColor) {
+            [[self window] setBackgroundColor:tabColor];
+            [background_ setColor:tabColor];
+        } else {
+            [[self window] setBackgroundColor:normalBackgroundColor];
+            [background_ setColor:normalBackgroundColor];
+        }
     }
 }
 

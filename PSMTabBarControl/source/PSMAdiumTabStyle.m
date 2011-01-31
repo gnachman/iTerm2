@@ -608,7 +608,7 @@
     [self drawInteriorWithTabCell:cell inView:[cell controlView]];
 }
 
-- (void)drawBackgroundInRect:(NSRect)rect
+- (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)color
 {
     NSBezierPath *thePath = [NSBezierPath bezierPath];
     [thePath setLineWidth:1.0];
@@ -674,7 +674,7 @@
         tabBar = bar;
     }
 
-    [self drawBackgroundInRect:rect];
+    [self drawBackgroundInRect:rect color:nil];
 
     // no tab view == not connected
     if (![bar tabView]) {

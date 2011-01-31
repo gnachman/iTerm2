@@ -126,6 +126,8 @@
 #define XTERMCC_REPORT_ICON_TITLE   107
 #define XTERMCC_REPORT_WIN_TITLE    108
 #define XTERMCC_SET_RGB 109
+#define XTERMCC_PROPRIETARY_ETERM_EXT 110
+#define XTERMCC_SET_PALETTE 111
 
 // Some ansi stuff
 #define ANSICSI_CHA      3000   // Cursor Horizontal Absolute

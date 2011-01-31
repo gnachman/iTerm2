@@ -33,6 +33,9 @@
 #import <iTerm/VT100Screen.h>
 #import <iTerm/NSStringITerm.h>
 #import "iTermApplicationDelegate.h"
+#import "PTYTab.h"
+#import "PseudoTerminal.h"
+#import "WindowControllerInterface.h"
 #include <term.h>
 
 #define DEBUG_ALLOC 0
@@ -696,10 +699,13 @@ static VT100TCC decode_xterm(unsigned char *datap,
         mode=n;
     }
     if (datalen>0) {
-        if (*datap != ';') {
+        if (*datap != ';' && *datap != 'P') {
             unrecognized=YES;
         }
         else {
+            if (*datap == 'P') {
+                mode = -1;
+            }
             BOOL str_end=NO;;
             c=s;
             datalen--;
@@ -751,20 +757,32 @@ static VT100TCC decode_xterm(unsigned char *datap,
         result.u.string = [[[NSString alloc] initWithData:data
                                                  encoding:enc] autorelease];
         switch (mode) {
+            case -1:
+                // Nnstandard Linux OSC P nrrggbb ST to change color palette
+                // entry.
+                result.type = XTERMCC_SET_PALETTE;
+                break;
             case 0:
                 result.type = XTERMCC_WINICON_TITLE;
                 break;
             case 1:
                 result.type = XTERMCC_ICON_TITLE;
                 break;
-            case 9:
-                result.type = ITERM_GROWL;
-                break;
             case 2:
                 result.type = XTERMCC_WIN_TITLE;
                 break;
             case 4:
                 result.type = XTERMCC_SET_RGB;
+                break;
+            case 6:
+                // This is not a real xterm code. It is from eTerm, which extended the xterm
+                // protocol for its own purposes. We don't follow the eTerm protocol,
+                // but we follow the template it set.
+                // http://www.eterm.org/docs/view.php?doc=ref#escape
+                result.type = XTERMCC_PROPRIETARY_ETERM_EXT;
+                break;
+            case 9:
+                result.type = ITERM_GROWL;
                 break;
             default:
                 result.type = VT100_NOTSUPPORT;
@@ -2518,6 +2536,133 @@ static VT100TCC decode_string(unsigned char *datap,
              r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) { // ignore bad colors
             [[SCREEN session] setColorTable:theIndex
                                               color:[NSColor colorWithCalibratedRed:r/256.0 green:g/256.0 blue:b/256.0 alpha:1]];
+        }
+    } else if (token.type == XTERMCC_SET_PALETTE) {
+        NSString* argument = token.u.string;
+        if ([argument length] == 7) {
+            int n, r, g, b;
+            int count = 0;
+            count += sscanf([[argument substringWithRange:NSMakeRange(0, 1)] UTF8String], "%x", &n);
+            if (count == 0) {
+                unichar c = [argument characterAtIndex:0];
+                n = c - 'a' + 10;
+                // fg = 16
+                // bg = 17
+                // bold = 18
+                // selection = 19
+                // selected text = 20
+                // cursor = 21
+                // cursor text = 22
+                if (n >= 16 && n <= 22) {
+                    ++count;
+                }
+            }
+            count += sscanf([[argument substringWithRange:NSMakeRange(1, 2)] UTF8String], "%x", &r);
+            count += sscanf([[argument substringWithRange:NSMakeRange(3, 2)] UTF8String], "%x", &g);
+            count += sscanf([[argument substringWithRange:NSMakeRange(5, 2)] UTF8String], "%x", &b);
+            if (count == 4 &&
+                n >= 0 &&
+                n <= 22 &&
+                r >= 0 &&
+                r <= 255 &&
+                g >= 0 &&
+                g <= 255 &&
+                b >= 0 &&
+                b <= 255) {
+                NSColor* theColor = [NSColor colorWithCalibratedRed:((double)r)/256.0
+                                                              green:((double)g)/256.0
+                                                               blue:((double)b)/256.0
+                                                              alpha:1];
+                switch (n) {
+                    case 16:
+                        [[[SCREEN session] TEXTVIEW] setFGColor:theColor];
+                        break;
+                    case 17:
+                        [[[SCREEN session] TEXTVIEW] setBGColor:theColor];
+                        break;
+                    case 18:
+                        [[[SCREEN session] TEXTVIEW] setBoldColor:theColor];
+                        break;
+                    case 19:
+                        [[[SCREEN session] TEXTVIEW] setSelectionColor:theColor];
+                        break;
+                    case 20:
+                        [[[SCREEN session] TEXTVIEW] setSelectedTextColor:theColor];
+                        break;
+                    case 21:
+                        [[[SCREEN session] TEXTVIEW] setCursorColor:theColor];
+                        break;
+                    case 22:
+                        [[[SCREEN session] TEXTVIEW] setCursorTextColor:theColor];
+                        break;
+                    default:
+                        [[[SCREEN session] TEXTVIEW] setColorTable:n color:theColor];
+                        break;
+                }
+            }
+        }
+    } else if (token.type == XTERMCC_PROPRIETARY_ETERM_EXT) {
+        NSString* argument = token.u.string;
+        NSArray* parts = [argument componentsSeparatedByString:@";"];
+        NSString* func = nil;
+        if ([parts count] >= 1) {
+            func = [parts objectAtIndex:0];
+        }
+        if (func) {
+            if ([func isEqualToString:@"1"]) {
+                // Adjusts a color modifier. This attempts to roughly follow the pattern that Eterm
+                // estabilshed.
+                //
+                // ESC ] 6 ; 1 ; class ; color ; attribute ; value BEL
+                //
+                // Adjusts a color modifier.
+                // class: determines which image class will have its color modifier altered:
+                //   legal values: bg (background), or a number 0-15 (color pallette entries).
+                // color: The color component to modify.
+                //   legal values: red, green, or blue.
+                // attribute: how to modify it.
+                //   legal values: brightness
+                // value: the new value for this attribute.
+                //   legal values: decimal integers in 0-255.
+                if ([parts count] == 5) {
+                    NSString* class = [parts objectAtIndex:1];
+                    NSString* color = [parts objectAtIndex:2];
+                    NSString* attribute = [parts objectAtIndex:3];
+                    NSString* value = [parts objectAtIndex:4];
+                    if ([class isEqualToString:@"bg"] &&
+                        [attribute isEqualToString:@"brightness"]) {
+                        double numValue = MIN(1, ([value intValue] / 255.0));
+                        if (numValue >= 0 && numValue <= 1) {
+                            NSTabViewItem* tabViewItem = [[[SCREEN session] ptytab] tabViewItem];
+                            id<WindowControllerInterface> term = [[[SCREEN session] ptytab] parentWindow];
+                            NSColor* curColor = [term tabColorForTabViewItem:tabViewItem];
+                            double red, green, blue;
+                            red = [curColor redComponent];
+                            green = [curColor greenComponent];
+                            blue = [curColor blueComponent];
+                            if ([color isEqualToString:@"red"]) {
+                                [term setTabColor:[NSColor colorWithCalibratedRed:numValue
+                                                                            green:green
+                                                                             blue:blue
+                                                                            alpha:1]
+                                                                   forTabViewItem:tabViewItem];
+                            } else if ([color isEqualToString:@"green"]) {
+                                [term setTabColor:[NSColor colorWithCalibratedRed:red
+                                                                            green:numValue
+                                                                             blue:blue
+                                                                            alpha:1]
+                                                                   forTabViewItem:tabViewItem];
+                            } else if ([color isEqualToString:@"blue"]) {
+                                [term setTabColor:[NSColor colorWithCalibratedRed:red
+                                                                            green:green
+                                                                             blue:numValue
+                                                                            alpha:1]
+                                                                   forTabViewItem:tabViewItem];
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

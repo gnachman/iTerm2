@@ -10,16 +10,17 @@
 #import "iTerm/PseudoTerminal.h"
 #import "WindowControllerInterface.h"
 
-@interface FakeWindow : NSObject <WindowControllerInterface> 
+@interface FakeWindow : NSObject <WindowControllerInterface>
 {
     // FakeWindow always has exactly one session.
     PTYSession* session;
-    
+
     // Saved state from old window.
     BOOL isFullScreen;
     BOOL isMiniaturized;
     NSRect frame;
     NSScreen* screen;
+    PseudoTerminal* realWindow;
 
     // Changes the session has initiated that will be delayed and performed
     // in -[rejoin:].
@@ -34,6 +35,7 @@
     BOOL hasPendingResetTempTitle;
 
     NSColor* pendingLabelColor;
+    NSColor* pendingTabColor;
 }
 
 - (id)initFromRealWindow:(PseudoTerminal*)aTerm session:(PTYSession*)aSession;
@@ -49,6 +51,8 @@
 - (IBAction)nextTab:(id)sender;
 - (IBAction)previousTab:(id)sender;
 - (void)setLabelColor:(NSColor *)color forTabViewItem:tabViewItem;
+- (void)setTabColor:(NSColor *)color forTabViewItem:tabViewItem;
+- (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
 - (void)enableBlur;
 - (void)disableBlur;
 - (BOOL)tempTitle;

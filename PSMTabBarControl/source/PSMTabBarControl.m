@@ -2164,4 +2164,34 @@
     if (updated) [self update: NO];
 }
 
+- (void)setTabColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem
+{
+    BOOL updated = NO;
+
+    NSEnumerator *e = [_cells objectEnumerator];
+    PSMTabBarCell *cell;
+    while ( (cell = [e nextObject])) {
+        if ([cell representedObject] == tabViewItem) {
+            if ([cell tabColor] != aColor) {
+                updated = YES;
+                [cell setTabColor: aColor];
+            }
+        }
+    }
+
+    if (updated) [self update: NO];
+}
+
+- (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem
+{
+    NSEnumerator *e = [_cells objectEnumerator];
+    PSMTabBarCell *cell;
+    while ( (cell = [e nextObject])) {
+        if ([cell representedObject] == tabViewItem) {
+            return [cell tabColor];
+        }
+    }
+    return nil;
+}
+
 @end

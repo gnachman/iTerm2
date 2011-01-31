@@ -296,6 +296,10 @@
 // Set the text color for a tab control's name.
 - (void)setLabelColor:(NSColor *)color forTabViewItem:tabViewItem;
 
+// Set background color for tab chrome.
+- (void)setTabColor:(NSColor *)color forTabViewItem:(NSTabViewItem*)tabViewItem;
+- (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
+
 // accessor
 - (PTYTabView *)tabView;
 

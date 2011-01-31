@@ -38,6 +38,7 @@
         _count = 0;
         _isPlaceholder = NO;
         _labelColor = nil;
+        _tabColor = nil;
     }
     return self;
 }
@@ -64,7 +65,7 @@
         _isCloseButtonSuppressed = NO;
         _count = 0;
         _labelColor = nil;
-
+        _tabColor = nil;
         if (value) {
             [self setCurrentStep:(kPSMTabDragAnimationSteps - 1)];
         } else {
@@ -79,7 +80,8 @@
     [_indicator release];
     if (_labelColor)
         [_labelColor release];
-
+    if (_tabColor) 
+        [_tabColor release];
     [super dealloc];
 }
 
@@ -504,6 +506,21 @@
             [_labelColor release];
         }
         _labelColor = aColor ? [aColor retain] : nil;
+    }
+}
+
+- (NSColor*)tabColor
+{
+    return _tabColor;
+}
+
+- (void)setTabColor:(NSColor *)aColor
+{
+    if (_tabColor != aColor) {
+        if (_tabColor) {
+            [_tabColor release];
+        }
+        _tabColor = aColor ? [aColor retain] : nil;
     }
 }
 

@@ -230,6 +230,8 @@ enum {
 
 // iTerm add-on
 - (void)setLabelColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
+- (void)setTabColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
+- (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
 - (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem;
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView;
 

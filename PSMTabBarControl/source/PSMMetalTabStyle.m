@@ -344,7 +344,13 @@
             aRect.origin.x += 1.0;
             aRect.size.width--;
             aRect.size.height -= 0.5;
-            NSDrawWindowBackground(aRect);
+            NSColor* tabColor = [cell tabColor];
+            if (tabColor) {
+                [tabColor set];
+                NSRectFill(aRect);
+            } else {
+                NSDrawWindowBackground(aRect);
+            }
             aRect.size.width++;
             aRect.size.height += 0.5;
 
@@ -396,6 +402,17 @@
         // rollover
         if ([cell isHighlighted]) {
             [[NSColor colorWithCalibratedWhite:0.0 alpha:0.1] set];
+            NSRectFillUsingOperation(aRect, NSCompositeSourceAtop);
+        }
+        NSColor* tabColor = [cell tabColor];
+        if (tabColor) {
+            [tabColor set];
+            NSRectFill(aRect);
+        } else {
+            [[NSColor windowBackgroundColor] set];
+            NSRectFill(aRect);
+
+            [[NSColor colorWithCalibratedWhite:0.0 alpha:0.2] set];
             NSRectFillUsingOperation(aRect, NSCompositeSourceAtop);
         }
 
@@ -522,7 +539,7 @@
     [[cell attributedStringValue] drawInRect:labelRect];
 }
 
-- (void)drawBackgroundInRect:(NSRect)rect
+- (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)backgroundColor
 {
     if (orientation == PSMTabBarVerticalOrientation && [tabBar frame].size.width < 2) {
         return;
@@ -533,8 +550,8 @@
 
     [[NSColor colorWithCalibratedWhite:0.0 alpha:0.2] set];
     NSRectFillUsingOperation(rect, NSCompositeSourceAtop);
-    [[NSColor darkGrayColor] set];
 
+    [[NSColor darkGrayColor] set];
     if (orientation == PSMTabBarHorizontalOrientation) {
         [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x, rect.origin.y + 0.5) toPoint:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + 0.5)];
         [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x, rect.origin.y + rect.size.height - 0.5) toPoint:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + rect.size.height - 0.5)];
@@ -556,7 +573,15 @@
         tabBar = bar;
     }
 
-    [self drawBackgroundInRect:rect];
+    PSMTabBarCell* activeCell = nil;
+    for (PSMTabBarCell *cell in [bar cells]) {
+        if ([cell state] == NSOnState) {
+            activeCell = cell;
+            break;
+        }
+    }
+
+    [self drawBackgroundInRect:rect color:[activeCell tabColor]];
 
     // no tab view == not connected
     if(![bar tabView]){

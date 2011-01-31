@@ -45,6 +45,7 @@
     screen = [[aTerm window] screen];
     session = aSession;
     [session retain];
+    realWindow = aTerm;
     return self;
 }
 
@@ -52,6 +53,9 @@
 {
     if (pendingLabelColor) {
         [pendingLabelColor release];
+    }
+    if (pendingTabColor) {
+        [pendingTabColor release];
     }
     [super dealloc];
 }
@@ -79,6 +83,9 @@
     }
     if (pendingLabelColor) {
         [aTerm setLabelColor:pendingLabelColor forTabViewItem:[[session tab] tabViewItem]];
+    }
+    if (pendingTabColor) {
+        [aTerm setTabColor:pendingTabColor forTabViewItem:[[session tab]tabViewItem]];
     }
     if (hasPendingSetWindowTitle) {
         [aTerm setWindowTitle];
@@ -135,6 +142,22 @@
     [pendingLabelColor release];
     pendingLabelColor = color;
     [pendingLabelColor retain];
+}
+
+- (void)setTabColor:(NSColor *)color forTabViewItem:tabViewItem
+{
+    [pendingTabColor release];
+    pendingTabColor = color;
+    [pendingTabColor retain];
+}
+
+- (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem
+{
+    if (pendingTabColor) {
+        return pendingTabColor;
+    } else {
+        return [realWindow tabColorForTabViewItem:tabViewItem];
+    }
 }
 
 - (void)enableBlur

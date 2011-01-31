@@ -283,6 +283,7 @@ static const float kBackgroundSessionIntervalSec = 1;
 
 // get/set methods
 - (PTYTab*)tab;
+- (PTYTab*)ptytab;
 - (void)setTab:(PTYTab*)tab;
 - (struct timeval)lastOutput;
 - (void)setGrowlIdle:(BOOL)value;

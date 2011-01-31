@@ -39,6 +39,8 @@
 - (IBAction)nextTab:(id)sender;
 - (IBAction)previousTab:(id)sender;
 - (void)setLabelColor:(NSColor *)color forTabViewItem:tabViewItem;
+- (void)setTabColor:(NSColor *)color forTabViewItem:tabViewItem;
+- (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
 - (void)enableBlur;
 - (void)disableBlur;
 - (BOOL)tempTitle;

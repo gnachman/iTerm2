@@ -43,7 +43,7 @@ Protocol to be observed by all style delegate objects.  These objects handle the
 
 // drawing
 - (void)drawTabCell:(PSMTabBarCell *)cell;
-- (void)drawBackgroundInRect:(NSRect)rect;
+- (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)color;
 - (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect;
 
 @end
