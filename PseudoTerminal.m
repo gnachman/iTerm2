@@ -908,48 +908,88 @@ NSString *sessionsKey = @"sessions";
 {
     pbbfValid = NO;
     PtyLog(@"%s(%d):-[PseudoTerminal windowWillResize: obj=%d, proposedFrameSize width = %f; height = %f]",
-          __FILE__, __LINE__, [self window], proposedFrameSize.width, proposedFrameSize.height);
+           __FILE__, __LINE__, [self window], proposedFrameSize.width, proposedFrameSize.height);
 
-    float charHeight = [self maxCharHeight:nil];
-    float charWidth = [self maxCharWidth:nil];
-    //NSLog(@"charSize=%fx%f", charHeight, charWidth);
-    PtyLog(@"Proposed size: %fx%f", proposedFrameSize.width, proposedFrameSize.height);
+    // Find the session for the current pane of the current tab.
+    PTYTab* tab = [self currentTab];
+    PTYSession* session = [tab activeSession];
+
+    // Get the width and height of characters in this session.
+    float charWidth = [[session TEXTVIEW] charWidth];
+    float charHeight = [[session TEXTVIEW] lineHeight];
+
+    // Decide when to snap.  (We snap unless shift is held down.)
+    BOOL shiftDown = (([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask) != 0);
+    BOOL snapWidth = !shiftDown;
+    BOOL snapHeight = !shiftDown;
     if (sender != [self window]) {
-        if (!(proposedFrameSize.width > 20*charWidth + MARGIN*2)) {
-            proposedFrameSize.width = 20*charWidth + MARGIN * 2;
-        }
-        if (!(proposedFrameSize.height > 20*charHeight)) {
-            proposedFrameSize.height = 20*charHeight + MARGIN * 2;
-        }
-        PtyLog(@"(via sender!=self) Allowed size: %fx%f", proposedFrameSize.height, proposedFrameSize.width);
-        return proposedFrameSize;
+      snapWidth = snapHeight = false;
     }
 
-    float northChange = [sender frame].size.height - proposedFrameSize.height;
-    float westChange = [sender frame].size.width - proposedFrameSize.width;
-    //NSLog(@"Change change: %f,%f", northChange, westChange);
-    int old_height = (proposedFrameSize.height - northChange - VMARGIN*2) / charHeight + 0.5;
-    int old_width = (proposedFrameSize.width - westChange - MARGIN*2) / charWidth + 0.5;
-    if (old_height < 2) {
-        old_height = 2;
-    }
-    if (old_width < 20) {
-        old_width = 20;
-    }
-    proposedFrameSize.height = charHeight * old_height + northChange + VMARGIN*2;
-    proposedFrameSize.width = charWidth * old_width + westChange + MARGIN * 2;
-
+    // Compute proposed tab size (window minus decorations).
     NSSize decorationSize = [self windowDecorationSize];
+    NSSize tabSize = NSMakeSize(proposedFrameSize.width - decorationSize.width,
+                                proposedFrameSize.height - decorationSize.height);
+
+    // Snap proposed tab size to grid.  The snapping uses a grid spaced to
+    // match the current pane's character size and aligned so margins are
+    // correct if all we have is a single pane.
+    BOOL hasScrollbar = !_fullScreen && ![[PreferencePanel sharedInstance] hideScrollbar];
+    NSSize contentSize = [PTYScrollView contentSizeForFrameSize:tabSize
+                                        hasHorizontalScroller:NO
+                                        hasVerticalScroller:hasScrollbar
+                                        borderType:NSNoBorder];
+
+    int screenWidth = (contentSize.width - MARGIN * 2) / charWidth + 0.5;
+    int screenHeight = (contentSize.height - VMARGIN * 2) / charHeight + 0.5;
+
+    if (snapWidth) {
+      contentSize.width = screenWidth * charWidth + MARGIN * 2;
+    }
+    if (snapHeight) {
+      contentSize.height = screenHeight * charHeight + VMARGIN * 2;
+    }
+    tabSize = [PTYScrollView frameSizeForContentSize:contentSize
+                             hasHorizontalScroller:NO
+                             hasVerticalScroller:hasScrollbar
+                             borderType:NSNoBorder];
+
+    // Respect minimum tab sizes.
     for (NSTabViewItem* tabViewItem in [TABVIEW tabViewItems]) {
         PTYTab* theTab = [tabViewItem identifier];
-        NSSize s = [theTab minSize];
-        proposedFrameSize.width = MAX(proposedFrameSize.width, s.width + decorationSize.width);
-        proposedFrameSize.height = MAX(proposedFrameSize.height, s.height + decorationSize.height);
+        NSSize minTabSize = [theTab minSize];
+        tabSize.width = MAX(tabSize.width, minTabSize.width);
+        tabSize.height = MAX(tabSize.height, minTabSize.height);
     }
 
-    NSSize theMax = [self maxFrame].size;
-    proposedFrameSize.width = MIN(theMax.width, proposedFrameSize.width);
-    proposedFrameSize.height = MIN(theMax.height, proposedFrameSize.height);
+    // Compute new window size from tab size.
+    proposedFrameSize.width = tabSize.width + decorationSize.width;
+    proposedFrameSize.height = tabSize.height + decorationSize.height;
+
+    // Apply maximum window size.
+    NSSize maxFrameSize = [self maxFrame].size;
+    proposedFrameSize.width = MIN(maxFrameSize.width, proposedFrameSize.width);
+    proposedFrameSize.height = MIN(maxFrameSize.height, proposedFrameSize.height);
+
+    // If snapping, reject the new size if the mouse has not moved at least
+    // half the current grid size in a given direction.  This is really
+    // important to the feel of the snapping, especially when the window is
+    // not aligned to the grid (e.g. after switching to a tab with a
+    // different font size).
+    NSSize senderSize = [sender frame].size;
+    if (snapWidth) {
+      int deltaX = abs(senderSize.width - proposedFrameSize.width);
+      if (deltaX < (int)(charWidth / 2)) {
+        proposedFrameSize.width = senderSize.width;
+      }
+    }
+    if (snapHeight) {
+      int deltaY = abs(senderSize.height - proposedFrameSize.height);
+      if (deltaY < (int)(charHeight / 2)) {
+        proposedFrameSize.height = senderSize.height;
+      }
+    }
+
     PtyLog(@"Accepted size: %fx%f", proposedFrameSize.width, proposedFrameSize.height);
 
     return proposedFrameSize;
@@ -1145,8 +1185,8 @@ NSString *sessionsKey = @"sessions";
     proposedFrame.origin.y = [sender frame].size.height;;
     BOOL verticalOnly = NO;
 
-    if ([[PreferencePanel sharedInstance] maxVertically] &&
-        !([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask)) {
+    if ([[PreferencePanel sharedInstance] maxVertically] ^
+        (([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask) != 0)) {
         verticalOnly = YES;
     }
     if (verticalOnly) {
@@ -2454,9 +2494,6 @@ NSString *sessionsKey = @"sessions";
     }
     PtyLog(@"fitWindowToTabs - update tab bar");
     [tabBarControl update];
-    PtyLog(@"fitWindowToTabs - set resize increments");
-
-    [[self window] setResizeIncrements:NSMakeSize([self maxCharWidth:nil], [self maxCharHeight:nil])];
     PtyLog(@"fitWindowToTabs - return.");
 
     if (mustResizeTabs) {
@@ -3012,9 +3049,6 @@ NSString *sessionsKey = @"sessions";
 
     PtyLog(@"repositionWidgets - update tab bar");
     [tabBarControl update];
-    PtyLog(@"repositionWidgets - set resize increments");
-
-    [[self window] setResizeIncrements:NSMakeSize([self maxCharWidth:nil], [self maxCharHeight:nil])];
     PtyLog(@"repositionWidgets - return.");
 }
 
