@@ -2232,10 +2232,11 @@ static VT100TCC decode_string(unsigned char *datap,
     screen_char_t result = { 0 };
     if (reversed) {
         result.foregroundColor = BG_COLORCODE;
+        result.alternateForegroundSemantics = alternateBackgroundSemantics;
     } else {
         result.foregroundColor = FG_COLORCODE;
+        result.alternateForegroundSemantics = alternateForegroundSemantics;
     }
-    result.alternateForegroundSemantics = alternateForegroundSemantics;
     result.bold = bold;
     result.underline = under;
     result.blink = blink;
@@ -2247,10 +2248,11 @@ static VT100TCC decode_string(unsigned char *datap,
     screen_char_t result = { 0 };
     if (reversed) {
         result.backgroundColor = FG_COLORCODE;
+        result.alternateBackgroundSemantics = alternateForegroundSemantics;
     } else {
         result.backgroundColor = BG_COLORCODE;
+        result.alternateBackgroundSemantics = alternateBackgroundSemantics;
     }
-    result.alternateBackgroundSemantics = alternateBackgroundSemantics;
     return result;
 }
 
