@@ -103,6 +103,8 @@
 #define KEY_ACTION_SELECT_PANE_RIGHT    19
 #define KEY_ACTION_SELECT_PANE_ABOVE    20
 #define KEY_ACTION_SELECT_PANE_BELOW    21
+#define KEY_ACTION_DO_NOT_REMAP_MODIFIERS 22
+#define KEY_ACTION_TOGGLE_FULLSCREEN    23
 
 @class PreferencePanel;
 @interface iTermKeyBindingMgr : NSObject {

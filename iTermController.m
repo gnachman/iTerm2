@@ -770,11 +770,30 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         return NULL;
     }
 
+    BOOL callDirectly = NO;
     if ([NSApp isActive]) {
         // Remap modifier keys only while iTerm2 is active; otherwise you could just use the
         // OS's remap feature.
-        [iTermKeyBindingMgr remapModifiersInCGEvent:event
-                                          prefPanel:[PreferencePanel sharedInstance]];
+        NSEvent* cocoaEvent = [NSEvent eventWithCGEvent:event];
+        NSString* unmodkeystr = [cocoaEvent charactersIgnoringModifiers];
+        unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+        unsigned int modflag = [cocoaEvent modifierFlags];
+        NSString *keyBindingText;
+        PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
+        BOOL tempDisabled = [prefPanel remappingDisabledTemporarily];
+        BOOL isDoNotRemap = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
+                                                       modifiers:modflag
+                                                            text:&keyBindingText
+                                                     keyMappings:nil] == KEY_ACTION_DO_NOT_REMAP_MODIFIERS;
+        BOOL keySheetOpen = [[prefPanel keySheet] isKeyWindow] && [prefPanel keySheetIsOpen];
+        if ((!tempDisabled && !isDoNotRemap) ||  // normal case, whether keysheet is open or not
+            (!tempDisabled && isDoNotRemap && keySheetOpen)) {  // about to change dnr to non-dnr
+            [iTermKeyBindingMgr remapModifiersInCGEvent:event
+                                              prefPanel:prefPanel];
+        }
+        if (tempDisabled && !isDoNotRemap) {
+            callDirectly = YES;
+        }
     }
     NSEvent* cocoaEvent = [NSEvent eventWithCGEvent:event];
     if ([cont eventIsHotkey:cocoaEvent]) {
@@ -782,6 +801,12 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         return NULL;
     }
 
+    if (callDirectly) {
+        // Send keystroke directly to preference panel when setting do-not-remap for a key; for
+        // system keys, NSApp sendEvent: is never called so this is the last chance.
+        [[PreferencePanel sharedInstance] shortcutKeyDown:cocoaEvent];
+        return nil;
+    }
     return event;
 }
 

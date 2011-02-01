@@ -132,8 +132,7 @@
                 }
             }
 
-            if (inTextView &&
-                [currentSession hasKeyMappingForEvent:event]) {
+            if (inTextView && [currentSession hasActionableKeyMappingForEvent:event]) {
                 // Remap key.
                 [currentSession keyDown:event];
                 return;

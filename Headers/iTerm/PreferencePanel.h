@@ -539,6 +539,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (int)switchWindowModifier;
 - (BOOL)deleteSendsCtrlH;
 
+- (BOOL)remappingDisabledTemporarily;
 
 @end
 

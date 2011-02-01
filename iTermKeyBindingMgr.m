@@ -400,6 +400,12 @@ static NSDictionary* globalKeyMap;
         case KEY_ACTION_SELECT_PANE_BELOW:
             actionString = @"Select Split Pane Below";
             break;
+        case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
+            actionString = @"Do Not Remap Modifiers";
+            break;
+        case KEY_ACTION_TOGGLE_FULLSCREEN:
+            actionString = @"Toggle Fullscreen";
+            break;
         default:
             actionString = [NSString stringWithFormat: @"%@ %d",
                 NSLocalizedStringFromTableInBundle(@"Unknown Action ID",
@@ -489,10 +495,13 @@ static NSDictionary* globalKeyMap;
                     text:(NSString **) text
              keyMappings:(NSDictionary *)keyMappings
 {
-    int keyBindingAction = [iTermKeyBindingMgr _actionForKeyCode:keyCode
+    int keyBindingAction = -1;
+    if (keyMappings) {
+        keyBindingAction = [iTermKeyBindingMgr _actionForKeyCode:keyCode
                                                        modifiers:keyMods
                                                             text:text
                                                      keyMappings:keyMappings];
+    }
     if (keyBindingAction < 0) {
         keyBindingAction = [iTermKeyBindingMgr _actionForKeyCode:keyCode
                                                        modifiers:keyMods

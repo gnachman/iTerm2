@@ -568,7 +568,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     }
 }
 
-- (BOOL)hasKeyMappingForEvent:(NSEvent *)event
+- (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event
 {
     unsigned int modflag;
     NSString *unmodkeystr;
@@ -595,7 +595,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                                                 keyMappings:[[self addressBookEntry] objectForKey: KEY_KEYBOARD_MAP]];
 
 
-    return (keyBindingAction >= 0);
+    return (keyBindingAction >= 0) && (keyBindingAction != KEY_ACTION_DO_NOT_REMAP_MODIFIERS);
 }
 
 + (void)reloadAllBookmarks
@@ -834,6 +834,11 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                 break;
             case KEY_ACTION_SELECT_PANE_BELOW:
                 [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
+                break;
+            case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
+                break;
+            case KEY_ACTION_TOGGLE_FULLSCREEN:
+                [[[iTermController sharedInstance] currentTerminal] toggleFullScreen:nil];
                 break;
             default:
                 NSLog(@"Unknown key action %d", keyBindingAction);

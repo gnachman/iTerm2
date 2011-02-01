@@ -250,7 +250,7 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (void)brokenPipe;
 
 // PTYTextView
-- (BOOL)hasKeyMappingForEvent: (NSEvent *)event;
+- (BOOL)hasActionableKeyMappingForEvent: (NSEvent *)event;
 - (void)keyDown:(NSEvent *)event;
 - (BOOL)willHandleEvent: (NSEvent *)theEvent;
 - (void)handleEvent: (NSEvent *)theEvent;

@@ -2420,6 +2420,12 @@ static float versionNumber;
         [valueToSend setHidden:NO];
         [[valueToSend cell] setPlaceholderString:@"characters to send"];
         [escPlus setHidden:NO];
+        [escPlus setStringValue:@"Esc+"];
+    } else if (tag == KEY_ACTION_DO_NOT_REMAP_MODIFIERS) {
+        [valueToSend setHidden:YES];
+        [valueToSend setStringValue:@""];
+        [escPlus setHidden:NO];
+        [escPlus setStringValue:@"Modifier remapping temporarily disabled."];
     } else {
         [valueToSend setHidden:YES];
         [valueToSend setStringValue:@""];
@@ -2649,6 +2655,11 @@ static float versionNumber;
     [dataSource addBookmark:newDict];
     [bookmarksTableView reloadData];
     [bookmarksTableView selectRowByGuid:[newDict objectForKey:KEY_GUID]];
+}
+
+- (BOOL)remappingDisabledTemporarily
+{
+    return [[self keySheet] isKeyWindow] && [self keySheetIsOpen] && [action selectedTag] == KEY_ACTION_DO_NOT_REMAP_MODIFIERS;
 }
 
 #pragma mark NSTokenField delegate

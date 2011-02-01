@@ -1233,7 +1233,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     // Should we process the event immediately in the delegate?
     if ((!prev) &&
-        ([delegate hasKeyMappingForEvent:event] ||
+        ([delegate hasActionableKeyMappingForEvent:event] ||
          (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)) ||
          ((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL) ||
          ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL) ||
