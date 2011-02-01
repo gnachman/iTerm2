@@ -2802,7 +2802,7 @@ NSString *sessionsKey = @"sessions";
     float charWidth = [self maxCharWidth:&width];
 
     NSRect aRect = [[self window] frame];
-    height = aRect.size.height / charHeight;
+    height = (aRect.size.height - VMARGIN * 2) / charHeight;
     width = (aRect.size.width - MARGIN * 2) / charWidth;
     int yoffset=0;
     if (![bottomBar isHidden]) {
@@ -2815,7 +2815,7 @@ NSString *sessionsKey = @"sessions";
     aRect = NSMakeRect(floor((aRect.size.width - width * charWidth - MARGIN * 2)/2),  // screen width minus one half character and a margin
                        yoffset,
                        width * charWidth + MARGIN * 2,                        // enough width for width col plus two margins
-                       charHeight * height);                                  // enough height for width rows
+                       charHeight * height + VMARGIN * 2);                    // enough height for width rows
     [TABVIEW setFrame:aRect];
     PtyLog(@"adjustFullScreenWindowForBottomBarChange - call fitTabsToWindow");
     [self fitTabsToWindow];
