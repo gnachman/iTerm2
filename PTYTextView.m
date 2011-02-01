@@ -452,8 +452,9 @@ static NSCursor* textViewCursor =  nil;
     return defaultCursorColor;
 }
 
-- (void)setColorTable:(int)theIndex color:(NSColor*)theColor
+- (void)setColorTable:(int)theIndex color:(NSColor*)origColor
 {
+    NSColor* theColor = [origColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
     [colorTable[theIndex] release];
     [theColor retain];
     colorTable[theIndex] = theColor;
