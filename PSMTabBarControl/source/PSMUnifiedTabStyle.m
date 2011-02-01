@@ -417,6 +417,19 @@
         }
     }
 
+    NSColor* tabColor = [cell tabColor];
+    if (tabColor) {
+        if ([cell state] == NSOnState) {
+            [[tabColor colorWithAlphaComponent:0.5] set];
+        } else {
+            [tabColor set];
+        }
+        NSRectFillUsingOperation(NSMakeRect(cellFrame.origin.x + 0.5,
+                                            cellFrame.origin.y + 0.5,
+                                            cellFrame.size.width,
+                                            cellFrame.size.height),
+                                 NSCompositeSourceOver);
+    }
     [self drawInteriorWithTabCell:cell inView:[cell controlView]];
 }
 
@@ -526,8 +539,15 @@
 
 - (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect
 {
+    PSMTabBarCell* activeCell = nil;
+    for (PSMTabBarCell *cell in [bar cells]) {
+        if ([cell state] == NSOnState) {
+            activeCell = cell;
+            break;
+        }
+    }
     tabBar = bar;
-    [self drawBackgroundInRect:rect color:nil];
+    [self drawBackgroundInRect:rect color:[activeCell tabColor]];
 
     // no tab view == not connected
     if(![bar tabView]){

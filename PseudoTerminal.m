@@ -182,14 +182,9 @@ NSString *sessionsKey = @"sessions";
     styleMask = NSTitledWindowMask |
         NSClosableWindowMask |
         NSMiniaturizableWindowMask |
-        NSResizableWindowMask;
+        NSResizableWindowMask |
+        NSTexturedBackgroundWindowMask;
 
-    // set the window style according to preference
-    if ([[PreferencePanel sharedInstance] windowStyle] == 0) {
-        styleMask |= NSTexturedBackgroundWindowMask;
-    } else if ([[PreferencePanel sharedInstance] windowStyle] == 2) {
-        styleMask |= NSUnifiedTitleAndToolbarWindowMask;
-    }
     NSRect initialFrame;
     if (fullScreen) {
         initialFrame = [fullScreen frame];
@@ -301,20 +296,7 @@ NSString *sessionsKey = @"sessions";
     [tabBarControl setHidden:_fullScreen];
 
     // set the style of tabs to match window style
-    switch ([[PreferencePanel sharedInstance] windowStyle]) {
-        case 0:
-            [tabBarControl setStyleNamed:@"Metal"];
-            break;
-        case 1:
-            [tabBarControl setStyleNamed:@"Aqua"];
-            break;
-        case 2:
-            [tabBarControl setStyleNamed:@"Unified"];
-            break;
-        default:
-            [tabBarControl setStyleNamed:@"Adium"];
-            break;
-    }
+    [self setTabBarStyle];
 
     [[[self window] contentView] setAutoresizesSubviews: YES];
     [[self window] setDelegate: self];
@@ -334,8 +316,26 @@ NSString *sessionsKey = @"sessions";
         [self hideMenuBar];
     }
     useTransparency_ = YES;
-    
+
     return self;
+}
+
+- (void)setTabBarStyle
+{
+    switch ([[PreferencePanel sharedInstance] windowStyle]) {
+        case 0:
+            [tabBarControl setStyleNamed:@"Metal"];
+            break;
+        case 1:
+            [tabBarControl setStyleNamed:@"Aqua"];
+            break;
+        case 2:
+            [tabBarControl setStyleNamed:@"Unified"];
+            break;
+        default:
+            [tabBarControl setStyleNamed:@"Adium"];
+            break;
+    }
 }
 
 - (id)commandField
@@ -1334,7 +1334,7 @@ NSString *sessionsKey = @"sessions";
         [[self window] setBackgroundColor: [NSColor highlightColor]];
         [background_ setColor:[NSColor highlightColor]];
     } else {
-        [[self window] setBackgroundColor:normalBackgroundColor];
+        [[self window] setBackgroundColor:nil];
         [background_ setColor:normalBackgroundColor];
     }
 }
@@ -2991,20 +2991,7 @@ NSString *sessionsKey = @"sessions";
     }
 
     // Update the tab style.
-    switch ([[PreferencePanel sharedInstance] windowStyle]) {
-        case 0:
-            [tabBarControl setStyleNamed:@"Metal"];
-            break;
-        case 1:
-            [tabBarControl setStyleNamed:@"Aqua"];
-            break;
-        case 2:
-            [tabBarControl setStyleNamed:@"Unified"];
-            break;
-        default:
-            [tabBarControl setStyleNamed:@"Adium"];
-            break;
-    }
+    [self setTabBarStyle];
 
     [tabBarControl setDisableTabClose:[[PreferencePanel sharedInstance] useCompactLabel]];
     if ([[PreferencePanel sharedInstance] useCompactLabel]) {
@@ -3503,7 +3490,7 @@ NSString *sessionsKey = @"sessions";
             [[self window] setBackgroundColor:tabColor];
             [background_ setColor:tabColor];
         } else {
-            [[self window] setBackgroundColor:normalBackgroundColor];
+            [[self window] setBackgroundColor:nil];
             [background_ setColor:normalBackgroundColor];
         }
     }

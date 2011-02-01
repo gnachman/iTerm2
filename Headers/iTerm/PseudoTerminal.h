@@ -207,6 +207,9 @@
 // accessor for commandField.
 - (id)commandField;
 
+// Set the tab bar's look & feel
+- (void)setTabBarStyle;
+
 // Make the tab at [sender tag] the foreground tab.
 - (void)selectSessionAtIndexAction:(id)sender;
 
