@@ -2,17 +2,17 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="7.10">
 	<data>
 		<int key="IBDocument.SystemTarget">1050</int>
-		<string key="IBDocument.SystemVersion">10D2063a</string>
-		<string key="IBDocument.InterfaceBuilderVersion">788</string>
-		<string key="IBDocument.AppKitVersion">1038.29</string>
-		<string key="IBDocument.HIToolboxVersion">460.00</string>
+		<string key="IBDocument.SystemVersion">10H574</string>
+		<string key="IBDocument.InterfaceBuilderVersion">804</string>
+		<string key="IBDocument.AppKitVersion">1038.35</string>
+		<string key="IBDocument.HIToolboxVersion">461.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
-			<string key="NS.object.0">788</string>
+			<string key="NS.object.0">804</string>
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="5"/>
+			<integer value="6"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -38,7 +38,7 @@
 				<int key="NSWindowBacking">2</int>
 				<string key="NSWindowRect">{{252, 573}, {735, 360}}</string>
 				<int key="NSWTFlags">1618477056</int>
-				<string key="NSWindowTitle">Bookmarks</string>
+				<string key="NSWindowTitle">Address Book</string>
 				<string key="NSWindowClass">NSPanel</string>
 				<object class="NSMutableString" key="NSViewClass">
 					<characters key="NS.bytes">View</characters>
@@ -60,13 +60,13 @@
 						<object class="NSButton" id="627943894">
 							<reference key="NSNextResponder" ref="944403435"/>
 							<int key="NSvFlags">292</int>
-							<string key="NSFrame">{{570, 49}, {151, 32}}</string>
+							<string key="NSFrame">{{562, 49}, {167, 32}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="898617995">
 								<int key="NSCellFlags">67239424</int>
 								<int key="NSCellFlags2">134217728</int>
-								<string key="NSContents">Edit Bookmarks...</string>
+								<string key="NSContents">Edit Address Book...</string>
 								<object class="NSFont" key="NSSupport" id="981454797">
 									<string key="NSName">LucidaGrande</string>
 									<double key="NSSize">13</double>
@@ -164,13 +164,13 @@
 						<object class="NSButton" id="705416951">
 							<reference key="NSNextResponder" ref="944403435"/>
 							<int key="NSvFlags">256</int>
-							<string key="NSFrame">{{19, 58}, {309, 18}}</string>
+							<string key="NSFrame">{{19, 58}, {375, 18}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="983321060">
 								<int key="NSCellFlags">-2080244224</int>
 								<int key="NSCellFlags2">0</int>
-								<string key="NSContents">Close this window after opening a bookmark.</string>
+								<string key="NSContents">Close this window after opening an address book entry.</string>
 								<reference key="NSSupport" ref="981454797"/>
 								<reference key="NSControlView" ref="705416951"/>
 								<int key="NSButtonFlags">1211912703</int>

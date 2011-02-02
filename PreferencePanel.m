@@ -2577,7 +2577,7 @@ static float versionNumber;
     } else {
         [newDict setValuesForKeysWithDictionary:[dataSource defaultBookmark]];
     }
-    [newDict setObject:@"New Bookmark" forKey:KEY_NAME];
+    [newDict setObject:@"New Address Book Entry" forKey:KEY_NAME];
     [newDict setObject:@"" forKey:KEY_SHORTCUT];
     NSString* guid = [BookmarkModel freshGuid];
     [newDict setObject:guid forKey:KEY_GUID];

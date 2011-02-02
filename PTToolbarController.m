@@ -32,7 +32,7 @@
 #import "BookmarksWindow.h"
 
 NSString *NewToolbarItem = @"New";
-NSString *BookmarksToolbarItem = @"Bookmarks";
+NSString *BookmarksToolbarItem = @"Address Book";
 NSString *CloseToolbarItem = @"Close";
 NSString *ConfigToolbarItem = @"Info";
 NSString *CommandToolbarItem = @"Command";
@@ -135,9 +135,9 @@ NSString *CommandToolbarItem = @"Command";
     }
     else if ([itemIdent isEqual: BookmarksToolbarItem])
     {
-        [toolbarItem setLabel: NSLocalizedStringFromTableInBundle(@"Bookmarks",@"iTerm", thisBundle, @"Toolbar Item: Bookmarks") ];
-        [toolbarItem setPaletteLabel: NSLocalizedStringFromTableInBundle(@"Bookmarks",@"iTerm", thisBundle, @"Toolbar Item: Bookmarks") ];
-        [toolbarItem setToolTip: NSLocalizedStringFromTableInBundle(@"Bookmarks",@"iTerm", thisBundle, @"Toolbar Item Tip: Bookmarks")];
+        [toolbarItem setLabel: NSLocalizedStringFromTableInBundle(@"Address Book",@"iTerm", thisBundle, @"Toolbar Item: Address Book") ];
+        [toolbarItem setPaletteLabel: NSLocalizedStringFromTableInBundle(@"Address Book",@"iTerm", thisBundle, @"Toolbar Item: Address Book") ];
+        [toolbarItem setToolTip: NSLocalizedStringFromTableInBundle(@"Address Book",@"iTerm", thisBundle, @"Toolbar Item Tip: Address Book")];
         imagePath = [thisBundle pathForResource:@"addressbook"
                                          ofType:@"png"];
         anImage = [[NSImage alloc] initByReferencingFile: imagePath];
