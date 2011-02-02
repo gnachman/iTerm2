@@ -534,8 +534,9 @@ static BOOL initDone = NO;
 {
     NSArray* tags = [[BookmarkModel sharedInstance] allTags];
     int count = 0;
-    for (int i = 0; i < [tags count]; ++i) {
-        [self _addBookmarksForTag:[tags objectAtIndex:i]
+    NSArray* sortedTags = [tags sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+    for (int i = 0; i < [sortedTags count]; ++i) {
+        [self _addBookmarksForTag:[sortedTags objectAtIndex:i]
                            toMenu:aMenu
                            target:aTarget
                     withShortcuts:withShortcuts
