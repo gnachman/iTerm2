@@ -428,6 +428,7 @@ static float versionNumber;
 
     bookmarksToolbarId = [bookmarksToolbarItem itemIdentifier];
     globalToolbarId = [globalToolbarItem itemIdentifier];
+    appearanceToolbarId = [appearanceToolbarItem itemIdentifier];
     keyboardToolbarId = [keyboardToolbarItem itemIdentifier];
     advancedToolbarId = [advancedToolbarItem itemIdentifier];
     [toolbar setSelectedItemIdentifier:globalToolbarId];
@@ -700,6 +701,8 @@ static float versionNumber;
     }
     if ([itemIdentifier isEqual:globalToolbarId]) {
         return globalToolbarItem;
+    } else if ([itemIdentifier isEqual:appearanceToolbarId]) {
+        return appearanceToolbarItem;
     } else if ([itemIdentifier isEqual:bookmarksToolbarId]) {
         return bookmarksToolbarItem;
     } else if ([itemIdentifier isEqual:keyboardToolbarId]) {
@@ -714,6 +717,7 @@ static float versionNumber;
 - (NSArray *)toolbarAllowedItemIdentifiers:(NSToolbar *)toolbar
 {
     return [NSArray arrayWithObjects:globalToolbarId,
+                                     appearanceToolbarId,
                                      bookmarksToolbarId,
                                      keyboardToolbarId,
                                      advancedToolbarId,
@@ -722,14 +726,15 @@ static float versionNumber;
 
 - (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar
 {
-    return [NSArray arrayWithObjects:globalToolbarId, bookmarksToolbarId, keyboardToolbarId, advancedToolbarId, nil];
+    return [NSArray arrayWithObjects:globalToolbarId, appearanceToolbarId, bookmarksToolbarId, keyboardToolbarId, advancedToolbarId, nil];
 }
 
 - (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar
 {
     // Optional delegate method: Returns the identifiers of the subset of
     // toolbar items that are selectable.
-    return [NSArray arrayWithObjects:globalToolbarId,
+    return [NSArray arrayWithObjects:globalToolbarId, 
+                                     appearanceToolbarId,
                                      bookmarksToolbarId,
                                      keyboardToolbarId,
                                      advancedToolbarId,
@@ -786,7 +791,6 @@ static float versionNumber;
     defaultWindowNumber = [prefs objectForKey:@"WindowNumber"]?[[prefs objectForKey:@"WindowNumber"] boolValue]: YES;
     defaultJobName = [prefs objectForKey:@"JobName"]?[[prefs objectForKey:@"JobName"] boolValue]: NO;
     defaultShowBookmarkName = [prefs objectForKey:@"ShowBookmarkName"]?[[prefs objectForKey:@"ShowBookmarkName"] boolValue] : NO;
-    defaultInstantReplay = [prefs objectForKey:@"InstantReplay"]?[[prefs objectForKey:@"InstantReplay"] boolValue]: YES;
     defaultHotkey = [prefs objectForKey:@"Hotkey"]?[[prefs objectForKey:@"Hotkey"] boolValue]: NO;
     defaultHotkeyCode = [prefs objectForKey:@"HotkeyCode"]?[[prefs objectForKey:@"HotkeyCode"] intValue]: 0;
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
@@ -908,7 +912,6 @@ static float versionNumber;
     [prefs setBool:defaultWindowNumber forKey:@"WindowNumber"];
     [prefs setBool:defaultJobName forKey:@"JobName"];
     [prefs setBool:defaultShowBookmarkName forKey:@"ShowBookmarkName"];
-    [prefs setBool:defaultInstantReplay forKey:@"InstantReplay"];
     [prefs setBool:defaultHotkey forKey:@"Hotkey"];
     [prefs setInteger:defaultHotkeyCode forKey:@"HotkeyCode"];
     [prefs setInteger:defaultHotkeyChar forKey:@"HotkeyChar"];
@@ -980,7 +983,6 @@ static float versionNumber;
     [windowNumber setState: defaultWindowNumber?NSOnState:NSOffState];
     [jobName setState: defaultJobName?NSOnState:NSOffState];
     [showBookmarkName setState: defaultShowBookmarkName?NSOnState:NSOffState];
-    [instantReplay setState: defaultInstantReplay?NSOnState:NSOffState];
     [savePasteHistory setState: defaultSavePasteHistory?NSOnState:NSOffState];
     [openArrangementAtStartup setState:defaultOpenArrangementAtStartup ? NSOnState : NSOffState];
     [openArrangementAtStartup setEnabled:[[iTermController sharedInstance] hasWindowArrangement]];
@@ -1154,7 +1156,6 @@ static float versionNumber;
         defaultQuitWhenAllWindowsClosed = ([quitWhenAllWindowsClosed state] == NSOnState);
         defaultCheckUpdate = ([checkUpdate state] == NSOnState);
         defaultSmartPlacement = ([smartPlacement state] == NSOnState);
-        defaultInstantReplay = ([instantReplay state] == NSOnState);
         defaultSavePasteHistory = ([savePasteHistory state] == NSOnState);
         if (!defaultSavePasteHistory) {
             [[PasteboardHistory sharedInstance] eraseHistory];
@@ -1378,7 +1379,7 @@ static float versionNumber;
 
 - (BOOL)instantReplay
 {
-    return defaultInstantReplay;
+    return YES;
 }
 
 - (BOOL)savePasteHistory
@@ -2216,6 +2217,11 @@ static float versionNumber;
 - (IBAction)showGlobalTabView:(id)sender
 {
     [tabView selectTabViewItem:globalTabViewItem];
+}
+
+- (IBAction)showAppearanceTabView:(id)sender
+{
+    [tabView selectTabViewItem:appearanceTabViewItem];
 }
 
 - (IBAction)showBookmarksTabView:(id)sender
