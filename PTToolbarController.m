@@ -254,8 +254,6 @@ NSString *CommandToolbarItem = @"Command";
                                          openAllSelector:@selector(newSessionsInWindow:)
                                        alternateSelector:nil];
 
-    [aMenu addItem: [NSMenuItem separatorItem]];
-
     [aPopUpButton setMenu: aMenu];
     [aMenu release];
 
@@ -288,8 +286,6 @@ NSString *CommandToolbarItem = @"Command";
                                                 selector:@selector(newSessionInTabAtIndex:) 
                                          openAllSelector:@selector(newSessionsInWindow:)
                                        alternateSelector:nil];
-
-    [aMenu addItem: [NSMenuItem separatorItem]];
     [item setSubmenu: aMenu];
     [aMenu release];
 

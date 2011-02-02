@@ -435,21 +435,23 @@ static BOOL initDone = NO;
     }
 }
 
-- (void)_addBookmarksForTag:(NSString*)tag toMenu:(NSMenu*)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts selector:(SEL)selector alternateSelector:(SEL)alternateSelector
+- (void)_addBookmarksForTag:(NSString*)tag toMenu:(NSMenu*)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts selector:(SEL)selector alternateSelector:(SEL)alternateSelector openAllSelector:(SEL)openAllSelector
 {
     NSMenuItem* aMenuItem = [[[NSMenuItem alloc] initWithTitle:tag action:@selector(noAction:) keyEquivalent:@""] autorelease];
     NSMenu* subMenu = [[[NSMenu alloc] init] autorelease];
+    int count = 0;
     for (int i = 0; i < [[BookmarkModel sharedInstance] numberOfBookmarks]; ++i) {
         Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkAtIndex:i];
         NSArray* tags = [bookmark objectForKey:KEY_TAGS];
         for (int j = 0; j < [tags count]; ++j) {
             if ([tag localizedCaseInsensitiveCompare:[tags objectAtIndex:j]] == NSOrderedSame) {
-                    [self _addBookmark:bookmark
-                                toMenu:subMenu
-                                target:aTarget
-                         withShortcuts:withShortcuts
-                              selector:selector
-                     alternateSelector:alternateSelector];
+                ++count;
+                [self _addBookmark:bookmark
+                            toMenu:subMenu
+                            target:aTarget
+                     withShortcuts:withShortcuts
+                          selector:selector
+                 alternateSelector:alternateSelector];
                 break;
             }
         }
@@ -457,11 +459,32 @@ static BOOL initDone = NO;
     [aMenuItem setSubmenu:subMenu];
     [aMenuItem setTarget:self];
     [aMenu addItem:aMenuItem];
+
+    if (openAllSelector && count > 1) {
+        [subMenu addItem:[NSMenuItem separatorItem]];
+        aMenuItem = [[[NSMenuItem alloc] initWithTitle:
+                      NSLocalizedStringFromTableInBundle(@"Open All",
+                                                         @"iTerm",
+                                                         [NSBundle bundleForClass: [iTermController class]],
+                                                         @"Context Menu")
+                                                action:openAllSelector
+                                         keyEquivalent:@""] autorelease];
+        unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
+        [aMenuItem setKeyEquivalentModifierMask:modifierMask];
+        [aMenuItem setRepresentedObject:subMenu];
+        if ([self respondsToSelector:openAllSelector]) {
+            [aMenuItem setTarget:self];
+        } else {
+            assert([aTarget respondsToSelector:openAllSelector]);
+            [aMenuItem setTarget:aTarget];
+        }
+        [subMenu addItem:aMenuItem];
+        aMenuItem = [[aMenuItem copy] autorelease];
+    }
 }
 
-- (void)newSessionsInManyWindows:(id)sender
+- (void)_newSessionsInManyWindowsInMenu:(NSMenu*)parent
 {
-    NSMenu* parent = [sender representedObject];
     for (NSMenuItem* item in [parent itemArray]) {
         if (![item isSeparatorItem] && ![item submenu]) {
             NSString* guid = [item representedObject];
@@ -469,14 +492,20 @@ static BOOL initDone = NO;
             if (bookmark) {
                 [self launchBookmark:bookmark inTerminal:nil];
             }
+        } else if (![item isSeparatorItem] && [item submenu]) {
+            [self _newSessionsInManyWindowsInMenu:[item submenu]];
         }
     }
 }
 
-- (void)newSessionsInWindow:(id)sender
+- (void)newSessionsInManyWindows:(id)sender
+{
+    [self _newSessionsInManyWindowsInMenu:[sender representedObject]];
+}
+
+- (void)_openNewSessionsInWindow:(NSMenu*)parent
 {
     PseudoTerminal* term = [self currentTerminal];
-    NSMenu* parent = [sender representedObject];
     for (NSMenuItem* item in [parent itemArray]) {
         if (![item isSeparatorItem] && ![item submenu] && ![item isAlternate]) {
             NSString* guid = [item representedObject];
@@ -489,8 +518,16 @@ static BOOL initDone = NO;
                     [self launchBookmark:bookmark inTerminal:term];
                 }
             }
+        } else if (![item isSeparatorItem] && [item submenu] && ![item isAlternate]) {
+            NSMenu* sub = [item submenu];
+            [self _openNewSessionsInWindow:sub];
         }
     }
+}
+
+- (void)newSessionsInWindow:(id)sender
+{
+    [self _openNewSessionsInWindow:[sender representedObject]];
 }
 
 - (void)addBookmarksToMenu:(NSMenu *)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts selector:(SEL)selector openAllSelector:(SEL)openAllSelector alternateSelector:(SEL)alternateSelector
@@ -503,7 +540,8 @@ static BOOL initDone = NO;
                            target:aTarget
                     withShortcuts:withShortcuts
                          selector:selector
-                alternateSelector:alternateSelector];
+                alternateSelector:alternateSelector
+                  openAllSelector:openAllSelector];
         ++count;
     }
     for (int i = 0; i < [[BookmarkModel sharedInstance] numberOfBookmarks]; ++i) {

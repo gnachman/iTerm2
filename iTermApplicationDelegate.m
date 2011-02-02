@@ -366,8 +366,6 @@ int gDebugLogFile = -1;
                                          openAllSelector:openAllSelector 
                                        alternateSelector:nil];
     [newMenuItem setSubmenu:bookmarksMenu];
-
-    [bookmarksMenu addItem:[NSMenuItem separatorItem]];
 }
 
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender
