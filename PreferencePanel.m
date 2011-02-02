@@ -1803,6 +1803,7 @@ static float versionNumber;
     [columnsField setStringValue:[NSString stringWithFormat:@"%d", cols]];
     int rows = [[dict objectForKey:KEY_ROWS] intValue];
     [rowsField setStringValue:[NSString stringWithFormat:@"%d", rows]];
+    [fullScreenButton setState:[dict objectForKey:KEY_FULLSCREEN] ? [[dict objectForKey:KEY_FULLSCREEN] boolValue] : NO];
 
     [normalFontField setStringValue:[[ITAddressBookMgr fontWithDesc:[dict objectForKey:KEY_NORMAL_FONT]] displayName]];
     if (normalFont) {
@@ -2069,6 +2070,7 @@ static float versionNumber;
     if (rows > 0) {
         [newDict setObject:[NSNumber numberWithInt:rows] forKey:KEY_ROWS];
     }
+    [newDict setObject:[NSNumber numberWithBool:[fullScreenButton state]==NSOnState] forKey:KEY_FULLSCREEN];
 
     [newDict setObject:[ITAddressBookMgr descFromFont:normalFont] forKey:KEY_NORMAL_FONT];
     [newDict setObject:[ITAddressBookMgr descFromFont:nonAsciiFont] forKey:KEY_NON_ASCII_FONT];

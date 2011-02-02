@@ -88,6 +88,7 @@
 // Display
 #define KEY_ROWS                   @"Rows"
 #define KEY_COLUMNS                @"Columns"
+#define KEY_FULLSCREEN             @"Full Screen"
 #define KEY_NORMAL_FONT            @"Normal Font"
 #define KEY_NON_ASCII_FONT         @"Non Ascii Font"
 #define KEY_HORIZONTAL_SPACING     @"Horizontal Spacing"

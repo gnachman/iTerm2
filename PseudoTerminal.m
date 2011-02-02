@@ -1054,7 +1054,7 @@ NSString *sessionsKey = @"sessions";
     pbbfValid = NO;
     PseudoTerminal *newTerminal;
     if (!_fullScreen) {
-        NSScreen *currentScreen = [[[[iTermController sharedInstance] currentTerminal] window]screen];
+        NSScreen *currentScreen = [[[[iTermController sharedInstance] currentTerminal] window] screen];
         newTerminal = [[PseudoTerminal alloc] initWithSmartLayout:NO fullScreen:currentScreen];
         newTerminal->oldFrame_ = [[self window] frame];
         newTerminal->useTransparency_ = NO;
@@ -3871,6 +3871,14 @@ NSString *sessionsKey = @"sessions";
         [aSession runCommandWithOldCwd:oldCWD];
         if ([[[self window] title] compare:@"Window"] == NSOrderedSame) {
             [self setWindowTitle];
+        }
+    }
+
+    if ([self numberOfTabs] == 1) {
+        if ([addressbookEntry objectForKey:KEY_FULLSCREEN]
+            && [[addressbookEntry objectForKey:KEY_FULLSCREEN] boolValue]) {
+            PtyLog(@"Opening bookmark in fullscreen mode.");
+            [self toggleFullScreen:nil];
         }
     }
 

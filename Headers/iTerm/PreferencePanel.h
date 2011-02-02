@@ -299,7 +299,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSSlider *displayFontSpacingWidth;
     IBOutlet NSSlider *displayFontSpacingHeight;
     IBOutlet NSTextField *columnsField;
+    IBOutlet NSTextField *columnsLabel;
+    IBOutlet NSTextField *rowsLabel;
     IBOutlet NSTextField *rowsField;
+    IBOutlet NSButton *fullScreenButton;
     IBOutlet NSTextField *normalFontField;
     IBOutlet NSTextField *nonAsciiFontField;
 
