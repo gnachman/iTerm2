@@ -177,6 +177,13 @@ static float versionNumber;
     [bookmarkCommand setHidden:YES];
     [bookmarkDirectoryType setHidden:YES];
     [bookmarkDirectory setHidden:YES];
+    [columnsLabel setHidden:YES];
+    [rowsLabel setHidden:YES];
+    [columnsField setHidden:YES];
+    [rowsField setHidden:YES];
+    [windowTypeButton setHidden:YES];
+    [windowTypeLabel setHidden:YES];
+    [newWindowttributesHeader setHidden:YES];
 
     NSRect newFrame = [bookmarksSettingsTabViewParent frame];
     newFrame.origin.x = 0;
@@ -2838,6 +2845,7 @@ static float versionNumber;
         KEY_HORIZONTAL_SPACING,
         KEY_VERTICAL_SPACING,
         KEY_BLINKING_CURSOR,
+        KEY_WINDOW_TYPE,
         KEY_USE_BOLD_FONT,
         KEY_USE_BRIGHT_BOLD,
         KEY_TRANSPARENCY,

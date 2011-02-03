@@ -311,9 +311,11 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTextField *columnsLabel;
     IBOutlet NSTextField *rowsLabel;
     IBOutlet NSTextField *rowsField;
+    IBOutlet NSTextField* windowTypeLabel;
     IBOutlet NSPopUpButton* windowTypeButton;
     IBOutlet NSTextField *normalFontField;
     IBOutlet NSTextField *nonAsciiFontField;
+    IBOutlet NSTextField *newWindowttributesHeader;
 
     IBOutlet NSButton* blinkingCursor;
     IBOutlet NSButton* useBoldFont;

@@ -196,9 +196,8 @@ NSString *sessionsKey = @"sessions";
     switch (windowType) {
         case WINDOW_TYPE_TOP:
             initialFrame = [[NSScreen mainScreen] visibleFrame];
-            initialFrame.origin.x = 0;
             break;
-            
+
         case WINDOW_TYPE_FULL_SCREEN:
             initialFrame = [fullScreen frame];
             break;
@@ -232,7 +231,9 @@ NSString *sessionsKey = @"sessions";
     } else {
         background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor windowBackgroundColor]];
     }
-    [[self window] setAlphaValue:0.9999];  // Why is this not 1.0?
+    [[self window] setAlphaValue:1];
+    [[self window] setOpaque:NO];
+
     normalBackgroundColor = [background_ color];
 
 #if DEBUG_ALLOC
@@ -408,6 +409,11 @@ NSString *sessionsKey = @"sessions";
     } else {
         [aSession terminate];
     }
+}
+
+- (int)windowType
+{
+    return windowType_;
 }
 
 - (void)closeTab:(PTYTab*)aTab
@@ -1110,6 +1116,7 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"toggleFullScreen - set new frame to old frame: %fx%f", oldFrame_.size.width, oldFrame_.size.height);
         [[newTerminal window] setFrame:oldFrame_ display:YES];
     }
+    [newTerminal setIsHotKeyWindow:isHotKeyWindow_];
 
     _fullScreen = !_fullScreen;
     togglingFullScreen_ = true;
@@ -2681,6 +2688,11 @@ NSString *sessionsKey = @"sessions";
 - (void)setIsHotKeyWindow:(BOOL)value
 {
     isHotKeyWindow_ = value;
+    if (value) {
+        [[self window] setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
+    } else {
+        [[self window] setCollectionBehavior:NSWindowCollectionBehaviorDefault];
+    }
 }
 
 @end

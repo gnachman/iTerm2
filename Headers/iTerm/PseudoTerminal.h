@@ -228,6 +228,9 @@
 // Close a tab and resize/close the window if needed.
 - (void)closeTab:(PTYTab*)aTab;
 
+// Get the window type
+- (int)windowType;
+
 // Close a session (TODO: currently just closes the tab the session is in).
 - (void)closeSession:(PTYSession *)aSession;
 

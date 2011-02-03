@@ -776,10 +776,27 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 {
     NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
     NSRect rect = [[term window] frame];
-    rect.origin.y = screenFrame.origin.y + screenFrame.size.height - rect.size.height;
-    rect.size = [[term window] frame].size;
     [[term window] makeKeyAndOrderFront:nil];
-    [[[term window] animator] setFrame:rect display:YES];
+    switch ([term windowType]) {
+        case WINDOW_TYPE_NORMAL:
+            rect.origin.x = -rect.size.width;
+            rect.origin.y = -rect.size.height;
+            [[term window] setFrame:rect display:NO];
+
+            rect.origin.x = (screenFrame.size.width - rect.size.width) / 2;
+            rect.origin.y = screenFrame.origin.y + (screenFrame.size.height - rect.size.height) / 2;
+            [[[term window] animator] setFrame:rect display:YES];
+            break;
+
+        case WINDOW_TYPE_TOP:
+            rect.origin.y = screenFrame.origin.y + screenFrame.size.height - rect.size.height;
+            [[[term window] animator] setFrame:rect display:YES];
+            break;
+
+        case WINDOW_TYPE_FULL_SCREEN:
+            [[[term window] animator] setAlphaValue:1];
+            break;
+    }
 }
 
 static void OpenHotkeyWindow()
@@ -790,13 +807,21 @@ static void OpenHotkeyWindow()
         PTYSession* session = [cont launchBookmark:bookmark inTerminal:nil];
         PseudoTerminal* term = [[session tab] realParentWindow];
         [term setIsHotKeyWindow:YES];
-        
-        // place it above the screen so it can be rolled in.
-        NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
-        NSRect rect = [[term window] frame];
-        rect.origin.y = screenFrame.origin.y + screenFrame.size.height + rect.size.height;
-        [[term window] setFrame:rect display:YES];
-        
+
+        if ([term windowType] == WINDOW_TYPE_FULL_SCREEN) {
+            [[term window] setAlphaValue:0];
+        } else {
+            // place it above the screen so it can be rolled in.
+            NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
+            NSRect rect = [[term window] frame];
+            if ([term windowType] == WINDOW_TYPE_TOP) {
+                rect.origin.y = screenFrame.origin.y + screenFrame.size.height + rect.size.height;
+            } else {
+                rect.origin.y = -rect.size.height;
+                rect.origin.x = -rect.size.width;
+            }
+            [[term window] setFrame:rect display:YES];
+        }
         RollInHotkeyTerm(term);
     }
 }
@@ -817,8 +842,23 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL showOtherWindows)
 {
     NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
     NSRect rect = [[term window] frame];
-    rect.origin.y = screenFrame.origin.y + screenFrame.size.height + rect.size.height;
-    [[[term window] animator] setFrame:rect display:YES];
+    switch ([term windowType]) {
+        case WINDOW_TYPE_NORMAL:
+            rect.origin.x = -rect.size.width;
+            rect.origin.y = -rect.size.height;
+            [[[term window] animator] setFrame:rect display:YES];
+            break;
+
+        case WINDOW_TYPE_TOP:
+            rect.origin.y = screenFrame.size.height;
+            [[[term window] animator] setFrame:rect display:YES];
+            break;
+
+        case WINDOW_TYPE_FULL_SCREEN:
+            [[[term window] animator] setAlphaValue:0];
+            break;
+    }
+
     [[term window] performSelector:@selector(orderOut:)
                         withObject:nil
                         afterDelay:[[NSAnimationContext currentContext] duration]]; 
@@ -826,8 +866,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL showOtherWindows)
         [[iTermController sharedInstance] performSelector:@selector(showOtherWindows:)
                                                withObject:term
                                                afterDelay:[[NSAnimationContext currentContext] duration]]; 
-    }        
-    // [[hotkeyTerm window] orderOut:nil];
+    }
 }
 
 void OnHotKeyEvent(void)
