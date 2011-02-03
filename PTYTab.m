@@ -536,7 +536,9 @@ static NSString* FormatRect(NSRect r) {
         } else {
             SessionView* sessionView = (SessionView*)subview;
             PTYSession* session = [sessionView session];
-            [sessions addObject:session];
+            if (session) {
+                [sessions addObject:session];
+            }
         }
     }
     return sessions;

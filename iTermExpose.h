@@ -36,6 +36,7 @@
 
 + (NSString*)labelForTab:(PTYTab*)aTab windowNumber:(int)i tabNumber:(int)j;
 + (void)toggle;
++ (void)exitIfActive;
 + (iTermExpose*)sharedInstance;
 - (void)showWindows:(BOOL)fade;
 - (NSWindow*)window;

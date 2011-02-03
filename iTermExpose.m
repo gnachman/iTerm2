@@ -1122,6 +1122,13 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     }
 }
 
++ (void)exitIfActive
+{
+    if ([iTermExpose sharedInstance]->window_) {
+        [[iTermExpose sharedInstance] _toggleOff];
+    }
+}
+
 - (id)init
 {
     self = [super init];
@@ -1183,12 +1190,11 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     iTermController* controller = [iTermController sharedInstance];
     for (int i = 0; i < [controller numberOfTerminals]; i++) {
         PseudoTerminal* term = [controller terminalAtIndex:i];
-        // TODO: this 0.9999 comes from PseudoTerminal. I don't know why it doesn't use 1. I should try using 1, it might be faster.
         if ([[term window] alphaValue] == 0) {
             if (fade) {
-                [[[term window] animator] setAlphaValue:0.9999];
+                [[[term window] animator] setAlphaValue:1];
             } else {
-                [[term window] setAlphaValue:0.9999];
+                [[term window] setAlphaValue:1];
             }
         }
     }

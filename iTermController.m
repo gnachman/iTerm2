@@ -47,6 +47,7 @@
 #import "PTYTab.h"
 #import "iTermKeyBindingMgr.h"
 #import "iTerm/PseudoTerminal.h"
+#import "iTermExpose.h"
 
 @interface NSApplication (Undocumented)
 - (void)_cycleWindowsReversed:(BOOL)back;
@@ -365,6 +366,8 @@ static BOOL initDone = NO;
 
 - (void)arrangeHorizontally
 {
+    [iTermExpose exitIfActive];
+    
     // Un-full-screen each window. This is done in two steps because
     // toggleFullScreen deallocs self.
     for (PseudoTerminal* t in terminalWindows) {
