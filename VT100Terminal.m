@@ -1636,9 +1636,9 @@ static VT100TCC decode_string(unsigned char *datap,
     bold = blink = reversed = under = NO;
     saveBold = saveBlink = saveReversed = saveUnder = NO;
     FG_COLORCODE = ALTSEM_FG_DEFAULT;
-    alternateForegroundSemantics = NO;
+    alternateForegroundSemantics = YES;
     BG_COLORCODE = ALTSEM_BG_DEFAULT;
-    alternateBackgroundSemantics = NO;
+    alternateBackgroundSemantics = YES;
     MOUSE_MODE = MOUSE_REPORTING_NONE;
 
     TRACE = NO;

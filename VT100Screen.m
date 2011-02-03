@@ -2101,6 +2101,8 @@ static void DumpBuf(screen_char_t* p, int n) {
         return;
     }
 
+    aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
+    aLine = aDefaultLine;
     // make the current line the first line and clear everything else
     for (i = cursorY - 1; i >= 0; i--) {
         aLine = [self getLineAtScreenIndex:i];
@@ -2118,7 +2120,6 @@ static void DumpBuf(screen_char_t* p, int n) {
     }
 
     [self setCursorX:cursorX Y:j - 1];
-    aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
     for (i = j; i < HEIGHT; i++) {
         aLine = [self getLineAtScreenIndex:i];
         memcpy(aLine, aDefaultLine, REAL_WIDTH*sizeof(screen_char_t));
