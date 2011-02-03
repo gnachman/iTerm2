@@ -958,11 +958,12 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         return NULL;
     }
 
+    NSEvent* cocoaEvent;
     BOOL callDirectly = NO;
     if ([NSApp isActive]) {
         // Remap modifier keys only while iTerm2 is active; otherwise you could just use the
         // OS's remap feature.
-        NSEvent* cocoaEvent = [NSEvent eventWithCGEvent:event];
+        cocoaEvent = [NSEvent eventWithCGEvent:event];
         NSString* unmodkeystr = [cocoaEvent charactersIgnoringModifiers];
         unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
         unsigned int modflag = [cocoaEvent modifierFlags];
@@ -978,12 +979,30 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
             (!tempDisabled && isDoNotRemap && keySheetOpen)) {  // about to change dnr to non-dnr
             [iTermKeyBindingMgr remapModifiersInCGEvent:event
                                               prefPanel:prefPanel];
+            cocoaEvent = [NSEvent eventWithCGEvent:event];
         }
         if (tempDisabled && !isDoNotRemap) {
             callDirectly = YES;
         }
+    } else {
+        // Update cocoaEvent with a remapped modifier (if it appropriate to do
+        // so). This has an effect only if the remapped key is the hotkey.
+        CGEventRef eventCopy = CGEventCreateCopy(event);
+        NSString* unmodkeystr = [cocoaEvent charactersIgnoringModifiers];
+        unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+        unsigned int modflag = [cocoaEvent modifierFlags];
+        NSString *keyBindingText;
+        BOOL isDoNotRemap = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
+                                                       modifiers:modflag
+                                                            text:&keyBindingText
+                                                     keyMappings:nil] == KEY_ACTION_DO_NOT_REMAP_MODIFIERS;
+        if (!isDoNotRemap) {
+            [iTermKeyBindingMgr remapModifiersInCGEvent:eventCopy
+                                              prefPanel:[PreferencePanel sharedInstance]];
+        }
+        cocoaEvent = [NSEvent eventWithCGEvent:eventCopy];
+        CFRelease(eventCopy);
     }
-    NSEvent* cocoaEvent = [NSEvent eventWithCGEvent:event];
     if ([cont eventIsHotkey:cocoaEvent]) {
         OnHotKeyEvent();
         return NULL;
