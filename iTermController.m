@@ -46,6 +46,7 @@
 #import "UKCrashReporter/UKCrashReporter.h"
 #import "PTYTab.h"
 #import "iTermKeyBindingMgr.h"
+#import "iTerm/PseudoTerminal.h"
 
 @interface NSApplication (Undocumented)
 - (void)_cycleWindowsReversed:(BOOL)back;
@@ -208,7 +209,9 @@ static BOOL initDone = NO;
 {
     NSMutableArray* terminalArrangements = [NSMutableArray arrayWithCapacity:[terminalWindows count]];
     for (PseudoTerminal* terminal in terminalWindows) {
-        [terminalArrangements addObject:[terminal arrangement]];
+        if (![terminal isHotKeyWindow]) {
+            [terminalArrangements addObject:[terminal arrangement]];
+        }
     }
     NSMutableDictionary* arrangements = [NSMutableDictionary dictionaryWithObject:terminalArrangements
                                                                            forKey:DEFAULT_ARRANGEMENT_NAME];
@@ -605,7 +608,9 @@ static BOOL initDone = NO;
 
     // Where do we execute this command?
     if (theTerm == nil) {
-        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES fullScreen:nil] autorelease];
+        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES 
+                                                 windowType:[aDict objectForKey:KEY_WINDOW_TYPE] ? [[aDict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL
+                                                 fullScreen:nil] autorelease];
         [self addInTerminals:term];
     } else {
         term = theTerm;
@@ -641,7 +646,9 @@ static BOOL initDone = NO;
 
     // Where do we execute this command?
     if (theTerm == nil) {
-        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES fullScreen:nil] autorelease];
+        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES 
+                                                 windowType:[aDict objectForKey:KEY_WINDOW_TYPE] ? [[aDict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL
+                                                 fullScreen:nil] autorelease];
         [self addInTerminals:term];
     } else {
         term = theTerm;
@@ -700,7 +707,9 @@ static BOOL initDone = NO;
 
     // Where do we execute this command?
     if (theTerm == nil) {
-        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES fullScreen:nil] autorelease];
+        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                 windowType:[aDict objectForKey:KEY_WINDOW_TYPE] ? [[aDict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL
+                                                 fullScreen:nil] autorelease];
         [self addInTerminals: term];
     } else {
         term = theTerm;
@@ -751,10 +760,108 @@ static BOOL initDone = NO;
     return [terminalWindows objectAtIndex:i];
 }
 
+static PseudoTerminal* GetHotkeyWindow()
+{
+    iTermController* cont = [iTermController sharedInstance];
+    NSArray* terminals = [cont terminals];
+    for (PseudoTerminal* term in terminals) {
+        if ([term isHotKeyWindow]) {
+            return term;
+        }
+    }
+    return nil;
+}
+
+static void RollInHotkeyTerm(PseudoTerminal* term)
+{
+    NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
+    NSRect rect = [[term window] frame];
+    rect.origin.y = screenFrame.origin.y + screenFrame.size.height - rect.size.height;
+    rect.size = [[term window] frame].size;
+    [[term window] makeKeyAndOrderFront:nil];
+    [[[term window] animator] setFrame:rect display:YES];
+}
+
+static void OpenHotkeyWindow()
+{
+    iTermController* cont = [iTermController sharedInstance];
+    Bookmark* bookmark = [[PreferencePanel sharedInstance] hotkeyBookmark];
+    if (bookmark) {
+        PTYSession* session = [cont launchBookmark:bookmark inTerminal:nil];
+        PseudoTerminal* term = [[session tab] realParentWindow];
+        [term setIsHotKeyWindow:YES];
+        
+        // place it above the screen so it can be rolled in.
+        NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
+        NSRect rect = [[term window] frame];
+        rect.origin.y = screenFrame.origin.y + screenFrame.size.height + rect.size.height;
+        [[term window] setFrame:rect display:YES];
+        
+        RollInHotkeyTerm(term);
+    }
+}
+
+- (void)showOtherWindows:(PseudoTerminal*)hotkeyTerm
+{
+    NSLog(@"Hide app from selector.");
+    // Only hotkey window was visible.
+    [NSApp hide:nil];
+    for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
+        if (term != hotkeyTerm) {
+            [[term window] makeKeyAndOrderFront:nil];
+        }
+    }  
+}
+
+static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL showOtherWindows)
+{
+    NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
+    NSRect rect = [[term window] frame];
+    rect.origin.y = screenFrame.origin.y + screenFrame.size.height + rect.size.height;
+    [[[term window] animator] setFrame:rect display:YES];
+    [[term window] performSelector:@selector(orderOut:)
+                        withObject:nil
+                        afterDelay:[[NSAnimationContext currentContext] duration]]; 
+    if (showOtherWindows) {
+        [[iTermController sharedInstance] performSelector:@selector(showOtherWindows:)
+                                               withObject:term
+                                               afterDelay:[[NSAnimationContext currentContext] duration]]; 
+    }        
+    // [[hotkeyTerm window] orderOut:nil];
+}
+
 void OnHotKeyEvent(void)
 {
-    if ([NSApp isActive]) {
-        PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
+    PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
+    if ([prefPanel hotkeyTogglesWindow]) {
+        PseudoTerminal* hotkeyTerm = GetHotkeyWindow();
+        if (hotkeyTerm) {
+            if ([[hotkeyTerm window] isKeyWindow]) {
+                BOOL isAnyNonHotWindowVisible = NO;
+                for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
+                    if (term != hotkeyTerm) {
+                        if ([[term window] isVisible]) {
+                            isAnyNonHotWindowVisible = YES;
+                            break;
+                        }
+                    }
+                }        
+                RollOutHotkeyTerm(hotkeyTerm, !isAnyNonHotWindowVisible);
+            } else {
+                for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
+                    if (![NSApp isActive]) {
+                        if (term != hotkeyTerm) {
+                            [[term window] orderOut:nil];
+                        }
+                    }
+                }
+                [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+                RollInHotkeyTerm(hotkeyTerm);
+            }
+        } else {
+            OpenHotkeyWindow();
+        }
+    } else if ([NSApp isActive]) {
         NSWindow* prefWindow = [prefPanel window];
         NSWindow* appKeyWindow = [[NSApplication sharedApplication] keyWindow];
         if (prefWindow != appKeyWindow ||
@@ -1016,7 +1123,7 @@ NSString *terminalsKey = @"terminals";
     [terminalWindows insertObject:object atIndex:theIndex];
     [self updateWindowTitles];
     if (![object isInitialized]) {
-        [object initWithSmartLayout:YES fullScreen:nil];
+        [object initWithSmartLayout:YES windowType:WINDOW_TYPE_NORMAL fullScreen:nil];
     }
 }
 

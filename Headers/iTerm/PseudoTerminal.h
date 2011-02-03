@@ -190,15 +190,20 @@
     int nextSessionColumns_;
 
     BOOL tempDisableProgressIndicators_;
+    
+    int windowType_;
+    BOOL isHotKeyWindow_;
 }
 
 // Initialize a new PseudoTerminal.
 // smartLayout: If true then position windows using the "smart layout"
 //   algorithm.
+// windowType: WINDOW_TYPE_NORMAL, WINDOW_TYPE_FULL_SCREEN, or WINDOW_TYPE_TOP.
 // fullScreen: If nil, then a normal window is opened. If not nil, it gives the
 //   size of the screen and a full screen window is opened with those
-//   dimensions.
+//   dimensions. Must be nonnil if windowType is WINDOW_TYPE_FULL_SCREEN
 - (id)initWithSmartLayout:(BOOL)smartLayout
+               windowType:(int)windowType
                fullScreen:(NSScreen*)fullScreen;
 
 // Called on object deallocation.
@@ -561,6 +566,11 @@
 - (void)getSessionParameters:(NSMutableString *)command withName:(NSMutableString *)name;
 
 - (NSArray*)tabs;
+
+// Up to one window may be the hotkey window, which is toggled with the system-wide
+// hotkey.
+- (BOOL)isHotKeyWindow;
+- (void)setIsHotKeyWindow:(BOOL)value;
 
 @end
 

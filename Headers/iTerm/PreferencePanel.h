@@ -108,6 +108,12 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTextField *wordChars;
     NSString *defaultWordChars;
 
+    // Hotkey opens dedicated window
+    IBOutlet NSButton* hotkeyTogglesWindow;
+    BOOL defaultHotkeyTogglesWindow;
+    IBOutlet NSPopUpButton* hotkeyBookmark;
+    NSString* defaultHotKeyBookmarkGuid;
+    
     // Enable bonjour
     IBOutlet NSButton *enableBonjour;
     BOOL defaultEnableBonjour;
@@ -305,7 +311,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTextField *columnsLabel;
     IBOutlet NSTextField *rowsLabel;
     IBOutlet NSTextField *rowsField;
-    IBOutlet NSButton *fullScreenButton;
+    IBOutlet NSPopUpButton* windowTypeButton;
     IBOutlet NSTextField *normalFontField;
     IBOutlet NSTextField *nonAsciiFontField;
 
@@ -547,6 +553,8 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (BOOL)deleteSendsCtrlH;
 
 - (BOOL)remappingDisabledTemporarily;
+- (BOOL)hotkeyTogglesWindow;
+- (Bookmark*)hotkeyBookmark;
 
 @end
 

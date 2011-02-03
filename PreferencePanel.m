@@ -770,6 +770,8 @@ static float versionNumber;
     defaultPromptOnClose = [prefs objectForKey:@"PromptOnClose"]?[[prefs objectForKey:@"PromptOnClose"] boolValue]: YES;
     defaultOnlyWhenMoreTabs = [prefs objectForKey:@"OnlyWhenMoreTabs"]?[[prefs objectForKey:@"OnlyWhenMoreTabs"] boolValue]: YES;
     defaultFocusFollowsMouse = [prefs objectForKey:@"FocusFollowsMouse"]?[[prefs objectForKey:@"FocusFollowsMouse"] boolValue]: NO;
+    defaultHotkeyTogglesWindow = [prefs objectForKey:@"HotKeyTogglesWindow"]?[[prefs objectForKey:@"HotKeyTogglesWindow"] boolValue]: NO;
+    defaultHotKeyBookmarkGuid = [[prefs objectForKey:@"HotKeyBookmark"] copy];
     defaultEnableBonjour = [prefs objectForKey:@"EnableRendezvous"]?[[prefs objectForKey:@"EnableRendezvous"] boolValue]: NO;
     defaultEnableGrowl = [prefs objectForKey:@"EnableGrowl"]?[[prefs objectForKey:@"EnableGrowl"] boolValue]: NO;
     defaultCmdSelection = [prefs objectForKey:@"CommandSelection"]?[[prefs objectForKey:@"CommandSelection"] boolValue]: YES;
@@ -891,6 +893,8 @@ static float versionNumber;
     [prefs setBool:defaultPromptOnClose forKey:@"PromptOnClose"];
     [prefs setBool:defaultOnlyWhenMoreTabs forKey:@"OnlyWhenMoreTabs"];
     [prefs setBool:defaultFocusFollowsMouse forKey:@"FocusFollowsMouse"];
+    [prefs setBool:defaultHotkeyTogglesWindow forKey:@"HotKeyTogglesWindow"];
+    [prefs setValue:defaultHotKeyBookmarkGuid forKey:@"HotKeyBookmark"];
     [prefs setBool:defaultEnableBonjour forKey:@"EnableRendezvous"];
     [prefs setBool:defaultEnableGrowl forKey:@"EnableGrowl"];
     [prefs setBool:defaultCmdSelection forKey:@"CommandSelection"];
@@ -938,6 +942,17 @@ static float versionNumber;
     [prefs synchronize];
 }
 
+- (void)_populateHotKeyBookmarksMenu
+{
+    [hotkeyBookmark removeAllItems];
+    NSArray* bookmarks = [[BookmarkModel sharedInstance] bookmarks];
+    for (Bookmark* bookmark in bookmarks) {
+        [hotkeyBookmark addItemWithTitle:[bookmark objectForKey:KEY_NAME]];
+        NSMenuItem* item = [hotkeyBookmark lastItem];
+        [item setRepresentedObject:[bookmark objectForKey:KEY_GUID]];
+    }
+}
+
 - (void)run
 {
     // load nib if we haven't already
@@ -958,6 +973,17 @@ static float versionNumber;
     [onlyWhenMoreTabs setState:defaultOnlyWhenMoreTabs?NSOnState:NSOffState];
     [onlyWhenMoreTabs setEnabled: defaultPromptOnClose];
     [focusFollowsMouse setState: defaultFocusFollowsMouse?NSOnState:NSOffState];
+    [hotkeyTogglesWindow setState: defaultHotkeyTogglesWindow?NSOnState:NSOffState];
+    int hotkeyBookmarkIndex = 0;
+    [self _populateHotKeyBookmarksMenu];
+    for (int i = 0; i < [hotkeyBookmark numberOfItems]; i++) {
+        NSMenuItem* item = [hotkeyBookmark itemAtIndex:i];
+        if ([[item representedObject] isEqualToString:defaultHotKeyBookmarkGuid]) {
+            hotkeyBookmarkIndex = i;
+            break;
+        }
+    }
+    [hotkeyBookmark selectItemAtIndex:hotkeyBookmarkIndex];
     [enableBonjour setState: defaultEnableBonjour?NSOnState:NSOffState];
     [enableGrowl setState: defaultEnableGrowl?NSOnState:NSOffState];
     [cmdSelection setState: defaultCmdSelection?NSOnState:NSOffState];
@@ -1123,6 +1149,9 @@ static float versionNumber;
         defaultOnlyWhenMoreTabs = ([onlyWhenMoreTabs state] == NSOnState);
         [onlyWhenMoreTabs setEnabled: defaultPromptOnClose];
         defaultFocusFollowsMouse = ([focusFollowsMouse state] == NSOnState);
+        defaultHotkeyTogglesWindow = ([hotkeyTogglesWindow state] == NSOnState);
+        [defaultHotKeyBookmarkGuid release];
+        defaultHotKeyBookmarkGuid = [[[hotkeyBookmark selectedItem] representedObject] copy];
         BOOL bonjourBefore = defaultEnableBonjour;
         defaultEnableBonjour = ([enableBonjour state] == NSOnState);
         if (bonjourBefore != defaultEnableBonjour) {
@@ -1804,7 +1833,7 @@ static float versionNumber;
     [columnsField setStringValue:[NSString stringWithFormat:@"%d", cols]];
     int rows = [[dict objectForKey:KEY_ROWS] intValue];
     [rowsField setStringValue:[NSString stringWithFormat:@"%d", rows]];
-    [fullScreenButton setState:[dict objectForKey:KEY_FULLSCREEN] ? [[dict objectForKey:KEY_FULLSCREEN] boolValue] : NO];
+    [windowTypeButton selectItemWithTag:[dict objectForKey:KEY_WINDOW_TYPE] ? [[dict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL];
 
     [normalFontField setStringValue:[[ITAddressBookMgr fontWithDesc:[dict objectForKey:KEY_NORMAL_FONT]] displayName]];
     if (normalFont) {
@@ -2071,7 +2100,7 @@ static float versionNumber;
     if (rows > 0) {
         [newDict setObject:[NSNumber numberWithInt:rows] forKey:KEY_ROWS];
     }
-    [newDict setObject:[NSNumber numberWithBool:[fullScreenButton state]==NSOnState] forKey:KEY_FULLSCREEN];
+    [newDict setObject:[NSNumber numberWithInt:[windowTypeButton selectedTag]] forKey:KEY_WINDOW_TYPE];
 
     [newDict setObject:[ITAddressBookMgr descFromFont:normalFont] forKey:KEY_NORMAL_FONT];
     [newDict setObject:[ITAddressBookMgr descFromFont:nonAsciiFont] forKey:KEY_NON_ASCII_FONT];
@@ -2876,6 +2905,20 @@ static float versionNumber;
     [NSApp endSheet:copyPanel];
 }
 
+- (BOOL)hotkeyTogglesWindow
+{
+    return defaultHotkeyTogglesWindow;
+}
+
+- (Bookmark*)hotkeyBookmark
+{
+    if (defaultHotKeyBookmarkGuid) {
+        return [[BookmarkModel sharedInstance] bookmarkWithGuid:defaultHotKeyBookmarkGuid];
+    } else {
+        return nil;
+    }
+}
+
 @end
 
 
@@ -2884,6 +2927,7 @@ static float versionNumber;
 - (void)_reloadURLHandlers:(NSNotification *)aNotification
 {
     [bookmarksForUrlsTable reloadData];
+    [self _populateHotKeyBookmarksMenu];
 }
 
 @end

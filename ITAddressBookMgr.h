@@ -88,7 +88,8 @@
 // Display
 #define KEY_ROWS                   @"Rows"
 #define KEY_COLUMNS                @"Columns"
-#define KEY_FULLSCREEN             @"Full Screen"
+#define KEY_FULLSCREEN             @"Full Screen"  // DEPRECATED
+#define KEY_WINDOW_TYPE            @"Window Type"
 #define KEY_NORMAL_FONT            @"Normal Font"
 #define KEY_NON_ASCII_FONT         @"Non Ascii Font"
 #define KEY_HORIZONTAL_SPACING     @"Horizontal Spacing"
@@ -127,6 +128,9 @@
 #define KEY_OPTION_KEY_SENDS                  @"Option Key Sends"
 #define KEY_RIGHT_OPTION_KEY_SENDS            @"Right Option Key Sends"
 
+#define WINDOW_TYPE_NORMAL 0
+#define WINDOW_TYPE_FULL_SCREEN 1
+#define WINDOW_TYPE_TOP 2
 
 @interface ITAddressBookMgr : NSObject
 {
