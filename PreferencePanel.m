@@ -996,7 +996,6 @@ static float versionNumber;
         [item setRepresentedObject:[bookmark objectForKey:KEY_GUID]];
         if ([[item representedObject] isEqualToString:defaultHotKeyBookmarkGuid]) {
             hotkeyBookmarkIndex = i;
-            break;
         }
         i++;
     }

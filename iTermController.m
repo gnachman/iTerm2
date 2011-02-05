@@ -815,6 +815,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 {
     NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
     NSRect rect = [[term window] frame];
+    [NSApp activateIgnoringOtherApps:YES];
     [[term window] makeKeyAndOrderFront:nil];
     switch ([term windowType]) {
         case WINDOW_TYPE_NORMAL:
@@ -865,20 +866,34 @@ static void OpenHotkeyWindow()
     }
 }
 
+- (void)resetWindowAlphaValues
+{
+    for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
+        [[term window] setAlphaValue:1];
+    }
+}
+
 - (void)showOtherWindows:(PseudoTerminal*)hotkeyTerm
 {
-    NSLog(@"Hide app from selector.");
-    // Only hotkey window was visible.
+    // Only hotkey window was visible. Hide the app, make all windows transparent.
     [NSApp hide:nil];
     for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
+        [[term window] setAlphaValue:0];
         if (term != hotkeyTerm) {
             [[term window] makeKeyAndOrderFront:nil];
         }
     }
+    // Unhide all windows and bring the one that was at the top to the front.
     int i = [[iTermController sharedInstance] keyWindowIndexMemo];
     if (i >= 0 && i < [[[iTermController sharedInstance] terminals] count]) {
         [[[[[iTermController sharedInstance] terminals] objectAtIndex:i] window] makeKeyAndOrderFront:nil];
     }
+    // Reset window alpha values next time through the event loop. That will happen
+    // after the [NSApp hide] takes effect, so the windows don't briefly appear and then
+    // disappear.
+    [[iTermController sharedInstance] performSelectorOnMainThread:@selector(resetWindowAlphaValues)
+                                                       withObject:nil
+                                                    waitUntilDone:NO];
 }
 
 static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL showOtherWindows)
@@ -905,6 +920,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL showOtherWindows)
     [[term window] performSelector:@selector(orderOut:)
                         withObject:nil
                         afterDelay:[[NSAnimationContext currentContext] duration]]; 
+
     if (showOtherWindows) {
         [[iTermController sharedInstance] performSelector:@selector(showOtherWindows:)
                                                withObject:term
@@ -948,6 +964,13 @@ void OnHotKeyEvent(void)
                 RollInHotkeyTerm(hotkeyTerm);
             }
         } else {
+            if (![NSApp isActive]) {
+                for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
+                    if (term != hotkeyTerm) {
+                        [[term window] orderOut:nil];
+                    }
+                }
+            }
             OpenHotkeyWindow();
         }
     } else if ([NSApp isActive]) {
