@@ -90,6 +90,8 @@
 #define KEY_COLUMNS                @"Columns"
 #define KEY_FULLSCREEN             @"Full Screen"  // DEPRECATED
 #define KEY_WINDOW_TYPE            @"Window Type"
+#define KEY_SCREEN                 @"Screen"
+#define KEY_SPACE                  @"Space"
 #define KEY_NORMAL_FONT            @"Normal Font"
 #define KEY_NON_ASCII_FONT         @"Non Ascii Font"
 #define KEY_HORIZONTAL_SPACING     @"Horizontal Spacing"

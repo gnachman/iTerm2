@@ -190,21 +190,21 @@
     int nextSessionColumns_;
 
     BOOL tempDisableProgressIndicators_;
-    
+
     int windowType_;
     BOOL isHotKeyWindow_;
+    int screenNumber_;
 }
 
 // Initialize a new PseudoTerminal.
 // smartLayout: If true then position windows using the "smart layout"
 //   algorithm.
 // windowType: WINDOW_TYPE_NORMAL, WINDOW_TYPE_FULL_SCREEN, or WINDOW_TYPE_TOP.
-// fullScreen: If nil, then a normal window is opened. If not nil, it gives the
-//   size of the screen and a full screen window is opened with those
-//   dimensions. Must be nonnil if windowType is WINDOW_TYPE_FULL_SCREEN
+// screen: An index into [NSScreen screens], or -1 to let the system pick a
+//   screen.
 - (id)initWithSmartLayout:(BOOL)smartLayout
                windowType:(int)windowType
-               fullScreen:(NSScreen*)fullScreen;
+                   screen:(int)screenIndex;
 
 // Called on object deallocation.
 - (void)dealloc;

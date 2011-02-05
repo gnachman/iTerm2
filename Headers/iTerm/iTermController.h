@@ -46,10 +46,13 @@
     int hotkeyCode_;
     int hotkeyModifiers_;
     CFMachPortRef machPortRef;
+    int keyWindowIndexMemo_;
 }
 
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;
+
++ (void)switchToSpaceInBookmark:(NSDictionary*)aDict;
 
 // actions are forwarded from application
 - (IBAction)newWindow:(id)sender;
@@ -60,6 +63,9 @@
 - (void)newSessionInTabAtIndex:(id)sender;
 - (void)newSessionInWindowAtIndex:(id)sender;
 - (void)showHideFindBar;
+
+- (int)keyWindowIndexMemo;
+- (void)setKeyWindowIndexMemo:(int)i;
 
 - (BOOL)hasWindowArrangement;
 - (void)saveWindowArrangement;

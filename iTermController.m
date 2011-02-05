@@ -113,6 +113,7 @@ static BOOL initDone = NO;
         [fileManager createDirectoryAtPath: [SUPPORT_DIRECTORY stringByExpandingTildeInPath] attributes: nil];
 
     terminalWindows = [[NSMutableArray alloc] init];
+    keyWindowIndexMemo_ = -1;
 
     // Activate Growl
     /*
@@ -170,6 +171,16 @@ static BOOL initDone = NO;
 - (void) showHideFindBar
 {
     [[self currentTerminal] showHideFindBar];
+}
+
+- (int)keyWindowIndexMemo
+{
+    return keyWindowIndexMemo_;
+}
+
+- (void)setKeyWindowIndexMemo:(int)i
+{
+    keyWindowIndexMemo_ = i;
 }
 
 - (void)newSessionInWindowAtIndex: (id) sender
@@ -592,6 +603,28 @@ static BOOL initDone = NO;
     [FRONT irAdvance:dir];
 }
 
++ (void)switchToSpaceInBookmark:(Bookmark*)aDict
+{
+    if ([aDict objectForKey:KEY_SPACE]) {
+        int spaceNum = [[aDict objectForKey:KEY_SPACE] intValue];
+        if (spaceNum > 0 && spaceNum < 10) {
+            // keycodes for digits 1-9. Send control-n to switch spaces.
+            // TODO: This would get remapped by the event tap. It requires universal access to be on and
+            // spaces to be configured properly. But we don't tell the users this.
+            int codes[] = { 18, 19, 20, 21, 23, 22, 26, 28, 25 };
+            CGEventRef e = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)codes[spaceNum - 1], true);
+            CGEventSetFlags(e, kCGEventFlagMaskControl);
+            CGEventPost(kCGSessionEventTap, e);
+            CFRelease(e);
+
+            e = CGEventCreateKeyboardEvent (NULL, (CGKeyCode)codes[spaceNum - 1], false);
+            CGEventSetFlags(e, kCGEventFlagMaskControl);
+            CGEventPost(kCGSessionEventTap, e);
+            CFRelease(e);
+        }
+    }
+}
+
 // Executes an addressbook command in new window or tab
 - (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm
 {
@@ -611,9 +644,10 @@ static BOOL initDone = NO;
 
     // Where do we execute this command?
     if (theTerm == nil) {
+        [iTermController switchToSpaceInBookmark:aDict];
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES 
                                                  windowType:[aDict objectForKey:KEY_WINDOW_TYPE] ? [[aDict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL
-                                                 fullScreen:nil] autorelease];
+                                                     screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
         [self addInTerminals:term];
     } else {
         term = theTerm;
@@ -649,9 +683,10 @@ static BOOL initDone = NO;
 
     // Where do we execute this command?
     if (theTerm == nil) {
+        [iTermController switchToSpaceInBookmark:aDict];
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES 
                                                  windowType:[aDict objectForKey:KEY_WINDOW_TYPE] ? [[aDict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL
-                                                 fullScreen:nil] autorelease];
+                                                     screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
         [self addInTerminals:term];
     } else {
         term = theTerm;
@@ -710,9 +745,10 @@ static BOOL initDone = NO;
 
     // Where do we execute this command?
     if (theTerm == nil) {
+        [iTermController switchToSpaceInBookmark:aDict];
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                  windowType:[aDict objectForKey:KEY_WINDOW_TYPE] ? [[aDict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL
-                                                 fullScreen:nil] autorelease];
+                                                     screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
         [self addInTerminals: term];
     } else {
         term = theTerm;
@@ -838,7 +874,11 @@ static void OpenHotkeyWindow()
         if (term != hotkeyTerm) {
             [[term window] makeKeyAndOrderFront:nil];
         }
-    }  
+    }
+    int i = [[iTermController sharedInstance] keyWindowIndexMemo];
+    if (i >= 0 && i < [[[iTermController sharedInstance] terminals] count]) {
+        [[[[[iTermController sharedInstance] terminals] objectAtIndex:i] window] makeKeyAndOrderFront:nil];
+    }
 }
 
 static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL showOtherWindows)
@@ -887,15 +927,22 @@ void OnHotKeyEvent(void)
                             break;
                         }
                     }
-                }        
+                }
                 RollOutHotkeyTerm(hotkeyTerm, !isAnyNonHotWindowVisible);
             } else {
+                int i = 0;
+                [[iTermController sharedInstance] setKeyWindowIndexMemo:-1];
                 for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
                     if (![NSApp isActive]) {
                         if (term != hotkeyTerm) {
                             [[term window] orderOut:nil];
                         }
+                    } else {
+                        if (term != hotkeyTerm && [[term window] isKeyWindow]) {
+                            [[iTermController sharedInstance] setKeyWindowIndexMemo:i];
+                        }
                     }
+                    i++;
                 }
                 [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
                 RollInHotkeyTerm(hotkeyTerm);
@@ -1184,7 +1231,9 @@ NSString *terminalsKey = @"terminals";
     [terminalWindows insertObject:object atIndex:theIndex];
     [self updateWindowTitles];
     if (![object isInitialized]) {
-        [object initWithSmartLayout:YES windowType:WINDOW_TYPE_NORMAL fullScreen:nil];
+        [object initWithSmartLayout:YES
+                         windowType:WINDOW_TYPE_NORMAL
+                             screen:-1];
     }
 }
 

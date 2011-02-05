@@ -182,6 +182,9 @@ static float versionNumber;
     [columnsField setHidden:YES];
     [rowsField setHidden:YES];
     [windowTypeButton setHidden:YES];
+    [screenButton setHidden:YES];
+    [spaceButton setHidden:YES];
+    [spaceLabel setHidden:YES];
     [windowTypeLabel setHidden:YES];
     [newWindowttributesHeader setHidden:YES];
 
@@ -426,6 +429,37 @@ static float versionNumber;
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:COLOR_GALLERY_URL]];
 }
 
+- (void)setScreens
+{
+    int selectedTag = [screenButton selectedTag];
+    [screenButton removeAllItems];
+    int i = 0;
+    [screenButton addItemWithTitle:@"No Preference"];
+    [[screenButton lastItem] setTag:-1];
+    for (NSScreen* screen in [NSScreen screens]) {
+        if (i == 0) {
+            [screenButton addItemWithTitle:[NSString stringWithFormat:@"Main Screen", i]];
+        } else {
+            [screenButton addItemWithTitle:[NSString stringWithFormat:@"Screen %d", i+1]];
+        }
+        [[screenButton lastItem] setTag:i];
+        i++;
+    }
+    if (selectedTag >= 0 && selectedTag < i) {
+        [screenButton selectItemWithTag:selectedTag];
+    } else {
+        [screenButton selectItemWithTag:-1];
+    }
+    if ([windowTypeButton selectedTag] == WINDOW_TYPE_NORMAL) {
+        [screenButton setEnabled:NO];
+        [screenLabel setTextColor:[NSColor disabledControlTextColor]];
+        [screenButton selectItemWithTag:-1];
+    } else {
+        [screenButton setEnabled:YES];
+        [screenLabel setTextColor:[NSColor blackColor]];
+    }
+}
+
 - (void)awakeFromNib
 {
     [self window];
@@ -450,6 +484,7 @@ static float versionNumber;
         [characterEncoding addItemWithTitle:[NSString localizedNameOfStringEncoding:[anEncoding unsignedIntValue]]];
         [[characterEncoding lastItem] setTag:[anEncoding unsignedIntValue]];
     }
+    [self setScreens];
 
     [keyMappings setDoubleAction:@selector(editKeyMapping:)];
     [globalKeyMappings setDoubleAction:@selector(editKeyMapping:)];
@@ -951,13 +986,21 @@ static float versionNumber;
 
 - (void)_populateHotKeyBookmarksMenu
 {
+    int hotkeyBookmarkIndex = 0;
+    int i = 0;
     [hotkeyBookmark removeAllItems];
     NSArray* bookmarks = [[BookmarkModel sharedInstance] bookmarks];
     for (Bookmark* bookmark in bookmarks) {
         [hotkeyBookmark addItemWithTitle:[bookmark objectForKey:KEY_NAME]];
         NSMenuItem* item = [hotkeyBookmark lastItem];
         [item setRepresentedObject:[bookmark objectForKey:KEY_GUID]];
+        if ([[item representedObject] isEqualToString:defaultHotKeyBookmarkGuid]) {
+            hotkeyBookmarkIndex = i;
+            break;
+        }
+        i++;
     }
+    [hotkeyBookmark selectItemAtIndex:hotkeyBookmarkIndex];
 }
 
 - (void)run
@@ -981,16 +1024,7 @@ static float versionNumber;
     [onlyWhenMoreTabs setEnabled: defaultPromptOnClose];
     [focusFollowsMouse setState: defaultFocusFollowsMouse?NSOnState:NSOffState];
     [hotkeyTogglesWindow setState: defaultHotkeyTogglesWindow?NSOnState:NSOffState];
-    int hotkeyBookmarkIndex = 0;
     [self _populateHotKeyBookmarksMenu];
-    for (int i = 0; i < [hotkeyBookmark numberOfItems]; i++) {
-        NSMenuItem* item = [hotkeyBookmark itemAtIndex:i];
-        if ([[item representedObject] isEqualToString:defaultHotKeyBookmarkGuid]) {
-            hotkeyBookmarkIndex = i;
-            break;
-        }
-    }
-    [hotkeyBookmark selectItemAtIndex:hotkeyBookmarkIndex];
     [enableBonjour setState: defaultEnableBonjour?NSOnState:NSOffState];
     [enableGrowl setState: defaultEnableGrowl?NSOnState:NSOffState];
     [cmdSelection setState: defaultCmdSelection?NSOnState:NSOffState];
@@ -1030,6 +1064,8 @@ static float versionNumber;
     }
     [hotkeyField setEnabled:defaultHotkey];
     [hotkeyLabel setTextColor:defaultHotkey ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
+    [hotkeyTogglesWindow setEnabled:defaultHotkey];
+    [hotkeyBookmark setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
 
     [irMemory setIntValue:defaultIrMemory];
     [checkTestRelease setState:defaultCheckTestRelease?NSOnState:NSOffState];
@@ -1210,6 +1246,9 @@ static float versionNumber;
         }
         [hotkeyField setEnabled:defaultHotkey];
         [hotkeyLabel setTextColor:defaultHotkey ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
+        [hotkeyTogglesWindow setEnabled:defaultHotkey];
+        [hotkeyBookmark setEnabled:(defaultHotkey && defaultHotkeyTogglesWindow)];
+
         if (prefs &&
             defaultCheckTestRelease != ([checkTestRelease state] == NSOnState)) {
             defaultCheckTestRelease = ([checkTestRelease state] == NSOnState);
@@ -1841,7 +1880,15 @@ static float versionNumber;
     int rows = [[dict objectForKey:KEY_ROWS] intValue];
     [rowsField setStringValue:[NSString stringWithFormat:@"%d", rows]];
     [windowTypeButton selectItemWithTag:[dict objectForKey:KEY_WINDOW_TYPE] ? [[dict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL];
-
+    [self setScreens];
+    if (![screenButton selectItemWithTag:[dict objectForKey:KEY_SCREEN] ? [[dict objectForKey:KEY_SCREEN] intValue] : -1]) {
+        [screenButton selectItemWithTag:-1];
+    }
+    if ([dict objectForKey:KEY_SPACE]) {
+        [spaceButton selectItemWithTag:[[dict objectForKey:KEY_SPACE] intValue]];
+    } else {
+        [spaceButton selectItemWithTag:0];
+    }
     [normalFontField setStringValue:[[ITAddressBookMgr fontWithDesc:[dict objectForKey:KEY_NORMAL_FONT]] displayName]];
     if (normalFont) {
         [normalFont release];
@@ -2108,7 +2155,11 @@ static float versionNumber;
         [newDict setObject:[NSNumber numberWithInt:rows] forKey:KEY_ROWS];
     }
     [newDict setObject:[NSNumber numberWithInt:[windowTypeButton selectedTag]] forKey:KEY_WINDOW_TYPE];
-
+    [self setScreens];
+    [newDict setObject:[NSNumber numberWithInt:[screenButton selectedTag]] forKey:KEY_SCREEN];
+    if ([spaceButton selectedTag]) {
+        [newDict setObject:[NSNumber numberWithInt:[spaceButton selectedTag]] forKey:KEY_SPACE];
+     }
     [newDict setObject:[ITAddressBookMgr descFromFont:normalFont] forKey:KEY_NORMAL_FONT];
     [newDict setObject:[ITAddressBookMgr descFromFont:nonAsciiFont] forKey:KEY_NON_ASCII_FONT];
     [newDict setObject:[NSNumber numberWithFloat:[displayFontSpacingWidth floatValue]] forKey:KEY_HORIZONTAL_SPACING];

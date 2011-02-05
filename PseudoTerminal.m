@@ -95,6 +95,7 @@ static NSString* TERMINAL_ARRANGEMENT_TABS = @"Tabs";
 static NSString* TERMINAL_ARRANGEMENT_FULLSCREEN = @"Fullscreen";
 static NSString* TERMINAL_ARRANGEMENT_WINDOW_TYPE = @"Window Type";
 static NSString* TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX = @"Selected Tab Index";
+static NSString* TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
 
 @interface PSMTabBarControl (Private)
 - (void)update;
@@ -161,7 +162,7 @@ NSString *sessionsKey = @"sessions";
 
 @implementation PseudoTerminal
 
-- (id)initWithSmartLayout:(BOOL)smartLayout windowType:(int)windowType fullScreen:(NSScreen*)fullScreen
+- (id)initWithSmartLayout:(BOOL)smartLayout windowType:(int)windowType screen:(int)screenNumber
 {
     unsigned int styleMask;
     PTYWindow *myWindow;
@@ -174,8 +175,13 @@ NSString *sessionsKey = @"sessions";
     [commandField retain];
     [commandField setDelegate:self];
     [bottomBar retain];
-    if (windowType == WINDOW_TYPE_FULL_SCREEN && !fullScreen) {
-        windowType = WINDOW_TYPE_NORMAL;
+    if (windowType == WINDOW_TYPE_FULL_SCREEN && screenNumber == -1) {
+        NSUInteger n = [[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]];
+        if (n == NSNotFound) {
+            screenNumber = 0;
+        } else {
+            screenNumber = n;
+        }
     }
     if (windowType == WINDOW_TYPE_TOP) {
         smartLayout = NO;
@@ -192,14 +198,21 @@ NSString *sessionsKey = @"sessions";
         NSResizableWindowMask |
         NSTexturedBackgroundWindowMask;
 
+    NSScreen* screen;
+    if (screenNumber < 0 || screenNumber >= [[NSScreen screens] count])  {
+        screen = [[self window] screen];
+    } else {
+        screen = [[NSScreen screens] objectAtIndex:screenNumber];
+    }
+
     NSRect initialFrame;
     switch (windowType) {
         case WINDOW_TYPE_TOP:
-            initialFrame = [[NSScreen mainScreen] visibleFrame];
+            initialFrame = [screen visibleFrame];
             break;
 
         case WINDOW_TYPE_FULL_SCREEN:
-            initialFrame = [fullScreen frame];
+            initialFrame = [screen frame];
             break;
 
         case WINDOW_TYPE_NORMAL:
@@ -226,7 +239,6 @@ NSString *sessionsKey = @"sessions";
     _fullScreen = (windowType == WINDOW_TYPE_FULL_SCREEN);
     previousFindString = [[NSMutableString alloc] init];
     if (_fullScreen) {
-        assert(fullScreen);
         background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor blackColor]];
     } else {
         background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor windowBackgroundColor]];
@@ -242,7 +254,8 @@ NSString *sessionsKey = @"sessions";
 
     _resizeInProgressFlag = NO;
 
-    if (!smartLayout) {
+    screenNumber_ = screenNumber;
+    if (!smartLayout || windowType == WINDOW_TYPE_FULL_SCREEN) {
         [(PTYWindow*)[self window] setLayoutDone];
     }
 
@@ -343,7 +356,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)swipeWithEvent:(NSEvent *)event
 {
-	if ([event deltaX] < 0) {
+    if ([event deltaX] < 0) {
         [self nextTab:nil];
     } else if ([event deltaX] > 0) {
         [self previousTab:nil];
@@ -694,16 +707,20 @@ NSString *sessionsKey = @"sessions";
             windowType = WINDOW_TYPE_NORMAL;
         }
     }
+    int screenIndex;
+    if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_SCREEN_INDEX]) {
+        screenIndex = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_SCREEN_INDEX] intValue];
+    } else {
+        screenIndex = 0;
+    }
+    if (screenIndex < 0 || screenIndex >= [[NSScreen screens] count]) {
+        screenIndex = 0;
+    }
+
     if (windowType == WINDOW_TYPE_FULL_SCREEN) {
-        NSScreen *currentScreen;
-        if ([[iTermController sharedInstance] currentTerminal]) {
-            currentScreen = [[[[iTermController sharedInstance] currentTerminal] window] screen];
-        } else {
-            currentScreen = [NSScreen mainScreen];
-        }
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:windowType
-                                                 fullScreen:currentScreen] autorelease];
+                                                     screen:screenIndex] autorelease];
 
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_X_ORIGIN] doubleValue];
@@ -712,7 +729,11 @@ NSString *sessionsKey = @"sessions";
         rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_HEIGHT] doubleValue];
         term->oldFrame_ = rect;
     } else {
-        term = [[[PseudoTerminal alloc] initWithSmartLayout:NO windowType:windowType fullScreen:nil] autorelease];
+        if (windowType == WINDOW_TYPE_NORMAL) {
+            screenIndex = -1;
+        }
+        term = [[[PseudoTerminal alloc] initWithSmartLayout:NO windowType:windowType screen:-1] autorelease];
+
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
         rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
@@ -765,7 +786,8 @@ NSString *sessionsKey = @"sessions";
 
     [result setObject:[NSNumber numberWithInt:windowType_]
                forKey:TERMINAL_ARRANGEMENT_WINDOW_TYPE];
-
+    [result setObject:[NSNumber numberWithInt:[[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]]
+                                       forKey:TERMINAL_ARRANGEMENT_SCREEN_INDEX];
     // Save tabs.
     NSMutableArray* tabs = [NSMutableArray arrayWithCapacity:[self numberOfTabs]];
     for (NSTabViewItem* tabViewItem in [TABVIEW tabViewItems]) {
@@ -1113,7 +1135,9 @@ NSString *sessionsKey = @"sessions";
     PseudoTerminal *newTerminal;
     if (!_fullScreen) {
         NSScreen *currentScreen = [[[[iTermController sharedInstance] currentTerminal] window] screen];
-        newTerminal = [[PseudoTerminal alloc] initWithSmartLayout:NO windowType:WINDOW_TYPE_FULL_SCREEN fullScreen:currentScreen];
+        newTerminal = [[PseudoTerminal alloc] initWithSmartLayout:NO
+                                                       windowType:WINDOW_TYPE_FULL_SCREEN
+                                                           screen:[[NSScreen screens] indexOfObjectIdenticalTo:currentScreen]];
         newTerminal->oldFrame_ = [[self window] frame];
         newTerminal->useTransparency_ = NO;
         [[newTerminal window] setOpaque:NO];
@@ -1126,7 +1150,10 @@ NSString *sessionsKey = @"sessions";
         [NSMenu setMenuBarVisible:YES];
         PtyLog(@"toggleFullScreen - allocate new terminal");
         // TODO: restore previous window type
-        newTerminal = [[PseudoTerminal alloc] initWithSmartLayout:NO windowType:WINDOW_TYPE_NORMAL fullScreen:nil];
+        NSScreen *currentScreen = [[[[iTermController sharedInstance] currentTerminal] window] screen];
+        newTerminal = [[PseudoTerminal alloc] initWithSmartLayout:NO
+                                                       windowType:WINDOW_TYPE_NORMAL
+                                                       screen:[[NSScreen screens] indexOfObjectIdenticalTo:currentScreen]];
         PtyLog(@"toggleFullScreen - set new frame to old frame: %fx%f", oldFrame_.size.width, oldFrame_.size.height);
         [[newTerminal window] setFrame:oldFrame_ display:YES];
     }
@@ -1753,7 +1780,9 @@ NSString *sessionsKey = @"sessions";
     }
 
     // create a new terminal window
-    term = [[[PseudoTerminal alloc] initWithSmartLayout:NO windowType:WINDOW_TYPE_NORMAL fullScreen:nil] autorelease];
+    term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
+                                             windowType:WINDOW_TYPE_NORMAL
+                                                 screen:-1] autorelease];
     if (term == nil) {
         return nil;
     }
@@ -2702,11 +2731,6 @@ NSString *sessionsKey = @"sessions";
 - (void)setIsHotKeyWindow:(BOOL)value
 {
     isHotKeyWindow_ = value;
-    if (value) {
-        [[self window] setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
-    } else {
-        [[self window] setCollectionBehavior:NSWindowCollectionBehaviorDefault];
-    }
 }
 
 @end
@@ -3680,7 +3704,9 @@ NSString *sessionsKey = @"sessions";
     }
 
     // create a new terminal window
-    term = [[[PseudoTerminal alloc] initWithSmartLayout:NO windowType:WINDOW_TYPE_NORMAL fullScreen:nil] autorelease];
+    term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
+                                             windowType:WINDOW_TYPE_NORMAL
+                                                 screen:-1] autorelease];
     if (term == nil) {
         return;
     }
@@ -3964,16 +3990,9 @@ NSString *sessionsKey = @"sessions";
     }
 
     if ([self numberOfTabs] == 1 &&
-        [addressbookEntry objectForKey:KEY_WINDOW_TYPE]) {
-        switch ([[addressbookEntry objectForKey:KEY_WINDOW_TYPE] intValue]) {
-            case WINDOW_TYPE_FULL_SCREEN:
-                PtyLog(@"Opening bookmark in fullscreen mode.");
-                [self toggleFullScreen:nil];
-                break;
-                
-            default:
-                break;
-        }
+        [addressbookEntry objectForKey:KEY_SPACE] &&
+        [[addressbookEntry objectForKey:KEY_SPACE] intValue] == -1) {
+        [[self window] setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
     }
 
     [aSession release];
@@ -4288,9 +4307,10 @@ NSString *sessionsKey = @"sessions";
             windowType = WINDOW_TYPE_NORMAL;
             // TODO: this should work with fullscreen
         }
+        [iTermController switchToSpaceInBookmark:abEntry];
         [self initWithSmartLayout:NO 
                        windowType:windowType
-                       fullScreen:nil];
+                           screen:-1];
     }
 
     // TODO(georgen): test this

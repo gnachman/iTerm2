@@ -1,4 +1,4 @@
-        /*
+/*
  **  PreferencePanel.h
  **
  **  Copyright (c) 2002, 2003
@@ -312,10 +312,15 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTextField *rowsLabel;
     IBOutlet NSTextField *rowsField;
     IBOutlet NSTextField* windowTypeLabel;
+    IBOutlet NSPopUpButton* screenButton;
+    IBOutlet NSTextField* spaceLabel;
+    IBOutlet NSPopUpButton* spaceButton;
+
     IBOutlet NSPopUpButton* windowTypeButton;
     IBOutlet NSTextField *normalFontField;
     IBOutlet NSTextField *nonAsciiFontField;
     IBOutlet NSTextField *newWindowttributesHeader;
+    IBOutlet NSTextField *screenLabel;
 
     IBOutlet NSButton* blinkingCursor;
     IBOutlet NSButton* useBoldFont;
