@@ -837,6 +837,9 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowWillClose:(NSNotification *)aNotification
 {
+    if ([self isHotKeyWindow]) {
+        [[iTermController sharedInstance] showNonHotKeyWindowsAndSetAlphaTo:1];
+    }
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PseudoTerminal windowWillClose:%@]",
           __FILE__, __LINE__, aNotification);
@@ -905,6 +908,8 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification
 {
+    isOrderedOut_ = NO;
+
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PseudoTerminal windowDidBecomeKey:%@]",
           __FILE__, __LINE__, aNotification);
@@ -932,6 +937,10 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidResignKey:(NSNotification *)aNotification
 {
+    if ([self isHotKeyWindow] && [[self window] isVisible]) {
+        NSLog(@"windowDidResignKey: is hotkey, is visible, hide myself");
+        [[iTermController sharedInstance] hideHotKeyWindow:self];
+    }
     if (togglingFullScreen_) {
         PtyLog(@"windowDidResignKey returning because togglingFullScreen.");
         return;
@@ -2731,6 +2740,16 @@ NSString *sessionsKey = @"sessions";
 - (void)setIsHotKeyWindow:(BOOL)value
 {
     isHotKeyWindow_ = value;
+}
+
+- (BOOL)isOrderedOut
+{
+    return isOrderedOut_;
+}
+
+- (void)setIsOrderedOut:(BOOL)value
+{
+    isOrderedOut_ = value;
 }
 
 @end

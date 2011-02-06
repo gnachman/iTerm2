@@ -986,12 +986,25 @@ static float versionNumber;
 
 - (void)_populateHotKeyBookmarksMenu
 {
+    if (!hotkeyBookmark) {
+        return;
+    }
     int hotkeyBookmarkIndex = 0;
     int i = 0;
     [hotkeyBookmark removeAllItems];
     NSArray* bookmarks = [[BookmarkModel sharedInstance] bookmarks];
     for (Bookmark* bookmark in bookmarks) {
-        [hotkeyBookmark addItemWithTitle:[bookmark objectForKey:KEY_NAME]];
+        int j = 0;
+        NSString* temp;
+        do {
+            if (j == 0) {
+                temp = [bookmark objectForKey:KEY_NAME];
+            } else {
+                temp = [NSString stringWithFormat:@"%@ (%d)", [bookmark objectForKey:KEY_NAME], j];
+            }
+            j++;
+        } while ([hotkeyBookmark indexOfItemWithTitle:temp] != -1);
+        [hotkeyBookmark addItemWithTitle:temp];
         NSMenuItem* item = [hotkeyBookmark lastItem];
         [item setRepresentedObject:[bookmark objectForKey:KEY_GUID]];
         if ([[item representedObject] isEqualToString:defaultHotKeyBookmarkGuid]) {

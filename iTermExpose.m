@@ -372,9 +372,13 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
     if (windowIndex_ >= 0 && tabIndex_ >= 0) {
         iTermController* controller = [iTermController sharedInstance];
         PseudoTerminal* terminal = [[controller terminals] objectAtIndex:windowIndex_];
-        [controller setCurrentTerminal:terminal];
-        [[terminal window] makeKeyAndOrderFront:self];
-        [[terminal tabView] selectTabViewItemAtIndex:tabIndex_];
+        if ([terminal isHotKeyWindow]) {
+            [[iTermController sharedInstance] showHotKeyWindow];
+        } else {
+            [controller setCurrentTerminal:terminal];
+            [[terminal window] makeKeyAndOrderFront:self];
+            [[terminal tabView] selectTabViewItemAtIndex:tabIndex_];
+        }
     } else {
         NSBeep();
     }
@@ -1471,6 +1475,9 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
 - (void)_toggleOn
 {
     iTermController* controller = [iTermController sharedInstance];
+    if ([controller isHotKeyWindowOpen]) {
+        [controller fastHideHotKeyWindow];
+    }
 
     // Crete parallel arrays with info needed to create subviews.
     NSMutableArray* images = [NSMutableArray arrayWithCapacity:[controller numberOfTerminals]];
@@ -1518,7 +1525,17 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     [window_ setContentView:view_];
     [window_ setBackgroundColor:[[NSColor blackColor] colorWithAlphaComponent:0]];
     [window_ setOpaque:NO];
+
+    PseudoTerminal* hotKeyWindow = [controller hotKeyWindow];
+    BOOL isHot = NO;
+    if (hotKeyWindow) {
+        isHot = [hotKeyWindow isHotKeyWindow];
+        [hotKeyWindow setIsHotKeyWindow:NO];
+    }
     [window_ makeKeyAndOrderFront:self];
+    if (hotKeyWindow) {
+        [hotKeyWindow setIsHotKeyWindow:isHot];
+    }
 }
 
 - (int)_populateArrays:(NSMutableArray *)images

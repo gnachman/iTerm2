@@ -66,6 +66,12 @@
 
 - (int)keyWindowIndexMemo;
 - (void)setKeyWindowIndexMemo:(int)i;
+- (void)showHotKeyWindow;
+- (void)fastHideHotKeyWindow;
+- (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm;
+- (BOOL)isHotKeyWindowOpen;
+- (void)showNonHotKeyWindowsAndSetAlphaTo:(float)a;
+- (PseudoTerminal*)hotKeyWindow;
 
 - (BOOL)hasWindowArrangement;
 - (void)saveWindowArrangement;

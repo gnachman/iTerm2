@@ -194,6 +194,7 @@
     int windowType_;
     BOOL isHotKeyWindow_;
     int screenNumber_;
+    BOOL isOrderedOut_;
 }
 
 // Initialize a new PseudoTerminal.
@@ -574,6 +575,9 @@
 // hotkey.
 - (BOOL)isHotKeyWindow;
 - (void)setIsHotKeyWindow:(BOOL)value;
+
+- (BOOL)isOrderedOut;
+- (void)setIsOrderedOut:(BOOL)value;
 
 @end
 
