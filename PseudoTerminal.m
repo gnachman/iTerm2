@@ -1025,8 +1025,8 @@ NSString *sessionsKey = @"sessions";
                                         hasVerticalScroller:hasScrollbar
                                         borderType:NSNoBorder];
 
-    int screenWidth = (contentSize.width - MARGIN * 2) / charWidth + 0.5;
-    int screenHeight = (contentSize.height - VMARGIN * 2) / charHeight + 0.5;
+    int screenWidth = (contentSize.width - MARGIN * 2) / charWidth;
+    int screenHeight = (contentSize.height - VMARGIN * 2) / charHeight;
 
     if (snapWidth) {
       contentSize.width = screenWidth * charWidth + MARGIN * 2;
