@@ -429,12 +429,14 @@
     NSString* thisUser = NSUserName();
     char* userShell = getenv("SHELL");
     if (thisUser) {
-        // Historical note: For a while, we did not pass the -l argument
-	// if we wanted to start in a directory other than the home dir.
-	// Having just tested this, it seems that -l doesn't affect the
-	// starting dir for bash or tcsh. Let's try leaving it out and see
-	// if there are complaints. This is to address bug 588.
-        return [NSString stringWithFormat:@"login -fpl \"%@\"", thisUser];
+        if (![[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"No"]) {
+            // -l specifies a NON-LOGIN shell which doesn't changed the pwd.
+            // (there is either a custom dir or we're recycling the last tab's dir)
+            return [NSString stringWithFormat:@"login -fpl \"%@\"", thisUser];
+        } else {
+            // No -l argument: this is a login session and will use the home dir.
+            return [NSString stringWithFormat:@"login -fp \"%@\"", thisUser];
+        }
     } else if (userShell) {
         return [NSString stringWithCString:userShell];
     } else {
