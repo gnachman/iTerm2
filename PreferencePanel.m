@@ -2082,13 +2082,16 @@ static float versionNumber;
     NSString* customCommand = [[bookmarkCommandType selectedCell] tag] == 0 ? @"Yes" : @"No";
     NSString* customDir;
 
+    BOOL warn = NO;
     switch ([[bookmarkDirectoryType selectedCell] tag]) {
         case 0:
             customDir = @"Yes";
+            warn = YES;
             break;
 
         case 2:
             customDir = @"Recycle";
+            warn = YES;
             break;
 
         case 1:
@@ -2096,7 +2099,35 @@ static float versionNumber;
             customDir = @"No";
             break;
     }
-
+    if (sender != bookmarkDirectoryType) {
+        warn = NO;
+    }
+    if (warn && [[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutDirsAndBash"]) {
+        warn = NO;
+    }
+    if ([customCommand isEqualToString:@"Yes"]) {
+        warn = NO;
+    }
+    if (warn) {
+        switch (NSRunAlertPanel(@"Warning",
+                                @"If you use bash and you choose not to start in your home directory, your .bash_profile and .profile will not be sourced (.bashrc is sourced instead). You can set the command to \"/bin/bash --login\" to work around this.",
+                                @"OK",
+                                @"Never warn me again",
+                                @"Change Command",
+                                nil)) {
+            case NSAlertOtherReturn:
+                [bookmarkCommand setStringValue:@"/bin/bash --login"];
+                [bookmarkCommandType selectCellWithTag:0];
+                customCommand = @"Yes";
+                command = [bookmarkCommand stringValue];
+                break;
+            case NSAlertDefaultReturn:
+                break;
+            case NSAlertAlternateReturn:
+                [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:@"NeverWarnAboutDirsAndBash"];
+                break;
+        }
+    }
     NSString* guid = [bookmarksTableView selectedGuid];
     if (!guid) {
         return;
