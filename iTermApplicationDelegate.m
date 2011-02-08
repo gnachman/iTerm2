@@ -570,12 +570,6 @@ void DebugLog(NSString* value)
     [aboutController showWindow:ABOUT];
 }
 
--(void)applicationDidChangeScreenParameters: (NSNotification *)notice
-{
-    NSLog(@"Screen params changed.");
-}
-
-
 // size
 - (IBAction)returnToDefaultSize:(id)sender
 {

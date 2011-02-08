@@ -219,16 +219,6 @@ NSString *sessionsKey = @"sessions";
             // Use the system-supplied frame which has a reasonable origin. It may
             // be overridden by smart window placement or a saved window location.
             initialFrame = [[self window] frame];
-            if (screenNumber != -1) {
-                // TODO: test this
-                NSPoint screenOrigin = [[[self window] screen] visibleFrame].origin;
-                NSPoint windowOrigin = [[self window] frame].origin;
-                NSPoint screenRelativeOrigin = NSMakePoint(windowOrigin.x - screenOrigin.x,
-                                                           windowOrigin.y - screenOrigin.y);
-                NSPoint newScreenOrigin = [screen visibleFrame].origin;
-                initialFrame.origin.x = newScreenOrigin.x + screenRelativeOrigin.x;
-                initialFrame.origin.y = newScreenOrigin.y + screenRelativeOrigin.y;
-            }
             break;
     }
     preferredOrigin_ = initialFrame.origin;
