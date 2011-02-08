@@ -1140,12 +1140,11 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         return NULL;
     }
 
-    NSEvent* cocoaEvent;
+    NSEvent* cocoaEvent = [NSEvent eventWithCGEvent:event];
     BOOL callDirectly = NO;
     if ([NSApp isActive]) {
         // Remap modifier keys only while iTerm2 is active; otherwise you could just use the
         // OS's remap feature.
-        cocoaEvent = [NSEvent eventWithCGEvent:event];
         NSString* unmodkeystr = [cocoaEvent charactersIgnoringModifiers];
         unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
         unsigned int modflag = [cocoaEvent modifierFlags];
