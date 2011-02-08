@@ -403,6 +403,9 @@ static NSDictionary* globalKeyMap;
         case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
             actionString = @"Do Not Remap Modifiers";
             break;
+        case KEY_ACTION_REMAP_LOCALLY:
+            actionString = @"Remap Modifiers in iTerm2 Only";
+            break;
         case KEY_ACTION_TOGGLE_FULLSCREEN:
             actionString = @"Toggle Fullscreen";
             break;

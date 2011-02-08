@@ -1142,6 +1142,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 
     NSEvent* cocoaEvent = [NSEvent eventWithCGEvent:event];
     BOOL callDirectly = NO;
+    BOOL local = NO;
     if ([NSApp isActive]) {
         // Remap modifier keys only while iTerm2 is active; otherwise you could just use the
         // OS's remap feature.
@@ -1151,16 +1152,35 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         NSString *keyBindingText;
         PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
         BOOL tempDisabled = [prefPanel remappingDisabledTemporarily];
-        BOOL isDoNotRemap = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
+        int action = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
                                                        modifiers:modflag
                                                             text:&keyBindingText
-                                                     keyMappings:nil] == KEY_ACTION_DO_NOT_REMAP_MODIFIERS;
+                                              keyMappings:nil];
+        BOOL isDoNotRemap = (action == KEY_ACTION_DO_NOT_REMAP_MODIFIERS);
+        local = action == KEY_ACTION_REMAP_LOCALLY;
+        CGEventRef eventCopy = CGEventCreateCopy(event);
+        if (local) {
+            // The remapping should be applied and sent to [NSApp sendEvent:]
+            // and not be returned from here. Apply the remapping to a copy
+            // of the original event.
+            CGEventRef temp = event;
+            event = eventCopy;
+            eventCopy = temp;
+        }
         BOOL keySheetOpen = [[prefPanel keySheet] isKeyWindow] && [prefPanel keySheetIsOpen];
         if ((!tempDisabled && !isDoNotRemap) ||  // normal case, whether keysheet is open or not
             (!tempDisabled && isDoNotRemap && keySheetOpen)) {  // about to change dnr to non-dnr
             [iTermKeyBindingMgr remapModifiersInCGEvent:event
                                               prefPanel:prefPanel];
             cocoaEvent = [NSEvent eventWithCGEvent:event];
+        }
+        if (local) {
+            // Now that the cocoaEvent has the remapped version, restore
+            // the original event and free the copy.
+            CGEventRef temp = event;
+            event = eventCopy;
+            eventCopy = temp;
+            CFRelease(eventCopy);
         }
         if (tempDisabled && !isDoNotRemap) {
             callDirectly = YES;
@@ -1173,10 +1193,11 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
         unsigned int modflag = [cocoaEvent modifierFlags];
         NSString *keyBindingText;
-        BOOL isDoNotRemap = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
+        int action = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
                                                        modifiers:modflag
                                                             text:&keyBindingText
-                                                     keyMappings:nil] == KEY_ACTION_DO_NOT_REMAP_MODIFIERS;
+                                                     keyMappings:nil];
+        BOOL isDoNotRemap = (action == KEY_ACTION_DO_NOT_REMAP_MODIFIERS) || (action == KEY_ACTION_REMAP_LOCALLY);
         if (!isDoNotRemap) {
             [iTermKeyBindingMgr remapModifiersInCGEvent:eventCopy
                                               prefPanel:[PreferencePanel sharedInstance]];
@@ -1195,7 +1216,15 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         [[PreferencePanel sharedInstance] shortcutKeyDown:cocoaEvent];
         return nil;
     }
-    return event;
+    if (local) {
+        // Send event directly to iTerm2 and do not allow other apps to see the
+        // event at all.
+        [NSApp sendEvent:cocoaEvent];
+        return nil;
+    } else {
+        // Normal case.
+        return event;
+    }
 }
 
 - (void)unregisterHotkey

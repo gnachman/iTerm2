@@ -595,7 +595,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                                                 keyMappings:[[self addressBookEntry] objectForKey: KEY_KEYBOARD_MAP]];
 
 
-    return (keyBindingAction >= 0) && (keyBindingAction != KEY_ACTION_DO_NOT_REMAP_MODIFIERS);
+    return (keyBindingAction >= 0) && (keyBindingAction != KEY_ACTION_DO_NOT_REMAP_MODIFIERS) && (keyBindingAction != KEY_ACTION_REMAP_LOCALLY);
 }
 
 + (void)reloadAllBookmarks
@@ -836,6 +836,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                 [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
                 break;
             case KEY_ACTION_DO_NOT_REMAP_MODIFIERS:
+            case KEY_ACTION_REMAP_LOCALLY:
                 break;
             case KEY_ACTION_TOGGLE_FULLSCREEN:
                 [[[iTermController sharedInstance] currentTerminal] toggleFullScreen:nil];

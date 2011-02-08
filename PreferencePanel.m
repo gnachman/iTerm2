@@ -2528,11 +2528,12 @@ static float versionNumber;
         [[valueToSend cell] setPlaceholderString:@"characters to send"];
         [escPlus setHidden:NO];
         [escPlus setStringValue:@"Esc+"];
-    } else if (tag == KEY_ACTION_DO_NOT_REMAP_MODIFIERS) {
+    } else if (tag == KEY_ACTION_DO_NOT_REMAP_MODIFIERS ||
+               tag == KEY_ACTION_REMAP_LOCALLY) {
         [valueToSend setHidden:YES];
         [valueToSend setStringValue:@""];
         [escPlus setHidden:NO];
-        [escPlus setStringValue:@"Modifier remapping temporarily disabled."];
+        [escPlus setStringValue:@"Modifier remapping disabled: type the actual key combo you want to affect."];
     } else {
         [valueToSend setHidden:YES];
         [valueToSend setStringValue:@""];
@@ -2766,7 +2767,8 @@ static float versionNumber;
 
 - (BOOL)remappingDisabledTemporarily
 {
-    return [[self keySheet] isKeyWindow] && [self keySheetIsOpen] && [action selectedTag] == KEY_ACTION_DO_NOT_REMAP_MODIFIERS;
+    return [[self keySheet] isKeyWindow] && [self keySheetIsOpen] && ([action selectedTag] == KEY_ACTION_DO_NOT_REMAP_MODIFIERS ||
+                                                                      [action selectedTag] == KEY_ACTION_REMAP_LOCALLY);
 }
 
 #pragma mark NSTokenField delegate
