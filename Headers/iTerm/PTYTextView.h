@@ -87,8 +87,6 @@ typedef struct PTYFontInfo PTYFontInfo;
     BOOL CURSOR;
     BOOL colorInvertedCursor;
 
-    BOOL doCommandBySelectorCalled;
-
     // geometry
     float lineHeight;
     float lineWidth;
