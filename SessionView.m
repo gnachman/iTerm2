@@ -105,6 +105,7 @@ static const float kTargetFrameRate = 1.0/60.0;
 
 - (void)setFrameSize:(NSSize)newSize
 {
+    NSLog(@"********************* SESSIONVIEW CHANGES SIZE TO %lf", newSize.height);
     [super setFrameSize:newSize];
     [shade_ setFrameSize:newSize];
     [shade_ setFrameOrigin:NSMakePoint(0, 0)];

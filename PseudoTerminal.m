@@ -1089,7 +1089,7 @@ NSString *sessionsKey = @"sessions";
     }
 
     // Adjust the size of all the sessions.
-    PtyLog(@"windowDidResize - call fitTabsToWindow");
+    NSLog(@"windowDidResize - call repositionWidgets");
     [self repositionWidgets];
 
     PTYSession* session = [self currentSession];
@@ -2031,8 +2031,10 @@ NSString *sessionsKey = @"sessions";
 // Toggle bottom bar.
 - (void)showHideBottomBar
 {
+    NSLog(@"showHideBottomBar");
     BOOL hide = ![bottomBar isHidden];
     if (!hide) {
+        NSLog(@"showing bottom bar. Save frame height of %lf", [[self window] frame].size.height);
         preBottomBarFrame = [[self window] frame];
     }
     [bottomBar setHidden:hide];
@@ -2042,9 +2044,16 @@ NSString *sessionsKey = @"sessions";
     } else {
         PtyLog(@"showHideFindBar - calling fitWindowToTabs");
         if (hide && pbbfValid) {
+            NSLog(@"Restore old frame of height %lf", preBottomBarFrame.size.height);
             [[self window] setFrame:preBottomBarFrame display:YES];
+            NSLog(@"showHideBottomBar - calling repositionWidgets");
+            [self repositionWidgets];
+            NSLog(@"showHideBottomBar - call fitTabsToWindow");
             [self fitTabsToWindow];
         } else {
+            NSLog(@"showHideBottomBar - call repositionWidgets");
+            [self repositionWidgets];
+            NSLog(@"showHideBottomBar - call fitWindowToTabs");
             [self fitWindowToTabs];
         }
     }
@@ -2219,6 +2228,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)showHideFindBar
 {
+    NSLog(@"showHideFindBar********************************************** tabview size is %lf", [TABVIEW frame].size.height);
     BOOL hide = ![findBarSubview isHidden];
     NSObject* firstResponder = [[self window] firstResponder];
     NSText* currentEditor = [findBarTextField currentEditor];
@@ -2243,11 +2253,12 @@ NSString *sessionsKey = @"sessions";
         [self showHideBottomBar];
     }
 
+    NSLog(@"showHideFindBar - calling arrangeBottomBarSubviews");
     [self arrangeBottomBarSubviews];
     if (_fullScreen) {
         [self adjustFullScreenWindowForBottomBarChange];
     } else {
-        PtyLog(@"showHideFindBar - calling fitWindowToTabs");
+        NSLog(@"showHideFindBar - calling fitWindowToTabs");
         [self fitWindowToTabs];
     }
 
@@ -2532,9 +2543,11 @@ NSString *sessionsKey = @"sessions";
 
     // Determine the size of the largest tab.
     NSSize maxTabSize = NSZeroSize;
+    NSLog(@"fitWindowToTabs.......");
     for (NSTabViewItem* item in [TABVIEW tabViewItems]) {
         PTYTab* tab = [item identifier];
         NSSize tabSize = [tab size];
+        NSLog(@"The natrual size of this tab is %lf", tabSize.height);
         if (tabSize.width > maxTabSize.width) {
             maxTabSize.width = tabSize.width;
         }
@@ -2550,7 +2563,9 @@ NSString *sessionsKey = @"sessions";
             maxTabSize.height = tabSize.height;
         }
     }
+    NSLog(@"fitWindowToTabs - calling repositionWidgets");
     [self repositionWidgets];
+    NSLog(@"fitWindowToTabs - calling fitWindowToTabSize");
     [self fitWindowToTabSize:maxTabSize];
 }
 
@@ -3126,7 +3141,7 @@ NSString *sessionsKey = @"sessions";
             }
             aRect.size.height -= aRect.origin.y;
             aRect.size.height -= [tabBarControl frame].size.height;
-            PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
+            NSLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
             [TABVIEW setFrame:aRect];
             aRect.origin.y += aRect.size.height;
             aRect.size.height = [tabBarControl frame].size.height;
@@ -3433,6 +3448,7 @@ NSString *sessionsKey = @"sessions";
 - (void)fitTabToWindow:(PTYTab*)aTab
 {
     NSSize size = [TABVIEW contentRect].size;
+    NSLog(@"fitTabToWindow calling setSize for content size of height %lf", size.height);
     [aTab setSize:size];
 }
 

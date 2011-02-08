@@ -1221,6 +1221,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)keyDown:(NSEvent*)event
 {
+    NSLog(@"PTYTextView keyDown");
     id delegate = [self delegate];
     unsigned int modflag = [event modifierFlags];
     unsigned short keyCode = [event keyCode];
@@ -1251,7 +1252,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     // If the IME didn't want it, pass it on to the delegate
     if (!prev &&
         !IM_INPUT_INSERT &&
-        doCommandBySelectorCalled &&
+//        doCommandBySelectorCalled &&
         ![self hasMarkedText]) {
         [delegate keyDown:event];
     }
@@ -1262,7 +1263,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return (keyIsARepeat);
 }
 
-// TODO: disable other, right mouse for inactive panes
+// TODO: disable other, righxt mouse for inactive panes
 - (void)otherMouseDown: (NSEvent *) event
 {
     NSPoint locationInWindow, locationInTextView;
@@ -2587,6 +2588,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 - (void)doCommandBySelector:(SEL)aSelector
 {
     doCommandBySelectorCalled = YES;
+    NSLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
 
 #if GREED_KEYDOWN == 0
     id delegate = [self delegate];

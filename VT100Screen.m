@@ -676,6 +676,7 @@ static char* FormatCont(int c)
 
 - (void)resizeWidth:(int)new_width height:(int)new_height
 {
+    NSLog(@"Resize session to %d height", new_height);
     int i;
     screen_char_t *new_buffer_lines;
 

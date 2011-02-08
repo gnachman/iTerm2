@@ -41,7 +41,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTerm/iTermController.h"
 
-// #define PTYTAB_VERBOSE_LOGGING
+#define PTYTAB_VERBOSE_LOGGING
 #ifdef PTYTAB_VERBOSE_LOGGING
 #define PtyLog NSLog
 #else
@@ -52,6 +52,33 @@ DebugLog([NSString stringWithFormat:args]); \
 } \
 } while (0)
 #endif
+
+@interface MySplitView : NSSplitView
+{
+}
+
+- (void)adjustSubviews;
+
+@end
+
+@implementation MySplitView
+
+- (void)adjustSubviews
+{
+    NSLog(@"@@@@@@@@@@ begin adjustSubviews");
+    for (NSView* v in [self subviews]) {
+        NSLog(@"View %p has height %lf", v, [v frame].size.height);
+    }
+    [super adjustSubviews];
+    NSLog(@"AFTER:");
+    for (NSView* v in [self subviews]) {
+        NSLog(@"View %p has height %lf", v, [v frame].size.height);
+    }
+    NSLog(@"@@@@@@@@ END @@@@@@@");
+}
+
+@end
+
 
 @implementation PTYTab
 
@@ -109,7 +136,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     if (self) {
         activeSession_ = session;
         [session setLastActiveAt:[NSDate date]];
-        root_ = [[NSSplitView alloc] init];
+        root_ = [[MySplitView alloc] init];
         if (USE_THIN_SPLITTERS) {
             [root_ setDividerStyle:NSSplitViewDividerStyleThin];
         }
@@ -863,6 +890,22 @@ static NSString* FormatRect(NSRect r) {
     }
 }
 
+- (void)dumpSubviewsOf:(NSSplitView*)split
+{
+    for (NSView* v in [split subviews]) {
+        NSLog(@"View %p has height %lf", v, [v frame].size.height);
+    }
+}
+
+- (void)adjustSubviewsOf:(NSSplitView*)split
+{
+    NSLog(@"--- adjust ---");
+    [split adjustSubviews];
+    NSLog(@">>AFTER:");
+    [self dumpSubviewsOf:split];
+    NSLog(@"<<<<<<<< end dump");
+}
+
 - (SessionView*)splitVertically:(BOOL)isVertical targetSession:(PTYSession*)targetSession
 {
     PtyLog(@"PTYTab splitVertically");
@@ -884,7 +927,7 @@ static NSString* FormatRect(NSRect r) {
         [parentSplit addSubview:newView positioned:NSWindowAbove relativeTo:targetSessionView];
 
         // Resize all subviews the same size to accommodate the new view.
-        [parentSplit adjustSubviews];
+        [self adjustSubviewsOf:parentSplit];
         [self _splitViewDidResizeSubviews:parentSplit];
     } else if ([parentSplit isVertical] != isVertical) {
         PtyLog(@"PTYTab splitVertically parent has opposite orientation");
@@ -893,7 +936,7 @@ static NSString* FormatRect(NSRect r) {
         // 2. Replace it with an 'isVertical'-orientation NSSplitView
         // 3. Add two children to the 'isVertical'-orientation NSSplitView: the active session and the new view.
         [targetSessionView retain];
-        NSSplitView* newSplit = [[NSSplitView alloc] initWithFrame:[targetSessionView frame]];
+        NSSplitView* newSplit = [[MySplitView alloc] initWithFrame:[targetSessionView frame]];
         if (USE_THIN_SPLITTERS) {
             [newSplit setDividerStyle:NSSplitViewDividerStyleThin];
         }
@@ -907,7 +950,7 @@ static NSString* FormatRect(NSRect r) {
         [newSplit addSubview:newView];
 
         // Resize all subviews the same size to accommodate the new view.
-        [parentSplit adjustSubviews];
+        [self adjustSubviewsOf:parentSplit];
         [newSplit adjustSubviews];
         [self _splitViewDidResizeSubviews:newSplit];
     } else {
@@ -916,7 +959,7 @@ static NSString* FormatRect(NSRect r) {
         [parentSplit addSubview:newView positioned:NSWindowAbove relativeTo:targetSessionView];
 
         // Resize all subviews the same size to accommodate the new view.
-        [parentSplit adjustSubviews];
+        [self adjustSubviewsOf:parentSplit];
         [self _splitViewDidResizeSubviews:parentSplit];
     }
     PtyLog(@"After:");
@@ -929,6 +972,7 @@ static NSString* FormatRect(NSRect r) {
 {
     NSSize size;
     PTYSession* session = [sessionView session];
+    NSLog(@"    session size based on %d rows", [session rows]);
     size.width = [session columns] * [[session TEXTVIEW] charWidth] + MARGIN * 2;
     size.height = [session rows] * [[session TEXTVIEW] lineHeight] + VMARGIN * 2;
 
@@ -960,6 +1004,7 @@ static NSString* FormatRect(NSRect r) {
 // whose size is "canonical" when its size differs from that of its siblings.
 - (NSSize)_recursiveSize:(NSSplitView*)node containsLock:(BOOL*)containsLockOut
 {
+    NSLog(@"Computing recursive size for node %p", node);
     PtyLog(@"PTYTab recursiveSize");
     NSSize size;
     size.width = 0;
@@ -986,16 +1031,19 @@ static NSString* FormatRect(NSRect r) {
             // Add the size of the splitter between this pane and the previous one.
             size.width += dividerSize.width;
             size.height += dividerSize.height;
+            NSLog(@"  add %lf for divider", dividerSize.height);
         }
 
         BOOL subviewContainsLock = NO;
         if ([subview isKindOfClass:[NSSplitView class]]) {
             // Get size of child tree at this subview.
             subviewSize = [self _recursiveSize:(NSSplitView*)subview containsLock:&subviewContainsLock];
+            NSLog(@"  add %lf for child split", subviewSize.height);
         } else {
             // Get size of session at this subview.
             SessionView* sessionView = (SessionView*)subview;
             subviewSize = [self _sessionSize:sessionView];
+            NSLog(@"  add %lf for session", subviewSize.height);
             if ([sessionView session] == lockedSession_) {
                 subviewContainsLock = YES;
             }
@@ -1120,9 +1168,11 @@ static NSString* FormatRect(NSRect r) {
 
 - (void)setSize:(NSSize)newSize
 {
-    PtyLog(@"PTYTab setSize:%fx%f", (float)newSize.width, (float)newSize.height);
+    NSLog(@"PTYTab setSize:%fx%f", (float)newSize.width, (float)newSize.height);
+    [self dumpSubviewsOf:root_];
     [root_ setFrameSize:newSize];
-    [root_ adjustSubviews];
+    //[root_ adjustSubviews];
+    [self adjustSubviewsOf:root_];
     [self _splitViewDidResizeSubviews:root_];
 }
 
@@ -1273,7 +1323,7 @@ static NSString* FormatRect(NSRect r) {
         PtyLog(@"fitSessionToWindow - terminating early because session size doesn't change");
         return;
     }
-    PtyLog(@"PTYTab fitSessionToCurrentViewSize - Given a scrollview size of %fx%f, can fit %dx%d chars", size.width, size.height, width, height);
+    NSLog(@"PTYTab fitSessionToCurrentViewSize - Given a scrollview size of %fx%f, can fit %dx%d chars", size.width, size.height, width, height);
 
     [[aSession SCREEN] resizeWidth:width height:height];
     PtyLog(@"fitSessionToCurrentViewSize -  calling shell setWidth:%d height:%d", width, height);
@@ -1401,7 +1451,7 @@ static NSString* FormatRect(NSRect r) {
 {
     if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
         NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SPLIITER_FRAME]];
-        NSSplitView *splitter = [[NSSplitView alloc] initWithFrame:frame];
+        NSSplitView *splitter = [[MySplitView alloc] initWithFrame:frame];
         if (USE_THIN_SPLITTERS) {
             [splitter setDividerStyle:NSSplitViewDividerStyleThin];
         }
@@ -2040,7 +2090,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 // being resized.
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification
 {
-    PtyLog(@"splitViewDidResizeSubviews notification received.");
+    NSLog(@"splitViewDidResizeSubviews notification received. new height is %lf", [root_ frame].size.height);
     NSSplitView* splitView = [aNotification object];
     [self _splitViewDidResizeSubviews:splitView];
 }
@@ -2052,7 +2102,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         if ([subview isKindOfClass:[SessionView class]]) {
             PTYSession* session = [(SessionView*)subview session];
             if (session) {
-                PtyLog(@"splitViewDidResizeSubviews - view is %fx%f, ignore=%d", [subview frame].size.width, [subview frame].size.height, (int)[session ignoreResizeNotifications]);
+                NSLog(@"splitViewDidResizeSubviews - view is %fx%f, ignore=%d", [subview frame].size.width, [subview frame].size.height, (int)[session ignoreResizeNotifications]);
                 if (![session ignoreResizeNotifications]) {
                     PtyLog(@"splitViewDidResizeSubviews - adjust session %p", session);
                     [self fitSessionToCurrentViewSize:session];
