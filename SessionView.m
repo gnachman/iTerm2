@@ -44,9 +44,19 @@ static const float kTargetFrameRate = 1.0/60.0;
     NSRectFill(rect);
 }
 
+- (void)mouseDown:(NSEvent *)event
+{
+    [[self superview] mouseDown:event];
+}
+
 - (void)rightMouseDown:(NSEvent*)event
 {
     [[self superview] rightMouseDown:event];
+}
+
+- (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
+{
+    return [self alphaValue] > 0;
 }
 
 @end
@@ -231,6 +241,11 @@ static const float kTargetFrameRate = 1.0/60.0;
 - (void)rightMouseDown:(NSEvent*)event
 {
     [[[self session] TEXTVIEW] rightMouseDown:event];
+}
+
+- (void)mouseDown:(NSEvent*)event
+{
+    [[[self session] TEXTVIEW] mouseDown:event];
 }
 
 @end
