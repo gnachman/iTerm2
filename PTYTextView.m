@@ -3529,18 +3529,22 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     // 1. Enclosing marks (q in a circle shows as a q)
     // 2. U+239d, a part of a paren for graphics drawing, doesn't quite render
     //    right (though it appears to need to render in another char's cell).
-    // Other rejected approaches include dusing CTFontGetGlyphsForCharacters+
+    // Other rejected approaches included using CTFontGetGlyphsForCharacters+
     // CGContextShowGlyphsWithAdvances, which doesn't render thai characters
     // correctly in UTF-8-demo.txt.
+    //
+    // We use width*2 so that wide characters that are not double width chars
+    // render properly. These are font-dependent. See tests/suits.txt for an
+    // example.
     [attributedString drawWithRect:NSMakeRect(pos.x,
                                               pos.y + fontInfo->baselineOffset + lineHeight,
-                                              width,
+                                              width*2,
                                               lineHeight)
                            options:0];  // NSStringDrawingUsesLineFragmentOrigin
     if (fakeBold) {
         [attributedString drawWithRect:NSMakeRect(pos.x + 1,
                                                   pos.y + fontInfo->baselineOffset + lineHeight,
-                                                  width,
+                                                  width*2,
                                                   lineHeight)
                                options:0];  // NSStringDrawingUsesLineFragmentOrigin
     }

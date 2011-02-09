@@ -121,7 +121,7 @@ void StringToScreenChars(NSString *s,
             lastInitializedChar = j;
         }
 
-        if ((sc[i] >= 0xe000 && sc[i] <= 0xf8ff) ||
+        if ((sc[i] >= 0xe000 && sc[i] <= ITERM2_PRIVATE_END) ||
             sc[i] >= 0xfffd) {
             // Translate private-use characters into a replacement char.
             // Unfortunately, the proper replacement char U+fffd is double-width

@@ -60,7 +60,7 @@
 // The range of private codes we use, with specific instances defined right
 // above here.
 #define ITERM2_PRIVATE_BEGIN 0xf000
-#define ITERM2_PRIVATE_END 0xf8ff
+#define ITERM2_PRIVATE_END 0xf8fe
 
 // This is the standard unicode replacement character for when input couldn't
 // be parsed properly but we need to render something there.
