@@ -617,6 +617,8 @@ NSString *sessionsKey = @"sessions";
     for (; [TABVIEW numberOfTabViewItems]; )  {
         aTabViewItem = [TABVIEW tabViewItemAtIndex:0];
         [[aTabViewItem identifier] terminateAllSessions];
+        PTYTab* theTab = [aTabViewItem identifier];
+        [theTab setParentWindow:nil];
         [TABVIEW removeTabViewItem:aTabViewItem];
     }
 
