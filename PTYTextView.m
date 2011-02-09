@@ -1343,7 +1343,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseReleaseAtX:rx Y:ry]];
+                [session writeTask:[terminal mouseReleaseWithModifiers:[event modifierFlags]
+                                                                   atX:rx
+                                                                     Y:ry]];
                 return;
                 break;
 
@@ -1472,7 +1474,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseReleaseAtX:rx Y:ry]];
+                [session writeTask:[terminal mouseReleaseWithModifiers:[event modifierFlags]
+                                                                   atX:rx
+                                                                     Y:ry]];
                 return;
                 break;
 
@@ -1818,7 +1822,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseReleaseAtX:rx Y:ry]];
+                [session writeTask:[terminal mouseReleaseWithModifiers:[event modifierFlags]
+                                                                   atX:rx
+                                                                     Y:ry]];
                 return;
                 break;
 
@@ -2223,7 +2229,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     NSPoint locationInWindow = [theEvent locationInWindow];
     NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
     VT100Terminal *terminal = [dataSource terminal];
-    mouseMode mm = [terminal mouseMode];
+    MouseMode mm = [terminal mouseMode];
     if (frontTextView == self &&
         ([[self delegate] xtermMouseReporting]) &&
         (mm == MOUSE_REPORTING_NORMAL ||

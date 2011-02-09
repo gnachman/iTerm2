@@ -262,7 +262,13 @@ typedef enum {
     MOUSE_REPORTING_HILITE,
     MOUSE_REPORTING_BUTTON_MOTION,
     MOUSE_REPORTING_ALL_MOTION,
-} mouseMode;
+} MouseMode;
+
+typedef enum {
+    MOUSE_FORMAT_XTERM = 0,       // Regular 1000 mode
+    MOUSE_FORMAT_XTERM_EXT = 1,   // UTF-8 1005 mode
+    MOUSE_FORMAT_URXVT = 2        // rxvt's 1015 mode
+} MouseFormat;
 
 @interface VT100Terminal : NSObject
 {
@@ -289,7 +295,8 @@ typedef enum {
     int  CHARSET;           // G0...G3
     BOOL XON;               // YES=XON, NO=XOFF
     BOOL numLock;           // YES=ON, NO=OFF, default=YES;
-    mouseMode MOUSE_MODE;
+    MouseMode MOUSE_MODE;
+    MouseFormat MOUSE_FORMAT;
 
     int FG_COLORCODE;
     BOOL alternateForegroundSemantics;
@@ -362,9 +369,10 @@ typedef enum {
 - (NSData *)keyFunction:(int)no;
 - (NSData *)keypadData: (unichar) unicode keystr: (NSString *) keystr;
 
-- (NSData *)mousePress: (int)button withModifiers: (unsigned int)modflag atX: (int)x Y: (int)y;
-- (NSData *)mouseReleaseAtX: (int)x Y: (int)y;
-- (NSData *)mouseMotion: (int)button withModifiers: (unsigned int)modflag atX: (int)x Y: (int)y;
+- (char *)mouseReport:(int)button atX:(int)x Y:(int)y;
+- (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
+- (NSData *)mouseReleaseWithModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
+- (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
 
 - (BOOL)lineMode;
 - (BOOL)cursorMode;
@@ -380,7 +388,7 @@ typedef enum {
 - (BOOL)insertMode;
 - (int)charset;
 - (BOOL)xon;
-- (mouseMode)mouseMode;
+- (MouseMode)mouseMode;
 
 - (screen_char_t)foregroundColorCode;
 - (screen_char_t)backgroundColorCode;

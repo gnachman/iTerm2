@@ -37,6 +37,7 @@
 #import "PseudoTerminal.h"
 #import "WindowControllerInterface.h"
 #include <term.h>
+#include <wchar.h>
 
 #define DEBUG_ALLOC 0
 #define LOG_UNKNOWN 0
@@ -129,8 +130,6 @@
 // Secondary Device Attribute: VT100
 #define REPORT_SDA           "\033[>0;95;c"
 #define REPORT_VT52          "\033/Z"
-
-#define MOUSE_REPORT_FORMAT "\033[M%c%c%c"
 
 #define conststr_sizeof(n)   ((sizeof(n)) - 1)
 
@@ -1498,6 +1497,7 @@ static VT100TCC decode_string(unsigned char *datap,
     saveBackground = BG_COLORCODE;
     saveAltBackground = alternateBackgroundSemantics;
     MOUSE_MODE = MOUSE_REPORTING_NONE;
+    MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
 
     TRACE = NO;
 
@@ -1640,6 +1640,7 @@ static VT100TCC decode_string(unsigned char *datap,
     BG_COLORCODE = ALTSEM_BG_DEFAULT;
     alternateBackgroundSemantics = YES;
     MOUSE_MODE = MOUSE_REPORTING_NONE;
+    MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
 
     TRACE = NO;
 
@@ -2112,9 +2113,29 @@ static VT100TCC decode_string(unsigned char *datap,
     return (theData);
 }
 
-- (NSData*)mousePress:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
+- (char *)mouseReport:(int)button atX:(int)x Y:(int)y
 {
-    static char buf[7];
+    static char buf[32]; // This should be enough for all formats.
+    switch (MOUSE_FORMAT) {
+        case MOUSE_FORMAT_XTERM_EXT:
+            snprintf(buf, sizeof(buf), "\033[M%c%lc%lc",
+                     (wint_t) (32 + button),
+                     (wint_t) (32 + x),
+                     (wint_t) (32 + y));
+            break;
+        case MOUSE_FORMAT_URXVT:
+            snprintf(buf, sizeof(buf), "\033[%d;%d;%dM", 32 + button, x, y);
+            break;
+        case MOUSE_FORMAT_XTERM:
+        default:
+            snprintf(buf, sizeof(buf), "\033[M%c%c%c", 32 + button, 32 + x, 32 + y);
+            break;
+    }
+    return buf;
+}
+
+- (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
+{
     char cb;
 
     cb = button;
@@ -2122,30 +2143,47 @@ static VT100TCC decode_string(unsigned char *datap,
     if (modflag & NSControlKeyMask) cb += 16;
     if (modflag & NSShiftKeyMask) cb += 4;
     if (modflag & NSAlternateKeyMask) cb += 8;
-    sprintf(buf, MOUSE_REPORT_FORMAT, 32 + cb, 32 + x + 1, 32 + y + 1);
+    char *buf = [self mouseReport:(cb) atX:(x + 1) Y:(y + 1)];
 
     return [NSData dataWithBytes: buf length: strlen(buf)];
 }
 
-- (NSData *)mouseReleaseAtX:(int)x Y:(int)y
+- (NSData *)mouseReleaseWithModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
 {
-    static char buf[7];
-    sprintf(buf, MOUSE_REPORT_FORMAT, 32 + 3, 32 + x + 1, 32 + y + 1);
+    char cb = 3;
+
+    if (modflag & NSControlKeyMask) {
+      cb |= 16;
+    }
+    if (modflag & NSShiftKeyMask) {
+      cb |= 4;
+    }
+    if (modflag & NSAlternateKeyMask) {
+      cb |= 8;
+    }
+    char *buf = [self mouseReport:cb atX:(x + 1) Y:(y + 1)];
 
     return [NSData dataWithBytes: buf length: strlen(buf)];
 }
 
 - (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
 {
-    static char buf[7];
     char cb;
 
     cb = button % 3;
-    if (button > 3) cb += 64;
-    if (modflag & NSControlKeyMask) cb += 16;
-    if (modflag & NSShiftKeyMask) cb += 4;
-    if (modflag & NSAlternateKeyMask) cb += 8;
-    sprintf(buf, MOUSE_REPORT_FORMAT, 32 + 32 + cb, 32 + x + 1, 32 + y + 1);
+    if (button > 3) {
+      cb |= 64;
+    }
+    if (modflag & NSControlKeyMask) {
+      cb |= 16;
+    }
+    if (modflag & NSShiftKeyMask) {
+      cb |= 4;
+    }
+    if (modflag & NSAlternateKeyMask) {
+      cb |= 8;
+    }
+    char *buf = [self mouseReport:(32 + cb) atX:(x + 1) Y:(y + 1)];
 
     return [NSData dataWithBytes: buf length: strlen(buf)];
 }
@@ -2222,7 +2260,7 @@ static VT100TCC decode_string(unsigned char *datap,
     return CHARSET;
 }
 
-- (mouseMode) mouseMode
+- (MouseMode)mouseMode
 {
     return MOUSE_MODE;
 }
@@ -2359,8 +2397,27 @@ static VT100TCC decode_string(unsigned char *datap,
                 /* case 1001: */ /* MOUSE_REPORTING_HILITE not implemented yet */
                 case 1002:
                 case 1003:
-                    if (mode) MOUSE_MODE = token.u.csi.p[0] - 1000;
-                    else MOUSE_MODE = MOUSE_REPORTING_NONE;
+                    if (mode) {
+                        MOUSE_MODE = token.u.csi.p[0] - 1000;
+                    } else {
+                        MOUSE_MODE = MOUSE_REPORTING_NONE;
+                    }
+                    break;
+
+                case 1005:
+                    if (mode) {
+                        MOUSE_FORMAT = MOUSE_FORMAT_XTERM_EXT;
+                    } else {
+                        MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
+                    }
+                    break;
+
+                case 1015:
+                    if (mode) {
+                        MOUSE_FORMAT = MOUSE_FORMAT_URXVT;
+                    } else {
+                        MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
+                    }
                     break;
             }
                 break;
