@@ -339,6 +339,9 @@
 // Toggle find bar.
 - (void)showHideFindBar;
 
+// Are we in in IR?
+- (BOOL)inInstantReplay;
+
 // Toggle IR bar.
 - (void)showHideInstantReplay;
 
@@ -544,6 +547,9 @@
 // Advance to next or previous time step
 - (IBAction)irPrev:(id)sender;
 - (IBAction)irNext:(id)sender;
+
+// Maximize or unmaximize the active pane
+- (void)toggleMaximizeActivePane;
 
 // selector for menu item to split current session vertically.
 - (IBAction)splitVertically:(id)sender;

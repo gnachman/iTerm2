@@ -2096,7 +2096,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [result setObject:[NSNumber numberWithInt:[SCREEN width]] forKey:SESSION_ARRANGEMENT_COLUMNS];
     [result setObject:[NSNumber numberWithInt:[SCREEN height]] forKey:SESSION_ARRANGEMENT_ROWS];
     [result setObject:addressBookEntry forKey:SESSION_ARRANGEMENT_BOOKMARK];
-    [result setObject:[SHELL getWorkingDirectory] forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
+    NSString* pwd = [SHELL getWorkingDirectory];
+    [result setObject:pwd ? pwd : @"" forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
     return result;
 }
 

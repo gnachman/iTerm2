@@ -76,21 +76,6 @@ static const float kTargetFrameRate = 1.0/60.0;
     return self;
 }
 
-- (id)retain
-{
-    return [super retain];
-}
-
-- (oneway void)release
-{
-    [super release];
-}
-
-- (id)autorelease
-{
-    return [super autorelease];
-}
-
 - (id)initWithFrame:(NSRect)frame session:(PTYSession*)session
 {
     self = [self initWithFrame:frame];
@@ -248,8 +233,8 @@ static const float kTargetFrameRate = 1.0/60.0;
 - (void)mouseDown:(NSEvent*)event
 {
     if ([[[self session] TEXTVIEW] mouseDownImpl:event]) {
-		[super mouseDown:event];
-	}
+        [super mouseDown:event];
+    }
 }
 
 @end

@@ -430,6 +430,12 @@ static void FlushDebugLog() {
         [gDebugLogStr setString:@""];
 }
 
+- (IBAction)maximizePane:(id)sender
+{
+    [[[iTermController sharedInstance] currentTerminal] toggleMaximizeActivePane];
+    [self updateMaximizePaneMenuItem];
+}
+
 - (IBAction)toggleUseTransparency:(id)sender
 {
     [[[iTermController sharedInstance] currentTerminal] toggleUseTransparency:sender];
@@ -642,6 +648,8 @@ void DebugLog(NSString* value)
 
 - (void)buildSessionSubmenu:(NSNotification *)aNotification
 {
+    [self updateMaximizePaneMenuItem];
+
     // build a submenu to select tabs
     PseudoTerminal *currentTerminal = [self currentTerminal];
 
@@ -700,6 +708,8 @@ void DebugLog(NSString* value)
 // This is called whenever a tab becomes key or logging starts/stops.
 - (void)reloadSessionMenus:(NSNotification *)aNotification
 {
+    [self updateMaximizePaneMenuItem];
+
     PseudoTerminal *currentTerminal = [self currentTerminal];
     PTYSession* aSession = [aNotification object];
 
@@ -717,14 +727,32 @@ void DebugLog(NSString* value)
     }
 }
 
+- (void)updateMaximizePaneMenuItem
+{
+    [maximizePane setState:[[[[iTermController sharedInstance] currentTerminal] currentTab] hasMaximizedPane] ? NSOnState : NSOffState];
+}
+
 - (void)updateUseTransparencyMenuItem
 {
     [useTransparency setState:[[[iTermController sharedInstance] currentTerminal] useTransparency] ? NSOnState : NSOffState];
 }
 
-- (BOOL) validateMenuItem: (NSMenuItem *) menuItem
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem
 {
-    return YES;
+    if (menuItem == maximizePane) {
+        if ([[[iTermController sharedInstance] currentTerminal] inInstantReplay]) {
+            // Things get too complex if you allow this. It crashes.
+            return NO;
+        } else if ([[[[iTermController sharedInstance] currentTerminal] currentTab] hasMaximizedPane]) {
+            return YES;
+        } else if ([[[[iTermController sharedInstance] currentTerminal] currentTab] hasMultipleSessions]) {
+            return YES;
+        } else {
+            return NO;
+        }
+    } else {
+        return YES;
+    }
 }
 
 - (IBAction)buildScriptMenu:(id)sender

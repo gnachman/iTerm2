@@ -64,7 +64,13 @@ static NSString* FormatRect(NSRect r) {
     NSImage* cache_;  // background image
 }
 
-- (id)initWithFrame:(NSRect)frame images:(NSArray*)images labels:(NSArray*)labels tabs:(NSArray*)tabs frames:(NSRect*)frames putOnTop:(int)topIndex;
+- (id)initWithFrame:(NSRect)frame
+             images:(NSArray*)images
+             labels:(NSArray*)labels
+               tabs:(NSArray*)tabs
+             frames:(NSRect*)frames
+       wasMaximized:(NSArray*)wasMaximized
+           putOnTop:(int)topIndex;
 - (void)dealloc;
 - (void)updateTab:(PTYTab*)theTab;
 - (void)drawRect:(NSRect)rect;
@@ -77,7 +83,8 @@ static NSString* FormatRect(NSRect r) {
                   screenFrame:(NSRect)screenFrame
            visibleScreenFrame:(NSRect)visibleScreenFrame
                         frame:(NSRect)frame
-                        index:(int)theIndex;
+                        index:(int)theIndex
+                 wasMaximized:(BOOL)wasMaximized;
 // Delegate methods
 - (void)onSelection:(iTermExposeTabView*)theView session:(PTYSession*)theSession;
 - (BOOL)recomputeIndices;
@@ -105,6 +112,7 @@ static NSString* FormatRect(NSRect r) {
     BOOL hasResult_;
     NSSize origSize_;
     int index_;
+    BOOL wasMaximized_;
 }
 
 - (id)initWithImage:(NSImage*)image
@@ -114,7 +122,9 @@ static NSString* FormatRect(NSRect r) {
       fullSizeFrame:(NSRect)fullSizeFrame
         normalFrame:(NSRect)normalFrame
            delegate:(id<iTermExposeTabViewDelegate>)delegate
-              index:(int)theIndex;
+              index:(int)theIndex
+       wasMaximized:(BOOL)wasMaximized;
+
 - (void)dealloc;
 - (NSRect)imageFrame:(NSSize)thumbSize;
 - (NSRect)originalFrame;
@@ -141,6 +151,7 @@ static NSString* FormatRect(NSRect r) {
 - (void)setFullSizeFrame:(NSRect)fullSizeFrame;
 - (NSSize)origSize;
 - (int)index;
+- (PTYTab*)tab;
 
 @end
 
@@ -150,6 +161,7 @@ static NSString* FormatRect(NSRect r) {
 - (int)_populateArrays:(NSMutableArray *)images
                 labels:(NSMutableArray *)labels
                   tabs:(NSMutableArray *)tabs
+          wasMaximized:(NSMutableArray *)wasMaximized
             controller:(iTermController *)controller;
 - (void)_squareThumbGridSize:(float)aspectRatio n:(float)n cols_p:(int *)cols_p rows_p:(int *)rows_p;
 - (void)_optimalGridSize:(int *)cols_p rows_p:(int *)rows_p frames:(NSRect*)frames screenFrame:(NSRect)screenFrame images:(NSMutableArray *)images n:(float)n maxWindowsToOptimize:(const int)maxWindowsToOptimize;
@@ -216,10 +228,12 @@ static NSString* FormatRect(NSRect r) {
       fullSizeFrame:(NSRect)fullSizeFrame
         normalFrame:(NSRect)normalFrame
            delegate:(id<iTermExposeTabViewDelegate>)delegate
-              index:(int)theIndex;
+              index:(int)theIndex
+       wasMaximized:(BOOL)wasMaximized
 {
     self = [super initWithFrame:frame];
     if (self) {
+        wasMaximized_ = wasMaximized;
         image_ = [image retain];
         label_ = [label retain];
         tabIndex_ = [[tab realParentWindow] indexOfTab:tab];
@@ -360,6 +374,7 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
     NSPoint loc = [self convertPoint:locInWin fromView:nil];
     if ([self tabObject] && NSPointInRect(loc, [self imageFrame:[self frame].size])) {
         if (windowIndex_ >= 0 && tabIndex_ >= 0) {
+            // TODO: pick the session under the mouse
             [delegate_ onSelection:self session:[[self tabObject] activeSession]];
         }
     } else {
@@ -590,6 +605,20 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
     return index_;
 }
 
+- (PTYTab*)tab
+{
+    NSArray* allTerms = [[iTermController sharedInstance] terminals];
+    if ([allTerms count] <= windowIndex_) {
+        return nil;
+    }
+    PseudoTerminal* window = [allTerms objectAtIndex:windowIndex_];
+
+    if ([window numberOfTabs] <= tabIndex_) {
+        return nil;
+    }
+    return [[window tabs] objectAtIndex:tabIndex_];
+}
+
 @end
 
 @implementation iTermExposeGridView
@@ -598,7 +627,13 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     return (int)a.width == (int)b.width && (int)a.height == (int)b.height;
 }
 
-- (id)initWithFrame:(NSRect)frame images:(NSArray*)images labels:(NSArray*)labels tabs:(NSArray*)tabs frames:(NSRect*)frames putOnTop:(int)topIndex
+- (id)initWithFrame:(NSRect)frame
+             images:(NSArray*)images
+             labels:(NSArray*)labels
+               tabs:(NSArray*)tabs
+             frames:(NSRect*)frames
+       wasMaximized:(NSArray*)wasMaximized
+           putOnTop:(int)topIndex
 {
     self = [super initWithFrame:frame];
     if (self) {
@@ -610,12 +645,13 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
         [self setAlphaValue:0];
         [[self animator] setAlphaValue:1];
         const int n = [images count];
-        
+
         iTermExposeTabView* selectedView = nil;
         for (int i = 0; i < n; i++) {
             PTYTab* theTab = [tabs objectAtIndex:i];
             NSString* theLabel = [labels objectAtIndex:i];
             NSImage* theImage = [images objectAtIndex:i];
+            BOOL wasMax = [[wasMaximized objectAtIndex:i] boolValue];
             //NSLog(@"Place %@ at %lf,%lf", theLabel, frames_[i].origin.x, frames_[i].origin.y);
             iTermExposeTabView* newView = [self addTab:theTab
                                                  label:theLabel
@@ -623,7 +659,8 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
                                            screenFrame:screenFrame
                                     visibleScreenFrame:visibleScreenFrame
                                                  frame:frames_[i]
-                                                 index:i];
+                                                 index:i
+                                          wasMaximized:wasMax];
             if (i == topIndex) {
                 selectedView = newView;
             }
@@ -792,6 +829,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
            visibleScreenFrame:(NSRect)visibleScreenFrame
                         frame:(NSRect)dest
                         index:(int)theIndex
+                 wasMaximized:(BOOL)wasMaximized
 {
     NSRect tabRect = [self tabOrigin:theTab
                         visibleScreenFrame:visibleScreenFrame
@@ -813,7 +851,8 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
                                                             fullSizeFrame:fullSizeFrame
                                                               normalFrame:dest
                                                                  delegate:self
-                                                                    index:theIndex];
+                                                                    index:theIndex
+                                                             wasMaximized:wasMaximized];
     [self addSubview:aView];
     [aView release];
     [[aView animator] setFrame:dest];
@@ -842,11 +881,24 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     }
 }
 
+- (void)_restoreMaximizationExceptSession:(PTYSession*)theSession
+{
+    for (iTermExposeTabView* aView in [self subviews]) {
+        if ([aView isKindOfClass:[iTermExposeTabView class]]) {
+            iTermExposeTabView* tabView = (iTermExposeTabView*)aView;
+            if ([theSession tab] != [tabView tab]) {
+                [[tabView tab] maximize];
+            }
+        }
+    }
+}
+
 - (void)onSelection:(iTermExposeTabView*)theView session:(PTYSession*)theSession
 {
     if (theView && ![theView tabObject]) {
         return;
     }
+    [self _restoreMaximizationExceptSession:theSession];
     [theView moveToTop];
     for (iTermExposeTabView* aView in [self subviews]) {
         if ([aView isKindOfClass:[iTermExposeTabView class]]) {
@@ -1483,12 +1535,14 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     NSMutableArray* images = [NSMutableArray arrayWithCapacity:[controller numberOfTerminals]];
     NSMutableArray* tabs = [NSMutableArray arrayWithCapacity:[controller numberOfTerminals]];
     NSMutableArray* labels = [NSMutableArray arrayWithCapacity:[controller numberOfTerminals]];
+    NSMutableArray* wasMaximized = [NSMutableArray arrayWithCapacity:[controller numberOfTerminals]];
 
     int selectedIndex = [self _populateArrays:images
                                        labels:labels
                                          tabs:tabs
+                                 wasMaximized:wasMaximized
                                    controller:controller];
-    
+
     NSRect* frames = (NSRect*)calloc([images count], sizeof(NSRect));
 
     // Figure out the right size for a thumbnail.
@@ -1521,6 +1575,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
                                                         labels:labels
                                                           tabs:tabs
                                                         frames:frames
+                                                  wasMaximized:wasMaximized
                                                       putOnTop:selectedIndex] autorelease]];
     [window_ setContentView:view_];
     [window_ setBackgroundColor:[[NSColor blackColor] colorWithAlphaComponent:0]];
@@ -1541,6 +1596,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
 - (int)_populateArrays:(NSMutableArray *)images
                 labels:(NSMutableArray *)labels
                   tabs:(NSMutableArray *)tabs
+          wasMaximized:(NSMutableArray*)wasMaximized
             controller:(iTermController *)controller
 {
     int selectedIndex = 0;
@@ -1552,11 +1608,14 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
                 aTab == [term currentTab]) {
                 selectedIndex = [images count];
             }
+            [wasMaximized addObject:[NSNumber numberWithBool:[aTab hasMaximizedPane]]];
+            if ([aTab hasMaximizedPane]) {
+                [aTab unmaximize];
+            }
             [images addObject:[aTab image:NO]];
             [tabs addObject:aTab];
             NSString* label = [iTermExpose labelForTab:aTab windowNumber:i+1 tabNumber:j+1];
             [labels addObject:label];
-            //NSLog(@"append %@", label);
             j++;
         }
         assert(selectedIndex >= 0);

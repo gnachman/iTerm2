@@ -923,6 +923,7 @@ NSString *sessionsKey = @"sessions";
           __FILE__, __LINE__, aNotification);
 
     [[iTermController sharedInstance] setCurrentTerminal:self];
+    [[[NSApplication sharedApplication] delegate] updateMaximizePaneMenuItem];
     [[[NSApplication sharedApplication] delegate] updateUseTransparencyMenuItem];
     if (_fullScreen) {
         [self hideMenuBar];
@@ -2198,6 +2199,11 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (BOOL)inInstantReplay
+{
+    return ![instantReplaySubview isHidden];
+}
+
 // Toggle instant replay bar.
 - (void)showHideInstantReplay
 {
@@ -2486,6 +2492,15 @@ NSString *sessionsKey = @"sessions";
         }
     }
     return YES;
+}
+
+- (void)toggleMaximizeActivePane
+{
+    if ([[self currentTab] hasMaximizedPane]) {
+        [[self currentTab] unmaximize];
+    } else {
+        [[self currentTab] maximize];
+    }
 }
 
 - (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark targetSession:(PTYSession*)targetSession

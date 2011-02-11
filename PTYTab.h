@@ -71,6 +71,12 @@ static const int MIN_SESSION_COLUMNS = 2;
 
     // If non-nil, this session may not change size.
     PTYSession* lockedSession_;
+
+    // The active pane is maximized, meaning there are other panes that are hidden.
+    BOOL isMaximized_;
+    NSMutableDictionary* idMap_;  // maps saved session id to ptysession.
+    NSDictionary* savedArrangement_;  // layout of splitters pre-maximize
+    NSSize savedSize_;  // pre-maximize active session size.
 }
 
 // init/dealloc
@@ -154,6 +160,10 @@ static const int MIN_SESSION_COLUMNS = 2;
 
 + (void)openTabWithArrangement:(NSDictionary*)arrangement inTerminal:(PseudoTerminal*)term;
 - (NSDictionary*)arrangement;
+
+- (BOOL)hasMaximizedPane;
+- (void)maximize;
+- (void)unmaximize;
 
 #pragma mark NSSplitView delegate methods
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;

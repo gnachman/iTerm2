@@ -106,6 +106,8 @@ static NSString* TAB_Y = @"y";
 static NSString* SUBVIEWS = @"Subviews";
 static NSString* TAB_ARRANGEMENT_SESSION = @"Session";
 static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
+static NSString* TAB_ARRANGEMENT_ID = @"ID";  // only for maximize/unmaximize
+static NSString* TAB_ARRANGEMENT_IS_MAXIMIZED = @"Maximized";
 
 static const BOOL USE_THIN_SPLITTERS = YES;
 
@@ -153,6 +155,16 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return self;
 }
 
++ (void)_recursiveSetDelegateIn:(NSSplitView*)node to:(id)delegate
+{
+    [node setDelegate:delegate];
+    for (NSView* subView in [node subviews]) {
+        if ([subView isKindOfClass:[NSSplitView class]]) {
+            [PTYTab _recursiveSetDelegateIn:(NSSplitView*)subView to:delegate];
+        }
+    }
+}
+
 // This is used when restoring a window arrangement. A tree of splits and
 // sessionviews is passed in but the sessionviews don't have sessions yet.
 - (id)initWithRoot:(NSSplitView*)root
@@ -164,6 +176,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         root_ = [root retain];
         [root_ setAutoresizesSubviews:YES];
         [root_ setDelegate:self];
+        [PTYTab _recursiveSetDelegateIn:root_ to:self];
 
     }
     [[NSNotificationCenter defaultCenter] addObserver:self
@@ -183,10 +196,25 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     for (PTYSession* aSession in [self sessions]) {
         [[aSession view] cancelTimers];
+        [aSession setTab:nil];
     }
     [root_ release];
+
+    for (id key in idMap_) {
+        SessionView* aView = [idMap_ objectForKey:key];
+
+        PTYSession* aSession = [aView session];
+        [[aSession view] cancelTimers];
+        [aSession cancelTimers];
+        [aSession setTab:nil];
+    }
+
+    root_ = nil;
+
     [fakeParentWindow_ release];
     [icon_ release];
+    [idMap_ release];
+    [savedArrangement_ release];
     [super dealloc];
 }
 
@@ -573,7 +601,16 @@ static NSString* FormatRect(NSRect r) {
 
 - (NSArray*)sessions
 {
-    return [self _recursiveSessions:[NSMutableArray arrayWithCapacity:1] atNode:root_];
+    if (idMap_) {
+        NSArray* sessionViews = [idMap_ allValues];
+        NSMutableArray* result = [NSMutableArray arrayWithCapacity:[sessionViews count]];
+        for (SessionView* sessionView in sessionViews) {
+            [result addObject:[sessionView session]];
+        }
+        return result;
+    } else {
+        return [self _recursiveSessions:[NSMutableArray arrayWithCapacity:1] atNode:root_];
+    }
 }
 
 - (BOOL)allSessionsExited
@@ -618,7 +655,7 @@ static NSString* FormatRect(NSRect r) {
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession
 {
     PtyLog(@"PTYTab showLiveSessio:%p", liveSession);
-   [replaySession cancelTimers];
+    [replaySession cancelTimers];
     [liveSession setAddressBookEntry:[replaySession addressBookEntry]];
 
     SessionView* oldView = [replaySession view];
@@ -700,8 +737,12 @@ static NSString* FormatRect(NSRect r) {
         for (NSView* subView in [node subviews]) {
             if ([subView isKindOfClass:[NSSplitView class]]) {
                 [self _checkInvariants:(NSSplitView*)subView];
+            } else {
+                //NSLog(@"CHECK INVARIANTS: retain count of %p is %d", subView, [subView retainCount]);
             }
         }
+    } else {
+        //NSLog(@"CHECK INVARIANTS: retain count of %p is %d", node, [node retainCount]);
     }
 }
 
@@ -721,8 +762,11 @@ static NSString* FormatRect(NSRect r) {
                 [splitView setVertical:![splitView isVertical]];
 
                 // Move grandchildren into splitView
-                for (NSView* grandchild in [[onlyChild subviews] copy]) {
+                for (NSView* grandchild in [[[onlyChild subviews] copy] autorelease]) {
+                    [grandchild retain];
+                    [grandchild removeFromSuperview];
                     [splitView addSubview:grandchild];
+                    [grandchild release];
                 }
                 [onlyChild release];
             } else {
@@ -739,8 +783,11 @@ static NSString* FormatRect(NSRect r) {
                 [splitView removeFromSuperview];
 
                 // Move grandchildren into grandparent.
-                for (NSView* grandchild in [[onlyChild subviews] copy]) {
+                for (NSView* grandchild in [[[onlyChild subviews] copy] autorelease]) {
+                    [grandchild retain];
+                    [grandchild removeFromSuperview];
                     [splitViewParent addSubview:grandchild positioned:NSWindowAbove relativeTo:referencePoint];
+                    [grandchild release];
                     ++splitViewIndex;
                     referencePoint = [[splitViewParent subviews] objectAtIndex:splitViewIndex - 1];
                 }
@@ -820,6 +867,9 @@ static NSString* FormatRect(NSRect r) {
 
 - (void)removeSession:(PTYSession*)aSession
 {
+    if (idMap_) {
+        [self unmaximize];
+    }
     PtyLog(@"PTYTab removeSession:%p", aSession);
     // Grab the nearest neighbor (arbitrarily, the subview before if there is on or after if not)
     // to make its earliest descendent that is a session active.
@@ -908,6 +958,9 @@ static NSString* FormatRect(NSRect r) {
 
 - (SessionView*)splitVertically:(BOOL)isVertical targetSession:(PTYSession*)targetSession
 {
+    if (isMaximized_) {
+        [self unmaximize];
+    }
     PtyLog(@"PTYTab splitVertically");
     SessionView* targetSessionView = [targetSession view];
     NSSplitView* parentSplit = (NSSplitView*) [targetSessionView superview];
@@ -1420,9 +1473,14 @@ static NSString* FormatRect(NSRect r) {
                       [[dict objectForKey:TAB_HEIGHT] doubleValue]);
 }
 
-- (NSDictionary*)_recursiveArrangement:(NSView*)view
+- (NSDictionary*)_recursiveArrangement:(NSView*)view idMap:(NSMutableDictionary*)idMap isMaximized:(BOOL)isMaximized
 {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
+    if (isMaximized) {
+        [result setObject:[NSNumber numberWithBool:YES]
+                   forKey:TAB_ARRANGEMENT_IS_MAXIMIZED];
+    }
+    isMaximized = NO;
     if ([view isKindOfClass:[NSSplitView class]]) {
         NSSplitView* splitView = (NSSplitView*)view;
         [result setObject:VIEW_TYPE_SPLITTER forKey:TAB_ARRANGEMENT_VIEW_TYPE];
@@ -1430,7 +1488,7 @@ static NSString* FormatRect(NSRect r) {
         [result setObject:[NSNumber numberWithBool:[splitView isVertical]] forKey:SPLITTER_IS_VERTICAL];
         NSMutableArray* subviews = [NSMutableArray arrayWithCapacity:[[splitView subviews] count]];
         for (NSView* subview in [splitView subviews]) {
-            [subviews addObject:[self _recursiveArrangement:subview]];
+            [subviews addObject:[self _recursiveArrangement:subview idMap:idMap isMaximized:isMaximized]];
         }
         [result setObject:subviews forKey:SUBVIEWS];
     } else {
@@ -1443,11 +1501,16 @@ static NSString* FormatRect(NSRect r) {
                    forKey:TAB_ARRANGEMENT_SESSION];
         [result setObject:[NSNumber numberWithBool:([sessionView session] == [self activeSession])]
                    forKey:TAB_ARRANGEMENT_IS_ACTIVE];
+        if (idMap) {
+            [result setObject:[NSNumber numberWithInt:[idMap count]]
+                       forKey:TAB_ARRANGEMENT_ID];
+            [idMap setObject:sessionView forKey:[NSNumber numberWithInt:[idMap count]]];
+        }
     }
     return result;
 }
 
-+ (NSView*)_recusiveRestoreSplitters:(NSDictionary*)arrangement
++ (NSView*)_recusiveRestoreSplitters:(NSDictionary*)arrangement fromMap:(NSDictionary*)theMap
 {
     if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
         NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SPLIITER_FRAME]];
@@ -1459,14 +1522,20 @@ static NSString* FormatRect(NSRect r) {
 
         NSArray* subviews = [arrangement objectForKey:SUBVIEWS];
         for (NSDictionary* subArrangement in subviews) {
-            NSView* subView = [PTYTab _recusiveRestoreSplitters:(NSDictionary*)subArrangement];
+            NSView* subView = [PTYTab _recusiveRestoreSplitters:(NSDictionary*)subArrangement
+                                                        fromMap:theMap];
             if (subView) {
                 [splitter addSubview:subView];
+                [subView release];
             }
         }
         return splitter;
     } else {
-        return [[SessionView alloc] initWithFrame:[PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]]];
+        if (theMap) {
+            return [[theMap objectForKey:[arrangement objectForKey:TAB_ARRANGEMENT_ID]] retain];
+        } else {
+            return [[SessionView alloc] initWithFrame:[PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]]];
+        }
     }
 }
 
@@ -1508,7 +1577,8 @@ static NSString* FormatRect(NSRect r) {
 {
     PTYTab* theTab;
     // Build a tree with splitters and SessionViews but no PTYSessions.
-    NSSplitView* newRoot = (NSSplitView*)[PTYTab _recusiveRestoreSplitters:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]];
+    NSSplitView* newRoot = (NSSplitView*)[PTYTab _recusiveRestoreSplitters:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
+                                                                   fromMap:nil];
 
     // Create a tab.
     theTab = [[PTYTab alloc] initWithRoot:newRoot];
@@ -1524,15 +1594,103 @@ static NSString* FormatRect(NSRect r) {
     // Add the existing tab, which is now fully populated, to the term.
     [term appendTab:theTab];
     [theTab release];
+
+    NSDictionary* root = [arrangement objectForKey:TAB_ARRANGEMENT_ROOT];
+    if ([root objectForKey:TAB_ARRANGEMENT_IS_MAXIMIZED] &&
+        [[root objectForKey:TAB_ARRANGEMENT_IS_MAXIMIZED] boolValue]) {
+        [theTab maximize];
+    }
+}
+
+- (NSDictionary*)arrangementWithMap:(NSMutableDictionary*)idMap
+{
+    NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:1];
+    BOOL temp = isMaximized_;
+    if (isMaximized_) {
+        [self unmaximize];
+    }
+    [result setObject:[self _recursiveArrangement:root_ idMap:idMap isMaximized:temp] forKey:TAB_ARRANGEMENT_ROOT];
+    if (temp) {
+        [self maximize];
+    }
+
+    return result;
 }
 
 - (NSDictionary*)arrangement
 {
-    NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:1];
+    return [self arrangementWithMap:nil];
+}
 
-    [result setObject:[self _recursiveArrangement:root_] forKey:TAB_ARRANGEMENT_ROOT];
 
-    return result;
+- (BOOL)hasMaximizedPane
+{
+    return isMaximized_;
+}
+
+- (void)maximize
+{
+    assert(!savedArrangement_);
+    assert(!idMap_);
+    assert(!isMaximized_);
+
+    SessionView* temp = [activeSession_ view];
+    savedSize_ = [temp frame].size;
+
+    idMap_ = [[NSMutableDictionary alloc] init];
+    savedArrangement_ = [[self arrangementWithMap:idMap_] retain];
+    isMaximized_ = YES;
+
+    NSRect oldRootFrame = [root_ frame];
+    [root_ removeFromSuperview];
+
+    root_ = [[MySplitView alloc] init];
+    [root_ setFrame:oldRootFrame];
+    if (USE_THIN_SPLITTERS) {
+        [root_ setDividerStyle:NSSplitViewDividerStyleThin];
+    }
+    [root_ setAutoresizesSubviews:YES];
+    [root_ setDelegate:self];
+    [tabViewItem_ setView:root_];
+
+    [temp retain];
+    [temp removeFromSuperview];
+    [root_ addSubview:temp];
+    [temp release];
+
+    [[root_ window] makeFirstResponder:[activeSession_ TEXTVIEW]];
+}
+
+- (void)unmaximize
+{
+    assert(savedArrangement_);
+    assert(idMap_);
+    assert(isMaximized_);
+
+    // Pull the formerly maximized sessionview out of the old root.
+    assert([[root_ subviews] count] == 1);
+    SessionView* formerlyMaximizedSessionView = [[root_ subviews] objectAtIndex:0];
+    [formerlyMaximizedSessionView retain];
+    [formerlyMaximizedSessionView removeFromSuperview];
+    [formerlyMaximizedSessionView setFrameSize:savedSize_];
+
+    // Build a tree with splitters and SessionViews/PTYSessions from idMap.
+    NSSplitView* newRoot = (NSSplitView*)[PTYTab _recusiveRestoreSplitters:[savedArrangement_ objectForKey:TAB_ARRANGEMENT_ROOT]
+                                                                   fromMap:idMap_];
+    [PTYTab _recursiveSetDelegateIn:newRoot to:self];
+
+    // Create a tab.
+    [tabViewItem_ setView:newRoot];
+    [root_ release];
+    root_ = newRoot;
+
+    [idMap_ release];
+    idMap_ = nil;
+    [savedArrangement_ release];
+    savedArrangement_ = nil;
+    isMaximized_ = NO;
+
+    [[root_ window] makeFirstResponder:[activeSession_ TEXTVIEW]];
 }
 
 #pragma mark NSSplitView delegate methods
