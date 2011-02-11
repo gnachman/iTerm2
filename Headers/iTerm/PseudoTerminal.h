@@ -242,6 +242,15 @@
 // Close foreground tab.
 - (IBAction)closeCurrentTab:(id)sender;
 
+// Save the current scroll position
+- (IBAction)saveScrollPosition:(id)sender;
+
+// Jump to the saved scroll position
+- (IBAction)jumpToSavedScrollPosition:(id)sender;
+
+// Is there a saved scroll position?
+- (BOOL)hasSavedScrollPosition;
+
 // Show paste history window.
 - (IBAction)openPasteHistory:(id)sender;
 

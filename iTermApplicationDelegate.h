@@ -30,6 +30,18 @@
 #import <Cocoa/Cocoa.h>
 #import <Carbon/Carbon.h>
 
+//#define GENERAL_VERBOSE_LOGGING
+#ifdef GENERAL_VERBOSE_LOGGING
+#define DLog NSLog
+#else
+#define DLog(args...) \
+do { \
+if (gDebugLogging) { \
+DebugLog([NSString stringWithFormat:args]); \
+} \
+} while (0)
+#endif
+
 @class PseudoTerminal;
 extern BOOL gDebugLogging;
 void DebugLog(NSString* value);

@@ -314,6 +314,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)scrollPageDown:(id)sender;
 - (void)scrollHome;
 - (void)scrollEnd;
+- (void)scrollToAbsoluteOffset:(long long)absOff;
 - (void)scrollToSelection;
 
 
@@ -385,6 +386,7 @@ typedef enum {
 
 - (PTYCharType)classifyChar:(unichar)ch
                   isComplex:(BOOL)complex;
+- (long long)absoluteScrollPosition;
 
 - (NSString *)getWordForX:(int)x
                         y:(int)y

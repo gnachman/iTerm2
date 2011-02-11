@@ -41,7 +41,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTerm/iTermController.h"
 
-#define PTYTAB_VERBOSE_LOGGING
+//#define PTYTAB_VERBOSE_LOGGING
 #ifdef PTYTAB_VERBOSE_LOGGING
 #define PtyLog NSLog
 #else
@@ -65,16 +65,16 @@ DebugLog([NSString stringWithFormat:args]); \
 
 - (void)adjustSubviews
 {
-    NSLog(@"@@@@@@@@@@ begin adjustSubviews");
+    PtyLog(@"@@@@@@@@@@ begin adjustSubviews");
     for (NSView* v in [self subviews]) {
-        NSLog(@"View %p has height %lf", v, [v frame].size.height);
+        PtyLog(@"View %p has height %lf", v, [v frame].size.height);
     }
     [super adjustSubviews];
-    NSLog(@"AFTER:");
+    PtyLog(@"AFTER:");
     for (NSView* v in [self subviews]) {
-        NSLog(@"View %p has height %lf", v, [v frame].size.height);
+        PtyLog(@"View %p has height %lf", v, [v frame].size.height);
     }
-    NSLog(@"@@@@@@@@ END @@@@@@@");
+    PtyLog(@"@@@@@@@@ END @@@@@@@");
 }
 
 @end
@@ -943,17 +943,17 @@ static NSString* FormatRect(NSRect r) {
 - (void)dumpSubviewsOf:(NSSplitView*)split
 {
     for (NSView* v in [split subviews]) {
-        NSLog(@"View %p has height %lf", v, [v frame].size.height);
+        PtyLog(@"View %p has height %lf", v, [v frame].size.height);
     }
 }
 
 - (void)adjustSubviewsOf:(NSSplitView*)split
 {
-    NSLog(@"--- adjust ---");
+    PtyLog(@"--- adjust ---");
     [split adjustSubviews];
-    NSLog(@">>AFTER:");
+    PtyLog(@">>AFTER:");
     [self dumpSubviewsOf:split];
-    NSLog(@"<<<<<<<< end dump");
+    PtyLog(@"<<<<<<<< end dump");
 }
 
 - (SessionView*)splitVertically:(BOOL)isVertical targetSession:(PTYSession*)targetSession
@@ -1025,7 +1025,7 @@ static NSString* FormatRect(NSRect r) {
 {
     NSSize size;
     PTYSession* session = [sessionView session];
-    NSLog(@"    session size based on %d rows", [session rows]);
+    PtyLog(@"    session size based on %d rows", [session rows]);
     size.width = [session columns] * [[session TEXTVIEW] charWidth] + MARGIN * 2;
     size.height = [session rows] * [[session TEXTVIEW] lineHeight] + VMARGIN * 2;
 
@@ -1057,8 +1057,7 @@ static NSString* FormatRect(NSRect r) {
 // whose size is "canonical" when its size differs from that of its siblings.
 - (NSSize)_recursiveSize:(NSSplitView*)node containsLock:(BOOL*)containsLockOut
 {
-    NSLog(@"Computing recursive size for node %p", node);
-    PtyLog(@"PTYTab recursiveSize");
+    PtyLog(@"Computing recursive size for node %p", node);
     NSSize size;
     size.width = 0;
     size.height = 0;
@@ -1084,19 +1083,19 @@ static NSString* FormatRect(NSRect r) {
             // Add the size of the splitter between this pane and the previous one.
             size.width += dividerSize.width;
             size.height += dividerSize.height;
-            NSLog(@"  add %lf for divider", dividerSize.height);
+            PtyLog(@"  add %lf for divider", dividerSize.height);
         }
 
         BOOL subviewContainsLock = NO;
         if ([subview isKindOfClass:[NSSplitView class]]) {
             // Get size of child tree at this subview.
             subviewSize = [self _recursiveSize:(NSSplitView*)subview containsLock:&subviewContainsLock];
-            NSLog(@"  add %lf for child split", subviewSize.height);
+            PtyLog(@"  add %lf for child split", subviewSize.height);
         } else {
             // Get size of session at this subview.
             SessionView* sessionView = (SessionView*)subview;
             subviewSize = [self _sessionSize:sessionView];
-            NSLog(@"  add %lf for session", subviewSize.height);
+            PtyLog(@"  add %lf for session", subviewSize.height);
             if ([sessionView session] == lockedSession_) {
                 subviewContainsLock = YES;
             }
@@ -1221,7 +1220,7 @@ static NSString* FormatRect(NSRect r) {
 
 - (void)setSize:(NSSize)newSize
 {
-    NSLog(@"PTYTab setSize:%fx%f", (float)newSize.width, (float)newSize.height);
+    PtyLog(@"PTYTab setSize:%fx%f", (float)newSize.width, (float)newSize.height);
     [self dumpSubviewsOf:root_];
     [root_ setFrameSize:newSize];
     //[root_ adjustSubviews];
@@ -1376,7 +1375,7 @@ static NSString* FormatRect(NSRect r) {
         PtyLog(@"fitSessionToWindow - terminating early because session size doesn't change");
         return;
     }
-    NSLog(@"PTYTab fitSessionToCurrentViewSize - Given a scrollview size of %fx%f, can fit %dx%d chars", size.width, size.height, width, height);
+    PtyLog(@"PTYTab fitSessionToCurrentViewSize - Given a scrollview size of %fx%f, can fit %dx%d chars", size.width, size.height, width, height);
 
     [[aSession SCREEN] resizeWidth:width height:height];
     PtyLog(@"fitSessionToCurrentViewSize -  calling shell setWidth:%d height:%d", width, height);
@@ -2248,7 +2247,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 // being resized.
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification
 {
-    NSLog(@"splitViewDidResizeSubviews notification received. new height is %lf", [root_ frame].size.height);
+    PtyLog(@"splitViewDidResizeSubviews notification received. new height is %lf", [root_ frame].size.height);
     NSSplitView* splitView = [aNotification object];
     [self _splitViewDidResizeSubviews:splitView];
 }
@@ -2260,7 +2259,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         if ([subview isKindOfClass:[SessionView class]]) {
             PTYSession* session = [(SessionView*)subview session];
             if (session) {
-                NSLog(@"splitViewDidResizeSubviews - view is %fx%f, ignore=%d", [subview frame].size.width, [subview frame].size.height, (int)[session ignoreResizeNotifications]);
+                PtyLog(@"splitViewDidResizeSubviews - view is %fx%f, ignore=%d", [subview frame].size.width, [subview frame].size.height, (int)[session ignoreResizeNotifications]);
                 if (![session ignoreResizeNotifications]) {
                     PtyLog(@"splitViewDidResizeSubviews - adjust session %p", session);
                     [self fitSessionToCurrentViewSize:session];

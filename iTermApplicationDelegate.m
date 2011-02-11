@@ -388,7 +388,7 @@ int gDebugLogFile = -1;
 
 - (void)applicationWillBecomeActive:(NSNotification *)aNotification
 {
-    NSLog(@"******** Become Active");
+    DLog(@"******** Become Active");
     for (PseudoTerminal* term in [self terminals]) {
         if ([term isHotKeyWindow]) {
             NSLog(@"Visor is open; not rescuing orphans.");

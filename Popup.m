@@ -568,7 +568,6 @@ DebugLog([NSString stringWithFormat:args]); \
     return YES;
 }
 
-
 // Delegate methods
 - (void)windowDidResignKey:(NSNotification *)aNotification
 {

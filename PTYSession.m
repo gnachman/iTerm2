@@ -77,7 +77,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     lastOutput = lastInput;
     lastUpdate = lastInput;
     EXIT=NO;
-
+    savedScrollPosition_ = -1;
     updateTimer = nil;
     antiIdleTimer = nil;
     addressBookEntry=nil;
@@ -2335,6 +2335,30 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 {
     return lastActiveAt_;
 }
+
+// Save the current scroll position
+- (void)saveScrollPosition
+{
+    savedScrollPosition_ = [TEXTVIEW absoluteScrollPosition];
+}
+
+// Jump to the saved scroll position
+- (void)jumpToSavedScrollPosition
+{
+    assert(savedScrollPosition_ != -1);
+    if (savedScrollPosition_ < [SCREEN totalScrollbackOverflow]) {
+        NSBeep();
+    } else {
+        [TEXTVIEW scrollToAbsoluteOffset:savedScrollPosition_];
+    }
+}
+
+// Is there a saved scroll position?
+- (BOOL)hasSavedScrollPosition
+{
+    return savedScrollPosition_ != -1;
+}
+
 
 @end
 

@@ -194,6 +194,9 @@ static const float kBackgroundSessionIntervalSec = 1;
 
     // Last time this session became active
     NSDate* lastActiveAt_;
+    
+    // saved scroll position or -1
+    long long savedScrollPosition_;
 }
 
 // init/dealloc
@@ -409,6 +412,15 @@ static const float kBackgroundSessionIntervalSec = 1;
 
 - (void)setLastActiveAt:(NSDate*)date;
 - (NSDate*)lastActiveAt;
+
+// Save the current scroll position
+- (void)saveScrollPosition;
+
+// Jump to the saved scroll position
+- (void)jumpToSavedScrollPosition;
+
+// Is there a saved scroll position?
+- (BOOL)hasSavedScrollPosition;
 
 @end
 
