@@ -28,6 +28,7 @@
 #import "SessionView.h"
 #import "PTYSession.h"
 #import "PTYTab.h"
+#import "PTYTextView.h"
 
 static const float kTargetFrameRate = 1.0/60.0;
 
@@ -243,9 +244,12 @@ static const float kTargetFrameRate = 1.0/60.0;
     [[[self session] TEXTVIEW] rightMouseDown:event];
 }
 
+
 - (void)mouseDown:(NSEvent*)event
 {
-    [[[self session] TEXTVIEW] mouseDown:event];
+    if ([[[self session] TEXTVIEW] mouseDownImpl:event]) {
+		[super mouseDown:event];
+	}
 }
 
 @end

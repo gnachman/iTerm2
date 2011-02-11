@@ -198,6 +198,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)mouseExited:(NSEvent *)event;
 - (void)mouseEntered:(NSEvent *)event;
 - (void)mouseDown:(NSEvent *)event;
+- (BOOL)mouseDownImpl:(NSEvent*)event;
 - (void)mouseUp:(NSEvent *)event;
 - (void)mouseDragged:(NSEvent *)event;
 - (void)otherMouseDown: (NSEvent *) event;
