@@ -215,6 +215,9 @@ NSString *sessionsKey = @"sessions";
             initialFrame = [screen frame];
             break;
 
+        default:
+            NSLog(@"Unknown window type: %d", (int)windowType);
+            // fall through
         case WINDOW_TYPE_NORMAL:
             // Use the system-supplied frame which has a reasonable origin. It may
             // be overridden by smart window placement or a saved window location.
@@ -259,7 +262,7 @@ NSString *sessionsKey = @"sessions";
         [(PTYWindow*)[self window] setLayoutDone];
     }
 
-    if (!_fullScreen) {
+    if (windowType == WINDOW_TYPE_NORMAL) {
         _toolbarController = [[PTToolbarController alloc] initWithPseudoTerminal:self];
         if ([[self window] respondsToSelector:@selector(setBottomCornerRounded:)])
             [[self window] setBottomCornerRounded:NO];
