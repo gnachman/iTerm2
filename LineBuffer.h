@@ -229,6 +229,7 @@ typedef struct FindContext {
 // length of the substring in the presence of double-width characters.
 #define FindOptCaseInsensitive (1 << 0)
 #define FindOptBackwards       (1 << 1)
+#define FindOptRegex           (1 << 2)
 - (void)initFind:(NSString*)substring startingAt:(int)start options:(int)options withContext:(FindContext*)context;
 - (void)releaseFind:(FindContext*)context;
 - (void)findSubstring:(FindContext*)context stopAt:(int)stopAt;

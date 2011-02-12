@@ -2938,6 +2938,7 @@ static void DumpBuf(screen_char_t* p, int n) {
 - (void)initFindString:(NSString*)aString
       forwardDirection:(BOOL)direction
           ignoringCase:(BOOL)ignoreCase
+                 regex:(BOOL)regex
            startingAtX:(int)x
            startingAtY:(int)y
             withOffset:(int)offset
@@ -2970,6 +2971,9 @@ static void DumpBuf(screen_char_t* p, int n) {
     }
     if (ignoreCase) {
         opts |= FindOptCaseInsensitive;
+    }
+    if (regex) {
+        opts |= FindOptRegex;
     }
     [linebuffer initFind:aString startingAt:startPos options:opts withContext:context];
     context->hasWrapped = NO;

@@ -188,9 +188,9 @@ NSString *sessionsKey = @"sessions";
     }
     windowType_ = windowType;
     pbHistoryView = [[PasteboardHistoryView alloc] init];
-
     autocompleteView = [[AutocompleteView alloc] init];
-
+    [ignoreCase setState:[[FindCommandHandler sharedInstance] ignoresCase] ? NSOnState : NSOffState];
+    [regex setState:[[FindCommandHandler sharedInstance] regex] ? NSOnState : NSOffState];
     // create the window programmatically with appropriate style mask
     styleMask = NSTitledWindowMask |
         NSClosableWindowMask |
@@ -1899,17 +1899,26 @@ NSString *sessionsKey = @"sessions";
     return TABVIEW;
 }
 
+- (IBAction)findBarSettingChanged:(id)sender
+{
+    [[FindCommandHandler sharedInstance] setIgnoresCase:[ignoreCase state]];
+    [[FindCommandHandler sharedInstance] setRegex:[regex state]];
+}
+
 - (IBAction)searchPrevious:(id)sender
 {
     [[FindCommandHandler sharedInstance] setSearchString:[findBarTextField stringValue]];
-    [[FindCommandHandler sharedInstance] setIgnoresCase: [ignoreCase state]];
-    [self _newSearch:[[FindCommandHandler sharedInstance] findPreviousWithOffset:1]];
+    [[FindCommandHandler sharedInstance] setIgnoresCase:[ignoreCase state]];
+    [[FindCommandHandler sharedInstance] setRegex:[regex state]];
+    [self _newSearch:[[FindCommandHandler sharedInstance]
+                      findPreviousWithOffset:1]];
 }
 
 - (IBAction)searchNext:(id)sender
 {
     [[FindCommandHandler sharedInstance] setSearchString:[findBarTextField stringValue]];
-    [[FindCommandHandler sharedInstance] setIgnoresCase: [ignoreCase state]];
+    [[FindCommandHandler sharedInstance] setIgnoresCase:[ignoreCase state]];
+    [[FindCommandHandler sharedInstance] setRegex:[regex state]];
     [self _newSearch:[[FindCommandHandler sharedInstance] findNext]];
 }
 
@@ -1929,9 +1938,6 @@ NSString *sessionsKey = @"sessions";
     if ([textView selectedText]) {
         [findBarTextField setStringValue:[textView selectedText]];
         [self _loadFindStringIntoSharedPasteboard];
-        if ([findBarSubview isHidden]) {
-            [self showHideFindBar];
-        }
     }
 }
 
@@ -1955,7 +1961,8 @@ NSString *sessionsKey = @"sessions";
     }
     [previousFindString setString:[findBarTextField stringValue]];
     [[FindCommandHandler sharedInstance] setSearchString:[findBarTextField stringValue]];
-    [[FindCommandHandler sharedInstance] setIgnoresCase: [ignoreCase state]];
+    [[FindCommandHandler sharedInstance] setIgnoresCase:[ignoreCase state]];
+    [[FindCommandHandler sharedInstance] setRegex:[regex state]];
     [self _newSearch:[[FindCommandHandler sharedInstance] findPreviousWithOffset:0]];
 }
 

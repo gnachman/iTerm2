@@ -281,12 +281,13 @@ const int kMaxResultContextWords = 4;
     y_ = startY_ - [screen scrollbackOverflow];
 
     [self _processPasteboardHistory];
-    
+
     AcLog(@"Searching for '%@'", prefix_);
     matchCount_ = 0;
     [screen initFindString:prefix_
           forwardDirection:NO
               ignoringCase:YES
+                     regex:NO
                startingAtX:x_
                startingAtY:y_
                 withOffset:1
@@ -546,6 +547,7 @@ const int kMaxResultContextWords = 4;
             [screen initFindString:prefix_
                   forwardDirection:NO
                       ignoringCase:YES
+                             regex:NO
                        startingAtX:x_
                        startingAtY:y_
                         withOffset:1

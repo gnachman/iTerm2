@@ -28,6 +28,7 @@
  */
 
 #import <LineBuffer.h>
+#import "RegexKitLite/RegexKitLite.h"
 
 @implementation LineBlock
 
@@ -448,6 +449,111 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     }
 }
 
+const unichar kPrefixChar = 1;
+const unichar kSuffixChar = 2;
+
+static NSString* RewrittenRegex(NSString* originalRegex) {
+    // Convert ^ in a context where it refers to the start of string to kPrefixChar
+    // Convert $ in a context where it refers to the end of string to kSuffixChar
+    // ^ is NOT start-of-string when:
+    //   - it is escaped
+    //   - it is preceeded by an unescaped [
+    //   - it is preceeded by an unescaped [:
+    // $ is NOT end-of-string when:
+    //   - it is escaped
+    //
+    // It might be possible to write this as a regular substitution but it would be a crazy mess.
+
+    NSMutableString* rewritten = [NSMutableString stringWithCapacity:[originalRegex length]];
+    BOOL escaped = NO;
+    BOOL inSet = NO;
+    BOOL firstCharInSet = NO;
+    unichar prevChar = 0;
+    for (int i = 0; i < [originalRegex length]; i++) {
+        BOOL nextCharIsFirstInSet = NO;
+        unichar c = [originalRegex characterAtIndex:i];
+        switch (c) {
+            case '\\':
+                escaped = !escaped;
+                break;
+
+            case '[':
+                if (!inSet && !escaped) {
+                    inSet = YES;
+                    nextCharIsFirstInSet = YES;
+                }
+                break;
+
+            case ']':
+                if (inSet && !escaped) {
+                    inSet = NO;
+                }
+                break;
+
+            case ':':
+                if (inSet && firstCharInSet && prevChar == '[') {
+                    nextCharIsFirstInSet = YES;
+                }
+                break;
+
+            case '^':
+                if (!escaped && !firstCharInSet) {
+                    c = kPrefixChar;
+                }
+                break;
+
+            case '$':
+                if (!escaped) {
+                    c = kSuffixChar;
+                }
+                break;
+        }
+        prevChar = c;
+        firstCharInSet = nextCharIsFirstInSet;
+        [rewritten appendFormat:@"%C", c];
+    }
+
+    return rewritten;
+}
+
+static NSString* StarToPlus(NSString* originalRegex) {
+    // Convert Kleene Stars to + because ICU, buggy disaster that it is, does not match * greedily.
+    // If a regex has a * and returns a 0-length result, we retry with a + in its place.
+
+    NSMutableString* rewritten = [NSMutableString stringWithCapacity:[originalRegex length]];
+    unichar nextChar = 0;
+    BOOL escaped = NO;
+    for (int i = 0; i < [originalRegex length]; i++) {
+        if (i + 1 < [originalRegex length]) {
+            nextChar = [originalRegex characterAtIndex:i+1];
+        } else {
+            nextChar = 0;
+        }
+        unichar c = [originalRegex characterAtIndex:i];
+        switch (c) {
+            case '\\':
+                escaped = !escaped;
+                break;
+
+            case '*':
+                if (!escaped) {
+                    // *? is how * actually behaves
+                    if (nextChar != '?') {
+                        c = '+';
+                        if (nextChar == '+') {
+                            // *+ failed, try it as +
+                            ++i;
+                        }
+                    }
+                }
+                break;
+        }
+        [rewritten appendFormat:@"%C", c];
+    }
+
+    return rewritten;
+}
+
 static int Search(NSString* needle,
                   screen_char_t* rawline,
                   int raw_line_length,
@@ -522,13 +628,110 @@ static int Search(NSString* needle,
                                                    freeWhenDone:NO] autorelease];
 
     int apiOptions = 0;
-    if (options & FindOptBackwards) {
-        apiOptions |= NSBackwardsSearch;
+    NSRange range;
+    BOOL regex;
+    if (options & FindOptRegex) {
+        regex = YES;
+    } else {
+        regex = NO;
     }
-    if (options & FindOptCaseInsensitive) {
-        apiOptions |= NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch | NSWidthInsensitiveSearch;
+    if (regex) {
+        BOOL backwards = NO;
+        if (options & FindOptBackwards) {
+            backwards = YES;
+        }
+        if (options & FindOptCaseInsensitive) {
+            apiOptions |= RKLCaseless;
+        }
+
+        NSError* regexError = nil;
+        NSRange temp;
+        NSString* rewrittenRegex = RewrittenRegex(needle);
+        NSString* sanitizedHaystack = [haystack stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%c", kPrefixChar]
+                                                                          withString:[NSString stringWithFormat:@"%c", 3]];
+        sanitizedHaystack = [sanitizedHaystack stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%c", kSuffixChar]
+                                                                         withString:[NSString stringWithFormat:@"%c", 3]];
+
+        NSString* sandwich = [NSString stringWithFormat:@"%C%@%C", kPrefixChar, sanitizedHaystack, kSuffixChar];
+        NSString* regexPlus = StarToPlus(rewrittenRegex);
+        BOOL hasKleeneStar = ![regexPlus isEqualToString:rewrittenRegex];
+
+        temp = [sandwich rangeOfRegex:rewrittenRegex
+                              options:apiOptions
+                              inRange:NSMakeRange(0, [sandwich length])
+                              capture:0
+                                error:&regexError];
+        if (temp.length == 0) {
+            if (hasKleeneStar) {
+                // ICU (about which enough bad things cannot be said) does not match * greedily.
+                // Replace the * with a + and see if we get a better result.
+                // This is on 10.6.4.
+                temp = [sandwich rangeOfRegex:regexPlus
+                                      options:apiOptions
+                                      inRange:NSMakeRange(0, [sandwich length])
+                                      capture:0
+                                        error:&regexError];
+            }
+            if (temp.length == 0) {
+                temp.location = NSNotFound;
+            }
+        }
+        range = temp;
+
+        if (backwards) {
+            // keep searching from one char after the start of the match until we don't find anything.
+            // regexes aren't good at searching backwards.
+            while (!regexError && temp.location != NSNotFound && temp.location < [sandwich length]) {
+                range = temp;
+                temp.location += temp.length;
+                temp = [sandwich rangeOfRegex:rewrittenRegex
+                                      options:apiOptions
+                                      inRange:NSMakeRange(temp.location, [sandwich length] - temp.location)
+                                      capture:0
+                                        error:&regexError];
+                if (temp.length == 0) {
+                    if (hasKleeneStar) {
+                        // See comment disparaging ICU above.
+                        temp = [sandwich rangeOfRegex:regexPlus
+                                              options:apiOptions
+                                              inRange:NSMakeRange(temp.location, [sandwich length] - temp.location)
+                                              capture:0
+                                                error:&regexError];
+                    }
+                    if (temp.length == 0) {
+                        temp.location = NSNotFound;
+                    }
+                }
+            }
+        }
+        if (!regexError && range.location != NSNotFound) {
+            if (range.location + range.length == [sandwich length]) {
+                --range.length;
+            }
+            if (range.location == 0) {
+                --range.length;
+            } else {
+                --range.location;
+            }
+        }
+        if (range.length == 0) {
+            // Happens if only ^ matches.
+            range.location = NSNotFound;
+        }
+        if (regexError) {
+            NSLog(@"regex error: %@", regexError);
+            range.length = 0;
+            range.location = NSNotFound;
+        }
+    } else {
+        if (options & FindOptBackwards) {
+            apiOptions |= NSBackwardsSearch;
+        }
+        if (options & FindOptCaseInsensitive) {
+            apiOptions |= NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch | NSWidthInsensitiveSearch;
+        }
+        range = [haystack rangeOfString:needle options:apiOptions];
     }
-    NSRange range = [haystack rangeOfString:needle options:apiOptions];
     int result = -1;
     if (range.location != NSNotFound) {
         int adjustedLocation;

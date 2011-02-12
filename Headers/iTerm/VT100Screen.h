@@ -246,8 +246,20 @@ void StringToScreenChars(NSString *s,
 
 // Initialize the find context.
 - (FindContext*)findContext;
-- (void)initFindString:(NSString*)aString forwardDirection:(BOOL)direction ignoringCase:(BOOL)ignoreCase startingAtX:(int)x startingAtY:(int)y withOffset:(int)offsetof inContext:(FindContext*)context;
-- (BOOL)continueFindResultAtStartX:(int*)startX atStartY:(int*)startY atEndX:(int*)endX atEndY:(int*)endY found:(BOOL*)found inContext:(FindContext*)context;
+- (void)initFindString:(NSString*)aString
+      forwardDirection:(BOOL)direction
+          ignoringCase:(BOOL)ignoreCase
+                 regex:(BOOL)regex
+           startingAtX:(int)x
+           startingAtY:(int)y
+            withOffset:(int)offsetof
+             inContext:(FindContext*)context;
+- (BOOL)continueFindResultAtStartX:(int*)startX
+                          atStartY:(int*)startY
+                            atEndX:(int*)endX
+                            atEndY:(int*)endY
+                             found:(BOOL*)found
+                         inContext:(FindContext*)context;
 - (void)cancelFindInContext:(FindContext*)context;
 
 - (void) dumpDebugLog;

@@ -184,6 +184,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
         [theScreen_ initFindString:findString_
                   forwardDirection:NO
                       ignoringCase:YES
+                             regex:NO
                        startingAtX:0
                        startingAtY:(long long)([theScreen_ numberOfLines] + 1) + [theScreen_ totalScrollbackOverflow]
                         withOffset:0  // 1?
@@ -272,6 +273,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
             [theScreen_ initFindString:findString_
                       forwardDirection:NO
                           ignoringCase:YES
+                                 regex:NO
                            startingAtX:startX
                            startingAtY:startY
                             withOffset:1

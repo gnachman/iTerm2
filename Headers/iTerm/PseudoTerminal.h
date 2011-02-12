@@ -86,6 +86,7 @@
 
     // Checkbox: ignore case?
     IBOutlet NSButton*    ignoreCase;
+    IBOutlet NSButton*    regex;
 
     // Spins as asynchronous searching is in progress.
     IBOutlet NSProgressIndicator* findProgressIndicator;
@@ -323,6 +324,9 @@
 
 // accessor
 - (PTYTabView *)tabView;
+
+// A checkbox in the findbar was changed.
+- (IBAction)findBarSettingChanged:(id)sender;
 
 // Search for the previous occurrence of a string.
 - (IBAction)searchPrevious:(id)sender;

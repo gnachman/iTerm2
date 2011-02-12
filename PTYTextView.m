@@ -2888,6 +2888,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 - (BOOL)findString:(NSString *)aString
   forwardDirection:(BOOL)direction
       ignoringCase:(BOOL)ignoreCase
+             regex:(BOOL)regex
         withOffset:(int)offset
 {
     if (_findInProgress) {
@@ -2902,6 +2903,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [dataSource initFindString:aString
               forwardDirection:direction
                   ignoringCase:ignoreCase
+                         regex:regex
                    startingAtX:lastFindX
                    startingAtY:absLastFindY - [dataSource totalScrollbackOverflow]
                     withOffset:offset

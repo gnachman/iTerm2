@@ -324,7 +324,11 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)printContent:(NSString *)aString;
 
 // Find method
-- (BOOL)findString:(NSString *)aString forwardDirection:(BOOL)direction ignoringCase:(BOOL)ignoreCase withOffset:(int)offset;
+- (BOOL)findString:(NSString*)aString
+  forwardDirection:(BOOL)direction
+      ignoringCase:(BOOL)ignoreCase
+             regex:(BOOL)regex
+        withOffset:(int)offset;
 
 // NSTextInput
 - (void)insertText:(id)aString;
@@ -358,6 +362,8 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)drawBackground:(NSRect)bgRect;
 - (void)drawBackground:(NSRect)bgRect toPoint:(NSPoint)dest;
 
+- (long long)absoluteScrollPosition;
+
 @end
 
 //
@@ -386,7 +392,6 @@ typedef enum {
 
 - (PTYCharType)classifyChar:(unichar)ch
                   isComplex:(BOOL)complex;
-- (long long)absoluteScrollPosition;
 
 - (NSString *)getWordForX:(int)x
                         y:(int)y
