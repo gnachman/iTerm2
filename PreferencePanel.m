@@ -824,6 +824,7 @@ static float versionNumber;
     defaultAdvancedFontRendering = [prefs objectForKey:@"AdvancedFontRendering"]?[[prefs objectForKey:@"AdvancedFontRendering"] boolValue] : NO;
     defaultStrokeThickness = [prefs objectForKey:@"AFRStrokeThickness"] ? [[prefs objectForKey:@"AFRStrokeThickness"] floatValue] : 0;
     defaultMinimumContrast = [prefs objectForKey:@"MinimumContrast"] ? [[prefs objectForKey:@"MinimumContrast"] floatValue] : 0;
+    defaultFsTabDelay = [prefs objectForKey:@"FsTabDelay"] ? [[prefs objectForKey:@"FsTabDelay"] floatValue] : 1.0;
     [defaultWordChars release];
     defaultWordChars = [prefs objectForKey: @"WordCharacters"]?[[prefs objectForKey: @"WordCharacters"] retain]:@"/-+\\~_.";
     defaultOpenBookmark = [prefs objectForKey:@"OpenBookmark"]?[[prefs objectForKey:@"OpenBookmark"] boolValue]: NO;
@@ -947,6 +948,7 @@ static float versionNumber;
     [prefs setBool:defaultAdvancedFontRendering forKey:@"AdvancedFontRendering"];
     [prefs setFloat:defaultStrokeThickness forKey:@"AFRStrokeThickness"];
     [prefs setFloat:defaultMinimumContrast forKey:@"MinimumContrast"];
+    [prefs setFloat:defaultFsTabDelay forKey:@"FsTabDelay"];
     [prefs setObject: defaultWordChars forKey: @"WordCharacters"];
     [prefs setBool:defaultOpenBookmark forKey:@"OpenBookmark"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
@@ -1051,6 +1053,7 @@ static float versionNumber;
     [strokeThicknessMaxLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
     [strokeThickness setFloatValue:defaultStrokeThickness];
     [minimumContrast setFloatValue:defaultMinimumContrast];
+    [fsTabDelay setFloatValue:defaultFsTabDelay];
 
     [openBookmark setState: defaultOpenBookmark?NSOnState:NSOffState];
     [wordChars setStringValue: ([defaultWordChars length] > 0)?defaultWordChars:@""];
@@ -1145,6 +1148,11 @@ static float versionNumber;
     return defaultMinimumContrast;
 }
 
+- (float)fsTabDelay
+{
+    return defaultFsTabDelay;
+}
+
 - (IBAction)settingChanged:(id)sender
 {
     if (sender == windowStyle ||
@@ -1198,6 +1206,7 @@ static float versionNumber;
                                                             object:nil
                                                           userInfo:nil];
     } else {
+        defaultFsTabDelay = [fsTabDelay floatValue];
         defaultCopySelection=([selectionCopiesText state]==NSOnState);
         defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
         defaultPromptOnClose = ([promptOnClose state] == NSOnState);

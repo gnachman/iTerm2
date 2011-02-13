@@ -187,6 +187,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *smartPlacement;
     BOOL defaultSmartPlacement;
 
+    // Delay before showing tabs in fullscreen mode
+    IBOutlet NSSlider* fsTabDelay;
+    float defaultFsTabDelay;
+
     // Window/tab title customization
     IBOutlet NSButton* windowNumber;
     BOOL defaultWindowNumber;
@@ -441,6 +445,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (BOOL)advancedFontRendering;
 - (float)strokeThickness;
 - (float)minimumContrast;
+- (float)fsTabDelay;
 - (void)windowWillLoad;
 - (void)windowWillClose:(NSNotification *)aNotification;
 - (void)windowDidBecomeKey:(NSNotification *)aNotification;

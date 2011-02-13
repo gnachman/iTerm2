@@ -3118,11 +3118,11 @@ NSString *sessionsKey = @"sessions";
     if (!_fullScreen) {
         return;
     }
-    const float kCmdHoldTime = 1;
     NSUInteger modifierFlags = [theEvent modifierFlags];
-    if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) == NSCommandKeyMask &&
-        fullScreenTabviewTimer_ == nil) {
-        fullScreenTabviewTimer_ = [[NSTimer scheduledTimerWithTimeInterval:kCmdHoldTime
+    if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) == NSCommandKeyMask &&  // you pressed exactly cmd
+        ([tabBarBackground isHidden] || [tabBarBackground alphaValue] == 0) &&  // the tab bar is not visible
+        fullScreenTabviewTimer_ == nil) {  // not in the middle of doing this already
+        fullScreenTabviewTimer_ = [[NSTimer scheduledTimerWithTimeInterval:[[PreferencePanel sharedInstance] fsTabDelay]
                                                                     target:self
                                                                   selector:@selector(cmdHeld:)
                                                                   userInfo:nil
@@ -3132,7 +3132,14 @@ NSString *sessionsKey = @"sessions";
         [fullScreenTabviewTimer_ invalidate];
         fullScreenTabviewTimer_ = nil;
     }
-    if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) != NSCommandKeyMask) {
+
+     // This hides the tabbar if you press any other key while it's already showing.
+     // This breaks certain popular ways of switching tabs like cmd-shift-arrow or
+     // cmd-shift-[ or ].
+     // I can't remember why I added this. Let's take it out and if nobody complains
+     // remove it for good. gn 2/12/2011.
+     // if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) != NSCommandKeyMask) {
+    if (!(modifierFlags & NSCommandKeyMask)) {
         [self hideFullScreenTabControl];
     }
 }
