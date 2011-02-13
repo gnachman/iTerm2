@@ -646,6 +646,31 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [PTYSession reloadAllBookmarks];
 }
 
+- (BOOL)_recursiveSelectMenuItem:(NSString*)theName inMenu:(NSMenu*)menu
+{
+    for (NSMenuItem* item in [menu itemArray]) {
+        if (![item isEnabled] || [item isHidden] || [item isAlternate]) {
+            continue;
+        }
+        if ([item hasSubmenu]) {
+            if ([self _recursiveSelectMenuItem:theName inMenu:[item submenu]]) {
+                return YES;
+            }
+        } else if ([theName isEqualToString:[item title]]) {
+            [NSApp sendAction:[item action] to:[item target] from:self];
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (void)_selectMenuItem:(NSString*)theName
+{
+    if (![self _recursiveSelectMenuItem:theName inMenu:[NSApp mainMenu]]) {
+        NSBeep();
+    }
+}
+
 // Handle bookmark- and global-scope keybindings. If there is no keybinding then
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event
@@ -803,6 +828,10 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                     [self writeTask:[bindingText dataUsingEncoding:NSUTF8StringEncoding]];
                 }
                 break;
+            case KEY_ACTION_SELECT_MENU_ITEM:
+                [self _selectMenuItem:keyBindingText];
+                break;
+
             case KEY_ACTION_SEND_C_H_BACKSPACE:
                 if (EXIT) {
                     return;

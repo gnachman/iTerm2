@@ -106,6 +106,7 @@
 #define KEY_ACTION_DO_NOT_REMAP_MODIFIERS 22
 #define KEY_ACTION_TOGGLE_FULLSCREEN    23
 #define KEY_ACTION_REMAP_LOCALLY        24
+#define KEY_ACTION_SELECT_MENU_ITEM     25
 
 @class PreferencePanel;
 @interface iTermKeyBindingMgr : NSObject {

@@ -2563,6 +2563,10 @@ static float versionNumber;
         [valueToSend setHidden:NO];
         [[valueToSend cell] setPlaceholderString:@"Enter value to send"];
         [escPlus setHidden:YES];
+    } else if (tag == KEY_ACTION_SELECT_MENU_ITEM) {
+        [valueToSend setHidden:NO];
+        [[valueToSend cell] setPlaceholderString:@"Enter name of menu item"];
+        [escPlus setHidden:YES];
     } else if (tag == KEY_ACTION_ESCAPE_SEQUENCE) {
         [valueToSend setHidden:NO];
         [[valueToSend cell] setPlaceholderString:@"characters to send"];

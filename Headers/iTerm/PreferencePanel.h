@@ -369,6 +369,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTextField* keyPress;
     IBOutlet NSPopUpButton* action;
     IBOutlet NSTextField* valueToSend;
+    IBOutlet NSPopUpButton* menuToSelect;
     IBOutlet NSButton* removeMappingButton;
     IBOutlet NSTextField* escPlus;
     IBOutlet NSMatrix *optionKeySends;
@@ -524,6 +525,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (void)hotkeyKeyDown:(NSEvent*)event;
 - (void)disableHotkey;
 - (void)updateValueToSend;
+- (void)updateMenuToSelect;
 - (IBAction)actionChanged:(id)sender;
 - (NSWindow*)keySheet;
 - (IBAction)addNewMapping:(id)sender;

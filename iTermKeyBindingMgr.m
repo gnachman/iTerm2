@@ -370,6 +370,14 @@ static NSDictionary* globalKeyMap;
                                                    @"Key Binding Actions"),
                 auxText];
             break;
+        case KEY_ACTION_SELECT_MENU_ITEM:
+            actionString = [NSString stringWithFormat:@"%@ \"%@\"",
+                            NSLocalizedStringFromTableInBundle(@"Select Menu Item",
+                                                               @"iTerm",
+                                                               [NSBundle bundleForClass: [self class]],
+                                                               @"Key Binding Actions"),
+                            auxText];
+            break;
         case KEY_ACTION_SEND_C_H_BACKSPACE:
             actionString = @"Send ^H Backspace";
             break;
