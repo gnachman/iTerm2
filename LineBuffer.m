@@ -519,35 +519,46 @@ static NSString* RewrittenRegex(NSString* originalRegex) {
 static NSString* StarToPlus(NSString* originalRegex) {
     // Convert Kleene Stars to + because ICU, buggy disaster that it is, does not match * greedily.
     // If a regex has a * and returns a 0-length result, we retry with a + in its place.
-
     NSMutableString* rewritten = [NSMutableString stringWithCapacity:[originalRegex length]];
-    unichar nextChar = 0;
     BOOL escaped = NO;
+    BOOL inSet = NO;
+    BOOL firstCharInSet = NO;
+    unichar prevChar = 0;
     for (int i = 0; i < [originalRegex length]; i++) {
-        if (i + 1 < [originalRegex length]) {
-            nextChar = [originalRegex characterAtIndex:i+1];
-        } else {
-            nextChar = 0;
-        }
+        BOOL nextCharIsFirstInSet = NO;
         unichar c = [originalRegex characterAtIndex:i];
         switch (c) {
             case '\\':
                 escaped = !escaped;
                 break;
 
+            case '[':
+                if (!inSet && !escaped) {
+                    inSet = YES;
+                    nextCharIsFirstInSet = YES;
+                }
+                break;
+
+            case ']':
+                if (inSet && !escaped) {
+                    inSet = NO;
+                }
+                break;
+
+            case ':':
+                if (inSet && firstCharInSet && prevChar == '[') {
+                    nextCharIsFirstInSet = YES;
+                }
+                break;
+
             case '*':
-                if (!escaped) {
-                    // *? is how * actually behaves
-                    if (nextChar != '?') {
-                        c = '+';
-                        if (nextChar == '+') {
-                            // *+ failed, try it as +
-                            ++i;
-                        }
-                    }
+                if (!escaped && !inSet) {
+                    c = '+';
                 }
                 break;
         }
+        prevChar = c;
+        firstCharInSet = nextCharIsFirstInSet;
         [rewritten appendFormat:@"%C", c];
     }
 
