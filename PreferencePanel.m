@@ -1153,6 +1153,24 @@ static float versionNumber;
     return defaultFsTabDelay;
 }
 
+- (int)modifierTagToMask:(int)tag
+{
+    switch (tag) {
+        case MOD_TAG_ANY_COMMAND:
+            return NSCommandKeyMask;
+
+        case MOD_TAG_CMD_OPT:
+            return NSCommandKeyMask | NSAlternateKeyMask;
+
+        case MOD_TAG_OPTION:
+            return NSAlternateKeyMask;
+
+        default:
+            NSLog(@"Unexpected value for modifierTagToMask: %d", tag);
+            return NSCommandKeyMask | NSAlternateKeyMask;
+    }
+}
+
 - (IBAction)settingChanged:(id)sender
 {
     if (sender == windowStyle ||
@@ -1205,6 +1223,16 @@ static float versionNumber;
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermUpdateLabels"
                                                             object:nil
                                                           userInfo:nil];
+    } else if (sender == switchTabModifierButton ||
+               sender == switchWindowModifierButton) {
+        defaultSwitchTabModifier = [switchTabModifierButton selectedTag];
+        defaultSwitchWindowModifier = [switchWindowModifierButton selectedTag];
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermModifierChanged"
+                                                            object:nil
+                                                          userInfo:[NSDictionary dictionaryWithObjectsAndKeys:
+                                                                    [NSNumber numberWithInt:[self modifierTagToMask:defaultSwitchTabModifier]], @"TabModifier",
+                                                                    [NSNumber numberWithInt:[self modifierTagToMask:defaultSwitchWindowModifier]], @"WindowModifier",
+                                                                    nil, nil]];
     } else {
         defaultFsTabDelay = [fsTabDelay floatValue];
         defaultCopySelection=([selectionCopiesText state]==NSOnState);
@@ -1293,8 +1321,6 @@ static float versionNumber;
         [[iTermController sharedInstance] beginRemappingModifiers];
     }
 
-    defaultSwitchTabModifier = [switchTabModifierButton selectedTag];
-    defaultSwitchWindowModifier = [switchWindowModifierButton selectedTag];
 
     if (sender == deleteSendsCtrlHButton) {
         BOOL sendCtrlH = ([deleteSendsCtrlHButton state] == NSOnState);

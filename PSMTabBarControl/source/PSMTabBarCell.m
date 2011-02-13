@@ -39,6 +39,7 @@
         _isPlaceholder = NO;
         _labelColor = nil;
         _tabColor = nil;
+        _modifierString = [@"" copy];
     }
     return self;
 }
@@ -66,6 +67,7 @@
         _count = 0;
         _labelColor = nil;
         _tabColor = nil;
+        _modifierString = [@"" copy];
         if (value) {
             [self setCurrentStep:(kPSMTabDragAnimationSteps - 1)];
         } else {
@@ -77,10 +79,11 @@
 
 - (void)dealloc
 {
+    [_modifierString release];
     [_indicator release];
     if (_labelColor)
         [_labelColor release];
-    if (_tabColor) 
+    if (_tabColor)
         [_tabColor release];
     [super dealloc];
 }
@@ -269,6 +272,17 @@
         value = (kPSMTabDragAnimationSteps - 1);
 
     _currentStep = value;
+}
+
+- (NSString*)modifierString
+{
+    return _modifierString;
+}
+
+- (void)setModifierString:(NSString*)value
+{
+    [_modifierString autorelease];
+    _modifierString = [value copy];
 }
 
 #pragma mark -

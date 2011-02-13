@@ -447,6 +447,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (float)strokeThickness;
 - (float)minimumContrast;
 - (float)fsTabDelay;
+- (int)modifierTagToMask:(int)tag;
 - (void)windowWillLoad;
 - (void)windowWillClose:(NSNotification *)aNotification;
 - (void)windowDidBecomeKey:(NSNotification *)aNotification;
@@ -525,7 +526,6 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (void)hotkeyKeyDown:(NSEvent*)event;
 - (void)disableHotkey;
 - (void)updateValueToSend;
-- (void)updateMenuToSelect;
 - (IBAction)actionChanged:(id)sender;
 - (NSWindow*)keySheet;
 - (IBAction)addNewMapping:(id)sender;

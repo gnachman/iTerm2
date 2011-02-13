@@ -35,6 +35,7 @@
     //iTerm add-on
     NSColor             *_labelColor;
     NSColor             *_tabColor;
+    NSString            *_modifierString;
 }
 
 // creation/destruction
@@ -76,6 +77,8 @@
 - (void)setIsPlaceholder:(BOOL)value;
 - (int)currentStep;
 - (void)setCurrentStep:(int)value;
+- (NSString*)modifierString;
+- (void)setModifierString:(NSString*)value;
 
 // component attributes
 - (NSRect)indicatorRectForFrame:(NSRect)cellFrame;

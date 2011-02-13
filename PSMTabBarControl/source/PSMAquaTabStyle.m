@@ -277,12 +277,13 @@
 #else
     NSString *contents = [NSString stringWithFormat:@"%d", [cell count]];
 #endif
+    contents = [NSString stringWithFormat:@"%@%@", [cell modifierString], contents];
     attrStr = [[[NSMutableAttributedString alloc] initWithString:contents] autorelease];
     NSRange range = NSMakeRange(0, [contents length]);
 
     // Add font attribute
-    [attrStr addAttribute:NSFontAttributeName value:[fm convertFont:[NSFont fontWithName:@"Helvetica" size:11.0] toHaveTrait:NSBoldFontMask] range:range];
-    [attrStr addAttribute:NSForegroundColorAttributeName value:[[NSColor whiteColor] colorWithAlphaComponent:0.85] range:range];
+    [attrStr addAttribute:NSFontAttributeName value:[NSFont fontWithName:@"Helvetica" size:11.0] range:range];
+    [attrStr addAttribute:NSForegroundColorAttributeName value:[[NSColor blackColor] colorWithAlphaComponent:0.85] range:range];
 
     return attrStr;
 }
@@ -473,15 +474,7 @@
 
     // object counter
     if([cell count] > 0){
-        [[NSColor colorWithCalibratedWhite:0.3 alpha:0.45] set];
-        NSBezierPath *path = [NSBezierPath bezierPath];
         NSRect myRect = [self objectCounterRectForTabCell:cell];
-        [path moveToPoint:NSMakePoint(myRect.origin.x + kPSMAquaObjectCounterRadius, myRect.origin.y)];
-        [path lineToPoint:NSMakePoint(myRect.origin.x + myRect.size.width - kPSMAquaObjectCounterRadius, myRect.origin.y)];
-        [path appendBezierPathWithArcWithCenter:NSMakePoint(myRect.origin.x + myRect.size.width - kPSMAquaObjectCounterRadius, myRect.origin.y + kPSMAquaObjectCounterRadius) radius:kPSMAquaObjectCounterRadius startAngle:270.0 endAngle:90.0];
-        [path lineToPoint:NSMakePoint(myRect.origin.x + kPSMAquaObjectCounterRadius, myRect.origin.y + myRect.size.height)];
-        [path appendBezierPathWithArcWithCenter:NSMakePoint(myRect.origin.x + kPSMAquaObjectCounterRadius, myRect.origin.y + kPSMAquaObjectCounterRadius) radius:kPSMAquaObjectCounterRadius startAngle:90.0 endAngle:270.0];
-        [path fill];
 
         // draw attributed string centered in area
         NSRect counterStringRect;

@@ -256,17 +256,17 @@ static NSDictionary* globalKeyMap;
     }
 
     theKeyString = [[NSMutableString alloc] initWithString: @""];
-    if (keyMods & NSCommandKeyMask) {
-        [theKeyString appendString: @"⌘"];
+    if (keyMods & NSControlKeyMask) {
+        [theKeyString appendString: @"^"];
     }
     if (keyMods & NSAlternateKeyMask) {
         [theKeyString appendString: @"⌥"];
     }
-    if (keyMods & NSControlKeyMask) {
-        [theKeyString appendString: @"^"];
-    }
     if (keyMods & NSShiftKeyMask) {
         [theKeyString appendString: @"⇧"];
+    }
+    if (keyMods & NSCommandKeyMask) {
+        [theKeyString appendString: @"⌘"];
     }
     if ((keyMods & NSNumericPadKeyMask) && !isArrow) {
         [theKeyString appendString: @"num-"];
@@ -666,42 +666,6 @@ static NSDictionary* globalKeyMap;
     NSString* keyString = [NSString stringWithFormat:@"0x%x-0x%x", keyCode, mods];
     [km removeObjectForKey:keyString];
     [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
-}
-
-+ (NSInteger)switchToWindowMask:(PreferencePanel*)pp
-{
-    switch ([pp switchWindowModifier]) {
-        case MOD_TAG_ANY_COMMAND:
-            return NSCommandKeyMask;
-
-        case MOD_TAG_CMD_OPT:
-            return NSCommandKeyMask | NSAlternateKeyMask;
-
-        case MOD_TAG_OPTION:
-            return NSAlternateKeyMask;
-
-        default:
-            NSLog(@"Unexpected value for switchWindowModifier: %d", (int)[pp switchWindowModifier]);
-            return NSCommandKeyMask | NSAlternateKeyMask;
-    }
-}
-
-+ (NSInteger)switchToTabMask:(PreferencePanel*)pp
-{
-    switch ([pp switchTabModifier]) {
-        case MOD_TAG_ANY_COMMAND:
-            return NSCommandKeyMask;
-
-        case MOD_TAG_CMD_OPT:
-            return NSCommandKeyMask | NSAlternateKeyMask;
-
-        case MOD_TAG_OPTION:
-            return NSAlternateKeyMask;
-
-        default:
-            NSLog(@"Unexpected value for switchTabModifier: %d", (int)[pp switchTabModifier]);
-            return NSCommandKeyMask | NSAlternateKeyMask;
-    }
 }
 
 + (NSInteger)_cgMaskForMod:(int)mod

@@ -34,8 +34,8 @@
         _addTabButtonPressedImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"TabNewMetalPressed"]];
         _addTabButtonRolloverImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"TabNewMetalRollover"]];
 
-        _objectCountStringAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:[[NSFontManager sharedFontManager] convertFont:[NSFont fontWithName:@"Helvetica" size:11.0] toHaveTrait:NSBoldFontMask], NSFontAttributeName,
-                                                                                    [[NSColor whiteColor] colorWithAlphaComponent:0.85], NSForegroundColorAttributeName,
+        _objectCountStringAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:[NSFont fontWithName:@"Helvetica" size:11.0], NSFontAttributeName,
+                                                                                    [[NSColor blackColor] colorWithAlphaComponent:0.85], NSForegroundColorAttributeName,
                                                                                     nil, nil];
     }
     return self;
@@ -281,6 +281,7 @@
 #else
     NSString *contents = [NSString stringWithFormat:@"%d", [cell count]];
 #endif
+    contents = [NSString stringWithFormat:@"%@%@", [cell modifierString], contents];
     return [[[NSMutableAttributedString alloc] initWithString:contents attributes:_objectCountStringAttributes] autorelease];
 }
 
@@ -497,17 +498,9 @@
 
     // object counter
     if([cell count] > 0){
-        [[NSColor colorWithCalibratedWhite:0.3 alpha:0.6] set];
-        NSBezierPath *path = [NSBezierPath bezierPath];
         NSRect myRect = [self objectCounterRectForTabCell:cell];
         if([cell state] == NSOnState)
             myRect.origin.y -= 1.0;
-        [path moveToPoint:NSMakePoint(myRect.origin.x + kPSMMetalObjectCounterRadius, myRect.origin.y)];
-        [path lineToPoint:NSMakePoint(myRect.origin.x + myRect.size.width - kPSMMetalObjectCounterRadius, myRect.origin.y)];
-        [path appendBezierPathWithArcWithCenter:NSMakePoint(myRect.origin.x + myRect.size.width - kPSMMetalObjectCounterRadius, myRect.origin.y + kPSMMetalObjectCounterRadius) radius:kPSMMetalObjectCounterRadius startAngle:270.0 endAngle:90.0];
-        [path lineToPoint:NSMakePoint(myRect.origin.x + kPSMMetalObjectCounterRadius, myRect.origin.y + myRect.size.height)];
-        [path appendBezierPathWithArcWithCenter:NSMakePoint(myRect.origin.x + kPSMMetalObjectCounterRadius, myRect.origin.y + kPSMMetalObjectCounterRadius) radius:kPSMMetalObjectCounterRadius startAngle:90.0 endAngle:270.0];
-        [path fill];
 
         // draw attributed string centered in area
         NSRect counterStringRect;

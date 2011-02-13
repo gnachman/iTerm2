@@ -383,7 +383,7 @@
 		DD02572409CB9398008F320C /* PSMAquaTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMAquaTabStyle.h; sourceTree = "<group>"; };
 		DD02572509CB9398008F320C /* PSMAquaTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMAquaTabStyle.m; sourceTree = "<group>"; };
 		DD02572609CB9398008F320C /* PSMMetalTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMMetalTabStyle.h; sourceTree = "<group>"; };
-		DD02572709CB9398008F320C /* PSMMetalTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMMetalTabStyle.m; sourceTree = "<group>"; };
+		DD02572709CB9398008F320C /* PSMMetalTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PSMMetalTabStyle.m; sourceTree = "<group>"; };
 		DD02572809CB9398008F320C /* PSMOverflowPopUpButton.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMOverflowPopUpButton.h; sourceTree = "<group>"; };
 		DD02572A09CB9398008F320C /* PSMOverflowPopUpButton.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMOverflowPopUpButton.m; sourceTree = "<group>"; };
 		DD02572C09CB9398008F320C /* PSMProgressIndicator.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMProgressIndicator.h; sourceTree = "<group>"; };
@@ -393,7 +393,7 @@
 		DD02573009CB9398008F320C /* PSMTabBarCell.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabBarCell.h; sourceTree = "<group>"; };
 		DD02573109CB9398008F320C /* PSMTabBarCell.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMTabBarCell.m; sourceTree = "<group>"; };
 		DD02573209CB9398008F320C /* PSMTabBarControl.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabBarControl.h; sourceTree = "<group>"; };
-		DD02573309CB9398008F320C /* PSMTabBarControl.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMTabBarControl.m; sourceTree = "<group>"; };
+		DD02573309CB9398008F320C /* PSMTabBarControl.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PSMTabBarControl.m; sourceTree = "<group>"; };
 		DD02573909CB9398008F320C /* PSMTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMTabStyle.h; sourceTree = "<group>"; };
 		DD02575809CB93C2008F320C /* AquaTabClose_Front.tif */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = AquaTabClose_Front.tif; sourceTree = "<group>"; };
 		DD02575909CB93C2008F320C /* AquaTabClose_Front_Pressed.tif */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; path = AquaTabClose_Front_Pressed.tif; sourceTree = "<group>"; };
@@ -537,7 +537,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				1D85D1C41306687700A3E998 /* RegexKitLite */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1DEE9FDB11FCA60F009E18C9 /* credits.rtf */,
@@ -545,6 +544,7 @@
 				1D5FD9AD11F61CA900C46BA3 /* Tests */,
 				F69E77040AB78B89001EC0FF /* Growl */,
 				1D093C131217412B0029F9AD /* Resources */,
+				1D85D1C41306687700A3E998 /* RegexKitLite */,
 				DD02571D09CB9363008F320C /* PSMTabBarControl */,
 				F6441F610E748404000EC682 /* CGSInternal */,
 				0464AB22006CD2EC7F000001 /* Interfaces */,
@@ -568,8 +568,6 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				1DAED99012EDF923005E49ED /* iTermSearchField.h */,
-				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
 				1DE214E0128212EE004E3ADF /* Autocomplete.m */,
 				1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */,
 				1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */,
@@ -590,6 +588,7 @@
 				1DDBC61D12E2BCDC00BC3868 /* iTermExpose.m */,
 				F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */,
 				DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */,
+				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
 				1D72438C11F416E500BD4924 /* LineBuffer.m */,
 				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
@@ -637,6 +636,7 @@
 				1DDBC61C12E2BCDC00BC3868 /* iTermExpose.h */,
 				F69E78910AB7AC85001EC0FF /* iTermGrowlDelegate.h */,
 				DDDB7AD605D773B400E197C2 /* iTermKeyBindingMgr.h */,
+				1DAED99012EDF923005E49ED /* iTermSearchField.h */,
 				20E74F4804E9089700000106 /* ITAddressBookMgr.h */,
 				20B8892A04E9342100000106 /* ITViewLocalizer.h */,
 				1D72438F11F416F300BD4924 /* LineBuffer.h */,

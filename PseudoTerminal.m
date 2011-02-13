@@ -276,6 +276,8 @@ NSString *sessionsKey = @"sessions";
     NSRect aRect = [[[self window] contentView] bounds];
     aRect.size.height = 22;
     tabBarControl = [[PSMTabBarControl alloc] initWithFrame:aRect];
+    PreferencePanel* pp = [PreferencePanel sharedInstance];
+    [tabBarControl setModifier:[pp modifierTagToMask:[pp switchTabModifier]]];
     [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMinYMargin)];
     if (!_fullScreen) {
         [[[self window] contentView] addSubview:tabBarControl];

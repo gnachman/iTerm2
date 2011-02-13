@@ -177,6 +177,9 @@
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowStatusDidChange:) name:NSWindowDidBecomeKeyNotification object:[self window]];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowStatusDidChange:) name:NSWindowDidResignKeyNotification object:[self window]];
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(windowDidMove:) name:NSWindowDidMoveNotification object:[self window]];
+
+        // modifier for changing tabs changed (iTerm2 addon)
+        [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(modifierChanged:) name:@"iTermModifierChanged" object:nil];
     }
     [self setTarget:self];
     return self;
@@ -508,6 +511,7 @@
     // create cell
     PSMTabBarCell *cell = [[PSMTabBarCell alloc] initWithControlView:self];
     [cell setRepresentedObject:item];
+    [cell setModifierString:[self _modifierString]];
 
     // add to collection
     [_cells addObject:cell];
@@ -2192,6 +2196,41 @@
         }
     }
     return nil;
+}
+
+- (void)modifierChanged:(NSNotification *)aNotification
+{
+    int mask = ([[[aNotification userInfo] objectForKey:@"TabModifier"] intValue]);
+    [self setModifier:mask];
+}
+
+- (NSString*)_modifierString
+{
+    NSString* str = @"";
+    if (_modifier & NSCommandKeyMask) {
+        str = [NSString stringWithFormat:@"⌘%@", str];
+    }
+    if (_modifier & NSShiftKeyMask) {
+        str = [NSString stringWithFormat:@"⇧%@", str];
+    }
+    if (_modifier & NSAlternateKeyMask) {
+        str = [NSString stringWithFormat:@"⌥%@", str];
+    }
+    if (_modifier & NSControlKeyMask) {
+        str = [NSString stringWithFormat:@"^%@", str];
+    }
+    return str;
+}
+
+- (void)setModifier:(int)mask
+{
+    _modifier = mask;
+    NSString* str = [self _modifierString];
+
+    for (PSMTabBarCell* cell in _cells) {
+        [cell setModifierString:str];
+    }
+    [self setNeedsDisplay];
 }
 
 @end

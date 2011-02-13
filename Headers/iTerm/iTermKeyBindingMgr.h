@@ -145,8 +145,6 @@
                      text:(NSString **)text
               keyMappings:(NSDictionary *)keyMappings;
 
-+ (NSInteger)switchToWindowMask:(PreferencePanel*)pp;
-+ (NSInteger)switchToTabMask:(PreferencePanel*)pp;
 + (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent prefPanel:(PreferencePanel*)pp;
 + (NSEvent*)remapModifiers:(NSEvent*)event prefPanel:(PreferencePanel*)pp;
 + (NSDictionary*)globalKeyMap;

@@ -114,6 +114,8 @@ enum {
     // orientation, top or bottom
     int                         _tabLocation;
 
+    // iTerm2 additions
+    int                         _modifier;
 }
 
 // control characteristics
@@ -234,5 +236,7 @@ enum {
 - (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
 - (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem;
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView;
+- (void)setModifier:(int)mask;
+- (NSString*)_modifierString;
 
 @end
