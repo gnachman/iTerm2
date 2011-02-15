@@ -1101,6 +1101,7 @@
 			isa = PBXProject;
 			buildConfigurationList = BB024D39096EE4080021E793 /* Build configuration list for PBXProject "iTerm" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,

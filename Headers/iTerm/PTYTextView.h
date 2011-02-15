@@ -125,9 +125,9 @@ typedef struct PTYFontInfo PTYFontInfo;
     NSEvent *mouseDownEvent;
 
     //find support
-    int lastFindX;
+    int lastFindStartX, lastFindEndX;
     // this includes all the lines since the beginning of time. It is stable.
-    long long absLastFindY;
+    long long absLastFindStartY, absLastFindEndY;
 
     BOOL reportingMouseDown;
 

@@ -193,7 +193,7 @@ static NSCursor* textViewCursor =  nil;
                 NSUnderlineStyleAttributeName,
             NULL]];
     CURSOR=YES;
-    lastFindX = oldStartX = startX = -1;
+    lastFindStartX = lastFindEndX = oldStartX = startX = -1;
     markedText = nil;
     gettimeofday(&lastBlink, NULL);
     [[self window] useOptimizedDrawing:YES];
@@ -1611,9 +1611,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)mouseDown:(NSEvent *)event
 {
-	if ([self mouseDownImpl:event]) {
-		[super mouseDown:event];
-	}
+    if ([self mouseDownImpl:event]) {
+        [super mouseDown:event];
+    }
 }
 
 // Returns yes if [super mouseDown:event] should be run by caller.
@@ -1795,7 +1795,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         [_delegate handleEvent: event];
     [self refresh];
 
-	return NO;
+    return NO;
 }
 
 - (void)mouseUp:(NSEvent *)event
@@ -1898,8 +1898,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 [self _openURL:url];
             }
         } else {
-            lastFindX = endX;
-            absLastFindY = endY + [dataSource totalScrollbackOverflow];
+            lastFindStartX = endX;
+            lastFindEndX = endX+1;
+            absLastFindStartY = endY + [dataSource totalScrollbackOverflow];
+            absLastFindEndY = absLastFindStartY+1;
         }
     }
 
@@ -2865,15 +2867,17 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
             [self _scrollToLine:endY];
             [self setNeedsDisplay:YES];
-            lastFindX = startX;
-            absLastFindY = (long long)startY + [dataSource totalScrollbackOverflow];
+            lastFindStartX = startX;
+            lastFindEndX = endX;
+            absLastFindStartY = (long long)startY + [dataSource totalScrollbackOverflow];
+            absLastFindEndY = (long long)endY + [dataSource totalScrollbackOverflow];
         }
     if (!more) {
         _findInProgress = NO;
         if (!found) {
             // Clear the selection.
             startX = startY = endX = endY = -1;
-            absLastFindY = -1;
+            absLastFindStartY = absLastFindEndY = -1;
             [self setNeedsDisplay:YES];
         }
     }
@@ -2882,7 +2886,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)resetFindCursor
 {
-    lastFindX = absLastFindY = -1;
+    lastFindStartX = lastFindEndX = absLastFindStartY = absLastFindEndY = -1;
 }
 
 - (BOOL)findString:(NSString *)aString
@@ -2895,17 +2899,17 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         [dataSource cancelFindInContext:[dataSource findContext]];
     }
 
-    if (lastFindX == -1) {
-        lastFindX = 0;
-        absLastFindY = (long long)([dataSource numberOfLines] + 1) + [dataSource totalScrollbackOverflow];
+    if (lastFindStartX == -1) {
+        lastFindStartX = lastFindEndX = 0;
+        absLastFindStartY = absLastFindEndY = (long long)([dataSource numberOfLines] + 1) + [dataSource totalScrollbackOverflow];
     }
 
     [dataSource initFindString:aString
               forwardDirection:direction
                   ignoringCase:ignoreCase
                          regex:regex
-                   startingAtX:lastFindX
-                   startingAtY:absLastFindY - [dataSource totalScrollbackOverflow]
+                   startingAtX:direction ? MAX(0, (lastFindEndX - 1)) : lastFindStartX
+                   startingAtY:(direction ? absLastFindEndY : absLastFindStartY) - [dataSource totalScrollbackOverflow]
                     withOffset:offset
                      inContext:[dataSource findContext]];
     _findInProgress = YES;

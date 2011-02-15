@@ -516,55 +516,6 @@ static NSString* RewrittenRegex(NSString* originalRegex) {
     return rewritten;
 }
 
-static NSString* StarToPlus(NSString* originalRegex) {
-    // Convert Kleene Stars to + because ICU, buggy disaster that it is, does not match * greedily.
-    // If a regex has a * and returns a 0-length result, we retry with a + in its place.
-    NSMutableString* rewritten = [NSMutableString stringWithCapacity:[originalRegex length]];
-    BOOL escaped = NO;
-    BOOL inSet = NO;
-    BOOL firstCharInSet = NO;
-    unichar prevChar = 0;
-    for (int i = 0; i < [originalRegex length]; i++) {
-        BOOL nextCharIsFirstInSet = NO;
-        unichar c = [originalRegex characterAtIndex:i];
-        switch (c) {
-            case '\\':
-                escaped = !escaped;
-                break;
-
-            case '[':
-                if (!inSet && !escaped) {
-                    inSet = YES;
-                    nextCharIsFirstInSet = YES;
-                }
-                break;
-
-            case ']':
-                if (inSet && !escaped) {
-                    inSet = NO;
-                }
-                break;
-
-            case ':':
-                if (inSet && firstCharInSet && prevChar == '[') {
-                    nextCharIsFirstInSet = YES;
-                }
-                break;
-
-            case '*':
-                if (!escaped && !inSet) {
-                    c = '+';
-                }
-                break;
-        }
-        prevChar = c;
-        firstCharInSet = nextCharIsFirstInSet;
-        [rewritten appendFormat:@"%C", c];
-    }
-
-    return rewritten;
-}
-
 static int Search(NSString* needle,
                   screen_char_t* rawline,
                   int raw_line_length,
@@ -663,70 +614,64 @@ static int Search(NSString* needle,
         sanitizedHaystack = [sanitizedHaystack stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%c", kSuffixChar]
                                                                          withString:[NSString stringWithFormat:@"%c", 3]];
 
-        NSString* sandwich = [NSString stringWithFormat:@"%C%@%C", kPrefixChar, sanitizedHaystack, kSuffixChar];
-        NSString* regexPlus = StarToPlus(rewrittenRegex);
-        BOOL hasKleeneStar = ![regexPlus isEqualToString:rewrittenRegex];
+        NSString* sandwich;
+        BOOL hasPrefix = YES;
+        BOOL hasSuffix = YES;
+        if (end == raw_line_length) {
+            if (start == 0) {
+                sandwich = [NSString stringWithFormat:@"%C%@%C", kPrefixChar, sanitizedHaystack, kSuffixChar];
+            } else {
+                hasPrefix = NO;
+                sandwich = [NSString stringWithFormat:@"%@%C", sanitizedHaystack, kSuffixChar];
+            }
+        } else {
+            hasSuffix = NO;
+            sandwich = [NSString stringWithFormat:@"%C%@", kPrefixChar, sanitizedHaystack, kSuffixChar];
+        }
 
         temp = [sandwich rangeOfRegex:rewrittenRegex
                               options:apiOptions
                               inRange:NSMakeRange(0, [sandwich length])
                               capture:0
                                 error:&regexError];
-        if (temp.length == 0) {
-            if (hasKleeneStar) {
-                // ICU (about which enough bad things cannot be said) does not match * greedily.
-                // Replace the * with a + and see if we get a better result.
-                // This is on 10.6.4.
-                temp = [sandwich rangeOfRegex:regexPlus
-                                      options:apiOptions
-                                      inRange:NSMakeRange(0, [sandwich length])
-                                      capture:0
-                                        error:&regexError];
-            }
-            if (temp.length == 0) {
-                temp.location = NSNotFound;
-            }
-        }
         range = temp;
 
         if (backwards) {
+            int locationAdjustment = hasSuffix ? 1 : 0;
             // keep searching from one char after the start of the match until we don't find anything.
             // regexes aren't good at searching backwards.
-            while (!regexError && temp.location != NSNotFound && temp.location < [sandwich length]) {
-                range = temp;
-                temp.location += temp.length;
+            while (!regexError && temp.location != NSNotFound && temp.location+locationAdjustment < [sandwich length]) {
+                if (temp.length != 0) {
+                    range = temp;
+                }
+                temp.location += MAX(1, temp.length);
                 temp = [sandwich rangeOfRegex:rewrittenRegex
                                       options:apiOptions
                                       inRange:NSMakeRange(temp.location, [sandwich length] - temp.location)
                                       capture:0
                                         error:&regexError];
-                if (temp.length == 0) {
-                    if (hasKleeneStar) {
-                        // See comment disparaging ICU above.
-                        temp = [sandwich rangeOfRegex:regexPlus
-                                              options:apiOptions
-                                              inRange:NSMakeRange(temp.location, [sandwich length] - temp.location)
-                                              capture:0
-                                                error:&regexError];
-                    }
-                    if (temp.length == 0) {
-                        temp.location = NSNotFound;
-                    }
-                }
-            }
-        }
-        if (!regexError && range.location != NSNotFound) {
-            if (range.location + range.length == [sandwich length]) {
-                --range.length;
-            }
-            if (range.location == 0) {
-                --range.length;
-            } else {
-                --range.location;
             }
         }
         if (range.length == 0) {
-            // Happens if only ^ matches.
+            range.location = NSNotFound;
+        }
+        if (!regexError && range.location != NSNotFound) {
+            if (hasSuffix && range.location + range.length == [sandwich length]) {
+                // match includes $
+                --range.length;
+                if (range.length == 0) {
+                    // matched only on $
+                    --range.location;
+                }
+            }
+            if (hasPrefix && range.location == 0) {
+                --range.length;
+            } else if (hasPrefix) {
+                --range.location;
+            }
+        }
+        if (range.length <= 0) {
+            // match on ^ or $
             range.location = NSNotFound;
         }
         if (regexError) {
