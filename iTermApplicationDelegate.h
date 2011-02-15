@@ -71,6 +71,7 @@ void DebugLog(NSString* value);
     IBOutlet NSMenuItem *useTransparency;
     IBOutlet NSMenuItem *maximizePane;
     BOOL secureInputDesired_;
+    BOOL quittingBecauseLastWindowClosed_;
 }
 
 - (void)awakeFromNib;

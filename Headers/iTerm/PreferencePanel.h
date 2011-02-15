@@ -96,6 +96,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet id promptOnClose;
     BOOL defaultPromptOnClose;
 
+    // Warn when quitting
+    IBOutlet id promptOnQuit;
+    BOOL defaultPromptOnQuit;
+
     // only when multiple sessions close
     IBOutlet id onlyWhenMoreTabs;
     BOOL defaultOnlyWhenMoreTabs;
@@ -460,6 +464,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (NSTabViewType)tabViewType;
 - (int)windowStyle;
 - (BOOL)promptOnClose;
+- (BOOL)promptOnQuit;
 - (BOOL)onlyWhenMoreTabs;
 - (BOOL)focusFollowsMouse;
 - (BOOL)enableBonjour;

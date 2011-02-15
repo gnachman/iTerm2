@@ -106,7 +106,7 @@ int gDebugLogFile = -1;
                                                        returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];
 }
 
-- (BOOL) applicationShouldTerminate: (NSNotification *) theNotification
+- (BOOL)applicationShouldTerminate: (NSNotification *) theNotification
 {
     NSArray *terminals;
 
@@ -114,6 +114,8 @@ int gDebugLogFile = -1;
 
     // Display prompt if we need to
 
+    BOOL promptOnQuit = quittingBecauseLastWindowClosed_ ? NO : [[PreferencePanel sharedInstance] promptOnQuit];
+    quittingBecauseLastWindowClosed_ = NO;
     BOOL promptOnClose = [[PreferencePanel sharedInstance] promptOnClose];
     int numTerminals = [terminals count];
     BOOL onlyWhenMoreTabs = [[PreferencePanel sharedInstance] onlyWhenMoreTabs];
@@ -121,29 +123,17 @@ int gDebugLogFile = -1;
     if (numTerminals > 0) {
         numTabs = [[[[iTermController sharedInstance] currentTerminal] tabView] numberOfTabViewItems];
     }
-    BOOL shouldShowAlert = (!onlyWhenMoreTabs || 
+    BOOL shouldShowAlert = (!onlyWhenMoreTabs ||
                             numTerminals > 1 ||
                             numTabs > 1);
-    if (promptOnClose && 
-        numTerminals && 
-        shouldShowAlert) {
-        BOOL stayput = NSRunAlertPanel(NSLocalizedStringFromTableInBundle(@"Quit iTerm?",
-                                                                         @"iTerm", 
-                                                                         [NSBundle bundleForClass:[self class]], 
-                                                                         @"Close window"),
-                                      NSLocalizedStringFromTableInBundle(@"All sessions will be closed",
-                                                                         @"iTerm", 
-                                                                         [NSBundle bundleForClass:[self class]], 
-                                                                         @"Close window"),
-                                      NSLocalizedStringFromTableInBundle(@"OK",
-                                                                         @"iTerm", 
-                                                                         [NSBundle bundleForClass:[self class]], 
-                                                                         @"OK"),
-                                      NSLocalizedStringFromTableInBundle(@"Cancel",
-                                                                         @"iTerm", 
-                                                                         [NSBundle bundleForClass:[self class]], 
-                                                                         @"Cancel"),
-                                      nil) != NSAlertDefaultReturn;
+    if (promptOnQuit || (promptOnClose && 
+                         numTerminals && 
+                         shouldShowAlert)) {
+        BOOL stayput = NSRunAlertPanel(@"Quit iTerm2?",
+                                       @"All sessions will be closed",
+                                       @"OK",
+                                       @"Cancel",
+                                       nil) != NSAlertDefaultReturn;
         if (stayput) {
             return NO;
         }
@@ -221,7 +211,8 @@ int gDebugLogFile = -1;
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app
 {
-    return [[PreferencePanel sharedInstance] quitWhenAllWindowsClosed];
+    quittingBecauseLastWindowClosed_ = [[PreferencePanel sharedInstance] quitWhenAllWindowsClosed];
+    return quittingBecauseLastWindowClosed_;
 }
 
 // init
