@@ -3579,7 +3579,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                               lineHeight)
                            options:0];  // NSStringDrawingUsesLineFragmentOrigin
     if (fakeBold) {
-        [attributedString drawWithRect:NSMakeRect(pos.x + 1,
+        // If anti-aliased, drawing twice at the same position makes the strokes thicker.
+        // If not anti-alised, draw one pixel to the right.
+        [attributedString drawWithRect:NSMakeRect(pos.x + (antiAlias ? 0 : 1),
                                                   pos.y + fontInfo->baselineOffset + lineHeight,
                                                   width*2,
                                                   lineHeight)
@@ -3655,9 +3657,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                     currentRun->numCodes);
 
     if (currentRun->fakeBold) {
+        // If anti-aliased, drawing twice at the same position makes the strokes thicker.
+        // If not anti-alised, draw one pixel to the right.
         CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
                                                           0.0, -1.0,
-                                                          x + 1, y));
+                                                          x + (currentRun->antiAlias ? 0 : 1),    y));
 
         CGContextShowGlyphsWithAdvances(ctx, glyphs, currentRun->advances,
                                         currentRun->numCodes);
@@ -5142,7 +5146,6 @@ static bool IsUrlChar(NSString* str)
     oldSelectMode = selectMode;
 
     // Redraw lines with dirty characters
-    char* dirty = [dataSource dirty];
     int lineStart = [dataSource numberOfLines] - [dataSource height];
     int lineEnd = [dataSource numberOfLines];
     // lineStart to lineEnd is the region that is the screen when the scrollbar
@@ -5158,13 +5161,14 @@ static bool IsUrlChar(NSString* str)
     BOOL irEnabled = [[PreferencePanel sharedInstance] instantReplay];
     for (int y = lineStart; y < lineEnd; y++) {
         for (int x = 0; x < WIDTH; x++) {
-            if (dirty[x]) {
+            int dirtyFlags = [dataSource dirtyAtX:x Y:y-lineStart];
+            if (dirtyFlags) {
                 if (irEnabled) {
-                    if (dirty[x] & 1) {
+                    if (dirtyFlags & 1) {
                         foundDirty = YES;
                     } else {
                         for (int j = x+1; j < WIDTH; ++j) {
-                            if (dirty[j] & 1) {
+                            if ([dataSource dirtyAtX:j Y:y-lineStart] & 1) {
                                 foundDirty = YES;
                             }
                         }
@@ -5198,7 +5202,6 @@ static bool IsUrlChar(NSString* str)
 #ifdef DEBUG_DRAWING
         ++screenindex;
 #endif
-        dirty += WIDTH;
     }
 
     // Always mark the IME as needing to be drawn to keep things simple.
@@ -5357,7 +5360,6 @@ static bool IsUrlChar(NSString* str)
         return;
     }
 
-    char* dirty = [dataSource dirty];
     int width = [dataSource width];
     int lineStart = [dataSource numberOfLines] - [dataSource height];
     int lineEnd = [dataSource numberOfLines];
@@ -5367,14 +5369,13 @@ static bool IsUrlChar(NSString* str)
         for (int x = 0; x < width; x++) {
             BOOL isSelected = [self _isCharSelectedInRow:y col:x checkOld:NO];
             BOOL isCursor = (x == cursorX && y == cursorY);
-            if (dirty[x] && isSelected && !isCursor) {
+            if ([dataSource isDirtyAtX:x Y:y-lineStart] && isSelected && !isCursor) {
                 // Don't call [self deselect] as it would recurse back here
                 startX = -1;
                 DebugLog(@"found selected dirty noncursor");
                 break;
             }
         }
-        dirty += width;
     }
 }
 
@@ -5397,7 +5398,7 @@ static bool IsUrlChar(NSString* str)
             int cursorY = [dataSource cursorY] - 1;
             // Set a different bit for the cursor's dirty position because we don't
             // want to save an instant replay from when only the cursor is dirty.
-            [dataSource dirty][cursorY * [dataSource width] + cursorX] |= 2;
+            [dataSource setCharDirtyAtX:cursorX Y:cursorY value:2];
         }
         DebugLog(@"time to redraw blinking text");
     }

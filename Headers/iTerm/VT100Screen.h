@@ -95,6 +95,8 @@ void StringToScreenChars(NSString *s,
 
     // buffer holding flags for each char on whether it needs to be redrawn
     char *dirty;
+    // Number of bytes in the dirty array.
+    int dirtySize;
 
     // a single default line
     screen_char_t *default_line;
@@ -173,7 +175,6 @@ void StringToScreenChars(NSString *s,
 // Provide a buffer as large as sizeof(screen_char_t*) * ([SCREEN width] + 1)
 - (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer;
 - (screen_char_t *)getLineAtScreenIndex:(int)theIndex;
-- (char *)dirty;
 - (NSString *)getLineString:(screen_char_t *)theLine;
 
 // edit screen buffer
@@ -229,6 +230,18 @@ void StringToScreenChars(NSString *s,
 - (long long)totalScrollbackOverflow;
 - (void)resetScrollbackOverflow;
 - (void)scrollScreenIntoScrollbackBuffer:(int)leaving;
+
+// Set a range of bytes to dirty=1
+- (void)setRangeDirty:(NSRange)range;
+
+// OR in a value into the dirty array at an x,y coordinate
+- (void)setCharDirtyAtX:(int)x Y:(int)y value:(int)v;
+
+// Retrieve the dirty flags at an x,y coordinate
+- (int)dirtyAtX:(int)x Y:(int)y;
+
+// Check if any flag is set at an x,y coordinate in the dirty array
+- (BOOL)isDirtyAtX:(int)x Y:(int)y;
 
 - (void)resetDirty;
 - (void)setDirty;

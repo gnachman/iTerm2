@@ -53,6 +53,7 @@
 #import "PTYTab.h"
 
 #define MAX_SCROLLBACK_LINES 1000000
+#define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array
 
 // we add a character at the end of line to indicate wrapping
 #define REAL_WIDTH (WIDTH+1)
@@ -261,6 +262,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
     buffer_lines = NULL;
     dirty = NULL;
+    dirtySize = 0;
     // Temporary storage for returning lines from the screen or scrollback
     // buffer to hide the details of the encoding of each.
     result_line = NULL;
@@ -298,6 +300,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
     // free our "dirty flags" buffer
     if (dirty) {
+        assert(dirty[dirtySize] == DIRTY_MAGIC);
         free(dirty);
     }
     if (result_line) {
@@ -317,7 +320,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     [printToAnsiString release];
     [linebuffer release];
     [dvr release];
-
+    dirty = 0;
+    dirtySize = 0;
     [super dealloc];
 #if DEBUG_ALLOC
     NSLog(@"%s: 0x%x, done", __PRETTY_FUNCTION__, self);
@@ -387,7 +391,10 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     current_scrollback_lines = 0;
 
     // set up our dirty flags buffer
-    dirty = (char*)calloc(HEIGHT * WIDTH, sizeof(char));
+    dirtySize = WIDTH * HEIGHT;
+    // allocate one extra byte to check for overruns.
+    dirty = (char*)calloc(dirtySize + 1, sizeof(char));
+    dirty[dirtySize] = DIRTY_MAGIC;
     result_line = (screen_char_t*) calloc(REAL_WIDTH, sizeof(screen_char_t));
 
     // force a redraw
@@ -453,10 +460,131 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     return result;
 }
 
+- (BOOL)isAnyCharDirty
+{
+    assert(WIDTH * HEIGHT == dirtySize);
+    for (int i = 0; i < WIDTH*HEIGHT; i++) {
+      if (dirty[i]) {
+        return YES;
+      }
+    }
+    return NO;
+}
+
+- (void)moveDirtyRangeFromOffset:(int)i toOffset:(int)o size:(int)s
+{
+    assert(i >= 0);
+    assert(i < dirtySize);
+    assert(i + s <= dirtySize);
+    assert(o >= 0);
+    assert(o < dirtySize);
+    assert(o + s <= dirtySize);
+    memmove(dirty+o, dirty+i, s*sizeof(char));
+}
+
+// moves a block of size 's' from (fromX, fromY) to (toX, toY)
+- (void)moveDirtyRangeFromX:(int)fromX Y:(int)fromY toX:(int)toX Y:(int)toY size:(int)s
+{
+    assert(fromX >= 0);
+    assert(fromX <= WIDTH);
+    assert(toX >= 0);
+    assert(toX < WIDTH);
+    assert(fromY >= 0);
+    assert(fromY < HEIGHT);
+    assert(toY >= 0);
+    assert(toY < HEIGHT);
+    [self moveDirtyRangeFromOffset:(fromX + fromY * WIDTH)
+                          toOffset:(toX + toY * WIDTH)
+                              size:s];
+}
+
+// not inclusive of toX. Is inclusive of toY.
+- (void)setDirtyFromX:(int)fromX Y:(int)fromY toX:(int)toX Y:(int)toY
+{
+    assert(fromX >= 0);
+    assert(fromX < WIDTH);
+    assert(toX >= 0);
+    assert(toX <= WIDTH);  // <= because not inclusive of toX.
+    assert(fromY >= 0);
+    assert(fromY < HEIGHT);
+    assert(toY >= 0);
+    assert(toY < HEIGHT);
+    int i = fromX + fromY * WIDTH;
+    [self setRangeDirty:NSMakeRange(i, toX + toY * WIDTH - i)];
+}
+
+- (void)setDirtyAtOffset:(int)i value:(int)v
+{
+    i = MIN(i, WIDTH*HEIGHT-1);
+    assert(i >= 0);
+    assert(i < dirtySize);
+
+    dirty[i] |= v;
+}
+
+- (void)setRangeDirty:(NSRange)range
+{
+    assert(range.location >= 0);
+    assert(range.location < dirtySize);
+    assert(range.length >= 0);
+    assert(range.location + range.length <= dirtySize);
+
+    memset(dirty + range.location,
+           1,
+           range.length);
+}
+
+- (int)dirtyAtOffset:(int)i
+{
+    if (i >= WIDTH*HEIGHT) {
+        i = WIDTH*HEIGHT - 1;
+    }
+    assert(i >= 0);
+    assert(i < dirtySize);
+    return dirty[i];
+}
+
+- (BOOL)isDirtyAtX:(int)x Y:(int)y
+{
+    return [self dirtyAtX:x Y:y] != 0;
+}
+
+- (int)dirtyAtX:(int)x Y:(int)y
+{
+    assert(x >= 0);
+    assert(x < WIDTH);
+    assert(y >= 0);
+    assert(y < HEIGHT);
+    int i = x + y * WIDTH;
+    return [self dirtyAtOffset:i];
+}
+
+- (void)setCharDirtyAtX:(int)x Y:(int)y value:(int)v
+{
+    assert(x >= 0);
+    assert(x < WIDTH);
+    assert(y >= 0);
+    assert(y < HEIGHT);
+
+    int i = x + y * WIDTH;
+    [self setDirtyAtOffset:i value:v];
+}
+
+- (void)setCharAtCursorDirty:(int)value
+{
+    if (cursorX == WIDTH) {
+        if (cursorY < HEIGHT) {
+            [self setCharDirtyAtX:0 Y:cursorY+1 value:value];
+        }
+    } else {
+        [self setCharDirtyAtX:cursorX Y:cursorY value:value];
+    }
+}
+
 - (void)setCursorX:(int)x Y:(int)y
 {
     if (cursorX >= 0 && cursorX < WIDTH && cursorY >= 0 && cursorY < HEIGHT) {
-        dirty[cursorX + cursorY * WIDTH] = 1;
+        [self setCharAtCursorDirty:1];
     }
     if (gDebugLogging) {
       DebugLog([NSString stringWithFormat:@"Move cursor to %d,%d", x, y]);
@@ -464,7 +592,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     cursorX = x;
     cursorY = y;
     if (cursorX >= 0 && cursorX < WIDTH && cursorY >= 0 && cursorY < HEIGHT) {
-        dirty[cursorX + cursorY * WIDTH] = 1;
+        [self setCharAtCursorDirty:1];
     }
 }
 
@@ -746,13 +874,17 @@ static char* FormatCont(int c)
     buffer_lines = new_buffer_lines;
     screen_top = new_buffer_lines;
     if (dirty) {
+        assert(dirty[dirtySize] == DIRTY_MAGIC);
         free(dirty);
     }
     if (result_line) {
         free(result_line);
     }
-    dirty = (char*)malloc(new_height * new_width * sizeof(char));
-    memset(dirty, 1, new_height * new_width * sizeof(char));
+    dirtySize = new_height * new_width;
+    // Allocate one extra byte to check for buffer overruns.
+    dirty = (char*)malloc(1 + dirtySize * sizeof(char));
+    dirty[dirtySize] = DIRTY_MAGIC;
+    memset(dirty, 1, dirtySize * sizeof(char));
     result_line = (screen_char_t*)calloc((new_width + 1), sizeof(screen_char_t));
 
     // Move scrollback lines into screen
@@ -1828,17 +1960,15 @@ static void DumpBuf(screen_char_t* p, int n) {
             aLine[cursorX].complexChar = NO;
             aLine[cursorX-1].code = ' ';
             aLine[cursorX-1].complexChar = NO;
-            dirty[screenIdx + cursorX] = 1;
-            dirty[screenIdx + cursorX - 1] = 1;
+            [self setDirtyAtOffset:screenIdx + cursorX value:1];
+            [self setDirtyAtOffset:screenIdx + cursorX - 1 value:1];
         }
 
         // copy charsToInsert characters into the line and set them dirty.
         memcpy(aLine + cursorX,
                buffer + idx,
                charsToInsert * sizeof(screen_char_t));
-        memset(dirty + screenIdx + cursorX,
-               1,
-               charsToInsert);
+        [self setRangeDirty:NSMakeRange(screenIdx + cursorX, charsToInsert)];
         if (wrapDwc) {
             aLine[cursorX + charsToInsert].code = DWC_SKIP;
         }
@@ -1917,17 +2047,19 @@ static void DumpBuf(screen_char_t* p, int n) {
          cursorY > SCROLL_BOTTOM)) {
         [self setCursorX:cursorX Y:cursorY + 1];
         if (cursorX < WIDTH) {
-            dirty[cursorY * WIDTH + cursorX] = 1;
+            [self setCharAtCursorDirty:1];
         }
         DebugLog(@"setNewline advance cursor");
     } else if (SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT - 1) {
         // Mark the cursor's previous location dirty. This fixes a rare race condition where
         // the cursor is not erased.
-        dirty[WIDTH * (cursorY - 1) * sizeof(char) + cursorX - 1] = 1;
+        [self setCharDirtyAtX:MAX(0, cursorX - 1)
+                            Y:MAX(0, cursorY-1)
+                        value:1];
 
         // Top line can move into scroll area; we need to draw only bottom line.
-        memmove(dirty, dirty+WIDTH*sizeof(char), WIDTH*(HEIGHT-1)*sizeof(char));
-        memset(dirty+WIDTH*(HEIGHT-1)*sizeof(char),1,WIDTH*sizeof(char));
+        [self moveDirtyRangeFromX:0 Y:1 toX:0 Y:0 size:WIDTH*(HEIGHT - 1)];
+        [self setRangeDirty:NSMakeRange(WIDTH * (HEIGHT - 1), WIDTH)];
 
         // try to add top line to scroll area
         int overflowCount = [self _addLineToScrollback];
@@ -1991,7 +2123,7 @@ static void DumpBuf(screen_char_t* p, int n) {
         }
         DebugLog(@"deleteCharacters");
 
-        memset(dirty + idx + cursorX, 1, WIDTH - cursorX);
+        [self setRangeDirty:NSMakeRange(idx + cursorX, WIDTH - cursorX)];
     }
 }
 
@@ -2029,11 +2161,6 @@ static void DumpBuf(screen_char_t* p, int n) {
 
 - (void)setTab
 {
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen setTab]", __FILE__, __LINE__);
-#endif
-
     screen_char_t* aLine = [self getLineAtScreenIndex:cursorY];
     int positions = 0;
     BOOL allNulls = YES;
@@ -2064,7 +2191,7 @@ static void DumpBuf(screen_char_t* p, int n) {
             allNulls = NO;
         }
     }
-    dirty[cursorX + cursorY * REAL_WIDTH] = 1;
+    [self setCharAtCursorDirty:1];
     if (allNulls) {
         // If only nulls were advanced over, convert them to tab fillers
         // and place a tab character at the end of the run.
@@ -2220,9 +2347,8 @@ static void DumpBuf(screen_char_t* p, int n) {
         CopyBackgroundColor(aScreenChar, [TERMINAL backgroundColorCodeReal]);
     }
 
-    memset(dirty + yStart * WIDTH + x1,
-           1,
-           ((y2 - yStart) * WIDTH + (x2 - x1)) * sizeof(char));
+    [self setRangeDirty:NSMakeRange(yStart * WIDTH + x1,
+                                    ((y2 - yStart) * WIDTH + (x2 - x1)))];
     DebugLog(@"eraseInDisplay");
 }
 
@@ -2262,7 +2388,7 @@ static void DumpBuf(screen_char_t* p, int n) {
     }
 
     idx = cursorY * WIDTH + x1;
-    memset(dirty + idx, 1, (x2 - x1) * sizeof(char));
+    [self setRangeDirty:NSMakeRange(idx, (x2 - x1))];
     DebugLog(@"eraseInLine");
 }
 
@@ -2289,7 +2415,7 @@ static void DumpBuf(screen_char_t* p, int n) {
         [self setCursorX:x Y:cursorY];
     }
 
-    dirty[cursorY * WIDTH + cursorX] = 1;
+    [self setCharAtCursorDirty:1];
     DebugLog(@"cursorLeft");
 }
 
@@ -2307,7 +2433,7 @@ static void DumpBuf(screen_char_t* p, int n) {
         [self setCursorX:x Y:cursorY];
     }
 
-    dirty[cursorY * WIDTH + cursorX] = 1;
+    [self setCharAtCursorDirty:1];
     DebugLog(@"cursorRight");
 }
 
@@ -2325,7 +2451,7 @@ static void DumpBuf(screen_char_t* p, int n) {
         [self setCursorX:cursorX Y:y];
     }
     if (cursorX < WIDTH) {
-        dirty[cursorY * WIDTH + cursorX] = 1;
+        [self setCharAtCursorDirty:1];
         DebugLog(@"cursorUp");
     }
 }
@@ -2345,12 +2471,12 @@ static void DumpBuf(screen_char_t* p, int n) {
     }
 
     if (cursorX < WIDTH) {
-        dirty[cursorY * WIDTH + cursorX] = 1;
+        [self setCharAtCursorDirty:1];
         DebugLog(@"cursorDown");
     }
 }
 
-- (void) cursorToX: (int) x
+- (void)cursorToX:(int)x
 {
     int x_pos;
 
@@ -2369,7 +2495,7 @@ static void DumpBuf(screen_char_t* p, int n) {
 
     [self setCursorX:x_pos Y:cursorY];
 
-    dirty[cursorY * WIDTH + cursorX] = 1;
+    [self setCharAtCursorDirty:1];
     DebugLog(@"cursorToX");
 
 }
@@ -2401,7 +2527,7 @@ static void DumpBuf(screen_char_t* p, int n) {
 
     [self setCursorX:x_pos Y:y_pos];
 
-    dirty[cursorY * WIDTH + cursorX] = 1;
+    [self setCharAtCursorDirty:1];
     DebugLog(@"cursorToX:Y");
 }
 
@@ -2531,7 +2657,10 @@ static void DumpBuf(screen_char_t* p, int n) {
                REAL_WIDTH*sizeof(screen_char_t));
 
         // everything between SCROLL_TOP and SCROLL_BOTTOM is dirty
-        memset(dirty+SCROLL_TOP*WIDTH,1,(SCROLL_BOTTOM-SCROLL_TOP+1)*WIDTH*sizeof(char));
+        [self setDirtyFromX:0
+                          Y:SCROLL_TOP
+                        toX:WIDTH
+                          Y:SCROLL_BOTTOM];
         DebugLog(@"scrollUp");
     }
 }
@@ -2578,7 +2707,10 @@ static void DumpBuf(screen_char_t* p, int n) {
            REAL_WIDTH*sizeof(screen_char_t));
 
     // everything between SCROLL_TOP and SCROLL_BOTTOM is dirty
-    memset(dirty+SCROLL_TOP*WIDTH,1,(SCROLL_BOTTOM-SCROLL_TOP+1)*WIDTH*sizeof(char));
+    [self setDirtyFromX:0
+                      Y:SCROLL_TOP
+                    toX:WIDTH
+                      Y:SCROLL_BOTTOM];
     DebugLog(@"scrollDown");
 }
 
@@ -2617,8 +2749,10 @@ static void DumpBuf(screen_char_t* p, int n) {
     }
 
     // everything from cursorX to end of line is dirty
-    int screenIdx = cursorY * WIDTH + cursorX;
-    memset(dirty + screenIdx, 1, WIDTH - cursorX);
+    [self setDirtyFromX:MIN(WIDTH - 1, cursorX)
+                      Y:cursorY
+                    toX:WIDTH
+                      Y:cursorY];
     DebugLog(@"insertBlank");
 }
 
@@ -2656,7 +2790,7 @@ static void DumpBuf(screen_char_t* p, int n) {
     }
 
     // everything between cursorY and SCROLL_BOTTOM is dirty
-    memset(dirty + cursorY * WIDTH, 1, (SCROLL_BOTTOM - cursorY + 1) * WIDTH);
+    [self setDirtyFromX:0 Y:cursorY toX:WIDTH Y:SCROLL_BOTTOM];
     DebugLog(@"insertLines");
 }
 
@@ -2692,7 +2826,7 @@ static void DumpBuf(screen_char_t* p, int n) {
     }
 
     // everything between cursorY and SCROLL_BOTTOM is dirty
-    memset(dirty + cursorY * WIDTH, 1, (SCROLL_BOTTOM - cursorY + 1) * WIDTH);
+    [self setDirtyFromX:0 Y:cursorY toX:WIDTH Y:SCROLL_BOTTOM];
     DebugLog(@"deleteLines");
 
 }
@@ -2817,25 +2951,26 @@ static void DumpBuf(screen_char_t* p, int n) {
 
 - (void)showCursor:(BOOL)show
 {
-    if (show)
+    if (show) {
         [display showCursor];
-    else
+    } else {
         [display hideCursor];
+    }
 }
 
 - (void)blink
 {
-    if (memchr(dirty, 1, WIDTH*HEIGHT)) {
+    if ([self isAnyCharDirty]) {
         [display refresh];
     }
 }
 
-- (int) cursorX
+- (int)cursorX
 {
     return cursorX+1;
 }
 
-- (int) cursorY
+- (int)cursorY
 {
     return cursorY+1;
 }
@@ -2875,22 +3010,18 @@ static void DumpBuf(screen_char_t* p, int n) {
     scrollback_overflow = 0;
 }
 
-- (char *)dirty
-{
-    return dirty;
-}
-
-
 - (void)resetDirty
 {
     DebugLog(@"resetDirty");
-    memset(dirty,0,WIDTH*HEIGHT*sizeof(char));
+    assert(dirtySize == WIDTH*HEIGHT);
+    assert(dirty[dirtySize] == DIRTY_MAGIC);
+    memset(dirty, 0, dirtySize*sizeof(char));
+    assert(dirty[dirtySize] == DIRTY_MAGIC);
     DebugLog(@"resetDirty");
 }
 
 - (void)setDirty
 {
-//    memset(dirty,1,WIDTH*HEIGHT*sizeof(char));
     [self resetScrollbackOverflow];
     [display deselect];
     [display setNeedsDisplay:YES];
@@ -2899,10 +3030,11 @@ static void DumpBuf(screen_char_t* p, int n) {
 
 - (void) doPrint
 {
-    if([printToAnsiString length] > 0)
+    if ([printToAnsiString length] > 0) {
         [[SESSION TEXTVIEW] printContent: printToAnsiString];
-    else
+    } else {
         [[SESSION TEXTVIEW] print: nil];
+    }
     [printToAnsiString release];
     printToAnsiString = nil;
     [self setPrintToAnsi: NO];
