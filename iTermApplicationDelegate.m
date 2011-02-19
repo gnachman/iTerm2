@@ -140,12 +140,18 @@ int gDebugLogFile = -1;
     }
 
     // Ensure [iTermController dealloc] is called before prefs are saved
+    [[iTermController sharedInstance] stopEventTap];
     [iTermController sharedInstanceRelease];
 
     // save preferences
     [[PreferencePanel sharedInstance] savePreferences];
 
     return YES;
+}
+
+- (void)applicationWillTerminate:(NSNotification *)aNotification
+{
+    [[iTermController sharedInstance] stopEventTap];
 }
 
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename

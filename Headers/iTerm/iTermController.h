@@ -46,6 +46,7 @@
     int hotkeyCode_;
     int hotkeyModifiers_;
     CFMachPortRef machPortRef;
+    CFRunLoopSourceRef eventSrc;
     int keyWindowIndexMemo_;
 }
 
@@ -63,6 +64,8 @@
 - (void)newSessionInTabAtIndex:(id)sender;
 - (void)newSessionInWindowAtIndex:(id)sender;
 - (void)showHideFindBar;
+
+- (void)stopEventTap;
 
 - (int)keyWindowIndexMemo;
 - (void)setKeyWindowIndexMemo:(int)i;

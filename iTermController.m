@@ -1238,6 +1238,17 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     return machPortRef != 0;
 }
 
+- (void)stopEventTap
+{
+    if ([self haveEventTap]) {
+        CFRunLoopRemoveSource(CFRunLoopGetCurrent(),
+                              eventSrc,
+                              kCFRunLoopCommonModes);
+        CFMachPortInvalidate(machPortRef); // switches off the event tap;
+        CFRelease(machPortRef);
+    }
+}
+
 - (BOOL)startEventTap
 {
     if (![self haveEventTap]) {
@@ -1249,8 +1260,6 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                                        (CGEventTapCallBack)OnTappedEvent,
                                        self);
         if (machPortRef) {
-            CFRunLoopSourceRef eventSrc;
-
             eventSrc = CFMachPortCreateRunLoopSource(NULL, machPortRef, 0);
             if (eventSrc == NULL) {
                 DebugLog(@"CFMachPortCreateRunLoopSource failed.");
