@@ -101,6 +101,9 @@
     BOOL tasksChanged;
     // Protects 'tasks' and 'tasksChanged'.
     NSRecursiveLock* tasksLock;
+
+    // A set of NSNumber*s holding pids of tasks that need to be wait()ed on
+    NSMutableSet* deadpool;
     int unblockPipeR;
     int unblockPipeW;
 }
@@ -138,6 +141,7 @@ static TaskNotifier* taskNotifier = nil;
         return nil;
     }
 
+    deadpool = [[NSMutableSet alloc] init];
     tasks = [[NSMutableArray alloc] init];
     tasksLock = [[NSRecursiveLock alloc] init];
     tasksChanged = NO;
@@ -155,8 +159,10 @@ static TaskNotifier* taskNotifier = nil;
 
 - (void)dealloc
 {
+    taskNotifier = nil;
     [tasks release];
     [tasksLock release];
+    [deadpool release];
     close(unblockPipeR);
     close(unblockPipeW);
     [super dealloc];
@@ -180,6 +186,8 @@ static TaskNotifier* taskNotifier = nil;
     PtyTaskDebugLog(@"deregisterTask: lock\n");
     [tasksLock lock];
     PtyTaskDebugLog(@"Begin remove task 0x%x\n", (void*)task);
+    PtyTaskDebugLog(@"Add %d to deadpool", [task pid]);
+    [deadpool addObject:[NSNumber numberWithInt:[task pid]]];
     [tasks removeObject:task];
     tasksChanged = YES;
     PtyTaskDebugLog(@"End remove task 0x%x. There are now %d tasks.\n", (void*)task, [tasks count]);
@@ -230,6 +238,26 @@ static TaskNotifier* taskNotifier = nil;
                 [self deregisterTask:theTask];
             }
         }
+
+        if ([deadpool count] > 0) {
+            // waitpid() on pids that we think are dead or will be dead soon.
+            NSMutableSet* newDeadpool = [NSMutableSet setWithCapacity:[deadpool count]];
+            for (NSNumber* pid in deadpool) {
+                int statLoc;
+                PtyTaskDebugLog(@"wait on %d", [pid intValue]);
+                if (waitpid([pid intValue], &statLoc, WNOHANG) < 0) {
+                    if (errno != ECHILD) {
+                        PtyTaskDebugLog(@"  wait failed with %d (%s), adding back to deadpool", errno, strerror(errno));
+                        [newDeadpool addObject:pid];
+                    } else {
+                        PtyTaskDebugLog(@"  wait failed with ECHILD, I guess we already waited on it.");
+                    }
+                }
+            }
+            [deadpool release];
+            deadpool = [newDeadpool retain];
+        }
+
         PtyTaskDebugLog(@"Begin enumeration over %d tasks\n", [tasks count]);
         iter = [tasks objectEnumerator];
         int i = 0;
@@ -323,6 +351,8 @@ static TaskNotifier* taskNotifier = nil;
                 if (FD_ISSET(fd, &efds)) {
                     PtyTaskDebugLog(@"run/brokenPipe: unlock");
                     [tasksLock unlock];
+                    // brokenPipe will call deregisterTask and add the pid to
+                    // deadpool.
                     [task brokenPipe];
                     PtyTaskDebugLog(@"run/brokenPipe: lock");
                     [tasksLock lock];
@@ -444,6 +474,16 @@ setup_tty_param(
     [super dealloc];
 }
 
+static void reapchild(int n)
+{
+  // This intentionally does nothing.
+  // We cannot ignore SIGCHLD because Sparkle (the software updater) opens a
+  // Safari control which uses some buggy Netscape code that calls wait()
+  // until it succeeds. If we wait() on its pid, that process locks because
+  // it doesn't check if wait()'s failure is ECHLD. Instead of wait()ing here,
+  // we reap our children when our select() loop sees that a pipes is broken.
+}
+
 - (void)launchWithPath:(NSString*)progpath
              arguments:(NSArray*)args
            environment:(NSDictionary*)env
@@ -463,13 +503,8 @@ setup_tty_param(
 #endif
 
     setup_tty_param(&term, &win, width, height, isUTF8);
-    // This requests that the OS not create zombies for our children if we
-    // do not call wait, which we never do. Calling wait would be a bit
-    // tricky: Sparkle spawns a subprocess and wait()s on it, so if we tried
-    // to waitpid(-1) then sometimes it would lock up. Anyway, we don't care
-    // about our childrens' exit statuses.
-    signal(SIGCHLD, SIG_IGN);
-
+    // Register a handler for the child death signal.
+    signal(SIGCHLD, reapchild);
     pid = forkpty(&fd, theTtyname, &term, &win);
     if (pid == (pid_t)0) {
         const char* argpath = [[progpath stringByStandardizingPath] UTF8String];
@@ -704,14 +739,6 @@ setup_tty_param(
 - (pid_t)pid
 {
     return pid;
-}
-
-- (int)wait
-{
-    if (pid >= 0) {
-        waitpid(pid, &status, 0);
-    }
-    return status;
 }
 
 - (void)stop

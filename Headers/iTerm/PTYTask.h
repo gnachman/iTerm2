@@ -79,7 +79,6 @@
 
 - (void)sendSignal:(int)signo;
 - (void)setWidth:(int)width height:(int)height;
-- (int)wait;
 - (void)stop;
 
 - (int)fd;
