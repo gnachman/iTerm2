@@ -473,6 +473,11 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [updateTimer release];
     updateTimer = nil;
 
+    if (slowPasteTimer) {
+        [slowPasteTimer invalidate];
+        slowPasteTimer = nil;
+    }
+
     [tab_ removeSession:self];
 }
 
@@ -1230,6 +1235,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                                                         selector:@selector(pasteSlowly:)
                                                         userInfo:nil
                                                          repeats:NO];
+    } else {
+        slowPasteTimer = nil;
     }
 }
 
