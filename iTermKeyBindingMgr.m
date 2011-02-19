@@ -80,7 +80,7 @@ static NSDictionary* globalKeyMap;
 
 @implementation iTermKeyBindingMgr
 
-+ (NSString *) formatKeyCombination:(NSString *)theKeyCombination
++ (NSString *)formatKeyCombination:(NSString *)theKeyCombination
 {
     unsigned int keyMods;
     unsigned int keyCode;

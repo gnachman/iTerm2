@@ -144,6 +144,10 @@ static float versionNumber;
                                                  name:@"iTermSavedArrangementChanged"
                                                object:nil];
 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(keyBindingsChanged)
+                                                 name:@"iTermKeyBindingsChanged"
+                                               object:nil];
     return (self);
 }
 
@@ -1741,6 +1745,11 @@ static float versionNumber;
 - (NSString*)formattedActionForRow:(int)rowIndex originator:(id)originator
 {
     return [iTermKeyBindingMgr formatAction:[self keyInfoAtIndex:rowIndex originator:originator]];
+}
+
+- (void)keyBindingsChanged
+{
+    [keyMappings reloadData];
 }
 
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(int)rowIndex

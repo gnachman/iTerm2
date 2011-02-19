@@ -622,6 +622,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [iTermKeyBindingMgr removeMappingWithCode:0xf703
                                     modifiers:NSCommandKeyMask | NSAlternateKeyMask | NSNumericPadKeyMask
                                    inBookmark:temp];
+
     BookmarkModel* model;
     if (isDivorced) {
         model = [BookmarkModel sessionsInstance];
@@ -629,6 +630,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         model = [BookmarkModel sharedInstance];
     }
     [model setBookmark:temp withGuid:[temp objectForKey:KEY_GUID]];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermKeyBindingsChanged"
+                                                        object:nil
+                                                      userInfo:nil];
     [PTYSession reloadAllBookmarks];
 }
 
