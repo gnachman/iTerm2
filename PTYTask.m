@@ -444,18 +444,6 @@ setup_tty_param(
     [super dealloc];
 }
 
-// Signal handler for SIGCHLD. Be careful changing this - there's very little
-// that can be safely done in a signal handler. For some reason, it sometimes
-// happens that there is no child to reap, so we use WNOHANG and reap everything
-// that is available.
-static void reapchild(int n)
-{
-    int statLoc;
-    while (waitpid(-1, &statLoc, WNOHANG) > 0) {
-        ;
-    }
-}
-
 - (void)launchWithPath:(NSString*)progpath
              arguments:(NSArray*)args
            environment:(NSDictionary*)env
@@ -475,8 +463,13 @@ static void reapchild(int n)
 #endif
 
     setup_tty_param(&term, &win, width, height, isUTF8);
-    // Register a handler for the child death signal that just wait()s on it.
-    signal(SIGCHLD, reapchild);
+    // This requests that the OS not create zombies for our children if we
+    // do not call wait, which we never do. Calling wait would be a bit
+    // tricky: Sparkle spawns a subprocess and wait()s on it, so if we tried
+    // to waitpid(-1) then sometimes it would lock up. Anyway, we don't care
+    // about our childrens' exit statuses.
+    signal(SIGCHLD, SIG_IGN);
+
     pid = forkpty(&fd, theTtyname, &term, &win);
     if (pid == (pid_t)0) {
         const char* argpath = [[progpath stringByStandardizingPath] UTF8String];
