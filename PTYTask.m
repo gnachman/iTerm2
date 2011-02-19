@@ -216,7 +216,7 @@ static TaskNotifier* taskNotifier = nil;
         // Unblock pipe to interrupt select() whenever a PTYTask register/unregisters
         highfd = unblockPipeR;
         FD_SET(unblockPipeR, &rfds);
-        CFMutableSetRef handledFds = CFSetCreateMutable (NULL, [tasks count], NULL);
+        NSMutableSet* handledFds = [[NSMutableSet alloc] initWithCapacity:[tasks count]];
 
         // Add all the PTYTask pipes
         PtyTaskDebugLog(@"run1: lock");
@@ -290,13 +290,11 @@ static TaskNotifier* taskNotifier = nil;
                 // and there was a race condition) then trying
                 // to read twice would hang.
 
-                // The cast warning on this line can be ignored.
-                if (CFSetContainsValue(handledFds, (void*)fd)) {
+                if ([handledFds containsObject:[NSNumber numberWithInt:fd]]) {
                     PtyTaskDebugLog(@"Duplicate fd %d", fd);
                     continue;
                 }
-                // The cast warning on this line can be ignored.
-                CFSetAddValue(handledFds, (void*)fd);
+                [handledFds addObject:[NSNumber numberWithInt:fd]];
 
                 if (FD_ISSET(fd, &rfds)) {
                     PtyTaskDebugLog(@"run/processRead: unlock");
@@ -342,7 +340,7 @@ static TaskNotifier* taskNotifier = nil;
         [tasksLock unlock];
 
     breakloop:
-        CFRelease(handledFds);
+        [handledFds release];
         [innerPool drain];
     }
 
