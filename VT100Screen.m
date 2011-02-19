@@ -2242,7 +2242,8 @@ static void DumpBuf(screen_char_t* p, int n) {
     // copy the lines between that and the cursor to the top of the screen
     for (j = 0, i++; i <= cursorY; i++, j++) {
         aLine = [self getLineAtScreenIndex:i];
-        memcpy(screen_top + j * REAL_WIDTH,
+        screen_char_t* dest = [self getLineAtScreenIndex:j];
+        memcpy(dest,
                aLine,
                REAL_WIDTH * sizeof(screen_char_t));
     }
