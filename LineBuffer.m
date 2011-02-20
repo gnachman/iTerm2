@@ -851,6 +851,7 @@ static int Search(NSString* needle,
             int bytes_to_consume_in_this_line = position - prev;
             int dwc_peek = 0;
             if (bytes_to_consume_in_this_line < line_length &&
+                prev + bytes_to_consume_in_this_line + 1 < eol &&
                 buffer_start[prev + bytes_to_consume_in_this_line + 1].code == DWC_RIGHT) {
                 // It doesn't make sense to ask for the number of lines that end
                 // in the middle of a DWC. Add one extra char to look at if that
@@ -858,7 +859,7 @@ static int Search(NSString* needle,
                 ++dwc_peek;
             }
             int consume = NumberOfFullLines(buffer_start + prev,
-                                            bytes_to_consume_in_this_line + 1 + dwc_peek,
+                                            MIN(line_length, bytes_to_consume_in_this_line + 1 + dwc_peek),
                                             width);
             *y += consume;
             if (consume > 0) {
