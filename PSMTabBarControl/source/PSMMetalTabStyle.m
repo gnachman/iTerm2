@@ -406,15 +406,19 @@
             NSRectFillUsingOperation(aRect, NSCompositeSourceAtop);
         }
         NSColor* tabColor = [cell tabColor];
+        NSRect bgRect = NSMakeRect(aRect.origin.x,
+                                   aRect.origin.y,
+                                   aRect.size.width,
+                                   aRect.size.height - 2);
         if (tabColor) {
             [tabColor set];
-            NSRectFill(aRect);
+            NSRectFill(bgRect);
         } else {
             [[NSColor windowBackgroundColor] set];
-            NSRectFill(aRect);
+            NSRectFill(bgRect);
 
             [[NSColor colorWithCalibratedWhite:0.0 alpha:0.2] set];
-            NSRectFillUsingOperation(aRect, NSCompositeSourceAtop);
+            NSRectFillUsingOperation(bgRect, NSCompositeSourceAtop);
         }
 
         [lineColor set];
