@@ -630,6 +630,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)dealloc
 {
+    [[self window] makeFirstResponder:nil];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     // Cancel any SessionView timers.
