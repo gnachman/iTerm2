@@ -109,5 +109,7 @@ typedef enum {
 // Total size of storage.
 - (long long)capacity;
 
+// Are there no frames?
+- (BOOL)isEmpty;
 @end
 

@@ -151,4 +151,10 @@
     return capacity_;
 }
 
+- (BOOL)isEmpty
+{
+    return [index_ count] == 0;
+}
+
+
 @end
