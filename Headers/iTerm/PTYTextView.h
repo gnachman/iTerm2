@@ -364,6 +364,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 
 - (long long)absoluteScrollPosition;
 
+// Returns true if any character in the buffer is selected.
+- (BOOL)isAnyCharSelected;
+
 @end
 
 //
@@ -383,7 +386,6 @@ typedef enum {
 - (void)releaseFontInfo:(PTYFontInfo*)fontInfo;
 
 - (unsigned int) _checkForSupportedDragTypes:(id <NSDraggingInfo>) sender;
-- (void)_savePanelDidEnd:(NSSavePanel *)theSavePanel returnCode:(int)theReturnCode contextInfo:(void *)theContextInfo;
 
 - (void) _scrollToLine:(int)line;
 - (BOOL)shouldSelectCharForWord:(unichar)ch
@@ -448,8 +450,6 @@ typedef enum {
 // cursorHeight: cursor height in pixels
 - (BOOL)drawInputMethodEditorTextAt:(int)xStart y:(int)yStart width:(int)width height:(int)height cursorHeight:(float)cursorHeight;
 
-// Returns true if any character in the buffer is selected.
-- (BOOL)_isAnyCharSelected;
 - (BOOL)_wasAnyCharSelected;
 
 - (void)_deselectDirtySelectedText;

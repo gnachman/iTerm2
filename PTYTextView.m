@@ -2225,14 +2225,15 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         // Never allow cut.
         return NO;
     }
-    if ([item action]==@selector(saveDocumentAs:) ||
-        [item action] == @selector(selectAll:) ||
-        [item action]==@selector(splitTextViewVertically:) ||
-        [item action]==@selector(splitTextViewHorizontally:) ||
-        [item action]==@selector(clearTextViewBuffer:) ||
-        [item action]==@selector(editTextViewSession:) ||
-        [item action]==@selector(closeTextViewSession:) ||
-        ([item action] == @selector(print:) && [item tag] != 1)) {
+    if ([item action]==@selector(saveDocumentAs:)) {
+        return [self isAnyCharSelected];
+    } else if ([item action] == @selector(selectAll:) ||
+               [item action]==@selector(splitTextViewVertically:) ||
+               [item action]==@selector(splitTextViewHorizontally:) ||
+               [item action]==@selector(clearTextViewBuffer:) ||
+               [item action]==@selector(editTextViewSession:) ||
+               [item action]==@selector(closeTextViewSession:) ||
+               ([item action] == @selector(print:) && [item tag] != 1)) {
         // We always validate the above commands
         return YES;
     }
@@ -2535,24 +2536,31 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     // We get our content of the textview or selection, if any
     aString = [self selectedText];
     if (!aString) aString = [self content];
-    aData = [aString
-            dataUsingEncoding: NSASCIIStringEncoding
-         allowLossyConversion: YES];
-    // retain here so that is does not go away...
-    [aData retain];
+
+    aData = [aString dataUsingEncoding:[[dataSource session] encoding]
+                  allowLossyConversion:YES];
 
     // initialize a save panel
     aSavePanel = [NSSavePanel savePanel];
-    [aSavePanel setAccessoryView: nil];
-    [aSavePanel setRequiredFileType: @""];
+    [aSavePanel setAccessoryView:nil];
+    [aSavePanel setRequiredFileType:@""];
+    NSString *path = @"";
+    NSArray *searchPaths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory,
+                                                               NSUserDomainMask,
+                                                               YES);
+    if ([searchPaths count]) {
+        path = [searchPaths objectAtIndex:0];
+    }
 
-    // Run the save panel as a sheet
-    [aSavePanel beginSheetForDirectory:@""
-                                  file:@"Unknown"
-                        modalForWindow:[self window]
-                         modalDelegate:self
-                        didEndSelector:@selector(_savePanelDidEnd: returnCode: contextInfo:)
-                           contextInfo:aData];
+    NSString* nowStr = [[NSDate date] descriptionWithCalendarFormat:@"Log at %Y-%m-%d %H.%M.%S.txt"
+                                                           timeZone:nil
+                                                             locale:[[NSUserDefaults standardUserDefaults] dictionaryRepresentation]];
+
+    if ([aSavePanel runModalForDirectory:path file:nowStr] == NSFileHandlingPanelOKButton) {
+        if (![aData writeToFile:[aSavePanel filename] atomically:YES]) {
+            NSBeep();
+        }
+    }
 }
 
 // Print
@@ -3009,6 +3017,15 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     BOOL temp = changedSinceLastExpose_;
     changedSinceLastExpose_ = NO;
     return temp;
+}
+
+- (BOOL)isAnyCharSelected
+{
+    if (startX <= -1 || (startY == endY && startX == endX)) {
+        return NO;
+    } else {
+        return YES;
+    }
 }
 
 @end
@@ -4817,20 +4834,6 @@ static bool IsUrlChar(NSString* str)
     return iResult;
 }
 
-- (void)_savePanelDidEnd:(NSSavePanel*)theSavePanel
-               returnCode: (int) theReturnCode
-              contextInfo: (void *) theContextInfo
-{
-    // If successful, save file under designated name
-    if (theReturnCode == NSOKButton)
-    {
-        if ( ![(NSData *)theContextInfo writeToFile: [theSavePanel filename] atomically: YES] )
-            NSBeep();
-    }
-    // release our hold on the data
-    [(NSData *)theContextInfo release];
-}
-
 - (BOOL)_isBlankLine:(int)y
 {
     NSString *lineContents;
@@ -4963,15 +4966,6 @@ static bool IsUrlChar(NSString* str)
     [self dragImage:anImage at: dragPoint offset:dragOffset
               event: mouseDownEvent pasteboard:pboard source:self slideBack:YES];
 
-}
-
-- (BOOL)_isAnyCharSelected
-{
-    if (startX <= -1 || (startY == endY && startX == endX)) {
-        return NO;
-    } else {
-        return YES;
-    }
 }
 
 - (BOOL)_wasAnyCharSelected
@@ -5356,7 +5350,7 @@ static bool IsUrlChar(NSString* str)
 
 - (void)_deselectDirtySelectedText
 {
-    if (![self _isAnyCharSelected]) {
+    if (![self isAnyCharSelected]) {
         return;
     }
 
@@ -5417,7 +5411,7 @@ static bool IsUrlChar(NSString* str)
     if (lineEnd > [dataSource numberOfLines]) {
         lineEnd = [dataSource numberOfLines];
     }
-    if ([self _isAnyCharSelected] || [self _wasAnyCharSelected]) {
+    if ([self isAnyCharSelected] || [self _wasAnyCharSelected]) {
         // Mark blinking or selection-changed characters as dirty
         for (int y = lineStart; y < lineEnd; y++) {
             screen_char_t* theLine = [dataSource getLineAtIndex:y];
