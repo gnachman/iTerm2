@@ -50,6 +50,7 @@
 - (void)dealloc
 {
     [index_ release];
+    index_ = nil;
     free(store_);
     [super dealloc];
 }
@@ -138,6 +139,7 @@
 
 - (DVRIndexEntry*)entryForKey:(long long)key
 {
+    assert(index_);
     return [index_ objectForKey:[NSNumber numberWithLongLong:key]];
 }
 
