@@ -448,5 +448,9 @@
 	<true/>
 	<key>Working Directory</key>
 	<string>~</string>
+    <key>Option Key Sends</key>
+    <integer>2</integer>
+    <key>Right Option Key Sends</key>
+    <integer>0</integer>
 </dict>
 </plist>
