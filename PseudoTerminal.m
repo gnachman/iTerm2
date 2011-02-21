@@ -62,6 +62,7 @@
 #import "PTYTab.h"
 #import "SessionView.h"
 #import "iTerm/iTermApplication.h"
+#import "BookmarksWindow.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -560,8 +561,10 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)closeCurrentSession:(id)sender
 {
-    PTYSession *aSession = [[[TABVIEW selectedTabViewItem] identifier] activeSession];
-    [self closeSessionWithConfirmation:aSession];
+    if ([[self window] isKeyWindow]) {
+        PTYSession *aSession = [[[TABVIEW selectedTabViewItem] identifier] activeSession];
+        [self closeSessionWithConfirmation:aSession];
+    }
 }
 
 - (void)closeSessionWithConfirmation:(PTYSession *)aSession
@@ -3705,6 +3708,16 @@ NSString *sessionsKey = @"sessions";
                [item action] == @selector(selectPaneLeft:) ||
                [item action] == @selector(selectPaneRight:)) {
         result = ([[[self currentTab] sessions] count] > 1);
+    } else if ([item action] == @selector(closecurrentsession:)) {
+        NSWindowController* controller = [[NSApp keyWindow] windowController];
+        if (controller) {
+            // Any object whose window controller implements this selector is closed by
+            // cmd-w: pseudoterminal (closes a pane), preferences, bookmarks
+            // window. Notably, not expose, various modal windows, etc.
+            result = [controller respondsToSelector:@selector(closecurrentsession:)];
+        } else {
+            result = NO;
+        }
     }
     return result;
 }

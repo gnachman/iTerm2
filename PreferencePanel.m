@@ -534,6 +534,12 @@ static float versionNumber;
     return originator == addNewMapping || originator == keyMappings;
 }
 
+- (IBAction)closeCurrentSession:(id)sender
+{
+    if ([[self window] isKeyWindow]) {
+        [self closeWindow:self];
+    }
+}
 
 - (void)editKeyMapping:(id)sender
 {

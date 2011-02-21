@@ -79,6 +79,13 @@ typedef enum {
     return self;
 }
 
+- (IBAction)closeCurrentSession:(id)sender
+{
+    if ([[self window] isKeyWindow]) {
+        [self close];
+    }
+}
+
 - (void)_openBookmarkInTab:(BOOL)inTab firstInWindow:(BOOL)firstInWindow inPane:(PaneMode)inPane
 {
     NSSet* guids = [tableView_ selectedGuids];

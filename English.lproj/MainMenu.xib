@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="29"/>
+			<integer value="81"/>
 			<integer value="498"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
@@ -307,7 +307,7 @@
 								</object>
 								<object class="NSMenuItem" id="619695518">
 									<reference key="NSMenu" ref="360861402"/>
-									<string key="NSTitle">Close Session</string>
+									<string key="NSTitle">Close</string>
 									<string key="NSKeyEquiv">w</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -316,7 +316,7 @@
 								</object>
 								<object class="NSMenuItem" id="319026797">
 									<reference key="NSMenu" ref="360861402"/>
-									<string key="NSTitle">Close Window</string>
+									<string key="NSTitle">Close Terminal Window</string>
 									<string key="NSKeyEquiv">W</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -325,7 +325,7 @@
 								</object>
 								<object class="NSMenuItem" id="549350617">
 									<reference key="NSMenu" ref="360861402"/>
-									<string key="NSTitle">Close All Sessions in Tab</string>
+									<string key="NSTitle">Close All Panes in Tab</string>
 									<string key="NSKeyEquiv">w</string>
 									<int key="NSKeyEquivModMask">1572864</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -4294,7 +4294,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{141, 398}, {260, 303}}</string>
+					<string>{{141, 398}, {250, 303}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
