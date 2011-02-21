@@ -814,18 +814,25 @@ static void reapchild(int n)
 
 - (pid_t)getFirstChildOfPid:(pid_t)parentPid
 {
-    int numPids;
-    numPids = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
-    if (numPids <= 0) {
+    int numBytes;
+    numBytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    if (numBytes <= 0) {
         return -1;
     }
 
-    int* pids = (int*) malloc(sizeof(int) * numPids);
-    numPids = proc_listpids(PROC_ALL_PIDS, 0, pids, numPids);
-    if (numPids <= 0) {
+    int* pids = (int*) malloc(numBytes+sizeof(int));
+    // Save a magic int at the end to be sure that the buffer isn't overrun.
+    const int PID_MAGIC = 0xdeadbeef;
+    int magicIndex = numBytes/sizeof(int);
+    pids[magicIndex] = PID_MAGIC;
+    numBytes = proc_listpids(PROC_ALL_PIDS, 0, pids, numBytes);
+    assert(pids[magicIndex] == PID_MAGIC);
+    if (numBytes <= 0) {
         free(pids);
         return -1;
     }
+
+    int numPids = numBytes / sizeof(int);
 
     long long oldestTime = 0;
     pid_t oldestPid = -1;
@@ -850,6 +857,7 @@ static void reapchild(int n)
         }
     }
 
+    assert(pids[magicIndex] == PID_MAGIC);
     free(pids);
     return oldestPid;
 }
