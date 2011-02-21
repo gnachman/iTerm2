@@ -724,6 +724,15 @@ void DebugLog(NSString* value)
     }
 }
 
+- (void)makeHotKeyWindowKeyIfOpen
+{
+    for (PseudoTerminal* term in [self terminals]) {
+        if ([term isHotKeyWindow] && [[term window] isVisible]) {
+            [[term window] makeKeyAndOrderFront:self];
+        }
+    }
+}
+
 - (void)updateMaximizePaneMenuItem
 {
     [maximizePane setState:[[[[iTermController sharedInstance] currentTerminal] currentTab] hasMaximizedPane] ? NSOnState : NSOffState];

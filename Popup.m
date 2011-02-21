@@ -158,6 +158,14 @@ DebugLog([NSString stringWithFormat:args]); \
     }
 }
 
+- (void)close
+{
+    // The OS will send a hotkey window to the background if it's open and in
+    // all spaces. So make it key before closing.
+    [[NSApp delegate] makeHotKeyWindowKeyIfOpen];
+    [super close];
+}
+
 @end
 
 @implementation PopupModel
