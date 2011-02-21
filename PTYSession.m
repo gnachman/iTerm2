@@ -1186,18 +1186,40 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [self writeTask:[TERMINAL keyPageDown:0]];
 }
 
-- (void)paste:(id)sender
++ (NSString*)pasteboardString
 {
     NSPasteboard *board;
+
+    board = [NSPasteboard generalPasteboard];
+    assert(board != nil);
+
+    NSArray *supportedTypes = [NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil];
+    NSString *bestType = [board availableTypeFromArray:supportedTypes];
+
+    NSString* info;
+    if ([bestType isEqualToString:NSFilenamesPboardType]) {
+        NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
+        if ([filenames count] > 0) {
+            info = [filenames componentsJoinedByString:@"\n"];
+            if ([info length] == 0) {
+                info = nil;
+            }
+        }
+    } else {
+        info = [board stringForType:NSStringPboardType];
+    }
+    return info;
+}
+
+- (void)paste:(id)sender
+{
     NSMutableString *str;
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PTYSession paste:...]", __FILE__, __LINE__);
 #endif
 
-    board = [NSPasteboard generalPasteboard];
-    NSParameterAssert(board != nil );
-    str = [[[NSMutableString alloc] initWithString:[board stringForType:NSStringPboardType]] autorelease];
+    str = [[[NSMutableString alloc] initWithString:[PTYSession pasteboardString]] autorelease];
     if ([sender tag] & 1) {
         // paste with escape;
         [str replaceOccurrencesOfString:@"\\" withString:@"\\\\" options:NSLiteralSearch range:NSMakeRange(0, [str length])];

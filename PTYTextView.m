@@ -2197,7 +2197,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)paste:(id)sender
 {
-    NSString *info = [[NSPasteboard generalPasteboard] stringForType:NSStringPboardType];
+    NSString* info = [PTYSession pasteboardString];
     if (info) {
         [[PasteboardHistory sharedInstance] save:info];
     }

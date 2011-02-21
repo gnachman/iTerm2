@@ -194,10 +194,13 @@ static const float kBackgroundSessionIntervalSec = 1;
 
     // Last time this session became active
     NSDate* lastActiveAt_;
-    
+
     // saved scroll position or -1
     long long savedScrollPosition_;
 }
+
+// Return the current pasteboard value as a string.
++ (NSString*)pasteboardString;
 
 // init/dealloc
 - (id)init;
