@@ -103,6 +103,9 @@
 - (id)initWithWindowNibName:(NSString*)nibName tablePtr:(NSTableView**)table model:(PopupModel*)model;
 - (void)dealloc;
 
+// Turn off focus follows mouse while this window is key.
+- (BOOL)disableFocusFollowsMouse;
+
 // Called by clients to open window.
 - (void)popInSession:(PTYSession*)session;
 

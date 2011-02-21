@@ -45,6 +45,7 @@ static NSString* FormatRect(NSRect r) {
 
 - (BOOL)canBecomeKeyWindow;
 - (void)keyDown:(NSEvent *)event;
+- (BOOL)disableFocusFollowsMouse;
 
 @end
 
@@ -215,6 +216,11 @@ static NSString* FormatRect(NSRect r) {
     if (unmodunicode == 27) {
         [iTermExpose toggle];
     }
+}
+
+- (BOOL)disableFocusFollowsMouse
+{
+    return YES;
 }
 
 @end

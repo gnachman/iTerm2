@@ -1604,6 +1604,19 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 - (void)mouseEntered:(NSEvent *)event
 {
     if ([[PreferencePanel sharedInstance] focusFollowsMouse]) {
+        // Some windows automatically close when they lose key status and are
+        // incompatible with FFM. Check if the key window or its controller implements
+        // disableFocusFollowsMouse and if it returns YES do nothing.
+        id obj = nil;
+        if ([[NSApp keyWindow] respondsToSelector:@selector(disableFocusFollowsMouse)]) {
+            obj = [NSApp keyWindow];
+        } else if ([[[NSApp keyWindow] windowController] respondsToSelector:@selector(disableFocusFollowsMouse)]) {
+            obj = [[NSApp keyWindow] windowController];
+        }
+        if ([obj disableFocusFollowsMouse]) {
+            return;
+        }
+
         [[self window] makeKeyWindow];
         [[[dataSource session] tab] setActiveSession:[dataSource session]];
     }

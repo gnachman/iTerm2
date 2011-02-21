@@ -302,6 +302,11 @@ DebugLog([NSString stringWithFormat:args]); \
     [super dealloc];
 }
 
+- (BOOL)disableFocusFollowsMouse
+{
+    return YES;
+}
+
 - (void)popInSession:(PTYSession*)session
 {
     [self setSession:session];
