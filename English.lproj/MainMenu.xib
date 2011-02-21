@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="81"/>
+			<integer value="803"/>
 			<integer value="498"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
@@ -856,7 +856,7 @@
 								</object>
 								<object class="NSMenuItem" id="451524518">
 									<reference key="NSMenu" ref="203853260"/>
-									<string key="NSTitle">Enter Full Screen</string>
+									<string key="NSTitle">Toggle Full Screen</string>
 									<string type="base64-UTF8" key="NSKeyEquiv">DQ</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
