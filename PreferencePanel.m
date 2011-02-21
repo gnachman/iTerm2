@@ -557,7 +557,7 @@ static float versionNumber;
     for (NSMenuItem* item in [action itemArray]) {
         [item setState:NSOffState];
     }
-    keyString = [[[self keyComboAtIndex:rowIndex originator:sender] copy] retain];
+    keyString = [[self keyComboAtIndex:rowIndex originator:sender] copy];
     [action selectItemWithTag:[[[self keyInfoAtIndex:rowIndex originator:sender] objectForKey:@"Action"] intValue]];
     NSString* text = [[self keyInfoAtIndex:rowIndex originator:sender] objectForKey:@"Text"];
     [valueToSend setStringValue:text ? text : @""];
