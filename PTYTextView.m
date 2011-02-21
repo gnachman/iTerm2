@@ -1239,7 +1239,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)keyDown:(NSEvent*)event
 {
-    NSLog(@"PTYTextView keyDown");
+    DebugLog(@"PTYTextView keyDown");
     id delegate = [self delegate];
     unsigned int modflag = [event modifierFlags];
     unsigned short keyCode = [event keyCode];
@@ -2626,7 +2626,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 /// NSTextInput stuff
 - (void)doCommandBySelector:(SEL)aSelector
 {
-    NSLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
+    //NSLog(@"doCommandBySelector:%@", NSStringFromSelector(aSelector));
 
 #if GREED_KEYDOWN == 0
     id delegate = [self delegate];
@@ -4211,11 +4211,15 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     // Draw the regular cursor only if there's not an IME open as it draws its
     // own cursor.
     if (![self hasMarkedText] && CURSOR) {
-        if (showCursor && x1 < WIDTH && x1 >= 0 && yStart >= 0 && yStart < HEIGHT) {
+        if (showCursor && x1 <= WIDTH && x1 >= 0 && yStart >= 0 && yStart < HEIGHT) {
             // get the cursor line
             theLine = [dataSource getLineAtScreenIndex:yStart];
             double_width = 0;
             screen_char_t screenChar = theLine[x1];
+            if (x1 == WIDTH) {
+                screenChar = theLine[x1 - 1];
+                screenChar.code = 0;
+            }
             int aChar = screenChar.code;
             if (aChar) {
                 if (aChar == DWC_RIGHT && x1 > 0) {

@@ -57,7 +57,6 @@
 - (void)sendEvent:(NSEvent*)event
 {
     if ([event type] == NSKeyDown) {
-        NSLog(@"NSKeyDown");
         iTermController* cont = [iTermController sharedInstance];
         PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
         if ([prefPanel isAnyModifierRemapped] && 
@@ -112,7 +111,6 @@
             return;
         } else if ([[self keyWindow] isKindOfClass:[PTYWindow class]]) {
             // Focus is in a terminal window.
-            NSLog(@"Focus in ptytextview");
             responder = [[self keyWindow] firstResponder];
             bool inTextView = [responder isKindOfClass:[PTYTextView class]];
 
