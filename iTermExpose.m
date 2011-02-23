@@ -153,6 +153,7 @@ static NSString* FormatRect(NSRect r) {
 - (NSSize)origSize;
 - (int)index;
 - (PTYTab*)tab;
+- (BOOL)wasMaximized;
 
 @end
 
@@ -625,6 +626,11 @@ static BOOL RectsApproxEqual(NSRect a, NSRect b)
     return [[window tabs] objectAtIndex:tabIndex_];
 }
 
+- (BOOL)wasMaximized
+{
+    return wasMaximized_;
+}
+
 @end
 
 @implementation iTermExposeGridView
@@ -892,7 +898,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     for (iTermExposeTabView* aView in [self subviews]) {
         if ([aView isKindOfClass:[iTermExposeTabView class]]) {
             iTermExposeTabView* tabView = (iTermExposeTabView*)aView;
-            if ([theSession tab] != [tabView tab]) {
+            if ([aView wasMaximized] && [theSession tab] != [tabView tab]) {
                 [[tabView tab] maximize];
             }
         }
