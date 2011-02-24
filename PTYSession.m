@@ -1213,26 +1213,24 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)paste:(id)sender
 {
-    NSMutableString *str;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession paste:...]", __FILE__, __LINE__);
-#endif
-
-    str = [[[NSMutableString alloc] initWithString:[PTYSession pasteboardString]] autorelease];
-    if ([sender tag] & 1) {
-        // paste with escape;
-        [str replaceOccurrencesOfString:@"\\" withString:@"\\\\" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
-        [str replaceOccurrencesOfString:@"'" withString:@"\\'" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
-        [str replaceOccurrencesOfString:@"\"" withString:@"\\\"" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
-        [str replaceOccurrencesOfString:@" " withString:@"\\ " options:NSLiteralSearch range:NSMakeRange(0, [str length])];
-    }
-    if ([sender tag] & 2) {
-        [slowPasteBuffer setString:str];
-        [self pasteSlowly:nil];
-    } else {
-        [self pasteString:str];
-    }
+	NSString* pbStr = [PTYSession pasteboardString];
+	if (pbStr) {
+		NSMutableString *str;
+		str = [[[NSMutableString alloc] initWithString:pbStr] autorelease];
+		if ([sender tag] & 1) {
+			// paste with escape;
+			[str replaceOccurrencesOfString:@"\\" withString:@"\\\\" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
+			[str replaceOccurrencesOfString:@"'" withString:@"\\'" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
+			[str replaceOccurrencesOfString:@"\"" withString:@"\\\"" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
+			[str replaceOccurrencesOfString:@" " withString:@"\\ " options:NSLiteralSearch range:NSMakeRange(0, [str length])];
+		}
+		if ([sender tag] & 2) {
+			[slowPasteBuffer setString:str];
+			[self pasteSlowly:nil];
+		} else {
+			[self pasteString:str];
+		}
+	}
 }
 
 // Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
