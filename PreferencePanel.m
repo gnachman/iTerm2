@@ -526,6 +526,7 @@ static float versionNumber;
 
 - (void)genericCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo
 {
+    [action setTitle:@"Ignore"];
     [sheet close];
 }
 
@@ -2664,6 +2665,7 @@ static float versionNumber;
 
 - (IBAction)actionChanged:(id)sender
 {
+    [action setTitle:[[sender selectedItem] title]];
     [self updateValueToSend];
 }
 

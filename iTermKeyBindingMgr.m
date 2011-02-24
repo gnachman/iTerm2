@@ -543,6 +543,7 @@ static NSDictionary* globalKeyMap;
     assert([presetName isEqualToString:@"Factory Defaults"]);
     if (globalKeyMap) {
         [globalKeyMap release];
+        [[NSUserDefaults standardUserDefaults] removeObjectForKey:@"GlobalKeyMap"];
     }
     [self _loadGlobalKeyMap];
 }

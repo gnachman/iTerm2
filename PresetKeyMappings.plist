@@ -2,57 +2,63 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>Basic Defaults</key>
-	<dict>
-		<key>0xf700-0x220000</key>
-		<dict>
-			<key>Action</key>
-			<integer>7</integer>
-		</dict>
-		<key>0xf701-0x220000</key>
-		<dict>
-			<key>Action</key>
-			<integer>6</integer>
-		</dict>
-		<key>0xf702-0x320000</key>
-		<dict>
-			<key>Action</key>
-			<integer>2</integer>
-		</dict>
-		<key>0xf703-0x320000</key>
-		<dict>
-			<key>Action</key>
-			<integer>0</integer>
-		</dict>
-		<key>0xf729-0x20000</key>
-		<dict>
-			<key>Action</key>
-			<integer>5</integer>
-		</dict>
-		<key>0xf72b-0x20000</key>
-		<dict>
-			<key>Action</key>
-			<integer>4</integer>
-		</dict>
-		<key>0xf72c-0x20000</key>
-		<dict>
-			<key>Action</key>
-			<integer>9</integer>
-		</dict>
-		<key>0xf72d-0x20000</key>
-		<dict>
-			<key>Action</key>
-			<integer>8</integer>
-		</dict>
-	</dict>
 	<key>xterm Defaults</key>
 	<dict>
-		<key>0x7f-0x0</key>
+		<key>0x38-0x40000</key>
 		<dict>
 			<key>Action</key>
 			<integer>11</integer>
 			<key>Text</key>
-			<string>7f</string>
+			<string>0x7f</string>
+		</dict>
+		<key>0x2d-0x40000</key>
+		<dict>
+			<key>Action</key>
+			<integer>11</integer>
+			<key>Text</key>
+			<string>0x1f</string>
+		</dict>
+		<key>0x32-0x40000</key>
+		<dict>
+			<key>Action</key>
+			<integer>11</integer>
+			<key>Text</key>
+			<string>0x00</string>
+		</dict>
+		<key>0x33-0x40000</key>
+		<dict>
+			<key>Action</key>
+			<integer>11</integer>
+			<key>Text</key>
+			<string>0x1b</string>
+		</dict>
+		<key>0x34-0x40000</key>
+		<dict>
+			<key>Action</key>
+			<integer>11</integer>
+			<key>Text</key>
+			<string>0x1c</string>
+		</dict>
+		<key>0x35-0x40000</key>
+		<dict>
+			<key>Action</key>
+			<integer>11</integer>
+			<key>Text</key>
+			<string>0x1d</string>
+		</dict>
+		<key>0x36-0x40000</key>
+		<dict>
+			<key>Action</key>
+			<integer>11</integer>
+			<key>Text</key>
+			<string>0x1e</string>
+		</dict>
+		<key>0x37-0x40000</key>
+		<dict>
+			<key>Action</key>
+			<integer>11</integer>
+			<key>Text</key>
+			<string>0x1f</string>
 		</dict>
 		<key>0xf700-0x220000</key>
 		<dict>
