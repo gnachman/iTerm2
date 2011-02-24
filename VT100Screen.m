@@ -490,7 +490,10 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     assert(toX >= 0);
     assert(toX < WIDTH);
     assert(fromY >= 0);
-    assert(fromY < HEIGHT);
+    if (fromY >= HEIGHT) {
+        // Can happen with 1-line tall session
+        return;
+    }
     assert(toY >= 0);
     assert(toY < HEIGHT);
     [self moveDirtyRangeFromOffset:(fromX + fromY * WIDTH)
