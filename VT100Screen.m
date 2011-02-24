@@ -561,6 +561,9 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (void)setCharDirtyAtX:(int)x Y:(int)y value:(int)v
 {
+    if (x == WIDTH) {
+        x = WIDTH-1;
+    }
     assert(x >= 0);
     assert(x < WIDTH);
     assert(y >= 0);
@@ -576,9 +579,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         if (cursorY < HEIGHT) {
             [self setCharDirtyAtX:0 Y:cursorY+1 value:value];
         }
-    } else {
-        [self setCharDirtyAtX:cursorX Y:cursorY value:value];
     }
+    [self setCharDirtyAtX:cursorX Y:cursorY value:value];
 }
 
 - (void)setCursorX:(int)x Y:(int)y
