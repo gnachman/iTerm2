@@ -574,7 +574,7 @@ const double GLOBAL_SEARCH_MARGIN = 10;
     int prev = -1;
     int cur = (minLen + maxLen) / 2;
 
-    NSAttributedString* subString;
+    NSAttributedString* subString = nil;
     while (cur != prev) {
         if (wantHead) {
             subString = [as attributedSubstringFromRange:NSMakeRange(0, MIN(length, 1+cur))];
