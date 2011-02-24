@@ -340,6 +340,20 @@
 			<key>Text</key>
 			<string>[1;2C</string>
 		</dict>
+        <key>0xf701-0x240000</key>
+        <dict>
+            <key>Action</key>
+            <integer>10</integer>
+            <key>Text</key>
+            <string>[1;5B</string>
+        </dict>
+        <key>0xf700-0x240000</key>
+        <dict>
+            <key>Action</key>
+            <integer>10</integer>
+            <key>Text</key>
+            <string>[1;5A</string>
+        </dict>
 		<key>0xf703-0x240000</key>
 		<dict>
 			<key>Action</key>
