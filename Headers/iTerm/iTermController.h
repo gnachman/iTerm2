@@ -48,6 +48,7 @@
     CFMachPortRef machPortRef;
     CFRunLoopSourceRef eventSrc;
     int keyWindowIndexMemo_;
+    BOOL itermWasActiveWhenHotkeyOpened;
 }
 
 + (iTermController*)sharedInstance;
