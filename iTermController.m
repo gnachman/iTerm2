@@ -930,7 +930,6 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         [self performSelector:@selector(unhide) withObject:nil afterDelay:0.1];
     }
     [[term window] orderOut:nil];
-    [term setIsHotKeyWindow:NO];
 }
 
 - (void)unhide
