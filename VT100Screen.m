@@ -525,8 +525,13 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 - (void)setRangeDirty:(NSRange)range
 {
     assert(range.location >= 0);
-    assert(range.location < dirtySize);
+    if (range.location >= dirtySize) {
+        return;
+    }
     assert(range.length >= 0);
+    if (range.location + range.length > dirtySize) {
+        range.length = dirtySize - range.location;
+    }
     assert(range.location + range.length <= dirtySize);
 
     memset(dirty + range.location,
