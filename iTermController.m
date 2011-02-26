@@ -829,7 +829,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
             rect.origin.y = -rect.size.height;
             [[term window] setFrame:rect display:NO];
 
-            rect.origin.x = (screenFrame.size.width - rect.size.width) / 2;
+            rect.origin.x = screenFrame.origin.x + (screenFrame.size.width - rect.size.width) / 2;
             rect.origin.y = screenFrame.origin.y + (screenFrame.size.height - rect.size.height) / 2;
             [[[term window] animator] setFrame:rect display:YES];
             break;
