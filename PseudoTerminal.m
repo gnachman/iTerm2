@@ -2571,7 +2571,7 @@ NSString *sessionsKey = @"sessions";
     [scrollView release];
 
     pbbfValid = NO;
-    [self fitWindowToTabs];
+    [self fitTabsToWindow];
 
     [self runCommandInSession:newSession inCwd:oldCWD];
     if (targetSession == [[self currentTab] activeSession]) {
