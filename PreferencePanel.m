@@ -181,16 +181,18 @@ static float versionNumber;
     [bookmarkCommand setHidden:YES];
     [bookmarkDirectoryType setHidden:YES];
     [bookmarkDirectory setHidden:YES];
-    [columnsLabel setHidden:YES];
-    [rowsLabel setHidden:YES];
-    [columnsField setHidden:YES];
-    [rowsField setHidden:YES];
-    [windowTypeButton setHidden:YES];
-    [screenButton setHidden:YES];
-    [spaceButton setHidden:YES];
-    [spaceLabel setHidden:YES];
-    [windowTypeLabel setHidden:YES];
-    [newWindowttributesHeader setHidden:YES];
+
+    [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
+    [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
+    [columnsField setEnabled:NO];
+    [rowsField setEnabled:NO];
+    [windowTypeButton setEnabled:NO];
+    [screenLabel setTextColor:[NSColor disabledControlTextColor]];
+    [screenButton setEnabled:NO];
+    [spaceButton setEnabled:NO];
+    [spaceLabel setTextColor:[NSColor disabledControlTextColor]];
+    [windowTypeLabel setTextColor:[NSColor disabledControlTextColor]];
+    [newWindowttributesHeader setTextColor:[NSColor disabledControlTextColor]];
 
     NSRect newFrame = [bookmarksSettingsTabViewParent frame];
     newFrame.origin.x = 0;
@@ -458,7 +460,7 @@ static float versionNumber;
         [screenButton setEnabled:NO];
         [screenLabel setTextColor:[NSColor disabledControlTextColor]];
         [screenButton selectItemWithTag:-1];
-    } else {
+    } else if (!oneBookmarkOnly) {
         [screenButton setEnabled:YES];
         [screenLabel setTextColor:[NSColor blackColor]];
     }
