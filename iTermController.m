@@ -1092,8 +1092,9 @@ void OnHotKeyEvent(void)
 
 - (BOOL)eventIsHotkey:(NSEvent*)e
 {
+    const int mask = (NSCommandKeyMask | NSAlternateKeyMask | NSShiftKeyMask | NSControlKeyMask);
     return (hotkeyCode_ &&
-            ([e modifierFlags] & hotkeyModifiers_) == hotkeyModifiers_ &&
+            ([e modifierFlags] & mask) == (hotkeyModifiers_ & mask) &&
             [e keyCode] == hotkeyCode_);
 }
 
