@@ -1122,6 +1122,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidResize:(NSNotification *)aNotification
 {
+    pbbfValid = NO;
     PtyLog(@"windowDidResize to: %fx%f", [[self window] frame].size.width, [[self window] frame].size.height);
     if (togglingFullScreen_) {
         PtyLog(@"windowDidResize returning because togglingFullScreen.");
@@ -2091,8 +2092,16 @@ NSString *sessionsKey = @"sessions";
     } else {
         PtyLog(@"showHideFindBar - calling fitWindowToTabs");
         if (hide && pbbfValid) {
+            // Compute the top-left origin of the current frame in case the window moved
+            NSRect currentFrame = [[self window] frame];
+            NSPoint topLeft = currentFrame.origin;
+            topLeft.y += currentFrame.size.height;
+
             PtyLog(@"Restore old frame of height %lf", preBottomBarFrame.size.height);
+            preBottomBarFrame.origin.y = topLeft.y - preBottomBarFrame.size.height;
+            preBottomBarFrame.origin.x = topLeft.x;
             [[self window] setFrame:preBottomBarFrame display:YES];
+
             PtyLog(@"showHideBottomBar - calling repositionWidgets");
             [self repositionWidgets];
             PtyLog(@"showHideBottomBar - call fitTabsToWindow");
@@ -2101,7 +2110,7 @@ NSString *sessionsKey = @"sessions";
             PtyLog(@"showHideBottomBar - call repositionWidgets");
             [self repositionWidgets];
             PtyLog(@"showHideBottomBar - call fitWindowToTabs");
-            [self fitWindowToTabs];
+            [self fitTabsToWindow];
         }
     }
 
