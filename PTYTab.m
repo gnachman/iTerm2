@@ -2341,6 +2341,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         if ([session newOutput]) {
             // Idle after new output
             if (![session growlIdle] &&
+                [[session SCREEN] growl] &&
                 now.tv_sec > [session lastOutput].tv_sec + 1) {
                 [[iTermGrowlDelegate sharedInstance] growlNotify:NSLocalizedStringFromTableInBundle(@"Idle",
                                                                                                     @"iTerm",
@@ -2374,7 +2375,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     }
 
     if (![[self activeSession] growlNewOutput] &&
-        ![[self parentWindow] sendInputToAllSessions]) {
+        ![[self parentWindow] sendInputToAllSessions] &&
+        [[[self activeSession] SCREEN] growl] ) {
         [[iTermGrowlDelegate sharedInstance] growlNotify:NSLocalizedStringFromTableInBundle(@"New Output",
                                                                                             @"iTerm",
                                                                                             [NSBundle bundleForClass:[self class]],

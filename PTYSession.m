@@ -552,17 +552,19 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)brokenPipe
 {
-    [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Broken Pipe",
-                                                       @"iTerm",
-                                                       [NSBundle bundleForClass:[self class]],
-                                                       @"Growl Alerts")
-    withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Session %@ #%d just terminated.",
-                                                                                  @"iTerm",
-                                                                                  [NSBundle bundleForClass:[self class]],
-                                                                                  @"Growl Alerts"),
-                     [self name],
-                     [[self tab] realObjectCount]]
-    andNotification:@"Broken Pipes"];
+    if ([SCREEN growl]) {
+        [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Broken Pipe",
+                                                           @"iTerm",
+                                                           [NSBundle bundleForClass:[self class]],
+                                                           @"Growl Alerts")
+            withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Session %@ #%d just terminated.",
+                                                                                          @"iTerm",
+                                                                                          [NSBundle bundleForClass:[self class]],
+                                                                                          @"Growl Alerts"),
+                             [self name],
+                             [[self tab] realObjectCount]]
+            andNotification:@"Broken Pipes"];
+    }
 
     EXIT = YES;
     [[self tab] setLabelAttributes];
@@ -1337,7 +1339,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         bell = flag;
         [[self tab] setBell:flag];
         if (bell) {
-            if ([TEXTVIEW keyIsARepeat] == NO && ![[TEXTVIEW window] isKeyWindow]) {
+            if ([TEXTVIEW keyIsARepeat] == NO &&
+                ![[TEXTVIEW window] isKeyWindow] &&
+                [SCREEN growl]) {
                 [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Bell",
                                                                    @"iTerm",
                                                                    [NSBundle bundleForClass:[self class]],

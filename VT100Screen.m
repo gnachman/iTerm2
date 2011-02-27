@@ -2894,6 +2894,11 @@ static void DumpBuf(screen_char_t* p, int n) {
     GROWL = flag;
 }
 
+- (BOOL)growl
+{
+    return GROWL;
+}
+
 - (void)deviceReport:(VT100TCC)token
 {
     NSData *report = nil;

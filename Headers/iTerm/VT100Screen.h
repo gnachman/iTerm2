@@ -166,6 +166,7 @@ void StringToScreenChars(NSString *s,
 - (void)setShowBellFlag:(BOOL)flag;
 - (void)setFlashBellFlag:(BOOL)flag;
 - (void)setGrowlFlag:(BOOL)flag;
+- (BOOL)growl;
 
 // line access
 // This function is dangerous! It writes to an internal buffer and returns a
