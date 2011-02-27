@@ -4201,6 +4201,60 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [self _drawCursorTo:nil];
 }
 
+- (float)_brightnessOfCharBackground:(screen_char_t)c
+{
+    if ([[dataSource terminal] screenMode]) {
+        // reversed
+        NSColor* color = [self colorForCode:c.foregroundColor alternateSemantics:c.alternateForegroundSemantics bold:c.bold];
+        return [[color colorUsingColorSpaceName:NSCalibratedRGBColorSpace] brightnessComponent];
+    } else {
+        // normal
+        NSColor* color = [self colorForCode:c.backgroundColor alternateSemantics:c.alternateBackgroundSemantics bold:c.bold];
+        return [[color colorUsingColorSpaceName:NSCalibratedRGBColorSpace] brightnessComponent];
+    }
+}
+
+// Return the value in 'values' closest to target.
+- (CGFloat)_minimumDistanceOf:(CGFloat)target fromAnyValueIn:(NSArray*)values
+{
+    CGFloat md = 1;
+    for (NSNumber* n in values) {
+        CGFloat dist = fabs(target - [n doubleValue]);
+        if (dist < md) {
+            md = dist;
+        }
+    }
+    return md;
+}
+
+// Return the value between 0 and 1 that is farthest from any value in 'constraints'.
+- (CGFloat)_farthestValueFromAnyValueIn:(NSArray*)constraints
+{
+    if ([constraints count] == 0) {
+        return 0;
+    }
+
+    NSArray* sortedConstraints = [constraints sortedArrayUsingSelector:@selector(compare:)];
+    double minVal = [[sortedConstraints objectAtIndex:0] doubleValue];
+    double maxVal = [[sortedConstraints lastObject] doubleValue];
+    NSArray* aug = [sortedConstraints arrayByAddingObjectsFromArray:[NSArray arrayWithObjects:[NSNumber numberWithDouble:-minVal],
+                                                               [NSNumber numberWithDouble:1+maxVal],
+                                                               nil]];
+    CGFloat bestDistance = 0;
+    CGFloat bestValue = -1;
+    CGFloat prev = [[aug objectAtIndex:0] doubleValue];
+    for (NSNumber* np in sortedConstraints) {
+        CGFloat n = [np doubleValue];
+        const CGFloat dist = fabs(n - prev);
+        if (dist > bestDistance) {
+            bestDistance = dist;
+            bestValue = (n + prev) / 2;
+        }
+        prev = n;
+    }
+    return bestValue;
+}
+
 - (void)_drawCursorTo:(NSPoint*)toOrigin
 {
     int WIDTH, HEIGHT;
@@ -4252,7 +4306,15 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     if (![self hasMarkedText] && CURSOR) {
         if (showCursor && x1 <= WIDTH && x1 >= 0 && yStart >= 0 && yStart < HEIGHT) {
             // get the cursor line
+            screen_char_t* lineAbove = nil;
+            screen_char_t* lineBelow = nil;
             theLine = [dataSource getLineAtScreenIndex:yStart];
+            if (yStart > 0) {
+                lineAbove = [dataSource getLineAtScreenIndex:yStart - 1];
+            }
+            if (yStart < HEIGHT) {
+                lineBelow = [dataSource getLineAtScreenIndex:yStart + 1];
+            }
             double_width = 0;
             screen_char_t screenChar = theLine[x1];
             if (x1 == WIDTH) {
@@ -4285,6 +4347,26 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                             bold:screenChar.bold];
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 }
+
+                NSMutableArray* constraints = [NSMutableArray arrayWithCapacity:2];
+                CGFloat bgBrightness = [[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace] brightnessComponent];
+                if (x1 > 0) {
+                    [constraints addObject:[NSNumber numberWithDouble:[self _brightnessOfCharBackground:theLine[x1 - 1]]]];
+                }
+                if (x1 < WIDTH) {
+                    [constraints addObject:[NSNumber numberWithDouble:[self _brightnessOfCharBackground:theLine[x1 + 1]]]];
+                }
+                if (lineAbove) {
+                    [constraints addObject:[NSNumber numberWithDouble:[self _brightnessOfCharBackground:lineAbove[x1]]]];
+                }
+                if (lineBelow) {
+                    [constraints addObject:[NSNumber numberWithDouble:[self _brightnessOfCharBackground:lineBelow[x1]]]];
+                }
+                if ([self _minimumDistanceOf:bgBrightness fromAnyValueIn:constraints] < 0.3) {
+                    CGFloat b = [self _farthestValueFromAnyValueIn:constraints];
+                    bgColor = [NSColor colorWithCalibratedRed:b green:b blue:b alpha:1];
+                }
+
                 [bgColor set];
             } else {
                 bgColor = [self defaultCursorColor];
@@ -4332,7 +4414,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                             CGFloat fgBrightness = [proposedForeground brightnessComponent];
                             CGFloat bgBrightness = [[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace] brightnessComponent];
                             NSColor* overrideColor = nil;
-                            if (!frameOnly && fabs(fgBrightness - bgBrightness) < 0.2) {
+                            if (!frameOnly && fabs(fgBrightness - bgBrightness) < 0.3) {
                                 // foreground and background are very similar. Just use black and
                                 // white.
                                 if (bgBrightness < 0.5) {
