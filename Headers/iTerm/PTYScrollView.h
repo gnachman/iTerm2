@@ -57,8 +57,8 @@
 // background image
 - (NSImage *) backgroundImage;
 - (void) setBackgroundImage: (NSImage *) anImage;
-- (void) drawBackgroundImageRect: (NSRect) rect;
-- (void)drawBackgroundImageRect:(NSRect)rect toPoint:(NSPoint)dest;
+- (void)drawBackgroundImageRect:(NSRect)rect useTransparency:(BOOL)useTransparency;
+- (void)drawBackgroundImageRect:(NSRect)rect toPoint:(NSPoint)dest useTransparency:(BOOL)useTransparency;
 - (float) transparency;
 - (void) setTransparency: (float) theTransparency;
 

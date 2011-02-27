@@ -132,13 +132,15 @@
     return self;
 }
 
-- (void) drawBackgroundImageRect: (NSRect) rect
+- (void)drawBackgroundImageRect:(NSRect)rect useTransparency:(BOOL)useTransparency
 {
-    [self drawBackgroundImageRect:rect toPoint:NSMakePoint(rect.origin.x,
-                                                           rect.origin.y + rect.size.height)];
+    [self drawBackgroundImageRect:rect
+                          toPoint:NSMakePoint(rect.origin.x,
+                                              rect.origin.y + rect.size.height)
+                  useTransparency:useTransparency];
 }
 
-- (void)drawBackgroundImageRect:(NSRect)rect toPoint:(NSPoint)dest
+- (void)drawBackgroundImageRect:(NSRect)rect toPoint:(NSPoint)dest useTransparency:(BOOL)useTransparency
 {
     NSRect srcRect;
 
@@ -158,7 +160,7 @@
     [[self backgroundImage] compositeToPoint:dest
                                     fromRect:srcRect
                                    operation:NSCompositeCopy
-                                    fraction:(1.0 - [self transparency])];
+                                    fraction:useTransparency ? (1.0 - [self transparency]) : 1];
 }
 
 - (void)scrollWheel:(NSEvent *)theEvent

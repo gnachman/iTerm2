@@ -3030,7 +3030,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     float alpha = [self useTransparency] ? 1.0 - transparency : 1.0;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
-                                                                     toPoint:dest];
+                                                                     toPoint:dest
+                                                             useTransparency:[self useTransparency]];
     } else {
         [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
         NSRectFillUsingOperation(bgRect,
@@ -3044,7 +3045,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     BOOL hasBGImage = [scrollView backgroundImage] != nil;
     float alpha = [self useTransparency] ? 1.0 - transparency : 1.0;
     if (hasBGImage) {
-        [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect];
+        [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
+                                                             useTransparency:[self useTransparency]];
     } else {
         [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
         NSRectFillUsingOperation(bgRect, hasBGImage?NSCompositeSourceOver:NSCompositeCopy);
@@ -3810,11 +3812,19 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [aColor set];
     if (hasBGImage) {
         if (toPoint) {
-            [scrollView drawBackgroundImageRect:leftMargin toPoint:NSMakePoint(toPoint->x + leftMargin.origin.x, toPoint->y + leftMargin.size.height)];
-            [scrollView drawBackgroundImageRect:rightMargin toPoint:NSMakePoint(toPoint->x + rightMargin.origin.x, toPoint->y + rightMargin.size.height)];
+            [scrollView drawBackgroundImageRect:leftMargin
+                                        toPoint:NSMakePoint(toPoint->x + leftMargin.origin.x,
+                                                            toPoint->y + leftMargin.size.height)
+                                useTransparency:[self useTransparency]];
+            [scrollView drawBackgroundImageRect:rightMargin
+                                        toPoint:NSMakePoint(toPoint->x + rightMargin.origin.x,
+                                                            toPoint->y + rightMargin.size.height)
+                                useTransparency:[self useTransparency]];
         } else {
-            [scrollView drawBackgroundImageRect:leftMargin];
-            [scrollView drawBackgroundImageRect:rightMargin];
+            [scrollView drawBackgroundImageRect:leftMargin
+                                useTransparency:[self useTransparency]];
+            [scrollView drawBackgroundImageRect:rightMargin
+                                useTransparency:[self useTransparency]];
         }
     } else {
         if (toPoint) {
@@ -3890,9 +3900,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 if (toPoint) {
                     [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                                                  toPoint:NSMakePoint(toPoint->x + bgRect.origin.x,
-                                                                                                     toPoint->y + bgRect.size.height)];
+                                                                                                     toPoint->y + bgRect.size.height)
+                                                                         useTransparency:[self useTransparency]];
                 } else {
-                    [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect];
+                    [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
+                                                                         useTransparency:[self useTransparency]];
                 }
             }
             if (!hasBGImage ||
