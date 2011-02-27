@@ -2248,7 +2248,6 @@ NSString *sessionsKey = @"sessions";
 // Toggle instant replay bar.
 - (void)showHideInstantReplay
 {
-    pbbfValid = NO;
     BOOL hide = ![instantReplaySubview isHidden];
     if (!hide) {
         [self updateInstantReplay];
@@ -2257,9 +2256,6 @@ NSString *sessionsKey = @"sessions";
     [self arrangeBottomBarSubviews];
     if (_fullScreen) {
         [self adjustFullScreenWindowForBottomBarChange];
-    } else {
-        PtyLog(@"showHideFindBar - calling fitWindowToTabs");
-        [self fitWindowToTabs];
     }
 
     // On OS X 10.5.8, the scroll bar and resize indicator are messed up at this point. Resizing the tabview fixes it. This seems to be fixed in 10.6.
