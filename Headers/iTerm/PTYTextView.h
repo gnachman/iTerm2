@@ -179,6 +179,8 @@ typedef struct PTYFontInfo PTYFontInfo;
     float minimumContrast_;
 
     BOOL changedSinceLastExpose_;
+
+    double dimmingAmount_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -292,6 +294,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (float)transparency;
 - (void)setTransparency:(float)fVal;
 - (BOOL)useTransparency;
+
+// Dim all colors towards gray
+- (void)setDimmingAmount:(float)value;
 
 //
 // Drag and Drop methods for our text view

@@ -864,9 +864,6 @@ static float versionNumber;
     defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
     defaultColorInvertedCursor = [prefs objectForKey:@"ColorInvertedCursor"]?[[prefs objectForKey:@"ColorInvertedCursor"] boolValue]: YES;
     defaultDimInactiveSplitPanes = [prefs objectForKey:@"DimInactiveSplitPanes"]?[[prefs objectForKey:@"DimInactiveSplitPanes"] boolValue]: YES;
-    if (![SessionView dimmingSupported]) {
-        defaultDimInactiveSplitPanes = NO;
-    }
 
     defaultControl = [prefs objectForKey:@"Control"] ? [[prefs objectForKey:@"Control"] intValue] : MOD_TAG_CONTROL;
     defaultLeftOption = [prefs objectForKey:@"LeftOption"] ? [[prefs objectForKey:@"LeftOption"] intValue] : MOD_TAG_LEFT_OPTION;
@@ -1215,17 +1212,7 @@ static float versionNumber;
         defaultHideTab = ([hideTab state] == NSOnState);
         defaultCursorType = [[cursorType selectedCell] tag];
         defaultColorInvertedCursor = ([checkColorInvertedCursor state] == NSOnState);
-        if ([dimInactiveSplitPanes state] == NSOnState && ! [SessionView dimmingSupported]) {
-            NSRunAlertPanel(@"Dimming Not Supported.",
-                            @"Sorry, dimming inactive split panes requires OS X 10.6 or later.",
-                            @"OK",
-                            nil,
-                            nil,
-                            nil);
-            [dimInactiveSplitPanes setState:NSOffState];
-        } else {
-            defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
-        }
+        defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermRefreshTerminal"
                                                             object:nil

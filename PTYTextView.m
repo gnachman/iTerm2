@@ -461,7 +461,7 @@ static NSCursor* textViewCursor =  nil;
     [self setNeedsDisplay:YES];
 }
 
-- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold
+- (NSColor*)_colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold
 {
     NSColor* color;
 
@@ -500,6 +500,26 @@ static NSCursor* textViewCursor =  nil;
     }
 
     return color;
+}
+
+- (NSColor*)_dimmedColorFrom:(NSColor*)orig
+{
+    if (dimmingAmount_ == 0) {
+        return orig;
+    }
+    double r = [orig redComponent];
+    double g = [orig greenComponent];
+    double b = [orig blueComponent];
+    const double coeff = 1-dimmingAmount_;
+    return [NSColor colorWithCalibratedRed:0.5*dimmingAmount_ + r*coeff
+                                     green:0.5*dimmingAmount_ + g*coeff
+                                      blue:0.5*dimmingAmount_ + b*coeff
+                                     alpha:1];
+}
+
+- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold
+{
+    return [self _dimmedColorFrom:[self _colorForCode:theIndex alternateSemantics:alt bold:isBold]];
 }
 
 - (NSColor *)selectionColor
@@ -2950,6 +2970,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [self setNeedsDisplay:YES];
 }
 
+- (void)setDimmingAmount:(float)value
+{
+    dimmingAmount_ = value;
+    [self setNeedsDisplay:YES];
+}
+
 - (BOOL)useTransparency
 {
     return [[[[dataSource session] tab] realParentWindow] useTransparency];
@@ -3006,7 +3032,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                                      toPoint:dest];
     } else {
-        [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
+        [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
         NSRectFillUsingOperation(bgRect,
                                  hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
     }
@@ -3020,7 +3046,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect];
     } else {
-        [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
+        [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
         NSRectFillUsingOperation(bgRect, hasBGImage?NSCompositeSourceOver:NSCompositeCopy);
     }
 }
@@ -3322,7 +3348,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     const CGFloat x2 = p * e2 + (1 - p) * c2;
     const CGFloat x3 = p * e3 + (1 - p) * c3;
 
-    return [NSColor colorWithCalibratedRed:x1 green:x2 blue:x3 alpha:a];
+    return [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:x1 green:x2 blue:x3 alpha:a]];
 }
 
 - (NSColor*)color:(NSColor*)mainColor withContrastAgainst:(NSColor*)otherColor
@@ -3424,14 +3450,14 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             theLine[i].alternateForegroundSemantics &&
             theLine[i].foregroundColor == ALTSEM_FG_DEFAULT) {
             // Is a selection.
-            thisCharColor = selectedTextColor;
+            thisCharColor = [self _dimmedColorFrom:selectedTextColor];
         } else {
             // Not a selection.
             if (reversed &&
                 theLine[i].alternateForegroundSemantics &&
                 theLine[i].foregroundColor == ALTSEM_FG_DEFAULT) {
                 // Has default foreground color so use background color.
-                thisCharColor = defaultBGColor;
+                thisCharColor = [self _dimmedColorFrom:defaultBGColor];
             } else {
                 // Not reversed or not subject to reversing (only default
                 // foreground color is drawn in reverse video).
@@ -4082,7 +4108,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                   y,
                                   charsInLine * charWidth,
                                   lineHeight);
-            [defaultBGColor set];
+            [[self _dimmedColorFrom:defaultBGColor] set];
             NSRectFill(r);
 
             // Draw the characters.
@@ -4151,7 +4177,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                         cursorY,
                                         2.0,
                                         cursorHeight);
-        [[NSColor yellowColor] set];
+        [[self _dimmedColorFrom:[NSColor yellowColor]] set];
         NSRectFill(cursorFrame);
 
         return TRUE;
@@ -4286,7 +4312,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                     // draw any character on cursor if we need to
                     if (aChar) {
                         // Have a char at the cursor position.
-                        if (colorInvertedCursor) {
+                        if (colorInvertedCursor && !frameOnly) {
                             int fgColor;
                             BOOL fgAlt;
                             if ([[self window] isKeyWindow]) {
@@ -4310,9 +4336,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                 // foreground and background are very similar. Just use black and
                                 // white.
                                 if (bgBrightness < 0.5) {
-                                    overrideColor = [NSColor whiteColor];
+                                    overrideColor = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:1 green:1 blue:1 alpha:1]];
                                 } else {
-                                    overrideColor = [NSColor blackColor];
+                                    overrideColor = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1]];
                                 }
                             }
                             int theColor;
@@ -4336,7 +4362,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                      doubleWidth:double_width
                                    overrideColor:overrideColor];
                         } else {
-                            // Non-inverted cursor
+                            // Non-inverted cursor or cursor is frame
                             int theColor;
                             BOOL alt;
                             BOOL isBold;

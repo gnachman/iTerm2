@@ -462,6 +462,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [TEXTVIEW setDataSource: nil];
     [TEXTVIEW setDelegate: nil];
     [TEXTVIEW removeFromSuperview];
+    TEXTVIEW = nil;
 
     [SHELL setDelegate:nil];
     [SCREEN setShellTask:nil];
@@ -1213,24 +1214,24 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)paste:(id)sender
 {
-	NSString* pbStr = [PTYSession pasteboardString];
-	if (pbStr) {
-		NSMutableString *str;
-		str = [[[NSMutableString alloc] initWithString:pbStr] autorelease];
-		if ([sender tag] & 1) {
-			// paste with escape;
-			[str replaceOccurrencesOfString:@"\\" withString:@"\\\\" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
-			[str replaceOccurrencesOfString:@"'" withString:@"\\'" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
-			[str replaceOccurrencesOfString:@"\"" withString:@"\\\"" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
-			[str replaceOccurrencesOfString:@" " withString:@"\\ " options:NSLiteralSearch range:NSMakeRange(0, [str length])];
-		}
-		if ([sender tag] & 2) {
-			[slowPasteBuffer setString:str];
-			[self pasteSlowly:nil];
-		} else {
-			[self pasteString:str];
-		}
-	}
+    NSString* pbStr = [PTYSession pasteboardString];
+    if (pbStr) {
+        NSMutableString *str;
+        str = [[[NSMutableString alloc] initWithString:pbStr] autorelease];
+        if ([sender tag] & 1) {
+            // paste with escape;
+            [str replaceOccurrencesOfString:@"\\" withString:@"\\\\" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
+            [str replaceOccurrencesOfString:@"'" withString:@"\\'" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
+            [str replaceOccurrencesOfString:@"\"" withString:@"\\\"" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
+            [str replaceOccurrencesOfString:@" " withString:@"\\ " options:NSLiteralSearch range:NSMakeRange(0, [str length])];
+        }
+        if ([sender tag] & 2) {
+            [slowPasteBuffer setString:str];
+            [self pasteSlowly:nil];
+        } else {
+            [self pasteString:str];
+        }
+    }
 }
 
 // Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.

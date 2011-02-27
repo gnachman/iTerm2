@@ -32,49 +32,7 @@
 
 static const float kTargetFrameRate = 1.0/60.0;
 
-@implementation ShadeView
-
-- (void)setAlpha:(float)newAlpha
-{
-    alpha = newAlpha;
-}
-
-- (void)drawRect:(NSRect)rect
-{
-    [[NSColor blackColor] set];
-    NSRectFill(rect);
-}
-
-- (void)mouseDown:(NSEvent *)event
-{
-    [[self superview] mouseDown:event];
-}
-
-- (void)rightMouseDown:(NSEvent*)event
-{
-    [[self superview] rightMouseDown:event];
-}
-
-- (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
-{
-    return [self alphaValue] > 0;
-}
-
-@end
-
 @implementation SessionView
-
-- (id)initWithFrame:(NSRect)frame
-{
-    self = [super initWithFrame:frame];
-    if (self) {
-        shade_ = [[[ShadeView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height)] autorelease];
-        [shade_ setAlphaValue:0];
-        [shade_ setHidden:YES];
-        [self addSubview:shade_];
-    }
-    return self;
-}
 
 - (id)initWithFrame:(NSRect)frame session:(PTYSession*)session
 {
@@ -91,21 +49,6 @@ static const float kTargetFrameRate = 1.0/60.0;
     [super dealloc];
 }
 
-- (void)addSubview:(NSView *)aView
-{
-    // Keep shade on top of any subview.
-    [super addSubview:aView];
-    [shade_ removeFromSuperview];
-    [super addSubview:shade_];
-}
-
-- (void)setFrameSize:(NSSize)newSize
-{
-    [super setFrameSize:newSize];
-    [shade_ setFrameSize:newSize];
-    [shade_ setFrameOrigin:NSMakePoint(0, 0)];
-}
-
 - (PTYSession*)session
 {
     return session_;
@@ -117,27 +60,19 @@ static const float kTargetFrameRate = 1.0/60.0;
     session_ = [session retain];
 }
 
-- (void)hideShade
-{
-    [shade_ setHidden:YES];
-}
-
 - (void)fadeAnimation
 {
     timer_ = nil;
     float elapsed = [[NSDate date] timeIntervalSinceDate:previousUpdate_];
-    float newAlpha = currentAlpha_ + elapsed * changePerSecond_;
+    float newDimmingAmount = currentDimmingAmount_ + elapsed * changePerSecond_;
     [previousUpdate_ release];
-    if ((changePerSecond_ > 0 && newAlpha > targetAlpha_) ||
-        (changePerSecond_ < 0 && newAlpha < targetAlpha_)) {
-        currentAlpha_ = targetAlpha_;
-        [shade_ setAlphaValue:targetAlpha_];
-        if (targetAlpha_ == 0) {
-            [shade_ setHidden:YES];
-        }
+    if ((changePerSecond_ > 0 && newDimmingAmount > targetDimmingAmount_) ||
+        (changePerSecond_ < 0 && newDimmingAmount < targetDimmingAmount_)) {
+        currentDimmingAmount_ = targetDimmingAmount_;
+        [[session_ TEXTVIEW] setDimmingAmount:targetDimmingAmount_];
     } else {
-        [shade_ setAlphaValue:newAlpha];
-        currentAlpha_ = newAlpha;
+        [[session_ TEXTVIEW] setDimmingAmount:newDimmingAmount];
+        currentDimmingAmount_ = newDimmingAmount;
         previousUpdate_ = [[NSDate date] retain];
         timer_ = [NSTimer scheduledTimerWithTimeInterval:1.0/60.0
                                                   target:self
@@ -147,15 +82,12 @@ static const float kTargetFrameRate = 1.0/60.0;
     }
 }
 
-- (void)_dimShadeToAlpha:(float)newAlpha
+- (void)_dimShadeToDimmingAmount:(float)newDimmingAmount
 {
-    targetAlpha_ = newAlpha;
+    targetDimmingAmount_ = newDimmingAmount;
     previousUpdate_ = [[NSDate date] retain];
-    if (currentAlpha_ == 0 && [shade_ isHidden]) {
-        [shade_ setHidden:NO];
-    }
     const double kAnimationDuration = 0.250;
-    changePerSecond_ = (targetAlpha_ - currentAlpha_) / kAnimationDuration;
+    changePerSecond_ = (targetDimmingAmount_ - currentDimmingAmount_) / kAnimationDuration;
     if (timer_) {
         [timer_ invalidate];
         timer_ = nil;
@@ -163,43 +95,20 @@ static const float kTargetFrameRate = 1.0/60.0;
     [self fadeAnimation];
 }
 
-- (double)dimmedAlpha
+- (double)dimmedDimmingAmount
 {
     NSColor* backgroundColor = [session_ backgroundColor];
     NSColor* rgb = [backgroundColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
     double brightness = [rgb brightnessComponent];
-    // Map brightness onto alpha.
-    const double kMaxAlpha = 0.35;
-    const double kMinAlpha = 0.1;
-    const double kSpan = kMaxAlpha - kMinAlpha;
-    return kSpan * (1 - brightness) + kMinAlpha;
-}
-
-+ (BOOL)dimmingSupported
-{
-    static enum { DIMMING_OK, DIMMING_BROKEN, DIMMING_UNKNOWN } cachedResult = DIMMING_UNKNOWN;
-    if (cachedResult == DIMMING_UNKNOWN) {
-        SInt32 macVersion;
-
-        if (Gestalt(gestaltSystemVersion, &macVersion) == noErr) {
-            if (macVersion < 0x1060) {
-                cachedResult = DIMMING_BROKEN;
-            } else {
-                cachedResult = DIMMING_OK;
-            }
-        } else {
-            NSLog(@"Gestalt(gestaltSystemVersion) failed. Assuming 10.6 or greater.");
-            cachedResult = DIMMING_OK;
-        }
-    }
-    return cachedResult == DIMMING_OK;
+    // Map brightness onto dimming amount.
+    const double kMaxDimmingAmount = 0.35;
+    const double kMinDimmingAmount = 0.1;
+    const double kSpan = kMaxDimmingAmount - kMinDimmingAmount;
+    return kSpan * (1 - brightness) + kMinDimmingAmount;
 }
 
 - (void)setDimmed:(BOOL)isDimmed
 {
-    if (![SessionView dimmingSupported]) {
-        return;
-    }
     if (shuttingDown_) {
         return;
     }
@@ -208,12 +117,11 @@ static const float kTargetFrameRate = 1.0/60.0;
     }
     dim_ = isDimmed;
     if (isDimmed) {
-        currentAlpha_ = 0;
-        [shade_ setAlphaValue:0];
-        [shade_ setHidden:NO];
-        [self _dimShadeToAlpha:[self dimmedAlpha]];
+        currentDimmingAmount_ = 0;
+        [[session_ TEXTVIEW] setDimmingAmount:0];
+        [self _dimShadeToDimmingAmount:[self dimmedDimmingAmount]];
     } else {
-        [self _dimShadeToAlpha:0];
+        [self _dimShadeToDimmingAmount:0];
     }
 }
 
