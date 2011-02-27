@@ -2,13 +2,13 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="7.10">
 	<data>
 		<int key="IBDocument.SystemTarget">1050</int>
-		<string key="IBDocument.SystemVersion">10H574</string>
-		<string key="IBDocument.InterfaceBuilderVersion">804</string>
-		<string key="IBDocument.AppKitVersion">1038.35</string>
+		<string key="IBDocument.SystemVersion">10F569</string>
+		<string key="IBDocument.InterfaceBuilderVersion">788</string>
+		<string key="IBDocument.AppKitVersion">1038.29</string>
 		<string key="IBDocument.HIToolboxVersion">461.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
-			<string key="NS.object.0">804</string>
+			<string key="NS.object.0">788</string>
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -60,7 +60,7 @@
 						<object class="NSButton" id="627943894">
 							<reference key="NSNextResponder" ref="944403435"/>
 							<int key="NSvFlags">292</int>
-							<string key="NSFrame">{{562, 49}, {167, 32}}</string>
+							<string key="NSFrame">{{554, 49}, {167, 32}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="898617995">
@@ -387,12 +387,12 @@
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<reference ref="43614728"/>
 							<reference ref="705416951"/>
-							<reference ref="627943894"/>
 							<reference ref="113789196"/>
 							<reference ref="876045723"/>
 							<reference ref="450371780"/>
 							<reference ref="844383526"/>
 							<reference ref="619839802"/>
+							<reference ref="627943894"/>
 						</object>
 						<reference key="parent" ref="442949890"/>
 					</object>

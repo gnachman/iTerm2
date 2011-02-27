@@ -131,7 +131,7 @@ NSString *CommandToolbarItem = @"Command";
         [toolbarItem setImage: anImage];
         [anImage release];
         [toolbarItem setTarget: nil];
-        [toolbarItem setAction: @selector(showConfigWindow:)];
+        [toolbarItem setAction: @selector(editCurrentSession:)];
     }
     else if ([itemIdent isEqual: BookmarksToolbarItem])
     {
