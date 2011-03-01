@@ -49,12 +49,14 @@
     CFRunLoopSourceRef eventSrc;
     int keyWindowIndexMemo_;
     BOOL itermWasActiveWhenHotkeyOpened;
+    BOOL rollingIn_;
 }
 
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;
 
 + (void)switchToSpaceInBookmark:(NSDictionary*)aDict;
+- (BOOL)rollingInHotkeyTerm;
 
 // actions are forwarded from application
 - (IBAction)newWindow:(id)sender;

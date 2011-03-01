@@ -967,10 +967,16 @@ NSString *sessionsKey = @"sessions";
     [self _loadFindStringFromSharedPasteboard];
 }
 
+// Forbid FFM from changing key window if is hotkey window.
+- (BOOL)disableFocusFollowsMouse
+{
+    return isHotKeyWindow_;
+}
+
 - (void)windowDidResignKey:(NSNotification *)aNotification
 {
     PtyLog(@"PseudoTerminal windowDidResignKey");
-    if ([self isHotKeyWindow]) {
+    if ([self isHotKeyWindow] && ![[iTermController sharedInstance] rollingInHotkeyTerm]) {
         PtyLog(@"windowDidResignKey: is hotkey");
         // We want to dismiss the hotkey window when some other window
         // becomes key. Note that if a popup closes this function shouldn't

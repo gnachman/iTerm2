@@ -1633,12 +1633,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         } else if ([[[NSApp keyWindow] windowController] respondsToSelector:@selector(disableFocusFollowsMouse)]) {
             obj = [[NSApp keyWindow] windowController];
         }
-        if ([obj disableFocusFollowsMouse]) {
-            return;
+        if (![obj disableFocusFollowsMouse]) {
+            [[self window] makeKeyWindow];
         }
-
-        [[self window] makeKeyWindow];
-        [[[dataSource session] tab] setActiveSession:[dataSource session]];
+        if ([[self window] isKeyWindow]) {
+            [[[dataSource session] tab] setActiveSession:[dataSource session]];
+        }
     }
 }
 

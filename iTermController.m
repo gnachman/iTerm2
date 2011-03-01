@@ -843,9 +843,19 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
             [[[term window] animator] setAlphaValue:1];
             break;
     }
+    [[iTermController sharedInstance] performSelector:@selector(rollInFinished)
+                                           withObject:nil
+                                           afterDelay:[[NSAnimationContext currentContext] duration]];    
 }
 
-static void OpenHotkeyWindow()
+- (void)rollInFinished
+{
+    rollingIn_ = NO;
+    PseudoTerminal* term = GetHotkeyWindow();
+    [[term window] makeKeyAndOrderFront:nil];
+}
+
+static BOOL OpenHotkeyWindow()
 {
     NSLog(@"Open visor");
     iTermController* cont = [iTermController sharedInstance];
@@ -870,7 +880,9 @@ static void OpenHotkeyWindow()
             [[term window] setFrame:rect display:YES];
         }
         RollInHotkeyTerm(term);
+        return YES;
     }
+    return NO;
 }
 
 - (void)showNonHotKeyWindowsAndSetAlphaTo:(float)a
@@ -887,6 +899,11 @@ static void OpenHotkeyWindow()
     if (i >= 0 && i < [[[iTermController sharedInstance] terminals] count]) {
         [[[[[iTermController sharedInstance] terminals] objectAtIndex:i] window] makeKeyAndOrderFront:nil];
     }
+}
+
+- (BOOL)rollingInHotkeyTerm
+{
+    return rollingIn_;
 }
 
 static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotkeyOpened)
@@ -965,6 +982,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         }
         NSLog(@"Activate iterm2");
         [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+        rollingIn_ = YES;
         RollInHotkeyTerm(hotkeyTerm);
     } else {
         NSLog(@"Open new visor window");
@@ -977,7 +995,9 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
                 }
             }
         }
-        OpenHotkeyWindow();
+        if (OpenHotkeyWindow()) {
+            rollingIn_ = YES;
+        }
     }
 }
 

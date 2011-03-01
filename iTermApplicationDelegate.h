@@ -132,6 +132,8 @@ void DebugLog(NSString* value);
 - (IBAction)exposeForTabs:(id)sender;
 - (IBAction)editCurrentSession:(id)sender;
 
+- (void)makeHotKeyWindowKeyIfOpen;
+
 @end
 
 // Scripting support
