@@ -12,7 +12,6 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="6"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -38,7 +37,7 @@
 				<int key="NSWindowBacking">2</int>
 				<string key="NSWindowRect">{{252, 573}, {735, 360}}</string>
 				<int key="NSWTFlags">1618477056</int>
-				<string key="NSWindowTitle">Address Book</string>
+				<string key="NSWindowTitle">Profiles</string>
 				<string key="NSWindowClass">NSPanel</string>
 				<object class="NSMutableString" key="NSViewClass">
 					<characters key="NS.bytes">View</characters>
@@ -55,6 +54,7 @@
 							<int key="NSvFlags">274</int>
 							<string key="NSFrame">{{21, 86}, {694, 254}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
+							<reference key="NSWindow"/>
 							<string key="NSClassName">BookmarkListView</string>
 						</object>
 						<object class="NSButton" id="627943894">
@@ -62,11 +62,12 @@
 							<int key="NSvFlags">292</int>
 							<string key="NSFrame">{{554, 49}, {167, 32}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
+							<reference key="NSWindow"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="898617995">
 								<int key="NSCellFlags">67239424</int>
 								<int key="NSCellFlags2">134217728</int>
-								<string key="NSContents">Edit Address Book...</string>
+								<string key="NSContents">Edit Profiles...</string>
 								<object class="NSFont" key="NSSupport" id="981454797">
 									<string key="NSName">LucidaGrande</string>
 									<double key="NSSize">13</double>
@@ -86,6 +87,7 @@
 							<int key="NSvFlags">289</int>
 							<string key="NSFrame">{{505, 12}, {96, 32}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
+							<reference key="NSWindow"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="1056452351">
 								<int key="NSCellFlags">604110336</int>
@@ -106,6 +108,7 @@
 							<int key="NSvFlags">289</int>
 							<string key="NSFrame">{{221, 12}, {149, 32}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
+							<reference key="NSWindow"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="839074316">
 								<int key="NSCellFlags">604110336</int>
@@ -126,6 +129,7 @@
 							<int key="NSvFlags">289</int>
 							<string key="NSFrame">{{365, 12}, {140, 32}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
+							<reference key="NSWindow"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="506680054">
 								<int key="NSCellFlags">604110336</int>
@@ -146,6 +150,7 @@
 							<int key="NSvFlags">289</int>
 							<string key="NSFrame">{{601, 12}, {120, 32}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
+							<reference key="NSWindow"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="153751991">
 								<int key="NSCellFlags">604110336</int>
@@ -166,11 +171,12 @@
 							<int key="NSvFlags">256</int>
 							<string key="NSFrame">{{19, 58}, {375, 18}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
+							<reference key="NSWindow"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="983321060">
 								<int key="NSCellFlags">-2080244224</int>
 								<int key="NSCellFlags2">0</int>
-								<string key="NSContents">Close this window after opening an address book entry.</string>
+								<string key="NSContents">Close this window after opening a profile.</string>
 								<reference key="NSSupport" ref="981454797"/>
 								<reference key="NSControlView" ref="705416951"/>
 								<int key="NSButtonFlags">1211912703</int>
@@ -193,6 +199,7 @@
 							<int key="NSvFlags">289</int>
 							<string key="NSFrame">{{15, 12}, {211, 32}}</string>
 							<reference key="NSSuperview" ref="944403435"/>
+							<reference key="NSWindow"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSButtonCell" key="NSCell" id="312823858">
 								<int key="NSCellFlags">-1543373312</int>
@@ -211,6 +218,7 @@
 					</object>
 					<string key="NSFrameSize">{735, 360}</string>
 					<reference key="NSSuperview"/>
+					<reference key="NSWindow"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {1600, 1002}}</string>
 				<string key="NSMinSize">{606, 382}</string>
@@ -378,7 +386,7 @@
 							<reference ref="944403435"/>
 						</object>
 						<reference key="parent" ref="0"/>
-						<string key="objectName">Bookmarks</string>
+						<string key="objectName">Profiles</string>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">6</int>

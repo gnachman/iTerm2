@@ -142,6 +142,11 @@
                 [currentSession keyDown:event];
                 return;
             }
+        } else {
+            // Focus not in terminal window.
+            if ([PTYSession handleShortcutWithoutTerminal:event]) {
+                return;
+            }
         }
     }
 

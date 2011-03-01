@@ -567,7 +567,15 @@ static float versionNumber;
         [item setState:NSOffState];
     }
     keyString = [[self keyComboAtIndex:rowIndex originator:sender] copy];
-    [action selectItemWithTag:[[[self keyInfoAtIndex:rowIndex originator:sender] objectForKey:@"Action"] intValue]];
+    int theTag = [[[self keyInfoAtIndex:rowIndex originator:sender] objectForKey:@"Action"] intValue];
+    [action selectItemWithTag:theTag];
+    // Can't search for an item with tag 0 using the API, so search manually.
+    for (NSMenuItem* anItem in [[action menu] itemArray]) {
+        if (![anItem isSeparatorItem] && [anItem tag] == theTag) {
+            [action setTitle:[anItem title]];
+            break;
+        }
+    }
     NSString* text = [[self keyInfoAtIndex:rowIndex originator:sender] objectForKey:@"Text"];
     [valueToSend setStringValue:text ? text : @""];
 
@@ -589,7 +597,7 @@ static float versionNumber;
         return YES;
     }
     switch (NSRunAlertPanel(@"Overriding Global Delete Setting",
-                            @"The \"Delete Sends ^H\" preference in global keyboard settings is on. This change will override that preference (but only for this bookmark).",
+                            @"The \"Delete Sends ^H\" preference in global keyboard settings is on. This change will override that preference (but only for this profile).",
                             @"OK",
                             @"Never warn me again",
                             @"Cancel",
@@ -611,8 +619,8 @@ static float versionNumber;
     if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutDeleteOverride"] != nil) {
         return YES;
     }
-    switch (NSRunAlertPanel(@"Some Bookmark Overrides the Delete Key",
-                            @"Careful! You have at least one bookmark that has a key mapping for the Delete key. It will take precedence over this setting. Check your bookmarks' keyboard settings if Delete does not work as expected.",
+    switch (NSRunAlertPanel(@"Some Profile Overrides the Delete Key",
+                            @"Careful! You have at least one profile that has a key mapping for the Delete key. It will take precedence over this setting. Check your profiles' keyboard settings if Delete does not work as expected.",
                             @"OK",
                             @"Never warn me again",
                             @"Cancel",
@@ -635,7 +643,7 @@ static float versionNumber;
         return YES;
     }
     switch (NSRunAlertPanel(@"Overriding Global Shortcut",
-                            @"The keyboard shortcut you have set for this bookmark will take precedence over an existing shortcut for the same key combination in a global shortcut.",
+                            @"The keyboard shortcut you have set for this profile will take precedence over an existing shortcut for the same key combination in a global shortcut.",
                             @"OK",
                             @"Never warn me again",
                             @"Cancel",
@@ -657,8 +665,8 @@ static float versionNumber;
     if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutPossibleOverrides"] != nil) {
         return YES;
     }
-    switch (NSRunAlertPanel(@"Some Bookmark Overrides this Shortcut",
-                            @"The global keyboard shortcut you have set is overridden by at least one bookmark. Check your bookmarks' keyboard settings if it does not work as expected.",
+    switch (NSRunAlertPanel(@"Some Profile Overrides this Shortcut",
+                            @"The global keyboard shortcut you have set is overridden by at least one profile. Check your profiles' keyboard settings if it does not work as expected.",
                             @"OK",
                             @"Never warn me again",
                             @"Cancel",
@@ -2158,7 +2166,7 @@ static float versionNumber;
     }
 
     switch (NSRunAlertPanel(@"Warning",
-                            @"You have chosen to have an option key act as Meta. This option is useful for backward compatibility with older systems. Using \"+Esc\" is recommended for most users.",
+                            @"You have chosen to have an option key act as Meta. This option is useful for backward compatibility with older systems. The \"+Esc\" option is recommended for most users.",
                             @"OK",
                             @"Never warn me again",
                             nil,
@@ -2795,7 +2803,7 @@ static float versionNumber;
     } else {
         [newDict setValuesForKeysWithDictionary:[dataSource defaultBookmark]];
     }
-    [newDict setObject:@"New Address Book Entry" forKey:KEY_NAME];
+    [newDict setObject:@"New Profile" forKey:KEY_NAME];
     [newDict setObject:@"" forKey:KEY_SHORTCUT];
     NSString* guid = [BookmarkModel freshGuid];
     [newDict setObject:guid forKey:KEY_GUID];
@@ -2939,7 +2947,9 @@ static float versionNumber;
 
 - (IBAction)openCopyBookmarks:(id)sender
 {
-    [bulkCopyLabel setStringValue:[NSString stringWithFormat:@"From bookmark \"%@\", copy these settings:", [[dataSource bookmarkWithGuid:[bookmarksTableView selectedGuid]] objectForKey:KEY_NAME]]];
+    [bulkCopyLabel setStringValue:[NSString stringWithFormat:
+                                   @"Copy these settings from profile \"%@\":",
+                                   [[dataSource bookmarkWithGuid:[bookmarksTableView selectedGuid]] objectForKey:KEY_NAME]]];
     [NSApp beginSheet:copyPanel
        modalForWindow:[self window]
         modalDelegate:self

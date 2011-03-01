@@ -658,25 +658,55 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [PTYSession reloadAllBookmarks];
 }
 
-- (BOOL)_recursiveSelectMenuItem:(NSString*)theName inMenu:(NSMenu*)menu
++ (BOOL)_recursiveSelectMenuItem:(NSString*)theName inMenu:(NSMenu*)menu
 {
     for (NSMenuItem* item in [menu itemArray]) {
         if (![item isEnabled] || [item isHidden] || [item isAlternate]) {
             continue;
         }
         if ([item hasSubmenu]) {
-            if ([self _recursiveSelectMenuItem:theName inMenu:[item submenu]]) {
+            if ([PTYSession _recursiveSelectMenuItem:theName inMenu:[item submenu]]) {
                 return YES;
             }
         } else if ([theName isEqualToString:[item title]]) {
-            [NSApp sendAction:[item action] to:[item target] from:self];
+            [NSApp sendAction:[item action]
+                           to:[item target]
+                         from:nil];
             return YES;
         }
     }
     return NO;
 }
 
-- (void)_selectMenuItem:(NSString*)theName
++ (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event
+{
+    unsigned int modflag;
+    NSString *unmodkeystr;
+    unichar unmodunicode;
+    int keyBindingAction;
+    NSString *keyBindingText;
+
+    modflag = [event modifierFlags];
+    unmodkeystr = [event charactersIgnoringModifiers];
+    unmodunicode = [unmodkeystr length]>0?[unmodkeystr characterAtIndex:0]:0;
+
+    // Check if we have a custom key mapping for this event
+    keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
+                                                  modifiers:modflag
+                                                       text:&keyBindingText
+                                                keyMappings:[iTermKeyBindingMgr globalKeyMap]];
+
+
+    if (keyBindingAction == KEY_ACTION_SELECT_MENU_ITEM) {
+        [PTYSession selectMenuItem:keyBindingText];
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
+
++ (void)selectMenuItem:(NSString*)theName
 {
     if (![self _recursiveSelectMenuItem:theName inMenu:[NSApp mainMenu]]) {
         NSBeep();
@@ -742,7 +772,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                 if ([self _askAboutOutdatedKeyMappings]) {
                     int result = NSRunAlertPanel(@"Outdated Key Mapping Found",
                                                  @"It looks like you're trying to switch split panes but you have a key mapping from an old iTerm installation for ⌘⌥← or ⌘⌥→ that switches tabs instead. What would you like to do?",
-                                                 @"Remove it", 
+                                                 @"Remove it",
                                                  @"Remind me later",
                                                  @"Keep it");
                     switch (result) {
@@ -764,7 +794,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                 }
             }
         }
-        
+
         switch (keyBindingAction) {
             case KEY_ACTION_NEXT_SESSION:
                 [[[self tab] parentWindow] nextTab:nil];
@@ -841,7 +871,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                 }
                 break;
             case KEY_ACTION_SELECT_MENU_ITEM:
-                [self _selectMenuItem:keyBindingText];
+                [PTYSession selectMenuItem:keyBindingText];
                 break;
 
             case KEY_ACTION_SEND_C_H_BACKSPACE:
@@ -1414,7 +1444,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         [self setColorTable:i+8 color:colorTable[1][i]];
     }
     for (i = 0; i < 216; i++) {
-        [self setColorTable:i+16 
+        [self setColorTable:i+16
                       color:[NSColor colorWithCalibratedRed:(i/36) ? ((i/36)*40+55)/256.0 : 0
                                                       green:(i%36)/6 ? (((i%36)/6)*40+55)/256.0:0
                                                        blue:(i%6) ?((i%6)*40+55)/256.0:0

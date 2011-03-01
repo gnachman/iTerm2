@@ -12,8 +12,9 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
+			<integer value="1947"/>
 			<integer value="2568"/>
-			<integer value="1924"/>
+			<integer value="3518"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -118,13 +119,13 @@
 								<object class="NSMutableString" key="NSToolbarItemIdentifier">
 									<characters key="NS.bytes">A3650111-7031-4C54-AE69-7C0A67F80581</characters>
 								</object>
-								<string key="NSToolbarItemLabel">Address Book</string>
-								<string key="NSToolbarItemPaletteLabel">Address Book</string>
+								<string key="NSToolbarItemLabel">Profiles</string>
+								<string key="NSToolbarItemPaletteLabel">Profiles</string>
 								<nil key="NSToolbarItemToolTip"/>
 								<nil key="NSToolbarItemView"/>
 								<object class="NSCustomResource" key="NSToolbarItemImage">
 									<string key="NSClassName">NSImage</string>
-									<string key="NSResourceName">addressbook</string>
+									<string key="NSResourceName">NSUserAccounts</string>
 								</object>
 								<nil key="NSToolbarItemTarget"/>
 								<nil key="NSToolbarItemAction"/>
@@ -184,11 +185,11 @@
 					</object>
 					<object class="NSArray" key="NSToolbarIBAllowedItems">
 						<bool key="EncodedWithXMLCoder">YES</bool>
-						<reference ref="760931141"/>
 						<reference ref="829712292"/>
-						<reference ref="304998418"/>
-						<reference ref="252050769"/>
 						<reference ref="666388511"/>
+						<reference ref="760931141"/>
+						<reference ref="252050769"/>
+						<reference ref="304998418"/>
 					</object>
 					<object class="NSMutableArray" key="NSToolbarIBDefaultItems">
 						<bool key="EncodedWithXMLCoder">YES</bool>
@@ -219,7 +220,7 @@
 								<object class="NSTabViewItem" id="403608584">
 									<string key="NSIdentifier">1</string>
 									<object class="NSView" key="NSView" id="505411774">
-										<nil key="NSNextResponder"/>
+										<reference key="NSNextResponder" ref="415305200"/>
 										<int key="NSvFlags">256</int>
 										<object class="NSMutableArray" key="NSSubviews">
 											<bool key="EncodedWithXMLCoder">YES</bool>
@@ -263,7 +264,7 @@
 												<object class="NSButtonCell" key="NSCell" id="740951719">
 													<int key="NSCellFlags">-2080244224</int>
 													<int key="NSCellFlags2">0</int>
-													<string key="NSContents">Open address book at startup</string>
+													<string key="NSContents">Open profiles window at startup</string>
 													<reference key="NSSupport" ref="966507434"/>
 													<reference key="NSControlView" ref="238358498"/>
 													<int key="NSButtonFlags">1211912703</int>
@@ -729,7 +730,7 @@
 												<object class="NSButtonCell" key="NSCell" id="295471988">
 													<int key="NSCellFlags">-2080244224</int>
 													<int key="NSCellFlags2">0</int>
-													<string key="NSContents">Hotkey toggles a window with address book entry:</string>
+													<string key="NSContents">Hotkey toggles a window with profile:</string>
 													<reference key="NSSupport" ref="966507434"/>
 													<reference key="NSControlView" ref="863506467"/>
 													<int key="NSButtonFlags">1211912703</int>
@@ -778,7 +779,7 @@
 													<object class="NSMenuItem" key="NSMenuItem" id="753722534">
 														<reference key="NSMenu" ref="572357128"/>
 														<bool key="NSIsHidden">YES</bool>
-														<string key="NSTitle">Select Address Book Entry</string>
+														<string key="NSTitle">Select Profile</string>
 														<string key="NSKeyEquiv"/>
 														<int key="NSKeyEquivModMask">1048576</int>
 														<int key="NSMnemonicLoc">2147483647</int>
@@ -811,6 +812,7 @@
 											</object>
 										</object>
 										<string key="NSFrameSize">{767, 383}</string>
+										<reference key="NSSuperview" ref="415305200"/>
 									</object>
 									<string key="NSLabel">Global Settings</string>
 									<reference key="NSColor" ref="303715562"/>
@@ -1553,7 +1555,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 												<object class="NSButtonCell" key="NSCell" id="2626113">
 													<int key="NSCellFlags">-2080244224</int>
 													<int key="NSCellFlags2">0</int>
-													<string key="NSContents">Show address book entry name</string>
+													<string key="NSContents">Show profile name</string>
 													<reference key="NSSupport" ref="966507434"/>
 													<reference key="NSControlView" ref="364295538"/>
 													<int key="NSButtonFlags">1211912703</int>
@@ -1686,7 +1688,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 								<object class="NSTabViewItem" id="745611275">
 									<string key="NSIdentifier">2</string>
 									<object class="NSView" key="NSView" id="105539794">
-										<reference key="NSNextResponder" ref="415305200"/>
+										<nil key="NSNextResponder"/>
 										<int key="NSvFlags">256</int>
 										<object class="NSMutableArray" key="NSSubviews">
 											<bool key="EncodedWithXMLCoder">YES</bool>
@@ -5065,13 +5067,13 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																<object class="NSButton" id="662321857">
 																	<reference key="NSNextResponder" ref="974784023"/>
 																	<int key="NSvFlags">256</int>
-																	<string key="NSFrame">{{51, 293}, {340, 18}}</string>
+																	<string key="NSFrame">{{51, 293}, {385, 18}}</string>
 																	<reference key="NSSuperview" ref="974784023"/>
 																	<bool key="NSEnabled">YES</bool>
 																	<object class="NSButtonCell" key="NSCell" id="71180095">
 																		<int key="NSCellFlags">67239424</int>
 																		<int key="NSCellFlags2">0</int>
-																		<string key="NSContents">Keep address book entry name in session-set title</string>
+																		<string key="NSContents">Include profile name in server-set window/tab title</string>
 																		<reference key="NSSupport" ref="966507434"/>
 																		<reference key="NSControlView" ref="662321857"/>
 																		<int key="NSButtonFlags">1211912703</int>
@@ -5762,7 +5764,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 															<reference ref="411896568"/>
 															<object class="NSMenuItem" id="465867863">
 																<reference key="NSMenu" ref="529599947"/>
-																<string key="NSTitle">Make Copy of Address Book Entry</string>
+																<string key="NSTitle">Duplicate Profile</string>
 																<string key="NSKeyEquiv"/>
 																<int key="NSKeyEquivModMask">1048576</int>
 																<int key="NSMnemonicLoc">2147483647</int>
@@ -5773,7 +5775,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 															</object>
 															<object class="NSMenuItem" id="271202938">
 																<reference key="NSMenu" ref="529599947"/>
-																<string key="NSTitle">Set as Default Address Book Entry</string>
+																<string key="NSTitle">Set as Default</string>
 																<string key="NSKeyEquiv"/>
 																<int key="NSMnemonicLoc">2147483647</int>
 																<reference key="NSOnImage" ref="435836005"/>
@@ -5783,7 +5785,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 															</object>
 															<object class="NSMenuItem" id="443052612">
 																<reference key="NSMenu" ref="529599947"/>
-																<string key="NSTitle">Copy Some Settings From This Address Book Entry...</string>
+																<string key="NSTitle">Bulk Copy from Selected Profile...</string>
 																<string key="NSKeyEquiv"/>
 																<int key="NSMnemonicLoc">2147483647</int>
 																<reference key="NSOnImage" ref="435836005"/>
@@ -5809,7 +5811,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 											</object>
 										</object>
 										<string key="NSFrameSize">{767, 383}</string>
-										<reference key="NSSuperview" ref="415305200"/>
 									</object>
 									<string key="NSLabel">Bookmarks</string>
 									<reference key="NSColor" ref="303715562"/>
@@ -6623,7 +6624,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 														</object>
 														<string key="NSFrame">{{1, 17}, {407, 304}}</string>
 														<reference key="NSSuperview" ref="659710829"/>
-														<reference key="NSNextKeyView" ref="405339758"/>
 														<reference key="NSDocView" ref="405339758"/>
 														<reference key="NSBGColor" ref="288792532"/>
 														<int key="NScvFlags">4</int>
@@ -6656,7 +6656,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 														</object>
 														<string key="NSFrame">{{1, 0}, {407, 17}}</string>
 														<reference key="NSSuperview" ref="659710829"/>
-														<reference key="NSNextKeyView" ref="21462293"/>
 														<reference key="NSDocView" ref="21462293"/>
 														<reference key="NSBGColor" ref="288792532"/>
 														<int key="NScvFlags">4</int>
@@ -6665,12 +6664,12 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 												</object>
 												<string key="NSFrame">{{343, 36}, {424, 322}}</string>
 												<reference key="NSSuperview" ref="835055720"/>
-												<reference key="NSNextKeyView" ref="35583"/>
 												<int key="NSsFlags">18</int>
 												<reference key="NSVScroller" ref="543569760"/>
 												<reference key="NSHScroller" ref="1007942010"/>
 												<reference key="NSContentView" ref="35583"/>
 												<reference key="NSHeaderClipView" ref="302482683"/>
+												<reference key="NSCornerView" ref="520715592"/>
 												<bytes key="NSScrollAmts">QSAAAEEgAABBmAAAQZgAAA</bytes>
 											</object>
 											<object class="NSButton" id="649642907">
@@ -7103,7 +7102,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 											<object class="NSTextField" id="946585465">
 												<reference key="NSNextResponder" ref="965535712"/>
 												<int key="NSvFlags">256</int>
-												<string key="NSFrame">{{459, 336}, {130, 22}}</string>
+												<string key="NSFrame">{{459, 341}, {130, 17}}</string>
 												<reference key="NSSuperview" ref="965535712"/>
 												<reference key="NSNextKeyView" ref="1036653134"/>
 												<int key="NSViewLayerContentsRedrawPolicy">2</int>
@@ -7111,7 +7110,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 												<object class="NSTextFieldCell" key="NSCell" id="73610360">
 													<int key="NSCellFlags">67239424</int>
 													<int key="NSCellFlags2">272629760</int>
-													<string key="NSContents">Address Book:</string>
+													<string key="NSContents">Profile:</string>
 													<reference key="NSSupport" ref="966507434"/>
 													<reference key="NSControlView" ref="946585465"/>
 													<reference key="NSBackgroundColor" ref="303715562"/>
@@ -7364,14 +7363,14 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 									<reference key="NSTabView" ref="415305200"/>
 								</object>
 							</object>
-							<reference key="NSSelectedTabViewItem" ref="745611275"/>
+							<reference key="NSSelectedTabViewItem" ref="403608584"/>
 							<reference key="NSFont" ref="966507434"/>
 							<int key="NSTvFlags">6</int>
 							<bool key="NSAllowTruncatedLabels">YES</bool>
 							<bool key="NSDrawsBackground">YES</bool>
 							<object class="NSMutableArray" key="NSSubviews">
 								<bool key="EncodedWithXMLCoder">YES</bool>
-								<reference ref="105539794"/>
+								<reference ref="505411774"/>
 							</object>
 						</object>
 					</object>
@@ -8156,7 +8155,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 				<nil key="NSViewClass"/>
 				<string key="NSWindowContentMaxSize">{1.79769e+308, 1.79769e+308}</string>
 				<object class="NSView" key="NSWindowView" id="234439939">
-					<nil key="NSNextResponder"/>
+					<reference key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
 					<object class="NSMutableArray" key="NSSubviews">
 						<bool key="EncodedWithXMLCoder">YES</bool>
@@ -8185,7 +8184,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<object class="NSTextFieldCell" key="NSCell" id="601000691">
 								<int key="NSCellFlags">68288064</int>
 								<int key="NSCellFlags2">272630784</int>
-								<string key="NSContents">To these address book entries:</string>
+								<string key="NSContents">To these profiles:</string>
 								<reference key="NSSupport" ref="966507434"/>
 								<reference key="NSControlView" ref="496932408"/>
 								<reference key="NSBackgroundColor" ref="303715562"/>
@@ -8329,6 +8328,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						</object>
 					</object>
 					<string key="NSFrameSize">{472, 398}</string>
+					<reference key="NSSuperview"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {1440, 878}}</string>
 				<string key="NSMaxSize">{1.79769e+308, 1.79769e+308}</string>
@@ -11050,7 +11050,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<reference ref="105539794"/>
 						</object>
 						<reference key="parent" ref="415305200"/>
-						<string key="objectName">Selected Tab View Item (Address Book)</string>
+						<string key="objectName">Selected Tab View Item (Profiles)</string>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">1946</int>
@@ -17176,7 +17176,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<string>{{135, 289}, {800, 411}}</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{272, 686}, {616, 0}}</string>
+					<string>{{227, 700}, {616, 0}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -17732,7 +17732,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{76, 214}, {423, 83}}</string>
+					<string>{{183, 250}, {292, 83}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -18347,7 +18347,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{506, 383}, {302, 23}}</string>
+					<string>{{543, 396}, {302, 23}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -18514,7 +18514,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">4886</int>
+			<int key="maxID">4888</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -20906,10 +20906,10 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 				<string>NSMenuMixedState</string>
 				<string>NSRemoveTemplate</string>
 				<string>NSSwitch</string>
+				<string>NSUserAccounts</string>
 				<string>PrefsAdvanced</string>
 				<string>PrefsGeneral</string>
 				<string>PrefsKeyboard</string>
-				<string>addressbook</string>
 				<string>screen</string>
 			</object>
 			<object class="NSMutableArray" key="dict.values">
@@ -20923,7 +20923,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 				<string>{32, 32}</string>
 				<string>{32, 32}</string>
 				<string>{32, 32}</string>
-				<string>{48, 48}</string>
+				<string>{32, 32}</string>
 				<string>{80, 80}</string>
 			</object>
 		</object>

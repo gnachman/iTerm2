@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="24"/>
+			<integer value="592"/>
 			<integer value="498"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
@@ -974,7 +974,7 @@
 					</object>
 					<object class="NSMenuItem" id="582480416">
 						<reference key="NSMenu" ref="748181631"/>
-						<string key="NSTitle">Address Book</string>
+						<string key="NSTitle">Profiles</string>
 						<string key="NSKeyEquiv"/>
 						<int key="NSKeyEquivModMask">1048576</int>
 						<int key="NSMnemonicLoc">2147483647</int>
@@ -982,13 +982,13 @@
 						<reference key="NSMixedImage" ref="326707852"/>
 						<string key="NSAction">submenuAction:</string>
 						<object class="NSMenu" key="NSSubmenu" id="203951412">
-							<string key="NSTitle">Address Book</string>
+							<string key="NSTitle">Profiles</string>
 							<object class="NSMutableArray" key="NSMenuItems">
 								<bool key="EncodedWithXMLCoder">YES</bool>
 								<object class="NSMenuItem" id="80148555">
 									<reference key="NSMenu" ref="203951412"/>
-									<string key="NSTitle">Open Address Book…</string>
-									<string key="NSKeyEquiv">b</string>
+									<string key="NSTitle">Open Profiles…</string>
+									<string key="NSKeyEquiv">o</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
 									<reference key="NSOnImage" ref="643967552"/>
@@ -4213,7 +4213,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<boolean value="YES"/>
-					<string>{{59, 701}, {470, 20}}</string>
+					<string>{{59, 701}, {428, 20}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>{{160, 159}, {354, 164}}</string>
@@ -4235,7 +4235,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{286, 618}, {289, 83}}</string>
+					<string>{{286, 618}, {291, 83}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>

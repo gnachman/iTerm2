@@ -513,7 +513,7 @@ static NSDictionary* globalKeyMap;
                                                             text:text
                                                      keyMappings:keyMappings];
     }
-    if (keyBindingAction < 0) {
+    if (keyMappings != [self globalKeyMap] && keyBindingAction < 0) {
         keyBindingAction = [iTermKeyBindingMgr _actionForKeyCode:keyCode
                                                        modifiers:keyMods
                                                             text:text

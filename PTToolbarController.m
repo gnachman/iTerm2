@@ -32,7 +32,7 @@
 #import "BookmarksWindow.h"
 
 NSString *NewToolbarItem = @"New";
-NSString *BookmarksToolbarItem = @"Address Book";
+NSString *BookmarksToolbarItem = @"Profiles";
 NSString *CloseToolbarItem = @"Close";
 NSString *ConfigToolbarItem = @"Info";
 NSString *CommandToolbarItem = @"Command";
@@ -102,79 +102,69 @@ NSString *CommandToolbarItem = @"Command";
 
 - (NSToolbarItem *)toolbar: (NSToolbar *)toolbar itemForItemIdentifier: (NSString *) itemIdent willBeInsertedIntoToolbar:(BOOL) willBeInserted
 {
-    NSToolbarItem *toolbarItem = [[[NSToolbarItem alloc] initWithItemIdentifier: itemIdent] autorelease];
-    NSBundle *thisBundle = [NSBundle bundleForClass: [self class]];
+    NSToolbarItem *toolbarItem = [[[NSToolbarItem alloc] initWithItemIdentifier:itemIdent] autorelease];
+    NSBundle *thisBundle = [NSBundle bundleForClass:[self class]];
     NSString *imagePath;
     NSImage *anImage;
 
-    if ([itemIdent isEqual: CloseToolbarItem])
-    {
-        [toolbarItem setLabel: NSLocalizedStringFromTableInBundle(@"Close",@"iTerm", thisBundle, @"Toolbar Item: Close Session")];
-        [toolbarItem setPaletteLabel: NSLocalizedStringFromTableInBundle(@"Close",@"iTerm", thisBundle, @"Toolbar Item: Close Session")];
-        [toolbarItem setToolTip: NSLocalizedStringFromTableInBundle(@"Close the current session",@"iTerm", thisBundle, @"Toolbar Item Tip: Close")];
+    if ([itemIdent isEqual:CloseToolbarItem]) {
+        [toolbarItem setLabel:NSLocalizedStringFromTableInBundle(@"Close",@"iTerm", thisBundle, @"Toolbar Item: Close Session")];
+        [toolbarItem setPaletteLabel:NSLocalizedStringFromTableInBundle(@"Close",@"iTerm", thisBundle, @"Toolbar Item: Close Session")];
+        [toolbarItem setToolTip:NSLocalizedStringFromTableInBundle(@"Close the current session",@"iTerm", thisBundle, @"Toolbar Item Tip: Close")];
         imagePath = [thisBundle pathForResource:@"close"
                                          ofType:@"png"];
-        anImage = [[NSImage alloc] initByReferencingFile: imagePath];
-        [toolbarItem setImage: anImage];
+        anImage = [[NSImage alloc] initByReferencingFile:imagePath];
+        [toolbarItem setImage:anImage];
         [anImage release];
-        [toolbarItem setTarget: nil];
-        [toolbarItem setAction: @selector(closeCurrentSession:)];
-    }
-    else if ([itemIdent isEqual: ConfigToolbarItem])
-    {
-        [toolbarItem setLabel: NSLocalizedStringFromTableInBundle(@"Info",@"iTerm", thisBundle, @"Toolbar Item:Info") ];
-        [toolbarItem setPaletteLabel: NSLocalizedStringFromTableInBundle(@"Info",@"iTerm", thisBundle, @"Toolbar Item:Info") ];
-        [toolbarItem setToolTip: NSLocalizedStringFromTableInBundle(@"Window/Session Info",@"iTerm", thisBundle, @"Toolbar Item Tip:Info")];
+        [toolbarItem setTarget:nil];
+        [toolbarItem setAction:@selector(closeCurrentSession:)];
+    } else if ([itemIdent isEqual:ConfigToolbarItem]) {
+        [toolbarItem setLabel:NSLocalizedStringFromTableInBundle(@"Info",@"iTerm", thisBundle, @"Toolbar Item:Info") ];
+        [toolbarItem setPaletteLabel:NSLocalizedStringFromTableInBundle(@"Info",@"iTerm", thisBundle, @"Toolbar Item:Info") ];
+        [toolbarItem setToolTip:NSLocalizedStringFromTableInBundle(@"Window/Session Info",@"iTerm", thisBundle, @"Toolbar Item Tip:Info")];
         imagePath = [thisBundle pathForResource:@"config"
                                          ofType:@"png"];
-        anImage = [[NSImage alloc] initByReferencingFile: imagePath];
-        [toolbarItem setImage: anImage];
+        anImage = [[NSImage alloc] initByReferencingFile:imagePath];
+        [toolbarItem setImage:anImage];
         [anImage release];
-        [toolbarItem setTarget: nil];
-        [toolbarItem setAction: @selector(editCurrentSession:)];
-    }
-    else if ([itemIdent isEqual: BookmarksToolbarItem])
-    {
-        [toolbarItem setLabel: NSLocalizedStringFromTableInBundle(@"Address Book",@"iTerm", thisBundle, @"Toolbar Item: Address Book") ];
-        [toolbarItem setPaletteLabel: NSLocalizedStringFromTableInBundle(@"Address Book",@"iTerm", thisBundle, @"Toolbar Item: Address Book") ];
-        [toolbarItem setToolTip: NSLocalizedStringFromTableInBundle(@"Address Book",@"iTerm", thisBundle, @"Toolbar Item Tip: Address Book")];
-        imagePath = [thisBundle pathForResource:@"addressbook"
-                                         ofType:@"png"];
-        anImage = [[NSImage alloc] initByReferencingFile: imagePath];
-        [toolbarItem setImage: anImage];
+        [toolbarItem setTarget:nil];
+        [toolbarItem setAction:@selector(editCurrentSession:)];
+    } else if ([itemIdent isEqual:BookmarksToolbarItem]) {
+        [toolbarItem setLabel:NSLocalizedStringFromTableInBundle(@"Profiles",@"iTerm", thisBundle, @"Toolbar Item: Profiles") ];
+        [toolbarItem setPaletteLabel:NSLocalizedStringFromTableInBundle(@"Profiles",@"iTerm", thisBundle, @"Toolbar Item: Profiles") ];
+        [toolbarItem setToolTip:NSLocalizedStringFromTableInBundle(@"Profiles",@"iTerm", thisBundle, @"Toolbar Item Tip: Profiles")];
+        imagePath = nil;
+        anImage = [[NSImage imageNamed:NSImageNameUserAccounts] copy];
+        [toolbarItem setImage:anImage];
         [anImage release];
-        [toolbarItem setTarget: self];
-        [toolbarItem setAction: @selector(toggleBookmarksView:)];
-    }
-    else if ([itemIdent isEqual: NewToolbarItem])
-    {
+        [toolbarItem setTarget:self];
+        [toolbarItem setAction:@selector(toggleBookmarksView:)];
+    }  else if ([itemIdent isEqual:NewToolbarItem]) {
         NSPopUpButton *aPopUpButton;
 
         if([toolbar sizeMode] == NSToolbarSizeModeSmall)
-            aPopUpButton = [[NSPopUpButton alloc] initWithFrame: NSMakeRect(0.0, 0.0, 32.0, 24.0) pullsDown: YES];
+            aPopUpButton = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0.0, 0.0, 42, 30.0) pullsDown:YES];
         else
-            aPopUpButton = [[NSPopUpButton alloc] initWithFrame: NSMakeRect(0.0, 0.0, 40.0, 32.0) pullsDown: YES];
+            aPopUpButton = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0.0, 0.0, 48, 32.0) pullsDown:YES];
 
-        [aPopUpButton setTarget: nil];
-        [aPopUpButton setBordered: NO];
+        [aPopUpButton setTarget:nil];
+        [aPopUpButton setBordered:NO];
         [[aPopUpButton cell] setArrowPosition:NSPopUpNoArrow];
-        [toolbarItem setView: aPopUpButton];
+        [toolbarItem setView:aPopUpButton];
         // Release the popup button since it is retained by the toolbar item.
         [aPopUpButton release];
 
         // build the menu
-        [self buildToolbarItemPopUpMenu: toolbarItem forToolbar: toolbar];
+        [self buildToolbarItemPopUpMenu:toolbarItem forToolbar:toolbar];
 
         NSSize sz = [aPopUpButton bounds].size;
         //sz.width += 8;
         [toolbarItem setMinSize:sz];
         [toolbarItem setMaxSize:sz];
-        [toolbarItem setLabel: NSLocalizedStringFromTableInBundle(@"New",@"iTerm", thisBundle, @"Toolbar Item:New")];
-        [toolbarItem setPaletteLabel: NSLocalizedStringFromTableInBundle(@"New",@"iTerm", thisBundle, @"Toolbar Item:New")];
-        [toolbarItem setToolTip: NSLocalizedStringFromTableInBundle(@"Open a new session",@"iTerm", thisBundle, @"Toolbar Item:New")];
-    }
-    else if ([itemIdent isEqual: CommandToolbarItem])
-    {
+        [toolbarItem setLabel:NSLocalizedStringFromTableInBundle(@"New",@"iTerm", thisBundle, @"Toolbar Item:New")];
+        [toolbarItem setPaletteLabel:NSLocalizedStringFromTableInBundle(@"New",@"iTerm", thisBundle, @"Toolbar Item:New")];
+        [toolbarItem setToolTip:NSLocalizedStringFromTableInBundle(@"Open a new session",@"iTerm", thisBundle, @"Toolbar Item:New")];
+    } else if ([itemIdent isEqual:CommandToolbarItem]) {
         // Set up the standard properties
         [toolbarItem setLabel:NSLocalizedStringFromTableInBundle(@"Execute",@"iTerm", thisBundle, @"Toolbar Item:New")];
         [toolbarItem setPaletteLabel:NSLocalizedStringFromTableInBundle(@"Execute",@"iTerm", thisBundle, @"Toolbar Item:New")];
@@ -185,9 +175,9 @@ NSString *CommandToolbarItem = @"Command";
         [toolbarItem setMinSize:NSMakeSize(100,NSHeight([[_pseudoTerminal commandField] frame]))];
         [toolbarItem setMaxSize:NSMakeSize(700,NSHeight([[_pseudoTerminal commandField] frame]))];
 
+    } else {
+        toolbarItem = nil;
     }
-    else
-        toolbarItem=nil;
 
     return toolbarItem;
 }
@@ -203,7 +193,7 @@ NSString *CommandToolbarItem = @"Command";
 
 - (void)setupToolbar;
 {
-    _toolbar = [[NSToolbar alloc] initWithIdentifier: @"Terminal Toolbar"];
+    _toolbar = [[NSToolbar alloc] initWithIdentifier:@"Terminal Toolbar"];
     [_toolbar setVisible:false];
     [_toolbar setDelegate:self];
     [_toolbar setAllowsUserCustomization:YES];

@@ -162,7 +162,8 @@ DebugLog([NSString stringWithFormat:args]); \
 {
     // The OS will send a hotkey window to the background if it's open and in
     // all spaces. So make it key before closing.
-    [[NSApp delegate] makeHotKeyWindowKeyIfOpen];
+    iTermApplicationDelegate* theDelegate = [NSApp delegate];
+    [theDelegate makeHotKeyWindowKeyIfOpen];
     [super close];
 }
 

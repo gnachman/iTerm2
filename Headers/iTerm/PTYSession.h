@@ -201,6 +201,8 @@ static const float kBackgroundSessionIntervalSec = 1;
 
 // Return the current pasteboard value as a string.
 + (NSString*)pasteboardString;
++ (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
++ (void)selectMenuItem:(NSString*)theName;
 
 // init/dealloc
 - (id)init;
