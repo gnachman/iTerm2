@@ -583,10 +583,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (void)setCharAtCursorDirty:(int)value
 {
-    if (cursorX == WIDTH) {
-        if (cursorY < HEIGHT) {
-            [self setCharDirtyAtX:0 Y:cursorY+1 value:value];
-        }
+    if (cursorX == WIDTH && cursorY < HEIGHT - 1) {
+        [self setCharDirtyAtX:0 Y:cursorY+1 value:value];
     }
     [self setCharDirtyAtX:cursorX Y:cursorY value:value];
 }
@@ -2087,9 +2085,7 @@ static void DumpBuf(screen_char_t* p, int n) {
                [self _getDefaultLineWithWidth:WIDTH],
                REAL_WIDTH*sizeof(screen_char_t));
         DebugLog(@"setNewline scroll screen");
-    }
-    else
-    {
+    } else {
         [self scrollUp];
         DebugLog(@"setNewline weird case");
     }
@@ -2169,6 +2165,26 @@ static void DumpBuf(screen_char_t* p, int n) {
     }
 }
 
+- (void)advanceCursor:(BOOL)canOccupyLastSpace
+{
+    [self setCharAtCursorDirty:1];
+    ++cursorX;
+    if (canOccupyLastSpace) {
+        if (cursorX > WIDTH) {
+            cursorX = WIDTH;
+            screen_char_t* aLine = [self getLineAtScreenIndex:cursorY];
+            aLine[WIDTH].code = EOL_SOFT;
+            [self setNewLine];
+            [self setCursorX:0 Y:cursorY];
+        }
+    } else if (cursorX >= WIDTH) {
+        cursorX = WIDTH;
+        [self setNewLine];
+        [self setCursorX:0 Y:cursorY];
+    }
+    [self setCharAtCursorDirty:1];
+}
+
 - (void)setTab
 {
     screen_char_t* aLine = [self getLineAtScreenIndex:cursorY];
@@ -2183,8 +2199,9 @@ static void DumpBuf(screen_char_t* p, int n) {
 
     ++positions;
     // ensure we go to the next tab in case we are already on one
-    [self setCursorX:cursorX + 1 Y:cursorY];
-    for (; ; [self setCursorX:cursorX + 1 Y:cursorY], ++positions) {
+    [self advanceCursor:YES];
+    aLine = [self getLineAtScreenIndex:cursorY];
+    for (; ; [self advanceCursor:YES], ++positions) {
         if (cursorX == WIDTH) {
             // Wrap around to the next line.
             if (aLine[cursorX].code == EOL_HARD) {
