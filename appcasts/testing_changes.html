@@ -1,4 +1,79 @@
-These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2. Alpha 14 is known to be quite reliable, though.
+These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2. Alpha 16 is known to be quite reliable, though.
+
+Alpha 17
+This release includes a huge number of new features and bug fixes.
+
+Big features:
+- Add Visor-like hotkey support.
+- Maximize a split pane (cmd-shift-enter), hiding all others.
+- Add Exposé/Global search to let you see and search in all tabs at once.
+- Import and export color schemes.
+- Add ability to remap keyboard modifiers, including separate settings for left and right cmd and option.
+- Find now includes regular expression search.
+- Bookmarks renamed to Profiles.
+- Define global keymappings across all profiles.
+
+Enhancements:
+- Use transparency (cmd-U) brought back, including for full-screen mode.
+- Autocomplete improved: press cmd-; again to do consecutive autocompletes.
+- Improve appearance of pane splitters, making them thin.
+- Add proprietary escape code to set window/tab frame color.
+- Add preference to confirm quitting.
+- Add profile option for specifying window type as fullscreen or glued to the top of the screen.
+- Allow configuration of starting screen and Space per profile.
+- Add "minimum contrast" option to ensure text is always visible.
+- Add ability to render fonts with variable stroke thicknesses (but with a performance penalty).
+- Make cmd-w close a pane and cmd-opt-w close all panes in a tab.
+- Allow binding multiple hex codes to one key binding.
+- Allow binding a key to any menu item.
+- Separate anti-aliasing settings for ascii and non-ascii fonts.
+- Basic accessibility added.
+- Improvements to dock menu to eliminate need to press option to open a window, add Open All.
+- Add preference for unlimited scrollback.
+- Add preference for controlling window/tab titles.
+- Cmd-9 switches to last tab.
+- Saved window arrangements now also save their working directories.
+- Navigate panes with cmd-opt-arrows predictably.
+- Add option to pass ctrl-clicks through when mouse reporting.
+- Add key bindings for "do not remap modifiers" and "toggle full screen".
+- Reorganize preferences dialog.
+- Added gesture support.
+- Clicking in an inactive pane while another app is active switches to that pane.
+- Add support for extended mouse reporting protocols.
+- Delay before showing tab bar in fullscreen mode is now configurable by a preference.
+- Improve apperance of tab numbers.
+- Allow cursor to draw in the right-hand margin when it is in that position.
+- Pasting a file (e.g., from Finder) now pastes the full path.
+- Close prefs, profile window with cmd-w or esc.
+- Ensure that smart cursor color is always a different color than its immediate neighbors.
+
+Bug fixes:
+- Fix bug where we hang when there is a software update (which won't help you with the alpha17 update, but should with the one after that).
+- Many crashing bugs fixed.
+- Memory leaks fixed.
+- About box streamlined.
+- Many improvements to window resizing.
+- Fix bug where profile title names don't appear after restoring an arrangement.
+- Make zoom button resize to a multiple of line height.
+- Fix bug where hotkey sometimes stops working.
+- Improve use of vertical space in full screen mode.
+- Fix reverse video rendering.
+- Sort tags in profiles menus.
+- Fix reset (cmd-r) drawing bug.
+- Fix bug where we hang for 5 seconds when showing a dialog.
+- Fix key handling when DefaultKeyBindings.dict is present.
+- Fix rendering of overly wide characters.
+- Allow private-range Apple character to render.
+- Don't hide tabbar in fullscreen if you press a modifier.
+- Various bug fixes in keybinding panel.
+- Improve apperance of Edit Current Session window.
+- Window resizes more sanely when opening findbar or horizontal splits.
+- Remove 10.6 restriction on dimming split panes, improve their appearance.
+- Respect a profile's growl preference.
+- Fix bug where window resized when exiting instant replay.
+- Make toolbar work properly and look better.
+- Make smart cursor color work with inverted colors.
+
 
 Alpha 16
 This release brings Unicode support for combining marks and code points beyond the Basic Multilingual Plane. Non-English users may notice that text lines up better, characters render properly, and many formerly invisible CJK ideograms now work correctly. This release also features a large number of bug fixes.
