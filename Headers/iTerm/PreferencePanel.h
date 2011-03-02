@@ -176,6 +176,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSMatrix *cursorType;
     ITermCursorType defaultCursorType;
 
+    BOOL quelchCursorWarning_;
     IBOutlet NSButton *checkColorInvertedCursor;
     BOOL defaultColorInvertedCursor;
 

@@ -1152,6 +1152,7 @@ static float versionNumber;
 
     // Show the window.
     [[self window] makeKeyAndOrderFront:self];
+    quelchCursorWarning_ = NO;
 }
 
 - (BOOL)advancedFontRendering
@@ -2247,6 +2248,24 @@ static float versionNumber;
     [newDict setObject:customDir forKey:KEY_CUSTOM_DIRECTORY];
 
     // Colors tab
+    if (!quelchCursorWarning_ &&
+        (sender == cursorColor || sender == cursorTextColor) &&
+        defaultColorInvertedCursor) {
+        quelchCursorWarning_ = YES;
+        NSAlert *alert = [NSAlert alertWithMessageText:@"Warning"
+                                         defaultButton:@"OK"
+                                       alternateButton:@"Disable Smart Cursor Color"
+                                           otherButton:nil
+                             informativeTextWithFormat:@"You must disable \"Smart Cursor Color\" for this change to take effect."];        
+        NSInteger button = [alert runModal];
+        if (button == NSAlertAlternateReturn) {
+            defaultColorInvertedCursor = NO;
+            [checkColorInvertedCursor setState:NO];
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermRefreshTerminal"
+                                                                object:nil
+                                                              userInfo:nil];
+        }
+    }
     [newDict setObject:[ITAddressBookMgr encodeColor:[ansi0Color color]] forKey:KEY_ANSI_0_COLOR];
     [newDict setObject:[ITAddressBookMgr encodeColor:[ansi1Color color]] forKey:KEY_ANSI_1_COLOR];
     [newDict setObject:[ITAddressBookMgr encodeColor:[ansi2Color color]] forKey:KEY_ANSI_2_COLOR];
@@ -2370,6 +2389,8 @@ static float versionNumber;
 
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable
 {
+    quelchCursorWarning_ = NO;
+
     if ([[bookmarksTableView selectedGuids] count] != 1) {
         [bookmarksSettingsTabViewParent setHidden:YES];
         [bookmarksPopup setEnabled:NO];
@@ -2440,6 +2461,7 @@ static float versionNumber;
 
 - (IBAction)showBookmarksTabView:(id)sender
 {
+    quelchCursorWarning_ = NO;
     [tabView selectTabViewItem:bookmarksTabViewItem];
 }
 
@@ -2931,6 +2953,7 @@ static float versionNumber;
 
 - (void)showBookmarks
 {
+    quelchCursorWarning_ = NO;
     [tabView selectTabViewItem:bookmarksTabViewItem];
     [toolbar setSelectedItemIdentifier:bookmarksToolbarId];
 }
