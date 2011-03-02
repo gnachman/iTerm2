@@ -2256,7 +2256,7 @@ static float versionNumber;
                                          defaultButton:@"OK"
                                        alternateButton:@"Disable Smart Cursor Color"
                                            otherButton:nil
-                             informativeTextWithFormat:@"You must disable \"Smart Cursor Color\" for this change to take effect."];        
+                             informativeTextWithFormat:@"You must disable \"Smart Cursor Color\" for this change to be visible."];
         NSInteger button = [alert runModal];
         if (button == NSAlertAlternateReturn) {
             defaultColorInvertedCursor = NO;
