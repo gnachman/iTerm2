@@ -124,14 +124,7 @@ static const float kTargetFrameRate = 1.0/60.0;
 
 - (double)dimmedDimmingAmount
 {
-    NSColor* backgroundColor = [session_ backgroundColor];
-    NSColor* rgb = [backgroundColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
-    double brightness = [rgb brightnessComponent];
-    // Map brightness onto dimming amount.
-    const double kMaxDimmingAmount = 0.35;
-    const double kMinDimmingAmount = 0.1;
-    const double kSpan = kMaxDimmingAmount - kMinDimmingAmount;
-    return kSpan * (1 - brightness) + kMinDimmingAmount;
+    return 0.2;
 }
 
 - (void)setDimmed:(BOOL)isDimmed
