@@ -211,6 +211,7 @@ NSString *sessionsKey = @"sessions";
             break;
 
         case WINDOW_TYPE_FULL_SCREEN:
+            oldFrame_ = [[self window] frame];
             initialFrame = [screen frame];
             break;
 
