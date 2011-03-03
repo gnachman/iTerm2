@@ -30,6 +30,7 @@
 #import "DVR.h"
 #import "WindowControllerInterface.h"
 #import "TextViewWrapper.h"
+#import "FindViewController.h"
 
 #include <sys/time.h>
 
@@ -60,7 +61,7 @@ static const float kBackgroundSessionIntervalSec = 1;
 
 @class PTYTab;
 @class SessionView;
-@interface PTYSession : NSResponder
+@interface PTYSession : NSResponder <FindViewControllerDelegate>
 {
     // Owning tab.
     PTYTab* tab_;
@@ -426,6 +427,16 @@ static const float kBackgroundSessionIntervalSec = 1;
 
 // Is there a saved scroll position?
 - (BOOL)hasSavedScrollPosition;
+
+// Search for the selected text.
+- (void)findWithSelection;
+
+// Show/hide the find view
+- (void)toggleFind;
+
+// Find next/previous occurrence of find string.
+- (void)searchNext;
+- (void)searchPrevious;
 
 @end
 

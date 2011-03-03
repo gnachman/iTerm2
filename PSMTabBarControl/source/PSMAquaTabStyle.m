@@ -38,6 +38,15 @@
     aquaTabBg = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabsBackground"]];
     [aquaTabBg setFlipped:YES];
 
+    NSSize bgSize = [aquaTabBg size];
+    noborderBg = [[NSImage alloc] initWithSize:NSMakeSize(bgSize.width, bgSize.height - 2)];
+    [noborderBg lockFocus];
+    [aquaTabBg compositeToPoint:NSMakePoint(0, 0)
+                       fromRect:NSMakeRect(0, 1, bgSize.width, bgSize.height-2)
+                      operation:NSCompositeSourceOver];
+    [noborderBg unlockFocus];
+    [noborderBg setSize:NSMakeSize(300, 28)];
+
     aquaTabBgDown = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabsDown"]];
     [aquaTabBgDown setFlipped:YES];
 
@@ -267,7 +276,6 @@
 - (NSAttributedString *)attributedObjectCountValueForTabCell:(PSMTabBarCell *)cell
 {
     NSMutableAttributedString *attrStr;
-    NSFontManager *fm = [NSFontManager sharedFontManager];
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
     NSNumberFormatter *nf = [[[NSNumberFormatter alloc] init] autorelease];
     [nf setLocalizesFormat:YES];
@@ -387,6 +395,17 @@
 - (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)color
 {
     [aquaTabBg drawInRect:rect fromRect:NSMakeRect(0.0, 0.0, 1.0, 22.0) operation:NSCompositeSourceOver fraction:1.0];
+}
+
+- (void)fillPath:(NSBezierPath*)path
+{
+    [[NSColor colorWithPatternImage:noborderBg] set];
+    [path fill];
+    [[NSColor colorWithCalibratedRed:150.0/255.0
+                               green:150.0/255.0
+                                blue:150.0/255.0
+                               alpha:1] set];
+    [path stroke];
 }
 
 - (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect

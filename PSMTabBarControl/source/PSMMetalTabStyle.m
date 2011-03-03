@@ -550,14 +550,26 @@
 
     [[NSColor darkGrayColor] set];
     if (orientation == PSMTabBarHorizontalOrientation) {
-        [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x, rect.origin.y + 0.5) toPoint:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + 0.5)];
-        [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x, rect.origin.y + rect.size.height - 0.5) toPoint:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + rect.size.height - 0.5)];
+        [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x, rect.origin.y + 0.5)
+                                  toPoint:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + 0.5)];
+        [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x, rect.origin.y + rect.size.height - 0.5) 
+                                  toPoint:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + rect.size.height - 0.5)];
     } else {
         [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x, rect.origin.y + 0.5) toPoint:NSMakePoint(rect.origin.x, rect.origin.y + rect.size.height + 0.5)];
         [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + 0.5) toPoint:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + rect.size.height + 0.5)];
     }
 
     [NSGraphicsContext restoreGraphicsState];
+}
+
+- (void)fillPath:(NSBezierPath*)path
+{
+    [[NSColor windowBackgroundColor] set];
+    [path fill];
+    [[NSColor colorWithCalibratedWhite:0.0 alpha:0.2] set];
+    [path fill];
+    [[NSColor darkGrayColor] set];
+    [path stroke];
 }
 
 - (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect

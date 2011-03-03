@@ -238,5 +238,7 @@ enum {
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView;
 - (void)setModifier:(int)mask;
 - (NSString*)_modifierString;
+- (void)fillPath:(NSBezierPath*)path;
+
 
 @end

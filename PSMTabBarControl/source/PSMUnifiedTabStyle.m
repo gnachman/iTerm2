@@ -529,6 +529,19 @@
     }
 }
 
+- (void)fillPath:(NSBezierPath*)path
+{
+    if ([[[tabBar tabView] window] isKeyWindow]) {
+        [path linearGradientFillWithStartColor:[NSColor colorWithCalibratedWhite:0.843 alpha:1.0]
+                                      endColor:[NSColor colorWithCalibratedWhite:0.835 alpha:1.0]];
+    } else {
+        [[NSColor windowBackgroundColor] set];
+        [path fill];
+    }
+    [[NSColor colorWithCalibratedWhite:0.576 alpha:1.0] set];
+    [path stroke];
+}
+
 - (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect
 {
     PSMTabBarCell* activeCell = nil;

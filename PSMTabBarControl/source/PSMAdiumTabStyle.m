@@ -668,6 +668,24 @@
     [NSGraphicsContext restoreGraphicsState];
 }
 
+- (void)fillPath:(NSBezierPath*)path
+{
+    if (_drawsUnified && [[[tabBar tabView] window] isKeyWindow]) {
+        if ([[[tabBar tabView] window] isKeyWindow]) {
+            [path linearGradientFillWithStartColor:[NSColor colorWithCalibratedWhite:0.843 alpha:1.0]
+                                          endColor:[NSColor colorWithCalibratedWhite:0.835 alpha:1.0]];
+        } else {
+            [[NSColor windowBackgroundColor] set];
+            [path fill];
+        }
+    } else {
+        [[NSColor windowBackgroundColor] set];
+        [path fill];
+        [[NSColor colorWithCalibratedWhite:0.85 alpha:0.6] set];
+        [path fill];
+    }
+}
+
 - (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect
 {
     if (orientation != [bar orientation]) {

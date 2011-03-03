@@ -78,29 +78,11 @@
     // UI elements for searching the current session.
 
     // This contains all the other elements.
-    IBOutlet BottomBarView* findBarSubview;
     IBOutlet BottomBarView* instantReplaySubview;
-
-    // The text that is being searched for.
-    IBOutlet NSTextField* findBarTextField;
-
-    // Checkbox: ignore case?
-    IBOutlet NSButton*    ignoreCase;
-    IBOutlet NSButton*    regex;
-
-    // Spins as asynchronous searching is in progress.
-    IBOutlet NSProgressIndicator* findProgressIndicator;
-
-    // Find happens incrementally. This remembers the string to search for.
-    NSMutableString* previousFindString;
 
     // Contains only bottomBarSubview. For whatever reason, adding the BottomBarView
     // directly to the window doesn't work.
     NSView* bottomBar;
-
-    // Find runs out of a timer so that if you have a huge buffer then it
-    // doesn't lock up. This timer runs the show.
-    NSTimer* _timer;
 
     ////////////////////////////////////////////////////////////////////////////
     // Tab View
@@ -325,32 +307,8 @@
 // accessor
 - (PTYTabView *)tabView;
 
-// A checkbox in the findbar was changed.
-- (IBAction)findBarSettingChanged:(id)sender;
-
-// Search for the previous occurrence of a string.
-- (IBAction)searchPrevious:(id)sender;
-
-// Search for the next occurrence of a string.
-- (IBAction)searchNext:(id)sender;
-
-// Called when next/prev capsule button is clicked.
-- (IBAction)searchNextPrev:(id)sender;
-
-// Search for the currently selected text.
-- (void)findWithSelection;
-
-// Called when the bottomBar or the command text field changes.
-- (void)controlTextDidChange:(NSNotification *)aNotification;
-
-// Invoked when users press keys with predefined bindings in a cell of the specified control.
-- (BOOL)control:(NSControl*)control textView:(NSTextView*)textView doCommandBySelector:(SEL)commandSelector;
-
 // Toggle bottomBar.
 - (void)showHideBottomBar;
-
-// Toggle find bar.
-- (void)showHideFindBar;
 
 // Are we in in IR?
 - (BOOL)inInstantReplay;
@@ -358,7 +316,7 @@
 // Toggle IR bar.
 - (void)showHideInstantReplay;
 
-// Arrange IR and Find bar views within bottom bar.
+// Arrange IR and any other views within bottom bar.
 - (void)arrangeBottomBarSubviews;
 
 // Move backward/forward in time by one frame.
@@ -515,8 +473,10 @@
 // Returns true if an init... method was already called.
 - (BOOL)isInitialized;
 
+// Fill in a path with the tabbar color.
+- (void)fillPath:(NSBezierPath*)path;
+
 // Called when the close button in the find bar is pressed.
-- (IBAction)closeFindBar:(id)sender;
 - (IBAction)closeInstantReplay:(id)sender;
 
 // Resize the window to exactly fit this tab.
@@ -787,12 +747,6 @@
 // Called when the parameter panel should close.
 - (IBAction)parameterPanelEnd:(id)sender;
 
-// Called by the timer to search more text.
-- (void)_continueSearch;
-
-// Begin searching for a string.
-- (void)_newSearch:(BOOL)needTimer;
-
 // Grow or shrink the tabview to make room for the find bar in fullscreen mode
 // and then fit sessions to new window size.
 - (void)adjustFullScreenWindowForBottomBarChange;
@@ -814,7 +768,6 @@
 - (void)hideFullScreenTabControl;
 
 - (void)_loadFindStringFromSharedPasteboard;
-- (void)_loadFindStringIntoSharedPasteboard;
 
 @end
 

@@ -34,6 +34,20 @@ static const float kTargetFrameRate = 1.0/60.0;
 
 @implementation SessionView
 
+- (id)initWithFrame:(NSRect)frame
+{
+    self = [super initWithFrame:frame];
+    if (self) {
+        findView_ = [[FindViewController alloc] initWithNibName:@"FindView" bundle:nil];
+        [[findView_ view] setHidden:YES];
+        [self addSubview:[findView_ view]];
+        NSRect aRect = [self frame];
+        [findView_ setFrameOrigin:NSMakePoint(aRect.size.width - [[findView_ view] frame].size.width - 30,
+                                                     aRect.size.height - [[findView_ view] frame].size.height)];
+    }
+    return self;
+}
+
 - (id)initWithFrame:(NSRect)frame session:(PTYSession*)session
 {
     self = [self initWithFrame:frame];
@@ -41,6 +55,19 @@ static const float kTargetFrameRate = 1.0/60.0;
         session_ = [session retain];
     }
     return self;
+}
+
+- (void)addSubview:(NSView *)aView
+{
+    static BOOL running;
+    BOOL wasRunning = running;
+    running = YES;
+    if (!wasRunning && findView_ && aView != [findView_ view]) {
+        [super addSubview:aView positioned:NSWindowBelow relativeTo:[findView_ view]];
+    } else {
+        [super addSubview:aView];
+    }
+    running = NO;
 }
 
 - (void)dealloc
@@ -142,6 +169,11 @@ static const float kTargetFrameRate = 1.0/60.0;
     if ([[[self session] TEXTVIEW] mouseDownImpl:event]) {
         [super mouseDown:event];
     }
+}
+
+- (FindViewController*)findViewController
+{
+    return findView_;
 }
 
 @end

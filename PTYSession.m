@@ -97,6 +97,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     growlIdle = growlNewOutput = NO;
 
     slowPasteBuffer = [[NSMutableString alloc] init];
+
     return self;
 }
 
@@ -225,7 +226,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 {
     PTYSession* aSession = [[[PTYSession alloc] init] autorelease];
     aSession->view = sessionView;
-
+    [[sessionView findViewController] setDelegate:aSession];
     Bookmark* theBookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:[[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK] objectForKey:KEY_GUID]];
     BOOL needDivorce = NO;
     if (!theBookmark) {
@@ -269,6 +270,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     if (!view) {
         view = [[[SessionView alloc] initWithFrame:NSMakeRect(0, 0, aRect.size.width, aRect.size.height)
                                           session:self] autorelease];
+        [[view findViewController] setDelegate:self];
     }
 
     // Allocate a scrollview
@@ -1784,6 +1786,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 {
     // View holds a reference to us so we don't hold a reference to it.
     view = newView;
+    [[view findViewController] setDelegate:self];
 }
 
 - (PTYTextView *)TEXTVIEW
@@ -2454,6 +2457,72 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return savedScrollPosition_ != -1;
 }
 
+- (void)findWithSelection
+{
+    if ([TEXTVIEW selectedText]) {
+        [[view findViewController] findString:[TEXTVIEW selectedText]];
+    }
+}
+
+- (void)toggleFind
+{
+    [[view findViewController] toggleVisibility];
+}
+
+- (void)searchNext
+{
+    [[view findViewController] searchNext];
+}
+
+- (void)searchPrevious
+{
+    [[view findViewController] searchPrevious];
+}
+
+- (void)resetFindCursor
+{
+    [TEXTVIEW resetFindCursor];
+}
+
+- (BOOL)findInProgress
+{
+    return [TEXTVIEW findInProgress];
+}
+
+- (BOOL)continueFind
+{
+    return [TEXTVIEW continueFind];
+}
+
+- (BOOL)growSelectionLeft
+{
+    return [TEXTVIEW growSelectionLeft];
+}
+
+- (void)growSelectionRight
+{
+    [TEXTVIEW growSelectionRight];
+}
+
+- (NSString*)selectedText
+{
+    return [TEXTVIEW selectedText];
+}
+
+- (NSString*)unpaddedSelectedText
+{
+    return [TEXTVIEW selectedTextWithPad:NO];
+}
+
+- (void)copySelection
+{
+    return [TEXTVIEW copy:self];
+}
+
+- (void)takeFocus
+{
+    [[[[self tab] realParentWindow] window] makeFirstResponder:TEXTVIEW];
+}
 
 @end
 

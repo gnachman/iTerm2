@@ -26,6 +26,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "FindViewController.h"
 
 @class PTYSession;
 @interface SessionView : NSView {
@@ -38,6 +39,9 @@
     float targetDimmingAmount_;
     NSTimer* timer_;
     BOOL shuttingDown_;
+
+    // Find window
+    FindViewController* findView_;
 }
 
 - (id)initWithFrame:(NSRect)frame session:(PTYSession*)session;
@@ -46,5 +50,6 @@
 - (void)setSession:(PTYSession*)session;
 - (void)setDimmed:(BOOL)isDimmed;
 - (void)cancelTimers;
+- (FindViewController*)findViewController;
 
 @end

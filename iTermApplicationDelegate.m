@@ -937,7 +937,7 @@ void DebugLog(NSString* value)
 {
     PseudoTerminal* pty = [[iTermController sharedInstance] currentTerminal];
     if (pty) {
-        [pty searchNext:nil];
+        [[pty currentSession] searchNext];
     }
 }
 
@@ -945,7 +945,7 @@ void DebugLog(NSString* value)
 {
     PseudoTerminal* pty = [[iTermController sharedInstance] currentTerminal];
     if (pty) {
-        [pty searchPrevious:nil];
+        [[pty currentSession] searchPrevious];
     }
 }
 
@@ -953,7 +953,7 @@ void DebugLog(NSString* value)
 {
     PseudoTerminal* pty = [[iTermController sharedInstance] currentTerminal];
     if (pty) {
-        [pty findWithSelection];
+        [[pty currentSession] findWithSelection];
     }
 }
 

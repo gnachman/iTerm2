@@ -2233,4 +2233,9 @@
     [self setNeedsDisplay];
 }
 
+- (void)fillPath:(NSBezierPath*)path
+{
+  [style fillPath:path];
+}
+
 @end

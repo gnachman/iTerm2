@@ -168,9 +168,9 @@ static BOOL initDone = NO;
     }
 }
 
-- (void) showHideFindBar
+- (void)showHideFindBar
 {
-    [[self currentTerminal] showHideFindBar];
+    [[[self currentTerminal] currentSession] toggleFind];
 }
 
 - (int)keyWindowIndexMemo

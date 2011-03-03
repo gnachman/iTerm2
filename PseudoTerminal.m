@@ -50,7 +50,6 @@
 #import <iTerm/VT100Screen.h>
 #import <iTerm/PTYSession.h>
 #import <iTerm/PTToolbarController.h>
-#import <iTerm/FindCommandHandler.h>
 #import <iTerm/ITAddressBookMgr.h>
 #import <iTerm/iTermApplicationDelegate.h>
 #import "FakeWindow.h"
@@ -63,6 +62,7 @@
 #import "SessionView.h"
 #import "iTerm/iTermApplication.h"
 #import "BookmarksWindow.h"
+#import "FindViewController.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -190,8 +190,6 @@ NSString *sessionsKey = @"sessions";
     windowType_ = windowType;
     pbHistoryView = [[PasteboardHistoryView alloc] init];
     autocompleteView = [[AutocompleteView alloc] init];
-    [ignoreCase setState:[[FindCommandHandler sharedInstance] ignoresCase] ? NSOnState : NSOffState];
-    [regex setState:[[FindCommandHandler sharedInstance] regex] ? NSOnState : NSOffState];
     // create the window programmatically with appropriate style mask
     styleMask = NSTitledWindowMask |
         NSClosableWindowMask |
@@ -236,13 +234,12 @@ NSString *sessionsKey = @"sessions";
     if (windowType == WINDOW_TYPE_TOP) {
         [myWindow setHasShadow:YES];
     }
-    
+
     PtyLog(@"initWithSmartLayout - new window is at %d", myWindow);
     [self setWindow:myWindow];
     [myWindow release];
 
     _fullScreen = (windowType == WINDOW_TYPE_FULL_SCREEN);
-    previousFindString = [[NSMutableString alloc] init];
     if (_fullScreen) {
         background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor blackColor]];
     } else {
@@ -286,23 +283,16 @@ NSString *sessionsKey = @"sessions";
     }
 
     // Set up bottomBar
-    NSRect fbFrame = [findBarSubview frame];
     NSRect irFrame = [instantReplaySubview frame];
     bottomBar = [[NSView alloc] initWithFrame:NSMakeRect(0,
                                                          0,
-                                                         fbFrame.size.width,
-                                                         fbFrame.size.height + irFrame.size.height)];
-    [bottomBar addSubview:findBarSubview];
+                                                         irFrame.size.width,
+                                                         irFrame.size.height)];
     [bottomBar addSubview:instantReplaySubview];
-    fbFrame.origin.y = 0;
-    [findBarSubview setFrame:fbFrame];
-    irFrame.origin.y = fbFrame.size.height;
+    irFrame.origin.y = 0;
     [instantReplaySubview setFrame:irFrame];
     [bottomBar setHidden:YES];
     [instantReplaySubview setHidden:YES];
-    [findBarSubview setHidden:YES];
-
-    [findBarTextField setDelegate:self];
 
     // create the tabview
     aRect = [[[self window] contentView] bounds];
@@ -654,11 +644,6 @@ NSString *sessionsKey = @"sessions";
     [commandField release];
     [bottomBar release];
     [_toolbarController release];
-    if (_timer) {
-        [_timer invalidate];
-        [findProgressIndicator setHidden:YES];
-        _timer = nil;
-    }
     [pbHistoryView release];
     [autocompleteView release];
 
@@ -1920,139 +1905,9 @@ NSString *sessionsKey = @"sessions";
     return TABVIEW;
 }
 
-- (IBAction)findBarSettingChanged:(id)sender
-{
-    [[FindCommandHandler sharedInstance] setIgnoresCase:[ignoreCase state]];
-    [[FindCommandHandler sharedInstance] setRegex:[regex state]];
-}
-
-- (IBAction)searchPrevious:(id)sender
-{
-    [[FindCommandHandler sharedInstance] setSearchString:[findBarTextField stringValue]];
-    [[FindCommandHandler sharedInstance] setIgnoresCase:[ignoreCase state]];
-    [[FindCommandHandler sharedInstance] setRegex:[regex state]];
-    [self _newSearch:[[FindCommandHandler sharedInstance]
-                      findPreviousWithOffset:1]];
-}
-
-- (IBAction)searchNext:(id)sender
-{
-    [[FindCommandHandler sharedInstance] setSearchString:[findBarTextField stringValue]];
-    [[FindCommandHandler sharedInstance] setIgnoresCase:[ignoreCase state]];
-    [[FindCommandHandler sharedInstance] setRegex:[regex state]];
-    [self _newSearch:[[FindCommandHandler sharedInstance] findNext]];
-}
-
-- (IBAction)searchNextPrev:(id)sender
-{
-    if ([sender selectedSegment] == 0) {
-        [self searchPrevious:sender];
-    } else {
-        [self searchNext:sender];
-    }
-    [sender setSelected:NO forSegment:[sender selectedSegment]];
-}
-
-- (void)findWithSelection
-{
-    PTYTextView* textView = [[self currentSession] TEXTVIEW];
-    if ([textView selectedText]) {
-        [findBarTextField setStringValue:[textView selectedText]];
-        [self _loadFindStringIntoSharedPasteboard];
-    }
-}
-
-- (void)controlTextDidChange:(NSNotification *)aNotification
-{
-    NSTextField *field = [aNotification object];
-    if (field != findBarTextField) {
-        return;
-    }
-
-    [self _loadFindStringIntoSharedPasteboard];
-
-    // Search.
-    if ([previousFindString length] == 0) {
-        [[[self currentSession] TEXTVIEW] resetFindCursor];
-    } else {
-        NSRange range =  [[findBarTextField stringValue] rangeOfString:previousFindString];
-        if (range.location != 0) {
-            [[[self currentSession] TEXTVIEW] resetFindCursor];
-        }
-    }
-    [previousFindString setString:[findBarTextField stringValue]];
-    [[FindCommandHandler sharedInstance] setSearchString:[findBarTextField stringValue]];
-    [[FindCommandHandler sharedInstance] setIgnoresCase:[ignoreCase state]];
-    [[FindCommandHandler sharedInstance] setRegex:[regex state]];
-    [self _newSearch:[[FindCommandHandler sharedInstance] findPreviousWithOffset:0]];
-}
-
-- (void)deselectFindBarTextField
-{
-    NSText* fieldEditor = [[self window] fieldEditor:YES forObject:findBarTextField];
-    [fieldEditor setSelectedRange:NSMakeRange([[fieldEditor string] length], 0)];
-    [fieldEditor setNeedsDisplay:YES];
-}
-
-- (BOOL)control:(NSControl*)control textView:(NSTextView*)textView doCommandBySelector:(SEL)commandSelector
-{
-    if (control == findBarTextField && commandSelector == @selector(cancelOperation:)) {
-        // Have the esc key close the find bar instead of erasing its contents.
-        [self closeFindBar:self];
-        return YES;
-    } else if (control == findBarTextField && commandSelector == @selector(insertBacktab:)) {
-        if ([[[self currentSession] TEXTVIEW] growSelectionLeft]) {
-            NSString* text = [[[self currentSession] TEXTVIEW] selectedText];
-            if (text) {
-                [[[self currentSession] TEXTVIEW] copy:self];
-                [findBarTextField setStringValue:text];
-                [self _loadFindStringIntoSharedPasteboard];
-                [self deselectFindBarTextField];
-                [self searchPrevious:self];
-            }
-        }
-        return YES;
-    } else if (control == findBarTextField && commandSelector == @selector(insertTab:)) {
-        [[[self currentSession] TEXTVIEW] growSelectionRight];
-        NSString* text = [[[self currentSession] TEXTVIEW] selectedText];
-        if (text) {
-            [[[self currentSession] TEXTVIEW] copy:self];
-            [findBarTextField setStringValue:text];
-            [self _loadFindStringIntoSharedPasteboard];
-            [self deselectFindBarTextField];
-        }
-        return YES;
-    } else if (control == findBarTextField && commandSelector == @selector(insertNewlineIgnoringFieldEditor:)) {
-        // Alt-enter
-        PTYTextView* textview = [[self currentSession] TEXTVIEW];
-        [textview copy:nil];
-        NSString* text = [textview selectedTextWithPad:NO];
-        [[self currentSession] pasteString:text];
-        [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
-        return YES;
-    } else {
-        return NO;
-    }
-}
-
 - (void)controlTextDidEndEditing:(NSNotification *)aNotification
 {
     int move = [[[aNotification userInfo] objectForKey:@"NSTextMovement"] intValue];
-    NSControl *postingObject = [aNotification object];
-    if (postingObject == findBarTextField) {
-        [previousFindString setString:@""];
-        switch (move) {
-            case NSReturnTextMovement:
-                // Return key
-                if ([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask) {
-                    [self searchNext:self];
-                } else {
-                    [self searchPrevious:self];
-                }
-                break;
-        }
-        return;
-    }
 
     switch (move) {
         case NSReturnTextMovement:
@@ -2082,6 +1937,18 @@ NSString *sessionsKey = @"sessions";
     return TABVIEW != nil;
 }
 
+- (void)fillPath:(NSBezierPath*)path
+{
+    if ([tabBarControl isHidden]) {
+        [[NSColor windowBackgroundColor] set];
+        [path fill];
+        [[NSColor darkGrayColor] set];
+        [path stroke];
+    } else {
+      [tabBarControl fillPath:path];
+    }
+}
+
 // Toggle bottom bar.
 - (void)showHideBottomBar
 {
@@ -2096,7 +1963,7 @@ NSString *sessionsKey = @"sessions";
     if (_fullScreen) {
         [self adjustFullScreenWindowForBottomBarChange];
     } else {
-        PtyLog(@"showHideFindBar - calling fitWindowToTabs");
+        PtyLog(@"showHideBottomBar - calling fitWindowToTabs");
         if (hide && pbbfValid) {
             // Compute the top-left origin of the current frame in case the window moved
             NSRect currentFrame = [[self window] frame];
@@ -2134,23 +2001,17 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
-// Arrange find, instant replay subviews within bottom bar.
+// Arrange instant replay subview within bottom bar.
 - (void)arrangeBottomBarSubviews
 {
     NSRect frame = NSMakeRect(0, 0, [[self window] frame].size.width, 0);
     NSRect irFrame = [instantReplaySubview frame];
-    NSRect fbFrame = [findBarSubview frame];
     if (![instantReplaySubview isHidden]) {
         irFrame.origin.y = frame.size.height;
         frame.size.height += irFrame.size.height;
     }
-    if (![findBarSubview isHidden]) {
-        fbFrame.origin.y = frame.size.height;
-        frame.size.height += [findBarSubview frame].size.height;
-    }
     [bottomBar setFrame:frame];
     [instantReplaySubview setFrame:irFrame];
-    [findBarSubview setFrame:fbFrame];
 }
 
 - (NSString*)stringForTimestamp:(long long)timestamp
@@ -2280,66 +2141,11 @@ NSString *sessionsKey = @"sessions";
     tvframe.size.height -= 1;
     [TABVIEW setFrame: tvframe];
 
-    if (([findBarSubview isHidden] && [instantReplaySubview isHidden] && ![bottomBar isHidden]) ||
-        ((![findBarSubview isHidden] || ![instantReplaySubview isHidden]) && [bottomBar isHidden])) {
+    if ([instantReplaySubview isHidden] != [bottomBar isHidden]) {
         [self showHideBottomBar];
     }
     if (!hide) {
         [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
-    }
-}
-
-- (void)showHideFindBar
-{
-    PtyLog(@"showHideFindBar********************************************** tabview size is %lf", [TABVIEW frame].size.height);
-    BOOL hide = ![findBarSubview isHidden];
-    NSObject* firstResponder = [[self window] firstResponder];
-    NSText* currentEditor = [findBarTextField currentEditor];
-    if (hide && (!currentEditor || currentEditor != firstResponder)) {
-        // The bar is visible but doesn't have focus. Just set the focus.
-        [[self window] makeFirstResponder:findBarTextField];
-        return;
-    }
-    if (hide && _timer) {
-        [_timer invalidate];
-        _timer = nil;
-        [findProgressIndicator setHidden:YES];
-    }
-    [findBarSubview setHidden:hide];
-
-    if (([findBarSubview isHidden] &&
-         [instantReplaySubview isHidden] &&
-         ![bottomBar isHidden]) ||            // subviews hidden but parent view open.
-        ((![findBarSubview isHidden] ||
-          ![instantReplaySubview isHidden]) &&
-         [bottomBar isHidden])) {             // subview visible but parent view hidden.
-        [self showHideBottomBar];
-    }
-
-    PtyLog(@"showHideFindBar - calling arrangeBottomBarSubviews");
-    [self arrangeBottomBarSubviews];
-    if (_fullScreen) {
-        [self adjustFullScreenWindowForBottomBarChange];
-    }
-
-    // On OS X 10.5.8, the scroll bar and resize indicator are messed up at this point. Resizing the tabview fixes it. This seems to be fixed in 10.6.
-    NSRect tvframe = [TABVIEW frame];
-    tvframe.size.height += 1;
-    [TABVIEW setFrame: tvframe];
-    tvframe.size.height -= 1;
-    [TABVIEW setFrame: tvframe];
-
-    if (!hide) {
-        [[self window] makeFirstResponder:findBarTextField];
-    } else {
-        [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
-    }
-}
-
-- (IBAction)closeFindBar:(id)sender
-{
-    if (![findBarSubview isHidden]) {
-        [self showHideFindBar];
     }
 }
 
@@ -3036,11 +2842,6 @@ NSString *sessionsKey = @"sessions";
     bottomBarFrame.origin.x = [TABVIEW frame].origin.x;
     [bottomBar setFrame: bottomBarFrame];
 
-    NSRect findBarFrame = [findBarSubview frame];
-    findBarFrame.size.width = bottomBarFrame.size.width;
-    findBarFrame.origin.x = 0;
-    [findBarSubview setFrame: findBarFrame];
-
     NSRect instantReplayFrame = [instantReplaySubview frame];
     float dWidth = instantReplayFrame.size.width - bottomBarFrame.size.width;
     NSRect sliderFrame = [irSlider frame];
@@ -3344,11 +3145,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)copySettingsFrom:(PseudoTerminal*)other
 {
-    [findBarSubview setHidden:YES];
     [instantReplaySubview setHidden:YES];
-    if (![other->findBarSubview isHidden]) {
-        [self showHideFindBar];
-    }
     if (![other->instantReplaySubview isHidden]) {
         [self showHideInstantReplay];
     }
@@ -3922,41 +3719,6 @@ NSString *sessionsKey = @"sessions";
     [NSApp stopModal];
 }
 
-- (void)_continueSearch
-{
-    // NSLog(@"PseudoTerminal continueSearch");
-    BOOL more = NO;
-    if ([[[self currentSession] TEXTVIEW] findInProgress]) {
-        more = [[[self currentSession] TEXTVIEW] continueFind];
-    }
-    if (!more) {
-        // NSLog(@"invalidating timer");
-        [_timer invalidate];
-        [findProgressIndicator setHidden:YES];
-        _timer = nil;
-    }
-}
-
-- (void)_newSearch:(BOOL)needTimer
-{
-    if (needTimer && !_timer) {
-        // NSLog(@"creating timer");
-        _timer = [NSTimer scheduledTimerWithTimeInterval:0.01
-                                                  target:self
-                                                selector:@selector(_continueSearch)
-                                                userInfo:nil
-                                                 repeats:YES];
-        [findProgressIndicator setHidden:NO];
-        [findProgressIndicator startAnimation:self];
-    } else if (!needTimer && _timer) {
-        // NSLog(@"destroying timer");
-        // did a search while one was in progress
-        [_timer invalidate];
-        _timer = nil;
-        [findProgressIndicator setHidden:YES];
-    }
-}
-
 - (long long)timestampForFraction:(float)f
 {
     DVR* dvr = [[self currentSession] dvr];
@@ -4026,25 +3788,9 @@ NSString *sessionsKey = @"sessions";
 
 - (void)_loadFindStringFromSharedPasteboard
 {
-    if (![iTermApplication isTextFieldInFocus:findBarTextField]) {
-        NSPasteboard* findBoard = [NSPasteboard pasteboardWithName:NSFindPboard];
-        if ([[findBoard types] containsObject:NSStringPboardType]) {
-            NSString *value = [findBoard stringForType:NSStringPboardType];
-            if (value && [value length] > 0) {
-                [findBarTextField setStringValue:value];
-            }
-        }
-    }
-}
-
-- (void)_loadFindStringIntoSharedPasteboard
-{
-    // Copy into the NSFindPboard
-    NSPasteboard *findPB = [NSPasteboard pasteboardWithName: NSFindPboard];
-    if (findPB) {
-        [findPB declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
-        [findPB setString:[findBarTextField stringValue] forType:NSStringPboardType];
-    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermLoadFindStringFromSharedPasteboard"
+                                                        object:nil
+                                                      userInfo:nil];    
 }
 
 @end
