@@ -219,6 +219,15 @@ static BOOL initDone = NO;
 
 - (void)saveWindowArrangement
 {
+    if ([self hasWindowArrangement]) {
+        if (NSRunAlertPanel(@"Replace Existing Saved Window Arrangement?",
+                            @"There is an existing saved window arrangement. Would you like to replace it with the current arrangement?",
+                            @"Yes",
+                            @"No",
+                            nil) != NSAlertDefaultReturn) {
+            return;
+        }
+    }
     NSMutableArray* terminalArrangements = [NSMutableArray arrayWithCapacity:[terminalWindows count]];
     for (PseudoTerminal* terminal in terminalWindows) {
         if (![terminal isHotKeyWindow]) {
