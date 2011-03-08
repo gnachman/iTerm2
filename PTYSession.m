@@ -339,11 +339,12 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         newOutput = NO;
 
         // register for some notifications
+		/*
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(tabViewWillRedraw:)
                                                      name:@"iTermTabViewWillRedraw"
                                                    object:nil];
-
+*/
         return YES;
     } else {
         [SCREEN release];
