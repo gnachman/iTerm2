@@ -181,6 +181,45 @@ typedef struct PTYFontInfo PTYFontInfo;
     BOOL changedSinceLastExpose_;
 
     double dimmingAmount_;
+
+    // The string last searched for.
+    NSString* findString_;
+
+    // The set of SearchResult objects for which matches have been found.
+    NSMutableArray* findResults_;
+
+    // The next offset into findResults_ where values from findResults_ should
+    // be added to the map.
+    int nextOffset_;
+
+    // True if a result has been highlighted & scrolled to.
+    BOOL foundResult_;
+
+    // Maps an absolute line number (NSNumber longlong) to an NSData bit array
+    // with one bit per cell indicating whether that cell is a match.
+    NSMutableDictionary* resultMap_;
+
+    // True if the last search was forward, flase if backward.
+    BOOL searchingForward_;
+
+    // Offset value for last search.
+    int findOffset_;
+
+    // True if trying to find a result before/after current selection to
+    // highlight.
+    BOOL searchingForNextResult_;
+
+    // True if the last search was case insensitive.
+    BOOL findIgnoreCase_;
+
+    // True if the last search was for a regex.
+    BOOL findRegex_;
+
+    // Time that the flashing bell's alpha value was last adjusted.
+    NSDate* lastFlashUpdate_;
+
+    // Alpha value of flashing bell graphic.
+    double flashing_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -334,6 +373,9 @@ typedef struct PTYFontInfo PTYFontInfo;
       ignoringCase:(BOOL)ignoreCase
              regex:(BOOL)regex
         withOffset:(int)offset;
+
+// Remove highlighted terms from previous search.
+- (void)clearHighlights;
 
 // NSTextInput
 - (void)insertText:(id)aString;

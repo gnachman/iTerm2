@@ -38,8 +38,8 @@
     if (self) {
         previousFindString_ = [[NSMutableString alloc] init];
         [findBarTextField_ setDelegate:self];
-        [ignoreCaseMenuItem_ setState:[[FindCommandHandler sharedInstance] ignoresCase] ? NSOnState : NSOffState];
-        [regexMenuItem_ setState:[[FindCommandHandler sharedInstance] regex] ? NSOnState : NSOffState];
+        ignoreCase_ = [[FindCommandHandler sharedInstance] ignoresCase];
+        regex_ = [[FindCommandHandler sharedInstance] regex];
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(_loadFindStringFromSharedPasteboard)
                                                      name:@"iTermLoadFindStringFromSharedPasteboard"
@@ -121,13 +121,13 @@
     if (!wasHidden && timer_) {
         [timer_ invalidate];
         timer_ = nil;
-        [findBarTextField_ setFrameSize:textFieldSize_];
         [findBarProgressIndicator_ setHidden:YES];
     }
     [[[self view] animator] setFrame:[self collapsedFrame]];
     [self performSelector:@selector(_hide)
                withObject:nil
-               afterDelay:[[NSAnimationContext currentContext] duration]];    
+               afterDelay:[[NSAnimationContext currentContext] duration]];
+    [delegate_ clearHighlights];
     [delegate_ takeFocus];
 }
 
@@ -180,7 +180,6 @@
     if (!more) {
         [timer_ invalidate];
         timer_ = nil;
-        [[findBarTextField_ animator] setFrameSize:textFieldSize_];
         [findBarProgressIndicator_ setHidden:YES];
     }
 }
@@ -195,12 +194,10 @@
                                                 userInfo:nil
                                                  repeats:YES];
         [findBarProgressIndicator_ setHidden:NO];
-        [findBarTextField_ setFrameSize:textFieldSmallSize_];
         [findBarProgressIndicator_ startAnimation:self];
     } else if (!needTimer && timer_) {
         [timer_ invalidate];
         timer_ = nil;
-        [[findBarTextField_ animator] setFrameSize:textFieldSize_];
         [findBarProgressIndicator_ setHidden:YES];
     }
 }
@@ -232,16 +229,26 @@
              forSegment:[sender selectedSegment]];
 }
 
+- (BOOL)validateUserInterfaceItem:(NSMenuItem*)item
+{
+    if ([item action] == @selector(toggleIgnoreCase:)) {
+        [item setState:(ignoreCase_ ? NSOnState : NSOffState)];
+    } else if ([item action] == @selector(toggleRegex:)) {
+        [item setState:(regex_ ? NSOnState : NSOffState)];
+    }
+    return YES;
+}
+
 - (IBAction)toggleIgnoreCase:(id)sender
 {
-    [ignoreCaseMenuItem_ setState:([ignoreCaseMenuItem_ state] == NSOnState ? NSOffState : NSOnState)];
-    [[FindCommandHandler sharedInstance] setIgnoresCase:[ignoreCaseMenuItem_ state]];
+    ignoreCase_ = !ignoreCase_;
+    [[FindCommandHandler sharedInstance] setIgnoresCase:ignoreCase_];
 }
 
 - (IBAction)toggleRegex:(id)sender
 {
-    [regexMenuItem_ setState:([regexMenuItem_ state] == NSOnState ? NSOffState : NSOnState)];
-    [[FindCommandHandler sharedInstance] setRegex:[regexMenuItem_ state]];
+    regex_ = !regex_;
+    [[FindCommandHandler sharedInstance] setRegex:regex_];
 }
 
 - (void)_loadFindStringIntoSharedPasteboard
@@ -281,8 +288,8 @@
     }
     [previousFindString_ setString:[findBarTextField_ stringValue]];
     [[FindCommandHandler sharedInstance] setSearchString:[findBarTextField_ stringValue]];
-    [[FindCommandHandler sharedInstance] setIgnoresCase:[ignoreCaseMenuItem_ state]];
-    [[FindCommandHandler sharedInstance] setRegex:[ignoreCaseMenuItem_ state]];
+    [[FindCommandHandler sharedInstance] setIgnoresCase:ignoreCase_];
+    [[FindCommandHandler sharedInstance] setRegex:regex_];
     [self _newSearch:[[FindCommandHandler sharedInstance] findPreviousWithOffset:0]];
 }
 

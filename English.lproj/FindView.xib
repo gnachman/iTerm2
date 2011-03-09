@@ -13,6 +13,7 @@
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
 			<integer value="1"/>
+			<integer value="15"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -128,7 +129,7 @@
 						<reference key="NSNextResponder" ref="1005"/>
 						<int key="NSvFlags">-2147482356</int>
 						<object class="NSPSMatrix" key="NSDrawMatrix"/>
-						<string key="NSFrame">{{190, 6}, {16, 16}}</string>
+						<string key="NSFrame">{{172, 6}, {16, 16}}</string>
 						<reference key="NSSuperview" ref="1005"/>
 						<int key="NSpiFlags">20746</int>
 						<double key="NSMinValue">16</double>
@@ -217,6 +218,7 @@
 						<string key="NSTitle">Ignore case</string>
 						<string key="NSKeyEquiv"/>
 						<int key="NSMnemonicLoc">2147483647</int>
+						<int key="NSState">1</int>
 						<object class="NSCustomResource" key="NSOnImage" id="175005634">
 							<string key="NSClassName">NSImage</string>
 							<string key="NSResourceName">NSMenuCheckmark</string>
@@ -231,6 +233,7 @@
 						<string key="NSTitle">Regular expression</string>
 						<string key="NSKeyEquiv"/>
 						<int key="NSMnemonicLoc">2147483647</int>
+						<int key="NSState">1</int>
 						<reference key="NSOnImage" ref="175005634"/>
 						<reference key="NSMixedImage" ref="326596010"/>
 					</object>

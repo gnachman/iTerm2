@@ -58,6 +58,9 @@
 // we add a character at the end of line to indicate wrapping
 #define REAL_WIDTH (WIDTH+1)
 
+@implementation SearchResult
+@end
+
 /* translates normal char into graphics char */
 static void translate(screen_char_t *s, int len)
 {
@@ -372,7 +375,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     if (!buffer_lines) {
         return NULL;
     }
-    
+
     // set up our pointers
     screen_top = buffer_lines;
 
@@ -1606,7 +1609,7 @@ static char* FormatCont(int c)
         [printToAnsiString appendString: aString];
 }
 
-static void DumpBuf(screen_char_t* p, int n) {
+void DumpBuf(screen_char_t* p, int n) {
     for (int i = 0; i < n; ++i) {
         NSLog(@"%3d: \"%@\" (0x%04x)", i, ScreenCharToStr(&p[i]), (int)p[i].code);
     }
@@ -3150,12 +3153,13 @@ static void DumpBuf(screen_char_t* p, int n) {
     [linebuffer releaseFind:context];
 }
 
-- (BOOL)continueFindResultAtStartX:(int*)startX
-                          atStartY:(int*)startY
-                            atEndX:(int*)endX
-                            atEndY:(int*)endY
-                             found:(BOOL*)found
-                         inContext:(FindContext*)context
+- (BOOL)_continueFindResultAtStartX:(int*)startX
+                           atStartY:(int*)startY
+                             atEndX:(int*)endX
+                             atEndY:(int*)endY
+                              found:(BOOL*)found
+                          inContext:(FindContext*)context
+                            maxTime:(float)maxTime
 {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
@@ -3187,15 +3191,15 @@ static void DumpBuf(screen_char_t* p, int n) {
                 // NSLog(@"matched");
                 // Found a match in the text.
                 isOk = [linebuffer convertPosition:context->resultPosition
-                                       withWidth:WIDTH
-                                             toX:startX
-                                             toY:startY];
+                                         withWidth:WIDTH
+                                               toX:startX
+                                               toY:startY];
                 NSAssert(isOk, @"Couldn't convert start position");
 
                 isOk = [linebuffer convertPosition:context->resultPosition + context->matchLength - 1
-                                       withWidth:WIDTH
-                                             toX:endX
-                                             toY:endY];
+                                         withWidth:WIDTH
+                                               toX:endX
+                                               toY:endY];
                 NSAssert(isOk, @"Couldn't convert end position");
                 [linebuffer releaseFind:context];
                 keepSearching = NO;
@@ -3239,14 +3243,80 @@ static void DumpBuf(screen_char_t* p, int n) {
         if (keepSearching) {
             gettimeofday(&endtime, NULL);
             ms_diff = (endtime.tv_sec - begintime.tv_sec) * 1000 +
-                      (endtime.tv_usec - begintime.tv_usec) / 1000;
+            (endtime.tv_usec - begintime.tv_usec) / 1000;
         }
         ++iterations;
-    } while (keepSearching && ms_diff < 100);
+    } while (keepSearching && ms_diff < maxTime*1000);
     // NSLog(@"Did %d iterations in %dms. Average time per block was %dms", iterations, ms_diff, ms_diff/iterations);
 
     [self _popScrollbackLines:linesPushed];
     return keepSearching;
+}
+
+- (BOOL)continueFindAllResults:(NSMutableArray*)results
+                     inContext:(FindContext*)context
+{
+    FindContext contextCopy = *context;
+    [contextCopy.substring retain];
+    context->hasWrapped = YES;
+
+    float MAX_TIME = 0.1;
+    NSDate* start = [NSDate date];
+    BOOL keepSearching;
+    BOOL found;
+    do {
+        SearchResult* r = [[[SearchResult alloc] init] autorelease];
+        int startY, endY;
+        keepSearching = [self _continueFindResultAtStartX:&r->startX
+                                                 atStartY:&startY
+                                                   atEndX:&r->endX
+                                                   atEndY:&endY
+                                                    found:&found
+                                                inContext:context
+                                                  maxTime:0.1];
+        if (found) {
+            r->absStartY = startY + [self totalScrollbackOverflow];
+            r->absEndY = endY + [self totalScrollbackOverflow];
+            //NSLog(@"VT100Screen: Found match at %d,%d", r->startX, (int)r->absStartY);
+            [results addObject:r];
+
+            BOOL forward = (contextCopy.options & FindOptBackwards) == 0;
+            if (r->startX != 0 || r->absStartY - [self totalScrollbackOverflow] != 0) {
+                [self initFindString:contextCopy.substring
+                    forwardDirection:forward
+                        ignoringCase:(contextCopy.options & FindOptCaseInsensitive)
+                               regex:(contextCopy.options & FindOptRegex)
+                         startingAtX:r->startX
+                         startingAtY:r->absStartY - [self totalScrollbackOverflow]
+                          withOffset:1
+                           inContext:context];
+            } else {
+                found = NO;
+                keepSearching = NO;
+            }
+            context->hasWrapped = YES;
+        }
+    } while ((found || keepSearching) &&
+             [[NSDate date] timeIntervalSinceDate:start] < MAX_TIME);
+
+    [contextCopy.substring release];
+    return found || keepSearching;
+}
+
+- (BOOL)continueFindResultAtStartX:(int*)startX
+                          atStartY:(int*)startY
+                            atEndX:(int*)endX
+                            atEndY:(int*)endY
+                             found:(BOOL*)found
+                         inContext:(FindContext*)context
+{
+    return [self _continueFindResultAtStartX:startX
+                                    atStartY:startY
+                                      atEndX:endX
+                                      atEndY:endY
+                                       found:found
+                                   inContext:context
+                                     maxTime:0.1];
 }
 
 - (void)saveToDvr

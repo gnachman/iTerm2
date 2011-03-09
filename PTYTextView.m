@@ -96,62 +96,7 @@ typedef struct {
 
 // FIXME: Looks like this is leaked.
 static NSCursor* textViewCursor =  nil;
-
-@interface FlashingView : NSView
-{
-    NSTimer* t;
-    int iteration;
-}
-- (id)initWithFrame:(NSRect)frame iterations:(int)i;
-- (void)dealloc;
-- (void)drawRect:(NSRect)rect;
-- (void)onTimer:(id)sender;
-@end
-
-@implementation FlashingView
-- (id)initWithFrame:(NSRect)frame iterations:(int)i
-{
-    self = [super initWithFrame:frame];
-    if (!self) {
-        return self;
-    }
-    t = [NSTimer scheduledTimerWithTimeInterval:(1.0/30.0) target:self selector:@selector(onTimer:) userInfo:nil repeats:YES];
-    iteration = i;
-
-    return self;
-}
-
-- (void)dealloc
-{
-    if (t) {
-      [t invalidate];
-    }
-    [super dealloc];
-}
-
-- (void)drawRect:(NSRect)rect
-{
-    if (iteration % 2) {
-        [[NSColor whiteColor] set];
-    } else {
-        [[NSColor blackColor] set];
-    }
-    NSRectFill(rect);
-}
-
-- (void)onTimer:(id)sender
-{
-    if (--iteration == 0) {
-        [self removeFromSuperview];
-        [t invalidate];
-        t = nil;
-    } else {
-        [self setFrame:[[self superview] frame]];
-        [self setNeedsDisplay:YES];
-    }
-}
-
-@end
+static NSImage* bellImage = nil;
 
 @implementation PTYTextView
 
@@ -166,6 +111,11 @@ static NSCursor* textViewCursor =  nil;
     NSImage* image = [[[NSImage alloc] initWithContentsOfFile:ibarFile] autorelease];
 
     textViewCursor = [[NSCursor alloc] initWithImage:image hotSpot:hotspot];
+    NSString* bellFile = [bundle
+                          pathForResource:@"bell"
+                          ofType:@"png"];
+    bellImage = [[NSImage alloc] initWithContentsOfFile:bellFile];
+    [bellImage setFlipped:YES];
 }
 
 + (NSCursor *)textViewCursor
@@ -214,7 +164,7 @@ static NSCursor* textViewCursor =  nil;
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
     minimumContrast_ = [[PreferencePanel sharedInstance] minimumContrast];
     imeOffset = 0;
-
+    resultMap_ = [[NSMutableDictionary alloc] init];
     return self;
 }
 
@@ -266,6 +216,10 @@ static NSCursor* textViewCursor =  nil;
     for (i = 0; i < 256; i++) {
         [colorTable[i] release];
     }
+    [lastFlashUpdate_ release];
+    [resultMap_ release];
+    [findResults_ release];
+    [findString_ release];
     [defaultFGColor release];
     [defaultBGColor release];
     [defaultBoldColor release];
@@ -1043,6 +997,16 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 - (void)drawRect:(NSRect)rect
 {
     [self drawRect:rect to:nil];
+
+    if (flashing_ > 0) {
+        NSRect frame = [self visibleRect];
+        NSSize size = [bellImage size];
+        [bellImage drawAtPoint:NSMakePoint(frame.origin.x + frame.size.width/2 - size.width/2,
+                                           frame.origin.y + frame.size.height/2 - size.height/2)
+                      fromRect:NSMakeRect(0, 0, size.width, size.height)
+                     operation:NSCompositeSourceOver
+                      fraction:flashing_];
+    }
 }
 
 - (void)drawRect:(NSRect)rect to:(NSPoint*)toOrigin
@@ -2809,7 +2773,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (BOOL)findInProgress
 {
-    return _findInProgress;
+    return _findInProgress || searchingForNextResult_;
 }
 
 - (BOOL)growSelectionLeft
@@ -2889,38 +2853,155 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [self refresh];
 }
 
+// Add a match to resultMap_
+- (void)_addResultFromX:(int)resStartX absY:(long long)absStartY toX:(int)resEndX toAbsY:(long long)absEndY
+{
+    int width = [dataSource width];
+    for (long long y = absStartY; y <= absEndY; y++) {
+        NSNumber* key = [NSNumber numberWithLongLong:y];
+        NSMutableData* data = [resultMap_ objectForKey:key];
+        BOOL set = NO;
+        if (!data) {
+            data = [NSMutableData dataWithLength:(width / 8 + 1)];
+            char* b = [data mutableBytes];
+            memset(b, 0, (width / 8) + 1);
+            set = YES;
+        }
+        char* b = [data mutableBytes];
+        for (int i = resStartX; i < MIN(resEndX+1, width); i++) {
+            const int byteIndex = i/8;
+            const int bit = 1 << (i & 7);
+            if (byteIndex < [data length]) {
+                b[byteIndex] |= bit;
+            }
+        }
+        if (set) {
+            [resultMap_ setObject:data forKey:key];
+        }
+    }
+}
+
+// Select the next highlighted result by searching findResults_ for a match just before/after the
+// current selection.
+- (BOOL)_selectNextResultForward:(BOOL)forward withOffset:(int)offset
+{
+    long long width = [dataSource width];
+    long long maxPos = -1;
+    long long minPos = -1;
+    int start;
+    int stride;
+    if (forward) {
+        start = [findResults_ count] - 1;
+        stride = -1;
+        if (absLastFindStartY < 0) {
+            minPos = -1;
+        } else {
+            minPos = lastFindStartX + (long long) absLastFindStartY * width + offset;
+        }
+    } else {
+        start = 0;
+        stride = 1;
+        if (absLastFindStartY < 0) {
+            maxPos = (1 + [dataSource numberOfLines] + [dataSource totalScrollbackOverflow]) * width;
+        } else {
+            maxPos = lastFindStartX + (long long) absLastFindStartY * width - offset;
+        }
+    }
+    BOOL found = NO;
+    BOOL redraw = NO;
+    int i = start;
+    for (int j = 0; j < [findResults_ count]; j++) {
+        SearchResult* r = [findResults_ objectAtIndex:i];
+        long long pos = r->startX + (long long)r->absStartY * width;
+        if (!found &&
+            ((maxPos >= 0 && pos <= maxPos) ||
+             (minPos >= 0 && pos >= minPos))) {
+                found = YES;
+                redraw = YES;
+                startX = r->startX;
+                startY = r->absStartY - [dataSource totalScrollbackOverflow];
+                endX = r->endX;
+                endY = r->absEndY - [dataSource totalScrollbackOverflow];
+        }
+        i += stride;
+    }
+
+    if (!found && !foundResult_ && [findResults_ count] > 0) {
+        // Wrap around
+        SearchResult* r = [findResults_ objectAtIndex:start];
+        found = YES;
+        startX = r->startX;
+        startY = r->absStartY - [dataSource totalScrollbackOverflow];
+        endX = r->endX;
+        endY = r->absEndY - [dataSource totalScrollbackOverflow];
+    }
+
+    if (found) {
+        // Lock scrolling after finding text
+        ++endX; // make it half-open
+        [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+
+        [self _scrollToLine:endY];
+        [self setNeedsDisplay:YES];
+        lastFindStartX = startX;
+        lastFindEndX = endX;
+        absLastFindStartY = (long long)startY + [dataSource totalScrollbackOverflow];
+        absLastFindEndY = (long long)endY + [dataSource totalScrollbackOverflow];
+        foundResult_ = YES;
+    }
+
+    if (!_findInProgress && !foundResult_) {
+        // Clear the selection.
+        startX = startY = endX = endY = -1;
+        absLastFindStartY = absLastFindEndY = -1;
+        redraw = YES;
+    }
+
+    if (redraw) {
+        [self setNeedsDisplay:YES];
+    }
+
+    return found;
+}
+
+// continueFind is called by a timer in the client until it returns NO. It does
+// two things:
+// 1. If _findInProgress is true, search for more results in the dataSource and
+//   call _addREsultfromX:absY:toX:toAbsY: for each.
+// 2. If searchingForNextResult_ is true, highlight the next result before/after
+//   the current selection and flip searchingForNextResult_ to false.
 - (BOOL)continueFind
 {
-    BOOL more;
-    BOOL found;
+    BOOL more = NO;
+    BOOL redraw = NO;
 
-    more = [dataSource continueFindResultAtStartX:&startX
-                                         atStartY:&startY
-                                           atEndX:&endX
-                                           atEndY:&endY
-                                            found:&found
+    assert([self findInProgress]);
+    if (_findInProgress) {
+        // Collect more results.
+        more = [dataSource continueFindAllResults:findResults_
                                         inContext:[dataSource findContext]];
-
-        if (found) {
-            // Lock scrolling after finding text
-            ++endX; // make it half-open
-            [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
-
-            [self _scrollToLine:endY];
-            [self setNeedsDisplay:YES];
-            lastFindStartX = startX;
-            lastFindEndX = endX;
-            absLastFindStartY = (long long)startY + [dataSource totalScrollbackOverflow];
-            absLastFindEndY = (long long)endY + [dataSource totalScrollbackOverflow];
-        }
+    }
     if (!more) {
         _findInProgress = NO;
-        if (!found) {
-            // Clear the selection.
-            startX = startY = endX = endY = -1;
-            absLastFindStartY = absLastFindEndY = -1;
-            [self setNeedsDisplay:YES];
+    }
+    // Add new results to map.
+    for (int i = nextOffset_; i < [findResults_ count]; i++) {
+        SearchResult* r = [findResults_ objectAtIndex:i];
+        [self _addResultFromX:r->startX absY:r->absStartY toX:r->endX toAbsY:r->absEndY];
+        redraw = YES;
+    }
+    nextOffset_ = [findResults_ count];
+
+    // Highlight next result if needed.
+    if (searchingForNextResult_) {
+        if ([self _selectNextResultForward:searchingForward_
+                                withOffset:findOffset_]) {
+            searchingForNextResult_ = NO;
         }
+    }
+
+    if (redraw) {
+        [self setNeedsDisplay:YES];
     }
     return more;
 }
@@ -2936,26 +3017,66 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
              regex:(BOOL)regex
         withOffset:(int)offset
 {
-    if (_findInProgress) {
-        [dataSource cancelFindInContext:[dataSource findContext]];
-    }
+    searchingForward_ = direction;
+    findOffset_ = offset;
+    if ([findString_ isEqualToString:aString] &&
+        findRegex_ == regex &&
+        findIgnoreCase_ == ignoreCase) {
+        foundResult_ = NO;  // select the next item before/after the current selection.
+        searchingForNextResult_ = YES;
+        // I would like to call _selectNextResultForward:withOffset: here, but
+        // it results in drawing errors (drawing is clipped to the findbar for
+        // some reason). So we return YES and continueFind is run from a timer
+        // and everything works fine. The 100ms delay introduced is not
+        // noticable.
+        return YES;
+    } else {
+        // Begin a brand new search.
+        if (_findInProgress) {
+            [dataSource cancelFindInContext:[dataSource findContext]];
+        }
 
-    if (lastFindStartX == -1) {
         lastFindStartX = lastFindEndX = 0;
         absLastFindStartY = absLastFindEndY = (long long)([dataSource numberOfLines] + 1) + [dataSource totalScrollbackOverflow];
+
+        // Search backwards from the end. This is slower than searching
+        // forwards, but most searches are reverse searches begun at the end,
+        // so it will get a result sooner.
+        [dataSource initFindString:aString
+                  forwardDirection:direction
+                      ignoringCase:ignoreCase
+                             regex:regex
+                       startingAtX:0
+                       startingAtY:[dataSource numberOfLines] + 1 + [dataSource totalScrollbackOverflow]
+                        withOffset:0
+                         inContext:[dataSource findContext]];
+        _findInProgress = YES;
+
+        // Reset every bit of state.
+        [self clearHighlights];
+
+        // Initialize state with new values.
+        findRegex_ = regex;
+        findIgnoreCase_ = ignoreCase;
+        findResults_ = [[NSMutableArray alloc] init];
+        searchingForNextResult_ = YES;
+        findString_ = [aString copy];
+
+        [self setNeedsDisplay:YES];
+        return YES;
     }
+}
 
-    [dataSource initFindString:aString
-              forwardDirection:direction
-                  ignoringCase:ignoreCase
-                         regex:regex
-                   startingAtX:direction ? MAX(0, (lastFindEndX - 1)) : lastFindStartX
-                   startingAtY:(direction ? absLastFindEndY : absLastFindStartY) - [dataSource totalScrollbackOverflow]
-                    withOffset:offset
-                     inContext:[dataSource findContext]];
-    _findInProgress = YES;
-
-    return [self continueFind];
+- (void)clearHighlights
+{
+    [findString_ release];
+    findString_ = nil;
+    [findResults_ release];
+    findResults_ = nil;
+    nextOffset_ = 0;
+    foundResult_ = NO;
+    [resultMap_ removeAllObjects];
+    searchingForNextResult_ = NO;
 }
 
 // transparency
@@ -3017,10 +3138,47 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     selectionScrollDirection = 0;
 }
 
+// Called form a timer. Update the alpha value for the bell graphic and request
+// that the vie be redrawn.
+- (void)setBellAlpha
+{
+    NSDate* now = [NSDate date];
+    double interval = [now timeIntervalSinceDate:lastFlashUpdate_];
+    double ratio = interval / 0.016;
+    // Decrement proprotionate to the time between calls (exactly 0.05 if time
+    // was 0.016 sec).
+    flashing_ -= 0.05 * ratio;
+    if (flashing_ < 0) {
+        // All done.
+        flashing_ = 0;
+    } else {
+        // Schedule another decrementation.
+        [lastFlashUpdate_ release];
+        lastFlashUpdate_ = [now retain];
+        [NSTimer scheduledTimerWithTimeInterval:0.016
+                                         target:self
+                                       selector:@selector(setBellAlpha)
+                                       userInfo:nil
+                                        repeats:NO];
+    }
+    [self setNeedsDisplay:YES];
+}
+
 - (void)beginFlash
 {
-    [self addSubview:[[[FlashingView alloc] initWithFrame:[self frame]
-                                               iterations:4] autorelease]];
+    if (flashing_ == 0) {
+        // The timer is not running so start it.
+        [lastFlashUpdate_ release];
+        lastFlashUpdate_ = [[NSDate date] retain];
+        [NSTimer scheduledTimerWithTimeInterval:0.016
+                                         target:self
+                                       selector:@selector(setBellAlpha)
+                                       userInfo:nil
+                                        repeats:NO];
+    }
+    // Turn the bell to opaque and ask to redraw the screen.
+    flashing_ = 1;
+    [self setNeedsDisplay:YES];
 }
 
 - (void)drawBackground:(NSRect)bgRect toPoint:(NSPoint)dest
@@ -3409,12 +3567,14 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 width:(const int)width
            indexRange:(NSRange)indexRange
               bgColor:(NSColor*)bgColor
+              matches:(NSData*)matches
 {
     int numRuns = 0;
     CharRun* currentRun = NULL;
     int nextFreeAdvance = 0;
     int nextFreeCode = 0;
     int nextFreeGlyph = 0;
+    const char* matchBytes = [matches bytes];
 
     NSColor* prevCharColor = NULL;
     RunType prevCharRunType = SINGLE_CODE_POINT_RUN;
@@ -3446,12 +3606,14 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         } else {
             thisCharAntiAlias = nonasciiAntiAlias;
         }
+        BOOL isSelection = NO;
 
         // Figure out the color for this char.
         if (bgselected &&
             theLine[i].alternateForegroundSemantics &&
             theLine[i].foregroundColor == ALTSEM_FG_DEFAULT) {
             // Is a selection.
+            isSelection = YES;
             thisCharColor = [self _dimmedColorFrom:selectedTextColor];
         } else {
             // Not a selection.
@@ -3466,6 +3628,15 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 thisCharColor = [self colorForCode:theLine[i].foregroundColor
                                 alternateSemantics:theLine[i].alternateForegroundSemantics
                                               bold:theLine[i].bold];
+            }
+        }
+
+        if (matches && !isSelection) {
+            // Test if this is a highlighted match from a find.
+            int theIndex = i / 8;
+            int mask = 1 << (i & 7);
+            if (theIndex < [matches length] && matchBytes[theIndex] & mask) {
+                thisCharColor = [NSColor blackColor];
             }
         }
 
@@ -3761,6 +3932,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                    bgselected:(BOOL)bgselected
                      reversed:(BOOL)reversed
                       bgColor:(NSColor*)bgColor
+                      matches:(NSData*)matches
 {
     const int width = [dataSource width];
     unichar codeStorage[width * kMaxParts];
@@ -3777,7 +3949,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                             bgselected:bgselected
                                  width:width
                             indexRange:indexRange
-                               bgColor:bgColor];
+                               bgColor:bgColor
+                               matches:matches];
 
     [self _drawRuns:initialPoint runs:runs numRuns:numRuns];
 }
@@ -3850,6 +4023,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     int bgColor = 0;
     BOOL bgAlt = NO;
     BOOL bgselected = NO;
+    BOOL isMatch = NO;
+    NSData* matches = [resultMap_ objectForKey:[NSNumber numberWithLongLong:line + [dataSource totalScrollbackOverflow]]];
+    const char* matchBytes = [matches bytes];
 
     // Iterate over each character in the line
     while (j <= WIDTH) {
@@ -3874,6 +4050,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             selected = [self _isCharSelectedInRow:line col:j checkOld:NO];
         }
         BOOL double_width = j < WIDTH - 1 && (theLine[j+1].code == DWC_RIGHT);
+        BOOL match = NO;
+        if (matchBytes) {
+            // Test if this char is a highlighted match from a Find.
+            const int theIndex = j / 8;
+            const int bitMask = 1 << (j & 7);
+            match = theIndex < [matches length] && (matchBytes[theIndex] & bitMask);
+        }
 
         if (j != WIDTH && bgstart < 0) {
             // Start new run
@@ -3881,11 +4064,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             bgColor = theLine[j].backgroundColor;
             bgAlt = theLine[j].alternateBackgroundSemantics;
             bgselected = selected;
+            isMatch = match;
         }
 
         if (j != WIDTH &&
             bgselected == selected &&
             theLine[j].backgroundColor == bgColor &&
+            match == isMatch &&
             theLine[j].alternateBackgroundSemantics == bgAlt) {
             // Continue the run
             j += (double_width ? 2 : 1);
@@ -3914,7 +4099,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 // background fill must be drawn. If there is a background image
                 // it will be blended 50/50.
 
-                if (bgselected) {
+                if (isMatch && !bgselected) {
+                    aColor = [NSColor yellowColor];
+                } else if (bgselected) {
                     aColor = selectionColor;
                 } else {
                     if (reversed && bgColor == ALTSEM_BG_DEFAULT && bgAlt) {
@@ -3953,7 +4140,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                         startingAtPoint:textOrigin
                              bgselected:bgselected
                                reversed:reversed
-                                bgColor:aColor];
+                                bgColor:aColor
+                                matches:matches];
             bgstart = -1;
             // Return to top of loop without incrementing j so this
             // character gets the chance to start its own run
@@ -3994,7 +4182,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                             bgselected:NO
                                  width:[dataSource width]
                             indexRange:NSMakeRange(0, 1)
-                               bgColor:nil];
+                               bgColor:nil
+                               matches:nil];
     // If an override color is given, change the runs' colors.
     if (overrideColor) {
         for (int i = 0; i < numRuns; ++i) {
@@ -4134,7 +4323,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                     bgselected:NO
                                          width:[dataSource width]
                                     indexRange:NSMakeRange(i, charsInLine)
-                                       bgColor:nil];
+                                       bgColor:nil
+                                       matches:nil];
             [self _drawRuns:NSMakePoint(x, y) runs:runs numRuns:numRuns];
 
             // Draw an underline.

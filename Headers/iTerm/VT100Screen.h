@@ -37,6 +37,20 @@
 @class PTYTextView;
 @class iTermGrowlDelegate;
 
+// continueFindAllResults populates an array of search results with these
+// objects.
+@interface SearchResult : NSObject
+{
+@public
+    int startX, endX;
+    long long absStartY, absEndY;
+}
+
+@end
+
+// For debugging: log the buffer.
+void DumpBuf(screen_char_t* p, int n);
+
 // Convert a string into screen_char_t. This deals with padding out double-
 // width characters, joining combining marks, and skipping zero-width spaces.
 //
@@ -274,6 +288,11 @@ void StringToScreenChars(NSString *s,
                             atEndY:(int*)endY
                              found:(BOOL*)found
                          inContext:(FindContext*)context;
+
+// Find all matches to to the search in the provided context. Returns YES if it
+// should be called again.
+- (BOOL)continueFindAllResults:(NSMutableArray*)results
+                     inContext:(FindContext*)context;
 - (void)cancelFindInContext:(FindContext*)context;
 
 - (void) dumpDebugLog;

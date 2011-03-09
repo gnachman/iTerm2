@@ -338,13 +338,6 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         antiIdleTimer = nil;
         newOutput = NO;
 
-        // register for some notifications
-		/*
-        [[NSNotificationCenter defaultCenter] addObserver:self
-                                                 selector:@selector(tabViewWillRedraw:)
-                                                     name:@"iTermTabViewWillRedraw"
-                                                   object:nil];
-*/
         return YES;
     } else {
         [SCREEN release];
@@ -2308,14 +2301,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
-// Notification
-- (void)tabViewWillRedraw:(NSNotification *)aNotification
-{
-    if ([aNotification object] == [[[self tab] tabViewItem] tabView]) {
-        [TEXTVIEW setNeedsDisplay:YES];
-    }
-}
-
 - (int)rows
 {
     return [SCREEN height];
@@ -2523,6 +2508,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)takeFocus
 {
     [[[[self tab] realParentWindow] window] makeFirstResponder:TEXTVIEW];
+}
+
+- (void)clearHighlights
+{
+    [TEXTVIEW clearHighlights];
 }
 
 @end

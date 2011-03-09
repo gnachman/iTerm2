@@ -45,6 +45,7 @@
 
 - (void)drawRect:(NSRect)dirtyRect {
     NSRect frame = [self frame];
+    [[NSGraphicsContext currentContext] saveGraphicsState];
     [[NSGraphicsContext currentContext] setShouldAntialias:YES];
     NSBezierPath* path = [[NSBezierPath alloc] init];
     [path setLineWidth:1];
@@ -88,9 +89,6 @@
          controlPoint1:NSMakePoint(x, (ny+y)/2)
          controlPoint2:NSMakePoint((x+nx)/2, ny)];
 
-    //[[NSColor windowBackgroundColor] set];
-    //[[self backgroundColor] set];
-    //[path fill];
     PseudoTerminal* term = [[self window] windowController];
     if ([term isKindOfClass:[PseudoTerminal class]]) {
       [term fillPath:path];
@@ -98,9 +96,7 @@
       [[NSColor windowBackgroundColor] set];
       [path fill];
     }
-    /*[[NSColor darkGrayColor] set];
-    [path stroke];
-     */
+    [[NSGraphicsContext currentContext] restoreGraphicsState];
 }
 
 @end

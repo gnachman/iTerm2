@@ -60,14 +60,20 @@
 // call [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
 - (void)takeFocus;
 
+// Remove highlighted matches
+- (void)clearHighlights;
 @end
 
 
 @interface FindViewController : NSViewController {
     IBOutlet NSSearchField* findBarTextField_;
     IBOutlet NSProgressIndicator* findBarProgressIndicator_;
+    // These pointers are just "prototypes" and do not refer to any actual menu
+    // items.
     IBOutlet NSMenuItem* ignoreCaseMenuItem_;
     IBOutlet NSMenuItem* regexMenuItem_;
+    BOOL ignoreCase_;
+    BOOL regex_;
 
     // Find happens incrementally. This remembers the string to search for.
     NSMutableString* previousFindString_;
