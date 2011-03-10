@@ -2901,7 +2901,7 @@ void DumpBuf(screen_char_t* p, int n) {
         [SESSION setBell:YES];
     }
     if (FLASHBELL) {
-        [display beginFlash];
+        [display beginFlash:FlashBell];
     }
 }
 

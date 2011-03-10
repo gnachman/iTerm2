@@ -220,6 +220,10 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Alpha value of flashing bell graphic.
     double flashing_;
+
+    enum {
+        FlashBell, FlashWrapToTop, FlashWrapToBottom
+    } flashImage_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -403,8 +407,8 @@ typedef struct PTYFontInfo PTYFontInfo;
 // This textview is about to become invisible because another tab is selected.
 - (void)aboutToHide;
 
-// Visual bell
-- (void)beginFlash;
+// Flash a graphic. See the enum for flashImage_.
+- (void)beginFlash:(int)image;
 
 - (void)drawBackground:(NSRect)bgRect;
 - (void)drawBackground:(NSRect)bgRect toPoint:(NSPoint)dest;

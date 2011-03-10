@@ -97,6 +97,8 @@ typedef struct {
 // FIXME: Looks like this is leaked.
 static NSCursor* textViewCursor =  nil;
 static NSImage* bellImage = nil;
+static NSImage* wrapToTopImage = nil;
+static NSImage* wrapToBottomImage = nil;
 
 @implementation PTYTextView
 
@@ -111,11 +113,24 @@ static NSImage* bellImage = nil;
     NSImage* image = [[[NSImage alloc] initWithContentsOfFile:ibarFile] autorelease];
 
     textViewCursor = [[NSCursor alloc] initWithImage:image hotSpot:hotspot];
+
     NSString* bellFile = [bundle
                           pathForResource:@"bell"
                           ofType:@"png"];
     bellImage = [[NSImage alloc] initWithContentsOfFile:bellFile];
     [bellImage setFlipped:YES];
+
+    NSString* wrapToTopFile = [bundle
+                          pathForResource:@"wrap_to_top"
+                          ofType:@"png"];
+    wrapToTopImage = [[NSImage alloc] initWithContentsOfFile:wrapToTopFile];
+    [wrapToTopImage setFlipped:YES];
+
+    NSString* wrapToBottomFile = [bundle
+                               pathForResource:@"wrap_to_bottom"
+                               ofType:@"png"];
+    wrapToBottomImage = [[NSImage alloc] initWithContentsOfFile:wrapToBottomFile];
+    [wrapToBottomImage setFlipped:YES];
 }
 
 + (NSCursor *)textViewCursor
@@ -1000,12 +1015,27 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     if (flashing_ > 0) {
         NSRect frame = [self visibleRect];
-        NSSize size = [bellImage size];
-        [bellImage drawAtPoint:NSMakePoint(frame.origin.x + frame.size.width/2 - size.width/2,
-                                           frame.origin.y + frame.size.height/2 - size.height/2)
-                      fromRect:NSMakeRect(0, 0, size.width, size.height)
-                     operation:NSCompositeSourceOver
-                      fraction:flashing_];
+        NSImage* image;
+        switch (flashImage_) {
+            case FlashBell:
+                image = bellImage;
+                break;
+
+            case FlashWrapToTop:
+                image = wrapToTopImage;
+                break;
+
+            case FlashWrapToBottom:
+                image = wrapToBottomImage;
+                break;
+        }
+
+        NSSize size = [image size];
+        [image drawAtPoint:NSMakePoint(frame.origin.x + frame.size.width/2 - size.width/2,
+                                       frame.origin.y + frame.size.height/2 - size.height/2)
+                  fromRect:NSMakeRect(0, 0, size.width, size.height)
+                 operation:NSCompositeSourceOver
+                  fraction:flashing_];
     }
 }
 
@@ -2934,6 +2964,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         startY = r->absStartY - [dataSource totalScrollbackOverflow];
         endX = r->endX;
         endY = r->absEndY - [dataSource totalScrollbackOverflow];
+        if (forward) {
+            [self beginFlash:FlashWrapToTop];
+        } else {
+            [self beginFlash:FlashWrapToBottom];
+        }
     }
 
     if (found) {
@@ -3150,9 +3185,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     selectionScrollDirection = 0;
 }
 
-// Called form a timer. Update the alpha value for the bell graphic and request
+// Called form a timer. Update the alpha value for the graphic and request
 // that the vie be redrawn.
-- (void)setBellAlpha
+- (void)setFlashAlpha
 {
     NSDate* now = [NSDate date];
     double interval = [now timeIntervalSinceDate:lastFlashUpdate_];
@@ -3169,26 +3204,27 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         lastFlashUpdate_ = [now retain];
         [NSTimer scheduledTimerWithTimeInterval:0.016
                                          target:self
-                                       selector:@selector(setBellAlpha)
+                                       selector:@selector(setFlashAlpha)
                                        userInfo:nil
                                         repeats:NO];
     }
     [self setNeedsDisplay:YES];
 }
 
-- (void)beginFlash
+- (void)beginFlash:(int)image
 {
+    flashImage_ = image;
     if (flashing_ == 0) {
         // The timer is not running so start it.
         [lastFlashUpdate_ release];
         lastFlashUpdate_ = [[NSDate date] retain];
         [NSTimer scheduledTimerWithTimeInterval:0.016
                                          target:self
-                                       selector:@selector(setBellAlpha)
+                                       selector:@selector(setFlashAlpha)
                                        userInfo:nil
                                         repeats:NO];
     }
-    // Turn the bell to opaque and ask to redraw the screen.
+    // Turn the image to opaque and ask to redraw the screen.
     flashing_ = 1;
     [self setNeedsDisplay:YES];
 }
