@@ -29,6 +29,18 @@
 #import <Cocoa/Cocoa.h>
 #import "ScreenChar.h"
 
+// When receiving search results, you'll get an array of this class. Positions
+// can be converted to x,y coordinates with -convertPosition:withWidth:toX:toY.
+// length gives the number of screen_char_t elements matching the search (which
+// may differ from the number of code points in the search string because of
+// the vagueries of unicode, or more obviously, for regex searches).
+@interface ResultRange : NSObject {
+@public
+    int position;
+    int length;
+}
+@end
+
 typedef struct FindContext {
     int absBlockNum;
     NSString* substring;
@@ -37,8 +49,8 @@ typedef struct FindContext {
     int offset;
     int stopAt;
     enum { Searching, Matched, NotFound } status;
-    int resultPosition;
     int matchLength;
+    NSMutableArray* results;  // used for multiple results
     BOOL hasWrapped;   // for client use. Not read or written by LineBuffer.
 } FindContext;
 
@@ -230,6 +242,7 @@ typedef struct FindContext {
 #define FindOptCaseInsensitive (1 << 0)
 #define FindOptBackwards       (1 << 1)
 #define FindOptRegex           (1 << 2)
+#define FindMultipleResults    (1 << 3)
 - (void)initFind:(NSString*)substring startingAt:(int)start options:(int)options withContext:(FindContext*)context;
 - (void)releaseFind:(FindContext*)context;
 - (void)findSubstring:(FindContext*)context stopAt:(int)stopAt;

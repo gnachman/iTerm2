@@ -291,7 +291,8 @@ const int kMaxResultContextWords = 4;
                startingAtX:x_
                startingAtY:y_
                 withOffset:1
-                 inContext:&findContext_];
+                 inContext:&findContext_
+           multipleResults:NO];
 
     [self _doPopulateMore];
 }
@@ -551,7 +552,8 @@ const int kMaxResultContextWords = 4;
                        startingAtX:x_
                        startingAtY:y_
                         withOffset:1
-                         inContext:&findContext_];
+                         inContext:&findContext_
+                   multipleResults:NO];
         } else {
             // All done.
             AcLog(@"BREAK: Didn't find anything");

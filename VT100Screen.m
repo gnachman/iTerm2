@@ -845,7 +845,7 @@ static char* FormatCont(int c)
 
     int selectionStartPosition = -1;
     int selectionEndPosition = -1;
-    BOOL hasSelection = [display selectionStartX] != -1;
+    BOOL hasSelection = display && [display selectionStartX] != -1;
     [self _appendScreenToScrollback];
     if (hasSelection) {
         [linebuffer convertCoordinatesAtX:[display selectionStartX]
@@ -3111,6 +3111,7 @@ void DumpBuf(screen_char_t* p, int n) {
            startingAtY:(int)y
             withOffset:(int)offset
              inContext:(FindContext*)context
+       multipleResults:(BOOL)multipleResults
 {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
@@ -3143,6 +3144,9 @@ void DumpBuf(screen_char_t* p, int n) {
     if (regex) {
         opts |= FindOptRegex;
     }
+    if (multipleResults) {
+        opts |= FindMultipleResults;
+    }
     [linebuffer initFind:aString startingAt:startPos options:opts withContext:context];
     context->hasWrapped = NO;
     [self _popScrollbackLines:linesPushed];
@@ -3153,14 +3157,11 @@ void DumpBuf(screen_char_t* p, int n) {
     [linebuffer releaseFind:context];
 }
 
-- (BOOL)_continueFindResultAtStartX:(int*)startX
-                           atStartY:(int*)startY
-                             atEndX:(int*)endX
-                             atEndY:(int*)endY
-                              found:(BOOL*)found
-                          inContext:(FindContext*)context
-                            maxTime:(float)maxTime
+- (BOOL)_continueFindResultsInContext:(FindContext*)context
+                              maxTime:(float)maxTime
+                              toArray:(NSMutableArray*)results
 {
+    int startY, endY;
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
     linesPushed = [self _appendScreenToScrollback];
@@ -3180,8 +3181,9 @@ void DumpBuf(screen_char_t* p, int n) {
     int ms_diff = 0;
     do {
         if (context->status == Searching) {
-            // NSLog(@"VT100Screen: Search next block");
+            //NSDate* begin = [NSDate date];
             [linebuffer findSubstring:context stopAt:stopAt];
+            //NSLog(@"One call to linebuffer findSubstring took %f seconds", (float)[begin timeIntervalSinceNow]);
         }
 
         // Handle the current state
@@ -3190,27 +3192,37 @@ void DumpBuf(screen_char_t* p, int n) {
             case Matched:
                 // NSLog(@"matched");
                 // Found a match in the text.
-                isOk = [linebuffer convertPosition:context->resultPosition
-                                         withWidth:WIDTH
-                                               toX:startX
-                                               toY:startY];
-                NSAssert(isOk, @"Couldn't convert start position");
-
-                isOk = [linebuffer convertPosition:context->resultPosition + context->matchLength - 1
-                                         withWidth:WIDTH
-                                               toX:endX
-                                               toY:endY];
-                NSAssert(isOk, @"Couldn't convert end position");
-                [linebuffer releaseFind:context];
-                keepSearching = NO;
-                *found = YES;
+                for (ResultRange* rr in context->results) {
+                    SearchResult* result = [[SearchResult alloc] init];
+                    isOk = [linebuffer convertPosition:rr->position
+                                             withWidth:WIDTH
+                                                   toX:&result->startX
+                                                   toY:&startY];
+                    assert(isOk);
+                    result->absStartY = startY + [self totalScrollbackOverflow];
+                    
+                    isOk = [linebuffer convertPosition:rr->position + rr->length - 1
+                                             withWidth:WIDTH
+                                                   toX:&result->endX
+                                                   toY:&endY];
+                    assert(isOk);
+                    result->absEndY = endY + [self totalScrollbackOverflow];
+                    [results addObject:result];
+                    if (!(context->options & FindMultipleResults)) {
+                        assert([context->results count] == 1);
+                        [linebuffer releaseFind:context];
+                        keepSearching = NO;
+                    } else {
+                        keepSearching = YES;
+                    }
+                }
+                [context->results removeAllObjects];
                 break;
 
             case Searching:
                 // NSLog(@"searching");
                 // No result yet but keep looking
                 keepSearching = YES;
-                *found = NO;
                 break;
 
             case NotFound:
@@ -3232,11 +3244,10 @@ void DumpBuf(screen_char_t* p, int n) {
                     context->hasWrapped = YES;
                     keepSearching = YES;
                 }
-                *found = NO;
                 break;
 
             default:
-                NSAssert(0, @"Bogus status");
+                assert(false);  // Bogus status
         }
 
         struct timeval endtime;
@@ -3244,6 +3255,7 @@ void DumpBuf(screen_char_t* p, int n) {
             gettimeofday(&endtime, NULL);
             ms_diff = (endtime.tv_sec - begintime.tv_sec) * 1000 +
             (endtime.tv_usec - begintime.tv_usec) / 1000;
+            context->status = Searching;
         }
         ++iterations;
     } while (keepSearching && ms_diff < maxTime*1000);
@@ -3253,54 +3265,48 @@ void DumpBuf(screen_char_t* p, int n) {
     return keepSearching;
 }
 
+- (BOOL)_continueFindResultAtStartX:(int*)startX
+                           atStartY:(int*)startY
+                             atEndX:(int*)endX
+                             atEndY:(int*)endY
+                              found:(BOOL*)found
+                          inContext:(FindContext*)context
+                            maxTime:(float)maxTime
+{
+    NSMutableArray* myArray = [NSMutableArray arrayWithCapacity:1];
+    BOOL rc = [self _continueFindResultsInContext:context
+                                          maxTime:maxTime
+                                          toArray:myArray];
+    if ([myArray count] > 0) {
+        SearchResult* result = [myArray objectAtIndex:0];
+        *startX = result->startX;
+        *startY = result->absStartY - [self totalScrollbackOverflow];
+        *endX = result->endX;
+        *endY = result->absEndY;
+        *found = YES;
+    } else {
+        *found = NO;
+    }
+    return rc;
+}
+
 - (BOOL)continueFindAllResults:(NSMutableArray*)results
                      inContext:(FindContext*)context
 {
-    FindContext contextCopy = *context;
-    [contextCopy.substring retain];
     context->hasWrapped = YES;
 
     float MAX_TIME = 0.1;
     NSDate* start = [NSDate date];
     BOOL keepSearching;
-    BOOL found;
+    context->hasWrapped = YES;
     do {
-        SearchResult* r = [[[SearchResult alloc] init] autorelease];
-        int startY, endY;
-        keepSearching = [self _continueFindResultAtStartX:&r->startX
-                                                 atStartY:&startY
-                                                   atEndX:&r->endX
-                                                   atEndY:&endY
-                                                    found:&found
-                                                inContext:context
-                                                  maxTime:0.1];
-        if (found) {
-            r->absStartY = startY + [self totalScrollbackOverflow];
-            r->absEndY = endY + [self totalScrollbackOverflow];
-            //NSLog(@"VT100Screen: Found match at %d,%d", r->startX, (int)r->absStartY);
-            [results addObject:r];
-
-            BOOL forward = (contextCopy.options & FindOptBackwards) == 0;
-            if (r->startX != 0 || r->absStartY - [self totalScrollbackOverflow] != 0) {
-                [self initFindString:contextCopy.substring
-                    forwardDirection:forward
-                        ignoringCase:(contextCopy.options & FindOptCaseInsensitive)
-                               regex:(contextCopy.options & FindOptRegex)
-                         startingAtX:r->startX
-                         startingAtY:r->absStartY - [self totalScrollbackOverflow]
-                          withOffset:1
-                           inContext:context];
-            } else {
-                found = NO;
-                keepSearching = NO;
-            }
-            context->hasWrapped = YES;
-        }
-    } while ((found || keepSearching) &&
+        keepSearching = [self _continueFindResultsInContext:context
+                                              maxTime:0.1
+                                              toArray:results];
+    } while (keepSearching &&
              [[NSDate date] timeIntervalSinceDate:start] < MAX_TIME);
 
-    [contextCopy.substring release];
-    return found || keepSearching;
+    return keepSearching;
 }
 
 - (BOOL)continueFindResultAtStartX:(int*)startX

@@ -279,7 +279,6 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (void)deleteForward:(id)sender;
 - (void)textViewDidChangeSelection: (NSNotification *)aNotification;
 - (void)textViewResized: (NSNotification *)aNotification;
-- (void)tabViewWillRedraw: (NSNotification *)aNotification;
 
 
 // misc

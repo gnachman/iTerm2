@@ -68,6 +68,21 @@ NSString* CharToStr(unichar code, BOOL isComplex)
     }
 }
 
+int ExpandScreenChar(screen_char_t* sct, unichar* dest) {
+    NSString* value = nil;
+    if (sct->code == UNKNOWN) {
+        value = ReplacementString();
+    } else if (sct->complexChar) {
+        value = ComplexCharToStr(sct->code);
+    } else {
+        *dest = sct->code;
+        return 1;
+    }
+    assert(value);
+    [value getCharacters:dest];
+    return [value length];
+}
+
 UTF32Char CharToLongChar(unichar code, BOOL isComplex)
 {
     NSString* aString = CharToStr(code, isComplex);

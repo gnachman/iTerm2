@@ -281,7 +281,9 @@ void StringToScreenChars(NSString *s,
            startingAtX:(int)x
            startingAtY:(int)y
             withOffset:(int)offsetof
-             inContext:(FindContext*)context;
+             inContext:(FindContext*)context
+       multipleResults:(BOOL)multipleResults;
+
 - (BOOL)continueFindResultAtStartX:(int*)startX
                           atStartY:(int*)startY
                             atEndX:(int*)endX

@@ -205,16 +205,16 @@
 - (void)searchNext
 {
     [[FindCommandHandler sharedInstance] setSearchString:[findBarTextField_ stringValue]];
-    [[FindCommandHandler sharedInstance] setIgnoresCase:[ignoreCaseMenuItem_ state]];
-    [[FindCommandHandler sharedInstance] setRegex:[regexMenuItem_ state]];
+    [[FindCommandHandler sharedInstance] setIgnoresCase:ignoreCase_];
+    [[FindCommandHandler sharedInstance] setRegex:regex_];
     [self _newSearch:[[FindCommandHandler sharedInstance] findNext]];
 }
 
 - (void)searchPrevious;
 {
     [[FindCommandHandler sharedInstance] setSearchString:[findBarTextField_ stringValue]];
-    [[FindCommandHandler sharedInstance] setIgnoresCase:[ignoreCaseMenuItem_ state]];
-    [[FindCommandHandler sharedInstance] setRegex:[regexMenuItem_ state]];
+    [[FindCommandHandler sharedInstance] setIgnoresCase:ignoreCase_];
+    [[FindCommandHandler sharedInstance] setRegex:regex_];
     [self _newSearch:[[FindCommandHandler sharedInstance] findPreviousWithOffset:1]];
 }
 

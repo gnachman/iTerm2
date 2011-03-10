@@ -3049,7 +3049,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                        startingAtX:0
                        startingAtY:[dataSource numberOfLines] + 1 + [dataSource totalScrollbackOverflow]
                         withOffset:0
-                         inContext:[dataSource findContext]];
+                         inContext:[dataSource findContext]
+                   multipleResults:YES];
         _findInProgress = YES;
 
         // Reset every bit of state.

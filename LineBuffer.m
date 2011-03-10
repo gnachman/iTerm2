@@ -30,6 +30,9 @@
 #import <LineBuffer.h>
 #import "RegexKitLite/RegexKitLite.h"
 
+@implementation ResultRange
+@end
+
 @implementation LineBlock
 
 - (LineBlock*) initWithRawBufferSize: (int) size
@@ -562,9 +565,7 @@ static int Search(NSString* needle,
         if (c == DWC_RIGHT) {
             ++delta;
         } else {
-            NSString* charStr = ScreenCharToStr(&rawline[i]);
-            [charStr getCharacters:charHaystack + o];
-            const int len = [charStr length];
+            const int len = ExpandScreenChar(&rawline[i], charHaystack + o);
             ++delta;
             for (int j = o; j < o + len; ++j) {
                 deltas[j] = --delta;
@@ -703,7 +704,13 @@ static int Search(NSString* needle,
     return result;
 }
 
-- (int) _findInRawLine:(int) entry needle:(NSString*)needle options: (int) options skip: (int) skip length: (int) raw_line_length resultLength: (int*) resultLength
+- (void) _findInRawLine:(int) entry
+                 needle:(NSString*)needle
+                options:(int) options
+                   skip:(int) skip
+                 length:(int) raw_line_length
+        multipleResults:(BOOL)multipleResults
+                results:(NSMutableArray*)results
 {
     screen_char_t* rawline = raw_buffer + [self _lineRawOffset:entry];
     if (skip > raw_line_length) {
@@ -760,14 +767,34 @@ static int Search(NSString* needle,
             tempPosition =  Search(needle, rawline, raw_line_length, 0, limit,
                                    options, &tempResultLength);
             limit = tempPosition + tempResultLength - 1;
-        } while (tempPosition != -1 && tempPosition > skip);
-        if (tempPosition != -1) {
-            *resultLength = tempResultLength;
-        }
-        return tempPosition;
+            if (tempPosition != -1 && tempPosition <= skip) {
+                ResultRange* r = [[[ResultRange alloc] init] autorelease];
+                r->position = tempPosition;
+                r->length = tempResultLength;
+                [results addObject:r];
+            }
+        } while (tempPosition != -1 && (multipleResults || tempPosition > skip));
     } else {
-        return Search(needle, rawline, raw_line_length, skip, raw_line_length,
-                      options, resultLength);
+        // Search forward
+        // TODO: test this
+        int tempResultLength;
+        int tempPosition;
+        while (skip < raw_line_length) {
+            tempPosition = Search(needle, rawline, raw_line_length, skip, raw_line_length,
+                                        options, &tempResultLength);
+            if (tempPosition != -1) {
+                ResultRange* r = [[[ResultRange alloc] init] autorelease];
+                r->position = tempPosition;
+                r->length = tempResultLength;
+                [results addObject:r];
+                if (!multipleResults) {
+                    break;
+                }
+            } else {
+                break;
+            }
+            ++skip;
+        }
     }
 }
 
@@ -795,7 +822,11 @@ static int Search(NSString* needle,
     return cll_entries - 1;
 }
 
-- (int) findSubstring: (NSString*) substring options: (int) options atOffset: (int) offset resultLength: (int*) resultLength
+- (void) findSubstring: (NSString*) substring
+               options: (int) options
+              atOffset: (int) offset
+               results: (NSMutableArray*) results
+       multipleResults:(BOOL)multipleResults
 {
     if (offset == -1) {
         offset = [self rawSpaceUsed] - 1;
@@ -818,18 +849,23 @@ static int Search(NSString* needle,
         if (skipped < 0) {
             skipped = 0;
         }
-        int pos = [self _findInRawLine:entry
-                                needle:substring
-                               options:options
-                                  skip: skipped
-                                length: [self _lineLength: entry]
-                          resultLength: resultLength];
-        if (pos != -1) {
-            return pos + line_raw_offset;
+        NSMutableArray* newResults = [NSMutableArray arrayWithCapacity:1];
+        [self _findInRawLine:entry
+                      needle:substring
+                     options:options
+                        skip:skipped
+                      length:[self _lineLength: entry]
+             multipleResults:multipleResults
+                     results:newResults];
+        for (ResultRange* r in newResults) {
+            r->position += line_raw_offset;
+            [results addObject:r];
+        }
+        if ([newResults count] && !multipleResults) {
+            return;
         }
         entry += dir;
     }
-    return -1;
 }
 
 - (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y
@@ -1278,7 +1314,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 {
     context->substring = [[NSString alloc] initWithString:substring];
     context->options = options;
-    context->resultPosition = -1;
     if (options & FindOptBackwards) {
         context->dir = -1;
     } else {
@@ -1290,6 +1325,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     } else {
         context->status = NotFound;
     }
+    context->results = [[NSMutableArray alloc] init];
 }
 
 - (void)releaseFind:(FindContext*)context
@@ -1298,6 +1334,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         [context->substring release];
         context->substring = nil;
     }
+    [context->results release];
 }
 
 - (void)findSubstring:(FindContext*)context stopAt:(int)stopAt
@@ -1346,25 +1383,32 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     // NSLog(@"search block %d starting at offset %d", context->absBlockNum - num_dropped_blocks, context->offset);
 
-    int position = [block findSubstring:context->substring
-                                options:context->options
-                               atOffset:context->offset
-                           resultLength:&context->matchLength];
-    if (position >= 0) {
-        // NSLog(@"match at position %d", position);
-        position += [self _blockPosition:context->absBlockNum - num_dropped_blocks];
-        if (context->dir * (position - stopAt) > 0 ||
-            context->dir * (position + context->matchLength - stopAt) > 0) {
-            context->status = NotFound;
-            return;
+    [block findSubstring:context->substring
+                 options:context->options
+                atOffset:context->offset
+                 results:context->results
+         multipleResults:((context->options & FindMultipleResults) != 0)];
+    NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context->results count]];
+    BOOL haveOutOfRangeResults = NO;
+    for (ResultRange* range in context->results) {
+        range->position += [self _blockPosition:context->absBlockNum - num_dropped_blocks];
+        if (context->dir * (range->position - stopAt) > 0 ||
+            context->dir * (range->position + context->matchLength - stopAt) > 0) {
+            // result was outside the range to be searched
+            haveOutOfRangeResults = YES;
+        } else {
+            // Found a good result.
+            context->status = Matched;
+            [filtered addObject:range];
         }
-
-        context->status = Matched;
-        context->resultPosition = position;
-        return;
-    } else {
-        // NSLog(@"no match");
     }
+    [context->results release];
+    context->results = [filtered retain];
+    if ([filtered count] == 0 && haveOutOfRangeResults) {
+        context->status = NotFound;
+    }
+
+    // Prepare to continue searching next block.
     if (context->dir < 0) {
         context->offset = -1;
     } else {
@@ -1389,6 +1433,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             return result;
         }
     }
+    NSLog(@"Fail - ran out of blocks");
     return NO;
 }
 

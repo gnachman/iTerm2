@@ -188,7 +188,8 @@ const double GLOBAL_SEARCH_MARGIN = 10;
                        startingAtX:0
                        startingAtY:(long long)([theScreen_ numberOfLines] + 1) + [theScreen_ totalScrollbackOverflow]
                         withOffset:0  // 1?
-                         inContext:&findContext_];
+                         inContext:&findContext_
+                   multipleResults:NO];
         matchLocations_ = [[NSMutableSet alloc] init];
         findContext_.hasWrapped = YES;
     }
@@ -277,7 +278,8 @@ const double GLOBAL_SEARCH_MARGIN = 10;
                            startingAtX:startX
                            startingAtY:startY
                             withOffset:1
-                             inContext:&findContext_];
+                             inContext:&findContext_
+                       multipleResults:NO];
             findContext_.hasWrapped = YES;
         }
         now = [NSDate date];

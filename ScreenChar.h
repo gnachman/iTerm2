@@ -184,6 +184,10 @@ NSString* ComplexCharToStr(int key);
 NSString* ScreenCharToStr(screen_char_t* sct);
 NSString* CharToStr(unichar code, BOOL isComplex);
 
+// This is a faster version of ScreenCharToStr if what you want is an array of
+// unichars. Returns the number of code points appended to dest.
+int ExpandScreenChar(screen_char_t* sct, unichar* dest);
+
 // Convert a code into a utf-32 char.
 UTF32Char CharToLongChar(unichar code, BOOL isComplex);
 
