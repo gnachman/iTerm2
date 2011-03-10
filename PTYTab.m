@@ -1377,9 +1377,8 @@ static NSString* FormatRect(NSRect r) {
     }
     PtyLog(@"PTYTab fitSessionToCurrentViewSize - Given a scrollview size of %fx%f, can fit %dx%d chars", size.width, size.height, width, height);
 
-    [[aSession SCREEN] resizeWidth:width height:height];
-    PtyLog(@"fitSessionToCurrentViewSize -  calling shell setWidth:%d height:%d", width, height);
-    [[aSession SHELL] setWidth:width height:height];
+    [aSession setWidth:width height:height];
+    PtyLog(@"fitSessionToCurrentViewSize -  calling setWidth:%d height:%d", width, height);
     [[aSession SCROLLVIEW] setLineScroll:[[aSession TEXTVIEW] lineHeight]];
     [[aSession SCROLLVIEW] setPageScroll:2*[[aSession TEXTVIEW] lineHeight]];
     if ([aSession backgroundImagePath]) {

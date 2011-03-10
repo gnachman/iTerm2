@@ -3307,9 +3307,7 @@ NSString *sessionsKey = @"sessions";
         }
 
         PtyLog(@"safelySetSessionSize - set to %dx%d", width, height);
-        [[aSession SCREEN] resizeWidth:width height:height];
-        PtyLog(@"safelySetSessionSize -  calling shell setWidth:%d height:%d", width, height);
-        [[aSession SHELL] setWidth:width  height:height];
+        [aSession setWidth:width height:height];
         [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
         [[aSession SCROLLVIEW] setLineScroll:[[aSession TEXTVIEW] lineHeight]];
         [[aSession SCROLLVIEW] setPageScroll:2*[[aSession TEXTVIEW] lineHeight]];

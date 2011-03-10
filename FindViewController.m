@@ -32,9 +32,9 @@
 
 @implementation FindViewController
 
-- (id)init
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
-    self = [super init];
+    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
         previousFindString_ = [[NSMutableString alloc] init];
         [findBarTextField_ setDelegate:self];

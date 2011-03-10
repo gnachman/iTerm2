@@ -96,6 +96,7 @@
       [[NSColor windowBackgroundColor] set];
       [path fill];
     }
+    [path release];
     [[NSGraphicsContext currentContext] restoreGraphicsState];
 }
 

@@ -3208,6 +3208,7 @@ void DumpBuf(screen_char_t* p, int n) {
                     assert(isOk);
                     result->absEndY = endY + [self totalScrollbackOverflow];
                     [results addObject:result];
+                    [result release];
                     if (!(context->options & FindMultipleResults)) {
                         assert([context->results count] == 1);
                         [linebuffer releaseFind:context];

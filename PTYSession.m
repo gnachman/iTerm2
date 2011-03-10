@@ -389,6 +389,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 {
     [SCREEN resizeWidth:width height:height];
     [SHELL setWidth:width height:height];
+    [TEXTVIEW clearHighlights];
 }
 
 - (void)setNewOutput:(BOOL)value
@@ -1349,9 +1350,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     h = (int)(([[SCROLLVIEW contentView] frame].size.height) / [TEXTVIEW lineHeight]);
     //NSLog(@"%s: w = %d; h = %d; old w = %d; old h = %d", __PRETTY_FUNCTION__, w, h, [SCREEN width], [SCREEN height]);
 
-    [SCREEN resizeWidth:w height:h];
-    [SHELL setWidth:w  height:h];
-
+    [self setWidth:w height:h];
 }
 
 - (BOOL) bell
