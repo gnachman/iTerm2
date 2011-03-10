@@ -2941,7 +2941,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         ++endX; // make it half-open
         [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 
-        [self _scrollToLine:endY];
+        [self _scrollToCenterLine:endY];
         [self setNeedsDisplay:YES];
         lastFindStartX = startX;
         lastFindEndX = endX;
@@ -2989,6 +2989,17 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         SearchResult* r = [findResults_ objectAtIndex:i];
         [self _addResultFromX:r->startX absY:r->absStartY toX:r->endX toAbsY:r->absEndY];
         redraw = YES;
+    }
+    // DEBUGGING
+    for (int i = 0; i < [findResults_ count] - 1; i++) {
+        SearchResult* a = [findResults_ objectAtIndex:i];
+        SearchResult* b = [findResults_ objectAtIndex:i+1];
+        if (!(a->startX != b->startX ||
+              a->endX != b->endX ||
+              a->absStartY != b->absStartY ||
+              a->absEndY != b->absEndY)) {
+            NSLog(@"BUG");
+        }
     }
     nextOffset_ = [findResults_ count];
 
@@ -3043,7 +3054,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         // forwards, but most searches are reverse searches begun at the end,
         // so it will get a result sooner.
         [dataSource initFindString:aString
-                  forwardDirection:direction
+                  forwardDirection:NO
                       ignoringCase:ignoreCase
                              regex:regex
                        startingAtX:0
@@ -4691,14 +4702,35 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     oldCursorY = yStart;
 }
 
-- (void) _scrollToLine:(int)line
+- (void)_scrollToLine:(int)line
 {
     NSRect aFrame;
     aFrame.origin.x = 0;
     aFrame.origin.y = line * lineHeight;
     aFrame.size.width = [self frame].size.width;
     aFrame.size.height = lineHeight;
-    [self scrollRectToVisible: aFrame];
+    [self scrollRectToVisible:aFrame];
+}
+
+- (void)_scrollToCenterLine:(int)line
+{
+    NSRect visible = [self visibleRect];
+    int visibleLines = (visible.size.height - VMARGIN*2) / lineHeight;
+    int lineMargin = (visibleLines - 1) / 2;
+    float margin = lineMargin * lineHeight;
+
+    NSRect aFrame;
+    aFrame.origin.x = 0;
+    aFrame.origin.y = MAX(0, line * lineHeight - margin);
+    aFrame.size.width = [self frame].size.width;
+    aFrame.size.height = margin * 2 + lineHeight;
+    float end = aFrame.origin.y + aFrame.size.height;
+    NSRect total = [self frame];
+    if (end > total.size.height) {
+        float err = end - total.size.height;
+        aFrame.size.height -= err;
+    }
+    [self scrollRectToVisible:aFrame];
 }
 
 - (NSString*)_getCharacterAtX:(int)x Y:(int)y

@@ -435,6 +435,7 @@ typedef enum {
 - (unsigned int) _checkForSupportedDragTypes:(id <NSDraggingInfo>) sender;
 
 - (void) _scrollToLine:(int)line;
+- (void)_scrollToCenterLine:(int)line;
 - (BOOL)shouldSelectCharForWord:(unichar)ch
                       isComplex:(BOOL)compled
                 selectWordChars:(BOOL)selectWordChars;
