@@ -88,7 +88,7 @@
     NSSize textFieldSmallSize_;
 }
 
-- (id)init;
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil;
 - (void)dealloc;
 - (void)close;
 - (void)open;

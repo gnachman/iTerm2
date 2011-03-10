@@ -1015,7 +1015,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     if (flashing_ > 0) {
         NSRect frame = [self visibleRect];
-        NSImage* image;
+        NSImage* image = nil;
         switch (flashImage_) {
             case FlashBell:
                 image = bellImage;
