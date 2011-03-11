@@ -174,10 +174,8 @@ static NSImage* wrapToBottomImage = nil;
                                                  name:@"iTermRefreshTerminal"
                                                object:nil];
 
-    colorInvertedCursor = [[PreferencePanel sharedInstance] colorInvertedCursor];
     advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
-    minimumContrast_ = [[PreferencePanel sharedInstance] minimumContrast];
     imeOffset = 0;
     resultMap_ = [[NSMutableDictionary alloc] init];
     return self;
@@ -301,6 +299,11 @@ static NSImage* wrapToBottomImage = nil;
 - (void)setBlinkingCursor:(BOOL)bFlag
 {
     blinkingCursor = bFlag;
+}
+
+- (void)setCursorType:(ITermCursorType)value
+{
+    cursorType_ = value;
 }
 
 - (NSDictionary*)markedTextAttributes
@@ -3127,6 +3130,16 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [self setNeedsDisplay:YES];
 }
 
+- (void)setSmartCursorColor:(BOOL)value
+{
+    colorInvertedCursor = value;
+}
+
+- (void)setMinimumContrast:(float)value
+{
+    minimumContrast_ = value;
+}
+
 - (void)setDimmingAmount:(float)value
 {
     dimmingAmount_ = value;
@@ -4613,7 +4626,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             }
 
             BOOL frameOnly;
-            switch ([[PreferencePanel sharedInstance] cursorType]) {
+            switch (cursorType_) {
                 case CURSOR_BOX:
                     // draw the box
                     if ([[self window] isKeyWindow] &&
@@ -5414,12 +5427,10 @@ static bool IsUrlChar(NSString* str)
     }
 }
 
-- (void) _settingsChanged:(NSNotification *)notification
+- (void)_settingsChanged:(NSNotification *)notification
 {
-    colorInvertedCursor = [[PreferencePanel sharedInstance] colorInvertedCursor];
     advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
-    minimumContrast_ = [[PreferencePanel sharedInstance] minimumContrast];
     [self setNeedsDisplay:YES];
 }
 

@@ -84,6 +84,8 @@
 #define KEY_ANSI_14_COLOR          @"Ansi 14 Color"
 #define KEY_ANSI_15_COLOR          @"Ansi 15 Color"
 #define KEYTEMPLATE_ANSI_X_COLOR          @"Ansi %d Color"
+#define KEY_SMART_CURSOR_COLOR     @"Smart Cursor Color"
+#define KEY_MINIMUM_CONTRAST      @"Minimum Contrast"
 
 // Display
 #define KEY_ROWS                   @"Rows"
@@ -97,6 +99,7 @@
 #define KEY_HORIZONTAL_SPACING     @"Horizontal Spacing"
 #define KEY_VERTICAL_SPACING       @"Vertical Spacing"
 #define KEY_BLINKING_CURSOR        @"Blinking Cursor"
+#define KEY_CURSOR_TYPE            @"Cursor Type"
 #define KEY_DISABLE_BOLD           @"Disable Bold"  // DEPRECATED
 #define KEY_USE_BOLD_FONT          @"Use Bold Font"
 #define KEY_USE_BRIGHT_BOLD        @"Use Bright Bold"

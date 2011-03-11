@@ -29,6 +29,7 @@
 #import <Cocoa/Cocoa.h>
 #import <iTerm/iTerm.h>
 #import "ScreenChar.h"
+#import "PreferencePanel.h"
 
 #include <sys/time.h>
 #define PRETTY_BOLD
@@ -224,6 +225,8 @@ typedef struct PTYFontInfo PTYFontInfo;
     enum {
         FlashBell, FlashWrapToTop, FlashWrapToBottom
     } flashImage_;
+
+    ITermCursorType cursorType_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -284,6 +287,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)setUseBrightBold:(BOOL)flag;
 - (BOOL)blinkingCursor;
 - (void)setBlinkingCursor:(BOOL)bFlag;
+- (void)setCursorType:(ITermCursorType)value;
 
 //color stuff
 - (NSColor*)defaultFGColor;
@@ -337,6 +341,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (float)transparency;
 - (void)setTransparency:(float)fVal;
 - (BOOL)useTransparency;
+
+- (void)setSmartCursorColor:(BOOL)value;
+- (void)setMinimumContrast:(float)value;
 
 // Dim all colors towards gray
 - (void)setDimmingAmount:(float)value;

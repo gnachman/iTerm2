@@ -367,6 +367,8 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (void)setBoldColor:(NSColor*)color;
 - (NSColor *)cursorColor;
 - (void)setCursorColor:(NSColor*)color;
+- (void)setSmartCursorColor:(BOOL)value;
+- (void)setMinimumContrast:(float)value;
 - (NSColor *)selectedTextColor;
 - (void)setSelectedTextColor: (NSColor *)aColor;
 - (NSColor *)cursorTextColor;

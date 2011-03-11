@@ -1430,6 +1430,22 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [self setBoldColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_BOLD_COLOR]]];
     [self setCursorColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_CURSOR_COLOR]]];
     [self setCursorTextColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_CURSOR_TEXT_COLOR]]];
+    BOOL scc;
+    if ([aDict objectForKey:KEY_SMART_CURSOR_COLOR]) {
+        scc = [[aDict objectForKey:KEY_SMART_CURSOR_COLOR] boolValue];
+    } else {
+        scc = [[PreferencePanel sharedInstance] legacySmartCursorColor];
+    }
+    [self setSmartCursorColor:scc];
+
+    float mc;
+    if ([aDict objectForKey:KEY_MINIMUM_CONTRAST]) {
+        mc = [[aDict objectForKey:KEY_MINIMUM_CONTRAST] floatValue];
+    } else {
+        mc = [[PreferencePanel sharedInstance] legacyMinimumContrast];
+    }
+    [self setMinimumContrast:mc];
+
     for (i = 0; i < 8; i++) {
         colorTable[0][i] = [ITAddressBookMgr decodeColor:[aDict objectForKey:[NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i]]];
         colorTable[1][i] = [ITAddressBookMgr decodeColor:[aDict objectForKey:[NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i + 8]]];
@@ -1480,6 +1496,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [SCREEN setGrowlFlag:[[aDict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue]];
     [SCREEN setBlinkingCursor:[[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];
     [TEXTVIEW setBlinkingCursor:[[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];
+    [TEXTVIEW setCursorType:([aDict objectForKey:KEY_CURSOR_TYPE] ? [[aDict objectForKey:KEY_CURSOR_TYPE] intValue] : [[PreferencePanel sharedInstance] legacyCursorType])];
+
     PTYTab* currentTab = [[[self tab] parentWindow] currentTab];
     if (currentTab == nil || currentTab == [self tab]) {
         [[self tab] recheckBlur];
@@ -1925,6 +1943,16 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 - (void)setCursorColor:(NSColor*)color
 {
     [[self TEXTVIEW] setCursorColor: color];
+}
+
+- (void)setSmartCursorColor:(BOOL)value
+{
+    [[self TEXTVIEW] setSmartCursorColor:value];
+}
+
+- (void)setMinimumContrast:(float)value
+{
+    [[self TEXTVIEW] setMinimumContrast:value];
 }
 
 - (NSColor *)selectionColor

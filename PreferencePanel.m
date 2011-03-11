@@ -796,7 +796,7 @@ static float versionNumber;
 {
     // Optional delegate method: Returns the identifiers of the subset of
     // toolbar items that are selectable.
-    return [NSArray arrayWithObjects:globalToolbarId, 
+    return [NSArray arrayWithObjects:globalToolbarId,
                                      appearanceToolbarId,
                                      bookmarksToolbarId,
                                      keyboardToolbarId,
@@ -845,13 +845,11 @@ static float versionNumber;
     defaultHighlightTabLabels = [prefs objectForKey:@"HighlightTabLabels"]?[[prefs objectForKey:@"HighlightTabLabels"] boolValue]: YES;
     defaultAdvancedFontRendering = [prefs objectForKey:@"AdvancedFontRendering"]?[[prefs objectForKey:@"AdvancedFontRendering"] boolValue] : NO;
     defaultStrokeThickness = [prefs objectForKey:@"AFRStrokeThickness"] ? [[prefs objectForKey:@"AFRStrokeThickness"] floatValue] : 0;
-    defaultMinimumContrast = [prefs objectForKey:@"MinimumContrast"] ? [[prefs objectForKey:@"MinimumContrast"] floatValue] : 0;
     defaultFsTabDelay = [prefs objectForKey:@"FsTabDelay"] ? [[prefs objectForKey:@"FsTabDelay"] floatValue] : 1.0;
     [defaultWordChars release];
     defaultWordChars = [prefs objectForKey: @"WordCharacters"]?[[prefs objectForKey: @"WordCharacters"] retain]:@"/-+\\~_.";
     defaultOpenBookmark = [prefs objectForKey:@"OpenBookmark"]?[[prefs objectForKey:@"OpenBookmark"] boolValue]: NO;
     defaultQuitWhenAllWindowsClosed = [prefs objectForKey:@"QuitWhenAllWindowsClosed"]?[[prefs objectForKey:@"QuitWhenAllWindowsClosed"] boolValue]: NO;
-    defaultCursorType=[prefs objectForKey:@"CursorType"]?[prefs integerForKey:@"CursorType"]:2;
     defaultCheckUpdate = [prefs objectForKey:@"SUEnableAutomaticChecks"]?[[prefs objectForKey:@"SUEnableAutomaticChecks"] boolValue]: YES;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
     defaultSmartPlacement = [prefs objectForKey:@"SmartPlacement"]?[[prefs objectForKey:@"SmartPlacement"] boolValue]: NO;
@@ -870,7 +868,6 @@ static float versionNumber;
     }
     defaultIrMemory = [prefs objectForKey:@"IRMemory"]?[[prefs objectForKey:@"IRMemory"] intValue] : 4;
     defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
-    defaultColorInvertedCursor = [prefs objectForKey:@"ColorInvertedCursor"]?[[prefs objectForKey:@"ColorInvertedCursor"] boolValue]: YES;
     defaultDimInactiveSplitPanes = [prefs objectForKey:@"DimInactiveSplitPanes"]?[[prefs objectForKey:@"DimInactiveSplitPanes"] boolValue]: YES;
 
     defaultControl = [prefs objectForKey:@"Control"] ? [[prefs objectForKey:@"Control"] intValue] : MOD_TAG_CONTROL;
@@ -967,14 +964,12 @@ static float versionNumber;
     [prefs setBool:defaultHighlightTabLabels forKey:@"HighlightTabLabels"];
     [prefs setBool:defaultAdvancedFontRendering forKey:@"AdvancedFontRendering"];
     [prefs setFloat:defaultStrokeThickness forKey:@"AFRStrokeThickness"];
-    [prefs setFloat:defaultMinimumContrast forKey:@"MinimumContrast"];
     [prefs setFloat:defaultFsTabDelay forKey:@"FsTabDelay"];
     [prefs setObject: defaultWordChars forKey: @"WordCharacters"];
     [prefs setBool:defaultOpenBookmark forKey:@"OpenBookmark"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
     [prefs setBool:defaultQuitWhenAllWindowsClosed forKey:@"QuitWhenAllWindowsClosed"];
     [prefs setBool:defaultCheckUpdate forKey:@"SUEnableAutomaticChecks"];
-    [prefs setInteger:defaultCursorType forKey:@"CursorType"];
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
     [prefs setBool:defaultSmartPlacement forKey:@"SmartPlacement"];
     [prefs setBool:defaultWindowNumber forKey:@"WindowNumber"];
@@ -988,7 +983,6 @@ static float versionNumber;
     [prefs setBool:defaultOpenArrangementAtStartup forKey:@"OpenArrangementAtStartup"];
     [prefs setInteger:defaultIrMemory forKey:@"IRMemory"];
     [prefs setBool:defaultCheckTestRelease forKey:@"CheckTestRelease"];
-    [prefs setBool:defaultColorInvertedCursor forKey:@"ColorInvertedCursor"];
     [prefs setBool:defaultDimInactiveSplitPanes forKey:@"DimInactiveSplitPanes"];
 
     [prefs setInteger:defaultControl forKey:@"Control"];
@@ -1073,14 +1067,12 @@ static float versionNumber;
     [strokeThicknessMinLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
     [strokeThicknessMaxLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
     [strokeThickness setFloatValue:defaultStrokeThickness];
-    [minimumContrast setFloatValue:defaultMinimumContrast];
     [fsTabDelay setFloatValue:defaultFsTabDelay];
 
     [openBookmark setState: defaultOpenBookmark?NSOnState:NSOffState];
     [wordChars setStringValue: ([defaultWordChars length] > 0)?defaultWordChars:@""];
     [quitWhenAllWindowsClosed setState: defaultQuitWhenAllWindowsClosed?NSOnState:NSOffState];
     [checkUpdate setState: defaultCheckUpdate?NSOnState:NSOffState];
-    [cursorType selectCellWithTag:defaultCursorType];
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
     [smartPlacement setState: defaultSmartPlacement?NSOnState:NSOffState];
     [windowNumber setState: defaultWindowNumber?NSOnState:NSOffState];
@@ -1105,7 +1097,6 @@ static float versionNumber;
 
     [irMemory setIntValue:defaultIrMemory];
     [checkTestRelease setState:defaultCheckTestRelease?NSOnState:NSOffState];
-    [checkColorInvertedCursor setState:defaultColorInvertedCursor?NSOnState:NSOffState];
     [dimInactiveSplitPanes setState:defaultDimInactiveSplitPanes?NSOnState:NSOffState];
 
     [self showWindow: self];
@@ -1152,7 +1143,6 @@ static float versionNumber;
 
     // Show the window.
     [[self window] makeKeyAndOrderFront:self];
-    quelchCursorWarning_ = NO;
 }
 
 - (BOOL)advancedFontRendering
@@ -1165,9 +1155,9 @@ static float versionNumber;
     return defaultStrokeThickness;
 }
 
-- (float)minimumContrast
+- (float)legacyMinimumContrast
 {
-    return defaultMinimumContrast;
+    return [prefs objectForKey:@"MinimumContrast"] ? [[prefs objectForKey:@"MinimumContrast"] floatValue] : 0;;
 }
 
 - (float)fsTabDelay
@@ -1200,12 +1190,9 @@ static float versionNumber;
         sender == hideTab ||
         sender == useCompactLabel ||
         sender == highlightTabLabels ||
-        sender == cursorType ||
         sender == hideScrollbar ||
-        sender == checkColorInvertedCursor ||
         sender == advancedFontRendering ||
         sender == strokeThickness ||
-        sender == minimumContrast ||
         sender == dimInactiveSplitPanes) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
         defaultTabViewType=[tabPosition indexOfSelectedItem];
@@ -1217,10 +1204,7 @@ static float versionNumber;
         [strokeThicknessMinLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
         [strokeThicknessMaxLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
         defaultStrokeThickness = [strokeThickness floatValue];
-        defaultMinimumContrast = [minimumContrast floatValue];
         defaultHideTab = ([hideTab state] == NSOnState);
-        defaultCursorType = [[cursorType selectedCell] tag];
-        defaultColorInvertedCursor = ([checkColorInvertedCursor state] == NSOnState);
         defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermRefreshTerminal"
@@ -1487,9 +1471,9 @@ static float versionNumber;
     return defaultWordChars;
 }
 
-- (ITermCursorType)cursorType
+- (ITermCursorType)legacyCursorType
 {
-    return defaultCursorType;
+    return [prefs objectForKey:@"CursorType"] ? [prefs integerForKey:@"CursorType"] : CURSOR_BOX;
 }
 
 - (BOOL)hideScrollbar
@@ -1617,11 +1601,6 @@ static float versionNumber;
     [self savePreferences];
 }
 
-- (BOOL)checkColorInvertedCursor
-{
-    return defaultColorInvertedCursor;
-}
-
 - (BOOL)dimInactiveSplitPanes
 {
     return defaultDimInactiveSplitPanes;
@@ -1632,9 +1611,11 @@ static float versionNumber;
     return defaultCheckTestRelease;
 }
 
-- (BOOL)colorInvertedCursor
+// Smart cursor color used to be a global value. This provides the default when
+// migrating.
+- (BOOL)legacySmartCursorColor
 {
-    return defaultColorInvertedCursor;
+    return [prefs objectForKey:@"ColorInvertedCursor"]?[[prefs objectForKey:@"ColorInvertedCursor"] boolValue]: YES;
 }
 
 - (BOOL)quitWhenAllWindowsClosed
@@ -1944,6 +1925,28 @@ static float versionNumber;
     [cursorColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_CURSOR_COLOR]]];
     [cursorTextColor setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_CURSOR_TEXT_COLOR]]];
 
+    BOOL smartCursorColor;
+    if ([dict objectForKey:KEY_SMART_CURSOR_COLOR]) {
+        smartCursorColor = [[dict objectForKey:KEY_SMART_CURSOR_COLOR] boolValue];
+    } else {
+        smartCursorColor = [self legacySmartCursorColor];
+    }
+    [checkColorInvertedCursor setState:smartCursorColor ? NSOnState : NSOffState];
+
+    [cursorColor setEnabled:[checkColorInvertedCursor state] == NSOffState];
+    [cursorColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
+
+    [cursorTextColor setEnabled:[checkColorInvertedCursor state] == NSOffState];
+    [cursorTextColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
+
+    float minContrast;
+    if ([dict objectForKey:KEY_MINIMUM_CONTRAST]) {
+        minContrast = [[dict objectForKey:KEY_MINIMUM_CONTRAST] floatValue];
+    } else {
+        minContrast = [self legacyMinimumContrast];
+    }
+    [minimumContrast setFloatValue:minContrast];
+
     // Display tab
     int cols = [[dict objectForKey:KEY_COLUMNS] intValue];
     [columnsField setStringValue:[NSString stringWithFormat:@"%d", cols]];
@@ -1981,6 +1984,8 @@ static float versionNumber;
     [displayFontSpacingWidth setFloatValue:horizontalSpacing];
     [displayFontSpacingHeight setFloatValue:verticalSpacing];
     [blinkingCursor setState:[[dict objectForKey:KEY_BLINKING_CURSOR] boolValue] ? NSOnState : NSOffState];
+    [cursorType selectCellWithTag:[dict objectForKey:KEY_CURSOR_TYPE] ? [[dict objectForKey:KEY_CURSOR_TYPE] intValue] : [self legacyCursorType]];
+
     NSNumber* useBoldFontEntry = [dict objectForKey:KEY_USE_BOLD_FONT];
     NSNumber* disableBoldEntry = [dict objectForKey:KEY_DISABLE_BOLD];
     if (useBoldFontEntry) {
@@ -2108,26 +2113,26 @@ static float versionNumber;
 
     sts = [panel runModalForDirectory: NSHomeDirectory() file:@"" types: [NSImage imageFileTypes]];
     if (sts == NSOKButton) {
-                if ([[panel filenames] count] > 0) {
-                        filename = [[panel filenames] objectAtIndex: 0];
+        if ([[panel filenames] count] > 0) {
+            filename = [[panel filenames] objectAtIndex: 0];
         }
 
-                if ([filename length] > 0) {
-                        NSImage *anImage = [[NSImage alloc] initWithContentsOfFile: filename];
-                        if (anImage != nil) {
-                                [backgroundImagePreview setImage:anImage];
-                                [anImage release];
-                                return filename;
-                        } else {
-                                [backgroundImage setState: NSOffState];
+        if ([filename length] > 0) {
+            NSImage *anImage = [[NSImage alloc] initWithContentsOfFile: filename];
+            if (anImage != nil) {
+                [backgroundImagePreview setImage:anImage];
+                [anImage release];
+                return filename;
+            } else {
+                [backgroundImage setState: NSOffState];
             }
-                } else {
-                        [backgroundImage setState: NSOffState];
+        } else {
+            [backgroundImage setState: NSOffState];
         }
     } else {
-                [backgroundImage setState: NSOffState];
+        [backgroundImage setState: NSOffState];
     }
-        return nil;
+    return nil;
 }
 
 // This function has a side effect of changing the value of bookmarkCommand
@@ -2248,24 +2253,6 @@ static float versionNumber;
     [newDict setObject:customDir forKey:KEY_CUSTOM_DIRECTORY];
 
     // Colors tab
-    if (!quelchCursorWarning_ &&
-        (sender == cursorColor || sender == cursorTextColor) &&
-        defaultColorInvertedCursor) {
-        quelchCursorWarning_ = YES;
-        NSAlert *alert = [NSAlert alertWithMessageText:@"Warning"
-                                         defaultButton:@"OK"
-                                       alternateButton:@"Disable Smart Cursor Color"
-                                           otherButton:nil
-                             informativeTextWithFormat:@"You must disable \"Smart Cursor Color\" for this change to be visible."];
-        NSInteger button = [alert runModal];
-        if (button == NSAlertAlternateReturn) {
-            defaultColorInvertedCursor = NO;
-            [checkColorInvertedCursor setState:NO];
-            [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermRefreshTerminal"
-                                                                object:nil
-                                                              userInfo:nil];
-        }
-    }
     [newDict setObject:[ITAddressBookMgr encodeColor:[ansi0Color color]] forKey:KEY_ANSI_0_COLOR];
     [newDict setObject:[ITAddressBookMgr encodeColor:[ansi1Color color]] forKey:KEY_ANSI_1_COLOR];
     [newDict setObject:[ITAddressBookMgr encodeColor:[ansi2Color color]] forKey:KEY_ANSI_2_COLOR];
@@ -2289,6 +2276,14 @@ static float versionNumber;
     [newDict setObject:[ITAddressBookMgr encodeColor:[selectedTextColor color]] forKey:KEY_SELECTED_TEXT_COLOR];
     [newDict setObject:[ITAddressBookMgr encodeColor:[cursorColor color]] forKey:KEY_CURSOR_COLOR];
     [newDict setObject:[ITAddressBookMgr encodeColor:[cursorTextColor color]] forKey:KEY_CURSOR_TEXT_COLOR];
+    [newDict setObject:[NSNumber numberWithBool:[checkColorInvertedCursor state]] forKey:KEY_SMART_CURSOR_COLOR];
+    [newDict setObject:[NSNumber numberWithFloat:[minimumContrast floatValue]] forKey:KEY_MINIMUM_CONTRAST];
+
+    [cursorColor setEnabled:[checkColorInvertedCursor state] == NSOffState];
+    [cursorColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
+
+    [cursorTextColor setEnabled:[checkColorInvertedCursor state] == NSOffState];
+    [cursorTextColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
 
     // Display tab
     int rows, cols;
@@ -2311,6 +2306,7 @@ static float versionNumber;
     [newDict setObject:[NSNumber numberWithFloat:[displayFontSpacingWidth floatValue]] forKey:KEY_HORIZONTAL_SPACING];
     [newDict setObject:[NSNumber numberWithFloat:[displayFontSpacingHeight floatValue]] forKey:KEY_VERTICAL_SPACING];
     [newDict setObject:[NSNumber numberWithBool:([blinkingCursor state]==NSOnState)] forKey:KEY_BLINKING_CURSOR];
+    [newDict setObject:[NSNumber numberWithInt:[[cursorType selectedCell] tag]] forKey:KEY_CURSOR_TYPE];
     [newDict setObject:[NSNumber numberWithBool:([useBoldFont state]==NSOnState)] forKey:KEY_USE_BOLD_FONT];
     [newDict setObject:[NSNumber numberWithBool:([useBrightBold state]==NSOnState)] forKey:KEY_USE_BRIGHT_BOLD];
     [newDict setObject:[NSNumber numberWithFloat:[transparency floatValue]] forKey:KEY_TRANSPARENCY];
@@ -2389,8 +2385,6 @@ static float versionNumber;
 
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable
 {
-    quelchCursorWarning_ = NO;
-
     if ([[bookmarksTableView selectedGuids] count] != 1) {
         [bookmarksSettingsTabViewParent setHidden:YES];
         [bookmarksPopup setEnabled:NO];
@@ -2461,7 +2455,6 @@ static float versionNumber;
 
 - (IBAction)showBookmarksTabView:(id)sender
 {
-    quelchCursorWarning_ = NO;
     [tabView selectTabViewItem:bookmarksTabViewItem];
 }
 
@@ -2953,7 +2946,6 @@ static float versionNumber;
 
 - (void)showBookmarks
 {
-    quelchCursorWarning_ = NO;
     [tabView selectTabViewItem:bookmarksTabViewItem];
     [toolbar setSelectedItemIdentifier:bookmarksToolbarId];
 }
@@ -3005,6 +2997,9 @@ static float versionNumber;
         if ([copyDisplay state] == NSOnState) {
             [self copyAttributes:BulkCopyDisplay fromBookmark:srcGuid toBookmark:destGuid];
         }
+        if ([copyWindow state] == NSOnState) {
+            [self copyAttributes:BulkCopyWindow fromBookmark:srcGuid toBookmark:destGuid];
+        }
         if ([copyTerminal state] == NSOnState) {
             [self copyAttributes:BulkCopyTerminal fromBookmark:srcGuid toBookmark:destGuid];
         }
@@ -3045,30 +3040,38 @@ static float versionNumber;
         KEY_ANSI_13_COLOR,
         KEY_ANSI_14_COLOR,
         KEY_ANSI_15_COLOR,
+        KEY_SMART_CURSOR_COLOR,
+        KEY_MINIMUM_CONTRAST,
         nil
     };
     NSString* displayKeys[] = {
-        KEY_ROWS,
-        KEY_COLUMNS,
         KEY_NORMAL_FONT,
         KEY_NON_ASCII_FONT,
         KEY_HORIZONTAL_SPACING,
         KEY_VERTICAL_SPACING,
         KEY_BLINKING_CURSOR,
-        KEY_WINDOW_TYPE,
+        KEY_CURSOR_TYPE,
         KEY_USE_BOLD_FONT,
         KEY_USE_BRIGHT_BOLD,
-        KEY_TRANSPARENCY,
-        KEY_BLUR,
         KEY_ASCII_ANTI_ALIASED,
         KEY_NONASCII_ANTI_ALIASED,
         KEY_ANTI_ALIASING,
+        nil
+    };
+    NSString* windowKeys[] = {
+        KEY_ROWS,
+        KEY_COLUMNS,
+        KEY_WINDOW_TYPE,
+        KEY_SCREEN,
+        KEY_SPACE,
+        KEY_TRANSPARENCY,
+        KEY_BLUR,
         KEY_BACKGROUND_IMAGE_LOCATION,
+        KEY_SYNC_TITLE,
+        KEY_DISABLE_WINDOW_RESIZING,
         nil
     };
     NSString* terminalKeys[] = {
-        KEY_DISABLE_WINDOW_RESIZING,
-        KEY_SYNC_TITLE,
         KEY_CLOSE_SESSIONS_ON_END,
         KEY_AMBIGUOUS_DOUBLE_WIDTH,
         KEY_SILENCE_BELL,
@@ -3078,6 +3081,7 @@ static float versionNumber;
         KEY_BOOKMARK_GROWL_NOTIFICATIONS,
         KEY_CHARACTER_ENCODING,
         KEY_SCROLLBACK_LINES,
+        KEY_UNLIMITED_SCROLLBACK,
         KEY_TERMINAL_TYPE,
         KEY_SEND_CODE_WHEN_IDLE,
         KEY_IDLE_CODE,
@@ -3094,6 +3098,9 @@ static float versionNumber;
             break;
         case BulkCopyDisplay:
             keys = displayKeys;
+            break;
+        case BulkCopyWindow:
+            keys = windowKeys;
             break;
         case BulkCopyTerminal:
             keys = terminalKeys;

@@ -157,7 +157,6 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 
     // Minimum contrast
     IBOutlet NSSlider* minimumContrast;
-    float defaultMinimumContrast;
 
     // open bookmarks when iterm starts
     IBOutlet NSButton *openBookmark;
@@ -174,9 +173,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     // cursor type: underline/vertical bar/box
     // See ITermCursorType. One of: CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX
     IBOutlet NSMatrix *cursorType;
-    ITermCursorType defaultCursorType;
 
-    BOOL quelchCursorWarning_;
     IBOutlet NSButton *checkColorInvertedCursor;
     BOOL defaultColorInvertedCursor;
 
@@ -310,6 +307,8 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSColorWell *selectedTextColor;
     IBOutlet NSColorWell *cursorColor;
     IBOutlet NSColorWell *cursorTextColor;
+    IBOutlet NSTextField *cursorColorLabel;
+    IBOutlet NSTextField *cursorTextColorLabel;
     IBOutlet NSMenu *presetsMenu;
 
     // Display tab
@@ -393,6 +392,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* copyColors;
     IBOutlet NSButton* copyDisplay;
     IBOutlet NSButton* copyTerminal;
+    IBOutlet NSButton* copyWindow;
     IBOutlet NSButton* copyKeyboard;
     IBOutlet BookmarkListView* copyTo;
     IBOutlet NSButton* copyButton;
@@ -424,7 +424,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* globalAddNewMapping;
 }
 
-typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboard } BulkCopySettings;
+typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal, BulkCopyKeyboard } BulkCopySettings;
 
 + (PreferencePanel*)sharedInstance;
 + (PreferencePanel*)sessionsInstance;
@@ -450,7 +450,6 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (IBAction)settingChanged:(id)sender;
 - (BOOL)advancedFontRendering;
 - (float)strokeThickness;
-- (float)minimumContrast;
 - (float)fsTabDelay;
 - (int)modifierTagToMask:(int)tag;
 - (void)windowWillLoad;
@@ -477,7 +476,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (BOOL)highlightTabLabels;
 - (BOOL)openBookmark;
 - (NSString *)wordChars;
-- (ITermCursorType)cursorType;
+- (ITermCursorType)legacyCursorType;
 - (BOOL)hideScrollbar;
 - (BOOL)smartPlacement;
 - (BOOL)windowNumber;
@@ -492,10 +491,10 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyTerminal, BulkCopyKeyboa
 - (int)hotkeyModifiers;
 - (NSTextField*)hotkeyField;
 
-- (BOOL)checkColorInvertedCursor;
 - (BOOL)dimInactiveSplitPanes;
 - (BOOL)checkTestRelease;
-- (BOOL)colorInvertedCursor;
+- (BOOL)legacySmartCursorColor;
+- (float)legacyMinimumContrast;
 - (BOOL)quitWhenAllWindowsClosed;
 - (BOOL)useUnevenTabs;
 - (int)minTabWidth;
