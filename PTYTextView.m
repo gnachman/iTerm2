@@ -3025,17 +3025,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         [self _addResultFromX:r->startX absY:r->absStartY toX:r->endX toAbsY:r->absEndY];
         redraw = YES;
     }
-    // DEBUGGING
-    for (int i = 0; i < [findResults_ count] - 1; i++) {
-        SearchResult* a = [findResults_ objectAtIndex:i];
-        SearchResult* b = [findResults_ objectAtIndex:i+1];
-        if (!(a->startX != b->startX ||
-              a->endX != b->endX ||
-              a->absStartY != b->absStartY ||
-              a->absEndY != b->absEndY)) {
-            NSLog(@"BUG");
-        }
-    }
     nextOffset_ = [findResults_ count];
 
     // Highlight next result if needed.

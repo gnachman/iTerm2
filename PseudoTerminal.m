@@ -290,10 +290,8 @@ NSString *sessionsKey = @"sessions";
                                                          irFrame.size.width,
                                                          irFrame.size.height)];
     [bottomBar addSubview:instantReplaySubview];
-    irFrame.origin.y = 0;
-    [instantReplaySubview setFrame:irFrame];
     [bottomBar setHidden:YES];
-    [instantReplaySubview setHidden:YES];
+    [instantReplaySubview setHidden:NO];
 
     // create the tabview
     aRect = [[[self window] contentView] bounds];
@@ -521,7 +519,6 @@ NSString *sessionsKey = @"sessions";
         aTabViewItem = [aTab tabViewItem];
         [TABVIEW removeTabViewItem:aTabViewItem];
         PtyLog(@"closeSession - calling fitWindowToTabs");
-        pbbfValid = NO;
         [self fitWindowToTabs];
     }
 }
@@ -609,12 +606,12 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)previousPane:(id)sender
 {
-	[[self currentTab] previousSession];
+    [[self currentTab] previousSession];
 }
 
 - (IBAction)nextPane:(id)sender
 {
-	[[self currentTab] nextSession];
+    [[self currentTab] nextSession];
 }
 
 - (int)numberOfTabs
@@ -893,7 +890,7 @@ NSString *sessionsKey = @"sessions";
         // then the window size for the IR window is saved instead of the live
         // window.
         if (![bottomBar isHidden]) {
-            [self showHideBottomBar];
+            [self showHideInstantReplay];
         }
         if ([[PreferencePanel sharedInstance] smartPlacement]) {
             [[self window] saveFrameUsingName: [NSString stringWithFormat: WINDOW_NAME, 0]];
@@ -1033,7 +1030,6 @@ NSString *sessionsKey = @"sessions";
 
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)proposedFrameSize
 {
-    pbbfValid = NO;
     PtyLog(@"%s(%d):-[PseudoTerminal windowWillResize: obj=%d, proposedFrameSize width = %f; height = %f]",
            __FILE__, __LINE__, [self window], proposedFrameSize.width, proposedFrameSize.height);
 
@@ -1124,7 +1120,6 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidResize:(NSNotification *)aNotification
 {
-    pbbfValid = NO;
     PtyLog(@"windowDidResize to: %fx%f", [[self window] frame].size.width, [[self window] frame].size.height);
     if (togglingFullScreen_) {
         PtyLog(@"windowDidResize returning because togglingFullScreen.");
@@ -1158,7 +1153,6 @@ NSString *sessionsKey = @"sessions";
 - (void)windowDidToggleToolbarVisibility:(id)sender
 {
     PtyLog(@"windowDidToggleToolbarVisibility - calling fitWindowToTabs");
-    pbbfValid = NO;
     [self fitWindowToTabs];
 }
 
@@ -1183,7 +1177,6 @@ NSString *sessionsKey = @"sessions";
         return;
     }
     PtyLog(@"toggleFullScreen called");
-    pbbfValid = NO;
     PseudoTerminal *newTerminal;
     if (!_fullScreen) {
         NSScreen *currentScreen = [[[[iTermController sharedInstance] currentTerminal] window] screen];
@@ -1563,7 +1556,7 @@ NSString *sessionsKey = @"sessions";
         [self disableBlur];
     }
 
-    if (![instantReplaySubview isHidden]) {
+    if (![bottomBar isHidden]) {
         [self updateInstantReplay];
     }
     // Post notifications
@@ -1658,7 +1651,6 @@ NSString *sessionsKey = @"sessions";
     PseudoTerminal *term = [aTabBarControl delegate];
 
     if ([term numberOfTabs] == 1) {
-        pbbfValid = NO;
         [term fitWindowToTabs];
     } else {
         [term fitTabToWindow:aTab];
@@ -1762,7 +1754,6 @@ NSString *sessionsKey = @"sessions";
     if (([TABVIEW numberOfTabViewItems] == 1) || ([[PreferencePanel sharedInstance] hideTab] &&
         ([TABVIEW numberOfTabViewItems] > 1 && [tabBarControl isHidden]))) {
         PtyLog(@"tabViewDidChangeNumberOfTabViewItems - calling fitWindowToTab");
-        pbbfValid = NO;
         [self fitWindowToTabs];
     }
 
@@ -1960,71 +1951,6 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
-// Toggle bottom bar.
-- (void)showHideBottomBar
-{
-    PtyLog(@"showHideBottomBar");
-    BOOL hide = ![bottomBar isHidden];
-    if (!hide) {
-        PtyLog(@"showing bottom bar. Save frame height of %lf", [[self window] frame].size.height);
-        preBottomBarFrame = [[self window] frame];
-    }
-    [bottomBar setHidden:hide];
-    [self arrangeBottomBarSubviews];
-    if (_fullScreen) {
-        [self adjustFullScreenWindowForBottomBarChange];
-    } else {
-        PtyLog(@"showHideBottomBar - calling fitWindowToTabs");
-        if (hide && pbbfValid) {
-            // Compute the top-left origin of the current frame in case the window moved
-            NSRect currentFrame = [[self window] frame];
-            NSPoint topLeft = currentFrame.origin;
-            topLeft.y += currentFrame.size.height;
-
-            PtyLog(@"Restore old frame of height %lf", preBottomBarFrame.size.height);
-            preBottomBarFrame.origin.y = topLeft.y - preBottomBarFrame.size.height;
-            preBottomBarFrame.origin.x = topLeft.x;
-            [[self window] setFrame:preBottomBarFrame display:YES];
-
-            PtyLog(@"showHideBottomBar - calling repositionWidgets");
-            [self repositionWidgets];
-            PtyLog(@"showHideBottomBar - call fitTabsToWindow");
-            [self fitTabsToWindow];
-        } else {
-            PtyLog(@"showHideBottomBar - call repositionWidgets");
-            [self repositionWidgets];
-            PtyLog(@"showHideBottomBar - call fitWindowToTabs");
-            [self fitTabsToWindow];
-        }
-    }
-
-    // On OS X 10.5.8, the scroll bar and resize indicator are messed up at this point. Resizing the tabview fixes it. This seems to be fixed in 10.6.
-    NSRect tvframe = [TABVIEW frame];
-    tvframe.size.height += 1;
-    [TABVIEW setFrame: tvframe];
-    tvframe.size.height -= 1;
-    [TABVIEW setFrame: tvframe];
-
-    if (hide) {
-        [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
-    } else {
-        pbbfValid = YES;
-    }
-}
-
-// Arrange instant replay subview within bottom bar.
-- (void)arrangeBottomBarSubviews
-{
-    NSRect frame = NSMakeRect(0, 0, [[self window] frame].size.width, 0);
-    NSRect irFrame = [instantReplaySubview frame];
-    if (![instantReplaySubview isHidden]) {
-        irFrame.origin.y = frame.size.height;
-        frame.size.height += irFrame.size.height;
-    }
-    [bottomBar setFrame:frame];
-    [instantReplaySubview setFrame:irFrame];
-}
-
 - (NSString*)stringForTimestamp:(long long)timestamp
 {
     time_t startTime = timestamp / 1000000;
@@ -2122,27 +2048,42 @@ NSString *sessionsKey = @"sessions";
         [self replaySession:[self currentSession]];
     }
     [[self currentSession] irAdvance:dir];
-    if (![instantReplaySubview isHidden]) {
+    if (![bottomBar isHidden]) {
         [self updateInstantReplay];
     }
 }
 
 - (BOOL)inInstantReplay
 {
-    return ![instantReplaySubview isHidden];
+    return ![bottomBar isHidden];
 }
 
 // Toggle instant replay bar.
 - (void)showHideInstantReplay
 {
-    BOOL hide = ![instantReplaySubview isHidden];
+    BOOL hide = ![bottomBar isHidden];
     if (!hide) {
         [self updateInstantReplay];
     }
-    [instantReplaySubview setHidden:hide];
-    [self arrangeBottomBarSubviews];
+    [bottomBar setHidden:hide];
     if (_fullScreen) {
         [self adjustFullScreenWindowForBottomBarChange];
+    } else {
+        if (hide) {
+            NSRect frame = [[self window] frame];
+            NSPoint topLeft;
+            topLeft.x = frame.origin.x;
+            topLeft.y = frame.origin.y + frame.size.height;
+            [[self window] setFrame:preBottomBarFrame display:NO];
+            [[self window] setFrameTopLeftPoint:topLeft];
+        } else {
+            preBottomBarFrame = [[self window] frame];
+            NSRect newFrame = preBottomBarFrame;
+            float h = [instantReplaySubview frame].size.height;
+            newFrame.size.height += h;
+            newFrame.origin.y -= h;
+            [[self window] setFrame:newFrame display:YES];
+        }
     }
 
     // On OS X 10.5.8, the scroll bar and resize indicator are messed up at this point. Resizing the tabview fixes it. This seems to be fixed in 10.6.
@@ -2152,17 +2093,12 @@ NSString *sessionsKey = @"sessions";
     tvframe.size.height -= 1;
     [TABVIEW setFrame: tvframe];
 
-    if ([instantReplaySubview isHidden] != [bottomBar isHidden]) {
-        [self showHideBottomBar];
-    }
-    if (!hide) {
-        [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
-    }
+    [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
 }
 
 - (IBAction)closeInstantReplay:(id)sender
 {
-    if (![instantReplaySubview isHidden]) {
+    if (![bottomBar isHidden]) {
         if ([[self currentSession] liveSession]) {
             [self showLiveSession:[[self currentSession] liveSession] inPlaceOf:[self currentSession]];
         }
@@ -2207,7 +2143,7 @@ NSString *sessionsKey = @"sessions";
     [newSession setTab:theTab];
     [theTab setDvrInSession:newSession];
     [newSession release];
-    if ([instantReplaySubview isHidden]) {
+    if ([bottomBar isHidden]) {
         [self showHideInstantReplay];
     }
 }
@@ -2215,9 +2151,9 @@ NSString *sessionsKey = @"sessions";
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession
 {
     PTYTab* theTab = [replaySession tab];
-    [theTab showLiveSession:liveSession inPlaceOf:replaySession];
     [self updateInstantReplay];
     [self showHideInstantReplay];
+    [theTab showLiveSession:liveSession inPlaceOf:replaySession];
     [theTab setParentWindow:self];
     [[self window] makeFirstResponder:[[theTab activeSession] TEXTVIEW]];
 }
@@ -2398,7 +2334,6 @@ NSString *sessionsKey = @"sessions";
     [sessionView addSubview:scrollView];
     [scrollView release];
 
-    pbbfValid = NO;
     [self fitTabsToWindow];
 
     [self runCommandInSession:newSession inCwd:oldCWD];
@@ -2680,7 +2615,6 @@ NSString *sessionsKey = @"sessions";
 - (void)_refreshTerminal:(NSNotification *)aNotification
 {
     PtyLog(@"_refreshTerminal - calling fitWindowToTabs");
-    pbbfValid = NO;
     [self fitWindowToTabs];
 
     BOOL canDim = [[PreferencePanel sharedInstance] dimInactiveSplitPanes];
@@ -2867,7 +2801,7 @@ NSString *sessionsKey = @"sessions";
 - (void)setInstantReplayBarVisible:(BOOL)visible
 {
     BOOL hide = !visible;
-    if ([instantReplaySubview isHidden] != hide) {
+    if ([bottomBar isHidden] != hide) {
         [self showHideInstantReplay];
     }
 }
@@ -3156,8 +3090,8 @@ NSString *sessionsKey = @"sessions";
 
 - (void)copySettingsFrom:(PseudoTerminal*)other
 {
-    [instantReplaySubview setHidden:YES];
-    if (![other->instantReplaySubview isHidden]) {
+    [bottomBar setHidden:YES];
+    if (![other->bottomBar isHidden]) {
         [self showHideInstantReplay];
     }
     [bottomBar setHidden:[other->bottomBar isHidden]];
@@ -3401,7 +3335,6 @@ NSString *sessionsKey = @"sessions";
     [TABVIEW selectTabViewItemAtIndex:anIndex];
 
     // Bring the window to the fore.
-    pbbfValid = NO;
     [self fitWindowToTabs];
     if ([self windowInited] && !_fullScreen) {
         [[self window] makeKeyAndOrderFront:self];
@@ -3652,7 +3585,6 @@ NSString *sessionsKey = @"sessions";
     // add the session to the new terminal
     [term insertTab:aTab atIndex: 0];
     PtyLog(@"moveTabToNewWindowContextMenuAction - call fitWindowToTabs");
-    pbbfValid = NO;
     [term fitWindowToTabs];
 
     // release the tabViewItem

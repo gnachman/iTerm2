@@ -314,17 +314,11 @@
 // accessor
 - (PTYTabView *)tabView;
 
-// Toggle bottomBar.
-- (void)showHideBottomBar;
-
 // Are we in in IR?
 - (BOOL)inInstantReplay;
 
 // Toggle IR bar.
 - (void)showHideInstantReplay;
-
-// Arrange IR and any other views within bottom bar.
-- (void)arrangeBottomBarSubviews;
 
 // Move backward/forward in time by one frame.
 - (void)irAdvance:(int)dir;
