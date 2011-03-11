@@ -101,17 +101,17 @@
 
 - (NSRect)collapsedFrame
 {
-    return NSMakeRect(fullFrame_.origin.x + [self superframe].size.width,
+    return NSMakeRect([[self view] frame].origin.x,
                       fullFrame_.origin.y + [self superframe].size.height + fullFrame_.size.height,
-                      fullFrame_.size.width,
+                      [[self view] frame].size.width,
                       0);
 }
 
 - (NSRect)fullSizeFrame
 {
-    return NSMakeRect(fullFrame_.origin.x + [self superframe].size.width,
+    return NSMakeRect([[self view] frame].origin.x,
                       fullFrame_.origin.y + [self superframe].size.height,
-                      fullFrame_.size.width,
+                      [[self view] frame].size.width,
                       fullFrame_.size.height);
 }
 

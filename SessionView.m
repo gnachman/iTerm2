@@ -176,4 +176,20 @@ static int nextViewId;
     return viewId_;
 }
 
+- (void)setFrameSize:(NSSize)frameSize
+{
+    [super setFrameSize:frameSize];
+    if (frameSize.width < 340) {
+        [[findView_ view] setFrameSize:NSMakeSize(MAX(150, frameSize.width - 50),
+                                                  [[findView_ view] frame].size.height)];
+        [findView_ setFrameOrigin:NSMakePoint(frameSize.width - [[findView_ view] frame].size.width - 30,
+                                              frameSize.height - [[findView_ view] frame].size.height)];
+    } else {
+        [[findView_ view] setFrameSize:NSMakeSize(290,
+                                                  [[findView_ view] frame].size.height)];
+        [findView_ setFrameOrigin:NSMakePoint(frameSize.width - [[findView_ view] frame].size.width - 30,
+                                              frameSize.height - [[findView_ view] frame].size.height)];
+    }
+}
+
 @end

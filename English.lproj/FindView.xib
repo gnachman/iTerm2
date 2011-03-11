@@ -46,7 +46,7 @@
 					<bool key="EncodedWithXMLCoder">YES</bool>
 					<object class="NSSearchField" id="429275135">
 						<reference key="NSNextResponder" ref="1005"/>
-						<int key="NSvFlags">268</int>
+						<int key="NSvFlags">266</int>
 						<string key="NSFrame">{{8, 4}, {196, 19}}</string>
 						<reference key="NSSuperview" ref="1005"/>
 						<bool key="NSEnabled">YES</bool>
@@ -127,7 +127,7 @@
 					</object>
 					<object class="NSProgressIndicator" id="955536632">
 						<reference key="NSNextResponder" ref="1005"/>
-						<int key="NSvFlags">-2147482356</int>
+						<int key="NSvFlags">-2147482359</int>
 						<object class="NSPSMatrix" key="NSDrawMatrix"/>
 						<string key="NSFrame">{{172, 6}, {16, 16}}</string>
 						<reference key="NSSuperview" ref="1005"/>
@@ -137,7 +137,7 @@
 					</object>
 					<object class="NSButton" id="591122487">
 						<reference key="NSNextResponder" ref="1005"/>
-						<int key="NSvFlags">268</int>
+						<int key="NSvFlags">265</int>
 						<string key="NSFrame">{{259, 3}, {24, 23}}</string>
 						<reference key="NSSuperview" ref="1005"/>
 						<bool key="NSEnabled">YES</bool>
@@ -169,7 +169,7 @@
 					</object>
 					<object class="NSSegmentedControl" id="620504544">
 						<reference key="NSNextResponder" ref="1005"/>
-						<int key="NSvFlags">268</int>
+						<int key="NSvFlags">265</int>
 						<string key="NSFrame">{{210, 3}, {50, 21}}</string>
 						<reference key="NSSuperview" ref="1005"/>
 						<bool key="NSEnabled">YES</bool>
