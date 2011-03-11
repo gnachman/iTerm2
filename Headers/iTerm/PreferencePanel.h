@@ -73,12 +73,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSPopUpButton *tabPosition;
     int defaultTabViewType;
 
-    IBOutlet BookmarkListView* bookmarksForUrlsTable;
-
     IBOutlet NSTextField* tagFilter;
-
-    // List of URL schemes.
-    IBOutlet NSTableView *urlTable;
 
     // Copy to clipboard on selection
     IBOutlet NSButton *selectionCopiesText;
@@ -117,7 +112,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     BOOL defaultHotkeyTogglesWindow;
     IBOutlet NSPopUpButton* hotkeyBookmark;
     NSString* defaultHotKeyBookmarkGuid;
-    
+
     // Enable bonjour
     IBOutlet NSButton *enableBonjour;
     BOOL defaultEnableBonjour;
@@ -260,7 +255,6 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     NSString* advancedToolbarId;
 
     // url handler stuff
-    NSMutableArray *urlTypes;
     NSMutableDictionary *urlHandlersByGuid;
 
     // Bookmarks -----------------------------
@@ -282,6 +276,9 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTextField *bookmarkTagsLabel;
     IBOutlet NSTextField *bookmarkCommandLabel;
     IBOutlet NSTextField *bookmarkDirectoryLabel;
+    IBOutlet NSTextField *bookmarkUrlSchemesHeaderLabel;
+    IBOutlet NSTextField *bookmarkUrlSchemesLabel;
+    IBOutlet NSPopUpButton* bookmarkUrlSchemes;
 
     // Colors tab
     IBOutlet NSColorWell *ansi0Color;
@@ -515,13 +512,14 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (void)changeFont:(id)fontManager;
 - (NSString*)_chooseBackgroundImage;
 - (IBAction)bookmarkSettingChanged:(id)sender;
+- (IBAction)bookmarkUrlSchemeHandlerChanged:(id)sender;
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification;
 - (IBAction)showGlobalTabView:(id)sender;
 - (IBAction)showAppearanceTabView:(id)sender;
 - (IBAction)showBookmarksTabView:(id)sender;
 - (IBAction)showKeyboardTabView:(id)sender;
 - (IBAction)showAdvancedTabView:(id)sender;
-- (IBAction)connectURL:(id)sender;
+- (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme;
 - (IBAction)closeWindow:(id)sender;
 - (void)controlTextDidChange:(NSNotification *)aNotification;
 - (void)textDidChange:(NSNotification *)aNotification;

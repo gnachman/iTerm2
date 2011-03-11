@@ -750,6 +750,9 @@ static BOOL initDone = NO;
             [tempDict setObject:tempString forKey:KEY_COMMAND];
             aDict = tempDict;
         }
+        if (!aDict) {
+            aDict = tempDict;
+        }
     }
 
     // Where do we execute this command?

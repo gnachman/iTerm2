@@ -181,6 +181,9 @@ static float versionNumber;
     [bookmarkCommand setHidden:YES];
     [bookmarkDirectoryType setHidden:YES];
     [bookmarkDirectory setHidden:YES];
+    [bookmarkUrlSchemes setHidden:YES];
+    [bookmarkUrlSchemesHeaderLabel setHidden:YES];
+    [bookmarkUrlSchemesLabel setHidden:YES];
 
     [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
     [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
@@ -495,14 +498,6 @@ static float versionNumber;
     [keyMappings setDoubleAction:@selector(editKeyMapping:)];
     [globalKeyMappings setDoubleAction:@selector(editKeyMapping:)];
     keyString = nil;
-    [bookmarksForUrlsTable setShowGraphic:NO];
-    [bookmarksForUrlsTable hideSearch];
-    [bookmarksForUrlsTable allowEmptySelection];
-    [bookmarksForUrlsTable deselectAll];
-    [bookmarksForUrlsTable setDelegate:self];
-
-    [bookmarksTableView setDelegate:self];
-    [bookmarksTableView allowMultipleSelections];
 
     [copyTo allowMultipleSelections];
 
@@ -889,9 +884,7 @@ static float versionNumber;
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
     [prefs setObject:appCast forKey:@"SUFeedURL"];
 
-    NSArray *urlArray;
-
-    // Migrate old-style URL handlers.
+    // Migrate old-style (iTerm 0.x) URL handlers.
     // make sure bookmarks are loaded
     [ITAddressBookMgr sharedInstance];
 
@@ -928,11 +921,6 @@ static float versionNumber;
                 [urlHandlersByGuid setObject:guid forKey:key];
             }
         }
-    }
-    urlArray = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleURLTypes"];
-    urlTypes = [[NSMutableArray alloc] initWithCapacity:[urlArray count]];
-    for (int i=0; i<[urlArray count]; i++) {
-        [urlTypes addObject:[[[urlArray objectAtIndex:i] objectForKey: @"CFBundleURLSchemes"] objectAtIndex:0]];
     }
 }
 
@@ -1687,8 +1675,6 @@ static float versionNumber;
         return [iTermKeyBindingMgr numberOfMappingsForBookmark:bookmark];
     } else if (aTableView == globalKeyMappings) {
         return [[iTermKeyBindingMgr globalKeyMap] count];
-    } else if (aTableView == urlTable) {
-        return [urlTypes count];
     }
     // We can only get here while loading the nib (on some machines, this function is called
     // before the IBOutlets are populated).
@@ -1751,8 +1737,6 @@ static float versionNumber;
         } else if (aTableColumn == actionColumn) {
             return [iTermKeyBindingMgr formatAction:[iTermKeyBindingMgr mappingAtIndex:rowIndex forBookmark:bookmark]];
         }
-    } else if (aTableView == urlTable) {
-        return [urlTypes objectAtIndex:rowIndex];
     } else if (aTableView == globalKeyMappings) {
         if (aTableColumn == globalKeyCombinationColumn) {
             return [iTermKeyBindingMgr formatKeyCombination:[iTermKeyBindingMgr globalShortcutAtIndex:rowIndex]];
@@ -1848,6 +1832,43 @@ static float versionNumber;
     }
 }
 
+- (void)_populateBookmarkUrlSchemesFromDict:(Bookmark*)dict
+{
+    if ([[[bookmarkUrlSchemes menu] itemArray] count] == 0) {
+        NSArray* urlArray = [[NSBundle mainBundle] objectForInfoDictionaryKey:@"CFBundleURLTypes"];
+        for (int i=0; i<[urlArray count]; i++) {
+            [bookmarkUrlSchemes addItemWithTitle:[[[urlArray objectAtIndex:i] objectForKey: @"CFBundleURLSchemes"] objectAtIndex:0]];
+        }
+        [bookmarkUrlSchemes setTitle:@"Select URL Schemes…"];
+    }
+
+    NSString* guid = [dict objectForKey:KEY_GUID];
+    [[bookmarkUrlSchemes menu] setAutoenablesItems:YES];
+    [[bookmarkUrlSchemes menu] setDelegate:self];
+    for (NSMenuItem* item in [[bookmarkUrlSchemes menu] itemArray]) {
+        if ([[urlHandlersByGuid objectForKey:[item title]] isEqualToString:guid]) {
+            [item setState:NSOnState];
+        } else {
+            [item setState:NSOffState];
+        }
+    }
+}
+
+// This is for the URL schemes, the only menu for which we are a delegate.
+- (BOOL)validateMenuItem:(NSMenuItem *)menuItem
+{
+    NSString* scheme = [menuItem title];
+    NSString* guid = [bookmarksTableView selectedGuid];
+    if (!guid) {
+        return NO;
+    }
+    if ([[urlHandlersByGuid objectForKey:scheme] isEqualToString:guid]) {
+        return NO;
+    } else {
+        return YES;
+    }
+}
+
 // Update the values in form fields to reflect the bookmark's state
 - (void)updateBookmarkFields:(NSDictionary *)dict
 {
@@ -1899,8 +1920,9 @@ static float versionNumber;
             [bookmarkDirectoryType selectCellWithTag:1];
     }
     [bookmarkDirectory setStringValue:dir];
+    [self _populateBookmarkUrlSchemesFromDict:dict];
 
-        // Colors tab
+    // Colors tab
     [ansi0Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_0_COLOR]]];
     [ansi1Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_1_COLOR]]];
     [ansi2Color setColor:[ITAddressBookMgr decodeColor:[dict objectForKey:KEY_ANSI_2_COLOR]]];
@@ -2370,6 +2392,14 @@ static float versionNumber;
     }
 }
 
+- (IBAction)bookmarkUrlSchemeHandlerChanged:(id)sender
+{
+    NSString* guid = [bookmarksTableView selectedGuid];
+    NSString* scheme = [[bookmarkUrlSchemes selectedItem] title];
+    [self connectBookmarkWithGuid:guid toScheme:scheme];
+    [self _populateBookmarkUrlSchemesFromDict:[dataSource bookmarkWithGuid:guid]];
+}
+
 - (NSMenu*)bookmarkTable:(id)bookmarkTable menuForEvent:(NSEvent*)theEvent
 {
     return nil;
@@ -2421,18 +2451,6 @@ static float versionNumber;
         } else {
             [removeMappingButton setEnabled:NO];
         }
-    } else if ([aNotification object] == urlTable) {
-        int i = [urlTable selectedRow];
-        if (i < 0) {
-            [bookmarksForUrlsTable deselectAll];
-        } else {
-            NSString* guid = [urlHandlersByGuid objectForKey:[urlTypes objectAtIndex:i]];
-            if (guid) {
-                [bookmarksForUrlsTable selectRowByGuid:guid];
-            } else {
-                [bookmarksForUrlsTable deselectAll];
-            }
-        }
     } else if ([aNotification object] == globalKeyMappings) {
         int rowIndex = [globalKeyMappings selectedRow];
         if (rowIndex >= 0) {
@@ -2468,88 +2486,38 @@ static float versionNumber;
     [tabView selectTabViewItem:advancedTabViewItem];
 }
 
-- (IBAction)connectURL:(id)sender
+- (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme
 {
-    int i, j;
+    NSURL *appURL = nil;
+    OSStatus err;
+    BOOL set = YES;
 
-    i = [urlTable selectedRow];
-    j = [bookmarksForUrlsTable selectedRow];
-    if (i < 0) {
-        return;
-    }
-    if (j < 0) {
-        // No Handler selected
-        [urlHandlersByGuid removeObjectForKey:[urlTypes objectAtIndex: i]];
-    } else {
-        Bookmark* bookmark =
-            [dataSource
-                bookmarkAtIndex:[bookmarksForUrlsTable selectedRow]];
-        [urlHandlersByGuid setObject:[bookmark objectForKey:KEY_GUID]
-                              forKey:[urlTypes objectAtIndex:i]];
-
-        NSURL *appURL = nil;
-        OSStatus err;
-        BOOL set = NO;
-
-        err = LSGetApplicationForURL(
-            (CFURLRef)[NSURL URLWithString:[[urlTypes objectAtIndex: i] stringByAppendingString:@":"]],
-                                     kLSRolesAll, NULL, (CFURLRef *)&appURL);
-        if (err != noErr) {
-            set = NSRunAlertPanel(
-                [NSString stringWithFormat:NSLocalizedStringFromTableInBundle(
-                    @"iTerm is not the default handler for %@. Would you like to set iTerm as the default handler?",
-                    @"iTerm",
-                    [NSBundle bundleForClass: [self class]],
-                    @"URL Handler"), [urlTypes objectAtIndex: i]],
-                NSLocalizedStringFromTableInBundle(
-                    @"There is no handler currently.",
-                    @"iTerm",
-                    [NSBundle bundleForClass: [self class]],
-                    @"URL Handler"),
-                NSLocalizedStringFromTableInBundle(
-                    @"OK",
-                    @"iTerm",
-                    [NSBundle bundleForClass: [self class]],
-                    @"OK"),
-                NSLocalizedStringFromTableInBundle(
-                    @"Cancel",
-                    @"iTerm",
-                    [NSBundle bundleForClass: [self class]],
-                    @"Cancel"),
+    err = LSGetApplicationForURL(
+        (CFURLRef)[NSURL URLWithString:[scheme stringByAppendingString:@":"]],
+                                 kLSRolesAll, NULL, (CFURLRef *)&appURL);
+    if (err != noErr) {
+        set = NSRunAlertPanel([NSString stringWithFormat:@"iTerm is not the default handler for %@. Would you like to set iTerm as the default handler?",
+                               scheme],
+                @"There is currently no handler.",
+                @"OK",
+                @"Cancel",
                 nil) == NSAlertDefaultReturn;
-        }
-        else if (![[[NSFileManager defaultManager] displayNameAtPath:[appURL path]] isEqualToString:@"iTerm"]) {
-            set = NSRunAlertPanel(
-                [NSString stringWithFormat:NSLocalizedStringFromTableInBundle(
-                    @"iTerm is not the default handler for %@. Would you like to set iTerm as the default handler?",
-                    @"iTerm",
-                    [NSBundle bundleForClass: [self class]],
-                    @"URL Handler"),
-                [urlTypes objectAtIndex: i]],
-                [NSString stringWithFormat:NSLocalizedStringFromTableInBundle(
-                    @"The current handler is: %@",
-                    @"iTerm",
-                    [NSBundle bundleForClass: [self class]],
-                    @"URL Handler"),
-                [[NSFileManager defaultManager] displayNameAtPath:[appURL path]]],
-                NSLocalizedStringFromTableInBundle(
-                    @"OK",
-                    @"iTerm",
-                    [NSBundle bundleForClass: [self class]],
-                    @"OK"),
-                NSLocalizedStringFromTableInBundle(
-                    @"Cancel",
-                    @"iTerm",
-                    [NSBundle bundleForClass: [self class]],
-                    @"Cancel")
-                ,nil) == NSAlertDefaultReturn;
-        }
-
-        if (set) {
-              LSSetDefaultHandlerForURLScheme ((CFStringRef)[urlTypes objectAtIndex: i],(CFStringRef)[[NSBundle mainBundle] bundleIdentifier]);
-        }
+    } else if (![[[NSFileManager defaultManager] displayNameAtPath:[appURL path]] isEqualToString:@"iTerm"]) {
+        set = NSRunAlertPanel([NSString stringWithFormat:@"iTerm is not the default handler for %@. Would you like to set iTerm as the default handler?",
+                               scheme],
+                              [NSString stringWithFormat:@"The current handler is: %@",
+                               [[NSFileManager defaultManager] displayNameAtPath:[appURL path]]],
+                @"OK",
+                @"Cancel",
+                nil) == NSAlertDefaultReturn;
     }
-    //NSLog(@"urlHandlers:%@", urlHandlers);
+
+    if (set) {
+        [urlHandlersByGuid setObject:guid
+                              forKey:scheme];
+        LSSetDefaultHandlerForURLScheme((CFStringRef)scheme,
+                                        (CFStringRef)[[NSBundle mainBundle] bundleIdentifier]);
+    }
 }
 
 - (IBAction)closeWindow:(id)sender
@@ -3151,7 +3119,7 @@ static float versionNumber;
 
 - (void)_reloadURLHandlers:(NSNotification *)aNotification
 {
-    [bookmarksForUrlsTable reloadData];
+    // TODO: maybe something here for the current bookmark?
     [self _populateHotKeyBookmarksMenu];
 }
 
