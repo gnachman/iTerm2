@@ -757,7 +757,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
                                                  encoding:enc] autorelease];
         switch (mode) {
             case -1:
-                // Nnstandard Linux OSC P nrrggbb ST to change color palette
+                // Nonstandard Linux OSC P nrrggbb ST to change color palette
                 // entry.
                 result.type = XTERMCC_SET_PALETTE;
                 break;
@@ -782,6 +782,11 @@ static VT100TCC decode_xterm(unsigned char *datap,
                 break;
             case 9:
                 result.type = ITERM_GROWL;
+                break;
+            case 50:
+                // Nonstandard escape code implemented by Konsole.
+                // <Esc>]50;key=value^G
+                result.type = XTERMCC_SET_KVP;
                 break;
             default:
                 result.type = VT100_NOTSUPPORT;
@@ -2596,6 +2601,24 @@ static VT100TCC decode_string(unsigned char *datap,
             [[SCREEN session] setColorTable:theIndex
                                               color:[NSColor colorWithCalibratedRed:r/256.0 green:g/256.0 blue:b/256.0 alpha:1]];
         }
+    } else if (token.type == XTERMCC_SET_KVP) {
+      // argument is of the form key=value
+      // key: Sequence of characters not = or ^G
+      // value: Sequence of characters not ^G
+      NSString* argument = token.u.string;
+      NSRange eqRange = [argument rangeOfString:@"="];
+      if (eqRange.location != NSNotFound) {
+        NSString* key = [argument substringToIndex:eqRange.location];
+        NSString* value = [argument substringFromIndex:eqRange.location+1];
+        if ([key isEqualToString:@"CursorShape"]) {
+          // Value must be an integer. Bogusly, non-numbers are treated as 0.
+          int shape = [value intValue];
+          int shapeMap[] = { CURSOR_BOX, CURSOR_VERTICAL, CURSOR_UNDERLINE };
+          if (shape >= 0 && shape < sizeof(shapeMap)/sizeof(int)) {
+            [[[SCREEN session] TEXTVIEW] setCursorType:shapeMap[shape]];
+          }
+        }
+      }
     } else if (token.type == XTERMCC_SET_PALETTE) {
         NSString* argument = token.u.string;
         if ([argument length] == 7) {
