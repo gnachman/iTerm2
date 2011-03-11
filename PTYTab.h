@@ -77,6 +77,15 @@ static const int MIN_SESSION_COLUMNS = 2;
     NSMutableDictionary* idMap_;  // maps saved session id to ptysession.
     NSDictionary* savedArrangement_;  // layout of splitters pre-maximize
     NSSize savedSize_;  // pre-maximize active session size.
+
+    // An array of view IDs that can be thought of as cyclic, ordered from least
+    // recently used to most recently, beginning at currentViewIndex_.
+    NSMutableArray* viewOrder_;
+    int currentViewIndex_;
+
+    // This is >0 if currently inside setActiveSessionPreservingViewOrder, and the
+    // view order should not be changed.
+    int preserveOrder_;
 }
 
 // init/dealloc
@@ -86,9 +95,12 @@ static const int MIN_SESSION_COLUMNS = 2;
 
 - (NSRect)absoluteFrame;
 - (PTYSession*)activeSession;
+- (void)setActiveSessionPreservingViewOrder:(PTYSession*)session;
 - (void)setActiveSession:(PTYSession*)session;
 - (NSTabViewItem *)tabViewItem;
 - (void)setTabViewItem:(NSTabViewItem *)theTabViewItem;
+- (void)previousSession;
+- (void)nextSession;
 
 - (void)setLockedSession:(PTYSession*)lockedSession;
 - (PTYSession*)activeSession;

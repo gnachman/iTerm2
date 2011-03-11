@@ -246,6 +246,13 @@
 // Select the tab to the right of the foreground tab.
 - (IBAction)nextTab:(id)sender;
 
+// Select the most recent pane
+- (IBAction)previousPane:(id)sender;
+
+// Select the least recently used pane
+- (IBAction)nextPane:(id)sender;
+
+
 // Return the number of sessions in this window.
 - (int)numberOfTabs;
 

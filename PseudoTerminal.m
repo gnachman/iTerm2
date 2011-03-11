@@ -607,6 +607,16 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (IBAction)previousPane:(id)sender
+{
+	[[self currentTab] previousSession];
+}
+
+- (IBAction)nextPane:(id)sender
+{
+	[[self currentTab] nextSession];
+}
+
 - (int)numberOfTabs
 {
     return [TABVIEW numberOfTabViewItems];
@@ -2393,7 +2403,7 @@ NSString *sessionsKey = @"sessions";
 
     [self runCommandInSession:newSession inCwd:oldCWD];
     if (targetSession == [[self currentTab] activeSession]) {
-        [[self currentTab] setActiveSession:newSession];
+        [[self currentTab] setActiveSessionPreservingViewOrder:newSession];
     }
     [[self currentTab] recheckBlur];
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];

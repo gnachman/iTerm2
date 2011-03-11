@@ -3,16 +3,16 @@
 	<data>
 		<int key="IBDocument.SystemTarget">1050</int>
 		<string key="IBDocument.SystemVersion">10F569</string>
-		<string key="IBDocument.InterfaceBuilderVersion">788</string>
+		<string key="IBDocument.InterfaceBuilderVersion">804</string>
 		<string key="IBDocument.AppKitVersion">1038.29</string>
 		<string key="IBDocument.HIToolboxVersion">461.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
-			<string key="NS.object.0">788</string>
+			<string key="NS.object.0">804</string>
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="592"/>
+			<integer value="1210"/>
 			<integer value="498"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
@@ -1219,6 +1219,34 @@
 												<string key="NSTitle">Select Pane Right</string>
 												<string key="NSKeyEquiv"></string>
 												<int key="NSKeyEquivModMask">1572864</int>
+												<int key="NSMnemonicLoc">2147483647</int>
+												<reference key="NSOnImage" ref="643967552"/>
+												<reference key="NSMixedImage" ref="326707852"/>
+											</object>
+											<object class="NSMenuItem" id="421708572">
+												<reference key="NSMenu" ref="265908405"/>
+												<bool key="NSIsDisabled">YES</bool>
+												<bool key="NSIsSeparator">YES</bool>
+												<string key="NSTitle"/>
+												<string key="NSKeyEquiv"/>
+												<int key="NSMnemonicLoc">2147483647</int>
+												<reference key="NSOnImage" ref="643967552"/>
+												<reference key="NSMixedImage" ref="326707852"/>
+											</object>
+											<object class="NSMenuItem" id="476519492">
+												<reference key="NSMenu" ref="265908405"/>
+												<string key="NSTitle">Next Pane</string>
+												<string key="NSKeyEquiv">]</string>
+												<int key="NSKeyEquivModMask">1048576</int>
+												<int key="NSMnemonicLoc">2147483647</int>
+												<reference key="NSOnImage" ref="643967552"/>
+												<reference key="NSMixedImage" ref="326707852"/>
+											</object>
+											<object class="NSMenuItem" id="575240174">
+												<reference key="NSMenu" ref="265908405"/>
+												<string key="NSTitle">Previous Pane</string>
+												<string key="NSKeyEquiv">[</string>
+												<int key="NSKeyEquivModMask">1048576</int>
 												<int key="NSMnemonicLoc">2147483647</int>
 												<reference key="NSOnImage" ref="643967552"/>
 												<reference key="NSMixedImage" ref="326707852"/>
@@ -2704,6 +2732,22 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					</object>
 					<int key="connectionID">1248</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">previousPane:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="575240174"/>
+					</object>
+					<int key="connectionID">1254</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">nextPane:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="476519492"/>
+					</object>
+					<int key="connectionID">1255</int>
+				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<object class="NSArray" key="orderedObjects">
@@ -3703,6 +3747,9 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<reference ref="456490896"/>
 							<reference ref="70665414"/>
 							<reference ref="92579373"/>
+							<reference ref="421708572"/>
+							<reference ref="476519492"/>
+							<reference ref="575240174"/>
 						</object>
 						<reference key="parent" ref="667737648"/>
 					</object>
@@ -3791,6 +3838,21 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 						<reference key="object" ref="324976430"/>
 						<reference key="parent" ref="1015598466"/>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1249</int>
+						<reference key="object" ref="421708572"/>
+						<reference key="parent" ref="265908405"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1250</int>
+						<reference key="object" ref="476519492"/>
+						<reference key="parent" ref="265908405"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1251</int>
+						<reference key="object" ref="575240174"/>
+						<reference key="parent" ref="265908405"/>
+					</object>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="flattenedProperties">
@@ -3862,6 +3924,9 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>1243.ImportedFromIB2</string>
 					<string>1245.IBPluginDependency</string>
 					<string>1245.ImportedFromIB2</string>
+					<string>1249.IBPluginDependency</string>
+					<string>1250.IBPluginDependency</string>
+					<string>1251.IBPluginDependency</string>
 					<string>129.IBPluginDependency</string>
 					<string>129.ImportedFromIB2</string>
 					<string>130.IBEditorWindowLastContentRect</string>
@@ -4131,7 +4196,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{730, 416}, {217, 83}}</string>
+					<string>{{923, 348}, {217, 133}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -4153,6 +4218,9 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>{{614, 714}, {64, 6}}</string>
@@ -4209,11 +4277,11 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{397, 358}, {298, 343}}</string>
+					<string>{{625, 358}, {298, 343}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<boolean value="YES"/>
-					<string>{{59, 701}, {428, 20}}</string>
+					<string>{{329, 701}, {428, 20}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>{{160, 159}, {354, 164}}</string>
@@ -4235,7 +4303,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{286, 618}, {291, 83}}</string>
+					<string>{{556, 618}, {291, 83}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -4394,7 +4462,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">1248</int>
+			<int key="maxID">1255</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -4954,12 +5022,10 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>clearScrollbackBuffer:</string>
 							<string>closeCurrentSession:</string>
 							<string>closeCurrentTab:</string>
-							<string>closeFindBar:</string>
 							<string>closeInstantReplay:</string>
 							<string>closeTabContextualMenuAction:</string>
 							<string>closeWindow:</string>
 							<string>editCurrentSession:</string>
-							<string>findBarSettingChanged:</string>
 							<string>irButton:</string>
 							<string>irNext:</string>
 							<string>irPrev:</string>
@@ -4969,16 +5035,15 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>logStop:</string>
 							<string>moveTabToNewWindowContextualMenuAction:</string>
 							<string>newSessionInTabAtIndex:</string>
+							<string>nextPane:</string>
 							<string>nextTab:</string>
 							<string>openAutocomplete:</string>
 							<string>openPasteHistory:</string>
 							<string>parameterPanelEnd:</string>
+							<string>previousPane:</string>
 							<string>previousTab:</string>
 							<string>reset:</string>
 							<string>saveScrollPosition:</string>
-							<string>searchNext:</string>
-							<string>searchNextPrev:</string>
-							<string>searchPrevious:</string>
 							<string>selectPaneDown:</string>
 							<string>selectPaneLeft:</string>
 							<string>selectPaneRight:</string>
@@ -4999,9 +5064,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
-							<string>id</string>
-							<string>id</string>
-							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -5055,12 +5117,10 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>clearScrollbackBuffer:</string>
 							<string>closeCurrentSession:</string>
 							<string>closeCurrentTab:</string>
-							<string>closeFindBar:</string>
 							<string>closeInstantReplay:</string>
 							<string>closeTabContextualMenuAction:</string>
 							<string>closeWindow:</string>
 							<string>editCurrentSession:</string>
-							<string>findBarSettingChanged:</string>
 							<string>irButton:</string>
 							<string>irNext:</string>
 							<string>irPrev:</string>
@@ -5070,16 +5130,15 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>logStop:</string>
 							<string>moveTabToNewWindowContextualMenuAction:</string>
 							<string>newSessionInTabAtIndex:</string>
+							<string>nextPane:</string>
 							<string>nextTab:</string>
 							<string>openAutocomplete:</string>
 							<string>openPasteHistory:</string>
 							<string>parameterPanelEnd:</string>
+							<string>previousPane:</string>
 							<string>previousTab:</string>
 							<string>reset:</string>
 							<string>saveScrollPosition:</string>
-							<string>searchNext:</string>
-							<string>searchNextPrev:</string>
-							<string>searchPrevious:</string>
 							<string>selectPaneDown:</string>
 							<string>selectPaneLeft:</string>
 							<string>selectPaneRight:</string>
@@ -5117,10 +5176,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
-								<string key="name">closeFindBar:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-							<object class="IBActionInfo">
 								<string key="name">closeInstantReplay:</string>
 								<string key="candidateClassName">id</string>
 							</object>
@@ -5134,10 +5189,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							</object>
 							<object class="IBActionInfo">
 								<string key="name">editCurrentSession:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-							<object class="IBActionInfo">
-								<string key="name">findBarSettingChanged:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
@@ -5177,6 +5228,10 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
+								<string key="name">nextPane:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
 								<string key="name">nextTab:</string>
 								<string key="candidateClassName">id</string>
 							</object>
@@ -5193,6 +5248,10 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
+								<string key="name">previousPane:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
 								<string key="name">previousTab:</string>
 								<string key="candidateClassName">id</string>
 							</object>
@@ -5202,18 +5261,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							</object>
 							<object class="IBActionInfo">
 								<string key="name">saveScrollPosition:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-							<object class="IBActionInfo">
-								<string key="name">searchNext:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-							<object class="IBActionInfo">
-								<string key="name">searchNextPrev:</string>
-								<string key="candidateClassName">id</string>
-							</object>
-							<object class="IBActionInfo">
-								<string key="name">searchPrevious:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
@@ -5293,10 +5340,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>commandField</string>
 							<string>currentTime</string>
 							<string>earliestTime</string>
-							<string>findBarSubview</string>
-							<string>findBarTextField</string>
-							<string>findProgressIndicator</string>
-							<string>ignoreCase</string>
 							<string>instantReplaySubview</string>
 							<string>irSlider</string>
 							<string>latestTime</string>
@@ -5304,7 +5347,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>parameterPanel</string>
 							<string>parameterPrompt</string>
 							<string>parameterValue</string>
-							<string>regex</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
@@ -5312,17 +5354,12 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>NSTextField</string>
 							<string>NSTextField</string>
 							<string>BottomBarView</string>
-							<string>NSTextField</string>
-							<string>NSProgressIndicator</string>
-							<string>NSButton</string>
-							<string>BottomBarView</string>
 							<string>NSSlider</string>
 							<string>NSTextField</string>
 							<string>NSTextField</string>
 							<string>NSPanel</string>
 							<string>NSTextField</string>
 							<string>NSTextField</string>
-							<string>NSButton</string>
 						</object>
 					</object>
 					<object class="NSMutableDictionary" key="toOneOutletInfosByName">
@@ -5332,10 +5369,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>commandField</string>
 							<string>currentTime</string>
 							<string>earliestTime</string>
-							<string>findBarSubview</string>
-							<string>findBarTextField</string>
-							<string>findProgressIndicator</string>
-							<string>ignoreCase</string>
 							<string>instantReplaySubview</string>
 							<string>irSlider</string>
 							<string>latestTime</string>
@@ -5343,7 +5376,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>parameterPanel</string>
 							<string>parameterPrompt</string>
 							<string>parameterValue</string>
-							<string>regex</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
@@ -5358,22 +5390,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<object class="IBToOneOutletInfo">
 								<string key="name">earliestTime</string>
 								<string key="candidateClassName">NSTextField</string>
-							</object>
-							<object class="IBToOneOutletInfo">
-								<string key="name">findBarSubview</string>
-								<string key="candidateClassName">BottomBarView</string>
-							</object>
-							<object class="IBToOneOutletInfo">
-								<string key="name">findBarTextField</string>
-								<string key="candidateClassName">NSTextField</string>
-							</object>
-							<object class="IBToOneOutletInfo">
-								<string key="name">findProgressIndicator</string>
-								<string key="candidateClassName">NSProgressIndicator</string>
-							</object>
-							<object class="IBToOneOutletInfo">
-								<string key="name">ignoreCase</string>
-								<string key="candidateClassName">NSButton</string>
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">instantReplaySubview</string>
@@ -5402,10 +5418,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<object class="IBToOneOutletInfo">
 								<string key="name">parameterValue</string>
 								<string key="candidateClassName">NSTextField</string>
-							</object>
-							<object class="IBToOneOutletInfo">
-								<string key="name">regex</string>
-								<string key="candidateClassName">NSButton</string>
 							</object>
 						</object>
 					</object>
@@ -5815,14 +5827,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<object class="IBClassDescriptionSource" key="sourceIdentifier">
 						<string key="majorKey">IBFrameworkSource</string>
 						<string key="minorKey">AppKit.framework/Headers/NSBrowser.h</string>
-					</object>
-				</object>
-				<object class="IBPartialClassDescription">
-					<string key="className">NSButton</string>
-					<string key="superclassName">NSControl</string>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBFrameworkSource</string>
-						<string key="minorKey">AppKit.framework/Headers/NSButton.h</string>
 					</object>
 				</object>
 				<object class="IBPartialClassDescription">
@@ -6325,14 +6329,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<object class="IBClassDescriptionSource" key="sourceIdentifier">
 						<string key="majorKey">IBFrameworkSource</string>
 						<string key="minorKey">AppKit.framework/Headers/NSPanel.h</string>
-					</object>
-				</object>
-				<object class="IBPartialClassDescription">
-					<string key="className">NSProgressIndicator</string>
-					<string key="superclassName">NSView</string>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBFrameworkSource</string>
-						<string key="minorKey">AppKit.framework/Headers/NSProgressIndicator.h</string>
 					</object>
 				</object>
 				<object class="IBPartialClassDescription">

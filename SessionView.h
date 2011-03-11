@@ -42,6 +42,9 @@
 
     // Find window
     FindViewController* findView_;
+
+    // Unique per-process id of view, used for ordering them in PTYTab.
+    int viewId_;
 }
 
 - (id)initWithFrame:(NSRect)frame session:(PTYSession*)session;
@@ -51,5 +54,6 @@
 - (void)setDimmed:(BOOL)isDimmed;
 - (void)cancelTimers;
 - (FindViewController*)findViewController;
+- (int)viewId;
 
 @end

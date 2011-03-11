@@ -31,6 +31,7 @@
 #import "PTYTextView.h"
 
 static const float kTargetFrameRate = 1.0/60.0;
+static int nextViewId;
 
 @implementation SessionView
 
@@ -44,6 +45,7 @@ static const float kTargetFrameRate = 1.0/60.0;
         NSRect aRect = [self frame];
         [findView_ setFrameOrigin:NSMakePoint(aRect.size.width - [[findView_ view] frame].size.width - 30,
                                                      aRect.size.height - [[findView_ view] frame].size.height)];
+        viewId_ = nextViewId++;
     }
     return self;
 }
@@ -167,6 +169,11 @@ static const float kTargetFrameRate = 1.0/60.0;
 - (FindViewController*)findViewController
 {
     return findView_;
+}
+
+- (int)viewId
+{
+    return viewId_;
 }
 
 @end

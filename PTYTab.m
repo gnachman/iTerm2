@@ -130,6 +130,23 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     deadStateColor = [NSColor grayColor];
 }
 
+- (void)appendSessionViewToViewOrder:(SessionView*)sessionView
+{
+    NSNumber* n = [NSNumber numberWithInt:[sessionView viewId]];
+    if ([viewOrder_ indexOfObject:n] == NSNotFound) {
+        int i = currentViewIndex_ + 1;
+        if (i > [viewOrder_ count]) {
+            i = [viewOrder_ count];
+        }
+        [viewOrder_ insertObject:n atIndex:i];
+    }
+}
+
+- (void)appendSessionToViewOrder:(PTYSession*)session
+{
+    [self appendSessionViewToViewOrder:[session view]];
+}
+
 // init/dealloc
 - (id)initWithSession:(PTYSession*)session
 {
@@ -146,7 +163,8 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         [root_ setDelegate:self];
         [session setTab:self];
         [root_ addSubview:[session view]];
-
+        viewOrder_ = [[NSMutableArray alloc] init];
+        [self appendSessionToViewOrder:session];
     }
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)
@@ -177,7 +195,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         [root_ setAutoresizesSubviews:YES];
         [root_ setDelegate:self];
         [PTYTab _recursiveSetDelegateIn:root_ to:self];
-
+        viewOrder_ = [[NSMutableArray alloc] init];
     }
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)
@@ -210,7 +228,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 
     root_ = nil;
-
+    [viewOrder_ release];
     [fakeParentWindow_ release];
     [icon_ release];
     [idMap_ release];
@@ -270,8 +288,9 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return activeSession_;
 }
 
-- (void)setActiveSession:(PTYSession*)session
+- (void)setActiveSessionPreservingViewOrder:(PTYSession*)session
 {
+    ++preserveOrder_;
     PtyLog(@"PTYTab setActiveSession:%p", session);
     if (activeSession_ &&  activeSession_ != session && [activeSession_ dvr]) {
         [realParentWindow_ closeInstantReplay:self];
@@ -281,12 +300,20 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     activeSession_ = session;
     [session setLastActiveAt:[NSDate date]];
     if (activeSession_ == nil) {
+        --preserveOrder_;
         return;
     }
     if (changed) {
         [parentWindow_ setWindowTitle];
         [tabViewItem_ setLabel:[[self activeSession] name]];
-        [[realParentWindow_ window] makeFirstResponder:[session TEXTVIEW]];
+        if ([realParentWindow_ currentTab] == self) {
+            // If you set a textview in a non-current tab to the first responder and
+            // then close that tab, it crashes with NSTextInput caling
+            // -[PTYTextView respondsToSelector:] on a deallocated instance of the
+            // first responder. This kind of hacky workaround keeps us from making
+            // a invisible textview the first responder.
+            [[realParentWindow_ window] makeFirstResponder:[session TEXTVIEW]];
+        }
         [[session view] setDimmed:NO];
         if (oldSession && [[PreferencePanel sharedInstance] dimInactiveSplitPanes]) {
             [[oldSession view] setDimmed:YES];
@@ -299,7 +326,73 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     [self setLabelAttributes];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
                                                         object:activeSession_];
+    
+    NSUInteger i = [viewOrder_ indexOfObject:[NSNumber numberWithInt:[[session view] viewId]]];
+    if (i != NSNotFound) {
+        currentViewIndex_ = i;
+    }
+    
+    --preserveOrder_;
+}
+
+- (void)setActiveSession:(PTYSession*)session
+{
+    if (preserveOrder_) {
+        return;
+    }
+    [self setActiveSessionPreservingViewOrder:session];
+    [viewOrder_ removeObject:[NSNumber numberWithInt:[[session view] viewId]]];
+    [viewOrder_ addObject:[NSNumber numberWithInt:[[session view] viewId]]];
+    currentViewIndex_ = [viewOrder_ count] - 1;
+    
     [self recheckBlur];
+}
+
+// Do a depth-first search for a leaf with viewId==requestedId. Returns nil if not found under 'node'.
+- (SessionView*)_recursiveSessionViewWithId:(int)requestedId atNode:(NSSplitView*)node
+{
+    for (NSView* v in [node subviews]) {
+        if ([v isKindOfClass:[NSSplitView class]]) {
+            SessionView* sv = [self _recursiveSessionViewWithId:requestedId atNode:(NSSplitView*)v];
+            if (sv) {
+                return sv;
+            }
+        } else {
+            SessionView* sv = (SessionView*) v;
+            if ([sv viewId] == requestedId) {
+                return sv;
+            }
+        }
+    }
+    return nil;
+}
+
+- (void)previousSession
+{
+    --currentViewIndex_;
+    if (currentViewIndex_ < 0) {
+        currentViewIndex_ = [viewOrder_ count] - 1;
+    }
+    SessionView* sv = [self _recursiveSessionViewWithId:[[viewOrder_ objectAtIndex:currentViewIndex_] intValue]
+                                                 atNode:root_];
+    assert(sv);
+    if (sv) {
+        [self setActiveSessionPreservingViewOrder:[sv session]];
+    }
+}
+
+- (void)nextSession
+{
+    ++currentViewIndex_;
+    if (currentViewIndex_ >= [viewOrder_ count]) {
+        currentViewIndex_ = 0;
+    }
+    SessionView* sv = [self _recursiveSessionViewWithId:[[viewOrder_ objectAtIndex:currentViewIndex_] intValue]
+                                                 atNode:root_];
+    assert(sv);
+    if (sv) {
+        [self setActiveSessionPreservingViewOrder:[sv session]];
+    }
 }
 
 - (id<WindowControllerInterface>)parentWindow
@@ -892,9 +985,15 @@ static NSString* FormatRect(NSRect r) {
     // Remove the session.
     [self _recursiveRemoveView:[aSession view]];
 
-    if (aSession == activeSession_) {
-        [self setActiveSession:[(SessionView*)nearestNeighbor session]];
+    [viewOrder_ removeObject:[NSNumber numberWithInt:[[aSession view] viewId]]];
+    if (currentViewIndex_ >= [viewOrder_ count]) {
+        // Do not allow currentViewIndex_ to hold an out-of-bounds value
+        currentViewIndex_ = [viewOrder_ count] - 1;
     }
+    if (aSession == activeSession_) {
+        [self setActiveSessionPreservingViewOrder:[(SessionView*)nearestNeighbor session]];
+    }
+    
     [self recheckBlur];
     [realParentWindow_ sessionWasRemoved];
 }
@@ -1018,6 +1117,8 @@ static NSString* FormatRect(NSRect r) {
     PtyLog(@"After:");
     [self dump];
 
+    [self appendSessionViewToViewOrder:newView];
+    
     return newView;
 }
 
@@ -1561,6 +1662,7 @@ static NSString* FormatRect(NSRect r) {
                                                                                     inView:(SessionView*)view
                                                                                      inTab:theTab];
         [sessionView setSession:session];
+        [self appendSessionToViewOrder:session];
         if ([[arrangement objectForKey:TAB_ARRANGEMENT_IS_ACTIVE] boolValue]) {
             [sessionView setDimmed:NO];
             return session;
