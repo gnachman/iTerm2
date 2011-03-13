@@ -480,7 +480,6 @@ static float versionNumber;
     globalToolbarId = [globalToolbarItem itemIdentifier];
     appearanceToolbarId = [appearanceToolbarItem itemIdentifier];
     keyboardToolbarId = [keyboardToolbarItem itemIdentifier];
-    advancedToolbarId = [advancedToolbarItem itemIdentifier];
     [toolbar setSelectedItemIdentifier:globalToolbarId];
 
     // add list of encodings
@@ -765,8 +764,6 @@ static float versionNumber;
         return bookmarksToolbarItem;
     } else if ([itemIdentifier isEqual:keyboardToolbarId]) {
         return keyboardToolbarItem;
-    } else if ([itemIdentifier isEqual:advancedToolbarId]) {
-        return advancedToolbarItem;
     } else {
         return nil;
     }
@@ -778,13 +775,12 @@ static float versionNumber;
                                      appearanceToolbarId,
                                      bookmarksToolbarId,
                                      keyboardToolbarId,
-                                     advancedToolbarId,
                                      nil];
 }
 
 - (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar
 {
-    return [NSArray arrayWithObjects:globalToolbarId, appearanceToolbarId, bookmarksToolbarId, keyboardToolbarId, advancedToolbarId, nil];
+    return [NSArray arrayWithObjects:globalToolbarId, appearanceToolbarId, bookmarksToolbarId, keyboardToolbarId, nil];
 }
 
 - (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar
@@ -795,7 +791,6 @@ static float versionNumber;
                                      appearanceToolbarId,
                                      bookmarksToolbarId,
                                      keyboardToolbarId,
-                                     advancedToolbarId,
                                      nil];
 }
 
@@ -832,7 +827,6 @@ static float versionNumber;
     defaultHotkeyTogglesWindow = [prefs objectForKey:@"HotKeyTogglesWindow"]?[[prefs objectForKey:@"HotKeyTogglesWindow"] boolValue]: NO;
     defaultHotKeyBookmarkGuid = [[prefs objectForKey:@"HotKeyBookmark"] copy];
     defaultEnableBonjour = [prefs objectForKey:@"EnableRendezvous"]?[[prefs objectForKey:@"EnableRendezvous"] boolValue]: NO;
-    defaultEnableGrowl = [prefs objectForKey:@"EnableGrowl"]?[[prefs objectForKey:@"EnableGrowl"] boolValue]: NO;
     defaultCmdSelection = [prefs objectForKey:@"CommandSelection"]?[[prefs objectForKey:@"CommandSelection"] boolValue]: YES;
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
     defaultMaxVertically = [prefs objectForKey:@"MaxVertically"] ? [[prefs objectForKey:@"MaxVertically"] boolValue] : NO;
@@ -944,7 +938,6 @@ static float versionNumber;
     [prefs setBool:defaultHotkeyTogglesWindow forKey:@"HotKeyTogglesWindow"];
     [prefs setValue:defaultHotKeyBookmarkGuid forKey:@"HotKeyBookmark"];
     [prefs setBool:defaultEnableBonjour forKey:@"EnableRendezvous"];
-    [prefs setBool:defaultEnableGrowl forKey:@"EnableGrowl"];
     [prefs setBool:defaultCmdSelection forKey:@"CommandSelection"];
     [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
     [prefs setBool:defaultMaxVertically forKey:@"MaxVertically"];
@@ -1043,7 +1036,6 @@ static float versionNumber;
     [hotkeyTogglesWindow setState: defaultHotkeyTogglesWindow?NSOnState:NSOffState];
     [self _populateHotKeyBookmarksMenu];
     [enableBonjour setState: defaultEnableBonjour?NSOnState:NSOffState];
-    [enableGrowl setState: defaultEnableGrowl?NSOnState:NSOffState];
     [cmdSelection setState: defaultCmdSelection?NSOnState:NSOffState];
     [passOnControlLeftClick setState: defaultPassOnControlLeftClick?NSOnState:NSOffState];
     [maxVertically setState: defaultMaxVertically?NSOnState:NSOffState];
@@ -1252,7 +1244,6 @@ static float versionNumber;
             }
         }
 
-        defaultEnableGrowl = ([enableGrowl state] == NSOnState);
         defaultCmdSelection = ([cmdSelection state] == NSOnState);
         defaultPassOnControlLeftClick = ([passOnControlLeftClick state] == NSOnState);
         defaultMaxVertically = ([maxVertically state] == NSOnState);
@@ -1418,7 +1409,17 @@ static float versionNumber;
 
 - (BOOL)enableGrowl
 {
-    return defaultEnableGrowl;
+    for (Bookmark* bookmark in [[BookmarkModel sharedInstance] bookmarks]) {
+        if ([[bookmark objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue]) {
+            return YES;
+        }
+    }
+    for (Bookmark* bookmark in [[BookmarkModel sessionsInstance] bookmarks]) {
+        if ([[bookmark objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue]) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (BOOL)cmdSelection
@@ -2059,6 +2060,9 @@ static float versionNumber;
     [scrollbackLines setIntValue:[[dict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
     [unlimitedScrollback setState:[[dict objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue] ? NSOnState : NSOffState];
     [scrollbackLines setEnabled:[unlimitedScrollback state] == NSOffState];
+    if ([unlimitedScrollback state] == NSOnState) {
+        [scrollbackLines setStringValue:@""];
+    }
     [terminalType setStringValue:[dict objectForKey:KEY_TERMINAL_TYPE]];
     [sendCodeWhenIdle setState:[[dict objectForKey:KEY_SEND_CODE_WHEN_IDLE] boolValue] ? NSOnState : NSOffState];
     [idleCode setIntValue:[[dict objectForKey:KEY_IDLE_CODE] intValue]];
@@ -2362,8 +2366,14 @@ static float versionNumber;
     [newDict setObject:[NSNumber numberWithBool:([bookmarkGrowlNotifications state]==NSOnState)] forKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS];
     [newDict setObject:[NSNumber numberWithUnsignedInt:[[characterEncoding selectedItem] tag]] forKey:KEY_CHARACTER_ENCODING];
     [newDict setObject:[NSNumber numberWithInt:[scrollbackLines intValue]] forKey:KEY_SCROLLBACK_LINES];
-    [newDict setObject:[NSNumber numberWithBool:([unlimitedScrollback state]==NSOnState)] forKey:KEY_UNLIMITED_SCROLLBACK];
+        [newDict setObject:[NSNumber numberWithBool:([unlimitedScrollback state]==NSOnState)] forKey:KEY_UNLIMITED_SCROLLBACK];
     [scrollbackLines setEnabled:[unlimitedScrollback state]==NSOffState];
+    if ([unlimitedScrollback state] == NSOnState) {
+        [scrollbackLines setStringValue:@""];
+    } else if (sender == unlimitedScrollback) {
+        [scrollbackLines setStringValue:@"10000"];
+    }
+    
     [newDict setObject:[terminalType stringValue] forKey:KEY_TERMINAL_TYPE];
     [newDict setObject:[NSNumber numberWithBool:([sendCodeWhenIdle state]==NSOnState)] forKey:KEY_SEND_CODE_WHEN_IDLE];
     [newDict setObject:[NSNumber numberWithInt:[idleCode intValue]] forKey:KEY_IDLE_CODE];
@@ -2479,11 +2489,6 @@ static float versionNumber;
 - (IBAction)showKeyboardTabView:(id)sender
 {
     [tabView selectTabViewItem:keyboardTabViewItem];
-}
-
-- (IBAction)showAdvancedTabView:(id)sender
-{
-    [tabView selectTabViewItem:advancedTabViewItem];
 }
 
 - (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme

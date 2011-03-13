@@ -117,10 +117,6 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *enableBonjour;
     BOOL defaultEnableBonjour;
 
-    // Enable growl notifications
-    IBOutlet NSButton *enableGrowl;
-    BOOL defaultEnableGrowl;
-
     // cmd-click to launch url
     IBOutlet NSButton *cmdSelection;
     BOOL defaultCmdSelection;
@@ -246,13 +242,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTabViewItem* keyboardTabViewItem;
     IBOutlet NSToolbarItem* bookmarksToolbarItem;
     IBOutlet NSTabViewItem* bookmarksTabViewItem;
-    IBOutlet NSToolbarItem* advancedToolbarItem;
-    IBOutlet NSTabViewItem* advancedTabViewItem;
     NSString* globalToolbarId;
     NSString* appearanceToolbarId;
     NSString* keyboardToolbarId;
     NSString* bookmarksToolbarId;
-    NSString* advancedToolbarId;
 
     // url handler stuff
     NSMutableDictionary *urlHandlersByGuid;
@@ -465,6 +458,8 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (BOOL)onlyWhenMoreTabs;
 - (BOOL)focusFollowsMouse;
 - (BOOL)enableBonjour;
+// Returns true if ANY profile has growl enabled (preserves interface from back
+// when there was a global growl setting as well as a per-profile setting).
 - (BOOL)enableGrowl;
 - (BOOL)cmdSelection;
 - (BOOL)passOnControlLeftClick;
@@ -518,7 +513,6 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (IBAction)showAppearanceTabView:(id)sender;
 - (IBAction)showBookmarksTabView:(id)sender;
 - (IBAction)showKeyboardTabView:(id)sender;
-- (IBAction)showAdvancedTabView:(id)sender;
 - (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme;
 - (IBAction)closeWindow:(id)sender;
 - (void)controlTextDidChange:(NSNotification *)aNotification;
