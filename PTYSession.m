@@ -743,6 +743,25 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
     gettimeofday(&lastInput, NULL);
 
+    if ([[[self tab] realParentWindow] inInstantReplay]) {
+        // Special key handling in IR mode, and keys never get sent to the live
+        // session, even though it might be displayed.
+        if (unicode == 27) {
+            // Escape exits IR
+            [[[self tab] realParentWindow] closeInstantReplay:self];
+            return;
+        } else if (unmodunicode == NSLeftArrowFunctionKey) {
+            // Left arrow moves to prev frame
+            [[[self tab] realParentWindow] irPrev:self];
+        } else if (unmodunicode == NSRightArrowFunctionKey) {
+            // Right arrow moves to next frame
+            [[[self tab] realParentWindow] irNext:self];
+        } else {
+            NSBeep();
+        }
+        return;
+    }
+
     /*
     unsigned short keycode = [event keyCode];
     NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));

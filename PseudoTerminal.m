@@ -32,6 +32,9 @@
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
 
+// For beta 1, we're trying to keep the IR bar from mysteriously disappearing
+// when live mode is entered.
+// #define HIDE_IR_WHEN_LIVE_VIEW_ENTERED
 #define WINDOW_NAME @"iTerm Window %d"
 
 #import <iTerm/iTerm.h>
@@ -2069,6 +2072,7 @@ NSString *sessionsKey = @"sessions";
     if (_fullScreen) {
         [self adjustFullScreenWindowForBottomBarChange];
     } else {
+        [[[self window] contentView] setAutoresizesSubviews:NO];
         if (hide) {
             NSRect frame = [[self window] frame];
             NSPoint topLeft;
@@ -2092,6 +2096,7 @@ NSString *sessionsKey = @"sessions";
     [TABVIEW setFrame: tvframe];
     tvframe.size.height -= 1;
     [TABVIEW setFrame: tvframe];
+    [[[self window] contentView] setAutoresizesSubviews:YES];
 
     [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
 }
@@ -2152,7 +2157,9 @@ NSString *sessionsKey = @"sessions";
 {
     PTYTab* theTab = [replaySession tab];
     [self updateInstantReplay];
+#ifdef HIDE_IR_WHEN_LIVE_VIEW_ENTERED
     [self showHideInstantReplay];
+#endif
     [theTab showLiveSession:liveSession inPlaceOf:replaySession];
     [theTab setParentWindow:self];
     [[self window] makeFirstResponder:[[theTab activeSession] TEXTVIEW]];
@@ -2200,16 +2207,20 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)irSliderMoved:(id)sender
 {
+#ifdef HIDE_IR_WHEN_LIVE_VIEW_ENTERED
     if ([irSlider floatValue] == 1.0) {
         if ([[self currentSession] liveSession]) {
             [self showLiveSession:[[self currentSession] liveSession] inPlaceOf:[self currentSession]];
         }
     } else {
+#endif
         if (![[self currentSession] liveSession]) {
             [self replaySession:[self currentSession]];
         }
         [[self currentSession] irSeekToAtLeast:[self timestampForFraction:[irSlider floatValue]]];
+#ifdef HIDE_IR_WHEN_LIVE_VIEW_ENTERED
     }
+#endif
     [self updateInstantReplay];
 }
 

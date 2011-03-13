@@ -1258,6 +1258,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 {
     DebugLog(@"PTYTextView keyDown");
     id delegate = [self delegate];
+    if ([[[[[self dataSource] session] tab] realParentWindow] inInstantReplay]) {
+        // Delegate has special handling for this case.
+        [delegate keyDown:event];
+        return;
+    }
     unsigned int modflag = [event modifierFlags];
     unsigned short keyCode = [event keyCode];
     BOOL prev = [self hasMarkedText];
