@@ -2377,25 +2377,29 @@ static VT100TCC decode_string(unsigned char *datap,
                     // clears the alternate screen when switching to it rather than when
                     // switching to the normal screen, thus retaining the alternate screen
                     // contents for select/paste operations. 
-                    if(mode) {
-                        [self saveCursorAttributes];
-                        [SCREEN saveCursorPosition];
-                        [SCREEN saveBuffer];
-                        [SCREEN clearScreen];
-                    }
-                    else {
-                        [SCREEN restoreBuffer];
-                        [self restoreCursorAttributes];
-                        [SCREEN restoreCursorPosition];
+                    if (!disableSmcupRmcup) {
+                        if (mode) {
+                            [self saveCursorAttributes];
+                            [SCREEN saveCursorPosition];
+                            [SCREEN saveBuffer];
+                            [SCREEN clearScreen];
+                        } else {
+                            [SCREEN restoreBuffer];
+                            [self restoreCursorAttributes];
+                            [SCREEN restoreCursorPosition];
+                        }
                     }
                     break;
 
                 case 47:
                     // alternate screen buffer mode
-                    if(mode)
-                        [SCREEN saveBuffer];
-                    else
-                        [SCREEN restoreBuffer];
+                    if (!disableSmcupRmcup) {
+                        if (mode) {
+                            [SCREEN saveBuffer];
+                        } else {
+                            [SCREEN restoreBuffer];
+                        }
+                    }
                     break;
 
                 case 1000:
@@ -2752,6 +2756,11 @@ static VT100TCC decode_string(unsigned char *datap,
 - (void) setScreen:(VT100Screen*) sc
 {
     SCREEN=sc;
+}
+
+- (void)setDisableSmcupRmcup:(BOOL)value
+{
+    disableSmcupRmcup = value;
 }
 
 @end

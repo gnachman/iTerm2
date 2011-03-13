@@ -322,6 +322,7 @@ typedef enum {
     unsigned int streamOffset;
 
     BOOL IS_ANSI;
+    BOOL disableSmcupRmcup;
 
     //terminfo
     char  *key_strings[TERMINFO_KEYS];
@@ -406,5 +407,8 @@ typedef enum {
 - (void)_setRGB:(VT100TCC)token;
 
 - (void) setScreen:(VT100Screen *)sc;
+
+- (void)setDisableSmcupRmcup:(BOOL)value;
+
 @end
 
