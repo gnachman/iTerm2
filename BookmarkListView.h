@@ -108,6 +108,7 @@
 - (void)dealloc;
 - (BookmarkModelWrapper*)dataSource;
 - (void)setUnderlyingDatasource:(BookmarkModel*)dataSource;
+- (void)focusSearchField;
 
 // Drag drop
 - (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard*)pboard;

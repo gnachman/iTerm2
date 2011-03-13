@@ -239,6 +239,7 @@ typedef enum {
     [[NSNotificationCenter defaultCenter] postNotificationName:@"nonTerminalWindowBecameKey"
                                                         object:nil
                                                       userInfo:nil];
+    [tableView_ focusSearchField];
 }
 
 - (IBAction)closeAfterOpeningChanged:(id)sender

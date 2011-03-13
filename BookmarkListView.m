@@ -265,6 +265,11 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
 {
 }
 
+- (void)focusSearchField
+{
+    [[self window] makeFirstResponder:searchField_];
+}
+
 // Drag drop -------------------------------
 - (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard*)pboard
 {
