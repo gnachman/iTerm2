@@ -112,44 +112,111 @@
 @interface iTermKeyBindingMgr : NSObject {
 }
 
-+ (NSString *) formatKeyCombination:(NSString *)theKeyCombination;
+// Given a key combination of the form 0xKeycode-0xModifiers, return a human-
+// readable representation (e.g., ^X)
++ (NSString *)formatKeyCombination:(NSString *)theKeyCombination;
+
+// Given a dictionary with keys Action->int, Text->string, return a human-readable
+// description (e.g., "Send text: foo"). The action comes from the KEY_ACTION_xxx
+// constants.
 + (NSString *)formatAction:(NSDictionary *)keyInfo;
-+ (int) actionForKeyCode:(unichar)keyCode
-               modifiers:(unsigned int)keyMods
-                    text:(NSString **)text
-               keyMappings:(NSDictionary *)keyMappings;
+
+// Given a keycode and modifier mask, return the action and fill in the optional text
+// string. if keyMappings is provided, that is searched first, and if nothing is
+// found (or keyMappings is nil) then the global mappings are searched.
++ (int)actionForKeyCode:(unichar)keyCode
+              modifiers:(unsigned int)keyMods
+                   text:(NSString **)text
+            keyMappings:(NSDictionary *)keyMappings;
+
+// Remove an item from the bookmark's keymappings by index.
 + (void)removeMappingAtIndex:(int)rowIndex inBookmark:(NSMutableDictionary*)bookmark;
+
+// Return a dictionary that is a copy of dict, but without the keymapping at the
+// requested index.
 + (NSDictionary*)removeMappingAtIndex:(int)rowIndex inDictionary:(NSDictionary*)dict;
+
+// Load a set of preset keymappings from PresetKeyMappings.plist into the
+// specified bookmarks, removing all of its previous mappings.
 + (void)setKeyMappingsToPreset:(NSString*)presetName inBookmark:(NSMutableDictionary*)bookmark;
+
+// Load a set of preset keymappings from GlobalKeyMap.plist into the global
+// keymappings, removing all previous mappings.
 + (void)setGlobalKeyMappingsToPreset:(NSString*)presetName;
+
+// This function has two modes:
+// If newMapping is false, replace a mapping at the specified index. The index
+// must be in bounds.
+// If newMapping is true, either replace the existing mapping for the given keyString
+// (0xKeycode-0xModifier) or add a new one if there is no existing mapping.
+//
+// actionIndex takes a constant from the KEY_ACTION_xxx values.
+//
+// valueToSend must not be null, but if the actionIndex doesn't take an argument,
+// you should pass @"".
+//
+// bookmark will be modified in place.
 + (void)setMappingAtIndex:(int)rowIndex
                    forKey:(NSString*)keyString
                    action:(int)actionIndex
                     value:(NSString*)valueToSend
                 createNew:(BOOL)newMapping
                inBookmark:(NSMutableDictionary*)bookmark;
+
+// Replace an existing key mapping in a key mapping dictionary.
 + (void)setMappingAtIndex:(int)rowIndex
                    forKey:(NSString*)keyString
                    action:(int)actionIndex
                     value:(NSString*)valueToSend
                 createNew:(BOOL)newMapping
              inDictionary:(NSMutableDictionary*)km;
-+ (NSString*)shortcutAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark;
-+ (NSString*)globalShortcutAtIndex:(int)rowIndex;
-+ (NSDictionary*)mappingAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark;
-+ (NSDictionary*)globalMappingAtIndex:(int)rowIndex;
-+ (int)numberOfMappingsForBookmark:(Bookmark*)bmDict;
-+ (void)removeMappingWithCode:(unichar)keyCode modifiers:(unsigned int)mods inBookmark:(NSMutableDictionary*)bookmark;
-+ (int) _actionForKeyCode:(unichar)keyCode
-                modifiers:(unsigned int)keyMods
-                     text:(NSString **)text
-              keyMappings:(NSDictionary *)keyMappings;
 
-+ (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent prefPanel:(PreferencePanel*)pp;
+// Return a shortcut (0xKeycode-0xModifier) by index from a bookmark.
++ (NSString*)shortcutAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark;
+
+// Return a shortcut (0xKeycode-0xModifier) from the global keymappings.
++ (NSString*)globalShortcutAtIndex:(int)rowIndex;
+
+// Return a keymapping dict (having keys Action, Text) at a given index from a
+// bookmark.
++ (NSDictionary*)mappingAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark;
+
+// Return a keymapping dict (having keys Action, Text) at a given index from the
+// global key mappings.
++ (NSDictionary*)globalMappingAtIndex:(int)rowIndex;
+
+// Return the number of key mappings in a bookmark.
++ (int)numberOfMappingsForBookmark:(Bookmark*)bmDict;
+
+// Remove a keymapping with a given keycode and modifier mask from a bookmark.
++ (void)removeMappingWithCode:(unichar)keyCode
+                    modifiers:(unsigned int)mods
+                   inBookmark:(NSMutableDictionary*)bookmark;
+
+// Return the action (a value from the constant KEY_ACTION_xxx) for a given keycode
+// and modifiers, searching only the specified keymappings dictionary.
++ (int)localActionForKeyCode:(unichar)keyCode
+                   modifiers:(unsigned int)keyMods
+                        text:(NSString **)text
+                 keyMappings:(NSDictionary *)keyMappings;
+
+// Modify a keypress event, swapping modifiers as defined in the global settings.
++ (CGEventRef)remapModifiersInCGEvent:(CGEventRef)cgEvent
+                            prefPanel:(PreferencePanel*)pp;
+
+// Like remapModifiersInCGEvent:prefPanel: but for an NSEvent.
 + (NSEvent*)remapModifiers:(NSEvent*)event prefPanel:(PreferencePanel*)pp;
+
+// Returns the global keymap ("0xKeycode-0xModifiers"->{Action=int, [Text=str])
 + (NSDictionary*)globalKeyMap;
+
+// Replace the global keymap with a new dictionary.
 + (void)setGlobalKeyMap:(NSDictionary*)src;
+
+// True if a keystring 0xKeycode-0xModifiers has any global mapping.
 + (BOOL)haveGlobalKeyMappingForKeyString:(NSString*)keyString;
+
+// True if a bookmark has a mapping for a 0xKeycode-0xModifiers keystring.
 + (BOOL)haveKeyMappingForKeyString:(NSString*)keyString inBookmark:(Bookmark*)bookmark;
 
 @end

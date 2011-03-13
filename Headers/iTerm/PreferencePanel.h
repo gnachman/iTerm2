@@ -404,7 +404,6 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     int defaultSwitchWindowModifier;
     IBOutlet NSPopUpButton* switchWindowModifierButton;
 
-    BOOL defaultDeleteSendsCtrlH;
     IBOutlet NSButton* deleteSendsCtrlHButton;
 
     IBOutlet NSTableView* globalKeyMappings;
@@ -561,7 +560,6 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (BOOL)isAnyModifierRemapped;
 - (int)switchTabModifier;
 - (int)switchWindowModifier;
-- (BOOL)deleteSendsCtrlH;
 
 - (BOOL)remappingDisabledTemporarily;
 - (BOOL)hotkeyTogglesWindow;

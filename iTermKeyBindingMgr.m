@@ -107,13 +107,13 @@ static NSDictionary* globalKeyMap;
             isArrow = YES;
             break;
         case NSDeleteFunctionKey:
-            aString = NSLocalizedStringFromTableInBundle(@"Del",
+            aString = NSLocalizedStringFromTableInBundle(@"Del→",
                                                          @"iTerm",
                                                          [NSBundle bundleForClass:[self class]],
                                                          @"Key Names");
             break;
         case 0x7f:
-            aString = NSLocalizedStringFromTableInBundle(@"Delete",
+            aString = NSLocalizedStringFromTableInBundle(@"←Delete",
                                                          @"iTerm",
                                                          [NSBundle bundleForClass:[self class]],
                                                          @"Key Names");
@@ -441,10 +441,10 @@ static NSDictionary* globalKeyMap;
     return [dict objectForKey:keyString] != nil;
 }
 
-+ (int) _actionForKeyCode:(unichar)keyCode
-                modifiers:(unsigned int) keyMods
-                     text:(NSString **) text
-              keyMappings:(NSDictionary *)keyMappings
++ (int)localActionForKeyCode:(unichar)keyCode
+                   modifiers:(unsigned int) keyMods
+                        text:(NSString **) text
+                 keyMappings:(NSDictionary *)keyMappings
 {
     NSString *keyString;
     NSDictionary *theKeyMapping;
@@ -461,11 +461,11 @@ static NSDictionary* globalKeyMap;
 
     keyString = [NSString stringWithFormat: @"0x%x-0x%x", keyCode, theModifiers];
     theKeyMapping = [keyMappings objectForKey: keyString];
-    if (theKeyMapping == nil)
-    {
-        if(text)
+    if (theKeyMapping == nil) {
+        if (text) {
             *text = nil;
-        return (-1);
+        }
+        return -1;
     }
 
     // parse the mapping
@@ -501,23 +501,23 @@ static NSDictionary* globalKeyMap;
     [[NSUserDefaults standardUserDefaults] setObject:globalKeyMap forKey:@"GlobalKeyMap"];
 }
 
-+ (int) actionForKeyCode:(unichar)keyCode
-               modifiers:(unsigned int) keyMods
-                    text:(NSString **) text
-             keyMappings:(NSDictionary *)keyMappings
++ (int)actionForKeyCode:(unichar)keyCode
+              modifiers:(unsigned int) keyMods
+                   text:(NSString **) text
+            keyMappings:(NSDictionary *)keyMappings
 {
     int keyBindingAction = -1;
     if (keyMappings) {
-        keyBindingAction = [iTermKeyBindingMgr _actionForKeyCode:keyCode
-                                                       modifiers:keyMods
-                                                            text:text
-                                                     keyMappings:keyMappings];
+        keyBindingAction = [iTermKeyBindingMgr localActionForKeyCode:keyCode
+                                                           modifiers:keyMods
+                                                                text:text
+                                                         keyMappings:keyMappings];
     }
     if (keyMappings != [self globalKeyMap] && keyBindingAction < 0) {
-        keyBindingAction = [iTermKeyBindingMgr _actionForKeyCode:keyCode
-                                                       modifiers:keyMods
-                                                            text:text
-                                                     keyMappings:[self globalKeyMap]];
+        keyBindingAction = [iTermKeyBindingMgr localActionForKeyCode:keyCode
+                                                           modifiers:keyMods
+                                                                text:text
+                                                         keyMappings:[self globalKeyMap]];
     }
     return keyBindingAction;
 }
@@ -534,7 +534,8 @@ static NSDictionary* globalKeyMap;
 
 + (void)removeMappingAtIndex:(int)rowIndex inBookmark:(NSMutableDictionary*)bookmark
 {
-    [bookmark setObject:[iTermKeyBindingMgr removeMappingAtIndex:rowIndex inDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]]
+    [bookmark setObject:[iTermKeyBindingMgr removeMappingAtIndex:rowIndex
+                                                    inDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]]
                  forKey:KEY_KEYBOARD_MAP];
 }
 
@@ -571,7 +572,7 @@ static NSDictionary* globalKeyMap;
 {
     NSString* origKeyCombo = nil;
     NSArray* allKeys =
-    [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+        [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
     if (!newMapping) {
         if (rowIndex >= 0 && rowIndex < [allKeys count]) {
             origKeyCombo = [allKeys objectAtIndex:rowIndex];
@@ -587,7 +588,7 @@ static NSDictionary* globalKeyMap;
     }
 
     NSMutableDictionary* keyBinding =
-    [[[NSMutableDictionary alloc] init] autorelease];
+        [[[NSMutableDictionary alloc] init] autorelease];
     [keyBinding setObject:[NSNumber numberWithInt:actionIndex]
                    forKey:@"Action"];
     [keyBinding setObject:[[valueToSend copy] autorelease] forKey:@"Text"];
@@ -661,7 +662,9 @@ static NSDictionary* globalKeyMap;
     return [keyMapDict count];
 }
 
-+ (void)removeMappingWithCode:(unichar)keyCode modifiers:(unsigned int)mods inBookmark:(NSMutableDictionary*)bookmark
++ (void)removeMappingWithCode:(unichar)keyCode
+                    modifiers:(unsigned int)mods
+                   inBookmark:(NSMutableDictionary*)bookmark
 {
     NSMutableDictionary* km = [NSMutableDictionary dictionaryWithDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]];
     NSString* keyString = [NSString stringWithFormat:@"0x%x-0x%x", keyCode, mods];

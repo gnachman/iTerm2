@@ -621,10 +621,10 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 - (void)_removeOutdatedKeyMapping
 {
     NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:addressBookEntry];
-    [iTermKeyBindingMgr removeMappingWithCode:0xf702
+    [iTermKeyBindingMgr removeMappingWithCode:NSLeftArrowFunctionKey
                                     modifiers:NSCommandKeyMask | NSAlternateKeyMask | NSNumericPadKeyMask
                                    inBookmark:temp];
-    [iTermKeyBindingMgr removeMappingWithCode:0xf703
+    [iTermKeyBindingMgr removeMappingWithCode:NSRightArrowFunctionKey
                                     modifiers:NSCommandKeyMask | NSAlternateKeyMask | NSNumericPadKeyMask
                                    inBookmark:temp];
 
@@ -738,8 +738,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     if ([unmodkeystr length] == 0) {
         return;
     }
-    unicode = [keystr length]>0?[keystr characterAtIndex:0]:0;
-    unmodunicode = [unmodkeystr length]>0?[unmodkeystr characterAtIndex:0]:0;
+    unicode = [keystr length] > 0 ? [keystr characterAtIndex:0] : 0;
+    unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
 
     gettimeofday(&lastInput, NULL);
 
@@ -946,6 +946,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                     data = [TERMINAL keyInsert];
                     break;
                 case NSDeleteFunctionKey:
+                    // This is forward delete, not backspace.
                     data = [TERMINAL keyDelete];
                     break;
                 case NSHomeFunctionKey:
@@ -1026,13 +1027,6 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             // Check if we are in keypad mode
             if (modflag & NSNumericPadKeyMask) {
                 data = [TERMINAL keypadData:unicode keystr:keystr];
-            }
-            if (((modflag & (NSCommandKeyMask | NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask)) == 0) &&
-                [event keyCode] == 51) {  // delete key with no modifiers
-                if ([[PreferencePanel sharedInstance] deleteSendsCtrlH]) {
-                    unichar ch = 8;  // control-h
-                    data = [NSData dataWithBytes:&ch length:1];
-                }
             }
 
             int indMask = modflag & NSDeviceIndependentModifierFlagsMask;

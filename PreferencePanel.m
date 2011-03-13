@@ -582,32 +582,6 @@ static float versionNumber;
           contextInfo:nil];
 }
 
-- (BOOL)_warnAboutCtrlHOverride
-{
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutCtrlHOverrides"] != nil) {
-        return YES;
-    }
-    if (![self deleteSendsCtrlH]) {
-        return YES;
-    }
-    switch (NSRunAlertPanel(@"Overriding Global Delete Setting",
-                            @"The \"Delete Sends ^H\" preference in global keyboard settings is on. This change will override that preference (but only for this profile).",
-                            @"OK",
-                            @"Never warn me again",
-                            @"Cancel",
-                            nil)) {
-        case NSAlertDefaultReturn:
-            return YES;
-        case NSAlertAlternateReturn:
-            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:@"NeverWarnAboutCtrlHOverrides"];
-            return YES;
-        case NSAlertOtherReturn:
-            return NO;
-    }
-
-    return YES;
-}
-
 - (BOOL)_warnAboutDeleteOverride
 {
     if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutDeleteOverride"] != nil) {
@@ -697,11 +671,6 @@ static float versionNumber;
         NSAssert(dict, @"Can't find node");
         if ([iTermKeyBindingMgr haveGlobalKeyMappingForKeyString:keyString]) {
             if (![self _warnAboutOverride]) {
-                return;
-            }
-        }
-        if ([keyString isEqualToString:kDeleteKeyString]) {
-            if (![self _warnAboutCtrlHOverride]) {
                 return;
             }
         }
@@ -800,6 +769,34 @@ static float versionNumber;
     [super dealloc];
 }
 
+// Force the key binding for delete to be either ^H or absent.
+- (void)_setDeleteKeyMapToCtrlH:(BOOL)sendCtrlH inBookmark:(NSMutableDictionary*)bookmark
+{
+    if (sendCtrlH) {
+        [iTermKeyBindingMgr setMappingAtIndex:0
+                                       forKey:kDeleteKeyString
+                                       action:KEY_ACTION_SEND_C_H_BACKSPACE
+                                        value:@""
+                                    createNew:YES
+                                   inBookmark:bookmark];
+    } else {
+        [iTermKeyBindingMgr removeMappingWithCode:0x7f
+                                        modifiers:0
+                                       inBookmark:bookmark];
+    }
+}
+
+// Returns true if and only if there is a key mapping in the bookmark for delete
+// to send exactly ^H.
+- (BOOL)_deleteSendsCtrlHInBookmark:(Bookmark*)bookmark
+{
+    NSString* text;
+    return ([iTermKeyBindingMgr localActionForKeyCode:0x7f
+                                            modifiers:0
+                                                 text:&text
+                                          keyMappings:[bookmark objectForKey:KEY_KEYBOARD_MAP]] == KEY_ACTION_SEND_C_H_BACKSPACE);
+}
+
 - (void)readPreferences
 {
     if (!prefs) {
@@ -870,13 +867,33 @@ static float versionNumber;
     defaultSwitchTabModifier = [prefs objectForKey:@"SwitchTabModifier"] ? [[prefs objectForKey:@"SwitchTabModifier"] intValue] : MOD_TAG_ANY_COMMAND;
     defaultSwitchWindowModifier = [prefs objectForKey:@"SwitchWindowModifier"] ? [[prefs objectForKey:@"SwitchWindowModifier"] intValue] : MOD_TAG_CMD_OPT;
 
-    defaultDeleteSendsCtrlH = [prefs objectForKey:@"DeleteSendsCtrlH"] ? [[prefs objectForKey:@"DeleteSendsCtrlH"] boolValue] : false;
-
-
     NSString *appCast = defaultCheckTestRelease ?
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForTesting"] :
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
     [prefs setObject:appCast forKey:@"SUFeedURL"];
+
+    if ([[prefs objectForKey:@"DeleteSendsCtrlH"] boolValue]) {
+        // Migrate legacy global "delete sends ^h setting" to each bookmark's
+        // keymap. We change the array while looping over it, but only in a
+        // safe way--modifying the pointer of an item we'll never look at again.
+        // To avoid bogus errors, we enumerate it manually.
+        // The legacy setting existed only around Alpha 17.
+        NSArray* bookmarks = [[BookmarkModel sharedInstance] bookmarks];
+        for (int i = 0; i < [bookmarks count]; i++) {
+            Bookmark* bookmark = [bookmarks objectAtIndex:i];
+            NSString* text;
+            if ([iTermKeyBindingMgr localActionForKeyCode:0x7f
+                                                    modifiers:0
+                                                         text:&text
+                                              keyMappings:[bookmark objectForKey:KEY_KEYBOARD_MAP]] == -1) {
+                // Bookmark does not map delete key at all. Add a ^H map.
+                NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:bookmark];
+                [self _setDeleteKeyMapToCtrlH:YES inBookmark:temp];
+                [[BookmarkModel sharedInstance] setBookmark:temp atIndex:i];
+            }
+        }
+        [prefs removeObjectForKey:@"DeleteSendsCtrlH"];
+    }
 
     // Migrate old-style (iTerm 0.x) URL handlers.
     // make sure bookmarks are loaded
@@ -973,7 +990,6 @@ static float versionNumber;
     [prefs setInteger:defaultRightCommand forKey:@"RightCommand"];
     [prefs setInteger:defaultSwitchTabModifier forKey:@"SwitchTabModifier"];
     [prefs setInteger:defaultSwitchWindowModifier forKey:@"SwitchWindowModifier"];
-    [prefs setBool:defaultDeleteSendsCtrlH forKey:@"DeleteSendsCtrlH"];
 
     // save the handlers by converting the bookmark into an index
     [prefs setObject:urlHandlersByGuid forKey:@"URLHandlersByGuid"];
@@ -1112,7 +1128,6 @@ static float versionNumber;
     [switchTabModifierButton selectItemWithTag:defaultSwitchTabModifier];
     [switchWindowModifierButton selectItemWithTag:defaultSwitchWindowModifier];
 
-    [deleteSendsCtrlHButton setState:defaultDeleteSendsCtrlH ? NSOnState : NSOffState];
     int rowIndex = [globalKeyMappings selectedRow];
     if (rowIndex >= 0) {
         [globalRemoveMappingButton setEnabled:YES];
@@ -1296,17 +1311,6 @@ static float versionNumber;
         ([self isAnyModifierRemapped] && ![[iTermController sharedInstance] haveEventTap])) {
         [[iTermController sharedInstance] beginRemappingModifiers];
     }
-
-
-    if (sender == deleteSendsCtrlHButton) {
-        BOOL sendCtrlH = ([deleteSendsCtrlHButton state] == NSOnState);
-        if ([self _anyBookmarkHasKeyMapping:kDeleteKeyString]) {
-            if (![self _warnAboutDeleteOverride]) {
-                [deleteSendsCtrlHButton setState:sendCtrlH ? NSOffState : NSOnState];
-            }
-        }
-    }
-    defaultDeleteSendsCtrlH = ([deleteSendsCtrlHButton state] == NSOnState);
 
     int rowIndex = [globalKeyMappings selectedRow];
     if (rowIndex >= 0) {
@@ -1542,11 +1546,6 @@ static float versionNumber;
 - (int)switchWindowModifier
 {
     return defaultSwitchWindowModifier;
-}
-
-- (BOOL)deleteSendsCtrlH
-{
-    return defaultDeleteSendsCtrlH;
 }
 
 - (BOOL)openArrangementAtStartup
@@ -2082,6 +2081,10 @@ static float versionNumber;
     }
     [rightOptionKeySends selectCellWithTag:[rightOptPref intValue]];
     [tags setObjectValue:[dict objectForKey:KEY_TAGS]];
+    // If a keymapping for the delete key was added, make sure the
+    // "delete sends ^h" checkbox is correct
+    BOOL sendCH = [self _deleteSendsCtrlHInBookmark:dict];
+    [deleteSendsCtrlHButton setState:sendCH ? NSOnState : NSOffState];
 
     // Epilogue
     [bookmarksTableView reloadData];
@@ -2384,9 +2387,25 @@ static float versionNumber;
     [newDict setObject:[NSNumber numberWithInt:[[rightOptionKeySends selectedCell] tag]] forKey:KEY_RIGHT_OPTION_KEY_SENDS];
     [newDict setObject:[tags objectValue] forKey:KEY_TAGS];
 
+    BOOL reloadKeyMappings = NO;
+     if (sender == deleteSendsCtrlHButton) {
+        // Resolve any conflict between key mappings and delete sends ^h by
+        // modifying key mappings.
+        [self _setDeleteKeyMapToCtrlH:[deleteSendsCtrlHButton state] == NSOnState
+                           inBookmark:newDict];
+        reloadKeyMappings = YES;
+    } else {
+        // If a keymapping for the delete key was added, make sure the
+        // delete sends ^h checkbox is correct
+        BOOL sendCH = [self _deleteSendsCtrlHInBookmark:newDict];
+        [deleteSendsCtrlHButton setState:sendCH ? NSOnState : NSOffState];
+    }
     // Epilogue
     [dataSource setBookmark:newDict withGuid:guid];
     [bookmarksTableView reloadData];
+    if (reloadKeyMappings) {
+        [keyMappings reloadData];
+    }
 
     // Selectively update form fields.
     [self updateShortcutTitles];
