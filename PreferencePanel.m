@@ -3110,6 +3110,7 @@ static float versionNumber;
         KEY_ASCII_ANTI_ALIASED,
         KEY_NONASCII_ANTI_ALIASED,
         KEY_ANTI_ALIASING,
+        KEY_AMBIGUOUS_DOUBLE_WIDTH,
         nil
     };
     NSString* windowKeys[] = {
@@ -3127,7 +3128,6 @@ static float versionNumber;
     };
     NSString* terminalKeys[] = {
         KEY_CLOSE_SESSIONS_ON_END,
-        KEY_AMBIGUOUS_DOUBLE_WIDTH,
         KEY_SILENCE_BELL,
         KEY_VISUAL_BELL,
         KEY_FLASHING_BELL,
