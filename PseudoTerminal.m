@@ -2316,6 +2316,30 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (void)newWindowWithBookmarkGuid:(NSString*)guid
+{
+    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+    if (bookmark) {
+        [[iTermController sharedInstance] launchBookmark:bookmark inTerminal:nil];
+    }
+}
+
+- (void)newTabWithBookmarkGuid:(NSString*)guid
+{
+    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+    if (bookmark) {
+        [[iTermController sharedInstance] launchBookmark:bookmark inTerminal:self];
+    }
+}
+
+- (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid
+{
+    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+    if (bookmark) {
+        [self splitVertically:isVertical withBookmark:bookmark targetSession:[self currentSession]];
+    }
+}
+
 - (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark targetSession:(PTYSession*)targetSession
 {
     PtyLog(@"--------- splitVertically -----------");

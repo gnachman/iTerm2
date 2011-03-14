@@ -928,6 +928,18 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             case KEY_ACTION_TOGGLE_FULLSCREEN:
                 [[[iTermController sharedInstance] currentTerminal] toggleFullScreen:nil];
                 break;
+            case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
+                [[[self tab] realParentWindow] newWindowWithBookmarkGuid:keyBindingText];
+                break;
+            case KEY_ACTION_NEW_TAB_WITH_PROFILE:
+                [[[self tab] realParentWindow] newTabWithBookmarkGuid:keyBindingText];
+                break;
+            case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
+                [[[self tab] realParentWindow] splitVertically:NO withBookmarkGuid:keyBindingText];
+                break;
+            case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
+                [[[self tab] realParentWindow] splitVertically:YES withBookmarkGuid:keyBindingText];
+                break;
             default:
                 NSLog(@"Unknown key action %d", keyBindingAction);
                 break;

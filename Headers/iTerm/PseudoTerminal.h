@@ -525,6 +525,12 @@
 // Maximize or unmaximize the active pane
 - (void)toggleMaximizeActivePane;
 
+// Key actions
+- (void)newWindowWithBookmarkGuid:(NSString*)guid;
+- (void)newTabWithBookmarkGuid:(NSString*)guid;
+- (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid;
+- (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark targetSession:(PTYSession*)targetSession;
+
 // selector for menu item to split current session vertically.
 - (IBAction)splitVertically:(id)sender;
 - (IBAction)splitHorizontally:(id)sender;

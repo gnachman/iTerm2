@@ -538,6 +538,34 @@ static float versionNumber;
     }
 }
 
+- (void)_populatePopUpButtonWithBookmarks:(NSPopUpButton*)button selectedGuid:(NSString*)selectedGuid
+{
+    int selectedIndex = 0;
+    int i = 0;
+    [button removeAllItems];
+    NSArray* bookmarks = [[BookmarkModel sharedInstance] bookmarks];
+    for (Bookmark* bookmark in bookmarks) {
+        int j = 0;
+        NSString* temp;
+        do {
+            if (j == 0) {
+                temp = [bookmark objectForKey:KEY_NAME];
+            } else {
+                temp = [NSString stringWithFormat:@"%@ (%d)", [bookmark objectForKey:KEY_NAME], j];
+            }
+            j++;
+        } while ([button indexOfItemWithTitle:temp] != -1);
+        [button addItemWithTitle:temp];
+        NSMenuItem* item = [button lastItem];
+        [item setRepresentedObject:[bookmark objectForKey:KEY_GUID]];
+        if ([[item representedObject] isEqualToString:selectedGuid]) {
+            selectedIndex = i;
+        }
+        i++;
+    }
+    [button selectItemAtIndex:selectedIndex];
+}
+
 - (void)editKeyMapping:(id)sender
 {
     int rowIndex;
@@ -572,6 +600,8 @@ static float versionNumber;
     }
     NSString* text = [[self keyInfoAtIndex:rowIndex originator:sender] objectForKey:@"Text"];
     [valueToSend setStringValue:text ? text : @""];
+    [self _populatePopUpButtonWithBookmarks:bookmarkPopupButton
+                               selectedGuid:text];
 
     [self updateValueToSend];
     newMapping = NO;
@@ -663,7 +693,19 @@ static float versionNumber;
 
 - (IBAction)saveKeyMapping:(id)sender
 {
+    if ([[keyPress stringValue] length] == 0) {
+        NSBeep();
+        return;
+    }
     NSMutableDictionary* dict;
+    NSString* theParam = [valueToSend stringValue];
+    int theAction = [[action selectedItem] tag];
+    if (theAction == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
+        theAction == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE ||
+        theAction == KEY_ACTION_NEW_TAB_WITH_PROFILE ||
+        theAction == KEY_ACTION_NEW_WINDOW_WITH_PROFILE) {
+        theParam = [[bookmarkPopupButton selectedItem] representedObject];
+    }
     if ([self _originatorIsBookmark:modifyMappingOriginator]) {
         NSString* guid = [bookmarksTableView selectedGuid];
         NSAssert(guid, @"Null guid unexpected here");
@@ -677,8 +719,8 @@ static float versionNumber;
 
         [iTermKeyBindingMgr setMappingAtIndex:[keyMappings selectedRow]
                                        forKey:keyString
-                                       action:[[action selectedItem] tag]
-                                        value:[valueToSend stringValue]
+                                       action:theAction
+                                        value:theParam
                                     createNew:newMapping
                                    inBookmark:dict];
         [dataSource setBookmark:dict withGuid:guid];
@@ -693,8 +735,8 @@ static float versionNumber;
         }
         [iTermKeyBindingMgr setMappingAtIndex:[globalKeyMappings selectedRow]
                                        forKey:keyString
-                                       action:[[action selectedItem] tag]
-                                        value:[valueToSend stringValue]
+                                       action:theAction
+                                        value:theParam
                                     createNew:newMapping
                                  inDictionary:dict];
         [iTermKeyBindingMgr setGlobalKeyMap:dict];
@@ -1002,30 +1044,8 @@ static float versionNumber;
     if (!hotkeyBookmark) {
         return;
     }
-    int hotkeyBookmarkIndex = 0;
-    int i = 0;
-    [hotkeyBookmark removeAllItems];
-    NSArray* bookmarks = [[BookmarkModel sharedInstance] bookmarks];
-    for (Bookmark* bookmark in bookmarks) {
-        int j = 0;
-        NSString* temp;
-        do {
-            if (j == 0) {
-                temp = [bookmark objectForKey:KEY_NAME];
-            } else {
-                temp = [NSString stringWithFormat:@"%@ (%d)", [bookmark objectForKey:KEY_NAME], j];
-            }
-            j++;
-        } while ([hotkeyBookmark indexOfItemWithTitle:temp] != -1);
-        [hotkeyBookmark addItemWithTitle:temp];
-        NSMenuItem* item = [hotkeyBookmark lastItem];
-        [item setRepresentedObject:[bookmark objectForKey:KEY_GUID]];
-        if ([[item representedObject] isEqualToString:defaultHotKeyBookmarkGuid]) {
-            hotkeyBookmarkIndex = i;
-        }
-        i++;
-    }
-    [hotkeyBookmark selectItemAtIndex:hotkeyBookmarkIndex];
+    [self _populatePopUpButtonWithBookmarks:hotkeyBookmark
+                               selectedGuid:defaultHotKeyBookmarkGuid];
 }
 
 - (void)run
@@ -2643,35 +2663,57 @@ static float versionNumber;
         [valueToSend setHidden:NO];
         [[valueToSend cell] setPlaceholderString:@"ex: 0x7f 0x20"];
         [escPlus setHidden:YES];
+        [bookmarkPopupButton setHidden:YES];
+        [profileLabel setHidden:YES];
     } else if (tag == KEY_ACTION_TEXT) {
         [valueToSend setHidden:NO];
         [[valueToSend cell] setPlaceholderString:@"Enter value to send"];
         [escPlus setHidden:YES];
+        [bookmarkPopupButton setHidden:YES];
+        [profileLabel setHidden:YES];
     } else if (tag == KEY_ACTION_SELECT_MENU_ITEM) {
         [valueToSend setHidden:NO];
         [[valueToSend cell] setPlaceholderString:@"Enter name of menu item"];
         [escPlus setHidden:YES];
+        [bookmarkPopupButton setHidden:YES];
+        [profileLabel setHidden:YES];
     } else if (tag == KEY_ACTION_ESCAPE_SEQUENCE) {
         [valueToSend setHidden:NO];
         [[valueToSend cell] setPlaceholderString:@"characters to send"];
         [escPlus setHidden:NO];
         [escPlus setStringValue:@"Esc+"];
+        [bookmarkPopupButton setHidden:YES];
+        [profileLabel setHidden:YES];
+    } else if (tag == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE ||
+               tag == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
+               tag == KEY_ACTION_NEW_TAB_WITH_PROFILE ||
+               tag == KEY_ACTION_NEW_WINDOW_WITH_PROFILE) {
+        [valueToSend setHidden:YES];
+        [profileLabel setHidden:NO];
+        [bookmarkPopupButton setHidden:NO];
+        [escPlus setHidden:YES];
     } else if (tag == KEY_ACTION_DO_NOT_REMAP_MODIFIERS ||
                tag == KEY_ACTION_REMAP_LOCALLY) {
         [valueToSend setHidden:YES];
         [valueToSend setStringValue:@""];
         [escPlus setHidden:NO];
         [escPlus setStringValue:@"Modifier remapping disabled: type the actual key combo you want to affect."];
+        [bookmarkPopupButton setHidden:YES];
+        [profileLabel setHidden:YES];
     } else {
         [valueToSend setHidden:YES];
         [valueToSend setStringValue:@""];
         [escPlus setHidden:YES];
+        [bookmarkPopupButton setHidden:YES];
+        [profileLabel setHidden:YES];
     }
 }
 
 - (IBAction)actionChanged:(id)sender
 {
     [action setTitle:[[sender selectedItem] title]];
+    [self _populatePopUpButtonWithBookmarks:bookmarkPopupButton
+                               selectedGuid:[[bookmarkPopupButton selectedItem] representedObject]];
     [self updateValueToSend];
 }
 
@@ -2836,6 +2878,23 @@ static float versionNumber;
     [bookmarkName selectText:self];
 }
 
+- (void)_removeKeyMappingsReferringToBookmarkGuid:(NSString*)badRef
+{
+    for (NSString* guid in [[BookmarkModel sharedInstance] guids]) {
+        Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+        bookmark = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:bookmark];
+        [[BookmarkModel sharedInstance] setBookmark:bookmark withGuid:guid];
+    }
+    for (NSString* guid in [[BookmarkModel sessionsInstance] guids]) {
+        Bookmark* bookmark = [[BookmarkModel sessionsInstance] bookmarkWithGuid:guid];
+        bookmark = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:bookmark];
+        [[BookmarkModel sessionsInstance] setBookmark:bookmark withGuid:guid];
+    }
+    [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:nil];
+    [[PreferencePanel sharedInstance]->keyMappings reloadData];
+    [[PreferencePanel sessionsInstance]->keyMappings reloadData];
+}
+
 - (IBAction)removeBookmark:(id)sender
 {
     if ([dataSource numberOfBookmarks] == 1) {
@@ -2851,6 +2910,7 @@ static float versionNumber;
                 lastIndex = i;
             }
             ++numRemoved;
+            [self _removeKeyMappingsReferringToBookmarkGuid:guid];
             [dataSource removeBookmarkWithGuid:guid];
         }
         [bookmarksTableView reloadData];

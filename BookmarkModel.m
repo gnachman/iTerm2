@@ -459,4 +459,13 @@
     return bookmarks_;
 }
 
+- (NSArray*)guids
+{
+    NSMutableArray* guids = [NSMutableArray arrayWithCapacity:[bookmarks_ count]];
+    for (Bookmark* bookmark in bookmarks_) {
+        [guids addObject:[bookmark objectForKey:KEY_GUID]];
+    }
+    return guids;
+}
+
 @end

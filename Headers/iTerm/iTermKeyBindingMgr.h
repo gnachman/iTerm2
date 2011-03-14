@@ -107,6 +107,10 @@
 #define KEY_ACTION_TOGGLE_FULLSCREEN    23
 #define KEY_ACTION_REMAP_LOCALLY        24
 #define KEY_ACTION_SELECT_MENU_ITEM     25
+#define KEY_ACTION_NEW_WINDOW_WITH_PROFILE 26
+#define KEY_ACTION_NEW_TAB_WITH_PROFILE 27
+#define KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE 28
+#define KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE 29
 
 @class PreferencePanel;
 @interface iTermKeyBindingMgr : NSObject {
@@ -134,7 +138,7 @@
 
 // Return a dictionary that is a copy of dict, but without the keymapping at the
 // requested index.
-+ (NSDictionary*)removeMappingAtIndex:(int)rowIndex inDictionary:(NSDictionary*)dict;
++ (NSMutableDictionary*)removeMappingAtIndex:(int)rowIndex inDictionary:(NSDictionary*)dict;
 
 // Load a set of preset keymappings from PresetKeyMappings.plist into the
 // specified bookmarks, removing all of its previous mappings.
@@ -218,6 +222,10 @@
 
 // True if a bookmark has a mapping for a 0xKeycode-0xModifiers keystring.
 + (BOOL)haveKeyMappingForKeyString:(NSString*)keyString inBookmark:(Bookmark*)bookmark;
+
+// Remove any keymappings that reference a guid from either a bookmark or the global
+// keymappings (if bookmark is nil).
++ (Bookmark*)removeMappingsReferencingGuid:(NSString*)guid fromBookmark:(Bookmark*)bookmark;
 
 @end
 

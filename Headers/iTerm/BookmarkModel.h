@@ -66,6 +66,7 @@ typedef NSDictionary Bookmark;
 - (int)convertFilteredIndex:(int)theIndex withFilter:(NSString*)filter;
 - (void)dump;
 - (NSArray*)bookmarks;
+- (NSArray*)guids;
 
 // Tell all listeners that the model has changed.
 - (void)postChangeNotification;

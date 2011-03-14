@@ -364,6 +364,8 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTextField* keyPress;
     IBOutlet NSPopUpButton* action;
     IBOutlet NSTextField* valueToSend;
+    IBOutlet NSTextField* profileLabel;
+    IBOutlet NSPopUpButton* bookmarkPopupButton;
     IBOutlet NSPopUpButton* menuToSelect;
     IBOutlet NSButton* removeMappingButton;
     IBOutlet NSTextField* escPlus;

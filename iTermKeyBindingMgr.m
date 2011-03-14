@@ -275,6 +275,10 @@ static NSDictionary* globalKeyMap;
     return [theKeyString autorelease];
 }
 
++ (NSString*)_bookmarkNameForGuid:(NSString*)guid
+{
+    return [[[BookmarkModel sharedInstance] bookmarkWithGuid:guid] objectForKey:KEY_NAME];
+}
 
 + (NSString *)formatAction:(NSDictionary *)keyInfo
 {
@@ -378,6 +382,19 @@ static NSDictionary* globalKeyMap;
                                                                @"Key Binding Actions"),
                             auxText];
             break;
+        case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
+            actionString = [NSString stringWithFormat:@"New Window with \"%@\" Profile", [self _bookmarkNameForGuid:auxText]];
+            break;
+        case KEY_ACTION_NEW_TAB_WITH_PROFILE:
+            actionString = [NSString stringWithFormat:@"New Tab with \"%@\" Profile", [self _bookmarkNameForGuid:auxText]];
+            break;
+        case KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE:
+            actionString = [NSString stringWithFormat:@"Split Horizontally with \"%@\" Profile", [self _bookmarkNameForGuid:auxText]];
+            break;
+        case KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE:
+            actionString = [NSString stringWithFormat:@"Split Vertically with \"%@\" Profile", [self _bookmarkNameForGuid:auxText]];
+            break;
+
         case KEY_ACTION_SEND_C_H_BACKSPACE:
             actionString = @"Send ^H Backspace";
             break;
@@ -522,7 +539,7 @@ static NSDictionary* globalKeyMap;
     return keyBindingAction;
 }
 
-+ (NSDictionary*)removeMappingAtIndex:(int)rowIndex inDictionary:(NSDictionary*)dict
++ (NSMutableDictionary*)removeMappingAtIndex:(int)rowIndex inDictionary:(NSDictionary*)dict
 {
     NSMutableDictionary* km = [NSMutableDictionary dictionaryWithDictionary:dict];
     NSArray* allKeys = [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
@@ -871,6 +888,57 @@ static NSDictionary* globalKeyMap;
 {
     return [NSEvent eventWithCGEvent:[iTermKeyBindingMgr remapModifiersInCGEvent:[event CGEvent]
                                                                        prefPanel:pp]];
+}
+
++ (Bookmark*)removeMappingsReferencingGuid:(NSString*)guid fromBookmark:(Bookmark*)bookmark
+{
+    if (bookmark) {
+        NSMutableDictionary* mutableBookmark = [NSMutableDictionary dictionaryWithDictionary:bookmark];
+        BOOL change;
+        do {
+            change = NO;
+            for (int i = 0; i < [iTermKeyBindingMgr numberOfMappingsForBookmark:mutableBookmark]; i++) {
+                NSDictionary* keyMap = [iTermKeyBindingMgr mappingAtIndex:i forBookmark:mutableBookmark];
+                int action = [[keyMap objectForKey:@"Action"] intValue];
+                if (action == KEY_ACTION_NEW_TAB_WITH_PROFILE ||
+                    action == KEY_ACTION_NEW_WINDOW_WITH_PROFILE ||
+                    action == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
+                    action == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE) {
+                    NSString* referencedGuid = [keyMap objectForKey:@"Text"];
+                    if ([referencedGuid isEqualToString:guid]) {
+                        [iTermKeyBindingMgr removeMappingAtIndex:i inBookmark:mutableBookmark];
+                        change = YES;
+                        break;
+                    }
+                }
+            }
+        } while (change);
+        return mutableBookmark;
+    } else {
+        BOOL change;
+        do {
+            NSMutableDictionary* mutableGlobalKeyMap = [NSMutableDictionary dictionaryWithDictionary:[iTermKeyBindingMgr globalKeyMap]];
+            change = NO;
+            for (int i = 0; i < [mutableGlobalKeyMap count]; i++) {
+                NSDictionary* keyMap = [iTermKeyBindingMgr globalMappingAtIndex:i];
+                int action = [[keyMap objectForKey:@"Action"] intValue];
+                if (action == KEY_ACTION_NEW_TAB_WITH_PROFILE ||
+                    action == KEY_ACTION_NEW_WINDOW_WITH_PROFILE ||
+                    action == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
+                    action == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE) {
+                    NSString* referencedGuid = [keyMap objectForKey:@"Text"];
+                    if ([referencedGuid isEqualToString:guid]) {
+                        mutableGlobalKeyMap = [iTermKeyBindingMgr removeMappingAtIndex:i
+                                                                          inDictionary:mutableGlobalKeyMap];
+                        [iTermKeyBindingMgr setGlobalKeyMap:mutableGlobalKeyMap];
+                        change = YES;
+                        break;
+                    }
+                }
+            }
+        } while (change);
+        return nil;
+    }
 }
 
 
