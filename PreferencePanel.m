@@ -2827,9 +2827,9 @@ static float versionNumber;
     [self settingChanged:nil];
 }
 
-- (IBAction)useBasicKeyMappings:(id)sender
+- (IBAction)useXtermWithNumKeyMappings:(id)sender;
 {
-    [self setKeyMappingsToPreset:@"Basic Defaults"];
+    [self setKeyMappingsToPreset:@"xterm with Numeric Keypad"];
 }
 
 - (IBAction)useXtermKeyMappings:(id)sender
