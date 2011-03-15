@@ -2697,6 +2697,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [self refresh];
 }
 
+- (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
+{
+    return YES;
+}
+
 - (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange
 {
     [markedText release];
