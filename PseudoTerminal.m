@@ -1164,7 +1164,7 @@ NSString *sessionsKey = @"sessions";
     useTransparency_ = !useTransparency_;
     [[[NSApplication sharedApplication] delegate] updateUseTransparencyMenuItem];
     for (PTYSession* aSession in [self sessions]) {
-        [[aSession TEXTVIEW] setNeedsDisplay:YES];
+        [[aSession view] setNeedsDisplay:YES];
     }
 }
 

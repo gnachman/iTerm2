@@ -486,7 +486,7 @@ static NSImage* wrapToBottomImage = nil;
     return [NSColor colorWithCalibratedRed:0.5*dimmingAmount_ + r*coeff
                                      green:0.5*dimmingAmount_ + g*coeff
                                       blue:0.5*dimmingAmount_ + b*coeff
-                                     alpha:1];
+                                     alpha:[orig alphaComponent]];
 }
 
 - (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold
@@ -3236,16 +3236,38 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [self setNeedsDisplay:YES];
 }
 
-- (void)drawBackground:(NSRect)bgRect toPoint:(NSPoint)dest
+- (void)drawFlippedBackground:(NSRect)bgRect toPoint:(NSPoint)dest
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
     BOOL hasBGImage = [scrollView backgroundImage] != nil;
-    float alpha = [self useTransparency] ? 1.0 - transparency : 1.0;
+    float alpha = 1.0 - transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                                      toPoint:dest
                                                              useTransparency:[self useTransparency]];
-    } else {
+    }
+    if (!hasBGImage || ![self useTransparency]) {
+        // Either draw a normal bg or, if transparency is off, blend the default bg color over the bg image.
+        [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        NSRect fillDest = bgRect;
+        fillDest.origin.y += fillDest.size.height;
+        NSRectFillUsingOperation(fillDest,
+                                 hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
+    }
+}
+
+- (void)drawBackground:(NSRect)bgRect toPoint:(NSPoint)dest
+{
+    PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
+    BOOL hasBGImage = [scrollView backgroundImage] != nil;
+    float alpha = 1.0 - transparency;
+    if (hasBGImage) {
+        [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
+                                                                     toPoint:dest
+                                                             useTransparency:[self useTransparency]];
+    }
+    if (!hasBGImage || ![self useTransparency]) {
+        // Either draw a normal bg or, if transparency is off, blend the default bg color over the bg image.
         [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
         NSRectFillUsingOperation(bgRect,
                                  hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
@@ -3256,11 +3278,13 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
     BOOL hasBGImage = [scrollView backgroundImage] != nil;
-    float alpha = [self useTransparency] ? 1.0 - transparency : 1.0;
+    float alpha = 1.0 - transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                              useTransparency:[self useTransparency]];
-    } else {
+    }
+    if (!hasBGImage || ![self useTransparency]) {
+        // Either draw a normal bg or, if transparency is off, blend the default bg color over the bg image.
         [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
         NSRectFillUsingOperation(bgRect, hasBGImage?NSCompositeSourceOver:NSCompositeCopy);
     }
@@ -4019,7 +4043,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     screen_char_t* theLine = [dataSource getLineAtIndex:line];
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
     BOOL hasBGImage = [scrollView backgroundImage] != nil;
-    float alpha = [self useTransparency] ? 1.0 - transparency : 1.0;
+    float selectedAlpha = 1.0 - transparency;
+    float alphaIfTransparencyInUse = [self useTransparency] ? 1.0 - transparency : 1.0;
     BOOL reversed = [[dataSource terminal] screenMode];
     NSColor *aColor = nil;
 
@@ -4036,7 +4061,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
              alternateSemantics:YES
                            bold:NO];
 
-    aColor = [aColor colorWithAlphaComponent:alpha];
+    aColor = [aColor colorWithAlphaComponent:selectedAlpha];
     [aColor set];
     if (hasBGImage) {
         if (toPoint) {
@@ -4054,7 +4079,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             [scrollView drawBackgroundImageRect:rightMargin
                                 useTransparency:[self useTransparency]];
         }
-    } else {
+    }
+    if (!hasBGImage || ![self useTransparency]) {
+        // Blend fg over bgimage (because transparency is off), or there is no
+        // bg image and just draw the fg.
         if (toPoint) {
             NSRectFill(NSMakeRect(toPoint->x + leftMargin.origin.x,
                                   toPoint->y,
@@ -4065,12 +4093,16 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                   rightMargin.size.width,
                                   rightMargin.size.height));
         } else {
-            NSRectFill(leftMargin);
-            NSRectFill(rightMargin);
+            if (hasBGImage) {
+                NSRectFillUsingOperation(leftMargin, NSCompositeSourceOver);
+                NSRectFillUsingOperation(rightMargin, NSCompositeSourceOver);
+            } else {
+                NSRectFill(leftMargin);
+                NSRectFill(rightMargin);
+            }
         }
     }
-    [aColor set];
-
+    
     // Contiguous sections of background with the same colour
     // are combined into runs and draw as one operation
     int bgstart = -1;
@@ -4150,6 +4182,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             if (!hasBGImage ||
                 !(bgColor == ALTSEM_BG_DEFAULT && bgAlt) ||
                 bgselected) {
+                // There's no bg image, or there's a nondefault bg on a bg image.
                 // We are not drawing an unmolested background image. Some
                 // background fill must be drawn. If there is a background image
                 // it will be blended 50/50.
@@ -4172,7 +4205,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                                bold:NO];
                     }
                 }
-                aColor = [aColor colorWithAlphaComponent:alpha];
+                aColor = [aColor colorWithAlphaComponent:alphaIfTransparencyInUse];
                 [aColor set];
                 if (toPoint) {
                     bgRect.origin.x += toPoint->x;
@@ -4180,6 +4213,17 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 }
                 NSRectFillUsingOperation(bgRect,
                                          hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
+            } else if (hasBGImage) {
+                // There is a bg image and no special background on it. Blend in the
+                // default background color. But don't blend in the bg color if transparency is on.
+                aColor = [self colorForCode:ALTSEM_BG_DEFAULT
+                         alternateSemantics:YES
+                                       bold:NO];                
+                aColor = [aColor colorWithAlphaComponent:selectedAlpha];
+                [aColor set];
+                if (![self useTransparency]) {
+                    NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
+                }
             }
 
             NSPoint textOrigin;
