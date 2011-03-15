@@ -830,10 +830,11 @@ static PseudoTerminal* GetHotkeyWindow()
 
 static void RollInHotkeyTerm(PseudoTerminal* term)
 {
-    NSLog(@"Roll in visor");
+    NSLog(@"Roll in [show] visor");
     NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
     NSRect rect = [[term window] frame];
     [NSApp activateIgnoringOtherApps:YES];
+    [[term window] setFrame:rect display:YES];
     [[term window] makeKeyAndOrderFront:nil];
     switch ([term windowType]) {
         case WINDOW_TYPE_NORMAL:
@@ -844,11 +845,13 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
             rect.origin.x = screenFrame.origin.x + (screenFrame.size.width - rect.size.width) / 2;
             rect.origin.y = screenFrame.origin.y + (screenFrame.size.height - rect.size.height) / 2;
             [[[term window] animator] setFrame:rect display:YES];
+            [[[term window] animator] setAlphaValue:1];
             break;
 
         case WINDOW_TYPE_TOP:
             rect.origin.y = screenFrame.origin.y + screenFrame.size.height - rect.size.height;
             [[[term window] animator] setFrame:rect display:YES];
+            [[[term window] animator] setAlphaValue:1];
             break;
 
         case WINDOW_TYPE_FULL_SCREEN:
@@ -920,7 +923,7 @@ static BOOL OpenHotkeyWindow()
 
 static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotkeyOpened)
 {
-    NSLog(@"Roll out visor");
+    NSLog(@"Roll out [hide] visor");
     if (![[term window] isVisible]) {
         NSLog(@"RollOutHotkeyTerm returning because term isn't visible.");
         return;
@@ -933,12 +936,14 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
             rect.origin.x = -rect.size.width;
             rect.origin.y = -rect.size.height;
             [[[term window] animator] setFrame:rect display:YES];
+            [[[term window] animator] setAlphaValue:0];
             break;
 
         case WINDOW_TYPE_TOP:
             rect.origin.y = screenFrame.size.height;
             NSLog(@"SLOW: Set y=%f", rect.origin.y);
             [[[term window] animator] setFrame:rect display:YES];
+            [[[term window] animator] setAlphaValue:0];
             break;
 
         case WINDOW_TYPE_FULL_SCREEN:
@@ -948,7 +953,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
 
     [[iTermController sharedInstance] performSelector:@selector(restoreNormalcy:)
                                            withObject:term
-                                           afterDelay:[[NSAnimationContext currentContext] duration]];   
+                                           afterDelay:[[NSAnimationContext currentContext] duration]];
     [term setIsHotKeyWindow:temp];
 }
 
@@ -958,7 +963,9 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         [NSApp hide:nil];
         [self performSelector:@selector(unhide) withObject:nil afterDelay:0.1];
     }
-    [[term window] orderOut:nil];
+    // If you orderOut the hotkey term (term variable) then it switches to the
+    // space in which your next window exists. So leave key status in the hotkey
+    // window although it's invisible.
 }
 
 - (void)unhide
@@ -980,12 +987,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         int i = 0;
         [[iTermController sharedInstance] setKeyWindowIndexMemo:-1];
         for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
-            if (![NSApp isActive]) {
-                if (term != hotkeyTerm) {
-                    NSLog(@"orderOut non-visor window");
-                    [[[term window] animator] setAlphaValue:0];
-                }
-            } else {
+            if ([NSApp isActive]) {
                 if (term != hotkeyTerm && [[term window] isKeyWindow]) {
                     [[iTermController sharedInstance] setKeyWindowIndexMemo:i];
                 }
@@ -998,15 +1000,6 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         RollInHotkeyTerm(hotkeyTerm);
     } else {
         NSLog(@"Open new visor window");
-        if (![NSApp isActive]) {
-            NSLog(@"iterm2 is not active");
-            for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
-                if (term != hotkeyTerm) {
-                    NSLog(@"orderOut non-visor window");
-                    [[[term window] animator] setAlphaValue:0];
-                }
-            }
-        }
         if (OpenHotkeyWindow()) {
             rollingIn_ = YES;
         }
@@ -1082,7 +1075,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
 
 - (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm
 {
-    NSLog(@"visor is key");
+    NSLog(@"Hide visor.");
     RollOutHotkeyTerm(hotkeyTerm, itermWasActiveWhenHotkeyOpened);
 }
 
@@ -1095,10 +1088,11 @@ void OnHotKeyEvent(void)
         PseudoTerminal* hotkeyTerm = GetHotkeyWindow();
         if (hotkeyTerm) {
             NSLog(@"already have a visor created");
-            if ([[hotkeyTerm window] isKeyWindow]) {
+            if ([[hotkeyTerm window] alphaValue] == 1) {
+                NSLog(@"visor opaque");
                 [[iTermController sharedInstance] hideHotKeyWindow:hotkeyTerm];
             } else {
-                NSLog(@"visor not key");
+                NSLog(@"visor not opaque");
                 [[iTermController sharedInstance] showHotKeyWindow];
             }
         } else {

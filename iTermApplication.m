@@ -84,7 +84,7 @@
             int digit = [[event charactersIgnoringModifiers] intValue];
             if (digit >= 1 && digit <= 9 && [cont numberOfTerminals] >= digit) {
                 PseudoTerminal* termWithNumber = [cont terminalAtIndex:(digit - 1)];
-                if ([termWithNumber isHotKeyWindow] && ![[termWithNumber window] isVisible]) {
+                if ([termWithNumber isHotKeyWindow] && [[termWithNumber window] alphaValue] < 1) {
                     [[iTermController sharedInstance] showHotKeyWindow];
                 } else {
                     [[termWithNumber window] makeKeyAndOrderFront:self];
