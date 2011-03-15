@@ -3253,6 +3253,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
     if (!hasBGImage || ![self useTransparency]) {
         // Either draw a normal bg or, if transparency is off, blend the default bg color over the bg image.
+        if (!hasBGImage && ![self useTransparency]) {
+            alpha = 1;
+        }
         [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
         NSRect fillDest = bgRect;
         fillDest.origin.y += fillDest.size.height;
@@ -3273,6 +3276,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
     if (!hasBGImage || ![self useTransparency]) {
         // Either draw a normal bg or, if transparency is off, blend the default bg color over the bg image.
+        if (!hasBGImage && ![self useTransparency]) {
+            alpha = 1;
+        }
         [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
         NSRectFillUsingOperation(bgRect,
                                  hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
@@ -3290,6 +3296,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
     if (!hasBGImage || ![self useTransparency]) {
         // Either draw a normal bg or, if transparency is off, blend the default bg color over the bg image.
+        if (!hasBGImage && ![self useTransparency]) {
+            alpha = 1;
+        }
         [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
         NSRectFillUsingOperation(bgRect, hasBGImage?NSCompositeSourceOver:NSCompositeCopy);
     }
@@ -4102,12 +4111,14 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 NSRectFillUsingOperation(leftMargin, NSCompositeSourceOver);
                 NSRectFillUsingOperation(rightMargin, NSCompositeSourceOver);
             } else {
+                aColor = [aColor colorWithAlphaComponent:alphaIfTransparencyInUse];
+                [aColor set];
                 NSRectFill(leftMargin);
                 NSRectFill(rightMargin);
             }
         }
     }
-    
+
     // Contiguous sections of background with the same colour
     // are combined into runs and draw as one operation
     int bgstart = -1;

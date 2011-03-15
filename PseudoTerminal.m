@@ -348,7 +348,11 @@ NSString *sessionsKey = @"sessions";
     if (_fullScreen) {
         [self hideMenuBar];
     }
-    useTransparency_ = YES;
+    if (windowType != WINDOW_TYPE_FULL_SCREEN) {
+        useTransparency_ = YES;
+    } else {
+        useTransparency_ = NO;
+    }
 
     return self;
 }
