@@ -272,6 +272,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTextField *bookmarkUrlSchemesHeaderLabel;
     IBOutlet NSTextField *bookmarkUrlSchemesLabel;
     IBOutlet NSPopUpButton* bookmarkUrlSchemes;
+    IBOutlet NSButton* copyToProfileButton;
 
     // Colors tab
     IBOutlet NSColorWell *ansi0Color;
@@ -509,6 +510,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (void)changeFont:(id)fontManager;
 - (NSString*)_chooseBackgroundImage;
 - (IBAction)bookmarkSettingChanged:(id)sender;
+- (IBAction)copyToProfile:(id)sender;
 - (IBAction)bookmarkUrlSchemeHandlerChanged:(id)sender;
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification;
 - (IBAction)showGlobalTabView:(id)sender;

@@ -185,6 +185,7 @@ static float versionNumber;
     [bookmarkUrlSchemes setHidden:YES];
     [bookmarkUrlSchemesHeaderLabel setHidden:YES];
     [bookmarkUrlSchemesLabel setHidden:YES];
+    [copyToProfileButton setHidden:NO];
 
     [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
     [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
@@ -2268,6 +2269,37 @@ static float versionNumber;
     }
 }
 
+- (IBAction)copyToProfile:(id)sender
+{
+    NSString* sourceGuid = [bookmarksTableView selectedGuid];
+    if (!sourceGuid) {
+        return;
+    }
+    Bookmark* sourceBookmark = [dataSource bookmarkWithGuid:sourceGuid];
+    NSString* profileGuid = [sourceBookmark objectForKey:KEY_ORIGINAL_GUID];
+    Bookmark* destination = [[BookmarkModel sharedInstance] bookmarkWithGuid:profileGuid];
+    // TODO: changing color presets in cmd-i causes profileGuid=null.
+    if (sourceBookmark && destination) {
+        NSMutableDictionary* copyOfSource = [[sourceBookmark mutableCopy] autorelease];
+        [copyOfSource setObject:profileGuid forKey:KEY_GUID];
+        [copyOfSource removeObjectForKey:KEY_ORIGINAL_GUID];
+        [[BookmarkModel sharedInstance] setBookmark:copyOfSource withGuid:profileGuid];
+
+        [[PreferencePanel sharedInstance] bookmarkTableSelectionDidChange:[PreferencePanel sharedInstance]->bookmarksTableView];
+
+        // Update existing sessions
+        int n = [[iTermController sharedInstance] numberOfTerminals];
+        for (int i = 0; i < n; ++i) {
+            PseudoTerminal* pty = [[iTermController sharedInstance] terminalAtIndex:i];
+            [pty reloadBookmarks];
+        }
+
+        // Update user defaults
+        [[NSUserDefaults standardUserDefaults] setObject:[[BookmarkModel sharedInstance] rawData]
+                                                  forKey: @"New Bookmarks"];
+    }
+}
+
 - (IBAction)bookmarkSettingChanged:(id)sender
 {
     NSString* name = [bookmarkName stringValue];
@@ -2318,6 +2350,10 @@ static float versionNumber;
     [newDict setObject:isDefault forKey:KEY_DEFAULT_BOOKMARK];
     [newDict setObject:name forKey:KEY_NAME];
     [newDict setObject:guid forKey:KEY_GUID];
+    NSString* origGuid = [origBookmark objectForKey:KEY_ORIGINAL_GUID];
+    if (origGuid) {
+        [newDict setObject:origGuid forKey:KEY_ORIGINAL_GUID];
+    }
     if (shortcut) {
         // If any bookmark has this shortcut, clear its shortcut.
         for (int i = 0; i < [dataSource numberOfBookmarks]; ++i) {

@@ -2444,6 +2444,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     // than its bookmark. Changes to the bookmark will no longer affect this
     // session, and changes to this session won't affect its originating bookmark
     // (which may not evene exist any longer).
+    bookmark = [[BookmarkModel sessionsInstance] setObject:guid
+                                                    forKey:KEY_ORIGINAL_GUID
+                                                inBookmark:bookmark];
     guid = [BookmarkModel freshGuid];
     [[BookmarkModel sessionsInstance] setObject:guid
                                          forKey:KEY_GUID

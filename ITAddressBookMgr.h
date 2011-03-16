@@ -53,6 +53,7 @@
 #define KEY_BONJOUR_SERVICE_ADDRESS     @"Bonjour Service Address"
 #define KEY_TAGS                        @"Tags"
 #define KEY_GUID                        @"Guid"
+#define KEY_ORIGINAL_GUID               @"Original Guid"  // GUID before divorce. Not saved to preferences plist.
 #define KEY_DEFAULT_BOOKMARK            @"Default Bookmark"  // deprecated
 #define KEY_ASK_ABOUT_OUTDATED_KEYMAPS  @"Ask About Outdated Keymaps"
 
