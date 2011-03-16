@@ -2283,6 +2283,7 @@ static float versionNumber;
         NSMutableDictionary* copyOfSource = [[sourceBookmark mutableCopy] autorelease];
         [copyOfSource setObject:profileGuid forKey:KEY_GUID];
         [copyOfSource removeObjectForKey:KEY_ORIGINAL_GUID];
+        [copyOfSource setObject:[destination objectForKey:KEY_NAME] forKey:KEY_NAME];
         [[BookmarkModel sharedInstance] setBookmark:copyOfSource withGuid:profileGuid];
 
         [[PreferencePanel sharedInstance] bookmarkTableSelectionDidChange:[PreferencePanel sharedInstance]->bookmarksTableView];
