@@ -115,7 +115,7 @@ static int nextViewId;
 {
     targetDimmingAmount_ = newDimmingAmount;
     previousUpdate_ = [[NSDate date] retain];
-    const double kAnimationDuration = 0.250;
+    const double kAnimationDuration = 0.1;
     changePerSecond_ = (targetDimmingAmount_ - currentDimmingAmount_) / kAnimationDuration;
     if (timer_) {
         [timer_ invalidate];
