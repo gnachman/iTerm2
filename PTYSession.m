@@ -477,6 +477,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     }
 
     [tab_ removeSession:self];
+    tab_ = nil;
 }
 
 - (void)writeTask:(NSData*)data

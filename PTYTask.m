@@ -710,7 +710,7 @@ static void reapchild(int n)
 - (void)sendSignal:(int)signo
 {
     if (pid >= 0) {
-        killpg(pid, signo);
+        kill(pid, signo);
     }
 }
 
