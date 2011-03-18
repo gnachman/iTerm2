@@ -1853,13 +1853,13 @@ NSString *sessionsKey = @"sessions";
 - (NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem
 {
     NSDictionary *ade = [[[aTabViewItem identifier] activeSession] addressBookEntry];
-
+    BOOL ignore;
     NSString *temp = [NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Name: %@\nCommand: %@",
                                                                                    @"iTerm",
                                                                                    [NSBundle bundleForClass:[self class]],
                                                                                    @"Tab Tooltips"),
                       [ade objectForKey:KEY_NAME],
-                      [ITAddressBookMgr bookmarkCommand:ade]];
+                      [ITAddressBookMgr bookmarkCommand:ade isLoginSession:&ignore]];
 
     return temp;
 
@@ -1931,9 +1931,9 @@ NSString *sessionsKey = @"sessions";
                 [aDict setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
                 prototype = aDict;
             }
-
             [self addNewSession:prototype
-                    withCommand:[commandField stringValue]];
+                    withCommand:[commandField stringValue]
+                 asLoginSession:NO];
             break;
         }
         default:
@@ -3427,6 +3427,7 @@ NSString *sessionsKey = @"sessions";
          environment:(NSDictionary *)prog_env
               isUTF8:(BOOL)isUTF8
            inSession:(PTYSession*)theSession
+      asLoginSession:(BOOL)asLoginSession
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PseudoTerminal startProgram:%@ arguments:%@]",
@@ -3435,7 +3436,8 @@ NSString *sessionsKey = @"sessions";
     [theSession startProgram:program
                    arguments:prog_argv
                  environment:prog_env
-                      isUTF8:isUTF8];
+                      isUTF8:isUTF8
+              asLoginSession:asLoginSession];
 
     if ([[[self window] title] compare:@"Window"] == NSOrderedSame) {
         [self setWindowTitle];
@@ -3732,6 +3734,7 @@ NSString *sessionsKey = @"sessions";
     return [aSession autorelease];
 }
 
+// Used when adding a split pane.
 - (void)runCommandInSession:(PTYSession*)aSession inCwd:(NSString*)oldCWD;
 {
     if ([aSession SCREEN]) {
@@ -3739,10 +3742,10 @@ NSString *sessionsKey = @"sessions";
         NSArray *arg;
         NSString *pwd;
         BOOL isUTF8;
-
         // Grab the addressbook command
         Bookmark* addressbookEntry = [aSession addressBookEntry];
-        cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry]] autorelease];
+        BOOL loginSession;
+        cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry isLoginSession:&loginSession]] autorelease];
         name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
         // Get session parameters
         [self getSessionParameters:cmd withName:name];
@@ -3760,9 +3763,8 @@ NSString *sessionsKey = @"sessions";
         NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
         isUTF8 = ([[addressbookEntry objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
         [self setName:name forSession:aSession];
-
         // Start the command
-        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession];
+        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession asLoginSession:loginSession];
     }
 }
 
@@ -3931,7 +3933,9 @@ NSString *sessionsKey = @"sessions";
     [self appendSession: aSession];
     if ([aSession SCREEN]) {
         // We process the cmd to insert URL parts
-        NSMutableString *cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry]] autorelease];
+        BOOL loginSession;
+        NSMutableString *cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
+                                                                                           isLoginSession:&loginSession]] autorelease];
         NSMutableString *name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey: KEY_NAME]] autorelease];
         NSURL *urlRep = [NSURL URLWithString: url];
 
@@ -3970,13 +3974,13 @@ NSString *sessionsKey = @"sessions";
         [self setName:name forSession:aSession];
 
         // Start the command
-        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession];
+        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession asLoginSession:loginSession];
     }
     [aSession release];
     return aSession;
 }
 
--(id)addNewSession:(NSDictionary *)addressbookEntry withCommand:(NSString *)command
+-(id)addNewSession:(NSDictionary *)addressbookEntry withCommand:(NSString *)command asLoginSession:(BOOL)loginSession
 {
     PtyLog(@"PseudoTerminal: addNewSession 2");
     PTYSession *aSession;
@@ -4013,7 +4017,7 @@ NSString *sessionsKey = @"sessions";
         [self setName:name forSession:aSession];
 
         // Start the command
-        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession];
+        [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 inSession:aSession asLoginSession:loginSession];
     }
 
     [aSession release];
@@ -4162,7 +4166,6 @@ NSString *sessionsKey = @"sessions";
                            screen:-1];
     }
 
-    // TODO(georgen): test this
     // launch the session!
     id rv = [[iTermController sharedInstance] launchBookmark:abEntry
                                                  inTerminal:self];

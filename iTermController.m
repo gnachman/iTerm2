@@ -674,6 +674,7 @@ static BOOL initDone = NO;
     return session;
 }
 
+// I don't think this function is ever called.
 - (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm withCommand:(NSString *)command
 {
     PseudoTerminal *term;
@@ -701,7 +702,7 @@ static BOOL initDone = NO;
         term = theTerm;
     }
 
-    return [term addNewSession: aDict withCommand: command];
+    return [term addNewSession:aDict withCommand:command asLoginSession:NO];
 }
 
 - (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm withURL:(NSString *)url
@@ -710,8 +711,9 @@ static BOOL initDone = NO;
     NSDictionary *aDict;
 
     aDict = bookmarkData;
-    // $$ is a prefix/suffix of a variabe.
-    if (aDict == nil || [[ITAddressBookMgr bookmarkCommand:aDict] isEqualToString:@"$$"]) {
+    // Automatically fill in ssh command if command is exactly equal to $$
+    BOOL ignore;
+    if (aDict == nil || [[ITAddressBookMgr bookmarkCommand:aDict isLoginSession:&ignore] isEqualToString:@"$$"]) {
         Bookmark* prototype = aDict;
         if (!prototype) {
             prototype = [[BookmarkModel sharedInstance] defaultBookmark];

@@ -244,7 +244,9 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv
          environment:(NSDictionary *)prog_env
-              isUTF8:(BOOL)isUTF8;
+              isUTF8:(BOOL)isUTF8
+      asLoginSession:(BOOL)asLoginSession;
+
 - (void)terminate;
 
 - (void)setNewOutput:(BOOL)value;

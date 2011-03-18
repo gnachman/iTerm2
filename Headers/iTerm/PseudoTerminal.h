@@ -587,7 +587,7 @@
 -(id)valueWithName: (NSString *)uniqueName inPropertyWithKey: (NSString*)propertyKey;
 -(id)valueWithID: (NSString *)uniqueID inPropertyWithKey: (NSString*)propertyKey;
 -(id)addNewSession:(NSDictionary *)addressbookEntry withURL: (NSString *)url;
--(id)addNewSession:(NSDictionary *) addressbookEntry withCommand: (NSString *)command;
+-(id)addNewSession:(NSDictionary *) addressbookEntry withCommand: (NSString *)command asLoginSession:(BOOL)loginSession;
 -(void)appendSession:(PTYSession *)object;
 -(void)removeFromSessionsAtIndex:(unsigned)index;
 -(NSArray*)sessions;
@@ -703,7 +703,8 @@
            arguments:(NSArray *)prog_argv
          environment:(NSDictionary *)prog_env
               isUTF8:(BOOL)isUTF8
-           inSession:(PTYSession*)theSession;
+           inSession:(PTYSession*)theSession
+      asLoginSession:(BOOL)asLoginSession;
 
 // Send a reset to the current session's terminal.
 - (void)reset:(id)sender;

@@ -30,7 +30,8 @@
 #import <iTerm/iTermKeyBindingMgr.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
+#include <sys/types.h>
+#include <pwd.h>
 
 @implementation ITAddressBookMgr
 
@@ -424,33 +425,45 @@
     }
 }
 
-+ (NSString*)loginShellCommandForBookmark:(Bookmark*)bookmark
+static NSString* UserShell() {
+    struct passwd* pw;
+    pw = getpwuid(geteuid());
+    NSString* shell = [NSString stringWithUTF8String:pw->pw_shell];
+    endpwent();
+    return shell;
+}
+
++ (NSString*)loginShellCommandForBookmark:(Bookmark*)bookmark asLoginShell:(BOOL*)asLoginShell
 {
     NSString* thisUser = NSUserName();
-    char* userShell = getenv("SHELL");
-    if (thisUser) {
+    NSString* userShell = UserShell();
+    if (userShell) {
+        *asLoginShell = YES;
+        return userShell;
+    } else if (thisUser) {
+        *asLoginShell = NO;
         if (![[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"No"]) {
             // -l specifies a NON-LOGIN shell which doesn't changed the pwd.
             // (there is either a custom dir or we're recycling the last tab's dir)
-            return [NSString stringWithFormat:@"login -fpl \"%@\"", thisUser];
+            return [NSString stringWithFormat:@"dlogin -fpl \"%@\"", thisUser];
         } else {
             // No -l argument: this is a login session and will use the home dir.
             return [NSString stringWithFormat:@"login -fp \"%@\"", thisUser];
         }
-    } else if (userShell) {
-        return [NSString stringWithCString:userShell];
     } else {
+        *asLoginShell = YES;
         return @"/bin/bash --login";
     }
 }
 
-+ (NSString*)bookmarkCommand:(Bookmark*)bookmark
++ (NSString*)bookmarkCommand:(Bookmark*)bookmark isLoginSession:(BOOL*)isLoginSession
 {
     BOOL custom = [[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"];
     if (custom) {
+        *isLoginSession = NO;
         return [bookmark objectForKey:KEY_COMMAND];
     } else {
-        return [ITAddressBookMgr loginShellCommandForBookmark:bookmark];
+        return [ITAddressBookMgr loginShellCommandForBookmark:bookmark asLoginShell:isLoginSession];
     }
 }
 

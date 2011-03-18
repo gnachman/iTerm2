@@ -361,7 +361,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
     // Grab the addressbook command
     Bookmark* addressbookEntry = [self addressBookEntry];
-    cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry]] autorelease];
+    BOOL loginSession;
+    cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry isLoginSession:&loginSession]] autorelease];
     NSMutableString* theName = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
     // Get session parameters
     [[[self tab] realParentWindow] getSessionParameters:cmd withName:theName];
@@ -382,7 +383,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [[[self tab] realParentWindow] setName:theName forSession:self];
 
     // Start the command
-    [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8];
+    [self startProgram:cmd arguments:arg environment:env isUTF8:isUTF8 asLoginSession:loginSession];
 }
 
 - (void)setWidth:(int)width height:(int)height
@@ -406,6 +407,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
            arguments:(NSArray *)prog_argv
          environment:(NSDictionary *)prog_env
               isUTF8:(BOOL)isUTF8
+      asLoginSession:(BOOL)asLoginSession
 {
     NSString *path = program;
     NSMutableArray *argv = [NSMutableArray arrayWithArray:prog_argv];
@@ -436,7 +438,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                     width:[SCREEN width]
                    height:[SCREEN height]
                    isUTF8:isUTF8
-    ];
+           asLoginSession:asLoginSession];
 
 }
 
@@ -2624,8 +2626,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSArray *arg;
 
     [PseudoTerminal breakDown:command cmdPath:&cmd cmdArgs:&arg];
-
-    [self startProgram:cmd arguments:arg environment:[NSDictionary dictionary] isUTF8:isUTF8];
+    [self startProgram:cmd arguments:arg environment:[NSDictionary dictionary] isUTF8:isUTF8 asLoginSession:NO];
 
     return;
 }
@@ -2682,18 +2683,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 @implementation PTYSession (Private)
 
-- (NSString*)_getLocale
+- (NSString*)encodingName
 {
-    // Keep a copy of the current locale setting for this process
-    char* backupLocale = setlocale(LC_CTYPE, NULL);
-
-    // Start with the locale
-    NSString* locale = [[NSLocale currentLocale] localeIdentifier];
-
-    // Append the encoding
+    // Get the encoding, perhaps as a fully written out name.
     CFStringEncoding cfEncoding = CFStringConvertNSStringEncodingToEncoding([self encoding]);
+    // Convert it to the expected (IANA) format.
     NSString* ianaEncoding = (NSString*)CFStringConvertEncodingToIANACharSetName(cfEncoding);
-
+    
+    // Fix up lowercase letters.
     static NSDictionary* lowerCaseEncodings;
     if (!lowerCaseEncodings) {
         NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"EncodingsWithLowerCase" ofType:@"plist"];
@@ -2710,31 +2707,37 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             }
         }
     }
-
+    
     if (ianaEncoding != nil) {
         // Mangle the names slightly
-        NSMutableString* encoding = [[NSMutableString alloc] initWithString:ianaEncoding];
+        NSMutableString* encoding = [[[NSMutableString alloc] initWithString:ianaEncoding] autorelease];
         [encoding replaceOccurrencesOfString:@"ISO-" withString:@"ISO" options:0 range:NSMakeRange(0, [encoding length])];
         [encoding replaceOccurrencesOfString:@"EUC-" withString:@"euc" options:0 range:NSMakeRange(0, [encoding length])];
-
-        NSString* test = [locale stringByAppendingFormat:@".%@", encoding];
-        if (NULL != setlocale(LC_CTYPE, [test UTF8String])) {
-            locale = test;
-        }
-
-        [encoding release];
+        return encoding;
     }
-
-    // Check the locale is valid
-    if (NULL == setlocale(LC_CTYPE, [locale UTF8String])) {
-        locale = nil;
-    }
-
-    // Restore locale and return
-    setlocale(LC_CTYPE, backupLocale);
-    return locale;
+    
+    return nil;
 }
 
+- (NSString*)_getLocale
+{
+    NSObject* localeObject = [[NSUserDefaults standardUserDefaults] objectForKey:@"AppleLocale"];
+    NSString* theLocale;
+    if ([localeObject isKindOfClass:[NSString class]]) {
+        theLocale = (NSString*) localeObject;
+    } else {
+        NSArray* locales = (NSArray*) localeObject;
+        theLocale = [locales objectAtIndex:0];
+    }
+    NSString* canonical = (NSString*) CFLocaleCreateCanonicalLocaleIdentifierFromString(kCFAllocatorDefault,
+                                                                                        (CFStringRef) theLocale);
+    NSString* encoding = [self encodingName];
+    if (encoding) {
+        return [NSString stringWithFormat:@"%@.%@", canonical, encoding];
+    } else {
+        return canonical;
+    }
+}
 
 - (void)setDvrFrame
 {
