@@ -2715,27 +2715,26 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         [encoding replaceOccurrencesOfString:@"EUC-" withString:@"euc" options:0 range:NSMakeRange(0, [encoding length])];
         return encoding;
     }
-    
+
     return nil;
 }
 
 - (NSString*)_getLocale
 {
-    NSObject* localeObject = [[NSUserDefaults standardUserDefaults] objectForKey:@"AppleLocale"];
     NSString* theLocale;
-    if ([localeObject isKindOfClass:[NSString class]]) {
-        theLocale = (NSString*) localeObject;
-    } else {
-        NSArray* locales = (NSArray*) localeObject;
-        theLocale = [locales objectAtIndex:0];
+    NSString* languageCode = [[NSLocale currentLocale] objectForKey:NSLocaleLanguageCode];
+    NSString* countryCode = [[NSLocale currentLocale] objectForKey:NSLocaleCountryCode];
+    if (languageCode && countryCode) {
+        theLocale = [NSString stringWithFormat:@"%@_%@", languageCode, countryCode];
+    } else if (languageCode) {
+        theLocale = languageCode;
     }
-    NSString* canonical = (NSString*) CFLocaleCreateCanonicalLocaleIdentifierFromString(kCFAllocatorDefault,
-                                                                                        (CFStringRef) theLocale);
+
     NSString* encoding = [self encodingName];
-    if (encoding) {
-        return [NSString stringWithFormat:@"%@.%@", canonical, encoding];
+    if (encoding && theLocale) {
+        return [NSString stringWithFormat:@"%@.%@", theLocale, encoding];
     } else {
-        return canonical;
+        return encoding;
     }
 }
 
