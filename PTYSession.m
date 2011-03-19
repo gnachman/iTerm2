@@ -424,9 +424,11 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     if ([env objectForKey:COLORFGBG_ENVNAME] == nil && COLORFGBG_VALUE != nil)
         [env setObject:COLORFGBG_VALUE forKey:COLORFGBG_ENVNAME];
 
-    NSString* locale = [self _getLocale];
-    if (locale) {
-        [env setObject:locale forKey:@"LANG"];
+    NSString* lang = [self _lang];
+    if (lang) {
+        [env setObject:lang forKey:@"LANG"];
+    } else {
+        [env setObject:[self encodingName] forKey:@"LC_CTYPE"];
     }
 
     if ([env objectForKey:PWD_ENVNAME] == nil)
@@ -2721,20 +2723,23 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (NSString*)_getLocale
 {
-    NSString* theLocale;
+    NSString* theLocale = nil;
     NSString* languageCode = [[NSLocale currentLocale] objectForKey:NSLocaleLanguageCode];
     NSString* countryCode = [[NSLocale currentLocale] objectForKey:NSLocaleCountryCode];
     if (languageCode && countryCode) {
         theLocale = [NSString stringWithFormat:@"%@_%@", languageCode, countryCode];
-    } else if (languageCode) {
-        theLocale = languageCode;
     }
+    return theLocale;
+}
 
+- (NSString*)_lang
+{
+    NSString* theLocale = [self _getLocale];
     NSString* encoding = [self encodingName];
     if (encoding && theLocale) {
         return [NSString stringWithFormat:@"%@.%@", theLocale, encoding];
     } else {
-        return encoding;
+        return nil;
     }
 }
 
