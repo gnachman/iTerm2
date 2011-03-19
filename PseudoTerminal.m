@@ -868,9 +868,6 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowWillClose:(NSNotification *)aNotification
 {
-    if ([self isHotKeyWindow]) {
-        [[iTermController sharedInstance] showNonHotKeyWindowsAndSetAlphaTo:1];
-    }
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PseudoTerminal windowWillClose:%@]",
           __FILE__, __LINE__, aNotification);
