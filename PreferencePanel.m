@@ -2219,36 +2219,6 @@ static float versionNumber;
     return nil;
 }
 
-// This function has a side effect of changing the value of bookmarkCommand
-// and bookmarkCommandType sometimes.
-- (void)_maybeWarnAboutDirsAndBash
-{
-    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutDirsAndBash"]) {
-        return;
-    }
-    if ([[bookmarkCommandType selectedCell] tag] == 0) {
-        // Custom command
-        return;
-    }
-
-    switch (NSRunAlertPanel(@"Warning",
-                            @"If you use bash and you choose not to start in your home directory, your .bash_profile and .profile will not be sourced (.bashrc is sourced instead). You can set the command to \"/bin/bash --login\" to work around this.",
-                            @"OK",
-                            @"Never warn me again",
-                            @"Change Command",
-                            nil)) {
-        case NSAlertOtherReturn:
-            [bookmarkCommand setStringValue:@"/bin/bash --login"];
-            [bookmarkCommandType selectCellWithTag:0];
-            break;
-        case NSAlertDefaultReturn:
-            break;
-        case NSAlertAlternateReturn:
-            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:@"NeverWarnAboutDirsAndBash"];
-            break;
-    }
-}
-
 - (void)_maybeWarnAboutMeta
 {
     if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutMeta"]) {
@@ -2325,11 +2295,7 @@ static float versionNumber;
             break;
     }
 
-    if (sender == bookmarkDirectoryType && ![customDir isEqualToString:@"No"]) {
-        [self _maybeWarnAboutDirsAndBash];
-        command = [bookmarkCommand stringValue];
-        customCommand = [[bookmarkCommandType selectedCell] tag] == 0 ? @"Yes" : @"No";
-    } else if (sender == optionKeySends && [[optionKeySends selectedCell] tag] == OPT_META) {
+    if (sender == optionKeySends && [[optionKeySends selectedCell] tag] == OPT_META) {
         [self _maybeWarnAboutMeta];
     } else if (sender == rightOptionKeySends && [[rightOptionKeySends selectedCell] tag] == OPT_META) {
         [self _maybeWarnAboutMeta];

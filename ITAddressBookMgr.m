@@ -437,20 +437,24 @@ static NSString* UserShell() {
 {
     NSString* thisUser = NSUserName();
     NSString* userShell = UserShell();
-    if (userShell) {
+    if ([[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"No"]) {
+        // Run login without -l argument: this is a login session and will use the home dir.
+        *asLoginShell = NO;
+        return [NSString stringWithFormat:@"login -fp \"%@\"", thisUser];
+    } else if (userShell) {
+        // This is the normal case when using a custom dir or reusing previous tab's dir:
+        // Run the shell with - as the first char of argv[0]. It won't update
+        // utmpx (only login does), though.
         *asLoginShell = YES;
         return userShell;
     } else if (thisUser) {
+        // No shell known (not sure why this would happen) and we want a non-login shell.
         *asLoginShell = NO;
-        if (![[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"No"]) {
-            // -l specifies a NON-LOGIN shell which doesn't changed the pwd.
-            // (there is either a custom dir or we're recycling the last tab's dir)
-            return [NSString stringWithFormat:@"dlogin -fpl \"%@\"", thisUser];
-        } else {
-            // No -l argument: this is a login session and will use the home dir.
-            return [NSString stringWithFormat:@"login -fp \"%@\"", thisUser];
-        }
+        // -l specifies a NON-LOGIN shell which doesn't changed the pwd.
+        // (there is either a custom dir or we're recycling the last tab's dir)
+        return [NSString stringWithFormat:@"login -fpl \"%@\"", thisUser];
     } else {
+        // Can't get the shell or the user name. Should never happen.
         *asLoginShell = YES;
         return @"/bin/bash --login";
     }
