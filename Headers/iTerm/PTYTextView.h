@@ -139,6 +139,8 @@ typedef struct PTYFontInfo PTYFontInfo;
     struct timeval lastBlink;
     int oldCursorX, oldCursorY;
 
+    BOOL blinkAllowed_;
+
     // trackingRect tab
     NSTrackingRectTag trackingRectTag;
 
@@ -287,6 +289,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)setUseBrightBold:(BOOL)flag;
 - (BOOL)blinkingCursor;
 - (void)setBlinkingCursor:(BOOL)bFlag;
+- (void)setBlinkAllowed:(BOOL)value;
 - (void)setCursorType:(ITermCursorType)value;
 
 //color stuff

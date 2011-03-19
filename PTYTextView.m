@@ -293,12 +293,17 @@ static NSImage* wrapToBottomImage = nil;
 
 - (BOOL)blinkingCursor
 {
-    return (blinkingCursor);
+    return blinkingCursor;
 }
 
 - (void)setBlinkingCursor:(BOOL)bFlag
 {
     blinkingCursor = bFlag;
+}
+
+- (void)setBlinkAllowed:(BOOL)value
+{
+    blinkAllowed_ = value;
 }
 
 - (void)setCursorType:(ITermCursorType)value
@@ -3649,6 +3654,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     }
 }
 
+- (BOOL)_charBlinks:(screen_char_t)sct
+{
+    return blinkAllowed_ && sct.blink;
+}
+
 - (int)_constructRuns:(NSPoint)initialPoint
               theLine:(screen_char_t *)theLine
       advancesStorage:(CGSize*)advancesStorage
@@ -3737,7 +3747,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             thisCharColor = [self color:thisCharColor withContrastAgainst:bgColor];
         }
         BOOL drawable;
-        if (blinkShow || !theLine[i].blink) {
+        if (blinkShow || ![self _charBlinks:theLine[i]]) {
             // This char is either not blinking or during the "on" cycle of the
             // blink.
 
@@ -5834,7 +5844,8 @@ static bool IsUrlChar(NSString* str)
     }
 }
 
-- (BOOL) _updateBlink {
+- (BOOL)_updateBlink
+{
     // Time to redraw blinking text or cursor?
     struct timeval now;
     BOOL redrawBlink = NO;
@@ -5879,7 +5890,7 @@ static bool IsUrlChar(NSString* str)
             for (int x = 0; x < width; x++) {
                 BOOL isSelected = [self _isCharSelectedInRow:y col:x checkOld:NO];
                 BOOL wasSelected = [self _isCharSelectedInRow:y col:x checkOld:YES];
-                BOOL blinked = redrawBlink && theLine[x].blink;
+                BOOL blinked = redrawBlink && [self _charBlinks:theLine[x]];
                 if (isSelected != wasSelected || blinked) {
                     NSRect dirtyRect = [self visibleRect];
                     dirtyRect.origin.y = y*lineHeight;
@@ -5897,7 +5908,7 @@ static bool IsUrlChar(NSString* str)
         for (int y = lineStart; y < lineEnd; y++) {
             screen_char_t* theLine = [dataSource getLineAtIndex:y];
             for (int x = 0; x < width; x++) {
-                BOOL blinked = redrawBlink && theLine[x].blink;
+                BOOL blinked = redrawBlink && [self _charBlinks:theLine[x]];
                 if (blinked) {
                     NSRect dirtyRect = [self visibleRect];
                     dirtyRect.origin.y = y*lineHeight;
