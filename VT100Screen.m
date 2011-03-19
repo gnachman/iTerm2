@@ -1137,6 +1137,16 @@ static char* FormatCont(int c)
     blinkingCursor = flag;
 }
 
+// Should the profile name be inculded in the window/tab title? Requires both
+// a per-profile option to be on as well as the global option.
+- (BOOL)_syncTitle
+{
+    if (![[PreferencePanel sharedInstance] showBookmarkName]) {
+        return NO;
+    }
+    return [[[SESSION addressBookEntry] objectForKey:KEY_SYNC_TITLE] boolValue];
+}
+
 - (void)putToken:(VT100TCC)token
 {
     NSString *newTitle;
@@ -1359,14 +1369,14 @@ static char* FormatCont(int c)
     // XTERM extensions
     case XTERMCC_WIN_TITLE:
         newTitle = [[token.u.string copy] autorelease];
-        if ([[[SESSION addressBookEntry] objectForKey:KEY_SYNC_TITLE] boolValue]) {
+        if ([self _syncTitle]) {
             newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION joblessDefaultName], newTitle];
         }
         [SESSION setWindowTitle:newTitle];
         break;
     case XTERMCC_WINICON_TITLE:
         newTitle = [[token.u.string copy] autorelease];
-        if ([[[SESSION addressBookEntry] objectForKey:KEY_SYNC_TITLE] boolValue]) {
+        if ([self _syncTitle]) {
             newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION joblessDefaultName], newTitle];
         }
         [SESSION setWindowTitle: newTitle];
@@ -1374,7 +1384,7 @@ static char* FormatCont(int c)
         break;
     case XTERMCC_ICON_TITLE:
         newTitle = [[token.u.string copy] autorelease];
-        if ([[[SESSION addressBookEntry] objectForKey:KEY_SYNC_TITLE] boolValue]) {
+        if ([self _syncTitle]) {
             newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION joblessDefaultName], newTitle];
         }
         [SESSION setName: newTitle];
