@@ -899,6 +899,7 @@ static float versionNumber;
     defaultIrMemory = [prefs objectForKey:@"IRMemory"]?[[prefs objectForKey:@"IRMemory"] intValue] : 4;
     defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
     defaultDimInactiveSplitPanes = [prefs objectForKey:@"DimInactiveSplitPanes"]?[[prefs objectForKey:@"DimInactiveSplitPanes"] boolValue]: YES;
+    defaultShowWindowBorder = [[prefs objectForKey:@"UseBorder"] boolValue];
 
     defaultControl = [prefs objectForKey:@"Control"] ? [[prefs objectForKey:@"Control"] intValue] : MOD_TAG_CONTROL;
     defaultLeftOption = [prefs objectForKey:@"LeftOption"] ? [[prefs objectForKey:@"LeftOption"] intValue] : MOD_TAG_LEFT_OPTION;
@@ -1026,6 +1027,7 @@ static float versionNumber;
     [prefs setInteger:defaultIrMemory forKey:@"IRMemory"];
     [prefs setBool:defaultCheckTestRelease forKey:@"CheckTestRelease"];
     [prefs setBool:defaultDimInactiveSplitPanes forKey:@"DimInactiveSplitPanes"];
+    [prefs setBool:defaultShowWindowBorder forKey:@"UseBorder"];
 
     [prefs setInteger:defaultControl forKey:@"Control"];
     [prefs setInteger:defaultLeftOption forKey:@"LeftOption"];
@@ -1116,6 +1118,7 @@ static float versionNumber;
     [irMemory setIntValue:defaultIrMemory];
     [checkTestRelease setState:defaultCheckTestRelease?NSOnState:NSOffState];
     [dimInactiveSplitPanes setState:defaultDimInactiveSplitPanes?NSOnState:NSOffState];
+    [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
 
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];
@@ -1227,7 +1230,8 @@ static float versionNumber;
         sender == hideScrollbar ||
         sender == advancedFontRendering ||
         sender == strokeThickness ||
-        sender == dimInactiveSplitPanes) {
+        sender == dimInactiveSplitPanes ||
+        sender == showWindowBorder) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
         defaultTabViewType=[tabPosition indexOfSelectedItem];
         defaultUseCompactLabel = ([useCompactLabel state] == NSOnState);
@@ -1240,6 +1244,7 @@ static float versionNumber;
         defaultStrokeThickness = [strokeThickness floatValue];
         defaultHideTab = ([hideTab state] == NSOnState);
         defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
+        defaultShowWindowBorder = ([showWindowBorder state] == NSOnState);
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermRefreshTerminal"
                                                             object:nil
@@ -1646,6 +1651,11 @@ static float versionNumber;
 - (BOOL)dimInactiveSplitPanes
 {
     return defaultDimInactiveSplitPanes;
+}
+
+- (BOOL)showWindowBorder
+{
+    return defaultShowWindowBorder;
 }
 
 - (BOOL)checkTestRelease

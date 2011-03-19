@@ -2845,6 +2845,57 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (BOOL)_haveLeftBorder
+{
+    if (![[PreferencePanel sharedInstance] showWindowBorder]) {
+        return NO;
+    } else if (_fullScreen || windowType_ == WINDOW_TYPE_TOP) {
+        return NO;
+    } else {
+        return YES;
+    }
+}
+
+- (BOOL)_haveBottomBorder
+{
+    BOOL tabBarVisible = ([TABVIEW numberOfTabViewItems] > 1 ||
+                          ![[PreferencePanel sharedInstance] hideTab]);
+    BOOL topTabBar = ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab);
+    if (![[PreferencePanel sharedInstance] showWindowBorder]) {
+        return NO;
+    } else if (_fullScreen || windowType_ == WINDOW_TYPE_TOP) {
+        // Only normal windows can have a left border
+        return NO;
+    } else if (![bottomBar isHidden]) {
+        // Bottom bar visible so no need for a lower border
+        return NO;
+    } else if (topTabBar) {
+        // Nothing on the bottom, so need a border.
+        return YES;
+    } else if (!tabBarVisible) {
+        // Invisible bottom tab bar
+        return YES;
+    } else {
+        // Visible bottom tab bar
+        return NO;
+    }
+}
+
+- (BOOL)_haveRightBorder
+{
+    if (![[PreferencePanel sharedInstance] showWindowBorder]) {
+        return NO;
+    } else if (_fullScreen || windowType_ == WINDOW_TYPE_TOP) {
+        return NO;
+    } else if ([[PreferencePanel sharedInstance] hideScrollbar]) {
+        // hidden scrollbar
+        return YES;
+    } else {
+        // visible scrollbar
+        return NO;
+    }
+}
+
 - (NSSize)windowDecorationSize
 {
     NSSize contentSize = NSZeroSize;
@@ -2855,6 +2906,17 @@ NSString *sessionsKey = @"sessions";
     }
     if (![bottomBar isHidden]) {
         contentSize.height += [bottomBar frame].size.height;
+    }
+
+    // Add 1px border
+    if ([self _haveLeftBorder]) {
+        ++contentSize.width;
+    }
+    if ([self _haveRightBorder]) {
+        ++contentSize.width;
+    }
+    if ([self _haveBottomBorder]) {
+        ++contentSize.height;
     }
 
     return [[self window] frameRectForContentRect:NSMakeRect(0, 0, contentSize.width, contentSize.height)].size;
@@ -2977,13 +3039,15 @@ NSString *sessionsKey = @"sessions";
         // The tabBarControl should not be visible.
         [tabBarControl setHidden:YES];
         NSRect aRect;
-        aRect.origin.x = 0;
-        aRect.origin.y = 0;
+        aRect.origin.x = [self _haveLeftBorder] ? 1 : 0;
+        aRect.origin.y = [self _haveBottomBorder] ? 1 : 0;
         if (![bottomBar isHidden]) {
             aRect.origin.y += [bottomBar frame].size.height;
         }
         aRect.size = [[thisWindow contentView] frame].size;
         aRect.size.height -= aRect.origin.y;
+        aRect.size.width -= aRect.origin.x;
+        aRect.size.width -= [self _haveRightBorder] ? 1 : 0;
         PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
         [TABVIEW setFrame:aRect];
     } else {
@@ -2994,14 +3058,17 @@ NSString *sessionsKey = @"sessions";
         NSRect aRect;
         if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
             // Place tabs at the top.
-            aRect.origin.x = 0;
-            aRect.origin.y = 0;
+            // Add 1px border
+            aRect.origin.x = [self _haveLeftBorder] ? 1 : 0;
+            aRect.origin.y = [self _haveBottomBorder] ? 1 : 0;
             aRect.size = [[thisWindow contentView] frame].size;
             if (![bottomBar isHidden]) {
                 aRect.origin.y += [bottomBar frame].size.height;
             }
             aRect.size.height -= aRect.origin.y;
             aRect.size.height -= [tabBarControl frame].size.height;
+            aRect.size.width -= aRect.origin.x;
+            aRect.size.width -= [self _haveRightBorder] ? 1 : 0;
             PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
             [TABVIEW setFrame:aRect];
             aRect.origin.y += aRect.size.height;
@@ -3010,10 +3077,12 @@ NSString *sessionsKey = @"sessions";
         } else {
             PtyLog(@"repositionWidgets - putting tabs at bottom");
             // setup aRect to make room for the tabs at the bottom.
-            aRect.origin.x = 0;
-            aRect.origin.y = 0;
+            aRect.origin.x = [self _haveLeftBorder] ? 1 : 0;
+            aRect.origin.y = [self _haveBottomBorder] ? 1 : 0;
             aRect.size = [[thisWindow contentView] frame].size;
             aRect.size.height = [tabBarControl frame].size.height;
+            aRect.size.width -= aRect.origin.x;
+            aRect.size.width -= [self _haveRightBorder] ? 1 : 0;
             if (![bottomBar isHidden]) {
                 aRect.origin.y += [bottomBar frame].size.height;
             }
