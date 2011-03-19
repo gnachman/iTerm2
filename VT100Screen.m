@@ -225,7 +225,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (screen_char_t *)_getLineAtIndex:(int)anIndex fromLine:(screen_char_t *)aLine;
 - (screen_char_t*)_getDefaultLineWithWidth:(int)width;
-- (int)_addLineToScrollback;
+- (int)_addLineToScrollbackImpl;
 - (void)_setInitialTabStops;
 
 @end
@@ -2054,6 +2054,15 @@ void DumpBuf(screen_char_t* p, int n) {
     [self setCursorX:sx Y:sy];
 }
 
+- (void)addLineToScrollback
+{
+    int overflowCount = [self _addLineToScrollbackImpl];
+    if (overflowCount) {
+        scrollback_overflow += overflowCount;
+        cumulative_scrollback_overflow += overflowCount;
+    }
+}
+
 - (void)setNewLine
 {
     screen_char_t *aLine;
@@ -2082,12 +2091,7 @@ void DumpBuf(screen_char_t* p, int n) {
         [self moveDirtyRangeFromX:0 Y:1 toX:0 Y:0 size:WIDTH*(HEIGHT - 1)];
         [self setRangeDirty:NSMakeRange(WIDTH * (HEIGHT - 1), WIDTH)];
 
-        // try to add top line to scroll area
-        int overflowCount = [self _addLineToScrollback];
-        if (overflowCount) {
-            scrollback_overflow += overflowCount;
-            cumulative_scrollback_overflow += overflowCount;
-        }
+        [self addLineToScrollback];
 
         // Increment screen_top pointer
         screen_top = incrementLinePointer(buffer_lines, screen_top, HEIGHT, WIDTH, &wrap);
@@ -2099,6 +2103,7 @@ void DumpBuf(screen_char_t* p, int n) {
                REAL_WIDTH*sizeof(screen_char_t));
         DebugLog(@"setNewline scroll screen");
     } else {
+        // We are scrolling within a strict subset of the screen.
         [self scrollUp];
         DebugLog(@"setNewline weird case");
     }
@@ -2662,40 +2667,43 @@ void DumpBuf(screen_char_t* p, int n) {
     NSLog(@"%s(%d):-[VT100Screen scrollUp]", __FILE__, __LINE__);
 #endif
 
-    NSParameterAssert(SCROLL_TOP >= 0 && SCROLL_TOP < HEIGHT);
-    NSParameterAssert(SCROLL_BOTTOM >= 0 && SCROLL_BOTTOM < HEIGHT);
-    NSParameterAssert(SCROLL_TOP <= SCROLL_BOTTOM );
+    assert(SCROLL_TOP >= 0 && SCROLL_TOP < HEIGHT);
+    assert(SCROLL_BOTTOM >= 0 && SCROLL_BOTTOM < HEIGHT);
+    assert(SCROLL_TOP <= SCROLL_BOTTOM );
 
-    if (SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT -1)
-    {
+    if (SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT -1) {
         [self setNewLine];
-    }
-    else if (SCROLL_TOP<SCROLL_BOTTOM)
-    {
-        // SCROLL_TOP is not top of screen; move all lines between SCROLL_TOP and SCROLL_BOTTOM one line up
-        // check if the screen area is wrapped
-        sourceLine = [self getLineAtScreenIndex: SCROLL_TOP];
-        targetLine = [self getLineAtScreenIndex: SCROLL_BOTTOM];
-        if(sourceLine < targetLine)
-        {
-            // screen area is not wrapped; direct memmove
-            memmove(sourceLine, sourceLine+REAL_WIDTH, (SCROLL_BOTTOM-SCROLL_TOP)*REAL_WIDTH*sizeof(screen_char_t));
+    } else if (SCROLL_TOP < SCROLL_BOTTOM) {
+        // Not scrolling the whole screen.
+        if (SCROLL_TOP == 0) {
+            // A line is being scrolled off the top of the screen so add it to
+            // the scrollback buffer.
+            [self addLineToScrollback];
         }
-        else
-        {
+        // Move all lines between SCROLL_TOP and SCROLL_BOTTOM one line up
+        // check if the screen area is wrapped
+        sourceLine = [self getLineAtScreenIndex:SCROLL_TOP];
+        targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
+        if (sourceLine < targetLine) {
+            // screen area is not wrapped; direct memmove
+            memmove(sourceLine,
+                    sourceLine + REAL_WIDTH,
+                    (SCROLL_BOTTOM - SCROLL_TOP) * REAL_WIDTH * sizeof(screen_char_t));
+        } else {
             // screen area is wrapped; copy line by line
-            for(i = SCROLL_TOP; i < SCROLL_BOTTOM; i++)
-            {
+            for(i = SCROLL_TOP; i < SCROLL_BOTTOM; i++) {
                 sourceLine = [self getLineAtScreenIndex:i+1];
                 targetLine = [self getLineAtScreenIndex: i];
-                memmove(targetLine, sourceLine, REAL_WIDTH*sizeof(screen_char_t));
+                memmove(targetLine,
+                        sourceLine,
+                        REAL_WIDTH * sizeof(screen_char_t));
             }
         }
         // new line at SCROLL_BOTTOM with default settings
         targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
         memcpy(targetLine,
                [self _getDefaultLineWithWidth:WIDTH],
-               REAL_WIDTH*sizeof(screen_char_t));
+               REAL_WIDTH * sizeof(screen_char_t));
 
         // everything between SCROLL_TOP and SCROLL_BOTTOM is dirty
         [self setDirtyFromX:0
@@ -3497,7 +3505,7 @@ void DumpBuf(screen_char_t* p, int n) {
 
 
 // adds a line to scrollback area. Returns YES if oldest line is lost, NO otherwise
-- (int)_addLineToScrollback
+- (int)_addLineToScrollbackImpl
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s", __PRETTY_FUNCTION__);
@@ -3523,7 +3531,7 @@ void DumpBuf(screen_char_t* p, int n) {
     }
     current_scrollback_lines = [linebuffer numLinesWithWidth: WIDTH];
 
-    NSAssert(dropped == 0 || dropped == 1, @"Unexpected number of lines dropped");
+    assert(dropped == 0 || dropped == 1);
 
     return dropped;
 }

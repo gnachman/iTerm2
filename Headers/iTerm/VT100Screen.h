@@ -205,6 +205,7 @@ void StringToScreenChars(NSString *s,
                    Y:(int)y
               string:(NSString *)string
                ascii:(BOOL)ascii;
+- (void)addLineToScrollback;
 - (void)setNewLine;
 - (void)deleteCharacters:(int)n;
 - (void)backSpace;
