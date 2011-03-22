@@ -3049,6 +3049,11 @@ void DumpBuf(screen_char_t* p, int n) {
     [tabStops removeObject:[NSNumber numberWithInt:x]];
 }
 
+- (int)numberOfScrollbackLines
+{
+    return current_scrollback_lines;
+}
+
 - (int)numberOfLines
 {
     return current_scrollback_lines + HEIGHT;
@@ -3301,7 +3306,7 @@ void DumpBuf(screen_char_t* p, int n) {
         *startX = result->startX;
         *startY = result->absStartY - [self totalScrollbackOverflow];
         *endX = result->endX;
-        *endY = result->absEndY;
+        *endY = result->absEndY - [self totalScrollbackOverflow];
         *found = YES;
     } else {
         *found = NO;
