@@ -833,6 +833,31 @@ static BOOL initDone = NO;
     return [terminalWindows objectAtIndex:i];
 }
 
+- (int)allocateWindowNumber
+{
+    NSMutableSet* numbers = [NSMutableSet setWithCapacity:[self numberOfTerminals]];
+    for (PseudoTerminal* term in [self terminals]) {
+        [numbers addObject:[NSNumber numberWithInt:[term number]]];
+    }
+    for (int i = 0; i < [self numberOfTerminals] + 1; i++) {
+        if (![numbers containsObject:[NSNumber numberWithInt:i]]) {
+            return i;
+        }
+    }
+    assert(false);
+    return 0;
+}
+
+- (PseudoTerminal*)terminalWithNumber:(int)n
+{
+    for (PseudoTerminal* term in [self terminals]) {
+        if ([term number] == n) {
+            return term;
+        }
+    }
+    return nil;
+}
+
 static PseudoTerminal* GetHotkeyWindow()
 {
     iTermController* cont = [iTermController sharedInstance];

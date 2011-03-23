@@ -82,12 +82,14 @@
         if (([event modifierFlags] & (NSCommandKeyMask | NSAlternateKeyMask | NSControlKeyMask)) == [prefPanel modifierTagToMask:[prefPanel switchWindowModifier]]) {
             // Command-Alt (or selected modifier) + number: Switch to window by number.
             int digit = [[event charactersIgnoringModifiers] intValue];
-            if (digit >= 1 && digit <= 9 && [cont numberOfTerminals] >= digit) {
-                PseudoTerminal* termWithNumber = [cont terminalAtIndex:(digit - 1)];
-                if ([termWithNumber isHotKeyWindow] && [[termWithNumber window] alphaValue] < 1) {
-                    [[iTermController sharedInstance] showHotKeyWindow];
-                } else {
-                    [[termWithNumber window] makeKeyAndOrderFront:self];
+            if (digit >= 1 && digit <= 9) {
+                PseudoTerminal* termWithNumber = [cont terminalWithNumber:(digit - 1)];
+                if (termWithNumber) {
+                    if ([termWithNumber isHotKeyWindow] && [[termWithNumber window] alphaValue] < 1) {
+                        [[iTermController sharedInstance] showHotKeyWindow];
+                    } else {
+                        [[termWithNumber window] makeKeyAndOrderFront:self];
+                    }
                 }
                 return;
             }

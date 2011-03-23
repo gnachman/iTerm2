@@ -178,6 +178,10 @@
     BOOL isHotKeyWindow_;
     int screenNumber_;
     BOOL isOrderedOut_;
+
+    // Window number, used for keyboard shortcut to select a window.
+    // This value is 0-based while the UI is 1-based.
+    int number_;
 }
 
 // Initialize a new PseudoTerminal.
@@ -198,6 +202,9 @@
 
 // Set the tab bar's look & feel
 - (void)setTabBarStyle;
+
+// Get term number
+- (int)number;
 
 // Make the tab at [sender tag] the foreground tab.
 - (void)selectSessionAtIndexAction:(id)sender;

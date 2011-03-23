@@ -354,7 +354,14 @@ NSString *sessionsKey = @"sessions";
         useTransparency_ = NO;
     }
 
+    number_ = [[iTermController sharedInstance] allocateWindowNumber];
+
     return self;
+}
+
+- (int)number
+{
+    return number_;
 }
 
 - (void)swipeWithEvent:(NSEvent *)event
@@ -694,7 +701,7 @@ NSString *sessionsKey = @"sessions";
 
     NSUInteger number = [[iTermController sharedInstance] indexOfTerminal:self];
     if ([[PreferencePanel sharedInstance] windowNumber] && number >= 0 && number < 9) {
-        [[self window] setTitle:[NSString stringWithFormat:@"%d. %@", number+1, title]];
+        [[self window] setTitle:[NSString stringWithFormat:@"%d. %@", number_+1, title]];
     } else {
         [[self window] setTitle:title];
     }
