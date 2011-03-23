@@ -2733,12 +2733,35 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return theLocale;
 }
 
+- (BOOL)_localeIsSupported:(NSString*)theLocale
+{
+    // Keep a copy of the current locale setting for this process
+    char* backupLocale = setlocale(LC_CTYPE, NULL);
+
+    // Try to set it to the proposed locale
+    BOOL supported;
+    if (setlocale(LC_CTYPE, [theLocale UTF8String])) {
+        supported = YES;
+    } else {
+        supported = NO;
+    }
+
+    // Restore locale and return
+    setlocale(LC_CTYPE, backupLocale);
+    return supported;
+}
+
 - (NSString*)_lang
 {
     NSString* theLocale = [self _getLocale];
     NSString* encoding = [self encodingName];
     if (encoding && theLocale) {
-        return [NSString stringWithFormat:@"%@.%@", theLocale, encoding];
+        NSString* result = [NSString stringWithFormat:@"%@.%@", theLocale, encoding];
+        if ([self _localeIsSupported:result]) {
+            return result;
+        } else {
+            return nil;
+        }
     } else {
         return nil;
     }
