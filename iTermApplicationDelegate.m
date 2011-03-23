@@ -692,12 +692,31 @@ void DebugLog(NSString* value)
     [aMenu release];
 }
 
+- (void)_removeItemsFromMenu:(NSMenu*)menu
+{
+    while ([menu numberOfItems] > 0) {
+        NSMenuItem* item = [menu itemAtIndex:0];
+        NSMenu* sub = [item submenu];
+        if (sub) {
+            [self _removeItemsFromMenu:sub];
+        }
+        [menu removeItemAtIndex:0];
+    }
+}
+
 - (void)buildAddressBookMenu:(NSNotification *)aNotification
 {
     // clear Bookmark menu
     const int kNumberOfStaticMenuItems = 5;
     for (; [bookmarkMenu numberOfItems] > kNumberOfStaticMenuItems;) {
+        NSMenuItem* anItem = [bookmarkMenu itemAtIndex:kNumberOfStaticMenuItems];
+        [anItem retain];
         [bookmarkMenu removeItemAtIndex:kNumberOfStaticMenuItems];
+        NSMenu* sub = [anItem submenu];
+        if (sub) {
+            [self _removeItemsFromMenu:sub];
+        }
+        [anItem release];
     }
 
     // add bookmarks into Bookmark menu

@@ -432,11 +432,16 @@ static BOOL initDone = NO;
     return (tmp);
 }
 
-- (void)_addBookmark:(Bookmark*)bookmark toMenu:(NSMenu*)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts selector:(SEL)selector alternateSelector:(SEL)alternateSelector
+- (void)_addBookmark:(Bookmark*)bookmark
+              toMenu:(NSMenu*)aMenu
+              target:(id)aTarget
+       withShortcuts:(BOOL)withShortcuts
+            selector:(SEL)selector
+   alternateSelector:(SEL)alternateSelector
 {
-    NSMenuItem* aMenuItem = [[[NSMenuItem alloc] initWithTitle:[bookmark objectForKey:KEY_NAME]
-                                                        action:selector
-                                                 keyEquivalent:@""] autorelease];
+    NSMenuItem* aMenuItem = [[NSMenuItem alloc] initWithTitle:[bookmark objectForKey:KEY_NAME]
+                                                       action:selector
+                                                keyEquivalent:@""];
     if (withShortcuts) {
         if ([bookmark objectForKey:KEY_SHORTCUT] != nil) {
             NSString* shortcut = [bookmark objectForKey:KEY_SHORTCUT];
@@ -450,20 +455,34 @@ static BOOL initDone = NO;
     [aMenuItem setRepresentedObject:[bookmark objectForKey:KEY_GUID]];
     [aMenuItem setTarget:aTarget];
     [aMenu addItem:aMenuItem];
+    [aMenuItem release];
 
     if (alternateSelector) {
-        aMenuItem = [[aMenuItem copy] autorelease];
+        aMenuItem = [[NSMenuItem alloc] initWithTitle:[bookmark objectForKey:KEY_NAME]
+                                               action:alternateSelector
+                                        keyEquivalent:@""];
+        if (withShortcuts) {
+            if ([bookmark objectForKey:KEY_SHORTCUT] != nil) {
+                NSString* shortcut = [bookmark objectForKey:KEY_SHORTCUT];
+                shortcut = [shortcut lowercaseString];
+                [aMenuItem setKeyEquivalent:shortcut];
+            }
+        }
+
+        modifierMask = NSCommandKeyMask | NSControlKeyMask;
+        [aMenuItem setRepresentedObject:[bookmark objectForKey:KEY_GUID]];
+        [aMenuItem setTarget:self];
+
         [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSAlternateKeyMask];
         [aMenuItem setAlternate:YES];
-        [aMenuItem setAction:alternateSelector];
-        [aMenuItem setTarget:self];
         [aMenu addItem:aMenuItem];
+        [aMenuItem release];
     }
 }
 
 - (void)_addBookmarksForTag:(NSString*)tag toMenu:(NSMenu*)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts selector:(SEL)selector alternateSelector:(SEL)alternateSelector openAllSelector:(SEL)openAllSelector
 {
-    NSMenuItem* aMenuItem = [[[NSMenuItem alloc] initWithTitle:tag action:@selector(noAction:) keyEquivalent:@""] autorelease];
+    NSMenuItem* aMenuItem = [[NSMenuItem alloc] initWithTitle:tag action:@selector(noAction:) keyEquivalent:@""];
     NSMenu* subMenu = [[[NSMenu alloc] init] autorelease];
     int count = 0;
     for (int i = 0; i < [[BookmarkModel sharedInstance] numberOfBookmarks]; ++i) {
@@ -485,16 +504,17 @@ static BOOL initDone = NO;
     [aMenuItem setSubmenu:subMenu];
     [aMenuItem setTarget:self];
     [aMenu addItem:aMenuItem];
+    [aMenuItem release];
 
     if (openAllSelector && count > 1) {
         [subMenu addItem:[NSMenuItem separatorItem]];
-        aMenuItem = [[[NSMenuItem alloc] initWithTitle:
-                      NSLocalizedStringFromTableInBundle(@"Open All",
-                                                         @"iTerm",
-                                                         [NSBundle bundleForClass: [iTermController class]],
-                                                         @"Context Menu")
-                                                action:openAllSelector
-                                         keyEquivalent:@""] autorelease];
+        aMenuItem = [[NSMenuItem alloc] initWithTitle:
+                     NSLocalizedStringFromTableInBundle(@"Open All",
+                                                        @"iTerm",
+                                                        [NSBundle bundleForClass: [iTermController class]],
+                                                        @"Context Menu")
+                                               action:openAllSelector
+                                        keyEquivalent:@""];
         unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
         [aMenuItem setKeyEquivalentModifierMask:modifierMask];
         [aMenuItem setRepresentedObject:subMenu];
@@ -505,7 +525,7 @@ static BOOL initDone = NO;
             [aMenuItem setTarget:aTarget];
         }
         [subMenu addItem:aMenuItem];
-        aMenuItem = [[aMenuItem copy] autorelease];
+        [aMenuItem release];
     }
 }
 
@@ -586,13 +606,13 @@ static BOOL initDone = NO;
 
     if (count > 1) {
         [aMenu addItem:[NSMenuItem separatorItem]];
-        NSMenuItem* aMenuItem = [[[NSMenuItem alloc] initWithTitle:
-                                  NSLocalizedStringFromTableInBundle(@"Open All",
-                                                                     @"iTerm",
-                                                                     [NSBundle bundleForClass: [iTermController class]],
-                                                                     @"Context Menu")
-                                                            action:openAllSelector
-                                                     keyEquivalent:@""] autorelease];
+        NSMenuItem* aMenuItem = [[NSMenuItem alloc] initWithTitle:
+                                 NSLocalizedStringFromTableInBundle(@"Open All",
+                                                                    @"iTerm",
+                                                                    [NSBundle bundleForClass: [iTermController class]],
+                                                                    @"Context Menu")
+                                                           action:openAllSelector
+                                                    keyEquivalent:@""];
         unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
         [aMenuItem setKeyEquivalentModifierMask:modifierMask];
         [aMenuItem setRepresentedObject:aMenu];
@@ -603,7 +623,7 @@ static BOOL initDone = NO;
             [aMenuItem setTarget:aTarget];
         }
         [aMenu addItem:aMenuItem];
-        aMenuItem = [[aMenuItem copy] autorelease];
+        [aMenuItem release];
     }
 }
 

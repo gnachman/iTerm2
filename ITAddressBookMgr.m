@@ -324,38 +324,11 @@
     [aDict setObject:NSHomeDirectory() forKey: KEY_WORKING_DIRECTORY];
 }
 
-// NSNetService delegate
-- (void)netServiceDidResolveAddress:(NSNetService *)sender
+- (void)_addBonjourHostProfileWithName:(NSString *)serviceName
+                       ipAddressString:(NSString *)ipAddressString
+                           serviceType:(NSString *)serviceType
 {
-    NSData  *address = nil;
-    struct sockaddr_in  *socketAddress;
-    NSString    *ipAddressString = nil;
-    char buffer[INET6_ADDRSTRLEN + 1];
-
-    //NSLog(@"%s: %@", __PRETTY_FUNCTION__, sender);
-
-    // cancel the resolution
-    [sender stop];
-
-    if ([bonjourServices containsObject: sender] == NO) {
-        return;
-    }
-
-    // grab the address
-    if ([[sender addresses] count] == 0) {
-        return;
-    }
-    address = [[sender addresses] objectAtIndex: 0];
-    socketAddress = (struct sockaddr_in *)[address bytes];
-    const char* strAddr = inet_ntop(socketAddress->sin_family, socketAddress,
-                                    buffer, [address length]);
-    if (strAddr) {
-        ipAddressString = [NSString stringWithFormat:@"%s", strAddr];
-    } else {
-        return;
-    }
-
-    NSMutableDictionary *newBookmark;
+  NSMutableDictionary *newBookmark;
     Bookmark* prototype = [[BookmarkModel sharedInstance] defaultBookmark];
     if (prototype) {
         newBookmark = [NSMutableDictionary dictionaryWithDictionary:prototype];
@@ -364,10 +337,9 @@
         [ITAddressBookMgr setDefaultsInBookmark:newBookmark];
     }
 
-    NSString* serviceType = [self getBonjourServiceType:[sender type]];
 
-    [newBookmark setObject:[NSString stringWithFormat:@"%@", [sender name]] forKey:KEY_NAME];
-    [newBookmark setObject:[NSString stringWithFormat:@"%@", [sender name]] forKey:KEY_DESCRIPTION];
+    [newBookmark setObject:serviceName forKey:KEY_NAME];
+    [newBookmark setObject:serviceName forKey:KEY_DESCRIPTION];
     [newBookmark setObject:[NSString stringWithFormat:@"%@ %@", serviceType, ipAddressString] forKey:KEY_COMMAND];
     [newBookmark setObject:@"" forKey:KEY_WORKING_DIRECTORY];
     [newBookmark setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
@@ -381,18 +353,47 @@
 
     // No bonjour service for sftp. Rides over ssh, so try to detect that
     if ([serviceType isEqualToString:@"ssh"]) {
-        [newBookmark setObject:[NSString stringWithFormat:@"%@-sftp", [sender name]] forKey:KEY_NAME];
+        [newBookmark setObject:[NSString stringWithFormat:@"%@-sftp", serviceName] forKey:KEY_NAME];
         [newBookmark setObject:[NSArray arrayWithObjects:@"bonjour", @"sftp", nil] forKey:KEY_TAGS];
         [newBookmark setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
         [newBookmark setObject:[NSString stringWithFormat:@"sftp %@", ipAddressString] forKey:KEY_COMMAND];
         [[BookmarkModel sharedInstance] addBookmark:newBookmark];
     }
 
-    // remove from array now that resolving is done
-    if ([bonjourServices containsObject:sender]) {
-        [bonjourServices removeObject:sender];
+}
+// NSNetService delegate
+- (void)netServiceDidResolveAddress:(NSNetService *)sender
+{
+    //NSLog(@"%s: %@", __PRETTY_FUNCTION__, sender);
+
+    // cancel the resolution
+    [sender stop];
+
+    if ([bonjourServices containsObject: sender] == NO) {
+        return;
     }
 
+    // grab the address
+    if ([[sender addresses] count] == 0) {
+        return;
+    }
+    NSString* serviceType = [self getBonjourServiceType:[sender type]];
+    NSString* serviceName = [sender name];
+    NSData* address = [[sender addresses] objectAtIndex: 0];
+    struct sockaddr_in *socketAddress = (struct sockaddr_in *)[address bytes];
+    char buffer[INET6_ADDRSTRLEN + 1];
+    const char* strAddr = inet_ntop(socketAddress->sin_family, socketAddress,
+                                    buffer, [address length]);
+    if (strAddr) {
+          [self _addBonjourHostProfileWithName:serviceName
+                               ipAddressString:[NSString stringWithFormat:@"%s", strAddr]
+                                   serviceType:serviceType];
+
+        // remove from array now that resolving is done
+        if ([bonjourServices containsObject:sender]) {
+            [bonjourServices removeObject:sender];
+        }
+    }
 }
 
 - (void)netService:(NSNetService *)aNetService didNotResolve:(NSDictionary *)errorDict

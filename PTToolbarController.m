@@ -100,7 +100,9 @@ NSString *CommandToolbarItem = @"Command";
     return itemIdentifiers;
 }
 
-- (NSToolbarItem *)toolbar: (NSToolbar *)toolbar itemForItemIdentifier: (NSString *) itemIdent willBeInsertedIntoToolbar:(BOOL) willBeInserted
+- (NSToolbarItem *)toolbar:(NSToolbar *)toolbar
+     itemForItemIdentifier: (NSString *)itemIdent
+    willBeInsertedIntoToolbar:(BOOL)willBeInserted
 {
     NSToolbarItem *toolbarItem = [[[NSToolbarItem alloc] initWithItemIdentifier:itemIdent] autorelease];
     NSBundle *thisBundle = [NSBundle bundleForClass:[self class]];
@@ -216,6 +218,18 @@ NSString *CommandToolbarItem = @"Command";
 
 }
 
+- (void)_removeItemsFromMenu:(NSMenu*)menu
+{
+    while ([menu numberOfItems] > 0) {
+        NSMenuItem* item = [menu itemAtIndex:0];
+        NSMenu* sub = [item submenu];
+        if (sub) {
+            [self _removeItemsFromMenu:sub];
+        }
+        [menu removeItemAtIndex:0];
+    }
+}
+
 - (void)buildToolbarItemPopUpMenu:(NSToolbarItem *)toolbarItem forToolbar:(NSToolbar *)toolbar
 {
     NSPopUpButton *aPopUpButton;
@@ -225,13 +239,16 @@ NSString *CommandToolbarItem = @"Command";
     NSImage *anImage;
     NSBundle *thisBundle = [NSBundle bundleForClass: [self class]];
 
-    if (toolbarItem == nil)
+    if (toolbarItem == nil) {
         return;
+    }
 
     aPopUpButton = (NSPopUpButton *)[toolbarItem view];
-    //[aPopUpButton setAction: @selector(_addressbookPopupSelectionDidChange:)];
     [aPopUpButton setAction: nil];
-    [aPopUpButton removeAllItems];
+    // Remove menu items because otherwise they will leak (I think items and menus have a cyclic reference?)
+    // As soon as -[toolbarItem setImage:] is called, the menuFormRepresentation is lost and leaked.
+    [self _removeItemsFromMenu:[aPopUpButton menu]];
+    [self _removeItemsFromMenu:[[toolbarItem menuFormRepresentation] submenu]];
     [aPopUpButton addItemWithTitle: @""];
 
     aMenu = [[NSMenu alloc] init];
@@ -267,7 +284,6 @@ NSString *CommandToolbarItem = @"Command";
     // Used to set horizontal edge padding to 0 in 32-bit version.
 
     // build a menu representation for text only.
-    // TODO: test this
     item = [[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"New Tab",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item:New") action: nil keyEquivalent: @""];
     aMenu = [[NSMenu alloc] init];
     [[iTermController sharedInstance] addBookmarksToMenu:aMenu
@@ -288,8 +304,9 @@ NSString *CommandToolbarItem = @"Command";
 {
     NSToolbarItem *aToolbarItem = [self toolbarItemWithIdentifier:NewToolbarItem];
 
-    if (aToolbarItem )
-        [self buildToolbarItemPopUpMenu: aToolbarItem forToolbar:_toolbar];
+    if (aToolbarItem) {
+        [self buildToolbarItemPopUpMenu:aToolbarItem forToolbar:_toolbar];
+    }
 }
 
 - (NSToolbarItem*)toolbarItemWithIdentifier:(NSString*)identifier
