@@ -4846,6 +4846,14 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [self scrollRectToVisible:aFrame];
 }
 
+- (BOOL)_haveHardNewlineAtY:(int)y
+{
+    screen_char_t *theLine;
+    theLine = [dataSource getLineAtIndex:y];
+    const int w = [dataSource width];
+    return !theLine[w].complexChar && theLine[w].code == EOL_HARD;
+}
+
 - (NSString*)_getCharacterAtX:(int)x Y:(int)y
 {
     screen_char_t *theLine;
@@ -5115,6 +5123,10 @@ static bool IsUrlChar(NSString* str)
                     break;
                 }
                 yi--;
+                if (rightx == w-1 && [self _haveHardNewlineAtY:yi]) {
+                    // Hard newline before url
+                    break;
+                }
                 if (rightx < w-1 && ![[self _getCharacterAtX:rightx+1 Y:yi] isEqualToString:@"|"]) {
                     // Was bracketed by |s but the previous line lacks them.
                     break;
@@ -5153,6 +5165,11 @@ static bool IsUrlChar(NSString* str)
                 // Char is valid and xi < rightx.
                 continue;
             }
+            if (rightx == w-1 && [self _haveHardNewlineAtY:yi]) {
+                // Don't wrap URL at hard newline
+                break;
+            }
+
             // Wrap to the next line
             if (yi == h-1) {
                 // got to the end of the screen.
