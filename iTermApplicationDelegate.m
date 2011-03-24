@@ -753,7 +753,7 @@ void DebugLog(NSString* value)
 - (void)makeHotKeyWindowKeyIfOpen
 {
     for (PseudoTerminal* term in [self terminals]) {
-        if ([term isHotKeyWindow] && [[term window] isVisible]) {
+        if ([term isHotKeyWindow] && [[term window] alphaValue] == 1) {
             [[term window] makeKeyAndOrderFront:self];
         }
     }
