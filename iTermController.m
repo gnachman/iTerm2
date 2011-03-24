@@ -878,7 +878,12 @@ static PseudoTerminal* GetHotkeyWindow()
 static void RollInHotkeyTerm(PseudoTerminal* term)
 {
     NSLog(@"Roll in [show] visor");
-    NSRect screenFrame = [[NSScreen mainScreen] visibleFrame];
+    NSScreen* screen = [term screen];
+    if (!screen) {
+        screen = [NSScreen mainScreen];
+    }
+    NSRect screenFrame = [screen visibleFrame];
+
     NSRect rect = [[term window] frame];
     [NSApp activateIgnoringOtherApps:YES];
     [[term window] setFrame:rect display:YES];
@@ -1289,6 +1294,16 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
     }
 }
 
+- (NSEvent*)runEventTapHandler:(NSEvent*)event
+{
+    CGEventRef newEvent = OnTappedEvent(nil, kCGEventKeyDown, [event CGEvent], self);
+    if (newEvent) {
+        return [NSEvent eventWithCGEvent:newEvent];
+    } else {
+        return nil;
+    }
+}
+
 - (void)unregisterHotkey
 {
     hotkeyCode_ = 0;
@@ -1313,6 +1328,9 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 
 - (BOOL)startEventTap
 {
+#ifdef FAKE_EVENT_TAP
+    return YES;
+#endif
     if (![self haveEventTap]) {
         DebugLog(@"Register event tap.");
         machPortRef = CGEventTapCreate(kCGHIDEventTap,

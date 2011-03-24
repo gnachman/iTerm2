@@ -241,6 +241,7 @@ void StringToScreenChars(NSString *s,
 - (int)cursorY;
 
 - (int)numberOfLines;
+- (int)numberOfScrollbackLines;
 
 - (int)scrollbackOverflow;
 - (long long)totalScrollbackOverflow;

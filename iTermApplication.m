@@ -58,6 +58,12 @@
 {
     if ([event type] == NSKeyDown) {
         iTermController* cont = [iTermController sharedInstance];
+#ifdef FAKE_EVENT_TAP
+        event = [cont runEventTapHandler:event];
+        if (!event) {
+            return;
+        }
+#endif
         PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
         if ([prefPanel isAnyModifierRemapped] && 
             (IsSecureEventInputEnabled() || ![cont haveEventTap])) {

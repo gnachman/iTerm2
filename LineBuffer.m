@@ -527,69 +527,15 @@ static int Search(NSString* needle,
                   int options,
                   int* resultLength)
 {
-    unichar* charHaystack = malloc(sizeof(unichar) * raw_line_length * kMaxParts + 1);
-    int* deltas = malloc(sizeof(int) * (raw_line_length * kMaxParts + 1));
-    // The 'deltas' array gives the difference in position between the rawline
-    // and the charHaystack. The formula to convert an index in the charHaystack
-    // 'i' into an index in the rawline 'r' is:
-    //     r = i + deltas[i]
-    //
-    // Original string with some double-width characters, where DWC_RIGHT is
-    // shown as '-':
-    // 0123456789
-    // ab-c-de-fg
-    //
-    // charHaystack, with combining marks/low surrogates shown as '*':
-    // 0123456789A
-    // abcd**ef**g
-    //
-    // Mapping:
-    // charHaystack index i -> rawline index  deltas[i]
-    // 0 -> 0   (a@0->a@0)                    0
-    // 1 -> 1   (b@1->b-@1)                   0
-    // 2 -> 3   (c@2->c-@3)                   1
-    // 3 -> 5   (d@3->d@5)                    2
-    // 4 -> 5   (*@4->d@5)                    1
-    // 5 -> 5   (*@5->d@5)                    0
-    // 6 -> 6   (e@6->e-@6)                   0
-    // 7 -> 8   (f@7->f@8)                    1
-    // 8 -> 8   (*@8->f@8)                    0
-    // 9 -> 8   (*@9->f@8)                   -1
-    // A -> 9   (g@A->g@9)                   -1
-    //
-    // Note that delta is just the difference of the indices.
-    int delta = 0;
-    int o = 0;
-    for (int i = start; i < end; ++i) {
-        unichar c = rawline[i].code;
-        if (c == DWC_RIGHT) {
-            ++delta;
-        } else {
-            const int len = ExpandScreenChar(&rawline[i], charHaystack + o);
-            ++delta;
-            for (int j = o; j < o + len; ++j) {
-                deltas[j] = --delta;
-            }
-            o += len;
-        }
-    }
-    deltas[o] = delta;
-    // I have no idea why NSUnicodeStringEncoding doesn't work, but it has
-    // the wrong endianness on x86. Perhaps it's a relic of PPC days? Anyway,
-    // LittleEndian seems to work on my x86, and BigEndian works under Rosetta
-    // with a ppc-only binary. Oddly, testing for defined(LITTLE_ENDIAN) does
-    // not produce the correct results under ppc+Rosetta.
-    int encoding;
-#if defined(__ppc__) || defined(__ppc64__)
-    encoding = NSUTF16BigEndianStringEncoding;
-#else
-    encoding = NSUTF16LittleEndianStringEncoding;
-#endif
-    NSString* haystack = [[[NSString alloc] initWithBytesNoCopy:charHaystack
-                                                         length:o * sizeof(unichar)
-                                                       encoding:encoding
-                                                   freeWhenDone:NO] autorelease];
-
+    NSString* haystack;
+    unichar* charHaystack;
+    int* deltas;
+    haystack = ScreenCharArrayToString(rawline,
+                                       start,
+                                       end,
+                                       &charHaystack,
+                                       &deltas);
+                                       
     int apiOptions = 0;
     NSRange range;
     BOOL regex;

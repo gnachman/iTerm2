@@ -210,3 +210,19 @@ BOOL IsLowSurrogate(unichar c);
 
 // Test for high surrogacy.
 BOOL IsHighSurrogate(unichar c);
+
+// Convert an array of screen_char_t into a string.
+// After this call free(*backingStorePtr), free(*deltasPtr)
+// *deltasPtr will be filled in with values that let you convert indices in
+// the result string to indices in the original array.
+// In other words:
+// part or all of [result characterAtIndex:i] refers to all or part of screenChars[i - (*deltasPtr)[i]].
+
+NSString* ScreenCharArrayToString(screen_char_t* screenChars,
+                                  int start,
+                                  int end,
+                                  unichar** backingStorePtr,
+                                  int** deltasPtr);
+
+// Number of chars before a sequence of nuls at the end of the line.
+int EffectiveLineLength(screen_char_t* theLine, int totalLength);

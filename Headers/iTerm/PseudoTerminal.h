@@ -194,6 +194,9 @@
                windowType:(int)windowType
                    screen:(int)screenIndex;
 
+// The window's original screen.
+- (NSScreen*)screen;
+
 // Called on object deallocation.
 - (void)dealloc;
 

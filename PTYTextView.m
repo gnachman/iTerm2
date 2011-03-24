@@ -50,6 +50,7 @@
 #import "PasteboardHistory.h"
 #import "PTYTab.h"
 #import "iTermExpose.h"
+#import "RegexKitLite/RegexKitLite.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -99,6 +100,48 @@ static NSCursor* textViewCursor =  nil;
 static NSImage* bellImage = nil;
 static NSImage* wrapToTopImage = nil;
 static NSImage* wrapToBottomImage = nil;
+
+@interface Coord : NSObject
+{
+@public
+    int x, y;
+}
++ (Coord*)coordWithX:(int)x y:(int)y;
+@end
+
+@implementation Coord
+
++ (Coord*)coordWithX:(int)x y:(int)y
+{
+    Coord* c = [[[Coord alloc] init] autorelease];
+    c->x = x;
+    c->y = y;
+    return c;
+}
+
+@end
+
+@interface SmartMatch : NSObject
+{
+@public
+    double score;
+    int startX;
+    long long absStartY;
+    int endX;
+    long long absEndY;
+}
+- (NSComparisonResult)compare:(SmartMatch *)aNumber;
+@end
+
+@implementation SmartMatch
+
+- (NSComparisonResult)compare:(SmartMatch *)other
+{
+    return [[NSNumber numberWithDouble:score] compare:[NSNumber numberWithDouble:other->score]];
+}
+
+@end
+
 
 @implementation PTYTextView
 
@@ -1259,6 +1302,213 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 #endif
 }
 
+- (NSString*)_getTextInWindowAroundX:(int)x
+                                   y:(int)y
+                            numLines:(int)numLines
+                        targetOffset:(int*)targetOffset
+                              coords:(NSMutableArray*)coords
+{
+    const int width = [dataSource width];
+    NSMutableString* joinedLines = [NSMutableString stringWithCapacity:numLines * width];
+
+    *targetOffset = -1;
+
+    BOOL rejectAtHardEol = YES;
+    int xMin, xMax;
+    xMin = 0;
+    xMax = width;
+
+    int j = 0;
+
+    for (int i = y - numLines; i <= y + numLines; i++) {
+        if (i < 0 || i >= [dataSource numberOfLines]) {
+            continue;
+        }
+        screen_char_t* theLine = [dataSource getLineAtIndex:i];
+        if (i < y && rejectAtHardEol && theLine[width].code == EOL_HARD) {
+            continue;
+        }
+        unichar* backingStore;
+        int* deltas;
+        NSString* string = ScreenCharArrayToString(theLine,
+                                                   xMin,
+                                                   MIN(EffectiveLineLength(theLine, width), xMax),
+                                                   &backingStore,
+                                                   &deltas);
+        int o = 0;
+        for (int k = 0; k < [string length]; k++, o++) {
+            o += deltas[k];
+            if (*targetOffset == -1 && o >= x) {
+                *targetOffset = k + [joinedLines length];
+            }
+            [coords addObject:[Coord coordWithX:o
+                                              y:i]];
+        }
+        [joinedLines appendString:string];
+        free(deltas);
+        free(backingStore);
+
+        j++;
+        if (i >= y && rejectAtHardEol && theLine[width].code == EOL_HARD) {
+            [coords addObject:[Coord coordWithX:o
+                                              y:i]];
+            break;
+        }
+    }
+    // TODO: What if it's multiple lines ending in a soft eol and the selection goes to the end?
+    return joinedLines;
+}
+
+#if 0
+- (void)_selectCurrentSmartMatch
+{
+    SmartMatch* match = [smartMatches_ objectAtIndex:currentSmartMatch_];
+    NSLog(@"Select match #%d", currentSmartMatch_);
+    long long tso = [dataSource totalScrollbackOverflow];
+    if (match->absStartY >= tso && match->absEndY >= tso) {
+        NSLog(@"Selection is valid %d,%lld -> %d,%lld.",
+              match->startX,
+              match->absStartY - tso,
+              match->endX,
+              match->absEndY - tso);
+        [self setSelectionFromX:match->startX
+                          fromY:match->absStartY - tso
+                            toX:match->endX
+                            toY:match->absEndY - tso];
+        // If copy on selection is enabled, do it.
+        if ([[PreferencePanel sharedInstance] copySelection]) {
+            [self copy: self];
+        }
+    } 
+    [self setNeedsDisplay:YES];
+}
+
+- (void)smartSelectAtX:(int)x y:(int)y
+{
+    NSString* textWindow;
+    int targetOffset;
+    const int numLines = 2;
+    const int width = [dataSource width];
+    NSMutableArray* coords = [NSMutableArray arrayWithCapacity:numLines * width];
+    textWindow = [self _getTextInWindowAroundX:x
+                                             y:y
+                                      numLines:2
+                                  targetOffset:&targetOffset
+                                        coords:coords];
+
+    const double LOW_PRECISION = 0.001;
+    const double NORMAL_PRECISION = 1.0;
+    const double HIGH_PRECISION = 1000.0;
+    struct {
+        NSString* regex;
+        double precision;
+    } exps[] = {
+        { 
+            @"[[:letter:][:number:][:punctuation:][:symbol:]-[;]]+",          // Non-whitespace/non-bogus chars, but exclude ; to avoid getting line endings in code
+            LOW_PRECISION
+        },
+        { 
+            @"[[:letter:][:number:][:punctuation:][:symbol:]]+",          // Non-whitespace/non-bogus chars
+            LOW_PRECISION
+        },
+        { 
+            @"[0-9]+",           // Numbers
+            NORMAL_PRECISION
+        },
+        { 
+            @"[0-9]+\\.[0-9]+",  // Fractional numbers
+            NORMAL_PRECISION
+        },
+        { 
+            @"[a-zA-Z0-9_]+",    // Alphanumerics plus _ (e.g., C identifier)
+            NORMAL_PRECISION
+        },
+        { 
+            @"([a-zA-Z0-9_]+::)+[a-zA-Z0-9_]+",    // C++ namespace::identifier
+            NORMAL_PRECISION
+        },
+        { 
+            @"[[:letter:][:number:]._-]+",          // Alphanumeric plus limited symbols likely to be in a filename
+            NORMAL_PRECISION
+        },
+        {
+            @"/?([[:letter:][:number:]._]+/)+[[:letter:][:number:]._]+/?",  // words delimited by slashes, optionally beginning and optionally ending in a slash (e.g., include path)
+            NORMAL_PRECISION
+        },
+        { 
+            @"\"(?:[^\"\\\\]|\\\\.)*\"",  // Quoted string with escaped quotes (from http://stackoverflow.com/questions/249791/regexp-for-quoted-string-with-escaping-quotes)
+            NORMAL_PRECISION
+        },
+        { 
+            @"\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}\\b",  // Email address (approximately)
+            HIGH_PRECISION
+        },
+        { 
+            @"https?://([a-z0-9A-Z]+\\.)+[a-z]+/[a-zA-Z0-9/-_+%?&@=#\\(\\)]+",  // Rough match for urls
+            HIGH_PRECISION
+        },
+        { 
+            @"\\bmailto:[[:letter:][:number:][:punctuation:][:symbol:]]+",  // HTTP url (very, very approximately)
+            HIGH_PRECISION
+        },
+        { 
+            @"\\bssh:[[:letter:][:number:][:punctuation:][:symbol:]]+",  // SSH url (very, very approximately)
+            HIGH_PRECISION
+        },
+        { 
+            @"\\btelnet:[[:letter:][:number:][:punctuation:][:symbol:]]+",  // Telnet url (very, very approximately)
+            HIGH_PRECISION
+        },
+        { nil, 0 }
+    };
+    
+    NSMutableDictionary* matches = [NSMutableDictionary dictionaryWithCapacity:13];
+    
+    NSLog(@"Searching for %@", textWindow);
+    for (int j = 0; exps[j].regex; j++) {
+        NSLog(@"Try regex %@", exps[j]);
+        for (int i = 0; i <= targetOffset; i++) {
+            NSString* substring = [textWindow substringWithRange:NSMakeRange(i, [textWindow length] - i)];
+            NSError* regexError = nil;
+            NSRange temp = [substring rangeOfRegex:exps[j].regex
+                                           options:0
+                                           inRange:NSMakeRange(0, [substring length])
+                                           capture:0
+                                             error:&regexError];
+            if (temp.location != NSNotFound) {
+                if (i + temp.location <= targetOffset && i + temp.location + temp.length > targetOffset) {
+                    NSString* result = [substring substringWithRange:temp];
+                    double score = exps[j].precision / (double) temp.length;
+                    SmartMatch* oldMatch = [matches objectForKey:result];
+                    if (!oldMatch || score > oldMatch->score) {
+                        SmartMatch* match = [[[SmartMatch alloc] init] autorelease];
+                        match->score = score;
+                        Coord* startCoord = [coords objectAtIndex:i + temp.location];
+                        Coord* endCoord = [coords objectAtIndex:i + temp.location + temp.length];
+                        match->startX = startCoord->x;
+                        match->absStartY = startCoord->y + [dataSource totalScrollbackOverflow];
+                        match->endX = endCoord->x;
+                        match->absEndY = endCoord->y + [dataSource totalScrollbackOverflow];
+                        [matches setObject:match forKey:result];
+                        
+                        NSLog(@"Add result %@ at %d,%lld -> %d,%lld with score %lf", result, match->startX, match->absStartY, match->endX, match->absEndY, match->score);
+                    }
+                    i += temp.location + temp.length - 1;
+                } else {
+                    i += temp.location;
+                }
+            }
+        }
+    }
+    
+    [smartMatches_ release];
+    smartMatches_ = [[[matches allValues] sortedArrayUsingSelector:@selector(compare:)] retain];
+    currentSmartMatch_ = [smartMatches_ count] - 1;
+    
+    [self _selectCurrentSmartMatch];
+}
+#endif
+
 - (void)keyDown:(NSEvent*)event
 {
     DebugLog(@"PTYTextView keyDown");
@@ -1488,7 +1738,26 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 break;
         }
     }
-    [super rightMouseDown:event];
+
+    /*
+    TODO: Example code for using smart matches.
+    BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
+    int x, y;
+    x = (locationInTextView.x - MARGIN + charWidth/2)/charWidth;
+    if (x < 0) {
+        x = 0;
+    }
+    y = locationInTextView.y / lineHeight;
+    const int width = [dataSource width];
+    if (x >= width) {
+        x = width  - 1;
+    }
+    if (cmdPressed && x >= 0 && y >= 0) {
+        [self smartSelectAtX:x y:y];
+    } else {
+        [super rightMouseDown:event];
+    }
+    */
 }
 
 - (void)rightMouseUp:(NSEvent *)event

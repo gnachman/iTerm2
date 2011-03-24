@@ -203,8 +203,10 @@ NSString *sessionsKey = @"sessions";
     NSScreen* screen;
     if (screenNumber < 0 || screenNumber >= [[NSScreen screens] count])  {
         screen = [[self window] screen];
+        screenNumber_ = 0;
     } else {
         screen = [[NSScreen screens] objectAtIndex:screenNumber];
+        screenNumber_ = screenNumber;
     }
 
     NSRect initialFrame;
@@ -260,7 +262,6 @@ NSString *sessionsKey = @"sessions";
 
     _resizeInProgressFlag = NO;
 
-    screenNumber_ = screenNumber;
     if (!smartLayout || windowType == WINDOW_TYPE_FULL_SCREEN) {
         [(PTYWindow*)[self window] setLayoutDone];
     }
@@ -362,6 +363,16 @@ NSString *sessionsKey = @"sessions";
 - (int)number
 {
     return number_;
+}
+
+- (NSScreen*)screen
+{
+    NSArray* screens = [NSScreen screens];
+    if ([screens count] > screenNumber_) {
+        return [screens objectAtIndex:screenNumber_];
+    } else {
+        return [NSScreen mainScreen];
+    }
 }
 
 - (void)swipeWithEvent:(NSEvent *)event
