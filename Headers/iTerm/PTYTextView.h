@@ -40,7 +40,7 @@
 
 @class VT100Screen;
 
-enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
+enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_SMART, SELECT_BOX };
 
 // A collection of data about a font.
 struct PTYFontInfo {

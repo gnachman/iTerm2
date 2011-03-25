@@ -1338,7 +1338,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         int o = 0;
         for (int k = 0; k < [string length]; k++, o++) {
             o += deltas[k];
-            if (*targetOffset == -1 && o >= x) {
+            if (*targetOffset == -1 && i == y && o >= x) {
                 *targetOffset = k + [joinedLines length];
             }
             [coords addObject:[Coord coordWithX:o
@@ -1359,31 +1359,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return joinedLines;
 }
 
-#if 0
-- (void)_selectCurrentSmartMatch
-{
-    SmartMatch* match = [smartMatches_ objectAtIndex:currentSmartMatch_];
-    NSLog(@"Select match #%d", currentSmartMatch_);
-    long long tso = [dataSource totalScrollbackOverflow];
-    if (match->absStartY >= tso && match->absEndY >= tso) {
-        NSLog(@"Selection is valid %d,%lld -> %d,%lld.",
-              match->startX,
-              match->absStartY - tso,
-              match->endX,
-              match->absEndY - tso);
-        [self setSelectionFromX:match->startX
-                          fromY:match->absStartY - tso
-                            toX:match->endX
-                            toY:match->absEndY - tso];
-        // If copy on selection is enabled, do it.
-        if ([[PreferencePanel sharedInstance] copySelection]) {
-            [self copy: self];
-        }
-    } 
-    [self setNeedsDisplay:YES];
-}
-
-- (void)smartSelectAtX:(int)x y:(int)y
+- (BOOL)smartSelectAtX:(int)x y:(int)y
 {
     NSString* textWindow;
     int targetOffset;
@@ -1403,67 +1379,55 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         NSString* regex;
         double precision;
     } exps[] = {
-        { 
-            @"[[:letter:][:number:][:punctuation:][:symbol:]-[;]]+",          // Non-whitespace/non-bogus chars, but exclude ; to avoid getting line endings in code
+        {
+            @"\\S+",  // Text delimited by whitespace
             LOW_PRECISION
         },
-        { 
-            @"[[:letter:][:number:][:punctuation:][:symbol:]]+",          // Non-whitespace/non-bogus chars
-            LOW_PRECISION
-        },
-        { 
-            @"[0-9]+",           // Numbers
-            NORMAL_PRECISION
-        },
-        { 
-            @"[0-9]+\\.[0-9]+",  // Fractional numbers
-            NORMAL_PRECISION
-        },
-        { 
-            @"[a-zA-Z0-9_]+",    // Alphanumerics plus _ (e.g., C identifier)
-            NORMAL_PRECISION
-        },
-        { 
+        {
             @"([a-zA-Z0-9_]+::)+[a-zA-Z0-9_]+",    // C++ namespace::identifier
-            NORMAL_PRECISION
-        },
-        { 
-            @"[[:letter:][:number:]._-]+",          // Alphanumeric plus limited symbols likely to be in a filename
             NORMAL_PRECISION
         },
         {
             @"/?([[:letter:][:number:]._]+/)+[[:letter:][:number:]._]+/?",  // words delimited by slashes, optionally beginning and optionally ending in a slash (e.g., include path)
             NORMAL_PRECISION
         },
-        { 
-            @"\"(?:[^\"\\\\]|\\\\.)*\"",  // Quoted string with escaped quotes (from http://stackoverflow.com/questions/249791/regexp-for-quoted-string-with-escaping-quotes)
+        {
+            @"?([[:letter:][:number:]._]+\\.)+[[:letter:][:number:]._]+",  // words delimited by dots (e.g., java/python include path)
             NORMAL_PRECISION
         },
-        { 
+        {
+            @"@?\"(?:[^\"\\\\]|\\\\.)*\"",  // Quoted string with escaped quotes (from http://stackoverflow.com/questions/249791/regexp-for-quoted-string-with-escaping-quotes)
+            NORMAL_PRECISION
+        },
+        {
+            @"@selector\\([^)]+\\)",   // Obj-C selector
+            HIGH_PRECISION,
+        },
+        {
             @"\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}\\b",  // Email address (approximately)
             HIGH_PRECISION
         },
-        { 
+        {
             @"https?://([a-z0-9A-Z]+\\.)+[a-z]+/[a-zA-Z0-9/-_+%?&@=#\\(\\)]+",  // Rough match for urls
             HIGH_PRECISION
         },
-        { 
-            @"\\bmailto:[[:letter:][:number:][:punctuation:][:symbol:]]+",  // HTTP url (very, very approximately)
+        {
+            @"\\bmailto:[[:letter:][:number:][:punctuation:][:symbol:]]+",  // mailto url (very, very approximately)
             HIGH_PRECISION
         },
-        { 
+        {
             @"\\bssh:[[:letter:][:number:][:punctuation:][:symbol:]]+",  // SSH url (very, very approximately)
             HIGH_PRECISION
         },
-        { 
+        {
             @"\\btelnet:[[:letter:][:number:][:punctuation:][:symbol:]]+",  // Telnet url (very, very approximately)
             HIGH_PRECISION
         },
         { nil, 0 }
     };
-    
+
     NSMutableDictionary* matches = [NSMutableDictionary dictionaryWithCapacity:13];
-    
+
     NSLog(@"Searching for %@", textWindow);
     for (int j = 0; exps[j].regex; j++) {
         NSLog(@"Try regex %@", exps[j]);
@@ -1478,7 +1442,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             if (temp.location != NSNotFound) {
                 if (i + temp.location <= targetOffset && i + temp.location + temp.length > targetOffset) {
                     NSString* result = [substring substringWithRange:temp];
-                    double score = exps[j].precision / (double) temp.length;
+                    double score = exps[j].precision * (double) temp.length;
                     SmartMatch* oldMatch = [matches objectForKey:result];
                     if (!oldMatch || score > oldMatch->score) {
                         SmartMatch* match = [[[SmartMatch alloc] init] autorelease];
@@ -1490,7 +1454,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                         match->endX = endCoord->x;
                         match->absEndY = endCoord->y + [dataSource totalScrollbackOverflow];
                         [matches setObject:match forKey:result];
-                        
+
                         NSLog(@"Add result %@ at %d,%lld -> %d,%lld with score %lf", result, match->startX, match->absStartY, match->endX, match->absEndY, match->score);
                     }
                     i += temp.location + temp.length - 1;
@@ -1500,14 +1464,26 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             }
         }
     }
-    
-    [smartMatches_ release];
-    smartMatches_ = [[[matches allValues] sortedArrayUsingSelector:@selector(compare:)] retain];
-    currentSmartMatch_ = [smartMatches_ count] - 1;
-    
-    [self _selectCurrentSmartMatch];
+
+    if ([matches count]) {
+        NSArray* sortedMatches = [[[matches allValues] sortedArrayUsingSelector:@selector(compare:)] retain];
+        SmartMatch* bestMatch = [sortedMatches lastObject];
+        startX = bestMatch->startX;
+        startY = bestMatch->absStartY - [dataSource totalScrollbackOverflow];
+        endX = bestMatch->endX;
+        endY = bestMatch->absEndY - [dataSource totalScrollbackOverflow];
+        return YES;
+    } else {
+        // Fall back on word selection
+        [self getWordForX:x
+                        y:y
+                   startX:&startX
+                   startY:&startY
+                     endX:&endX
+                     endY:&endY];
+        return NO;
+    }
 }
-#endif
 
 - (void)keyDown:(NSEvent*)event
 {
@@ -1738,26 +1714,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 break;
         }
     }
-
-    /*
-    TODO: Example code for using smart matches.
-    BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
-    int x, y;
-    x = (locationInTextView.x - MARGIN + charWidth/2)/charWidth;
-    if (x < 0) {
-        x = 0;
-    }
-    y = locationInTextView.y / lineHeight;
-    const int width = [dataSource width];
-    if (x >= width) {
-        x = width  - 1;
-    }
-    if (cmdPressed && x >= 0 && y >= 0) {
-        [self smartSelectAtX:x y:y];
-    } else {
-        [super rightMouseDown:event];
-    }
-    */
 }
 
 - (void)rightMouseUp:(NSEvent *)event
@@ -2004,7 +1960,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
     BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
     BOOL shiftPressed = ([event modifierFlags] & NSShiftKeyMask) != 0;
-    if ([event clickCount] < 2) {
+
+    int clickCount = [event clickCount];
+    if (clickCount < 2) {
         // single click
         if (altPressed && cmdPressed) {
             selectMode = SELECT_BOX;
@@ -2038,7 +1996,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             endX = startX = x;
             endY = startY = y;
         }
-    } else if ([event clickCount] == 2) {
+    } else if (clickCount == 2) {
         int tmpX1, tmpY1, tmpX2, tmpY2;
 
         // double-click; select word
@@ -2072,8 +2030,65 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             endX = tmpX2;
             endY = tmpY2;
         }
-    } else if ([event clickCount] >= 3) {
-        // triple-click; select line
+    } else if (clickCount == 3) {
+        // triple-click: smart selection
+        selectMode = SELECT_SMART;
+        if (startX > -1 && shiftPressed) {
+            // Shift is pressed, so extend selection
+            int tx1 = startX;
+            int ty1 = startY;
+            int tx2 = endX;
+            int ty2 = endY;
+            [self smartSelectAtX:x y:y];
+            int tmpX1, tmpY1, tmpX2, tmpY2;
+            [self getWordForX:x
+                            y:y
+                       startX:&tmpX1
+                       startY:&tmpY1
+                         endX:&tmpX2
+                         endY:&tmpY2];
+            if (startX == tmpX1 &&
+                startY == tmpY1 &&
+                endX == tmpX2 &&
+                endY == tmpY2) {
+                // Same result as word selection -> perform line selection
+                clickCount = 4;
+            } else {
+                if (tx1 + ty1 * width < startX + startY * width) {
+                    startX = tx1;
+                    startY = ty1;
+                } else {
+                    endX = startX;
+                    endY = startY;
+                    startX = tx2;
+                    startY = ty2;
+                }
+            }
+        } else {
+            // not holding shift
+            if (![self smartSelectAtX:x y:y]) {
+                // fall back on line selection
+                clickCount = 4;
+            } else {
+                int tmpX1, tmpY1, tmpX2, tmpY2;
+                [self getWordForX:x
+                                y:y
+                           startX:&tmpX1
+                           startY:&tmpY1
+                             endX:&tmpX2
+                             endY:&tmpY2];
+                if (startX == tmpX1 &&
+                    startY == tmpY1 &&
+                    endX == tmpX2 &&
+                    endY == tmpY2) {
+                    // Same result as word selection -> perform line selection
+                    clickCount = 4;
+                }
+            }
+        }
+    }
+    if (clickCount >= 4) {
+        // quad-click; select line
         selectMode = SELECT_LINE;
         if (startX > -1 && shiftPressed) {
             // extend existing selection
@@ -4513,7 +4528,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 // default background color. But don't blend in the bg color if transparency is on.
                 aColor = [self colorForCode:ALTSEM_BG_DEFAULT
                          alternateSemantics:YES
-                                       bold:NO];                
+                                       bold:NO];
                 aColor = [aColor colorWithAlphaComponent:selectedAlpha];
                 [aColor set];
                 if (![self useTransparency]) {
@@ -6025,13 +6040,41 @@ static bool IsUrlChar(NSString* str)
             endY = y;
             break;
 
+        case SELECT_SMART:
         case SELECT_WORD:
-            [self getWordForX:x
-                            y:y
-                       startX:&tmpX1
-                       startY:&tmpY1
-                         endX:&tmpX2
-                         endY:&tmpY2];
+            // First, put the word around x,y in tmp[XY][12].
+            if (selectMode == SELECT_WORD) {
+                [self getWordForX:x
+                                y:y
+                           startX:&tmpX1
+                           startY:&tmpY1
+                             endX:&tmpX2
+                             endY:&tmpY2];
+            } else {
+                // Save start/end x/y
+                int ox1, oy1, ox2, oy2;
+                ox1 = startX;
+                oy1 = startY;
+                ox2 = endX;
+                oy2 = endY;
+
+                // Set start/end x/y to new word
+                [self smartSelectAtX:x y:y];
+
+                // Copy statr/end x/y to tmp x/y 1/2
+                tmpX1 = startX;
+                tmpY1 = startY;
+                tmpX2 = endX;
+                tmpY2 = endY;
+
+                // Restore start/end x/y
+                startX = ox1;
+                startY = oy1;
+                endX = ox2;
+                endY = oy2;
+            }
+
+            // Now the complicated bit...
             if ((startX + (startY * width)) < (tmpX2 + (tmpY2 * width))) {
                 // We go forwards in our selection session... and...
                 if ((startX + (startY * width)) > (endX + (endY * width))) {
