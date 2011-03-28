@@ -4023,7 +4023,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             int theIndex = i / 8;
             int mask = 1 << (i & 7);
             if (theIndex < [matches length] && matchBytes[theIndex] & mask) {
-                thisCharColor = [NSColor blackColor];
+                thisCharColor = [NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1];
             }
         }
 
@@ -4498,7 +4498,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 // it will be blended 50/50.
 
                 if (isMatch && !bgselected) {
-                    aColor = [NSColor yellowColor];
+                    aColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:1];
                 } else if (bgselected) {
                     aColor = selectionColor;
                 } else {
@@ -4788,7 +4788,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                         cursorY,
                                         2.0,
                                         cursorHeight);
-        [[self _dimmedColorFrom:[NSColor yellowColor]] set];
+        [[self _dimmedColorFrom:[NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:1]] set];
         NSRectFill(cursorFrame);
 
         return TRUE;
