@@ -975,11 +975,15 @@ void DebugLog(NSString* value)
     }
 }
 
-- (IBAction) findWithSelection: (id) sender
+- (IBAction)findWithSelection:(id)sender
 {
-    PseudoTerminal* pty = [[iTermController sharedInstance] currentTerminal];
-    if (pty) {
-        [[pty currentSession] findWithSelection];
+    NSString* selection = [[[[[iTermController sharedInstance] currentTerminal] currentSession] TEXTVIEW] selectedText];
+    if (selection) {
+        for (PseudoTerminal* pty in [[iTermController sharedInstance] terminals]) {
+            for (PTYSession* session in [pty sessions]) {
+                [session useStringForFind:selection];
+            }
+        }
     }
 }
 

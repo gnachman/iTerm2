@@ -429,6 +429,8 @@ typedef struct PTYFontInfo PTYFontInfo;
 // Returns true if any character in the buffer is selected.
 - (BOOL)isAnyCharSelected;
 
+- (void)clearMatches;
+
 @end
 
 //

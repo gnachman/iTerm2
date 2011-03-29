@@ -431,6 +431,9 @@ static const float kBackgroundSessionIntervalSec = 1;
 // Is there a saved scroll position?
 - (BOOL)hasSavedScrollPosition;
 
+// Prepare to use the given string for the next search.
+- (void)useStringForFind:(NSString*)string;
+
 // Search for the selected text.
 - (void)findWithSelection;
 

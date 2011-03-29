@@ -2505,6 +2505,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return savedScrollPosition_ != -1;
 }
 
+- (void)useStringForFind:(NSString*)string
+{
+    [[view findViewController] findString:string];
+}    
+
 - (void)findWithSelection
 {
     if ([TEXTVIEW selectedText]) {
