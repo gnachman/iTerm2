@@ -5642,7 +5642,18 @@ static bool IsUrlChar(NSString* str)
 
     NSRange range = [trimmedURLString rangeOfString:@"://"];
     if (range.location == NSNotFound) {
-        trimmedURLString = [@"http://" stringByAppendingString:trimmedURLString];
+      // Not a URL, let's pass it to the external script if it exists
+      NSString *path = [[NSUserDefaults standardUserDefaults] stringForKey:@"PathHandler"];
+      
+      if (path == nil)
+        return;
+       
+      int pid = [[[self dataSource] shellTask] pid];
+      NSString* process_id = [NSString stringWithInt:pid];
+      [NSTask launchedTaskWithLaunchPath:
+                               path
+                               arguments:[NSArray arrayWithObjects:trimmedURLString, process_id, nil]];
+      return;
     } else {
         // Search backwards for the start of the scheme.
         for (int i = range.location - 1; 0 <= i; i--) {
