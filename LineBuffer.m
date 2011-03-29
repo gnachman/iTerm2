@@ -1379,7 +1379,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             return result;
         }
     }
-    NSLog(@"Fail - ran out of blocks");
     return NO;
 }
 

@@ -847,30 +847,37 @@ static char* FormatCont(int c)
     int selectionEndPosition = -1;
     BOOL hasSelection = display && [display selectionStartX] != -1;
     [self _appendScreenToScrollback];
+    BOOL startPositionBeforeEnd;
+    BOOL endPostionBeforeEnd;
     if (hasSelection) {
-        [linebuffer convertCoordinatesAtX:[display selectionStartX]
-                                      atY:[display selectionStartY]
-                                withWidth:WIDTH
-                               toPosition:&selectionStartPosition
-                                   offset:0];
-        [linebuffer convertCoordinatesAtX:[display selectionEndX]
-                                      atY:[display selectionEndY]
-                                withWidth:WIDTH
-                               toPosition:&selectionEndPosition
-                                   offset:0];
+        startPositionBeforeEnd = [linebuffer convertCoordinatesAtX:[display selectionStartX]
+                                                               atY:[display selectionStartY]
+                                                         withWidth:WIDTH
+                                                        toPosition:&selectionStartPosition
+                                                            offset:0];
+        endPostionBeforeEnd = [linebuffer convertCoordinatesAtX:[display selectionEndX]
+                                                            atY:[display selectionEndY]
+                                                      withWidth:WIDTH
+                                                     toPosition:&selectionEndPosition
+                                                         offset:0];
     }
 
     int newSelStartX = -1, newSelStartY = -1;
     int newSelEndX = -1, newSelEndY = -1;
-    if (hasSelection) {
+    if (hasSelection && startPositionBeforeEnd) {
         [linebuffer convertPosition:selectionStartPosition
                           withWidth:new_width
                                 toX:&newSelStartX
                                 toY:&newSelStartY];
-        [linebuffer convertPosition:selectionEndPosition
-                          withWidth:new_width
-                                toX:&newSelEndX
-                                toY:&newSelEndY];
+        if (endPostionBeforeEnd) {
+            [linebuffer convertPosition:selectionEndPosition
+                              withWidth:new_width
+                                    toX:&newSelEndX
+                                    toY:&newSelEndY];
+        } else {
+            newSelEndX = WIDTH;
+            newSelEndY = [linebuffer numLinesWithWidth: new_width] + HEIGHT - 1;
+        }
     }
 
 #ifdef DEBUG_RESIZEDWIDTH
