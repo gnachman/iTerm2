@@ -1394,7 +1394,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             NORMAL_PRECISION
         },
         {
-            @"/?([[:letter:][:number:]._]+/)+[[:letter:][:number:]._]+/?",  // words delimited by slashes, optionally beginning and optionally ending in a slash (e.g., include path)
+            @"/?([[:letter:][:number:]._-]+/+)+[[:letter:][:number:]._-]+/?",  // words delimited by slashes, optionally beginning and optionally ending in a slash (e.g., include path)
             NORMAL_PRECISION
         },
         {
