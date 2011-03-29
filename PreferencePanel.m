@@ -1719,7 +1719,7 @@ static float versionNumber;
 }
 
 // URL handler stuff
-- (Bookmark *) handlerBookmarkForURL:(NSString *)url
+- (Bookmark *)handlerBookmarkForURL:(NSString *)url
 {
     NSString* guid = [urlHandlersByGuid objectForKey:url];
     if (!guid) {
@@ -1921,21 +1921,6 @@ static float versionNumber;
         } else {
             [item setState:NSOffState];
         }
-    }
-}
-
-// This is for the URL schemes, the only menu for which we are a delegate.
-- (BOOL)validateMenuItem:(NSMenuItem *)menuItem
-{
-    NSString* scheme = [menuItem title];
-    NSString* guid = [bookmarksTableView selectedGuid];
-    if (!guid) {
-        return NO;
-    }
-    if ([[urlHandlersByGuid objectForKey:scheme] isEqualToString:guid]) {
-        return NO;
-    } else {
-        return YES;
     }
 }
 
@@ -2501,7 +2486,11 @@ static float versionNumber;
 {
     NSString* guid = [bookmarksTableView selectedGuid];
     NSString* scheme = [[bookmarkUrlSchemes selectedItem] title];
-    [self connectBookmarkWithGuid:guid toScheme:scheme];
+    if ([urlHandlersByGuid objectForKey:scheme]) {
+        [self disconnectHandlerForScheme:scheme];
+    } else {
+        [self connectBookmarkWithGuid:guid toScheme:scheme];
+    }
     [self _populateBookmarkUrlSchemesFromDict:[dataSource bookmarkWithGuid:guid]];
 }
 
@@ -2618,6 +2607,11 @@ static float versionNumber;
         LSSetDefaultHandlerForURLScheme((CFStringRef)scheme,
                                         (CFStringRef)[[NSBundle mainBundle] bundleIdentifier]);
     }
+}
+
+- (void)disconnectHandlerForScheme:(NSString*)scheme
+{
+    [urlHandlersByGuid removeObjectForKey:scheme];
 }
 
 - (IBAction)closeWindow:(id)sender
