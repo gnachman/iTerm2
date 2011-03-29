@@ -1706,6 +1706,12 @@ static float versionNumber;
     return [prefs objectForKey:@"OptimumTabWidth"] ? [[prefs objectForKey:@"OptimumTabWidth"] intValue] : 175;
 }
 
+- (float) hotkeyTermAnimationDuration
+{
+    assert(prefs);
+    return [prefs objectForKey:@"HotkeyTermAnimationDuration"] ? [[prefs objectForKey:@"HotkeyTermAnimationDuration"] floatValue] : 0.25;
+}
+
 - (NSString *) searchCommand
 {
     assert(prefs);

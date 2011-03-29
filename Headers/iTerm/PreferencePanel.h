@@ -501,6 +501,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (int)minTabWidth;
 - (int)minCompactTabWidth;
 - (int)optimumTabWidth;
+- (float)hotkeyTermAnimationDuration;
 - (NSString *)searchCommand;
 - (Bookmark *)handlerBookmarkForURL:(NSString *)url;
 - (int)numberOfRowsInTableView: (NSTableView *)aTableView;

@@ -145,6 +145,16 @@ static BOOL initDone = NO;
     [super dealloc];
 }
 
+- (PseudoTerminal*)keyTerminalWindow
+{
+    for (PseudoTerminal* pty in [self terminals]) {
+        if ([[pty window] isKeyWindow]) {
+            return pty;
+        }
+    }
+    return nil;
+}
+
 - (void)updateWindowTitles
 {
     for (PseudoTerminal* terminal in terminalWindows) {
@@ -896,18 +906,22 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
 
             rect.origin.x = screenFrame.origin.x + (screenFrame.size.width - rect.size.width) / 2;
             rect.origin.y = screenFrame.origin.y + (screenFrame.size.height - rect.size.height) / 2;
+            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
             [[[term window] animator] setFrame:rect display:YES];
             [[[term window] animator] setAlphaValue:1];
             break;
 
         case WINDOW_TYPE_TOP:
             rect.origin.y = screenFrame.origin.y + screenFrame.size.height - rect.size.height;
+            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
             [[[term window] animator] setFrame:rect display:YES];
             [[[term window] animator] setAlphaValue:1];
             break;
 
         case WINDOW_TYPE_FULL_SCREEN:
+            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
             [[[term window] animator] setAlphaValue:1];
+            [NSMenu setMenuBarVisible:NO];
             break;
     }
     [[iTermController sharedInstance] performSelector:@selector(rollInFinished)
@@ -987,18 +1001,20 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         case WINDOW_TYPE_NORMAL:
             rect.origin.x = -rect.size.width;
             rect.origin.y = -rect.size.height;
+            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
             [[[term window] animator] setFrame:rect display:YES];
             [[[term window] animator] setAlphaValue:0];
             break;
 
         case WINDOW_TYPE_TOP:
             rect.origin.y = screenFrame.size.height;
-            NSLog(@"SLOW: Set y=%f", rect.origin.y);
+            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
             [[[term window] animator] setFrame:rect display:YES];
             [[[term window] animator] setAlphaValue:0];
             break;
 
         case WINDOW_TYPE_FULL_SCREEN:
+            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
             [[[term window] animator] setAlphaValue:0];
             break;
     }
@@ -1014,6 +1030,8 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     if (!itermWasActiveWhenHotkeyOpened) {
         [NSApp hide:nil];
         [self performSelector:@selector(unhide) withObject:nil afterDelay:0.1];
+    } else {
+        [NSMenu setMenuBarVisible:YES];
     }
     // If you orderOut the hotkey term (term variable) then it switches to the
     // space in which your next window exists. So leave key status in the hotkey
@@ -1446,6 +1464,9 @@ NSString *terminalsKey = @"terminals";
     // make sure this window is the key window
     if ([thePseudoTerminal windowInited] && [[thePseudoTerminal window] isKeyWindow] == NO) {
         [[thePseudoTerminal window] makeKeyAndOrderFront: self];
+        if ([thePseudoTerminal fullScreen]) {
+            [NSMenu setMenuBarVisible:NO];
+        }
     }
 
     // Post a notification

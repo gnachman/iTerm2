@@ -991,7 +991,9 @@ NSString *sessionsKey = @"sessions";
 - (void)windowDidResignKey:(NSNotification *)aNotification
 {
     PtyLog(@"PseudoTerminal windowDidResignKey");
-    if ([self isHotKeyWindow] && ![[iTermController sharedInstance] rollingInHotkeyTerm]) {
+    if ([[self window] alphaValue] > 0 &&
+        [self isHotKeyWindow] &&
+        ![[iTermController sharedInstance] rollingInHotkeyTerm]) {
         PtyLog(@"windowDidResignKey: is hotkey");
         // We want to dismiss the hotkey window when some other window
         // becomes key. Note that if a popup closes this function shouldn't

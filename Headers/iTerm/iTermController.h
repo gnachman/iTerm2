@@ -67,6 +67,7 @@
 - (void)newSessionInTabAtIndex:(id)sender;
 - (void)newSessionInWindowAtIndex:(id)sender;
 - (void)showHideFindBar;
+- (PseudoTerminal*)keyTerminalWindow;
 
 - (void)stopEventTap;
 
