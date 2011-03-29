@@ -3656,6 +3656,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 }
 
+- (void)clearMatches
+{
+    [resultMap_ removeAllObjects];
+}
+
 @end
 
 //

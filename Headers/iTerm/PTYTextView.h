@@ -75,10 +75,10 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // option to not render in bold
     BOOL useBoldFont;
-    
+
     // Option to draw bold text as brighter colors.
     BOOL useBrightBold;
-    
+
     // NSTextInput support
     BOOL IM_INPUT_INSERT;
     NSRange IM_INPUT_SELRANGE;
@@ -230,7 +230,7 @@ typedef struct PTYFontInfo PTYFontInfo;
     } flashImage_;
 
     ITermCursorType cursorType_;
-    
+
     // Trouter
     Trouter* trouter;
     NSMutableArray *workingDirectoryAtLines;
@@ -436,6 +436,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 
 // Clear working directories for when buffer is cleared
 - (void)clearWorkingDirectories;
+- (void)clearMatches;
 
 @end
 
@@ -493,7 +494,7 @@ typedef enum {
 - (void)logWorkingDirectoryAtLine:(long long)line;
 - (NSString *)getWorkingDirectoryAtLine:(long long)line;
 
-// Trouter change directory 
+// Trouter change directory
 - (void)_changeDirectory:(NSString *)path;
 
 - (BOOL)_findMatchingParenthesis:(NSString *)parenthesis withX:(int)X Y:(int)Y;
@@ -523,7 +524,7 @@ typedef enum {
 // Return the number of pixels tall to draw the cursor.
 - (float)cursorHeight;
 
-// Draw the contents of the input method editor beginning at some location, 
+// Draw the contents of the input method editor beginning at some location,
 // usually the cursor position.
 // xStart, yStart: cell coordinates
 // width, height: cell width, height of screen

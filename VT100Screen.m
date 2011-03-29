@@ -1554,7 +1554,7 @@ static char* FormatCont(int c)
 {
     [linebuffer release];
     linebuffer = [[LineBuffer alloc] init];
-
+    [display clearMatches];
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[VT100Screen clearScrollbackBuffer]",  __FILE__, __LINE__ );
 #endif
