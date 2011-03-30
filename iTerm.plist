@@ -39,9 +39,9 @@
 	<key>CFBundleGetInfoString</key>
 	<string>unknown</string>
 	<key>CFBundleHelpBookFolder</key>
-	<string>iTerm Help</string>
+	<string>iTerm2 Help</string>
 	<key>CFBundleHelpBookName</key>
-	<string>iTerm Help</string>
+	<string>iTerm2 Help</string>
 	<key>CFBundleIconFile</key>
 	<string>iTerm.icns</string>
 	<key>CFBundleIdentifier</key>

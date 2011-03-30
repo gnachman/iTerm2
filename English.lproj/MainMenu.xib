@@ -2,17 +2,17 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="7.10">
 	<data>
 		<int key="IBDocument.SystemTarget">1050</int>
-		<string key="IBDocument.SystemVersion">10F569</string>
-		<string key="IBDocument.InterfaceBuilderVersion">788</string>
-		<string key="IBDocument.AppKitVersion">1038.29</string>
+		<string key="IBDocument.SystemVersion">10J869</string>
+		<string key="IBDocument.InterfaceBuilderVersion">804</string>
+		<string key="IBDocument.AppKitVersion">1038.35</string>
 		<string key="IBDocument.HIToolboxVersion">461.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
-			<string key="NS.object.0">788</string>
+			<string key="NS.object.0">804</string>
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="81"/>
+			<integer value="106"/>
 			<integer value="498"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
@@ -1337,7 +1337,7 @@
 								<bool key="EncodedWithXMLCoder">YES</bool>
 								<object class="NSMenuItem" id="562626854">
 									<reference key="NSMenu" ref="1050697805"/>
-									<string key="NSTitle">iTerm Help</string>
+									<string key="NSTitle">iTerm2 Help</string>
 									<string key="NSKeyEquiv">?</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -4157,7 +4157,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
-					<string>{{749, 796}, {146, 23}}</string>
+					<string>{{696, 678}, {155, 23}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -4745,6 +4745,13 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					</object>
 				</object>
 				<object class="IBPartialClassDescription">
+					<string key="className">NSWindow</string>
+					<object class="IBClassDescriptionSource" key="sourceIdentifier" id="925662519">
+						<string key="majorKey">IBProjectSource</string>
+						<string key="minorKey">Headers/iTerm/PTYWindow.h</string>
+					</object>
+				</object>
+				<object class="IBPartialClassDescription">
 					<string key="className">PTYSession</string>
 					<string key="superclassName">NSResponder</string>
 					<object class="NSMutableDictionary" key="actions">
@@ -5006,10 +5013,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string key="candidateClassName">id</string>
 						</object>
 					</object>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">Headers/iTerm/PTYWindow.h</string>
-					</object>
+					<reference key="sourceIdentifier" ref="925662519"/>
 				</object>
 				<object class="IBPartialClassDescription">
 					<string key="className">PseudoTerminal</string>

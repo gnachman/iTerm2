@@ -209,9 +209,9 @@
 		1DE5EBE8122B892900C736B0 /* BookmarksWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* BookmarksWindow.h */; };
 		1DE5EBE9122B892900C736B0 /* BookmarksWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */; };
 		1DEE9FDD11FCA60F009E18C9 /* credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 1DEE9FDB11FCA60F009E18C9 /* credits.rtf */; };
+		1DF21A131342FFA700B44603 /* iTerm2 Help in Resources */ = {isa = PBXBuildFile; fileRef = 1DF21A0E1342FFA700B44603 /* iTerm2 Help */; };
 		49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A6E4081211CC6000D9AD6F /* Compatability.h */; };
 		874206490564169600CFC3F1 /* iTermApplicationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */; };
-		8742064C0564169600CFC3F1 /* iTerm Help in Resources */ = {isa = PBXBuildFile; fileRef = DD8CF2DD03CDD34B00A8A065 /* iTerm Help */; };
 		8742064D0564169600CFC3F1 /* iTerm.icns in Resources */ = {isa = PBXBuildFile; fileRef = E8EDCE69015E0A5703000001 /* iTerm.icns */; };
 		8742064F0564169600CFC3F1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF757F026DDAD703A80106 /* main.m */; };
 		874206500564169600CFC3F1 /* iTermApplicationDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 20D5CC6404E7AA0500000106 /* iTermApplicationDelegate.m */; };
@@ -365,6 +365,7 @@
 		1DEB29371288887100B2CB9F /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		1DEB293D1288899A00B2CB9F /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		1DEE9FDC11FCA60F009E18C9 /* English */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = English; path = English.lproj/credits.rtf; sourceTree = "<group>"; };
+		1DF21A0F1342FFA700B44603 /* English */ = {isa = PBXFileReference; lastKnownFileType = folder; name = English; path = "English.lproj/iTerm2 Help"; sourceTree = "<group>"; };
 		2076B15704E8817300000106 /* PTToolbarController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTToolbarController.h; sourceTree = "<group>"; };
 		2076B15804E8817300000106 /* PTToolbarController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTToolbarController.m; sourceTree = "<group>"; };
 		20B8892A04E9342100000106 /* ITViewLocalizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITViewLocalizer.h; sourceTree = "<group>"; };
@@ -438,7 +439,6 @@
 		DD4BAB7C0470C44C00A8A065 /* FindCommandHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FindCommandHandler.m; sourceTree = "<group>"; };
 		DD57633005653C2E00F1905E /* iTerm_Framework.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = iTerm_Framework.plist; sourceTree = "<group>"; };
 		DD57633605653C5F00F1905E /* iTerm.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = iTerm.plist; sourceTree = "<group>"; };
-		DD8CF2DE03CDD34C00A8A065 /* iTerm Help */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = folder; name = "iTerm Help"; path = "English.lproj/iTerm Help"; sourceTree = "<group>"; };
 		DD9C1AE2051F45C000A8A065 /* iTerm-Aqua.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "iTerm-Aqua.jpg"; path = "images/iTerm-Aqua.jpg"; sourceTree = "<group>"; };
 		DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyBindingMgr.m; sourceTree = "<group>"; };
 		DDDB7AD605D773B400E197C2 /* iTermKeyBindingMgr.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = iTermKeyBindingMgr.h; path = Headers/iTerm/iTermKeyBindingMgr.h; sourceTree = "<group>"; };
@@ -728,7 +728,6 @@
 			children = (
 				FBDF6B63042A6B3101F955DB /* website */,
 				F500A65D0395269C01A8A066 /* Changelog */,
-				DD8CF2DD03CDD34B00A8A065 /* iTerm Help */,
 				93A6FEF910685E9900A5F905 /* dsa_pub.pem */,
 			);
 			name = "Supporting Files";
@@ -774,6 +773,7 @@
 				1DCA8BA7121A1B8000ABDEB5 /* PrefsKeyboard.tiff */,
 				1DCA8BA8121A1B8000ABDEB5 /* PrefsTerminal.tiff */,
 				1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */,
+				1DF21A0E1342FFA700B44603 /* iTerm2 Help */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -1127,6 +1127,7 @@
 			isa = PBXProject;
 			buildConfigurationList = BB024D39096EE4080021E793 /* Build configuration list for PBXProject "iTerm" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,
@@ -1193,7 +1194,6 @@
 				1D5FDD9E1208E91100C46BA3 /* PseudoTerminal.xib in Resources */,
 				1D5FDDA01208E91100C46BA3 /* PreferencePanel.xib in Resources */,
 				1D5FDDA21208E91100C46BA3 /* BookmarksWindow.xib in Resources */,
-				8742064C0564169600CFC3F1 /* iTerm Help in Resources */,
 				8742064D0564169600CFC3F1 /* iTerm.icns in Resources */,
 				F6CDC4E70AE6D3E2005E7D4F /* folder.png in Resources */,
 				9325FF500FB54E00004EC67C /* MainMenu.xib in Resources */,
@@ -1224,6 +1224,7 @@
 				1DA02CFB1327612600D7E7DB /* bell.png in Resources */,
 				1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */,
 				1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */,
+				1DF21A131342FFA700B44603 /* iTerm2 Help in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1396,6 +1397,14 @@
 			name = credits.rtf;
 			sourceTree = "<group>";
 		};
+		1DF21A0E1342FFA700B44603 /* iTerm2 Help */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1DF21A0F1342FFA700B44603 /* English */,
+			);
+			name = "iTerm2 Help";
+			sourceTree = "<group>";
+		};
 		9325FF3C0FB54DF1004EC67C /* PseudoTerminal.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -1434,14 +1443,6 @@
 				DD48F1CD03EBB20500A8A065 /* English */,
 			);
 			name = iTerm.scriptTerminology;
-			sourceTree = "<group>";
-		};
-		DD8CF2DD03CDD34B00A8A065 /* iTerm Help */ = {
-			isa = PBXVariantGroup;
-			children = (
-				DD8CF2DE03CDD34C00A8A065 /* iTerm Help */,
-			);
-			name = "iTerm Help";
 			sourceTree = "<group>";
 		};
 		FB151F2903648AC401F955DB /* iTerm.strings */ = {
