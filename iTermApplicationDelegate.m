@@ -285,7 +285,7 @@ int gDebugLogFile = -1;
     NSURL *url = [NSURL URLWithString: urlStr];
     NSString *urlType = [url scheme];
 
-    id bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL: urlType];
+    id bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:urlType];
     if (bm) {
         [[iTermController sharedInstance] launchBookmark:bm
                                               inTerminal:[[iTermController sharedInstance] currentTerminal] withURL:urlStr];

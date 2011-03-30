@@ -1033,6 +1033,9 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     } else {
         [NSMenu setMenuBarVisible:YES];
     }
+    
+    // Place behind all other windows at this level
+    [[term window] orderWindow:NSWindowBelow relativeTo:0];
     // If you orderOut the hotkey term (term variable) then it switches to the
     // space in which your next window exists. So leave key status in the hotkey
     // window although it's invisible.
