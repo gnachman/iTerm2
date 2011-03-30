@@ -240,6 +240,7 @@ NSString *sessionsKey = @"sessions";
     if (windowType == WINDOW_TYPE_TOP) {
         [myWindow setHasShadow:YES];
     }
+    [myWindow _setContentHasShadow:NO];
 
     PtyLog(@"initWithSmartLayout - new window is at %d", myWindow);
     [self setWindow:myWindow];

@@ -30,6 +30,8 @@
 #import "iTerm/FindCommandHandler.h"
 #import "iTermApplication.h"
 
+static const float FINDVIEW_DURATION = 0.075;
+
 @implementation FindViewController
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
@@ -123,6 +125,8 @@
         timer_ = nil;
         [findBarProgressIndicator_ setHidden:YES];
     }
+    
+    [[NSAnimationContext currentContext] setDuration:FINDVIEW_DURATION];
     [[[self view] animator] setFrame:[self collapsedFrame]];
     [self performSelector:@selector(_hide)
                withObject:nil
@@ -141,6 +145,7 @@
 {    
     [[self view] setFrame:[self collapsedFrame]];
     [[self view] setHidden:NO];
+    [[NSAnimationContext currentContext] setDuration:FINDVIEW_DURATION];
     [[[self view] animator] setFrame:[self fullSizeFrame]];
     [delegate_ takeFocus];
     [self performSelector:@selector(_grabFocus)
