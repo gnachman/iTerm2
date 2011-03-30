@@ -440,13 +440,15 @@ html.no-js .back-to-top { float: right; }
 <body>
     <div id="container">
       <div id="main">
+
 <h1>Documentation</h1>
 
-<p>iTerm2 should require little explanation for users accustomed to terminal emulators. Even if you are an experienced user, take the time to read through the first section of this document. It will familiarize you with some features of iTerm2 that you may not have seen in other terminal emulators that can make a real difference in the way you work.</p>
+<p>iTerm2 should require little explanation for users accustomed to terminal emulators. Even if you are an experienced user, take the time to read through the <a href="#/section/documentation/highlights">highlights</a> section of this document. It will familiarize you with some features of iTerm2 that you may not have seen in other terminal emulators that can make a real difference in the way you work.</p>
 
 <h2>Table of Contents</h2>
 
 <ul>
+  <li><a href="#/section/documentation/general">General Usage</a></li>
   <li><a href="#/section/documentation/highlights">Highlights for New Users</a></li>
   <li><a href="#/section/documentation/menu_items">Menu Items</a></li>
   <li><a href="#/section/documentation/preferences">Preferences</a></li>
@@ -458,6 +460,104 @@ html.no-js .back-to-top { float: right; }
 </ul>
 
 <p><br/>
+<a name="/section/documentation/general"> </a></p>
+
+<h2>General Usage</h2>
+
+<hr/>
+
+<h4>Tabs</h4>
+
+<p>When you first start iTerm2, a window opens showing a terminal session. If you want to open more that one session at a time, you have a few options: You can create a new window (Shell &gt; New Window), you can createa  new tab (Shell &gt; New Tab), or you can split the current session into two panes (Shell  &gt; Split Horizontally, Shell &gt; Split Vertically), each of which is a separate session.</p>
+
+<p>Tabs in iTerm2 behave like tabs in other programs, most notably web browsers like Safari, Firefox, and Google Chrome. Note that you can drag and drop tabs to reorder them within a window. You can drag tabs from one window to another, and you can drag a tab from a window into a new window by dropping it outside any iTerm2 window's tab bar.</p>
+
+<p>By default, the label of each tab is the name of the job that's running in that session. Some systems are configured to augment this with additional information such as the hostname you're logged in to or your current directory (this is done by sending a special code of <code>ESC]0;string ^G</code>).</p>
+
+<p>Tab labels are colored to indicate their status. When new output is received in a tab other than the currently selected tab, its label changes color to magenta. After a few seconds it becomes red to indicate not-so-fresh output. When a tab's session terminates, the label turns gray. You can disable this coloring in Preferences &gt; Appearance &gt; Color tab labels on activity.</p>
+
+<p><br/>
+<br/></p>
+
+<h4>Toolbar</h4>
+
+<p>The toolbar provides quick access to some commonly used features.</p>
+
+<ul>
+<li>The <i>New</i> button allows you to open a new tab. If you have configured multiple profiles, it allows you to select one from a list.</li>
+<li>The <i>Info</i> button allows you to change the apperance of the current session.</li>
+<li>The <i>Close</i> button closes the current session, and may close the current window if it was the only session.</li>
+<li>The <i>Execute</i> field lets you to type in a command locally before sending it to the terminal. You can also type in a URL (including the scheme, such as <i>http://</i>), in which case the URL will be opened by the appropriate application. If you press TAB key instead of Enter after you type in the command, a new tab will be launched with your command. </li>
+</ul>
+
+<p><br/>
+<br/></p>
+
+<h4>Info Panel</h4>
+
+<p>Info Panel lets you modify the apperance of a single session. Note that after you open this panel, your changes will not be reflected in the profile and profile changes will not be reflected in this session. </p>
+
+<p><br/>
+<br/></p>
+
+<h4>Mouse</h4>
+
+<p>The primary use of the mouse in iTerm2 is to select text, and (by default) text is copied to the clipboard immediately upon being selected. You can click and drag to perform a normal selection. Double-clicking selects a whole word. Triple-clicking performs a "smart select", matching recognized strings such as URLs and email addresses, or selecting the whole line if nothing is matched. Quad-clicking selects an entire line.</p>
+
+<p>If you hold shift while clicking the existing selection is extended.</p>
+
+<p>If you hold cmd and click on a URL it will be opened.</p>
+
+<p>If you hold cmd you can drag and drop selected text.</p>
+
+<p>If you hold cmd and option while selecting, a rectangular selection will be made.</p>
+
+<p>If mouse reporting is enabled (in Preferences &gt; Profile &gt; Terminal) and the currently running terminal application is using it, pressing option will temporarily disable it so you can make a selection.</p>
+
+<p>If you hold the control key and click, that simulates a right click. If you'd prefer to send this combination to applications using mouse reporting, check "Report ctrl-click to apps instead of opening menu" in Preferences &gt; General.</p>
+
+<p>Moving the mouse's scroll wheel scrolls up and down.</p>
+
+<p>A three-finger swipe left or right on a trackpad (if configured to "navigate") will select an adjacent tab.</p>
+
+<p><br/>
+<br/></p>
+
+<h4>Keyboard</h4>
+
+<p>Every aspect of the keyboard can be configured in iTerm2. These keystrokes may be useful to remember:</p>
+
+<ul>
+<li>Cmd+left arrow, Cmd+right arrow navigates among tabs. So does Cmd-{ and Cmd-}.</li>
+<li>Cmd+number navigates directly to a tab.</li>
+<li>Cmd+Option+Number navigates directly to a window.</li>
+<li>Cmd+Option+Arrow keys navigate among split panes.</li>
+<li>Cmd+] and Cmd+[ navigates among split panesn in order of use.</li>
+</ul>
+
+<p>You can configure any key combination to perform any action in two places: in Preferences &gt; Keys, you can define global key shortcuts that affect all profiles. In Preferences &gt; Profiles &gt; Keys, you can define key shortcuts that affect only a single profile.</p>
+
+<p>You can remap modifiers like Option and Cmd within iTerm2. Some users find that pression Option frequently is uncomfortable, and configure iTerm2 to swap the function of the Option and Cmd keys. This is done in Preferences &gt; Keys under Remap Modifier Keys. If there is some key combination that you don't want to be affected by this change (such as Cmd-tab) add a new global shortcut key with the action Do Not Remap.</p>
+
+<p>iTerm2 allows you to define a global hotkey. This is a single keystroke that iTerm2 listens for even when another application has keyboard focus. When it is pressed, iTerm2 comes to the front. Press it again, and iTerm2 goes away. You can choose to bind the hotkey to a single dedicated window. This feature is similar to other programs like Visor, Guake, and Yakuake.</p>
+
+<p><br/>
+<br/></p>
+
+<h4>Context menus</h4>
+
+<p>By right-clicking in a session a context menu opens. You can use it to open a new session, perform various actions on selected text, or access frequently used features to affect the clicked-on session.</p>
+
+<p><br/>
+<br/></p>
+
+<h4>Profiles</h4>
+
+<p>Many settings are stored in <i>profiles</i>. A profile is a named collection of settings, and you can have as many of them as you like. Most users only have one profile, but if you find that you often connect to different servers, they may be useful for you. A key feature of a profile is that you can associate a command with it that is run when it begins. For instance, if you often ssh to a particular host, you could create a profile with the command "ssh example.com" to automate that process.</p>
+
+<p><br/>
+<br/>
+<br/>
 <a name="/section/documentation/highlights">
 </a></p>
 
@@ -471,20 +571,9 @@ html.no-js .back-to-top { float: right; }
 
 <h4>Text Selection</h4>
 
-<p>There are two ways to select text to copy to the clipboard: you can use the mouse, or you can use the find feature's "mouseless copy" feature.</p>
-
-<p>In iTerm2, text is copied to the clipboard immediately upon selecting it.  When selecting text with the mouse, you can click and drag to select a region of text. Double-clicking selects a word delimited by whitespace or any non-word character (there is a field in Preferences that lets you name any symbols you would like to define as word characters). Triple-clicking performs a "smart selection": if the mouse is over a recognizable object such as a URL, email address, pathname, Java/Python include path, or one of several other kinds of strings, it will be selected; otherwise, the entire line will be selected.  Quadruple-clicking always selects an entire line. Any of these multiple clicks may be followed by dragging to select a region.</p>
-
-<p>If you hold down shift while making a selection, the existing selection will be extended. If you hold down option and command while making a selection, a rectangular region is selected. If mouse reporting is on (meaning the application is reciving information about mouse events), you can temporarily turn it off to make a selection by holding down option.</p>
+<p>There are two ways to select text to copy to the clipboard: you can use the mouse, or you can use the find feature's "mouseless copy" feature. Text selection by mouse is described above in <a href="/section/documentation/general">General Usage</a> section.</p>
 
 <p>To select text without using the mouse, press cmd-f to open the find field. Enter the beginning fo the text you wish to copy and the find feature will select it in your window. Then press tab and the end of the selection will advance by a word. To advance the beginning of the selection to the left, press shift-tab. At most one line of text can be selected this way</p>
-
-<p><br/>
-<br/></p>
-
-<h4>URLs</h4>
-
-<p>If you hold down command, you can click on a URL to open it.</p>
 
 <p><br/>
 <br/></p>
@@ -506,13 +595,6 @@ html.no-js .back-to-top { float: right; }
 <h4>Swap Cmd and Option</h4>
 
 <p>iTerm2 allows you to remap modifiers. You have separate control over left and right command and option keys. One common need is to exchange cmd and option. To do this, go to Preferences &gt; Keys. Set Left option key to Left command key and Left command key to Left option key (and do the same for Right command and Right option if you please). You can add exceptions if you don't want certain combinations to be remapped (for example, cmd-tab) by adding a new global shortcut with the action "Do Not Remap" and the keystroke of the (unremapped) key you wish to keep unaffected by modifier remapping.</p>
-
-<p><br/>
-<br/></p>
-
-<h4>Keyboard Navigation</h4>
-
-<p>You can select a tab with cmd+number (and cmd+9 always selects the last tab) and you can select a window with cmd+opt+number. Window numbers are shown in their titles by default. You can change the modifiers used to make these selections under Preferences &gt; Keys.</p>
 
 <p><br/>
 <br/></p>
@@ -609,11 +691,18 @@ set t_Co=256
 
 <h4>Exposé Tabs</h4>
 
-<p>If you have too many tabs and are unable to find the one you're looking for, you can use the Exposé Tabs feature to find it. Press cmd-opt-E and all your tabs will be shown at once. You can then perform a search over all tabs simultaneously to find what you're looking for.
-<br/>
+<p>If you have too many tabs and are unable to find the one you're looking for, you can use the Exposé Tabs feature to find it. Press cmd-opt-E and all your tabs will be shown at once. You can then perform a search over all tabs simultaneously to find what you're looking for.</p>
+
+<p><br/>
 <br/></p>
 
-<p><a name="/section/documentation/menu_items">
+<h4>Window Arrangements</h4>
+
+<p>You can take a snapshot of your open windows, tabs, and panes with the menu option Window &gt; Save Window Arrangement. You can restore this configuration with Window &gt; Restore Window Arrangement, or you can choose to have it automatically restored when you start iTerm2 with Preferences &gt; General &gt; Open saved window arrangement.</p>
+
+<p><br/>
+<br/>
+<a name="/section/documentation/menu_items">
 </a></p>
 
 <h2>Menu Items</h2>
@@ -928,7 +1017,7 @@ set t_Co=256
 
 <h4>Command</h4>
 
-<p>This is the command that is executed when a new session with ths profile is created. If login shell is chosen, then your shell is run with '-' as the first character of argv[0].</p>
+<p>This is the command that is executed when a new session with ths profile is created. If login shell is chosen, then your shell is run with '-' as the first character of argv[0]. You can put special terms surrounded by $$ in this field (example: $$USERNAME$$). When a new session is created, you will be prompted to enter a value for each such term. See the description of URL Schemes below for details about the special "$$" value that can go in this field.</p>
 
 <p><br/><br/></p>
 
@@ -940,7 +1029,16 @@ set t_Co=256
 
 <h4>URL Schemes</h4>
 
-<p>You can configure a profile to handle a URL scheme, such as ssh. When a hyperlink is clicked on with that scheme, a new tab is opened with the selected bookmark. It is recommended that you set the command to "$$", in which case an ssh command line will be auto-generated.</p>
+<p>You can configure a profile to handle a URL scheme, such as ssh. When a hyperlink is clicked on with that scheme, a new tab is opened with the selected bookmark. It is recommended that you set the command to "$$", in which case an ssh command line will be auto-generated. For other schemes, you can uses these variables in the Command field and they will be replaced with the appropriate part of the URL:</p>
+
+<ul>
+<li>$$URL$$ The complete url</li>
+<li>$$HOST$$ The host portion of a url like scheme://host/</li>
+<li>$$USER$$ The username portion of a url like scheme://user@host/</li>
+<li>$$PASSWORD$$ The password portion of a url like scheme://user:password@host/</li>
+<li>$$PORT$$ The port number of a url like scheme://host:port/</li>
+<li>$$PATH$$ The path portion of a url like scheme://host/path</li>
+</ul>
 
 <p><br/></p>
 
@@ -1146,7 +1244,7 @@ set t_Co=256
 
 <h4>Send Text</h4>
 
-<p>This action allows you to enter a text string that will be sent when the associated key is pressed.</p>
+<p>This action allows you to enter a text string that will be sent when the associated key is pressed. The following escape characters are supported: \n (newline), \e (escape), \a (bell), \t (tab).</p>
 
 <p><br/><br/></p>
 
@@ -1223,8 +1321,7 @@ set t_Co=256
 
 <hr>
 
-<p>There are a few settings that you cannot access via iTerm2's own Preferences
-panel. However, you can use 'defaults" command to change them to your taste.</p>
+<p>There are a few settings that you cannot access via iTerm2's own Preferences panel. However, you can use the "defaults" command to change them.</p>
 
 <p>The first four are for setting the tab size:</p>
 
@@ -1364,11 +1461,7 @@ end tell
 
 <h4>Autolanching Scripts</h4>
 
-<p>iTerm2 also supports autolaunching of an Applescript on startup. On startup,
-iTerm2 looks for an Applescript called <code>AutoLaunch.scpt</code> under
-<code>~/Library/Application Support/iTerm2</code>. If it is found, the <code>AutoLauch.scpt</code>
-is launched and executed. This feature can be used to launch multiple
-sessions in defined windows and tabs when iTerm2 starts up.</p>
+<p>iTerm2 also supports autolaunching of an Applescript on startup. On startup, iTerm2 looks for an Applescript file in "~/Library/Application Support/iTerm2/AutoLaunch.scpt". If it is found, the "AutoLauch.scpt" script is launched and executed.</p>
 
 <p><br/><br/></p>
 
