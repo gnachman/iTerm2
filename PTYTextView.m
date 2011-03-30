@@ -1414,7 +1414,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             HIGH_PRECISION
         },
         {
-            @"https?://([a-z0-9A-Z]+\\.)+[a-z]+/[a-zA-Z0-9/-_+%?&@=#\\(\\)]+",  // Rough match for urls
+            @"https?://([a-z0-9A-Z]+\\.)+[a-z]+/[a-zA-Z0-9/\\.-_+%?&@=#\\(\\)]+",  // Rough match for urls
             HIGH_PRECISION
         },
         {
