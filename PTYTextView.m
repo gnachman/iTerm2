@@ -1855,7 +1855,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)mouseEntered:(NSEvent *)event
 {
-    if ([[PreferencePanel sharedInstance] focusFollowsMouse]) {
+    if ([[PreferencePanel sharedInstance] focusFollowsMouse] &&
+		    [[self window] alphaValue] > 0) {
         // Some windows automatically close when they lose key status and are
         // incompatible with FFM. Check if the key window or its controller implements
         // disableFocusFollowsMouse and if it returns YES do nothing.
