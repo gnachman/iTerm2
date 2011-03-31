@@ -116,7 +116,7 @@
         return;
     }
     
-    if ([self isTextFile: path]) {
+    if (editor && [self isTextFile: path]) {
         NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@://open?url=file://%@&line=%@", editor, path, lineNumber, nil]];
         [[NSWorkspace sharedWorkspace] openURL:url];
         return;
