@@ -36,6 +36,7 @@
 - (void) dealloc;
 - (void) determineEditor;
 - (BOOL) applicationExists: (NSString *)bundle_id;
+- (NSString *) getFilename:(NSString *)path workingDirectory:(NSString *)workingDirectory lineNumber:(NSString **)lineNumber;
 - (void) routePath:(NSString *)path workingDirectory:(NSString *)workingDirectory;
 
 @end

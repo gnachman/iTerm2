@@ -86,23 +86,29 @@
     if (item) CFRelease(item);
     return ret;
 }
+
+- (NSString *) getFilename:(NSString *)path workingDirectory:(NSString *)workingDirectory lineNumber:(NSString **)lineNumber {
+    *lineNumber = [path stringByMatching:@":(\\d+)" capture:1];
+    path = [path stringByReplacingOccurrencesOfRegex:@":\\d+(?::.+)?$" withString:@""];
+ 
+    if (![fileManager fileExistsAtPath:path])
+        path = [NSString stringWithFormat:@"%@/%@", workingDirectory, path];
+
+    return path;
+}
         
 
 - (void) routePath:(NSString *)path workingDirectory:(NSString *)workingDirectory {
     BOOL isDirectory;
     NSString* lineNumber;
     
-    lineNumber = [path stringByMatching:@":(\\d+)" capture:1];
-    path = [path stringByReplacingOccurrencesOfRegex:@":\\d+(?::.+)?$" withString:@""];
-    
-    if (lineNumber == nil)
-        lineNumber = @"";
-    
-    if (![fileManager fileExistsAtPath:path])
-        path = [NSString stringWithFormat:@"%@/%@", workingDirectory, path];
+    path = [self getFilename:path workingDirectory:workingDirectory lineNumber:&lineNumber];
     
     if (![fileManager fileExistsAtPath:path isDirectory:&isDirectory])
         return;
+    
+    if (lineNumber == nil)
+        lineNumber = @"";
     
     if (isDirectory) {
         [[NSWorkspace sharedWorkspace] openFile:path];
