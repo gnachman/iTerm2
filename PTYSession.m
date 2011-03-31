@@ -757,10 +757,22 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             return;
         } else if (unmodunicode == NSLeftArrowFunctionKey) {
             // Left arrow moves to prev frame
-            [[[self tab] realParentWindow] irPrev:self];
+            int n = 1;
+            if (modflag & NSShiftKeyMask) {
+                n = 15;
+            }
+            for (int i = 0; i < n; i++) {
+                [[[self tab] realParentWindow] irPrev:self];
+            }
         } else if (unmodunicode == NSRightArrowFunctionKey) {
             // Right arrow moves to next frame
-            [[[self tab] realParentWindow] irNext:self];
+            int n = 1;
+            if (modflag & NSShiftKeyMask) {
+                n = 15;
+            }
+            for (int i = 0; i < n; i++) {
+                [[[self tab] realParentWindow] irNext:self];
+            }
         } else {
             NSBeep();
         }
