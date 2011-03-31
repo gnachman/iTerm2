@@ -5651,7 +5651,7 @@ static bool IsUrlChar(NSString* str)
         
         NSString *working_directory = [[dataSource shellTask] getWorkingDirectory];
         
-        [trouter routePath:trimmedURLString workingDirectory:working_directory];
+        [trouter openPath:trimmedURLString workingDirectory:working_directory];
         
         return;
     } else {

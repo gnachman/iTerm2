@@ -98,7 +98,7 @@
 }
         
 
-- (void) routePath:(NSString *)path workingDirectory:(NSString *)workingDirectory {
+- (void) openPath:(NSString *)path workingDirectory:(NSString *)workingDirectory {
     BOOL isDirectory;
     NSString* lineNumber;
     
