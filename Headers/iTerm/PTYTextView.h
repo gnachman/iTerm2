@@ -229,6 +229,9 @@ typedef struct PTYFontInfo PTYFontInfo;
     } flashImage_;
 
     ITermCursorType cursorType_;
+
+    // Works around an apparent OS bug where we get drag events without a mousedown.
+    BOOL dragOk_;
 }
 
 + (NSCursor *)textViewCursor;

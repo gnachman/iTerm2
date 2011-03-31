@@ -1885,6 +1885,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent*)event
 {
+    dragOk_ = YES;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
     if ([[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
         // Mouse clicks in inactive tab are always handled by superclass.
@@ -2082,6 +2083,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)mouseUp:(NSEvent *)event
 {
+    dragOk_ = NO;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
     if ([[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
         // Mouse clicks in inactive tab are always handled by superclass but make it first responder.
@@ -2204,6 +2206,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)mouseDragged:(NSEvent *)event
 {
+    if (!dragOk_) {
+        return;
+    }
     NSPoint locationInWindow = [event locationInWindow];
     NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
     NSRect  rectInTextView = [self visibleRect];
