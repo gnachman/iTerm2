@@ -30,6 +30,7 @@
 #import <iTerm/iTerm.h>
 #import "ScreenChar.h"
 #import "PreferencePanel.h"
+#import "Trouter.h"
 
 #include <sys/time.h>
 #define PRETTY_BOLD
@@ -229,6 +230,9 @@ typedef struct PTYFontInfo PTYFontInfo;
     } flashImage_;
 
     ITermCursorType cursorType_;
+    
+    // Trouter
+    Trouter* trouter;
 }
 
 + (NSCursor *)textViewCursor;

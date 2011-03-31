@@ -221,6 +221,8 @@ static NSImage* wrapToBottomImage = nil;
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
     imeOffset = 0;
     resultMap_ = [[NSMutableDictionary alloc] init];
+    
+    trouter = [[Trouter alloc] init];
     return self;
 }
 
@@ -291,6 +293,8 @@ static NSImage* wrapToBottomImage = nil;
     [self releaseAllFallbackFonts];
     [fallbackFonts release];
     [selectionScrollTimer release];
+    
+    [trouter release];
 
     [super dealloc];
 }
@@ -5642,18 +5646,14 @@ static bool IsUrlChar(NSString* str)
 
     NSRange range = [trimmedURLString rangeOfString:@"://"];
     if (range.location == NSNotFound) {
-        // Not a URL, let's pass it to the external script if it exists
-        NSString *path_handler = [[NSUserDefaults standardUserDefaults] stringForKey:@"PathHandler"];
         
-        if (path_handler == nil)
-            return;
+        // Not a URL, hand it off to Trouter
         
         NSString *working_directory = [[dataSource shellTask] getWorkingDirectory];
         NSString *full_path = [NSString stringWithFormat:@"%@/%@", working_directory, trimmedURLString];
         
-        [NSTask launchedTaskWithLaunchPath:
-                                path_handler
-                                arguments:[NSArray arrayWithObjects:full_path, nil]];
+        [trouter routePath:full_path];
+        
         return;
     } else {
         // Search backwards for the start of the scheme.
