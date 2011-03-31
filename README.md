@@ -9,7 +9,7 @@ it looks like filename.ext:line_number.
 
 ## Instructions
 Currently requires either MacVim or Textmate to be installed.
-Just download (or build your own, if you're paranoid), and off you go!
+Just [Download](https://github.com/chendo/iTerm2/archives/master) (or build your own, if you're paranoid), and off you go!
 
 ## Cavets
 * Does not work with paths with spaces (for now).
