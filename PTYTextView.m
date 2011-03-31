@@ -1408,7 +1408,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             HIGH_PRECISION
         },
         {
-            @"https?://([a-z0-9A-Z]+\\.)+[a-z]+/[a-zA-Z0-9/\\.-_+%?&@=#\\(\\)]+",  // Rough match for urls
+            @"https?://([a-z0-9A-Z]+\\.)+[a-z]+/[a-zA-Z0-9/\\.\\-_+%?&@=#\\(\\)]+",  // Rough match for urls
             HIGH_PRECISION
         },
         {
@@ -2032,64 +2032,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             endY = tmpY2;
         }
     } else if (clickCount == 3) {
-        // triple-click: smart selection
-        selectMode = SELECT_SMART;
-        if (startX > -1 && shiftPressed) {
-            // Shift is pressed, so extend selection
-            int tx1 = startX;
-            int ty1 = startY;
-            int tx2 = endX;
-            int ty2 = endY;
-            [self smartSelectAtX:x y:y];
-            int tmpX1, tmpY1, tmpX2, tmpY2;
-            [self getWordForX:x
-                            y:y
-                       startX:&tmpX1
-                       startY:&tmpY1
-                         endX:&tmpX2
-                         endY:&tmpY2];
-            if (startX == tmpX1 &&
-                startY == tmpY1 &&
-                endX == tmpX2 &&
-                endY == tmpY2) {
-                // Same result as word selection -> perform line selection
-                clickCount = 4;
-            } else {
-                if (tx1 + ty1 * width < startX + startY * width) {
-                    startX = tx1;
-                    startY = ty1;
-                } else {
-                    endX = startX;
-                    endY = startY;
-                    startX = tx2;
-                    startY = ty2;
-                }
-            }
-        } else {
-            // not holding shift
-            if (![self smartSelectAtX:x y:y]) {
-                // fall back on line selection
-                clickCount = 4;
-            } else {
-                int tmpX1, tmpY1, tmpX2, tmpY2;
-                [self getWordForX:x
-                                y:y
-                           startX:&tmpX1
-                           startY:&tmpY1
-                             endX:&tmpX2
-                             endY:&tmpY2];
-                if (startX == tmpX1 &&
-                    startY == tmpY1 &&
-                    endX == tmpX2 &&
-                    endY == tmpY2) {
-                    // Same result as word selection -> perform line selection
-                    clickCount = 4;
-                }
-            }
-        }
-    }
-    if (clickCount >= 4) {
-        // quad-click; select line
+        // triple-click; select line
         selectMode = SELECT_LINE;
         if (startX > -1 && shiftPressed) {
             // extend existing selection
@@ -2112,6 +2055,20 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             startX = 0;
             endX = width;
             startY = endY = y;
+        }
+    } else if (clickCount == 4) {
+        // quad-click: smart selection
+        // ignore status of shift key for smart selection because extending was messed up by
+        // triple click.
+        selectMode = SELECT_SMART;
+        if ([self smartSelectAtX:x y:y]) {
+            int tmpX1, tmpY1, tmpX2, tmpY2;
+            [self getWordForX:x
+                            y:y
+                       startX:&tmpX1
+                       startY:&tmpY1
+                         endX:&tmpX2
+                         endY:&tmpY2];
         }
     }
 
