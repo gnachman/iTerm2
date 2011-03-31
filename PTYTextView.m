@@ -1375,6 +1375,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     const double LOW_PRECISION = 0.001;
     const double NORMAL_PRECISION = 1.0;
     const double HIGH_PRECISION = 1000.0;
+    const double VERY_HIGH_PRECISION = 1000000.0;
+
     struct {
         NSString* regex;
         double precision;
@@ -1408,25 +1410,32 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             HIGH_PRECISION
         },
         {
-            @"https?://([a-z0-9A-Z]+\\.)+[a-z]+/[a-zA-Z0-9/\\.\\-_+%?&@=#\\(\\)]+",  // Rough match for urls
-            HIGH_PRECISION
+            // http or https
+            // |       optional username@ or username:password@
+            // |       |                               alphanumeric hostname followed by dot repeated at least once
+            // |       |                               |                 tld
+            // |       |                               |                 |        optional: slash followed by 0 or more URL-y characters
+            // |       |                               |                 |        |
+            @"https?://([a-z0-9A-Z]+(:[a-zA-Z0-9]+)?@)?([a-z0-9A-Z]+\\.)+[A-Za-z]+(/[a-zA-Z0-9/\\.\\-_+%?&@=#\\(\\)]*)?",  // Rough match for urls
+            VERY_HIGH_PRECISION  // A URL can appear to contain an email addr so use a higher precision
         },
         {
             @"\\bmailto:[[:letter:][:number:][:punctuation:][:symbol:]]+",  // mailto url (very, very approximately)
-            HIGH_PRECISION
+            VERY_HIGH_PRECISION  // A URL can appear to contain an email addr so use a higher precision
         },
         {
             @"\\bssh:[[:letter:][:number:][:punctuation:][:symbol:]]+",  // SSH url (very, very approximately)
-            HIGH_PRECISION
+            VERY_HIGH_PRECISION  // A URL can appear to contain an email addr so use a higher precision
         },
         {
             @"\\btelnet:[[:letter:][:number:][:punctuation:][:symbol:]]+",  // Telnet url (very, very approximately)
-            HIGH_PRECISION
+            VERY_HIGH_PRECISION  // A URL can appear to contain an email addr so use a higher precision
         },
         { nil, 0 }
     };
 
     NSMutableDictionary* matches = [NSMutableDictionary dictionaryWithCapacity:13];
+    int numCoords = [coords count];
 
     NSLog(@"Searching for %@", textWindow);
     for (int j = 0; exps[j].regex; j++) {
@@ -1448,7 +1457,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                         SmartMatch* match = [[[SmartMatch alloc] init] autorelease];
                         match->score = score;
                         Coord* startCoord = [coords objectAtIndex:i + temp.location];
-                        Coord* endCoord = [coords objectAtIndex:i + temp.location + temp.length];
+                        Coord* endCoord = [coords objectAtIndex:MIN(numCoords - 1, i + temp.location + temp.length)];
                         match->startX = startCoord->x;
                         match->absStartY = startCoord->y + [dataSource totalScrollbackOverflow];
                         match->endX = endCoord->x;
@@ -1461,6 +1470,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 } else {
                     i += temp.location;
                 }
+            } else {
+                break;
             }
         }
     }
