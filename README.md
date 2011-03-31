@@ -1,7 +1,7 @@
-# iTerm2 with Trouter
+# iTerm2 with "Mouse in the Shell" technology
 ## Extremely alpha.
 
-Screencast: http://vimeo.com/21690922
+[Screencast](http://vimeo.com/21690922)
 
 Ever wanted to be able to click on paths to open things in a shell?
 Well, now you can! It'll even open it to the right line if
@@ -20,6 +20,7 @@ Just download (or build your own, if you're paranoid), and off you go!
 * Make paths work even after the directory has been changed.
 * Configuration options
 * More modifier keys: e.g.,
-** Shift + Command + Click on a folder does `cd <dir>; ls`
-** Shift + Command + Click on a foo_spec.rb:88 does `spec foo_spec.rb -l 88`
- 
+  * Shift + Command + Click on a folder does `cd <dir>; ls`
+  * Shift + Command + Click on a foo_spec.rb:88 does `spec foo_spec.rb -l 88`
+
+Jack Chen (chendo)
