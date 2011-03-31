@@ -22,5 +22,6 @@ Just [Download](https://github.com/chendo/iTerm2/archives/master) (or build your
 * More modifier keys: e.g.,
   * Shift + Command + Click on a folder does `cd <dir>; ls`
   * Shift + Command + Click on a foo_spec.rb:88 does `spec foo_spec.rb -l 88`
+* Support for other editors (BBEdit, TextWrangler, JEdit)
 
-Jack Chen (chendo)
+Jack Chen (@chendo)
