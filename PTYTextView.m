@@ -1365,7 +1365,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return joinedLines;
 }
 
-- (BOOL)smartSelectAtX:(int)x y:(int)y
+- (BOOL)smartSelectAtX:(int)x y:(int)y toStartX:(int*)X1 toStartY:(int*)Y1 toEndX:(int*)X2 toEndY:(int*)Y2
 {
     NSString* textWindow;
     int targetOffset;
@@ -1394,7 +1394,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             NORMAL_PRECISION
         },
         {
-            @"/?([[:letter:][:number:]._-]+/+)+[[:letter:][:number:]._-]+/?",  // words delimited by slashes, optionally beginning and optionally ending in a slash (e.g., include path)
+            @"\\~?/?([[:letter:][:number:]._-]+/+)+[[:letter:][:number:]._-]+/?",  // words delimited by slashes, optionally beginning with / or ~ or ~/ and optionally ending in a slash (e.g., include path)
             NORMAL_PRECISION
         },
         {
@@ -1474,22 +1474,28 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if ([matches count]) {
         NSArray* sortedMatches = [[[matches allValues] sortedArrayUsingSelector:@selector(compare:)] retain];
         SmartMatch* bestMatch = [sortedMatches lastObject];
-        startX = bestMatch->startX;
-        startY = bestMatch->absStartY - [dataSource totalScrollbackOverflow];
-        endX = bestMatch->endX;
-        endY = bestMatch->absEndY - [dataSource totalScrollbackOverflow];
+        *X1 = bestMatch->startX;
+        *Y1 = bestMatch->absStartY - [dataSource totalScrollbackOverflow];
+        *X2 = bestMatch->endX;
+        *Y2 = bestMatch->absEndY - [dataSource totalScrollbackOverflow];
         return YES;
     } else {
         // Fall back on word selection
         [self getWordForX:x
                         y:y
-                   startX:&startX
-                   startY:&startY
-                     endX:&endX
-                     endY:&endY];
+                   startX:X1
+                   startY:Y1
+                     endX:X2
+                     endY:Y2];
         return NO;
     }
 }
+
+- (BOOL)smartSelectAtX:(int)x y:(int)y
+{
+    return [self smartSelectAtX:x y:y toStartX:&startX toStartY:&startY toEndX:&endX toEndY:&endY];
+}
+
 
 - (void)keyDown:(NSEvent*)event
 {
@@ -1862,7 +1868,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 - (void)mouseEntered:(NSEvent *)event
 {
     if ([[PreferencePanel sharedInstance] focusFollowsMouse] &&
-		    [[self window] alphaValue] > 0) {
+            [[self window] alphaValue] > 0) {
         // Some windows automatically close when they lose key status and are
         // incompatible with FFM. Check if the key window or its controller implements
         // disableFocusFollowsMouse and if it returns YES do nothing.
@@ -6112,27 +6118,13 @@ static bool IsUrlChar(NSString* str)
                              endX:&tmpX2
                              endY:&tmpY2];
             } else {
-                // Save start/end x/y
-                int ox1, oy1, ox2, oy2;
-                ox1 = startX;
-                oy1 = startY;
-                ox2 = endX;
-                oy2 = endY;
-
                 // Set start/end x/y to new word
-                [self smartSelectAtX:x y:y];
-
-                // Copy statr/end x/y to tmp x/y 1/2
-                tmpX1 = startX;
-                tmpY1 = startY;
-                tmpX2 = endX;
-                tmpY2 = endY;
-
-                // Restore start/end x/y
-                startX = ox1;
-                startY = oy1;
-                endX = ox2;
-                endY = oy2;
+                [self smartSelectAtX:x
+                                   y:y
+                            toStartX:&tmpX1
+                            toStartY:&tmpY1
+                              toEndX:&tmpX2
+                              toEndY:&tmpY2];
             }
 
             // Now the complicated bit...
@@ -6153,12 +6145,21 @@ static bool IsUrlChar(NSString* str)
                     // NOT next word).
                     // Afterwards, selecting will continue normally.
                     int tx1, tx2, ty1, ty2;
-                    [self getWordForX:startX-1
-                                    y:startY
-                               startX:&tx1
-                               startY:&ty1
-                                 endX:&tx2
-                                 endY:&ty2];
+                    if (selectMode == SELECT_WORD) {
+                        [self getWordForX:startX-1
+                                        y:startY
+                                   startX:&tx1
+                                   startY:&ty1
+                                     endX:&tx2
+                                     endY:&ty2];
+                    } else {
+                        [self smartSelectAtX:startX-1
+                                           y:startY
+                                    toStartX:&tx1
+                                    toStartY:&ty1
+                                      toEndX:&tx2
+                                      toEndY:&ty2];
+                    }
                     startX = tx1;
                     startY = ty1;
                 }
@@ -6176,12 +6177,21 @@ static bool IsUrlChar(NSString* str)
                     // selecting backwards.)
                     // For an explanation why, read the long comment above.
                     int tx1, tx2, ty1, ty2;
-                    [self getWordForX:startX
-                                    y:startY
-                               startX:&tx1
-                               startY:&ty1
-                                 endX:&tx2
-                                 endY:&ty2];
+                    if (selectMode == SELECT_WORD) {
+                        [self getWordForX:startX
+                                        y:startY
+                                   startX:&tx1
+                                   startY:&ty1
+                                     endX:&tx2
+                                     endY:&ty2];
+                    } else {
+                        [self smartSelectAtX:startX
+                                           y:startY
+                                    toStartX:&tx1
+                                    toStartY:&ty1
+                                      toEndX:&tx2
+                                      toEndY:&ty2];
+                    }
                     startX = tx2;
                     startY = ty2;
                 }
