@@ -39,7 +39,7 @@
 
 - (void) dealloc {
     [fileManager release];
-    [super dealloc]; 
+    [super dealloc];
 }
 
 - (void) determineEditor {
@@ -54,10 +54,10 @@
 - (BOOL) applicationExists: (NSString *)bundle_id {
     CFURLRef appURL;
     OSStatus result = LSFindApplicationForInfo (
-                                                kLSUnknownCreator,        
-                                                (CFStringRef)bundle_id,  
-                                                NULL,                     
-                                                NULL,                     
+                                                kLSUnknownCreator,
+                                                (CFStringRef)bundle_id,
+                                                NULL,
+                                                NULL,
                                                 &appURL
                                                 );
     if (appURL)
@@ -76,52 +76,52 @@
     BOOL ret = FALSE;
     MDItemRef item = MDItemCreate(kCFAllocatorDefault, (CFStringRef)path);
     CFTypeRef ref = MDItemCopyAttribute(item, CFSTR("kMDItemContentType"));
-    
+
     if (ref) {
         if (UTTypeConformsTo(ref, CFSTR("public.text"))) {
             ret = TRUE;
         }
         CFRelease(ref);
     }
-    
+
     if (item) CFRelease(item);
     return ret;
 }
 
 - (NSString *) getFilename:(NSString *)path workingDirectory:(NSString *)workingDirectory lineNumber:(NSString **)lineNumber {
     *lineNumber = [path stringByMatching:@":(\\d+)" capture:1];
-    path = [path stringByReplacingOccurrencesOfRegex:@":\\d+(?::.+)?$" withString:@""];
- 
+    path = [path stringByReplacingOccurrencesOfRegex:@":\\d+(?::.*)?$" withString:@""];
+
     if (![fileManager fileExistsAtPath:path])
         path = [NSString stringWithFormat:@"%@/%@", workingDirectory, path];
 
     return path;
 }
-        
+
 
 - (void) openPath:(NSString *)path workingDirectory:(NSString *)workingDirectory {
     BOOL isDirectory;
     NSString* lineNumber;
-    
+
     path = [self getFilename:path workingDirectory:workingDirectory lineNumber:&lineNumber];
-    
+
     if (![fileManager fileExistsAtPath:path isDirectory:&isDirectory])
         return;
-    
+
     if (lineNumber == nil)
         lineNumber = @"";
-    
+
     if (isDirectory) {
         [[NSWorkspace sharedWorkspace] openFile:path];
         return;
     }
-    
+
     if (editor && [self isTextFile: path]) {
         NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@://open?url=file://%@&line=%@", editor, path, lineNumber, nil]];
         [[NSWorkspace sharedWorkspace] openURL:url];
         return;
     }
-    
+
     [[NSWorkspace sharedWorkspace] openFile:path];
 }
 
