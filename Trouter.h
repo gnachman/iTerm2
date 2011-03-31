@@ -35,7 +35,7 @@
 - (Trouter*) init;
 - (void) dealloc;
 - (void) determineEditor;
-- (BOOL) applicationExists: (CFStringRef)bundle_id;
-- (void) routePath:(NSString *)path;
+- (BOOL) applicationExists: (NSString *)bundle_id;
+- (void) routePath:(NSString *)path workingDirectory:(NSString *)workingDirectory;
 
 @end

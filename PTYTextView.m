@@ -5650,9 +5650,8 @@ static bool IsUrlChar(NSString* str)
         // Not a URL, hand it off to Trouter
         
         NSString *working_directory = [[dataSource shellTask] getWorkingDirectory];
-        NSString *full_path = [NSString stringWithFormat:@"%@/%@", working_directory, trimmedURLString];
         
-        [trouter routePath:full_path];
+        [trouter routePath:trimmedURLString workingDirectory:working_directory];
         
         return;
     } else {

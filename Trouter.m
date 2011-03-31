@@ -51,11 +51,11 @@
     }
 }
 
-- (BOOL) applicationExists: (CFStringRef)bundle_id {
+- (BOOL) applicationExists: (NSString *)bundle_id {
     CFURLRef appURL;
     OSStatus result = LSFindApplicationForInfo (
                                                 kLSUnknownCreator,        
-                                                bundle_id,  
+                                                (CFStringRef)bundle_id,  
                                                 NULL,                     
                                                 NULL,                     
                                                 &appURL
@@ -71,7 +71,24 @@
     }
 }
 
-- (void) routePath:(NSString *)path {
+- (BOOL) isTextFile: (NSString *)path {
+    BOOL ret = FALSE;
+    MDItemRef item = MDItemCreate(kCFAllocatorDefault, (CFStringRef)path);
+    CFTypeRef ref = MDItemCopyAttribute(item, CFSTR("kMDItemContentType"));
+    
+    if (ref) {
+        if (UTTypeConformsTo(ref, CFSTR("public.text"))) {
+            ret = TRUE;
+        }
+        CFRelease(ref);
+    }
+    
+    if (item) CFRelease(item);
+    return ret;
+}
+        
+
+- (void) routePath:(NSString *)path workingDirectory:(NSString *)workingDirectory {
     BOOL isDirectory;
     NSString* lineNumber;
     
@@ -81,6 +98,9 @@
     if (lineNumber == nil)
         lineNumber = @"";
     
+    if (![fileManager fileExistsAtPath:path])
+        path = [NSString stringWithFormat:@"%@/%@", workingDirectory, path];
+    
     if (![fileManager fileExistsAtPath:path isDirectory:&isDirectory])
         return;
     
@@ -89,9 +109,13 @@
         return;
     }
     
-    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@://open?url=file://%@&line=%@", editor, path, lineNumber, nil]];
-        
-    [[NSWorkspace sharedWorkspace] openURL:url];
+    if ([self isTextFile: path]) {
+        NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@://open?url=file://%@&line=%@", editor, path, lineNumber, nil]];
+        [[NSWorkspace sharedWorkspace] openURL:url];
+        return;
+    }
+    
+    [[NSWorkspace sharedWorkspace] openFile:path];
 }
 
 @end
