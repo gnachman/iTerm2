@@ -73,6 +73,13 @@
 
 - (void) routePath:(NSString *)path {
     BOOL isDirectory;
+    NSString* lineNumber;
+    
+    lineNumber = [path stringByMatching:@":(\\d+)" capture:1];
+    path = [path stringByReplacingOccurrencesOfRegex:@":\\d+(?::.+)?$" withString:@""];
+    
+    if (lineNumber == nil)
+        lineNumber = @"";
     
     if (![fileManager fileExistsAtPath:path isDirectory:&isDirectory])
         return;
@@ -82,7 +89,7 @@
         return;
     }
     
-    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@://open?url=file://%@&line=%@", editor, path, @"1", nil]];
+    NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:@"%@://open?url=file://%@&line=%@", editor, path, lineNumber, nil]];
         
     [[NSWorkspace sharedWorkspace] openURL:url];
 }
