@@ -234,6 +234,9 @@ typedef struct PTYFontInfo PTYFontInfo;
     // Trouter
     Trouter* trouter;
     NSMutableArray *workingDirectoryAtLines;
+
+    // Works around an apparent OS bug where we get drag events without a mousedown.
+    BOOL dragOk_;
 }
 
 + (NSCursor *)textViewCursor;
