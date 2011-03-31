@@ -60,7 +60,8 @@
                                                 NULL,                     
                                                 &appURL
                                                 );
-    CFRelease(appURL);
+    if (appURL)
+        CFRelease(appURL);
     switch (result) {
         case noErr:
             return true;
