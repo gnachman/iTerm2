@@ -540,7 +540,6 @@ static NSImage* wrapToBottomImage = nil;
     const double kBias = kCenter * dimmingAmount_;
     const double kRange = 1 - dimmingAmount_ * 2;
 
-    const double coeff = 1-dimmingAmount_;
     return [NSColor colorWithCalibratedRed:kBias + r * kRange
                                      green:kBias + g * kRange
                                       blue:kBias + b * kRange
@@ -1712,10 +1711,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([[self delegate] xtermMouseReporting])
-        && (locationInTextView.y > visibleRect.origin.y) && !([event modifierFlags] & NSAlternateKeyMask))
-        //        && ([event modifierFlags] & NSCommandKeyMask == 0))
-    {
+    if (([[self delegate] xtermMouseReporting]) &&
+        (locationInTextView.y > visibleRect.origin.y) &&
+        !([event modifierFlags] & NSAlternateKeyMask)) {
         int rx, ry;
         rx = (locationInTextView.x-MARGIN - visibleRect.origin.x)/charWidth;
         ry = (locationInTextView.y - visibleRect.origin.y)/lineHeight;
@@ -1741,6 +1739,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 break;
         }
     }
+
+    [super rightMouseDown:event];
 }
 
 - (void)rightMouseUp:(NSEvent *)event
