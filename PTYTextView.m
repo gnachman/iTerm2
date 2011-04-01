@@ -530,10 +530,20 @@ static NSImage* wrapToBottomImage = nil;
     double r = [orig redComponent];
     double g = [orig greenComponent];
     double b = [orig blueComponent];
+
+    // This algorithm limits the dynamic range of colors as well as brightening
+    // them. Both attributes change in proportion to the dimmingAmount_.
+
+    // This value arrived at by experimentation. Not sure if it'll be right for
+    // everyone.
+    const double kCenter = 26.0 / 32.0;
+    const double kBias = kCenter * dimmingAmount_;
+    const double kRange = 1 - dimmingAmount_ * 2;
+
     const double coeff = 1-dimmingAmount_;
-    return [NSColor colorWithCalibratedRed:0.5*dimmingAmount_ + r*coeff
-                                     green:0.5*dimmingAmount_ + g*coeff
-                                      blue:0.5*dimmingAmount_ + b*coeff
+    return [NSColor colorWithCalibratedRed:kBias + r * kRange
+                                     green:kBias + g * kRange
+                                      blue:kBias + b * kRange
                                      alpha:[orig alphaComponent]];
 }
 

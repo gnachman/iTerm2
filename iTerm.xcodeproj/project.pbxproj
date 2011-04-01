@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1D1158CE13444D29009B366F /* iTerm2 Help in Resources */ = {isa = PBXBuildFile; fileRef = 1D1158C913444D29009B366F /* iTerm2 Help */; };
 		1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
 		1D173859126C820A004622DC /* FakeWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D173857126C820A004622DC /* FakeWindow.h */; };
 		1D237D28131D8741004DD60C /* FindView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D237D26131D8741004DD60C /* FindView.h */; };
@@ -209,7 +210,6 @@
 		1DE5EBE8122B892900C736B0 /* BookmarksWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* BookmarksWindow.h */; };
 		1DE5EBE9122B892900C736B0 /* BookmarksWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */; };
 		1DEE9FDD11FCA60F009E18C9 /* credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 1DEE9FDB11FCA60F009E18C9 /* credits.rtf */; };
-		1DF21A131342FFA700B44603 /* iTerm2 Help in Resources */ = {isa = PBXBuildFile; fileRef = 1DF21A0E1342FFA700B44603 /* iTerm2 Help */; };
 		49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A6E4081211CC6000D9AD6F /* Compatability.h */; };
 		874206490564169600CFC3F1 /* iTermApplicationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */; };
 		8742064D0564169600CFC3F1 /* iTerm.icns in Resources */ = {isa = PBXBuildFile; fileRef = E8EDCE69015E0A5703000001 /* iTerm.icns */; };
@@ -277,6 +277,7 @@
 /* Begin PBXFileReference section */
 		0464AB2F006CD2EC7F000001 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		0464AB30006CD2EC7F000001 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
+		1D1158CA13444D29009B366F /* English */ = {isa = PBXFileReference; lastKnownFileType = folder; name = English; path = "English.lproj/iTerm2 Help"; sourceTree = "<group>"; };
 		1D13EADB12113A2D00909F9C /* libncurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libncurses.dylib; path = usr/lib/libncurses.dylib; sourceTree = SDKROOT; };
 		1D173857126C820A004622DC /* FakeWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FakeWindow.h; sourceTree = "<group>"; };
 		1D173858126C820A004622DC /* FakeWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FakeWindow.m; sourceTree = "<group>"; };
@@ -365,7 +366,6 @@
 		1DEB29371288887100B2CB9F /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		1DEB293D1288899A00B2CB9F /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		1DEE9FDC11FCA60F009E18C9 /* English */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = English; path = English.lproj/credits.rtf; sourceTree = "<group>"; };
-		1DF21A0F1342FFA700B44603 /* English */ = {isa = PBXFileReference; lastKnownFileType = folder; name = English; path = "English.lproj/iTerm2 Help"; sourceTree = "<group>"; };
 		2076B15704E8817300000106 /* PTToolbarController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTToolbarController.h; sourceTree = "<group>"; };
 		2076B15804E8817300000106 /* PTToolbarController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTToolbarController.m; sourceTree = "<group>"; };
 		20B8892A04E9342100000106 /* ITViewLocalizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITViewLocalizer.h; sourceTree = "<group>"; };
@@ -773,7 +773,7 @@
 				1DCA8BA7121A1B8000ABDEB5 /* PrefsKeyboard.tiff */,
 				1DCA8BA8121A1B8000ABDEB5 /* PrefsTerminal.tiff */,
 				1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */,
-				1DF21A0E1342FFA700B44603 /* iTerm2 Help */,
+				1D1158C913444D29009B366F /* iTerm2 Help */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -1224,7 +1224,7 @@
 				1DA02CFB1327612600D7E7DB /* bell.png in Resources */,
 				1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */,
 				1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */,
-				1DF21A131342FFA700B44603 /* iTerm2 Help in Resources */,
+				1D1158CE13444D29009B366F /* iTerm2 Help in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1357,6 +1357,14 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
+		1D1158C913444D29009B366F /* iTerm2 Help */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1D1158CA13444D29009B366F /* English */,
+			);
+			name = "iTerm2 Help";
+			sourceTree = "<group>";
+		};
 		1D237D8E131D8BEE004DD60C /* FindView.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -1395,14 +1403,6 @@
 				1DEE9FDC11FCA60F009E18C9 /* English */,
 			);
 			name = credits.rtf;
-			sourceTree = "<group>";
-		};
-		1DF21A0E1342FFA700B44603 /* iTerm2 Help */ = {
-			isa = PBXVariantGroup;
-			children = (
-				1DF21A0F1342FFA700B44603 /* English */,
-			);
-			name = "iTerm2 Help";
 			sourceTree = "<group>";
 		};
 		9325FF3C0FB54DF1004EC67C /* PseudoTerminal.xib */ = {

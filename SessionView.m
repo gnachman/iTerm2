@@ -126,7 +126,7 @@ static int nextViewId;
 
 - (double)dimmedDimmingAmount
 {
-    return 0.2;
+    return 0.06125;
 }
 
 - (void)setDimmed:(BOOL)isDimmed
