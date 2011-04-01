@@ -382,7 +382,8 @@
     NSData* address = [[sender addresses] objectAtIndex: 0];
     struct sockaddr_in *socketAddress = (struct sockaddr_in *)[address bytes];
     char buffer[INET6_ADDRSTRLEN + 1];
-    const char* strAddr = inet_ntop(socketAddress->sin_family, socketAddress,
+
+    const char* strAddr = inet_ntop(socketAddress->sin_family, &socketAddress->sin_addr,
                                     buffer, [address length]);
     if (strAddr) {
           [self _addBonjourHostProfileWithName:serviceName
