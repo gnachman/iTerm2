@@ -49,13 +49,21 @@
     else if ([self applicationExists: @"com.macromates.textmate"]) {
         editor = @"txmt";
     }
+    else if ([self applicationExists: @"com.barebones.bbedit"]) {
+        // BBedit suports txmt handler but doesn't have one of its own for some reason.
+        editor = @"txmt";
+    }
 }
 
 - (NSFileManager *) fileManager {
     return fileManager;
 }
 
-- (BOOL) applicationExists: (NSString *)bundle_id {
+- (BOOL) applicationExists:(NSString *)bundle_id {
+    return [self applicationExists:bundle_id path:nil];
+}
+
+- (BOOL) applicationExists:(NSString *)bundle_id path:(NSString **)path {
     CFURLRef appURL;
     OSStatus result = LSFindApplicationForInfo (
                                                 kLSUnknownCreator,
@@ -64,8 +72,13 @@
                                                 NULL,
                                                 &appURL
                                                 );
-    if (appURL)
+    
+    if (appURL) {
+        if (path != nil)
+            *path = [appURL path];
         CFRelease(appURL);
+    }
+    
     switch (result) {
         case noErr:
             return true;
@@ -76,7 +89,7 @@
     }
 }
 
-- (BOOL) isTextFile: (NSString *)path {
+- (BOOL) isTextFile:(NSString *)path {
     BOOL ret = FALSE;
     MDItemRef item = MDItemCreate(kCFAllocatorDefault, (CFStringRef)path);
     CFTypeRef ref = MDItemCopyAttribute(item, CFSTR("kMDItemContentType"));
@@ -92,14 +105,14 @@
     return ret;
 }
 
-- (NSString *) getFilename:(NSString *)path workingDirectory:(NSString *)workingDirectory lineNumber:(NSString **)lineNumber {
+- (NSString *) getFullPath:(NSString *)path workingDirectory:(NSString *)workingDirectory lineNumber:(NSString **)lineNumber {
     if (!path || [path length] == 0)
         return nil;
     if (lineNumber != nil)
         *lineNumber = [path stringByMatching:@":(\\d+)" capture:1];
     path = [path stringByReplacingOccurrencesOfRegex:@":\\d+(?::.*)?$" withString:@""];
 
-    if (![fileManager fileExistsAtPath:path])
+    if ([path substringToIndex:1] != @"/")
         path = [NSString stringWithFormat:@"%@/%@", workingDirectory, path];
 
     return path;

@@ -35,9 +35,10 @@
 - (Trouter*) init;
 - (void) dealloc;
 - (void) determineEditor;
-- (BOOL) applicationExists: (NSString *)bundle_id;
+- (BOOL) applicationExists:(NSString *)bundle_id;
+- (BOOL) applicationExists:(NSString *)bundle_id path:(NSString **)path;
 - (NSFileManager *) fileManager;
-- (NSString *) getFilename:(NSString *)path workingDirectory:(NSString *)workingDirectory lineNumber:(NSString **)lineNumber;
+- (NSString *) getFullPath:(NSString *)path workingDirectory:(NSString *)workingDirectory lineNumber:(NSString **)lineNumber;
 - (void) openPath:(NSString *)path workingDirectory:(NSString *)workingDirectory;
 
 @end

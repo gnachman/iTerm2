@@ -2328,7 +2328,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if ([event modifierFlags] & NSCommandKeyMask) {
         // Drag a file handle
         NSString *path = [self _getURLForX: x y:y];
-        path = [trouter getFilename:path workingDirectory:[[dataSource shellTask] getWorkingDirectory] lineNumber:nil];
+        path = [trouter getFullPath:path workingDirectory:[[dataSource shellTask] getWorkingDirectory] lineNumber:nil];
         if (![[trouter fileManager] fileExistsAtPath:path])
             return;
 
@@ -2342,7 +2342,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
         dragImage = [[NSWorkspace sharedWorkspace] iconForFile:path];
         dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
-        dragPosition.x -= 16;
+        dragPosition.x -= [dragImage size].width/2;
 
         [self dragImage:dragImage
                      at:dragPosition
