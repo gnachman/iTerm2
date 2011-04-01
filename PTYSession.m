@@ -2300,7 +2300,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                 // Update the job name in the tab title.
                 NSString* oldName = jobName_;
                 jobName_ = [[SHELL currentJob:NO] copy];
-                [jobName_ retain];
                 if (![oldName isEqualToString:jobName_]) {
                     [[self tab] nameOfSession:self didChangeTo:[self name]];
                     [[[self tab] parentWindow] setWindowTitle];
