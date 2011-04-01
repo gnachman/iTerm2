@@ -2401,16 +2401,30 @@ NSString *sessionsKey = @"sessions";
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
 
+- (Bookmark*)_bookmarkToSplit
+{
+    Bookmark* theBookmark = [[self currentSession] originalAddressBookEntry];
+    if (!theBookmark) {
+        theBookmark = [[self currentSession] addressBookEntry];
+    }
+    if (!theBookmark) {
+        theBookmark = [[BookmarkModel sharedInstance] defaultBookmark];
+    }
+    return theBookmark;
+}
+
 - (IBAction)splitVertically:(id)sender
 {
-    Bookmark* theBookmark = [[BookmarkModel sharedInstance] defaultBookmark];
-    [self splitVertically:YES withBookmark:theBookmark targetSession:[[self currentTab] activeSession]];
+    [self splitVertically:YES
+             withBookmark:[self _bookmarkToSplit]
+            targetSession:[[self currentTab] activeSession]];
 }
 
 - (IBAction)splitHorizontally:(id)sender
 {
-    Bookmark* theBookmark = [[BookmarkModel sharedInstance] defaultBookmark];
-    [self splitVertically:NO withBookmark:theBookmark targetSession:[[self currentTab] activeSession]];
+    [self splitVertically:NO
+             withBookmark:[self _bookmarkToSplit]
+            targetSession:[[self currentTab] activeSession]];
 }
 
 - (void)fitWindowToTabs
