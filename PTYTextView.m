@@ -221,7 +221,7 @@ static NSImage* wrapToBottomImage = nil;
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
     imeOffset = 0;
     resultMap_ = [[NSMutableDictionary alloc] init];
-    
+
     trouter = [[Trouter alloc] init];
     return self;
 }
@@ -293,7 +293,7 @@ static NSImage* wrapToBottomImage = nil;
     [self releaseAllFallbackFonts];
     [fallbackFonts release];
     [selectionScrollTimer release];
-    
+
     [trouter release];
 
     [super dealloc];
@@ -2323,6 +2323,36 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
             return;
         }
+    }
+
+    if ([event modifierFlags] & NSCommandKeyMask) {
+        // Drag a file handle
+        NSString *path = [self _getURLForX: x y:y];
+        path = [trouter getFilename:path workingDirectory:[[dataSource shellTask] getWorkingDirectory] lineNumber:nil];
+        if (![[trouter fileManager] fileExistsAtPath:path])
+            return;
+
+        NSPoint dragPosition;
+        NSImage *dragImage;
+
+        NSArray *fileList = [NSArray arrayWithObject: path];
+        NSPasteboard *pboard = [NSPasteboard pasteboardWithName:NSDragPboard];
+        [pboard declareTypes:[NSArray arrayWithObject:NSFilenamesPboardType] owner:nil];
+        [pboard setPropertyList:fileList forType:NSFilenamesPboardType];
+
+        dragImage = [[NSWorkspace sharedWorkspace] iconForFile:path];
+        dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
+        dragPosition.x -= 16;
+
+        [self dragImage:dragImage
+                     at:dragPosition
+                 offset:NSZeroSize
+                  event:event
+             pasteboard:pboard
+                 source:self
+              slideBack:YES];
+        return;
+
     }
 
     int prevScrolling = selectionScrollDirection;
@@ -5646,13 +5676,13 @@ static bool IsUrlChar(NSString* str)
 
     NSRange range = [trimmedURLString rangeOfString:@"://"];
     if (range.location == NSNotFound) {
-        
+
         // Not a URL, hand it off to Trouter
-        
+
         NSString *working_directory = [[dataSource shellTask] getWorkingDirectory];
-        
+
         [trouter openPath:trimmedURLString workingDirectory:working_directory];
-        
+
         return;
     } else {
         // Search backwards for the start of the scheme.

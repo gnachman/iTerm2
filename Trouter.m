@@ -51,6 +51,10 @@
     }
 }
 
+- (NSFileManager *) fileManager {
+    return fileManager;
+}
+
 - (BOOL) applicationExists: (NSString *)bundle_id {
     CFURLRef appURL;
     OSStatus result = LSFindApplicationForInfo (
@@ -89,7 +93,10 @@
 }
 
 - (NSString *) getFilename:(NSString *)path workingDirectory:(NSString *)workingDirectory lineNumber:(NSString **)lineNumber {
-    *lineNumber = [path stringByMatching:@":(\\d+)" capture:1];
+    if (!path || [path length] == 0)
+        return nil;
+    if (lineNumber != nil)
+        *lineNumber = [path stringByMatching:@":(\\d+)" capture:1];
     path = [path stringByReplacingOccurrencesOfRegex:@":\\d+(?::.*)?$" withString:@""];
 
     if (![fileManager fileExistsAtPath:path])
