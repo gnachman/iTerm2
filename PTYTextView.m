@@ -621,6 +621,13 @@ static NSImage* wrapToBottomImage = nil;
 
     // Force the secondary font to use the same baseline as the primary font.
     secondaryFont.baselineOffset = primaryFont.baselineOffset;
+    if (secondaryFont.boldVersion) {
+        if (primaryFont.boldVersion) {
+            secondaryFont.boldVersion->baselineOffset = primaryFont.boldVersion->baselineOffset;
+        } else {
+            secondaryFont.boldVersion->baselineOffset = secondaryFont.baselineOffset;
+        }
+    }
 
     [self setMarkedTextAttributes:
         [NSDictionary dictionaryWithObjectsAndKeys:
