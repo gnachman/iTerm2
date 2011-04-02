@@ -2212,7 +2212,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         t = startX; startX = endX; endX = t;
     } else if ([mouseDownEvent locationInWindow].x == [event locationInWindow].x &&
                [mouseDownEvent locationInWindow].y == [event locationInWindow].y &&
-               !([event modifierFlags] & NSShiftKeyMask) &&
                [event clickCount] < 2 &&
                !mouseDragged) {
         // Just a click in the window.
@@ -2224,7 +2223,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             // Command click in place.
             NSString *url = [self _getURLForX:x y:y];
             
-            if (url &&[event modifierFlags] & NSShiftKeyMask) {
+            if (url && [event modifierFlags] & NSShiftKeyMask) {
                 NSString *fullPath = [trouter getFullPath:url
                                          workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
                                                lineNumber:nil];
