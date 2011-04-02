@@ -15,6 +15,13 @@ Just [Download](https://github.com/chendo/iTerm2/archives/master) (or build your
 Works with MacVim, Textmate and BBedit (it searches for editor in that
 order)
 
+## Operation
+* Command + Click opens the file if it is text in
+  MacVim/Textmate/BBedit, otherwise opens with associated program.
+* Command + Drag gives you a file handle you can drop on any app that
+  supports drag and drop (pretty much everything).
+* Command + Option + Click on a directory does `cd <path>; ls`
+
 ## Customisation
 If you don't use MacVim, Textmate or BBedit or if you want write
 specific parsers, you can have the path sent to an external script of
@@ -27,7 +34,6 @@ receive the full path and the line number (if any) as arguments.
 
 ## Cavets
 * Does not work with paths with spaces (for now).
-* Only works when paths clicked are resolvable from the current directory in the shell (for now)
 * No configuration options (for now).
 
 ## TODO
