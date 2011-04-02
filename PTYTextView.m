@@ -5696,7 +5696,7 @@ static bool IsUrlChar(NSString* str)
 
 - (void)_changeDirectory:(NSString *)path {
     // TODO: Make this more efficient by calculating the shortest path to target folder
-    [[dataSource shellTask] writeTask:[[NSString stringWithFormat:@"cd \"%@\"; ls\n", path] dataUsingEncoding:[[dataSource session] encoding]]];
+    [[dataSource shellTask] writeTask:[[NSString stringWithFormat:@"\3cd \"%@\"; ls\n", path] dataUsingEncoding:[[dataSource session] encoding]]];
 }
 
 - (void)_openURL:(NSString *)aURLString atLine:(long long)line {
