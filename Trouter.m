@@ -90,6 +90,12 @@
     }
 }
 
+- (BOOL) isDirectory:(NSString *)path {
+    BOOL ret;
+    [fileManager fileExistsAtPath:path isDirectory:&ret];
+    return ret;
+}
+
 - (BOOL) isTextFile:(NSString *)path {
     BOOL ret = FALSE;
     MDItemRef item = MDItemCreate(kCFAllocatorDefault, (CFStringRef)path);

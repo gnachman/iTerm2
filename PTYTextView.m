@@ -2222,9 +2222,17 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             [mouseDownEvent locationInWindow].x == [event locationInWindow].x &&
             [mouseDownEvent locationInWindow].y == [event locationInWindow].y) {
             // Command click in place.
-            //[self _openURL: [self selectedText]];
             NSString *url = [self _getURLForX:x y:y];
-            if (url != nil) {
+            
+            if (url &&[event modifierFlags] & NSAlternateKeyMask) {
+                NSString *fullPath = [trouter getFullPath:url
+                                         workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
+                                               lineNumber:nil];
+                if ([trouter isDirectory:fullPath]) {
+                    [self _changeDirectory:url];
+                }
+            }
+            else {
                 [self _openURL:url atLine:y + 1];
             }
         } else {
@@ -5685,6 +5693,10 @@ static bool IsUrlChar(NSString* str)
     }
     
     return [[workingDirectoryAtLines lastObject] lastObject];
+}
+
+- (void)_changeDirectory:(NSString *)path {
+    [[dataSource shellTask] writeTask:[[NSString stringWithFormat:@"cd \"%@\"; ls\n", path] dataUsingEncoding:[[dataSource session] encoding]]];
 }
 
 - (void)_openURL:(NSString *)aURLString atLine:(long long)line {

@@ -38,6 +38,8 @@
 - (void) determineEditor;
 - (BOOL) applicationExists:(NSString *)bundle_id;
 - (BOOL) applicationExists:(NSString *)bundle_id path:(NSString **)path;
+- (BOOL) isTextFile:(NSString *)path;
+- (BOOL) isDirectory:(NSString *)path;
 - (NSFileManager *) fileManager;
 - (NSString *) getFullPath:(NSString *)path workingDirectory:(NSString *)workingDirectory lineNumber:(NSString **)lineNumber;
 - (void) openPath:(NSString *)path workingDirectory:(NSString *)workingDirectory;
