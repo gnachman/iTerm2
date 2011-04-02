@@ -2224,7 +2224,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             // Command click in place.
             NSString *url = [self _getURLForX:x y:y];
             
-            if (url &&[event modifierFlags] & NSAlternateKeyMask) {
+            if (url &&[event modifierFlags] & NSShiftKeyMask) {
                 NSString *fullPath = [trouter getFullPath:url
                                          workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
                                                lineNumber:nil];
