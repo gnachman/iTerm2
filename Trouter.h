@@ -30,6 +30,7 @@
 @interface Trouter : NSObject {
     NSString *editor;
     NSFileManager *fileManager;
+    NSString *externalScript;
 }
 
 - (Trouter*) init;

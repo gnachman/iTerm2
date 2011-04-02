@@ -34,6 +34,7 @@
     self = [super init];
     [self determineEditor];
     fileManager = [[NSFileManager alloc] init];
+    externalScript = [[NSUserDefaults standardUserDefaults] stringForKey:@"TrouterScriptPath"];
     return self;
 }
 
@@ -130,6 +131,11 @@
 
     if (lineNumber == nil)
         lineNumber = @"";
+    
+    if (externalScript) {
+        [NSTask launchedTaskWithLaunchPath:externalScript arguments:[NSArray arrayWithObjects:path, lineNumber, nil]];
+        return;
+    }
 
     if (isDirectory) {
         [[NSWorkspace sharedWorkspace] openFile:path];
