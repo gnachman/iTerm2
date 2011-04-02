@@ -75,7 +75,7 @@
     
     if (appURL) {
         if (path != nil)
-            *path = [appURL path];
+            *path = [(NSURL *)appURL path];
         CFRelease(appURL);
     }
     
@@ -123,7 +123,7 @@
     BOOL isDirectory;
     NSString* lineNumber;
 
-    path = [self getFilename:path workingDirectory:workingDirectory lineNumber:&lineNumber];
+    path = [self getFullPath:path workingDirectory:workingDirectory lineNumber:&lineNumber];
 
     if (![fileManager fileExistsAtPath:path isDirectory:&isDirectory])
         return;
