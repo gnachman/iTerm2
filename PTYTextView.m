@@ -2229,7 +2229,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                                          workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
                                                lineNumber:nil];
                 if ([trouter isDirectory:fullPath]) {
-                    [self _changeDirectory:url];
+                    [self _changeDirectory:fullPath];
                 }
             }
             else {
@@ -5696,6 +5696,7 @@ static bool IsUrlChar(NSString* str)
 }
 
 - (void)_changeDirectory:(NSString *)path {
+    // TODO: Make this more efficient by calculating the shortest path to target folder
     [[dataSource shellTask] writeTask:[[NSString stringWithFormat:@"cd \"%@\"; ls\n", path] dataUsingEncoding:[[dataSource session] encoding]]];
 }
 
