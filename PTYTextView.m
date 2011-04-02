@@ -223,6 +223,7 @@ static NSImage* wrapToBottomImage = nil;
     resultMap_ = [[NSMutableDictionary alloc] init];
 
     trouter = [[Trouter alloc] init];
+    workingDirectoryAtLines = [[NSMutableArray alloc] init];
     return self;
 }
 
@@ -295,6 +296,7 @@ static NSImage* wrapToBottomImage = nil;
     [selectionScrollTimer release];
 
     [trouter release];
+    [workingDirectoryAtLines release];
 
     [super dealloc];
 }
@@ -2223,7 +2225,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             //[self _openURL: [self selectedText]];
             NSString *url = [self _getURLForX:x y:y];
             if (url != nil) {
-                [self _openURL:url];
+                [self _openURL:url atLine:y + 1];
             }
         } else {
             lastFindStartX = endX;
@@ -2328,7 +2330,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if ([event modifierFlags] & NSCommandKeyMask) {
         // Drag a file handle
         NSString *path = [self _getURLForX: x y:y];
-        path = [trouter getFullPath:path workingDirectory:[[dataSource shellTask] getWorkingDirectory] lineNumber:nil];
+        path = [trouter getFullPath:path workingDirectory:[self getWorkingDirectoryAtLine:y + 1] lineNumber:nil];
         if (![[trouter fileManager] fileExistsAtPath:path])
             return;
 
@@ -5660,6 +5662,42 @@ static bool IsUrlChar(NSString* str)
     return YES;
 }
 
+
+- (void)logWorkingDirectoryAtLine:(long long) line {
+    [workingDirectoryAtLines addObject:[NSArray arrayWithObjects:[NSNumber numberWithLongLong:line], [[dataSource shellTask] getWorkingDirectory], nil]];
+    if ([workingDirectoryAtLines count] >= 1000) {
+        [workingDirectoryAtLines removeObjectAtIndex:0];
+    }
+}
+
+- (NSString *)getWorkingDirectoryAtLine:(long long) line {
+    long long previousLine = [[[workingDirectoryAtLines lastObject] objectAtIndex:0] longLongValue];
+    long long currentLine;
+    
+    for (int i=[workingDirectoryAtLines count] - 2; i != -1; i--) {
+        
+        currentLine = [[[workingDirectoryAtLines objectAtIndex:i] objectAtIndex: 0] longLongValue];
+        
+        if (currentLine < line && line <= previousLine)
+            return [[workingDirectoryAtLines objectAtIndex:i] lastObject];
+        
+        previousLine = currentLine;
+    }
+    
+    return [[workingDirectoryAtLines lastObject] lastObject];
+}
+
+- (void)_openURL:(NSString *)aURLString atLine:(long long)line {
+    NSString* trimmedURLString;
+    
+    trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    
+    NSString *working_directory = [self getWorkingDirectoryAtLine:line];
+    [trouter openPath:trimmedURLString workingDirectory:working_directory];
+    
+    return;
+}
+
 - (void)_openURL:(NSString *)aURLString
 {
     NSURL *url;
@@ -5676,14 +5714,7 @@ static bool IsUrlChar(NSString* str)
 
     NSRange range = [trimmedURLString rangeOfString:@"://"];
     if (range.location == NSNotFound) {
-
-        // Not a URL, hand it off to Trouter
-
-        NSString *working_directory = [[dataSource shellTask] getWorkingDirectory];
-
-        [trouter openPath:trimmedURLString workingDirectory:working_directory];
-
-        return;
+        trimmedURLString = [@"http://" stringByAppendingString:trimmedURLString];
     } else {
         // Search backwards for the start of the scheme.
         for (int i = range.location - 1; 0 <= i; i--) {

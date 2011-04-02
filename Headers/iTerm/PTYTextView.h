@@ -233,6 +233,7 @@ typedef struct PTYFontInfo PTYFontInfo;
     
     // Trouter
     Trouter* trouter;
+    NSMutableArray *workingDirectoryAtLines;
 }
 
 + (NSCursor *)textViewCursor;
@@ -483,6 +484,12 @@ typedef enum {
 
 - (BOOL)_isBlankLine:(int)y;
 - (void)_openURL:(NSString *)aURLString;
+- (void)_openURL:(NSString *)aURLString atLine:(long long)line;
+
+// Snapshot working directory for Trouter
+- (void)logWorkingDirectoryAtLine:(long long)line;
+- (NSString *)getWorkingDirectoryAtLine:(long long)line;
+
 - (BOOL)_findMatchingParenthesis:(NSString *)parenthesis withX:(int)X Y:(int)Y;
 - (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent;
 - (BOOL)_isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old;

@@ -240,6 +240,8 @@ void StringToScreenChars(NSString *s,
 - (int)cursorX;
 - (int)cursorY;
 
+- (long long)getLineNumber;
+
 - (int)numberOfLines;
 - (int)numberOfScrollbackLines;
 
