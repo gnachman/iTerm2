@@ -11,7 +11,9 @@ You can also use Command + drag and it will turn it into a draggable
 file handle, which you can drop in any OSX app. Pretty rad, no?
 
 ## Instructions
-Just [Download](https://github.com/chendo/iTerm2/archives/master) (or build your own, if you're paranoid), and off you go!
+Just [Download](https://github.com/chendo/iTerm2/archives/master) (or build your own,
+if you're paranoid or you want the newest features), and off you go!
+
 Works with MacVim, Textmate and BBedit (it searches for editor in that
 order)
 
@@ -44,5 +46,10 @@ receive the full path and the line number (if any) as arguments.
   * Shift + Command + Click on a foo_spec.rb:88 does `spec foo_spec.rb -l 88`
 * Native support for other editors (TextWrangler, JEdit, Emacs, Rubymine)
 * Quicklook support
+
+## Changelog
+
+- alpha 1:
+* Command + Click to open implemented
 
 Jack Chen (@chendo)
