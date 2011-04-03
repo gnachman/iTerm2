@@ -1,7 +1,7 @@
 # iTerm2 with Semantic History
-## Extremely alpha.
+### Extremely alpha, but works well.
 
-[Screencast](http://vimeo.com/21690922)
+## Watch the [thirty second screencast](http://vimeo.com/21872771)
 
 Ever wanted to be able to click on paths to open things in a shell?
 Well, now you can! Just hold Command and click on the path in the shell.
