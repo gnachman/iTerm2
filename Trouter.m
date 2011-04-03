@@ -119,7 +119,7 @@
         *lineNumber = [path stringByMatching:@":(\\d+)" capture:1];
     path = [path stringByReplacingOccurrencesOfRegex:@":\\d+(?::.*)?$" withString:@""];
 
-    if ([path substringToIndex:1] != @"/")
+    if ([path rangeOfRegex:@"^/"] == NSNotFound)
         path = [NSString stringWithFormat:@"%@/%@", workingDirectory, path];
 
     return path;
