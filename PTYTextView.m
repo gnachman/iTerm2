@@ -5682,6 +5682,11 @@ static bool IsUrlChar(NSString* str)
 }
 
 - (NSString *)getWorkingDirectoryAtLine:(long long) line {
+    // Return current directory if not able to log via XTERMCC_WINDOW_TITLE
+    if ([workingDirectoryAtLines count] == 0) {
+        return [[dataSource shellTask] getWorkingDirectory];
+    }
+    
     long long previousLine = [[[workingDirectoryAtLines lastObject] objectAtIndex:0] longLongValue];
     long long currentLine;
     

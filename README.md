@@ -11,11 +11,20 @@ You can also use Command + drag and it will turn it into a draggable
 file handle, which you can drop in any OSX app. Pretty rad, no?
 
 ## Instructions
-Just [Download](https://github.com/chendo/iTerm2/archives/master) (or build your own,
-if you're paranoid or you want the newest features), and off you go!
+[Download](https://github.com/chendo/iTerm2/archives/master) (or build your own,
+if you're paranoid or you want the newest features).
 
 Works with MacVim, Textmate and BBedit (it searches for editor in that
 order)
+
+If you want it to work even when changing between directories, your
+shell must set a window title every time your prompt shows up. I'm using
+this as a hook cause it seemed the most appropriate. If you
+have oh-my-zsh, then it works out of the box.
+
+Other zsh users, see [termsupport.zsh](https://github.com/robbyrussell/oh-my-zsh/blob/master/lib/termsupport.zsh).
+
+Other shell users, see [here](http://www.faqs.org/docs/Linux-mini/Xterm-Title.html#toc4).
 
 ## Operation
 * Command + Click opens the file if it is text in
@@ -37,6 +46,7 @@ receive the full path and the line number (if any) as arguments.
 ## Cavets
 * Does not work with paths with spaces (for now).
 * No configuration options (for now).
+* Changing support doesn't work out of the box.
 
 ## Known issues
 * Drag detection is way too sensitive. Even one pixel makes it think
@@ -51,6 +61,9 @@ receive the full path and the line number (if any) as arguments.
 * Quicklook support
 
 ## Changelog
+
+### alpha 3:
+* Basic functionality still works if shell isn't setting window title
 
 ### alpha 2:
 * Now works when the working directory is not valid for old paths in the
