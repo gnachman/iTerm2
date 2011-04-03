@@ -1593,7 +1593,7 @@
 					"\"$(SRCROOT)\"/build/Development",
 				);
 				GCC_C_LANGUAGE_STANDARD = c99;
-				GCC_VERSION = 4.0;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_CHECK_SWITCH_STATEMENTS = YES;
 				GCC_WARN_MISSING_PARENTHESES = YES;
 				GCC_WARN_PROTOTYPE_CONVERSION = NO;
@@ -1624,7 +1624,7 @@
 					"\"$(SRCROOT)\"/build/Development",
 				);
 				GCC_C_LANGUAGE_STANDARD = c99;
-				GCC_VERSION = 4.0;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_PROTOTYPE_CONVERSION = NO;
 				GCC_WARN_SIGN_COMPARE = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
@@ -1648,7 +1648,7 @@
 					"$(FRAMEWORK_SEARCH_PATHS_QUOTED_1)",
 					"\"$(SRCROOT)\"/build/Development",
 				);
-				GCC_VERSION = 4.0;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
 				GCC_WARN_PROTOTYPE_CONVERSION = NO;
 				GCC_WARN_SIGN_COMPARE = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
