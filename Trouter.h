@@ -39,6 +39,7 @@
 - (BOOL) applicationExists:(NSString *)bundle_id;
 - (BOOL) applicationExists:(NSString *)bundle_id path:(NSString **)path;
 - (BOOL) isTextFile:(NSString *)path;
+- (BOOL) file:(NSString *)path conformsToUTI:(NSString *)uti;
 - (BOOL) isDirectory:(NSString *)path;
 - (NSFileManager *) fileManager;
 - (NSString *) getFullPath:(NSString *)path workingDirectory:(NSString *)workingDirectory lineNumber:(NSString **)lineNumber;

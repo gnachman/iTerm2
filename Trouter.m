@@ -97,12 +97,31 @@
 }
 
 - (BOOL) isTextFile:(NSString *)path {
+    NSTask *task = [[NSTask alloc] init];
+    NSPipe *pipe = [NSPipe pipe];
+    NSFileHandle *file = [pipe fileHandleForReading];
+    
+    [task setStandardOutput:pipe];
+    [task setLaunchPath:@"/usr/bin/file"];
+    [task setArguments:[NSArray arrayWithObject:path]];
+    [task launch];
+    [task waitUntilExit];
+    
+    NSString *output = [[NSString alloc] initWithData:[file readDataToEndOfFile]
+                                             encoding:NSUTF8StringEncoding];
+    
+    BOOL ret = [output rangeOfRegex:@"\\btext\\b"] != NSNotFound;
+    [output release];
+    return ret;
+}
+
+- (BOOL) file:(NSString *)path conformsToUTI:(NSString *)uti {
     BOOL ret = FALSE;
     MDItemRef item = MDItemCreate(kCFAllocatorDefault, (CFStringRef)path);
     CFTypeRef ref = MDItemCopyAttribute(item, CFSTR("kMDItemContentType"));
 
     if (ref) {
-        if (UTTypeConformsTo(ref, CFSTR("public.text"))) {
+        if (UTTypeConformsTo(ref, (CFStringRef) uti)) {
             ret = TRUE;
         }
         CFRelease(ref);
