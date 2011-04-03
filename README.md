@@ -49,7 +49,17 @@ receive the full path and the line number (if any) as arguments.
 
 ## Changelog
 
-- alpha 1:
-* Command + Click to open implemented
+### alpha 2:
+* Command + Drag lets you drag file/directory handles into any OSX app
+* Native BBedit support
+* External script support
+* Now works when the working directory is not valid for old paths in the
+  buffer
+* Command + Shift + Click does `d <path>; ls`
+* Built with llvm/clang for slight performance increase
+* Scrolling with wheel always move at least one line.
+
+### alpha 1:
+* Command + Click to open implemented for Textmate and MacVim
 
 Jack Chen (@chendo)
