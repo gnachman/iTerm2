@@ -2158,6 +2158,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     //[TERMINAL cleanStream];
 
     [SCREEN clearBuffer];
+    [TEXTVIEW clearWorkingDirectories];
     // tell the shell to clear the screen
     //[self writeTask:[NSData dataWithBytes:&formFeed length:1]];
 }
@@ -2165,6 +2166,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 - (void)clearScrollbackBuffer
 {
     [SCREEN clearScrollbackBuffer];
+    [TEXTVIEW clearWorkingDirectories];
 }
 
 - (BOOL)exited

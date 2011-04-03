@@ -2532,6 +2532,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                                                      targetSession:[dataSource session]];
 }
 
+- (void)clearWorkingDirectories {
+    [workingDirectoryAtLines removeAllObjects];
+}
+
 - (void)clearTextViewBuffer:(id)sender
 {
     [[dataSource session] clearBuffer];
