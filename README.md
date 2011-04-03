@@ -1,4 +1,4 @@
-# iTerm2 with "Mouse in the Shell"/Trouter technology
+# iTerm2 with Semantic History
 ## Extremely alpha.
 
 [Screencast](http://vimeo.com/21690922)
@@ -29,7 +29,7 @@ If you don't use MacVim, Textmate or BBedit or if you want write
 specific parsers, you can have the path sent to an external script of
 your choice.
 
-`defaults write com.googlecode.iterm2 TrouterPathHandler <path to script>`
+`defaults write com.googlecode.iterm2 SemanticHistoryHandler <path to script>`
 
 The script must be marked executable (`chmod +x <file>`) and it will
 receive the full path and the line number (if any) as arguments.

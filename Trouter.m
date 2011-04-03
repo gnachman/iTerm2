@@ -34,7 +34,7 @@
     self = [super init];
     [self determineEditor];
     fileManager = [[NSFileManager alloc] init];
-    externalScript = [[NSUserDefaults standardUserDefaults] stringForKey:@"TrouterScriptPath"];
+    externalScript = [[NSUserDefaults standardUserDefaults] stringForKey:@"SemanticHistoryHandler"];
     return self;
 }
 
