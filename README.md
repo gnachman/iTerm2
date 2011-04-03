@@ -38,11 +38,14 @@ receive the full path and the line number (if any) as arguments.
 * Does not work with paths with spaces (for now).
 * No configuration options (for now).
 
+## Known issues
+* Drag detection is way too sensitive. Even one pixel makes it think
+  it's a drag. Will be fixed in next alpha.
+
 ## TODO
 * Make paths work even after the directory has been changed.
 * Configuration options
 * More modifier keys: e.g.,
-  * Shift + Command + Click on a folder does `cd <dir>; ls`
   * Shift + Command + Click on a foo_spec.rb:88 does `spec foo_spec.rb -l 88`
 * Native support for other editors (TextWrangler, JEdit, Emacs, Rubymine)
 * Quicklook support
@@ -50,14 +53,14 @@ receive the full path and the line number (if any) as arguments.
 ## Changelog
 
 ### alpha 2:
-* Command + Drag lets you drag file/directory handles into any OSX app
-* Native BBedit support
-* External script support
 * Now works when the working directory is not valid for old paths in the
   buffer
+* Command + Drag lets you drag file/directory handles into any OSX app
 * Command + Shift + Click does `d <path>; ls`
+* External script support
 * Built with llvm/clang for slight performance increase
 * Scrolling with wheel always move at least one line.
+* Native BBedit support
 
 ### alpha 1:
 * Command + Click to open implemented for Textmate and MacVim
