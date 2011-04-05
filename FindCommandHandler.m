@@ -37,8 +37,10 @@
 - (id)init;
 {
     self = [super init];
-    
-    _ignoresCase = [[NSUserDefaults standardUserDefaults] boolForKey:@"findIgnoreCase_iTerm"];
+
+    _ignoresCase = [[NSUserDefaults standardUserDefaults] objectForKey:@"findIgnoreCase_iTerm"] ?
+        [[NSUserDefaults standardUserDefaults] boolForKey:@"findIgnoreCase_iTerm"] : YES;
+    _regex = [[NSUserDefaults standardUserDefaults] boolForKey:@"findRegex_iTerm"];
 
     return self;
 }
@@ -68,57 +70,52 @@
 
 - (BOOL)findNext
 {
-    return [self findSubString: _searchString forwardDirection: YES ignoringCase: _ignoresCase withOffset:1];
+    return [self findSubString:_searchString
+              forwardDirection:YES
+                  ignoringCase:_ignoresCase
+                         regex:_regex
+                    withOffset:1];
 }
 
 - (BOOL)findPreviousWithOffset:(int)offset
 {
-    return [self findSubString: _searchString forwardDirection: NO ignoringCase: _ignoresCase withOffset:offset];
-}
-
-- (BOOL)findWithSelection
-{
-    PTYTextView* textView = [self currentTextView];
-    if (textView) {
-        // get the selected text
-        NSString *contentString = [textView selectedText];
-        if (!contentString) {
-            NSBeep();
-            return NO;
-        }
-        [self setSearchString: contentString];
-        return [self findNext];
-    } else {
-        NSBeep();
-        return NO;
-    }
+    return [self findSubString:_searchString
+              forwardDirection:NO
+                  ignoringCase:_ignoresCase
+                         regex:_regex
+                    withOffset:offset];
 }
 
 - (void)jumpToSelection
 {
     PTYTextView* textView = [self currentTextView];
-    if (textView)
-    {        
-                [textView scrollToSelection];
-    }
-    else
+    if (textView) {
+        [textView scrollToSelection];
+    } else {
         NSBeep();
+    }
 }
 
-- (BOOL)findSubString: (NSString *) subString forwardDirection: (BOOL) direction ignoringCase: (BOOL) caseCheck withOffset:(int)offset
+- (BOOL)findSubString:(NSString *)subString
+     forwardDirection:(BOOL)direction
+         ignoringCase:(BOOL)caseCheck
+                regex:(BOOL)regex
+           withOffset:(int)offset
 {
     PseudoTerminal* pseudoTerminal = [[iTermController sharedInstance] currentTerminal];
     PTYSession* session = [pseudoTerminal currentSession];
     PTYTextView* textView = [session TEXTVIEW];
-    if (textView)
-    {        
-        if ([subString length] <= 0)
-        {
+    if (textView) {
+        if ([subString length] <= 0) {
             NSBeep();
             return NO;
         }
-        
-        return [textView findString:subString forwardDirection: direction ignoringCase: caseCheck withOffset:offset];
+
+        return [textView findString:subString
+                   forwardDirection:direction
+                       ignoringCase:caseCheck
+                              regex:regex
+                         withOffset:offset];
     }
     return NO;
 }
@@ -141,9 +138,20 @@
 }
 
 - (void)setIgnoresCase:(BOOL)set;
-{    
+{
     _ignoresCase = set;
     [[NSUserDefaults standardUserDefaults] setBool:set forKey:@"findIgnoreCase_iTerm"];
+}
+
+- (BOOL)regex
+{
+    return _regex;
+}
+
+- (void)setRegex:(BOOL)set;
+{
+    _regex = set;
+    [[NSUserDefaults standardUserDefaults] setBool:set forKey:@"findRegex_iTerm"];
 }
 
 @end

@@ -28,6 +28,19 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import <Carbon/Carbon.h>
+
+//#define GENERAL_VERBOSE_LOGGING
+#ifdef GENERAL_VERBOSE_LOGGING
+#define DLog NSLog
+#else
+#define DLog(args...) \
+do { \
+if (gDebugLogging) { \
+DebugLog([NSString stringWithFormat:args]); \
+} \
+} while (0)
+#endif
 
 @class PseudoTerminal;
 extern BOOL gDebugLogging;
@@ -51,34 +64,57 @@ void DebugLog(NSString* value);
     IBOutlet NSMenuItem *closeWindow;
     IBOutlet NSMenuItem *sendInputToAllSessions;
     IBOutlet NSMenuItem *toggleBookmarksView;
+    IBOutlet NSMenuItem *irNext;
+    IBOutlet NSMenuItem *irPrev;
 
+    IBOutlet NSMenuItem *secureInput;
+    IBOutlet NSMenuItem *useTransparency;
+    IBOutlet NSMenuItem *maximizePane;
+    BOOL secureInputDesired_;
+    BOOL quittingBecauseLastWindowClosed_;
 }
+
+- (void)awakeFromNib;
 
 // NSApplication Delegate methods
 - (void)applicationWillFinishLaunching:(NSNotification *)aNotification;
-- (BOOL) applicationShouldTerminate: (NSNotification *) theNotification;
+- (BOOL)applicationShouldTerminate: (NSNotification *) theNotification;
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename;
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)app;
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender;
-- (void)applicationDidUnhide:(NSNotification *)aNotification;
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app;
+- (void)applicationDidBecomeActive:(NSNotification *)aNotification;
+- (void)applicationDidResignActive:(NSNotification *)aNotification;
+
+- (IBAction)maximizePane:(id)sender;
+- (IBAction)toggleUseTransparency:(id)sender;
+- (IBAction)toggleSecureInput:(id)sender;
 
 - (IBAction)newWindow:(id)sender;
 - (IBAction)newSession:(id)sender;
 - (IBAction)buildScriptMenu:(id)sender;
 
--(IBAction)debugLogging:(id)sender;
+- (IBAction)debugLogging:(id)sender;
+
+- (IBAction)toggleSecureInput:(id)sender;
+- (void)updateMaximizePaneMenuItem;
+- (void)updateUseTransparencyMenuItem;
 
     // About window
 - (IBAction)showAbout:(id)sender;
-- (IBAction)aboutOK:(id)sender;
+
+- (IBAction)saveWindowArrangement:(id)sender;
+- (IBAction)loadWindowArrangement:(id)sender;
 
 - (IBAction)showPrefWindow:(id)sender;
 - (IBAction)showBookmarkWindow:(id)sender;
+- (IBAction)instantReplayPrev:(id)sender;
+- (IBAction)instantReplayNext:(id)sender;
 
     // navigation
-- (IBAction) previousTerminal: (id) sender;
-- (IBAction) nextTerminal: (id) sender;
+- (IBAction)previousTerminal: (id) sender;
+- (IBAction)nextTerminal: (id) sender;
+- (IBAction)arrangeHorizontally:(id)sender;
 
 // Notifications
 - (void) reloadMenus: (NSNotification *) aNotification;
@@ -92,9 +128,11 @@ void DebugLog(NSString* value);
 - (IBAction) smallerFont: (id) sender;
 
 // size
-- (IBAction) returnToDefaultSize: (id) sender;
+- (IBAction)returnToDefaultSize:(id)sender;
+- (IBAction)exposeForTabs:(id)sender;
 - (IBAction)editCurrentSession:(id)sender;
 
+- (void)makeHotKeyWindowKeyIfOpen;
 
 @end
 

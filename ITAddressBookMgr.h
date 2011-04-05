@@ -48,12 +48,14 @@
 #define KEY_KEYBOARD_PROFILE            @"Keyboard Profile"
 #define KEY_DISPLAY_PROFILE             @"Display Profile"
 #define KEY_SHORTCUT                    @"Shortcut"
-#define KEY_BONJOUR_GROUP           @"Bonjour Group"
-#define KEY_BONJOUR_SERVICE         @"Bonjour Service"
-#define KEY_BONJOUR_SERVICE_ADDRESS  @"Bonjour Service Address"
-#define KEY_TAGS                              @"Tags"
-#define KEY_GUID                              @"Guid"
+#define KEY_BONJOUR_GROUP               @"Bonjour Group"
+#define KEY_BONJOUR_SERVICE             @"Bonjour Service"
+#define KEY_BONJOUR_SERVICE_ADDRESS     @"Bonjour Service Address"
+#define KEY_TAGS                        @"Tags"
+#define KEY_GUID                        @"Guid"
+#define KEY_ORIGINAL_GUID               @"Original Guid"  // GUID before divorce. Not saved to preferences plist.
 #define KEY_DEFAULT_BOOKMARK            @"Default Bookmark"  // deprecated
+#define KEY_ASK_ABOUT_OUTDATED_KEYMAPS  @"Ask About Outdated Keymaps"
 
 // Per-bookmark keys ----------------------------------------------------------
 // IMPORATANT: If you add keys, also modify doCopyFrom in PreferencePanel.m.
@@ -83,19 +85,31 @@
 #define KEY_ANSI_14_COLOR          @"Ansi 14 Color"
 #define KEY_ANSI_15_COLOR          @"Ansi 15 Color"
 #define KEYTEMPLATE_ANSI_X_COLOR          @"Ansi %d Color"
+#define KEY_SMART_CURSOR_COLOR     @"Smart Cursor Color"
+#define KEY_MINIMUM_CONTRAST      @"Minimum Contrast"
 
 // Display
 #define KEY_ROWS                   @"Rows"
 #define KEY_COLUMNS                @"Columns"
+#define KEY_FULLSCREEN             @"Full Screen"  // DEPRECATED
+#define KEY_WINDOW_TYPE            @"Window Type"
+#define KEY_SCREEN                 @"Screen"
+#define KEY_SPACE                  @"Space"
 #define KEY_NORMAL_FONT            @"Normal Font"
 #define KEY_NON_ASCII_FONT         @"Non Ascii Font"
 #define KEY_HORIZONTAL_SPACING     @"Horizontal Spacing"
 #define KEY_VERTICAL_SPACING       @"Vertical Spacing"
 #define KEY_BLINKING_CURSOR        @"Blinking Cursor"
-#define KEY_DISABLE_BOLD           @"Disable Bold"
+#define KEY_BLINK_ALLOWED          @"Blink Allowed"
+#define KEY_CURSOR_TYPE            @"Cursor Type"
+#define KEY_DISABLE_BOLD           @"Disable Bold"  // DEPRECATED
+#define KEY_USE_BOLD_FONT          @"Use Bold Font"
+#define KEY_USE_BRIGHT_BOLD        @"Use Bright Bold"
 #define KEY_TRANSPARENCY           @"Transparency"
 #define KEY_BLUR                   @"Blur"
-#define KEY_ANTI_ALIASING          @"Anti Aliasing"
+#define KEY_ANTI_ALIASING          @"Anti Aliasing"  // DEPRECATED
+#define KEY_ASCII_ANTI_ALIASED     @"ASCII Anti Aliased"
+#define KEY_NONASCII_ANTI_ALIASED  @"Non-ASCII Anti Aliased"
 #define KEY_BACKGROUND_IMAGE_LOCATION @"Background Image Location"
 
 // Terminal
@@ -106,10 +120,13 @@
 #define KEY_AMBIGUOUS_DOUBLE_WIDTH            @"Ambiguous Double Width"
 #define KEY_SILENCE_BELL                      @"Silence Bell"
 #define KEY_VISUAL_BELL                       @"Visual Bell"
+#define KEY_FLASHING_BELL                     @"Flashing Bell"
 #define KEY_XTERM_MOUSE_REPORTING             @"Mouse Reporting"
+#define KEY_DISABLE_SMCUP_RMCUP                @"Disable Smcup Rmcup"
 #define KEY_BOOKMARK_GROWL_NOTIFICATIONS      @"BM Growl"
 #define KEY_CHARACTER_ENCODING                @"Character Encoding"
 #define KEY_SCROLLBACK_LINES                  @"Scrollback Lines"
+#define KEY_UNLIMITED_SCROLLBACK              @"Unlimited Scrollback"
 #define KEY_TERMINAL_TYPE                     @"Terminal Type"
 #define KEY_SEND_CODE_WHEN_IDLE               @"Send Code When Idle"
 #define KEY_IDLE_CODE                         @"Idle Code"
@@ -117,7 +134,11 @@
 // Keyboard
 #define KEY_KEYBOARD_MAP                      @"Keyboard Map"
 #define KEY_OPTION_KEY_SENDS                  @"Option Key Sends"
+#define KEY_RIGHT_OPTION_KEY_SENDS            @"Right Option Key Sends"
 
+#define WINDOW_TYPE_NORMAL 0
+#define WINDOW_TYPE_FULL_SCREEN 1
+#define WINDOW_TYPE_TOP 2
 
 @interface ITAddressBookMgr : NSObject
 {
@@ -140,6 +161,7 @@
 - (id)init;
 - (void)dealloc;
 - (void) locateBonjourServices;
+- (void)stopLocatingBonjourServices;
 - (void)copyProfileToBookmark:(NSMutableDictionary *)dict;
 - (void)recursiveMigrateBookmarks:(NSDictionary*)node path:(NSArray*)array;
 + (NSFont *)fontWithDesc:(NSString *)fontDesc;
@@ -154,7 +176,7 @@
 - (void)netServiceDidStop:(NSNetService *)aNetService;
 - (NSString*) getBonjourServiceType:(NSString*)aType;
 + (NSString*)loginShellCommandForBookmark:(Bookmark*)bookmark;
-+ (NSString*)bookmarkCommand:(Bookmark*)bookmark;
++ (NSString*)bookmarkCommand:(Bookmark*)bookmark isLoginSession:(BOOL*)isLoginSession;
 + (NSString*)bookmarkWorkingDirectory:(Bookmark*)bookmark;
 
 @end

@@ -1,6 +1,4 @@
 // -*- mode:objc -*-
-// $Id: PTYTextView.h,v 1.70 2008-10-21 05:43:52 yfabian Exp $
-//
 /*
  **  PTYTextView.h
  **
@@ -30,23 +28,26 @@
 
 #import <Cocoa/Cocoa.h>
 #import <iTerm/iTerm.h>
+#import "ScreenChar.h"
+#import "PreferencePanel.h"
 
 #include <sys/time.h>
 #define PRETTY_BOLD
 
 #define MARGIN  5
-#define VMARGIN 5
+#define VMARGIN 2
+#define COLOR_KEY_SIZE 4
 
 @class VT100Screen;
 
-enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_BOX };
+enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_SMART, SELECT_BOX };
 
 // A collection of data about a font.
 struct PTYFontInfo {
     NSFont* font;  // Toll-free bridged to CTFontRef
 
     // Metrics
-    int baselineOffset;
+    float baselineOffset;
 
     struct PTYFontInfo* boldVersion;  // may be NULL
 };
@@ -67,12 +68,16 @@ typedef struct PTYFontInfo PTYFontInfo;
     // seem to return a real status, based on which we can set this flag.
     BOOL bExtendedDragNDrop;
 
-    // anti-alias flag
-    BOOL antiAlias;
+    // anti-alias flags
+    BOOL asciiAntiAlias;
+    BOOL nonasciiAntiAlias;
 
     // option to not render in bold
-    BOOL disableBold;
-
+    BOOL useBoldFont;
+    
+    // Option to draw bold text as brighter colors.
+    BOOL useBrightBold;
+    
     // NSTextInput support
     BOOL IM_INPUT_INSERT;
     NSRange IM_INPUT_SELRANGE;
@@ -105,7 +110,6 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // transparency
     float transparency;
-    BOOL useTransparency;
 
     // data source
     VT100Screen *dataSource;
@@ -122,9 +126,9 @@ typedef struct PTYFontInfo PTYFontInfo;
     NSEvent *mouseDownEvent;
 
     //find support
-    int lastFindX;
+    int lastFindStartX, lastFindEndX;
     // this includes all the lines since the beginning of time. It is stable.
-    long long absLastFindY;
+    long long absLastFindStartY, absLastFindEndY;
 
     BOOL reportingMouseDown;
 
@@ -135,13 +139,12 @@ typedef struct PTYFontInfo PTYFontInfo;
     struct timeval lastBlink;
     int oldCursorX, oldCursorY;
 
+    BOOL blinkAllowed_;
+
     // trackingRect tab
     NSTrackingRectTag trackingRectTag;
 
     BOOL keyIsARepeat;
-
-    // Needed for determining font size.
-    NSLayoutManager *layoutManager;
 
     // Is a find currently executing?
     BOOL _findInProgress;
@@ -150,6 +153,85 @@ typedef struct PTYFontInfo PTYFontInfo;
     NSRect _trackingRect;
 
     NSMutableDictionary* fallbackFonts;
+
+    // Indicates if a selection that scrolls the window is in progress.
+    // Negative value: scroll up.
+    // Positive value: scroll down.
+    // Zero: don't scroll.
+    int selectionScrollDirection;
+    NSTimeInterval lastSelectionScroll;
+
+    // Scrolls view when you drag a selection to top or bottom of view.
+    NSTimer* selectionScrollTimer;
+    float prevScrollDelay;
+    int scrollingX;
+    int scrollingY;
+    NSPoint scrollingLocation;
+
+    // This gives the number of lines added to the bottom of the frame that do
+    // not correspond to a line in the dataSource. They are used solely for
+    // IME text.
+    int imeOffset;
+
+    // Last position that accessibility was read up to.
+    int accX;
+    int accY;
+
+    BOOL advancedFontRendering;
+    float strokeThickness;
+    float minimumContrast_;
+
+    BOOL changedSinceLastExpose_;
+
+    double dimmingAmount_;
+
+    // The string last searched for.
+    NSString* findString_;
+
+    // The set of SearchResult objects for which matches have been found.
+    NSMutableArray* findResults_;
+
+    // The next offset into findResults_ where values from findResults_ should
+    // be added to the map.
+    int nextOffset_;
+
+    // True if a result has been highlighted & scrolled to.
+    BOOL foundResult_;
+
+    // Maps an absolute line number (NSNumber longlong) to an NSData bit array
+    // with one bit per cell indicating whether that cell is a match.
+    NSMutableDictionary* resultMap_;
+
+    // True if the last search was forward, flase if backward.
+    BOOL searchingForward_;
+
+    // Offset value for last search.
+    int findOffset_;
+
+    // True if trying to find a result before/after current selection to
+    // highlight.
+    BOOL searchingForNextResult_;
+
+    // True if the last search was case insensitive.
+    BOOL findIgnoreCase_;
+
+    // True if the last search was for a regex.
+    BOOL findRegex_;
+
+    // Time that the flashing bell's alpha value was last adjusted.
+    NSDate* lastFlashUpdate_;
+
+    // Alpha value of flashing bell graphic.
+    double flashing_;
+
+    enum {
+        FlashBell, FlashWrapToTop, FlashWrapToBottom
+    } flashImage_;
+
+    ITermCursorType cursorType_;
+
+    // Works around an apparent OS bug where we get drag events without a mousedown.
+    BOOL dragOk_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -160,13 +242,16 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (BOOL)resignFirstResponder;
 - (BOOL)isFlipped;
 - (BOOL)isOpaque;
+- (BOOL)getAndResetChangedSinceLastExpose;
 - (BOOL)shouldDrawInsertionPoint;
 - (void)drawRect:(NSRect)rect;
+- (void)drawRect:(NSRect)rect to:(NSPoint*)toOrigin;
 - (void)keyDown:(NSEvent *)event;
 - (BOOL)keyIsARepeat;
 - (void)mouseExited:(NSEvent *)event;
 - (void)mouseEntered:(NSEvent *)event;
 - (void)mouseDown:(NSEvent *)event;
+- (BOOL)mouseDownImpl:(NSEvent*)event;
 - (void)mouseUp:(NSEvent *)event;
 - (void)mouseDragged:(NSEvent *)event;
 - (void)otherMouseDown: (NSEvent *) event;
@@ -193,27 +278,32 @@ typedef struct PTYFontInfo PTYFontInfo;
 // Cause the next find to start at the top/bottom of the buffer
 - (void)resetFindCursor;
 
+- (BOOL)growSelectionLeft;
+- (void)growSelectionRight;
+
 //get/set methods
 - (NSFont *)font;
 - (NSFont *)nafont;
 - (void)setFont:(NSFont*)aFont nafont:(NSFont *)naFont horizontalSpacing:(float)horizontalSpacing verticalSpacing:(float)verticalSpacing;
 - (NSRect)scrollViewContentSize;
-- (BOOL)antiAlias;
-- (void)setAntiAlias:(BOOL)antiAliasFlag;
-- (BOOL)disableBold;
-- (void)setDisableBold:(BOOL)boldFlag;
+- (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
+- (BOOL)useBoldFont;
+- (void)setUseBoldFont:(BOOL)boldFlag;
+- (void)setUseBrightBold:(BOOL)flag;
 - (BOOL)blinkingCursor;
 - (void)setBlinkingCursor:(BOOL)bFlag;
+- (void)setBlinkAllowed:(BOOL)value;
+- (void)setCursorType:(ITermCursorType)value;
 
 //color stuff
-- (NSColor *)defaultFGColor;
-- (NSColor *)defaultBGColor;
-- (NSColor *)defaultBoldColor;
-- (NSColor *)colorForCode:(int) index;
-- (NSColor *)selectionColor;
-- (NSColor *)defaultCursorColor;
-- (NSColor *)selectedTextColor;
-- (NSColor *)cursorTextColor;
+- (NSColor*)defaultFGColor;
+- (NSColor*)defaultBGColor;
+- (NSColor*)defaultBoldColor;
+- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold;
+- (NSColor*)selectionColor;
+- (NSColor*)defaultCursorColor;
+- (NSColor*)selectedTextColor;
+- (NSColor*)cursorTextColor;
 - (void)setFGColor:(NSColor*)color;
 - (void)setBGColor:(NSColor*)color;
 - (void)setBoldColor:(NSColor*)color;
@@ -222,6 +312,14 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)setCursorColor:(NSColor*)color;
 - (void)setSelectedTextColor:(NSColor *)aColor;
 - (void)setCursorTextColor:(NSColor*)color;
+
+- (int)selectionStartX;
+- (int)selectionStartY;
+- (int)selectionEndX;
+- (int)selectionEndY;
+- (void)setSelectionFromX:(int)fromX fromY:(int)fromY toX:(int)toX toY:(int)toY;
+
+- (float)excess;
 
 
 - (NSDictionary*)markedTextAttributes;
@@ -249,7 +347,12 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (float)transparency;
 - (void)setTransparency:(float)fVal;
 - (BOOL)useTransparency;
-- (void)setUseTransparency:(BOOL)flag;
+
+- (void)setSmartCursorColor:(BOOL)value;
+- (void)setMinimumContrast:(float)value;
+
+// Dim all colors towards gray
+- (void)setDimmingAmount:(float)value;
 
 //
 // Drag and Drop methods for our text view
@@ -272,6 +375,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)scrollPageDown:(id)sender;
 - (void)scrollHome;
 - (void)scrollEnd;
+- (void)scrollToAbsoluteOffset:(long long)absOff;
 - (void)scrollToSelection;
 
 
@@ -281,7 +385,14 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)printContent:(NSString *)aString;
 
 // Find method
-- (BOOL)findString:(NSString *)aString forwardDirection:(BOOL)direction ignoringCase:(BOOL)ignoreCase withOffset:(int)offset;
+- (BOOL)findString:(NSString*)aString
+  forwardDirection:(BOOL)direction
+      ignoringCase:(BOOL)ignoreCase
+             regex:(BOOL)regex
+        withOffset:(int)offset;
+
+// Remove highlighted terms from previous search.
+- (void)clearHighlights;
 
 // NSTextInput
 - (void)insertText:(id)aString;
@@ -306,6 +417,23 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (float)horizontalSpacing;
 - (float)verticalSpacing;
 
+// This textview is about to become invisible because another tab is selected.
+- (void)aboutToHide;
+
+// Flash a graphic. See the enum for flashImage_.
+- (void)beginFlash:(int)image;
+
+- (void)drawFlippedBackground:(NSRect)bgRect toPoint:(NSPoint)dest;
+- (void)drawBackground:(NSRect)bgRect;
+- (void)drawBackground:(NSRect)bgRect toPoint:(NSPoint)dest;
+
+- (long long)absoluteScrollPosition;
+
+// Returns true if any character in the buffer is selected.
+- (BOOL)isAnyCharSelected;
+
+- (void)clearMatches;
+
 @end
 
 //
@@ -313,23 +441,47 @@ typedef struct PTYFontInfo PTYFontInfo;
 //
 @interface PTYTextView (Private)
 
+// Types of characters. Used when classifying characters for word selection.
+typedef enum {
+    CHARTYPE_WHITESPACE,  // whitespace chars or NUL
+    CHARTYPE_WORDCHAR,    // Any character considered part of a word, including user-defined chars.
+    CHARTYPE_DW_FILLER,   // Double-width character effluvia.
+    CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
+} PTYCharType;
+
 - (void)modifyFont:(NSFont*)font info:(PTYFontInfo*)fontInfo;
 - (void)releaseFontInfo:(PTYFontInfo*)fontInfo;
 
 - (unsigned int) _checkForSupportedDragTypes:(id <NSDraggingInfo>) sender;
-- (void)_savePanelDidEnd:(NSSavePanel *)theSavePanel returnCode:(int)theReturnCode contextInfo:(void *)theContextInfo;
 
 - (void) _scrollToLine:(int)line;
-- (NSString *)_getWordForX:(int)x
-                    y:(int)y
-               startX:(int *)startx
-               startY:(int *)starty
-                 endX:(int *)endx
-                 endY:(int *)endy;
+- (void)_scrollToCenterLine:(int)line;
+- (BOOL)shouldSelectCharForWord:(unichar)ch
+                      isComplex:(BOOL)compled
+                selectWordChars:(BOOL)selectWordChars;
+
+- (PTYCharType)classifyChar:(unichar)ch
+                  isComplex:(BOOL)complex;
+
+- (NSString *)getWordForX:(int)x
+                        y:(int)y
+                   startX:(int *)startx
+                   startY:(int *)starty
+                     endX:(int *)endx
+                     endY:(int *)endy;
 - (NSString *)_getURLForX:(int)x y:(int)y;
-- (void)_drawLine:(int)line AtY:(float)curY;
+- (void)_drawLine:(int)line AtY:(float)curY toPoint:(NSPoint*)toPoint;
 - (void)_drawCursor;
-- (void)_drawCharacter:(unichar)c fgColor:(int)fg AtX:(float)X Y:(float)Y doubleWidth:(BOOL)dw overrideColor:(NSColor*)overrideColor;
+- (void)_drawCursorTo:(NSPoint*)toOrigin;
+- (void)_drawCharacter:(screen_char_t)screenChar
+               fgColor:(int)fgColor
+    alternateSemantics:(BOOL)fgAlt
+                fgBold:(BOOL)fgBold
+                   AtX:(float)X
+                     Y:(float)Y
+           doubleWidth:(BOOL)double_width
+         overrideColor:(NSColor*)overrideColor;
+
 - (BOOL)_isBlankLine:(int)y;
 - (void)_openURL:(NSString *)aURLString;
 - (BOOL)_findMatchingParenthesis:(NSString *)parenthesis withX:(int)X Y:(int)Y;
@@ -338,11 +490,39 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)_settingsChanged:(NSNotification *)notification;
 - (void)_modifyFont:(NSFont*)font into:(PTYFontInfo*)fontInfo;
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
+                     isComplex:(BOOL)complex
                        fgColor:(int)fgColor
                     renderBold:(BOOL*)renderBold;
+
 - (PTYFontInfo*)getOrAddFallbackFont:(NSFont*)font;
 - (void)releaseAllFallbackFonts;
 - (void)updateDirtyRects;
+- (BOOL)isFutureTabSelectedAfterX:(int)x Y:(int)y;
+- (BOOL)isTabFillerOrphanAtX:(int)x Y:(int)y;
+- (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView;
+
+// Compute the number of single-wdith character spans that the input method
+// text takes up.
+- (int)inputMethodEditorLength;
+
+// Mark the entire input method editor text area as needing a redraw.
+- (void)invalidateInputMethodEditorRect;
+
+// Return the number of pixels tall to draw the cursor.
+- (float)cursorHeight;
+
+// Draw the contents of the input method editor beginning at some location, 
+// usually the cursor position.
+// xStart, yStart: cell coordinates
+// width, height: cell width, height of screen
+// cursorHeight: cursor height in pixels
+- (BOOL)drawInputMethodEditorTextAt:(int)xStart y:(int)yStart width:(int)width height:(int)height cursorHeight:(float)cursorHeight;
+
+- (BOOL)_wasAnyCharSelected;
+
+- (void)_deselectDirtySelectedText;
+- (BOOL) _updateBlink;
+- (void)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width;
 
 @end
 

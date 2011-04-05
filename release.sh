@@ -1,6 +1,5 @@
 #!/bin/bash
 # Run this before uploading.
-set -x
 NAME=$1
 cd build/Deployment
 zip -r iTerm2-${NAME}.zip iTerm.app

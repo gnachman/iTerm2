@@ -263,6 +263,8 @@
 			</dict>
 			<key>CommandClass</key>
 			<string>NSScriptCommand</string>
+            <key>Type</key>
+            <string>PTYSession</string>
 		</dict>
 		<key>select</key>
 		<dict>

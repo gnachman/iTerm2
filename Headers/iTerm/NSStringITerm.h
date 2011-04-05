@@ -38,10 +38,10 @@
 @interface NSString (iTerm)
 
 + (NSString *)stringWithInt:(int)num;
-+ (BOOL)isDoubleWidthCharacter:(unichar)unicode
++ (BOOL)isDoubleWidthCharacter:(int)unicode
                       encoding:(NSStringEncoding)e
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth;
 
-- (NSMutableString *) stringReplaceSubstringFrom:(NSString *)oldSubstring to:(NSString *)newSubstring;
+- (NSMutableString *)stringReplaceSubstringFrom:(NSString *)oldSubstring to:(NSString *)newSubstring;
 
 @end

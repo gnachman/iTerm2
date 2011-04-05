@@ -1,4 +1,247 @@
-These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2.
+These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2. Alpha 16 is known to be quite reliable, though.
+
+Alpha 17
+This release includes a huge number of new features and bug fixes.
+
+Big features:
+- Add Visor-like hotkey support.
+- Maximize a split pane (cmd-shift-enter), hiding all others.
+- Add Exposé/Global search to let you see and search in all tabs at once.
+- Import and export color schemes.
+- Add ability to remap keyboard modifiers, including separate settings for left and right cmd and option.
+- Find now includes regular expression search.
+- Bookmarks renamed to Profiles.
+- Define global keymappings across all profiles.
+
+Enhancements:
+- Use transparency (cmd-U) brought back, including for full-screen mode.
+- Autocomplete improved: press cmd-; again to do consecutive autocompletes.
+- Improve appearance of pane splitters, making them thin.
+- Add proprietary escape code to set window/tab frame color.
+- Add preference to confirm quitting.
+- Add profile option for specifying window type as fullscreen or glued to the top of the screen.
+- Allow configuration of starting screen and Space per profile.
+- Add "minimum contrast" option to ensure text is always visible.
+- Add ability to render fonts with variable stroke thicknesses (but with a performance penalty).
+- Make cmd-w close a pane and cmd-opt-w close all panes in a tab.
+- Allow binding multiple hex codes to one key binding.
+- Allow binding a key to any menu item.
+- Separate anti-aliasing settings for ascii and non-ascii fonts.
+- Basic accessibility added.
+- Improvements to dock menu to eliminate need to press option to open a window, add Open All.
+- Add preference for unlimited scrollback.
+- Add preference for controlling window/tab titles.
+- Cmd-9 switches to last tab.
+- Saved window arrangements now also save their working directories.
+- Navigate panes with cmd-opt-arrows predictably.
+- Add option to pass ctrl-clicks through when mouse reporting.
+- Add key bindings for "do not remap modifiers" and "toggle full screen".
+- Reorganize preferences dialog.
+- Added gesture support.
+- Clicking in an inactive pane while another app is active switches to that pane.
+- Add support for extended mouse reporting protocols.
+- Delay before showing tab bar in fullscreen mode is now configurable by a preference.
+- Improve apperance of tab numbers.
+- Allow cursor to draw in the right-hand margin when it is in that position.
+- Pasting a file (e.g., from Finder) now pastes the full path.
+- Close prefs, profile window with cmd-w or esc.
+- Ensure that smart cursor color is always a different color than its immediate neighbors.
+
+Bug fixes:
+- Fix bug where we hang when there is a software update (which won't help you with the alpha17 update, but should with the one after that).
+- Many crashing bugs fixed.
+- Memory leaks fixed.
+- About box streamlined.
+- Many improvements to window resizing.
+- Fix bug where profile title names don't appear after restoring an arrangement.
+- Make zoom button resize to a multiple of line height.
+- Fix bug where hotkey sometimes stops working.
+- Improve use of vertical space in full screen mode.
+- Fix reverse video rendering.
+- Sort tags in profiles menus.
+- Fix reset (cmd-r) drawing bug.
+- Fix bug where we hang for 5 seconds when showing a dialog.
+- Fix key handling when DefaultKeyBindings.dict is present.
+- Fix rendering of overly wide characters.
+- Allow private-range Apple character to render.
+- Don't hide tabbar in fullscreen if you press a modifier.
+- Various bug fixes in keybinding panel.
+- Improve apperance of Edit Current Session window.
+- Window resizes more sanely when opening findbar or horizontal splits.
+- Remove 10.6 restriction on dimming split panes, improve their appearance.
+- Respect a profile's growl preference.
+- Fix bug where window resized when exiting instant replay.
+- Make toolbar work properly and look better.
+- Make smart cursor color work with inverted colors.
+
+
+Alpha 16
+This release brings Unicode support for combining marks and code points beyond the Basic Multilingual Plane. Non-English users may notice that text lines up better, characters render properly, and many formerly invisible CJK ideograms now work correctly. This release also features a large number of bug fixes.
+
+Big features
+- Support for combining marks, surrogate pairs.
+- Glyphs not in either selected font will be drawn from other fonts.
+
+Enhancements
+- Make scrolling by selecting text go much faster.
+- Secure input state is saved when you restart iTerm2.
+- Added crash reporting.
+- Defaults for new users changed: Bonjour is off by default, windows zoom fullscreen, warn when closing multiple tabs, smart cursor on by default (bug 436, 448)
+
+Bug fixes
+- Fixed applescript session lookup (bug 439).
+- Don't output a digit if you press cmd-number but no tab exists with that number (bug 434).
+- Fix "draw bold text in bright colors" preference which wouldn't stay unchecked (bug 429).
+- Prompt the user about outdated key mappings that are now for switching panes (bug 427).
+- Handle changing font size in fullscreen mode correctly (bug 426).
+- Fixed bug where xterm mouse reporting prevented clicking in a pane from giving it focused (bug 419).
+- Improve behavior when increasing font size and window is already as big as it can get (bug 446).
+- Fix cmd-click on URLs with non-ASCII characters (bug 442).
+- Fix infinite loop when using ANSI terminal and no-wrap mode (bug 454).
+- Disabled dimming inactive panes in os 10.5 where it doesn't work (bug 440).
+- Fix crash that happened after closing a session that had used the paste history.
+- Preserve text selection when resizing (bug 414).
+- Restore window size when closing find bar (bug 425).
+- Avoid multiple rapid session resizings when exiting fullscreen (bug 191).
+- Fix crash when setting tab stops in huge windows (bug 382).
+- Make hotkey work when secure input is on (bug 450).
+
+Alpha 15
+This release has one big feature: split panes! You can divide a tab into rectangular regions, each showing a different session. Also, you can now save your window arrangement and have it automatically restored when you start iTerm2.
+
+Big new features
+- Horizontal and vertical split panes. Use Cmd-D to split vertically, Cmd-Shift-D to split horizontally, and Cmd-Opt-W to close a pane. Navigate panes with Cmd-Opt-Arrow keys (but note that you may have conflicting key mappings in your bookmark, as this had been a default setting).
+- Save your window arrangement including window positions, size, tabs, and split panes. You can open new windows with the saved arrangement with a keypress or use a new preference ("Open saved window arrangement at startup") to do it automatically.
+
+Small Enhancements
+- Make window title and tab labels more configurable so you can remove window number and job name.
+- Add global keybindings for cmd-arrow, cmd-pageup/pagedown, cmd-home/end to scroll.
+- Make opt-arrowkey send proper escape codes.
+- Preferences and Bookmarks windows can now be closed with Esc key.
+- When the "hotkey" is pressed, prevent the running app from getting the keypress.
+- Made Find With Selection (cmd-E) behave like a normal cocoa app.
+- Allow the OS to pick the initial window position if smart placement is off and no saved location exists.
+- Improved wording of context menus.
+- Fixed context menu's "send email" feature.
+
+Bugs fixed
+- Fix arrow key behavior in paste history and autocomplete windows (bug 407)
+- Various memory leaks fixed.
+- Improved behavior of full-screen tab bar display.
+- Fixed applescript bug with setting window size before adding session.
+
+Alpha 14
+This release has a passel of incremental improvements that make your life a happier place. 
+
+Headliners
+- Assign numbers to windows. You can switch between windows with cmd-option-number (bug 110).
+- Add a preference to display bold text in bright colors.
+- Added a bookmark preference to treat right option key differently than left option key (bug 115).
+- Hotkey toggles iTerm instead of only opening it.
+- Add flashing visual bell and an option to turn it off (bug 104).
+- Put current job name in tab title (bug 83).
+- Add "secure input" feature to prevent other apps from being able to see what you're typing (bug 265).
+- Add "arrange horizontally" option to Window menu (bug 112).
+
+Small Enhancements
+- Bookmarks can be sorted by clicking on column headers (bug 113).
+- Make it easier to assign ^H or ^? to delete key for a bookmark.
+- Holding down the cmd key in fullscreen mode will show the tab bar (bug 67).
+- Add new color presets.
+- Improve appearance of tags in prefs and bookmarks window.
+- New UI for batch copying bookmark attributes.
+- Increase speed of selection scrolling.
+- Add an option to close the bookmark window after opening a bookmark (bug 95).
+- Add "open as tabs in new window" option to bookmark window when there are multiple bookmarks selected (bug 126)
+- Add a few pixels' margin at the top of the textview (bug 137)
+- Simplified prefs panel by eliminating bottom margin option.
+
+Bugs Fixed
+- Allow multiple bookmarks to be selected in preferences window (bug 120).
+- Fix a bug where scrolling by dragging wouldn't reach the last line.
+- Fix bug where tab characters were inserted in the wrong place.
+- Fix bug where COLORFGBG environment variable wasn't set.
+- Fix bug where a window wouldn't fill the screen vertically.
+- Several rare crashes fixed.
+- Autocomplete in fullscreen mode no longer shows the dock an menu bar (bug 295).
+- Fix bug where Cmd-I opens an empty window (bug 302).
+- Use default bookmark with "make new window" Applescript (bug 301).
+- Quote multiword user names in login command (bug 293).
+
+
+Alpha 13
+This release includes the much-requested Visor-like hotkey feature plus an innovative new Autocomplete feature. There are plenty of bug fixes, too.
+
+Enhancements
+- Autocomplete: Do you find yourself using the mouse to copy and paste text all the time? No longer must you reach for the rodent! Just type the start of a word that has appeared in the current session (or appears anywhere in text that you've copy-pasted) and hit cmd-;. iTerm2 shows the words you might be looking for, and magically puts the best one at the top of the list!
+- Hotkey: You can register a "hotkey" that brings iTerm2 to the foreground when you're in another application.
+- Adds a preference to disable changing tab title appearance to indicate activity.
+
+Bug Fixes
+- Paste history window opens in the same Space as your window (268).
+- Control-Q fixed (273).
+- Cmd-+ with max-size window caused brokenness.
+- Various memory leaks fixed.
+- Improved behavior of paste history window.
+- Fix Control-/, Control-?, Control-shift-Y (285).
+- Fix LANG and LC_* vars (290, 281).
+- Fix Copy From in edit session dialog (272).
+- Select and escape URLs properly (291).
+- Display font names properly in Asian locales (264).
+
+
+Alpha 12
+Featurepalooza! And bug fixes, too.
+
+New features:
+- Instant Replay: This feature makes iTerm2 behave like TiVo. You can press cmd-opt-b to step back in time and cmd-opt-f to step forward in time. If something is erased from the screen, it's no longer lost forever. This feature can be turned off in Preferences as it does take a bit of extra memory and has a small performance impact (less than 1%).
+- Paste History: When you copy or paste text in iTerm2, it is now saved in the paste history. You can pop up a window at the cursor with cmd-shift-h which shows the last 20 strings in the clipboard. The list is searchable Quicksilver-style.
+- Mouseless Selection: Do you often copy-paste text within the same window? Now you can do it without using the mouse. Open the findbar with cmd-f and search for the text you wish to copy. When part of the text is matched, use the tab key to expand the selection to the right by a full word and shift-tab to expand it left to the previous word boundary. It's automatically copied to the clipboard, or you can use opt-Enter to paste the selection immediately.
+
+Enhancements:
+- Findbar appearance improved.
+- Add undo/redo to edit menu.
+- Add zoom shortcut for cmd-opt-=.
+- Read larger chunks from the network for better performance.
+- Idle CPU usage reduced.
+- Refresh rate adjustment removed, dynamic refresh rate added.
+- Input Method Editor wraps at end of line, scrolls window if necessary.
+- IPV6 support for Bonjour.
+
+Bug fixes:
+- Memory usage growth when Bonjour enabled (hopefully, 43).
+- Toggling Bonjour takes effect immediately (89)
+- Make resize look better (98)
+- Restore colors on exit of Vim (99)
+- Make bookmark window resize properly (114)
+- Select name field when copying/creating/editing bookmark (127, 128, 181)
+- Scroll by selection in fullscreen window (133)
+- IME improvements (163)
+- URLs with i18n chars can be selected now (174)
+- Tab lables updated when toggling compact tabs (196)
+- Better multi-monitor support (201)
+- Set localization vars better (204)
+- Fix return to default size (223)
+- Improve i-bar cursor appearance (235)
+- Numeric shortcuts displayed properly (241)
+- Prevent 100% transparency because it doesn't focus (250)
+- Fix bugs with AquaSKK (263)
+- Fix bug where page scrolling sometimes broke.
+- Fix creeping window size when toggling fullscreen.
+
+Alpha 11
+Bug fixes! Also brings back i386 and PPC support. Details:
+
+- Restore PPC and i386 support (bug 198).
+- In previous alphas, holding down Alt while making a selection would create a rectangular selection. This conflicted with an existing behavior where holding down Alt disables xterm mouse reporting. Now, you must hold down Cmd+Alt to select a rectang.e (bug 124).
+- Hopefully fixes a crash with entering and exiting fullscreen mode.
+- Improve reliability of opening a tab with the same working dir as the current tab (bug 75).
+- Copy now copies tabs properly instead of converting them to spaces (bug 90).
+- Prevent multiple bookmarks from having the same shortcut (bug 92).
+- When a you use the Finder to launch a script by doing Open With->Iterm and it starts a background process, the background process won't be killed when the script finished (bug 203).
+- When a window or tab is closed, send SIGHUP instead of SIGKILL so that login can shut down gracefully (bug 87).
+- The refresh rate slider had an insane max. (bug 202).
+- Debug logging performance improved.
 
 Alpha 10
 The focus of this release is bug fixes. It also features a major performance improvement as well as better internationalization support. This is the first 64-bit release.

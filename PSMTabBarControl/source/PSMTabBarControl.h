@@ -41,8 +41,8 @@
 @protocol PTYTabViewDelegateProtocol;
 
 typedef enum {
-	PSMTabBarHorizontalOrientation,
-	PSMTabBarVerticalOrientation
+    PSMTabBarHorizontalOrientation,
+    PSMTabBarVerticalOrientation
 } PSMTabBarOrientation;
 
 enum {
@@ -57,63 +57,65 @@ enum {
 
 enum {
     PSMTab_TopTab           = 0,
-    PSMTab_BottomTab		= 1
+    PSMTab_BottomTab        = 1
 };
 
 @interface PSMTabBarControl : NSControl <PTYTabViewDelegateProtocol> {
-    
+
     // control basics
     NSMutableArray              *_cells;                    // the cells that draw the tabs
     IBOutlet NSTabView          *tabView;                   // the tab view being navigated
     PSMOverflowPopUpButton      *_overflowPopUpButton;      // for too many tabs
     PSMRolloverButton           *_addTabButton;
-    
+
     // drawing style
     id<PSMTabStyle>             style;
     BOOL                        _canCloseOnlyTab;
-	BOOL						_disableTabClose;
+    BOOL                        _disableTabClose;
     BOOL                        _hideForSingleTab;
     BOOL                        _showAddTabButton;
     BOOL                        _sizeCellsToFit;
     BOOL                        _useOverflowMenu;
-	int							_resizeAreaCompensation;
-	PSMTabBarOrientation		_orientation;
-	BOOL						_automaticallyAnimates;
-	NSTimer						*_animationTimer;
-	float						_animationDelta;
-	
-	// behavior
-	BOOL						_allowsBackgroundTabClosing;
-	BOOL						_selectsTabsOnMouseDown;
-	
-	// vertical tab resizing
-	BOOL						_allowsResizing;
-	BOOL						_resizing;
-	
+    int                         _resizeAreaCompensation;
+    PSMTabBarOrientation        _orientation;
+    BOOL                        _automaticallyAnimates;
+    NSTimer                     *_animationTimer;
+    float                       _animationDelta;
+
+    // behavior
+    BOOL                        _allowsBackgroundTabClosing;
+    BOOL                        _selectsTabsOnMouseDown;
+
+    // vertical tab resizing
+    BOOL                        _allowsResizing;
+    BOOL                        _resizing;
+
     // cell width
     int                         _cellMinWidth;
     int                         _cellMaxWidth;
     int                         _cellOptimumWidth;
-    
+
     // animation for hide/show
     int                         _currentStep;
     BOOL                        _isHidden;
     BOOL                        _hideIndicators;
     IBOutlet id                 partnerView;                // gets resized when hide/show
     BOOL                        _awakenedFromNib;
-	int							_tabBarWidth;
-    
+    int                         _tabBarWidth;
+
     // drag and drop
     NSEvent                     *_lastMouseDownEvent;      // keep this for dragging reference
-	BOOL						_didDrag;
-	BOOL						_closeClicked;
-    
+    BOOL                        _didDrag;
+    BOOL                        _closeClicked;
+
     // MVC help
     IBOutlet id                 delegate;
-    
+
     // orientation, top or bottom
     int                         _tabLocation;
-    
+
+    // iTerm2 additions
+    int                         _modifier;
 }
 
 // control characteristics
@@ -154,6 +156,7 @@ enum {
 - (void)setAutomaticallyAnimates:(BOOL)value;
 - (int)tabLocation;
 - (void)setTabLocation:(int)value;
+- (void)changeIdentifier:(id)newIdentifier atIndex:(int)theIndex;
 
 // accessors
 - (NSTabView *)tabView;
@@ -177,6 +180,7 @@ enum {
 
 // internal bindings methods also used by the tab drag assistant
 - (void)bindPropertiesForCell:(PSMTabBarCell *)cell andTabViewItem:(NSTabViewItem *)item;
+- (void)disconnectItem:(NSObjectController*)item fromCell:(PSMTabBarCell*)cell;
 - (void)removeTabForCell:(PSMTabBarCell *)cell;
 
 @end
@@ -198,6 +202,7 @@ enum {
 //Drag and drop methods
 - (BOOL)tabView:(NSTabView *)aTabView shouldDragTabViewItem:(NSTabViewItem *)tabViewItem fromTabBar:(PSMTabBarControl *)tabBarControl;
 - (BOOL)tabView:(NSTabView *)aTabView shouldDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl;
+- (void)tabView:(NSTabView*)aTabView willDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl;
 - (void)tabView:(NSTabView*)aTabView didDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl;
 
 //Tear-off tabs methods
@@ -227,7 +232,13 @@ enum {
 
 // iTerm add-on
 - (void)setLabelColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
+- (void)setTabColor:(NSColor *)aColor forTabViewItem:(NSTabViewItem *) tabViewItem;
+- (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
 - (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem;
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView;
+- (void)setModifier:(int)mask;
+- (NSString*)_modifierString;
+- (void)fillPath:(NSBezierPath*)path;
+
 
 @end

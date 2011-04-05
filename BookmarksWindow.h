@@ -28,13 +28,19 @@
 @interface BookmarksWindow : NSWindowController <BookmarkTableDelegate> {
     IBOutlet BookmarkListView* tableView_;
     IBOutlet NSSegmentedControl* actions_;
+    IBOutlet NSButton* horizontalPaneButton_;
+    IBOutlet NSButton* verticalPaneButton_;
     IBOutlet NSButton* tabButton_;
     IBOutlet NSButton* windowButton_;
+	IBOutlet NSButton* closeAfterOpeningBookmark_;
+	IBOutlet NSButton* newTabsInNewWindowButton_;
 }
 
 + (BookmarksWindow*)sharedInstance;
 - (id)init;
 - (id)initWithWindowNibName:(NSString *)windowNibName;
+- (IBAction)openBookmarkInHorizontalPane:(id)sender;
+- (IBAction)openBookmarkInVerticalPane:(id)sender;
 - (IBAction)openBookmarkInTab:(id)sender;
 - (IBAction)openBookmarkInWindow:(id)sender;
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable;
@@ -42,6 +48,8 @@
 - (void)bookmarkTableRowSelected:(id)bookmarkTable;
 - (NSMenu*)bookmarkTable:(id)bookmarkTable menuForEvent:(NSEvent*)theEvent;
 - (IBAction)editBookmarks:(id)sender;
+- (IBAction)closeAfterOpeningChanged:(id)sender;
+- (IBAction)newTabsInNewWindow:(id)sender;
 
 // NSWindow Delegate
 - (void)windowDidBecomeKey:(NSNotification *)notification;

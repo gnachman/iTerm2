@@ -32,11 +32,14 @@
         _indicator = [[PSMProgressIndicator alloc] initWithFrame:NSMakeRect(0.0,0.0,kPSMTabBarIndicatorWidth,kPSMTabBarIndicatorWidth)];
         [_indicator setStyle:NSProgressIndicatorSpinningStyle];
         [_indicator setAutoresizingMask:NSViewMinYMargin];
+        [_indicator setControlSize:NSSmallControlSize];
         _hasCloseButton = YES;
         _isCloseButtonSuppressed = NO;
         _count = 0;
         _isPlaceholder = NO;
         _labelColor = nil;
+        _tabColor = nil;
+        _modifierString = [@"" copy];
     }
     return self;
 }
@@ -63,7 +66,8 @@
         _isCloseButtonSuppressed = NO;
         _count = 0;
         _labelColor = nil;
-
+        _tabColor = nil;
+        _modifierString = [@"" copy];
         if (value) {
             [self setCurrentStep:(kPSMTabDragAnimationSteps - 1)];
         } else {
@@ -75,10 +79,12 @@
 
 - (void)dealloc
 {
+    [_modifierString release];
     [_indicator release];
     if (_labelColor)
         [_labelColor release];
-
+    if (_tabColor)
+        [_tabColor release];
     [super dealloc];
 }
 
@@ -266,6 +272,17 @@
         value = (kPSMTabDragAnimationSteps - 1);
 
     _currentStep = value;
+}
+
+- (NSString*)modifierString
+{
+    return _modifierString;
+}
+
+- (void)setModifierString:(NSString*)value
+{
+    [_modifierString autorelease];
+    _modifierString = [value copy];
 }
 
 #pragma mark -
@@ -503,6 +520,21 @@
             [_labelColor release];
         }
         _labelColor = aColor ? [aColor retain] : nil;
+    }
+}
+
+- (NSColor*)tabColor
+{
+    return _tabColor;
+}
+
+- (void)setTabColor:(NSColor *)aColor
+{
+    if (_tabColor != aColor) {
+        if (_tabColor) {
+            [_tabColor release];
+        }
+        _tabColor = aColor ? [aColor retain] : nil;
     }
 }
 

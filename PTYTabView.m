@@ -121,13 +121,11 @@
     return (NO);
 }
 
-- (void) drawRect: (NSRect) rect
+- (void)drawRect:(NSRect)rect
 {
-    //NSLog(@"%s", __PRETTY_FUNCTION__);
-
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermTabViewWillRedraw" object: self];
-    [super drawRect: rect];
-
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabViewWillRedraw" 
+                                                        object:self];
+    [super drawRect:rect];
 }
 
 
@@ -164,7 +162,7 @@
     [super removeTabViewItem: aTabViewItem];
 }
 
-- (void) insertTabViewItem: (NSTabViewItem *) tabViewItem atIndex: (int) theIndex
+- (void)insertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int)theIndex
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"PTYTabView: -insertTabViewItem atIndex: %d", theIndex);
@@ -182,16 +180,16 @@
     if([delegate conformsToProtocol: @protocol(PTYTabViewDelegateProtocol)])
         [delegate tabView: self willInsertTabViewItem: tabViewItem atIndex: theIndex];
 
-    [super insertTabViewItem: tabViewItem atIndex: theIndex];
+    [super insertTabViewItem:tabViewItem atIndex:theIndex];
 #if DEBUG_METHOD_TRACE
     NSLog(@"PTYTabView: -insertTabViewItem atIndex: %d, done", theIndex);
 #endif
 }
 
 // selects a tab from the contextual menu
-- (void) selectTab: (id) sender
+- (void)selectTab:(id)sender
 {
-    [self selectTabViewItemWithIdentifier: [sender representedObject]];
+    [self selectTabViewItemWithIdentifier:[sender representedObject]];
 }
 
 @end

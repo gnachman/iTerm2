@@ -12,7 +12,7 @@ except KeyError:
 from Foundation import NSMutableDictionary
 
 if os.environ["CONFIGURATION"] == "Development":
-        status, output = commands.getstatusoutput("bash -l -c 'svn info'")
+        status, output = commands.getstatusoutput("bash -l -c 'LANGUAGE=C svn info'")
         if status != 0:
                 sys.exit(status)
 

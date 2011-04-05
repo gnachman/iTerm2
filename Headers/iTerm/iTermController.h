@@ -6,7 +6,7 @@
  **  Copyright (c) 2002, 2003
  **
  **  Author: Fabian, Ujwal S. Setlur
- **	     Initial code by Kiichi Kusama
+ **          Initial code by Kiichi Kusama
  **
  **  Project: iTerm
  **
@@ -28,41 +28,83 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import <Carbon/Carbon.h>
 
 @class PseudoTerminal;
 @class PTYTextView;
 @class ItermGrowlDelegate;
+@class PasteboardHistory;
 
 @interface iTermController : NSObject
 {
     // PseudoTerminal objects
     NSMutableArray *terminalWindows;
     id FRONT;
-	ItermGrowlDelegate *gd;
+    ItermGrowlDelegate *gd;
+
+    // App-wide hotkey
+    int hotkeyCode_;
+    int hotkeyModifiers_;
+    CFMachPortRef machPortRef;
+    CFRunLoopSourceRef eventSrc;
+    int keyWindowIndexMemo_;
+    BOOL itermWasActiveWhenHotkeyOpened;
+    BOOL rollingIn_;
 }
 
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;
 
-// actions are forwarded form application
++ (void)switchToSpaceInBookmark:(NSDictionary*)aDict;
+- (BOOL)rollingInHotkeyTerm;
+
+// actions are forwarded from application
 - (IBAction)newWindow:(id)sender;
 - (IBAction)newSession:(id)sender;
-- (IBAction) previousTerminal: (id) sender;
-- (IBAction) nextTerminal: (id) sender;
-- (void)newSessionInTabAtIndex: (id) sender;
-- (void)newSessionInWindowAtIndex: (id) sender;
+- (IBAction) previousTerminal:(id)sender;
+- (IBAction) nextTerminal:(id)sender;
+- (void)arrangeHorizontally;
+- (void)newSessionInTabAtIndex:(id)sender;
+- (void)newSessionInWindowAtIndex:(id)sender;
 - (void)showHideFindBar;
+- (PseudoTerminal*)keyTerminalWindow;
 
-- (PseudoTerminal *) currentTerminal;
-- (void) terminalWillClose: (PseudoTerminal *) theTerminalWindow;
-- (NSArray *) sortedEncodingList;
-- (void)addBookmarksToMenu:(NSMenu *)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts;
-- (void) launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm;
-- (void) launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm withCommand: (NSString *)command;
-- (void) launchBookmark: (NSDictionary *) bookmarkData inTerminal: (PseudoTerminal *) theTerm withURL: (NSString *)url;
-- (PTYTextView *) frontTextView;
--(int)numberOfTerminals;
--(PseudoTerminal*)terminalAtIndex:(int)i;
+- (void)stopEventTap;
+
+- (int)keyWindowIndexMemo;
+- (void)setKeyWindowIndexMemo:(int)i;
+- (void)showHotKeyWindow;
+- (void)fastHideHotKeyWindow;
+- (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm;
+- (BOOL)isHotKeyWindowOpen;
+- (void)showNonHotKeyWindowsAndSetAlphaTo:(float)a;
+- (PseudoTerminal*)hotKeyWindow;
+
+- (PseudoTerminal*)terminalWithNumber:(int)n;
+- (int)allocateWindowNumber;
+
+- (BOOL)hasWindowArrangement;
+- (void)saveWindowArrangement;
+- (void)loadWindowArrangement;
+
+- (PseudoTerminal *)currentTerminal;
+- (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
+- (NSArray*)sortedEncodingList;
+- (void)addBookmarksToMenu:(NSMenu *)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts selector:(SEL)selector openAllSelector:(SEL)openAllSelector alternateSelector:(SEL)alternateSeelctor;
+- (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm;
+- (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm withCommand:(NSString *)command;
+- (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm withURL:(NSString*)url;
+- (PTYTextView*)frontTextView;
+- (int)numberOfTerminals;
+- (PseudoTerminal*)terminalAtIndex:(int)i;
+- (void)irAdvance:(int)dir;
+- (NSUInteger)indexOfTerminal:(PseudoTerminal*)terminal;
+
+- (BOOL)eventIsHotkey:(NSEvent*)e;
+- (void)unregisterHotkey;
+- (BOOL)haveEventTap;
+- (BOOL)registerHotkey:(int)keyCode modifiers:(int)modifiers;
+- (void)beginRemappingModifiers;
 
 @end
 
@@ -85,6 +127,8 @@
 
 // a class method to provide the keys for KVC:
 - (NSArray*)kvcKeys;
+
+void OnHotKeyEvent(void);
 
 @end
 

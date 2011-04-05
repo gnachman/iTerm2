@@ -25,13 +25,47 @@
 #import <Cocoa/Cocoa.h>
 #import "BookmarkModel.h"
 
-@interface BookmarkSearchField : NSSearchField
+@class iTermSearchField;
+@class BookmarkRow;
+// This is an intermediate model that wraps BookmarkModel and allows
+// each BookmarkListView to have a different ordering of bookmarks.
+// It represents bookmarks are BookmarkRow objects which have a
+// key-value coding and can be sorted by the columns relevant to
+// BookmarkListView.
+@interface BookmarkModelWrapper : NSObject
 {
-    id arrowHandler_;
+    BookmarkModel* underlyingModel;
+    NSMutableArray* bookmarks;
+    NSMutableString* filter;
+    NSArray* sortDescriptors;
 }
 
-- (BOOL)performKeyEquivalent:(NSEvent *)theEvent;
-- (void)setArrowHandler:(id)handler;
+- (id)initWithModel:(BookmarkModel*)model;
+- (void)dealloc;
+- (void)setSortDescriptors:(NSArray*)newSortDescriptors;
+- (NSArray*)sortDescriptors;
+
+// Cause the underlying model to have the visible bookmarks in the same order as
+// they appear here. Only bookmarks matching the filter are pushed.
+- (void)pushOrderToUnderlyingModel;
+
+// Sort the local representation according to sort descriptors set with setSortDescriptors.
+- (void)sort;
+
+// These functions take the filter (set with setFilter) into account with respect to indices.
+- (int)numberOfBookmarks;
+- (BookmarkRow*)bookmarkRowAtIndex:(int)index;
+- (Bookmark*)bookmarkAtIndex:(int)index;
+- (int)indexOfBookmarkWithGuid:(NSString*)guid;
+- (void)moveBookmarkWithGuid:(NSString*)guid toIndex:(int)index;
+
+- (BookmarkModel*)underlyingModel;
+
+// Copy bookmarks matchin the filter from the underlying model.
+- (void)sync;
+
+// Show only bookmarks matching a search query 'filter'.
+- (void)setFilter:(NSString*)newFilter;
 
 @end
 
@@ -53,7 +87,7 @@
 @interface BookmarkListView : NSView {
     int rowHeight_;
     NSScrollView* scrollView_;
-    BookmarkSearchField* searchField_;
+    iTermSearchField* searchField_;
     BookmarkTableView* tableView_;
     NSTableColumn* tableColumn_;
     NSTableColumn* commandColumn_;
@@ -64,20 +98,17 @@
     BOOL showGraphic_;
     NSSet* selectedGuids_;
     BOOL debug;
-    BookmarkModel* dataSource_;
+    BookmarkModelWrapper* dataSource_;
 }
 
 - (void)awakeFromNib;
 - (id)initWithFrame:(NSRect)frameRect;
+- (id)initWithFrame:(NSRect)frameRect model:(BookmarkModel*)dataSource;
 - (void)setDelegate:(id<BookmarkTableDelegate>)delegate;
 - (void)dealloc;
-- (void)setDataSource:(BookmarkModel*)dataSource;
-
-// DataSource methods
-- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;
-- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex;
-- (BOOL)selectionShouldChangeInTableView:(NSTableView *)aTableView;
-- (NSDragOperation)tableView:(NSTableView *)aTableView validateDrop:(id < NSDraggingInfo >)info proposedRow:(NSInteger)row proposedDropOperation:(NSTableViewDropOperation)operation;
+- (BookmarkModelWrapper*)dataSource;
+- (void)setUnderlyingDatasource:(BookmarkModel*)dataSource;
+- (void)focusSearchField;
 
 // Drag drop
 - (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard*)pboard;
@@ -86,11 +117,18 @@
               row:(NSInteger)row dropOperation:(NSTableViewDropOperation)operation;
 
 
+// DataSource methods
+- (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView;
+- (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)rowIndex;
+- (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex;
+- (BOOL)selectionShouldChangeInTableView:(NSTableView *)aTableView;
+- (NSDragOperation)tableView:(NSTableView *)aTableView validateDrop:(id < NSDraggingInfo >)info proposedRow:(NSInteger)row proposedDropOperation:(NSTableViewDropOperation)operation;
+
 // Delegate methods
 - (BOOL)selectionShouldChangeInTableView:(NSTableView *)aTableView;
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification;
 
-// Don't use this if you've called allowMultipleSelection.
+// Don't use this if you've called allowMultipleSelections.
 - (int)selectedRow;
 - (void)reloadData;
 - (void)selectRowIndex:(int)theIndex;
@@ -103,7 +141,7 @@
 - (void)deselectAll;
 - (void)multiColumns;
 
-// Dont' use this if you've called allowMultipleSelection
+// Dont' use this if you've called allowMultipleSelections
 - (NSString*)selectedGuid;
 - (NSSet*)selectedGuids;
 - (void)dataChangeNotification:(id)sender;
@@ -113,7 +151,6 @@
 - (id)retain;
 - (oneway void)release;
 - (void)turnOnDebug;
-- (void)allowMultipleSelection;
 - (NSTableView*)tableView;
 - (id)delegate;
 

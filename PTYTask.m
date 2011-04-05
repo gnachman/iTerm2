@@ -26,6 +26,45 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+/* Some portions of this code were adapated from Apple's implementation of "ps".
+ * It appears to be BSD-derived. Their copyright message follows: */
+
+/*-
+ * Copyright (c) 1990, 1993, 1994
+ *  The Regents of the University of California.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * ------+---------+---------+-------- + --------+---------+---------+---------*
+ * Copyright (c) 2004  - Garance Alistair Drosehn <gad@FreeBSD.org>.
+ * All rights reserved.
+ *
+ * Significant modifications made to bring `ps' options somewhat closer
+ * to the standard for `ps' as described in SingleUnixSpec-v3.
+ * ------+---------+---------+-------- + --------+---------+---------+---------*
+ */
+
 // Debug option
 #define DEBUG_ALLOC         0
 #define DEBUG_METHOD_TRACE  0
@@ -33,7 +72,7 @@
 // Use this instead to debug this module:
 // #define PtyTaskDebugLog NSLog
 
-#define MAXRW 2048
+#define MAXRW 1024
 
 #import <Foundation/Foundation.h>
 
@@ -41,59 +80,19 @@
 #include <util.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
+#include <libproc.h>
 
 #import <iTerm/PTYTask.h>
 #import <iTerm/PreferencePanel.h>
 
 #include <dlfcn.h>
 #include <sys/mount.h>
-/* Definition stolen from libproc.h */
-#define PROC_PIDVNODEPATHINFO 9
-//int proc_pidinfo(pid_t pid, int flavor, uint64_t arg,  void *buffer, int buffersize);
 
-struct vinfo_stat {
-    uint32_t    vst_dev;            /* [XSI] ID of device containing file */
-    uint16_t    vst_mode;           /* [XSI] Mode of file (see below) */
-    uint16_t    vst_nlink;          /* [XSI] Number of hard links */
-    uint64_t    vst_ino;            /* [XSI] File serial number */
-    uid_t       vst_uid;            /* [XSI] User ID of the file */
-    gid_t       vst_gid;            /* [XSI] Group ID of the file */
-    int64_t     vst_atime;          /* [XSI] Time of last access */
-    int64_t     vst_atimensec;      /* nsec of last access */
-    int64_t     vst_mtime;          /* [XSI] Last data modification time */
-    int64_t     vst_mtimensec;      /* last data modification nsec */
-    int64_t     vst_ctime;          /* [XSI] Time of last status change */
-    int64_t     vst_ctimensec;      /* nsec of last status change */
-    int64_t     vst_birthtime;      /* File creation time(birth) */
-    int64_t     vst_birthtimensec;  /* nsec of File creation time */
-    off_t       vst_size;           /* [XSI] file size, in bytes */
-    int64_t     vst_blocks;         /* [XSI] blocks allocated for file */
-    int32_t     vst_blksize;        /* [XSI] optimal blocksize for I/O */
-    uint32_t    vst_flags;          /* user defined flags for file */
-    uint32_t    vst_gen;            /* file generation number */
-    uint32_t    vst_rdev;           /* [XSI] Device ID */
-    int64_t     vst_qspare[2];      /* RESERVED: DO NOT USE! */
-};
-
-struct vnode_info {
-    struct vinfo_stat vi_stat;
-    int               vi_type;
-    fsid_t            vi_fsid;
-    int               vi_pad;
-};
-
-struct vnode_info_path {
-    struct vnode_info vip_vi;
-    char              vip_path[MAXPATHLEN];  /* tail end of it  */
-};
-
-struct proc_vnodepathinfo {
-    struct vnode_info_path pvi_cdir;
-    struct vnode_info_path pvi_rdir;
-};
-
-
-
+#include <sys/time.h>
+#include <sys/user.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 @interface TaskNotifier : NSObject
 {
@@ -102,6 +101,9 @@ struct proc_vnodepathinfo {
     BOOL tasksChanged;
     // Protects 'tasks' and 'tasksChanged'.
     NSRecursiveLock* tasksLock;
+
+    // A set of NSNumber*s holding pids of tasks that need to be wait()ed on
+    NSMutableSet* deadpool;
     int unblockPipeR;
     int unblockPipeW;
 }
@@ -135,11 +137,13 @@ static TaskNotifier* taskNotifier = nil;
 
 - (id)init
 {
-    if ([super init] == nil)
+    if ([super init] == nil) {
         return nil;
+    }
 
-    tasks        = [[NSMutableArray alloc] init];
-    tasksLock    = [[NSRecursiveLock alloc] init];
+    deadpool = [[NSMutableSet alloc] init];
+    tasks = [[NSMutableArray alloc] init];
+    tasksLock = [[NSRecursiveLock alloc] init];
     tasksChanged = NO;
 
     int unblockPipe[2];
@@ -155,8 +159,10 @@ static TaskNotifier* taskNotifier = nil;
 
 - (void)dealloc
 {
+    taskNotifier = nil;
     [tasks release];
     [tasksLock release];
+    [deadpool release];
     close(unblockPipeR);
     close(unblockPipeW);
     [super dealloc];
@@ -180,6 +186,8 @@ static TaskNotifier* taskNotifier = nil;
     PtyTaskDebugLog(@"deregisterTask: lock\n");
     [tasksLock lock];
     PtyTaskDebugLog(@"Begin remove task 0x%x\n", (void*)task);
+    PtyTaskDebugLog(@"Add %d to deadpool", [task pid]);
+    [deadpool addObject:[NSNumber numberWithInt:[task pid]]];
     [tasks removeObject:task];
     tasksChanged = YES;
     PtyTaskDebugLog(@"End remove task 0x%x. There are now %d tasks.\n", (void*)task, [tasks count]);
@@ -198,12 +206,12 @@ static TaskNotifier* taskNotifier = nil;
 {
     NSAutoreleasePool* outerPool = [[NSAutoreleasePool alloc] init];
 
-    fd_set             rfds;
-    fd_set             wfds;
-    fd_set             efds;
-    int                highfd;
-    NSEnumerator*      iter;
-    PTYTask*           task;
+    fd_set rfds;
+    fd_set wfds;
+    fd_set efds;
+    int highfd;
+    NSEnumerator* iter;
+    PTYTask* task;
 
     // FIXME: replace this with something better...
     for(;;) {
@@ -216,7 +224,7 @@ static TaskNotifier* taskNotifier = nil;
         // Unblock pipe to interrupt select() whenever a PTYTask register/unregisters
         highfd = unblockPipeR;
         FD_SET(unblockPipeR, &rfds);
-        CFMutableSetRef handledFds = CFSetCreateMutable (NULL, [tasks count], NULL);
+        NSMutableSet* handledFds = [[NSMutableSet alloc] initWithCapacity:[tasks count]];
 
         // Add all the PTYTask pipes
         PtyTaskDebugLog(@"run1: lock");
@@ -230,6 +238,26 @@ static TaskNotifier* taskNotifier = nil;
                 [self deregisterTask:theTask];
             }
         }
+
+        if ([deadpool count] > 0) {
+            // waitpid() on pids that we think are dead or will be dead soon.
+            NSMutableSet* newDeadpool = [NSMutableSet setWithCapacity:[deadpool count]];
+            for (NSNumber* pid in deadpool) {
+                int statLoc;
+                PtyTaskDebugLog(@"wait on %d", [pid intValue]);
+                if (waitpid([pid intValue], &statLoc, WNOHANG) < 0) {
+                    if (errno != ECHILD) {
+                        PtyTaskDebugLog(@"  wait failed with %d (%s), adding back to deadpool", errno, strerror(errno));
+                        [newDeadpool addObject:pid];
+                    } else {
+                        PtyTaskDebugLog(@"  wait failed with ECHILD, I guess we already waited on it.");
+                    }
+                }
+            }
+            [deadpool release];
+            deadpool = [newDeadpool retain];
+        }
+
         PtyTaskDebugLog(@"Begin enumeration over %d tasks\n", [tasks count]);
         iter = [tasks objectEnumerator];
         int i = 0;
@@ -239,8 +267,7 @@ static TaskNotifier* taskNotifier = nil;
             int fd = [task fd];
             if (fd < 0) {
                 PtyTaskDebugLog(@"Task has fd of %d\n", fd);
-            }
-            else {
+            } else {
                 // PtyTaskDebugLog(@"Select on fd %d\n", fd);
                 if (fd > highfd)
                     highfd = fd;
@@ -290,17 +317,18 @@ static TaskNotifier* taskNotifier = nil;
                 // end up with the same fd (because one closed
                 // and there was a race condition) then trying
                 // to read twice would hang.
-                if (CFSetContainsValue(handledFds, (void*)fd)) {
+
+                if ([handledFds containsObject:[NSNumber numberWithInt:fd]]) {
                     PtyTaskDebugLog(@"Duplicate fd %d", fd);
                     continue;
                 }
-                CFSetAddValue(handledFds, (void*)fd);
+                [handledFds addObject:[NSNumber numberWithInt:fd]];
 
                 if (FD_ISSET(fd, &rfds)) {
-                    PtyTaskDebugLog(@"run/processREad: unlock");
+                    PtyTaskDebugLog(@"run/processRead: unlock");
                     [tasksLock unlock];
                     [task processRead];
-                    PtyTaskDebugLog(@"run/processREad: lock");
+                    PtyTaskDebugLog(@"run/processRead: lock");
                     [tasksLock lock];
                     if (tasksChanged) {
                         PtyTaskDebugLog(@"Restart iteration\n");
@@ -323,6 +351,8 @@ static TaskNotifier* taskNotifier = nil;
                 if (FD_ISSET(fd, &efds)) {
                     PtyTaskDebugLog(@"run/brokenPipe: unlock");
                     [tasksLock unlock];
+                    // brokenPipe will call deregisterTask and add the pid to
+                    // deadpool.
                     [task brokenPipe];
                     PtyTaskDebugLog(@"run/brokenPipe: lock");
                     [tasksLock lock];
@@ -340,7 +370,7 @@ static TaskNotifier* taskNotifier = nil;
         [tasksLock unlock];
 
     breakloop:
-        CFRelease(handledFds);
+        [handledFds release];
         [innerPool drain];
     }
 
@@ -351,7 +381,7 @@ static TaskNotifier* taskNotifier = nil;
 
 @implementation PTYTask
 
-#define CTRLKEY(c)   ((c)-'A'+1)
+#define CTRLKEY(c) ((c)-'A'+1)
 
 static void
 setup_tty_param(
@@ -365,37 +395,37 @@ setup_tty_param(
     memset(win, 0, sizeof(struct winsize));
 
     // UTF-8 input will be added on demand.
-    term->c_iflag        = ICRNL | IXON | IXANY | IMAXBEL | BRKINT | (isUTF8 ? IUTF8 : 0);
-    term->c_oflag        = OPOST | ONLCR;
-    term->c_cflag        = CREAD | CS8 | HUPCL;
-    term->c_lflag        = ICANON | ISIG | IEXTEN | ECHO | ECHOE | ECHOK | ECHOKE | ECHOCTL;
+    term->c_iflag = ICRNL | IXON | IXANY | IMAXBEL | BRKINT | (isUTF8 ? IUTF8 : 0);
+    term->c_oflag = OPOST | ONLCR;
+    term->c_cflag = CREAD | CS8 | HUPCL;
+    term->c_lflag = ICANON | ISIG | IEXTEN | ECHO | ECHOE | ECHOK | ECHOKE | ECHOCTL;
 
-    term->c_cc[VEOF]     = CTRLKEY('D');
-    term->c_cc[VEOL]     = -1;
-    term->c_cc[VEOL2]    = -1;
-    term->c_cc[VERASE]   = 0x7f;           // DEL
-    term->c_cc[VWERASE]  = CTRLKEY('W');
-    term->c_cc[VKILL]    = CTRLKEY('U');
+    term->c_cc[VEOF] = CTRLKEY('D');
+    term->c_cc[VEOL] = -1;
+    term->c_cc[VEOL2] = -1;
+    term->c_cc[VERASE] = 0x7f;           // DEL
+    term->c_cc[VWERASE] = CTRLKEY('W');
+    term->c_cc[VKILL] = CTRLKEY('U');
     term->c_cc[VREPRINT] = CTRLKEY('R');
-    term->c_cc[VINTR]    = CTRLKEY('C');
-    term->c_cc[VQUIT]    = 0x1c;           // Control+backslash
-    term->c_cc[VSUSP]    = CTRLKEY('Z');
-    term->c_cc[VDSUSP]   = CTRLKEY('Y');
-    term->c_cc[VSTART]   = CTRLKEY('Q');
-    term->c_cc[VSTOP]    = CTRLKEY('S');
-    term->c_cc[VLNEXT]   = -1;
+    term->c_cc[VINTR] = CTRLKEY('C');
+    term->c_cc[VQUIT] = 0x1c;           // Control+backslash
+    term->c_cc[VSUSP] = CTRLKEY('Z');
+    term->c_cc[VDSUSP] = CTRLKEY('Y');
+    term->c_cc[VSTART] = CTRLKEY('Q');
+    term->c_cc[VSTOP] = CTRLKEY('S');
+    term->c_cc[VLNEXT] = -1;
     term->c_cc[VDISCARD] = -1;
-    term->c_cc[VMIN]     = 1;
-    term->c_cc[VTIME]    = 0;
-    term->c_cc[VSTATUS]  = -1;
+    term->c_cc[VMIN] = 1;
+    term->c_cc[VTIME] = 0;
+    term->c_cc[VSTATUS] = -1;
 
-    term->c_ispeed       = B38400;
-    term->c_ospeed       = B38400;
+    term->c_ispeed = B38400;
+    term->c_ospeed = B38400;
 
-    win->ws_row          = height;
-    win->ws_col          = width;
-    win->ws_xpixel       = 0;
-    win->ws_ypixel       = 0;
+    win->ws_row = height;
+    win->ws_col = width;
+    win->ws_xpixel = 0;
+    win->ws_ypixel = 0;
 }
 
 - (id)init
@@ -406,17 +436,17 @@ setup_tty_param(
     if ([super init] == nil)
         return nil;
 
-    pid         = (pid_t)-1;
-    status      = 0;
-    delegate    = nil;
-    fd          = -1;
-    tty         = nil;
-    logPath     = nil;
-    logHandle   = nil;
-    hasOutput   = NO;
+    pid = (pid_t)-1;
+    status = 0;
+    delegate = nil;
+    fd = -1;
+    tty = nil;
+    logPath = nil;
+    logHandle = nil;
+    hasOutput = NO;
 
     writeBuffer = [[NSMutableData alloc] init];
-    writeLock   = [[NSLock alloc] init];
+    writeLock = [[NSLock alloc] init];
 
     return self;
 }
@@ -428,19 +458,30 @@ setup_tty_param(
 #endif
     [[TaskNotifier sharedInstance] deregisterTask:self];
 
-    if (pid > 0)
-        kill(pid, SIGKILL);
+    if (pid > 0) {
+        killpg(pid, SIGHUP);
+    }
 
     if (fd >= 0) {
         PtyTaskDebugLog(@"dealloc: Close fd %d\n", fd);
         close(fd);
     }
 
-    [writeLock   release];
+    [writeLock release];
     [writeBuffer release];
-    [tty         release];
-    [path        release];
-    [super       dealloc];
+    [tty release];
+    [path release];
+    [super dealloc];
+}
+
+static void reapchild(int n)
+{
+  // This intentionally does nothing.
+  // We cannot ignore SIGCHLD because Sparkle (the software updater) opens a
+  // Safari control which uses some buggy Netscape code that calls wait()
+  // until it succeeds. If we wait() on its pid, that process locks because
+  // it doesn't check if wait()'s failure is ECHLD. Instead of wait()ing here,
+  // we reap our children when our select() loop sees that a pipes is broken.
 }
 
 - (void)launchWithPath:(NSString*)progpath
@@ -449,11 +490,12 @@ setup_tty_param(
                  width:(int)width
                 height:(int)height
                 isUTF8:(BOOL)isUTF8
+        asLoginSession:(BOOL)asLoginSession
 {
     struct termios term;
     struct winsize win;
-    char           theTtyname[PATH_MAX];
-    int            sts;
+    char theTtyname[PATH_MAX];
+    int sts;
 
     path = [progpath copy];
 
@@ -462,17 +504,27 @@ setup_tty_param(
 #endif
 
     setup_tty_param(&term, &win, width, height, isUTF8);
+    // Register a handler for the child death signal.
+    signal(SIGCHLD, reapchild);
     pid = forkpty(&fd, theTtyname, &term, &win);
     if (pid == (pid_t)0) {
-        const char* argpath = [[progpath stringByStandardizingPath] UTF8String];
+        const char* argpath;
+        argpath = [[progpath stringByStandardizingPath] UTF8String];
+        // Do not start the new process with a signal handler.
+        signal(SIGCHLD, SIG_DFL);
         int max = (args == nil) ? 0 : [args count];
         const char* argv[max + 2];
 
-        argv[0] = argpath;
+        if (asLoginSession) {
+            argv[0] = [[NSString stringWithFormat:@"-%@", [progpath stringByStandardizingPath]] UTF8String];
+        } else {
+            argv[0] = [[progpath stringByStandardizingPath] UTF8String];
+        }
         if (args != nil) {
             int i;
-            for (i = 0; i < max; ++i)
+            for (i = 0; i < max; ++i) {
                 argv[i + 1] = [[args objectAtIndex:i] cString];
+            }
         }
         argv[max + 1] = NULL;
 
@@ -484,8 +536,9 @@ setup_tty_param(
                 NSString* value;
                 key = [keys objectAtIndex:i];
                 value = [env objectForKey:key];
-                if (key != nil && value != nil)
+                if (key != nil && value != nil) {
                     setenv([key UTF8String], [value UTF8String], 1);
+                }
             }
         }
         // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
@@ -498,8 +551,7 @@ setup_tty_param(
 
         sleep(1);
         _exit(-1);
-    }
-    else if (pid < (pid_t)0) {
+    } else if (pid < (pid_t)0) {
         PtyTaskDebugLog(@"%@ %s", progpath, strerror(errno));
         NSRunCriticalAlertPanel(NSLocalizedStringFromTableInBundle(@"Unable to Fork!",@"iTerm", [NSBundle bundleForClass: [self class]], @"Fork Error"),
                                 NSLocalizedStringFromTableInBundle(@"iTerm cannot launch the program for this session.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Fork Error"),
@@ -534,19 +586,39 @@ setup_tty_param(
     NSLog(@"%s(%d):+[PTYTask processRead]", __FILE__, __LINE__);
 #endif
 
-    // Only write up to MAXRW bytes, then release control
-    NSMutableData* data      = [NSMutableData dataWithLength:MAXRW];
-    ssize_t        bytesread = read(fd, [data mutableBytes], MAXRW);
+    int iterations = 10;
+    int bytesRead = 0;
 
-    // No data?
-    if ((bytesread < 0) && (!(errno == EAGAIN || errno == EINTR))) {
-        [self brokenPipe];
-        return;
+    NSMutableData* data = [NSMutableData dataWithLength:MAXRW * iterations];
+    for (int i = 0; i < iterations; ++i) {
+        // Only read up to MAXRW*iterations bytes, then release control
+        ssize_t n = read(fd, [data mutableBytes] + bytesRead, MAXRW);
+        if (n < 0) {
+            // There was a read error.
+            if (errno != EAGAIN && errno != EINTR) {
+                // It was a serious error.
+                [self brokenPipe];
+                return;
+            } else {
+                // We could read again in the case of EINTR but it would
+                // complicate the code with little advantage. Just bail out.
+                n = 0;
+            }
+        }
+        bytesRead += n;
+        if (n < MAXRW) {
+            // If we read fewer bytes than expected, return. For some apparently
+            // undocumented reason, read() never returns more than 1024 bytes
+            // (at least on OS 10.6), so that's what MAXRW is set to. If that
+            // ever goes down this'll break.
+            break;
+        }
     }
 
-    // Send data to the terminal
-    [data setLength:bytesread];
+    [data setLength:bytesRead];
     hasOutput = YES;
+
+    // Send data to the terminal
     [self readTask:data];
 }
 
@@ -563,10 +635,11 @@ setup_tty_param(
     [writeLock lock];
 
     // Only write up to MAXRW bytes, then release control
-    char*        ptr    = [writeBuffer mutableBytes];
+    char* ptr = [writeBuffer mutableBytes];
     unsigned int length = [writeBuffer length];
-    if (length > MAXRW)
+    if (length > MAXRW) {
         length = MAXRW;
+    }
     ssize_t written = write(fd, [writeBuffer mutableBytes], length);
 
     // No data?
@@ -582,7 +655,7 @@ setup_tty_param(
 
     // Clean up locks
     [writeLock unlock];
-    [self      autorelease];
+    [self autorelease];
 }
 
 - (BOOL)hasOutput
@@ -612,7 +685,8 @@ setup_tty_param(
     // forward the data to our delegate
     if ([delegate respondsToSelector:@selector(readTask:)]) {
         [delegate performSelectorOnMainThread:@selector(readTask:)
-                  withObject:data waitUntilDone:YES];
+                                   withObject:data 
+                                waitUntilDone:YES];
     }
 }
 
@@ -624,10 +698,10 @@ setup_tty_param(
 
     // Write as much as we can now through the non-blocking pipe
     // Lock to protect the writeBuffer from the IO thread
-    [writeLock     lock];
-    [writeBuffer   appendData:data];
+    [writeLock lock];
+    [writeBuffer appendData:data];
     [[TaskNotifier sharedInstance] unblock];
-    [writeLock     unlock];
+    [writeLock unlock];
 }
 
 - (void)brokenPipe
@@ -641,16 +715,19 @@ setup_tty_param(
 
 - (void)sendSignal:(int)signo
 {
-    if (pid >= 0)
+    if (pid >= 0) {
         kill(pid, signo);
+    }
 }
 
 - (void)setWidth:(int)width height:(int)height
 {
+    PtyTaskDebugLog(@"Set terminal size to %dx%d", width, height);
     struct winsize winsize;
 
-    if (fd == -1)
+    if (fd == -1) {
         return;
+    }
 
     ioctl(fd, TIOCGWINSZ, &winsize);
     if ((winsize.ws_col != width) || (winsize.ws_row != height)) {
@@ -670,17 +747,10 @@ setup_tty_param(
     return pid;
 }
 
-- (int)wait
-{
-    if (pid >= 0)
-        waitpid(pid, &status, 0);
-
-    return status;
-}
-
 - (void)stop
 {
-    [self sendSignal:SIGKILL];
+    [self sendSignal:SIGHUP];
+
     if (fd >= 0) {
         close(fd);
     }
@@ -689,8 +759,6 @@ setup_tty_param(
     // function returns, a new task may be created with this fd and then
     // the select thread wouldn't know which task a fd belongs to.
     fd = -1;
-
-    [self wait];
 }
 
 - (int)status
@@ -730,9 +798,9 @@ setup_tty_param(
 {
     [logHandle closeFile];
 
-    [logPath   autorelease];
+    [logPath autorelease];
     [logHandle autorelease];
-    logPath   = nil;
+    logPath = nil;
     logHandle = nil;
 }
 
@@ -746,39 +814,192 @@ setup_tty_param(
     return [NSString stringWithFormat:@"PTYTask(pid %d, fildes %d)", pid, fd];
 }
 
-- (NSString*)getWorkingDirectory
-{
-    static int loadedAttempted = 0;
-    static int(*proc_pidinfo)(pid_t pid, int flavor, uint64_t arg, void* buffer, int buffersize) = NULL;
-    if (!proc_pidinfo) {
-        if (loadedAttempted) {
-            /* Hmm, we can't find the symbols that we need... so lets not try */
-            return nil;
-        }
-        loadedAttempted = 1;
+// This is a stunningly brittle hack. Find the child of parentPid with the
+// oldest start time. This relies on undocumented APIs, but short of forking
+// ps, I can't see another way to do it.
 
-        /* We need to load the function first */
-        void* handle = dlopen("libSystem.B.dylib", RTLD_LAZY);
-        if (!handle)
-            return nil;
-        proc_pidinfo = dlsym(handle, "proc_pidinfo");
-        if (!proc_pidinfo)
-            return nil;
+- (pid_t)getFirstChildOfPid:(pid_t)parentPid
+{
+    int numBytes;
+    numBytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    if (numBytes <= 0) {
+        return -1;
     }
 
+    int* pids = (int*) malloc(numBytes+sizeof(int));
+    // Save a magic int at the end to be sure that the buffer isn't overrun.
+    const int PID_MAGIC = 0xdeadbeef;
+    int magicIndex = numBytes/sizeof(int);
+    pids[magicIndex] = PID_MAGIC;
+    numBytes = proc_listpids(PROC_ALL_PIDS, 0, pids, numBytes);
+    assert(pids[magicIndex] == PID_MAGIC);
+    if (numBytes <= 0) {
+        free(pids);
+        return -1;
+    }
+
+    int numPids = numBytes / sizeof(int);
+
+    long long oldestTime = 0;
+    pid_t oldestPid = -1;
+    for (int i = 0; i < numPids; ++i) {
+        struct proc_taskallinfo taskAllInfo;
+        int rc = proc_pidinfo(pids[i],
+                              PROC_PIDTASKALLINFO,
+                              0,
+                              &taskAllInfo,
+                              sizeof(taskAllInfo));
+        if (rc <= 0) {
+            continue;
+        }
+
+        pid_t ppid = taskAllInfo.pbsd.pbi_ppid;
+        if (ppid == parentPid) {
+            long long birthday = taskAllInfo.pbsd.pbi_start.tv_sec * 1000000 + taskAllInfo.pbsd.pbi_start.tv_usec;
+            if (birthday < oldestTime || oldestTime == 0) {
+                oldestTime = birthday;
+                oldestPid = pids[i];
+            }
+        }
+    }
+
+    assert(pids[magicIndex] == PID_MAGIC);
+    free(pids);
+    return oldestPid;
+}
+
+// Use sysctl magic to get the name of a process and whether it is controlling
+// the tty. This code was adapted from ps, here:
+// http://opensource.apple.com/source/adv_cmds/adv_cmds-138.1/ps/
+//
+// The equivalent in ps would be:
+//   ps -aef -o stat
+// If a + occurs in the STAT column then it is considered to be a foreground
+// job.
+- (NSString*)getNameOfPid:(pid_t)thePid isForeground:(BOOL*)isForeground
+{
+    int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, thePid };
+    struct kinfo_proc kp;
+    size_t bufSize = sizeof(kp);
+
+    kp.kp_proc.p_comm[0] = 0;
+    if (sysctl(mib, 4, &kp, &bufSize, NULL, 0) < 0) {
+        return 0;
+    }
+
+    // has a controlling terminal and
+    // process group id = tty process group id
+    *isForeground = ((kp.kp_proc.p_flag & P_CONTROLT) &&
+                     kp.kp_eproc.e_pgid == kp.kp_eproc.e_tpgid);
+
+    if (kp.kp_proc.p_comm[0]) {
+        return [NSString stringWithUTF8String:kp.kp_proc.p_comm];
+    } else {
+        return nil;
+    }
+}
+
+// Get the name of this task's current job. It is quite approximate! Any
+// arbitrary tty-controller in the tty's pgid that has this task as an ancestor
+// may be chosen. This function also implements a chache to avoid doing the
+// potentially expensive system calls too often.
+- (NSString*)currentJob:(BOOL)forceRefresh
+{
+    static NSMutableDictionary* pidInfoCache;
+    static NSDate* lastCacheUpdate;
+
+    const double kMaxCacheAge = 0.5;
+    if (forceRefresh ||
+        lastCacheUpdate == nil ||
+        [lastCacheUpdate timeIntervalSinceNow] < -kMaxCacheAge) {
+        if (pidInfoCache == nil) {
+            pidInfoCache = [[NSMutableDictionary alloc] init];
+        }
+        [self refreshProcessCache:pidInfoCache];
+        [lastCacheUpdate release];
+        lastCacheUpdate = [[NSDate date] retain];
+    }
+
+    return [pidInfoCache objectForKey:[NSNumber numberWithInt:pid]];
+}
+
+// Constructs a map of pid -> name of tty controller where pid is the tty
+// controller or any ancestor of the tty controller.
+- (void)refreshProcessCache:(NSMutableDictionary*)cache
+{
+    [cache removeAllObjects];
+    int numBytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    if (numBytes <= 0) {
+        return;
+    }
+
+    int* pids = (int*) malloc(numBytes);
+    numBytes = proc_listpids(PROC_ALL_PIDS, 0, pids, numBytes);
+    if (numBytes <= 0) {
+        free(pids);
+        return;
+    }
+
+    int numPids = numBytes / sizeof(int);
+    
+    NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithCapacity:numPids];
+    NSMutableDictionary* ancestry = [NSMutableDictionary dictionaryWithCapacity:numPids];
+    for (int i = 0; i < numPids; ++i) {
+        struct proc_taskallinfo taskAllInfo;
+        memset(&taskAllInfo, 0, sizeof(taskAllInfo));
+        int rc = proc_pidinfo(pids[i],
+                              PROC_PIDTASKALLINFO,
+                              0,
+                              &taskAllInfo,
+                              sizeof(taskAllInfo));
+        if (rc <= 0) {
+            continue;
+        }
+
+        pid_t ppid = taskAllInfo.pbsd.pbi_ppid;
+        BOOL isForeground;
+        NSString* name = [self getNameOfPid:pids[i] isForeground:&isForeground];
+        if (isForeground) {
+            [temp setObject:name forKey:[NSNumber numberWithInt:pids[i]]];
+        }
+        [ancestry setObject:[NSNumber numberWithInt:ppid] forKey:[NSNumber numberWithInt:pids[i]]];
+    }
+
+    for (NSNumber* tempPid in temp) {
+        NSString* value = [temp objectForKey:tempPid];
+        [cache setObject:value forKey:tempPid];
+
+        NSNumber* parent = [ancestry objectForKey:tempPid];
+        while (parent != nil) {
+            [cache setObject:value forKey:parent];
+            parent = [ancestry objectForKey:parent];
+        }
+    }
+
+    free(pids);
+}
+
+- (NSString*)getWorkingDirectory
+{
     struct proc_vnodepathinfo vpi;
-    int                       ret;
+    int ret;
     /* This only works if the child process is owned by our uid */
     ret = proc_pidinfo(pid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
     if (ret <= 0) {
+        // The child was probably owned by root (which is expected if it's
+        // a login shell. Use the cwd of its oldest child instead.
+        pid_t childPid = [self getFirstChildOfPid:pid];
+        if (childPid > 0) {
+            ret = proc_pidinfo(childPid, PROC_PIDVNODEPATHINFO, 0, &vpi, sizeof(vpi));
+        }
+    }
+    if (ret <= 0) {
         /* An error occured */
         return nil;
-    }
-    else if (ret != sizeof(vpi)) {
+    } else if (ret != sizeof(vpi)) {
         /* Now this is very bad... */
         return nil;
-    }
-    else {
+    } else {
         /* All is good */
         return [NSString stringWithUTF8String:vpi.pvi_cdir.vip_path];
     }

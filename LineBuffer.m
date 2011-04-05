@@ -28,6 +28,10 @@
  */
 
 #import <LineBuffer.h>
+#import "RegexKitLite/RegexKitLite.h"
+
+@implementation ResultRange
+@end
 
 @implementation LineBlock
 
@@ -83,7 +87,7 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     if (len > 999) len = 999;
     int i;
     for (i = 0; i < len; ++i) {
-        dest[i] = src[i].ch ? src[i].ch : '.';
+        dest[i] = (src[i].code && !src[i].complexChar) ? src[i].code : '.';
     }
     dest[i] = 0;
     return dest;
@@ -157,7 +161,7 @@ static int NumberOfFullLines(screen_char_t* buffer, int length, int width)
     // In the all-single-width case, it should return (length - 1) / width.
     int fullLines = 0;
     for (int i = width; i < length; i += width) {
-        if (buffer[i].ch == 0xffff) {
+        if (buffer[i].code == DWC_RIGHT) {
             --i;
         }
         ++fullLines;
@@ -186,7 +190,7 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
         i += width;
         ++lines;
         assert(i < length);
-        if (p[i].ch == 0xffff) {
+        if (p[i].code == DWC_RIGHT) {
             // Oops, the line starts with the second half of a double-width
             // character. Wrap the last character of the previous line on to
             // this line.
@@ -224,7 +228,7 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
             *lineLength = length - offset;  // the length of the suffix of the raw line, beginning at the wrapped line we want
             if (*lineLength > width) {
                 // return an infix of the full line
-                if (buffer_start[prev + offset + width].ch == 0xffff) {
+                if (buffer_start[prev + offset + width].code == DWC_RIGHT) {
                     // Result would end with the first half of a double-width character
                     *lineLength = width - 1;
                     *includesEndOfLine = EOL_DWC;
@@ -448,75 +452,211 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     }
 }
 
+const unichar kPrefixChar = 1;
+const unichar kSuffixChar = 2;
+
+static NSString* RewrittenRegex(NSString* originalRegex) {
+    // Convert ^ in a context where it refers to the start of string to kPrefixChar
+    // Convert $ in a context where it refers to the end of string to kSuffixChar
+    // ^ is NOT start-of-string when:
+    //   - it is escaped
+    //   - it is preceeded by an unescaped [
+    //   - it is preceeded by an unescaped [:
+    // $ is NOT end-of-string when:
+    //   - it is escaped
+    //
+    // It might be possible to write this as a regular substitution but it would be a crazy mess.
+
+    NSMutableString* rewritten = [NSMutableString stringWithCapacity:[originalRegex length]];
+    BOOL escaped = NO;
+    BOOL inSet = NO;
+    BOOL firstCharInSet = NO;
+    unichar prevChar = 0;
+    for (int i = 0; i < [originalRegex length]; i++) {
+        BOOL nextCharIsFirstInSet = NO;
+        unichar c = [originalRegex characterAtIndex:i];
+        switch (c) {
+            case '\\':
+                escaped = !escaped;
+                break;
+
+            case '[':
+                if (!inSet && !escaped) {
+                    inSet = YES;
+                    nextCharIsFirstInSet = YES;
+                }
+                break;
+
+            case ']':
+                if (inSet && !escaped) {
+                    inSet = NO;
+                }
+                break;
+
+            case ':':
+                if (inSet && firstCharInSet && prevChar == '[') {
+                    nextCharIsFirstInSet = YES;
+                }
+                break;
+
+            case '^':
+                if (!escaped && !firstCharInSet) {
+                    c = kPrefixChar;
+                }
+                break;
+
+            case '$':
+                if (!escaped) {
+                    c = kSuffixChar;
+                }
+                break;
+        }
+        prevChar = c;
+        firstCharInSet = nextCharIsFirstInSet;
+        [rewritten appendFormat:@"%C", c];
+    }
+
+    return rewritten;
+}
+
 static int Search(NSString* needle,
-                  screen_char_t* rawline, 
-                  int raw_line_length, 
-                  int start, 
-                  int end, 
+                  screen_char_t* rawline,
+                  int raw_line_length,
+                  int start,
+                  int end,
                   int options,
                   int* resultLength)
 {
-    char* charHaystack = malloc(raw_line_length + 1);
-    int* deltas = malloc(sizeof(int) * (raw_line_length + 1));
-    // The 'deltas' array maps positions in the stripped haystack to
-    // their offset from the original position in the buffer after removing
-    // 0xffff characters.
-    //
-    // Original string with some double-width characters. 0xfff shown as '-':
-    // 0123456789
-    // ab-c-de-fg
-    //
-    // Stripped string:
-    // 0123456
-    // abcdefg
-    //
-    // Mapping:
-    // new -> orig    delta
-    // 0 -> 0         0
-    // 1 -> 2         1
-    // 2 -> 3         1
-    // 3 -> 5         2
-    // 4 -> 6         2
-    // 5 -> 8         3
-    // 6 -> 9         3
-    int delta = 0;
-    int o = 0;
-    for (int i = start; i < end; ++i) {
-        unichar c = rawline[i].ch;
-        if (c == 0xffff) {
-            ++delta;
-        } else {
-            deltas[o] = delta;
-            charHaystack[o++] = c;
+    NSString* haystack;
+    unichar* charHaystack;
+    int* deltas;
+    haystack = ScreenCharArrayToString(rawline,
+                                       start,
+                                       end,
+                                       &charHaystack,
+                                       &deltas);
+                                       
+    int apiOptions = 0;
+    NSRange range;
+    BOOL regex;
+    if (options & FindOptRegex) {
+        regex = YES;
+    } else {
+        regex = NO;
+    }
+    if (regex) {
+        BOOL backwards = NO;
+        if (options & FindOptBackwards) {
+            backwards = YES;
         }
+        if (options & FindOptCaseInsensitive) {
+            apiOptions |= RKLCaseless;
+        }
+
+        NSError* regexError = nil;
+        NSRange temp;
+        NSString* rewrittenRegex = RewrittenRegex(needle);
+        NSString* sanitizedHaystack = [haystack stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%c", kPrefixChar]
+                                                                          withString:[NSString stringWithFormat:@"%c", 3]];
+        sanitizedHaystack = [sanitizedHaystack stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"%c", kSuffixChar]
+                                                                         withString:[NSString stringWithFormat:@"%c", 3]];
+
+        NSString* sandwich;
+        BOOL hasPrefix = YES;
+        BOOL hasSuffix = YES;
+        if (end == raw_line_length) {
+            if (start == 0) {
+                sandwich = [NSString stringWithFormat:@"%C%@%C", kPrefixChar, sanitizedHaystack, kSuffixChar];
+            } else {
+                hasPrefix = NO;
+                sandwich = [NSString stringWithFormat:@"%@%C", sanitizedHaystack, kSuffixChar];
+            }
+        } else {
+            hasSuffix = NO;
+            sandwich = [NSString stringWithFormat:@"%C%@", kPrefixChar, sanitizedHaystack, kSuffixChar];
+        }
+
+        temp = [sandwich rangeOfRegex:rewrittenRegex
+                              options:apiOptions
+                              inRange:NSMakeRange(0, [sandwich length])
+                              capture:0
+                                error:&regexError];
+        range = temp;
+
+        if (backwards) {
+            int locationAdjustment = hasSuffix ? 1 : 0;
+            // keep searching from one char after the start of the match until we don't find anything.
+            // regexes aren't good at searching backwards.
+            while (!regexError && temp.location != NSNotFound && temp.location+locationAdjustment < [sandwich length]) {
+                if (temp.length != 0) {
+                    range = temp;
+                }
+                temp.location += MAX(1, temp.length);
+                temp = [sandwich rangeOfRegex:rewrittenRegex
+                                      options:apiOptions
+                                      inRange:NSMakeRange(temp.location, [sandwich length] - temp.location)
+                                      capture:0
+                                        error:&regexError];
+            }
+        }
+        if (range.length == 0) {
+            range.location = NSNotFound;
+        }
+        if (!regexError && range.location != NSNotFound) {
+            if (hasSuffix && range.location + range.length == [sandwich length]) {
+                // match includes $
+                --range.length;
+                if (range.length == 0) {
+                    // matched only on $
+                    --range.location;
+                }
+            }
+            if (hasPrefix && range.location == 0) {
+                --range.length;
+            } else if (hasPrefix) {
+                --range.location;
+            }
+        }
+        if (range.length <= 0) {
+            // match on ^ or $
+            range.location = NSNotFound;
+        }
+        if (regexError) {
+            NSLog(@"regex error: %@", regexError);
+            range.length = 0;
+            range.location = NSNotFound;
+        }
+    } else {
+        if (options & FindOptBackwards) {
+            apiOptions |= NSBackwardsSearch;
+        }
+        if (options & FindOptCaseInsensitive) {
+            apiOptions |= NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch | NSWidthInsensitiveSearch;
+        }
+        range = [haystack rangeOfString:needle options:apiOptions];
     }
-    deltas[o] = delta;
-    NSString* haystack = [[[NSString alloc] initWithBytesNoCopy:charHaystack 
-                                                         length:o 
-                                                       encoding:NSUTF8StringEncoding 
-                                                   freeWhenDone:NO] autorelease];
-    
-    int apiOptions = NSBackwardsSearch;
-    if (options & FindOptCaseInsensitive) {
-        apiOptions |= NSCaseInsensitiveSearch | NSDiacriticInsensitiveSearch | NSWidthInsensitiveSearch;
-    }
-    NSRange range = [haystack rangeOfString:needle options:apiOptions];
     int result = -1;
     if (range.location != NSNotFound) {
         int adjustedLocation;
         int adjustedLength;
         adjustedLocation = range.location + deltas[range.location];
-        adjustedLength = range.length + deltas[range.location + range.length] - 
+        adjustedLength = range.length + deltas[range.location + range.length] -
             deltas[range.location];
         *resultLength = adjustedLength;
-        result = adjustedLocation;
+        result = adjustedLocation + start;
     }
     free(deltas);
     free(charHaystack);
     return result;
 }
 
-- (int) _findInRawLine:(int) entry needle:(NSString*)needle options: (int) options skip: (int) skip length: (int) raw_line_length resultLength: (int*) resultLength
+- (void) _findInRawLine:(int) entry
+                 needle:(NSString*)needle
+                options:(int) options
+                   skip:(int) skip
+                 length:(int) raw_line_length
+        multipleResults:(BOOL)multipleResults
+                results:(NSMutableArray*)results
 {
     screen_char_t* rawline = raw_buffer + [self _lineRawOffset:entry];
     if (skip > raw_line_length) {
@@ -565,22 +705,42 @@ static int Search(NSString* needle,
         // Thus, the algorithm is to do a reverse search until a hit is found
         // that begins not before 'skip', which is the leftmost acceptable
         // position.
-        
+
         int limit = raw_line_length;
         int tempResultLength;
         int tempPosition;
         do {
-            tempPosition =  Search(needle, rawline, raw_line_length, 0, limit, 
+            tempPosition =  Search(needle, rawline, raw_line_length, 0, limit,
                                    options, &tempResultLength);
             limit = tempPosition + tempResultLength - 1;
-        } while (tempPosition != -1 && tempPosition > skip);
-        if (tempPosition != -1) {
-            *resultLength = tempResultLength;
-        }
-        return tempPosition;
+            if (tempPosition != -1 && tempPosition <= skip) {
+                ResultRange* r = [[[ResultRange alloc] init] autorelease];
+                r->position = tempPosition;
+                r->length = tempResultLength;
+                [results addObject:r];
+            }
+        } while (tempPosition != -1 && (multipleResults || tempPosition > skip));
     } else {
-        return Search(needle, rawline, raw_line_length, skip, raw_line_length, 
-                      options, resultLength);
+        // Search forward
+        // TODO: test this
+        int tempResultLength;
+        int tempPosition;
+        while (skip < raw_line_length) {
+            tempPosition = Search(needle, rawline, raw_line_length, skip, raw_line_length,
+                                        options, &tempResultLength);
+            if (tempPosition != -1) {
+                ResultRange* r = [[[ResultRange alloc] init] autorelease];
+                r->position = tempPosition;
+                r->length = tempResultLength;
+                [results addObject:r];
+                if (!multipleResults) {
+                    break;
+                }
+                skip = tempPosition + 1;
+            } else {
+                break;
+            }
+        }
     }
 }
 
@@ -608,7 +768,11 @@ static int Search(NSString* needle,
     return cll_entries - 1;
 }
 
-- (int) findSubstring: (NSString*) substring options: (int) options atOffset: (int) offset resultLength: (int*) resultLength
+- (void) findSubstring: (NSString*) substring
+               options: (int) options
+              atOffset: (int) offset
+               results: (NSMutableArray*) results
+       multipleResults:(BOOL)multipleResults
 {
     if (offset == -1) {
         offset = [self rawSpaceUsed] - 1;
@@ -631,18 +795,23 @@ static int Search(NSString* needle,
         if (skipped < 0) {
             skipped = 0;
         }
-        int pos = [self _findInRawLine:entry
-                                needle:substring
-                               options:options
-                                  skip: skipped
-                                length: [self _lineLength: entry]
-                          resultLength: resultLength];
-        if (pos != -1) {
-            return pos + line_raw_offset;
+        NSMutableArray* newResults = [NSMutableArray arrayWithCapacity:1];
+        [self _findInRawLine:entry
+                      needle:substring
+                     options:options
+                        skip:skipped
+                      length:[self _lineLength: entry]
+             multipleResults:multipleResults
+                     results:newResults];
+        for (ResultRange* r in newResults) {
+            r->position += line_raw_offset;
+            [results addObject:r];
+        }
+        if ([newResults count] && !multipleResults) {
+            return;
         }
         entry += dir;
     }
-    return -1;
 }
 
 - (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y
@@ -664,14 +833,15 @@ static int Search(NSString* needle,
             int bytes_to_consume_in_this_line = position - prev;
             int dwc_peek = 0;
             if (bytes_to_consume_in_this_line < line_length &&
-                buffer_start[prev + bytes_to_consume_in_this_line + 1].ch == 0xffff) {
+                prev + bytes_to_consume_in_this_line + 1 < eol &&
+                buffer_start[prev + bytes_to_consume_in_this_line + 1].code == DWC_RIGHT) {
                 // It doesn't make sense to ask for the number of lines that end
                 // in the middle of a DWC. Add one extra char to look at if that
                 // is the case.
                 ++dwc_peek;
             }
             int consume = NumberOfFullLines(buffer_start + prev,
-                                            bytes_to_consume_in_this_line + 1 + dwc_peek,
+                                            MIN(line_length, bytes_to_consume_in_this_line + 1 + dwc_peek),
                                             width);
             *y += consume;
             if (consume > 0) {
@@ -744,6 +914,12 @@ static int Search(NSString* needle,
     num_wrapped_lines_width = -1;
     num_dropped_blocks = 0;
     return self;
+}
+
+- (void)dealloc
+{
+    [blocks release];
+    [super dealloc];
 }
 
 // This is called a lot so it's a C function to avoid obj_msgSend
@@ -840,7 +1016,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         char a[1000];
         int i;
         for (i = 0; i < length; i++) {
-            a[i] = buffer[i].ch ? buffer[i].ch : '.';
+            a[i] = (buffer[i].code && !buffer[i].complex) ? buffer[i].code : '.';
         }
         a[i] = '\0';
         NSLog(@"Append: %s\n", a);
@@ -993,7 +1169,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         char a[1000];
         int i;
         for (i = 0; i < width; i++) {
-            a[i] = ptr[i].ch ? ptr[i].ch : '.';
+            a[i] = (ptr[i].code && !ptr[i].complexChar) ? ptr[i].code : '.';
         }
         a[i] = '\0';
         NSLog(@"Pop: %s\n", a);
@@ -1084,7 +1260,6 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 {
     context->substring = [[NSString alloc] initWithString:substring];
     context->options = options;
-    context->resultPosition = -1;
     if (options & FindOptBackwards) {
         context->dir = -1;
     } else {
@@ -1096,6 +1271,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     } else {
         context->status = NotFound;
     }
+    context->results = [[NSMutableArray alloc] init];
 }
 
 - (void)releaseFind:(FindContext*)context
@@ -1104,6 +1280,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         [context->substring release];
         context->substring = nil;
     }
+    [context->results release];
 }
 
 - (void)findSubstring:(FindContext*)context stopAt:(int)stopAt
@@ -1152,25 +1329,32 @@ static int RawNumLines(LineBuffer* buffer, int width) {
 
     // NSLog(@"search block %d starting at offset %d", context->absBlockNum - num_dropped_blocks, context->offset);
 
-    int position = [block findSubstring:context->substring
-                                options:context->options
-                               atOffset:context->offset
-                           resultLength:&context->matchLength];
-    if (position >= 0) {
-        // NSLog(@"match at position %d", position);
-        position += [self _blockPosition:context->absBlockNum - num_dropped_blocks];
-        if (context->dir * (position - stopAt) > 0 ||
-            context->dir * (position + context->matchLength - stopAt) > 0) {
-            context->status = NotFound;
-            return;
+    [block findSubstring:context->substring
+                 options:context->options
+                atOffset:context->offset
+                 results:context->results
+         multipleResults:((context->options & FindMultipleResults) != 0)];
+    NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context->results count]];
+    BOOL haveOutOfRangeResults = NO;
+    for (ResultRange* range in context->results) {
+        range->position += [self _blockPosition:context->absBlockNum - num_dropped_blocks];
+        if (context->dir * (range->position - stopAt) > 0 ||
+            context->dir * (range->position + context->matchLength - stopAt) > 0) {
+            // result was outside the range to be searched
+            haveOutOfRangeResults = YES;
+        } else {
+            // Found a good result.
+            context->status = Matched;
+            [filtered addObject:range];
         }
-
-        context->status = Matched;
-        context->resultPosition = position;
-        return;
-    } else {
-        // NSLog(@"no match");
     }
+    [context->results release];
+    context->results = [filtered retain];
+    if ([filtered count] == 0 && haveOutOfRangeResults) {
+        context->status = NotFound;
+    }
+
+    // Prepare to continue searching next block.
     if (context->dir < 0) {
         context->offset = -1;
     } else {

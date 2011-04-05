@@ -34,8 +34,8 @@
         _addTabButtonPressedImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"TabNewMetalPressed"]];
         _addTabButtonRolloverImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"TabNewMetalRollover"]];
 
-        _objectCountStringAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:[[NSFontManager sharedFontManager] convertFont:[NSFont fontWithName:@"Helvetica" size:11.0] toHaveTrait:NSBoldFontMask], NSFontAttributeName,
-                                                                                    [[NSColor whiteColor] colorWithAlphaComponent:0.85], NSForegroundColorAttributeName,
+        _objectCountStringAttributes = [[NSDictionary alloc] initWithObjectsAndKeys:[NSFont fontWithName:@"Helvetica" size:11.0], NSFontAttributeName,
+                                                                                    [[NSColor blackColor] colorWithAlphaComponent:0.85], NSForegroundColorAttributeName,
                                                                                     nil, nil];
     }
     return self;
@@ -281,6 +281,7 @@
 #else
     NSString *contents = [NSString stringWithFormat:@"%d", [cell count]];
 #endif
+    contents = [NSString stringWithFormat:@"%@%@", [cell modifierString], contents];
     return [[[NSMutableAttributedString alloc] initWithString:contents attributes:_objectCountStringAttributes] autorelease];
 }
 
@@ -344,7 +345,13 @@
             aRect.origin.x += 1.0;
             aRect.size.width--;
             aRect.size.height -= 0.5;
-            NSDrawWindowBackground(aRect);
+            NSColor* tabColor = [cell tabColor];
+            if (tabColor) {
+                [tabColor set];
+                NSRectFill(aRect);
+            } else {
+                NSDrawWindowBackground(aRect);
+            }
             aRect.size.width++;
             aRect.size.height += 0.5;
 
@@ -397,6 +404,21 @@
         if ([cell isHighlighted]) {
             [[NSColor colorWithCalibratedWhite:0.0 alpha:0.1] set];
             NSRectFillUsingOperation(aRect, NSCompositeSourceAtop);
+        }
+        NSColor* tabColor = [cell tabColor];
+        NSRect bgRect = NSMakeRect(aRect.origin.x,
+                                   aRect.origin.y,
+                                   aRect.size.width,
+                                   aRect.size.height - 2);
+        if (tabColor) {
+            [tabColor set];
+            NSRectFill(bgRect);
+        } else {
+            [[NSColor windowBackgroundColor] set];
+            NSRectFill(bgRect);
+
+            [[NSColor colorWithCalibratedWhite:0.0 alpha:0.2] set];
+            NSRectFillUsingOperation(bgRect, NSCompositeSourceAtop);
         }
 
         [lineColor set];
@@ -480,17 +502,9 @@
 
     // object counter
     if([cell count] > 0){
-        [[NSColor colorWithCalibratedWhite:0.3 alpha:0.6] set];
-        NSBezierPath *path = [NSBezierPath bezierPath];
         NSRect myRect = [self objectCounterRectForTabCell:cell];
         if([cell state] == NSOnState)
             myRect.origin.y -= 1.0;
-        [path moveToPoint:NSMakePoint(myRect.origin.x + kPSMMetalObjectCounterRadius, myRect.origin.y)];
-        [path lineToPoint:NSMakePoint(myRect.origin.x + myRect.size.width - kPSMMetalObjectCounterRadius, myRect.origin.y)];
-        [path appendBezierPathWithArcWithCenter:NSMakePoint(myRect.origin.x + myRect.size.width - kPSMMetalObjectCounterRadius, myRect.origin.y + kPSMMetalObjectCounterRadius) radius:kPSMMetalObjectCounterRadius startAngle:270.0 endAngle:90.0];
-        [path lineToPoint:NSMakePoint(myRect.origin.x + kPSMMetalObjectCounterRadius, myRect.origin.y + myRect.size.height)];
-        [path appendBezierPathWithArcWithCenter:NSMakePoint(myRect.origin.x + kPSMMetalObjectCounterRadius, myRect.origin.y + kPSMMetalObjectCounterRadius) radius:kPSMMetalObjectCounterRadius startAngle:90.0 endAngle:270.0];
-        [path fill];
 
         // draw attributed string centered in area
         NSRect counterStringRect;
@@ -522,7 +536,7 @@
     [[cell attributedStringValue] drawInRect:labelRect];
 }
 
-- (void)drawBackgroundInRect:(NSRect)rect
+- (void)drawBackgroundInRect:(NSRect)rect color:(NSColor*)backgroundColor
 {
     if (orientation == PSMTabBarVerticalOrientation && [tabBar frame].size.width < 2) {
         return;
@@ -533,17 +547,29 @@
 
     [[NSColor colorWithCalibratedWhite:0.0 alpha:0.2] set];
     NSRectFillUsingOperation(rect, NSCompositeSourceAtop);
-    [[NSColor darkGrayColor] set];
 
+    [[NSColor darkGrayColor] set];
     if (orientation == PSMTabBarHorizontalOrientation) {
-        [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x, rect.origin.y + 0.5) toPoint:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + 0.5)];
-        [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x, rect.origin.y + rect.size.height - 0.5) toPoint:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + rect.size.height - 0.5)];
+        [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x, rect.origin.y + 0.5)
+                                  toPoint:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + 0.5)];
+        [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x, rect.origin.y + rect.size.height - 0.5) 
+                                  toPoint:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + rect.size.height - 0.5)];
     } else {
         [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x, rect.origin.y + 0.5) toPoint:NSMakePoint(rect.origin.x, rect.origin.y + rect.size.height + 0.5)];
         [NSBezierPath strokeLineFromPoint:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + 0.5) toPoint:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + rect.size.height + 0.5)];
     }
 
     [NSGraphicsContext restoreGraphicsState];
+}
+
+- (void)fillPath:(NSBezierPath*)path
+{
+    [[NSColor windowBackgroundColor] set];
+    [path fill];
+    [[NSColor colorWithCalibratedWhite:0.0 alpha:0.2] set];
+    [path fill];
+    [[NSColor darkGrayColor] set];
+    [path stroke];
 }
 
 - (void)drawTabBar:(PSMTabBarControl *)bar inRect:(NSRect)rect
@@ -556,32 +582,34 @@
         tabBar = bar;
     }
 
-    [self drawBackgroundInRect:rect];
+    PSMTabBarCell* activeCell = nil;
+    for (PSMTabBarCell *cell in [bar cells]) {
+        if ([cell state] == NSOnState) {
+            activeCell = cell;
+            break;
+        }
+    }
+
+    [self drawBackgroundInRect:rect color:[activeCell tabColor]];
 
     // no tab view == not connected
     if(![bar tabView]){
         NSRect labelRect = rect;
         labelRect.size.height -= 4.0;
         labelRect.origin.y += 4.0;
-        NSMutableAttributedString *attrStr;
         NSString *contents = @"PSMTabBarControl";
-        attrStr = [[[NSMutableAttributedString alloc] initWithString:contents] autorelease];
+        NSMutableAttributedString *attrStr = [[[NSMutableAttributedString alloc] initWithString:contents] autorelease];
         NSRange range = NSMakeRange(0, [contents length]);
         [attrStr addAttribute:NSFontAttributeName value:[NSFont systemFontOfSize:11.0] range:range];
-        NSMutableParagraphStyle *centeredParagraphStyle = nil;
-        if (!centeredParagraphStyle) {
-            centeredParagraphStyle = [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] retain];
-            [centeredParagraphStyle setAlignment:NSCenterTextAlignment];
-        }
+        NSMutableParagraphStyle *centeredParagraphStyle = [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
+        [centeredParagraphStyle setAlignment:NSCenterTextAlignment];
         [attrStr addAttribute:NSParagraphStyleAttributeName value:centeredParagraphStyle range:range];
         [attrStr drawInRect:labelRect];
         return;
     }
 
     // draw cells
-    NSEnumerator *e = [[bar cells] objectEnumerator];
-    PSMTabBarCell *cell;
-    while ( (cell = [e nextObject]) ) {
+    for (PSMTabBarCell *cell in [bar cells]) {
         if (![cell isInOverflowMenu] && NSIntersectsRect([cell frame], rect)) {
             [cell drawWithFrame:[cell frame] inView:bar];
         }

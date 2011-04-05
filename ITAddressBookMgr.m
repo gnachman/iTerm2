@@ -30,7 +30,8 @@
 #import <iTerm/iTermKeyBindingMgr.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
+#include <sys/types.h>
+#include <pwd.h>
 
 @implementation ITAddressBookMgr
 
@@ -92,21 +93,40 @@
     [super dealloc];
 }
 
-- (void) locateBonjourServices
+- (void)locateBonjourServices
 {
-    sshBonjourBrowser = [[NSNetServiceBrowser alloc] init];
-    ftpBonjourBrowser = [[NSNetServiceBrowser alloc] init];
-    telnetBonjourBrowser = [[NSNetServiceBrowser alloc] init];
+    if (!bonjourServices) {
+        sshBonjourBrowser = [[NSNetServiceBrowser alloc] init];
+        ftpBonjourBrowser = [[NSNetServiceBrowser alloc] init];
+        telnetBonjourBrowser = [[NSNetServiceBrowser alloc] init];
 
-    bonjourServices = [[NSMutableArray alloc] init];
+        bonjourServices = [[NSMutableArray alloc] init];
 
-    [sshBonjourBrowser setDelegate: self];
-    [ftpBonjourBrowser setDelegate: self];
-    [telnetBonjourBrowser setDelegate: self];
-    [sshBonjourBrowser searchForServicesOfType: @"_ssh._tcp." inDomain: @""];
-    [ftpBonjourBrowser searchForServicesOfType: @"_ftp._tcp." inDomain: @""];
-    [telnetBonjourBrowser searchForServicesOfType: @"_telnet._tcp." inDomain: @""];
+        [sshBonjourBrowser setDelegate: self];
+        [ftpBonjourBrowser setDelegate: self];
+        [telnetBonjourBrowser setDelegate: self];
+        [sshBonjourBrowser searchForServicesOfType: @"_ssh._tcp." inDomain: @""];
+        [ftpBonjourBrowser searchForServicesOfType: @"_ftp._tcp." inDomain: @""];
+        [telnetBonjourBrowser searchForServicesOfType: @"_telnet._tcp." inDomain: @""];
+    }
+}
 
+- (void)stopLocatingBonjourServices
+{
+    [sshBonjourBrowser stop];
+    [sshBonjourBrowser release];
+    sshBonjourBrowser = nil;
+
+    [ftpBonjourBrowser stop];
+    [ftpBonjourBrowser release];
+    ftpBonjourBrowser = nil;
+
+    [telnetBonjourBrowser stop];
+    [telnetBonjourBrowser release];
+    telnetBonjourBrowser = nil;
+
+    [bonjourServices release];
+    bonjourServices = nil;
 }
 
 + (NSArray*)encodeColor:(NSColor*)origColor
@@ -180,7 +200,7 @@
         // Not just a folder if it has a command.
         NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:data];
         [self copyProfileToBookmark:temp];
-        [temp setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
+        [temp setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
         [temp setObject:path forKey:KEY_TAGS];
         [temp setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
         NSString* dir = [data objectForKey:KEY_WORKING_DIRECTORY];
@@ -261,25 +281,18 @@
     }
 
     // remove host entry from this group
-    BOOL sshService = NO;
     NSMutableArray* toRemove = [[[NSMutableArray alloc] init] autorelease];
+    NSString* sftpName = [NSString stringWithFormat:@"%@-sftp", [aNetService name]];
     for (int i = 0; i < [[BookmarkModel sharedInstance] numberOfBookmarksWithFilter:@"bonjour"]; ++i) {
         Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkAtIndex:i withFilter:@"bonjour"];
-        if ([[bookmark objectForKey:KEY_NAME] isEqualToString:[aNetService name]]) {
-            if ([[bookmark objectForKey:KEY_BONJOUR_SERVICE] isEqualToString:@"ssh"]) {
-                sshService = YES;
-            }
+        NSString* bookmarkName = [bookmark objectForKey:KEY_NAME];
+        if ([bookmarkName isEqualToString:[aNetService name]] ||
+            [bookmarkName isEqualToString:sftpName]) {
             [toRemove addObject:[NSNumber numberWithInt:i]];
         }
     }
     for (int i = [toRemove count]-1; i >= 0; --i) {
         [[BookmarkModel sharedInstance] removeBookmarkAtIndex:[[toRemove objectAtIndex:i] intValue] withFilter:@"bonjour"];
-    }
-    if (sshService) {
-        int i = [[BookmarkModel sharedInstance] indexOfBookmarkWithName:[aNetService name]];
-        if (i >= 0) {
-            [toRemove addObject:[NSNumber numberWithInt:i]];
-        }
     }
     [toRemove removeAllObjects];
 }
@@ -311,14 +324,46 @@
     [aDict setObject:NSHomeDirectory() forKey: KEY_WORKING_DIRECTORY];
 }
 
+- (void)_addBonjourHostProfileWithName:(NSString *)serviceName
+                       ipAddressString:(NSString *)ipAddressString
+                           serviceType:(NSString *)serviceType
+{
+  NSMutableDictionary *newBookmark;
+    Bookmark* prototype = [[BookmarkModel sharedInstance] defaultBookmark];
+    if (prototype) {
+        newBookmark = [NSMutableDictionary dictionaryWithDictionary:prototype];
+    } else {
+        newBookmark = [NSMutableDictionary dictionaryWithCapacity:20];
+        [ITAddressBookMgr setDefaultsInBookmark:newBookmark];
+    }
+
+
+    [newBookmark setObject:serviceName forKey:KEY_NAME];
+    [newBookmark setObject:serviceName forKey:KEY_DESCRIPTION];
+    [newBookmark setObject:[NSString stringWithFormat:@"%@ %@", serviceType, ipAddressString] forKey:KEY_COMMAND];
+    [newBookmark setObject:@"" forKey:KEY_WORKING_DIRECTORY];
+    [newBookmark setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
+    [newBookmark setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
+    [newBookmark setObject:ipAddressString forKey:KEY_BONJOUR_SERVICE_ADDRESS];
+    [newBookmark setObject:[NSArray arrayWithObjects:@"bonjour",nil] forKey:KEY_TAGS];
+    [newBookmark setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
+    [newBookmark setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
+    [newBookmark removeObjectForKey:KEY_SHORTCUT];
+    [[BookmarkModel sharedInstance] addBookmark:newBookmark];
+
+    // No bonjour service for sftp. Rides over ssh, so try to detect that
+    if ([serviceType isEqualToString:@"ssh"]) {
+        [newBookmark setObject:[NSString stringWithFormat:@"%@-sftp", serviceName] forKey:KEY_NAME];
+        [newBookmark setObject:[NSArray arrayWithObjects:@"bonjour", @"sftp", nil] forKey:KEY_TAGS];
+        [newBookmark setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
+        [newBookmark setObject:[NSString stringWithFormat:@"sftp %@", ipAddressString] forKey:KEY_COMMAND];
+        [[BookmarkModel sharedInstance] addBookmark:newBookmark];
+    }
+
+}
 // NSNetService delegate
 - (void)netServiceDidResolveAddress:(NSNetService *)sender
 {
-    NSMutableDictionary *aDict;
-    NSData  *address = nil;
-    struct sockaddr_in  *socketAddress;
-    NSString    *ipAddressString = nil;
-
     //NSLog(@"%s: %@", __PRETTY_FUNCTION__, sender);
 
     // cancel the resolution
@@ -332,46 +377,24 @@
     if ([[sender addresses] count] == 0) {
         return;
     }
-    address = [[sender addresses] objectAtIndex: 0];
-    socketAddress = (struct sockaddr_in *)[address bytes];
-    ipAddressString = [NSString stringWithFormat:@"%s", inet_ntoa(socketAddress->sin_addr)];
-
-    Bookmark* prototype = [[BookmarkModel sharedInstance] defaultBookmark];
-    if (prototype) {
-        aDict = [NSMutableDictionary dictionaryWithDictionary:prototype];
-    } else {
-        aDict = [[NSMutableDictionary alloc] init];
-        [ITAddressBookMgr setDefaultsInBookmark:aDict];
-    }
-
     NSString* serviceType = [self getBonjourServiceType:[sender type]];
+    NSString* serviceName = [sender name];
+    NSData* address = [[sender addresses] objectAtIndex: 0];
+    struct sockaddr_in *socketAddress = (struct sockaddr_in *)[address bytes];
+    char buffer[INET6_ADDRSTRLEN + 1];
 
-    [aDict setObject:[NSString stringWithFormat:@"%@", [sender name]] forKey:KEY_NAME];
-    [aDict setObject:[NSString stringWithFormat:@"%@", [sender name]] forKey:KEY_DESCRIPTION];
-    [aDict setObject:[NSString stringWithFormat:@"%@ %@", serviceType, ipAddressString] forKey:KEY_COMMAND];
-    [aDict setObject:@"" forKey:KEY_WORKING_DIRECTORY];
-    [aDict setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
-    [aDict setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
-    [aDict setObject:ipAddressString forKey:KEY_BONJOUR_SERVICE_ADDRESS];
-    [aDict setObject:[NSArray arrayWithObjects:@"bonjour",nil] forKey:KEY_TAGS];
-    [aDict setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
-    [aDict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
-    [[BookmarkModel sharedInstance] addBookmark:aDict];
+    const char* strAddr = inet_ntop(socketAddress->sin_family, &socketAddress->sin_addr,
+                                    buffer, [address length]);
+    if (strAddr) {
+          [self _addBonjourHostProfileWithName:serviceName
+                               ipAddressString:[NSString stringWithFormat:@"%s", strAddr]
+                                   serviceType:serviceType];
 
-    // No bonjour service for sftp. Rides over ssh, so try to detect that
-    if ([serviceType isEqualToString:@"ssh"]) {
-        [aDict setObject:[NSString stringWithFormat:@"%@-sftp", [sender name]] forKey:KEY_NAME];
-        [aDict setObject:[NSArray arrayWithObjects:@"bonjour", @"sftp", nil] forKey:KEY_TAGS];
-        [aDict setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
-        [aDict setObject:[NSString stringWithFormat:@"sftp %@", ipAddressString] forKey:KEY_COMMAND];
-        [[BookmarkModel sharedInstance] addBookmark:aDict];
+        // remove from array now that resolving is done
+        if ([bonjourServices containsObject:sender]) {
+            [bonjourServices removeObject:sender];
+        }
     }
-
-    // remove from array now that resolving is done
-    if ([bonjourServices containsObject:sender]) {
-        [bonjourServices removeObject:sender];
-    }
-
 }
 
 - (void)netService:(NSNetService *)aNetService didNotResolve:(NSDictionary *)errorDict
@@ -404,33 +427,49 @@
     }
 }
 
-+ (NSString*)loginShellCommandForBookmark:(Bookmark*)bookmark
+static NSString* UserShell() {
+    struct passwd* pw;
+    pw = getpwuid(geteuid());
+    NSString* shell = [NSString stringWithUTF8String:pw->pw_shell];
+    endpwent();
+    return shell;
+}
+
++ (NSString*)loginShellCommandForBookmark:(Bookmark*)bookmark asLoginShell:(BOOL*)asLoginShell
 {
-    char* thisUser = getenv("USER");
-    char* userShell = getenv("SHELL");
-    if (thisUser) {
-        if (![[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"No"]) {
-            // -l specifies a login shell which goes to the home dir
-            // there is either a custom dir or we're recycling the last tab's dir
-            return [NSString stringWithFormat:@"login -fpl %s", thisUser];
-        } else {
-            // Using either a custom dir or recycling the last tab's dir. Caller will set CWD appropriately.
-            return [NSString stringWithFormat:@"login -fp %s", thisUser];
-        }
+    NSString* thisUser = NSUserName();
+    NSString* userShell = UserShell();
+    if ([[bookmark objectForKey:KEY_CUSTOM_DIRECTORY] isEqualToString:@"No"]) {
+        // Run login without -l argument: this is a login session and will use the home dir.
+        *asLoginShell = NO;
+        return [NSString stringWithFormat:@"login -fp \"%@\"", thisUser];
     } else if (userShell) {
-        return [NSString stringWithCString:userShell];
+        // This is the normal case when using a custom dir or reusing previous tab's dir:
+        // Run the shell with - as the first char of argv[0]. It won't update
+        // utmpx (only login does), though.
+        *asLoginShell = YES;
+        return userShell;
+    } else if (thisUser) {
+        // No shell known (not sure why this would happen) and we want a non-login shell.
+        *asLoginShell = NO;
+        // -l specifies a NON-LOGIN shell which doesn't changed the pwd.
+        // (there is either a custom dir or we're recycling the last tab's dir)
+        return [NSString stringWithFormat:@"login -fpl \"%@\"", thisUser];
     } else {
+        // Can't get the shell or the user name. Should never happen.
+        *asLoginShell = YES;
         return @"/bin/bash --login";
     }
 }
 
-+ (NSString*)bookmarkCommand:(Bookmark*)bookmark
++ (NSString*)bookmarkCommand:(Bookmark*)bookmark isLoginSession:(BOOL*)isLoginSession
 {
     BOOL custom = [[bookmark objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"];
     if (custom) {
+        *isLoginSession = NO;
         return [bookmark objectForKey:KEY_COMMAND];
     } else {
-        return [ITAddressBookMgr loginShellCommandForBookmark:bookmark];
+        return [ITAddressBookMgr loginShellCommandForBookmark:bookmark asLoginShell:isLoginSession];
     }
 }
 

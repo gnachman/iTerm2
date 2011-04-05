@@ -6,7 +6,7 @@
  **  Copyright (c) 2002, 2003
  **
  **  Author: Fabian, Ujwal S. Setlur
- **	     Initial code by Kiichi Kusama
+ **      Initial code by Kiichi Kusama
  **
  **  Project: iTerm
  **
@@ -28,36 +28,36 @@
  */
 
 /*
-	Delegate
-		readTask:
-		brokenPipe
-		closeSession:
+    Delegate
+        readTask:
+        brokenPipe
+        closeSession:
 */
 
 #import <Foundation/Foundation.h>
 
 // Silence a few warnings.
-@class PTYSession;
+@class PTYTab;
 
 @protocol PTYTaskDelegate
-- (void) closeSession: (PTYSession*) aSession;
+- (void) closeTab:(PTYTab*)aSession;
 @end
 
 @interface PTYTask : NSObject
 {
-	pid_t pid;
-	int fd;
-	int status;
-	id delegate;
-	NSString* tty;
-	NSString* path;
-	BOOL hasOutput;
+    pid_t pid;
+    int fd;
+    int status;
+    id delegate;
+    NSString* tty;
+    NSString* path;
+    BOOL hasOutput;
 
-	NSLock* writeLock;
-	NSMutableData* writeBuffer;
+    NSLock* writeLock;
+    NSMutableData* writeBuffer;
 
-	NSString* logPath;
-	NSFileHandle* logHandle;
+    NSString* logPath;
+    NSFileHandle* logHandle;
 }
 
 - (id)init;
@@ -68,7 +68,10 @@
            environment:(NSDictionary*)env
                  width:(int)width
                 height:(int)height
-                isUTF8:(BOOL)isUTF8;
+                isUTF8:(BOOL)isUTF8
+        asLoginSession:(BOOL)asLoginSession;
+
+- (NSString*)currentJob:(BOOL)forceRefresh;
 
 - (void)setDelegate:(id)object;
 - (id)delegate;
@@ -77,7 +80,6 @@
 
 - (void)sendSignal:(int)signo;
 - (void)setWidth:(int)width height:(int)height;
-- (int)wait;
 - (void)stop;
 
 - (int)fd;
@@ -98,6 +100,8 @@
 - (void)brokenPipe;
 - (void)processRead;
 - (void)processWrite;
+
+- (void)refreshProcessCache:(NSMutableDictionary*)cache;
 
 @end
 

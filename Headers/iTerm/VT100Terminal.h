@@ -28,10 +28,9 @@
  */
 
 #import <Cocoa/Cocoa.h>
-//#include <term.h>
+#import "ScreenChar.h"
 
 @class VT100Screen;
-@class PseudoTerminal;
 
 // VT100TCC types
 #define VT100CC_NULL        0
@@ -127,6 +126,9 @@
 #define XTERMCC_REPORT_ICON_TITLE   107
 #define XTERMCC_REPORT_WIN_TITLE    108
 #define XTERMCC_SET_RGB 109
+#define XTERMCC_PROPRIETARY_ETERM_EXT 110
+#define XTERMCC_SET_PALETTE 111
+#define XTERMCC_SET_KVP 112
 
 // Some ansi stuff
 #define ANSICSI_CHA      3000   // Cursor Horizontal Absolute
@@ -236,18 +238,6 @@ typedef enum {
 #define VT100CHARATTR_BG_HI_WATER     (VT100CHARATTR_BG_HI_BASE + COLORCODE_WATER)
 #define VT100CHARATTR_BG_HI_WHITE     (VT100CHARATTR_BG_HI_BASE + COLORCODE_WHITE)
 
-
-// for foreground colors
-#define DEFAULT_FG_COLOR_CODE   0x100
-#define BOLD_MASK 0x200
-#define BLINK_MASK 0x400
-#define UNDER_MASK 0x800
-#define SELECTED_TEXT   0x102
-#define CURSOR_TEXT     0x103
-
-// for background colors
-#define DEFAULT_BG_COLOR_CODE   0x101
-
 // terminfo stuff
 enum {
     TERMINFO_KEY_LEFT, TERMINFO_KEY_RIGHT, TERMINFO_KEY_UP, TERMINFO_KEY_DOWN,
@@ -273,7 +263,13 @@ typedef enum {
     MOUSE_REPORTING_HILITE,
     MOUSE_REPORTING_BUTTON_MOTION,
     MOUSE_REPORTING_ALL_MOTION,
-} mouseMode;
+} MouseMode;
+
+typedef enum {
+    MOUSE_FORMAT_XTERM = 0,       // Regular 1000 mode
+    MOUSE_FORMAT_XTERM_EXT = 1,   // UTF-8 1005 mode
+    MOUSE_FORMAT_URXVT = 2        // rxvt's 1015 mode
+} MouseFormat;
 
 @interface VT100Terminal : NSObject
 {
@@ -300,14 +296,21 @@ typedef enum {
     int  CHARSET;           // G0...G3
     BOOL XON;               // YES=XON, NO=XOFF
     BOOL numLock;           // YES=ON, NO=OFF, default=YES;
-    mouseMode MOUSE_MODE;
+    MouseMode MOUSE_MODE;
+    MouseFormat MOUSE_FORMAT;
 
     int FG_COLORCODE;
+    BOOL alternateForegroundSemantics;
     int BG_COLORCODE;
+    BOOL alternateBackgroundSemantics;
     int bold, under, blink, reversed;
 
     int saveBold, saveUnder, saveBlink, saveReversed;
     int saveCHARSET;
+    int saveForeground;
+    BOOL saveAltForeground;
+    int saveBackground;
+    BOOL saveAltBackground;
 
     BOOL TRACE;
 
@@ -317,6 +320,9 @@ typedef enum {
     BOOL allowKeypadMode;
 
     unsigned int streamOffset;
+
+    BOOL IS_ANSI;
+    BOOL disableSmcupRmcup;
 
     //terminfo
     char  *key_strings[TERMINFO_KEYS];
@@ -360,14 +366,15 @@ typedef enum {
 - (NSData *)keyInsert;
 - (NSData *)keyDelete;
 - (NSData *)keyBackspace;
-- (NSData *)keyPageUp;
-- (NSData *)keyPageDown;
+- (NSData *)keyPageUp:(unsigned int)modflag;
+- (NSData *)keyPageDown:(unsigned int)modflag;
 - (NSData *)keyFunction:(int)no;
 - (NSData *)keypadData: (unichar) unicode keystr: (NSString *) keystr;
 
-- (NSData *)mousePress: (int)button withModifiers: (unsigned int)modflag atX: (int)x Y: (int)y;
-- (NSData *)mouseReleaseAtX: (int)x Y: (int)y;
-- (NSData *)mouseMotion: (int)button withModifiers: (unsigned int)modflag atX: (int)x Y: (int)y;
+- (char *)mouseReport:(int)button atX:(int)x Y:(int)y;
+- (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
+- (NSData *)mouseReleaseWithModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
+- (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
 
 - (BOOL)lineMode;
 - (BOOL)cursorMode;
@@ -376,18 +383,19 @@ typedef enum {
 - (BOOL)screenMode;
 - (BOOL)originMode;
 - (BOOL)wraparoundMode;
+- (BOOL)isAnsi;
 - (BOOL)autorepeatMode;
 - (BOOL)interlaceMode;
 - (BOOL)keypadMode;
 - (BOOL)insertMode;
 - (int)charset;
 - (BOOL)xon;
-- (mouseMode)mouseMode;
+- (MouseMode)mouseMode;
 
-- (int)foregroundColorCode;
-- (int)backgroundColorCode;
-- (int)foregroundColorCodeReal;
-- (int)backgroundColorCodeReal;
+- (screen_char_t)foregroundColorCode;
+- (screen_char_t)backgroundColorCode;
+- (screen_char_t)foregroundColorCodeReal;
+- (screen_char_t)backgroundColorCodeReal;
 
 - (NSData *)reportActivePositionWithX:(int)x Y:(int)y withQuestion:(BOOL)q;
 - (NSData *)reportStatus;
@@ -399,5 +407,8 @@ typedef enum {
 - (void)_setRGB:(VT100TCC)token;
 
 - (void) setScreen:(VT100Screen *)sc;
+
+- (void)setDisableSmcupRmcup:(BOOL)value;
+
 @end
 

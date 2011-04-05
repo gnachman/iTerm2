@@ -1,10 +1,22 @@
 #include <stdio.h>
 #include <stdlib.h>
+int cm;
+
 void setline(char* s, int n) {
   int l = random() % n;
+  if (cm) l *= 3;
   int j;
   for (j = 0; j < l; ++j) {
-    s[j] = 'A' + (random() % 60);
+    if (cm) {
+      int r = random() %30 + 1;
+      s[j++] = 0xe0;
+      s[j++] = 0xb8;
+      s[j++] = 0x80 | r;
+      s[j++] = 0xcc;
+      s[j] = 0x80;
+    } else {
+      s[j] = 'A' + (random() % 60);
+    }
   }
   s[j] = 0;
 }
@@ -16,6 +28,7 @@ int main(int argc, char*argv[]) {
   } else {
     n = atoi(argv[1]);
   }
+  cm = argc==3;
   for (int i = 0; i < n; ++i) {
     char buffer[100];
     setline(buffer, sizeof(buffer)-1);

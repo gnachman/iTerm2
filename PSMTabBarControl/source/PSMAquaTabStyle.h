@@ -11,6 +11,7 @@
 
 @interface PSMAquaTabStyle : NSObject <PSMTabStyle> {
     NSImage *aquaTabBg;
+    NSImage *noborderBg;
     NSImage *aquaTabBgDown;
     NSImage *aquaTabBgDownGraphite;
     NSImage *aquaTabBgDownNonKey;

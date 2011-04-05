@@ -160,37 +160,30 @@
 
 - (void)addBookmark:(Bookmark*)bookmark inSortedOrder:(BOOL)sort
 {
+
+    NSMutableDictionary *newBookmark = [[bookmark mutableCopy] autorelease];
+
     // Ensure required fields are present
-    if (![bookmark objectForKey:KEY_NAME]) {
-        NSMutableDictionary* aDict = [[NSMutableDictionary alloc] initWithDictionary:bookmark];
-        [aDict setObject:@"Bookmark" forKey:KEY_NAME];
-        bookmark = aDict;
+    if (![newBookmark objectForKey:KEY_NAME]) {
+        [newBookmark setObject:@"Bookmark" forKey:KEY_NAME];
     }
-    if (![bookmark objectForKey:KEY_TAGS]) {
-        NSMutableDictionary* aDict = [[NSMutableDictionary alloc] initWithDictionary:bookmark];
-        [aDict setObject:[NSArray arrayWithObjects:nil] forKey:KEY_TAGS];
-        bookmark = aDict;
+    if (![newBookmark objectForKey:KEY_TAGS]) {
+        [newBookmark setObject:[NSArray arrayWithObjects:nil] forKey:KEY_TAGS];
     }
-    if (![bookmark objectForKey:KEY_CUSTOM_COMMAND]) {
-        NSMutableDictionary* aDict = [[NSMutableDictionary alloc] initWithDictionary:bookmark];
-        [aDict setObject:@"No" forKey:KEY_CUSTOM_COMMAND];
-        bookmark = aDict;
+    if (![newBookmark objectForKey:KEY_CUSTOM_COMMAND]) {
+        [newBookmark setObject:@"No" forKey:KEY_CUSTOM_COMMAND];
     }
-    if (![bookmark objectForKey:KEY_COMMAND]) {
-        NSMutableDictionary* aDict = [[NSMutableDictionary alloc] initWithDictionary:bookmark];
-        [aDict setObject:@"/bin/bash --login" forKey:KEY_COMMAND];
-        bookmark = aDict;
+    if (![newBookmark objectForKey:KEY_COMMAND]) {
+        [newBookmark setObject:@"/bin/bash --login" forKey:KEY_COMMAND];
     }
-    if (![bookmark objectForKey:KEY_GUID]) {
-        NSMutableDictionary* aDict = [[NSMutableDictionary alloc] initWithDictionary:bookmark];
-        [aDict setObject:[BookmarkModel newGuid] forKey:KEY_GUID];
-        bookmark = aDict;
+    if (![newBookmark objectForKey:KEY_GUID]) {
+        [newBookmark setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
     }
-    if (![bookmark objectForKey:KEY_DEFAULT_BOOKMARK]) {
-        NSMutableDictionary* aDict = [[NSMutableDictionary alloc] initWithDictionary:bookmark];
-        [aDict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
-        bookmark = aDict;
+    if (![newBookmark objectForKey:KEY_DEFAULT_BOOKMARK]) {
+        [newBookmark setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
     }
+
+    bookmark = [[newBookmark copy] autorelease];
 
     if (sort) {
         // Insert alphabetically. Sort so that objects with the "bonjour" tag come after objects without.
@@ -228,7 +221,7 @@
     if (![self defaultBookmark] || (isDeprecatedDefaultBookmark && [isDeprecatedDefaultBookmark isEqualToString:@"Yes"])) {
         [self setDefaultByGuid:[bookmark objectForKey:KEY_GUID]];
     }
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];
+    [self postChangeNotification];
 }
 
 - (BOOL)bookmark:(Bookmark*)bookmark hasTag:(NSString*)tag
@@ -260,7 +253,7 @@
     if (![self defaultBookmark] && [bookmarks_ count]) {
         [self setDefaultByGuid:[[bookmarks_ objectAtIndex:0] objectForKey:KEY_GUID]];
     }
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];
+    [self postChangeNotification];
 }
 
 - (void)removeBookmarkAtIndex:(int)i withFilter:(NSString*)filter
@@ -287,7 +280,7 @@
     if (isDefault) {
         [self setDefaultByGuid:[bookmark objectForKey:KEY_GUID]];
     }
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];
+    [self postChangeNotification];
 }
 
 - (void)setBookmark:(Bookmark*)bookmark withGuid:(NSString*)guid
@@ -302,7 +295,7 @@
 {
     [bookmarks_ removeAllObjects];
     defaultBookmarkGuid_ = @"";
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];
+    [self postChangeNotification];
 }
 
 - (NSArray*)rawData
@@ -323,7 +316,7 @@
     [bookmarks_ retain];
 }
 
-+ (NSString*)newGuid
++ (NSString*)freshGuid
 {
     CFUUIDRef uuidObj = CFUUIDCreate(nil); //create a new UUID
     //get the string representation of the UUID
@@ -406,13 +399,19 @@
     return [temp allKeys];
 }
 
-- (void)setObject:(id)object forKey:(NSString*)key inBookmark:(Bookmark*)bookmark
+- (Bookmark*)setObject:(id)object forKey:(NSString*)key inBookmark:(Bookmark*)bookmark
 {
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
-    [newDict setObject:object forKey:key];
+    if (object == nil) {
+        [newDict removeObjectForKey:key];
+    } else {
+        [newDict setObject:object forKey:key];
+    }
     NSString* guid = [bookmark objectForKey:KEY_GUID];
-    [self setBookmark:[NSDictionary dictionaryWithDictionary:newDict]
+    Bookmark* newBookmark = [NSDictionary dictionaryWithDictionary:newDict];
+    [self setBookmark:newBookmark
              withGuid:guid];
+    return newBookmark;
 }
 
 - (void)setDefaultByGuid:(NSString*)guid
@@ -423,7 +422,7 @@
     if (prefs_) {
         [prefs_ setObject:defaultBookmarkGuid_ forKey:KEY_DEFAULT_GUID];
     }
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];
+    [self postChangeNotification];
 }
 
 - (void)moveGuid:(NSString*)guid toRow:(int)destinationRow
@@ -442,12 +441,31 @@
     [bookmark release];
 }
 
+- (void)postChangeNotification
+{
+    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];
+}
+
 - (void)dump
 {
     for (int i = 0; i < [self numberOfBookmarks]; ++i) {
         Bookmark* bookmark = [self bookmarkAtIndex:i];
         NSLog(@"%d: %@ %@", i, [bookmark objectForKey:KEY_NAME], [bookmark objectForKey:KEY_GUID]);
     }
+}
+
+- (NSArray*)bookmarks
+{
+    return bookmarks_;
+}
+
+- (NSArray*)guids
+{
+    NSMutableArray* guids = [NSMutableArray arrayWithCapacity:[bookmarks_ count]];
+    for (Bookmark* bookmark in bookmarks_) {
+        [guids addObject:[bookmark objectForKey:KEY_GUID]];
+    }
+    return guids;
 }
 
 @end

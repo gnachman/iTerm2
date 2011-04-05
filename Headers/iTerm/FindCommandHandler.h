@@ -33,19 +33,25 @@
 {
     NSString* _searchString;
     BOOL _ignoresCase;
+    BOOL _regex;
 }
 
 + (id)sharedInstance;
 
 - (BOOL)findNext;
 - (BOOL)findPreviousWithOffset:(int)offset;
-- (BOOL)findWithSelection;
 - (void)jumpToSelection;
-- (BOOL) findSubString:(NSString *) subString forwardDirection: (BOOL) direction ignoringCase: (BOOL) caseCheck withOffset:(int)offset;
+- (BOOL)findSubString:(NSString *)subString
+     forwardDirection:(BOOL)direction
+         ignoringCase:(BOOL)caseCheck
+                regex:(BOOL)regex
+           withOffset:(int)offset;
 - (void)setSearchString:(NSString*)searchString;
 - (NSString*)searchString;
 - (BOOL)ignoresCase;
 - (void)setIgnoresCase:(BOOL)set;
+- (BOOL)regex;
+- (void)setRegex:(BOOL)set;
 
 @end
 

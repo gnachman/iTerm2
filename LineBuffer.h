@@ -1,5 +1,4 @@
 // -*- mode:objc -*-
-// $Id: $
 /*
  **  LineBuffer.h
  **
@@ -28,12 +27,19 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "ScreenChar.h"
 
-// These codes go in the continuation character to the right of the
-// rightmost column.
-#define EOL_HARD 0 // Hard line break (explicit newline)
-#define EOL_SOFT 1 // Soft line break (a long line was wrapped)
-#define EOL_DWC  2 // Double-width character wrapped to next line
+// When receiving search results, you'll get an array of this class. Positions
+// can be converted to x,y coordinates with -convertPosition:withWidth:toX:toY.
+// length gives the number of screen_char_t elements matching the search (which
+// may differ from the number of code points in the search string because of
+// the vagueries of unicode, or more obviously, for regex searches).
+@interface ResultRange : NSObject {
+@public
+    int position;
+    int length;
+}
+@end
 
 typedef struct FindContext {
     int absBlockNum;
@@ -43,22 +49,10 @@ typedef struct FindContext {
     int offset;
     int stopAt;
     enum { Searching, Matched, NotFound } status;
-    int resultPosition;
     int matchLength;
+    NSMutableArray* results;  // used for multiple results
     BOOL hasWrapped;   // for client use. Not read or written by LineBuffer.
 } FindContext;
-
-typedef struct screen_char_t
-{
-    // ch has some special meanings:
-    //   0: Signifies no character was ever set at this location. Not selectable.
-    //   0xffff: The next character is a double-width character.
-    // In the WIDTH+1 position on a line, this takes the value of 0 or 1. If 1, then the
-    // next line is a continuation of this one (it's a long line that wrapped).
-    unichar ch;            // the actual character.
-    unsigned int bg_color; // background color
-    unsigned int fg_color; // foreground color
-} screen_char_t;
 
 // LineBlock represents an ordered collection of lines of text. It stores them contiguously
 // in a buffer.
@@ -247,6 +241,8 @@ typedef struct screen_char_t
 // length of the substring in the presence of double-width characters.
 #define FindOptCaseInsensitive (1 << 0)
 #define FindOptBackwards       (1 << 1)
+#define FindOptRegex           (1 << 2)
+#define FindMultipleResults    (1 << 3)
 - (void)initFind:(NSString*)substring startingAt:(int)start options:(int)options withContext:(FindContext*)context;
 - (void)releaseFind:(FindContext*)context;
 - (void)findSubstring:(FindContext*)context stopAt:(int)stopAt;
