@@ -1,0 +1,2 @@
+Many of these characters are wider than EastAsianWidth says they ought to be:
+♠♡♢♣♤♥♦♧

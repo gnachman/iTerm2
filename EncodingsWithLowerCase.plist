@@ -1,0 +1,1521 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Adobe-Standard-Encoding</key>
+    <true/>
+
+    <key>Adobe-Symbol-Encoding</key>
+    <true/>
+
+    <key>Ami-1251</key>
+    <true/>
+
+    <key>Ami1251</key>
+    <true/>
+
+    <key>Amiga-1251</key>
+    <true/>
+
+    <key>Amiga1251</key>
+    <true/>
+
+    <key>BS_viewdata</key>
+    <true/>
+
+    <key>Big5</key>
+    <true/>
+
+    <key>Big5-HKSCS</key>
+    <true/>
+
+    <key>CSA_Z243.4-1985-gr</key>
+    <true/>
+
+    <key>Cyrillic-Asian</key>
+    <true/>
+
+    <key>EBCDIC-Cyrillic</key>
+    <true/>
+
+    <key>EBCDIC-JP-kana</key>
+    <true/>
+
+    <key>ECMA-cyrillic</key>
+    <true/>
+
+    <key>Extended_UNIX_Code_Fixed_Width_for_Japanese</key>
+    <true/>
+
+    <key>Extended_UNIX_Code_Packed_Format_for_Japanese</key>
+    <true/>
+
+    <key>HP-DeskTop</key>
+    <true/>
+
+    <key>HP-Legal</key>
+    <true/>
+
+    <key>HP-Math8</key>
+    <true/>
+
+    <key>HP-Pi-font</key>
+    <true/>
+
+    <key>IBM-Symbols</key>
+    <true/>
+
+    <key>IBM-Thai</key>
+    <true/>
+
+    <key>INIS-cyrillic</key>
+    <true/>
+
+    <key>ISO-10646-UCS-Basic</key>
+    <true/>
+
+    <key>ISO-10646-Unicode-Latin1</key>
+    <true/>
+
+    <key>ISO-8859-1-Windows-3.0-Latin-1</key>
+    <true/>
+
+    <key>ISO-8859-1-Windows-3.1-Latin-1</key>
+    <true/>
+
+    <key>ISO-8859-2-Windows-Latin-2</key>
+    <true/>
+
+    <key>ISO-8859-9-Windows-Latin-5</key>
+    <true/>
+
+    <key>ISO-Unicode-IBM-1261</key>
+    <true/>
+
+    <key>ISO-Unicode-IBM-1264</key>
+    <true/>
+
+    <key>ISO-Unicode-IBM-1265</key>
+    <true/>
+
+    <key>ISO-Unicode-IBM-1268</key>
+    <true/>
+
+    <key>ISO-Unicode-IBM-1276</key>
+    <true/>
+
+    <key>ISO5427Cyrillic1981</key>
+    <true/>
+
+    <key>ISO_10367-box</key>
+    <true/>
+
+    <key>ISO_646.basic:1983</key>
+    <true/>
+
+    <key>ISO_646.irv:1983</key>
+    <true/>
+
+    <key>ISO_646.irv:1991</key>
+    <true/>
+
+    <key>ISO_6937-2-add</key>
+    <true/>
+
+    <key>ISO_8859-supp</key>
+    <true/>
+
+    <key>JIS_C6220-1969-jp</key>
+    <true/>
+
+    <key>JIS_C6220-1969-ro</key>
+    <true/>
+
+    <key>JIS_C6229-1984-a</key>
+    <true/>
+
+    <key>JIS_C6229-1984-b</key>
+    <true/>
+
+    <key>JIS_C6229-1984-b-add</key>
+    <true/>
+
+    <key>JIS_C6229-1984-hand</key>
+    <true/>
+
+    <key>JIS_C6229-1984-hand-add</key>
+    <true/>
+
+    <key>JIS_C6229-1984-kana</key>
+    <true/>
+
+    <key>JIS_Encoding</key>
+    <true/>
+
+    <key>JUS_I.B1.003-mac</key>
+    <true/>
+
+    <key>JUS_I.B1.003-serb</key>
+    <true/>
+
+    <key>KOI7-switched</key>
+    <true/>
+
+    <key>Latin-9</key>
+    <true/>
+
+    <key>Latin-greek-1</key>
+    <true/>
+
+    <key>MS_Kanji</key>
+    <true/>
+
+    <key>Microsoft-Publishing</key>
+    <true/>
+
+    <key>PC-Multilingual-850+euro</key>
+    <true/>
+
+    <key>PC8-Danish-Norwegian</key>
+    <true/>
+
+    <key>PC8-Turkish</key>
+    <true/>
+
+    <key>Shift_JIS</key>
+    <true/>
+
+    <key>T.61-7bit</key>
+    <true/>
+
+    <key>T.61-8bit</key>
+    <true/>
+
+    <key>Ventura-International</key>
+    <true/>
+
+    <key>Ventura-Math</key>
+    <true/>
+
+    <key>Ventura-US</key>
+    <true/>
+
+    <key>Windows-31J</key>
+    <true/>
+
+    <key>arabic</key>
+    <true/>
+
+    <key>arabic7</key>
+    <true/>
+
+    <key>ca</key>
+    <true/>
+
+    <key>chinese</key>
+    <true/>
+
+    <key>cn</key>
+    <true/>
+
+    <key>cp-ar</key>
+    <true/>
+
+    <key>cp-gr</key>
+    <true/>
+
+    <key>cp-is</key>
+    <true/>
+
+    <key>cp037</key>
+    <true/>
+
+    <key>cp038</key>
+    <true/>
+
+    <key>cp275</key>
+    <true/>
+
+    <key>cp281</key>
+    <true/>
+
+    <key>cp290</key>
+    <true/>
+
+    <key>cp297</key>
+    <true/>
+
+    <key>cp367</key>
+    <true/>
+
+    <key>cp420</key>
+    <true/>
+
+    <key>cp423</key>
+    <true/>
+
+    <key>cp424</key>
+    <true/>
+
+    <key>cp437</key>
+    <true/>
+
+    <key>cp775</key>
+    <true/>
+
+    <key>cp850</key>
+    <true/>
+
+    <key>cp851</key>
+    <true/>
+
+    <key>cp852</key>
+    <true/>
+
+    <key>cp855</key>
+    <true/>
+
+    <key>cp857</key>
+    <true/>
+
+    <key>cp860</key>
+    <true/>
+
+    <key>cp861</key>
+    <true/>
+
+    <key>cp862</key>
+    <true/>
+
+    <key>cp863</key>
+    <true/>
+
+    <key>cp864</key>
+    <true/>
+
+    <key>cp865</key>
+    <true/>
+
+    <key>cp866</key>
+    <true/>
+
+    <key>cp869</key>
+    <true/>
+
+    <key>cp880</key>
+    <true/>
+
+    <key>cp891</key>
+    <true/>
+
+    <key>cp903</key>
+    <true/>
+
+    <key>cp904</key>
+    <true/>
+
+    <key>csASCII</key>
+    <true/>
+
+    <key>csAdobeStandardEncoding</key>
+    <true/>
+
+    <key>csBOCU-1</key>
+    <true/>
+
+    <key>csBRF</key>
+    <true/>
+
+    <key>csBig5</key>
+    <true/>
+
+    <key>csCESU-8</key>
+    <true/>
+
+    <key>csCP51932</key>
+    <true/>
+
+    <key>csDECMCS</key>
+    <true/>
+
+    <key>csDKUS</key>
+    <true/>
+
+    <key>csEBCDICATDEA</key>
+    <true/>
+
+    <key>csEBCDICCAFR</key>
+    <true/>
+
+    <key>csEBCDICDKNO</key>
+    <true/>
+
+    <key>csEBCDICDKNOA</key>
+    <true/>
+
+    <key>csEBCDICES</key>
+    <true/>
+
+    <key>csEBCDICESA</key>
+    <true/>
+
+    <key>csEBCDICESS</key>
+    <true/>
+
+    <key>csEBCDICFISE</key>
+    <true/>
+
+    <key>csEBCDICFISEA</key>
+    <true/>
+
+    <key>csEBCDICFR</key>
+    <true/>
+
+    <key>csEBCDICIT</key>
+    <true/>
+
+    <key>csEBCDICPT</key>
+    <true/>
+
+    <key>csEBCDICUK</key>
+    <true/>
+
+    <key>csEBCDICUS</key>
+    <true/>
+
+    <key>csEUCFixWidJapanese</key>
+    <true/>
+
+    <key>csEUCKR</key>
+    <true/>
+
+    <key>csEUCPkdFmtJapanese</key>
+    <true/>
+
+    <key>csGB2312</key>
+    <true/>
+
+    <key>csHPDesktop</key>
+    <true/>
+
+    <key>csHPLegal</key>
+    <true/>
+
+    <key>csHPMath8</key>
+    <true/>
+
+    <key>csHPPSMath</key>
+    <true/>
+
+    <key>csHPPiFont</key>
+    <true/>
+
+    <key>csHPRoman8</key>
+    <true/>
+
+    <key>csHalfWidthKatakana</key>
+    <true/>
+
+    <key>csIBBM904</key>
+    <true/>
+
+    <key>csIBM037</key>
+    <true/>
+
+    <key>csIBM038</key>
+    <true/>
+
+    <key>csIBM1026</key>
+    <true/>
+
+    <key>csIBM273</key>
+    <true/>
+
+    <key>csIBM274</key>
+    <true/>
+
+    <key>csIBM275</key>
+    <true/>
+
+    <key>csIBM277</key>
+    <true/>
+
+    <key>csIBM278</key>
+    <true/>
+
+    <key>csIBM280</key>
+    <true/>
+
+    <key>csIBM281</key>
+    <true/>
+
+    <key>csIBM284</key>
+    <true/>
+
+    <key>csIBM285</key>
+    <true/>
+
+    <key>csIBM290</key>
+    <true/>
+
+    <key>csIBM297</key>
+    <true/>
+
+    <key>csIBM420</key>
+    <true/>
+
+    <key>csIBM423</key>
+    <true/>
+
+    <key>csIBM424</key>
+    <true/>
+
+    <key>csIBM500</key>
+    <true/>
+
+    <key>csIBM851</key>
+    <true/>
+
+    <key>csIBM855</key>
+    <true/>
+
+    <key>csIBM857</key>
+    <true/>
+
+    <key>csIBM860</key>
+    <true/>
+
+    <key>csIBM861</key>
+    <true/>
+
+    <key>csIBM863</key>
+    <true/>
+
+    <key>csIBM864</key>
+    <true/>
+
+    <key>csIBM865</key>
+    <true/>
+
+    <key>csIBM866</key>
+    <true/>
+
+    <key>csIBM868</key>
+    <true/>
+
+    <key>csIBM869</key>
+    <true/>
+
+    <key>csIBM870</key>
+    <true/>
+
+    <key>csIBM871</key>
+    <true/>
+
+    <key>csIBM880</key>
+    <true/>
+
+    <key>csIBM891</key>
+    <true/>
+
+    <key>csIBM903</key>
+    <true/>
+
+    <key>csIBM905</key>
+    <true/>
+
+    <key>csIBM918</key>
+    <true/>
+
+    <key>csIBMEBCDICATDE</key>
+    <true/>
+
+    <key>csIBMSymbols</key>
+    <true/>
+
+    <key>csIBMThai</key>
+    <true/>
+
+    <key>csINVARIANT</key>
+    <true/>
+
+    <key>csISO102T617bit</key>
+    <true/>
+
+    <key>csISO10367Box</key>
+    <true/>
+
+    <key>csISO103T618bit</key>
+    <true/>
+
+    <key>csISO10646UTF1</key>
+    <true/>
+
+    <key>csISO10Swedish</key>
+    <true/>
+
+    <key>csISO111ECMACyrillic</key>
+    <true/>
+
+    <key>csISO115481</key>
+    <true/>
+
+    <key>csISO11SwedishForNames</key>
+    <true/>
+
+    <key>csISO121Canadian1</key>
+    <true/>
+
+    <key>csISO122Canadian2</key>
+    <true/>
+
+    <key>csISO123CSAZ24341985gr</key>
+    <true/>
+
+    <key>csISO128T101G2</key>
+    <true/>
+
+    <key>csISO139CSN369103</key>
+    <true/>
+
+    <key>csISO13JISC6220jp</key>
+    <true/>
+
+    <key>csISO141JUSIB1002</key>
+    <true/>
+
+    <key>csISO143IECP271</key>
+    <true/>
+
+    <key>csISO146Serbian</key>
+    <true/>
+
+    <key>csISO147Macedonian</key>
+    <true/>
+
+    <key>csISO14JISC6220ro</key>
+    <true/>
+
+    <key>csISO150</key>
+    <true/>
+
+    <key>csISO150GreekCCITT</key>
+    <true/>
+
+    <key>csISO151Cuba</key>
+    <true/>
+
+    <key>csISO153GOST1976874</key>
+    <true/>
+
+    <key>csISO158Lap</key>
+    <true/>
+
+    <key>csISO159JISX02121990</key>
+    <true/>
+
+    <key>csISO15Italian</key>
+    <true/>
+
+    <key>csISO16Portuguese</key>
+    <true/>
+
+    <key>csISO17Spanish</key>
+    <true/>
+
+    <key>csISO18Greek7Old</key>
+    <true/>
+
+    <key>csISO19LatinGreek</key>
+    <true/>
+
+    <key>csISO2022JP</key>
+    <true/>
+
+    <key>csISO2022JP2</key>
+    <true/>
+
+    <key>csISO2022KR</key>
+    <true/>
+
+    <key>csISO2033</key>
+    <true/>
+
+    <key>csISO21German</key>
+    <true/>
+
+    <key>csISO25French</key>
+    <true/>
+
+    <key>csISO27LatinGreek1</key>
+    <true/>
+
+    <key>csISO2IntlRefVersion</key>
+    <true/>
+
+    <key>csISO42JISC62261978</key>
+    <true/>
+
+    <key>csISO47BSViewdata</key>
+    <true/>
+
+    <key>csISO49INIS</key>
+    <true/>
+
+    <key>csISO4UnitedKingdom</key>
+    <true/>
+
+    <key>csISO50INIS8</key>
+    <true/>
+
+    <key>csISO51INISCyrillic</key>
+    <true/>
+
+    <key>csISO5427Cyrillic</key>
+    <true/>
+
+    <key>csISO5428Greek</key>
+    <true/>
+
+    <key>csISO57GB1988</key>
+    <true/>
+
+    <key>csISO58GB231280</key>
+    <true/>
+
+    <key>csISO60DanishNorwegian</key>
+    <true/>
+
+    <key>csISO60Norwegian1</key>
+    <true/>
+
+    <key>csISO61Norwegian2</key>
+    <true/>
+
+    <key>csISO646Danish</key>
+    <true/>
+
+    <key>csISO646basic1983</key>
+    <true/>
+
+    <key>csISO6937Add</key>
+    <true/>
+
+    <key>csISO69French</key>
+    <true/>
+
+    <key>csISO70VideotexSupp1</key>
+    <true/>
+
+    <key>csISO84Portuguese2</key>
+    <true/>
+
+    <key>csISO85Spanish2</key>
+    <true/>
+
+    <key>csISO86Hungarian</key>
+    <true/>
+
+    <key>csISO87JISX0208</key>
+    <true/>
+
+    <key>csISO88596E</key>
+    <true/>
+
+    <key>csISO88596I</key>
+    <true/>
+
+    <key>csISO88598E</key>
+    <true/>
+
+    <key>csISO88598I</key>
+    <true/>
+
+    <key>csISO8859Supp</key>
+    <true/>
+
+    <key>csISO88Greek7</key>
+    <true/>
+
+    <key>csISO89ASMO449</key>
+    <true/>
+
+    <key>csISO90</key>
+    <true/>
+
+    <key>csISO91JISC62291984a</key>
+    <true/>
+
+    <key>csISO92JISC62991984b</key>
+    <true/>
+
+    <key>csISO93JIS62291984badd</key>
+    <true/>
+
+    <key>csISO94JIS62291984hand</key>
+    <true/>
+
+    <key>csISO95JIS62291984handadd</key>
+    <true/>
+
+    <key>csISO96JISC62291984kana</key>
+    <true/>
+
+    <key>csISO99NAPLPS</key>
+    <true/>
+
+    <key>csISOLatin1</key>
+    <true/>
+
+    <key>csISOLatin2</key>
+    <true/>
+
+    <key>csISOLatin3</key>
+    <true/>
+
+    <key>csISOLatin4</key>
+    <true/>
+
+    <key>csISOLatin5</key>
+    <true/>
+
+    <key>csISOLatin6</key>
+    <true/>
+
+    <key>csISOLatinArabic</key>
+    <true/>
+
+    <key>csISOLatinCyrillic</key>
+    <true/>
+
+    <key>csISOLatinGreek</key>
+    <true/>
+
+    <key>csISOLatinHebrew</key>
+    <true/>
+
+    <key>csISOTextComm</key>
+    <true/>
+
+    <key>csJISEncoding</key>
+    <true/>
+
+    <key>csKOI8R</key>
+    <true/>
+
+    <key>csKSC56011987</key>
+    <true/>
+
+    <key>csKSC5636</key>
+    <true/>
+
+    <key>csKZ1048</key>
+    <true/>
+
+    <key>csMacintosh</key>
+    <true/>
+
+    <key>csMicrosoftPublishing</key>
+    <true/>
+
+    <key>csMnem</key>
+    <true/>
+
+    <key>csMnemonic</key>
+    <true/>
+
+    <key>csNATSDANO</key>
+    <true/>
+
+    <key>csNATSDANOADD</key>
+    <true/>
+
+    <key>csNATSSEFI</key>
+    <true/>
+
+    <key>csNATSSEFIADD</key>
+    <true/>
+
+    <key>csPC775Baltic</key>
+    <true/>
+
+    <key>csPC850Multilingual</key>
+    <true/>
+
+    <key>csPC862LatinHebrew</key>
+    <true/>
+
+    <key>csPC8CodePage437</key>
+    <true/>
+
+    <key>csPC8DanishNorwegian</key>
+    <true/>
+
+    <key>csPC8Turkish</key>
+    <true/>
+
+    <key>csPCp852</key>
+    <true/>
+
+    <key>csPTCP154</key>
+    <true/>
+
+    <key>csShiftJIS</key>
+    <true/>
+
+    <key>csTSCII</key>
+    <true/>
+
+    <key>csUCS4</key>
+    <true/>
+
+    <key>csUSDK</key>
+    <true/>
+
+    <key>csUnicode</key>
+    <true/>
+
+    <key>csUnicode11</key>
+    <true/>
+
+    <key>csUnicode11UTF7</key>
+    <true/>
+
+    <key>csUnicodeASCII</key>
+    <true/>
+
+    <key>csUnicodeIBM1261</key>
+    <true/>
+
+    <key>csUnicodeIBM1264</key>
+    <true/>
+
+    <key>csUnicodeIBM1265</key>
+    <true/>
+
+    <key>csUnicodeIBM1268</key>
+    <true/>
+
+    <key>csUnicodeIBM1276</key>
+    <true/>
+
+    <key>csUnicodeLatin1</key>
+    <true/>
+
+    <key>csUnknown8BiT</key>
+    <true/>
+
+    <key>csVIQR</key>
+    <true/>
+
+    <key>csVISCII</key>
+    <true/>
+
+    <key>csVenturaInternational</key>
+    <true/>
+
+    <key>csVenturaMath</key>
+    <true/>
+
+    <key>csVenturaUS</key>
+    <true/>
+
+    <key>csWindows30Latin1</key>
+    <true/>
+
+    <key>csWindows31J</key>
+    <true/>
+
+    <key>csWindows31Latin1</key>
+    <true/>
+
+    <key>csWindows31Latin2</key>
+    <true/>
+
+    <key>csWindows31Latin5</key>
+    <true/>
+
+    <key>csa7-1</key>
+    <true/>
+
+    <key>csa7-2</key>
+    <true/>
+
+    <key>cuba</key>
+    <true/>
+
+    <key>cyrillic</key>
+    <true/>
+
+    <key>de</key>
+    <true/>
+
+    <key>dec</key>
+    <true/>
+
+    <key>dk</key>
+    <true/>
+
+    <key>dk-us</key>
+    <true/>
+
+    <key>e13b</key>
+    <true/>
+
+    <key>ebcdic-Latin9--euro</key>
+    <true/>
+
+    <key>ebcdic-cp-ar1</key>
+    <true/>
+
+    <key>ebcdic-cp-ar2</key>
+    <true/>
+
+    <key>ebcdic-cp-be</key>
+    <true/>
+
+    <key>ebcdic-cp-ca</key>
+    <true/>
+
+    <key>ebcdic-cp-ch</key>
+    <true/>
+
+    <key>ebcdic-cp-es</key>
+    <true/>
+
+    <key>ebcdic-cp-fi</key>
+    <true/>
+
+    <key>ebcdic-cp-fr</key>
+    <true/>
+
+    <key>ebcdic-cp-gb</key>
+    <true/>
+
+    <key>ebcdic-cp-gr</key>
+    <true/>
+
+    <key>ebcdic-cp-he</key>
+    <true/>
+
+    <key>ebcdic-cp-is</key>
+    <true/>
+
+    <key>ebcdic-cp-it</key>
+    <true/>
+
+    <key>ebcdic-cp-nl</key>
+    <true/>
+
+    <key>ebcdic-cp-roece</key>
+    <true/>
+
+    <key>ebcdic-cp-se</key>
+    <true/>
+
+    <key>ebcdic-cp-tr</key>
+    <true/>
+
+    <key>ebcdic-cp-us</key>
+    <true/>
+
+    <key>ebcdic-cp-wt</key>
+    <true/>
+
+    <key>ebcdic-cp-yu</key>
+    <true/>
+
+    <key>ebcdic-de-273+euro</key>
+    <true/>
+
+    <key>ebcdic-dk-277+euro</key>
+    <true/>
+
+    <key>ebcdic-es-284+euro</key>
+    <true/>
+
+    <key>ebcdic-fi-278+euro</key>
+    <true/>
+
+    <key>ebcdic-fr-297+euro</key>
+    <true/>
+
+    <key>ebcdic-gb-285+euro</key>
+    <true/>
+
+    <key>ebcdic-international-500+euro</key>
+    <true/>
+
+    <key>ebcdic-is-871+euro</key>
+    <true/>
+
+    <key>ebcdic-it-280+euro</key>
+    <true/>
+
+    <key>ebcdic-no-277+euro</key>
+    <true/>
+
+    <key>ebcdic-se-278+euro</key>
+    <true/>
+
+    <key>ebcdic-us-37+euro</key>
+    <true/>
+
+    <key>fr</key>
+    <true/>
+
+    <key>gb</key>
+    <true/>
+
+    <key>greek</key>
+    <true/>
+
+    <key>greek-ccitt</key>
+    <true/>
+
+    <key>greek7</key>
+    <true/>
+
+    <key>greek7-old</key>
+    <true/>
+
+    <key>greek8</key>
+    <true/>
+
+    <key>hebrew</key>
+    <true/>
+
+    <key>hp-roman8</key>
+    <true/>
+
+    <key>hu</key>
+    <true/>
+
+    <key>irv</key>
+    <true/>
+
+    <key>iso-celtic</key>
+    <true/>
+
+    <key>iso-ir-10</key>
+    <true/>
+
+    <key>iso-ir-100</key>
+    <true/>
+
+    <key>iso-ir-101</key>
+    <true/>
+
+    <key>iso-ir-102</key>
+    <true/>
+
+    <key>iso-ir-103</key>
+    <true/>
+
+    <key>iso-ir-109</key>
+    <true/>
+
+    <key>iso-ir-11</key>
+    <true/>
+
+    <key>iso-ir-110</key>
+    <true/>
+
+    <key>iso-ir-111</key>
+    <true/>
+
+    <key>iso-ir-121</key>
+    <true/>
+
+    <key>iso-ir-122</key>
+    <true/>
+
+    <key>iso-ir-123</key>
+    <true/>
+
+    <key>iso-ir-126</key>
+    <true/>
+
+    <key>iso-ir-127</key>
+    <true/>
+
+    <key>iso-ir-128</key>
+    <true/>
+
+    <key>iso-ir-13</key>
+    <true/>
+
+    <key>iso-ir-138</key>
+    <true/>
+
+    <key>iso-ir-139</key>
+    <true/>
+
+    <key>iso-ir-14</key>
+    <true/>
+
+    <key>iso-ir-141</key>
+    <true/>
+
+    <key>iso-ir-142</key>
+    <true/>
+
+    <key>iso-ir-143</key>
+    <true/>
+
+    <key>iso-ir-144</key>
+    <true/>
+
+    <key>iso-ir-146</key>
+    <true/>
+
+    <key>iso-ir-147</key>
+    <true/>
+
+    <key>iso-ir-148</key>
+    <true/>
+
+    <key>iso-ir-149</key>
+    <true/>
+
+    <key>iso-ir-15</key>
+    <true/>
+
+    <key>iso-ir-150</key>
+    <true/>
+
+    <key>iso-ir-151</key>
+    <true/>
+
+    <key>iso-ir-152</key>
+    <true/>
+
+    <key>iso-ir-153</key>
+    <true/>
+
+    <key>iso-ir-154</key>
+    <true/>
+
+    <key>iso-ir-155</key>
+    <true/>
+
+    <key>iso-ir-157</key>
+    <true/>
+
+    <key>iso-ir-158</key>
+    <true/>
+
+    <key>iso-ir-159</key>
+    <true/>
+
+    <key>iso-ir-16</key>
+    <true/>
+
+    <key>iso-ir-17</key>
+    <true/>
+
+    <key>iso-ir-18</key>
+    <true/>
+
+    <key>iso-ir-19</key>
+    <true/>
+
+    <key>iso-ir-199</key>
+    <true/>
+
+    <key>iso-ir-2</key>
+    <true/>
+
+    <key>iso-ir-21</key>
+    <true/>
+
+    <key>iso-ir-226</key>
+    <true/>
+
+    <key>iso-ir-25</key>
+    <true/>
+
+    <key>iso-ir-27</key>
+    <true/>
+
+    <key>iso-ir-37</key>
+    <true/>
+
+    <key>iso-ir-4</key>
+    <true/>
+
+    <key>iso-ir-42</key>
+    <true/>
+
+    <key>iso-ir-47</key>
+    <true/>
+
+    <key>iso-ir-49</key>
+    <true/>
+
+    <key>iso-ir-50</key>
+    <true/>
+
+    <key>iso-ir-51</key>
+    <true/>
+
+    <key>iso-ir-54</key>
+    <true/>
+
+    <key>iso-ir-55</key>
+    <true/>
+
+    <key>iso-ir-57</key>
+    <true/>
+
+    <key>iso-ir-58</key>
+    <true/>
+
+    <key>iso-ir-6</key>
+    <true/>
+
+    <key>iso-ir-60</key>
+    <true/>
+
+    <key>iso-ir-61</key>
+    <true/>
+
+    <key>iso-ir-69</key>
+    <true/>
+
+    <key>iso-ir-70</key>
+    <true/>
+
+    <key>iso-ir-8-1</key>
+    <true/>
+
+    <key>iso-ir-8-2</key>
+    <true/>
+
+    <key>iso-ir-84</key>
+    <true/>
+
+    <key>iso-ir-85</key>
+    <true/>
+
+    <key>iso-ir-86</key>
+    <true/>
+
+    <key>iso-ir-87</key>
+    <true/>
+
+    <key>iso-ir-88</key>
+    <true/>
+
+    <key>iso-ir-89</key>
+    <true/>
+
+    <key>iso-ir-9-1</key>
+    <true/>
+
+    <key>iso-ir-9-2</key>
+    <true/>
+
+    <key>iso-ir-90</key>
+    <true/>
+
+    <key>iso-ir-91</key>
+    <true/>
+
+    <key>iso-ir-92</key>
+    <true/>
+
+    <key>iso-ir-93</key>
+    <true/>
+
+    <key>iso-ir-94</key>
+    <true/>
+
+    <key>iso-ir-95</key>
+    <true/>
+
+    <key>iso-ir-96</key>
+    <true/>
+
+    <key>iso-ir-98</key>
+    <true/>
+
+    <key>iso-ir-99</key>
+    <true/>
+
+    <key>jp</key>
+    <true/>
+
+    <key>jp-ocr-a</key>
+    <true/>
+
+    <key>jp-ocr-b</key>
+    <true/>
+
+    <key>jp-ocr-b-add</key>
+    <true/>
+
+    <key>jp-ocr-hand</key>
+    <true/>
+
+    <key>jp-ocr-hand-add</key>
+    <true/>
+
+    <key>js</key>
+    <true/>
+
+    <key>katakana</key>
+    <true/>
+
+    <key>korean</key>
+    <true/>
+
+    <key>l1</key>
+    <true/>
+
+    <key>l10</key>
+    <true/>
+
+    <key>l2</key>
+    <true/>
+
+    <key>l3</key>
+    <true/>
+
+    <key>l4</key>
+    <true/>
+
+    <key>l5</key>
+    <true/>
+
+    <key>l6</key>
+    <true/>
+
+    <key>l8</key>
+    <true/>
+
+    <key>lap</key>
+    <true/>
+
+    <key>latin-greek</key>
+    <true/>
+
+    <key>latin-lap</key>
+    <true/>
+
+    <key>latin1</key>
+    <true/>
+
+    <key>latin1-2-5</key>
+    <true/>
+
+    <key>latin10</key>
+    <true/>
+
+    <key>latin2</key>
+    <true/>
+
+    <key>latin3</key>
+    <true/>
+
+    <key>latin4</key>
+    <true/>
+
+    <key>latin5</key>
+    <true/>
+
+    <key>latin6</key>
+    <true/>
+
+    <key>latin8</key>
+    <true/>
+
+    <key>mac</key>
+    <true/>
+
+    <key>macedonian</key>
+    <true/>
+
+    <key>macintosh</key>
+    <true/>
+
+    <key>no</key>
+    <true/>
+
+    <key>no2</key>
+    <true/>
+
+    <key>r8</key>
+    <true/>
+
+    <key>ref</key>
+    <true/>
+
+    <key>roman8</key>
+    <true/>
+
+    <key>se</key>
+    <true/>
+
+    <key>se2</key>
+    <true/>
+
+    <key>serbian</key>
+    <true/>
+
+    <key>uk</key>
+    <true/>
+
+    <key>us</key>
+    <true/>
+
+    <key>us-dk</key>
+    <true/>
+
+    <key>videotex-suppl</key>
+    <true/>
+
+    <key>windows-1250</key>
+    <true/>
+
+    <key>windows-1251</key>
+    <true/>
+
+    <key>windows-1252</key>
+    <true/>
+
+    <key>windows-1253</key>
+    <true/>
+
+    <key>windows-1254</key>
+    <true/>
+
+    <key>windows-1255</key>
+    <true/>
+
+    <key>windows-1256</key>
+    <true/>
+
+    <key>windows-1257</key>
+    <true/>
+
+    <key>windows-1258</key>
+    <true/>
+
+    <key>windows-936</key>
+    <true/>
+
+    <key>x0201-7</key>
+    <true/>
+
+    <key>x0208</key>
+    <true/>
+
+    <key>x0212</key>
+    <true/>
+
+    <key>yu</key>
+    <true/>
+  </dict>
+</plist>
+
