@@ -855,6 +855,8 @@ static void reapchild(int n)
 
         pid_t ppid = taskAllInfo.pbsd.pbi_ppid;
         if (ppid == parentPid) {
+            // This works with 10.6 sdk:
+            //long long birthday = taskAllInfo.pbsd.pbi_start_tvsec * 1000000 + taskAllInfo.pbsd.pbi_start_tvusec;
             long long birthday = taskAllInfo.pbsd.pbi_start.tv_sec * 1000000 + taskAllInfo.pbsd.pbi_start.tv_usec;
             if (birthday < oldestTime || oldestTime == 0) {
                 oldestTime = birthday;

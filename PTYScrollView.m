@@ -168,11 +168,11 @@
     PTYScroller *verticalScroller = (PTYScroller *)[self verticalScroller];
     NSRect scrollRect;
 
-    scrollRect= [self documentVisibleRect];
-    scrollRect.origin.y-=[theEvent deltaY] * [self verticalLineScroll];
+    scrollRect = [self documentVisibleRect];
+    scrollRect.origin.y -= [theEvent deltaY] * [self verticalLineScroll];
     [[self documentView] scrollRectToVisible: scrollRect];
 
-    scrollRect= [self documentVisibleRect];
+    scrollRect = [self documentVisibleRect];
     if(scrollRect.origin.y+scrollRect.size.height < [[self documentView] frame].size.height)
         [verticalScroller setUserScroll: YES];
     else

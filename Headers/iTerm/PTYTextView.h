@@ -30,6 +30,7 @@
 #import <iTerm/iTerm.h>
 #import "ScreenChar.h"
 #import "PreferencePanel.h"
+#import "Trouter.h"
 
 #include <sys/time.h>
 #define PRETTY_BOLD
@@ -232,6 +233,12 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Works around an apparent OS bug where we get drag events without a mousedown.
     BOOL dragOk_;
+
+    // Semantic history controller
+    Trouter* trouter;
+
+    // Array of (line number, pwd) arrays, sorted by line number. Line numbers are absolute.
+    NSMutableArray *workingDirectoryAtLines;
 }
 
 + (NSCursor *)textViewCursor;
@@ -434,6 +441,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 
 - (void)clearMatches;
 
+// Clear working directories for when buffer is cleared
+- (void)clearWorkingDirectories;
+
 @end
 
 //
@@ -484,6 +494,15 @@ typedef enum {
 
 - (BOOL)_isBlankLine:(int)y;
 - (void)_openURL:(NSString *)aURLString;
+- (void)_openURL:(NSString *)aURLString atLine:(long long)line;
+
+// Snapshot working directory for Trouter
+- (void)logWorkingDirectoryAtLine:(long long)line;
+- (NSString *)getWorkingDirectoryAtLine:(long long)line;
+
+// Trouter change directory
+- (void)_changeDirectory:(NSString *)path;
+
 - (BOOL)_findMatchingParenthesis:(NSString *)parenthesis withX:(int)X Y:(int)Y;
 - (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent;
 - (BOOL)_isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old;
