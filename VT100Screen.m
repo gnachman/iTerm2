@@ -1380,8 +1380,8 @@ static char* FormatCont(int c)
             newTitle = [NSString stringWithFormat:@"%@: %@", [SESSION joblessDefaultName], newTitle];
         }
         [SESSION setWindowTitle:newTitle];
-        long long lineNumber = [self getLineNumber];
-        [[SESSION TEXTVIEW] logWorkingDirectoryAtLine: lineNumber];
+        long long lineNumber = [self absoluteLineNumberOfCursor];
+        [[SESSION TEXTVIEW] logWorkingDirectoryAtLine:lineNumber];
         break;
     case XTERMCC_WINICON_TITLE:
         newTitle = [[token.u.string copy] autorelease];
@@ -1542,7 +1542,8 @@ static char* FormatCont(int c)
 //    NSLog(@"Done");
 }
 
-- (long long)getLineNumber {
+- (long long)absoluteLineNumberOfCursor
+{
     return [self totalScrollbackOverflow] + [self numberOfLines] - [self height] + [self cursorY] - 1;
 }
 

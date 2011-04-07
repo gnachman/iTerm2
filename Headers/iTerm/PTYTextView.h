@@ -75,10 +75,10 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // option to not render in bold
     BOOL useBoldFont;
-
+    
     // Option to draw bold text as brighter colors.
     BOOL useBrightBold;
-
+    
     // NSTextInput support
     BOOL IM_INPUT_INSERT;
     NSRange IM_INPUT_SELRANGE;
@@ -231,12 +231,14 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     ITermCursorType cursorType_;
 
-    // Trouter
-    Trouter* trouter;
-    NSMutableArray *workingDirectoryAtLines;
-
     // Works around an apparent OS bug where we get drag events without a mousedown.
     BOOL dragOk_;
+
+    // Semantic history controller
+    Trouter* trouter;
+
+    // Array of (line number, pwd) arrays, sorted by line number. Line numbers are absolute.
+    NSMutableArray *workingDirectoryAtLines;
 }
 
 + (NSCursor *)textViewCursor;
@@ -437,12 +439,10 @@ typedef struct PTYFontInfo PTYFontInfo;
 // Returns true if any character in the buffer is selected.
 - (BOOL)isAnyCharSelected;
 
-<<<<<<< HEAD
-=======
+- (void)clearMatches;
+
 // Clear working directories for when buffer is cleared
 - (void)clearWorkingDirectories;
->>>>>>> cross_repo_merge
-- (void)clearMatches;
 
 @end
 
@@ -530,7 +530,7 @@ typedef enum {
 // Return the number of pixels tall to draw the cursor.
 - (float)cursorHeight;
 
-// Draw the contents of the input method editor beginning at some location,
+// Draw the contents of the input method editor beginning at some location, 
 // usually the cursor position.
 // xStart, yStart: cell coordinates
 // width, height: cell width, height of screen

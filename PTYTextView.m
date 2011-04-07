@@ -30,6 +30,7 @@
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
 #define GREED_KEYDOWN         1
+static const int MAX_WORKING_DIR_COUNT = 50;
 //#define DEBUG_DRAWING
 
 #define SWAPINT(a, b) { int temp; temp = a; a = b; b = temp; }
@@ -295,8 +296,8 @@ static NSImage* wrapToBottomImage = nil;
     [fallbackFonts release];
     [selectionScrollTimer release];
 
-    [trouter release];
     [workingDirectoryAtLines release];
+    [trouter release];
 
     [super dealloc];
 }
@@ -2216,16 +2217,16 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             [mouseDownEvent locationInWindow].y == [event locationInWindow].y) {
             // Command click in place.
             NSString *url = [self _getURLForX:x y:y];
-            
-            if (url && [event modifierFlags] & NSShiftKeyMask) {
+
+            if (url && ([event modifierFlags] & NSShiftKeyMask)) {
+                // Cmd-shift click executes an alternate semantic history action.
                 NSString *fullPath = [trouter getFullPath:url
                                          workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
                                                lineNumber:nil];
                 if ([trouter isDirectory:fullPath]) {
                     [self _changeDirectory:fullPath];
                 }
-            }
-            else {
+            } else {
                 [self _openURL:url atLine:y + 1];
             }
         } else {
@@ -2333,10 +2334,13 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     if ([event modifierFlags] & NSCommandKeyMask) {
         // Drag a file handle
-        NSString *path = [self _getURLForX: x y:y];
-        path = [trouter getFullPath:path workingDirectory:[self getWorkingDirectoryAtLine:y + 1] lineNumber:nil];
-        if (![[trouter fileManager] fileExistsAtPath:path])
+        NSString *path = [self _getURLForX:x y:y];
+        path = [trouter getFullPath:path
+                   workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
+                         lineNumber:nil];
+        if (![[trouter fileManager] fileExistsAtPath:path]) {
             return;
+        }
 
         NSPoint dragPosition;
         NSImage *dragImage;
@@ -2348,7 +2352,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
         dragImage = [[NSWorkspace sharedWorkspace] iconForFile:path];
         dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
-        dragPosition.x -= [dragImage size].width/2;
+        dragPosition.x -= [dragImage size].width / 2;
 
         [self dragImage:dragImage
                      at:dragPosition
@@ -5676,48 +5680,58 @@ static bool IsUrlChar(NSString* str)
 }
 
 
-- (void)logWorkingDirectoryAtLine:(long long) line {
-    [workingDirectoryAtLines addObject:[NSArray arrayWithObjects:[NSNumber numberWithLongLong:line], [[dataSource shellTask] getWorkingDirectory], nil]];
-    if ([workingDirectoryAtLines count] >= 1000) {
+- (void)logWorkingDirectoryAtLine:(long long)line
+{
+    [workingDirectoryAtLines addObject:[NSArray arrayWithObjects:
+          [NSNumber numberWithLongLong:line],
+          [[dataSource shellTask] getWorkingDirectory],
+          nil]];
+    if ([workingDirectoryAtLines count] > MAX_WORKING_DIR_COUNT) {
         [workingDirectoryAtLines removeObjectAtIndex:0];
     }
 }
 
-- (NSString *)getWorkingDirectoryAtLine:(long long) line {
+- (NSString *)getWorkingDirectoryAtLine:(long long)line
+{
+    // TODO: use a binary search if we make MAX_WORKING_DIR_COUNT large.
+
     // Return current directory if not able to log via XTERMCC_WINDOW_TITLE
     if ([workingDirectoryAtLines count] == 0) {
         return [[dataSource shellTask] getWorkingDirectory];
     }
-    
+
     long long previousLine = [[[workingDirectoryAtLines lastObject] objectAtIndex:0] longLongValue];
     long long currentLine;
-    
-    for (int i=[workingDirectoryAtLines count] - 2; i != -1; i--) {
-        
+
+    for (int i = [workingDirectoryAtLines count] - 2; i != -1; i--) {
+
         currentLine = [[[workingDirectoryAtLines objectAtIndex:i] objectAtIndex: 0] longLongValue];
-        
-        if (currentLine < line && line <= previousLine)
+
+        if (currentLine < line && line <= previousLine) {
             return [[workingDirectoryAtLines objectAtIndex:i] lastObject];
-        
+        }
+
         previousLine = currentLine;
     }
-    
+
     return [[workingDirectoryAtLines lastObject] lastObject];
 }
 
-- (void)_changeDirectory:(NSString *)path {
+- (void)_changeDirectory:(NSString *)path
+{
     // TODO: Make this more efficient by calculating the shortest path to target folder
     [[dataSource shellTask] writeTask:[[NSString stringWithFormat:@"\3cd \"%@\"; ls\n", path] dataUsingEncoding:[[dataSource session] encoding]]];
 }
 
-- (void)_openURL:(NSString *)aURLString atLine:(long long)line {
+- (void)_openURL:(NSString *)aURLString atLine:(long long)line
+{
     NSString* trimmedURLString;
-    
+
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-    
-    NSString *working_directory = [self getWorkingDirectoryAtLine:line];
-    [trouter openPath:trimmedURLString workingDirectory:working_directory];
-    
+
+    NSString *workingDirectory = [self getWorkingDirectoryAtLine:line];
+    [trouter openPath:trimmedURLString workingDirectory:workingDirectory];
+
     return;
 }
 
