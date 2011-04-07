@@ -30,6 +30,7 @@
 #import <iTerm/iTerm.h>
 #import "ScreenChar.h"
 #import "PreferencePanel.h"
+#import "Trouter.h"
 
 #include <sys/time.h>
 #define PRETTY_BOLD
@@ -74,10 +75,10 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // option to not render in bold
     BOOL useBoldFont;
-    
+
     // Option to draw bold text as brighter colors.
     BOOL useBrightBold;
-    
+
     // NSTextInput support
     BOOL IM_INPUT_INSERT;
     NSRange IM_INPUT_SELRANGE;
@@ -229,6 +230,10 @@ typedef struct PTYFontInfo PTYFontInfo;
     } flashImage_;
 
     ITermCursorType cursorType_;
+
+    // Trouter
+    Trouter* trouter;
+    NSMutableArray *workingDirectoryAtLines;
 
     // Works around an apparent OS bug where we get drag events without a mousedown.
     BOOL dragOk_;
@@ -432,6 +437,11 @@ typedef struct PTYFontInfo PTYFontInfo;
 // Returns true if any character in the buffer is selected.
 - (BOOL)isAnyCharSelected;
 
+<<<<<<< HEAD
+=======
+// Clear working directories for when buffer is cleared
+- (void)clearWorkingDirectories;
+>>>>>>> cross_repo_merge
 - (void)clearMatches;
 
 @end
@@ -484,6 +494,15 @@ typedef enum {
 
 - (BOOL)_isBlankLine:(int)y;
 - (void)_openURL:(NSString *)aURLString;
+- (void)_openURL:(NSString *)aURLString atLine:(long long)line;
+
+// Snapshot working directory for Trouter
+- (void)logWorkingDirectoryAtLine:(long long)line;
+- (NSString *)getWorkingDirectoryAtLine:(long long)line;
+
+// Trouter change directory
+- (void)_changeDirectory:(NSString *)path;
+
 - (BOOL)_findMatchingParenthesis:(NSString *)parenthesis withX:(int)X Y:(int)Y;
 - (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent;
 - (BOOL)_isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old;
@@ -511,7 +530,7 @@ typedef enum {
 // Return the number of pixels tall to draw the cursor.
 - (float)cursorHeight;
 
-// Draw the contents of the input method editor beginning at some location, 
+// Draw the contents of the input method editor beginning at some location,
 // usually the cursor position.
 // xStart, yStart: cell coordinates
 // width, height: cell width, height of screen

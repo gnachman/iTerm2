@@ -221,6 +221,9 @@ static NSImage* wrapToBottomImage = nil;
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
     imeOffset = 0;
     resultMap_ = [[NSMutableDictionary alloc] init];
+
+    trouter = [[Trouter alloc] init];
+    workingDirectoryAtLines = [[NSMutableArray alloc] init];
     return self;
 }
 
@@ -291,6 +294,9 @@ static NSImage* wrapToBottomImage = nil;
     [self releaseAllFallbackFonts];
     [fallbackFonts release];
     [selectionScrollTimer release];
+
+    [trouter release];
+    [workingDirectoryAtLines release];
 
     [super dealloc];
 }
@@ -2200,7 +2206,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         t = startX; startX = endX; endX = t;
     } else if ([mouseDownEvent locationInWindow].x == [event locationInWindow].x &&
                [mouseDownEvent locationInWindow].y == [event locationInWindow].y &&
-               !([event modifierFlags] & NSShiftKeyMask) &&
                [event clickCount] < 2 &&
                !mouseDragged) {
         // Just a click in the window.
@@ -2210,10 +2215,18 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             [mouseDownEvent locationInWindow].x == [event locationInWindow].x &&
             [mouseDownEvent locationInWindow].y == [event locationInWindow].y) {
             // Command click in place.
-            //[self _openURL: [self selectedText]];
             NSString *url = [self _getURLForX:x y:y];
-            if (url != nil) {
-                [self _openURL:url];
+            
+            if (url && [event modifierFlags] & NSShiftKeyMask) {
+                NSString *fullPath = [trouter getFullPath:url
+                                         workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
+                                               lineNumber:nil];
+                if ([trouter isDirectory:fullPath]) {
+                    [self _changeDirectory:fullPath];
+                }
+            }
+            else {
+                [self _openURL:url atLine:y + 1];
             }
         } else {
             lastFindStartX = endX;
@@ -2316,6 +2329,36 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
             return;
         }
+    }
+
+    if ([event modifierFlags] & NSCommandKeyMask) {
+        // Drag a file handle
+        NSString *path = [self _getURLForX: x y:y];
+        path = [trouter getFullPath:path workingDirectory:[self getWorkingDirectoryAtLine:y + 1] lineNumber:nil];
+        if (![[trouter fileManager] fileExistsAtPath:path])
+            return;
+
+        NSPoint dragPosition;
+        NSImage *dragImage;
+
+        NSArray *fileList = [NSArray arrayWithObject: path];
+        NSPasteboard *pboard = [NSPasteboard pasteboardWithName:NSDragPboard];
+        [pboard declareTypes:[NSArray arrayWithObject:NSFilenamesPboardType] owner:nil];
+        [pboard setPropertyList:fileList forType:NSFilenamesPboardType];
+
+        dragImage = [[NSWorkspace sharedWorkspace] iconForFile:path];
+        dragPosition = [self convertPoint:[event locationInWindow] fromView:nil];
+        dragPosition.x -= [dragImage size].width/2;
+
+        [self dragImage:dragImage
+                     at:dragPosition
+                 offset:NSZeroSize
+                  event:event
+             pasteboard:pboard
+                 source:self
+              slideBack:YES];
+        return;
+
     }
 
     int prevScrolling = selectionScrollDirection;
@@ -2484,6 +2527,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [[[[dataSource session] tab] realParentWindow] splitVertically:NO
                                                       withBookmark:[[BookmarkModel sharedInstance] defaultBookmark]
                                                      targetSession:[dataSource session]];
+}
+
+- (void)clearWorkingDirectories {
+    [workingDirectoryAtLines removeAllObjects];
 }
 
 - (void)clearTextViewBuffer:(id)sender
@@ -5626,6 +5673,52 @@ static bool IsUrlChar(NSString* str)
         }
     }
     return YES;
+}
+
+
+- (void)logWorkingDirectoryAtLine:(long long) line {
+    [workingDirectoryAtLines addObject:[NSArray arrayWithObjects:[NSNumber numberWithLongLong:line], [[dataSource shellTask] getWorkingDirectory], nil]];
+    if ([workingDirectoryAtLines count] >= 1000) {
+        [workingDirectoryAtLines removeObjectAtIndex:0];
+    }
+}
+
+- (NSString *)getWorkingDirectoryAtLine:(long long) line {
+    // Return current directory if not able to log via XTERMCC_WINDOW_TITLE
+    if ([workingDirectoryAtLines count] == 0) {
+        return [[dataSource shellTask] getWorkingDirectory];
+    }
+    
+    long long previousLine = [[[workingDirectoryAtLines lastObject] objectAtIndex:0] longLongValue];
+    long long currentLine;
+    
+    for (int i=[workingDirectoryAtLines count] - 2; i != -1; i--) {
+        
+        currentLine = [[[workingDirectoryAtLines objectAtIndex:i] objectAtIndex: 0] longLongValue];
+        
+        if (currentLine < line && line <= previousLine)
+            return [[workingDirectoryAtLines objectAtIndex:i] lastObject];
+        
+        previousLine = currentLine;
+    }
+    
+    return [[workingDirectoryAtLines lastObject] lastObject];
+}
+
+- (void)_changeDirectory:(NSString *)path {
+    // TODO: Make this more efficient by calculating the shortest path to target folder
+    [[dataSource shellTask] writeTask:[[NSString stringWithFormat:@"\3cd \"%@\"; ls\n", path] dataUsingEncoding:[[dataSource session] encoding]]];
+}
+
+- (void)_openURL:(NSString *)aURLString atLine:(long long)line {
+    NSString* trimmedURLString;
+    
+    trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+    
+    NSString *working_directory = [self getWorkingDirectoryAtLine:line];
+    [trouter openPath:trimmedURLString workingDirectory:working_directory];
+    
+    return;
 }
 
 - (void)_openURL:(NSString *)aURLString
