@@ -143,6 +143,7 @@ static const float FINDVIEW_DURATION = 0.075;
 
 - (void)open
 {
+{
     [[self view] setFrame:[self collapsedFrame]];
     [[self view] setHidden:NO];
     [[NSAnimationContext currentContext] setDuration:FINDVIEW_DURATION];
