@@ -8,7 +8,7 @@
  **
  **  Project: iTerm
  **
- **  Description: Terminal Router
+ **  Description: Semantic History
  **
  **  This program is free software; you can redistribute it and/or modify
  **  it under the terms of the GNU General Public License as published by
@@ -33,16 +33,18 @@
     NSString *externalScript;
 }
 
-- (Trouter*) init;
-- (void) dealloc;
-- (void) determineEditor;
-- (BOOL) applicationExists:(NSString *)bundle_id;
-- (BOOL) applicationExists:(NSString *)bundle_id path:(NSString **)path;
-- (BOOL) isTextFile:(NSString *)path;
-- (BOOL) file:(NSString *)path conformsToUTI:(NSString *)uti;
-- (BOOL) isDirectory:(NSString *)path;
-- (NSFileManager *) fileManager;
-- (NSString *) getFullPath:(NSString *)path workingDirectory:(NSString *)workingDirectory lineNumber:(NSString **)lineNumber;
-- (void) openPath:(NSString *)path workingDirectory:(NSString *)workingDirectory;
+- (Trouter*)init;
+- (void)dealloc;
+- (void)determineEditor;
+- (BOOL)applicationExists:(NSString *)bundle_id;
+- (BOOL)applicationExists:(NSString *)bundle_id path:(NSString **)path;
+- (BOOL)isTextFile:(NSString *)path;
+- (BOOL)file:(NSString *)path conformsToUTI:(NSString *)uti;
+- (BOOL)isDirectory:(NSString *)path;
+- (NSFileManager *)fileManager;
+- (NSString *)getFullPath:(NSString *)path
+         workingDirectory:(NSString *)workingDirectory
+               lineNumber:(NSString **)lineNumber;
+- (void)openPath:(NSString *)path workingDirectory:(NSString *)workingDirectory;
 
 @end
