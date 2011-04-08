@@ -224,6 +224,10 @@ int gDebugLogFile = -1;
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app
 {
+    const double kMinRunningTime = 10;
+    if ([[NSDate date] timeIntervalSinceDate:launchTime_] < kMinRunningTime) {
+        return NO;
+    }
     quittingBecauseLastWindowClosed_ = [[PreferencePanel sharedInstance] quitWhenAllWindowsClosed];
     return quittingBecauseLastWindowClosed_;
 }
@@ -270,6 +274,7 @@ int gDebugLogFile = -1;
                                                         andEventID:kAEGetURL];
 
     aboutController = nil;
+    launchTime_ = [[NSDate date] retain];
 
     return self;
 }

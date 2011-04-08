@@ -72,6 +72,8 @@ void DebugLog(NSString* value);
     IBOutlet NSMenuItem *maximizePane;
     BOOL secureInputDesired_;
     BOOL quittingBecauseLastWindowClosed_;
+
+    NSDate* launchTime_;
 }
 
 - (void)awakeFromNib;
