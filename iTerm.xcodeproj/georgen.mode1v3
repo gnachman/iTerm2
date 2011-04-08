@@ -282,7 +282,7 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>37</integer>
+									<integer>36</integer>
 									<integer>1</integer>
 									<integer>0</integer>
 								</array>
@@ -337,7 +337,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1DC0A9A3134E9FF900F89944</string>
+										<string>1DC0A9CF134ED18500F89944</string>
 										<key>history</key>
 										<array>
 											<string>1D87317E128DD56A0049E357</string>
@@ -426,7 +426,6 @@
 											<string>1DB9E0F01339B115008E70C5</string>
 											<string>1DB9E1181339B996008E70C5</string>
 											<string>1DB9E11B1339B996008E70C5</string>
-											<string>1DB9E1251339B9D9008E70C5</string>
 											<string>1D9CF13D133D011B00BB6537</string>
 											<string>1D9CF15B133D031100BB6537</string>
 											<string>1D04C8D11342F9AD000670B3</string>
@@ -439,13 +438,14 @@
 											<string>1DF8689B13459A9900C50CEC</string>
 											<string>1DF869061346CA3F00C50CEC</string>
 											<string>1D7438221346DCBD009766C5</string>
-											<string>1D7438291346DD80009766C5</string>
 											<string>1D74382A1346DD80009766C5</string>
 											<string>1D74383F1346DF21009766C5</string>
-											<string>1D7438401346DF21009766C5</string>
 											<string>1DC0A903134C237C00F89944</string>
 											<string>1DC0A9A1134E9FF300F89944</string>
-											<string>1DC0A94C134C28F000F89944</string>
+											<string>1DC0A9BA134ED08B00F89944</string>
+											<string>1DC0A9C5134ED0DE00F89944</string>
+											<string>1DC0A9C6134ED0DE00F89944</string>
+											<string>1DC0A9C7134ED0DE00F89944</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -643,14 +643,14 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1DC0A9A4134E9FF900F89944</string>
+		<string>1DC0A9CD134ED14800F89944</string>
 		<string>1DC0A986134E9C7B00F89944</string>
 		<string>1DC0A987134E9C7B00F89944</string>
 		<string>1C78EAAD065D492600B07095</string>
-		<string>1CD10A99069EF8BA00B06720</string>
 		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>1DB1162C128D1D1A0028C458</string>
 		<string>/Users/georgen/iterm2/trunk/iTerm.xcodeproj</string>
+		<string>1CD10A99069EF8BA00B06720</string>
 	</array>
 	<key>WindowString</key>
 	<string>0 160 1440 718 0 0 1440 878 </string>
@@ -867,7 +867,7 @@
 			<key>WindowToolGUID</key>
 			<string>1CD10A99069EF8BA00B06720</string>
 			<key>WindowToolIsVisible</key>
-			<false/>
+			<true/>
 		</dict>
 		<dict>
 			<key>FirstTimeWindowDisplayed</key>
@@ -977,6 +977,8 @@
 					<key>Dock</key>
 					<array>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
