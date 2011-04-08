@@ -23,6 +23,7 @@
 		1D2E813212A18F7500F3D71E /* SessionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E813012A18F7500F3D71E /* SessionView.m */; };
 		1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D36155312CBF33E00803EA9 /* ScreenChar.h */; };
 		1D36155612CBF33E00803EA9 /* ScreenChar.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D36155412CBF33E00803EA9 /* ScreenChar.m */; };
+		1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D395912134E75B5005A8021 /* SmartSelectionRules.plist */; };
 		1D44218C1290B34500891504 /* TextViewWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D44218A1290B34500891504 /* TextViewWrapper.h */; };
 		1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D44218B1290B34500891504 /* TextViewWrapper.m */; };
 		1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */; };
@@ -296,6 +297,7 @@
 		1D2E813012A18F7500F3D71E /* SessionView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SessionView.m; sourceTree = "<group>"; };
 		1D36155312CBF33E00803EA9 /* ScreenChar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScreenChar.h; sourceTree = "<group>"; };
 		1D36155412CBF33E00803EA9 /* ScreenChar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ScreenChar.m; sourceTree = "<group>"; };
+		1D395912134E75B5005A8021 /* SmartSelectionRules.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = SmartSelectionRules.plist; sourceTree = "<group>"; };
 		1D44218A1290B34500891504 /* TextViewWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextViewWrapper.h; sourceTree = "<group>"; };
 		1D44218B1290B34500891504 /* TextViewWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TextViewWrapper.m; sourceTree = "<group>"; };
 		1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultGlobalKeyMap.plist; sourceTree = "<group>"; };
@@ -761,6 +763,7 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1D395912134E75B5005A8021 /* SmartSelectionRules.plist */,
 				1DA02CFA1327612600D7E7DB /* bell.png */,
 				1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */,
 				1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */,
@@ -1231,6 +1234,7 @@
 				1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */,
 				1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */,
 				1D1158CE13444D29009B366F /* iTerm2 Help in Resources */,
+				1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

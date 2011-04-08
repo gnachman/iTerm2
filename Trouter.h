@@ -8,11 +8,7 @@
  **
  **  Project: iTerm
  **
-<<<<<<< HEAD
- **  Description: Semantic History
-=======
  **  Description: Terminal Router
->>>>>>> 2808b2e68677ff4617914613460ef327460f1ddd
  **
  **  This program is free software; you can redistribute it and/or modify
  **  it under the terms of the GNU General Public License as published by

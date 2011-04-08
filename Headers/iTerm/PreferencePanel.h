@@ -525,6 +525,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (IBAction)showBookmarksTabView:(id)sender;
 - (IBAction)showKeyboardTabView:(id)sender;
 - (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme;
+- (void)disconnectHandlerForScheme:(NSString*)scheme;
 - (IBAction)closeWindow:(id)sender;
 - (void)controlTextDidChange:(NSNotification *)aNotification;
 - (void)textDidChange:(NSNotification *)aNotification;

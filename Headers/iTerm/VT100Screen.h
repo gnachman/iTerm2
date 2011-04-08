@@ -195,6 +195,7 @@ void StringToScreenChars(NSString *s,
 // edit screen buffer
 - (void)putToken:(VT100TCC)token;
 - (void)clearBuffer;
+- (long long)absoluteLineNumberOfCursor;
 - (void)clearScrollbackBuffer;
 - (void)saveBuffer;
 - (void)restoreBuffer;

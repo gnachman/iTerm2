@@ -1400,73 +1400,47 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     const double HIGH_PRECISION = 1000.0;
     const double VERY_HIGH_PRECISION = 1000000.0;
 
-    struct {
+    typedef struct {
         NSString* regex;
         double precision;
-    } exps[] = {
-        {
-            @"\\S+",  // Text delimited by whitespace
-            LOW_PRECISION
-        },
-        {
-            @"([a-zA-Z0-9_]+::)+[a-zA-Z0-9_]+",    // C++ namespace::identifier
-            NORMAL_PRECISION
-        },
-        {
-            @"\\~?/?([[:letter:][:number:]._-]+/+)+[[:letter:][:number:]._-]+/?",  // words delimited by slashes, optionally beginning with / or ~ or ~/ and optionally ending in a slash (e.g., include path)
-            NORMAL_PRECISION
-        },
-        {
-            @"?([[:letter:][:number:]._]+\\.)+[[:letter:][:number:]._]+",  // words delimited by dots (e.g., java/python include path)
-            NORMAL_PRECISION
-        },
-        {
-            @"@?\"(?:[^\"\\\\]|\\\\.)*\"",  // Quoted string with escaped quotes (from http://stackoverflow.com/questions/249791/regexp-for-quoted-string-with-escaping-quotes)
-            NORMAL_PRECISION
-        },
-        {
-            @"@selector\\([^)]+\\)",   // Obj-C selector
-            HIGH_PRECISION,
-        },
-        {
-            @"\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,4}\\b",  // Email address (approximately)
-            HIGH_PRECISION
-        },
-        {
-            // http or https
-            // |       optional username@ or username:password@
-            // |       |                               alphanumeric hostname followed by dot repeated at least once
-            // |       |                               |                 tld
-            // |       |                               |                 |        optional: slash followed by 0 or more URL-y characters
-            // |       |                               |                 |        |
-            @"https?://([a-z0-9A-Z]+(:[a-zA-Z0-9]+)?@)?([a-z0-9A-Z]+\\.)+[A-Za-z]+(/[a-zA-Z0-9/\\.\\-_+%?&@=#\\(\\)]*)?",  // Rough match for urls
-            VERY_HIGH_PRECISION  // A URL can appear to contain an email addr so use a higher precision
-        },
-        {
-            @"\\bmailto:[[:letter:][:number:][:punctuation:][:symbol:]]+",  // mailto url (very, very approximately)
-            VERY_HIGH_PRECISION  // A URL can appear to contain an email addr so use a higher precision
-        },
-        {
-            @"\\bssh:[[:letter:][:number:][:punctuation:][:symbol:]]+",  // SSH url (very, very approximately)
-            VERY_HIGH_PRECISION  // A URL can appear to contain an email addr so use a higher precision
-        },
-        {
-            @"\\btelnet:[[:letter:][:number:][:punctuation:][:symbol:]]+",  // Telnet url (very, very approximately)
-            VERY_HIGH_PRECISION  // A URL can appear to contain an email addr so use a higher precision
-        },
-        { nil, 0 }
-    };
-
+    } SmartMatchRule;
+    static SmartMatchRule* rules = nil;
+    static int numRules = 0;
+    if (!rules) {
+        NSString* plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"SmartSelectionRules"
+                                                                               ofType:@"plist"];
+        NSDictionary* rulesDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
+        NSArray* rulesArray = [rulesDict objectForKey:@"Rules"];
+        rules = malloc(sizeof(SmartMatchRule) * [rulesArray count]);
+        int i = 0;
+        for (NSDictionary* dict in rulesArray) {
+            rules[i].regex = [[dict objectForKey:@"regex"] retain];
+            NSString* precision = [dict objectForKey:@"precision"];
+            if ([precision isEqualToString:@"low"]) {
+                rules[i].precision = LOW_PRECISION;
+            } else if ([precision isEqualToString:@"normal"]) {
+                rules[i].precision = NORMAL_PRECISION;
+            } else if ([precision isEqualToString:@"high"]) {
+                rules[i].precision = HIGH_PRECISION;
+            } else if ([precision isEqualToString:@"very_high"]) {
+                rules[i].precision = VERY_HIGH_PRECISION;
+            }
+            i++;
+        }
+        numRules = [rulesArray count];
+        //NSLog(@"Loaded %d smart selection rules", numRules);
+    }
+    
     NSMutableDictionary* matches = [NSMutableDictionary dictionaryWithCapacity:13];
     int numCoords = [coords count];
 
-    NSLog(@"Searching for %@", textWindow);
-    for (int j = 0; exps[j].regex; j++) {
-        NSLog(@"Try regex %@", exps[j]);
+    //NSLog(@"Searching for %@", textWindow);
+    for (int j = 0; j < numRules; j++) {
+        //NSLog(@"Try regex %@", rules[j].regex);
         for (int i = 0; i <= targetOffset; i++) {
             NSString* substring = [textWindow substringWithRange:NSMakeRange(i, [textWindow length] - i)];
             NSError* regexError = nil;
-            NSRange temp = [substring rangeOfRegex:exps[j].regex
+            NSRange temp = [substring rangeOfRegex:rules[j].regex
                                            options:0
                                            inRange:NSMakeRange(0, [substring length])
                                            capture:0
@@ -1474,7 +1448,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             if (temp.location != NSNotFound) {
                 if (i + temp.location <= targetOffset && i + temp.location + temp.length > targetOffset) {
                     NSString* result = [substring substringWithRange:temp];
-                    double score = exps[j].precision * (double) temp.length;
+                    double score = rules[j].precision * (double) temp.length;
                     SmartMatch* oldMatch = [matches objectForKey:result];
                     if (!oldMatch || score > oldMatch->score) {
                         SmartMatch* match = [[[SmartMatch alloc] init] autorelease];
@@ -1487,7 +1461,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                         match->absEndY = endCoord->y + [dataSource totalScrollbackOverflow];
                         [matches setObject:match forKey:result];
 
-                        NSLog(@"Add result %@ at %d,%lld -> %d,%lld with score %lf", result, match->startX, match->absStartY, match->endX, match->absEndY, match->score);
+                        //NSLog(@"Add result %@ at %d,%lld -> %d,%lld with score %lf", result, match->startX, match->absStartY, match->endX, match->absEndY, match->score);
                     }
                     i += temp.location + temp.length - 1;
                 } else {
