@@ -4048,6 +4048,7 @@ NSString *sessionsKey = @"sessions";
         [cmd replaceOccurrencesOfString:@"$$PASSWORD$$" withString:[urlRep password]?[urlRep password]:@"" options:NSLiteralSearch range:NSMakeRange(0, [cmd length])];
         [cmd replaceOccurrencesOfString:@"$$PORT$$" withString:[urlRep port]?[[urlRep port] stringValue]:@"" options:NSLiteralSearch range:NSMakeRange(0, [cmd length])];
         [cmd replaceOccurrencesOfString:@"$$PATH$$" withString:[urlRep path]?[urlRep path]:@"" options:NSLiteralSearch range:NSMakeRange(0, [cmd length])];
+        [cmd replaceOccurrencesOfString:@"$$RES$$" withString:[urlRep resourceSpecifier]?[urlRep resourceSpecifier]:@"" options:NSLiteralSearch range:NSMakeRange(0, [cmd length])];
 
         // Update the addressbook title
         [name replaceOccurrencesOfString:@"$$URL$$" withString:url options:NSLiteralSearch range:NSMakeRange(0, [name length])];
@@ -4056,6 +4057,7 @@ NSString *sessionsKey = @"sessions";
         [name replaceOccurrencesOfString:@"$$PASSWORD$$" withString:[urlRep password]?[urlRep password]:@"" options:NSLiteralSearch range:NSMakeRange(0, [name length])];
         [name replaceOccurrencesOfString:@"$$PORT$$" withString:[urlRep port]?[[urlRep port] stringValue]:@"" options:NSLiteralSearch range:NSMakeRange(0, [name length])];
         [name replaceOccurrencesOfString:@"$$PATH$$" withString:[urlRep path]?[urlRep path]:@"" options:NSLiteralSearch range:NSMakeRange(0, [name length])];
+        [name replaceOccurrencesOfString:@"$$RES$$" withString:[urlRep resourceSpecifier]?[urlRep resourceSpecifier]:@"" options:NSLiteralSearch range:NSMakeRange(0, [name length])];
 
         // Get remaining session parameters
         [self getSessionParameters:cmd withName:name];
