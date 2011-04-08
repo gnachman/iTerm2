@@ -1,0 +1,76 @@
+Words consisting of anything but whitespace
+foo bar baz
+foo 𠀋∮E⋅da=Q,n→∞,∑f(i)=∏g(i), bar
+
+C++ namespace
+
+foo namespace::classname bar
+foo namespace::classname::subclass bar
+foo namespace::classname::Sub_Class1 bar
+
+Paths
+prefix:foo;suffix
+prefix:/foo;suffix
+prefix:/foo/bar;suffix
+prefix:/foo/bar_baz;suffix
+prefix:/foo/bar/file.ext;suffix
+prefix:/foo/bar/file-name.ext;suffix
+prefix=/foo/bar/file-name.ext;suffix
+prefix:~/foo/bar/file-name.ext;suffix
+prefix=~/foo/bar/file-name.ext;suffix
+
+Dotted include paths
+
+import foo
+import foo.bar
+import foo.bar;
+import "foo.bar";
+
+Quoted strings
+
+This is a "quoted string" for sure
+Here is "one with, some; punctuation!" in it
+Here's a fake quote \" and "a quoted string" fake quote \"
+A "quoted string with \" escaped quote" in it
+a "quoted string ending in escaped slash \\" haha
+
+objc selector
+foo:@selector(foo))
+foo:@selector(foo:bar:))
+
+email addr
+My email: foo123@bar.com <blah blah>
+Prefix: foo.bar@baz.com, suffix
+
+HTTP URLs (from adapted daring fireball)
+prefix http://foo.com/blah_blah suffix
+prefix http://foo.com/blah_blah/ suffix
+prefix http://foo.com/blah_blah. suffix
+prefix http://foo.com/blah_blah/. suffix
+<http://foo.com/blah_blah>
+<http://foo.com/blah_blah/>
+prefixhttp://foo.com/blah_blah,
+prefixhttp://foo.com:123/blah/blah.php?k=v&k2=v2#fragment,
+prefixhttp://www.example.com/wpstyle/?p=364.
+prefixhttp://userid:password@example.com:8080 suffix
+prefixhttp://userid@example.com suffix
+prefixhttp://userid@example.com:8080 suffix
+prefixhttp://userid:password@example.com suffix
+prefixhttp://example.com:8080 x-yojimbo-item://6303E4C1-xxxx-45A6-AB9D-3A908F59AE0E
+<tag>http://example.com</tag>
+
+HTTPs
+prefixhttp://foo.com:123/blah/blah.php?k=v&k2=v2#fragment,
+
+mailto
+prefix:mailto:foo@bar.com, suffix
+
+ssh
+prefix:ssh:user@site.com, suffix
+prefix:ssh:site.com, suffix
+prefix:ssh:site, suffix
+
+telnet
+prefix:telnet:user@site.com, suffix
+prefix:telnet:site.com, suffix
+prefix:telnet:site, suffix
