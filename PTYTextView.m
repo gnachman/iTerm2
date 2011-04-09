@@ -5649,10 +5649,12 @@ static bool IsUrlChar(NSString* str)
 
 - (void)logWorkingDirectoryAtLine:(long long)line
 {
+    NSString *workingDirectory = [[dataSource shellTask] getWorkingDirectory];
     [workingDirectoryAtLines addObject:[NSArray arrayWithObjects:
           [NSNumber numberWithLongLong:line],
-          [[dataSource shellTask] getWorkingDirectory],
+          workingDirectory,
           nil]];
+    NSLog(@"Logged working directory at line %@ as %@", [NSNumber numberWithLongLong:line], workingDirectory);
     if ([workingDirectoryAtLines count] > MAX_WORKING_DIR_COUNT) {
         [workingDirectoryAtLines removeObjectAtIndex:0];
     }
@@ -5675,12 +5677,14 @@ static bool IsUrlChar(NSString* str)
         currentLine = [[[workingDirectoryAtLines objectAtIndex:i] objectAtIndex: 0] longLongValue];
 
         if (currentLine < line && line <= previousLine) {
+            NSLog(@"Working directory lookup for line %@ returned %@", [NSNumber numberWithLongLong:line], [[workingDirectoryAtLines objectAtIndex:i] lastObject]);
             return [[workingDirectoryAtLines objectAtIndex:i] lastObject];
         }
 
         previousLine = currentLine;
     }
-
+    
+    NSLog(@"Working directory lookup for line %@ returned %@", [NSNumber numberWithLongLong:line], [[workingDirectoryAtLines lastObject] lastObject]);
     return [[workingDirectoryAtLines lastObject] lastObject];
 }
 
