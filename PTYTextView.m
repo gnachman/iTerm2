@@ -2312,7 +2312,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         path = [trouter getFullPath:path
                    workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
                          lineNumber:nil];
-        if (![[trouter fileManager] fileExistsAtPath:path]) {
+        if (path == nil) {
             return;
         }
 
