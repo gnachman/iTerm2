@@ -855,9 +855,11 @@ static void reapchild(int n)
 
         pid_t ppid = taskAllInfo.pbsd.pbi_ppid;
         if (ppid == parentPid) {
-            // This works with 10.6 sdk:
-            //long long birthday = taskAllInfo.pbsd.pbi_start_tvsec * 1000000 + taskAllInfo.pbsd.pbi_start_tvusec;
+#ifdef AVAILABLE_MAC_OS_X_VERSION_10_6_AND_LATER
+            long long birthday = taskAllInfo.pbsd.pbi_start_tvsec * 1000000 + taskAllInfo.pbsd.pbi_start_tvusec;
+#else
             long long birthday = taskAllInfo.pbsd.pbi_start.tv_sec * 1000000 + taskAllInfo.pbsd.pbi_start.tv_usec;
+#endif
             if (birthday < oldestTime || oldestTime == 0) {
                 oldestTime = birthday;
                 oldestPid = pids[i];
