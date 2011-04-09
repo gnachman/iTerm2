@@ -2179,16 +2179,14 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         int t;
         t = startY; startY = endY; endY = t;
         t = startX; startX = endX; endX = t;
-    } else if ([mouseDownEvent locationInWindow].x == [event locationInWindow].x &&
-               [mouseDownEvent locationInWindow].y == [event locationInWindow].y &&
+    } else if (abs([mouseDownEvent locationInWindow].x - [event locationInWindow].x) < 3 &&
+               abs([mouseDownEvent locationInWindow].y - [event locationInWindow].y) < 3 &&
                [event clickCount] < 2 &&
                !mouseDragged) {
         // Just a click in the window.
         startX=-1;
         if (([event modifierFlags] & NSCommandKeyMask) &&
-            [[PreferencePanel sharedInstance] cmdSelection] &&
-            [mouseDownEvent locationInWindow].x == [event locationInWindow].x &&
-            [mouseDownEvent locationInWindow].y == [event locationInWindow].y) {
+            [[PreferencePanel sharedInstance] cmdSelection]) {
             // Command click in place.
             NSString *url = [self _getURLForX:x y:y];
 
@@ -2252,6 +2250,13 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 
     y = locationInTextView.y / lineHeight;
+    
+    NSPoint mouseDownLocation = [mouseDownEvent locationInWindow];
+    
+    // Prevent accidental dragging
+    if (abs(mouseDownLocation.x - locationInWindow.x) < 3 || abs(mouseDownLocation.y - locationInWindow.y) < 3)
+        return;
+    
 
     if (([[self delegate] xtermMouseReporting]) &&
         reportingMouseDown &&
