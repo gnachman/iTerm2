@@ -209,7 +209,7 @@ static const int ambiguous_chars[] = {
 
         // update search Range
         searchRange.location = resultRange.location + resultRange.length;
-        searchRange.length   = len - searchRange.location;
+        searchRange.length   = len - searchRange}location;
 
         //  NSLog(@"resultRange.location=%d\n", resultRange.location);
         //  NSLog(@"resultRange.length=%d\n", resultRange.length);
@@ -218,6 +218,23 @@ static const int ambiguous_chars[] = {
     [mstr appendString:[self substringWithRange:searchRange]];
 
     return mstr;
+}
+
+- (NSString *)stringWithEscapedShellCharacters
+{
+    NSMutableString *aMutableString = [[NSMutableString alloc] initWithString: self];
+    [aMutableString replaceOccurrencesOfString: @"\\" withString: @"\\\\" options: 0 range: NSMakeRange(0, [aMutableString length])];
+    [aMutableString replaceOccurrencesOfString: @" " withString: @"\\ " options: 0 range: NSMakeRange(0, [aMutableString length])];
+    [aMutableString replaceOccurrencesOfString: @"(" withString: @"\\(" options: 0 range: NSMakeRange(0, [aMutableString length])];
+    [aMutableString replaceOccurrencesOfString: @")" withString: @"\\)" options: 0 range: NSMakeRange(0, [aMutableString length])];
+    [aMutableString replaceOccurrencesOfString: @"\"" withString: @"\\\"" options: 0 range: NSMakeRange(0, [aMutableString length])];
+    [aMutableString replaceOccurrencesOfString: @"&" withString: @"\\&" options: 0 range: NSMakeRange(0, [aMutableString length])];
+    [aMutableString replaceOccurrencesOfString: @"'" withString: @"\\'" options: 0 range: NSMakeRange(0, [aMutableString length])];
+
+    NSString *ret = [NSString stringWithString: aMutableString];
+    [aMutableString release];
+    return ret;
+
 }
 
 @end

@@ -1430,7 +1430,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         numRules = [rulesArray count];
         //NSLog(@"Loaded %d smart selection rules", numRules);
     }
-    
+
     NSMutableDictionary* matches = [NSMutableDictionary dictionaryWithCapacity:13];
     int numCoords = [coords count];
 
@@ -2825,21 +2825,14 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                     // Just paste the file names into the shell after escaping special characters.
                     if ([delegate respondsToSelector:@selector(pasteString:)])
                     {
-                        NSMutableString *aMutableString;
+                        NSMutableString *path;
 
-                        aMutableString = [[NSMutableString alloc] initWithString: (NSString*)[propertyList objectAtIndex: i]];
+                        path = [[NSMutableString alloc] initWithString: (NSString*)[propertyList objectAtIndex: i]];
+
                         // get rid of special characters
-                        [aMutableString replaceOccurrencesOfString: @"\\" withString: @"\\\\" options: 0 range: NSMakeRange(0, [aMutableString length])];
-                        [aMutableString replaceOccurrencesOfString: @" " withString: @"\\ " options: 0 range: NSMakeRange(0, [aMutableString length])];
-                        [aMutableString replaceOccurrencesOfString: @"(" withString: @"\\(" options: 0 range: NSMakeRange(0, [aMutableString length])];
-                        [aMutableString replaceOccurrencesOfString: @")" withString: @"\\)" options: 0 range: NSMakeRange(0, [aMutableString length])];
-                        [aMutableString replaceOccurrencesOfString: @"\"" withString: @"\\\"" options: 0 range: NSMakeRange(0, [aMutableString length])];
-                        [aMutableString replaceOccurrencesOfString: @"&" withString: @"\\&" options: 0 range: NSMakeRange(0, [aMutableString length])];
-                        [aMutableString replaceOccurrencesOfString: @"'" withString: @"\\'" options: 0 range: NSMakeRange(0, [aMutableString length])];
-
-                        [delegate pasteString: aMutableString];
+                        [delegate pasteString: [path stringWithEscapedShellCharacters]];
                         [delegate pasteString: @" "];
-                        [aMutableString release];
+                        [path release];
                     }
 
                 }
