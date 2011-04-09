@@ -209,7 +209,7 @@ static const int ambiguous_chars[] = {
 
         // update search Range
         searchRange.location = resultRange.location + resultRange.length;
-        searchRange.length   = len - searchRange}location;
+        searchRange.length   = len - searchRange.location;
 
         //  NSLog(@"resultRange.location=%d\n", resultRange.location);
         //  NSLog(@"resultRange.length=%d\n", resultRange.length);
