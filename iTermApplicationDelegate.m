@@ -133,8 +133,8 @@ int gDebugLogFile = -1;
     BOOL shouldShowAlert = (!onlyWhenMoreTabs ||
                             numTerminals > 1 ||
                             numTabs > 1);
-    if (promptOnQuit || (promptOnClose && 
-                         numTerminals && 
+    if (promptOnQuit || (promptOnClose &&
+                         numTerminals &&
                          shouldShowAlert)) {
         BOOL stayput = NSRunAlertPanel(@"Quit iTerm2?",
                                        @"All sessions will be closed",
@@ -164,7 +164,7 @@ int gDebugLogFile = -1;
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
 {
         //NSLog(@"%s: %@", __PRETTY_FUNCTION__, filename);
-
+        filename = [filename stringWithEscapedShellCharacters];
         if (filename) {
                 // Verify whether filename is a script or a folder
                 BOOL isDir;
@@ -177,7 +177,7 @@ int gDebugLogFile = -1;
                     [[[[iTermController sharedInstance] currentTerminal] currentSession] insertText:aString];
                 }
                 else {
-                        NSString *aString = [NSString stringWithFormat:@"cd \"%@\"\n", filename];
+                        NSString *aString = [NSString stringWithFormat:@"cd %@\n", filename];
                         [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil];
                         // Sleeping a while waiting for the login.
                         sleep(1);
@@ -372,8 +372,8 @@ int gDebugLogFile = -1;
     [[iTermController sharedInstance] addBookmarksToMenu:bookmarksMenu
                                                   target:aTarget
                                            withShortcuts:NO
-                                                selector:selector 
-                                         openAllSelector:openAllSelector 
+                                                selector:selector
+                                         openAllSelector:openAllSelector
                                        alternateSelector:nil];
     [newMenuItem setSubmenu:bookmarksMenu];
 }
@@ -560,7 +560,7 @@ void DebugLog(NSString* value)
         [aboutController showWindow:self];
         return;
     }
-    
+
     NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
     NSString *versionString = [NSString stringWithFormat: @"Build %@\n\n", [myDict objectForKey:@"CFBundleVersion"]];
 
@@ -604,7 +604,7 @@ void DebugLog(NSString* value)
     PTYTextView* textview = [session TEXTVIEW];
     [textview setFont:font nafont:nafont horizontalSpacing:hs verticalSpacing:vs];
     [frontTerminal sessionInitiatedResize:session
-                                    width:[[abEntry objectForKey:KEY_COLUMNS] intValue] 
+                                    width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
                                    height:[[abEntry objectForKey:KEY_ROWS] intValue]];
 }
 
@@ -824,8 +824,8 @@ void DebugLog(NSString* value)
         }
         if ([[file pathExtension] isEqualToString: @"scpt"] ||
             [[file pathExtension] isEqualToString: @"app"] ) {
-            NSMenuItem *scriptItem = [[NSMenuItem alloc] initWithTitle:file 
-                                                                action:@selector(launchScript:) 
+            NSMenuItem *scriptItem = [[NSMenuItem alloc] initWithTitle:file
+                                                                action:@selector(launchScript:)
                                                          keyEquivalent:@""];
             [scriptItem setTarget:[iTermController sharedInstance]];
             [scriptMenu addItem:scriptItem];

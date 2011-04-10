@@ -43,5 +43,6 @@
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth;
 
 - (NSMutableString *)stringReplaceSubstringFrom:(NSString *)oldSubstring to:(NSString *)newSubstring;
+- (NSString *)stringWithEscapedShellCharacters;
 
 @end

@@ -164,6 +164,11 @@
     if ([path rangeOfRegex:@"^/"].location == NSNotFound) {
         path = [NSString stringWithFormat:@"%@/%@", workingDirectory, path];
     }
+    
+    NSURL *url = [NSURL fileURLWithPath:path];
+    
+    // Resolve path by removing ./ and ../ etc
+    path = [[url standardizedURL] path];
 
     return path;
 }
