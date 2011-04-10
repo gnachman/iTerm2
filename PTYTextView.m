@@ -5704,7 +5704,9 @@ static bool IsUrlChar(NSString* str)
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
     NSString *workingDirectory = [self getWorkingDirectoryAtLine:line];
-    [trouter openPath:trimmedURLString workingDirectory:workingDirectory];
+    if (![trouter openPath:trimmedURLString workingDirectory:workingDirectory]) {
+        [self _openURL:aURLString];
+    }
 
     return;
 }

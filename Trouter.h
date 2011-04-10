@@ -45,6 +45,6 @@
 - (NSString *)getFullPath:(NSString *)path
          workingDirectory:(NSString *)workingDirectory
                lineNumber:(NSString **)lineNumber;
-- (void)openPath:(NSString *)path workingDirectory:(NSString *)workingDirectory;
+- (BOOL)openPath:(NSString *)path workingDirectory:(NSString *)workingDirectory;
 
 @end

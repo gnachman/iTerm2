@@ -169,7 +169,7 @@
 }
 
 
-- (void)openPath:(NSString *)path workingDirectory:(NSString *)workingDirectory
+- (BOOL)openPath:(NSString *)path workingDirectory:(NSString *)workingDirectory
 {
     BOOL isDirectory;
     NSString* lineNumber;
@@ -179,7 +179,7 @@
                   lineNumber:&lineNumber];
 
     if (![fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
-        return;
+        return NO;
     }
 
     if (lineNumber == nil) {
@@ -189,22 +189,23 @@
     if (externalScript) {
         [NSTask launchedTaskWithLaunchPath:externalScript
                                  arguments:[NSArray arrayWithObjects:path, lineNumber, nil]];
-        return;
+        return YES;
     }
 
     if (isDirectory) {
         [[NSWorkspace sharedWorkspace] openFile:path];
-        return;
+        return YES;
     }
 
-    if (editor && [self isTextFile: path]) {
+    if (editor && [self isTextFile:path]) {
         NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:
                                      @"%@://open?url=file://%@&line=%@", editor, path, lineNumber, nil]];
         [[NSWorkspace sharedWorkspace] openURL:url];
-        return;
+        return YES;
     }
 
     [[NSWorkspace sharedWorkspace] openFile:path];
+    return YES;
 }
 
 @end
