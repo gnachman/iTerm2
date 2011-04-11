@@ -117,12 +117,6 @@ int gDebugLogFile = -1;
 
     int numTerminals = [terminals count];
     int numNontrivialWindows = numTerminals;
-    if ([[[BookmarksWindow sharedInstance] window] isVisible]) {
-        ++numNontrivialWindows;
-    }
-    if ([[[PreferencePanel sharedInstance] window] isVisible]) {
-        ++numNontrivialWindows;
-    }
     BOOL promptOnQuit = quittingBecauseLastWindowClosed_ ? NO : (numNontrivialWindows > 0 && [[PreferencePanel sharedInstance] promptOnQuit]);
     quittingBecauseLastWindowClosed_ = NO;
     BOOL promptOnClose = [[PreferencePanel sharedInstance] promptOnClose];

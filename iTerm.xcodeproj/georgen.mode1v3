@@ -330,7 +330,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>PTYTextView.m</string>
+								<string>iTermApplicationDelegate.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -338,11 +338,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>PTYTextView.m</string>
+										<string>iTermApplicationDelegate.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D395A451353C4DC005A8021</string>
+										<string>1D395A751353C716005A8021</string>
 										<key>history</key>
 										<array>
 											<string>1D87317E128DD56A0049E357</string>
@@ -442,7 +442,6 @@
 											<string>1D6DA3D21345482600DCE9B3</string>
 											<string>1D6DA41B13454D6600DCE9B3</string>
 											<string>1D74908B134D4AC800974D30</string>
-											<string>1D3959991353B5F3005A8021</string>
 											<string>1D39599E1353B98F005A8021</string>
 											<string>1D3959B41353B9F1005A8021</string>
 											<string>1D3959E01353BD12005A8021</string>
@@ -453,7 +452,8 @@
 											<string>1D395A1A1353C040005A8021</string>
 											<string>1D395A1B1353C040005A8021</string>
 											<string>1D395A2D1353C353005A8021</string>
-											<string>1D395A371353C387005A8021</string>
+											<string>1D395A571353C6AC005A8021</string>
+											<string>1D395A581353C6AC005A8021</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -669,14 +669,14 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1D395A461353C4DC005A8021</string>
+		<string>1D395A761353C716005A8021</string>
+		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>1D39598B13537BD1005A8021</string>
 		<string>1D39598C13537BD1005A8021</string>
 		<string>1C78EAAD065D492600B07095</string>
 		<string>1CD10A99069EF8BA00B06720</string>
 		<string>1DB1162C128D1D1A0028C458</string>
 		<string>1D3959FD1353BD70005A8021</string>
-		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>/Users/georgen/iterm2/iTerm.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
@@ -919,7 +919,7 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CDD528C0622207200134675</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>Popup.m</string>
+										<string>iTermApplicationDelegate.m</string>
 										<key>StatusBarVisibility</key>
 										<true/>
 									</dict>
@@ -987,7 +987,7 @@
 			<key>WindowToolGUID</key>
 			<string>1C530D57069F1CE1000CFCEE</string>
 			<key>WindowToolIsVisible</key>
-			<true/>
+			<false/>
 		</dict>
 		<dict>
 			<key>Identifier</key>
