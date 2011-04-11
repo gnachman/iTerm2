@@ -2250,13 +2250,14 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 
     y = locationInTextView.y / lineHeight;
-    
+
     NSPoint mouseDownLocation = [mouseDownEvent locationInWindow];
-    
+
     // Prevent accidental dragging
-    if (abs(mouseDownLocation.x - locationInWindow.x) < 3 || abs(mouseDownLocation.y - locationInWindow.y) < 3)
+    if (abs(mouseDownLocation.x - locationInWindow.x) < 3 ||
+        abs(mouseDownLocation.y - locationInWindow.y) < 3) {
         return;
-    
+    }
 
     if (([[self delegate] xtermMouseReporting]) &&
         reportingMouseDown &&
@@ -2832,11 +2833,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                     {
                         NSMutableString *path;
 
-                        path = [[NSMutableString alloc] initWithString: (NSString*)[propertyList objectAtIndex: i]];
+                        path = [[NSMutableString alloc] initWithString:(NSString*)[propertyList objectAtIndex: i]];
 
                         // get rid of special characters
-                        [delegate pasteString: [path stringWithEscapedShellCharacters]];
-                        [delegate pasteString: @" "];
+                        [delegate pasteString:[path stringWithEscapedShellCharacters]];
+                        [delegate pasteString:@" "];
                         [path release];
                     }
 
@@ -5659,7 +5660,6 @@ static bool IsUrlChar(NSString* str)
           [NSNumber numberWithLongLong:line],
           workingDirectory,
           nil]];
-    NSLog(@"Logged working directory at line %@ as %@", [NSNumber numberWithLongLong:line], workingDirectory);
     if ([workingDirectoryAtLines count] > MAX_WORKING_DIR_COUNT) {
         [workingDirectoryAtLines removeObjectAtIndex:0];
     }
@@ -5682,14 +5682,12 @@ static bool IsUrlChar(NSString* str)
         currentLine = [[[workingDirectoryAtLines objectAtIndex:i] objectAtIndex: 0] longLongValue];
 
         if (currentLine < line && line <= previousLine) {
-            NSLog(@"Working directory lookup for line %@ returned %@", [NSNumber numberWithLongLong:line], [[workingDirectoryAtLines objectAtIndex:i] lastObject]);
             return [[workingDirectoryAtLines objectAtIndex:i] lastObject];
         }
 
         previousLine = currentLine;
     }
-    
-    NSLog(@"Working directory lookup for line %@ returned %@", [NSNumber numberWithLongLong:line], [[workingDirectoryAtLines lastObject] lastObject]);
+
     return [[workingDirectoryAtLines lastObject] lastObject];
 }
 
