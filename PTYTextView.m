@@ -3353,7 +3353,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // continueFind is called by a timer in the client until it returns NO. It does
 // two things:
 // 1. If _findInProgress is true, search for more results in the dataSource and
-//   call _addREsultfromX:absY:toX:toAbsY: for each.
+//   call _addResultFromX:absY:toX:toAbsY: for each.
 // 2. If searchingForNextResult_ is true, highlight the next result before/after
 //   the current selection and flip searchingForNextResult_ to false.
 - (BOOL)continueFind
@@ -6038,13 +6038,20 @@ static bool IsUrlChar(NSString* str)
     int screenindex=0;
 #endif
     BOOL irEnabled = [[PreferencePanel sharedInstance] instantReplay];
+    long long totalScrollbackOverflow = [dataSource totalScrollbackOverflow];
     for (int y = lineStart; y < lineEnd; y++) {
+        NSMutableData* matches = [resultMap_ objectForKey:[NSNumber numberWithLongLong:y + totalScrollbackOverflow]];
         for (int x = 0; x < WIDTH; x++) {
             int dirtyFlags = [dataSource dirtyAtX:x Y:y-lineStart];
             if (dirtyFlags) {
                 if (irEnabled) {
                     if (dirtyFlags & 1) {
                         foundDirty = YES;
+                        if (matches) {
+                            // Remove highlighted search matches on this line.
+                            [resultMap_ removeObjectForKey:[NSNumber numberWithLongLong:y + totalScrollbackOverflow]];
+                            matches = nil;
+                        }
                     } else {
                         for (int j = x+1; j < WIDTH; ++j) {
                             if ([dataSource dirtyAtX:j Y:y-lineStart] & 1) {
