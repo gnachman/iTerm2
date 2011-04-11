@@ -56,6 +56,10 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #include <sys/time.h>
 #include <math.h>
 
+// Minimum distance that the mouse must move before a cmd+drag will be
+// recognized as a drag.
+static const int kDragThreshold = 3;
+
 // When drawing lines, we use this structure to represent a run of cells  of
 // the same font, color, and attributes.
 typedef enum {
@@ -2096,6 +2100,14 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return NO;
 }
 
+static double Square(double n) {
+    return n * n;
+}
+
+static double EuclideanDistance(NSPoint p1, NSPoint p2) {
+    return sqrt(Square(p1.x - p2.x) + Square(p1.y - p2.y));
+}
+
 - (void)mouseUp:(NSEvent *)event
 {
     dragOk_ = NO;
@@ -2179,9 +2191,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         int t;
         t = startY; startY = endY; endY = t;
         t = startX; startX = endX; endX = t;
-    } else if (abs([mouseDownEvent locationInWindow].x - [event locationInWindow].x) < 3 &&
-               abs([mouseDownEvent locationInWindow].y - [event locationInWindow].y) < 3 &&
-               [event clickCount] < 2 &&
+    } else if ([event clickCount] < 2 &&
                !mouseDragged) {
         // Just a click in the window.
         startX=-1;
@@ -2253,12 +2263,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     NSPoint mouseDownLocation = [mouseDownEvent locationInWindow];
 
-    // Prevent accidental dragging
-    if (abs(mouseDownLocation.x - locationInWindow.x) < 3 ||
-        abs(mouseDownLocation.y - locationInWindow.y) < 3) {
-        return;
-    }
-
     if (([[self delegate] xtermMouseReporting]) &&
         reportingMouseDown &&
         !([event modifierFlags] & NSAlternateKeyMask)) {
@@ -2295,10 +2299,20 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         }
     }
 
-    mouseDragged = YES;
+    // Prevent accidental dragging while holding cmd.
+    BOOL dragThresholdMet = NO;
+    if (EuclideanDistance(mouseDownLocation, locationInWindow) >= kDragThreshold) {
+        dragThresholdMet = YES;
+    }
+    BOOL pressingCmdOnly = ([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask;
+    if (!pressingCmdOnly || dragThresholdMet) {
+      mouseDragged = YES;
+    }
+
 
     if (mouseDownOnSelection == YES &&
-        ([event modifierFlags] & NSCommandKeyMask)) {
+        ([event modifierFlags] & NSCommandKeyMask) &&
+        dragThresholdMet) {
         // Drag and drop a selection
         if (selectMode == SELECT_BOX) {
             theSelectedText = [self contentInBoxFromX: startX Y: startY ToX: endX Y: endY pad: NO];
@@ -2312,8 +2326,22 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         }
     }
 
-    if ([event modifierFlags] & NSCommandKeyMask) {
-        // Drag a file handle
+    if (pressingCmdOnly && !dragThresholdMet) {
+        // If you're holding cmd (but not opt) then you're either trying to click on a link and
+        // accidentally dragged a little bit, or you're trying to drag a selection. Do nothing until
+        // the threshold is met.
+        return;
+    }
+    if (mouseDownOnSelection == YES &&
+        ([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == (NSAlternateKeyMask | NSCommandKeyMask) &&
+        !dragThresholdMet) {
+        // Would be a drag of a rect region but mouse hasn't moved far enough yet. Prevent the
+        // selection from changing.
+        return;
+    }
+
+    if (startX < 0 && pressingCmdOnly) {
+        // Drag a file handle (only possible when there is no selection).
         NSString *path = [self _getURLForX:x y:y];
         path = [trouter getFullPath:path
                    workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
