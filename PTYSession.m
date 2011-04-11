@@ -97,7 +97,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     growlIdle = growlNewOutput = NO;
 
     slowPasteBuffer = [[NSMutableString alloc] init];
-
+    creationDate_ = [[NSDate date] retain];
     return self;
 }
 
@@ -107,6 +107,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     if (slowPasteTimer) {
         [slowPasteTimer invalidate];
     }
+    [creationDate_ release];
     [lastActiveAt_ release];
     [bookmarkName release];
     [TERM_VALUE release];
@@ -444,9 +445,28 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 }
 
+- (void)_maybeWarnAboutShortLivedSessions
+{
+    if ([[NSDate date] timeIntervalSinceDate:creationDate_] < 3) {
+        NSString* theName = [addressBookEntry objectForKey:KEY_NAME];
+        NSString* theKey = [NSString stringWithFormat:@"NeverWarnAboutShortLivedSessions_%@", [addressBookEntry objectForKey:KEY_GUID]];
+        if (![[[NSUserDefaults standardUserDefaults] objectForKey:theKey] boolValue]) {
+            if (NSRunAlertPanel(@"Short-Lived Session Warning",
+                                [NSString stringWithFormat:@"A session ended very soon after starting. Check that the command in profile \"%@\" is correct.", theName],
+                                @"Ok",
+                                @"Don't Warn Again for This Profile",
+                                nil) != NSAlertDefaultReturn) {
+                [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:theKey];
+            }
+        }
+    }
+}
 
 - (void)terminate
 {
+    if (EXIT) {
+        [self _maybeWarnAboutShortLivedSessions];
+    }
     // deregister from the notification center
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
@@ -781,7 +801,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 
     unsigned short keycode = [event keyCode];
-    NSLog([NSString stringWithFormat:@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask)]);
+    //NSLog([NSString stringWithFormat:@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask)]);
     DebugLog([NSString stringWithFormat:@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask)]);
 
     // Check if we have a custom key mapping for this event

@@ -198,6 +198,9 @@ static const float kBackgroundSessionIntervalSec = 1;
 
     // saved scroll position or -1
     long long savedScrollPosition_;
+
+    // Time session was created
+    NSDate* creationDate_;
 }
 
 // Return the current pasteboard value as a string.
