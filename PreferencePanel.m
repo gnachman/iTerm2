@@ -1721,15 +1721,21 @@ static float versionNumber;
 // URL handler stuff
 - (Bookmark *)handlerBookmarkForURL:(NSString *)url
 {
-    NSString* guid = [urlHandlersByGuid objectForKey:url];
-    if (!guid) {
+    NSString* handlerId = (NSString*) LSCopyDefaultHandlerForURLScheme((CFStringRef) url);
+    if ([handlerId isEqualToString:@"com.googlecode.iterm2"] ||
+        [handlerId isEqualToString:@"net.sourceforge.iterm"]) {
+        NSString* guid = [urlHandlersByGuid objectForKey:url];
+        if (!guid) {
+            return nil;
+        }
+        int theIndex = [dataSource indexOfBookmarkWithGuid:guid];
+        if (theIndex < 0) {
+            return nil;
+        }
+        return [dataSource bookmarkAtIndex:theIndex];
+    } else {
         return nil;
     }
-    int theIndex = [dataSource indexOfBookmarkWithGuid:guid];
-    if (theIndex < 0) {
-        return nil;
-    }
-    return [dataSource bookmarkAtIndex:theIndex];
 }
 
 // NSTableView data source
@@ -1916,7 +1922,8 @@ static float versionNumber;
     [[bookmarkUrlSchemes menu] setAutoenablesItems:YES];
     [[bookmarkUrlSchemes menu] setDelegate:self];
     for (NSMenuItem* item in [[bookmarkUrlSchemes menu] itemArray]) {
-        if ([[urlHandlersByGuid objectForKey:[item title]] isEqualToString:guid]) {
+        Bookmark* handler = [self handlerBookmarkForURL:[item title]];
+        if (handler && [[handler objectForKey:KEY_GUID] isEqualToString:guid]) {
             [item setState:NSOnState];
         } else {
             [item setState:NSOffState];
@@ -2591,7 +2598,7 @@ static float versionNumber;
                 @"OK",
                 @"Cancel",
                 nil) == NSAlertDefaultReturn;
-    } else if (![[[NSFileManager defaultManager] displayNameAtPath:[appURL path]] isEqualToString:@"iTerm"]) {
+    } else if (![[[NSFileManager defaultManager] displayNameAtPath:[appURL path]] isEqualToString:@"iTerm 2"]) {
         set = NSRunAlertPanel([NSString stringWithFormat:@"iTerm is not the default handler for %@. Would you like to set iTerm as the default handler?",
                                scheme],
                               [NSString stringWithFormat:@"The current handler is: %@",

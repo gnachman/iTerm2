@@ -37,6 +37,7 @@
 #import <iTerm/FindCommandHandler.h>
 #import <iTerm/PTYWindow.h>
 #import <iTerm/PTYTextView.h>
+#import "iTerm/NSStringITerm.h"
 #import <BookmarksWindow.h>
 #import "PTYTab.h"
 #import "iTermExpose.h"

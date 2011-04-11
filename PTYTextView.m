@@ -5725,7 +5725,7 @@ static bool IsUrlChar(NSString* str)
 
     // Check for common types of URLs
 
-    NSRange range = [trimmedURLString rangeOfString:@"://"];
+    NSRange range = [trimmedURLString rangeOfString:@":"];
     if (range.location == NSNotFound) {
         trimmedURLString = [@"http://" stringByAppendingString:trimmedURLString];
     } else {
