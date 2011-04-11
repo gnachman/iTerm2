@@ -10,12 +10,13 @@
 #import "PTYSession.h"
 
 @interface PopupWindow : NSWindow {
+    NSWindow* parentWindow_;
 }
 - (id)initWithContentRect:(NSRect)contentRect
                 styleMask:(NSUInteger)aStyle
                   backing:(NSBackingStoreType)bufferingType
                     defer:(BOOL)flag;
-
+- (void)setParentWindow:(NSWindow*)parentWindow;
 - (BOOL)canBecomeKeyWindow;
 - (void)keyDown:(NSEvent *)event;
 

@@ -158,6 +158,11 @@ DebugLog([NSString stringWithFormat:args]); \
     }
 }
 
+- (void)setParentWindow:(NSWindow*)parentWindow
+{
+    parentWindow_ = parentWindow;
+}
+
 - (void)close
 {
     // The OS will send a hotkey window to the background if it's open and in
@@ -165,6 +170,7 @@ DebugLog([NSString stringWithFormat:args]); \
     iTermApplicationDelegate* theDelegate = [NSApp delegate];
     [theDelegate makeHotKeyWindowKeyIfOpen];
     [super close];
+    [parentWindow_ makeKeyAndOrderFront:self];
 }
 
 @end
@@ -318,6 +324,7 @@ DebugLog([NSString stringWithFormat:args]); \
 
 - (void)popInSession:(PTYSession*)session
 {
+    [[self window] setParentWindow:[[[session tab] realParentWindow] window]];
     [self setSession:session];
     [self showWindow:[[session tab] parentWindow]];
     [[self window] makeKeyAndOrderFront:[[session tab] parentWindow]];
