@@ -287,7 +287,7 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>37</integer>
+									<integer>35</integer>
 									<integer>1</integer>
 									<integer>0</integer>
 								</array>
@@ -330,7 +330,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>iTermApplicationDelegate.m</string>
+								<string>PTYTab.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -338,11 +338,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>iTermApplicationDelegate.m</string>
+										<string>PTYTab.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D395A751353C716005A8021</string>
+										<string>1D395A931353D099005A8021</string>
 										<key>history</key>
 										<array>
 											<string>1D87317E128DD56A0049E357</string>
@@ -400,7 +400,6 @@
 											<string>1D8076081315B331000455F6</string>
 											<string>1D8076251315B7F8000455F6</string>
 											<string>1D8076361315B8EC000455F6</string>
-											<string>1D8076BB1316DB16000455F6</string>
 											<string>1D8076C41316DD53000455F6</string>
 											<string>1D8076DA1316DF14000455F6</string>
 											<string>1D237CAE131D7EB8004DD60C</string>
@@ -446,14 +445,15 @@
 											<string>1D3959B41353B9F1005A8021</string>
 											<string>1D3959E01353BD12005A8021</string>
 											<string>1D395A111353BE7C005A8021</string>
-											<string>1D395A171353C040005A8021</string>
 											<string>1D395A181353C040005A8021</string>
 											<string>1D395A191353C040005A8021</string>
 											<string>1D395A1A1353C040005A8021</string>
 											<string>1D395A1B1353C040005A8021</string>
 											<string>1D395A2D1353C353005A8021</string>
 											<string>1D395A571353C6AC005A8021</string>
-											<string>1D395A581353C6AC005A8021</string>
+											<string>1D395A7B1353CFFB005A8021</string>
+											<string>1D395A911353D099005A8021</string>
+											<string>1D395A921353D099005A8021</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -669,7 +669,7 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1D395A761353C716005A8021</string>
+		<string>1D395A941353D099005A8021</string>
 		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>1D39598B13537BD1005A8021</string>
 		<string>1D39598C13537BD1005A8021</string>

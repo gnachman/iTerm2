@@ -369,6 +369,9 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 - (void)previousSession
 {
+    if (isMaximized_) {
+        return;
+    }
     --currentViewIndex_;
     if (currentViewIndex_ < 0) {
         currentViewIndex_ = [viewOrder_ count] - 1;
@@ -383,6 +386,9 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 - (void)nextSession
 {
+    if (isMaximized_) {
+        return;
+    }
     ++currentViewIndex_;
     if (currentViewIndex_ >= [viewOrder_ count]) {
         currentViewIndex_ = 0;
