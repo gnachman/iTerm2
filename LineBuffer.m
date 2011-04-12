@@ -781,6 +781,10 @@ static int Search(NSString* needle,
     int limit;
     int dir;
     if (options & FindOptBackwards) {
+        if (offset < start_offset) {
+            // Starting point is before legal beginning.
+            return;
+        }
         entry = [self _findEntryBeforeOffset: offset];
         limit = first_entry - 1;
         dir = -1;

@@ -382,7 +382,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)scrollPageDown:(id)sender;
 - (void)scrollHome;
 - (void)scrollEnd;
-- (void)scrollToAbsoluteOffset:(long long)absOff;
+- (void)scrollToAbsoluteOffset:(long long)absOff height:(int)height;
 - (void)scrollToSelection;
 
 

@@ -2525,6 +2525,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)saveScrollPosition
 {
     savedScrollPosition_ = [TEXTVIEW absoluteScrollPosition];
+    savedScrollHeight_ = [SCREEN height];
 }
 
 // Jump to the saved scroll position
@@ -2534,7 +2535,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (savedScrollPosition_ < [SCREEN totalScrollbackOverflow]) {
         NSBeep();
     } else {
-        [TEXTVIEW scrollToAbsoluteOffset:savedScrollPosition_];
+        [TEXTVIEW scrollToAbsoluteOffset:savedScrollPosition_ height:savedScrollHeight_];
     }
 }
 

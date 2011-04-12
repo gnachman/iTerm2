@@ -198,6 +198,7 @@ static const float kBackgroundSessionIntervalSec = 1;
 
     // saved scroll position or -1
     long long savedScrollPosition_;
+    int savedScrollHeight_;
 
     // Time session was created
     NSDate* creationDate_;

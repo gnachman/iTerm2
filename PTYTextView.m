@@ -1055,13 +1055,13 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return localOffset + [dataSource totalScrollbackOverflow];
 }
 
-- (void)scrollToAbsoluteOffset:(long long)absOff
+- (void)scrollToAbsoluteOffset:(long long)absOff height:(int)height
 {
     NSRect aFrame;
     aFrame.origin.x = 0;
     aFrame.origin.y = (absOff - [dataSource totalScrollbackOverflow]) * lineHeight - VMARGIN;
     aFrame.size.width = [self frame].size.width;
-    aFrame.size.height = lineHeight;
+    aFrame.size.height = lineHeight * height;
     [self scrollRectToVisible: aFrame];
     [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
 }
