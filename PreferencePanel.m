@@ -2248,6 +2248,26 @@ static float versionNumber;
     }
 }
 
+- (void)_maybeWarnAboutSpaces
+{
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NeverWarnAboutSpaces"]) {
+        return;
+    }
+
+    switch (NSRunAlertPanel(@"Notice",
+                            @"To have a new window open in a specific space, make sure that Spaces is enabled in System Preferences and that it is configured to switch directly to a space with ^ Number Keys.",
+                            @"OK",
+                            @"Never warn me again",
+                            nil,
+                            nil)) {
+        case NSAlertDefaultReturn:
+            break;
+        case NSAlertAlternateReturn:
+            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:@"NeverWarnAboutSpaces"];
+            break;
+    }
+}
+
 - (IBAction)copyToProfile:(id)sender
 {
     NSString* sourceGuid = [bookmarksTableView selectedGuid];
@@ -2308,6 +2328,9 @@ static float versionNumber;
         [self _maybeWarnAboutMeta];
     } else if (sender == rightOptionKeySends && [[rightOptionKeySends selectedCell] tag] == OPT_META) {
         [self _maybeWarnAboutMeta];
+    }
+    if (sender == spaceButton && [spaceButton selectedTag] > 0) {
+        [self _maybeWarnAboutSpaces];
     }
     NSString* guid = [bookmarksTableView selectedGuid];
     if (!guid) {
