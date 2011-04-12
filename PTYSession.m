@@ -1100,9 +1100,12 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             int indMask = modflag & NSDeviceIndependentModifierFlagsMask;
             if ((indMask & NSCommandKeyMask) &&   // pressing cmd
                 ([keystr isEqualToString:@"0"] ||  // pressed 0 key
-                 ([keystr intValue] > 0 && [keystr intValue] <= 9))) {   // or any other digit key
+                 ([keystr intValue] > 0 && [keystr intValue] <= 9) || // or any other digit key
+                 [keystr isEqualToString:@"\r"])) {   // or enter
                 // Do not send anything for cmd+number because the user probably
                 // fat-fingered switching of tabs/windows.
+                // Do not send anything for cmd+[shift]+enter if it wasn't
+                // caught by the menu.
                 data = nil;
             }
             if (data != nil) {
