@@ -1549,23 +1549,16 @@ static char* FormatCont(int c)
 
 - (void)clearBuffer
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen clearBuffer]",  __FILE__, __LINE__ );
-#endif
-
     [self clearScreen];
     [self clearScrollbackBuffer];
-
 }
 
 - (void)clearScrollbackBuffer
 {
     [linebuffer release];
     linebuffer = [[LineBuffer alloc] init];
+    [linebuffer setMaxLines:max_scrollback_lines];
     [display clearMatches];
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen clearScrollbackBuffer]",  __FILE__, __LINE__ );
-#endif
 
     current_scrollback_lines = 0;
     scrollback_overflow = 0;
@@ -1577,37 +1570,33 @@ static char* FormatCont(int c)
 
 - (void)saveBuffer
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s", __PRETTY_FUNCTION__);
-#endif
+    if (temp_buffer) {
+        free(temp_buffer);
+    }
 
-    if (temp_buffer) free(temp_buffer);
-
-    int size = REAL_WIDTH*HEIGHT;
-    int n = (screen_top - buffer_lines)/REAL_WIDTH;
+    int size = REAL_WIDTH * HEIGHT;
+    int n = (screen_top - buffer_lines) / REAL_WIDTH;
     temp_buffer = (screen_char_t*)calloc(size, (sizeof(screen_char_t)));
     if (n <= 0) {
         memcpy(temp_buffer, screen_top, size*sizeof(screen_char_t));
     } else {
         memcpy(temp_buffer, screen_top, (HEIGHT-n)*REAL_WIDTH*sizeof(screen_char_t));
-        memcpy(temp_buffer+(HEIGHT-n)*REAL_WIDTH, buffer_lines, n*REAL_WIDTH*sizeof(screen_char_t));
+        memcpy(temp_buffer + (HEIGHT - n) * REAL_WIDTH, buffer_lines, n * REAL_WIDTH * sizeof(screen_char_t));
     }
 }
 
 - (void)restoreBuffer
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s", __PRETTY_FUNCTION__);
-#endif
-
-    if (!temp_buffer) return;
+    if (!temp_buffer) {
+        return;
+    }
 
     int n = (screen_top - buffer_lines) / REAL_WIDTH;
-    if (n <= 0)
-        memcpy(screen_top, temp_buffer, REAL_WIDTH*HEIGHT*sizeof(screen_char_t));
-    else {
-        memcpy(screen_top, temp_buffer, (HEIGHT-n)*REAL_WIDTH*sizeof(screen_char_t));
-        memcpy(buffer_lines, temp_buffer+(HEIGHT-n)*REAL_WIDTH, n*REAL_WIDTH*sizeof(screen_char_t));
+    if (n <= 0) {
+        memcpy(screen_top, temp_buffer, REAL_WIDTH * HEIGHT * sizeof(screen_char_t));
+    } else {
+        memcpy(screen_top, temp_buffer, (HEIGHT - n) * REAL_WIDTH * sizeof(screen_char_t));
+        memcpy(buffer_lines, temp_buffer + (HEIGHT - n) * REAL_WIDTH, n * REAL_WIDTH * sizeof(screen_char_t));
     }
 
     DebugLog(@"restoreBuffer setDirty");
@@ -1619,7 +1608,7 @@ static char* FormatCont(int c)
 
 - (BOOL) printToAnsi
 {
-    return (printToAnsi);
+    return printToAnsi;
 }
 
 - (void) setPrintToAnsi: (BOOL) aFlag
@@ -1629,8 +1618,9 @@ static char* FormatCont(int c)
 
 - (void) printStringToAnsi: (NSString *) aString
 {
-    if ([aString length] > 0)
+    if ([aString length] > 0) {
         [printToAnsiString appendString: aString];
+    }
 }
 
 void DumpBuf(screen_char_t* p, int n) {
