@@ -2192,7 +2192,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         t = startY; startY = endY; endY = t;
         t = startX; startX = endX; endX = t;
     } else if ([event clickCount] < 2 &&
-               !mouseDragged) {
+               !mouseDragged &&
+               !([event modifierFlags] & NSShiftKeyMask)) {
         // Just a click in the window.
         startX=-1;
         if (([event modifierFlags] & NSCommandKeyMask) &&

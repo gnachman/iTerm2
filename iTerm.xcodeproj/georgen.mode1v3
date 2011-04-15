@@ -282,7 +282,7 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>45</integer>
+									<integer>37</integer>
 									<integer>1</integer>
 									<integer>0</integer>
 								</array>
@@ -325,7 +325,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>VT100Terminal.m</string>
+								<string>PTYTextView.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -333,11 +333,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>VT100Terminal.m</string>
+										<string>PTYTextView.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D9673CD13589DFC0078F311</string>
+										<string>1D9673FD1358A1590078F311</string>
 										<key>history</key>
 										<array>
 											<string>1D87317E128DD56A0049E357</string>
@@ -354,15 +354,18 @@
 											<string>1D979B3513540E9600DEAF95</string>
 											<string>1D979B4313540EEB00DEAF95</string>
 											<string>1D979B6A1354A52600DEAF95</string>
-											<string>1D979B701354A54A00DEAF95</string>
 											<string>1D96735A13569FE80078F311</string>
-											<string>1D96735C13569FE80078F311</string>
 											<string>1D96735D13569FE80078F311</string>
 											<string>1D9673981356CC7A0078F311</string>
 											<string>1D9673B5135899F70078F311</string>
 											<string>1D9673B6135899F70078F311</string>
 											<string>1D9673CB13589DFC0078F311</string>
-											<string>1D9673CC13589DFC0078F311</string>
+											<string>1D9673D613589F680078F311</string>
+											<string>1D9673E213589FEF0078F311</string>
+											<string>1D9673E313589FEF0078F311</string>
+											<string>1D9673E413589FEF0078F311</string>
+											<string>1D9673F01358A1370078F311</string>
+											<string>1D9673F71358A14D0078F311</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -560,13 +563,13 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1D9673CA13589C2E0078F311</string>
+		<string>1D9673F31358A1370078F311</string>
 		<string>1D96735013569F320078F311</string>
 		<string>1D96735113569F320078F311</string>
 		<string>1C78EAAD065D492600B07095</string>
+		<string>1CD10A99069EF8BA00B06720</string>
 		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>1DB1162C128D1D1A0028C458</string>
-		<string>1CD10A99069EF8BA00B06720</string>
 		<string>/Users/georgen/iterm2/trunk/iTerm.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
@@ -593,7 +596,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>PTYTask.m</string>
+								<string>PTYSession.m</string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>
@@ -662,7 +665,7 @@
 			<key>WindowToolGUID</key>
 			<string>1DB1162C128D1D1A0028C458</string>
 			<key>WindowToolIsVisible</key>
-			<false/>
+			<true/>
 		</dict>
 		<dict>
 			<key>FirstTimeWindowDisplayed</key>
@@ -811,7 +814,7 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CDD528C0622207200134675</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>PseudoTerminal.m</string>
+										<string>PTYSession.m</string>
 										<key>StatusBarVisibility</key>
 										<true/>
 									</dict>
@@ -877,7 +880,7 @@
 			<key>WindowToolGUID</key>
 			<string>1C530D57069F1CE1000CFCEE</string>
 			<key>WindowToolIsVisible</key>
-			<false/>
+			<true/>
 		</dict>
 		<dict>
 			<key>Identifier</key>
