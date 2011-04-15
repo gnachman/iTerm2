@@ -2524,17 +2524,17 @@ static VT100TCC decode_string(unsigned char *datap,
                         alternateBackgroundSemantics = YES;
                         break;
                     case VT100CHARATTR_FG_256:
-                        if (token.u.csi.count == 3 && i == 0 && token.u.csi.p[1] == 5) {
-                            FG_COLORCODE = token.u.csi.p[2];
+                        if (token.u.csi.count - i >= 3 && token.u.csi.p[i + 1] == 5) {
+                            FG_COLORCODE = token.u.csi.p[i + 2];
                             alternateForegroundSemantics = NO;
-                            i = 2;
+                            i += 2;
                         }
                         break;
                     case VT100CHARATTR_BG_256:
-                        if (token.u.csi.count==3 && i==0 && token.u.csi.p[1]==5) {
-                            BG_COLORCODE = token.u.csi.p[2];
+                        if (token.u.csi.count - i >= 3 && token.u.csi.p[i + 1] == 5) {
+                            BG_COLORCODE = token.u.csi.p[i + 2];
                             alternateBackgroundSemantics = NO;
-                            i = 2;
+                            i += 2;
                         }
                         break;
                     default:

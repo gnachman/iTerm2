@@ -1,4 +1,74 @@
-These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2. Alpha 16 is known to be quite reliable, though.
+These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2. Alpha 17 is known to be quite reliable, though.
+
+Beta 1
+This release heralds a new age of stability. It also brings some notable UI improvements over the previous release.
+
+Big features:
+- The Find UI was redesigned to stay out of the way.
+- Smart selection added: quad-click selects recognizable objects like email addresses, paths, URLs, host names, quoted strings, etc.
+- Semantic History added: cmd-click on a filename or directory to open it, or cmd+drag a filename to copy it (only if you're logged onto localhost, of course).
+- Reorganize preferences.
+- "Help" docs revamped.
+
+Enhancements:
+- Find highlights all matches in yellow
+- Flash a bell graphic (if visual bell enabled) instead of blinking the screen.
+- Add key shortcut for previous/next pane (cmd-[ and ])
+- Add pref to show a 1px border around the window.
+- Add proprietary escape code to change cursor shape.
+- Add keyboard shortcuts for controlling instant replay (601)
+- Splitting a pane now uses the same profile as the original pane.
+- Preserve window numbers when a window closes (746).
+- Add hidden pref to adjust hotkey animation speed.
+- Only confirm quitting if a terminal window is open.
+- Dim inactive panes less visibly.
+- Confirm overwriting saved window arrangements (686)
+- Flash a graphic when search wraps.
+- Add preference to disable the "alternate screen" escape codes (324)
+- Add new key mapping actions to open new window, tab, split pane.
+- Improve how transparent windows are drawn to be more like iTerm 0.10.
+- Accept first click in terminal windows (720)
+- Add preset keymapping that disables app keypad.
+- Add "copy to profile" button in session info (662)
+- Speed up split pane dimming animation (724)
+- Add pref to disable blink (344).
+- You can now unregister from handling a URL.
+- Add $$RES$$ var to Command field for "everything after the scheme".
+- Warn the user when a session lives less than 3 second that he may have a bad profile. Don't quit immediately at startup.
+- Add key mappings for ctrl+shift+arrow keys.
+- Add warning about requirements for setting a profile's Space
+
+Bug fixes:
+- Fix memory leak related to Bonjour (705)
+- Fix memory leak of process names that caused slow constant growth.
+- Fix bonjour IP addresses.
+- Remove variable stroke thickness (it was too slow).
+- Slowness with multiple panes (
+- Fix bug where fullscreen windows couldn't exit fullscreen properly (627)
+- Show job name in tab title by default (690)
+- Fix crash when closing a background tab where a split pane had closed.
+- Fix bug where instnat replay would cause window size to change.
+- Focus search field when entering profiles window (367)
+- Disable transparency when window type is fullscreen.
+- Draw border of fullscreen window properly when it is not transparent and there is no bg image (700)
+- Don't adjust window order when hotkey window is toggled to avoid switching spaces.
+- Change how jobs are killed when a session is closed to make them really die (370)
+- Fix a crash that happened when a session ends unexpectedly.
+- Fix bug where specifying a directory caused the session to be a non-login session (588)
+- Improve how locale is detected.
+- Only preserve profile name in session-set title if global show-profile option is on (733)
+- Do not show non-hotkey windows when the hotkey window closes (734)
+- When scrolling part of the screen, add the top line to the scrollback buffer it the region is adjacent to the top.
+- Fix crash on autocomplete.
+- Respect hard newlines when finding URLs (739)
+- Fix bug where focus incorrectly returns to hotkey window after closing autocomplete/paste history.
+- Improve behavior of selection that extends after last non-empty line when resizing.
+- Fix vertical alignment of bold non-ascii text.
+- Fix cmd-click on mailto: which was prepending http:// to the URL.
+- Fix bug where closing autocomplete/paste history changed window order.
+- Don't send input when cmd-shift-enter is pressed but doesn't do anything (731)
+- Make jump to mark work when jumping down.
+- Fix bug where cmd-k would reset max # scrollback lines to infinity.
 
 Alpha 17
 This release includes a huge number of new features and bug fixes.
