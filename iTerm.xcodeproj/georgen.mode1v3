@@ -337,7 +337,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D98863C135D4C180072023F</string>
+										<string>1D988664135D4F250072023F</string>
 										<key>history</key>
 										<array>
 											<string>1D87317E128DD56A0049E357</string>
@@ -354,7 +354,6 @@
 											<string>1D979B4313540EEB00DEAF95</string>
 											<string>1D979B6A1354A52600DEAF95</string>
 											<string>1D96735D13569FE80078F311</string>
-											<string>1D9673981356CC7A0078F311</string>
 											<string>1D9673B5135899F70078F311</string>
 											<string>1D9673CB13589DFC0078F311</string>
 											<string>1D9673D613589F680078F311</string>
@@ -370,7 +369,8 @@
 											<string>1D9885F8135D47700072023F</string>
 											<string>1D98861D135D48F40072023F</string>
 											<string>1D988623135D49950072023F</string>
-											<string>1D988633135D4BA10072023F</string>
+											<string>1D988644135D4D740072023F</string>
+											<string>1D988645135D4D740072023F</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -568,14 +568,14 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1D98863D135D4C180072023F</string>
+		<string>1D988663135D4F1B0072023F</string>
 		<string>1D98854F135D1CB30072023F</string>
 		<string>1D988550135D1CB30072023F</string>
+		<string>1DB1162C128D1D1A0028C458</string>
+		<string>/Users/georgen/iterm2/trunk/iTerm.xcodeproj</string>
+		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>1C78EAAD065D492600B07095</string>
 		<string>1CD10A99069EF8BA00B06720</string>
-		<string>1DB1162C128D1D1A0028C458</string>
-		<string>1C530D57069F1CE1000CFCEE</string>
-		<string>/Users/georgen/iterm2/trunk/iTerm.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
 	<string>0 160 1440 718 0 0 1440 878 </string>
@@ -794,7 +794,7 @@
 			<key>WindowToolGUID</key>
 			<string>1CD10A99069EF8BA00B06720</string>
 			<key>WindowToolIsVisible</key>
-			<false/>
+			<true/>
 		</dict>
 		<dict>
 			<key>FirstTimeWindowDisplayed</key>
@@ -819,7 +819,7 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CDD528C0622207200134675</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>PTYTask.m</string>
+										<string>PreferencePanel.m</string>
 										<key>StatusBarVisibility</key>
 										<true/>
 									</dict>
@@ -951,7 +951,7 @@
 			<key>WindowToolGUID</key>
 			<string>1C78EAAD065D492600B07095</string>
 			<key>WindowToolIsVisible</key>
-			<false/>
+			<true/>
 		</dict>
 		<dict>
 			<key>Identifier</key>

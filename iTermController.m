@@ -741,9 +741,11 @@ static BOOL initDone = NO;
     NSDictionary *aDict;
 
     aDict = bookmarkData;
-    // Automatically fill in ssh command if command is exactly equal to $$
+    // Automatically fill in ssh command if command is exactly equal to $$ or it's a login shell.
     BOOL ignore;
-    if (aDict == nil || [[ITAddressBookMgr bookmarkCommand:aDict isLoginSession:&ignore] isEqualToString:@"$$"]) {
+    if (aDict == nil ||
+        [[ITAddressBookMgr bookmarkCommand:aDict isLoginSession:&ignore] isEqualToString:@"$$"] ||
+        ![[aDict objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
         Bookmark* prototype = aDict;
         if (!prototype) {
             prototype = [[BookmarkModel sharedInstance] defaultBookmark];
@@ -761,25 +763,34 @@ static BOOL initDone = NO;
 
         if ([urlType compare:@"ssh" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
             NSMutableString *tempString = [NSMutableString stringWithString:@"ssh "];
-            if ([urlRep user]) [tempString appendFormat:@"-l %@ ", [urlRep user]];
-            if ([urlRep port]) [tempString appendFormat:@"-p %@ ", [urlRep port]];
-            if ([urlRep host]) [tempString appendString:[urlRep host]];
+            if ([urlRep user]) {
+                [tempString appendFormat:@"-l %@ ", [urlRep user]];
+            }
+            if ([urlRep port]) {
+                [tempString appendFormat:@"-p %@ ", [urlRep port]];
+            }
+            if ([urlRep host]) {
+                [tempString appendString:[urlRep host]];
+            }
             [tempDict setObject:tempString forKey:KEY_COMMAND];
+            [tempDict setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
             aDict = tempDict;
-        }
-        else if ([urlType compare:@"ftp" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
+        } else if ([urlType compare:@"ftp" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
             NSMutableString *tempString = [NSMutableString stringWithFormat:@"ftp %@", url];
             [tempDict setObject:tempString forKey:KEY_COMMAND];
+            [tempDict setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
             aDict = tempDict;
-        }
-        else if ([urlType compare:@"telnet" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
+        } else if ([urlType compare:@"telnet" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
             NSMutableString *tempString = [NSMutableString stringWithString:@"telnet "];
-            if ([urlRep user]) [tempString appendFormat:@"-l %@ ", [urlRep user]];
+            if ([urlRep user]) {
+                [tempString appendFormat:@"-l %@ ", [urlRep user]];
+            }
             if ([urlRep host]) {
                 [tempString appendString:[urlRep host]];
                 if ([urlRep port]) [tempString appendFormat:@" %@", [urlRep port]];
             }
             [tempDict setObject:tempString forKey:KEY_COMMAND];
+            [tempDict setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
             aDict = tempDict;
         }
         if (!aDict) {
