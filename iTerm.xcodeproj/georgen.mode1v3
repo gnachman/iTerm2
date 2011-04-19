@@ -229,6 +229,8 @@
 			<key>Layout</key>
 			<array>
 				<dict>
+					<key>BecomeActive</key>
+					<true/>
 					<key>ContentConfiguration</key>
 					<dict>
 						<key>PBXBottomSmartGroupGIDs</key>
@@ -282,13 +284,13 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>34</integer>
-									<integer>1</integer>
-									<integer>0</integer>
+									<integer>126</integer>
+									<integer>125</integer>
+									<integer>120</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 82}, {251, 659}}</string>
+							<string>{{0, 1602}, {251, 659}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -323,7 +325,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>PTYSession.m</string>
+								<string>PTYTextView.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -331,11 +333,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>PTYSession.m</string>
+										<string>PTYTextView.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D9886AF135D59A30072023F</string>
+										<string>1D9886C8135D5F770072023F</string>
 										<key>history</key>
 										<array>
 											<string>1D87317E128DD56A0049E357</string>
@@ -367,8 +369,8 @@
 											<string>1D98861D135D48F40072023F</string>
 											<string>1D988623135D49950072023F</string>
 											<string>1D988644135D4D740072023F</string>
-											<string>1D9886AD135D59A30072023F</string>
-											<string>1D9886AE135D59A30072023F</string>
+											<string>1D9886B3135D5DD80072023F</string>
+											<string>1D9886C1135D5E5F0072023F</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -566,7 +568,7 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1D9886B0135D59A30072023F</string>
+		<string>1D9886C9135D5F770072023F</string>
 		<string>1D98854F135D1CB30072023F</string>
 		<string>1D988550135D1CB30072023F</string>
 		<string>1C78EAAD065D492600B07095</string>
