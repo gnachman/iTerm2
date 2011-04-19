@@ -713,6 +713,10 @@
 			1D9886CE135D606B0072023F /* PBXTextBookmark */ = 1D9886CE135D606B0072023F /* PBXTextBookmark */;
 			1D9886CF135D606B0072023F /* PBXTextBookmark */ = 1D9886CF135D606B0072023F /* PBXTextBookmark */;
 			1D9886D0135D606B0072023F /* PBXTextBookmark */ = 1D9886D0135D606B0072023F /* PBXTextBookmark */;
+			1D9886D4135D61C70072023F /* PBXTextBookmark */ = 1D9886D4135D61C70072023F /* PBXTextBookmark */;
+			1D9886D5135D61C70072023F /* PBXTextBookmark */ = 1D9886D5135D61C70072023F /* PBXTextBookmark */;
+			1D9886D6135D61C70072023F /* PBXTextBookmark */ = 1D9886D6135D61C70072023F /* PBXTextBookmark */;
+			1D9886DA135D62230072023F /* PBXTextBookmark */ = 1D9886DA135D62230072023F /* PBXTextBookmark */;
 			1D9D5A7512F0AAD800527C69 = 1D9D5A7512F0AAD800527C69 /* PBXTextBookmark */;
 			1DB5D495129A37D30085BF51 = 1DB5D495129A37D30085BF51 /* PlistBookmark */;
 			1DBC760912E8E6B900011D68 = 1DBC760912E8E6B900011D68 /* PBXTextBookmark */;
@@ -790,7 +794,7 @@
 		ignoreCount = 0;
 		lineNumber = 1540;
 		location = iTerm;
-		modificationTime = 324886633.616462;
+		modificationTime = 324887073.257623;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -829,7 +833,7 @@
 		ignoreCount = 0;
 		lineNumber = 181;
 		location = iTerm;
-		modificationTime = 324886633.616169;
+		modificationTime = 324887073.257536;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -847,7 +851,7 @@
 		ignoreCount = 0;
 		lineNumber = 2579;
 		location = iTerm;
-		modificationTime = 324886633.61621;
+		modificationTime = 324887073.257551;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -865,7 +869,7 @@
 		ignoreCount = 0;
 		lineNumber = 181;
 		location = iTerm;
-		modificationTime = 324886633.616325;
+		modificationTime = 324887073.257564;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -880,7 +884,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = CoreGraphics;
-		modificationTime = 324886633.617066;
+		modificationTime = 324887073.258042;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 		symbolName = CGErrorBreakpoint;
@@ -947,7 +951,7 @@
 		ignoreCount = 0;
 		lineNumber = 1391;
 		location = iTerm;
-		modificationTime = 324886633.616437;
+		modificationTime = 324887073.25759;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -1248,7 +1252,7 @@
 		fRef = 1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */;
 		name = "BookmarkModel.m: 156";
 		rLen = 40;
-		rLoc = 4355;
+		rLoc = 4574;
 		rType = 0;
 		vrLen = 1520;
 		vrLoc = 3882;
@@ -2864,7 +2868,7 @@
 		ignoreCount = 0;
 		lineNumber = 1384;
 		location = iTerm;
-		modificationTime = 324886633.615816;
+		modificationTime = 324887073.257286;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -2899,7 +2903,7 @@
 		ignoreCount = 0;
 		lineNumber = 4766;
 		location = iTerm;
-		modificationTime = 324886633.616021;
+		modificationTime = 324887073.257416;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -2917,7 +2921,7 @@
 		ignoreCount = 0;
 		lineNumber = 750;
 		location = iTerm;
-		modificationTime = 324886633.616131;
+		modificationTime = 324887073.257498;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -3334,7 +3338,7 @@
 		ignoreCount = 0;
 		lineNumber = 715;
 		location = iTerm;
-		modificationTime = 324886634.088996;
+		modificationTime = 324887073.660256;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 	};
@@ -3526,7 +3530,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = "";
-		modificationTime = 324886633.617001;
+		modificationTime = 324887073.258001;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 		symbolName = "-[PreferencePanel openCopyBookmarks]";
@@ -3542,7 +3546,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = libobjc.A.dylib;
-		modificationTime = 324886634.111827;
+		modificationTime = 324887073.680101;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 		symbolName = objc_exception_throw;
@@ -3973,7 +3977,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = CoreGraphics;
-		modificationTime = 324886633.617296;
+		modificationTime = 324887073.258201;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 		symbolName = CGErrorBreakpoint;
@@ -5057,7 +5061,7 @@
 		ignoreCount = 0;
 		lineNumber = 788;
 		location = iTerm;
-		modificationTime = 324886633.616753;
+		modificationTime = 324887073.257796;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -5824,7 +5828,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = CoreFoundation;
-		modificationTime = 324886634.169198;
+		modificationTime = 324887073.743465;
 		originalNumberOfMultipleMatches = 1;
 		state = 1;
 		symbolName = __NSAutoreleaseNoPool;
@@ -6999,6 +7003,46 @@
 		vrLen = 2182;
 		vrLoc = 33389;
 	};
+	1D9886D4135D61C70072023F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */;
+		name = "PseudoTerminal.m: 1004";
+		rLen = 0;
+		rLoc = 35012;
+		rType = 0;
+		vrLen = 2182;
+		vrLoc = 33389;
+	};
+	1D9886D5135D61C70072023F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */;
+		name = "BookmarkModel.m: 156";
+		rLen = 40;
+		rLoc = 4574;
+		rType = 0;
+		vrLen = 1520;
+		vrLoc = 3882;
+	};
+	1D9886D6135D61C70072023F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */;
+		name = "BookmarkModel.m: 77";
+		rLen = 6;
+		rLoc = 2106;
+		rType = 0;
+		vrLen = 1438;
+		vrLoc = 1533;
+	};
+	1D9886DA135D62230072023F /* PBXTextBookmark */ = {
+		isa = PBXTextBookmark;
+		fRef = 1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */;
+		name = "BookmarkModel.m: 79";
+		rLen = 0;
+		rLoc = 2112;
+		rType = 0;
+		vrLen = 1476;
+		vrLoc = 1569;
+	};
 	1D9D58D512EF824200527C69 /* -[NSView _drawView] */ = {
 		isa = PBXSymbolicBreakpoint;
 		actions = (
@@ -7010,7 +7054,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = "";
-		modificationTime = 324886633.617187;
+		modificationTime = 324887073.258106;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 		symbolName = "-[NSView _drawView]";
@@ -7026,7 +7070,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = AppKit;
-		modificationTime = 324886633.617204;
+		modificationTime = 324887073.258121;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 		symbolName = "-[NSView _drawView:]";
@@ -7042,7 +7086,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = AppKit;
-		modificationTime = 324886633.617227;
+		modificationTime = 324887073.258133;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 		symbolName = "-[NSView _drawView:]";
@@ -7058,7 +7102,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = AppKit;
-		modificationTime = 324886633.617244;
+		modificationTime = 324887073.258146;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 		symbolName = "-[NSView setNeedsDisplay:]";
@@ -7077,7 +7121,7 @@
 		ignoreCount = 0;
 		lineNumber = 2169;
 		location = iTerm;
-		modificationTime = 324886633.616616;
+		modificationTime = 324887073.257677;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -7092,7 +7136,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = AppKit;
-		modificationTime = 324886633.617257;
+		modificationTime = 324887073.258158;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 		symbolName = "-[NSView setNeedsDisplay:]";
@@ -7108,7 +7152,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = AppKit;
-		modificationTime = 324886633.617271;
+		modificationTime = 324887073.258169;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 		symbolName = "-[NSView setNeedsDisplayInRect:]";
@@ -7137,7 +7181,7 @@
 		ignoreCount = 0;
 		lineNumber = 1044;
 		location = iTerm;
-		modificationTime = 324886633.616354;
+		modificationTime = 324887073.257577;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -7155,7 +7199,7 @@
 		ignoreCount = 0;
 		lineNumber = 757;
 		location = iTerm;
-		modificationTime = 324886633.616481;
+		modificationTime = 324887073.257639;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -7173,7 +7217,7 @@
 		ignoreCount = 0;
 		lineNumber = 1656;
 		location = iTerm;
-		modificationTime = 324886633.616506;
+		modificationTime = 324887073.257651;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -7191,7 +7235,7 @@
 		ignoreCount = 0;
 		lineNumber = 159;
 		location = iTerm;
-		modificationTime = 324886633.616586;
+		modificationTime = 324887073.257664;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 	};
@@ -7264,7 +7308,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = CoreGraphics;
-		modificationTime = 324886633.617044;
+		modificationTime = 324887073.258031;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 		symbolName = CGErrorBreakpoint;
@@ -7306,9 +7350,9 @@
 	};
 	1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {971, 5928}}";
-			sepNavSelRange = "{4355, 40}";
-			sepNavVisRange = "{3882, 1520}";
+			sepNavIntBoundsRect = "{{0, 0}, {1106, 6266}}";
+			sepNavSelRange = "{2112, 0}";
+			sepNavVisRange = "{1569, 1476}";
 		};
 	};
 	1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */ = {
@@ -7392,7 +7436,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = Foundation;
-		modificationTime = 324886633.617079;
+		modificationTime = 324887073.258056;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 		symbolName = "-[NSPlaceholderString init]";
@@ -7408,7 +7452,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = Foundation;
-		modificationTime = 324886633.617105;
+		modificationTime = 324887073.258069;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 		symbolName = "-[NSPlaceholderString initWithBytes:length:encoding:]";
@@ -7424,7 +7468,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = Foundation;
-		modificationTime = 324886633.617122;
+		modificationTime = 324887073.258082;
 		originalNumberOfMultipleMatches = 0;
 		state = 2;
 		symbolName = "-[NSPlaceholderString initWithBytes:length:encoding:]";
@@ -7440,7 +7484,7 @@
 		hitCount = 0;
 		ignoreCount = 0;
 		location = "";
-		modificationTime = 324886633.617149;
+		modificationTime = 324887073.258094;
 		originalNumberOfMultipleMatches = 1;
 		state = 2;
 		symbolName = "-[NSString dealloc]";

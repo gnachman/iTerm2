@@ -74,7 +74,12 @@
 {
     for (int k = 0; k < [nameWords count]; ++k) {
         NSString* tagPart = [nameWords objectAtIndex:k];
-        NSRange range = [tagPart rangeOfString:token options:(NSCaseInsensitiveSearch | NSAnchoredSearch)];
+        NSRange range;
+        if ([token length] && [token characterAtIndex:0] == '*') {
+            range = [tagPart rangeOfString:[token substringFromIndex:1] options:NSCaseInsensitiveSearch];
+        } else {
+            range = [tagPart rangeOfString:token options:(NSCaseInsensitiveSearch | NSAnchoredSearch)];
+        }
         if (range.location != NSNotFound) {
             return YES;
         }

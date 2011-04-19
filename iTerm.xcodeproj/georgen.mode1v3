@@ -282,13 +282,13 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>126</integer>
-									<integer>125</integer>
-									<integer>120</integer>
+									<integer>5</integer>
+									<integer>1</integer>
+									<integer>0</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 650}, {251, 659}}</string>
+							<string>{{0, 0}, {251, 659}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -325,7 +325,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>PseudoTerminal.m</string>
+								<string>BookmarkModel.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -333,11 +333,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>PseudoTerminal.m</string>
+										<string>BookmarkModel.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D9886D0135D606B0072023F</string>
+										<string>1D9886DA135D62230072023F</string>
 										<key>history</key>
 										<array>
 											<string>1D87317E128DD56A0049E357</string>
@@ -371,7 +371,8 @@
 											<string>1D9886CC135D606B0072023F</string>
 											<string>1D9886CD135D606B0072023F</string>
 											<string>1D9886CE135D606B0072023F</string>
-											<string>1D9886CF135D606B0072023F</string>
+											<string>1D9886D4135D61C70072023F</string>
+											<string>1D9886D5135D61C70072023F</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -569,7 +570,7 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1D9886D1135D606B0072023F</string>
+		<string>1D9886DB135D62230072023F</string>
 		<string>1D98854F135D1CB30072023F</string>
 		<string>1D988550135D1CB30072023F</string>
 		<string>1C78EAAD065D492600B07095</string>
