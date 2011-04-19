@@ -194,7 +194,7 @@ static NSImage* wrapToBottomImage = nil;
 
     self = [super initWithFrame: aRect];
     dataSource=_delegate=markedTextAttributes=NULL;
-
+    firstMouseEventNumber_ = -1;
     fallbackFonts = [[NSMutableDictionary alloc] init];
 
     [self setMarkedTextAttributes:
@@ -2237,6 +2237,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseDragged:(NSEvent *)event
 {
+    if ([event eventNumber] == firstMouseEventNumber_) {
+        // We accept first mouse for the purposes of focusing a split pane but not for making a
+        // selection.
+        return;
+    }
     if (!dragOk_) {
         return;
     }
@@ -3038,6 +3043,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
 {
+    firstMouseEventNumber_ = [theEvent eventNumber];
     return YES;
 }
 

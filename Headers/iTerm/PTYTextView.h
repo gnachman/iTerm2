@@ -239,6 +239,10 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Array of (line number, pwd) arrays, sorted by line number. Line numbers are absolute.
     NSMutableArray *workingDirectoryAtLines;
+    
+    // Saves the monotonically increasing event number of a first-mouse click, which disallows
+    // selection.
+    int firstMouseEventNumber_;
 }
 
 + (NSCursor *)textViewCursor;
