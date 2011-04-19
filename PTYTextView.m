@@ -982,6 +982,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         }
     }
 
+    // Scroll to the bottom if needed.
+    BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
+    if (!userScroll) {
+        [self scrollEnd];
+    }
+    
     [self updateDirtyRects];
 }
 

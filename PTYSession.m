@@ -2333,7 +2333,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 
     [TEXTVIEW refresh];
-    [self updateScroll];
 
     if ([[[self tab] parentWindow] currentTab] == [self tab]) {
         [self scheduleUpdateIn:kBlinkTimerIntervalSec];

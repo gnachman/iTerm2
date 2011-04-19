@@ -318,8 +318,6 @@
 					<key>Dock</key>
 					<array>
 						<dict>
-							<key>BecomeActive</key>
-							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
@@ -337,7 +335,7 @@
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D988664135D4F250072023F</string>
+										<string>1D9886AF135D59A30072023F</string>
 										<key>history</key>
 										<array>
 											<string>1D87317E128DD56A0049E357</string>
@@ -364,13 +362,13 @@
 											<string>1D98855C135D1DEA0072023F</string>
 											<string>1D988581135D1FA90072023F</string>
 											<string>1D9885AA135D3F480072023F</string>
-											<string>1D9885BF135D3FCD0072023F</string>
 											<string>1D9885C1135D3FCD0072023F</string>
 											<string>1D9885F8135D47700072023F</string>
 											<string>1D98861D135D48F40072023F</string>
 											<string>1D988623135D49950072023F</string>
 											<string>1D988644135D4D740072023F</string>
-											<string>1D988645135D4D740072023F</string>
+											<string>1D9886AD135D59A30072023F</string>
+											<string>1D9886AE135D59A30072023F</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -568,14 +566,14 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1D988663135D4F1B0072023F</string>
+		<string>1D9886B0135D59A30072023F</string>
 		<string>1D98854F135D1CB30072023F</string>
 		<string>1D988550135D1CB30072023F</string>
+		<string>1C78EAAD065D492600B07095</string>
+		<string>1C530D57069F1CE1000CFCEE</string>
+		<string>1CD10A99069EF8BA00B06720</string>
 		<string>1DB1162C128D1D1A0028C458</string>
 		<string>/Users/georgen/iterm2/trunk/iTerm.xcodeproj</string>
-		<string>1C530D57069F1CE1000CFCEE</string>
-		<string>1C78EAAD065D492600B07095</string>
-		<string>1CD10A99069EF8BA00B06720</string>
 	</array>
 	<key>WindowString</key>
 	<string>0 160 1440 718 0 0 1440 878 </string>
@@ -601,7 +599,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>ProcessCache.m</string>
+								<string>PTYTextView.m</string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>
@@ -670,7 +668,7 @@
 			<key>WindowToolGUID</key>
 			<string>1DB1162C128D1D1A0028C458</string>
 			<key>WindowToolIsVisible</key>
-			<true/>
+			<false/>
 		</dict>
 		<dict>
 			<key>FirstTimeWindowDisplayed</key>
@@ -794,7 +792,7 @@
 			<key>WindowToolGUID</key>
 			<string>1CD10A99069EF8BA00B06720</string>
 			<key>WindowToolIsVisible</key>
-			<true/>
+			<false/>
 		</dict>
 		<dict>
 			<key>FirstTimeWindowDisplayed</key>
@@ -819,7 +817,7 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CDD528C0622207200134675</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>PreferencePanel.m</string>
+										<string>VT100Screen.m</string>
 										<key>StatusBarVisibility</key>
 										<true/>
 									</dict>
@@ -885,7 +883,7 @@
 			<key>WindowToolGUID</key>
 			<string>1C530D57069F1CE1000CFCEE</string>
 			<key>WindowToolIsVisible</key>
-			<true/>
+			<false/>
 		</dict>
 		<dict>
 			<key>Identifier</key>
@@ -951,7 +949,7 @@
 			<key>WindowToolGUID</key>
 			<string>1C78EAAD065D492600B07095</string>
 			<key>WindowToolIsVisible</key>
-			<true/>
+			<false/>
 		</dict>
 		<dict>
 			<key>Identifier</key>
