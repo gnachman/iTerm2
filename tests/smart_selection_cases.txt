@@ -47,6 +47,7 @@ prefix http://foo.com/blah_blah suffix
 prefix http://foo.com/blah_blah/ suffix
 prefix http://foo.com/blah_blah. suffix
 prefix http://foo.com/blah_blah/. suffix
+prefix http://foo.com/blah_blah/bar;baz suffix
 <http://foo.com/blah_blah>
 <http://foo.com/blah_blah/>
 prefixhttp://foo.com/blah_blah,

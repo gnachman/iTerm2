@@ -33,16 +33,23 @@
       <string>normal</string>
     </dict>
     <dict>
-      <!-- objc selector -->
-      <key>regex</key>
-      <string>@selector\([^)]+\)</string>
-      <key>precision</key>
-      <string>high</string>
-    </dict>
-    <dict>
       <!-- java/python include paths -->
       <key>regex</key>
       <string>([[:letter:][:number:]._]+\.)+[[:letter:][:number:]._]+</string>
+      <key>precision</key>
+      <string>normal</string>
+    </dict>
+    <dict>
+      <!-- mailto url -->
+      <key>regex</key>
+      <string>\bmailto:([a-z0-9A-Z_]+@)?([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\b</string>
+      <key>precision</key>
+      <string>normal</string>
+    </dict>
+    <dict>
+      <!-- objc selector -->
+      <key>regex</key>
+      <string>@selector\([^)]+\)</string>
       <key>precision</key>
       <string>high</string>
     </dict>
@@ -54,18 +61,11 @@
       <string>high</string>
     </dict>
     <dict>
-      <key>regex</key>
       <!-- http url -->
-      <string>https?://([a-z0-9A-Z]+(:[a-zA-Z0-9]+)?@)?([a-z0-9A-Z]+\.)+[A-Za-z]+((:[0-9]+)?)(/[a-zA-Z0-9/\.\-_+%?&amp;@=#\(\)]*)?</string>
+      <key>regex</key>
+      <string>https?://([a-z0-9A-Z]+(:[a-zA-Z0-9]+)?@)?([a-z0-9A-Z]+\.)+[A-Za-z]+((:[0-9]+)?)(/[a-zA-Z0-9;/\.\-_+%?&amp;@=#\(\)]*)?</string>
       <key>precision</key>
       <string>very_high</string>
-    </dict>
-    <dict>
-      <key>regex</key>
-      <!-- mailto url -->
-      <string>\bmailto:([a-z0-9A-Z_]+@)?([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\b</string>
-      <key>precision</key>
-      <string>normal</string>
     </dict>
     <dict>
       <!-- ssh url -->
