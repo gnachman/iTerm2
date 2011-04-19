@@ -574,15 +574,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)brokenPipe
 {
-    if ([SCREEN growl]) {
-        [gd growlNotify:NSLocalizedStringFromTableInBundle(@"Broken Pipe",
-                                                           @"iTerm",
-                                                           [NSBundle bundleForClass:[self class]],
-                                                           @"Growl Alerts")
-            withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Session %@ #%d just terminated.",
-                                                                                          @"iTerm",
-                                                                                          [NSBundle bundleForClass:[self class]],
-                                                                                          @"Growl Alerts"),
+    if ([SCREEN growl] && ![[self tab] isForegroundTab]) {
+        [gd growlNotify:@"Session Ended"
+            withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
                              [self name],
                              [[self tab] realObjectCount]]
             andNotification:@"Broken Pipes"];
