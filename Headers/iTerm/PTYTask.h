@@ -101,7 +101,5 @@
 - (void)processRead;
 - (void)processWrite;
 
-- (void)refreshProcessCache:(NSMutableDictionary*)cache;
-
 @end
 

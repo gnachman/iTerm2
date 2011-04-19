@@ -84,6 +84,7 @@
 
 #import <iTerm/PTYTask.h>
 #import <iTerm/PreferencePanel.h>
+#import "ProcessCache.h"
 
 #include <dlfcn.h>
 #include <sys/mount.h>
@@ -872,115 +873,13 @@ static void reapchild(int n)
     return oldestPid;
 }
 
-// Use sysctl magic to get the name of a process and whether it is controlling
-// the tty. This code was adapted from ps, here:
-// http://opensource.apple.com/source/adv_cmds/adv_cmds-138.1/ps/
-//
-// The equivalent in ps would be:
-//   ps -aef -o stat
-// If a + occurs in the STAT column then it is considered to be a foreground
-// job.
-- (NSString*)getNameOfPid:(pid_t)thePid isForeground:(BOOL*)isForeground
-{
-    int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, thePid };
-    struct kinfo_proc kp;
-    size_t bufSize = sizeof(kp);
-
-    kp.kp_proc.p_comm[0] = 0;
-    if (sysctl(mib, 4, &kp, &bufSize, NULL, 0) < 0) {
-        return 0;
-    }
-
-    // has a controlling terminal and
-    // process group id = tty process group id
-    *isForeground = ((kp.kp_proc.p_flag & P_CONTROLT) &&
-                     kp.kp_eproc.e_pgid == kp.kp_eproc.e_tpgid);
-
-    if (kp.kp_proc.p_comm[0]) {
-        return [NSString stringWithUTF8String:kp.kp_proc.p_comm];
-    } else {
-        return nil;
-    }
-}
-
 // Get the name of this task's current job. It is quite approximate! Any
 // arbitrary tty-controller in the tty's pgid that has this task as an ancestor
 // may be chosen. This function also implements a chache to avoid doing the
 // potentially expensive system calls too often.
 - (NSString*)currentJob:(BOOL)forceRefresh
 {
-    static NSMutableDictionary* pidInfoCache;
-    static NSDate* lastCacheUpdate;
-
-    const double kMaxCacheAge = 0.5;
-    if (forceRefresh ||
-        lastCacheUpdate == nil ||
-        [lastCacheUpdate timeIntervalSinceNow] < -kMaxCacheAge) {
-        if (pidInfoCache == nil) {
-            pidInfoCache = [[NSMutableDictionary alloc] init];
-        }
-        [self refreshProcessCache:pidInfoCache];
-        [lastCacheUpdate release];
-        lastCacheUpdate = [[NSDate date] retain];
-    }
-
-    return [pidInfoCache objectForKey:[NSNumber numberWithInt:pid]];
-}
-
-// Constructs a map of pid -> name of tty controller where pid is the tty
-// controller or any ancestor of the tty controller.
-- (void)refreshProcessCache:(NSMutableDictionary*)cache
-{
-    [cache removeAllObjects];
-    int numBytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
-    if (numBytes <= 0) {
-        return;
-    }
-
-    int* pids = (int*) malloc(numBytes);
-    numBytes = proc_listpids(PROC_ALL_PIDS, 0, pids, numBytes);
-    if (numBytes <= 0) {
-        free(pids);
-        return;
-    }
-
-    int numPids = numBytes / sizeof(int);
-    
-    NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithCapacity:numPids];
-    NSMutableDictionary* ancestry = [NSMutableDictionary dictionaryWithCapacity:numPids];
-    for (int i = 0; i < numPids; ++i) {
-        struct proc_taskallinfo taskAllInfo;
-        memset(&taskAllInfo, 0, sizeof(taskAllInfo));
-        int rc = proc_pidinfo(pids[i],
-                              PROC_PIDTASKALLINFO,
-                              0,
-                              &taskAllInfo,
-                              sizeof(taskAllInfo));
-        if (rc <= 0) {
-            continue;
-        }
-
-        pid_t ppid = taskAllInfo.pbsd.pbi_ppid;
-        BOOL isForeground;
-        NSString* name = [self getNameOfPid:pids[i] isForeground:&isForeground];
-        if (isForeground) {
-            [temp setObject:name forKey:[NSNumber numberWithInt:pids[i]]];
-        }
-        [ancestry setObject:[NSNumber numberWithInt:ppid] forKey:[NSNumber numberWithInt:pids[i]]];
-    }
-
-    for (NSNumber* tempPid in temp) {
-        NSString* value = [temp objectForKey:tempPid];
-        [cache setObject:value forKey:tempPid];
-
-        NSNumber* parent = [ancestry objectForKey:tempPid];
-        while (parent != nil) {
-            [cache setObject:value forKey:parent];
-            parent = [ancestry objectForKey:parent];
-        }
-    }
-
-    free(pids);
+    return [[ProcessCache sharedInstance] jobNameWithPid:pid];
 }
 
 - (NSString*)getWorkingDirectory

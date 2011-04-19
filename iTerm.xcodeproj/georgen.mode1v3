@@ -282,13 +282,13 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>41</integer>
+									<integer>37</integer>
 									<integer>1</integer>
 									<integer>0</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 353}, {251, 659}}</string>
+							<string>{{0, 82}, {251, 659}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -325,7 +325,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>PTYTextView.m</string>
+								<string>ProcessCache.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -333,11 +333,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>PTYTextView.m</string>
+										<string>ProcessCache.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D988590135D202C0072023F</string>
+										<string>1D988620135D48F80072023F</string>
 										<key>history</key>
 										<array>
 											<string>1D87317E128DD56A0049E357</string>
@@ -353,11 +353,9 @@
 											<string>1D979B2B13540DE200DEAF95</string>
 											<string>1D979B4313540EEB00DEAF95</string>
 											<string>1D979B6A1354A52600DEAF95</string>
-											<string>1D96735A13569FE80078F311</string>
 											<string>1D96735D13569FE80078F311</string>
 											<string>1D9673981356CC7A0078F311</string>
 											<string>1D9673B5135899F70078F311</string>
-											<string>1D9673B6135899F70078F311</string>
 											<string>1D9673CB13589DFC0078F311</string>
 											<string>1D9673D613589F680078F311</string>
 											<string>1D9673E213589FEF0078F311</string>
@@ -367,7 +365,12 @@
 											<string>1D988542135D1CB30072023F</string>
 											<string>1D98855C135D1DEA0072023F</string>
 											<string>1D988581135D1FA90072023F</string>
-											<string>1D988582135D1FA90072023F</string>
+											<string>1D9885AA135D3F480072023F</string>
+											<string>1D9885BF135D3FCD0072023F</string>
+											<string>1D9885C1135D3FCD0072023F</string>
+											<string>1D9885F8135D47700072023F</string>
+											<string>1D98861D135D48F40072023F</string>
+											<string>1D98861E135D48F40072023F</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -565,13 +568,13 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1D988591135D202C0072023F</string>
+		<string>1D98861C135D48450072023F</string>
 		<string>1D98854F135D1CB30072023F</string>
 		<string>1D988550135D1CB30072023F</string>
 		<string>1C78EAAD065D492600B07095</string>
 		<string>1CD10A99069EF8BA00B06720</string>
-		<string>1DB1162C128D1D1A0028C458</string>
 		<string>1C530D57069F1CE1000CFCEE</string>
+		<string>1DB1162C128D1D1A0028C458</string>
 		<string>/Users/georgen/iterm2/trunk/iTerm.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
@@ -591,12 +594,14 @@
 					<key>Dock</key>
 					<array>
 						<dict>
+							<key>BecomeActive</key>
+							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
 								<string>1CD0528F0623707200166675</string>
 								<key>PBXProjectModuleLabel</key>
-								<string></string>
+								<string>ProcessCache.m</string>
 								<key>StatusBarVisibility</key>
 								<true/>
 							</dict>
@@ -665,7 +670,7 @@
 			<key>WindowToolGUID</key>
 			<string>1DB1162C128D1D1A0028C458</string>
 			<key>WindowToolIsVisible</key>
-			<false/>
+			<true/>
 		</dict>
 		<dict>
 			<key>FirstTimeWindowDisplayed</key>
@@ -814,7 +819,7 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CDD528C0622207200134675</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>PTYTextView.m</string>
+										<string>ProcessCache.m</string>
 										<key>StatusBarVisibility</key>
 										<true/>
 									</dict>
