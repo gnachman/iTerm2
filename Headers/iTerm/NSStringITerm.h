@@ -45,4 +45,7 @@
 - (NSMutableString *)stringReplaceSubstringFrom:(NSString *)oldSubstring to:(NSString *)newSubstring;
 - (NSString *)stringWithEscapedShellCharacters;
 
+// Properly escapes chars for a string to stick in a URL query param.
+- (NSString*)stringWithPercentEscape;
+
 @end

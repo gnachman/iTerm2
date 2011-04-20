@@ -52,6 +52,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #import "PTYTab.h"
 #import "iTermExpose.h"
 #import "RegexKitLite/RegexKitLite.h"
+#import "iTerm/NSStringITerm.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -2759,8 +2760,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)searchInBrowser:(id)sender
 {
-    [self _openURL:[[NSString stringWithFormat:[[PreferencePanel sharedInstance] searchCommand], [self selectedText]]
-                    stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+    NSString* url = [NSString stringWithFormat:[[PreferencePanel sharedInstance] searchCommand],
+                              [[self selectedText] stringWithPercentEscape]];
+    [self _openURL:url];
 }
 
 //

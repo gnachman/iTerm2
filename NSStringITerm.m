@@ -237,4 +237,15 @@ static const int ambiguous_chars[] = {
 
 }
 
+- (NSString*)stringWithPercentEscape
+{
+    // From
+    // http://stackoverflow.com/questions/705448/iphone-sdk-problem-with-ampersand-in-the-url-string
+    return [(NSString *)CFURLCreateStringByAddingPercentEscapes(NULL,
+                                                                (CFStringRef)[[self mutableCopy] autorelease],
+                                                                NULL,
+                                                                CFSTR("￼=,!$&'()*+;@?\n\"<>#\t :/"),
+                                                                kCFStringEncodingUTF8) autorelease];
+}
+
 @end
