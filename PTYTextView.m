@@ -5417,8 +5417,9 @@ static bool IsUrlChar(NSString* str)
             [[NSCharacterSet alphanumericCharacterSet] longCharacterIsMember:theChar]);
 }
 
-- (NSString *)_getURLForX:(int)x
-                        y:(int)y
+- (NSString*)_getURLForX:(int)x
+                       y:(int)y
+    respectingHardNewlines:(BOOL)respectHardNewlines
 {
     int w = [dataSource width];
     int h = [dataSource numberOfLines];
@@ -5474,7 +5475,7 @@ static bool IsUrlChar(NSString* str)
                     break;
                 }
                 yi--;
-                if (rightx == w-1 && [self _haveHardNewlineAtY:yi]) {
+                if (respectHardNewlines && rightx == w-1 && [self _haveHardNewlineAtY:yi]) {
                     // Hard newline before url
                     break;
                 }
@@ -5516,7 +5517,7 @@ static bool IsUrlChar(NSString* str)
                 // Char is valid and xi < rightx.
                 continue;
             }
-            if (rightx == w-1 && [self _haveHardNewlineAtY:yi]) {
+            if (respectHardNewlines && rightx == w-1 && [self _haveHardNewlineAtY:yi]) {
                 // Don't wrap URL at hard newline
                 break;
             }
@@ -5543,6 +5544,24 @@ static bool IsUrlChar(NSString* str)
 
     return (url);
 
+}
+
+- (BOOL)_stringLooksLikeURL:(NSString*)s
+{
+    return [s rangeOfRegex:@"^[a-zA-Z]{1,6}:"].location == 0;
+}
+
+- (NSString *)_getURLForX:(int)x
+                        y:(int)y
+{
+    NSString* urlIgnoringHardEOL = [self _getURLForX:x y:y respectingHardNewlines:NO];
+    NSString* urlRespectingHardEOL = [self _getURLForX:x y:y respectingHardNewlines:YES];
+    if (![self _stringLooksLikeURL:urlRespectingHardEOL] &&
+        [self _stringLooksLikeURL:urlIgnoringHardEOL]) {
+        return urlIgnoringHardEOL;
+    } else {
+        return urlRespectingHardEOL;
+    }
 }
 
 - (BOOL) _findMatchingParenthesis: (NSString *) parenthesis withX:(int)X Y:(int)Y

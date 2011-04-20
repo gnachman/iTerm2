@@ -278,7 +278,7 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>21</integer>
+									<integer>39</integer>
 									<integer>1</integer>
 									<integer>0</integer>
 								</array>
@@ -321,7 +321,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>iTermController.m</string>
+								<string>PTYTextView.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -329,11 +329,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>iTermController.m</string>
+										<string>PTYTextView.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D06A0D6135E8A4200C414EF</string>
+										<string>1D06A0F7135E926000C414EF</string>
 										<key>history</key>
 										<array>
 											<string>1D06A077134CDDEC00C414EF</string>
@@ -341,13 +341,13 @@
 											<string>1D06A081134CDE3F00C414EF</string>
 											<string>1D06A085134CDF1000C414EF</string>
 											<string>1D06A0B5135E855600C414EF</string>
-											<string>1D06A0B6135E855600C414EF</string>
 											<string>1D06A0CA135E863400C414EF</string>
 											<string>1D06A0D1135E8A4200C414EF</string>
 											<string>1D06A0D2135E8A4200C414EF</string>
 											<string>1D06A0D3135E8A4200C414EF</string>
 											<string>1D06A0D4135E8A4200C414EF</string>
-											<string>1D06A0D5135E8A4200C414EF</string>
+											<string>1D06A0DB135E8F8F00C414EF</string>
+											<string>1D06A0F5135E91C800C414EF</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -543,6 +543,7 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
+		<string>1D06A0F2135E91B100C414EF</string>
 		<string>1D06A0A4135DFAD600C414EF</string>
 		<string>1D06A0A5135DFAD600C414EF</string>
 		<string>1C78EAAD065D492600B07095</string>
