@@ -287,13 +287,13 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>28</integer>
+									<integer>31</integer>
 									<integer>1</integer>
 									<integer>0</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 71}, {219, 632}}</string>
+							<string>{{0, 135}, {219, 632}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -330,7 +330,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>NSStringITerm.h</string>
+								<string>ProcessCache.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -338,17 +338,20 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>NSStringITerm.h</string>
+										<string>ProcessCache.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D395AF9135F8F8A005A8021</string>
+										<string>1D395B19135F97D5005A8021</string>
 										<key>history</key>
 										<array>
 											<string>1D395AE9135F8EB3005A8021</string>
 											<string>1D395AF6135F8F8A005A8021</string>
 											<string>1D395AF7135F8F8A005A8021</string>
-											<string>1D395AF8135F8F8A005A8021</string>
+											<string>1D395B00135F9536005A8021</string>
+											<string>1D395B01135F9536005A8021</string>
+											<string>1D395B02135F9536005A8021</string>
+											<string>1D395B03135F9536005A8021</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -564,13 +567,13 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1D395AFA135F8F8A005A8021</string>
+		<string>1D395B1A135F97D5005A8021</string>
 		<string>1D395ADF135F8D4B005A8021</string>
 		<string>1D395AE0135F8D4B005A8021</string>
-		<string>1C78EAAD065D492600B07095</string>
 		<string>1CD10A99069EF8BA00B06720</string>
 		<string>1C530D57069F1CE1000CFCEE</string>
 		<string>1DB1162C128D1D1A0028C458</string>
+		<string>1C78EAAD065D492600B07095</string>
 		<string>/Users/georgen/iterm2/iTerm.xcodeproj</string>
 	</array>
 	<key>WindowString</key>
@@ -947,7 +950,7 @@
 			<key>WindowToolGUID</key>
 			<string>1C78EAAD065D492600B07095</string>
 			<key>WindowToolIsVisible</key>
-			<false/>
+			<true/>
 		</dict>
 		<dict>
 			<key>Identifier</key>
