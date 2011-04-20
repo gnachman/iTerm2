@@ -2368,7 +2368,9 @@ static float versionNumber;
         for (int i = 0; i < [dataSource numberOfBookmarks]; ++i) {
             Bookmark* temp = [dataSource bookmarkAtIndex:i];
             NSString* existingShortcut = [temp objectForKey:KEY_SHORTCUT];
-            if ([existingShortcut isEqualToString:shortcut] && temp != origBookmark) {
+            if ([shortcut length] > 0 && 
+                [existingShortcut isEqualToString:shortcut] &&
+                temp != origBookmark) {
                 [dataSource setObject:nil forKey:KEY_SHORTCUT inBookmark:temp];
             }
         }
