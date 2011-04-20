@@ -805,6 +805,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                                                 keyMappings:[[self addressBookEntry] objectForKey:KEY_KEYBOARD_MAP]];
 
     if (keyBindingAction >= 0) {
+        DebugLog([NSString stringWithFormat:@"keyBindingAction=%d", keyBindingAction]);
         // A special action was bound to this key combination.
         NSString *aString;
 
@@ -976,11 +977,14 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                 break;
         }
     } else {
+        DebugLog(@"No keybinding action");
         if (EXIT) {
+            DebugLog(@"Terminal already dead");
             return;
         }
         // No special binding for this key combination.
         if (modflag & NSFunctionKeyMask) {
+            DebugLog(@"Is a function key");
             // Handle all "special" keys (arrows, etc.)
             NSData *data = nil;
 
@@ -1046,6 +1050,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                     ([self optionKey] != OPT_NORMAL)) ||
                    ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask &&
                     ([self rightOptionKey] != OPT_NORMAL))) {
+           DebugLog(@"Option + key -> modified key");
             // A key was pressed while holding down option and the option key
             // is not behaving normally. Apply the modified behavior.
             int mode;  // The modified behavior based on which modifier is pressed.
@@ -1071,23 +1076,28 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                 }
             }
         } else {
+            DebugLog(@"Regular path for keypress");
             // Regular path for inserting a character from a keypress.
             int max = [keystr length];
             NSData *data=nil;
 
             if (max != 1||[keystr characterAtIndex:0] > 0x7f) {
+                DebugLog(@"Non-ascii input");
                 data = [keystr dataUsingEncoding:[TERMINAL encoding]];
             } else {
+                DebugLog(@"ASCII input");
                 data = [keystr dataUsingEncoding:NSUTF8StringEncoding];
             }
 
             // Enter key is on numeric keypad, but not marked as such
             if (unicode == NSEnterCharacter && unmodunicode == NSEnterCharacter) {
                 modflag |= NSNumericPadKeyMask;
+                DebugLog(@"Enter key");
                 keystr = @"\015";  // Enter key -> 0x0d
             }
             // Check if we are in keypad mode
             if (modflag & NSNumericPadKeyMask) {
+                DebugLog(@"Numeric keypad mask");
                 data = [TERMINAL keypadData:unicode keystr:keystr];
             }
 
@@ -1100,6 +1110,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                 // fat-fingered switching of tabs/windows.
                 // Do not send anything for cmd+[shift]+enter if it wasn't
                 // caught by the menu.
+                DebugLog(@"Cmd + 0-9 or cmd + enter");
                 data = nil;
             }
             if (data != nil) {
