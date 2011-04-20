@@ -129,6 +129,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *maxVertically;
     BOOL defaultMaxVertically;
 
+    // Closing hotkey window may switch Spaces
+    IBOutlet NSButton* closingHotkeySwitchesSpaces;
+    BOOL defaultClosingHotkeySwitchesSpaces;
+
     // use compact tab labels
     IBOutlet NSButton *useCompactLabel;
     BOOL defaultUseCompactLabel;
@@ -473,6 +477,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (BOOL)cmdSelection;
 - (BOOL)passOnControlLeftClick;
 - (BOOL)maxVertically;
+- (BOOL)closingHotkeySwitchesSpaces;
 - (BOOL)useCompactLabel;
 - (BOOL)highlightTabLabels;
 - (BOOL)openBookmark;

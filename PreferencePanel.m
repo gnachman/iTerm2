@@ -871,6 +871,7 @@ static float versionNumber;
     defaultCmdSelection = [prefs objectForKey:@"CommandSelection"]?[[prefs objectForKey:@"CommandSelection"] boolValue]: YES;
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
     defaultMaxVertically = [prefs objectForKey:@"MaxVertically"] ? [[prefs objectForKey:@"MaxVertically"] boolValue] : NO;
+    defaultClosingHotkeySwitchesSpaces = [prefs objectForKey:@"ClosingHotkeySwitchesSpaces"] ? [[prefs objectForKey:@"ClosingHotkeySwitchesSpaces"] boolValue] : NO;
     defaultUseCompactLabel = [prefs objectForKey:@"UseCompactLabel"]?[[prefs objectForKey:@"UseCompactLabel"] boolValue]: YES;
     defaultHighlightTabLabels = [prefs objectForKey:@"HighlightTabLabels"]?[[prefs objectForKey:@"HighlightTabLabels"] boolValue]: YES;
     defaultAdvancedFontRendering = [prefs objectForKey:@"HiddenAdvancedFontRendering"]?[[prefs objectForKey:@"HiddenAdvancedFontRendering"] boolValue] : NO;
@@ -1003,6 +1004,7 @@ static float versionNumber;
     [prefs setBool:defaultCmdSelection forKey:@"CommandSelection"];
     [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
     [prefs setBool:defaultMaxVertically forKey:@"MaxVertically"];
+    [prefs setBool:defaultClosingHotkeySwitchesSpaces forKey:@"ClosingHotkeySwitchesSpaces"];
     [prefs setBool:defaultUseCompactLabel forKey:@"UseCompactLabel"];
     [prefs setBool:defaultHighlightTabLabels forKey:@"HighlightTabLabels"];
     [prefs setBool:defaultAdvancedFontRendering forKey:@"HiddenAdvancedFontRendering"];
@@ -1079,6 +1081,7 @@ static float versionNumber;
     [cmdSelection setState: defaultCmdSelection?NSOnState:NSOffState];
     [passOnControlLeftClick setState: defaultPassOnControlLeftClick?NSOnState:NSOffState];
     [maxVertically setState: defaultMaxVertically?NSOnState:NSOffState];
+    [closingHotkeySwitchesSpaces setState:defaultClosingHotkeySwitchesSpaces?NSOnState:NSOffState];
     [useCompactLabel setState: defaultUseCompactLabel?NSOnState:NSOffState];
     [highlightTabLabels setState: defaultHighlightTabLabels?NSOnState:NSOffState];
     [advancedFontRendering setState: defaultAdvancedFontRendering?NSOnState:NSOffState];
@@ -1321,6 +1324,7 @@ static float versionNumber;
         defaultCmdSelection = ([cmdSelection state] == NSOnState);
         defaultPassOnControlLeftClick = ([passOnControlLeftClick state] == NSOnState);
         defaultMaxVertically = ([maxVertically state] == NSOnState);
+        defaultClosingHotkeySwitchesSpaces = ([closingHotkeySwitchesSpaces state] == NSOnState);
         defaultOpenBookmark = ([openBookmark state] == NSOnState);
         [defaultWordChars release];
         defaultWordChars = [[wordChars stringValue] retain];
@@ -1498,6 +1502,11 @@ static float versionNumber;
 - (BOOL)maxVertically
 {
     return defaultMaxVertically;
+}
+
+- (BOOL)closingHotkeySwitchesSpaces
+{
+    return defaultClosingHotkeySwitchesSpaces;
 }
 
 - (BOOL)useCompactLabel
