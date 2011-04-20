@@ -2679,7 +2679,8 @@ void DumpBuf(screen_char_t* p, int n) {
         [self setNewLine];
     } else if (SCROLL_TOP < SCROLL_BOTTOM) {
         // Not scrolling the whole screen.
-        if (SCROLL_TOP == 0) {
+        if (SCROLL_TOP == 0 &&
+            [[[SESSION addressBookEntry] objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue]) {
             // A line is being scrolled off the top of the screen so add it to
             // the scrollback buffer.
             [self addLineToScrollback];

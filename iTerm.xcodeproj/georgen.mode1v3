@@ -278,13 +278,13 @@
 							<key>PBXSmartGroupTreeModuleOutlineStateSelectionKey</key>
 							<array>
 								<array>
-									<integer>39</integer>
+									<integer>31</integer>
 									<integer>1</integer>
 									<integer>0</integer>
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 0}, {270, 760}}</string>
+							<string>{{0, 290}, {270, 760}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -321,7 +321,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>PTYTextView.m</string>
+								<string>PreferencePanel.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -329,18 +329,22 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>PTYTextView.m</string>
+										<string>PreferencePanel.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D06A0AA135DFC6E00C414EF</string>
+										<string>1D06A0CC135E863400C414EF</string>
 										<key>history</key>
 										<array>
 											<string>1D06A077134CDDEC00C414EF</string>
 											<string>1D06A078134CDDEC00C414EF</string>
 											<string>1D06A081134CDE3F00C414EF</string>
 											<string>1D06A085134CDF1000C414EF</string>
-											<string>1D06A097135DFAD600C414EF</string>
+											<string>1D06A0B5135E855600C414EF</string>
+											<string>1D06A0B6135E855600C414EF</string>
+											<string>1D06A0B7135E855600C414EF</string>
+											<string>1D06A0CA135E863400C414EF</string>
+											<string>1D06A0CB135E863400C414EF</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -536,7 +540,7 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1D06A0AB135DFC6E00C414EF</string>
+		<string>1D06A0CD135E863400C414EF</string>
 		<string>1D06A0A4135DFAD600C414EF</string>
 		<string>1D06A0A5135DFAD600C414EF</string>
 		<string>1C78EAAD065D492600B07095</string>
