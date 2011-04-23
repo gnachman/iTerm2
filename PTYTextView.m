@@ -546,15 +546,13 @@ static NSImage* wrapToBottomImage = nil;
     // This algorithm limits the dynamic range of colors as well as brightening
     // them. Both attributes change in proportion to the dimmingAmount_.
 
-    // This value arrived at by experimentation. Not sure if it'll be right for
-    // everyone.
-    const double kCenter = 26.0 / 32.0;
-    const double kBias = kCenter * dimmingAmount_;
-    const double kRange = 1 - dimmingAmount_ * 2;
+    // Find a linear interpolation between kCenter and the requested color component
+    // in proportion to 1- dimmingAmount_.
+    const double kCenter = 0.5;
 
-    return [NSColor colorWithCalibratedRed:kBias + r * kRange
-                                     green:kBias + g * kRange
-                                      blue:kBias + b * kRange
+    return [NSColor colorWithCalibratedRed:(1 - dimmingAmount_) * r + dimmingAmount_ * kCenter
+                                     green:(1 - dimmingAmount_) * g + dimmingAmount_ * kCenter
+                                      blue:(1 - dimmingAmount_) * b + dimmingAmount_ * kCenter
                                      alpha:[orig alphaComponent]];
 }
 
@@ -3506,7 +3504,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)setDimmingAmount:(float)value
 {
     dimmingAmount_ = value;
-    [self setNeedsDisplay:YES];
+    [[self superview] setNeedsDisplay:YES];
 }
 
 - (BOOL)useTransparency

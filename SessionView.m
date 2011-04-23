@@ -126,7 +126,8 @@ static int nextViewId;
 
 - (double)dimmedDimmingAmount
 {
-    return 0.06125;
+    NSNumber* n = [[NSUserDefaults standardUserDefaults] objectForKey:@"SplitPaneDimmingAmount"];
+    return n ? [n doubleValue] : 0.15;
 }
 
 - (void)setDimmed:(BOOL)isDimmed

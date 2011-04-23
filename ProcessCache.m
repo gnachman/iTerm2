@@ -217,8 +217,9 @@ static ProcessCache* instance;
         double elapsedTime = [[NSDate date] timeIntervalSinceDate:date];
         if ([NSApp isActive]) {
             // Sleep 1000 times as long as it took to update the cache so we don't eat more than 0.1%
-            // CPU doing this. Don't sleep more than 5 seconds, because that's crazy.
-            sleep(MIN(5, elapsedTime * 1000));
+            // CPU doing this. Don't sleep more than 5 seconds, because that's crazy. Sleep at least
+            // .5 seconds.
+            [NSThread sleepForTimeInterval:MAX(0.5, MIN(5, elapsedTime * 1000))];
         } else {
             // Sleep at least 2 seconds or until the app becomes active. This prevents
             // the CPU from appearing to spike periodically in activity monitor.
