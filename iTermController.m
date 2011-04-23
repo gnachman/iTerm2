@@ -1279,12 +1279,12 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         }
         if (local) {
             // Now that the cocoaEvent has the remapped version, restore
-            // the original event and free the copy.
+            // the original event.
             CGEventRef temp = event;
             event = eventCopy;
             eventCopy = temp;
-            CFRelease(eventCopy);
         }
+        CFRelease(eventCopy);
         if (tempDisabled && !isDoNotRemap) {
             callDirectly = YES;
         }
