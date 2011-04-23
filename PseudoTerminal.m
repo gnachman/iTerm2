@@ -989,6 +989,53 @@ NSString *sessionsKey = @"sessions";
     return isHotKeyWindow_;
 }
 
+- (void)screenParametersDidChange
+{
+    PtyLog(@"Screen parameters changed.");
+    NSScreen* screen = [[self window] deepestScreen];
+    if (!screen) {
+        NSDictionary* aDict = [[self currentSession] addressBookEntry];
+        // Try to use the screen of the current session. Fall back to the main
+        // screen if that's not an option.
+        int screenNumber = [aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : 0;
+        NSArray* screens = [NSScreen screens];
+        if ([screens count] == 0) {
+          // Nothing we can do if we're headless.
+          return;
+        }
+        if ([screens count] < screenNumber) {
+            screenNumber = 0;
+        }
+        screen = [[NSScreen screens] objectAtIndex:screenNumber];
+    }
+    NSRect frame = [[self window] frame];
+
+    switch (windowType_) {
+        case WINDOW_TYPE_TOP:
+            frame.size.width = [screen visibleFrame].size.width;
+            frame.origin.x = [screen visibleFrame].origin.x;
+            if ([[self window] alphaValue] == 0) {
+                // Is hidden hotkey window
+                frame.origin.y = [screen visibleFrame].origin.y + [screen visibleFrame].size.height;
+            } else {
+                // Normal case
+                frame.origin.y = [screen visibleFrame].origin.y + [screen visibleFrame].size.height - frame.size.height;
+            }
+
+            [[self window] setFrame:frame display:YES];
+            break;
+
+        case WINDOW_TYPE_FULL_SCREEN:
+            [[self window] setFrame:[screen frame] display:YES];
+            break;
+
+        case WINDOW_TYPE_NORMAL:
+            // fall through, the os takes care of this fine.
+        default:
+            break;
+    }
+}
+
 - (void)windowDidResignKey:(NSNotification *)aNotification
 {
     PtyLog(@"PseudoTerminal windowDidResignKey");

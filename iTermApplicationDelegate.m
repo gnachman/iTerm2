@@ -227,6 +227,14 @@ int gDebugLogFile = -1;
     return quittingBecauseLastWindowClosed_;
 }
 
+- (void)applicationDidChangeScreenParameters:(NSNotification *)aNotification
+{
+    // Make sure that all top-of-screen windows are the proper width.
+    for (PseudoTerminal* term in [self terminals]) {
+        [term screenParametersDidChange];
+    }
+}
+
 // init
 - (id)init
 {

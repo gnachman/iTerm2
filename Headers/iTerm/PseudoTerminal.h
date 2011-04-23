@@ -574,6 +574,7 @@
 
 - (BOOL)isOrderedOut;
 - (void)setIsOrderedOut:(BOOL)value;
+- (void)screenParametersDidChange;
 
 @end
 
