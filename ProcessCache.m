@@ -208,24 +208,31 @@ static ProcessCache* instance;
     [old release];
 }
 
+- (BOOL)testAndClearNewOutput
+{
+    [lock_ lock];
+    BOOL v = newOutput_;
+    newOutput_ = NO;
+    [lock_ unlock];
+    return v;
+}
+
+- (void)notifyNewOutput
+{
+    [lock_ lock];
+    newOutput_ = YES;
+    [lock_ unlock];
+}
+
 - (void)_run
 {
     while (1) {
         NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-        NSDate* date = [NSDate date];
         [self _update];
-        double elapsedTime = [[NSDate date] timeIntervalSinceDate:date];
-        if ([NSApp isActive]) {
-            // Sleep 1000 times as long as it took to update the cache so we don't eat more than 0.1%
-            // CPU doing this. Don't sleep more than 5 seconds, because that's crazy. Sleep at least
-            // .5 seconds.
-            [NSThread sleepForTimeInterval:MAX(0.5, MIN(5, elapsedTime * 1000))];
-        } else {
-            // Sleep at least 2 seconds or until the app becomes active. This prevents
-            // the CPU from appearing to spike periodically in activity monitor.
-            for (int i = 0; i < MAX(elapsedTime * 1000, 2) && ![NSApp isActive];i ++) {
-                sleep(1);
-            }
+        // As long as there's no output, don't update the process cache. Otherwise the CPU usage
+        // appears to spike periodically.
+        while (![self testAndClearNewOutput]) {
+            [NSThread sleepForTimeInterval:[NSApp isActive] ? 0.5 : 5];
         }
         [pool release];
     }

@@ -32,6 +32,7 @@
 
 @interface ProcessCache : NSObject {
     NSMutableDictionary* pidInfoCache_;
+    BOOL newOutput_;
     NSLock* lock_;
 }
 
@@ -39,5 +40,6 @@
 
 // Get the name of the foreground job owned by pid.
 - (NSString*)jobNameWithPid:(int)pid;
+- (void)notifyNewOutput;
 
 @end

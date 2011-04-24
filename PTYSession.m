@@ -43,6 +43,7 @@
 #import "iTermApplicationDelegate.h"
 #import "SessionView.h"
 #import "PTYTab.h"
+#import "ProcessCache.h"
 
 #include <unistd.h>
 #include <sys/wait.h>
@@ -570,6 +571,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     } else {
         [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
     }
+    [[ProcessCache sharedInstance] notifyNewOutput];
 }
 
 - (void)brokenPipe
