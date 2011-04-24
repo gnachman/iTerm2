@@ -1036,6 +1036,11 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     [term setIsHotKeyWindow:temp];
 }
 
+- (void)doNotOrderOutWhenHidingHotkeyWindow
+{
+    itermWasActiveWhenHotkeyOpened = YES;
+}
+
 - (void)restoreNormalcy:(PseudoTerminal*)term
 {
     if (!itermWasActiveWhenHotkeyOpened) {
