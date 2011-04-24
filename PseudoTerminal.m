@@ -2216,6 +2216,7 @@ NSString *sessionsKey = @"sessions";
     [newSession setAddressBookEntry:[oldSession addressBookEntry]];
     [[newSession SCREEN] setScrollback:0];
     [self setupSession:newSession title:nil withSize:nil];
+    [[newSession view] setViewId:[[oldSession view] viewId]];
 
     // Add this session to our term and make it current
     PTYTab* theTab = [oldTabViewItem identifier];

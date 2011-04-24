@@ -331,7 +331,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     if (i != NSNotFound) {
         currentViewIndex_ = i;
     }
-    
+
     --preserveOrder_;
 }
 

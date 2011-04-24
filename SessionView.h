@@ -55,5 +55,6 @@
 - (void)cancelTimers;
 - (FindViewController*)findViewController;
 - (int)viewId;
+- (void)setViewId:(int)id;
 
 @end

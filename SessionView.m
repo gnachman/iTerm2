@@ -172,6 +172,11 @@ static int nextViewId;
     return findView_;
 }
 
+- (void)setViewId:(int)id
+{
+    viewId_ = id;
+}
+
 - (int)viewId
 {
     return viewId_;
