@@ -960,7 +960,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             case KEY_ACTION_REMAP_LOCALLY:
                 break;
             case KEY_ACTION_TOGGLE_FULLSCREEN:
-                [[[iTermController sharedInstance] currentTerminal] toggleFullScreen:nil];
+                [[[iTermController sharedInstance] currentTerminal] toggleFullScreenMode:nil];
                 break;
             case KEY_ACTION_NEW_WINDOW_WITH_PROFILE:
                 [[[self tab] realParentWindow] newWindowWithBookmarkGuid:keyBindingText];

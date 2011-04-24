@@ -399,10 +399,10 @@ static BOOL initDone = NO;
     [iTermExpose exitIfActive];
     
     // Un-full-screen each window. This is done in two steps because
-    // toggleFullScreen deallocs self.
+    // toggleFullScreenMode deallocs self.
     for (PseudoTerminal* t in terminalWindows) {
         if ([t fullScreen]) {
-            [t toggleFullScreen:self];
+            [t toggleFullScreenMode:self];
         }
     }
 

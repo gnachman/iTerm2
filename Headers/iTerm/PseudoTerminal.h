@@ -293,7 +293,7 @@
 
 // Turn full-screen mode on or off. Creates a new PseudoTerminal and moves this
 // one's state into it.
-- (IBAction)toggleFullScreen:(id)sender;
+- (IBAction)toggleFullScreenMode:(id)sender;
 
 // accessor
 - (BOOL)fullScreen;
