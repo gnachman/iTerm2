@@ -834,14 +834,15 @@ static int Search(NSString* needle,
             int spans = NumberOfFullLines(buffer_start + prev, line_length, width);
             *y += spans + 1;
         } else {
+            // The position we're searching for is in this (unwrapped) line.
             int bytes_to_consume_in_this_line = position - prev;
             int dwc_peek = 0;
+
+            // If the position is the left half of a double width char then include the right half in
+            // the following call to NumberOfFullLines.
             if (bytes_to_consume_in_this_line < line_length &&
                 prev + bytes_to_consume_in_this_line + 1 < eol &&
-                buffer_start[prev + bytes_to_consume_in_this_line + 1].code == DWC_RIGHT) {
-                // It doesn't make sense to ask for the number of lines that end
-                // in the middle of a DWC. Add one extra char to look at if that
-                // is the case.
+                raw_buffer[prev + bytes_to_consume_in_this_line + 1].code == DWC_RIGHT) {    
                 ++dwc_peek;
             }
             int consume = NumberOfFullLines(buffer_start + prev,
