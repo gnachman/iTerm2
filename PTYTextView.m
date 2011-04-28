@@ -1909,10 +1909,16 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent*)event
 {
+    const BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
+    const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
+    const BOOL shiftPressed = ([event modifierFlags] & NSShiftKeyMask) != 0;
+
     dragOk_ = YES;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-    if ([[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
-        // Mouse clicks in inactive tab are always handled by superclass.
+    if (!cmdPressed && [[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
+        // Mouse clicks in inactive tab are always handled by superclass because we don't want clicks
+        // to select a split pane to be xterm-mouse-reported. We do allow cmd-clicks to go through
+        // incase you're clicking on a URL.
         return YES;
     }
 
@@ -1982,10 +1988,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     mouseDragged = NO;
     mouseDown = YES;
     mouseDownOnSelection = NO;
-
-    BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
-    BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
-    BOOL shiftPressed = ([event modifierFlags] & NSShiftKeyMask) != 0;
 
     int clickCount = [event clickCount];
     if (clickCount < 2) {
@@ -2117,7 +2119,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     dragOk_ = NO;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-    if ([[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
+    const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
+    if (!cmdPressed && [[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
         // Mouse clicks in inactive tab are always handled by superclass but make it first responder.
         [[self window] makeFirstResponder: self];
         [super mouseUp:event];
@@ -2201,7 +2204,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                !([event modifierFlags] & NSShiftKeyMask)) {
         // Just a click in the window.
         startX=-1;
-        if (([event modifierFlags] & NSCommandKeyMask) &&
+        if (cmdPressed &&
             [[PreferencePanel sharedInstance] cmdSelection]) {
             // Command click in place.
             NSString *url = [self _getURLForX:x y:y];

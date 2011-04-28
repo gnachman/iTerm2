@@ -216,7 +216,7 @@
 						<key>_historyCapacity</key>
 						<integer>0</integer>
 						<key>bookmark</key>
-						<string>1D8D2F4113669A3400336B24</string>
+						<string>1D8D2F7413693F9B00336B24</string>
 						<key>history</key>
 						<array>
 							<string>1D8D2DED1364E06200336B24</string>
@@ -257,7 +257,7 @@
 						<key>_historyCapacity</key>
 						<integer>0</integer>
 						<key>bookmark</key>
-						<string>1D8D2F4213669A3400336B24</string>
+						<string>1D8D2F7513693F9B00336B24</string>
 						<key>history</key>
 						<array>
 							<string>1D8D2DE81364E06200336B24</string>
@@ -370,7 +370,7 @@
 								</array>
 							</array>
 							<key>PBXSmartGroupTreeModuleOutlineStateVisibleRectKey</key>
-							<string>{{0, 0}, {251, 659}}</string>
+							<string>{{0, 263}, {251, 659}}</string>
 						</dict>
 						<key>PBXTopSmartGroupGIDs</key>
 						<array/>
@@ -407,7 +407,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>iTermApplicationDelegate.m</string>
+								<string>PTYTextView.m</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -415,11 +415,11 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>iTermApplicationDelegate.m</string>
+										<string>PTYTextView.m</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>1D8D2F4013669A3400336B24</string>
+										<string>1D8D2F7313693F9B00336B24</string>
 										<key>history</key>
 										<array>
 											<string>1D98878B1363A04A0072023F</string>
@@ -436,13 +436,13 @@
 											<string>1D8D2DF71364E09800336B24</string>
 											<string>1D8D2E2F1364E26700336B24</string>
 											<string>1D8D2E5E1364E67C00336B24</string>
-											<string>1D8D2E8F1364ED8100336B24</string>
 											<string>1D8D2EAF1364F29500336B24</string>
 											<string>1D8D2ED81364FD9B00336B24</string>
 											<string>1D8D2ED91364FD9B00336B24</string>
 											<string>1D8D2F081366965900336B24</string>
 											<string>1D8D2F391366996F00336B24</string>
-											<string>1D8D2F3A1366996F00336B24</string>
+											<string>1D8D2F4E13693BBB00336B24</string>
+											<string>1D8D2F4F13693BBB00336B24</string>
 										</array>
 									</dict>
 									<key>SplitCount</key>
@@ -640,16 +640,16 @@
 	<integer>5</integer>
 	<key>WindowOrderList</key>
 	<array>
-		<string>1D8D2F2D136696AF00336B24</string>
-		<string>1C530D57069F1CE1000CFCEE</string>
+		<string>1D8D2F7213693F8900336B24</string>
 		<string>1D8D2DC41363BA1300336B24</string>
 		<string>1D8D2DC51363BA1300336B24</string>
 		<string>1C78EAAD065D492600B07095</string>
 		<string>1DB1162C128D1D1A0028C458</string>
 		<string>1D8D2DE61364E06200336B24</string>
 		<string>1D8D2DEB1364E06200336B24</string>
-		<string>1CD10A99069EF8BA00B06720</string>
 		<string>/Users/georgen/iterm2/trunk/iTerm.xcodeproj</string>
+		<string>1C530D57069F1CE1000CFCEE</string>
+		<string>1CD10A99069EF8BA00B06720</string>
 	</array>
 	<key>WindowString</key>
 	<string>0 160 1440 718 0 0 1440 878 </string>
@@ -886,12 +886,14 @@
 							<key>Dock</key>
 							<array>
 								<dict>
+									<key>BecomeActive</key>
+									<true/>
 									<key>ContentConfiguration</key>
 									<dict>
 										<key>PBXProjectModuleGUID</key>
 										<string>1CDD528C0622207200134675</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>PseudoTerminal.m</string>
+										<string>PTYTextView.m</string>
 										<key>StatusBarVisibility</key>
 										<true/>
 									</dict>
@@ -912,8 +914,6 @@
 							<string>455pt</string>
 						</dict>
 						<dict>
-							<key>BecomeActive</key>
-							<true/>
 							<key>ContentConfiguration</key>
 							<dict>
 								<key>PBXProjectModuleGUID</key>
@@ -959,7 +959,7 @@
 			<key>WindowToolGUID</key>
 			<string>1C530D57069F1CE1000CFCEE</string>
 			<key>WindowToolIsVisible</key>
-			<false/>
+			<true/>
 		</dict>
 		<dict>
 			<key>Identifier</key>
