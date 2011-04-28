@@ -1261,7 +1261,6 @@ NSString *sessionsKey = @"sessions";
                                                        windowType:WINDOW_TYPE_FULL_SCREEN
                                                            screen:[[NSScreen screens] indexOfObjectIdenticalTo:currentScreen]];
         newTerminal->oldFrame_ = [[self window] frame];
-        newTerminal->useTransparency_ = NO;
         [[newTerminal window] setOpaque:NO];
     } else {
         // If a window is created while the menu bar is hidden then its
@@ -1279,6 +1278,7 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"toggleFullScreenMode - set new frame to old frame: %fx%f", oldFrame_.size.width, oldFrame_.size.height);
         [[newTerminal window] setFrame:oldFrame_ display:YES];
     }
+    newTerminal->useTransparency_ = useTransparency_;
     [newTerminal setIsHotKeyWindow:isHotKeyWindow_];
 
     _fullScreen = !_fullScreen;
