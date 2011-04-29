@@ -808,7 +808,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                                  Y:y
                 locationInTextView:scrollingLocation];
 
-    [self refresh];
+    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
     [self scheduleSelectionScroll];
 }
 
@@ -864,11 +864,55 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 }
 
-- (void)refresh
+- (BOOL)_isCursorBlinking
+{
+    if ([self blinkingCursor] &&
+        [[self window] isKeyWindow] &&
+        [[[dataSource session] tab] activeSession] == [dataSource session]) {
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
+- (BOOL)_charBlinks:(screen_char_t)sct
+{
+    return blinkAllowed_ && sct.blink;
+}
+
+- (BOOL)_isTextBlinking
+{
+    int width = [dataSource width];
+    int lineStart = ([self visibleRect].origin.y + VMARGIN) / lineHeight;  // add VMARGIN because stuff under top margin isn't visible.
+    int lineEnd = ceil(([self visibleRect].origin.y + [self visibleRect].size.height - [self excess]) / lineHeight);
+    if (lineStart < 0) {
+        lineStart = 0;
+    }
+    if (lineEnd > [dataSource numberOfLines]) {
+        lineEnd = [dataSource numberOfLines];
+    }
+    for (int y = lineStart; y < lineEnd; y++) {
+        screen_char_t* theLine = [dataSource getLineAtIndex:y];
+        for (int x = 0; x < width; x++) {
+            if (theLine[x].blink) {
+                return YES;
+            }
+        }
+    }
+
+    return NO;
+}
+
+- (BOOL)_isAnythingBlinking
+{
+    return [self _isCursorBlinking] || (blinkAllowed_ && [self _isTextBlinking]);
+}
+
+- (BOOL)refresh
 {
     DebugLog(@"PTYTextView refresh called");
     if (dataSource == nil) {
-        return;
+        return YES;
     }
 
     // reset tracking rect
@@ -943,7 +987,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             }
             [self scrollRectToVisible:scrollRect];
             if (!redrawAll) {
-                return;
+                return [self _isAnythingBlinking];
             }
         }
 
@@ -986,8 +1030,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if (!userScroll) {
         [self scrollEnd];
     }
-    
-    [self updateDirtyRects];
+
+    return [self updateDirtyRects] || [self _isCursorBlinking];
 }
 
 - (NSRect)adjustScroll:(NSRect)proposedVisibleRect
@@ -1184,6 +1228,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 #endif
     float y = lineStart * lineHeight;
     const float initialY = y;
+    BOOL anyBlinking = NO;
     for (int line = lineStart; line < lineEnd; line++) {
         NSRect lineRect = [self visibleRect];
         lineRect.origin.y = line*lineHeight;
@@ -1203,7 +1248,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                     const CGFloat offsetFromTopOfScreen = y - initialY;
                     temp = NSMakePoint(toOrigin->x, toOrigin->y + offsetFromTopOfScreen);
                 }
-                [self _drawLine:line-overflow AtY:y toPoint:toOrigin ? &temp : nil];
+                anyBlinking |= [self _drawLine:line-overflow AtY:y toPoint:toOrigin ? &temp : nil];
             }
             // if overflow > line then the requested line cannot be drawn
             // because it has been lost to the sands of time.
@@ -1323,6 +1368,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                                height:[dataSource height]
                          cursorHeight:[self cursorHeight]];
     [self _drawCursorTo:toOrigin];
+    anyBlinking |= [self _isCursorBlinking];
 
 #ifdef DEBUG_DRAWING
     if (overflow) {
@@ -1332,6 +1378,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         prevBad=YES;
     }
 #endif
+    if (anyBlinking) {
+        // The user might have used the scroll wheel to cause blinking text to become
+        // visible. Make sure the timer is running if anything onscreen is
+        // blinking.
+        [[dataSource session] scheduleUpdateIn:kBlinkTimerIntervalSec];
+    }
 }
 
 - (NSString*)_getTextInWindowAroundX:(int)x
@@ -2102,7 +2154,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     DebugLog([NSString stringWithFormat:@"Mouse down. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
     if([_delegate respondsToSelector: @selector(willHandleEvent:)] && [_delegate willHandleEvent: event])
         [_delegate handleEvent: event];
-    [self refresh];
+    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
 
     return NO;
 }
@@ -2240,7 +2292,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     DebugLog([NSString stringWithFormat:@"Mouse up. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
 
-    [self refresh];
+    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
 }
 
 - (void)mouseDragged:(NSEvent *)event
@@ -2496,14 +2548,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     startX = startY = 0;
     endX = [dataSource width];
     endY = [dataSource numberOfLines] - 1;
-    [self refresh];
+    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
 }
 
 - (void)deselect
 {
     if (startX > -1) {
         startX = -1;
-        [self refresh];
+        [[[self dataSource] session] refreshAndStartTimerIfNeeded];
     }
 }
 
@@ -3047,7 +3099,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     // In case imeOffset changed, the frame height must adjust.
-    [self refresh];
+    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
 }
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
@@ -3089,7 +3141,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // char in the IME buffer then this causes it be erased.
         [self invalidateInputMethodEditorRect];
     }
-    [self refresh];
+    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
     [self scrollEnd];
 }
 
@@ -3099,7 +3151,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     IM_INPUT_MARKEDRANGE = NSMakeRange(0, 0);
     imeOffset = 0;
     [self invalidateInputMethodEditorRect];
-    [self refresh];
+    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
     [self scrollEnd];
 }
 
@@ -3208,7 +3260,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     startX = tmpX1;
     startY = tmpY1;
-    [self refresh];
+    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
     return YES;
 }
 
@@ -3247,7 +3299,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     endX = tmpX2;
     endY = tmpY2;
-    [self refresh];
+    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
 }
 
 // Add a match to resultMap_
@@ -4008,11 +4060,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     }
 }
 
-- (BOOL)_charBlinks:(screen_char_t)sct
-{
-    return blinkAllowed_ && sct.blink;
-}
-
 - (int)_constructRuns:(NSPoint)initialPoint
               theLine:(screen_char_t *)theLine
       advancesStorage:(CGSize*)advancesStorage
@@ -4412,8 +4459,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [self _drawRuns:initialPoint runs:runs numRuns:numRuns];
 }
 
-- (void)_drawLine:(int)line AtY:(float)curY toPoint:(NSPoint*)toPoint
+- (BOOL)_drawLine:(int)line AtY:(float)curY toPoint:(NSPoint*)toPoint
 {
+    BOOL anyBlinking = NO;
     int screenstartline = [self frame].origin.y / lineHeight;
     DebugLog([NSString stringWithFormat:@"Draw line %d (%d on screen)", line, (line - screenstartline)]);
 
@@ -4500,6 +4548,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             // Do not draw the right-hand side of double-width characters.
             j++;
             continue;
+        }
+        if (blinkAllowed_ && theLine[j].blink) {
+            anyBlinking = YES;
         }
 
         BOOL selected;
@@ -4629,6 +4680,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             j += (double_width ? 2 : 1);
         }
     }
+    return anyBlinking;
 }
 
 
@@ -6028,8 +6080,9 @@ static bool IsUrlChar(NSString* str)
 // -[refresh] instead, as it ensures scrollback overflow
 // is dealt with so that this function can dereference
 // [dataSource dirty] correctly.
-- (void)updateDirtyRects
+- (BOOL)updateDirtyRects
 {
+    BOOL anythingIsBlinking = NO;
     BOOL foundDirty = NO;
     if ([dataSource scrollbackOverflow] != 0) {
         NSAssert([dataSource scrollbackOverflow] == 0, @"updateDirtyRects called with nonzero overflow");
@@ -6050,7 +6103,7 @@ static bool IsUrlChar(NSString* str)
 
     // Any characters that changed selection status since the last update or
     // are blinking should be set dirty.
-    [self _markChangedSelectionAndBlinkDirty:redrawBlink width:WIDTH];
+    anythingIsBlinking = [self _markChangedSelectionAndBlinkDirty:redrawBlink width:WIDTH];
 
     // Copy selection position to detect change in selected chars next call.
     oldStartX = startX;
@@ -6154,6 +6207,8 @@ static bool IsUrlChar(NSString* str)
                                                             object:nil
                                                           userInfo:nil];
     }
+
+    return blinkAllowed_ && anythingIsBlinking;
 }
 
 - (void)invalidateInputMethodEditorRect
@@ -6304,7 +6359,7 @@ static bool IsUrlChar(NSString* str)
     }
 
     DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
-    [self refresh];
+    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
 }
 
 - (void)_deselectDirtySelectedText
@@ -6359,8 +6414,9 @@ static bool IsUrlChar(NSString* str)
   return redrawBlink;
 }
 
-- (void)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width
+- (BOOL)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width
 {
+    BOOL anyBlinkers = NO;
     // Visible chars that have changed selection status are dirty
     // Also mark blinking text as dirty if needed
     int lineStart = ([self visibleRect].origin.y + VMARGIN) / lineHeight;  // add VMARGIN because stuff under top margin isn't visible.
@@ -6378,7 +6434,9 @@ static bool IsUrlChar(NSString* str)
             for (int x = 0; x < width; x++) {
                 BOOL isSelected = [self _isCharSelectedInRow:y col:x checkOld:NO];
                 BOOL wasSelected = [self _isCharSelectedInRow:y col:x checkOld:YES];
-                BOOL blinked = redrawBlink && [self _charBlinks:theLine[x]];
+                BOOL charBlinks = [self _charBlinks:theLine[x]];
+                anyBlinkers |= charBlinks;
+                BOOL blinked = redrawBlink && charBlinks;
                 if (isSelected != wasSelected || blinked) {
                     NSRect dirtyRect = [self visibleRect];
                     dirtyRect.origin.y = y*lineHeight;
@@ -6396,7 +6454,9 @@ static bool IsUrlChar(NSString* str)
         for (int y = lineStart; y < lineEnd; y++) {
             screen_char_t* theLine = [dataSource getLineAtIndex:y];
             for (int x = 0; x < width; x++) {
-                BOOL blinked = redrawBlink && [self _charBlinks:theLine[x]];
+                BOOL charBlinks = [self _charBlinks:theLine[x]];
+                anyBlinkers |= charBlinks;
+                BOOL blinked = redrawBlink && charBlinks;
                 if (blinked) {
                     NSRect dirtyRect = [self visibleRect];
                     dirtyRect.origin.y = y*lineHeight;
@@ -6410,6 +6470,7 @@ static bool IsUrlChar(NSString* str)
             }
         }
     }
+    return anyBlinkers;
 }
 
 @end

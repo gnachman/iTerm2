@@ -646,7 +646,7 @@ static NSString* FormatRect(NSRect r) {
     return [self _sessionAdjacentTo:session verticalDir:YES after:YES];
 }
 
-- (void)setLabelAttributes
+- (BOOL)setLabelAttributes
 {
     PtyLog(@"PTYTab setLabelAttributes");
     struct timeval now;
@@ -655,20 +655,24 @@ static NSString* FormatRect(NSRect r) {
     if ([[self activeSession] exited]) {
         // Session has terminated.
         [self _setLabelAttributesForDeadSession];
+        return NO;
     } else if ([[tabViewItem_ tabView] selectedTabViewItem] != [self tabViewItem]) {
         // We are not the foreground tab.
         if (now.tv_sec > [[self activeSession] lastOutput].tv_sec+2) {
             // At least two seconds have passed since the last call.
             [self _setLabelAttributesForIdleBackgroundTabAtTime:now];
+            return NO;
         } else {
             // Less than 2 seconds has passed since the last output in the session.
             if ([self anySessionHasNewOutput]) {
                 [self _setLabelAttributesForActiveBackgroundTab];
             }
+            return YES;
         }
     } else {
         // This tab is the foreground tab and the session hasn't exited.
         [self _setLabelAttributesForForegroundTab];
+        return NO;
     }
 }
 

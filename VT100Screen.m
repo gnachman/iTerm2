@@ -1009,7 +1009,7 @@ static char* FormatCont(int c)
     // An immediate refresh is needed so that the size of TEXTVIEW can be
     // adjusted to fit the new size
     DebugLog(@"resizeWidth setDirty");
-    [display refresh];
+    [SESSION refreshAndStartTimerIfNeeded];
 
     if (hasSelection &&
         newSelStartY >= linesDropped &&
@@ -3020,7 +3020,7 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)blink
 {
     if ([self isAnyCharDirty]) {
-        [display refresh];
+        [SESSION refreshAndStartTimerIfNeeded];
     }
 }
 

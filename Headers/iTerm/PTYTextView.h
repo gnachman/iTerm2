@@ -345,7 +345,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (float)charWidth;
 - (void)setCharWidth:(float)width;
 
-- (void)refresh;
+// Update the scroll position and schedule a redraw. Returns true if anything
+// onscreen is blinking.
+- (BOOL)refresh;
 - (void)setFrameSize:(NSSize)aSize;
 - (void)showCursor;
 - (void)hideCursor;
@@ -484,7 +486,8 @@ typedef enum {
                      endX:(int *)endx
                      endY:(int *)endy;
 - (NSString *)_getURLForX:(int)x y:(int)y;
-- (void)_drawLine:(int)line AtY:(float)curY toPoint:(NSPoint*)toPoint;
+// Returns true if any char in the line is blinking.
+- (BOOL)_drawLine:(int)line AtY:(float)curY toPoint:(NSPoint*)toPoint;
 - (void)_drawCursor;
 - (void)_drawCursorTo:(NSPoint*)toOrigin;
 - (void)_drawCharacter:(screen_char_t)screenChar
@@ -519,7 +522,8 @@ typedef enum {
 
 - (PTYFontInfo*)getOrAddFallbackFont:(NSFont*)font;
 - (void)releaseAllFallbackFonts;
-- (void)updateDirtyRects;
+// Returns true if any onscreen text is blinking
+- (BOOL)updateDirtyRects;
 - (BOOL)isFutureTabSelectedAfterX:(int)x Y:(int)y;
 - (BOOL)isTabFillerOrphanAtX:(int)x Y:(int)y;
 - (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView;
@@ -545,7 +549,8 @@ typedef enum {
 
 - (void)_deselectDirtySelectedText;
 - (BOOL) _updateBlink;
-- (void)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width;
+// Returns true if any onscreen char is blinking.
+- (BOOL)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width;
 
 @end
 

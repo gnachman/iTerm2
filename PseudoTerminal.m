@@ -978,7 +978,9 @@ NSString *sessionsKey = @"sessions";
     // svn history for the old impl.
 
     // update the cursor
-    [[[self currentSession] TEXTVIEW] refresh];
+    if ([[[self currentSession] TEXTVIEW] refresh]) {
+        [[self currentSession] scheduleUpdateIn:kBlinkTimerIntervalSec];
+    }
     [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
     [self _loadFindStringFromSharedPasteboard];
 }
@@ -1212,8 +1214,8 @@ NSString *sessionsKey = @"sessions";
                         [self currentSessionName],
                         [session columns],
                         [session rows]];
-    [self setWindowTitle:aTitle];
     tempTitle = YES;
+    [self setWindowTitle:aTitle];
     [self fitTabsToWindow];
 
     // Post a notification
@@ -1377,21 +1379,24 @@ NSString *sessionsKey = @"sessions";
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal windowWillUseStandardFrame:defaultFramewidth = %f, height = %f]",
-          __FILE__, __LINE__, defaultFrame.size.width, defaultFrame.size.height);
-#endif
+    // This function attempts to size the window to fit the screen with exactly
+    // MARGIN/VMARGIN-sized margins for the current session. If there are split
+    // panes then the margins probably won't turn out perfect. If other tabs have
+    // a different char size, they will also have imperfect margins.
     float decorationHeight = [sender frame].size.height -
-        [[[self currentSession] SCROLLVIEW] documentVisibleRect].size.height;
+        [[[self currentSession] SCROLLVIEW] documentVisibleRect].size.height + VMARGIN * 2;
     float decorationWidth = [sender frame].size.width -
-        [[[self currentSession] SCROLLVIEW] documentVisibleRect].size.width;
+        [[[self currentSession] SCROLLVIEW] documentVisibleRect].size.width + MARGIN * 2;
 
     float charHeight = [self maxCharHeight:nil];
     float charWidth = [self maxCharWidth:nil];
 
     NSRect proposedFrame;
+    // Initially, set the proposed x-origin to remain unchanged in case we're
+    // zooming vertically only. The y-origin always goes to the top of the screen
+    // which is what the defaultFrame contains.
     proposedFrame.origin.x = [sender frame].origin.x;
-    proposedFrame.origin.y = [sender frame].size.height;;
+    proposedFrame.origin.y = defaultFrame.origin.y;
     BOOL verticalOnly = NO;
 
     if ([[PreferencePanel sharedInstance] maxVertically] ^
@@ -1399,12 +1404,15 @@ NSString *sessionsKey = @"sessions";
         verticalOnly = YES;
     }
     if (verticalOnly) {
+        // Keep the width the same
         proposedFrame.size.width = [sender frame].size.width;
     } else {
-        proposedFrame.size.width = decorationWidth + floor(defaultFrame.size.width / charWidth) * charWidth;
+        // Set the width & origin to fill the screen horizontally to a character boundary
+        proposedFrame.size.width = decorationWidth + floor((defaultFrame.size.width - decorationWidth) / charWidth) * charWidth;
+        proposedFrame.origin.x = defaultFrame.origin.x;
     }
-    // TODO: This doesn't make any sense with horizontal split panes.
-    proposedFrame.size.height = floor((defaultFrame.size.height - decorationHeight - VMARGIN * 2) / charHeight) * charHeight + decorationHeight + VMARGIN*2;
+    // Set the height to fill the screen to a character boundary.
+    proposedFrame.size.height = floor((defaultFrame.size.height - decorationHeight) / charHeight) * charHeight + decorationHeight;
 
     PtyLog(@"For zoom, default frame is %fx%f, proposed frame is %f,%f %fx%f",
            defaultFrame.size.width, defaultFrame.size.height,

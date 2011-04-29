@@ -99,6 +99,11 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
     slowPasteBuffer = [[NSMutableString alloc] init];
     creationDate_ = [[NSDate date] retain];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(windowResized)
+                                                 name:@"iTermWindowDidResize"
+                                               object:nil];
     return self;
 }
 
@@ -131,7 +136,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [TERMINAL release];
     TERMINAL = nil;
 
-    [[NSNotificationCenter defaultCenter] removeObserver: self];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     if (dvrDecoder_) {
         [dvr_ releaseDecoder:dvrDecoder_];
@@ -222,6 +227,15 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 - (PTYSession*)liveSession
 {
     return liveSession_;
+}
+
+- (void)windowResized
+{
+    // When the window is resized the title is temporarily changed and it's our
+    // timer that resets it.
+    if (!EXIT) {
+        [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
+    }
 }
 
 + (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement inView:(SessionView*)sessionView inTab:(PTYTab*)theTab
@@ -2314,10 +2328,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)updateDisplay
 {
     timerRunning_ = YES;
+    BOOL anotherUpdateNeeded = NO;
+
     BOOL isForegroundTab = [[self tab] isForegroundTab];
     if (!isForegroundTab) {
         // Set color, other attributes of a background tab.
-        [[self tab] setLabelAttributes];
+        anotherUpdateNeeded |= [[self tab] setLabelAttributes];
     }
     if ([[self tab] activeSession] == self) {
         // Update window info for the active tab.
@@ -2326,7 +2342,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         if (!jobName_ ||
             timeInTenthsOfSeconds(now) >= timeInTenthsOfSeconds(lastUpdate) + 7) {
             // It has been more than 700ms since the last time we were here or
-            // the job doesn't ahve a name
+            // the job doesn't have a name
             if (isForegroundTab && [[[self tab] parentWindow] tempTitle]) {
                 // Revert to the permanent tab title.
                 [[[self tab] parentWindow] setWindowTitle];
@@ -2342,17 +2358,33 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                 [oldName release];
             }
             lastUpdate = now;
+        } else if (timeInTenthsOfSeconds(now) < timeInTenthsOfSeconds(lastUpdate) + 7) {
+            // If it's been less than 700ms keep updating.
+            anotherUpdateNeeded = YES;
         }
     }
 
-    [TEXTVIEW refresh];
+    anotherUpdateNeeded |= [TEXTVIEW refresh];
+    anotherUpdateNeeded |= [[[self tab] parentWindow] tempTitle];
 
-    if ([[[self tab] parentWindow] currentTab] == [self tab]) {
-        [self scheduleUpdateIn:kBlinkTimerIntervalSec];
+    if (anotherUpdateNeeded) {
+        if ([[[self tab] parentWindow] currentTab] == [self tab]) {
+            [self scheduleUpdateIn:kBlinkTimerIntervalSec];
+        } else {
+            [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
+        }
     } else {
-        [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
+        [updateTimer release];
+        updateTimer = nil;
     }
     timerRunning_ = NO;
+}
+
+- (void)refreshAndStartTimerIfNeeded
+{
+    if ([TEXTVIEW refresh]) {
+        [self scheduleUpdateIn:kBlinkTimerIntervalSec];
+    }
 }
 
 - (void)scheduleUpdateIn:(NSTimeInterval)timeout

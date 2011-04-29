@@ -417,6 +417,9 @@ static const float kBackgroundSessionIntervalSec = 1;
 // Schedule the screen update timer to run in a specified number of seconds.
 - (void)scheduleUpdateIn:(NSTimeInterval)timeout;
 
+// Call refresh on the textview and schedule a timer if anything is blinking.
+- (void)refreshAndStartTimerIfNeeded;
+
 - (NSString*)jobName;
 - (NSString*)uncachedJobName;
 

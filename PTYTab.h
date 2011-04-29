@@ -136,7 +136,8 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)setIsProcessing:(BOOL)aFlag;
 - (BOOL)isActiveSession;
 - (BOOL)anySessionHasNewOutput;
-- (void)setLabelAttributes;
+// Returns true if another update may be needed later (so the timer should be scheduled).
+- (BOOL)setLabelAttributes;
 - (void)closeSession:(PTYSession*)session;
 - (void)terminateAllSessions;
 - (NSArray*)sessions;
