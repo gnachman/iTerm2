@@ -268,8 +268,8 @@ static const float FINDVIEW_DURATION = 0.075;
 
 - (void)findString:(NSString*)string
 {
-    [self _loadFindStringIntoSharedPasteboard];
     [findBarTextField_ setStringValue:string];
+    [self _loadFindStringIntoSharedPasteboard];
 }
 
 
