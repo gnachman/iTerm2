@@ -1413,7 +1413,7 @@ NSString *sessionsKey = @"sessions";
     }
     // Set the height to fill the screen to a character boundary.
     proposedFrame.size.height = floor((defaultFrame.size.height - decorationHeight) / charHeight) * charHeight + decorationHeight;
-
+    proposedFrame.origin.y += defaultFrame.size.height - proposedFrame.size.height;
     PtyLog(@"For zoom, default frame is %fx%f, proposed frame is %f,%f %fx%f",
            defaultFrame.size.width, defaultFrame.size.height,
            proposedFrame.origin.x, proposedFrame.origin.y,
