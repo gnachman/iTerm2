@@ -33,7 +33,7 @@
 {
     BOOL userScroll;
 }
-
++ (BOOL)isCompatibleWithOverlayScrollers;
 - (id)init;
 - (void) mouseDown: (NSEvent *)theEvent;
 - (void)trackScrollButtons:(NSEvent *)theEvent;

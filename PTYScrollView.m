@@ -34,6 +34,7 @@
 #import <iTerm/iTerm.h>
 #import <iTerm/PTYScrollView.h>
 #import <iTerm/PTYTextView.h>
+#import <PreferencePanel.h>
 
 @implementation PTYScroller
 
@@ -43,38 +44,42 @@
     return [super init];
 }
 
++ (BOOL)isCompatibleWithOverlayScrollers
+{
+    return YES;
+}
+
 - (void) mouseDown: (NSEvent *)theEvent
 {
-    //NSLog(@"PTYScroller: mouseDown");
+    [super mouseDown:theEvent];
 
-    [super mouseDown: theEvent];
-
-    if([self floatValue] != 1)
-        userScroll=YES;
-    else
+    if ([self floatValue] != 1) {
+        userScroll = YES;
+    } else {
         userScroll = NO;
+    }
 }
 
 - (void)trackScrollButtons:(NSEvent *)theEvent
 {
     [super trackScrollButtons:theEvent];
 
-    //NSLog(@"scrollbutton");
-    if([self floatValue] != 1)
-        userScroll=YES;
-    else
+    if ([self floatValue] != 1) {
+        userScroll = YES;
+    } else {
         userScroll = NO;
+    }
 }
 
 - (void)trackKnob:(NSEvent *)theEvent
 {
     [super trackKnob:theEvent];
 
-    //NSLog(@"trackKnob: %f", [self floatValue]);
-    if([self floatValue] != 1)
-        userScroll=YES;
-    else
+    if ([self floatValue] != 1) {
+        userScroll = YES;
+    } else {
         userScroll = NO;
+    }
 }
 
 - (BOOL)userScroll
@@ -82,16 +87,14 @@
     return userScroll;
 }
 
-- (void)setUserScroll: (BOOL) scroll
+- (void)setUserScroll:(BOOL)scroll
 {
-    userScroll=scroll;
+    userScroll = scroll;
 }
 
 - (NSScrollerPart)hitPart
 {
-    NSScrollerPart h = [super hitPart];
-
-    return h;
+    return [super hitPart];
 }
 
 @end
@@ -100,10 +103,6 @@
 
 - (void) dealloc
 {
-#if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
-#endif
-
     [backgroundImage release];
 
     [super dealloc];
@@ -111,22 +110,16 @@
 
 - (id)initWithFrame:(NSRect)frame
 {
-#if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x: initWithFrame:%d,%d,%d,%d",
-          __PRETTY_FUNCTION__, self,
-          frame.origin.x, frame.origin.y,
-          frame.size.width, frame.size.height);
-#endif
-    if ((self = [super initWithFrame:frame]) == nil)
+    if ((self = [super initWithFrame:frame]) == nil) {
         return nil;
-
-    NSParameterAssert([self contentView] != nil);
+    }
+    
+    assert([self contentView] != nil);
 
     PTYScroller *aScroller;
 
-    aScroller=[[PTYScroller alloc] init];
-    //[aScroller setControlSize:NSSmallControlSize];
-    [self setVerticalScroller: aScroller];
+    aScroller = [[PTYScroller alloc] init];
+    [self setVerticalScroller:aScroller];
     [aScroller release];
 
     return self;
