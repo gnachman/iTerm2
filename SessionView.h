@@ -47,6 +47,8 @@
     int viewId_;
 }
 
++ (NSDate*)lastResizeDate;
++ (void)windowDidResize;
 - (id)initWithFrame:(NSRect)frame session:(PTYSession*)session;
 - (void)dealloc;
 - (PTYSession*)session;

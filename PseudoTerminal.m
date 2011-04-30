@@ -1200,6 +1200,7 @@ NSString *sessionsKey = @"sessions";
 - (void)windowDidResize:(NSNotification *)aNotification
 {
     PtyLog(@"windowDidResize to: %fx%f", [[self window] frame].size.width, [[self window] frame].size.height);
+    [SessionView windowDidResize];
     if (togglingFullScreen_) {
         PtyLog(@"windowDidResize returning because togglingFullScreen.");
         return;
@@ -1251,6 +1252,7 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)toggleFullScreenMode:(id)sender
 {
+    [SessionView windowDidResize];
     if (windowType_ == WINDOW_TYPE_TOP) {
         // TODO: would be nice if you could toggle top windows to fullscreen
         return;

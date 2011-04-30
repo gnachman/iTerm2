@@ -33,12 +33,28 @@
 static const float kTargetFrameRate = 1.0/60.0;
 static int nextViewId;
 
+// Last time any window was resized TODO(georgen):it would be better to track per window.
+static NSDate* lastResizeDate_;
+
 @implementation SessionView
+
++ (void)initialize
+{
+    lastResizeDate_ = [[NSDate date] retain];
+}
+
++ (void)windowDidResize
+{
+    [lastResizeDate_ release];
+    lastResizeDate_ = [[NSDate date] retain];
+}
 
 - (id)initWithFrame:(NSRect)frame
 {
     self = [super initWithFrame:frame];
     if (self) {
+        [lastResizeDate_ release];
+        lastResizeDate_ = [[NSDate date] retain];
         findView_ = [[FindViewController alloc] initWithNibName:@"FindView" bundle:nil];
         [[findView_ view] setHidden:YES];
         [self addSubview:[findView_ view]];
@@ -54,6 +70,8 @@ static int nextViewId;
 {
     self = [self initWithFrame:frame];
     if (self) {
+        [lastResizeDate_ release];
+        lastResizeDate_ = [[NSDate date] retain];
         session_ = [session retain];
     }
     return self;
@@ -196,6 +214,18 @@ static int nextViewId;
         [findView_ setFrameOrigin:NSMakePoint(frameSize.width - [[findView_ view] frame].size.width - 30,
                                               frameSize.height - [[findView_ view] frame].size.height)];
     }
+}
+
++ (NSDate*)lastResizeDate
+{
+    return lastResizeDate_;
+}
+
+// This is called as part of the live resizing protocol when you let up the mouse button.
+- (void)viewDidEndLiveResize
+{
+    [lastResizeDate_ release];
+    lastResizeDate_ = [[NSDate date] retain];
 }
 
 @end

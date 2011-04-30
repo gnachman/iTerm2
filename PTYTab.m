@@ -53,6 +53,9 @@ DebugLog([NSString stringWithFormat:args]); \
 } while (0)
 #endif
 
+// No growl output/idle alerts for a few seconds after a window is resized because there will be bogus bg activity
+const int POST_WINDOW_RESIZE_SILENCE_SEC = 5;
+
 @interface MySplitView : NSSplitView
 {
 }
@@ -2453,6 +2456,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
             // Idle after new output
             if (![session growlIdle] &&
                 [[session SCREEN] growl] &&
+                [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC &&
                 now.tv_sec > [session lastOutput].tv_sec + 1) {
                 [[iTermGrowlDelegate sharedInstance] growlNotify:NSLocalizedStringFromTableInBundle(@"Idle",
                                                                                                     @"iTerm",
@@ -2485,17 +2489,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         [self setIsProcessing:YES];
     }
 
+    NSLog(@"Time since resize=%lf", [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]]);
     if (![[self activeSession] growlNewOutput] &&
         ![[self parentWindow] sendInputToAllSessions] &&
-        [[[self activeSession] SCREEN] growl] ) {
+        [[[self activeSession] SCREEN] growl] &&
+        [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC) {
         [[iTermGrowlDelegate sharedInstance] growlNotify:NSLocalizedStringFromTableInBundle(@"New Output",
                                                                                             @"iTerm",
                                                                                             [NSBundle bundleForClass:[self class]],
                                                                                             @"Growl Alerts")
-                                         withDescription:[NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"New Output was received in %@, tab #%d.",
-                                                                                                                       @"iTerm",
-                                                                                                                       [NSBundle bundleForClass:[self class]],
-                                                                                                                       @"Growl Alerts"),
+                                         withDescription:[NSString stringWithFormat:@"New output was received in %@, tab #%d.",
                                                           [[self activeSession] name],
                                                           [self realObjectCount]]
                                          andNotification:@"New Output"];
