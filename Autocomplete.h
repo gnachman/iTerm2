@@ -68,6 +68,12 @@
 
     // Previous state from calls to -[more] so that -[less] can go back in time.
     NSMutableArray* stack_;
+    
+    // SearchResults from doing a find operation
+    NSMutableArray* findResults_;
+    
+    // Result of previous search
+    BOOL more_;
 }
 
 - (id)init;

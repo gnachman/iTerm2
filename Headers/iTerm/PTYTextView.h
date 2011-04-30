@@ -449,6 +449,12 @@ typedef struct PTYFontInfo PTYFontInfo;
 
 // Clear working directories for when buffer is cleared
 - (void)clearWorkingDirectories;
+- (NSString *)getWordForX:(int)x
+                        y:(int)y
+                   startX:(int *)startx
+                   startY:(int *)starty
+                     endX:(int *)endx
+                     endY:(int *)endy;
 
 @end
 
@@ -479,12 +485,6 @@ typedef enum {
 - (PTYCharType)classifyChar:(unichar)ch
                   isComplex:(BOOL)complex;
 
-- (NSString *)getWordForX:(int)x
-                        y:(int)y
-                   startX:(int *)startx
-                   startY:(int *)starty
-                     endX:(int *)endx
-                     endY:(int *)endy;
 - (NSString *)_getURLForX:(int)x y:(int)y;
 // Returns true if any char in the line is blinking.
 - (BOOL)_drawLine:(int)line AtY:(float)curY toPoint:(NSPoint*)toPoint;

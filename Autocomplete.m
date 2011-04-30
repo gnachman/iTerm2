@@ -66,11 +66,13 @@ const int kMaxResultContextWords = 4;
     prefix_ = [[NSMutableString alloc] init];
     context_ = [[NSMutableArray alloc] init];
     stack_ = [[NSMutableArray alloc] init];
+    findResults_ = [[NSMutableArray alloc] init];
     return self;
 }
 
 - (void)dealloc
 {
+    [findResults_ release];
     [stack_ release];
     [moreText_ release];
     [context_ release];
@@ -284,6 +286,8 @@ const int kMaxResultContextWords = 4;
 
     AcLog(@"Searching for '%@'", prefix_);
     matchCount_ = 0;
+    [findResults_ removeAllObjects];
+    more_ = YES;
     [screen initFindString:prefix_
           forwardDirection:NO
               ignoringCase:YES
@@ -292,7 +296,7 @@ const int kMaxResultContextWords = 4;
                startingAtY:y_
                 withOffset:1
                  inContext:&findContext_
-           multipleResults:NO];
+           multipleResults:YES];
 
     [self _doPopulateMore];
 }
@@ -408,155 +412,147 @@ const int kMaxResultContextWords = 4;
 - (void)_doPopulateMore
 {
     VT100Screen* screen = [[self session] SCREEN];
-    BOOL found;
 
     struct timeval begintime;
     gettimeofday(&begintime, NULL);
     NSCharacterSet* nonWhitespace = [[NSCharacterSet whitespaceCharacterSet] invertedSet];
 
     do {
-        BOOL more;
         int startX;
         int startY;
         int endX;
         int endY;
-        found = NO;
-        do {
-            findContext_.hasWrapped = YES;
-            AcLog(@"Continue search...");
-            more = [screen continueFindResultAtStartX:&startX
-                                             atStartY:&startY
-                                               atEndX:&endX
-                                               atEndY:&endY
-                                                found:&found
+
+        findContext_.hasWrapped = YES;
+        AcLog(@"Continue search...");
+        
+        NSDate* cs = [NSDate date];
+        if ([findResults_ count] == 0) {
+            assert(more_);
+            AcLog(@"Do another search");
+            more_ = [screen continueFindAllResults:findResults_
                                             inContext:&findContext_];
-            if (found) {
-                AcLog(@"Found match at %d-%d, line %d", startX, endX, startY);
-                int tx1, ty1, tx2, ty2;
-                // Get the word that includes the match.
-                NSMutableString* firstWord = [NSMutableString stringWithString:[[[self session] TEXTVIEW] getWordForX:startX
-                                                                                                                    y:startY
-                                                                                                               startX:&tx1
-                                                                                                               startY:&ty1
-                                                                                                                 endX:&tx2
-                                                                                                                 endY:&ty2]];
-                while ([firstWord length] < [prefix_ length]) {
-                    NSString* part = [[[self session] TEXTVIEW] getWordForX:tx2
-                                                                          y:ty2
-                                                                     startX:&tx1
-                                                                     startY:&ty1
-                                                                       endX:&tx2
-                                                                       endY:&ty2];
-                    if ([part length] == 0) {
-                        break;
-                    }
-                    [firstWord appendString:part];
+        }
+        AcLog(@"This iteration found %d results in %lf sec", [findResults_ count], [[NSDate date] timeIntervalSinceDate:cs]);
+        NSDate* ps = [NSDate date];
+        int n = 0;
+        while ([findResults_ count] > 0 && [[NSDate date] timeIntervalSinceDate:cs] < 0.15) {
+            ++n;
+            SearchResult* result = [findResults_ objectAtIndex:0];
+
+            startX = result->startX;
+            startY = result->absStartY - [screen totalScrollbackOverflow];
+            endX = result->endX;
+            endY = result->absEndY - [screen totalScrollbackOverflow];
+
+            [findResults_ removeObjectAtIndex:0];
+
+            AcLog(@"Found match at %d-%d, line %d", startX, endX, startY);
+            int tx1, ty1, tx2, ty2;
+            // Get the word that includes the match.
+            NSMutableString* firstWord = [NSMutableString stringWithString:[[[self session] TEXTVIEW] getWordForX:startX
+                                                                                                                y:startY
+                                                                                                           startX:&tx1
+                                                                                                           startY:&ty1
+                                                                                                             endX:&tx2
+                                                                                                             endY:&ty2]];
+            while ([firstWord length] < [prefix_ length]) {
+                NSString* part = [[[self session] TEXTVIEW] getWordForX:tx2
+                                                                      y:ty2
+                                                                 startX:&tx1
+                                                                 startY:&ty1
+                                                                   endX:&tx2
+                                                                   endY:&ty2];
+                if ([part length] == 0) {
+                    break;
                 }
-                NSString* word = firstWord;
-                AcLog(@"Matching word is %@", word);
-                NSRange range = [word rangeOfString:prefix_ options:(NSCaseInsensitiveSearch|NSAnchoredSearch)];
-                if (range.location == 0) {
-                    // Result has prefix_ as prefix.
-                    // Set fullMatch to true if the word we found is equal to prefix, or false if word just has prefix as its prefix.
-                    BOOL fullMatch = (range.length == [word length]);
+                [firstWord appendString:part];
+            }
+            NSString* word = firstWord;
+            AcLog(@"Matching word is %@", word);
+            NSRange range = [word rangeOfString:prefix_ options:(NSCaseInsensitiveSearch|NSAnchoredSearch)];
+            if (range.location == 0) {
+                // Result has prefix_ as prefix.
+                // Set fullMatch to true if the word we found is equal to prefix, or false if word just has prefix as its prefix.
+                BOOL fullMatch = (range.length == [word length]);
 
-                    // Grab the context before the match.
-                    NSMutableArray* resultContext = [NSMutableArray arrayWithCapacity:kMaxResultContextWords];
-                    AcLog(@"Word before what we want is in x=[%d to %d]", startX, endX);
-                    [self appendContextAtX:startX y:(int)startY into:resultContext maxWords:kMaxResultContextWords];
+                // Grab the context before the match.
+                NSMutableArray* resultContext = [NSMutableArray arrayWithCapacity:kMaxResultContextWords];
+                AcLog(@"Word before what we want is in x=[%d to %d]", startX, endX);
+                [self appendContextAtX:startX y:(int)startY into:resultContext maxWords:kMaxResultContextWords];
 
-                    if (fullMatch) {
-                        // Grab the word after the match (presumably containing non-word characters)
-                        ++endX;
-                        if (endX >= [screen width]) {
-                            endX -= [screen width];
-                            ++endY;
-                        }
-                        word = [[[self session] TEXTVIEW] getWordForX:endX y:endY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
-                        AcLog(@"First candidate is at %d-%d, %d: '%@'", tx1, tx2, ty1, word);
-                        if ([word rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
-                            // word after match is all whitespace. Grab the next word.
-                            if (tx2 == [screen width]) {
-                                tx2 = 0;
-                                ++ty2;
-                            }
-                            if (ty2 < [screen numberOfLines]) {
-                                word = [[[self session] TEXTVIEW] getWordForX:tx2 y:ty2 startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
-                                if (!whitespaceBeforeCursor_) {
-                                    // Prepend a space if one is needed
-                                    word = [NSString stringWithFormat:@" %@", word];
-                                }
-                                AcLog(@"Replacement candidate is at %d-%d, %d: '%@'", tx1, tx2, ty1, word);
-                            } else {
-                                AcLog(@"Hit end of screen.");
-                            }
-                        }
-                    } else if (!whitespaceBeforeCursor_) {
-                        // Get suffix of word after match. If there's whitespace before the cursor then only
-                        // full matches are interesting.
-                        word = [word substringWithRange:NSMakeRange(range.length, [word length] - range.length)];
-                    } else {
-                        // Not a full match and there is whitespace before the cursor.
-                        word = @"";
+                if (fullMatch) {
+                    // Grab the word after the match (presumably containing non-word characters)
+                    ++endX;
+                    if (endX >= [screen width]) {
+                        endX -= [screen width];
+                        ++endY;
                     }
-
-                    if ([word rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
-                        // Found a non-whitespace word after the match.
-                        AcLog(@"Candidate suffix is '%@'", word);
-                        int joiningPrefixLength;
-                        if (fullMatch) {
-                            joiningPrefixLength = 0;
-                        } else {
-                            joiningPrefixLength = [prefix_ length];
+                    word = [[[self session] TEXTVIEW] getWordForX:endX y:endY startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
+                    AcLog(@"First candidate is at %d-%d, %d: '%@'", tx1, tx2, ty1, word);
+                    if ([word rangeOfCharacterFromSet:nonWhitespace].location == NSNotFound) {
+                        // word after match is all whitespace. Grab the next word.
+                        if (tx2 == [screen width]) {
+                            tx2 = 0;
+                            ++ty2;
                         }
-                        PopupEntry* e = [PopupEntry entryWithString:word score:[self scoreResultNumber:matchCount_++
-                                                                                          queryContext:context_
-                                                                                         resultContext:resultContext
-                                                                                   joiningPrefixLength:joiningPrefixLength
-                                                                                                  word:word]];
-                        if (whitespaceBeforeCursor_) {
-                            [e setPrefix:[NSString stringWithFormat:@"%@ ", prefix_]];
+                        if (ty2 < [screen numberOfLines]) {
+                            word = [[[self session] TEXTVIEW] getWordForX:tx2 y:ty2 startX:&tx1 startY:&ty1 endX:&tx2 endY:&ty2];
+                            if (!whitespaceBeforeCursor_) {
+                                // Prepend a space if one is needed
+                                word = [NSString stringWithFormat:@" %@", word];
+                            }
+                            AcLog(@"Replacement candidate is at %d-%d, %d: '%@'", tx1, tx2, ty1, word);
                         } else {
-                            [e setPrefix:prefix_];
+                            AcLog(@"Hit end of screen.");
                         }
-                        [[self unfilteredModel] addHit:e];
-                    } else {
-                        AcLog(@"No candidate here.");
                     }
-                    x_ = startX;
-                    y_ = startY + [screen scrollbackOverflow];
-                    AcLog(@"Update x,y to %d,%d", x_, y_);
+                } else if (!whitespaceBeforeCursor_) {
+                    // Get suffix of word after match. If there's whitespace before the cursor then only
+                    // full matches are interesting.
+                    word = [word substringWithRange:NSMakeRange(range.length, [word length] - range.length)];
                 } else {
-                    // Match started in the middle of a word.
-                    AcLog(@"Search found %@ which doesn't start the same as our search term %@", word, prefix_);
-                    x_ = startX;
-                    y_ = startY + [screen scrollbackOverflow];
+                    // Not a full match and there is whitespace before the cursor.
+                    word = @"";
                 }
-            }
-        } while (more);
 
-        if (found) {
-            if (y_ < [screen scrollbackOverflow] ||
-                (x_ <= 0 && y_ == [screen scrollbackOverflow])) {
-                // Last match was on the first char of the screen. All done.
-                AcLog(@"BREAK: Last match on first char");
-                break;
+                if ([word rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
+                    // Found a non-whitespace word after the match.
+                    AcLog(@"Candidate suffix is '%@'", word);
+                    int joiningPrefixLength;
+                    if (fullMatch) {
+                        joiningPrefixLength = 0;
+                    } else {
+                        joiningPrefixLength = [prefix_ length];
+                    }
+                    PopupEntry* e = [PopupEntry entryWithString:word score:[self scoreResultNumber:matchCount_++
+                                                                                      queryContext:context_
+                                                                                     resultContext:resultContext
+                                                                               joiningPrefixLength:joiningPrefixLength
+                                                                                              word:word]];
+                    if (whitespaceBeforeCursor_) {
+                        [e setPrefix:[NSString stringWithFormat:@"%@ ", prefix_]];
+                    } else {
+                        [e setPrefix:prefix_];
+                    }
+                    [[self unfilteredModel] addHit:e];
+                } else {
+                    AcLog(@"No candidate here.");
+                }
+                x_ = startX;
+                y_ = startY + [screen scrollbackOverflow];
+                AcLog(@"Update x,y to %d,%d", x_, y_);
+            } else {
+                // Match started in the middle of a word.
+                AcLog(@"Search found %@ which doesn't start the same as our search term %@", word, prefix_);
+                x_ = startX;
+                y_ = startY + [screen scrollbackOverflow];
             }
+        }
+        AcLog(@"This iteration processed %d results in %lf sec", n, [[NSDate date] timeIntervalSinceDate:ps]);
 
-            // Begin search again before the last hit.
-            AcLog(@"Continue search at %d,%d", x_, y_);
-            [screen initFindString:prefix_
-                  forwardDirection:NO
-                      ignoringCase:YES
-                             regex:NO
-                       startingAtX:x_
-                       startingAtY:y_
-                        withOffset:1
-                         inContext:&findContext_
-                   multipleResults:NO];
-        } else {
-            // All done.
-            AcLog(@"BREAK: Didn't find anything");
+        if (!more_ && [findResults_ count] == 0) {
+            AcLog(@"no more and no unprocessed results");
             break;
         }
 
@@ -565,8 +561,10 @@ const int kMaxResultContextWords = 4;
         gettimeofday(&endtime, NULL);
         int ms_diff = (endtime.tv_sec - begintime.tv_sec) * 1000 +
             (endtime.tv_usec - begintime.tv_usec) / 1000;
-        if (ms_diff > 100) {
+        AcLog(@"ms_diff=%d", ms_diff);
+        if (ms_diff > 150) {
             // Out of time. Reschedule and try again.
+            AcLog(@"Schedule timer");
             populateTimer_ = [NSTimer scheduledTimerWithTimeInterval:0.01
                                                               target:self
                                                             selector:@selector(_populateMore:)
@@ -574,7 +572,8 @@ const int kMaxResultContextWords = 4;
                                                              repeats:NO];
             break;
         }
-    } while (found);
+    } while (more_ || [findResults_ count] > 0);
+    AcLog(@"While loop exited. Nothing more to do.");
     [self reloadData:YES];
 }
 

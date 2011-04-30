@@ -3731,6 +3731,134 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [resultMap_ removeAllObjects];
 }
 
+- (NSString *)getWordForX:(int)x
+                        y:(int)y
+                   startX:(int *)startx
+                   startY:(int *)starty
+                     endX:(int *)endx
+                     endY:(int *)endy
+{
+    int tmpX;
+    int tmpY;
+    int x1;
+    int yStart;
+    int x2;
+    int y2;
+    int width = [dataSource width];
+    
+    // Search backward from (x, y) to find the beginning of the word.
+    tmpX = x;
+    tmpY = y;
+    // If the char at (x,y) is not whitespace, then go into a mode where
+    // word characters are selected as blocks; else go into a mode where
+    // whitespace is selected as a block.
+    screen_char_t sct = [dataSource getLineAtIndex:tmpY][tmpX];
+    BOOL selectWordChars = [self classifyChar:sct.code isComplex:sct.complexChar] != CHARTYPE_WHITESPACE;
+    
+    while (tmpX >= 0) {
+        screen_char_t* theLine = [dataSource getLineAtIndex:tmpY];
+        
+        if ([self shouldSelectCharForWord:theLine[tmpX].code isComplex:theLine[tmpX].complexChar selectWordChars:selectWordChars]) {
+            tmpX--;
+            if (tmpX < 0 && tmpY > 0) {
+                // Wrap tmpX, tmpY to the end of the previous line.
+                theLine = [dataSource getLineAtIndex:tmpY-1];
+                if (theLine[width].code != EOL_HARD) {
+                    // check if there's a hard line break
+                    tmpY--;
+                    tmpX = width - 1;
+                }
+            }
+        } else {
+            break;
+        }
+    }
+    if (tmpX != x) {
+        // Advance back to the right of the char that caused us to break.
+        tmpX++;
+    }
+    
+    // Ensure the values are sane, although I think none of these cases will
+    // ever occur.
+    if (tmpX < 0) {
+        tmpX = 0;
+    }
+    if (tmpY < 0) {
+        tmpY = 0;
+    }
+    if (tmpX >= width) {
+        tmpX = 0;
+        tmpY++;
+    }
+    if (tmpY >= [dataSource numberOfLines]) {
+        tmpY = [dataSource numberOfLines] - 1;
+    }
+    
+    // Save to startx, starty.
+    if (startx) {
+        *startx = tmpX;
+    }
+    if (starty) {
+        *starty = tmpY;
+    }
+    x1 = tmpX;
+    yStart = tmpY;
+    
+    
+    // Search forward from x to find the end of the word.
+    tmpX = x;
+    tmpY = y;
+    while (tmpX < width) {
+        screen_char_t* theLine = [dataSource getLineAtIndex:tmpY];
+        if ([self shouldSelectCharForWord:theLine[tmpX].code isComplex:theLine[tmpX].complexChar selectWordChars:selectWordChars]) {
+            tmpX++;
+            if (tmpX >= width && tmpY < [dataSource numberOfLines]) {
+                if (theLine[width].code != EOL_HARD) {
+                    // check if there's a hard line break
+                    tmpY++;
+                    tmpX = 0;
+                }
+            }
+        } else {
+            break;
+        }
+    }
+    
+    // Back off from trailing char.
+    if (tmpX != x) {
+        tmpX--;
+    }
+    
+    // Sanity checks.
+    if (tmpX < 0) {
+        tmpX = width - 1;
+        tmpY--;
+    }
+    if (tmpY < 0) {
+        tmpY = 0;
+    }
+    if (tmpX >= width) {
+        tmpX = width - 1;
+    }
+    if (tmpY >= [dataSource numberOfLines]) {
+        tmpY = [dataSource numberOfLines] - 1;
+    }
+    
+    // Save to endx, endy.
+    if (endx) {
+        *endx = tmpX+1;
+    }
+    if (endy) {
+        *endy = tmpY;
+    }
+    
+    // Grab the contents to return.
+    x2 = tmpX+1;
+    y2 = tmpY;
+    
+    return ([self contentFromX:x1 Y:yStart ToX:x2 Y:y2 pad: YES]);
+}
+
 @end
 
 //
@@ -5313,134 +5441,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             break;
     };
     return NO;
-}
-
-- (NSString *)getWordForX:(int)x
-                        y:(int)y
-                   startX:(int *)startx
-                   startY:(int *)starty
-                     endX:(int *)endx
-                     endY:(int *)endy
-{
-    int tmpX;
-    int tmpY;
-    int x1;
-    int yStart;
-    int x2;
-    int y2;
-    int width = [dataSource width];
-
-    // Search backward from (x, y) to find the beginning of the word.
-    tmpX = x;
-    tmpY = y;
-    // If the char at (x,y) is not whitespace, then go into a mode where
-    // word characters are selected as blocks; else go into a mode where
-    // whitespace is selected as a block.
-    screen_char_t sct = [dataSource getLineAtIndex:tmpY][tmpX];
-    BOOL selectWordChars = [self classifyChar:sct.code isComplex:sct.complexChar] != CHARTYPE_WHITESPACE;
-
-    while (tmpX >= 0) {
-        screen_char_t* theLine = [dataSource getLineAtIndex:tmpY];
-
-        if ([self shouldSelectCharForWord:theLine[tmpX].code isComplex:theLine[tmpX].complexChar selectWordChars:selectWordChars]) {
-            tmpX--;
-            if (tmpX < 0 && tmpY > 0) {
-                // Wrap tmpX, tmpY to the end of the previous line.
-                theLine = [dataSource getLineAtIndex:tmpY-1];
-                if (theLine[width].code != EOL_HARD) {
-                    // check if there's a hard line break
-                    tmpY--;
-                    tmpX = width - 1;
-                }
-            }
-        } else {
-            break;
-        }
-    }
-    if (tmpX != x) {
-        // Advance back to the right of the char that caused us to break.
-        tmpX++;
-    }
-
-    // Ensure the values are sane, although I think none of these cases will
-    // ever occur.
-    if (tmpX < 0) {
-        tmpX = 0;
-    }
-    if (tmpY < 0) {
-        tmpY = 0;
-    }
-    if (tmpX >= width) {
-        tmpX = 0;
-        tmpY++;
-    }
-    if (tmpY >= [dataSource numberOfLines]) {
-        tmpY = [dataSource numberOfLines] - 1;
-    }
-
-    // Save to startx, starty.
-    if (startx) {
-        *startx = tmpX;
-    }
-    if (starty) {
-        *starty = tmpY;
-    }
-    x1 = tmpX;
-    yStart = tmpY;
-
-
-    // Search forward from x to find the end of the word.
-    tmpX = x;
-    tmpY = y;
-    while (tmpX < width) {
-        screen_char_t* theLine = [dataSource getLineAtIndex:tmpY];
-        if ([self shouldSelectCharForWord:theLine[tmpX].code isComplex:theLine[tmpX].complexChar selectWordChars:selectWordChars]) {
-            tmpX++;
-            if (tmpX >= width && tmpY < [dataSource numberOfLines]) {
-                if (theLine[width].code != EOL_HARD) {
-                    // check if there's a hard line break
-                    tmpY++;
-                    tmpX = 0;
-                }
-            }
-        } else {
-            break;
-        }
-    }
-
-    // Back off from trailing char.
-    if (tmpX != x) {
-        tmpX--;
-    }
-
-    // Sanity checks.
-    if (tmpX < 0) {
-        tmpX = width - 1;
-        tmpY--;
-    }
-    if (tmpY < 0) {
-        tmpY = 0;
-    }
-    if (tmpX >= width) {
-        tmpX = width - 1;
-    }
-    if (tmpY >= [dataSource numberOfLines]) {
-        tmpY = [dataSource numberOfLines] - 1;
-    }
-
-    // Save to endx, endy.
-    if (endx) {
-        *endx = tmpX+1;
-    }
-    if (endy) {
-        *endy = tmpY;
-    }
-
-    // Grab the contents to return.
-    x2 = tmpX+1;
-    y2 = tmpY;
-
-    return ([self contentFromX:x1 Y:yStart ToX:x2 Y:y2 pad: YES]);
 }
 
 static bool IsUrlChar(NSString* str)
