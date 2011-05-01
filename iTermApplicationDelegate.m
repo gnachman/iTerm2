@@ -227,6 +227,32 @@ int gDebugLogFile = -1;
     return quittingBecauseLastWindowClosed_;
 }
 
+- (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag
+{
+    PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
+    if ([prefPanel hotkey] &&
+        [prefPanel hotkeyTogglesWindow]) {
+        // The hotkey window is configured.
+        PseudoTerminal* hotkeyTerm = [[iTermController sharedInstance] hotKeyWindow];
+        if (hotkeyTerm) {
+            // Hide the existing window or open it if enabled by preference.
+            if ([[hotkeyTerm window] alphaValue] == 1) {
+                [[iTermController sharedInstance] hideHotKeyWindow:hotkeyTerm];
+                return NO;
+            } else if ([prefPanel dockIconTogglesWindow]) {
+                [[iTermController sharedInstance] showHotKeyWindow];
+                return NO;
+            }
+        } else if ([prefPanel dockIconTogglesWindow]) {
+            // No existing hotkey window but preference is to toggle it by dock icon so open a new
+            // one.
+            [[iTermController sharedInstance] showHotKeyWindow];
+            return NO;
+        }
+    }
+    return YES;
+}
+
 - (void)applicationDidChangeScreenParameters:(NSNotification *)aNotification
 {
     // Make sure that all top-of-screen windows are the proper width.

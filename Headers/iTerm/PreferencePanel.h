@@ -582,6 +582,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 
 - (BOOL)remappingDisabledTemporarily;
 - (BOOL)hotkeyTogglesWindow;
+- (BOOL)dockIconTogglesWindow;
 - (Bookmark*)hotkeyBookmark;
 
 @end

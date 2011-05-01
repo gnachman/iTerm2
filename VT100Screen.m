@@ -847,8 +847,8 @@ static char* FormatCont(int c)
     int selectionEndPosition = -1;
     BOOL hasSelection = display && [display selectionStartX] != -1;
     [self _appendScreenToScrollback];
-    BOOL startPositionBeforeEnd;
-    BOOL endPostionBeforeEnd;
+    BOOL startPositionBeforeEnd = NO;
+    BOOL endPostionBeforeEnd = NO;
     if (hasSelection) {
         startPositionBeforeEnd = [linebuffer convertCoordinatesAtX:[display selectionStartX]
                                                                atY:[display selectionStartY]

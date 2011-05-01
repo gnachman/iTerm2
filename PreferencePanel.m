@@ -3283,6 +3283,12 @@ static float versionNumber;
     return defaultHotkeyTogglesWindow;
 }
 
+- (BOOL)dockIconTogglesWindow
+{
+    assert(prefs);
+    return [prefs boolForKey:@"dockIconTogglesWindow"];
+}
+
 - (Bookmark*)hotkeyBookmark
 {
     if (defaultHotKeyBookmarkGuid) {
