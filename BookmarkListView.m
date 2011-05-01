@@ -191,10 +191,11 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
 - (void)sync
 {
     [bookmarks removeAllObjects];
-    int n = [underlyingModel numberOfBookmarksWithFilter:filter];
-    for (int i = 0; i < n; ++i) {
+    NSArray* filteredBookmarks = [underlyingModel bookmarkIndicesMatchingFilter:filter];
+    for (NSNumber* n in filteredBookmarks) {
+        int i = [n intValue];
         //NSLog(@"Wrapper at %p add bookmark %@ at index %d", self, [[underlyingModel bookmarkAtIndex:i] objectForKey:KEY_NAME], i);
-        [bookmarks addObject:[[[BookmarkRow alloc] initWithBookmark:[underlyingModel bookmarkAtIndex:i withFilter:filter] 
+        [bookmarks addObject:[[[BookmarkRow alloc] initWithBookmark:[underlyingModel bookmarkAtIndex:i] 
                                                     underlyingModel:underlyingModel] autorelease]];
     }
     [self sort];
