@@ -202,6 +202,10 @@ static const float kBackgroundSessionIntervalSec = 1;
 
     // Time session was created
     NSDate* creationDate_;
+    
+    // After receiving new output, we keep running the updateDisplay timer for a few seconds to catch
+    // changes in job name.
+    NSDate* updateDisplayUntil_;
 }
 
 // Return the current pasteboard value as a string.

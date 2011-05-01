@@ -113,6 +113,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     if (slowPasteTimer) {
         [slowPasteTimer invalidate];
     }
+    [updateDisplayUntil_ release];
     [creationDate_ release];
     [lastActiveAt_ release];
     [bookmarkName release];
@@ -576,6 +577,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     newOutput = YES;
 
     // Make sure the screen gets redrawn soonish
+    [updateDisplayUntil_ release];
+    updateDisplayUntil_ = [[NSDate dateWithTimeIntervalSinceNow:10] retain];
     if ([[[self tab] parentWindow] currentTab] == [self tab]) {
         if ([data length] < 1024) {
             [self scheduleUpdateIn:kFastTimerIntervalSec];
@@ -2328,8 +2331,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)updateDisplay
 {
     timerRunning_ = YES;
-    BOOL anotherUpdateNeeded = NO;
-
+    BOOL anotherUpdateNeeded = [NSApp isActive];
+    if (!anotherUpdateNeeded &&
+        updateDisplayUntil_ &&
+        [[NSDate date] timeIntervalSinceDate:updateDisplayUntil_] < 0) {
+        // We're still in the time window after the last output where updates are needed.
+        anotherUpdateNeeded = YES;
+    }
+    
     BOOL isForegroundTab = [[self tab] isForegroundTab];
     if (!isForegroundTab) {
         // Set color, other attributes of a background tab.
