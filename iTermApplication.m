@@ -145,7 +145,7 @@
                 }
             }
 
-            if (inTextView && [currentSession hasActionableKeyMappingForEvent:event]) {
+            if ([currentSession hasActionableKeyMappingForEvent:event]) {
                 // Remap key.
                 [currentSession keyDown:event];
                 return;
