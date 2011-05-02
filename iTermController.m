@@ -946,7 +946,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
         case WINDOW_TYPE_FULL_SCREEN:
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
             [[[term window] animator] setAlphaValue:1];
-            [NSMenu setMenuBarVisible:NO];
+            [term hideMenuBar];
             break;
     }
     [[iTermController sharedInstance] performSelector:@selector(rollInFinished)
@@ -1502,7 +1502,7 @@ NSString *terminalsKey = @"terminals";
     if ([thePseudoTerminal windowInited] && [[thePseudoTerminal window] isKeyWindow] == NO) {
         [[thePseudoTerminal window] makeKeyAndOrderFront: self];
         if ([thePseudoTerminal fullScreen]) {
-            [NSMenu setMenuBarVisible:NO];
+          [thePseudoTerminal hideMenuBar];
         }
     }
 
