@@ -121,6 +121,19 @@
     return [filter componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
 }
 
+- (NSArray*)bookmarkIndicesMatchingFilter:(NSString*)filter
+{
+    NSMutableArray* result = [NSMutableArray arrayWithCapacity:[bookmarks_ count]];
+    NSArray* tokens = [self parseFilter:filter];
+    int count = [bookmarks_ count];
+    for (int i = 0; i < count; ++i) {
+        if ([self doesBookmarkAtIndex:i matchFilter:tokens]) {
+            [result addObject:[NSNumber numberWithInt:i]];
+        }
+    }
+    return result;
+}
+
 - (int)numberOfBookmarksWithFilter:(NSString*)filter
 {
     NSArray* tokens = [self parseFilter:filter];
@@ -251,9 +264,24 @@
     return -1;
 }
 
+- (void)removeBookmarksAtIndices:(NSArray*)indices
+{
+    NSArray* sorted = [indices sortedArrayUsingSelector:@selector(compare:)];
+    for (int j = [sorted count] - 1; j >= 0; j--) {
+        int i = [[sorted objectAtIndex:j] intValue];
+        assert(i >= 0);
+        
+        [bookmarks_ removeObjectAtIndex:i];
+        if (![self defaultBookmark] && [bookmarks_ count]) {
+            [self setDefaultByGuid:[[bookmarks_ objectAtIndex:0] objectForKey:KEY_GUID]];
+        }
+    }
+    [self postChangeNotification];
+}
+
 - (void)removeBookmarkAtIndex:(int)i
 {
-    NSAssert(i >= 0, @"Bounds");
+    assert(i >= 0);
     [bookmarks_ removeObjectAtIndex:i];
     if (![self defaultBookmark] && [bookmarks_ count]) {
         [self setDefaultByGuid:[[bookmarks_ objectAtIndex:0] objectForKey:KEY_GUID]];

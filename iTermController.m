@@ -495,21 +495,35 @@ static BOOL initDone = NO;
     NSMenuItem* aMenuItem = [[NSMenuItem alloc] initWithTitle:tag action:@selector(noAction:) keyEquivalent:@""];
     NSMenu* subMenu = [[[NSMenu alloc] init] autorelease];
     int count = 0;
+    int MAX_MENU_ITEMS = 100;
+    if ([tag isEqualToString:@"bonjour"]) {
+        MAX_MENU_ITEMS = 50;
+    }
     for (int i = 0; i < [[BookmarkModel sharedInstance] numberOfBookmarks]; ++i) {
         Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkAtIndex:i];
         NSArray* tags = [bookmark objectForKey:KEY_TAGS];
         for (int j = 0; j < [tags count]; ++j) {
             if ([tag localizedCaseInsensitiveCompare:[tags objectAtIndex:j]] == NSOrderedSame) {
                 ++count;
-                [self _addBookmark:bookmark
-                            toMenu:subMenu
-                            target:aTarget
-                     withShortcuts:withShortcuts
-                          selector:selector
-                 alternateSelector:alternateSelector];
+                if (count <= MAX_MENU_ITEMS) {
+                    [self _addBookmark:bookmark
+                                toMenu:subMenu
+                                target:aTarget
+                         withShortcuts:withShortcuts
+                              selector:selector
+                     alternateSelector:alternateSelector];
+                }
                 break;
             }
         }
+    }
+    if ([[BookmarkModel sharedInstance] numberOfBookmarks] > MAX_MENU_ITEMS) {
+        int overflow = [[BookmarkModel sharedInstance] numberOfBookmarks] - MAX_MENU_ITEMS;
+        NSMenuItem* overflowItem = [[NSMenuItem alloc] initWithTitle:[NSString stringWithFormat:@"[%d profiles not shown]", overflow]
+                                                           action:nil
+                                                    keyEquivalent:@""];
+        [subMenu addItem:overflowItem];
+        [overflowItem release];        
     }
     [aMenuItem setSubmenu:subMenu];
     [aMenuItem setTarget:self];
