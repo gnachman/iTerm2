@@ -46,6 +46,14 @@ DebugLog([NSString stringWithFormat:args]); \
 extern BOOL gDebugLogging;
 void DebugLog(NSString* value);
 
+@interface iTermAboutWindow : NSPanel
+{
+}
+
+- (IBAction)closeCurrentSession:(id)sender;
+
+@end
+
 @interface iTermApplicationDelegate : NSObject
 {
     // about window

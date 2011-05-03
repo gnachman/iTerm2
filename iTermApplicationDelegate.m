@@ -52,6 +52,15 @@ static BOOL usingAutoLaunchScript = NO;
 BOOL gDebugLogging = NO;
 int gDebugLogFile = -1;
 
+@implementation iTermAboutWindow
+
+- (IBAction)closeCurrentSession:(id)sender
+{
+    [self close];
+}
+
+@end
+
 
 @implementation iTermApplicationDelegate
 
