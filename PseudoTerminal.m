@@ -1900,6 +1900,20 @@ NSString *sessionsKey = @"sessions";
     return rootMenu;
 }
 
+- (int)_screenAtPoint:(NSPoint)p
+{
+    int i = 0;
+    for (NSScreen* screen in [NSScreen screens]) {
+        if (NSPointInRect(p, [screen frame])) {
+            return i;
+        }
+        i++;
+    }
+
+    NSLog(@"Point %lf,%lf not in any screen", p.x, p.y);
+    return 0;
+}
+
 - (PSMTabBarControl *)tabView:(NSTabView *)aTabView newTabBarForDraggedTabViewItem:(NSTabViewItem *)tabViewItem atPoint:(NSPoint)point
 {
     PseudoTerminal *term;
@@ -1909,24 +1923,36 @@ NSString *sessionsKey = @"sessions";
         return nil;
     }
 
+    int screen;
+    if (windowType_ != WINDOW_TYPE_NORMAL) {
+      screen = [self _screenAtPoint:point];
+    } else {
+      screen = -1;
+    }
+
     // create a new terminal window
     term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
-                                             windowType:WINDOW_TYPE_NORMAL
-                                                 screen:-1] autorelease];
+                                             windowType:windowType_
+                                                 screen:screen] autorelease];
     if (term == nil) {
-        return nil;
+      return nil;
     }
 
     [term copySettingsFrom:self];
 
     [[iTermController sharedInstance] addInTerminals: term];
 
-    if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+    if (windowType_ == WINDOW_TYPE_NORMAL) {
+      if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
         [[term window] setFrameTopLeftPoint:point];
-    } else {
+      } else {
         [[term window] setFrameOrigin:point];
+      }
+    } else if (windowType_ == WINDOW_TYPE_FULL_SCREEN) {
+      [[term window] makeKeyAndOrderFront:nil];
+      [term hideMenuBar];
     }
-
+    
     return [term tabBarControl];
 }
 
@@ -2772,6 +2798,7 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+// Hide the menu bar only if this term is the key window.
 - (void)hideMenuBar
 {
     NSScreen* menubarScreen = nil;
@@ -3978,14 +4005,14 @@ NSString *sessionsKey = @"sessions";
 
 -(id)addNewSession:(NSDictionary *)addressbookEntry
 {
-    NSAssert(addressbookEntry, @"Null address book entry");
-    // NSLog(@"PseudoTerminal: -addInSessions: 0x%x", object);
+    assert(addressbookEntry);
     PTYSession *aSession;
     NSString *oldCWD = nil;
 
-    /* Get active session's directory */
-    if ([self currentSession]) {
-        oldCWD = [[[self currentSession] SHELL] getWorkingDirectory];
+    // Get active session's directory
+    PTYSession* cwdSession = [[[iTermController sharedInstance] currentTerminal] currentSession];
+    if (cwdSession) {
+        oldCWD = [[cwdSession SHELL] getWorkingDirectory];
     }
 
     // Initialize a new session
