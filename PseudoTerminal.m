@@ -2812,7 +2812,7 @@ NSString *sessionsKey = @"sessions";
     currentScreen = [NSScreen mainScreen];
 
     if (currentScreen == menubarScreen) {
-        [NSMenu setMenuBarVisible: NO];
+        [NSMenu setMenuBarVisible:NO];
     }
 }
 

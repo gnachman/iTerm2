@@ -1120,7 +1120,12 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         [NSApp hide:nil];
         [self performSelector:@selector(unhide) withObject:nil afterDelay:0.1];
     } else {
-        [NSMenu setMenuBarVisible:YES];
+        PseudoTerminal* currentTerm = [self currentTerminal];
+        if (currentTerm && ![currentTerm isHotKeyWindow] && [currentTerm fullScreen]) {
+            [currentTerm hideMenuBar];
+        } else {
+            [NSMenu setMenuBarVisible:YES];
+        }
     }
 
     if ([[PreferencePanel sharedInstance] closingHotkeySwitchesSpaces]) {
