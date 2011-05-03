@@ -961,6 +961,60 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     [[term window] makeKeyAndOrderFront:nil];
 }
 
+// http://www.cocoadev.com/index.pl?DeterminingOSVersion
++ (BOOL)getSystemVersionMajor:(unsigned *)major
+                        minor:(unsigned *)minor
+                       bugFix:(unsigned *)bugFix;
+{
+    OSErr err;
+    SInt32 systemVersion, versionMajor, versionMinor, versionBugFix;
+    if ((err = Gestalt(gestaltSystemVersion, &systemVersion)) != noErr) {
+        return NO;
+    }
+    if (systemVersion < 0x1040) {
+        if (major) {
+            *major = ((systemVersion & 0xF000) >> 12) * 10 + ((systemVersion & 0x0F00) >> 8);
+        }
+        if (minor) {
+            *minor = (systemVersion & 0x00F0) >> 4;
+        }
+        if (bugFix) {
+            *bugFix = (systemVersion & 0x000F);
+        }
+    } else {
+        if ((err = Gestalt(gestaltSystemVersionMajor, &versionMajor)) != noErr) {
+            return NO;
+        }
+        if ((err = Gestalt(gestaltSystemVersionMinor, &versionMinor)) != noErr) {
+            return NO;
+        }
+        if ((err = Gestalt(gestaltSystemVersionBugFix, &versionBugFix)) != noErr) {
+            return NO;
+        }
+        if (major) {
+            *major = versionMajor;
+        }
+        if (minor) {
+            *minor = versionMinor;
+        }
+        if (bugFix) {
+            *bugFix = versionBugFix;
+        }
+    }
+    
+    return YES;
+}
+
+static BOOL IsSnowLeopardOrLater() {
+    unsigned major;
+    unsigned minor;
+    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
+        return (major == 10 && minor >= 6) || (major > 10);
+    } else {
+        return NO;
+    }
+}
+
 static BOOL OpenHotkeyWindow()
 {
     NSLog(@"Open visor");
@@ -983,7 +1037,12 @@ static BOOL OpenHotkeyWindow()
                 rect.origin.y = -rect.size.height;
                 rect.origin.x = -rect.size.width;
             }
-            [[term window] setFrame:rect display:YES];
+            if (IsSnowLeopardOrLater()) {
+                // TODO: When upgrading to the 10.6 SDK, remove the conditional and the
+                // const below:
+                const int NSWindowCollectionBehaviorStationary = (1 << 4);  // value stolen from 10.6 SDK
+                [[term window] setCollectionBehavior:[[term window] collectionBehavior] | NSWindowCollectionBehaviorStationary];
+            }
         }
         RollInHotkeyTerm(term);
         return YES;
