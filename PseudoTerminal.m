@@ -967,7 +967,8 @@ NSString *sessionsKey = @"sessions";
     [[iTermController sharedInstance] setCurrentTerminal:self];
     [[[NSApplication sharedApplication] delegate] updateMaximizePaneMenuItem];
     [[[NSApplication sharedApplication] delegate] updateUseTransparencyMenuItem];
-    if (_fullScreen) {
+    if (_fullScreen && [[self window] alphaValue] > 0) {
+        // Is a fullscreen window and is not a hidden hotkey window.
         [self hideMenuBar];
     }
 
