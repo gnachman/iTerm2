@@ -1003,7 +1003,10 @@ void DebugLog(NSString* value)
         [[iTermController sharedInstance] showHideFindBar];
 }
 
-- (IBAction) findNext: (id) sender
+// findNext and findPrevious are reversed here because in the search UI next
+// goes backwards and previous goes forwards.
+// Internally, next=forward and prev=backwards.
+- (IBAction)findPrevious:(id)sender
 {
     PseudoTerminal* pty = [[iTermController sharedInstance] currentTerminal];
     if (pty) {
@@ -1011,7 +1014,7 @@ void DebugLog(NSString* value)
     }
 }
 
-- (IBAction) findPrevious: (id) sender
+- (IBAction)findNext:(id)sender
 {
     PseudoTerminal* pty = [[iTermController sharedInstance] currentTerminal];
     if (pty) {

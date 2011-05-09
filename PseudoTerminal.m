@@ -984,6 +984,11 @@ NSString *sessionsKey = @"sessions";
     }
     [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
     [self _loadFindStringFromSharedPasteboard];
+    
+    // Start the timers back up
+    for (PTYSession* aSession in [self sessions]) {
+        [aSession updateDisplay];
+    }
 }
 
 // Forbid FFM from changing key window if is hotkey window.
@@ -3639,6 +3644,7 @@ NSString *sessionsKey = @"sessions";
 - (void)reset:(id)sender
 {
     [[[self currentSession] TERMINAL] reset];
+    [[self currentSession] updateDisplay];
 }
 
 - (void)clearBuffer:(id)sender

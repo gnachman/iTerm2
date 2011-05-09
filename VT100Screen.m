@@ -1551,6 +1551,7 @@ static char* FormatCont(int c)
 {
     [self clearScreen];
     [self clearScrollbackBuffer];
+    [SESSION updateDisplay];
 }
 
 - (void)clearScrollbackBuffer
