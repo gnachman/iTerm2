@@ -33,6 +33,11 @@
 static const int MAX_WORKING_DIR_COUNT = 50;
 //#define DEBUG_DRAWING
 
+// Constants for converting RGB to luma.
+#define RED_COEFFICIENT    0.30
+#define GREEN_COEFFICIENT  0.59
+#define BLUE_COEFFICIENT   0.11
+
 #define SWAPINT(a, b) { int temp; temp = a; a = b; b = temp; }
 
 #import <iTerm/iTerm.h>
@@ -4076,7 +4081,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
-    return (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
+    return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
+}
+
+- (double)_perceivedBrightness:(NSColor*) c
+{
+    return PerceivedBrightness([c redComponent], [c greenComponent], [c blueComponent]);
 }
 
 - (NSColor*)colorWithRed:(float)r green:(float)g blue:(float)b alpha:(float)a withPerceivedBrightness:(CGFloat)t
@@ -4130,9 +4140,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     const CGFloat e2 = k;
     const CGFloat e3 = k;
 
-    const CGFloat a1 = 0.2126;
-    const CGFloat a2 = 0.7152;
-    const CGFloat a3 = 0.0722;
+    const CGFloat a1 = RED_COEFFICIENT;
+    const CGFloat a2 = GREEN_COEFFICIENT;
+    const CGFloat a3 = BLUE_COEFFICIENT;
 
     const CGFloat p = (t - (a1*c1 + a2*c2 + a3*c3)) / (a1*(e1 - c1) + a2*(e2 - c2) + a3*(e3 - c3));
 
@@ -5062,17 +5072,20 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [self _drawCursorTo:nil];
 }
 
-- (float)_brightnessOfCharBackground:(screen_char_t)c
+- (NSColor*)_charBackground:(screen_char_t)c
 {
     if ([[dataSource terminal] screenMode]) {
         // reversed
-        NSColor* color = [self colorForCode:c.foregroundColor alternateSemantics:c.alternateForegroundSemantics bold:c.bold];
-        return [[color colorUsingColorSpaceName:NSCalibratedRGBColorSpace] brightnessComponent];
+        return [self colorForCode:c.foregroundColor alternateSemantics:c.alternateForegroundSemantics bold:c.bold];
     } else {
         // normal
-        NSColor* color = [self colorForCode:c.backgroundColor alternateSemantics:c.alternateBackgroundSemantics bold:c.bold];
-        return [[color colorUsingColorSpaceName:NSCalibratedRGBColorSpace] brightnessComponent];
+        return [self colorForCode:c.backgroundColor alternateSemantics:c.alternateBackgroundSemantics bold:false];
     }
+}
+
+- (float)_brightnessOfCharBackground:(screen_char_t)c
+{
+    return [self _perceivedBrightness:[[self _charBackground:c] colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
 }
 
 // Return the value in 'values' closest to target.
@@ -5098,21 +5111,28 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     NSArray* sortedConstraints = [constraints sortedArrayUsingSelector:@selector(compare:)];
     double minVal = [[sortedConstraints objectAtIndex:0] doubleValue];
     double maxVal = [[sortedConstraints lastObject] doubleValue];
-    NSArray* aug = [sortedConstraints arrayByAddingObjectsFromArray:[NSArray arrayWithObjects:[NSNumber numberWithDouble:-minVal],
-                                                               [NSNumber numberWithDouble:1+maxVal],
-                                                               nil]];
+
     CGFloat bestDistance = 0;
     CGFloat bestValue = -1;
-    CGFloat prev = [[aug objectAtIndex:0] doubleValue];
+    CGFloat prev = [[sortedConstraints objectAtIndex:0] doubleValue];
     for (NSNumber* np in sortedConstraints) {
         CGFloat n = [np doubleValue];
-        const CGFloat dist = fabs(n - prev);
+        const CGFloat dist = fabs(n - prev) / 2;
         if (dist > bestDistance) {
             bestDistance = dist;
             bestValue = (n + prev) / 2;
         }
         prev = n;
     }
+    if (minVal > bestDistance) {
+        bestValue = 0;
+        bestDistance = minVal;
+    }
+    if (1 - maxVal > bestDistance) {
+        bestValue = 1;
+        bestDistance = 1 - maxVal;
+    }
+
     return bestValue;
 }
 
@@ -5210,7 +5230,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 }
 
                 NSMutableArray* constraints = [NSMutableArray arrayWithCapacity:2];
-                CGFloat bgBrightness = [[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace] brightnessComponent];
+                CGFloat bgBrightness = [self _perceivedBrightness:[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
                 if (x1 > 0) {
                     [constraints addObject:[NSNumber numberWithDouble:[self _brightnessOfCharBackground:theLine[x1 - 1]]]];
                 }
@@ -5223,7 +5243,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 if (lineBelow) {
                     [constraints addObject:[NSNumber numberWithDouble:[self _brightnessOfCharBackground:lineBelow[x1]]]];
                 }
-                if ([self _minimumDistanceOf:bgBrightness fromAnyValueIn:constraints] < 0.3) {
+                if ([self _minimumDistanceOf:bgBrightness fromAnyValueIn:constraints] < 0.5) {
                     CGFloat b = [self _farthestValueFromAnyValueIn:constraints];
                     bgColor = [NSColor colorWithCalibratedRed:b green:b blue:b alpha:1];
                 }
@@ -5269,21 +5289,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                 fgColor = screenChar.foregroundColor;
                                 fgAlt = screenChar.alternateForegroundSemantics;
                             }
-                            NSColor* proposedForeground = [[self colorForCode:fgColor
-                                                           alternateSemantics:fgAlt
-                                                                         bold:screenChar.bold] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-                            CGFloat fgBrightness = [proposedForeground brightnessComponent];
-                            CGFloat bgBrightness = [[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace] brightnessComponent];
-                            NSColor* overrideColor = nil;
-                            if (!frameOnly && fabs(fgBrightness - bgBrightness) < 0.3) {
-                                // foreground and background are very similar. Just use black and
-                                // white.
-                                if (bgBrightness < 0.5) {
-                                    overrideColor = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:1 green:1 blue:1 alpha:1]];
-                                } else {
-                                    overrideColor = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1]];
-                                }
-                            }
+
+                            // Pick background color for text if is key window, otherwise use fg color for text.
                             int theColor;
                             BOOL alt;
                             BOOL isBold;
@@ -5295,6 +5302,23 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                 theColor = screenChar.foregroundColor;
                                 alt = screenChar.alternateForegroundSemantics;
                                 isBold = screenChar.bold;
+                            }
+
+                            // Ensure text has enough contrast by making it black/white if the char's color would be close to the cursor bg.
+                            NSColor* proposedForeground = [[self colorForCode:fgColor
+                                                           alternateSemantics:fgAlt
+                                                                         bold:screenChar.bold] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+                            CGFloat fgBrightness = [self _perceivedBrightness:proposedForeground];
+                            CGFloat bgBrightness = [self _perceivedBrightness:[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
+                            NSColor* overrideColor = nil;
+                            if (!frameOnly && fabs(fgBrightness - bgBrightness) < 0.5) {
+                                // foreground and background are very similar. Just use black and
+                                // white.
+                                if (bgBrightness < 0.5) {
+                                    overrideColor = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:1 green:1 blue:1 alpha:1]];
+                                } else {
+                                    overrideColor = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1]];
+                                }
                             }
                             [self _drawCharacter:screenChar
                                          fgColor:theColor
