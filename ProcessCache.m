@@ -182,9 +182,14 @@ static ProcessCache* instance;
         [cache setObject:value forKey:tempPid];
         
         NSNumber* parent = [ancestry objectForKey:tempPid];
+        NSNumber *parent1 = parent;
         while (parent != nil) {
             [cache setObject:value forKey:parent];
             parent = [ancestry objectForKey:parent];
+            if (parent != nil && [parent compare:parent1] == NSOrderedSame) {
+                // See bug 771
+                break;
+            }
         }
     }
     
