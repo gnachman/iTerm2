@@ -1997,10 +1997,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (frontTextView == self &&
-        ([[self delegate] xtermMouseReporting]) &&
-        (locationInTextView.y > visibleRect.origin.y) &&
-        !([event modifierFlags] & NSAlternateKeyMask)) {
+    
+    if ([event eventNumber] != firstMouseEventNumber_ &&   // Not first mouse in formerly non-key app
+        frontTextView == self &&                           // Is active session's textview
+        ([[self delegate] xtermMouseReporting]) &&         // Xterm mouse reporting is on
+        (locationInTextView.y > visibleRect.origin.y) &&   // Not inside the top margin
+        !([event modifierFlags] & NSAlternateKeyMask)) {   // Not holding Opt to disable mouse reporting
         // Mouse reporting is on.
         int rx, ry;
         rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
