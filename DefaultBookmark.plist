@@ -539,7 +539,7 @@
 	<key>Window Type</key>
 	<integer>0</integer>
 	<key>Option Key Sends</key>
-	<integer>2</integer>
+	<integer>0</integer>
 	<key>Right Option Key Sends</key>
 	<integer>0</integer>
 	<key>Screen</key>
