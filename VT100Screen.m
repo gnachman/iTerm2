@@ -271,7 +271,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     result_line = NULL;
     screen_top = NULL;
 
-    temp_buffer=NULL;
+    temp_buffer = NULL;
     findContext.substring = nil;
 
     max_scrollback_lines = DEFAULT_SCROLLBACK;
@@ -3518,10 +3518,13 @@ void DumpBuf(screen_char_t* p, int n) {
 // adds a line to scrollback area. Returns YES if oldest line is lost, NO otherwise
 - (int)_addLineToScrollbackImpl
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s", __PRETTY_FUNCTION__);
-#endif
-
+    if (temp_buffer) {
+        // This is an experiment to not save to scrollback when we're in alternate
+        // screen mode. This was mentioned in a comment in bug 839 (though it's
+        // not really related).
+        return 0;
+    }
+    
     int len = WIDTH;
     if (screen_top[WIDTH].code == EOL_HARD) {
         // The line is not continued. Figure out its length by finding the last nonnull char.
