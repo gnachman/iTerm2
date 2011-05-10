@@ -182,14 +182,28 @@ static ProcessCache* instance;
         [cache setObject:value forKey:tempPid];
         
         NSNumber* parent = [ancestry objectForKey:tempPid];
-        NSNumber *parent1 = parent;
+        NSNumber* cycleFinder = parent;
         while (parent != nil) {
             [cache setObject:value forKey:parent];
-            parent = [ancestry objectForKey:parent];
-            if (parent != nil && [parent compare:parent1] == NSOrderedSame) {
-                // See bug 771
-                break;
+            
+            // cycleFinder moves through the chain of ancestry at twice the
+            // rate of parent. If it ever catches up to parent then there is a cycle.
+            // A cycle can occur because there's a race in getting each process's
+            // ppid. See bug 771 for details.
+            if (cycleFinder) {
+                cycleFinder = [ancestry objectForKey:cycleFinder];
+                if (cycleFinder && [cycleFinder isEqualToNumber:parent]) {
+                    break;
+                }
             }
+            if (cycleFinder) {
+                cycleFinder = [ancestry objectForKey:cycleFinder];
+                if (cycleFinder && [cycleFinder isEqualToNumber:parent]) {
+                    break;
+                }
+            }
+            
+            parent = [ancestry objectForKey:parent];
         }
     }
     
