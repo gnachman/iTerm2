@@ -2080,12 +2080,15 @@ void DumpBuf(screen_char_t* p, int n) {
     if (cursorY < SCROLL_BOTTOM ||
         (cursorY < (HEIGHT - 1) &&
          cursorY > SCROLL_BOTTOM)) {
+        // Do not scroll the screen; just move the cursor.
         [self setCursorX:cursorX Y:cursorY + 1];
         if (cursorX < WIDTH) {
             [self setCharAtCursorDirty:1];
         }
         DebugLog(@"setNewline advance cursor");
     } else if (SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT - 1) {
+        // Scroll the whole screen.
+        
         // Mark the cursor's previous location dirty. This fixes a rare race condition where
         // the cursor is not erased.
         [self setCharDirtyAtX:MAX(0, cursorX - 1)
@@ -2106,6 +2109,10 @@ void DumpBuf(screen_char_t* p, int n) {
         memcpy(aLine,
                [self _getDefaultLineWithWidth:WIDTH],
                REAL_WIDTH*sizeof(screen_char_t));
+        
+        // Mark everything dirty
+        [self setDirty];
+        
         DebugLog(@"setNewline scroll screen");
     } else {
         // We are scrolling within a strict subset of the screen.
@@ -3524,7 +3531,7 @@ void DumpBuf(screen_char_t* p, int n) {
         // not really related).
         return 0;
     }
-    
+  
     int len = WIDTH;
     if (screen_top[WIDTH].code == EOL_HARD) {
         // The line is not continued. Figure out its length by finding the last nonnull char.

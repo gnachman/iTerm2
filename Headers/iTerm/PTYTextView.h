@@ -67,7 +67,7 @@ typedef struct PTYFontInfo PTYFontInfo;
     // implementation bug?
     // Fortunately, the draggingEntered and draggingUpdated methods
     // seem to return a real status, based on which we can set this flag.
-    BOOL bExtendedDragNDrop;
+    BOOL extendedDragNDrop;
 
     // anti-alias flags
     BOOL asciiAntiAlias;

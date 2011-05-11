@@ -2834,10 +2834,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 //
 - (unsigned int)draggingEntered:(id <NSDraggingInfo>)sender
 {
-    // Always say YES; handle failure later.
-    bExtendedDragNDrop = YES;
+    extendedDragNDrop = YES;
 
-    return bExtendedDragNDrop;
+    // Always say YES; handle failure later.
+    return YES;
 }
 
 //
@@ -2848,11 +2848,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     unsigned int iResult;
 
     // Let's see if our parent NSTextView knows what to do
-    iResult = [super draggingUpdated: sender];
+    iResult = [super draggingUpdated:sender];
 
     // If parent class does not know how to deal with this drag type, check if we do.
-    if (iResult == NSDragOperationNone) // Parent NSTextView does not support this drag type.
-        return [self _checkForSupportedDragTypes: sender];
+    if (iResult == NSDragOperationNone) {  // Parent NSTextView does not support this drag type.
+        return [self _checkForSupportedDragTypes:sender];
+    }
 
     return iResult;
 }
@@ -2863,10 +2864,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)draggingExited:(id <NSDraggingInfo>)sender
 {
     // We don't do anything special, so let the parent NSTextView handle this.
-    [super draggingExited: sender];
+    [super draggingExited:sender];
 
     // Reset our handler flag
-    bExtendedDragNDrop = NO;
+    extendedDragNDrop = NO;
 }
 
 //
@@ -2874,16 +2875,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 //
 - (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender
 {
-    BOOL bResult;
+    BOOL result;
 
     // Check if parent NSTextView knows how to handle this.
-    bResult = [super prepareForDragOperation: sender];
+    result = [super prepareForDragOperation: sender];
 
     // If parent class does not know how to deal with this drag type, check if we do.
-    if ( bResult != YES && [self _checkForSupportedDragTypes: sender] != NSDragOperationNone )
-        bResult = YES;
+    if (result != YES &&
+        [self _checkForSupportedDragTypes:sender] != NSDragOperationNone) {
+        result = YES;
+    }
 
-    return bResult;
+    return result;
 }
 
 //
@@ -2892,78 +2895,67 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (BOOL)performDragOperation:(id <NSDraggingInfo>)sender
 {
     unsigned int dragOperation;
-    BOOL bResult = NO;
     PTYSession *delegate = [self delegate];
-
+    
     // If parent class does not know how to deal with this drag type, check if we do.
-    if (bExtendedDragNDrop)
-    {
+    if (extendedDragNDrop) {
         NSPasteboard *pb = [sender draggingPasteboard];
         NSArray *propertyList;
         NSString *aString;
         int i;
-
+        
         dragOperation = [self _checkForSupportedDragTypes: sender];
-
-        switch (dragOperation)
-        {
-            case NSDragOperationCopy:
-                // Check for simple strings first
-                aString = [pb stringForType:NSStringPboardType];
-                if (aString != nil)
-                {
-                    if ([delegate respondsToSelector:@selector(pasteString:)])
-                        [delegate pasteString: aString];
+        
+        if (dragOperation == NSDragOperationCopy) {
+            // Check for simple strings first
+            aString = [pb stringForType:NSStringPboardType];
+            if (aString != nil) {
+                if ([delegate respondsToSelector:@selector(pasteString:)]) {
+                    [delegate pasteString: aString];
                 }
-
-                // Check for file names
-                propertyList = [pb propertyListForType: NSFilenamesPboardType];
-                for (i = 0; i < (int)[propertyList count]; i++) {
-
-                    // Ignore text clippings
-                    NSString *filename = (NSString*)[propertyList objectAtIndex: i]; // this contains the POSIX path to a file
-                    NSDictionary *filenamesAttributes = [[NSFileManager defaultManager] fileAttributesAtPath:filename traverseLink:YES];
-                    if (([filenamesAttributes fileHFSTypeCode] == 'clpt' &&
-                         [filenamesAttributes fileHFSCreatorCode] == 'MACS') ||
-                        [[filename pathExtension] isEqualToString:@"textClipping"] == YES)
-                    {
-                        continue;
-                    }
-
-                    // Just paste the file names into the shell after escaping special characters.
-                    if ([delegate respondsToSelector:@selector(pasteString:)])
-                    {
-                        NSMutableString *path;
-
-                        path = [[NSMutableString alloc] initWithString:(NSString*)[propertyList objectAtIndex: i]];
-
-                        // get rid of special characters
-                        [delegate pasteString:[path stringWithEscapedShellCharacters]];
-                        [delegate pasteString:@" "];
-                        [path release];
-                    }
-
+            }
+            
+            // Check for file names
+            propertyList = [pb propertyListForType: NSFilenamesPboardType];
+            for (i = 0; i < (int)[propertyList count]; i++) {
+                // Ignore text clippings
+                NSString *filename = (NSString*)[propertyList objectAtIndex:i];  // this contains the POSIX path to a file
+                NSDictionary *filenamesAttributes = [[NSFileManager defaultManager] fileAttributesAtPath:filename
+                                                                                            traverseLink:YES];
+                if (([filenamesAttributes fileHFSTypeCode] == 'clpt' &&
+                     [filenamesAttributes fileHFSCreatorCode] == 'MACS') ||
+                    [[filename pathExtension] isEqualToString:@"textClipping"] == YES) {
+                    continue;
                 }
-                bResult = YES;
-                break;
+                
+                // Just paste the file names into the shell after escaping special characters.
+                if ([delegate respondsToSelector:@selector(pasteString:)]) {
+                    NSMutableString *path;
+                    
+                    path = [[NSMutableString alloc] initWithString:(NSString*)[propertyList objectAtIndex:i]];
+                    
+                    // get rid of special characters
+                    [delegate pasteString:[path stringWithEscapedShellCharacters]];
+                    [delegate pasteString:@" "];
+                    [path release];
+                }
+            }
+            return YES;
         }
-
     }
 
-    return bResult;
+    return NO;
 }
 
-//
-//
-//
 - (void)concludeDragOperation:(id <NSDraggingInfo>)sender
 {
     // If we did no handle the drag'n'drop, ask our parent to clean up
     // I really wish the concludeDragOperation would have a useful exit value.
-    if (!bExtendedDragNDrop)
-        [super concludeDragOperation: sender];
+    if (!extendedDragNDrop) {
+        [super concludeDragOperation:sender];
+    }
 
-    bExtendedDragNDrop = NO;
+    extendedDragNDrop = NO;
 }
 
 - (void)resetCursorRects
@@ -2975,15 +2967,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // Save method
 - (void)saveDocumentAs:(id)sender
 {
-
     NSData *aData;
     NSSavePanel *aSavePanel;
     NSString *aString;
 
     // We get our content of the textview or selection, if any
     aString = [self selectedText];
-    if (!aString) aString = [self content];
-
+    if (!aString) {
+        aString = [self content];
+    }
+    
     aData = [aString dataUsingEncoding:[[dataSource session] encoding]
                   allowLossyConversion:YES];
 
@@ -3017,8 +3010,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int lineOffset, numLines;
     int type = sender ? [sender tag] : 0;
 
-    switch (type)
-    {
+    switch (type) {
         case 0: // visible range
             visibleRect = [[self enclosingScrollView] documentVisibleRect];
             // Starting from which line?
