@@ -135,6 +135,10 @@ static NSDate* lastResizeDate_;
     previousUpdate_ = [[NSDate date] retain];
     const double kAnimationDuration = 0.1;
     changePerSecond_ = (targetDimmingAmount_ - currentDimmingAmount_) / kAnimationDuration;
+    if (changePerSecond_ == 0) {
+        // Nothing to do.
+        return;
+    }
     if (timer_) {
         [timer_ invalidate];
         timer_ = nil;
