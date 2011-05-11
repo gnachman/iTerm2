@@ -230,6 +230,7 @@ static const int ambiguous_chars[] = {
     [aMutableString replaceOccurrencesOfString: @"\"" withString: @"\\\"" options: 0 range: NSMakeRange(0, [aMutableString length])];
     [aMutableString replaceOccurrencesOfString: @"&" withString: @"\\&" options: 0 range: NSMakeRange(0, [aMutableString length])];
     [aMutableString replaceOccurrencesOfString: @"'" withString: @"\\'" options: 0 range: NSMakeRange(0, [aMutableString length])];
+    [aMutableString replaceOccurrencesOfString: @"!" withString: @"\\!" options: 0 range: NSMakeRange(0, [aMutableString length])];
 
     NSString *ret = [NSString stringWithString: aMutableString];
     [aMutableString release];
