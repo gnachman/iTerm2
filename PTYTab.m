@@ -2489,7 +2489,6 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         [self setIsProcessing:YES];
     }
 
-    NSLog(@"Time since resize=%lf", [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]]);
     if (![[self activeSession] growlNewOutput] &&
         ![[self parentWindow] sendInputToAllSessions] &&
         [[[self activeSession] SCREEN] growl] &&
