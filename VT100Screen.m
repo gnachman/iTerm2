@@ -414,7 +414,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer
 {
-    NSAssert([linebuffer numLinesWithWidth: WIDTH] == current_scrollback_lines, @"Scrollback mismatch");
+    assert([linebuffer numLinesWithWidth: WIDTH] == current_scrollback_lines);
     if (theIndex >= current_scrollback_lines) {
         // Get a line from the circular screen buffer
         return [self _getLineAtIndex:(theIndex - current_scrollback_lines)

@@ -757,14 +757,14 @@ static int Search(NSString* needle,
 
 - (int) _findEntryBeforeOffset: (int) offset
 {
-    NSAssert(offset >= start_offset, @"Offset before start_offset");
+    assert(offset >= start_offset);
     int i;
     for (i = first_entry; i < cll_entries; ++i) {
         if (cumulative_line_lengths[i] > offset) {
             return i;
         }
     }
-    NSAssert(NO, @"Offset not in block");
+    assert(false);
     return cll_entries - 1;
 }
 
