@@ -532,15 +532,28 @@ static BOOL initDone = NO;
 
     if (openAllSelector && count > 1) {
         [subMenu addItem:[NSMenuItem separatorItem]];
-        aMenuItem = [[NSMenuItem alloc] initWithTitle:
-                     NSLocalizedStringFromTableInBundle(@"Open All",
-                                                        @"iTerm",
-                                                        [NSBundle bundleForClass: [iTermController class]],
-                                                        @"Context Menu")
+        aMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open All"
                                                action:openAllSelector
                                         keyEquivalent:@""];
         unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
         [aMenuItem setKeyEquivalentModifierMask:modifierMask];
+        [aMenuItem setRepresentedObject:subMenu];
+        if ([self respondsToSelector:openAllSelector]) {
+            [aMenuItem setTarget:self];
+        } else {
+            assert([aTarget respondsToSelector:openAllSelector]);
+            [aMenuItem setTarget:aTarget];
+        }
+        [subMenu addItem:aMenuItem];
+        [aMenuItem release];
+
+        // Add alternate -------------------------------------------------------
+        aMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open All in New Window"
+                                               action:openAllSelector
+                                        keyEquivalent:@""];
+        modifierMask = NSCommandKeyMask | NSControlKeyMask;
+        [aMenuItem setAlternate:YES];
+        [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSAlternateKeyMask];
         [aMenuItem setRepresentedObject:subMenu];
         if ([self respondsToSelector:openAllSelector]) {
             [aMenuItem setTarget:self];
@@ -573,9 +586,9 @@ static BOOL initDone = NO;
     [self _newSessionsInManyWindowsInMenu:[sender representedObject]];
 }
 
-- (void)_openNewSessionsInWindow:(NSMenu*)parent
+- (PseudoTerminal*)_openNewSessionsFromMenu:(NSMenu*)parent inNewWindow:(BOOL)newWindow
 {
-    PseudoTerminal* term = [self currentTerminal];
+    PseudoTerminal* term = newWindow ? nil : [self currentTerminal];
     for (NSMenuItem* item in [parent itemArray]) {
         if (![item isSeparatorItem] && ![item submenu] && ![item isAlternate]) {
             NSString* guid = [item representedObject];
@@ -590,14 +603,16 @@ static BOOL initDone = NO;
             }
         } else if (![item isSeparatorItem] && [item submenu] && ![item isAlternate]) {
             NSMenu* sub = [item submenu];
-            [self _openNewSessionsInWindow:sub];
+            term = [self _openNewSessionsFromMenu:sub inNewWindow:(term == nil)];
         }
     }
+
+    return term;
 }
 
 - (void)newSessionsInWindow:(id)sender
 {
-    [self _openNewSessionsInWindow:[sender representedObject]];
+    [self _openNewSessionsFromMenu:[sender representedObject] inNewWindow:[sender isAlternate]];
 }
 
 - (void)addBookmarksToMenu:(NSMenu *)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts selector:(SEL)selector openAllSelector:(SEL)openAllSelector alternateSelector:(SEL)alternateSelector
@@ -630,15 +645,28 @@ static BOOL initDone = NO;
 
     if (count > 1) {
         [aMenu addItem:[NSMenuItem separatorItem]];
-        NSMenuItem* aMenuItem = [[NSMenuItem alloc] initWithTitle:
-                                 NSLocalizedStringFromTableInBundle(@"Open All",
-                                                                    @"iTerm",
-                                                                    [NSBundle bundleForClass: [iTermController class]],
-                                                                    @"Context Menu")
+        NSMenuItem* aMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open All"
                                                            action:openAllSelector
                                                     keyEquivalent:@""];
         unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
         [aMenuItem setKeyEquivalentModifierMask:modifierMask];
+        [aMenuItem setRepresentedObject:aMenu];
+        if ([self respondsToSelector:openAllSelector]) {
+            [aMenuItem setTarget:self];
+        } else {
+            assert([aTarget respondsToSelector:openAllSelector]);
+            [aMenuItem setTarget:aTarget];
+        }
+        [aMenu addItem:aMenuItem];
+        [aMenuItem release];
+
+        // Add alternate -------------------------------------------------------
+        aMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open All in New Window"
+                                               action:openAllSelector
+                                        keyEquivalent:@""];
+        modifierMask = NSCommandKeyMask | NSControlKeyMask;
+        [aMenuItem setAlternate:YES];
+        [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSAlternateKeyMask];
         [aMenuItem setRepresentedObject:aMenu];
         if ([self respondsToSelector:openAllSelector]) {
             [aMenuItem setTarget:self];
