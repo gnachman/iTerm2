@@ -379,7 +379,7 @@ setup_tty_param(
     term->c_cc[VDISCARD] = -1;
     term->c_cc[VMIN] = 1;
     term->c_cc[VTIME] = 0;
-    term->c_cc[VSTATUS] = -1;
+    term->c_cc[VSTATUS] = CTRLKEY('T');
 
     term->c_ispeed = B38400;
     term->c_ospeed = B38400;
