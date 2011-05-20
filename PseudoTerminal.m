@@ -215,7 +215,7 @@ NSString *sessionsKey = @"sessions";
             initialFrame = [screen visibleFrame];
             break;
 
-        case WINDOW_TYPE_FULL_SCREEN:
+        case WINDOW_TYPE_FORCE_FULL_SCREEN:
             oldFrame_ = [[self window] frame];
             initialFrame = [screen frame];
             break;
@@ -224,6 +224,7 @@ NSString *sessionsKey = @"sessions";
             PtyLog(@"Unknown window type: %d", (int)windowType);
             NSLog(@"Unknown window type: %d", (int)windowType);
             // fall through
+        case WINDOW_TYPE_FULL_SCREEN:
         case WINDOW_TYPE_NORMAL:
             // Use the system-supplied frame which has a reasonable origin. It may
             // be overridden by smart window placement or a saved window location.
@@ -234,7 +235,7 @@ NSString *sessionsKey = @"sessions";
 
     PtyLog(@"initWithSmartLayout - initWithContentRect");
     myWindow = [[PTYWindow alloc] initWithContentRect:initialFrame
-                                            styleMask:(windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_FULL_SCREEN) ? NSBorderlessWindowMask : styleMask
+                                            styleMask:(windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_FORCE_FULL_SCREEN) ? NSBorderlessWindowMask : styleMask
                                               backing:NSBackingStoreBuffered
                                                 defer:NO];
     if (windowType == WINDOW_TYPE_TOP) {
@@ -246,7 +247,7 @@ NSString *sessionsKey = @"sessions";
     [self setWindow:myWindow];
     [myWindow release];
 
-    _fullScreen = (windowType == WINDOW_TYPE_FULL_SCREEN);
+    _fullScreen = (windowType == WINDOW_TYPE_FORCE_FULL_SCREEN);
     if (_fullScreen) {
         background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor blackColor]];
     } else {
@@ -263,7 +264,7 @@ NSString *sessionsKey = @"sessions";
 
     _resizeInProgressFlag = NO;
 
-    if (!smartLayout || windowType == WINDOW_TYPE_FULL_SCREEN) {
+    if (!smartLayout || windowType == WINDOW_TYPE_FORCE_FULL_SCREEN) {
         [(PTYWindow*)[self window] setLayoutDone];
     }
 
@@ -353,7 +354,9 @@ NSString *sessionsKey = @"sessions";
     useTransparency_ = YES;
 
     number_ = [[iTermController sharedInstance] allocateWindowNumber];
-
+    if (windowType == WINDOW_TYPE_FORCE_FULL_SCREEN) {
+        windowType_ = WINDOW_TYPE_FULL_SCREEN;
+    }
     return self;
 }
 
@@ -765,7 +768,7 @@ NSString *sessionsKey = @"sessions";
 
     if (windowType == WINDOW_TYPE_FULL_SCREEN) {
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
-                                                 windowType:windowType
+                                                 windowType:WINDOW_TYPE_FORCE_FULL_SCREEN
                                                      screen:screenIndex] autorelease];
 
         NSRect rect;
@@ -1264,7 +1267,7 @@ NSString *sessionsKey = @"sessions";
     if (!_fullScreen) {
         NSScreen *currentScreen = [[[[iTermController sharedInstance] currentTerminal] window] screen];
         newTerminal = [[PseudoTerminal alloc] initWithSmartLayout:NO
-                                                       windowType:WINDOW_TYPE_FULL_SCREEN
+                                                       windowType:WINDOW_TYPE_FORCE_FULL_SCREEN
                                                            screen:[[NSScreen screens] indexOfObjectIdenticalTo:currentScreen]];
         newTerminal->oldFrame_ = [[self window] frame];
         [[newTerminal window] setOpaque:NO];
@@ -1934,7 +1937,7 @@ NSString *sessionsKey = @"sessions";
 
     // create a new terminal window
     term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
-                                             windowType:windowType_
+                                             windowType:windowType_ == WINDOW_TYPE_FULL_SCREEN ? WINDOW_TYPE_FORCE_FULL_SCREEN : windowType_
                                                  screen:screen] autorelease];
     if (term == nil) {
       return nil;
@@ -2529,7 +2532,7 @@ NSString *sessionsKey = @"sessions";
     PtyLog(@"fitWindowToTabs.......");
     for (NSTabViewItem* item in [TABVIEW tabViewItems]) {
         PTYTab* tab = [item identifier];
-        NSSize tabSize = [tab size];
+        NSSize tabSize = [tab currentSize];
         PtyLog(@"The natrual size of this tab is %lf", tabSize.height);
         if (tabSize.width > maxTabSize.width) {
             maxTabSize.width = tabSize.width;
@@ -3536,7 +3539,11 @@ NSString *sessionsKey = @"sessions";
         // create a new tab
         PTYTab* aTab = [[PTYTab alloc] initWithSession:aSession];
         [aSession setIgnoreResizeNotifications:YES];
+        if ([self numberOfTabs] == 0) {
+            [aTab setReportIdealSizeAsCurrent:YES];
+        }
         [self insertTab:aTab atIndex:anIndex];
+        [aTab setReportIdealSizeAsCurrent:NO];
         [aTab release];
     }
 }
@@ -4350,6 +4357,7 @@ NSString *sessionsKey = @"sessions";
     }
 
     // If we have not set up a window, do it now
+    BOOL toggle = NO;
     if ([self windowInited] == NO) {
         int windowType = [abEntry objectForKey:KEY_WINDOW_TYPE] ? [[abEntry objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL;
         if (windowType == WINDOW_TYPE_FULL_SCREEN) {
@@ -4360,11 +4368,15 @@ NSString *sessionsKey = @"sessions";
         [self initWithSmartLayout:NO 
                        windowType:windowType
                            screen:-1];
+        toggle = windowType == WINDOW_TYPE_FULL_SCREEN;
     }
 
     // launch the session!
     id rv = [[iTermController sharedInstance] launchBookmark:abEntry
                                                  inTerminal:self];
+    if (toggle) {
+        [self toggleFullScreenMode:self];
+    }
     return rv;
 }
 

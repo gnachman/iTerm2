@@ -86,6 +86,9 @@ static const int MIN_SESSION_COLUMNS = 2;
     // This is >0 if currently inside setActiveSessionPreservingViewOrder, and the
     // view order should not be changed.
     int preserveOrder_;
+
+    // If true, report that the tab's ideal size is its currentSize.
+    BOOL reportIdeal_;
 }
 
 // init/dealloc
@@ -146,6 +149,8 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession;
 - (BOOL)hasMultipleSessions;
 - (NSSize)size;
+- (void)setReportIdealSizeAsCurrent:(BOOL)v;
+- (NSSize)currentSize;
 - (NSSize)minSize;
 - (void)setSize:(NSSize)newSize;
 - (PTYSession*)sessionLeftOf:(PTYSession*)session;

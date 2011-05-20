@@ -1327,6 +1327,21 @@ static NSString* FormatRect(NSRect r) {
     return [self _recursiveSize:root_ containsLock:&ignore];
 }
 
+- (void)setReportIdealSizeAsCurrent:(BOOL)v
+{
+    reportIdeal_ = v;
+}
+
+// This returns the current size
+- (NSSize)currentSize
+{
+    if (reportIdeal_) {
+        return [self size];
+    } else {
+        return [root_ frame].size;
+    }
+}
+
 - (NSSize)minSize
 {
     return [self _recursiveMinSize:root_];

@@ -724,18 +724,22 @@ static BOOL initDone = NO;
     }
 
     // Where do we execute this command?
+    BOOL toggle = NO;
     if (theTerm == nil) {
         [iTermController switchToSpaceInBookmark:aDict];
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES 
                                                  windowType:[aDict objectForKey:KEY_WINDOW_TYPE] ? [[aDict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL
                                                      screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
         [self addInTerminals:term];
+        toggle = [term windowType] == WINDOW_TYPE_FULL_SCREEN;
     } else {
         term = theTerm;
     }
 
     PTYSession* session = [term addNewSession:aDict];
-
+    if (toggle) {
+        [term toggleFullScreenMode:nil];
+    }
     // This function is activated from the dock icon's context menu so make sure
     // that the new window is on top of all other apps' windows. For some reason,
     // makeKeyAndOrderFront does nothing.
@@ -764,17 +768,23 @@ static BOOL initDone = NO;
     }
 
     // Where do we execute this command?
+    BOOL toggle = NO;
     if (theTerm == nil) {
         [iTermController switchToSpaceInBookmark:aDict];
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES 
                                                  windowType:[aDict objectForKey:KEY_WINDOW_TYPE] ? [[aDict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL
                                                      screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
         [self addInTerminals:term];
+        toggle = [term windowType] == WINDOW_TYPE_FULL_SCREEN;
     } else {
         term = theTerm;
     }
 
-    return [term addNewSession:aDict withCommand:command asLoginSession:NO];
+    id result = [term addNewSession:aDict withCommand:command asLoginSession:NO];
+    if (toggle) {
+        [term toggleFullScreenMode:nil];
+    }
+    return result;
 }
 
 - (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm withURL:(NSString *)url
@@ -841,17 +851,23 @@ static BOOL initDone = NO;
     }
 
     // Where do we execute this command?
+    BOOL toggle = NO;
     if (theTerm == nil) {
         [iTermController switchToSpaceInBookmark:aDict];
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                  windowType:[aDict objectForKey:KEY_WINDOW_TYPE] ? [[aDict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL
                                                      screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
         [self addInTerminals: term];
+        toggle = [term windowType] == WINDOW_TYPE_FULL_SCREEN;
     } else {
         term = theTerm;
     }
 
-    return [term addNewSession: aDict withURL: url];
+    id result = [term addNewSession: aDict withURL: url];
+    if (toggle) {
+        [term toggleFullScreenMode:nil];
+    }
+    return result;
 }
 
 - (void)launchScript:(id)sender
