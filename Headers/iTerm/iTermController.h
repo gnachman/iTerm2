@@ -34,6 +34,7 @@
 @class PTYTextView;
 @class ItermGrowlDelegate;
 @class PasteboardHistory;
+@class GTMCarbonHotKey;
 
 @interface iTermController : NSObject
 {
@@ -45,6 +46,9 @@
     // App-wide hotkey
     int hotkeyCode_;
     int hotkeyModifiers_;
+
+    GTMCarbonHotKey* carbonHotKey_;
+
     CFMachPortRef machPortRef;
     CFRunLoopSourceRef eventSrc;
     int keyWindowIndexMemo_;
