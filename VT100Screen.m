@@ -2109,10 +2109,12 @@ void DumpBuf(screen_char_t* p, int n) {
         memcpy(aLine,
                [self _getDefaultLineWithWidth:WIDTH],
                REAL_WIDTH*sizeof(screen_char_t));
-        
-        // Mark everything dirty
-        [self setDirty];
-        
+
+        // Mark everything dirty if we're not using the scrollback buffer
+        if (temp_buffer) {
+            [self setDirty];
+        }
+
         DebugLog(@"setNewline scroll screen");
     } else {
         // We are scrolling within a strict subset of the screen.
