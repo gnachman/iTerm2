@@ -828,8 +828,14 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         // A special action was bound to this key combination.
         NSString *aString;
 
-        if (keyBindingAction == KEY_ACTION_NEXT_SESSION ||
-            keyBindingAction == KEY_ACTION_PREVIOUS_SESSION) {
+        NSString* temp;
+        int profileAction = [iTermKeyBindingMgr localActionForKeyCode:unmodunicode
+                                                            modifiers:modflag
+                                                                 text:&temp
+                                                          keyMappings:[[self addressBookEntry] objectForKey:KEY_KEYBOARD_MAP]];
+        if (profileAction == keyBindingAction &&  // Don't warn if it's a global mapping
+            (keyBindingAction == KEY_ACTION_NEXT_SESSION ||
+             keyBindingAction == KEY_ACTION_PREVIOUS_SESSION)) {
             // Warn users about outdated default key bindings.
             int tempMods = modflag & (NSAlternateKeyMask | NSControlKeyMask | NSShiftKeyMask | NSCommandKeyMask);
             int tempKeyCode = unmodunicode;
