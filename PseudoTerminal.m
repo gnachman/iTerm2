@@ -350,11 +350,7 @@ NSString *sessionsKey = @"sessions";
     if (_fullScreen) {
         [self hideMenuBar];
     }
-    if (windowType != WINDOW_TYPE_FULL_SCREEN) {
-        useTransparency_ = YES;
-    } else {
-        useTransparency_ = NO;
-    }
+    useTransparency_ = YES;
 
     number_ = [[iTermController sharedInstance] allocateWindowNumber];
 
