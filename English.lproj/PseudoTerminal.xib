@@ -2,19 +2,20 @@
 <archive type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="7.10">
 	<data>
 		<int key="IBDocument.SystemTarget">1050</int>
-		<string key="IBDocument.SystemVersion">10F569</string>
-		<string key="IBDocument.InterfaceBuilderVersion">788</string>
-		<string key="IBDocument.AppKitVersion">1038.29</string>
+		<string key="IBDocument.SystemVersion">10J869</string>
+		<string key="IBDocument.InterfaceBuilderVersion">804</string>
+		<string key="IBDocument.AppKitVersion">1038.35</string>
 		<string key="IBDocument.HIToolboxVersion">461.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
-			<string key="NS.object.0">788</string>
+			<string key="NS.object.0">804</string>
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="351"/>
 			<integer value="514"/>
+			<integer value="519"/>
 			<integer value="377"/>
+			<integer value="351"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -36,7 +37,7 @@
 				<string key="NSClassName">NSApplication</string>
 			</object>
 			<object class="NSCustomView" id="526825131">
-				<nil key="NSNextResponder"/>
+				<reference key="NSNextResponder"/>
 				<int key="NSvFlags">256</int>
 				<object class="NSMutableArray" key="NSSubviews">
 					<bool key="EncodedWithXMLCoder">YES</bool>
@@ -80,6 +81,7 @@
 					</object>
 				</object>
 				<string key="NSFrameSize">{126, 22}</string>
+				<reference key="NSSuperview"/>
 				<object class="NSMutableString" key="NSClassName">
 					<characters key="NS.bytes">NSView</characters>
 				</object>
@@ -520,6 +522,46 @@
 					</object>
 					<int key="connectionID">522</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">nextKeyView</string>
+						<reference key="source" ref="794792838"/>
+						<reference key="destination" ref="154611239"/>
+					</object>
+					<int key="connectionID">530</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">initialFirstResponder</string>
+						<reference key="source" ref="1029067747"/>
+						<reference key="destination" ref="794792838"/>
+					</object>
+					<int key="connectionID">531</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">nextKeyView</string>
+						<reference key="source" ref="127562589"/>
+						<reference key="destination" ref="728167634"/>
+					</object>
+					<int key="connectionID">532</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">nextKeyView</string>
+						<reference key="source" ref="728167634"/>
+						<reference key="destination" ref="106980984"/>
+					</object>
+					<int key="connectionID">533</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">nextKeyView</string>
+						<reference key="source" ref="952750523"/>
+						<reference key="destination" ref="106980984"/>
+					</object>
+					<int key="connectionID">534</int>
+				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<object class="NSArray" key="orderedObjects">
@@ -797,6 +839,7 @@
 					<string>353.IBPluginDependency</string>
 					<string>353.ImportedFromIB2</string>
 					<string>354.IBPluginDependency</string>
+					<string>354.IBViewBoundsToFrameTransform</string>
 					<string>354.ImportedFromIB2</string>
 					<string>355.IBPluginDependency</string>
 					<string>355.ImportedFromIB2</string>
@@ -852,6 +895,9 @@
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<object class="NSAffineTransform">
+						<bytes key="NSTransformStruct">P4AAAL+AAABC1gAAwogAAA</bytes>
+					</object>
 					<boolean value="YES"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<boolean value="YES"/>
@@ -910,7 +956,7 @@
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">527</int>
+			<int key="maxID">534</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -938,6 +984,13 @@
 					</object>
 				</object>
 				<object class="IBPartialClassDescription">
+					<string key="className">NSWindow</string>
+					<object class="IBClassDescriptionSource" key="sourceIdentifier">
+						<string key="majorKey">IBProjectSource</string>
+						<string key="minorKey">Headers/iTerm/PTYWindow.h</string>
+					</object>
+				</object>
+				<object class="IBPartialClassDescription">
 					<string key="className">PseudoTerminal</string>
 					<string key="superclassName">NSWindowController</string>
 					<object class="NSMutableDictionary" key="actions">
@@ -961,10 +1014,12 @@
 							<string>logStop:</string>
 							<string>moveTabToNewWindowContextualMenuAction:</string>
 							<string>newSessionInTabAtIndex:</string>
+							<string>nextPane:</string>
 							<string>nextTab:</string>
 							<string>openAutocomplete:</string>
 							<string>openPasteHistory:</string>
 							<string>parameterPanelEnd:</string>
+							<string>previousPane:</string>
 							<string>previousTab:</string>
 							<string>reset:</string>
 							<string>saveScrollPosition:</string>
@@ -976,7 +1031,7 @@
 							<string>sendCommand:</string>
 							<string>splitHorizontally:</string>
 							<string>splitVertically:</string>
-							<string>toggleFullScreen:</string>
+							<string>toggleFullScreenMode:</string>
 							<string>toggleInputToAllSessions:</string>
 							<string>toggleUseTransparency:</string>
 							<string>windowDeminiaturize:</string>
@@ -988,6 +1043,8 @@
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>id</string>
+							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -1052,10 +1109,12 @@
 							<string>logStop:</string>
 							<string>moveTabToNewWindowContextualMenuAction:</string>
 							<string>newSessionInTabAtIndex:</string>
+							<string>nextPane:</string>
 							<string>nextTab:</string>
 							<string>openAutocomplete:</string>
 							<string>openPasteHistory:</string>
 							<string>parameterPanelEnd:</string>
+							<string>previousPane:</string>
 							<string>previousTab:</string>
 							<string>reset:</string>
 							<string>saveScrollPosition:</string>
@@ -1067,7 +1126,7 @@
 							<string>sendCommand:</string>
 							<string>splitHorizontally:</string>
 							<string>splitVertically:</string>
-							<string>toggleFullScreen:</string>
+							<string>toggleFullScreenMode:</string>
 							<string>toggleInputToAllSessions:</string>
 							<string>toggleUseTransparency:</string>
 							<string>windowDeminiaturize:</string>
@@ -1148,6 +1207,10 @@
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
+								<string key="name">nextPane:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
 								<string key="name">nextTab:</string>
 								<string key="candidateClassName">id</string>
 							</object>
@@ -1161,6 +1224,10 @@
 							</object>
 							<object class="IBActionInfo">
 								<string key="name">parameterPanelEnd:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
+								<string key="name">previousPane:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
@@ -1208,7 +1275,7 @@
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
-								<string key="name">toggleFullScreen:</string>
+								<string key="name">toggleFullScreenMode:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">
@@ -2015,7 +2082,7 @@
 				<string>{12, 13}</string>
 				<string>{9, 9}</string>
 				<string>{9, 9}</string>
-				<string>{128, 128}</string>
+				<string>{512, 512}</string>
 			</object>
 		</object>
 	</data>
