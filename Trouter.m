@@ -187,10 +187,23 @@
 {
     BOOL isDirectory;
     NSString* lineNumber;
+    NSString *orgPath = path;
 
     path = [self getFullPath:path
             workingDirectory:workingDirectory
                   lineNumber:&lineNumber];
+
+    // if path doesn't exist and it starts with "a/" or "b/" (from `diff`)
+    if (![fileManager fileExistsAtPath:path] && [orgPath isMatchedByRegex:@"^[ab]/"]) {
+        // strip the prefix off ...
+        path = [orgPath stringByReplacingOccurrencesOfRegex:@"^[ab]/"
+                                                 withString:@""];
+
+        // ... and calculate the full path again
+        path = [self getFullPath:path
+                workingDirectory:workingDirectory
+                      lineNumber:&lineNumber];
+    }
 
     if (![fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
         return NO;
