@@ -547,9 +547,12 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (IBAction)removeMapping:(id)sender;
 - (IBAction)globalRemoveMapping:(id)sender;
 - (void)setKeyMappingsToPreset:(NSString*)presetName;
+
 - (IBAction)useXtermKeyMappings:(id)sender;
 - (IBAction)useXtermWithNumKeyMappings:(id)sender;
 - (IBAction)useFactoryGlobalKeyMappings:(id)sender;
+- (IBAction)useXtermWithFixTerm:(id)sender;
+
 - (void)_loadPresetColors:(NSString*)presetName;
 - (void)loadColorPreset:(id)sender;
 - (IBAction)addBookmark:(id)sender;

@@ -2900,6 +2900,11 @@ static float versionNumber;
     [self setGlobalKeyMappingsToPreset:@"Factory Defaults"];
 }
 
+- (IBAction)useXtermWithFixTerm:(id)sender
+{
+    [self setKeyMappingsToPreset:@"xterm with FixTerm"];
+}
+
 - (void)_loadPresetColors:(NSString*)presetName
 {
     NSString* guid = [bookmarksTableView selectedGuid];
