@@ -584,27 +584,42 @@ static BOOL initDone = NO;
 
 - (void)newSessionsInManyWindows:(id)sender
 {
-    [self _newSessionsInManyWindowsInMenu:[sender representedObject]];
+    [self _newSessionsInManyWindowsInMenu:[sender menu]];
 }
 
-- (PseudoTerminal*)_openNewSessionsFromMenu:(NSMenu*)parent inNewWindow:(BOOL)newWindow
+- (PseudoTerminal*)_openNewSessionsFromMenu:(NSMenu*)parent inNewWindow:(BOOL)newWindow usedGuids:(NSMutableSet*)usedGuids bookmarks:(NSMutableArray*)bookmarks
 {
+    BOOL doOpen = usedGuids == nil;
+    if (doOpen) {
+        usedGuids = [NSMutableSet setWithCapacity:[[BookmarkModel sharedInstance] numberOfBookmarks]];
+        bookmarks = [NSMutableArray arrayWithCapacity:[[BookmarkModel sharedInstance] numberOfBookmarks]];
+    }
+
     PseudoTerminal* term = newWindow ? nil : [self currentTerminal];
     for (NSMenuItem* item in [parent itemArray]) {
         if (![item isSeparatorItem] && ![item submenu] && ![item isAlternate]) {
             NSString* guid = [item representedObject];
             Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
             if (bookmark) {
-                if (!term) {
-                    PTYSession* session = [self launchBookmark:bookmark inTerminal:nil];
-                    term = [[session tab] realParentWindow];
-                } else {
-                    [self launchBookmark:bookmark inTerminal:term];
+                if (![usedGuids containsObject:guid]) {
+                    [usedGuids addObject:guid];
+                    [bookmarks addObject:bookmark];
                 }
             }
         } else if (![item isSeparatorItem] && [item submenu] && ![item isAlternate]) {
             NSMenu* sub = [item submenu];
-            term = [self _openNewSessionsFromMenu:sub inNewWindow:(term == nil)];
+            term = [self _openNewSessionsFromMenu:sub inNewWindow:newWindow usedGuids:usedGuids bookmarks:bookmarks];
+        }
+    }
+
+    if (doOpen) {
+        for (Bookmark* bookmark in bookmarks) {
+            if (!term) {
+                PTYSession* session = [self launchBookmark:bookmark inTerminal:nil];
+                term = [[session tab] realParentWindow];
+            } else {
+                [self launchBookmark:bookmark inTerminal:term];
+            }
         }
     }
 
@@ -613,71 +628,41 @@ static BOOL initDone = NO;
 
 - (void)newSessionsInWindow:(id)sender
 {
-    [self _openNewSessionsFromMenu:[sender representedObject] inNewWindow:[sender isAlternate]];
+    [self _openNewSessionsFromMenu:[sender menu] inNewWindow:[sender isAlternate] usedGuids:nil bookmarks:nil];
 }
 
-- (void)addBookmarksToMenu:(NSMenu *)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts selector:(SEL)selector openAllSelector:(SEL)openAllSelector alternateSelector:(SEL)alternateSelector
+- (void)newSessionsInNewWindow:(id)sender
 {
-    NSArray* tags = [[BookmarkModel sharedInstance] allTags];
-    int count = 0;
-    NSArray* sortedTags = [tags sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
-    for (int i = 0; i < [sortedTags count]; ++i) {
-        [self _addBookmarksForTag:[sortedTags objectAtIndex:i]
-                           toMenu:aMenu
-                           target:aTarget
-                    withShortcuts:withShortcuts
-                         selector:selector
-                alternateSelector:alternateSelector
-                  openAllSelector:openAllSelector];
-        ++count;
-    }
-    for (int i = 0; i < [[BookmarkModel sharedInstance] numberOfBookmarks]; ++i) {
-        Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkAtIndex:i];
-        if ([[bookmark objectForKey:KEY_TAGS] count] == 0) {
-            ++count;
-            [self _addBookmark:bookmark
-                        toMenu:aMenu
-                        target:aTarget
-                 withShortcuts:withShortcuts
-                      selector:selector
-             alternateSelector:alternateSelector];
-        }
-    }
+    [self _openNewSessionsFromMenu:[sender menu] inNewWindow:YES
+                         usedGuids:nil bookmarks:nil];
+}
 
-    if (count > 1) {
-        [aMenu addItem:[NSMenuItem separatorItem]];
-        NSMenuItem* aMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open All"
-                                                           action:openAllSelector
-                                                    keyEquivalent:@""];
-        unsigned int modifierMask = NSCommandKeyMask | NSControlKeyMask;
-        [aMenuItem setKeyEquivalentModifierMask:modifierMask];
-        [aMenuItem setRepresentedObject:aMenu];
-        if ([self respondsToSelector:openAllSelector]) {
-            [aMenuItem setTarget:self];
-        } else {
-            assert([aTarget respondsToSelector:openAllSelector]);
-            [aMenuItem setTarget:aTarget];
-        }
-        [aMenu addItem:aMenuItem];
-        [aMenuItem release];
+- (void)addBookmarksToMenu:(NSMenu *)aMenu withSelector:(SEL)selector openAllSelector:(SEL)openAllSelector
+{
+    JournalParams params;
+    params.selector = selector;
+    params.openAllSelector = openAllSelector;
+    params.alternateSelector = @selector(newSessionInWindowAtIndex:);
+    params.alternateOpenAllSelector = @selector(newSessionsInWindow:);
+    params.target = self;
 
-        // Add alternate -------------------------------------------------------
-        aMenuItem = [[NSMenuItem alloc] initWithTitle:@"Open All in New Window"
-                                               action:openAllSelector
-                                        keyEquivalent:@""];
-        modifierMask = NSCommandKeyMask | NSControlKeyMask;
-        [aMenuItem setAlternate:YES];
-        [aMenuItem setKeyEquivalentModifierMask:modifierMask | NSAlternateKeyMask];
-        [aMenuItem setRepresentedObject:aMenu];
-        if ([self respondsToSelector:openAllSelector]) {
-            [aMenuItem setTarget:self];
-        } else {
-            assert([aTarget respondsToSelector:openAllSelector]);
-            [aMenuItem setTarget:aTarget];
-        }
-        [aMenu addItem:aMenuItem];
-        [aMenuItem release];
+    BookmarkModel* bm = [BookmarkModel sharedInstance];
+    int N = [bm numberOfBookmarks];
+    for (int i = 0; i < N; i++) {
+        Bookmark* b = [bm bookmarkAtIndex:i];
+        [bm addBookmark:b
+                 toMenu:aMenu
+         startingAtItem:0
+               withTags:[b objectForKey:KEY_TAGS]
+                 params:&params];
     }
+}
+
+- (void)addBookmarksToMenu:(NSMenu *)aMenu
+{
+    [self addBookmarksToMenu:aMenu
+                withSelector:@selector(newSessionInTabAtIndex:)
+             openAllSelector:@selector(newSessionsInWindow:)];
 }
 
 - (void)irAdvance:(int)dir

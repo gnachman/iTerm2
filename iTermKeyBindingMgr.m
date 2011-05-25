@@ -894,6 +894,7 @@ static NSDictionary* globalKeyMap;
 {
     if (bookmark) {
         NSMutableDictionary* mutableBookmark = [NSMutableDictionary dictionaryWithDictionary:bookmark];
+        BOOL anyChange = NO;
         BOOL change;
         do {
             change = NO;
@@ -908,12 +909,17 @@ static NSDictionary* globalKeyMap;
                     if ([referencedGuid isEqualToString:guid]) {
                         [iTermKeyBindingMgr removeMappingAtIndex:i inBookmark:mutableBookmark];
                         change = YES;
+                        anyChange = YES;
                         break;
                     }
                 }
             }
         } while (change);
-        return mutableBookmark;
+        if (!anyChange) {
+            return nil;
+        } else {
+            return mutableBookmark;
+        }
     } else {
         BOOL change;
         do {

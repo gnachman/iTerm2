@@ -63,6 +63,8 @@ NSString *CommandToolbarItem = @"Command";
 - (void)dealloc;
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [iconMenu_ release];
+    [textMenu_ release];
     [_toolbar release];
     [super dealloc];
 }
@@ -251,18 +253,13 @@ NSString *CommandToolbarItem = @"Command";
     [self _removeItemsFromMenu:[[toolbarItem menuFormRepresentation] submenu]];
     [aPopUpButton addItemWithTitle: @""];
 
-    aMenu = [[NSMenu alloc] init];
+    [iconMenu_ release];
+    iconMenu_ = aMenu = [[NSMenu alloc] init];
     // first menu item is just a space taker
     [aMenu addItem: [[[NSMenuItem alloc] initWithTitle: @"AAA" action:@selector(newSessionInTabAtIndex:) keyEquivalent:@""] autorelease]];
-    [[iTermController sharedInstance] addBookmarksToMenu:aMenu
-                                                  target:_pseudoTerminal
-                                           withShortcuts:NO
-                                                selector:@selector(newSessionInTabAtIndex:) 
-                                         openAllSelector:@selector(newSessionsInWindow:)
-                                       alternateSelector:nil];
+    [[iTermController sharedInstance] addBookmarksToMenu:aMenu];
 
-    [aPopUpButton setMenu: aMenu];
-    [aMenu release];
+    [aPopUpButton setMenu:aMenu];
 
     // Now set the icon
     item = [[aPopUpButton cell] menuItem];
@@ -285,15 +282,10 @@ NSString *CommandToolbarItem = @"Command";
 
     // build a menu representation for text only.
     item = [[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"New Tab",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item:New") action: nil keyEquivalent: @""];
-    aMenu = [[NSMenu alloc] init];
-    [[iTermController sharedInstance] addBookmarksToMenu:aMenu
-                                                  target:_pseudoTerminal
-                                           withShortcuts:NO
-                                                selector:@selector(newSessionInTabAtIndex:) 
-                                         openAllSelector:@selector(newSessionsInWindow:)
-                                       alternateSelector:nil];
-    [item setSubmenu: aMenu];
-    [aMenu release];
+    [textMenu_ release];
+    textMenu_ = aMenu = [[NSMenu alloc] init];
+    [[iTermController sharedInstance] addBookmarksToMenu:aMenu];
+    [item setSubmenu:aMenu];
 
     [toolbarItem setMenuFormRepresentation: item];
     [item release];
@@ -305,7 +297,16 @@ NSString *CommandToolbarItem = @"Command";
     NSToolbarItem *aToolbarItem = [self toolbarItemWithIdentifier:NewToolbarItem];
 
     if (aToolbarItem) {
-        [self buildToolbarItemPopUpMenu:aToolbarItem forToolbar:_toolbar];
+        JournalParams params;
+        params.selector = @selector(newSessionInTabAtIndex:);
+        params.openAllSelector = @selector(newSessionsInWindow:);
+        params.alternateSelector = @selector(newSessionInTabAtIndex:);
+        params.alternateOpenAllSelector = @selector(newSessionsInWindow:);
+        params.target = self;
+
+        [BookmarkModel applyJournal:[aNotification userInfo] toMenu:iconMenu_ params:&params];
+        [BookmarkModel applyJournal:[aNotification userInfo] toMenu:textMenu_ params:&params];
+        //[self buildToolbarItemPopUpMenu:aToolbarItem forToolbar:_toolbar];
     }
 }
 

@@ -1551,25 +1551,16 @@ NSString *sessionsKey = @"sessions";
     // Build the bookmarks menu
     NSMenu *aMenu = [[[NSMenu alloc] init] autorelease];
 
-    // TODO: test this
     [[iTermController sharedInstance] addBookmarksToMenu:aMenu
-                                                  target:[iTermController sharedInstance]
-                                           withShortcuts:NO
-                                                selector:@selector(newSessionInWindowAtIndex:)
-                                         openAllSelector:@selector(newSessionsInManyWindows:)
-                                       alternateSelector:nil];
-    [aMenu addItem: [NSMenuItem separatorItem]];
+                                            withSelector:@selector(newSessionInWindowAtIndex:)
+                                         openAllSelector:@selector(newSessionsInNewWindow:)];
 
     [theMenu setSubmenu:aMenu forItem:[theMenu itemAtIndex:0]];
 
     aMenu = [[[NSMenu alloc] init] autorelease];
     [[iTermController sharedInstance] addBookmarksToMenu:aMenu
-                                                  target:self
-                                           withShortcuts:NO
-                                                selector:@selector(newSessionInTabAtIndex:)
-                                         openAllSelector:@selector(newSessionsInManyTabsAtIndex:)
-                                       alternateSelector:nil];
-    [aMenu addItem: [NSMenuItem separatorItem]];
+                                            withSelector:@selector(newSessionInTabAtIndex:)
+                                         openAllSelector:@selector(newSessionsInWindow:)];
 
     [theMenu setSubmenu:aMenu forItem:[theMenu itemAtIndex:1]];
 }

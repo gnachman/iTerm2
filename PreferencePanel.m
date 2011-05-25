@@ -2974,12 +2974,16 @@ static float versionNumber;
     for (NSString* guid in [[BookmarkModel sharedInstance] guids]) {
         Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
         bookmark = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:bookmark];
-        [[BookmarkModel sharedInstance] setBookmark:bookmark withGuid:guid];
+        if (bookmark) {
+            [[BookmarkModel sharedInstance] setBookmark:bookmark withGuid:guid];
+        }
     }
     for (NSString* guid in [[BookmarkModel sessionsInstance] guids]) {
         Bookmark* bookmark = [[BookmarkModel sessionsInstance] bookmarkWithGuid:guid];
         bookmark = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:bookmark];
-        [[BookmarkModel sessionsInstance] setBookmark:bookmark withGuid:guid];
+        if (bookmark) {
+            [[BookmarkModel sessionsInstance] setBookmark:bookmark withGuid:guid];
+        }
     }
     [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:nil];
     [[PreferencePanel sharedInstance]->keyMappings reloadData];

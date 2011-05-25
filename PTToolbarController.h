@@ -4,7 +4,7 @@
  **  Copyright (c) 2002, 2003
  **
  **  Author: Fabian, Ujwal S. Setlur
- **	     Initial code by Kiichi Kusama
+ **      Initial code by Kiichi Kusama
  **
  **  Project: iTerm
  **
@@ -35,10 +35,12 @@ extern NSString *CommandToolbarItem;
 
 @class PseudoTerminal;
 
-@interface PTToolbarController : NSObject 
+@interface PTToolbarController : NSObject
 {
     NSToolbar* _toolbar;
     PseudoTerminal* _pseudoTerminal;
+    NSMenu* iconMenu_;
+    NSMenu* textMenu_;
 }
 
 - (id)initWithPseudoTerminal:(PseudoTerminal*)terminal;

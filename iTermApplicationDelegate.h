@@ -92,6 +92,7 @@ void DebugLog(NSString* value);
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename;
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)app;
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender;
+- (NSMenu*)bookmarksMenu;
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app;
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag;
@@ -132,7 +133,6 @@ void DebugLog(NSString* value);
 // Notifications
 - (void) reloadMenus: (NSNotification *) aNotification;
 - (void) buildSessionSubmenu: (NSNotification *) aNotification;
-- (void) buildAddressBookMenu: (NSNotification *) aNotification;
 - (void) reloadSessionMenus: (NSNotification *) aNotification;
 - (void) nonTerminalWindowBecameKey: (NSNotification *) aNotification;
 

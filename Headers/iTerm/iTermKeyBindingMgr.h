@@ -224,7 +224,9 @@
 + (BOOL)haveKeyMappingForKeyString:(NSString*)keyString inBookmark:(Bookmark*)bookmark;
 
 // Remove any keymappings that reference a guid from either a bookmark or the global
-// keymappings (if bookmark is nil).
+// keymappings (if bookmark is nil). If a bookmark is specified but no change is made then
+// it returns nil. If a bookmark is specified and changed, an autorelease copy of the modified
+// bookmark is returned.
 + (Bookmark*)removeMappingsReferencingGuid:(NSString*)guid fromBookmark:(Bookmark*)bookmark;
 
 @end

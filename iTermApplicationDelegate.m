@@ -102,8 +102,6 @@ int gDebugLogFile = -1;
                              CFSTR(""),
                              kCFPreferencesCurrentApplication);
 
-    [self buildAddressBookMenu:nil];
-
     PreferencePanel* ppanel = [PreferencePanel sharedInstance];
     if ([ppanel hotkey]) {
         [[iTermController sharedInstance] registerHotkey:[ppanel hotkeyCode] modifiers:[ppanel hotkeyModifiers]];
@@ -282,7 +280,7 @@ int gDebugLogFile = -1;
                                                object:nil];
 
     [[NSNotificationCenter defaultCenter] addObserver: self
-                                             selector: @selector(buildAddressBookMenu:)
+                                             selector: @selector(updateAddressBookMenu:)
                                                  name: @"iTermReloadAddressBook"
                                                object: nil];
 
@@ -407,13 +405,13 @@ int gDebugLogFile = -1;
     // Build the bookmark menu
     bookmarksMenu = [[[NSMenu alloc] init] autorelease];
 
-    [[iTermController sharedInstance] addBookmarksToMenu:bookmarksMenu
-                                                  target:aTarget
-                                           withShortcuts:NO
-                                                selector:selector
-                                         openAllSelector:openAllSelector
-                                       alternateSelector:nil];
+    [[iTermController sharedInstance] addBookmarksToMenu:bookmarksMenu withSelector:selector openAllSelector:openAllSelector];
     [newMenuItem setSubmenu:bookmarksMenu];
+}
+
+- (NSMenu*)bookmarksMenu
+{
+    return bookmarkMenu;
 }
 
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender
@@ -425,7 +423,7 @@ int gDebugLogFile = -1;
     [self _newSessionMenu:aMenu title:@"New Window"
                    target:[iTermController sharedInstance]
                  selector:@selector(newSessionInWindowAtIndex:)
-          openAllSelector:@selector(newSessionsInManyWindows:)];
+          openAllSelector:@selector(newSessionsInNewWindow:)];
     [self _newSessionMenu:aMenu title:@"New Tab"
                    target:frontTerminal
                  selector:@selector(newSessionInTabAtIndex:)
@@ -662,7 +660,6 @@ void DebugLog(NSString* value)
     [nextTerminal setAction: (frontTerminal ? @selector(nextTerminal:) : nil)];
 
     [self buildSessionSubmenu: aNotification];
-    [self buildAddressBookMenu: aNotification];
     // reset the close tab/window shortcuts
     [closeTab setAction:@selector(closeCurrentTab:)];
     [closeTab setTarget:frontTerminal];
@@ -748,28 +745,19 @@ void DebugLog(NSString* value)
     }
 }
 
-- (void)buildAddressBookMenu:(NSNotification *)aNotification
+- (void)updateAddressBookMenu:(NSNotification*)aNotification
 {
-    // clear Bookmark menu
-    const int kNumberOfStaticMenuItems = 5;
-    for (; [bookmarkMenu numberOfItems] > kNumberOfStaticMenuItems;) {
-        NSMenuItem* anItem = [bookmarkMenu itemAtIndex:kNumberOfStaticMenuItems];
-        [anItem retain];
-        [bookmarkMenu removeItemAtIndex:kNumberOfStaticMenuItems];
-        NSMenu* sub = [anItem submenu];
-        if (sub) {
-            [self _removeItemsFromMenu:sub];
-        }
-        [anItem release];
-    }
+    JournalParams params;
+    params.selector = @selector(newSessionInTabAtIndex:);
+    params.openAllSelector = @selector(newSessionsInWindow:);
+    params.alternateSelector = @selector(newSessionInWindowAtIndex:);
+    params.alternateOpenAllSelector = @selector(newSessionsInWindow:);
+    params.target = [iTermController sharedInstance];
 
-    // add bookmarks into Bookmark menu
-    [[iTermController sharedInstance] addBookmarksToMenu:bookmarkMenu
-                                                  target:[[iTermController sharedInstance] currentTerminal]
-                                           withShortcuts:YES
-                                                selector:@selector(newSessionInTabAtIndex:)
-                                         openAllSelector:@selector(newSessionsInWindow:)
-                                       alternateSelector:@selector(newSessionInWindowAtIndex:)];
+    [BookmarkModel applyJournal:[aNotification userInfo]
+                         toMenu:bookmarkMenu
+                 startingAtItem:5
+                         params:&params];
 }
 
 // This is called whenever a tab becomes key or logging starts/stops.
