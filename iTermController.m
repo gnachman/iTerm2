@@ -48,6 +48,7 @@
 #import "iTermKeyBindingMgr.h"
 #import "iTerm/PseudoTerminal.h"
 #import "iTermExpose.h"
+#import "GTMCarbonEvent.h"
 
 @interface NSApplication (Undocumented)
 - (void)_cycleWindowsReversed:(BOOL)back;
@@ -1435,10 +1436,12 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         cocoaEvent = [NSEvent eventWithCGEvent:eventCopy];
         CFRelease(eventCopy);
     }
+#ifdef USE_EVENT_TAP_FOR_HOTKEY
     if ([cont eventIsHotkey:cocoaEvent]) {
         OnHotKeyEvent();
         return NULL;
     }
+#endif
 
     if (callDirectly) {
         // Send keystroke directly to preference panel when setting do-not-remap for a key; for
@@ -1471,6 +1474,11 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 {
     hotkeyCode_ = 0;
     hotkeyModifiers_ = 0;
+#ifndef USE_EVENT_TAP_FOR_HOTKEY
+    [[GTMCarbonEventDispatcherHandler sharedEventDispatcherHandler] unregisterHotKey:carbonHotKey_];
+    [carbonHotKey_ release];
+    carbonHotKey_ = nil;
+#endif
 }
 
 - (BOOL)haveEventTap
@@ -1494,6 +1502,7 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 #ifdef FAKE_EVENT_TAP
     return YES;
 #endif
+
     if (![self haveEventTap]) {
         DebugLog(@"Register event tap.");
         machPortRef = CGEventTapCreate(kCGHIDEventTap,
@@ -1529,8 +1538,12 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
 
 - (BOOL)registerHotkey:(int)keyCode modifiers:(int)modifiers
 {
+    if (carbonHotKey_) {
+        [self unregisterHotkey];
+    }
     hotkeyCode_ = keyCode;
     hotkeyModifiers_ = modifiers & (NSCommandKeyMask | NSControlKeyMask | NSAlternateKeyMask | NSShiftKeyMask);
+#ifdef USE_EVENT_TAP_FOR_HOTKEY
     if (![self startEventTap]) {
         switch (NSRunAlertPanel(@"Could not enable hotkey",
                                 @"You have assigned a \"hotkey\" that opens iTerm2 at any time. To use it, you must turn on \"access for assistive devices\" in the Universal Access preferences panel in System Preferences and restart iTerm2.",
@@ -1548,6 +1561,21 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
         }
     }
     return YES;
+#else
+    carbonHotKey_ = [[[GTMCarbonEventDispatcherHandler sharedEventDispatcherHandler]
+                      registerHotKey:keyCode
+                      modifiers:hotkeyModifiers_
+                      target:self
+                      action:@selector(carbonHotkeyPressed)
+                      userInfo:nil
+                      whenPressed:YES] retain];
+    return YES;
+#endif
+}
+
+- (void)carbonHotkeyPressed
+{
+    OnHotKeyEvent();
 }
 
 - (void)beginRemappingModifiers

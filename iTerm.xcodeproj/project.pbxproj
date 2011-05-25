@@ -145,6 +145,12 @@
 		1D5FDDC61208E93600C46BA3 /* PSMTabDragWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F62D15F10AA64B2F0075A287 /* PSMTabDragWindow.m */; };
 		1D5FDDC71208E93600C46BA3 /* iTermGrowlDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */; };
 		1D5FDDC91208E93600C46BA3 /* LineBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D72438C11F416E500BD4924 /* LineBuffer.m */; };
+		1D624BC81386E09E00111319 /* GTMCarbonEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D624BC71386E09E00111319 /* GTMCarbonEvent.m */; };
+		1D624BD91386E0B600111319 /* GTMCarbonEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BD81386E0B600111319 /* GTMCarbonEvent.h */; };
+		1D624BDD1386E0FA00111319 /* GTMDefines.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BDC1386E0FA00111319 /* GTMDefines.h */; };
+		1D624BEE1386E34F00111319 /* GTMObjectSingleton.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BED1386E34F00111319 /* GTMObjectSingleton.h */; };
+		1D624BF41386E39D00111319 /* GTMDebugSelectorValidation.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BF31386E39D00111319 /* GTMDebugSelectorValidation.h */; };
+		1D624BF61386E3B400111319 /* GTMTypeCasting.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BF51386E3B400111319 /* GTMTypeCasting.h */; };
 		1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB293D1288899A00B2CB9F /* Carbon.framework */; };
 		1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D6C4D59122329F000E0AA3E /* ColorPresets.plist */; };
 		1D6C50A71226EEFB00E0AA3E /* BookmarkListView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */; };
@@ -303,6 +309,12 @@
 		1D44218A1290B34500891504 /* TextViewWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextViewWrapper.h; sourceTree = "<group>"; };
 		1D44218B1290B34500891504 /* TextViewWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TextViewWrapper.m; sourceTree = "<group>"; };
 		1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultGlobalKeyMap.plist; sourceTree = "<group>"; };
+		1D624BC71386E09E00111319 /* GTMCarbonEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GTMCarbonEvent.m; sourceTree = "<group>"; };
+		1D624BD81386E0B600111319 /* GTMCarbonEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMCarbonEvent.h; sourceTree = "<group>"; };
+		1D624BDC1386E0FA00111319 /* GTMDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMDefines.h; sourceTree = "<group>"; };
+		1D624BED1386E34F00111319 /* GTMObjectSingleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMObjectSingleton.h; sourceTree = "<group>"; };
+		1D624BF31386E39D00111319 /* GTMDebugSelectorValidation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMDebugSelectorValidation.h; sourceTree = "<group>"; };
+		1D624BF51386E3B400111319 /* GTMTypeCasting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMTypeCasting.h; sourceTree = "<group>"; };
 		1D6C4D59122329F000E0AA3E /* ColorPresets.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ColorPresets.plist; sourceTree = "<group>"; };
 		1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkListView.h; sourceTree = "<group>"; };
 		1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarkListView.m; sourceTree = "<group>"; };
@@ -609,6 +621,7 @@
 				1D237D27131D8741004DD60C /* FindView.m */,
 				1D237D93131D8D66004DD60C /* FindViewController.m */,
 				1DAED28712E9395E005E49ED /* GlobalSearch.m */,
+				1D624BC71386E09E00111319 /* GTMCarbonEvent.m */,
 				20E74F4904E9089700000106 /* ITAddressBookMgr.m */,
 				20B8892B04E9342100000106 /* ITViewLocalizer.m */,
 				DDF0FD64062916F70080EF74 /* iTermApplication.m */,
@@ -662,6 +675,11 @@
 				1D237D26131D8741004DD60C /* FindView.h */,
 				1D237D92131D8D66004DD60C /* FindViewController.h */,
 				1DAED28612E9395E005E49ED /* GlobalSearch.h */,
+				1D624BD81386E0B600111319 /* GTMCarbonEvent.h */,
+				1D624BF31386E39D00111319 /* GTMDebugSelectorValidation.h */,
+				1D624BDC1386E0FA00111319 /* GTMDefines.h */,
+				1D624BED1386E34F00111319 /* GTMObjectSingleton.h */,
+				1D624BF51386E3B400111319 /* GTMTypeCasting.h */,
 				872EBC6A04E42E320073D10E /* iTerm.h */,
 				DDF0FD63062916F70080EF74 /* iTermApplication.h */,
 				20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */,
@@ -1071,6 +1089,11 @@
 				1D237D94131D8D66004DD60C /* FindViewController.h in Headers */,
 				1D06A052134CDBF800C414EF /* Trouter.h in Headers */,
 				1D988597135D23BD0072023F /* ProcessCache.h in Headers */,
+				1D624BD91386E0B600111319 /* GTMCarbonEvent.h in Headers */,
+				1D624BDD1386E0FA00111319 /* GTMDefines.h in Headers */,
+				1D624BEE1386E34F00111319 /* GTMObjectSingleton.h in Headers */,
+				1D624BF41386E39D00111319 /* GTMDebugSelectorValidation.h in Headers */,
+				1D624BF61386E3B400111319 /* GTMTypeCasting.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1144,7 +1167,6 @@
 			isa = PBXProject;
 			buildConfigurationList = BB024D39096EE4080021E793 /* Build configuration list for PBXProject "iTerm" */;
 			compatibilityVersion = "Xcode 3.1";
-			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,
@@ -1349,6 +1371,7 @@
 				1D237D95131D8D66004DD60C /* FindViewController.m in Sources */,
 				1D06A050134CDBED00C414EF /* Trouter.m in Sources */,
 				1D988598135D23BD0072023F /* ProcessCache.m in Sources */,
+				1D624BC81386E09E00111319 /* GTMCarbonEvent.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
