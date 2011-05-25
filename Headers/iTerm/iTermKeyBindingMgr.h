@@ -140,6 +140,10 @@
 // requested index.
 + (NSMutableDictionary*)removeMappingAtIndex:(int)rowIndex inDictionary:(NSDictionary*)dict;
 
+// Return an array containing the names of all the presets available in
+// the PresetKeyMapping.plist file
++ (NSArray*)presetKeyMappingNamesAvailable;
+
 // Load a set of preset keymappings from PresetKeyMappings.plist into the
 // specified bookmarks, removing all of its previous mappings.
 + (void)setKeyMappingsToPreset:(NSString*)presetName inBookmark:(NSMutableDictionary*)bookmark;

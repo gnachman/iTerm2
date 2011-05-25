@@ -8,7 +8,7 @@
 		<string key="IBDocument.HIToolboxVersion">353.00</string>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="3184"/>
+			<integer value="2110"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -5627,40 +5627,8 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																			<object class="NSMutableArray" key="NSMenuItems">
 																				<bool key="EncodedWithXMLCoder">YES</bool>
 																				<reference ref="641881592"/>
-																				<object class="NSMenuItem" id="105096650">
-																					<reference key="NSMenu" ref="521692370"/>
-																					<string key="NSTitle">Xterm Defaults</string>
-																					<string key="NSKeyEquiv"/>
-																					<int key="NSMnemonicLoc">2147483647</int>
-																					<reference key="NSOnImage" ref="836643152"/>
-																					<reference key="NSMixedImage" ref="928131098"/>
-																					<string key="NSAction">_popUpItemAction:</string>
-																					<reference key="NSTarget" ref="586135333"/>
-																				</object>
-																				<object class="NSMenuItem" id="832699714">
-																					<reference key="NSMenu" ref="521692370"/>
-																					<string key="NSTitle">Xterm with FixTerm</string>
-																					<string key="NSKeyEquiv"/>
-																					<int key="NSMnemonicLoc">2147483647</int>
-																					<reference key="NSOnImage" ref="836643152"/>
-																					<reference key="NSMixedImage" ref="928131098"/>
-																					<string key="NSAction">_popUpItemAction:</string>
-																					<reference key="NSTarget" ref="586135333"/>
-																				</object>
-																				<object class="NSMenuItem" id="290730283">
-																					<reference key="NSMenu" ref="521692370"/>
-																					<string key="NSTitle">Xterm with Numeric Keypad</string>
-																					<string key="NSKeyEquiv"/>
-																					<int key="NSMnemonicLoc">2147483647</int>
-																					<reference key="NSOnImage" ref="836643152"/>
-																					<reference key="NSMixedImage" ref="928131098"/>
-																					<string key="NSAction">_popUpItemAction:</string>
-																					<int key="NSTag">1</int>
-																					<reference key="NSTarget" ref="586135333"/>
-																				</object>
 																			</object>
 																		</object>
-																		<int key="NSSelectedIndex">1</int>
 																		<bool key="NSPullDown">YES</bool>
 																		<int key="NSPreferredEdge">1</int>
 																		<bool key="NSUsesItemFromMenu">YES</bool>
@@ -9367,14 +9335,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<int key="connectionID">3210</int>
 				</object>
 				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
-						<string key="label">useXtermKeyMappings:</string>
-						<reference key="source" ref="155244235"/>
-						<reference key="destination" ref="105096650"/>
-					</object>
-					<int key="connectionID">3212</int>
-				</object>
-				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
 						<string key="label">escPlus</string>
 						<reference key="source" ref="155244235"/>
@@ -10879,14 +10839,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<int key="connectionID">5136</int>
 				</object>
 				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
-						<string key="label">useXtermWithNumKeyMappings:</string>
-						<reference key="source" ref="155244235"/>
-						<reference key="destination" ref="290730283"/>
-					</object>
-					<int key="connectionID">5139</int>
-				</object>
-				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
 						<string key="label">copyToProfileButton</string>
 						<reference key="source" ref="155244235"/>
@@ -12031,12 +11983,20 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<int key="connectionID">5303</int>
 				</object>
 				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
-						<string key="label">useXtermWithFixTerm:</string>
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">presetsPopupButton</string>
 						<reference key="source" ref="155244235"/>
-						<reference key="destination" ref="832699714"/>
+						<reference key="destination" ref="1055084058"/>
 					</object>
-					<int key="connectionID">5305</int>
+					<int key="connectionID">5306</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">presetKeyMappingsItemSelected:</string>
+						<reference key="source" ref="155244235"/>
+						<reference key="destination" ref="1055084058"/>
+					</object>
+					<int key="connectionID">5307</int>
 				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -13712,20 +13672,12 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						<object class="NSMutableArray" key="children">
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<reference ref="641881592"/>
-							<reference ref="105096650"/>
-							<reference ref="290730283"/>
-							<reference ref="832699714"/>
 						</object>
 						<reference key="parent" ref="586135333"/>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">3185</int>
 						<reference key="object" ref="641881592"/>
-						<reference key="parent" ref="521692370"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">3187</int>
-						<reference key="object" ref="105096650"/>
 						<reference key="parent" ref="521692370"/>
 					</object>
 					<object class="IBObjectRecord">
@@ -17141,11 +17093,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						<reference key="parent" ref="547374323"/>
 					</object>
 					<object class="IBObjectRecord">
-						<int key="objectID">5137</int>
-						<reference key="object" ref="290730283"/>
-						<reference key="parent" ref="521692370"/>
-					</object>
-					<object class="IBObjectRecord">
 						<int key="objectID">5140</int>
 						<reference key="object" ref="365100074"/>
 						<object class="NSMutableArray" key="children">
@@ -17219,11 +17166,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						<int key="objectID">5165</int>
 						<reference key="object" ref="90179863"/>
 						<reference key="parent" ref="107520417"/>
-					</object>
-					<object class="IBObjectRecord">
-						<int key="objectID">5304</int>
-						<reference key="object" ref="832699714"/>
-						<reference key="parent" ref="521692370"/>
 					</object>
 				</object>
 			</object>
@@ -17676,7 +17618,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<string>3184.IBEditorWindowLastContentRect</string>
 					<string>3184.IBPluginDependency</string>
 					<string>3185.IBPluginDependency</string>
-					<string>3187.IBPluginDependency</string>
 					<string>3201.IBPluginDependency</string>
 					<string>3202.IBPluginDependency</string>
 					<string>3213.IBPluginDependency</string>
@@ -18276,7 +18217,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<string>5130.IBPluginDependency</string>
 					<string>5130.ImportedFromIB2</string>
 					<string>5131.IBPluginDependency</string>
-					<string>5137.IBPluginDependency</string>
 					<string>5140.IBPluginDependency</string>
 					<string>5140.IBViewBoundsToFrameTransform</string>
 					<string>5141.IBPluginDependency</string>
@@ -18295,15 +18235,14 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<string>5164.IBViewBoundsToFrameTransform</string>
 					<string>5164.ImportedFromIB2</string>
 					<string>5165.IBPluginDependency</string>
-					<string>5304.IBPluginDependency</string>
 				</object>
 				<object class="NSMutableArray" key="dict.values">
 					<bool key="EncodedWithXMLCoder">YES</bool>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<reference ref="5"/>
-					<string>{{113, 117}, {800, 411}}</string>
+					<string>{{321, 117}, {800, 411}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{113, 117}, {800, 411}}</string>
+					<string>{{321, 117}, {800, 411}}</string>
 					<reference ref="5"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>{{227, 537}, {616, 0}}</string>
@@ -18781,8 +18720,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						<bytes key="NSTransformStruct">P4AAAL+AAABCYAAAwpYAAA</bytes>
 					</object>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{501, 166}, {244, 83}}</string>
-					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>{{709, 226}, {244, 23}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -19569,7 +19507,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<reference ref="5"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<object class="NSAffineTransform">
 						<bytes key="NSTransformStruct">P4AAAL+AAABC+AAAw5aAAA</bytes>
 					</object>
@@ -19593,7 +19530,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					</object>
 					<reference ref="5"/>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="unlocalizedProperties">
@@ -19616,7 +19552,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">5305</int>
+			<int key="maxID">5307</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -19713,6 +19649,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>globalRemoveMapping:</string>
 							<string>loadColorPreset:</string>
 							<string>openCopyBookmarks:</string>
+							<string>presetKeyMappingsItemSelected:</string>
 							<string>removeBookmark:</string>
 							<string>removeMapping:</string>
 							<string>saveKeyMapping:</string>
@@ -19722,16 +19659,9 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>showBookmarksTabView:</string>
 							<string>showGlobalTabView:</string>
 							<string>showKeyboardTabView:</string>
-							<string>useFactoryGlobalKeyMappings:</string>
-							<string>useXtermKeyMappings:</string>
-							<string>useXtermWithFixTerm:</string>
-							<string>useXtermWithNumKeyMappings:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
-							<string>id</string>
-							<string>id</string>
-							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -19903,6 +19833,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>optionKeySends</string>
 							<string>passOnControlLeftClick</string>
 							<string>presetsMenu</string>
+							<string>presetsPopupButton</string>
 							<string>profileLabel</string>
 							<string>promptOnClose</string>
 							<string>promptOnQuit</string>
@@ -20097,6 +20028,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>NSMatrix</string>
 							<string>NSButton</string>
 							<string>NSMenu</string>
+							<string>NSPopUpButton</string>
 							<string>NSTextField</string>
 							<string>id</string>
 							<string>id</string>
