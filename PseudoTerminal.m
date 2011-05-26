@@ -2540,17 +2540,19 @@ NSString *sessionsKey = @"sessions";
             maxTabSize.height = tabSize.height;
         }
     }
-    PtyLog(@"fitWindowToTabs - calling repositionWidgets");
-    [self repositionWidgets];
     PtyLog(@"fitWindowToTabs - calling fitWindowToTabSize");
-    [self fitWindowToTabSize:maxTabSize];
+    if (![self fitWindowToTabSize:maxTabSize]) {
+        // Sometimes the window doesn't resize but widgets need to be moved. For example, when toggling
+        // the scrollbar.
+        [self repositionWidgets];
+    }
 }
 
-- (void)fitWindowToTabSize:(NSSize)tabSize
+- (BOOL)fitWindowToTabSize:(NSSize)tabSize
 {
     if (_fullScreen) {
         [self fitTabsToWindow];
-        return;
+        return NO;
     }
     // Set the window size to be large enough to encompass that tab plus its decorations.
     NSSize decorationSize = [self windowDecorationSize];
@@ -2577,6 +2579,7 @@ NSString *sessionsKey = @"sessions";
         frame.size.width = [[self window] frame].size.width;
         frame.origin.x = [[self window] frame].origin.x;
     }
+    BOOL didResize = NSEqualRects([[self window] frame], frame);
     [[self window] setFrame:frame display:YES];
     [[[self window] contentView] setAutoresizesSubviews:YES];
 
@@ -2593,6 +2596,8 @@ NSString *sessionsKey = @"sessions";
     if (mustResizeTabs) {
         [self fitTabsToWindow];
     }
+
+    return didResize;
 }
 
 - (void)selectPaneLeft:(id)sender

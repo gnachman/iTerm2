@@ -758,12 +758,10 @@ static char* FormatCont(int c)
     return line_length;
 }
 
-// Returns the number of lines appended.
-- (int)_appendScreenToScrollback
+- (int)_usedHeight
 {
-    // Set used_height to the number of lines on the screen that are in use.
-    int i;
     int used_height = HEIGHT;
+    int i;
 
     for(; used_height > cursorY + 1; used_height--) {
         screen_char_t* aLine = [self getLineAtScreenIndex: used_height-1];
@@ -776,14 +774,23 @@ static char* FormatCont(int c)
         }
     }
 
+    return used_height;
+}
+
+// Returns the number of lines appended.
+- (int)_appendScreenToScrollback:(int)numLines
+{
+    // Set numLines to the number of lines on the screen that are in use.
+    int i;
+
     // Push the current screen contents into the scrollback buffer.
     // The maximum number of lines of scrollback are temporarily ignored because this
     // loop doesn't call dropExcessLinesWithWidth.
     int next_line_length;
-    if (used_height > 0) {
+    if (numLines > 0) {
         next_line_length  = [self _getLineLength:[self getLineAtScreenIndex: 0]];
     }
-    for (i = 0; i < used_height; ++i) {
+    for (i = 0; i < numLines; ++i) {
         screen_char_t* line = [self getLineAtScreenIndex: i];
         int line_length = next_line_length;
         if (i+1 < HEIGHT) {
@@ -810,7 +817,7 @@ static char* FormatCont(int c)
 #endif
     }
 
-    return used_height;
+    return numLines;
 }
 
 - (void)resizeWidth:(int)new_width height:(int)new_height
@@ -846,7 +853,18 @@ static char* FormatCont(int c)
     int selectionStartPosition = -1;
     int selectionEndPosition = -1;
     BOOL hasSelection = display && [display selectionStartX] != -1;
-    [self _appendScreenToScrollback];
+
+    int usedHeight = [self _usedHeight];
+    if (HEIGHT - new_height >= usedHeight) {
+        // Height is decreasing but pushing HEIGHT lines into the buffer would scroll all the used
+        // lines off the top, leaving the cursor floating without any text. Keep all used lines that
+        // fit onscreen.
+        [self _appendScreenToScrollback:MAX(usedHeight, new_height)];
+    } else {
+        // Keep last used line a fixed distance from the bottom of the screen
+        [self _appendScreenToScrollback:HEIGHT];
+    }
+
     BOOL startPositionBeforeEnd = NO;
     BOOL endPostionBeforeEnd = NO;
     if (hasSelection) {
@@ -2088,7 +2106,7 @@ void DumpBuf(screen_char_t* p, int n) {
         DebugLog(@"setNewline advance cursor");
     } else if (SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT - 1) {
         // Scroll the whole screen.
-        
+
         // Mark the cursor's previous location dirty. This fixes a rare race condition where
         // the cursor is not erased.
         [self setCharDirtyAtX:MAX(0, cursorX - 1)
@@ -3153,7 +3171,7 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
-    linesPushed = [self _appendScreenToScrollback];
+    linesPushed = [self _appendScreenToScrollback:[self _usedHeight]];
 
     // Get the start position of (x,y)
     int startPos;
@@ -3202,7 +3220,7 @@ void DumpBuf(screen_char_t* p, int n) {
     int startY, endY;
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
-    linesPushed = [self _appendScreenToScrollback];
+    linesPushed = [self _appendScreenToScrollback:[self _usedHeight]];
 
     // Search one block.
     int stopAt;
@@ -3238,7 +3256,7 @@ void DumpBuf(screen_char_t* p, int n) {
                                                    toY:&startY];
                     assert(isOk);
                     result->absStartY = startY + [self totalScrollbackOverflow];
-                    
+
                     isOk = [linebuffer convertPosition:rr->position + rr->length - 1
                                              withWidth:WIDTH
                                                    toX:&result->endX
@@ -3533,7 +3551,7 @@ void DumpBuf(screen_char_t* p, int n) {
         // not really related).
         return 0;
     }
-  
+
     int len = WIDTH;
     if (screen_top[WIDTH].code == EOL_HARD) {
         // The line is not continued. Figure out its length by finding the last nonnull char.
