@@ -510,7 +510,6 @@ static float versionNumber;
     if (presetArray != nil) {
         [presetsPopupButton addItemsWithTitles:presetArray];
     } else {
-        // send alert dialog.
         [presetsPopupButton setEnabled:NO];
         [presetsErrorLabel setFont:[NSFont boldSystemFontOfSize:12]];
         [presetsErrorLabel setStringValue:@"PresetKeyMappings.plist failed to load"];
