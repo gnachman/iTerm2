@@ -1357,6 +1357,16 @@ NSString *sessionsKey = @"sessions";
             ![[PreferencePanel sharedInstance] hideTab]) {
             contentSize.height -= [newTerminal->tabBarControl frame].size.height;
         }
+        if ([newTerminal _haveLeftBorder]) {
+            --contentSize.width;
+        }
+        if ([newTerminal _haveRightBorder]) {
+            --contentSize.width;
+        }
+        if ([newTerminal _haveBottomBorder]) {
+            --contentSize.height;
+        }
+
         [newTerminal fitWindowToTabSize:contentSize];
     }
     newTerminal->togglingFullScreen_ = NO;
