@@ -506,7 +506,7 @@ static float versionNumber;
     [self _rebuildColorPresetsMenu];
 
     // Add preset keybindings to button-popup-list.
-    [presetsPopupButton addItemsWithTitles:[iTermKeyBindingMgr presetKeyMappingNamesAvailable]];
+    [presetsPopupButton addItemsWithTitles:[iTermKeyBindingMgr presetKeyMappingsNames]];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(handleWindowWillCloseNotification:)
