@@ -385,7 +385,8 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTokenField* tags;
 
     IBOutlet NSPopUpButton* presetsPopupButton;
-    
+    IBOutlet NSTextField*   presetsErrorLabel;
+
     NSString* keyString;  // hexcode-hexcode rep of keystring in current sheet
     BOOL newMapping;  // true if the keymap sheet is open for adding a new entry
     id modifyMappingOriginator;  // widget that caused add new mapping window to open

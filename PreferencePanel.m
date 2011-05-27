@@ -506,7 +506,15 @@ static float versionNumber;
     [self _rebuildColorPresetsMenu];
 
     // Add preset keybindings to button-popup-list.
-    [presetsPopupButton addItemsWithTitles:[iTermKeyBindingMgr presetKeyMappingsNames]];
+    NSArray* presetArray = [iTermKeyBindingMgr presetKeyMappingsNames];
+    if (presetArray != nil) {
+        [presetsPopupButton addItemsWithTitles:presetArray];
+    } else {
+        // send alert dialog.
+        [presetsPopupButton setEnabled:NO];
+        [presetsErrorLabel setFont:[NSFont boldSystemFontOfSize:12]];
+        [presetsErrorLabel setStringValue:@"PresetKeyMappings.plist failed to load"];
+    }
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(handleWindowWillCloseNotification:)
