@@ -566,14 +566,21 @@ static NSDictionary* globalKeyMap;
     [self _loadGlobalKeyMap];
 }
 
++ (NSDictionary*)readPresetKeyMappingsFromPlist:(NSString *)thePlist {
+    NSString* plistFile = [[NSBundle bundleForClass:[self class]]
+                            pathForResource:thePlist ofType:@"plist"];
+    NSDictionary* dict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
+    return dict;
+}
+
 + (void)setKeyMappingsToPreset:(NSString*)presetName inBookmark:(NSMutableDictionary*)bookmark
 {
     NSMutableDictionary* km = [NSMutableDictionary dictionaryWithDictionary:[bookmark objectForKey:KEY_KEYBOARD_MAP]];
 
     [km removeAllObjects];
+    NSDictionary* presetsDict 
+        = [self readPresetKeyMappingsFromPlist:@"PresetKeyMappings"];
 
-    NSString* plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"PresetKeyMappings" ofType:@"plist"];
-    NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
     NSDictionary* settings = [presetsDict objectForKey:presetName];
     [km setDictionary:settings];
 
@@ -582,8 +589,8 @@ static NSDictionary* globalKeyMap;
 
 + (NSArray *)presetKeyMappingsNames
 {
-    NSString* plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"PresetKeyMappings" ofType:@"plist"];
-    NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
+    NSDictionary* presetsDict 
+        = [self readPresetKeyMappingsFromPlist:@"PresetKeyMappings"];
     NSArray* names = [presetsDict allKeys];
     return names;
 }
