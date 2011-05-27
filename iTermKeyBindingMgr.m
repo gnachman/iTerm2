@@ -572,8 +572,8 @@ static NSDictionary* globalKeyMap;
 
     [km removeAllObjects];
 
-    NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"PresetKeyMappings" ofType:@"plist"];
-    NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile: plistFile];
+    NSString* plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"PresetKeyMappings" ofType:@"plist"];
+    NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
     NSDictionary* settings = [presetsDict objectForKey:presetName];
     [km setDictionary:settings];
 
@@ -582,8 +582,8 @@ static NSDictionary* globalKeyMap;
 
 + (NSArray *)presetKeyMappingsNames
 {
-    NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"PresetKeyMappings" ofType:@"plist"];
-    NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile: plistFile];
+    NSString* plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"PresetKeyMappings" ofType:@"plist"];
+    NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
     NSArray* names = [presetsDict allKeys];
     return names;
 }

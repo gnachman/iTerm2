@@ -2890,7 +2890,7 @@ static float versionNumber;
 
 - (IBAction)presetKeyMappingsItemSelected:(id)sender
 {
-    [self setKeyMappingsToPreset: [[sender selectedItem] title]];
+    [self setKeyMappingsToPreset:[[sender selectedItem] title]];
 }
 
 - (IBAction)useFactoryGlobalKeyMappings:(id)sender
