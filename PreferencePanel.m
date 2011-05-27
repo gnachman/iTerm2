@@ -2890,28 +2890,8 @@ static float versionNumber;
 
 - (IBAction)presetKeyMappingsItemSelected:(id)sender
 {
-    // break this up and test for validity
     [self setKeyMappingsToPreset: [[sender selectedItem] title]];
 }
-
-/*
-- (IBAction)useXtermWithNumKeyMappings:(id)sender;
-{
-    [self setKeyMappingsToPreset:@"xterm with Numeric Keypad"];
-}
-
-- (IBAction)useXtermKeyMappings:(id)sender
-{
-    [self setKeyMappingsToPreset:@"xterm Defaults"];
-}
-
-- (IBAction)useXtermWithFixTerm:(id)sender
-{
-    // where to put this?
-    [presetsPopupButton addItemsWithTitles:[iTermKeyBindingMgr presetKeyMappingNamesAvailable]];
-    [self setKeyMappingsToPreset:@"xterm with FixTerm"];
-}
-*/
 
 - (IBAction)useFactoryGlobalKeyMappings:(id)sender
 {
