@@ -580,7 +580,7 @@ static NSDictionary* globalKeyMap;
     [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
 }
 
-+ (NSArray *)presetKeyMappingNamesAvailable
++ (NSArray *)presetKeyMappingsNames
 {
     NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"PresetKeyMappings" ofType:@"plist"];
     NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile: plistFile];

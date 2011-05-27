@@ -142,7 +142,7 @@
 
 // Return an array containing the names of all the presets available in
 // the PresetKeyMapping.plist file
-+ (NSArray*)presetKeyMappingNamesAvailable;
++ (NSArray*)presetKeyMappingsNames;
 
 // Load a set of preset keymappings from PresetKeyMappings.plist into the
 // specified bookmarks, removing all of its previous mappings.
