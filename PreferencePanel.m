@@ -505,6 +505,16 @@ static float versionNumber;
     // Add presets to preset color selection.
     [self _rebuildColorPresetsMenu];
 
+    // Add preset keybindings to button-popup-list.
+    NSArray* presetArray = [iTermKeyBindingMgr presetKeyMappingsNames];
+    if (presetArray != nil) {
+        [presetsPopupButton addItemsWithTitles:presetArray];
+    } else {
+        [presetsPopupButton setEnabled:NO];
+        [presetsErrorLabel setFont:[NSFont boldSystemFontOfSize:12]];
+        [presetsErrorLabel setStringValue:@"PresetKeyMappings.plist failed to load"];
+    }
+
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(handleWindowWillCloseNotification:)
                                                  name:NSWindowWillCloseNotification object: [self window]];
@@ -2885,14 +2895,9 @@ static float versionNumber;
     [self settingChanged:nil];
 }
 
-- (IBAction)useXtermWithNumKeyMappings:(id)sender;
+- (IBAction)presetKeyMappingsItemSelected:(id)sender
 {
-    [self setKeyMappingsToPreset:@"xterm with Numeric Keypad"];
-}
-
-- (IBAction)useXtermKeyMappings:(id)sender
-{
-    [self setKeyMappingsToPreset:@"xterm Defaults"];
+    [self setKeyMappingsToPreset:[[sender selectedItem] title]];
 }
 
 - (IBAction)useFactoryGlobalKeyMappings:(id)sender

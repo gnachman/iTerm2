@@ -5,4 +5,5 @@
 *.pbxuser
 *.perspective
 *.perspectivev3
-
+build/
+iTerm.xcodeproj/project.pbxproj
