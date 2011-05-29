@@ -390,9 +390,6 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
                REAL_WIDTH*sizeof(screen_char_t));
     }
 
-    // set current lines in scrollback
-    current_scrollback_lines = 0;
-
     // set up our dirty flags buffer
     dirtySize = WIDTH * HEIGHT;
     // allocate one extra byte to check for overruns.
@@ -414,17 +411,16 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer
 {
-    assert([linebuffer numLinesWithWidth: WIDTH] == current_scrollback_lines);
-    if (theIndex >= current_scrollback_lines) {
+    if (theIndex >= [linebuffer numLinesWithWidth: WIDTH]) {
         // Get a line from the circular screen buffer
-        return [self _getLineAtIndex:(theIndex - current_scrollback_lines)
+        return [self _getLineAtIndex:(theIndex - [linebuffer numLinesWithWidth: WIDTH])
                             fromLine:screen_top];
     } else {
         // Get a line from the scrollback buffer.
         memcpy(buffer, default_line, sizeof(screen_char_t) * WIDTH);
         int cont = [linebuffer copyLineToBuffer:buffer width:WIDTH lineNum:theIndex];
         if (cont == EOL_SOFT &&
-            theIndex == current_scrollback_lines - 1 &&
+            theIndex == [linebuffer numLinesWithWidth: WIDTH] - 1 &&
             screen_top[1].code == DWC_RIGHT &&
             buffer[WIDTH - 1].code == 0) {
             // The last line in the scrollback buffer is actually a split DWC
@@ -704,7 +700,7 @@ static char* FormatCont(int c)
     char line[1000];
     char dirtyline[1000];
     DebugLog([NSString stringWithFormat:@"width=%d height=%d cursor_x=%d cursor_y=%d scroll_top=%d scroll_bottom=%d max_scrollback_lines=%d current_scrollback_lines=%d scrollback_overflow=%d",
-              WIDTH, HEIGHT, cursorX, cursorY, SCROLL_TOP, SCROLL_BOTTOM, max_scrollback_lines, current_scrollback_lines, scrollback_overflow]);
+              WIDTH, HEIGHT, cursorX, cursorY, SCROLL_TOP, SCROLL_BOTTOM, max_scrollback_lines, [linebuffer numLinesWithWidth: WIDTH], scrollback_overflow]);
 
     for (y = 0; y < HEIGHT; ++y) {
         int ox = 0;
@@ -1022,7 +1018,6 @@ static char* FormatCont(int c)
     }
     int lines = [linebuffer numLinesWithWidth: WIDTH];
     NSAssert(lines >= 0, @"Negative lines");
-    current_scrollback_lines = lines;
 
     // An immediate refresh is needed so that the size of TEXTVIEW can be
     // adjusted to fit the new size
@@ -1090,7 +1085,6 @@ static char* FormatCont(int c)
     if (!unlimitedScrollback_) {
         [linebuffer dropExcessLinesWithWidth: WIDTH];
     }
-    current_scrollback_lines = [linebuffer numLinesWithWidth: WIDTH];
 }
 
 - (void)setUnlimitedScrollback:(BOOL)enable
@@ -1585,7 +1579,6 @@ static char* FormatCont(int c)
     [linebuffer setMaxLines:max_scrollback_lines];
     [display clearMatches];
 
-    current_scrollback_lines = 0;
     scrollback_overflow = 0;
 
     DebugLog(@"clearScrollbackBuffer setDirty");
@@ -1701,7 +1694,7 @@ void DumpBuf(screen_char_t* p, int n) {
     if (gDebugLogging) {
         DebugLog([NSString stringWithFormat:@"setString: %d chars starting with %c at x=%d, y=%d, line=%d",
                   [string length], [string characterAtIndex:0],
-                  cursorX, cursorY, cursorY + current_scrollback_lines]);
+                  cursorX, cursorY, cursorY + [linebuffer numLinesWithWidth: WIDTH]]);
     }
 
 #if DEBUG_METHOD_TRACE
@@ -3090,12 +3083,12 @@ void DumpBuf(screen_char_t* p, int n) {
 
 - (int)numberOfScrollbackLines
 {
-    return current_scrollback_lines;
+    return [linebuffer numLinesWithWidth: WIDTH];
 }
 
 - (int)numberOfLines
 {
-    return current_scrollback_lines + HEIGHT;
+    return [linebuffer numLinesWithWidth: WIDTH] + HEIGHT;
 }
 
 - (int)scrollbackOverflow
@@ -3576,7 +3569,6 @@ void DumpBuf(screen_char_t* p, int n) {
     } else {
         dropped = 0;
     }
-    current_scrollback_lines = [linebuffer numLinesWithWidth: WIDTH];
 
     assert(dropped == 0 || dropped == 1);
 
