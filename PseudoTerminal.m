@@ -2189,21 +2189,7 @@ NSString *sessionsKey = @"sessions";
         [self adjustFullScreenWindowForBottomBarChange];
     } else {
         [[[self window] contentView] setAutoresizesSubviews:NO];
-        if (hide) {
-            NSRect frame = [[self window] frame];
-            NSPoint topLeft;
-            topLeft.x = frame.origin.x;
-            topLeft.y = frame.origin.y + frame.size.height;
-            [[self window] setFrame:preBottomBarFrame display:NO];
-            [[self window] setFrameTopLeftPoint:topLeft];
-        } else {
-            preBottomBarFrame = [[self window] frame];
-            NSRect newFrame = preBottomBarFrame;
-            float h = [instantReplaySubview frame].size.height;
-            newFrame.size.height += h;
-            newFrame.origin.y -= h;
-            [[self window] setFrame:newFrame display:YES];
-        }
+        [self fitWindowToTabs];
     }
 
     // On OS X 10.5.8, the scroll bar and resize indicator are messed up at this point. Resizing the tabview fixes it. This seems to be fixed in 10.6.
@@ -2277,6 +2263,11 @@ NSString *sessionsKey = @"sessions";
 #ifdef HIDE_IR_WHEN_LIVE_VIEW_ENTERED
     [self showHideInstantReplay];
 #endif
+
+    [self sessionInitiatedResize:replaySession
+                           width:[[liveSession SCREEN] width]
+                          height:[[liveSession SCREEN] height]];
+
     [replaySession retain];
     [theTab showLiveSession:liveSession inPlaceOf:replaySession];
     [replaySession softTerminate];
