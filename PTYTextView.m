@@ -3333,6 +3333,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // current selection.
 - (BOOL)_selectNextResultForward:(BOOL)forward withOffset:(int)offset
 {
+    long long overflowAdustment = [dataSource totalScrollbackOverflow] - [dataSource scrollbackOverflow];
     long long width = [dataSource width];
     long long maxPos = -1;
     long long minPos = -1;
@@ -3350,7 +3351,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         start = 0;
         stride = 1;
         if (absLastFindStartY < 0) {
-            maxPos = (1 + [dataSource numberOfLines] + [dataSource totalScrollbackOverflow]) * width;
+            maxPos = (1 + [dataSource numberOfLines] + overflowAdustment) * width;
         } else {
             maxPos = lastFindStartX + (long long) absLastFindStartY * width - offset;
         }
@@ -3367,9 +3368,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 found = YES;
                 redraw = YES;
                 startX = r->startX;
-                startY = r->absStartY - [dataSource totalScrollbackOverflow];
+                startY = r->absStartY - overflowAdustment;
                 endX = r->endX;
-                endY = r->absEndY - [dataSource totalScrollbackOverflow];
+                endY = r->absEndY - overflowAdustment;
         }
         i += stride;
     }
@@ -3379,9 +3380,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         SearchResult* r = [findResults_ objectAtIndex:start];
         found = YES;
         startX = r->startX;
-        startY = r->absStartY - [dataSource totalScrollbackOverflow];
+        startY = r->absStartY - overflowAdustment;
         endX = r->endX;
-        endY = r->absEndY - [dataSource totalScrollbackOverflow];
+        endY = r->absEndY - overflowAdustment;
         if (forward) {
             [self beginFlash:FlashWrapToTop];
         } else {
@@ -3398,8 +3399,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self setNeedsDisplay:YES];
         lastFindStartX = startX;
         lastFindEndX = endX;
-        absLastFindStartY = (long long)startY + [dataSource totalScrollbackOverflow];
-        absLastFindEndY = (long long)endY + [dataSource totalScrollbackOverflow];
+        absLastFindStartY = (long long)startY + overflowAdustment;
+        absLastFindEndY = (long long)endY + overflowAdustment;
         foundResult_ = YES;
     }
 
