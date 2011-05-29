@@ -788,6 +788,10 @@
 
 - (void)_loadFindStringFromSharedPasteboard;
 
+- (BOOL)_haveLeftBorder;
+- (BOOL)_haveBottomBorder;
+- (BOOL)_haveRightBorder;
+
 @end
 
 @interface PseudoTerminal (ScriptingSupport)

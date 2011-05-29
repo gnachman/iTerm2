@@ -2277,7 +2277,10 @@ NSString *sessionsKey = @"sessions";
 #ifdef HIDE_IR_WHEN_LIVE_VIEW_ENTERED
     [self showHideInstantReplay];
 #endif
+    [replaySession retain];
     [theTab showLiveSession:liveSession inPlaceOf:replaySession];
+    [replaySession softTerminate];
+    [replaySession release];
     [theTab setParentWindow:self];
     [[self window] makeFirstResponder:[[theTab activeSession] TEXTVIEW]];
 }
