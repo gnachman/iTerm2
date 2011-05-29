@@ -1342,18 +1342,24 @@ static char* FormatCont(int c)
         break;
     case ANSICSI_ECH:
         if (cursorX < WIDTH) {
-            i = WIDTH * cursorY + cursorX;
+            int dirtyX = cursorX;
+            int dirtyY = cursorY;
+
             j = token.u.csi.p[0];
-            if (j + cursorX > WIDTH) {
-                j = WIDTH - cursorX;
-            }
             aLine = [self getLineAtScreenIndex:cursorY];
-            for (k = 0; k < j; k++) {
+            for (k = 0; cursorX + k < WIDTH && k < j; k++) {
                 aLine[cursorX + k].code = 0;
+                assert(cursorX + k < WIDTH);
                 CopyForegroundColor(&aLine[cursorX + k], [TERMINAL foregroundColorCodeReal]);
                 CopyBackgroundColor(&aLine[cursorX + k], [TERMINAL backgroundColorCodeReal]);
             }
-            memset(dirty+i,1,j);
+
+            int endX = MIN(WIDTH, dirtyX + j);
+            [self setDirtyFromX:dirtyX
+                              Y:dirtyY
+                            toX:endX
+                              Y:dirtyY];
+
             DebugLog(@"putToken ECH");
         }
         break;
