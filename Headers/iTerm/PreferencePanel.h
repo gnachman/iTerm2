@@ -384,6 +384,9 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSMatrix *rightOptionKeySends;
     IBOutlet NSTokenField* tags;
 
+    IBOutlet NSPopUpButton* presetsPopupButton;
+    IBOutlet NSTextField*   presetsErrorLabel;
+
     NSString* keyString;  // hexcode-hexcode rep of keystring in current sheet
     BOOL newMapping;  // true if the keymap sheet is open for adding a new entry
     id modifyMappingOriginator;  // widget that caused add new mapping window to open
@@ -547,9 +550,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (IBAction)removeMapping:(id)sender;
 - (IBAction)globalRemoveMapping:(id)sender;
 - (void)setKeyMappingsToPreset:(NSString*)presetName;
-- (IBAction)useXtermKeyMappings:(id)sender;
-- (IBAction)useXtermWithNumKeyMappings:(id)sender;
-- (IBAction)useFactoryGlobalKeyMappings:(id)sender;
+- (IBAction)presetKeyMappingsItemSelected:(id)sender;
 - (void)_loadPresetColors:(NSString*)presetName;
 - (void)loadColorPreset:(id)sender;
 - (IBAction)addBookmark:(id)sender;

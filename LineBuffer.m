@@ -840,10 +840,13 @@ static int Search(NSString* needle,
 
             // If the position is the left half of a double width char then include the right half in
             // the following call to NumberOfFullLines.
+
             if (bytes_to_consume_in_this_line < line_length &&
-                prev + bytes_to_consume_in_this_line + 1 < eol &&
-                raw_buffer[prev + bytes_to_consume_in_this_line + 1].code == DWC_RIGHT) {    
-                ++dwc_peek;
+                prev + bytes_to_consume_in_this_line + 1 < eol) {
+                assert(prev + bytes_to_consume_in_this_line + 1 < buffer_size);
+                if (raw_buffer[prev + bytes_to_consume_in_this_line + 1].code == DWC_RIGHT) {    
+                    ++dwc_peek;
+                }
             }
             int consume = NumberOfFullLines(buffer_start + prev,
                                             MIN(line_length, bytes_to_consume_in_this_line + 1 + dwc_peek),

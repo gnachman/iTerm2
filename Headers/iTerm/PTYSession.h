@@ -255,6 +255,7 @@ static const float kBackgroundSessionIntervalSec = 1;
               isUTF8:(BOOL)isUTF8
       asLoginSession:(BOOL)asLoginSession;
 
+- (void)softTerminate;
 - (void)terminate;
 
 - (void)setNewOutput:(BOOL)value;

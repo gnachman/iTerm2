@@ -159,8 +159,6 @@
     PasteboardHistoryView* pbHistoryView;
     AutocompleteView* autocompleteView;
 
-    // Size of window before opening bottom bar frame.
-    NSRect preBottomBarFrame;
     // True if preBottomBarFrame is valid.
     BOOL pbbfValid;
 
@@ -496,8 +494,8 @@
 // Resize window to be just large enough to fit the largest tab without changing session sizes.
 - (void)fitWindowToTabs;
 
-// Fit the window to exactly fit a tab of the given size.
-- (void)fitWindowToTabSize:(NSSize)tabSize;
+// Fit the window to exactly fit a tab of the given size. Returns true if the window was resized.
+- (BOOL)fitWindowToTabSize:(NSSize)tabSize;
 
 // Force the window size to change to be just large enough to fit this session.
 - (void)fitWindowToTab:(PTYTab*)tab;
@@ -787,6 +785,10 @@
 - (void)hideFullScreenTabControl;
 
 - (void)_loadFindStringFromSharedPasteboard;
+
+- (BOOL)_haveLeftBorder;
+- (BOOL)_haveBottomBorder;
+- (BOOL)_haveRightBorder;
 
 @end
 
