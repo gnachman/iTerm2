@@ -788,6 +788,10 @@ static VT100TCC decode_xterm(unsigned char *datap,
                 // <Esc>]50;key=value^G
                 result.type = XTERMCC_SET_KVP;
                 break;
+            case 42:
+                // nonstandard, completely arbitrary value.
+                [NSApp requestUserAttention:NSCriticalRequest];
+                break;
             default:
                 result.type = VT100_NOTSUPPORT;
                 break;
