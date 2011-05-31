@@ -2623,10 +2623,10 @@ static VT100TCC decode_string(unsigned char *datap,
           }
         } else if ([key isEqualToString:@"BounceDockIcon"]) {
             if ([value boolValue]) {
-                shouldBounceDockIcon = 
+                shouldBounceDockIcon =
                 [NSApp requestUserAttention:NSCriticalRequest];
             } else {
-                [NSApp cancelUserAttentionRequest:shouldBounceDockIcon];        
+                [NSApp cancelUserAttentionRequest:shouldBounceDockIcon];
             }
         }
       }
