@@ -1,10 +1,10 @@
 Profiles
  BookmarkListView
  BookmarkModel
- BookmarksController
+ BookmarksController - controller was broken?
  BookmarksWindow
  ITAddressBookMgr
- iTermTerminalProfileMgr
+ iTermTerminalProfileMgr -- ditto this.
 Popups
  Autocomplete
  PasteboardHistory
