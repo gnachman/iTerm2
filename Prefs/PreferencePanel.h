@@ -25,8 +25,8 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import <iTerm/BookmarkModel.h>
-#import "BookmarkListView.h"
+#import <Profiles/BookmarkModel.h>
+#import <Profiles/BookmarkListView.h>
 
 #define OPT_NORMAL 0
 #define OPT_META   1

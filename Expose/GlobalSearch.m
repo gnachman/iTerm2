@@ -26,11 +26,11 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import "GlobalSearch.h"
-#import "VT100Screen.h"
-#import "PTYTextView.h"
-#import "iTerm/PseudoTerminal.h"
-#import "iTerm/PTYSession.h"
+#import <Search/GlobalSearch.h>
+#import <Session/VT100Screen.h>
+#import <Session/PTYTextView.h>
+#import <Window/PseudoTerminal.h>
+#import <Session/PTYSession.h>
 #import "iTermController.h"
 #import "iTermExpose.h"
 #import "PTYTextView.h"

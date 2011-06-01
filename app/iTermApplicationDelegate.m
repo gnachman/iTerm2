@@ -27,20 +27,20 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <iTerm/iTermApplicationDelegate.h>
-#import <iTerm/iTermController.h>
-#import <iTerm/ITAddressBookMgr.h>
-#import <iTerm/PreferencePanel.h>
-#import <iTerm/PseudoTerminal.h>
-#import <iTerm/PTYSession.h>
-#import <iTerm/VT100Terminal.h>
-#import <iTerm/FindCommandHandler.h>
-#import <iTerm/PTYWindow.h>
-#import <iTerm/PTYTextView.h>
-#import "iTerm/NSStringITerm.h"
-#import <BookmarksWindow.h>
-#import "PTYTab.h"
-#import "iTermExpose.h"
+#import <App/iTermApplicationDelegate.h>
+#import <App/iTermController.h>
+#import <Profiles/ITAddressBookMgr.h>
+#import <Prefs/PreferencePanel.h>
+#import <Window/PseudoTerminal.h>
+#import <Session/PTYSession.h>
+#import <Session/VT100Terminal.h>
+#import <Search/FindCommandHandler.h>
+#import <Window/PTYWindow.h>
+#import <Session/PTYTextView.h>
+#import "Misc/NSStringITerm.h"
+#import <Profiles/BookmarksWindow.h>
+#import "Window/PTYTab.h"
+#import "Expose/iTermExpose.h"
 #include <unistd.h>
 
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
