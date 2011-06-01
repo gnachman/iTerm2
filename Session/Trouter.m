@@ -1,6 +1,6 @@
 // -*- mode:objc -*-
 /*
- **  Trouter.h
+ **  TRouter.h
  **
  **  Copyright (c) 2011
  **
@@ -25,13 +25,13 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import "Trouter.h"
+#import "TRouter.h"
 #import "RegexKitLite/RegexKitLite.h"
 
 
-@implementation Trouter
+@implementation TRouter
 
-- (Trouter *)init
+- (TRouter *)init
 {
     self = [super init];
     if (self) {

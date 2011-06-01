@@ -30,7 +30,7 @@
 #import <iTerm/iTerm.h>
 #import "ScreenChar.h"
 #import "PreferencePanel.h"
-#import "Trouter.h"
+#import "TRouter.h"
 
 #include <sys/time.h>
 #define PRETTY_BOLD
@@ -235,7 +235,7 @@ typedef struct PTYFontInfo PTYFontInfo;
     BOOL dragOk_;
 
     // Semantic history controller
-    Trouter* trouter;
+    TRouter* tRouter;
 
     // Array of (line number, pwd) arrays, sorted by line number. Line numbers are absolute.
     NSMutableArray *workingDirectoryAtLines;
@@ -503,11 +503,11 @@ typedef enum {
 - (void)_openURL:(NSString *)aURLString;
 - (void)_openURL:(NSString *)aURLString atLine:(long long)line;
 
-// Snapshot working directory for Trouter
+// Snapshot working directory for TRouter
 - (void)logWorkingDirectoryAtLine:(long long)line;
 - (NSString *)getWorkingDirectoryAtLine:(long long)line;
 
-// Trouter change directory
+// TRouter change directory
 - (void)_changeDirectory:(NSString *)path;
 
 - (BOOL)_findMatchingParenthesis:(NSString *)parenthesis withX:(int)X Y:(int)Y;

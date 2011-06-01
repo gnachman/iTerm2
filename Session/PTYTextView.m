@@ -232,7 +232,7 @@ static NSImage* wrapToBottomImage = nil;
     imeOffset = 0;
     resultMap_ = [[NSMutableDictionary alloc] init];
 
-    trouter = [[Trouter alloc] init];
+    tRouter = [[TRouter alloc] init];
     workingDirectoryAtLines = [[NSMutableArray alloc] init];
     return self;
 }
@@ -306,7 +306,7 @@ static NSImage* wrapToBottomImage = nil;
     [selectionScrollTimer release];
 
     [workingDirectoryAtLines release];
-    [trouter release];
+    [tRouter release];
 
     [super dealloc];
 }
@@ -2269,10 +2269,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
             if (url && ([event modifierFlags] & NSShiftKeyMask)) {
                 // Cmd-shift click executes an alternate semantic history action.
-                NSString *fullPath = [trouter getFullPath:url
+                NSString *fullPath = [tRouter getFullPath:url
                                          workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
                                                lineNumber:nil];
-                if ([trouter isDirectory:fullPath]) {
+                if ([tRouter isDirectory:fullPath]) {
                     [self _changeDirectory:fullPath];
                 }
             } else {
@@ -2415,7 +2415,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (startX < 0 && pressingCmdOnly) {
         // Drag a file handle (only possible when there is no selection).
         NSString *path = [self _getURLForX:x y:y];
-        path = [trouter getFullPath:path
+        path = [tRouter getFullPath:path
                    workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
                          lineNumber:nil];
         if (path == nil) {
@@ -5837,7 +5837,7 @@ static bool IsUrlChar(NSString* str)
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
     NSString *workingDirectory = [self getWorkingDirectoryAtLine:line];
-    if (![trouter openPath:trimmedURLString workingDirectory:workingDirectory]) {
+    if (![tRouter openPath:trimmedURLString workingDirectory:workingDirectory]) {
         [self _openURL:aURLString];
     }
 

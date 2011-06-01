@@ -227,7 +227,6 @@
 		2C7EE2ED139607FB000305E6 /* GTMDefines.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C7EE2E8139607FB000305E6 /* GTMDefines.h */; };
 		2C7EE2EE139607FB000305E6 /* GTMObjectSingleton.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C7EE2E9139607FB000305E6 /* GTMObjectSingleton.h */; };
 		2C7EE2EF139607FB000305E6 /* GTMTypeCasting.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C7EE2EA139607FB000305E6 /* GTMTypeCasting.h */; };
-		2C7EE32713960BC4000305E6 /* iTerm in Resources */ = {isa = PBXBuildFile; fileRef = 2C7EE32313960BC4000305E6 /* iTerm */; };
 		2C7EE32A13960BFA000305E6 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C7EE32913960BFA000305E6 /* main.m */; };
 		2C7EE32C13960C0C000305E6 /* iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C7EE32B13960C0C000305E6 /* iTerm.h */; };
 		49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A6E4081211CC6000D9AD6F /* Compatability.h */; };
@@ -592,25 +591,18 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				1DEE9FDB11FCA60F009E18C9 /* credits.rtf */,
+				2CE2723B13965953005797CA /* XIB Files */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				2C2761F01395DAA100D340AA /* Source */,
-				2C2760D21395CA5A00D340AA /* RegexKitLite */,
-				2C2760BE1395CA0900D340AA /* UKCrashReporter */,
 				0464AB15006CD2EC7F000001 /* Headers */,
-				1DEE9FDB11FCA60F009E18C9 /* credits.rtf */,
 				1D5FD9AD11F61CA900C46BA3 /* Tests */,
-				F69E77040AB78B89001EC0FF /* Growl */,
 				1D093C131217412B0029F9AD /* Resources */,
-				DD02571D09CB9363008F320C /* PSMTabBarControl */,
-				F6441F610E748404000EC682 /* CGSInternal */,
-				0464AB22006CD2EC7F000001 /* Interfaces */,
+				0464AB22006CD2EC7F000001 /* Scripting */,
 				0464AB27006CD2EC7F000001 /* Supporting Files */,
-				0464AB2E006CD2EC7F000001 /* External Frameworks and Libraries */,
+				2CE2726013965B4F005797CA /* External Libraries */,
+				0464AB2E006CD2EC7F000001 /* External Frameworks */,
 				0464AB32006CD2EC7F000001 /* Products */,
-				F69E774A0AB78CDB001EC0FF /* Growl-Info.plist */,
-				1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */,
-				1DE2154112821F1C004E3ADF /* Autocomplete.xib */,
-				1D99785112EEB3D600F0794D /* GlobalSearch.xib */,
 			);
 			name = JTerminal;
 			sourceTree = "<group>";
@@ -694,16 +686,14 @@
 			name = Headers;
 			sourceTree = "<group>";
 		};
-		0464AB22006CD2EC7F000001 /* Interfaces */ = {
+		0464AB22006CD2EC7F000001 /* Scripting */ = {
 			isa = PBXGroup;
 			children = (
 				DD48F1C703EBB1C400A8A065 /* iTerm.scriptSuite */,
 				DD48F1CC03EBB20500A8A065 /* iTerm.scriptTerminology */,
 				FB151F2903648AC401F955DB /* iTerm.strings */,
-				DD57633005653C2E00F1905E /* iTerm_Framework.plist */,
-				DD57633605653C5F00F1905E /* iTerm.plist */,
 			);
-			name = Interfaces;
+			name = Scripting;
 			sourceTree = "<group>";
 		};
 		0464AB27006CD2EC7F000001 /* Supporting Files */ = {
@@ -716,7 +706,7 @@
 			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
-		0464AB2E006CD2EC7F000001 /* External Frameworks and Libraries */ = {
+		0464AB2E006CD2EC7F000001 /* External Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				1D13EADB12113A2D00909F9C /* libncurses.dylib */,
@@ -728,7 +718,7 @@
 				0464AB2F006CD2EC7F000001 /* AppKit.framework */,
 				0464AB30006CD2EC7F000001 /* Foundation.framework */,
 			);
-			name = "External Frameworks and Libraries";
+			name = "External Frameworks";
 			sourceTree = "<group>";
 		};
 		0464AB32006CD2EC7F000001 /* Products */ = {
@@ -743,44 +733,9 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				1D237D8E131D8BEE004DD60C /* FindView.xib */,
-				9325FF4E0FB54E00004EC67C /* MainMenu.xib */,
-				9325FF3C0FB54DF1004EC67C /* PseudoTerminal.xib */,
-				9325FF400FB54DF1004EC67C /* PreferencePanel.xib */,
-				9325FF460FB54DF1004EC67C /* BookmarksWindow.xib */,
+				2CE2725D13965B26005797CA /* Images */,
+				2CE2723D139659A3005797CA /* Property Lists */,
 				E8EDCE69015E0A5703000001 /* iTerm.icns */,
-				FBBB8B60039FC04E01F955DB /* iTerm.png */,
-				DD9C1AE2051F45C000A8A065 /* iTerm-Aqua.jpg */,
-				FB094A14033D58AE01F955DB /* addressbook.png */,
-				FB094A16033D58B601F955DB /* close.png */,
-				FB754C5F036EFC5301F955DB /* config.png */,
-				F6DA0AFC0AF066EE0098EFEB /* edit.png */,
-				FB47BCC403686CAC01F955DB /* exec.png */,
-				F6CDC4E60AE6D3E2005E7D4F /* folder.png */,
-				FBB2EBCD040AC7C201F955DB /* important.png */,
-				FB094A18033D58BD01F955DB /* new.png */,
-				FB896717038D935801F955DB /* newwin.png */,
-				8786A96E052CEC220073D10E /* script.png */,
-				F6C9AFEF0EA70D0200D318A8 /* sort.png */,
-				1D395912134E75B5005A8021 /* SmartSelectionRules.plist */,
-				1DA02CFA1327612600D7E7DB /* bell.png */,
-				1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */,
-				1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */,
-				1D823C4712F92B3F0028422B /* screen.png */,
-				1DC7429F127C96F90069594C /* IBarCursor.png */,
-				1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */,
-				1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */,
-				1DA9BD0C122F1077002FCC65 /* star-gold24.png */,
-				1D6C4D59122329F000E0AA3E /* ColorPresets.plist */,
-				1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */,
-				1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */,
-				1DCA8BA3121A1B8000ABDEB5 /* PrefsAdvanced.tiff */,
-				1DCA8BA4121A1B8000ABDEB5 /* PrefsBookmarks.tiff */,
-				1DCA8BA5121A1B8000ABDEB5 /* PrefsDisplay.tiff */,
-				1DCA8BA6121A1B8000ABDEB5 /* PrefsGeneral.tiff */,
-				1DCA8BA7121A1B8000ABDEB5 /* PrefsKeyboard.tiff */,
-				1DCA8BA8121A1B8000ABDEB5 /* PrefsTerminal.tiff */,
-				1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */,
 				1D1158C913444D29009B366F /* iTerm2 Help */,
 			);
 			name = Resources;
@@ -871,7 +826,7 @@
 			);
 			name = UKCrashReporter;
 			path = Vendor/UKCrashReporter;
-			sourceTree = SOURCE_ROOT;
+			sourceTree = "<group>";
 		};
 		2C2760D21395CA5A00D340AA /* RegexKitLite */ = {
 			isa = PBXGroup;
@@ -881,7 +836,7 @@
 			);
 			name = RegexKitLite;
 			path = Vendor/RegexKitLite;
-			sourceTree = SOURCE_ROOT;
+			sourceTree = "<group>";
 		};
 		2C2761F01395DAA100D340AA /* Source */ = {
 			isa = PBXGroup;
@@ -940,6 +895,82 @@
 				2C27613F1395D0E400D340AA /* LineBufferTest.h */,
 			);
 			name = Source;
+			sourceTree = "<group>";
+		};
+		2CE2723B13965953005797CA /* XIB Files */ = {
+			isa = PBXGroup;
+			children = (
+				1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */,
+				1DE2154112821F1C004E3ADF /* Autocomplete.xib */,
+				1D99785112EEB3D600F0794D /* GlobalSearch.xib */,
+				1D237D8E131D8BEE004DD60C /* FindView.xib */,
+				9325FF4E0FB54E00004EC67C /* MainMenu.xib */,
+				9325FF3C0FB54DF1004EC67C /* PseudoTerminal.xib */,
+				9325FF400FB54DF1004EC67C /* PreferencePanel.xib */,
+				9325FF460FB54DF1004EC67C /* BookmarksWindow.xib */,
+			);
+			name = "XIB Files";
+			sourceTree = "<group>";
+		};
+		2CE2723D139659A3005797CA /* Property Lists */ = {
+			isa = PBXGroup;
+			children = (
+				DD57633005653C2E00F1905E /* iTerm_Framework.plist */,
+				DD57633605653C5F00F1905E /* iTerm.plist */,
+				1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */,
+				1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */,
+				1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */,
+				F69E774A0AB78CDB001EC0FF /* Growl-Info.plist */,
+				1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */,
+				1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */,
+				1D6C4D59122329F000E0AA3E /* ColorPresets.plist */,
+				1D395912134E75B5005A8021 /* SmartSelectionRules.plist */,
+			);
+			name = "Property Lists";
+			sourceTree = "<group>";
+		};
+		2CE2725D13965B26005797CA /* Images */ = {
+			isa = PBXGroup;
+			children = (
+				FBBB8B60039FC04E01F955DB /* iTerm.png */,
+				DD9C1AE2051F45C000A8A065 /* iTerm-Aqua.jpg */,
+				FB094A14033D58AE01F955DB /* addressbook.png */,
+				FB094A16033D58B601F955DB /* close.png */,
+				FB754C5F036EFC5301F955DB /* config.png */,
+				F6DA0AFC0AF066EE0098EFEB /* edit.png */,
+				FB47BCC403686CAC01F955DB /* exec.png */,
+				F6CDC4E60AE6D3E2005E7D4F /* folder.png */,
+				FBB2EBCD040AC7C201F955DB /* important.png */,
+				FB094A18033D58BD01F955DB /* new.png */,
+				FB896717038D935801F955DB /* newwin.png */,
+				8786A96E052CEC220073D10E /* script.png */,
+				F6C9AFEF0EA70D0200D318A8 /* sort.png */,
+				1DA02CFA1327612600D7E7DB /* bell.png */,
+				1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */,
+				1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */,
+				1D823C4712F92B3F0028422B /* screen.png */,
+				1DC7429F127C96F90069594C /* IBarCursor.png */,
+				1DA9BD0C122F1077002FCC65 /* star-gold24.png */,
+				1DCA8BA3121A1B8000ABDEB5 /* PrefsAdvanced.tiff */,
+				1DCA8BA4121A1B8000ABDEB5 /* PrefsBookmarks.tiff */,
+				1DCA8BA5121A1B8000ABDEB5 /* PrefsDisplay.tiff */,
+				1DCA8BA6121A1B8000ABDEB5 /* PrefsGeneral.tiff */,
+				1DCA8BA7121A1B8000ABDEB5 /* PrefsKeyboard.tiff */,
+				1DCA8BA8121A1B8000ABDEB5 /* PrefsTerminal.tiff */,
+			);
+			name = Images;
+			sourceTree = "<group>";
+		};
+		2CE2726013965B4F005797CA /* External Libraries */ = {
+			isa = PBXGroup;
+			children = (
+				2C2760D21395CA5A00D340AA /* RegexKitLite */,
+				2C2760BE1395CA0900D340AA /* UKCrashReporter */,
+				F69E77040AB78B89001EC0FF /* Growl */,
+				DD02571D09CB9363008F320C /* PSMTabBarControl */,
+				F6441F610E748404000EC682 /* CGSInternal */,
+			);
+			name = "External Libraries";
 			sourceTree = "<group>";
 		};
 		DD02571D09CB9363008F320C /* PSMTabBarControl */ = {
@@ -1300,7 +1331,6 @@
 				2C2760C81395CA0900D340AA /* UKCrashReporter Readme.txt in Resources */,
 				2C2760CB1395CA0900D340AA /* UKCrashReporter.nib in Resources */,
 				2C2760CC1395CA0900D340AA /* UKCrashReporter.strings in Resources */,
-				2C7EE32713960BC4000305E6 /* iTerm in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

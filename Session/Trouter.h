@@ -1,6 +1,6 @@
 // -*- mode:objc -*-
 /*
- **  Trouter.h
+ **  TRouter.h
  **
  **  Copyright (c) 2011
  **
@@ -27,13 +27,13 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface Trouter : NSObject {
+@interface TRouter : NSObject {
     NSString *editor;
     NSFileManager *fileManager;
     NSString *externalScript;
 }
 
-- (Trouter*)init;
+- (TRouter*)init;
 - (void)dealloc;
 - (void)determineEditor;
 - (BOOL)applicationExists:(NSString *)bundle_id;
