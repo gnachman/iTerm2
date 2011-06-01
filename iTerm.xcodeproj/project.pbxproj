@@ -168,6 +168,23 @@
 		2C2761BA1395D5D800D340AA /* PTYTabView.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2761B41395D5D800D340AA /* PTYTabView.m */; };
 		2C2761BB1395D5D800D340AA /* PTYWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2761B51395D5D800D340AA /* PTYWindow.m */; };
 		2C2761EF1395DA8A00D340AA /* DVR.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2761EE1395DA8A00D340AA /* DVR.m */; };
+		2C2764B21395FAC700D340AA /* GrowlImageAdditions.m in Resources */ = {isa = PBXBuildFile; fileRef = F69E771F0AB78C26001EC0FF /* GrowlImageAdditions.m */; };
+		2C2764B41395FAF200D340AA /* NSURLAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = F69E77270AB78C26001EC0FF /* NSURLAdditions.m */; };
+		2C2764B51395FAF200D340AA /* NSBezierPath_AMShading.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2760661395C7A800D340AA /* NSBezierPath_AMShading.m */; };
+		2C2764B61395FAF200D340AA /* PSMAdiumTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2760681395C7A800D340AA /* PSMAdiumTabStyle.m */; };
+		2C2764B71395FAF200D340AA /* PSMAquaTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C27606A1395C7A800D340AA /* PSMAquaTabStyle.m */; };
+		2C2764B81395FAF200D340AA /* PSMMetalTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C27606C1395C7A800D340AA /* PSMMetalTabStyle.m */; };
+		2C2764B91395FAF200D340AA /* PSMOverflowPopUpButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C27606E1395C7A800D340AA /* PSMOverflowPopUpButton.m */; };
+		2C2764BA1395FAF200D340AA /* PSMProgressIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2760701395C7A800D340AA /* PSMProgressIndicator.m */; };
+		2C2764BB1395FAF200D340AA /* PSMRolloverButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2760721395C7A800D340AA /* PSMRolloverButton.m */; };
+		2C2764BC1395FAF200D340AA /* PSMTabBarCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2760741395C7A800D340AA /* PSMTabBarCell.m */; };
+		2C2764BD1395FAF200D340AA /* PSMTabBarControl.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2760761395C7A800D340AA /* PSMTabBarControl.m */; };
+		2C2764BE1395FAF200D340AA /* PSMTabDragAssistant.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2760781395C7A800D340AA /* PSMTabDragAssistant.m */; };
+		2C2764BF1395FAF200D340AA /* PSMTabDragWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C27607A1395C7A800D340AA /* PSMTabDragWindow.m */; };
+		2C2764C01395FAF200D340AA /* PSMUnifiedTabStyle.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C27607D1395C7A800D340AA /* PSMUnifiedTabStyle.m */; };
+		2C2764C21395FB2F00D340AA /* UKCrashReporter.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2760C11395CA0900D340AA /* UKCrashReporter.m */; };
+		2C2764C31395FB2F00D340AA /* UKNibOwner.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2760C51395CA0900D340AA /* UKNibOwner.m */; };
+		2C2764C41395FB2F00D340AA /* UKSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2760C71395CA0900D340AA /* UKSystemInfo.m */; };
 		49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A6E4081211CC6000D9AD6F /* Compatability.h */; };
 		8742064D0564169600CFC3F1 /* iTerm.icns in Resources */ = {isa = PBXBuildFile; fileRef = E8EDCE69015E0A5703000001 /* iTerm.icns */; };
 		8742064F0564169600CFC3F1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF757F026DDAD703A80106 /* main.m */; };
@@ -1083,6 +1100,7 @@
 				2C2760911395C7A800D340AA /* TabNewMetalPressed.png in Resources */,
 				2C2760921395C7A800D340AA /* TabNewMetalRollover.png in Resources */,
 				2C2760931395C7A800D340AA /* Warning.png in Resources */,
+				2C2764B21395FAC700D340AA /* GrowlImageAdditions.m in Resources */,
 				2C2760C81395CA0900D340AA /* UKCrashReporter Readme.txt in Resources */,
 				2C2760CB1395CA0900D340AA /* UKCrashReporter.nib in Resources */,
 				2C2760CC1395CA0900D340AA /* UKCrashReporter.strings in Resources */,
@@ -1130,6 +1148,22 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2C2764C21395FB2F00D340AA /* UKCrashReporter.m in Sources */,
+				2C2764C31395FB2F00D340AA /* UKNibOwner.m in Sources */,
+				2C2764C41395FB2F00D340AA /* UKSystemInfo.m in Sources */,
+				2C2764B41395FAF200D340AA /* NSURLAdditions.m in Sources */,
+				2C2764B51395FAF200D340AA /* NSBezierPath_AMShading.m in Sources */,
+				2C2764B61395FAF200D340AA /* PSMAdiumTabStyle.m in Sources */,
+				2C2764B71395FAF200D340AA /* PSMAquaTabStyle.m in Sources */,
+				2C2764B81395FAF200D340AA /* PSMMetalTabStyle.m in Sources */,
+				2C2764B91395FAF200D340AA /* PSMOverflowPopUpButton.m in Sources */,
+				2C2764BA1395FAF200D340AA /* PSMProgressIndicator.m in Sources */,
+				2C2764BB1395FAF200D340AA /* PSMRolloverButton.m in Sources */,
+				2C2764BC1395FAF200D340AA /* PSMTabBarCell.m in Sources */,
+				2C2764BD1395FAF200D340AA /* PSMTabBarControl.m in Sources */,
+				2C2764BE1395FAF200D340AA /* PSMTabDragAssistant.m in Sources */,
+				2C2764BF1395FAF200D340AA /* PSMTabDragWindow.m in Sources */,
+				2C2764C01395FAF200D340AA /* PSMUnifiedTabStyle.m in Sources */,
 				8742064F0564169600CFC3F1 /* main.m in Sources */,
 				2C27615E1395D3ED00D340AA /* iTermApplication.m in Sources */,
 				2C27615F1395D3ED00D340AA /* iTermApplicationDelegate.m in Sources */,

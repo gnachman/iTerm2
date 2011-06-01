@@ -30,7 +30,7 @@ buildDir = os.environ["BUILT_PRODUCTS_DIR"]
 infoFile = os.environ["INFOPLIST_PATH"]
 path = os.path.join(buildDir, infoFile)
 plist = NSMutableDictionary.dictionaryWithContentsOfFile_(path)
-version = open("../version.txt").read().strip() % {"extra": revision}
+version = open("version.txt").read().strip() % {"extra": revision}
 print "Updating versions:", infoFile, version
 plist["CFBundleShortVersionString"] = version
 plist["CFBundleGetInfoString"] = version
