@@ -30,7 +30,33 @@ sub fix_imports {
     return unless exists $dir_match->{$dir};
     return unless $name =~ m/\.[mh]/;
 
-    move($path, "$path.bak");
+    say "Processing $path";
+    my $to = $name . '.bak';
+    move($name, $to) or die "Failed to move $name to $to: $!";
+    open my $in_fh, '<', $to or die "couldn't open $to to read: $!";
+    open my $out_fh, '>', $name or die "couldn't open $name to write: $!";
+
+    while (my $line = <$in_fh>) {
+        if ($line =~ m|#import ["<]([^">]+)[">]|) {
+            my $thing = $1;
+            my $orig = $1;
+            if ($thing =~ m|^([^/]+)(.*)+|) {
+                if (exists $headers->{$1}) {
+                    print $out_fh $line;
+                    next;
+                } else {
+                    $thing = $2;
+                }
+            }
+            my $new_dir = $headers->{$thing}
+              or $orig; #die "Couldn't find a header for $thing ($orig) on $line";
+            print $out_fh "#import <$new_dir/$1>\n";
+        } else {
+            print $out_fh $line;
+        }
+    }
+    close $in_fh;
+    close $out_fh;
 }
 
 
