@@ -420,6 +420,41 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     return newOutput;
 }
 
+// This command installs the xterm-256color terminfo in the user's terminfo directory:
+// tic -e xterm-256color $FILENAME
+- (void)_maybeAskAboutInstallXtermTerminfo
+{
+    NSString* NEVER_WARN = @"NeverWarnAboutXterm256ColorTerminfo";
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:NEVER_WARN]) {
+        return;
+    }
+
+    NSString* filename = [[NSBundle bundleForClass: [self class]] pathForResource:@"xterm-terminfo" ofType:@"txt"];
+    if (!filename) {
+        return;
+    }
+    NSString* cmd = [NSString stringWithFormat:@"tic -e xterm-256color %@", filename];
+    if (system("infocmp xterm-256color")) {
+        switch (NSRunAlertPanel(@"Warning",
+                                @"The terminfo file for the terminal type you're using, \"xterm-256color\", is not installed on your system. Would you like to install it now?",
+                                @"Install",
+                                @"Never ask me again",
+                                @"Not Now",
+                                nil)) {
+            case NSAlertDefaultReturn:
+                if (system([cmd UTF8String])) {
+                    NSRunAlertPanel(@"Error",
+                                    [NSString stringWithFormat:@"Sorry, an error occurred while running: %@", cmd],
+                                    @"Ok", nil, nil);
+                }
+                break;
+            case NSAlertAlternateReturn:
+                [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES] forKey:NEVER_WARN];
+                break;
+        }
+    }
+}
+
 - (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv
          environment:(NSDictionary *)prog_env
@@ -437,6 +472,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 #endif
     if ([env objectForKey:TERM_ENVNAME] == nil)
         [env setObject:TERM_VALUE forKey:TERM_ENVNAME];
+    if ([[env objectForKey:TERM_ENVNAME] isEqualToString:@"xterm-256color"]) {
+        [self _maybeAskAboutInstallXtermTerminfo];
+    }
 
     if ([env objectForKey:COLORFGBG_ENVNAME] == nil && COLORFGBG_VALUE != nil)
         [env setObject:COLORFGBG_VALUE forKey:COLORFGBG_ENVNAME];
