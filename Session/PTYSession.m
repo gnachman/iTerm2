@@ -25,25 +25,25 @@
  */
 
 #import <iTerm/iTerm.h>
-#import <iTerm/PTYSession.h>
-#import <iTerm/PTYTask.h>
-#import <iTerm/PTYTextView.h>
-#import <iTerm/PTYScrollView.h>;
-#import <iTerm/VT100Screen.h>
-#import <iTerm/VT100Terminal.h>
-#import <iTerm/PreferencePanel.h>
-#import <WindowControllerInterface.h>
-#import <iTerm/iTermController.h>
-#import <iTerm/PseudoTerminal.h>
-#import <FakeWindow.h>
-#import <iTerm/NSStringITerm.h>
-#import <iTerm/iTermKeyBindingMgr.h>
-#import <iTerm/ITAddressBookMgr.h>
-#import <iTerm/iTermGrowlDelegate.h>
-#import "iTermApplicationDelegate.h"
-#import "SessionView.h"
-#import "PTYTab.h"
-#import "ProcessCache.h"
+#import <Session/PTYSession.h>
+#import <Session/PTYTask.h>
+#import <Session/PTYTextView.h>
+#import <Session/PTYScrollView.h>;
+#import <Session/VT100Screen.h>
+#import <Session/VT100Terminal.h>
+#import <Prefs/PreferencePanel.h>
+#import <Window/WindowControllerInterface.h>
+#import <App/iTermController.h>
+#import <Window/PseudoTerminal.h>
+#import <Window/FakeWindow.h>
+#import <Misc/NSStringITerm.h>
+#import <App/iTermKeyBindingMgr.h>
+#import <Profiles/ITAddressBookMgr.h>
+#import <App/iTermGrowlDelegate.h>
+#import <App/iTermApplicationDelegate.h>
+#import <Session/SessionView.h>
+#import <Window/PTYTab.h>
+#import <App/ProcessCache.h>
 
 #include <unistd.h>
 #include <sys/wait.h>

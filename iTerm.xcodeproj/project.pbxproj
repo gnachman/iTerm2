@@ -146,13 +146,11 @@
 		2C27618C1395D57A00D340AA /* BookmarksController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2761861395D57A00D340AA /* BookmarksController.m */; };
 		2C27618D1395D57A00D340AA /* BookmarksWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2761871395D57A00D340AA /* BookmarksWindow.m */; };
 		2C27618E1395D57A00D340AA /* ITAddressBookMgr.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2761881395D57A00D340AA /* ITAddressBookMgr.m */; };
-		2C27618F1395D57A00D340AA /* iTermTerminalProfileMgr.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2761891395D57A00D340AA /* iTermTerminalProfileMgr.m */; };
 		2C2761941395D58F00D340AA /* FindCommandHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2761901395D58F00D340AA /* FindCommandHandler.m */; };
 		2C2761951395D58F00D340AA /* FindView.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2761911395D58F00D340AA /* FindView.m */; };
 		2C2761961395D58F00D340AA /* FindViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2761921395D58F00D340AA /* FindViewController.m */; };
 		2C2761971395D58F00D340AA /* iTermSearchField.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2761931395D58F00D340AA /* iTermSearchField.m */; };
 		2C2761A41395D5B000D340AA /* LineBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2761981395D5B000D340AA /* LineBuffer.m */; };
-		2C2761A51395D5B000D340AA /* LineBufferTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2761991395D5B000D340AA /* LineBufferTest.m */; };
 		2C2761A61395D5B000D340AA /* PTYScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C27619A1395D5B000D340AA /* PTYScrollView.m */; };
 		2C2761A71395D5B000D340AA /* PTYSession.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C27619B1395D5B000D340AA /* PTYSession.m */; };
 		2C2761A81395D5B000D340AA /* PTYTask.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C27619C1395D5B000D340AA /* PTYTask.m */; };
@@ -494,14 +492,9 @@
 				0464AB2E006CD2EC7F000001 /* External Frameworks and Libraries */,
 				0464AB32006CD2EC7F000001 /* Products */,
 				F69E774A0AB78CDB001EC0FF /* Growl-Info.plist */,
-				1D13EADB12113A2D00909F9C /* libncurses.dylib */,
 				1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */,
 				1DE2154112821F1C004E3ADF /* Autocomplete.xib */,
 				1D99785112EEB3D600F0794D /* GlobalSearch.xib */,
-				1DEB29301288885700B2CB9F /* Quartz.framework */,
-				1DEB29371288887100B2CB9F /* QuartzCore.framework */,
-				1DEB293D1288899A00B2CB9F /* Carbon.framework */,
-				1D94EAC712D641D3008225A9 /* AddressBook.framework */,
 			);
 			name = JTerminal;
 			sourceTree = "<group>";
@@ -555,6 +548,11 @@
 		0464AB2E006CD2EC7F000001 /* External Frameworks and Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				1D13EADB12113A2D00909F9C /* libncurses.dylib */,
+				1DEB29301288885700B2CB9F /* Quartz.framework */,
+				1DEB29371288887100B2CB9F /* QuartzCore.framework */,
+				1DEB293D1288899A00B2CB9F /* Carbon.framework */,
+				1D94EAC712D641D3008225A9 /* AddressBook.framework */,
 				2C2760471395C77000D340AA /* Sparkle.framework */,
 				0464AB2F006CD2EC7F000001 /* AppKit.framework */,
 				0464AB30006CD2EC7F000001 /* Foundation.framework */,
@@ -1158,13 +1156,11 @@
 				2C27618C1395D57A00D340AA /* BookmarksController.m in Sources */,
 				2C27618D1395D57A00D340AA /* BookmarksWindow.m in Sources */,
 				2C27618E1395D57A00D340AA /* ITAddressBookMgr.m in Sources */,
-				2C27618F1395D57A00D340AA /* iTermTerminalProfileMgr.m in Sources */,
 				2C2761941395D58F00D340AA /* FindCommandHandler.m in Sources */,
 				2C2761951395D58F00D340AA /* FindView.m in Sources */,
 				2C2761961395D58F00D340AA /* FindViewController.m in Sources */,
 				2C2761971395D58F00D340AA /* iTermSearchField.m in Sources */,
 				2C2761A41395D5B000D340AA /* LineBuffer.m in Sources */,
-				2C2761A51395D5B000D340AA /* LineBufferTest.m in Sources */,
 				2C2761A61395D5B000D340AA /* PTYScrollView.m in Sources */,
 				2C2761A71395D5B000D340AA /* PTYSession.m in Sources */,
 				2C2761A81395D5B000D340AA /* PTYTask.m in Sources */,

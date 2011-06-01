@@ -28,13 +28,13 @@
  */
 
 #include <wctype.h>
-#import "Autocomplete.h"
-#import "iTerm/iTermController.h"
-#import "iTerm/VT100Screen.h"
-#import "iTerm/PTYTextView.h"
-#import "LineBuffer.h"
-#import "PasteboardHistory.h"
-#import "iTermApplicationDelegate.h"
+#import <Popups/Autocomplete.h>
+#import <App/iTermController.h>
+#import <Session/VT100Screen.h>
+#import <Session/PTYTextView.h>
+#import <Session/LineBuffer.h>
+#import <Popups/PasteboardHistory.h>
+#import <App/iTermApplicationDelegate.h>
 
 //#define AUTOCOMPLETE_VERBOSE_LOGGING
 #ifdef AUTOCOMPLETE_VERBOSE_LOGGING

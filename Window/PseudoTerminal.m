@@ -38,34 +38,31 @@
 #define WINDOW_NAME @"iTerm Window %d"
 
 #import <iTerm/iTerm.h>
-#import <iTerm/PseudoTerminal.h>
-#import <iTerm/PTYScrollView.h>
-#import <iTerm/NSStringITerm.h>
-#import <iTerm/PTYSession.h>
-#import <iTerm/VT100Screen.h>
-#import <iTerm/PTYTabView.h>
-#import <iTerm/PreferencePanel.h>
-#import <iTerm/iTermController.h>
-#import <iTerm/PTYTask.h>
-#import <iTerm/PTYTextView.h>
-#import <iTerm/PseudoTerminal.h>
-#import <iTerm/VT100Terminal.h>
-#import <iTerm/VT100Screen.h>
-#import <iTerm/PTYSession.h>
-#import <iTerm/PTToolbarController.h>
-#import <iTerm/ITAddressBookMgr.h>
-#import <iTerm/iTermApplicationDelegate.h>
-#import "FakeWindow.h"
+#import "PseudoTerminal.h"
+#import <Session/PTYScrollView.h>
+#import <Misc/NSStringITerm.h>
+#import <Session/PTYSession.h>
+#import <Session/VT100Screen.h>
+#import <Window/PTYTabView.h>
+#import <Prefs/PreferencePanel.h>
+#import <App/iTermController.h>
+#import <Session/PTYTask.h>
+#import <Session/PTYTextView.h>
+#import <Session/VT100Terminal.h>
+#import <Window/PTToolbarController.h>
+#import <Profiles/ITAddressBookMgr.h>
+#import <App/iTermApplicationDelegate.h>
+#import <Window/FakeWindow.h>
 #import <PSMTabBarControl.h>
 #import <PSMTabStyle.h>
-#import <iTerm/iTermGrowlDelegate.h>
+#import <App/iTermGrowlDelegate.h>
 #include <unistd.h>
-#import "PasteboardHistory.h"
-#import "PTYTab.h"
-#import "SessionView.h"
-#import "iTerm/iTermApplication.h"
-#import "BookmarksWindow.h"
-#import "FindViewController.h"
+#import <Popups/PasteboardHistory.h>
+#import <Window/PTYTab.h>
+#import <Session/SessionView.h>
+#import <App/iTermApplication.h>
+#import <Profiles/BookmarksWindow.h>
+#import <Search/FindViewController.h>
 
 #define CACHED_WINDOW_POSITIONS 100
 

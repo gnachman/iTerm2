@@ -41,23 +41,22 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #define SWAPINT(a, b) { int temp; temp = a; a = b; b = temp; }
 
 #import <iTerm/iTerm.h>
-#import <iTerm/PTYTextView.h>
-#import <iTerm/PseudoTerminal.h>
-#import <iTerm/PTYSession.h>
-#import <iTerm/VT100Screen.h>
-#import <iTerm/FindCommandHandler.h>
-#import <iTerm/PreferencePanel.h>
-#import <iTerm/PTYScrollView.h>
-#import <iTerm/PTYTask.h>
-#import <iTerm/iTermController.h>
-#import <iTerm/NSStringITerm.h>
-#import "iTermApplicationDelegate.h"
-#import "PreferencePanel.h"
-#import "PasteboardHistory.h"
-#import "PTYTab.h"
-#import "iTermExpose.h"
+#import <Session/PTYTextView.h>
+#import <Window/PseudoTerminal.h>
+#import <Session/PTYSession.h>
+#import <Session/VT100Screen.h>
+#import <Search/FindCommandHandler.h>
+#import <Prefs/PreferencePanel.h>
+#import <Session/PTYScrollView.h>
+#import <Session/PTYTask.h>
+#import <App/iTermController.h>
+#import <Misc/NSStringITerm.h>
+#import <App/iTermApplicationDelegate.h>
+#import <Popups/PasteboardHistory.h>
+#import <Window/PTYTab.h>
+#import <Expose/iTermExpose.h>
 #import "RegexKitLite/RegexKitLite.h"
-#import "iTerm/NSStringITerm.h"
+#import <Misc/NSStringITerm.h>
 
 #include <sys/time.h>
 #include <math.h>

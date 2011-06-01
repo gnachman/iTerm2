@@ -32,9 +32,9 @@
 #define DEBUG_METHOD_TRACE    0
 
 #import <iTerm/iTerm.h>
-#import <iTerm/PTYScrollView.h>
-#import <iTerm/PTYTextView.h>
-#import <PreferencePanel.h>
+#import <Session/PTYScrollView.h>
+#import <Session/PTYTextView.h>
+#import <Prefs/PreferencePanel.h>
 
 @implementation PTYScroller
 

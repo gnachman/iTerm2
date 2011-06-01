@@ -24,7 +24,7 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <iTerm/PTYTabView.h>
+#import "PTYTabView.h"
 
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0

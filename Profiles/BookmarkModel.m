@@ -22,8 +22,8 @@
  **  along with this program; if not, write to the Free Software
  */
 
-#import <iTerm/ITAddressBookMgr.h>
-#import <iTerm/BookmarkModel.h>
+#import <Profiles/ITAddressBookMgr.h>
+#import <Profiles/BookmarkModel.h>
 
 id gAltOpenAllRepresentedObject;
 

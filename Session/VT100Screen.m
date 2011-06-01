@@ -34,23 +34,23 @@
 //#define DEBUG_CORRUPTION
 
 #import <iTerm/iTerm.h>
-#import <iTerm/VT100Screen.h>
-#import <iTerm/NSStringITerm.h>
-#import "WindowControllerInterface.h"
-#import <iTerm/PTYTextView.h>
-#import <iTerm/PTYScrollView.h>
-#import <iTerm/charmaps.h>
-#import <iTerm/PTYSession.h>
-#import <iTerm/PTYTask.h>
-#import <iTerm/PreferencePanel.h>
-#import "iTermApplicationDelegate.h"
-#import <iTerm/iTermGrowlDelegate.h>
-#import <iTerm/ITAddressBookMgr.h>
+#import <Session/VT100Screen.h>
+#import <Misc/NSStringITerm.h>
+#import <Window/WindowControllerInterface.h>
+#import <Session/PTYTextView.h>
+#import <Session/PTYScrollView.h>
+#import <Misc/charmaps.h>
+#import <Session/PTYSession.h>
+#import <Session/PTYTask.h>
+#import <Prefs/PreferencePanel.h>
+#import <App/iTermApplicationDelegate.h>
+#import <App/iTermGrowlDelegate.h>
+#import <Profiles/ITAddressBookMgr.h>
 #include <string.h>
 #include <unistd.h>
-#include <LineBuffer.h>
-#import "DVRBuffer.h"
-#import "PTYTab.h"
+#include <Session/LineBuffer.h>
+#import <DVR/DVRBuffer.h>
+#import <Window/PTYTab.h>
 
 #define MAX_SCROLLBACK_LINES 1000000
 #define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array

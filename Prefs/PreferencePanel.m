@@ -25,16 +25,16 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <iTerm/PreferencePanel.h>
-#import <iTerm/NSStringITerm.h>
-#import <iTerm/iTermController.h>
-#import <iTerm/ITAddressBookMgr.h>
-#import <iTerm/iTermKeyBindingMgr.h>
-#import <iTerm/PTYSession.h>
-#import <iTerm/PseudoTerminal.h>
-#import <iTerm/BookmarkModel.h>
-#import "PasteboardHistory.h"
-#import "SessionView.h"
+#import <Prefs/PreferencePanel.h>
+#import <Misc/NSStringITerm.h>
+#import <App/iTermController.h>
+#import <Profiles/ITAddressBookMgr.h>
+#import <App/iTermKeyBindingMgr.h>
+#import <Session/PTYSession.h>
+#import <Window/PseudoTerminal.h>
+#import <Profiles/BookmarkModel.h>
+#import <Popups/PasteboardHistory.h>
+#import <Session/SessionView.h>
 
 #define CUSTOM_COLOR_PRESETS @"Custom Color Presets"
 #define HOTKEY_WINDOW_GENERATED_PROFILE_NAME @"Hotkey Window"

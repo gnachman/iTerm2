@@ -28,7 +28,7 @@
 
 
 #import "TextViewWrapper.h"
-#import "iTerm/PTYTextView.h"
+#import <Session/PTYTextView.h>
 
 @implementation TextViewWrapper
 

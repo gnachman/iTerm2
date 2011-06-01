@@ -13,5 +13,4 @@
 
 @end
 
-+ (BookmarksController*) sharedInstance;
-- (int) numberOfBookmarks;
+

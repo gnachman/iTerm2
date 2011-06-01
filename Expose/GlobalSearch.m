@@ -26,15 +26,15 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <Search/GlobalSearch.h>
+#import <Expose/GlobalSearch.h>
 #import <Session/VT100Screen.h>
 #import <Session/PTYTextView.h>
 #import <Window/PseudoTerminal.h>
 #import <Session/PTYSession.h>
-#import "iTermController.h"
-#import "iTermExpose.h"
-#import "PTYTextView.h"
-#import "iTermSearchField.h"
+#import <App/iTermController.h>
+#import <Expose/iTermExpose.h>
+#import <Session/PTYTextView.h>
+#import <Search/iTermSearchField.h>
 
 const double GLOBAL_SEARCH_MARGIN = 10;
 

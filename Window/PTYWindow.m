@@ -29,10 +29,10 @@
  */
 
 #import <iTerm/iTerm.h>
-#import <iTerm/PTYWindow.h>
-#import <iTerm/PreferencePanel.h>
-#import <iTerm/PseudoTerminal.h>
-#import <iTerm/iTermController.h>
+#import <Window/PTYWindow.h>
+#import <Prefs/PreferencePanel.h>
+#import <Window/PseudoTerminal.h>
+#import <App/iTermController.h>
 // This is included because the blurring code uses undocumented APIs to do its thing.
 #import <CGSInternal.h>
 

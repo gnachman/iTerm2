@@ -12,5 +12,6 @@
 @interface BookmarksController : NSObject {
 
 }
-
++ (BookmarksController*) sharedInstance;
+- (int) numberOfBookmarks;
 @end

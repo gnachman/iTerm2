@@ -7,8 +7,8 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "iTerm/PseudoTerminal.h"
-#import "WindowControllerInterface.h"
+#import <Window/PseudoTerminal.h>
+#import <Window/WindowControllerInterface.h>
 
 @interface FakeWindow : NSObject <WindowControllerInterface>
 {
