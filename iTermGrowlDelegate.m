@@ -39,65 +39,65 @@
  **  in @implementation.
  */
 @interface
-	iTermGrowlDelegate (PrivateMethods)
+    iTermGrowlDelegate (PrivateMethods)
 @end
 
 @implementation iTermGrowlDelegate
 
 + (id)sharedInstance
 {
-	static iTermGrowlDelegate* shared = nil;
-	if(!shared)
-		shared = [iTermGrowlDelegate new];
-	return shared;
+    static iTermGrowlDelegate* shared = nil;
+    if(!shared)
+        shared = [iTermGrowlDelegate new];
+    return shared;
 }
 
 - (id)init
 {
     self = [super init];
-	if (self) {
-		notifications = [[NSArray arrayWithObjects:OURNOTIFICATIONS,
+    if (self) {
+        notifications = [[NSArray arrayWithObjects:OURNOTIFICATIONS,
                           nil] retain];
 
-		[GrowlApplicationBridge setGrowlDelegate:self];
-		[self registrationDictionaryForGrowl];
-		[self setEnabled:YES];
-        
-		return self;
-	} else {
-		return nil;
-	}
+        [GrowlApplicationBridge setGrowlDelegate:self];
+        [self registrationDictionaryForGrowl];
+        [self setEnabled:YES];
+
+        return self;
+    } else {
+        return nil;
+    }
 }
 
 - (void)dealloc
 {
     [notifications release];
-	[super dealloc];
+    [super dealloc];
 }
 
 - (BOOL)isEnabled
 {
-	if ([GrowlApplicationBridge isGrowlInstalled]) {
-		return enabled;
-	} else {
-		return NO;
-	}
+    if ([GrowlApplicationBridge isGrowlInstalled]) {
+        return enabled;
+    } else {
+        return NO;
+    }
 }
 
 - (void)setEnabled:(BOOL)newState
 {
-	enabled = newState;
+    enabled = newState;
 }
 
 - (void)growlNotify:(NSString *)title
 {
-	if (![self isEnabled]) {
-		NSLog(@"%s(%d):-[Growl not enabled.]",  __FILE__, __LINE__);
-		return;
-	}
+    if (![self isEnabled]) {
+        //NSLog(@"%s(%d):-[Growl not enabled.]",  __FILE__, __LINE__);
+        return;
+    }
 
     if ([[PreferencePanel sharedInstance] enableGrowl]) {
-        [GrowlApplicationBridge 
+        [GrowlApplicationBridge
             notifyWithTitle:title
                 description:nil
            notificationName:DEFAULTNOTIFICATION
@@ -108,14 +108,14 @@
     }
 }
 
-- (void)growlNotify:(NSString *)title 
-	 withDescription:(NSString *)description
+- (void)growlNotify:(NSString *)title
+     withDescription:(NSString *)description
 {
-	if (![self isEnabled]) {
-		NSLog(@"%s(%d):-[Growl not enabled.]",  __FILE__, __LINE__);
-		return;
-	}
-	
+    if (![self isEnabled]) {
+        //NSLog(@"%s(%d):-[Growl not enabled.]",  __FILE__, __LINE__);
+        return;
+    }
+
     if ([[PreferencePanel sharedInstance] enableGrowl]) {
         [GrowlApplicationBridge notifyWithTitle:title
                                     description:description
@@ -127,15 +127,15 @@
     }
 }
 
-- (void)growlNotify:(NSString *)title 
+- (void)growlNotify:(NSString *)title
     withDescription:(NSString *)description
     andNotification:(NSString *)notification
 {
-	if (![self isEnabled]) {
-		NSLog(@"%s(%d):-[Growl not enabled.]",  __FILE__, __LINE__);
-		return;
-	}
-    
+    if (![self isEnabled]) {
+        //NSLog(@"%s(%d):-[Growl not enabled.]",  __FILE__, __LINE__);
+        return;
+    }
+
     if ([[PreferencePanel sharedInstance] enableGrowl]) {
         [GrowlApplicationBridge notifyWithTitle:title
                                     description:description
@@ -148,14 +148,14 @@
 }
 
 - (NSDictionary *)registrationDictionaryForGrowl
-{	
-	NSDictionary *regDict = [NSDictionary dictionaryWithObjectsAndKeys:
-		OURGROWLAPPNAME, GROWL_APP_NAME,
-		notifications, GROWL_NOTIFICATIONS_ALL,
-		notifications, GROWL_NOTIFICATIONS_DEFAULT,
-		nil];
-	
-	return regDict;
+{
+    NSDictionary *regDict = [NSDictionary dictionaryWithObjectsAndKeys:
+        OURGROWLAPPNAME, GROWL_APP_NAME,
+        notifications, GROWL_NOTIFICATIONS_ALL,
+        notifications, GROWL_NOTIFICATIONS_DEFAULT,
+        nil];
+
+    return regDict;
 }
 
 @end

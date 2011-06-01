@@ -478,6 +478,13 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     }
 }
 
+// Terminate a replay session but not the live session
+- (void)softTerminate
+{
+    liveSession_ = nil;
+    [self terminate];
+}
+
 - (void)terminate
 {
     if (EXIT) {
@@ -2404,6 +2411,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)scheduleUpdateIn:(NSTimeInterval)timeout
 {
+    if (EXIT) {
+        return;
+    }
     float kEpsilon = 0.001;
     if (!timerRunning_ &&
         [updateTimer isValid] &&

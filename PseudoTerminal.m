@@ -1357,6 +1357,16 @@ NSString *sessionsKey = @"sessions";
             ![[PreferencePanel sharedInstance] hideTab]) {
             contentSize.height -= [newTerminal->tabBarControl frame].size.height;
         }
+        if ([newTerminal _haveLeftBorder]) {
+            --contentSize.width;
+        }
+        if ([newTerminal _haveRightBorder]) {
+            --contentSize.width;
+        }
+        if ([newTerminal _haveBottomBorder]) {
+            --contentSize.height;
+        }
+
         [newTerminal fitWindowToTabSize:contentSize];
     }
     newTerminal->togglingFullScreen_ = NO;
@@ -2179,21 +2189,7 @@ NSString *sessionsKey = @"sessions";
         [self adjustFullScreenWindowForBottomBarChange];
     } else {
         [[[self window] contentView] setAutoresizesSubviews:NO];
-        if (hide) {
-            NSRect frame = [[self window] frame];
-            NSPoint topLeft;
-            topLeft.x = frame.origin.x;
-            topLeft.y = frame.origin.y + frame.size.height;
-            [[self window] setFrame:preBottomBarFrame display:NO];
-            [[self window] setFrameTopLeftPoint:topLeft];
-        } else {
-            preBottomBarFrame = [[self window] frame];
-            NSRect newFrame = preBottomBarFrame;
-            float h = [instantReplaySubview frame].size.height;
-            newFrame.size.height += h;
-            newFrame.origin.y -= h;
-            [[self window] setFrame:newFrame display:YES];
-        }
+        [self fitWindowToTabs];
     }
 
     // On OS X 10.5.8, the scroll bar and resize indicator are messed up at this point. Resizing the tabview fixes it. This seems to be fixed in 10.6.
@@ -2267,7 +2263,15 @@ NSString *sessionsKey = @"sessions";
 #ifdef HIDE_IR_WHEN_LIVE_VIEW_ENTERED
     [self showHideInstantReplay];
 #endif
+
+    [self sessionInitiatedResize:replaySession
+                           width:[[liveSession SCREEN] width]
+                          height:[[liveSession SCREEN] height]];
+
+    [replaySession retain];
     [theTab showLiveSession:liveSession inPlaceOf:replaySession];
+    [replaySession softTerminate];
+    [replaySession release];
     [theTab setParentWindow:self];
     [[self window] makeFirstResponder:[[theTab activeSession] TEXTVIEW]];
 }
@@ -2540,17 +2544,19 @@ NSString *sessionsKey = @"sessions";
             maxTabSize.height = tabSize.height;
         }
     }
-    PtyLog(@"fitWindowToTabs - calling repositionWidgets");
-    [self repositionWidgets];
     PtyLog(@"fitWindowToTabs - calling fitWindowToTabSize");
-    [self fitWindowToTabSize:maxTabSize];
+    if (![self fitWindowToTabSize:maxTabSize]) {
+        // Sometimes the window doesn't resize but widgets need to be moved. For example, when toggling
+        // the scrollbar.
+        [self repositionWidgets];
+    }
 }
 
-- (void)fitWindowToTabSize:(NSSize)tabSize
+- (BOOL)fitWindowToTabSize:(NSSize)tabSize
 {
     if (_fullScreen) {
         [self fitTabsToWindow];
-        return;
+        return NO;
     }
     // Set the window size to be large enough to encompass that tab plus its decorations.
     NSSize decorationSize = [self windowDecorationSize];
@@ -2577,6 +2583,7 @@ NSString *sessionsKey = @"sessions";
         frame.size.width = [[self window] frame].size.width;
         frame.origin.x = [[self window] frame].origin.x;
     }
+    BOOL didResize = NSEqualRects([[self window] frame], frame);
     [[self window] setFrame:frame display:YES];
     [[[self window] contentView] setAutoresizesSubviews:YES];
 
@@ -2593,6 +2600,8 @@ NSString *sessionsKey = @"sessions";
     if (mustResizeTabs) {
         [self fitTabsToWindow];
     }
+
+    return didResize;
 }
 
 - (void)selectPaneLeft:(id)sender

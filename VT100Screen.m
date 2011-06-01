@@ -390,9 +390,6 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
                REAL_WIDTH*sizeof(screen_char_t));
     }
 
-    // set current lines in scrollback
-    current_scrollback_lines = 0;
-
     // set up our dirty flags buffer
     dirtySize = WIDTH * HEIGHT;
     // allocate one extra byte to check for overruns.
@@ -414,17 +411,16 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (screen_char_t *)getLineAtIndex:(int)theIndex withBuffer:(screen_char_t*)buffer
 {
-    assert([linebuffer numLinesWithWidth: WIDTH] == current_scrollback_lines);
-    if (theIndex >= current_scrollback_lines) {
+    if (theIndex >= [linebuffer numLinesWithWidth: WIDTH]) {
         // Get a line from the circular screen buffer
-        return [self _getLineAtIndex:(theIndex - current_scrollback_lines)
+        return [self _getLineAtIndex:(theIndex - [linebuffer numLinesWithWidth: WIDTH])
                             fromLine:screen_top];
     } else {
         // Get a line from the scrollback buffer.
         memcpy(buffer, default_line, sizeof(screen_char_t) * WIDTH);
         int cont = [linebuffer copyLineToBuffer:buffer width:WIDTH lineNum:theIndex];
         if (cont == EOL_SOFT &&
-            theIndex == current_scrollback_lines - 1 &&
+            theIndex == [linebuffer numLinesWithWidth: WIDTH] - 1 &&
             screen_top[1].code == DWC_RIGHT &&
             buffer[WIDTH - 1].code == 0) {
             // The last line in the scrollback buffer is actually a split DWC
@@ -704,7 +700,7 @@ static char* FormatCont(int c)
     char line[1000];
     char dirtyline[1000];
     DebugLog([NSString stringWithFormat:@"width=%d height=%d cursor_x=%d cursor_y=%d scroll_top=%d scroll_bottom=%d max_scrollback_lines=%d current_scrollback_lines=%d scrollback_overflow=%d",
-              WIDTH, HEIGHT, cursorX, cursorY, SCROLL_TOP, SCROLL_BOTTOM, max_scrollback_lines, current_scrollback_lines, scrollback_overflow]);
+              WIDTH, HEIGHT, cursorX, cursorY, SCROLL_TOP, SCROLL_BOTTOM, max_scrollback_lines, [linebuffer numLinesWithWidth: WIDTH], scrollback_overflow]);
 
     for (y = 0; y < HEIGHT; ++y) {
         int ox = 0;
@@ -758,12 +754,10 @@ static char* FormatCont(int c)
     return line_length;
 }
 
-// Returns the number of lines appended.
-- (int)_appendScreenToScrollback
+- (int)_usedHeight
 {
-    // Set used_height to the number of lines on the screen that are in use.
-    int i;
     int used_height = HEIGHT;
+    int i;
 
     for(; used_height > cursorY + 1; used_height--) {
         screen_char_t* aLine = [self getLineAtScreenIndex: used_height-1];
@@ -776,14 +770,23 @@ static char* FormatCont(int c)
         }
     }
 
+    return used_height;
+}
+
+// Returns the number of lines appended.
+- (int)_appendScreenToScrollback:(int)numLines
+{
+    // Set numLines to the number of lines on the screen that are in use.
+    int i;
+
     // Push the current screen contents into the scrollback buffer.
     // The maximum number of lines of scrollback are temporarily ignored because this
     // loop doesn't call dropExcessLinesWithWidth.
     int next_line_length;
-    if (used_height > 0) {
+    if (numLines > 0) {
         next_line_length  = [self _getLineLength:[self getLineAtScreenIndex: 0]];
     }
-    for (i = 0; i < used_height; ++i) {
+    for (i = 0; i < numLines; ++i) {
         screen_char_t* line = [self getLineAtScreenIndex: i];
         int line_length = next_line_length;
         if (i+1 < HEIGHT) {
@@ -810,7 +813,7 @@ static char* FormatCont(int c)
 #endif
     }
 
-    return used_height;
+    return numLines;
 }
 
 - (void)resizeWidth:(int)new_width height:(int)new_height
@@ -846,7 +849,18 @@ static char* FormatCont(int c)
     int selectionStartPosition = -1;
     int selectionEndPosition = -1;
     BOOL hasSelection = display && [display selectionStartX] != -1;
-    [self _appendScreenToScrollback];
+
+    int usedHeight = [self _usedHeight];
+    if (HEIGHT - new_height >= usedHeight) {
+        // Height is decreasing but pushing HEIGHT lines into the buffer would scroll all the used
+        // lines off the top, leaving the cursor floating without any text. Keep all used lines that
+        // fit onscreen.
+        [self _appendScreenToScrollback:MAX(usedHeight, new_height)];
+    } else {
+        // Keep last used line a fixed distance from the bottom of the screen
+        [self _appendScreenToScrollback:HEIGHT];
+    }
+
     BOOL startPositionBeforeEnd = NO;
     BOOL endPostionBeforeEnd = NO;
     if (hasSelection) {
@@ -1004,7 +1018,6 @@ static char* FormatCont(int c)
     }
     int lines = [linebuffer numLinesWithWidth: WIDTH];
     NSAssert(lines >= 0, @"Negative lines");
-    current_scrollback_lines = lines;
 
     // An immediate refresh is needed so that the size of TEXTVIEW can be
     // adjusted to fit the new size
@@ -1072,7 +1085,6 @@ static char* FormatCont(int c)
     if (!unlimitedScrollback_) {
         [linebuffer dropExcessLinesWithWidth: WIDTH];
     }
-    current_scrollback_lines = [linebuffer numLinesWithWidth: WIDTH];
 }
 
 - (void)setUnlimitedScrollback:(BOOL)enable
@@ -1324,18 +1336,24 @@ static char* FormatCont(int c)
         break;
     case ANSICSI_ECH:
         if (cursorX < WIDTH) {
-            i = WIDTH * cursorY + cursorX;
+            int dirtyX = cursorX;
+            int dirtyY = cursorY;
+
             j = token.u.csi.p[0];
-            if (j + cursorX > WIDTH) {
-                j = WIDTH - cursorX;
-            }
             aLine = [self getLineAtScreenIndex:cursorY];
-            for (k = 0; k < j; k++) {
+            for (k = 0; cursorX + k < WIDTH && k < j; k++) {
                 aLine[cursorX + k].code = 0;
+                assert(cursorX + k < WIDTH);
                 CopyForegroundColor(&aLine[cursorX + k], [TERMINAL foregroundColorCodeReal]);
                 CopyBackgroundColor(&aLine[cursorX + k], [TERMINAL backgroundColorCodeReal]);
             }
-            memset(dirty+i,1,j);
+
+            int endX = MIN(WIDTH, dirtyX + j);
+            [self setDirtyFromX:dirtyX
+                              Y:dirtyY
+                            toX:endX
+                              Y:dirtyY];
+
             DebugLog(@"putToken ECH");
         }
         break;
@@ -1561,7 +1579,6 @@ static char* FormatCont(int c)
     [linebuffer setMaxLines:max_scrollback_lines];
     [display clearMatches];
 
-    current_scrollback_lines = 0;
     scrollback_overflow = 0;
 
     DebugLog(@"clearScrollbackBuffer setDirty");
@@ -1677,7 +1694,7 @@ void DumpBuf(screen_char_t* p, int n) {
     if (gDebugLogging) {
         DebugLog([NSString stringWithFormat:@"setString: %d chars starting with %c at x=%d, y=%d, line=%d",
                   [string length], [string characterAtIndex:0],
-                  cursorX, cursorY, cursorY + current_scrollback_lines]);
+                  cursorX, cursorY, cursorY + [linebuffer numLinesWithWidth: WIDTH]]);
     }
 
 #if DEBUG_METHOD_TRACE
@@ -2088,7 +2105,7 @@ void DumpBuf(screen_char_t* p, int n) {
         DebugLog(@"setNewline advance cursor");
     } else if (SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT - 1) {
         // Scroll the whole screen.
-        
+
         // Mark the cursor's previous location dirty. This fixes a rare race condition where
         // the cursor is not erased.
         [self setCharDirtyAtX:MAX(0, cursorX - 1)
@@ -3066,12 +3083,12 @@ void DumpBuf(screen_char_t* p, int n) {
 
 - (int)numberOfScrollbackLines
 {
-    return current_scrollback_lines;
+    return [linebuffer numLinesWithWidth: WIDTH];
 }
 
 - (int)numberOfLines
 {
-    return current_scrollback_lines + HEIGHT;
+    return [linebuffer numLinesWithWidth: WIDTH] + HEIGHT;
 }
 
 - (int)scrollbackOverflow
@@ -3153,7 +3170,7 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
-    linesPushed = [self _appendScreenToScrollback];
+    linesPushed = [self _appendScreenToScrollback:[self _usedHeight]];
 
     // Get the start position of (x,y)
     int startPos;
@@ -3202,7 +3219,7 @@ void DumpBuf(screen_char_t* p, int n) {
     int startY, endY;
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
-    linesPushed = [self _appendScreenToScrollback];
+    linesPushed = [self _appendScreenToScrollback:[self _usedHeight]];
 
     // Search one block.
     int stopAt;
@@ -3238,7 +3255,7 @@ void DumpBuf(screen_char_t* p, int n) {
                                                    toY:&startY];
                     assert(isOk);
                     result->absStartY = startY + [self totalScrollbackOverflow];
-                    
+
                     isOk = [linebuffer convertPosition:rr->position + rr->length - 1
                                              withWidth:WIDTH
                                                    toX:&result->endX
@@ -3533,7 +3550,7 @@ void DumpBuf(screen_char_t* p, int n) {
         // not really related).
         return 0;
     }
-  
+
     int len = WIDTH;
     if (screen_top[WIDTH].code == EOL_HARD) {
         // The line is not continued. Figure out its length by finding the last nonnull char.
@@ -3552,7 +3569,6 @@ void DumpBuf(screen_char_t* p, int n) {
     } else {
         dropped = 0;
     }
-    current_scrollback_lines = [linebuffer numLinesWithWidth: WIDTH];
 
     assert(dropped == 0 || dropped == 1);
 
