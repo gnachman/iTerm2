@@ -1848,6 +1848,7 @@ NSString *sessionsKey = @"sessions";
         ([TABVIEW numberOfTabViewItems] > 1 && [tabBarControl isHidden]))) {
         PtyLog(@"tabViewDidChangeNumberOfTabViewItems - calling fitWindowToTab");
         [self fitWindowToTabs];
+        [self repositionWidgets];
     }
 
     int i;
