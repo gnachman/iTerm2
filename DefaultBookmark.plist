@@ -249,6 +249,13 @@
 	<integer>0</integer>
 	<key>Keyboard Map</key>
 	<dict>
+        <key>0x9-0x40000</key>
+        <dict>
+            <key>Action</key>
+            <integer>11</integer>
+            <key>Text</key>
+            <string>9</string>
+        </dict>
         <key>0xf700-0x260000</key>
         <dict>
             <key>Action</key>
