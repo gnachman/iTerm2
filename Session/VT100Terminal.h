@@ -130,8 +130,6 @@
 #define XTERMCC_SET_PALETTE 111
 #define XTERMCC_SET_KVP 112
 
-
-
 // Some ansi stuff
 #define ANSICSI_CHA      3000   // Cursor Horizontal Absolute
 #define ANSICSI_VPA      3001   // Vert Position Absolute
