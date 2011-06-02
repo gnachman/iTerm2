@@ -27,8 +27,8 @@
  */
 
 #import "FindViewController.h"
-#import <Search/FindCommandHandler.h>
-#import <App/iTermApplication.h>
+#import "Search/FindCommandHandler.h"
+#import "App/iTermApplication.h"
 
 static const float FINDVIEW_DURATION = 0.075;
 

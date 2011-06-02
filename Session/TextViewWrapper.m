@@ -28,7 +28,7 @@
 
 
 #import "TextViewWrapper.h"
-#import <Session/PTYTextView.h>
+#import "Session/PTYTextView.h"
 
 @implementation TextViewWrapper
 

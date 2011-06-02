@@ -25,7 +25,7 @@
  */
 
 
-#import <Profiles/ITAddressBookMgr.h>
+#import "Profiles/ITAddressBookMgr.h"
 #import "iTermTerminalProfileMgr.h"
 
 static iTermTerminalProfileMgr *singleInstance = nil;

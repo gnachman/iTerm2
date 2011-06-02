@@ -28,9 +28,9 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import <Session/PTYSession.h>
-#import <Session/LineBuffer.h>
-#import <Popups/Popup.h>
+#import "Session/PTYSession.h"
+#import "Session/LineBuffer.h"
+#import "Popups/Popup.h"
 
 @interface AutocompleteView : Popup
 {

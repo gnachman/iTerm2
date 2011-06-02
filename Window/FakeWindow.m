@@ -28,7 +28,7 @@
 
 #import "FakeWindow.h"
 #import "Session/PTYSession.h"
-#import <Window/PTYTab.h>
+#import "Window/PTYTab.h"
 
 @implementation FakeWindow
 

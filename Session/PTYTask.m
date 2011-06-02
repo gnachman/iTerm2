@@ -43,9 +43,9 @@
 #include <sys/select.h>
 #include <libproc.h>
 
-#import <Session/PTYTask.h>
-#import <Prefs/PreferencePanel.h>
-#import <App/ProcessCache.h>
+#import "Session/PTYTask.h"
+#import "Prefs/PreferencePanel.h"
+#import "App/ProcessCache.h"
 
 #include <dlfcn.h>
 #include <sys/mount.h>

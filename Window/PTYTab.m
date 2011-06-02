@@ -29,17 +29,17 @@
 
 #import "PTYTab.h"
 #import "Session/PTYSession.h"
-#import <Window/WindowControllerInterface.h>
-#import <Session/SessionView.h>
-#import <Window/FakeWindow.h>
-#import <Prefs/PreferencePanel.h>
-#import <App/iTermGrowlDelegate.h>
-#import <Session/PTYScrollView.h>
+#import "Window/WindowControllerInterface.h"
+#import "Session/SessionView.h"
+#import "Window/FakeWindow.h"
+#import "Prefs/PreferencePanel.h"
+#import "App/iTermGrowlDelegate.h"
+#import "Session/PTYScrollView.h"
 #import "PSMTabBarControl.h"
 #import "PSMTabStyle.h"
-#import <Profiles/ITAddressBookMgr.h>
-#import <App/iTermApplicationDelegate.h>
-#import <App/iTermController.h>
+#import "Profiles/ITAddressBookMgr.h"
+#import "App/iTermApplicationDelegate.h"
+#import "App/iTermController.h"
 
 //#define PTYTAB_VERBOSE_LOGGING
 #ifdef PTYTAB_VERBOSE_LOGGING

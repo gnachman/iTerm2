@@ -31,10 +31,10 @@
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
 
-#import <iTerm/iTerm.h>
-#import <Session/PTYScrollView.h>
-#import <Session/PTYTextView.h>
-#import <Prefs/PreferencePanel.h>
+#import "iTerm/iTerm.h"
+#import "Session/PTYScrollView.h"
+#import "Session/PTYTextView.h"
+#import "Prefs/PreferencePanel.h"
 
 @implementation PTYScroller
 

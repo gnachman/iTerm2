@@ -23,11 +23,11 @@
 */
 
 #import "BookmarksWindow.h"
-#import <Profiles/BookmarkModel.h>
-#import <App/iTermController.h>
-#import <Prefs/PreferencePanel.h>
-#import <Window/PseudoTerminal.h>
-#import <Window/PTYTab.h>
+#import "Profiles/BookmarkModel.h"
+#import "App/iTermController.h"
+#import "Prefs/PreferencePanel.h"
+#import "Window/PseudoTerminal.h"
+#import "Window/PTYTab.h"
 
 typedef enum {
     HORIZONTAL_PANE,

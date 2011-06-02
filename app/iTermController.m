@@ -31,24 +31,24 @@
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
 
-#import <App/iTermController.h>
-#import <Prefs/PreferencePanel.h>
-#import <Window/PseudoTerminal.h>
-#import <Session/PTYSession.h>
-#import <Session/VT100Screen.h>
-#import <Misc/NSStringITerm.h>
-#import <Profiles/ITAddressBookMgr.h>
-#import <App/iTermGrowlDelegate.h>
-#import <Popups/PasteboardHistory.h>
+#import "App/iTermController.h"
+#import "Prefs/PreferencePanel.h"
+#import "Window/PseudoTerminal.h"
+#import "Session/PTYSession.h"
+#import "Session/VT100Screen.h"
+#import "Misc/NSStringITerm.h"
+#import "Profiles/ITAddressBookMgr.h"
+#import "App/iTermGrowlDelegate.h"
+#import "Popups/PasteboardHistory.h"
 #import <Carbon/Carbon.h>
-#import <App/iTermApplicationDelegate.h>
-#import <App/iTermApplication.h>
+#import "App/iTermApplicationDelegate.h"
+#import "App/iTermApplication.h"
 #import "UKCrashReporter/UKCrashReporter.h"
-#import <Window/PTYTab.h>
-#import <App/iTermKeyBindingMgr.h>
-#import <Window/PseudoTerminal.h>
-#import <Expose/iTermExpose.h>
-#import <GTM/GTMCarbonEvent.h>
+#import "Window/PTYTab.h"
+#import "App/iTermKeyBindingMgr.h"
+#import "Window/PseudoTerminal.h"
+#import "Expose/iTermExpose.h"
+#import "GTM/GTMCarbonEvent.h"
 
 @interface NSApplication (Undocumented)
 - (void)_cycleWindowsReversed:(BOOL)back;

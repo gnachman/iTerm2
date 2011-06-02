@@ -24,11 +24,11 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <App/iTermController.h>
-#import <Session/PTYTextView.h>
-#import <Window/PseudoTerminal.h>
-#import <Session/PTYSession.h>
-#import <Search/FindCommandHandler.h>
+#import "App/iTermController.h"
+#import "Session/PTYTextView.h"
+#import "Window/PseudoTerminal.h"
+#import "Session/PTYSession.h"
+#import "Search/FindCommandHandler.h"
 
 #define DEBUG_ALLOC     0
 

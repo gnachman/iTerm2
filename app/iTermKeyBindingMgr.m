@@ -71,10 +71,10 @@
  * Left.
  */
 
-#import <Profiles/ITAddressBookMgr.h>
-#import <App/iTermKeyBindingMgr.h>
+#import "Profiles/ITAddressBookMgr.h"
+#import "App/iTermKeyBindingMgr.h"
 #import <Carbon/Carbon.h>
-#import <Prefs/PreferencePanel.h>
+#import "Prefs/PreferencePanel.h"
 
 static NSDictionary* globalKeyMap;
 

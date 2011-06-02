@@ -26,11 +26,11 @@
 
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
-#import <Profiles/BookmarkModel.h>
-#import <DVR/DVR.h>
-#import <Window/WindowControllerInterface.h>
-#import <Session/TextViewWrapper.h>
-#import <Search/FindViewController.h>
+#import "Profiles/BookmarkModel.h"
+#import "DVR/DVR.h"
+#import "Window/WindowControllerInterface.h"
+#import "Session/TextViewWrapper.h"
+#import "Search/FindViewController.h"
 
 #include <sys/time.h>
 

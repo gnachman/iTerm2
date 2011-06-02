@@ -28,12 +28,12 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import <Window/PTYTabView.h>
-#import <Window/PTYWindow.h>
-#import <Profiles/BookmarkListView.h>
-#import <Window/WindowControllerInterface.h>
-#import <Popups/PasteboardHistory.h>
-#import <Popups/Autocomplete.h>
+#import "Window/PTYTabView.h"
+#import "Window/PTYWindow.h"
+#import "Profiles/BookmarkListView.h"
+#import "Window/WindowControllerInterface.h"
+#import "Popups/PasteboardHistory.h"
+#import "Popups/Autocomplete.h"
 
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
 

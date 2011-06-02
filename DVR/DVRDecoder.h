@@ -29,7 +29,7 @@
 
 
 #import <Cocoa/Cocoa.h>
-#import <DVRBuffer.h>
+#import "DVR/DVRBuffer.h"
 
 @interface DVRDecoder : NSObject
 {

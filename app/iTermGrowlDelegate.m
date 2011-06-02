@@ -28,8 +28,8 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <iTermGrowlDelegate.h>
-#import <PreferencePanel.h>
+#import "iTermGrowlDelegate.h"
+#import "Prefs/PreferencePanel.h"
 
 /**
  **  The category is used to extend iTermGrowlDelegate with private methods.

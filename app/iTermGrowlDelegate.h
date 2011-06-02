@@ -54,7 +54,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import <Growl.h>
+#import "Growl.h"
 
 #define OURGROWLAPPNAME  @"iTerm"
 #define DEFAULTNOTIFICATION @"Miscellaneous"

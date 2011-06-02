@@ -27,7 +27,7 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <LineBuffer.h>
+#import "LineBuffer.h"
 #import "RegexKitLite/RegexKitLite.h"
 
 @implementation ResultRange

@@ -40,23 +40,23 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 
 #define SWAPINT(a, b) { int temp; temp = a; a = b; b = temp; }
 
-#import <iTerm/iTerm.h>
-#import <Session/PTYTextView.h>
-#import <Window/PseudoTerminal.h>
-#import <Session/PTYSession.h>
-#import <Session/VT100Screen.h>
-#import <Search/FindCommandHandler.h>
-#import <Prefs/PreferencePanel.h>
-#import <Session/PTYScrollView.h>
-#import <Session/PTYTask.h>
-#import <App/iTermController.h>
-#import <Misc/NSStringITerm.h>
-#import <App/iTermApplicationDelegate.h>
-#import <Popups/PasteboardHistory.h>
-#import <Window/PTYTab.h>
-#import <Expose/iTermExpose.h>
+#import "iTerm/iTerm.h"
+#import "Session/PTYTextView.h"
+#import "Window/PseudoTerminal.h"
+#import "Session/PTYSession.h"
+#import "Session/VT100Screen.h"
+#import "Search/FindCommandHandler.h"
+#import "Prefs/PreferencePanel.h"
+#import "Session/PTYScrollView.h"
+#import "Session/PTYTask.h"
+#import "App/iTermController.h"
+#import "Misc/NSStringITerm.h"
+#import "App/iTermApplicationDelegate.h"
+#import "Popups/PasteboardHistory.h"
+#import "Window/PTYTab.h"
+#import "Expose/iTermExpose.h"
 #import "RegexKitLite/RegexKitLite.h"
-#import <Misc/NSStringITerm.h>
+#import "Misc/NSStringITerm.h"
 
 #include <sys/time.h>
 #include <math.h>

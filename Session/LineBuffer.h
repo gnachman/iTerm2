@@ -27,7 +27,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import <Session/ScreenChar.h>
+#import "Session/ScreenChar.h"
 
 // When receiving search results, you'll get an array of this class. Positions
 // can be converted to x,y coordinates with -convertPosition:withWidth:toX:toY.

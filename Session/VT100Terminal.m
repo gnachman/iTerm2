@@ -28,14 +28,14 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <Session/VT100Terminal.h>
-#import <Session/PTYSession.h>
-#import <Session/VT100Screen.h>
-#import <Misc/NSStringITerm.h>
-#import <App/iTermApplicationDelegate.h>
-#import <Window/PTYTab.h>
-#import <Window/PseudoTerminal.h>
-#import <Window/WindowControllerInterface.h>
+#import "Session/VT100Terminal.h"
+#import "Session/PTYSession.h"
+#import "Session/VT100Screen.h"
+#import "Misc/NSStringITerm.h"
+#import "App/iTermApplicationDelegate.h"
+#import "Window/PTYTab.h"
+#import "Window/PseudoTerminal.h"
+#import "Window/WindowControllerInterface.h"
 #include <term.h>
 #include <wchar.h>
 

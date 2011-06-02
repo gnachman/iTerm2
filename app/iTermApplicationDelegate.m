@@ -27,18 +27,18 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <App/iTermApplicationDelegate.h>
-#import <App/iTermController.h>
-#import <Profiles/ITAddressBookMgr.h>
-#import <Prefs/PreferencePanel.h>
-#import <Window/PseudoTerminal.h>
-#import <Session/PTYSession.h>
-#import <Session/VT100Terminal.h>
-#import <Search/FindCommandHandler.h>
-#import <Window/PTYWindow.h>
-#import <Session/PTYTextView.h>
+#import "App/iTermApplicationDelegate.h"
+#import "App/iTermController.h"
+#import "Profiles/ITAddressBookMgr.h"
+#import "Prefs/PreferencePanel.h"
+#import "Window/PseudoTerminal.h"
+#import "Session/PTYSession.h"
+#import "Session/VT100Terminal.h"
+#import "Search/FindCommandHandler.h"
+#import "Window/PTYWindow.h"
+#import "Session/PTYTextView.h"
 #import "Misc/NSStringITerm.h"
-#import <Profiles/BookmarksWindow.h>
+#import "Profiles/BookmarksWindow.h"
 #import "Window/PTYTab.h"
 #import "Expose/iTermExpose.h"
 #include <unistd.h>

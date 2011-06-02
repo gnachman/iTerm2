@@ -28,9 +28,9 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import <Session/VT100Terminal.h>
-#import <Session/LineBuffer.h>
-#import <DVR/DVR.h>
+#import "Session/VT100Terminal.h"
+#import "Session/LineBuffer.h"
+#import "DVR/DVR.h"
 
 @class PTYTask;
 @class PTYSession;

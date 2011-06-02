@@ -27,7 +27,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import <iTerm/iTerm.h>
+#import "iTerm/iTerm.h"
 #import "ScreenChar.h"
 #import "PreferencePanel.h"
 #import "TRouter.h"

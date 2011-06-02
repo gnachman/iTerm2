@@ -28,7 +28,7 @@
 
 
 #import <Cocoa/Cocoa.h>
-#import "DVRIndexEntry.h"
+#import "DVR/DVRIndexEntry.h"
 
 // Sequences in a diff frame begin with one byte indicating the type of content
 // that follows. The values come from this enum:
