@@ -75,12 +75,13 @@ typedef struct {
 - (Bookmark*)setObject:(id)object forKey:(NSString*)key inBookmark:(Bookmark*)bookmark;
 - (void)setDefaultByGuid:(NSString*)guid;
 - (void)moveGuid:(NSString*)guid toRow:(int)row;
+- (void)rebuildMenus;
 // Return the absolute index of a bookmark given its index with the filter applied.
 - (int)convertFilteredIndex:(int)theIndex withFilter:(NSString*)filter;
 - (void)dump;
 - (NSArray*)bookmarks;
 - (NSArray*)guids;
-- (void)addBookmark:(Bookmark*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params;
+- (void)addBookmark:(Bookmark*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params atPos:(int)pos;
 
 // Tell all listeners that the model has changed.
 - (void)postChangeNotification;
@@ -110,6 +111,7 @@ typedef enum {
     BookmarkModel* model;
     // Tags before the action was applied.
     NSArray* tags;
+    int index;  // Index of bookmark
 }
 
 + (BookmarkJournalEntry*)journalWithAction:(JournalAction)action

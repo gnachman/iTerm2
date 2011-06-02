@@ -211,6 +211,7 @@ id gAltOpenAllRepresentedObject;
 
     bookmark = [[newBookmark copy] autorelease];
 
+    int theIndex;
     if (sort) {
         // Insert alphabetically. Sort so that objects with the "bonjour" tag come after objects without.
         int insertionPoint = -1;
@@ -236,17 +237,22 @@ id gAltOpenAllRepresentedObject;
             }
         }
         if (insertionPoint == -1) {
+            theIndex = [bookmarks_ count];
             [bookmarks_ addObject:[NSDictionary dictionaryWithDictionary:bookmark]];
         } else {
+            theIndex = insertionPoint;
             [bookmarks_ insertObject:[NSDictionary dictionaryWithDictionary:bookmark] atIndex:insertionPoint];
         }
     } else {
+        theIndex = [bookmarks_ count];
         [bookmarks_ addObject:[NSDictionary dictionaryWithDictionary:bookmark]];
     }
     NSString* isDeprecatedDefaultBookmark = [bookmark objectForKey:KEY_DEFAULT_BOOKMARK];
 
     // The call to setDefaultByGuid may add a journal entry so make sure this one comes first.
-    [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_ADD bookmark:bookmark model:self]];
+    BookmarkJournalEntry* e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD bookmark:bookmark model:self];
+    e->index = theIndex;
+    [journal_ addObject:e];
 
     if (![self defaultBookmark] || (isDeprecatedDefaultBookmark && [isDeprecatedDefaultBookmark isEqualToString:@"Yes"])) {
         [self setDefaultByGuid:[bookmark objectForKey:KEY_GUID]];
@@ -344,7 +350,9 @@ id gAltOpenAllRepresentedObject;
     }
     [bookmarks_ replaceObjectAtIndex:i withObject:bookmark];
     if (needJournal) {
-        [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_ADD bookmark:bookmark model:self]];
+        BookmarkJournalEntry* e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD bookmark:bookmark model:self];
+        e->index = i;
+        [journal_ addObject:e];
     }
     if (isDefault) {
         [self setDefaultByGuid:[bookmark objectForKey:KEY_GUID]];
@@ -514,6 +522,18 @@ id gAltOpenAllRepresentedObject;
     [bookmark release];
 }
 
+- (void)rebuildMenus
+{
+    [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE_ALL bookmark:nil model:self]];
+    int i = 0;
+    for (Bookmark* b in bookmarks_) {
+        BookmarkJournalEntry* e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD bookmark:b model:self];
+        e->index = i++;
+        [journal_ addObject:e];
+    }
+    [self postChangeNotification];
+}
+
 - (void)postChangeNotification
 {
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermReloadAddressBook"
@@ -628,11 +648,38 @@ id gAltOpenAllRepresentedObject;
     return pos;
 }
 
+- (int)positionOfBookmarkWithIndex:(int)theIndex startingAtItem:(int)skip inMenu:(NSMenu*)menu
+{
+    // Find position of bookmark in menu
+    int N = [menu numberOfItems];
+    if ([BookmarkModel menuHasOpenAll:menu]) {
+        N -= 3;
+    }
+    NSArray* items = [menu itemArray];
+    int pos = N;
+    for (int i = skip; i < N; i++) {
+        NSMenuItem* cur = [items objectAtIndex:i];
+        if ([cur isSeparatorItem]) {
+            break;
+        }
+        if ([cur isHidden] || [cur submenu]) {
+            continue;
+        }
+        if ([cur tag] > theIndex) {
+            pos = i;
+            break;
+        }
+    }
+
+    return pos;
+}
+
 - (void)addBookmark:(Bookmark*)b
              toMenu:(NSMenu*)menu
          atPosition:(int)pos
          withParams:(JournalParams*)params
         isAlternate:(BOOL)isAlternate
+            withTag:(int)tag
 {
     NSMenuItem* item = [[NSMenuItem alloc] initWithTitle:[b objectForKey:KEY_NAME]
                                                   action:isAlternate ? params->alternateSelector : params->selector
@@ -647,17 +694,24 @@ id gAltOpenAllRepresentedObject;
     [item setAlternate:isAlternate];
     [item setTarget:params->target];
     [item setRepresentedObject:[[[b objectForKey:KEY_GUID] copy] autorelease]];
+    [item setTag:tag];
     [menu insertItem:item atIndex:pos];
 }
 
-- (void)addBookmark:(Bookmark*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params
+- (void)addBookmark:(Bookmark*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params atPos:(int)theIndex
 {
-    int pos = [self positionOfBookmark:b startingAtItem:skip inMenu:menu];
+    int pos;
+    if (theIndex == -1) {
+        // Add in sorted order
+        pos = [self positionOfBookmark:b startingAtItem:skip inMenu:menu];
+    } else {
+        pos = [self positionOfBookmarkWithIndex:theIndex startingAtItem:skip inMenu:menu];
+    }
 
     if (![tags count]) {
         // Add item & alternate if no tags
-        [self addBookmark:b toMenu:menu atPosition:pos withParams:params isAlternate:NO];
-        [self addBookmark:b toMenu:menu atPosition:pos+1 withParams:params isAlternate:YES];
+        [self addBookmark:b toMenu:menu atPosition:pos withParams:params isAlternate:NO withTag:theIndex];
+        [self addBookmark:b toMenu:menu atPosition:pos+1 withParams:params isAlternate:YES withTag:theIndex];
     }
 
     // Add to tag submenus
@@ -666,7 +720,7 @@ id gAltOpenAllRepresentedObject;
                                                           startingAtItem:skip
                                                                 withName:tag
                                                                   params:params];
-        [self addBookmark:b toMenu:tagSubMenu startingAtItem:0 withTags:nil params:params];
+        [self addBookmark:b toMenu:tagSubMenu startingAtItem:0 withTags:nil params:params atPos:-1];
     }
 
     if ([menu numberOfItems] > skip + 2 && ![BookmarkModel menuHasOpenAll:menu]) {
@@ -681,7 +735,7 @@ id gAltOpenAllRepresentedObject;
     if (!b) {
         return;
     }
-    [model addBookmark:b toMenu:menu startingAtItem:skip withTags:[b objectForKey:KEY_TAGS] params:params];
+    [model addBookmark:b toMenu:menu startingAtItem:skip withTags:[b objectForKey:KEY_TAGS] params:params atPos:e->index];
 }
 
 + (void)applyRemoveJournalEntry:(BookmarkJournalEntry*)e toMenu:(NSMenu*)menu startingAtItem:(int)skip params:(JournalParams*)params

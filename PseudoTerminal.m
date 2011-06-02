@@ -1563,14 +1563,16 @@ NSString *sessionsKey = @"sessions";
 
     [[iTermController sharedInstance] addBookmarksToMenu:aMenu
                                             withSelector:@selector(newSessionInWindowAtIndex:)
-                                         openAllSelector:@selector(newSessionsInNewWindow:)];
+                                         openAllSelector:@selector(newSessionsInNewWindow:)
+                                              startingAt:0];
 
     [theMenu setSubmenu:aMenu forItem:[theMenu itemAtIndex:0]];
 
     aMenu = [[[NSMenu alloc] init] autorelease];
     [[iTermController sharedInstance] addBookmarksToMenu:aMenu
                                             withSelector:@selector(newSessionInTabAtIndex:)
-                                         openAllSelector:@selector(newSessionsInWindow:)];
+                                         openAllSelector:@selector(newSessionsInWindow:)
+                                              startingAt:0];
 
     [theMenu setSubmenu:aMenu forItem:[theMenu itemAtIndex:1]];
 }
@@ -1844,8 +1846,8 @@ NSString *sessionsKey = @"sessions";
     }
 
     // check window size in case tabs have to be hidden or shown
-    if (([TABVIEW numberOfTabViewItems] == 1) || ([[PreferencePanel sharedInstance] hideTab] &&
-        ([TABVIEW numberOfTabViewItems] > 1 && [tabBarControl isHidden]))) {
+    if (([TABVIEW numberOfTabViewItems] == 1) ||
+        ([[PreferencePanel sharedInstance] hideTab] && ([TABVIEW numberOfTabViewItems] > 1 && [tabBarControl isHidden]))) {
         PtyLog(@"tabViewDidChangeNumberOfTabViewItems - calling fitWindowToTab");
         [self fitWindowToTabs];
         [self repositionWidgets];

@@ -405,7 +405,10 @@ int gDebugLogFile = -1;
     // Build the bookmark menu
     bookmarksMenu = [[[NSMenu alloc] init] autorelease];
 
-    [[iTermController sharedInstance] addBookmarksToMenu:bookmarksMenu withSelector:selector openAllSelector:openAllSelector];
+    [[iTermController sharedInstance] addBookmarksToMenu:bookmarksMenu
+                                            withSelector:selector
+                                         openAllSelector:openAllSelector
+                                              startingAt:0];
     [newMenuItem setSubmenu:bookmarksMenu];
 }
 
