@@ -2621,6 +2621,12 @@ static VT100TCC decode_string(unsigned char *datap,
           if (shape >= 0 && shape < sizeof(shapeMap)/sizeof(int)) {
             [[[SCREEN session] TEXTVIEW] setCursorType:shapeMap[shape]];
           }
+        } else if ([key isEqualToString:@"RequestAttention"]) {
+            if ([value boolValue]) {
+                shouldBounceDockIcon = [NSApp requestUserAttention:NSCriticalRequest];
+            } else {
+                [NSApp cancelUserAttentionRequest:shouldBounceDockIcon];
+            }
         }
       }
     } else if (token.type == XTERMCC_SET_PALETTE) {
