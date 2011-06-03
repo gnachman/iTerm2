@@ -5,6 +5,9 @@ PATH := /usr/bin:/bin:/usr/sbin:/sbin
 ITERM_PID=$(shell pgrep "iTerm")
 APPS := /Applications
 ITERM_CONF_PLIST = $(HOME)/Library/Preferences/com.googlecode.iterm2.plist
+PRODUCT_NAME=iTerm
+
+XCB_FLAGS=PRODUCT_NAME=$(PRODUCT_NAME)
 
 .PHONY: clean all backup-old-iterm restart
 
@@ -18,11 +21,11 @@ install: | Deployment backup-old-iterm
 
 Development:
 	echo "Using PATH for build: $(PATH)"
-	xcodebuild -parallelizeTargets -alltargets -configuration Development && \
+	xcodebuild -parallelizeTargets -alltargets -configuration Development $(XCB_FLAGS) && \
 	chmod -R go+rX build/Development
 
 Deployment:
-	xcodebuild -parallelizeTargets -alltargets -configuration Deployment && \
+	xcodebuild -parallelizeTargets -alltargets -configuration Deployment $(XCB_FLAGS) && \
 	chmod -R go+rX build/Deployment
 
 run: Development
