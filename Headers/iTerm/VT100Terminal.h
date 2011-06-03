@@ -130,6 +130,8 @@
 #define XTERMCC_SET_PALETTE 111
 #define XTERMCC_SET_KVP 112
 
+
+
 // Some ansi stuff
 #define ANSICSI_CHA      3000   // Cursor Horizontal Absolute
 #define ANSICSI_VPA      3001   // Vert Position Absolute
@@ -296,6 +298,7 @@ typedef enum {
     int  CHARSET;           // G0...G3
     BOOL XON;               // YES=XON, NO=XOFF
     BOOL numLock;           // YES=ON, NO=OFF, default=YES;
+    BOOL shouldBounceDockIcon;
     MouseMode MOUSE_MODE;
     MouseFormat MOUSE_FORMAT;
 
