@@ -1849,8 +1849,20 @@ NSString *sessionsKey = @"sessions";
     if (([TABVIEW numberOfTabViewItems] == 1) ||
         ([[PreferencePanel sharedInstance] hideTab] && ([TABVIEW numberOfTabViewItems] > 1 && [tabBarControl isHidden]))) {
         PtyLog(@"tabViewDidChangeNumberOfTabViewItems - calling fitWindowToTab");
+        PTYTab* firstTab = [[[TABVIEW tabViewItems] objectAtIndex:0] identifier];
+        if (wasDraggedFromAnotherWindow_) {
+            // A tab was just dragged out of another window's tabbar into its own window.
+            // When this happens, it loses its size. This is our only chance to resize it.
+            // So we put it in a mode where it will resize to its "ideal" size instead of
+            // its incorrect current size.
+            [firstTab setReportIdealSizeAsCurrent:YES];
+        }
         [self fitWindowToTabs];
         [self repositionWidgets];
+        if (wasDraggedFromAnotherWindow_) {
+            wasDraggedFromAnotherWindow_ = NO;
+            [firstTab setReportIdealSizeAsCurrent:NO];
+        }
     }
 
     int i;
@@ -1946,7 +1958,7 @@ NSString *sessionsKey = @"sessions";
     if (term == nil) {
       return nil;
     }
-
+    term->wasDraggedFromAnotherWindow_ = YES;
     [term copySettingsFrom:self];
 
     [[iTermController sharedInstance] addInTerminals: term];
