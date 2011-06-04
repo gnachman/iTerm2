@@ -250,7 +250,9 @@ NSString *CommandToolbarItem = @"Command";
     // Remove menu items because otherwise they will leak (I think items and menus have a cyclic reference?)
     // As soon as -[toolbarItem setImage:] is called, the menuFormRepresentation is lost and leaked.
     [self _removeItemsFromMenu:[aPopUpButton menu]];
-    [self _removeItemsFromMenu:[[toolbarItem menuFormRepresentation] submenu]];
+    // For some reason, making a call to [toolbarItem menuFormRepresentation] here causes the "new tab"
+    // toolbar item to turn into the icon version so that when it's clicked in text mode the toolbar
+    // switches into text+icon mode. See bug 995.
     [aPopUpButton addItemWithTitle: @""];
 
     [iconMenu_ release];
