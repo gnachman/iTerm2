@@ -325,10 +325,14 @@ id gAltOpenAllRepresentedObject;
 // A change in bookmarks is journal-worthy only if the name, shortcut, tags, or guid changes.
 - (BOOL)bookmark:(Bookmark*)a differsJournalablyFrom:(Bookmark*)b
 {
+    // Any field that is shown in a view (profiles window, menus, bookmark list views, etc.) must
+    // be a criteria for journalability for it to be updated immediately.
     if (![[a objectForKey:KEY_NAME] isEqualToString:[b objectForKey:KEY_NAME]] ||
         ![[a objectForKey:KEY_SHORTCUT] isEqualToString:[b objectForKey:KEY_SHORTCUT]] ||
         ![[a objectForKey:KEY_TAGS] isEqualToArray:[b objectForKey:KEY_TAGS]] ||
-        ![[a objectForKey:KEY_GUID] isEqualToString:[b objectForKey:KEY_GUID]]) {
+        ![[a objectForKey:KEY_GUID] isEqualToString:[b objectForKey:KEY_GUID]] ||
+        ![[a objectForKey:KEY_COMMAND] isEqualToString:[b objectForKey:KEY_COMMAND]] ||
+        ![[a objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:[b objectForKey:KEY_CUSTOM_COMMAND]]) {
         return YES;
     } else {
         return NO;
@@ -357,7 +361,9 @@ id gAltOpenAllRepresentedObject;
     if (isDefault) {
         [self setDefaultByGuid:[bookmark objectForKey:KEY_GUID]];
     }
-    [self postChangeNotification];
+    if (needJournal) {
+        [self postChangeNotification];
+    }
 }
 
 - (void)setBookmark:(Bookmark*)bookmark withGuid:(NSString*)guid
