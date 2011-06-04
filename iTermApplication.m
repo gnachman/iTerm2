@@ -49,8 +49,31 @@
     inFocus = ([[[textField window] firstResponder] isKindOfClass:[NSTextView class]]
                && [[textField window] fieldEditor:NO forObject:nil]!=nil
                && [textField isEqualTo:(id)[(NSTextView *)[[textField window] firstResponder]delegate]]);
-    
+
     return inFocus;
+}
+
+- (BOOL)_eventUsesNavigationKeys:(NSEvent*)event
+{
+    NSString* unmodkeystr = [event charactersIgnoringModifiers];
+    if ([unmodkeystr length] == 0) {
+        return NO;
+    }
+    unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+    switch (unmodunicode) {
+        case NSUpArrowFunctionKey:
+        case NSDownArrowFunctionKey:
+        case NSLeftArrowFunctionKey:
+        case NSRightArrowFunctionKey:
+        case NSInsertFunctionKey:
+        case NSDeleteFunctionKey:
+        case NSDeleteCharFunctionKey:
+        case NSHomeFunctionKey:
+        case NSEndFunctionKey:
+            return YES;
+        default:
+            return NO;
+    }
 }
 
 // override to catch key press events very early on
@@ -145,7 +168,18 @@
                 }
             }
 
-            if ([currentSession hasActionableKeyMappingForEvent:event]) {
+            BOOL okToRemap = YES;
+            if ([responder isKindOfClass:[NSTextView class]]) {
+                // Disable keymaps that send text
+                if ([currentSession hasTextSendingKeyMappingForEvent:event]) {
+                    okToRemap = NO;
+                }
+                if ([self _eventUsesNavigationKeys:event]) {
+                    okToRemap = NO;
+                }
+            }
+
+            if (okToRemap && [currentSession hasActionableKeyMappingForEvent:event]) {
                 // Remap key.
                 [currentSession keyDown:event];
                 return;

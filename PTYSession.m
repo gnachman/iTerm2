@@ -656,7 +656,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     }
 }
 
-- (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event
+- (int)_keyBindingActionForEvent:(NSEvent*)event
 {
     unsigned int modflag;
     NSString *unmodkeystr;
@@ -676,13 +676,31 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     */
 
     // Check if we have a custom key mapping for this event
-
     keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
                                                   modifiers:modflag
                                                        text:&keyBindingText
                                                 keyMappings:[[self addressBookEntry] objectForKey: KEY_KEYBOARD_MAP]];
+    return keyBindingAction;
+}
 
+- (BOOL)hasTextSendingKeyMappingForEvent:(NSEvent*)event
+{
+    int keyBindingAction = [self _keyBindingActionForEvent:event];
+    switch (keyBindingAction) {
+        case KEY_ACTION_ESCAPE_SEQUENCE:
+        case KEY_ACTION_HEX_CODE:
+        case KEY_ACTION_TEXT:
+        case KEY_ACTION_IGNORE:
+        case KEY_ACTION_SEND_C_H_BACKSPACE:
+        case KEY_ACTION_SEND_C_QM_BACKSPACE:
+            return YES;
+    }
+    return NO;
+}
 
+- (BOOL)hasActionableKeyMappingForEvent:(NSEvent *)event
+{
+    int keyBindingAction = [self _keyBindingActionForEvent:event];
     return (keyBindingAction >= 0) && (keyBindingAction != KEY_ACTION_DO_NOT_REMAP_MODIFIERS) && (keyBindingAction != KEY_ACTION_REMAP_LOCALLY);
 }
 
