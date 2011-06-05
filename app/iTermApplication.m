@@ -29,7 +29,7 @@
  */
 
 #import "iTermApplication.h"
-#import "App/iTermController.h"
+#import <App/iTermController.h>
 #import "Window/PTYWindow.h"
 #import "Window/PseudoTerminal.h"
 #import "Session/PTYSession.h"
