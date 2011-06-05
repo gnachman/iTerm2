@@ -1146,12 +1146,12 @@ static char* FormatCont(int c)
     display = aDisplay;
 }
 
-- (BOOL) blinkingCursor
+- (BOOL)blinkingCursor
 {
     return (blinkingCursor);
 }
 
-- (void) setBlinkingCursor: (BOOL) flag
+- (void)setBlinkingCursor: (BOOL) flag
 {
     blinkingCursor = flag;
 }
@@ -3548,7 +3548,12 @@ void DumpBuf(screen_char_t* p, int n) {
         // This is an experiment to not save to scrollback when we're in alternate
         // screen mode. This was mentioned in a comment in bug 839 (though it's
         // not really related).
-        return 0;
+        if (SCROLL_BOTTOM == HEIGHT - 1 ||
+            ![[[SESSION addressBookEntry] objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue]) {
+            // If the whole screen is being scrolled (as in less) don't save to scrollback.
+            // If only the top of the screen is being scrolled back and scrollbackWithStatusBar is disabled then don't save to scrollback.
+            return 0;
+        }
     }
 
     int len = WIDTH;
