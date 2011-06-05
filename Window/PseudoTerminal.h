@@ -174,12 +174,17 @@
 
     int windowType_;
     BOOL isHotKeyWindow_;
+    BOOL haveScreenPreference_;
     int screenNumber_;
     BOOL isOrderedOut_;
 
     // Window number, used for keyboard shortcut to select a window.
     // This value is 0-based while the UI is 1-based.
     int number_;
+
+    // True if this window was created by dragging a tab from another window.
+    // Affects how its size is set when the number of tabview items changes.
+    BOOL wasDraggedFromAnotherWindow_;
 }
 
 // Initialize a new PseudoTerminal.
