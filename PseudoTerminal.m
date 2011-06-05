@@ -204,9 +204,11 @@ NSString *sessionsKey = @"sessions";
     if (screenNumber < 0 || screenNumber >= [[NSScreen screens] count])  {
         screen = [[self window] screen];
         screenNumber_ = 0;
+        haveScreenPreference_ = NO;
     } else {
         screen = [[NSScreen screens] objectAtIndex:screenNumber];
         screenNumber_ = screenNumber;
+        haveScreenPreference_ = YES;
     }
 
     NSRect initialFrame;
@@ -224,11 +226,36 @@ NSString *sessionsKey = @"sessions";
             PtyLog(@"Unknown window type: %d", (int)windowType);
             NSLog(@"Unknown window type: %d", (int)windowType);
             // fall through
-        case WINDOW_TYPE_FULL_SCREEN:
         case WINDOW_TYPE_NORMAL:
+            haveScreenPreference_ = NO;
+            // fall through
+        case WINDOW_TYPE_FULL_SCREEN:
             // Use the system-supplied frame which has a reasonable origin. It may
             // be overridden by smart window placement or a saved window location.
             initialFrame = [[self window] frame];
+            if (screenNumber_ != 0) {
+                // Move the frame to the desired screen
+                NSScreen* baseScreen = [[self window] deepestScreen];
+                NSPoint basePoint = [baseScreen visibleFrame].origin;
+                double xoffset = initialFrame.origin.x - basePoint.x;
+                double yoffset = initialFrame.origin.y - basePoint.y;
+                NSPoint destPoint = [screen visibleFrame].origin;
+                destPoint.x += xoffset;
+                destPoint.y += yoffset;
+                initialFrame.origin = destPoint;
+
+                // Make sure the top-right corner of the window is on the screen too
+                NSRect destScreenFrame = [screen visibleFrame];
+                double xover = destPoint.x + initialFrame.size.width - (destScreenFrame.origin.x + destScreenFrame.size.width);
+                double yover = destPoint.y + initialFrame.size.height - (destScreenFrame.origin.y + destScreenFrame.size.height);
+                if (xover > 0) {
+                    destPoint.x -= xover;
+                }
+                if (yover > 0) {
+                    destPoint.y -= yover;
+                }
+                [[self window] setFrameOrigin:destPoint];
+            }
             break;
     }
     preferredOrigin_ = initialFrame.origin;
@@ -1441,6 +1468,13 @@ NSString *sessionsKey = @"sessions";
 - (void)windowWillShowInitial
 {
     PTYWindow* window = (PTYWindow*)[self window];
+    // If it's a full or top-of-screen window with a screen number preference, always honor that.
+    if (haveScreenPreference_) {
+        NSRect frame = [window frame];
+        frame.origin = preferredOrigin_;
+        [window setFrame:frame display:NO];
+        return;
+    }
     if (([[[iTermController sharedInstance] terminals] count] == 1) ||
         (![[PreferencePanel sharedInstance] smartPlacement])) {
         NSRect frame = [window frame];

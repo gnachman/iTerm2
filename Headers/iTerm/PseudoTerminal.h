@@ -174,6 +174,7 @@
 
     int windowType_;
     BOOL isHotKeyWindow_;
+    BOOL haveScreenPreference_;
     int screenNumber_;
     BOOL isOrderedOut_;
 
