@@ -226,6 +226,7 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     for (BookmarkRow* theRow in bookmarks) {
         [underlyingModel moveGuid:[theRow guid] toRow:i++];
     }
+    [underlyingModel rebuildMenus];
 }
 
 - (NSArray*)sortDescriptors
@@ -342,7 +343,9 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
 
     // The underlying model doesn't post a change notification for each bookmark
     // move because it would be overwhelming so we must do it ourselves. This
-    // makes all other table views sync with the new order.
+    // makes all other table views sync with the new order. First, add commands
+    // to rebuild the menus.
+    [[dataSource_ underlyingModel] rebuildMenus];
     [[dataSource_ underlyingModel] postChangeNotification];
 
     NSMutableIndexSet* newIndexes = [[[NSMutableIndexSet alloc] init] autorelease];
@@ -525,6 +528,8 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
 {
     [dataSource_ setSortDescriptors:[aTableView sortDescriptors]];
     [dataSource_ sort];
+    [dataSource_ pushOrderToUnderlyingModel];
+    [[dataSource_ underlyingModel] postChangeNotification];
 
     // Update the sort indicator image for all columns.
     NSArray* sortDescriptors = [dataSource_ sortDescriptors];
