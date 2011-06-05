@@ -250,14 +250,16 @@ NSString *CommandToolbarItem = @"Command";
     // Remove menu items because otherwise they will leak (I think items and menus have a cyclic reference?)
     // As soon as -[toolbarItem setImage:] is called, the menuFormRepresentation is lost and leaked.
     [self _removeItemsFromMenu:[aPopUpButton menu]];
-    [self _removeItemsFromMenu:[[toolbarItem menuFormRepresentation] submenu]];
+    // For some reason, making a call to [toolbarItem menuFormRepresentation] here causes the "new tab"
+    // toolbar item to turn into the icon version so that when it's clicked in text mode the toolbar
+    // switches into text+icon mode. See bug 995.
     [aPopUpButton addItemWithTitle: @""];
 
     [iconMenu_ release];
     iconMenu_ = aMenu = [[NSMenu alloc] init];
     // first menu item is just a space taker
-    [aMenu addItem: [[[NSMenuItem alloc] initWithTitle: @"AAA" action:@selector(newSessionInTabAtIndex:) keyEquivalent:@""] autorelease]];
-    [[iTermController sharedInstance] addBookmarksToMenu:aMenu];
+    [aMenu addItem:[[[NSMenuItem alloc] initWithTitle: @"AAA" action:@selector(newSessionInTabAtIndex:) keyEquivalent:@""] autorelease]];
+    [[iTermController sharedInstance] addBookmarksToMenu:aMenu startingAt:1];
 
     [aPopUpButton setMenu:aMenu];
 
@@ -284,7 +286,7 @@ NSString *CommandToolbarItem = @"Command";
     item = [[NSMenuItem alloc] initWithTitle: NSLocalizedStringFromTableInBundle(@"New Tab",@"iTerm", [NSBundle bundleForClass: [self class]], @"Toolbar Item:New") action: nil keyEquivalent: @""];
     [textMenu_ release];
     textMenu_ = aMenu = [[NSMenu alloc] init];
-    [[iTermController sharedInstance] addBookmarksToMenu:aMenu];
+    [[iTermController sharedInstance] addBookmarksToMenu:aMenu startingAt:0];
     [item setSubmenu:aMenu];
 
     [toolbarItem setMenuFormRepresentation: item];
@@ -302,11 +304,10 @@ NSString *CommandToolbarItem = @"Command";
         params.openAllSelector = @selector(newSessionsInWindow:);
         params.alternateSelector = @selector(newSessionInTabAtIndex:);
         params.alternateOpenAllSelector = @selector(newSessionsInWindow:);
-        params.target = self;
+        params.target = [iTermController sharedInstance];
 
-        [BookmarkModel applyJournal:[aNotification userInfo] toMenu:iconMenu_ params:&params];
+        [BookmarkModel applyJournal:[aNotification userInfo] toMenu:iconMenu_ startingAtItem:1 params:&params];
         [BookmarkModel applyJournal:[aNotification userInfo] toMenu:textMenu_ params:&params];
-        //[self buildToolbarItemPopUpMenu:aToolbarItem forToolbar:_toolbar];
     }
 }
 

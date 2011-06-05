@@ -637,7 +637,7 @@ static BOOL initDone = NO;
                          usedGuids:nil bookmarks:nil];
 }
 
-- (void)addBookmarksToMenu:(NSMenu *)aMenu withSelector:(SEL)selector openAllSelector:(SEL)openAllSelector
+- (void)addBookmarksToMenu:(NSMenu *)aMenu withSelector:(SEL)selector openAllSelector:(SEL)openAllSelector startingAt:(int)startingAt
 {
     JournalParams params;
     params.selector = selector;
@@ -652,17 +652,19 @@ static BOOL initDone = NO;
         Bookmark* b = [bm bookmarkAtIndex:i];
         [bm addBookmark:b
                  toMenu:aMenu
-         startingAtItem:0
+         startingAtItem:startingAt
                withTags:[b objectForKey:KEY_TAGS]
-                 params:&params];
+                 params:&params
+                  atPos:i];
     }
 }
 
-- (void)addBookmarksToMenu:(NSMenu *)aMenu
+- (void)addBookmarksToMenu:(NSMenu *)aMenu startingAt:(int)startingAt
 {
     [self addBookmarksToMenu:aMenu
                 withSelector:@selector(newSessionInTabAtIndex:)
-             openAllSelector:@selector(newSessionsInWindow:)];
+             openAllSelector:@selector(newSessionsInWindow:)
+                  startingAt:startingAt];
 }
 
 - (void)irAdvance:(int)dir
