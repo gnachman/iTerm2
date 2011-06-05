@@ -636,9 +636,14 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [[ProcessCache sharedInstance] notifyNewOutput];
 }
 
+- (BOOL)_growlOnForegroundTabs
+{
+    return [[[NSUserDefaults standardUserDefaults] objectForKey:@"GrowlOnForegroundTabs"] boolValue];
+}
+
 - (void)brokenPipe
 {
-    if ([SCREEN growl] && ![[self tab] isForegroundTab]) {
+    if ([SCREEN growl] && (![[self tab] isForegroundTab] || [self _growlOnForegroundTabs])) {
         [gd growlNotify:@"Session Ended"
             withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
                              [self name],
