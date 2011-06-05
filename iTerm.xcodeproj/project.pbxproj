@@ -240,6 +240,8 @@
 		2CE2758A139B0923005797CA /* PresetKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = 2CE27580139B0923005797CA /* PresetKeyMappings.plist */; };
 		2CE2758B139B0923005797CA /* SmartSelectionRules.plist in Resources */ = {isa = PBXBuildFile; fileRef = 2CE27581139B0923005797CA /* SmartSelectionRules.plist */; };
 		2CE2758D139B0923005797CA /* iTerm_Framework.plist in Resources */ = {isa = PBXBuildFile; fileRef = 2CE27583139B0923005797CA /* iTerm_Framework.plist */; };
+		2CE275DC139B2469005797CA /* termios in Resources */ = {isa = PBXBuildFile; fileRef = 2CE275D9139B2469005797CA /* termios */; };
+		2CE275DE139B247C005797CA /* xterm-terminfo.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2CE275DD139B247C005797CA /* xterm-terminfo.txt */; };
 		49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A6E4081211CC6000D9AD6F /* Compatability.h */; };
 		874206520564169600CFC3F1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0464AB30006CD2EC7F000001 /* Foundation.framework */; };
 		874206530564169600CFC3F1 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0464AB2F006CD2EC7F000001 /* AppKit.framework */; };
@@ -529,6 +531,8 @@
 		2CE27580139B0923005797CA /* PresetKeyMappings.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PresetKeyMappings.plist; path = properties/PresetKeyMappings.plist; sourceTree = "<group>"; };
 		2CE27581139B0923005797CA /* SmartSelectionRules.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = SmartSelectionRules.plist; path = properties/SmartSelectionRules.plist; sourceTree = "<group>"; };
 		2CE27583139B0923005797CA /* iTerm_Framework.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = iTerm_Framework.plist; path = properties/iTerm_Framework.plist; sourceTree = "<group>"; };
+		2CE275D9139B2469005797CA /* termios */ = {isa = PBXFileReference; lastKnownFileType = folder; path = termios; sourceTree = "<group>"; };
+		2CE275DD139B247C005797CA /* xterm-terminfo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "xterm-terminfo.txt"; path = "termios/xterm-terminfo.txt"; sourceTree = "<group>"; };
 		49A6E4081211CC6000D9AD6F /* Compatability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Compatability.h; sourceTree = "<group>"; };
 		8742065A0564169600CFC3F1 /* iTerm.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTerm.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9325FF3D0FB54DF1004EC67C /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/PseudoTerminal.xib; sourceTree = "<group>"; };
@@ -931,6 +935,7 @@
 		2CE27487139B0655005797CA /* Resources_xx */ = {
 			isa = PBXGroup;
 			children = (
+				2CE275D9139B2469005797CA /* termios */,
 				2CE274E5139B06F0005797CA /* AppleScript */,
 				2CE274E8139B06F0005797CA /* images */,
 				2CE2750A139B06F0005797CA /* properties */,
@@ -943,6 +948,7 @@
 			isa = PBXGroup;
 			children = (
 				2CE2757A139B0923005797CA /* ColorPresets.plist */,
+				2CE275DD139B247C005797CA /* xterm-terminfo.txt */,
 				2CE2757B139B0923005797CA /* DefaultBookmark.plist */,
 				2CE2757C139B0923005797CA /* DefaultGlobalKeyMap.plist */,
 				2CE2757D139B0923005797CA /* EncodingsWithLowerCase.plist */,
@@ -1356,6 +1362,8 @@
 				2CE2758A139B0923005797CA /* PresetKeyMappings.plist in Resources */,
 				2CE2758B139B0923005797CA /* SmartSelectionRules.plist in Resources */,
 				2CE2758D139B0923005797CA /* iTerm_Framework.plist in Resources */,
+				2CE275DC139B2469005797CA /* termios in Resources */,
+				2CE275DE139B247C005797CA /* xterm-terminfo.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
