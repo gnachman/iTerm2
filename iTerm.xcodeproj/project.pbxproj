@@ -10,22 +10,6 @@
 		1D1158CE13444D29009B366F /* iTerm2 Help in Resources */ = {isa = PBXBuildFile; fileRef = 1D1158C913444D29009B366F /* iTerm2 Help */; };
 		1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
 		1D237D90131D8BEE004DD60C /* FindView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D237D8E131D8BEE004DD60C /* FindView.xib */; };
-		1D5FDD681208E8F000C46BA3 /* CarbonHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F620E748404000EC682 /* CarbonHelpers.h */; };
-		1D5FDD691208E8F000C46BA3 /* CGSAccessibility.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F630E748404000EC682 /* CGSAccessibility.h */; };
-		1D5FDD6A1208E8F000C46BA3 /* CGSCIFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F640E748404000EC682 /* CGSCIFilter.h */; };
-		1D5FDD6B1208E8F000C46BA3 /* CGSConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F650E748404000EC682 /* CGSConnection.h */; };
-		1D5FDD6C1208E8F000C46BA3 /* CGSCursor.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F660E748404000EC682 /* CGSCursor.h */; };
-		1D5FDD6D1208E8F000C46BA3 /* CGSDebug.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F670E748404000EC682 /* CGSDebug.h */; };
-		1D5FDD6E1208E8F000C46BA3 /* CGSDisplays.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F680E748404000EC682 /* CGSDisplays.h */; };
-		1D5FDD6F1208E8F000C46BA3 /* CGSHotKeys.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F690E748404000EC682 /* CGSHotKeys.h */; };
-		1D5FDD701208E8F000C46BA3 /* CGSInternal.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6A0E748404000EC682 /* CGSInternal.h */; };
-		1D5FDD711208E8F000C46BA3 /* CGSMisc.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6B0E748404000EC682 /* CGSMisc.h */; };
-		1D5FDD721208E8F000C46BA3 /* CGSNotifications.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6C0E748404000EC682 /* CGSNotifications.h */; };
-		1D5FDD731208E8F000C46BA3 /* CGSRegion.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6D0E748404000EC682 /* CGSRegion.h */; };
-		1D5FDD741208E8F000C46BA3 /* CGSSession.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6E0E748404000EC682 /* CGSSession.h */; };
-		1D5FDD751208E8F000C46BA3 /* CGSTransitions.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F6F0E748404000EC682 /* CGSTransitions.h */; };
-		1D5FDD761208E8F000C46BA3 /* CGSWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F700E748404000EC682 /* CGSWindow.h */; };
-		1D5FDD771208E8F000C46BA3 /* CGSWorkspace.h in Headers */ = {isa = PBXBuildFile; fileRef = F6441F710E748404000EC682 /* CGSWorkspace.h */; };
 		1D5FDD831208E91100C46BA3 /* iTerm.scriptTerminology in Resources */ = {isa = PBXBuildFile; fileRef = DD48F1CC03EBB20500A8A065 /* iTerm.scriptTerminology */; };
 		1D5FDD9E1208E91100C46BA3 /* PseudoTerminal.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9325FF3C0FB54DF1004EC67C /* PseudoTerminal.xib */; };
 		1D5FDDA01208E91100C46BA3 /* PreferencePanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9325FF400FB54DF1004EC67C /* PreferencePanel.xib */; };
@@ -79,7 +63,6 @@
 		2C2760CD1395CA0900D340AA /* UKNibOwner.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C2760C41395CA0900D340AA /* UKNibOwner.h */; };
 		2C2760CF1395CA0900D340AA /* UKSystemInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C2760C61395CA0900D340AA /* UKSystemInfo.h */; };
 		2C2760FB1395CA5A00D340AA /* RegexKitLite.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C2760E61395CA5A00D340AA /* RegexKitLite.h */; };
-		2C2761401395D0E400D340AA /* LineBufferTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C27613F1395D0E400D340AA /* LineBufferTest.h */; };
 		2C27615E1395D3ED00D340AA /* iTermApplication.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2761581395D3ED00D340AA /* iTermApplication.m */; };
 		2C27615F1395D3ED00D340AA /* iTermApplicationDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2761591395D3ED00D340AA /* iTermApplicationDelegate.m */; };
 		2C2761601395D3ED00D340AA /* iTermController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C27615A1395D3ED00D340AA /* iTermController.m */; };
@@ -190,12 +173,6 @@
 		2C7EE25813960462000305E6 /* DVREncoder.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C7EE22913960462000305E6 /* DVREncoder.h */; };
 		2C7EE25913960462000305E6 /* DVRIndexEntry.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C7EE22A13960462000305E6 /* DVRIndexEntry.h */; };
 		2C7EE25A13960584000305E6 /* RegexKitLite.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C2760E81395CA5A00D340AA /* RegexKitLite.m */; };
-		2C7EE2E5139607DF000305E6 /* GTMCarbonEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C7EE2E4139607DF000305E6 /* GTMCarbonEvent.m */; };
-		2C7EE2EB139607FB000305E6 /* GTMCarbonEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C7EE2E6139607FB000305E6 /* GTMCarbonEvent.h */; };
-		2C7EE2EC139607FB000305E6 /* GTMDebugSelectorValidation.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C7EE2E7139607FB000305E6 /* GTMDebugSelectorValidation.h */; };
-		2C7EE2ED139607FB000305E6 /* GTMDefines.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C7EE2E8139607FB000305E6 /* GTMDefines.h */; };
-		2C7EE2EE139607FB000305E6 /* GTMObjectSingleton.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C7EE2E9139607FB000305E6 /* GTMObjectSingleton.h */; };
-		2C7EE2EF139607FB000305E6 /* GTMTypeCasting.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C7EE2EA139607FB000305E6 /* GTMTypeCasting.h */; };
 		2C7EE32A13960BFA000305E6 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 2C7EE32913960BFA000305E6 /* main.m */; };
 		2C7EE32C13960C0C000305E6 /* iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 2C7EE32B13960C0C000305E6 /* iTerm.h */; };
 		2CE27518139B06F0005797CA /* iTerm.icns in Resources */ = {isa = PBXBuildFile; fileRef = 2CE27509139B06F0005797CA /* iTerm.icns */; };
@@ -242,7 +219,31 @@
 		2CE2758D139B0923005797CA /* iTerm_Framework.plist in Resources */ = {isa = PBXBuildFile; fileRef = 2CE27583139B0923005797CA /* iTerm_Framework.plist */; };
 		2CE275DC139B2469005797CA /* termios in Resources */ = {isa = PBXBuildFile; fileRef = 2CE275D9139B2469005797CA /* termios */; };
 		2CE275DE139B247C005797CA /* xterm-terminfo.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2CE275DD139B247C005797CA /* xterm-terminfo.txt */; };
-		49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A6E4081211CC6000D9AD6F /* Compatability.h */; };
+		2CE279D2139D6B00005797CA /* GTM in Resources */ = {isa = PBXBuildFile; fileRef = 2CE279CA139D6B00005797CA /* GTM */; };
+		2CE279E6139D6B1B005797CA /* CGSInternal in Resources */ = {isa = PBXBuildFile; fileRef = 2CE279D3139D6B1B005797CA /* CGSInternal */; };
+		2CE279F8139D6B51005797CA /* CGSAccessibility.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279E7139D6B51005797CA /* CGSAccessibility.h */; };
+		2CE279F9139D6B51005797CA /* CGSCIFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279E8139D6B51005797CA /* CGSCIFilter.h */; };
+		2CE279FA139D6B51005797CA /* CGSConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279E9139D6B51005797CA /* CGSConnection.h */; };
+		2CE279FB139D6B51005797CA /* CGSCursor.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279EA139D6B51005797CA /* CGSCursor.h */; };
+		2CE279FC139D6B51005797CA /* CGSDebug.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279EB139D6B51005797CA /* CGSDebug.h */; };
+		2CE279FD139D6B51005797CA /* CGSDisplays.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279EC139D6B51005797CA /* CGSDisplays.h */; };
+		2CE279FE139D6B51005797CA /* CGSHotKeys.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279ED139D6B51005797CA /* CGSHotKeys.h */; };
+		2CE279FF139D6B51005797CA /* CGSInternal.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279EE139D6B51005797CA /* CGSInternal.h */; };
+		2CE27A00139D6B51005797CA /* CGSMisc.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279EF139D6B51005797CA /* CGSMisc.h */; };
+		2CE27A01139D6B51005797CA /* CGSNotifications.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279F0139D6B51005797CA /* CGSNotifications.h */; };
+		2CE27A02139D6B51005797CA /* CGSRegion.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279F1139D6B51005797CA /* CGSRegion.h */; };
+		2CE27A03139D6B51005797CA /* CGSSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279F2139D6B51005797CA /* CGSSession.h */; };
+		2CE27A04139D6B51005797CA /* CGSTransitions.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279F3139D6B51005797CA /* CGSTransitions.h */; };
+		2CE27A05139D6B51005797CA /* CGSWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279F4139D6B51005797CA /* CGSWindow.h */; };
+		2CE27A06139D6B51005797CA /* CGSWorkspace.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279F5139D6B51005797CA /* CGSWorkspace.h */; };
+		2CE27A07139D6B51005797CA /* CarbonHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279F6139D6B51005797CA /* CarbonHelpers.h */; };
+		2CE27A08139D6B51005797CA /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279F7139D6B51005797CA /* Compatability.h */; };
+		2CE27A0E139D6B76005797CA /* GTMCarbonEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE27A09139D6B76005797CA /* GTMCarbonEvent.h */; };
+		2CE27A0F139D6B76005797CA /* GTMDebugSelectorValidation.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE27A0A139D6B76005797CA /* GTMDebugSelectorValidation.h */; };
+		2CE27A10139D6B76005797CA /* GTMDefines.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE27A0B139D6B76005797CA /* GTMDefines.h */; };
+		2CE27A11139D6B76005797CA /* GTMObjectSingleton.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE27A0C139D6B76005797CA /* GTMObjectSingleton.h */; };
+		2CE27A12139D6B76005797CA /* GTMTypeCasting.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE27A0D139D6B76005797CA /* GTMTypeCasting.h */; };
+		2CE27A14139D6B85005797CA /* GTMCarbonEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 2CE27A13139D6B85005797CA /* GTMCarbonEvent.m */; };
 		874206520564169600CFC3F1 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0464AB30006CD2EC7F000001 /* Foundation.framework */; };
 		874206530564169600CFC3F1 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0464AB2F006CD2EC7F000001 /* AppKit.framework */; };
 		9325FF500FB54E00004EC67C /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9325FF4E0FB54E00004EC67C /* MainMenu.xib */; };
@@ -380,7 +381,6 @@
 		2C2760C71395CA0900D340AA /* UKSystemInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = UKSystemInfo.m; path = Vendor/UKCrashReporter/UKSystemInfo.m; sourceTree = SOURCE_ROOT; };
 		2C2760E61395CA5A00D340AA /* RegexKitLite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RegexKitLite.h; path = Vendor/RegexKitLite/RegexKitLite.h; sourceTree = SOURCE_ROOT; };
 		2C2760E81395CA5A00D340AA /* RegexKitLite.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = RegexKitLite.m; path = Vendor/RegexKitLite/RegexKitLite.m; sourceTree = SOURCE_ROOT; };
-		2C27613F1395D0E400D340AA /* LineBufferTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LineBufferTest.h; path = Session/LineBufferTest.h; sourceTree = "<group>"; };
 		2C2761581395D3ED00D340AA /* iTermApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermApplication.m; path = App/iTermApplication.m; sourceTree = "<group>"; };
 		2C2761591395D3ED00D340AA /* iTermApplicationDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermApplicationDelegate.m; path = App/iTermApplicationDelegate.m; sourceTree = "<group>"; };
 		2C27615A1395D3ED00D340AA /* iTermController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermController.m; path = App/iTermController.m; sourceTree = "<group>"; };
@@ -393,7 +393,6 @@
 		2C2761681395D42400D340AA /* DVRIndexEntry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = DVRIndexEntry.m; path = DVR/DVRIndexEntry.m; sourceTree = "<group>"; };
 		2C27616E1395D45800D340AA /* GlobalSearch.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GlobalSearch.m; path = Expose/GlobalSearch.m; sourceTree = "<group>"; };
 		2C27616F1395D45800D340AA /* iTermExpose.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iTermExpose.m; path = Expose/iTermExpose.m; sourceTree = "<group>"; };
-		2C2761721395D46C00D340AA /* GTMCarbonEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GTMCarbonEvent.m; path = GTM/GTMCarbonEvent.m; sourceTree = "<group>"; };
 		2C2761741395D48300D340AA /* ITViewLocalizer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = ITViewLocalizer.m; path = Misc/ITViewLocalizer.m; sourceTree = "<group>"; };
 		2C2761761395D51F00D340AA /* NSDateFormatterExtras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = NSDateFormatterExtras.m; path = Misc/NSDateFormatterExtras.m; sourceTree = "<group>"; };
 		2C2761771395D51F00D340AA /* NSStringITerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = NSStringITerm.m; path = Misc/NSStringITerm.m; sourceTree = "<group>"; };
@@ -476,12 +475,6 @@
 		2C7EE22913960462000305E6 /* DVREncoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DVREncoder.h; path = DVR/DVREncoder.h; sourceTree = "<group>"; };
 		2C7EE22A13960462000305E6 /* DVRIndexEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DVRIndexEntry.h; path = DVR/DVRIndexEntry.h; sourceTree = "<group>"; };
 		2C7EE25C13960713000305E6 /* GTM */ = {isa = PBXFileReference; lastKnownFileType = folder; path = GTM; sourceTree = "<group>"; };
-		2C7EE2E4139607DF000305E6 /* GTMCarbonEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GTMCarbonEvent.m; path = GTM/GTMCarbonEvent.m; sourceTree = "<group>"; };
-		2C7EE2E6139607FB000305E6 /* GTMCarbonEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMCarbonEvent.h; path = GTM/GTMCarbonEvent.h; sourceTree = "<group>"; };
-		2C7EE2E7139607FB000305E6 /* GTMDebugSelectorValidation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMDebugSelectorValidation.h; path = GTM/GTMDebugSelectorValidation.h; sourceTree = "<group>"; };
-		2C7EE2E8139607FB000305E6 /* GTMDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMDefines.h; path = GTM/GTMDefines.h; sourceTree = "<group>"; };
-		2C7EE2E9139607FB000305E6 /* GTMObjectSingleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMObjectSingleton.h; path = GTM/GTMObjectSingleton.h; sourceTree = "<group>"; };
-		2C7EE2EA139607FB000305E6 /* GTMTypeCasting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMTypeCasting.h; path = GTM/GTMTypeCasting.h; sourceTree = "<group>"; };
 		2C7EE32313960BC4000305E6 /* iTerm */ = {isa = PBXFileReference; lastKnownFileType = folder; path = iTerm; sourceTree = "<group>"; };
 		2C7EE32913960BFA000305E6 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = iTerm/main.m; sourceTree = "<group>"; };
 		2C7EE32B13960C0C000305E6 /* iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTerm.h; path = iTerm/iTerm.h; sourceTree = "<group>"; };
@@ -533,7 +526,31 @@
 		2CE27583139B0923005797CA /* iTerm_Framework.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = iTerm_Framework.plist; path = properties/iTerm_Framework.plist; sourceTree = "<group>"; };
 		2CE275D9139B2469005797CA /* termios */ = {isa = PBXFileReference; lastKnownFileType = folder; path = termios; sourceTree = "<group>"; };
 		2CE275DD139B247C005797CA /* xterm-terminfo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "xterm-terminfo.txt"; path = "termios/xterm-terminfo.txt"; sourceTree = "<group>"; };
-		49A6E4081211CC6000D9AD6F /* Compatability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Compatability.h; sourceTree = "<group>"; };
+		2CE279CA139D6B00005797CA /* GTM */ = {isa = PBXFileReference; lastKnownFileType = folder; name = GTM; path = ../Users/tomfeist/projects/iTerm2/Vendor/GTM; sourceTree = DEVELOPER_DIR; };
+		2CE279D3139D6B1B005797CA /* CGSInternal */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CGSInternal; path = ../Users/tomfeist/projects/iTerm2/Vendor/CGSInternal; sourceTree = DEVELOPER_DIR; };
+		2CE279E7139D6B51005797CA /* CGSAccessibility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSAccessibility.h; path = Vendor/CGSInternal/CGSAccessibility.h; sourceTree = "<group>"; };
+		2CE279E8139D6B51005797CA /* CGSCIFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSCIFilter.h; path = Vendor/CGSInternal/CGSCIFilter.h; sourceTree = "<group>"; };
+		2CE279E9139D6B51005797CA /* CGSConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSConnection.h; path = Vendor/CGSInternal/CGSConnection.h; sourceTree = "<group>"; };
+		2CE279EA139D6B51005797CA /* CGSCursor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSCursor.h; path = Vendor/CGSInternal/CGSCursor.h; sourceTree = "<group>"; };
+		2CE279EB139D6B51005797CA /* CGSDebug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSDebug.h; path = Vendor/CGSInternal/CGSDebug.h; sourceTree = "<group>"; };
+		2CE279EC139D6B51005797CA /* CGSDisplays.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSDisplays.h; path = Vendor/CGSInternal/CGSDisplays.h; sourceTree = "<group>"; };
+		2CE279ED139D6B51005797CA /* CGSHotKeys.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSHotKeys.h; path = Vendor/CGSInternal/CGSHotKeys.h; sourceTree = "<group>"; };
+		2CE279EE139D6B51005797CA /* CGSInternal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSInternal.h; path = Vendor/CGSInternal/CGSInternal.h; sourceTree = "<group>"; };
+		2CE279EF139D6B51005797CA /* CGSMisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSMisc.h; path = Vendor/CGSInternal/CGSMisc.h; sourceTree = "<group>"; };
+		2CE279F0139D6B51005797CA /* CGSNotifications.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSNotifications.h; path = Vendor/CGSInternal/CGSNotifications.h; sourceTree = "<group>"; };
+		2CE279F1139D6B51005797CA /* CGSRegion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSRegion.h; path = Vendor/CGSInternal/CGSRegion.h; sourceTree = "<group>"; };
+		2CE279F2139D6B51005797CA /* CGSSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSSession.h; path = Vendor/CGSInternal/CGSSession.h; sourceTree = "<group>"; };
+		2CE279F3139D6B51005797CA /* CGSTransitions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSTransitions.h; path = Vendor/CGSInternal/CGSTransitions.h; sourceTree = "<group>"; };
+		2CE279F4139D6B51005797CA /* CGSWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSWindow.h; path = Vendor/CGSInternal/CGSWindow.h; sourceTree = "<group>"; };
+		2CE279F5139D6B51005797CA /* CGSWorkspace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSWorkspace.h; path = Vendor/CGSInternal/CGSWorkspace.h; sourceTree = "<group>"; };
+		2CE279F6139D6B51005797CA /* CarbonHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CarbonHelpers.h; path = Vendor/CGSInternal/CarbonHelpers.h; sourceTree = "<group>"; };
+		2CE279F7139D6B51005797CA /* Compatability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Compatability.h; path = Vendor/CGSInternal/Compatability.h; sourceTree = "<group>"; };
+		2CE27A09139D6B76005797CA /* GTMCarbonEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMCarbonEvent.h; path = Vendor/GTM/GTMCarbonEvent.h; sourceTree = "<group>"; };
+		2CE27A0A139D6B76005797CA /* GTMDebugSelectorValidation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMDebugSelectorValidation.h; path = Vendor/GTM/GTMDebugSelectorValidation.h; sourceTree = "<group>"; };
+		2CE27A0B139D6B76005797CA /* GTMDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMDefines.h; path = Vendor/GTM/GTMDefines.h; sourceTree = "<group>"; };
+		2CE27A0C139D6B76005797CA /* GTMObjectSingleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMObjectSingleton.h; path = Vendor/GTM/GTMObjectSingleton.h; sourceTree = "<group>"; };
+		2CE27A0D139D6B76005797CA /* GTMTypeCasting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GTMTypeCasting.h; path = Vendor/GTM/GTMTypeCasting.h; sourceTree = "<group>"; };
+		2CE27A13139D6B85005797CA /* GTMCarbonEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = GTMCarbonEvent.m; path = Vendor/GTM/GTMCarbonEvent.m; sourceTree = "<group>"; };
 		8742065A0564169600CFC3F1 /* iTerm.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = iTerm.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9325FF3D0FB54DF1004EC67C /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/PseudoTerminal.xib; sourceTree = "<group>"; };
 		9325FF410FB54DF1004EC67C /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/PreferencePanel.xib; sourceTree = "<group>"; };
@@ -542,22 +559,6 @@
 		93A6FEF910685E9900A5F905 /* dsa_pub.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = dsa_pub.pem; sourceTree = "<group>"; };
 		DD48F1CD03EBB20500A8A065 /* English */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = English; path = English.lproj/iTerm.scriptTerminology; sourceTree = "<group>"; };
 		F500A65D0395269C01A8A066 /* Changelog */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = Changelog; sourceTree = "<group>"; };
-		F6441F620E748404000EC682 /* CarbonHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CarbonHelpers.h; sourceTree = "<group>"; };
-		F6441F630E748404000EC682 /* CGSAccessibility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSAccessibility.h; sourceTree = "<group>"; };
-		F6441F640E748404000EC682 /* CGSCIFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSCIFilter.h; sourceTree = "<group>"; };
-		F6441F650E748404000EC682 /* CGSConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSConnection.h; sourceTree = "<group>"; };
-		F6441F660E748404000EC682 /* CGSCursor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSCursor.h; sourceTree = "<group>"; };
-		F6441F670E748404000EC682 /* CGSDebug.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSDebug.h; sourceTree = "<group>"; };
-		F6441F680E748404000EC682 /* CGSDisplays.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSDisplays.h; sourceTree = "<group>"; };
-		F6441F690E748404000EC682 /* CGSHotKeys.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSHotKeys.h; sourceTree = "<group>"; };
-		F6441F6A0E748404000EC682 /* CGSInternal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSInternal.h; sourceTree = "<group>"; };
-		F6441F6B0E748404000EC682 /* CGSMisc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSMisc.h; sourceTree = "<group>"; };
-		F6441F6C0E748404000EC682 /* CGSNotifications.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSNotifications.h; sourceTree = "<group>"; };
-		F6441F6D0E748404000EC682 /* CGSRegion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSRegion.h; sourceTree = "<group>"; };
-		F6441F6E0E748404000EC682 /* CGSSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSSession.h; sourceTree = "<group>"; };
-		F6441F6F0E748404000EC682 /* CGSTransitions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSTransitions.h; sourceTree = "<group>"; };
-		F6441F700E748404000EC682 /* CGSWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSWindow.h; sourceTree = "<group>"; };
-		F6441F710E748404000EC682 /* CGSWorkspace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSWorkspace.h; sourceTree = "<group>"; };
 		F69E77100AB78BDC001EC0FF /* CFGrowlAdditions.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = CFGrowlAdditions.c; path = Growl/CFGrowlAdditions.c; sourceTree = "<group>"; };
 		F69E77120AB78BE7001EC0FF /* GrowlApplicationBridge-Carbon.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = "GrowlApplicationBridge-Carbon.c"; path = "Growl/GrowlApplicationBridge-Carbon.c"; sourceTree = "<group>"; };
 		F69E77140AB78C26001EC0FF /* CFGrowlAdditions.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = CFGrowlAdditions.h; path = Growl/CFGrowlAdditions.h; sourceTree = "<group>"; };
@@ -650,12 +651,7 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
-				2C7EE2E6139607FB000305E6 /* GTMCarbonEvent.h */,
 				2C7EE32B13960C0C000305E6 /* iTerm.h */,
-				2C7EE2E7139607FB000305E6 /* GTMDebugSelectorValidation.h */,
-				2C7EE2E8139607FB000305E6 /* GTMDefines.h */,
-				2C7EE2E9139607FB000305E6 /* GTMObjectSingleton.h */,
-				2C7EE2EA139607FB000305E6 /* GTMTypeCasting.h */,
 				2C7EE1FC13960462000305E6 /* ProcessCache.h */,
 				2C7EE1FD13960462000305E6 /* iTermApplication.h */,
 				2C7EE1FE13960462000305E6 /* iTermApplicationDelegate.h */,
@@ -701,8 +697,30 @@
 				2C7EE22613960462000305E6 /* DVR.h */,
 				2C7EE22713960462000305E6 /* DVRBuffer.h */,
 				2C7EE22813960462000305E6 /* DVRDecoder.h */,
+				2CE279E7139D6B51005797CA /* CGSAccessibility.h */,
+				2CE279E8139D6B51005797CA /* CGSCIFilter.h */,
+				2CE279E9139D6B51005797CA /* CGSConnection.h */,
+				2CE279EA139D6B51005797CA /* CGSCursor.h */,
+				2CE279EB139D6B51005797CA /* CGSDebug.h */,
+				2CE279EC139D6B51005797CA /* CGSDisplays.h */,
+				2CE279ED139D6B51005797CA /* CGSHotKeys.h */,
+				2CE279EE139D6B51005797CA /* CGSInternal.h */,
+				2CE279EF139D6B51005797CA /* CGSMisc.h */,
+				2CE279F0139D6B51005797CA /* CGSNotifications.h */,
+				2CE279F1139D6B51005797CA /* CGSRegion.h */,
+				2CE279F2139D6B51005797CA /* CGSSession.h */,
+				2CE279F3139D6B51005797CA /* CGSTransitions.h */,
+				2CE279F4139D6B51005797CA /* CGSWindow.h */,
+				2CE279F5139D6B51005797CA /* CGSWorkspace.h */,
+				2CE279F6139D6B51005797CA /* CarbonHelpers.h */,
+				2CE279F7139D6B51005797CA /* Compatability.h */,
 				2C7EE22913960462000305E6 /* DVREncoder.h */,
 				2C7EE22A13960462000305E6 /* DVRIndexEntry.h */,
+				2CE27A09139D6B76005797CA /* GTMCarbonEvent.h */,
+				2CE27A0A139D6B76005797CA /* GTMDebugSelectorValidation.h */,
+				2CE27A0B139D6B76005797CA /* GTMDefines.h */,
+				2CE27A0C139D6B76005797CA /* GTMObjectSingleton.h */,
+				2CE27A0D139D6B76005797CA /* GTMTypeCasting.h */,
 			);
 			name = Headers;
 			sourceTree = "<group>";
@@ -851,7 +869,7 @@
 		2C2761F01395DAA100D340AA /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				2C7EE2E4139607DF000305E6 /* GTMCarbonEvent.m */,
+				2CE27A13139D6B85005797CA /* GTMCarbonEvent.m */,
 				2C7EE32913960BFA000305E6 /* main.m */,
 				2C2761EE1395DA8A00D340AA /* DVR.m */,
 				2C2761B01395D5D800D340AA /* FakeWindow.m */,
@@ -887,7 +905,6 @@
 				2C2761761395D51F00D340AA /* NSDateFormatterExtras.m */,
 				2C2761771395D51F00D340AA /* NSStringITerm.m */,
 				2C2761741395D48300D340AA /* ITViewLocalizer.m */,
-				2C2761721395D46C00D340AA /* GTMCarbonEvent.m */,
 				2C27616E1395D45800D340AA /* GlobalSearch.m */,
 				2C27616F1395D45800D340AA /* iTermExpose.m */,
 				2C2761651395D42400D340AA /* DVRBuffer.m */,
@@ -900,7 +917,6 @@
 				2C27615B1395D3ED00D340AA /* iTermGrowlDelegate.m */,
 				2C27615C1395D3ED00D340AA /* iTermKeyBindingMgr.m */,
 				2C27615D1395D3ED00D340AA /* ProcessCache.m */,
-				2C27613F1395D0E400D340AA /* LineBufferTest.h */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -923,11 +939,12 @@
 		2CE2726013965B4F005797CA /* External Libraries */ = {
 			isa = PBXGroup;
 			children = (
+				2CE279D3139D6B1B005797CA /* CGSInternal */,
+				2CE279CA139D6B00005797CA /* GTM */,
 				2C2760D21395CA5A00D340AA /* RegexKitLite */,
 				2C2760BE1395CA0900D340AA /* UKCrashReporter */,
 				F69E77040AB78B89001EC0FF /* Growl */,
 				DD02571D09CB9363008F320C /* PSMTabBarControl */,
-				F6441F610E748404000EC682 /* CGSInternal */,
 			);
 			name = "External Libraries";
 			sourceTree = "<group>";
@@ -1004,30 +1021,6 @@
 			name = PSMTabBarControl;
 			sourceTree = "<group>";
 		};
-		F6441F610E748404000EC682 /* CGSInternal */ = {
-			isa = PBXGroup;
-			children = (
-				F6441F620E748404000EC682 /* CarbonHelpers.h */,
-				F6441F630E748404000EC682 /* CGSAccessibility.h */,
-				F6441F640E748404000EC682 /* CGSCIFilter.h */,
-				F6441F650E748404000EC682 /* CGSConnection.h */,
-				F6441F660E748404000EC682 /* CGSCursor.h */,
-				F6441F670E748404000EC682 /* CGSDebug.h */,
-				F6441F680E748404000EC682 /* CGSDisplays.h */,
-				F6441F690E748404000EC682 /* CGSHotKeys.h */,
-				F6441F6A0E748404000EC682 /* CGSInternal.h */,
-				F6441F6B0E748404000EC682 /* CGSMisc.h */,
-				F6441F6C0E748404000EC682 /* CGSNotifications.h */,
-				F6441F6D0E748404000EC682 /* CGSRegion.h */,
-				F6441F6E0E748404000EC682 /* CGSSession.h */,
-				F6441F6F0E748404000EC682 /* CGSTransitions.h */,
-				F6441F700E748404000EC682 /* CGSWindow.h */,
-				F6441F710E748404000EC682 /* CGSWorkspace.h */,
-				49A6E4081211CC6000D9AD6F /* Compatability.h */,
-			);
-			path = CGSInternal;
-			sourceTree = "<group>";
-		};
 		F69E77040AB78B89001EC0FF /* Growl */ = {
 			isa = PBXGroup;
 			children = (
@@ -1093,7 +1086,6 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2C2761401395D0E400D340AA /* LineBufferTest.h in Headers */,
 				2C2760FB1395CA5A00D340AA /* RegexKitLite.h in Headers */,
 				2C2760C91395CA0900D340AA /* UKCrashReporter.h in Headers */,
 				2C2760CD1395CA0900D340AA /* UKNibOwner.h in Headers */,
@@ -1112,23 +1104,6 @@
 				2C2760A91395C7A800D340AA /* PSMTabDragWindow.h in Headers */,
 				2C2760AB1395C7A800D340AA /* PSMTabStyle.h in Headers */,
 				2C2760AC1395C7A800D340AA /* PSMUnifiedTabStyle.h in Headers */,
-				1D5FDD681208E8F000C46BA3 /* CarbonHelpers.h in Headers */,
-				1D5FDD691208E8F000C46BA3 /* CGSAccessibility.h in Headers */,
-				1D5FDD6A1208E8F000C46BA3 /* CGSCIFilter.h in Headers */,
-				1D5FDD6B1208E8F000C46BA3 /* CGSConnection.h in Headers */,
-				1D5FDD6C1208E8F000C46BA3 /* CGSCursor.h in Headers */,
-				1D5FDD6D1208E8F000C46BA3 /* CGSDebug.h in Headers */,
-				1D5FDD6E1208E8F000C46BA3 /* CGSDisplays.h in Headers */,
-				1D5FDD6F1208E8F000C46BA3 /* CGSHotKeys.h in Headers */,
-				1D5FDD701208E8F000C46BA3 /* CGSInternal.h in Headers */,
-				1D5FDD711208E8F000C46BA3 /* CGSMisc.h in Headers */,
-				1D5FDD721208E8F000C46BA3 /* CGSNotifications.h in Headers */,
-				1D5FDD731208E8F000C46BA3 /* CGSRegion.h in Headers */,
-				1D5FDD741208E8F000C46BA3 /* CGSSession.h in Headers */,
-				1D5FDD751208E8F000C46BA3 /* CGSTransitions.h in Headers */,
-				1D5FDD761208E8F000C46BA3 /* CGSWindow.h in Headers */,
-				1D5FDD771208E8F000C46BA3 /* CGSWorkspace.h in Headers */,
-				49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */,
 				2C7EE22B13960462000305E6 /* ProcessCache.h in Headers */,
 				2C7EE22C13960462000305E6 /* iTermApplication.h in Headers */,
 				2C7EE22D13960462000305E6 /* iTermApplicationDelegate.h in Headers */,
@@ -1176,12 +1151,29 @@
 				2C7EE25713960462000305E6 /* DVRDecoder.h in Headers */,
 				2C7EE25813960462000305E6 /* DVREncoder.h in Headers */,
 				2C7EE25913960462000305E6 /* DVRIndexEntry.h in Headers */,
-				2C7EE2EB139607FB000305E6 /* GTMCarbonEvent.h in Headers */,
-				2C7EE2EC139607FB000305E6 /* GTMDebugSelectorValidation.h in Headers */,
-				2C7EE2ED139607FB000305E6 /* GTMDefines.h in Headers */,
-				2C7EE2EE139607FB000305E6 /* GTMObjectSingleton.h in Headers */,
-				2C7EE2EF139607FB000305E6 /* GTMTypeCasting.h in Headers */,
 				2C7EE32C13960C0C000305E6 /* iTerm.h in Headers */,
+				2CE279F8139D6B51005797CA /* CGSAccessibility.h in Headers */,
+				2CE279F9139D6B51005797CA /* CGSCIFilter.h in Headers */,
+				2CE279FA139D6B51005797CA /* CGSConnection.h in Headers */,
+				2CE279FB139D6B51005797CA /* CGSCursor.h in Headers */,
+				2CE279FC139D6B51005797CA /* CGSDebug.h in Headers */,
+				2CE279FD139D6B51005797CA /* CGSDisplays.h in Headers */,
+				2CE279FE139D6B51005797CA /* CGSHotKeys.h in Headers */,
+				2CE279FF139D6B51005797CA /* CGSInternal.h in Headers */,
+				2CE27A00139D6B51005797CA /* CGSMisc.h in Headers */,
+				2CE27A01139D6B51005797CA /* CGSNotifications.h in Headers */,
+				2CE27A02139D6B51005797CA /* CGSRegion.h in Headers */,
+				2CE27A03139D6B51005797CA /* CGSSession.h in Headers */,
+				2CE27A04139D6B51005797CA /* CGSTransitions.h in Headers */,
+				2CE27A05139D6B51005797CA /* CGSWindow.h in Headers */,
+				2CE27A06139D6B51005797CA /* CGSWorkspace.h in Headers */,
+				2CE27A07139D6B51005797CA /* CarbonHelpers.h in Headers */,
+				2CE27A08139D6B51005797CA /* Compatability.h in Headers */,
+				2CE27A0E139D6B76005797CA /* GTMCarbonEvent.h in Headers */,
+				2CE27A0F139D6B76005797CA /* GTMDebugSelectorValidation.h in Headers */,
+				2CE27A10139D6B76005797CA /* GTMDefines.h in Headers */,
+				2CE27A11139D6B76005797CA /* GTMObjectSingleton.h in Headers */,
+				2CE27A12139D6B76005797CA /* GTMTypeCasting.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1364,6 +1356,8 @@
 				2CE2758D139B0923005797CA /* iTerm_Framework.plist in Resources */,
 				2CE275DC139B2469005797CA /* termios in Resources */,
 				2CE275DE139B247C005797CA /* xterm-terminfo.txt in Resources */,
+				2CE279D2139D6B00005797CA /* GTM in Resources */,
+				2CE279E6139D6B1B005797CA /* CGSInternal in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1469,8 +1463,8 @@
 				2C2761BA1395D5D800D340AA /* PTYTabView.m in Sources */,
 				2C2761BB1395D5D800D340AA /* PTYWindow.m in Sources */,
 				2C2761EF1395DA8A00D340AA /* DVR.m in Sources */,
-				2C7EE2E5139607DF000305E6 /* GTMCarbonEvent.m in Sources */,
 				2C7EE32A13960BFA000305E6 /* main.m in Sources */,
+				2CE27A14139D6B85005797CA /* GTMCarbonEvent.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
