@@ -14,9 +14,9 @@ add up to a lot.
 
 ## Where Do I Get It?
 
-You can find the latest precompiled versions at
-(googlecode)[http://code.google.com/p/iterm2/downloads/list], or clone this
-repository and build it yourself.
+You can find the latest precompiled versions at the
+[google-code](http://code.google.com/p/iterm2/downloads/list) downloads page, or
+clone this repository and build it yourself.
 
 ## How Do I Use It?
 
