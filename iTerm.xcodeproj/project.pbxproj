@@ -219,8 +219,6 @@
 		2CE2758D139B0923005797CA /* iTerm_Framework.plist in Resources */ = {isa = PBXBuildFile; fileRef = 2CE27583139B0923005797CA /* iTerm_Framework.plist */; };
 		2CE275DC139B2469005797CA /* termios in Resources */ = {isa = PBXBuildFile; fileRef = 2CE275D9139B2469005797CA /* termios */; };
 		2CE275DE139B247C005797CA /* xterm-terminfo.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2CE275DD139B247C005797CA /* xterm-terminfo.txt */; };
-		2CE279D2139D6B00005797CA /* GTM in Resources */ = {isa = PBXBuildFile; fileRef = 2CE279CA139D6B00005797CA /* GTM */; };
-		2CE279E6139D6B1B005797CA /* CGSInternal in Resources */ = {isa = PBXBuildFile; fileRef = 2CE279D3139D6B1B005797CA /* CGSInternal */; };
 		2CE279F8139D6B51005797CA /* CGSAccessibility.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279E7139D6B51005797CA /* CGSAccessibility.h */; };
 		2CE279F9139D6B51005797CA /* CGSCIFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279E8139D6B51005797CA /* CGSCIFilter.h */; };
 		2CE279FA139D6B51005797CA /* CGSConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 2CE279E9139D6B51005797CA /* CGSConnection.h */; };
@@ -474,7 +472,6 @@
 		2C7EE22813960462000305E6 /* DVRDecoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DVRDecoder.h; path = DVR/DVRDecoder.h; sourceTree = "<group>"; };
 		2C7EE22913960462000305E6 /* DVREncoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DVREncoder.h; path = DVR/DVREncoder.h; sourceTree = "<group>"; };
 		2C7EE22A13960462000305E6 /* DVRIndexEntry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DVRIndexEntry.h; path = DVR/DVRIndexEntry.h; sourceTree = "<group>"; };
-		2C7EE25C13960713000305E6 /* GTM */ = {isa = PBXFileReference; lastKnownFileType = folder; path = GTM; sourceTree = "<group>"; };
 		2C7EE32313960BC4000305E6 /* iTerm */ = {isa = PBXFileReference; lastKnownFileType = folder; path = iTerm; sourceTree = "<group>"; };
 		2C7EE32913960BFA000305E6 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = iTerm/main.m; sourceTree = "<group>"; };
 		2C7EE32B13960C0C000305E6 /* iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iTerm.h; path = iTerm/iTerm.h; sourceTree = "<group>"; };
@@ -526,8 +523,8 @@
 		2CE27583139B0923005797CA /* iTerm_Framework.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = iTerm_Framework.plist; path = properties/iTerm_Framework.plist; sourceTree = "<group>"; };
 		2CE275D9139B2469005797CA /* termios */ = {isa = PBXFileReference; lastKnownFileType = folder; path = termios; sourceTree = "<group>"; };
 		2CE275DD139B247C005797CA /* xterm-terminfo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = "xterm-terminfo.txt"; path = "termios/xterm-terminfo.txt"; sourceTree = "<group>"; };
-		2CE279CA139D6B00005797CA /* GTM */ = {isa = PBXFileReference; lastKnownFileType = folder; name = GTM; path = ../Users/tomfeist/projects/iTerm2/Vendor/GTM; sourceTree = DEVELOPER_DIR; };
-		2CE279D3139D6B1B005797CA /* CGSInternal */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CGSInternal; path = ../Users/tomfeist/projects/iTerm2/Vendor/CGSInternal; sourceTree = DEVELOPER_DIR; };
+		2CE279CA139D6B00005797CA /* GTM */ = {isa = PBXFileReference; lastKnownFileType = folder; name = GTM; path = Vendor/GTM; sourceTree = SOURCE_ROOT; };
+		2CE279D3139D6B1B005797CA /* CGSInternal */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CGSInternal; path = Vendor/CGSInternal; sourceTree = SOURCE_ROOT; };
 		2CE279E7139D6B51005797CA /* CGSAccessibility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSAccessibility.h; path = Vendor/CGSInternal/CGSAccessibility.h; sourceTree = "<group>"; };
 		2CE279E8139D6B51005797CA /* CGSCIFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSCIFilter.h; path = Vendor/CGSInternal/CGSCIFilter.h; sourceTree = "<group>"; };
 		2CE279E9139D6B51005797CA /* CGSConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CGSConnection.h; path = Vendor/CGSInternal/CGSConnection.h; sourceTree = "<group>"; };
@@ -633,7 +630,6 @@
 			isa = PBXGroup;
 			children = (
 				2C7EE32313960BC4000305E6 /* iTerm */,
-				2C7EE25C13960713000305E6 /* GTM */,
 				2C275FD91395C70600D340AA /* App */,
 				2C275FE51395C70600D340AA /* Expose */,
 				2C275FEB1395C70600D340AA /* Misc */,
@@ -1356,8 +1352,6 @@
 				2CE2758D139B0923005797CA /* iTerm_Framework.plist in Resources */,
 				2CE275DC139B2469005797CA /* termios in Resources */,
 				2CE275DE139B247C005797CA /* xterm-terminfo.txt in Resources */,
-				2CE279D2139D6B00005797CA /* GTM in Resources */,
-				2CE279E6139D6B1B005797CA /* CGSInternal in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
