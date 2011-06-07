@@ -43,6 +43,7 @@ typedef struct {
     // posted.
     NSMutableArray* journal_;
     NSUserDefaults* prefs_;
+    BOOL postChanges_;              // should change notifications be posted?
 }
 
 + (BookmarkModel*)sharedInstance;

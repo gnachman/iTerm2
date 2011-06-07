@@ -49,6 +49,7 @@ id gAltOpenAllRepresentedObject;
     if (!shared) {
         shared = [[BookmarkModel alloc] init];
         shared->prefs_ = [NSUserDefaults standardUserDefaults];
+        shared->postChanges_ = YES;
     }
 
     return shared;
@@ -61,6 +62,7 @@ id gAltOpenAllRepresentedObject;
     if (!shared) {
         shared = [[BookmarkModel alloc] init];
         shared->prefs_ = nil;
+        shared->postChanges_ = NO;
     }
 
     return shared;
@@ -542,9 +544,11 @@ id gAltOpenAllRepresentedObject;
 
 - (void)postChangeNotification
 {
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermReloadAddressBook"
-                                                        object:nil
-                                                      userInfo:[NSDictionary dictionaryWithObject:journal_ forKey:@"array"]];
+    if (postChanges_) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermReloadAddressBook"
+                                                            object:nil
+                                                          userInfo:[NSDictionary dictionaryWithObject:journal_ forKey:@"array"]];
+    }
     [journal_ release];
     journal_ = [[NSMutableArray alloc] init];
 }
