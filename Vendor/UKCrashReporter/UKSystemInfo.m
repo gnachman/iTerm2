@@ -11,12 +11,12 @@
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
-unsigned	UKPhysicalRAMSize()
+unsigned int UKPhysicalRAMSize()
 {
-	long		ramSize;
+	SInt32 ramSize;
 	
 	if( Gestalt( gestaltPhysicalRAMSizeInMegabytes, &ramSize ) == noErr )
-		return ramSize;
+		return (unsigned int)ramSize;
 	else
 		return 0;
 }
@@ -24,14 +24,14 @@ unsigned	UKPhysicalRAMSize()
 
 NSString*	UKSystemVersionString()
 {
-	long		vMajor = 10, vMinor = 0, vBugfix = 0;
+	SInt32 vMajor = 10, vMinor = 0, vBugfix = 0;
 	UKGetSystemVersionComponents( &vMajor, &vMinor, &vBugfix );
 	
 	return [NSString stringWithFormat: @"%ld.%ld.%ld", vMajor, vMinor, vBugfix];
 }
 
 
-void	UKGetSystemVersionComponents( long* outMajor, long* outMinor, long* outBugfix )
+void	UKGetSystemVersionComponents( SInt32* outMajor, SInt32* outMinor, SInt32* outBugfix )
 {
 	long		sysVersion = UKSystemVersion();
 	if( sysVersion >= MAC_OS_X_VERSION_10_4 )
@@ -42,32 +42,34 @@ void	UKGetSystemVersionComponents( long* outMajor, long* outMinor, long* outBugf
 	}
 	else
 	{
-		*outMajor = ((sysVersion & 0x0000F000) >> 12) * 10 + ((sysVersion & 0x00000F00) >> 8);
-		*outMinor = (sysVersion & 0x000000F0) >> 4;
+		*outMajor  = ((sysVersion & 0x0000F000) >> 12) * 10 + ((sysVersion & 0x00000F00) >> 8);
+		*outMinor  = (sysVersion & 0x000000F0) >> 4;
 		*outBugfix = sysVersion & 0x0000000F;
 	}
 }
 
 
-long	UKSystemVersion()
+unsigned int UKSystemVersion()
 {
-	long		sysVersion = 0;
+	SInt32	sysVersion = 0;
 	
 	if( Gestalt( gestaltSystemVersion, &sysVersion ) != noErr )
 		return 0;
 	
-	return sysVersion;
+	return (unsigned int)sysVersion;
 }
 
 
-unsigned	UKClockSpeed()
+unsigned int UKClockSpeed()
 {
-	long		speed;
+	SInt32 speed;
 	
-	if( Gestalt( gestaltProcClkSpeed, &speed ) == noErr )
-		return speed / 1000000;
-	else
+	if( Gestalt( gestaltProcClkSpeed, &speed ) == noErr ) {
+        speed = speed / 1000000;
+        return (unsigned int)speed;
+    } else {
 		return 0;
+    }
 }
 
 
@@ -85,13 +87,13 @@ unsigned	UKCountCores()
 
 NSString*	UKMachineName()
 {
-	static NSString*	cpuName = nil;
+	static NSString* cpuName = nil;
 	if( cpuName )
 		return cpuName;
 	
-	char*				machineName = NULL;
+	char* machineName = NULL;
 	
-	if( Gestalt( gestaltUserVisibleMachineName, (long*) &machineName ) == noErr )
+	if( Gestalt( gestaltUserVisibleMachineName, (SInt32*) &machineName ) == noErr )
 	{
 		NSString*	internalName = [NSString stringWithCString: machineName +1 length: machineName[0]];
 		
@@ -177,7 +179,7 @@ NSString*	UKMachineName()
 		NSEnumerator	*e=[[[translationDictionary allKeys]
 									sortedArrayUsingSelector:@selector(compare:)]
 									objectEnumerator];
-		while( aKey = [e nextObject] )
+		while( (aKey = [e nextObject]) )
 		{
 			r = [internalName rangeOfString: aKey];
 			if( r.location != NSNotFound )
@@ -212,7 +214,7 @@ NSString*	UKCPUName()
 
 NSString*	UKAutoreleasedCPUName( BOOL releaseIt )
 {
-	long				cpu;
+	SInt32				cpu;
 	static NSString*	cpuName = nil;
 	
 	if( Gestalt( gestaltNativeCPUtype, &cpu ) == noErr )
