@@ -2179,7 +2179,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     dragOk_ = NO;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
     const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
-    if (!cmdPressed && [[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
+    if (!cmdPressed &&
+        frontTextView &&
+        [[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
         // Mouse clicks in inactive tab are always handled by superclass but make it first responder.
         [[self window] makeFirstResponder: self];
         [super mouseUp:event];

@@ -1457,7 +1457,14 @@
 
             if ((NSMouseInRect(mousePt, iconRect,[self isFlipped])) && ![self disableTabClose] && [mouseDownCell closeButtonPressed]) {
                 [self performSelector:@selector(closeTabClick:) withObject:cell];
-            } else if (NSMouseInRect(mousePt, mouseDownCellFrame,[self isFlipped]) && (!NSMouseInRect(trackingStartPoint, [cell closeButtonRectForFrame:cellFrame], [self isFlipped]) || ![self allowsBackgroundTabClosing])) {
+            } else if (NSMouseInRect(mousePt, 
+                                     mouseDownCellFrame,
+                                     [self isFlipped]) &&
+                       (!NSMouseInRect(trackingStartPoint,
+                                       [cell closeButtonRectForFrame:cellFrame],
+                                       [self isFlipped]) ||
+                        [self disableTabClose] ||
+                        ![self allowsBackgroundTabClosing])) {
                 [mouseDownCell setCloseButtonPressed:NO];
                 [self performSelector:@selector(tabClick:) withObject:cell];
             } else {
