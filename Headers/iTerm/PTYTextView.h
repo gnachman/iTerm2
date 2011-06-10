@@ -239,10 +239,17 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Array of (line number, pwd) arrays, sorted by line number. Line numbers are absolute.
     NSMutableArray *workingDirectoryAtLines;
-    
+
     // Saves the monotonically increasing event number of a first-mouse click, which disallows
     // selection.
     int firstMouseEventNumber_;
+
+    // For accessibility. This is a giant string with the entire scrollback buffer plus screen concatenated with newlines for hard eol's.
+    NSMutableString* allText_;
+    // For accessibility. This is the indices at which newlines occur in allText_, ignoring multi-char compositing characters.
+    NSMutableArray* lineBreakIndexOffsets_;
+    // For accessibility. This is the actual indices at which newlines occcur in allText_.
+    NSMutableArray* lineBreakCharOffsets_;
 }
 
 + (NSCursor *)textViewCursor;

@@ -822,48 +822,334 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return NO;
 }
 
-- (NSArray *)accessibilityAttributeNames
+- (NSArray*)accessibilityAttributeNames
 {
-    static NSArray *names = nil;
-    if (names == nil) {
-        names = [[[super accessibilityAttributeNames] arrayByAddingObject:NSAccessibilityValueDescriptionAttribute] retain];
+    return [NSArray arrayWithObjects:
+            NSAccessibilityRoleAttribute,
+            NSAccessibilityRoleDescriptionAttribute,
+            NSAccessibilityHelpAttribute,
+            NSAccessibilityFocusedAttribute,
+            NSAccessibilityParentAttribute,
+            NSAccessibilityChildrenAttribute,
+            NSAccessibilityWindowAttribute,
+            NSAccessibilityTopLevelUIElementAttribute,
+            NSAccessibilityPositionAttribute,
+            NSAccessibilitySizeAttribute,
+            NSAccessibilityDescriptionAttribute,
+            NSAccessibilityValueAttribute,
+            NSAccessibilityNumberOfCharactersAttribute,
+            NSAccessibilitySelectedTextAttribute,
+            NSAccessibilitySelectedTextRangeAttribute,
+            NSAccessibilitySelectedTextRangesAttribute,
+            NSAccessibilityInsertionPointLineNumberAttribute,
+            NSAccessibilityVisibleCharacterRangeAttribute,
+            nil];
+}
+
+- (NSArray *)accessibilityParameterizedAttributeNames
+{
+    return [NSArray arrayWithObjects:
+            NSAccessibilityLineForIndexParameterizedAttribute,
+            NSAccessibilityRangeForLineParameterizedAttribute,
+            NSAccessibilityStringForRangeParameterizedAttribute,
+            NSAccessibilityRangeForPositionParameterizedAttribute,
+            NSAccessibilityRangeForIndexParameterizedAttribute,
+            NSAccessibilityBoundsForRangeParameterizedAttribute,
+            nil];
+}
+
+// Range in allText_ of the given line.
+- (NSRange)_rangeOfLine:(NSUInteger)lineNumber
+{
+    NSRange range;
+    if (lineNumber == 0) {
+        range.location = 0;
+    } else {
+        range.location = [[lineBreakCharOffsets_ objectAtIndex:lineNumber-1] unsignedLongValue];
+    }
+    if (lineNumber >= [lineBreakCharOffsets_ count]) {
+        range.length = [allText_ length] - range.location;
+    } else {
+        range.length = [[lineBreakCharOffsets_ objectAtIndex:lineNumber] unsignedLongValue] - range.location;
+    }
+    return range;
+}
+
+// Range in allText_ of the given index.
+- (NSUInteger)_lineNumberOfIndex:(NSUInteger)theIndex
+{
+    NSUInteger lineNum = 0;
+    for (NSNumber* n in lineBreakIndexOffsets_) {
+        NSUInteger offset = [n unsignedLongValue];
+        if (offset > theIndex) {
+            break;
+        }
+        lineNum++;
+    }
+    return lineNum;
+}
+
+// Line number of a location (respecting compositing chars) in allText_.
+- (NSUInteger)_lineNumberOfChar:(NSUInteger)location
+{
+    NSUInteger lineNum = 0;
+    for (NSNumber* n in lineBreakCharOffsets_) {
+        NSUInteger offset = [n unsignedLongValue];
+        if (offset > location) {
+            break;
+        }
+        lineNum++;
+    }
+    return lineNum;
+}
+
+// Number of unichar a character uses (normally 1 in English).
+- (int)_lengthOfChar:(screen_char_t)sct
+{
+    return [ScreenCharToStr(&sct) length];
+}
+
+// Position, respecting compositing chars, in allText_ of a line.
+- (NSUInteger)_offsetOfLine:(NSUInteger)lineNum
+{
+    if (lineNum == 0) {
+        return 0;
+    }
+    assert(lineNum < [lineBreakCharOffsets_ count] + 1);
+    return [[lineBreakCharOffsets_ objectAtIndex:lineNum - 1] unsignedLongValue];
+}
+
+// Onscreen X-position of a location (respecting compositing chars) in allText_.
+- (NSUInteger)_columnOfChar:(NSUInteger)location inLine:(NSUInteger)lineNum
+{
+    NSUInteger lineStart = [self _offsetOfLine:lineNum];
+    screen_char_t* theLine = [dataSource getLineAtIndex:lineNum];
+    assert(location >= lineStart);
+    int remaining = location - lineStart;
+    int i = 0;
+    while (remaining > 0 && i < [dataSource width]) {
+        remaining -= [self _lengthOfChar:theLine[i++]];
+    }
+    return i;
+}
+
+// Index (ignoring compositing chars) of a line in allText_.
+- (NSUInteger)_startingIndexOfLineNumber:(NSUInteger)lineNumber
+{
+    if (lineNumber < [lineBreakIndexOffsets_ count]) {
+        return [[lineBreakCharOffsets_ objectAtIndex:lineNumber] unsignedLongValue];
+    } else if ([lineBreakIndexOffsets_ count] > 0) {
+        return [[lineBreakIndexOffsets_ lastObject] unsignedLongValue];
+    } else {
+        return 0;
+    }
+}
+
+// Range in allText_ of an index (ignoring compositing chars).
+- (NSRange)_rangeOfIndex:(NSUInteger)theIndex
+{
+    NSUInteger lineNumber = [self _lineNumberOfIndex:theIndex];
+    screen_char_t* theLine = [dataSource getLineAtIndex:lineNumber];
+    NSUInteger startingIndexOfLine = [self _startingIndexOfLineNumber:lineNumber];
+    assert(theIndex >= startingIndexOfLine);
+    int x = theIndex - startingIndexOfLine;
+    NSRange rangeOfLine = [self _rangeOfLine:lineNumber];
+    NSRange range;
+    range.location = rangeOfLine.location;
+    for (int i = 0; i < x; i++) {
+        range.location += [self _lengthOfChar:theLine[i]];
+    }
+    range.length = [self _lengthOfChar:theLine[x]];
+    return range;
+}
+
+// Range, respecting compositing chars, of a character at an x,y position where 0,0 is the
+// first char of the first line in the scrollback buffer.
+- (NSRange)_rangeOfCharAtX:(int)x y:(int)y
+{
+    screen_char_t* theLine = [dataSource getLineAtIndex:y];
+    NSRange lineRange = [self _rangeOfLine:y];
+    NSRange result = lineRange;
+    for (int i = 0; i < x; i++) {
+        result.location += [self _lengthOfChar:theLine[i]];
+    }
+    result.length = [self _lengthOfChar:theLine[x]];
+    return result;
+}
+
+/*
+ * The concepts used here are not defined, so I'm going to give it my best guess.
+ *
+ * Suppose we have a terminal window like this:
+ *
+ * Line  On-Screen Contents
+ * 0     [x]
+ * 1     [ba'r]  (the ' is a combining accent)
+ * 2     [y]
+ *
+ * Index  Location (as in a range)  Character
+ * 0      0                         f
+ * 1      1                         b
+ * 2      2-3                       b + [']
+ * 3      4                         r
+ * 4      5                         y
+ *
+ * Index                   012 34
+ * Char                    012345
+ * allText_              = xba«ry
+ * lineBreakCharOffests_ = [1, 4]
+ * lineBreakInexOffsets_ = [1, 3]
+ */
+- (id)_accessibilityAttributeValue:(NSString *)attribute forParameter:(id)parameter
+{
+    if ([attribute isEqualToString:NSAccessibilityLineForIndexParameterizedAttribute]) {
+        //(NSNumber *) - line# for char index; param:(NSNumber *)
+        NSUInteger theIndex = [(NSNumber*)parameter unsignedLongValue];
+        return [NSNumber numberWithUnsignedLong:[self _lineNumberOfIndex:theIndex]];
+    } else if ([attribute isEqualToString:NSAccessibilityRangeForLineParameterizedAttribute]) {
+        //(NSValue *)  - (rangeValue) range of line; param:(NSNumber *)
+        NSUInteger lineNumber = [(NSNumber*)parameter unsignedLongValue];
+        assert(lineNumber < [lineBreakIndexOffsets_ count]);
+        return [NSValue valueWithRange:[self _rangeOfLine:lineNumber]];
+    } else if ([attribute isEqualToString:NSAccessibilityStringForRangeParameterizedAttribute]) {
+        //(NSString *) - substring; param:(NSValue * - rangeValue)
+        NSRange range = [(NSValue*)parameter rangeValue];
+        return [allText_ substringWithRange:range];
+    } else if ([attribute isEqualToString:NSAccessibilityRangeForPositionParameterizedAttribute]) {
+        //(NSValue *)  - (rangeValue) composed char range; param:(NSValue * - pointValue)
+        NSPoint position = [(NSValue*)parameter pointValue];
+        int x = position.x / charWidth;
+        NSRect myFrame = [self frame];
+        myFrame.size.height = 0;
+        int y = (myFrame.size.height - position.y) / lineHeight;
+        return [NSValue valueWithRange:[self _rangeOfCharAtX:x y:y]];
+    } else if ([attribute isEqualToString:NSAccessibilityRangeForIndexParameterizedAttribute]) {
+        //(NSValue *)  - (rangeValue) composed char range; param:(NSNumber *)
+        NSUInteger theIndex = [(NSNumber*)parameter unsignedLongValue];
+        return [NSValue valueWithRange:[self _rangeOfIndex:theIndex]];
+    } else if ([attribute isEqualToString:NSAccessibilityBoundsForRangeParameterizedAttribute]) {
+        //(NSValue *)  - (rectValue) bounds of text; param:(NSValue * - rangeValue)
+        NSRange range = [(NSValue*)parameter rangeValue];
+        int yStart = [self _lineNumberOfChar:range.location];
+        int y2 = [self _lineNumberOfChar:range.location + range.length - 1];
+        int xStart = [self _columnOfChar:range.location inLine:yStart];
+        int x2 = [self _columnOfChar:range.location + range.length - 1 inLine:y2];
+        ++x2;
+        if (x2 == [dataSource width]) {
+            x2 = 0;
+            ++y2;
+        }
+        int yMin = MIN(yStart, y2);
+        int yMax = MAX(yStart, y2);
+        int xMin = MIN(xStart, x2);
+        int xMax = MAX(xStart, x2);
+        NSRect myFrame = [self frame];
+        myFrame.size.height = 0;
+        NSRect result = NSMakeRect(xMin * charWidth,
+                                   myFrame.size.height - yMin * lineHeight,
+                                   (xMax - xMin + 1) * charWidth,
+                                   (yMax - yMin + 1) * lineHeight);
+        return [NSValue valueWithRect:result];
+    } else {
+        return [super accessibilityAttributeValue:attribute forParameter:parameter];
+    }
+}
+
+- (id)accessibilityAttributeValue:(NSString *)attribute forParameter:(id)parameter
+{
+    id result = [self _accessibilityAttributeValue:attribute forParameter:parameter];
+    return result;
+}
+
+// TODO(georgen): Speed this up! This code is dreadfully slow but it's only used
+// when accessibility is on, and it might be faster than voiceover for reasonable
+// amounts of text.
+- (NSString*)_allText
+{
+    [allText_ release];
+    [lineBreakCharOffsets_ release];
+    [lineBreakIndexOffsets_ release];
+
+    allText_ = [[NSMutableString alloc] init];
+    lineBreakCharOffsets_ = [[NSMutableArray alloc] init];
+    lineBreakIndexOffsets_ = [[NSMutableArray alloc] init];
+
+    int width = [dataSource width];
+    unichar chars[width * kMaxParts];
+    int offset = 0;
+    for (int i = 0; i < [dataSource numberOfLines]; i++) {
+        screen_char_t* line = [dataSource getLineAtIndex:i];
+        int k;
+        // Get line width, store it in k
+        for (k = width - 1; k >= 0; k--) {
+            if (line[k].code) {
+                break;
+            }
+        }
+        int o = 0;
+        // Add first width-k chars to the 'chars' array, expanding complex chars.
+        for (int j = 0; j <= k; j++) {
+            if (line[j].complexChar) {
+                NSString* cs = ComplexCharToStr(line[j].code);
+                for (int l = 0; l < [cs length]; ++l) {
+                    chars[o++] = [cs characterAtIndex:l];
+                }
+            } else {
+                chars[o++] = line[j].code;
+            }
+        }
+        // Append this line to allText_.
+        offset += o;
+        if (k > 0) {
+            [allText_ appendString:[NSString stringWithCharacters:chars length:o]];
+        }
+        if (line[width].code == EOL_HARD) {
+            // Add a newline and update offsets arrays that track line break locations.
+            [allText_ appendString:@"\n"];
+            ++offset;
+            [lineBreakCharOffsets_ addObject:[NSNumber numberWithUnsignedLong:[allText_ length]]];
+            [lineBreakIndexOffsets_ addObject:[NSNumber numberWithUnsignedLong:offset]];
+        }
     }
 
-    return names;
+    return allText_;
 }
 
 - (id)accessibilityAttributeValue:(NSString *)attribute
 {
-    if ([attribute isEqualToString:NSAccessibilityValueDescriptionAttribute]) {
-        int accStartX = accX;
-        int accStartY = MAX(0, accY - [dataSource totalScrollbackOverflow]);
-        int accEndX = [dataSource cursorX] - 1;
-        int accEndY = [dataSource cursorY] + [dataSource numberOfLines] - [dataSource height] - 1;
-        int begin = accStartX + accStartY * [dataSource width];
-        int accEnd = accEndX + accEndY * [dataSource width];
-        NSString* result = nil;
-        if (begin > accEnd) {
-            SWAPINT(accStartX, accEndX);
-            SWAPINT(accStartY, accEndY);
-            if (accEnd - begin != 1) {
-                result = [self getWordForX:accStartX y:accStartY startX:nil startY:nil endX:nil endY:nil];
-            }
-        }
-        if (!result) {
-            result = [self contentFromX:accStartX
-                                      Y:accStartY
-                                    ToX:accEndX
-                                      Y:accEndY
-                                    pad:NO];
-        }
-        accX = [dataSource cursorX] - 1;
-        accY = [dataSource cursorY] + [dataSource numberOfLines] - [dataSource height] + [dataSource totalScrollbackOverflow] - 1;
-        NSLog(@"Returning %@: %@", NSAccessibilityValueDescriptionAttribute, result);
-        return result;
-    } else if ([attribute isEqualToString:NSAccessibilityRoleAttribute]) {
-        return NSAccessibilityValueIndicatorRole;
+    if ([attribute isEqualToString:NSAccessibilityRoleAttribute]) {
+        return NSAccessibilityTextAreaRole;
     } else if ([attribute isEqualToString:NSAccessibilityRoleDescriptionAttribute]) {
-        return @"terminal text area";
+        return NSAccessibilityRoleDescriptionForUIElement(NSAccessibilityTextAreaRole);
+    } else if ([attribute isEqualToString:NSAccessibilityHelpAttribute]) {
+        return nil;
+    } else if ([attribute isEqualToString:NSAccessibilityFocusedAttribute]) {
+        return [NSNumber numberWithBool:YES];
+    } else if ([attribute isEqualToString:NSAccessibilityDescriptionAttribute]) {
+        return @"shell";
+    } else if ([attribute isEqualToString:NSAccessibilityValueAttribute]) {
+        return [self _allText];
+    } else if ([attribute isEqualToString:NSAccessibilityNumberOfCharactersAttribute]) {
+        return [NSNumber numberWithInt:[[self _allText] length]];
+    } else if ([attribute isEqualToString:NSAccessibilitySelectedTextAttribute]) {
+        return @"";
+    } else if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
+        int x = [dataSource cursorX] - 1;
+        int y = [dataSource numberOfLines] - [dataSource height] + [dataSource cursorY] - 1;
+        NSRange range = [self _rangeOfCharAtX:x y:y];
+        range.length--;
+        return [NSValue valueWithRange:range];
+    } else if ([attribute isEqualToString:NSAccessibilitySelectedTextRangesAttribute]) {
+        int x = [dataSource cursorX] - 1;
+        int y = [dataSource numberOfLines] - [dataSource height] + [dataSource cursorY] - 1;
+        NSRange range = [self _rangeOfCharAtX:x y:y];
+        range.length--;
+        return [NSArray arrayWithObject:
+                [NSValue valueWithRange:range]];
+    } else if ([attribute isEqualToString:NSAccessibilityInsertionPointLineNumberAttribute]) {
+        return [NSNumber numberWithInt:[dataSource cursorY]-1 + [dataSource numberOfScrollbackLines]];
+    } else if ([attribute isEqualToString:NSAccessibilityVisibleCharacterRangeAttribute]) {
+        return [NSValue valueWithRange:NSMakeRange(0, [[self _allText] length])];
     } else {
         return [super accessibilityAttributeValue:attribute];
     }
@@ -961,6 +1247,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         frame.size.height = height + excess + imeOffset * lineHeight + VMARGIN;
         [[self superview] setFrame:frame];
         frame.size.height -= VMARGIN;
+        NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
     } else if (scrollbackOverflow > 0) {
         // Some number of lines were lost from the head of the buffer.
 
@@ -1028,12 +1315,23 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 [self setNeedsDisplayInRect:dr];
             }
         }
+        NSAccessibilityPostNotification(self, NSAccessibilityRowCountChangedNotification);
     }
 
     // Scroll to the bottom if needed.
     BOOL userScroll = [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) userScroll];
     if (!userScroll) {
         [self scrollEnd];
+    }
+    NSAccessibilityPostNotification(self, NSAccessibilityValueChangedNotification);
+    long long absCursorY = [dataSource cursorY] + [dataSource numberOfLines] + [dataSource totalScrollbackOverflow] - [dataSource height];
+    if ([dataSource cursorX] != accX ||
+        absCursorY != accY) {
+        NSAccessibilityPostNotification(self, NSAccessibilitySelectedTextChangedNotification);
+        NSAccessibilityPostNotification(self, NSAccessibilitySelectedRowsChangedNotification);
+        NSAccessibilityPostNotification(self, NSAccessibilitySelectedColumnsChangedNotification);
+        accX = [dataSource cursorX];
+        accY = absCursorY;
     }
 
     return [self updateDirtyRects] || [self _isCursorBlinking];
@@ -6215,12 +6513,6 @@ static bool IsUrlChar(NSString* str)
         [dataSource saveToDvr];
     }
 
-    // Check if the cursor has moved and tell accessibility about it.
-    if ([dataSource cursorX] - 1 != accX ||
-        [dataSource cursorY] + [dataSource numberOfLines] - [dataSource height] + [dataSource totalScrollbackOverflow] - 1 != accY) {
-        NSAccessibilityPostNotification(self,
-                                        NSAccessibilityValueChangedNotification);
-    }
 
     if (foundDirty && [[iTermExpose sharedInstance] isVisible]) {
         changedSinceLastExpose_ = YES;
