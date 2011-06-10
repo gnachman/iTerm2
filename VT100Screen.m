@@ -2910,7 +2910,7 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 
     // everything between cursorY and SCROLL_BOTTOM is dirty
-    if (cursorY >= SCROLL_BOTTOM) {
+    if (cursorY <= SCROLL_BOTTOM) {
         [self setDirtyFromX:0 Y:cursorY toX:WIDTH Y:SCROLL_BOTTOM];
     }
     DebugLog(@"deleteLines");

@@ -608,12 +608,12 @@ static void reapchild(int n)
     if ((written < 0) && (!(errno == EAGAIN || errno == EINTR))) {
         [self brokenPipe];
         return;
+    } else if (written > 0) {
+        // Shrink the writeBuffer
+        length = [writeBuffer length] - written;
+        memmove(ptr, ptr+written, length);
+        [writeBuffer setLength:length];
     }
-
-    // Shrink the writeBuffer
-    length = [writeBuffer length] - written;
-    memmove(ptr, ptr+written, length);
-    [writeBuffer setLength:length];
 
     // Clean up locks
     [writeLock unlock];
