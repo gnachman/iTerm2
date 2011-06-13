@@ -79,8 +79,15 @@
 // override to catch key press events very early on
 - (void)sendEvent:(NSEvent*)event
 {
+	iTermController* cont = [iTermController sharedInstance];
+	PseudoTerminal* currentTerminal = [cont currentTerminal];
+	PTYTabView* tabView = [currentTerminal tabView];
+
+	if ([tabView processMRUEvent:event]) {
+		return;
+	}
+	
     if ([event type] == NSKeyDown) {
-        iTermController* cont = [iTermController sharedInstance];
 #ifdef FAKE_EVENT_TAP
         event = [cont runEventTapHandler:event];
         if (!event) {
@@ -103,8 +110,6 @@
             return;
         }
         PreferencePanel* privatePrefPanel = [PreferencePanel sessionsInstance];
-        PseudoTerminal* currentTerminal = [cont currentTerminal];
-        PTYTabView* tabView = [currentTerminal tabView];
         PTYSession* currentSession = [currentTerminal currentSession];
         NSResponder *responder;
 
