@@ -2541,10 +2541,28 @@ NSString *sessionsKey = @"sessions";
 
 - (Bookmark*)_bookmarkToSplit
 {
-    Bookmark* theBookmark = [[self currentSession] originalAddressBookEntry];
+    Bookmark* theBookmark = nil;
+
+    // Get the bookmark this session was originally created with. But look it up from its GUID because
+    // it might have changed since it was copied into originalAddressBookEntry when the bookmark was
+    // first created.
+    Bookmark* originalBookmark = [[self currentSession] originalAddressBookEntry];
+    if (originalBookmark && [originalBookmark objectForKey:KEY_GUID]) {
+        theBookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:[originalBookmark objectForKey:KEY_GUID]];
+    }
+
+    // If that fails, use its current bookmark.
     if (!theBookmark) {
         theBookmark = [[self currentSession] addressBookEntry];
     }
+
+    // I don't think that'll ever fail, but to be safe try using the original bookmark.
+    if (!theBookmark) {
+        theBookmark = originalBookmark;
+    }
+
+    // I really don't think this'll ever happen, but there's always a default bookmark to fall back
+    // on.
     if (!theBookmark) {
         theBookmark = [[BookmarkModel sharedInstance] defaultBookmark];
     }
