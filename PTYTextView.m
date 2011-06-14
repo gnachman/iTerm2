@@ -1883,11 +1883,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     // Should we process the event immediately in the delegate?
     if ((!prev) &&
-        ([delegate hasActionableKeyMappingForEvent:event] ||
-         (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)) ||
-         ((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL) ||
-         ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL) ||
-         ((modflag & NSControlKeyMask) &&
+        ([delegate hasActionableKeyMappingForEvent:event] ||       // delegate will do something useful
+         (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)) ||  // is an arrow key, f key, etc.
+         ([[event charactersIgnoringModifiers] length] > 0 &&      // Will send Meta/Esc+ (length is 0 if it's a dedicated dead key)
+          (((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL) ||
+           ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL))) ||
+         ((modflag & NSControlKeyMask) &&                          // a few special cases
           (keyCode == 0x2c /* slash */ || keyCode == 0x2a /* backslash */)))) {
         [delegate keyDown:event];
         return;
