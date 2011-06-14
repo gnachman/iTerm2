@@ -247,4 +247,9 @@ static const int ambiguous_chars[] = {
                                                                 kCFStringEncodingUTF8) autorelease];
 }
 
+- (NSString*)stringWithLinefeedNewlines
+{
+    return [[self stringReplaceSubstringFrom:@"\r\n" to:@"\r"] stringReplaceSubstringFrom:@"\n" to:@"\r"];
+}
+
 @end

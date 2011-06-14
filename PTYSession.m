@@ -1422,6 +1422,57 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     return info;
 }
 
+
+- (void)_pasteStringImmediately:(NSString*)aString
+{
+    if ([aString length] > 0) {
+        [self writeTask:[aString
+                         dataUsingEncoding:[TERMINAL encoding]
+                         allowLossyConversion:YES]];
+
+    }
+}
+
+- (void)_pasteWithBytePerCallPrefKey:(NSString*)bytesPerCallKey
+                        defaultValue:(int)bytesPerCallDefault
+            delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
+                        defaultValue:(float)delayBetweenCallsDefault
+                            selector:(SEL)selector
+{
+    NSRange range;
+    range.location = 0;
+    NSNumber* pref = [[NSUserDefaults standardUserDefaults] valueForKey:bytesPerCallKey];
+    NSNumber* delay = [[NSUserDefaults standardUserDefaults] valueForKey:delayBetweenCallsKey];
+    const int kBatchSize = pref ? [pref intValue] : bytesPerCallDefault;
+    if ([slowPasteBuffer length] > kBatchSize) {
+        range.length = kBatchSize;
+    } else {
+        range.length = [slowPasteBuffer length];
+    }
+    [self _pasteStringImmediately:[slowPasteBuffer substringWithRange:range]];
+    [slowPasteBuffer deleteCharactersInRange:range];
+    if ([slowPasteBuffer length] > 0) {
+        slowPasteTimer = [NSTimer scheduledTimerWithTimeInterval:delay ? [delay floatValue] : delayBetweenCallsDefault
+                                                          target:self
+                                                        selector:selector
+                                                        userInfo:nil
+                                                         repeats:NO];
+    } else {
+        slowPasteTimer = nil;
+    }
+}
+
+// Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
+// Override the constnats by setting defaults SlowPasteBytesPerCall and SlowPasteDelayBetweenCalls
+- (void)pasteSlowly:(id)sender
+{
+    [self _pasteWithBytePerCallPrefKey:@"SlowPasteBytesPerCall"
+                          defaultValue:16
+              delayBetweenCallsPrefKey:@"SlowPasteDelayBetweenCalls"
+                          defaultValue:0.125
+                              selector:@selector(pasteSlowly:)];
+}
+
 - (void)paste:(id)sender
 {
     NSString* pbStr = [PTYSession pasteboardString];
@@ -1436,7 +1487,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             [str replaceOccurrencesOfString:@" " withString:@"\\ " options:NSLiteralSearch range:NSMakeRange(0, [str length])];
         }
         if ([sender tag] & 2) {
-            [slowPasteBuffer setString:str];
+            [slowPasteBuffer appendString:[str stringWithLinefeedNewlines]];
             [self pasteSlowly:nil];
         } else {
             [self pasteString:str];
@@ -1444,44 +1495,25 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     }
 }
 
-// Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
-// Override the constnats by setting defaults SlowPasteBytesPerCall and SlowPasteDelayBetweenCalls
-- (void)pasteSlowly:(id)sender
+- (void)_pasteStringMore
 {
-    NSRange range;
-    range.location = 0;
-    NSNumber* pref = [[NSUserDefaults standardUserDefaults] valueForKey:@"SlowPasteBytesPerCall"];
-    NSNumber* delay = [[NSUserDefaults standardUserDefaults] valueForKey:@"SlowPasteDelayBetweenCalls"];
-    const int kBatchSize = pref ? [pref intValue] : 16;
-    if ([slowPasteBuffer length] > kBatchSize) {
-        range.length = kBatchSize;
-    } else {
-        range.length = [slowPasteBuffer length];
-    }
-    [self pasteString:[slowPasteBuffer substringWithRange:range]];
-    [slowPasteBuffer deleteCharactersInRange:range];
-    if ([slowPasteBuffer length] > 0) {
-        slowPasteTimer = [NSTimer scheduledTimerWithTimeInterval:delay ? [delay floatValue] : 0.125
-                                                          target:self
-                                                        selector:@selector(pasteSlowly:)
-                                                        userInfo:nil
-                                                         repeats:NO];
-    } else {
-        slowPasteTimer = nil;
-    }
+    [self _pasteWithBytePerCallPrefKey:@"QuickPasteBytesPerCall"
+                          defaultValue:256
+              delayBetweenCallsPrefKey:@"QuickPasteDelayBetweenCalls"
+                          defaultValue:0.01
+                              selector:@selector(_pasteStringMore)];
 }
 
 - (void)pasteString:(NSString *)aString
 {
-
     if ([aString length] > 0) {
-        NSString *tempString = [aString stringReplaceSubstringFrom:@"\r\n" to:@"\r"];
-        [self writeTask:[[tempString stringReplaceSubstringFrom:@"\n" to:@"\r"] dataUsingEncoding:[TERMINAL encoding]
-                                                                             allowLossyConversion:YES]];
+        // This is the "normal" way of pasting. It's fast but tends not to outrun a shell's ability to
+        // read from its buffer. Why this crazy thing? See bug 1031.
+        [slowPasteBuffer appendString:[aString stringWithLinefeedNewlines]];
+        [self _pasteStringMore];
     } else {
         NSBeep();
     }
-
 }
 
 - (void)deleteBackward:(id)sender
