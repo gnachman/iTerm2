@@ -434,7 +434,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     if (!filename) {
         return;
     }
-    NSString* cmd = [NSString stringWithFormat:@"tic -e xterm-256color %@", filename];
+    NSString* cmd = [NSString stringWithFormat:@"tic -e xterm-256color %@", [filename stringWithEscapedShellCharacters]];
     if (system("infocmp xterm-256color")) {
         switch (NSRunAlertPanel(@"Warning",
                                 @"The terminfo file for the terminal type you're using, \"xterm-256color\", is not installed on your system. Would you like to install it now?",
