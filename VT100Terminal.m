@@ -684,7 +684,8 @@ static VT100TCC decode_xterm(unsigned char *datap,
     datalen -= 2;
     *rmlen=2;
 
-    if (datalen>0 && isdigit(*datap)) {
+    if (datalen > 0 && isdigit(*datap)) {
+        // read an integer from datap and store it in mode.
         int n = *datap++ - '0';
         datalen--;
         (*rmlen)++;
@@ -695,30 +696,38 @@ static VT100TCC decode_xterm(unsigned char *datap,
             datap++;
             datalen--;
         }
-        mode=n;
+        mode = n;
     }
-    if (datalen>0) {
+    if (datalen > 0) {
         if (*datap != ';' && *datap != 'P') {
             unrecognized=YES;
-        }
-        else {
+        } else {
             if (*datap == 'P') {
                 mode = -1;
             }
-            BOOL str_end=NO;;
+            BOOL str_end = NO;
             c=s;
             datalen--;
             datap++;
             (*rmlen)++;
-            while (*datap!=0x007&&datalen>0) {
-                if (*datap==0x1b && datalen>2 && *(datap+1)=='\\') {
+            // Search for the end of a ^G/ST terminated string (but see the note below about other ways to terminate it).
+            while (*datap != 7 && datalen > 0) {
+                // Technically, only ^G or esc + \ ought to terminate a string. But sometimes an application is buggy and it forgets to terminate it.
+                // xterm has a very complicated state machine that determines when a string is terminated. Effectively, it allows you to terminate
+                // an OSC with ESC + anything except ], 0x9d, and 0xdd. Other bogus values may do strange things in xterm.
+                if (*datap == 0x1b &&  // 0x1b == ESC
+                    datalen > 2 &&
+                    (*(datap+1) != ']' &&
+                     *(datap+1) != 0x9d &&
+                     *(datap+1) != 0xdd)) {
+                    // Esc+backslash (called ST in the spec), or equivalent
                     datap++;
                     datalen--;
                     (*rmlen)++;
                     str_end=YES;
                     break;
                 }
-                if (c-s<MAX_BUFFER_LENGTH) {
+                if (c - s < MAX_BUFFER_LENGTH) {
                     *c=*datap;
                     c++;
                 }
@@ -726,7 +735,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
                 datap++;
                 (*rmlen)++;
             }
-            if ((*datap!=0x007 && !str_end) || datalen==0) {
+            if ((*datap != 0x007 && !str_end) || datalen==0) {
                 if (datalen>0) unrecognized=YES;
                 else {
                     *rmlen=0;
