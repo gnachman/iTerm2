@@ -226,7 +226,8 @@ int gDebugLogFile = -1;
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app
 {
-    const double kMinRunningTime = 10;
+    NSNumber* pref = [[NSUserDefaults standardUserDefaults] objectForKey:@"MinRunningTime"];
+    const double kMinRunningTime =  pref ? [pref floatValue] : 10;
     if ([[NSDate date] timeIntervalSinceDate:launchTime_] < kMinRunningTime) {
         return NO;
     }
