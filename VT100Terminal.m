@@ -1823,10 +1823,6 @@ static VT100TCC decode_string(unsigned char *datap,
 - (NSData *)specialKey:(int)terminfo cursorMod:(char*)cursorMod cursorSet:(char*)cursorSet cursorReset:(char*)cursorReset modflag:(unsigned int)modflag
 {
     NSData* prefix = nil;
-    if (modflag & NSAlternateKeyMask) {
-        char esc = 27;
-        prefix = [NSData dataWithBytes:&esc length:1];
-    }
     NSData* theSuffix;
     if (key_strings[terminfo] && !allowKeypadMode) {
         theSuffix = [NSData dataWithBytes:key_strings[terminfo]
@@ -1834,14 +1830,21 @@ static VT100TCC decode_string(unsigned char *datap,
     } else {
         int mod=0;
         static char buf[20];
-
-        if ((modflag & NSControlKeyMask) && (modflag & NSShiftKeyMask)) {
-            mod = 6;
-        } else if (modflag & NSControlKeyMask) {
-            mod = 5;
-        } else if (modflag & NSShiftKeyMask) {
-            mod = 2;
+        static int modValues[] = {
+            0, 2, 5, 6, 9, 10, 13, 14
+        };
+        int theIndex = 0;
+        if (modflag & NSAlternateKeyMask) {
+            theIndex |= 4;
         }
+        if (modflag & NSControlKeyMask) {
+            theIndex |= 2;
+        }
+        if (modflag & NSShiftKeyMask) {
+            theIndex |= 1;
+        }
+        mod = modValues[theIndex];
+
         if (mod) {
             sprintf(buf, cursorMod, mod);
             theSuffix = [NSData dataWithBytes:buf length:strlen(buf)];

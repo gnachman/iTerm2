@@ -1096,25 +1096,18 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             // Handle all "special" keys (arrows, etc.)
             NSData *data = nil;
 
-            // Set the alternate key mask iff an esc-generating modifier is
-            // pressed.
-            unsigned int hackedModflag = modflag & (~NSAlternateKeyMask);
-            if ([self shouldSendEscPrefixForModifier:modflag]) {
-                hackedModflag |= NSAlternateKeyMask;
-            }
-
             switch (unicode) {
                 case NSUpArrowFunctionKey:
-                    data = [TERMINAL keyArrowUp:hackedModflag];
+                    data = [TERMINAL keyArrowUp:modflag];
                     break;
                 case NSDownArrowFunctionKey:
-                    data = [TERMINAL keyArrowDown:hackedModflag];
+                    data = [TERMINAL keyArrowDown:modflag];
                     break;
                 case NSLeftArrowFunctionKey:
-                    data = [TERMINAL keyArrowLeft:hackedModflag];
+                    data = [TERMINAL keyArrowLeft:modflag];
                     break;
                 case NSRightArrowFunctionKey:
-                    data = [TERMINAL keyArrowRight:hackedModflag];
+                    data = [TERMINAL keyArrowRight:modflag];
                     break;
                 case NSInsertFunctionKey:
                     data = [TERMINAL keyInsert];
@@ -1124,16 +1117,16 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                     data = [TERMINAL keyDelete];
                     break;
                 case NSHomeFunctionKey:
-                    data = [TERMINAL keyHome:hackedModflag];
+                    data = [TERMINAL keyHome:modflag];
                     break;
                 case NSEndFunctionKey:
-                    data = [TERMINAL keyEnd:hackedModflag];
+                    data = [TERMINAL keyEnd:modflag];
                     break;
                 case NSPageUpFunctionKey:
-                    data = [TERMINAL keyPageUp:hackedModflag];
+                    data = [TERMINAL keyPageUp:modflag];
                     break;
                 case NSPageDownFunctionKey:
-                    data = [TERMINAL keyPageDown:hackedModflag];
+                    data = [TERMINAL keyPageDown:modflag];
                     break;
                 case NSClearLineFunctionKey:
                     data = [@"\e" dataUsingEncoding:NSUTF8StringEncoding];
