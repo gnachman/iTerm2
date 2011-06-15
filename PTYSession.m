@@ -2133,6 +2133,211 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [[self SCROLLVIEW] setBackgroundColor: color];
 }
 
+#pragma mark -
+#pragma mark Ansi Colors
+
+/*
+ * All these are mainly added to support setting them using
+ * Applescript.
+ */
+- (NSColor *)ansiBlackColor
+{
+    return [TEXTVIEW defaultBGColor];
+}
+
+- (void)setAnsiBlackColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:0 color:color];
+}
+
+- (void)setAnsiRedColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:1 color:color];
+}
+
+- (NSColor *)ansiRedColor
+{
+    return [TEXTVIEW colorInColorTableWithIndex:1];
+}
+
+- (void)setAnsiGreenColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:2 color:color];
+}
+
+- (NSColor *)ansiGreenColor
+{
+    return [TEXTVIEW colorInColorTableWithIndex:2];
+}
+
+- (void)setAnsiYellowColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:3 color:color];
+}
+
+- (NSColor *)ansiYellowColor
+{
+    return [TEXTVIEW colorInColorTableWithIndex:3];
+}
+
+- (void)setAnsiBlueColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:4 color:color];
+}
+
+- (NSColor *)ansiBlueColor
+{
+    return [TEXTVIEW colorInColorTableWithIndex:4];
+}
+
+- (void)setAnsiMagentaColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:5 color:color];
+}
+
+- (NSColor *)ansiMagentaColor
+{
+    return [TEXTVIEW colorInColorTableWithIndex:5];
+}
+
+- (void)setAnsiCyanColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:6 color:color];
+}
+
+- (NSColor *)ansiCyanColor
+{
+    return [TEXTVIEW colorInColorTableWithIndex:6];
+}
+
+- (void)setAnsiWhiteColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:7 color:color];
+}
+
+- (NSColor *)ansiWhiteColor
+{
+    return [TEXTVIEW colorInColorTableWithIndex:7];
+}
+
+#pragma mark -
+#pragma mark Ansi Bright Colors
+
+- (NSColor *)ansiBrightBlackColor
+{
+    return [TEXTVIEW colorInColorTableWithIndex:8];
+}
+
+- (void)setAnsiBrightBlackColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:8 color:color];
+}
+
+- (void)setAnsiBrightRedColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:9 color:color];
+}
+
+- (NSColor *)ansiBrightRedColor
+{
+    return [TEXTVIEW colorInColorTableWithIndex:9];
+}
+
+- (void)setAnsiBrightGreenColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:10 color:color];
+}
+
+- (NSColor *)ansiBrightGreenColor
+{
+    return [TEXTVIEW colorInColorTableWithIndex:10];
+}
+
+- (void)setAnsiBrightYellowColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:11 color:color];
+}
+
+- (NSColor *)ansiBrightYellowColor
+{
+    return [TEXTVIEW colorInColorTableWithIndex:11];
+}
+
+- (void)setAnsiBrightBlueColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:12 color:color];
+}
+
+- (NSColor *)ansiBrightBlueColor
+{
+    return [TEXTVIEW colorInColorTableWithIndex:12];
+}
+
+- (void)setAnsiBrightMagentaColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:13 color:color];
+}
+
+- (NSColor *)ansiBrightMagentaColor
+{
+    return [TEXTVIEW colorInColorTableWithIndex:13];
+}
+
+- (void)setAnsiBrightCyanColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:14 color:color];
+}
+
+- (NSColor *)ansiBrightCyanColor
+{
+    return [TEXTVIEW colorInColorTableWithIndex:14];
+}
+
+- (void)setAnsiBrightWhiteColor:(NSColor*) color
+{
+    if (color == nil) return;
+    
+	[self setColorTable:15 color:color];
+}
+
+- (NSColor *)ansiBrightWhiteColor
+{
+    return [TEXTVIEW colorInColorTableWithIndex:15];
+}
+
+#pragma mark -
+#pragma mark Regular Colors
+
 - (NSColor *) boldColor
 {
     return [TEXTVIEW defaultBoldColor];
