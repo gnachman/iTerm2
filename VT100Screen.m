@@ -3549,18 +3549,8 @@ void DumpBuf(screen_char_t* p, int n) {
 // adds a line to scrollback area. Returns YES if oldest line is lost, NO otherwise
 - (int)_addLineToScrollbackImpl
 {
-    if (temp_buffer) {
-        // This is an experiment to not save to scrollback when we're in alternate
-        // screen mode. This was mentioned in a comment in bug 839 (though it's
-        // not really related).
-        if (SCROLL_BOTTOM == HEIGHT - 1 ||
-            ![[[SESSION addressBookEntry] objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue]) {
-            // If the whole screen is being scrolled (as in less) don't save to scrollback.
-            // If only the top of the screen is being scrolled back and scrollbackWithStatusBar is disabled then don't save to scrollback.
-            return 0;
-        }
-    }
-
+    // There was an experiment to try not saving lines to scrollback when in alternate screen mode.
+    // It failed because it broke screen (see bug 1034).
     int len = WIDTH;
     if (screen_top[WIDTH].code == EOL_HARD) {
         // The line is not continued. Figure out its length by finding the last nonnull char.
