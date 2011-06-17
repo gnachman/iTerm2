@@ -589,7 +589,7 @@ static NSImage* wrapToBottomImage = nil;
     return secondaryFont.font;
 }
 
-+ (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(float)hspace verticalSpacing:(float)vspace
++ (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(double)hspace verticalSpacing:(double)vspace
 {
     NSMutableDictionary *dic = [NSMutableDictionary dictionary];
 
@@ -601,20 +601,20 @@ static NSImage* wrapToBottomImage = nil;
     return size;
 }
 
-- (float)horizontalSpacing
+- (double)horizontalSpacing
 {
     return horizontalSpacing_;
 }
 
-- (float)verticalSpacing
+- (double)verticalSpacing
 {
     return verticalSpacing_;
 }
 
 - (void)setFont:(NSFont*)aFont
          nafont:(NSFont *)naFont
-    horizontalSpacing:(float)horizontalSpacing
-    verticalSpacing:(float)verticalSpacing
+    horizontalSpacing:(double)horizontalSpacing
+    verticalSpacing:(double)verticalSpacing
 {
     NSSize sz = [PTYTextView charSizeForFont:aFont
                            horizontalSpacing:1.0
@@ -688,22 +688,22 @@ static NSImage* wrapToBottomImage = nil;
     _delegate = aDelegate;
 }
 
-- (float)lineHeight
+- (double)lineHeight
 {
     return ceil(lineHeight);
 }
 
-- (void)setLineHeight:(float)aLineHeight
+- (void)setLineHeight:(double)aLineHeight
 {
     lineHeight = aLineHeight;
 }
 
-- (float)charWidth
+- (double)charWidth
 {
     return ceil(charWidth);
 }
 
-- (void)setCharWidth:(float)width
+- (void)setCharWidth:(double)width
 {
     charWidth = width;
 }
@@ -729,12 +729,12 @@ NSMutableArray* screens=0;
     return r;
 }
 
-- (float)excess
+- (double)excess
 {
     NSRect visible = [self scrollViewContentSize];
     visible.size.height -= VMARGIN * 2;  // Height without top and bottom margins.
     int rows = visible.size.height / lineHeight;
-    float usablePixels = rows * lineHeight;
+    double usablePixels = rows * lineHeight;
     return MAX(visible.size.height - usablePixels + VMARGIN, VMARGIN);  // Never have less than VMARGIN excess, but it can be more (if another tab has a bigger font)
 }
 
@@ -1225,7 +1225,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int height = [dataSource numberOfLines] * lineHeight;
     NSRect frame = [self frame];
 
-    float excess = [self excess];
+    double excess = [self excess];
 
     if ((int)(height + excess + imeOffset * lineHeight) != frame.size.height) {
         // The old iTerm code had a comment about a hack at this location
@@ -1252,7 +1252,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         // Some number of lines were lost from the head of the buffer.
 
         NSScrollView* scrollView = [self enclosingScrollView];
-        float amount = [scrollView verticalLineScroll] * scrollbackOverflow;
+        double amount = [scrollView verticalLineScroll] * scrollbackOverflow;
         BOOL userScroll = [(PTYScroller*)([scrollView verticalScroller]) userScroll];
 
         // Keep correct selection highlighted
@@ -1485,7 +1485,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
           rect.origin.x, rect.origin.y, rect.size.width, rect.size.height,
           [self frame].origin.x, [self frame].origin.y, [self frame].size.width, [self frame].size.height]);
 
-    float curLineWidth = [dataSource width] * charWidth;
+    double curLineWidth = [dataSource width] * charWidth;
     if (lineHeight <= 0 || curLineWidth <= 0) {
         DebugLog(@"height or width too small");
         return;
@@ -1510,7 +1510,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     int lh = lineHeight;
     int visibleRows = vh / lh;
     NSRect docVisibleRect = [[[dataSource session] SCROLLVIEW] documentVisibleRect];
-    float hiddenAbove = docVisibleRect.origin.y + [self frame].origin.y;
+    double hiddenAbove = docVisibleRect.origin.y + [self frame].origin.y;
     int firstVisibleRow = hiddenAbove / lh;
     if (lineEnd > firstVisibleRow + visibleRows) {
         lineEnd = firstVisibleRow + visibleRows;
@@ -1529,8 +1529,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 #ifdef DEBUG_DRAWING
     NSMutableString* lineDebug = [NSMutableString stringWithFormat:@"drawRect:%d,%d %dx%d drawing these lines with scrollback overflow of %d, iteration=%d:\n", (int)rect.origin.x, (int)rect.origin.y, (int)rect.size.width, (int)rect.size.height, (int)[dataSource scrollbackOverflow], iteration];
 #endif
-    float y = lineStart * lineHeight;
-    const float initialY = y;
+    double y = lineStart * lineHeight;
+    const double initialY = y;
     BOOL anyBlinking = NO;
     for (int line = lineStart; line < lineEnd; line++) {
         NSRect lineRect = [self visibleRect];
@@ -1611,9 +1611,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     // Draws the excess bar in a different color each time
     static int i;
     i++;
-    float rc = ((float)((i + 0) % 100)) / 100;
-    float gc = ((float)((i + 33) % 100)) / 100;
-    float bc = ((float)((i + 66) % 100)) / 100;
+    double rc = ((double)((i + 0) % 100)) / 100;
+    double gc = ((double)((i + 33) % 100)) / 100;
+    double bc = ((double)((i + 66) % 100)) / 100;
     [[NSColor colorWithCalibratedRed:rc green:gc blue:bc alpha:1] set];
     NSRectFill(excessRect);
 #else
@@ -1638,11 +1638,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 #ifdef DEBUG_DRAWING
     // Draws a different-colored rectangle around each drawn area. Useful for
     // seeing which groups of lines were drawn in a batch.
-    static float it;
+    static double it;
     it += 3.14/4;
-    float red = sin(it);
-    float green = sin(it + 1*2*3.14/3);
-    float blue = sin(it + 2*2*3.14/3);
+    double red = sin(it);
+    double green = sin(it + 1*2*3.14/3);
+    double blue = sin(it + 2*2*3.14/3);
     NSColor* c = [NSColor colorWithCalibratedRed:red green:green blue:blue alpha:1];
     [c set];
     NSRect r = rect;
@@ -2620,7 +2620,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int width = [dataSource width];
     NSString *theSelectedText;
 
-    float logicalX = locationInTextView.x - MARGIN - charWidth/2;
+    double logicalX = locationInTextView.x - MARGIN - charWidth/2;
     if (logicalX >= 0) {
         x = logicalX / charWidth;
     } else {
@@ -3836,12 +3836,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 // transparency
-- (float)transparency
+- (double)transparency
 {
     return (transparency);
 }
 
-- (void)setTransparency:(float)fVal
+- (void)setTransparency:(double)fVal
 {
     transparency = fVal;
     [self setNeedsDisplay:YES];
@@ -3852,12 +3852,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     colorInvertedCursor = value;
 }
 
-- (void)setMinimumContrast:(float)value
+- (void)setMinimumContrast:(double)value
 {
     minimumContrast_ = value;
 }
 
-- (void)setDimmingAmount:(float)value
+- (void)setDimmingAmount:(double)value
 {
     dimmingAmount_ = value;
     [[self superview] setNeedsDisplay:YES];
@@ -3952,7 +3952,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
     BOOL hasBGImage = [scrollView backgroundImage] != nil;
-    float alpha = 1.0 - transparency;
+    double alpha = 1.0 - transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                                      toPoint:dest
@@ -3975,7 +3975,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
     BOOL hasBGImage = [scrollView backgroundImage] != nil;
-    float alpha = 1.0 - transparency;
+    double alpha = 1.0 - transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                                      toPoint:dest
@@ -3996,7 +3996,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
     BOOL hasBGImage = [scrollView backgroundImage] != nil;
-    float alpha = 1.0 - transparency;
+    double alpha = 1.0 - transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                              useTransparency:[self useTransparency]];
@@ -4385,7 +4385,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return PerceivedBrightness([c redComponent], [c greenComponent], [c blueComponent]);
 }
 
-- (NSColor*)colorWithRed:(float)r green:(float)g blue:(float)b alpha:(float)a withPerceivedBrightness:(CGFloat)t
+- (NSColor*)colorWithRed:(double)r green:(double)g blue:(double)b alpha:(double)a withPerceivedBrightness:(CGFloat)t
 {
     /*
      Given:
@@ -4451,13 +4451,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (NSColor*)color:(NSColor*)mainColor withContrastAgainst:(NSColor*)otherColor
 {
-    float r = [mainColor redComponent];
-    float g = [mainColor greenComponent];
-    float b = [mainColor blueComponent];
-    float mainBrightness = PerceivedBrightness(r, g, b);
-    float otherBrightness = PerceivedBrightness([otherColor redComponent],
-                                                [otherColor greenComponent],
-                                                [otherColor blueComponent]);
+    double r = [mainColor redComponent];
+    double g = [mainColor greenComponent];
+    double b = [mainColor blueComponent];
+    double mainBrightness = PerceivedBrightness(r, g, b);
+    double otherBrightness = PerceivedBrightness([otherColor redComponent],
+                                                 [otherColor greenComponent],
+                                                 [otherColor blueComponent]);
     CGFloat brightnessDiff = fabs(mainBrightness - otherBrightness);
     if (brightnessDiff < minimumContrast_) {
         CGFloat error = fabs(brightnessDiff - minimumContrast_);
@@ -4465,9 +4465,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         if (mainBrightness < otherBrightness) {
             targetBrightness -= error;
             if (targetBrightness < 0) {
-                const float alternative = otherBrightness + minimumContrast_;
-                const float baseContrast = otherBrightness;
-                const float altContrast = MIN(alternative, 1) - otherBrightness;
+                const double alternative = otherBrightness + minimumContrast_;
+                const double baseContrast = otherBrightness;
+                const double altContrast = MIN(alternative, 1) - otherBrightness;
                 if (altContrast > baseContrast) {
                     targetBrightness = alternative;
                 }
@@ -4475,9 +4475,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         } else {
             targetBrightness += error;
             if (targetBrightness > 1) {
-                const float alternative = otherBrightness - minimumContrast_;
-                const float baseContrast = 1 - otherBrightness;
-                const float altContrast = otherBrightness - MAX(alternative, 0);
+                const double alternative = otherBrightness - minimumContrast_;
+                const double baseContrast = 1 - otherBrightness;
+                const double altContrast = otherBrightness - MAX(alternative, 0);
                 if (altContrast > baseContrast) {
                     targetBrightness = alternative;
                 }
@@ -4813,7 +4813,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [currentRun->color getComponents:components];
     CGContextSetFillColor(ctx, components);
 
-    float y = initialPoint.y + lineHeight + currentRun->fontInfo->baselineOffset;
+    double y = initialPoint.y + lineHeight + currentRun->fontInfo->baselineOffset;
     int x = currentRun->x;
     // Flip vertically and translate to (x, y).
     CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
@@ -4893,7 +4893,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [self _drawRuns:initialPoint runs:runs numRuns:numRuns];
 }
 
-- (BOOL)_drawLine:(int)line AtY:(float)curY toPoint:(NSPoint*)toPoint
+- (BOOL)_drawLine:(int)line AtY:(double)curY toPoint:(NSPoint*)toPoint
 {
     BOOL anyBlinking = NO;
     int screenstartline = [self frame].origin.y / lineHeight;
@@ -4903,8 +4903,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     screen_char_t* theLine = [dataSource getLineAtIndex:line];
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
     BOOL hasBGImage = [scrollView backgroundImage] != nil;
-    float selectedAlpha = 1.0 - transparency;
-    float alphaIfTransparencyInUse = [self useTransparency] ? 1.0 - transparency : 1.0;
+    double selectedAlpha = 1.0 - transparency;
+    double alphaIfTransparencyInUse = [self useTransparency] ? 1.0 - transparency : 1.0;
     BOOL reversed = [[dataSource terminal] screenMode];
     NSColor *aColor = nil;
 
@@ -5122,8 +5122,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                fgColor:(int)fgColor
     alternateSemantics:(BOOL)fgAlt
                 fgBold:(BOOL)fgBold
-                   AtX:(float)X
-                     Y:(float)Y
+                   AtX:(double)X
+                     Y:(double)Y
            doubleWidth:(BOOL)double_width
          overrideColor:(NSColor*)overrideColor
 {
@@ -5218,7 +5218,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                   y:(int)yStart
                               width:(int)width
                              height:(int)height
-                       cursorHeight:(float)cursorHeight
+                       cursorHeight:(double)cursorHeight
 {
     // draw any text for NSTextInput
     if ([self hasMarkedText]) {
@@ -5333,8 +5333,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 cursorY = y;
             }
         }
-        const float kCursorWidth = 2.0;
-        float rightMargin = MARGIN + [dataSource width] * charWidth;
+        const double kCursorWidth = 2.0;
+        double rightMargin = MARGIN + [dataSource width] * charWidth;
         if (cursorX + kCursorWidth >= rightMargin) {
             // Make sure the cursor doesn't draw in the margin. Shove it left
             // a little bit so it fits.
@@ -5352,9 +5352,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return FALSE;
 }
 
-- (float)cursorHeight
+- (double)cursorHeight
 {
-    float cursorHeight;
+    double cursorHeight;
     if (lineHeight < charHeightWithoutSpacing) {
         cursorHeight = lineHeight;
     } else {
@@ -5379,7 +5379,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     }
 }
 
-- (float)_brightnessOfCharBackground:(screen_char_t)c
+- (double)_brightnessOfCharBackground:(screen_char_t)c
 {
     return [self _perceivedBrightness:[[self _charBackground:c] colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
 }
@@ -5437,10 +5437,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     int WIDTH, HEIGHT;
     screen_char_t* theLine;
     int yStart, x1;
-    float cursorWidth, cursorHeight;
-    float curX, curY;
+    double cursorWidth, cursorHeight;
+    double curX, curY;
     BOOL double_width;
-    float alpha = [self useTransparency] ? 1.0 - transparency : 1.0;
+    double alpha = [self useTransparency] ? 1.0 - transparency : 1.0;
     const BOOL reversed = [[dataSource terminal] screenMode];
 
     WIDTH = [dataSource width];
@@ -5684,17 +5684,17 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     NSRect visible = [self visibleRect];
     int visibleLines = (visible.size.height - VMARGIN*2) / lineHeight;
     int lineMargin = (visibleLines - 1) / 2;
-    float margin = lineMargin * lineHeight;
+    double margin = lineMargin * lineHeight;
 
     NSRect aFrame;
     aFrame.origin.x = 0;
     aFrame.origin.y = MAX(0, line * lineHeight - margin);
     aFrame.size.width = [self frame].size.width;
     aFrame.size.height = margin * 2 + lineHeight;
-    float end = aFrame.origin.y + aFrame.size.height;
+    double end = aFrame.origin.y + aFrame.size.height;
     NSRect total = [self frame];
     if (end > total.size.height) {
-        float err = end - total.size.height;
+        double err = end - total.size.height;
         aFrame.size.height -= err;
     }
     [self scrollRectToVisible:aFrame];
