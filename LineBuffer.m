@@ -764,8 +764,7 @@ static int Search(NSString* needle,
             return i;
         }
     }
-    assert(false);
-    return cll_entries - 1;
+    return -1;
 }
 
 - (void) findSubstring: (NSString*) substring
@@ -781,11 +780,11 @@ static int Search(NSString* needle,
     int limit;
     int dir;
     if (options & FindOptBackwards) {
-        if (offset < start_offset) {
-            // Starting point is before legal beginning.
+        entry = [self _findEntryBeforeOffset: offset];
+        if (entry == -1) {
+            // Maybe there were no lines or offset was <= start_offset.
             return;
         }
-        entry = [self _findEntryBeforeOffset: offset];
         limit = first_entry - 1;
         dir = -1;
     } else {
