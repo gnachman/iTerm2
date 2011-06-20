@@ -1,4 +1,38 @@
-These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2. Beta 1 is known to be quite reliable, though.
+These release notes are for the development builds of iTerm2. Beta versions are very stable as we near release.
+
+Beta 3
+Even more bug-free!
+
+Enhancements:
+- Add a hidden setting "GrowlOnForegroundTabs" to enable growl for foreground tabs as an accessibility improvement.
+- Add a hidden setting "MinRunningTime" that controls the safety valve on "Quit when all windows are closed" (for accessibility).
+
+Bug fixes:
+- Fix bug where tab bar disappears.
+- Preserve profile order in menus.
+- Don't change a session's size when a tab is dragged out of its window.
+- Allow key shortcuts that send text or move the cursor to work when focus is in the search field.
+- Fix bug where toolbar won't stay in text mode.
+- Speed up editing of a profile when there are many of them.
+- Fix bug where a fullscreen window won't open on screens besides the main screen.
+- Fix bug where screen and tmux don't log to scrollback buffer (when save lines to scrollback when an app status bar is present is on).
+- Fix crash in mouseUp:.
+- Respect clicks in tabs where the close button would be when it's hidden.
+- Fix a case where you get repeatedly asked about outdated profiles.
+- Improve accessibility for VoiceOver users.
+- Fix redraw bug when there's a status line.
+- Fix crash when pasting a huge amount of content.
+- Paste a little slower to avoid hitting a readline bug.
+- Fix bug where "dead keys" didn't work.
+- When splitting panes, use the most current version of the originating profile of the original pane.
+- Fix bug where install of xterm-256color terminfo when iTerm2 is installed in a path with a space would fail.
+- Fix how function keys with modifiers were transmitted.
+- Fix problem where iTerm2 would hang when OSC was sent without a terminating ^G.
+- Save lines to scrollback buffer when in alternate screen mode (to make tmux work).
+- Fix bug where very, very large scrollback buffers would cause crazy drawing problems.
+- Don't sort profiles in tag submenus; instead, respect their order in prefs.
+- Fix assertion crash in _findEntryBeforeOffset.
+
 
 Beta 2
 Amazingly bug-free!
