@@ -369,6 +369,42 @@ static const float kBackgroundSessionIntervalSec = 1;
 - (void)logStop;
 - (NSString *)backgroundImagePath;
 - (void)setBackgroundImagePath: (NSString *)imageFilePath;
+
+// Ansi Colors
+- (NSColor *)ansiBlackColor;
+- (void)setAnsiBlackColor:(NSColor*)color;
+- (NSColor *)ansiRedColor;
+- (void)setAnsiRedColor:(NSColor*)color;
+- (void)setAnsiGreenColor:(NSColor*)color;
+- (NSColor *)ansiGreenColor;
+- (void)setAnsiYellowColor:(NSColor*)color;
+- (NSColor *)ansiYellowColor;
+- (void)setAnsiBlueColor:(NSColor*)color;
+- (NSColor *)ansiBlueColor;
+- (void)setAnsiMagentaColor:(NSColor*)color;
+- (NSColor *)ansiMagentaColor;
+- (void)setAnsiCyanColor:(NSColor*)color;
+- (NSColor *)ansiCyanColor;
+- (NSColor *)ansiWhiteColor;
+- (void)setAnsiWhiteColor:(NSColor*)color;
+- (NSColor *)ansiBrightBlackColor;
+- (void)setAnsiBrightBlackColor:(NSColor*)color;
+- (NSColor *)ansiBrightRedColor;
+- (void)setAnsiBrightRedColor:(NSColor*)color;
+- (void)setAnsiBrightGreenColor:(NSColor*)color;
+- (NSColor *)ansiBrightGreenColor;
+- (void)setAnsiBrightYellowColor:(NSColor*)color;
+- (NSColor *)ansiBrightYellowColor;
+- (void)setAnsiBrightBlueColor:(NSColor*)color;
+- (NSColor *)ansiBrightBlueColor;
+- (void)setAnsiBrightMagentaColor:(NSColor*)color;
+- (NSColor *)ansiBrightMagentaColor;
+- (void)setAnsiBrightCyanColor:(NSColor*)color;
+- (NSColor *)ansiBrightCyanColor;
+- (NSColor *)ansiBrightWhiteColor;
+- (void)setAnsiBrightWhiteColor:(NSColor*)color;
+
+
 - (NSColor *)foregroundColor;
 - (void)setForegroundColor:(NSColor*)color;
 - (NSColor *)backgroundColor;

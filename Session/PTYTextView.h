@@ -319,6 +319,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)setBGColor:(NSColor*)color;
 - (void)setBoldColor:(NSColor*)color;
 - (void)setColorTable:(int) theIndex color:(NSColor *) c;
+- (NSColor *)colorInColorTableWithIndex:(int) theIndex;
 - (void)setSelectionColor:(NSColor *)aColor;
 - (void)setCursorColor:(NSColor*)color;
 - (void)setSelectedTextColor:(NSColor *)aColor;
