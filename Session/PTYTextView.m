@@ -497,9 +497,11 @@ static NSImage* wrapToBottomImage = nil;
     [self setNeedsDisplay:YES];
 }
 
-- (NSColor *)colorInColorTableWithIndex:(int) theIndex
+- (NSColor *)colorInColorTableWithIndex:(int)theIndex
 {
-	if(theIndex > 255) return nil;
+	if (theIndex > 255) {
+		return nil;
+	}
 	return colorTable[theIndex];
 }
 
