@@ -6530,6 +6530,9 @@ static bool IsUrlChar(NSString* str)
 
 - (void)invalidateInputMethodEditorRect
 {
+    if ([dataSource width] == 0) {
+        return;
+    }
     int imeLines = ([dataSource cursorX] - 1 + [self inputMethodEditorLength] + 1) / [dataSource width] + 1;
 
     NSRect imeRect = NSMakeRect(MARGIN,
