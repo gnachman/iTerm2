@@ -58,6 +58,7 @@ typedef enum {
 
     // Maps a frame key number to DVRIndexEntry*.
     NSMutableDictionary* index_;
+    id sanityCheck;  // TODO(georgen): remove this after the source of corruption of index_ is found
 
     // First key in index.
     long long firstKey_;
