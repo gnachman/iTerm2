@@ -3503,6 +3503,9 @@ NSString *sessionsKey = @"sessions";
 // Set the session to a size that fits on the screen.
 - (void)safelySetSessionSize:(PTYSession*)aSession rows:(int)rows columns:(int)columns
 {
+    if ([aSession exited]) {
+        return;
+    }
     PtyLog(@"safelySetSessionSize");
     BOOL hasScrollbar = !_fullScreen && ![[PreferencePanel sharedInstance] hideScrollbar];
     if (windowType_ == WINDOW_TYPE_NORMAL) {

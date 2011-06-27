@@ -838,6 +838,8 @@ static char* FormatCont(int c)
     if (WIDTH == 0 || HEIGHT == 0 || (new_width==WIDTH && new_height==HEIGHT)) {
         return;
     }
+    new_width = MAX(new_width, 1);
+    new_height = MAX(new_height, 1);
 
     // create a new buffer and fill it with the default line.
     new_buffer_lines = (screen_char_t*)calloc(new_height * (new_width+1),
