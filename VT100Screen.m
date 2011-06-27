@@ -575,13 +575,13 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     if (x == WIDTH) {
         x = WIDTH-1;
     }
-    assert(x >= 0);
-    assert(x < WIDTH);
-    assert(y >= 0);
-    assert(y < HEIGHT);
-
-    int i = x + y * WIDTH;
-    [self setDirtyAtOffset:i value:v];
+    if (x >= 0 &&
+        x < WIDTH &&
+        y >= 0 &&
+        y < HEIGHT) {
+        int i = x + y * WIDTH;
+        [self setDirtyAtOffset:i value:v];
+    }
 }
 
 - (void)setCharAtCursorDirty:(int)value
@@ -2374,6 +2374,7 @@ void DumpBuf(screen_char_t* p, int n) {
     [self setCursorX:cx Y:cy];
     SCROLL_TOP = st;
     SCROLL_BOTTOM = sb;
+    assert(SCROLL_BOTTOM < HEIGHT);
 }
 
 - (void)eraseInDisplay:(VT100TCC)token
@@ -2548,7 +2549,7 @@ void DumpBuf(screen_char_t* p, int n) {
     if (cursorY <= SCROLL_BOTTOM) {
         [self setCursorX:cursorX Y:y > SCROLL_BOTTOM ? SCROLL_BOTTOM : y];
     } else {
-        [self setCursorX:cursorX Y:y];
+        [self setCursorX:cursorX Y:MAX(0, MIN(HEIGHT-1, y))];
     }
 
     if (cursorX < WIDTH) {
@@ -2684,6 +2685,7 @@ void DumpBuf(screen_char_t* p, int n) {
     {
         SCROLL_TOP = top;
         SCROLL_BOTTOM = bottom;
+        assert(SCROLL_BOTTOM < HEIGHT);
 
         if ([TERMINAL originMode]) {
             [self setCursorX:0 Y:SCROLL_TOP];
