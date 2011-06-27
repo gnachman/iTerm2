@@ -64,10 +64,14 @@
 {
     [session release];
     if (hasPendingClose) {
-        [aTerm closeSession:session];
+        // TODO(georgen): We don't honor pending closes. It's not safe to close right now because
+        // this may release aTerm, but aTerm may exist in the calling stack (in many places!).
+        // It might work to start a timer to close it, but that would have some serious unexpected
+        // side effects.
+        // [aTerm closeSession:session];
         return;
     }
-    
+
     if (hasPendingBlurChange) {
         if (pendingBlur) {
             [aTerm enableBlur];
