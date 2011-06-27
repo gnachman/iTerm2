@@ -29,7 +29,7 @@ int main(int argc, char*argv[]) {
     n = atoi(argv[1]);
   }
   cm = argc==3;
-  for (int i = 0; i < n; ++i) {
+  for (int i = 0; n < 0 || i < n; ++i) {
     char buffer[100];
     setline(buffer, sizeof(buffer)-1);
     printf("%s\n", buffer);

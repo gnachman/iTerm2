@@ -1009,8 +1009,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     } else if ([attribute isEqualToString:NSAccessibilityRangeForLineParameterizedAttribute]) {
         //(NSValue *)  - (rangeValue) range of line; param:(NSNumber *)
         NSUInteger lineNumber = [(NSNumber*)parameter unsignedLongValue];
-        assert(lineNumber < [lineBreakIndexOffsets_ count]);
-        return [NSValue valueWithRange:[self _rangeOfLine:lineNumber]];
+        if (lineNumber >= [lineBreakIndexOffsets_ count]) {
+            return [NSValue valueWithRange:NSMakeRange(NSNotFound, 0)];
+        } else {
+            return [NSValue valueWithRange:[self _rangeOfLine:lineNumber]];
+        }
     } else if ([attribute isEqualToString:NSAccessibilityStringForRangeParameterizedAttribute]) {
         //(NSString *) - substring; param:(NSValue * - rangeValue)
         NSRange range = [(NSValue*)parameter rangeValue];
