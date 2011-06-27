@@ -375,7 +375,7 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     } else {
         start = cumulative_line_lengths[linenum - 1];
     }
-    return buffer_start + start;
+    return raw_buffer + start;
 }
 
 - (void) changeBufferSize: (int) capacity
@@ -830,7 +830,7 @@ static int Search(NSString* needle,
             // Get the number of full-width lines in the raw line. If there were
             // only single-width characters the formula would be:
             //     spans = (line_length - 1) / width;
-            int spans = NumberOfFullLines(buffer_start + prev, line_length, width);
+            int spans = NumberOfFullLines(raw_buffer + prev, line_length, width);
             *y += spans + 1;
         } else {
             // The position we're searching for is in this (unwrapped) line.
@@ -847,13 +847,13 @@ static int Search(NSString* needle,
                     ++dwc_peek;
                 }
             }
-            int consume = NumberOfFullLines(buffer_start + prev,
+            int consume = NumberOfFullLines(raw_buffer + prev,
                                             MIN(line_length, bytes_to_consume_in_this_line + 1 + dwc_peek),
                                             width);
             *y += consume;
             if (consume > 0) {
                 // Offset from prev where the consume'th line begin.
-                int offset = OffsetOfWrappedLine(buffer_start + prev,
+                int offset = OffsetOfWrappedLine(raw_buffer + prev,
                                                  consume,
                                                  line_length,
                                                  width);
@@ -871,30 +871,6 @@ static int Search(NSString* needle,
     }
     NSLog(@"Didn't find position %d", position);
     return NO;
-}
-
-// If you were to do an append, this is the x position of where your append
-// would begin.
-- (int) getTrailingWithWidth:(int)width
-{
-    int numLines = [self numRawLines];
-    if (!is_partial || numLines == 0) {
-        return 0;
-    } else {
-        int start;
-        if (cll_entries == 1) {
-            start = 0;
-        } else {
-            start = cumulative_line_lengths[cll_entries - 2];
-        }
-        int length = cumulative_line_lengths[cll_entries - 1] - start;
-        int spans = NumberOfFullLines(buffer_start + start, length, width);
-        int offset = OffsetOfWrappedLine(buffer_start + start,
-                                         spans,
-                                         length,
-                                         width);
-        return offset;
-    }
 }
 
 @end

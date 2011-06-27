@@ -142,9 +142,6 @@ typedef struct FindContext {
 // Append a value to cumulativeLineLengths.
 - (void) _appendCumulativeLineLength: (int) cumulativeLength;
 
-// Get length of last wrapped line if partial, or 0 if not partial.
-- (int) getTrailingWithWidth:(int)width;
-
 // Return a raw line
 - (screen_char_t*) rawLine: (int) linenum;
 
