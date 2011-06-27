@@ -2274,7 +2274,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     dragOk_ = YES;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-    if (!cmdPressed && [[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
+    if (!cmdPressed &&
+        frontTextView &&
+        [[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
         // Mouse clicks in inactive tab are always handled by superclass because we don't want clicks
         // to select a split pane to be xterm-mouse-reported. We do allow cmd-clicks to go through
         // incase you're clicking on a URL.
