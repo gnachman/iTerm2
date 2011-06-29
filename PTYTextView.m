@@ -4051,19 +4051,28 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int x2;
     int y2;
     int width = [dataSource width];
-    
+
+    if (x < 0) {
+        x = 0;
+    }
+    if (x >= width) {
+        x = width - 1;
+    }
+
     // Search backward from (x, y) to find the beginning of the word.
     tmpX = x;
     tmpY = y;
     // If the char at (x,y) is not whitespace, then go into a mode where
     // word characters are selected as blocks; else go into a mode where
     // whitespace is selected as a block.
-    screen_char_t sct = [dataSource getLineAtIndex:tmpY][tmpX];
+    screen_char_t* initialLine = [dataSource getLineAtIndex:tmpY];
+    assert(initialLine);
+    screen_char_t sct = initialLine[tmpX];
     BOOL selectWordChars = [self classifyChar:sct.code isComplex:sct.complexChar] != CHARTYPE_WHITESPACE;
-    
+
     while (tmpX >= 0) {
         screen_char_t* theLine = [dataSource getLineAtIndex:tmpY];
-        
+
         if ([self shouldSelectCharForWord:theLine[tmpX].code isComplex:theLine[tmpX].complexChar selectWordChars:selectWordChars]) {
             tmpX--;
             if (tmpX < 0 && tmpY > 0) {
@@ -4157,12 +4166,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (endy) {
         *endy = tmpY;
     }
-    
+
     // Grab the contents to return.
     x2 = tmpX+1;
     y2 = tmpY;
-    
-    return ([self contentFromX:x1 Y:yStart ToX:x2 Y:y2 pad: YES]);
+
+    return [self contentFromX:x1 Y:yStart ToX:x2 Y:y2 pad: YES];
 }
 
 @end
