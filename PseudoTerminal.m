@@ -704,6 +704,8 @@ NSString *sessionsKey = @"sessions";
     [commandField release];
     [bottomBar release];
     [_toolbarController release];
+    [autocompleteView shutdown];
+    [pbHistoryView shutdown];
     [pbHistoryView release];
     [autocompleteView release];
 

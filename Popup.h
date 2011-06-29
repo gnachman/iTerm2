@@ -11,6 +11,7 @@
 
 @interface PopupWindow : NSWindow {
     NSWindow* parentWindow_;
+    BOOL shutdown_;
 }
 - (id)initWithContentRect:(NSRect)contentRect
                 styleMask:(NSUInteger)aStyle
@@ -19,6 +20,7 @@
 - (void)setParentWindow:(NSWindow*)parentWindow;
 - (BOOL)canBecomeKeyWindow;
 - (void)keyDown:(NSEvent *)event;
+- (void)shutdown;
 
 @end
 
@@ -109,6 +111,10 @@
 
 // Called by clients to open window.
 - (void)popInSession:(PTYSession*)session;
+
+// Safely shut down the popup when the parent is about to be dealloced. Clients must call this from
+// dealloc. It removes possible pending timers.
+- (void)shutdown;
 
 // Subclasses may override these methods.
 // Begin populating the unfiltered model.
