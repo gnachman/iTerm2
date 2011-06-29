@@ -226,3 +226,6 @@ NSString* ScreenCharArrayToString(screen_char_t* screenChars,
 
 // Number of chars before a sequence of nuls at the end of the line.
 int EffectiveLineLength(screen_char_t* theLine, int totalLength);
+
+NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,
+                                       int lineLength);

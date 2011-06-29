@@ -326,6 +326,18 @@ NSString* ScreenCharArrayToString(screen_char_t* screenChars,
                                      freeWhenDone:NO] autorelease];
 }
 
+NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,
+                                       int lineLength) {
+  NSMutableString* result = [NSMutableString stringWithCapacity:lineLength];
+  for (int i = 0; i < lineLength; ++i) {
+    unichar c = screenChars[i].code;
+    if (c != DWC_RIGHT) {
+      [result appendString:ScreenCharToStr(&screenChars[i])];
+    }
+  }
+  return result;
+}
+
 int EffectiveLineLength(screen_char_t* theLine, int totalLength) {
     for (int i = totalLength-1; i >= 0; i--) {
         if (theLine[i].complexChar || theLine[i].code) {

@@ -118,7 +118,13 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     if (length > free_space) {
         return NO;
     }
-    if (is_partial) {
+    // There's a bit of an edge case here: if you're appending an empty
+    // non-partial line to a partial line, we need it to append a blank line
+    // after the continued line. In practice this happens because a line is
+    // long but then the wrapped portion is erased and the EOL_SOFT flag stays
+    // behind. It would be really complex to ensure consistency of line-wrapping
+    // flags because the screen contents are changed in so many places.
+    if (is_partial && !(!partial && length == 0)) {
         // append to an existing line
         NSAssert(cll_entries > 0, @"is_partial but has no entries");
         cumulative_line_lengths[cll_entries - 1] += length;
