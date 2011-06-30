@@ -2102,16 +2102,16 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setAnsiBlackColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:0 color:color];
+    if (color) {
+        [self setColorTable:0 color:color];
+    }
 }
 
 - (void)setAnsiRedColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:1 color:color];
+    if (color) {
+        [self setColorTable:1 color:color];
+    }
 }
 
 - (NSColor *)ansiRedColor
@@ -2121,9 +2121,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setAnsiGreenColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:2 color:color];
+    if (color) {
+        [self setColorTable:2 color:color];
+    }
 }
 
 - (NSColor *)ansiGreenColor
@@ -2133,9 +2133,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setAnsiYellowColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:3 color:color];
+    if (color) {
+        [self setColorTable:3 color:color];
+    }
 }
 
 - (NSColor *)ansiYellowColor
@@ -2145,9 +2145,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setAnsiBlueColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:4 color:color];
+    if (color) {
+        [self setColorTable:4 color:color];
+    }
 }
 
 - (NSColor *)ansiBlueColor
@@ -2157,9 +2157,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setAnsiMagentaColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:5 color:color];
+    if (color) {
+        [self setColorTable:5 color:color];
+    }
 }
 
 - (NSColor *)ansiMagentaColor
@@ -2169,9 +2169,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setAnsiCyanColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:6 color:color];
+    if (color) {
+        [self setColorTable:6 color:color];
+    }
 }
 
 - (NSColor *)ansiCyanColor
@@ -2181,9 +2181,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setAnsiWhiteColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:7 color:color];
+    if (color) {
+        [self setColorTable:7 color:color];
+    }
 }
 
 - (NSColor *)ansiWhiteColor
@@ -2201,16 +2201,16 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setAnsiBrightBlackColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:8 color:color];
+    if (color) {
+        [self setColorTable:8 color:color];
+    }
 }
 
 - (void)setAnsiBrightRedColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:9 color:color];
+    if (color) {
+        [self setColorTable:9 color:color];
+    }
 }
 
 - (NSColor *)ansiBrightRedColor
@@ -2220,9 +2220,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setAnsiBrightGreenColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:10 color:color];
+    if (color) {
+        [self setColorTable:10 color:color];
+    }
 }
 
 - (NSColor *)ansiBrightGreenColor
@@ -2232,9 +2232,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setAnsiBrightYellowColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:11 color:color];
+    if (color) {
+        [self setColorTable:11 color:color];
+    }
 }
 
 - (NSColor *)ansiBrightYellowColor
@@ -2244,9 +2244,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setAnsiBrightBlueColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:12 color:color];
+    if (color) {
+        [self setColorTable:12 color:color];
+    }
 }
 
 - (NSColor *)ansiBrightBlueColor
@@ -2256,9 +2256,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setAnsiBrightMagentaColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:13 color:color];
+    if (color) {
+        [self setColorTable:13 color:color];
+    }
 }
 
 - (NSColor *)ansiBrightMagentaColor
@@ -2268,9 +2268,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setAnsiBrightCyanColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:14 color:color];
+    if (color) {
+        [self setColorTable:14 color:color];
+    }
 }
 
 - (NSColor *)ansiBrightCyanColor
@@ -2280,9 +2280,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setAnsiBrightWhiteColor:(NSColor*) color
 {
-    if (color == nil) return;
-    
-	[self setColorTable:15 color:color];
+    if (color) {
+        [self setColorTable:15 color:color];
+    }
 }
 
 - (NSColor *)ansiBrightWhiteColor
