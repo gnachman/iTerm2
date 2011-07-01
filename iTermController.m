@@ -50,6 +50,17 @@
 #import "iTermExpose.h"
 #import "GTMCarbonEvent.h"
 
+#ifdef HOTKEY_WINDOW_VERBOSE_LOGGING
+#define HKWLog NSLog
+#else
+#define HKWLog(args...) \
+do { \
+if (gDebugLogging) { \
+DebugLog([NSString stringWithFormat:args]); \
+} \
+} while (0)
+#endif
+
 @interface NSApplication (Undocumented)
 - (void)_cycleWindowsReversed:(BOOL)back;
 @end
@@ -944,7 +955,7 @@ static PseudoTerminal* GetHotkeyWindow()
 
 static void RollInHotkeyTerm(PseudoTerminal* term)
 {
-    NSLog(@"Roll in [show] visor");
+    HKWLog(@"Roll in [show] visor");
     NSScreen* screen = [term screen];
     if (!screen) {
         screen = [NSScreen mainScreen];
@@ -1049,7 +1060,7 @@ static BOOL IsSnowLeopardOrLater() {
 
 static BOOL OpenHotkeyWindow()
 {
-    NSLog(@"Open visor");
+    HKWLog(@"Open visor");
     iTermController* cont = [iTermController sharedInstance];
     Bookmark* bookmark = [[PreferencePanel sharedInstance] hotkeyBookmark];
     if (bookmark) {
@@ -1105,9 +1116,9 @@ static BOOL OpenHotkeyWindow()
 
 static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotkeyOpened)
 {
-    NSLog(@"Roll out [hide] visor");
+    HKWLog(@"Roll out [hide] visor");
     if (![[term window] isVisible]) {
-        NSLog(@"RollOutHotkeyTerm returning because term isn't visible.");
+        HKWLog(@"RollOutHotkeyTerm returning because term isn't visible.");
         return;
     }
     BOOL temp = [term isHotKeyWindow];
@@ -1186,7 +1197,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     itermWasActiveWhenHotkeyOpened = [NSApp isActive];
     PseudoTerminal* hotkeyTerm = GetHotkeyWindow();
     if (hotkeyTerm) {
-        NSLog(@"Showing existing visor");
+        HKWLog(@"Showing existing visor");
         int i = 0;
         [[iTermController sharedInstance] setKeyWindowIndexMemo:-1];
         for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
@@ -1197,12 +1208,12 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
             }
             i++;
         }
-        NSLog(@"Activate iterm2");
+        HKWLog(@"Activate iterm2");
         [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
         rollingIn_ = YES;
         RollInHotkeyTerm(hotkeyTerm);
     } else {
-        NSLog(@"Open new visor window");
+        HKWLog(@"Open new visor window");
         if (OpenHotkeyWindow()) {
             rollingIn_ = YES;
         }
@@ -1222,7 +1233,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     for (PseudoTerminal* term in [[iTermController sharedInstance] terminals]) {
         if (term != hotkeyTerm) {
             if ([[term window] isVisible]) {
-                NSLog(@"found visible non-visor window");
+                HKWLog(@"found visible non-visor window");
                 isAnyNonHotWindowVisible = YES;
                 break;
             }
@@ -1233,10 +1244,10 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
 
 - (void)fastHideHotKeyWindow
 {
-    NSLog(@"fastHideHotKeyWindow");
+    HKWLog(@"fastHideHotKeyWindow");
     PseudoTerminal* term = GetHotkeyWindow();
     if (term) {
-        NSLog(@"fastHideHotKeyWindow - found a hot term");
+        HKWLog(@"fastHideHotKeyWindow - found a hot term");
         // Temporarily tell the hotkeywindow that it's not hot so that it doesn't try to hide itself
         // when losing key status.
         BOOL temp = [term isHotKeyWindow];
@@ -1259,7 +1270,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
                 // Note that this rect is different than in RollOutHotkeyTerm(). For some reason,
                 // in this code path, the screen's origin is not included. I don't know why.
                 rect.origin.y = screenFrame.size.height + screenFrame.origin.y;
-                NSLog(@"FAST: Set y=%f", rect.origin.y);
+                HKWLog(@"FAST: Set y=%f", rect.origin.y);
                 [[term window] setFrame:rect display:YES];
                 break;
 
@@ -1278,28 +1289,28 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
 
 - (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm
 {
-    NSLog(@"Hide visor.");
+    HKWLog(@"Hide visor.");
     RollOutHotkeyTerm(hotkeyTerm, itermWasActiveWhenHotkeyOpened);
 }
 
 void OnHotKeyEvent(void)
 {
-    NSLog(@"hotkey pressed");
+    HKWLog(@"hotkey pressed");
     PreferencePanel* prefPanel = [PreferencePanel sharedInstance];
     if ([prefPanel hotkeyTogglesWindow]) {
-        NSLog(@"visor enabled");
+        HKWLog(@"visor enabled");
         PseudoTerminal* hotkeyTerm = GetHotkeyWindow();
         if (hotkeyTerm) {
-            NSLog(@"already have a visor created");
+            HKWLog(@"already have a visor created");
             if ([[hotkeyTerm window] alphaValue] == 1) {
-                NSLog(@"visor opaque");
+                HKWLog(@"visor opaque");
                 [[iTermController sharedInstance] hideHotKeyWindow:hotkeyTerm];
             } else {
-                NSLog(@"visor not opaque");
+                HKWLog(@"visor not opaque");
                 [[iTermController sharedInstance] showHotKeyWindow];
             }
         } else {
-            NSLog(@"no visor created yet");
+            HKWLog(@"no visor created yet");
             [[iTermController sharedInstance] showHotKeyWindow];
         }
     } else if ([NSApp isActive]) {
