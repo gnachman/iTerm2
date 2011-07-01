@@ -1,5 +1,28 @@
 These release notes are for the development builds of iTerm2. Beta versions are very stable as we near release.
 
+Beta 4
+So bug-free it hurts.
+
+Enhancements:
+Add preset keymapping with Terminal.app-compatible alt-arrow keys. The default bookmark now uses this.
+Online help is now up to date.
+
+Bug fixes:
+- Fix crash when resizing window.
+- Fix Voiceover crash.
+- Fix crash when trying to move cursor below bottom of screen.
+- Fix crash when getpwuid fails.
+- Fix crash with input method editor and 0-width sessions.
+- Fix crash when you cmd-click in a window and no terminal is considered to be in front.
+- Fix crash when session ends while in instant replay.
+- Fix crash when closing a window in instant replay while another window has focus.
+- Fix a bug that cause find to go crazy and occasional blank lines not to be added to the scrollback buffer.
+- Fix a bug where clicking on a background window while paste history/autocomplete is open caused two terminals to think they had focus.
+- Fix a crash when quitting while paste history/autocomplete is open.
+- Fix a crash when closing a window with cmd-opt-w while paste history/autocomplete is open.
+- Fix a crash when double-clicking on a word (exact cause unknown)
+- Remove excessive logging around hotkey window.
+
 Beta 3
 Even more bug-free!
 
