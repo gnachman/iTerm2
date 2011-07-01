@@ -441,13 +441,13 @@ int gDebugLogFile = -1;
     DLog(@"******** Become Active");
     for (PseudoTerminal* term in [self terminals]) {
         if ([term isHotKeyWindow]) {
-            NSLog(@"Visor is open; not rescuing orphans.");
+            //NSLog(@"Visor is open; not rescuing orphans.");
             return;
         }
     }
     for (PseudoTerminal* term in [self terminals]) {
         if ([term isOrderedOut]) {
-            NSLog(@"term %p was orphaned, order front.", term);
+            //NSLog(@"term %p was orphaned, order front.", term);
             [[term window] orderFront:nil];
         }
     }

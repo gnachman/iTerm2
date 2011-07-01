@@ -176,7 +176,7 @@ DebugLog([NSString stringWithFormat:args]); \
         // The OS will send a hotkey window to the background if it's open and in
         // all spaces. Make it key before closing. This has to be done later because if you do it
         // here the OS gets confused and two windows are key.
-        NSLog(@"Perform delayed selector with target %@", self);
+        //NSLog(@"Perform delayed selector with target %@", self);
         [self performSelector:@selector(twiddleKeyWindow)
                    withObject:self
                    afterDelay:0];
