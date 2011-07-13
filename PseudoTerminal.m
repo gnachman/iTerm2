@@ -1316,6 +1316,10 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"toggleFullScreenMode - set new frame to old frame: %fx%f", oldFrame_.size.width, oldFrame_.size.height);
         [[newTerminal window] setFrame:oldFrame_ display:YES];
     }
+
+    // Ensure that fullscreen windows (often hotkey windows) don't lose their collection behavior.
+    [[newTerminal window] setCollectionBehavior:[[self window] collectionBehavior]];
+
     newTerminal->useTransparency_ = useTransparency_;
     [newTerminal setIsHotKeyWindow:isHotKeyWindow_];
 
@@ -4116,7 +4120,7 @@ NSString *sessionsKey = @"sessions";
     if ([self numberOfTabs] == 1 &&
         [addressbookEntry objectForKey:KEY_SPACE] &&
         [[addressbookEntry objectForKey:KEY_SPACE] intValue] == -1) {
-        [[self window] setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
+        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
     }
 
     [aSession release];
