@@ -1897,15 +1897,48 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         return;
     }
 
-    // Let the IME process key events
-    IM_INPUT_INSERT = NO;
-    [self interpretKeyEvents:[NSArray arrayWithObject:event]];
-
-    // If the IME didn't want it, pass it on to the delegate
+    // Control+Key doesn't work right with custom keyboard layouts. Handle ctrl+key here for the
+    // standard combinations.
+    BOOL workAroundControlBug = NO;
     if (!prev &&
-        !IM_INPUT_INSERT &&
-        ![self hasMarkedText]) {
-        [delegate keyDown:event];
+        (modflag & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == NSControlKeyMask) {
+        NSString *unmodkeystr = [event charactersIgnoringModifiers];
+        if ([unmodkeystr length] != 0) {
+            unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+            unichar cc = 0xffff;
+            if (unmodunicode >= 'a' && unmodunicode <= 'z') {
+                cc = unmodunicode - 'a' + 1;
+            } else if (unmodunicode == ' ' || unmodunicode == '2' || unmodunicode == '@') {
+                cc = 0;
+            } else if (unmodunicode == '[') {  // esc
+                cc = 27;
+            } else if (unmodunicode == '\\') {
+                cc = 28;
+            } else if (unmodunicode == ']') {
+                cc = 29;
+            } else if (unmodunicode == '^' || unmodunicode == '6') {
+                cc = 30;
+            } else if (unmodunicode == '-' || unmodunicode == '_') {
+                cc = 31;
+            }
+            if (cc != 0xffff) {
+                [self insertText:[NSString stringWithCharacters:&cc length:1]];
+                workAroundControlBug = YES;
+            }
+        }
+    }
+
+    if (!workAroundControlBug) {
+        // Let the IME process key events
+        IM_INPUT_INSERT = NO;
+        [self interpretKeyEvents:[NSArray arrayWithObject:event]];
+
+        // If the IME didn't want it, pass it on to the delegate
+        if (!prev &&
+            !IM_INPUT_INSERT &&
+            ![self hasMarkedText]) {
+            [delegate keyDown:event];
+        }
     }
 }
 
