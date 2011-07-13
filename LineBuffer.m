@@ -541,7 +541,19 @@ static int Search(NSString* needle,
                                        end,
                                        &charHaystack,
                                        &deltas);
-                                       
+    // screen_char_t[i + deltas[i]] begins its run at charHaystack[i]
+    int result = CoreSearch(needle, rawline, raw_line_length, start, end, options, resultLength,
+                            haystack, charHaystack, deltas, deltas[0]);
+
+    free(deltas);
+    free(charHaystack);
+    return result;
+}
+
+int CoreSearch(NSString* needle, screen_char_t* rawline, int raw_line_length, int start, int end, 
+               int options, int* resultLength, NSString* haystack, unichar* charHaystack,
+               int* deltas, int deltaOffset)
+{
     int apiOptions = 0;
     NSRange range;
     BOOL regex;
@@ -645,14 +657,12 @@ static int Search(NSString* needle,
     if (range.location != NSNotFound) {
         int adjustedLocation;
         int adjustedLength;
-        adjustedLocation = range.location + deltas[range.location];
+        adjustedLocation = range.location + deltas[range.location] + deltaOffset;
         adjustedLength = range.length + deltas[range.location + range.length] -
-            deltas[range.location];
+            (deltas[range.location] + deltaOffset);
         *resultLength = adjustedLength;
         result = adjustedLocation + start;
     }
-    free(deltas);
-    free(charHaystack);
     return result;
 }
 
@@ -715,10 +725,26 @@ static int Search(NSString* needle,
         int limit = raw_line_length;
         int tempResultLength;
         int tempPosition;
+
+        NSString* haystack;
+        unichar* charHaystack;
+        int* deltas;
+        haystack = ScreenCharArrayToString(rawline,
+                                           0,
+                                           limit,
+                                           &charHaystack,
+                                           &deltas);
+        int numUnichars = [haystack length];
         do {
-            tempPosition =  Search(needle, rawline, raw_line_length, 0, limit,
-                                   options, &tempResultLength);
+            haystack = CharArrayToString(charHaystack, numUnichars);
+            tempPosition = CoreSearch(needle, rawline, raw_line_length, 0, limit, options,
+                                      &tempResultLength, haystack, charHaystack, deltas, 0);
+
             limit = tempPosition + tempResultLength - 1;
+            // find i so that i-deltas[i] == limit
+            while (numUnichars >= 0 && numUnichars + deltas[numUnichars] > limit) {
+                --numUnichars;
+            }
             if (tempPosition != -1 && tempPosition <= skip) {
                 ResultRange* r = [[[ResultRange alloc] init] autorelease];
                 r->position = tempPosition;
@@ -726,6 +752,8 @@ static int Search(NSString* needle,
                 [results addObject:r];
             }
         } while (tempPosition != -1 && (multipleResults || tempPosition > skip));
+        free(deltas);
+        free(charHaystack);
     } else {
         // Search forward
         // TODO: test this

@@ -269,8 +269,8 @@ NSString* ScreenCharArrayToString(screen_char_t* screenChars,
     // 'i' into an index in the screenChars 'r' is:
     //     r = i + deltas[i]
     //
-    // Original string with some double-width characters, where DWC_RIGHT is
-    // shown as '-':
+    // Array of screen_char_t with some double-width characters, where DWC_RIGHT is
+    // shown as '-', and d & f have combining marks/surrogate pairs (not shown here):
     // 0123456789
     // ab-c-de-fg
     //
@@ -293,6 +293,9 @@ NSString* ScreenCharArrayToString(screen_char_t* screenChars,
     // A -> 9   (g@A->g@9)                       -1
     //
     // Note that delta is just the difference of the indices.
+    //
+    // screen_char_t[i + deltas[i]] begins its run at charHaystack[i]
+    // CharHaystackIndexToScreenCharTIndex(i) : i + deltas[i]
     int delta = 0;
     int o = 0;
     for (int i = start; i < end; ++i) {
@@ -309,6 +312,12 @@ NSString* ScreenCharArrayToString(screen_char_t* screenChars,
         }
     }
     deltas[o] = delta;
+
+    return CharArrayToString(charHaystack, o);
+}
+
+NSString* CharArrayToString(unichar* charHaystack, int o)
+{
     // I have no idea why NSUnicodeStringEncoding doesn't work, but it has
     // the wrong endianness on x86. Perhaps it's a relic of PPC days? Anyway,
     // LittleEndian seems to work on my x86, and BigEndian works under Rosetta

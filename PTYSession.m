@@ -552,6 +552,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [SCREEN setSession:nil];
     [SCREEN setTerminal:nil];
     [TERMINAL setScreen:nil];
+    if ([[view findViewController] delegate] == self) {
+        [[view findViewController] setDelegate:nil];
+    }
 
     [updateTimer invalidate];
     [updateTimer release];
