@@ -174,11 +174,6 @@ NSString *sessionsKey = @"sessions";
     self = [super initWithWindowNibName:@"PseudoTerminal"];
     NSAssert(self, @"initWithWindowNibName returned nil");
 
-    // Force the nib to load
-    [self window];
-    [commandField retain];
-    [commandField setDelegate:self];
-    [bottomBar retain];
     if (windowType == WINDOW_TYPE_FULL_SCREEN && screenNumber == -1) {
         NSUInteger n = [[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]];
         if (n == NSNotFound) {
@@ -190,6 +185,17 @@ NSString *sessionsKey = @"sessions";
     if (windowType == WINDOW_TYPE_TOP) {
         smartLayout = NO;
     }
+    if (windowType == WINDOW_TYPE_NORMAL) {
+        // If you create a window with a minimize button and the menu bar is hidden then the
+        // minimize button is disabled. Currently the only window type with a miniaturize button
+        // is NORMAL.
+        [NSMenu setMenuBarVisible:YES];
+    }
+    // Force the nib to load
+    [self window];
+    [commandField retain];
+    [commandField setDelegate:self];
+    [bottomBar retain];
     windowType_ = windowType;
     pbHistoryView = [[PasteboardHistoryView alloc] init];
     autocompleteView = [[AutocompleteView alloc] init];
