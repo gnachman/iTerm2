@@ -478,7 +478,7 @@ typedef enum {
     CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
 } PTYCharType;
 
-- (void)modifyFont:(NSFont*)font info:(PTYFontInfo*)fontInfo;
+- (void)modifyFont:(NSFont*)font baseline:(double)baseline info:(PTYFontInfo*)fontInfo;
 - (void)releaseFontInfo:(PTYFontInfo*)fontInfo;
 
 - (unsigned int) _checkForSupportedDragTypes:(id <NSDraggingInfo>) sender;
@@ -521,7 +521,7 @@ typedef enum {
 - (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent;
 - (BOOL)_isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old;
 - (void)_settingsChanged:(NSNotification *)notification;
-- (void)_modifyFont:(NSFont*)font into:(PTYFontInfo*)fontInfo;
+- (void)_modifyFont:(NSFont*)font baseline:(double)baseline into:(PTYFontInfo*)fontInfo;
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)complex
                        fgColor:(int)fgColor

@@ -58,6 +58,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #import "iTermExpose.h"
 #import "RegexKitLite/RegexKitLite.h"
 #import "iTerm/NSStringITerm.h"
+#import "FontSizeEstimator.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -589,16 +590,21 @@ static NSImage* wrapToBottomImage = nil;
     return secondaryFont.font;
 }
 
++ (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(double)hspace verticalSpacing:(double)vspace baseline:(double*)baseline
+{
+    FontSizeEstimator* fse = [FontSizeEstimator fontSizeEstimatorForFont:aFont];
+    NSSize size = [fse size];
+    size.width = ceil(size.width * hspace);
+    size.height = ceil(vspace * ceil(size.height + [aFont leading]));
+    if (baseline) {
+        *baseline = [fse baseline];
+    }
+    return size;
+}
+
 + (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(double)hspace verticalSpacing:(double)vspace
 {
-    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
-
-    [dic setObject:aFont forKey:NSFontAttributeName];
-    NSSize size = [@"W" sizeWithAttributes:dic];
-
-    size.width = ceil(size.width * hspace);
-    size.height = ceil(vspace * ceil([aFont ascender] - [aFont descender] + [aFont leading]));
-    return size;
+    return [PTYTextView charSizeForFont:aFont horizontalSpacing:hspace verticalSpacing:vspace baseline:nil];
 }
 
 - (double)horizontalSpacing
@@ -616,9 +622,11 @@ static NSImage* wrapToBottomImage = nil;
     horizontalSpacing:(double)horizontalSpacing
     verticalSpacing:(double)verticalSpacing
 {
+    double baseline;
     NSSize sz = [PTYTextView charSizeForFont:aFont
                            horizontalSpacing:1.0
-                             verticalSpacing:1.0];
+                             verticalSpacing:1.0
+                                    baseline:&baseline];
 
     charWidthWithoutSpacing = sz.width;
     charHeightWithoutSpacing = sz.height;
@@ -626,8 +634,8 @@ static NSImage* wrapToBottomImage = nil;
     verticalSpacing_ = verticalSpacing;
     charWidth = ceil(charWidthWithoutSpacing * horizontalSpacing);
     lineHeight = ceil(charHeightWithoutSpacing * verticalSpacing);
-    [self modifyFont:aFont info:&primaryFont];
-    [self modifyFont:naFont info:&secondaryFont];
+    [self modifyFont:aFont baseline:baseline info:&primaryFont];
+    [self modifyFont:naFont baseline:baseline info:&secondaryFont];
 
     // Cannot keep fallback fonts if the primary font changes because their
     // baseline offsets are set by the primary font. It's simplest to remove
@@ -6377,7 +6385,7 @@ static bool IsUrlChar(NSString* str)
     [self setNeedsDisplay:YES];
 }
 
-- (void)_modifyFont:(NSFont*)font into:(PTYFontInfo*)fontInfo
+- (void)_modifyFont:(NSFont*)font baseline:(double)baseline into:(PTYFontInfo*)fontInfo
 {
     if (fontInfo->font) {
         [self releaseFontInfo:fontInfo];
@@ -6385,19 +6393,19 @@ static bool IsUrlChar(NSString* str)
 
     fontInfo->font = font;
     [fontInfo->font retain];
-    fontInfo->baselineOffset = -(floorf([font leading]) - floorf([font descender]));
+    fontInfo->baselineOffset = baseline;
     fontInfo->boldVersion = NULL;
 }
 
-- (void)modifyFont:(NSFont*)font info:(PTYFontInfo*)fontInfo
+- (void)modifyFont:(NSFont*)font baseline:(double)baseline info:(PTYFontInfo*)fontInfo
 {
-    [self _modifyFont:font into:fontInfo];
+    [self _modifyFont:font baseline:baseline into:fontInfo];
     NSFontManager* fontManager = [NSFontManager sharedFontManager];
     NSFont* boldFont = [fontManager convertFont:font toHaveTrait:NSBoldFontMask];
     if (boldFont && ([fontManager traitsOfFont:boldFont] & NSBoldFontMask)) {
         fontInfo->boldVersion = (PTYFontInfo*)malloc(sizeof(PTYFontInfo));
         fontInfo->boldVersion->font = NULL;
-        [self _modifyFont:boldFont into:fontInfo->boldVersion];
+        [self _modifyFont:boldFont baseline:baseline into:fontInfo->boldVersion];
     }
 }
 
@@ -6410,7 +6418,7 @@ static bool IsUrlChar(NSString* str)
     } else {
         PTYFontInfo* info = (PTYFontInfo*) malloc(sizeof(PTYFontInfo));
         info->font = NULL;
-        [self _modifyFont:font into:info];
+        [self _modifyFont:font baseline:primaryFont.baselineOffset into:info];
 
         // Force this font to line up with the primary font's baseline.
         info->baselineOffset = primaryFont.baselineOffset;
