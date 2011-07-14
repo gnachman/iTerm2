@@ -1873,6 +1873,38 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return [self smartSelectAtX:x y:y toStartX:&startX toStartY:&startY toEndX:&endX toEndY:&endY];
 }
 
+// Control-pgup and control-pgdown are handled at this level by NSWindow if no
+// view handles it. It's necessary to setUserScroll in the PTYScroller, or else
+// it scrolls back to the bottom right away. This code handles those two
+// keypresses and scrolls correctly.
+- (BOOL)performKeyEquivalent:(NSEvent *)theEvent
+{
+    NSString* unmodkeystr = [theEvent charactersIgnoringModifiers];
+    if ([unmodkeystr length] == 0) {
+        return [super performKeyEquivalent:theEvent];
+    }
+    unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+
+    NSUInteger modifiers = [theEvent modifierFlags];
+    if ((modifiers & NSControlKeyMask) &&
+        (modifiers & NSFunctionKeyMask)) {
+        switch (unmodunicode) {
+            case NSPageUpFunctionKey:
+                [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+                [self scrollPageUp:self];
+                return YES;
+
+            case NSPageDownFunctionKey:
+                [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+                [self scrollPageDown:self];
+                return YES;
+
+            default:
+                break;
+        }
+    }
+    return [super performKeyEquivalent:theEvent];
+}
 
 - (void)keyDown:(NSEvent*)event
 {
