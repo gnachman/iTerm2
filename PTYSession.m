@@ -1646,6 +1646,32 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         scc = [[PreferencePanel sharedInstance] legacySmartCursorColor];
     }
     [self setSmartCursorColor:scc];
+    BOOL ats;
+    if ([aDict objectForKey:KEY_APPLY_TEXT_SHADOW]) {
+      ats = [[aDict objectForKey:KEY_APPLY_TEXT_SHADOW] boolValue];
+    } else {
+      ats = [[PreferencePanel sharedInstance] applyTextShadow];
+    }
+    [self setApplyTextShadow:ats];
+    CGFloat left, top, blur;
+    if ([aDict objectForKey:KEY_TEXT_SHADOW_LEFT]) {
+      left = [[aDict objectForKey:KEY_TEXT_SHADOW_LEFT] floatValue];
+    } else {
+      left = [[PreferencePanel sharedInstance] applyTextShadowLeft];
+    }
+    if ([aDict objectForKey:KEY_TEXT_SHADOW_TOP]) {
+      top = [[aDict objectForKey:KEY_TEXT_SHADOW_TOP] floatValue];
+    } else {
+      top = [[PreferencePanel sharedInstance] applyTextShadowTop];
+    }
+    if ([aDict objectForKey:KEY_TEXT_SHADOW_BLUR]) {
+      blur = [[aDict objectForKey:KEY_TEXT_SHADOW_BLUR] floatValue];
+    } else {
+      blur = [[PreferencePanel sharedInstance] applyTextShadowBlur];
+    }
+    [self setTextShadowLeft:left];
+    [self setTextShadowTop:top];
+    [self setTextShadowBlur:blur];
 
     float mc;
     if ([aDict objectForKey:KEY_MINIMUM_CONTRAST]) {
@@ -2160,6 +2186,27 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 {
     [[self TEXTVIEW] setSmartCursorColor:value];
 }
+
+- (void)setApplyTextShadow:(BOOL)value
+{
+    [[self TEXTVIEW] setApplyTextShadow:value];
+}
+
+- (void)setTextShadowLeft:(CGFloat)value
+{
+    [[self TEXTVIEW] setTextShadowLeft:value];
+}
+
+- (void)setTextShadowTop:(CGFloat)value
+{
+    [[self TEXTVIEW] setTextShadowTop:value];
+}
+
+- (void)setTextShadowBlur:(CGFloat)value
+{
+    [[self TEXTVIEW] setTextShadowBlur:value];
+}
+
 
 - (void)setMinimumContrast:(float)value
 {

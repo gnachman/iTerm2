@@ -171,6 +171,15 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 
     IBOutlet NSButton *checkColorInvertedCursor;
     BOOL defaultColorInvertedCursor;
+  
+    // text shadow button and properties
+    IBOutlet NSButton *checkFontTextShadow;
+    BOOL defaultFontTextShadow;
+    IBOutlet NSButton *btnTextShadowProps;
+    IBOutlet NSTextField *propTextShadowLeft;
+    IBOutlet NSTextField *propTextShadowTop;
+    IBOutlet NSTextField *propTextShadowBlur;
+    IBOutlet NSPanel *panelTextShadowProps;
 
     // Dim inactive split panes
     IBOutlet NSButton* dimInactiveSplitPanes;
@@ -504,6 +513,12 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (BOOL)dimInactiveSplitPanes;
 - (BOOL)checkTestRelease;
 - (BOOL)legacySmartCursorColor;
+- (BOOL)applyTextShadow;
+- (CGFloat)applyTextShadowLeft;
+- (CGFloat)applyTextShadowTop;
+- (CGFloat)applyTextShadowBlur;
+- (IBAction)adjustTextShadowProps:(id)sender;
+- (IBAction)textShadowPropChanged:(id)sender;
 - (float)legacyMinimumContrast;
 - (BOOL)quitWhenAllWindowsClosed;
 - (BOOL)useUnevenTabs;

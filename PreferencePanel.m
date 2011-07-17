@@ -1689,6 +1689,27 @@ static float versionNumber;
     return [prefs objectForKey:@"ColorInvertedCursor"]?[[prefs objectForKey:@"ColorInvertedCursor"] boolValue]: YES;
 }
 
+- (BOOL)applyTextShadow
+{
+    return [prefs objectForKey:@"ApplyTextShadow"]?[[prefs objectForKey:@"ApplyTextShadow"] boolValue]: YES;
+}
+
+- (CGFloat)applyTextShadowLeft
+{
+    return [prefs objectForKey:KEY_TEXT_SHADOW_LEFT]?[[prefs objectForKey:KEY_TEXT_SHADOW_LEFT] floatValue]:0.0;
+}
+
+- (CGFloat)applyTextShadowTop
+{
+    return [prefs objectForKey:KEY_TEXT_SHADOW_TOP]?[[prefs objectForKey:KEY_TEXT_SHADOW_TOP] floatValue]:0.0;
+}
+
+- (CGFloat)applyTextShadowBlur
+{
+    return [prefs objectForKey:KEY_TEXT_SHADOW_BLUR]?[[prefs objectForKey:KEY_TEXT_SHADOW_BLUR] floatValue]:4.0;
+}
+
+
 - (BOOL)quitWhenAllWindowsClosed
 {
     return defaultQuitWhenAllWindowsClosed;
@@ -2036,6 +2057,19 @@ static float versionNumber;
     }
     [checkColorInvertedCursor setState:smartCursorColor ? NSOnState : NSOffState];
 
+    BOOL fontTextShadow;
+    if ([dict objectForKey:KEY_APPLY_TEXT_SHADOW]) {
+      fontTextShadow = [[dict objectForKey:KEY_APPLY_TEXT_SHADOW] boolValue];
+    } else {
+      fontTextShadow = [self applyTextShadow];
+    }
+    [checkFontTextShadow setState:fontTextShadow ? NSOnState : NSOffState];
+    [btnTextShadowProps setEnabled:fontTextShadow ? YES : NO];
+    
+    [propTextShadowLeft setFloatValue:[[dict objectForKey:KEY_TEXT_SHADOW_LEFT] floatValue]];
+    [propTextShadowTop setFloatValue:[[dict objectForKey:KEY_TEXT_SHADOW_TOP] floatValue]];
+    [propTextShadowBlur setFloatValue:[[dict objectForKey:KEY_TEXT_SHADOW_BLUR] floatValue]];
+  
     [cursorColor setEnabled:[checkColorInvertedCursor state] == NSOffState];
     [cursorColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
 
@@ -2417,7 +2451,13 @@ static float versionNumber;
     [newDict setObject:[ITAddressBookMgr encodeColor:[cursorColor color]] forKey:KEY_CURSOR_COLOR];
     [newDict setObject:[ITAddressBookMgr encodeColor:[cursorTextColor color]] forKey:KEY_CURSOR_TEXT_COLOR];
     [newDict setObject:[NSNumber numberWithBool:[checkColorInvertedCursor state]] forKey:KEY_SMART_CURSOR_COLOR];
+    [newDict setObject:[NSNumber numberWithBool:[checkFontTextShadow state]] forKey:KEY_APPLY_TEXT_SHADOW];
+    [newDict setObject:[NSNumber numberWithFloat:[propTextShadowLeft floatValue]] forKey:KEY_TEXT_SHADOW_LEFT];
+    [newDict setObject:[NSNumber numberWithFloat:[propTextShadowTop floatValue]] forKey:KEY_TEXT_SHADOW_TOP];
+    [newDict setObject:[NSNumber numberWithFloat:[propTextShadowBlur floatValue]] forKey:KEY_TEXT_SHADOW_BLUR];
     [newDict setObject:[NSNumber numberWithFloat:[minimumContrast floatValue]] forKey:KEY_MINIMUM_CONTRAST];
+
+    [btnTextShadowProps setEnabled:[checkFontTextShadow state] == NSOnState ? YES : NO];
 
     [cursorColor setEnabled:[checkColorInvertedCursor state] == NSOffState];
     [cursorColorLabel setTextColor:([checkColorInvertedCursor state] == NSOffState) ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
@@ -3052,6 +3092,39 @@ static float versionNumber;
     [dataSource addBookmark:newDict];
     [bookmarksTableView reloadData];
     [bookmarksTableView selectRowByGuid:[newDict objectForKey:KEY_GUID]];
+}
+
+- (IBAction)adjustTextShadowProps:(id)sender 
+{
+    if (![panelTextShadowProps isVisible]) 
+    {
+      [panelTextShadowProps setIsVisible:YES];
+    }
+}
+
+- (IBAction)textShadowPropChanged:(id)sender 
+{
+    BOOL refresh = NO;
+    if (sender == propTextShadowLeft) 
+    {
+        [prefs setObject:[NSNumber numberWithFloat:[propTextShadowLeft floatValue]] forKey:KEY_TEXT_SHADOW_LEFT];
+        refresh = YES;
+    }
+    else if (sender == propTextShadowTop) 
+    {
+        [prefs setObject:[NSNumber numberWithFloat:[propTextShadowTop floatValue]] forKey:KEY_TEXT_SHADOW_TOP];
+        refresh = YES;
+    }
+    else if (sender == propTextShadowBlur)
+    {
+        [prefs setObject:[NSNumber numberWithFloat:[propTextShadowBlur floatValue]] forKey:KEY_TEXT_SHADOW_BLUR];
+        refresh = YES;
+    }
+    
+    if (refresh)
+    {
+        [self bookmarkSettingChanged:sender];
+    }
 }
 
 - (BOOL)remappingDisabledTemporarily
