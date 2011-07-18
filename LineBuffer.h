@@ -41,6 +41,15 @@
 }
 @end
 
+@interface XYRange : NSObject {
+@public
+    int xStart;
+    int yStart;
+    int xEnd;
+    int yEnd;
+}
+@end
+
 typedef struct FindContext {
     int absBlockNum;
     NSString* substring;
@@ -247,6 +256,9 @@ typedef struct FindContext {
 // Convert a position (as returned by findSubstring) into an x,y position.
 // Returns TRUE if the conversion was successful, false if the position was out of bounds.
 - (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y;
+
+// Returns an array of XYRange values
+- (NSArray*)convertPositions:(NSArray*)resultRanges withWidth:(int)width;
 
 // Convert x,y coordinates (with y=0 being the first line) into a position. Offset is added to the position safely.
 // Returns TRUE if the conversion was successful, false, if out of bounds.

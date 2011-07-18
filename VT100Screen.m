@@ -3253,24 +3253,22 @@ void DumpBuf(screen_char_t* p, int n) {
         // Handle the current state
         BOOL isOk;
         switch (context->status) {
-            case Matched:
+            case Matched: {
                 // NSLog(@"matched");
                 // Found a match in the text.
-                for (ResultRange* rr in context->results) {
+                NSArray *allPositions = [linebuffer convertPositions:context->results
+                                                           withWidth:WIDTH];
+                int k = 0;
+                for (ResultRange* currentResultRange in context->results) {
                     SearchResult* result = [[SearchResult alloc] init];
-                    isOk = [linebuffer convertPosition:rr->position
-                                             withWidth:WIDTH
-                                                   toX:&result->startX
-                                                   toY:&startY];
-                    assert(isOk);
-                    result->absStartY = startY + [self totalScrollbackOverflow];
 
-                    isOk = [linebuffer convertPosition:rr->position + rr->length - 1
-                                             withWidth:WIDTH
-                                                   toX:&result->endX
-                                                   toY:&endY];
-                    assert(isOk);
-                    result->absEndY = endY + [self totalScrollbackOverflow];
+                    XYRange* xyrange = [allPositions objectAtIndex:k++];
+
+                    result->startX = xyrange->xStart;
+                    result->endX = xyrange->xEnd;
+                    result->absStartY = xyrange->yStart + [self totalScrollbackOverflow];
+                    result->absEndY = xyrange->yEnd + [self totalScrollbackOverflow];
+
                     [results addObject:result];
                     [result release];
                     if (!(context->options & FindMultipleResults)) {
@@ -3283,6 +3281,7 @@ void DumpBuf(screen_char_t* p, int n) {
                 }
                 [context->results removeAllObjects];
                 break;
+            }
 
             case Searching:
                 // NSLog(@"searching");

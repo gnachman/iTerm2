@@ -33,6 +33,9 @@
 @implementation ResultRange
 @end
 
+@implementation XYRange
+@end
+
 @implementation LineBlock
 
 - (LineBlock*) initWithRawBufferSize: (int) size
@@ -525,34 +528,9 @@ static NSString* RewrittenRegex(NSString* originalRegex) {
     return rewritten;
 }
 
-static int Search(NSString* needle,
-                  screen_char_t* rawline,
-                  int raw_line_length,
-                  int start,
-                  int end,
-                  int options,
-                  int* resultLength)
-{
-    NSString* haystack;
-    unichar* charHaystack;
-    int* deltas;
-    haystack = ScreenCharArrayToString(rawline,
-                                       start,
-                                       end,
-                                       &charHaystack,
-                                       &deltas);
-    // screen_char_t[i + deltas[i]] begins its run at charHaystack[i]
-    int result = CoreSearch(needle, rawline, raw_line_length, start, end, options, resultLength,
-                            haystack, charHaystack, deltas, deltas[0]);
-
-    free(deltas);
-    free(charHaystack);
-    return result;
-}
-
-int CoreSearch(NSString* needle, screen_char_t* rawline, int raw_line_length, int start, int end, 
-               int options, int* resultLength, NSString* haystack, unichar* charHaystack,
-               int* deltas, int deltaOffset)
+static int CoreSearch(NSString* needle, screen_char_t* rawline, int raw_line_length, int start, int end, 
+                      int options, int* resultLength, NSString* haystack, unichar* charHaystack,
+                      int* deltas, int deltaOffset)
 {
     int apiOptions = 0;
     NSRange range;
@@ -663,6 +641,31 @@ int CoreSearch(NSString* needle, screen_char_t* rawline, int raw_line_length, in
         *resultLength = adjustedLength;
         result = adjustedLocation + start;
     }
+    return result;
+}
+
+static int Search(NSString* needle,
+                  screen_char_t* rawline,
+                  int raw_line_length,
+                  int start,
+                  int end,
+                  int options,
+                  int* resultLength)
+{
+    NSString* haystack;
+    unichar* charHaystack;
+    int* deltas;
+    haystack = ScreenCharArrayToString(rawline,
+                                       start,
+                                       end,
+                                       &charHaystack,
+                                       &deltas);
+    // screen_char_t[i + deltas[i]] begins its run at charHaystack[i]
+    int result = CoreSearch(needle, rawline, raw_line_length, start, end, options, resultLength,
+                            haystack, charHaystack, deltas, deltas[0]);
+
+    free(deltas);
+    free(charHaystack);
     return result;
 }
 
@@ -1353,8 +1356,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
          multipleResults:((context->options & FindMultipleResults) != 0)];
     NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context->results count]];
     BOOL haveOutOfRangeResults = NO;
+    int blockPosition = [self _blockPosition:context->absBlockNum - num_dropped_blocks];
     for (ResultRange* range in context->results) {
-        range->position += [self _blockPosition:context->absBlockNum - num_dropped_blocks];
+        range->position += blockPosition;
         if (context->dir * (range->position - stopAt) > 0 ||
             context->dir * (range->position + context->matchLength - stopAt) > 0) {
             // result was outside the range to be searched
@@ -1378,6 +1382,87 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         context->offset = 0;
     }
     context->absBlockNum += context->dir;
+}
+
+// Returns an array of XRange values
+- (NSArray*)convertPositions:(NSArray*)resultRanges withWidth:(int)width
+{
+    // Create sorted array of all positions to convert.
+    NSMutableArray* unsortedPositions = [NSMutableArray arrayWithCapacity:[resultRanges count] * 2];
+    for (ResultRange* rr in resultRanges) {
+        [unsortedPositions addObject:[NSNumber numberWithInt:rr->position]];
+        [unsortedPositions addObject:[NSNumber numberWithInt:rr->position + rr->length - 1]];
+    }
+
+    // Walk blocks and positions in parallel, converting each position in order. Store in
+    // intermediate dict, mapping position->NSPoint(x,y)
+    NSArray *positionsArray = [unsortedPositions sortedArrayUsingSelector:@selector(compare:)];
+    int i = 0;
+    int yoffset = 0;
+    int numBlocks = [blocks count];
+    int passed = 0;
+    LineBlock *block = [blocks objectAtIndex:0];
+    int used = [block rawSpaceUsed];
+    NSMutableDictionary* intermediate = [NSMutableDictionary dictionaryWithCapacity:[resultRanges count] * 2];
+    int prev = -1;
+    for (NSNumber* positionNum in positionsArray) {
+        int position = [positionNum intValue];
+        if (position == prev) {
+            continue;
+        }
+        prev = position;
+
+        // Advance block until it includes this position
+        while (position >= passed + used && i < numBlocks) {
+            passed += used;
+            yoffset += [block getNumLinesWithWrapWidth:width];
+            i++;
+            if (i < numBlocks) {
+                block = [blocks objectAtIndex:i];
+                used = [block rawSpaceUsed];
+            }
+        }
+        if (i < numBlocks) {
+            int x, y;
+            assert(position >= passed);
+            assert(position < passed + used);
+            assert(used == [block rawSpaceUsed]);
+            BOOL isOk = [block convertPosition:position - passed
+                                     withWidth:width
+                                           toX:&x
+                                           toY:&y];
+            assert(x < 2000);
+            if (isOk) {
+                y += yoffset;
+                [intermediate setObject:[NSValue valueWithPoint:NSMakePoint(x, y)]
+                                 forKey:positionNum];
+            } else {
+                assert(false);
+            }
+        }
+    }
+
+    // Walk the positions array and populate results by looking up points in intermediate dict.
+    NSMutableArray* result = [NSMutableArray arrayWithCapacity:[resultRanges count]];
+    for (ResultRange* rr in resultRanges) {
+        NSValue *start = [intermediate objectForKey:[NSNumber numberWithInt:rr->position]];
+        NSValue *end = [intermediate objectForKey:[NSNumber numberWithInt:rr->position + rr->length - 1]];
+        if (start && end) {
+            XYRange *xyrange = [[[XYRange alloc] init] autorelease];
+            NSPoint startPoint = [start pointValue];
+            NSPoint endPoint = [end pointValue];
+            xyrange->xStart = startPoint.x;
+            xyrange->yStart = startPoint.y;
+            xyrange->xEnd = endPoint.x;
+            xyrange->yEnd = endPoint.y;
+            [result addObject:xyrange];
+        } else {
+            assert(false);
+            [result addObject:[NSNull null]];
+        }
+    }
+
+    return result;
 }
 
 - (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y
