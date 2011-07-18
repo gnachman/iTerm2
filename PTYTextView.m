@@ -3930,6 +3930,27 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     colorInvertedCursor = value;
 }
 
+- (void)setApplyTextShadow:(BOOL)value
+{
+    fontTextShadow = value;
+}
+
+- (void)setTextShadowLeft:(CGFloat)value
+{
+    textShadowLeft = value;
+}
+
+- (void)setTextShadowTop:(CGFloat)value
+{
+    textShadowTop = value;
+}
+
+- (void)setTextShadowBlur:(CGFloat)value
+{
+    textShadowBlur = value;
+}
+
+
 - (void)setMinimumContrast:(double)value
 {
     minimumContrast_ = value;
@@ -4798,17 +4819,27 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                             length:numCodes];
     NSDictionary* attrs;
     if (advancedFontRendering && antiAlias) {
-        attrs = [NSDictionary dictionaryWithObjectsAndKeys:
+        attrs = [NSMutableDictionary dictionaryWithObjectsAndKeys:
                                fontInfo->font, NSFontAttributeName,
                                color, NSForegroundColorAttributeName,
                                [NSNumber numberWithFloat:strokeThickness], NSStrokeWidthAttributeName,
                                nil];
     } else {
-        attrs = [NSDictionary dictionaryWithObjectsAndKeys:
+        attrs = [NSMutableDictionary dictionaryWithObjectsAndKeys:
                  fontInfo->font, NSFontAttributeName,
                  color, NSForegroundColorAttributeName,
                  nil];
     }
+
+    if (fontTextShadow) {
+      NSShadow *aShadow = [[NSShadow alloc] init];
+      [aShadow setShadowOffset:NSMakeSize(textShadowLeft, textShadowTop)];
+      [aShadow setShadowBlurRadius:textShadowBlur];
+      [aShadow setShadowColor:color];
+      [attrs setValue:aShadow forKey:NSShadowAttributeName];
+      [aShadow release];
+    }
+  
     NSMutableAttributedString* attributedString = [[[NSMutableAttributedString alloc] initWithString:str
                                                                                           attributes:attrs] autorelease];
     // Note that drawInRect doesn't use the right baseline, but drawWithRect
@@ -4907,8 +4938,15 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                                       0.0, -1.0,
                                                       x,    y));
 
+    if (fontTextShadow) {
+      CGContextSaveGState(ctx);
+      CGContextSetShadowWithColor(ctx, CGSizeMake(textShadowLeft, textShadowTop), textShadowBlur, CGColorCreate([[currentRun->color colorSpace] CGColorSpace], components));  
+    }
     CGContextShowGlyphsWithAdvances(ctx, glyphs, currentRun->advances,
                                     currentRun->numCodes);
+    if (fontTextShadow) {
+      CGContextRestoreGState(ctx);
+    }
 
     if (currentRun->fakeBold) {
         // If anti-aliased, drawing twice at the same position makes the strokes thicker.

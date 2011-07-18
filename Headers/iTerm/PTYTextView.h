@@ -88,6 +88,10 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     BOOL CURSOR;
     BOOL colorInvertedCursor;
+    BOOL fontTextShadow;
+    float textShadowLeft;
+    float textShadowTop;
+    float textShadowBlur;
 
     // geometry
     double lineHeight;
@@ -330,6 +334,10 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)setCursorColor:(NSColor*)color;
 - (void)setSelectedTextColor:(NSColor *)aColor;
 - (void)setCursorTextColor:(NSColor*)color;
+- (void)setApplyTextShadow:(BOOL)value;
+- (void)setTextShadowLeft:(CGFloat)value;
+- (void)setTextShadowTop:(CGFloat)value;
+- (void)setTextShadowBlur:(CGFloat)value;
 
 - (int)selectionStartX;
 - (int)selectionStartY;

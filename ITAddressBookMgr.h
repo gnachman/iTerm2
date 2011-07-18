@@ -86,6 +86,10 @@
 #define KEY_ANSI_15_COLOR          @"Ansi 15 Color"
 #define KEYTEMPLATE_ANSI_X_COLOR          @"Ansi %d Color"
 #define KEY_SMART_CURSOR_COLOR     @"Smart Cursor Color"
+#define KEY_APPLY_TEXT_SHADOW      @"ApplyTextShadow"
+#define KEY_TEXT_SHADOW_TOP        @"TextShadowTop"
+#define KEY_TEXT_SHADOW_LEFT       @"TextShadowLeft"
+#define KEY_TEXT_SHADOW_BLUR       @"TextShadowBlur"
 #define KEY_MINIMUM_CONTRAST      @"Minimum Contrast"
 
 // Display
