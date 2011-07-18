@@ -61,27 +61,26 @@ static double Brightness(NSColor* c) {
             osBound.height = MAX(size.height, charSize.height);
         }
     }
-    
+
     return osBound;
 }
 
 - (NSImage *)imageForString:(NSString*)s withFont:(NSFont*)aFont
 {
-    // TODO: sometimes ctx is null but I haven't caught it yet.
-    CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
-    assert(ctx);
-    CGContextSetShouldAntialias(ctx, NO);
-    
     NSSize osSize = [self osEstimate:aFont];
     NSSize estimate = osSize;
     estimate.width *= 4;
     estimate.height *= 4;
     NSImage *image = [[[NSImage alloc] initWithSize:NSMakeSize(estimate.width, estimate.height)] autorelease];
     [image lockFocus];
-    
+
+    CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
+    assert(ctx);
+    CGContextSetShouldAntialias(ctx, NO);
+
     [[NSColor whiteColor] set];
     NSRectFill(NSMakeRect(0, 0, estimate.width, estimate.height));
-    
+
     NSDictionary *attrs = [NSDictionary dictionaryWithObjectsAndKeys:
                            aFont, NSFontAttributeName,
                            [NSColor blackColor], NSForegroundColorAttributeName,
