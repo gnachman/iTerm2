@@ -404,7 +404,9 @@ setup_tty_param(
     fd = -1;
     tty = nil;
     logPath = nil;
-    logHandle = nil;
+    @synchronized(logHandle) {
+        logHandle = nil;
+    }
     hasOutput = NO;
 
     writeBuffer = [[NSMutableData alloc] init];
@@ -640,8 +642,10 @@ static void reapchild(int n)
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PTYTask readTask:%@]", __FILE__, __LINE__, data);
 #endif
-    if ([self logging]) {
-        [logHandle writeData:data];
+    @synchronized(logHandle) {
+        if ([self logging]) {
+            [logHandle writeData:data];
+        }
     }
 
     // forward the data to our delegate
@@ -740,35 +744,41 @@ static void reapchild(int n)
 
 - (BOOL)loggingStartWithPath:(NSString*)aPath
 {
-    [logPath autorelease];
-    logPath = [[aPath stringByStandardizingPath] copy];
+    @synchronized(logHandle) {
+        [logPath autorelease];
+        logPath = [[aPath stringByStandardizingPath] copy];
 
-    [logHandle autorelease];
-    logHandle = [NSFileHandle fileHandleForWritingAtPath:logPath];
-    if (logHandle == nil) {
-        NSFileManager* fm = [NSFileManager defaultManager];
-        [fm createFileAtPath:logPath contents:nil attributes:nil];
+        [logHandle autorelease];
         logHandle = [NSFileHandle fileHandleForWritingAtPath:logPath];
-    }
-    [logHandle retain];
-    [logHandle seekToEndOfFile];
+        if (logHandle == nil) {
+            NSFileManager* fm = [NSFileManager defaultManager];
+            [fm createFileAtPath:logPath contents:nil attributes:nil];
+            logHandle = [NSFileHandle fileHandleForWritingAtPath:logPath];
+        }
+        [logHandle retain];
+        [logHandle seekToEndOfFile];
 
-    return logHandle == nil ? NO : YES;
+        return logHandle == nil ? NO : YES;
+    }
 }
 
 - (void)loggingStop
 {
-    [logHandle closeFile];
+    @synchronized(logHandle) {
+        [logHandle closeFile];
 
-    [logPath autorelease];
-    [logHandle autorelease];
-    logPath = nil;
-    logHandle = nil;
+        [logPath autorelease];
+        [logHandle autorelease];
+        logPath = nil;
+        logHandle = nil;
+    }
 }
 
 - (BOOL)logging
 {
-    return logHandle == nil ? NO : YES;
+    @synchronized(logHandle) {
+        return logHandle == nil ? NO : YES;
+    }
 }
 
 - (NSString*)description
