@@ -1937,6 +1937,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         return;
     }
 
+    if (modflag & NSCommandKeyMask) {
+        // You pressed cmd+something but it's not handled by the delegate. Going further would
+        // send the unmodified key to the terminal which doesn't make sense.adsjflsd
+        return;
+    }
+
     // Control+Key doesn't work right with custom keyboard layouts. Handle ctrl+key here for the
     // standard combinations.
     BOOL workAroundControlBug = NO;
