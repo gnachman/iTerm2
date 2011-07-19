@@ -1,4 +1,4 @@
-/* staight from linux/drivers/char/consolemap.c, GNU GPL:ed */
+/* straight from linux/drivers/char/consolemap.c, GNU GPL:ed */
 static const unichar charmap[256]={
   /* VT100 graphics mapped to Unicode */
     0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,
