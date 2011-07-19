@@ -3010,12 +3010,12 @@ NSString *sessionsKey = @"sessions";
     if (![bottomBar isHidden]) {
         int dh = [bottomBar frame].size.height / charHeight + 1;
         height -= dh;
-        yoffset = [bottomBar frame].size.height;
+        yoffset = [bottomBar frame].size.height + VMARGIN;
     } else {
         yoffset = floor(aRect.size.height - charHeight * height)/2; // screen height minus one half character
     }
     aRect = NSMakeRect(floor((aRect.size.width - width * charWidth - MARGIN * 2)/2),  // screen width minus one half character and a margin
-                       yoffset,
+                       yoffset - VMARGIN,                                     // shift down by one VMARGIN
                        width * charWidth + MARGIN * 2,                        // enough width for width col plus two margins
                        charHeight * height + VMARGIN * 2);                    // enough height for width rows
     [TABVIEW setFrame:aRect];
