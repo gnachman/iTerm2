@@ -3695,7 +3695,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             set = YES;
         }
         char* b = [data mutableBytes];
-        for (int i = resStartX; i < MIN(resEndX+1, width); i++) {
+        int lineEndX = MIN(resEndX + 1, width);
+        int lineStartX = resStartX;
+        if (absEndY > y) {
+            lineEndX = width;
+        }
+        if (y > absStartY) {
+            lineStartX = 0;
+        }
+        for (int i = lineStartX; i < lineEndX; i++) {
             const int byteIndex = i/8;
             const int bit = 1 << (i & 7);
             if (byteIndex < [data length]) {
