@@ -51,6 +51,8 @@ receive the full path and the line number (if any) as arguments.
 ## Known issues
 * Drag detection is way too sensitive. Even one pixel makes it think
   it's a drag. Will be fixed in next alpha.
+* Some apps have issues (MacVim at least)if you give it a path with './'
+  in it: e.g., /path/to/./file
 
 ## TODO
 * Make paths work even after the directory has been changed.
