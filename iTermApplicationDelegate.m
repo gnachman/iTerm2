@@ -102,8 +102,6 @@ int gDebugLogFile = -1;
                              CFSTR(""),
                              kCFPreferencesCurrentApplication);
 
-    [self buildAddressBookMenu:nil];
-
     PreferencePanel* ppanel = [PreferencePanel sharedInstance];
     if ([ppanel hotkey]) {
         [[iTermController sharedInstance] registerHotkey:[ppanel hotkeyCode] modifiers:[ppanel hotkeyModifiers]];
@@ -228,7 +226,8 @@ int gDebugLogFile = -1;
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app
 {
-    const double kMinRunningTime = 10;
+    NSNumber* pref = [[NSUserDefaults standardUserDefaults] objectForKey:@"MinRunningTime"];
+    const double kMinRunningTime =  pref ? [pref floatValue] : 10;
     if ([[NSDate date] timeIntervalSinceDate:launchTime_] < kMinRunningTime) {
         return NO;
     }
@@ -282,7 +281,7 @@ int gDebugLogFile = -1;
                                                object:nil];
 
     [[NSNotificationCenter defaultCenter] addObserver: self
-                                             selector: @selector(buildAddressBookMenu:)
+                                             selector: @selector(updateAddressBookMenu:)
                                                  name: @"iTermReloadAddressBook"
                                                object: nil];
 
@@ -408,12 +407,15 @@ int gDebugLogFile = -1;
     bookmarksMenu = [[[NSMenu alloc] init] autorelease];
 
     [[iTermController sharedInstance] addBookmarksToMenu:bookmarksMenu
-                                                  target:aTarget
-                                           withShortcuts:NO
-                                                selector:selector
+                                            withSelector:selector
                                          openAllSelector:openAllSelector
-                                       alternateSelector:nil];
+                                              startingAt:0];
     [newMenuItem setSubmenu:bookmarksMenu];
+}
+
+- (NSMenu*)bookmarksMenu
+{
+    return bookmarkMenu;
 }
 
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender
@@ -425,7 +427,7 @@ int gDebugLogFile = -1;
     [self _newSessionMenu:aMenu title:@"New Window"
                    target:[iTermController sharedInstance]
                  selector:@selector(newSessionInWindowAtIndex:)
-          openAllSelector:@selector(newSessionsInManyWindows:)];
+          openAllSelector:@selector(newSessionsInNewWindow:)];
     [self _newSessionMenu:aMenu title:@"New Tab"
                    target:frontTerminal
                  selector:@selector(newSessionInTabAtIndex:)
@@ -439,13 +441,13 @@ int gDebugLogFile = -1;
     DLog(@"******** Become Active");
     for (PseudoTerminal* term in [self terminals]) {
         if ([term isHotKeyWindow]) {
-            NSLog(@"Visor is open; not rescuing orphans.");
+            //NSLog(@"Visor is open; not rescuing orphans.");
             return;
         }
     }
     for (PseudoTerminal* term in [self terminals]) {
         if ([term isOrderedOut]) {
-            NSLog(@"term %p was orphaned, order front.", term);
+            //NSLog(@"term %p was orphaned, order front.", term);
             [[term window] orderFront:nil];
         }
     }
@@ -662,7 +664,6 @@ void DebugLog(NSString* value)
     [nextTerminal setAction: (frontTerminal ? @selector(nextTerminal:) : nil)];
 
     [self buildSessionSubmenu: aNotification];
-    [self buildAddressBookMenu: aNotification];
     // reset the close tab/window shortcuts
     [closeTab setAction:@selector(closeCurrentTab:)];
     [closeTab setTarget:frontTerminal];
@@ -748,28 +749,19 @@ void DebugLog(NSString* value)
     }
 }
 
-- (void)buildAddressBookMenu:(NSNotification *)aNotification
+- (void)updateAddressBookMenu:(NSNotification*)aNotification
 {
-    // clear Bookmark menu
-    const int kNumberOfStaticMenuItems = 5;
-    for (; [bookmarkMenu numberOfItems] > kNumberOfStaticMenuItems;) {
-        NSMenuItem* anItem = [bookmarkMenu itemAtIndex:kNumberOfStaticMenuItems];
-        [anItem retain];
-        [bookmarkMenu removeItemAtIndex:kNumberOfStaticMenuItems];
-        NSMenu* sub = [anItem submenu];
-        if (sub) {
-            [self _removeItemsFromMenu:sub];
-        }
-        [anItem release];
-    }
+    JournalParams params;
+    params.selector = @selector(newSessionInTabAtIndex:);
+    params.openAllSelector = @selector(newSessionsInWindow:);
+    params.alternateSelector = @selector(newSessionInWindowAtIndex:);
+    params.alternateOpenAllSelector = @selector(newSessionsInWindow:);
+    params.target = [iTermController sharedInstance];
 
-    // add bookmarks into Bookmark menu
-    [[iTermController sharedInstance] addBookmarksToMenu:bookmarkMenu
-                                                  target:[[iTermController sharedInstance] currentTerminal]
-                                           withShortcuts:YES
-                                                selector:@selector(newSessionInTabAtIndex:)
-                                         openAllSelector:@selector(newSessionsInWindow:)
-                                       alternateSelector:@selector(newSessionInWindowAtIndex:)];
+    [BookmarkModel applyJournal:[aNotification userInfo]
+                         toMenu:bookmarkMenu
+                 startingAtItem:5
+                         params:&params];
 }
 
 // This is called whenever a tab becomes key or logging starts/stops.

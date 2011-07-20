@@ -159,8 +159,6 @@
     PasteboardHistoryView* pbHistoryView;
     AutocompleteView* autocompleteView;
 
-    // Size of window before opening bottom bar frame.
-    NSRect preBottomBarFrame;
     // True if preBottomBarFrame is valid.
     BOOL pbbfValid;
 
@@ -176,12 +174,17 @@
 
     int windowType_;
     BOOL isHotKeyWindow_;
+    BOOL haveScreenPreference_;
     int screenNumber_;
     BOOL isOrderedOut_;
 
     // Window number, used for keyboard shortcut to select a window.
     // This value is 0-based while the UI is 1-based.
     int number_;
+
+    // True if this window was created by dragging a tab from another window.
+    // Affects how its size is set when the number of tabview items changes.
+    BOOL wasDraggedFromAnotherWindow_;
 }
 
 // Initialize a new PseudoTerminal.
@@ -496,8 +499,8 @@
 // Resize window to be just large enough to fit the largest tab without changing session sizes.
 - (void)fitWindowToTabs;
 
-// Fit the window to exactly fit a tab of the given size.
-- (void)fitWindowToTabSize:(NSSize)tabSize;
+// Fit the window to exactly fit a tab of the given size. Returns true if the window was resized.
+- (BOOL)fitWindowToTabSize:(NSSize)tabSize;
 
 // Force the window size to change to be just large enough to fit this session.
 - (void)fitWindowToTab:(PTYTab*)tab;
@@ -787,6 +790,10 @@
 - (void)hideFullScreenTabControl;
 
 - (void)_loadFindStringFromSharedPasteboard;
+
+- (BOOL)_haveLeftBorder;
+- (BOOL)_haveBottomBorder;
+- (BOOL)_haveRightBorder;
 
 @end
 

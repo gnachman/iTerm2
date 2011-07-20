@@ -428,6 +428,11 @@
 static NSString* UserShell() {
     struct passwd* pw;
     pw = getpwuid(geteuid());
+    if (!pw) {
+        NSLog(@"No passwd entry for effective uid %d", geteuid());
+        endpwent();
+        return nil;
+    }
     NSString* shell = [NSString stringWithUTF8String:pw->pw_shell];
     endpwent();
     return shell;

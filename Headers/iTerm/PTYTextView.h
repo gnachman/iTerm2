@@ -48,7 +48,7 @@ struct PTYFontInfo {
     NSFont* font;  // Toll-free bridged to CTFontRef
 
     // Metrics
-    float baselineOffset;
+    double baselineOffset;
 
     struct PTYFontInfo* boldVersion;  // may be NULL
 };
@@ -90,12 +90,12 @@ typedef struct PTYFontInfo PTYFontInfo;
     BOOL colorInvertedCursor;
 
     // geometry
-    float lineHeight;
-    float lineWidth;
-    float charWidth;
-    float charWidthWithoutSpacing, charHeightWithoutSpacing;
-    float horizontalSpacing_;
-    float  verticalSpacing_;
+    double lineHeight;
+    double lineWidth;
+    double charWidth;
+    double charWidthWithoutSpacing, charHeightWithoutSpacing;
+    double horizontalSpacing_;
+    double  verticalSpacing_;
 
     PTYFontInfo primaryFont;
     PTYFontInfo secondaryFont;
@@ -110,7 +110,7 @@ typedef struct PTYFontInfo PTYFontInfo;
     NSColor* cursorTextColor;
 
     // transparency
-    float transparency;
+    double transparency;
 
     // data source
     VT100Screen *dataSource;
@@ -164,7 +164,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Scrolls view when you drag a selection to top or bottom of view.
     NSTimer* selectionScrollTimer;
-    float prevScrollDelay;
+    double prevScrollDelay;
     int scrollingX;
     int scrollingY;
     NSPoint scrollingLocation;
@@ -179,8 +179,8 @@ typedef struct PTYFontInfo PTYFontInfo;
     int accY;
 
     BOOL advancedFontRendering;
-    float strokeThickness;
-    float minimumContrast_;
+    double strokeThickness;
+    double minimumContrast_;
 
     BOOL changedSinceLastExpose_;
 
@@ -239,14 +239,21 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Array of (line number, pwd) arrays, sorted by line number. Line numbers are absolute.
     NSMutableArray *workingDirectoryAtLines;
-    
+
     // Saves the monotonically increasing event number of a first-mouse click, which disallows
     // selection.
     int firstMouseEventNumber_;
+
+    // For accessibility. This is a giant string with the entire scrollback buffer plus screen concatenated with newlines for hard eol's.
+    NSMutableString* allText_;
+    // For accessibility. This is the indices at which newlines occur in allText_, ignoring multi-char compositing characters.
+    NSMutableArray* lineBreakIndexOffsets_;
+    // For accessibility. This is the actual indices at which newlines occcur in allText_.
+    NSMutableArray* lineBreakCharOffsets_;
 }
 
 + (NSCursor *)textViewCursor;
-+ (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(float)hspace verticalSpacing:(float)vspace;
++ (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(double)hspace verticalSpacing:(double)vspace;
 - (id)initWithFrame:(NSRect)aRect;
 - (void)dealloc;
 - (BOOL)becomeFirstResponder;
@@ -295,7 +302,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 //get/set methods
 - (NSFont *)font;
 - (NSFont *)nafont;
-- (void)setFont:(NSFont*)aFont nafont:(NSFont *)naFont horizontalSpacing:(float)horizontalSpacing verticalSpacing:(float)verticalSpacing;
+- (void)setFont:(NSFont*)aFont nafont:(NSFont *)naFont horizontalSpacing:(double)horizontalSpacing verticalSpacing:(double)verticalSpacing;
 - (NSRect)scrollViewContentSize;
 - (void)setAntiAlias:(BOOL)asciiAA nonAscii:(BOOL)nonAsciiAA;
 - (BOOL)useBoldFont;
@@ -330,7 +337,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (int)selectionEndY;
 - (void)setSelectionFromX:(int)fromX fromY:(int)fromY toX:(int)toX toY:(int)toY;
 
-- (float)excess;
+- (double)excess;
 
 
 - (NSDictionary*)markedTextAttributes;
@@ -340,10 +347,10 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)setDataSource:(id)aDataSource;
 - (id)delegate;
 - (void)setDelegate:(id)delegate;
-- (float)lineHeight;
-- (void)setLineHeight:(float)aLineHeight;
-- (float)charWidth;
-- (void)setCharWidth:(float)width;
+- (double)lineHeight;
+- (void)setLineHeight:(double)aLineHeight;
+- (double)charWidth;
+- (void)setCharWidth:(double)width;
 
 // Update the scroll position and schedule a redraw. Returns true if anything
 // onscreen is blinking.
@@ -357,15 +364,15 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)deselect;
 
 // transparency
-- (float)transparency;
-- (void)setTransparency:(float)fVal;
+- (double)transparency;
+- (void)setTransparency:(double)fVal;
 - (BOOL)useTransparency;
 
 - (void)setSmartCursorColor:(BOOL)value;
-- (void)setMinimumContrast:(float)value;
+- (void)setMinimumContrast:(double)value;
 
 // Dim all colors towards gray
-- (void)setDimmingAmount:(float)value;
+- (void)setDimmingAmount:(double)value;
 
 //
 // Drag and Drop methods for our text view
@@ -427,8 +434,8 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard;
 - (BOOL)findInProgress;
 - (BOOL)continueFind;
-- (float)horizontalSpacing;
-- (float)verticalSpacing;
+- (double)horizontalSpacing;
+- (double)verticalSpacing;
 
 // This textview is about to become invisible because another tab is selected.
 - (void)aboutToHide;
@@ -471,7 +478,7 @@ typedef enum {
     CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
 } PTYCharType;
 
-- (void)modifyFont:(NSFont*)font info:(PTYFontInfo*)fontInfo;
+- (void)modifyFont:(NSFont*)font baseline:(double)baseline info:(PTYFontInfo*)fontInfo;
 - (void)releaseFontInfo:(PTYFontInfo*)fontInfo;
 
 - (unsigned int) _checkForSupportedDragTypes:(id <NSDraggingInfo>) sender;
@@ -487,15 +494,15 @@ typedef enum {
 
 - (NSString *)_getURLForX:(int)x y:(int)y;
 // Returns true if any char in the line is blinking.
-- (BOOL)_drawLine:(int)line AtY:(float)curY toPoint:(NSPoint*)toPoint;
+- (BOOL)_drawLine:(int)line AtY:(double)curY toPoint:(NSPoint*)toPoint;
 - (void)_drawCursor;
 - (void)_drawCursorTo:(NSPoint*)toOrigin;
 - (void)_drawCharacter:(screen_char_t)screenChar
                fgColor:(int)fgColor
     alternateSemantics:(BOOL)fgAlt
                 fgBold:(BOOL)fgBold
-                   AtX:(float)X
-                     Y:(float)Y
+                   AtX:(double)X
+                     Y:(double)Y
            doubleWidth:(BOOL)double_width
          overrideColor:(NSColor*)overrideColor;
 
@@ -514,7 +521,7 @@ typedef enum {
 - (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent;
 - (BOOL)_isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old;
 - (void)_settingsChanged:(NSNotification *)notification;
-- (void)_modifyFont:(NSFont*)font into:(PTYFontInfo*)fontInfo;
+- (void)_modifyFont:(NSFont*)font baseline:(double)baseline into:(PTYFontInfo*)fontInfo;
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)complex
                        fgColor:(int)fgColor
@@ -536,14 +543,14 @@ typedef enum {
 - (void)invalidateInputMethodEditorRect;
 
 // Return the number of pixels tall to draw the cursor.
-- (float)cursorHeight;
+- (double)cursorHeight;
 
 // Draw the contents of the input method editor beginning at some location, 
 // usually the cursor position.
 // xStart, yStart: cell coordinates
 // width, height: cell width, height of screen
 // cursorHeight: cursor height in pixels
-- (BOOL)drawInputMethodEditorTextAt:(int)xStart y:(int)yStart width:(int)width height:(int)height cursorHeight:(float)cursorHeight;
+- (BOOL)drawInputMethodEditorTextAt:(int)xStart y:(int)yStart width:(int)width height:(int)height cursorHeight:(double)cursorHeight;
 
 - (BOOL)_wasAnyCharSelected;
 

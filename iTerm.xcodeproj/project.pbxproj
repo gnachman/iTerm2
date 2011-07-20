@@ -145,6 +145,12 @@
 		1D5FDDC61208E93600C46BA3 /* PSMTabDragWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F62D15F10AA64B2F0075A287 /* PSMTabDragWindow.m */; };
 		1D5FDDC71208E93600C46BA3 /* iTermGrowlDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */; };
 		1D5FDDC91208E93600C46BA3 /* LineBuffer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D72438C11F416E500BD4924 /* LineBuffer.m */; };
+		1D624BC81386E09E00111319 /* GTMCarbonEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D624BC71386E09E00111319 /* GTMCarbonEvent.m */; };
+		1D624BD91386E0B600111319 /* GTMCarbonEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BD81386E0B600111319 /* GTMCarbonEvent.h */; };
+		1D624BDD1386E0FA00111319 /* GTMDefines.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BDC1386E0FA00111319 /* GTMDefines.h */; };
+		1D624BEE1386E34F00111319 /* GTMObjectSingleton.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BED1386E34F00111319 /* GTMObjectSingleton.h */; };
+		1D624BF41386E39D00111319 /* GTMDebugSelectorValidation.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BF31386E39D00111319 /* GTMDebugSelectorValidation.h */; };
+		1D624BF61386E3B400111319 /* GTMTypeCasting.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BF51386E3B400111319 /* GTMTypeCasting.h */; };
 		1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB293D1288899A00B2CB9F /* Carbon.framework */; };
 		1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D6C4D59122329F000E0AA3E /* ColorPresets.plist */; };
 		1D6C50A71226EEFB00E0AA3E /* BookmarkListView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */; };
@@ -186,12 +192,15 @@
 		1DA02CFB1327612600D7E7DB /* bell.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA02CFA1327612600D7E7DB /* bell.png */; };
 		1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */; };
 		1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */; };
+		1DA8117E13CEA30A00CCA89A /* FontSizeEstimator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */; };
+		1DA8117F13CEA30A00CCA89A /* FontSizeEstimator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */; };
 		1DA9BD0D122F1077002FCC65 /* star-gold24.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA9BD0C122F1077002FCC65 /* star-gold24.png */; };
 		1DAED28812E9395E005E49ED /* GlobalSearch.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DAED28612E9395E005E49ED /* GlobalSearch.h */; };
 		1DAED28912E9395E005E49ED /* GlobalSearch.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DAED28712E9395E005E49ED /* GlobalSearch.m */; };
 		1DAED5B212ECC485005E49ED /* FakeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D173858126C820A004622DC /* FakeWindow.m */; };
 		1DAED99212EDF923005E49ED /* iTermSearchField.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DAED99012EDF923005E49ED /* iTermSearchField.h */; };
 		1DAED99312EDF923005E49ED /* iTermSearchField.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DAED99112EDF923005E49ED /* iTermSearchField.m */; };
+		1DB72CF61396059200EB1005 /* xterm-terminfo.txt in Resources */ = {isa = PBXBuildFile; fileRef = 1DB72CF51396059200EB1005 /* xterm-terminfo.txt */; };
 		1DC742A0127C96F90069594C /* IBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC7429F127C96F90069594C /* IBarCursor.png */; };
 		1DCA8BA9121A1B8000ABDEB5 /* PrefsAdvanced.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA3121A1B8000ABDEB5 /* PrefsAdvanced.tiff */; };
 		1DCA8BAA121A1B8000ABDEB5 /* PrefsBookmarks.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA4121A1B8000ABDEB5 /* PrefsBookmarks.tiff */; };
@@ -303,6 +312,12 @@
 		1D44218A1290B34500891504 /* TextViewWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextViewWrapper.h; sourceTree = "<group>"; };
 		1D44218B1290B34500891504 /* TextViewWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TextViewWrapper.m; sourceTree = "<group>"; };
 		1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultGlobalKeyMap.plist; sourceTree = "<group>"; };
+		1D624BC71386E09E00111319 /* GTMCarbonEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GTMCarbonEvent.m; sourceTree = "<group>"; };
+		1D624BD81386E0B600111319 /* GTMCarbonEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMCarbonEvent.h; sourceTree = "<group>"; };
+		1D624BDC1386E0FA00111319 /* GTMDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMDefines.h; sourceTree = "<group>"; };
+		1D624BED1386E34F00111319 /* GTMObjectSingleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMObjectSingleton.h; sourceTree = "<group>"; };
+		1D624BF31386E39D00111319 /* GTMDebugSelectorValidation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMDebugSelectorValidation.h; sourceTree = "<group>"; };
+		1D624BF51386E3B400111319 /* GTMTypeCasting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMTypeCasting.h; sourceTree = "<group>"; };
 		1D6C4D59122329F000E0AA3E /* ColorPresets.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ColorPresets.plist; sourceTree = "<group>"; };
 		1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkListView.h; sourceTree = "<group>"; };
 		1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarkListView.m; sourceTree = "<group>"; };
@@ -345,11 +360,14 @@
 		1DA02CFA1327612600D7E7DB /* bell.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = bell.png; path = images/bell.png; sourceTree = "<group>"; };
 		1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wrap_to_bottom.png; path = images/wrap_to_bottom.png; sourceTree = "<group>"; };
 		1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wrap_to_top.png; path = images/wrap_to_top.png; sourceTree = "<group>"; };
+		1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FontSizeEstimator.h; sourceTree = "<group>"; };
+		1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FontSizeEstimator.m; sourceTree = "<group>"; };
 		1DA9BD0C122F1077002FCC65 /* star-gold24.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "star-gold24.png"; path = "images/star-gold24.png"; sourceTree = "<group>"; };
 		1DAED28612E9395E005E49ED /* GlobalSearch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GlobalSearch.h; sourceTree = "<group>"; };
 		1DAED28712E9395E005E49ED /* GlobalSearch.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GlobalSearch.m; sourceTree = "<group>"; };
 		1DAED99012EDF923005E49ED /* iTermSearchField.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSearchField.h; sourceTree = "<group>"; };
 		1DAED99112EDF923005E49ED /* iTermSearchField.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSearchField.m; sourceTree = "<group>"; };
+		1DB72CF51396059200EB1005 /* xterm-terminfo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "xterm-terminfo.txt"; sourceTree = "<group>"; };
 		1DC7429F127C96F90069594C /* IBarCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = IBarCursor.png; path = images/IBarCursor.png; sourceTree = "<group>"; };
 		1DCA8BA3121A1B8000ABDEB5 /* PrefsAdvanced.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsAdvanced.tiff; path = images/PrefsAdvanced.tiff; sourceTree = "<group>"; };
 		1DCA8BA4121A1B8000ABDEB5 /* PrefsBookmarks.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsBookmarks.tiff; path = images/PrefsBookmarks.tiff; sourceTree = "<group>"; };
@@ -595,6 +613,8 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */,
+				1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */,
 				1DE214E0128212EE004E3ADF /* Autocomplete.m */,
 				1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */,
 				1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */,
@@ -609,6 +629,7 @@
 				1D237D27131D8741004DD60C /* FindView.m */,
 				1D237D93131D8D66004DD60C /* FindViewController.m */,
 				1DAED28712E9395E005E49ED /* GlobalSearch.m */,
+				1D624BC71386E09E00111319 /* GTMCarbonEvent.m */,
 				20E74F4904E9089700000106 /* ITAddressBookMgr.m */,
 				20B8892B04E9342100000106 /* ITViewLocalizer.m */,
 				DDF0FD64062916F70080EF74 /* iTermApplication.m */,
@@ -662,6 +683,11 @@
 				1D237D26131D8741004DD60C /* FindView.h */,
 				1D237D92131D8D66004DD60C /* FindViewController.h */,
 				1DAED28612E9395E005E49ED /* GlobalSearch.h */,
+				1D624BD81386E0B600111319 /* GTMCarbonEvent.h */,
+				1D624BF31386E39D00111319 /* GTMDebugSelectorValidation.h */,
+				1D624BDC1386E0FA00111319 /* GTMDefines.h */,
+				1D624BED1386E34F00111319 /* GTMObjectSingleton.h */,
+				1D624BF51386E3B400111319 /* GTMTypeCasting.h */,
 				872EBC6A04E42E320073D10E /* iTerm.h */,
 				DDF0FD63062916F70080EF74 /* iTermApplication.h */,
 				20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */,
@@ -783,6 +809,7 @@
 				1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */,
 				1DCA8BA3121A1B8000ABDEB5 /* PrefsAdvanced.tiff */,
 				1DCA8BA4121A1B8000ABDEB5 /* PrefsBookmarks.tiff */,
+				1DB72CF51396059200EB1005 /* xterm-terminfo.txt */,
 				1DCA8BA5121A1B8000ABDEB5 /* PrefsDisplay.tiff */,
 				1DCA8BA6121A1B8000ABDEB5 /* PrefsGeneral.tiff */,
 				1DCA8BA7121A1B8000ABDEB5 /* PrefsKeyboard.tiff */,
@@ -1071,6 +1098,12 @@
 				1D237D94131D8D66004DD60C /* FindViewController.h in Headers */,
 				1D06A052134CDBF800C414EF /* Trouter.h in Headers */,
 				1D988597135D23BD0072023F /* ProcessCache.h in Headers */,
+				1D624BD91386E0B600111319 /* GTMCarbonEvent.h in Headers */,
+				1D624BDD1386E0FA00111319 /* GTMDefines.h in Headers */,
+				1D624BEE1386E34F00111319 /* GTMObjectSingleton.h in Headers */,
+				1D624BF41386E39D00111319 /* GTMDebugSelectorValidation.h in Headers */,
+				1D624BF61386E3B400111319 /* GTMTypeCasting.h in Headers */,
+				1DA8117E13CEA30A00CCA89A /* FontSizeEstimator.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1144,6 +1177,7 @@
 			isa = PBXProject;
 			buildConfigurationList = BB024D39096EE4080021E793 /* Build configuration list for PBXProject "iTerm" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
 			knownRegions = (
 				English,
@@ -1242,6 +1276,7 @@
 				1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */,
 				1D1158CE13444D29009B366F /* iTerm2 Help in Resources */,
 				1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */,
+				1DB72CF61396059200EB1005 /* xterm-terminfo.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1348,6 +1383,8 @@
 				1D237D95131D8D66004DD60C /* FindViewController.m in Sources */,
 				1D06A050134CDBED00C414EF /* Trouter.m in Sources */,
 				1D988598135D23BD0072023F /* ProcessCache.m in Sources */,
+				1D624BC81386E09E00111319 /* GTMCarbonEvent.m in Sources */,
+				1DA8117F13CEA30A00CCA89A /* FontSizeEstimator.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

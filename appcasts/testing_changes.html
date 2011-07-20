@@ -1,4 +1,138 @@
-These release notes are for the development builds of iTerm2. If you want something stable, stick with the original iTerm until the first official release of iTerm2. Alpha 17 is known to be quite reliable, though.
+These release notes are for the development builds of iTerm2. Beta versions are very stable as we near release.
+
+iTerm2 1.0.0
+The first release is here!
+
+The only changes from Beta 4 are the version number and the removal of debug logging from the menu.
+
+Beta 4
+So bug-free it hurts.
+
+Enhancements:
+Add preset keymapping with Terminal.app-compatible alt-arrow keys. The default bookmark now uses this.
+Online help is now up to date.
+
+Bug fixes:
+- Fix crash when resizing window.
+- Fix Voiceover crash.
+- Fix crash when trying to move cursor below bottom of screen.
+- Fix crash when getpwuid fails.
+- Fix crash with input method editor and 0-width sessions.
+- Fix crash when you cmd-click in a window and no terminal is considered to be in front.
+- Fix crash when session ends while in instant replay.
+- Fix crash when closing a window in instant replay while another window has focus.
+- Fix a bug that cause find to go crazy and occasional blank lines not to be added to the scrollback buffer.
+- Fix a bug where clicking on a background window while paste history/autocomplete is open caused two terminals to think they had focus.
+- Fix a crash when quitting while paste history/autocomplete is open.
+- Fix a crash when closing a window with cmd-opt-w while paste history/autocomplete is open.
+- Fix a crash when double-clicking on a word (exact cause unknown)
+- Remove excessive logging around hotkey window.
+
+Beta 3
+Even more bug-free!
+
+Enhancements:
+- Add a hidden setting "GrowlOnForegroundTabs" to enable growl for foreground tabs as an accessibility improvement.
+- Add a hidden setting "MinRunningTime" that controls the safety valve on "Quit when all windows are closed" (for accessibility).
+
+Bug fixes:
+- Fix bug where tab bar disappears.
+- Preserve profile order in menus.
+- Don't change a session's size when a tab is dragged out of its window.
+- Allow key shortcuts that send text or move the cursor to work when focus is in the search field.
+- Fix bug where toolbar won't stay in text mode.
+- Speed up editing of a profile when there are many of them.
+- Fix bug where a fullscreen window won't open on screens besides the main screen.
+- Fix bug where screen and tmux don't log to scrollback buffer (when save lines to scrollback when an app status bar is present is on).
+- Fix crash in mouseUp:.
+- Respect clicks in tabs where the close button would be when it's hidden.
+- Fix a case where you get repeatedly asked about outdated profiles.
+- Improve accessibility for VoiceOver users.
+- Fix redraw bug when there's a status line.
+- Fix crash when pasting a huge amount of content.
+- Paste a little slower to avoid hitting a readline bug.
+- Fix bug where "dead keys" didn't work.
+- When splitting panes, use the most current version of the originating profile of the original pane.
+- Fix bug where install of xterm-256color terminfo when iTerm2 is installed in a path with a space would fail.
+- Fix how function keys with modifiers were transmitted.
+- Fix problem where iTerm2 would hang when OSC was sent without a terminating ^G.
+- Save lines to scrollback buffer when in alternate screen mode (to make tmux work).
+- Fix bug where very, very large scrollback buffers would cause crazy drawing problems.
+- Don't sort profiles in tag submenus; instead, respect their order in prefs.
+- Fix assertion crash in _findEntryBeforeOffset.
+
+
+Beta 2
+Amazingly bug-free!
+
+Enhancements:
+- For the first time in iTerm history, when nothing is happening, CPU usage is at 0%!
+- Allow substring searches of profiles. To use, start your search with *. For example, *x matches all tags and profile names containing the letter x.
+- Add preference to control whether lines are added to the scrollback buffer when a status line is visible.
+- Add preference to allow Hotkey Window to switch spaces when it closes but return focus to the correct terminal window.
+- Performance improvements for people with lots of profiles.
+
+Bug fixes:
+- Fix bug where spaces indicator hangs when you have a hotkey defined; also fixes compatibility with Synergy and various other programs.
+- Fixed bug in parsing 256-color control codes.
+- Fix bug with shift-click to extend a selection.
+- Prevent clicks that bring iTerm2 to the foreground from accidentally making a selection.
+- Change how job names are gotten to prevent terminal becoming non-responsive sometimes.
+- Improve growl behavior when a session ends.
+- Better support for ssh, ftp, and telnet scheme handlers.
+- Fix flickering of status bar when scrolling vim.
+- Allow instant replay memory usage to be set to 0.
+- Don't close hotkey window when prefs window opens.
+- Improve selection of dotted-words in smart selection and add semicolons to URL matching.
+- Improve URL parsing when a URL wraps around lines with a hard newline.
+- Fix param escaping in "search google" feature.
+- Handle changing the number of screens with fullscreen and top of screen windows.
+- Memory leak tied to keypresses fixed.
+- Improve wording in prefs dialog.
+- Improve visor behavior when switching to a terminal or profiles window.
+- Make fullscreen and scrollbars work under 10.7.
+- Fix crash when going to prev/next pane.
+- Fix crash when searching.
+- Allow cmd-click to open a file/url in an inactive tab.
+- Don't turn off transparency automatically when opening a fullscreen window.
+- Fix bug where zooming on a multi-screen system would cause the window to jump to a different screen.
+- Performance improvements for autocomplete.
+- Suppress growl messages when resizing a window with many tabs.
+- Fix use selection for find to work standardly.
+- Respect key bindings when focus is in a text field.
+- Hide hotkey window when clicking the dock icon.
+- Don't hide menu bar when fullscreen window is not on main screen.
+- Handle dragging tabs of all window types into a new window.
+- Make reuse tab's directory work when opening a new window, not just a new tab.
+- Hide hotkey window from expose.
+- Don't show menu bar when hotkey window is hidden if current term is fullscreen.
+- Allow cmd-w to close the about box.
+- Improve perceived brightness formula for contrast calculations.
+- Fix bug where bold fg was used to compute bg brightness. 
+- Fix bugs in computing smart cursor color.
+- Swap positions of OK and Cancel buttons in edit key bindings dialog.
+- Change default left option key behavior to normal to avoid confusing non-US keyboard users.
+- Don't hide menu bar when hidden hotkey window becomes key.
+- When clicking on a background window, don't report xterm mouse down.
+- Fix hang when you run an app that aborts and tries to fork gdb in error handler for stacktrace.
+- Update display immedately after Cmd-R or Cmd-K.
+- Swap find next and find prev behavior.
+- Don't save lines to scrollback buffer in alternate screen mode.
+- Escape more shell characters when dragging a file into a term.
+- Fix link to home page.
+- Removed unnecessary logging by Growl code.
+- Added assert statements.
+- Don't warn about outdated key mappings if modifying a global action and no profile has it.
+- Set ^T as status char in tty.
+- Keep window from resizing when you open a new tab and the existing tab has split panes.
+- Improve resizing behavior of screen contents.
+- Fix bug where window slowly grew when toggling fullscreen.
+- Fix bug where the wrong line was highlighted when doing a search while scrolling with a full buffer.
+- Fix crash where a session dies while in instant replay and then you close the window.
+- Fix bug where session size isn't restored properly when exiting instant replay.
+- Fix assertion in VT100Screen
+- Add default key mapping for ctrl-tab to send tab.
+
 
 Beta 1
 This release heralds a new age of stability. It also brings some notable UI improvements over the previous release.

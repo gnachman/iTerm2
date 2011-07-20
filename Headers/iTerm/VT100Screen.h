@@ -128,8 +128,7 @@ void StringToScreenChars(NSString *s,
     unsigned int  max_scrollback_lines;
     // This flag overrides max_scrollback_lines:
     BOOL unlimitedScrollback_;
-    // current number of lines in scrollback buffer (not including what is on screen)
-    unsigned int current_scrollback_lines;
+
     // how many scrollback lines have been lost due to overflow
     int scrollback_overflow;
     long long cumulative_scrollback_overflow;

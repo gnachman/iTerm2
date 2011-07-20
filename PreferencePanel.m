@@ -505,6 +505,16 @@ static float versionNumber;
     // Add presets to preset color selection.
     [self _rebuildColorPresetsMenu];
 
+    // Add preset keybindings to button-popup-list.
+    NSArray* presetArray = [iTermKeyBindingMgr presetKeyMappingsNames];
+    if (presetArray != nil) {
+        [presetsPopupButton addItemsWithTitles:presetArray];
+    } else {
+        [presetsPopupButton setEnabled:NO];
+        [presetsErrorLabel setFont:[NSFont boldSystemFontOfSize:12]];
+        [presetsErrorLabel setStringValue:@"PresetKeyMappings.plist failed to load"];
+    }
+
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(handleWindowWillCloseNotification:)
                                                  name:NSWindowWillCloseNotification object: [self window]];
@@ -871,7 +881,7 @@ static float versionNumber;
     defaultCmdSelection = [prefs objectForKey:@"CommandSelection"]?[[prefs objectForKey:@"CommandSelection"] boolValue]: YES;
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
     defaultMaxVertically = [prefs objectForKey:@"MaxVertically"] ? [[prefs objectForKey:@"MaxVertically"] boolValue] : NO;
-    defaultClosingHotkeySwitchesSpaces = [prefs objectForKey:@"ClosingHotkeySwitchesSpaces"] ? [[prefs objectForKey:@"ClosingHotkeySwitchesSpaces"] boolValue] : NO;
+    defaultClosingHotkeySwitchesSpaces = [prefs objectForKey:@"ClosingHotkeySwitchesSpaces"] ? [[prefs objectForKey:@"ClosingHotkeySwitchesSpaces"] boolValue] : YES;
     defaultUseCompactLabel = [prefs objectForKey:@"UseCompactLabel"]?[[prefs objectForKey:@"UseCompactLabel"] boolValue]: YES;
     defaultHighlightTabLabels = [prefs objectForKey:@"HighlightTabLabels"]?[[prefs objectForKey:@"HighlightTabLabels"] boolValue]: YES;
     defaultAdvancedFontRendering = [prefs objectForKey:@"HiddenAdvancedFontRendering"]?[[prefs objectForKey:@"HiddenAdvancedFontRendering"] boolValue] : NO;
@@ -2885,14 +2895,9 @@ static float versionNumber;
     [self settingChanged:nil];
 }
 
-- (IBAction)useXtermWithNumKeyMappings:(id)sender;
+- (IBAction)presetKeyMappingsItemSelected:(id)sender
 {
-    [self setKeyMappingsToPreset:@"xterm with Numeric Keypad"];
-}
-
-- (IBAction)useXtermKeyMappings:(id)sender
-{
-    [self setKeyMappingsToPreset:@"xterm Defaults"];
+    [self setKeyMappingsToPreset:[[sender selectedItem] title]];
 }
 
 - (IBAction)useFactoryGlobalKeyMappings:(id)sender
@@ -2974,12 +2979,16 @@ static float versionNumber;
     for (NSString* guid in [[BookmarkModel sharedInstance] guids]) {
         Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
         bookmark = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:bookmark];
-        [[BookmarkModel sharedInstance] setBookmark:bookmark withGuid:guid];
+        if (bookmark) {
+            [[BookmarkModel sharedInstance] setBookmark:bookmark withGuid:guid];
+        }
     }
     for (NSString* guid in [[BookmarkModel sessionsInstance] guids]) {
         Bookmark* bookmark = [[BookmarkModel sessionsInstance] bookmarkWithGuid:guid];
         bookmark = [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:bookmark];
-        [[BookmarkModel sessionsInstance] setBookmark:bookmark withGuid:guid];
+        if (bookmark) {
+            [[BookmarkModel sessionsInstance] setBookmark:bookmark withGuid:guid];
+        }
     }
     [iTermKeyBindingMgr removeMappingsReferencingGuid:badRef fromBookmark:nil];
     [[PreferencePanel sharedInstance]->keyMappings reloadData];

@@ -23,15 +23,27 @@
  */
 
 #import <Cocoa/Cocoa.h>
- 
+
 #define BMKEY_BOOKMARKS_ARRAY @"Bookmarks Array"
 
 typedef NSDictionary Bookmark;
+typedef struct {
+    SEL selector;                  // normal action
+    SEL alternateSelector;         // opt+click
+    SEL openAllSelector;           // open all bookmarks
+    SEL alternateOpenAllSelector;  // opt+open all bookmarks
+    id target;                     // receiver of selector
+} JournalParams;
 
 @interface BookmarkModel : NSObject {
     NSMutableArray* bookmarks_;
     NSString* defaultBookmarkGuid_;
+
+    // The journal is an array of actions since the last change notification was
+    // posted.
+    NSMutableArray* journal_;
     NSUserDefaults* prefs_;
+    BOOL postChanges_;              // should change notifications be posted?
 }
 
 + (BookmarkModel*)sharedInstance;
@@ -64,12 +76,47 @@ typedef NSDictionary Bookmark;
 - (Bookmark*)setObject:(id)object forKey:(NSString*)key inBookmark:(Bookmark*)bookmark;
 - (void)setDefaultByGuid:(NSString*)guid;
 - (void)moveGuid:(NSString*)guid toRow:(int)row;
+- (void)rebuildMenus;
 // Return the absolute index of a bookmark given its index with the filter applied.
 - (int)convertFilteredIndex:(int)theIndex withFilter:(NSString*)filter;
 - (void)dump;
 - (NSArray*)bookmarks;
 - (NSArray*)guids;
+- (void)addBookmark:(Bookmark*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params atPos:(int)pos;
 
 // Tell all listeners that the model has changed.
 - (void)postChangeNotification;
+
++ (void)applyJournal:(NSDictionary*)journal
+              toMenu:(NSMenu*)menu
+      startingAtItem:(int)skip
+              params:(JournalParams*)params;
+
++ (void)applyJournal:(NSDictionary*)journal
+              toMenu:(NSMenu*)menu
+              params:(JournalParams*)params;
+
+@end
+
+typedef enum {
+    JOURNAL_ADD,
+    JOURNAL_REMOVE,
+    JOURNAL_REMOVE_ALL,
+    JOURNAL_SET_DEFAULT
+} JournalAction;
+
+@interface BookmarkJournalEntry : NSObject {
+  @public
+    JournalAction action;
+    NSString* guid;
+    BookmarkModel* model;
+    // Tags before the action was applied.
+    NSArray* tags;
+    int index;  // Index of bookmark
+}
+
++ (BookmarkJournalEntry*)journalWithAction:(JournalAction)action
+                                  bookmark:(Bookmark*)bookmark
+                                     model:(BookmarkModel*)model;
+
 @end

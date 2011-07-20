@@ -34,6 +34,7 @@
 @class PTYTextView;
 @class ItermGrowlDelegate;
 @class PasteboardHistory;
+@class GTMCarbonHotKey;
 
 @interface iTermController : NSObject
 {
@@ -45,6 +46,9 @@
     // App-wide hotkey
     int hotkeyCode_;
     int hotkeyModifiers_;
+
+    GTMCarbonHotKey* carbonHotKey_;
+
     CFMachPortRef machPortRef;
     CFRunLoopSourceRef eventSrc;
     int keyWindowIndexMemo_;
@@ -91,7 +95,8 @@
 - (PseudoTerminal *)currentTerminal;
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
 - (NSArray*)sortedEncodingList;
-- (void)addBookmarksToMenu:(NSMenu *)aMenu target:(id)aTarget withShortcuts:(BOOL)withShortcuts selector:(SEL)selector openAllSelector:(SEL)openAllSelector alternateSelector:(SEL)alternateSeelctor;
+- (void)addBookmarksToMenu:(NSMenu *)aMenu startingAt:(int)startingAt;
+- (void)addBookmarksToMenu:(NSMenu *)aMenu withSelector:(SEL)selector openAllSelector:(SEL)openAllSelector startingAt:(int)startingAt;
 - (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm;
 - (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm withCommand:(NSString *)command;
 - (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm withURL:(NSString*)url;

@@ -379,7 +379,7 @@ setup_tty_param(
     term->c_cc[VDISCARD] = -1;
     term->c_cc[VMIN] = 1;
     term->c_cc[VTIME] = 0;
-    term->c_cc[VSTATUS] = -1;
+    term->c_cc[VSTATUS] = CTRLKEY('T');
 
     term->c_ispeed = B38400;
     term->c_ospeed = B38400;
@@ -404,7 +404,9 @@ setup_tty_param(
     fd = -1;
     tty = nil;
     logPath = nil;
-    logHandle = nil;
+    @synchronized(logHandle) {
+        logHandle = nil;
+    }
     hasOutput = NO;
 
     writeBuffer = [[NSMutableData alloc] init];
@@ -608,12 +610,12 @@ static void reapchild(int n)
     if ((written < 0) && (!(errno == EAGAIN || errno == EINTR))) {
         [self brokenPipe];
         return;
+    } else if (written > 0) {
+        // Shrink the writeBuffer
+        length = [writeBuffer length] - written;
+        memmove(ptr, ptr+written, length);
+        [writeBuffer setLength:length];
     }
-
-    // Shrink the writeBuffer
-    length = [writeBuffer length] - written;
-    memmove(ptr, ptr+written, length);
-    [writeBuffer setLength:length];
 
     // Clean up locks
     [writeLock unlock];
@@ -640,8 +642,10 @@ static void reapchild(int n)
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PTYTask readTask:%@]", __FILE__, __LINE__, data);
 #endif
-    if ([self logging]) {
-        [logHandle writeData:data];
+    @synchronized(logHandle) {
+        if ([self logging]) {
+            [logHandle writeData:data];
+        }
     }
 
     // forward the data to our delegate
@@ -740,35 +744,41 @@ static void reapchild(int n)
 
 - (BOOL)loggingStartWithPath:(NSString*)aPath
 {
-    [logPath autorelease];
-    logPath = [[aPath stringByStandardizingPath] copy];
+    @synchronized(logHandle) {
+        [logPath autorelease];
+        logPath = [[aPath stringByStandardizingPath] copy];
 
-    [logHandle autorelease];
-    logHandle = [NSFileHandle fileHandleForWritingAtPath:logPath];
-    if (logHandle == nil) {
-        NSFileManager* fm = [NSFileManager defaultManager];
-        [fm createFileAtPath:logPath contents:nil attributes:nil];
+        [logHandle autorelease];
         logHandle = [NSFileHandle fileHandleForWritingAtPath:logPath];
-    }
-    [logHandle retain];
-    [logHandle seekToEndOfFile];
+        if (logHandle == nil) {
+            NSFileManager* fm = [NSFileManager defaultManager];
+            [fm createFileAtPath:logPath contents:nil attributes:nil];
+            logHandle = [NSFileHandle fileHandleForWritingAtPath:logPath];
+        }
+        [logHandle retain];
+        [logHandle seekToEndOfFile];
 
-    return logHandle == nil ? NO : YES;
+        return logHandle == nil ? NO : YES;
+    }
 }
 
 - (void)loggingStop
 {
-    [logHandle closeFile];
+    @synchronized(logHandle) {
+        [logHandle closeFile];
 
-    [logPath autorelease];
-    [logHandle autorelease];
-    logPath = nil;
-    logHandle = nil;
+        [logPath autorelease];
+        [logHandle autorelease];
+        logPath = nil;
+        logHandle = nil;
+    }
 }
 
 - (BOOL)logging
 {
-    return logHandle == nil ? NO : YES;
+    @synchronized(logHandle) {
+        return logHandle == nil ? NO : YES;
+    }
 }
 
 - (NSString*)description
@@ -817,7 +827,7 @@ static void reapchild(int n)
 
         pid_t ppid = taskAllInfo.pbsd.pbi_ppid;
         if (ppid == parentPid) {
-#ifdef MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_5
+#if MAC_OS_X_VERSION_MIN_REQUIRED <= MAC_OS_X_VERSION_10_5
             long long birthday = taskAllInfo.pbsd.pbi_start.tv_sec * 1000000 + taskAllInfo.pbsd.pbi_start.tv_usec;
 #else
             long long birthday = taskAllInfo.pbsd.pbi_start_tvsec * 1000000 + taskAllInfo.pbsd.pbi_start_tvusec;  // 10.6 and up

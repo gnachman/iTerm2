@@ -1,14 +1,15 @@
+// -*- mode:objc -*-
 /*
- **  PTToolbarController.h
+ **  FontSizeEstimator.h
  **
- **  Copyright (c) 2002, 2003
+ **  Copyright (c) 2011
  **
- **  Author: Fabian, Ujwal S. Setlur
- **      Initial code by Kiichi Kusama
+ **  Author: George Nachman
  **
- **  Project: iTerm
+ **  Project: iTerm2
  **
- **  Description: manages an the toolbar.
+ **  Description: Attempts to measure font metrics because the OS's metrics
+ **    are sometimes unreliable.
  **
  **  This program is free software; you can redistribute it and/or modify
  **  it under the terms of the GNU General Public License as published by
@@ -25,24 +26,19 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+
 #import <Cocoa/Cocoa.h>
 
-extern NSString *NewToolbarItem;
-extern NSString *ABToolbarItem;
-extern NSString *CloseToolbarItem;
-extern NSString *ConfigToolbarItem;
-extern NSString *CommandToolbarItem;
 
-@class PseudoTerminal;
-
-@interface PTToolbarController : NSObject
-{
-    NSToolbar* _toolbar;
-    PseudoTerminal* _pseudoTerminal;
-    NSMenu* iconMenu_;
-    NSMenu* textMenu_;
+@interface FontSizeEstimator : NSObject {
+    NSSize osBound;
+    NSSize size;
+    double baseline;
 }
 
-- (id)initWithPseudoTerminal:(PseudoTerminal*)terminal;
+@property (nonatomic, assign) NSSize size;
+@property (nonatomic, assign) double baseline;
+
++ (id)fontSizeEstimatorForFont:(NSFont *)aFont;
 
 @end

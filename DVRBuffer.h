@@ -58,7 +58,7 @@ typedef enum {
 
     // Maps a frame key number to DVRIndexEntry*.
     NSMutableDictionary* index_;
-
+    
     // First key in index.
     long long firstKey_;
 
@@ -76,6 +76,9 @@ typedef enum {
 
     // Non-inclusive end of circular buffer's used regino.
     long long end_;
+
+    // this must always equal index_.
+    id sanityCheck;  // TODO(georgen): remove this after the source of corruption of index_ is found
 }
 
 - (id)initWithBufferCapacity:(long long)capacity;

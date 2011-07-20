@@ -25,13 +25,20 @@
 #import <iTerm/ITAddressBookMgr.h>
 #import <iTerm/BookmarkModel.h>
 
+id gAltOpenAllRepresentedObject;
 
 @implementation BookmarkModel
+
++ (void)initialize
+{
+    gAltOpenAllRepresentedObject = [[NSObject alloc] init];
+}
 
 - (BookmarkModel*)init
 {
     bookmarks_ = [[NSMutableArray alloc] init];
     defaultBookmarkGuid_ = @"";
+    journal_ = [[NSMutableArray alloc] init];
     return self;
 }
 
@@ -42,6 +49,7 @@
     if (!shared) {
         shared = [[BookmarkModel alloc] init];
         shared->prefs_ = [NSUserDefaults standardUserDefaults];
+        shared->postChanges_ = YES;
     }
 
     return shared;
@@ -54,6 +62,7 @@
     if (!shared) {
         shared = [[BookmarkModel alloc] init];
         shared->prefs_ = nil;
+        shared->postChanges_ = NO;
     }
 
     return shared;
@@ -62,6 +71,7 @@
 - (void)dealloc
 {
     [super dealloc];
+    [journal_ release];
     NSLog(@"Deallocating bookmark model!");
 }
 
@@ -203,6 +213,7 @@
 
     bookmark = [[newBookmark copy] autorelease];
 
+    int theIndex;
     if (sort) {
         // Insert alphabetically. Sort so that objects with the "bonjour" tag come after objects without.
         int insertionPoint = -1;
@@ -228,14 +239,23 @@
             }
         }
         if (insertionPoint == -1) {
+            theIndex = [bookmarks_ count];
             [bookmarks_ addObject:[NSDictionary dictionaryWithDictionary:bookmark]];
         } else {
+            theIndex = insertionPoint;
             [bookmarks_ insertObject:[NSDictionary dictionaryWithDictionary:bookmark] atIndex:insertionPoint];
         }
     } else {
+        theIndex = [bookmarks_ count];
         [bookmarks_ addObject:[NSDictionary dictionaryWithDictionary:bookmark]];
     }
     NSString* isDeprecatedDefaultBookmark = [bookmark objectForKey:KEY_DEFAULT_BOOKMARK];
+
+    // The call to setDefaultByGuid may add a journal entry so make sure this one comes first.
+    BookmarkJournalEntry* e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD bookmark:bookmark model:self];
+    e->index = theIndex;
+    [journal_ addObject:e];
+
     if (![self defaultBookmark] || (isDeprecatedDefaultBookmark && [isDeprecatedDefaultBookmark isEqualToString:@"Yes"])) {
         [self setDefaultByGuid:[bookmark objectForKey:KEY_GUID]];
     }
@@ -270,7 +290,8 @@
     for (int j = [sorted count] - 1; j >= 0; j--) {
         int i = [[sorted objectAtIndex:j] intValue];
         assert(i >= 0);
-        
+
+        [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
         [bookmarks_ removeObjectAtIndex:i];
         if (![self defaultBookmark] && [bookmarks_ count]) {
             [self setDefaultByGuid:[[bookmarks_ objectAtIndex:0] objectForKey:KEY_GUID]];
@@ -282,6 +303,7 @@
 - (void)removeBookmarkAtIndex:(int)i
 {
     assert(i >= 0);
+    [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
     [bookmarks_ removeObjectAtIndex:i];
     if (![self defaultBookmark] && [bookmarks_ count]) {
         [self setDefaultByGuid:[[bookmarks_ objectAtIndex:0] objectForKey:KEY_GUID]];
@@ -302,6 +324,23 @@
     }
 }
 
+// A change in bookmarks is journal-worthy only if the name, shortcut, tags, or guid changes.
+- (BOOL)bookmark:(Bookmark*)a differsJournalablyFrom:(Bookmark*)b
+{
+    // Any field that is shown in a view (profiles window, menus, bookmark list views, etc.) must
+    // be a criteria for journalability for it to be updated immediately.
+    if (![[a objectForKey:KEY_NAME] isEqualToString:[b objectForKey:KEY_NAME]] ||
+        ![[a objectForKey:KEY_SHORTCUT] isEqualToString:[b objectForKey:KEY_SHORTCUT]] ||
+        ![[a objectForKey:KEY_TAGS] isEqualToArray:[b objectForKey:KEY_TAGS]] ||
+        ![[a objectForKey:KEY_GUID] isEqualToString:[b objectForKey:KEY_GUID]] ||
+        ![[a objectForKey:KEY_COMMAND] isEqualToString:[b objectForKey:KEY_COMMAND]] ||
+        ![[a objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:[b objectForKey:KEY_CUSTOM_COMMAND]]) {
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
 - (void)setBookmark:(Bookmark*)bookmark atIndex:(int)i
 {
     Bookmark* orig = [bookmarks_ objectAtIndex:i];
@@ -309,11 +348,24 @@
     if ([[orig objectForKey:KEY_GUID] isEqualToString:defaultBookmarkGuid_]) {
         isDefault = YES;
     }
+
+    Bookmark* before = [bookmarks_ objectAtIndex:i];
+    BOOL needJournal = [self bookmark:bookmark differsJournalablyFrom:before];
+    if (needJournal) {
+        [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
+    }
     [bookmarks_ replaceObjectAtIndex:i withObject:bookmark];
+    if (needJournal) {
+        BookmarkJournalEntry* e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD bookmark:bookmark model:self];
+        e->index = i;
+        [journal_ addObject:e];
+    }
     if (isDefault) {
         [self setDefaultByGuid:[bookmark objectForKey:KEY_GUID]];
     }
-    [self postChangeNotification];
+    if (needJournal) {
+        [self postChangeNotification];
+    }
 }
 
 - (void)setBookmark:(Bookmark*)bookmark withGuid:(NSString*)guid
@@ -328,6 +380,7 @@
 {
     [bookmarks_ removeAllObjects];
     defaultBookmarkGuid_ = @"";
+    [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE_ALL bookmark:nil model:self]];
     [self postChangeNotification];
 }
 
@@ -455,6 +508,9 @@
     if (prefs_) {
         [prefs_ setObject:defaultBookmarkGuid_ forKey:KEY_DEFAULT_GUID];
     }
+    [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_SET_DEFAULT
+                                                       bookmark:[self defaultBookmark]
+                                                          model:self]];
     [self postChangeNotification];
 }
 
@@ -474,9 +530,27 @@
     [bookmark release];
 }
 
+- (void)rebuildMenus
+{
+    [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE_ALL bookmark:nil model:self]];
+    int i = 0;
+    for (Bookmark* b in bookmarks_) {
+        BookmarkJournalEntry* e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD bookmark:b model:self];
+        e->index = i++;
+        [journal_ addObject:e];
+    }
+    [self postChangeNotification];
+}
+
 - (void)postChangeNotification
 {
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermReloadAddressBook" object: nil userInfo: nil];
+    if (postChanges_) {
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermReloadAddressBook"
+                                                            object:nil
+                                                          userInfo:[NSDictionary dictionaryWithObject:journal_ forKey:@"array"]];
+    }
+    [journal_ release];
+    journal_ = [[NSMutableArray alloc] init];
 }
 
 - (void)dump
@@ -499,6 +573,276 @@
         [guids addObject:[bookmark objectForKey:KEY_GUID]];
     }
     return guids;
+}
+
++ (NSMenu*)findOrCreateTagSubmenuInMenu:(NSMenu*)menu startingAtItem:(int)skip withName:(NSString*)name params:(JournalParams*)params
+{
+    NSArray* items = [menu itemArray];
+    int pos = [menu numberOfItems];
+    int N = pos;
+    for (int i = skip; i < N; i++) {
+        NSMenuItem* cur = [items objectAtIndex:i];
+        if (![cur submenu] || [cur isSeparatorItem]) {
+            pos = i;
+            break;
+        }
+        int comp = [[cur title] caseInsensitiveCompare:name];
+        if (comp == 0) {
+            return [cur submenu];
+        } else if (comp > 0) {
+            pos = i;
+            break;
+        }
+    }
+
+    // Add menu item with submenu
+    NSMenuItem* newItem = [[NSMenuItem alloc] initWithTitle:name action:nil keyEquivalent:@""];
+    [newItem setSubmenu:[[NSMenu alloc] init]];
+    [menu insertItem:newItem atIndex:pos];
+
+    return [newItem submenu];
+}
+
++ (void)addOpenAllToMenu:(NSMenu*)menu params:(JournalParams*)params
+{
+    // Add separator + open all menu items
+    [menu addItem:[NSMenuItem separatorItem]];
+    NSMenuItem* openAll = [menu addItemWithTitle:@"Open All" action:params->openAllSelector keyEquivalent:@""];
+    [openAll setTarget:params->target];
+
+    // Add alternate open all menu
+    NSMenuItem* altOpenAll = [[NSMenuItem alloc] initWithTitle:@"Open All in New Window"
+                                                        action:params->alternateOpenAllSelector
+                                                 keyEquivalent:@""];
+    [altOpenAll setTarget:params->target];
+    [altOpenAll setKeyEquivalentModifierMask:NSAlternateKeyMask];
+    [altOpenAll setAlternate:YES];
+    [altOpenAll setRepresentedObject:gAltOpenAllRepresentedObject];
+    [menu addItem:altOpenAll];
+}
+
++ (BOOL)menuHasOpenAll:(NSMenu*)menu
+{
+    NSArray* items = [menu itemArray];
+    if ([items count] < 3) {
+        return NO;
+    }
+    int n = [items count];
+    return ([[items objectAtIndex:n-1] representedObject] == gAltOpenAllRepresentedObject);
+}
+
+- (int)positionOfBookmark:(Bookmark*)b startingAtItem:(int)skip inMenu:(NSMenu*)menu
+{
+    // Find position of bookmark in menu
+    NSString* name = [b objectForKey:KEY_NAME];
+    int N = [menu numberOfItems];
+    if ([BookmarkModel menuHasOpenAll:menu]) {
+        N -= 3;
+    }
+    NSArray* items = [menu itemArray];
+    int pos = N;
+    for (int i = skip; i < N; i++) {
+        NSMenuItem* cur = [items objectAtIndex:i];
+        if ([cur isSeparatorItem]) {
+            break;
+        }
+        if ([cur isHidden] || [cur submenu]) {
+            continue;
+        }
+        if ([[cur title] caseInsensitiveCompare:name] > 0) {
+            pos = i;
+            break;
+        }
+    }
+
+    return pos;
+}
+
+- (int)positionOfBookmarkWithIndex:(int)theIndex startingAtItem:(int)skip inMenu:(NSMenu*)menu
+{
+    // Find position of bookmark in menu
+    int N = [menu numberOfItems];
+    if ([BookmarkModel menuHasOpenAll:menu]) {
+        N -= 3;
+    }
+    NSArray* items = [menu itemArray];
+    int pos = N;
+    for (int i = skip; i < N; i++) {
+        NSMenuItem* cur = [items objectAtIndex:i];
+        if ([cur isSeparatorItem]) {
+            break;
+        }
+        if ([cur isHidden] || [cur submenu]) {
+            continue;
+        }
+        if ([cur tag] > theIndex) {
+            pos = i;
+            break;
+        }
+    }
+
+    return pos;
+}
+
+- (void)addBookmark:(Bookmark*)b
+             toMenu:(NSMenu*)menu
+         atPosition:(int)pos
+         withParams:(JournalParams*)params
+        isAlternate:(BOOL)isAlternate
+            withTag:(int)tag
+{
+    NSMenuItem* item = [[NSMenuItem alloc] initWithTitle:[b objectForKey:KEY_NAME]
+                                                  action:isAlternate ? params->alternateSelector : params->selector
+                                           keyEquivalent:@""];
+    NSString* shortcut = [b objectForKey:KEY_SHORTCUT];
+    if ([shortcut length]) {
+        [item setKeyEquivalent:[shortcut lowercaseString]];
+        [item setKeyEquivalentModifierMask:NSCommandKeyMask | NSControlKeyMask | (isAlternate ? NSAlternateKeyMask : 0)];
+    } else if (isAlternate) {
+        [item setKeyEquivalentModifierMask:NSAlternateKeyMask];
+    }
+    [item setAlternate:isAlternate];
+    [item setTarget:params->target];
+    [item setRepresentedObject:[[[b objectForKey:KEY_GUID] copy] autorelease]];
+    [item setTag:tag];
+    [menu insertItem:item atIndex:pos];
+}
+
+- (void)addBookmark:(Bookmark*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params atPos:(int)theIndex
+{
+    int pos;
+    if (theIndex == -1) {
+        // Add in sorted order
+        pos = [self positionOfBookmark:b startingAtItem:skip inMenu:menu];
+    } else {
+        pos = [self positionOfBookmarkWithIndex:theIndex startingAtItem:skip inMenu:menu];
+    }
+
+    if (![tags count]) {
+        // Add item & alternate if no tags
+        [self addBookmark:b toMenu:menu atPosition:pos withParams:params isAlternate:NO withTag:theIndex];
+        [self addBookmark:b toMenu:menu atPosition:pos+1 withParams:params isAlternate:YES withTag:theIndex];
+    }
+
+    // Add to tag submenus
+    for (NSString* tag in [NSSet setWithArray:tags]) {
+        NSMenu* tagSubMenu = [BookmarkModel findOrCreateTagSubmenuInMenu:menu
+                                                          startingAtItem:skip
+                                                                withName:tag
+                                                                  params:params];
+        [self addBookmark:b toMenu:tagSubMenu startingAtItem:0 withTags:nil params:params atPos:theIndex];
+    }
+
+    if ([menu numberOfItems] > skip + 2 && ![BookmarkModel menuHasOpenAll:menu]) {
+        [BookmarkModel addOpenAllToMenu:menu params:params];
+    }
+}
+
++ (void)applyAddJournalEntry:(BookmarkJournalEntry*)e toMenu:(NSMenu*)menu startingAtItem:(int)skip params:(JournalParams*)params
+{
+    BookmarkModel* model = e->model;
+    Bookmark* b = [model bookmarkWithGuid:e->guid];
+    if (!b) {
+        return;
+    }
+    [model addBookmark:b toMenu:menu startingAtItem:skip withTags:[b objectForKey:KEY_TAGS] params:params atPos:e->index];
+}
+
++ (void)applyRemoveJournalEntry:(BookmarkJournalEntry*)e toMenu:(NSMenu*)menu startingAtItem:(int)skip params:(JournalParams*)params
+{
+    int pos = [menu indexOfItemWithRepresentedObject:e->guid];
+    if (pos != -1) {
+        [menu removeItemAtIndex:pos];
+        [menu removeItemAtIndex:pos];
+    }
+
+    // Remove bookmark from each tag it belongs to
+    for (NSString* tag in e->tags) {
+        NSMenuItem* item = [menu itemWithTitle:tag];
+        NSMenu* submenu = [item submenu];
+        if (submenu) {
+            [BookmarkModel applyRemoveJournalEntry:e toMenu:submenu startingAtItem:0 params:params];
+            if ([submenu numberOfItems] == 0) {
+                [menu removeItem:item];
+            }
+        }
+    }
+
+    // Remove "open all" section if it's no longer needed.
+    // [0, ..., skip-1, bm1, bm1alt, separator, open all, open all alternate]
+    if (([BookmarkModel menuHasOpenAll:menu] && [menu numberOfItems] <= skip + 5)) {
+        [menu removeItemAtIndex:[menu numberOfItems] - 1];
+        [menu removeItemAtIndex:[menu numberOfItems] - 1];
+        [menu removeItemAtIndex:[menu numberOfItems] - 1];
+    }
+}
+
++ (void)applyRemoveAllJournalEntry:(BookmarkJournalEntry*)e toMenu:(NSMenu*)menu startingAtItem:(int)skip params:(JournalParams*)params
+{
+    while ([menu numberOfItems] > skip) {
+        [menu removeItemAtIndex:[menu numberOfItems] - 1];
+    }
+}
+
++ (void)applySetDefaultJournalEntry:(BookmarkJournalEntry*)e toMenu:(NSMenu*)menu startingAtItem:(int)skip params:(JournalParams*)params
+{
+}
+
++ (void)applyJournal:(NSDictionary*)journalDict toMenu:(NSMenu*)menu startingAtItem:(int)skip params:(JournalParams*)params
+{
+    NSArray* journal = [journalDict objectForKey:@"array"];
+    for (BookmarkJournalEntry* e in journal) {
+        switch (e->action) {
+            case JOURNAL_ADD:
+                [BookmarkModel applyAddJournalEntry:e toMenu:menu startingAtItem:skip params:params];
+                break;
+
+            case JOURNAL_REMOVE:
+                [BookmarkModel applyRemoveJournalEntry:e toMenu:menu startingAtItem:skip params:params];
+                break;
+
+            case JOURNAL_REMOVE_ALL:
+                [BookmarkModel applyRemoveAllJournalEntry:e toMenu:menu startingAtItem:skip params:params];
+                break;
+
+            case JOURNAL_SET_DEFAULT:
+                [BookmarkModel applySetDefaultJournalEntry:e toMenu:menu startingAtItem:skip params:params];
+                break;
+
+            default:
+                assert(false);
+        }
+    }
+}
+
++ (void)applyJournal:(NSDictionary*)journal toMenu:(NSMenu*)menu params:(JournalParams*)params
+{
+    [BookmarkModel applyJournal:journal toMenu:menu startingAtItem:0 params:params];
+}
+
+
+@end
+
+@implementation BookmarkJournalEntry
+
+
++ (BookmarkJournalEntry*)journalWithAction:(JournalAction)action
+                                  bookmark:(Bookmark*)bookmark
+                                     model:(BookmarkModel*)model
+{
+    BookmarkJournalEntry* entry = [[[BookmarkJournalEntry alloc] init] autorelease];
+    entry->action = action;
+    entry->guid = [[bookmark objectForKey:KEY_GUID] copy];
+    entry->model = model;
+    entry->tags = [[NSArray alloc] initWithArray:[bookmark objectForKey:KEY_TAGS]];
+    return entry;
+}
+
+- (void)dealloc
+{
+    [guid release];
+    [tags release];
+    [super dealloc];
 }
 
 @end

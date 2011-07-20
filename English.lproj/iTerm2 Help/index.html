@@ -22,8 +22,6 @@
    NOTE: WORK IN PROGRESS
    USE WITH CAUTION AND TEST WITH ABANDON */
 
-
-
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -107,6 +105,7 @@ pre, code, kbd, samp { font-family: monospace, sans-serif; }
  * )
  * should be in multiples of 18px.
  */
+
 
 body {
   background-color: #000;
@@ -508,7 +507,7 @@ html.no-js .back-to-top { float: right; }
 
 <p>If you hold shift while clicking the existing selection is extended.</p>
 
-<p>If you hold cmd and click on a URL it will be opened.</p>
+<p>If you hold cmd and click on a URL it will be opened. If you hold cmd and click on a filename, it will be opened. There is special support for Macvim, Textmate, and BBEdit when you cmd-click on a text file's name: if it is followed by a colon and line number, the file will be opened at that line number. The current directory is tracked if you have your shell prompt set the window title, <a href="http://www.faqs.org/docs/Linux-mini/Xterm-Title.html#toc4">as described here</a>. </p>
 
 <p>If you hold cmd you can drag and drop selected text.</p>
 
@@ -610,7 +609,7 @@ html.no-js .back-to-top { float: right; }
 
 <h4>Regular Expression Search</h4>
 
-<p>When you open the find field (cmd-f) there is a down arrow on the left of the field by the magnifying glass. Clicking it opens a menu of options in which you can enable regular expression search. The <a href="http://userguide.icu-project.org/strings/regexp#TOC-Regular-Expression-Metacharacters">ICU syntax</a> is used.</p>
+<p>When you open the find field (cmd-f) there is a down-arrow on the left of the field by the magnifying glass. Clicking it opens a menu of options in which you can enable regular expression search. The <a href="http://userguide.icu-project.org/strings/regexp#TOC-Regular-Expression-Metacharacters">ICU syntax</a> is used.</p>
 
 <p><br/>
 <br/></p>
@@ -631,7 +630,7 @@ html.no-js .back-to-top { float: right; }
 
 <h4>Instant Replay</h4>
 
-<p>Sometimes interactive programs will overwrite something of interest on the screen (for example, top(1) does this all the time). Normally, this would be lost forever. With Instant Replay, you can step back in time to see exactly what was on your screen at some point in the recent past. To enable, press cmd-opt-B. Once you are in instant replay mode, you can use the left and right arrow keys to navigate back and forward through time. Holding down shift while pressing the arrow keys moves through time at 15x speed.  Esc exits instant replay mode. By default, each session uses up to 4MB to save its instant replay history, and this can be adjusted under Preferences &gt; General &gt; Instant Replay uses __ MB per session.</p>
+<p>Sometimes interactive programs will overwrite something of interest on the screen (for example, top(1) does this all the time). Normally, this would be lost forever. With Instant Replay, you can step back in time to see exactly what was on your screen at some point in the recent past. To enable, press cmd-opt-B. Once you are in instant replay mode, you can use the left and right arrow keys to navigate back and forward through time. Esc exits instant replay mode. By default, each session uses up to 4MB to save its instant replay history, and this can be adjusted under Preferences &gt; General &gt; Instant Replay uses __ MB per session.</p>
 
 <p>Another benefit of Instant Replay is that it shows you the exact time that something appeared on your screen down to the second. This is useful when trying to figure out when an error occurred, for example.</p>
 
@@ -1039,6 +1038,7 @@ set t_Co=256
 <li>$$PASSWORD$$ The password portion of a url like scheme://user:password@host/</li>
 <li>$$PORT$$ The port number of a url like scheme://host:port/</li>
 <li>$$PATH$$ The path portion of a url like scheme://host/path</li>
+<li>$$RES$$ The portion of a url following the scheme.</li>
 </ul>
 
 <p><br/></p>
@@ -1171,6 +1171,82 @@ set t_Co=256
 
 <p><br/></p>
 
+<h3>Profiles &gt; Terminal</h3>
+
+<p><br/><br/></p>
+
+<h4>Automatically close a session when it ends</h4>
+
+<p>If selected, a session's pane, tab, or window will automatically close when the session ends.</p>
+
+<p><br/><br/></p>
+
+<h4>Silence bell</h4>
+
+<p>If selected, the bell (control-G) will not make an audible sound.</p>
+
+<p><br/><br/></p>
+
+<h4>Bell icon in tabs</h4>
+
+<p>If selected, tabs will indicate that a bell has rung by displaying a bell graphic.</p>
+
+<p><br/><br/></p>
+
+<h4>Visual bell</h4>
+
+<p>If selected, a bell graphic will be flashed when the bell character is received.</p>
+
+<p><br/><br/></p>
+
+<h4>Character encoding</h4>
+
+<p>The encoding to send and receive in. For most people, "Unicode (UTF-8)" is the right choice.</p>
+
+<p><br/><br/></p>
+
+<h4>Scrollback lines</h4>
+
+<p>The number of lines of scrollback buffer to keep above the visible part of the screen.</p>
+
+<p><br/><br/></p>
+
+<h4>Save lines to scrollback when an app status bar is present</h4>
+
+<p>Some programs (such as vim or tmux) keep a status bar at the bottom of the screen. For some applications (like vim) it is undesirable to save lines to the scrollback buffer when the application scrolls. For others (like tmux) you may want to save scrolled-off lines into the scrollback buffer. When this setting is enabled, lines scrolled off the top of the screen in the presence of a status bar are added to the scrollback buffer. The screen is considered to have a status bar if it has a scroll region whose top is the first line of the screen and whose bottom is above the bottom of the screen.</p>
+
+<p><br/><br/></p>
+
+<h4>Report terminal type</h4>
+
+<p>The TERM variable will be set to this value by default. If xterm-256color is selected and your system is missing the terminfo file, you will be prompted to install it when you open a new session.</p>
+
+<p><br/><br/></p>
+
+<h4>Enable xterm mouse reporting</h4>
+
+<p>If selected, applications may choose to receive information about the mouse. This can be temporarily disabled by holding down Option.</p>
+
+<p><br/><br/></p>
+
+<h4>Disable save/restore alternate screen</h4>
+
+<p>Some programs (such as vim, tmux, and less) switch into a so-called "alternate screen". A characteristic of this behavior is that when these programs terminate the screen's contents are restored to their state from before the program was run. If this option is selected, alternate screen mode is disabled and the screen cannot be restored by an application.</p>
+
+<p><br/><br/></p>
+
+<h4>When idle, send ASCII code</h4>
+
+<p>If selected, the specified ASCII code will be transmitted every 30 seconds while nothing is happening. Don't use this unless you know what you're doing as it can have unexpected consequences.</p>
+
+<p><br/><br/></p>
+
+<h4>Enable Growl notifications</h4>
+
+<p>If selected and Growl is installed, iTerm2 will post a Growl notification when sessions receive output, become idle, ring the bell, or close. </p>
+
+<p><br/></p>
+
 <h3>Profiles &gt; Keys</h3>
 
 <p>This panel shows key mappings. You can double-click on a mapping to edit it. When the "Keyboard Shortcut" field has focus, you should press the keystroke that you want to modify (even if it involves modifiers like Cmd). The following actions are available:</p>
@@ -1259,7 +1335,7 @@ set t_Co=256
 
 <p>This action allows you to enter the name of an iTerm2 menu item. It must be entered exactly the same as it appears in the menu. Ellipses can be typed with option-semicolon.</p>
 
-<p>You can add a new keymapping by pressing "+". You can remove an existing mapping by selecting it and pressing "-". Two presets are provided: "Xterm defaults" is the normal key mappings, while "Xterm defaults with numeric keypad" disables the "application keypad" in favor of the numbers and symbols that the numeric keypad typically emits.</p>
+<p>You can add a new keymapping by pressing "+". You can remove an existing mapping by selecting it and pressing "-". Three presets are provided: "Xterm defaults" is the normal key mappings, while "Xterm defaults with numeric keypad" disables the "application keypad" in favor of the numbers and symbols that the numeric keypad typically emits. "Terminal.app Compatability" tries to emulate the way that Terminal.app sends keys by default.</p>
 
 <p><br/><br/></p>
 
@@ -1353,6 +1429,28 @@ The default is to use google. You can set it to anything you want.</p>
 <pre>
     defaults write com.googlecode.iterm2 HotkeyTermAnimationDuration \
             -float 0.25
+</pre>
+
+<p>You can adjust the amount of dimming of split panes. Set the value to a floating-point number between 0 (no dimming) and 1 (complete dimming). The default is 0.15:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2 SplitPaneDimmingAmount \
+            -float 0.25
+</pre>
+
+<p>If you don't mind <strong>extreme slowness</strong> you can turn on adjustable font width:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2 HiddenAdvancedFontRendering -bool true
+    defaults write com.googlecode.iterm2 HiddenAFRStrokeThickness -float -0.1
+</pre>
+
+<p>The second parameter is a negative number, where values close to 0 are thin and very negative values are thick.</p>
+
+<p>If you'd like to receive Growl notifications for foreground tabs, which is useful as an accessibility feature, use this command:</p>
+
+<pre>
+    defaults write com.googlecode.iterm2 GrowlOnForegroundTabs -bool true
 </pre>
 
 <p><br/>
@@ -1564,15 +1662,13 @@ you input mult-bytes characters to tcsh, this patch may help you to edit the cha
 <p>There are people with hints on ways to customize the title bar and tabs, a
 much simpler way when using zsh is to do the following:</p>
 
-<pre><code>precmd () {
-  echo -n "\033]1;$USERNAME@$HOST^G\033]2;$PWD&gt;    - $USERNAME@$HOST
-  ($status)^G"
+<pre><code>bell=`tput bel`
+precmd () {
+ echo -n "\033]1;$USERNAME@$HOST$bell\033]2;$PWD&gt;    - $USERNAME@$HOST ($status)$bell"
 }
 PROMPT='%m %B%3c%(#.#.&gt;)%b '
 RPROMPT=''
 </code></pre>
-
-<p>(NOTE: <code>^G</code> is CTRL-G, you need to enter it using <code>^V^G</code>)</p>
 
 <p>Much simpler and does not require anything special. (apart from zsh)</p>
 
@@ -1622,8 +1718,8 @@ application... (added an alias run as well)</p>
 <p>Add this to your .vimrc to change cursor shape in insert mode:</p>
 
 <pre>
-let &t_SI = "\<Esc>]50;CursorShape=1\x7"
-let &t_EI = "\<Esc>]50;CursorShape=0\x7"
+let &t_SI = "\&lt;Esc&gt;]50;CursorShape=1\x7"
+let &t_EI = "\&lt;Esc&gt;]50;CursorShape=0\x7"
 </pre>
 
 <p>This is derived from <a href="http://vim.wikia.com/wiki/Change_cursor_shape_in_different_modes">Konsole</a>.</p>

@@ -249,6 +249,41 @@
 	<integer>0</integer>
 	<key>Keyboard Map</key>
 	<dict>
+	<key>0xf703-0x280000</key>
+	<dict>
+		<key>Action</key>
+		<integer>11</integer>
+		<key>Text</key>
+		<string>0x1b 0x1b 0x5b 0x43</string>
+	</dict>
+	<key>0xf702-0x280000</key>
+	<dict>
+		<key>Action</key>
+		<integer>11</integer>
+		<key>Text</key>
+		<string>0x1b 0x1b 0x5b 0x44</string>
+	</dict>
+	<key>0xf701-0x280000</key>
+	<dict>
+		<key>Action</key>
+		<integer>11</integer>
+		<key>Text</key>
+		<string>0x1b 0x1b 0x5b 0x42</string>
+	</dict>
+	<key>0xf700-0x280000</key>
+	<dict>
+		<key>Action</key>
+		<integer>11</integer>
+		<key>Text</key>
+		<string>0x1b 0x1b 0x5b 0x41</string>
+	</dict>
+        <key>0x9-0x40000</key>
+        <dict>
+            <key>Action</key>
+            <integer>11</integer>
+            <key>Text</key>
+            <string>9</string>
+        </dict>
         <key>0xf700-0x260000</key>
         <dict>
             <key>Action</key>

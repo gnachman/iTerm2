@@ -1,0 +1,9 @@
+#!/bin/bash
+echo 'Exhibit A: [36mfoo[0m Expected: cyan text from 16-bit palette'
+echo 'Exhibit B: [01;36mfoo[0m Expected: bold cyan text from 16-bit palette'
+echo 'Exhibit C: [38;05;50mfoo[0m Expected: cyan text from 256-bit palette'
+echo 'Exhibit D: [01;38;05;50mfoo[0m Expected: bold cyan text from 256-bit palette'
+
+echo 'Exhibit C: [48;05;50mfoo[0m Expected: cyan background from 256-bit palette'
+echo 'Exhibit D: [01;48;05;50mfoo[0m Expected: bold cyan background from 256-bit palette'
+

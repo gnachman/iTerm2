@@ -376,4 +376,9 @@ static const float FINDVIEW_DURATION = 0.075;
     delegate_ = delegate;
 }
 
+- (id<FindViewControllerDelegate>)delegate
+{
+    return delegate_;
+}
+
 @end

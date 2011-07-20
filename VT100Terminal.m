@@ -684,7 +684,8 @@ static VT100TCC decode_xterm(unsigned char *datap,
     datalen -= 2;
     *rmlen=2;
 
-    if (datalen>0 && isdigit(*datap)) {
+    if (datalen > 0 && isdigit(*datap)) {
+        // read an integer from datap and store it in mode.
         int n = *datap++ - '0';
         datalen--;
         (*rmlen)++;
@@ -695,30 +696,38 @@ static VT100TCC decode_xterm(unsigned char *datap,
             datap++;
             datalen--;
         }
-        mode=n;
+        mode = n;
     }
-    if (datalen>0) {
+    if (datalen > 0) {
         if (*datap != ';' && *datap != 'P') {
             unrecognized=YES;
-        }
-        else {
+        } else {
             if (*datap == 'P') {
                 mode = -1;
             }
-            BOOL str_end=NO;;
+            BOOL str_end = NO;
             c=s;
             datalen--;
             datap++;
             (*rmlen)++;
-            while (*datap!=0x007&&datalen>0) {
-                if (*datap==0x1b && datalen>2 && *(datap+1)=='\\') {
+            // Search for the end of a ^G/ST terminated string (but see the note below about other ways to terminate it).
+            while (*datap != 7 && datalen > 0) {
+                // Technically, only ^G or esc + \ ought to terminate a string. But sometimes an application is buggy and it forgets to terminate it.
+                // xterm has a very complicated state machine that determines when a string is terminated. Effectively, it allows you to terminate
+                // an OSC with ESC + anything except ], 0x9d, and 0xdd. Other bogus values may do strange things in xterm.
+                if (*datap == 0x1b &&  // 0x1b == ESC
+                    datalen > 2 &&
+                    (*(datap+1) != ']' &&
+                     *(datap+1) != 0x9d &&
+                     *(datap+1) != 0xdd)) {
+                    // Esc+backslash (called ST in the spec), or equivalent
                     datap++;
                     datalen--;
                     (*rmlen)++;
                     str_end=YES;
                     break;
                 }
-                if (c-s<MAX_BUFFER_LENGTH) {
+                if (c - s < MAX_BUFFER_LENGTH) {
                     *c=*datap;
                     c++;
                 }
@@ -726,7 +735,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
                 datap++;
                 (*rmlen)++;
             }
-            if ((*datap!=0x007 && !str_end) || datalen==0) {
+            if ((*datap != 0x007 && !str_end) || datalen==0) {
                 if (datalen>0) unrecognized=YES;
                 else {
                     *rmlen=0;
@@ -1823,10 +1832,6 @@ static VT100TCC decode_string(unsigned char *datap,
 - (NSData *)specialKey:(int)terminfo cursorMod:(char*)cursorMod cursorSet:(char*)cursorSet cursorReset:(char*)cursorReset modflag:(unsigned int)modflag
 {
     NSData* prefix = nil;
-    if (modflag & NSAlternateKeyMask) {
-        char esc = 27;
-        prefix = [NSData dataWithBytes:&esc length:1];
-    }
     NSData* theSuffix;
     if (key_strings[terminfo] && !allowKeypadMode) {
         theSuffix = [NSData dataWithBytes:key_strings[terminfo]
@@ -1834,14 +1839,21 @@ static VT100TCC decode_string(unsigned char *datap,
     } else {
         int mod=0;
         static char buf[20];
-
-        if ((modflag & NSControlKeyMask) && (modflag & NSShiftKeyMask)) {
-            mod = 6;
-        } else if (modflag & NSControlKeyMask) {
-            mod = 5;
-        } else if (modflag & NSShiftKeyMask) {
-            mod = 2;
+        static int modValues[] = {
+            0, 2, 5, 6, 9, 10, 13, 14
+        };
+        int theIndex = 0;
+        if (modflag & NSAlternateKeyMask) {
+            theIndex |= 4;
         }
+        if (modflag & NSControlKeyMask) {
+            theIndex |= 2;
+        }
+        if (modflag & NSShiftKeyMask) {
+            theIndex |= 1;
+        }
+        mod = modValues[theIndex];
+
         if (mod) {
             sprintf(buf, cursorMod, mod);
             theSuffix = [NSData dataWithBytes:buf length:strlen(buf)];

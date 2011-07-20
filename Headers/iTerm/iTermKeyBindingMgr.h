@@ -140,6 +140,14 @@
 // requested index.
 + (NSMutableDictionary*)removeMappingAtIndex:(int)rowIndex inDictionary:(NSDictionary*)dict;
 
+// load an xml plist with the given filename, and return it in dictionary
+// format.
++ (NSDictionary*)readPresetKeyMappingsFromPlist:(NSString *)thePlist;
+
+// Return an array containing the names of all the presets available in
+// the PresetKeyMapping.plist file
++ (NSArray*)presetKeyMappingsNames;
+
 // Load a set of preset keymappings from PresetKeyMappings.plist into the
 // specified bookmarks, removing all of its previous mappings.
 + (void)setKeyMappingsToPreset:(NSString*)presetName inBookmark:(NSMutableDictionary*)bookmark;
@@ -224,7 +232,9 @@
 + (BOOL)haveKeyMappingForKeyString:(NSString*)keyString inBookmark:(Bookmark*)bookmark;
 
 // Remove any keymappings that reference a guid from either a bookmark or the global
-// keymappings (if bookmark is nil).
+// keymappings (if bookmark is nil). If a bookmark is specified but no change is made then
+// it returns nil. If a bookmark is specified and changed, an autorelease copy of the modified
+// bookmark is returned.
 + (Bookmark*)removeMappingsReferencingGuid:(NSString*)guid fromBookmark:(Bookmark*)bookmark;
 
 @end
