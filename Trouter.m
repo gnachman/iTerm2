@@ -169,8 +169,11 @@
 
     // Resolve path by removing ./ and ../ etc
     path = [[url standardizedURL] path];
-
-    return path;
+    
+    if ([fileManager fileExistsAtPath:path])
+        return path;
+    
+    return NULL;
 }
 
 
