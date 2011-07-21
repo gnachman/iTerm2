@@ -38,8 +38,9 @@
     if (!self) {
         return nil;
     }
-    
+
     isFullScreen = [aTerm fullScreen];
+    isLionFullScreen = [[aTerm ptyWindow] isFullScreen];
     isMiniaturized = [[aTerm window] isMiniaturized];
     frame = [[aTerm window] frame];
     screen = [[aTerm window] screen];
@@ -109,6 +110,11 @@
 - (BOOL)fullScreen
 {
     return isFullScreen;
+}
+
+- (BOOL)anyFullScreen
+{
+    return isLionFullScreen || isFullScreen;
 }
 
 // TODO(georgen): disable send input to all sessions when you transition to

@@ -80,6 +80,15 @@ static NSInteger _compareEncodingByLocalizedName(id a, id b, void *unused)
     return [sa caseInsensitiveCompare: sb];
 }
 
+BOOL IsLionOrLater() {
+    unsigned major;
+    unsigned minor;
+    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
+        return (major == 10 && minor >= 7) || (major > 10);
+    } else {
+        return NO;
+    }
+}
 
 @implementation iTermController
 
@@ -102,6 +111,15 @@ static BOOL initDone = NO;
     shared = nil;
 }
 
+static BOOL IsSnowLeopardOrLater() {
+    unsigned major;
+    unsigned minor;
+    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
+        return (major == 10 && minor >= 6) || (major > 10);
+    } else {
+        return NO;
+    }
+}
 
 // init
 - (id)init
@@ -281,7 +299,8 @@ static BOOL initDone = NO;
 {
     NSMutableArray* result = [NSMutableArray arrayWithCapacity:0];
     for (PseudoTerminal* term in terminalWindows) {
-        if ([[term window] deepestScreen] == screen) {
+        if (![term isHotKeyWindow] &&
+            [[term window] deepestScreen] == screen) {
             [result addObject:term];
         }
     }
@@ -409,13 +428,22 @@ static BOOL initDone = NO;
 - (void)arrangeHorizontally
 {
     [iTermExpose exitIfActive];
-    
+
     // Un-full-screen each window. This is done in two steps because
     // toggleFullScreenMode deallocs self.
+    PseudoTerminal* waitFor = nil;
     for (PseudoTerminal* t in terminalWindows) {
-        if ([t fullScreen]) {
+        if ([t anyFullScreen]) {
+            if ([t lionFullScreen]) {
+                waitFor = t;
+            }
             [t toggleFullScreenMode:self];
         }
+    }
+
+    if (waitFor) {
+        [self performSelector:@selector(arrangeHorizontally) withObject:nil afterDelay:0.5];
+        return;
     }
 
     // For each screen, find the terminals in it and arrange them. This way
@@ -423,6 +451,9 @@ static BOOL initDone = NO;
     for (NSScreen* screen in [NSScreen screens]) {
         [self arrangeTerminals:[self _terminalsInScreen:screen]
                        inFrame:[screen visibleFrame]];
+    }
+    for (PseudoTerminal* t in terminalWindows) {
+        [[t window] orderFront:nil];
     }
 }
 
@@ -730,14 +761,15 @@ static BOOL initDone = NO;
                                                  windowType:[aDict objectForKey:KEY_WINDOW_TYPE] ? [[aDict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL
                                                      screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
         [self addInTerminals:term];
-        toggle = [term windowType] == WINDOW_TYPE_FULL_SCREEN;
+        toggle = ([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
+                 ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
     } else {
         term = theTerm;
     }
 
     PTYSession* session = [term addNewSession:aDict];
     if (toggle) {
-        [term toggleFullScreenMode:nil];
+        [term delayedEnterFullscreen];
     }
     // This function is activated from the dock icon's context menu so make sure
     // that the new window is on top of all other apps' windows. For some reason,
@@ -774,14 +806,15 @@ static BOOL initDone = NO;
                                                  windowType:[aDict objectForKey:KEY_WINDOW_TYPE] ? [[aDict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL
                                                      screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
         [self addInTerminals:term];
-        toggle = [term windowType] == WINDOW_TYPE_FULL_SCREEN;
+        toggle = (([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
+                  ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN));
     } else {
         term = theTerm;
     }
 
     id result = [term addNewSession:aDict withCommand:command asLoginSession:NO];
     if (toggle) {
-        [term toggleFullScreenMode:nil];
+        [term delayedEnterFullscreen];
     }
     return result;
 }
@@ -857,14 +890,15 @@ static BOOL initDone = NO;
                                                  windowType:[aDict objectForKey:KEY_WINDOW_TYPE] ? [[aDict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL
                                                      screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
         [self addInTerminals: term];
-        toggle = [term windowType] == WINDOW_TYPE_FULL_SCREEN;
+        toggle = (([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
+                  ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN));
     } else {
         term = theTerm;
     }
 
     id result = [term addNewSession: aDict withURL: url];
     if (toggle) {
-        [term toggleFullScreenMode:nil];
+        [term delayedEnterFullscreen];
     }
     return result;
 }
@@ -986,6 +1020,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
             [[[term window] animator] setAlphaValue:1];
             break;
 
+        case WINDOW_TYPE_LION_FULL_SCREEN:  // Shouldn't happen
         case WINDOW_TYPE_FULL_SCREEN:
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
             [[[term window] animator] setAlphaValue:1];
@@ -1044,18 +1079,8 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
             *bugFix = versionBugFix;
         }
     }
-    
-    return YES;
-}
 
-static BOOL IsSnowLeopardOrLater() {
-    unsigned major;
-    unsigned minor;
-    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
-        return (major == 10 && minor >= 6) || (major > 10);
-    } else {
-        return NO;
-    }
+    return YES;
 }
 
 static BOOL OpenHotkeyWindow()
@@ -1064,6 +1089,14 @@ static BOOL OpenHotkeyWindow()
     iTermController* cont = [iTermController sharedInstance];
     Bookmark* bookmark = [[PreferencePanel sharedInstance] hotkeyBookmark];
     if (bookmark) {
+        if ([[bookmark objectForKey:KEY_WINDOW_TYPE] intValue] == WINDOW_TYPE_LION_FULL_SCREEN) {
+            // Lion fullscreen doesn't make sense with hotkey windows. Change
+            // window type to traditional fullscreen.
+            NSMutableDictionary* replacement = [NSMutableDictionary dictionaryWithDictionary:bookmark];
+            [replacement setObject:[NSNumber numberWithInt:WINDOW_TYPE_FULL_SCREEN]
+                            forKey:KEY_WINDOW_TYPE];
+            bookmark = replacement;
+        }
         PTYSession* session = [cont launchBookmark:bookmark inTerminal:nil];
         PseudoTerminal* term = [[session tab] realParentWindow];
         [term setIsHotKeyWindow:YES];
@@ -1140,6 +1173,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
             [[[term window] animator] setAlphaValue:0];
             break;
 
+        case WINDOW_TYPE_LION_FULL_SCREEN:  // Shouldn't happen
         case WINDOW_TYPE_FULL_SCREEN:
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
             [[[term window] animator] setAlphaValue:0];
@@ -1274,6 +1308,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
                 [[term window] setFrame:rect display:YES];
                 break;
 
+            case WINDOW_TYPE_LION_FULL_SCREEN:  // Shouldn't happen.
             case WINDOW_TYPE_FULL_SCREEN:
                 [[term window] setAlphaValue:0];
                 break;

@@ -17,6 +17,7 @@
 
     // Saved state from old window.
     BOOL isFullScreen;
+    BOOL isLionFullScreen;
     BOOL isMiniaturized;
     NSRect frame;
     NSScreen* screen;
@@ -46,6 +47,7 @@
 
 - (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
 - (BOOL)fullScreen;
+- (BOOL)anyFullScreen;
 - (BOOL)sendInputToAllSessions;
 - (void)closeSession:(PTYSession*)aSession;
 - (IBAction)nextTab:(id)sender;

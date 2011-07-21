@@ -744,6 +744,7 @@ static void reapchild(int n)
 
 - (BOOL)loggingStartWithPath:(NSString*)aPath
 {
+    BOOL rc;
     @synchronized(logHandle) {
         [logPath autorelease];
         logPath = [[aPath stringByStandardizingPath] copy];
@@ -758,8 +759,9 @@ static void reapchild(int n)
         [logHandle retain];
         [logHandle seekToEndOfFile];
 
-        return logHandle == nil ? NO : YES;
+        rc = (logHandle == nil ? NO : YES);
     }
+    return rc;
 }
 
 - (void)loggingStop
@@ -776,9 +778,11 @@ static void reapchild(int n)
 
 - (BOOL)logging
 {
+    BOOL rc;
     @synchronized(logHandle) {
-        return logHandle == nil ? NO : YES;
+        rc = (logHandle == nil ? NO : YES);
     }
+    return rc;
 }
 
 - (NSString*)description

@@ -34,6 +34,7 @@
 
 - (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
 - (BOOL)fullScreen;
+- (BOOL)anyFullScreen;
 - (BOOL)sendInputToAllSessions;
 - (void)closeSession:(PTYSession*)aSession;
 - (IBAction)nextTab:(id)sender;

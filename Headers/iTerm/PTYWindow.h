@@ -7,7 +7,7 @@
  **  Copyright (c) 2002, 2003
  **
  **  Author: Fabian, Ujwal S. Setlur
- **	     Initial code by Kiichi Kusama
+ **      Initial code by Kiichi Kusama
  **
  **  Project: iTerm
  **
@@ -46,14 +46,17 @@
 
 @interface PTYWindow : NSWindow 
 {
-	int blurFilter;
-	BOOL layoutDone;
+    int blurFilter;
+    BOOL layoutDone;
+
+    // True if in OS 10.7 fullscreen mode.
+    BOOL isFullScreen_;
 }
 
-- initWithContentRect:(NSRect)contentRect 
-            styleMask:(NSUInteger)aStyle 
-	      backing:(NSBackingStoreType)bufferingType 
-		defer:(BOOL)flag;
+- initWithContentRect:(NSRect)contentRect
+            styleMask:(NSUInteger)aStyle
+              backing:(NSBackingStoreType)bufferingType
+                defer:(BOOL)flag;
 
 - (void)toggleToolbarShown:(id)sender;
 
@@ -64,6 +67,7 @@
 - (void)disableBlur;
 
 - (int)screenNumber;
+- (BOOL)isFullScreen;
 
 @end
 

@@ -1143,7 +1143,7 @@ static NSString* FormatRect(NSRect r) {
     size.width = [session columns] * [[session TEXTVIEW] charWidth] + MARGIN * 2;
     size.height = [session rows] * [[session TEXTVIEW] lineHeight] + VMARGIN * 2;
 
-    BOOL hasScrollbar = ![parentWindow_ fullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
+    BOOL hasScrollbar = ![parentWindow_ anyFullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
     NSSize scrollViewSize = [PTYScrollView frameSizeForContentSize:size
                                              hasHorizontalScroller:NO
                                                hasVerticalScroller:hasScrollbar
@@ -1158,7 +1158,7 @@ static NSString* FormatRect(NSRect r) {
     size.width = MIN_SESSION_COLUMNS * [[session TEXTVIEW] charWidth] + MARGIN * 2;
     size.height = MIN_SESSION_ROWS * [[session TEXTVIEW] lineHeight] + VMARGIN * 2;
 
-    BOOL hasScrollbar = ![parentWindow_ fullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
+    BOOL hasScrollbar = ![parentWindow_ anyFullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
     NSSize scrollViewSize = [PTYScrollView frameSizeForContentSize:size
                                              hasHorizontalScroller:NO
                                                hasVerticalScroller:hasScrollbar
@@ -1481,7 +1481,7 @@ static NSString* FormatRect(NSRect r) {
 {
     PtyLog(@"PTYTab fitSessionToCurrentViewSzie");
     PtyLog(@"fitSessionToCurrentViewSize begins");
-    BOOL hasScrollbar = ![parentWindow_ fullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
+    BOOL hasScrollbar = ![parentWindow_ anyFullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
     [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
     NSSize size = [[aSession SCROLLVIEW] documentVisibleRect].size;
     int width = (size.width - MARGIN*2) / [[aSession TEXTVIEW] charWidth];

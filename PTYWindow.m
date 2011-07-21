@@ -125,6 +125,21 @@
 #endif
 }
 
+- (void)toggleFullScreen:(id)sender
+{
+    isFullScreen_ = !isFullScreen_;
+
+    // This is a way of calling [super toggleFullScreen:] that doesn't give a warning if
+    // the method doesn't exist (it's new in 10.7) but we build against 10.5 sdk.
+    IMP functionPointer = [NSWindow instanceMethodForSelector:_cmd];
+    functionPointer(self, _cmd, sender);
+}
+
+- (BOOL)isFullScreen
+{
+    return isFullScreen_;
+}
+
 - (int)screenNumber
 {
     return [[[[self screen] deviceDescription] objectForKey:@"NSScreenNumber"] intValue];
