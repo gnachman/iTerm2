@@ -5887,7 +5887,7 @@ static bool IsUrlChar(NSString* str)
 
     static NSCharacterSet* urlChars;
     if (!urlChars) {
-        urlChars = [[NSCharacterSet characterSetWithCharactersInString:@".?/:;%=&_-,+~#@!*'()"] retain];
+        urlChars = [[NSCharacterSet characterSetWithCharactersInString:@" .?\\/:;%=&_-,+~#@!*'()"] retain];
     }
     return ([urlChars longCharacterIsMember:theChar] ||
             [[NSCharacterSet alphanumericCharacterSet] longCharacterIsMember:theChar]);
@@ -5899,11 +5899,12 @@ static bool IsUrlChar(NSString* str)
 {
     int w = [dataSource width];
     int h = [dataSource numberOfLines];
-    NSMutableString *url = [NSMutableString string];
+    NSMutableString *beforeString = [NSMutableString string];
+    NSMutableString *afterString = [NSMutableString string];
     NSString* theChar = [self _getCharacterAtX:x Y:y];
 
     if (!IsUrlChar(theChar)) {
-        return url;
+        return NULL;
     }
 
     // Look for a left and right edge bracketed by | characters
@@ -5938,13 +5939,13 @@ static bool IsUrlChar(NSString* str)
             NSString* curChar = [self _getCharacterAtX:xi Y:yi];
             if (!IsUrlChar(curChar)) {
                 // Found a non-url character so append the left part of the URL.
-                [url insertString:[self contentFromX:xi+1 Y:yi ToX:endx+1 Y:yi pad: YES]
+                [beforeString insertString:[self contentFromX:xi+1 Y:yi ToX:endx+1 Y:yi pad: YES]
                      atIndex:0];
                 break;
             }
             if (xi == leftx) {
                 // hit the start of the line
-                [url insertString:[self contentFromX:xi Y:yi ToX:endx+1 Y:yi pad: YES]
+                [beforeString insertString:[self contentFromX:xi Y:yi ToX:endx+1 Y:yi pad: YES]
                      atIndex:0];
                 // Try to wrap around to the previous line
                 if (yi == 0) {
@@ -5976,7 +5977,7 @@ static bool IsUrlChar(NSString* str)
             NSString* curChar = [self _getCharacterAtX:xi Y:yi];
             if (!IsUrlChar(curChar)) {
                 // Found something non-urly. Append what we have so far.
-                [url appendString:[self contentFromX:startx Y:yi ToX:xi Y:yi pad: YES]];
+                [afterString appendString:[self contentFromX:startx Y:yi ToX:xi Y:yi pad: YES]];
                 // skip backslahes that indicate wrapping
                 while (x <= rightx && [[self _getCharacterAtX:xi Y:yi] isEqualToString:@"\\"]) {
                     xi++;
@@ -5988,7 +5989,7 @@ static bool IsUrlChar(NSString* str)
                 // xi is left at rightx+1
             } else if (xi == rightx) {
                 // Made it to rightx.
-                [url appendString:[self contentFromX:startx Y:yi ToX:xi+1 Y:yi pad: YES]];
+                [afterString appendString:[self contentFromX:startx Y:yi ToX:xi+1 Y:yi pad: YES]];
             } else {
                 // Char is valid and xi < rightx.
                 continue;
@@ -6011,6 +6012,44 @@ static bool IsUrlChar(NSString* str)
             xi = startx = leftx;
         }
     }
+    
+    // Remove escaping slashes
+    [beforeString replaceOccurrencesOfRegex:@"\\\\" withString:@""];
+    [afterString replaceOccurrencesOfRegex:@"\\\\" withString:@""];
+    
+    NSMutableArray *beforeChunks = [[beforeString componentsSeparatedByRegex:@"( )"] mutableCopy];
+    NSMutableArray *afterChunks = [[afterString componentsSeparatedByRegex:@"( )"] mutableCopy];
+    
+    NSMutableString *url = NULL;
+    NSMutableString *left = [NSMutableString string];
+    
+    [beforeChunks addObject:@""]; // So there is an attempt with no left chunks
+    int limit = 100;
+    
+    for (int i=[beforeChunks count] - 1; i >= 0; i--) {
+        [left insertString:[beforeChunks objectAtIndex:i] atIndex:0];
+        NSMutableString *possiblePath = [NSMutableString stringWithString:left];
+        
+        if ([trouter getFullPath:possiblePath workingDirectory:[self getWorkingDirectoryAtLine:y] lineNumber:NULL]) {
+            url = possiblePath;
+            break;
+        }
+        for (int j=0; j<[afterChunks count]; j++) {
+            [possiblePath appendString:[afterChunks objectAtIndex:j]];
+             if ([trouter getFullPath:possiblePath workingDirectory:[self getWorkingDirectoryAtLine:y] lineNumber:NULL]) {
+                 url = possiblePath;
+                 i = 0; // GTFO outer loop
+                 break;
+             }
+            
+            if (--limit == 0) {
+                return NULL;
+            }
+        }
+    }
+
+    if (url == NULL)
+        return NULL;
 
     // Grab the addressbook command
     [url replaceOccurrencesOfString:@"\n"
@@ -6292,7 +6331,7 @@ static bool IsUrlChar(NSString* str)
             }
         }
     }
-
+    
     NSString* escapedString =
         (NSString *)CFURLCreateStringByAddingPercentEscapes(NULL,
                                                             (CFStringRef)trimmedURLString,
