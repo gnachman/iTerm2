@@ -180,6 +180,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* showWindowBorder;
     BOOL defaultShowWindowBorder;
 
+    // Lion-style fullscreen
+    IBOutlet NSButton* lionStyleFullscreen;
+    BOOL defaultLionStyleFullscreen;
+
     // hide scrollbar and resize
     IBOutlet NSButton *hideScrollbar;
     BOOL defaultHideScrollbar;
@@ -501,6 +505,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (NSTextField*)hotkeyField;
 
 - (BOOL)showWindowBorder;
+- (BOOL)lionStyleFullscreen;
 - (BOOL)dimInactiveSplitPanes;
 - (BOOL)checkTestRelease;
 - (BOOL)legacySmartCursorColor;

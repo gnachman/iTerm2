@@ -523,6 +523,14 @@ static float versionNumber;
     }
     [[tags cell] setDelegate:self];
     [tags setDelegate:self];
+
+    if (IsLionOrLater()) {
+        [spaceLabel setHidden:YES];
+        [spaceButton setHidden:YES];
+        [lionStyleFullscreen setHidden:NO];
+    } else {
+        [lionStyleFullscreen setHidden:YES];
+    }
 }
 
 - (void)handleWindowWillCloseNotification:(NSNotification *)notification
@@ -911,6 +919,7 @@ static float versionNumber;
     defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
     defaultDimInactiveSplitPanes = [prefs objectForKey:@"DimInactiveSplitPanes"]?[[prefs objectForKey:@"DimInactiveSplitPanes"] boolValue]: YES;
     defaultShowWindowBorder = [[prefs objectForKey:@"UseBorder"] boolValue];
+    defaultLionStyleFullscreen = [prefs objectForKey:@"UseLionStyleFullscreen"] ? [[prefs objectForKey:@"UseLionStyleFullscreen"] boolValue] : YES;
 
     defaultControl = [prefs objectForKey:@"Control"] ? [[prefs objectForKey:@"Control"] intValue] : MOD_TAG_CONTROL;
     defaultLeftOption = [prefs objectForKey:@"LeftOption"] ? [[prefs objectForKey:@"LeftOption"] intValue] : MOD_TAG_LEFT_OPTION;
@@ -1040,6 +1049,7 @@ static float versionNumber;
     [prefs setBool:defaultCheckTestRelease forKey:@"CheckTestRelease"];
     [prefs setBool:defaultDimInactiveSplitPanes forKey:@"DimInactiveSplitPanes"];
     [prefs setBool:defaultShowWindowBorder forKey:@"UseBorder"];
+    [prefs setBool:defaultLionStyleFullscreen forKey:@"UseLionStyleFullscreen"];
 
     [prefs setInteger:defaultControl forKey:@"Control"];
     [prefs setInteger:defaultLeftOption forKey:@"LeftOption"];
@@ -1132,6 +1142,7 @@ static float versionNumber;
     [checkTestRelease setState:defaultCheckTestRelease?NSOnState:NSOffState];
     [dimInactiveSplitPanes setState:defaultDimInactiveSplitPanes?NSOnState:NSOffState];
     [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
+    [lionStyleFullscreen setState:defaultLionStyleFullscreen?NSOnState:NSOffState];
 
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];
@@ -1235,7 +1246,9 @@ static float versionNumber;
 
 - (IBAction)settingChanged:(id)sender
 {
-    if (sender == windowStyle ||
+    if (sender == lionStyleFullscreen) {
+        defaultLionStyleFullscreen = ([lionStyleFullscreen state] == NSOnState);
+    } else if (sender == windowStyle ||
         sender == tabPosition ||
         sender == hideTab ||
         sender == useCompactLabel ||
@@ -1675,6 +1688,15 @@ static float versionNumber;
 - (BOOL)showWindowBorder
 {
     return defaultShowWindowBorder;
+}
+
+- (BOOL)lionStyleFullscreen
+{
+    if (IsLionOrLater()) {
+        return defaultLionStyleFullscreen;
+    } else {
+        return NO;
+    }
 }
 
 - (BOOL)checkTestRelease

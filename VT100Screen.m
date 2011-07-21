@@ -1429,7 +1429,7 @@ static char* FormatCont(int c)
     case XTERMCC_WINDOWSIZE:
         //NSLog(@"setting window size from (%d, %d) to (%d, %d)", WIDTH, HEIGHT, token.u.csi.p[1], token.u.csi.p[2]);
         if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] &&
-            ![[[SESSION tab] parentWindow] fullScreen]) {
+            ![[[SESSION tab] parentWindow] anyFullScreen]) {
             // set the column
             [[SESSION tab] sessionInitiatedResize:SESSION
                                             width:token.u.csi.p[2]
@@ -1439,7 +1439,7 @@ static char* FormatCont(int c)
         break;
     case XTERMCC_WINDOWSIZE_PIXEL:
         if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] &&
-            ![[[SESSION tab] parentWindow] fullScreen]) {
+            ![[[SESSION tab] parentWindow] anyFullScreen]) {
             // TODO: Only allow this if there is a single session in the tab.
             [[SESSION tab] sessionInitiatedResize:SESSION
                                             width:(token.u.csi.p[2] / [display charWidth])
@@ -1449,14 +1449,14 @@ static char* FormatCont(int c)
     case XTERMCC_WINDOWPOS:
         //NSLog(@"setting window position to Y=%d, X=%d", token.u.csi.p[1], token.u.csi.p[2]);
         if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] &&
-            ![[[SESSION tab] parentWindow] fullScreen])
+            ![[[SESSION tab] parentWindow] anyFullScreen])
             // TODO: Only allow this if there is a single session in the tab.
             [[[SESSION tab] parentWindow] windowSetFrameTopLeftPoint:NSMakePoint(token.u.csi.p[2],
                                                                                  [[[[SESSION tab] parentWindow] windowScreen] frame].size.height - token.u.csi.p[1])];
         break;
     case XTERMCC_ICONIFY:
         // TODO: Only allow this if there is a single session in the tab.
-        if (![[[SESSION tab] parentWindow] fullScreen])
+        if (![[[SESSION tab] parentWindow] anyFullScreen])
             [[[SESSION tab] parentWindow] windowPerformMiniaturize:nil];
         break;
     case XTERMCC_DEICONIFY:
@@ -1469,7 +1469,7 @@ static char* FormatCont(int c)
         break;
     case XTERMCC_LOWER:
         // TODO: Only allow this if there is a single session in the tab.
-        if (![[[SESSION tab] parentWindow] fullScreen])
+        if (![[[SESSION tab] parentWindow] anyFullScreen])
             [[[SESSION tab] parentWindow] windowOrderBack: nil];
         break;
     case XTERMCC_SU:
@@ -3225,7 +3225,6 @@ void DumpBuf(screen_char_t* p, int n) {
                               maxTime:(float)maxTime
                               toArray:(NSMutableArray*)results
 {
-    int startY, endY;
     // Append the screen contents to the scrollback buffer so they are included in the search.
     int linesPushed;
     linesPushed = [self _appendScreenToScrollback:[self _usedHeight]];
@@ -3251,7 +3250,6 @@ void DumpBuf(screen_char_t* p, int n) {
         }
 
         // Handle the current state
-        BOOL isOk;
         switch (context->status) {
             case Matched: {
                 // NSLog(@"matched");

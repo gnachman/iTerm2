@@ -208,13 +208,13 @@ NSString *CommandToolbarItem = @"Command";
 #endif
 
     [_toolbar setDisplayMode:NSToolbarDisplayModeDefault];
-    [_toolbar insertItemWithItemIdentifier: NewToolbarItem atIndex:0];
-    [_toolbar insertItemWithItemIdentifier: ConfigToolbarItem atIndex:1];
-    [_toolbar insertItemWithItemIdentifier: NSToolbarFlexibleSpaceItemIdentifier atIndex:2];
-    [_toolbar insertItemWithItemIdentifier: NSToolbarCustomizeToolbarItemIdentifier atIndex:3];
-    [_toolbar insertItemWithItemIdentifier: NSToolbarSeparatorItemIdentifier atIndex:4];
-    [_toolbar insertItemWithItemIdentifier: CommandToolbarItem atIndex:5];
-    [_toolbar insertItemWithItemIdentifier: CloseToolbarItem atIndex:6];
+    [_toolbar insertItemWithItemIdentifier: NewToolbarItem atIndex:[[_toolbar items] count]];
+    [_toolbar insertItemWithItemIdentifier: ConfigToolbarItem atIndex:[[_toolbar items] count]];
+    [_toolbar insertItemWithItemIdentifier: NSToolbarFlexibleSpaceItemIdentifier atIndex:[[_toolbar items] count]];
+    [_toolbar insertItemWithItemIdentifier: NSToolbarCustomizeToolbarItemIdentifier atIndex:[[_toolbar items] count]];
+    [_toolbar insertItemWithItemIdentifier: NSToolbarSeparatorItemIdentifier atIndex:[[_toolbar items] count]];
+    [_toolbar insertItemWithItemIdentifier: CommandToolbarItem atIndex:[[_toolbar items] count]];
+    [_toolbar insertItemWithItemIdentifier: CloseToolbarItem atIndex:[[_toolbar items] count]];
 
     [[_pseudoTerminal window] setToolbar:_toolbar];
 
