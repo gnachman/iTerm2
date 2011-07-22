@@ -1556,22 +1556,18 @@ NSString *sessionsKey = @"sessions";
     BOOL verticalOnly = NO;
 
     BOOL maxVerticallyPref;
-    if ([self lionFullScreen] ||
-        (windowType_ != WINDOW_TYPE_FULL_SCREEN &&
-         IsLionOrLater() &&
-         [[PreferencePanel sharedInstance] lionStyleFullscreen])) {
+    if ([[self ptyWindow] isTogglingLionFullScreen]) {
         // Going into lion fullscreen mode. Disregard the "maximize vertically"
-        // preference (though it can still be overridden with the shift key,
-        // below.
-        maxVerticallyPref = NO;
+        // preference.
+        verticalOnly = NO;
     } else {
         maxVerticallyPref = [[PreferencePanel sharedInstance] maxVertically];
+        if (maxVerticallyPref ^
+            (([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask) != 0)) {
+            verticalOnly = YES;
+        }
     }
 
-    if (maxVerticallyPref ^
-        (([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask) != 0)) {
-        verticalOnly = YES;
-    }
     if (verticalOnly) {
         // Keep the width the same
         proposedFrame.size.width = [sender frame].size.width;

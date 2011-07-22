@@ -51,6 +51,9 @@
 
     // True if in OS 10.7 fullscreen mode.
     BOOL isFullScreen_;
+
+    // True while in -[NSWindow toggleFullScreen:].
+    BOOL isTogglingLionFullScreen_;
 }
 
 - initWithContentRect:(NSRect)contentRect
