@@ -17,5 +17,6 @@ sed -e "s/%NAME%/${NAME}/" | \
 sed -e "s/%LENGTH%/$LENGTH/" |
 sed -e "s,%SIG%,${SIG}," > ../../appcasts/testing.xml
 echo "Go upload the iTerm2-${NAME}.zip, then run:"
-echo "svn commit -m $NAME"
-echo "cd .. && trunk/release2.sh $NAME"
+echo "git tag v${VERSION}"
+echo "git push --tags"
+echo "svn commit -m ${VERSION} appcasts/testing.xml appcasts/testing_changes.html"
