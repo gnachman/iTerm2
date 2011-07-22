@@ -525,8 +525,6 @@ static float versionNumber;
     [tags setDelegate:self];
 
     if (IsLionOrLater()) {
-        [spaceLabel setHidden:YES];
-        [spaceButton setHidden:YES];
         [lionStyleFullscreen setHidden:NO];
     } else {
         [lionStyleFullscreen setHidden:YES];
