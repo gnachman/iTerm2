@@ -5985,6 +5985,8 @@ static bool IsUrlChar(NSString* str)
                     // before rightx there was something besides \s
                     break;
                 }
+                // Don't respect hard newlines that are "escaped" by a \.
+                respectHardNewlines = NO;
                 // xi is left at rightx+1
             } else if (xi == rightx) {
                 // Made it to rightx.
