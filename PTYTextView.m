@@ -66,6 +66,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 // Minimum distance that the mouse must move before a cmd+drag will be
 // recognized as a drag.
 static const int kDragThreshold = 3;
+static const double kBackgroundConsideredDarkThreshold = 0.5;
 
 // When drawing lines, we use this structure to represent a run of cells  of
 // the same font, color, and attributes.
@@ -112,6 +113,10 @@ static NSCursor* textViewCursor =  nil;
 static NSImage* bellImage = nil;
 static NSImage* wrapToTopImage = nil;
 static NSImage* wrapToBottomImage = nil;
+
+static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
+    return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
+}
 
 @interface Coord : NSObject
 {
@@ -425,6 +430,9 @@ static NSImage* wrapToBottomImage = nil;
     [defaultBGColor release];
     [color retain];
     defaultBGColor = color;
+    PTYScroller *scroller = (PTYScroller*)[[[dataSource session] SCROLLVIEW] verticalScroller];
+    BOOL isDark = ([self _perceivedBrightness:color] < kBackgroundConsideredDarkThreshold);
+    [scroller setHasDarkBackground:isDark];
     [self setNeedsDisplay:YES];
 }
 
@@ -4475,10 +4483,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                             currentRun->numCodes);
     }
     return newRuns;
-}
-
-static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
-    return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
 }
 
 - (double)_perceivedBrightness:(NSColor*) c

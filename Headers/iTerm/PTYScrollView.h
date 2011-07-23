@@ -33,6 +33,9 @@
 {
     BOOL userScroll;
 }
+
+@property (nonatomic, assign) BOOL hasDarkBackground;
+
 + (BOOL)isCompatibleWithOverlayScrollers;
 - (id)init;
 - (void) mouseDown: (NSEvent *)theEvent;
