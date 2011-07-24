@@ -155,6 +155,11 @@
     if (!path || [path length] == 0) {
         return nil;
     }
+
+    // strip any trailing parenthesis
+    path = [path stringByReplacingOccurrencesOfRegex:@"[)]$"
+                                          withString:@""];
+
     if (lineNumber != nil) {
         *lineNumber = [path stringByMatching:@":(\\d+)" capture:1];
     }
