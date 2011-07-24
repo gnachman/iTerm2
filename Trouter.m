@@ -158,9 +158,9 @@
     if (lineNumber != nil) {
         *lineNumber = [path stringByMatching:@":(\\d+)" capture:1];
     }
-    path = [path stringByReplacingOccurrencesOfRegex:@":\\d+(?::.*)?$"
-                                          withString:@""];
-
+    path = [[path stringByReplacingOccurrencesOfRegex:@":\\d+(?::.*)?$"
+                                           withString:@""]
+               stringByExpandingTildeInPath];
     if ([path rangeOfRegex:@"^/"].location == NSNotFound) {
         path = [NSString stringWithFormat:@"%@/%@", workingDirectory, path];
     }
