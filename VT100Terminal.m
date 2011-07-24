@@ -2618,23 +2618,30 @@ static VT100TCC decode_string(unsigned char *datap,
                                               color:[NSColor colorWithCalibratedRed:r/256.0 green:g/256.0 blue:b/256.0 alpha:1]];
         }
     } else if (token.type == XTERMCC_SET_KVP) {
-      // argument is of the form key=value
-      // key: Sequence of characters not = or ^G
-      // value: Sequence of characters not ^G
-      NSString* argument = token.u.string;
-      NSRange eqRange = [argument rangeOfString:@"="];
-      if (eqRange.location != NSNotFound) {
-        NSString* key = [argument substringToIndex:eqRange.location];
-        NSString* value = [argument substringFromIndex:eqRange.location+1];
-        if ([key isEqualToString:@"CursorShape"]) {
-          // Value must be an integer. Bogusly, non-numbers are treated as 0.
-          int shape = [value intValue];
-          int shapeMap[] = { CURSOR_BOX, CURSOR_VERTICAL, CURSOR_UNDERLINE };
-          if (shape >= 0 && shape < sizeof(shapeMap)/sizeof(int)) {
-            [[[SCREEN session] TEXTVIEW] setCursorType:shapeMap[shape]];
-          }
+        // argument is of the form key=value
+        // key: Sequence of characters not = or ^G
+        // value: Sequence of characters not ^G
+        NSString* argument = token.u.string;
+        NSRange eqRange = [argument rangeOfString:@"="];
+        NSString* key;
+        NSString* value;
+        if (eqRange.location != NSNotFound) {
+            key = [argument substringToIndex:eqRange.location];;
+            value = [argument substringFromIndex:eqRange.location+1];
+        } else {
+            key = argument;
+            value = @"";
         }
-      }
+        if ([key isEqualToString:@"CursorShape"]) {
+            // Value must be an integer. Bogusly, non-numbers are treated as 0.
+            int shape = [value intValue];
+            int shapeMap[] = { CURSOR_BOX, CURSOR_VERTICAL, CURSOR_UNDERLINE };
+            if (shape >= 0 && shape < sizeof(shapeMap)/sizeof(int)) {
+                [[[SCREEN session] TEXTVIEW] setCursorType:shapeMap[shape]];
+            }
+        } else if ([key isEqualToString:@"SetMark"]) {
+            [[SCREEN session] saveScrollPosition];
+        }
     } else if (token.type == XTERMCC_SET_PALETTE) {
         NSString* argument = token.u.string;
         if ([argument length] == 7) {
