@@ -31,10 +31,11 @@
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
 
-#import <iTerm/iTerm.h>
+#import "iTerm.h"
 #import <iTerm/PTYScrollView.h>
 #import <iTerm/PTYTextView.h>
 #import <PreferencePanel.h>
+#include "NSImage+CoreImage.h"
 #import <Cocoa/Cocoa.h>
 
 @implementation PTYScroller

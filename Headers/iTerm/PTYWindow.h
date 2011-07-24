@@ -71,6 +71,7 @@
 
 - (int)screenNumber;
 - (BOOL)isFullScreen;
+- (BOOL)isTogglingLionFullScreen;
 
 @end
 

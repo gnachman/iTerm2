@@ -32,6 +32,7 @@
 @interface PTYScroller : NSScroller
 {
     BOOL userScroll;
+    BOOL hasDarkBackground;
 }
 
 @property (nonatomic, assign) BOOL hasDarkBackground;

@@ -29,11 +29,14 @@
 #define _ITERM_H_
 
 #import "AvailabilityMacros.h"
+#import <Foundation/Foundation.h>
 
 #define NSLogRect(aRect)	NSLog(@"Rect = %f,%f,%f,%f", (aRect).origin.x, (aRect).origin.y, (aRect).size.width, (aRect).size.height)
 
 #define OSX_TIGERORLATER (floor(NSAppKitVersionNumber) > 743)
 #define OSX_LEOPARDORLATER (floor(NSAppKitVersionNumber) > 824)
+
+BOOL IsLionOrLater();
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
 static const int NSWindowCollectionBehaviorFullScreenPrimary = 1 << 7;
