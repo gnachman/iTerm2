@@ -176,7 +176,7 @@
 	<key>SUPublicDSAKeyFile</key>
 	<string>dsa_pub.pem</string>
 	<key>SUFeedURLForTesting</key>
-	<string>http://iterm2.googlecode.com/svn/trunk/appcasts/testing.xml</string>
+	<string>http://iterm2.googlecode.com/svn/trunk/appcasts/canary.xml</string>
 	<key>SUFeedURLForFinal</key>
 	<string>http://iterm2.googlecode.com/svn/trunk/appcasts/final.xml</string>
 </dict>
