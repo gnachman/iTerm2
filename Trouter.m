@@ -194,7 +194,7 @@
                   lineNumber:&lineNumber];
 
     // if path doesn't exist and it starts with "a/" or "b/" (from `diff`)
-    if (![fileManager fileExistsAtPath:path] && [orgPath isMatchedByRegex:@"^[ab]/"]) {
+    if (path == NULL || [orgPath isMatchedByRegex:@"^[ab]/"]) {
         // strip the prefix off ...
         path = [orgPath stringByReplacingOccurrencesOfRegex:@"^[ab]/"
                                                  withString:@""];
