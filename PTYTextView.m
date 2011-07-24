@@ -3303,16 +3303,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (dragOperation == NSDragOperationCopy) {
             NSArray *types = [pb types];
 
-            if ([types containsObject:NSStringPboardType]) {
-                aString = [pb stringForType:NSStringPboardType];
-                if (aString != nil) {
-                    if ([delegate respondsToSelector:@selector(pasteString:)]) {
-                        [delegate pasteString: aString];
-                        res = YES;
-                    }
-                }
-            }
-            if (!res && [types containsObject:NSFilenamesPboardType]) {
+            if ([types containsObject:NSFilenamesPboardType]) {
                 propertyList = [pb propertyListForType: NSFilenamesPboardType];
                 for (i = 0; i < (int)[propertyList count]; i++) {
                     // Ignore text clippings
@@ -3336,6 +3327,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         [delegate pasteString:@" "];
                         [path release];
 
+                        res = YES;
+                    }
+                }
+            }
+            if (!res && [types containsObject:NSStringPboardType]) {
+                aString = [pb stringForType:NSStringPboardType];
+                if (aString != nil) {
+                    if ([delegate respondsToSelector:@selector(pasteString:)]) {
+                        [delegate pasteString: aString];
                         res = YES;
                     }
                 }
