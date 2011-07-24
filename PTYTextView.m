@@ -3289,55 +3289,61 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     unsigned int dragOperation;
     PTYSession *delegate = [self delegate];
-    
+    BOOL res = NO;
+
     // If parent class does not know how to deal with this drag type, check if we do.
     if (extendedDragNDrop) {
         NSPasteboard *pb = [sender draggingPasteboard];
         NSArray *propertyList;
         NSString *aString;
         int i;
-        
+
         dragOperation = [self _checkForSupportedDragTypes: sender];
-        
+
         if (dragOperation == NSDragOperationCopy) {
-            // Check for simple strings first
-            aString = [pb stringForType:NSStringPboardType];
-            if (aString != nil) {
-                if ([delegate respondsToSelector:@selector(pasteString:)]) {
-                    [delegate pasteString: aString];
+            NSArray *types = [pb types];
+
+            if ([types containsObject:NSStringPboardType]) {
+                aString = [pb stringForType:NSStringPboardType];
+                if (aString != nil) {
+                    if ([delegate respondsToSelector:@selector(pasteString:)]) {
+                        [delegate pasteString: aString];
+                        res = YES;
+                    }
                 }
             }
-            
-            // Check for file names
-            propertyList = [pb propertyListForType: NSFilenamesPboardType];
-            for (i = 0; i < (int)[propertyList count]; i++) {
-                // Ignore text clippings
-                NSString *filename = (NSString*)[propertyList objectAtIndex:i];  // this contains the POSIX path to a file
-                NSDictionary *filenamesAttributes = [[NSFileManager defaultManager] fileAttributesAtPath:filename
-                                                                                            traverseLink:YES];
-                if (([filenamesAttributes fileHFSTypeCode] == 'clpt' &&
-                     [filenamesAttributes fileHFSCreatorCode] == 'MACS') ||
-                    [[filename pathExtension] isEqualToString:@"textClipping"] == YES) {
-                    continue;
-                }
-                
-                // Just paste the file names into the shell after escaping special characters.
-                if ([delegate respondsToSelector:@selector(pasteString:)]) {
-                    NSMutableString *path;
-                    
-                    path = [[NSMutableString alloc] initWithString:(NSString*)[propertyList objectAtIndex:i]];
-                    
-                    // get rid of special characters
-                    [delegate pasteString:[path stringWithEscapedShellCharacters]];
-                    [delegate pasteString:@" "];
-                    [path release];
+            if (!res && [types containsObject:NSFilenamesPboardType]) {
+                propertyList = [pb propertyListForType: NSFilenamesPboardType];
+                for (i = 0; i < (int)[propertyList count]; i++) {
+                    // Ignore text clippings
+                    NSString *filename = (NSString*)[propertyList objectAtIndex:i];  // this contains the POSIX path to a file
+                    NSDictionary *filenamesAttributes = [[NSFileManager defaultManager] fileAttributesAtPath:filename
+                                                                                                traverseLink:YES];
+                    if (([filenamesAttributes fileHFSTypeCode] == 'clpt' &&
+                         [filenamesAttributes fileHFSCreatorCode] == 'MACS') ||
+                        [[filename pathExtension] isEqualToString:@"textClipping"] == YES) {
+                        continue;
+                    }
+
+                    // Just paste the file names into the shell after escaping special characters.
+                    if ([delegate respondsToSelector:@selector(pasteString:)]) {
+                        NSMutableString *path;
+
+                        path = [[NSMutableString alloc] initWithString:(NSString*)[propertyList objectAtIndex:i]];
+
+                        // get rid of special characters
+                        [delegate pasteString:[path stringWithEscapedShellCharacters]];
+                        [delegate pasteString:@" "];
+                        [path release];
+
+                        res = YES;
+                    }
                 }
             }
-            return YES;
         }
     }
 
-    return NO;
+    return res;
 }
 
 - (void)concludeDragOperation:(id <NSDraggingInfo>)sender
