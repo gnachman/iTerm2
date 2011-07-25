@@ -338,7 +338,7 @@
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu;
 
 // setters
-- (void)enableBlur;
+- (void)enableBlur:(double)radius;
 - (void)disableBlur;
 
 // Set the text color for a tab control's name.

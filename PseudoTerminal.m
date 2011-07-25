@@ -934,7 +934,7 @@ NSString *sessionsKey = @"sessions";
           __FILE__, __LINE__, aNotification);
 #endif
     if ([[self currentTab] blur]) {
-        [self enableBlur];
+        [self enableBlur:[[self currentTab] blurRadius]];
     } else {
         [self disableBlur];
     }
@@ -1758,12 +1758,12 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
-- (void)enableBlur
+- (void)enableBlur:(double)radius
 {
     id window = [self window];
     if (nil != window &&
-        [window respondsToSelector:@selector(enableBlur)]) {
-        [window enableBlur];
+        [window respondsToSelector:@selector(enableBlur:)]) {
+        [window enableBlur:radius];
     }
 }
 
@@ -1798,7 +1798,7 @@ NSString *sessionsKey = @"sessions";
 
     [[self window] makeFirstResponder:[[[tabViewItem identifier] activeSession] TEXTVIEW]];
     if ([[aSession tab] blur]) {
-        [self enableBlur];
+        [self enableBlur:[[aSession tab] blurRadius]];
     } else {
         [self disableBlur];
     }

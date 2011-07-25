@@ -42,7 +42,7 @@
 - (void)setLabelColor:(NSColor *)color forTabViewItem:tabViewItem;
 - (void)setTabColor:(NSColor *)color forTabViewItem:tabViewItem;
 - (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
-- (void)enableBlur;
+- (void)enableBlur:(double)radius;
 - (void)disableBlur;
 - (BOOL)tempTitle;
 - (void)fitWindowToTab:(PTYTab*)tab;

@@ -47,6 +47,7 @@
 @interface PTYWindow : NSWindow 
 {
     int blurFilter;
+    double blurRadius_;
     BOOL layoutDone;
 
     // True if in OS 10.7 fullscreen mode.
@@ -66,7 +67,7 @@
 - (void)smartLayout;
 - (void)setLayoutDone;
 
-- (void)enableBlur;
+- (void)enableBlur:(double)radius;
 - (void)disableBlur;
 
 - (int)screenNumber;

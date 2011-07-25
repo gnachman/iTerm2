@@ -1565,13 +1565,32 @@ static NSString* FormatRect(NSRect r) {
     return y > n;
 }
 
+- (double)blurRadius
+{
+    double sum = 0;
+    double count = 0;
+    NSArray* sessions = [self sessions];
+    for (PTYSession* session in sessions) {
+        if ([[[session addressBookEntry] objectForKey:KEY_BLUR] boolValue]) {
+            sum += [[session addressBookEntry] objectForKey:KEY_BLUR_RADIUS] ? [[[session addressBookEntry] objectForKey:KEY_BLUR_RADIUS] floatValue] : 2.0;
+            ++count;
+        }
+    }
+    if (count > 0) {
+        return sum / count;
+    } else {
+        // This shouldn't actually happen, but better save than divide by zero.
+        return 2.0;
+    }
+}
+
 - (void)recheckBlur
 {
     PtyLog(@"PTYTab recheckBlur");
     if ([realParentWindow_ currentTab] == self &&
         ![[realParentWindow_ window] isMiniaturized]) {
         if ([self blur]) {
-            [parentWindow_ enableBlur];
+            [parentWindow_ enableBlur:[self blurRadius]];
         } else {
             [parentWindow_ disableBlur];
         }
