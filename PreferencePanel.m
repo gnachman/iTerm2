@@ -892,7 +892,6 @@ static float versionNumber;
     defaultHighlightTabLabels = [prefs objectForKey:@"HighlightTabLabels"]?[[prefs objectForKey:@"HighlightTabLabels"] boolValue]: YES;
     defaultAdvancedFontRendering = [prefs objectForKey:@"HiddenAdvancedFontRendering"]?[[prefs objectForKey:@"HiddenAdvancedFontRendering"] boolValue] : NO;
     defaultStrokeThickness = [prefs objectForKey:@"HiddenAFRStrokeThickness"] ? [[prefs objectForKey:@"HiddenAFRStrokeThickness"] floatValue] : 0;
-    defaultFsTabDelay = [prefs objectForKey:@"FsTabDelay"] ? [[prefs objectForKey:@"FsTabDelay"] floatValue] : 1.0;
     [defaultWordChars release];
     defaultWordChars = [prefs objectForKey: @"WordCharacters"]?[[prefs objectForKey: @"WordCharacters"] retain]:@"/-+\\~_.";
     defaultOpenBookmark = [prefs objectForKey:@"OpenBookmark"]?[[prefs objectForKey:@"OpenBookmark"] boolValue]: NO;
@@ -1026,7 +1025,6 @@ static float versionNumber;
     [prefs setBool:defaultHighlightTabLabels forKey:@"HighlightTabLabels"];
     [prefs setBool:defaultAdvancedFontRendering forKey:@"HiddenAdvancedFontRendering"];
     [prefs setFloat:defaultStrokeThickness forKey:@"HiddenAFRStrokeThickness"];
-    [prefs setFloat:defaultFsTabDelay forKey:@"FsTabDelay"];
     [prefs setObject: defaultWordChars forKey: @"WordCharacters"];
     [prefs setBool:defaultOpenBookmark forKey:@"OpenBookmark"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
@@ -1108,7 +1106,6 @@ static float versionNumber;
     [strokeThicknessMinLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
     [strokeThicknessMaxLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
     [strokeThickness setFloatValue:defaultStrokeThickness];
-    [fsTabDelay setFloatValue:defaultFsTabDelay];
 
     [openBookmark setState: defaultOpenBookmark?NSOnState:NSOffState];
     [wordChars setStringValue: ([defaultWordChars length] > 0)?defaultWordChars:@""];
@@ -1200,11 +1197,6 @@ static float versionNumber;
 - (float)legacyMinimumContrast
 {
     return [prefs objectForKey:@"MinimumContrast"] ? [[prefs objectForKey:@"MinimumContrast"] floatValue] : 0;;
-}
-
-- (float)fsTabDelay
-{
-    return defaultFsTabDelay;
 }
 
 - (int)modifierTagToMask:(int)tag
@@ -1308,7 +1300,6 @@ static float versionNumber;
                             nil);
         }
  
-        defaultFsTabDelay = [fsTabDelay floatValue];
         defaultCopySelection=([selectionCopiesText state]==NSOnState);
         defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
         defaultPromptOnClose = ([promptOnClose state] == NSOnState);
