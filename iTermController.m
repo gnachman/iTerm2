@@ -49,6 +49,7 @@
 #import "iTerm/PseudoTerminal.h"
 #import "iTermExpose.h"
 #import "GTMCarbonEvent.h"
+#import "iTerm.h"
 
 #ifdef HOTKEY_WINDOW_VERBOSE_LOGGING
 #define HKWLog NSLog
@@ -80,11 +81,21 @@ static NSInteger _compareEncodingByLocalizedName(id a, id b, void *unused)
     return [sa caseInsensitiveCompare: sb];
 }
 
-BOOL IsLionOrLater() {
+BOOL IsLionOrLater(void) {
     unsigned major;
     unsigned minor;
     if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
         return (major == 10 && minor >= 7) || (major > 10);
+    } else {
+        return NO;
+    }
+}
+
+BOOL IsLeopard(void) {
+    unsigned major;
+    unsigned minor;
+    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
+        return (major == 10 && minor == 5);
     } else {
         return NO;
     }
@@ -130,32 +141,35 @@ static BOOL IsSnowLeopardOrLater() {
 #endif
     self = [super init];
 
-    UKCrashReporterCheckForCrash();
+    if (self) {
+        UKCrashReporterCheckForCrash();
 
-    // create the iTerm directory if it does not exist
-    NSFileManager *fileManager = [NSFileManager defaultManager];
+        runningApplicationClass_ = NSClassFromString(@"NSRunningApplication"); // 10.6
+        // create the iTerm directory if it does not exist
+        NSFileManager *fileManager = [NSFileManager defaultManager];
 
-    // create the "~/Library/Application Support" directory if it does not exist
-    if([fileManager fileExistsAtPath: [APPLICATION_SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO)
-        [fileManager createDirectoryAtPath: [APPLICATION_SUPPORT_DIRECTORY stringByExpandingTildeInPath] attributes: nil];
+        // create the "~/Library/Application Support" directory if it does not exist
+        if([fileManager fileExistsAtPath: [APPLICATION_SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO)
+            [fileManager createDirectoryAtPath: [APPLICATION_SUPPORT_DIRECTORY stringByExpandingTildeInPath] attributes: nil];
 
-    if([fileManager fileExistsAtPath: [SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO)
-        [fileManager createDirectoryAtPath: [SUPPORT_DIRECTORY stringByExpandingTildeInPath] attributes: nil];
+        if([fileManager fileExistsAtPath: [SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO)
+            [fileManager createDirectoryAtPath: [SUPPORT_DIRECTORY stringByExpandingTildeInPath] attributes: nil];
 
-    terminalWindows = [[NSMutableArray alloc] init];
-    keyWindowIndexMemo_ = -1;
+        terminalWindows = [[NSMutableArray alloc] init];
+        keyWindowIndexMemo_ = -1;
 
-    // Activate Growl
-    /*
-     * Need to add routine in iTerm prefs for Growl support and
-     * PLIST check here.
-     */
-    gd = [iTermGrowlDelegate sharedInstance];
+        // Activate Growl
+        /*
+         * Need to add routine in iTerm prefs for Growl support and
+         * PLIST check here.
+         */
+        gd = [iTermGrowlDelegate sharedInstance];
+    }
 
     return (self);
 }
 
-- (void) dealloc
+- (void)dealloc
 {
 #if DEBUG_ALLOC
     NSLog(@"%s(%d):-[iTermController dealloc]",
@@ -169,8 +183,10 @@ static BOOL IsSnowLeopardOrLater() {
     [terminalWindows release];
 
     // Release the GrowlDelegate
-    if(gd)
+    if (gd) {
         [gd release];
+    }
+    [previouslyActiveAppPID_ release];
 
     [super dealloc];
 }
@@ -970,6 +986,66 @@ static BOOL IsSnowLeopardOrLater() {
     return nil;
 }
 
+#pragma mark hotkey window
+
+- (void)storePreviouslyActiveApp
+{
+    if (IsLeopard()) {
+        // Visor has a 10.5 path, but it is very hacky and apparently has a crash. 10.5 is moribund
+        // so I'm going to omit it.
+        return;
+    } else {
+        // 10.6+ path
+        NSDictionary *activeAppDict = [[NSWorkspace sharedWorkspace] activeApplication];
+        [previouslyActiveAppPID_ release];
+        previouslyActiveAppPID_ = nil;
+        if ([[activeAppDict objectForKey:@"NSApplicationBundleIdentifier"] compare:@"com.googlecode.iterm2"]) {
+            previouslyActiveAppPID_ = [[activeAppDict objectForKey:@"NSApplicationProcessIdentifier"] copy];
+        }
+    }
+}
+
+- (void)restorePreviouslyActiveApp
+{
+    if (IsLeopard()) {
+        // See note in storePreviouslyActiveApp.
+        return;
+    } else {
+        // 10.6+ path
+        if (!previouslyActiveAppPID_) {
+            return;
+        }
+
+        id app;
+        // NSInvocation hackery because we need to build against the 10.5 sdk and call a
+        // 10.6 function.
+
+        // app = [runningApplicationClass_ runningApplicationWithProcessIdentifier:[previouslyActiveAppPID_ intValue]];
+        NSMethodSignature *sig = [runningApplicationClass_->isa instanceMethodSignatureForSelector:@selector(runningApplicationWithProcessIdentifier:)];
+        NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+        [inv setTarget:runningApplicationClass_];
+        [inv setSelector:@selector(runningApplicationWithProcessIdentifier:)];
+        int appId = [previouslyActiveAppPID_ intValue];
+        [inv setArgument:&appId atIndex:2];
+        [inv invoke];
+        [inv getReturnValue:&app];
+
+        if (app) {
+            //[app activateWithOptions:0];
+            sig = [[app class] instanceMethodSignatureForSelector:@selector(activateWithOptions:)];
+            assert(sig);
+            inv = [NSInvocation invocationWithMethodSignature:sig];
+            [inv setTarget:app];
+            [inv setSelector:@selector(activateWithOptions:)];
+            int opts = 0;
+            [inv setArgument:&opts atIndex:2];
+            [inv invoke];
+        }
+        [previouslyActiveAppPID_ release];
+        previouslyActiveAppPID_ = nil;
+    }
+}
+
 static PseudoTerminal* GetHotkeyWindow()
 {
     iTermController* cont = [iTermController sharedInstance];
@@ -1228,6 +1304,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
 
 - (void)showHotKeyWindow
 {
+    [self storePreviouslyActiveApp];
     itermWasActiveWhenHotkeyOpened = [NSApp isActive];
     PseudoTerminal* hotkeyTerm = GetHotkeyWindow();
     if (hotkeyTerm) {
@@ -1325,6 +1402,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
 - (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm
 {
     HKWLog(@"Hide visor.");
+    [self restorePreviouslyActiveApp];
     RollOutHotkeyTerm(hotkeyTerm, itermWasActiveWhenHotkeyOpened);
 }
 
