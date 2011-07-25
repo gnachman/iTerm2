@@ -5932,7 +5932,7 @@ static bool IsUrlChar(NSString* str)
     NSString* theChar = [self _getCharacterAtX:x Y:y];
 
     if (!IsUrlChar(theChar)) {
-        return NULL;
+        return nil;
     }
 
     // Look for a left and right edge bracketed by | characters
@@ -6102,14 +6102,14 @@ static bool IsUrlChar(NSString* str)
                  }
                 
                 if (--limit == 0) {
-                    return NULL;
+                    return nil;
                 }
             }
         }
     }
 
-    if (url == NULL)
-        return NULL;
+    if (url == nil)
+        return nil;
 
     // Grab the addressbook command
     [url replaceOccurrencesOfString:@"\n"
