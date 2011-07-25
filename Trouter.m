@@ -226,6 +226,7 @@
     }
 
     if (editor && [self isTextFile:path]) {
+        path = [path stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding];
         NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:
                                      @"%@://open?url=file://%@&line=%@", editor, path, lineNumber, nil]];
         [[NSWorkspace sharedWorkspace] openURL:url];
