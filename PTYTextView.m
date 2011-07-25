@@ -6089,10 +6089,6 @@ static bool IsUrlChar(NSString* str)
             [left insertString:[beforeChunks objectAtIndex:i] atIndex:0];
             NSMutableString *possiblePath = [NSMutableString stringWithString:left];
             
-            if ([trouter getFullPath:possiblePath workingDirectory:[self getWorkingDirectoryAtLine:y] lineNumber:NULL]) {
-                url = possiblePath;
-                break;
-            }
             for (int j=0; j<[afterChunks count]; j++) {
                 [possiblePath appendString:[afterChunks objectAtIndex:j]];
                  if ([trouter getFullPath:possiblePath workingDirectory:[self getWorkingDirectoryAtLine:y] lineNumber:NULL]) {
