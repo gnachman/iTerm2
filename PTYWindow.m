@@ -103,7 +103,7 @@
     NSDictionary *optionsDict = [NSDictionary dictionaryWithObject:[NSNumber numberWithFloat:2.0] forKey:@"inputRadius"];
     CGSSetCIFilterValuesFromDictionary(con, blurFilter, (CFDictionaryRef)optionsDict);
 
-    CGSAddWindowFilter(con, [self windowNumber], blurFilter, kCGWindowFilterUnderlay);
+    CGSAddWindowFilter(con, [self windowNumber], blurFilter, kCGWindowFilterDock);
 #endif
 }
 

@@ -76,6 +76,7 @@ void DebugLog(NSString* value);
     IBOutlet NSMenuItem *irPrev;
 
     IBOutlet NSMenuItem *secureInput;
+    IBOutlet NSMenuItem *showFullScreenTabs;
     IBOutlet NSMenuItem *useTransparency;
     IBOutlet NSMenuItem *maximizePane;
     BOOL secureInputDesired_;
@@ -100,6 +101,7 @@ void DebugLog(NSString* value);
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification;
 - (void)applicationDidResignActive:(NSNotification *)aNotification;
 
+- (IBAction)toggleFullScreenTabBar:(id)sender;
 - (IBAction)maximizePane:(id)sender;
 - (IBAction)toggleUseTransparency:(id)sender;
 - (IBAction)toggleSecureInput:(id)sender;

@@ -376,6 +376,11 @@ static BOOL hasBecomeActive = NO;
 }
 
 // Action methods
+- (IBAction)toggleFullScreenTabBar:(id)sender
+{
+    [[[iTermController sharedInstance] currentTerminal] toggleFullScreenTabBar];
+}
+
 - (IBAction)newWindow:(id)sender
 {
     [[iTermController sharedInstance] newWindow:sender];
@@ -852,6 +857,14 @@ void DebugLog(NSString* value)
             return YES;
         } else {
             return NO;
+        }
+    } else if ([menuItem action] == @selector(toggleFullScreenTabBar:)) {
+        PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+        if (!term || ![term anyFullScreen]) {
+            return NO;
+        } else {
+            [menuItem setState:[term fullScreenTabControl] ? NSOnState : NSOffState];
+            return YES;
         }
     } else {
         return YES;
