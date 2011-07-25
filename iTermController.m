@@ -1431,9 +1431,14 @@ void OnHotKeyEvent(void)
         NSWindow* appKeyWindow = [[NSApplication sharedApplication] keyWindow];
         if (prefWindow != appKeyWindow ||
             ![iTermApplication isTextFieldInFocus:[prefPanel hotkeyField]]) {
-            [NSApp hide:nil];
+            if (OSX_LEOPARDORLATER) {
+                [[iTermController sharedInstance] restorePreviouslyActiveApp];
+            } else {
+                [NSApp hide:nil];
+            }
         }
     } else {
+        [[iTermController sharedInstance] storePreviouslyActiveApp];
         iTermController* controller = [iTermController sharedInstance];
         int n = [controller numberOfTerminals];
         [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
