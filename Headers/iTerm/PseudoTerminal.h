@@ -659,6 +659,7 @@
 - (void)_drawFullScreenBlackBackground;
 
 - (void)hideMenuBar;
+- (void)showMenuBar;
 
 // This is a half-baked function that tries to parse a command line into a
 // command (returned in *cmd) and an array of arguments (returned in *path).
@@ -808,10 +809,6 @@
 
 // Return all sessions in all tabs.
 - (NSArray*)allSessions;
-
-// Change visiblity of tabBarControl in fullscreen mode.
-- (void)showFullScreenTabControl;
-- (void)hideFullScreenTabControl;
 
 - (void)_loadFindStringFromSharedPasteboard;
 

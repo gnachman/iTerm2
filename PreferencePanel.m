@@ -915,6 +915,7 @@ static float versionNumber;
     defaultIrMemory = [prefs objectForKey:@"IRMemory"]?[[prefs objectForKey:@"IRMemory"] intValue] : 4;
     defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
     defaultDimInactiveSplitPanes = [prefs objectForKey:@"DimInactiveSplitPanes"]?[[prefs objectForKey:@"DimInactiveSplitPanes"] boolValue]: YES;
+    defaultDimBackgroundWindows = [prefs objectForKey:@"DimBackgroundWindows"]?[[prefs objectForKey:@"DimBackgroundWindows"] boolValue]: NO;
     defaultShowWindowBorder = [[prefs objectForKey:@"UseBorder"] boolValue];
     defaultLionStyleFullscreen = [prefs objectForKey:@"UseLionStyleFullscreen"] ? [[prefs objectForKey:@"UseLionStyleFullscreen"] boolValue] : YES;
 
@@ -1044,6 +1045,7 @@ static float versionNumber;
     [prefs setInteger:defaultIrMemory forKey:@"IRMemory"];
     [prefs setBool:defaultCheckTestRelease forKey:@"CheckTestRelease"];
     [prefs setBool:defaultDimInactiveSplitPanes forKey:@"DimInactiveSplitPanes"];
+    [prefs setBool:defaultDimBackgroundWindows forKey:@"DimBackgroundWindows"];
     [prefs setBool:defaultShowWindowBorder forKey:@"UseBorder"];
     [prefs setBool:defaultLionStyleFullscreen forKey:@"UseLionStyleFullscreen"];
 
@@ -1136,6 +1138,7 @@ static float versionNumber;
     [irMemory setIntValue:defaultIrMemory];
     [checkTestRelease setState:defaultCheckTestRelease?NSOnState:NSOffState];
     [dimInactiveSplitPanes setState:defaultDimInactiveSplitPanes?NSOnState:NSOffState];
+    [dimBackgroundWindows setState:defaultDimBackgroundWindows?NSOnState:NSOffState];
     [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
     [lionStyleFullscreen setState:defaultLionStyleFullscreen?NSOnState:NSOffState];
 
@@ -1247,6 +1250,7 @@ static float versionNumber;
         sender == advancedFontRendering ||
         sender == strokeThickness ||
         sender == dimInactiveSplitPanes ||
+        sender == dimBackgroundWindows ||
         sender == showWindowBorder) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
         defaultTabViewType=[tabPosition indexOfSelectedItem];
@@ -1260,6 +1264,7 @@ static float versionNumber;
         defaultStrokeThickness = [strokeThickness floatValue];
         defaultHideTab = ([hideTab state] == NSOnState);
         defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
+        defaultDimBackgroundWindows = ([dimBackgroundWindows state] == NSOnState);
         defaultShowWindowBorder = ([showWindowBorder state] == NSOnState);
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermRefreshTerminal"
@@ -1672,6 +1677,11 @@ static float versionNumber;
 - (BOOL)dimInactiveSplitPanes
 {
     return defaultDimInactiveSplitPanes;
+}
+
+- (BOOL)dimBackgroundWindows
+{
+    return defaultDimBackgroundWindows;
 }
 
 - (BOOL)showWindowBorder

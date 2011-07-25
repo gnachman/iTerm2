@@ -1060,10 +1060,11 @@ NSString *sessionsKey = @"sessions";
     }
     [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
     [self _loadFindStringFromSharedPasteboard];
-    
+
     // Start the timers back up
     for (PTYSession* aSession in [self sessions]) {
         [aSession updateDisplay];
+        [[aSession view] setBackgroundDimmed:NO];
     }
 }
 
@@ -1160,6 +1161,9 @@ NSString *sessionsKey = @"sessions";
     // update the cursor
     [[[self currentSession] TEXTVIEW] refresh];
     [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
+    for (PTYSession* aSession in [self sessions]) {
+        [[aSession view] setBackgroundDimmed:YES];
+    }
 }
 
 - (void)windowDidResignMain:(NSNotification *)aNotification

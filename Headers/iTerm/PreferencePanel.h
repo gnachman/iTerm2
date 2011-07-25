@@ -176,6 +176,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* dimInactiveSplitPanes;
     BOOL defaultDimInactiveSplitPanes;
 
+    // Dim background windows
+    IBOutlet NSButton* dimBackgroundWindows;
+    BOOL defaultDimBackgroundWindows;
+
     // Window border
     IBOutlet NSButton* showWindowBorder;
     BOOL defaultShowWindowBorder;
@@ -502,6 +506,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (BOOL)showWindowBorder;
 - (BOOL)lionStyleFullscreen;
 - (BOOL)dimInactiveSplitPanes;
+- (BOOL)dimBackgroundWindows;
 - (BOOL)checkTestRelease;
 - (BOOL)legacySmartCursorColor;
 - (float)legacyMinimumContrast;

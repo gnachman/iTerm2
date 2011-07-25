@@ -152,6 +152,14 @@ static NSDate* lastResizeDate_;
     return n ? [n doubleValue] : 0.15;
 }
 
+- (void)_updateDim
+{
+    double amount = 0;
+    if (dim_) amount += [self dimmedDimmingAmount];
+    if (backgroundDimmed_) amount += [self dimmedDimmingAmount];
+    [self _dimShadeToDimmingAmount:amount];
+}
+
 - (void)setDimmed:(BOOL)isDimmed
 {
     if (shuttingDown_) {
@@ -161,12 +169,14 @@ static NSDate* lastResizeDate_;
         return;
     }
     dim_ = isDimmed;
-    if (isDimmed) {
-        currentDimmingAmount_ = 0;
-        [[session_ TEXTVIEW] setDimmingAmount:0];
-        [self _dimShadeToDimmingAmount:[self dimmedDimmingAmount]];
-    } else {
-        [self _dimShadeToDimmingAmount:0];
+    [self _updateDim];
+}
+
+- (void)setBackgroundDimmed:(BOOL)backgroundDimmed
+{
+    if ([[PreferencePanel sharedInstance] dimBackgroundWindows]) {
+        backgroundDimmed_ = backgroundDimmed;
+        [self _updateDim];
     }
 }
 

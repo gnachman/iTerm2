@@ -270,6 +270,7 @@ static BOOL hasBecomeActive = NO;
     if (hasBecomeActive) {
         [self _performStartupActivities];
     }
+    return YES;
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app
