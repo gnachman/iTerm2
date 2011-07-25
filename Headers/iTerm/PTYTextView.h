@@ -236,6 +236,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Semantic history controller
     Trouter* trouter;
+    
+    // Flag to make sure a Trouter drag check is only one once per drag
+    BOOL trouterDragged;
 
     // Array of (line number, pwd) arrays, sorted by line number. Line numbers are absolute.
     NSMutableArray *workingDirectoryAtLines;

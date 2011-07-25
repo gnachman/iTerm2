@@ -240,6 +240,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     resultMap_ = [[NSMutableDictionary alloc] init];
 
     trouter = [[Trouter alloc] init];
+    trouterDragged = NO;
     workingDirectoryAtLines = [[NSMutableArray alloc] init];
     return self;
 }
@@ -2568,6 +2569,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)mouseUp:(NSEvent *)event
 {
     dragOk_ = NO;
+    trouterDragged = NO;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
     const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
     if (!cmdPressed &&
@@ -2806,7 +2808,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
 
-    if (startX < 0 && pressingCmdOnly) {
+    if (startX < 0 && pressingCmdOnly && trouterDragged == NO) {
+        
+        // Only one Trouter check per drag
+        trouterDragged = YES;
+
         // Drag a file handle (only possible when there is no selection).
         NSString *path = [self _getURLForX:x y:y];
         path = [trouter getFullPath:path
@@ -2835,6 +2841,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
              pasteboard:pboard
                  source:self
               slideBack:YES];
+        
+        // Valid drag, so we reset the flag because mouseUp doesn't get called when a drag is done
+        trouterDragged = NO;
+        
         return;
 
     }
