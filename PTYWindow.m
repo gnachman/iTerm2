@@ -103,7 +103,7 @@
     NSDictionary *optionsDict = [NSDictionary dictionaryWithObject:[NSNumber numberWithFloat:2.0] forKey:@"inputRadius"];
     CGSSetCIFilterValuesFromDictionary(con, blurFilter, (CFDictionaryRef)optionsDict);
 
-    CGSAddWindowFilter(con, [self windowNumber], blurFilter, kCGWindowFilterUnderlay);
+    CGSAddWindowFilter(con, [self windowNumber], blurFilter, kCGWindowFilterDock);
 #endif
 }
 
@@ -132,7 +132,14 @@
     // This is a way of calling [super toggleFullScreen:] that doesn't give a warning if
     // the method doesn't exist (it's new in 10.7) but we build against 10.5 sdk.
     IMP functionPointer = [NSWindow instanceMethodForSelector:_cmd];
+    isTogglingLionFullScreen_ = true;
     functionPointer(self, _cmd, sender);
+    isTogglingLionFullScreen_ = false;
+}
+
+- (BOOL)isTogglingLionFullScreen
+{
+    return isTogglingLionFullScreen_;
 }
 
 - (BOOL)isFullScreen

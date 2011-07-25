@@ -185,6 +185,7 @@
     // True if this window was created by dragging a tab from another window.
     // Affects how its size is set when the number of tabview items changes.
     BOOL wasDraggedFromAnotherWindow_;
+    BOOL fullscreenTabs_;
 }
 
 // Initialize a new PseudoTerminal.
@@ -240,6 +241,8 @@
 
 // Close a session (TODO: currently just closes the tab the session is in).
 - (void)closeSession:(PTYSession *)aSession;
+
+- (void)toggleFullScreenTabBar;
 
 // Close the active session.
 - (IBAction)closeCurrentSession:(id)sender;
@@ -316,6 +319,11 @@
 
 // accessor
 - (BOOL)fullScreen;
+- (BOOL)fullScreenTabControl;
+
+- (BOOL)tabBarShouldBeVisible;
+- (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)n;
+- (BOOL)scrollbarShouldBeVisible;
 
 // Called by VT100Screen when it wants to resize a window for a
 // session-initiated resize. It resizes the session, then the window, then all

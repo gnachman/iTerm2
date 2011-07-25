@@ -559,5 +559,6 @@ typedef enum {
 // Returns true if any onscreen char is blinking.
 - (BOOL)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width;
 
+- (double)_perceivedBrightness:(NSColor*)c;
 @end
 

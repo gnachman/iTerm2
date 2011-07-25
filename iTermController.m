@@ -1201,7 +1201,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
         if (currentTerm && ![currentTerm isHotKeyWindow] && [currentTerm fullScreen]) {
             [currentTerm hideMenuBar];
         } else {
-            [NSMenu setMenuBarVisible:YES];
+            [currentTerm showMenuBar];
         }
     }
 

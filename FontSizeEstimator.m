@@ -76,7 +76,7 @@ static double Brightness(NSColor* c) {
 
     CGContextRef ctx = (CGContextRef)[[NSGraphicsContext currentContext] graphicsPort];
     assert(ctx);
-    CGContextSetShouldAntialias(ctx, NO);
+    CGContextSetShouldAntialias(ctx, YES);
 
     [[NSColor whiteColor] set];
     NSRectFill(NSMakeRect(0, 0, estimate.width, estimate.height));
@@ -85,16 +85,19 @@ static double Brightness(NSColor* c) {
                            aFont, NSFontAttributeName,
                            [NSColor blackColor], NSForegroundColorAttributeName,
                            nil];
-    
-    NSAttributedString *str = [[NSAttributedString alloc] initWithString:s
-                                                              attributes:attrs];
-    [str drawWithRect:NSMakeRect(0,
-                                 osSize.height * 2,
-                                 osSize.width * 2,
-                                 osSize.height * 2)
-              options:0];
+
+    for (int i = 0; i < [s length]; i++) {
+        unichar c = [s characterAtIndex:i];
+        NSAttributedString *str = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"%C", c]
+                                                                  attributes:attrs];
+        [str drawWithRect:NSMakeRect(0,
+                                     osSize.height * 2,
+                                     osSize.width * 2,
+                                     osSize.height * 2)
+                  options:0];
+    }
     [image unlockFocus];
-        
+
     return image;
 }
 
@@ -182,18 +185,22 @@ static double Brightness(NSColor* c) {
 {
     FontSizeEstimator* fse = [[[FontSizeEstimator alloc] init] autorelease];
     if (fse) {
+        NSMutableString *allAscii = [NSMutableString stringWithCapacity:128-32];
+        for (int i = 32; i < 128; i++) {
+            [allAscii appendFormat:@"%c", (char)i];
+        }
         // We get the upper bound of a character from the top of X
         // We get the rightmost bound as the max of right(X) and right(x)
         // We get the descender's height from bottom(y) - bottom(X)
         NSImage *capXImage = [fse imageForString:@"X" withFont:aFont];
         NSRect capXBounds = [fse boundsOfImage:capXImage];
-        
+
         NSImage *lowXImage = [fse imageForString:@"x" withFont:aFont];
         NSRect lowXBounds = [fse boundsOfImage:lowXImage];
-        
-        NSImage *lowYImage = [fse imageForString:@"y" withFont:aFont];
+
+        NSImage *lowYImage = [fse imageForString:allAscii withFont:aFont];
         NSRect lowYBounds = [fse boundsOfImage:lowYImage];
-        
+
         NSSize s;
         double b;
         double capXMaxX = capXBounds.origin.x + capXBounds.size.width;
