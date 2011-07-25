@@ -173,4 +173,8 @@ void DebugLog(NSString* value);
 // a class method to provide the keys for KVC:
 +(NSArray*)kvcKeys;
 
+// Implements the 10.6 api but is callable in 10.5 and tries to implement
+// some subset of the flags.
+- (void)setFutureApplicationPresentationOptions:(int)flags unset:(int)antiflags;
+
 @end

@@ -90,15 +90,20 @@ static BOOL hasBecomeActive = NO;
     [ITAddressBookMgr sharedInstance];
     [PreferencePanel sharedInstance];
 
+    [self setFutureApplicationPresentationOptions:NSApplicationPresentationFullScreen unset:0];
+}
+
+- (void)setFutureApplicationPresentationOptions:(int)flags unset:(int)antiflags
+{
     if ([NSApp respondsToSelector:@selector(presentationOptions)]) {
         // This crazy hackery is done so that we can use 10.6 and 10.7 features
         // while compiling against the 10.5 SDK.
 
         // presentationOptions =  [NSApp presentationOptions]
         NSMethodSignature *presentationOptionsSignature = [NSApp->isa
-                                           instanceMethodSignatureForSelector:@selector(presentationOptions)];
+            instanceMethodSignatureForSelector:@selector(presentationOptions)];
         NSInvocation *presentationOptionsInvocation = [NSInvocation
-                                       invocationWithMethodSignature:presentationOptionsSignature];
+            invocationWithMethodSignature:presentationOptionsSignature];
         [presentationOptionsInvocation setTarget:NSApp];
         [presentationOptionsInvocation setSelector:@selector(presentationOptions)];
         [presentationOptionsInvocation invoke];
@@ -106,7 +111,8 @@ static BOOL hasBecomeActive = NO;
         NSUInteger presentationOptions;
         [presentationOptionsInvocation getReturnValue:&presentationOptions];
 
-        presentationOptions |= NSApplicationPresentationFullScreen;
+        presentationOptions |= flags;
+        presentationOptions &= ~antiflags;
 
         // [NSAppObj setPresentationOptions:presentationOptions];
         NSMethodSignature *setSig = [NSApp->isa instanceMethodSignatureForSelector:@selector(setPresentationOptions:)];
@@ -115,6 +121,14 @@ static BOOL hasBecomeActive = NO;
         [setInv setSelector:@selector(setPresentationOptions:)];
         [setInv setArgument:&presentationOptions atIndex:2];
         [setInv invoke];
+    } else {
+        // Emulate setPresentationOptions API for OS 10.5.
+        if (flags & NSApplicationPresentationAutoHideMenuBar) {
+            SetSystemUIMode(kUIModeAllHidden, kUIOptionAutoShowMenuBar);
+        } else if (antiflags & NSApplicationPresentationAutoHideMenuBar) {
+            SetSystemUIMode(kUIModeNormal, 0);
+        }
+
     }
 }
 

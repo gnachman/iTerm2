@@ -200,7 +200,7 @@ NSString *sessionsKey = @"sessions";
         // If you create a window with a minimize button and the menu bar is hidden then the
         // minimize button is disabled. Currently the only window type with a miniaturize button
         // is NORMAL.
-        [NSMenu setMenuBarVisible:YES];
+        [self showMenuBar];
     }
     // Force the nib to load
     [self window];
@@ -394,14 +394,12 @@ NSString *sessionsKey = @"sessions";
                                                object: nil];
 
     [self setWindowInited: YES];
-    if (_fullScreen) {
-        [self hideMenuBar];
-    }
     useTransparency_ = YES;
     fullscreenTabs_ = [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowFullScreenTabBar"];
     number_ = [[iTermController sharedInstance] allocateWindowNumber];
     if (windowType == WINDOW_TYPE_FORCE_FULL_SCREEN) {
         windowType_ = WINDOW_TYPE_FULL_SCREEN;
+        [self hideMenuBar];
     }
 
     if (IsLionOrLater()) {
@@ -976,8 +974,10 @@ NSString *sessionsKey = @"sessions";
     [tabBarControl setDelegate:nil];
 
     [self disableBlur];
-    if (_fullScreen) {
-        [NSMenu setMenuBarVisible:YES];
+    // If a fullscreen window is closing, hide the menu bar unless it's only fullscreen because it's
+    // mid-toggle in which case it's really the window that's replacing us that is fullscreen.
+    if (_fullScreen && !togglingFullScreen_) {
+        [self showMenuBar];
     }
 
     // Save frame position for last window
@@ -1155,7 +1155,7 @@ NSString *sessionsKey = @"sessions";
           __FILE__, __LINE__, aNotification);
 
     if (_fullScreen) {
-        [NSMenu setMenuBarVisible:YES];
+        [self showMenuBar];
     }
     // update the cursor
     [[[self currentSession] TEXTVIEW] refresh];
@@ -1389,7 +1389,7 @@ NSString *sessionsKey = @"sessions";
         // shown. Thus, we must show the menu bar before creating the new window.
         // It is not hidden in the other clause of this if statement because
         // hiding the menu bar must be done after setting the window's frame.
-        [NSMenu setMenuBarVisible:YES];
+        [self showMenuBar];
         PtyLog(@"toggleFullScreenMode - allocate new terminal");
         // TODO: restore previous window type
         NSScreen *currentScreen = [[[[iTermController sharedInstance] currentTerminal] window] screen];
@@ -3004,8 +3004,17 @@ NSString *sessionsKey = @"sessions";
     currentScreen = [NSScreen mainScreen];
 
     if (currentScreen == menubarScreen) {
-        [NSMenu setMenuBarVisible:NO];
+        int flags = NSApplicationPresentationAutoHideDock | NSApplicationPresentationAutoHideMenuBar;
+        [[[iTermApplication sharedApplication] delegate] setFutureApplicationPresentationOptions:flags
+                                                                                           unset:0];
     }
+}
+
+- (void)showMenuBar
+{
+    int flags = NSApplicationPresentationAutoHideDock | NSApplicationPresentationAutoHideMenuBar;
+    [[[iTermApplication sharedApplication] delegate] setFutureApplicationPresentationOptions:0
+                                                                                       unset:flags];
 }
 
 // Utility

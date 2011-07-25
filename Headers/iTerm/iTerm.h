@@ -44,6 +44,8 @@ static const int NSApplicationPresentationAutoHideToolbar = (1 << 11);
 static const int NSApplicationPresentationFullScreen = (1 << 10);
 #endif
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1060
+static const int NSApplicationPresentationAutoHideDock  = (1 <<  0);
+static const int NSApplicationPresentationAutoHideMenuBar  = (1 <<  2);
 typedef unsigned int NSApplicationPresentationOptions;
 #endif
 
