@@ -149,14 +149,19 @@ static NSDate* lastResizeDate_;
 - (double)dimmedDimmingAmount
 {
     NSNumber* n = [[NSUserDefaults standardUserDefaults] objectForKey:@"SplitPaneDimmingAmount"];
-    return n ? [n doubleValue] : 0.15;
+    return n ? [n doubleValue] : 0.4;
 }
 
 - (void)_updateDim
 {
-    double amount = 0;
-    if (dim_) amount += [self dimmedDimmingAmount];
-    if (backgroundDimmed_) amount += [self dimmedDimmingAmount];
+    double x= 0;
+    if (dim_) x += 1;
+    if (backgroundDimmed_) x += 1;
+    // 0 -> 0
+    // 1 -> dimmedDimmingAmount
+    // 2 -> 4/3 * dimmedDimmingAmount
+    double amount = (1 - 1 / (1 + x)) * [self dimmedDimmingAmount] * 2;
+
     [self _dimShadeToDimmingAmount:amount];
 }
 
@@ -174,10 +179,20 @@ static NSDate* lastResizeDate_;
 
 - (void)setBackgroundDimmed:(BOOL)backgroundDimmed
 {
+    BOOL orig = backgroundDimmed_;
     if ([[PreferencePanel sharedInstance] dimBackgroundWindows]) {
         backgroundDimmed_ = backgroundDimmed;
+    } else {
+        backgroundDimmed_ = NO;
+    }
+    if (backgroundDimmed_ != orig) {
         [self _updateDim];
     }
+}
+
+- (BOOL)backgroundDimmed
+{
+    return backgroundDimmed_;
 }
 
 - (void)cancelTimers

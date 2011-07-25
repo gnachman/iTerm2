@@ -317,6 +317,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [WRAPPER setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
     TEXTVIEW = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, VMARGIN, aSize.width, aSize.height)];
+    [TEXTVIEW setDimOnlyText:[[PreferencePanel sharedInstance] dimOnlyText]];
     [TEXTVIEW setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [TEXTVIEW setFont:[ITAddressBookMgr fontWithDesc:[addressBookEntry objectForKey:KEY_NORMAL_FONT]]
                nafont:[ITAddressBookMgr fontWithDesc:[addressBookEntry objectForKey:KEY_NON_ASCII_FONT]]

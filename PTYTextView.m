@@ -377,6 +377,12 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     cursorType_ = value;
 }
 
+- (void)setDimOnlyText:(BOOL)value
+{
+    dimOnlyText_ = value;
+    [[self superview] setNeedsDisplay:YES];
+}
+
 - (NSDictionary*)markedTextAttributes
 {
     return markedTextAttributes;
@@ -432,6 +438,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     defaultBGColor = color;
     PTYScroller *scroller = (PTYScroller*)[[[dataSource session] SCROLLVIEW] verticalScroller];
     BOOL isDark = ([self _perceivedBrightness:color] < kBackgroundConsideredDarkThreshold);
+    backgroundBrightness_ = PerceivedBrightness([color redComponent], [color greenComponent], [color blueComponent]);
     [scroller setHasDarkBackground:isDark];
     [self setNeedsDisplay:YES];
 }
@@ -562,17 +569,31 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
     // Find a linear interpolation between kCenter and the requested color component
     // in proportion to 1- dimmingAmount_.
-    const double kCenter = 0.5;
+    if (!dimOnlyText_) {
+        const double kCenter = 0.5;
 
-    return [NSColor colorWithCalibratedRed:(1 - dimmingAmount_) * r + dimmingAmount_ * kCenter
-                                     green:(1 - dimmingAmount_) * g + dimmingAmount_ * kCenter
-                                      blue:(1 - dimmingAmount_) * b + dimmingAmount_ * kCenter
-                                     alpha:[orig alphaComponent]];
+        return [NSColor colorWithCalibratedRed:(1 - dimmingAmount_) * r + dimmingAmount_ * kCenter
+                                         green:(1 - dimmingAmount_) * g + dimmingAmount_ * kCenter
+                                          blue:(1 - dimmingAmount_) * b + dimmingAmount_ * kCenter
+                                         alpha:[orig alphaComponent]];
+    } else {
+        return [NSColor colorWithCalibratedRed:(1 - dimmingAmount_) * r + dimmingAmount_ * backgroundBrightness_
+                                         green:(1 - dimmingAmount_) * g + dimmingAmount_ * backgroundBrightness_
+                                          blue:(1 - dimmingAmount_) * b + dimmingAmount_ * backgroundBrightness_
+                                         alpha:[orig alphaComponent]];
+    }
 }
 
-- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold
+- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold isBackground:(BOOL)isBackground
 {
-    return [self _dimmedColorFrom:[self _colorForCode:theIndex alternateSemantics:alt bold:isBold]];
+    NSColor *theColor = [self _colorForCode:theIndex
+                         alternateSemantics:alt
+                                       bold:isBold];
+    if (isBackground && dimOnlyText_) {
+        return theColor;
+    } else {
+        return [self _dimmedColorFrom:theColor];
+    }
 }
 
 - (NSColor *)selectionColor
@@ -4069,7 +4090,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (!hasBGImage && ![self useTransparency]) {
             alpha = 1;
         }
-        [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        if (!dimOnlyText_) {
+            [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        } else {
+            [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
+        }
         NSRect fillDest = bgRect;
         fillDest.origin.y += fillDest.size.height;
         NSRectFillUsingOperation(fillDest,
@@ -4092,7 +4117,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (!hasBGImage && ![self useTransparency]) {
             alpha = 1;
         }
-        [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        if (!dimOnlyText_) {
+            [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        } else {
+            [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
+        }
         NSRectFillUsingOperation(bgRect,
                                  hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
     }
@@ -4112,7 +4141,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (!hasBGImage && ![self useTransparency]) {
             alpha = 1;
         }
-        [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        if (!dimOnlyText_) {
+            [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        } else {
+            [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
+        }
         NSRectFillUsingOperation(bgRect, hasBGImage?NSCompositeSourceOver:NSCompositeCopy);
     }
 }
@@ -4670,13 +4703,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 theLine[i].alternateForegroundSemantics &&
                 theLine[i].foregroundColor == ALTSEM_FG_DEFAULT) {
                 // Has default foreground color so use background color.
-                thisCharColor = [self _dimmedColorFrom:defaultBGColor];
+                if (!dimOnlyText_) {
+                    thisCharColor = [self _dimmedColorFrom:defaultBGColor];
+                } else {
+                    thisCharColor = defaultBGColor;
+                }
             } else {
                 // Not reversed or not subject to reversing (only default
                 // foreground color is drawn in reverse video).
                 thisCharColor = [self colorForCode:theLine[i].foregroundColor
                                 alternateSemantics:theLine[i].alternateForegroundSemantics
-                                              bold:theLine[i].bold];
+                                              bold:theLine[i].bold
+                                      isBackground:NO];
             }
         }
 
@@ -5030,7 +5068,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     aColor = [self colorForCode:ALTSEM_BG_DEFAULT
              alternateSemantics:YES
-                           bold:NO];
+                           bold:NO
+                   isBackground:YES];
 
     aColor = [aColor colorWithAlphaComponent:selectedAlpha];
     [aColor set];
@@ -5173,12 +5212,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         // color chars.
                         aColor = [self colorForCode:ALTSEM_FG_DEFAULT
                                  alternateSemantics:YES
-                                               bold:NO];
+                                               bold:NO
+                                       isBackground:NO];
                     } else {
                         // Use the regular background color.
                         aColor = [self colorForCode:bgColor
                                  alternateSemantics:bgAlt
-                                               bold:NO];
+                                               bold:NO
+                                       isBackground:(bgColor == ALTSEM_BG_DEFAULT)];
                     }
                 }
                 aColor = [aColor colorWithAlphaComponent:alphaIfTransparencyInUse];
@@ -5194,7 +5235,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 // default background color. But don't blend in the bg color if transparency is on.
                 aColor = [self colorForCode:ALTSEM_BG_DEFAULT
                          alternateSemantics:YES
-                                       bold:NO];
+                                       bold:NO
+                               isBackground:YES];
                 aColor = [aColor colorWithAlphaComponent:selectedAlpha];
                 [aColor set];
                 if (![self useTransparency]) {
@@ -5275,7 +5317,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         } else {
             [[self colorForCode:fgColor
                alternateSemantics:fgAlt
-                           bold:fgBold] set];
+                           bold:fgBold
+                   isBackground:NO] set];
         }
 
         NSRectFill(NSMakeRect(X,
@@ -5385,7 +5428,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                   y,
                                   charsInLine * charWidth,
                                   lineHeight);
-            [[self _dimmedColorFrom:defaultBGColor] set];
+            if (!dimOnlyText_) {
+                [[self _dimmedColorFrom:defaultBGColor] set];
+            } else {
+                [defaultBGColor set];
+            }
             NSRectFill(r);
 
             // Draw the characters.
@@ -5483,10 +5530,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     if ([[dataSource terminal] screenMode]) {
         // reversed
-        return [self colorForCode:c.foregroundColor alternateSemantics:c.alternateForegroundSemantics bold:c.bold];
+        return [self colorForCode:c.foregroundColor
+               alternateSemantics:c.alternateForegroundSemantics
+                             bold:c.bold
+                     isBackground:YES];
     } else {
         // normal
-        return [self colorForCode:c.backgroundColor alternateSemantics:c.alternateBackgroundSemantics bold:false];
+        return [self colorForCode:c.backgroundColor
+               alternateSemantics:c.alternateBackgroundSemantics
+                             bold:false
+                     isBackground:YES];
     }
 }
 
@@ -5627,12 +5680,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 if (reversed) {
                     bgColor = [self colorForCode:screenChar.backgroundColor
                               alternateSemantics:screenChar.alternateBackgroundSemantics
-                                            bold:screenChar.bold];
+                                            bold:screenChar.bold
+                                    isBackground:NO];
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 } else {
                     bgColor = [self colorForCode:screenChar.foregroundColor
                               alternateSemantics:screenChar.alternateForegroundSemantics
-                                            bold:screenChar.bold];
+                                            bold:screenChar.bold
+                                    isBackground:NO];
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 }
 
@@ -5714,7 +5769,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             // Ensure text has enough contrast by making it black/white if the char's color would be close to the cursor bg.
                             NSColor* proposedForeground = [[self colorForCode:fgColor
                                                            alternateSemantics:fgAlt
-                                                                         bold:screenChar.bold] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+                                                                         bold:screenChar.bold
+                                                                 isBackground:NO] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
                             CGFloat fgBrightness = [self _perceivedBrightness:proposedForeground];
                             CGFloat bgBrightness = [self _perceivedBrightness:[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
                             NSColor* overrideColor = nil;
@@ -6441,6 +6497,8 @@ static bool IsUrlChar(NSString* str)
     advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
     [self setNeedsDisplay:YES];
+    [self setDimOnlyText:[[PreferencePanel sharedInstance] dimOnlyText]];
+
 }
 
 - (void)_modifyFont:(NSFont*)font baseline:(double)baseline into:(PTYFontInfo*)fontInfo

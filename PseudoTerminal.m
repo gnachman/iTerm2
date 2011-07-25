@@ -2990,6 +2990,7 @@ NSString *sessionsKey = @"sessions";
             } else {
                 [[aSession view] setDimmed:NO];
             }
+            [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
         }
     }
 }

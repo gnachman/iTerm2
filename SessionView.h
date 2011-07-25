@@ -60,5 +60,6 @@
 - (int)viewId;
 - (void)setViewId:(int)id;
 - (void)setBackgroundDimmed:(BOOL)backgroundDimmed;
+- (BOOL)backgroundDimmed;
 
 @end

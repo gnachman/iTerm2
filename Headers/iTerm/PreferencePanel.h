@@ -180,6 +180,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* dimBackgroundWindows;
     BOOL defaultDimBackgroundWindows;
 
+    // Dim text (and non-default background colors)
+    IBOutlet NSButton* dimOnlyText;
+    BOOL defaultDimOnlyText;
+
     // Window border
     IBOutlet NSButton* showWindowBorder;
     BOOL defaultShowWindowBorder;
@@ -507,6 +511,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (BOOL)lionStyleFullscreen;
 - (BOOL)dimInactiveSplitPanes;
 - (BOOL)dimBackgroundWindows;
+- (BOOL)dimOnlyText;
 - (BOOL)checkTestRelease;
 - (BOOL)legacySmartCursorColor;
 - (float)legacyMinimumContrast;

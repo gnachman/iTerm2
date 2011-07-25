@@ -1335,6 +1335,28 @@
 													<int key="NSPeriodicInterval">25</int>
 												</object>
 											</object>
+											<object class="NSButton" id="652260021">
+												<reference key="NSNextResponder" ref="1019983678"/>
+												<int key="NSvFlags">268</int>
+												<string key="NSFrame">{{283, 98}, {298, 18}}</string>
+												<reference key="NSSuperview" ref="1019983678"/>
+												<bool key="NSEnabled">YES</bool>
+												<object class="NSButtonCell" key="NSCell" id="438107074">
+													<int key="NSCellFlags">-2080244224</int>
+													<int key="NSCellFlags2">0</int>
+													<string key="NSContents">Dimming affects only text, not background.</string>
+													<reference key="NSSupport" ref="966507434"/>
+													<reference key="NSControlView" ref="652260021"/>
+													<int key="NSButtonFlags">1211912703</int>
+													<int key="NSButtonFlags2">2</int>
+													<reference key="NSNormalImage" ref="93419583"/>
+													<reference key="NSAlternateImage" ref="573748959"/>
+													<string key="NSAlternateContents"/>
+													<string key="NSKeyEquivalent"/>
+													<int key="NSPeriodicDelay">200</int>
+													<int key="NSPeriodicInterval">25</int>
+												</object>
+											</object>
 											<object class="NSButton" id="1009965154">
 												<reference key="NSNextResponder" ref="1019983678"/>
 												<int key="NSvFlags">256</int>
@@ -1360,7 +1382,7 @@
 											<object class="NSButton" id="253372206">
 												<reference key="NSNextResponder" ref="1019983678"/>
 												<int key="NSvFlags">256</int>
-												<string key="NSFrame">{{283, 98}, {228, 18}}</string>
+												<string key="NSFrame">{{283, 78}, {228, 18}}</string>
 												<reference key="NSSuperview" ref="1019983678"/>
 												<bool key="NSEnabled">YES</bool>
 												<object class="NSButtonCell" key="NSCell" id="651640814">
@@ -12020,6 +12042,30 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					</object>
 					<int key="connectionID">5329</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">settingChanged:</string>
+						<reference key="source" ref="155244235"/>
+						<reference key="destination" ref="652260021"/>
+					</object>
+					<int key="connectionID">5332</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">nextKeyView</string>
+						<reference key="source" ref="652260021"/>
+						<reference key="destination" ref="253372206"/>
+					</object>
+					<int key="connectionID">5333</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">dimOnlyText</string>
+						<reference key="source" ref="155244235"/>
+						<reference key="destination" ref="652260021"/>
+					</object>
+					<int key="connectionID">5334</int>
+				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<object class="NSArray" key="orderedObjects">
@@ -15164,6 +15210,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<reference ref="253372206"/>
 							<reference ref="42775949"/>
 							<reference ref="140624317"/>
+							<reference ref="652260021"/>
 						</object>
 						<reference key="parent" ref="75732044"/>
 					</object>
@@ -17172,6 +17219,20 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						<reference key="object" ref="592396050"/>
 						<reference key="parent" ref="140624317"/>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">5330</int>
+						<reference key="object" ref="652260021"/>
+						<object class="NSMutableArray" key="children">
+							<bool key="EncodedWithXMLCoder">YES</bool>
+							<reference ref="438107074"/>
+						</object>
+						<reference key="parent" ref="1019983678"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">5331</int>
+						<reference key="object" ref="438107074"/>
+						<reference key="parent" ref="652260021"/>
+					</object>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="flattenedProperties">
@@ -18232,6 +18293,9 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<string>5325.IBPluginDependency</string>
 					<string>5325.IBViewBoundsToFrameTransform</string>
 					<string>5326.IBPluginDependency</string>
+					<string>5330.IBPluginDependency</string>
+					<string>5330.IBViewBoundsToFrameTransform</string>
+					<string>5331.IBPluginDependency</string>
 				</object>
 				<object class="NSMutableArray" key="dict.values">
 					<bool key="EncodedWithXMLCoder">YES</bool>
@@ -19504,6 +19568,11 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<object class="NSAffineTransform">
+						<bytes key="NSTransformStruct">P4AAAL+AAABDjYAAwwYAAA</bytes>
+					</object>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<object class="NSAffineTransform">
 						<bytes key="NSTransformStruct">P4AAAL+AAABD2AAAw1UAAA</bytes>
 					</object>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -19525,7 +19594,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">5329</int>
+			<int key="maxID">5334</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -19919,6 +19988,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>deleteSendsCtrlHButton</string>
 							<string>dimBackgroundWindows</string>
 							<string>dimInactiveSplitPanes</string>
+							<string>dimOnlyText</string>
 							<string>disableSmcupRmcup</string>
 							<string>disableWindowResizing</string>
 							<string>displayFontAccessoryView</string>
@@ -20113,6 +20183,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>NSColorWell</string>
 							<string>NSTextField</string>
 							<string>NSMatrix</string>
+							<string>NSButton</string>
 							<string>NSButton</string>
 							<string>NSButton</string>
 							<string>NSButton</string>
@@ -20316,6 +20387,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>deleteSendsCtrlHButton</string>
 							<string>dimBackgroundWindows</string>
 							<string>dimInactiveSplitPanes</string>
+							<string>dimOnlyText</string>
 							<string>disableSmcupRmcup</string>
 							<string>disableWindowResizing</string>
 							<string>displayFontAccessoryView</string>
@@ -20754,6 +20826,10 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">dimInactiveSplitPanes</string>
+								<string key="candidateClassName">NSButton</string>
+							</object>
+							<object class="IBToOneOutletInfo">
+								<string key="name">dimOnlyText</string>
 								<string key="candidateClassName">NSButton</string>
 							</object>
 							<object class="IBToOneOutletInfo">
