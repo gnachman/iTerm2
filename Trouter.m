@@ -151,6 +151,7 @@
          workingDirectory:(NSString *)workingDirectory
                lineNumber:(NSString **)lineNumber
 {
+    NSString *origPath = path;
     // TODO: Move regex, define capture semants in config file/prefs
     if (!path || [path length] == 0) {
         return nil;
@@ -178,7 +179,20 @@
     if ([fileManager fileExistsAtPath:path])
         return path;
     
-    return NULL;
+    
+    // if path doesn't exist and it starts with "a/" or "b/" (from `diff`)
+    if ([origPath isMatchedByRegex:@"^[ab]/"]) {
+        // strip the prefix off ...
+        origPath = [origPath stringByReplacingOccurrencesOfRegex:@"^[ab]/"
+                                                 withString:@""];
+        
+        // ... and calculate the full path again
+        return [self getFullPath:origPath
+                workingDirectory:workingDirectory
+                      lineNumber:lineNumber];
+    }
+    
+    return nil;
 }
 
 
@@ -186,23 +200,11 @@
 {
     BOOL isDirectory;
     NSString* lineNumber;
-    NSString* orgPath = path;
 
     path = [self getFullPath:path
             workingDirectory:workingDirectory
                   lineNumber:&lineNumber];
 
-    // if path doesn't exist and it starts with "a/" or "b/" (from `diff`)
-    if (path == NULL || [orgPath isMatchedByRegex:@"^[ab]/"]) {
-        // strip the prefix off ...
-        path = [orgPath stringByReplacingOccurrencesOfRegex:@"^[ab]/"
-                                                 withString:@""];
-
-        // ... and calculate the full path again
-        path = [self getFullPath:path
-                workingDirectory:workingDirectory
-                      lineNumber:&lineNumber];
-    }
 
     if (![fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
         return NO;
