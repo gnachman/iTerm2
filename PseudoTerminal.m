@@ -2991,6 +2991,9 @@ NSString *sessionsKey = @"sessions";
                 [[aSession view] setDimmed:NO];
             }
             [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
+
+            // In case dimming amount slider moved update the dimming amount.
+            [[aSession view] updateDim];
         }
     }
 }

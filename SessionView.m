@@ -148,19 +148,24 @@ static NSDate* lastResizeDate_;
 
 - (double)dimmedDimmingAmount
 {
-    NSNumber* n = [[NSUserDefaults standardUserDefaults] objectForKey:@"SplitPaneDimmingAmount"];
-    return n ? [n doubleValue] : 0.4;
+    return [[PreferencePanel sharedInstance] dimmingAmount];
 }
 
-- (void)_updateDim
+- (void)updateDim
 {
-    double x= 0;
-    if (dim_) x += 1;
-    if (backgroundDimmed_) x += 1;
-    // 0 -> 0
-    // 1 -> dimmedDimmingAmount
-    // 2 -> 4/3 * dimmedDimmingAmount
-    double amount = (1 - 1 / (1 + x)) * [self dimmedDimmingAmount] * 2;
+    int x = 0;
+    if (dim_) {
+        x++;
+    }
+    if (backgroundDimmed_) {
+        x++;
+    }
+    double scale[] = { 0, 1.0, 1.5 };
+    double amount = scale[x] * [self dimmedDimmingAmount];
+    // Cap amount within reasonable bounds. Before 1.1, dimming amount was only changed by
+    // twiddling the prefs file so it could have all kinds of crazy values.
+    amount = MIN(0.9, amount);
+    amount = MAX(0.1, amount);
 
     [self _dimShadeToDimmingAmount:amount];
 }
@@ -174,7 +179,7 @@ static NSDate* lastResizeDate_;
         return;
     }
     dim_ = isDimmed;
-    [self _updateDim];
+    [self updateDim];
 }
 
 - (void)setBackgroundDimmed:(BOOL)backgroundDimmed
@@ -186,7 +191,7 @@ static NSDate* lastResizeDate_;
         backgroundDimmed_ = NO;
     }
     if (backgroundDimmed_ != orig) {
-        [self _updateDim];
+        [self updateDim];
     }
 }
 
