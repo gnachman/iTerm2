@@ -82,6 +82,8 @@ void DebugLog(NSString* value);
     BOOL secureInputDesired_;
     BOOL quittingBecauseLastWindowClosed_;
 
+    // If set, skip performing launch actions.
+    BOOL quiet_;
     NSDate* launchTime_;
 }
 

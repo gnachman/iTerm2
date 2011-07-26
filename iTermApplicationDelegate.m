@@ -134,6 +134,16 @@ static BOOL hasBecomeActive = NO;
 
 - (void)_performStartupActivities
 {
+    static BOOL run;
+    if (run) {
+        // Has already run
+        return;
+    }
+    run = YES;
+    if (quiet_) {
+        // iTerm2 was launched with "open file" that turns off startup activities.
+        return;
+    }
     // Check if we have an autolauch script to execute. Do it only once, i.e. at application launch.
     if (ranAutoLaunchScript == NO &&
         [[NSFileManager defaultManager] fileExistsAtPath:[AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]]) {
@@ -188,7 +198,11 @@ static BOOL hasBecomeActive = NO;
     // register for services
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
                                                        returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];
-    [self _performStartupActivities];
+    // Sometimes, open untitled doc isn't called in Lion. We need to give application:openFile:
+    // a chance to run because a "special" filename cancels _performStartupActivities.
+    [self performSelector:@selector(_performStartupActivities)
+               withObject:nil
+               afterDelay:0];
 }
 
 - (BOOL)applicationShouldTerminate:(NSNotification *)theNotification
@@ -240,8 +254,23 @@ static BOOL hasBecomeActive = NO;
     [[iTermController sharedInstance] stopEventTap];
 }
 
+/**
+ * The following applescript invokes this method before
+ * _performStartupActivites is run and prevents it from being run. Scripts can
+ * use it to launch a command in a predictable way if iTerm2 isn't running (and
+ * window arrangements won't be restored, etc.)
+ *
+ * tell application "iTerm"
+ *    open file "/com.googlecode.iterm2/commandmode"
+ *    // create a terminal if needed, run commands, whatever.
+ * end tell
+ */
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
 {
+    if ([filename isEqualToString:@"/:com.googlecode.iterm2:commandmode"]) {
+        quiet_ = YES;
+        return YES;
+    }
     filename = [filename stringWithEscapedShellCharacters];
     if (filename) {
         // Verify whether filename is a script or a folder
