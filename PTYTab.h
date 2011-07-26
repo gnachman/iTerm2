@@ -104,7 +104,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)setTabViewItem:(NSTabViewItem *)theTabViewItem;
 - (void)previousSession;
 - (void)nextSession;
-- (int)indexOfSession:(PTYSession*)session;
+- (int)indexOfSessionView:(SessionView*)sessionView;
 
 - (void)setLockedSession:(PTYSession*)lockedSession;
 - (PTYSession*)activeSession;

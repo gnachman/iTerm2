@@ -404,9 +404,9 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 }
 
-- (int)indexOfSession:(PTYSession*)session
+- (int)indexOfSessionView:(SessionView*)sessionView
 {
-    return [[self sessions] indexOfObject:session];
+    return [[self sessionViews] indexOfObject:sessionView];
 }
 
 - (id<WindowControllerInterface>)parentWindow
@@ -710,6 +710,22 @@ static NSString* FormatRect(NSRect r) {
     return sessions;
 }
 
+- (NSArray*)_recursiveSessionViews:(NSMutableArray*)sessionViews
+                            atNode:(NSSplitView*)node
+{
+    for (id subview in [node subviews]) {
+        if ([subview isKindOfClass:[NSSplitView class]]) {
+            [self _recursiveSessions:sessionViews atNode:(NSSplitView*)subview];
+        } else {
+            SessionView* sessionView = (SessionView*)subview;
+            if (sessionView) {
+                [sessionViews addObject:sessionView];
+            }
+        }
+    }
+    return sessionViews;
+}
+
 - (NSArray*)sessions
 {
     if (idMap_) {
@@ -721,6 +737,20 @@ static NSString* FormatRect(NSRect r) {
         return result;
     } else {
         return [self _recursiveSessions:[NSMutableArray arrayWithCapacity:1] atNode:root_];
+    }
+}
+
+- (NSArray*)sessionViews
+{
+    if (idMap_) {
+        NSArray* sessionViews = [idMap_ allValues];
+        NSMutableArray* result = [NSMutableArray arrayWithCapacity:[sessionViews count]];
+        for (SessionView* sessionView in sessionViews) {
+            [result addObject:sessionView];
+        }
+        return result;
+    } else {
+        return [self _recursiveSessionViews:[NSMutableArray arrayWithCapacity:1] atNode:root_];
     }
 }
 
@@ -1738,6 +1768,8 @@ static NSString* FormatRect(NSRect r) {
     [theTab->tabViewItem_ setLabel:@"Restoring..."];
     [newRoot release];
 
+    [theTab setObjectCount:[term numberOfTabs] + 1];
+    
     // Instantiate sessions in the skeleton view tree.
     [theTab setActiveSession:[theTab _recursiveRestoreSessions:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
                                                         atNode:theTab->root_
