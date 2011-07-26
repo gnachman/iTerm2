@@ -404,6 +404,11 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 }
 
+- (int)indexOfSession:(PTYSession*)session
+{
+    return [[self sessions] indexOfObject:session];
+}
+
 - (id<WindowControllerInterface>)parentWindow
 {
     return parentWindow_;

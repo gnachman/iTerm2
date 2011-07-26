@@ -488,8 +488,16 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         [env setObject:[self encodingName] forKey:@"LC_CTYPE"];
     }
 
-    if ([env objectForKey:PWD_ENVNAME] == nil)
+    if ([env objectForKey:PWD_ENVNAME] == nil) {
         [env setObject:[PWD_ENVVALUE stringByExpandingTildeInPath] forKey:PWD_ENVNAME];
+    }
+
+    PseudoTerminal *pty = [tab_ realParentWindow];
+    NSString *itermId = [NSString stringWithFormat:@"w%dt%dp%d",
+                         [pty number],
+                         [tab_ objectCount] - 1,
+                         [tab_ indexOfSession:self]];
+    [env setObject:itermId forKey:@"ITERM_SESSION_ID"];
 
     [SHELL launchWithPath:path
                 arguments:argv
