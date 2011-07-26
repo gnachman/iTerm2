@@ -5918,21 +5918,56 @@ static bool IsUrlChar(NSString* str)
     return [s rangeOfRegex:@"^[a-zA-Z]{1,6}:"].location == 0;
 }
 
+- (NSMutableString *)_bruteforcePathFromBeforeString:(NSMutableString *)beforeString afterString:(NSMutableString *) afterString workingDirectory:(NSString *)workingDirectory {
+    // Remove escaping slashes
+    [beforeString replaceOccurrencesOfRegex:@"\\\\" withString:@""];
+    [afterString replaceOccurrencesOfRegex:@"\\\\" withString:@""];
+    
+    NSMutableArray *beforeChunks = [[beforeString componentsSeparatedByRegex:@"( )"] mutableCopy];
+    NSMutableArray *afterChunks = [[afterString componentsSeparatedByRegex:@"( )"] mutableCopy];
+    
+    NSMutableString *left = [NSMutableString string];
+    
+    [beforeChunks addObject:@""]; // So there is an attempt with no left chunks
+    // Bail after 100 iterations if nothing is still found.
+    int limit = 100;
+    
+    for (int i = [beforeChunks count] - 1; i >= 0; i--) {
+        [left insertString:[beforeChunks objectAtIndex:i] atIndex:0];
+        NSMutableString *possiblePath = [NSMutableString stringWithString:left];
+        
+        for (int j = 0; j < [afterChunks count]; j++) {
+            [possiblePath appendString:[afterChunks objectAtIndex:j]];
+            if ([trouter getFullPath:possiblePath workingDirectory:workingDirectory lineNumber:NULL]) {
+                return possiblePath;
+            }
+            
+            if (--limit == 0) {
+                return nil;
+            }
+        }
+    }
+    return nil;
+}
+
 - (NSString*)_getURLForX:(int)x
                        y:(int)y
-    respectingHardNewlines:(BOOL)respectHardNewlines
+  respectingHardNewlines:(BOOL)respectHardNewlines
 {
     int w = [dataSource width];
     int h = [dataSource numberOfLines];
+    
+    // The idea with this algorithm is that it looks paths with spaces as well.
+    // We want to start looking from the point where the user clicked, so we separate the strings into before (the point) and after (the point).
     NSMutableString *beforeString = [NSMutableString string];
     NSMutableString *afterString = [NSMutableString string];
     NSMutableString *possibleURL = [NSMutableString string];
-    bool urlFlag = true;
+    bool urlFlag = YES;
     
     NSString* theChar = [self _getCharacterAtX:x Y:y];
 
     if (!IsUrlChar(theChar)) {
-        return nil;
+        return @"";
     }
 
     // Look for a left and right edge bracketed by | characters
@@ -5972,7 +6007,7 @@ static bool IsUrlChar(NSString* str)
                 break;
             }
             if (!IsUrlChar(curChar) && urlFlag) {
-                // Found a non-url or path character
+                // Found the first space while searching left
                 [possibleURL insertString:[self contentFromX:xi+1 Y:yi ToX:endx+1 Y:yi pad:YES]
                                   atIndex: 0];
                 urlFlag = false;
@@ -6071,41 +6106,13 @@ static bool IsUrlChar(NSString* str)
 
     if ([self _stringLooksLikeURL:possibleURL]) {
         url = possibleURL;
-    }
-    else {
-        // Remove escaping slashes
-        [beforeString replaceOccurrencesOfRegex:@"\\\\" withString:@""];
-        [afterString replaceOccurrencesOfRegex:@"\\\\" withString:@""];
-        
-        NSMutableArray *beforeChunks = [[beforeString componentsSeparatedByRegex:@"( )"] mutableCopy];
-        NSMutableArray *afterChunks = [[afterString componentsSeparatedByRegex:@"( )"] mutableCopy];
-        
-        NSMutableString *left = [NSMutableString string];
-        
-        [beforeChunks addObject:@""]; // So there is an attempt with no left chunks
-        int limit = 100;
-        
-        for (int i=[beforeChunks count] - 1; i >= 0; i--) {
-            [left insertString:[beforeChunks objectAtIndex:i] atIndex:0];
-            NSMutableString *possiblePath = [NSMutableString stringWithString:left];
-            
-            for (int j=0; j<[afterChunks count]; j++) {
-                [possiblePath appendString:[afterChunks objectAtIndex:j]];
-                 if ([trouter getFullPath:possiblePath workingDirectory:[self getWorkingDirectoryAtLine:y] lineNumber:NULL]) {
-                     url = possiblePath;
-                     i = 0; // GTFO outer loop
-                     break;
-                 }
-                
-                if (--limit == 0) {
-                    return nil;
-                }
-            }
-        }
+    } else {
+        url = [self _bruteforcePathFromBeforeString:beforeString afterString:afterString workingDirectory:[self getWorkingDirectoryAtLine:y]];
     }
 
-    if (url == nil)
-        return nil;
+    if (url == nil) {
+        return @"";
+    }
 
     // Grab the addressbook command
     [url replaceOccurrencesOfString:@"\n"

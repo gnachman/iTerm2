@@ -176,8 +176,9 @@
     // Resolve path by removing ./ and ../ etc
     path = [[url standardizedURL] path];
     
-    if ([fileManager fileExistsAtPath:path])
+    if ([fileManager fileExistsAtPath:path]) {
         return path;
+    } 
     
     
     // if path doesn't exist and it starts with "a/" or "b/" (from `diff`)
