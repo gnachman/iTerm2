@@ -185,12 +185,14 @@
     // True if this window was created by dragging a tab from another window.
     // Affects how its size is set when the number of tabview items changes.
     BOOL wasDraggedFromAnotherWindow_;
+    BOOL fullscreenTabs_;
 }
 
 // Initialize a new PseudoTerminal.
 // smartLayout: If true then position windows using the "smart layout"
 //   algorithm.
-// windowType: WINDOW_TYPE_NORMAL, WINDOW_TYPE_FULL_SCREEN, or WINDOW_TYPE_TOP.
+// windowType: WINDOW_TYPE_NORMAL, WINDOW_TYPE_FULL_SCREEN, WINDOW_TYPE_TOP, or
+//   WINDOW_TYPE_LION_FULL_SCREEN.
 // screen: An index into [NSScreen screens], or -1 to let the system pick a
 //   screen.
 - (id)initWithSmartLayout:(BOOL)smartLayout
@@ -199,6 +201,9 @@
 
 // The window's original screen.
 - (NSScreen*)screen;
+
+// The PTYWindow for this controller.
+- (PTYWindow*)ptyWindow;
 
 // Called on object deallocation.
 - (void)dealloc;
@@ -211,6 +216,12 @@
 
 // Get term number
 - (int)number;
+
+// Returns true if the window is fullscreen in either Lion-style or pre-Lion-style fullscreen.
+- (BOOL)anyFullScreen;
+
+// Returns true if the window is in 10.7-style fullscreen.
+- (BOOL)lionFullScreen;
 
 // Make the tab at [sender tag] the foreground tab.
 - (void)selectSessionAtIndexAction:(id)sender;
@@ -230,6 +241,8 @@
 
 // Close a session (TODO: currently just closes the tab the session is in).
 - (void)closeSession:(PTYSession *)aSession;
+
+- (void)toggleFullScreenTabBar;
 
 // Close the active session.
 - (IBAction)closeCurrentSession:(id)sender;
@@ -298,8 +311,19 @@
 // one's state into it.
 - (IBAction)toggleFullScreenMode:(id)sender;
 
+// Enter full screen mode in the next mainloop.
+- (void)delayedEnterFullscreen;
+
+// Toggle non-Lion fullscreen mode.
+- (void)toggleTraditionalFullScreenMode;
+
 // accessor
 - (BOOL)fullScreen;
+- (BOOL)fullScreenTabControl;
+
+- (BOOL)tabBarShouldBeVisible;
+- (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)n;
+- (BOOL)scrollbarShouldBeVisible;
 
 // Called by VT100Screen when it wants to resize a window for a
 // session-initiated resize. It resizes the session, then the window, then all
@@ -314,7 +338,7 @@
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu;
 
 // setters
-- (void)enableBlur;
+- (void)enableBlur:(double)radius;
 - (void)disableBlur;
 
 // Set the text color for a tab control's name.
@@ -635,6 +659,7 @@
 - (void)_drawFullScreenBlackBackground;
 
 - (void)hideMenuBar;
+- (void)showMenuBar;
 
 // This is a half-baked function that tries to parse a command line into a
 // command (returned in *cmd) and an array of arguments (returned in *path).
@@ -784,10 +809,6 @@
 
 // Return all sessions in all tabs.
 - (NSArray*)allSessions;
-
-// Change visiblity of tabBarControl in fullscreen mode.
-- (void)showFullScreenTabControl;
-- (void)hideFullScreenTabControl;
 
 - (void)_loadFindStringFromSharedPasteboard;
 

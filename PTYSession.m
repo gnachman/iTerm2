@@ -28,7 +28,7 @@
 #import <iTerm/PTYSession.h>
 #import <iTerm/PTYTask.h>
 #import <iTerm/PTYTextView.h>
-#import <iTerm/PTYScrollView.h>;
+#import <iTerm/PTYScrollView.h>
 #import <iTerm/VT100Screen.h>
 #import <iTerm/VT100Terminal.h>
 #import <iTerm/PreferencePanel.h>
@@ -293,7 +293,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
     // Allocate a scrollview
     SCROLLVIEW = [[PTYScrollView alloc] initWithFrame: NSMakeRect(0, 0, aRect.size.width, aRect.size.height)];
-    [SCROLLVIEW setHasVerticalScroller:(![parent fullScreen] &&
+    [SCROLLVIEW setHasVerticalScroller:(![parent anyFullScreen] &&
                                         ![[PreferencePanel sharedInstance] hideScrollbar])];
     NSParameterAssert(SCROLLVIEW != nil);
     [SCROLLVIEW setAutoresizingMask: NSViewWidthSizable|NSViewHeightSizable];
@@ -317,6 +317,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [WRAPPER setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
     TEXTVIEW = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, VMARGIN, aSize.width, aSize.height)];
+    [TEXTVIEW setDimOnlyText:[[PreferencePanel sharedInstance] dimOnlyText]];
     [TEXTVIEW setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [TEXTVIEW setFont:[ITAddressBookMgr fontWithDesc:[addressBookEntry objectForKey:KEY_NORMAL_FONT]]
                nafont:[ITAddressBookMgr fontWithDesc:[addressBookEntry objectForKey:KEY_NON_ASCII_FONT]]
@@ -348,7 +349,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         [SCROLLVIEW setDocumentCursor: [PTYTextView textViewCursor]];
         [SCROLLVIEW setLineScroll:[TEXTVIEW lineHeight]];
         [SCROLLVIEW setPageScroll:2*[TEXTVIEW lineHeight]];
-        [SCROLLVIEW setHasVerticalScroller:(![parent fullScreen] &&
+        [SCROLLVIEW setHasVerticalScroller:(![parent anyFullScreen] &&
                                             ![[PreferencePanel sharedInstance] hideScrollbar])];
 
         ai_code=0;
@@ -435,7 +436,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         return;
     }
     NSString* cmd = [NSString stringWithFormat:@"tic -e xterm-256color %@", [filename stringWithEscapedShellCharacters]];
-    if (system("infocmp xterm-256color")) {
+    if (system("infocmp xterm-256color > /dev/null")) {
         switch (NSRunAlertPanel(@"Warning",
                                 @"The terminfo file for the terminal type you're using, \"xterm-256color\", is not installed on your system. Would you like to install it now?",
                                 @"Install",
@@ -487,8 +488,16 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         [env setObject:[self encodingName] forKey:@"LC_CTYPE"];
     }
 
-    if ([env objectForKey:PWD_ENVNAME] == nil)
+    if ([env objectForKey:PWD_ENVNAME] == nil) {
         [env setObject:[PWD_ENVVALUE stringByExpandingTildeInPath] forKey:PWD_ENVNAME];
+    }
+
+    PseudoTerminal *pty = [tab_ realParentWindow];
+    NSString *itermId = [NSString stringWithFormat:@"w%dt%dp%d",
+                         [pty number],
+                         [tab_ objectCount] - 1,
+                         [tab_ indexOfSession:self]];
+    [env setObject:itermId forKey:@"ITERM_SESSION_ID"];
 
     [SHELL launchWithPath:path
                 arguments:argv
@@ -552,6 +561,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [SCREEN setSession:nil];
     [SCREEN setTerminal:nil];
     [TERMINAL setScreen:nil];
+    if ([[view findViewController] delegate] == self) {
+        [[view findViewController] setDelegate:nil];
+    }
 
     [updateTimer invalidate];
     [updateTimer release];
@@ -2594,7 +2606,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         return;
     }
     [TEXTVIEW setFont:font nafont:nafont horizontalSpacing:horizontalSpacing verticalSpacing:verticalSpacing];
-    if (![[[self tab] parentWindow] fullScreen]) {
+    if (![[[self tab] parentWindow] anyFullScreen]) {
         [[[self tab] parentWindow] fitWindowToTab:[self tab]];
     }
     // If the window isn't able to adjust, or adjust enough, make the session

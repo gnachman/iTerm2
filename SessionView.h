@@ -32,6 +32,7 @@
 @interface SessionView : NSView {
     PTYSession* session_;
     BOOL dim_;
+    BOOL backgroundDimmed_;
 
     float currentDimmingAmount_;
     NSDate* previousUpdate_;
@@ -58,5 +59,8 @@
 - (FindViewController*)findViewController;
 - (int)viewId;
 - (void)setViewId:(int)id;
+- (void)setBackgroundDimmed:(BOOL)backgroundDimmed;
+- (void)updateDim;
+- (BOOL)backgroundDimmed;
 
 @end

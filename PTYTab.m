@@ -404,6 +404,11 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 }
 
+- (int)indexOfSession:(PTYSession*)session
+{
+    return [[self sessions] indexOfObject:session];
+}
+
 - (id<WindowControllerInterface>)parentWindow
 {
     return parentWindow_;
@@ -1143,7 +1148,7 @@ static NSString* FormatRect(NSRect r) {
     size.width = [session columns] * [[session TEXTVIEW] charWidth] + MARGIN * 2;
     size.height = [session rows] * [[session TEXTVIEW] lineHeight] + VMARGIN * 2;
 
-    BOOL hasScrollbar = ![parentWindow_ fullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
+    BOOL hasScrollbar = ![parentWindow_ anyFullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
     NSSize scrollViewSize = [PTYScrollView frameSizeForContentSize:size
                                              hasHorizontalScroller:NO
                                                hasVerticalScroller:hasScrollbar
@@ -1158,7 +1163,7 @@ static NSString* FormatRect(NSRect r) {
     size.width = MIN_SESSION_COLUMNS * [[session TEXTVIEW] charWidth] + MARGIN * 2;
     size.height = MIN_SESSION_ROWS * [[session TEXTVIEW] lineHeight] + VMARGIN * 2;
 
-    BOOL hasScrollbar = ![parentWindow_ fullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
+    BOOL hasScrollbar = ![parentWindow_ anyFullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
     NSSize scrollViewSize = [PTYScrollView frameSizeForContentSize:size
                                              hasHorizontalScroller:NO
                                                hasVerticalScroller:hasScrollbar
@@ -1481,7 +1486,7 @@ static NSString* FormatRect(NSRect r) {
 {
     PtyLog(@"PTYTab fitSessionToCurrentViewSzie");
     PtyLog(@"fitSessionToCurrentViewSize begins");
-    BOOL hasScrollbar = ![parentWindow_ fullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
+    BOOL hasScrollbar = ![parentWindow_ anyFullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
     [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
     NSSize size = [[aSession SCROLLVIEW] documentVisibleRect].size;
     int width = (size.width - MARGIN*2) / [[aSession TEXTVIEW] charWidth];
@@ -1565,13 +1570,32 @@ static NSString* FormatRect(NSRect r) {
     return y > n;
 }
 
+- (double)blurRadius
+{
+    double sum = 0;
+    double count = 0;
+    NSArray* sessions = [self sessions];
+    for (PTYSession* session in sessions) {
+        if ([[[session addressBookEntry] objectForKey:KEY_BLUR] boolValue]) {
+            sum += [[session addressBookEntry] objectForKey:KEY_BLUR_RADIUS] ? [[[session addressBookEntry] objectForKey:KEY_BLUR_RADIUS] floatValue] : 2.0;
+            ++count;
+        }
+    }
+    if (count > 0) {
+        return sum / count;
+    } else {
+        // This shouldn't actually happen, but better save than divide by zero.
+        return 2.0;
+    }
+}
+
 - (void)recheckBlur
 {
     PtyLog(@"PTYTab recheckBlur");
     if ([realParentWindow_ currentTab] == self &&
         ![[realParentWindow_ window] isMiniaturized]) {
         if ([self blur]) {
-            [parentWindow_ enableBlur];
+            [parentWindow_ enableBlur:[self blurRadius]];
         } else {
             [parentWindow_ disableBlur];
         }

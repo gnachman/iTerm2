@@ -1,4 +1,72 @@
-These release notes are for the development builds of iTerm2. Beta versions are very stable as we near release.
+These release notes are for the development builds of iTerm2. The last stable release was 1.0.0.
+
+iTerm2 1.0.0.20110724
+This test release primarily fixes various Lion-related issues.
+
+Enhancements:
+- When you cmd-click on a filename in a diff, remove the a/ or b/ prefix and replace with the real directory to open the file.
+- Expand tildes when you cmd-click on a file to open it.
+- Remove trailing braces from file name when you cmd-click to open it.
+- Add escape code <Esc>]50;SetMark^G to perform Edit > Set Mark command.
+
+Bug fixes:
+- Fix bug where the bottoms of some characters were cut off in some fonts.
+- Fix bug where "zoom maximizes vertically" affects Lion fullscreen.
+- Make scrollbar visible in Lion against dark backgrounds.
+- Fix bug where iTerm2 would hang/beachball when playing the bell repeatedlhy.
+- Improve how pasting filenames is handled.
+- Fix bug where startup activities (opening saved window arrangements, etc.) wasn't performed sometimes on Lion.
+
+
+iTerm2 1.0.0.20110720
+This test release adds bug fixes and Lion fullscreen support.
+
+Enhancements:
+- Add support for Lion fullscreen mode.
+- Improve find performance for long lines.
+- Improve find performance when there are lots and lots of matches.
+
+Bug fixes:
+- Improve wording of preferences option to "Closing hotkey window restores focus but may switch spaces".
+- Fix bug where fullscreen windows are stuck to one space even if they're set to "all spaces".
+- Fix bug where minaturiaze button was missing when a new window was created while a fullscreen window was open.
+- Fix control key behavior with certain keyboards and custom layouts.
+- Change how font size is estimated to be more consistent and work better with broken fonts like Consolas.
+- Handle control-pgup and control-pgdn correctly.
+- Fix bug where the top two pixels weren't drawn in fullscreen mode.
+- Remove infocmp spam from console logs.
+- Fix bug where find highlights didn't wrap around to the next line.
+- Fix race condition with session logging.
+- Cmd-key no longer sends input to the terminal if it's not bound to anything.
+
+
+iTerm2 1.0.0
+The first release is here!
+
+The only changes from Beta 4 are the version number and the removal of debug logging from the menu.
+
+Beta 4
+So bug-free it hurts.
+
+Enhancements:
+Add preset keymapping with Terminal.app-compatible alt-arrow keys. The default bookmark now uses this.
+Online help is now up to date.
+
+Bug fixes:
+- Fix crash when resizing window.
+- Fix Voiceover crash.
+- Fix crash when trying to move cursor below bottom of screen.
+- Fix crash when getpwuid fails.
+- Fix crash with input method editor and 0-width sessions.
+- Fix crash when you cmd-click in a window and no terminal is considered to be in front.
+- Fix crash when session ends while in instant replay.
+- Fix crash when closing a window in instant replay while another window has focus.
+- Fix a bug that cause find to go crazy and occasional blank lines not to be added to the scrollback buffer.
+- Fix a bug where clicking on a background window while paste history/autocomplete is open caused two terminals to think they had focus.
+- Fix a crash when quitting while paste history/autocomplete is open.
+- Fix a crash when closing a window with cmd-opt-w while paste history/autocomplete is open.
+- Fix a crash when double-clicking on a word (exact cause unknown)
+- Remove excessive logging around hotkey window.
 
 Beta 3
 Even more bug-free!

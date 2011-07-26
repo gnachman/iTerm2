@@ -48,9 +48,10 @@ static NSString* AUTO_LAUNCH_SCRIPT = @"~/Library/Application Support/iTerm/Auto
 
 NSMutableString* gDebugLogStr = nil;
 NSMutableString* gDebugLogStr2 = nil;
-static BOOL usingAutoLaunchScript = NO;
+static BOOL ranAutoLaunchScript = NO;
 BOOL gDebugLogging = NO;
 int gDebugLogFile = -1;
+static BOOL hasBecomeActive = NO;
 
 @implementation iTermAboutWindow
 
@@ -88,6 +89,91 @@ int gDebugLogFile = -1;
     [PreferencePanel migratePreferences];
     [ITAddressBookMgr sharedInstance];
     [PreferencePanel sharedInstance];
+
+    [self setFutureApplicationPresentationOptions:NSApplicationPresentationFullScreen unset:0];
+}
+
+- (void)setFutureApplicationPresentationOptions:(int)flags unset:(int)antiflags
+{
+    if ([NSApp respondsToSelector:@selector(presentationOptions)]) {
+        // This crazy hackery is done so that we can use 10.6 and 10.7 features
+        // while compiling against the 10.5 SDK.
+
+        // presentationOptions =  [NSApp presentationOptions]
+        NSMethodSignature *presentationOptionsSignature = [NSApp->isa
+            instanceMethodSignatureForSelector:@selector(presentationOptions)];
+        NSInvocation *presentationOptionsInvocation = [NSInvocation
+            invocationWithMethodSignature:presentationOptionsSignature];
+        [presentationOptionsInvocation setTarget:NSApp];
+        [presentationOptionsInvocation setSelector:@selector(presentationOptions)];
+        [presentationOptionsInvocation invoke];
+
+        NSUInteger presentationOptions;
+        [presentationOptionsInvocation getReturnValue:&presentationOptions];
+
+        presentationOptions |= flags;
+        presentationOptions &= ~antiflags;
+
+        // [NSAppObj setPresentationOptions:presentationOptions];
+        NSMethodSignature *setSig = [NSApp->isa instanceMethodSignatureForSelector:@selector(setPresentationOptions:)];
+        NSInvocation *setInv = [NSInvocation invocationWithMethodSignature:setSig];
+        [setInv setTarget:NSApp];
+        [setInv setSelector:@selector(setPresentationOptions:)];
+        [setInv setArgument:&presentationOptions atIndex:2];
+        [setInv invoke];
+    } else {
+        // Emulate setPresentationOptions API for OS 10.5.
+        if (flags & NSApplicationPresentationAutoHideMenuBar) {
+            SetSystemUIMode(kUIModeAllHidden, kUIOptionAutoShowMenuBar);
+        } else if (antiflags & NSApplicationPresentationAutoHideMenuBar) {
+            SetSystemUIMode(kUIModeNormal, 0);
+        }
+
+    }
+}
+
+- (void)_performStartupActivities
+{
+    static BOOL run;
+    if (run) {
+        // Has already run
+        return;
+    }
+    run = YES;
+    if (quiet_) {
+        // iTerm2 was launched with "open file" that turns off startup activities.
+        return;
+    }
+    // Check if we have an autolauch script to execute. Do it only once, i.e. at application launch.
+    if (ranAutoLaunchScript == NO &&
+        [[NSFileManager defaultManager] fileExistsAtPath:[AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]]) {
+        ranAutoLaunchScript = YES;
+
+        NSAppleScript *autoLaunchScript;
+        NSDictionary *errorInfo = [NSDictionary dictionary];
+        NSURL *aURL = [NSURL fileURLWithPath:[AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]];
+
+        // Make sure our script suite registry is loaded
+        [NSScriptSuiteRegistry sharedScriptSuiteRegistry];
+
+        autoLaunchScript = [[NSAppleScript alloc] initWithContentsOfURL:aURL
+                                                                  error:&errorInfo];
+        [autoLaunchScript executeAndReturnError:&errorInfo];
+        [autoLaunchScript release];
+    } else {
+        if ([[PreferencePanel sharedInstance] openBookmark]) {
+            [self showBookmarkWindow:nil];
+            if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
+                // Open both bookmark window and arrangement!
+                [[iTermController sharedInstance] loadWindowArrangement];
+            }
+        } else if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
+            [[iTermController sharedInstance] loadWindowArrangement];
+        } else {
+            [self newWindow:nil];
+        }
+    }
+    ranAutoLaunchScript = YES;
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
@@ -112,9 +198,14 @@ int gDebugLogFile = -1;
     // register for services
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
                                                        returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];
+    // Sometimes, open untitled doc isn't called in Lion. We need to give application:openFile:
+    // a chance to run because a "special" filename cancels _performStartupActivities.
+    [self performSelector:@selector(_performStartupActivities)
+               withObject:nil
+               afterDelay:0];
 }
 
-- (BOOL)applicationShouldTerminate: (NSNotification *) theNotification
+- (BOOL)applicationShouldTerminate:(NSNotification *)theNotification
 {
     NSArray *terminals;
 
@@ -163,64 +254,51 @@ int gDebugLogFile = -1;
     [[iTermController sharedInstance] stopEventTap];
 }
 
+/**
+ * The following applescript invokes this method before
+ * _performStartupActivites is run and prevents it from being run. Scripts can
+ * use it to launch a command in a predictable way if iTerm2 isn't running (and
+ * window arrangements won't be restored, etc.)
+ *
+ * tell application "iTerm"
+ *    open file "/com.googlecode.iterm2/commandmode"
+ *    // create a terminal if needed, run commands, whatever.
+ * end tell
+ */
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
 {
-        //NSLog(@"%s: %@", __PRETTY_FUNCTION__, filename);
-        filename = [filename stringWithEscapedShellCharacters];
-        if (filename) {
-                // Verify whether filename is a script or a folder
-                BOOL isDir;
-                [[NSFileManager defaultManager] fileExistsAtPath:filename isDirectory:&isDir];
-                if (!isDir) {
-                    NSString *aString = [NSString stringWithFormat:@"%@; exit;\n", filename];
-                    [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil];
-                    // Sleeping a while waiting for the login.
-                    sleep(1);
-                    [[[[iTermController sharedInstance] currentTerminal] currentSession] insertText:aString];
-                }
-                else {
-                        NSString *aString = [NSString stringWithFormat:@"cd %@\n", filename];
-                        [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil];
-                        // Sleeping a while waiting for the login.
-                        sleep(1);
-                        [[[[iTermController sharedInstance] currentTerminal] currentSession] insertText:aString];
-                }
+    if ([filename isEqualToString:@"/:com.googlecode.iterm2:commandmode"]) {
+        quiet_ = YES;
+        return YES;
+    }
+    filename = [filename stringWithEscapedShellCharacters];
+    if (filename) {
+        // Verify whether filename is a script or a folder
+        BOOL isDir;
+        [[NSFileManager defaultManager] fileExistsAtPath:filename isDirectory:&isDir];
+        if (!isDir) {
+            NSString *aString = [NSString stringWithFormat:@"%@; exit;\n", filename];
+            [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil];
+            // Sleeping a while waiting for the login.
+            sleep(1);
+            [[[[iTermController sharedInstance] currentTerminal] currentSession] insertText:aString];
         }
-        return (YES);
-}
-
-- (BOOL)applicationOpenUntitledFile:(NSApplication *)app
-{
-    // Check if we have an autolauch script to execute. Do it only once, i.e. at application launch.
-    if (usingAutoLaunchScript == NO &&
-        [[NSFileManager defaultManager] fileExistsAtPath:[AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]]) {
-        usingAutoLaunchScript = YES;
-
-        NSAppleScript *autoLaunchScript;
-        NSDictionary *errorInfo = [NSDictionary dictionary];
-        NSURL *aURL = [NSURL fileURLWithPath: [AUTO_LAUNCH_SCRIPT stringByExpandingTildeInPath]];
-
-        // Make sure our script suite registry is loaded
-        [NSScriptSuiteRegistry sharedScriptSuiteRegistry];
-
-        autoLaunchScript = [[NSAppleScript alloc] initWithContentsOfURL: aURL error: &errorInfo];
-        [autoLaunchScript executeAndReturnError: &errorInfo];
-        [autoLaunchScript release];
-    } else {
-        if ([[PreferencePanel sharedInstance] openBookmark]) {
-            [self showBookmarkWindow:nil];
-            if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
-                // Open both bookmark window and arrangement!
-                [[iTermController sharedInstance] loadWindowArrangement];
-            }
-        } else if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
-            [[iTermController sharedInstance] loadWindowArrangement];
-        } else {
-            [self newWindow:nil];
+        else {
+            NSString *aString = [NSString stringWithFormat:@"cd %@\n", filename];
+            [[iTermController sharedInstance] launchBookmark:nil inTerminal:nil];
+            // Sleeping a while waiting for the login.
+            sleep(1);
+            [[[[iTermController sharedInstance] currentTerminal] currentSession] insertText:aString];
         }
     }
-    usingAutoLaunchScript = YES;
+    return (YES);
+}
 
+- (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication
+{
+    if (hasBecomeActive) {
+        [self _performStartupActivities];
+    }
     return YES;
 }
 
@@ -342,6 +420,11 @@ int gDebugLogFile = -1;
 }
 
 // Action methods
+- (IBAction)toggleFullScreenTabBar:(id)sender
+{
+    [[[iTermController sharedInstance] currentTerminal] toggleFullScreenTabBar];
+}
+
 - (IBAction)newWindow:(id)sender
 {
     [[iTermController sharedInstance] newWindow:sender];
@@ -441,13 +524,13 @@ int gDebugLogFile = -1;
     DLog(@"******** Become Active");
     for (PseudoTerminal* term in [self terminals]) {
         if ([term isHotKeyWindow]) {
-            NSLog(@"Visor is open; not rescuing orphans.");
+            //NSLog(@"Visor is open; not rescuing orphans.");
             return;
         }
     }
     for (PseudoTerminal* term in [self terminals]) {
         if ([term isOrderedOut]) {
-            NSLog(@"term %p was orphaned, order front.", term);
+            //NSLog(@"term %p was orphaned, order front.", term);
             [[term window] orderFront:nil];
         }
     }
@@ -518,6 +601,7 @@ static void FlushDebugLog() {
 
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification
 {
+    hasBecomeActive = YES;
     if (secureInputDesired_) {
         if (EnableSecureEventInput() != noErr) {
             NSLog(@"Failed to enable secure input.");
@@ -817,6 +901,14 @@ void DebugLog(NSString* value)
             return YES;
         } else {
             return NO;
+        }
+    } else if ([menuItem action] == @selector(toggleFullScreenTabBar:)) {
+        PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
+        if (!term || ![term anyFullScreen]) {
+            return NO;
+        } else {
+            [menuItem setState:[term fullScreenTabControl] ? NSOnState : NSOffState];
+            return YES;
         }
     } else {
         return YES;

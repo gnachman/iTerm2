@@ -31,12 +31,16 @@
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
 
-#import <iTerm/iTerm.h>
+#import "iTerm.h"
 #import <iTerm/PTYScrollView.h>
 #import <iTerm/PTYTextView.h>
 #import <PreferencePanel.h>
+#include "NSImage+CoreImage.h"
+#import <Cocoa/Cocoa.h>
 
 @implementation PTYScroller
+
+@synthesize hasDarkBackground;
 
 - (id)init
 {
@@ -95,6 +99,31 @@
 - (NSScrollerPart)hitPart
 {
     return [super hitPart];
+}
+
+- (void)drawRect:(NSRect)dirtyRect {
+    if (IsLionOrLater() && self.hasDarkBackground) {
+        NSImage *superDrawn = [[NSImage alloc] initWithSize:NSMakeSize(dirtyRect.origin.x + dirtyRect.size.width,
+                                                                       dirtyRect.origin.y + dirtyRect.size.height)];
+        [superDrawn lockFocus];
+        [super drawRect:dirtyRect];
+        [superDrawn unlockFocus];
+        
+        NSImage *temp = [[NSImage alloc] initWithSize:[superDrawn size]];
+        [temp lockFocus];
+        [superDrawn drawAtPoint:dirtyRect.origin
+                       fromRect:dirtyRect
+                coreImageFilter:@"CIColorControls"
+                      arguments:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithDouble:0.5], @"inputBrightness", nil]];
+        [temp unlockFocus];
+        
+        [temp drawAtPoint:dirtyRect.origin
+                 fromRect:dirtyRect
+                operation:NSCompositeCopy
+                 fraction:1.0];
+    } else {
+        [super drawRect:dirtyRect];
+    }
 }
 
 @end

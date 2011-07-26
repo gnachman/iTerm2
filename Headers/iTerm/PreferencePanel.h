@@ -176,9 +176,25 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* dimInactiveSplitPanes;
     BOOL defaultDimInactiveSplitPanes;
 
+    // Dim background windows
+    IBOutlet NSButton* dimBackgroundWindows;
+    BOOL defaultDimBackgroundWindows;
+
+    // Dim text (and non-default background colors)
+    IBOutlet NSButton* dimOnlyText;
+    BOOL defaultDimOnlyText;
+
+    // Dimming amount
+    IBOutlet NSSlider* dimmingAmount;
+    float defaultDimmingAmount;
+
     // Window border
     IBOutlet NSButton* showWindowBorder;
     BOOL defaultShowWindowBorder;
+
+    // Lion-style fullscreen
+    IBOutlet NSButton* lionStyleFullscreen;
+    BOOL defaultLionStyleFullscreen;
 
     // hide scrollbar and resize
     IBOutlet NSButton *hideScrollbar;
@@ -187,10 +203,6 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     // smart window placement
     IBOutlet NSButton *smartPlacement;
     BOOL defaultSmartPlacement;
-
-    // Delay before showing tabs in fullscreen mode
-    IBOutlet NSSlider* fsTabDelay;
-    float defaultFsTabDelay;
 
     // Window/tab title customization
     IBOutlet NSButton* windowNumber;
@@ -335,6 +347,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* useBrightBold;
     IBOutlet NSSlider *transparency;
     IBOutlet NSButton* blur;
+    IBOutlet NSSlider *blurRadius;
     IBOutlet NSButton* asciiAntiAliased;
     IBOutlet NSButton* nonasciiAntiAliased;
     IBOutlet NSButton* backgroundImage;
@@ -456,7 +469,6 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (IBAction)settingChanged:(id)sender;
 - (BOOL)advancedFontRendering;
 - (float)strokeThickness;
-- (float)fsTabDelay;
 - (int)modifierTagToMask:(int)tag;
 - (void)windowWillLoad;
 - (void)windowWillClose:(NSNotification *)aNotification;
@@ -501,7 +513,11 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (NSTextField*)hotkeyField;
 
 - (BOOL)showWindowBorder;
+- (BOOL)lionStyleFullscreen;
 - (BOOL)dimInactiveSplitPanes;
+- (BOOL)dimBackgroundWindows;
+- (BOOL)dimOnlyText;
+- (float)dimmingAmount;
 - (BOOL)checkTestRelease;
 - (BOOL)legacySmartCursorColor;
 - (float)legacyMinimumContrast;

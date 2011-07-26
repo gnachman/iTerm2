@@ -107,6 +107,7 @@
 #define KEY_USE_BRIGHT_BOLD        @"Use Bright Bold"
 #define KEY_TRANSPARENCY           @"Transparency"
 #define KEY_BLUR                   @"Blur"
+#define KEY_BLUR_RADIUS            @"Blur Radius"
 #define KEY_ANTI_ALIASING          @"Anti Aliasing"  // DEPRECATED
 #define KEY_ASCII_ANTI_ALIASED     @"ASCII Anti Aliased"
 #define KEY_NONASCII_ANTI_ALIASED  @"Non-ASCII Anti Aliased"
@@ -141,6 +142,7 @@
 #define WINDOW_TYPE_FULL_SCREEN 1  // Creates a normal window but all callers to initWithSmartLayout will toggle fullscreen mode if this is the windowType.
 #define WINDOW_TYPE_TOP 2
 #define WINDOW_TYPE_FORCE_FULL_SCREEN 3  // Used internally, never reported by windowType API. Causes initWithSmartLayout to create a window with fullscreen chrome. It will set its windowType to FULL_SCREEN
+#define WINDOW_TYPE_LION_FULL_SCREEN 4  // Lion-native fullscreen
 
 @interface ITAddressBookMgr : NSObject
 {

@@ -910,19 +910,6 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     [tableView_ setFrame:tableViewFrame];
 }
 
-- (id)retain
-{
-    if (debug)
-        NSLog(@"Object at %x retain. Count is now %d", (void*)self, [self retainCount]+1);
-    return [super retain];
-}
-- (oneway void)release
-{
-    if (debug)
-        NSLog(@"Object at %x release. Count is now %d", (void*)self, [self retainCount]-1);
-    [super release];
-}
-
 - (void)turnOnDebug
 {
     NSLog(@"Debugging object at %x. Current count is %d", (void*)self, [self retainCount]);

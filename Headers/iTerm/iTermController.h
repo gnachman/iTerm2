@@ -36,6 +36,8 @@
 @class PasteboardHistory;
 @class GTMCarbonHotKey;
 
+BOOL IsLionOrLater(void);
+
 @interface iTermController : NSObject
 {
     // PseudoTerminal objects
@@ -54,10 +56,17 @@
     int keyWindowIndexMemo_;
     BOOL itermWasActiveWhenHotkeyOpened;
     BOOL rollingIn_;
+
+    // For restoring previously active app when exiting hotkey window
+    NSNumber *previouslyActiveAppPID_;
+    id runningApplicationClass_;
 }
 
 + (iTermController*)sharedInstance;
 + (void)sharedInstanceRelease;
++ (BOOL)getSystemVersionMajor:(unsigned *)major
+                        minor:(unsigned *)minor
+                       bugFix:(unsigned *)bugFix;
 
 + (void)switchToSpaceInBookmark:(NSDictionary*)aDict;
 - (BOOL)rollingInHotkeyTerm;

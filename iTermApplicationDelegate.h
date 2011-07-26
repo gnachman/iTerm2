@@ -76,11 +76,14 @@ void DebugLog(NSString* value);
     IBOutlet NSMenuItem *irPrev;
 
     IBOutlet NSMenuItem *secureInput;
+    IBOutlet NSMenuItem *showFullScreenTabs;
     IBOutlet NSMenuItem *useTransparency;
     IBOutlet NSMenuItem *maximizePane;
     BOOL secureInputDesired_;
     BOOL quittingBecauseLastWindowClosed_;
 
+    // If set, skip performing launch actions.
+    BOOL quiet_;
     NSDate* launchTime_;
 }
 
@@ -100,6 +103,7 @@ void DebugLog(NSString* value);
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification;
 - (void)applicationDidResignActive:(NSNotification *)aNotification;
 
+- (IBAction)toggleFullScreenTabBar:(id)sender;
 - (IBAction)maximizePane:(id)sender;
 - (IBAction)toggleUseTransparency:(id)sender;
 - (IBAction)toggleSecureInput:(id)sender;
@@ -146,6 +150,11 @@ void DebugLog(NSString* value);
 - (IBAction)editCurrentSession:(id)sender;
 
 - (void)makeHotKeyWindowKeyIfOpen;
+
+// Implements the 10.6 api but is callable in 10.5 and tries to implement
+// some subset of the flags.
+- (void)setFutureApplicationPresentationOptions:(int)flags unset:(int)antiflags;
+
 
 @end
 

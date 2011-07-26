@@ -33,6 +33,9 @@
 @implementation ResultRange
 @end
 
+@implementation XYRange
+@end
+
 @implementation LineBlock
 
 - (LineBlock*) initWithRawBufferSize: (int) size
@@ -118,7 +121,13 @@ static char* formatsct(screen_char_t* src, int len, char* dest) {
     if (length > free_space) {
         return NO;
     }
-    if (is_partial) {
+    // There's a bit of an edge case here: if you're appending an empty
+    // non-partial line to a partial line, we need it to append a blank line
+    // after the continued line. In practice this happens because a line is
+    // long but then the wrapped portion is erased and the EOL_SOFT flag stays
+    // behind. It would be really complex to ensure consistency of line-wrapping
+    // flags because the screen contents are changed in so many places.
+    if (is_partial && !(!partial && length == 0)) {
         // append to an existing line
         NSAssert(cll_entries > 0, @"is_partial but has no entries");
         cumulative_line_lengths[cll_entries - 1] += length;
@@ -375,7 +384,7 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     } else {
         start = cumulative_line_lengths[linenum - 1];
     }
-    return buffer_start + start;
+    return raw_buffer + start;
 }
 
 - (void) changeBufferSize: (int) capacity
@@ -519,23 +528,10 @@ static NSString* RewrittenRegex(NSString* originalRegex) {
     return rewritten;
 }
 
-static int Search(NSString* needle,
-                  screen_char_t* rawline,
-                  int raw_line_length,
-                  int start,
-                  int end,
-                  int options,
-                  int* resultLength)
+static int CoreSearch(NSString* needle, screen_char_t* rawline, int raw_line_length, int start, int end, 
+                      int options, int* resultLength, NSString* haystack, unichar* charHaystack,
+                      int* deltas, int deltaOffset)
 {
-    NSString* haystack;
-    unichar* charHaystack;
-    int* deltas;
-    haystack = ScreenCharArrayToString(rawline,
-                                       start,
-                                       end,
-                                       &charHaystack,
-                                       &deltas);
-                                       
     int apiOptions = 0;
     NSRange range;
     BOOL regex;
@@ -639,12 +635,35 @@ static int Search(NSString* needle,
     if (range.location != NSNotFound) {
         int adjustedLocation;
         int adjustedLength;
-        adjustedLocation = range.location + deltas[range.location];
+        adjustedLocation = range.location + deltas[range.location] + deltaOffset;
         adjustedLength = range.length + deltas[range.location + range.length] -
-            deltas[range.location];
+            (deltas[range.location] + deltaOffset);
         *resultLength = adjustedLength;
         result = adjustedLocation + start;
     }
+    return result;
+}
+
+static int Search(NSString* needle,
+                  screen_char_t* rawline,
+                  int raw_line_length,
+                  int start,
+                  int end,
+                  int options,
+                  int* resultLength)
+{
+    NSString* haystack;
+    unichar* charHaystack;
+    int* deltas;
+    haystack = ScreenCharArrayToString(rawline,
+                                       start,
+                                       end,
+                                       &charHaystack,
+                                       &deltas);
+    // screen_char_t[i + deltas[i]] begins its run at charHaystack[i]
+    int result = CoreSearch(needle, rawline, raw_line_length, start, end, options, resultLength,
+                            haystack, charHaystack, deltas, deltas[0]);
+
     free(deltas);
     free(charHaystack);
     return result;
@@ -709,10 +728,26 @@ static int Search(NSString* needle,
         int limit = raw_line_length;
         int tempResultLength;
         int tempPosition;
+
+        NSString* haystack;
+        unichar* charHaystack;
+        int* deltas;
+        haystack = ScreenCharArrayToString(rawline,
+                                           0,
+                                           limit,
+                                           &charHaystack,
+                                           &deltas);
+        int numUnichars = [haystack length];
         do {
-            tempPosition =  Search(needle, rawline, raw_line_length, 0, limit,
-                                   options, &tempResultLength);
+            haystack = CharArrayToString(charHaystack, numUnichars);
+            tempPosition = CoreSearch(needle, rawline, raw_line_length, 0, limit, options,
+                                      &tempResultLength, haystack, charHaystack, deltas, 0);
+
             limit = tempPosition + tempResultLength - 1;
+            // find i so that i-deltas[i] == limit
+            while (numUnichars >= 0 && numUnichars + deltas[numUnichars] > limit) {
+                --numUnichars;
+            }
             if (tempPosition != -1 && tempPosition <= skip) {
                 ResultRange* r = [[[ResultRange alloc] init] autorelease];
                 r->position = tempPosition;
@@ -720,6 +755,8 @@ static int Search(NSString* needle,
                 [results addObject:r];
             }
         } while (tempPosition != -1 && (multipleResults || tempPosition > skip));
+        free(deltas);
+        free(charHaystack);
     } else {
         // Search forward
         // TODO: test this
@@ -830,7 +867,7 @@ static int Search(NSString* needle,
             // Get the number of full-width lines in the raw line. If there were
             // only single-width characters the formula would be:
             //     spans = (line_length - 1) / width;
-            int spans = NumberOfFullLines(buffer_start + prev, line_length, width);
+            int spans = NumberOfFullLines(raw_buffer + prev, line_length, width);
             *y += spans + 1;
         } else {
             // The position we're searching for is in this (unwrapped) line.
@@ -847,13 +884,13 @@ static int Search(NSString* needle,
                     ++dwc_peek;
                 }
             }
-            int consume = NumberOfFullLines(buffer_start + prev,
+            int consume = NumberOfFullLines(raw_buffer + prev,
                                             MIN(line_length, bytes_to_consume_in_this_line + 1 + dwc_peek),
                                             width);
             *y += consume;
             if (consume > 0) {
                 // Offset from prev where the consume'th line begin.
-                int offset = OffsetOfWrappedLine(buffer_start + prev,
+                int offset = OffsetOfWrappedLine(raw_buffer + prev,
                                                  consume,
                                                  line_length,
                                                  width);
@@ -871,30 +908,6 @@ static int Search(NSString* needle,
     }
     NSLog(@"Didn't find position %d", position);
     return NO;
-}
-
-// If you were to do an append, this is the x position of where your append
-// would begin.
-- (int) getTrailingWithWidth:(int)width
-{
-    int numLines = [self numRawLines];
-    if (!is_partial || numLines == 0) {
-        return 0;
-    } else {
-        int start;
-        if (cll_entries == 1) {
-            start = 0;
-        } else {
-            start = cumulative_line_lengths[cll_entries - 2];
-        }
-        int length = cumulative_line_lengths[cll_entries - 1] - start;
-        int spans = NumberOfFullLines(buffer_start + start, length, width);
-        int offset = OffsetOfWrappedLine(buffer_start + start,
-                                         spans,
-                                         length,
-                                         width);
-        return offset;
-    }
 }
 
 @end
@@ -1343,8 +1356,9 @@ static int RawNumLines(LineBuffer* buffer, int width) {
          multipleResults:((context->options & FindMultipleResults) != 0)];
     NSMutableArray* filtered = [NSMutableArray arrayWithCapacity:[context->results count]];
     BOOL haveOutOfRangeResults = NO;
+    int blockPosition = [self _blockPosition:context->absBlockNum - num_dropped_blocks];
     for (ResultRange* range in context->results) {
-        range->position += [self _blockPosition:context->absBlockNum - num_dropped_blocks];
+        range->position += blockPosition;
         if (context->dir * (range->position - stopAt) > 0 ||
             context->dir * (range->position + context->matchLength - stopAt) > 0) {
             // result was outside the range to be searched
@@ -1368,6 +1382,87 @@ static int RawNumLines(LineBuffer* buffer, int width) {
         context->offset = 0;
     }
     context->absBlockNum += context->dir;
+}
+
+// Returns an array of XRange values
+- (NSArray*)convertPositions:(NSArray*)resultRanges withWidth:(int)width
+{
+    // Create sorted array of all positions to convert.
+    NSMutableArray* unsortedPositions = [NSMutableArray arrayWithCapacity:[resultRanges count] * 2];
+    for (ResultRange* rr in resultRanges) {
+        [unsortedPositions addObject:[NSNumber numberWithInt:rr->position]];
+        [unsortedPositions addObject:[NSNumber numberWithInt:rr->position + rr->length - 1]];
+    }
+
+    // Walk blocks and positions in parallel, converting each position in order. Store in
+    // intermediate dict, mapping position->NSPoint(x,y)
+    NSArray *positionsArray = [unsortedPositions sortedArrayUsingSelector:@selector(compare:)];
+    int i = 0;
+    int yoffset = 0;
+    int numBlocks = [blocks count];
+    int passed = 0;
+    LineBlock *block = [blocks objectAtIndex:0];
+    int used = [block rawSpaceUsed];
+    NSMutableDictionary* intermediate = [NSMutableDictionary dictionaryWithCapacity:[resultRanges count] * 2];
+    int prev = -1;
+    for (NSNumber* positionNum in positionsArray) {
+        int position = [positionNum intValue];
+        if (position == prev) {
+            continue;
+        }
+        prev = position;
+
+        // Advance block until it includes this position
+        while (position >= passed + used && i < numBlocks) {
+            passed += used;
+            yoffset += [block getNumLinesWithWrapWidth:width];
+            i++;
+            if (i < numBlocks) {
+                block = [blocks objectAtIndex:i];
+                used = [block rawSpaceUsed];
+            }
+        }
+        if (i < numBlocks) {
+            int x, y;
+            assert(position >= passed);
+            assert(position < passed + used);
+            assert(used == [block rawSpaceUsed]);
+            BOOL isOk = [block convertPosition:position - passed
+                                     withWidth:width
+                                           toX:&x
+                                           toY:&y];
+            assert(x < 2000);
+            if (isOk) {
+                y += yoffset;
+                [intermediate setObject:[NSValue valueWithPoint:NSMakePoint(x, y)]
+                                 forKey:positionNum];
+            } else {
+                assert(false);
+            }
+        }
+    }
+
+    // Walk the positions array and populate results by looking up points in intermediate dict.
+    NSMutableArray* result = [NSMutableArray arrayWithCapacity:[resultRanges count]];
+    for (ResultRange* rr in resultRanges) {
+        NSValue *start = [intermediate objectForKey:[NSNumber numberWithInt:rr->position]];
+        NSValue *end = [intermediate objectForKey:[NSNumber numberWithInt:rr->position + rr->length - 1]];
+        if (start && end) {
+            XYRange *xyrange = [[[XYRange alloc] init] autorelease];
+            NSPoint startPoint = [start pointValue];
+            NSPoint endPoint = [end pointValue];
+            xyrange->xStart = startPoint.x;
+            xyrange->yStart = startPoint.y;
+            xyrange->xEnd = endPoint.x;
+            xyrange->yEnd = endPoint.y;
+            [result addObject:xyrange];
+        } else {
+            assert(false);
+            [result addObject:[NSNull null]];
+        }
+    }
+
+    return result;
 }
 
 - (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y

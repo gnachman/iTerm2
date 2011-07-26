@@ -158,6 +158,11 @@ DebugLog([NSString stringWithFormat:args]); \
     }
 }
 
+- (void)shutdown
+{
+    shutdown_ = YES;
+}
+
 - (void)setParentWindow:(NSWindow*)parentWindow
 {
     parentWindow_ = parentWindow;
@@ -165,8 +170,21 @@ DebugLog([NSString stringWithFormat:args]); \
 
 - (void)close
 {
-    // The OS will send a hotkey window to the background if it's open and in
-    // all spaces. So make it key before closing.
+    if (shutdown_) {
+        [super close];
+    } else {
+        // The OS will send a hotkey window to the background if it's open and in
+        // all spaces. Make it key before closing. This has to be done later because if you do it
+        // here the OS gets confused and two windows are key.
+        //NSLog(@"Perform delayed selector with target %@", self);
+        [self performSelector:@selector(twiddleKeyWindow)
+                   withObject:self
+                   afterDelay:0];
+    }
+}
+
+- (void)twiddleKeyWindow
+{
     iTermApplicationDelegate* theDelegate = [NSApp delegate];
     [theDelegate makeHotKeyWindowKeyIfOpen];
     [super close];
@@ -316,6 +334,19 @@ DebugLog([NSString stringWithFormat:args]); \
     [session_ release];
     [super dealloc];
 }
+
+- (void)shutdown
+{
+    // Disable the fancy footwork in -[PopupWindow close]
+    [(PopupWindow*)[self window] shutdown];
+
+    // Prevent twiddleKeyWindow from running after parent window is dealloc'ed.
+    [NSObject cancelPreviousPerformRequestsWithTarget:[self window]];
+
+    // Force the window to close immediately.
+    [self close];
+}
+
 
 - (BOOL)disableFocusFollowsMouse
 {
@@ -598,6 +629,13 @@ DebugLog([NSString stringWithFormat:args]); \
 
 - (void)windowDidBecomeKey:(NSNotification *)aNotification
 {
+    if (!session_) {
+        // A dialog box can cause you to become key after closing because of a
+        // race condition with twiddleKeyWindow. But it immediately loses key
+        // status again after this. Because it was already closed, there is no
+        // session at this point and we just return harmlessly.
+        return;
+    }
     clearFilterOnNextKeyDown_ = NO;
     if (timer_) {
         [timer_ invalidate];

@@ -250,6 +250,12 @@ typedef struct PTYFontInfo PTYFontInfo;
     NSMutableArray* lineBreakIndexOffsets_;
     // For accessibility. This is the actual indices at which newlines occcur in allText_.
     NSMutableArray* lineBreakCharOffsets_;
+
+    // Brightness of background color
+    double backgroundBrightness_;
+
+    // Dim everything but the default background color.
+    BOOL dimOnlyText_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -312,12 +318,13 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)setBlinkingCursor:(BOOL)bFlag;
 - (void)setBlinkAllowed:(BOOL)value;
 - (void)setCursorType:(ITermCursorType)value;
+- (void)setDimOnlyText:(BOOL)value;
 
 //color stuff
 - (NSColor*)defaultFGColor;
 - (NSColor*)defaultBGColor;
 - (NSColor*)defaultBoldColor;
-- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold;
+- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold isBackground:(BOOL)isBackground;
 - (NSColor*)selectionColor;
 - (NSColor*)defaultCursorColor;
 - (NSColor*)selectedTextColor;
@@ -478,7 +485,7 @@ typedef enum {
     CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
 } PTYCharType;
 
-- (void)modifyFont:(NSFont*)font info:(PTYFontInfo*)fontInfo;
+- (void)modifyFont:(NSFont*)font baseline:(double)baseline info:(PTYFontInfo*)fontInfo;
 - (void)releaseFontInfo:(PTYFontInfo*)fontInfo;
 
 - (unsigned int) _checkForSupportedDragTypes:(id <NSDraggingInfo>) sender;
@@ -521,7 +528,7 @@ typedef enum {
 - (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent;
 - (BOOL)_isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old;
 - (void)_settingsChanged:(NSNotification *)notification;
-- (void)_modifyFont:(NSFont*)font into:(PTYFontInfo*)fontInfo;
+- (void)_modifyFont:(NSFont*)font baseline:(double)baseline into:(PTYFontInfo*)fontInfo;
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)complex
                        fgColor:(int)fgColor
@@ -559,5 +566,6 @@ typedef enum {
 // Returns true if any onscreen char is blinking.
 - (BOOL)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width;
 
+- (double)_perceivedBrightness:(NSColor*)c;
 @end
 

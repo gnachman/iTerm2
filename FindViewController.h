@@ -104,5 +104,6 @@
 - (void)findString:(NSString*)string;
 
 - (void)setDelegate:(id<FindViewControllerDelegate>)delegate;
+- (id<FindViewControllerDelegate>)delegate;
 
 @end

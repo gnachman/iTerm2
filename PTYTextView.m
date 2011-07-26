@@ -58,6 +58,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #import "iTermExpose.h"
 #import "RegexKitLite/RegexKitLite.h"
 #import "iTerm/NSStringITerm.h"
+#import "FontSizeEstimator.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -65,6 +66,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 // Minimum distance that the mouse must move before a cmd+drag will be
 // recognized as a drag.
 static const int kDragThreshold = 3;
+static const double kBackgroundConsideredDarkThreshold = 0.5;
 
 // When drawing lines, we use this structure to represent a run of cells  of
 // the same font, color, and attributes.
@@ -111,6 +113,10 @@ static NSCursor* textViewCursor =  nil;
 static NSImage* bellImage = nil;
 static NSImage* wrapToTopImage = nil;
 static NSImage* wrapToBottomImage = nil;
+
+static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
+    return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
+}
 
 @interface Coord : NSObject
 {
@@ -371,6 +377,12 @@ static NSImage* wrapToBottomImage = nil;
     cursorType_ = value;
 }
 
+- (void)setDimOnlyText:(BOOL)value
+{
+    dimOnlyText_ = value;
+    [[self superview] setNeedsDisplay:YES];
+}
+
 - (NSDictionary*)markedTextAttributes
 {
     return markedTextAttributes;
@@ -424,6 +436,10 @@ static NSImage* wrapToBottomImage = nil;
     [defaultBGColor release];
     [color retain];
     defaultBGColor = color;
+    PTYScroller *scroller = (PTYScroller*)[[[dataSource session] SCROLLVIEW] verticalScroller];
+    BOOL isDark = ([self _perceivedBrightness:color] < kBackgroundConsideredDarkThreshold);
+    backgroundBrightness_ = PerceivedBrightness([color redComponent], [color greenComponent], [color blueComponent]);
+    [scroller setHasDarkBackground:isDark];
     [self setNeedsDisplay:YES];
 }
 
@@ -553,17 +569,31 @@ static NSImage* wrapToBottomImage = nil;
 
     // Find a linear interpolation between kCenter and the requested color component
     // in proportion to 1- dimmingAmount_.
-    const double kCenter = 0.5;
+    if (!dimOnlyText_) {
+        const double kCenter = 0.5;
 
-    return [NSColor colorWithCalibratedRed:(1 - dimmingAmount_) * r + dimmingAmount_ * kCenter
-                                     green:(1 - dimmingAmount_) * g + dimmingAmount_ * kCenter
-                                      blue:(1 - dimmingAmount_) * b + dimmingAmount_ * kCenter
-                                     alpha:[orig alphaComponent]];
+        return [NSColor colorWithCalibratedRed:(1 - dimmingAmount_) * r + dimmingAmount_ * kCenter
+                                         green:(1 - dimmingAmount_) * g + dimmingAmount_ * kCenter
+                                          blue:(1 - dimmingAmount_) * b + dimmingAmount_ * kCenter
+                                         alpha:[orig alphaComponent]];
+    } else {
+        return [NSColor colorWithCalibratedRed:(1 - dimmingAmount_) * r + dimmingAmount_ * backgroundBrightness_
+                                         green:(1 - dimmingAmount_) * g + dimmingAmount_ * backgroundBrightness_
+                                          blue:(1 - dimmingAmount_) * b + dimmingAmount_ * backgroundBrightness_
+                                         alpha:[orig alphaComponent]];
+    }
 }
 
-- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold
+- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold isBackground:(BOOL)isBackground
 {
-    return [self _dimmedColorFrom:[self _colorForCode:theIndex alternateSemantics:alt bold:isBold]];
+    NSColor *theColor = [self _colorForCode:theIndex
+                         alternateSemantics:alt
+                                       bold:isBold];
+    if (isBackground && dimOnlyText_) {
+        return theColor;
+    } else {
+        return [self _dimmedColorFrom:theColor];
+    }
 }
 
 - (NSColor *)selectionColor
@@ -589,16 +619,21 @@ static NSImage* wrapToBottomImage = nil;
     return secondaryFont.font;
 }
 
++ (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(double)hspace verticalSpacing:(double)vspace baseline:(double*)baseline
+{
+    FontSizeEstimator* fse = [FontSizeEstimator fontSizeEstimatorForFont:aFont];
+    NSSize size = [fse size];
+    size.width = ceil(size.width * hspace);
+    size.height = ceil(vspace * ceil(size.height + [aFont leading]));
+    if (baseline) {
+        *baseline = [fse baseline];
+    }
+    return size;
+}
+
 + (NSSize)charSizeForFont:(NSFont*)aFont horizontalSpacing:(double)hspace verticalSpacing:(double)vspace
 {
-    NSMutableDictionary *dic = [NSMutableDictionary dictionary];
-
-    [dic setObject:aFont forKey:NSFontAttributeName];
-    NSSize size = [@"W" sizeWithAttributes:dic];
-
-    size.width = ceil(size.width * hspace);
-    size.height = ceil(vspace * ceil([aFont ascender] - [aFont descender] + [aFont leading]));
-    return size;
+    return [PTYTextView charSizeForFont:aFont horizontalSpacing:hspace verticalSpacing:vspace baseline:nil];
 }
 
 - (double)horizontalSpacing
@@ -616,9 +651,11 @@ static NSImage* wrapToBottomImage = nil;
     horizontalSpacing:(double)horizontalSpacing
     verticalSpacing:(double)verticalSpacing
 {
+    double baseline;
     NSSize sz = [PTYTextView charSizeForFont:aFont
                            horizontalSpacing:1.0
-                             verticalSpacing:1.0];
+                             verticalSpacing:1.0
+                                    baseline:&baseline];
 
     charWidthWithoutSpacing = sz.width;
     charHeightWithoutSpacing = sz.height;
@@ -626,8 +663,8 @@ static NSImage* wrapToBottomImage = nil;
     verticalSpacing_ = verticalSpacing;
     charWidth = ceil(charWidthWithoutSpacing * horizontalSpacing);
     lineHeight = ceil(charHeightWithoutSpacing * verticalSpacing);
-    [self modifyFont:aFont info:&primaryFont];
-    [self modifyFont:naFont info:&secondaryFont];
+    [self modifyFont:aFont baseline:baseline info:&primaryFont];
+    [self modifyFont:naFont baseline:baseline info:&secondaryFont];
 
     // Cannot keep fallback fonts if the primary font changes because their
     // baseline offsets are set by the primary font. It's simplest to remove
@@ -1009,8 +1046,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     } else if ([attribute isEqualToString:NSAccessibilityRangeForLineParameterizedAttribute]) {
         //(NSValue *)  - (rangeValue) range of line; param:(NSNumber *)
         NSUInteger lineNumber = [(NSNumber*)parameter unsignedLongValue];
-        assert(lineNumber < [lineBreakIndexOffsets_ count]);
-        return [NSValue valueWithRange:[self _rangeOfLine:lineNumber]];
+        if (lineNumber >= [lineBreakIndexOffsets_ count]) {
+            return [NSValue valueWithRange:NSMakeRange(NSNotFound, 0)];
+        } else {
+            return [NSValue valueWithRange:[self _rangeOfLine:lineNumber]];
+        }
     } else if ([attribute isEqualToString:NSAccessibilityStringForRangeParameterizedAttribute]) {
         //(NSString *) - substring; param:(NSValue * - rangeValue)
         NSRange range = [(NSValue*)parameter rangeValue];
@@ -1862,6 +1902,38 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     return [self smartSelectAtX:x y:y toStartX:&startX toStartY:&startY toEndX:&endX toEndY:&endY];
 }
 
+// Control-pgup and control-pgdown are handled at this level by NSWindow if no
+// view handles it. It's necessary to setUserScroll in the PTYScroller, or else
+// it scrolls back to the bottom right away. This code handles those two
+// keypresses and scrolls correctly.
+- (BOOL)performKeyEquivalent:(NSEvent *)theEvent
+{
+    NSString* unmodkeystr = [theEvent charactersIgnoringModifiers];
+    if ([unmodkeystr length] == 0) {
+        return [super performKeyEquivalent:theEvent];
+    }
+    unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+
+    NSUInteger modifiers = [theEvent modifierFlags];
+    if ((modifiers & NSControlKeyMask) &&
+        (modifiers & NSFunctionKeyMask)) {
+        switch (unmodunicode) {
+            case NSPageUpFunctionKey:
+                [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+                [self scrollPageUp:self];
+                return YES;
+
+            case NSPageDownFunctionKey:
+                [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+                [self scrollPageDown:self];
+                return YES;
+
+            default:
+                break;
+        }
+    }
+    return [super performKeyEquivalent:theEvent];
+}
 
 - (void)keyDown:(NSEvent*)event
 {
@@ -1894,15 +1966,54 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         return;
     }
 
-    // Let the IME process key events
-    IM_INPUT_INSERT = NO;
-    [self interpretKeyEvents:[NSArray arrayWithObject:event]];
+    if (modflag & NSCommandKeyMask) {
+        // You pressed cmd+something but it's not handled by the delegate. Going further would
+        // send the unmodified key to the terminal which doesn't make sense.adsjflsd
+        return;
+    }
 
-    // If the IME didn't want it, pass it on to the delegate
+    // Control+Key doesn't work right with custom keyboard layouts. Handle ctrl+key here for the
+    // standard combinations.
+    BOOL workAroundControlBug = NO;
     if (!prev &&
-        !IM_INPUT_INSERT &&
-        ![self hasMarkedText]) {
-        [delegate keyDown:event];
+        (modflag & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == NSControlKeyMask) {
+        NSString *unmodkeystr = [event charactersIgnoringModifiers];
+        if ([unmodkeystr length] != 0) {
+            unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
+            unichar cc = 0xffff;
+            if (unmodunicode >= 'a' && unmodunicode <= 'z') {
+                cc = unmodunicode - 'a' + 1;
+            } else if (unmodunicode == ' ' || unmodunicode == '2' || unmodunicode == '@') {
+                cc = 0;
+            } else if (unmodunicode == '[') {  // esc
+                cc = 27;
+            } else if (unmodunicode == '\\') {
+                cc = 28;
+            } else if (unmodunicode == ']') {
+                cc = 29;
+            } else if (unmodunicode == '^' || unmodunicode == '6') {
+                cc = 30;
+            } else if (unmodunicode == '-' || unmodunicode == '_') {
+                cc = 31;
+            }
+            if (cc != 0xffff) {
+                [self insertText:[NSString stringWithCharacters:&cc length:1]];
+                workAroundControlBug = YES;
+            }
+        }
+    }
+
+    if (!workAroundControlBug) {
+        // Let the IME process key events
+        IM_INPUT_INSERT = NO;
+        [self interpretKeyEvents:[NSArray arrayWithObject:event]];
+
+        // If the IME didn't want it, pass it on to the delegate
+        if (!prev &&
+            !IM_INPUT_INSERT &&
+            ![self hasMarkedText]) {
+            [delegate keyDown:event];
+        }
     }
 }
 
@@ -2271,7 +2382,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     dragOk_ = YES;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-    if (!cmdPressed && [[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
+    if (!cmdPressed &&
+        frontTextView &&
+        [[frontTextView->dataSource session] tab] != [[dataSource session] tab]) {
         // Mouse clicks in inactive tab are always handled by superclass because we don't want clicks
         // to select a split pane to be xterm-mouse-reported. We do allow cmd-clicks to go through
         // incase you're clicking on a URL.
@@ -3197,55 +3310,61 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     unsigned int dragOperation;
     PTYSession *delegate = [self delegate];
-    
+    BOOL res = NO;
+
     // If parent class does not know how to deal with this drag type, check if we do.
     if (extendedDragNDrop) {
         NSPasteboard *pb = [sender draggingPasteboard];
         NSArray *propertyList;
         NSString *aString;
         int i;
-        
+
         dragOperation = [self _checkForSupportedDragTypes: sender];
-        
+
         if (dragOperation == NSDragOperationCopy) {
-            // Check for simple strings first
-            aString = [pb stringForType:NSStringPboardType];
-            if (aString != nil) {
-                if ([delegate respondsToSelector:@selector(pasteString:)]) {
-                    [delegate pasteString: aString];
+            NSArray *types = [pb types];
+
+            if ([types containsObject:NSFilenamesPboardType]) {
+                propertyList = [pb propertyListForType: NSFilenamesPboardType];
+                for (i = 0; i < (int)[propertyList count]; i++) {
+                    // Ignore text clippings
+                    NSString *filename = (NSString*)[propertyList objectAtIndex:i];  // this contains the POSIX path to a file
+                    NSDictionary *filenamesAttributes = [[NSFileManager defaultManager] fileAttributesAtPath:filename
+                                                                                                traverseLink:YES];
+                    if (([filenamesAttributes fileHFSTypeCode] == 'clpt' &&
+                         [filenamesAttributes fileHFSCreatorCode] == 'MACS') ||
+                        [[filename pathExtension] isEqualToString:@"textClipping"] == YES) {
+                        continue;
+                    }
+
+                    // Just paste the file names into the shell after escaping special characters.
+                    if ([delegate respondsToSelector:@selector(pasteString:)]) {
+                        NSMutableString *path;
+
+                        path = [[NSMutableString alloc] initWithString:(NSString*)[propertyList objectAtIndex:i]];
+
+                        // get rid of special characters
+                        [delegate pasteString:[path stringWithEscapedShellCharacters]];
+                        [delegate pasteString:@" "];
+                        [path release];
+
+                        res = YES;
+                    }
                 }
             }
-            
-            // Check for file names
-            propertyList = [pb propertyListForType: NSFilenamesPboardType];
-            for (i = 0; i < (int)[propertyList count]; i++) {
-                // Ignore text clippings
-                NSString *filename = (NSString*)[propertyList objectAtIndex:i];  // this contains the POSIX path to a file
-                NSDictionary *filenamesAttributes = [[NSFileManager defaultManager] fileAttributesAtPath:filename
-                                                                                            traverseLink:YES];
-                if (([filenamesAttributes fileHFSTypeCode] == 'clpt' &&
-                     [filenamesAttributes fileHFSCreatorCode] == 'MACS') ||
-                    [[filename pathExtension] isEqualToString:@"textClipping"] == YES) {
-                    continue;
-                }
-                
-                // Just paste the file names into the shell after escaping special characters.
-                if ([delegate respondsToSelector:@selector(pasteString:)]) {
-                    NSMutableString *path;
-                    
-                    path = [[NSMutableString alloc] initWithString:(NSString*)[propertyList objectAtIndex:i]];
-                    
-                    // get rid of special characters
-                    [delegate pasteString:[path stringWithEscapedShellCharacters]];
-                    [delegate pasteString:@" "];
-                    [path release];
+            if (!res && [types containsObject:NSStringPboardType]) {
+                aString = [pb stringForType:NSStringPboardType];
+                if (aString != nil) {
+                    if ([delegate respondsToSelector:@selector(pasteString:)]) {
+                        [delegate pasteString: aString];
+                        res = YES;
+                    }
                 }
             }
-            return YES;
         }
     }
 
-    return NO;
+    return res;
 }
 
 - (void)concludeDragOperation:(id <NSDraggingInfo>)sender
@@ -3617,7 +3736,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             set = YES;
         }
         char* b = [data mutableBytes];
-        for (int i = resStartX; i < MIN(resEndX+1, width); i++) {
+        int lineEndX = MIN(resEndX + 1, width);
+        int lineStartX = resStartX;
+        if (absEndY > y) {
+            lineEndX = width;
+        }
+        if (y > absStartY) {
+            lineStartX = 0;
+        }
+        for (int i = lineStartX; i < lineEndX; i++) {
             const int byteIndex = i/8;
             const int bit = 1 << (i & 7);
             if (byteIndex < [data length]) {
@@ -3963,7 +4090,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (!hasBGImage && ![self useTransparency]) {
             alpha = 1;
         }
-        [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        if (!dimOnlyText_) {
+            [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        } else {
+            [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
+        }
         NSRect fillDest = bgRect;
         fillDest.origin.y += fillDest.size.height;
         NSRectFillUsingOperation(fillDest,
@@ -3986,7 +4117,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (!hasBGImage && ![self useTransparency]) {
             alpha = 1;
         }
-        [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        if (!dimOnlyText_) {
+            [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        } else {
+            [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
+        }
         NSRectFillUsingOperation(bgRect,
                                  hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
     }
@@ -4006,7 +4141,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (!hasBGImage && ![self useTransparency]) {
             alpha = 1;
         }
-        [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        if (!dimOnlyText_) {
+            [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        } else {
+            [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
+        }
         NSRectFillUsingOperation(bgRect, hasBGImage?NSCompositeSourceOver:NSCompositeCopy);
     }
 }
@@ -4046,19 +4185,28 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int x2;
     int y2;
     int width = [dataSource width];
-    
+
+    if (x < 0) {
+        x = 0;
+    }
+    if (x >= width) {
+        x = width - 1;
+    }
+
     // Search backward from (x, y) to find the beginning of the word.
     tmpX = x;
     tmpY = y;
     // If the char at (x,y) is not whitespace, then go into a mode where
     // word characters are selected as blocks; else go into a mode where
     // whitespace is selected as a block.
-    screen_char_t sct = [dataSource getLineAtIndex:tmpY][tmpX];
+    screen_char_t* initialLine = [dataSource getLineAtIndex:tmpY];
+    assert(initialLine);
+    screen_char_t sct = initialLine[tmpX];
     BOOL selectWordChars = [self classifyChar:sct.code isComplex:sct.complexChar] != CHARTYPE_WHITESPACE;
-    
+
     while (tmpX >= 0) {
         screen_char_t* theLine = [dataSource getLineAtIndex:tmpY];
-        
+
         if ([self shouldSelectCharForWord:theLine[tmpX].code isComplex:theLine[tmpX].complexChar selectWordChars:selectWordChars]) {
             tmpX--;
             if (tmpX < 0 && tmpY > 0) {
@@ -4152,12 +4300,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (endy) {
         *endy = tmpY;
     }
-    
+
     // Grab the contents to return.
     x2 = tmpX+1;
     y2 = tmpY;
-    
-    return ([self contentFromX:x1 Y:yStart ToX:x2 Y:y2 pad: YES]);
+
+    return [self contentFromX:x1 Y:yStart ToX:x2 Y:y2 pad: YES];
 }
 
 @end
@@ -4376,10 +4524,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return newRuns;
 }
 
-static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
-    return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
-}
-
 - (double)_perceivedBrightness:(NSColor*) c
 {
     return PerceivedBrightness([c redComponent], [c greenComponent], [c blueComponent]);
@@ -4559,13 +4703,18 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 theLine[i].alternateForegroundSemantics &&
                 theLine[i].foregroundColor == ALTSEM_FG_DEFAULT) {
                 // Has default foreground color so use background color.
-                thisCharColor = [self _dimmedColorFrom:defaultBGColor];
+                if (!dimOnlyText_) {
+                    thisCharColor = [self _dimmedColorFrom:defaultBGColor];
+                } else {
+                    thisCharColor = defaultBGColor;
+                }
             } else {
                 // Not reversed or not subject to reversing (only default
                 // foreground color is drawn in reverse video).
                 thisCharColor = [self colorForCode:theLine[i].foregroundColor
                                 alternateSemantics:theLine[i].alternateForegroundSemantics
-                                              bold:theLine[i].bold];
+                                              bold:theLine[i].bold
+                                      isBackground:NO];
             }
         }
 
@@ -4919,7 +5068,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
     aColor = [self colorForCode:ALTSEM_BG_DEFAULT
              alternateSemantics:YES
-                           bold:NO];
+                           bold:NO
+                   isBackground:YES];
 
     aColor = [aColor colorWithAlphaComponent:selectedAlpha];
     [aColor set];
@@ -5062,12 +5212,14 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                         // color chars.
                         aColor = [self colorForCode:ALTSEM_FG_DEFAULT
                                  alternateSemantics:YES
-                                               bold:NO];
+                                               bold:NO
+                                       isBackground:NO];
                     } else {
                         // Use the regular background color.
                         aColor = [self colorForCode:bgColor
                                  alternateSemantics:bgAlt
-                                               bold:NO];
+                                               bold:NO
+                                       isBackground:(bgColor == ALTSEM_BG_DEFAULT)];
                     }
                 }
                 aColor = [aColor colorWithAlphaComponent:alphaIfTransparencyInUse];
@@ -5083,7 +5235,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 // default background color. But don't blend in the bg color if transparency is on.
                 aColor = [self colorForCode:ALTSEM_BG_DEFAULT
                          alternateSemantics:YES
-                                       bold:NO];
+                                       bold:NO
+                               isBackground:YES];
                 aColor = [aColor colorWithAlphaComponent:selectedAlpha];
                 [aColor set];
                 if (![self useTransparency]) {
@@ -5164,7 +5317,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         } else {
             [[self colorForCode:fgColor
                alternateSemantics:fgAlt
-                           bold:fgBold] set];
+                           bold:fgBold
+                   isBackground:NO] set];
         }
 
         NSRectFill(NSMakeRect(X,
@@ -5274,7 +5428,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                   y,
                                   charsInLine * charWidth,
                                   lineHeight);
-            [[self _dimmedColorFrom:defaultBGColor] set];
+            if (!dimOnlyText_) {
+                [[self _dimmedColorFrom:defaultBGColor] set];
+            } else {
+                [defaultBGColor set];
+            }
             NSRectFill(r);
 
             // Draw the characters.
@@ -5372,10 +5530,16 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 {
     if ([[dataSource terminal] screenMode]) {
         // reversed
-        return [self colorForCode:c.foregroundColor alternateSemantics:c.alternateForegroundSemantics bold:c.bold];
+        return [self colorForCode:c.foregroundColor
+               alternateSemantics:c.alternateForegroundSemantics
+                             bold:c.bold
+                     isBackground:YES];
     } else {
         // normal
-        return [self colorForCode:c.backgroundColor alternateSemantics:c.alternateBackgroundSemantics bold:false];
+        return [self colorForCode:c.backgroundColor
+               alternateSemantics:c.alternateBackgroundSemantics
+                             bold:false
+                     isBackground:YES];
     }
 }
 
@@ -5516,12 +5680,14 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 if (reversed) {
                     bgColor = [self colorForCode:screenChar.backgroundColor
                               alternateSemantics:screenChar.alternateBackgroundSemantics
-                                            bold:screenChar.bold];
+                                            bold:screenChar.bold
+                                    isBackground:NO];
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 } else {
                     bgColor = [self colorForCode:screenChar.foregroundColor
                               alternateSemantics:screenChar.alternateForegroundSemantics
-                                            bold:screenChar.bold];
+                                            bold:screenChar.bold
+                                    isBackground:NO];
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 }
 
@@ -5603,7 +5769,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                             // Ensure text has enough contrast by making it black/white if the char's color would be close to the cursor bg.
                             NSColor* proposedForeground = [[self colorForCode:fgColor
                                                            alternateSemantics:fgAlt
-                                                                         bold:screenChar.bold] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+                                                                         bold:screenChar.bold
+                                                                 isBackground:NO] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
                             CGFloat fgBrightness = [self _perceivedBrightness:proposedForeground];
                             CGFloat bgBrightness = [self _perceivedBrightness:[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
                             NSColor* overrideColor = nil;
@@ -5884,6 +6051,8 @@ static bool IsUrlChar(NSString* str)
                     // before rightx there was something besides \s
                     break;
                 }
+                // Don't respect hard newlines that are "escaped" by a \.
+                respectHardNewlines = NO;
                 // xi is left at rightx+1
             } else if (xi == rightx) {
                 // Made it to rightx.
@@ -6328,9 +6497,11 @@ static bool IsUrlChar(NSString* str)
     advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
     [self setNeedsDisplay:YES];
+    [self setDimOnlyText:[[PreferencePanel sharedInstance] dimOnlyText]];
+
 }
 
-- (void)_modifyFont:(NSFont*)font into:(PTYFontInfo*)fontInfo
+- (void)_modifyFont:(NSFont*)font baseline:(double)baseline into:(PTYFontInfo*)fontInfo
 {
     if (fontInfo->font) {
         [self releaseFontInfo:fontInfo];
@@ -6338,19 +6509,19 @@ static bool IsUrlChar(NSString* str)
 
     fontInfo->font = font;
     [fontInfo->font retain];
-    fontInfo->baselineOffset = -(floorf([font leading]) - floorf([font descender]));
+    fontInfo->baselineOffset = baseline;
     fontInfo->boldVersion = NULL;
 }
 
-- (void)modifyFont:(NSFont*)font info:(PTYFontInfo*)fontInfo
+- (void)modifyFont:(NSFont*)font baseline:(double)baseline info:(PTYFontInfo*)fontInfo
 {
-    [self _modifyFont:font into:fontInfo];
+    [self _modifyFont:font baseline:baseline into:fontInfo];
     NSFontManager* fontManager = [NSFontManager sharedFontManager];
     NSFont* boldFont = [fontManager convertFont:font toHaveTrait:NSBoldFontMask];
     if (boldFont && ([fontManager traitsOfFont:boldFont] & NSBoldFontMask)) {
         fontInfo->boldVersion = (PTYFontInfo*)malloc(sizeof(PTYFontInfo));
         fontInfo->boldVersion->font = NULL;
-        [self _modifyFont:boldFont into:fontInfo->boldVersion];
+        [self _modifyFont:boldFont baseline:baseline into:fontInfo->boldVersion];
     }
 }
 
@@ -6363,7 +6534,7 @@ static bool IsUrlChar(NSString* str)
     } else {
         PTYFontInfo* info = (PTYFontInfo*) malloc(sizeof(PTYFontInfo));
         info->font = NULL;
-        [self _modifyFont:font into:info];
+        [self _modifyFont:font baseline:primaryFont.baselineOffset into:info];
 
         // Force this font to line up with the primary font's baseline.
         info->baselineOffset = primaryFont.baselineOffset;
@@ -6527,6 +6698,9 @@ static bool IsUrlChar(NSString* str)
 
 - (void)invalidateInputMethodEditorRect
 {
+    if ([dataSource width] == 0) {
+        return;
+    }
     int imeLines = ([dataSource cursorX] - 1 + [self inputMethodEditorLength] + 1) / [dataSource width] + 1;
 
     NSRect imeRect = NSMakeRect(MARGIN,
