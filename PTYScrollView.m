@@ -103,9 +103,7 @@
 
 - (void)drawRect:(NSRect)dirtyRect {
     if (IsLionOrLater() &&
-        self.hasDarkBackground &&
-        dirtyRect.size.width > 0 &&
-        dirtyRect.size.height > 0) {
+        self.hasDarkBackground) {
         NSImage *superDrawn = [[NSImage alloc] initWithSize:NSMakeSize(dirtyRect.origin.x + dirtyRect.size.width,
                                                                        dirtyRect.origin.y + dirtyRect.size.height)];
         [superDrawn lockFocus];
