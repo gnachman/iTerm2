@@ -261,12 +261,12 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
     [aSession setPreferencesFromAddressBookEntry:theBookmark];
     [[aSession SCREEN] setDisplay:[aSession TEXTVIEW]];
-    [aSession runCommandWithOldCwd:[arrangement objectForKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY]];
     [aSession setName:[theBookmark objectForKey:KEY_NAME]];
     if ([[[[theTab realParentWindow] window] title] compare:@"Window"] == NSOrderedSame) {
         [[theTab realParentWindow] setWindowTitle];
     }
     [aSession setTab:theTab];
+    [aSession runCommandWithOldCwd:[arrangement objectForKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY]];
 
     if (needDivorce) {
         [aSession divorceAddressBookEntryFromPreferences];
@@ -495,8 +495,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     PseudoTerminal *pty = [tab_ realParentWindow];
     NSString *itermId = [NSString stringWithFormat:@"w%dt%dp%d",
                          [pty number],
-                         [tab_ objectCount] - 1,
-                         [tab_ indexOfSession:self]];
+                         [tab_ realObjectCount] - 1,
+                         [tab_ indexOfSessionView:[self view]]];
     [env setObject:itermId forKey:@"ITERM_SESSION_ID"];
 
     [SHELL launchWithPath:path
