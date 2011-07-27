@@ -395,7 +395,8 @@ NSString *sessionsKey = @"sessions";
 
     [self setWindowInited: YES];
     useTransparency_ = YES;
-    fullscreenTabs_ = [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowFullScreenTabBar"];
+    fullscreenTabs_ = [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowFullScreenTabBar"] ?
+      [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowFullScreenTabBar"] : true;
     number_ = [[iTermController sharedInstance] allocateWindowNumber];
     if (windowType == WINDOW_TYPE_FORCE_FULL_SCREEN) {
         windowType_ = WINDOW_TYPE_FULL_SCREEN;
