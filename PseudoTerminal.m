@@ -934,7 +934,7 @@ NSString *sessionsKey = @"sessions";
           __FILE__, __LINE__, aNotification);
 #endif
     if ([[self currentTab] blur]) {
-        [self enableBlur];
+        [self enableBlur:[[self currentTab] blurRadius]];
     } else {
         [self disableBlur];
     }
@@ -1060,10 +1060,11 @@ NSString *sessionsKey = @"sessions";
     }
     [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
     [self _loadFindStringFromSharedPasteboard];
-    
+
     // Start the timers back up
     for (PTYSession* aSession in [self sessions]) {
         [aSession updateDisplay];
+        [[aSession view] setBackgroundDimmed:NO];
     }
 }
 
@@ -1160,6 +1161,9 @@ NSString *sessionsKey = @"sessions";
     // update the cursor
     [[[self currentSession] TEXTVIEW] refresh];
     [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
+    for (PTYSession* aSession in [self sessions]) {
+        [[aSession view] setBackgroundDimmed:YES];
+    }
 }
 
 - (void)windowDidResignMain:(NSNotification *)aNotification
@@ -1754,12 +1758,12 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
-- (void)enableBlur
+- (void)enableBlur:(double)radius
 {
     id window = [self window];
     if (nil != window &&
-        [window respondsToSelector:@selector(enableBlur)]) {
-        [window enableBlur];
+        [window respondsToSelector:@selector(enableBlur:)]) {
+        [window enableBlur:radius];
     }
 }
 
@@ -1794,7 +1798,7 @@ NSString *sessionsKey = @"sessions";
 
     [[self window] makeFirstResponder:[[[tabViewItem identifier] activeSession] TEXTVIEW]];
     if ([[aSession tab] blur]) {
-        [self enableBlur];
+        [self enableBlur:[[aSession tab] blurRadius]];
     } else {
         [self disableBlur];
     }
@@ -2986,6 +2990,10 @@ NSString *sessionsKey = @"sessions";
             } else {
                 [[aSession view] setDimmed:NO];
             }
+            [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
+
+            // In case dimming amount slider moved update the dimming amount.
+            [[aSession view] updateDim];
         }
     }
 }

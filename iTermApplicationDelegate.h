@@ -82,6 +82,8 @@ void DebugLog(NSString* value);
     BOOL secureInputDesired_;
     BOOL quittingBecauseLastWindowClosed_;
 
+    // If set, skip performing launch actions.
+    BOOL quiet_;
     NSDate* launchTime_;
 }
 
@@ -149,6 +151,11 @@ void DebugLog(NSString* value);
 
 - (void)makeHotKeyWindowKeyIfOpen;
 
+// Implements the 10.6 api but is callable in 10.5 and tries to implement
+// some subset of the flags.
+- (void)setFutureApplicationPresentationOptions:(int)flags unset:(int)antiflags;
+
+
 @end
 
 // Scripting support
@@ -172,9 +179,5 @@ void DebugLog(NSString* value);
 
 // a class method to provide the keys for KVC:
 +(NSArray*)kvcKeys;
-
-// Implements the 10.6 api but is callable in 10.5 and tries to implement
-// some subset of the flags.
-- (void)setFutureApplicationPresentationOptions:(int)flags unset:(int)antiflags;
 
 @end

@@ -56,6 +56,10 @@ BOOL IsLionOrLater(void);
     int keyWindowIndexMemo_;
     BOOL itermWasActiveWhenHotkeyOpened;
     BOOL rollingIn_;
+
+    // For restoring previously active app when exiting hotkey window
+    NSNumber *previouslyActiveAppPID_;
+    id runningApplicationClass_;
 }
 
 + (iTermController*)sharedInstance;

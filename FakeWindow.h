@@ -26,6 +26,7 @@
     // Changes the session has initiated that will be delayed and performed
     // in -[rejoin:].
     BOOL hasPendingBlurChange;
+    double pendingBlurRadius;
     BOOL pendingBlur;
     BOOL hasPendingClose;
     BOOL hasPendingFitWindowToTab;
@@ -55,7 +56,7 @@
 - (void)setLabelColor:(NSColor *)color forTabViewItem:tabViewItem;
 - (void)setTabColor:(NSColor *)color forTabViewItem:tabViewItem;
 - (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem;
-- (void)enableBlur;
+- (void)enableBlur:(double)radius;
 - (void)disableBlur;
 - (BOOL)tempTitle;
 - (PTYTabView *)tabView;

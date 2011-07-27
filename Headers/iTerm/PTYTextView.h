@@ -250,6 +250,12 @@ typedef struct PTYFontInfo PTYFontInfo;
     NSMutableArray* lineBreakIndexOffsets_;
     // For accessibility. This is the actual indices at which newlines occcur in allText_.
     NSMutableArray* lineBreakCharOffsets_;
+
+    // Brightness of background color
+    double backgroundBrightness_;
+
+    // Dim everything but the default background color.
+    BOOL dimOnlyText_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -312,12 +318,13 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)setBlinkingCursor:(BOOL)bFlag;
 - (void)setBlinkAllowed:(BOOL)value;
 - (void)setCursorType:(ITermCursorType)value;
+- (void)setDimOnlyText:(BOOL)value;
 
 //color stuff
 - (NSColor*)defaultFGColor;
 - (NSColor*)defaultBGColor;
 - (NSColor*)defaultBoldColor;
-- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold;
+- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold isBackground:(BOOL)isBackground;
 - (NSColor*)selectionColor;
 - (NSColor*)defaultCursorColor;
 - (NSColor*)selectedTextColor;

@@ -404,6 +404,11 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 }
 
+- (int)indexOfSessionView:(SessionView*)sessionView
+{
+    return [[self sessionViews] indexOfObject:sessionView];
+}
+
 - (id<WindowControllerInterface>)parentWindow
 {
     return parentWindow_;
@@ -705,6 +710,22 @@ static NSString* FormatRect(NSRect r) {
     return sessions;
 }
 
+- (NSArray*)_recursiveSessionViews:(NSMutableArray*)sessionViews
+                            atNode:(NSSplitView*)node
+{
+    for (id subview in [node subviews]) {
+        if ([subview isKindOfClass:[NSSplitView class]]) {
+            [self _recursiveSessions:sessionViews atNode:(NSSplitView*)subview];
+        } else {
+            SessionView* sessionView = (SessionView*)subview;
+            if (sessionView) {
+                [sessionViews addObject:sessionView];
+            }
+        }
+    }
+    return sessionViews;
+}
+
 - (NSArray*)sessions
 {
     if (idMap_) {
@@ -716,6 +737,20 @@ static NSString* FormatRect(NSRect r) {
         return result;
     } else {
         return [self _recursiveSessions:[NSMutableArray arrayWithCapacity:1] atNode:root_];
+    }
+}
+
+- (NSArray*)sessionViews
+{
+    if (idMap_) {
+        NSArray* sessionViews = [idMap_ allValues];
+        NSMutableArray* result = [NSMutableArray arrayWithCapacity:[sessionViews count]];
+        for (SessionView* sessionView in sessionViews) {
+            [result addObject:sessionView];
+        }
+        return result;
+    } else {
+        return [self _recursiveSessionViews:[NSMutableArray arrayWithCapacity:1] atNode:root_];
     }
 }
 
@@ -1565,13 +1600,32 @@ static NSString* FormatRect(NSRect r) {
     return y > n;
 }
 
+- (double)blurRadius
+{
+    double sum = 0;
+    double count = 0;
+    NSArray* sessions = [self sessions];
+    for (PTYSession* session in sessions) {
+        if ([[[session addressBookEntry] objectForKey:KEY_BLUR] boolValue]) {
+            sum += [[session addressBookEntry] objectForKey:KEY_BLUR_RADIUS] ? [[[session addressBookEntry] objectForKey:KEY_BLUR_RADIUS] floatValue] : 2.0;
+            ++count;
+        }
+    }
+    if (count > 0) {
+        return sum / count;
+    } else {
+        // This shouldn't actually happen, but better save than divide by zero.
+        return 2.0;
+    }
+}
+
 - (void)recheckBlur
 {
     PtyLog(@"PTYTab recheckBlur");
     if ([realParentWindow_ currentTab] == self &&
         ![[realParentWindow_ window] isMiniaturized]) {
         if ([self blur]) {
-            [parentWindow_ enableBlur];
+            [parentWindow_ enableBlur:[self blurRadius]];
         } else {
             [parentWindow_ disableBlur];
         }
@@ -1714,6 +1768,8 @@ static NSString* FormatRect(NSRect r) {
     [theTab->tabViewItem_ setLabel:@"Restoring..."];
     [newRoot release];
 
+    [theTab setObjectCount:[term numberOfTabs] + 1];
+    
     // Instantiate sessions in the skeleton view tree.
     [theTab setActiveSession:[theTab _recursiveRestoreSessions:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
                                                         atNode:theTab->root_

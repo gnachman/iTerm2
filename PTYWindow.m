@@ -80,13 +80,14 @@
 }
 
 
-- (void)enableBlur
+- (void)enableBlur:(double)radius
 {
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
     // Only works in Leopard (or hopefully later)
     if (!OSX_LEOPARDORLATER) return;
 
-    if (blurFilter) {
+    const double kEpsilon = 0.001;
+    if (blurFilter && fabs(blurRadius_ - radius) < kEpsilon) {
         return;
     }
 
@@ -99,11 +100,11 @@
         return;
     }
 
-    // should really set this from options:
-    NSDictionary *optionsDict = [NSDictionary dictionaryWithObject:[NSNumber numberWithFloat:2.0] forKey:@"inputRadius"];
+    NSDictionary *optionsDict = [NSDictionary dictionaryWithObject:[NSNumber numberWithFloat:radius] forKey:@"inputRadius"];
     CGSSetCIFilterValuesFromDictionary(con, blurFilter, (CFDictionaryRef)optionsDict);
 
     CGSAddWindowFilter(con, [self windowNumber], blurFilter, kCGWindowFilterDock);
+    blurRadius_ = radius;
 #endif
 }
 
