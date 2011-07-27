@@ -42,9 +42,12 @@
 #import "PTYTab.h"
 #import "iTermExpose.h"
 #include <unistd.h>
+#include <sys/stat.h>
 
+static NSString *APP_SUPPORT_DIR = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 static NSString* AUTO_LAUNCH_SCRIPT = @"~/Library/Application Support/iTerm/AutoLaunch.scpt";
+static NSString *ITERM2_FLAG = @"~/Library/Application Support/iTerm/version.txt";
 
 NSMutableString* gDebugLogStr = nil;
 NSMutableString* gDebugLogStr2 = nil;
@@ -176,8 +179,23 @@ static BOOL hasBecomeActive = NO;
     ranAutoLaunchScript = YES;
 }
 
+- (void)_createFlag
+{
+    mkdir([[APP_SUPPORT_DIR stringByExpandingTildeInPath] UTF8String], 0755);
+    NSDictionary *myDict = [[NSBundle bundleForClass:[self class]] infoDictionary];
+    NSString *versionString = [myDict objectForKey:@"CFBundleVersion"];
+    NSString *flagFilename = [ITERM2_FLAG stringByExpandingTildeInPath];
+    [versionString writeToFile:flagFilename
+                    atomically:NO
+                      encoding:NSUTF8StringEncoding
+                         error:nil];
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
+    // Create the app support directory
+    [self _createFlag];
+
     // Prevent the input manager from swallowing control-q. See explanation here:
     // http://b4winckler.wordpress.com/2009/07/19/coercing-the-cocoa-text-system/
     CFPreferencesSetAppValue(CFSTR("NSQuotedKeystrokeBinding"),
@@ -267,7 +285,8 @@ static BOOL hasBecomeActive = NO;
  */
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
 {
-    if ([filename isEqualToString:@"/:com.googlecode.iterm2:commandmode"]) {
+    if ([filename isEqualToString:[ITERM2_FLAG stringByExpandingTildeInPath]]) {
+        NSLog(@"Quiet launch");
         quiet_ = YES;
         return YES;
     }
