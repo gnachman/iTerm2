@@ -6,13 +6,13 @@
 		<description>Most recent changes with links to updates.</description>
 		<language>en</language>
                 <item>
-                        <title>Version 0.20.%VER%</title>
+                        <title>Version %VER%</title>
                         <sparkle:releaseNotesLink>
                                 http://iterm2.googlecode.com/svn/trunk/appcasts/testing_changes.html
                         </sparkle:releaseNotesLink>
                         <pubDate>%DATE%</pubDate>
                         <enclosure url="http://iterm2.googlecode.com/files/iTerm2-%NAME%.zip"
-                                sparkle:version="0.20.%VER%" length="%LENGTH%" type="application/octet-stream"
+                                sparkle:version="%VER%" length="%LENGTH%" type="application/octet-stream"
                                 sparkle:dsaSignature="%SIG%" />
                 </item>
 	</channel>
