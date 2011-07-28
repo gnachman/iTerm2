@@ -3235,7 +3235,7 @@ NSString *sessionsKey = @"sessions";
         return NO;
     } else if ([self anyFullScreen] || windowType_ == WINDOW_TYPE_TOP) {
         return NO;
-    } else if ([self scrollbarShouldBeVisible]) {
+    } else if (![self scrollbarShouldBeVisible]) {
         // hidden scrollbar
         return YES;
     } else {
