@@ -1075,7 +1075,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     NSRect screenFrame = [screen visibleFrame];
 
     NSRect rect = [[term window] frame];
-    [NSApp activateIgnoringOtherApps:YES];
+    [[NSRunningApplication currentApplication] activateWithOptions:NSApplicationActivateIgnoringOtherApps];
     [[term window] setFrame:rect display:YES];
     [[term window] makeKeyAndOrderFront:nil];
     switch ([term windowType]) {
@@ -1322,7 +1322,6 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
             i++;
         }
         HKWLog(@"Activate iterm2");
-        [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
         rollingIn_ = YES;
         RollInHotkeyTerm(hotkeyTerm);
     } else {

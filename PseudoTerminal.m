@@ -292,10 +292,11 @@ NSString *sessionsKey = @"sessions";
             break;
     }
 
-    myWindow = [[PTYWindow alloc] initWithContentRect:initialFrame
+    myWindow = [self window];
+    /*[[NSWindow alloc] initWithContentRect:initialFrame
                                             styleMask:styleMask
                                               backing:NSBackingStoreBuffered
-                                                defer:NO];
+                                                defer:NO];*/
     if (windowType == WINDOW_TYPE_TOP) {
         [myWindow setHasShadow:YES];
     }
@@ -323,7 +324,7 @@ NSString *sessionsKey = @"sessions";
     _resizeInProgressFlag = NO;
 
     if (!smartLayout || windowType == WINDOW_TYPE_FORCE_FULL_SCREEN) {
-        [(PTYWindow*)[self window] setLayoutDone];
+        [[self ptyWindow] setLayoutDone];
     }
 
     if (windowType == WINDOW_TYPE_NORMAL) {
@@ -417,7 +418,7 @@ NSString *sessionsKey = @"sessions";
 
 - (PTYWindow*)ptyWindow
 {
-    return (PTYWindow*) [self window];
+    return nil; //(PTYWindow*) [self window];
 }
 
 - (NSScreen*)screen

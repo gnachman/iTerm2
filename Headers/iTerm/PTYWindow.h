@@ -55,6 +55,8 @@
 
     // True while in -[NSWindow toggleFullScreen:].
     BOOL isTogglingLionFullScreen_;
+    
+    BOOL canBecomeKey_;
 }
 
 - initWithContentRect:(NSRect)contentRect
@@ -73,6 +75,6 @@
 - (int)screenNumber;
 - (BOOL)isFullScreen;
 - (BOOL)isTogglingLionFullScreen;
-
+- (void)setCanBecomeKey:(BOOL)value;
 @end
 
