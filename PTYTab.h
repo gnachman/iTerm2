@@ -145,6 +145,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)closeSession:(PTYSession*)session;
 - (void)terminateAllSessions;
 - (NSArray*)sessions;
+- (NSArray*)sessionViews;
 - (BOOL)allSessionsExited;
 - (void)setDvrInSession:(PTYSession*)newSession;
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession;

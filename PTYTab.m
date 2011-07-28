@@ -491,7 +491,9 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 - (BOOL)isProcessing
 {
-    return isProcessing_ && ![realParentWindow_ disableProgressIndicators];
+    return ![[PreferencePanel sharedInstance] hideActivityIndicator] &&
+        isProcessing_ &&
+        ![realParentWindow_ disableProgressIndicators];
 }
 
 - (void)setIsProcessing:(BOOL)aFlag

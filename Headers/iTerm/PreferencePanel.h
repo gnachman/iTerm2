@@ -137,6 +137,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *useCompactLabel;
     BOOL defaultUseCompactLabel;
 
+    // hide activity indicator
+    IBOutlet NSButton *hideActivityIndicator;
+    BOOL defaultHideActivityIndicator;
+
     // Highlight tab labels on activity
     IBOutlet NSButton *highlightTabLabels;
     BOOL defaultHighlightTabLabels;
@@ -494,6 +498,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (BOOL)maxVertically;
 - (BOOL)closingHotkeySwitchesSpaces;
 - (BOOL)useCompactLabel;
+- (BOOL)hideActivityIndicator;
 - (BOOL)highlightTabLabels;
 - (BOOL)openBookmark;
 - (NSString *)wordChars;
