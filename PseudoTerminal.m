@@ -778,7 +778,7 @@ NSString *sessionsKey = @"sessions";
     }
 
     NSUInteger number = [[iTermController sharedInstance] indexOfTerminal:self];
-    if ([[PreferencePanel sharedInstance] windowNumber] && number >= 0 && number < 9) {
+    if ([[PreferencePanel sharedInstance] windowNumber] && number < 9) {
         [[self window] setTitle:[NSString stringWithFormat:@"%d. %@", number_+1, title]];
     } else {
         [[self window] setTitle:title];
