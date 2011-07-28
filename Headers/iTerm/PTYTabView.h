@@ -57,4 +57,7 @@
 // selects a tab from the contextual menu
 - (void) selectTab: (id) sender;
 
+// Override setDelegate so that it accepts PSMTabBarControl without warning
+- (void) setDelegate: (id<PTYTabViewDelegateProtocol>) anObject;
+
 @end
