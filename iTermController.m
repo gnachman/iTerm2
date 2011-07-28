@@ -51,6 +51,7 @@
 #import "GTMCarbonEvent.h"
 #import "iTerm.h"
 
+#define HOTKEY_WINDOW_VERBOSE_LOGGING
 #ifdef HOTKEY_WINDOW_VERBOSE_LOGGING
 #define HKWLog NSLog
 #else
@@ -1031,6 +1032,7 @@ static BOOL IsSnowLeopardOrLater() {
         [inv getReturnValue:&app];
 
         if (app) {
+            NSLog(@"Restore app %@", app);
             //[app activateWithOptions:0];
             sig = [[app class] instanceMethodSignatureForSelector:@selector(activateWithOptions:)];
             assert(sig);
@@ -1402,7 +1404,12 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
 - (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm
 {
     HKWLog(@"Hide visor.");
-    [self restorePreviouslyActiveApp];
+    if ([[hotkeyTerm window] isVisible]) {
+        HKWLog(@"key window is %@", [NSApp keyWindow]);
+        if ([NSApp keyWindow] == nil) {
+            [self restorePreviouslyActiveApp];
+        }
+    }
     RollOutHotkeyTerm(hotkeyTerm, itermWasActiveWhenHotkeyOpened);
 }
 
