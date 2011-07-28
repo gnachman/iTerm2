@@ -186,6 +186,9 @@
     // Affects how its size is set when the number of tabview items changes.
     BOOL wasDraggedFromAnotherWindow_;
     BOOL fullscreenTabs_;
+
+    // In the process of zooming in Lion or later.
+    BOOL zooming_;
 }
 
 // Initialize a new PseudoTerminal.

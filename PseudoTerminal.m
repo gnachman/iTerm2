@@ -1281,6 +1281,10 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidResize:(NSNotification *)aNotification
 {
+    if (zooming_) {
+        // Pretend nothing happened to avoid slowing down zooming.
+        return;
+    }
     PtyLog(@"windowDidResize to: %fx%f", [[self window] frame].size.width, [[self window] frame].size.height);
     [SessionView windowDidResize];
     if (togglingFullScreen_) {
@@ -1531,8 +1535,21 @@ NSString *sessionsKey = @"sessions";
             ![[PreferencePanel sharedInstance] hideScrollbar]);
 }
 
+- (void)windowDidEndLiveResize:(NSNotification *)notification
+{
+    BOOL wasZooming = zooming_;
+    zooming_ = NO;
+    if (wasZooming) {
+        // Reached zoom size. Update size.
+        [self windowDidResize:nil];
+    }
+}
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame
 {
+    if (IsLionOrLater()) {
+        // Disable redrawing during zoom-initiated live resize.
+        zooming_ = YES;
+    }
     // This function attempts to size the window to fit the screen with exactly
     // MARGIN/VMARGIN-sized margins for the current session. If there are split
     // panes then the margins probably won't turn out perfect. If other tabs have

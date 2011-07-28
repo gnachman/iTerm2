@@ -224,12 +224,12 @@
 		1DE5EBE8122B892900C736B0 /* BookmarksWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* BookmarksWindow.h */; };
 		1DE5EBE9122B892900C736B0 /* BookmarksWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */; };
 		1DEE9FDD11FCA60F009E18C9 /* credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 1DEE9FDB11FCA60F009E18C9 /* credits.rtf */; };
-		1DF0895B13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF0895713DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h */; };
-		1DF0895C13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */; };
-		1DF0895D13DBAE1F00A52AD8 /* NSImage+CoreImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF0895913DBAE1F00A52AD8 /* NSImage+CoreImage.h */; };
-		1DF0895E13DBAE1F00A52AD8 /* NSImage+CoreImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF0895A13DBAE1F00A52AD8 /* NSImage+CoreImage.m */; };
-		1DF0897113DBAF4C00A52AD8 /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DF0897013DBAF4C00A52AD8 /* Quartz.framework */; };
 		49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A6E4081211CC6000D9AD6F /* Compatability.h */; };
+		5E01AB3613DB644B0096AD28 /* NSImage+CoreImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E01AB3413DB644B0096AD28 /* NSImage+CoreImage.h */; };
+		5E01AB3713DB644B0096AD28 /* NSImage+CoreImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E01AB3513DB644B0096AD28 /* NSImage+CoreImage.m */; };
+		5E01AB3A13DB64860096AD28 /* NSBitmapImageRep+CoreImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 5E01AB3813DB64860096AD28 /* NSBitmapImageRep+CoreImage.h */; };
+		5E01AB3B13DB64860096AD28 /* NSBitmapImageRep+CoreImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 5E01AB3913DB64860096AD28 /* NSBitmapImageRep+CoreImage.m */; };
+		5E7BB47213DA20D6006ACA89 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB29371288887100B2CB9F /* QuartzCore.framework */; };
 		874206490564169600CFC3F1 /* iTermApplicationDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */; };
 		8742064D0564169600CFC3F1 /* iTerm.icns in Resources */ = {isa = PBXBuildFile; fileRef = E8EDCE69015E0A5703000001 /* iTerm.icns */; };
 		8742064F0564169600CFC3F1 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF757F026DDAD703A80106 /* main.m */; };
@@ -399,11 +399,6 @@
 		1DEB29371288887100B2CB9F /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		1DEB293D1288899A00B2CB9F /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
 		1DEE9FDC11FCA60F009E18C9 /* English */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = English; path = English.lproj/credits.rtf; sourceTree = "<group>"; };
-		1DF0895713DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSBitmapImageRep+CoreImage.h"; sourceTree = "<group>"; };
-		1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSBitmapImageRep+CoreImage.m"; sourceTree = "<group>"; };
-		1DF0895913DBAE1F00A52AD8 /* NSImage+CoreImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSImage+CoreImage.h"; sourceTree = "<group>"; };
-		1DF0895A13DBAE1F00A52AD8 /* NSImage+CoreImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSImage+CoreImage.m"; sourceTree = "<group>"; };
-		1DF0897013DBAF4C00A52AD8 /* Quartz.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Quartz.framework; path = System/Library/Frameworks/Quartz.framework; sourceTree = SDKROOT; };
 		2076B15704E8817300000106 /* PTToolbarController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTToolbarController.h; sourceTree = "<group>"; };
 		2076B15804E8817300000106 /* PTToolbarController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTToolbarController.m; sourceTree = "<group>"; };
 		20B8892A04E9342100000106 /* ITViewLocalizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITViewLocalizer.h; sourceTree = "<group>"; };
@@ -413,6 +408,10 @@
 		20E74F4804E9089700000106 /* ITAddressBookMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITAddressBookMgr.h; sourceTree = "<group>"; };
 		20E74F4904E9089700000106 /* ITAddressBookMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ITAddressBookMgr.m; sourceTree = "<group>"; };
 		49A6E4081211CC6000D9AD6F /* Compatability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Compatability.h; sourceTree = "<group>"; };
+		5E01AB3413DB644B0096AD28 /* NSImage+CoreImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSImage+CoreImage.h"; sourceTree = "<group>"; };
+		5E01AB3513DB644B0096AD28 /* NSImage+CoreImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSImage+CoreImage.m"; sourceTree = "<group>"; };
+		5E01AB3813DB64860096AD28 /* NSBitmapImageRep+CoreImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSBitmapImageRep+CoreImage.h"; sourceTree = "<group>"; };
+		5E01AB3913DB64860096AD28 /* NSBitmapImageRep+CoreImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSBitmapImageRep+CoreImage.m"; sourceTree = "<group>"; };
 		872EBC5304E42E320073D10E /* NSStringITerm.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = NSStringITerm.h; path = Headers/iTerm/NSStringITerm.h; sourceTree = "<group>"; };
 		872EBC5404E42E320073D10E /* PTYTextView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = PTYTextView.h; path = Headers/iTerm/PTYTextView.h; sourceTree = "<group>"; };
 		872EBC5704E42E320073D10E /* PTYTabView.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = PTYTabView.h; path = Headers/iTerm/PTYTabView.h; sourceTree = "<group>"; };
@@ -567,6 +566,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5E7BB47213DA20D6006ACA89 /* QuartzCore.framework in Frameworks */,
 				874206520564169600CFC3F1 /* Foundation.framework in Frameworks */,
 				874206530564169600CFC3F1 /* AppKit.framework in Frameworks */,
 				F69E80E70ABB46F2001EC0FF /* Growl.framework in Frameworks */,
@@ -574,7 +574,6 @@
 				1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */,
 				1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */,
 				1D94EAC812D641D3008225A9 /* AddressBook.framework in Frameworks */,
-				1DF0897113DBAF4C00A52AD8 /* Quartz.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -592,6 +591,10 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				5E01AB3413DB644B0096AD28 /* NSImage+CoreImage.h */,
+				5E01AB3813DB64860096AD28 /* NSBitmapImageRep+CoreImage.h */,
+				5E01AB3913DB64860096AD28 /* NSBitmapImageRep+CoreImage.m */,
+				5E01AB3513DB644B0096AD28 /* NSImage+CoreImage.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1DEE9FDB11FCA60F009E18C9 /* credits.rtf */,
@@ -617,7 +620,6 @@
 				1DEB293D1288899A00B2CB9F /* Carbon.framework */,
 				1D94EAC712D641D3008225A9 /* AddressBook.framework */,
 				1D237D8E131D8BEE004DD60C /* FindView.xib */,
-				1DF0897013DBAF4C00A52AD8 /* Quartz.framework */,
 			);
 			name = JTerminal;
 			sourceTree = "<group>";
@@ -652,11 +654,7 @@
 				DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */,
 				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
 				1D72438C11F416E500BD4924 /* LineBuffer.m */,
-				1DF0895713DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h */,
-				1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */,
 				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
-				1DF0895913DBAE1F00A52AD8 /* NSImage+CoreImage.h */,
-				1DF0895A13DBAE1F00A52AD8 /* NSImage+CoreImage.m */,
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
 				1D7C18801275D22900461E55 /* PasteboardHistory.m */,
 				1DD736401283C2FA009B7829 /* Popup.m */,
@@ -1120,8 +1118,8 @@
 				1D624BF41386E39D00111319 /* GTMDebugSelectorValidation.h in Headers */,
 				1D624BF61386E3B400111319 /* GTMTypeCasting.h in Headers */,
 				1DA8117E13CEA30A00CCA89A /* FontSizeEstimator.h in Headers */,
-				1DF0895B13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h in Headers */,
-				1DF0895D13DBAE1F00A52AD8 /* NSImage+CoreImage.h in Headers */,
+				5E01AB3613DB644B0096AD28 /* NSImage+CoreImage.h in Headers */,
+				5E01AB3A13DB64860096AD28 /* NSBitmapImageRep+CoreImage.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1403,8 +1401,8 @@
 				1D988598135D23BD0072023F /* ProcessCache.m in Sources */,
 				1D624BC81386E09E00111319 /* GTMCarbonEvent.m in Sources */,
 				1DA8117F13CEA30A00CCA89A /* FontSizeEstimator.m in Sources */,
-				1DF0895C13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m in Sources */,
-				1DF0895E13DBAE1F00A52AD8 /* NSImage+CoreImage.m in Sources */,
+				5E01AB3713DB644B0096AD28 /* NSImage+CoreImage.m in Sources */,
+				5E01AB3B13DB64860096AD28 /* NSBitmapImageRep+CoreImage.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1541,7 +1539,6 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_VERSION = 4.0;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_MISSING_PARENTHESES = YES;
@@ -1557,10 +1554,10 @@
 				HEADER_SEARCH_PATHS = Headers/iTerm/;
 				INFOPLIST_FILE = iTerm.plist;
 				LINK_WITH_STANDARD_LIBRARIES = YES;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_LDFLAGS = "-licucore";
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.5;
+				SDKROOT = macosx10.6;
 				SECTORDER_FLAGS = "";
 				VALID_ARCHS = "i386 x86_64 ppc";
 				WARNING_CFLAGS = "-Wall";
@@ -1576,7 +1573,6 @@
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_VERSION = 4.0;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_MISSING_PARENTHESES = YES;
@@ -1590,10 +1586,10 @@
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = iTerm.plist;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_LDFLAGS = "-licucore";
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.5;
+				SDKROOT = macosx10.6;
 				VALID_ARCHS = "i386 x86_64 ppc";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
@@ -1607,7 +1603,6 @@
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G4;
 				GCC_OPTIMIZATION_LEVEL = 3;
-				GCC_VERSION = 4.0;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
 				GCC_WARN_MISSING_PARENTHESES = YES;
@@ -1621,12 +1616,12 @@
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				INFOPLIST_FILE = iTerm.plist;
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				MACOSX_DEPLOYMENT_TARGET = 10.6;
 				OTHER_LDFLAGS = "-licucore";
 				OTHER_REZFLAGS = "";
 				PRODUCT_NAME = iTerm;
 				REZ_EXECUTABLE = YES;
-				SDKROOT = macosx10.5;
+				SDKROOT = macosx10.6;
 				SECTORDER_FLAGS = "";
 				VALID_ARCHS = "i386 x86_64 ppc";
 				WARNING_CFLAGS = "-Wall";
@@ -1712,17 +1707,15 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Carbon.framework/Headers/Carbon.h";
-				GCC_VERSION = 4.0;
 				INFOPLIST_FILE = "Growl-Info.plist";
 				LD_DYLIB_INSTALL_NAME = "@executable_path/../Frameworks/$(EXECUTABLE_PATH)";
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_LDFLAGS = (
 					"-framework",
 					Carbon,
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Growl;
-				SDKROOT = macosx10.5;
+				SDKROOT = macosx10.6;
 				VALID_ARCHS = "i386 x86_64 ppc";
 				ZERO_LINK = YES;
 			};
@@ -1741,17 +1734,15 @@
 				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Carbon.framework/Headers/Carbon.h";
-				GCC_VERSION = 4.0;
 				INFOPLIST_FILE = "Growl-Info.plist";
 				INSTALL_PATH = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_LDFLAGS = (
 					"-framework",
 					Carbon,
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Growl;
-				SDKROOT = macosx10.5;
+				SDKROOT = macosx10.6;
 				VALID_ARCHS = "i386 x86_64 ppc";
 				ZERO_LINK = NO;
 			};
@@ -1768,17 +1759,15 @@
 				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Carbon.framework/Headers/Carbon.h";
-				GCC_VERSION = 4.0;
 				INFOPLIST_FILE = "Growl-Info.plist";
 				INSTALL_PATH = "$(HOME)/Library/Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_LDFLAGS = (
 					"-framework",
 					Carbon,
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = Growl;
-				SDKROOT = macosx10.5;
+				SDKROOT = macosx10.6;
 				VALID_ARCHS = "i386 x86_64 ppc";
 				ZERO_LINK = YES;
 			};
