@@ -810,7 +810,7 @@ typedef enum {
 // accessor
 - (PSMTabBarControl*)tabBarControl;
 
-// Called when the tab control's context menu is closed.
+// Called when the "Close tab" contextual menu item is clicked.
 - (void)closeTabContextualMenuAction:(id)sender;
 
 // Move a tab to a new window due to a context menu selection.
