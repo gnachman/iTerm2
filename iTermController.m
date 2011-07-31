@@ -753,6 +753,22 @@ static BOOL IsSnowLeopardOrLater() {
     }
 }
 
+- (int)_windowTypeForBookmark:(Bookmark*)aDict
+{
+    if ([aDict objectForKey:KEY_WINDOW_TYPE]) {
+        int windowType = [[aDict objectForKey:KEY_WINDOW_TYPE] intValue];
+        if (windowType == WINDOW_TYPE_FULL_SCREEN &&
+            IsLionOrLater() &&
+            [[PreferencePanel sharedInstance] lionStyleFullscreen]) {
+            return WINDOW_TYPE_LION_FULL_SCREEN;
+        } else {
+            return windowType;
+        }
+    } else {
+        return WINDOW_TYPE_NORMAL;
+    }
+}
+
 // Executes an addressbook command in new window or tab
 - (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm
 {
@@ -774,8 +790,8 @@ static BOOL IsSnowLeopardOrLater() {
     BOOL toggle = NO;
     if (theTerm == nil) {
         [iTermController switchToSpaceInBookmark:aDict];
-        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES 
-                                                 windowType:[aDict objectForKey:KEY_WINDOW_TYPE] ? [[aDict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL
+        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                 windowType:[self _windowTypeForBookmark:aDict]
                                                      screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
         [self addInTerminals:term];
         toggle = ([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
@@ -819,8 +835,8 @@ static BOOL IsSnowLeopardOrLater() {
     BOOL toggle = NO;
     if (theTerm == nil) {
         [iTermController switchToSpaceInBookmark:aDict];
-        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES 
-                                                 windowType:[aDict objectForKey:KEY_WINDOW_TYPE] ? [[aDict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL
+        term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                                 windowType:[self _windowTypeForBookmark:aDict]
                                                      screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
         [self addInTerminals:term];
         toggle = (([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
@@ -904,7 +920,7 @@ static BOOL IsSnowLeopardOrLater() {
     if (theTerm == nil) {
         [iTermController switchToSpaceInBookmark:aDict];
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                 windowType:[aDict objectForKey:KEY_WINDOW_TYPE] ? [[aDict objectForKey:KEY_WINDOW_TYPE] intValue] : WINDOW_TYPE_NORMAL
+                                                 windowType:[self _windowTypeForBookmark:aDict]
                                                      screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
         [self addInTerminals: term];
         toggle = (([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
