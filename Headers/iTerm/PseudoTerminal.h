@@ -192,6 +192,8 @@
 
     // Time since 1970 of last window resize
     double lastResizeTime_;
+
+    BOOL temporarilyShowingTabs_;
 }
 
 // Initialize a new PseudoTerminal.
@@ -718,6 +720,9 @@
 
 // Change position of window widgets.
 - (void)repositionWidgets;
+
+- (void)showFullScreenTabControl;
+- (void)hideFullScreenTabControl;
 
 // Adjust the tab's size for a new window size.
 - (void)fitTabToWindow:(PTYTab*)aTab;

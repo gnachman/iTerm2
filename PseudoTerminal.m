@@ -1144,6 +1144,21 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"windowDidResignKey returning because togglingFullScreen.");
         return;
     }
+
+    if (fullScreenTabviewTimer_) {
+        // If the window has been closed then it's possible that the
+        // timer is the only object left that is holding a reference to
+        // self. Retain and autorelease so that invalidating the timer
+        // doesn't free self while there's still stuff going on in this
+        // function.
+        [self retain];
+        [self autorelease];
+        [fullScreenTabviewTimer_ invalidate];
+        fullScreenTabviewTimer_ = nil;
+    } else {
+        [self hideFullScreenTabControl];
+    }
+
     if ([[pbHistoryView window] isVisible] ||
         [[autocompleteView window] isVisible]) {
         return;
@@ -1153,6 +1168,7 @@ NSString *sessionsKey = @"sessions";
           __FILE__, __LINE__, aNotification);
 
     if (_fullScreen) {
+        [self hideFullScreenTabControl];
         [self showMenuBar];
     }
     // update the cursor
@@ -1527,8 +1543,7 @@ NSString *sessionsKey = @"sessions";
 
 - (BOOL)scrollbarShouldBeVisible
 {
-    return (!IsLionOrLater() &&
-            ![self anyFullScreen] &&
+    return (![self anyFullScreen] &&
             ![[PreferencePanel sharedInstance] hideScrollbar]);
 }
 
@@ -2029,7 +2044,7 @@ NSString *sessionsKey = @"sessions";
             [firstTab setReportIdealSizeAsCurrent:NO];
         }
     }
-    
+
     int i;
     for (i=0; i < [TABVIEW numberOfTabViewItems]; ++i) {
         PTYTab *aTab = [[TABVIEW tabViewItemAtIndex: i] identifier];
@@ -3274,6 +3289,67 @@ NSString *sessionsKey = @"sessions";
     for (NSTabViewItem* anItem in [TABVIEW tabViewItems]) {
         PTYTab* theTab = [anItem identifier];
         [theTab setIsProcessing:[theTab realIsProcessing]];
+    }
+}
+
+- (void)showFullScreenTabControl
+{
+    if (!fullscreenTabs_) {
+        [self toggleFullScreenTabBar];
+    }
+    temporarilyShowingTabs_ = YES;
+}
+
+- (void)hideFullScreenTabControl
+{
+    if (fullscreenTabs_) {
+        [self toggleFullScreenTabBar];
+    }
+    temporarilyShowingTabs_ = NO;
+}
+
+- (void)flagsChanged:(NSEvent *)theEvent
+{
+    if (!_fullScreen) {
+        return;
+    }
+    if (!temporarilyShowingTabs_ && fullscreenTabs_) {
+        // Being shown non-temporarily
+        return;
+    }
+    NSUInteger modifierFlags = [theEvent modifierFlags];
+    if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) == NSCommandKeyMask &&  // you pressed exactly cmd
+        ([tabBarBackground isHidden] || [tabBarBackground alphaValue] == 0) &&  // the tab bar is not visible
+        fullScreenTabviewTimer_ == nil) {  // not in the middle of doing this already
+        fullScreenTabviewTimer_ = [[NSTimer scheduledTimerWithTimeInterval:[[PreferencePanel sharedInstance] fsTabDelay]
+                                                                    target:self
+                                                                  selector:@selector(cmdHeld:)
+                                                                  userInfo:nil
+                                                                   repeats:NO] retain];
+    } else if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) != NSCommandKeyMask &&
+               fullScreenTabviewTimer_ != nil) {
+        [fullScreenTabviewTimer_ invalidate];
+        fullScreenTabviewTimer_ = nil;
+    }
+
+    // This hides the tabbar if you press any other key while it's already showing.
+    // This breaks certain popular ways of switching tabs like cmd-shift-arrow or
+    // cmd-shift-[ or ].
+    // I can't remember why I added this. Let's take it out and if nobody complains
+    // remove it for good. gn 2/12/2011.
+    // if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) != NSCommandKeyMask) {
+    if (temporarilyShowingTabs_ && !(modifierFlags & NSCommandKeyMask)) {
+        [self hideFullScreenTabControl];
+        temporarilyShowingTabs_ = NO;
+    }
+}
+
+- (void)cmdHeld:(id)sender
+{
+    [fullScreenTabviewTimer_ release];
+    fullScreenTabviewTimer_ = nil;
+    if (_fullScreen) {
+        [self showFullScreenTabControl];
     }
 }
 

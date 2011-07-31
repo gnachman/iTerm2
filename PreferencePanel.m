@@ -892,6 +892,7 @@ static float versionNumber;
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
     defaultMaxVertically = [prefs objectForKey:@"MaxVertically"] ? [[prefs objectForKey:@"MaxVertically"] boolValue] : NO;
     defaultClosingHotkeySwitchesSpaces = [prefs objectForKey:@"ClosingHotkeySwitchesSpaces"] ? [[prefs objectForKey:@"ClosingHotkeySwitchesSpaces"] boolValue] : YES;
+    defaultFsTabDelay = [prefs objectForKey:@"FsTabDelay"] ? [[prefs objectForKey:@"FsTabDelay"] floatValue] : 1.0;
     defaultUseCompactLabel = [prefs objectForKey:@"UseCompactLabel"]?[[prefs objectForKey:@"UseCompactLabel"] boolValue]: YES;
     defaultHideActivityIndicator = [prefs objectForKey:@"HideActivityIndicator"]?[[prefs objectForKey:@"HideActivityIndicator"] boolValue]: NO;
     defaultHighlightTabLabels = [prefs objectForKey:@"HighlightTabLabels"]?[[prefs objectForKey:@"HighlightTabLabels"] boolValue]: YES;
@@ -1026,6 +1027,7 @@ static float versionNumber;
     [prefs setValue:defaultHotKeyBookmarkGuid forKey:@"HotKeyBookmark"];
     [prefs setBool:defaultEnableBonjour forKey:@"EnableRendezvous"];
     [prefs setBool:defaultCmdSelection forKey:@"CommandSelection"];
+    [prefs setFloat:defaultFsTabDelay forKey:@"FsTabDelay"];
     [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
     [prefs setBool:defaultMaxVertically forKey:@"MaxVertically"];
     [prefs setBool:defaultClosingHotkeySwitchesSpaces forKey:@"ClosingHotkeySwitchesSpaces"];
@@ -1119,6 +1121,7 @@ static float versionNumber;
     [strokeThicknessMinLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
     [strokeThicknessMaxLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
     [strokeThickness setFloatValue:defaultStrokeThickness];
+    [fsTabDelay setFloatValue:defaultFsTabDelay];
 
     [openBookmark setState: defaultOpenBookmark?NSOnState:NSOffState];
     [wordChars setStringValue: ([defaultWordChars length] > 0)?defaultWordChars:@""];
@@ -1198,6 +1201,11 @@ static float versionNumber;
 
     // Show the window.
     [[self window] makeKeyAndOrderFront:self];
+}
+
+- (float)fsTabDelay
+{
+    return defaultFsTabDelay;
 }
 
 - (BOOL)advancedFontRendering
@@ -1324,7 +1332,8 @@ static float versionNumber;
                             nil,
                             nil);
         }
- 
+
+        defaultFsTabDelay = [fsTabDelay floatValue];
         defaultCopySelection=([selectionCopiesText state]==NSOnState);
         defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
         defaultPromptOnClose = ([promptOnClose state] == NSOnState);
