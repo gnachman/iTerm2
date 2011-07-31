@@ -17,7 +17,8 @@ sed -e "s/%DATE%/${DATE}/" | \
 sed -e "s/%NAME%/${NAME}/" | \
 sed -e "s/%LENGTH%/$LENGTH/" |
 sed -e "s,%SIG%,${SIG}," > ../../appcasts/testing.xml
+cp ../../appcasts/testing.xml ../../appcasts/canary.xml
 echo "Go upload the iTerm2-${NAME}.zip, then run:"
 echo "git tag v${VERSION}"
 echo "git push --tags"
-echo "svn commit -am ${VERSION} appcasts/testing.xml appcasts/testing_changes.html"
+echo "svn commit -am ${VERSION} appcasts/testing.xml appcasts/canary.xml appcasts/testing_changes.html"
