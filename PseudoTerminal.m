@@ -770,10 +770,6 @@ NSString *sessionsKey = @"sessions";
         title = @"";
     }
 
-    if ([self sendInputToAllSessions]) {
-        title = [NSString stringWithFormat:@"☛%@", title];
-    }
-
     NSUInteger number = [[iTermController sharedInstance] indexOfTerminal:self];
     if ([[PreferencePanel sharedInstance] windowNumber] && number >= 0 && number < 9) {
         [[self window] setTitle:[NSString stringWithFormat:@"%d. %@", number_+1, title]];
@@ -1765,12 +1761,9 @@ NSString *sessionsKey = @"sessions";
         [autocompleteView close];
     }
     NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:tabViewItem];
-    if (newTabColor && !sendInputToAllSessions) {
+    if (newTabColor) {
         [[self window] setBackgroundColor:newTabColor];
         [background_ setColor:newTabColor];
-    } else if (sendInputToAllSessions) {
-        [[self window] setBackgroundColor: [NSColor highlightColor]];
-        [background_ setColor:[NSColor highlightColor]];
     } else {
         [[self window] setBackgroundColor:nil];
         [background_ setColor:normalBackgroundColor];
@@ -2196,7 +2189,7 @@ NSString *sessionsKey = @"sessions";
     [tabBarControl setTabColor:color forTabViewItem:tabViewItem];
     if ([TABVIEW selectedTabViewItem] == tabViewItem) {
         NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:tabViewItem];
-        if (newTabColor && !sendInputToAllSessions) {
+        if (newTabColor) {
             [[self window] setBackgroundColor:newTabColor];
             [background_ setColor:newTabColor];
         }
@@ -3864,18 +3857,13 @@ NSString *sessionsKey = @"sessions";
                                                   NSLocalizedStringFromTableInBundle(@"OK",@"iTerm", [NSBundle bundleForClass: [self class]], @"Profile"),
                                                   NSLocalizedStringFromTableInBundle(@"Cancel",@"iTerm", [NSBundle bundleForClass: [self class]], @"Cancel"), nil) == NSAlertDefaultReturn);
     }
-    if (sendInputToAllSessions) {
-        [[self window] setBackgroundColor: [NSColor highlightColor]];
-        [background_ setColor:[NSColor highlightColor]];
+    NSColor* tabColor = [tabBarControl tabColorForTabViewItem:[TABVIEW selectedTabViewItem]];
+    if (tabColor) {
+        [[self window] setBackgroundColor:tabColor];
+        [background_ setColor:tabColor];
     } else {
-        NSColor* tabColor = [tabBarControl tabColorForTabViewItem:[TABVIEW selectedTabViewItem]];
-        if (tabColor) {
-            [[self window] setBackgroundColor:tabColor];
-            [background_ setColor:tabColor];
-        } else {
-            [[self window] setBackgroundColor:nil];
-            [background_ setColor:normalBackgroundColor];
-        }
+        [[self window] setBackgroundColor:nil];
+        [background_ setColor:normalBackgroundColor];
     }
 }
 
@@ -3885,7 +3873,7 @@ NSString *sessionsKey = @"sessions";
     NSLog(@"%s(%d):-[PseudoTerminal toggleInputToAllSessions:%@]",
           __FILE__, __LINE__, sender);
 #endif
-    [self setSendInputToAllSessions: ![self sendInputToAllSessions]];
+    [self setSendInputToAllSessions:![self sendInputToAllSessions]];
 
     // Post a notification to reload menus
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermWindowBecameKey"

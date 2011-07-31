@@ -5042,6 +5042,48 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self _drawRuns:initialPoint runs:runs numRuns:numRuns];
 }
 
+- (void)_drawStripesInRect:(NSRect)rect
+{
+    [NSGraphicsContext saveGraphicsState];
+    NSRectClip(rect);
+    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
+
+    const CGFloat kStripeWidth = 40;
+    const double kSlope = 1;
+
+    for (CGFloat x = kSlope * -fmod(rect.origin.y, kStripeWidth * 2) -2 * kStripeWidth ;
+         x < rect.origin.x + rect.size.width;
+         x += kStripeWidth * 2) {
+        if (x + 2 * kStripeWidth + rect.size.height * kSlope < rect.origin.x) {
+            continue;
+        }
+        NSBezierPath* thePath = [NSBezierPath bezierPath];
+
+        [thePath moveToPoint:NSMakePoint(x, rect.origin.y + rect.size.height)];
+        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height, rect.origin.y)];
+        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height + kStripeWidth, rect.origin.y)];
+        [thePath lineToPoint:NSMakePoint(x + kStripeWidth, rect.origin.y + rect.size.height)];
+        [thePath closePath];
+
+        [[[NSColor redColor] colorWithAlphaComponent:0.25] set];
+        [thePath fill];
+
+        x += kStripeWidth;
+        thePath = [NSBezierPath bezierPath];
+
+        [thePath moveToPoint:NSMakePoint(x, rect.origin.y + rect.size.height)];
+        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height, rect.origin.y)];
+        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height + kStripeWidth, rect.origin.y)];
+        [thePath lineToPoint:NSMakePoint(x + kStripeWidth, rect.origin.y + rect.size.height)];
+        [thePath closePath];
+
+        [[[NSColor whiteColor] colorWithAlphaComponent:0.25] set];
+//        [thePath fill];
+        x -= kStripeWidth;
+    }
+    [NSGraphicsContext restoreGraphicsState];
+}
+
 - (BOOL)_drawLine:(int)line AtY:(double)curY toPoint:(NSPoint*)toPoint
 {
     BOOL anyBlinking = NO;
@@ -5242,6 +5284,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 if (![self useTransparency]) {
                     NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
                 }
+            }
+
+            // Draw red stripes in the background if sending input to all sessions
+            if ([[[[dataSource session] tab] realParentWindow] sendInputToAllSessions]) {
+                [self _drawStripesInRect:bgRect];
             }
 
             NSPoint textOrigin;
