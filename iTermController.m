@@ -1422,7 +1422,10 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     HKWLog(@"Hide visor.");
     if ([[hotkeyTerm window] isVisible]) {
         HKWLog(@"key window is %@", [NSApp keyWindow]);
-        if ([NSApp keyWindow] == nil) {
+        NSWindow *keyWindow = [NSApp keyWindow];
+        if (!keyWindow ||
+            ([keyWindow isKindOfClass:[PTYWindow class]] &&
+             [(PseudoTerminal*)[keyWindow windowController] isHotKeyWindow])) {
             [self restorePreviouslyActiveApp];
         }
     }
