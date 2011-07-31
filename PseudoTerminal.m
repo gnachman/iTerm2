@@ -306,11 +306,7 @@ NSString *sessionsKey = @"sessions";
     [myWindow release];
 
     _fullScreen = (windowType == WINDOW_TYPE_FORCE_FULL_SCREEN);
-    if (_fullScreen) {
-        background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor blackColor]];
-    } else {
-        background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor windowBackgroundColor]];
-    }
+    background_ = [[SolidColorView alloc] initWithFrame:[[[self window] contentView] frame] color:[NSColor windowBackgroundColor]];
     [[self window] setAlphaValue:1];
     [[self window] setOpaque:NO];
 
@@ -3302,7 +3298,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)hideFullScreenTabControl
 {
-    if (fullscreenTabs_) {
+    if (temporarilyShowingTabs_ && fullscreenTabs_) {
         [self toggleFullScreenTabBar];
     }
     temporarilyShowingTabs_ = NO;
