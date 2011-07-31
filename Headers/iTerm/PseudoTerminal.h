@@ -189,6 +189,9 @@
 
     // In the process of zooming in Lion or later.
     BOOL zooming_;
+
+    // Time since 1970 of last window resize
+    double lastResizeTime_;
 }
 
 // Initialize a new PseudoTerminal.
@@ -323,6 +326,9 @@
 // accessor
 - (BOOL)fullScreen;
 - (BOOL)fullScreenTabControl;
+
+// Last time the window was resized.
+- (NSDate *)lastResizeTime;
 
 - (BOOL)tabBarShouldBeVisible;
 - (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)n;

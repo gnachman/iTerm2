@@ -2518,6 +2518,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     }
 }
 
+- (BOOL)_windowResizedRecently
+{
+    NSDate *lastResize = [realParentWindow_ lastResizeTime];
+    double elapsed = [[NSDate date] timeIntervalSinceDate:lastResize];
+    return elapsed < (2 * kBackgroundSessionIntervalSec);
+}
+
 - (void)_setLabelAttributesForIdleBackgroundTabAtTime:(struct timeval)now
 {
     if ([self isProcessing]) {
@@ -2577,8 +2584,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         [[self activeSession] setGrowlNewOutput:YES];
     }
 
-    [[self parentWindow] setLabelColor:newOutputStateColor
-                        forTabViewItem:tabViewItem_];
+    if ([self _windowResizedRecently]) {
+        // Reset new output flag for all sessions because it may have been caused by an app
+        // redrawing itself in response to the window resizing.
+        for (PTYSession* session in [self sessions]) {
+            [session setNewOutput:NO];
+        }
+    } else {
+        [[self parentWindow] setLabelColor:newOutputStateColor
+                            forTabViewItem:tabViewItem_];
+    }
 }
 
 - (void)_setLabelAttributesForForegroundTab

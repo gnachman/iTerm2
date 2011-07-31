@@ -1281,6 +1281,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidResize:(NSNotification *)aNotification
 {
+    lastResizeTime_ = [[NSDate date] timeIntervalSince1970];
     if (zooming_) {
         // Pretend nothing happened to avoid slowing down zooming.
         return;
@@ -2960,6 +2961,11 @@ NSString *sessionsKey = @"sessions";
 - (BOOL)fullScreenTabControl
 {
     return fullscreenTabs_;
+}
+
+- (NSDate *)lastResizeTime
+{
+    return [NSDate dateWithTimeIntervalSince1970:lastResizeTime_];
 }
 
 @end
