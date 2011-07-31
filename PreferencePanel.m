@@ -526,7 +526,6 @@ static float versionNumber;
 
     if (IsLionOrLater()) {
         [lionStyleFullscreen setHidden:NO];
-        [hideScrollbar setHidden:YES];
     } else {
         [lionStyleFullscreen setHidden:YES];
     }
@@ -1582,11 +1581,7 @@ static float versionNumber;
 
 - (BOOL)hideScrollbar
 {
-    if (IsLionOrLater()) {
-        return NO;
-    } else {
-        return defaultHideScrollbar;
-    }
+    return defaultHideScrollbar;
 }
 
 - (BOOL)smartPlacement
