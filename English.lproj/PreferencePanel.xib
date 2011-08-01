@@ -1357,6 +1357,28 @@
 													<int key="NSPeriodicInterval">25</int>
 												</object>
 											</object>
+											<object class="NSButton" id="511639492">
+												<reference key="NSNextResponder" ref="1019983678"/>
+												<int key="NSvFlags">268</int>
+												<string key="NSFrame">{{429, 120}, {186, 18}}</string>
+												<reference key="NSSuperview" ref="1019983678"/>
+												<bool key="NSEnabled">YES</bool>
+												<object class="NSButtonCell" key="NSCell" id="319417609">
+													<int key="NSCellFlags">-2080244224</int>
+													<int key="NSCellFlags2">0</int>
+													<string key="NSContents">Animate dimming</string>
+													<reference key="NSSupport" ref="966507434"/>
+													<reference key="NSControlView" ref="511639492"/>
+													<int key="NSButtonFlags">1211912703</int>
+													<int key="NSButtonFlags2">2</int>
+													<reference key="NSNormalImage" ref="93419583"/>
+													<reference key="NSAlternateImage" ref="573748959"/>
+													<string key="NSAlternateContents"/>
+													<string key="NSKeyEquivalent"/>
+													<int key="NSPeriodicDelay">200</int>
+													<int key="NSPeriodicInterval">25</int>
+												</object>
+											</object>
 											<object class="NSButton" id="1021432808">
 												<reference key="NSNextResponder" ref="1019983678"/>
 												<int key="NSvFlags">268</int>
@@ -1382,7 +1404,7 @@
 											<object class="NSButton" id="1009965154">
 												<reference key="NSNextResponder" ref="1019983678"/>
 												<int key="NSvFlags">256</int>
-												<string key="NSFrame">{{429, 63}, {228, 18}}</string>
+												<string key="NSFrame">{{429, 48}, {228, 18}}</string>
 												<reference key="NSSuperview" ref="1019983678"/>
 												<bool key="NSEnabled">YES</bool>
 												<object class="NSButtonCell" key="NSCell" id="53143667">
@@ -1404,7 +1426,7 @@
 											<object class="NSButton" id="253372206">
 												<reference key="NSNextResponder" ref="1019983678"/>
 												<int key="NSvFlags">256</int>
-												<string key="NSFrame">{{429, 83}, {228, 18}}</string>
+												<string key="NSFrame">{{429, 68}, {228, 18}}</string>
 												<reference key="NSSuperview" ref="1019983678"/>
 												<bool key="NSEnabled">YES</bool>
 												<object class="NSButtonCell" key="NSCell" id="651640814">
@@ -1442,7 +1464,7 @@
 											<object class="NSTextField" id="1041271253">
 												<reference key="NSNextResponder" ref="1019983678"/>
 												<int key="NSvFlags">268</int>
-												<string key="NSFrame">{{428, 107}, {57, 17}}</string>
+												<string key="NSFrame">{{428, 92}, {57, 17}}</string>
 												<reference key="NSSuperview" ref="1019983678"/>
 												<bool key="NSEnabled">YES</bool>
 												<object class="NSTextFieldCell" key="NSCell" id="927506957">
@@ -12399,6 +12421,30 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					</object>
 					<int key="connectionID">5402</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">settingChanged:</string>
+						<reference key="source" ref="155244235"/>
+						<reference key="destination" ref="511639492"/>
+					</object>
+					<int key="connectionID">5405</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">nextKeyView</string>
+						<reference key="source" ref="511639492"/>
+						<reference key="destination" ref="840263255"/>
+					</object>
+					<int key="connectionID">5406</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">animateDimming</string>
+						<reference key="source" ref="155244235"/>
+						<reference key="destination" ref="511639492"/>
+					</object>
+					<int key="connectionID">5407</int>
+				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<object class="NSArray" key="orderedObjects">
@@ -15554,6 +15600,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<reference ref="1009965154"/>
 							<reference ref="253372206"/>
 							<reference ref="1041271253"/>
+							<reference ref="511639492"/>
 						</object>
 						<reference key="parent" ref="75732044"/>
 					</object>
@@ -17761,6 +17808,20 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						<reference key="object" ref="789037191"/>
 						<reference key="parent" ref="270689610"/>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">5403</int>
+						<reference key="object" ref="511639492"/>
+						<object class="NSMutableArray" key="children">
+							<bool key="EncodedWithXMLCoder">YES</bool>
+							<reference ref="319417609"/>
+						</object>
+						<reference key="parent" ref="1019983678"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">5404</int>
+						<reference key="object" ref="319417609"/>
+						<reference key="parent" ref="511639492"/>
+					</object>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="flattenedProperties">
@@ -18862,6 +18923,9 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<string>5396.IBPluginDependency</string>
 					<string>5397.IBPluginDependency</string>
 					<string>5398.IBPluginDependency</string>
+					<string>5403.IBPluginDependency</string>
+					<string>5403.IBViewBoundsToFrameTransform</string>
+					<string>5404.IBPluginDependency</string>
 				</object>
 				<object class="NSMutableArray" key="dict.values">
 					<bool key="EncodedWithXMLCoder">YES</bool>
@@ -20143,7 +20207,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<object class="NSAffineTransform">
-						<bytes key="NSTransformStruct">P4AAAL+AAABC2AAAwqoAAA</bytes>
+						<bytes key="NSTransformStruct">P4AAAL+AAABD1oAAwxwAAA</bytes>
 					</object>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -20204,6 +20268,11 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<object class="NSAffineTransform">
+						<bytes key="NSTransformStruct">P4AAAL+AAABC2AAAwqoAAA</bytes>
+					</object>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="unlocalizedProperties">
@@ -20222,7 +20291,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">5402</int>
+			<int key="maxID">5407</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -20540,6 +20609,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>addBookmarkButton</string>
 							<string>addNewMapping</string>
 							<string>advancedFontRendering</string>
+							<string>animateDimming</string>
 							<string>ansi0Color</string>
 							<string>ansi10Color</string>
 							<string>ansi11Color</string>
@@ -20739,6 +20809,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<bool key="EncodedWithXMLCoder">YES</bool>
 							<string>NSPopUpButton</string>
 							<string>NSTableColumn</string>
+							<string>NSButton</string>
 							<string>NSButton</string>
 							<string>NSButton</string>
 							<string>NSButton</string>
@@ -20947,6 +21018,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>addBookmarkButton</string>
 							<string>addNewMapping</string>
 							<string>advancedFontRendering</string>
+							<string>animateDimming</string>
 							<string>ansi0Color</string>
 							<string>ansi10Color</string>
 							<string>ansi11Color</string>
@@ -21162,6 +21234,10 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">advancedFontRendering</string>
+								<string key="candidateClassName">NSButton</string>
+							</object>
+							<object class="IBToOneOutletInfo">
+								<string key="name">animateDimming</string>
 								<string key="candidateClassName">NSButton</string>
 							</object>
 							<object class="IBToOneOutletInfo">
