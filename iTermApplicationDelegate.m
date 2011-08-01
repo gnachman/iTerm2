@@ -48,6 +48,7 @@ static NSString *APP_SUPPORT_DIR = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 static NSString* AUTO_LAUNCH_SCRIPT = @"~/Library/Application Support/iTerm/AutoLaunch.scpt";
 static NSString *ITERM2_FLAG = @"~/Library/Application Support/iTerm/version.txt";
+static BOOL gStartupActivitiesPerformed = NO;
 
 NSMutableString* gDebugLogStr = nil;
 NSMutableString* gDebugLogStr2 = nil;
@@ -135,14 +136,9 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-- (void)_performStartupActivities
+- (void)_performIdempotentStartupActivities
 {
-    static BOOL run;
-    if (run) {
-        // Has already run
-        return;
-    }
-    run = YES;
+    gStartupActivitiesPerformed = YES;
     if (quiet_) {
         // iTerm2 was launched with "open file" that turns off startup activities.
         return;
@@ -177,6 +173,15 @@ static BOOL hasBecomeActive = NO;
         }
     }
     ranAutoLaunchScript = YES;
+}
+
+// This performs startup activities as long as they haven't been run before.
+- (void)_performStartupActivities
+{
+    if (gStartupActivitiesPerformed) {
+        return;
+    }
+    [self _performIdempotentStartupActivities];
 }
 
 - (void)_createFlag
@@ -316,7 +321,7 @@ static BOOL hasBecomeActive = NO;
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication
 {
     if (hasBecomeActive) {
-        [self _performStartupActivities];
+        [self _performIdempotentStartupActivities];
     }
     return YES;
 }
