@@ -249,7 +249,7 @@
         theIndex = 0;
     }
     NSTabViewItem* next = [mruTabs objectAtIndex:theIndex];
-	[self selectTabViewItem:next];
+    [self selectTabViewItem:next];
 }
 
 - (BOOL)onKeyPressed:(NSEvent*)event
