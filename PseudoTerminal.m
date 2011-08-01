@@ -670,12 +670,12 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)previousTab:(id)sender
 {
-	[TABVIEW previousTab:sender];
+    [TABVIEW previousTab:sender];
 }
 
 - (IBAction)nextTab:(id)sender
 {
-	[TABVIEW nextTab:sender];
+    [TABVIEW nextTab:sender];
 }
 
 - (IBAction)previousPane:(id)sender

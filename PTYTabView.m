@@ -99,16 +99,16 @@
 }
 
 
-- (id)initWithFrame: (NSRect) aRect
+- (id)initWithFrame:(NSRect) aRect
 {
 #if DEBUG_ALLOC
     NSLog(@"%s: %p", __PRETTY_FUNCTION__, self);
 #endif
 
     self = [super initWithFrame: aRect];
-	if (self) {
-		mruTabs = [[NSMutableArray alloc] init];
-	}
+    if (self) {
+        mruTabs = [[NSMutableArray alloc] init];
+    }
 
     return self;
 }
@@ -118,7 +118,8 @@
 #if DEBUG_ALLOC
     NSLog(@"%s: %p", __PRETTY_FUNCTION__, self);
 #endif
-
+    
+    [mruTabs dealloc];
     [super dealloc];
 }
 
@@ -137,7 +138,7 @@
 
 
 // NSTabView methods overridden
-- (void) addTabViewItem: (NSTabViewItem *) aTabViewItem
+- (void)addTabViewItem:(NSTabViewItem *) aTabViewItem
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"PTYTabView: -addTabViewItem");
@@ -149,12 +150,12 @@
     if([delegate conformsToProtocol: @protocol(PTYTabViewDelegateProtocol)])
         [delegate tabView: self willAddTabViewItem: aTabViewItem];
 
-	[mruTabs addObject:aTabViewItem];
+    [mruTabs addObject:aTabViewItem];
 
     [super addTabViewItem: aTabViewItem];
 }
 
-- (void) removeTabViewItem: (NSTabViewItem *) aTabViewItem
+- (void)removeTabViewItem:(NSTabViewItem *) aTabViewItem
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"PTYTabView: -removeTabViewItem");
@@ -166,7 +167,7 @@
     if([delegate conformsToProtocol: @protocol(PTYTabViewDelegateProtocol)])
         [delegate tabView: self willRemoveTabViewItem: aTabViewItem];
 	
-	[mruTabs removeObject:aTabViewItem];
+    [mruTabs removeObject:aTabViewItem];
 
     // remove the item
     [super removeTabViewItem: aTabViewItem];
@@ -189,7 +190,7 @@
     if([delegate conformsToProtocol: @protocol(PTYTabViewDelegateProtocol)])
         [delegate tabView: self willInsertTabViewItem: tabViewItem atIndex: theIndex];
 	
-	[mruTabs addObject:tabViewItem];
+    [mruTabs addObject:tabViewItem];
 
     [super insertTabViewItem:tabViewItem atIndex:theIndex];
 #if DEBUG_METHOD_TRACE
@@ -203,22 +204,12 @@
     NSLog(@"PTYTabView: -selectTabViewItem");
 #endif
 	
-	[super selectTabViewItem:tabViewItem];
+    [super selectTabViewItem:tabViewItem];
 
-	if (!isModifierPressed) {
-		NSTabViewItem* tvi = [self selectedTabViewItem];
-		[mruTabs removeObject:tvi];
-		[mruTabs insertObject:tvi atIndex:0];
-	}
-}
-
-- (void)selectTabViewItemAtIndex:(NSInteger)index
-{
-#if DEBUG_METHOD_TRACE
-    NSLog(@"PTYTabView: -selectTabViewItemAtIndex");
-#endif
-	
-	[super selectTabViewItemAtIndex:index];
+    if (!isModifierPressed) {
+        [mruTabs removeObject:tabViewItem];
+        [mruTabs insertObject:tabViewItem atIndex:0];
+    }
 }
 
 // selects a tab from the contextual menu
@@ -229,18 +220,18 @@
 
 - (void)previousTab:(id)sender
 {
-    NSTabViewItem *tvi = [self selectedTabViewItem];
+    NSTabViewItem *tabViewItem = [self selectedTabViewItem];
     [self selectPreviousTabViewItem:sender];
-    if (tvi == [self selectedTabViewItem]) {
+    if (tabViewItem == [self selectedTabViewItem]) {
         [self selectTabViewItemAtIndex:[self numberOfTabViewItems] - 1];
     }
 }
 
 - (void)nextTab:(id)sender
 {
-    NSTabViewItem *tvi = [self selectedTabViewItem];
+    NSTabViewItem *tabViewItem = [self selectedTabViewItem];
     [self selectNextTabViewItem:sender];
-    if (tvi == [self selectedTabViewItem]) {
+    if (tabViewItem == [self selectedTabViewItem]) {
         [self selectTabViewItemAtIndex:0];
     }
 }
@@ -251,40 +242,42 @@
     NSLog(@"PTYTabView: -nextMRU");
 #endif
 
-    NSTabViewItem* tvi = [self selectedTabViewItem];
-	NSUInteger index = [mruTabs indexOfObject:tvi] + 1;
-	if (index >= [mruTabs count])
-		index = 0;
-    NSTabViewItem* next = [mruTabs objectAtIndex:index];
+    NSTabViewItem* tabViewItem = [self selectedTabViewItem];
+    NSUInteger theIndex = [mruTabs indexOfObject:tabViewItem] + 1;
+    NSAssert(theIndex != NSNotFound, "tabViewItem is missing!");
+    if (theIndex >= [mruTabs count]) {
+        theIndex = 0;
+    }
+    NSTabViewItem* next = [mruTabs objectAtIndex:theIndex];
 	[self selectTabViewItem:next];
 }
 
 - (BOOL)onKeyPressed:(NSEvent*)event
 {
-	if (isModifierPressed && [event keyCode] == HOTKEY) {
-		isHotkeyPressed = YES;	
-		[self nextMRU];
-		return YES;
-	}
-	return NO;
+    if (isModifierPressed && [event keyCode] == HOTKEY) {
+        isHotkeyPressed = YES;	
+        [self nextMRU];
+        return YES;
+    }
+    return NO;
 }
 
 - (BOOL)onFlagsChanged:(NSEvent*)event
 {
-	if ([event modifierFlags] & MODIFIER_MASK) {
-		isModifierPressed = YES;
-		return YES;
-	}
-	
-	if (isModifierPressed && (([event modifierFlags] & MODIFIER_MASK) == 0)) {
-		isModifierPressed = NO;
-		if (isHotkeyPressed) {
-			isHotkeyPressed = NO;
-			[self selectTabViewItem:[self selectedTabViewItem]];
-		}
-		return YES;
-	}
-	return NO;
+    if ([event modifierFlags] & MODIFIER_MASK) {
+        isModifierPressed = YES;
+        return YES;
+    }
+
+    if (isModifierPressed && (([event modifierFlags] & MODIFIER_MASK) == 0)) {
+        isModifierPressed = NO;
+        if (isHotkeyPressed) {
+            isHotkeyPressed = NO;
+            [self selectTabViewItem:[self selectedTabViewItem]];
+        }
+        return YES;
+    }
+    return NO;
 }
 
 // process keyboard events
@@ -292,15 +285,15 @@
 // otherwise returns NO, meaning that the event still needs to be processed
 - (BOOL)processMRUEvent:(NSEvent*)event 
 {
-	switch ([event type]) {
-		case NSKeyDown:
-			return [self onKeyPressed:event];
-		case NSFlagsChanged:
-			return [self onFlagsChanged:event];
-		default:
-			return NO;
-	}
-	return NO;
+    switch ([event type]) {
+        case NSKeyDown:
+            return [self onKeyPressed:event];
+        case NSFlagsChanged:
+            return [self onFlagsChanged:event];
+        default:
+            return NO;
+    }
+    return NO;
 }
 
 @end
