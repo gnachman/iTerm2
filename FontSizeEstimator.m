@@ -95,6 +95,7 @@ static double Brightness(NSColor* c) {
                                      osSize.width * 2,
                                      osSize.height * 2)
                   options:0];
+        [str release];
     }
     [image unlockFocus];
 
