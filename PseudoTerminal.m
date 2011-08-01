@@ -1556,11 +1556,28 @@ NSString *sessionsKey = @"sessions";
         [self windowDidResize:nil];
     }
 }
+
+- (void)windowWillEnterFullScreen:(NSNotification *)notification
+{
+    togglingLionFullScreen_ = YES;
+}
+
+- (void)windowDidEnterFullScreen:(NSNotification *)notification
+{
+    togglingLionFullScreen_ = NO;
+}
+
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame
 {
     if (IsLionOrLater()) {
         // Disable redrawing during zoom-initiated live resize.
         zooming_ = YES;
+        if ([self lionFullScreen] &&
+            togglingLionFullScreen_) {
+            // Tell it to use the whole screen when entering Lion fullscreen.
+            // This is actually called twice in a row when entering fullscreen.
+            return defaultFrame;
+        }
     }
     // This function attempts to size the window to fit the screen with exactly
     // MARGIN/VMARGIN-sized margins for the current session. If there are split

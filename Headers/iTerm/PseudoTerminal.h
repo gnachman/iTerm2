@@ -150,6 +150,9 @@
     // from trying to exit fullscreen mode in the midst of toggling it.
     BOOL togglingFullScreen_;
 
+    // True while entering lion fullscreen (the animation is going on)
+    BOOL togglingLionFullScreen_;
+
     // Instant Replay widgets.
     IBOutlet NSSlider* irSlider;
     IBOutlet NSTextField* earliestTime;
