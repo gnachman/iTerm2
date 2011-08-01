@@ -167,9 +167,7 @@ NSString *sessionsKey = @"sessions";
 
 @implementation PseudoTerminal
 
-- (id)initWithSmartLayout:(BOOL)smartLayout 
-			   windowType:(int)windowType 
-				   screen:(int)screenNumber
+- (id)initWithSmartLayout:(BOOL)smartLayout windowType:(int)windowType screen:(int)screenNumber
 {
     PTYWindow *myWindow;
 
@@ -283,7 +281,7 @@ NSString *sessionsKey = @"sessions";
                            NSTexturedBackgroundWindowMask;
     switch (windowType) {
         case WINDOW_TYPE_TOP:
-		case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_BOTTOM:
             styleMask = NSBorderlessWindowMask;
             break;
 
@@ -3215,7 +3213,7 @@ NSString *sessionsKey = @"sessions";
 {
     if (![[PreferencePanel sharedInstance] showWindowBorder]) {
         return NO;
-    } else if ([self anyFullScreen] || windowType_ == WINDOW_TYPE_TOP||  windowType_== WINDOW_TYPE_BOTTOM) {
+    } else if ([self anyFullScreen] || windowType_ == WINDOW_TYPE_TOP || windowType_== WINDOW_TYPE_BOTTOM) {
         return NO;
     } else {
         return YES;
