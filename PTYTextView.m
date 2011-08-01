@@ -66,6 +66,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 // Minimum distance that the mouse must move before a cmd+drag will be
 // recognized as a drag.
 static const int kDragThreshold = 3;
+static const double kBackgroundConsideredDarkThreshold = 0.5;
 
 // When drawing lines, we use this structure to represent a run of cells  of
 // the same font, color, and attributes.
@@ -112,6 +113,10 @@ static NSCursor* textViewCursor =  nil;
 static NSImage* bellImage = nil;
 static NSImage* wrapToTopImage = nil;
 static NSImage* wrapToBottomImage = nil;
+
+static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
+    return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
+}
 
 @interface Coord : NSObject
 {
@@ -372,6 +377,12 @@ static NSImage* wrapToBottomImage = nil;
     cursorType_ = value;
 }
 
+- (void)setDimOnlyText:(BOOL)value
+{
+    dimOnlyText_ = value;
+    [[self superview] setNeedsDisplay:YES];
+}
+
 - (NSDictionary*)markedTextAttributes
 {
     return markedTextAttributes;
@@ -425,6 +436,10 @@ static NSImage* wrapToBottomImage = nil;
     [defaultBGColor release];
     [color retain];
     defaultBGColor = color;
+    PTYScroller *scroller = (PTYScroller*)[[[dataSource session] SCROLLVIEW] verticalScroller];
+    BOOL isDark = ([self _perceivedBrightness:color] < kBackgroundConsideredDarkThreshold);
+    backgroundBrightness_ = PerceivedBrightness([color redComponent], [color greenComponent], [color blueComponent]);
+    [scroller setHasDarkBackground:isDark];
     [self setNeedsDisplay:YES];
 }
 
@@ -554,17 +569,31 @@ static NSImage* wrapToBottomImage = nil;
 
     // Find a linear interpolation between kCenter and the requested color component
     // in proportion to 1- dimmingAmount_.
-    const double kCenter = 0.5;
+    if (!dimOnlyText_) {
+        const double kCenter = 0.5;
 
-    return [NSColor colorWithCalibratedRed:(1 - dimmingAmount_) * r + dimmingAmount_ * kCenter
-                                     green:(1 - dimmingAmount_) * g + dimmingAmount_ * kCenter
-                                      blue:(1 - dimmingAmount_) * b + dimmingAmount_ * kCenter
-                                     alpha:[orig alphaComponent]];
+        return [NSColor colorWithCalibratedRed:(1 - dimmingAmount_) * r + dimmingAmount_ * kCenter
+                                         green:(1 - dimmingAmount_) * g + dimmingAmount_ * kCenter
+                                          blue:(1 - dimmingAmount_) * b + dimmingAmount_ * kCenter
+                                         alpha:[orig alphaComponent]];
+    } else {
+        return [NSColor colorWithCalibratedRed:(1 - dimmingAmount_) * r + dimmingAmount_ * backgroundBrightness_
+                                         green:(1 - dimmingAmount_) * g + dimmingAmount_ * backgroundBrightness_
+                                          blue:(1 - dimmingAmount_) * b + dimmingAmount_ * backgroundBrightness_
+                                         alpha:[orig alphaComponent]];
+    }
 }
 
-- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold
+- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold isBackground:(BOOL)isBackground
 {
-    return [self _dimmedColorFrom:[self _colorForCode:theIndex alternateSemantics:alt bold:isBold]];
+    NSColor *theColor = [self _colorForCode:theIndex
+                         alternateSemantics:alt
+                                       bold:isBold];
+    if (isBackground && dimOnlyText_) {
+        return theColor;
+    } else {
+        return [self _dimmedColorFrom:theColor];
+    }
 }
 
 - (NSColor *)selectionColor
@@ -3281,55 +3310,61 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     unsigned int dragOperation;
     PTYSession *delegate = [self delegate];
-    
+    BOOL res = NO;
+
     // If parent class does not know how to deal with this drag type, check if we do.
     if (extendedDragNDrop) {
         NSPasteboard *pb = [sender draggingPasteboard];
         NSArray *propertyList;
         NSString *aString;
         int i;
-        
+
         dragOperation = [self _checkForSupportedDragTypes: sender];
-        
+
         if (dragOperation == NSDragOperationCopy) {
-            // Check for simple strings first
-            aString = [pb stringForType:NSStringPboardType];
-            if (aString != nil) {
-                if ([delegate respondsToSelector:@selector(pasteString:)]) {
-                    [delegate pasteString: aString];
+            NSArray *types = [pb types];
+
+            if ([types containsObject:NSFilenamesPboardType]) {
+                propertyList = [pb propertyListForType: NSFilenamesPboardType];
+                for (i = 0; i < (int)[propertyList count]; i++) {
+                    // Ignore text clippings
+                    NSString *filename = (NSString*)[propertyList objectAtIndex:i];  // this contains the POSIX path to a file
+                    NSDictionary *filenamesAttributes = [[NSFileManager defaultManager] fileAttributesAtPath:filename
+                                                                                                traverseLink:YES];
+                    if (([filenamesAttributes fileHFSTypeCode] == 'clpt' &&
+                         [filenamesAttributes fileHFSCreatorCode] == 'MACS') ||
+                        [[filename pathExtension] isEqualToString:@"textClipping"] == YES) {
+                        continue;
+                    }
+
+                    // Just paste the file names into the shell after escaping special characters.
+                    if ([delegate respondsToSelector:@selector(pasteString:)]) {
+                        NSMutableString *path;
+
+                        path = [[NSMutableString alloc] initWithString:(NSString*)[propertyList objectAtIndex:i]];
+
+                        // get rid of special characters
+                        [delegate pasteString:[path stringWithEscapedShellCharacters]];
+                        [delegate pasteString:@" "];
+                        [path release];
+
+                        res = YES;
+                    }
                 }
             }
-            
-            // Check for file names
-            propertyList = [pb propertyListForType: NSFilenamesPboardType];
-            for (i = 0; i < (int)[propertyList count]; i++) {
-                // Ignore text clippings
-                NSString *filename = (NSString*)[propertyList objectAtIndex:i];  // this contains the POSIX path to a file
-                NSDictionary *filenamesAttributes = [[NSFileManager defaultManager] fileAttributesAtPath:filename
-                                                                                            traverseLink:YES];
-                if (([filenamesAttributes fileHFSTypeCode] == 'clpt' &&
-                     [filenamesAttributes fileHFSCreatorCode] == 'MACS') ||
-                    [[filename pathExtension] isEqualToString:@"textClipping"] == YES) {
-                    continue;
-                }
-                
-                // Just paste the file names into the shell after escaping special characters.
-                if ([delegate respondsToSelector:@selector(pasteString:)]) {
-                    NSMutableString *path;
-                    
-                    path = [[NSMutableString alloc] initWithString:(NSString*)[propertyList objectAtIndex:i]];
-                    
-                    // get rid of special characters
-                    [delegate pasteString:[path stringWithEscapedShellCharacters]];
-                    [delegate pasteString:@" "];
-                    [path release];
+            if (!res && [types containsObject:NSStringPboardType]) {
+                aString = [pb stringForType:NSStringPboardType];
+                if (aString != nil) {
+                    if ([delegate respondsToSelector:@selector(pasteString:)]) {
+                        [delegate pasteString: aString];
+                        res = YES;
+                    }
                 }
             }
-            return YES;
         }
     }
 
-    return NO;
+    return res;
 }
 
 - (void)concludeDragOperation:(id <NSDraggingInfo>)sender
@@ -4055,7 +4090,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (!hasBGImage && ![self useTransparency]) {
             alpha = 1;
         }
-        [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        if (!dimOnlyText_) {
+            [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        } else {
+            [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
+        }
         NSRect fillDest = bgRect;
         fillDest.origin.y += fillDest.size.height;
         NSRectFillUsingOperation(fillDest,
@@ -4078,7 +4117,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (!hasBGImage && ![self useTransparency]) {
             alpha = 1;
         }
-        [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        if (!dimOnlyText_) {
+            [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        } else {
+            [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
+        }
         NSRectFillUsingOperation(bgRect,
                                  hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
     }
@@ -4098,7 +4141,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (!hasBGImage && ![self useTransparency]) {
             alpha = 1;
         }
-        [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        if (!dimOnlyText_) {
+            [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+        } else {
+            [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
+        }
         NSRectFillUsingOperation(bgRect, hasBGImage?NSCompositeSourceOver:NSCompositeCopy);
     }
 }
@@ -4477,10 +4524,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return newRuns;
 }
 
-static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
-    return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
-}
-
 - (double)_perceivedBrightness:(NSColor*) c
 {
     return PerceivedBrightness([c redComponent], [c greenComponent], [c blueComponent]);
@@ -4660,13 +4703,18 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 theLine[i].alternateForegroundSemantics &&
                 theLine[i].foregroundColor == ALTSEM_FG_DEFAULT) {
                 // Has default foreground color so use background color.
-                thisCharColor = [self _dimmedColorFrom:defaultBGColor];
+                if (!dimOnlyText_) {
+                    thisCharColor = [self _dimmedColorFrom:defaultBGColor];
+                } else {
+                    thisCharColor = defaultBGColor;
+                }
             } else {
                 // Not reversed or not subject to reversing (only default
                 // foreground color is drawn in reverse video).
                 thisCharColor = [self colorForCode:theLine[i].foregroundColor
                                 alternateSemantics:theLine[i].alternateForegroundSemantics
-                                              bold:theLine[i].bold];
+                                              bold:theLine[i].bold
+                                      isBackground:NO];
             }
         }
 
@@ -4994,6 +5042,48 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [self _drawRuns:initialPoint runs:runs numRuns:numRuns];
 }
 
+- (void)_drawStripesInRect:(NSRect)rect
+{
+    [NSGraphicsContext saveGraphicsState];
+    NSRectClip(rect);
+    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
+
+    const CGFloat kStripeWidth = 40;
+    const double kSlope = 1;
+
+    for (CGFloat x = kSlope * -fmod(rect.origin.y, kStripeWidth * 2) -2 * kStripeWidth ;
+         x < rect.origin.x + rect.size.width;
+         x += kStripeWidth * 2) {
+        if (x + 2 * kStripeWidth + rect.size.height * kSlope < rect.origin.x) {
+            continue;
+        }
+        NSBezierPath* thePath = [NSBezierPath bezierPath];
+
+        [thePath moveToPoint:NSMakePoint(x, rect.origin.y + rect.size.height)];
+        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height, rect.origin.y)];
+        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height + kStripeWidth, rect.origin.y)];
+        [thePath lineToPoint:NSMakePoint(x + kStripeWidth, rect.origin.y + rect.size.height)];
+        [thePath closePath];
+
+        [[[NSColor redColor] colorWithAlphaComponent:0.25] set];
+        [thePath fill];
+
+        x += kStripeWidth;
+        thePath = [NSBezierPath bezierPath];
+
+        [thePath moveToPoint:NSMakePoint(x, rect.origin.y + rect.size.height)];
+        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height, rect.origin.y)];
+        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height + kStripeWidth, rect.origin.y)];
+        [thePath lineToPoint:NSMakePoint(x + kStripeWidth, rect.origin.y + rect.size.height)];
+        [thePath closePath];
+
+        [[[NSColor whiteColor] colorWithAlphaComponent:0.25] set];
+//        [thePath fill];
+        x -= kStripeWidth;
+    }
+    [NSGraphicsContext restoreGraphicsState];
+}
+
 - (BOOL)_drawLine:(int)line AtY:(double)curY toPoint:(NSPoint*)toPoint
 {
     BOOL anyBlinking = NO;
@@ -5020,7 +5110,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
     aColor = [self colorForCode:ALTSEM_BG_DEFAULT
              alternateSemantics:YES
-                           bold:NO];
+                           bold:NO
+                   isBackground:YES];
 
     aColor = [aColor colorWithAlphaComponent:selectedAlpha];
     [aColor set];
@@ -5163,12 +5254,14 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                         // color chars.
                         aColor = [self colorForCode:ALTSEM_FG_DEFAULT
                                  alternateSemantics:YES
-                                               bold:NO];
+                                               bold:NO
+                                       isBackground:NO];
                     } else {
                         // Use the regular background color.
                         aColor = [self colorForCode:bgColor
                                  alternateSemantics:bgAlt
-                                               bold:NO];
+                                               bold:NO
+                                       isBackground:(bgColor == ALTSEM_BG_DEFAULT)];
                     }
                 }
                 aColor = [aColor colorWithAlphaComponent:alphaIfTransparencyInUse];
@@ -5184,12 +5277,18 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 // default background color. But don't blend in the bg color if transparency is on.
                 aColor = [self colorForCode:ALTSEM_BG_DEFAULT
                          alternateSemantics:YES
-                                       bold:NO];
+                                       bold:NO
+                               isBackground:YES];
                 aColor = [aColor colorWithAlphaComponent:selectedAlpha];
                 [aColor set];
                 if (![self useTransparency]) {
                     NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
                 }
+            }
+
+            // Draw red stripes in the background if sending input to all sessions
+            if ([[[[dataSource session] tab] realParentWindow] sendInputToAllSessions]) {
+                [self _drawStripesInRect:bgRect];
             }
 
             NSPoint textOrigin;
@@ -5265,7 +5364,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         } else {
             [[self colorForCode:fgColor
                alternateSemantics:fgAlt
-                           bold:fgBold] set];
+                           bold:fgBold
+                   isBackground:NO] set];
         }
 
         NSRectFill(NSMakeRect(X,
@@ -5375,7 +5475,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                   y,
                                   charsInLine * charWidth,
                                   lineHeight);
-            [[self _dimmedColorFrom:defaultBGColor] set];
+            if (!dimOnlyText_) {
+                [[self _dimmedColorFrom:defaultBGColor] set];
+            } else {
+                [defaultBGColor set];
+            }
             NSRectFill(r);
 
             // Draw the characters.
@@ -5473,10 +5577,16 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 {
     if ([[dataSource terminal] screenMode]) {
         // reversed
-        return [self colorForCode:c.foregroundColor alternateSemantics:c.alternateForegroundSemantics bold:c.bold];
+        return [self colorForCode:c.foregroundColor
+               alternateSemantics:c.alternateForegroundSemantics
+                             bold:c.bold
+                     isBackground:YES];
     } else {
         // normal
-        return [self colorForCode:c.backgroundColor alternateSemantics:c.alternateBackgroundSemantics bold:false];
+        return [self colorForCode:c.backgroundColor
+               alternateSemantics:c.alternateBackgroundSemantics
+                             bold:false
+                     isBackground:YES];
     }
 }
 
@@ -5617,12 +5727,14 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 if (reversed) {
                     bgColor = [self colorForCode:screenChar.backgroundColor
                               alternateSemantics:screenChar.alternateBackgroundSemantics
-                                            bold:screenChar.bold];
+                                            bold:screenChar.bold
+                                    isBackground:NO];
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 } else {
                     bgColor = [self colorForCode:screenChar.foregroundColor
                               alternateSemantics:screenChar.alternateForegroundSemantics
-                                            bold:screenChar.bold];
+                                            bold:screenChar.bold
+                                    isBackground:NO];
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 }
 
@@ -5704,7 +5816,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                             // Ensure text has enough contrast by making it black/white if the char's color would be close to the cursor bg.
                             NSColor* proposedForeground = [[self colorForCode:fgColor
                                                            alternateSemantics:fgAlt
-                                                                         bold:screenChar.bold] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+                                                                         bold:screenChar.bold
+                                                                 isBackground:NO] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
                             CGFloat fgBrightness = [self _perceivedBrightness:proposedForeground];
                             CGFloat bgBrightness = [self _perceivedBrightness:[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
                             NSColor* overrideColor = nil;
@@ -5985,6 +6098,8 @@ static bool IsUrlChar(NSString* str)
                     // before rightx there was something besides \s
                     break;
                 }
+                // Don't respect hard newlines that are "escaped" by a \.
+                respectHardNewlines = NO;
                 // xi is left at rightx+1
             } else if (xi == rightx) {
                 // Made it to rightx.
@@ -6429,6 +6544,8 @@ static bool IsUrlChar(NSString* str)
     advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
     [self setNeedsDisplay:YES];
+    [self setDimOnlyText:[[PreferencePanel sharedInstance] dimOnlyText]];
+
 }
 
 - (void)_modifyFont:(NSFont*)font baseline:(double)baseline into:(PTYFontInfo*)fontInfo

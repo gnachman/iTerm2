@@ -32,7 +32,11 @@
 @interface PTYScroller : NSScroller
 {
     BOOL userScroll;
+    BOOL hasDarkBackground;
 }
+
+@property (nonatomic, assign) BOOL hasDarkBackground;
+
 + (BOOL)isCompatibleWithOverlayScrollers;
 - (id)init;
 - (void) mouseDown: (NSEvent *)theEvent;

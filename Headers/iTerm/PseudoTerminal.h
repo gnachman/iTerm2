@@ -185,6 +185,15 @@
     // True if this window was created by dragging a tab from another window.
     // Affects how its size is set when the number of tabview items changes.
     BOOL wasDraggedFromAnotherWindow_;
+    BOOL fullscreenTabs_;
+
+    // In the process of zooming in Lion or later.
+    BOOL zooming_;
+
+    // Time since 1970 of last window resize
+    double lastResizeTime_;
+
+    BOOL temporarilyShowingTabs_;
 }
 
 // Initialize a new PseudoTerminal.
@@ -240,6 +249,8 @@
 
 // Close a session (TODO: currently just closes the tab the session is in).
 - (void)closeSession:(PTYSession *)aSession;
+
+- (void)toggleFullScreenTabBar;
 
 // Close the active session.
 - (IBAction)closeCurrentSession:(id)sender;
@@ -316,6 +327,14 @@
 
 // accessor
 - (BOOL)fullScreen;
+- (BOOL)fullScreenTabControl;
+
+// Last time the window was resized.
+- (NSDate *)lastResizeTime;
+
+- (BOOL)tabBarShouldBeVisible;
+- (BOOL)tabBarShouldBeVisibleWithAdditionalTabs:(int)n;
+- (BOOL)scrollbarShouldBeVisible;
 
 // Called by VT100Screen when it wants to resize a window for a
 // session-initiated resize. It resizes the session, then the window, then all
@@ -330,7 +349,7 @@
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu;
 
 // setters
-- (void)enableBlur;
+- (void)enableBlur:(double)radius;
 - (void)disableBlur;
 
 // Set the text color for a tab control's name.
@@ -651,6 +670,7 @@
 - (void)_drawFullScreenBlackBackground;
 
 - (void)hideMenuBar;
+- (void)showMenuBar;
 
 // This is a half-baked function that tries to parse a command line into a
 // command (returned in *cmd) and an array of arguments (returned in *path).
@@ -700,6 +720,9 @@
 
 // Change position of window widgets.
 - (void)repositionWidgets;
+
+- (void)showFullScreenTabControl;
+- (void)hideFullScreenTabControl;
 
 // Adjust the tab's size for a new window size.
 - (void)fitTabToWindow:(PTYTab*)aTab;
@@ -800,10 +823,6 @@
 
 // Return all sessions in all tabs.
 - (NSArray*)allSessions;
-
-// Change visiblity of tabBarControl in fullscreen mode.
-- (void)showFullScreenTabControl;
-- (void)hideFullScreenTabControl;
 
 - (void)_loadFindStringFromSharedPasteboard;
 

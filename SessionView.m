@@ -148,8 +148,26 @@ static NSDate* lastResizeDate_;
 
 - (double)dimmedDimmingAmount
 {
-    NSNumber* n = [[NSUserDefaults standardUserDefaults] objectForKey:@"SplitPaneDimmingAmount"];
-    return n ? [n doubleValue] : 0.15;
+    return [[PreferencePanel sharedInstance] dimmingAmount];
+}
+
+- (void)updateDim
+{
+    int x = 0;
+    if (dim_) {
+        x++;
+    }
+    if (backgroundDimmed_) {
+        x++;
+    }
+    double scale[] = { 0, 1.0, 1.5 };
+    double amount = scale[x] * [self dimmedDimmingAmount];
+    // Cap amount within reasonable bounds. Before 1.1, dimming amount was only changed by
+    // twiddling the prefs file so it could have all kinds of crazy values.
+    amount = MIN(0.9, amount);
+    amount = MAX(0.1, amount);
+
+    [self _dimShadeToDimmingAmount:amount];
 }
 
 - (void)setDimmed:(BOOL)isDimmed
@@ -161,13 +179,25 @@ static NSDate* lastResizeDate_;
         return;
     }
     dim_ = isDimmed;
-    if (isDimmed) {
-        currentDimmingAmount_ = 0;
-        [[session_ TEXTVIEW] setDimmingAmount:0];
-        [self _dimShadeToDimmingAmount:[self dimmedDimmingAmount]];
+    [self updateDim];
+}
+
+- (void)setBackgroundDimmed:(BOOL)backgroundDimmed
+{
+    BOOL orig = backgroundDimmed_;
+    if ([[PreferencePanel sharedInstance] dimBackgroundWindows]) {
+        backgroundDimmed_ = backgroundDimmed;
     } else {
-        [self _dimShadeToDimmingAmount:0];
+        backgroundDimmed_ = NO;
     }
+    if (backgroundDimmed_ != orig) {
+        [self updateDim];
+    }
+}
+
+- (BOOL)backgroundDimmed
+{
+    return backgroundDimmed_;
 }
 
 - (void)cancelTimers

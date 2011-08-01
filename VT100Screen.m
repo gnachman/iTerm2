@@ -55,6 +55,9 @@
 #define MAX_SCROLLBACK_LINES 1000000
 #define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array
 
+// Wait this long between calls to NSBeep().
+static const double kInterBellQuietPeriod = 0.1;
+
 // we add a character at the end of line to indicate wrapping
 #define REAL_WIDTH (WIDTH+1)
 
@@ -2954,7 +2957,17 @@ void DumpBuf(screen_char_t* p, int n) {
     NSLog(@"%s(%d):-[VT100Screen playBell]",  __FILE__, __LINE__);
 #endif
     if (PLAYBELL) {
-        NSBeep();
+        // Some bells or systems block on NSBeep so it's important to rate-limit it to prevent
+        // bells from blocking the terminal indefinitely. The small delay we insert between
+        // bells allows us to swallow up the vast majority of ^G characters when you cat a
+        // binary file.
+        static NSDate *lastBell;
+        double interval = lastBell ? [[NSDate date] timeIntervalSinceDate:lastBell] : INFINITY;
+        if (interval > kInterBellQuietPeriod) {
+            NSBeep();
+            [lastBell release];
+            lastBell = [[NSDate date] retain];
+        }
     }
     if (SHOWBELL) {
         [SESSION setBell:YES];

@@ -75,7 +75,7 @@
 
     if (hasPendingBlurChange) {
         if (pendingBlur) {
-            [aTerm enableBlur];
+            [aTerm enableBlur:pendingBlurRadius];
         } else {
             [aTerm disableBlur];
         }
@@ -170,9 +170,10 @@
     }
 }
 
-- (void)enableBlur
+- (void)enableBlur:(double)radius
 {
     hasPendingBlurChange = YES;
+    pendingBlurRadius = radius;
     pendingBlur = YES;
 }
 

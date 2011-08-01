@@ -60,7 +60,14 @@
 {
     static PasteboardHistory* instance;
     if (!instance) {
-        instance = [[PasteboardHistory alloc] initWithMaxEntries:20];
+        int maxEntries = 20;
+        if ([[NSUserDefaults standardUserDefaults] objectForKey:@"MaxPasteHistoryEntries"]) {
+            maxEntries = [[NSUserDefaults standardUserDefaults] integerForKey:@"MaxPasteHistoryEntries"];
+            if (maxEntries < 0) {
+                maxEntries = 0;
+            }
+        }
+        instance = [[PasteboardHistory alloc] initWithMaxEntries:maxEntries];
     }
     return instance;
 }
@@ -169,7 +176,7 @@
     PasteboardEntry* entry = [PasteboardEntry entryWithString:value score:[[NSDate date] timeIntervalSince1970]];
     entry->timestamp = [[NSDate alloc] init];
     [entries_ addObject:entry];
-    if ([entries_ count] == maxEntries_) {
+    if ([entries_ count] > maxEntries_) {
         [entries_ removeObjectAtIndex:0];
     }
 

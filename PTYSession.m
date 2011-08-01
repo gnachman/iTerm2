@@ -261,12 +261,12 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
     [aSession setPreferencesFromAddressBookEntry:theBookmark];
     [[aSession SCREEN] setDisplay:[aSession TEXTVIEW]];
-    [aSession runCommandWithOldCwd:[arrangement objectForKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY]];
     [aSession setName:[theBookmark objectForKey:KEY_NAME]];
     if ([[[[theTab realParentWindow] window] title] compare:@"Window"] == NSOrderedSame) {
         [[theTab realParentWindow] setWindowTitle];
     }
     [aSession setTab:theTab];
+    [aSession runCommandWithOldCwd:[arrangement objectForKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY]];
 
     if (needDivorce) {
         [aSession divorceAddressBookEntryFromPreferences];
@@ -317,6 +317,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [WRAPPER setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
     TEXTVIEW = [[PTYTextView alloc] initWithFrame: NSMakeRect(0, VMARGIN, aSize.width, aSize.height)];
+    [TEXTVIEW setDimOnlyText:[[PreferencePanel sharedInstance] dimOnlyText]];
     [TEXTVIEW setAutoresizingMask: NSViewWidthSizable | NSViewHeightSizable];
     [TEXTVIEW setFont:[ITAddressBookMgr fontWithDesc:[addressBookEntry objectForKey:KEY_NORMAL_FONT]]
                nafont:[ITAddressBookMgr fontWithDesc:[addressBookEntry objectForKey:KEY_NON_ASCII_FONT]]
@@ -487,8 +488,16 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         [env setObject:[self encodingName] forKey:@"LC_CTYPE"];
     }
 
-    if ([env objectForKey:PWD_ENVNAME] == nil)
+    if ([env objectForKey:PWD_ENVNAME] == nil) {
         [env setObject:[PWD_ENVVALUE stringByExpandingTildeInPath] forKey:PWD_ENVNAME];
+    }
+
+    PseudoTerminal *pty = [tab_ realParentWindow];
+    NSString *itermId = [NSString stringWithFormat:@"w%dt%dp%d",
+                         [pty number],
+                         [tab_ realObjectCount] - 1,
+                         [tab_ indexOfSessionView:[self view]]];
+    [env setObject:itermId forKey:@"ITERM_SESSION_ID"];
 
     [SHELL launchWithPath:path
                 arguments:argv

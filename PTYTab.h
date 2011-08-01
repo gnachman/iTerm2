@@ -104,6 +104,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)setTabViewItem:(NSTabViewItem *)theTabViewItem;
 - (void)previousSession;
 - (void)nextSession;
+- (int)indexOfSessionView:(SessionView*)sessionView;
 
 - (void)setLockedSession:(PTYSession*)lockedSession;
 - (PTYSession*)activeSession;
@@ -144,6 +145,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)closeSession:(PTYSession*)session;
 - (void)terminateAllSessions;
 - (NSArray*)sessions;
+- (NSArray*)sessionViews;
 - (BOOL)allSessionsExited;
 - (void)setDvrInSession:(PTYSession*)newSession;
 - (void)showLiveSession:(PTYSession*)liveSession inPlaceOf:(PTYSession*)replaySession;
@@ -160,6 +162,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (BOOL)canSplitVertically:(BOOL)isVertical withSize:(NSSize)newSessionSize;
 - (NSImage*)image:(BOOL)withSpaceForFrame;
 - (bool)blur;
+- (double)blurRadius;
 - (void)recheckBlur;
 
 - (NSSize)_minSessionSize:(SessionView*)sessionView;

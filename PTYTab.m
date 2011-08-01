@@ -404,6 +404,11 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 }
 
+- (int)indexOfSessionView:(SessionView*)sessionView
+{
+    return [[self sessionViews] indexOfObject:sessionView];
+}
+
 - (id<WindowControllerInterface>)parentWindow
 {
     return parentWindow_;
@@ -486,7 +491,9 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 - (BOOL)isProcessing
 {
-    return isProcessing_ && ![realParentWindow_ disableProgressIndicators];
+    return ![[PreferencePanel sharedInstance] hideActivityIndicator] &&
+        isProcessing_ &&
+        ![realParentWindow_ disableProgressIndicators];
 }
 
 - (void)setIsProcessing:(BOOL)aFlag
@@ -705,6 +712,22 @@ static NSString* FormatRect(NSRect r) {
     return sessions;
 }
 
+- (NSArray*)_recursiveSessionViews:(NSMutableArray*)sessionViews
+                            atNode:(NSSplitView*)node
+{
+    for (id subview in [node subviews]) {
+        if ([subview isKindOfClass:[NSSplitView class]]) {
+            [self _recursiveSessions:sessionViews atNode:(NSSplitView*)subview];
+        } else {
+            SessionView* sessionView = (SessionView*)subview;
+            if (sessionView) {
+                [sessionViews addObject:sessionView];
+            }
+        }
+    }
+    return sessionViews;
+}
+
 - (NSArray*)sessions
 {
     if (idMap_) {
@@ -716,6 +739,20 @@ static NSString* FormatRect(NSRect r) {
         return result;
     } else {
         return [self _recursiveSessions:[NSMutableArray arrayWithCapacity:1] atNode:root_];
+    }
+}
+
+- (NSArray*)sessionViews
+{
+    if (idMap_) {
+        NSArray* sessionViews = [idMap_ allValues];
+        NSMutableArray* result = [NSMutableArray arrayWithCapacity:[sessionViews count]];
+        for (SessionView* sessionView in sessionViews) {
+            [result addObject:sessionView];
+        }
+        return result;
+    } else {
+        return [self _recursiveSessionViews:[NSMutableArray arrayWithCapacity:1] atNode:root_];
     }
 }
 
@@ -1565,13 +1602,32 @@ static NSString* FormatRect(NSRect r) {
     return y > n;
 }
 
+- (double)blurRadius
+{
+    double sum = 0;
+    double count = 0;
+    NSArray* sessions = [self sessions];
+    for (PTYSession* session in sessions) {
+        if ([[[session addressBookEntry] objectForKey:KEY_BLUR] boolValue]) {
+            sum += [[session addressBookEntry] objectForKey:KEY_BLUR_RADIUS] ? [[[session addressBookEntry] objectForKey:KEY_BLUR_RADIUS] floatValue] : 2.0;
+            ++count;
+        }
+    }
+    if (count > 0) {
+        return sum / count;
+    } else {
+        // This shouldn't actually happen, but better save than divide by zero.
+        return 2.0;
+    }
+}
+
 - (void)recheckBlur
 {
     PtyLog(@"PTYTab recheckBlur");
     if ([realParentWindow_ currentTab] == self &&
         ![[realParentWindow_ window] isMiniaturized]) {
         if ([self blur]) {
-            [parentWindow_ enableBlur];
+            [parentWindow_ enableBlur:[self blurRadius]];
         } else {
             [parentWindow_ disableBlur];
         }
@@ -1714,6 +1770,8 @@ static NSString* FormatRect(NSRect r) {
     [theTab->tabViewItem_ setLabel:@"Restoring..."];
     [newRoot release];
 
+    [theTab setObjectCount:[term numberOfTabs] + 1];
+    
     // Instantiate sessions in the skeleton view tree.
     [theTab setActiveSession:[theTab _recursiveRestoreSessions:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
                                                         atNode:theTab->root_
@@ -2460,6 +2518,13 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     }
 }
 
+- (BOOL)_windowResizedRecently
+{
+    NSDate *lastResize = [realParentWindow_ lastResizeTime];
+    double elapsed = [[NSDate date] timeIntervalSinceDate:lastResize];
+    return elapsed < (2 * kBackgroundSessionIntervalSec);
+}
+
 - (void)_setLabelAttributesForIdleBackgroundTabAtTime:(struct timeval)now
 {
     if ([self isProcessing]) {
@@ -2519,8 +2584,16 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         [[self activeSession] setGrowlNewOutput:YES];
     }
 
-    [[self parentWindow] setLabelColor:newOutputStateColor
-                        forTabViewItem:tabViewItem_];
+    if ([self _windowResizedRecently]) {
+        // Reset new output flag for all sessions because it may have been caused by an app
+        // redrawing itself in response to the window resizing.
+        for (PTYSession* session in [self sessions]) {
+            [session setNewOutput:NO];
+        }
+    } else {
+        [[self parentWindow] setLabelColor:newOutputStateColor
+                            forTabViewItem:tabViewItem_];
+    }
 }
 
 - (void)_setLabelAttributesForForegroundTab
