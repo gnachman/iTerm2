@@ -32,7 +32,6 @@
 
 
 @interface iTermApplication : NSApplication {
-
 }
 
 + (BOOL)isTextFieldInFocus:(NSTextField *)textField;

@@ -670,20 +670,12 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)previousTab:(id)sender
 {
-    NSTabViewItem *tvi = [TABVIEW selectedTabViewItem];
-    [TABVIEW selectPreviousTabViewItem:sender];
-    if (tvi == [TABVIEW selectedTabViewItem]) {
-        [TABVIEW selectTabViewItemAtIndex:[TABVIEW numberOfTabViewItems]-1];
-    }
+    [TABVIEW previousTab:sender];
 }
 
 - (IBAction)nextTab:(id)sender
 {
-    NSTabViewItem *tvi = [TABVIEW selectedTabViewItem];
-    [TABVIEW selectNextTabViewItem: sender];
-    if (tvi == [TABVIEW selectedTabViewItem]) {
-        [TABVIEW selectTabViewItemAtIndex:0];
-    }
+    [TABVIEW nextTab:sender];
 }
 
 - (IBAction)previousPane:(id)sender
