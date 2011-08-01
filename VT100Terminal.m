@@ -149,6 +149,7 @@ static BOOL isString(unsigned char *, NSStringEncoding);
 static size_t getCSIParam(unsigned char *, size_t, CSIParam *, VT100Screen *);
 static VT100TCC decode_csi(unsigned char *, size_t, size_t *,VT100Screen *);
 static VT100TCC decode_xterm(unsigned char *, size_t, size_t *,NSStringEncoding);
+static VT100TCC decode_ansi(unsigned char *,size_t, size_t *,VT100Screen *);
 static VT100TCC decode_other(unsigned char *, size_t, size_t *);
 static VT100TCC decode_control(unsigned char *, size_t, size_t *,NSStringEncoding,VT100Screen *);
 static int decode_utf8_char(unsigned char *, size_t, unsigned int *);
@@ -170,6 +171,15 @@ static BOOL isXTERM(unsigned char *code, size_t len)
 {
     if (len >= 2 && code[0] == ESC && (code[1] == ']'))
         return YES;
+    return NO;
+}
+
+static BOOL isANSI(unsigned char *code, size_t len)
+{
+    // Currently, we only support esc-c as an ANSI code (other ansi codes are CSI).
+    if (len >= 2 && code[0] == ESC && code[1] == 'c') {
+        return YES;
+    }
     return NO;
 }
 
@@ -376,6 +386,24 @@ static size_t getCSIParam(unsigned char *datap,
 #define SET_PARAM_DEFAULT(pm,n,d) \
 (((pm).p[(n)] = (pm).p[(n)] < 0 ? (d):(pm).p[(n)]), \
  ((pm).count  = (pm).count > (n) + 1 ? (pm).count : (n) + 1 ))
+
+static VT100TCC decode_ansi(unsigned char *datap,
+                            size_t datalen,
+                            size_t *rmlen,
+                            VT100Screen *SCREEN)
+{
+    VT100TCC result;
+    result.type = VT100_UNKNOWNCHAR;
+    if (datalen >= 2 && datap[0] == ESC) {
+        switch (datap[1]) {
+            case 'c':
+                result.type = ANSI_RIS;
+                *rmlen = 2;
+                break;
+        }
+    }
+    return result;
+}
 
 static VT100TCC decode_csi(unsigned char *datap,
                            size_t datalen,
@@ -971,11 +999,11 @@ static VT100TCC decode_control(unsigned char *datap,
 
     if (isCSI(datap, datalen)) {
         result = decode_csi(datap, datalen, rmlen, SCREEN);
-    }
-    else if (isXTERM(datap,datalen)) {
-        result = decode_xterm(datap,datalen,rmlen,enc);
-    }
-    else {
+    } else if (isXTERM(datap,datalen)) {
+        result = decode_xterm(datap, datalen, rmlen, enc);
+    } else if (isANSI(datap, datalen)) {
+        result = decode_ansi(datap, datalen, rmlen, SCREEN);
+    } else {
         NSCParameterAssert(datalen > 0);
 
         switch ( *datap ) {
