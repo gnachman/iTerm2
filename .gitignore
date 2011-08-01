@@ -10,3 +10,4 @@ build/
 iTerm.xcodeproj/xcuserdata
 iTerm.xcodeproj/project.xcworkspace
 iTerm.xcodeproj/project.pbxproj
+.gitignore
