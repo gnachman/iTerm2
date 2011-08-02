@@ -389,6 +389,11 @@ NSString *sessionsKey = @"sessions";
                                                  name: @"iTermRefreshTerminal"
                                                object: nil];
 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_scrollerStyleChanged:)
+                                                 name:@"NSPreferredScrollerStyleDidChangeNotification"
+                                               object:nil];
+
     [self setWindowInited: YES];
     useTransparency_ = YES;
     fullscreenTabs_ = [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowFullScreenTabBar"] ?
@@ -3011,6 +3016,16 @@ NSString *sessionsKey = @"sessions";
 {
     // This is if displaying of window number was toggled in prefs.
     [self setWindowTitle];
+}
+
+- (void)_scrollerStyleChanged:(id)sender
+{
+    if ([self anyFullScreen]) {
+        [self fitTabsToWindow];
+    } else {
+        [self fitTabsToWindow];
+        [self fitWindowToTabs];
+    }
 }
 
 - (void)_refreshTerminal:(NSNotification *)aNotification
