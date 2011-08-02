@@ -33,8 +33,6 @@
 #define GREEN_COEFFICIENT  0.59
 #define BLUE_COEFFICIENT   0.11
 
-static const double kBrightnessThreshold = 0.5;
-
 @implementation FontSizeEstimator
 
 @synthesize size;
@@ -102,41 +100,33 @@ static double Brightness(NSColor* c) {
     return image;
 }
 
-+ (double)xBoundOfImage:(NSImage *)i startingAt:(int)startAt dir:(int)dir
++ (double)xBoundOfImage:(NSImage *)i startingAt:(int)startAt dir:(int)dir threshold:(double)threshold cache:(double*)cache
 {
     int maxX = [i size].width;
     int maxY = [i size].height;
     int x;
-    [i lockFocus];
     for (x = startAt; x >= 0 && x < maxX; x += dir) {
         for (int y = 0; y < maxY; y++) {
-            NSColor *c = NSReadPixel(NSMakePoint(x, maxY - y - 1));
-            if (Brightness(c) < kBrightnessThreshold) {
-                [i unlockFocus];
+            if (cache[x + (maxY - y - 1) * maxX] < threshold) {
                 return x;
             }
         }
     }
-    [i unlockFocus];
     return x;
 }
 
-+ (double)yBoundOfImage:(NSImage *)i startingAt:(int)startAt dir:(int)dir
++ (double)yBoundOfImage:(NSImage *)i startingAt:(int)startAt dir:(int)dir threshold:(double)threshold cache:(double*)cache
 {
     int maxX = [i size].width;
     int maxY = [i size].height;
     int y;
-    [i lockFocus];
     for (y = startAt; y >= 0 && y < maxY; y += dir) {
         for (int x = 0; x < maxX; x++) {
-            NSColor *c = NSReadPixel(NSMakePoint(x, maxY - y - 1));
-            if (Brightness(c) < kBrightnessThreshold) {
-                [i unlockFocus];
+            if (cache[x + (maxY - y - 1) * maxX] < threshold) {
                 return y;
             }
         }
     }
-    [i unlockFocus];
     return y;
 }
 
@@ -149,10 +139,16 @@ static double Brightness(NSColor* c) {
         for (x = 0; x < [i size].width; x++) {
             NSColor *c = NSReadPixel(NSMakePoint(x, y));
             //NSLog(@"%@ %lf", c, Brightness(c));
-            if (Brightness(c) < kBrightnessThreshold) {
-                temp[x] = '#';
-            } else {
+            if (Brightness(c) < 0.25) {
                 temp[x] = ' ';
+            } else if (Brightness(c) < 0.5) {
+                temp[x] = '.';
+            } else if (Brightness(c) < 0.75) {
+                temp[x] = 'o';
+            } else if (Brightness(c) < 0.99) {
+                temp[x] = '%';
+            } else {
+                temp[x] = '#';
             }
         }
         int n = [i size].height - 1 - y;
@@ -161,15 +157,53 @@ static double Brightness(NSColor* c) {
     [i unlockFocus];
 }
 
-- (NSRect)boundsOfImage:(NSImage *)i
-{    
++ (void)dumpImage:(NSImage *)i cache:(double*)cache
+{
+    for (int y = [i size].height - 1; y >= 0; y--) {
+        unichar temp[1000];
+        int x;
+        for (x = 0; x < [i size].width; x++) {
+            double b = cache[x + y * (int)[i size].width];
+            if (b < 0.25) {
+                temp[x] = ' ';
+            } else if (b < 0.5) {
+                temp[x] = '.';
+            } else if (b < 0.75) {
+                temp[x] = 'o';
+            } else if (b < 0.99) {
+                temp[x] = '%';
+            } else {
+                temp[x] = '#';
+            }
+        }
+        int n = [i size].height - 1 - y;
+        NSLog(@"%04d %@", n, [NSString stringWithCharacters:temp length:x]);
+    }
+}
+
+- (NSRect)boundsOfImage:(NSImage *)i threshold:(double)threshold cache:(double*)cache
+{
     // [FontSizeEstimator dumpImage:i];
     NSRect result = NSZeroRect;
-    result.origin.x = [FontSizeEstimator xBoundOfImage:i startingAt:0 dir:1];
-    result.size.width = [FontSizeEstimator xBoundOfImage:i startingAt:[i size].width-1 dir:-1] - result.origin.x + 1;
-    result.origin.y = [FontSizeEstimator yBoundOfImage:i startingAt:0 dir:1];
-    result.size.height = [FontSizeEstimator yBoundOfImage:i startingAt:[i size].height-1 dir:-1] - result.origin.y + 1;
+    result.origin.x = [FontSizeEstimator xBoundOfImage:i startingAt:0 dir:1 threshold:threshold cache:cache];
+    result.size.width = [FontSizeEstimator xBoundOfImage:i startingAt:[i size].width-1 dir:-1 threshold:threshold cache:cache] - result.origin.x + 1;
+    result.origin.y = [FontSizeEstimator yBoundOfImage:i startingAt:0 dir:1 threshold:threshold cache:cache];
+    result.size.height = [FontSizeEstimator yBoundOfImage:i startingAt:[i size].height-1 dir:-1 threshold:threshold cache:cache] - result.origin.y + 1;
     return result;
+}
+
+- (void)cacheBrightnessOfImage:(NSImage *)i inCache:(double *)cache
+{
+    [i lockFocus];
+    NSSize s = [i size];
+    int w = s.width;
+    int h = s.height;
+    for (int y = 0; y < h; y++) {
+        for (int x = 0; x < w; x++) {
+            cache[x + y * w] = Brightness(NSReadPixel(NSMakePoint(x, y)));
+        }
+    }
+    [i unlockFocus];
 }
 
 - (id)initWithSize:(NSSize)s baseline:(double)b
@@ -186,41 +220,58 @@ static double Brightness(NSColor* c) {
 {
     FontSizeEstimator* fse = [[[FontSizeEstimator alloc] init] autorelease];
     if (fse) {
-        NSMutableString *allAscii = [NSMutableString stringWithCapacity:128-32];
-        for (int i = 32; i < 128; i++) {
-            [allAscii appendFormat:@"%c", (char)i];
-        }
         // We get the upper bound of a character from the top of X
         // We get the rightmost bound as the max of right(X) and right(x)
         // We get the descender's height from bottom(y) - bottom(X)
         NSImage *capXImage = [fse imageForString:@"X" withFont:aFont];
-        NSRect capXBounds = [fse boundsOfImage:capXImage];
+        const int w = [capXImage size].width;
+        const int h = [capXImage size].height;
+        double cache[w*h];
+        [fse cacheBrightnessOfImage:capXImage inCache:cache];
+        NSRect capXBounds = [fse boundsOfImage:capXImage threshold:0.5 cache:cache];
+//        [FontSizeEstimator dumpImage:capXImage cache:cache];
 
         NSImage *lowXImage = [fse imageForString:@"x" withFont:aFont];
-        NSRect lowXBounds = [fse boundsOfImage:lowXImage];
+        [fse cacheBrightnessOfImage:lowXImage inCache:cache];
+        NSRect lowXBounds = [fse boundsOfImage:lowXImage threshold:0.5 cache:cache];
+//        [FontSizeEstimator dumpImage:lowXImage];
 
-        NSImage *lowYImage = [fse imageForString:allAscii withFont:aFont];
-        NSRect lowYBounds = [fse boundsOfImage:lowYImage];
+        double theMinX = INFINITY, theMinY = INFINITY, theMaxX = -INFINITY, theMaxY = -INFINITY;
+        NSString *lowHangingChars[] = {
+            @"g", @"j", @"p", @"q", @"y", @"[", @"]", @"{", @"}", @"_", nil
+        };
+        for (int i = 0; lowHangingChars[i]; i++) {
+            NSString *s = lowHangingChars[i];
+            NSImage *charImage = [fse imageForString:s withFont:aFont];
+            [fse cacheBrightnessOfImage:charImage inCache:cache];
+            NSRect bounds = [fse boundsOfImage:charImage threshold:0.99 cache:cache];
+            theMinX = MIN(theMinX, bounds.origin.x);
+            theMinY = MIN(theMinY, bounds.origin.y);
+            theMaxX = MAX(theMaxX, bounds.origin.x + bounds.size.width);
+            theMaxY = MAX(theMaxY, bounds.origin.y + bounds.size.height);
+//            [FontSizeEstimator dumpImage:charImage];
+        }
+        NSRect descenderBounds = NSMakeRect(theMinX, theMinY, theMaxX - theMinX, theMaxY - theMinY);
 
         NSSize s;
         double b;
         double capXMaxX = capXBounds.origin.x + capXBounds.size.width;
         double lowXMaxX = lowXBounds.origin.x + lowXBounds.size.width;
         s.width = MAX(capXMaxX, lowXMaxX);
-        s.height = lowYBounds.origin.y + lowYBounds.size.height - capXBounds.origin.y;
-        double lowYMaxY = lowYBounds.origin.y + lowYBounds.size.height;
+        s.height = descenderBounds.origin.y + descenderBounds.size.height - capXBounds.origin.y;
+        double lowYMaxY = descenderBounds.origin.y + descenderBounds.size.height;
         double capXmaxY = capXBounds.origin.y + capXBounds.size.height;
         b = capXmaxY - lowYMaxY;
-        
+
         // If the OS reports a larger size, use it.
         NSMutableDictionary *dic = [NSMutableDictionary dictionary];
         [dic setObject:aFont forKey:NSFontAttributeName];
         s.height = MAX(s.height, ([aFont ascender] - [aFont descender]));
         s.width = MAX(s.width, [@"X" sizeWithAttributes:dic].width);
-        
+
         [fse setSize:s];
         [fse setBaseline:b];
-    }    
+    }
     return fse;
 }
 
