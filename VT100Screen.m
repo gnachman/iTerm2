@@ -3577,7 +3577,6 @@ void DumpBuf(screen_char_t* p, int n) {
     if (screen_top[WIDTH].code == EOL_HARD) {
         // The line is not continued. Figure out its length by finding the last nonnull char.
         while (len > 0 && (screen_top[len - 1].code == 0)) {
-            assert(screen_top[len - 1].code != DWC_SKIP); // Impossible to have a dwc skip here.
             --len;
         }
     }
