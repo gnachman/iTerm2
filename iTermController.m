@@ -1016,7 +1016,7 @@ static BOOL IsSnowLeopardOrLater() {
         NSDictionary *activeAppDict = [[NSWorkspace sharedWorkspace] activeApplication];
         [previouslyActiveAppPID_ release];
         previouslyActiveAppPID_ = nil;
-        if ([[activeAppDict objectForKey:@"NSApplicationBundleIdentifier"] compare:@"com.googlecode.iterm2"]) {
+        if (![[activeAppDict objectForKey:@"NSApplicationBundleIdentifier"] isEqualToString:@"com.googlecode.iterm2"]) {
             previouslyActiveAppPID_ = [[activeAppDict objectForKey:@"NSApplicationProcessIdentifier"] copy];
         }
     }
@@ -1422,10 +1422,10 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     HKWLog(@"Hide visor.");
     if ([[hotkeyTerm window] isVisible]) {
         HKWLog(@"key window is %@", [NSApp keyWindow]);
-        NSWindow *keyWindow = [NSApp keyWindow];
-        if (!keyWindow ||
-            ([keyWindow isKindOfClass:[PTYWindow class]] &&
-             [(PseudoTerminal*)[keyWindow windowController] isHotKeyWindow])) {
+        NSWindow *theKeyWindow = [NSApp keyWindow];
+        if (!theKeyWindow ||
+            ([theKeyWindow isKindOfClass:[PTYWindow class]] &&
+             [(PseudoTerminal*)[theKeyWindow windowController] isHotKeyWindow])) {
             [self restorePreviouslyActiveApp];
         }
     }

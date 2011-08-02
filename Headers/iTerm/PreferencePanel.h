@@ -180,6 +180,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* dimInactiveSplitPanes;
     BOOL defaultDimInactiveSplitPanes;
 
+    // Animate dimming
+    IBOutlet NSButton* animateDimming;
+    BOOL defaultAnimateDimming;
+
     // Dim background windows
     IBOutlet NSButton* dimBackgroundWindows;
     BOOL defaultDimBackgroundWindows;
@@ -526,6 +530,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (BOOL)lionStyleFullscreen;
 - (BOOL)dimInactiveSplitPanes;
 - (BOOL)dimBackgroundWindows;
+- (BOOL)animateDimming;
 - (BOOL)dimOnlyText;
 - (float)dimmingAmount;
 - (BOOL)checkTestRelease;

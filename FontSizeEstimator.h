@@ -31,7 +31,6 @@
 
 
 @interface FontSizeEstimator : NSObject {
-    NSSize osBound;
     NSSize size;
     double baseline;
 }

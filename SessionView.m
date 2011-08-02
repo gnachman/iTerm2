@@ -134,16 +134,20 @@ static NSDate* lastResizeDate_;
     targetDimmingAmount_ = newDimmingAmount;
     previousUpdate_ = [[NSDate date] retain];
     const double kAnimationDuration = 0.1;
-    changePerSecond_ = (targetDimmingAmount_ - currentDimmingAmount_) / kAnimationDuration;
-    if (changePerSecond_ == 0) {
-        // Nothing to do.
-        return;
+    if ([[PreferencePanel sharedInstance] animateDimming]) {
+        changePerSecond_ = (targetDimmingAmount_ - currentDimmingAmount_) / kAnimationDuration;
+        if (changePerSecond_ == 0) {
+            // Nothing to do.
+            return;
+        }
+        if (timer_) {
+            [timer_ invalidate];
+            timer_ = nil;
+        }
+        [self fadeAnimation];
+    } else {
+        [[session_ TEXTVIEW] setDimmingAmount:newDimmingAmount];
     }
-    if (timer_) {
-        [timer_ invalidate];
-        timer_ = nil;
-    }
-    [self fadeAnimation];
 }
 
 - (double)dimmedDimmingAmount

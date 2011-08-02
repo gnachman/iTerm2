@@ -922,6 +922,7 @@ static float versionNumber;
     defaultCheckTestRelease = [prefs objectForKey:@"CheckTestRelease"]?[[prefs objectForKey:@"CheckTestRelease"] boolValue]: YES;
     defaultDimInactiveSplitPanes = [prefs objectForKey:@"DimInactiveSplitPanes"]?[[prefs objectForKey:@"DimInactiveSplitPanes"] boolValue]: YES;
     defaultDimBackgroundWindows = [prefs objectForKey:@"DimBackgroundWindows"]?[[prefs objectForKey:@"DimBackgroundWindows"] boolValue]: NO;
+    defaultAnimateDimming = [prefs objectForKey:@"AnimateDimming"]?[[prefs objectForKey:@"AnimateDimming"] boolValue]: NO;
     defaultDimOnlyText = [prefs objectForKey:@"DimOnlyText"]?[[prefs objectForKey:@"DimOnlyText"] boolValue]: NO;
     defaultDimmingAmount = [prefs objectForKey:@"SplitPaneDimmingAmount"] ? [[prefs objectForKey:@"SplitPaneDimmingAmount"] floatValue] : 0.4;
     defaultShowWindowBorder = [[prefs objectForKey:@"UseBorder"] boolValue];
@@ -1056,6 +1057,7 @@ static float versionNumber;
     [prefs setBool:defaultCheckTestRelease forKey:@"CheckTestRelease"];
     [prefs setBool:defaultDimInactiveSplitPanes forKey:@"DimInactiveSplitPanes"];
     [prefs setBool:defaultDimBackgroundWindows forKey:@"DimBackgroundWindows"];
+    [prefs setBool:defaultAnimateDimming forKey:@"AnimateDimming"];
     [prefs setBool:defaultDimOnlyText forKey:@"DimOnlyText"];
     [prefs setFloat:defaultDimmingAmount forKey:@"SplitPaneDimmingAmount"];
     [prefs setBool:defaultShowWindowBorder forKey:@"UseBorder"];
@@ -1152,6 +1154,7 @@ static float versionNumber;
     [irMemory setIntValue:defaultIrMemory];
     [checkTestRelease setState:defaultCheckTestRelease?NSOnState:NSOffState];
     [dimInactiveSplitPanes setState:defaultDimInactiveSplitPanes?NSOnState:NSOffState];
+    [animateDimming setState:defaultAnimateDimming?NSOnState:NSOffState];
     [dimBackgroundWindows setState:defaultDimBackgroundWindows?NSOnState:NSOffState];
     [dimOnlyText setState:defaultDimOnlyText?NSOnState:NSOffState];
     [dimmingAmount setFloatValue:defaultDimmingAmount];
@@ -1274,6 +1277,7 @@ static float versionNumber;
         sender == strokeThickness ||
         sender == dimInactiveSplitPanes ||
         sender == dimBackgroundWindows ||
+        sender == animateDimming ||
         sender == dimOnlyText ||
         sender == dimmingAmount ||
         sender == showWindowBorder) {
@@ -1291,6 +1295,7 @@ static float versionNumber;
         defaultHideTab = ([hideTab state] == NSOnState);
         defaultDimInactiveSplitPanes = ([dimInactiveSplitPanes state] == NSOnState);
         defaultDimBackgroundWindows = ([dimBackgroundWindows state] == NSOnState);
+        defaultAnimateDimming= ([animateDimming state] == NSOnState);
         defaultDimOnlyText = ([dimOnlyText state] == NSOnState);
         defaultDimmingAmount = [dimmingAmount floatValue];
         defaultShowWindowBorder = ([showWindowBorder state] == NSOnState);
@@ -1716,6 +1721,11 @@ static float versionNumber;
 - (BOOL)dimBackgroundWindows
 {
     return defaultDimBackgroundWindows;
+}
+
+- (BOOL)animateDimming
+{
+    return defaultAnimateDimming;
 }
 
 - (BOOL)dimOnlyText

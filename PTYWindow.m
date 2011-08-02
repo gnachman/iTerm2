@@ -78,7 +78,32 @@
 
     return self;
 }
+typedef CGError CGSSetWindowBackgroundBlurRadiusFunction(CGSConnectionID cid, CGSWindowID wid, NSUInteger blur);
 
+static void *GetFunctionByName(NSString *library, char *func) {
+    CFBundleRef bundle;
+    CFURLRef bundleURL = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (CFStringRef) library, kCFURLPOSIXPathStyle, true);
+    CFStringRef functionName = CFStringCreateWithCString(kCFAllocatorDefault, func, kCFStringEncodingASCII);    
+    bundle = CFBundleCreate(kCFAllocatorDefault, bundleURL);
+    if (!bundle) {
+        return NULL;
+    }
+    void *f = CFBundleGetFunctionPointerForName(bundle, functionName);
+    CFRelease(functionName);
+    CFRelease(bundleURL);
+    CFRelease(bundle);
+    return f;
+}
+
+static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFunction() {
+    static BOOL tried = NO;
+    static CGSSetWindowBackgroundBlurRadiusFunction *function = NULL;
+    if (!tried) {
+        function  = GetFunctionByName(@"/System/Library/Frameworks/ApplicationServices.framework",
+                                      "CGSSetWindowBackgroundBlurRadius");
+    }
+    return function;
+}
 
 - (void)enableBlur:(double)radius
 {
@@ -95,15 +120,22 @@
     if (!con) {
         return;
     }
+    CGSSetWindowBackgroundBlurRadiusFunction* function = GetCGSSetWindowBackgroundBlurRadiusFunction();
+    if (function) {
+        // If CGSSetWindowBackgroundBlurRadius() is available (10.6 and up) use it because it works
+        // right in Exposé.
+        function(con, [self windowNumber], (int)radius);
+    } else {
+        // Fall back to 10.5-only method.
+        if (CGSNewCIFilterByName(con, (CFStringRef)@"CIGaussianBlur", &blurFilter)) {
+            return;
+        }
 
-    if (CGSNewCIFilterByName(con, (CFStringRef)@"CIGaussianBlur", &blurFilter)) {
-        return;
+        NSDictionary *optionsDict = [NSDictionary dictionaryWithObject:[NSNumber numberWithFloat:radius] forKey:@"inputRadius"];
+        CGSSetCIFilterValuesFromDictionary(con, blurFilter, (CFDictionaryRef)optionsDict);
+
+        CGSAddWindowFilter(con, [self windowNumber], blurFilter, kCGWindowFilterUnderlay);
     }
-
-    NSDictionary *optionsDict = [NSDictionary dictionaryWithObject:[NSNumber numberWithFloat:radius] forKey:@"inputRadius"];
-    CGSSetCIFilterValuesFromDictionary(con, blurFilter, (CFDictionaryRef)optionsDict);
-
-    CGSAddWindowFilter(con, [self windowNumber], blurFilter, kCGWindowFilterDock);
     blurRadius_ = radius;
 #endif
 }
@@ -114,11 +146,15 @@
     //only works in Leopard (or hopefully later)
     if (!OSX_LEOPARDORLATER) return;
 
-    if (blurFilter) {
-        CGSConnectionID con = CGSMainConnectionID();
-        if (!con)
-            return;
+    CGSConnectionID con = CGSMainConnectionID();
+    if (!con) {
+        return;
+    }
 
+    CGSSetWindowBackgroundBlurRadiusFunction* function = GetCGSSetWindowBackgroundBlurRadiusFunction();
+    if (function) {
+        function(con, [self windowNumber], 0);
+    } else if (blurFilter) {
         CGSRemoveWindowFilter(con, (CGSWindowID)[self windowNumber], blurFilter);
         CGSReleaseCIFilter(CGSMainConnectionID(), blurFilter);
         blurFilter = 0;

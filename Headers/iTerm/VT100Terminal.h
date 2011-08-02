@@ -140,6 +140,9 @@
 #define ANSICSI_RCP      3006   // Restore cursor position
 #define ANSICSI_CBT      3007   // Back tab
 
+
+#define ANSI_RIS         3100   // Reset to initial state (there's also a CSI version)
+
 // Toggle between ansi/vt52
 #define STRICT_ANSI_MODE        4000
 
