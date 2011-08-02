@@ -169,7 +169,7 @@ static NSDate* lastResizeDate_;
     // Cap amount within reasonable bounds. Before 1.1, dimming amount was only changed by
     // twiddling the prefs file so it could have all kinds of crazy values.
     amount = MIN(0.9, amount);
-    amount = MAX(0.1, amount);
+    amount = MAX(0, amount);
 
     [self _dimShadeToDimmingAmount:amount];
 }
