@@ -869,6 +869,12 @@ NSString *sessionsKey = @"sessions";
     }
     [term->TABVIEW selectTabViewItemAtIndex:[[arrangement objectForKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] intValue]];
 
+    Bookmark* addressbookEntry = [[[[[term tabs] objectAtIndex:0] sessions] objectAtIndex:0] addressBookEntry];
+    if ([addressbookEntry objectForKey:KEY_SPACE] &&
+        [[addressbookEntry objectForKey:KEY_SPACE] intValue] == -1) {
+        [[term window] setCollectionBehavior:[[term window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
+    }
+
     return term;
 }
 
