@@ -182,7 +182,11 @@ static NSDate* lastResizeDate_;
     if (isDimmed == dim_) {
         return;
     }
-    dim_ = isDimmed;
+    if ([[[session_ tab] realParentWindow] sendInputToAllSessions]) {
+        dim_ = NO;
+    } else {
+        dim_ = isDimmed;
+    }
     [self updateDim];
 }
 

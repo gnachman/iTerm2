@@ -3975,6 +3975,12 @@ NSString *sessionsKey = @"sessions";
         [[self window] setBackgroundColor:nil];
         [background_ setColor:normalBackgroundColor];
     }
+    PTYSession *activeSession = [[self currentTab] activeSession];
+    for (PTYSession *aSession in [[self currentTab] sessions]) {
+        if (aSession != activeSession) {
+            [[aSession view] setDimmed:!flag];
+        }
+    }
 }
 
 - (IBAction)toggleInputToAllSessions:(id)sender

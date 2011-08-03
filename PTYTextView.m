@@ -5065,21 +5065,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [thePath lineToPoint:NSMakePoint(x + kStripeWidth, rect.origin.y + rect.size.height)];
         [thePath closePath];
 
-        [[[NSColor redColor] colorWithAlphaComponent:0.25] set];
+        [[[NSColor redColor] colorWithAlphaComponent:0.15] set];
         [thePath fill];
-
-        x += kStripeWidth;
-        thePath = [NSBezierPath bezierPath];
-
-        [thePath moveToPoint:NSMakePoint(x, rect.origin.y + rect.size.height)];
-        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height, rect.origin.y)];
-        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height + kStripeWidth, rect.origin.y)];
-        [thePath lineToPoint:NSMakePoint(x + kStripeWidth, rect.origin.y + rect.size.height)];
-        [thePath closePath];
-
-        [[[NSColor whiteColor] colorWithAlphaComponent:0.25] set];
-//        [thePath fill];
-        x -= kStripeWidth;
     }
     [NSGraphicsContext restoreGraphicsState];
 }
