@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="4440"/>
+			<integer value="4910"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -939,7 +939,7 @@
 								<object class="NSTabViewItem" id="75732044">
 									<string key="NSIdentifier">Item 4</string>
 									<object class="NSView" key="NSView" id="1019983678">
-										<reference key="NSNextResponder" ref="415305200"/>
+										<nil key="NSNextResponder"/>
 										<int key="NSvFlags">256</int>
 										<object class="NSMutableArray" key="NSSubviews">
 											<bool key="EncodedWithXMLCoder">YES</bool>
@@ -1621,7 +1621,6 @@
 											</object>
 										</object>
 										<string key="NSFrameSize">{767, 383}</string>
-										<reference key="NSSuperview" ref="415305200"/>
 									</object>
 									<string key="NSLabel">Item 4</string>
 									<reference key="NSColor" ref="303715562"/>
@@ -1630,7 +1629,7 @@
 								<object class="NSTabViewItem" id="745611275">
 									<string key="NSIdentifier">2</string>
 									<object class="NSView" key="NSView" id="105539794">
-										<nil key="NSNextResponder"/>
+										<reference key="NSNextResponder" ref="415305200"/>
 										<int key="NSvFlags">256</int>
 										<object class="NSMutableArray" key="NSSubviews">
 											<bool key="EncodedWithXMLCoder">YES</bool>
@@ -4867,7 +4866,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																		<int key="NSCellFlags2">0</int>
 																		<string key="NSContents"/>
 																		<reference key="NSControlView" ref="684174978"/>
-																		<double key="NSMaxValue">10</double>
+																		<double key="NSMaxValue">31</double>
 																		<double key="NSMinValue">0.10000000000000001</double>
 																		<double key="NSValue">0.10000000000000001</double>
 																		<double key="NSAltIncValue">0.0</double>
@@ -6263,6 +6262,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 											</object>
 										</object>
 										<string key="NSFrameSize">{767, 383}</string>
+										<reference key="NSSuperview" ref="415305200"/>
 									</object>
 									<string key="NSLabel">Bookmarks</string>
 									<reference key="NSColor" ref="303715562"/>
@@ -7469,14 +7469,14 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 									<reference key="NSTabView" ref="415305200"/>
 								</object>
 							</object>
-							<reference key="NSSelectedTabViewItem" ref="75732044"/>
+							<reference key="NSSelectedTabViewItem" ref="745611275"/>
 							<reference key="NSFont" ref="966507434"/>
 							<int key="NSTvFlags">6</int>
 							<bool key="NSAllowTruncatedLabels">YES</bool>
 							<bool key="NSDrawsBackground">YES</bool>
 							<object class="NSMutableArray" key="NSSubviews">
 								<bool key="EncodedWithXMLCoder">YES</bool>
-								<reference ref="1019983678"/>
+								<reference ref="105539794"/>
 							</object>
 						</object>
 					</object>
