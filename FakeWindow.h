@@ -49,7 +49,6 @@
 - (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
 - (BOOL)fullScreen;
 - (BOOL)anyFullScreen;
-- (BOOL)sendInputToAllSessions;
 - (void)closeSession:(PTYSession*)aSession;
 - (IBAction)nextTab:(id)sender;
 - (IBAction)previousTab:(id)sender;
@@ -61,7 +60,6 @@
 - (BOOL)tempTitle;
 - (PTYTabView *)tabView;
 - (PTYSession *)currentSession;
-- (void)sendInputToAllSessions:(NSData *)data;
 - (void)setWindowTitle;
 - (void)resetTempTitle;
 - (PTYTab*)currentTab;

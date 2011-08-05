@@ -581,8 +581,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 - (void)writeTask:(NSData*)data
 {
     // check if we want to send this input to all the sessions
-    id<WindowControllerInterface> parent = [[self tab] parentWindow];
-    if ([parent sendInputToAllSessions] == NO) {
+    if (![[[self tab] realParentWindow] broadcastInputToSession:self]) {
+        // Send to only this session
         if (!EXIT) {
             [self setBell:NO];
             PTYScroller* ptys = (PTYScroller*)[SCROLLVIEW verticalScroller];
@@ -591,7 +591,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         }
     } else {
         // send to all sessions
-        [parent sendInputToAllSessions:data];
+        [[[self tab] realParentWindow] sendInputToAllSessions:data];
     }
 }
 
@@ -2881,7 +2881,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 
     if (contentsOfFile != nil) {
-        aString = [NSString stringWithContentsOfFile:contentsOfFile];
+        aString = [NSString stringWithContentsOfFile:contentsOfFile
+                                            encoding:NSUTF8StringEncoding
+                                               error:nil];
         data = [aString dataUsingEncoding:[TERMINAL encoding]];
     }
 

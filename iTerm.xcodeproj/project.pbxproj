@@ -166,6 +166,7 @@
 		1D85D1ED1306687700A3E998 /* RegexKitLite.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D85D1D81306687700A3E998 /* RegexKitLite.h */; };
 		1D85D1EF1306687700A3E998 /* RegexKitLite.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D85D1DA1306687700A3E998 /* RegexKitLite.m */; };
 		1D8C6BF5126592DF00E2744E /* EncodingsWithLowerCase.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */; };
+		1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D8F396A13EB7A2C0025B80B /* BroadcastInput.png */; };
 		1D93D33512695442007F741B /* DVR.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D33312695442007F741B /* DVR.h */; };
 		1D93D33612695442007F741B /* DVR.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D93D33412695442007F741B /* DVR.m */; };
 		1D93D3471269741B007F741B /* DVRBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D93D3451269741B007F741B /* DVRBuffer.h */; };
@@ -339,6 +340,7 @@
 		1D85D1D81306687700A3E998 /* RegexKitLite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegexKitLite.h; sourceTree = "<group>"; };
 		1D85D1DA1306687700A3E998 /* RegexKitLite.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RegexKitLite.m; sourceTree = "<group>"; };
 		1D8C6BF4126592DF00E2744E /* EncodingsWithLowerCase.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = EncodingsWithLowerCase.plist; sourceTree = "<group>"; };
+		1D8F396A13EB7A2C0025B80B /* BroadcastInput.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = BroadcastInput.png; path = images/BroadcastInput.png; sourceTree = "<group>"; };
 		1D93D33312695442007F741B /* DVR.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DVR.h; sourceTree = "<group>"; };
 		1D93D33412695442007F741B /* DVR.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DVR.m; sourceTree = "<group>"; };
 		1D93D3451269741B007F741B /* DVRBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DVRBuffer.h; sourceTree = "<group>"; };
@@ -811,6 +813,7 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1D8F396A13EB7A2C0025B80B /* BroadcastInput.png */,
 				1D395912134E75B5005A8021 /* SmartSelectionRules.plist */,
 				1DA02CFA1327612600D7E7DB /* bell.png */,
 				1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */,
@@ -1295,6 +1298,7 @@
 				1D1158CE13444D29009B366F /* iTerm2 Help in Resources */,
 				1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */,
 				1DB72CF61396059200EB1005 /* xterm-terminfo.txt in Resources */,
+				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

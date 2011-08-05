@@ -29,6 +29,7 @@
 #import "PTYSession.h"
 #import "PTYTab.h"
 #import "PTYTextView.h"
+#import "PseudoTerminal.h"
 
 static const float kTargetFrameRate = 1.0/60.0;
 static int nextViewId;
@@ -182,7 +183,7 @@ static NSDate* lastResizeDate_;
     if (isDimmed == dim_) {
         return;
     }
-    if ([[[session_ tab] realParentWindow] sendInputToAllSessions]) {
+    if ([[[session_ tab] realParentWindow] broadcastInputToSession:session_]) {
         dim_ = NO;
     } else {
         dim_ = isDimmed;

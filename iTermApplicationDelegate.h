@@ -71,6 +71,8 @@ void DebugLog(NSString* value);
     IBOutlet NSMenuItem *closeTab;
     IBOutlet NSMenuItem *closeWindow;
     IBOutlet NSMenuItem *sendInputToAllSessions;
+    IBOutlet NSMenuItem *sendInputToAllPanes;
+    IBOutlet NSMenuItem *sendInputNormally;
     IBOutlet NSMenuItem *toggleBookmarksView;
     IBOutlet NSMenuItem *irNext;
     IBOutlet NSMenuItem *irPrev;
@@ -155,6 +157,7 @@ void DebugLog(NSString* value);
 // some subset of the flags.
 - (void)setFutureApplicationPresentationOptions:(int)flags unset:(int)antiflags;
 
+- (void)updateBroadcastMenuState;
 
 @end
 

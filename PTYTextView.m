@@ -67,7 +67,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 // recognized as a drag.
 static const int kDragThreshold = 3;
 static const double kBackgroundConsideredDarkThreshold = 0.5;
-
+static const int kBroadcastMargin = 4;
 // When drawing lines, we use this structure to represent a run of cells  of
 // the same font, color, and attributes.
 typedef enum {
@@ -113,6 +113,7 @@ static NSCursor* textViewCursor =  nil;
 static NSImage* bellImage = nil;
 static NSImage* wrapToTopImage = nil;
 static NSImage* wrapToBottomImage = nil;
+static NSImage* broadcastInputImage = nil;
 
 static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
@@ -181,16 +182,21 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [bellImage setFlipped:YES];
 
     NSString* wrapToTopFile = [bundle
-                          pathForResource:@"wrap_to_top"
-                          ofType:@"png"];
+                               pathForResource:@"wrap_to_top"
+                               ofType:@"png"];
     wrapToTopImage = [[NSImage alloc] initWithContentsOfFile:wrapToTopFile];
     [wrapToTopImage setFlipped:YES];
 
     NSString* wrapToBottomFile = [bundle
-                               pathForResource:@"wrap_to_bottom"
-                               ofType:@"png"];
+                                  pathForResource:@"wrap_to_bottom"
+                                  ofType:@"png"];
     wrapToBottomImage = [[NSImage alloc] initWithContentsOfFile:wrapToBottomFile];
     [wrapToBottomImage setFlipped:YES];
+
+    NSString* broadcastInputFile = [bundle pathForResource:@"BroadcastInput"
+                                                    ofType:@"png"];
+    broadcastInputImage = [[NSImage alloc] initWithContentsOfFile:broadcastInputFile];
+    [broadcastInputImage setFlipped:YES];
 }
 
 + (NSCursor *)textViewCursor
@@ -1483,6 +1489,16 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 {
     [self drawRect:rect to:nil];
 
+    if ([[[[dataSource session] tab] realParentWindow] broadcastInputToSession:[dataSource session]]) {
+        NSRect frame = [self visibleRect];
+        NSSize size = [broadcastInputImage size];
+        [broadcastInputImage drawAtPoint:NSMakePoint(frame.origin.x + frame.size.width - size.width - kBroadcastMargin,
+                                                     frame.origin.y + kBroadcastMargin)
+                                fromRect:NSMakeRect(0, 0, size.width, size.height)
+                               operation:NSCompositeSourceOver
+                                fraction:0.5];
+    }
+
     if (flashing_ > 0) {
         NSRect frame = [self visibleRect];
         NSImage* image = nil;
@@ -1606,7 +1622,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                         dl[i] = theLine[i].code;
                     }
                 }
-                DebugLog([NSString stringWithCString:dl]);
+                DebugLog([NSString stringWithUTF8String:dl]);
             }
 
 #ifdef DEBUG_DRAWING
@@ -3042,6 +3058,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[[[dataSource session] tab] realParentWindow] editSession:[dataSource session]];
 }
 
+- (void)toggleBroadcastingInput:(id)sender
+{
+    [[[[dataSource session] tab] realParentWindow] toggleBroadcastingInputToSession:[dataSource session]];
+}
+
 - (void)closeTextViewSession:(id)sender
 {
     [[[[dataSource session] tab] realParentWindow] closeSessionWithConfirmation:[dataSource session]];
@@ -3081,6 +3102,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
+- (BOOL)_broadcastToggleable
+{
+    PseudoTerminal *pty = [[[dataSource session] tab] realParentWindow];
+    if ([pty broadcastMode] == BROADCAST_OFF && [[pty currentSession] TEXTVIEW] == self) {
+        return NO;
+    }
+    return YES;
+}
+
 - (BOOL)validateMenuItem:(NSMenuItem *)item
 {
     if ([item action] == @selector(paste:)) {
@@ -3091,6 +3121,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([item action ] == @selector(cut:)) {
         // Never allow cut.
         return NO;
+    }
+    if ([item action]==@selector(toggleBroadcastingInput:) &&
+        [self _broadcastToggleable]) {
+        return YES;
     }
     if ([item action]==@selector(saveDocumentAs:)) {
         return [self isAnyCharSelected];
@@ -3188,6 +3222,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Edit Session
     [theMenu addItemWithTitle:@"Edit Session..."
                        action:@selector(editTextViewSession:)
+                keyEquivalent:@""];
+
+    // Separator
+    [theMenu addItem:[NSMenuItem separatorItem]];
+
+    // Toggle broadcast
+    [theMenu addItemWithTitle:@"Toggle Broadcasting Input"
+                       action:@selector(toggleBroadcastingInput:)
                 keyEquivalent:@""];
 
     // Separator
@@ -5042,35 +5084,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self _drawRuns:initialPoint runs:runs numRuns:numRuns];
 }
 
-- (void)_drawStripesInRect:(NSRect)rect
-{
-    [NSGraphicsContext saveGraphicsState];
-    NSRectClip(rect);
-    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
-
-    const CGFloat kStripeWidth = 40;
-    const double kSlope = 1;
-
-    for (CGFloat x = kSlope * -fmod(rect.origin.y, kStripeWidth * 2) -2 * kStripeWidth ;
-         x < rect.origin.x + rect.size.width;
-         x += kStripeWidth * 2) {
-        if (x + 2 * kStripeWidth + rect.size.height * kSlope < rect.origin.x) {
-            continue;
-        }
-        NSBezierPath* thePath = [NSBezierPath bezierPath];
-
-        [thePath moveToPoint:NSMakePoint(x, rect.origin.y + rect.size.height)];
-        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height, rect.origin.y)];
-        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height + kStripeWidth, rect.origin.y)];
-        [thePath lineToPoint:NSMakePoint(x + kStripeWidth, rect.origin.y + rect.size.height)];
-        [thePath closePath];
-
-        [[[NSColor redColor] colorWithAlphaComponent:0.15] set];
-        [thePath fill];
-    }
-    [NSGraphicsContext restoreGraphicsState];
-}
-
 - (BOOL)_drawLine:(int)line AtY:(double)curY toPoint:(NSPoint*)toPoint
 {
     BOOL anyBlinking = NO;
@@ -5274,10 +5287,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
 
             // Draw red stripes in the background if sending input to all sessions
-            if ([[[[dataSource session] tab] realParentWindow] sendInputToAllSessions]) {
-                [self _drawStripesInRect:bgRect];
-            }
-
             NSPoint textOrigin;
             if (toPoint) {
                 textOrigin = NSMakePoint(toPoint->x + MARGIN + bgstart * charWidth,

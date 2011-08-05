@@ -783,16 +783,37 @@ void DebugLog(NSString* value)
     // set some menu item states
     if (frontTerminal && [[frontTerminal tabView] numberOfTabViewItems]) {
         [toggleBookmarksView setEnabled:YES];
-        [sendInputToAllSessions setEnabled:YES];
-        if ([frontTerminal sendInputToAllSessions] == YES) {
-            [sendInputToAllSessions setState: NSOnState];
-        } else {
-            [sendInputToAllSessions setState: NSOffState];
-        }
     } else {
         [toggleBookmarksView setEnabled:NO];
-        [sendInputToAllSessions setEnabled:NO];
     }
+}
+
+- (void)updateBroadcastMenuState
+{
+    BOOL sessions = NO;
+    BOOL panes = NO;
+    BOOL normal = NO;
+    PseudoTerminal *frontTerminal;
+    frontTerminal = [[iTermController sharedInstance] currentTerminal];
+    switch ([frontTerminal broadcastMode]) {
+        case BROADCAST_OFF:
+            normal = YES;
+            break;
+
+        case BROADCAST_TO_ALL_TABS:
+            sessions = YES;
+            break;
+
+        case BROADCAST_TO_ALL_PANES:
+            panes = YES;
+            break;
+
+        case BROADCAST_CUSTOM:
+            break;
+    }
+    [sendInputToAllSessions setState:sessions];
+    [sendInputToAllPanes setState:panes];
+    [sendInputNormally setState:normal];
 }
 
 - (void) nonTerminalWindowBecameKey: (NSNotification *) aNotification
@@ -1048,6 +1069,7 @@ void DebugLog(NSString* value)
 {
     //NSLog(@"iTermApplicationDelegate: setCurrentTerminal '0x%x'", aTerminal);
     [[iTermController sharedInstance] setCurrentTerminal: aTerminal];
+    [[[NSApplication sharedApplication] delegate] updateBroadcastMenuState];
 }
 
 

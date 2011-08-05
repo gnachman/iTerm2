@@ -770,7 +770,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
                 }
             }
             else {
-                *datap++;
+                datap++;
                 datalen--;
                 (*rmlen)++;
             }

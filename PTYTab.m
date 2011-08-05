@@ -2570,7 +2570,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
     }
 
     if (![[self activeSession] growlNewOutput] &&
-        ![[self parentWindow] sendInputToAllSessions] &&
+        [[self realParentWindow] broadcastMode] == BROADCAST_OFF &&
         [[[self activeSession] SCREEN] growl] &&
         [[NSDate date] timeIntervalSinceDate:[SessionView lastResizeDate]] > POST_WINDOW_RESIZE_SILENCE_SEC) {
         [[iTermGrowlDelegate sharedInstance] growlNotify:NSLocalizedStringFromTableInBundle(@"New Output",

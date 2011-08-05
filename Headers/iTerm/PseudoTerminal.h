@@ -37,6 +37,13 @@
 
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
 
+typedef enum {
+    BROADCAST_OFF,
+    BROADCAST_TO_ALL_PANES,
+    BROADCAST_TO_ALL_TABS,
+    BROADCAST_CUSTOM
+} BroadcastMode;
+
 // The BottomBar's view is of this class. It overrides drawing the background.
 @interface BottomBarView : NSView
 {
@@ -127,8 +134,8 @@
     // True if an [init...] method was called.
     BOOL windowInited;
 
-    // True if input is being redirected to all sessions.
-    BOOL sendInputToAllSessions;
+    // How input should be broadcast (or not).
+    BroadcastMode broadcastMode_;
 
     // True if the window title is showing transient information (such as the
     // size during resizing).
@@ -197,6 +204,8 @@
     double lastResizeTime_;
 
     BOOL temporarilyShowingTabs_;
+
+    NSMutableSet *broadcastViewIds_;
 }
 
 // Initialize a new PseudoTerminal.
@@ -549,9 +558,6 @@
 // Update irBar.
 - (void)updateInstantReplay;
 
-// accessor
-- (BOOL)sendInputToAllSessions;
-
 -(void)replaySession:(PTYSession *)session;
 
 // WindowControllerInterface protocol
@@ -616,6 +622,12 @@
 - (BOOL)isOrderedOut;
 - (void)setIsOrderedOut:(BOOL)value;
 - (void)screenParametersDidChange;
+
+// setter
+- (void)setBroadcastMode:(BroadcastMode)mode;
+- (void)toggleBroadcastingInputToSession:(PTYSession *)session;
+- (BroadcastMode)broadcastMode;
+- (BOOL)broadcastInputToSession:(PTYSession *)session;
 
 @end
 
@@ -780,12 +792,11 @@
 // Returns true if the given menu item is selectable.
 - (BOOL)validateMenuItem:(NSMenuItem *)item;
 
-// setter
-- (void)setSendInputToAllSessions:(BOOL)flag;
-
 // Turn on/off sending of input to all sessions. This causes a bunch of UI
 // to update in addition to flipping the flag.
-- (IBAction)toggleInputToAllSessions:(id)sender;
+- (IBAction)enableSendInputToAllTabs:(id)sender;
+- (IBAction)enableSendInputToAllPanes:(id)sender;
+- (IBAction)disableBroadcasting:(id)sender;
 
 // Show a dialog confirming close. Returns YES if the window should be closed.
 - (BOOL)showCloseWindow;
