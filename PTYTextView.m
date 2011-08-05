@@ -1953,9 +1953,17 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)keyDown:(NSEvent*)event
 {
+    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+
+    if (debugKeyDown) {
+        NSLog(@"PTYTextView keyDown BEGIN %@", event);
+    }
     DebugLog(@"PTYTextView keyDown");
     id delegate = [self delegate];
     if ([[[[[self dataSource] session] tab] realParentWindow] inInstantReplay]) {
+        if (debugKeyDown) {
+            NSLog(@"PTYTextView keyDown: in instant replay, send to delegate");
+        }
         // Delegate has special handling for this case.
         [delegate keyDown:event];
         return;
@@ -1965,6 +1973,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     BOOL prev = [self hasMarkedText];
 
     keyIsARepeat = [event isARepeat];
+    if (debugKeyDown) {
+        NSLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
+    }
 
     // Hide the cursor
     [NSCursor setHiddenUntilMouseMoves:YES];
@@ -1978,6 +1989,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
            ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL))) ||
          ((modflag & NSControlKeyMask) &&                          // a few special cases
           (keyCode == 0x2c /* slash */ || keyCode == 0x2a /* backslash */)))) {
+        if (debugKeyDown) {
+            NSLog(@"PTYTextView keyDown: process in delegate");
+        }
         [delegate keyDown:event];
         return;
     }
@@ -1985,6 +1999,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if (modflag & NSCommandKeyMask) {
         // You pressed cmd+something but it's not handled by the delegate. Going further would
         // send the unmodified key to the terminal which doesn't make sense.adsjflsd
+        if (debugKeyDown) {
+            NSLog(@"PTYTextView keyDown You pressed cmd+something");
+        }
         return;
     }
 
@@ -2014,6 +2031,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             }
             if (cc != 0xffff) {
                 [self insertText:[NSString stringWithCharacters:&cc length:1]];
+                if (debugKeyDown) {
+                    NSLog(@"PTYTextView keyDown work around control bug. cc=%d", (int)cc);
+                }
                 workAroundControlBug = YES;
             }
         }
@@ -2022,14 +2042,23 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if (!workAroundControlBug) {
         // Let the IME process key events
         IM_INPUT_INSERT = NO;
+        if (debugKeyDown) {
+            NSLog(@"PTYTextView keyDown send to IME");
+        }
         [self interpretKeyEvents:[NSArray arrayWithObject:event]];
 
         // If the IME didn't want it, pass it on to the delegate
         if (!prev &&
             !IM_INPUT_INSERT &&
             ![self hasMarkedText]) {
+            if (debugKeyDown) {
+                NSLog(@"PTYTextView keyDown IME no, send to delegate");
+            }
             [delegate keyDown:event];
         }
+    }
+    if (debugKeyDown) {
+        NSLog(@"PTYTextView keyDown END");
     }
 }
 
