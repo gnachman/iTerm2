@@ -527,7 +527,7 @@ static void reapchild(int n)
         return;
     }
 
-    tty = [[NSString stringWithCString:theTtyname] retain];
+    tty = [[NSString stringWithUTF8String:theTtyname] retain];
     NSParameterAssert(tty != nil);
 
     fcntl(fd,F_SETFL,O_NONBLOCK);

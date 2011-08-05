@@ -792,12 +792,12 @@ void DebugLog(NSString* value)
 {
     BOOL sessions = NO;
     BOOL panes = NO;
-    BOOL normal = NO;
+    BOOL noBroadcast = NO;
     PseudoTerminal *frontTerminal;
     frontTerminal = [[iTermController sharedInstance] currentTerminal];
     switch ([frontTerminal broadcastMode]) {
         case BROADCAST_OFF:
-            normal = YES;
+            noBroadcast = YES;
             break;
 
         case BROADCAST_TO_ALL_TABS:
@@ -813,7 +813,7 @@ void DebugLog(NSString* value)
     }
     [sendInputToAllSessions setState:sessions];
     [sendInputToAllPanes setState:panes];
-    [sendInputNormally setState:normal];
+    [sendInputNormally setState:noBroadcast];
 }
 
 - (void) nonTerminalWindowBecameKey: (NSNotification *) aNotification

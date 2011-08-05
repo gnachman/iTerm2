@@ -42,6 +42,7 @@
 #define KEY_DESCRIPTION                 @"Description"
 #define KEY_CUSTOM_COMMAND              @"Custom Command"
 #define KEY_COMMAND                     @"Command"
+#define KEY_INITIAL_TEXT                @"Initial Text"
 #define KEY_CUSTOM_DIRECTORY            @"Custom Directory"  // values are Yes, No, Recycle
 #define KEY_WORKING_DIRECTORY           @"Working Directory"
 #define KEY_TERMINAL_PROFILE            @"Terminal Profile"

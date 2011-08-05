@@ -506,7 +506,11 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                    height:[SCREEN height]
                    isUTF8:isUTF8
            asLoginSession:asLoginSession];
-
+    NSString *initialText = [addressBookEntry objectForKey:KEY_INITIAL_TEXT];
+    if ([initialText length]) {
+        [SHELL writeTask:[initialText dataUsingEncoding:[self encoding]]];
+        [SHELL writeTask:[@"\n" dataUsingEncoding:[self encoding]]];
+    }
 }
 
 - (void)_maybeWarnAboutShortLivedSessions
@@ -929,7 +933,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
     unsigned short keycode = [event keyCode];
     if (debugKeyDown) {
-        NSLog([NSString stringWithFormat:@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask)]);
+        NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
     }
     DebugLog([NSString stringWithFormat:@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask)]);
 

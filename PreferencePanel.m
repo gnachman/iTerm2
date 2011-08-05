@@ -175,11 +175,13 @@ static float versionNumber;
     [bookmarkShortcutKeyModifiersLabel setHidden:YES];
     [bookmarkTagsLabel setHidden:YES];
     [bookmarkCommandLabel setHidden:YES];
+    [initialTextLabel setHidden:YES];
     [bookmarkDirectoryLabel setHidden:YES];
     [bookmarkShortcutKey setHidden:YES];
     [tags setHidden:YES];
     [bookmarkCommandType setHidden:YES];
     [bookmarkCommand setHidden:YES];
+    [initialText setHidden:YES];
     [bookmarkDirectoryType setHidden:YES];
     [bookmarkDirectory setHidden:YES];
     [bookmarkUrlSchemes setHidden:YES];
@@ -529,6 +531,7 @@ static float versionNumber;
     } else {
         [lionStyleFullscreen setHidden:YES];
     }
+    [initialText setContinuous:YES];
     [blurRadius setContinuous:YES];
     [transparency setContinuous:YES];
     [dimmingAmount setContinuous:YES];
@@ -2045,12 +2048,17 @@ static float versionNumber;
     NSString* name;
     NSString* shortcut;
     NSString* command;
+    NSString* text;
     NSString* dir;
     NSString* customCommand;
     NSString* customDir;
     name = [dict objectForKey:KEY_NAME];
     shortcut = [dict objectForKey:KEY_SHORTCUT];
     command = [dict objectForKey:KEY_COMMAND];
+    text = [dict objectForKey:KEY_INITIAL_TEXT];
+    if (!text) {
+        text = @"";
+    }
     dir = [dict objectForKey:KEY_WORKING_DIRECTORY];
     customCommand = [dict objectForKey:KEY_CUSTOM_COMMAND];
     customDir = [dict objectForKey:KEY_CUSTOM_DIRECTORY];
@@ -2067,6 +2075,7 @@ static float versionNumber;
         [bookmarkCommandType selectCellWithTag:1];
     }
     [bookmarkCommand setStringValue:command];
+    [initialText setStringValue:text];
 
     if ([customDir isEqualToString:@"Yes"]) {
             [bookmarkDirectoryType selectCellWithTag:0];
@@ -2401,6 +2410,10 @@ static float versionNumber;
     NSString* name = [bookmarkName stringValue];
     NSString* shortcut = [self shortcutKeyForTag:[[bookmarkShortcutKey selectedItem] tag]];
     NSString* command = [bookmarkCommand stringValue];
+    NSString *text = [initialText stringValue];
+    if (!text) {
+        text = @"";
+    }
     NSString* dir = [bookmarkDirectory stringValue];
 
     NSString* customCommand = [[bookmarkCommandType selectedCell] tag] == 0 ? @"Yes" : @"No";
@@ -2464,6 +2477,7 @@ static float versionNumber;
         [newDict setObject:shortcut forKey:KEY_SHORTCUT];
     }
     [newDict setObject:command forKey:KEY_COMMAND];
+    [newDict setObject:text forKey:KEY_INITIAL_TEXT];
     [newDict setObject:dir forKey:KEY_WORKING_DIRECTORY];
     [newDict setObject:customCommand forKey:KEY_CUSTOM_COMMAND];
     [newDict setObject:customDir forKey:KEY_CUSTOM_DIRECTORY];
@@ -2760,6 +2774,7 @@ static float versionNumber;
                obj == rowsField ||
                obj == scrollbackLines ||
                obj == terminalType ||
+               obj == initialText ||
                obj == idleCode) {
         [self bookmarkSettingChanged:nil];
     } else if (obj == tagFilter) {
@@ -3038,6 +3053,7 @@ static float versionNumber;
         [newDict removeObjectForKey:KEY_BONJOUR_SERVICE];
         [newDict removeObjectForKey:KEY_BONJOUR_SERVICE_ADDRESS];
         [newDict setObject:@"" forKey:KEY_COMMAND];
+        [newDict setObject:@"" forKey:KEY_INITIAL_TEXT];
         [newDict setObject:@"No" forKey:KEY_CUSTOM_COMMAND];
         [newDict setObject:@"" forKey:KEY_WORKING_DIRECTORY];
         [newDict setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
