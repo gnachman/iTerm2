@@ -2190,7 +2190,9 @@
         }
     }
 
-    if (updated) [self update: NO];
+    if (updated) {
+        [self update: NO];
+    }
 }
 
 - (NSColor*)tabColorForTabViewItem:(NSTabViewItem*)tabViewItem

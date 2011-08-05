@@ -2611,35 +2611,41 @@ static VT100TCC decode_string(unsigned char *datap,
         // The format of this command is "<index>;rgb:<redhex>/<greenhex>/<bluehex>", e.g. "105;rgb:00/cc/ff"
         const char *s = [token.u.string UTF8String];
         int theIndex = 0;
-        while (isdigit(*s))
+        while (isdigit(*s)) {
             theIndex = 10*theIndex + *s++ - '0';
-        if (*s++ != ';')
+        }
+        if (*s++ != ';') {
             return;
-        if (*s++ != 'r')
+        }
+        if (*s++ != 'r') {
             return;
-        if (*s++ != 'g')
+        }
+        if (*s++ != 'g') {
             return;
-        if (*s++ != 'b')
+        }
+        if (*s++ != 'b') {
             return;
-        if (*s++ != ':')
+        }
+        if (*s++ != ':') {
             return;
+        }
         int r = 0, g = 0, b = 0;
 
-        while (isxdigit(*s))
+        while (isxdigit(*s)) {
             r = 16*r + (*s>='a' ? *s++ - 'a' + 10 : *s>='A' ? *s++ - 'A' + 10 : *s++ - '0');
-
-        if (*s++ != '/')
+        }
+        if (*s++ != '/') {
             return;
-
-        while (isxdigit(*s))
+        }
+        while (isxdigit(*s)) {
             g = 16*g + (*s>='a' ? *s++ - 'a' + 10 : *s>='A' ? *s++ - 'A' + 10 : *s++ - '0');
-
-        if (*s++ != '/')
+        }
+        if (*s++ != '/') {
             return;
-
-        while (isxdigit(*s))
+        }
+        while (isxdigit(*s)) {
             b = 16*b + (*s>='a' ? *s++ - 'a' + 10 : *s>='A' ? *s++ - 'A' + 10 : *s++ - '0');
-
+        }
         if (theIndex >= 16 && theIndex <= 255 && // ignore assigns to the systems colors or outside the palette
              r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) { // ignore bad colors
             [[SCREEN session] setColorTable:theIndex
@@ -2750,14 +2756,26 @@ static VT100TCC decode_string(unsigned char *datap,
                 //
                 // Adjusts a color modifier.
                 // class: determines which image class will have its color modifier altered:
-                //   legal values: bg (background), or a number 0-15 (color pallette entries).
+                //   legal values: bg (background), or a number 0-15 (color palette entries).
                 // color: The color component to modify.
                 //   legal values: red, green, or blue.
                 // attribute: how to modify it.
                 //   legal values: brightness
                 // value: the new value for this attribute.
                 //   legal values: decimal integers in 0-255.
-                if ([parts count] == 5) {
+                if ([parts count] == 4) {
+                    NSString* class = [parts objectAtIndex:1];
+                    NSString* color = [parts objectAtIndex:2];
+                    NSString* attribute = [parts objectAtIndex:3];
+                    if ([class isEqualToString:@"bg"] &&
+                        [color isEqualToString:@"*"] &&
+                        [attribute isEqualToString:@"default"]) {
+
+                        NSTabViewItem* tabViewItem = [[[SCREEN session] ptytab] tabViewItem];
+                        id<WindowControllerInterface> term = [[[SCREEN session] ptytab] parentWindow];
+                        [term setTabColor:nil forTabViewItem:tabViewItem];
+                    }
+                } else if ([parts count] == 5) {
                     NSString* class = [parts objectAtIndex:1];
                     NSString* color = [parts objectAtIndex:2];
                     NSString* attribute = [parts objectAtIndex:3];

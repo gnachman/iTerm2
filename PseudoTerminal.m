@@ -2292,7 +2292,10 @@ NSString *sessionsKey = @"sessions";
     [tabBarControl setTabColor:color forTabViewItem:tabViewItem];
     if ([TABVIEW selectedTabViewItem] == tabViewItem) {
         NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:tabViewItem];
-        if (newTabColor) {
+        if (!newTabColor) {
+            [[self window] setBackgroundColor:nil];
+            [background_ setColor:normalBackgroundColor];
+        } else {
             [[self window] setBackgroundColor:newTabColor];
             [background_ setColor:newTabColor];
         }
