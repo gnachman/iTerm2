@@ -3193,6 +3193,16 @@ NSString *sessionsKey = @"sessions";
     PtyLog(@"_refreshTerminal - calling fitWindowToTabs");
     [self fitWindowToTabs];
 
+    // If tab style or position changed.
+    [self repositionWidgets];
+
+    // In case scrollbars came or went:
+    for (PTYTab *aTab in [self tabs]) {
+        for (PTYSession *aSession in [aTab sessions]) {
+            [aTab fitSessionToCurrentViewSize:aSession];
+        }
+    }
+
     BOOL canDim = [[PreferencePanel sharedInstance] dimInactiveSplitPanes];
     // Assign counts to each session. This causes tabs to show their tab number,
     // called an objectCount. When the "compact tab" pref is toggled, this makes
