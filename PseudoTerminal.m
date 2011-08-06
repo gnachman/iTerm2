@@ -3074,6 +3074,9 @@ NSString *sessionsKey = @"sessions";
 
 - (void)setBroadcastMode:(BroadcastMode)mode
 {
+    if (mode != BROADCAST_CUSTOM && mode == broadcastMode_) {
+        mode = BROADCAST_OFF;
+    }
     if (mode != BROADCAST_OFF && broadcastMode_ == BROADCAST_OFF) {
         if (NSRunAlertPanel(@"Warning!",
                             @"Keyboard input will be sent to multiple sessions.",
