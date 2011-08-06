@@ -383,6 +383,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* silenceBell;
     IBOutlet NSButton* visualBell;
     IBOutlet NSButton* flashingBell;
+    IBOutlet NSButton* takeFocusOnBell;
     IBOutlet NSButton* xtermMouseReporting;
     IBOutlet NSButton* disableSmcupRmcup;
     IBOutlet NSButton* scrollbackWithStatusBar;
