@@ -227,9 +227,10 @@ NSString *sessionsKey = @"sessions";
     NSRect initialFrame;
     switch (windowType) {
         case WINDOW_TYPE_TOP:
-		case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_BOTTOM:
             initialFrame = [screen visibleFrame];
             break;
+
         case WINDOW_TYPE_FORCE_FULL_SCREEN:
             oldFrame_ = [[self window] frame];
             initialFrame = [screen frame];
@@ -1309,6 +1310,13 @@ NSString *sessionsKey = @"sessions";
         return;
     }
 
+    //Set the origin again to the bottom of screen
+    if(windowType_ == WINDOW_TYPE_BOTTOM) {
+        NSPoint origin = [self window].frame.origin;
+        origin.y = self.screen.frame.origin.y;
+        [[self window]setFrameOrigin:origin];
+    }
+    
     // Adjust the size of all the sessions.
     PtyLog(@"windowDidResize - call repositionWidgets");
     [self repositionWidgets];
@@ -2798,7 +2806,7 @@ NSString *sessionsKey = @"sessions";
     CGFloat heightChange = winSize.height - [[self window] frame].size.height;
     frame.size = winSize;
     frame.origin.y -= heightChange;
-
+    
     [[[self window] contentView] setAutoresizesSubviews:NO];
     if (windowType_ == WINDOW_TYPE_TOP || windowType_ == WINDOW_TYPE_BOTTOM) {
         frame.size.width = [[self window] frame].size.width;
