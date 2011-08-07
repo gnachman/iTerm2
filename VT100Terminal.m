@@ -2678,6 +2678,7 @@ static VT100TCC decode_string(unsigned char *datap,
         } else if ([key isEqualToString:@"StealFocus"]) {
             [NSApp activateIgnoringOtherApps:YES];
             [[[SCREEN display] window]makeKeyAndOrderFront:nil];
+            [[[SCREEN display] window]makeMainWindow];
         }
     } else if (token.type == XTERMCC_SET_PALETTE) {
         NSString* argument = token.u.string;
