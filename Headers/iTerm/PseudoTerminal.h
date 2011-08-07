@@ -66,7 +66,7 @@ typedef enum {
 // This class is 1:1 with windows. It controls the tabs, bottombar, toolbar,
 // fullscreen, and coordinates resizing of sessions (either session-initiated
 // or window-initiated).
-@interface PseudoTerminal : NSWindowController <PTYTabViewDelegateProtocol, PTYWindowDelegateProtocol, WindowControllerInterface>
+@interface PseudoTerminal : NSWindowController <PTYTabViewDelegateProtocol, PTYWindowDelegateProtocol, WindowControllerInterface, NSWindowDelegate>
 {
     NSPoint preferredOrigin_;
     SolidColorView* background_;
@@ -250,6 +250,9 @@ typedef enum {
 - (void)selectSessionAtIndexAction:(id)sender;
 
 // Return the index of a tab or NSNotFound.
+// This method is used, for example, in iTermExpose, where PTYTabs are shown
+// side by side, and one needs to determine which index it has, so it can be
+// selected when leaving iTerm expose.
 - (NSInteger)indexOfTab:(PTYTab*)aTab;
 
 // Open a new tab with the bookmark given by the guid in
@@ -807,7 +810,7 @@ typedef enum {
 // accessor
 - (PSMTabBarControl*)tabBarControl;
 
-// Called when the tab control's context menu is closed.
+// Called when the "Close tab" contextual menu item is clicked.
 - (void)closeTabContextualMenuAction:(id)sender;
 
 // Move a tab to a new window due to a context menu selection.
