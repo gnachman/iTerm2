@@ -27,7 +27,7 @@
 #import <Cocoa/Cocoa.h>
 #import <iTerm/BookmarkModel.h>
 #import "BookmarkListView.h"
-#import "ArrangementsModel.h"
+#import "WindowArrangements.h"
 
 #define OPT_NORMAL 0
 #define OPT_META   1
@@ -460,7 +460,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* globalRemoveMappingButton;
     IBOutlet NSButton* globalAddNewMapping;
     
-    IBOutlet ArrangementsModel *arrangements_;
+    IBOutlet WindowArrangements *arrangements_;
 }
 
 typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal, BulkCopyKeyboard } BulkCopySettings;
@@ -476,7 +476,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (void)editKeyMapping:(id)sender;
 - (IBAction)saveKeyMapping:(id)sender;
 - (BOOL)keySheetIsOpen;
-- (ArrangementsModel *)arrangements;
+- (WindowArrangements *)arrangements;
 - (IBAction)closeKeyMapping:(id)sender;
 - (BOOL)validateToolbarItem:(NSToolbarItem *)theItem;
 - (NSToolbarItem *)toolbar:(NSToolbar *)toolbar itemForItemIdentifier:(NSString *)itemIdentifier willBeInsertedIntoToolbar:(BOOL)flag;

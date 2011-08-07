@@ -50,7 +50,7 @@
 #import "iTermExpose.h"
 #import "GTMCarbonEvent.h"
 #import "iTerm.h"
-#import "ArrangementsModel.h"
+#import "WindowArrangements.h"
 
 #define HOTKEY_WINDOW_VERBOSE_LOGGING
 #ifdef HOTKEY_WINDOW_VERBOSE_LOGGING
@@ -293,11 +293,11 @@ static BOOL IsSnowLeopardOrLater() {
 - (void)saveWindowArrangement
 {
     NSString *name = [self _showAlertWithText:@"Name for saved window arrangement:"
-                                 defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1+[ArrangementsModel count]]];
+                                 defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1+[WindowArrangements count]]];
     if (!name) {
         return;
     }
-    if ([ArrangementsModel hasWindowArrangement:name]) {
+    if ([WindowArrangements hasWindowArrangement:name]) {
         if (NSRunAlertPanel(@"Replace Existing Saved Window Arrangement?",
                             @"There is an existing saved window arrangement with this name. Would you like to replace it with the current arrangement?",
                             @"Yes",
@@ -313,12 +313,12 @@ static BOOL IsSnowLeopardOrLater() {
         }
     }
 
-    [ArrangementsModel setArrangement:terminalArrangements withName:name];
+    [WindowArrangements setArrangement:terminalArrangements withName:name];
 }
 
 - (void)loadWindowArrangementWithName:(NSString *)theName
 {
-    NSArray* terminalArrangements = [ArrangementsModel arrangementWithName:theName];
+    NSArray* terminalArrangements = [WindowArrangements arrangementWithName:theName];
     if (terminalArrangements) {
         for (NSDictionary* terminalArrangement in terminalArrangements) {
             PseudoTerminal* term = [PseudoTerminal terminalWithArrangement:terminalArrangement];

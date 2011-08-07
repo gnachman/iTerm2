@@ -49,7 +49,8 @@ static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Script
 static NSString* AUTO_LAUNCH_SCRIPT = @"~/Library/Application Support/iTerm/AutoLaunch.scpt";
 static NSString *ITERM2_FLAG = @"~/Library/Application Support/iTerm/version.txt";
 static BOOL gStartupActivitiesPerformed = NO;
-
+// Prior to 8/7/11, there was only one window arrangement, always called Default.
+static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
 NSMutableString* gDebugLogStr = nil;
 NSMutableString* gDebugLogStr2 = nil;
 static BOOL ranAutoLaunchScript = NO;
@@ -160,14 +161,19 @@ static BOOL hasBecomeActive = NO;
         [autoLaunchScript executeAndReturnError:&errorInfo];
         [autoLaunchScript release];
     } else {
+        if ([WindowArrangements defaultArrangementName] == nil &&
+            [WindowArrangements arrangementWithName:LEGACY_DEFAULT_ARRANGEMENT_NAME] != nil) {
+            [WindowArrangements makeDefaultArrangement:LEGACY_DEFAULT_ARRANGEMENT_NAME];
+        }
+        
         if ([[PreferencePanel sharedInstance] openBookmark]) {
             [self showBookmarkWindow:nil];
             if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
                 // Open both bookmark window and arrangement!
-                [[iTermController sharedInstance] loadWindowArrangementWithName:[ArrangementsModel defaultArrangementName]];
+                [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
             }
         } else if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
-            [[iTermController sharedInstance] loadWindowArrangementWithName:[ArrangementsModel defaultArrangementName]];
+            [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
         } else {
             [self newWindow:nil];
         }
@@ -429,9 +435,9 @@ static BOOL hasBecomeActive = NO;
         [[windowArrangements_ submenu] removeItemAtIndex:0];
     }
 
-    NSString *defaultName = [ArrangementsModel defaultArrangementName];
+    NSString *defaultName = [WindowArrangements defaultArrangementName];
 
-    for (NSString *theName in [ArrangementsModel allNames]) {
+    for (NSString *theName in [WindowArrangements allNames]) {
         NSString *theShortcut;
         if ([theName isEqualToString:defaultName]) {
             theShortcut = @"R";
@@ -1070,7 +1076,7 @@ void DebugLog(NSString* value)
 
 - (IBAction)loadWindowArrangement:(id)sender
 {
-    [[iTermController sharedInstance] loadWindowArrangementWithName:[ArrangementsModel defaultArrangementName]];
+    [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
 }
 
 // TODO(georgen): Disable "Edit Current Session..." when there are no current sessions.

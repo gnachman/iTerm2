@@ -35,7 +35,7 @@
 #import <iTerm/BookmarkModel.h>
 #import "PasteboardHistory.h"
 #import "SessionView.h"
-#import "ArrangementsModel.h"
+#import "WindowArrangements.h"
 
 #define CUSTOM_COLOR_PRESETS @"Custom Color Presets"
 #define HOTKEY_WINDOW_GENERATED_PROFILE_NAME @"Hotkey Window"
@@ -156,8 +156,8 @@ static float versionNumber;
 - (void)_savedArrangementChanged:(id)sender
 {
     [openArrangementAtStartup setState:defaultOpenArrangementAtStartup ? NSOnState : NSOffState];
-    [openArrangementAtStartup setEnabled:[ArrangementsModel count] > 0];
-    if ([ArrangementsModel count] == 0) {
+    [openArrangementAtStartup setEnabled:[WindowArrangements count] > 0];
+    if ([WindowArrangements count] == 0) {
         [openArrangementAtStartup setState:NO];
     }
 }
@@ -779,7 +779,7 @@ static float versionNumber;
     return [editKeyMappingWindow isVisible];
 }
 
-- (ArrangementsModel *)arrangements
+- (WindowArrangements *)arrangements
 {
     return arrangements_;
 }
@@ -928,7 +928,7 @@ static float versionNumber;
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
     defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
     defaultSavePasteHistory = [prefs objectForKey:@"SavePasteHistory"]?[[prefs objectForKey:@"SavePasteHistory"] boolValue]: NO;
-    if ([ArrangementsModel count] > 0) {
+    if ([WindowArrangements count] > 0) {
         defaultOpenArrangementAtStartup = [prefs objectForKey:@"OpenArrangementAtStartup"]?[[prefs objectForKey:@"OpenArrangementAtStartup"] boolValue]: NO;
     } else {
         defaultOpenArrangementAtStartup = NO;
@@ -1151,8 +1151,8 @@ static float versionNumber;
     [showBookmarkName setState: defaultShowBookmarkName?NSOnState:NSOffState];
     [savePasteHistory setState: defaultSavePasteHistory?NSOnState:NSOffState];
     [openArrangementAtStartup setState:defaultOpenArrangementAtStartup ? NSOnState : NSOffState];
-    [openArrangementAtStartup setEnabled:[ArrangementsModel count] > 0];
-    if ([ArrangementsModel count] == 0) {
+    [openArrangementAtStartup setEnabled:[WindowArrangements count] > 0];
+    if ([WindowArrangements count] == 0) {
         [openArrangementAtStartup setState:NO];
     }
     [hotkey setState: defaultHotkey?NSOnState:NSOffState];
