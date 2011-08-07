@@ -2675,6 +2675,11 @@ static VT100TCC decode_string(unsigned char *datap,
             }
         } else if ([key isEqualToString:@"SetMark"]) {
             [[SCREEN session] saveScrollPosition];
+        } else if ([key isEqualToString:@"StealFocus"]) {
+            [NSApp activateIgnoringOtherApps:YES];
+            [[[SCREEN display] window]orderFrontRegardless];
+            [[[SCREEN display] window]makeMainWindow];
+            [[[SCREEN display] window]makeKeyWindow];
         }
     } else if (token.type == XTERMCC_SET_PALETTE) {
         NSString* argument = token.u.string;
