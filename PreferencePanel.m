@@ -2220,6 +2220,7 @@ static float versionNumber;
     [silenceBell setState:[[dict objectForKey:KEY_SILENCE_BELL] boolValue] ? NSOnState : NSOffState];
     [visualBell setState:[[dict objectForKey:KEY_VISUAL_BELL] boolValue] ? NSOnState : NSOffState];
     [flashingBell setState:[[dict objectForKey:KEY_FLASHING_BELL] boolValue] ? NSOnState : NSOffState];
+    [takeFocusOnBell setState:[[dict objectForKey:KEY_TAKE_FOCUS_ON_BELL] boolValue] ? NSOnState: NSOffState];
     [xtermMouseReporting setState:[[dict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue] ? NSOnState : NSOffState];
     [disableSmcupRmcup setState:[[dict objectForKey:KEY_DISABLE_SMCUP_RMCUP] boolValue] ? NSOnState : NSOffState];
     [scrollbackWithStatusBar setState:[[dict objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue] ? NSOnState : NSOffState];
@@ -2568,6 +2569,7 @@ static float versionNumber;
     [newDict setObject:[NSNumber numberWithBool:([silenceBell state]==NSOnState)] forKey:KEY_SILENCE_BELL];
     [newDict setObject:[NSNumber numberWithBool:([visualBell state]==NSOnState)] forKey:KEY_VISUAL_BELL];
     [newDict setObject:[NSNumber numberWithBool:([flashingBell state]==NSOnState)] forKey:KEY_FLASHING_BELL];
+    [newDict setObject:[NSNumber numberWithBool:([takeFocusOnBell state]==NSOnState)] forKey:KEY_TAKE_FOCUS_ON_BELL];
     [newDict setObject:[NSNumber numberWithBool:([xtermMouseReporting state]==NSOnState)] forKey:KEY_XTERM_MOUSE_REPORTING];
     [newDict setObject:[NSNumber numberWithBool:([disableSmcupRmcup state]==NSOnState)] forKey:KEY_DISABLE_SMCUP_RMCUP];
     [newDict setObject:[NSNumber numberWithBool:([scrollbackWithStatusBar state]==NSOnState)] forKey:KEY_SCROLLBACK_WITH_STATUS_BAR];
@@ -3326,6 +3328,7 @@ static float versionNumber;
         KEY_SILENCE_BELL,
         KEY_VISUAL_BELL,
         KEY_FLASHING_BELL,
+        KEY_TAKE_FOCUS_ON_BELL,
         KEY_XTERM_MOUSE_REPORTING,
         KEY_DISABLE_SMCUP_RMCUP,
         KEY_BOOKMARK_GROWL_NOTIFICATIONS,

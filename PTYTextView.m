@@ -4175,6 +4175,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
+- (void)takeFocus
+{
+    [NSApp activateIgnoringOtherApps:YES];
+    [[self window] orderFrontRegardless];
+    [[self window] makeMainWindow];
+    [[self window] makeKeyWindow];
+}
+
 - (void)beginFlash:(int)image
 {
     flashImage_ = image;

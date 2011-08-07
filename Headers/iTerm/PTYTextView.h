@@ -449,6 +449,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 
 // Flash a graphic. See the enum for flashImage_.
 - (void)beginFlash:(int)image;
+- (void)takeFocus;
 
 - (void)drawFlippedBackground:(NSRect)bgRect toPoint:(NSPoint)dest;
 - (void)drawBackground:(NSRect)bgRect;

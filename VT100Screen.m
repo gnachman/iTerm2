@@ -2959,6 +2959,15 @@ void DumpBuf(screen_char_t* p, int n) {
     FLASHBELL = flag;
 }
 
+- (void)setTakeFocusOnBellFlag:(BOOL)flag
+{
+#if DEBUG_METHOD_TRACE
+    NSLog(@"%s(%d):+[VT100Screen setTakeFocusOnBellFlag:%s]"
+          __FILE__, __LINE__, flag == YES ? "YES" : "NO");
+#endif
+    TAKEFOCUSBELL = flag;
+}
+
 - (void)activateBell
 {
 #if DEBUG_METHOD_TRACE
@@ -2982,6 +2991,9 @@ void DumpBuf(screen_char_t* p, int n) {
     }
     if (FLASHBELL) {
         [display beginFlash:FlashBell];
+    }
+    if (TAKEFOCUSBELL) {
+        [display takeFocus];
     }
 }
 

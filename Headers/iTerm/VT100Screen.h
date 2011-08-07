@@ -93,6 +93,7 @@ void StringToScreenChars(NSString *s,
     BOOL PLAYBELL;
     BOOL SHOWBELL;
     BOOL FLASHBELL;
+    BOOL TAKEFOCUSBELL;
     BOOL GROWL;
 
 
