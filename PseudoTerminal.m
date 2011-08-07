@@ -482,7 +482,8 @@ NSString *sessionsKey = @"sessions";
 {
     NSArray* items = [TABVIEW tabViewItems];
     for (int i = 0; i < [items count]; i++) {
-        if ([[items objectAtIndex:i] identifier] == aTab) {
+        NSTabViewItem *tabViewItem = [items objectAtIndex:i];
+        if ([tabViewItem identifier] == aTab) {
             return i;
         }
     }
@@ -2216,7 +2217,10 @@ NSString *sessionsKey = @"sessions";
         ([[PreferencePanel sharedInstance] hideTab] && ([TABVIEW numberOfTabViewItems] > 1 && [tabBarControl isHidden]))) {
         // Need to change the visibility status of the tab bar control.
         PtyLog(@"tabViewDidChangeNumberOfTabViewItems - calling fitWindowToTab");
-        PTYTab* firstTab = [[[TABVIEW tabViewItems] objectAtIndex:0] identifier];
+
+        NSTabViewItem *tabViewItem = [[TABVIEW tabViewItems] objectAtIndex:0];
+        PTYTab *firstTab = [tabViewItem identifier];
+
         if (wasDraggedFromAnotherWindow_) {
             // A tab was just dragged out of another window's tabbar into its own window.
             // When this happens, it loses its size. This is our only chance to resize it.
