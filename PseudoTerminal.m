@@ -865,9 +865,8 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
-+ (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement
++ (int)_windowTypeForArrangement:(NSDictionary*)arrangement
 {
-    PseudoTerminal* term;
     int windowType;
     if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_WINDOW_TYPE]) {
         windowType = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WINDOW_TYPE] intValue];
@@ -885,6 +884,11 @@ NSString *sessionsKey = @"sessions";
             windowType = WINDOW_TYPE_NORMAL;
         }
     }
+    return windowType;
+}
+
++ (int)_screenIndexForArrangement:(NSDictionary*)arrangement
+{
     int screenIndex;
     if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_SCREEN_INDEX]) {
         screenIndex = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_SCREEN_INDEX] intValue];
@@ -894,6 +898,70 @@ NSString *sessionsKey = @"sessions";
     if (screenIndex < 0 || screenIndex >= [[NSScreen screens] count]) {
         screenIndex = 0;
     }
+    return screenIndex;
+}
+
++ (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
+                  screenFrames:(NSArray *)frames
+{
+    int windowType = [PseudoTerminal _windowTypeForArrangement:terminalArrangement];
+    int screenIndex = [PseudoTerminal _screenIndexForArrangement:terminalArrangement];
+    NSRect virtualScreenFrame = [[frames objectAtIndex:screenIndex] rectValue];
+    NSRect screenFrame = [[[NSScreen screens] objectAtIndex:screenIndex] frame];
+    double xScale = virtualScreenFrame.size.width / screenFrame.size.width;
+    double yScale = virtualScreenFrame.size.height / screenFrame.size.height;
+    double xOrigin = virtualScreenFrame.origin.x;
+    double yOrigin = virtualScreenFrame.origin.y;
+    
+    NSRect rect;
+    if (windowType == WINDOW_TYPE_FULL_SCREEN || windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+        rect = virtualScreenFrame;
+    } else if (windowType == WINDOW_TYPE_NORMAL) {
+        rect.origin.x = xOrigin + xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
+        rect.origin.y = yOrigin + yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
+        rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+        rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+    } else if (windowType == WINDOW_TYPE_TOP) {
+        rect.origin.x = xOrigin;
+        rect.origin.y = yOrigin;
+        rect.size.width = virtualScreenFrame.size.width;
+        rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+    }
+
+    [[NSColor blackColor] set];
+    NSRectFill(rect);
+    [[NSColor windowFrameColor] set];
+    NSFrameRect(rect);
+
+    int N = [(NSDictionary *)[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_TABS] count];
+    [[NSColor windowBackgroundColor] set];
+    double y;
+    if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
+        y = rect.origin.y + rect.size.height - 10;
+    } else {
+        y = rect.origin.y;
+    }
+    NSRectFill(NSMakeRect(rect.origin.x + 1, y, rect.size.width - 2, 10));
+    
+    double x = 1;
+    [[NSColor darkGrayColor] set];
+    for (int i = 0; i < N; i++) {
+        NSFrameRect(NSMakeRect(rect.origin.x + x, y, rect.size.width / N, 9));
+        x += floor((rect.size.width - 2) / N);
+    }
+
+    NSDictionary* tabArrangement = [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_TABS] objectAtIndex:0];
+    [PTYTab drawArrangementPreview:tabArrangement frame:NSMakeRect(rect.origin.x + 1,
+                                                                   ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) ? rect.origin.y : rect.origin.y + 10,
+                                                                   rect.size.width - 2,
+                                                                   rect.size.height - 10)];
+}
+
++ (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement
+{
+    PseudoTerminal* term;
+    int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
+    int screenIndex = [PseudoTerminal _screenIndexForArrangement:arrangement];
 
     if (windowType == WINDOW_TYPE_FULL_SCREEN) {
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO

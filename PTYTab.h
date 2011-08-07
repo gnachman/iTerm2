@@ -179,6 +179,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (NSSize)_recursiveMinSize:(NSSplitView*)node;
 - (PTYSession*)_recursiveSessionAtPoint:(NSPoint)point relativeTo:(NSView*)node;
 
++ (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame;
 + (void)openTabWithArrangement:(NSDictionary*)arrangement inTerminal:(PseudoTerminal*)term;
 - (NSDictionary*)arrangement;
 

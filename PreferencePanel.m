@@ -35,6 +35,7 @@
 #import <iTerm/BookmarkModel.h>
 #import "PasteboardHistory.h"
 #import "SessionView.h"
+#import "ArrangementsModel.h"
 
 #define CUSTOM_COLOR_PRESETS @"Custom Color Presets"
 #define HOTKEY_WINDOW_GENERATED_PROFILE_NAME @"Hotkey Window"
@@ -155,8 +156,8 @@ static float versionNumber;
 - (void)_savedArrangementChanged:(id)sender
 {
     [openArrangementAtStartup setState:defaultOpenArrangementAtStartup ? NSOnState : NSOffState];
-    [openArrangementAtStartup setEnabled:[[iTermController sharedInstance] hasWindowArrangement]];
-    if (![[iTermController sharedInstance] hasWindowArrangement]) {
+    [openArrangementAtStartup setEnabled:[arrangements_ count] > 0];
+    if ([arrangements_ count] == 0) {
         [openArrangementAtStartup setState:NO];
     }
 }
@@ -484,6 +485,7 @@ static float versionNumber;
     globalToolbarId = [globalToolbarItem itemIdentifier];
     appearanceToolbarId = [appearanceToolbarItem itemIdentifier];
     keyboardToolbarId = [keyboardToolbarItem itemIdentifier];
+    arrangementsToolbarId = [arrangementsToolbarItem itemIdentifier];
     [toolbar setSelectedItemIdentifier:globalToolbarId];
 
     // add list of encodings
@@ -777,6 +779,11 @@ static float versionNumber;
     return [editKeyMappingWindow isVisible];
 }
 
+- (ArrangementsModel *)arrangements
+{
+    return arrangements_;
+}
+
 - (IBAction)closeKeyMapping:(id)sender
 {
     [NSApp endSheet:editKeyMappingWindow];
@@ -800,6 +807,8 @@ static float versionNumber;
         return bookmarksToolbarItem;
     } else if ([itemIdentifier isEqual:keyboardToolbarId]) {
         return keyboardToolbarItem;
+    } else if ([itemIdentifier isEqual:arrangementsToolbarId]) {
+        return arrangementsToolbarItem;
     } else {
         return nil;
     }
@@ -811,12 +820,14 @@ static float versionNumber;
                                      appearanceToolbarId,
                                      bookmarksToolbarId,
                                      keyboardToolbarId,
+                                     arrangementsToolbarId,
                                      nil];
 }
 
 - (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar
 {
-    return [NSArray arrayWithObjects:globalToolbarId, appearanceToolbarId, bookmarksToolbarId, keyboardToolbarId, nil];
+    return [NSArray arrayWithObjects:globalToolbarId, appearanceToolbarId, bookmarksToolbarId,
+            keyboardToolbarId, arrangementsToolbarId, nil];
 }
 
 - (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar
@@ -827,6 +838,7 @@ static float versionNumber;
                                      appearanceToolbarId,
                                      bookmarksToolbarId,
                                      keyboardToolbarId,
+                                     arrangementsToolbarId,
                                      nil];
 }
 
@@ -916,7 +928,7 @@ static float versionNumber;
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
     defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
     defaultSavePasteHistory = [prefs objectForKey:@"SavePasteHistory"]?[[prefs objectForKey:@"SavePasteHistory"] boolValue]: NO;
-    if ([[iTermController sharedInstance] hasWindowArrangement]) {
+    if ([arrangements_ count] > 0) {
         defaultOpenArrangementAtStartup = [prefs objectForKey:@"OpenArrangementAtStartup"]?[[prefs objectForKey:@"OpenArrangementAtStartup"] boolValue]: NO;
     } else {
         defaultOpenArrangementAtStartup = NO;
@@ -1139,8 +1151,8 @@ static float versionNumber;
     [showBookmarkName setState: defaultShowBookmarkName?NSOnState:NSOffState];
     [savePasteHistory setState: defaultSavePasteHistory?NSOnState:NSOffState];
     [openArrangementAtStartup setState:defaultOpenArrangementAtStartup ? NSOnState : NSOffState];
-    [openArrangementAtStartup setEnabled:[[iTermController sharedInstance] hasWindowArrangement]];
-    if (![[iTermController sharedInstance] hasWindowArrangement]) {
+    [openArrangementAtStartup setEnabled:[arrangements_ count] > 0];
+    if ([arrangements_ count] == 0) {
         [openArrangementAtStartup setState:NO];
     }
     [hotkey setState: defaultHotkey?NSOnState:NSOffState];
@@ -2717,6 +2729,11 @@ static float versionNumber;
 - (IBAction)showKeyboardTabView:(id)sender
 {
     [tabView selectTabViewItem:keyboardTabViewItem];
+}
+
+- (IBAction)showArrangementsTabView:(id)sender
+{
+    [tabView selectTabViewItem:arrangementsTabViewItem];
 }
 
 - (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme

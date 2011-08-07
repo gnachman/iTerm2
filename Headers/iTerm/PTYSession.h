@@ -245,6 +245,7 @@ static const float kBackgroundSessionIntervalSec = 1;
 // Session specific methods
 - (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent;
 
++ (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame;
 + (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement inView:(SessionView*)sessionView inTab:(PTYTab*)theTab;
 
 - (void)runCommandWithOldCwd:(NSString*)oldCWD;

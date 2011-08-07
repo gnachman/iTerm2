@@ -1332,8 +1332,10 @@ static char* FormatCont(int c)
             [[SESSION tab] sessionInitiatedResize:SESSION
                                             width:([TERMINAL columnMode] ? 132 : 80)
                                            height:HEIGHT];
-            token.u.csi.p[0]=2; [self eraseInDisplay:token]; //erase the screen
-            token.u.csi.p[0]=token.u.csi.p[1]=0; [self setTopBottom:token]; // reset scroll;
+            token.u.csi.p[0] = 2;
+            [self eraseInDisplay:token];  // erase the screen
+            token.u.csi.p[0] = token.u.csi.p[1] = 0;
+            [self setTopBottom:token];  // reset scroll
         }
 
         break;

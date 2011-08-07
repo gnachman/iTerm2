@@ -97,7 +97,6 @@ BOOL IsLionOrLater(void);
 - (PseudoTerminal*)terminalWithNumber:(int)n;
 - (int)allocateWindowNumber;
 
-- (BOOL)hasWindowArrangement;
 - (void)saveWindowArrangement;
 - (void)loadWindowArrangement;
 

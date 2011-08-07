@@ -1693,6 +1693,54 @@ static NSString* FormatRect(NSRect r) {
     return result;
 }
 
++ (void)_recursiveDrawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame
+{
+    NSLog(@"Frame=%@", [NSValue valueWithRect:frame]);
+    if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
+        BOOL isVerticalSplitter = [[arrangement objectForKey:SPLITTER_IS_VERTICAL] boolValue];
+        float xExtent = 0;
+        float yExtent = 0;
+        float dx = 0;
+        float dy = 0;
+        float pw, ph;
+        NSArray* subviews = [arrangement objectForKey:SUBVIEWS];
+        if (isVerticalSplitter) {
+            yExtent = frame.size.height;
+            dx = frame.size.width / [subviews count];
+            pw = dx;
+            ph = yExtent;
+        } else {
+            xExtent = frame.size.width;
+            dy = frame.size.height / [subviews count];
+            pw = xExtent;
+            ph = dy;
+        }
+        double x = frame.origin.x;
+        double y = frame.origin.y;
+        for (int i = 0; i < [subviews count]; i++) {
+            NSDictionary* subArrangement = [subviews objectAtIndex:i];
+            NSRect subFrame = NSMakeRect(x, y, pw, ph);
+            [PTYTab _recursiveDrawArrangementPreview:subArrangement frame:subFrame];
+            x += dx;
+            y += dy;
+        }
+        [[NSColor grayColor] set];
+        x = frame.origin.x;
+        y = frame.origin.y;
+        for (int i = 0; i < [subviews count]; i++) {            
+            NSBezierPath *line = [[[NSBezierPath alloc] init] autorelease];
+            [line moveToPoint:NSMakePoint(x, y)];
+            [line lineToPoint:NSMakePoint(x + xExtent, y + yExtent)];
+            [line stroke];
+            x += dx;
+            y += dy;
+//            NSRectFill(NSMakeRect(x, y, x+10, y+10));
+        }
+    } else {
+        [PTYSession drawArrangementPreview:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION] frame:frame];
+    }
+}
+
 + (NSView*)_recusiveRestoreSplitters:(NSDictionary*)arrangement fromMap:(NSDictionary*)theMap
 {
     if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
@@ -1755,6 +1803,12 @@ static NSString* FormatRect(NSRect r) {
             return nil;
         }
     }
+}
+
++ (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame
+{
+    [PTYTab _recursiveDrawArrangementPreview:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
+                                       frame:frame];
 }
 
 + (void)openTabWithArrangement:(NSDictionary*)arrangement inTerminal:(PseudoTerminal*)term

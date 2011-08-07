@@ -27,6 +27,7 @@
 #import <Cocoa/Cocoa.h>
 #import <iTerm/BookmarkModel.h>
 #import "BookmarkListView.h"
+#import "ArrangementsModel.h"
 
 #define OPT_NORMAL 0
 #define OPT_META   1
@@ -271,12 +272,15 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSToolbarItem* appearanceToolbarItem;
     IBOutlet NSTabViewItem* appearanceTabViewItem;
     IBOutlet NSToolbarItem* keyboardToolbarItem;
+    IBOutlet NSToolbarItem* arrangementsToolbarItem;
     IBOutlet NSTabViewItem* keyboardTabViewItem;
+    IBOutlet NSTabViewItem* arrangementsTabViewItem;
     IBOutlet NSToolbarItem* bookmarksToolbarItem;
     IBOutlet NSTabViewItem* bookmarksTabViewItem;
     NSString* globalToolbarId;
     NSString* appearanceToolbarId;
     NSString* keyboardToolbarId;
+    NSString* arrangementsToolbarId;
     NSString* bookmarksToolbarId;
 
     // url handler stuff
@@ -455,6 +459,8 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTableColumn* globalActionColumn;
     IBOutlet NSButton* globalRemoveMappingButton;
     IBOutlet NSButton* globalAddNewMapping;
+    
+    IBOutlet ArrangementsModel *arrangements_;
 }
 
 typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal, BulkCopyKeyboard } BulkCopySettings;
@@ -470,6 +476,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (void)editKeyMapping:(id)sender;
 - (IBAction)saveKeyMapping:(id)sender;
 - (BOOL)keySheetIsOpen;
+- (ArrangementsModel *)arrangements;
 - (IBAction)closeKeyMapping:(id)sender;
 - (BOOL)validateToolbarItem:(NSToolbarItem *)theItem;
 - (NSToolbarItem *)toolbar:(NSToolbar *)toolbar itemForItemIdentifier:(NSString *)itemIdentifier willBeInsertedIntoToolbar:(BOOL)flag;
@@ -566,6 +573,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (IBAction)showAppearanceTabView:(id)sender;
 - (IBAction)showBookmarksTabView:(id)sender;
 - (IBAction)showKeyboardTabView:(id)sender;
+- (IBAction)showArrangementsTabView:(id)sender;
 - (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme;
 - (void)disconnectHandlerForScheme:(NSString*)scheme;
 - (IBAction)closeWindow:(id)sender;

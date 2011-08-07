@@ -50,6 +50,7 @@
 #import "iTermExpose.h"
 #import "GTMCarbonEvent.h"
 #import "iTerm.h"
+#import "ArrangementsModel.h"
 
 #define HOTKEY_WINDOW_VERBOSE_LOGGING
 #ifdef HOTKEY_WINDOW_VERBOSE_LOGGING
@@ -68,11 +69,9 @@ DebugLog([NSString stringWithFormat:args]); \
 @end
 
 // Constants for saved window arrangement key names.
-static NSString* DEFAULT_ARRANGEMENT_NAME = @"Default";
 static NSString* APPLICATION_SUPPORT_DIRECTORY = @"~/Library/Application Support";
 static NSString *SUPPORT_DIRECTORY = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
-static NSString* WINDOW_ARRANGEMENTS = @"Window Arrangements";
 
 // Comparator for sorting encodings
 static NSInteger _compareEncodingByLocalizedName(id a, id b, void *unused)
@@ -269,16 +268,38 @@ static BOOL IsSnowLeopardOrLater() {
     [NSApp _cycleWindowsReversed:NO];
 }
 
-- (BOOL)hasWindowArrangement
-{
-    return [[[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS] objectForKey:DEFAULT_ARRANGEMENT_NAME] != nil;
+- (NSString *)_showAlertWithText:(NSString *)prompt defaultInput:(NSString *)defaultValue {
+    NSAlert *alert = [NSAlert alertWithMessageText:prompt
+                                     defaultButton:@"OK"
+                                   alternateButton:@"Cancel"
+                                       otherButton:nil
+                         informativeTextWithFormat:@""];
+    
+    NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
+    [input setStringValue:defaultValue];
+    [alert setAccessoryView:input];
+    NSInteger button = [alert runModal];
+    if (button == NSAlertDefaultReturn) {
+        [input validateEditing];
+        return [input stringValue];
+    } else if (button == NSAlertAlternateReturn) {
+        return nil;
+    } else {
+        NSAssert1(NO, @"Invalid input dialog button %d", button);
+        return nil;
+    }
 }
 
 - (void)saveWindowArrangement
 {
-    if ([self hasWindowArrangement]) {
+    NSString *name = [self _showAlertWithText:@"Name for saved window arrangement:"
+                                 defaultInput:[NSString stringWithFormat:@"Arrangement %d", 1+[[ArrangementsModel sharedInstance] count]]];
+    if (!name) {
+        return;
+    }
+    if ([[ArrangementsModel sharedInstance] hasWindowArrangement:name]) {
         if (NSRunAlertPanel(@"Replace Existing Saved Window Arrangement?",
-                            @"There is an existing saved window arrangement. Would you like to replace it with the current arrangement?",
+                            @"There is an existing saved window arrangement with this name. Would you like to replace it with the current arrangement?",
                             @"Yes",
                             @"No",
                             nil) != NSAlertDefaultReturn) {
@@ -291,23 +312,18 @@ static BOOL IsSnowLeopardOrLater() {
             [terminalArrangements addObject:[terminal arrangement]];
         }
     }
-    NSMutableDictionary* arrangements = [NSMutableDictionary dictionaryWithObject:terminalArrangements
-                                                                           forKey:DEFAULT_ARRANGEMENT_NAME];
-    [[NSUserDefaults standardUserDefaults] setObject:arrangements forKey:WINDOW_ARRANGEMENTS];
-
-    // Post a notification
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSavedArrangementChanged"
-                                                        object:nil
-                                                      userInfo:nil];
+    
+    [[ArrangementsModel sharedInstance] setArrangement:terminalArrangements withName:name];
 }
 
 - (void)loadWindowArrangement
 {
-    NSDictionary* arrangements = [[NSUserDefaults standardUserDefaults] objectForKey:WINDOW_ARRANGEMENTS];
-    NSArray* terminalArrangements = [arrangements objectForKey:DEFAULT_ARRANGEMENT_NAME];
-    for (NSDictionary* terminalArrangement in terminalArrangements) {
-        PseudoTerminal* term = [PseudoTerminal terminalWithArrangement:terminalArrangement];
-        [self addInTerminals:term];
+    NSArray* terminalArrangements = [[ArrangementsModel sharedInstance] arrangementWithName:nil];
+    if (terminalArrangements) {
+        for (NSDictionary* terminalArrangement in terminalArrangements) {
+            PseudoTerminal* term = [PseudoTerminal terminalWithArrangement:terminalArrangement];
+            [self addInTerminals:term];
+        }
     }
 }
 

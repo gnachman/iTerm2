@@ -240,6 +240,18 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     }
 }
 
++ (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame
+{
+    Bookmark* theBookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:[[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK] objectForKey:KEY_GUID]];
+    if (!theBookmark) {
+        theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
+    }
+    //    [self setForegroundColor:[ITAddressBookMgr decodeColor:[aDict objectForKey:KEY_FOREGROUND_COLOR]]];
+    [[ITAddressBookMgr decodeColor:[theBookmark objectForKey:KEY_BACKGROUND_COLOR]] set];
+    NSRectFill(frame);
+}
+
+
 + (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement inView:(SessionView*)sessionView inTab:(PTYTab*)theTab
 {
     PTYSession* aSession = [[[PTYSession alloc] init] autorelease];

@@ -208,6 +208,9 @@ typedef enum {
     NSMutableSet *broadcastViewIds_;
 }
 
++ (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
+                  screenFrames:(NSArray *)frames;
+
 // Initialize a new PseudoTerminal.
 // smartLayout: If true then position windows using the "smart layout"
 //   algorithm.

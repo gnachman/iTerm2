@@ -17,6 +17,8 @@
 		1D237D90131D8BEE004DD60C /* FindView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D237D8E131D8BEE004DD60C /* FindView.xib */; };
 		1D237D94131D8D66004DD60C /* FindViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D237D92131D8D66004DD60C /* FindViewController.h */; };
 		1D237D95131D8D66004DD60C /* FindViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D237D93131D8D66004DD60C /* FindViewController.m */; };
+		1D2560AA13EE60E4006B35CD /* ArrangementPreviewView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */; };
+		1D2560AB13EE60E4006B35CD /* ArrangementPreviewView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */; };
 		1D2E802E129DA45A00F3D71E /* PTYTab.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E802C129DA45A00F3D71E /* PTYTab.h */; };
 		1D2E802F129DA45A00F3D71E /* PTYTab.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E802D129DA45A00F3D71E /* PTYTab.m */; };
 		1D2E813112A18F7500F3D71E /* SessionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E812F12A18F7500F3D71E /* SessionView.h */; };
@@ -203,6 +205,9 @@
 		1DAED99312EDF923005E49ED /* iTermSearchField.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DAED99112EDF923005E49ED /* iTermSearchField.m */; };
 		1DB72CF61396059200EB1005 /* xterm-terminfo.txt in Resources */ = {isa = PBXBuildFile; fileRef = 1DB72CF51396059200EB1005 /* xterm-terminfo.txt */; };
 		1DC742A0127C96F90069594C /* IBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC7429F127C96F90069594C /* IBarCursor.png */; };
+		1DCA5ECC13EE4DA800B7725E /* arrangement.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA5ECB13EE4DA800B7725E /* arrangement.png */; };
+		1DCA5ECF13EE507800B7725E /* ArrangementsModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCA5ECD13EE507800B7725E /* ArrangementsModel.h */; };
+		1DCA5ED013EE507800B7725E /* ArrangementsModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DCA5ECE13EE507800B7725E /* ArrangementsModel.m */; };
 		1DCA8BA9121A1B8000ABDEB5 /* PrefsAdvanced.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA3121A1B8000ABDEB5 /* PrefsAdvanced.tiff */; };
 		1DCA8BAA121A1B8000ABDEB5 /* PrefsBookmarks.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA4121A1B8000ABDEB5 /* PrefsBookmarks.tiff */; };
 		1DCA8BAB121A1B8000ABDEB5 /* PrefsDisplay.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA5121A1B8000ABDEB5 /* PrefsDisplay.tiff */; };
@@ -308,6 +313,8 @@
 		1D237D8F131D8BEE004DD60C /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/FindView.xib; sourceTree = "<group>"; };
 		1D237D92131D8D66004DD60C /* FindViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindViewController.h; sourceTree = "<group>"; };
 		1D237D93131D8D66004DD60C /* FindViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FindViewController.m; sourceTree = "<group>"; };
+		1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ArrangementPreviewView.h; sourceTree = "<group>"; };
+		1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ArrangementPreviewView.m; sourceTree = "<group>"; };
 		1D2E802C129DA45A00F3D71E /* PTYTab.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYTab.h; sourceTree = "<group>"; };
 		1D2E802D129DA45A00F3D71E /* PTYTab.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYTab.m; sourceTree = "<group>"; };
 		1D2E812F12A18F7500F3D71E /* SessionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SessionView.h; sourceTree = "<group>"; };
@@ -376,6 +383,9 @@
 		1DAED99112EDF923005E49ED /* iTermSearchField.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSearchField.m; sourceTree = "<group>"; };
 		1DB72CF51396059200EB1005 /* xterm-terminfo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "xterm-terminfo.txt"; sourceTree = "<group>"; };
 		1DC7429F127C96F90069594C /* IBarCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = IBarCursor.png; path = images/IBarCursor.png; sourceTree = "<group>"; };
+		1DCA5ECB13EE4DA800B7725E /* arrangement.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = arrangement.png; path = images/arrangement.png; sourceTree = "<group>"; };
+		1DCA5ECD13EE507800B7725E /* ArrangementsModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ArrangementsModel.h; sourceTree = "<group>"; };
+		1DCA5ECE13EE507800B7725E /* ArrangementsModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ArrangementsModel.m; sourceTree = "<group>"; };
 		1DCA8BA3121A1B8000ABDEB5 /* PrefsAdvanced.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsAdvanced.tiff; path = images/PrefsAdvanced.tiff; sourceTree = "<group>"; };
 		1DCA8BA4121A1B8000ABDEB5 /* PrefsBookmarks.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsBookmarks.tiff; path = images/PrefsBookmarks.tiff; sourceTree = "<group>"; };
 		1DCA8BA5121A1B8000ABDEB5 /* PrefsDisplay.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsDisplay.tiff; path = images/PrefsDisplay.tiff; sourceTree = "<group>"; };
@@ -679,6 +689,10 @@
 				1D44218B1290B34500891504 /* TextViewWrapper.m */,
 				E8CF7562026DDA6303A80106 /* VT100Screen.m */,
 				E8CF7563026DDA6303A80106 /* VT100Terminal.m */,
+				1DCA5ECD13EE507800B7725E /* ArrangementsModel.h */,
+				1DCA5ECE13EE507800B7725E /* ArrangementsModel.m */,
+				1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */,
+				1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -813,6 +827,7 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1DCA5ECB13EE4DA800B7725E /* arrangement.png */,
 				1D8F396A13EB7A2C0025B80B /* BroadcastInput.png */,
 				1D395912134E75B5005A8021 /* SmartSelectionRules.plist */,
 				1DA02CFA1327612600D7E7DB /* bell.png */,
@@ -1125,6 +1140,8 @@
 				1DA8117E13CEA30A00CCA89A /* FontSizeEstimator.h in Headers */,
 				1DF0895B13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h in Headers */,
 				1DF0895D13DBAE1F00A52AD8 /* NSImage+CoreImage.h in Headers */,
+				1DCA5ECF13EE507800B7725E /* ArrangementsModel.h in Headers */,
+				1D2560AA13EE60E4006B35CD /* ArrangementPreviewView.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1299,6 +1316,7 @@
 				1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */,
 				1DB72CF61396059200EB1005 /* xterm-terminfo.txt in Resources */,
 				1D8F396B13EB7A2C0025B80B /* BroadcastInput.png in Resources */,
+				1DCA5ECC13EE4DA800B7725E /* arrangement.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1409,6 +1427,8 @@
 				1DA8117F13CEA30A00CCA89A /* FontSizeEstimator.m in Sources */,
 				1DF0895C13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m in Sources */,
 				1DF0895E13DBAE1F00A52AD8 /* NSImage+CoreImage.m in Sources */,
+				1DCA5ED013EE507800B7725E /* ArrangementsModel.m in Sources */,
+				1D2560AB13EE60E4006B35CD /* ArrangementPreviewView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
