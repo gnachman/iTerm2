@@ -912,15 +912,22 @@ NSString *sessionsKey = @"sessions";
     double yScale = virtualScreenFrame.size.height / screenFrame.size.height;
     double xOrigin = virtualScreenFrame.origin.x;
     double yOrigin = virtualScreenFrame.origin.y;
-    
+
     NSRect rect;
     if (windowType == WINDOW_TYPE_FULL_SCREEN || windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
         rect = virtualScreenFrame;
     } else if (windowType == WINDOW_TYPE_NORMAL) {
         rect.origin.x = xOrigin + xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
-        rect.origin.y = yOrigin + yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
+        double h = [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+        double y = [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
+        // y is distance from bottom of screen to bottom of window
+        y += h;
+        // y is distance from bottom of screen to top of window
+        y = screenFrame.size.height - y;
+        // y is distance from top of screen to top of window
+        rect.origin.y = yOrigin + yScale * y;
         rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
-        rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+        rect.size.height = yScale * h;
     } else if (windowType == WINDOW_TYPE_TOP) {
         rect.origin.x = xOrigin;
         rect.origin.y = yOrigin;
@@ -934,7 +941,7 @@ NSString *sessionsKey = @"sessions";
     NSFrameRect(rect);
 
     int N = [(NSDictionary *)[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_TABS] count];
-    [[NSColor windowBackgroundColor] set];
+    [[NSColor windowFrameColor] set];
     double y;
     if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
         y = rect.origin.y + rect.size.height - 10;
@@ -942,19 +949,20 @@ NSString *sessionsKey = @"sessions";
         y = rect.origin.y;
     }
     NSRectFill(NSMakeRect(rect.origin.x + 1, y, rect.size.width - 2, 10));
-    
+
     double x = 1;
     [[NSColor darkGrayColor] set];
+    double step = MIN(20, floor((rect.size.width - 2) / N));
     for (int i = 0; i < N; i++) {
-        NSFrameRect(NSMakeRect(rect.origin.x + x, y, rect.size.width / N, 9));
-        x += floor((rect.size.width - 2) / N);
+        NSRectFill(NSMakeRect(rect.origin.x + x + 1, y + 1, step - 2, 8));
+        x += step;
     }
 
     NSDictionary* tabArrangement = [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_TABS] objectAtIndex:0];
     [PTYTab drawArrangementPreview:tabArrangement frame:NSMakeRect(rect.origin.x + 1,
                                                                    ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) ? rect.origin.y : rect.origin.y + 10,
                                                                    rect.size.width - 2,
-                                                                   rect.size.height - 10)];
+                                                                   rect.size.height - 11)];
 }
 
 + (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement

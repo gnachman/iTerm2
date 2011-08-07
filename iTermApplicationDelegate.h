@@ -76,6 +76,7 @@ void DebugLog(NSString* value);
     IBOutlet NSMenuItem *toggleBookmarksView;
     IBOutlet NSMenuItem *irNext;
     IBOutlet NSMenuItem *irPrev;
+    IBOutlet NSMenuItem *windowArrangements_;
 
     IBOutlet NSMenuItem *secureInput;
     IBOutlet NSMenuItem *showFullScreenTabs;

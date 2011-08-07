@@ -156,8 +156,8 @@ static float versionNumber;
 - (void)_savedArrangementChanged:(id)sender
 {
     [openArrangementAtStartup setState:defaultOpenArrangementAtStartup ? NSOnState : NSOffState];
-    [openArrangementAtStartup setEnabled:[arrangements_ count] > 0];
-    if ([arrangements_ count] == 0) {
+    [openArrangementAtStartup setEnabled:[ArrangementsModel count] > 0];
+    if ([ArrangementsModel count] == 0) {
         [openArrangementAtStartup setState:NO];
     }
 }
@@ -928,7 +928,7 @@ static float versionNumber;
     defaultHotkeyChar = [prefs objectForKey:@"HotkeyChar"]?[[prefs objectForKey:@"HotkeyChar"] intValue]: 0;
     defaultHotkeyModifiers = [prefs objectForKey:@"HotkeyModifiers"]?[[prefs objectForKey:@"HotkeyModifiers"] intValue]: 0;
     defaultSavePasteHistory = [prefs objectForKey:@"SavePasteHistory"]?[[prefs objectForKey:@"SavePasteHistory"] boolValue]: NO;
-    if ([arrangements_ count] > 0) {
+    if ([ArrangementsModel count] > 0) {
         defaultOpenArrangementAtStartup = [prefs objectForKey:@"OpenArrangementAtStartup"]?[[prefs objectForKey:@"OpenArrangementAtStartup"] boolValue]: NO;
     } else {
         defaultOpenArrangementAtStartup = NO;
@@ -1151,8 +1151,8 @@ static float versionNumber;
     [showBookmarkName setState: defaultShowBookmarkName?NSOnState:NSOffState];
     [savePasteHistory setState: defaultSavePasteHistory?NSOnState:NSOffState];
     [openArrangementAtStartup setState:defaultOpenArrangementAtStartup ? NSOnState : NSOffState];
-    [openArrangementAtStartup setEnabled:[arrangements_ count] > 0];
-    if ([arrangements_ count] == 0) {
+    [openArrangementAtStartup setEnabled:[ArrangementsModel count] > 0];
+    if ([ArrangementsModel count] == 0) {
         [openArrangementAtStartup setState:NO];
     }
     [hotkey setState: defaultHotkey?NSOnState:NSOffState];

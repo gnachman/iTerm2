@@ -164,10 +164,10 @@ static BOOL hasBecomeActive = NO;
             [self showBookmarkWindow:nil];
             if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
                 // Open both bookmark window and arrangement!
-                [[iTermController sharedInstance] loadWindowArrangement];
+                [[iTermController sharedInstance] loadWindowArrangementWithName:[ArrangementsModel defaultArrangementName]];
             }
         } else if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
-            [[iTermController sharedInstance] loadWindowArrangement];
+            [[iTermController sharedInstance] loadWindowArrangementWithName:[ArrangementsModel defaultArrangementName]];
         } else {
             [self newWindow:nil];
         }
@@ -407,6 +407,11 @@ static BOOL hasBecomeActive = NO;
                                                  name:@"nonTerminalWindowBecameKey"
                                                object:nil];
 
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(windowArrangementsDidChange:)
+                                                 name:@"iTermSavedArrangementChanged"
+                                               object:nil];
+
     [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self
                                                        andSelector:@selector(getUrl:withReplyEvent:)
                                                      forEventClass:kInternetEventClass
@@ -418,9 +423,41 @@ static BOOL hasBecomeActive = NO;
     return self;
 }
 
+- (void)_updateArrangementsMenu
+{
+    while ([[windowArrangements_ submenu] numberOfItems]) {
+        [[windowArrangements_ submenu] removeItemAtIndex:0];
+    }
+
+    NSString *defaultName = [ArrangementsModel defaultArrangementName];
+
+    for (NSString *theName in [ArrangementsModel allNames]) {
+        NSString *theShortcut;
+        if ([theName isEqualToString:defaultName]) {
+            theShortcut = @"R";
+        } else {
+            theShortcut = @"";
+        }
+        [[windowArrangements_ submenu] addItemWithTitle:theName
+                                                 action:@selector(restoreWindowArrangement:)
+                                          keyEquivalent:theShortcut];
+    }
+}
+
+- (void)windowArrangementsDidChange:(id)sender
+{
+    [self _updateArrangementsMenu];
+}
+
+- (void)restoreWindowArrangement:(id)sender
+{
+    [[iTermController sharedInstance] loadWindowArrangementWithName:[sender title]];
+}
+
 - (void)awakeFromNib
 {
     secureInputDesired_ = [[[NSUserDefaults standardUserDefaults] objectForKey:@"Secure Input"] boolValue];
+    [self _updateArrangementsMenu];
 }
 
 - (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent
@@ -1033,7 +1070,7 @@ void DebugLog(NSString* value)
 
 - (IBAction)loadWindowArrangement:(id)sender
 {
-    [[iTermController sharedInstance] loadWindowArrangement];
+    [[iTermController sharedInstance] loadWindowArrangementWithName:[ArrangementsModel defaultArrangementName]];
 }
 
 // TODO(georgen): Disable "Edit Current Session..." when there are no current sessions.

@@ -98,7 +98,7 @@ BOOL IsLionOrLater(void);
 - (int)allocateWindowNumber;
 
 - (void)saveWindowArrangement;
-- (void)loadWindowArrangement;
+- (void)loadWindowArrangementWithName:(NSString *)theName;
 
 - (PseudoTerminal *)currentTerminal;
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
