@@ -470,6 +470,9 @@ typedef struct PTYFontInfo PTYFontInfo;
                      endX:(int *)endx
                      endY:(int *)endy;
 
+- (double)perceivedBrightness:(NSColor*)c;
+- (void)drawOutlineInRect:(NSRect)rect topOnly:(BOOL)topOnly;
+
 @end
 
 //
@@ -566,6 +569,5 @@ typedef enum {
 // Returns true if any onscreen char is blinking.
 - (BOOL)_markChangedSelectionAndBlinkDirty:(BOOL)redrawBlink width:(int)width;
 
-- (double)_perceivedBrightness:(NSColor*)c;
 @end
 

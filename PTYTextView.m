@@ -443,7 +443,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [color retain];
     defaultBGColor = color;
     PTYScroller *scroller = (PTYScroller*)[[[dataSource session] SCROLLVIEW] verticalScroller];
-    BOOL isDark = ([self _perceivedBrightness:color] < kBackgroundConsideredDarkThreshold);
+    BOOL isDark = ([self perceivedBrightness:color] < kBackgroundConsideredDarkThreshold);
     backgroundBrightness_ = PerceivedBrightness([color redComponent], [color greenComponent], [color blueComponent]);
     [scroller setHasDarkBackground:isDark];
     [self setNeedsDisplay:YES];
@@ -1522,6 +1522,53 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                   fromRect:NSMakeRect(0, 0, size.width, size.height)
                  operation:NSCompositeSourceOver
                   fraction:flashing_];
+    }
+
+    [self drawOutlineInRect:rect topOnly:NO];
+}
+
+- (void)drawOutlineInRect:(NSRect)rect topOnly:(BOOL)topOnly
+{
+    if ([[[dataSource session] tab] hasMaximizedPane]) {
+        NSColor *color;
+        double brightness = [self perceivedBrightness:[self defaultBGColor]];
+        if (brightness > 0.5) {
+            color = [NSColor colorWithCalibratedWhite:pow(brightness - 0.5, 2)
+                                                alpha:1];
+        } else {
+            color = [NSColor colorWithCalibratedWhite:0.5 + pow(brightness, 2) alpha:1];
+        }
+        NSRect frame = [self visibleRect];
+        if (!topOnly) {
+            if (frame.origin.y < VMARGIN) {
+                frame.size.height += (VMARGIN - frame.origin.y);
+                frame.origin.y -= (VMARGIN - frame.origin.y);
+            }
+        }
+        NSBezierPath *path = [[[NSBezierPath alloc] init] autorelease];
+        CGFloat left = frame.origin.x + 0.5;
+        CGFloat right = frame.origin.x + frame.size.width - 0.5;
+        CGFloat top = frame.origin.y + 0.5;
+        CGFloat bottom = frame.origin.y + frame.size.height - 0.5;
+
+        if (topOnly) {
+            [path moveToPoint:NSMakePoint(left, top + VMARGIN)];
+            [path lineToPoint:NSMakePoint(left, top)];
+            [path lineToPoint:NSMakePoint(right, top)];
+            [path lineToPoint:NSMakePoint(right, top + VMARGIN)];
+        } else {
+            [path moveToPoint:NSMakePoint(left, top + VMARGIN)];
+            [path lineToPoint:NSMakePoint(left, top)];
+            [path lineToPoint:NSMakePoint(right, top)];
+            [path lineToPoint:NSMakePoint(right, bottom)];
+            [path lineToPoint:NSMakePoint(left, bottom)];
+            [path lineToPoint:NSMakePoint(left, top + VMARGIN)];
+        }
+
+        CGFloat dashPattern[2] = { 5, 5 };
+        [path setLineDash:dashPattern count:2 phase:0];
+        [color set];
+        [path stroke];
     }
 }
 
@@ -4379,6 +4426,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return [self contentFromX:x1 Y:yStart ToX:x2 Y:y2 pad: YES];
 }
 
+- (double)perceivedBrightness:(NSColor*) c
+{
+    return PerceivedBrightness([c redComponent], [c greenComponent], [c blueComponent]);
+}
+
 @end
 
 //
@@ -4593,11 +4645,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                             currentRun->numCodes);
     }
     return newRuns;
-}
-
-- (double)_perceivedBrightness:(NSColor*) c
-{
-    return PerceivedBrightness([c redComponent], [c greenComponent], [c blueComponent]);
 }
 
 - (NSColor*)colorWithRed:(double)r green:(double)g blue:(double)b alpha:(double)a withPerceivedBrightness:(CGFloat)t
@@ -5617,7 +5664,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (double)_brightnessOfCharBackground:(screen_char_t)c
 {
-    return [self _perceivedBrightness:[[self _charBackground:c] colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
+    return [self perceivedBrightness:[[self _charBackground:c] colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
 }
 
 // Return the value in 'values' closest to target.
@@ -5764,7 +5811,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 }
 
                 NSMutableArray* constraints = [NSMutableArray arrayWithCapacity:2];
-                CGFloat bgBrightness = [self _perceivedBrightness:[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
+                CGFloat bgBrightness = [self perceivedBrightness:[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
                 if (x1 > 0) {
                     [constraints addObject:[NSNumber numberWithDouble:[self _brightnessOfCharBackground:theLine[x1 - 1]]]];
                 }
@@ -5843,8 +5890,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                            alternateSemantics:fgAlt
                                                                          bold:screenChar.bold
                                                                  isBackground:NO] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-                            CGFloat fgBrightness = [self _perceivedBrightness:proposedForeground];
-                            CGFloat bgBrightness = [self _perceivedBrightness:[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
+                            CGFloat fgBrightness = [self perceivedBrightness:proposedForeground];
+                            CGFloat bgBrightness = [self perceivedBrightness:[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
                             NSColor* overrideColor = nil;
                             if (!frameOnly && fabs(fgBrightness - bgBrightness) < 0.5) {
                                 // foreground and background are very similar. Just use black and

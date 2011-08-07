@@ -39,6 +39,8 @@
                                       [self frame].size.width,
                                       VMARGIN)
                    toPoint:NSMakePoint(0, VMARGIN)];
+
+    [child_ drawOutlineInRect:rect topOnly:YES];
 }
 
 - (void)addSubview:(PTYTextView*)child
