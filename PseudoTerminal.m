@@ -167,7 +167,9 @@ NSString *sessionsKey = @"sessions";
 
 @implementation PseudoTerminal
 
-- (id)initWithSmartLayout:(BOOL)smartLayout windowType:(int)windowType screen:(int)screenNumber
+- (id)initWithSmartLayout:(BOOL)smartLayout
+               windowType:(int)windowType
+                   screen:(int)screenNumber
 {
     PTYWindow *myWindow;
 
@@ -193,7 +195,7 @@ NSString *sessionsKey = @"sessions";
             screenNumber = n;
         }
     }
-    if (windowType == WINDOW_TYPE_TOP) {
+    if (windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_BOTTOM) {
         smartLayout = NO;
     }
     if (windowType == WINDOW_TYPE_NORMAL) {
@@ -226,6 +228,7 @@ NSString *sessionsKey = @"sessions";
     NSRect initialFrame;
     switch (windowType) {
         case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
             initialFrame = [screen visibleFrame];
             break;
 
@@ -282,6 +285,7 @@ NSString *sessionsKey = @"sessions";
                            NSTexturedBackgroundWindowMask;
     switch (windowType) {
         case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
             styleMask = NSBorderlessWindowMask;
             break;
 
@@ -297,7 +301,7 @@ NSString *sessionsKey = @"sessions";
                                             styleMask:styleMask
                                               backing:NSBackingStoreBuffered
                                                 defer:NO];
-    if (windowType == WINDOW_TYPE_TOP) {
+    if (windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_BOTTOM) {
         [myWindow setHasShadow:YES];
     }
     [myWindow _setContentHasShadow:NO];
@@ -933,6 +937,11 @@ NSString *sessionsKey = @"sessions";
         rect.origin.y = yOrigin;
         rect.size.width = virtualScreenFrame.size.width;
         rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+    } else if (windowType == WINDOW_TYPE_BOTTOM) {
+        rect.origin.x = xOrigin;
+        rect.size.width = virtualScreenFrame.size.width;
+        rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
+        rect.origin.y = virtualScreenFrame.size.height - rect.size.height;
     }
 
     [[NSColor blackColor] set];
@@ -1253,6 +1262,20 @@ NSString *sessionsKey = @"sessions";
             [[self window] setFrame:frame display:YES];
             break;
 
+        case WINDOW_TYPE_BOTTOM:
+            frame.size.width = [screen visibleFrame].size.width;
+            frame.origin.x = [screen visibleFrame].origin.x;
+            if ([[self window] alphaValue] == 0) {
+                // Is hidden hotkey window
+                frame.origin.y = [screen visibleFrame].origin.y - frame.size.height;
+            } else {
+                // Normal case
+                frame.origin.y = [screen visibleFrame].origin.y;
+            }
+
+            [[self window] setFrame:frame display:YES];
+            break;
+
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_FULL_SCREEN:
             [[self window] setFrame:[screen frame] display:YES];
@@ -1538,7 +1561,7 @@ NSString *sessionsKey = @"sessions";
 - (void)toggleTraditionalFullScreenMode
 {
     [SessionView windowDidResize];
-    if (windowType_ == WINDOW_TYPE_TOP) {
+    if (windowType_ == WINDOW_TYPE_TOP || windowType_ == WINDOW_TYPE_BOTTOM) {
         // TODO: would be nice if you could toggle top windows to fullscreen
         return;
     }
@@ -2959,10 +2982,16 @@ NSString *sessionsKey = @"sessions";
     frame.origin.y -= heightChange;
 
     [[[self window] contentView] setAutoresizesSubviews:NO];
-    if (windowType_ == WINDOW_TYPE_TOP) {
+    if (windowType_ == WINDOW_TYPE_TOP || windowType_ == WINDOW_TYPE_BOTTOM) {
         frame.size.width = [[self window] frame].size.width;
         frame.origin.x = [[self window] frame].origin.x;
     }
+
+    // Set the origin again to the bottom of screen
+    if (windowType_ == WINDOW_TYPE_BOTTOM) {
+        frame.origin.y = self.screen.visibleFrame.origin.y;
+    }
+
     BOOL didResize = NSEqualRects([[self window] frame], frame);
     [[self window] setFrame:frame display:YES];
     [[[self window] contentView] setAutoresizesSubviews:YES];
@@ -3489,7 +3518,9 @@ NSString *sessionsKey = @"sessions";
 {
     if (![[PreferencePanel sharedInstance] showWindowBorder]) {
         return NO;
-    } else if ([self anyFullScreen] || windowType_ == WINDOW_TYPE_TOP) {
+    } else if ([self anyFullScreen] ||
+               windowType_ == WINDOW_TYPE_TOP ||
+               windowType_ == WINDOW_TYPE_BOTTOM) {
         return NO;
     } else {
         return YES;
@@ -3502,7 +3533,9 @@ NSString *sessionsKey = @"sessions";
     BOOL topTabBar = ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab);
     if (![[PreferencePanel sharedInstance] showWindowBorder]) {
         return NO;
-    } else if ([self anyFullScreen] || windowType_ == WINDOW_TYPE_TOP) {
+    } else if ([self anyFullScreen] ||
+               windowType_ == WINDOW_TYPE_TOP ||
+               windowType_ == WINDOW_TYPE_BOTTOM) {
         // Only normal windows can have a left border
         return NO;
     } else if (![bottomBar isHidden]) {
@@ -3524,7 +3557,9 @@ NSString *sessionsKey = @"sessions";
 {
     if (![[PreferencePanel sharedInstance] showWindowBorder]) {
         return NO;
-    } else if ([self anyFullScreen] || windowType_ == WINDOW_TYPE_TOP) {
+    } else if ([self anyFullScreen] ||
+               windowType_ == WINDOW_TYPE_TOP ||
+               windowType_ == WINDOW_TYPE_BOTTOM) {
         return NO;
     } else if (![self scrollbarShouldBeVisible]) {
         // hidden scrollbar
@@ -3852,7 +3887,8 @@ NSString *sessionsKey = @"sessions";
                                  horizontalSpacing:[[tempPrefs objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
                                    verticalSpacing:[[tempPrefs objectForKey:KEY_VERTICAL_SPACING] floatValue]];
 
-    if (windowType_ == WINDOW_TYPE_TOP) {
+    if (windowType_ == WINDOW_TYPE_TOP ||
+        windowType_ == WINDOW_TYPE_BOTTOM) {
         NSRect windowFrame = [[self window] frame];
         BOOL hasScrollbar = [self scrollbarShouldBeVisible];
         NSSize contentSize = [PTYScrollView contentSizeForFrameSize:windowFrame.size
