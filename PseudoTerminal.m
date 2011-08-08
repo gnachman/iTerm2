@@ -1526,6 +1526,8 @@ NSString *sessionsKey = @"sessions";
 {
     if ([self lionFullScreen] ||
         (windowType_ != WINDOW_TYPE_FULL_SCREEN &&
+         windowType_ != WINDOW_TYPE_TOP &&
+         windowType_ != WINDOW_TYPE_BOTTOM &&
          IsLionOrLater() &&
          [[PreferencePanel sharedInstance] lionStyleFullscreen])) {
         // Is 10.7 Lion or later.
