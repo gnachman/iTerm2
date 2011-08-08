@@ -63,6 +63,10 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #include <sys/time.h>
 #include <math.h>
 
+// When performing the "find cursor" action, a gray window is shown with a
+// transparent "hole" around the cursor. This is the radius of that hole in
+// pixels.
+const double kFindCursorHoleRadius = 30;
 
 @implementation FindCursorView
 
@@ -78,9 +82,8 @@ static const int MAX_WORKING_DIR_COUNT = 50;
     double y = cursor.y;
 
     const double numSteps = 2;
-    const double finalRadius = 30;
     const double stepSize = 2;
-    const double initialRadius = finalRadius + numSteps * stepSize;
+    const double initialRadius = kFindCursorHoleRadius + numSteps * stepSize;
     double a = initialAlpha;
     for (double focusRadius = initialRadius; a > 0 && focusRadius >= initialRadius - numSteps * stepSize; focusRadius -= stepSize) {
         [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
@@ -4224,7 +4227,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
-- (NSPoint)globalCursorLocation
+- (NSPoint)cursorLocationInScreenCoordinates
 {
     NSRect frame = [self visibleRect];
     double x = MARGIN + charWidth * ([dataSource cursorX] - 1) + charWidth/2;
@@ -4239,22 +4242,47 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return p;
 }
 
+// Returns the location of the cursor relative to the origin of findCursorWindow_.
+- (NSPoint)globalCursorLocation
+{
+    NSPoint p = [self cursorLocationInScreenCoordinates];
+    p = [findCursorWindow_ convertScreenToBase:p];
+    return p;
+}
+
+// Returns the proper frame for findCursorWindow_, including every screen that the
+// "hole" will be in.
+- (NSRect)_cursorScreenFrame
+{
+    NSRect frame = NSZeroRect;
+    for (NSScreen *aScreen in [NSScreen screens]) {
+        NSRect screenFrame = [aScreen frame];
+        if (NSIntersectsRect([[self window] frame], screenFrame)) {
+            frame = NSUnionRect(frame, screenFrame);
+        }
+    }
+    if (NSEqualRects(frame, NSZeroRect)) {
+        frame = [[self window] frame];
+    }
+    return frame;
+}
+
 - (void)createFindCursorWindow
 {
-    findCursorWindow_ = [[NSWindow alloc] initWithContentRect:[[[self window] screen] frame]
+    findCursorWindow_ = [[NSWindow alloc] initWithContentRect:NSZeroRect
                                                     styleMask:NSBorderlessWindowMask
                                                       backing:NSBackingStoreBuffered
-                                                        defer:YES
-                                                       screen:[[self window] screen]];
+                                                        defer:YES];
     [findCursorWindow_ setOpaque:NO];
     [findCursorWindow_ makeKeyAndOrderFront:nil];
     [findCursorWindow_ setLevel:NSFloatingWindowLevel];
     [findCursorWindow_ setAlphaValue:0];
+    [findCursorWindow_ setFrame:[self _cursorScreenFrame] display:YES];
     [[NSAnimationContext currentContext] setDuration:0.5];
     [[findCursorWindow_ animator] setAlphaValue:1];
-    NSPoint p = [self globalCursorLocation];
 
     findCursorView_ = [[FindCursorView alloc] initWithFrame:NSMakeRect(0, 0, [[self window] frame].size.width, [[self window] frame].size.height)];
+    NSPoint p = [self globalCursorLocation];
     findCursorView_.cursor = p;
     [findCursorWindow_ setContentView:findCursorView_];
     [findCursorView_ release];
