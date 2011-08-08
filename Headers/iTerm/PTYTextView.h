@@ -54,6 +54,17 @@ struct PTYFontInfo {
 };
 typedef struct PTYFontInfo PTYFontInfo;
 
+@interface FindCursorView : NSView {
+    NSPoint cursor;
+    double phase;
+}
+
+@property (nonatomic, assign) NSPoint cursor;
+@property (nonatomic, assign) double phase;
+
+@end
+
+
 @interface PTYTextView : NSView <NSTextInput>
 {
     // This is a flag to let us know whether we are handling this
@@ -256,6 +267,11 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Dim everything but the default background color.
     BOOL dimOnlyText_;
+
+    // For find-cursor animation
+    NSWindow *findCursorWindow_;
+    FindCursorView *findCursorView_;
+    NSTimer *findCursorTeardownTimer_;
 }
 
 + (NSCursor *)textViewCursor;

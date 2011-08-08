@@ -613,7 +613,10 @@ NSString *sessionsKey = @"sessions";
 // Save the current scroll position
 - (IBAction)saveScrollPosition:(id)sender
 {
+    [[[self currentSession] TEXTVIEW] beginFindCursor];
+#if 0
     [[self currentSession] saveScrollPosition];
+#endif
 }
 
 // Jump to the saved scroll position

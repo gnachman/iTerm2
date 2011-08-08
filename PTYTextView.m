@@ -63,6 +63,52 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #include <sys/time.h>
 #include <math.h>
 
+
+@implementation FindCursorView
+
+@synthesize cursor;
+@synthesize phase;
+
+- (void)drawRect:(NSRect)dirtyRect
+{
+    NSLog(@"rect %@", [NSValue valueWithRect:dirtyRect]);
+    [[NSColor colorWithDeviceWhite:0.5 alpha:0.7] set];
+    NSRectFill(dirtyRect);
+        
+    NSRect frame = [self frame];
+    double x = cursor.x;
+    double y = cursor.y;
+
+    double focusRadius = 40;
+    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
+    NSBezierPath *circle = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(x - focusRadius, y - focusRadius, focusRadius*2, focusRadius*2)];
+    [[NSColor colorWithDeviceWhite:1 alpha:0] set];
+    [circle fill];
+    
+#if 0
+    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
+    [[NSColor colorWithDeviceWhite:1 alpha:sin(M_PI * (1 - phase))] set];
+    NSRectFill(NSMakeRect(0, y-2, frame.size.width, 4));
+    NSRectFill(NSMakeRect(x-2, frame.origin.y, 4, frame.size.height));
+    
+    [[NSColor colorWithDeviceWhite:0 alpha:sin(M_PI * (1 - phase))] set];
+    NSRectFill(NSMakeRect(0, y-1, frame.size.width, 2));
+    NSRectFill(NSMakeRect(x-1, frame.origin.y, 2, frame.size.height));
+#endif
+    /*
+    double xRadius = MAX(x, frame.size.width - x) * phase;
+    double yRadius = MAX(y, frame.size.height - y) * phase;
+    double radius = MAX(xRadius, yRadius);
+    NSRect rect = NSMakeRect(x - radius, y - radius, radius * 2, radius * 2);
+    circle = [NSBezierPath bezierPathWithOvalInRect:rect];
+    [[NSColor redColor] set];
+    [circle setLineWidth:4];
+    [circle stroke];
+*/
+}
+@end
+
+
 // Minimum distance that the mouse must move before a cmd+drag will be
 // recognized as a drag.
 static const int kDragThreshold = 3;
@@ -4149,8 +4195,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     selectionScrollDirection = 0;
 }
 
-// Called form a timer. Update the alpha value for the graphic and request
-// that the vie be redrawn.
+// Called from a timer. Update the alpha value for the graphic and request
+// that the view be redrawn.
 - (void)setFlashAlpha
 {
     NSDate* now = [NSDate date];
@@ -4191,6 +4237,56 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Turn the image to opaque and ask to redraw the screen.
     flashing_ = 1;
     [self setNeedsDisplay:YES];
+}
+
+- (void)createFullScreenWindow
+{
+    findCursorWindow_ = [[NSWindow alloc] initWithContentRect:[[[self window] screen] frame]
+                                                    styleMask:NSBorderlessWindowMask
+                                                      backing:NSBackingStoreBuffered
+                                                        defer:NO
+                                                       screen:[[self window] screen]];
+    [findCursorWindow_ setOpaque:NO];
+    [findCursorWindow_ makeKeyAndOrderFront:nil];
+    [findCursorWindow_ setLevel:NSFloatingWindowLevel];
+    [findCursorWindow_ setAlphaValue:0];
+    [[NSAnimationContext currentContext] setDuration:0.5];
+    [[findCursorWindow_ animator] setAlphaValue:1];
+    NSRect frame = [self visibleRect];
+    double x = MARGIN + charWidth * ([dataSource cursorX] - 1) + charWidth/2;
+    double y = frame.origin.y + VMARGIN + lineHeight * ([dataSource cursorY] - 1) + lineHeight/2;
+    
+    NSPoint p = NSMakePoint(x, y);
+    p = [self convertPoint:p toView:nil];
+    p = [[self window] convertBaseToScreen:p];
+
+    findCursorView_ = [[FindCursorView alloc] initWithFrame:NSMakeRect(0, 0, [[self window] frame].size.width, [[self window] frame].size.height)];
+    findCursorView_.cursor = p;
+    findCursorView_.phase = 1;
+    [findCursorWindow_ setContentView:findCursorView_];
+    [findCursorView_ release];
+}
+
+- (void)beginFindCursor
+{
+    if (!findCursorView_ || findCursorView_.phase) {
+        [self createFullScreenWindow];
+    } else {
+        [findCursorWindow_ setAlphaValue:1];
+        [findCursorTeardownTimer_ invalidate];
+    }
+}
+
+- (void)endFindCursor
+{
+    [[findCursorWindow_ animator] setAlphaValue:0];
+    findCursorTeardownTimer_ = [NSTimer scheduledTimerWithTimeInterval:[[NSAnimationContext currentContext] duration]
+                                                                target:findCursorWindow_
+                                                              selector:@selector(close)
+                                                              userInfo:nil
+                                                               repeats:NO];
+    findCursorWindow_ = nil;
+    findCursorView_ = nil;
 }
 
 - (void)drawFlippedBackground:(NSRect)bgRect toPoint:(NSPoint)dest
