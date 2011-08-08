@@ -6,7 +6,7 @@
  **  Copyright (c) 2002, 2003
  **
  **  Author: Fabian, Ujwal S. Setlur
- **	     Initial code by Kiichi Kusama
+ **      Initial code by Kiichi Kusama
  **
  **  Project: iTerm
  **
@@ -49,21 +49,26 @@
 
 @interface PTYScrollView : NSScrollView
 {
-	NSImage *backgroundImage;
-	float transparency;
+    NSImage *backgroundImage;
+    float transparency;
+
+    // Used for working around Lion bug described in setHasVerticalScroller:inInit:
+    NSDate *creationDate_;
+    NSTimer *timer_;
 }
 
 - (void) dealloc;
-- (id)initWithFrame:(NSRect)frame;
+- (id)initWithFrame:(NSRect)frame hasVerticalScroller:(BOOL)hasVerticalScroller;
 - (void)scrollWheel:(NSEvent *)theEvent;
 - (void)detectUserScroll;
 
 // background image
-- (NSImage *) backgroundImage;
-- (void) setBackgroundImage: (NSImage *) anImage;
+- (NSImage *)backgroundImage;
+- (void)setBackgroundImage: (NSImage *) anImage;
 - (void)drawBackgroundImageRect:(NSRect)rect useTransparency:(BOOL)useTransparency;
 - (void)drawBackgroundImageRect:(NSRect)rect toPoint:(NSPoint)dest useTransparency:(BOOL)useTransparency;
-- (float) transparency;
-- (void) setTransparency: (float) theTransparency;
+- (float)transparency;
+- (void)setTransparency: (float) theTransparency;
+- (void)bugfixSetHasVerticalScroller:(BOOL)flag;
 
 @end

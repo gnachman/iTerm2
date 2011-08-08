@@ -66,7 +66,12 @@ typedef enum {
 // This class is 1:1 with windows. It controls the tabs, bottombar, toolbar,
 // fullscreen, and coordinates resizing of sessions (either session-initiated
 // or window-initiated).
-@interface PseudoTerminal : NSWindowController <PTYTabViewDelegateProtocol, PTYWindowDelegateProtocol, WindowControllerInterface, NSWindowDelegate>
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
+@interface PseudoTerminal : NSWindowController <PTYTabViewDelegateProtocol, PTYWindowDelegateProtocol, WindowControllerInterface , NSWindowDelegate>
+#else
+// OS 10.5 doesn't support window delegates
+@interface PseudoTerminal : NSWindowController <PTYTabViewDelegateProtocol, PTYWindowDelegateProtocol, WindowControllerInterface>
+#endif
 {
     NSPoint preferredOrigin_;
     SolidColorView* background_;

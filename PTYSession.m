@@ -304,9 +304,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     }
 
     // Allocate a scrollview
-    SCROLLVIEW = [[PTYScrollView alloc] initWithFrame: NSMakeRect(0, 0, aRect.size.width, aRect.size.height)];
-    [SCROLLVIEW setHasVerticalScroller:(![parent anyFullScreen] &&
-                                        ![[PreferencePanel sharedInstance] hideScrollbar])];
+    SCROLLVIEW = [[PTYScrollView alloc] initWithFrame:NSMakeRect(0, 0, aRect.size.width, aRect.size.height)
+                                  hasVerticalScroller:(![parent anyFullScreen] &&
+                                                       ![[PreferencePanel sharedInstance] hideScrollbar])];
     NSParameterAssert(SCROLLVIEW != nil);
     [SCROLLVIEW setAutoresizingMask: NSViewWidthSizable|NSViewHeightSizable];
 
