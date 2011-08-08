@@ -610,13 +610,19 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (IBAction)findCursor:(id)sender
+{
+    [[[self currentSession] TEXTVIEW] beginFindCursor:YES];
+    if (!(GetCurrentKeyModifiers() & cmdKey)) {
+        [[[self currentSession] TEXTVIEW] placeFindCursorOnAutoHide];
+    }
+    findCursorStartTime_ = [[NSDate date] timeIntervalSince1970];
+}
+
 // Save the current scroll position
 - (IBAction)saveScrollPosition:(id)sender
 {
-    [[[self currentSession] TEXTVIEW] beginFindCursor];
-#if 0
     [[self currentSession] saveScrollPosition];
-#endif
 }
 
 // Jump to the saved scroll position
@@ -1294,6 +1300,12 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidResignKey:(NSNotification *)aNotification
 {
+    for (PTYSession *aSession in [self sessions]) {
+        if ([[aSession TEXTVIEW] isFindingCursor]) {
+            [[aSession TEXTVIEW] endFindCursor];
+        }
+    }
+
     PtyLog(@"PseudoTerminal windowDidResignKey");
     if ([[self window] alphaValue] > 0 &&
         [self isHotKeyWindow] &&
@@ -3631,6 +3643,20 @@ NSString *sessionsKey = @"sessions";
 
 - (void)flagsChanged:(NSEvent *)theEvent
 {
+    NSUInteger modifierFlags = [theEvent modifierFlags];
+    if (!(modifierFlags & NSCommandKeyMask) &&
+        [[[self currentSession] TEXTVIEW] isFindingCursor]) {
+        // The cmd key was let up while finding the cursor
+
+        if ([[NSDate date] timeIntervalSinceDate:[NSDate dateWithTimeIntervalSince1970:findCursorStartTime_]] > kFindCursorHoldTime) {
+            // The time for it to hide automatically has passed, so just hide it
+            [[[self currentSession] TEXTVIEW] endFindCursor];
+        } else {
+            // Hide it after the minimum time
+            [[[self currentSession] TEXTVIEW] placeFindCursorOnAutoHide];
+        }
+    }
+
     if (!_fullScreen) {
         return;
     }
@@ -3638,7 +3664,6 @@ NSString *sessionsKey = @"sessions";
         // Being shown non-temporarily
         return;
     }
-    NSUInteger modifierFlags = [theEvent modifierFlags];
     if ((modifierFlags & NSDeviceIndependentModifierFlagsMask) == NSCommandKeyMask &&  // you pressed exactly cmd
         ([tabBarBackground isHidden] || [tabBarBackground alphaValue] == 0) &&  // the tab bar is not visible
         fullScreenTabviewTimer_ == nil) {  // not in the middle of doing this already

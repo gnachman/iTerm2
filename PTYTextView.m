@@ -67,44 +67,29 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 @implementation FindCursorView
 
 @synthesize cursor;
-@synthesize phase;
 
 - (void)drawRect:(NSRect)dirtyRect
 {
-    NSLog(@"rect %@", [NSValue valueWithRect:dirtyRect]);
-    [[NSColor colorWithDeviceWhite:0.5 alpha:0.7] set];
+    const double initialAlpha = 0.7;
+    [[NSColor colorWithDeviceWhite:0.5 alpha:initialAlpha] set];
     NSRectFill(dirtyRect);
-        
-    NSRect frame = [self frame];
+
     double x = cursor.x;
     double y = cursor.y;
 
-    double focusRadius = 40;
-    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
-    NSBezierPath *circle = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(x - focusRadius, y - focusRadius, focusRadius*2, focusRadius*2)];
-    [[NSColor colorWithDeviceWhite:1 alpha:0] set];
-    [circle fill];
-    
-#if 0
-    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
-    [[NSColor colorWithDeviceWhite:1 alpha:sin(M_PI * (1 - phase))] set];
-    NSRectFill(NSMakeRect(0, y-2, frame.size.width, 4));
-    NSRectFill(NSMakeRect(x-2, frame.origin.y, 4, frame.size.height));
-    
-    [[NSColor colorWithDeviceWhite:0 alpha:sin(M_PI * (1 - phase))] set];
-    NSRectFill(NSMakeRect(0, y-1, frame.size.width, 2));
-    NSRectFill(NSMakeRect(x-1, frame.origin.y, 2, frame.size.height));
-#endif
-    /*
-    double xRadius = MAX(x, frame.size.width - x) * phase;
-    double yRadius = MAX(y, frame.size.height - y) * phase;
-    double radius = MAX(xRadius, yRadius);
-    NSRect rect = NSMakeRect(x - radius, y - radius, radius * 2, radius * 2);
-    circle = [NSBezierPath bezierPathWithOvalInRect:rect];
-    [[NSColor redColor] set];
-    [circle setLineWidth:4];
-    [circle stroke];
-*/
+    const double numSteps = 2;
+    const double finalRadius = 30;
+    const double stepSize = 2;
+    const double initialRadius = finalRadius + numSteps * stepSize;
+    double a = initialAlpha;
+    for (double focusRadius = initialRadius; a > 0 && focusRadius >= initialRadius - numSteps * stepSize; focusRadius -= stepSize) {
+        [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeCopy];
+        NSBezierPath *circle = [NSBezierPath bezierPathWithOvalInRect:NSMakeRect(x - focusRadius, y - focusRadius, focusRadius*2, focusRadius*2)];
+        a -= initialAlpha / numSteps;
+        a = MAX(0, a);
+        [[NSColor colorWithDeviceWhite:0.5 alpha:a] set];
+        [circle fill];
+    }
 }
 @end
 
@@ -4239,12 +4224,27 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
-- (void)createFullScreenWindow
+- (NSPoint)globalCursorLocation
+{
+    NSRect frame = [self visibleRect];
+    double x = MARGIN + charWidth * ([dataSource cursorX] - 1) + charWidth/2;
+    double y = frame.origin.y + VMARGIN + lineHeight * ([dataSource cursorY] - 1) + lineHeight/2;
+    if ([self hasMarkedText]) {
+        x = imeCursorLastPos_.x + 1;
+        y = imeCursorLastPos_.y + lineHeight / 2;
+    }
+    NSPoint p = NSMakePoint(x, y);
+    p = [self convertPoint:p toView:nil];
+    p = [[self window] convertBaseToScreen:p];
+    return p;
+}
+
+- (void)createFindCursorWindow
 {
     findCursorWindow_ = [[NSWindow alloc] initWithContentRect:[[[self window] screen] frame]
                                                     styleMask:NSBorderlessWindowMask
                                                       backing:NSBackingStoreBuffered
-                                                        defer:NO
+                                                        defer:YES
                                                        screen:[[self window] screen]];
     [findCursorWindow_ setOpaque:NO];
     [findCursorWindow_ makeKeyAndOrderFront:nil];
@@ -4252,37 +4252,79 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [findCursorWindow_ setAlphaValue:0];
     [[NSAnimationContext currentContext] setDuration:0.5];
     [[findCursorWindow_ animator] setAlphaValue:1];
-    NSRect frame = [self visibleRect];
-    double x = MARGIN + charWidth * ([dataSource cursorX] - 1) + charWidth/2;
-    double y = frame.origin.y + VMARGIN + lineHeight * ([dataSource cursorY] - 1) + lineHeight/2;
-    
-    NSPoint p = NSMakePoint(x, y);
-    p = [self convertPoint:p toView:nil];
-    p = [[self window] convertBaseToScreen:p];
+    NSPoint p = [self globalCursorLocation];
 
     findCursorView_ = [[FindCursorView alloc] initWithFrame:NSMakeRect(0, 0, [[self window] frame].size.width, [[self window] frame].size.height)];
     findCursorView_.cursor = p;
-    findCursorView_.phase = 1;
     [findCursorWindow_ setContentView:findCursorView_];
     [findCursorView_ release];
+
+    findCursorBlinkTimer_ = [NSTimer scheduledTimerWithTimeInterval:0.1
+                                                             target:self
+                                                           selector:@selector(invalidateCursor)
+                                                           userInfo:nil
+                                                            repeats:YES];
 }
 
-- (void)beginFindCursor
+- (void)invalidateCursor
 {
-    if (!findCursorView_ || findCursorView_.phase) {
-        [self createFullScreenWindow];
+    [self setNeedsDisplay:YES];
+}
+
+- (void)beginFindCursor:(BOOL)hold
+{
+    [self showCursor];
+    if (!findCursorView_) {
+        [self createFindCursorWindow];
     } else {
         [findCursorWindow_ setAlphaValue:1];
-        [findCursorTeardownTimer_ invalidate];
     }
+    [findCursorTeardownTimer_ invalidate];
+    autoHideFindCursor_ = NO;
+    if (hold) {
+        findCursorTeardownTimer_ = [NSTimer scheduledTimerWithTimeInterval:kFindCursorHoldTime
+                                                                    target:self
+                                                                  selector:@selector(startCloseFindCursorWindow)
+                                                                  userInfo:nil
+                                                                   repeats:NO];
+    } else {
+        findCursorTeardownTimer_ = nil;
+    }
+}
+
+- (void)placeFindCursorOnAutoHide
+{
+    autoHideFindCursor_ = YES;
+}
+
+- (BOOL)isFindingCursor
+{
+    return findCursorView_ != nil;
+}
+
+- (void)startCloseFindCursorWindow
+{
+    findCursorTeardownTimer_ = nil;
+    if (autoHideFindCursor_ && [self isFindingCursor]) {
+        [self endFindCursor];
+    }
+}
+
+- (void)closeFindCursorWindow
+{
+    [findCursorWindow_ close];
+    [findCursorBlinkTimer_ invalidate];
+    findCursorBlinkTimer_ = nil;
+    findCursorTeardownTimer_ = nil;
 }
 
 - (void)endFindCursor
 {
     [[findCursorWindow_ animator] setAlphaValue:0];
+    [findCursorTeardownTimer_ invalidate];
     findCursorTeardownTimer_ = [NSTimer scheduledTimerWithTimeInterval:[[NSAnimationContext currentContext] duration]
-                                                                target:findCursorWindow_
-                                                              selector:@selector(close)
+                                                                target:self
+                                                              selector:@selector(closeFindCursorWindow)
                                                               userInfo:nil
                                                                repeats:NO];
     findCursorWindow_ = nil;
@@ -5717,6 +5759,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                         cursorY,
                                         2.0,
                                         cursorHeight);
+        imeCursorLastPos_ = cursorFrame.origin;
+        if ([self isFindingCursor]) {
+            NSPoint cp = [self globalCursorLocation];
+            if (!NSEqualPoints(findCursorView_.cursor, cp)) {
+                findCursorView_.cursor = cp;
+                [findCursorView_ setNeedsDisplay:YES];
+            }
+        }
         [[self _dimmedColorFrom:[NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:1]] set];
         NSRectFill(cursorFrame);
 
@@ -5811,6 +5861,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return bestValue;
 }
 
+- (NSColor *)_randomColor
+{
+    double r = arc4random() % 256;
+    double g = arc4random() % 256;
+    double b = arc4random() % 256;
+    return [NSColor colorWithDeviceRed:r/255.0
+                                 green:g/255.0
+                                  blue:b/255.0
+                                 alpha:1];
+}
+
 - (void)_drawCursorTo:(NSPoint*)toOrigin
 {
     int WIDTH, HEIGHT;
@@ -5889,7 +5950,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             curX = floor(x1 * charWidth + MARGIN);
             curY = toOrigin ? toOrigin->y + (yStart + 1) * lineHeight - cursorHeight :
                 (yStart + [dataSource numberOfLines] - HEIGHT + 1) * lineHeight - cursorHeight;
-
+            if (!toOrigin && [self isFindingCursor]) {
+                NSPoint cp = [self globalCursorLocation];
+                if (!NSEqualPoints(findCursorView_.cursor, cp)) {
+                    findCursorView_.cursor = cp;
+                    [findCursorView_ setNeedsDisplay:YES];
+                }
+            }
             NSColor *bgColor;
             if (colorInvertedCursor) {
                 if (reversed) {
@@ -5929,6 +5996,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             } else {
                 bgColor = [self defaultCursorColor];
                 [[bgColor colorWithAlphaComponent:alpha] set];
+            }
+            if ([self isFindingCursor]) {
+                [[self _randomColor] set];
             }
 
             BOOL frameOnly;

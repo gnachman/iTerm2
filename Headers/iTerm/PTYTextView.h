@@ -41,6 +41,8 @@
 
 @class VT100Screen;
 
+// Amount of time to highlight the cursor after beginFindCursor:YES
+static const double kFindCursorHoldTime = 1;
 enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_SMART, SELECT_BOX };
 
 // A collection of data about a font.
@@ -56,11 +58,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 
 @interface FindCursorView : NSView {
     NSPoint cursor;
-    double phase;
 }
 
 @property (nonatomic, assign) NSPoint cursor;
-@property (nonatomic, assign) double phase;
 
 @end
 
@@ -272,6 +272,9 @@ typedef struct PTYFontInfo PTYFontInfo;
     NSWindow *findCursorWindow_;
     FindCursorView *findCursorView_;
     NSTimer *findCursorTeardownTimer_;
+    NSTimer *findCursorBlinkTimer_;
+    BOOL autoHideFindCursor_;
+    NSPoint imeCursorLastPos_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -476,6 +479,11 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (BOOL)isAnyCharSelected;
 
 - (void)clearMatches;
+
+- (void)placeFindCursorOnAutoHide;
+- (BOOL)isFindingCursor;
+- (void)beginFindCursor:(BOOL)hold;
+- (void)endFindCursor;
 
 // Clear working directories for when buffer is cleared
 - (void)clearWorkingDirectories;

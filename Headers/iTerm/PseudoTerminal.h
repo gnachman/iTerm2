@@ -211,6 +211,7 @@ typedef enum {
     BOOL temporarilyShowingTabs_;
 
     NSMutableSet *broadcastViewIds_;
+    NSTimeInterval findCursorStartTime_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
@@ -274,6 +275,8 @@ typedef enum {
 - (void)closeSession:(PTYSession *)aSession;
 
 - (void)toggleFullScreenTabBar;
+
+- (IBAction)findCursor:(id)sender;
 
 // Close the active session.
 - (IBAction)closeCurrentSession:(id)sender;

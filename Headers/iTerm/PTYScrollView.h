@@ -69,6 +69,5 @@
 - (void)drawBackgroundImageRect:(NSRect)rect toPoint:(NSPoint)dest useTransparency:(BOOL)useTransparency;
 - (float)transparency;
 - (void)setTransparency: (float) theTransparency;
-- (void)bugfixSetHasVerticalScroller:(BOOL)flag;
 
 @end
