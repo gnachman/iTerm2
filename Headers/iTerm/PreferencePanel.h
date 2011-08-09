@@ -391,6 +391,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* disableSmcupRmcup;
     IBOutlet NSButton* scrollbackWithStatusBar;
     IBOutlet NSButton* bookmarkGrowlNotifications;
+    IBOutlet NSButton *autoLog;
+    IBOutlet NSTextField *logDir;
+    IBOutlet NSButton *changeLogDir;
+    IBOutlet NSImageView *logDirWarning;
     IBOutlet NSTextField* scrollbackLines;
     IBOutlet NSButton* unlimitedScrollback;
     IBOutlet NSComboBox* terminalType;
@@ -577,6 +581,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme;
 - (void)disconnectHandlerForScheme:(NSString*)scheme;
 - (IBAction)closeWindow:(id)sender;
+- (IBAction)selectLogDir:(id)sender;
 - (void)controlTextDidChange:(NSNotification *)aNotification;
 - (void)textDidChange:(NSNotification *)aNotification;
 - (BOOL)onScreen;

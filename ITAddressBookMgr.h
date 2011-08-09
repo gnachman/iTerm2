@@ -133,6 +133,8 @@
 #define KEY_TERMINAL_TYPE                     @"Terminal Type"
 #define KEY_SEND_CODE_WHEN_IDLE               @"Send Code When Idle"
 #define KEY_IDLE_CODE                         @"Idle Code"
+#define KEY_AUTOLOG                           @"Automatically Log"
+#define KEY_LOGDIR                            @"Log Directory"
 
 // Keyboard
 #define KEY_KEYBOARD_MAP                      @"Keyboard Map"

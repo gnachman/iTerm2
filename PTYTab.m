@@ -717,7 +717,7 @@ static NSString* FormatRect(NSRect r) {
 {
     for (id subview in [node subviews]) {
         if ([subview isKindOfClass:[NSSplitView class]]) {
-            [self _recursiveSessions:sessionViews atNode:(NSSplitView*)subview];
+            [self _recursiveSessionViews:sessionViews atNode:(NSSplitView*)subview];
         } else {
             SessionView* sessionView = (SessionView*)subview;
             if (sessionView) {

@@ -25,6 +25,7 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <stdlib.h>
 #import <iTerm/PreferencePanel.h>
 #import <iTerm/NSStringITerm.h>
 #import <iTerm/iTermController.h>
@@ -441,6 +442,31 @@ static float versionNumber;
 {
     NSString* COLOR_GALLERY_URL = @"http://www.iterm2.com/colorgallery";
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:COLOR_GALLERY_URL]];
+}
+
+- (BOOL)_logDirIsWritable
+{
+    NSString *dir = [logDir stringValue];
+    if ([[dir stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] length] == 0) {
+        return NO;
+    }
+
+    NSString *filename = [NSString stringWithFormat:@"%@/.testwritable.%d", dir, (int)getpid()];
+    NSError *error = nil;
+    [@"test" writeToFile:filename
+              atomically:YES
+                encoding:NSUTF8StringEncoding
+                   error:&error];
+    if (error) {
+        return NO;
+    }
+    unlink([filename UTF8String]);
+    return YES;
+}
+
+- (void)_updateLogDirWarning
+{
+    [logDirWarning setHidden:[self _logDirIsWritable]];
 }
 
 - (void)setScreens
@@ -2236,6 +2262,11 @@ static float versionNumber;
     [disableSmcupRmcup setState:[[dict objectForKey:KEY_DISABLE_SMCUP_RMCUP] boolValue] ? NSOnState : NSOffState];
     [scrollbackWithStatusBar setState:[[dict objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue] ? NSOnState : NSOffState];
     [bookmarkGrowlNotifications setState:[[dict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue] ? NSOnState : NSOffState];
+    [autoLog setState:[[dict objectForKey:KEY_AUTOLOG] boolValue] ? NSOnState : NSOffState];
+    [logDir setStringValue:[dict objectForKey:KEY_LOGDIR]];
+    [logDir setEnabled:[autoLog state] == NSOnState];
+    [changeLogDir setEnabled:[autoLog state] == NSOnState];
+    [self _updateLogDirWarning];
     [characterEncoding setTitle:[NSString localizedNameOfStringEncoding:[[dict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]]];
     [scrollbackLines setIntValue:[[dict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
     [unlimitedScrollback setState:[[dict objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue] ? NSOnState : NSOffState];
@@ -2584,9 +2615,14 @@ static float versionNumber;
     [newDict setObject:[NSNumber numberWithBool:([disableSmcupRmcup state]==NSOnState)] forKey:KEY_DISABLE_SMCUP_RMCUP];
     [newDict setObject:[NSNumber numberWithBool:([scrollbackWithStatusBar state]==NSOnState)] forKey:KEY_SCROLLBACK_WITH_STATUS_BAR];
     [newDict setObject:[NSNumber numberWithBool:([bookmarkGrowlNotifications state]==NSOnState)] forKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS];
+    [newDict setObject:[NSNumber numberWithBool:([autoLog state]==NSOnState)] forKey:KEY_AUTOLOG];
+    [newDict setObject:[logDir stringValue] forKey:KEY_LOGDIR];
+    [logDir setEnabled:[autoLog state] == NSOnState];
+    [changeLogDir setEnabled:[autoLog state] == NSOnState];
+    [self _updateLogDirWarning];
     [newDict setObject:[NSNumber numberWithUnsignedInt:[[characterEncoding selectedItem] tag]] forKey:KEY_CHARACTER_ENCODING];
     [newDict setObject:[NSNumber numberWithInt:[scrollbackLines intValue]] forKey:KEY_SCROLLBACK_LINES];
-        [newDict setObject:[NSNumber numberWithBool:([unlimitedScrollback state]==NSOnState)] forKey:KEY_UNLIMITED_SCROLLBACK];
+    [newDict setObject:[NSNumber numberWithBool:([unlimitedScrollback state]==NSOnState)] forKey:KEY_UNLIMITED_SCROLLBACK];
     [scrollbackLines setEnabled:[unlimitedScrollback state]==NSOffState];
     if ([unlimitedScrollback state] == NSOnState) {
         [scrollbackLines setStringValue:@""];
@@ -2780,6 +2816,19 @@ static float versionNumber;
     [[self window] close];
 }
 
+- (IBAction)selectLogDir:(id)sender
+{
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    [panel setCanChooseFiles:NO];
+    [panel setCanChooseDirectories:YES];
+    [panel setAllowsMultipleSelection:NO];
+
+    if ([panel runModal] == NSOKButton) {
+        [logDir setStringValue:[panel directory]];
+    }
+    [self _updateLogDirWarning];
+}
+
 // NSTextField delegate
 - (void)controlTextDidChange:(NSNotification *)aNotification
 {
@@ -2794,6 +2843,8 @@ static float versionNumber;
                obj == initialText ||
                obj == idleCode) {
         [self bookmarkSettingChanged:nil];
+    } else if (obj == logDir) {
+        [self _updateLogDirWarning];
     } else if (obj == tagFilter) {
         NSLog(@"Tag filter changed");
     }
@@ -3346,6 +3397,8 @@ static float versionNumber;
         KEY_XTERM_MOUSE_REPORTING,
         KEY_DISABLE_SMCUP_RMCUP,
         KEY_BOOKMARK_GROWL_NOTIFICATIONS,
+        KEY_AUTOLOG,
+        KEY_LOGDIR,
         KEY_CHARACTER_ENCODING,
         KEY_SCROLLBACK_LINES,
         KEY_SCROLLBACK_WITH_STATUS_BAR,

@@ -44,7 +44,7 @@
 #import "SessionView.h"
 #import "PTYTab.h"
 #import "ProcessCache.h"
-
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
 #include <sys/time.h>
@@ -469,6 +469,16 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     }
 }
 
+- (NSString *)_autoLogFilenameForTermId:(NSString *)termid
+{
+    return [NSString stringWithFormat:@"%@/%@.%@.%d.%0x.log",
+            [addressBookEntry objectForKey:KEY_LOGDIR],
+            termid,
+            [[[NSDate date] description] stringByReplacingOccurrencesOfString:@"/" withString:@"."],
+            (int)getpid(),
+            (int)arc4random()];
+}
+
 - (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv
          environment:(NSDictionary *)prog_env
@@ -511,6 +521,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                          [tab_ indexOfSessionView:[self view]]];
     [env setObject:itermId forKey:@"ITERM_SESSION_ID"];
 
+    if ([[addressBookEntry objectForKey:KEY_AUTOLOG] boolValue]) {
+        [SHELL loggingStartWithPath:[self _autoLogFilenameForTermId:itermId]];
+    }
     [SHELL launchWithPath:path
                 arguments:argv
               environment:env
