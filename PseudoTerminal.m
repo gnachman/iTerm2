@@ -3694,7 +3694,8 @@ NSString *sessionsKey = @"sessions";
 {
     [fullScreenTabviewTimer_ release];
     fullScreenTabviewTimer_ = nil;
-    if (_fullScreen) {
+    // Don't show the tabbar if you're holding cmd while doing find cursor
+    if (_fullScreen && ![[[self currentSession] TEXTVIEW] isFindingCursor]) {
         [self showFullScreenTabControl];
     }
 }

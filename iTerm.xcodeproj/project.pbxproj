@@ -1586,7 +1586,7 @@
 				PRODUCT_NAME = iTerm;
 				SDKROOT = macosx10.5;
 				SECTORDER_FLAGS = "";
-				VALID_ARCHS = "i386 x86_64 ppc";
+				VALID_ARCHS = "i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = YES;
@@ -1618,7 +1618,7 @@
 				OTHER_LDFLAGS = "-licucore";
 				PRODUCT_NAME = iTerm;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "i386 x86_64 ppc";
+				VALID_ARCHS = "i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -1652,7 +1652,7 @@
 				REZ_EXECUTABLE = YES;
 				SDKROOT = macosx10.5;
 				SECTORDER_FLAGS = "";
-				VALID_ARCHS = "i386 x86_64 ppc";
+				VALID_ARCHS = "i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
 			};
@@ -1676,7 +1676,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "i386 x86_64 ppc";
+				VALID_ARCHS = "i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 			};
 			name = Development;
@@ -1684,11 +1684,7 @@
 		BB024D3B096EE4080021E793 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					i386,
-					x86_64,
-					ppc,
-				);
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_VERSION = 4.2;
@@ -1697,7 +1693,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "i386 x86_64 ppc";
+				VALID_ARCHS = "i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 			};
 			name = Deployment;
@@ -1705,11 +1701,7 @@
 		BB024D3C096EE4080021E793 /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					i386,
-					x86_64,
-					ppc,
-				);
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_VERSION = 4.2;
 				GCC_WARN_PROTOTYPE_CONVERSION = NO;
@@ -1717,7 +1709,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "i386 x86_64 ppc";
+				VALID_ARCHS = "i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 			};
 			name = Default;

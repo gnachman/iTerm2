@@ -105,6 +105,9 @@ BOOL IsLionOrLater(void);
 - (NSArray*)sortedEncodingList;
 - (void)addBookmarksToMenu:(NSMenu *)aMenu startingAt:(int)startingAt;
 - (void)addBookmarksToMenu:(NSMenu *)aMenu withSelector:(SEL)selector openAllSelector:(SEL)openAllSelector startingAt:(int)startingAt;
+- (id)launchBookmark:(NSDictionary *)bookmarkData
+               inTerminal:(PseudoTerminal *)theTerm
+    disableLionFullscreen:(BOOL)disableLionFullscreen;
 - (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm;
 - (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm withCommand:(NSString *)command;
 - (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm withURL:(NSString*)url;

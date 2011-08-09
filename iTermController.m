@@ -786,7 +786,9 @@ static BOOL IsSnowLeopardOrLater() {
 }
 
 // Executes an addressbook command in new window or tab
-- (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm
+- (id)launchBookmark:(NSDictionary *)bookmarkData
+               inTerminal:(PseudoTerminal *)theTerm
+    disableLionFullscreen:(BOOL)disableLionFullscreen
 {
     PseudoTerminal *term;
     NSDictionary *aDict;
@@ -806,8 +808,12 @@ static BOOL IsSnowLeopardOrLater() {
     BOOL toggle = NO;
     if (theTerm == nil) {
         [iTermController switchToSpaceInBookmark:aDict];
+        int windowType = [self _windowTypeForBookmark:aDict];
+        if (windowType == WINDOW_TYPE_LION_FULL_SCREEN && disableLionFullscreen) {
+            windowType = WINDOW_TYPE_FULL_SCREEN;
+        }
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
-                                                 windowType:[self _windowTypeForBookmark:aDict]
+                                                 windowType:windowType
                                                      screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
         [self addInTerminals:term];
         toggle = ([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
@@ -828,6 +834,11 @@ static BOOL IsSnowLeopardOrLater() {
     }
 
     return session;
+}
+
+- (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm
+{
+    return [self launchBookmark:bookmarkData inTerminal:theTerm disableLionFullscreen:NO];
 }
 
 // I don't think this function is ever called.
@@ -1214,7 +1225,7 @@ static BOOL OpenHotkeyWindow()
                             forKey:KEY_WINDOW_TYPE];
             bookmark = replacement;
         }
-        PTYSession* session = [cont launchBookmark:bookmark inTerminal:nil];
+        PTYSession* session = [cont launchBookmark:bookmark inTerminal:nil disableLionFullscreen:YES];
         PseudoTerminal* term = [[session tab] realParentWindow];
         [term setIsHotKeyWindow:YES];
 
