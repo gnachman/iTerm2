@@ -3261,6 +3261,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return NO;
 }
 
+- (BOOL)_haveShortSelection
+{
+    return startX > -1 && abs(startY - endY) <= 1;
+}
+
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
 {
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
@@ -3287,6 +3292,32 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Allocate a menu
     theMenu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
+
+    if ([self _haveShortSelection]) {
+        NSString *text = [self selectedText];
+        if ([text intValue]) {
+            [theMenu addItemWithTitle:[NSString stringWithFormat:@"%d = 0x%x", [text intValue], [text intValue]]
+                               action:@selector(bogusSelector)
+                        keyEquivalent:@""];
+        } else if ([text hasPrefix:@"0x"] && [text length] <= 10) {
+            NSScanner *scanner = [NSScanner scannerWithString:text];
+
+            [scanner setScanLocation:2]; // bypass 0x
+            unsigned result;
+            if ([scanner scanHexInt:&result]) {
+                if ((int)result >= 0) {
+                    [theMenu addItemWithTitle:[NSString stringWithFormat:@"0x%x = %d", result, result]
+                                       action:@selector(bogusSelector)
+                                keyEquivalent:@""];
+                } else {
+                    [theMenu addItemWithTitle:[NSString stringWithFormat:@"0x%x = %d or %u", result, result, result]
+                                       action:@selector(bogusSelector)
+                                keyEquivalent:@""];
+                }
+            }
+        }
+        [theMenu addItem:[NSMenuItem separatorItem]];
+    }
 
     // Menu items for acting on text selections
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Open Selection as URL",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
