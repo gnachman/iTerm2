@@ -88,9 +88,9 @@ static BOOL hasBecomeActive = NO;
     // set the TERM_PROGRAM environment variable
     putenv("TERM_PROGRAM=iTerm.app");
 
-        [self buildScriptMenu:nil];
+    [self buildScriptMenu:nil];
 
-        // read preferences
+    // read preferences
     [PreferencePanel migratePreferences];
     [ITAddressBookMgr sharedInstance];
     [PreferencePanel sharedInstance];

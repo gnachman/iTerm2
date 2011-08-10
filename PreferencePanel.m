@@ -44,6 +44,26 @@ NSString* kDeleteKeyString = @"0x7f-0x0";
 
 static float versionNumber;
 
+@interface NSFileManager (TemporaryDirectory)
+
+- (NSString *)temporaryDirectory;
+
+@end
+@implementation NSFileManager (TemporaryDirectory)
+
+- (NSString *)temporaryDirectory
+{
+    // Create a unique directory in the system temporary directory
+    NSString *guid = [[NSProcessInfo processInfo] globallyUniqueString];
+    NSString *path = [NSTemporaryDirectory() stringByAppendingPathComponent:guid];
+    if (![self createDirectoryAtPath:path withIntermediateDirectories:NO attributes:nil error:nil]) {
+        return nil;
+    }
+    return path;
+}
+
+@end
+
 @implementation PreferencePanel
 
 + (PreferencePanel*)sharedInstance;
@@ -115,6 +135,9 @@ static float versionNumber;
     dataSource = model;
     prefs = userDefaults;
     oneBookmarkOnly = NO;
+    if (userDefaults) {
+        [self loadPrefs];
+    }
     [self readPreferences];
     if (defaultEnableBonjour == YES) {
         [[ITAddressBookMgr sharedInstance] locateBonjourServices];
@@ -444,9 +467,8 @@ static float versionNumber;
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:COLOR_GALLERY_URL]];
 }
 
-- (BOOL)_logDirIsWritable
+- (BOOL)_dirIsWritable:(NSString *)dir
 {
-    NSString *dir = [logDir stringValue];
     if ([[dir stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] length] == 0) {
         return NO;
     }
@@ -464,9 +486,31 @@ static float versionNumber;
     return YES;
 }
 
+- (BOOL)_logDirIsWritable
+{
+    return [self _dirIsWritable:[logDir stringValue]];
+}
+
 - (void)_updateLogDirWarning
 {
-    [logDirWarning setHidden:[self _logDirIsWritable]];
+    [logDirWarning setHidden:[autoLog state] == NSOffState || [self _logDirIsWritable]];
+}
+
+- (BOOL)_prefsDirIsWritable
+{
+    return [self _dirIsWritable:defaultPrefsCustomFolder];
+}
+
+- (void)_updatePrefsDirWarning
+{
+    if (([defaultPrefsCustomFolder hasPrefix:@"http://"] ||
+         [defaultPrefsCustomFolder hasPrefix:@"https://"]) &&
+        [NSURL URLWithString:defaultPrefsCustomFolder]) {
+        // Don't warn about URLs, too expensive to check
+        [prefsDirWarning setHidden:YES];
+        return;
+    }
+    [prefsDirWarning setHidden:!defaultLoadPrefsFromCustomFolder || [self _prefsDirIsWritable]];
 }
 
 - (void)setScreens
@@ -564,6 +608,11 @@ static float versionNumber;
     [transparency setContinuous:YES];
     [dimmingAmount setContinuous:YES];
     [minimumContrast setContinuous:YES];
+
+    [prefsCustomFolder setEnabled:defaultLoadPrefsFromCustomFolder];
+    [browseCustomFolder setEnabled:defaultLoadPrefsFromCustomFolder];
+    [pushToCustomFolder setEnabled:defaultLoadPrefsFromCustomFolder];
+    [self _updatePrefsDirWarning];
 }
 
 - (void)handleWindowWillCloseNotification:(NSNotification *)notification
@@ -968,6 +1017,8 @@ static float versionNumber;
     defaultDimmingAmount = [prefs objectForKey:@"SplitPaneDimmingAmount"] ? [[prefs objectForKey:@"SplitPaneDimmingAmount"] floatValue] : 0.4;
     defaultShowWindowBorder = [[prefs objectForKey:@"UseBorder"] boolValue];
     defaultLionStyleFullscreen = [prefs objectForKey:@"UseLionStyleFullscreen"] ? [[prefs objectForKey:@"UseLionStyleFullscreen"] boolValue] : YES;
+    defaultLoadPrefsFromCustomFolder = [prefs objectForKey:@"LoadPrefsFromCustomFolder"] ? [[prefs objectForKey:@"LoadPrefsFromCustomFolder"] boolValue] : NO;
+    defaultPrefsCustomFolder = [prefs objectForKey:@"PrefsCustomFolder"] ? [prefs objectForKey:@"PrefsCustomFolder"] : @"";
 
     defaultControl = [prefs objectForKey:@"Control"] ? [[prefs objectForKey:@"Control"] intValue] : MOD_TAG_CONTROL;
     defaultLeftOption = [prefs objectForKey:@"LeftOption"] ? [[prefs objectForKey:@"LeftOption"] intValue] : MOD_TAG_LEFT_OPTION;
@@ -1103,6 +1154,8 @@ static float versionNumber;
     [prefs setFloat:defaultDimmingAmount forKey:@"SplitPaneDimmingAmount"];
     [prefs setBool:defaultShowWindowBorder forKey:@"UseBorder"];
     [prefs setBool:defaultLionStyleFullscreen forKey:@"UseLionStyleFullscreen"];
+    [prefs setBool:defaultLoadPrefsFromCustomFolder forKey:@"LoadPrefsFromCustomFolder"];
+    [prefs setObject:defaultPrefsCustomFolder forKey:@"PrefsCustomFolder"];
 
     [prefs setInteger:defaultControl forKey:@"Control"];
     [prefs setInteger:defaultLeftOption forKey:@"LeftOption"];
@@ -1201,6 +1254,8 @@ static float versionNumber;
     [dimmingAmount setFloatValue:defaultDimmingAmount];
     [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
     [lionStyleFullscreen setState:defaultLionStyleFullscreen?NSOnState:NSOffState];
+    [loadPrefsFromCustomFolder setState:defaultLoadPrefsFromCustomFolder?NSOnState:NSOffState];
+    [prefsCustomFolder setStringValue:defaultPrefsCustomFolder];
 
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];
@@ -1307,6 +1362,36 @@ static float versionNumber;
 {
     if (sender == lionStyleFullscreen) {
         defaultLionStyleFullscreen = ([lionStyleFullscreen state] == NSOnState);
+    } else if (sender == loadPrefsFromCustomFolder) {
+        defaultLoadPrefsFromCustomFolder = [loadPrefsFromCustomFolder state] == NSOnState;
+        if (defaultLoadPrefsFromCustomFolder) {
+            // Just turned it on.
+            if ([[prefsCustomFolder stringValue] length] == 0) {
+                // Field was initially empty so browse for a dir.
+                [self browseCustomFolder:nil];
+            }
+            if ([prefsDirWarning isHidden]) {
+                // The directory is valid and it's probably the user's first time downt this path.
+                if ([[NSAlert alertWithMessageText:@"Copy local preferences to custom folder now?"
+                                 defaultButton:@"Copy"
+                               alternateButton:@"Cancel"
+                                   otherButton:nil
+                         informativeTextWithFormat:@""] runModal] == NSOKButton) {
+                    [self pushToCustomFolder:nil];
+                }
+            }
+        }
+        [prefsCustomFolder setEnabled:defaultLoadPrefsFromCustomFolder];
+        [browseCustomFolder setEnabled:defaultLoadPrefsFromCustomFolder];
+        [pushToCustomFolder setEnabled:defaultLoadPrefsFromCustomFolder];
+        [self _updatePrefsDirWarning];
+    } else if (sender == prefsCustomFolder) {
+        // The OS will never call us directly with this sender, but we do call ourselves this way.
+        [prefs setObject:[prefsCustomFolder stringValue]
+                  forKey:@"PrefsCustomFolder"];
+        defaultPrefsCustomFolder = [prefs objectForKey:@"PrefsCustomFolder"];
+
+        [self _updatePrefsDirWarning];
     } else if (sender == windowStyle ||
         sender == tabPosition ||
         sender == hideTab ||
@@ -1793,6 +1878,119 @@ static float versionNumber;
     }
 }
 
+- (NSString *)_prefsFilename
+{
+    NSString *prefDir = [[NSHomeDirectory()
+                          stringByAppendingPathComponent:@"Library"]
+                          stringByAppendingPathComponent:@"Preferences"];
+    return [prefDir stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.plist",
+                                                    [[NSBundle mainBundle] bundleIdentifier]]];
+}
+
+- (NSString *)_prefsFilenameWithBaseDir:(NSString *)base
+{
+    return [NSString stringWithFormat:@"%@/%@.plist", base, [[NSBundle mainBundle] bundleIdentifier]];
+}
+
+- (BOOL)loadPrefs
+{
+    static BOOL done;
+    if (done) {
+        return YES;
+    }
+    done = YES;
+
+    BOOL doLoad = [prefs objectForKey:@"LoadPrefsFromCustomFolder"] ? [[prefs objectForKey:@"LoadPrefsFromCustomFolder"] boolValue] : NO;
+    if (!doLoad) {
+        return YES;
+    }
+    NSString *folder = [prefs objectForKey:@"PrefsCustomFolder"] ? [prefs objectForKey:@"PrefsCustomFolder"] : @"";
+    NSString *filename = [self _prefsFilenameWithBaseDir:folder];
+    NSDictionary *remotePrefs;
+    if ([folder hasPrefix:@"http://"] ||
+        [folder hasPrefix:@"https://"]) {
+
+        // Download the URL's contents.
+        NSURL *url = [NSURL URLWithString:folder];
+        const NSTimeInterval kFetchTimeout = 5.0;
+        NSURLRequest *req = [NSURLRequest requestWithURL:url
+                                             cachePolicy:NSURLRequestUseProtocolCachePolicy
+                                         timeoutInterval:kFetchTimeout];
+        NSURLResponse *response = nil;
+        NSError *error = nil;
+
+        NSData *data = [NSURLConnection sendSynchronousRequest:req
+                                             returningResponse:&response
+                                                         error:&error];
+
+        if (!data || error) {
+            [[NSAlert alertWithMessageText:@"Failed to load preferences from URL. Falling back to local copy."
+                             defaultButton:@"OK"
+                           alternateButton:nil
+                               otherButton:nil
+                 informativeTextWithFormat:@"HTTP request failed: %@", [error description] ? [error description] : @"unknown error"] runModal];
+            return NO;
+        }
+
+        // Write it to disk
+        NSFileManager *mgr = [NSFileManager defaultManager];
+        NSString *tempDir = [mgr temporaryDirectory];
+        NSString *tempFile = [tempDir stringByAppendingPathComponent:@"temp.plist"];
+        error = nil;
+        if (![data writeToFile:tempFile options:0 error:&error]) {
+            [[NSAlert alertWithMessageText:@"Failed to write to temp file while getting remote prefs. Falling back to local copy."
+                             defaultButton:@"OK"
+                           alternateButton:nil
+                               otherButton:nil
+                 informativeTextWithFormat:@"Error on file %@: %@", tempFile, [error localizedFailureReason]] runModal];
+            return NO;
+        }
+
+        remotePrefs = [NSDictionary dictionaryWithContentsOfFile:tempFile];
+
+        [mgr removeItemAtPath:tempFile error:nil];
+        [mgr removeItemAtPath:tempDir error:nil];
+    } else {
+        remotePrefs = [NSDictionary dictionaryWithContentsOfFile:filename];
+    }
+
+    if (remotePrefs && [remotePrefs count]) {
+        NSDictionary *localPrefs = [NSDictionary dictionaryWithContentsOfFile:[self _prefsFilename]];
+        // Empty out the current prefs
+        NSArray *exemptKeys = [NSArray arrayWithObjects:@"LoadPrefsFromCustomFolder",
+                               @"PrefsCustomFolder", nil];
+        for (NSString *key in localPrefs) {
+            if (![exemptKeys containsObject:key]) {
+                [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
+            }
+        }
+
+        for (NSString *key in remotePrefs) {
+            if (![exemptKeys containsObject:key]) {
+                [[NSUserDefaults standardUserDefaults] setObject:[remotePrefs objectForKey:key]
+                                                          forKey:key];
+            }
+        }
+        return YES;
+    } else {
+        [[NSAlert alertWithMessageText:@"Failed to load preferences from custom directory. Falling back to local copy."
+                         defaultButton:@"OK"
+                       alternateButton:nil
+                           otherButton:nil
+             informativeTextWithFormat:@"Missing or malformed file at \"%@\"", filename] runModal];
+    }
+    return NO;
+}
+
+- (NSString *)loadPrefsFromCustomFolder
+{
+    if (defaultLoadPrefsFromCustomFolder) {
+        return defaultPrefsCustomFolder;
+    } else {
+        return nil;
+    }
+}
+
 - (BOOL)checkTestRelease
 {
     return defaultCheckTestRelease;
@@ -2263,7 +2461,7 @@ static float versionNumber;
     [scrollbackWithStatusBar setState:[[dict objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue] ? NSOnState : NSOffState];
     [bookmarkGrowlNotifications setState:[[dict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue] ? NSOnState : NSOffState];
     [autoLog setState:[[dict objectForKey:KEY_AUTOLOG] boolValue] ? NSOnState : NSOffState];
-    [logDir setStringValue:[dict objectForKey:KEY_LOGDIR]];
+    [logDir setStringValue:[dict objectForKey:KEY_LOGDIR] ? [dict objectForKey:KEY_LOGDIR] : @""];
     [logDir setEnabled:[autoLog state] == NSOnState];
     [changeLogDir setEnabled:[autoLog state] == NSOnState];
     [self _updateLogDirWarning];
@@ -2448,6 +2646,52 @@ static float versionNumber;
     }
 }
 
+- (IBAction)browseCustomFolder:(id)sender
+{
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    [panel setCanChooseFiles:NO];
+    [panel setCanChooseDirectories:YES];
+    [panel setAllowsMultipleSelection:NO];
+
+    if ([panel runModal] == NSOKButton) {
+        [prefsCustomFolder setStringValue:[panel directory]];
+        [self settingChanged:prefsCustomFolder];
+    }
+}
+
+- (IBAction)pushToCustomFolder:(id)sender
+{
+    [[NSUserDefaults standardUserDefaults] synchronize];
+
+    NSString *folder = [prefs objectForKey:@"PrefsCustomFolder"] ? [prefs objectForKey:@"PrefsCustomFolder"] : @"";
+    NSString *filename = [self _prefsFilenameWithBaseDir:folder];
+    NSFileManager *mgr = [NSFileManager defaultManager];
+
+    // Copy fails if the destination exists.
+    [mgr removeItemAtPath:filename error:nil];
+
+    [self savePreferences];
+    NSDictionary *myDict = [[NSUserDefaults standardUserDefaults] persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
+    BOOL isOk;
+    if ([filename hasPrefix:@"http://"] ||
+        [filename hasPrefix:@"https://"]) {
+        [[NSAlert alertWithMessageText:@"Sorry, preferences cannot be copied to a URL by iTerm2."
+                         defaultButton:@"OK"
+                       alternateButton:nil
+                           otherButton:nil
+             informativeTextWithFormat:@"To make it available, manually copy ~/Library/Preferences/com.googlecode.iterm2.plist to your hosting provider to be served at %@", folder] runModal];
+        return;
+    }
+    isOk = [myDict writeToFile:filename atomically:YES];
+    if (!isOk) {
+        [[NSAlert alertWithMessageText:@"Failed to copy preferences to custom directory."
+                         defaultButton:@"OK"
+                       alternateButton:nil
+                           otherButton:nil
+             informativeTextWithFormat:@"Copy %@ to %@: %s", [self _prefsFilename], filename, strerror(errno)] runModal];
+    }
+}
+
 - (IBAction)bookmarkSettingChanged:(id)sender
 {
     NSString* name = [bookmarkName stringValue];
@@ -2620,6 +2864,7 @@ static float versionNumber;
     [logDir setEnabled:[autoLog state] == NSOnState];
     [changeLogDir setEnabled:[autoLog state] == NSOnState];
     [self _updateLogDirWarning];
+    [self _updatePrefsDirWarning];
     [newDict setObject:[NSNumber numberWithUnsignedInt:[[characterEncoding selectedItem] tag]] forKey:KEY_CHARACTER_ENCODING];
     [newDict setObject:[NSNumber numberWithInt:[scrollbackLines intValue]] forKey:KEY_SCROLLBACK_LINES];
     [newDict setObject:[NSNumber numberWithBool:([unlimitedScrollback state]==NSOnState)] forKey:KEY_UNLIMITED_SCROLLBACK];
@@ -2845,6 +3090,8 @@ static float versionNumber;
         [self bookmarkSettingChanged:nil];
     } else if (obj == logDir) {
         [self _updateLogDirWarning];
+    } else if (obj == prefsCustomFolder) {
+        [self settingChanged:prefsCustomFolder];
     } else if (obj == tagFilter) {
         NSLog(@"Tag filter changed");
     }

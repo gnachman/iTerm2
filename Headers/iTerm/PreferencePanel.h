@@ -205,6 +205,15 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* lionStyleFullscreen;
     BOOL defaultLionStyleFullscreen;
 
+    // Load prefs from custom folder
+    IBOutlet NSButton *loadPrefsFromCustomFolder;
+    BOOL defaultLoadPrefsFromCustomFolder;
+    IBOutlet NSTextField *prefsCustomFolder;
+    NSString *defaultPrefsCustomFolder;
+    IBOutlet NSButton *browseCustomFolder;
+    IBOutlet NSButton *pushToCustomFolder;
+    IBOutlet NSImageView *prefsDirWarning;
+
     // hide scrollbar and resize
     IBOutlet NSButton *hideScrollbar;
     BOOL defaultHideScrollbar;
@@ -463,15 +472,18 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTableColumn* globalActionColumn;
     IBOutlet NSButton* globalRemoveMappingButton;
     IBOutlet NSButton* globalAddNewMapping;
-    
+
     IBOutlet WindowArrangements *arrangements_;
 }
+
+void LoadPrefsFromCustomFolder(void);
 
 typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal, BulkCopyKeyboard } BulkCopySettings;
 
 + (PreferencePanel*)sharedInstance;
 + (PreferencePanel*)sessionsInstance;
 + (BOOL)migratePreferences;
+- (BOOL)loadPrefs;
 - (id)initWithDataSource:(BookmarkModel*)model userDefaults:(NSUserDefaults*)userDefaults;
 - (void)setOneBokmarkOnly;
 - (void)awakeFromNib;
@@ -541,6 +553,7 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 
 - (BOOL)showWindowBorder;
 - (BOOL)lionStyleFullscreen;
+- (NSString *)loadPrefsFromCustomFolder;
 - (BOOL)dimInactiveSplitPanes;
 - (BOOL)dimBackgroundWindows;
 - (BOOL)animateDimming;
@@ -569,6 +582,8 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (IBAction)displaySelectFont:(id)sender;
 - (void)changeFont:(id)fontManager;
 - (NSString*)_chooseBackgroundImage;
+- (IBAction)browseCustomFolder:(id)sender;
+- (IBAction)pushToCustomFolder:(id)sender;
 - (IBAction)bookmarkSettingChanged:(id)sender;
 - (IBAction)copyToProfile:(id)sender;
 - (IBAction)bookmarkUrlSchemeHandlerChanged:(id)sender;
