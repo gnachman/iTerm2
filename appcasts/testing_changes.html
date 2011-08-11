@@ -1,5 +1,30 @@
 These release notes are for the development builds of iTerm2. The last stable release was 1.0.0.
 
+iTerm2 1.0.0.20110810
+Candy!
+
+Major New Features:
+- Add support for loading prefs from a custom folder (e.g., Dropbox) or URL. This makes it easy to share a config between multiple machines or people.
+- Add auto logging of sessions. When enabled (per-profile), all input received from the host in a session is saved to a file tagged with the window, tag, and pane number, plus the time and date of initiation. 
+- Add "find cursor" feature (cmd-/) that highlights the cursor location. Useful when you have a huge terminal, this makes it easy to quickly find a lost cursor. If activated with the shortcut cmd-/, continuing to hold cmd will keep the highlighting active.
+
+Enhancements:
+- For new users, we now hide the tab bar in fullscreen by default (otherwise, use cmd-shift-t to toggle it).
+- Draw a dotted line around maximized sessions.
+- You can toggle send input to all tabs/panes by re-pressing the keystroke that got you into that mode.
+- Add escape code to steal focus: ESC ]50;StealFocus^G  (thanks, gordolio).
+- Add support for multiple saved window arrangements.
+- Add "bottom of screen" window style (thanks, melbic).
+- Add decimal <-> hex conversion to right-click context menu when a number is selected.
+
+Bug fixes:
+- Changes to tab appearance take effect immediately.
+- Fix bug where a white rectangle briefly appears in Lion when opening a new tab.
+- Fix crash due to assertion in setDirtyFromX:Y:toX:Y:
+- Fix bug where fullscreen hotkey windows on Lion tried to use Lion fullscreen.
+- Fix bug where tall windows weren't restored properly.
+
+
 iTerm2 1.0.0.20110804
 A little of this, a little of that.
 

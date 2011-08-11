@@ -1586,7 +1586,7 @@
 				PRODUCT_NAME = iTerm;
 				SDKROOT = macosx10.5;
 				SECTORDER_FLAGS = "";
-				VALID_ARCHS = "i386 x86_64";
+				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = YES;
@@ -1596,6 +1596,7 @@
 		BB024D37096EE4080021E793 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				COPY_PHASE_STRIP = YES;
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
@@ -1618,7 +1619,7 @@
 				OTHER_LDFLAGS = "-licucore";
 				PRODUCT_NAME = iTerm;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "i386 x86_64";
+				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
@@ -1652,7 +1653,7 @@
 				REZ_EXECUTABLE = YES;
 				SDKROOT = macosx10.5;
 				SECTORDER_FLAGS = "";
-				VALID_ARCHS = "i386 x86_64";
+				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
 			};
@@ -1661,7 +1662,10 @@
 		BB024D3A096EE4080021E793 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				ARCHS = (
+					ppc,
+					"$(ARCHS_STANDARD_32_64_BIT)",
+				);
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_VERSION = 4.2;
@@ -1676,7 +1680,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "i386 x86_64";
+				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 			};
 			name = Development;
@@ -1684,7 +1688,10 @@
 		BB024D3B096EE4080021E793 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				ARCHS = (
+					ppc,
+					"$(ARCHS_STANDARD_32_64_BIT)",
+				);
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
 				GCC_VERSION = 4.2;
@@ -1693,7 +1700,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "i386 x86_64";
+				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 			};
 			name = Deployment;
@@ -1701,7 +1708,10 @@
 		BB024D3C096EE4080021E793 /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				ARCHS = (
+					ppc,
+					"$(ARCHS_STANDARD_32_64_BIT)",
+				);
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_VERSION = 4.2;
 				GCC_WARN_PROTOTYPE_CONVERSION = NO;
@@ -1709,7 +1719,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "i386 x86_64";
+				VALID_ARCHS = "ppc i386 x86_64";
 				WARNING_CFLAGS = "-Wall";
 			};
 			name = Default;
@@ -1747,6 +1757,7 @@
 		F69E79310AB8CDD2001EC0FF /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				COPY_PHASE_STRIP = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
