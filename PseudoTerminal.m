@@ -1032,6 +1032,7 @@ NSString *sessionsKey = @"sessions";
         [[term window] setCollectionBehavior:[[term window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
     }
 
+    [term fitTabsToWindow];
     return term;
 }
 
