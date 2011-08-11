@@ -92,8 +92,8 @@ static BOOL hasBecomeActive = NO;
 
     // read preferences
     [PreferencePanel migratePreferences];
-    [ITAddressBookMgr sharedInstance];
     [PreferencePanel sharedInstance];
+    [ITAddressBookMgr sharedInstance];
 
     [self setFutureApplicationPresentationOptions:NSApplicationPresentationFullScreen unset:0];
 }

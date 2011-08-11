@@ -1255,7 +1255,7 @@ static float versionNumber;
     [showWindowBorder setState:defaultShowWindowBorder?NSOnState:NSOffState];
     [lionStyleFullscreen setState:defaultLionStyleFullscreen?NSOnState:NSOffState];
     [loadPrefsFromCustomFolder setState:defaultLoadPrefsFromCustomFolder?NSOnState:NSOffState];
-    [prefsCustomFolder setStringValue:defaultPrefsCustomFolder];
+    [prefsCustomFolder setStringValue:defaultPrefsCustomFolder ? defaultPrefsCustomFolder : @""];
 
     [self showWindow: self];
     [[self window] setLevel:NSNormalWindowLevel];
@@ -1910,8 +1910,10 @@ static float versionNumber;
     if ([folder hasPrefix:@"http://"] ||
         [folder hasPrefix:@"https://"]) {
 
+        filename = folder;
+
         // Download the URL's contents.
-        NSURL *url = [NSURL URLWithString:folder];
+        NSURL *url = [NSURL URLWithString:filename];
         const NSTimeInterval kFetchTimeout = 5.0;
         NSURLRequest *req = [NSURLRequest requestWithURL:url
                                              cachePolicy:NSURLRequestUseProtocolCachePolicy
@@ -2679,7 +2681,7 @@ static float versionNumber;
                          defaultButton:@"OK"
                        alternateButton:nil
                            otherButton:nil
-             informativeTextWithFormat:@"To make it available, manually copy ~/Library/Preferences/com.googlecode.iterm2.plist to your hosting provider to be served at %@", folder] runModal];
+             informativeTextWithFormat:@"To make it available, first quit iTerm2 and then manually copy ~/Library/Preferences/com.googlecode.iterm2.plist to your hosting provider."] runModal];
         return;
     }
     isOk = [myDict writeToFile:filename atomically:YES];

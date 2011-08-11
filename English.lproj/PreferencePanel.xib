@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="1947"/>
+			<integer value="1924"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -973,13 +973,13 @@
 											<object class="NSButton" id="731675876">
 												<reference key="NSNextResponder" ref="505411774"/>
 												<int key="NSvFlags">268</int>
-												<string key="NSFrame">{{64, 54}, {261, 18}}</string>
+												<string key="NSFrame">{{64, 54}, {354, 18}}</string>
 												<reference key="NSSuperview" ref="505411774"/>
 												<bool key="NSEnabled">YES</bool>
 												<object class="NSButtonCell" key="NSCell" id="71661080">
 													<int key="NSCellFlags">-2080244224</int>
 													<int key="NSCellFlags2">0</int>
-													<string key="NSContents">Load preferences from custom folder:</string>
+													<string key="NSContents">Load preferences from a user-defined folder or URL:</string>
 													<reference key="NSSupport" ref="966507434"/>
 													<reference key="NSControlView" ref="731675876"/>
 													<int key="NSButtonFlags">1211912703</int>
@@ -1032,13 +1032,13 @@
 											<object class="NSButton" id="916346445">
 												<reference key="NSNextResponder" ref="505411774"/>
 												<int key="NSvFlags">268</int>
-												<string key="NSFrame">{{434, 20}, {234, 32}}</string>
+												<string key="NSFrame">{{434, 20}, {184, 32}}</string>
 												<reference key="NSSuperview" ref="505411774"/>
 												<bool key="NSEnabled">YES</bool>
 												<object class="NSButtonCell" key="NSCell" id="53419469">
-													<int key="NSCellFlags">67239424</int>
+													<int key="NSCellFlags">-2080244224</int>
 													<int key="NSCellFlags2">134217728</int>
-													<string key="NSContents">Copy Curent Settings to Folder</string>
+													<string key="NSContents">Save Settings to Folder</string>
 													<reference key="NSSupport" ref="966507434"/>
 													<reference key="NSControlView" ref="916346445"/>
 													<int key="NSButtonFlags">-2038284033</int>
