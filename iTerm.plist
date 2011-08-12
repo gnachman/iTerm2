@@ -84,14 +84,6 @@
 		</dict>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>file URL</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>file</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLName</key>
 			<string>gopher URL</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
