@@ -1789,7 +1789,7 @@ NSString *sessionsKey = @"sessions";
     BOOL verticalOnly = NO;
 
     BOOL maxVerticallyPref;
-    if ([[self ptyWindow] isTogglingLionFullScreen]) {
+    if (togglingLionFullScreen_ || [[self ptyWindow] isTogglingLionFullScreen] || [self lionFullScreen]) {
         // Going into lion fullscreen mode. Disregard the "maximize vertically"
         // preference.
         verticalOnly = NO;
@@ -3583,7 +3583,8 @@ NSString *sessionsKey = @"sessions";
                windowType_ == WINDOW_TYPE_TOP ||
                windowType_ == WINDOW_TYPE_BOTTOM) {
         return NO;
-    } else if (![self scrollbarShouldBeVisible]) {
+    } else if (![[[self currentSession] SCROLLVIEW] isLegacyScroller] ||
+               ![self scrollbarShouldBeVisible]) {
         // hidden scrollbar
         return YES;
     } else {
@@ -3658,7 +3659,7 @@ NSString *sessionsKey = @"sessions";
         }
     }
 
-    if (!_fullScreen) {
+    if (![self anyFullScreen]) {
         return;
     }
     if (!temporarilyShowingTabs_ && fullscreenTabs_) {
@@ -3696,7 +3697,7 @@ NSString *sessionsKey = @"sessions";
     [fullScreenTabviewTimer_ release];
     fullScreenTabviewTimer_ = nil;
     // Don't show the tabbar if you're holding cmd while doing find cursor
-    if (_fullScreen && ![[[self currentSession] TEXTVIEW] isFindingCursor]) {
+    if ([self anyFullScreen] && ![[[self currentSession] TEXTVIEW] isFindingCursor]) {
         [self showFullScreenTabControl];
     }
 }

@@ -471,10 +471,14 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (NSString *)_autoLogFilenameForTermId:(NSString *)termid
 {
-    return [NSString stringWithFormat:@"%@/%@.%@.%d.%0x.log",
+    // $(LOGDIR)/YYYYMMDD_HHMMSS.$(NAME).wNtNpN.$(PID).$(RANDOM).log
+    return [NSString stringWithFormat:@"%@/%@.%@.%@.%d.%0x.log",
             [addressBookEntry objectForKey:KEY_LOGDIR],
+            [[NSDate date] descriptionWithCalendarFormat:@"%Y%m%d_%H%M%S"
+                                                timeZone:nil
+                                                  locale:nil],
+            [addressBookEntry objectForKey:KEY_NAME],
             termid,
-            [[[NSDate date] description] stringByReplacingOccurrencesOfString:@"/" withString:@"."],
             (int)getpid(),
             (int)arc4random()];
 }

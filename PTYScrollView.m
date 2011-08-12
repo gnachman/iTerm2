@@ -107,7 +107,7 @@
     return [super hitPart];
 }
 
-- (BOOL)_isLegacyScroller
+- (BOOL)isLegacyScroller
 {
     if ([self respondsToSelector:@selector(scrollerStyle)]) {
         return [self scrollerStyle] == NSScrollerStyleLegacy;
@@ -118,7 +118,7 @@
 
 - (void)drawRect:(NSRect)dirtyRect {
     if (IsLionOrLater() &&
-        ![self _isLegacyScroller] &&
+        ![self isLegacyScroller] &&
         self.hasDarkBackground &&
         dirtyRect.size.width > 0 &&
         dirtyRect.size.height > 0) {
@@ -273,7 +273,7 @@
     timer_ = nil;
 }
 
-- (BOOL)_isLegacyScroller
+- (BOOL)isLegacyScroller
 {
     if ([self respondsToSelector:@selector(scrollerStyle)]) {
         return [self scrollerStyle] == NSScrollerStyleLegacy;
@@ -293,7 +293,7 @@
 
 - (void)setHasVerticalScroller:(BOOL)flag inInit:(BOOL)inInit
 {
-    if ([self _isLegacyScroller]) {
+    if ([self isLegacyScroller]) {
         [super setHasVerticalScroller:flag];
         return;
     }
