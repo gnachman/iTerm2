@@ -1789,7 +1789,7 @@ NSString *sessionsKey = @"sessions";
     BOOL verticalOnly = NO;
 
     BOOL maxVerticallyPref;
-    if ([[self ptyWindow] isTogglingLionFullScreen]) {
+    if (togglingLionFullScreen_ || [[self ptyWindow] isTogglingLionFullScreen] || [self lionFullScreen]) {
         // Going into lion fullscreen mode. Disregard the "maximize vertically"
         // preference.
         verticalOnly = NO;
