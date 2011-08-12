@@ -3583,7 +3583,8 @@ NSString *sessionsKey = @"sessions";
                windowType_ == WINDOW_TYPE_TOP ||
                windowType_ == WINDOW_TYPE_BOTTOM) {
         return NO;
-    } else if (![self scrollbarShouldBeVisible]) {
+    } else if (![[[self currentSession] SCROLLVIEW] isLegacyScroller] ||
+               ![self scrollbarShouldBeVisible]) {
         // hidden scrollbar
         return YES;
     } else {
