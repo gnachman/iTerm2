@@ -296,9 +296,9 @@ static BOOL hasBecomeActive = NO;
  */
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
 {
+    NSLog(@"Quiet launch");
+    quiet_ = YES;
     if ([filename isEqualToString:[ITERM2_FLAG stringByExpandingTildeInPath]]) {
-        NSLog(@"Quiet launch");
-        quiet_ = YES;
         return YES;
     }
     filename = [filename stringWithEscapedShellCharacters];
