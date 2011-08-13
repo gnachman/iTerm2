@@ -1209,10 +1209,11 @@ static char* FormatCont(int c)
     case VT100CC_LF:
     case VT100CC_VT:
     case VT100CC_FF:
-        if([self printToAnsi] == YES)
+        if ([self printToAnsi] == YES) {
             [self printStringToAnsi: @"\n"];
-        else
+        } else {
             [self setNewLine];
+        }
         break;
     case VT100CC_CR:  [self setCursorX:0 Y:cursorY]; break;
     case VT100CC_SO:  break;
@@ -1382,25 +1383,27 @@ static char* FormatCont(int c)
         break;
 
     case ANSICSI_PRINT:
-        switch (token.u.csi.p[0]) {
-            case 4:
-                // print our stuff!!
-                [self doPrint];
-                break;
-            case 5:
-                // allocate a string for the stuff to be printed
-                if (printToAnsiString != nil)
-                    [printToAnsiString release];
-                printToAnsiString = [[NSMutableString alloc] init];
-                [self setPrintToAnsi: YES];
-                break;
-            default:
-                //print out the whole screen
-                if (printToAnsiString != nil)
-                    [printToAnsiString release];
-                printToAnsiString = nil;
-                [self setPrintToAnsi: NO];
-                [self doPrint];
+        if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_PRINTING] boolValue]) {
+            switch (token.u.csi.p[0]) {
+                case 4:
+                    // print our stuff!!
+                    [self doPrint];
+                    break;
+                case 5:
+                    // allocate a string for the stuff to be printed
+                    if (printToAnsiString != nil)
+                        [printToAnsiString release];
+                    printToAnsiString = [[NSMutableString alloc] init];
+                    [self setPrintToAnsi: YES];
+                    break;
+                default:
+                    //print out the whole screen
+                    if (printToAnsiString != nil)
+                        [printToAnsiString release];
+                    printToAnsiString = nil;
+                    [self setPrintToAnsi: NO];
+                    [self doPrint];
+            }
         }
         break;
     case ANSICSI_SCP:
@@ -1643,17 +1646,17 @@ static char* FormatCont(int c)
     temp_buffer = NULL;
 }
 
-- (BOOL) printToAnsi
+- (BOOL)printToAnsi
 {
     return printToAnsi;
 }
 
-- (void) setPrintToAnsi: (BOOL) aFlag
+- (void)setPrintToAnsi: (BOOL) aFlag
 {
     printToAnsi = aFlag;
 }
 
-- (void) printStringToAnsi: (NSString *) aString
+- (void)printStringToAnsi: (NSString *) aString
 {
     if ([aString length] > 0) {
         [printToAnsiString appendString: aString];
@@ -3153,7 +3156,7 @@ void DumpBuf(screen_char_t* p, int n) {
     DebugLog(@"setDirty (doesn't actually set dirty)");
 }
 
-- (void) doPrint
+- (void)doPrint
 {
     if ([printToAnsiString length] > 0) {
         [[SESSION TEXTVIEW] printContent: printToAnsiString];
