@@ -46,6 +46,9 @@
 
     // Unique per-process id of view, used for ordering them in PTYTab.
     int viewId_;
+
+    // Saved size for unmaximizing.
+    NSSize savedSize_;
 }
 
 + (NSDate*)lastResizeDate;
@@ -62,5 +65,7 @@
 - (void)setBackgroundDimmed:(BOOL)backgroundDimmed;
 - (void)updateDim;
 - (BOOL)backgroundDimmed;
+- (void)saveFrameSize;
+- (void)restoreFrameSize;
 
 @end

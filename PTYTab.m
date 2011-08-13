@@ -370,17 +370,32 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return nil;
 }
 
+- (SessionView *)_savedViewWithId:(int)i
+{
+    for (NSNumber *k in idMap_) {
+        SessionView *cur = [idMap_ objectForKey:k];
+        if ([cur viewId] == [[viewOrder_ objectAtIndex:i] intValue]) {
+            return cur;
+        }
+    }
+    return nil;
+}
+
 - (void)previousSession
 {
-    if (isMaximized_) {
-        return;
-    }
     --currentViewIndex_;
     if (currentViewIndex_ < 0) {
         currentViewIndex_ = [viewOrder_ count] - 1;
     }
-    SessionView* sv = [self _recursiveSessionViewWithId:[[viewOrder_ objectAtIndex:currentViewIndex_] intValue]
-                                                 atNode:root_];
+    SessionView *sv;
+    if (isMaximized_) {
+        sv = [self _savedViewWithId:currentViewIndex_];
+        [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]
+                         with:sv];
+    } else {
+        sv = [self _recursiveSessionViewWithId:[[viewOrder_ objectAtIndex:currentViewIndex_] intValue]
+                                        atNode:root_];
+    }
     assert(sv);
     if (sv) {
         [self setActiveSessionPreservingViewOrder:[sv session]];
@@ -389,15 +404,19 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 - (void)nextSession
 {
-    if (isMaximized_) {
-        return;
-    }
     ++currentViewIndex_;
     if (currentViewIndex_ >= [viewOrder_ count]) {
         currentViewIndex_ = 0;
     }
-    SessionView* sv = [self _recursiveSessionViewWithId:[[viewOrder_ objectAtIndex:currentViewIndex_] intValue]
-                                                 atNode:root_];
+    SessionView *sv;
+    if (isMaximized_) {
+        sv = [self _savedViewWithId:currentViewIndex_];
+        [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]
+                         with:sv];
+    } else {
+        sv = [self _recursiveSessionViewWithId:[[viewOrder_ objectAtIndex:currentViewIndex_] intValue]
+                                        atNode:root_];
+    }
     assert(sv);
     if (sv) {
         [self setActiveSessionPreservingViewOrder:[sv session]];
@@ -1687,6 +1706,7 @@ static NSString* FormatRect(NSRect r) {
         if (idMap) {
             [result setObject:[NSNumber numberWithInt:[idMap count]]
                        forKey:TAB_ARRANGEMENT_ID];
+            [sessionView saveFrameSize];
             [idMap setObject:sessionView forKey:[NSNumber numberWithInt:[idMap count]]];
         }
     }
@@ -1763,7 +1783,9 @@ static NSString* FormatRect(NSRect r) {
         return splitter;
     } else {
         if (theMap) {
-            return [[theMap objectForKey:[arrangement objectForKey:TAB_ARRANGEMENT_ID]] retain];
+            SessionView *sv = [[theMap objectForKey:[arrangement objectForKey:TAB_ARRANGEMENT_ID]] retain];
+            [sv restoreFrameSize];
+            return sv;
         } else {
             return [[SessionView alloc] initWithFrame:[PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]]];
         }

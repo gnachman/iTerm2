@@ -271,4 +271,14 @@ static NSDate* lastResizeDate_;
     lastResizeDate_ = [[NSDate date] retain];
 }
 
+- (void)saveFrameSize
+{
+    savedSize_ = [self frame].size;
+}
+
+- (void)restoreFrameSize
+{
+    [self setFrameSize:savedSize_];
+}
+
 @end

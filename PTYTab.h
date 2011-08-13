@@ -184,6 +184,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (NSDictionary*)arrangement;
 
 - (BOOL)hasMaximizedPane;
+- (void)maximizeWithoutMakingKey;
 - (void)maximize;
 - (void)unmaximize;
 
