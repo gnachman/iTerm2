@@ -1559,6 +1559,11 @@
 		BB024D36096EE4080021E793 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = (
+					ppc,
+					x86_64,
+					i386,
+				);
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -1596,7 +1601,11 @@
 		BB024D37096EE4080021E793 /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				ARCHS = (
+					ppc,
+					x86_64,
+					i386,
+				);
 				COPY_PHASE_STRIP = YES;
 				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
@@ -1629,6 +1638,11 @@
 		BB024D38096EE4080021E793 /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = (
+					ppc,
+					x86_64,
+					i386,
+				);
 				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
 				GCC_MODEL_TUNING = G4;
 				GCC_OPTIMIZATION_LEVEL = 3;
@@ -1689,8 +1703,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = (
+					x86_64,
+					i386,
 					ppc,
-					"$(ARCHS_STANDARD_32_64_BIT)",
 				);
 				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
 				GCC_C_LANGUAGE_STANDARD = c99;
@@ -1727,6 +1742,11 @@
 		F69E79300AB8CDD2001EC0FF /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = (
+					ppc,
+					i386,
+					x86_64,
+				);
 				COPY_PHASE_STRIP = NO;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -1749,7 +1769,7 @@
 				PREBINDING = NO;
 				PRODUCT_NAME = Growl;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "i386 x86_64 ppc";
+				VALID_ARCHS = "ppc x86_64 i386";
 				ZERO_LINK = YES;
 			};
 			name = Development;
@@ -1757,7 +1777,11 @@
 		F69E79310AB8CDD2001EC0FF /* Deployment */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				ARCHS = (
+					ppc,
+					i386,
+					x86_64,
+				);
 				COPY_PHASE_STRIP = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -1779,7 +1803,7 @@
 				PREBINDING = NO;
 				PRODUCT_NAME = Growl;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "i386 x86_64 ppc";
+				VALID_ARCHS = "ppc x86_64 i386";
 				ZERO_LINK = NO;
 			};
 			name = Deployment;
@@ -1787,6 +1811,11 @@
 		F69E79330AB8CDD2001EC0FF /* Default */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = (
+					ppc,
+					i386,
+					x86_64,
+				);
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_VERSION = A;
@@ -1806,7 +1835,7 @@
 				PREBINDING = NO;
 				PRODUCT_NAME = Growl;
 				SDKROOT = macosx10.5;
-				VALID_ARCHS = "i386 x86_64 ppc";
+				VALID_ARCHS = "ppc x86_64 i386";
 				ZERO_LINK = YES;
 			};
 			name = Default;

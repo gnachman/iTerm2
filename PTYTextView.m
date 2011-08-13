@@ -4369,9 +4369,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (void)closeFindCursorWindow
+- (void)closeFindCursorWindow:(NSTimer *)timer
 {
-    [findCursorWindow_ close];
+    NSWindowController *win = [timer userInfo];
+    [win close];
     [findCursorBlinkTimer_ invalidate];
     findCursorBlinkTimer_ = nil;
     findCursorTeardownTimer_ = nil;
@@ -4383,8 +4384,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [findCursorTeardownTimer_ invalidate];
     findCursorTeardownTimer_ = [NSTimer scheduledTimerWithTimeInterval:[[NSAnimationContext currentContext] duration]
                                                                 target:self
-                                                              selector:@selector(closeFindCursorWindow)
-                                                              userInfo:nil
+                                                              selector:@selector(closeFindCursorWindow:)
+                                                              userInfo:findCursorWindow_
                                                                repeats:NO];
     findCursorWindow_ = nil;
     findCursorView_ = nil;
