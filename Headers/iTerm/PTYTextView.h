@@ -546,6 +546,7 @@ typedef enum {
 
 // Snapshot working directory for Trouter
 - (void)logWorkingDirectoryAtLine:(long long)line;
+- (void)logWorkingDirectoryAtLine:(long long)line withDirectory:(NSString *)workingDirectory;
 - (NSString *)getWorkingDirectoryAtLine:(long long)line;
 
 // Trouter change directory
