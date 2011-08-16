@@ -1374,7 +1374,7 @@ static float versionNumber;
                 // The directory is valid and it's probably the user's first time downt this path.
                 if ([[NSAlert alertWithMessageText:@"Copy local preferences to custom folder now?"
                                  defaultButton:@"Copy"
-                               alternateButton:@"Cancel"
+                               alternateButton:@"Don't Copy"
                                    otherButton:nil
                          informativeTextWithFormat:@""] runModal] == NSOKButton) {
                     [self pushToCustomFolder:nil];
@@ -1390,7 +1390,7 @@ static float versionNumber;
         [prefs setObject:[prefsCustomFolder stringValue]
                   forKey:@"PrefsCustomFolder"];
         defaultPrefsCustomFolder = [prefs objectForKey:@"PrefsCustomFolder"];
-
+        customFolderChanged_ = YES;
         [self _updatePrefsDirWarning];
     } else if (sender == windowStyle ||
         sender == tabPosition ||
@@ -1892,26 +1892,28 @@ static float versionNumber;
     return [NSString stringWithFormat:@"%@/%@.plist", base, [[NSBundle mainBundle] bundleIdentifier]];
 }
 
-- (BOOL)loadPrefs
+- (NSString *)remotePrefsLocation
 {
-    static BOOL done;
-    if (done) {
-        return YES;
-    }
-    done = YES;
-
-    BOOL doLoad = [prefs objectForKey:@"LoadPrefsFromCustomFolder"] ? [[prefs objectForKey:@"LoadPrefsFromCustomFolder"] boolValue] : NO;
-    if (!doLoad) {
-        return YES;
-    }
     NSString *folder = [prefs objectForKey:@"PrefsCustomFolder"] ? [prefs objectForKey:@"PrefsCustomFolder"] : @"";
     NSString *filename = [self _prefsFilenameWithBaseDir:folder];
-    NSDictionary *remotePrefs;
     if ([folder hasPrefix:@"http://"] ||
         [folder hasPrefix:@"https://"]) {
 
         filename = folder;
+    }
+    return filename;
+}
 
+- (NSDictionary *)_remotePrefs
+{
+    BOOL doLoad = [prefs objectForKey:@"LoadPrefsFromCustomFolder"] ? [[prefs objectForKey:@"LoadPrefsFromCustomFolder"] boolValue] : NO;
+    if (!doLoad) {
+        return nil;
+    }
+    NSString *filename = [self remotePrefsLocation];
+    NSDictionary *remotePrefs;
+    if ([filename hasPrefix:@"http://"] ||
+        [filename hasPrefix:@"https://"]) {
         // Download the URL's contents.
         NSURL *url = [NSURL URLWithString:filename];
         const NSTimeInterval kFetchTimeout = 5.0;
@@ -1955,20 +1957,44 @@ static float versionNumber;
     } else {
         remotePrefs = [NSDictionary dictionaryWithContentsOfFile:filename];
     }
+    return remotePrefs;
+}
+
+- (BOOL)loadPrefs
+{
+    static BOOL done;
+    if (done) {
+        return YES;
+    }
+    done = YES;
+
+    BOOL doLoad = [prefs objectForKey:@"LoadPrefsFromCustomFolder"] ? [[prefs objectForKey:@"LoadPrefsFromCustomFolder"] boolValue] : NO;
+    if (!doLoad) {
+        return YES;
+    }
+    NSDictionary *remotePrefs = [self _remotePrefs];
 
     if (remotePrefs && [remotePrefs count]) {
         NSDictionary *localPrefs = [NSDictionary dictionaryWithContentsOfFile:[self _prefsFilename]];
         // Empty out the current prefs
         NSArray *exemptKeys = [NSArray arrayWithObjects:@"LoadPrefsFromCustomFolder",
-                               @"PrefsCustomFolder", nil];
+                               @"PrefsCustomFolder", @"iTerm Version", nil];
         for (NSString *key in localPrefs) {
-            if (![exemptKeys containsObject:key]) {
+            if (![exemptKeys containsObject:key] &&
+                ![key hasPrefix:@"NS"] && 
+                ![key hasPrefix:@"SU"] &&
+                ![key hasPrefix:@"UK"]) {
+
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
             }
         }
 
         for (NSString *key in remotePrefs) {
-            if (![exemptKeys containsObject:key]) {
+            if (![exemptKeys containsObject:key] &&
+                ![key hasPrefix:@"NS"] && 
+                ![key hasPrefix:@"SU"] &&
+                ![key hasPrefix:@"UK"]) {
+
                 [[NSUserDefaults standardUserDefaults] setObject:[remotePrefs objectForKey:key]
                                                           forKey:key];
             }
@@ -1979,9 +2005,49 @@ static float versionNumber;
                          defaultButton:@"OK"
                        alternateButton:nil
                            otherButton:nil
-             informativeTextWithFormat:@"Missing or malformed file at \"%@\"", filename] runModal];
+             informativeTextWithFormat:@"Missing or malformed file at \"%@\"", [self remotePrefsLocation]] runModal];
     }
     return NO;
+}
+
+- (BOOL)prefsDifferFromRemote
+{
+    BOOL doLoad = [prefs objectForKey:@"LoadPrefsFromCustomFolder"] ? [[prefs objectForKey:@"LoadPrefsFromCustomFolder"] boolValue] : NO;
+    if (!doLoad) {
+        return NO;
+    }
+    NSDictionary *remotePrefs = [self _remotePrefs];
+    if (remotePrefs && [remotePrefs count]) {
+        NSDictionary *localPrefs = [NSDictionary dictionaryWithContentsOfFile:[self _prefsFilename]];
+        // Iterate over each set of prefs and validate that the other has the same value for each key.
+        NSArray *exemptKeys = [NSArray arrayWithObjects:@"LoadPrefsFromCustomFolder",
+                               @"PrefsCustomFolder", @"iTerm Version", nil];
+        for (NSString *key in localPrefs) {
+            if (![exemptKeys containsObject:key]) {
+                if (![key hasPrefix:@"NS"] &&
+                    ![key hasPrefix:@"SU"] &&
+                    ![key hasPrefix:@"UK"] &&
+                    ![[remotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
+                    return YES;
+                }
+            }
+        }
+
+        for (NSString *key in remotePrefs) {
+            if (![exemptKeys containsObject:key]) {
+                if (![key hasPrefix:@"NS"] &&
+                    ![key hasPrefix:@"SU"] &&
+                    ![key hasPrefix:@"UK"] &&
+                    ![[remotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
+                    return YES;
+                }
+            }
+        }
+        return NO;
+    } else {
+        // Can't load remote prefs, so no problem.
+        return NO;
+    }
 }
 
 - (NSString *)loadPrefsFromCustomFolder
@@ -2660,6 +2726,11 @@ static float versionNumber;
         [prefsCustomFolder setStringValue:[panel directory]];
         [self settingChanged:prefsCustomFolder];
     }
+}
+
+- (BOOL)customFolderChanged
+{
+    return customFolderChanged_;
 }
 
 - (IBAction)pushToCustomFolder:(id)sender

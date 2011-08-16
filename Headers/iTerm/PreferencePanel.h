@@ -213,6 +213,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *browseCustomFolder;
     IBOutlet NSButton *pushToCustomFolder;
     IBOutlet NSImageView *prefsDirWarning;
+    BOOL customFolderChanged_;
 
     // hide scrollbar and resize
     IBOutlet NSButton *hideScrollbar;
@@ -584,7 +585,10 @@ typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal
 - (void)changeFont:(id)fontManager;
 - (NSString*)_chooseBackgroundImage;
 - (IBAction)browseCustomFolder:(id)sender;
+- (BOOL)prefsDifferFromRemote;
+- (NSString *)remotePrefsLocation;
 - (IBAction)pushToCustomFolder:(id)sender;
+- (BOOL)customFolderChanged;
 - (IBAction)bookmarkSettingChanged:(id)sender;
 - (IBAction)copyToProfile:(id)sender;
 - (IBAction)bookmarkUrlSchemeHandlerChanged:(id)sender;

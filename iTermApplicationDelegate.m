@@ -201,6 +201,26 @@ static BOOL hasBecomeActive = NO;
                       encoding:NSUTF8StringEncoding
                          error:nil];
 }
+- (void)_updateArrangementsMenu
+{
+    while ([[windowArrangements_ submenu] numberOfItems]) {
+        [[windowArrangements_ submenu] removeItemAtIndex:0];
+    }
+
+    NSString *defaultName = [WindowArrangements defaultArrangementName];
+
+    for (NSString *theName in [WindowArrangements allNames]) {
+        NSString *theShortcut;
+        if ([theName isEqualToString:defaultName]) {
+            theShortcut = @"R";
+        } else {
+            theShortcut = @"";
+        }
+        [[windowArrangements_ submenu] addItemWithTitle:theName
+                                                 action:@selector(restoreWindowArrangement:)
+                                          keyEquivalent:theShortcut];
+    }
+}
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
@@ -224,6 +244,8 @@ static BOOL hasBecomeActive = NO;
     if ([ppanel isAnyModifierRemapped]) {
         [[iTermController sharedInstance] beginRemappingModifiers];
     }
+    [self _updateArrangementsMenu];
+
     // register for services
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
                                                        returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];
@@ -274,6 +296,32 @@ static BOOL hasBecomeActive = NO;
 
     // save preferences
     [[PreferencePanel sharedInstance] savePreferences];
+    if (![[PreferencePanel sharedInstance] customFolderChanged]) {
+        if ([[PreferencePanel sharedInstance] prefsDifferFromRemote]) {
+            NSString *remote = [[PreferencePanel sharedInstance] remotePrefsLocation];
+            if ([remote hasPrefix:@"http://"] ||
+                [remote hasPrefix:@"https://"]) {
+                NSRunAlertPanel(@"Preference Changes Will be Lost!",
+                                [NSString stringWithFormat:@"Your preferences are loaded from a URL and differ from your local preferences. To save your local preferences, copy ~/Library/Preferences/com.googlecode.iterm2.plist to %@ after quitting iTerm2.", remote],
+                                @"OK",
+                                nil,
+                                nil);
+            } else {
+                switch (NSRunAlertPanel(@"Preference Changes Will be Lost!",
+                                        [NSString stringWithFormat:@"Your preferences are loaded from a custom location and differ from your local preferences. Your local preferences will be lost if not copied to %@.", remote],
+                                        @"Copy",
+                                        @"Lose Changes",
+                                        nil)) {
+                    case NSAlertDefaultReturn:
+                        [[PreferencePanel sharedInstance] pushToCustomFolder:nil];
+                        break;
+
+                    case NSAlertAlternateReturn:
+                        break;
+                }
+            }
+        }
+    }
 
     return YES;
 }
@@ -429,27 +477,6 @@ static BOOL hasBecomeActive = NO;
     return self;
 }
 
-- (void)_updateArrangementsMenu
-{
-    while ([[windowArrangements_ submenu] numberOfItems]) {
-        [[windowArrangements_ submenu] removeItemAtIndex:0];
-    }
-
-    NSString *defaultName = [WindowArrangements defaultArrangementName];
-
-    for (NSString *theName in [WindowArrangements allNames]) {
-        NSString *theShortcut;
-        if ([theName isEqualToString:defaultName]) {
-            theShortcut = @"R";
-        } else {
-            theShortcut = @"";
-        }
-        [[windowArrangements_ submenu] addItemWithTitle:theName
-                                                 action:@selector(restoreWindowArrangement:)
-                                          keyEquivalent:theShortcut];
-    }
-}
-
 - (void)windowArrangementsDidChange:(id)sender
 {
     [self _updateArrangementsMenu];
@@ -463,7 +490,6 @@ static BOOL hasBecomeActive = NO;
 - (void)awakeFromNib
 {
     secureInputDesired_ = [[[NSUserDefaults standardUserDefaults] objectForKey:@"Secure Input"] boolValue];
-    [self _updateArrangementsMenu];
 }
 
 - (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent
