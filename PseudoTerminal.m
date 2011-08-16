@@ -2791,38 +2791,7 @@ NSString *sessionsKey = @"sessions";
     NSSize newSessionSize = NSMakeSize(charSize.width * MIN_SESSION_COLUMNS + MARGIN * 2,
                                        charSize.height * MIN_SESSION_ROWS + VMARGIN * 2);
 
-    if (![[self currentTab] canSplitVertically:isVertical withSize:newSessionSize]) {
-        // Test if the window can afford to grow. First, compute the minimum growth possible based on
-        // the font size of the new pane.
-        BOOL hasScrollbar = [self scrollbarShouldBeVisible];
-        NSSize growth = NSMakeSize(isVertical ? newSessionSize.width : 0,
-                                   isVertical ? 0 : newSessionSize.height);
-        growth = [PTYScrollView frameSizeForContentSize:growth
-                                  hasHorizontalScroller:NO
-                                    hasVerticalScroller:hasScrollbar
-                                             borderType:NSNoBorder];
-
-        // Now compute the minimum window size that can support this new pane.
-        NSSize windowSize = NSZeroSize;
-        for (NSTabViewItem* theItem in [TABVIEW tabViewItems]) {
-            PTYTab* theTab = [theItem identifier];
-            NSSize minTabSize = [theTab minSize];
-            windowSize.width = MAX(windowSize.width, minTabSize.width);
-            windowSize.height = MAX(windowSize.height, minTabSize.height);
-        }
-        NSSize decoration = [self windowDecorationSize];
-        windowSize.width += decoration.width;
-        windowSize.height += decoration.height;
-        windowSize.width += growth.width;
-        windowSize.height += growth.height;
-
-        // Finally, check if the new window size would fit on the screen.
-        NSSize maxFrameSize = [self maxFrame].size;
-        if (windowSize.width > maxFrameSize.width || windowSize.height > maxFrameSize.height) {
-            return NO;
-        }
-    }
-    return YES;
+    return [[self currentTab] canSplitVertically:isVertical withSize:newSessionSize];
 }
 
 - (void)toggleMaximizeActivePane
