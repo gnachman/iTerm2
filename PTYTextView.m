@@ -308,6 +308,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (void)viewDidMoveToWindow
 {
     if ([self window]) {
+        if (trackingRectTag) {
+            [self removeTrackingRect:trackingRectTag];
+        }
+
         trackingRectTag = [self addTrackingRect:[self frame]
                                           owner:self
                                        userData:nil
