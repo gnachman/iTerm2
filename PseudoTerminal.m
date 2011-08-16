@@ -989,7 +989,7 @@ NSString *sessionsKey = @"sessions";
     PseudoTerminal* term;
     int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     int screenIndex = [PseudoTerminal _screenIndexForArrangement:arrangement];
-
+    NSRect normalWindowRect = NSZeroRect;
     if (windowType == WINDOW_TYPE_FULL_SCREEN) {
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:WINDOW_TYPE_FORCE_FULL_SCREEN
@@ -1020,10 +1020,17 @@ NSString *sessionsKey = @"sessions";
         rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
         rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
         [[term window] setFrame:rect display:NO];
+
+        normalWindowRect = rect;
     }
     for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
         [PTYTab openTabWithArrangement:tabArrangement inTerminal:term];
     }
+    if (windowType == WINDOW_TYPE_NORMAL) {
+        // The window may have changed size while adding tab bars, etc.
+        [[term window] setFrame:normalWindowRect display:YES];
+    }
+
     [term->TABVIEW selectTabViewItemAtIndex:[[arrangement objectForKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] intValue]];
 
     Bookmark* addressbookEntry = [[[[[term tabs] objectAtIndex:0] sessions] objectAtIndex:0] addressBookEntry];
