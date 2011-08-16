@@ -1021,6 +1021,12 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         }
 
         switch (keyBindingAction) {
+            case KEY_ACTION_NEXT_PANE:
+                [[self tab] nextSession];
+                break;
+            case KEY_ACTION_PREVIOUS_PANE:
+                [[self tab] previousSession];
+                break;
             case KEY_ACTION_NEXT_SESSION:
                 [[[self tab] parentWindow] nextTab:nil];
                 break;

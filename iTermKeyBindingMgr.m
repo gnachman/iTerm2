@@ -290,6 +290,12 @@ static NSDictionary* globalKeyMap;
     auxText = [keyInfo objectForKey: @"Text"];
 
     switch (action) {
+        case KEY_ACTION_NEXT_PANE:
+            actionString = @"Next Pane";
+            break;
+        case KEY_ACTION_PREVIOUS_PANE:
+            actionString = @"Previous Pane";
+            break;
         case KEY_ACTION_NEXT_SESSION:
             actionString = NSLocalizedStringFromTableInBundle(@"Next Tab",
                                                               @"iTerm",
