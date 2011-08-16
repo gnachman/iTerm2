@@ -541,8 +541,8 @@ typedef enum {
          overrideColor:(NSColor*)overrideColor;
 
 - (BOOL)_isBlankLine:(int)y;
-- (void)_openURL:(NSString *)aURLString;
-- (void)_openURL:(NSString *)aURLString atLine:(long long)line;
+- (void)_openURL:(NSString *)aURLString inBackground:(BOOL)background;
+- (void)_openURL:(NSString *)aURLString atLine:(long long)line inBackground:(BOOL)background;
 
 // Snapshot working directory for Trouter
 - (void)logWorkingDirectoryAtLine:(long long)line;

@@ -2817,7 +2817,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     [self _changeDirectory:fullPath];
                 }
             } else {
-                [self _openURL:url atLine:y + 1];
+                int mods = [event modifierFlags];
+                BOOL altPressed = (mods & NSAlternateKeyMask) != 0;
+                [self _openURL:url
+                          atLine:y + 1
+                          inBackground:altPressed];
             }
         } else {
             lastFindStartX = endX;
@@ -3412,14 +3416,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)browse:(id)sender
 {
-    [self _openURL: [self selectedText]];
+    [self _openURL: [self selectedText] inBackground:NO];
 }
 
 - (void)searchInBrowser:(id)sender
 {
     NSString* url = [NSString stringWithFormat:[[PreferencePanel sharedInstance] searchCommand],
                               [[self selectedText] stringWithPercentEscape]];
-    [self _openURL:url];
+    [self _openURL:url inBackground:NO];
 }
 
 //
@@ -6646,7 +6650,7 @@ static bool IsUrlChar(NSString* str)
     [[dataSource shellTask] writeTask:[[NSString stringWithFormat:@"\3cd \"%@\"; ls\n", path] dataUsingEncoding:[[dataSource session] encoding]]];
 }
 
-- (void)_openURL:(NSString *)aURLString atLine:(long long)line
+- (void)_openURL:(NSString *)aURLString atLine:(long long)line inBackground:(BOOL)background
 {
     NSString* trimmedURLString;
 
@@ -6654,13 +6658,28 @@ static bool IsUrlChar(NSString* str)
 
     NSString *workingDirectory = [self getWorkingDirectoryAtLine:line];
     if (![trouter openPath:trimmedURLString workingDirectory:workingDirectory]) {
-        [self _openURL:aURLString];
+        [self _openURL:aURLString inBackground:background];
     }
 
     return;
 }
 
-- (void)_openURL:(NSString *)aURLString
+// Opens a URL in the default browser in background or foreground
+- (void)openURL:(NSURL *)url inBackground:(BOOL)background
+{
+    if (background) {
+        NSArray* urls = [NSArray arrayWithObject:url];
+        [[NSWorkspace sharedWorkspace] openURLs:urls
+                                           withAppBundleIdentifier:nil
+                                           options:NSWorkspaceLaunchWithoutActivation
+                                           additionalEventParamDescriptor:nil
+                                           launchIdentifiers:nil];
+    } else {
+        [[NSWorkspace sharedWorkspace] openURL:url];
+    }
+}
+
+- (void)_openURL:(NSString *)aURLString inBackground:(BOOL)background
 {
     NSURL *url;
     NSString* trimmedURLString;
@@ -6723,7 +6742,7 @@ static bool IsUrlChar(NSString* str)
                                               inTerminal:[[iTermController sharedInstance] currentTerminal]
                                                  withURL:trimmedURLString];
     } else {
-        [[NSWorkspace sharedWorkspace] openURL:url];
+        [self openURL:url inBackground:background];
     }
 
 }
