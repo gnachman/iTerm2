@@ -2679,6 +2679,8 @@ static VT100TCC decode_string(unsigned char *datap,
             [NSApp activateIgnoringOtherApps:YES];
             [[[SCREEN display] window]makeKeyAndOrderFront:nil];
             [[[SCREEN display] window]makeMainWindow];
+        } else if ([key isEqualToString:@"ClearScrollback"]) {
+            [SCREEN clearBuffer];
         }
     } else if (token.type == XTERMCC_SET_PALETTE) {
         NSString* argument = token.u.string;
