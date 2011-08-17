@@ -1568,14 +1568,23 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 - (void)drawOutlineInRect:(NSRect)rect topOnly:(BOOL)topOnly
 {
     if ([[[dataSource session] tab] hasMaximizedPane]) {
-        NSColor *color;
-        double brightness = [self perceivedBrightness:[self defaultBGColor]];
-        if (brightness > 0.5) {
-            color = [NSColor colorWithCalibratedWhite:pow(brightness - 0.5, 2)
-                                                alpha:1];
+        NSColor *color = [self defaultBGColor];
+        double r = [color redComponent];
+        double g = [color greenComponent];
+        double b = [color blueComponent];
+        double pb = PerceivedBrightness(r, g, b);
+        double k;
+        if (pb <= 0.5) {
+            k = 1;
         } else {
-            color = [NSColor colorWithCalibratedWhite:0.5 + pow(brightness, 2) alpha:1];
+            k = 0;
         }
+        const double alpha = 0.2;
+        r = alpha * k + (1 - alpha) * r;
+        g = alpha * k + (1 - alpha) * g;
+        b = alpha * k + (1 - alpha) * b;
+        color = [NSColor colorWithCalibratedRed:r green:g blue:b alpha:1];
+
         NSRect frame = [self visibleRect];
         if (!topOnly) {
             if (frame.origin.y < VMARGIN) {
