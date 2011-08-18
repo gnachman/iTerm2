@@ -2677,8 +2677,7 @@ static VT100TCC decode_string(unsigned char *datap,
             [[SCREEN session] saveScrollPosition];
         } else if ([key isEqualToString:@"StealFocus"]) {
             [NSApp activateIgnoringOtherApps:YES];
-            [[[SCREEN display] window]makeKeyAndOrderFront:nil];
-            [[[SCREEN display] window]makeMainWindow];
+            [[[SCREEN display] window] makeKeyAndOrderFront:nil];
         } else if ([key isEqualToString:@"ClearScrollback"]) {
             [SCREEN clearBuffer];
         }
