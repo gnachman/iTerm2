@@ -81,6 +81,8 @@
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable;
 - (void)bookmarkTableSelectionWillChange:(id)bookmarkTable;
 - (void)bookmarkTableRowSelected:(id)bookmarkTable;
+
+@optional
 - (NSMenu*)bookmarkTable:(id)bookmarkTable menuForEvent:(NSEvent*)theEvent;
 @end
 

@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="29"/>
+			<integer value="81"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -259,7 +259,7 @@
 								</object>
 								<object class="NSMenuItem" id="250043371">
 									<reference key="NSMenu" ref="360861402"/>
-									<string key="NSTitle">Split Vertically</string>
+									<string key="NSTitle">Split Vertically With Same Profile</string>
 									<string key="NSKeyEquiv">d</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -268,9 +268,27 @@
 								</object>
 								<object class="NSMenuItem" id="931862216">
 									<reference key="NSMenu" ref="360861402"/>
-									<string key="NSTitle">Split Horizontally</string>
+									<string key="NSTitle">Split Horizontally With Same Profile</string>
 									<string key="NSKeyEquiv">D</string>
 									<int key="NSKeyEquivModMask">1048576</int>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="643967552"/>
+									<reference key="NSMixedImage" ref="326707852"/>
+								</object>
+								<object class="NSMenuItem" id="734260745">
+									<reference key="NSMenu" ref="360861402"/>
+									<string key="NSTitle">Split Horizontally...</string>
+									<string key="NSKeyEquiv">H</string>
+									<int key="NSKeyEquivModMask">1572864</int>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="643967552"/>
+									<reference key="NSMixedImage" ref="326707852"/>
+								</object>
+								<object class="NSMenuItem" id="353438768">
+									<reference key="NSMenu" ref="360861402"/>
+									<string key="NSTitle">Split Vertically...</string>
+									<string key="NSKeyEquiv">V</string>
+									<int key="NSKeyEquivModMask">1572864</int>
 									<int key="NSMnemonicLoc">2147483647</int>
 									<reference key="NSOnImage" ref="643967552"/>
 									<reference key="NSMixedImage" ref="326707852"/>
@@ -2883,6 +2901,22 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					</object>
 					<int key="connectionID">1288</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">openSplitHorizontallySheet:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="734260745"/>
+					</object>
+					<int key="connectionID">1293</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">openSplitVerticallySheet:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="353438768"/>
+					</object>
+					<int key="connectionID">1294</int>
+				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<object class="NSArray" key="orderedObjects">
@@ -3173,6 +3207,8 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<reference ref="619695518"/>
 							<reference ref="549350617"/>
 							<reference ref="393004483"/>
+							<reference ref="734260745"/>
+							<reference ref="353438768"/>
 						</object>
 						<reference key="parent" ref="1015666104"/>
 					</object>
@@ -4042,6 +4078,16 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 						<reference key="object" ref="672316615"/>
 						<reference key="parent" ref="203853260"/>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1289</int>
+						<reference key="object" ref="734260745"/>
+						<reference key="parent" ref="360861402"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1291</int>
+						<reference key="object" ref="353438768"/>
+						<reference key="parent" ref="360861402"/>
+					</object>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="flattenedProperties">
@@ -4113,7 +4159,9 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>1281.IBEditorWindowLastContentRect</string>
 					<string>1281.IBPluginDependency</string>
 					<string>1286.IBPluginDependency</string>
+					<string>1289.IBPluginDependency</string>
 					<string>129.IBPluginDependency</string>
+					<string>1291.IBPluginDependency</string>
 					<string>130.IBPluginDependency</string>
 					<string>131.IBPluginDependency</string>
 					<string>134.IBPluginDependency</string>
@@ -4317,6 +4365,8 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>{{183, 482}, {245, 343}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -4380,7 +4430,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{126, 522}, {250, 303}}</string>
+					<string>{{82, 482}, {344, 343}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -4447,7 +4497,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">1288</int>
+			<int key="maxID">1294</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -5024,6 +5074,8 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>nextTab:</string>
 							<string>openAutocomplete:</string>
 							<string>openPasteHistory:</string>
+							<string>openSplitHorizontallySheet:</string>
+							<string>openSplitVerticallySheet:</string>
 							<string>parameterPanelEnd:</string>
 							<string>previousPane:</string>
 							<string>previousTab:</string>
@@ -5048,6 +5100,8 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>id</string>
+							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -5125,6 +5179,8 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>nextTab:</string>
 							<string>openAutocomplete:</string>
 							<string>openPasteHistory:</string>
+							<string>openSplitHorizontallySheet:</string>
+							<string>openSplitVerticallySheet:</string>
 							<string>parameterPanelEnd:</string>
 							<string>previousPane:</string>
 							<string>previousTab:</string>
@@ -5247,6 +5303,14 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							</object>
 							<object class="IBActionInfo">
 								<string key="name">openPasteHistory:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
+								<string key="name">openSplitHorizontallySheet:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
+								<string key="name">openSplitVerticallySheet:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">

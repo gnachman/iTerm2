@@ -276,6 +276,8 @@ typedef enum {
 
 - (void)toggleFullScreenTabBar;
 
+- (IBAction)openSplitHorizontallySheet:(id)sender;
+- (IBAction)openSplitVerticallySheet:(id)sender;
 - (IBAction)findCursor:(id)sender;
 
 // Close the active session.

@@ -66,6 +66,7 @@
 #import "iTerm/iTermApplication.h"
 #import "BookmarksWindow.h"
 #import "FindViewController.h"
+#import "SplitPanel.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -2767,6 +2768,24 @@ NSString *sessionsKey = @"sessions";
 {
     [self irAdvance:1];
     [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+}
+
+- (void)_openSplitSheetForVertical:(BOOL)vertical
+{
+    NSString *guid = [SplitPanel showPanelWithParent:self isVertical:vertical];
+    if (guid) {
+        [self splitVertically:vertical withBookmarkGuid:guid];
+    }
+}
+
+- (IBAction)openSplitHorizontallySheet:(id)sender
+{
+    [self _openSplitSheetForVertical:NO];
+}
+
+- (IBAction)openSplitVerticallySheet:(id)sender
+{
+    [self _openSplitSheetForVertical:YES];
 }
 
 - (IBAction)openPasteHistory:(id)sender
