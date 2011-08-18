@@ -6622,6 +6622,11 @@ static bool IsUrlChar(NSString* str)
 - (void)logWorkingDirectoryAtLine:(long long)line
 {
     NSString *workingDirectory = [[dataSource shellTask] getWorkingDirectory];
+    [self logWorkingDirectoryAtLine:line withDirectory:workingDirectory];
+}
+
+- (void)logWorkingDirectoryAtLine:(long long)line withDirectory:(NSString *)workingDirectory
+{
     [workingDirectoryAtLines addObject:[NSArray arrayWithObjects:
           [NSNumber numberWithLongLong:line],
           workingDirectory,

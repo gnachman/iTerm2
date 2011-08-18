@@ -2680,6 +2680,10 @@ static VT100TCC decode_string(unsigned char *datap,
             [[[SCREEN display] window] makeKeyAndOrderFront:nil];
         } else if ([key isEqualToString:@"ClearScrollback"]) {
             [SCREEN clearBuffer];
+        } else if ([key isEqualToString:@"CurrentDir"]) {
+            long long lineNumber = [SCREEN absoluteLineNumberOfCursor];
+            [[[SCREEN session] TEXTVIEW] logWorkingDirectoryAtLine:lineNumber
+                                                     withDirectory:value];
         }
     } else if (token.type == XTERMCC_SET_PALETTE) {
         NSString* argument = token.u.string;
