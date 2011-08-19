@@ -641,7 +641,10 @@ NSString *sessionsKey = @"sessions";
 - (void)toggleFullScreenTabBar
 {
     fullscreenTabs_ = !fullscreenTabs_;
-    [[NSUserDefaults standardUserDefaults] setBool:fullscreenTabs_ forKey:@"ShowFullScreenTabBar"];
+    if (!temporarilyShowingTabs_) {
+        [[NSUserDefaults standardUserDefaults] setBool:fullscreenTabs_
+                                                forKey:@"ShowFullScreenTabBar"];
+    }
     [self repositionWidgets];
 }
 
@@ -3619,10 +3622,10 @@ NSString *sessionsKey = @"sessions";
 
 - (void)showFullScreenTabControl
 {
+    temporarilyShowingTabs_ = YES;
     if (!fullscreenTabs_) {
         [self toggleFullScreenTabBar];
     }
-    temporarilyShowingTabs_ = YES;
 }
 
 - (void)hideFullScreenTabControl
