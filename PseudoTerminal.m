@@ -3478,26 +3478,17 @@ NSString *sessionsKey = @"sessions";
     }
     PtyLog(@"adjustFullScreenWindowForBottomBarChange");
 
-    int width;
-    int height;
-    float charHeight = [self maxCharHeight:&height];
-    float charWidth = [self maxCharWidth:&width];
 
     NSRect aRect = [[self window] frame];
-    height = (aRect.size.height - VMARGIN * 2) / charHeight;
-    width = (aRect.size.width - MARGIN * 2) / charWidth;
-    int yoffset=0;
     if (![bottomBar isHidden]) {
-        int dh = [bottomBar frame].size.height / charHeight + 1;
-        height -= dh;
-        yoffset = [bottomBar frame].size.height + VMARGIN;
+        aRect.origin.y = [bottomBar frame].size.height;
+        aRect.size.height -= aRect.origin.y;
     } else {
-        yoffset = floor(aRect.size.height - charHeight * height)/2; // screen height minus one half character
+        aRect.origin.y = 0;
     }
-    aRect = NSMakeRect(floor((aRect.size.width - width * charWidth - MARGIN * 2)/2),  // screen width minus one half character and a margin
-                       yoffset - VMARGIN,                                     // shift down by one VMARGIN
-                       width * charWidth + MARGIN * 2,                        // enough width for width col plus two margins
-                       charHeight * height + VMARGIN * 2);                    // enough height for width rows
+    if (![tabBarControl isHidden]) {
+        aRect.size.height -= [tabBarControl frame].size.height;
+    }
     [TABVIEW setFrame:aRect];
     PtyLog(@"adjustFullScreenWindowForBottomBarChange - call fitTabsToWindow");
     [self fitTabsToWindow];
