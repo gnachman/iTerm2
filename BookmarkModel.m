@@ -619,6 +619,7 @@ id gAltOpenAllRepresentedObject;
     [altOpenAll setAlternate:YES];
     [altOpenAll setRepresentedObject:gAltOpenAllRepresentedObject];
     [menu addItem:altOpenAll];
+    [altOpenAll release];
 }
 
 + (BOOL)menuHasOpenAll:(NSMenu*)menu
@@ -706,6 +707,7 @@ id gAltOpenAllRepresentedObject;
     [item setRepresentedObject:[[[b objectForKey:KEY_GUID] copy] autorelease]];
     [item setTag:tag];
     [menu insertItem:item atIndex:pos];
+    [item release];
 }
 
 - (void)addBookmark:(Bookmark*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params atPos:(int)theIndex

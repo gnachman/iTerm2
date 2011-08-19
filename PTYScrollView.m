@@ -110,7 +110,7 @@
 - (BOOL)isLegacyScroller
 {
     if ([self respondsToSelector:@selector(scrollerStyle)]) {
-        return [self scrollerStyle] == NSScrollerStyleLegacy;
+        return (int)[self scrollerStyle] == NSScrollerStyleLegacy;
     } else {
         return YES;
     }
@@ -135,11 +135,13 @@
                 coreImageFilter:@"CIColorControls"
                       arguments:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithDouble:0.5], @"inputBrightness", nil]];
         [temp unlockFocus];
-        
+
         [temp drawAtPoint:dirtyRect.origin
                  fromRect:dirtyRect
                 operation:NSCompositeCopy
                  fraction:1.0];
+        [temp release];
+        [superDrawn release];
     } else {
         [super drawRect:dirtyRect];
     }
