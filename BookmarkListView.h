@@ -146,6 +146,7 @@
 // Dont' use this if you've called allowMultipleSelections
 - (NSString*)selectedGuid;
 - (NSSet*)selectedGuids;
+- (NSArray *)orderedSelectedGuids;
 - (void)dataChangeNotification:(id)sender;
 - (void)onDoubleClick:(id)sender;
 - (void)eraseQuery;

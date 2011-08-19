@@ -88,7 +88,7 @@ typedef enum {
 
 - (void)_openBookmarkInTab:(BOOL)inTab firstInWindow:(BOOL)firstInWindow inPane:(PaneMode)inPane
 {
-    NSSet* guids = [tableView_ selectedGuids];
+    NSArray* guids = [tableView_ orderedSelectedGuids];
     if (![guids count]) {
         NSBeep();
         return;

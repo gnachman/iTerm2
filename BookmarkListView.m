@@ -816,9 +816,9 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     return [bookmark objectForKey:KEY_GUID];
 }
 
-- (NSSet*)selectedGuids
+- (NSArray *)orderedSelectedGuids
 {
-    NSMutableSet* result = [[[NSMutableSet alloc] init] autorelease];
+    NSMutableArray* result = [[[NSMutableArray alloc] init] autorelease];
     NSIndexSet* indexes = [tableView_ selectedRowIndexes];
     NSUInteger theIndex = [indexes firstIndex];
     while (theIndex != NSNotFound) {
@@ -830,6 +830,11 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
         theIndex = [indexes indexGreaterThanIndex:theIndex];
     }
     return result;
+}
+
+- (NSSet*)selectedGuids
+{
+    return [NSSet setWithArray:[self orderedSelectedGuids]];
 }
 
 - (void)controlTextDidChange:(NSNotification *)aNotification
