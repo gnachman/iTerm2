@@ -212,6 +212,12 @@ typedef enum {
 
     NSMutableSet *broadcastViewIds_;
     NSTimeInterval findCursorStartTime_;
+
+    // Accumulated pinch magnification amount.
+    double cumulativeMag_;
+
+    // Time of last magnification change.
+    NSTimeInterval lastMagChangeTime_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement

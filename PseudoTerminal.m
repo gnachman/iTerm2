@@ -103,6 +103,33 @@ static NSString* TERMINAL_ARRANGEMENT_WINDOW_TYPE = @"Window Type";
 static NSString* TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX = @"Selected Tab Index";
 static NSString* TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
 
+@interface NSEvent (iTermFutureCompat)
+
+- (double)futureMagnification;
+
+@end
+
+@implementation NSEvent (iTermFutureCompat)
+
+- (double)futureMagnification
+{
+    if ([self respondsToSelector:@selector(magnification)]) {
+        NSMethodSignature *sig = [[self class] instanceMethodSignatureForSelector:@selector(magnification)];
+        NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+        [inv setTarget:self];
+        [inv setSelector:@selector(magnification)];
+        [inv invoke];
+
+        double result;
+        [inv getReturnValue:&result];
+        return result;
+    } else {
+        return 0;
+    }
+}
+
+@end
+
 @interface PSMTabBarControl (Private)
 - (void)update;
 @end
@@ -435,6 +462,29 @@ NSString *sessionsKey = @"sessions";
     } else {
         return [NSScreen mainScreen];
     }
+}
+
+- (void)magnifyWithEvent:(NSEvent *)event
+{
+    const double kMagTimeout = 0.2;
+    if ([[NSDate date] timeIntervalSinceDate:[NSDate dateWithTimeIntervalSince1970:lastMagChangeTime_]] > kMagTimeout) {
+        cumulativeMag_ = 0;
+    }
+    lastMagChangeTime_ = [[NSDate date] timeIntervalSince1970];
+
+    double factor = [event futureMagnification];
+    cumulativeMag_ += factor;
+    int dir;
+    const double kMagnifyThreshold = 0.4 ;
+    if (cumulativeMag_ > kMagnifyThreshold) {
+        dir = 1;
+    } else if (cumulativeMag_ < -kMagnifyThreshold) {
+        dir = -1;
+    } else {
+        return;
+    }
+    cumulativeMag_ = 0;
+    [[self currentSession] changeFontSizeDirection:dir];
 }
 
 - (void)swipeWithEvent:(NSEvent *)event
@@ -1769,6 +1819,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
 {
+    zooming_ = NO;
     togglingLionFullScreen_ = NO;
 }
 
@@ -1776,6 +1827,11 @@ NSString *sessionsKey = @"sessions";
 {
     [self fitTabsToWindow];
     [self repositionWidgets];
+}
+
+- (void)windowDidExitFullScreen:(NSNotification *)notification
+{
+    zooming_ = NO;
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame
