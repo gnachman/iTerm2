@@ -506,7 +506,7 @@
 
 #pragma mark -
 #pragma mark Functionality
-- (void)addTabViewItem:(NSTabViewItem *)item
+- (void)addTabViewItem:(NSTabViewItem *)item atIndex:(NSUInteger)i
 {
     // create cell
     PSMTabBarCell *cell = [[PSMTabBarCell alloc] initWithControlView:self];
@@ -514,13 +514,18 @@
     [cell setModifierString:[self _modifierString]];
 
     // add to collection
-    [_cells addObject:cell];
+    [_cells insertObject:cell atIndex:i];
 
     // bind it up
     [self bindPropertiesForCell:cell andTabViewItem:item];
     [cell release];
 
     //[self update];
+}
+
+- (void)addTabViewItem:(NSTabViewItem *)item
+{
+    [self addTabViewItem:item atIndex:[_cells count]];
 }
 
 - (void)disconnectItem:(NSObjectController*)item fromCell:(PSMTabBarCell*)cell
@@ -1881,10 +1886,12 @@
     NSMutableArray *cellItems = [self representedTabViewItems];
     NSEnumerator *ex = [tabItems objectEnumerator];
     NSTabViewItem *item;
+    int i = 0;
     while ( (item = [ex nextObject]) ) {
         if (![cellItems containsObject:item]) {
-            [self addTabViewItem:item];
+            [self addTabViewItem:item atIndex:i];
         }
+        i++;
     }
 
     // pass along for other delegate responses
