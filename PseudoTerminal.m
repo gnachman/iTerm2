@@ -752,6 +752,10 @@ NSString *sessionsKey = @"sessions";
         [TABVIEW removeTabViewItem:aTabViewItem];
     }
 
+    if ([[iTermController sharedInstance] currentTerminal] == self) {
+        NSLog(@"Red alert! Current terminal is being freed!");
+        [[iTermController sharedInstance] setCurrentTerminal:nil];
+    }
     [broadcastViewIds_ release];
     [commandField release];
     [bottomBar release];
