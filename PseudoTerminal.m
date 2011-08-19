@@ -1763,12 +1763,19 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification
 {
+    [self repositionWidgets];
     togglingLionFullScreen_ = YES;
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
 {
     togglingLionFullScreen_ = NO;
+}
+
+- (void)windowWillExitFullScreen:(NSNotification *)notification
+{
+    [self fitTabsToWindow];
+    [self repositionWidgets];
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame
