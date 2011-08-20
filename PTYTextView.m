@@ -5915,13 +5915,15 @@ static bool IsUrlChar(NSString* str)
 
 - (BOOL)_stringLooksLikeURL:(NSString*)s
 {
+    // This regex checks for all valid TLDs
     return [s rangeOfRegex:@"^([a-zA-Z]{1,6}:)?([a-z0-9]([-a-z0-9]*[a-z0-9])?\\.)+((a[cdefgilmnoqrstuwxz]|aero|arpa)|(b[abdefghijmnorstvwyz]|biz)|(c[acdfghiklmnorsuvxyz]|cat|com|coop)|d[ejkmoz]|(e[ceghrstu]|edu)|f[ijkmor]|(g[abdefghilmnpqrstuwy]|gov)|h[kmnrtu]|(i[delmnoqrst]|info|int)|(j[emop]|jobs)|k[eghimnprwyz]|l[abcikrstuvy]|(m[acdghklmnopqrstuvwxyz]|mil|mobi|museum)|(n[acefgilopruz]|name|net)|(om|org)|(p[aefghklmnrstwy]|pro)|qa|r[eouw]|s[abcdeghijklmnortvyz]|(t[cdfghjklmnoprtvwz]|travel)|u[agkmsyz]|v[aceginu]|w[fs]|y[etu]|z[amw])$(?i)"].location == 0;
 }
 
 - (NSMutableString *)_bruteforcePathFromBeforeString:(NSMutableString *)beforeString afterString:(NSMutableString *) afterString workingDirectory:(NSString *)workingDirectory {
     // Remove escaping slashes
-    [beforeString replaceOccurrencesOfRegex:@"\\\\" withString:@""];
-    [afterString replaceOccurrencesOfRegex:@"\\\\" withString:@""];
+    NSString *removeEscapingSlashes = @"\\\\([ \\(\\[\\]\\\\)])";
+    [beforeString replaceOccurrencesOfRegex: removeEscapingSlashes withString:@"$1"];
+    [afterString replaceOccurrencesOfRegex: removeEscapingSlashes withString:@"$1"];
     
     NSMutableArray *beforeChunks = [[beforeString componentsSeparatedByRegex:@"( )"] mutableCopy];
     NSMutableArray *afterChunks = [[afterString componentsSeparatedByRegex:@"( )"] mutableCopy];
@@ -5952,17 +5954,19 @@ static bool IsUrlChar(NSString* str)
 
 - (NSString*)_getURLForX:(int)x
                        y:(int)y
-  respectingHardNewlines:(BOOL)respectHardNewlines
+    respectingHardNewlines:(BOOL)respectHardNewlines
 {
     int w = [dataSource width];
     int h = [dataSource numberOfLines];
     
-    // The idea with this algorithm is that it looks paths with spaces as well.
+    // The idea with this algorithm is that it looks for paths with spaces as well.
     // We want to start looking from the point where the user clicked, so we separate the strings into before (the point) and after (the point).
     NSMutableString *beforeString = [NSMutableString string];
     NSMutableString *afterString = [NSMutableString string];
     NSMutableString *possibleURL = [NSMutableString string];
     bool urlFlag = YES;
+    
+    // If true, urlFlag indicates that the text we're iterating over might be part of a URL. If false, it may be part of a path including a space.
     
     NSString* theChar = [self _getCharacterAtX:x Y:y];
 
@@ -5970,6 +5974,7 @@ static bool IsUrlChar(NSString* str)
         return @"";
     }
 
+    // Set possibleURL to the text to the left of the point that could be part of a URL. Set beforeString to the text before the point that could be part of a path containing a single space.
     // Look for a left and right edge bracketed by | characters
     // Look for a left edge
     int leftx = 0;
