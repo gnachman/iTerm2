@@ -5915,7 +5915,7 @@ static bool IsUrlChar(NSString* str)
 
 - (BOOL)_stringLooksLikeURL:(NSString*)s
 {
-    return [s rangeOfRegex:@"^[a-zA-Z]{1,6}:"].location == 0;
+    return [s rangeOfRegex:@"^([a-zA-Z]{1,6}:)?([a-z0-9]([-a-z0-9]*[a-z0-9])?\\.)+((a[cdefgilmnoqrstuwxz]|aero|arpa)|(b[abdefghijmnorstvwyz]|biz)|(c[acdfghiklmnorsuvxyz]|cat|com|coop)|d[ejkmoz]|(e[ceghrstu]|edu)|f[ijkmor]|(g[abdefghilmnpqrstuwy]|gov)|h[kmnrtu]|(i[delmnoqrst]|info|int)|(j[emop]|jobs)|k[eghimnprwyz]|l[abcikrstuvy]|(m[acdghklmnopqrstuvwxyz]|mil|mobi|museum)|(n[acefgilopruz]|name|net)|(om|org)|(p[aefghklmnrstwy]|pro)|qa|r[eouw]|s[abcdeghijklmnortvyz]|(t[cdfghjklmnoprtvwz]|travel)|u[agkmsyz]|v[aceginu]|w[fs]|y[etu]|z[amw])$(?i)"].location == 0;
 }
 
 - (NSMutableString *)_bruteforcePathFromBeforeString:(NSMutableString *)beforeString afterString:(NSMutableString *) afterString workingDirectory:(NSString *)workingDirectory {
@@ -5925,10 +5925,7 @@ static bool IsUrlChar(NSString* str)
     
     NSMutableArray *beforeChunks = [[beforeString componentsSeparatedByRegex:@"( )"] mutableCopy];
     NSMutableArray *afterChunks = [[afterString componentsSeparatedByRegex:@"( )"] mutableCopy];
-    
-    [beforeChunks autorelease];
-    [afterChunks autorelease];
-    
+
     NSMutableString *left = [NSMutableString string];
     
     [beforeChunks addObject:@""]; // So there is an attempt with no left chunks
@@ -6107,15 +6104,15 @@ static bool IsUrlChar(NSString* str)
 
     NSMutableString *url = NULL;
 
-    if ([self _stringLooksLikeURL:possibleURL]) {
+    url = [self _bruteforcePathFromBeforeString:beforeString afterString:afterString workingDirectory:[self getWorkingDirectoryAtLine:y]];
+    if (url == nil && [self _stringLooksLikeURL:possibleURL]) {
         url = possibleURL;
-    } else {
-        url = [self _bruteforcePathFromBeforeString:beforeString afterString:afterString workingDirectory:[self getWorkingDirectoryAtLine:y]];
-    }
-
+    } 
+    
     if (url == nil) {
         return @"";
     }
+    
 
     // Grab the addressbook command
     [url replaceOccurrencesOfString:@"\n"
@@ -6363,7 +6360,7 @@ static bool IsUrlChar(NSString* str)
 
     NSRange range = [trimmedURLString rangeOfString:@":"];
     if (range.location == NSNotFound) {
-        return;
+        trimmedURLString = [NSString stringWithFormat:@"http://%@", trimmedURLString];
     } else {
         // Search backwards for the start of the scheme.
         for (int i = range.location - 1; 0 <= i; i--) {
