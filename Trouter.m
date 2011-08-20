@@ -51,7 +51,9 @@
 - (void)determineEditor
 {
     // TODO: Move this into a plist file/prefs
-    if ([self applicationExists:@"org.vim.MacVim"]) {
+    if ([self applicationExists:@"com.sublimetext.2"]) {
+        editor = @"subl";
+    } else if ([self applicationExists:@"org.vim.MacVim"]) {
         editor = @"mvim";
     } else if ([self applicationExists:@"com.macromates.textmate"]) {
         editor = @"txmt";
@@ -196,6 +198,23 @@
     return nil;
 }
 
+- (BOOL)openFileInEditor: (NSString *) path lineNumber:(NSString *)lineNumber {
+    if ([editor isEqualToString:@"subl"]) {
+        if (lineNumber != nil) {
+            path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
+        }
+
+        [NSTask launchedTaskWithLaunchPath:@"/usr/bin/env" arguments:[NSArray arrayWithObjects: @"subl", path, nil]];
+    } else {
+        path = [path stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding];
+        NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:
+                                           @"%@://open?url=file://%@&line=%@", editor, path, lineNumber, nil]];
+        [[NSWorkspace sharedWorkspace] openURL:url];
+        
+    }
+    return YES;
+}
+
 
 - (BOOL)openPath:(NSString *)path workingDirectory:(NSString *)workingDirectory
 {
@@ -211,10 +230,6 @@
         return NO;
     }
 
-    if (lineNumber == nil) {
-        lineNumber = @"";
-    }
-
     if (externalScript) {
         [NSTask launchedTaskWithLaunchPath:externalScript
                                  arguments:[NSArray arrayWithObjects:path, lineNumber, nil]];
@@ -227,11 +242,7 @@
     }
 
     if (editor && [self isTextFile:path]) {
-        path = [path stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding];
-        NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:
-                                     @"%@://open?url=file://%@&line=%@", editor, path, lineNumber, nil]];
-        [[NSWorkspace sharedWorkspace] openURL:url];
-        return YES;
+        return [self openFileInEditor: path lineNumber:lineNumber];
     }
 
     [[NSWorkspace sharedWorkspace] openFile:path];
