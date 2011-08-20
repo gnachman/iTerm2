@@ -5926,6 +5926,9 @@ static bool IsUrlChar(NSString* str)
     NSMutableArray *beforeChunks = [[beforeString componentsSeparatedByRegex:@"( )"] mutableCopy];
     NSMutableArray *afterChunks = [[afterString componentsSeparatedByRegex:@"( )"] mutableCopy];
     
+    [beforeChunks autorelease];
+    [afterChunks autorelease];
+    
     NSMutableString *left = [NSMutableString string];
     
     [beforeChunks addObject:@""]; // So there is an attempt with no left chunks
