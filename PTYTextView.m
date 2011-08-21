@@ -280,6 +280,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     resultMap_ = [[NSMutableDictionary alloc] init];
 
     trouter = [[Trouter alloc] init];
+    trouterDragged = NO;
     workingDirectoryAtLines = [[NSMutableArray alloc] init];
     return self;
 }
@@ -2728,6 +2729,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)mouseUp:(NSEvent *)event
 {
     dragOk_ = NO;
+    trouterDragged = NO;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
     const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
     if (!cmdPressed &&
@@ -2970,7 +2972,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
 
-    if (startX < 0 && pressingCmdOnly) {
+    if (startX < 0 && pressingCmdOnly && trouterDragged == NO) {
+        
+        // Only one Trouter check per drag
+        trouterDragged = YES;
+
         // Drag a file handle (only possible when there is no selection).
         NSString *path = [self _getURLForX:x y:y];
         path = [trouter getFullPath:path
@@ -2999,6 +3005,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
              pasteboard:pboard
                  source:self
               slideBack:YES];
+        
+        // Valid drag, so we reset the flag because mouseUp doesn't get called when a drag is done
+        trouterDragged = NO;
+        
         return;
 
     }
@@ -6315,10 +6325,49 @@ static bool IsUrlChar(NSString* str)
 
     static NSCharacterSet* urlChars;
     if (!urlChars) {
-        urlChars = [[NSCharacterSet characterSetWithCharactersInString:@".?/:;%=&_-,+~#@!*'()"] retain];
+        urlChars = [[NSCharacterSet characterSetWithCharactersInString:@".?\\/:;%=&_-,+~#@!*'()"] retain];
     }
     return ([urlChars longCharacterIsMember:theChar] ||
             [[NSCharacterSet alphanumericCharacterSet] longCharacterIsMember:theChar]);
+}
+
+- (BOOL)_stringLooksLikeURL:(NSString*)s
+{
+    // This regex checks for all valid TLDs
+    return [s rangeOfRegex:@"^([a-zA-Z]{1,6}:)?([a-z0-9]([-a-z0-9]*[a-z0-9])?\\.)+((a[cdefgilmnoqrstuwxz]|aero|arpa)|(b[abdefghijmnorstvwyz]|biz)|(c[acdfghiklmnorsuvxyz]|cat|com|coop)|d[ejkmoz]|(e[ceghrstu]|edu)|f[ijkmor]|(g[abdefghilmnpqrstuwy]|gov)|h[kmnrtu]|(i[delmnoqrst]|info|int)|(j[emop]|jobs)|k[eghimnprwyz]|l[abcikrstuvy]|(m[acdghklmnopqrstuvwxyz]|mil|mobi|museum)|(n[acefgilopruz]|name|net)|(om|org)|(p[aefghklmnrstwy]|pro)|qa|r[eouw]|s[abcdeghijklmnortvyz]|(t[cdfghjklmnoprtvwz]|travel)|u[agkmsyz]|v[aceginu]|w[fs]|y[etu]|z[amw])$(?i)"].location == 0;
+}
+
+- (NSMutableString *)_bruteforcePathFromBeforeString:(NSMutableString *)beforeString afterString:(NSMutableString *) afterString workingDirectory:(NSString *)workingDirectory {
+    // Remove escaping slashes
+    NSString *removeEscapingSlashes = @"\\\\([ \\(\\[\\]\\\\)])";
+    [beforeString replaceOccurrencesOfRegex: removeEscapingSlashes withString:@"$1"];
+    [afterString replaceOccurrencesOfRegex: removeEscapingSlashes withString:@"$1"];
+    
+    NSMutableArray *beforeChunks = [[beforeString componentsSeparatedByRegex:@"( )"] mutableCopy];
+    NSMutableArray *afterChunks = [[afterString componentsSeparatedByRegex:@"( )"] mutableCopy];
+
+    NSMutableString *left = [NSMutableString string];
+    
+    [beforeChunks addObject:@""]; // So there is an attempt with no left chunks
+    // Bail after 100 iterations if nothing is still found.
+    int limit = 100;
+    
+    for (int i = [beforeChunks count] - 1; i >= 0; i--) {
+        [left insertString:[beforeChunks objectAtIndex:i] atIndex:0];
+        NSMutableString *possiblePath = [NSMutableString stringWithString:left];
+        
+        for (int j = 0; j < [afterChunks count]; j++) {
+            [possiblePath appendString:[afterChunks objectAtIndex:j]];
+            if ([trouter getFullPath:possiblePath workingDirectory:workingDirectory lineNumber:NULL]) {
+                return possiblePath;
+            }
+            
+            if (--limit == 0) {
+                return nil;
+            }
+        }
+    }
+    return nil;
 }
 
 - (NSString*)_getURLForX:(int)x
@@ -6327,13 +6376,23 @@ static bool IsUrlChar(NSString* str)
 {
     int w = [dataSource width];
     int h = [dataSource numberOfLines];
-    NSMutableString *url = [NSMutableString string];
+    
+    // The idea with this algorithm is that it looks for paths with spaces as well.
+    // We want to start looking from the point where the user clicked, so we separate the strings into before (the point) and after (the point).
+    NSMutableString *beforeString = [NSMutableString string];
+    NSMutableString *afterString = [NSMutableString string];
+    NSMutableString *possibleURL = [NSMutableString string];
+    bool urlFlag = YES;
+    
+    // If true, urlFlag indicates that the text we're iterating over might be part of a URL. If false, it may be part of a path including a space.
+    
     NSString* theChar = [self _getCharacterAtX:x Y:y];
 
     if (!IsUrlChar(theChar)) {
-        return url;
+        return @"";
     }
 
+    // Set possibleURL to the text to the left of the point that could be part of a URL. Set beforeString to the text before the point that could be part of a path containing a single space.
     // Look for a left and right edge bracketed by | characters
     // Look for a left edge
     int leftx = 0;
@@ -6364,16 +6423,28 @@ static bool IsUrlChar(NSString* str)
         int endx = x-1;
         for (int xi = endx, yi = y; xi >= leftx && 0 <= yi; xi--) {
             NSString* curChar = [self _getCharacterAtX:xi Y:yi];
-            if (!IsUrlChar(curChar)) {
-                // Found a non-url character so append the left part of the URL.
-                [url insertString:[self contentFromX:xi+1 Y:yi ToX:endx+1 Y:yi pad: YES]
+            if (!IsUrlChar(curChar) && ![curChar isEqualToString:@" "]) {
+                // Found a non-url or path character so append to the left of beforeString.
+                [beforeString insertString:[self contentFromX:xi+1 Y:yi ToX:endx+1 Y:yi pad: YES]
                      atIndex:0];
                 break;
             }
+            if (!IsUrlChar(curChar) && urlFlag) {
+                // Found the first space while searching left
+                [possibleURL insertString:[self contentFromX:xi+1 Y:yi ToX:endx+1 Y:yi pad:YES]
+                                  atIndex: 0];
+                urlFlag = false;
+                continue;                
+            }
             if (xi == leftx) {
                 // hit the start of the line
-                [url insertString:[self contentFromX:xi Y:yi ToX:endx+1 Y:yi pad: YES]
+                [beforeString insertString:[self contentFromX:xi Y:yi ToX:endx+1 Y:yi pad: YES]
                      atIndex:0];
+                
+                if (urlFlag) {
+                    [possibleURL insertString:[self contentFromX:xi Y:yi ToX:endx+1 Y:yi pad: YES]
+                                      atIndex:0];
+                }
                 // Try to wrap around to the previous line
                 if (yi == 0) {
                     break;
@@ -6400,11 +6471,18 @@ static bool IsUrlChar(NSString* str)
     // Move to the right
     {
         int startx = x;
+        urlFlag = true;
         for (int xi = startx+1, yi = y; xi <= rightx && yi < h; xi++) {
             NSString* curChar = [self _getCharacterAtX:xi Y:yi];
-            if (!IsUrlChar(curChar)) {
-                // Found something non-urly. Append what we have so far.
-                [url appendString:[self contentFromX:startx Y:yi ToX:xi Y:yi pad: YES]];
+            if (!IsUrlChar(curChar) && urlFlag) {
+                // Found a non-url or path character
+                [possibleURL appendString:[self contentFromX:startx Y:yi ToX:xi Y:yi pad: YES]];
+                urlFlag = false;
+            }
+            
+            if (!IsUrlChar(curChar) && ![curChar isEqualToString:@" "]) {
+                // Found something non-pathy. Append what we have so far.
+                [afterString appendString:[self contentFromX:startx Y:yi ToX:xi Y:yi pad: YES]];
                 // skip backslahes that indicate wrapping
                 while (x <= rightx && [[self _getCharacterAtX:xi Y:yi] isEqualToString:@"\\"]) {
                     xi++;
@@ -6416,9 +6494,14 @@ static bool IsUrlChar(NSString* str)
                 // Don't respect hard newlines that are "escaped" by a \.
                 respectHardNewlines = NO;
                 // xi is left at rightx+1
-            } else if (xi == rightx) {
+            }
+            if (xi == rightx) {
                 // Made it to rightx.
-                [url appendString:[self contentFromX:startx Y:yi ToX:xi+1 Y:yi pad: YES]];
+                [afterString appendString:[self contentFromX:startx Y:yi ToX:xi+1 Y:yi pad: YES]];
+                
+                if (urlFlag) {
+                    [possibleURL appendString:[self contentFromX:startx Y:yi ToX:xi+1 Y:yi pad: YES]];
+                }
             } else {
                 // Char is valid and xi < rightx.
                 continue;
@@ -6442,6 +6525,18 @@ static bool IsUrlChar(NSString* str)
         }
     }
 
+    NSMutableString *url = NULL;
+
+    url = [self _bruteforcePathFromBeforeString:beforeString afterString:afterString workingDirectory:[self getWorkingDirectoryAtLine:y]];
+    if (url == nil && [self _stringLooksLikeURL:possibleURL]) {
+        url = possibleURL;
+    } 
+    
+    if (url == nil) {
+        return @"";
+    }
+    
+
     // Grab the addressbook command
     [url replaceOccurrencesOfString:@"\n"
                          withString:@""
@@ -6450,11 +6545,6 @@ static bool IsUrlChar(NSString* str)
 
     return (url);
 
-}
-
-- (BOOL)_stringLooksLikeURL:(NSString*)s
-{
-    return [s rangeOfRegex:@"^[a-zA-Z]{1,6}:"].location == 0;
 }
 
 - (NSString *)_getURLForX:(int)x
@@ -6713,7 +6803,7 @@ static bool IsUrlChar(NSString* str)
 
     NSRange range = [trimmedURLString rangeOfString:@":"];
     if (range.location == NSNotFound) {
-        trimmedURLString = [@"http://" stringByAppendingString:trimmedURLString];
+        trimmedURLString = [NSString stringWithFormat:@"http://%@", trimmedURLString];
     } else {
         // Search backwards for the start of the scheme.
         for (int i = range.location - 1; 0 <= i; i--) {
@@ -6742,7 +6832,7 @@ static bool IsUrlChar(NSString* str)
             }
         }
     }
-
+    
     NSString* escapedString =
         (NSString *)CFURLCreateStringByAddingPercentEscapes(NULL,
                                                             (CFStringRef)trimmedURLString,
