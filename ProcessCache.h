@@ -29,6 +29,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+extern NSString *PID_INFO_IS_FOREGROUND;
+extern NSString *PID_INFO_NAME;
 
 @interface ProcessCache : NSObject {
     NSMutableDictionary* pidInfoCache_;
@@ -37,6 +39,9 @@
 }
 
 + (ProcessCache*)sharedInstance;
+- (NSSet *)childrenOfPid:(pid_t)thePid levelsToSkip:(int)skip;
+- (NSString*)getNameOfPid:(pid_t)thePid isForeground:(BOOL*)isForeground;
+- (NSDictionary *)dictionaryOfTaskInfoForPid:(pid_t)thePid;
 
 // Get the name of the foreground job owned by pid.
 - (NSString*)jobNameWithPid:(int)pid;

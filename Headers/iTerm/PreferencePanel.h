@@ -447,6 +447,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* copyTerminal;
     IBOutlet NSButton* copyWindow;
     IBOutlet NSButton* copyKeyboard;
+    IBOutlet NSButton* copySession;
     IBOutlet BookmarkListView* copyTo;
     IBOutlet NSButton* copyButton;
 
@@ -480,7 +481,14 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 
 void LoadPrefsFromCustomFolder(void);
 
-typedef enum { BulkCopyColors, BulkCopyDisplay, BulkCopyWindow, BulkCopyTerminal, BulkCopyKeyboard } BulkCopySettings;
+typedef enum {
+    BulkCopyColors,
+    BulkCopyDisplay,
+    BulkCopyWindow,
+    BulkCopyTerminal,
+    BulkCopyKeyboard,
+    BulkCopySession
+} BulkCopySettings;
 
 + (PreferencePanel*)sharedInstance;
 + (PreferencePanel*)sessionsInstance;

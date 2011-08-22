@@ -67,7 +67,7 @@
 #import "BookmarksWindow.h"
 #import "FindViewController.h"
 #import "SplitPanel.h"
-
+#import "ProcessCache.h"
 #define CACHED_WINDOW_POSITIONS 100
 
 #define ITLocalizedString(key) NSLocalizedStringFromTableInBundle(key, @"iTerm", [NSBundle bundleForClass:[self class]], @"Context menu")
@@ -557,21 +557,32 @@ NSString *sessionsKey = @"sessions";
     if (mustAsk) {
         BOOL okToClose;
         if (numClosing == 1) {
+            int skip = 0;
+            pid_t thePid = [[[aTab activeSession] SHELL] pid];
+            if ([[[ProcessCache sharedInstance] getNameOfPid:thePid isForeground:nil] isEqualToString:@"login"]) {
+                skip = 1;
+            }
+            NSMutableArray *names = [NSMutableArray array];
+            for (NSNumber *n in [[ProcessCache sharedInstance] childrenOfPid:thePid levelsToSkip:skip]) {
+                pid_t pid = [n intValue];
+                NSDictionary *info = [[ProcessCache sharedInstance] dictionaryOfTaskInfoForPid:pid];
+                [names addObject:[info objectForKey:PID_INFO_NAME]];
+            }
+            NSString *message;
+            NSArray *sortedNames = [names sortedArrayUsingSelector:@selector(compare:)];
+            if ([sortedNames count] == 1) {
+                message = [NSString stringWithFormat:@"This tab is running \"%@\". Close it?", [sortedNames objectAtIndex:0]];
+            } else if ([sortedNames count] > 1) {
+                message = [NSString stringWithFormat:@"This tab is running the following jobs: %@. Close it?", [sortedNames componentsJoinedByString:@", "]];
+            } else {
+                message = @"This tab will be closed.";
+            }
             okToClose = NSRunAlertPanel([NSString stringWithFormat:@"%@ #%d",
                                          [[aTab activeSession] name],
                                          [aTab realObjectCount]],
-                                        NSLocalizedStringFromTableInBundle(@"This tab will be closed.",
-                                                                           @"iTerm",
-                                                                           [NSBundle bundleForClass:[self class]],
-                                                                           @"Close Session"),
-                                        NSLocalizedStringFromTableInBundle(@"OK",
-                                                                           @"iTerm",
-                                                                           [NSBundle bundleForClass:[self class]],
-                                                                           @"OK"),
-                                        NSLocalizedStringFromTableInBundle(@"Cancel",
-                                                                           @"iTerm",
-                                                                           [NSBundle bundleForClass:[self class]],
-                                                                           @"Cancel"),
+                                        message,
+                                        @"OK",
+                                        @"Cancel",
                                         nil) == NSAlertDefaultReturn;
         } else {
             okToClose = NSRunAlertPanel([NSString stringWithFormat:@"Close multiple panes in tab #%d",

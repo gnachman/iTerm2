@@ -3643,6 +3643,9 @@ static float versionNumber;
         if ([copyKeyboard state] == NSOnState) {
             [self copyAttributes:BulkCopyKeyboard fromBookmark:srcGuid toBookmark:destGuid];
         }
+        if ([copySession state] == NSOnState) {
+            [self copyAttributes:BulkCopySession fromBookmark:srcGuid toBookmark:destGuid];
+        }
     }
     [NSApp endSheet:copyPanel];
 }
@@ -3712,25 +3715,28 @@ static float versionNumber;
         nil
     };
     NSString* terminalKeys[] = {
-        KEY_CLOSE_SESSIONS_ON_END,
         KEY_SILENCE_BELL,
         KEY_VISUAL_BELL,
         KEY_FLASHING_BELL,
         KEY_XTERM_MOUSE_REPORTING,
         KEY_DISABLE_SMCUP_RMCUP,
         KEY_DISABLE_PRINTING,
-        KEY_BOOKMARK_GROWL_NOTIFICATIONS,
-        KEY_AUTOLOG,
-        KEY_LOGDIR,
         KEY_CHARACTER_ENCODING,
         KEY_SCROLLBACK_LINES,
         KEY_SCROLLBACK_WITH_STATUS_BAR,
         KEY_UNLIMITED_SCROLLBACK,
         KEY_TERMINAL_TYPE,
-        KEY_SEND_CODE_WHEN_IDLE,
-        KEY_IDLE_CODE,
         nil
     };
+    NSString *sessionKeys[] = {
+        KEY_CLOSE_SESSIONS_ON_END,
+        KEY_BOOKMARK_GROWL_NOTIFICATIONS,
+        KEY_AUTOLOG,
+        KEY_LOGDIR,
+        KEY_SEND_CODE_WHEN_IDLE,
+        KEY_IDLE_CODE,
+    };
+    
     NSString* keyboardKeys[] = {
         KEY_KEYBOARD_MAP,
         KEY_OPTION_KEY_SENDS,
@@ -3751,6 +3757,9 @@ static float versionNumber;
             break;
         case BulkCopyKeyboard:
             keys = keyboardKeys;
+            break;
+        case BulkCopySession:
+            keys = sessionKeys;
             break;
         default:
             NSLog(@"Unexpected copy attribute %d", (int)attributes);
