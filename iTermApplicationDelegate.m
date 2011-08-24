@@ -201,10 +201,11 @@ static BOOL hasBecomeActive = NO;
                       encoding:NSUTF8StringEncoding
                          error:nil];
 }
-- (void)_updateArrangementsMenu
+
+- (void)_updateArrangementsMenu:(NSMenuItem *)container
 {
-    while ([[windowArrangements_ submenu] numberOfItems]) {
-        [[windowArrangements_ submenu] removeItemAtIndex:0];
+    while ([[container submenu] numberOfItems]) {
+        [[container submenu] removeItemAtIndex:0];
     }
 
     NSString *defaultName = [WindowArrangements defaultArrangementName];
@@ -216,9 +217,9 @@ static BOOL hasBecomeActive = NO;
         } else {
             theShortcut = @"";
         }
-        [[windowArrangements_ submenu] addItemWithTitle:theName
-                                                 action:@selector(restoreWindowArrangement:)
-                                          keyEquivalent:theShortcut];
+        [[container submenu] addItemWithTitle:theName
+                                       action:@selector(restoreWindowArrangement:)
+                                keyEquivalent:theShortcut];
     }
 }
 
@@ -244,7 +245,7 @@ static BOOL hasBecomeActive = NO;
     if ([ppanel isAnyModifierRemapped]) {
         [[iTermController sharedInstance] beginRemappingModifiers];
     }
-    [self _updateArrangementsMenu];
+    [self _updateArrangementsMenu:windowArrangements_];
 
     // register for services
     [NSApp registerServicesMenuSendTypes:[NSArray arrayWithObjects:NSStringPboardType, nil]
@@ -479,7 +480,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)windowArrangementsDidChange:(id)sender
 {
-    [self _updateArrangementsMenu];
+    [self _updateArrangementsMenu:windowArrangements_];
 }
 
 - (void)restoreWindowArrangement:(id)sender
@@ -569,10 +570,7 @@ static BOOL hasBecomeActive = NO;
     //new window menu
     NSMenuItem *newMenuItem;
     NSMenu *bookmarksMenu;
-    newMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedStringFromTableInBundle(title,
-                                                                                       @"iTerm",
-                                                                                       [NSBundle bundleForClass:[self class]],
-                                                                                       @"Context menu")
+    newMenuItem = [[NSMenuItem alloc] initWithTitle:title
                                              action:nil
                                       keyEquivalent:@""];
     [superMenu addItem:newMenuItem];
@@ -594,20 +592,33 @@ static BOOL hasBecomeActive = NO;
     return bookmarkMenu;
 }
 
+- (void)_addArrangementsMenuTo:(NSMenu *)theMenu
+{
+    NSMenuItem *container = [theMenu addItemWithTitle:@"Restore Arrangement"
+                                               action:nil
+                                        keyEquivalent:@""];
+    NSMenu *subMenu = [[[NSMenu alloc] init] autorelease];
+    [container setSubmenu:subMenu];
+    [self _updateArrangementsMenu:container];
+}
+
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender
 {
     NSMenu* aMenu = [[NSMenu alloc] initWithTitle: @"Dock Menu"];
 
     PseudoTerminal *frontTerminal;
     frontTerminal = [[iTermController sharedInstance] currentTerminal];
-    [self _newSessionMenu:aMenu title:@"New Window"
+    [self _newSessionMenu:aMenu
+                    title:@"New Window"
                    target:[iTermController sharedInstance]
                  selector:@selector(newSessionInWindowAtIndex:)
           openAllSelector:@selector(newSessionsInNewWindow:)];
-    [self _newSessionMenu:aMenu title:@"New Tab"
+    [self _newSessionMenu:aMenu
+                    title:@"New Tab"
                    target:frontTerminal
                  selector:@selector(newSessionInTabAtIndex:)
           openAllSelector:@selector(newSessionsInWindow:)];
+    [self _addArrangementsMenuTo:aMenu];
 
     return ([aMenu autorelease]);
 }
