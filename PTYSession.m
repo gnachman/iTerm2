@@ -3058,6 +3058,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSString* countryCode = [[NSLocale currentLocale] objectForKey:NSLocaleCountryCode];
     if (languageCode && countryCode) {
         theLocale = [NSString stringWithFormat:@"%@_%@", languageCode, countryCode];
+    } else {
+        return [[NSLocale currentLocale] localeIdentifier];
     }
     return theLocale;
 }
