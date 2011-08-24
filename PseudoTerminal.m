@@ -1466,9 +1466,9 @@ NSString *sessionsKey = @"sessions";
     float charHeight = [[session TEXTVIEW] lineHeight];
 
     // Decide when to snap.  (We snap unless shift is held down.)
-    BOOL shiftDown = (([[NSApp currentEvent] modifierFlags] & NSShiftKeyMask) != 0);
-    BOOL snapWidth = !shiftDown;
-    BOOL snapHeight = !shiftDown;
+    BOOL modifierDown = (([[NSApp currentEvent] modifierFlags] & NSControlKeyMask) != 0);
+    BOOL snapWidth = !modifierDown;
+    BOOL snapHeight = !modifierDown;
     if (sender != [self window]) {
       snapWidth = snapHeight = false;
     }
