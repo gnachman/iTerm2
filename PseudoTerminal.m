@@ -577,6 +577,51 @@ NSString *sessionsKey = @"sessions";
     return windowType_;
 }
 
+// Convert a lexicographically sorted array like ["a", "b", "b", "c"] into
+// ["a", "2 instances of \"b\"", "c"].
+- (NSArray *)uniqWithCounts:(NSArray *)a
+{
+  NSMutableArray *result = [NSMutableArray array];
+
+  for (int i = 0; i < [a count]; ) {
+    int c = 0;
+    NSString *thisValue = [a objectAtIndex:i];
+    int j;
+    for (j = i; j < [a count]; j++) {
+      if (![[a objectAtIndex:j] isEqualToString:thisValue]) {
+        break;
+      }
+      ++c;
+    }
+    if (c > 1) {
+      [result addObject:[NSString stringWithFormat:@"%d instances of \"%@\"", c, thisValue]];
+    } else {
+      [result addObject:thisValue];
+    }
+    i = j;
+  }
+
+  return result;
+}
+
+// Convert an array ["x", "y", "z"] into a nicely formatted English string like
+// "x, y, and z".
+- (NSString *)prettyListOfStrings:(NSArray *)a
+{
+  if ([a count] < 2) {
+    return [a componentsJoinedByString:@", "];
+  }
+
+  NSMutableString *result = [NSMutableString string];
+  if ([a count] == 2) {
+    [result appendFormat:@"%@ and %@", [a objectAtIndex:0], [a lastObject]];
+  } else {
+    [result appendString:[[a subarrayWithRange:NSMakeRange(0, [a count] - 1)] componentsJoinedByString:@", "]];
+    [result appendFormat:@", and %@", [a lastObject]];
+  }
+  return result;
+}
+
 - (BOOL)confirmCloseForSessions:(NSArray *)sessions
                      identifier:(NSString*)identifier
                     genericName:(NSString *)genericName
@@ -589,14 +634,15 @@ NSString *sessionsKey = @"sessions";
     }
     NSString *message;
     NSArray *sortedNames = [names sortedArrayUsingSelector:@selector(compare:)];
+    sortedNames = [self uniqWithCounts:sortedNames];
     if ([sortedNames count] == 1) {
-        message = [NSString stringWithFormat:@"%@ is running \"%@\".", identifier, [sortedNames objectAtIndex:0]];
+        message = [NSString stringWithFormat:@"%@ is running %@.", identifier, [sortedNames objectAtIndex:0]];
     } else if ([sortedNames count] > 1 && [sortedNames count] <= 10) {
-        message = [NSString stringWithFormat:@"%@ is running the following jobs: %@.", identifier, [sortedNames componentsJoinedByString:@", "]];
+        message = [NSString stringWithFormat:@"%@ is running the following jobs: %@.", identifier, [self prettyListOfStrings:sortedNames]];
     } else if ([sortedNames count] > 10) {
         message = [NSString stringWithFormat:@"%@ is running the following jobs: %@, plus %d %@.",
                    identifier,
-                   [[sortedNames subarrayWithRange:NSMakeRange(0, 10)] componentsJoinedByString:@", "],
+                   [self prettyListOfStrings:sortedNames],
                    [sortedNames count] - 10,
                    [sortedNames count] == 11 ? @"other" : @"others"];
     } else {
@@ -731,23 +777,12 @@ NSString *sessionsKey = @"sessions";
         okToClose = YES;
     } else if (![aSession promptOnClose]) {
         okToClose = YES;
-    } else if (NSRunAlertPanel([NSString stringWithFormat:@"%@ #%d",
-                            [aSession name],
-                            [[aSession tab] realObjectCount]],
-                         NSLocalizedStringFromTableInBundle(@"This session will be closed.",
-                                                            @"iTerm",
-                                                            [NSBundle bundleForClass:[self class]],
-                                                            @"Close Session"),
-                         NSLocalizedStringFromTableInBundle(@"OK",
-                                                            @"iTerm",
-                                                            [NSBundle bundleForClass:[self class]],
-                                                            @"OK"),
-                         NSLocalizedStringFromTableInBundle(@"Cancel",
-                                                            @"iTerm",
-                                                            [NSBundle bundleForClass:[self class]],
-                                                            @"Cancel"),
-                         nil) == NSAlertDefaultReturn) {
-        okToClose = YES;
+    } else {
+      okToClose = [self confirmCloseForSessions:[NSArray arrayWithObject:aSession]
+                                     identifier:@"This session"
+                                    genericName:[NSString stringWithFormat:@"session \"%@\"",
+                                                    [aSession name],
+                                                    [[aSession tab] realObjectCount]]];
     }
     if (okToClose) {
         // Just in case IR is open, close it first.
