@@ -1955,6 +1955,16 @@ static NSString* FormatRect(NSRect r) {
     [[root_ window] makeFirstResponder:[activeSession_ TEXTVIEW]];
 }
 
+- (BOOL)promptOnClose
+{
+    for (PTYSession *aSession in [self sessions]) {
+        if ([aSession promptOnClose]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 #pragma mark NSSplitView delegate methods
 
 // Prevent any session from becoming smaller than its minimum size because of

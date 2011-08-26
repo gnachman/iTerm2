@@ -43,6 +43,14 @@
 #define MOD_TAG_LEFT_COMMAND 7
 #define MOD_TAG_RIGHT_COMMAND 8
 
+// Constants for KEY_PROMPT_CLOSE
+// Never prompt on close
+#define PROMPT_NEVER 0
+// Always prompt on close
+#define PROMPT_ALWAYS 1
+// Prompt on close if jobs (excluding some in a list) are running.
+#define PROMPT_EX_JOBS 2
+
 @class iTermController;
 
 typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
@@ -87,10 +95,6 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     // Hide tab bar when there is only one session
     IBOutlet id hideTab;
     BOOL defaultHideTab;
-
-    // Warn me when a session closes
-    IBOutlet id promptOnClose;
-    BOOL defaultPromptOnClose;
 
     // Warn when quitting
     IBOutlet id promptOnQuit;
@@ -402,15 +406,9 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* disablePrinting;
     IBOutlet NSButton* scrollbackWithStatusBar;
     IBOutlet NSButton* bookmarkGrowlNotifications;
-    IBOutlet NSButton *autoLog;
-    IBOutlet NSTextField *logDir;
-    IBOutlet NSButton *changeLogDir;
-    IBOutlet NSImageView *logDirWarning;
     IBOutlet NSTextField* scrollbackLines;
     IBOutlet NSButton* unlimitedScrollback;
     IBOutlet NSComboBox* terminalType;
-    IBOutlet NSButton* sendCodeWhenIdle;
-    IBOutlet NSTextField* idleCode;
     IBOutlet NSPopUpButton* characterEncoding;
 
     // Keyboard tab
@@ -438,6 +436,17 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     id modifyMappingOriginator;  // widget that caused add new mapping window to open
     IBOutlet NSPopUpButton* bookmarksPopup;
     IBOutlet NSButton* addNewMapping;
+
+    // Session --------------------------------
+    IBOutlet NSTableView *jobsTable_;
+    IBOutlet NSButton *autoLog;
+    IBOutlet NSTextField *logDir;
+    IBOutlet NSButton *changeLogDir;
+    IBOutlet NSImageView *logDirWarning;
+    IBOutlet NSButton* sendCodeWhenIdle;
+    IBOutlet NSTextField* idleCode;
+    IBOutlet NSButton* removeJobButton_;
+    IBOutlet NSMatrix* promptBeforeClosing_;
 
     // Copy Bookmark Settings...
     IBOutlet NSTextField* bulkCopyLabel;
@@ -493,6 +502,7 @@ typedef enum {
 + (PreferencePanel*)sharedInstance;
 + (PreferencePanel*)sessionsInstance;
 + (BOOL)migratePreferences;
++ (BOOL)loadingPrefsFromCustomFolder;
 - (BOOL)loadPrefs;
 - (id)initWithDataSource:(BookmarkModel*)model userDefaults:(NSUserDefaults*)userDefaults;
 - (void)setOneBokmarkOnly;
@@ -500,6 +510,8 @@ typedef enum {
 - (void)handleWindowWillCloseNotification:(NSNotification *)notification;
 - (void)genericCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo;
 - (void)editKeyMapping:(id)sender;
+- (IBAction)addJob:(id)sender;
+- (IBAction)removeJob:(id)sender;
 - (IBAction)saveKeyMapping:(id)sender;
 - (BOOL)keySheetIsOpen;
 - (WindowArrangements *)arrangements;
@@ -529,7 +541,6 @@ typedef enum {
 - (void)setTabViewType:(NSTabViewType)type;
 - (NSTabViewType)tabViewType;
 - (int)windowStyle;
-- (BOOL)promptOnClose;
 - (BOOL)promptOnQuit;
 - (BOOL)onlyWhenMoreTabs;
 - (BOOL)focusFollowsMouse;
@@ -662,3 +673,8 @@ typedef enum {
 
 @end
 
+@interface PreferencePanel (KeyValueCoding)
+- (BOOL)haveJobsForCurrentBookmark;
+- (void)setHaveJobsForCurrentBookmark:(BOOL)value;
+
+@end

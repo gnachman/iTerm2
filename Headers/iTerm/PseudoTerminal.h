@@ -405,6 +405,9 @@ typedef enum {
 // Can progress indicators be shown? They're turned off during animation of the tabbar.
 - (BOOL)disableProgressIndicators;
 
+// Does any session want to be prompted for closing?
+- (BOOL)promptOnClose;
+
 ////////////////////////////////////////////////////////////////////////////////
 // NSTextField Delegate Methods
 

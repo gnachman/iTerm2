@@ -97,8 +97,8 @@ static float versionNumber;
  Static method to copy old preferences file, iTerm.plist or net.sourceforge.iTerm.plist, to new
  preferences file, com.googlecode.iterm2.plist
  */
-+ (BOOL) migratePreferences {
-
++ (BOOL)migratePreferences
+{
     NSString *prefDir = [[NSHomeDirectory()
         stringByAppendingPathComponent:@"Library"]
         stringByAppendingPathComponent:@"Preferences"];
@@ -972,7 +972,6 @@ static float versionNumber;
     defaultPasteFromClipboard=[prefs objectForKey:@"PasteFromClipboard"]?[[prefs objectForKey:@"PasteFromClipboard"] boolValue]:YES;
     defaultHideTab=[prefs objectForKey:@"HideTab"]?[[prefs objectForKey:@"HideTab"] boolValue]: YES;
     defaultPromptOnQuit = [prefs objectForKey:@"PromptOnQuit"]?[[prefs objectForKey:@"PromptOnQuit"] boolValue]: YES;
-    defaultPromptOnClose = [prefs objectForKey:@"PromptOnClose"]?[[prefs objectForKey:@"PromptOnClose"] boolValue]: YES;
     defaultOnlyWhenMoreTabs = [prefs objectForKey:@"OnlyWhenMoreTabs"]?[[prefs objectForKey:@"OnlyWhenMoreTabs"] boolValue]: YES;
     defaultFocusFollowsMouse = [prefs objectForKey:@"FocusFollowsMouse"]?[[prefs objectForKey:@"FocusFollowsMouse"] boolValue]: NO;
     defaultHotkeyTogglesWindow = [prefs objectForKey:@"HotKeyTogglesWindow"]?[[prefs objectForKey:@"HotKeyTogglesWindow"] boolValue]: NO;
@@ -1036,29 +1035,6 @@ static float versionNumber;
         [[NSBundle mainBundle] objectForInfoDictionaryKey:@"SUFeedURLForFinal"];
     [prefs setObject:appCast forKey:@"SUFeedURL"];
 
-    if ([[prefs objectForKey:@"DeleteSendsCtrlH"] boolValue]) {
-        // Migrate legacy global "delete sends ^h setting" to each bookmark's
-        // keymap. We change the array while looping over it, but only in a
-        // safe way--modifying the pointer of an item we'll never look at again.
-        // To avoid bogus errors, we enumerate it manually.
-        // The legacy setting existed only around Alpha 17.
-        NSArray* bookmarks = [[BookmarkModel sharedInstance] bookmarks];
-        for (int i = 0; i < [bookmarks count]; i++) {
-            Bookmark* bookmark = [bookmarks objectAtIndex:i];
-            NSString* text;
-            if ([iTermKeyBindingMgr localActionForKeyCode:0x7f
-                                                    modifiers:0
-                                                         text:&text
-                                              keyMappings:[bookmark objectForKey:KEY_KEYBOARD_MAP]] == -1) {
-                // Bookmark does not map delete key at all. Add a ^H map.
-                NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithDictionary:bookmark];
-                [self _setDeleteKeyMapToCtrlH:YES inBookmark:temp];
-                [[BookmarkModel sharedInstance] setBookmark:temp atIndex:i];
-            }
-        }
-        [prefs removeObjectForKey:@"DeleteSendsCtrlH"];
-    }
-
     // Migrate old-style (iTerm 0.x) URL handlers.
     // make sure bookmarks are loaded
     [ITAddressBookMgr sharedInstance];
@@ -1113,7 +1089,6 @@ static float versionNumber;
     [prefs setInteger:defaultWindowStyle forKey:@"WindowStyle"];
     [prefs setInteger:defaultTabViewType forKey:@"TabViewType"];
     [prefs setBool:defaultPromptOnQuit forKey:@"PromptOnQuit"];
-    [prefs setBool:defaultPromptOnClose forKey:@"PromptOnClose"];
     [prefs setBool:defaultOnlyWhenMoreTabs forKey:@"OnlyWhenMoreTabs"];
     [prefs setBool:defaultFocusFollowsMouse forKey:@"FocusFollowsMouse"];
     [prefs setBool:defaultHotkeyTogglesWindow forKey:@"HotKeyTogglesWindow"];
@@ -1196,10 +1171,8 @@ static float versionNumber;
     [selectionCopiesText setState:defaultCopySelection?NSOnState:NSOffState];
     [middleButtonPastesFromClipboard setState:defaultPasteFromClipboard?NSOnState:NSOffState];
     [hideTab setState:defaultHideTab?NSOnState:NSOffState];
-    [promptOnClose setState:defaultPromptOnClose?NSOnState:NSOffState];
     [promptOnQuit setState:defaultPromptOnQuit?NSOnState:NSOffState];
     [onlyWhenMoreTabs setState:defaultOnlyWhenMoreTabs?NSOnState:NSOffState];
-    [onlyWhenMoreTabs setEnabled: defaultPromptOnClose];
     [focusFollowsMouse setState: defaultFocusFollowsMouse?NSOnState:NSOffState];
     [hotkeyTogglesWindow setState: defaultHotkeyTogglesWindow?NSOnState:NSOffState];
     [self _populateHotKeyBookmarksMenu];
@@ -1467,10 +1440,8 @@ static float versionNumber;
         defaultFsTabDelay = [fsTabDelay floatValue];
         defaultCopySelection=([selectionCopiesText state]==NSOnState);
         defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
-        defaultPromptOnClose = ([promptOnClose state] == NSOnState);
         defaultPromptOnQuit = ([promptOnQuit state] == NSOnState);
         defaultOnlyWhenMoreTabs = ([onlyWhenMoreTabs state] == NSOnState);
-        [onlyWhenMoreTabs setEnabled: defaultPromptOnClose];
         defaultFocusFollowsMouse = ([focusFollowsMouse state] == NSOnState);
         defaultHotkeyTogglesWindow = ([hotkeyTogglesWindow state] == NSOnState);
         [defaultHotKeyBookmarkGuid release];
@@ -1624,11 +1595,6 @@ static float versionNumber;
 - (int)windowStyle
 {
     return defaultWindowStyle;
-}
-
-- (BOOL)promptOnClose
-{
-    return defaultPromptOnClose;
 }
 
 - (BOOL)promptOnQuit
@@ -1960,6 +1926,11 @@ static float versionNumber;
     return remotePrefs;
 }
 
++ (BOOL)loadingPrefsFromCustomFolder
+{
+    return [[NSUserDefaults standardUserDefaults] objectForKey:@"LoadPrefsFromCustomFolder"] ? [[[NSUserDefaults standardUserDefaults] objectForKey:@"LoadPrefsFromCustomFolder"] boolValue] : NO;
+}
+
 - (BOOL)loadPrefs
 {
     static BOOL done;
@@ -1968,7 +1939,7 @@ static float versionNumber;
     }
     done = YES;
 
-    BOOL doLoad = [prefs objectForKey:@"LoadPrefsFromCustomFolder"] ? [[prefs objectForKey:@"LoadPrefsFromCustomFolder"] boolValue] : NO;
+    BOOL doLoad = [PreferencePanel loadingPrefsFromCustomFolder];
     if (!doLoad) {
         return YES;
     }
@@ -2152,6 +2123,14 @@ static float versionNumber;
         return [iTermKeyBindingMgr numberOfMappingsForBookmark:bookmark];
     } else if (aTableView == globalKeyMappings) {
         return [[iTermKeyBindingMgr globalKeyMap] count];
+    } else if (aTableView == jobsTable_) {
+        NSString* guid = [bookmarksTableView selectedGuid];
+        if (!guid) {
+            return 0;
+        }
+        Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
+        NSArray *jobNames = [bookmark objectForKey:KEY_JOBS];
+        return [jobNames count];
     }
     // We can only get here while loading the nib (on some machines, this function is called
     // before the IBOutlets are populated).
@@ -2201,6 +2180,21 @@ static float versionNumber;
     [keyMappings reloadData];
 }
 
+- (void)tableView:(NSTableView *)aTableView
+   setObjectValue:(id)anObject
+   forTableColumn:(NSTableColumn *)aTableColumn
+              row:(NSInteger)rowIndex
+{
+    if (aTableView == jobsTable_) {
+        NSString* guid = [bookmarksTableView selectedGuid];
+        Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
+        NSMutableArray *jobs = [NSMutableArray arrayWithArray:[bookmark objectForKey:KEY_JOBS]];
+        [jobs replaceObjectAtIndex:rowIndex withObject:anObject];
+        [dataSource setObject:jobs forKey:KEY_JOBS inBookmark:bookmark];
+    }
+    [self bookmarkSettingChanged:nil];
+}
+
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(int)rowIndex
 {
     if (aTableView == keyMappings) {
@@ -2220,6 +2214,10 @@ static float versionNumber;
         } else if (aTableColumn == globalActionColumn) {
             return [iTermKeyBindingMgr formatAction:[iTermKeyBindingMgr globalMappingAtIndex:rowIndex]];
         }
+    } else if (aTableView == jobsTable_) {
+        NSString* guid = [bookmarksTableView selectedGuid];
+        Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
+        return [[bookmark objectForKey:KEY_JOBS] objectAtIndex:rowIndex];
     }
     // Shouldn't get here but must return something to avoid a warning.
     return nil;
@@ -2564,6 +2562,9 @@ static float versionNumber;
     // "delete sends ^h" checkbox is correct
     BOOL sendCH = [self _deleteSendsCtrlHInBookmark:dict];
     [deleteSendsCtrlHButton setState:sendCH ? NSOnState : NSOffState];
+
+    // Session tab
+    [promptBeforeClosing_ selectCellWithTag:[[dict objectForKey:KEY_PROMPT_CLOSE] intValue]];
 
     // Epilogue
     [bookmarksTableView reloadData];
@@ -2973,6 +2974,13 @@ static float versionNumber;
         BOOL sendCH = [self _deleteSendsCtrlHInBookmark:newDict];
         [deleteSendsCtrlHButton setState:sendCH ? NSOnState : NSOffState];
     }
+
+    // Session tab
+    [newDict setObject:[NSNumber numberWithInt:[[promptBeforeClosing_ selectedCell] tag]]
+                forKey:KEY_PROMPT_CLOSE];
+    [newDict setObject:[origBookmark objectForKey:KEY_JOBS] ? [origBookmark objectForKey:KEY_JOBS] : [NSArray array]
+                forKey:KEY_JOBS];
+
     // Epilogue
     [dataSource setBookmark:newDict withGuid:guid];
     [bookmarksTableView reloadData];
@@ -3039,6 +3047,7 @@ static float versionNumber;
             [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
         }
     }
+    [self setHaveJobsForCurrentBookmark:[self haveJobsForCurrentBookmark]];
 }
 
 - (void)bookmarkTableRowSelected:(id)bookmarkTable
@@ -3064,7 +3073,62 @@ static float versionNumber;
         } else {
             [globalRemoveMappingButton setEnabled:NO];
         }
+    } else if ([aNotification object] == jobsTable_) {
+        [self setHaveJobsForCurrentBookmark:[self haveJobsForCurrentBookmark]];
     }
+}
+
+- (IBAction)addJob:(id)sender
+{
+    NSString* guid = [bookmarksTableView selectedGuid];
+    if (!guid) {
+        return;
+    }
+    Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
+    NSArray *jobNames = [bookmark objectForKey:KEY_JOBS];
+    NSMutableArray *augmented;
+    if (jobNames) {
+        augmented = [NSMutableArray arrayWithArray:jobNames];
+        [augmented addObject:@"Job Name"];
+    } else {
+        augmented = [NSArray arrayWithObject:@"Job Name"];
+    }
+    [dataSource setObject:augmented forKey:KEY_JOBS inBookmark:bookmark];
+    [jobsTable_ reloadData];
+    [jobsTable_ selectRowIndexes:[NSIndexSet indexSetWithIndex:[augmented count] - 1]
+            byExtendingSelection:NO];
+    [jobsTable_ editColumn:0
+                       row:[self numberOfRowsInTableView:jobsTable_] - 1
+                 withEvent:nil
+                    select:YES];
+    [self setHaveJobsForCurrentBookmark:[self haveJobsForCurrentBookmark]];
+    [self bookmarkSettingChanged:nil];
+}
+
+- (IBAction)removeJob:(id)sender
+{
+    // Causes editing to end. If you try to remove a cell that is being edited,
+    // it tries to dereference the deleted cell. There doesn't seem to be an
+    // API that explicitly ends editing.
+    [jobsTable_ reloadData];
+
+    NSInteger selectedIndex = [jobsTable_ selectedRow];
+    if (selectedIndex < 0) {
+        return;
+    }
+    NSString* guid = [bookmarksTableView selectedGuid];
+    if (!guid) {
+        return;
+    }
+    Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
+    NSArray *jobNames = [bookmark objectForKey:KEY_JOBS];
+    NSMutableArray *mod = [NSMutableArray arrayWithArray:jobNames];
+    [mod removeObjectAtIndex:selectedIndex];
+
+    [dataSource setObject:mod forKey:KEY_JOBS inBookmark:bookmark];
+    [jobsTable_ reloadData];
+    [self setHaveJobsForCurrentBookmark:[self haveJobsForCurrentBookmark]];
+    [self bookmarkSettingChanged:nil];
 }
 
 - (IBAction)showGlobalTabView:(id)sender
@@ -3812,6 +3876,31 @@ static float versionNumber;
 {
     // TODO: maybe something here for the current bookmark?
     [self _populateHotKeyBookmarksMenu];
+}
+
+@end
+
+@implementation PreferencePanel (KeyValueCoding)
+
+// An experiment with cocoa bindings. This is bound to the "enabled" status of
+// the "remove job" button.
+- (BOOL)haveJobsForCurrentBookmark
+{
+    if ([jobsTable_ selectedRow] < 0) {
+        return NO;
+    }
+    NSString* guid = [bookmarksTableView selectedGuid];
+    if (!guid) {
+        return NO;
+    }
+    Bookmark* bookmark = [dataSource bookmarkWithGuid:guid];
+    NSArray *jobNames = [bookmark objectForKey:KEY_JOBS];
+    return [jobNames count] > 0;
+}
+
+- (void)setHaveJobsForCurrentBookmark:(BOOL)value
+{
+    // observed but has no effect because the getter does all the computation.
 }
 
 @end

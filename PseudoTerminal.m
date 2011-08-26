@@ -527,13 +527,42 @@ NSString *sessionsKey = @"sessions";
     return windowType_;
 }
 
-- (void)closeTab:(PTYTab*)aTab
+- (BOOL)confirmCloseForSessions:(NSArray *)sessions
+                     identifier:(NSString*)identifier
+                    genericName:(NSString *)genericName
 {
-    NSTabViewItem *aTabViewItem;
-    int numberOfTabs;
+    NSMutableArray *names = [NSMutableArray array];
+    for (PTYSession *aSession in sessions) {
+        if (![aSession exited]) {
+            [names addObjectsFromArray:[aSession childJobNames]];
+        }
+    }
+    NSString *message;
+    NSArray *sortedNames = [names sortedArrayUsingSelector:@selector(compare:)];
+    if ([sortedNames count] == 1) {
+        message = [NSString stringWithFormat:@"%@ is running \"%@\".", identifier, [sortedNames objectAtIndex:0]];
+    } else if ([sortedNames count] > 1 && [sortedNames count] <= 10) {
+        message = [NSString stringWithFormat:@"%@ is running the following jobs: %@.", identifier, [sortedNames componentsJoinedByString:@", "]];
+    } else if ([sortedNames count] > 10) {
+        message = [NSString stringWithFormat:@"%@ is running the following jobs: %@, plus %d %@.",
+                   identifier,
+                   [[sortedNames subarrayWithRange:NSMakeRange(0, 10)] componentsJoinedByString:@", "],
+                   [sortedNames count] - 10,
+                   [sortedNames count] == 11 ? @"other" : @"others"];
+    } else {
+        message = [NSString stringWithFormat:@"%@ will be closed.", identifier];
+    }
+    return NSRunAlertPanel([NSString stringWithFormat:@"Close %@?", genericName],
+                           message,
+                           @"OK",
+                           @"Cancel",
+                           nil) == NSAlertDefaultReturn;
+}
 
+- (BOOL)confirmCloseTab:(PTYTab *)aTab
+{
     if ([TABVIEW indexOfTabViewItemWithIdentifier:aTab] == NSNotFound) {
-        return;
+        return NO;
     }
 
     int numClosing = 0;
@@ -544,70 +573,37 @@ NSString *sessionsKey = @"sessions";
     }
 
     BOOL mustAsk = NO;
-    if (numClosing > 0 && [[PreferencePanel sharedInstance] promptOnClose]) {
-        if (numClosing == 1) {
-            if (![[PreferencePanel sharedInstance] onlyWhenMoreTabs]) {
-                mustAsk = YES;
-            }
-        } else {
-            mustAsk = YES;
-        }
+    if (numClosing > 0 && [aTab promptOnClose]) {
+        mustAsk = YES;
+    }
+    if (numClosing > 1 &&
+        [[PreferencePanel sharedInstance] onlyWhenMoreTabs]) {
+        mustAsk = YES;
     }
 
     if (mustAsk) {
         BOOL okToClose;
         if (numClosing == 1) {
-            int skip = 0;
-            pid_t thePid = [[[aTab activeSession] SHELL] pid];
-            if ([[[ProcessCache sharedInstance] getNameOfPid:thePid isForeground:nil] isEqualToString:@"login"]) {
-                skip = 1;
-            }
-            NSMutableArray *names = [NSMutableArray array];
-            for (NSNumber *n in [[ProcessCache sharedInstance] childrenOfPid:thePid levelsToSkip:skip]) {
-                pid_t pid = [n intValue];
-                NSDictionary *info = [[ProcessCache sharedInstance] dictionaryOfTaskInfoForPid:pid];
-                [names addObject:[info objectForKey:PID_INFO_NAME]];
-            }
-            NSString *message;
-            NSArray *sortedNames = [names sortedArrayUsingSelector:@selector(compare:)];
-            if ([sortedNames count] == 1) {
-                message = [NSString stringWithFormat:@"This tab is running \"%@\". Close it?", [sortedNames objectAtIndex:0]];
-            } else if ([sortedNames count] > 1) {
-                message = [NSString stringWithFormat:@"This tab is running the following jobs: %@. Close it?", [sortedNames componentsJoinedByString:@", "]];
-            } else {
-                message = @"This tab will be closed.";
-            }
-            okToClose = NSRunAlertPanel([NSString stringWithFormat:@"%@ #%d",
-                                         [[aTab activeSession] name],
-                                         [aTab realObjectCount]],
-                                        message,
-                                        @"OK",
-                                        @"Cancel",
-                                        nil) == NSAlertDefaultReturn;
+            okToClose = [self confirmCloseForSessions:[aTab sessions]
+                                           identifier:@"This tab"
+                                          genericName:[NSString stringWithFormat:@"tab #%d",
+                                                       [aTab realObjectCount]]];
         } else {
-            okToClose = NSRunAlertPanel([NSString stringWithFormat:@"Close multiple panes in tab #%d",
-                                         [aTab realObjectCount]],
-                                        [NSString stringWithFormat:
-                                         NSLocalizedStringFromTableInBundle(@"%d sessions will be closed.",
-                                                                            @"iTerm",
-                                                                            [NSBundle bundleForClass:[self class]],
-                                                                            @"Close Session"), numClosing],
-                                        NSLocalizedStringFromTableInBundle(@"OK",
-                                                                           @"iTerm",
-                                                                           [NSBundle bundleForClass:[self class]],
-                                                                           @"OK"),
-                                        NSLocalizedStringFromTableInBundle(@"Cancel",
-                                                                           @"iTerm",
-                                                                           [NSBundle bundleForClass:[self class]],
-                                                                           @"Cancel"),
-                                        nil) == NSAlertDefaultReturn;
+            okToClose = [self confirmCloseForSessions:[aTab sessions]
+                                           identifier:@"This multi-pane tab"
+                                          genericName:[NSString stringWithFormat:@"tab #%d",
+                                                       [aTab realObjectCount]]];
         }
-        if (!okToClose) {
-            return;
-        }
+        return okToClose;
     }
+    return YES;
+}
 
-    numberOfTabs = [TABVIEW numberOfTabViewItems];
+- (void)closeTab:(PTYTab*)aTab
+{
+    NSTabViewItem *aTabViewItem;
+
+    int numberOfTabs = [TABVIEW numberOfTabViewItems];
     for (PTYSession* session in [aTab sessions]) {
         [session terminate];
     }
@@ -658,7 +654,9 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)closeCurrentTab:(id)sender
 {
-    [self closeTab:[self currentTab]];
+    if ([self tabView:TABVIEW shouldCloseTabViewItem:[TABVIEW selectedTabViewItem]]) {
+        [self closeTab:[self currentTab]];
+    }
 }
 
 - (IBAction)closeCurrentSession:(id)sender
@@ -675,10 +673,12 @@ NSString *sessionsKey = @"sessions";
         [self closeCurrentTab:self];
         return;
     }
-    if ([aSession exited] ||
-        ![[PreferencePanel sharedInstance] promptOnClose] ||
-        [[PreferencePanel sharedInstance] onlyWhenMoreTabs] ||
-        (NSRunAlertPanel([NSString stringWithFormat:@"%@ #%d",
+    BOOL okToClose = NO;
+    if ([aSession exited]) {
+        okToClose = YES;
+    } else if (![aSession promptOnClose]) {
+        okToClose = YES;
+    } else if (NSRunAlertPanel([NSString stringWithFormat:@"%@ #%d",
                             [aSession name],
                             [[aSession tab] realObjectCount]],
                          NSLocalizedStringFromTableInBundle(@"This session will be closed.",
@@ -693,7 +693,10 @@ NSString *sessionsKey = @"sessions";
                                                             @"iTerm",
                                                             [NSBundle bundleForClass:[self class]],
                                                             @"Cancel"),
-                         nil) == NSAlertDefaultReturn)) {
+                         nil) == NSAlertDefaultReturn) {
+        okToClose = YES;
+    }
+    if (okToClose) {
         // Just in case IR is open, close it first.
         [self closeInstantReplay:self];
         [self closeSession:aSession];
@@ -1128,16 +1131,39 @@ NSString *sessionsKey = @"sessions";
                                                       userInfo:nil];
 }
 
+- (BOOL)promptOnClose
+{
+    for (PTYSession *aSession in [self sessions]) {
+        if ([aSession promptOnClose]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (int)numRunningSessions
+{
+    int n = 0;
+    for (PTYSession *aSession in [self sessions]) {
+        if (![aSession exited]) {
+            ++n;
+        }
+    }
+    return n;
+}
+
 - (BOOL)windowShouldClose:(NSNotification *)aNotification
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal windowShouldClose:%@]",
-          __FILE__, __LINE__, aNotification);
-#endif
+    BOOL needPrompt = NO;
+    if ([self promptOnClose]) {
+        needPrompt = YES;
+    }
+    if ([[PreferencePanel sharedInstance] onlyWhenMoreTabs] &&
+         [self numRunningSessions] > 1) {
+        needPrompt = YES;
+    }
 
-    if ([[PreferencePanel sharedInstance] promptOnClose] &&
-        (![[PreferencePanel sharedInstance] onlyWhenMoreTabs] ||
-         [TABVIEW numberOfTabViewItems] > 1)) {
+    if (needPrompt) {
         return [self showCloseWindow];
     } else {
         return YES;
@@ -1146,11 +1172,6 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowWillClose:(NSNotification *)aNotification
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal windowWillClose:%@]",
-          __FILE__, __LINE__, aNotification);
-#endif
-
     // Close popups.
     [pbHistoryView close];
     [autocompleteView close];
@@ -1217,7 +1238,7 @@ NSString *sessionsKey = @"sessions";
 - (void)windowDidBecomeKey:(NSNotification *)aNotification
 {
     isOrderedOut_ = NO;
-    
+
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PseudoTerminal windowDidBecomeKey:%@]",
           __FILE__, __LINE__, aNotification);
@@ -2106,27 +2127,7 @@ NSString *sessionsKey = @"sessions";
 - (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem
 {
     PTYTab *aTab = [tabViewItem identifier];
-
-    return ([aTab allSessionsExited] ||
-            ![[PreferencePanel sharedInstance] promptOnClose] ||
-            [[PreferencePanel sharedInstance] onlyWhenMoreTabs] ||
-            (NSRunAlertPanel([NSString stringWithFormat:@"%@ #%d",
-                              [[aTab activeSession] name],
-                              [[[aTab activeSession] tab] realObjectCount]],
-                             NSLocalizedStringFromTableInBundle(@"This session will be closed.",
-                                                                @"iTerm",
-                                                                [NSBundle bundleForClass:[self class]],
-                                                                @"Close Session"),
-                        NSLocalizedStringFromTableInBundle(@"OK",
-                                                           @"iTerm",
-                                                           [NSBundle bundleForClass:[self class]],
-                                                           @"OK"),
-                        NSLocalizedStringFromTableInBundle(@"Cancel",
-                                                           @"iTerm",
-                                                           [NSBundle bundleForClass:[self class]],
-                                                           @"Cancel"),
-                        nil) == NSAlertDefaultReturn));
-
+    return [self confirmCloseTab:aTab];
 }
 
 - (BOOL)tabView:(NSTabView*)aTabView shouldDragTabViewItem:(NSTabViewItem *)tabViewItem fromTabBar:(PSMTabBarControl *)tabBarControl
@@ -2385,7 +2386,7 @@ NSString *sessionsKey = @"sessions";
       [[term window] makeKeyAndOrderFront:nil];
       [term hideMenuBar];
     }
-    
+
     return [term tabBarControl];
 }
 
@@ -2650,7 +2651,7 @@ NSString *sessionsKey = @"sessions";
 
 - (BOOL)sendInputToAllSessions
 {
-    return broadcastMode_ != BROADCAST_OFF; 
+    return broadcastMode_ != BROADCAST_OFF;
 }
 
 -(void)replaySession:(PTYSession *)oldSession
@@ -4316,15 +4317,9 @@ NSString *sessionsKey = @"sessions";
 // Close Window
 - (BOOL)showCloseWindow
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal showCloseWindow]", __FILE__, __LINE__);
-#endif
-
-    return (NSRunAlertPanel(NSLocalizedStringFromTableInBundle(@"Close Window?",@"iTerm", [NSBundle bundleForClass: [self class]], @"Close window"),
-                            NSLocalizedStringFromTableInBundle(@"All sessions will be closed",@"iTerm", [NSBundle bundleForClass: [self class]], @"Close window"),
-                            NSLocalizedStringFromTableInBundle(@"OK",@"iTerm", [NSBundle bundleForClass: [self class]], @"OK"),
-                            NSLocalizedStringFromTableInBundle(@"Cancel",@"iTerm", [NSBundle bundleForClass: [self class]], @"Cancel")
-                            ,nil) == NSAlertDefaultReturn);
+    return ([self confirmCloseForSessions:[self sessions]
+                               identifier:@"This window"
+                              genericName:[NSString stringWithFormat:@"Window #%d", number_+1]]);
 }
 
 - (PSMTabBarControl*)tabBarControl
@@ -4515,7 +4510,7 @@ NSString *sessionsKey = @"sessions";
 {
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermLoadFindStringFromSharedPasteboard"
                                                         object:nil
-                                                      userInfo:nil];    
+                                                      userInfo:nil];
 }
 
 @end
@@ -4914,7 +4909,7 @@ NSString *sessionsKey = @"sessions";
             // TODO: this should work with fullscreen
         }
         [iTermController switchToSpaceInBookmark:abEntry];
-        [self initWithSmartLayout:NO 
+        [self initWithSmartLayout:NO
                        windowType:windowType
                            screen:-1];
         toggle = ([self windowType] == WINDOW_TYPE_FULL_SCREEN) ||

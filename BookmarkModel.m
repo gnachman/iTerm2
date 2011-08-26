@@ -24,14 +24,23 @@
 
 #import <iTerm/ITAddressBookMgr.h>
 #import <iTerm/BookmarkModel.h>
+#import "PreferencePanel.h"
 
 id gAltOpenAllRepresentedObject;
+// Set to true if a bookmark was changed automatically due to migration to a new
+// standard.
+int gMigrated;
 
 @implementation BookmarkModel
 
 + (void)initialize
 {
     gAltOpenAllRepresentedObject = [[NSObject alloc] init];
+}
+
++ (BOOL)migrated
+{
+    return gMigrated;
 }
 
 - (BookmarkModel*)init
@@ -186,6 +195,25 @@ id gAltOpenAllRepresentedObject;
     [self addBookmark:bookmark inSortedOrder:NO];
 }
 
++ (void)migratePromptOnCloseInMutableBookmark:(NSMutableDictionary *)dict
+{
+    // Migrate global "prompt on close" to per-profile prompt enum
+    if (![dict objectForKey:KEY_PROMPT_CLOSE]) {
+        BOOL promptOnClose = [[[NSUserDefaults standardUserDefaults] objectForKey:@"PromptOnClose"] boolValue];
+        NSNumber *newValue = [NSNumber numberWithBool:promptOnClose ? PROMPT_ALWAYS : PROMPT_NEVER];
+        [dict setObject:newValue forKey:KEY_PROMPT_CLOSE];
+        gMigrated = YES;
+    }
+
+    // This is a required field to avoid setting nil values in the bookmark
+    // dict later on.
+    if (![dict objectForKey:KEY_JOBS]) {
+        [dict setObject:[NSArray arrayWithObjects:@"rlogin", @"ssh", @"slogin", @"telnet", nil]
+                 forKey:KEY_JOBS];
+        gMigrated = YES;
+    }
+}
+
 - (void)addBookmark:(Bookmark*)bookmark inSortedOrder:(BOOL)sort
 {
 
@@ -210,6 +238,7 @@ id gAltOpenAllRepresentedObject;
     if (![newBookmark objectForKey:KEY_DEFAULT_BOOKMARK]) {
         [newBookmark setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
     }
+    [BookmarkModel migratePromptOnCloseInMutableBookmark:newBookmark];
 
     bookmark = [[newBookmark copy] autorelease];
 

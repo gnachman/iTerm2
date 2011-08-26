@@ -202,7 +202,7 @@ static const float kBackgroundSessionIntervalSec = 1;
 
     // Time session was created
     NSDate* creationDate_;
-    
+
     // After receiving new output, we keep running the updateDisplay timer for a few seconds to catch
     // changes in job name.
     NSDate* updateDisplayUntil_;
@@ -297,6 +297,11 @@ static const float kBackgroundSessionIntervalSec = 1;
 // misc
 - (void)setWidth:(int)width height:(int)height;
 
+// Do we need to prompt on close for this session?
+- (BOOL)promptOnClose;
+
+// Array of subprocessess names.
+- (NSArray *)childJobNames;
 
 // Contextual menu
 - (void)menuForEvent:(NSEvent *)theEvent menu: (NSMenu *)theMenu;

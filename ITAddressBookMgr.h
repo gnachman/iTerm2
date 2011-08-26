@@ -132,10 +132,14 @@
 #define KEY_SCROLLBACK_LINES                  @"Scrollback Lines"
 #define KEY_UNLIMITED_SCROLLBACK              @"Unlimited Scrollback"
 #define KEY_TERMINAL_TYPE                     @"Terminal Type"
-#define KEY_SEND_CODE_WHEN_IDLE               @"Send Code When Idle"
-#define KEY_IDLE_CODE                         @"Idle Code"
+
+// Session
 #define KEY_AUTOLOG                           @"Automatically Log"
 #define KEY_LOGDIR                            @"Log Directory"
+#define KEY_SEND_CODE_WHEN_IDLE               @"Send Code When Idle"
+#define KEY_IDLE_CODE                         @"Idle Code"
+#define KEY_PROMPT_CLOSE                      @"Prompt Before Closing"
+#define KEY_JOBS                              @"Jobs to Ignore"
 
 // Keyboard
 #define KEY_KEYBOARD_MAP                      @"Keyboard Map"
