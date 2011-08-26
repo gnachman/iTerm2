@@ -186,6 +186,8 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (BOOL)hasMaximizedPane;
 - (void)maximize;
 - (void)unmaximize;
+// Does any session in this tab require prompt on close?
+- (BOOL)promptOnClose;
 
 #pragma mark NSSplitView delegate methods
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;

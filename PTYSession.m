@@ -424,6 +424,48 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [TEXTVIEW clearHighlights];
 }
 
+- (NSArray *)childJobNames
+{
+    int skip = 0;
+    pid_t thePid = [SHELL pid];
+    if ([[[ProcessCache sharedInstance] getNameOfPid:thePid isForeground:nil] isEqualToString:@"login"]) {
+        skip = 1;
+    }
+    NSMutableArray *names = [NSMutableArray array];
+    for (NSNumber *n in [[ProcessCache sharedInstance] childrenOfPid:thePid levelsToSkip:skip]) {
+        pid_t pid = [n intValue];
+        NSDictionary *info = [[ProcessCache sharedInstance] dictionaryOfTaskInfoForPid:pid];
+        [names addObject:[info objectForKey:PID_INFO_NAME]];
+    }
+    return names;
+}
+
+- (BOOL)promptOnClose
+{
+    if (EXIT) {
+        return NO;
+    }
+    switch ([[addressBookEntry objectForKey:KEY_PROMPT_CLOSE] intValue]) {
+        case PROMPT_ALWAYS:
+            return YES;
+
+        case PROMPT_NEVER:
+            return NO;
+
+        case PROMPT_EX_JOBS: {
+            NSArray *jobsThatDontRequirePrompting = [addressBookEntry objectForKey:KEY_JOBS];
+            for (NSString *childName in [self childJobNames]) {
+                if ([jobsThatDontRequirePrompting indexOfObject:childName] == NSNotFound) {
+                    // This job is not in the ignore list.
+                    return YES;
+                }
+            }
+            // All jobs were in the ignore list.
+            return NO;
+        }
+    }
+}
+
 - (void)setNewOutput:(BOOL)value
 {
     newOutput = value;
@@ -2499,12 +2541,18 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setAddressBookEntry:(NSDictionary*)entry
 {
+    NSMutableDictionary *dict = [[entry mutableCopy] autorelease];
+    // This is the most practical way to migrate the bopy of a
+    // profile that's stored in a saved window arrangement. It doesn't get
+    // saved back into the arrangement, unfortunately.
+    [BookmarkModel migratePromptOnCloseInMutableBookmark:dict];
+
     if (!originalAddressBookEntry) {
-        originalAddressBookEntry = [NSDictionary dictionaryWithDictionary:entry];
+        originalAddressBookEntry = [NSDictionary dictionaryWithDictionary:dict];
         [originalAddressBookEntry retain];
     }
     [addressBookEntry release];
-    addressBookEntry = [entry retain];
+    addressBookEntry = [dict retain];
 }
 
 - (NSDictionary *)addressBookEntry

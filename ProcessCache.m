@@ -70,6 +70,8 @@
 
 // Singleton of this class.
 static ProcessCache* instance;
+NSString *PID_INFO_IS_FOREGROUND = @"foreground";
+NSString *PID_INFO_NAME = @"name";
 
 @implementation ProcessCache
 
@@ -87,7 +89,6 @@ static ProcessCache* instance;
     self = [super init];
     if (self) {
         pidInfoCache_ = [[NSMutableDictionary alloc] init];
-        lock_ = [[NSLock alloc] init];
     }
     return self;
 }
@@ -106,21 +107,25 @@ static ProcessCache* instance;
 //   ps -aef -o stat
 // If a + occurs in the STAT column then it is considered to be a foreground
 // job.
-- (NSString*)_getNameOfPid:(pid_t)thePid isForeground:(BOOL*)isForeground
+- (NSString*)getNameOfPid:(pid_t)thePid isForeground:(BOOL*)isForeground
 {
     int mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PID, thePid };
     struct kinfo_proc kp;
     size_t bufSize = sizeof(kp);
     
     kp.kp_proc.p_comm[0] = 0;
-    if (sysctl(mib, 4, &kp, &bufSize, NULL, 0) < 0) {
-        return 0;
+    @synchronized ([ProcessCache class]) {
+        if (sysctl(mib, 4, &kp, &bufSize, NULL, 0) < 0) {
+            return 0;
+        }
     }
     
     // has a controlling terminal and
     // process group id = tty process group id
-    *isForeground = ((kp.kp_proc.p_flag & P_CONTROLT) &&
-                     kp.kp_eproc.e_pgid == kp.kp_eproc.e_tpgid);
+    if (isForeground) {
+        *isForeground = ((kp.kp_proc.p_flag & P_CONTROLT) &&
+                         kp.kp_eproc.e_pgid == kp.kp_eproc.e_tpgid);
+    }
     
     if (kp.kp_proc.p_comm[0]) {
         return [NSString stringWithUTF8String:kp.kp_proc.p_comm];
@@ -129,50 +134,141 @@ static ProcessCache* instance;
     }
 }
 
-
-// Constructs a map of pid -> name of tty controller where pid is the tty
-// controller or any ancestor of the tty controller.
-- (void)_refreshProcessCache:(NSMutableDictionary*)cache
++ (NSArray *)allPids
 {
-    [cache removeAllObjects];
-    int numBytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    int numBytes;
+    @synchronized ([ProcessCache class]) {
+        numBytes = proc_listpids(PROC_ALL_PIDS, 0, NULL, 0);
+    }
     if (numBytes <= 0) {
-        return;
+        return nil;
     }
     
     // Put all the pids of running jobs in the pids array.
     int* pids = (int*) malloc(numBytes);
-    numBytes = proc_listpids(PROC_ALL_PIDS, 0, pids, numBytes);
+    @synchronized ([ProcessCache class]) {
+        numBytes = proc_listpids(PROC_ALL_PIDS, 0, pids, numBytes);
+    }
     if (numBytes <= 0) {
         free(pids);
-        return;
+        return nil;
     }
     
+    int numPids = numBytes / sizeof(int);
+
+    NSMutableArray *pidsArray = [NSMutableArray array];
+    for (int i = 0; i < numPids; ++i) {
+        [pidsArray addObject:[NSNumber numberWithInt:pids[i]]];
+    }
+    
+    free(pids);
+    
+    return pidsArray;
+}
+
++ (BOOL)getInfoForPid:(pid_t)thePid taskAllInfo:(struct proc_taskallinfo *)taskAllInfo
+{
+    memset(taskAllInfo, 0, sizeof(*taskAllInfo));
+    int rc;
+    @synchronized ([ProcessCache class]) {
+        rc = proc_pidinfo(thePid,
+                          PROC_PIDTASKALLINFO,
+                          0,
+                          taskAllInfo,
+                          sizeof(*taskAllInfo));
+    }
+    if (rc <= 0) {
+        return NO;
+    }
+    return YES;
+}
+
+- (NSDictionary *)dictionaryOfTaskInfoForPid:(pid_t)thePid
+{
+    BOOL isForeground;
+    NSString* name = [self getNameOfPid:thePid isForeground:&isForeground];
+    return [NSDictionary dictionaryWithObjectsAndKeys:
+            [NSNumber numberWithBool:isForeground], PID_INFO_IS_FOREGROUND,
+            name, PID_INFO_NAME,
+            nil];
+}
+
++ (void)augmentClosure:(NSMutableSet *)closure
+              withTree:(NSDictionary *)tree
+                atNode:(NSNumber *)node
+                  skip:(int)skip
+{
+    if (skip <= 0) {
+        [closure addObject:node];
+    }
+    NSSet *children = [tree objectForKey:node];
+    if (children) {
+        for (NSNumber *n in children) {
+            if (![closure containsObject:n]) {
+                [ProcessCache augmentClosure:closure withTree:tree atNode:n skip:skip-1];
+            }
+        }
+    }
+}
+
+- (NSSet *)childrenOfPid:(pid_t)thePid levelsToSkip:(int)skip
+{
+    NSArray *allPids = [ProcessCache allPids];
+    NSMutableDictionary *parentage = [NSMutableDictionary dictionary];
+    
+    // parentage maps ppid -> {pid, pid, ...}
+    for (NSNumber *n in allPids) {
+        struct proc_taskallinfo taskAllInfo;
+        if ([ProcessCache getInfoForPid:[n intValue]
+                            taskAllInfo:&taskAllInfo]) {
+            NSNumber *ppid = [NSNumber numberWithInt:taskAllInfo.pbsd.pbi_ppid];
+            NSMutableSet *children = [parentage objectForKey:ppid];
+            if (!children) {
+                children = [NSMutableSet set];
+                [parentage setObject:children forKey:ppid];
+            }
+            [children addObject:n];
+        }
+    }
+    
+    // Return the transitive closure of children of thePid.
+    NSMutableSet *closure = [NSMutableSet set];
+    NSNumber *n = [NSNumber numberWithInt:thePid];
+    [ProcessCache augmentClosure:closure
+                        withTree:parentage
+                          atNode:n
+                            skip:skip+1];
+    return closure;
+}
+
+// Constructs a map of pid -> name of tty controller where pid is the tty
+// controller or any ancestor of the tty controller.
+- (void)_refreshProcessCache:(NSMutableDictionary*)cache
+{    
+    [cache removeAllObjects];
     // Add a mapping to 'temp' of pid->job name for all foreground jobs.
     // Add a mapping to 'ancestry' of of pid->ppid for all pid's.
-    int numPids = numBytes / sizeof(int);
+    
+    NSArray *allPids = [ProcessCache allPids];
+    int numPids = [allPids count];
     
     NSMutableDictionary* temp = [NSMutableDictionary dictionaryWithCapacity:numPids];
     NSMutableDictionary* ancestry = [NSMutableDictionary dictionaryWithCapacity:numPids];
-    for (int i = 0; i < numPids; ++i) {
+    for (NSNumber *n in allPids) {
+        pid_t thePid = [n intValue];
+
         struct proc_taskallinfo taskAllInfo;
-        memset(&taskAllInfo, 0, sizeof(taskAllInfo));
-        int rc = proc_pidinfo(pids[i],
-                              PROC_PIDTASKALLINFO,
-                              0,
-                              &taskAllInfo,
-                              sizeof(taskAllInfo));
-        if (rc <= 0) {
+        if (![ProcessCache getInfoForPid:thePid taskAllInfo:&taskAllInfo]) {
             continue;
         }
         
         pid_t ppid = taskAllInfo.pbsd.pbi_ppid;
         BOOL isForeground;
-        NSString* name = [self _getNameOfPid:pids[i] isForeground:&isForeground];
+        NSString* name = [self getNameOfPid:thePid isForeground:&isForeground];
         if (isForeground) {
-            [temp setObject:name forKey:[NSNumber numberWithInt:pids[i]]];
+            [temp setObject:name forKey:[NSNumber numberWithInt:thePid]];
         }
-        [ancestry setObject:[NSNumber numberWithInt:ppid] forKey:[NSNumber numberWithInt:pids[i]]];
+        [ancestry setObject:[NSNumber numberWithInt:ppid] forKey:n];
     }
     
     // For each pid in 'temp', follow the parent pid chain in 'ancestry' and add a map of
@@ -206,8 +302,6 @@ static ProcessCache* instance;
             parent = [ancestry objectForKey:parent];
         }
     }
-    
-    free(pids);
 }
 
 - (void)_update
@@ -220,27 +314,28 @@ static ProcessCache* instance;
     NSMutableDictionary* old = pidInfoCache_;
     [temp retain];
    
-    [lock_ lock];
-    pidInfoCache_ = temp;
-    [lock_ unlock];
+    @synchronized ([ProcessCache class]) {
+        pidInfoCache_ = temp;
+    }
     
     [old release];
 }
 
 - (BOOL)testAndClearNewOutput
 {
-    [lock_ lock];
-    BOOL v = newOutput_;
-    newOutput_ = NO;
-    [lock_ unlock];
+    BOOL v;
+    @synchronized ([ProcessCache class]) {
+        v = newOutput_;
+        newOutput_ = NO;
+    }
     return v;
 }
 
 - (void)notifyNewOutput
 {
-    [lock_ lock];
-    newOutput_ = YES;
-    [lock_ unlock];
+    @synchronized ([ProcessCache class]) {
+        newOutput_ = YES;
+    }
 }
 
 - (void)_run
@@ -259,13 +354,13 @@ static ProcessCache* instance;
 
 - (NSString*)jobNameWithPid:(int)pid
 {
-    assert(lock_);
-    [lock_ lock];
-    NSString* jobName = [pidInfoCache_ objectForKey:[NSNumber numberWithInt:pid]];
-    // Move jobName into this thread's autorelease pool so it will survive until we return to
-    // mainloop.
-    [[jobName retain] autorelease];
-    [lock_ unlock];
+    NSString* jobName;
+    @synchronized ([ProcessCache class]) {
+        jobName = [pidInfoCache_ objectForKey:[NSNumber numberWithInt:pid]];
+        // Move jobName into this thread's autorelease pool so it will survive until we return to
+        // mainloop.
+        [[jobName retain] autorelease];
+    }
     
     return jobName;
 }

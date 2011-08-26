@@ -262,27 +262,30 @@ static BOOL hasBecomeActive = NO;
     NSArray *terminals;
 
     terminals = [[iTermController sharedInstance] terminals];
+    int numSessions = 0;
+    BOOL shouldShowAlert = NO;
+    for (PseudoTerminal *term in terminals) {
+        numSessions += [[term sessions] count];
+        if ([term promptOnClose]) {
+            shouldShowAlert = YES;
+        }
+    }
 
     // Display prompt if we need to
-
-    int numTerminals = [terminals count];
-    int numNontrivialWindows = numTerminals;
-    BOOL promptOnQuit = quittingBecauseLastWindowClosed_ ? NO : (numNontrivialWindows > 0 && [[PreferencePanel sharedInstance] promptOnQuit]);
-    quittingBecauseLastWindowClosed_ = NO;
-    BOOL promptOnClose = [[PreferencePanel sharedInstance] promptOnClose];
-    BOOL onlyWhenMoreTabs = [[PreferencePanel sharedInstance] onlyWhenMoreTabs];
-    int numTabs = 0;
-    if (numTerminals > 0) {
-        numTabs = [[[[iTermController sharedInstance] currentTerminal] tabView] numberOfTabViewItems];
+    if (!quittingBecauseLastWindowClosed_ &&  // cmd-q
+        [terminals count] > 0 &&  // there are terminal windows
+        [[PreferencePanel sharedInstance] promptOnQuit]) {  // preference is to prompt on quit cmd
+        shouldShowAlert = YES;
     }
-    BOOL shouldShowAlert = (!onlyWhenMoreTabs ||
-                            numTerminals > 1 ||
-                            numTabs > 1);
-    if (promptOnQuit || (promptOnClose &&
-                         numTerminals &&
-                         shouldShowAlert)) {
+    quittingBecauseLastWindowClosed_ = NO;
+    if ([[PreferencePanel sharedInstance] onlyWhenMoreTabs] && numSessions > 1) {
+        // closing multiple sessions
+        shouldShowAlert = YES;
+    }
+    
+    if (shouldShowAlert) {
         BOOL stayput = NSRunAlertPanel(@"Quit iTerm2?",
-                                       @"All sessions will be closed",
+                                       @"All sessions will be closed.",
                                        @"OK",
                                        @"Cancel",
                                        nil) != NSAlertDefaultReturn;
@@ -308,8 +311,17 @@ static BOOL hasBecomeActive = NO;
                                 nil,
                                 nil);
             } else {
+                NSString *format;
+                if ([BookmarkModel migrated]) {
+                    format = @"Your preferences were modified by iTerm2 as part of an upgrade process (and you might have changed them, too). "
+                    @"Since you load prefs from a custom location, your local preferences will be lost if not copied to %@.";
+                } else {
+                    format = @"Your preferences are loaded from a custom location and differ from your local preferences."
+                    @"Your local preferences will be lost if not copied to %@.";
+                }
                 switch (NSRunAlertPanel(@"Preference Changes Will be Lost!",
-                                        [NSString stringWithFormat:@"Your preferences are loaded from a custom location and differ from your local preferences. Your local preferences will be lost if not copied to %@.", remote],
+                                        [NSString stringWithFormat:format,
+                                         remote],
                                         @"Copy",
                                         @"Lose Changes",
                                         nil)) {

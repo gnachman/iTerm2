@@ -49,6 +49,8 @@ typedef struct {
 + (BookmarkModel*)sharedInstance;
 + (BookmarkModel*)sessionsInstance;
 + (NSString*)freshGuid;
++ (void)migratePromptOnCloseInMutableBookmark:(NSMutableDictionary *)dict;
++ (BOOL)migrated;
 - (int)numberOfBookmarks;
 - (int)numberOfBookmarksWithFilter:(NSString*)filter;
 - (NSArray*)bookmarkIndicesMatchingFilter:(NSString*)filter;
