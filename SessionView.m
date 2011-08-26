@@ -30,6 +30,8 @@
 #import "PTYTab.h"
 #import "PTYTextView.h"
 #import "PseudoTerminal.h"
+#import "SplitSelectionView.h"
+#import "MovePaneController.h"
 
 static const float kTargetFrameRate = 1.0/60.0;
 static int nextViewId;
@@ -217,13 +219,17 @@ static NSDate* lastResizeDate_;
 
 - (void)rightMouseDown:(NSEvent*)event
 {
-    [[[self session] TEXTVIEW] rightMouseDown:event];
+    if (!splitSelectionView_) {
+        [[[self session] TEXTVIEW] rightMouseDown:event];
+    }
 }
 
 
 - (void)mouseDown:(NSEvent*)event
 {
-    if ([[[self session] TEXTVIEW] mouseDownImpl:event]) {
+    if (splitSelectionView_) {
+        [splitSelectionView_ mouseDown:event];
+    } else if ([[[self session] TEXTVIEW] mouseDownImpl:event]) {
         [super mouseDown:event];
     }
 }
@@ -280,5 +286,42 @@ static NSDate* lastResizeDate_;
 {
     [self setFrameSize:savedSize_];
 }
+
+- (void)_createSplitSelectionView:(BOOL)cancelOnly
+{
+    splitSelectionView_ = [[SplitSelectionView alloc] initAsCancelOnly:cancelOnly
+                                                             withFrame:NSMakeRect(0,
+                                                                                  0,
+                                                                                  [self frame].size.width,
+                                                                                  [self frame].size.height)
+                                                           withSession:session_
+                                                              delegate:[MovePaneController sharedInstance]];
+    [splitSelectionView_ setFrameOrigin:NSMakePoint(0, 0)];
+    [splitSelectionView_ setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
+    [self addSubview:splitSelectionView_];
+    [splitSelectionView_ release];
+}
+
+- (void)setSplitSelectionMode:(SplitSelectionMode)mode
+{
+    switch (mode) {
+        case kSplitSelectionModeOn:
+            if (splitSelectionView_) {
+                return;
+            }
+            [self _createSplitSelectionView:NO];
+            break;
+
+        case kSplitSelectionModeOff:
+            [splitSelectionView_ removeFromSuperview];
+            splitSelectionView_ = nil;
+            break;
+
+        case kSplitSelectionModeCancel:
+            [self _createSplitSelectionView:YES];
+            break;
+    }
+}
+
 
 @end

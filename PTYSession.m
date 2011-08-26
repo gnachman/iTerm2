@@ -44,6 +44,7 @@
 #import "SessionView.h"
 #import "PTYTab.h"
 #import "ProcessCache.h"
+#import "MovePaneController.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -73,6 +74,10 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     if ((self = [super init]) == nil) {
         return (nil);
     }
+
+    // The new session won't have the move-pane overlay, so just exit move pane
+    // mode.
+    [[MovePaneController sharedInstance] exitMovePaneMode];
 
     isDivorced = NO;
     gettimeofday(&lastInput, NULL);
@@ -424,6 +429,11 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [TEXTVIEW clearHighlights];
 }
 
+- (void)setSplitSelectionMode:(SplitSelectionMode)mode
+{
+    [[self view] setSplitSelectionMode:mode];
+}
+
 - (NSArray *)childJobNames
 {
     int skip = 0;
@@ -464,6 +474,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             return NO;
         }
     }
+
+    return YES;
 }
 
 - (void)setNewOutput:(BOOL)value
@@ -613,6 +625,10 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     if (EXIT) {
         [self _maybeWarnAboutShortLivedSessions];
     }
+    // The source pane may have just exited. Dogs and cats living together!
+    // Mass hysteria!
+    [[MovePaneController sharedInstance] exitMovePaneMode];
+
     // deregister from the notification center
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 

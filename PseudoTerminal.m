@@ -2970,6 +2970,42 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (void)splitVertically:(BOOL)isVertical
+                 before:(BOOL)before
+          addingSession:(PTYSession*)newSession
+          targetSession:(PTYSession*)targetSession
+           performSetup:(BOOL)performSetup
+{
+    NSView *scrollView;
+    SessionView* sessionView = [[self currentTab] splitVertically:isVertical
+                                                           before:before
+                                                    targetSession:targetSession];
+    [sessionView setSession:newSession];
+    [newSession setTab:[self currentTab]];
+    scrollView = [[[newSession view] subviews] objectAtIndex:0];
+    [newSession setView:sessionView];
+    NSSize size = [sessionView frame].size;
+    if (performSetup) {
+        [self setupSession:newSession title:nil withSize:&size];
+        scrollView = [[[newSession view] subviews] objectAtIndex:0];
+    }
+    // Move the scrollView created by PTYSession into sessionView.
+    [scrollView retain];
+    [scrollView removeFromSuperview];
+    [sessionView addSubview:scrollView];
+    [scrollView release];
+    if (!performSetup) {
+        [scrollView setFrameSize:[sessionView frame].size];
+    }
+    [self fitTabsToWindow];
+
+    if (targetSession == [[self currentTab] activeSession]) {
+        [[self currentTab] setActiveSessionPreservingViewOrder:newSession];
+    }
+    [[self currentTab] recheckBlur];
+    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
+}
+
 - (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark targetSession:(PTYSession*)targetSession
 {
     PtyLog(@"--------- splitVertically -----------");
@@ -2977,36 +3013,21 @@ NSString *sessionsKey = @"sessions";
         NSBeep();
         return;
     }
+
+    PTYSession* newSession = [self newSessionWithBookmark:theBookmark];
+    [self splitVertically:isVertical
+                   before:NO
+            addingSession:newSession
+            targetSession:targetSession
+             performSetup:YES];
+
     NSString *oldCWD = nil;
 
     /* Get currently selected tabviewitem */
     if ([self currentSession]) {
         oldCWD = [[[self currentSession] SHELL] getWorkingDirectory];
     }
-
-    PTYSession* newSession = [self newSessionWithBookmark:theBookmark];
-    SessionView* sessionView = [[self currentTab] splitVertically:isVertical targetSession:targetSession];
-    [sessionView setSession:newSession];
-    [newSession setTab:[self currentTab]];
-    [newSession setView:sessionView];
-    NSSize size = [sessionView frame].size;
-    [self setupSession:newSession title:nil withSize:&size];
-
-    // Move the scrollView into sessionView.
-    NSView* scrollView = [[[newSession view] subviews] objectAtIndex:0];
-    [scrollView retain];
-    [scrollView removeFromSuperview];
-    [sessionView addSubview:scrollView];
-    [scrollView release];
-
-    [self fitTabsToWindow];
-
     [self runCommandInSession:newSession inCwd:oldCWD];
-    if (targetSession == [[self currentTab] activeSession]) {
-        [[self currentTab] setActiveSessionPreservingViewOrder:newSession];
-    }
-    [[self currentTab] recheckBlur];
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
 
 - (Bookmark*)_bookmarkToSplit
@@ -3394,6 +3415,20 @@ NSString *sessionsKey = @"sessions";
         }
     }
     [[[NSApplication sharedApplication] delegate] updateBroadcastMenuState];
+}
+
+- (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session
+{
+    // Things would get really complicated if you could do this in IR, so just
+    // close it.
+    [self closeInstantReplay:nil];
+    for (PTYSession *aSession in [self sessions]) {
+        if (mode) {
+            [aSession setSplitSelectionMode:(aSession != session) ? kSplitSelectionModeOn : kSplitSelectionModeCancel];
+        } else {
+            [aSession setSplitSelectionMode:kSplitSelectionModeOff];
+        }
+    }
 }
 
 @end

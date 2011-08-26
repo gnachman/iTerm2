@@ -1124,7 +1124,9 @@ static NSString* FormatRect(NSRect r) {
     PtyLog(@"<<<<<<<< end dump");
 }
 
-- (SessionView*)splitVertically:(BOOL)isVertical targetSession:(PTYSession*)targetSession
+- (SessionView*)splitVertically:(BOOL)isVertical
+                         before:(BOOL)before
+                  targetSession:(PTYSession*)targetSession
 {
     if (isMaximized_) {
         [self unmaximize];
@@ -1145,7 +1147,9 @@ static NSString* FormatRect(NSRect r) {
 
         // Set its orientation to vertical and add the new view.
         [parentSplit setVertical:isVertical];
-        [parentSplit addSubview:newView positioned:NSWindowAbove relativeTo:targetSessionView];
+        [parentSplit addSubview:newView
+                     positioned:before ? NSWindowBelow : NSWindowAbove
+                     relativeTo:targetSessionView];
 
         // Resize all subviews the same size to accommodate the new view.
         [self adjustSubviewsOf:parentSplit];
@@ -1166,9 +1170,9 @@ static NSString* FormatRect(NSRect r) {
         [newSplit setVertical:isVertical];
         [[targetSessionView superview] replaceSubview:targetSessionView with:newSplit];
         [newSplit release];
-        [newSplit addSubview:targetSessionView];
+        [newSplit addSubview:before ? newView : targetSessionView];
         [targetSessionView release];
-        [newSplit addSubview:newView];
+        [newSplit addSubview:before ? targetSessionView : newView];
 
         // Resize all subviews the same size to accommodate the new view.
         [self adjustSubviewsOf:parentSplit];
@@ -1177,7 +1181,9 @@ static NSString* FormatRect(NSRect r) {
     } else {
         PtyLog(@"PTYTab splitVertically multiple children");
         // The parent has same-orientation splits and there is more than one child.
-        [parentSplit addSubview:newView positioned:NSWindowAbove relativeTo:targetSessionView];
+        [parentSplit addSubview:newView
+                     positioned:before ? NSWindowBelow : NSWindowAbove
+                     relativeTo:targetSessionView];
 
         // Resize all subviews the same size to accommodate the new view.
         [self adjustSubviewsOf:parentSplit];

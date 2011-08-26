@@ -19,6 +19,10 @@
 		1D237D95131D8D66004DD60C /* FindViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D237D93131D8D66004DD60C /* FindViewController.m */; };
 		1D2560AA13EE60E4006B35CD /* ArrangementPreviewView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */; };
 		1D2560AB13EE60E4006B35CD /* ArrangementPreviewView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */; };
+		1D29732714082676004C5DBE /* MovePaneController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D29732514082676004C5DBE /* MovePaneController.h */; };
+		1D29732814082676004C5DBE /* MovePaneController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D29732614082676004C5DBE /* MovePaneController.m */; };
+		1D29732B14082A52004C5DBE /* SplitSelectionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D29732914082A52004C5DBE /* SplitSelectionView.h */; };
+		1D29732C14082A52004C5DBE /* SplitSelectionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D29732A14082A52004C5DBE /* SplitSelectionView.m */; };
 		1D2E802E129DA45A00F3D71E /* PTYTab.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E802C129DA45A00F3D71E /* PTYTab.h */; };
 		1D2E802F129DA45A00F3D71E /* PTYTab.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E802D129DA45A00F3D71E /* PTYTab.m */; };
 		1D2E813112A18F7500F3D71E /* SessionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E812F12A18F7500F3D71E /* SessionView.h */; };
@@ -318,6 +322,10 @@
 		1D237D93131D8D66004DD60C /* FindViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FindViewController.m; sourceTree = "<group>"; };
 		1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ArrangementPreviewView.h; sourceTree = "<group>"; };
 		1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ArrangementPreviewView.m; sourceTree = "<group>"; };
+		1D29732514082676004C5DBE /* MovePaneController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MovePaneController.h; sourceTree = "<group>"; };
+		1D29732614082676004C5DBE /* MovePaneController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MovePaneController.m; sourceTree = "<group>"; };
+		1D29732914082A52004C5DBE /* SplitSelectionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SplitSelectionView.h; sourceTree = "<group>"; };
+		1D29732A14082A52004C5DBE /* SplitSelectionView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SplitSelectionView.m; sourceTree = "<group>"; };
 		1D2E802C129DA45A00F3D71E /* PTYTab.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYTab.h; sourceTree = "<group>"; };
 		1D2E802D129DA45A00F3D71E /* PTYTab.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYTab.m; sourceTree = "<group>"; };
 		1D2E812F12A18F7500F3D71E /* SessionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SessionView.h; sourceTree = "<group>"; };
@@ -673,6 +681,8 @@
 				DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */,
 				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
 				1D72438C11F416E500BD4924 /* LineBuffer.m */,
+				1D29732614082676004C5DBE /* MovePaneController.m */,
+				1D29732514082676004C5DBE /* MovePaneController.h */,
 				1DF0895713DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h */,
 				1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */,
 				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
@@ -694,6 +704,8 @@
 				F56B230B03A1B36701A8A066 /* PTYWindow.m */,
 				1D36155412CBF33E00803EA9 /* ScreenChar.m */,
 				1D2E813012A18F7500F3D71E /* SessionView.m */,
+				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
+				1D29732914082A52004C5DBE /* SplitSelectionView.h */,
 				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
 				1DF8AF5613FD781700C8A435 /* SplitPanel.h */,
 				1D06A04F134CDBED00C414EF /* Trouter.m */,
@@ -1152,6 +1164,8 @@
 				1DCA5ECF13EE507800B7725E /* WindowArrangements.h in Headers */,
 				1D2560AA13EE60E4006B35CD /* ArrangementPreviewView.h in Headers */,
 				1DF8AF5813FD781700C8A435 /* SplitPanel.h in Headers */,
+				1D29732714082676004C5DBE /* MovePaneController.h in Headers */,
+				1D29732B14082A52004C5DBE /* SplitSelectionView.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1441,6 +1455,8 @@
 				1DCA5ED013EE507800B7725E /* WindowArrangements.m in Sources */,
 				1D2560AB13EE60E4006B35CD /* ArrangementPreviewView.m in Sources */,
 				1DF8AF5913FD781700C8A435 /* SplitPanel.m in Sources */,
+				1D29732814082676004C5DBE /* MovePaneController.m in Sources */,
+				1D29732C14082A52004C5DBE /* SplitSelectionView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

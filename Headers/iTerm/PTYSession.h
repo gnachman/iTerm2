@@ -59,6 +59,12 @@ static const float kFastTimerIntervalSec = 1.0 / 30.0;
 // TODO(georgen): There's room for improvement here.
 static const float kBackgroundSessionIntervalSec = 1;
 
+typedef enum {
+    kSplitSelectionModeOn,
+    kSplitSelectionModeOff,
+    kSplitSelectionModeCancel
+} SplitSelectionMode;
+
 @class PTYTab;
 @class SessionView;
 @interface PTYSession : NSResponder <FindViewControllerDelegate>
@@ -299,6 +305,8 @@ static const float kBackgroundSessionIntervalSec = 1;
 
 // Do we need to prompt on close for this session?
 - (BOOL)promptOnClose;
+
+- (void)setSplitSelectionMode:(SplitSelectionMode)mode;
 
 // Array of subprocessess names.
 - (NSArray *)childJobNames;

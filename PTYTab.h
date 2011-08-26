@@ -175,7 +175,9 @@ static const int MIN_SESSION_COLUMNS = 2;
 //   only one child: make its orientation vertical and add a new subview.
 //   more than one child and a vertical orientation: add a new subview and return it.
 //   more than one child and a horizontal orientation: add a new split subview with vertical orientation and add a sessionview subview to it and return that sessionview.
-- (SessionView*)splitVertically:(BOOL)isVertical targetSession:(PTYSession*)targetSession;
+- (SessionView*)splitVertically:(BOOL)isVertical
+                         before:(BOOL)before
+                  targetSession:(PTYSession*)targetSession;
 - (NSSize)_recursiveMinSize:(NSSplitView*)node;
 - (PTYSession*)_recursiveSessionAtPoint:(NSPoint)point relativeTo:(NSView*)node;
 

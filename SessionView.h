@@ -27,6 +27,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "FindViewController.h"
+#import "PTYSession.h"
 
 @class PTYSession;
 @interface SessionView : NSView {
@@ -49,6 +50,10 @@
 
     // Saved size for unmaximizing.
     NSSize savedSize_;
+
+    // When moving a pane, a view is put over all sessions to help the user
+    // choose how to split the destination.
+    NSView *splitSelectionView_;
 }
 
 + (NSDate*)lastResizeDate;
@@ -67,5 +72,6 @@
 - (BOOL)backgroundDimmed;
 - (void)saveFrameSize;
 - (void)restoreFrameSize;
+- (void)setSplitSelectionMode:(SplitSelectionMode)mode;
 
 @end

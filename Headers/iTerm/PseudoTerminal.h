@@ -610,8 +610,16 @@ typedef enum {
 // Key actions
 - (void)newWindowWithBookmarkGuid:(NSString*)guid;
 - (void)newTabWithBookmarkGuid:(NSString*)guid;
+
+// Splitting
+- (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark;
 - (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid;
 - (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark targetSession:(PTYSession*)targetSession;
+- (void)splitVertically:(BOOL)isVertical
+                 before:(BOOL)before
+          addingSession:(PTYSession*)newSession
+          targetSession:(PTYSession*)targetSession
+           performSetup:(BOOL)performSetup;
 
 // selector for menu item to split current session vertically.
 - (IBAction)splitVertically:(id)sender;
@@ -653,6 +661,8 @@ typedef enum {
 - (void)toggleBroadcastingInputToSession:(PTYSession *)session;
 - (BroadcastMode)broadcastMode;
 - (BOOL)broadcastInputToSession:(PTYSession *)session;
+
+- (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session;
 
 @end
 

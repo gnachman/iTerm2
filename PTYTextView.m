@@ -59,6 +59,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #import "RegexKitLite/RegexKitLite.h"
 #import "iTerm/NSStringITerm.h"
 #import "FontSizeEstimator.h"
+#import "MovePaneController.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -3171,6 +3172,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                      targetSession:[dataSource session]];
 }
 
+- (void)movePane:(id)sender
+{
+    [[MovePaneController sharedInstance] movePane:[dataSource session]];
+}
+
 - (void)clearWorkingDirectories {
     [workingDirectoryAtLines removeAllObjects];
 }
@@ -3261,6 +3267,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                [item action]==@selector(clearTextViewBuffer:) ||
                [item action]==@selector(editTextViewSession:) ||
                [item action]==@selector(closeTextViewSession:) ||
+               [item action]==@selector(movePane:) ||
                ([item action] == @selector(print:) && [item tag] != 1)) {
         // We always validate the above commands
         return YES;
@@ -3350,6 +3357,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Split pane options
     [theMenu addItemWithTitle:@"Split Pane Vertically" action:@selector(splitTextViewVertically:) keyEquivalent:@""];
     [theMenu addItemWithTitle:@"Split Pane Horizontally" action:@selector(splitTextViewHorizontally:) keyEquivalent:@""];
+    [theMenu addItemWithTitle:@"Move Session to Split Pane" action:@selector(movePane:) keyEquivalent:@""];
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
