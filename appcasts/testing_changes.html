@@ -1,5 +1,42 @@
 These release notes are for the development builds of iTerm2. The last stable release was 1.0.0.
 
+iTerm2 1.0.0.20110821
+This and that.
+
+Enhancements:
+- Add new cmd-opt-shift-H and cmd-opt-shift-v interface for opening a split pane with a particular profile.
+- Allow pinch gesture to change font size.
+- Add option to disable session-initiated printing.
+- Make cmd-[ and cmd-] work when a pane is maximized.
+- Cmd-opt click on a URL to open it without bringing the browser to the front.
+- Add warning on quit that your changes will be lost if you're using a custom prefs dir.
+- Make maximized pane indicator more subtle.
+- Add proprietary escape code esc]50;ClearScrollback^G to erase screen and scrollback buffer.
+- Add proprietary escape code esc]50;CurrentDir=/Path/To/Directory^G to notify iTerm2 of the current directory (so you can cmd-click on relative filenames and we'll know where they are).
+- Add next/previous pane action.
+
+Deprecations:
+- Removed SFTP bonjour host support.
+
+Bug fixes:
+- Fix bug where opening a .sh or .command file with iTerm2 wouldn't work.
+- Make holding cmd to show tabbar in Lion fullscreen work.
+- Ignore zoom-vertically-only setting when creating a new window in Lion fullscreen.
+- Fix bug where right border wasn't shown in Lion with overlay scrollbars.
+- Change pattern of filenames for autologged sessions.
+- Fix various memory leaks.
+- Only open one window if iTerm2 is launched to run a script.
+- Don't allow creation of panes smaller than the minimum size.
+- Preserve window sizes better when restoring saved window arrangments.
+- Fix bug where window arrangements menu didn't work right if you used a custom prefs dir.
+- Swap positions of shell and edit menus.
+- Fix bug where StealFocus escape code didn't work on fullscreen windows.
+- Fix bug where fullscreen got a funny colored border after using instant replay.
+- Fix bug where applescript couldn't insert a session at the beginning of sessions.
+- When opening multiple profiles from the profiles window, respect their order.
+- Fix bug where holding cmd to show tabs would save that as a preference if you exited fullscreen while they're shown.
+
+
 iTerm2 1.0.0.20110810
 Candy!
 
