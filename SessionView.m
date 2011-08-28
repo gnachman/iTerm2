@@ -369,6 +369,7 @@ static NSDate* lastResizeDate_;
                                                                                frame.size.height)];
     [self addSubview:splitSelectionView_];
     [splitSelectionView_ release];
+    [[self window] orderFront:nil];
     return NSDragOperationMove;
 }
 
