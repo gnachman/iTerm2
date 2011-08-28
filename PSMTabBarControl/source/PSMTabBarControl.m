@@ -1511,7 +1511,7 @@
 }
 
 // NSDraggingSource
-- (unsigned int)draggingSourceOperationMaskForLocal:(BOOL)isLocal
+- (NSDragOperation)draggingSourceOperationMaskForLocal:(BOOL)isLocal
 {
     return (isLocal ? NSDragOperationMove : NSDragOperationNone);
 }
@@ -1534,7 +1534,7 @@
 // NSDraggingDestination
 - (NSDragOperation)draggingEntered:(id <NSDraggingInfo>)sender
 {
-    if([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
+    if ([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
 
         if ([self delegate] && [[self delegate] respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
                 ![[self delegate] tabView:[[sender draggingSource] tabView] shouldDropTabViewItem:[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] inTabBar:self]) {
@@ -1543,9 +1543,16 @@
 
         [[PSMTabDragAssistant sharedDragAssistant] draggingEnteredTabBar:self atPoint:[self convertPoint:[sender draggingLocation] fromView:nil]];
         return NSDragOperationMove;
+    } else if ([[self delegate] respondsToSelector:@selector(tabView:draggingEnteredTabBarForSender:)]) {
+        NSDragOperation op = [[self delegate] tabView:tabView draggingEnteredTabBarForSender:sender];
+        if (op != NSDragOperationNone) {
+            [[PSMTabDragAssistant sharedDragAssistant] startAnimationWithOrientation:_orientation width:_cellOptimumWidth];
+            [[PSMTabDragAssistant sharedDragAssistant] draggingEnteredTabBar:self atPoint:[self convertPoint:[sender draggingLocation] fromView:nil]];
+        }
+        return op;
+    } else {
+        return NSDragOperationNone;
     }
-
-    return NSDragOperationNone;
 }
 
 - (NSDragOperation)draggingUpdated:(id <NSDraggingInfo>)sender
@@ -1559,6 +1566,10 @@
             return NSDragOperationNone;
         }
 
+        [[PSMTabDragAssistant sharedDragAssistant] draggingUpdatedInTabBar:self atPoint:[self convertPoint:[sender draggingLocation] fromView:nil]];
+        return NSDragOperationMove;
+    } else if ([[self delegate] respondsToSelector:@selector(tabView:shouldAcceptDragFromSender:)] &&
+               [[self delegate] tabView:tabView shouldAcceptDragFromSender:sender]) {
         [[PSMTabDragAssistant sharedDragAssistant] draggingUpdatedInTabBar:self atPoint:[self convertPoint:[sender draggingLocation] fromView:nil]];
         return NSDragOperationMove;
     } else if (cell) {
@@ -1577,15 +1588,27 @@
 
 - (BOOL)prepareForDragOperation:(id <NSDraggingInfo>)sender
 {
-    //validate the drag operation only if there's a valid tab bar to drop into
-    return [[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] == NSNotFound ||
-                [[PSMTabDragAssistant sharedDragAssistant] destinationTabBar] != nil;
+    // validate the drag operation only if there's a valid tab bar to drop into
+    BOOL badType = [[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] == NSNotFound;
+    if (badType && [[self delegate] respondsToSelector:@selector(tabView:shouldAcceptDragFromSender:sender:)] &&
+        ![[self delegate] tabView:tabView shouldAcceptDragFromSender:sender]) {
+        badType = YES;
+    }
+    return badType ||
+           [[PSMTabDragAssistant sharedDragAssistant] destinationTabBar] != nil;
+}
+
+- (BOOL)_delegateAcceptsSender:(id <NSDraggingInfo>)sender
+{
+    return [[self delegate] respondsToSelector:@selector(tabView:shouldAcceptDragFromSender:)] &&
+           [[self delegate] tabView:tabView shouldAcceptDragFromSender:sender];
 }
 
 - (BOOL)performDragOperation:(id <NSDraggingInfo>)sender
 {
-    if ([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
-        [[PSMTabDragAssistant sharedDragAssistant] performDragOperation];
+    if ([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound ||
+        [self _delegateAcceptsSender:sender]) {
+        [[PSMTabDragAssistant sharedDragAssistant] performDragOperation:sender];
     } else if ([self delegate] && [[self delegate] respondsToSelector:@selector(tabView:acceptedDraggingInfo:onTabViewItem:)]) {
         //forward the drop to the delegate
         [[self delegate] tabView:tabView acceptedDraggingInfo:sender onTabViewItem:[[self cellForPoint:[self convertPoint:[sender draggingLocation] fromView:nil] cellFrame:nil] representedObject]];
@@ -1902,6 +1925,20 @@
     }
 }
 
+- (NSDragOperation)tabView:(NSTabView *)tabView draggingEnteredTabBarForSender:(id<NSDraggingInfo>)tagViewItem
+{
+    return NSDragOperationNone;
+}
+
+- (BOOL)tabView:(NSTabView *)tabView shouldAcceptDragFromSender:(id<NSDraggingInfo>)tagViewItem
+{
+    return NO;
+}
+
+- (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id <NSDraggingInfo>)sender;
+{
+    return nil;
+}
 
 #pragma mark -
 #pragma mark Tooltips

@@ -234,6 +234,8 @@ typedef enum {
                windowType:(int)windowType
                    screen:(int)screenIndex;
 
+- (PseudoTerminal *)terminalDraggedFromAnotherWindowAtPoint:(NSPoint)point;
+
 // The window's original screen.
 - (NSScreen*)screen;
 
@@ -708,6 +710,8 @@ typedef enum {
 @end
 
 @interface PseudoTerminal (Private)
+
+- (int)_screenAtPoint:(NSPoint)p;
 
 // Allocate a new session and assign it a bookmark.
 - (PTYSession*)newSessionWithBookmark:(Bookmark*)bookmark;

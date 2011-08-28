@@ -13,6 +13,9 @@
 
 @implementation MovePaneController
 
+@synthesize dragFailed = dragFailed_;
+@synthesize session = session_;
+
 + (MovePaneController *)sharedInstance
 {
     static MovePaneController *inst;
@@ -41,12 +44,60 @@
     session_ = nil;
 }
 
+- (void)moveSessionToNewWindow:(PTYSession *)movingSession atPoint:(NSPoint)point
+{
+    PTYTab *theTab = [movingSession tab];
+    PseudoTerminal *term = [[theTab realParentWindow] terminalDraggedFromAnotherWindowAtPoint:point];
+
+    SessionView *oldView = [movingSession view];
+    [oldView retain];
+    [theTab removeSession:movingSession];
+    if ([[theTab sessions] count] == 0) {
+        [[theTab realParentWindow] closeTab:theTab];
+    }
+
+    [term insertSession:movingSession atIndex:0];
+    [oldView autorelease];
+ }
+
+- (SessionView *)removeAndClearSession
+{
+    SessionView *oldView = [session_ view];
+    [oldView retain];
+    PTYSession *movingSession = session_;
+    PTYTab *theTab = [movingSession tab];
+    [[movingSession tab] removeSession:movingSession];
+    if ([[theTab sessions] count] == 0) {
+        [[theTab realParentWindow] closeTab:theTab];
+    }
+    session_ = nil;
+    return oldView;
+}
+
+// This function is either called once or twice at the end of a drag.
+// If only one call is made, then dest will be nil and the session will be moved to a new window.
+// If two calls are made, the first has dest non-null and will perform a split. The second call will
+// be ignored.
+// It isn't called at all if a session is dragged into an existing tab bar, though.
 - (BOOL)dropInSession:(PTYSession *)dest
                  half:(SplitSessionHalf)half
+              atPoint:(NSPoint)point
 {
     if (dest == session_ || !session_) {
+        didSplit_ = YES;
         return NO;
     }
+
+    if (!dest && !didSplit_) {
+        // We were not called before, so move the session to a new window.
+        [self moveSessionToNewWindow:session_ atPoint:point];
+        return YES;
+    } else if (!dest) {
+        // This is the second call and a split has already been performed.
+        return NO;
+    }
+
+    didSplit_ = YES;
 
     PTYSession *movingSession = session_;
     BOOL isVertical = (half == kWestHalf || half == kEastHalf);
@@ -81,7 +132,7 @@
 {
     [self exitMovePaneMode];
     session_ = session;
-
+    self.dragFailed = NO;
     NSPasteboard *pboard;
 
     pboard = [NSPasteboard pasteboardWithName:NSDragPboard];
@@ -92,14 +143,16 @@
     NSRect rect = [[[session view] superview] convertRect:[[session view] frame] toView:nil];
     SessionView *source = [session view];
     [source retain];
+    didSplit_ = NO;
     [[[theTab realParentWindow] window] dragImage:[session dragImage]
                                                at:rect.origin
                                            offset:NSZeroSize
                                             event:[NSApp currentEvent]
                                        pasteboard:pboard
                                            source:source
-                                        slideBack:YES];
+                                        slideBack:NO];
     [source autorelease];
+    session_ = nil;
 }
 
 #pragma mark Delegate
@@ -107,7 +160,7 @@
 - (void)didSelectDestinationSession:(PTYSession *)dest
                                half:(SplitSessionHalf)half
 {
-    [self dropInSession:dest half:half];
+    [self dropInSession:dest half:half atPoint:NSZeroPoint];
     [self exitMovePaneMode];
 }
 

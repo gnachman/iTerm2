@@ -10,10 +10,17 @@
 #import "SplitSelectionView.h"
 
 @class PTYSession;
-
+@class SessionView;
 @interface MovePaneController : NSObject <SplitSelectionViewDelegate> {
+    // The session being moved.
     PTYSession *session_;  // weak
+
+    BOOL dragFailed_;
+    BOOL didSplit_;
 }
+
+@property (nonatomic, assign) BOOL dragFailed;
+@property (nonatomic, assign) PTYSession *session;
 
 + (MovePaneController *)sharedInstance;
 // Iniate click-to-move mode.
@@ -23,5 +30,10 @@
 - (void)beginDrag:(PTYSession *)session;
 - (BOOL)isMovingSession:(PTYSession *)s;
 - (BOOL)dropInSession:(PTYSession *)dest
-                 half:(SplitSessionHalf)half;
+                 half:(SplitSessionHalf)half
+              atPoint:(NSPoint)point;
+
+// Returns a retained session view. Add the session view to something useful and release it.
+- (SessionView *)removeAndClearSession;
+
 @end

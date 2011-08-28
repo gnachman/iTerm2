@@ -68,6 +68,8 @@
 #import "FindViewController.h"
 #import "SplitPanel.h"
 #import "ProcessCache.h"
+#import "MovePaneController.h"
+
 #define CACHED_WINDOW_POSITIONS 100
 
 #define ITLocalizedString(key) NSLocalizedStringFromTableInBundle(key, @"iTerm", [NSBundle bundleForClass:[self class]], @"Context menu")
@@ -442,6 +444,39 @@ NSString *sessionsKey = @"sessions";
     }
 
     return self;
+}
+
+- (PseudoTerminal *)terminalDraggedFromAnotherWindowAtPoint:(NSPoint)point
+{
+    PseudoTerminal *term;
+
+    int screen;
+    if (windowType_ != WINDOW_TYPE_NORMAL) {
+        screen = [self _screenAtPoint:point];
+    } else {
+        screen = -1;
+    }
+
+    // create a new terminal window
+    term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
+                                             windowType:windowType_ == WINDOW_TYPE_FULL_SCREEN ? WINDOW_TYPE_FORCE_FULL_SCREEN : windowType_
+                                                 screen:screen] autorelease];
+    if (term == nil) {
+        return nil;
+    }
+    term->wasDraggedFromAnotherWindow_ = YES;
+    [term copySettingsFrom:self];
+
+    [[iTermController sharedInstance] addInTerminals:term];
+
+    if (windowType_ == WINDOW_TYPE_NORMAL) {
+        [[term window] setFrameOrigin:point];
+    } else if (windowType_ == WINDOW_TYPE_FULL_SCREEN) {
+        [[term window] makeKeyAndOrderFront:nil];
+        [term hideMenuBar];
+    }
+
+    return term;
 }
 
 - (int)number
@@ -2228,6 +2263,10 @@ NSString *sessionsKey = @"sessions";
 - (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem
 {
     PTYTab *aTab = [tabViewItem identifier];
+    if (aTab == nil) {
+        return NO;
+    }
+
     return [self confirmCloseTab:aTab];
 }
 
@@ -2435,60 +2474,48 @@ NSString *sessionsKey = @"sessions";
     return rootMenu;
 }
 
-- (int)_screenAtPoint:(NSPoint)p
-{
-    int i = 0;
-    for (NSScreen* screen in [NSScreen screens]) {
-        if (NSPointInRect(p, [screen frame])) {
-            return i;
-        }
-        i++;
-    }
-
-    NSLog(@"Point %lf,%lf not in any screen", p.x, p.y);
-    return 0;
-}
-
 - (PSMTabBarControl *)tabView:(NSTabView *)aTabView newTabBarForDraggedTabViewItem:(NSTabViewItem *)tabViewItem atPoint:(NSPoint)point
 {
-    PseudoTerminal *term;
     PTYTab *aTab = [tabViewItem identifier];
-
     if (aTab == nil) {
         return nil;
     }
 
-    int screen;
-    if (windowType_ != WINDOW_TYPE_NORMAL) {
-      screen = [self _screenAtPoint:point];
-    } else {
-      screen = -1;
-    }
-
-    // create a new terminal window
-    term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
-                                             windowType:windowType_ == WINDOW_TYPE_FULL_SCREEN ? WINDOW_TYPE_FORCE_FULL_SCREEN : windowType_
-                                                 screen:screen] autorelease];
-    if (term == nil) {
-      return nil;
-    }
-    term->wasDraggedFromAnotherWindow_ = YES;
-    [term copySettingsFrom:self];
-
-    [[iTermController sharedInstance] addInTerminals: term];
-
-    if (windowType_ == WINDOW_TYPE_NORMAL) {
-      if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
-        [[term window] setFrameTopLeftPoint:point];
-      } else {
-        [[term window] setFrameOrigin:point];
-      }
-    } else if (windowType_ == WINDOW_TYPE_FULL_SCREEN) {
-      [[term window] makeKeyAndOrderFront:nil];
-      [term hideMenuBar];
+    PseudoTerminal *term = [self terminalDraggedFromAnotherWindowAtPoint:point];
+    if (term->windowType_ == WINDOW_TYPE_NORMAL &&
+        [[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab) {
+            [[term window] setFrameTopLeftPoint:point];
     }
 
     return [term tabBarControl];
+}
+
+- (NSArray *)allowedDraggedTypesForTabView:(NSTabView *)aTabView
+{
+    return [NSArray arrayWithObject:@"iTermDragPanePBType"];
+}
+
+- (NSDragOperation)tabView:(NSTabView *)aTabView draggingEnteredTabBarForSender:(id<NSDraggingInfo>)tabView
+{
+    return NSDragOperationMove;
+}
+
+- (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id<NSDraggingInfo>)sender
+{
+    PTYSession *session = [[MovePaneController sharedInstance] session];
+    [[[MovePaneController sharedInstance] removeAndClearSession] autorelease];
+    PTYTab *theTab = [[PTYTab alloc] initWithSession:session];
+    [theTab setParentWindow:self];
+    NSTabViewItem *tabViewItem = [[[NSTabViewItem alloc] initWithIdentifier:theTab] autorelease];
+    [theTab setTabViewItem:tabViewItem];
+    [tabViewItem setLabel:[session name] ? [session name] : @""];
+
+    return tabViewItem;
+}
+
+- (BOOL)tabView:(NSTabView *)tabView shouldAcceptDragFromSender:(id<NSDraggingInfo>)sender
+{
+    return YES;
 }
 
 - (NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem
@@ -3434,6 +3461,20 @@ NSString *sessionsKey = @"sessions";
 @end
 
 @implementation PseudoTerminal (Private)
+
+- (int)_screenAtPoint:(NSPoint)p
+{
+    int i = 0;
+    for (NSScreen* screen in [NSScreen screens]) {
+        if (NSPointInRect(p, [screen frame])) {
+            return i;
+        }
+        i++;
+    }
+
+    NSLog(@"Point %lf,%lf not in any screen", p.x, p.y);
+    return 0;
+}
 
 - (void)_drawFullScreenBlackBackground
 {

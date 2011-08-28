@@ -68,6 +68,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 // transparent "hole" around the cursor. This is the radius of that hole in
 // pixels.
 const double kFindCursorHoleRadius = 30;
+
 const int kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
 
 @implementation FindCursorView
@@ -2554,7 +2555,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    
+
     if ([event eventNumber] != firstMouseEventNumber_ &&   // Not first mouse in formerly non-key app
         frontTextView == self &&                           // Is active session's textview
         ([[self delegate] xtermMouseReporting]) &&         // Xterm mouse reporting is on
@@ -2867,20 +2868,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseDragged:(NSEvent *)event
 {
-    if ([event eventNumber] == firstMouseEventNumber_) {
-        // We accept first mouse for the purposes of focusing a split pane but not for making a
-        // selection.
-        return;
-    }
-    if (!dragOk_) {
-        return;
-    }
+    // Prevent accidental dragging while dragging trouter item or dragging pane.
+    BOOL dragThresholdMet = NO;
     NSPoint locationInWindow = [event locationInWindow];
     NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
     NSRect  rectInTextView = [self visibleRect];
     int x, y;
     int width = [dataSource width];
-    NSString *theSelectedText;
 
     double logicalX = locationInTextView.x - MARGIN - charWidth/2;
     if (logicalX >= 0) {
@@ -2898,6 +2892,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     y = locationInTextView.y / lineHeight;
 
     NSPoint mouseDownLocation = [mouseDownEvent locationInWindow];
+    if (EuclideanDistance(mouseDownLocation, locationInWindow) >= kDragThreshold) {
+        dragThresholdMet = YES;
+    }
+    if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
+        if (dragThresholdMet) {
+            [[MovePaneController sharedInstance] beginDrag:[dataSource session]];
+        }
+        return;
+    }
+    if ([event eventNumber] == firstMouseEventNumber_) {
+        // We accept first mouse for the purposes of focusing or dragging a
+        // split pane but not for making a selection.
+        return;
+    }
+    if (!dragOk_) {
+        return;
+    }
+    NSString *theSelectedText;
 
     if (([[self delegate] xtermMouseReporting]) &&
         reportingMouseDown &&
@@ -2935,22 +2947,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
 
-    // Prevent accidental dragging while holding cmd.
-    BOOL dragThresholdMet = NO;
-    if (EuclideanDistance(mouseDownLocation, locationInWindow) >= kDragThreshold) {
-        dragThresholdMet = YES;
-    }
     BOOL pressingCmdOnly = ([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask;
     if (!pressingCmdOnly || dragThresholdMet) {
       mouseDragged = YES;
     }
 
-    if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
-        if (dragThresholdMet) {
-            [[MovePaneController sharedInstance] beginDrag:[dataSource session]];
-        }
-        return;
-    }
 
     if (mouseDownOnSelection == YES &&
         ([event modifierFlags] & NSCommandKeyMask) &&
@@ -3615,7 +3616,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (!aString) {
         aString = [self content];
     }
-    
+
     aData = [aString dataUsingEncoding:[[dataSource session] encoding]
                   allowLossyConversion:YES];
 
@@ -4578,7 +4579,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Advance back to the right of the char that caused us to break.
         tmpX++;
     }
-    
+
     // Ensure the values are sane, although I think none of these cases will
     // ever occur.
     if (tmpX < 0) {
@@ -4594,7 +4595,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (tmpY >= [dataSource numberOfLines]) {
         tmpY = [dataSource numberOfLines] - 1;
     }
-    
+
     // Save to startx, starty.
     if (startx) {
         *startx = tmpX;
@@ -4604,8 +4605,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     x1 = tmpX;
     yStart = tmpY;
-    
-    
+
+
     // Search forward from x to find the end of the word.
     tmpX = x;
     tmpY = y;
@@ -4624,12 +4625,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             break;
         }
     }
-    
+
     // Back off from trailing char.
     if (tmpX != x) {
         tmpX--;
     }
-    
+
     // Sanity checks.
     if (tmpX < 0) {
         tmpX = width - 1;
@@ -4644,7 +4645,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (tmpY >= [dataSource numberOfLines]) {
         tmpY = [dataSource numberOfLines] - 1;
     }
-    
+
     // Save to endx, endy.
     if (endx) {
         *endx = tmpX+1;

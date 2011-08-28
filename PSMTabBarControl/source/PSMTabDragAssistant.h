@@ -59,11 +59,12 @@
 - (void)setTargetCell:(PSMTabBarCell *)cell;
 
 // Functionality
+- (void)startAnimationWithOrientation:(PSMTabBarOrientation)orientation width:(CGFloat)width;
 - (void)startDraggingCell:(PSMTabBarCell *)cell fromTabBar:(PSMTabBarControl *)control withMouseDownEvent:(NSEvent *)event;
 - (void)draggingEnteredTabBar:(PSMTabBarControl *)control atPoint:(NSPoint)mouseLoc;
 - (void)draggingUpdatedInTabBar:(PSMTabBarControl *)control atPoint:(NSPoint)mouseLoc;
 - (void)draggingExitedTabBar:(PSMTabBarControl *)control;
-- (void)performDragOperation;
+- (void)performDragOperation:(id<NSDraggingInfo>)sender;
 - (void)draggedImageEndedAt:(NSPoint)aPoint operation:(NSDragOperation)operation;
 - (void)finishDrag;
 

@@ -176,9 +176,9 @@
         theIndex = [super numberOfTabViewItems];
     }
 
-    if([delegate conformsToProtocol: @protocol(PTYTabViewDelegateProtocol)])
-        [delegate tabView: self willInsertTabViewItem: tabViewItem atIndex: theIndex];
-
+    if ([delegate conformsToProtocol: @protocol(PTYTabViewDelegateProtocol)]) {
+        [delegate tabView:self willInsertTabViewItem:tabViewItem atIndex:theIndex];
+    }
     [super insertTabViewItem:tabViewItem atIndex:theIndex];
 #if DEBUG_METHOD_TRACE
     NSLog(@"PTYTabView: -insertTabViewItem atIndex: %d, done", theIndex);
@@ -189,6 +189,11 @@
 - (void)selectTab:(id)sender
 {
     [self selectTabViewItemWithIdentifier:[sender representedObject]];
+}
+
+- (void)setDelegate:(id<PTYTabViewDelegateProtocol>)anObject
+{
+    [super setDelegate:(id)anObject];
 }
 
 @end

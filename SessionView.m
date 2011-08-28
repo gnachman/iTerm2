@@ -342,11 +342,18 @@ static NSDate* lastResizeDate_;
     return YES;
 }
 
+- (void)draggedImage:(NSImage *)anImage endedAt:(NSPoint)aPoint operation:(NSDragOperation)operation
+{
+    if (![[MovePaneController sharedInstance] dragFailed]) {
+        [[MovePaneController sharedInstance] dropInSession:nil half:kNoHalf atPoint:aPoint];
+    }
+}
+
 #pragma mark NSDraggingDestination protocol
 - (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender
 {
     if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
-        return NSDragOperationNone;
+        return NSDragOperationMove;
     }
     NSRect frame = [self frame];
     splitSelectionView_ = [[SplitSelectionView alloc] initWithFrame:NSMakeRect(0,
@@ -367,7 +374,7 @@ static NSDate* lastResizeDate_;
 - (NSDragOperation)draggingUpdated:(id < NSDraggingInfo >)sender
 {
     if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
-        return NSDragOperationNone;
+        return NSDragOperationMove;
     }
     NSPoint point = [self convertPointFromBase:[sender draggingLocation]];
     [splitSelectionView_ updateAtPoint:point];
@@ -377,19 +384,18 @@ static NSDate* lastResizeDate_;
 - (BOOL)performDragOperation:(id < NSDraggingInfo >)sender
 {
     if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
-        return NO;
+        [[MovePaneController sharedInstance] setDragFailed:YES];
     }
     SplitSessionHalf half = [splitSelectionView_ half];
     [splitSelectionView_ removeFromSuperview];
     splitSelectionView_ = nil;
-    return [[MovePaneController sharedInstance] dropInSession:[self session] half:half];
+    return [[MovePaneController sharedInstance] dropInSession:[self session]
+                                                         half:half
+                                                      atPoint:[sender draggingLocation]];
 }
 
 - (BOOL)prepareForDragOperation:(id < NSDraggingInfo >)sender
 {
-    if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
-        return NO;
-    }
     return YES;
 }
 
