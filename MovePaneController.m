@@ -9,6 +9,7 @@
 #import "iTermController.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
+#import "SessionView.h"
 
 @implementation MovePaneController
 
@@ -40,21 +41,22 @@
     session_ = nil;
 }
 
-#pragma mark Delegate
-
-- (void)didSelectDestinationSession:(PTYSession *)dest
-                               half:(SplitSessionHalf)half
+- (BOOL)dropInSession:(PTYSession *)dest
+                 half:(SplitSessionHalf)half
 {
+    if (dest == session_ || !session_) {
+        return NO;
+    }
+
     PTYSession *movingSession = session_;
-    [self exitMovePaneMode];
     BOOL isVertical = (half == kWestHalf || half == kEastHalf);
     if (![[[dest tab] realParentWindow] canSplitPaneVertically:isVertical
                                                   withBookmark:[movingSession addressBookEntry]]) {
-        NSBeep();
-        return;
+        return NO;
     }
 
-    [movingSession retain];
+    SessionView *oldView = [movingSession view];
+    [oldView retain];
     PTYTab *theTab = [movingSession tab];
     [[movingSession tab] removeSession:movingSession];
     if ([[theTab sessions] count] == 0) {
@@ -65,7 +67,48 @@
                                      addingSession:movingSession
                                      targetSession:dest
                                       performSetup:NO];
+    [oldView release];
     [[dest tab] fitSessionToCurrentViewSize:movingSession];
+    return YES;
+}
+
+- (BOOL)isMovingSession:(PTYSession *)s
+{
+    return session_ == s;
+}
+
+- (void)beginDrag:(PTYSession *)session
+{
+    [self exitMovePaneMode];
+    session_ = session;
+
+    NSPasteboard *pboard;
+
+    pboard = [NSPasteboard pasteboardWithName:NSDragPboard];
+    [pboard declareTypes:[NSArray arrayWithObjects:@"iTermDragPanePBType", nil] owner: nil];
+    [pboard setString:@"" forType:@"iTermDragPanePBType"];
+
+    PTYTab *theTab = [session tab];
+    NSRect rect = [[[session view] superview] convertRect:[[session view] frame] toView:nil];
+    SessionView *source = [session view];
+    [source retain];
+    [[[theTab realParentWindow] window] dragImage:[session dragImage]
+                                               at:rect.origin
+                                           offset:NSZeroSize
+                                            event:[NSApp currentEvent]
+                                       pasteboard:pboard
+                                           source:source
+                                        slideBack:YES];
+    [source autorelease];
+}
+
+#pragma mark Delegate
+
+- (void)didSelectDestinationSession:(PTYSession *)dest
+                               half:(SplitSessionHalf)half
+{
+    [self dropInSession:dest half:half];
+    [self exitMovePaneMode];
 }
 
 @end

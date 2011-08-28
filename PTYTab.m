@@ -1421,17 +1421,7 @@ static NSString* FormatRect(NSRect r) {
 
 - (void)_drawSession:(PTYSession*)session inImage:(NSImage*)viewImage atOrigin:(NSPoint)origin
 {
-    [[session TEXTVIEW] refresh];
-    NSRect theRect = [[session SCROLLVIEW] documentVisibleRect];
-    NSImage *textviewImage = [[[NSImage alloc] initWithSize:theRect.size] autorelease];
-
-    [textviewImage setFlipped:YES];
-    [textviewImage lockFocus];
-    [[session TEXTVIEW] drawBackground:theRect toPoint:NSMakePoint(0, 0)];
-    // Draw the background flipped, which is actually the right way up.
-    NSPoint temp = NSMakePoint(0, 0);
-    [[session TEXTVIEW] drawRect:theRect to:&temp];
-    [textviewImage unlockFocus];
+    NSImage *textviewImage = [session imageOfSession:NO];
 
     [viewImage lockFocus];
     [textviewImage compositeToPoint:origin operation:NSCompositeSourceOver];

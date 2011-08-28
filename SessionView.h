@@ -30,6 +30,8 @@
 #import "PTYSession.h"
 
 @class PTYSession;
+@class SplitSelectionView;
+
 @interface SessionView : NSView {
     PTYSession* session_;
     BOOL dim_;
@@ -53,7 +55,7 @@
 
     // When moving a pane, a view is put over all sessions to help the user
     // choose how to split the destination.
-    NSView *splitSelectionView_;
+    SplitSelectionView *splitSelectionView_;
 }
 
 + (NSDate*)lastResizeDate;

@@ -52,12 +52,18 @@ static NSDate* lastResizeDate_;
     lastResizeDate_ = [[NSDate date] retain];
 }
 
+- (void)_initCommon
+{
+    [self registerForDraggedTypes:[NSArray arrayWithObjects:@"iTermDragPanePBType", nil]];
+    [lastResizeDate_ release];
+    lastResizeDate_ = [[NSDate date] retain];
+}
+
 - (id)initWithFrame:(NSRect)frame
 {
     self = [super initWithFrame:frame];
     if (self) {
-        [lastResizeDate_ release];
-        lastResizeDate_ = [[NSDate date] retain];
+        [self _initCommon];
         findView_ = [[FindViewController alloc] initWithNibName:@"FindView" bundle:nil];
         [[findView_ view] setHidden:YES];
         [self addSubview:[findView_ view]];
@@ -73,8 +79,7 @@ static NSDate* lastResizeDate_;
 {
     self = [self initWithFrame:frame];
     if (self) {
-        [lastResizeDate_ release];
-        lastResizeDate_ = [[NSDate date] retain];
+        [self _initCommon];
         session_ = [session retain];
     }
     return self;
@@ -95,6 +100,7 @@ static NSDate* lastResizeDate_;
 
 - (void)dealloc
 {
+    [self unregisterDraggedTypes];
     [session_ release];
     [super dealloc];
 }
@@ -323,5 +329,73 @@ static NSDate* lastResizeDate_;
     }
 }
 
+
+#pragma mark NSDraggingSource protocol
+
+- (NSDragOperation)draggingSourceOperationMaskForLocal:(BOOL)isLocal
+{
+    return (isLocal ? NSDragOperationMove : NSDragOperationNone);
+}
+
+- (BOOL)ignoreModifierKeysWhileDragging
+{
+    return YES;
+}
+
+#pragma mark NSDraggingDestination protocol
+- (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender
+{
+    if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
+        return NSDragOperationNone;
+    }
+    NSRect frame = [self frame];
+    splitSelectionView_ = [[SplitSelectionView alloc] initWithFrame:NSMakeRect(0,
+                                                                               0,
+                                                                               frame.size.width,
+                                                                               frame.size.height)];
+    [self addSubview:splitSelectionView_];
+    [splitSelectionView_ release];
+    return NSDragOperationMove;
+}
+
+- (void)draggingExited:(id < NSDraggingInfo >)sender
+{
+    [splitSelectionView_ removeFromSuperview];
+    splitSelectionView_ = nil;
+}
+
+- (NSDragOperation)draggingUpdated:(id < NSDraggingInfo >)sender
+{
+    if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
+        return NSDragOperationNone;
+    }
+    NSPoint point = [self convertPointFromBase:[sender draggingLocation]];
+    [splitSelectionView_ updateAtPoint:point];
+    return NSDragOperationMove;
+}
+
+- (BOOL)performDragOperation:(id < NSDraggingInfo >)sender
+{
+    if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
+        return NO;
+    }
+    SplitSessionHalf half = [splitSelectionView_ half];
+    [splitSelectionView_ removeFromSuperview];
+    splitSelectionView_ = nil;
+    return [[MovePaneController sharedInstance] dropInSession:[self session] half:half];
+}
+
+- (BOOL)prepareForDragOperation:(id < NSDraggingInfo >)sender
+{
+    if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
+        return NO;
+    }
+    return YES;
+}
+
+- (BOOL)wantsPeriodicDraggingUpdates
+{
+    return YES;
+}
 
 @end

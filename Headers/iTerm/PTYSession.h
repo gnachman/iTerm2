@@ -471,6 +471,12 @@ typedef enum {
 - (void)searchNext;
 - (void)searchPrevious;
 
+// Bitmap of how the session looks.
+- (NSImage *)imageOfSession:(BOOL)flip;
+
+// Image for dragging one session.
+- (NSImage *)dragImage;
+
 @end
 
 @interface PTYSession (ScriptingSupport)

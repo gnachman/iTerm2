@@ -68,6 +68,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 // transparent "hole" around the cursor. This is the radius of that hole in
 // pixels.
 const double kFindCursorHoleRadius = 30;
+const int kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
 
 @implementation FindCursorView
 
@@ -2531,6 +2532,10 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         return YES;
     }
 
+    if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
+        return YES;
+    }
+
     NSPoint locationInWindow, locationInTextView;
     int x, y;
     int width = [dataSource width];
@@ -2940,6 +2945,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
       mouseDragged = YES;
     }
 
+    if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
+        if (dragThresholdMet) {
+            [[MovePaneController sharedInstance] beginDrag:[dataSource session]];
+        }
+        return;
+    }
 
     if (mouseDownOnSelection == YES &&
         ([event modifierFlags] & NSCommandKeyMask) &&

@@ -2634,7 +2634,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         // We're still in the time window after the last output where updates are needed.
         anotherUpdateNeeded = YES;
     }
-    
+
     BOOL isForegroundTab = [[self tab] isForegroundTab];
     if (!isForegroundTab) {
         // Set color, other attributes of a background tab.
@@ -2894,7 +2894,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)useStringForFind:(NSString*)string
 {
     [[view findViewController] findString:string];
-}    
+}
 
 - (void)findWithSelection
 {
@@ -2967,6 +2967,40 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 {
     [TEXTVIEW clearHighlights];
 }
+
+- (NSImage *)dragImage
+{
+    NSImage *image = [self imageOfSession:YES];
+    NSImage *dragImage = [[[NSImage alloc] initWithSize:[image size]] autorelease];
+    [dragImage lockFocus];
+    [image compositeToPoint:NSZeroPoint fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:0.5];
+    [dragImage unlockFocus];
+    return dragImage;
+}
+
+- (NSImage *)imageOfSession:(BOOL)flip
+{
+    [TEXTVIEW refresh];
+    NSRect theRect = [SCROLLVIEW documentVisibleRect];
+    NSImage *textviewImage = [[[NSImage alloc] initWithSize:theRect.size] autorelease];
+
+    [textviewImage lockFocus];
+    if (flip) {
+        NSAffineTransform *transform = [NSAffineTransform transform];
+        [transform scaleXBy:1.0 yBy:-1];
+        [transform translateXBy:0 yBy:-theRect.size.height];
+        [transform concat];
+    }
+
+    [TEXTVIEW drawBackground:theRect toPoint:NSMakePoint(0, 0)];
+    // Draw the background flipped, which is actually the right way up.
+    NSPoint temp = NSMakePoint(0, 0);
+    [TEXTVIEW drawRect:theRect to:&temp];
+    [textviewImage unlockFocus];
+
+    return textviewImage;
+}
+
 
 @end
 
@@ -3085,7 +3119,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     CFStringEncoding cfEncoding = CFStringConvertNSStringEncodingToEncoding([self encoding]);
     // Convert it to the expected (IANA) format.
     NSString* ianaEncoding = (NSString*)CFStringConvertEncodingToIANACharSetName(cfEncoding);
-    
+
     // Fix up lowercase letters.
     static NSDictionary* lowerCaseEncodings;
     if (!lowerCaseEncodings) {
@@ -3103,7 +3137,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             }
         }
     }
-    
+
     if (ianaEncoding != nil) {
         // Mangle the names slightly
         NSMutableString* encoding = [[[NSMutableString alloc] initWithString:ianaEncoding] autorelease];

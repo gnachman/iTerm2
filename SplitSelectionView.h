@@ -48,4 +48,10 @@ typedef enum {
            withSession:(PTYSession *)session
               delegate:(id<SplitSelectionViewDelegate>)delegate;
 
+// Update the selected half for a drag at the given point
+- (void)updateAtPoint:(NSPoint)point;
+
+// Which half is currently selected.
+- (SplitSessionHalf)half;
+
 @end

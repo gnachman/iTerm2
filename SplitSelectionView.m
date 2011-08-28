@@ -17,18 +17,26 @@
 
 @synthesize cancelOnly = cancelOnly_;
 
+- (id)initWithFrame:(NSRect)frameRect
+{
+    self = [super initWithFrame:frameRect];
+    if (self) {
+        half_ = kNoHalf;
+        [self setAlphaValue:0.9];
+    }
+    return self;
+}
+
 - (id)initAsCancelOnly:(BOOL)cancelOnly
              withFrame:(NSRect)frame
            withSession:(PTYSession *)session
               delegate:(id<SplitSelectionViewDelegate>)delegate {
-    self = [super initWithFrame:frame];
+    self = [self initWithFrame:frame];
     if (self) {
       cancelOnly_ = cancelOnly;
-      half_ = kNoHalf;
       session_ = session;
       delegate_ = delegate;
       [self _createTrackingArea];
-      [self setAlphaValue:0.9];
     }
     return self;
 }
@@ -52,9 +60,11 @@
 - (void)setFrameSize:(NSSize)newSize
 {
     [super setFrameSize:newSize];
-    [self removeTrackingArea:trackingArea_];
-    [trackingArea_ release];
-    [self _createTrackingArea];
+    if (trackingArea_) {
+        [self removeTrackingArea:trackingArea_];
+        [trackingArea_ release];
+        [self _createTrackingArea];
+    }
 }
 
 - (void)_showMessage:(NSString *)message inRect:(NSRect)frame
@@ -136,20 +146,22 @@
 
         [[NSColor whiteColor] set];
         NSFrameRect(highlightRect);
-        
+
         highlightRect = NSInsetRect(highlightRect, 1, 1);
         [[NSColor blackColor] set];
         NSFrameRect(highlightRect);
 
-        if (half_ != kNoHalf) {
-            [self _showMessage:@"Click to split this pane and move source pane here" inRect:highlightRect];
+        if (delegate_ && half_ != kNoHalf) {
+            [self _showMessage:@"Click to move source pane to this split" inRect:highlightRect];
         }
     }
 }
 
 - (void)mouseDown:(NSEvent *)theEvent
 {
-    [delegate_ didSelectDestinationSession:session_ half:half_];
+    if (delegate_) {
+        [delegate_ didSelectDestinationSession:session_ half:half_];
+    }
 }
 
 - (void)mouseEntered:(NSEvent *)theEvent
@@ -166,8 +178,12 @@
 - (void)mouseMoved:(NSEvent *)theEvent
 {
     NSPoint locationInWindow = [theEvent locationInWindow];
-    NSPoint point = [self convertPoint: locationInWindow fromView: nil];
+    NSPoint point = [self convertPoint:locationInWindow fromView:nil];
+    [self updateAtPoint:point];
+}
 
+- (void)updateAtPoint:(NSPoint)point
+{
     SplitSessionHalf possibilities[4];
     CGFloat scores[4];
     int numPossibilities = 0;
@@ -194,8 +210,8 @@
             bestIndex = i;
         }
     }
-    
-    if (half_ != possibilities[bestIndex] && minScore < 0.25) {
+
+    if (half_ != possibilities[bestIndex] && minScore < 0.4) {
       half_ = possibilities[bestIndex];
       [self setNeedsDisplay:YES];
     }
@@ -204,6 +220,11 @@
 - (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
 {
     return YES;
+}
+
+- (SplitSessionHalf)half
+{
+    return half_;
 }
 
 @end

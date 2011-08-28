@@ -16,9 +16,12 @@
 }
 
 + (MovePaneController *)sharedInstance;
+// Iniate click-to-move mode.
 - (void)movePane:(PTYSession *)session;
 - (void)exitMovePaneMode;
-- (void)didSelectDestinationSession:(PTYSession *)dest
-                               half:(SplitSessionHalf)half;
-
+// Initiate dragging.
+- (void)beginDrag:(PTYSession *)session;
+- (BOOL)isMovingSession:(PTYSession *)s;
+- (BOOL)dropInSession:(PTYSession *)dest
+                 half:(SplitSessionHalf)half;
 @end
