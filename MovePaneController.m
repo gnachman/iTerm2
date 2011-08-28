@@ -74,6 +74,21 @@
     return oldView;
 }
 
+- (BOOL)dropTab:(PTYTab *)tab
+      inSession:(PTYSession *)dest
+           half:(SplitSessionHalf)half
+        atPoint:(NSPoint)point
+{
+    if ([[tab sessions] count] != 1) {
+        // This sometimes can't be done at all, and it usually can't be done right if tabs' sizes
+        // differ, etc. Just wimp out, basically.
+        return NO;
+    }
+
+    session_ = [[tab sessions] objectAtIndex:0];
+    return [self dropInSession:dest half:half atPoint:point];
+}
+
 // This function is either called once or twice at the end of a drag.
 // If only one call is made, then dest will be nil and the session will be moved to a new window.
 // If two calls are made, the first has dest non-null and will perform a split. The second call will

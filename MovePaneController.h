@@ -9,6 +9,7 @@
 #import <Foundation/Foundation.h>
 #import "SplitSelectionView.h"
 
+@class PTYTab;
 @class PTYSession;
 @class SessionView;
 @interface MovePaneController : NSObject <SplitSelectionViewDelegate> {
@@ -32,6 +33,10 @@
 - (BOOL)dropInSession:(PTYSession *)dest
                  half:(SplitSessionHalf)half
               atPoint:(NSPoint)point;
+- (BOOL)dropTab:(PTYTab *)tab
+      inSession:(PTYSession *)dest
+           half:(SplitSessionHalf)half
+        atPoint:(NSPoint)point;
 
 // Returns a retained session view. Add the session view to something useful and release it.
 - (SessionView *)removeAndClearSession;

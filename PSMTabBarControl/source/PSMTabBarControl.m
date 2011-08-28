@@ -1618,7 +1618,12 @@
 
 - (void)draggedImage:(NSImage *)anImage endedAt:(NSPoint)aPoint operation:(NSDragOperation)operation
 {
-    [[PSMTabDragAssistant sharedDragAssistant] draggedImageEndedAt:aPoint operation:operation];
+    if (operation != NSDragOperationNone) {
+        [self removeTabForCell:[[PSMTabDragAssistant sharedDragAssistant] draggedCell]];
+        [[PSMTabDragAssistant sharedDragAssistant] finishDrag];
+    } else {
+        [[PSMTabDragAssistant sharedDragAssistant] draggedImageEndedAt:aPoint operation:operation];
+    }
 }
 
 - (void)concludeDragOperation:(id <NSDraggingInfo>)sender

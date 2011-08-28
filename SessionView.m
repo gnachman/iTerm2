@@ -32,6 +32,7 @@
 #import "PseudoTerminal.h"
 #import "SplitSelectionView.h"
 #import "MovePaneController.h"
+#import "PSMTabDragAssistant.h"
 
 static const float kTargetFrameRate = 1.0/60.0;
 static int nextViewId;
@@ -54,7 +55,7 @@ static NSDate* lastResizeDate_;
 
 - (void)_initCommon
 {
-    [self registerForDraggedTypes:[NSArray arrayWithObjects:@"iTermDragPanePBType", nil]];
+    [self registerForDraggedTypes:[NSArray arrayWithObjects:@"iTermDragPanePBType", @"PSMTabBarControlItemPBType", nil]];
     [lastResizeDate_ release];
     lastResizeDate_ = [[NSDate date] retain];
 }
@@ -352,7 +353,13 @@ static NSDate* lastResizeDate_;
 #pragma mark NSDraggingDestination protocol
 - (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender
 {
-    if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
+    if ([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
+        // Dragging a tab handle. Source is a PSMTabBarControl.
+        PTYTab *theTab = [[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
+        if (theTab == [session_ tab] || [[theTab sessions] count] > 1) {
+            return NSDragOperationNone;
+        }
+    } else if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
         return NSDragOperationMove;
     }
     NSRect frame = [self frame];
@@ -373,7 +380,8 @@ static NSDate* lastResizeDate_;
 
 - (NSDragOperation)draggingUpdated:(id < NSDraggingInfo >)sender
 {
-    if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
+    if ([[[sender draggingPasteboard] types] indexOfObject:@"iTermDragPanePBType"] != NSNotFound &&
+        [[MovePaneController sharedInstance] isMovingSession:[self session]]) {
         return NSDragOperationMove;
     }
     NSPoint point = [self convertPointFromBase:[sender draggingLocation]];
@@ -383,15 +391,27 @@ static NSDate* lastResizeDate_;
 
 - (BOOL)performDragOperation:(id < NSDraggingInfo >)sender
 {
-    if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
-        [[MovePaneController sharedInstance] setDragFailed:YES];
+    if ([[[sender draggingPasteboard] types] indexOfObject:@"iTermDragPanePBType"] != NSNotFound) {
+        if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
+            [[MovePaneController sharedInstance] setDragFailed:YES];
+        }
+        SplitSessionHalf half = [splitSelectionView_ half];
+        [splitSelectionView_ removeFromSuperview];
+        splitSelectionView_ = nil;
+        return [[MovePaneController sharedInstance] dropInSession:[self session]
+                                                             half:half
+                                                          atPoint:[sender draggingLocation]];
+    } else {
+        // Drag a tab into a split
+        SplitSessionHalf half = [splitSelectionView_ half];
+        [splitSelectionView_ removeFromSuperview];
+        splitSelectionView_ = nil;
+        PTYTab *theTab = [[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
+        return [[MovePaneController sharedInstance] dropTab:theTab
+                                                  inSession:[self session]
+                                                       half:half
+                                                    atPoint:[sender draggingLocation]];
     }
-    SplitSessionHalf half = [splitSelectionView_ half];
-    [splitSelectionView_ removeFromSuperview];
-    splitSelectionView_ = nil;
-    return [[MovePaneController sharedInstance] dropInSession:[self session]
-                                                         half:half
-                                                      atPoint:[sender draggingLocation]];
 }
 
 - (BOOL)prepareForDragOperation:(id < NSDraggingInfo >)sender
