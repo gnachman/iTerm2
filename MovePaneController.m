@@ -159,13 +159,22 @@
     SessionView *source = [session view];
     [source retain];
     didSplit_ = NO;
-    [[[theTab realParentWindow] window] dragImage:[session dragImage]
-                                               at:rect.origin
-                                           offset:NSZeroSize
-                                            event:[NSApp currentEvent]
-                                       pasteboard:pboard
-                                           source:source
-                                        slideBack:NO];
+    NSWindow *theWindow = [[theTab realParentWindow] window];
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        [[term window] disableCursorRects];
+    }
+    [[NSCursor closedHandCursor] set];
+    [theWindow dragImage:[session dragImage]
+                      at:rect.origin
+                  offset:NSZeroSize
+                   event:[NSApp currentEvent]
+              pasteboard:pboard
+                  source:source
+               slideBack:NO];
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        [[term window] enableCursorRects];
+    }
+    [[NSCursor openHandCursor] set];
     [source autorelease];
     session_ = nil;
 }

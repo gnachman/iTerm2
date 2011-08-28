@@ -2481,13 +2481,33 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [super scrollWheel:event];
 }
 
+- (void)_updateCursor:(NSEvent *)event
+{
+    if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
+        [[NSCursor openHandCursor] set];
+    } else if (([event modifierFlags] & (NSCommandKeyMask | NSAlternateKeyMask)) == (NSCommandKeyMask | NSAlternateKeyMask)) {
+        [[NSCursor crosshairCursor] set];
+    } else if (([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask) {
+        [[NSCursor pointingHandCursor] set];
+    } else {
+        [textViewCursor set];
+    }
+}
+
+- (void)flagsChanged:(NSEvent *)theEvent
+{
+    [self _updateCursor:theEvent];
+}
+
 - (void)mouseExited:(NSEvent *)event
 {
+    [textViewCursor set];
     // no-op
 }
 
 - (void)mouseEntered:(NSEvent *)event
 {
+    [self _updateCursor:event];
     if ([[PreferencePanel sharedInstance] focusFollowsMouse] &&
             [[self window] alphaValue] > 0) {
         // Some windows automatically close when they lose key status and are
@@ -2518,6 +2538,11 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent*)event
 {
+    if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
+        [[MovePaneController sharedInstance] beginDrag:[dataSource session]];
+        return NO;
+    }
+
     const BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
     const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
     const BOOL shiftPressed = ([event modifierFlags] & NSShiftKeyMask) != 0;
@@ -2868,7 +2893,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseDragged:(NSEvent *)event
 {
-    // Prevent accidental dragging while dragging trouter item or dragging pane.
+    // Prevent accidental dragging while dragging trouter item.
     BOOL dragThresholdMet = NO;
     NSPoint locationInWindow = [event locationInWindow];
     NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
@@ -2894,12 +2919,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint mouseDownLocation = [mouseDownEvent locationInWindow];
     if (EuclideanDistance(mouseDownLocation, locationInWindow) >= kDragThreshold) {
         dragThresholdMet = YES;
-    }
-    if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
-        if (dragThresholdMet) {
-            [[MovePaneController sharedInstance] beginDrag:[dataSource session]];
-        }
-        return;
     }
     if ([event eventNumber] == firstMouseEventNumber_) {
         // We accept first mouse for the purposes of focusing or dragging a

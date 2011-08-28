@@ -333,6 +333,11 @@ static NSDate* lastResizeDate_;
 
 #pragma mark NSDraggingSource protocol
 
+- (void)draggedImage:(NSImage *)draggedImage movedTo:(NSPoint)screenPoint
+{
+    [[NSCursor closedHandCursor] set];
+}
+
 - (NSDragOperation)draggingSourceOperationMaskForLocal:(BOOL)isLocal
 {
     return (isLocal ? NSDragOperationMove : NSDragOperationNone);
