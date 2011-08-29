@@ -1421,8 +1421,9 @@ static NSString* FormatRect(NSRect r) {
 
 - (void)_drawSession:(PTYSession*)session inImage:(NSImage*)viewImage atOrigin:(NSPoint)origin
 {
-    NSImage *textviewImage = [session imageOfSession:NO];
+    NSImage *textviewImage = [session imageOfSession:YES];
 
+    origin.y = [viewImage size].height - [textviewImage size].height - origin.y;
     [viewImage lockFocus];
     [textviewImage compositeToPoint:origin operation:NSCompositeSourceOver];
     [viewImage unlockFocus];
