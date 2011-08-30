@@ -197,6 +197,8 @@
 		1D988597135D23BD0072023F /* ProcessCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D988595135D23BD0072023F /* ProcessCache.h */; };
 		1D988598135D23BD0072023F /* ProcessCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D988596135D23BD0072023F /* ProcessCache.m */; };
 		1D99785312EEB3D600F0794D /* GlobalSearch.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D99785112EEB3D600F0794D /* GlobalSearch.xib */; };
+		1D9F6AB8140C9DC4009B5CD4 /* FutureMethods.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9F6AB6140C9DC4009B5CD4 /* FutureMethods.h */; };
+		1D9F6AB9140C9DC4009B5CD4 /* FutureMethods.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */; };
 		1DA02CFB1327612600D7E7DB /* bell.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA02CFA1327612600D7E7DB /* bell.png */; };
 		1DA030F91328BD7C00D7E7DB /* wrap_to_bottom.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */; };
 		1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */; };
@@ -383,6 +385,8 @@
 		1D988595135D23BD0072023F /* ProcessCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessCache.h; sourceTree = "<group>"; };
 		1D988596135D23BD0072023F /* ProcessCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProcessCache.m; sourceTree = "<group>"; };
 		1D99785212EEB3D600F0794D /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/GlobalSearch.xib; sourceTree = "<group>"; };
+		1D9F6AB6140C9DC4009B5CD4 /* FutureMethods.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FutureMethods.h; sourceTree = "<group>"; };
+		1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FutureMethods.m; sourceTree = "<group>"; };
 		1DA02CFA1327612600D7E7DB /* bell.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = bell.png; path = images/bell.png; sourceTree = "<group>"; };
 		1DA030F71328BD7C00D7E7DB /* wrap_to_bottom.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wrap_to_bottom.png; path = images/wrap_to_bottom.png; sourceTree = "<group>"; };
 		1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wrap_to_top.png; path = images/wrap_to_top.png; sourceTree = "<group>"; };
@@ -652,6 +656,8 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				1D9F6AB6140C9DC4009B5CD4 /* FutureMethods.h */,
+				1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */,
 				1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */,
 				1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */,
 				1DE214E0128212EE004E3ADF /* Autocomplete.m */,
@@ -1166,6 +1172,7 @@
 				1DF8AF5813FD781700C8A435 /* SplitPanel.h in Headers */,
 				1D29732714082676004C5DBE /* MovePaneController.h in Headers */,
 				1D29732B14082A52004C5DBE /* SplitSelectionView.h in Headers */,
+				1D9F6AB8140C9DC4009B5CD4 /* FutureMethods.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1457,6 +1464,7 @@
 				1DF8AF5913FD781700C8A435 /* SplitPanel.m in Sources */,
 				1D29732814082676004C5DBE /* MovePaneController.m in Sources */,
 				1D29732C14082A52004C5DBE /* SplitSelectionView.m in Sources */,
+				1D9F6AB9140C9DC4009B5CD4 /* FutureMethods.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

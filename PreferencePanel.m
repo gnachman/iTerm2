@@ -970,6 +970,7 @@ static float versionNumber;
     }
     defaultCopySelection=[prefs objectForKey:@"CopySelection"]?[[prefs objectForKey:@"CopySelection"] boolValue]:YES;
     defaultPasteFromClipboard=[prefs objectForKey:@"PasteFromClipboard"]?[[prefs objectForKey:@"PasteFromClipboard"] boolValue]:YES;
+    defaultThreeFingerEmulatesMiddle=[prefs objectForKey:@"ThreeFingerEmulates"]?[[prefs objectForKey:@"ThreeFingerEmulates"] boolValue]:NO;
     defaultHideTab=[prefs objectForKey:@"HideTab"]?[[prefs objectForKey:@"HideTab"] boolValue]: YES;
     defaultPromptOnQuit = [prefs objectForKey:@"PromptOnQuit"]?[[prefs objectForKey:@"PromptOnQuit"] boolValue]: YES;
     defaultOnlyWhenMoreTabs = [prefs objectForKey:@"OnlyWhenMoreTabs"]?[[prefs objectForKey:@"OnlyWhenMoreTabs"] boolValue]: YES;
@@ -1085,6 +1086,7 @@ static float versionNumber;
 
     [prefs setBool:defaultCopySelection forKey:@"CopySelection"];
     [prefs setBool:defaultPasteFromClipboard forKey:@"PasteFromClipboard"];
+    [prefs setBool:defaultThreeFingerEmulatesMiddle forKey:@"ThreeFingerEmulates"];
     [prefs setBool:defaultHideTab forKey:@"HideTab"];
     [prefs setInteger:defaultWindowStyle forKey:@"WindowStyle"];
     [prefs setInteger:defaultTabViewType forKey:@"TabViewType"];
@@ -1170,6 +1172,7 @@ static float versionNumber;
     [tabPosition selectItemAtIndex: defaultTabViewType];
     [selectionCopiesText setState:defaultCopySelection?NSOnState:NSOffState];
     [middleButtonPastesFromClipboard setState:defaultPasteFromClipboard?NSOnState:NSOffState];
+    [threeFingerEmulatesMiddle setState:defaultThreeFingerEmulatesMiddle ? NSOnState : NSOffState];
     [hideTab setState:defaultHideTab?NSOnState:NSOffState];
     [promptOnQuit setState:defaultPromptOnQuit?NSOnState:NSOffState];
     [onlyWhenMoreTabs setState:defaultOnlyWhenMoreTabs?NSOnState:NSOffState];
@@ -1379,6 +1382,7 @@ static float versionNumber;
         sender == animateDimming ||
         sender == dimOnlyText ||
         sender == dimmingAmount ||
+        sender == threeFingerEmulatesMiddle ||
         sender == showWindowBorder) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
         defaultTabViewType=[tabPosition indexOfSelectedItem];
@@ -1398,6 +1402,7 @@ static float versionNumber;
         defaultDimOnlyText = ([dimOnlyText state] == NSOnState);
         defaultDimmingAmount = [dimmingAmount floatValue];
         defaultShowWindowBorder = ([showWindowBorder state] == NSOnState);
+        defaultThreeFingerEmulatesMiddle=([threeFingerEmulatesMiddle state] == NSOnState);
         defaultHideScrollbar = ([hideScrollbar state] == NSOnState);
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermRefreshTerminal"
                                                             object:nil
@@ -1570,6 +1575,11 @@ static float versionNumber;
 - (BOOL)pasteFromClipboard
 {
     return defaultPasteFromClipboard;
+}
+
+- (BOOL)threeFingerEmulatesMiddle
+{
+    return defaultThreeFingerEmulatesMiddle;
 }
 
 - (void)setPasteFromClipboard:(BOOL)flag

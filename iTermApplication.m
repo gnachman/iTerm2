@@ -148,7 +148,6 @@
             if (inTextView &&
                 [(PTYTextView *)responder hasMarkedText]) {
                 // Let the IM process it
-                NSLog(@"IM is handling it");
                 [(PTYTextView *)responder interpretKeyEvents:[NSArray arrayWithObject:event]];
                 return;
             }

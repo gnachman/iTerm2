@@ -92,6 +92,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *middleButtonPastesFromClipboard;
     BOOL defaultPasteFromClipboard;
 
+    // Three finger click emulates middle button
+    IBOutlet NSButton *threeFingerEmulatesMiddle;
+    BOOL defaultThreeFingerEmulatesMiddle;
+
     // Hide tab bar when there is only one session
     IBOutlet id hideTab;
     BOOL defaultHideTab;
@@ -536,6 +540,7 @@ typedef enum {
 - (BOOL)copySelection;
 - (void)setCopySelection:(BOOL)flag;
 - (BOOL)pasteFromClipboard;
+- (BOOL)threeFingerEmulatesMiddle;
 - (void)setPasteFromClipboard:(BOOL)flag;
 - (BOOL)hideTab;
 - (void)setTabViewType:(NSTabViewType)type;

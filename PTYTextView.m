@@ -60,6 +60,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #import "iTerm/NSStringITerm.h"
 #import "FontSizeEstimator.h"
 #import "MovePaneController.h"
+#import "FutureMethods.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -284,7 +285,25 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
     trouter = [[Trouter alloc] init];
     workingDirectoryAtLines = [[NSMutableArray alloc] init];
+
+    if ([[PreferencePanel sharedInstance] threeFingerEmulatesMiddle]) {
+        [self futureSetAcceptsTouchEvents:YES];
+        [self futureSetWantsRestingTouches:YES];
+    }
+
     return self;
+}
+
+- (void)touchesBeganWithEvent:(NSEvent *)ev
+{
+    numTouches_ = [[ev futureTouchesMatchingPhase:1 | (1 << 2)/*NSTouchPhasesBegan | NSTouchPhasesStationary*/
+                                           inView:self] count];
+}
+
+- (void)touchesEndedWithEvent:(NSEvent *)ev
+{
+    numTouches_ = [[ev futureTouchesMatchingPhase:(1 << 2)/*NSTouchPhasesStationary*/
+                                           inView:self] count];
 }
 
 - (BOOL)resignFirstResponder
@@ -2213,9 +2232,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     }
 
     if ([[PreferencePanel sharedInstance] pasteFromClipboard]) {
-        [self paste: nil];
+        [self paste:nil];
     } else {
-        [self pasteSelection: nil];
+        [self pasteSelection:nil];
     }
 }
 
@@ -2258,7 +2277,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 break;
         }
     }
-    [super otherMouseUp:event];
+    if (!mouseDownIsThreeFingerClick_) {
+        [super otherMouseUp:event];
+    }
 }
 
 - (void)otherMouseDragged:(NSEvent *)event
@@ -2538,11 +2559,16 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent*)event
 {
+    mouseDownIsThreeFingerClick_ = NO;
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         [[MovePaneController sharedInstance] beginDrag:[dataSource session]];
         return NO;
     }
-
+    if (numTouches_ == 3 && [[PreferencePanel sharedInstance] threeFingerEmulatesMiddle]) {
+        mouseDownIsThreeFingerClick_ = YES;
+        [self otherMouseDown:event];
+        return NO;
+    }
     const BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
     const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
     const BOOL shiftPressed = ([event modifierFlags] & NSShiftKeyMask) != 0;
@@ -2759,6 +2785,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseUp:(NSEvent *)event
 {
+    if (mouseDownIsThreeFingerClick_) {
+        [self otherMouseUp:nil];
+        mouseDownIsThreeFingerClick_ = NO;
+        return;
+    }
     dragOk_ = NO;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
     const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
@@ -2893,6 +2924,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseDragged:(NSEvent *)event
 {
+    if (mouseDownIsThreeFingerClick_) {
+        return;
+    }
     // Prevent accidental dragging while dragging trouter item.
     BOOL dragThresholdMet = NO;
     NSPoint locationInWindow = [event locationInWindow];
@@ -6920,6 +6954,9 @@ static bool IsUrlChar(NSString* str)
     [self setNeedsDisplay:YES];
     [self setDimOnlyText:[[PreferencePanel sharedInstance] dimOnlyText]];
 
+    BOOL emulate = [[PreferencePanel sharedInstance] threeFingerEmulatesMiddle];
+    [self futureSetAcceptsTouchEvents:emulate];
+    [self futureSetWantsRestingTouches:emulate];
 }
 
 - (void)_modifyFont:(NSFont*)font baseline:(double)baseline into:(PTYFontInfo*)fontInfo

@@ -275,6 +275,14 @@ typedef struct PTYFontInfo PTYFontInfo;
     NSTimer *findCursorBlinkTimer_;
     BOOL autoHideFindCursor_;
     NSPoint imeCursorLastPos_;
+
+    // Number of fingers currently down (only valid if three finger click
+    // emulates middle button)
+    int numTouches_;
+
+    // If true, ignore the next mouse up because it's due to a three finger
+    // mouseDown.
+    BOOL mouseDownIsThreeFingerClick_;
 }
 
 + (NSCursor *)textViewCursor;
