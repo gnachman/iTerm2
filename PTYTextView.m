@@ -2530,6 +2530,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 - (void)flagsChanged:(NSEvent *)theEvent
 {
     [self updateCursor:theEvent];
+    [super flagsChanged:theEvent];
 }
 
 - (void)mouseExited:(NSEvent *)event

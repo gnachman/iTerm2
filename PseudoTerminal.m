@@ -2444,9 +2444,6 @@ NSString *sessionsKey = @"sessions";
 
 - (NSMenu *)tabView:(NSTabView *)tabView menuForTabViewItem:(NSTabViewItem *)tabViewItem
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal tabViewContextualMenu]", __FILE__, __LINE__);
-#endif
     NSMenuItem *item;
     NSMenu *rootMenu = [[[NSMenu alloc] init] autorelease];
 
