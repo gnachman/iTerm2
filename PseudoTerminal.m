@@ -3045,6 +3045,12 @@ NSString *sessionsKey = @"sessions";
         return;
     }
 
+    NSString *oldCWD = nil;
+    /* Get currently selected tabviewitem */
+    if ([self currentSession]) {
+        oldCWD = [[[self currentSession] SHELL] getWorkingDirectory];
+    }
+
     PTYSession* newSession = [self newSessionWithBookmark:theBookmark];
     [self splitVertically:isVertical
                    before:NO
@@ -3052,12 +3058,6 @@ NSString *sessionsKey = @"sessions";
             targetSession:targetSession
              performSetup:YES];
 
-    NSString *oldCWD = nil;
-
-    /* Get currently selected tabviewitem */
-    if ([self currentSession]) {
-        oldCWD = [[[self currentSession] SHELL] getWorkingDirectory];
-    }
     [self runCommandInSession:newSession inCwd:oldCWD];
 }
 
