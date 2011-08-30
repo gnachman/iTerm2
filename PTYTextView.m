@@ -146,12 +146,12 @@ typedef struct {
     BOOL antiAlias;
 } CharRun;
 
-// FIXME: Looks like this is leaked.
-static NSCursor* textViewCursor =  nil;
-static NSImage* bellImage = nil;
-static NSImage* wrapToTopImage = nil;
-static NSImage* wrapToBottomImage = nil;
-static NSImage* broadcastInputImage = nil;
+static NSCursor* textViewCursor;
+static NSCursor* xmrCursor;
+static NSImage* bellImage;
+static NSImage* wrapToTopImage;
+static NSImage* wrapToBottomImage;
+static NSImage* broadcastInputImage;
 
 static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
@@ -213,6 +213,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
     textViewCursor = [[NSCursor alloc] initWithImage:image hotSpot:hotspot];
 
+    NSString* xmrFile = [bundle
+                          pathForResource:@"IBarCursorXMR"
+                          ofType:@"png"];
+    NSImage* xmrImage = [[[NSImage alloc] initWithContentsOfFile:xmrFile] autorelease];
+    
+    xmrCursor = [[NSCursor alloc] initWithImage:xmrImage hotSpot:hotspot];
+    
     NSString* bellFile = [bundle
                           pathForResource:@"bell"
                           ofType:@"png"];
@@ -235,6 +242,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                                     ofType:@"png"];
     broadcastInputImage = [[NSImage alloc] initWithContentsOfFile:broadcastInputFile];
     [broadcastInputImage setFlipped:YES];
+}
+
+- (BOOL)xtermMouseReporting
+{
+    NSEvent *event = [NSApp currentEvent];
+    return (([[self delegate] xtermMouseReporting]) &&        // Xterm mouse reporting is on
+            !([event modifierFlags] & NSAlternateKeyMask));   // Not holding Opt to disable mouse reporting
 }
 
 + (NSCursor *)textViewCursor
@@ -2191,9 +2205,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([[self delegate] xtermMouseReporting])
-        && (locationInTextView.y > visibleRect.origin.y)
-        && !([event modifierFlags] & NSAlternateKeyMask)) {
+    if ([self xtermMouseReporting] &&
+        locationInTextView.y > visibleRect.origin.y) {
         // Mouse reporting is on
         int rx, ry;
         rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
@@ -2245,9 +2258,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([[self delegate] xtermMouseReporting]) &&
-        reportingMouseDown &&
-        !([event modifierFlags] & NSAlternateKeyMask)) {
+    if (([self xtermMouseReporting]) && reportingMouseDown) {
         reportingMouseDown = NO;
         int rx, ry;
         rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
@@ -2289,10 +2300,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([[self delegate] xtermMouseReporting]) &&
+    if (([self xtermMouseReporting]) &&
         (locationInTextView.y > visibleRect.origin.y) &&
-        reportingMouseDown &&
-        !([event modifierFlags] & NSAlternateKeyMask)) {
+        reportingMouseDown) {
         // Mouse reporting is on.
         int rx, ry;
         rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
@@ -2338,9 +2348,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([[self delegate] xtermMouseReporting]) &&
-        (locationInTextView.y > visibleRect.origin.y) &&
-        !([event modifierFlags] & NSAlternateKeyMask)) {
+    if (([self xtermMouseReporting]) &&
+        (locationInTextView.y > visibleRect.origin.y)) {
         int rx, ry;
         rx = (locationInTextView.x-MARGIN - visibleRect.origin.x)/charWidth;
         ry = (locationInTextView.y - visibleRect.origin.y)/lineHeight;
@@ -2377,9 +2386,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([[self delegate] xtermMouseReporting]) &&
-        reportingMouseDown &&
-        !([event modifierFlags] & NSAlternateKeyMask)) {
+    if (([self xtermMouseReporting]) &&
+        reportingMouseDown) {
         // Mouse reporting is on
         reportingMouseDown = NO;
         int rx, ry;
@@ -2420,10 +2428,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([[self delegate] xtermMouseReporting]) &&
+    if (([self xtermMouseReporting]) &&
         (locationInTextView.y > visibleRect.origin.y) &&
-        reportingMouseDown &&
-        !([event modifierFlags] & NSAlternateKeyMask)) {
+        reportingMouseDown) {
         // Mouse reporting is on.
         int rx, ry;
         rx = (locationInTextView.x -MARGIN - visibleRect.origin.x) / charWidth;
@@ -2464,9 +2471,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    if (([[self delegate] xtermMouseReporting]) &&
-        (locationInTextView.y > visibleRect.origin.y) &&
-        !([event modifierFlags] & NSAlternateKeyMask)) {
+    if (([self xtermMouseReporting]) &&
+        (locationInTextView.y > visibleRect.origin.y)) {
         // Mouse reporting is on.
         int rx, ry;
         rx = (locationInTextView.x-MARGIN - visibleRect.origin.x) / charWidth;
@@ -2502,14 +2508,20 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     [super scrollWheel:event];
 }
 
-- (void)_updateCursor:(NSEvent *)event
+- (void)updateCursor:(NSEvent *)event
 {
+    MouseMode mouseMode = [[dataSource terminal] mouseMode];
+
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         [[NSCursor openHandCursor] set];
     } else if (([event modifierFlags] & (NSCommandKeyMask | NSAlternateKeyMask)) == (NSCommandKeyMask | NSAlternateKeyMask)) {
         [[NSCursor crosshairCursor] set];
     } else if (([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask) {
         [[NSCursor pointingHandCursor] set];
+    } else if ([self xtermMouseReporting] &&
+               mouseMode != MOUSE_REPORTING_NONE &&
+               mouseMode != MOUSE_REPORTING_HILITE) {
+        [xmrCursor set];
     } else {
         [textViewCursor set];
     }
@@ -2517,7 +2529,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)flagsChanged:(NSEvent *)theEvent
 {
-    [self _updateCursor:theEvent];
+    [self updateCursor:theEvent];
 }
 
 - (void)mouseExited:(NSEvent *)event
@@ -2528,7 +2540,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)mouseEntered:(NSEvent *)event
 {
-    [self _updateCursor:event];
+    [self updateCursor:event];
     if ([[PreferencePanel sharedInstance] focusFollowsMouse] &&
             [[self window] alphaValue] > 0) {
         // Some windows automatically close when they lose key status and are
@@ -2609,9 +2621,8 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     if ([event eventNumber] != firstMouseEventNumber_ &&   // Not first mouse in formerly non-key app
         frontTextView == self &&                           // Is active session's textview
-        ([[self delegate] xtermMouseReporting]) &&         // Xterm mouse reporting is on
-        (locationInTextView.y > visibleRect.origin.y) &&   // Not inside the top margin
-        !([event modifierFlags] & NSAlternateKeyMask)) {   // Not holding Opt to disable mouse reporting
+        ([self xtermMouseReporting]) &&                    // Xterm mouse reporting is on
+        (locationInTextView.y > visibleRect.origin.y)) {   // Not inside the top margin
         // Mouse reporting is on.
         int rx, ry;
         rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
@@ -2819,9 +2830,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     // Send mouse up event to host if xterm mouse reporting is on
     if (frontTextView == self &&
-        [[self delegate] xtermMouseReporting] &&
-        reportingMouseDown &&
-        !([event modifierFlags] & NSAlternateKeyMask)) {
+        [self xtermMouseReporting] &&
+        reportingMouseDown) {
         // Mouse reporting is on.
         reportingMouseDown = NO;
         int rx, ry;
@@ -2964,9 +2974,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     NSString *theSelectedText;
 
-    if (([[self delegate] xtermMouseReporting]) &&
-        reportingMouseDown &&
-        !([event modifierFlags] & NSAlternateKeyMask)) {
+    if (([self xtermMouseReporting]) && reportingMouseDown) {
         // Mouse reporting is on.
         int rx, ry;
         NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
@@ -3383,12 +3391,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     VT100Terminal *terminal = [dataSource terminal];
     MouseMode mm = [terminal mouseMode];
     if (frontTextView == self &&
-        ([[self delegate] xtermMouseReporting]) &&
+        ([self xtermMouseReporting]) &&
         (mm == MOUSE_REPORTING_NORMAL ||
          mm == MOUSE_REPORTING_BUTTON_MOTION ||
          mm == MOUSE_REPORTING_ALL_MOTION) &&
         (locationInTextView.y > visibleRect.origin.y) &&
-        !([theEvent modifierFlags] & NSAlternateKeyMask) &&
         [[frontTextView->dataSource session] tab] == [[dataSource session] tab] &&
         [theEvent type] == NSLeftMouseDown &&
         ([theEvent modifierFlags] & NSControlKeyMask) &&

@@ -1683,7 +1683,8 @@ static VT100TCC decode_string(unsigned char *datap,
     alternateBackgroundSemantics = YES;
     MOUSE_MODE = MOUSE_REPORTING_NONE;
     MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
-
+    [SCREEN mouseModeDidChange:MOUSE_MODE];
+    
     TRACE = NO;
 
     strictAnsiMode = NO;
@@ -2451,6 +2452,7 @@ static VT100TCC decode_string(unsigned char *datap,
                     } else {
                         MOUSE_MODE = MOUSE_REPORTING_NONE;
                     }
+                    [SCREEN mouseModeDidChange:MOUSE_MODE];
                     break;
 
                 case 1005:

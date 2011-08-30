@@ -199,6 +199,8 @@ void StringToScreenChars(NSString *s,
 - (void)saveBuffer;
 - (void)restoreBuffer;
 
+- (void)mouseModeDidChange:(MouseMode)mouseMode;
+
 // internal
 - (void)setString:(NSString *)s ascii:(BOOL)ascii;
 - (void)setStringToX:(int)x
