@@ -115,6 +115,7 @@ static NSDate* lastResizeDate_;
 {
     [session_ autorelease];
     session_ = [session retain];
+    [[session_ TEXTVIEW] setDimmingAmount:currentDimmingAmount_];
 }
 
 - (void)fadeAnimation
@@ -165,7 +166,7 @@ static NSDate* lastResizeDate_;
     return [[PreferencePanel sharedInstance] dimmingAmount];
 }
 
-- (void)updateDim
+- (double)adjustedDimmingAmount
 {
     int x = 0;
     if (dim_) {
@@ -181,6 +182,13 @@ static NSDate* lastResizeDate_;
     amount = MIN(0.9, amount);
     amount = MAX(0, amount);
 
+    return amount;
+}
+
+- (void)updateDim
+{
+    double amount = [self adjustedDimmingAmount];
+
     [self _dimShadeToDimmingAmount:amount];
 }
 
@@ -192,12 +200,17 @@ static NSDate* lastResizeDate_;
     if (isDimmed == dim_) {
         return;
     }
-    if ([[[session_ tab] realParentWindow] broadcastInputToSession:session_]) {
-        dim_ = NO;
+    if (session_) {
+        if ([[[session_ tab] realParentWindow] broadcastInputToSession:session_]) {
+            dim_ = NO;
+        } else {
+            dim_ = isDimmed;
+        }
+        [self updateDim];
     } else {
         dim_ = isDimmed;
+        currentDimmingAmount_ = [self adjustedDimmingAmount];
     }
-    [self updateDim];
 }
 
 - (void)setBackgroundDimmed:(BOOL)backgroundDimmed

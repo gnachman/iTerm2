@@ -158,6 +158,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     if (self) {
         activeSession_ = session;
         [session setLastActiveAt:[NSDate date]];
+        [[session view] setDimmed:NO];
         root_ = [[MySplitView alloc] init];
         if (USE_THIN_SPLITTERS) {
             [root_ setDividerStyle:NSSplitViewDividerStyleThin];

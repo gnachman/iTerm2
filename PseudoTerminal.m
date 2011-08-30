@@ -2505,6 +2505,7 @@ NSString *sessionsKey = @"sessions";
     PTYSession *session = [[MovePaneController sharedInstance] session];
     [[[MovePaneController sharedInstance] removeAndClearSession] autorelease];
     PTYTab *theTab = [[PTYTab alloc] initWithSession:session];
+    [theTab setActiveSession:session];
     [theTab setParentWindow:self];
     NSTabViewItem *tabViewItem = [[[NSTabViewItem alloc] initWithIdentifier:theTab] autorelease];
     [theTab setTabViewItem:tabViewItem];
@@ -3007,6 +3008,9 @@ NSString *sessionsKey = @"sessions";
     SessionView* sessionView = [[self currentTab] splitVertically:isVertical
                                                            before:before
                                                     targetSession:targetSession];
+    if (targetSession != [[self currentTab] activeSession]) {
+        [sessionView setDimmed:YES];
+    }
     [sessionView setSession:newSession];
     [newSession setTab:[self currentTab]];
     scrollView = [[[newSession view] subviews] objectAtIndex:0];
