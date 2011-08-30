@@ -88,6 +88,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *selectionCopiesText;
     BOOL defaultCopySelection;
 
+    // Copy includes trailing newline
+    IBOutlet NSButton *copyLastNewline;
+    BOOL defaultCopyLastNewline;
+
     // Middle button paste from clipboard
     IBOutlet NSButton *middleButtonPastesFromClipboard;
     BOOL defaultPasteFromClipboard;
@@ -538,6 +542,7 @@ typedef enum {
 - (void)windowWillClose:(NSNotification *)aNotification;
 - (void)windowDidBecomeKey:(NSNotification *)aNotification;
 - (BOOL)copySelection;
+- (BOOL)copyLastNewline;
 - (void)setCopySelection:(BOOL)flag;
 - (BOOL)pasteFromClipboard;
 - (BOOL)threeFingerEmulatesMiddle;

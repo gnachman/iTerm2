@@ -313,6 +313,12 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)rightMouseDragged:(NSEvent *)event;
 - (void)scrollWheel:(NSEvent *)event;
 - (NSString *)contentFromX:(int)startx Y:(int)starty ToX:(int)endx Y:(int)endy pad: (BOOL) pad;
+- (NSString *)contentFromX:(int)startx
+                         Y:(int)starty
+                       ToX:(int)nonInclusiveEndx
+                         Y:(int)endy
+                       pad:(BOOL)pad
+        includeLastNewline:(BOOL)includeLastNewline;
 - (NSString*)contentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad;
 - (NSString *)selectedText;
 - (NSString *)selectedTextWithPad: (BOOL) pad;

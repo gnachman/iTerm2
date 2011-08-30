@@ -3011,9 +3011,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         dragThresholdMet) {
         // Drag and drop a selection
         if (selectMode == SELECT_BOX) {
-            theSelectedText = [self contentInBoxFromX: startX Y: startY ToX: endX Y: endY pad: NO];
+            theSelectedText = [self contentInBoxFromX:startX Y:startY ToX:endX Y:endY pad:NO];
         } else {
-            theSelectedText = [self contentFromX: startX Y: startY ToX: endX Y: endY pad: NO];
+            theSelectedText = [self contentFromX:startX Y:startY ToX:endX Y:endY pad:NO includeLastNewline:[[PreferencePanel sharedInstance] copyLastNewline]];
         }
         if ([theSelectedText length] > 0) {
             [self _dragText: theSelectedText forEvent: event];
@@ -3109,7 +3109,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                          Y:(int)starty
                        ToX:(int)nonInclusiveEndx
                          Y:(int)endy
-                       pad:(BOOL) pad
+                       pad:(BOOL)pad
+        includeLastNewline:(BOOL)includeLastNewline
 {
     int endx = nonInclusiveEndx-1;
     int width = [dataSource width];
@@ -3148,8 +3149,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                 [result appendString:@" "];
                             }
                         }
-                        if (y < endy && theLine[width].code == EOL_HARD) {
-                            [result appendString:@"\n"];
+                        if (theLine[width].code == EOL_HARD) {
+                            if (includeLastNewline || y < endy) {
+                                [result appendString:@"\n"];
+                            }
                         }
                         break;
                     } else {
@@ -3170,6 +3173,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     return result;
+}
+
+- (NSString *)contentFromX:(int)startx
+                         Y:(int)starty
+                       ToX:(int)nonInclusiveEndx
+                         Y:(int)endy
+                       pad:(BOOL)pad
+{
+    return [self contentFromX:startx
+                            Y:starty
+                          ToX:nonInclusiveEndx
+                            Y:endy
+                          pad:pad
+           includeLastNewline:NO];
 }
 
 - (IBAction)selectAll:(id)sender
@@ -3210,7 +3227,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                  Y:startY
                                ToX:endX
                                  Y:endY
-                               pad:pad]);
+                               pad:pad
+                includeLastNewline:[[PreferencePanel sharedInstance] copyLastNewline]]);
     }
 }
 
@@ -3220,7 +3238,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             Y:0
                           ToX:[dataSource width]
                             Y:[dataSource numberOfLines] - 1
-                          pad:NO];
+                          pad:NO
+           includeLastNewline:YES];
 }
 
 - (void)splitTextViewVertically:(id)sender
@@ -3383,11 +3402,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     theMenu = [[NSMenu alloc] initWithTitle:@"Contextual Menu"];
 
     if ([self _haveShortSelection]) {
+        BOOL addedItem = NO;
         NSString *text = [self selectedText];
         if ([text intValue]) {
             [theMenu addItemWithTitle:[NSString stringWithFormat:@"%d = 0x%x", [text intValue], [text intValue]]
                                action:@selector(bogusSelector)
                         keyEquivalent:@""];
+            addedItem = YES;
         } else if ([text hasPrefix:@"0x"] && [text length] <= 10) {
             NSScanner *scanner = [NSScanner scannerWithString:text];
 
@@ -3398,14 +3419,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     [theMenu addItemWithTitle:[NSString stringWithFormat:@"0x%x = %d", result, result]
                                        action:@selector(bogusSelector)
                                 keyEquivalent:@""];
+                    addedItem = YES;
                 } else {
                     [theMenu addItemWithTitle:[NSString stringWithFormat:@"0x%x = %d or %u", result, result, result]
                                        action:@selector(bogusSelector)
                                 keyEquivalent:@""];
+                    addedItem = YES;
                 }
             }
         }
-        [theMenu addItem:[NSMenuItem separatorItem]];
+        if (addedItem) {
+            [theMenu addItem:[NSMenuItem separatorItem]];
+        }
     }
 
     // Menu items for acting on text selections
@@ -3714,7 +3739,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                 Y:lineOffset
                                               ToX:[dataSource width]
                                                 Y:lineOffset + numLines - 1
-                                       pad: NO]];
+                                               pad:NO
+                               includeLastNewline:YES]];
             break;
         case 1: // text selection
             [self printContent: [self selectedTextWithPad:NO]];
@@ -4711,7 +4737,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     x2 = tmpX+1;
     y2 = tmpY;
 
-    return [self contentFromX:x1 Y:yStart ToX:x2 Y:y2 pad: YES];
+    return [self contentFromX:x1 Y:yStart ToX:x2 Y:y2 pad:YES includeLastNewline:NO];
 }
 
 - (double)perceivedBrightness:(NSColor*) c
@@ -6439,13 +6465,13 @@ static bool IsUrlChar(NSString* str)
             NSString* curChar = [self _getCharacterAtX:xi Y:yi];
             if (!IsUrlChar(curChar)) {
                 // Found a non-url character so append the left part of the URL.
-                [url insertString:[self contentFromX:xi+1 Y:yi ToX:endx+1 Y:yi pad: YES]
+                [url insertString:[self contentFromX:xi+1 Y:yi ToX:endx+1 Y:yi pad:YES includeLastNewline:NO]
                      atIndex:0];
                 break;
             }
             if (xi == leftx) {
                 // hit the start of the line
-                [url insertString:[self contentFromX:xi Y:yi ToX:endx+1 Y:yi pad: YES]
+                [url insertString:[self contentFromX:xi Y:yi ToX:endx+1 Y:yi pad:YES includeLastNewline:NO]
                      atIndex:0];
                 // Try to wrap around to the previous line
                 if (yi == 0) {
@@ -6477,7 +6503,7 @@ static bool IsUrlChar(NSString* str)
             NSString* curChar = [self _getCharacterAtX:xi Y:yi];
             if (!IsUrlChar(curChar)) {
                 // Found something non-urly. Append what we have so far.
-                [url appendString:[self contentFromX:startx Y:yi ToX:xi Y:yi pad: YES]];
+                [url appendString:[self contentFromX:startx Y:yi ToX:xi Y:yi pad:YES includeLastNewline:NO]];
                 // skip backslahes that indicate wrapping
                 while (x <= rightx && [[self _getCharacterAtX:xi Y:yi] isEqualToString:@"\\"]) {
                     xi++;
@@ -6491,7 +6517,7 @@ static bool IsUrlChar(NSString* str)
                 // xi is left at rightx+1
             } else if (xi == rightx) {
                 // Made it to rightx.
-                [url appendString:[self contentFromX:startx Y:yi ToX:xi+1 Y:yi pad: YES]];
+                [url appendString:[self contentFromX:startx Y:yi ToX:xi+1 Y:yi pad:YES includeLastNewline:NO]];
             } else {
                 // Char is valid and xi < rightx.
                 continue;
@@ -6681,7 +6707,8 @@ static bool IsUrlChar(NSString* str)
                                     Y:y
                                   ToX:[dataSource width]
                                     Y:y
-                                  pad:YES];
+                                  pad:YES
+                   includeLastNewline:NO];
     const char* utf8 = [lineContents UTF8String];
     for (int i = 0; utf8[i]; ++i) {
         if (utf8[i] != ' ') {

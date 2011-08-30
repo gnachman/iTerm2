@@ -969,6 +969,7 @@ static float versionNumber;
         defaultTabViewType = 0;
     }
     defaultCopySelection=[prefs objectForKey:@"CopySelection"]?[[prefs objectForKey:@"CopySelection"] boolValue]:YES;
+    defaultCopyLastNewline = [prefs objectForKey:@"CopyLastNewline"] ? [[prefs objectForKey:@"CopyLastNewline"] boolValue] : NO;
     defaultPasteFromClipboard=[prefs objectForKey:@"PasteFromClipboard"]?[[prefs objectForKey:@"PasteFromClipboard"] boolValue]:YES;
     defaultThreeFingerEmulatesMiddle=[prefs objectForKey:@"ThreeFingerEmulates"]?[[prefs objectForKey:@"ThreeFingerEmulates"] boolValue]:NO;
     defaultHideTab=[prefs objectForKey:@"HideTab"]?[[prefs objectForKey:@"HideTab"] boolValue]: YES;
@@ -1085,6 +1086,7 @@ static float versionNumber;
     }
 
     [prefs setBool:defaultCopySelection forKey:@"CopySelection"];
+    [prefs setBool:defaultCopyLastNewline forKey:@"CopyLastNewline"];
     [prefs setBool:defaultPasteFromClipboard forKey:@"PasteFromClipboard"];
     [prefs setBool:defaultThreeFingerEmulatesMiddle forKey:@"ThreeFingerEmulates"];
     [prefs setBool:defaultHideTab forKey:@"HideTab"];
@@ -1171,6 +1173,7 @@ static float versionNumber;
     [windowStyle selectItemAtIndex: defaultWindowStyle];
     [tabPosition selectItemAtIndex: defaultTabViewType];
     [selectionCopiesText setState:defaultCopySelection?NSOnState:NSOffState];
+    [copyLastNewline setState:defaultCopyLastNewline ? NSOnState : NSOffState];
     [middleButtonPastesFromClipboard setState:defaultPasteFromClipboard?NSOnState:NSOffState];
     [threeFingerEmulatesMiddle setState:defaultThreeFingerEmulatesMiddle ? NSOnState : NSOffState];
     [hideTab setState:defaultHideTab?NSOnState:NSOffState];
@@ -1443,7 +1446,8 @@ static float versionNumber;
         }
 
         defaultFsTabDelay = [fsTabDelay floatValue];
-        defaultCopySelection=([selectionCopiesText state]==NSOnState);
+        defaultCopySelection = ([selectionCopiesText state]==NSOnState);
+        defaultCopyLastNewline = ([copyLastNewline state] == NSOnState);
         defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
         defaultPromptOnQuit = ([promptOnQuit state] == NSOnState);
         defaultOnlyWhenMoreTabs = ([onlyWhenMoreTabs state] == NSOnState);
@@ -1565,6 +1569,11 @@ static float versionNumber;
 - (BOOL)copySelection
 {
     return defaultCopySelection;
+}
+
+- (BOOL)copyLastNewline
+{
+    return defaultCopyLastNewline;
 }
 
 - (void) setCopySelection:(BOOL)flag
