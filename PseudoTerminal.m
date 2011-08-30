@@ -1617,7 +1617,6 @@ NSString *sessionsKey = @"sessions";
 
     // Apply maximum window size.
     NSSize maxFrameSize = [self maxFrame].size;
-    proposedFrameSize.width = MIN(maxFrameSize.width, proposedFrameSize.width);
     proposedFrameSize.height = MIN(maxFrameSize.height, proposedFrameSize.height);
 
     // If snapping, reject the new size if the mouse has not moved at least
@@ -4202,23 +4201,15 @@ NSString *sessionsKey = @"sessions";
         NSSize maxGrowth;
         maxGrowth.width = maxTabSize.width - currentSize.width;
         maxGrowth.height = maxTabSize.height - currentSize.height;
-        int maxNewCols = maxGrowth.width / [[aSession TEXTVIEW] charWidth];
         int maxNewRows = maxGrowth.height / [[aSession TEXTVIEW] lineHeight];
 
         // 3. Compute the number of rows and columns we're trying to grow by.
         int newRows = rows - [aSession rows];
-        int newCols = columns - [aSession columns];
-
         // 4. Cap growth if it exceeds the maximum. Do nothing if it's shrinking.
         if (newRows > maxNewRows) {
             int error = newRows - maxNewRows;
             height -= error;
         }
-        if (newCols > maxNewCols) {
-            int error = newCols - maxNewCols;
-            width -= error;
-        }
-
         PtyLog(@"safelySetSessionSize - set to %dx%d", width, height);
         [aSession setWidth:width height:height];
         [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
