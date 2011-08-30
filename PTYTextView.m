@@ -2563,6 +2563,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)mouseDown:(NSEvent *)event
 {
+    NSLog(@"mouseDown: %@", event);
     if ([self mouseDownImpl:event]) {
         [super mouseDown:event];
     }
@@ -2796,6 +2797,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseUp:(NSEvent *)event
 {
+    NSLog(@"mouseUp");
     if (mouseDownIsThreeFingerClick_) {
         [self otherMouseUp:nil];
         mouseDownIsThreeFingerClick_ = NO;
@@ -2934,7 +2936,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseDragged:(NSEvent *)event
 {
+    NSLog(@"mouseDrag: %@", event);
     if (mouseDownIsThreeFingerClick_) {
+        NSLog(@"* three finger click");
         return;
     }
     // Prevent accidental dragging while dragging trouter item.
@@ -2967,9 +2971,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([event eventNumber] == firstMouseEventNumber_) {
         // We accept first mouse for the purposes of focusing or dragging a
         // split pane but not for making a selection.
+        NSLog(@"* first mouse");
         return;
     }
     if (!dragOk_) {
+        NSLog(@"* !drag ok");
         return;
     }
     NSString *theSelectedText;
@@ -2998,6 +3004,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                        Y:ry]];
             case MOUSE_REPORTING_NORMAL:
                 DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
+                NSLog(@"* mouse reporting normal");
                 return;
                 break;
 
@@ -3024,6 +3031,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             theSelectedText = [self contentFromX:startX Y:startY ToX:endX Y:endY pad:NO includeLastNewline:[[PreferencePanel sharedInstance] copyLastNewline]];
         }
         if ([theSelectedText length] > 0) {
+            NSLog(@"* dragText");
             [self _dragText: theSelectedText forEvent: event];
             DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
             return;
@@ -3034,6 +3042,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // If you're holding cmd (but not opt) then you're either trying to click on a link and
         // accidentally dragged a little bit, or you're trying to drag a selection. Do nothing until
         // the threshold is met.
+        NSLog(@"* cmd only + drag threshold met");
         return;
     }
     if (mouseDownOnSelection == YES &&
@@ -3041,6 +3050,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         !dragThresholdMet) {
         // Would be a drag of a rect region but mouse hasn't moved far enough yet. Prevent the
         // selection from changing.
+        NSLog(@"* trying to drag a rect region");
         return;
     }
 
@@ -3051,6 +3061,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                    workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
                          lineNumber:nil];
         if (path == nil) {
+            NSLog(@"* path=nil, cmd only");
             return;
         }
 
@@ -3073,6 +3084,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
              pasteboard:pboard
                  source:self
               slideBack:YES];
+        NSLog(@"* cmd only drag");
         return;
 
     }
@@ -3096,6 +3108,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     [self moveSelectionEndpointToX:x Y:y locationInTextView:locationInTextView];
+    NSLog(@"-> moveSelectionEndpointToX:%d y:%d locationInTextView:%@", x, y, [NSValue valueWithPoint:locationInTextView]);
 }
 
 - (NSString*)contentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad
