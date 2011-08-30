@@ -231,6 +231,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *hideScrollbar;
     BOOL defaultHideScrollbar;
 
+    // Disable transparency in fullscreen by default
+    IBOutlet NSButton *disableFullscreenTransparency;
+    BOOL defaultDisableFullscreenTransparency;
+    
     // smart window placement
     IBOutlet NSButton *smartPlacement;
     BOOL defaultSmartPlacement;
@@ -569,6 +573,7 @@ typedef enum {
 - (NSString *)wordChars;
 - (ITermCursorType)legacyCursorType;
 - (BOOL)hideScrollbar;
+- (BOOL)disableFullscreenTransparency;
 - (BOOL)smartPlacement;
 - (BOOL)windowNumber;
 - (BOOL)jobName;

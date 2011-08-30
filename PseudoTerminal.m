@@ -1143,6 +1143,9 @@ NSString *sessionsKey = @"sessions";
         rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_WIDTH] doubleValue];
         rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_HEIGHT] doubleValue];
         term->oldFrame_ = rect;
+        term->useTransparency_ = ![[PreferencePanel sharedInstance] disableFullscreenTransparency];
+        term->oldUseTransparency_ = YES;
+        term->restoreUseTransparency_ = YES;
     } else if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:WINDOW_TYPE_LION_FULL_SCREEN
@@ -1694,6 +1697,7 @@ NSString *sessionsKey = @"sessions";
     for (PTYSession* aSession in [self sessions]) {
         [[aSession view] setNeedsDisplay:YES];
     }
+    restoreUseTransparency_ = NO;
 }
 
 - (BOOL)useTransparency
@@ -1780,7 +1784,19 @@ NSString *sessionsKey = @"sessions";
     // Ensure that fullscreen windows (often hotkey windows) don't lose their collection behavior.
     [[newTerminal window] setCollectionBehavior:[[self window] collectionBehavior]];
 
-    newTerminal->useTransparency_ = useTransparency_;
+    if (!_fullScreen &&
+        [[PreferencePanel sharedInstance] disableFullscreenTransparency]) {
+        newTerminal->useTransparency_ = NO;
+        newTerminal->oldUseTransparency_ = useTransparency_;
+        newTerminal->restoreUseTransparency_ = YES;
+    } else {
+        if (_fullScreen && restoreUseTransparency_) {
+            newTerminal->useTransparency_ = oldUseTransparency_;
+        } else {
+            newTerminal->useTransparency_ = useTransparency_;
+            restoreUseTransparency_ = NO;
+        }
+    }
     [newTerminal setIsHotKeyWindow:isHotKeyWindow_];
 
     _fullScreen = !_fullScreen;

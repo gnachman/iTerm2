@@ -135,6 +135,12 @@ typedef enum {
     // When you enter full-screen mode the old frame size is saved here. When
     // full-screen mode is exited that frame is restored.
     NSRect oldFrame_;
+    
+    // When you enter fullscreen mode, the old use transparency setting is
+    // saved, and then restored when you exit FS unless it was changed
+    // by the user.
+    BOOL oldUseTransparency_;
+    BOOL restoreUseTransparency_;
 
     // True if an [init...] method was called.
     BOOL windowInited;
