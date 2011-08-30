@@ -3576,7 +3576,10 @@ NSString *sessionsKey = @"sessions";
     }
 
     menubarScreen = [[NSScreen screens] objectAtIndex:0];
-    currentScreen = [NSScreen mainScreen];
+    currentScreen = [[self window] deepestScreen];
+    if (!currentScreen) {
+        currentScreen = [NSScreen mainScreen];
+    }
 
     if (currentScreen == menubarScreen) {
         int flags = NSApplicationPresentationAutoHideDock | NSApplicationPresentationAutoHideMenuBar;
