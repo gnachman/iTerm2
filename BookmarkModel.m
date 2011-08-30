@@ -200,6 +200,11 @@ int gMigrated;
     // Migrate global "prompt on close" to per-profile prompt enum
     if (![dict objectForKey:KEY_PROMPT_CLOSE]) {
         BOOL promptOnClose = [[[NSUserDefaults standardUserDefaults] objectForKey:@"PromptOnClose"] boolValue];
+        NSNumber *onlyWhenNumber = [[NSUserDefaults standardUserDefaults] objectForKey:@"OnlyWhenMoreTabs"];
+        if (!onlyWhenNumber || [onlyWhenNumber boolValue]) {
+            promptOnClose = NO;
+        }
+
         NSNumber *newValue = [NSNumber numberWithBool:promptOnClose ? PROMPT_ALWAYS : PROMPT_NEVER];
         [dict setObject:newValue forKey:KEY_PROMPT_CLOSE];
         gMigrated = YES;
