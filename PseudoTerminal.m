@@ -1956,8 +1956,7 @@ NSString *sessionsKey = @"sessions";
     if (IsLionOrLater()) {
         // Disable redrawing during zoom-initiated live resize.
         zooming_ = YES;
-        if ([self lionFullScreen] &&
-            togglingLionFullScreen_) {
+        if (togglingLionFullScreen_) {
             // Tell it to use the whole screen when entering Lion fullscreen.
             // This is actually called twice in a row when entering fullscreen.
             return defaultFrame;
