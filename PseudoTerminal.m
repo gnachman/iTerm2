@@ -2289,10 +2289,16 @@ NSString *sessionsKey = @"sessions";
     return YES;
 }
 
-- (BOOL)tabView:(NSTabView*)aTabView shouldDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl
+- (BOOL)tabView:(NSTabView*)aTabView shouldDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)aTabBarControl
 {
-    //NSLog(@"shouldDropTabViewItem: %@ inTabBar: %@", [tabViewItem label], tabBarControl);
-    return YES;
+    if ([aTabBarControl tabView] &&  // nil -> tab dropping outside any existing tabbar to create a new window
+        [[aTabBarControl tabView] indexOfTabViewItem:tabViewItem] != NSNotFound) {
+        // Dropping a tab in its own tabbar when it's the only tab causes the
+        // window to disappear, so disallow that one case.
+        return [[aTabBarControl tabView] numberOfTabViewItems] > 1;
+    } else {
+        return YES;
+    }
 }
 
 - (void)tabView:(NSTabView*)aTabView willDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)aTabBarControl
