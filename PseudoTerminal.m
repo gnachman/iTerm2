@@ -1530,8 +1530,11 @@ NSString *sessionsKey = @"sessions";
     // update the cursor
     [[[self currentSession] TEXTVIEW] refresh];
     [[[self currentSession] TEXTVIEW] setNeedsDisplay:YES];
-    for (PTYSession* aSession in [self sessions]) {
-        [[aSession view] setBackgroundDimmed:YES];
+    if (![self lionFullScreen]) {
+        // Don't dim Lion fullscreen because you can't see the window when it's not key.
+        for (PTYSession* aSession in [self sessions]) {
+            [[aSession view] setBackgroundDimmed:YES];
+        }
     }
 }
 
