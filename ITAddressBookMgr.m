@@ -25,6 +25,7 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 #import "ITAddressBookMgr.h"
+#import "iTerm.h"
 
 #import <iTerm/PreferencePanel.h>
 #import <iTerm/iTermKeyBindingMgr.h>
@@ -312,6 +313,11 @@
                                              ofType:@"plist"];
     NSDictionary* presetsDict = [NSDictionary dictionaryWithContentsOfFile: plistFile];
     [aDict addEntriesFromDictionary:presetsDict];
+    // Override the terminal type if it's Lion so those users get the best
+    // experience.
+    if (IsLionOrLater()) {
+        [aDict setObject:@"xterm-256color" forKey:KEY_TERMINAL_TYPE];
+    }
 
     NSString *aName;
 
