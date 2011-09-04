@@ -687,6 +687,8 @@ typedef enum {
 - (BOOL)dockIconTogglesWindow;
 - (Bookmark*)hotkeyBookmark;
 
+- (BOOL)importColorPresetFromFile:(NSString*)filename;
+
 @end
 
 @interface PreferencePanel (KeyValueCoding)

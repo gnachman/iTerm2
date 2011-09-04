@@ -1,5 +1,3 @@
-// -*- mode:objc -*-
-// $Id: iTermApplicationDelegate.m,v 1.70 2008-10-23 04:57:13 yfabian Exp $
 /*
  **  iTermApplicationDelegate.m
  **
@@ -76,13 +74,9 @@ static BOOL hasBecomeActive = NO;
     // Check the system version for minimum requirements.
     SInt32 gSystemVersion;
     Gestalt(gestaltSystemVersion, &gSystemVersion);
-    if(gSystemVersion < 0x1020)
-    {
-                NSRunAlertPanel(NSLocalizedStringFromTableInBundle(@"Sorry",@"iTerm", [NSBundle bundleForClass: [iTermController class]], @"Sorry"),
-                         NSLocalizedStringFromTableInBundle(@"Minimum_OS", @"iTerm", [NSBundle bundleForClass: [iTermController class]], @"OS Version"),
-                        NSLocalizedStringFromTableInBundle(@"Quit",@"iTerm", [NSBundle bundleForClass: [iTermController class]], @"Quit"),
-                         nil, nil);
-                [NSApp terminate: self];
+    if (gSystemVersion < 0x1050) {
+        NSRunAlertPanel(@"Sorry", @"iTerm2 requires OS 10.5 or newer.", @"OK", nil, nil);
+        [NSApp terminate: self];
     }
 
     // set the TERM_PROGRAM environment variable
@@ -357,6 +351,12 @@ static BOOL hasBecomeActive = NO;
  */
 - (BOOL)application:(NSApplication *)theApplication openFile:(NSString *)filename
 {
+    if ([filename hasSuffix:@".itermcolors"]) {
+        if ([[PreferencePanel sharedInstance] importColorPresetFromFile:filename]) {
+            NSRunAlertPanel(@"Colors Scheme Imported", @"The color scheme was imported and added to presets. You can find it under Preferences>Profiles>Colors>Load Presets….", @"OK", nil, nil);
+        }
+        return YES;
+    }
     NSLog(@"Quiet launch");
     quiet_ = YES;
     if ([filename isEqualToString:[ITERM2_FLAG stringByExpandingTildeInPath]]) {

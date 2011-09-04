@@ -299,7 +299,7 @@ static float versionNumber;
     return [[filename stringByDeletingPathExtension] lastPathComponent];
 }
 
-- (void)_importColorPresetFromFile:(NSString*)filename
+- (BOOL)importColorPresetFromFile:(NSString*)filename
 {
     NSDictionary* aDict = [NSDictionary dictionaryWithContentsOfFile:filename];
     if (!aDict) {
@@ -309,9 +309,11 @@ static float versionNumber;
                         nil,
                         nil,
                         nil);
+        return NO;
     } else {
         [self _addColorPreset:[self _presetNameFromFilename:filename]
                    withColors:aDict];
+        return YES;
     }
 }
 
@@ -332,7 +334,7 @@ static float versionNumber;
         // Get an array containing the full filenames of all
         // files and directories selected.
         for (NSString* filename in [openDlg filenames]) {
-            [self _importColorPresetFromFile:filename];
+            [self importColorPresetFromFile:filename];
         }
     }
 }
