@@ -201,6 +201,14 @@ NSString *sessionsKey = @"sessions";
                windowType:(int)windowType
                    screen:(int)screenNumber
 {
+    return [self initWithSmartLayout:smartLayout windowType:windowType screen:screenNumber isHotkey:NO];
+}
+
+- (id)initWithSmartLayout:(BOOL)smartLayout
+               windowType:(int)windowType
+                   screen:(int)screenNumber
+                 isHotkey:(BOOL)isHotkey
+{
     PTYWindow *myWindow;
 
     self = [super initWithWindowNibName:@"PseudoTerminal"];
@@ -440,7 +448,13 @@ NSString *sessionsKey = @"sessions";
     }
 
     if (IsLionOrLater()) {
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenPrimary];
+        if (isHotkey) {
+            // This allows the hotkey window to be in the same space as a Lion fullscreen iTerm2 window.
+            [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenAuxiliary];
+        } else {
+            // This allows the window to enter Lion fullscreen.
+            [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenPrimary];
+        }
     }
 
     return self;
@@ -1552,12 +1566,12 @@ NSString *sessionsKey = @"sessions";
 
 - (BOOL)anyFullScreen
 {
-    return _fullScreen || [[self ptyWindow] isFullScreen];
+    return _fullScreen || lionFullScreen_;
 }
 
 - (BOOL)lionFullScreen
 {
-    return [[self ptyWindow] isFullScreen];
+    return lionFullScreen_;
 }
 
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)proposedFrameSize
@@ -1721,7 +1735,7 @@ NSString *sessionsKey = @"sessions";
          [[PreferencePanel sharedInstance] lionStyleFullscreen])) {
         // Is 10.7 Lion or later.
         [[self ptyWindow] performSelector:@selector(toggleFullScreen:) withObject:self];
-        if ([[self ptyWindow] isFullScreen]) {
+        if (lionFullScreen_) {
             windowType_ = WINDOW_TYPE_LION_FULL_SCREEN;
         } else {
             windowType_ = WINDOW_TYPE_NORMAL;
@@ -1941,6 +1955,7 @@ NSString *sessionsKey = @"sessions";
 {
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
+    lionFullScreen_ = YES;
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
@@ -1952,6 +1967,7 @@ NSString *sessionsKey = @"sessions";
 - (void)windowDidExitFullScreen:(NSNotification *)notification
 {
     zooming_ = NO;
+    lionFullScreen_ = NO;
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame

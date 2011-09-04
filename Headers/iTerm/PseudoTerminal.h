@@ -224,6 +224,9 @@ typedef enum {
 
     // Time of last magnification change.
     NSTimeInterval lastMagChangeTime_;
+
+    // In 10.7 style full screen mode
+    BOOL lionFullScreen_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
@@ -239,6 +242,11 @@ typedef enum {
 - (id)initWithSmartLayout:(BOOL)smartLayout
                windowType:(int)windowType
                    screen:(int)screenIndex;
+
+- (id)initWithSmartLayout:(BOOL)smartLayout
+               windowType:(int)windowType
+                   screen:(int)screenNumber
+                 isHotkey:(BOOL)isHotkey;
 
 - (PseudoTerminal *)terminalDraggedFromAnotherWindowAtPoint:(NSPoint)point;
 

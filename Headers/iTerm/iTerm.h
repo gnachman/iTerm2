@@ -41,6 +41,7 @@ BOOL IsLeopard(void);
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
 static const int NSWindowCollectionBehaviorFullScreenPrimary = 1 << 7;
+static const int NSWindowCollectionBehaviorFullScreenAuxiliary = 1 << 8;
 static const int NSApplicationPresentationAutoHideToolbar = (1 << 11);
 static const int NSApplicationPresentationFullScreen = (1 << 10);
 static const int NSScrollerStyleLegacy = 0;

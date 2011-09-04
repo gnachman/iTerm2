@@ -814,7 +814,8 @@ static BOOL IsSnowLeopardOrLater() {
         }
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                  windowType:windowType
-                                                     screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
+                                                     screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
+                                                   isHotkey:disableLionFullscreen] autorelease];
         [self addInTerminals:term];
         toggle = ([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
                  ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
@@ -1248,6 +1249,9 @@ static BOOL OpenHotkeyWindow()
                 // const below:
                 const int NSWindowCollectionBehaviorStationary = (1 << 4);  // value stolen from 10.6 SDK
                 [[term window] setCollectionBehavior:[[term window] collectionBehavior] | NSWindowCollectionBehaviorStationary];
+            }
+            if (IsLionOrLater()) {
+                [[term window] setCollectionBehavior:[[term window] collectionBehavior] & ~NSWindowCollectionBehaviorFullScreenPrimary];
             }
         }
         RollInHotkeyTerm(term);
