@@ -2432,6 +2432,11 @@ static VT100TCC decode_string(unsigned char *datap,
                     }
                     break;
 
+                case 2004:
+                    // Set bracketed paste mode
+                    bracketedPasteMode_ = mode;
+                    break;
+
                 case 47:
                     // alternate screen buffer mode
                     if (!disableSmcupRmcup) {
@@ -2837,6 +2842,11 @@ static VT100TCC decode_string(unsigned char *datap,
 - (void)setDisableSmcupRmcup:(BOOL)value
 {
     disableSmcupRmcup = value;
+}
+
+- (BOOL)bracketedPasteMode
+{
+    return bracketedPasteMode_;
 }
 
 @end

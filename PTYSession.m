@@ -1627,12 +1627,17 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                                                         userInfo:nil
                                                          repeats:NO];
     } else {
+        if ([TERMINAL bracketedPasteMode]) {
+            [self writeTask:[[NSString stringWithFormat:@"%c[201~", 27]
+                             dataUsingEncoding:[TERMINAL encoding]
+                             allowLossyConversion:YES]];
+        }
         slowPasteTimer = nil;
     }
 }
 
 // Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
-// Override the constnats by setting defaults SlowPasteBytesPerCall and SlowPasteDelayBetweenCalls
+// Override the constants by setting defaults SlowPasteBytesPerCall and SlowPasteDelayBetweenCalls
 - (void)pasteSlowly:(id)sender
 {
     [self _pasteWithBytePerCallPrefKey:@"SlowPasteBytesPerCall"
@@ -1642,8 +1647,36 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                               selector:@selector(pasteSlowly:)];
 }
 
+- (void)_pasteStringMore
+{
+    [self _pasteWithBytePerCallPrefKey:@"QuickPasteBytesPerCall"
+                          defaultValue:256
+              delayBetweenCallsPrefKey:@"QuickPasteDelayBetweenCalls"
+                          defaultValue:0.01
+                              selector:@selector(_pasteStringMore)];
+}
+
+- (void)_pasteString:(NSString *)aString
+{
+    if ([aString length] > 0) {
+        // This is the "normal" way of pasting. It's fast but tends not to
+        // outrun a shell's ability to read from its buffer. Why this crazy
+        // thing? See bug 1031.
+        [slowPasteBuffer appendString:[aString stringWithLinefeedNewlines]];
+        [self _pasteStringMore];
+    } else {
+        NSBeep();
+    }
+}
+
 - (void)paste:(id)sender
 {
+    if ([TERMINAL bracketedPasteMode]) {
+        [self writeTask:[[NSString stringWithFormat:@"%c[200~", 27]
+                         dataUsingEncoding:[TERMINAL encoding]
+                         allowLossyConversion:YES]];
+    }
+
     NSString* pbStr = [PTYSession pasteboardString];
     if (pbStr) {
         NSMutableString *str;
@@ -1659,30 +1692,19 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             [slowPasteBuffer appendString:[str stringWithLinefeedNewlines]];
             [self pasteSlowly:nil];
         } else {
-            [self pasteString:str];
+            [self _pasteString:str];
         }
     }
 }
 
-- (void)_pasteStringMore
-{
-    [self _pasteWithBytePerCallPrefKey:@"QuickPasteBytesPerCall"
-                          defaultValue:256
-              delayBetweenCallsPrefKey:@"QuickPasteDelayBetweenCalls"
-                          defaultValue:0.01
-                              selector:@selector(_pasteStringMore)];
-}
-
 - (void)pasteString:(NSString *)aString
 {
-    if ([aString length] > 0) {
-        // This is the "normal" way of pasting. It's fast but tends not to outrun a shell's ability to
-        // read from its buffer. Why this crazy thing? See bug 1031.
-        [slowPasteBuffer appendString:[aString stringWithLinefeedNewlines]];
-        [self _pasteStringMore];
-    } else {
-        NSBeep();
+    if ([TERMINAL bracketedPasteMode]) {
+        [self writeTask:[[NSString stringWithFormat:@"%c[200~", 27]
+                         dataUsingEncoding:[TERMINAL encoding]
+                         allowLossyConversion:YES]];
     }
+    [self _pasteString:aString];
 }
 
 - (void)deleteBackward:(id)sender

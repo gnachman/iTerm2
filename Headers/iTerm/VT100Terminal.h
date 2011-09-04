@@ -329,6 +329,9 @@ typedef enum {
 
     //terminfo
     char  *key_strings[TERMINFO_KEYS];
+
+    // http://www.xfree86.org/current/ctlseqs.html#Bracketed%20Paste%20Mode
+    BOOL bracketedPasteMode_;
 }
 
 + (void)initialize;
@@ -412,6 +415,8 @@ typedef enum {
 - (void) setScreen:(VT100Screen *)sc;
 
 - (void)setDisableSmcupRmcup:(BOOL)value;
+
+- (BOOL)bracketedPasteMode;
 
 @end
 
