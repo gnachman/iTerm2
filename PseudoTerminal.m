@@ -456,6 +456,10 @@ NSString *sessionsKey = @"sessions";
             [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorFullScreenPrimary];
         }
     }
+    if (isHotkey && IsSnowLeopardOrLater()) {
+        [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorIgnoresCycle];
+        [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];        
+    }
 
     return self;
 }

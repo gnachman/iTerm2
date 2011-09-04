@@ -91,6 +91,16 @@ BOOL IsLionOrLater(void) {
     }
 }
 
+BOOL IsSnowLeopardOrLater() {
+    unsigned major;
+    unsigned minor;
+    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
+        return (major == 10 && minor >= 6) || (major > 10);
+    } else {
+        return NO;
+    }
+}
+
 BOOL IsLeopard(void) {
     unsigned major;
     unsigned minor;
@@ -120,16 +130,6 @@ static BOOL initDone = NO;
 {
     [shared release];
     shared = nil;
-}
-
-static BOOL IsSnowLeopardOrLater() {
-    unsigned major;
-    unsigned minor;
-    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
-        return (major == 10 && minor >= 6) || (major > 10);
-    } else {
-        return NO;
-    }
 }
 
 // init

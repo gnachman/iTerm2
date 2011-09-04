@@ -37,6 +37,7 @@
 @class GTMCarbonHotKey;
 
 BOOL IsLionOrLater(void);
+BOOL IsSnowLeopardOrLater();
 
 @interface iTermController : NSObject
 {
