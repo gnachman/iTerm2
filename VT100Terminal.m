@@ -33,6 +33,7 @@
 #import <iTerm/VT100Screen.h>
 #import <iTerm/NSStringITerm.h>
 #import "iTermApplicationDelegate.h"
+#import "ITAddressBookMgr.h"
 #import "PTYTab.h"
 #import "PseudoTerminal.h"
 #import "WindowControllerInterface.h"
@@ -2691,6 +2692,21 @@ static VT100TCC decode_string(unsigned char *datap,
             long long lineNumber = [SCREEN absoluteLineNumberOfCursor];
             [[[SCREEN session] TEXTVIEW] logWorkingDirectoryAtLine:lineNumber
                                                      withDirectory:value];
+        } else if ([key isEqualToString:@"SetProfile"]) {
+            Bookmark *newProfile;
+            if ([value length]) {
+                newProfile = [[BookmarkModel sharedInstance] bookmarkWithName:value];
+            } else {
+                newProfile = [[BookmarkModel sharedInstance] defaultBookmark];
+            }
+            if (newProfile) {
+                NSString *name = [[[SCREEN session] addressBookEntry] objectForKey:KEY_NAME];
+                NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:newProfile];
+                [dict setObject:name forKey:KEY_NAME];
+                [[SCREEN session] setAddressBookEntry:dict];
+                [[SCREEN session] setPreferencesFromAddressBookEntry:dict];
+                [[SCREEN session] remarry];
+            }
         }
     } else if (token.type == XTERMCC_SET_PALETTE) {
         NSString* argument = token.u.string;

@@ -2844,6 +2844,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (void)remarry
+{
+    isDivorced = NO;
+}
+
 - (NSString*)divorceAddressBookEntryFromPreferences
 {
     Bookmark* bookmark = [self addressBookEntry];

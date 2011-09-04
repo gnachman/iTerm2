@@ -433,6 +433,7 @@ typedef enum {
 // affect it. Returns the GUID of a divorced bookmark. Does nothing if already
 // divorced, but still returns the divorced GUID.
 - (NSString*)divorceAddressBookEntryFromPreferences;
+- (void)remarry;
 
 // Schedule the screen update timer to run in a specified number of seconds.
 - (void)scheduleUpdateIn:(NSTimeInterval)timeout;
