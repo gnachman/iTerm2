@@ -198,6 +198,26 @@ int gMigrated;
 + (void)migratePromptOnCloseInMutableBookmark:(NSMutableDictionary *)dict
 {
     // Migrate global "prompt on close" to per-profile prompt enum
+    if ([dict objectForKey:KEY_PROMPT_CLOSE_DEPRECATED]) {
+        // The 8/28 build incorrectly ignored the OnlyWhenMoreTabs setting
+        // when migrating PromptOnClose to KEY_PRMOPT_CLOSE. Its preference
+        // key has been changed to KEY_PROMPT_CLOSE_DEPRECATED and a new
+        // pref key with the same intended usage has been added on 9/4 but
+        // with a different name. If the setting is PROMPT_ALWAYS, then it may
+        // have been migrated incorrectly. There are three ways to get here:
+        // 1. PromptOnClose && OnlyWhenMoreTabs was migrated wrong.
+        // 2. PromptOnClose && !OnlyWhenMoreTabs was migrated right.
+        // 3. Post migration, the user set it to PROMPT_ALWAYS
+        //
+        // For case 1, redoing the migration produces the correct result.
+        // For case 2, redoing the migration has no effect.
+        // For case 3, the user's pref is overwritten. This should be rare.
+        int value = [[dict objectForKey:KEY_PROMPT_CLOSE_DEPRECATED] intValue];
+        if (value != PROMPT_ALWAYS) {
+            [dict setObject:[NSNumber numberWithInt:value]
+                     forKey:KEY_PROMPT_CLOSE];
+        }
+    }
     if (![dict objectForKey:KEY_PROMPT_CLOSE]) {
         BOOL promptOnClose = [[[NSUserDefaults standardUserDefaults] objectForKey:@"PromptOnClose"] boolValue];
         NSNumber *onlyWhenNumber = [[NSUserDefaults standardUserDefaults] objectForKey:@"OnlyWhenMoreTabs"];
