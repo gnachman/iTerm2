@@ -3001,6 +3001,11 @@ void DumpBuf(screen_char_t* p, int n) {
     GROWL = flag;
 }
 
+- (void)setSaveToScrollbackInAlternateScreen:(BOOL)flag
+{
+    saveToScrollbackInAlternateScreen_ = flag;
+}
+
 - (BOOL)growl
 {
     return GROWL;
@@ -3578,8 +3583,11 @@ void DumpBuf(screen_char_t* p, int n) {
 // adds a line to scrollback area. Returns YES if oldest line is lost, NO otherwise
 - (int)_addLineToScrollbackImpl
 {
-    // There was an experiment to try not saving lines to scrollback when in alternate screen mode.
-    // It failed because it broke screen (see bug 1034).
+    if (temp_buffer && !saveToScrollbackInAlternateScreen_) {
+        // Don't save to scrollback in alternate screen mode.
+        return 0;
+    }
+
     int len = WIDTH;
     if (screen_top[WIDTH].code == EOL_HARD) {
         // The line is not continued. Figure out its length by finding the last nonnull char.

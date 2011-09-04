@@ -127,6 +127,7 @@
 #define KEY_DISABLE_SMCUP_RMCUP               @"Disable Smcup Rmcup"
 #define KEY_DISABLE_PRINTING                  @"Disable Printing"
 #define KEY_SCROLLBACK_WITH_STATUS_BAR        @"Scrollback With Status Bar"
+#define KEY_SCROLLBACK_IN_ALTERNATE_SCREEN    @"Scrollback in Alternate Screen"
 #define KEY_BOOKMARK_GROWL_NOTIFICATIONS      @"BM Growl"
 #define KEY_CHARACTER_ENCODING                @"Character Encoding"
 #define KEY_SCROLLBACK_LINES                  @"Scrollback Lines"

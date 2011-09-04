@@ -1791,7 +1791,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     return ([[NSString alloc] initWithFormat:@"%d;%d", fgNum, bgNum]);
 }
 
-- (void)setPreferencesFromAddressBookEntry:(NSDictionary *) aePrefs
+- (void)setPreferencesFromAddressBookEntry:(NSDictionary *)aePrefs
 {
     NSColor *colorTable[2][8];
     int i;
@@ -1913,6 +1913,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
            nafont:[ITAddressBookMgr fontWithDesc:[aDict objectForKey:KEY_NON_ASCII_FONT]]
         horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
         verticalSpacing:[[aDict objectForKey:KEY_VERTICAL_SPACING] floatValue]];
+    [SCREEN setSaveToScrollbackInAlternateScreen:[aDict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] ? [[aDict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] boolValue] : YES];
 }
 
 // Contextual menu

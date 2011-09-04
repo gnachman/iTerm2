@@ -146,6 +146,7 @@ void StringToScreenChars(NSString *s,
 
     // Used for recording instant replay.
     DVR* dvr;
+    BOOL saveToScrollbackInAlternateScreen_;
 }
 
 
@@ -179,6 +180,7 @@ void StringToScreenChars(NSString *s,
 - (void)setShowBellFlag:(BOOL)flag;
 - (void)setFlashBellFlag:(BOOL)flag;
 - (void)setGrowlFlag:(BOOL)flag;
+- (void)setSaveToScrollbackInAlternateScreen:(BOOL)flag;
 - (BOOL)growl;
 
 // line access

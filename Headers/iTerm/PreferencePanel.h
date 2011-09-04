@@ -413,6 +413,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* disableSmcupRmcup;
     IBOutlet NSButton* disablePrinting;
     IBOutlet NSButton* scrollbackWithStatusBar;
+    IBOutlet NSButton* scrollbackInAlternateScreen;
     IBOutlet NSButton* bookmarkGrowlNotifications;
     IBOutlet NSTextField* scrollbackLines;
     IBOutlet NSButton* unlimitedScrollback;
