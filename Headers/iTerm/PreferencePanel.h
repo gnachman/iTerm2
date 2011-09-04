@@ -320,6 +320,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *addBookmarkButton;
 
     // General tab
+    IBOutlet NSTextField *basicsLabel;
     IBOutlet NSTextField *bookmarkName;
     IBOutlet NSPopUpButton *bookmarkShortcutKey;
     IBOutlet NSMatrix *bookmarkCommandType;
@@ -336,7 +337,12 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTextField *bookmarkUrlSchemesHeaderLabel;
     IBOutlet NSTextField *bookmarkUrlSchemesLabel;
     IBOutlet NSPopUpButton* bookmarkUrlSchemes;
+
+    // Only visible in Get Info mode
     IBOutlet NSButton* copyToProfileButton;
+    IBOutlet NSTextField* setProfileLabel;
+    IBOutlet BookmarkListView* setProfileBookmarkListView;
+    IBOutlet NSButton* changeProfileButton;
 
     // Colors tab
     IBOutlet NSColorWell *ansi0Color;
@@ -523,6 +529,7 @@ typedef enum {
 - (void)handleWindowWillCloseNotification:(NSNotification *)notification;
 - (void)genericCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo;
 - (void)editKeyMapping:(id)sender;
+- (IBAction)changeProfile:(id)sender;
 - (IBAction)addJob:(id)sender;
 - (IBAction)removeJob:(id)sender;
 - (IBAction)saveKeyMapping:(id)sender;

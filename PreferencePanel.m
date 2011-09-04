@@ -213,6 +213,9 @@ static float versionNumber;
     [bookmarkUrlSchemesHeaderLabel setHidden:YES];
     [bookmarkUrlSchemesLabel setHidden:YES];
     [copyToProfileButton setHidden:NO];
+    [setProfileLabel setHidden:NO];
+    [setProfileBookmarkListView setHidden:NO];
+    [changeProfileButton setHidden:NO];
 
     [columnsLabel setTextColor:[NSColor disabledControlTextColor]];
     [rowsLabel setTextColor:[NSColor disabledControlTextColor]];
@@ -714,6 +717,26 @@ static float versionNumber;
         modalDelegate:self
        didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
           contextInfo:nil];
+}
+
+- (IBAction)changeProfile:(id)sender
+{
+    NSString* origGuid = [bookmarksTableView selectedGuid];
+    Bookmark* origBookmark = [dataSource bookmarkWithGuid:origGuid];
+    NSString *theName = [[[origBookmark objectForKey:KEY_NAME] copy] autorelease];
+    NSString *guid = [setProfileBookmarkListView selectedGuid];
+    Bookmark *bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
+    [dict setObject:theName forKey:KEY_NAME];
+    [dict setObject:origGuid forKey:KEY_GUID];
+
+    // Change the dict in the sessions bookmarks so that if you copy it back, it gets copied to
+    // the new profile.
+    [dict setObject:guid forKey:KEY_ORIGINAL_GUID];
+    [dataSource setBookmark:dict withGuid:origGuid];
+
+    [self updateBookmarkFields:dict];
+    [self bookmarkSettingChanged:nil];
 }
 
 - (BOOL)_warnAboutDeleteOverride
@@ -3691,6 +3714,7 @@ static float versionNumber;
     [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
     [self showBookmarks];
     [bookmarksTableView selectRowByGuid:guid];
+    [setProfileBookmarkListView selectRowByGuid:nil];
     [bookmarksSettingsTabViewParent selectTabViewItem:bookmarkSettingsGeneralTab];
     [[self window] makeFirstResponder:bookmarkName];
 }
