@@ -1646,6 +1646,11 @@ static char* FormatCont(int c)
     temp_buffer = NULL;
 }
 
+- (void)mouseModeDidChange:(MouseMode)mouseMode
+{
+    [display updateCursor:nil];
+}
+
 - (BOOL)printToAnsi
 {
     return printToAnsi;

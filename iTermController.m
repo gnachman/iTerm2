@@ -1243,7 +1243,7 @@ static BOOL OpenHotkeyWindow()
                 rect.origin.y = -rect.size.height;
                 rect.origin.x = -rect.size.width;
             }
-            if (IsSnowLeopardOrLater()) {
+            if (IsSnowLeopardOrLater() && !IsLionOrLater()) {
                 // TODO: When upgrading to the 10.6 SDK, remove the conditional and the
                 // const below:
                 const int NSWindowCollectionBehaviorStationary = (1 << 4);  // value stolen from 10.6 SDK

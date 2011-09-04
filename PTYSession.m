@@ -2466,6 +2466,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 - (void)setXtermMouseReporting:(BOOL)set
 {
     xtermMouseReporting = set;
+    [TEXTVIEW updateCursor:[NSApp currentEvent]];
 }
 
 

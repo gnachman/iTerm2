@@ -299,6 +299,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)drawRect:(NSRect)rect to:(NSPoint*)toOrigin;
 - (void)keyDown:(NSEvent *)event;
 - (BOOL)keyIsARepeat;
+- (void)updateCursor:(NSEvent *)event;
 - (void)mouseExited:(NSEvent *)event;
 - (void)mouseEntered:(NSEvent *)event;
 - (void)mouseDown:(NSEvent *)event;

@@ -1143,6 +1143,9 @@ NSString *sessionsKey = @"sessions";
         rect.size.width = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_WIDTH] doubleValue];
         rect.size.height = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_HEIGHT] doubleValue];
         term->oldFrame_ = rect;
+        term->useTransparency_ = ![[PreferencePanel sharedInstance] disableFullscreenTransparency];
+        term->oldUseTransparency_ = YES;
+        term->restoreUseTransparency_ = YES;
     } else if (windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:WINDOW_TYPE_LION_FULL_SCREEN
@@ -1694,6 +1697,7 @@ NSString *sessionsKey = @"sessions";
     for (PTYSession* aSession in [self sessions]) {
         [[aSession view] setNeedsDisplay:YES];
     }
+    restoreUseTransparency_ = NO;
 }
 
 - (BOOL)useTransparency
@@ -1780,7 +1784,19 @@ NSString *sessionsKey = @"sessions";
     // Ensure that fullscreen windows (often hotkey windows) don't lose their collection behavior.
     [[newTerminal window] setCollectionBehavior:[[self window] collectionBehavior]];
 
-    newTerminal->useTransparency_ = useTransparency_;
+    if (!_fullScreen &&
+        [[PreferencePanel sharedInstance] disableFullscreenTransparency]) {
+        newTerminal->useTransparency_ = NO;
+        newTerminal->oldUseTransparency_ = useTransparency_;
+        newTerminal->restoreUseTransparency_ = YES;
+    } else {
+        if (_fullScreen && restoreUseTransparency_) {
+            newTerminal->useTransparency_ = oldUseTransparency_;
+        } else {
+            newTerminal->useTransparency_ = useTransparency_;
+            restoreUseTransparency_ = NO;
+        }
+    }
     [newTerminal setIsHotKeyWindow:isHotKeyWindow_];
 
     _fullScreen = !_fullScreen;
@@ -1940,8 +1956,7 @@ NSString *sessionsKey = @"sessions";
     if (IsLionOrLater()) {
         // Disable redrawing during zoom-initiated live resize.
         zooming_ = YES;
-        if ([self lionFullScreen] &&
-            togglingLionFullScreen_) {
+        if (togglingLionFullScreen_) {
             // Tell it to use the whole screen when entering Lion fullscreen.
             // This is actually called twice in a row when entering fullscreen.
             return defaultFrame;
@@ -2274,10 +2289,16 @@ NSString *sessionsKey = @"sessions";
     return YES;
 }
 
-- (BOOL)tabView:(NSTabView*)aTabView shouldDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)tabBarControl
+- (BOOL)tabView:(NSTabView*)aTabView shouldDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)aTabBarControl
 {
-    //NSLog(@"shouldDropTabViewItem: %@ inTabBar: %@", [tabViewItem label], tabBarControl);
-    return YES;
+    if ([aTabBarControl tabView] &&  // nil -> tab dropping outside any existing tabbar to create a new window
+        [[aTabBarControl tabView] indexOfTabViewItem:tabViewItem] != NSNotFound) {
+        // Dropping a tab in its own tabbar when it's the only tab causes the
+        // window to disappear, so disallow that one case.
+        return [[aTabBarControl tabView] numberOfTabViewItems] > 1;
+    } else {
+        return YES;
+    }
 }
 
 - (void)tabView:(NSTabView*)aTabView willDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)aTabBarControl
@@ -2428,9 +2449,6 @@ NSString *sessionsKey = @"sessions";
 
 - (NSMenu *)tabView:(NSTabView *)tabView menuForTabViewItem:(NSTabViewItem *)tabViewItem
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PseudoTerminal tabViewContextualMenu]", __FILE__, __LINE__);
-#endif
     NSMenuItem *item;
     NSMenu *rootMenu = [[[NSMenu alloc] init] autorelease];
 
@@ -3560,7 +3578,10 @@ NSString *sessionsKey = @"sessions";
     }
 
     menubarScreen = [[NSScreen screens] objectAtIndex:0];
-    currentScreen = [NSScreen mainScreen];
+    currentScreen = [[self window] deepestScreen];
+    if (!currentScreen) {
+        currentScreen = [NSScreen mainScreen];
+    }
 
     if (currentScreen == menubarScreen) {
         int flags = NSApplicationPresentationAutoHideDock | NSApplicationPresentationAutoHideMenuBar;
