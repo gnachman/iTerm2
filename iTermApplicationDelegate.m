@@ -219,6 +219,10 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
+    // Make us the default handler for iterm2:// urls
+    OSStatus status = LSSetDefaultHandlerForURLScheme((CFStringRef)@"iterm2",
+                                    (CFStringRef)[[NSBundle mainBundle] bundleIdentifier]);
+
     // Create the app support directory
     [self _createFlag];
 
@@ -505,12 +509,77 @@ static BOOL hasBecomeActive = NO;
     secureInputDesired_ = [[[NSUserDefaults standardUserDefaults] objectForKey:@"Secure Input"] boolValue];
 }
 
+- (NSDictionary *)dictForQueryString:(NSString *)query
+{
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    for (NSString *kvp in [query componentsSeparatedByString:@"&"]) {
+        NSRange r = [kvp rangeOfString:@"="];
+        if (r.location != NSNotFound) {
+            [dict setObject:[kvp substringFromIndex:r.location + 1]
+                     forKey:[kvp substringToIndex:r.location]];
+        } else {
+            [dict setObject:@"" forKey:kvp];
+        }
+    }
+    return dict;
+}
+
+- (void)launchFromUrl:(NSURL *)url
+{
+    NSString *queryString = [url query];
+    NSDictionary *query = [self dictForQueryString:queryString];
+
+    if ([query objectForKey:@"quiet"]) {
+        quiet_ = YES;
+    }
+    PseudoTerminal *term = nil;
+    BOOL doLaunch = YES;
+    BOOL launchIfNeeded = NO;
+    if ([[url host] isEqualToString:@"newtab"]) {
+        term = [[iTermController sharedInstance] currentTerminal];
+    } else if ([[url host] isEqualToString:@"newwindow"]) {
+        term = nil;
+    } else if ([[url host] isEqualToString:@"current"]) {
+        doLaunch = NO;
+    } else if ([[url host] isEqualToString:@"tryCurrent"]) {
+        doLaunch = NO;
+        launchIfNeeded = YES;
+    } else {
+        NSLog(@"Bad host: %@", [url host]);
+        return;
+    }
+    Bookmark *profile = nil;
+    if ([query objectForKey:@"profile"]) {
+        NSString *bookmarkName = [[query objectForKey:@"profile"] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        profile = [[BookmarkModel sharedInstance] bookmarkWithName:bookmarkName];
+    }
+    PTYSession *aSession;
+    if (!doLaunch) {
+        aSession = [[[iTermController sharedInstance] currentTerminal] currentSession];
+    }
+    if (doLaunch || (!aSession && launchIfNeeded)) {
+        aSession = [[iTermController sharedInstance] launchBookmark:profile
+                                                         inTerminal:term];
+    }
+    if ([query objectForKey:@"command"]) {
+        NSData *theData;
+        NSStringEncoding encoding = [[aSession TERMINAL] encoding];
+        theData = [[[query objectForKey:@"command"] stringByReplacingPercentEscapesUsingEncoding:encoding] dataUsingEncoding:encoding];
+        [aSession writeTask:theData];
+        [aSession writeTask:[@"\r" dataUsingEncoding:encoding]];
+    }
+}
+
 - (void)getUrl:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent
 {
     NSString *urlStr = [[event paramDescriptorForKeyword:keyDirectObject] stringValue];
     NSURL *url = [NSURL URLWithString: urlStr];
     NSString *urlType = [url scheme];
 
+    if ([urlType isEqualToString:@"iterm2"]) {
+        [self launchFromUrl:url];
+        return;
+    }
     id bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:urlType];
     if (bm) {
         [[iTermController sharedInstance] launchBookmark:bm

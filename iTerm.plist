@@ -72,6 +72,14 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
+			<string>iTerm2 URL</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>iterm2</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
 			<string>http URL</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
