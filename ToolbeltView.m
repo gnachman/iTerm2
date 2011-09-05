@@ -8,6 +8,7 @@
 
 #import "ToolbeltView.h"
 #import "ToolProfiles.h"
+#import "ToolPasteHistory.h"
 
 @interface ToolbeltView (Private)
 
@@ -23,6 +24,7 @@ static NSMutableDictionary *gRegisteredTools;
 + (void)initialize
 {
     gRegisteredTools = [[NSMutableDictionary alloc] init];
+    [ToolbeltView registerToolWithName:@"Paste History" withClass:[ToolPasteHistory class]];
     [ToolbeltView registerToolWithName:@"Profiles" withClass:[ToolProfiles class]];
 }
 
@@ -33,6 +35,7 @@ static NSMutableDictionary *gRegisteredTools;
         delegate_ = delegate;
         splitter_ = [[NSSplitView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height)];
         [splitter_ setVertical:NO];
+        [splitter_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [self addSubview:splitter_];
         tools_ = [[ToolbeltView toolsDictionary] retain];
         
@@ -71,8 +74,8 @@ static NSMutableDictionary *gRegisteredTools;
 
 - (void)addTool:(NSView<ToolbeltTool> *)theTool
 {
-    [splitter_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     [splitter_ addSubview:theTool];
+    [theTool setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     [splitter_ adjustSubviews];
 }
 

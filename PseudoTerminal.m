@@ -250,7 +250,7 @@ NSString *sessionsKey = @"sessions";
     [bottomBar retain];
     windowType_ = windowType;
     broadcastViewIds_ = [[NSMutableSet alloc] init];
-    pbHistoryView = [[PasteboardHistoryView alloc] init];
+    pbHistoryView = [[PasteboardHistoryWindowController alloc] init];
     autocompleteView = [[AutocompleteView alloc] init];
 
     NSScreen* screen;

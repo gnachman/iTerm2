@@ -31,7 +31,6 @@
 #import "iTerm/iTermController.h"
 #import "NSDateFormatterExtras.h"
 #import "PreferencePanel.h"
-#define kPasteboardHistoryDidChange @"PasteboardHistoryDidChange"
 #define PBHKEY_ENTRIES @"Entries"
 #define PBHKEY_VALUE @"Value"
 #define PBHKEY_TIMESTAMP @"Timestamp"
@@ -188,7 +187,7 @@
 
 @end
 
-@implementation PasteboardHistoryView
+@implementation PasteboardHistoryWindowController
 
 - (id)init
 {
@@ -207,6 +206,7 @@
 
 - (void)dealloc
 {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
 }
 

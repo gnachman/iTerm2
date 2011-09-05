@@ -6,6 +6,7 @@
 
 @interface NSDateFormatter (Extras)
 + (NSString *)dateDifferenceStringFromDate:(NSDate *)date;
++ (NSString *)compactDateDifferenceStringFromDate:(NSDate *)date;
 
 @end
 

@@ -33,6 +33,8 @@
 #import "PTYTextView.h"
 #import "Popup.h"
 
+#define kPasteboardHistoryDidChange @"PasteboardHistoryDidChange"
+
 @interface PasteboardEntry : PopupEntry {
     @public
     NSDate* timestamp;
@@ -58,14 +60,6 @@
 
 - (void)_loadHistoryFromDisk;
 - (void)_writeHistoryToDisk;
-
-@end
-
-@interface PasteboardHistoryViewController : NSViewController
-{
-    IBOutlet NSTableView *table_;
-    NSTimer *minuteRefreshTimer_;
-}
 
 @end
 

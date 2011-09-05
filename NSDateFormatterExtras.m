@@ -48,4 +48,42 @@
     }   
 }
 
++ (NSString *)compactDateDifferenceStringFromDate:(NSDate *)date
+{
+    NSDate *now = [NSDate date];
+    double theTime = [date timeIntervalSinceDate:now];
+    theTime *= -1;
+    if (theTime < 60) {
+        return @"< 1 min";
+    } else if (theTime < 3600) {
+        int diff = round(theTime / 60);
+        if (diff == 1) {
+            return [NSString stringWithFormat:@"1 min", diff];
+        }
+        return [NSString stringWithFormat:@"%d min", diff];
+    } else if (theTime < 86400) {
+        int diff = round(theTime / 60 / 60);
+        if (diff == 1) {
+            return [NSString stringWithFormat:@"1 hour", diff];
+        }
+        return [NSString stringWithFormat:@"%d hrs", diff];
+    } else if (theTime < 604800) {
+        int diff = round(theTime / 60 / 60 / 24);
+        if (diff == 1) {
+            return [NSString stringWithFormat:@"1 day", diff];
+        }
+        if (diff == 7) {
+            return [NSString stringWithFormat:@"1 week", diff];
+        }
+        return[NSString stringWithFormat:@"%d days", diff];
+    } else {
+        int diff = round(theTime / 60 / 60 / 24 / 7);
+        if (diff == 1) {
+            return [NSString stringWithFormat:@"1 week", diff];
+            
+        }
+        return [NSString stringWithFormat:@"%d wks", diff];
+    }   
+}
+
 @end

@@ -182,7 +182,7 @@ typedef enum {
     IBOutlet NSTextField* latestTime;
     IBOutlet NSTextField* currentTime;
 
-    PasteboardHistoryView* pbHistoryView;
+    PasteboardHistoryWindowController* pbHistoryView;
     AutocompleteView* autocompleteView;
 
     // True if preBottomBarFrame is valid.
