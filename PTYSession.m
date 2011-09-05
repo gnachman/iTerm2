@@ -115,6 +115,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)dealloc
 {
+    [pasteboard_ release];
+    [pbtext_ release];
     [slowPasteBuffer release];
     if (slowPasteTimer) {
         [slowPasteTimer invalidate];
@@ -710,11 +712,6 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
       DebugLog([NSString stringWithFormat:@"readTask called with %d bytes. The last byte is %d", (int)length, (int)bytes[length-1]]);
     }
 
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession readTask:%@]", __FILE__, __LINE__,
-        [[NSString alloc] initWithBytes:[data bytes] length:[data length] encoding:nil]);
-#endif
-
     [TERMINAL putStreamData:data];
 
     VT100TCC token;
@@ -726,14 +723,29 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             token.type != VT100_WAIT &&
             token.type != VT100CC_NULL)) {
         // process token
-        if (token.type != VT100_SKIP) {
-            if (token.type == VT100_NOTSUPPORT) {
-                //NSLog(@"%s(%d):not support token", __FILE__ , __LINE__);
-            } else {
+        if (token.type != VT100_SKIP) {  // VT100_SKIP = there was no data to read
+            if (pasteboard_) {
+                // We are probably copying text to the clipboard until esc]50;EndCopy^G is received.
+                if (token.type != XTERMCC_SET_KVP || ![token.u.string hasPrefix:@"CopyToClipboard"]) {
+                    // Append text to clipboard except for initial command that turns on copying to
+                    // the clipboard.
+                    [pbtext_ appendData:[NSData dataWithBytes:token.position
+                                                       length:token.length]];
+                }
+
+                // Don't allow more than 100MB to be added to the pasteboard queue in case someone
+                // forgets to send the EndCopy command.
+                const int kMaxPasteboardBytes = 100 * 1024 * 1024;
+                if ([pbtext_ length] > kMaxPasteboardBytes) {
+                    [self setPasteboard:nil];
+                }
+            }
+
+            if (token.type != VT100_NOTSUPPORT) {
                 [SCREEN putToken:token];
             }
         }
-    } // end token processing loop
+    }
 
     gettimeofday(&lastOutput, NULL);
     newOutput = YES;
@@ -3030,6 +3042,29 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return textviewImage;
 }
 
+- (void)setPasteboard:(NSString *)pbName
+{
+    if (pbName) {
+        [pasteboard_ autorelease];
+        pasteboard_ = [pbName copy];
+        [pbtext_ release];
+        pbtext_ = [[NSMutableData alloc] init];
+    } else {
+        NSPasteboard *pboard = [NSPasteboard pasteboardWithName:pasteboard_];
+        [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
+        [pboard setData:pbtext_ forType:NSStringPboardType];
+
+        [pasteboard_ release];
+        pasteboard_ = nil;
+        [pbtext_ release];
+        pbtext_ = nil;
+
+        // In case it was the find pasteboard that chagned
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermLoadFindStringFromSharedPasteboard"
+                                                            object:nil
+                                                          userInfo:nil];        
+    }
+}
 
 @end
 

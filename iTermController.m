@@ -91,7 +91,7 @@ BOOL IsLionOrLater(void) {
     }
 }
 
-BOOL IsSnowLeopardOrLater() {
+BOOL IsSnowLeopardOrLater(void) {
     unsigned major;
     unsigned minor;
     if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {

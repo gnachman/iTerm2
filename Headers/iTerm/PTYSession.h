@@ -212,6 +212,11 @@ typedef enum {
     // After receiving new output, we keep running the updateDisplay timer for a few seconds to catch
     // changes in job name.
     NSDate* updateDisplayUntil_;
+
+    // If not nil, we're aggregating text to append to a pasteboard. The pasteboard will be
+    // updated when this is set to nil.
+    NSString *pasteboard_;
+    NSMutableData *pbtext_;
 }
 
 // Return the current pasteboard value as a string.
@@ -477,6 +482,8 @@ typedef enum {
 
 // Image for dragging one session.
 - (NSImage *)dragImage;
+
+- (void)setPasteboard:(NSString *)pbName;
 
 @end
 

@@ -36,9 +36,6 @@
 @class PasteboardHistory;
 @class GTMCarbonHotKey;
 
-BOOL IsLionOrLater(void);
-BOOL IsSnowLeopardOrLater();
-
 @interface iTermController : NSObject
 {
     // PseudoTerminal objects

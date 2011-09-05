@@ -2707,6 +2707,18 @@ static VT100TCC decode_string(unsigned char *datap,
                 [[SCREEN session] setPreferencesFromAddressBookEntry:dict];
                 [[SCREEN session] remarry];
             }
+        } else if ([key isEqualToString:@"CopyToClipboard"]) {
+            if ([value isEqualToString:@"ruler"]) {
+                [[SCREEN session] setPasteboard:NSGeneralPboard];
+            } else if ([value isEqualToString:@"find"]) {
+                [[SCREEN session] setPasteboard:NSFindPboard];
+            } else if ([value isEqualToString:@"font"]) {
+                [[SCREEN session] setPasteboard:NSFontPboard];
+            } else {
+                [[SCREEN session] setPasteboard:NSGeneralPboard];
+            }
+        } else if ([key isEqualToString:@"EndCopy"]) {
+            [[SCREEN session] setPasteboard:nil];
         }
     } else if (token.type == XTERMCC_SET_PALETTE) {
         NSString* argument = token.u.string;

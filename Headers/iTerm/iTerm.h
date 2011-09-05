@@ -37,6 +37,7 @@
 #define OSX_LEOPARDORLATER (floor(NSAppKitVersionNumber) > 824)
 
 BOOL IsLionOrLater(void);
+BOOL IsSnowLeopardOrLater(void);
 BOOL IsLeopard(void);
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
