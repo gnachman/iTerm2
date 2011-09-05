@@ -220,7 +220,7 @@ static BOOL hasBecomeActive = NO;
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
     // Make us the default handler for iterm2:// urls
-    OSStatus status = LSSetDefaultHandlerForURLScheme((CFStringRef)@"iterm2",
+    LSSetDefaultHandlerForURLScheme((CFStringRef)@"iterm2",
                                     (CFStringRef)[[NSBundle mainBundle] bundleIdentifier]);
 
     // Create the app support directory

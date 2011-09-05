@@ -61,7 +61,15 @@
 
 @end
 
-@interface PasteboardHistoryView : Popup
+@interface PasteboardHistoryViewController : NSViewController
+{
+    IBOutlet NSTableView *table_;
+    NSTimer *minuteRefreshTimer_;
+}
+
+@end
+
+@interface PasteboardHistoryWindowController : Popup
 {
     IBOutlet NSTableView* table_;
     NSTimer* minuteRefreshTimer_;

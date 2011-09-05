@@ -69,6 +69,7 @@
 #import "SplitPanel.h"
 #import "ProcessCache.h"
 #import "MovePaneController.h"
+#import "ToolbeltView.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -461,6 +462,18 @@ NSString *sessionsKey = @"sessions";
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];        
     }
 
+    {
+        drawer_ = [[NSDrawer alloc] initWithContentSize:NSMakeSize(200, self.window.frame.size.height + 100)
+                                          preferredEdge:CGRectMaxXEdge];
+        [drawer_ setParentWindow:self.window];
+        NSSize contentSize = [drawer_ contentSize];
+        NSRect toolbeltFrame = NSMakeRect(0, 0, contentSize.width, contentSize.height);;
+        toolbelt_ = [[[ToolbeltView alloc] initWithFrame:toolbeltFrame
+                                                delegate:self] autorelease];
+        [drawer_ setContentView:toolbelt_];
+        [drawer_ open];
+    }
+    
     return self;
 }
 

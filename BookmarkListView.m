@@ -493,6 +493,9 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
 
     [searchField_ setArrowHandler:tableView_];
 
+    [scrollView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+    [searchField_ setAutoresizingMask:NSViewWidthSizable | NSViewMinYMargin];
+    
     [[NSNotificationCenter defaultCenter] addObserver: self
                                              selector: @selector(dataChangeNotification:)
                                                  name: @"iTermReloadAddressBook"
@@ -683,6 +686,16 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     [selectedGuids_ retain];
 }
 
+- (void)setHasSelection:(BOOL)value
+{
+    // Placeholder for key-value observation
+}
+
+- (BOOL)hasSelection
+{
+    return [tableView_ numberOfSelectedRows] > 0;
+}
+
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
 {
     // There was a click on a row
@@ -692,6 +705,8 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     [selectedGuids_ release];
     selectedGuids_ = [self selectedGuids];
     [selectedGuids_ retain];
+    // tweak key value observation
+    [self setHasSelection:[selectedGuids_ count] > 0];
 }
 
 - (int)selectedRow

@@ -126,7 +126,6 @@
 // Scripting support
 @interface iTermController (KeyValueCoding)
 
-- (NSString *)uriToken;
 - (BOOL)application:(NSApplication *)sender delegateHandlesKey:(NSString *)key;
 
 // accessors for to-many relationships:

@@ -34,8 +34,10 @@
 #import "WindowControllerInterface.h"
 #import "PasteboardHistory.h"
 #import "Autocomplete.h"
+#import "ToolbeltView.h"
 
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
+@class ToolbeltView;
 
 typedef enum {
     BROADCAST_OFF,
@@ -66,12 +68,15 @@ typedef enum {
 // This class is 1:1 with windows. It controls the tabs, bottombar, toolbar,
 // fullscreen, and coordinates resizing of sessions (either session-initiated
 // or window-initiated).
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
-@interface PseudoTerminal : NSWindowController <PTYTabViewDelegateProtocol, PTYWindowDelegateProtocol, WindowControllerInterface , NSWindowDelegate>
-#else
 // OS 10.5 doesn't support window delegates
-@interface PseudoTerminal : NSWindowController <PTYTabViewDelegateProtocol, PTYWindowDelegateProtocol, WindowControllerInterface>
+@interface PseudoTerminal : NSWindowController <
+    PTYTabViewDelegateProtocol, 
+    PTYWindowDelegateProtocol,
+    WindowControllerInterface,
+#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
+    NSWindowDelegate,
 #endif
+    ToolbeltDelegate >
 {
     NSPoint preferredOrigin_;
     SolidColorView* background_;
@@ -227,6 +232,12 @@ typedef enum {
 
     // In 10.7 style full screen mode
     BOOL lionFullScreen_;
+    
+    // Drawer view, which only exists for window_type normal.
+    NSDrawer *drawer_;
+    
+    // Toolbelt view which goes in the drawer, or perhaps other places in the future.
+    ToolbeltView *toolbelt_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
