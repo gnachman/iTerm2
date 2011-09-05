@@ -200,5 +200,10 @@
     [super sendEvent: event];
 }
 
+- (NSString *)uriToken
+{
+    return [[self delegate] uriToken];
+}
+
 @end
 

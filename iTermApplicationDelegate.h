@@ -88,6 +88,10 @@ void DebugLog(NSString* value);
     // If set, skip performing launch actions.
     BOOL quiet_;
     NSDate* launchTime_;
+
+    // Cross app request forgery prevention token. Get this with applescript and then include
+    // in a URI request.
+    NSString *token_;
 }
 
 - (void)awakeFromNib;
@@ -168,6 +172,7 @@ void DebugLog(NSString* value);
 - (BOOL)application:(NSApplication *)sender delegateHandlesKey:(NSString *)key;
 
 - (PseudoTerminal *)currentTerminal;
+- (NSString *)uriToken;
 
 // accessors for to-many relationships:
 -(NSArray*)terminals;

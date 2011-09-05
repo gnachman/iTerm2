@@ -529,6 +529,12 @@ static BOOL hasBecomeActive = NO;
     NSString *queryString = [url query];
     NSDictionary *query = [self dictForQueryString:queryString];
 
+    if (![[query objectForKey:@"token"] isEqualToString:token_]) {
+        NSLog(@"URL request %@ missing token", url);
+        return;
+    }
+    [token_ release];
+    token_ = nil;
     if ([query objectForKey:@"quiet"]) {
         quiet_ = YES;
     }
@@ -1217,6 +1223,13 @@ void DebugLog(NSString* value)
 {
     //NSLog(@"iTermApplicationDelegate: delegateHandlesKey: '%@'", key);
     return [[iTermController sharedInstance] application:sender delegateHandlesKey:key];
+}
+
+- (NSString *)uriToken
+{
+    [token_ release];
+    token_ = [[NSString stringWithFormat:@"%x%x", arc4random(), arc4random()] retain];
+    return token_;
 }
 
 // accessors for to-one relationships:

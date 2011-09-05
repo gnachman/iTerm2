@@ -168,6 +168,16 @@
 			<string>i term application</string>
 			<key>PluralName</key>
 			<string>i term applications</string>
+			<key>Attributes</key>
+			<dict>
+				<key>uriToken</key>
+				<dict>
+					<key>Description</key>
+					<string>URI token</string>
+					<key>Name</key>
+					<string>uri token</string>
+				</dict>
+            </dict>
 			<key>ToOneRelationships</key>
 			<dict>
 				<key>currentTerminal</key>

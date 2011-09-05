@@ -212,6 +212,16 @@
 					<string>PseudoTerminal</string>
 				</dict>
 			</dict>
+			<key>Attributes</key>
+			<dict>
+				<key>uriToken</key>
+				<dict>
+					<key>AppleEventCode</key>
+					<string>Utok</string>
+					<key>Type</key>
+					<string>NSString</string>
+				</dict>
+            </dict>
 			<key>ToOneRelationships</key>
 			<dict>
 				<key>currentTerminal</key>
