@@ -437,7 +437,10 @@ NSString *sessionsKey = @"sessions";
                                              selector:@selector(_scrollerStyleChanged:)
                                                  name:@"NSPreferredScrollerStyleDidChangeNotification"
                                                object:nil];
-
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_updateDrawerVisibility:)
+                                                 name:@"iTermToolbeltVisibilityChanged"
+                                               object:nil];
     [self setWindowInited: YES];
     useTransparency_ = YES;
     fullscreenTabs_ = [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowFullScreenTabBar"] ?
@@ -462,19 +465,30 @@ NSString *sessionsKey = @"sessions";
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];        
     }
 
-    {
-        drawer_ = [[NSDrawer alloc] initWithContentSize:NSMakeSize(200, self.window.frame.size.height + 100)
-                                          preferredEdge:CGRectMaxXEdge];
-        [drawer_ setParentWindow:self.window];
-        NSSize contentSize = [drawer_ contentSize];
-        NSRect toolbeltFrame = NSMakeRect(0, 0, contentSize.width, contentSize.height);;
-        toolbelt_ = [[[ToolbeltView alloc] initWithFrame:toolbeltFrame
-                                                delegate:self] autorelease];
-        [drawer_ setContentView:toolbelt_];
+    drawer_ = [[NSDrawer alloc] initWithContentSize:NSMakeSize(200, self.window.frame.size.height + 100)
+                                      preferredEdge:CGRectMaxXEdge];
+    [drawer_ setParentWindow:self.window];
+    NSSize contentSize = [drawer_ contentSize];
+    NSRect toolbeltFrame = NSMakeRect(0, 0, contentSize.width, contentSize.height);;
+    toolbelt_ = [[[ToolbeltView alloc] initWithFrame:toolbeltFrame
+                                            delegate:self] autorelease];
+    [drawer_ setContentView:toolbelt_];
+    if ([[[iTermApplication sharedApplication] delegate] showToolbelt]) {
         [drawer_ open];
     }
-    
+
     return self;
+}
+
+- (void)_updateDrawerVisibility:(id)sender
+{
+    if (windowType_ == WINDOW_TYPE_NORMAL) {
+        if ([[[iTermApplication sharedApplication] delegate] showToolbelt]) {
+            [drawer_ open];
+        } else {
+            [drawer_ close];
+        }
+    }
 }
 
 - (PseudoTerminal *)terminalDraggedFromAnotherWindowAtPoint:(NSPoint)point
@@ -1296,6 +1310,11 @@ NSString *sessionsKey = @"sessions";
         }
     }
     return NO;
+}
+
+- (ToolbeltView *)toolbelt
+{
+    return toolbelt_;
 }
 
 - (int)numRunningSessions

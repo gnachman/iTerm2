@@ -10,7 +10,7 @@
 #import "ToolbeltView.h"
 #import "BookmarkListView.h"
 
-@interface ToolProfiles : NSView <ToolbeltTool> {
+@interface ToolProfiles : NSView <ToolbeltTool, BookmarkTableDelegate> {
     BookmarkListView *listView_;
     NSPopUpButton *popup_;
 }

@@ -78,8 +78,13 @@
 @end
 
 @protocol BookmarkTableDelegate
+@optional
 - (void)bookmarkTableSelectionDidChange:(id)bookmarkTable;
+
+@optional
 - (void)bookmarkTableSelectionWillChange:(id)bookmarkTable;
+
+@optional
 - (void)bookmarkTableRowSelected:(id)bookmarkTable;
 
 @optional
@@ -96,7 +101,7 @@
     NSTableColumn* shortcutColumn_;
     NSTableColumn* starColumn_;
     NSTableColumn* tagsColumn_;
-    id<BookmarkTableDelegate> delegate_;
+    NSObject<BookmarkTableDelegate> *delegate_;
     BOOL showGraphic_;
     NSSet* selectedGuids_;
     BOOL debug;
@@ -106,7 +111,7 @@
 - (void)awakeFromNib;
 - (id)initWithFrame:(NSRect)frameRect;
 - (id)initWithFrame:(NSRect)frameRect model:(BookmarkModel*)dataSource;
-- (void)setDelegate:(id<BookmarkTableDelegate>)delegate;
+- (void)setDelegate:(NSObject<BookmarkTableDelegate> *)delegate;
 - (void)dealloc;
 - (BookmarkModelWrapper*)dataSource;
 - (void)setUnderlyingDatasource:(BookmarkModel*)dataSource;

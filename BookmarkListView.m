@@ -516,7 +516,7 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     [super dealloc];
 }
 
-- (void)setDelegate:(id<BookmarkTableDelegate>)delegate
+- (void)setDelegate:(NSObject<BookmarkTableDelegate> *)delegate
 {
     delegate_ = delegate;
 }
@@ -669,7 +669,7 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
 
 - (BOOL)selectionShouldChangeInTableView:(NSTableView *)aTableView
 {
-    if (delegate_) {
+    if (delegate_ && [delegate_ respondsToSelector:@selector(bookmarkTableSelectionWillChange:)]) {
         [delegate_ bookmarkTableSelectionWillChange:self];
     }
     return YES;
@@ -678,7 +678,7 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
 - (void)tableViewSelectionIsChanging:(NSNotification *)aNotification
 {
     // Mouse is being dragged across rows
-    if (delegate_) {
+    if (delegate_ && [delegate_ respondsToSelector:@selector(bookmarkTableSelectionDidChange:)]) {
         [delegate_ bookmarkTableSelectionDidChange:self];
     }
     [selectedGuids_ release];
@@ -699,7 +699,7 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
 {
     // There was a click on a row
-    if (delegate_) {
+    if (delegate_ && [delegate_ respondsToSelector:@selector(bookmarkTableSelectionDidChange:)]) {
         [delegate_ bookmarkTableSelectionDidChange:self];
     }
     [selectedGuids_ release];
@@ -723,7 +723,9 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
         [selectedGuids_ release];
         selectedGuids_ = [self selectedGuids];
         [selectedGuids_ retain];
-        [delegate_ bookmarkTableSelectionDidChange:self];
+        if ([delegate_ respondsToSelector:@selector(bookmarkTableSelectionDidChange:)]) {
+            [delegate_ bookmarkTableSelectionDidChange:self];
+        }
     }
 }
 
@@ -888,7 +890,7 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
 
 - (void)onDoubleClick:(id)sender
 {
-    if (delegate_) {
+    if (delegate_ && [delegate_ respondsToSelector:@selector(bookmarkTableRowSelected:)]) {
         [delegate_ bookmarkTableRowSelected:self];
     }
 }

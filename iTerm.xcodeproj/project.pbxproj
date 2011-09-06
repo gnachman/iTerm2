@@ -12,6 +12,9 @@
 		1D1158CE13444D29009B366F /* iTerm2 Help in Resources */ = {isa = PBXBuildFile; fileRef = 1D1158C913444D29009B366F /* iTerm2 Help */; };
 		1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
 		1D173859126C820A004622DC /* FakeWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D173857126C820A004622DC /* FakeWindow.h */; };
+		1D19C3291415979E00617E08 /* HoverButton.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D19C3271415979E00617E08 /* HoverButton.h */; };
+		1D19C32A1415979E00617E08 /* HoverButton.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D19C3281415979E00617E08 /* HoverButton.m */; };
+		1D19C3631415998E00617E08 /* closebutton.tif in Resources */ = {isa = PBXBuildFile; fileRef = 1D19C3621415998E00617E08 /* closebutton.tif */; };
 		1D237D28131D8741004DD60C /* FindView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D237D26131D8741004DD60C /* FindView.h */; };
 		1D237D29131D8741004DD60C /* FindView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D237D27131D8741004DD60C /* FindView.m */; };
 		1D237D90131D8BEE004DD60C /* FindView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D237D8E131D8BEE004DD60C /* FindView.xib */; };
@@ -243,6 +246,8 @@
 		1DE8DC8E1415546000F83147 /* ToolProfiles.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC8C1415546000F83147 /* ToolProfiles.m */; };
 		1DE8DDAD1415648600F83147 /* ToolPasteHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DDAB1415648600F83147 /* ToolPasteHistory.h */; };
 		1DE8DDAE1415648600F83147 /* ToolPasteHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */; };
+		1DE8DF361415799700F83147 /* ToolWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DF341415799700F83147 /* ToolWrapper.h */; };
+		1DE8DF371415799700F83147 /* ToolWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DF351415799700F83147 /* ToolWrapper.m */; };
 		1DEE9FDD11FCA60F009E18C9 /* credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 1DEE9FDB11FCA60F009E18C9 /* credits.rtf */; };
 		1DF0895B13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF0895713DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h */; };
 		1DF0895C13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */; };
@@ -324,6 +329,9 @@
 		1D13EADB12113A2D00909F9C /* libncurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libncurses.dylib; path = usr/lib/libncurses.dylib; sourceTree = SDKROOT; };
 		1D173857126C820A004622DC /* FakeWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FakeWindow.h; sourceTree = "<group>"; };
 		1D173858126C820A004622DC /* FakeWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FakeWindow.m; sourceTree = "<group>"; };
+		1D19C3271415979E00617E08 /* HoverButton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HoverButton.h; sourceTree = "<group>"; };
+		1D19C3281415979E00617E08 /* HoverButton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HoverButton.m; sourceTree = "<group>"; };
+		1D19C3621415998E00617E08 /* closebutton.tif */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = closebutton.tif; path = images/closebutton.tif; sourceTree = "<group>"; };
 		1D237D26131D8741004DD60C /* FindView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindView.h; sourceTree = "<group>"; };
 		1D237D27131D8741004DD60C /* FindView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FindView.m; sourceTree = "<group>"; };
 		1D237D8F131D8BEE004DD60C /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/FindView.xib; sourceTree = "<group>"; };
@@ -437,6 +445,8 @@
 		1DE8DC8C1415546000F83147 /* ToolProfiles.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolProfiles.m; sourceTree = "<group>"; };
 		1DE8DDAB1415648600F83147 /* ToolPasteHistory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolPasteHistory.h; sourceTree = "<group>"; };
 		1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolPasteHistory.m; sourceTree = "<group>"; };
+		1DE8DF341415799700F83147 /* ToolWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolWrapper.h; sourceTree = "<group>"; };
+		1DE8DF351415799700F83147 /* ToolWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolWrapper.m; sourceTree = "<group>"; };
 		1DEB29301288885700B2CB9F /* Quartz.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Quartz.framework; path = System/Library/Frameworks/Quartz.framework; sourceTree = SDKROOT; };
 		1DEB29371288887100B2CB9F /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		1DEB293D1288899A00B2CB9F /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
@@ -670,6 +680,8 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				1D19C3271415979E00617E08 /* HoverButton.h */,
+				1D19C3281415979E00617E08 /* HoverButton.m */,
 				1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */,
 				1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */,
 				1DE214E0128212EE004E3ADF /* Autocomplete.m */,
@@ -724,6 +736,7 @@
 				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
 				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
 				1DE8DC881415513A00F83147 /* ToolbeltView.m */,
+				1DE8DF351415799700F83147 /* ToolWrapper.m */,
 				1DE8DC8C1415546000F83147 /* ToolProfiles.m */,
 				1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */,
 				1D06A04F134CDBED00C414EF /* Trouter.m */,
@@ -739,6 +752,7 @@
 			isa = PBXGroup;
 			children = (
 				1DE214DF128212EE004E3ADF /* Autocomplete.h */,
+				1DE8DF341415799700F83147 /* ToolWrapper.h */,
 				1D9F6AB6140C9DC4009B5CD4 /* FutureMethods.h */,
 				1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */,
 				1DE8DDAB1415648600F83147 /* ToolPasteHistory.h */,
@@ -874,6 +888,7 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1D19C3621415998E00617E08 /* closebutton.tif */,
 				1DCA5ECB13EE4DA800B7725E /* arrangement.png */,
 				1D6A5FDE140D7AA000DE19F8 /* IBarCursorXMR.png */,
 				1D8F396A13EB7A2C0025B80B /* BroadcastInput.png */,
@@ -1197,6 +1212,8 @@
 				1DE8DC891415513A00F83147 /* ToolbeltView.h in Headers */,
 				1DE8DC8D1415546000F83147 /* ToolProfiles.h in Headers */,
 				1DE8DDAD1415648600F83147 /* ToolPasteHistory.h in Headers */,
+				1DE8DF361415799700F83147 /* ToolWrapper.h in Headers */,
+				1D19C3291415979E00617E08 /* HoverButton.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1374,6 +1391,7 @@
 				1DCA5ECC13EE4DA800B7725E /* arrangement.png in Resources */,
 				1D844C8D13FD8B7700CD4F85 /* SplitPanel.xib in Resources */,
 				1D6A5FDF140D7AA000DE19F8 /* IBarCursorXMR.png in Resources */,
+				1D19C3631415998E00617E08 /* closebutton.tif in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1493,6 +1511,8 @@
 				1DE8DC8A1415513A00F83147 /* ToolbeltView.m in Sources */,
 				1DE8DC8E1415546000F83147 /* ToolProfiles.m in Sources */,
 				1DE8DDAE1415648600F83147 /* ToolPasteHistory.m in Sources */,
+				1DE8DF371415799700F83147 /* ToolWrapper.m in Sources */,
+				1D19C32A1415979E00617E08 /* HoverButton.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

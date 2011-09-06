@@ -60,9 +60,11 @@ void DebugLog(NSString* value);
     NSWindowController *aboutController;
     IBOutlet id ABOUT;
     IBOutlet NSTextView *AUTHORS;
-    
+
     // Menu items
     IBOutlet NSMenu     *bookmarkMenu;
+    IBOutlet NSMenu     *toolbeltMenu;
+    IBOutlet NSMenuItem *showToolbeltItem;
     IBOutlet NSMenuItem *selectTab;
     IBOutlet NSMenuItem *previousTerminal;
     IBOutlet NSMenuItem *nextTerminal;
@@ -110,6 +112,7 @@ void DebugLog(NSString* value);
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification;
 - (void)applicationDidResignActive:(NSNotification *)aNotification;
 
+- (IBAction)toggleToolbelt:(id)sender;
 - (IBAction)toggleFullScreenTabBar:(id)sender;
 - (IBAction)maximizePane:(id)sender;
 - (IBAction)toggleUseTransparency:(id)sender;
@@ -163,6 +166,8 @@ void DebugLog(NSString* value);
 - (void)setFutureApplicationPresentationOptions:(int)flags unset:(int)antiflags;
 
 - (void)updateBroadcastMenuState;
+
+- (BOOL)showToolbelt;
 
 @end
 

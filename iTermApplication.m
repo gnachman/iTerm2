@@ -205,5 +205,10 @@
     return [[self delegate] uriToken];
 }
 
+- (iTermApplicationDelegate *)delegate
+{
+    return [super delegate];
+}
+
 @end
 

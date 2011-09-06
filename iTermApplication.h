@@ -30,6 +30,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class iTermApplicationDelegate;
 
 @interface iTermApplication : NSApplication {
 
@@ -37,5 +38,6 @@
 
 + (BOOL)isTextFieldInFocus:(NSTextField *)textField;
 - (void)sendEvent:(NSEvent *)anEvent;
+- (iTermApplicationDelegate *)delegate;
 
 @end

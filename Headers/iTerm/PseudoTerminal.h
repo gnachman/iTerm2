@@ -441,6 +441,7 @@ typedef enum {
 // Does any session want to be prompted for closing?
 - (BOOL)promptOnClose;
 
+- (ToolbeltView *)toolbelt;
 ////////////////////////////////////////////////////////////////////////////////
 // NSTextField Delegate Methods
 

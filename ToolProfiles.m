@@ -17,10 +17,11 @@
     self = [super initWithFrame:frame];
     if (self) {
         const int kVerticalMargin = 8;
-        const int kMargin = 14;
+        const int kMargin = 0;
         const int kPopupHeight = 26;
         listView_ = [[BookmarkListView alloc] initWithFrame:NSMakeRect(kMargin, 0, frame.size.width - kMargin * 2, frame.size.height - kPopupHeight - kVerticalMargin)];
         [listView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
+        [listView_ setDelegate:self];
         [self addSubview:listView_];
         popup_ = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(kMargin, frame.size.height - kPopupHeight, frame.size.width - kMargin * 2, kPopupHeight)];
         [[popup_ menu] addItemWithTitle:@"New Tab"
@@ -83,7 +84,21 @@
     PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
     for (NSString* guid in [listView_ selectedGuids]) {
         [terminal splitVertically:YES withBookmarkGuid:guid];
-    }    
+    }
+}
+
+- (void)bookmarkTableRowSelected:(id)bookmarkTable
+{
+    NSEvent *event = [[NSApplication sharedApplication] currentEvent];
+    if ([event modifierFlags] & (NSControlKeyMask)) {
+        [self toolProfilesNewHorizontalSplit:nil];
+    } else if ([event modifierFlags] & (NSAlternateKeyMask)) {
+        [self toolProfilesNewVerticalSplit:nil];
+    } else if ([event modifierFlags] & (NSShiftKeyMask)) {
+        [self toolProfilesNewWindow:nil];
+    } else {
+        [self toolProfilesNewTab:nil];
+    }
 }
 
 @end

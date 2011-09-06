@@ -56,6 +56,12 @@ BOOL gDebugLogging = NO;
 int gDebugLogFile = -1;
 static BOOL hasBecomeActive = NO;
 
+@interface iTermApplicationDelegate ()
+
+- (void)_updateToolbeltMenuItem;
+
+@end
+
 @implementation iTermAboutWindow
 
 - (IBAction)closeCurrentSession:(id)sender
@@ -89,6 +95,8 @@ static BOOL hasBecomeActive = NO;
     [PreferencePanel sharedInstance];
     [ITAddressBookMgr sharedInstance];
 
+    [ToolbeltView populateMenu:toolbeltMenu];
+    [self _updateToolbeltMenuItem];
     [self setFutureApplicationPresentationOptions:NSApplicationPresentationFullScreen unset:0];
 }
 
@@ -482,6 +490,10 @@ static BOOL hasBecomeActive = NO;
                                              selector:@selector(windowArrangementsDidChange:)
                                                  name:@"iTermSavedArrangementChanged"
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(toolDidToggle:)
+                                                 name:@"iTermToolToggled"
+                                               object:nil];
 
     [[NSAppleEventManager sharedAppleEventManager] setEventHandler:self
                                                        andSelector:@selector(getUrl:withReplyEvent:)
@@ -507,6 +519,49 @@ static BOOL hasBecomeActive = NO;
 - (void)awakeFromNib
 {
     secureInputDesired_ = [[[NSUserDefaults standardUserDefaults] objectForKey:@"Secure Input"] boolValue];
+}
+
+- (BOOL)showToolbelt
+{
+    NSNumber *n = [[NSUserDefaults standardUserDefaults] objectForKey:@"Show Toolbelt"];
+    if (!n) {
+        n = [NSNumber numberWithBool:NO];
+    }
+    return [n boolValue];
+}
+
+- (IBAction)toggleToolbelt:(id)sender
+{
+    [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:![self showToolbelt]]
+                                                                       forKey:@"Show Toolbelt"];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermToolbeltVisibilityChanged"
+                                                        object:nil];
+    [self _updateToolbeltMenuItem];
+}
+
+- (void)_updateToolbeltMenuItem
+{
+    [showToolbeltItem setState:[self showToolbelt] ? NSOnState : NSOffState];
+}
+
+- (IBAction)toggleToolbeltTool:(NSMenuItem *)menuItem
+{
+    if ([ToolbeltView numberOfVisibleTools] == 1 && [menuItem state] == NSOnState) {
+        return;
+    }
+    [ToolbeltView toggleShouldShowTool:[menuItem title]];
+}
+
+- (void)toolDidToggle:(NSNotification *)notification
+{
+    NSString *theName = [notification object];
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        [[term toolbelt] toggleToolWithName:theName];
+    }
+    NSMenuItem *menuItem = [toolbeltMenu itemWithTitle:theName];
+
+    NSInteger newState = ([menuItem state] == NSOnState) ? NSOffState : NSOnState;
+    [menuItem setState:newState];
 }
 
 - (NSDictionary *)dictForQueryString:(NSString *)query
