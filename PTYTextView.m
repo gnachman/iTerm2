@@ -6059,7 +6059,6 @@ static bool IsUrlChar(NSString* str)
             if (!IsUrlChar(curChar) && urlFlag) {
                 // Found a non-url or path character
                 [possibleURL appendString:[self contentFromX:startx Y:yi ToX:xi Y:yi pad: YES]];
-                urlFlag = false;
             }
             
             if (!IsUrlChar(curChar) && ![curChar isEqualToString:@" "]) {
@@ -6071,6 +6070,7 @@ static bool IsUrlChar(NSString* str)
                 }
                 if (xi <= rightx) {
                     // before rightx there was something besides \s
+                    urlFlag = false;
                     break;
                 }
                 // Don't respect hard newlines that are "escaped" by a \.
