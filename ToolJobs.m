@@ -151,6 +151,7 @@ static const int kMaxJobs = 20;
 
 - (void)dealloc
 {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [signal_ release];
     [tableView_ release];
     [scrollView_ release];
