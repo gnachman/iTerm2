@@ -9,6 +9,7 @@
 #import "ToolPasteHistory.h"
 #import "NSDateFormatterExtras.h"
 #import "iTermController.h"
+#import "ToolWrapper.h"
 
 @implementation ToolPasteHistory
 
@@ -114,6 +115,14 @@
 - (void)pasteboardHistoryDidChange:(id)sender
 {
     [tableView_ reloadData];
+    // Updating the table data causes the cursor to change into an arrow!
+    [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
+}
+
+- (void)fixCursor
+{
+    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+    [[[wrapper.term currentSession] TEXTVIEW] updateCursor:[[NSApplication sharedApplication] currentEvent]];
 }
 
 - (void)doubleClickOnTableView:(id)sender
@@ -134,6 +143,8 @@
     [pasteHistory_ eraseHistory];
     [pasteHistory_ clear];
     [tableView_ reloadData];
+    // Updating the table data causes the cursor to change into an arrow!
+    [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
 }
 
 @end

@@ -106,15 +106,47 @@ static const int kMaxJobs = 20;
         
         [tableView_ sizeToFit];
         [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
-        
+
         timer_ = [NSTimer scheduledTimerWithTimeInterval:1
                                                   target:self
                                                 selector:@selector(updateTimer:)
                                                 userInfo:nil
-                                                 repeats:YES];    
+                                                 repeats:YES];
+
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(setSlowTimer)
+                                                     name:NSWindowDidResignMainNotification
+                                                   object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(setFastTimer)
+                                                     name:NSWindowDidBecomeKeyNotification
+                                                   object:nil];
+
         [self updateTimer:nil];
     }
     return self;
+}
+
+// When not key, check much less often to avoid burning the battery.
+- (void)setSlowTimer
+{
+    [timer_ invalidate];
+    timer_ = [NSTimer scheduledTimerWithTimeInterval:10
+                                              target:self
+                                            selector:@selector(updateTimer:)
+                                            userInfo:nil
+                                             repeats:YES];
+}
+
+- (void)setFastTimer
+{
+    [self updateTimer:nil];
+    [timer_ invalidate];
+    timer_ = [NSTimer scheduledTimerWithTimeInterval:1
+                                              target:self
+                                            selector:@selector(updateTimer:)
+                                            userInfo:nil
+                                             repeats:YES];
 }
 
 - (void)dealloc
@@ -140,6 +172,10 @@ static const int kMaxJobs = 20;
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
     pid_t rootPid = [[[wrapper.term currentSession] SHELL] pid];
     NSSet *pids = [[ProcessCache sharedInstance] childrenOfPid:rootPid levelsToSkip:0];
+    if ([pids isEqualToSet:[NSSet setWithArray:pids_]]) {
+        // Nothing to do, skip the expensive step of getting names.
+        return;
+    }
     [pids_ release];
     pids_ = [[[pids allObjects] sortedArrayUsingSelector:@selector(compare:)] retain];
     [names_ removeAllObjects];
@@ -153,6 +189,15 @@ static const int kMaxJobs = 20;
         }
     }
     [tableView_ reloadData];
+
+    // Updating the table data causes the cursor to change into an arrow!
+    [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
+}
+
+- (void)fixCursor
+{
+    ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
+    [[[wrapper.term currentSession] TEXTVIEW] updateCursor:[[NSApplication sharedApplication] currentEvent]];
 }
 
 - (BOOL)isFlipped
