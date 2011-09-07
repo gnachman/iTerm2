@@ -85,6 +85,7 @@
 
 - (void)shutdown
 {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [minuteRefreshTimer_ invalidate];
     minuteRefreshTimer_ = nil;
 }
