@@ -1658,6 +1658,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     static BOOL prevBad=NO;
     ++iteration;
     if (prevBad) {
+        NSLog(@"Last was bad.");
         prevBad = NO;
     }
 #endif
