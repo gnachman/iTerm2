@@ -162,4 +162,6 @@
 - (id)delegate;
 
 - (void)setFont:(NSFont *)theFont;
+- (void)disableArrowHandler;
+
 @end

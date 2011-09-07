@@ -942,4 +942,9 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     }
 }
 
+- (void)disableArrowHandler
+{
+    [searchField_ setArrowHandler:nil];
+}
+
 @end

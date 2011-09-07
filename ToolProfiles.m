@@ -24,6 +24,8 @@
         [listView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [listView_ setDelegate:self];
         [listView_ setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
+        [listView_ disableArrowHandler];
+
         [self addSubview:listView_];
         [listView_ release];
 
