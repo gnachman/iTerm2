@@ -17,6 +17,7 @@
     NSTimer *timer_;
     NSMutableArray *names_;
     NSMutableArray *pids_;
+    BOOL hasSelection;
 }
 
 @property (nonatomic, assign) BOOL hasSelection;

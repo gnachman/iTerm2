@@ -13,6 +13,9 @@
 @interface ToolWrapper : NSView {
     NSTextField *title_;
     NSButton *closeButton_;
+    NSString *name;
+    NSView *container_;
+    PseudoTerminal *term;
 }
 
 @property (nonatomic, copy) NSString *name;

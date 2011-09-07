@@ -20,6 +20,7 @@ static const CGFloat kButtonSize = 17;
 @synthesize name;
 @synthesize container = container_;
 @synthesize term;
+
 - (id)initWithFrame:(NSRect)frame
 {
     self = [super initWithFrame:frame];

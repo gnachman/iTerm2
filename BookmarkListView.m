@@ -933,7 +933,6 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     [tableView_ setRowHeight:normalRowHeight_];
 
     if ([theFont pointSize] < 13) {
-        NSRect before = searchField_.frame;
         [[searchField_ cell] setFont:theFont];
         [[searchField_ cell] setControlSize:NSSmallControlSize];
         [searchField_ sizeToFit];
