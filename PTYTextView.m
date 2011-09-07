@@ -2510,8 +2510,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)updateCursor:(NSEvent *)event
 {
-    [textViewCursor set];
-    /*
     MouseMode mouseMode = [[dataSource terminal] mouseMode];
 
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
@@ -2526,7 +2524,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         [xmrCursor set];
     } else {
         [textViewCursor set];
-    }*/
+    }
 }
 
 - (void)flagsChanged:(NSEvent *)theEvent
