@@ -1,5 +1,38 @@
 These release notes are for the development builds of iTerm2. The last stable release was 1.0.0.
 
+iTerm2 1.0.0.20010906
+Implement ALL the features!
+
+Important notes - read this!
+There was a bug in the previous release that caused many users to get a prompt on close dialog. This has been fixed, but if you've configured a profile to use prompt on close, that setting may be lost after upgrading. Check it under preferences-profiles-session.
+
+Enhancements:
+- A "Toolbelt" has been added. It's a drawer that opens to the right of a window and shows running jobs, paste history, and lets you open new windows/tabs/splits. Look for the Toolbelt menu.
+- Three finger click on a trackpad emulates the middle button (which by default performs Paste).
+- Add option to copy trailing newlines when making a selection that includes a whole line at its end.
+- Allow windows to temporarily grow larger than the screen.
+- Change mouse cursor to indicate that mouse reporting is on.
+- Add preference to disable transparency when entering fullscreen mode.
+- Improve support for keyboard that require a modifier to type a number.
+- Add preference to disable saving lines to the scrollback buffer while in alternate screen mode.
+- Implemented bracketed paste mode (this is cool, see here: http://stackoverflow.com/questions/5585129/pasting-code-into-terminal-window-into-vim-on-mac-os-x)
+- For new users under Lion, xterm-256color will be the default terminal.
+- Add ability to open .itermcolors files by double clicking on them.
+- Add ability to change profile from Edit Current Session.
+- Add proprietary escape code <esc>]50;SetProfile=X^G to set the current session's profile to the one named X.
+- Add proprietary escape code to send text to clipboard. To use, send esc]50;CopyToClipboard=X^G followed by text followed by esc]50;EndCopy^G, where X is a clipboard name from the set: ruler, find, font, or general. If not specified, general is used.
+
+Bug fixes:
+- Fix bug that dragged panes may retain their dimmed status.
+- Fix bug where splitting a pane didn't open in the current directory if so configured.
+- Fix bug where the menu would be hidden sometimes when opening a fullscreen window.
+- Fix bug where "find cursor" view didn't disappear if you pressed cmd-/.
+- Fix bug where opening a new window while in Lion fullscreen caused a pixel of linen to show around the border.
+- Fix bug where hotkey window stays open over mission control.
+- Fix bug where dragging a tab to its own tabbar makes the window disappear.
+- Fix bug where background windows are dimmed in Lion fullscreen.
+- Exclude hotkey window from cmd-`
+
 iTerm2 1.0.0.20110828
 Rearranging split panes!
 

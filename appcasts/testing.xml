@@ -6,14 +6,14 @@
 		<description>Most recent changes with links to updates.</description>
 		<language>en</language>
                 <item>
-                        <title>Version 1.0.0.20110828</title>
+                        <title>Version 1.0.0.20110906</title>
                         <sparkle:releaseNotesLink>
                                 http://iterm2.googlecode.com/svn/trunk/appcasts/testing_changes.html
                         </sparkle:releaseNotesLink>
-                        <pubDate>Sun, 28 Aug 2011 22:54:53 -0700</pubDate>
-                        <enclosure url="http://iterm2.googlecode.com/files/iTerm2-1_0_0_20110828.zip"
-                                sparkle:version="1.0.0.20110828" length="3912073" type="application/octet-stream"
-                                sparkle:dsaSignature="MCwCFH9LlGsfu9XxWFylTsH2dUMWCHNJAhQ/DWGmctstpWyvGpsjHdnMmjSHKg==" />
+                        <pubDate>Tue, 06 Sep 2011 23:50:44 -0700</pubDate>
+                        <enclosure url="http://iterm2.googlecode.com/files/iTerm2-1_0_0_20110906.zip"
+                                sparkle:version="1.0.0.20110906" length="3974175" type="application/octet-stream"
+                                sparkle:dsaSignature="MCwCFGjLnqEiiO503v29sslNdVGxQMZYAhQjb20QalBzjI6UCjDBvirt1DviFw==" />
                 </item>
 	</channel>
 </rss>
