@@ -8,15 +8,18 @@
 
 #import <Cocoa/Cocoa.h>
 
+@class PseudoTerminal;
 
 @interface ToolWrapper : NSView {
     NSTextField *title_;
     NSButton *closeButton_;
 }
 
-@property (nonatomic, assign) NSString *name;
+@property (nonatomic, copy) NSString *name;
 @property (nonatomic, readonly) NSView *container;
+@property (nonatomic, assign) PseudoTerminal *term;
 
 - (void)bindCloseButton;
+- (void)unbind;
 
 @end

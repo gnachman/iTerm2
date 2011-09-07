@@ -8,17 +8,15 @@
 
 #import <Cocoa/Cocoa.h>
 
-@protocol ToolbeltDelegate
-
-@end
+@class PseudoTerminal;
 
 @protocol ToolbeltTool
 @end
 
 @interface ToolbeltView : NSView {
-    id<ToolbeltDelegate> delegate_;
     NSSplitView *splitter_;
     NSMutableDictionary *tools_;
+    PseudoTerminal *term_;   // weak
 }
 
 + (void)registerToolWithName:(NSString *)name withClass:(Class)c;
@@ -26,7 +24,7 @@
 + (void)toggleShouldShowTool:(NSString *)theName;
 + (int)numberOfVisibleTools;
 
-- (id)initWithFrame:(NSRect)frame delegate:(id<ToolbeltDelegate>)delegate;
+- (id)initWithFrame:(NSRect)frame term:(PseudoTerminal *)term;
 
 
 // Is the tool visible?
@@ -37,6 +35,7 @@
 // Do prefs say the tool is visible?
 + (BOOL)shouldShowTool:(NSString *)name;
 
-- (BOOL)haveMultipleTools;
+- (BOOL)haveOnlyOneTool;
+- (void)shutdown;
 
 @end

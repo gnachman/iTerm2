@@ -10,13 +10,14 @@
 #import "ToolProfiles.h"
 #import "ToolPasteHistory.h"
 #import "ToolWrapper.h"
+#import "ToolJobs.h"
 
 @interface ToolbeltView (Private)
 
 + (NSDictionary *)toolsDictionary;
 - (void)addTool:(NSView<ToolbeltTool> *)theTool toWrapper:(ToolWrapper *)wrapper;
 - (void)addToolWithName:(NSString *)theName;
-- (void)setHaveMultipleTools:(BOOL)value;
+- (void)setHaveOnlyOneTool:(BOOL)value;
 
 @end
 
@@ -30,17 +31,37 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     gRegisteredTools = [[NSMutableDictionary alloc] init];
     [ToolbeltView registerToolWithName:@"Paste History" withClass:[ToolPasteHistory class]];
     [ToolbeltView registerToolWithName:@"Profiles" withClass:[ToolProfiles class]];
+    [ToolbeltView registerToolWithName:@"Jobs" withClass:[ToolJobs class]];
 }
 
-- (id)initWithFrame:(NSRect)frame delegate:(id<ToolbeltDelegate>)delegate
++ (NSArray *)defaultTools
+{
+    return [NSArray arrayWithObjects:@"Profiles", nil];
+}
+
++ (NSArray *)allTools
+{
+    return [gRegisteredTools allKeys];
+}
+
++ (NSArray *)configuredTools
+{
+    NSArray *tools = [[NSUserDefaults standardUserDefaults] objectForKey:kToolbeltPrefKey];
+    if (!tools) {
+        return [ToolbeltView defaultTools];
+    }
+    return tools;
+}
+
+- (id)initWithFrame:(NSRect)frame term:(PseudoTerminal *)term
 {
     self = [super initWithFrame:frame];
     if (self) {
-        delegate_ = delegate;
+        term_ = term;
 
-        NSArray *items = [[NSUserDefaults standardUserDefaults] objectForKey:kToolbeltPrefKey];
+        NSArray *items = [ToolbeltView configuredTools];
         if (!items) {
-            items = [gRegisteredTools allKeys];
+            items = [ToolbeltView defaultTools];
             [[NSUserDefaults standardUserDefaults] setObject:items forKey:kToolbeltPrefKey];
         }
 
@@ -68,6 +89,18 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     [super dealloc];
 }
 
+- (void)shutdown
+{
+    while ([tools_ count]) {
+        NSString *theName = [[tools_ allKeys] objectAtIndex:0];
+
+        ToolWrapper *wrapper = [tools_ objectForKey:theName];
+        [tools_ removeObjectForKey:theName];
+        [wrapper unbind];
+        [wrapper removeFromSuperview];
+    }
+}
+
 + (void)registerToolWithName:(NSString *)name withClass:(Class)c
 {
     [gRegisteredTools setObject:c forKey:name];
@@ -85,14 +118,14 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 + (BOOL)shouldShowTool:(NSString *)name
 {
-    return [[[NSUserDefaults standardUserDefaults] objectForKey:kToolbeltPrefKey] indexOfObject:name] != NSNotFound;
+    return [[ToolbeltView configuredTools] indexOfObject:name] != NSNotFound;
 }
 
 + (void)toggleShouldShowTool:(NSString *)theName
 {
-    NSMutableArray *tools = [[[[NSUserDefaults standardUserDefaults] objectForKey:kToolbeltPrefKey] mutableCopy] autorelease];
+    NSMutableArray *tools = [[[ToolbeltView configuredTools] mutableCopy] autorelease];
     if (!tools) {
-        tools = [[[gRegisteredTools allKeys] mutableCopy] autorelease];
+        tools = [[[ToolbeltView defaultTools] mutableCopy] autorelease];
     }
     if ([tools indexOfObject:theName] == NSNotFound) {
         [tools addObject:theName];
@@ -108,9 +141,9 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 + (int)numberOfVisibleTools
 {
-    NSArray *tools = [[NSUserDefaults standardUserDefaults] objectForKey:kToolbeltPrefKey];
+    NSArray *tools = [ToolbeltView configuredTools];
     if (!tools) {
-        tools = [gRegisteredTools allKeys];
+        tools = [ToolbeltView defaultTools];
     }
     return [tools count];
 }
@@ -119,12 +152,13 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 {
     ToolWrapper *wrapper = [tools_ objectForKey:theName];
     if (wrapper) {
-        [wrapper removeFromSuperview];
         [tools_ removeObjectForKey:theName];
+        [wrapper unbind];
+        [wrapper removeFromSuperview];
     } else {
         [self addToolWithName:theName];
     }
-    [self setHaveMultipleTools:[self haveMultipleTools]];
+    [self setHaveOnlyOneTool:[self haveOnlyOneTool]];
 }
 
 - (BOOL)showingToolWithName:(NSString *)theName
@@ -134,7 +168,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 + (void)populateMenu:(NSMenu *)menu
 {
-    NSArray *names = [[gRegisteredTools allKeys] sortedArrayUsingSelector:@selector(compare:)];
+    NSArray *names = [[ToolbeltView allTools] sortedArrayUsingSelector:@selector(compare:)];
     for (NSString *theName in names) {
         NSMenuItem *i = [[[NSMenuItem alloc] initWithTitle:theName action:@selector(toggleToolbeltTool:) keyEquivalent:@""] autorelease];
         [i setState:[ToolbeltView shouldShowTool:theName] ? NSOnState : NSOffState];
@@ -147,21 +181,23 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     [splitter_ addSubview:wrapper];
     [wrapper release];
     [wrapper.container addSubview:theTool];
+
     [wrapper setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     [theTool setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
     [splitter_ adjustSubviews];
     [wrapper bindCloseButton];
-    [tools_ setObject:wrapper forKey:wrapper.name];
+    [tools_ setObject:wrapper forKey:[[wrapper.name copy] autorelease]];
 }
 
 - (void)addToolWithName:(NSString *)toolName
 {
     ToolWrapper *wrapper = [[ToolWrapper alloc] initWithFrame:NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height)];
     wrapper.name = toolName;
+    wrapper.term = term_;
     Class c = [gRegisteredTools objectForKey:toolName];
     [self addTool:[[[c alloc] initWithFrame:NSMakeRect(0, 0, wrapper.container.frame.size.width, wrapper.container.frame.size.height)] autorelease]
         toWrapper:wrapper];
-    [self setHaveMultipleTools:[self haveMultipleTools]];
+    [self setHaveOnlyOneTool:[self haveOnlyOneTool]];
 }
 
 - (BOOL)isFlipped
@@ -169,14 +205,14 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     return YES;
 }
 
-- (void)setHaveMultipleTools:(BOOL)value
+- (void)setHaveOnlyOneTool:(BOOL)value
 {
     // For KVO
 }
 
-- (BOOL)haveMultipleTools
+- (BOOL)haveOnlyOneTool
 {
-    return [[splitter_ subviews] count] > 1;
+    return [[splitter_ subviews] count] == 1;
 }
 
 @end

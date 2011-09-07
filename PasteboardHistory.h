@@ -56,7 +56,12 @@
 - (void)dealloc;
 - (NSArray*)entries;
 - (void)save:(NSString*)value;
+
+// Erases persistent history, but not in-memory.
 - (void)eraseHistory;
+
+// Erases in-memory history but not persistent copy.
+- (void)clear;
 
 - (void)_loadHistoryFromDisk;
 - (void)_writeHistoryToDisk;

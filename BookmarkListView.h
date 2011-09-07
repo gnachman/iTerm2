@@ -92,7 +92,8 @@
 @end
 
 @interface BookmarkListView : NSView {
-    int rowHeight_;
+    int normalRowHeight_;
+    int rowHeightWithTags_;
     NSScrollView* scrollView_;
     iTermSearchField* searchField_;
     BookmarkTableView* tableView_;
@@ -102,10 +103,10 @@
     NSTableColumn* starColumn_;
     NSTableColumn* tagsColumn_;
     NSObject<BookmarkTableDelegate> *delegate_;
-    BOOL showGraphic_;
     NSSet* selectedGuids_;
     BOOL debug;
     BookmarkModelWrapper* dataSource_;
+    int margin_;
 }
 
 - (void)awakeFromNib;
@@ -142,7 +143,6 @@
 - (void)selectRowByGuid:(NSString*)guid;
 - (int)numberOfRows;
 - (void)hideSearch;
-- (void)setShowGraphic:(BOOL)showGraphic;
 - (void)allowEmptySelection;
 - (void)allowMultipleSelections;
 - (void)deselectAll;
@@ -161,4 +161,5 @@
 - (NSTableView*)tableView;
 - (id)delegate;
 
+- (void)setFont:(NSFont *)theFont;
 @end

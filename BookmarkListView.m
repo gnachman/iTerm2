@@ -414,6 +414,8 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
 - (id)initWithFrame:(NSRect)frameRect model:(BookmarkModel*)dataSource
 {
     self = [super initWithFrame:frameRect];
+
+    margin_ = kInterWidgetMargin;
     [self setUnderlyingDatasource:dataSource];
     debug = NO;
 
@@ -434,14 +436,14 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     scrollViewFrame.origin.y = 0;
     scrollViewFrame.size.width = frame.size.width;
     scrollViewFrame.size.height =
-        frame.size.height - kSearchWidgetHeight - kInterWidgetMargin;
+        frame.size.height - kSearchWidgetHeight - margin_;
     scrollView_ = [[NSScrollView alloc] initWithFrame:scrollViewFrame];
     [scrollView_ setHasVerticalScroller:YES];
     [self addSubview:scrollView_];
 
     NSRect tableViewFrame;
     tableViewFrame.origin.x = 0;
-    tableViewFrame.origin.y = 0;;
+    tableViewFrame.origin.y = 0;
     tableViewFrame.size =
         [NSScrollView contentSizeForFrameSize:scrollViewFrame.size
                         hasHorizontalScroller:NO
@@ -451,9 +453,9 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     tableView_ = [[BookmarkTableView alloc] initWithFrame:tableViewFrame];
     [tableView_ setParent:self];
     [tableView_ registerForDraggedTypes:[NSArray arrayWithObject:BookmarkTableViewDataType]];
-    rowHeight_ = 29;
-    showGraphic_ = YES;
-    [tableView_ setRowHeight:rowHeight_];
+    normalRowHeight_ = 21;
+    rowHeightWithTags_ = 29;
+    [tableView_ setRowHeight:rowHeightWithTags_];
     [tableView_
          setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleSourceList];
     [tableView_ setAllowsColumnResizing:YES];
@@ -555,9 +557,9 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     Bookmark* bookmark = [dataSource_ bookmarkAtIndex:rowIndex];
     NSArray* tags = [bookmark objectForKey:KEY_TAGS];
     if ([tags count] == 0) {
-        return 21;
+        return normalRowHeight_;
     } else {
-        return 29;
+        return rowHeightWithTags_;
     }
 }
 
@@ -574,6 +576,7 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
         }
         NSDictionary* plainAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
                                          textColor, NSForegroundColorAttributeName,
+                                         [[aTableColumn dataCell] font], NSFontAttributeName,
                                          nil];
         NSDictionary* smallAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
                                          textColor, NSForegroundColorAttributeName,
@@ -614,7 +617,7 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
         NSImage *image = [[[NSImage alloc] init] autorelease];
         NSSize size;
         size.width = [aTableColumn width];
-        size.height = rowHeight_;
+        size.height = rowHeightWithTags_;
         [image setSize:size];
 
         NSRect rect;
@@ -625,7 +628,7 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
         if ([[bookmark objectForKey:KEY_GUID] isEqualToString:[[[BookmarkModel sharedInstance] defaultBookmark] objectForKey:KEY_GUID]]) {
             NSPoint destPoint;
             destPoint.x = (size.width - [starImage size].width) / 2;
-            destPoint.y = (rowHeight_ - [starImage size].height) / 2;
+            destPoint.y = (rowHeightWithTags_ - [starImage size].height) / 2;
             [starImage drawAtPoint:destPoint fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
         }
         [image unlockFocus];
@@ -775,36 +778,6 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     [tableView_ sizeLastColumnToFit];
 }
 
-- (void)setShowGraphic:(BOOL)showGraphic
-{
-    NSFont* font = [NSFont systemFontOfSize:0];
-    NSLayoutManager* layoutManager = [[NSLayoutManager alloc] init];
-    [layoutManager autorelease];
-    int height = ([layoutManager defaultLineHeightForFont:font]);
-
-    rowHeight_ = showGraphic ? 75 : height;
-    showGraphic_ = showGraphic;
-    [tableView_ setRowHeight:rowHeight_];
-
-    if (!showGraphic) {
-        [tableView_ setUsesAlternatingRowBackgroundColors:YES];
-        [tableView_
-         setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleRegular];
-        [tableView_ removeTableColumn:starColumn_];
-        [tableColumn_ setDataCell:[[[NSTextFieldCell alloc] initTextCell:@""] autorelease]];
-    } else {
-        [tableView_ setUsesAlternatingRowBackgroundColors:NO];
-        [tableView_
-             setSelectionHighlightStyle:NSTableViewSelectionHighlightStyleSourceList];
-        [tableView_ removeTableColumn:tableColumn_];
-        tableColumn_ =
-            [[NSTableColumn alloc] initWithIdentifier:@"name"];
-        [tableColumn_ setEditable:NO];
-
-        [tableView_ addTableColumn:tableColumn_];
-    }
-}
-
 - (void)allowEmptySelection
 {
     [tableView_ setAllowsEmptySelection:YES];
@@ -917,7 +890,7 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
     scrollViewFrame.origin.y = 0;
     scrollViewFrame.size.width = frame.size.width;
     scrollViewFrame.size.height =
-        frame.size.height - kSearchWidgetHeight - kInterWidgetMargin;
+        frame.size.height - kSearchWidgetHeight - margin_;
     [scrollView_ setFrame:scrollViewFrame];
 
     NSRect tableViewFrame = [tableView_ frame];
@@ -946,6 +919,28 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
 - (id)delegate
 {
     return delegate_;
+}
+
+- (void)setFont:(NSFont *)theFont
+{
+    for (NSTableColumn *col in [tableView_ tableColumns]) {
+        [[col dataCell] setFont:theFont];
+    }
+    NSLayoutManager* layoutManager = [[NSLayoutManager alloc] init];
+    [layoutManager autorelease];
+    normalRowHeight_ = [layoutManager defaultLineHeightForFont:theFont];
+    rowHeightWithTags_ =  normalRowHeight_ + [layoutManager defaultLineHeightForFont:[NSFont systemFontOfSize:10]];
+    [tableView_ setRowHeight:normalRowHeight_];
+
+    if ([theFont pointSize] < 13) {
+        NSRect before = searchField_.frame;
+        [[searchField_ cell] setFont:theFont];
+        [[searchField_ cell] setControlSize:NSSmallControlSize];
+        [searchField_ sizeToFit];
+
+        margin_ = 5;
+        [self resizeSubviewsWithOldSize:self.frame.size];
+    }
 }
 
 @end

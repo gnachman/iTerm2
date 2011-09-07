@@ -72,11 +72,10 @@ typedef enum {
 @interface PseudoTerminal : NSWindowController <
     PTYTabViewDelegateProtocol, 
     PTYWindowDelegateProtocol,
-    WindowControllerInterface,
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
-    NSWindowDelegate,
+NSWindowDelegate,
 #endif
-    ToolbeltDelegate >
+    WindowControllerInterface >
 {
     NSPoint preferredOrigin_;
     SolidColorView* background_;

@@ -13,6 +13,8 @@
 		1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
 		1D173859126C820A004622DC /* FakeWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D173857126C820A004622DC /* FakeWindow.h */; };
 		1D19C3631415998E00617E08 /* closebutton.tif in Resources */ = {isa = PBXBuildFile; fileRef = 1D19C3621415998E00617E08 /* closebutton.tif */; };
+		1D19C71414171F1D00617E08 /* ToolJobs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D19C71214171F1D00617E08 /* ToolJobs.h */; };
+		1D19C71514171F1D00617E08 /* ToolJobs.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D19C71314171F1D00617E08 /* ToolJobs.m */; };
 		1D237D28131D8741004DD60C /* FindView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D237D26131D8741004DD60C /* FindView.h */; };
 		1D237D29131D8741004DD60C /* FindView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D237D27131D8741004DD60C /* FindView.m */; };
 		1D237D90131D8BEE004DD60C /* FindView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D237D8E131D8BEE004DD60C /* FindView.xib */; };
@@ -328,6 +330,8 @@
 		1D173857126C820A004622DC /* FakeWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FakeWindow.h; sourceTree = "<group>"; };
 		1D173858126C820A004622DC /* FakeWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FakeWindow.m; sourceTree = "<group>"; };
 		1D19C3621415998E00617E08 /* closebutton.tif */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = closebutton.tif; path = images/closebutton.tif; sourceTree = "<group>"; };
+		1D19C71214171F1D00617E08 /* ToolJobs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolJobs.h; sourceTree = "<group>"; };
+		1D19C71314171F1D00617E08 /* ToolJobs.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolJobs.m; sourceTree = "<group>"; };
 		1D237D26131D8741004DD60C /* FindView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindView.h; sourceTree = "<group>"; };
 		1D237D27131D8741004DD60C /* FindView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FindView.m; sourceTree = "<group>"; };
 		1D237D8F131D8BEE004DD60C /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/FindView.xib; sourceTree = "<group>"; };
@@ -730,9 +734,10 @@
 				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
 				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
 				1DE8DC881415513A00F83147 /* ToolbeltView.m */,
-				1DE8DF351415799700F83147 /* ToolWrapper.m */,
-				1DE8DC8C1415546000F83147 /* ToolProfiles.m */,
+				1D19C71314171F1D00617E08 /* ToolJobs.m */,
 				1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */,
+				1DE8DC8C1415546000F83147 /* ToolProfiles.m */,
+				1DE8DF351415799700F83147 /* ToolWrapper.m */,
 				1D06A04F134CDBED00C414EF /* Trouter.m */,
 				1D44218B1290B34500891504 /* TextViewWrapper.m */,
 				E8CF7562026DDA6303A80106 /* VT100Screen.m */,
@@ -752,6 +757,7 @@
 				1DE8DDAB1415648600F83147 /* ToolPasteHistory.h */,
 				1D29732514082676004C5DBE /* MovePaneController.h */,
 				1DE8DC8B1415546000F83147 /* ToolProfiles.h */,
+				1D19C71214171F1D00617E08 /* ToolJobs.h */,
 				1DE8DC871415513A00F83147 /* ToolbeltView.h */,
 				1DCA5ECD13EE507800B7725E /* WindowArrangements.h */,
 				1D29732914082A52004C5DBE /* SplitSelectionView.h */,
@@ -1207,6 +1213,7 @@
 				1DE8DC8D1415546000F83147 /* ToolProfiles.h in Headers */,
 				1DE8DDAD1415648600F83147 /* ToolPasteHistory.h in Headers */,
 				1DE8DF361415799700F83147 /* ToolWrapper.h in Headers */,
+				1D19C71414171F1D00617E08 /* ToolJobs.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1505,6 +1512,7 @@
 				1DE8DC8E1415546000F83147 /* ToolProfiles.m in Sources */,
 				1DE8DDAE1415648600F83147 /* ToolPasteHistory.m in Sources */,
 				1DE8DF371415799700F83147 /* ToolWrapper.m in Sources */,
+				1D19C71514171F1D00617E08 /* ToolJobs.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

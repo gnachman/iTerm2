@@ -126,6 +126,11 @@
     }
 }
 
+- (void)clear
+{
+    [entries_ removeAllObjects];
+}
+
 - (void)eraseHistory
 {
     [[NSFileManager defaultManager] removeItemAtPath:path_ error:NULL];

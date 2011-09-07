@@ -471,7 +471,7 @@ NSString *sessionsKey = @"sessions";
     NSSize contentSize = [drawer_ contentSize];
     NSRect toolbeltFrame = NSMakeRect(0, 0, contentSize.width, contentSize.height);;
     toolbelt_ = [[[ToolbeltView alloc] initWithFrame:toolbeltFrame
-                                            delegate:self] autorelease];
+                                                term:self] autorelease];
     [drawer_ setContentView:toolbelt_];
     if ([[[iTermApplication sharedApplication] delegate] showToolbelt]) {
         [drawer_ open];
@@ -916,6 +916,9 @@ NSString *sessionsKey = @"sessions";
 
 - (void)dealloc
 {
+    [[drawer_ contentView] shutdown];
+    [drawer_ release];
+
     // Do not assume that [self window] is valid here. It may have been freed.
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 

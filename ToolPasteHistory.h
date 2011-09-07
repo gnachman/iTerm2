@@ -13,10 +13,12 @@
 @interface ToolPasteHistory : NSView <ToolbeltTool> {
     NSScrollView *scrollView_;
     NSTableView *tableView_;
+    NSButton *clear_;
     PasteboardHistory *pasteHistory_;
     NSTimer *minuteRefreshTimer_;
 }
 
 - (id)initWithFrame:(NSRect)frame;
+- (void)shutdown;
 
 @end

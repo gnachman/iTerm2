@@ -16,14 +16,20 @@
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        const int kVerticalMargin = 8;
+        const int kVerticalMargin = 5;
         const int kMargin = 0;
         const int kPopupHeight = 26;
+
         listView_ = [[BookmarkListView alloc] initWithFrame:NSMakeRect(kMargin, 0, frame.size.width - kMargin * 2, frame.size.height - kPopupHeight - kVerticalMargin)];
         [listView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [listView_ setDelegate:self];
+        [listView_ setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
         [self addSubview:listView_];
-        popup_ = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(kMargin, frame.size.height - kPopupHeight, frame.size.width - kMargin * 2, kPopupHeight)];
+        [listView_ release];
+
+        popup_ = [[NSPopUpButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kPopupHeight, frame.size.width, kPopupHeight)];
+        [[popup_ cell] setControlSize:NSSmallControlSize];
+        [[popup_ cell] setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
         [[popup_ menu] addItemWithTitle:@"New Tab"
                                  action:@selector(toolProfilesNewTab:)
                           keyEquivalent:@""];
@@ -40,11 +46,18 @@
             [i setTarget:self];
         }
         [self addSubview:popup_];
+        [popup_ release];
         [popup_ setAutoresizingMask:NSViewMinYMargin | NSViewWidthSizable];
-        
+
         [popup_ bind:@"enabled" toObject:listView_ withKeyPath:@"hasSelection" options:nil];
     }
     return self;
+}
+
+- (void)dealloc
+{
+    [popup_ unbind:@"enabled"];
+    [super dealloc];
 }
 
 - (BOOL)isFlipped
