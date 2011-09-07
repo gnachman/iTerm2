@@ -99,4 +99,16 @@ static const CGFloat kButtonSize = 17;
     }
 }
 
+- (void)setName:(NSString *)theName
+{
+    [name autorelease];
+    name = [theName copy];
+    [self performSelector:@selector(setTitleEditable) withObject:nil afterDelay:0];
+}
+
+- (void)setTitleEditable
+{
+    [title_ setEditable:NO];
+}
+
 @end
