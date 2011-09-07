@@ -258,10 +258,6 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (id)initWithFrame:(NSRect)aRect
 {
-#if DEBUG_ALLOC
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
-#endif
-
     self = [super initWithFrame: aRect];
     dataSource=_delegate=markedTextAttributes=NULL;
     firstMouseEventNumber_ = -1;
@@ -1662,7 +1658,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     static BOOL prevBad=NO;
     ++iteration;
     if (prevBad) {
-        NSLog(@"Last was bad.");
         prevBad = NO;
     }
 #endif
@@ -2105,6 +2100,16 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     keyIsARepeat = [event isARepeat];
     if (debugKeyDown) {
         NSLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
+        NSLog(@"prev=%@", prev);
+        NSLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
+        NSLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%d", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
+        NSLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
+        NSLog(@"delegate optionkey=%d, delegate rightOptionKey=%d", (int)[delegate optionKey], (int)[delegate rightOptionKey]);
+        NSLog(@"modflag & leftAlt == leftAlt && optionKey != NORMAL = %d", (int)((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
+        NSLog(@"modflag == alt && optionKey != NORMAL = %d", (int)(modflag == NSAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
+        NSLog(@"modflag & rightAlt == rightAlt && rightOptionKey != NORMAL = %d", (int)((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL));
+        NSLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
+        NSLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));                 
     }
 
     // Hide the cursor
@@ -2116,6 +2121,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
          (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)) ||  // is an arrow key, f key, etc.
          ([[event charactersIgnoringModifiers] length] > 0 &&      // Will send Meta/Esc+ (length is 0 if it's a dedicated dead key)
           (((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask && [delegate optionKey] != OPT_NORMAL) ||
+           (modflag == NSAlternateKeyMask && [delegate optionKey] != OPT_NORMAL) ||  // Synergy sends an Alt key that's neither left nor right!
            ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL))) ||
          ((modflag & NSControlKeyMask) &&                          // a few special cases
           (keyCode == 0x2c /* slash */ || keyCode == 0x2a /* backslash */)))) {
@@ -2126,6 +2132,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         return;
     }
 
+    if (debugKeyDown) {
+        NSLog(@"Test for command key");
+    }
     if (modflag & NSCommandKeyMask) {
         // You pressed cmd+something but it's not handled by the delegate. Going further would
         // send the unmodified key to the terminal which doesn't make sense.adsjflsd
@@ -2140,6 +2149,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     BOOL workAroundControlBug = NO;
     if (!prev &&
         (modflag & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == NSControlKeyMask) {
+        if (debugKeyDown) {
+            NSLog(@"Special ctrl+key handler running");
+        }
         NSString *unmodkeystr = [event charactersIgnoringModifiers];
         if ([unmodkeystr length] != 0) {
             unichar unmodunicode = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
@@ -2563,7 +2575,6 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)mouseDown:(NSEvent *)event
 {
-    NSLog(@"mouseDown: %@", event);
     if ([self mouseDownImpl:event]) {
         [super mouseDown:event];
     }
@@ -2797,7 +2808,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseUp:(NSEvent *)event
 {
-    NSLog(@"mouseUp");
+    firstMouseEventNumber_ = -1;  // Synergy seems to interfere with event numbers, so reset it here.
     if (mouseDownIsThreeFingerClick_) {
         [self otherMouseUp:nil];
         mouseDownIsThreeFingerClick_ = NO;
@@ -2936,9 +2947,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseDragged:(NSEvent *)event
 {
-    NSLog(@"mouseDrag: %@", event);
     if (mouseDownIsThreeFingerClick_) {
-        NSLog(@"* three finger click");
         return;
     }
     // Prevent accidental dragging while dragging trouter item.
@@ -2971,11 +2980,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([event eventNumber] == firstMouseEventNumber_) {
         // We accept first mouse for the purposes of focusing or dragging a
         // split pane but not for making a selection.
-        NSLog(@"* first mouse");
         return;
     }
     if (!dragOk_) {
-        NSLog(@"* !drag ok");
         return;
     }
     NSString *theSelectedText;
@@ -3004,7 +3011,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                        Y:ry]];
             case MOUSE_REPORTING_NORMAL:
                 DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
-                NSLog(@"* mouse reporting normal");
                 return;
                 break;
 
@@ -3031,7 +3037,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             theSelectedText = [self contentFromX:startX Y:startY ToX:endX Y:endY pad:NO includeLastNewline:[[PreferencePanel sharedInstance] copyLastNewline]];
         }
         if ([theSelectedText length] > 0) {
-            NSLog(@"* dragText");
             [self _dragText: theSelectedText forEvent: event];
             DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
             return;
@@ -3042,7 +3047,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // If you're holding cmd (but not opt) then you're either trying to click on a link and
         // accidentally dragged a little bit, or you're trying to drag a selection. Do nothing until
         // the threshold is met.
-        NSLog(@"* cmd only + drag threshold met");
         return;
     }
     if (mouseDownOnSelection == YES &&
@@ -3050,7 +3054,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         !dragThresholdMet) {
         // Would be a drag of a rect region but mouse hasn't moved far enough yet. Prevent the
         // selection from changing.
-        NSLog(@"* trying to drag a rect region");
         return;
     }
 
@@ -3061,7 +3064,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                    workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
                          lineNumber:nil];
         if (path == nil) {
-            NSLog(@"* path=nil, cmd only");
             return;
         }
 
@@ -3084,7 +3086,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
              pasteboard:pboard
                  source:self
               slideBack:YES];
-        NSLog(@"* cmd only drag");
         return;
 
     }
@@ -3108,7 +3109,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     [self moveSelectionEndpointToX:x Y:y locationInTextView:locationInTextView];
-    NSLog(@"-> moveSelectionEndpointToX:%d y:%d locationInTextView:%@", x, y, [NSValue valueWithPoint:locationInTextView]);
 }
 
 - (NSString*)contentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad
@@ -3818,6 +3818,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)insertText:(id)aString
 {
     if ([self hasMarkedText]) {
+        BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+        if (debugKeyDown) {
+            NSLog(@"insertText: clear marked text");
+        }
         IM_INPUT_MARKEDRANGE = NSMakeRange(0, 0);
         [markedText release];
         markedText=nil;
@@ -3848,6 +3852,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)setMarkedText:(id)aString selectedRange:(NSRange)selRange
 {
+    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+    if (debugKeyDown) {
+        NSLog(@"set marked text to %@; range %@", aString, [NSValue valueWithRange:selRange]);
+    }
     [markedText release];
     if ([aString isKindOfClass:[NSAttributedString class]]) {
         markedText = [[NSAttributedString alloc] initWithString:[aString string]
@@ -3885,6 +3893,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)unmarkText
 {
+    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+    if (debugKeyDown) {
+        NSLog(@"clear marked text");
+    }
     // As far as I can tell this is never called.
     IM_INPUT_MARKEDRANGE = NSMakeRange(0, 0);
     imeOffset = 0;
