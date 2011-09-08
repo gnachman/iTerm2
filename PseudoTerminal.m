@@ -2007,6 +2007,7 @@ NSString *sessionsKey = @"sessions";
 {
     zooming_ = NO;
     lionFullScreen_ = NO;
+    [self repositionWidgets];
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame
