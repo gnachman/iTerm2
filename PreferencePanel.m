@@ -1946,7 +1946,6 @@ static float versionNumber;
         NSData *data = [NSURLConnection sendSynchronousRequest:req
                                              returningResponse:&response
                                                          error:&error];
-
         if (!data || error) {
             [[NSAlert alertWithMessageText:@"Failed to load preferences from URL. Falling back to local copy."
                              defaultButton:@"OK"
@@ -2008,6 +2007,7 @@ static float versionNumber;
             if (![exemptKeys containsObject:key] &&
                 ![key hasPrefix:@"NS"] && 
                 ![key hasPrefix:@"SU"] &&
+                ![key hasPrefix:@"NoSync"] &&
                 ![key hasPrefix:@"UK"]) {
 
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
@@ -2018,6 +2018,7 @@ static float versionNumber;
             if (![exemptKeys containsObject:key] &&
                 ![key hasPrefix:@"NS"] && 
                 ![key hasPrefix:@"SU"] &&
+                ![key hasPrefix:@"NoSync"] &&
                 ![key hasPrefix:@"UK"]) {
 
                 [[NSUserDefaults standardUserDefaults] setObject:[remotePrefs objectForKey:key]
@@ -2051,6 +2052,7 @@ static float versionNumber;
             if (![exemptKeys containsObject:key]) {
                 if (![key hasPrefix:@"NS"] &&
                     ![key hasPrefix:@"SU"] &&
+                    ![key hasPrefix:@"NoSync"] &&
                     ![key hasPrefix:@"UK"] &&
                     ![[remotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
                     return YES;
@@ -2062,6 +2064,7 @@ static float versionNumber;
             if (![exemptKeys containsObject:key]) {
                 if (![key hasPrefix:@"NS"] &&
                     ![key hasPrefix:@"SU"] &&
+                    ![key hasPrefix:@"NoSync"] &&
                     ![key hasPrefix:@"UK"] &&
                     ![[remotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
                     return YES;

@@ -311,11 +311,16 @@ static BOOL hasBecomeActive = NO;
             NSString *remote = [[PreferencePanel sharedInstance] remotePrefsLocation];
             if ([remote hasPrefix:@"http://"] ||
                 [remote hasPrefix:@"https://"]) {
-                NSRunAlertPanel(@"Preference Changes Will be Lost!",
-                                [NSString stringWithFormat:@"Your preferences are loaded from a URL and differ from your local preferences. To save your local preferences, copy ~/Library/Preferences/com.googlecode.iterm2.plist to %@ after quitting iTerm2.", remote],
-                                @"OK",
-                                nil,
-                                nil);
+                if (![[NSUserDefaults standardUserDefaults] objectForKey:@"NoSyncNeverRemindPrefsChangesLost"]) {
+                    if (NSRunAlertPanel(@"Preference Changes Will be Lost!",
+                                        [NSString stringWithFormat:@"Your preferences are loaded from a URL and differ from your local preferences. To save your local preferences, copy ~/Library/Preferences/com.googlecode.iterm2.plist to %@ after quitting iTerm2.", remote],
+                                        @"OK",
+                                        @"Never Remind Me Again",
+                                        nil) == NSAlertAlternateReturn) {
+                        [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES]
+                                                                  forKey:@"NoSyncNeverRemindPrefsChangesLost"];
+                    }
+                }
             } else {
                 NSString *format;
                 if ([BookmarkModel migrated]) {
@@ -325,18 +330,25 @@ static BOOL hasBecomeActive = NO;
                     format = @"Your preferences are loaded from a custom location and differ from your local preferences."
                     @"Your local preferences will be lost if not copied to %@.";
                 }
-                switch (NSRunAlertPanel(@"Preference Changes Will be Lost!",
-                                        [NSString stringWithFormat:format,
-                                         remote],
-                                        @"Copy",
-                                        @"Lose Changes",
-                                        nil)) {
-                    case NSAlertDefaultReturn:
-                        [[PreferencePanel sharedInstance] pushToCustomFolder:nil];
-                        break;
+                if (![[NSUserDefaults standardUserDefaults] objectForKey:@"NoSyncNeverRemindPrefsChangesLost"]) {
+                    switch (NSRunAlertPanel(@"Preference Changes Will be Lost!",
+                                            [NSString stringWithFormat:format,
+                                             remote],
+                                            @"Copy",
+                                            @"Never Remind Me Again",
+                                            @"Lose Changes")) {
+                        case NSAlertDefaultReturn:
+                            [[PreferencePanel sharedInstance] pushToCustomFolder:nil];
+                            break;
 
-                    case NSAlertAlternateReturn:
-                        break;
+                        case NSAlertOtherReturn:
+                            break;
+                            
+                        case NSAlertAlternateReturn:
+                            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES]
+                                                                      forKey:@"NoSyncNeverRemindPrefsChangesLost"];
+                            break;
+                    }
                 }
             }
         }
