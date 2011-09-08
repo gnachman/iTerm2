@@ -294,6 +294,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     resultMap_ = [[NSMutableDictionary alloc] init];
 
     trouter = [[Trouter alloc] init];
+    trouterDragged = NO;
     workingDirectoryAtLines = [[NSMutableArray alloc] init];
 
     if ([[PreferencePanel sharedInstance] threeFingerEmulatesMiddle]) {
@@ -1109,7 +1110,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
  *
  * Index                   012 34
  * Char                    012345
- * allText_              = xba�ry
+ * allText_              = xba´ry
  * lineBreakCharOffests_ = [1, 4]
  * lineBreakInexOffsets_ = [1, 3]
  */
@@ -2820,6 +2821,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
     dragOk_ = NO;
+    trouterDragged = NO;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
     const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
     if (!cmdPressed &&
@@ -3062,7 +3064,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
 
-    if (startX < 0 && pressingCmdOnly) {
+    if (startX < 0 && pressingCmdOnly && trouterDragged == NO) {
+        // Only one Trouter check per drag
+        trouterDragged = YES;
+
         // Drag a file handle (only possible when there is no selection).
         NSString *path = [self _getURLForX:x y:y];
         path = [trouter getFullPath:path
@@ -3091,6 +3096,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
              pasteboard:pboard
                  source:self
               slideBack:YES];
+
+        // Valid drag, so we reset the flag because mouseUp doesn't get called when a drag is done
+        trouterDragged = NO;
+
         return;
 
     }
@@ -6428,169 +6437,265 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return NO;
 }
 
-static bool IsUrlChar(NSString* str)
++ (NSCharacterSet *)urlCharacterSet
 {
-    if ([str length] == 0) {
-        return NO;
-    }
-    UTF32Char theChar;
-    if ([str length] == 1) {
-        theChar = [str characterAtIndex:0];
-    } else {
-        unichar first = [str characterAtIndex:0];
-        if (IsHighSurrogate(first)) {
-            theChar = DecodeSurrogatePair(first, [str characterAtIndex:1]);
-        } else {
-            // Use the base character; combining marks won't affect the outcome.
-            theChar = first;
-        }
-    }
-    if (!theChar) {
-        return NO;
+    static NSMutableCharacterSet* urlChars;
+    if (!urlChars) {
+        urlChars = [[NSMutableCharacterSet characterSetWithCharactersInString:@".?\\/:;%=&_-,+~#@!*'()"] retain];
+        [urlChars formUnionWithCharacterSet:[NSCharacterSet alphanumericCharacterSet]];
+        [urlChars retain];
     }
 
-    static NSCharacterSet* urlChars;
-    if (!urlChars) {
-        urlChars = [[NSCharacterSet characterSetWithCharactersInString:@".?/:;%=&_-,+~#@!*'()"] retain];
-    }
-    return ([urlChars longCharacterIsMember:theChar] ||
-            [[NSCharacterSet alphanumericCharacterSet] longCharacterIsMember:theChar]);
+    return urlChars;
 }
 
-- (NSString*)_getURLForX:(int)x
-                       y:(int)y
-    respectingHardNewlines:(BOOL)respectHardNewlines
++ (NSCharacterSet *)filenameCharacterSet
 {
-    int w = [dataSource width];
-    int h = [dataSource numberOfLines];
-    NSMutableString *url = [NSMutableString string];
-    NSString* theChar = [self _getCharacterAtX:x Y:y];
-
-    if (!IsUrlChar(theChar)) {
-        return url;
+    static NSMutableCharacterSet* filenameChars;
+    if (!filenameChars) {
+        filenameChars = [[NSCharacterSet whitespaceCharacterSet] mutableCopy];
+        [filenameChars formUnionWithCharacterSet:[PTYTextView urlCharacterSet]];
     }
 
-    // Look for a left and right edge bracketed by | characters
-    // Look for a left edge
-    int leftx = 0;
-    for (int xi = x-1, yi = y; 0 <= xi; xi--) {
-        NSString* curChar = [self _getCharacterAtX:xi Y:yi];
-        if ([curChar isEqualToString:@"|"] &&
-            ((yi > 0 && [[self _getCharacterAtX:xi Y:yi-1] isEqualToString:@"|"]) ||
-             (yi < h-1 && [[self _getCharacterAtX:xi Y:yi+1] isEqualToString:@"|"]))) {
-            leftx = xi+1;
-            break;
-        }
-    }
-
-    // Look for a right edge
-    int rightx = w-1;
-    for (int xi = x+1, yi = y; xi < w; xi++) {
-        NSString* c = [self _getCharacterAtX:xi Y:yi];
-        if ([c isEqualToString:@"|"] &&
-            ((yi > 0 && [[self _getCharacterAtX:xi Y:yi-1] isEqualToString:@"|"]) ||
-             (yi < h-1 && [[self _getCharacterAtX:xi Y:yi+1] isEqualToString:@"|"]))) {
-            rightx = xi-1;
-            break;
-        }
-    }
-
-    // Move to the left
-    {
-        int endx = x-1;
-        for (int xi = endx, yi = y; xi >= leftx && 0 <= yi; xi--) {
-            NSString* curChar = [self _getCharacterAtX:xi Y:yi];
-            if (!IsUrlChar(curChar)) {
-                // Found a non-url character so append the left part of the URL.
-                [url insertString:[self contentFromX:xi+1 Y:yi ToX:endx+1 Y:yi pad:YES includeLastNewline:NO]
-                     atIndex:0];
-                break;
-            }
-            if (xi == leftx) {
-                // hit the start of the line
-                [url insertString:[self contentFromX:xi Y:yi ToX:endx+1 Y:yi pad:YES includeLastNewline:NO]
-                     atIndex:0];
-                // Try to wrap around to the previous line
-                if (yi == 0) {
-                    break;
-                }
-                yi--;
-                if (respectHardNewlines && rightx == w-1 && [self _haveHardNewlineAtY:yi]) {
-                    // Hard newline before url
-                    break;
-                }
-                if (rightx < w-1 && ![[self _getCharacterAtX:rightx+1 Y:yi] isEqualToString:@"|"]) {
-                    // Was bracketed by |s but the previous line lacks them.
-                    break;
-                }
-                // skip backslashes at the end of the line indicating wrapping.
-                xi = rightx;
-                while (xi >= leftx && [[self _getCharacterAtX:xi Y:yi] isEqualToString:@"\\"]) {
-                    xi--;
-                }
-                endx = xi;
-            }
-        }
-    }
-
-    // Move to the right
-    {
-        int startx = x;
-        for (int xi = startx+1, yi = y; xi <= rightx && yi < h; xi++) {
-            NSString* curChar = [self _getCharacterAtX:xi Y:yi];
-            if (!IsUrlChar(curChar)) {
-                // Found something non-urly. Append what we have so far.
-                [url appendString:[self contentFromX:startx Y:yi ToX:xi Y:yi pad:YES includeLastNewline:NO]];
-                // skip backslahes that indicate wrapping
-                while (x <= rightx && [[self _getCharacterAtX:xi Y:yi] isEqualToString:@"\\"]) {
-                    xi++;
-                }
-                if (xi <= rightx) {
-                    // before rightx there was something besides \s
-                    break;
-                }
-                // Don't respect hard newlines that are "escaped" by a \.
-                respectHardNewlines = NO;
-                // xi is left at rightx+1
-            } else if (xi == rightx) {
-                // Made it to rightx.
-                [url appendString:[self contentFromX:startx Y:yi ToX:xi+1 Y:yi pad:YES includeLastNewline:NO]];
-            } else {
-                // Char is valid and xi < rightx.
-                continue;
-            }
-            if (respectHardNewlines && rightx == w-1 && [self _haveHardNewlineAtY:yi]) {
-                // Don't wrap URL at hard newline
-                break;
-            }
-
-            // Wrap to the next line
-            if (yi == h-1) {
-                // got to the end of the screen.
-                break;
-            }
-            yi++;
-            if (leftx > 0 && ![[self _getCharacterAtX:leftx-1 Y:yi] isEqualToString:@"|"]) {
-                // Tried to wrap but there was no |, so stop.
-                break;
-            }
-            xi = startx = leftx;
-        }
-    }
-
-    // Grab the addressbook command
-    [url replaceOccurrencesOfString:@"\n"
-                         withString:@""
-                            options:NSLiteralSearch
-                              range:NSMakeRange(0, [url length])];
-
-    return (url);
-
+    return filenameChars;
 }
 
 - (BOOL)_stringLooksLikeURL:(NSString*)s
 {
-    return [s rangeOfRegex:@"^[a-zA-Z]{1,6}:"].location == 0;
+    // This is much harder than it sounds.
+    // [NSURL URLWithString] is supposed to do this, but it doesn't accept IDN-encoded domains like
+    // http://例子.测试
+    // Just about any word can be a URL in the local search path. The code that calls this prefers false
+    // positives, so just make sure it's not empty and doesn't have illegal characters.
+    if ([s rangeOfCharacterFromSet:[[PTYTextView urlCharacterSet] invertedSet]].location != NSNotFound) {
+        return NO;
+    }
+    if ([s length] == 0) {
+        return NO;
+    }
+    return YES;
+}
+
+- (NSMutableString *)_bruteforcePathFromBeforeString:(NSMutableString *)beforeString afterString:(NSMutableString *) afterString workingDirectory:(NSString *)workingDirectory {
+    // Remove escaping slashes
+    NSString *removeEscapingSlashes = @"\\\\([ \\(\\[\\]\\\\)])";
+    [beforeString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
+    [afterString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
+
+    // The parens here cause "Foo bar" to become {"Foo", " ", "bar"} rather than {"Foo", "bar"}.
+    NSMutableArray *beforeChunks = [[beforeString componentsSeparatedByRegex:@"([\t ])"] mutableCopy];
+    NSMutableArray *afterChunks = [[afterString componentsSeparatedByRegex:@"([\t ])"] mutableCopy];
+
+    NSMutableString *left = [NSMutableString string];
+
+    [beforeChunks addObject:@""]; // So there is an attempt with no left chunks
+    // Bail after 100 iterations if nothing is still found.
+    int limit = 100;
+
+    for (int i = [beforeChunks count] - 1; i >= 0; i--) {
+        [left insertString:[beforeChunks objectAtIndex:i] atIndex:0];
+        NSMutableString *possiblePath = [NSMutableString stringWithString:left];
+
+        // Do not search more than 10 chunks forward to avoid starving leftward search.
+        for (int j = 0; j < [afterChunks count] && j < 10; j++) {
+            [possiblePath appendString:[afterChunks objectAtIndex:j]];
+            if ([trouter getFullPath:possiblePath workingDirectory:workingDirectory lineNumber:NULL]) {
+                return possiblePath;
+            }
+
+            if (--limit == 0) {
+                return nil;
+            }
+        }
+    }
+    return nil;
+}
+
+// Find the bounding rectangle of what could possibly be a single semantic
+// string with a character at xi,yi. Lines of | characters are treated as a
+// vertical bound.
+- (NSRect)boundingRectForCharAtX:(int)xi y:(int)yi
+{
+    int w = [dataSource width];
+    int h = [dataSource numberOfLines];
+    int minX = 0;
+    int maxX = w - 1;
+    
+    // Find lines of at least two | characters on either side of xi,yi to define the min and max
+    // horizontal bounds.
+    for (int i = xi; i >= 0; i--) {
+        if ([[self _getCharacterAtX:i Y:yi] isEqualToString:@"|"] &&
+            ((yi > 0 && [[self _getCharacterAtX:i Y:yi - 1] isEqualToString:@"|"]) ||
+             (yi < h - 1 && [[self _getCharacterAtX:i Y:yi + 1] isEqualToString:@"|"]))) {
+            minX = i + 1;
+            break;
+        }
+    }
+    for (int i = xi; i < w; i++) {
+        if ([[self _getCharacterAtX:i Y:yi] isEqualToString:@"|"] &&
+            ((yi > 0 && [[self _getCharacterAtX:i Y:yi - 1] isEqualToString:@"|"]) ||
+             (yi < h - 1 && [[self _getCharacterAtX:i Y:yi + 1] isEqualToString:@"|"]))) {
+            maxX = i - 1;
+            break;
+        }
+    }
+
+    // We limit the esarch to 10 lines in each direction.
+    // See how high the lines of pipes go
+    int minY = MAX(0, yi - 10);
+    int maxY = MIN(h - 1, yi + 10);
+    for (int i = yi; i >= yi - 10 && i >= 0; i--) {
+        if (minX != 0) {
+            if (![[self _getCharacterAtX:minX - 1 Y:i] isEqualToString:@"|"]) {
+                minY = i + 1;
+                break;
+            }
+        }
+        if (maxX != w - 1) {
+            if (![[self _getCharacterAtX:maxX + 1 Y:i] isEqualToString:@"|"]) {
+                minY = i + 1;
+                break;
+            }
+        }
+    }
+
+    // See how low the lines of pipes go
+    for (int i = yi; i < h && i < yi + 10; i++) {
+        if (minX != 0) {
+            if (![[self _getCharacterAtX:minX - 1 Y:i] isEqualToString:@"|"]) {
+                maxY = i - 1;
+                break;
+            }
+        }
+        if (maxX != w - 1) {
+            if (![[self _getCharacterAtX:maxX + 1 Y:i] isEqualToString:@"|"]) {
+                maxY = i - 1;
+                break;
+            }
+        }
+    }
+
+    return NSMakeRect(minX, minY, maxX - minX + 1, maxY - minY + 1);
+}
+
+// Find the prefix (if dir < 0) or suffix (dir > 0) of a string having a
+// character at xi,yi.
+// If respectHardNewlines is true, then a hard newline always terminates the
+// string.
+- (NSString *)wrappedStringAtX:(int)xi y:(int)yi dir:(int)dir respectHardNewlines:(BOOL)respectHardNewlines
+{
+    int w = [dataSource width];
+    int h = [dataSource height];
+    int x = xi;
+    int y = yi;
+    NSRect bounds = [self boundingRectForCharAtX:xi y:yi];
+    int minX = bounds.origin.x;
+    int maxX = bounds.origin.x + bounds.size.width - 1;
+    int minY = bounds.origin.y;
+    int maxY = bounds.origin.y + bounds.size.height - 1;
+
+    // Walk characters until a hard newline (if respected) or the edge of the screen.
+    NSMutableString *s = [NSMutableString string];
+    screen_char_t *theLine = [dataSource getLineAtIndex:y];
+    BOOL first = YES;
+    while (y >= minY && y <= maxY) {
+        NSString* curChar = [self _getCharacterAtX:x Y:y];
+
+        if (first && dir < 0) {
+            // Skip first char when going backwards to avoid getting it in both directions
+            first = NO;
+        } else if ([curChar isEqualToString:@"\\"] && x == maxX) {
+            // Ignore backslash in last position of line
+        } else {
+            NSString *value = nil;
+            if (theLine[x].code == TAB_FILLER) {
+                if ([self isTabFillerOrphanAtX:x Y:y]) {
+                    value = @" ";
+                }
+            } else if (theLine[x].code != DWC_RIGHT &&
+                       theLine[x].code != DWC_SKIP) {
+                value = curChar;
+            }
+            if (value && [value length] > 0) {
+                if ([value length] == 1 && [value characterAtIndex:0] == 0) {
+                    value = @" ";
+                }
+                if (dir > 0) {
+                    [s appendString:value];
+                } else {
+                    [s insertString:value atIndex:0];
+                }
+            }
+        }
+
+        x += dir;
+        if (x < minX) {
+            x = maxX;
+            --y;
+            if (respectHardNewlines && y >= minY && minX == 0 && [self _haveHardNewlineAtY:y]) {
+                break;
+            }
+            if (y >= 0) {
+                theLine = [dataSource getLineAtIndex:y];
+            }
+        } else if (x > maxX) {
+            x = minX;
+            ++y;
+            if (respectHardNewlines && y <= maxY && maxX == w - 1 && [self _haveHardNewlineAtY:y]) {
+                break;
+            }
+            if (y < h) {
+                theLine = [dataSource getLineAtIndex:y];
+            }
+        }
+    }
+
+    return s;
+}
+
+// Returns a substring of contiguous characters only from a given character set
+// including some character in the middle of the "haystack" (source) string.
+- (NSString *)stringInString:(NSString *)haystack includingOffset:(int)offset fromCharacterSet:(NSCharacterSet *)charSet
+{
+    NSRange firstBadCharRange = [haystack rangeOfCharacterFromSet:[charSet invertedSet]
+                                                          options:NSBackwardsSearch
+                                                            range:NSMakeRange(0, offset)];
+    NSRange lastBadCharRange = [haystack rangeOfCharacterFromSet:[charSet invertedSet]
+                                                         options:0
+                                                           range:NSMakeRange(offset, [haystack length] - offset)];
+    int start = 0;
+    int end = [haystack length];
+    if (firstBadCharRange.location != NSNotFound) {
+        start = firstBadCharRange.location + 1;
+    }
+    if (lastBadCharRange.location != NSNotFound) {
+        end = lastBadCharRange.location;
+    }
+
+    return [haystack substringWithRange:NSMakeRange(start, end - start)];
+}
+
+- (NSString*)_getURLForX:(int)x
+                       y:(int)y
+  respectingHardNewlines:(BOOL)respectHardNewlines
+{
+    NSString *prefix = [self wrappedStringAtX:x y:y dir:-1 respectHardNewlines:respectHardNewlines];
+    NSString *suffix = [self wrappedStringAtX:x y:y dir:1 respectHardNewlines:respectHardNewlines];
+    NSString *joined = [prefix stringByAppendingString:suffix];
+    NSString *possibleUrl = [self stringInString:joined includingOffset:[prefix length] fromCharacterSet:[PTYTextView urlCharacterSet]];
+    NSString *possibleFilePart1 = [self stringInString:prefix includingOffset:[prefix length] - 1 fromCharacterSet:[PTYTextView filenameCharacterSet]];
+    NSString *possibleFilePart2 = [self stringInString:suffix includingOffset:0 fromCharacterSet:[PTYTextView filenameCharacterSet]];
+
+    NSString *filename = [self _bruteforcePathFromBeforeString:[[possibleFilePart1 mutableCopy] autorelease]
+                                                   afterString:[[possibleFilePart2 mutableCopy] autorelease]
+                                              workingDirectory:[self getWorkingDirectoryAtLine:y]];
+    if (!filename && [self _stringLooksLikeURL:possibleUrl]) {
+        return possibleUrl;
+    } else if (filename) {
+        return filename;
+    } else {
+        return @"";
+    }
 }
 
 - (NSString *)_getURLForX:(int)x
@@ -6850,7 +6955,7 @@ static bool IsUrlChar(NSString* str)
 
     NSRange range = [trimmedURLString rangeOfString:@":"];
     if (range.location == NSNotFound) {
-        trimmedURLString = [@"http://" stringByAppendingString:trimmedURLString];
+        trimmedURLString = [NSString stringWithFormat:@"http://%@", trimmedURLString];
     } else {
         // Search backwards for the start of the scheme.
         for (int i = range.location - 1; 0 <= i; i--) {

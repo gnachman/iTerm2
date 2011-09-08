@@ -50,8 +50,10 @@
 
 - (void)determineEditor
 {
-    // TODO: Move this into a plist file/prefs
-    if ([self applicationExists:@"org.vim.MacVim"]) {
+    // TODO(chendo): Move this into a plist file/prefs
+    if ([self applicationExists:@"com.sublimetext.2"]) {
+        editor = @"subl";
+    } else if ([self applicationExists:@"org.vim.MacVim"]) {
         editor = @"mvim";
     } else if ([self applicationExists:@"com.macromates.textmate"]) {
         editor = @"txmt";
@@ -80,7 +82,7 @@
                                                NULL,
                                                &appURL);
 
-    if (appURL) { 
+    if (appURL) {
         if (path != nil) {
             *path = [(NSURL *)appURL path];
         }
@@ -106,7 +108,7 @@
 
 - (BOOL)isTextFile:(NSString *)path
 {
-    // TODO: link in the "magic" library from file instead of calling it.
+    // TODO(chendo): link in the "magic" library from file instead of calling it.
     NSTask *task = [[NSTask alloc] init];
     NSPipe *myPipe = [NSPipe pipe];
     NSFileHandle *file = [myPipe fileHandleForReading];
@@ -151,13 +153,14 @@
          workingDirectory:(NSString *)workingDirectory
                lineNumber:(NSString **)lineNumber
 {
-    // TODO: Move regex, define capture semants in config file/prefs
+    NSString *origPath = path;
+    // TODO(chendo): Move regex, define capture semants in config file/prefs
     if (!path || [path length] == 0) {
         return nil;
     }
 
-    // strip any trailing parenthesis
-    path = [path stringByReplacingOccurrencesOfRegex:@"[)]$"
+    // strip any trailing period or parenthesis
+    path = [path stringByReplacingOccurrencesOfRegex:@"[.)]$"
                                           withString:@""];
 
     if (lineNumber != nil) {
@@ -175,7 +178,40 @@
     // Resolve path by removing ./ and ../ etc
     path = [[url standardizedURL] path];
 
-    return path;
+    if ([fileManager fileExistsAtPath:path]) {
+        return path;
+    }
+
+    // If path doesn't exist and it starts with "a/" or "b/" (from `diff`).
+    if ([origPath isMatchedByRegex:@"^[ab]/"]) {
+        // strip the prefix off ...
+        origPath = [origPath stringByReplacingOccurrencesOfRegex:@"^[ab]/"
+                                                 withString:@""];
+
+        // ... and calculate the full path again
+        return [self getFullPath:origPath
+                workingDirectory:workingDirectory
+                      lineNumber:lineNumber];
+    }
+
+    return nil;
+}
+
+- (BOOL)openFileInEditor:(NSString *)path lineNumber:(NSString *)lineNumber {
+    if ([editor isEqualToString:@"subl"]) {
+        if (lineNumber != nil) {
+            path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
+        }
+
+        [NSTask launchedTaskWithLaunchPath:@"/usr/bin/env" arguments:[NSArray arrayWithObjects: @"subl", path, nil]];
+    } else {
+        path = [path stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding];
+        NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:
+                                           @"%@://open?url=file://%@&line=%@", editor, path, lineNumber, nil]];
+        [[NSWorkspace sharedWorkspace] openURL:url];
+
+    }
+    return YES;
 }
 
 
@@ -183,36 +219,14 @@
 {
     BOOL isDirectory;
     NSString* lineNumber;
-    NSString* orgPath = path;
 
     path = [self getFullPath:path
             workingDirectory:workingDirectory
                   lineNumber:&lineNumber];
 
-    // if path doesn't exist and it starts with "a/" or "b/" (presumably from `diff`)
-    if (![fileManager fileExistsAtPath:path] && [orgPath isMatchedByRegex:@"^[ab]/"]) {
-        // strip the prefix off ...
-        NSString *temp;
-        temp = [orgPath stringByReplacingOccurrencesOfRegex:@"^[ab]/"
-                                                 withString:@""];
-
-        // ... and calculate the full path again
-        temp = [self getFullPath:temp
-                workingDirectory:workingDirectory
-                      lineNumber:&lineNumber];
-
-        // If the resulting filename exists, then use it.
-        if ([fileManager fileExistsAtPath:temp]) {
-            path = temp;
-        }
-    }
 
     if (![fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
         return NO;
-    }
-
-    if (lineNumber == nil) {
-        lineNumber = @"";
     }
 
     if (externalScript) {
@@ -227,10 +241,7 @@
     }
 
     if (editor && [self isTextFile:path]) {
-        NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:
-                                     @"%@://open?url=file://%@&line=%@", editor, path, lineNumber, nil]];
-        [[NSWorkspace sharedWorkspace] openURL:url];
-        return YES;
+        return [self openFileInEditor: path lineNumber:lineNumber];
     }
 
     [[NSWorkspace sharedWorkspace] openFile:path];
