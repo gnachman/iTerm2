@@ -2523,6 +2523,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)updateCursor:(NSEvent *)event
 {
+    if (!mouseInRect_) {
+        return;
+    }
     MouseMode mouseMode = [[dataSource terminal] mouseMode];
 
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
@@ -2548,12 +2551,12 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
 - (void)mouseExited:(NSEvent *)event
 {
-    [textViewCursor set];
-    // no-op
+    mouseInRect_ = NO;
 }
 
 - (void)mouseEntered:(NSEvent *)event
 {
+    mouseInRect_ = YES;
     [self updateCursor:event];
     if ([[PreferencePanel sharedInstance] focusFollowsMouse] &&
             [[self window] alphaValue] > 0) {

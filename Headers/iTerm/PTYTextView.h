@@ -283,6 +283,9 @@ typedef struct PTYFontInfo PTYFontInfo;
     // If true, ignore the next mouse up because it's due to a three finger
     // mouseDown.
     BOOL mouseDownIsThreeFingerClick_;
+
+    // Is the mouse inside our view?
+    BOOL mouseInRect_;
 }
 
 + (NSCursor *)textViewCursor;
