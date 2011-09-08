@@ -3756,8 +3756,10 @@ NSString *sessionsKey = @"sessions";
 
 
     NSRect aRect = [[self window] frame];
+    aRect.origin.x = [self _haveLeftBorder] ? 1 : 0;
+    aRect.origin.y = [self _haveBottomBorder] ? 1 : 0;
     if (![bottomBar isHidden]) {
-        aRect.origin.y = [bottomBar frame].size.height;
+        aRect.origin.y += [bottomBar frame].size.height;
         aRect.size.height -= aRect.origin.y;
     } else {
         aRect.origin.y = 0;
@@ -3777,7 +3779,7 @@ NSString *sessionsKey = @"sessions";
     NSRect bottomBarFrame = [bottomBar frame];
     bottomBarFrame.size.width = [TABVIEW frame].size.width;
     bottomBarFrame.origin.x = [TABVIEW frame].origin.x;
-    [bottomBar setFrame: bottomBarFrame];
+    [bottomBar setFrame:bottomBarFrame];
 
     NSRect instantReplayFrame = [instantReplaySubview frame];
     float dWidth = instantReplayFrame.size.width - bottomBarFrame.size.width;
