@@ -163,6 +163,7 @@ static const int kMaxJobs = 20;
 
 - (void)shutdown
 {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     [timer_ invalidate];
     [kill_ unbind:@"enabled"];
     timer_ = nil;

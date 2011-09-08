@@ -1300,6 +1300,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             }
         } else if (((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask &&
                     ([self optionKey] != OPT_NORMAL)) ||
+                   (modflag == NSAlternateKeyMask && 
+                    ([self optionKey] != OPT_NORMAL)) ||  /// synergy
                    ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask &&
                     ([self rightOptionKey] != OPT_NORMAL))) {
             if (debugKeyDown) {
@@ -1309,7 +1311,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             // A key was pressed while holding down option and the option key
             // is not behaving normally. Apply the modified behavior.
             int mode;  // The modified behavior based on which modifier is pressed.
-            if ((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask) {
+            if ((modflag == NSAlternateKeyMask) ||  // synergy
+                (modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask) {
                 mode = [self optionKey];
             } else {
                 mode = [self rightOptionKey];
@@ -2565,7 +2568,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 - (BOOL)shouldSendEscPrefixForModifier:(unsigned int)modmask
 {
     if ([self optionKey] == OPT_ESC) {
-        if ((modmask & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask) {
+        if ((modmask == NSAlternateKeyMask) ||
+            (modmask & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask) {
             return YES;
         }
     }
