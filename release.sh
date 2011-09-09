@@ -1,6 +1,6 @@
 #!/bin/bash
 # Run this before uploading.
-COMPACTDATE=$(date +"%Y%m%d")b
+COMPACTDATE=20110909
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")
 cd build/Deployment
