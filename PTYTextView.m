@@ -6841,6 +6841,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return iResult;
 }
 
+- (BOOL)_lineLength:(int)y
+{
+    screen_char_t *theLine = [dataSource getLineAtIndex:y];
+    int x;
+    for (x = [dataSource width] - 1; x >= 0; x--) {
+        if (theLine[x].code) {
+            break;
+        }
+    }
+    return x + 1;
+}
+
 - (BOOL)_isBlankLine:(int)y
 {
     NSString *lineContents;
@@ -7337,6 +7349,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplayInRect:imeRect];
 }
 
+- (void)extendSelectionPastNulls
+{
+    if (endY >= 0 && [self _lineLength:endY] < endX) {
+        endX = [dataSource width];
+    }
+}
+
 - (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView
 {
     int width = [dataSource width];
@@ -7360,6 +7379,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int tmpX1, tmpX2, tmpY1, tmpY2;
     switch (selectMode) {
         case SELECT_CHAR:
+            endX = x + 1;
+            endY = y;
+            [self extendSelectionPastNulls];
+            break;
+
         case SELECT_BOX:
             endX = x + 1;
             endY = y;
