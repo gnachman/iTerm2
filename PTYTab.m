@@ -2329,6 +2329,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
         // nothing to do!
         return;
     }
+    if ([splitView frame].size.width == 0) {
+        NSLog(@"Warning: splitView:resizeSubviewsWithOldSize: resized to 0 width");
+        return;
+    }
     PtyLog(@"splitView:resizeSubviewsWithOldSize for %p", splitView);
     BOOL isVertical = [splitView isVertical];
     NSSet* ancestors = [self _ancestorsOfLockedSession];
@@ -2518,6 +2522,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 // being resized.
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification
 {
+    if ([root_ frame].size.width == 0) {
+        NSLog(@"Warning: splitViewDidResizeSubviews: resized to 0 width");
+        return;
+    }
     PtyLog(@"splitViewDidResizeSubviews notification received. new height is %lf", [root_ frame].size.height);
     NSSplitView* splitView = [aNotification object];
     [self _splitViewDidResizeSubviews:splitView];
