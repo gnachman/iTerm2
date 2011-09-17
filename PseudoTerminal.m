@@ -1270,7 +1270,7 @@ NSString *sessionsKey = @"sessions";
                    forKey:TERMINAL_ARRANGEMENT_OLD_HEIGHT];
     }
 
-    [result setObject:[NSNumber numberWithInt:windowType_]
+    [result setObject:[NSNumber numberWithInt:([self lionFullScreen] ? WINDOW_TYPE_LION_FULL_SCREEN : windowType_)]
                forKey:TERMINAL_ARRANGEMENT_WINDOW_TYPE];
     [result setObject:[NSNumber numberWithInt:[[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]]
                                        forKey:TERMINAL_ARRANGEMENT_SCREEN_INDEX];
