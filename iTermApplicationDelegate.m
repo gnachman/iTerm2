@@ -678,6 +678,11 @@ static BOOL hasBecomeActive = NO;
     [[iTermController sharedInstance] newWindow:sender];
 }
 
+- (IBAction)newSessionWithSameProfile:(id)sender
+{
+    [[iTermController sharedInstance] newSessionWithSameProfile:sender];
+}
+
 - (IBAction)newSession:(id)sender
 {
     [[iTermController sharedInstance] newSession:sender];
@@ -1181,6 +1186,8 @@ void DebugLog(NSString* value)
         } else {
             return NO;
         }
+    } else if ([menuItem action] == @selector(newSessionWithSameProfile:)) {
+        return [[iTermController sharedInstance] currentTerminal] != nil;
     } else if ([menuItem action] == @selector(toggleFullScreenTabBar:)) {
         PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
         if (!term || ![term anyFullScreen]) {

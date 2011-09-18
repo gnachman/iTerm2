@@ -71,6 +71,7 @@
 
 // actions are forwarded from application
 - (IBAction)newWindow:(id)sender;
+- (IBAction)newSessionWithSameProfile:(id)sender;
 - (IBAction)newSession:(id)sender;
 - (IBAction) previousTerminal:(id)sender;
 - (IBAction) nextTerminal:(id)sender;

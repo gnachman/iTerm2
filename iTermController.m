@@ -257,6 +257,15 @@ static BOOL initDone = NO;
 
 }
 
+- (IBAction)newSessionWithSameProfile:(id)sender
+{
+    Bookmark *bookmark = nil;
+    if (FRONT) {
+        bookmark = [[FRONT currentSession] addressBookEntry];
+    }
+    [self launchBookmark:bookmark inTerminal:FRONT];
+}
+
 - (IBAction)newSession:(id)sender
 {
     [self launchBookmark:nil inTerminal: FRONT];

@@ -119,6 +119,7 @@ void DebugLog(NSString* value);
 - (IBAction)toggleSecureInput:(id)sender;
 
 - (IBAction)newWindow:(id)sender;
+- (IBAction)newSessionWithSameProfile:(id)sender;
 - (IBAction)newSession:(id)sender;
 - (IBAction)buildScriptMenu:(id)sender;
 
