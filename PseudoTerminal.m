@@ -1481,6 +1481,9 @@ NSString *sessionsKey = @"sessions";
     }
     NSRect frame = [[self window] frame];
 
+    // NOTE: In bug 1347, we see that for some machines, [screen frame].size.width==0 at some point
+    // during sleep/wake from sleep. That is why we check that width is positive before setting the
+    // window's frame.
     switch (windowType_) {
         case WINDOW_TYPE_TOP:
             frame.size.width = [screen visibleFrame].size.width;
@@ -1493,7 +1496,9 @@ NSString *sessionsKey = @"sessions";
                 frame.origin.y = [screen visibleFrame].origin.y + [screen visibleFrame].size.height - frame.size.height;
             }
 
-            [[self window] setFrame:frame display:YES];
+            if (frame.size.width > 0) {
+                [[self window] setFrame:frame display:YES];
+            }
             break;
 
         case WINDOW_TYPE_BOTTOM:
@@ -1507,12 +1512,16 @@ NSString *sessionsKey = @"sessions";
                 frame.origin.y = [screen visibleFrame].origin.y;
             }
 
-            [[self window] setFrame:frame display:YES];
+            if (frame.size.width > 0) {
+                [[self window] setFrame:frame display:YES];
+            }
             break;
 
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_FULL_SCREEN:
-            [[self window] setFrame:[screen frame] display:YES];
+            if ([screen frame].size.width > 0) {
+                [[self window] setFrame:[screen frame] display:YES];
+            }
             break;
 
         case WINDOW_TYPE_NORMAL:
