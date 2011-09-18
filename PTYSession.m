@@ -580,7 +580,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                          [tab_ realObjectCount] - 1,
                          [tab_ indexOfSessionView:[self view]]];
     [env setObject:itermId forKey:@"ITERM_SESSION_ID"];
-
+    if ([addressBookEntry objectForKey:KEY_NAME]) {
+        [env setObject:[addressBookEntry objectForKey:KEY_NAME] forKey:@"ITERM_PROFILE"];
+    }
     if ([[addressBookEntry objectForKey:KEY_AUTOLOG] boolValue]) {
         [SHELL loggingStartWithPath:[self _autoLogFilenameForTermId:itermId]];
     }
