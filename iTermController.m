@@ -111,6 +111,10 @@ BOOL IsLeopard(void) {
     }
 }
 
+@interface iTermController ()
+- (void)restorePreviouslyActiveApp;
+@end
+
 @implementation iTermController
 
 static iTermController* shared = nil;
@@ -497,6 +501,9 @@ static BOOL initDone = NO;
 
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow
 {
+    if ([theTerminalWindow isHotKeyWindow]) {
+        [self restorePreviouslyActiveApp];
+    }
     if (FRONT == theTerminalWindow) {
         [self setCurrentTerminal: nil];
     }
