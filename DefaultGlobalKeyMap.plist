@@ -86,6 +86,13 @@
 			<key>Text</key>
 			<string></string>
 		</dict>
+        <key>0x9-0x40000</key>
+        <dict>
+            <key>Action</key>
+            <integer>32</integer>
+            <key>Text</key>
+            <string></string>
+        </dict>
 	</dict>
 </plist>
 

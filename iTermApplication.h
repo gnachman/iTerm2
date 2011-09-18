@@ -11,7 +11,7 @@
  **  Project: iTerm
  **
  **  Description: overrides sendEvent: so that key mappings with command mask  
- **				  are handled properly.
+ **               are handled properly.
  **
  **  This program is free software; you can redistribute it and/or modify
  **  it under the terms of the GNU General Public License as published by
@@ -33,7 +33,6 @@
 @class iTermApplicationDelegate;
 
 @interface iTermApplication : NSApplication {
-
 }
 
 + (BOOL)isTextFieldInFocus:(NSTextField *)textField;

@@ -32,7 +32,7 @@
 - (void)tabView:(NSTabView *)tabView didSelectTabViewItem:(NSTabViewItem *)tabViewItem;
 - (void)tabView:(NSTabView *)tabView willRemoveTabViewItem:(NSTabViewItem *)tabViewItem;
 - (void)tabView:(NSTabView *)tabView willAddTabViewItem:(NSTabViewItem *)tabViewItem;
-- (void)tabView:(NSTabView *)tabView willInsertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int) index;
+- (void)tabView:(NSTabView *)tabView willInsertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int)index;
 - (void)tabViewDidChangeNumberOfTabViewItems:(NSTabView *)tabView;
 - (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem;
 - (NSDragOperation)tabView:(NSTabView *)tabView draggingEnteredTabBarForSender:(id<NSDraggingInfo>)sender;
@@ -41,26 +41,35 @@
 @end
 
 @interface PTYTabView : NSTabView {
+    BOOL isModifierPressed;
+    BOOL wereTabsNavigatedWithMRU;
+    NSMutableArray* mruTabs;
 }
 
 // Class methods that Apple should have provided
-+ (NSSize) contentSizeForFrameSize: (NSSize) frameSize tabViewType: (NSTabViewType) type controlSize: (NSControlSize) controlSize;
-+ (NSSize) frameSizeForContentSize: (NSSize) contentSize tabViewType: (NSTabViewType) type controlSize: (NSControlSize) controlSize;
++ (NSSize)contentSizeForFrameSize:(NSSize)frameSize tabViewType:(NSTabViewType)type controlSize:(NSControlSize)controlSize;
++ (NSSize)frameSizeForContentSize:(NSSize)contentSize tabViewType:(NSTabViewType)type controlSize:(NSControlSize)controlSize;
 
-- (id)initWithFrame: (NSRect) aFrame;
-- (void) dealloc;
+- (id)initWithFrame:(NSRect)aFrame;
+- (void)dealloc;
 - (BOOL)acceptsFirstResponder;
-- (void) drawRect: (NSRect) rect;
+- (void)drawRect:(NSRect)rect;
 
 // NSTabView methods overridden
-- (void) addTabViewItem: (NSTabViewItem *) aTabViewItem;
-- (void) removeTabViewItem: (NSTabViewItem *) aTabViewItem;
-- (void) insertTabViewItem: (NSTabViewItem *) tabViewItem atIndex: (int) theIndex;
+- (void)addTabViewItem:(NSTabViewItem *)aTabViewItem;
+- (void)removeTabViewItem:(NSTabViewItem *)aTabViewItem;
+- (void)insertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int)theIndex;
 
 // selects a tab from the contextual menu
-- (void) selectTab: (id) sender;
+- (void)selectTab:(id)sender;
+
+- (void)nextTab:(id)sender;
+- (void)previousTab:(id)sender;
+
+// selects next most recently used tab (MRU)
+- (BOOL)processMRUEvent:(NSEvent*)event;
 
 // Override setDelegate so that it accepts PSMTabBarControl without warning
-- (void) setDelegate: (id<PTYTabViewDelegateProtocol>) anObject;
+- (void)setDelegate:(id<PTYTabViewDelegateProtocol>)anObject;
 
 @end

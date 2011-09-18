@@ -873,20 +873,12 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)previousTab:(id)sender
 {
-    NSTabViewItem *tvi = [TABVIEW selectedTabViewItem];
-    [TABVIEW selectPreviousTabViewItem:sender];
-    if (tvi == [TABVIEW selectedTabViewItem]) {
-        [TABVIEW selectTabViewItemAtIndex:[TABVIEW numberOfTabViewItems]-1];
-    }
+    [TABVIEW previousTab:sender];
 }
 
 - (IBAction)nextTab:(id)sender
 {
-    NSTabViewItem *tvi = [TABVIEW selectedTabViewItem];
-    [TABVIEW selectNextTabViewItem: sender];
-    if (tvi == [TABVIEW selectedTabViewItem]) {
-        [TABVIEW selectTabViewItemAtIndex:0];
-    }
+    [TABVIEW nextTab:sender];
 }
 
 - (IBAction)previousPane:(id)sender
@@ -3918,6 +3910,8 @@ NSString *sessionsKey = @"sessions";
 
 - (void)flagsChanged:(NSEvent *)theEvent
 {
+    [TABVIEW processMRUEvent:theEvent];
+
     NSUInteger modifierFlags = [theEvent modifierFlags];
     if (!(modifierFlags & NSCommandKeyMask) &&
         [[[self currentSession] TEXTVIEW] isFindingCursor]) {

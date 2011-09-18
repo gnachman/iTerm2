@@ -113,6 +113,7 @@
 #define KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE 29
 #define KEY_ACTION_NEXT_PANE 30
 #define KEY_ACTION_PREVIOUS_PANE 31
+#define KEY_ACTION_NEXT_MRU_TAB 32
 
 @class PreferencePanel;
 @interface iTermKeyBindingMgr : NSObject {
