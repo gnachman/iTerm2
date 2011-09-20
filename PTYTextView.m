@@ -6701,13 +6701,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (NSString *)_getURLForX:(int)x
                         y:(int)y
 {
+    // I tried respecting hard newlines if that is a legal URL, but that's such a broad definition
+    // that it doesn't work well. Hard EOLs mid-url are very common. Let's try always ignoring them.
     NSString* urlIgnoringHardEOL = [self _getURLForX:x y:y respectingHardNewlines:NO];
-    NSString* urlRespectingHardEOL = [self _getURLForX:x y:y respectingHardNewlines:YES];
-    if (![self _stringLooksLikeURL:urlRespectingHardEOL] &&
-        [self _stringLooksLikeURL:urlIgnoringHardEOL]) {
+    if ([self _stringLooksLikeURL:urlIgnoringHardEOL]) {
         return urlIgnoringHardEOL;
     } else {
-        return urlRespectingHardEOL;
+        return @"";
     }
 }
 
