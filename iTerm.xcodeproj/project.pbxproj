@@ -160,6 +160,10 @@
 		1D624BEE1386E34F00111319 /* GTMObjectSingleton.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BED1386E34F00111319 /* GTMObjectSingleton.h */; };
 		1D624BF41386E39D00111319 /* GTMDebugSelectorValidation.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BF31386E39D00111319 /* GTMDebugSelectorValidation.h */; };
 		1D624BF61386E3B400111319 /* GTMTypeCasting.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D624BF51386E3B400111319 /* GTMTypeCasting.h */; };
+		1D67AAA914284BF300D5DA4E /* ToolNotes.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D67AAA714284BF300D5DA4E /* ToolNotes.h */; };
+		1D67AAAA14284BF300D5DA4E /* ToolNotes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67AAA814284BF300D5DA4E /* ToolNotes.m */; };
+		1D67ABAB14285D6000D5DA4E /* NSFileManager+DirectoryLocations.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D67ABA914285D6000D5DA4E /* NSFileManager+DirectoryLocations.h */; };
+		1D67ABAC14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67ABAA14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m */; };
 		1D6A5FDF140D7AA000DE19F8 /* IBarCursorXMR.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D6A5FDE140D7AA000DE19F8 /* IBarCursorXMR.png */; };
 		1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB293D1288899A00B2CB9F /* Carbon.framework */; };
 		1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D6C4D59122329F000E0AA3E /* ColorPresets.plist */; };
@@ -359,6 +363,10 @@
 		1D624BED1386E34F00111319 /* GTMObjectSingleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMObjectSingleton.h; sourceTree = "<group>"; };
 		1D624BF31386E39D00111319 /* GTMDebugSelectorValidation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMDebugSelectorValidation.h; sourceTree = "<group>"; };
 		1D624BF51386E3B400111319 /* GTMTypeCasting.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GTMTypeCasting.h; sourceTree = "<group>"; };
+		1D67AAA714284BF300D5DA4E /* ToolNotes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolNotes.h; sourceTree = "<group>"; };
+		1D67AAA814284BF300D5DA4E /* ToolNotes.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolNotes.m; sourceTree = "<group>"; };
+		1D67ABA914285D6000D5DA4E /* NSFileManager+DirectoryLocations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSFileManager+DirectoryLocations.h"; sourceTree = "<group>"; };
+		1D67ABAA14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSFileManager+DirectoryLocations.m"; sourceTree = "<group>"; };
 		1D6A5FDE140D7AA000DE19F8 /* IBarCursorXMR.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = IBarCursorXMR.png; path = images/IBarCursorXMR.png; sourceTree = "<group>"; };
 		1D6C4D59122329F000E0AA3E /* ColorPresets.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ColorPresets.plist; sourceTree = "<group>"; };
 		1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkListView.h; sourceTree = "<group>"; };
@@ -680,7 +688,6 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */,
 				1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */,
 				1DE214E0128212EE004E3ADF /* Autocomplete.m */,
 				1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */,
@@ -696,7 +703,7 @@
 				1D237D27131D8741004DD60C /* FindView.m */,
 				1D237D93131D8D66004DD60C /* FindViewController.m */,
 				1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */,
-				1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */,
+				1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */,
 				1DAED28712E9395E005E49ED /* GlobalSearch.m */,
 				1D624BC71386E09E00111319 /* GTMCarbonEvent.m */,
 				20E74F4904E9089700000106 /* ITAddressBookMgr.m */,
@@ -713,6 +720,7 @@
 				1DF0895713DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h */,
 				1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */,
 				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
+				1D67ABAA14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m */,
 				1DF0895913DBAE1F00A52AD8 /* NSImage+CoreImage.h */,
 				1DF0895A13DBAE1F00A52AD8 /* NSImage+CoreImage.m */,
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
@@ -735,6 +743,7 @@
 				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
 				1DE8DC881415513A00F83147 /* ToolbeltView.m */,
 				1D19C71314171F1D00617E08 /* ToolJobs.m */,
+				1D67AAA814284BF300D5DA4E /* ToolNotes.m */,
 				1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */,
 				1DE8DC8C1415546000F83147 /* ToolProfiles.m */,
 				1DE8DF351415799700F83147 /* ToolWrapper.m */,
@@ -750,12 +759,14 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				1D67AAA714284BF300D5DA4E /* ToolNotes.h */,
 				1DE214DF128212EE004E3ADF /* Autocomplete.h */,
 				1DE8DF341415799700F83147 /* ToolWrapper.h */,
 				1D9F6AB6140C9DC4009B5CD4 /* FutureMethods.h */,
 				1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */,
 				1DE8DDAB1415648600F83147 /* ToolPasteHistory.h */,
 				1D29732514082676004C5DBE /* MovePaneController.h */,
+				1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */,
 				1DE8DC8B1415546000F83147 /* ToolProfiles.h */,
 				1D19C71214171F1D00617E08 /* ToolJobs.h */,
 				1DE8DC871415513A00F83147 /* ToolbeltView.h */,
@@ -767,6 +778,7 @@
 				1DE5EBE6122B892900C736B0 /* BookmarksWindow.h */,
 				872EBC6B04E42E320073D10E /* charmaps.h */,
 				1D93D33312695442007F741B /* DVR.h */,
+				1D67ABA914285D6000D5DA4E /* NSFileManager+DirectoryLocations.h */,
 				1D93D3451269741B007F741B /* DVRBuffer.h */,
 				1D93D34D126974BC007F741B /* DVRDecoder.h */,
 				1D93D35112697529007F741B /* DVREncoder.h */,
@@ -1214,6 +1226,8 @@
 				1DE8DDAD1415648600F83147 /* ToolPasteHistory.h in Headers */,
 				1DE8DF361415799700F83147 /* ToolWrapper.h in Headers */,
 				1D19C71414171F1D00617E08 /* ToolJobs.h in Headers */,
+				1D67AAA914284BF300D5DA4E /* ToolNotes.h in Headers */,
+				1D67ABAB14285D6000D5DA4E /* NSFileManager+DirectoryLocations.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1513,6 +1527,8 @@
 				1DE8DDAE1415648600F83147 /* ToolPasteHistory.m in Sources */,
 				1DE8DF371415799700F83147 /* ToolWrapper.m in Sources */,
 				1D19C71514171F1D00617E08 /* ToolJobs.m in Sources */,
+				1D67AAAA14284BF300D5DA4E /* ToolNotes.m in Sources */,
+				1D67ABAC14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

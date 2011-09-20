@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ToolWrapper.h"
 
-@interface ToolJobs : NSView {
+@interface ToolJobs : NSView <ToolbeltTool> {
     NSScrollView *scrollView_;
     NSTableView *tableView_;
     NSButton *kill_;

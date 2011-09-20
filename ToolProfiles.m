@@ -11,15 +11,15 @@
 #import "iTermController.h"
 #import "BookmarkModel.h"
 
+static const int kVerticalMargin = 5;
+static const int kMargin = 0;
+static const int kPopupHeight = 26;
+
 @implementation ToolProfiles
 
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        const int kVerticalMargin = 5;
-        const int kMargin = 0;
-        const int kPopupHeight = 26;
-
         listView_ = [[BookmarkListView alloc] initWithFrame:NSMakeRect(kMargin, 0, frame.size.width - kMargin * 2, frame.size.height - kPopupHeight - kVerticalMargin)];
         [listView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [listView_ setDelegate:self];
@@ -60,6 +60,14 @@
 {
     [popup_ unbind:@"enabled"];
     [super dealloc];
+}
+
+- (void)relayout
+{
+    NSRect frame = self.frame;
+    listView_.frame = NSMakeRect(kMargin, 0, frame.size.width - kMargin * 2, frame.size.height - kPopupHeight - kVerticalMargin);
+    popup_.frame = NSMakeRect(0, frame.size.height - kPopupHeight, frame.size.width, kPopupHeight);
+    NSLog(@"Frame height is %d", (int)frame.size.height);
 }
 
 - (BOOL)isFlipped

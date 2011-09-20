@@ -64,6 +64,19 @@ static const CGFloat kButtonSize = 17;
     [super dealloc];
 }
 
+- (void)relayout
+{
+    NSRect frame = [self frame];
+    title_.frame = NSMakeRect(kButtonSize, 0, frame.size.width - kButtonSize - kRightMargin, kTitleHeight);
+    closeButton_.frame = NSMakeRect(0, 0, kButtonSize, kButtonSize);
+    container_.frame = NSMakeRect(kLeftMargin, kTitleHeight + kMargin, MAX(0, frame.size.width - kLeftMargin - kRightMargin), MAX(0, frame.size.height - kTitleHeight - kMargin - kBottomMargin));
+
+    NSObject<ToolbeltTool> *tool = [self tool];
+    if ([tool respondsToSelector:@selector(relayout)]) {
+        [tool relayout];
+    }
+}
+
 - (void)bindCloseButton
 {
     [closeButton_ bind:@"hidden"
@@ -76,7 +89,7 @@ static const CGFloat kButtonSize = 17;
 {
     [title_ unbind:@"value"];
     [closeButton_ unbind:@"hidden"];
-    NSObject *subview = [[container_ subviews] objectAtIndex:0];
+    NSObject<ToolbeltTool> *subview = [self tool];
     if ([subview respondsToSelector:@selector(shutdown)]) {
         [subview performSelector:@selector(shutdown)];
     }
@@ -109,6 +122,11 @@ static const CGFloat kButtonSize = 17;
 - (void)setTitleEditable
 {
     [title_ setEditable:NO];
+}
+
+- (NSObject<ToolbeltTool> *)tool
+{
+    return (NSObject<ToolbeltTool>*) [[container_ subviews] objectAtIndex:0];
 }
 
 @end

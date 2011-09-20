@@ -11,14 +11,14 @@
 #import "iTermController.h"
 #import "ToolWrapper.h"
 
+static const CGFloat kButtonHeight = 23;
+static const CGFloat kMargin = 4;
+
 @implementation ToolPasteHistory
 
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        const CGFloat kButtonHeight = 23;
-        const CGFloat kMargin = 4;
-
         clear_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
         [clear_ setButtonType:NSMomentaryPushInButton];
         [clear_ setTitle:@"Clear All"];
@@ -88,6 +88,15 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [minuteRefreshTimer_ invalidate];
     minuteRefreshTimer_ = nil;
+}
+
+- (void)relayout
+{
+    NSRect frame = self.frame;
+    [clear_ setFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
+    [scrollView_ setFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin)];
+    NSSize contentSize = [scrollView_ contentSize];
+    [tableView_ setFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
 }
 
 - (BOOL)isFlipped

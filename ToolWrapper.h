@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "ToolbeltView.h"
 
 @class PseudoTerminal;
 
@@ -22,7 +23,9 @@
 @property (nonatomic, readonly) NSView *container;
 @property (nonatomic, assign) PseudoTerminal *term;
 
+- (void)relayout;
 - (void)bindCloseButton;
 - (void)unbind;
+- (NSObject<ToolbeltTool> *)tool;
 
 @end

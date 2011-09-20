@@ -11,6 +11,7 @@
 #import "ToolPasteHistory.h"
 #import "ToolWrapper.h"
 #import "ToolJobs.h"
+#import "ToolNotes.h"
 
 @interface ToolbeltView (Private)
 
@@ -29,9 +30,10 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 + (void)initialize
 {
     gRegisteredTools = [[NSMutableDictionary alloc] init];
+    [ToolbeltView registerToolWithName:@"Jobs" withClass:[ToolJobs class]];
+    [ToolbeltView registerToolWithName:@"Notes" withClass:[ToolNotes class]];
     [ToolbeltView registerToolWithName:@"Paste History" withClass:[ToolPasteHistory class]];
     [ToolbeltView registerToolWithName:@"Profiles" withClass:[ToolProfiles class]];
-    [ToolbeltView registerToolWithName:@"Jobs" withClass:[ToolJobs class]];
 }
 
 + (NSArray *)defaultTools
@@ -191,7 +193,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 
 - (void)addToolWithName:(NSString *)toolName
 {
-    ToolWrapper *wrapper = [[ToolWrapper alloc] initWithFrame:NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height)];
+    ToolWrapper *wrapper = [[ToolWrapper alloc] initWithFrame:NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height / MAX(1, [ToolbeltView numberOfVisibleTools ] - 1))];
     wrapper.name = toolName;
     wrapper.term = term_;
     Class c = [gRegisteredTools objectForKey:toolName];
@@ -213,6 +215,15 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 - (BOOL)haveOnlyOneTool
 {
     return [[splitter_ subviews] count] == 1;
+}
+
+#pragma mark - NSSplitViewDelegate
+
+- (void)splitViewDidResizeSubviews:(NSNotification *)aNotification
+{
+    for (ToolWrapper *wrapper in [splitter_ subviews]) {
+        [wrapper relayout];
+    }
 }
 
 @end

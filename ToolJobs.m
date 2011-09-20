@@ -14,6 +14,8 @@
 #import "ProcessCache.h"
 
 static const int kMaxJobs = 20;
+static const CGFloat kButtonHeight = 23;
+static const CGFloat kMargin = 4;
 
 @interface ToolJobs ()
 - (void)updateTimer:(id)sender;
@@ -29,9 +31,6 @@ static const int kMaxJobs = 20;
         names_ = [[NSMutableArray alloc] init];
         pids_ = [[NSMutableArray alloc] init];
 
-        const CGFloat kButtonHeight = 23;
-        const CGFloat kMargin = 4;
-        
         kill_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
         [kill_ setButtonType:NSMomentaryPushInButton];
         [kill_ setTitle:@"Send Signal"];
@@ -125,6 +124,17 @@ static const int kMaxJobs = 20;
         [self updateTimer:nil];
     }
     return self;
+}
+
+- (void)relayout
+{
+    NSRect frame = self.frame;
+    kill_.frame = NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight);
+    [kill_ sizeToFit];
+    signal_.frame = NSMakeRect(kill_.frame.size.width + kMargin, frame.size.height - kButtonHeight + 1,
+                               1, 22);
+    [signal_ sizeToFit];
+    scrollView_.frame = NSMakeRect(0, 0, frame.size.width, frame.size.height - kButtonHeight - kMargin);
 }
 
 // When not key, check much less often to avoid burning the battery.

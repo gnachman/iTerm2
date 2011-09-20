@@ -11,6 +11,11 @@
 @class PseudoTerminal;
 
 @protocol ToolbeltTool
+@optional
+- (void)relayout;
+
+@optional
+- (void)shutdown;
 @end
 
 @interface ToolbeltView : NSView {
