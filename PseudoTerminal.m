@@ -106,6 +106,9 @@ static NSString* TERMINAL_ARRANGEMENT_WINDOW_TYPE = @"Window Type";
 static NSString* TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX = @"Selected Tab Index";
 static NSString* TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
 
+// In full screen, leave a bit of space at the top of the toolbar for aesthetics.
+static const CGFloat kToolbeltMargin = 8;
+
 @interface NSEvent (iTermFutureCompat)
 
 - (double)futureMagnification;
@@ -465,24 +468,75 @@ NSString *sessionsKey = @"sessions";
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];        
     }
 
-    drawer_ = [[NSDrawer alloc] initWithContentSize:NSMakeSize(200, self.window.frame.size.height + 100)
-                                      preferredEdge:CGRectMaxXEdge];
-    [drawer_ setParentWindow:self.window];
-    NSSize contentSize = [drawer_ contentSize];
-    NSRect toolbeltFrame = NSMakeRect(0, 0, contentSize.width, contentSize.height);;
-    toolbelt_ = [[[ToolbeltView alloc] initWithFrame:toolbeltFrame
-                                                term:self] autorelease];
-    [drawer_ setContentView:toolbelt_];
-    if ([[[iTermApplication sharedApplication] delegate] showToolbelt]) {
-        [drawer_ open];
+    if (windowType == WINDOW_TYPE_NORMAL) {
+        drawer_ = [[NSDrawer alloc] initWithContentSize:NSMakeSize(200, self.window.frame.size.height)
+                                          preferredEdge:CGRectMaxXEdge];
+        [drawer_ setParentWindow:self.window];
+        NSSize contentSize = [drawer_ contentSize];
+        NSRect toolbeltFrame = NSMakeRect(0, 0, contentSize.width, contentSize.height);;
+        toolbelt_ = [[[ToolbeltView alloc] initWithFrame:toolbeltFrame
+                                                    term:self] autorelease];
+        [drawer_ setContentView:toolbelt_];
+        if ([[[iTermApplication sharedApplication] delegate] showToolbelt]) {
+            [drawer_ open];
+        }
+    } else {
+        CGFloat width = [self fullscreenToolbeltWidth];
+        NSRect toolbeltFrame = NSMakeRect(self.window.frame.size.width - width,
+                                          0,
+                                          width,
+                                          self.window.frame.size.height - kToolbeltMargin);
+        toolbelt_ = [[[ToolbeltView alloc] initWithFrame:toolbeltFrame
+                                                    term:self] autorelease];
+        [[[self window] contentView] addSubview:toolbelt_
+                                     positioned:NSWindowBelow
+                                     relativeTo:TABVIEW];
     }
 
     return self;
 }
 
+- (CGFloat)tabviewWidth
+{
+    if ([self anyFullScreen]) {
+        if ([[[iTermApplication sharedApplication] delegate] showToolbelt]) {
+            const CGFloat width = [self fullscreenToolbeltWidth];
+            return self.window.frame.size.width - width;
+        } else {
+            return self.window.frame.size.width;
+        }
+    } else {
+        CGFloat width = self.window.frame.size.width;
+        if ([self _haveLeftBorder]) {
+            --width;
+        }
+        if ([self _haveRightBorder]) {
+            --width;
+        }
+        return width;
+    }
+}
+
 - (void)_updateDrawerVisibility:(id)sender
 {
-    if (windowType_ == WINDOW_TYPE_NORMAL) {
+    if (windowType_ != WINDOW_TYPE_NORMAL) {
+        if ([[[iTermApplication sharedApplication] delegate] showToolbelt]) {
+            const CGFloat width = [self fullscreenToolbeltWidth];
+            [toolbelt_ setFrameOrigin:NSMakePoint(self.window.frame.size.width - width, 0)];
+            [TABVIEW setFrame:NSMakeRect(TABVIEW.frame.origin.x,
+                                         TABVIEW.frame.origin.y,
+                                         [self tabviewWidth],
+                                         TABVIEW.frame.size.height)];
+        } else {
+            [TABVIEW setFrame:NSMakeRect(TABVIEW.frame.origin.x,
+                                         TABVIEW.frame.origin.y,
+                                         [self tabviewWidth],
+                                         TABVIEW.frame.size.height)];
+        }
+        if (![bottomBar isHidden]) {
+            [self fitBottomBarToWindow];
+        }
+    } else {
         if ([[[iTermApplication sharedApplication] delegate] showToolbelt]) {
             [drawer_ open];
         } else {
@@ -908,7 +962,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)dealloc
 {
-    [[drawer_ contentView] shutdown];
+    [toolbelt_ shutdown];
     [drawer_ release];
 
     // Do not assume that [self window] is valid here. It may have been freed.
@@ -1910,6 +1964,9 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"toggleFullScreenMode - call adjustFullScreenWindowForBottomBarChange");
         [newTerminal fitTabsToWindow];
         [newTerminal hideMenuBar];
+        
+        // The toolbelt may try to become the first responder.
+        [[newTerminal window] makeFirstResponder:[[newTerminal currentSession] TEXTVIEW]];
     }
 
     if (!fs) {
@@ -2832,9 +2889,9 @@ NSString *sessionsKey = @"sessions";
     // On OS X 10.5.8, the scroll bar and resize indicator are messed up at this point. Resizing the tabview fixes it. This seems to be fixed in 10.6.
     NSRect tvframe = [TABVIEW frame];
     tvframe.size.height += 1;
-    [TABVIEW setFrame: tvframe];
+    [TABVIEW setFrame:tvframe];
     tvframe.size.height -= 1;
-    [TABVIEW setFrame: tvframe];
+    [TABVIEW setFrame:tvframe];
     [[[self window] contentView] setAutoresizesSubviews:YES];
 
     [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
@@ -3026,6 +3083,10 @@ NSString *sessionsKey = @"sessions";
 
 - (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark
 {
+    if (![bottomBar isHidden]) {
+	// Things get very complicated in this case. Just disallow it.
+        return NO;
+    }
     NSFont* asciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NORMAL_FONT]];
     NSFont* nonAsciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NON_ASCII_FONT]];
     NSSize asciiCharSize = [PTYTextView charSizeForFont:asciiFont
@@ -3768,6 +3829,7 @@ NSString *sessionsKey = @"sessions";
     if (![tabBarControl isHidden]) {
         aRect.size.height -= [tabBarControl frame].size.height;
     }
+    aRect.size.width = [self tabviewWidth];
     [TABVIEW setFrame:aRect];
     PtyLog(@"adjustFullScreenWindowForBottomBarChange - call fitTabsToWindow");
     [self fitTabsToWindow];
@@ -3987,8 +4049,7 @@ NSString *sessionsKey = @"sessions";
         }
         aRect.size = [[thisWindow contentView] frame].size;
         aRect.size.height -= aRect.origin.y;
-        aRect.size.width -= aRect.origin.x;
-        aRect.size.width -= [self _haveRightBorder] ? 1 : 0;
+        aRect.size.width = [self tabviewWidth];
         PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
         [TABVIEW setFrame:aRect];
     } else {
@@ -4008,8 +4069,7 @@ NSString *sessionsKey = @"sessions";
             }
             aRect.size.height -= aRect.origin.y;
             aRect.size.height -= [tabBarControl frame].size.height;
-            aRect.size.width -= aRect.origin.x;
-            aRect.size.width -= [self _haveRightBorder] ? 1 : 0;
+            aRect.size.width = [self tabviewWidth];
             PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
             [TABVIEW setFrame:aRect];
             aRect.origin.y += aRect.size.height;
@@ -4022,8 +4082,7 @@ NSString *sessionsKey = @"sessions";
             aRect.origin.y = [self _haveBottomBorder] ? 1 : 0;
             aRect.size = [[thisWindow contentView] frame].size;
             aRect.size.height = [tabBarControl frame].size.height;
-            aRect.size.width -= aRect.origin.x;
-            aRect.size.width -= [self _haveRightBorder] ? 1 : 0;
+            aRect.size.width = [self tabviewWidth];
             if (![bottomBar isHidden]) {
                 aRect.origin.y += [bottomBar frame].size.height;
             }
@@ -4389,6 +4448,11 @@ NSString *sessionsKey = @"sessions";
         [[self window] makeKeyAndOrderFront:self];
     }
     [[iTermController sharedInstance] setCurrentTerminal:self];
+}
+
+- (CGFloat)fullscreenToolbeltWidth
+{
+    return MIN(250, self.window.frame.size.width / 5);
 }
 
 - (NSString *)currentSessionName
@@ -5183,5 +5247,3 @@ NSString *sessionsKey = @"sessions";
 }
 
 @end
-
-

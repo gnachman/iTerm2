@@ -26,13 +26,13 @@ static const CGFloat kButtonSize = 17;
     self = [super initWithFrame:frame];
     if (self) {
         title_ = [[NSTextField alloc] initWithFrame:NSMakeRect(kButtonSize, 0, frame.size.width - kButtonSize - kRightMargin, kTitleHeight)];
+        [title_ setEditable:NO];
         [title_ bind:@"value" toObject:self withKeyPath:@"name" options:nil];
-        [self addSubview:title_];
         [title_ setAutoresizingMask:NSViewWidthSizable | NSViewMaxYMargin];
         [title_ setAlignment:NSCenterTextAlignment];
         [title_ setBackgroundColor:[NSColor windowBackgroundColor]];
-        [title_ setEditable:NO];
         [title_ setBezeled:NO];
+        [self addSubview:title_];
         [title_ release];
 
         NSImage *closeImage = [[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"closebutton"

@@ -822,6 +822,8 @@ NSWindowDelegate,
 // Reutrn the name of the foreground session.
 - (NSString *)currentSessionName;
 
+- (CGFloat)fullscreenToolbeltWidth;
+
 // Set the session name. If theSessionName is nil then set it to the pathname
 // or "Finish" if it's closed.
 - (void)setName:(NSString*)theName forSession:(PTYSession*)aSession;
