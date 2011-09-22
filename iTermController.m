@@ -287,7 +287,7 @@ static BOOL initDone = NO;
                                    alternateButton:@"Cancel"
                                        otherButton:nil
                          informativeTextWithFormat:@""];
-    
+
     NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
     [input setStringValue:defaultValue];
     [alert setAccessoryView:input];
@@ -356,85 +356,74 @@ static BOOL initDone = NO;
 // Arrange terminals horizontally, in multiple rows if needed.
 - (void)arrangeTerminals:(NSArray*)terminals inFrame:(NSRect)frame
 {
-    NSLog(@"arrangeTerminals:%@ inFrame:%@", terminals, [NSValue valueWithRect:frame]);
     if ([terminals count] == 0) {
-        NSLog(@"no terminals");
         return;
     }
 
     // Determine the new width for all windows, not less than some minimum.
-    float x = 0;
-    float w = frame.size.width / [terminals count];
-    float minWidth = 400;
+    int x = frame.origin.x;
+    int w = frame.size.width / [terminals count];
+    int minWidth = 400;
     for (PseudoTerminal* term in terminals) {
-        float termMinWidth = [term minWidth];
-        NSLog(@"term min width=%f", termMinWidth);
+        int termMinWidth = [term minWidth];
         minWidth = MAX(minWidth, termMinWidth);
     }
-    NSLog(@"minWidth=%f", minWidth);
     if (w < minWidth) {
         // Width would be too narrow. Pick the smallest width larger than minWidth
         // that evenly  divides the screen up horizontally.
         int maxWindowsInOneRow = floor(frame.size.width / minWidth);
         w = frame.size.width / maxWindowsInOneRow;
-        NSLog(@"Too small. maxWIndowsInOneRow=%d, w=%f", maxWindowsInOneRow, w);
     }
 
     // Find the window whose top is nearest the top of the screen. That will be the
     // new top of all the windows in the first row.
-    float highestTop = 0;
+    int highestTop = 0;
     for (PseudoTerminal* terminal in terminals) {
         NSRect r = [[terminal window] frame];
         if (r.origin.y < frame.origin.y) {
             // Bottom of window is below dock. Pretend its bottom abuts the dock.
             r.origin.y = frame.origin.y;
         }
-        float top = r.origin.y + r.size.height;
+        int top = r.origin.y + r.size.height;
         if (top > highestTop) {
             highestTop = top;
         }
     }
-    NSLog(@"highestTop=%f", highestTop);
-    
+
     // Ensure the bottom of the last row of windows will be above the bottom of the screen.
-    int rows = ceil((w * (float)[terminals count]) / frame.size.width);
-    NSLog(@"rows=%d", rows);
-    
-    float maxHeight = frame.size.height / rows;
-    NSLog(@"maxHeight=%f", maxHeight);
-    
+    int rows = ceil((w * [terminals count]) / frame.size.width);
+
+    int maxHeight = frame.size.height / rows;
+
     if (rows > 1 && highestTop - maxHeight * rows < frame.origin.y) {
         highestTop = frame.origin.y + maxHeight * rows;
-        NSLog(@"adjust highest top up to %f", highestTop);
     }
 
     if (highestTop > frame.origin.y + frame.size.height) {
         // Don't let the top of the first row go above the top of the screen. This is just
         // paranoia.
         highestTop = frame.origin.y + frame.size.height;
-        NSLog(@"adjust highest top down to %f", highestTop);
     }
 
-    float yOffset = 0;
+    int yOffset = 0;
     NSMutableArray *terminalsCopy = [NSMutableArray arrayWithArray:terminals];
 
     // Grab the window that would move the least and move it. This isn't a global
     // optimum, but it is reasonably stable.
     while ([terminalsCopy count] > 0) {
-        NSLog(@"-- top of main loop --");
         // Find the leftmost terminal.
         PseudoTerminal* terminal = nil;
-        float bestDistance = 0;
+        int bestDistance = 0;
         int bestIndex = 0;
 
         for (int j = 0; j < [terminalsCopy count]; ++j) {
             PseudoTerminal* t = [terminalsCopy objectAtIndex:j];
             if (t) {
                 NSRect r = [[t window] frame];
-                float y = highestTop - r.size.height + yOffset;
-                float dx = x - r.origin.x;
-                float dy = y - r.origin.y;
-                float distance = dx*dx + dy*dy;
+                int y = highestTop - r.size.height + yOffset;
+                int dx = x - r.origin.x;
+                int dy = y - r.origin.y;
+                int distance = dx*dx + dy*dy;
                 if (terminal == nil || distance < bestDistance) {
                     bestDistance = distance;
                     terminal = t;
@@ -452,8 +441,8 @@ static BOOL initDone = NO;
         [dict setObject:[terminal window] forKey:NSViewAnimationTargetKey];
         [dict setObject:[NSValue valueWithRect:[[terminal window] frame]]
                  forKey:NSViewAnimationStartFrameKey];
-        float y = highestTop - [[terminal window] frame].size.height;
-        float h = MIN(maxHeight, [[terminal window] frame].size.height);
+        int y = highestTop - [[terminal window] frame].size.height;
+        int h = MIN(maxHeight, [[terminal window] frame].size.height);
         if (rows > 1) {
             // The first row can be a bit ragged vertically but subsequent rows line up
             // at the tops of the windows.
@@ -464,15 +453,11 @@ static BOOL initDone = NO;
                                                           w,
                                                           h)]
                  forKey:NSViewAnimationEndFrameKey];
-        NSLog(@"Before incr x=%f", x);
         x += w;
-        NSLog(@"After incr by %f, x=%f", w, x);
         if (x > frame.size.width - w) {
-            NSLog(@"x=%f > width=%lf - w=%f", x, frame.size.width, w);
             // Wrap around to the next row of windows.
-            x = 0;
+            x = frame.origin.x;
             yOffset -= maxHeight;
-            NSLog(@"update yOffset to %f", yOffset);
         }
         NSViewAnimation* theAnim = [[NSViewAnimation alloc] initWithViewAnimations:[NSArray arrayWithObjects:dict, nil]];
 
@@ -648,7 +633,7 @@ static BOOL initDone = NO;
                                                            action:nil
                                                     keyEquivalent:@""];
         [subMenu addItem:overflowItem];
-        [overflowItem release];        
+        [overflowItem release];
     }
     [aMenuItem setSubmenu:subMenu];
     [aMenuItem setTarget:self];
@@ -1207,7 +1192,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     }
     [[iTermController sharedInstance] performSelector:@selector(rollInFinished)
                                            withObject:nil
-                                           afterDelay:[[NSAnimationContext currentContext] duration]];    
+                                           afterDelay:[[NSAnimationContext currentContext] duration]];
 }
 
 - (void)rollInFinished
