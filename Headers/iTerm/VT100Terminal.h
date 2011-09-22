@@ -299,6 +299,7 @@ typedef enum {
     int  CHARSET;           // G0...G3
     BOOL XON;               // YES=XON, NO=XOFF
     BOOL numLock;           // YES=ON, NO=OFF, default=YES;
+    BOOL shouldBounceDockIcon; // YES=Bounce, NO=cancel;
     MouseMode MOUSE_MODE;
     MouseFormat MOUSE_FORMAT;
 
