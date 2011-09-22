@@ -2719,6 +2719,12 @@ static VT100TCC decode_string(unsigned char *datap,
             }
         } else if ([key isEqualToString:@"EndCopy"]) {
             [[SCREEN session] setPasteboard:nil];
+        } else if ([key isEqualToString:@"RequestAttention"]) {
+            if ([value boolValue]) {
+                shouldBounceDockIcon = [NSApp requestUserAttention:NSCriticalRequest];
+            } else {
+                [NSApp cancelUserAttentionRequest:shouldBounceDockIcon];
+            }
         }
     } else if (token.type == XTERMCC_SET_PALETTE) {
         NSString* argument = token.u.string;
