@@ -356,7 +356,9 @@ static BOOL initDone = NO;
 // Arrange terminals horizontally, in multiple rows if needed.
 - (void)arrangeTerminals:(NSArray*)terminals inFrame:(NSRect)frame
 {
+    NSLog(@"arrangeTerminals:%@ inFrame:%@", terminals, [NSValue valueWithRect:frame]);
     if ([terminals count] == 0) {
+        NSLog(@"no terminals");
         return;
     }
 
@@ -366,13 +368,16 @@ static BOOL initDone = NO;
     float minWidth = 400;
     for (PseudoTerminal* term in terminals) {
         float termMinWidth = [term minWidth];
+        NSLog(@"term min width=%f", termMinWidth);
         minWidth = MAX(minWidth, termMinWidth);
     }
+    NSLog(@"minWidth=%f", minWidth);
     if (w < minWidth) {
         // Width would be too narrow. Pick the smallest width larger than minWidth
         // that evenly  divides the screen up horizontally.
         int maxWindowsInOneRow = floor(frame.size.width / minWidth);
         w = frame.size.width / maxWindowsInOneRow;
+        NSLog(@"Too small. maxWIndowsInOneRow=%d, w=%f", maxWindowsInOneRow, w);
     }
 
     // Find the window whose top is nearest the top of the screen. That will be the
@@ -389,18 +394,25 @@ static BOOL initDone = NO;
             highestTop = top;
         }
     }
-
+    NSLog(@"highestTop=%f", highestTop);
+    
     // Ensure the bottom of the last row of windows will be above the bottom of the screen.
     int rows = ceil((w * (float)[terminals count]) / frame.size.width);
+    NSLog(@"rows=%d", rows);
+    
     float maxHeight = frame.size.height / rows;
+    NSLog(@"maxHeight=%f", maxHeight);
+    
     if (rows > 1 && highestTop - maxHeight * rows < frame.origin.y) {
         highestTop = frame.origin.y + maxHeight * rows;
+        NSLog(@"adjust highest top up to %f", highestTop);
     }
 
     if (highestTop > frame.origin.y + frame.size.height) {
         // Don't let the top of the first row go above the top of the screen. This is just
         // paranoia.
         highestTop = frame.origin.y + frame.size.height;
+        NSLog(@"adjust highest top down to %f", highestTop);
     }
 
     float yOffset = 0;
@@ -409,6 +421,7 @@ static BOOL initDone = NO;
     // Grab the window that would move the least and move it. This isn't a global
     // optimum, but it is reasonably stable.
     while ([terminalsCopy count] > 0) {
+        NSLog(@"-- top of main loop --");
         // Find the leftmost terminal.
         PseudoTerminal* terminal = nil;
         float bestDistance = 0;
@@ -451,11 +464,15 @@ static BOOL initDone = NO;
                                                           w,
                                                           h)]
                  forKey:NSViewAnimationEndFrameKey];
+        NSLog(@"Before incr x=%f", x);
         x += w;
+        NSLog(@"After incr by %f, x=%f", w, x);
         if (x > frame.size.width - w) {
+            NSLog(@"x=%f > width=%lf - w=%f", x, frame.size.width, w);
             // Wrap around to the next row of windows.
             x = 0;
             yOffset -= maxHeight;
+            NSLog(@"update yOffset to %f", yOffset);
         }
         NSViewAnimation* theAnim = [[NSViewAnimation alloc] initWithViewAnimations:[NSArray arrayWithObjects:dict, nil]];
 
