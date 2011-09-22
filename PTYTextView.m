@@ -492,12 +492,22 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return endY;
 }
 
+- (void)setSelectionTime
+{
+    if (startX < 0 || (startX == endX && startY == endY)) {
+        selectionTime_ = 0;
+    } else {
+        selectionTime_ = [[NSDate date] timeIntervalSince1970];
+    }
+}
+
 - (void)setSelectionFromX:(int)fromX fromY:(int)fromY toX:(int)toX toY:(int)toY
 {
     startX = fromX;
     startY = fromY;
     endX = toX;
     endY = toY;
+    [self setSelectionTime];
 }
 
 - (void)setFGColor:(NSColor*)color
@@ -1376,6 +1386,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         startY -= scrollbackOverflow;
         if (startY < 0) {
             startX = -1;
+            [self setSelectionTime];
         }
         endY -= scrollbackOverflow;
         oldStartY -= scrollbackOverflow;
@@ -2705,6 +2716,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 // Clicked before the start. Move the start to the old end.
                 startX = endX;
                 startY = endY;
+                [self setSelectionTime];
             }
             // Move the end to the click location.
             endX = x;
@@ -2720,6 +2732,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             // start a new selection
             endX = startX = x;
             endY = startY = y;
+            [self setSelectionTime];
         }
     } else if (clickCount == 2) {
         int tmpX1, tmpY1, tmpX2, tmpY2;
@@ -2747,6 +2760,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                 startY = endY;
                 endX = tmpX1;
                 endY = tmpY1;
+                [self setSelectionTime];
             }
         } else  {
             // no matching paren and not holding shift. Set selection to word boundary.
@@ -2754,6 +2768,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             startY = tmpY1;
             endX = tmpX2;
             endY = tmpY2;
+            [self setSelectionTime];
         }
     } else if (clickCount == 3) {
         // triple-click; select line
@@ -2770,6 +2785,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                     // advance start to end
                     startX = endX;
                     startY = endY;
+                    [self setSelectionTime];
                 }
                 endX = 0;
                 endY = y;
@@ -2779,6 +2795,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             startX = 0;
             endX = width;
             startY = endY = y;
+            [self setSelectionTime];
         }
     } else if (clickCount == 4) {
         // quad-click: smart selection
@@ -2904,6 +2921,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         int t;
         t = startY; startY = endY; endY = t;
         t = startX; startX = endX; endX = t;
+        [self setSelectionTime];
     } else if ([event clickCount] < 2 &&
                !mouseDragged &&
                !([event modifierFlags] & NSShiftKeyMask)) {
@@ -3230,6 +3248,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     startX = startY = 0;
     endX = [dataSource width];
     endY = [dataSource numberOfLines] - 1;
+    [self setSelectionTime];
     [[[self dataSource] session] refreshAndStartTimerIfNeeded];
 }
 
@@ -3237,6 +3256,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     if (startX > -1) {
         startX = -1;
+        [self setSelectionTime];
         [[[self dataSource] session] refreshAndStartTimerIfNeeded];
     }
 }
@@ -3347,10 +3367,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
+- (NSTimeInterval)selectionTime
+{
+    return selectionTime_;
+}
+
 - (void)pasteSelection:(id)sender
 {
-    if (startX > -1 && [_delegate respondsToSelector:@selector(pasteString:)]) {
-        [_delegate pasteString:[self selectedText]];
+    if ([_delegate respondsToSelector:@selector(pasteString:)]) {
+        PTYSession *session = [[iTermController sharedInstance] sessionWithMostRecentSelection];
+        if (session) {
+            PTYTextView *textview = [session TEXTVIEW];
+            if (textview->startX > -1) {
+                [_delegate pasteString:[textview selectedText]];
+            }
+        }
     }
 }
 
@@ -4024,6 +4055,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     startX = tmpX1;
     startY = tmpY1;
+    [self setSelectionTime];
     [[[self dataSource] session] refreshAndStartTimerIfNeeded];
     return YES;
 }
@@ -4144,6 +4176,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 startY = r->absStartY - overflowAdustment;
                 endX = r->endX;
                 endY = r->absEndY - overflowAdustment;
+                [self setSelectionTime];
         }
         i += stride;
     }
@@ -4156,6 +4189,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         startY = r->absStartY - overflowAdustment;
         endX = r->endX;
         endY = r->absEndY - overflowAdustment;
+        [self setSelectionTime];
         if (forward) {
             [self beginFlash:FlashWrapToTop];
         } else {
@@ -4180,6 +4214,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (!_findInProgress && !foundResult_) {
         // Clear the selection.
         startX = startY = endX = endY = -1;
+        [self setSelectionTime];
         absLastFindStartY = absLastFindEndY = -1;
         redraw = YES;
     }
@@ -4724,6 +4759,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Save to startx, starty.
     if (startx) {
         *startx = tmpX;
+        [self setSelectionTime];
     }
     if (starty) {
         *starty = tmpY;
@@ -6779,6 +6815,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             startY = yStart;
             endX = X+1;
             endY = Y;
+            [self setSelectionTime];
 
             return YES;
         } else {
@@ -6813,6 +6850,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             startY = Y;
             endX = x1+1;
             endY = yStart;
+            [self setSelectionTime];
 
             return YES;
         } else {
@@ -7444,6 +7482,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     }
                     startX = tx1;
                     startY = ty1;
+                    [self setSelectionTime];
                 }
                 // This will update the ending coordinates to the new selected word's end boundaries.
                 // If we had to swap the starting and ending value (see above), the ending value is set
@@ -7476,6 +7515,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     }
                     startX = tx2;
                     startY = ty2;
+                    [self setSelectionTime];
                 }
                 // Continue selecting text backwards. For a complete explanation see above, but read
                 // it upside-down. :p
@@ -7489,10 +7529,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 startX = 0;
                 endX = [dataSource width];
                 endY = y;
+                [self setSelectionTime];
             } else {
                 endX = 0;
                 endY = y;
                 startX = [dataSource width];
+                [self setSelectionTime];
             }
             break;
     }
@@ -7519,6 +7561,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if ([dataSource isDirtyAtX:x Y:y-lineStart] && isSelected && !isCursor) {
                 // Don't call [self deselect] as it would recurse back here
                 startX = -1;
+                [self setSelectionTime];
                 DebugLog(@"found selected dirty noncursor");
                 break;
             }

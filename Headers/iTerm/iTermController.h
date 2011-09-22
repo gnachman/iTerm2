@@ -35,6 +35,7 @@
 @class ItermGrowlDelegate;
 @class PasteboardHistory;
 @class GTMCarbonHotKey;
+@class PTYSession;
 
 @interface iTermController : NSObject
 {
@@ -98,6 +99,8 @@
 
 - (void)saveWindowArrangement;
 - (void)loadWindowArrangementWithName:(NSString *)theName;
+
+- (PTYSession *)sessionWithMostRecentSelection;
 
 - (PseudoTerminal *)currentTerminal;
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;

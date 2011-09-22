@@ -289,6 +289,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Is the mouse inside our view?
     BOOL mouseInRect_;
+
+    // Time the selection last changed at or 0 if there's no selection.
+    NSTimeInterval selectionTime_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -339,6 +342,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)browse:(id)sender;
 - (void)searchInBrowser:(id)sender;
 - (void)mail:(id)sender;
+- (NSTimeInterval)selectionTime;
 // Cause the next find to start at the top/bottom of the buffer
 - (void)resetFindCursor;
 

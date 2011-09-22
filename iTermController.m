@@ -503,6 +503,22 @@ static BOOL initDone = NO;
     }
 }
 
+- (PTYSession *)sessionWithMostRecentSelection
+{
+    NSTimeInterval latest = 0;
+    PTYSession *best = nil;
+    for (PseudoTerminal *term in [self terminals]) {
+        for (PTYSession *aSession in [term sessions]) {
+            NSTimeInterval current = [[aSession TEXTVIEW] selectionTime];
+            if (current > latest) {
+                latest = current;
+                best = aSession;
+            }
+        }
+    }
+    return best;
+}
+
 - (PseudoTerminal*)currentTerminal
 {
     return FRONT;
