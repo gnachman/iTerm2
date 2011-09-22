@@ -1776,5 +1776,25 @@ echo -e "\033]6;1;bg;blue;brightness;255\a"
 <pre>
 echo -e "\033]Pg4040ff\033\\"
 </pre>
+
+<h4>Dock Icon Activity Notification</h4>
+
+<p>Causes the iTerm2 Dock icon to bounce up and down in the standard
+OS X "This application wants attention" fashion.</p>
+
+<p><strong>Note:</strong> The Dock icon Notification will only occur if iTerm2
+is <em>not</em> the currently active application, and will continue until
+either iTerm2 is made active again, or the "cancel" sequence is received.
+</p>
+
+<pre>
+^[]50;RequestAttention=N^G
+</pre>
+
+<p>where N=0 or 1.</p>
+<ul>
+<li>1 = Bounce Dock Icon continuously until iTerm2 made active</li>
+<li>0 = Cancel Existing Bouncing. No-op if not bouncing.</li>
+</ul>
 </div>
 </body>
