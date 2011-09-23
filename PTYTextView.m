@@ -6879,7 +6879,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return iResult;
 }
 
-- (BOOL)_lineLength:(int)y
+- (int)_lineLength:(int)y
 {
     screen_char_t *theLine = [dataSource getLineAtIndex:y];
     int x;
