@@ -28,6 +28,7 @@
 #import <iTerm/BookmarkModel.h>
 #import "BookmarkListView.h"
 #import "WindowArrangements.h"
+#import "TriggerController.h"
 
 #define OPT_NORMAL 0
 #define OPT_META   1
@@ -52,14 +53,16 @@
 #define PROMPT_EX_JOBS 2
 
 @class iTermController;
+@class TriggerController;
 
 typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 
-@interface PreferencePanel : NSWindowController <BookmarkTableDelegate>
+@interface PreferencePanel : NSWindowController <BookmarkTableDelegate, TriggerDelegate>
 {
     BookmarkModel* dataSource;
     BOOL oneBookmarkMode;
-
+    IBOutlet TriggerController *triggers_;
+    
     // This is actually the tab style. It takes one of these values:
     // 0: Metal
     // 1: Aqua
@@ -522,9 +525,13 @@ typedef enum {
 + (PreferencePanel*)sessionsInstance;
 + (BOOL)migratePreferences;
 + (BOOL)loadingPrefsFromCustomFolder;
+
 - (BOOL)loadPrefs;
 - (id)initWithDataSource:(BookmarkModel*)model userDefaults:(NSUserDefaults*)userDefaults;
-- (void)setOneBokmarkOnly;
+
+- (void)triggerChanged:(TriggerController *)triggerController;
+
+- (void)setOneBookmarkOnly;
 - (void)awakeFromNib;
 - (void)handleWindowWillCloseNotification:(NSNotification *)notification;
 - (void)genericCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo;

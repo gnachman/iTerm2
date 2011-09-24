@@ -148,12 +148,16 @@
 #define KEY_OPTION_KEY_SENDS                  @"Option Key Sends"
 #define KEY_RIGHT_OPTION_KEY_SENDS            @"Right Option Key Sends"
 
+// Advanced
+#define KEY_TRIGGERS                         @"Triggers"  // NSArray of NSDictionary
+
 #define WINDOW_TYPE_NORMAL 0
 #define WINDOW_TYPE_FULL_SCREEN 1  // Creates a normal window but all callers to initWithSmartLayout will toggle fullscreen mode if this is the windowType.
 #define WINDOW_TYPE_TOP 2
 #define WINDOW_TYPE_FORCE_FULL_SCREEN 3  // Used internally, never reported by windowType API. Causes initWithSmartLayout to create a window with fullscreen chrome. It will set its windowType to FULL_SCREEN
 #define WINDOW_TYPE_LION_FULL_SCREEN 4  // Lion-native fullscreen
 #define WINDOW_TYPE_BOTTOM 5
+
 
 @interface ITAddressBookMgr : NSObject
 {

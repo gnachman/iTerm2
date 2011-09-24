@@ -37,6 +37,7 @@
 #import "PasteboardHistory.h"
 #import "SessionView.h"
 #import "WindowArrangements.h"
+#import "TriggerController.h"
 
 #define CUSTOM_COLOR_PRESETS @"Custom Color Presets"
 #define HOTKEY_WINDOW_GENERATED_PROFILE_NAME @"Hotkey Window"
@@ -186,7 +187,7 @@ static float versionNumber;
     }
 }
 
-- (void)setOneBokmarkOnly
+- (void)setOneBookmarkOnly
 {
     oneBookmarkOnly = YES;
     [self showBookmarks];
@@ -555,7 +556,6 @@ static float versionNumber;
     [[self window] setCollectionBehavior:NSWindowCollectionBehaviorMoveToActiveSpace];
     NSAssert(bookmarksTableView, @"Null table view");
     [bookmarksTableView setUnderlyingDatasource:dataSource];
-
     bookmarksToolbarId = [bookmarksToolbarItem itemIdentifier];
     globalToolbarId = [globalToolbarItem itemIdentifier];
     appearanceToolbarId = [appearanceToolbarItem itemIdentifier];
@@ -598,7 +598,7 @@ static float versionNumber;
                                              selector:@selector(handleWindowWillCloseNotification:)
                                                  name:NSWindowWillCloseNotification object: [self window]];
     if (oneBookmarkMode) {
-        [self setOneBokmarkOnly];
+        [self setOneBookmarkOnly];
     }
     [[tags cell] setDelegate:self];
     [tags setDelegate:self];
@@ -3041,6 +3041,9 @@ static float versionNumber;
     [newDict setObject:[origBookmark objectForKey:KEY_JOBS] ? [origBookmark objectForKey:KEY_JOBS] : [NSArray array]
                 forKey:KEY_JOBS];
 
+    // Advanced tab
+    [newDict setObject:[triggers_ triggers] forKey:KEY_TRIGGERS];
+    
     // Epilogue
     [dataSource setBookmark:newDict withGuid:guid];
     [bookmarksTableView reloadData];
@@ -3104,6 +3107,7 @@ static float versionNumber;
         [removeBookmarkButton setEnabled:NO];
         if (bookmarkTable == bookmarksTableView) {
             NSString* guid = [bookmarksTableView selectedGuid];
+            triggers_.guid = guid;
             [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
         }
     }
@@ -3927,6 +3931,11 @@ static float versionNumber;
     } else {
         return nil;
     }
+}
+
+- (void)triggerChanged:(TriggerController *)triggerController
+{
+  [self bookmarkSettingChanged:nil];
 }
 
 @end

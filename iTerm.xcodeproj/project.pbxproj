@@ -30,6 +30,8 @@
 		1D2E802F129DA45A00F3D71E /* PTYTab.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E802D129DA45A00F3D71E /* PTYTab.m */; };
 		1D2E813112A18F7500F3D71E /* SessionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E812F12A18F7500F3D71E /* SessionView.h */; };
 		1D2E813212A18F7500F3D71E /* SessionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E813012A18F7500F3D71E /* SessionView.m */; };
+		1D31BC65142D33CA001F7ECB /* TriggerController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D31BC63142D33CA001F7ECB /* TriggerController.h */; };
+		1D31BC66142D33CA001F7ECB /* TriggerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D31BC64142D33CA001F7ECB /* TriggerController.m */; };
 		1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D36155312CBF33E00803EA9 /* ScreenChar.h */; };
 		1D36155612CBF33E00803EA9 /* ScreenChar.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D36155412CBF33E00803EA9 /* ScreenChar.m */; };
 		1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D395912134E75B5005A8021 /* SmartSelectionRules.plist */; };
@@ -351,6 +353,8 @@
 		1D2E802D129DA45A00F3D71E /* PTYTab.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYTab.m; sourceTree = "<group>"; };
 		1D2E812F12A18F7500F3D71E /* SessionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SessionView.h; sourceTree = "<group>"; };
 		1D2E813012A18F7500F3D71E /* SessionView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SessionView.m; sourceTree = "<group>"; };
+		1D31BC63142D33CA001F7ECB /* TriggerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TriggerController.h; sourceTree = "<group>"; };
+		1D31BC64142D33CA001F7ECB /* TriggerController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TriggerController.m; sourceTree = "<group>"; };
 		1D36155312CBF33E00803EA9 /* ScreenChar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScreenChar.h; sourceTree = "<group>"; };
 		1D36155412CBF33E00803EA9 /* ScreenChar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ScreenChar.m; sourceTree = "<group>"; };
 		1D395912134E75B5005A8021 /* SmartSelectionRules.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = SmartSelectionRules.plist; sourceTree = "<group>"; };
@@ -752,6 +756,8 @@
 				E8CF7562026DDA6303A80106 /* VT100Screen.m */,
 				E8CF7563026DDA6303A80106 /* VT100Terminal.m */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
+				1D31BC63142D33CA001F7ECB /* TriggerController.h */,
+				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -1228,6 +1234,7 @@
 				1D19C71414171F1D00617E08 /* ToolJobs.h in Headers */,
 				1D67AAA914284BF300D5DA4E /* ToolNotes.h in Headers */,
 				1D67ABAB14285D6000D5DA4E /* NSFileManager+DirectoryLocations.h in Headers */,
+				1D31BC65142D33CA001F7ECB /* TriggerController.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1529,6 +1536,7 @@
 				1D19C71514171F1D00617E08 /* ToolJobs.m in Sources */,
 				1D67AAAA14284BF300D5DA4E /* ToolNotes.m in Sources */,
 				1D67ABAC14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m in Sources */,
+				1D31BC66142D33CA001F7ECB /* TriggerController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
