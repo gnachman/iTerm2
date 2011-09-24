@@ -756,7 +756,6 @@
 				E8CF7562026DDA6303A80106 /* VT100Screen.m */,
 				E8CF7563026DDA6303A80106 /* VT100Terminal.m */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
-				1D31BC63142D33CA001F7ECB /* TriggerController.h */,
 				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
 			);
 			name = Classes;
@@ -767,6 +766,7 @@
 			children = (
 				1D67AAA714284BF300D5DA4E /* ToolNotes.h */,
 				1DE214DF128212EE004E3ADF /* Autocomplete.h */,
+				1D31BC63142D33CA001F7ECB /* TriggerController.h */,
 				1DE8DF341415799700F83147 /* ToolWrapper.h */,
 				1D9F6AB6140C9DC4009B5CD4 /* FutureMethods.h */,
 				1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */,
