@@ -45,6 +45,7 @@
 #import "PTYTab.h"
 #import "ProcessCache.h"
 #import "MovePaneController.h"
+#import "Trigger.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -78,7 +79,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     // The new session won't have the move-pane overlay, so just exit move pane
     // mode.
     [[MovePaneController sharedInstance] exitMovePaneMode];
-
+    triggerLine_ = [[NSMutableString alloc] init];
     isDivorced = NO;
     gettimeofday(&lastInput, NULL);
     lastOutput = lastInput;
@@ -115,6 +116,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)dealloc
 {
+    [triggerLine_ release];
     [pasteboard_ release];
     [pbtext_ release];
     [slowPasteBuffer release];
@@ -405,7 +407,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     // Get session parameters
     [[[self tab] realParentWindow] getSessionParameters:cmd withName:theName];
 
-    [PseudoTerminal breakDown:cmd cmdPath:&cmd cmdArgs:&arg];
+    [cmd breakDownCommandToPath:&cmd cmdArgs:&arg];
 
     pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
     if ([pwd length] == 0) {
@@ -765,6 +767,29 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         [self scheduleUpdateIn:kBackgroundSessionIntervalSec];
     }
     [[ProcessCache sharedInstance] notifyNewOutput];
+}
+
+- (void)checkTriggers
+{
+    for (Trigger *trigger in triggers_) {
+        [trigger tryString:triggerLine_ inSession:self];
+    }
+}
+
+- (void)appendStringToTriggerLine:(NSString *)s
+{
+    const int kMaxTriggerLineLength = 1024;
+    if ([triggers_ count] && [triggerLine_ length] + [s length] < kMaxTriggerLineLength) {
+        [triggerLine_ appendString:s];
+    }
+}
+
+- (void)clearTriggerLine
+{
+    if ([triggers_ count]) {
+        [self checkTriggers];
+        [triggerLine_ setString:@""];
+    }
 }
 
 - (BOOL)_growlOnForegroundTabs
@@ -1939,6 +1964,12 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     } else {
         nonasciiAA = [[aDict objectForKey:KEY_ANTI_ALIASING] boolValue];
     }
+    [triggers_ release];
+    triggers_ = [[NSMutableArray alloc] init];
+    for (NSDictionary *triggerDict in [aDict objectForKey:KEY_TRIGGERS]) {
+        [triggers_ addObject:[Trigger triggerFromDict:triggerDict]];
+    }
+
     [TEXTVIEW setAntiAlias:asciiAA nonAscii:nonasciiAA];
     [self setEncoding:[[aDict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]];
     [self setTERM_VALUE:[aDict objectForKey:KEY_TERMINAL_TYPE]];
@@ -3126,7 +3157,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSString *cmd;
     NSArray *arg;
 
-    [PseudoTerminal breakDown:command cmdPath:&cmd cmdArgs:&arg];
+    [command breakDownCommandToPath:&cmd cmdArgs:&arg];
     [self startProgram:cmd arguments:arg environment:[NSDictionary dictionary] isUTF8:isUTF8 asLoginSession:NO];
 
     return;

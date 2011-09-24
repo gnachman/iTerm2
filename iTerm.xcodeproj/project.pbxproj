@@ -207,6 +207,18 @@
 		1D988597135D23BD0072023F /* ProcessCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D988595135D23BD0072023F /* ProcessCache.h */; };
 		1D988598135D23BD0072023F /* ProcessCache.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D988596135D23BD0072023F /* ProcessCache.m */; };
 		1D99785312EEB3D600F0794D /* GlobalSearch.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D99785112EEB3D600F0794D /* GlobalSearch.xib */; };
+		1D9DCBFE142D7BA60016228A /* Trigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCBFC142D7BA60016228A /* Trigger.h */; };
+		1D9DCBFF142D7BA60016228A /* Trigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCBFD142D7BA60016228A /* Trigger.m */; };
+		1D9DCC04142D7E570016228A /* GrowlTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC02142D7E570016228A /* GrowlTrigger.h */; };
+		1D9DCC05142D7E570016228A /* GrowlTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC03142D7E570016228A /* GrowlTrigger.m */; };
+		1D9DCC0A142D7F300016228A /* BounceTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC08142D7F300016228A /* BounceTrigger.h */; };
+		1D9DCC0B142D7F300016228A /* BounceTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC09142D7F300016228A /* BounceTrigger.m */; };
+		1D9DCC0E142D7F5F0016228A /* BellTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC0C142D7F5F0016228A /* BellTrigger.h */; };
+		1D9DCC0F142D7F5F0016228A /* BellTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC0D142D7F5F0016228A /* BellTrigger.m */; };
+		1D9DCC12142D7F970016228A /* ScriptTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC10142D7F970016228A /* ScriptTrigger.h */; };
+		1D9DCC13142D7F970016228A /* ScriptTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC11142D7F970016228A /* ScriptTrigger.m */; };
+		1D9DCC16142D7FC10016228A /* AlertTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC14142D7FC10016228A /* AlertTrigger.h */; };
+		1D9DCC17142D7FC10016228A /* AlertTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC15142D7FC10016228A /* AlertTrigger.m */; };
 		1D9F6AB8140C9DC4009B5CD4 /* FutureMethods.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9F6AB6140C9DC4009B5CD4 /* FutureMethods.h */; };
 		1D9F6AB9140C9DC4009B5CD4 /* FutureMethods.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */; };
 		1DA02CFB1327612600D7E7DB /* bell.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA02CFA1327612600D7E7DB /* bell.png */; };
@@ -413,6 +425,18 @@
 		1D988595135D23BD0072023F /* ProcessCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessCache.h; sourceTree = "<group>"; };
 		1D988596135D23BD0072023F /* ProcessCache.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProcessCache.m; sourceTree = "<group>"; };
 		1D99785212EEB3D600F0794D /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/GlobalSearch.xib; sourceTree = "<group>"; };
+		1D9DCBFC142D7BA60016228A /* Trigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Trigger.h; sourceTree = "<group>"; };
+		1D9DCBFD142D7BA60016228A /* Trigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Trigger.m; sourceTree = "<group>"; };
+		1D9DCC02142D7E570016228A /* GrowlTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GrowlTrigger.h; sourceTree = "<group>"; };
+		1D9DCC03142D7E570016228A /* GrowlTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GrowlTrigger.m; sourceTree = "<group>"; };
+		1D9DCC08142D7F300016228A /* BounceTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BounceTrigger.h; sourceTree = "<group>"; };
+		1D9DCC09142D7F300016228A /* BounceTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BounceTrigger.m; sourceTree = "<group>"; };
+		1D9DCC0C142D7F5F0016228A /* BellTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BellTrigger.h; sourceTree = "<group>"; };
+		1D9DCC0D142D7F5F0016228A /* BellTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BellTrigger.m; sourceTree = "<group>"; };
+		1D9DCC10142D7F970016228A /* ScriptTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScriptTrigger.h; sourceTree = "<group>"; };
+		1D9DCC11142D7F970016228A /* ScriptTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ScriptTrigger.m; sourceTree = "<group>"; };
+		1D9DCC14142D7FC10016228A /* AlertTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlertTrigger.h; sourceTree = "<group>"; };
+		1D9DCC15142D7FC10016228A /* AlertTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AlertTrigger.m; sourceTree = "<group>"; };
 		1D9F6AB6140C9DC4009B5CD4 /* FutureMethods.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FutureMethods.h; sourceTree = "<group>"; };
 		1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FutureMethods.m; sourceTree = "<group>"; };
 		1DA02CFA1327612600D7E7DB /* bell.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = bell.png; path = images/bell.png; sourceTree = "<group>"; };
@@ -692,6 +716,18 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				1D9DCC14142D7FC10016228A /* AlertTrigger.h */,
+				1D9DCC15142D7FC10016228A /* AlertTrigger.m */,
+				1D9DCC10142D7F970016228A /* ScriptTrigger.h */,
+				1D9DCC11142D7F970016228A /* ScriptTrigger.m */,
+				1D9DCC0C142D7F5F0016228A /* BellTrigger.h */,
+				1D9DCC0D142D7F5F0016228A /* BellTrigger.m */,
+				1D9DCC08142D7F300016228A /* BounceTrigger.h */,
+				1D9DCC09142D7F300016228A /* BounceTrigger.m */,
+				1D9DCC02142D7E570016228A /* GrowlTrigger.h */,
+				1D9DCC03142D7E570016228A /* GrowlTrigger.m */,
+				1D9DCBFC142D7BA60016228A /* Trigger.h */,
+				1D9DCBFD142D7BA60016228A /* Trigger.m */,
 				1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */,
 				1DE214E0128212EE004E3ADF /* Autocomplete.m */,
 				1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */,
@@ -1235,6 +1271,12 @@
 				1D67AAA914284BF300D5DA4E /* ToolNotes.h in Headers */,
 				1D67ABAB14285D6000D5DA4E /* NSFileManager+DirectoryLocations.h in Headers */,
 				1D31BC65142D33CA001F7ECB /* TriggerController.h in Headers */,
+				1D9DCBFE142D7BA60016228A /* Trigger.h in Headers */,
+				1D9DCC04142D7E570016228A /* GrowlTrigger.h in Headers */,
+				1D9DCC0A142D7F300016228A /* BounceTrigger.h in Headers */,
+				1D9DCC0E142D7F5F0016228A /* BellTrigger.h in Headers */,
+				1D9DCC12142D7F970016228A /* ScriptTrigger.h in Headers */,
+				1D9DCC16142D7FC10016228A /* AlertTrigger.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1537,6 +1579,12 @@
 				1D67AAAA14284BF300D5DA4E /* ToolNotes.m in Sources */,
 				1D67ABAC14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m in Sources */,
 				1D31BC66142D33CA001F7ECB /* TriggerController.m in Sources */,
+				1D9DCBFF142D7BA60016228A /* Trigger.m in Sources */,
+				1D9DCC05142D7E570016228A /* GrowlTrigger.m in Sources */,
+				1D9DCC0B142D7F300016228A /* BounceTrigger.m in Sources */,
+				1D9DCC0F142D7F5F0016228A /* BellTrigger.m in Sources */,
+				1D9DCC13142D7F970016228A /* ScriptTrigger.m in Sources */,
+				1D9DCC17142D7FC10016228A /* AlertTrigger.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

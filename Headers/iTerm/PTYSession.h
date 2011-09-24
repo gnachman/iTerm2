@@ -217,6 +217,12 @@ typedef enum {
     // updated when this is set to nil.
     NSString *pasteboard_;
     NSMutableData *pbtext_;
+
+    // The current line of text, for checking against triggers if any.
+    NSMutableString *triggerLine_;
+
+    // The current triggers.
+    NSMutableArray *triggers_;
 }
 
 // Return the current pasteboard value as a string.
@@ -255,6 +261,10 @@ typedef enum {
 
 // Session specific methods
 - (BOOL)setScreenSize:(NSRect)aRect parent:(id<WindowControllerInterface>)parent;
+
+// triggers
+- (void)clearTriggerLine;
+- (void)appendStringToTriggerLine:(NSString *)s;
 
 + (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame;
 + (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement inView:(SessionView*)sessionView inTab:(PTYTab*)theTab;

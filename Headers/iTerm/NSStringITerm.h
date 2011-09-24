@@ -51,4 +51,7 @@
 // Convert DOS-style and \n newlines to \r newlines.
 - (NSString*)stringWithLinefeedNewlines;
 
+- (void)breakDownCommandToPath:(NSString **)cmd cmdArgs:(NSArray **)path;
+- (NSString *)stringByReplacingBackreference:(int)n withString:(NSString *)s;
+
 @end

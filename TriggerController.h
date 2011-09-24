@@ -13,9 +13,6 @@
 - (void)triggerChanged:(TriggerController *)controller;
 @end
 
-@interface TriggerActionColumn : NSTableColumn
-@end
-
 @interface TriggerController : NSObject {
   NSString *guid_;
   BOOL hasSelection_;

@@ -252,4 +252,121 @@ static const int ambiguous_chars[] = {
     return [[self stringReplaceSubstringFrom:@"\r\n" to:@"\r"] stringReplaceSubstringFrom:@"\n" to:@"\r"];
 }
 
+- (void)breakDownCommandToPath:(NSString **)cmd cmdArgs:(NSArray **)path
+{
+    NSMutableArray *mutableCmdArgs;
+    char *cmdLine; // The temporary UTF-8 version of the command line
+    char *nextChar; // The character we will process next
+    char *argStart; // The start of the current argument we are processing
+    char *copyPos; // The position where we are currently writing characters
+    int inQuotes = 0; // Are we inside double quotes?
+
+    mutableCmdArgs = [[NSMutableArray alloc] init];
+
+    // The value returned by [self UTF8String] is automatically freed (when the
+    // autorelease context containing this is destroyed). We need to copy the
+    // string, as the tokenisation is easier when we can modify string we are
+    // working with.
+    cmdLine = strdup([self UTF8String]);
+    nextChar = cmdLine;
+    copyPos = cmdLine;
+    argStart = cmdLine;
+
+    if (!cmdLine) {
+        // We could not allocate enough memory for the cmdLine... bailing
+        *path = [[NSArray alloc] init];
+        [mutableCmdArgs release];
+        return;
+    }
+
+    char c;
+    while ((c = *nextChar++)) {
+        switch (c) {
+            case '\\':
+                if (*nextChar == '\0') {
+                    // This is the last character, thus this is a malformed
+                    // command line, we will just leave the "\" character as a
+                    // literal.
+                }
+
+                // We need to copy the next character verbatim.
+                *copyPos++ = *nextChar++;
+                break;
+            case '\"':
+                // Time to toggle the quotation mode
+                inQuotes = !inQuotes;
+                // Note: Since we don't copy to/increment copyPos, this
+                // character will be dropped from the output string.
+                break;
+            case ' ':
+            case '\t':
+            case '\n':
+                if (inQuotes) {
+                    // We need to copy the current character verbatim.
+                    *copyPos++ = c;
+                } else {
+                    // Time to split the command
+                    *copyPos = '\0';
+                    [mutableCmdArgs addObject:[NSString stringWithUTF8String: argStart]];
+                    argStart = nextChar;
+                    copyPos = nextChar;
+                }
+                break;
+            default:
+                // Just copy the current character.
+                // Note: This could be made more efficient for the 'normal
+                // case' where copyPos is not offset from the current place we
+                // are reading from. Since this function is called rarely, and
+                // it isn't that slow, we will just ignore the optimisation.
+                *copyPos++ = c;
+                break;
+        }
+    }
+
+    if (copyPos != argStart) {
+        // We have data that we have not copied into mutableCmdArgs.
+        *copyPos = '\0';
+        [mutableCmdArgs addObject:[NSString stringWithUTF8String: argStart]];
+    }
+
+    if ([mutableCmdArgs count] > 0) {
+        *cmd = [mutableCmdArgs objectAtIndex:0];
+        [mutableCmdArgs removeObjectAtIndex:0];
+    } else {
+        // This will only occur if the input string is empty.
+        // Note: The old code did nothing in this case, so neither will we.
+    }
+
+    free(cmdLine);
+    *path = [NSArray arrayWithArray:mutableCmdArgs];
+    [mutableCmdArgs release];
+}
+
+- (NSString *)stringByReplacingBackreference:(int)n withString:(NSString *)s
+{
+    NSString *br = [NSString stringWithFormat:@"\\%d", n];
+    NSMutableArray *ranges = [NSMutableArray array];
+    NSRange range = [self rangeOfString:br];
+    while (range.location != NSNotFound) {
+        int numSlashes = 0;
+        for (int i = range.location - 1; i >= 0 && [self characterAtIndex:i] == '\\'; i--) {
+            ++numSlashes;
+        }
+        if (numSlashes % 2 == 0) {
+            [ranges insertObject:[NSValue valueWithRange:range] atIndex:0];
+        }
+        range = [self rangeOfString:br
+                            options:0
+                              range:NSMakeRange(range.location + 1, self.length - range.location - 1)];
+    }
+
+    NSString *newString = self;
+    for (NSValue *value in ranges) {
+        NSRange r = [value rangeValue];
+        newString = [newString stringByReplacingCharactersInRange:r withString:s];
+    }
+
+    return newString;
+}
+
 @end

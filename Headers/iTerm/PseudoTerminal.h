@@ -751,12 +751,6 @@ NSWindowDelegate,
 - (void)hideMenuBar;
 - (void)showMenuBar;
 
-// This is a half-baked function that tries to parse a command line into a
-// command (returned in *cmd) and an array of arguments (returned in *path).
-+ (void)breakDown:(NSString *)cmdl
-          cmdPath:(NSString **)cmd
-          cmdArgs:(NSArray **)path;
-
 // Returns the width of characters in pixels in the session with the widest
 // characters. Fills in *numChars with the number of columns in that session.
 - (float)maxCharWidth:(int*)numChars;

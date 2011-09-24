@@ -8,16 +8,12 @@
 #import "TriggerController.h"
 #import "BookmarkModel.h"
 #import "ITAddressBookMgr.h"
-
-static NSString * const kTriggerRegexKey = @"regex";
-static NSString * const kTriggerActionKey = @"action";
-static NSString * const kTriggerParameterKey = @"parameter";
-
-typedef struct {
-    NSString *action;
-    NSString *title;
-    BOOL takesParameter;
-} Trigger;
+#import "GrowlTrigger.h"
+#import "BounceTrigger.h"
+#import "BellTrigger.h"
+#import "ScriptTrigger.h"
+#import "AlertTrigger.h"
+#import "Trigger.h"
 
 enum {
     kGrowlAction,
@@ -27,19 +23,23 @@ enum {
     kAlertAction
 };
 
-static Trigger gTriggers[] = {
-    { @"growl",  @"Send Growl Message…", YES },
-    { @"bounce", @"Bounce Dock Icon",    NO },
-    { @"bell",   @"Ring Bell",           NO },
-    { @"script", @"Run Script…",         YES },
-    { @"alert",  @"Show Alert…",         YES },
-};
+static NSMutableArray *gTriggerClasses;
 
 @implementation TriggerController
 
 @synthesize guid = guid_;
 @synthesize hasSelection = hasSelection_;
 @synthesize delegate = delegate_;
+
++ (void)initialize
+{
+    gTriggerClasses = [[NSMutableArray alloc] init];
+    [gTriggerClasses addObject:[[AlertTrigger alloc] init]];
+    [gTriggerClasses addObject:[[BellTrigger alloc] init]];
+    [gTriggerClasses addObject:[[BounceTrigger alloc] init]];
+    [gTriggerClasses addObject:[[GrowlTrigger alloc] init]];
+    [gTriggerClasses addObject:[[ScriptTrigger alloc] init]];
+}
 
 - (void)dealloc
 {
@@ -49,14 +49,15 @@ static Trigger gTriggers[] = {
 
 + (int)numberOfTriggers
 {
-    return sizeof(gTriggers) / sizeof(Trigger);
+    return gTriggerClasses.count;
 }
 
 + (int)indexOfAction:(NSString *)action
 {
     int n = [TriggerController numberOfTriggers];
     for (int i = 0; i < n; i++) {
-        if ([gTriggers[i].action isEqualToString:action]) {
+        NSString *className = NSStringFromClass([[gTriggerClasses objectAtIndex:i] class]);
+        if ([className isEqualToString:action]) {
             return i;
         }
     }
@@ -65,7 +66,7 @@ static Trigger gTriggers[] = {
 
 + (Trigger *)triggerAtIndex:(int)i
 {
-    return gTriggers + i;
+    return [gTriggerClasses objectAtIndex:i];
 }
 
 + (Trigger *)triggerWithAction:(NSString *)action
@@ -105,21 +106,22 @@ static Trigger gTriggers[] = {
 
 - (BOOL)actionTakesParameter:(NSString *)action
 {
-    return [TriggerController triggerWithAction:action]->takesParameter;
+    return [[TriggerController triggerWithAction:action] takesParameter];
 }
 
 - (NSDictionary *)defaultTrigger
 {
     return [NSDictionary dictionaryWithObjectsAndKeys:
             @"", kTriggerRegexKey,
-            [TriggerController triggerAtIndex:kBounceAction]->action, kTriggerActionKey,
+            [[TriggerController triggerAtIndex:kBounceAction] action], kTriggerActionKey,
             nil];
 }
 
 - (IBAction)addTrigger:(id)sender
 {
     [self setTrigger:[self defaultTrigger] forRow:-1];
-    [tableView_ selectRow:tableView_.numberOfRows - 1 byExtendingSelection:NO];
+    [tableView_ selectRowIndexes:[NSIndexSet indexSetWithIndex:tableView_.numberOfRows - 1]
+            byExtendingSelection:NO];
 }
 
 - (IBAction)removeTrigger:(id)sender
@@ -142,14 +144,14 @@ static Trigger gTriggers[] = {
 }
 
 - (id)tableView:(NSTableView *)aTableView
-objectValueForTableColumn:(NSTableColumn *)aTableColumn
+          objectValueForTableColumn:(NSTableColumn *)aTableColumn
             row:(NSInteger)rowIndex {
     NSDictionary *trigger = [[self triggers] objectAtIndex:rowIndex];
     if (aTableColumn == regexColumn_) {
         return [trigger objectForKey:kTriggerRegexKey];
     } else if (aTableColumn == parametersColumn_) {
         NSString *action = [trigger objectForKey:kTriggerActionKey];
-        if ([TriggerController triggerWithAction:action]->takesParameter) {
+        if ([[TriggerController triggerWithAction:action] takesParameter]) {
             return [trigger objectForKey:kTriggerParameterKey];
         } else {
             return @"";
@@ -163,13 +165,13 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
 - (void)tableView:(NSTableView *)aTableView setObjectValue:(id)anObject forTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
 {
     NSMutableDictionary *trigger = [[[[self triggers] objectAtIndex:rowIndex] mutableCopy] autorelease];
-    
+
     if (aTableColumn == regexColumn_) {
         [trigger setObject:anObject forKey:kTriggerRegexKey];
     } else if (aTableColumn == parametersColumn_) {
         [trigger setObject:anObject forKey:kTriggerParameterKey];
     } else {
-        [trigger setObject:[TriggerController triggerAtIndex:[anObject intValue]]->action
+        [trigger setObject:[[TriggerController triggerAtIndex:[anObject intValue]] action]
                     forKey:kTriggerActionKey];
     }
     [self setTrigger:trigger forRow:rowIndex];
@@ -189,28 +191,45 @@ objectValueForTableColumn:(NSTableColumn *)aTableColumn
     return NO;
 }
 
+- (NSCell *)tableView:(NSTableView *)tableView
+      dataCellForTableColumn:(NSTableColumn *)tableColumn
+                  row:(NSInteger)row
+{
+    if (tableColumn == actionColumn_) {
+        NSPopUpButtonCell *cell =
+            [[[NSPopUpButtonCell alloc] initTextCell:[[TriggerController triggerAtIndex:0] title] pullsDown:NO] autorelease];
+        for (int i = 0; i < [TriggerController numberOfTriggers]; i++) {
+            [cell addItemWithTitle:[[TriggerController triggerAtIndex:i] title]];
+        }
+
+        [cell setBordered:NO];
+
+        return cell;
+    } else if (tableColumn == regexColumn_) {
+        NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@"regex"] autorelease];
+        [cell setEditable:YES];
+        return cell;
+    } else if (tableColumn == parametersColumn_) {
+        Trigger *trigger = [TriggerController triggerWithAction:[[[self triggers] objectAtIndex:row] objectForKey:kTriggerActionKey]];
+        if ([trigger takesParameter]) {
+            NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@""] autorelease];
+            [cell setPlaceholderString:[trigger paramPlaceholder]];
+            [cell setEditable:YES];
+            return cell;
+        } else {
+            NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@""] autorelease];
+            [cell setPlaceholderString:@""];
+            [cell setEditable:NO];
+            return cell;
+        }
+    }
+    return nil;
+}
+
 - (void)tableViewSelectionDidChange:(NSNotification *)notification
 {
     self.hasSelection = [tableView_ numberOfSelectedRows] > 0;
 }
-
-@end
-
-@implementation TriggerActionColumn
-
-- (id)dataCellForRow:(NSInteger)row
-{
-    NSPopUpButtonCell *cell =
-    [[[NSPopUpButtonCell alloc] initTextCell:[TriggerController triggerAtIndex:0]->title pullsDown:NO] autorelease];
-    for (int i = 0; i < [TriggerController numberOfTriggers]; i++) {
-        [cell addItemWithTitle:[TriggerController triggerAtIndex:i]->title];
-    }
-    
-    [cell setBordered:NO];
-    
-    return cell;
-}
-
 
 @end
 

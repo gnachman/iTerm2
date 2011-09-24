@@ -1053,6 +1053,7 @@ static char* FormatCont(int c)
 
 - (void)reset
 {
+    [SESSION clearTriggerLine];
     // Save screen contents before resetting.
     [self scrollScreenIntoScrollbackBuffer:1];
 
@@ -1196,6 +1197,7 @@ static char* FormatCont(int c)
             // else display string on screen
             [self setString:token.u.string ascii:(token.type == VT100_ASCIISTRING)];
         }
+        [SESSION appendStringToTriggerLine:token.u.string];
         break;
 
     case VT100_UNKNOWNCHAR: break;
@@ -1214,6 +1216,7 @@ static char* FormatCont(int c)
         } else {
             [self setNewLine];
         }
+        [SESSION clearTriggerLine];
         break;
     case VT100CC_CR:  [self setCursorX:0 Y:cursorY]; break;
     case VT100CC_SO:  break;
@@ -1222,17 +1225,33 @@ static char* FormatCont(int c)
     case VT100CC_DC3: break;
     case VT100CC_CAN:
     case VT100CC_SUB: break;
-    case VT100CC_DEL: [self deleteCharacters:1];break;
+    case VT100CC_DEL:
+        [self deleteCharacters:1];
+        [SESSION clearTriggerLine];
+        break;
 
     // VT100 CSI
     case VT100CSI_CPR: break;
-    case VT100CSI_CUB: [self cursorLeft:token.u.csi.p[0]]; break;
-    case VT100CSI_CUD: [self cursorDown:token.u.csi.p[0]]; break;
-    case VT100CSI_CUF: [self cursorRight:token.u.csi.p[0]]; break;
-    case VT100CSI_CUP: [self cursorToX:token.u.csi.p[1]
-                                     Y:token.u.csi.p[0]];
+    case VT100CSI_CUB:
+        [self cursorLeft:token.u.csi.p[0]];
+        [SESSION clearTriggerLine];
         break;
-    case VT100CSI_CUU: [self cursorUp:token.u.csi.p[0]]; break;
+    case VT100CSI_CUD:
+        [self cursorDown:token.u.csi.p[0]];
+        [SESSION clearTriggerLine];
+        break;
+    case VT100CSI_CUF:
+        [self cursorRight:token.u.csi.p[0]];
+        [SESSION clearTriggerLine];
+        break;
+    case VT100CSI_CUP:
+        [self cursorToX:token.u.csi.p[1] Y:token.u.csi.p[0]];
+        [SESSION clearTriggerLine];
+        break;
+    case VT100CSI_CUU:
+        [self cursorUp:token.u.csi.p[0]];
+        [SESSION clearTriggerLine];
+        break;
     case VT100CSI_DA:   [self deviceAttribute:token]; break;
     case VT100CSI_DECALN:
         for (i = 0; i < HEIGHT; i++) {
@@ -1254,7 +1273,10 @@ static char* FormatCont(int c)
     case VT100CSI_DECKPAM: break;
     case VT100CSI_DECKPNM: break;
     case VT100CSI_DECLL: break;
-    case VT100CSI_DECRC: [self restoreCursorPosition]; break;
+    case VT100CSI_DECRC:
+        [self restoreCursorPosition];
+        [SESSION clearTriggerLine];
+        break;
     case VT100CSI_DECREPTPARM: break;
     case VT100CSI_DECREQTPARM: break;
     case VT100CSI_DECSC: [self saveCursorPosition]; break;
@@ -1262,15 +1284,22 @@ static char* FormatCont(int c)
     case VT100CSI_DECSWL: break;
     case VT100CSI_DECTST: break;
     case VT100CSI_DSR:  [self deviceReport:token]; break;
-    case VT100CSI_ED:   [self eraseInDisplay:token]; break;
-    case VT100CSI_EL:   [self eraseInLine:token]; break;
+    case VT100CSI_ED:
+        [self eraseInDisplay:token];
+        [SESSION clearTriggerLine];
+        break;
+    case VT100CSI_EL:
+        [self eraseInLine:token];
+        [SESSION clearTriggerLine];
+        break;
     case VT100CSI_HTS:
         if (cursorX < WIDTH) {
             [self setTabStopAt:cursorX];
         }
         break;
-    case VT100CSI_HVP: [self cursorToX:token.u.csi.p[1]
-                                     Y:token.u.csi.p[0]];
+    case VT100CSI_HVP:
+        [self cursorToX:token.u.csi.p[1] Y:token.u.csi.p[0]];
+        [SESSION clearTriggerLine];
         break;
     case VT100CSI_NEL:
         [self setCursorX:0 Y:cursorY];
@@ -1284,6 +1313,7 @@ static char* FormatCont(int c)
                 [self setCursorX:cursorX Y:HEIGHT - 1];
             }
         }
+        [SESSION clearTriggerLine];
         break;
     case VT100CSI_RI:
         if (cursorY == SCROLL_TOP) {
@@ -1294,6 +1324,7 @@ static char* FormatCont(int c)
                 [self setCursorX:cursorX Y:0];
             }
         }
+        [SESSION clearTriggerLine];
         break;
     case VT100CSI_RIS:
             // As far as I can tell, this is not part of the standard and should not be
@@ -1344,15 +1375,19 @@ static char* FormatCont(int c)
     // ANSI CSI
     case ANSICSI_CBT:
         [self backTab];
+        [SESSION clearTriggerLine];
         break;
     case ANSICSI_CHA:
         [self cursorToX: token.u.csi.p[0]];
+        [SESSION clearTriggerLine];
         break;
     case ANSICSI_VPA:
         [self cursorToX:cursorX + 1 Y:token.u.csi.p[0]];
+        [SESSION clearTriggerLine];
         break;
     case ANSICSI_VPR:
         [self cursorToX:cursorX + 1 Y:token.u.csi.p[0] + cursorY + 1];
+        [SESSION clearTriggerLine];
         break;
     case ANSICSI_ECH:
         if (cursorX < WIDTH) {
@@ -1376,10 +1411,11 @@ static char* FormatCont(int c)
 
             DebugLog(@"putToken ECH");
         }
+        [SESSION clearTriggerLine];
         break;
 
     case STRICT_ANSI_MODE:
-        [TERMINAL setStrictAnsiMode: ![TERMINAL strictAnsiMode]];
+        [TERMINAL setStrictAnsiMode:![TERMINAL strictAnsiMode]];
         break;
 
     case ANSICSI_PRINT:
@@ -1411,6 +1447,7 @@ static char* FormatCont(int c)
         break;
     case ANSICSI_RCP:
         [self restoreCursorPosition];
+        [SESSION clearTriggerLine];
         break;
 
     // XTERM extensions
@@ -1439,9 +1476,18 @@ static char* FormatCont(int c)
         [SESSION setName: newTitle];
         break;
     case XTERMCC_INSBLNK: [self insertBlank:token.u.csi.p[0]]; break;
-    case XTERMCC_INSLN: [self insertLines:token.u.csi.p[0]]; break;
-    case XTERMCC_DELCH: [self deleteCharacters:token.u.csi.p[0]]; break;
-    case XTERMCC_DELLN: [self deleteLines:token.u.csi.p[0]]; break;
+    case XTERMCC_INSLN:
+        [self insertLines:token.u.csi.p[0]];
+        [SESSION clearTriggerLine];
+        break;
+    case XTERMCC_DELCH:
+        [self deleteCharacters:token.u.csi.p[0]];
+        [SESSION clearTriggerLine];
+        break;
+    case XTERMCC_DELLN:
+        [self deleteLines:token.u.csi.p[0]];
+        [SESSION clearTriggerLine];
+        break;
     case XTERMCC_WINDOWSIZE:
         //NSLog(@"setting window size from (%d, %d) to (%d, %d)", WIDTH, HEIGHT, token.u.csi.p[1], token.u.csi.p[2]);
         if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] &&
@@ -1490,9 +1536,11 @@ static char* FormatCont(int c)
         break;
     case XTERMCC_SU:
         for (i=0; i<token.u.csi.p[0]; i++) [self scrollUp];
+        [SESSION clearTriggerLine];
         break;
     case XTERMCC_SD:
         for (i=0; i<token.u.csi.p[0]; i++) [self scrollDown];
+        [SESSION clearTriggerLine];
         break;
     case XTERMCC_REPORT_WIN_STATE:
         {
