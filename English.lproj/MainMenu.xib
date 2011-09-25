@@ -12,7 +12,7 @@
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="81"/>
+			<integer value="169"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -432,7 +432,7 @@
 									<reference key="NSOnImage" ref="643967552"/>
 									<reference key="NSMixedImage" ref="326707852"/>
 								</object>
-								<object class="NSMenuItem" id="343689805">
+								<object class="NSMenuItem" id="821580870">
 									<reference key="NSMenu" ref="360861402"/>
 									<string key="NSTitle">Stop Coprocess</string>
 									<string key="NSKeyEquiv"/>
@@ -596,6 +596,15 @@
 									<reference key="NSMixedImage" ref="326707852"/>
 								</object>
 								<object class="NSMenuItem" id="505863833">
+									<reference key="NSMenu" ref="1015598466"/>
+									<string key="NSTitle">Cut</string>
+									<string key="NSKeyEquiv">x</string>
+									<int key="NSKeyEquivModMask">1048576</int>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="643967552"/>
+									<reference key="NSMixedImage" ref="326707852"/>
+								</object>
+								<object class="NSMenuItem" id="813929307">
 									<reference key="NSMenu" ref="1015598466"/>
 									<string key="NSTitle">Copy</string>
 									<string key="NSKeyEquiv">c</string>
@@ -2245,14 +2254,6 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBActionConnection" key="connection">
-						<string key="label">copy:</string>
-						<reference key="source" ref="620772211"/>
-						<reference key="destination" ref="505863833"/>
-					</object>
-					<int key="connectionID">181</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
 						<string key="label">paste:</string>
 						<reference key="source" ref="620772211"/>
 						<reference key="destination" ref="687249336"/>
@@ -3031,9 +3032,25 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<object class="IBActionConnection" key="connection">
 						<string key="label">stopCoprocess:</string>
 						<reference key="source" ref="620772211"/>
-						<reference key="destination" ref="343689805"/>
+						<reference key="destination" ref="821580870"/>
 					</object>
 					<int key="connectionID">1325</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">copy:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="813929307"/>
+					</object>
+					<int key="connectionID">1327</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">cut:</string>
+						<reference key="source" ref="620772211"/>
+						<reference key="destination" ref="505863833"/>
+					</object>
+					<int key="connectionID">1404</int>
 				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
@@ -3331,7 +3348,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<reference ref="259318620"/>
 							<reference ref="932048131"/>
 							<reference ref="983811310"/>
-							<reference ref="343689805"/>
+							<reference ref="821580870"/>
 						</object>
 						<reference key="parent" ref="1015666104"/>
 					</object>
@@ -3511,6 +3528,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<reference ref="839868777"/>
 							<reference ref="717381369"/>
 							<reference ref="324976430"/>
+							<reference ref="813929307"/>
 						</object>
 						<reference key="parent" ref="800408560"/>
 					</object>
@@ -4257,8 +4275,13 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					</object>
 					<object class="IBObjectRecord">
 						<int key="objectID">1321</int>
-						<reference key="object" ref="343689805"/>
+						<reference key="object" ref="821580870"/>
 						<reference key="parent" ref="360861402"/>
+					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1326</int>
+						<reference key="object" ref="813929307"/>
+						<reference key="parent" ref="1015598466"/>
 					</object>
 				</object>
 			</object>
@@ -4346,6 +4369,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>1307.IBPluginDependency</string>
 					<string>131.IBPluginDependency</string>
 					<string>1321.IBPluginDependency</string>
+					<string>1326.IBPluginDependency</string>
 					<string>134.IBPluginDependency</string>
 					<string>136.IBPluginDependency</string>
 					<string>143.IBPluginDependency</string>
@@ -4561,7 +4585,8 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{133, 482}, {245, 343}}</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
+					<string>{{133, 462}, {245, 363}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -4693,7 +4718,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">1325</int>
+			<int key="maxID">1404</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">

@@ -27,15 +27,16 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
         [scrollview setHasVerticalScroller:YES];
         [scrollview setHasHorizontalScroller:NO];
         [scrollview setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
-        
+
         NSSize contentSize = [scrollview contentSize];
         textView_ = [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+        [textView_ setAllowsUndo:YES];
         [textView_ setMinSize:NSMakeSize(0.0, contentSize.height)];
         [textView_ setMaxSize:NSMakeSize(FLT_MAX, FLT_MAX)];
         [textView_ setVerticallyResizable:YES];
         [textView_ setHorizontallyResizable:NO];
         [textView_ setAutoresizingMask:NSViewWidthSizable];
-        
+
         [[textView_ textContainer] setContainerSize:NSMakeSize(contentSize.width, FLT_MAX)];
         [[textView_ textContainer] setWidthTracksTextView:YES];
         [textView_ setDelegate:self];
@@ -75,6 +76,7 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
                                                             object:nil];
         ignoreNotification_ = NO;
     }
+    [textView_ breakUndoCoalescing];
 }
 
 - (void)setText:(NSNotification *)aNotification
