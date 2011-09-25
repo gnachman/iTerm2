@@ -70,14 +70,18 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
     // Avoid saving huge files because of the slowdown it would cause.
     if ([[textView_ textStorage] length] < 100 * 1024) {
         [textView_ writeRTFDToFile:[self filename] atomically:NO];
+        ignoreNotification_ = YES;
         [[NSNotificationCenter defaultCenter] postNotificationName:kToolNotesSetTextNotification
                                                             object:nil];
+        ignoreNotification_ = NO;
     }
 }
 
 - (void)setText:(NSNotification *)aNotification
 {
-    [textView_ readRTFDFromFile:[self filename]];
+    if (!ignoreNotification_) {
+        [textView_ readRTFDFromFile:[self filename]];
+    }
 }
 
 @end

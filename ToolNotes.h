@@ -12,6 +12,7 @@
 @interface ToolNotes : NSView <ToolbeltTool> {
     NSTextView *textView_;
     NSFileManager *filemanager_;
+    BOOL ignoreNotification_;
 }
 
 @end
