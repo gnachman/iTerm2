@@ -3775,6 +3775,9 @@ static float versionNumber;
         if ([copySession state] == NSOnState) {
             [self copyAttributes:BulkCopySession fromBookmark:srcGuid toBookmark:destGuid];
         }
+        if ([copyAdvanced state] == NSOnState) {
+            [self copyAttributes:BulkCopyAdvanced fromBookmark:srcGuid toBookmark:destGuid];
+        }
     }
     [NSApp endSheet:copyPanel];
 }
@@ -3866,10 +3869,14 @@ static float versionNumber;
         KEY_SEND_CODE_WHEN_IDLE,
         KEY_IDLE_CODE,
     };
-    
+
     NSString* keyboardKeys[] = {
         KEY_KEYBOARD_MAP,
         KEY_OPTION_KEY_SENDS,
+        nil
+    };
+    NSString *advancedKeys[] = {
+        KEY_TRIGGERS,
         nil
     };
     switch (attributes) {
@@ -3890,6 +3897,9 @@ static float versionNumber;
             break;
         case BulkCopySession:
             keys = sessionKeys;
+            break;
+        case BulkCopyAdvanced:
+            keys = advancedKeys;
             break;
         default:
             NSLog(@"Unexpected copy attribute %d", (int)attributes);

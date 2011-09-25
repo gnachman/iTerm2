@@ -344,7 +344,12 @@ static const int ambiguous_chars[] = {
 
 - (NSString *)stringByReplacingBackreference:(int)n withString:(NSString *)s
 {
-    NSString *br = [NSString stringWithFormat:@"\\%d", n];
+    return [self stringByReplacingEscapedChar:'0' + n withString:s];
+}
+
+- (NSString *)stringByReplacingEscapedChar:(unichar)echar withString:(NSString *)s
+{
+    NSString *br = [NSString stringWithFormat:@"\\%C", echar];
     NSMutableArray *ranges = [NSMutableArray array];
     NSRange range = [self rangeOfString:br];
     while (range.location != NSNotFound) {

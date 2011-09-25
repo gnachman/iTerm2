@@ -14,7 +14,7 @@
 
 - (NSString *)title
 {
-    return @"Show Alert";
+    return @"Show Alert…";
 }
 
 - (NSString *)paramPlaceholder

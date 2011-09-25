@@ -20,6 +20,8 @@
 		1D237D90131D8BEE004DD60C /* FindView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D237D8E131D8BEE004DD60C /* FindView.xib */; };
 		1D237D94131D8D66004DD60C /* FindViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D237D92131D8D66004DD60C /* FindViewController.h */; };
 		1D237D95131D8D66004DD60C /* FindViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D237D93131D8D66004DD60C /* FindViewController.m */; };
+		1D24C284142EF334006B246F /* SendTextTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D24C282142EF334006B246F /* SendTextTrigger.h */; };
+		1D24C285142EF334006B246F /* SendTextTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D24C283142EF334006B246F /* SendTextTrigger.m */; };
 		1D2560AA13EE60E4006B35CD /* ArrangementPreviewView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */; };
 		1D2560AB13EE60E4006B35CD /* ArrangementPreviewView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */; };
 		1D29732714082676004C5DBE /* MovePaneController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D29732514082676004C5DBE /* MovePaneController.h */; };
@@ -360,6 +362,8 @@
 		1D237D8F131D8BEE004DD60C /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/FindView.xib; sourceTree = "<group>"; };
 		1D237D92131D8D66004DD60C /* FindViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindViewController.h; sourceTree = "<group>"; };
 		1D237D93131D8D66004DD60C /* FindViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FindViewController.m; sourceTree = "<group>"; };
+		1D24C282142EF334006B246F /* SendTextTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SendTextTrigger.h; sourceTree = "<group>"; };
+		1D24C283142EF334006B246F /* SendTextTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SendTextTrigger.m; sourceTree = "<group>"; };
 		1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ArrangementPreviewView.h; sourceTree = "<group>"; };
 		1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ArrangementPreviewView.m; sourceTree = "<group>"; };
 		1D29732514082676004C5DBE /* MovePaneController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MovePaneController.h; sourceTree = "<group>"; };
@@ -781,6 +785,7 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				1D24C282142EF334006B246F /* SendTextTrigger.h */,
 				1D67AAA714284BF300D5DA4E /* ToolNotes.h */,
 				1DE214DF128212EE004E3ADF /* Autocomplete.h */,
 				1D31BC63142D33CA001F7ECB /* TriggerController.h */,
@@ -1008,6 +1013,7 @@
 				1D9DCC09142D7F300016228A /* BounceTrigger.m */,
 				1D9DCC03142D7E570016228A /* GrowlTrigger.m */,
 				1D9DCC11142D7F970016228A /* ScriptTrigger.m */,
+				1D24C283142EF334006B246F /* SendTextTrigger.m */,
 			);
 			name = Triggers;
 			sourceTree = "<group>";
@@ -1334,6 +1340,7 @@
 				1D9DCC16142D7FC10016228A /* AlertTrigger.h in Headers */,
 				1D9DDD92142E5AC600275650 /* CoprocessTrigger.h in Headers */,
 				1D9DDD9C142E5FBB00275650 /* Coprocess.h in Headers */,
+				1D24C284142EF334006B246F /* SendTextTrigger.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1645,6 +1652,7 @@
 				1D9DCC17142D7FC10016228A /* AlertTrigger.m in Sources */,
 				1D9DDD93142E5AC600275650 /* CoprocessTrigger.m in Sources */,
 				1D9DDD9D142E5FBB00275650 /* Coprocess.m in Sources */,
+				1D24C285142EF334006B246F /* SendTextTrigger.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

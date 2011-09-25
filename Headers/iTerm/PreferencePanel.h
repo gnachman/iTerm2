@@ -479,6 +479,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* copyWindow;
     IBOutlet NSButton* copyKeyboard;
     IBOutlet NSButton* copySession;
+    IBOutlet NSButton* copyAdvanced;
     IBOutlet BookmarkListView* copyTo;
     IBOutlet NSButton* copyButton;
 
@@ -518,7 +519,8 @@ typedef enum {
     BulkCopyWindow,
     BulkCopyTerminal,
     BulkCopyKeyboard,
-    BulkCopySession
+    BulkCopySession,
+    BulkCopyAdvanced,
 } BulkCopySettings;
 
 + (PreferencePanel*)sharedInstance;

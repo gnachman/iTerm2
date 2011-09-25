@@ -36,4 +36,6 @@ extern NSString * const kTriggerParameterKey;
 // Subclasses must override this.
 - (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession;
 
+- (NSComparisonResult)compareName:(Trigger *)other;
+
 @end

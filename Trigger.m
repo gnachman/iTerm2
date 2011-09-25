@@ -3,11 +3,11 @@
 //  iTerm
 //
 //  Created by George Nachman on 9/23/11.
-//  Copyright 2011 Georgetech. All rights reserved.
 //
 
 #import "Trigger.h"
 #import "RegexKitLite.h"
+#import "NSStringITerm.h"
 
 NSString * const kTriggerRegexKey = @"regex";
 NSString * const kTriggerActionKey = @"action";
@@ -82,10 +82,15 @@ NSString * const kTriggerParameterKey = @"parameter";
         if (values.count > i) {
             rep = [values objectAtIndex:i];
         }
-        p = [p stringByReplacingOccurrencesOfString:[NSString stringWithFormat:@"\\%d", i]
-                                         withString:rep];
+        p = [p stringByReplacingBackreference:i withString:rep];
     }
+    p = [p stringByReplacingEscapedChar:'n' withString:@"\n"];
     return p;
+}
+
+- (NSComparisonResult)compareTitle:(Trigger *)other
+{
+    return [[self title] compare:[other title]];
 }
 
 @end
