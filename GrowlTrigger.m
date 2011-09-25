@@ -7,6 +7,8 @@
 
 #import "GrowlTrigger.h"
 #import "iTermGrowlDelegate.h"
+#import "PTYSession.h"
+#import "PTYTab.h"
 
 @implementation GrowlTrigger
 

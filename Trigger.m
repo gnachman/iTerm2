@@ -39,6 +39,11 @@ NSString * const kTriggerParameterKey = @"parameter";
     assert(false);
 }
 
+- (NSString *)paramPlaceholder
+{
+    assert(false);
+}
+
 - (BOOL)takesParameter
 {
     assert(false);

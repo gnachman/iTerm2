@@ -106,6 +106,7 @@ const int kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftK
 static const int kDragThreshold = 3;
 static const double kBackgroundConsideredDarkThreshold = 0.5;
 static const int kBroadcastMargin = 4;
+static const int kCoprocessMargin = 4;
 // When drawing lines, we use this structure to represent a run of cells  of
 // the same font, color, and attributes.
 typedef enum {
@@ -152,6 +153,7 @@ static NSImage* bellImage;
 static NSImage* wrapToTopImage;
 static NSImage* wrapToBottomImage;
 static NSImage* broadcastInputImage;
+static NSImage* coprocessImage;
 
 static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return (RED_COEFFICIENT * r) + (GREEN_COEFFICIENT * g) + (BLUE_COEFFICIENT * b);
@@ -242,6 +244,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                                     ofType:@"png"];
     broadcastInputImage = [[NSImage alloc] initWithContentsOfFile:broadcastInputFile];
     [broadcastInputImage setFlipped:YES];
+
+    NSString* coprocessFile = [bundle pathForResource:@"Coprocess"
+                                                    ofType:@"png"];
+    coprocessImage = [[NSImage alloc] initWithContentsOfFile:coprocessFile];
+    [coprocessImage setFlipped:YES];
 }
 
 - (BOOL)xtermMouseReporting
@@ -1570,19 +1577,29 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 - (void)drawRect:(NSRect)rect
 {
     [self drawRect:rect to:nil];
-
+    const NSRect frame = [self visibleRect];
+    double x = frame.origin.x + frame.size.width;
     if ([[[[dataSource session] tab] realParentWindow] broadcastInputToSession:[dataSource session]]) {
-        NSRect frame = [self visibleRect];
         NSSize size = [broadcastInputImage size];
-        [broadcastInputImage drawAtPoint:NSMakePoint(frame.origin.x + frame.size.width - size.width - kBroadcastMargin,
+        x -= size.width + kBroadcastMargin;
+        [broadcastInputImage drawAtPoint:NSMakePoint(x,
                                                      frame.origin.y + kBroadcastMargin)
                                 fromRect:NSMakeRect(0, 0, size.width, size.height)
                                operation:NSCompositeSourceOver
                                 fraction:0.5];
     }
 
+    if ([[[dataSource session] SHELL] hasCoprocess]) {
+        NSSize size = [coprocessImage size];
+        x -= size.width + kCoprocessMargin;
+        [coprocessImage drawAtPoint:NSMakePoint(x,
+                                                     frame.origin.y + kCoprocessMargin)
+                                fromRect:NSMakeRect(0, 0, size.width, size.height)
+                               operation:NSCompositeSourceOver
+                                fraction:0.5];
+    }
+
     if (flashing_ > 0) {
-        NSRect frame = [self visibleRect];
         NSImage* image = nil;
         switch (flashImage_) {
             case FlashBell:

@@ -55,6 +55,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#import "Coprocess.h"
+
+NSString *kCoprocessStatusChangeNotification = @"kCoprocessStatusChangeNotification";
 
 @interface TaskNotifier : NSObject
 {
@@ -150,10 +153,21 @@ static TaskNotifier* taskNotifier = nil;
     PtyTaskDebugLog(@"Begin remove task 0x%x\n", (void*)task);
     PtyTaskDebugLog(@"Add %d to deadpool", [task pid]);
     [deadpool addObject:[NSNumber numberWithInt:[task pid]]];
+    if ([task hasCoprocess]) {
+        [deadpool addObject:[NSNumber numberWithInt:[[task coprocess] pid]]];
+    }
     [tasks removeObject:task];
     tasksChanged = YES;
     PtyTaskDebugLog(@"End remove task 0x%x. There are now %d tasks.\n", (void*)task, [tasks count]);
     PtyTaskDebugLog(@"deregisterTask: unlock\n");
+    [tasksLock unlock];
+    [self unblock];
+}
+
+- (void)waitForPid:(pid_t)pid
+{
+    [tasksLock lock];
+    [deadpool addObject:[NSNumber numberWithInt:pid]];
     [tasksLock unlock];
     [self unblock];
 }
@@ -239,6 +253,38 @@ static TaskNotifier* taskNotifier = nil;
                     FD_SET(fd, &wfds);
                 FD_SET(fd, &efds);
             }
+            @synchronized (task) {
+                Coprocess *coprocess = [task coprocess];
+                if (coprocess) {
+                    if ([coprocess wantToRead] && [task writeBufferHasRoom]) { 
+                        int rfd = [coprocess readFileDescriptor];
+                        if (rfd > highfd) {
+                            highfd = rfd;
+                        }
+                        FD_SET(rfd, &rfds);
+                    }
+                    if ([coprocess wantToWrite]) {
+                        int wfd = [coprocess writeFileDescriptor];
+                        if (wfd > highfd) {
+                            highfd = wfd;
+                        }
+                        FD_SET(wfd, &wfds);
+                    }
+                    if (![coprocess eof]) {
+                        int rfd = [coprocess readFileDescriptor];
+                        if (rfd > highfd) {
+                            highfd = rfd;
+                        }
+                        FD_SET(rfd, &efds);
+
+                        int wfd = [coprocess writeFileDescriptor];
+                        if (wfd > highfd) {
+                            highfd = wfd;
+                        }
+                        FD_SET(wfd, &efds);
+                    }
+                }
+            }
             ++i;
             PtyTaskDebugLog(@"About to get task %d\n", i);
         }
@@ -270,6 +316,7 @@ static TaskNotifier* taskNotifier = nil;
         PtyTaskDebugLog(@"Iterating over %d tasks\n", [tasks count]);
         iter = [tasks objectEnumerator];
         i = 0;
+        BOOL notifyOfCoprocessChange = NO;
 
         while ((task = [iter nextObject])) {
             PtyTaskDebugLog(@"Got task %d\n", i);
@@ -325,11 +372,59 @@ static TaskNotifier* taskNotifier = nil;
                     }
                 }
             }
+
+            // Move input around between coprocess and main process.
+            @synchronized (task) {
+                Coprocess *coprocess = [task coprocess];
+                if (coprocess) {
+                    fd = [coprocess readFileDescriptor];
+                    if ([handledFds containsObject:[NSNumber numberWithInt:fd]]) {
+                        NSLog(@"Duplicate fd %d", fd);
+                        continue;
+                    }
+                    [handledFds addObject:[NSNumber numberWithInt:fd]];
+                    if (![coprocess eof] && FD_ISSET(fd, &rfds)) {
+                        [coprocess read];
+                        [task writeTask:coprocess.inputBuffer];
+                        [coprocess.inputBuffer setLength:0];
+                    }
+                    if (FD_ISSET(fd, &efds)) {
+                        coprocess.eof = YES;
+                    }
+
+                    fd = [coprocess writeFileDescriptor];
+                    if ([handledFds containsObject:[NSNumber numberWithInt:fd]]) {
+                        NSLog(@"Duplicate fd %d", fd);
+                        continue;
+                    }
+                    [handledFds addObject:[NSNumber numberWithInt:fd]];
+                    if (FD_ISSET(fd, &efds)) {
+                        coprocess.eof = YES;
+                    }
+                    if (FD_ISSET(fd, &wfds)) {
+                        if (![coprocess eof]) {
+                            [coprocess write];
+                        }
+                    }
+
+                    if ([coprocess eof]) {
+                        [deadpool addObject:[NSNumber numberWithInt:[coprocess pid]]];
+                        [coprocess terminate];
+                        [task setCoprocess:nil];
+                        notifyOfCoprocessChange = YES;
+                    }
+                }
+            }
             ++i;
             PtyTaskDebugLog(@"About to get task %d\n", i);
         }
         PtyTaskDebugLog(@"run3: unlock");
         [tasksLock unlock];
+        if (notifyOfCoprocessChange) {
+            [self performSelectorOnMainThread:@selector(notifyCoprocessChange)
+                                   withObject:nil
+                                waitUntilDone:YES];
+        }
 
     breakloop:
         [handledFds release];
@@ -337,6 +432,13 @@ static TaskNotifier* taskNotifier = nil;
     }
 
     [outerPool drain];
+}
+
+// This is run in the main thread.
+- (void)notifyCoprocessChange
+{
+    [[NSNotificationCenter defaultCenter] postNotificationName:kCoprocessStatusChangeNotification
+                                                        object:nil];
 }
 
 @end
@@ -435,6 +537,12 @@ setup_tty_param(
     [writeBuffer release];
     [tty release];
     [path release];
+
+    @synchronized (self) {
+        [[self coprocess] mainProcessDidTerminate];
+        [coprocess_ release];
+    }
+
     [super dealloc];
 }
 
@@ -541,7 +649,19 @@ static void reapchild(int n)
 
 - (BOOL)wantsWrite
 {
-    return [writeBuffer length] > 0;
+    [writeLock lock];
+    BOOL wantsWrite = [writeBuffer length] > 0;
+    [writeLock unlock];
+    return wantsWrite;
+}
+
+- (BOOL)writeBufferHasRoom
+{
+    const int kMaxWriteBufferSize = 1024 * 10;
+    [writeLock lock];
+    BOOL hasRoom = [writeBuffer length] < kMaxWriteBufferSize;
+    [writeLock unlock];
+    return hasRoom;
 }
 
 - (void)processRead
@@ -637,11 +757,9 @@ static void reapchild(int n)
     return delegate;
 }
 
+// The bytes in data were just read from the fd.
 - (void)readTask:(NSData*)data
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYTask readTask:%@]", __FILE__, __LINE__, data);
-#endif
     @synchronized(logHandle) {
         if ([self logging]) {
             [logHandle writeData:data];
@@ -653,6 +771,10 @@ static void reapchild(int n)
         [delegate performSelectorOnMainThread:@selector(readTask:)
                                    withObject:data 
                                 waitUntilDone:YES];
+    }
+
+    @synchronized (self) {
+        [coprocess_.outputBuffer appendData:data];
     }
 }
 
@@ -880,6 +1002,48 @@ static void reapchild(int n)
     } else {
         /* All is good */
         return [NSString stringWithUTF8String:vpi.pvi_cdir.vip_path];
+    }
+}
+
+- (void)stopCoprocess
+{
+    pid_t thePid = 0;
+    @synchronized (self) {
+        if (coprocess_.pid > 0) {
+            thePid = coprocess_.pid;
+        }
+        [coprocess_ terminate];
+        [coprocess_ release];
+        coprocess_ = nil;
+    }
+    if (thePid) {
+        [[TaskNotifier sharedInstance] waitForPid:thePid];
+    }
+    [[TaskNotifier sharedInstance] performSelectorOnMainThread:@selector(notifyCoprocessChange)
+                                                    withObject:nil
+                                                 waitUntilDone:NO];
+}
+
+- (void)setCoprocess:(Coprocess *)coprocess
+{
+    @synchronized (self) {
+        [coprocess_ autorelease];
+        coprocess_ = [coprocess retain];
+    }
+    [[TaskNotifier sharedInstance] unblock];
+}
+
+- (Coprocess *)coprocess
+{
+    @synchronized (self) {
+        return coprocess_;
+    }
+}
+
+- (BOOL)hasCoprocess
+{
+    @synchronized (self) {
+        return coprocess_ != nil;
     }
 }
 

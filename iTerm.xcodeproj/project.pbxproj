@@ -219,6 +219,11 @@
 		1D9DCC13142D7F970016228A /* ScriptTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC11142D7F970016228A /* ScriptTrigger.m */; };
 		1D9DCC16142D7FC10016228A /* AlertTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DCC14142D7FC10016228A /* AlertTrigger.h */; };
 		1D9DCC17142D7FC10016228A /* AlertTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DCC15142D7FC10016228A /* AlertTrigger.m */; };
+		1D9DDD92142E5AC600275650 /* CoprocessTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DDD90142E5AC600275650 /* CoprocessTrigger.h */; };
+		1D9DDD93142E5AC600275650 /* CoprocessTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DDD91142E5AC600275650 /* CoprocessTrigger.m */; };
+		1D9DDD9C142E5FBB00275650 /* Coprocess.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9DDD9A142E5FBB00275650 /* Coprocess.h */; };
+		1D9DDD9D142E5FBB00275650 /* Coprocess.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9DDD9B142E5FBB00275650 /* Coprocess.m */; };
+		1D9DDE9E142E855D00275650 /* Coprocess.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D9DDE9D142E855D00275650 /* Coprocess.png */; };
 		1D9F6AB8140C9DC4009B5CD4 /* FutureMethods.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D9F6AB6140C9DC4009B5CD4 /* FutureMethods.h */; };
 		1D9F6AB9140C9DC4009B5CD4 /* FutureMethods.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */; };
 		1DA02CFB1327612600D7E7DB /* bell.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA02CFA1327612600D7E7DB /* bell.png */; };
@@ -437,6 +442,11 @@
 		1D9DCC11142D7F970016228A /* ScriptTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ScriptTrigger.m; sourceTree = "<group>"; };
 		1D9DCC14142D7FC10016228A /* AlertTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlertTrigger.h; sourceTree = "<group>"; };
 		1D9DCC15142D7FC10016228A /* AlertTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AlertTrigger.m; sourceTree = "<group>"; };
+		1D9DDD90142E5AC600275650 /* CoprocessTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CoprocessTrigger.h; sourceTree = "<group>"; };
+		1D9DDD91142E5AC600275650 /* CoprocessTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CoprocessTrigger.m; sourceTree = "<group>"; };
+		1D9DDD9A142E5FBB00275650 /* Coprocess.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Coprocess.h; sourceTree = "<group>"; };
+		1D9DDD9B142E5FBB00275650 /* Coprocess.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Coprocess.m; sourceTree = "<group>"; };
+		1D9DDE9D142E855D00275650 /* Coprocess.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Coprocess.png; path = images/Coprocess.png; sourceTree = "<group>"; };
 		1D9F6AB6140C9DC4009B5CD4 /* FutureMethods.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FutureMethods.h; sourceTree = "<group>"; };
 		1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FutureMethods.m; sourceTree = "<group>"; };
 		1DA02CFA1327612600D7E7DB /* bell.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = bell.png; path = images/bell.png; sourceTree = "<group>"; };
@@ -716,29 +726,16 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				1D9DCC14142D7FC10016228A /* AlertTrigger.h */,
-				1D9DCC15142D7FC10016228A /* AlertTrigger.m */,
-				1D9DCC10142D7F970016228A /* ScriptTrigger.h */,
-				1D9DCC11142D7F970016228A /* ScriptTrigger.m */,
-				1D9DCC0C142D7F5F0016228A /* BellTrigger.h */,
-				1D9DCC0D142D7F5F0016228A /* BellTrigger.m */,
-				1D9DCC08142D7F300016228A /* BounceTrigger.h */,
-				1D9DCC09142D7F300016228A /* BounceTrigger.m */,
-				1D9DCC02142D7E570016228A /* GrowlTrigger.h */,
-				1D9DCC03142D7E570016228A /* GrowlTrigger.m */,
-				1D9DCBFC142D7BA60016228A /* Trigger.h */,
-				1D9DCBFD142D7BA60016228A /* Trigger.m */,
+				1D9DDE31142E73E300275650 /* Categories */,
+				1D9DDE30142E738800275650 /* Popups */,
+				1D9DDE2F142E735900275650 /* DVR */,
+				1D9DDE2E142E733100275650 /* Toolbelt */,
+				1D9DDE2D142E730700275650 /* Triggers */,
 				1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */,
-				1DE214E0128212EE004E3ADF /* Autocomplete.m */,
 				1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */,
 				1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */,
 				1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */,
-				1D93D33412695442007F741B /* DVR.m */,
-				1D93D3591269778C007F741B /* DVRBuffer.m */,
-				1D93D34E126974BC007F741B /* DVRDecoder.m */,
-				1D93D35212697529007F741B /* DVREncoder.m */,
-				1D93D3B012697D53007F741B /* DVRIndexEntry.m */,
-				1D173858126C820A004622DC /* FakeWindow.m */,
+				1D9DDD9B142E5FBB00275650 /* Coprocess.m */,
 				DD4BAB7C0470C44C00A8A065 /* FindCommandHandler.m */,
 				1D237D27131D8741004DD60C /* FindView.m */,
 				1D237D93131D8D66004DD60C /* FindViewController.m */,
@@ -757,15 +754,6 @@
 				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
 				1D72438C11F416E500BD4924 /* LineBuffer.m */,
 				1D29732614082676004C5DBE /* MovePaneController.m */,
-				1DF0895713DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h */,
-				1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */,
-				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
-				1D67ABAA14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m */,
-				1DF0895913DBAE1F00A52AD8 /* NSImage+CoreImage.h */,
-				1DF0895A13DBAE1F00A52AD8 /* NSImage+CoreImage.m */,
-				E8E901A202743CA303A80106 /* NSStringITerm.m */,
-				1D7C18801275D22900461E55 /* PasteboardHistory.m */,
-				1DD736401283C2FA009B7829 /* Popup.m */,
 				FB019DE103670C6501F955DB /* PreferencePanel.m */,
 				1D988596135D23BD0072023F /* ProcessCache.m */,
 				FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */,
@@ -781,18 +769,11 @@
 				1D2E813012A18F7500F3D71E /* SessionView.m */,
 				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
 				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
-				1DE8DC881415513A00F83147 /* ToolbeltView.m */,
-				1D19C71314171F1D00617E08 /* ToolJobs.m */,
-				1D67AAA814284BF300D5DA4E /* ToolNotes.m */,
-				1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */,
-				1DE8DC8C1415546000F83147 /* ToolProfiles.m */,
-				1DE8DF351415799700F83147 /* ToolWrapper.m */,
 				1D06A04F134CDBED00C414EF /* Trouter.m */,
 				1D44218B1290B34500891504 /* TextViewWrapper.m */,
 				E8CF7562026DDA6303A80106 /* VT100Screen.m */,
 				E8CF7563026DDA6303A80106 /* VT100Terminal.m */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
-				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -803,6 +784,16 @@
 				1D67AAA714284BF300D5DA4E /* ToolNotes.h */,
 				1DE214DF128212EE004E3ADF /* Autocomplete.h */,
 				1D31BC63142D33CA001F7ECB /* TriggerController.h */,
+				1D9DDD90142E5AC600275650 /* CoprocessTrigger.h */,
+				1D9DCC14142D7FC10016228A /* AlertTrigger.h */,
+				1D9DCC10142D7F970016228A /* ScriptTrigger.h */,
+				1D9DCC0C142D7F5F0016228A /* BellTrigger.h */,
+				1DF0895713DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h */,
+				1DF0895913DBAE1F00A52AD8 /* NSImage+CoreImage.h */,
+				1D9DCC08142D7F300016228A /* BounceTrigger.h */,
+				1D9DCC02142D7E570016228A /* GrowlTrigger.h */,
+				1D9DCBFC142D7BA60016228A /* Trigger.h */,
+				1D9DDD9A142E5FBB00275650 /* Coprocess.h */,
 				1DE8DF341415799700F83147 /* ToolWrapper.h */,
 				1D9F6AB6140C9DC4009B5CD4 /* FutureMethods.h */,
 				1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */,
@@ -942,6 +933,7 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1D9DDE9D142E855D00275650 /* Coprocess.png */,
 				1D19C3621415998E00617E08 /* closebutton.tif */,
 				1DCA5ECB13EE4DA800B7725E /* arrangement.png */,
 				1D6A5FDE140D7AA000DE19F8 /* IBarCursorXMR.png */,
@@ -1003,6 +995,69 @@
 				1D94EAAC12D64022008225A9 /* UKSystemInfo.m */,
 			);
 			path = UKCrashReporter;
+			sourceTree = "<group>";
+		};
+		1D9DDE2D142E730700275650 /* Triggers */ = {
+			isa = PBXGroup;
+			children = (
+				1D9DCBFD142D7BA60016228A /* Trigger.m */,
+				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
+				1D9DCC15142D7FC10016228A /* AlertTrigger.m */,
+				1D9DCC0D142D7F5F0016228A /* BellTrigger.m */,
+				1D9DDD91142E5AC600275650 /* CoprocessTrigger.m */,
+				1D9DCC09142D7F300016228A /* BounceTrigger.m */,
+				1D9DCC03142D7E570016228A /* GrowlTrigger.m */,
+				1D9DCC11142D7F970016228A /* ScriptTrigger.m */,
+			);
+			name = Triggers;
+			sourceTree = "<group>";
+		};
+		1D9DDE2E142E733100275650 /* Toolbelt */ = {
+			isa = PBXGroup;
+			children = (
+				1DE8DC881415513A00F83147 /* ToolbeltView.m */,
+				1DE8DF351415799700F83147 /* ToolWrapper.m */,
+				1D19C71314171F1D00617E08 /* ToolJobs.m */,
+				1D67AAA814284BF300D5DA4E /* ToolNotes.m */,
+				1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */,
+				1DE8DC8C1415546000F83147 /* ToolProfiles.m */,
+			);
+			name = Toolbelt;
+			sourceTree = "<group>";
+		};
+		1D9DDE2F142E735900275650 /* DVR */ = {
+			isa = PBXGroup;
+			children = (
+				1D93D33412695442007F741B /* DVR.m */,
+				1D93D3591269778C007F741B /* DVRBuffer.m */,
+				1D93D34E126974BC007F741B /* DVRDecoder.m */,
+				1D93D35212697529007F741B /* DVREncoder.m */,
+				1D93D3B012697D53007F741B /* DVRIndexEntry.m */,
+				1D173858126C820A004622DC /* FakeWindow.m */,
+			);
+			name = DVR;
+			sourceTree = "<group>";
+		};
+		1D9DDE30142E738800275650 /* Popups */ = {
+			isa = PBXGroup;
+			children = (
+				1DE214E0128212EE004E3ADF /* Autocomplete.m */,
+				1D7C18801275D22900461E55 /* PasteboardHistory.m */,
+				1DD736401283C2FA009B7829 /* Popup.m */,
+			);
+			name = Popups;
+			sourceTree = "<group>";
+		};
+		1D9DDE31142E73E300275650 /* Categories */ = {
+			isa = PBXGroup;
+			children = (
+				1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */,
+				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
+				1D67ABAA14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m */,
+				1DF0895A13DBAE1F00A52AD8 /* NSImage+CoreImage.m */,
+				E8E901A202743CA303A80106 /* NSStringITerm.m */,
+			);
+			name = Categories;
 			sourceTree = "<group>";
 		};
 		DD02571D09CB9363008F320C /* PSMTabBarControl */ = {
@@ -1277,6 +1332,8 @@
 				1D9DCC0E142D7F5F0016228A /* BellTrigger.h in Headers */,
 				1D9DCC12142D7F970016228A /* ScriptTrigger.h in Headers */,
 				1D9DCC16142D7FC10016228A /* AlertTrigger.h in Headers */,
+				1D9DDD92142E5AC600275650 /* CoprocessTrigger.h in Headers */,
+				1D9DDD9C142E5FBB00275650 /* Coprocess.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1455,6 +1512,7 @@
 				1D844C8D13FD8B7700CD4F85 /* SplitPanel.xib in Resources */,
 				1D6A5FDF140D7AA000DE19F8 /* IBarCursorXMR.png in Resources */,
 				1D19C3631415998E00617E08 /* closebutton.tif in Resources */,
+				1D9DDE9E142E855D00275650 /* Coprocess.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1585,6 +1643,8 @@
 				1D9DCC0F142D7F5F0016228A /* BellTrigger.m in Sources */,
 				1D9DCC13142D7F970016228A /* ScriptTrigger.m in Sources */,
 				1D9DCC17142D7FC10016228A /* AlertTrigger.m in Sources */,
+				1D9DDD93142E5AC600275650 /* CoprocessTrigger.m in Sources */,
+				1D9DDD9D142E5FBB00275650 /* Coprocess.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

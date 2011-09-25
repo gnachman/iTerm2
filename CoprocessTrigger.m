@@ -33,8 +33,10 @@
 
 - (void)performActionWithValues:(NSArray *)values inSession:(PTYSession *)aSession
 {
-    NSString *command = [self paramWithBackreferencesReplacedWithValues:values];
-    [self executeCommand:command inSession:aSession];
+    if (![aSession hasCoprocess]) {
+        NSString *command = [self paramWithBackreferencesReplacedWithValues:values];
+        [self executeCommand:command inSession:aSession];
+    }
 }
 
 @end

@@ -46,6 +46,7 @@
 #import "ProcessCache.h"
 #import "MovePaneController.h"
 #import "Trigger.h"
+#import "Coprocess.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -111,6 +112,11 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                                              selector:@selector(windowResized)
                                                  name:@"iTermWindowDidResize"
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(coprocessChanged)
+                                                 name:@"kCoprocessStatusChangeNotification"
+                                               object:nil];
+
     return self;
 }
 
@@ -238,6 +244,11 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 - (PTYSession*)liveSession
 {
     return liveSession_;
+}
+
+- (void)coprocessChanged
+{
+    [TEXTVIEW setNeedsDisplay:YES];
 }
 
 - (void)windowResized
@@ -1967,7 +1978,10 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [triggers_ release];
     triggers_ = [[NSMutableArray alloc] init];
     for (NSDictionary *triggerDict in [aDict objectForKey:KEY_TRIGGERS]) {
-        [triggers_ addObject:[Trigger triggerFromDict:triggerDict]];
+        Trigger *trigger = [Trigger triggerFromDict:triggerDict];
+        if (trigger) {
+            [triggers_ addObject:trigger];
+        }
     }
 
     [TEXTVIEW setAntiAlias:asciiAA nonAscii:nonasciiAA];
@@ -3102,8 +3116,25 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         // In case it was the find pasteboard that chagned
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermLoadFindStringFromSharedPasteboard"
                                                             object:nil
-                                                          userInfo:nil];        
+                                                          userInfo:nil];
     }
+}
+
+- (void)stopCoprocess
+{
+    [SHELL stopCoprocess];
+}
+
+- (BOOL)hasCoprocess
+{
+    return [SHELL hasCoprocess];
+}
+
+- (void)launchCoprocessWithCommand:(NSString *)command
+{
+    Coprocess *coprocess = [Coprocess launchedCoprocessWithCommand:command];
+    [SHELL setCoprocess:coprocess];
+    [TEXTVIEW setNeedsDisplay:YES];
 }
 
 @end

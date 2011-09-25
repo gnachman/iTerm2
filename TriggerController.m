@@ -14,6 +14,7 @@
 #import "ScriptTrigger.h"
 #import "AlertTrigger.h"
 #import "Trigger.h"
+#import "CoprocessTrigger.h"
 
 enum {
     kGrowlAction,
@@ -39,6 +40,7 @@ static NSMutableArray *gTriggerClasses;
     [gTriggerClasses addObject:[[BounceTrigger alloc] init]];
     [gTriggerClasses addObject:[[GrowlTrigger alloc] init]];
     [gTriggerClasses addObject:[[ScriptTrigger alloc] init]];
+    [gTriggerClasses addObject:[[CoprocessTrigger alloc] init]];
 }
 
 - (void)dealloc

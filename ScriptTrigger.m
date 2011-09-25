@@ -33,7 +33,7 @@
 {
     NSString *command = [self paramWithBackreferencesReplacedWithValues:values];
     [NSThread detachNewThreadSelector:@selector(runCommand:)
-                             toTarget:[ScriptTrigger class]
+                             toTarget:[self class]
                            withObject:command];
 }
 

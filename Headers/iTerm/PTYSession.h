@@ -494,6 +494,9 @@ typedef enum {
 - (NSImage *)dragImage;
 
 - (void)setPasteboard:(NSString *)pbName;
+- (BOOL)hasCoprocess;
+- (void)stopCoprocess;
+- (void)launchCoprocessWithCommand:(NSString *)command;
 
 @end
 

@@ -231,12 +231,16 @@ NSWindowDelegate,
 
     // In 10.7 style full screen mode
     BOOL lionFullScreen_;
-    
+
     // Drawer view, which only exists for window_type normal.
     NSDrawer *drawer_;
-    
+
     // Toolbelt view which goes in the drawer, or perhaps other places in the future.
     ToolbeltView *toolbelt_;
+
+    IBOutlet NSPanel *coprocesssPanel_;
+    IBOutlet NSButton *coprocessOkButton_;
+    IBOutlet NSTextField *coprocessCommand_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
@@ -307,6 +311,11 @@ NSWindowDelegate,
 - (void)closeSession:(PTYSession *)aSession;
 
 - (void)toggleFullScreenTabBar;
+
+- (IBAction)runCoprocess:(id)sender;
+- (IBAction)stopCoprocess:(id)sender;
+- (IBAction)coprocessPanelEnd:(id)sender;
+- (IBAction)coprocessHelp:(id)sender;
 
 - (IBAction)openSplitHorizontallySheet:(id)sender;
 - (IBAction)openSplitVerticallySheet:(id)sender;

@@ -3057,6 +3057,42 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (IBAction)stopCoprocess:(id)sender
+{
+    [[self currentSession] stopCoprocess];
+}
+
+- (IBAction)runCoprocess:(id)sender
+{
+    [NSApp beginSheet:coprocesssPanel_
+       modalForWindow:[self window]
+        modalDelegate:self
+       didEndSelector:nil
+          contextInfo:nil];
+
+    [NSApp runModalForWindow:coprocesssPanel_];
+
+    [NSApp endSheet:coprocesssPanel_];
+    [coprocesssPanel_ orderOut:self];
+}
+
+- (IBAction)coprocessPanelEnd:(id)sender
+{
+    if (sender == coprocessOkButton_) {
+        if ([[[coprocessCommand_ stringValue] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] length] == 0) {
+            NSBeep();
+            return;
+        }
+        [[self currentSession] launchCoprocessWithCommand:[coprocessCommand_ stringValue]];
+    }
+    [NSApp stopModal];
+}
+
+- (IBAction)coprocessHelp:(id)sender
+{
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://www.iterm2.com/coprocesses.html"]];
+}
+
 - (IBAction)openSplitHorizontallySheet:(id)sender
 {
     [self _openSplitSheetForVertical:NO];
@@ -3084,7 +3120,7 @@ NSString *sessionsKey = @"sessions";
 - (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark
 {
     if (![bottomBar isHidden]) {
-	// Things get very complicated in this case. Just disallow it.
+    // Things get very complicated in this case. Just disallow it.
         return NO;
     }
     NSFont* asciiFont = [ITAddressBookMgr fontWithDesc:[theBookmark objectForKey:KEY_NORMAL_FONT]];
@@ -4475,6 +4511,10 @@ NSString *sessionsKey = @"sessions";
 
     if ([item action] == @selector(jumpToSavedScrollPosition:)) {
         result = [self hasSavedScrollPosition];
+    } else if ([item action] == @selector(runCoprocess:)) {
+        result = ![[self currentSession] hasCoprocess];
+    } else if ([item action] == @selector(stopCoprocess:)) {
+        result = [[self currentSession] hasCoprocess];
     } else if ([item action] == @selector(logStart:)) {
         result = logging == YES ? NO : YES;
     } else if ([item action] == @selector(logStop:)) {

@@ -13,21 +13,64 @@ const int kMaxOutputBufferSize = 1024;
 
 @implementation Coprocess
 
-@synthesize task = task_;
-@synthesize inputPipe = inputPipe_;
-@synthesize outputPipe = outputPipe_;
+@synthesize pid = pid_;
+@synthesize outputFd = outputFd_;
+@synthesize inputFd = inputFd_;
 @synthesize inputBuffer = inputBuffer_;
 @synthesize outputBuffer = outputBuffer_;
 @synthesize eof = eof_;
 
-+ (Coprocess *)coprocessWithTask:(NSTask *)task
-                       inputPipe:(NSPipe *)inputPipe
-                      outputPipe:(NSPipe *)outputPipe
++ (Coprocess *)launchedCoprocessWithCommand:(NSString *)command
+{
+    int inputPipe[2];
+    int outputPipe[2];
+    pipe(inputPipe);
+    pipe(outputPipe);
+    pid_t pid = fork();
+    if (pid == 0) {
+        dup2(inputPipe[0], 0);
+        close(inputPipe[0]);
+        close(inputPipe[1]);
+
+        dup2(outputPipe[1], 1);
+        close(outputPipe[0]);
+        close(outputPipe[1]);
+        for (int i = 3; i < 256; i++) {
+            if (i != outputPipe[1] && i != inputPipe[0]) {
+                close(i);
+            }
+        }
+
+        signal(SIGCHLD, SIG_DFL);
+        execl("/bin/sh", "/bin/sh", "-c", [command UTF8String], 0);
+
+        /* exec error */
+        fprintf(stderr, "## exec failed %s for command /bin/sh -c %s##\n", strerror(errno), [command UTF8String]);
+        _exit(-1);
+    } else if (pid < (pid_t)0) {
+        [[NSAlert alertWithMessageText:@"Failed to launch coprocess."
+                         defaultButton:@"OK"
+                       alternateButton:nil
+                           otherButton:nil
+             informativeTextWithFormat:nil] runModal];
+        return nil;
+    }
+
+    close(inputPipe[0]);
+    close(outputPipe[1]);
+    return [Coprocess coprocessWithPid:pid
+                              outputFd:inputPipe[1]
+                               inputFd:outputPipe[0]];
+}
+
++ (Coprocess *)coprocessWithPid:(pid_t)pid
+                       outputFd:(int)outputFd
+                        inputFd:(int)inputFd
 {
     Coprocess *result = [[[Coprocess alloc] init] autorelease];
-    result.task = task;
-    result.inputPipe = inputPipe;
-    result.outputPipe = outputPipe;
+    result.pid = pid;
+    result.outputFd = outputFd;
+    result.inputFd = inputFd;
     return result;
 }
 
@@ -43,9 +86,6 @@ const int kMaxOutputBufferSize = 1024;
 
 - (void)dealloc
 {
-    [task_ release];
-    [inputPipe_ release];
-    [outputPipe_ release];
     [inputBuffer_ release];
     [outputBuffer_ release];
     [super dealloc];
@@ -53,11 +93,12 @@ const int kMaxOutputBufferSize = 1024;
 
 - (int)write
 {
-    if (!task_) {
+    if (self.pid < 0) {
         return -1;
     }
     int fd = [self writeFileDescriptor];
     int n = write(fd, [outputBuffer_ bytes], [outputBuffer_ length]);
+
     if (n < 0 && (!(errno == EAGAIN || errno == EINTR))) {
         eof_ = YES;
     } else if (n == 0) {
@@ -72,7 +113,7 @@ const int kMaxOutputBufferSize = 1024;
 
 - (int)read
 {
-    if (!task_) {
+    if (self.pid < 0) {
         return -1;
     }
     int rc = 0;
@@ -101,35 +142,14 @@ const int kMaxOutputBufferSize = 1024;
     return rc;
 }
 
-- (int)readFileDescriptor
-{
-    if (!task_) {
-        return -1;
-    }
-    return [[outputPipe_ fileHandleForReading] fileDescriptor];
-}
-
-- (int)writeFileDescriptor
-{
-    if (!task_) {
-        return -1;
-    }
-    return [[self.inputPipe fileHandleForWriting] fileDescriptor];
-}
-
-- (int)errorFileDescriptor
-{
-    return [self writeFileDescriptor];
-}
-
 - (BOOL)wantToRead
 {
-    return task_ && !eof_ && (inputBuffer_.length < kMaxInputBufferSize);
+    return self.pid >= 0 && !eof_ && (inputBuffer_.length < kMaxInputBufferSize);
 }
 
 - (BOOL)wantToWrite
 {
-    return task_ && !eof_ && (outputBuffer_.length > 0);
+    return self.pid >= 0 && !eof_ && (outputBuffer_.length > 0);
 }
 
 - (void)mainProcessDidTerminate
@@ -139,17 +159,24 @@ const int kMaxOutputBufferSize = 1024;
 
 - (void)terminate
 {
-    if (task_) {
-        kill([task_ processIdentifier], 1);
-        [task_ release];
-        task_ = nil;
-        eof_ = YES;
+    if (self.pid > 0) {
+        kill(self.pid, 15);
+        close(self.outputFd);
+        close(self.inputFd);
+        self.outputFd = -1;
+        self.inputFd = -1;
+        self.pid = -1;
     }
 }
 
-- (pid_t)pid
+- (int)readFileDescriptor
 {
-    return [task_ processIdentifier];
+    return self.inputFd;
+}
+
+- (int)writeFileDescriptor
+{
+    return self.outputFd;
 }
 
 @end
