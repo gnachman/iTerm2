@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 @interface Coprocess : NSObject {
-    pid_t pid;  // -1 after termination
+    pid_t pid_;  // -1 after termination
     int outputFd_;
     int inputFd_;
     NSMutableData *outputBuffer_;
