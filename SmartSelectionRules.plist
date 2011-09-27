@@ -6,7 +6,7 @@
         <array>
             <dict>
                 <key>notes</key>
-                <string>Word consisting of anything but whitespace</string>
+                <string>Word bounded by whitespace</string>
                 <key>regex</key>
                 <string>\S+</string>
                 <key>precision</key>

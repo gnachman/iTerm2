@@ -13,7 +13,7 @@
 - (void)triggerChanged:(TriggerController *)controller;
 @end
 
-@interface TriggerController : NSObject {
+@interface TriggerController : NSWindowController {
   NSString *guid_;
   BOOL hasSelection_;
   IBOutlet NSObject<TriggerDelegate> *delegate_;  // weak

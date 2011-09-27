@@ -639,6 +639,39 @@ static float versionNumber;
     return originator == addNewMapping || originator == keyMappings;
 }
 
+- (IBAction)editSmartSelection:(id)sender
+{
+    [NSApp beginSheet:[smartSelectionWindowController_ window]
+       modalForWindow:[self window]
+        modalDelegate:self
+       didEndSelector:@selector(advancedTabCloseSheet:returnCode:contextInfo:)
+          contextInfo:nil];
+}
+
+- (IBAction)closeSmartSelectionSheet:(id)sender
+{
+    [NSApp endSheet:[smartSelectionWindowController_ window]];
+}
+
+- (void)advancedTabCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo
+{
+    [sheet close];
+}
+
+- (IBAction)editTriggers:(id)sender
+{
+    [NSApp beginSheet:[triggerWindowController_ window]
+       modalForWindow:[self window]
+        modalDelegate:self
+       didEndSelector:@selector(advancedTabCloseSheet:returnCode:contextInfo:)
+          contextInfo:nil];
+}
+
+- (IBAction)closeTriggersSheet:(id)sender
+{
+    [NSApp endSheet:[triggerWindowController_ window]];
+}
+
 - (IBAction)closeCurrentSession:(id)sender
 {
     if ([[self window] isKeyWindow]) {
@@ -3043,8 +3076,8 @@ static float versionNumber;
                 forKey:KEY_JOBS];
 
     // Advanced tab
-    [newDict setObject:[triggers_ triggers] forKey:KEY_TRIGGERS];
-    [newDict setObject:[smartSelectionRules_ rules] forKey:KEY_SMART_SELECTION_RULES];
+    [newDict setObject:[triggerWindowController_ triggers] forKey:KEY_TRIGGERS];
+    [newDict setObject:[smartSelectionWindowController_ rules] forKey:KEY_SMART_SELECTION_RULES];
 
     // Epilogue
     [dataSource setBookmark:newDict withGuid:guid];
@@ -3109,8 +3142,8 @@ static float versionNumber;
         [removeBookmarkButton setEnabled:NO];
         if (bookmarkTable == bookmarksTableView) {
             NSString* guid = [bookmarksTableView selectedGuid];
-            triggers_.guid = guid;
-            smartSelectionRules_.guid = guid;
+            triggerWindowController_.guid = guid;
+            smartSelectionWindowController_.guid = guid;
             [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
         }
     }

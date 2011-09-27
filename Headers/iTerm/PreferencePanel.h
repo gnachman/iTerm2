@@ -63,8 +63,8 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 {
     BookmarkModel* dataSource;
     BOOL oneBookmarkMode;
-    IBOutlet TriggerController *triggers_;
-    IBOutlet SmartSelectionController *smartSelectionRules_;
+    IBOutlet TriggerController *triggerWindowController_;
+    IBOutlet SmartSelectionController *smartSelectionWindowController_;
 
     // This is actually the tab style. It takes one of these values:
     // 0: Metal
@@ -542,6 +542,10 @@ typedef enum {
 - (void)handleWindowWillCloseNotification:(NSNotification *)notification;
 - (void)genericCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo;
 - (void)editKeyMapping:(id)sender;
+- (IBAction)editSmartSelection:(id)sender;
+- (IBAction)closeSmartSelectionSheet:(id)sender;
+- (IBAction)editTriggers:(id)sender;
+- (IBAction)closeTriggersSheet:(id)sender;
 - (IBAction)changeProfile:(id)sender;
 - (IBAction)addJob:(id)sender;
 - (IBAction)removeJob:(id)sender;

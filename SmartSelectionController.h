@@ -15,7 +15,7 @@
 @end
 
 
-@interface SmartSelectionController : NSObject {
+@interface SmartSelectionController : NSWindowController {
     NSString *guid_;
     BOOL hasSelection_;
     IBOutlet NSObject<SmartSelectionDelegate> *delegate_;  // weak
