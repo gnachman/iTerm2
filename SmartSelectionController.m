@@ -11,6 +11,7 @@
 #import "ITAddressBookMgr.h"
 
 static NSString *kRegexKey = @"regex";
+static NSString *kNotesKey = @"notes";
 static NSString *kPrecisionKey = @"precision";
 
 #define kVeryLowPrecision @"very_low"
@@ -51,6 +52,29 @@ static NSString *gPrecisionKeys[] = {
     return rulesArray;
 }
 
++ (NSString *)regexInRule:(NSDictionary *)rule
+{
+    return [rule objectForKey:kRegexKey];
+}
+
++ (double)precisionInRule:(NSDictionary *)rule
+{
+    static const double precisionValues[] = {
+        0.00001,
+        0.001,
+        1.0,
+        1000.0,
+        1000000.0
+    };
+    NSString *precision = [rule objectForKey:kPrecisionKey];
+    for (int i = 0; i < sizeof(gPrecisionKeys) / sizeof(NSString *); i++) {
+        if ([gPrecisionKeys[i] isEqualToString:precision]) {
+            return precisionValues[i];
+        }
+    }
+    return 0;
+}
+
 - (NSArray *)rules
 {
     Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:self.guid];
@@ -69,7 +93,7 @@ static NSString *gPrecisionKeys[] = {
 - (void)setRule:(NSDictionary *)rule forRow:(NSInteger)rowIndex
 {
     NSMutableArray *rules = [[[self rules] mutableCopy] autorelease];
-    if (rowIndex < 0) {     
+    if (rowIndex < 0) {
         assert(rule);
         [rules addObject:rule];
     } else {
@@ -110,7 +134,7 @@ static NSString *gPrecisionKeys[] = {
                                        forKey:KEY_SMART_SELECTION_RULES
                                    inBookmark:bookmark];
     [tableView_ reloadData];
-    [delegate_ smartSelectionChanged:nil];    
+    [delegate_ smartSelectionChanged:nil];
 }
 
 - (void)setGuid:(NSString *)guid
@@ -136,7 +160,7 @@ static NSString *gPrecisionKeys[] = {
         return @"Undefined";
     }
 }
-     
+
 - (int)indexForPrecision:(NSString *)precision
 {
     for (int i = 0; i < sizeof(gPrecisionKeys) / sizeof(NSString *); i++) {
@@ -164,6 +188,8 @@ static NSString *gPrecisionKeys[] = {
     NSDictionary *rule = [[self rules] objectAtIndex:rowIndex];
     if (aTableColumn == regexColumn_) {
         return [rule objectForKey:kRegexKey];
+    } else if (aTableColumn == notesColumn_) {
+        return [rule objectForKey:kNotesKey];
     } else {
         NSString *precision = [rule objectForKey:kPrecisionKey];
         return [NSNumber numberWithInt:[self indexForPrecision:precision]];
@@ -177,9 +203,11 @@ static NSString *gPrecisionKeys[] = {
               row:(NSInteger)rowIndex
 {
     NSMutableDictionary *rule = [[[[self rules] objectAtIndex:rowIndex] mutableCopy] autorelease];
-    
+
     if (aTableColumn == regexColumn_) {
         [rule setObject:anObject forKey:kRegexKey];
+    } else if (aTableColumn == notesColumn_) {
+        [rule setObject:anObject forKey:kNotesKey];
     } else {
         [rule setObject:[self precisionKeyWithIndex:[anObject intValue]]
                     forKey:kPrecisionKey];
@@ -193,7 +221,8 @@ static NSString *gPrecisionKeys[] = {
                        *)aTableColumn
               row:(NSInteger)rowIndex
 {
-    if (aTableColumn == regexColumn_) {
+    if (aTableColumn == regexColumn_ ||
+        aTableColumn == notesColumn_) {
         return YES;
     }
     return NO;
@@ -209,12 +238,23 @@ static NSString *gPrecisionKeys[] = {
         for (int i = 0; i < sizeof(gPrecisionKeys) / sizeof(NSString *); i++) {
             [cell addItemWithTitle:[self displayNameForPrecision:[self precisionKeyWithIndex:i]]];
         }
-        
+
         [cell setBordered:NO];
-        
+
         return cell;
     } else if (tableColumn == regexColumn_) {
         NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@"regex"] autorelease];
+        [cell setPlaceholderString:@"Enter Regular Expression"];
+        [cell setEditable:YES];
+        [cell setTruncatesLastVisibleLine:YES];
+        [cell setLineBreakMode:NSLineBreakByTruncatingTail];
+
+        return cell;
+    } else if (tableColumn == notesColumn_) {
+        NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@"notes"] autorelease];
+        [cell setPlaceholderString:@"Enter Description"];
+        [cell setTruncatesLastVisibleLine:YES];
+        [cell setLineBreakMode:NSLineBreakByTruncatingTail];
         [cell setEditable:YES];
         return cell;
     }
@@ -225,6 +265,5 @@ static NSString *gPrecisionKeys[] = {
 {
     self.hasSelection = [tableView_ numberOfSelectedRows] > 0;
 }
-
 
 @end

@@ -347,6 +347,58 @@ static const int ambiguous_chars[] = {
     return [self stringByReplacingEscapedChar:'0' + n withString:s];
 }
 
+static BOOL ishex(unichar c) {
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
+
+static int fromhex(unichar c) {
+    if (c >= '0' && c <= '9') {
+        return c - '0';
+    }
+    if (c >= 'a' && c <= 'f') {
+        return c - 'a' + 10;
+    }
+    return c - 'A' + 10;
+}
+
+- (NSString *)stringByReplacingEscapedHexValuesWithChars
+{
+    NSMutableArray *ranges = [NSMutableArray array];
+    NSRange range = [self rangeOfString:@"\\x"];
+    while (range.location != NSNotFound) {
+        int numSlashes = 0;
+        for (int i = range.location - 1; i >= 0 && [self characterAtIndex:i] == '\\'; i--) {
+            ++numSlashes;
+        }
+        if (range.location + 3 < self.length) {
+            if (numSlashes % 2 == 0) {
+                unichar c1 = [self characterAtIndex:range.location + 2];
+                unichar c2 = [self characterAtIndex:range.location + 3];
+                if (ishex(c1) && ishex(c2)) {
+                    range.length += 2;
+                    [ranges insertObject:[NSValue valueWithRange:range] atIndex:0];
+                }
+            }
+        }
+        range = [self rangeOfString:@"\\x"
+                            options:0
+                              range:NSMakeRange(range.location + 1, self.length - range.location - 1)];
+    }
+
+    NSString *newString = self;
+    for (NSValue *value in ranges) {
+        NSRange r = [value rangeValue];
+
+        unichar c1 = [self characterAtIndex:r.location + 2];
+        unichar c2 = [self characterAtIndex:r.location + 3];
+        unichar c = (fromhex(c1) << 4) + fromhex(c2);
+        NSString *s = [NSString stringWithCharacters:&c length:1];
+        newString = [newString stringByReplacingCharactersInRange:r withString:s];
+    }
+
+    return newString;
+}
+
 - (NSString *)stringByReplacingEscapedChar:(unichar)echar withString:(NSString *)s
 {
     NSString *br = [NSString stringWithFormat:@"\\%C", echar];

@@ -1972,48 +1972,22 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                                   targetOffset:&targetOffset
                                         coords:coords];
 
-    const double VERY_LOW_PRECISION = 0.00001;
-    const double LOW_PRECISION = 0.001;
-    const double NORMAL_PRECISION = 1.0;
-    const double HIGH_PRECISION = 1000.0;
-    const double VERY_HIGH_PRECISION = 1000000.0;
-
-    typedef struct {
-        NSString* regex;
-        double precision;
-    } SmartMatchRule;
-
     NSArray* rulesArray = smartSelectionRules_ ? smartSelectionRules_ : [SmartSelectionController defaultRules];
     const int numRules = [rulesArray count];
-    SmartMatchRule rules[numRules];
-    int i = 0;
-    for (NSDictionary* dict in rulesArray) {
-        rules[i].regex = [[dict objectForKey:@"regex"] retain];
-        NSString* precision = [dict objectForKey:@"precision"];
-        if ([precision isEqualToString:@"very_low"]) {
-            rules[i].precision = VERY_LOW_PRECISION;
-        } else if ([precision isEqualToString:@"low"]) {
-            rules[i].precision = LOW_PRECISION;
-        } else if ([precision isEqualToString:@"normal"]) {
-            rules[i].precision = NORMAL_PRECISION;
-        } else if ([precision isEqualToString:@"high"]) {
-            rules[i].precision = HIGH_PRECISION;
-        } else if ([precision isEqualToString:@"very_high"]) {
-            rules[i].precision = VERY_HIGH_PRECISION;
-        }
-        i++;
-    }
 
     NSMutableDictionary* matches = [NSMutableDictionary dictionaryWithCapacity:13];
     int numCoords = [coords count];
 
     //NSLog(@"Searching for %@", textWindow);
     for (int j = 0; j < numRules; j++) {
-        //NSLog(@"Try regex %@", rules[j].regex);
-        for (i = 0; i <= targetOffset; i++) {
+        NSDictionary *rule = [smartSelectionRules_ objectAtIndex:j];
+        NSString *regex = [SmartSelectionController regexInRule:rule];
+        double precision = [SmartSelectionController precisionInRule:rule];
+        //NSLog(@"Try regex %@", regex);
+        for (int i = 0; i <= targetOffset; i++) {
             NSString* substring = [textWindow substringWithRange:NSMakeRange(i, [textWindow length] - i)];
             NSError* regexError = nil;
-            NSRange temp = [substring rangeOfRegex:rules[j].regex
+            NSRange temp = [substring rangeOfRegex:regex
                                            options:0
                                            inRange:NSMakeRange(0, [substring length])
                                            capture:0
@@ -2021,7 +1995,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
             if (temp.location != NSNotFound) {
                 if (i + temp.location <= targetOffset && i + temp.location + temp.length > targetOffset) {
                     NSString* result = [substring substringWithRange:temp];
-                    double score = rules[j].precision * (double) temp.length;
+                    double score = precision * (double) temp.length;
                     SmartMatch* oldMatch = [matches objectForKey:result];
                     if (!oldMatch || score > oldMatch->score) {
                         SmartMatch* match = [[[SmartMatch alloc] init] autorelease];

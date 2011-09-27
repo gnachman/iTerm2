@@ -1,85 +1,97 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-  <key>Rules</key>
-  <array>
     <dict>
-      <!-- word consisting of anything but whitespace -->
-      <key>regex</key>
-      <string>\S+</string>
-      <key>precision</key>
-      <string>low</string>
+        <key>Rules</key>
+        <array>
+            <dict>
+                <key>notes</key>
+                <string>Word consisting of anything but whitespace</string>
+                <key>regex</key>
+                <string>\S+</string>
+                <key>precision</key>
+                <string>low</string>
+            </dict>
+            <dict>
+                <key>notes</key>
+                <string>C++ namespace::identifier</string>
+                <key>regex</key>
+                <string>([a-zA-Z0-9_]+::)+[a-zA-Z0-9_]+</string>
+                <key>precision</key>
+                <string>normal</string>
+            </dict>
+            <dict>
+                <key>notes</key>
+                <string>Paths</string>
+                <key>regex</key>
+                <string>\~?/?([[:letter:][:number:]._-]+/+)+[[:letter:][:number:]._-]+/?</string>
+                <key>precision</key>
+                <string>normal</string>
+            </dict>
+            <dict>
+                <key>notes</key>
+                <string>Quoted string</string>
+                <key>regex</key>
+                <string>@?"(?:[^"\\]|\\.)*"</string>
+                <key>precision</key>
+                <string>normal</string>
+            </dict>
+            <dict>
+                <key>notes</key>
+                <string>Java/Python include paths</string>
+                <key>regex</key>
+                <string>([[:letter:][:number:]._]+\.)+[[:letter:][:number:]._]+</string>
+                <key>precision</key>
+                <string>normal</string>
+            </dict>
+            <dict>
+                <key>notes</key>
+                <string>mailto URL</string>
+                <key>regex</key>
+                <string>\bmailto:([a-z0-9A-Z_]+@)?([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\b</string>
+                <key>precision</key>
+                <string>normal</string>
+            </dict>
+            <dict>
+                <key>notes</key>
+                <string>Obj-C selector</string>
+                <key>regex</key>
+                <string>@selector\([^)]+\)</string>
+                <key>precision</key>
+                <string>high</string>
+            </dict>
+            <dict>
+                <key>notes</key>
+                <string>email address</string>
+                <key>regex</key>
+                <string>\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}\b</string>
+                <key>precision</key>
+                <string>high</string>
+            </dict>
+            <dict>
+                <key>notes</key>
+                <string>HTTP URL</string>
+                <key>regex</key>
+                <string>https?://([a-z0-9A-Z]+(:[a-zA-Z0-9]+)?@)?([a-z0-9A-Z]+\.)+[A-Za-z]+((:[0-9]+)?)(/[a-zA-Z0-9;/\.\-_+%?&amp;@=#\(\)]*)?</string>
+                <key>precision</key>
+                <string>very_high</string>
+            </dict>
+            <dict>
+                <key>notes</key>
+                <string>SSH URL</string>
+                <key>regex</key>
+                <string>\bssh:([a-z0-9A-Z_]+@)?([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\b</string>
+                <key>precision</key>
+                <string>very_high</string>
+            </dict>
+            <dict>
+                <key>notes</key>
+                <string>Telnet URL</string>
+                <key>regex</key>
+                <string>\btelnet:([a-z0-9A-Z_]+@)?([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\b</string>
+                <key>precision</key>
+                <string>very_high</string>
+            </dict>
+        </array>
     </dict>
-    <dict>
-      <!-- C++ namespace::identifier -->
-      <key>regex</key>
-      <string>([a-zA-Z0-9_]+::)+[a-zA-Z0-9_]+</string>
-      <key>precision</key>
-      <string>normal</string>
-    </dict>
-    <dict>
-      <!-- paths -->
-      <key>regex</key>
-      <string>\~?/?([[:letter:][:number:]._-]+/+)+[[:letter:][:number:]._-]+/?</string>
-      <key>precision</key>
-      <string>normal</string>
-    </dict>
-    <dict>
-      <!-- quoted string -->
-      <key>regex</key>
-      <string>@?"(?:[^"\\]|\\.)*"</string>
-      <key>precision</key>
-      <string>normal</string>
-    </dict>
-    <dict>
-      <!-- java/python include paths -->
-      <key>regex</key>
-      <string>([[:letter:][:number:]._]+\.)+[[:letter:][:number:]._]+</string>
-      <key>precision</key>
-      <string>normal</string>
-    </dict>
-    <dict>
-      <!-- mailto url -->
-      <key>regex</key>
-      <string>\bmailto:([a-z0-9A-Z_]+@)?([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\b</string>
-      <key>precision</key>
-      <string>normal</string>
-    </dict>
-    <dict>
-      <!-- objc selector -->
-      <key>regex</key>
-      <string>@selector\([^)]+\)</string>
-      <key>precision</key>
-      <string>high</string>
-    </dict>
-    <dict>
-      <!-- email addr -->
-      <key>regex</key>
-      <string>\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,4}\b</string>
-      <key>precision</key>
-      <string>high</string>
-    </dict>
-    <dict>
-      <!-- http url -->
-      <key>regex</key>
-      <string>https?://([a-z0-9A-Z]+(:[a-zA-Z0-9]+)?@)?([a-z0-9A-Z]+\.)+[A-Za-z]+((:[0-9]+)?)(/[a-zA-Z0-9;/\.\-_+%?&amp;@=#\(\)]*)?</string>
-      <key>precision</key>
-      <string>very_high</string>
-    </dict>
-    <dict>
-      <!-- ssh url -->
-      <key>regex</key>
-      <string>\bssh:([a-z0-9A-Z_]+@)?([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\b</string>
-      <key>precision</key>
-      <string>very_high</string>
-    </dict>
-    <dict>
-      <key>regex</key>
-      <string>\btelnet:([a-z0-9A-Z_]+@)?([a-zA-Z0-9\-]+\.)*[a-zA-Z0-9\-]+\b</string>
-      <key>precision</key>
-      <string>very_high</string>
-    </dict>
-  </array>
-</dict>
 </plist>

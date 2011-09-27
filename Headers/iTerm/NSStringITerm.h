@@ -54,5 +54,6 @@
 - (void)breakDownCommandToPath:(NSString **)cmd cmdArgs:(NSArray **)path;
 - (NSString *)stringByReplacingBackreference:(int)n withString:(NSString *)s;
 - (NSString *)stringByReplacingEscapedChar:(unichar)echar withString:(NSString *)s;
+- (NSString *)stringByReplacingEscapedHexValuesWithChars;
 
 @end

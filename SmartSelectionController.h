@@ -21,6 +21,7 @@
     IBOutlet NSObject<SmartSelectionDelegate> *delegate_;  // weak
     IBOutlet NSTableView *tableView_;
     IBOutlet NSTableColumn *regexColumn_;
+    IBOutlet NSTableColumn *notesColumn_;
     IBOutlet NSTableColumn *precisionColumn_;
 }
 
@@ -28,6 +29,8 @@
 @property (nonatomic, assign) BOOL hasSelection;
 @property (nonatomic, assign) NSObject<SmartSelectionDelegate> *delegate;
 
++ (double)precisionInRule:(NSDictionary *)rule;
++ (NSString *)regexInRule:(NSDictionary *)rule;
 + (NSArray *)defaultRules;
 - (NSArray *)rules;
 - (IBAction)addRule:(id)sender;

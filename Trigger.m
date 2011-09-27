@@ -84,7 +84,13 @@ NSString * const kTriggerParameterKey = @"parameter";
         }
         p = [p stringByReplacingBackreference:i withString:rep];
     }
+    p = [p stringByReplacingEscapedChar:'a' withString:@"\x07"];
+    p = [p stringByReplacingEscapedChar:'b' withString:@"\x08"];
+    p = [p stringByReplacingEscapedChar:'e' withString:@"\x1b"];
     p = [p stringByReplacingEscapedChar:'n' withString:@"\n"];
+    p = [p stringByReplacingEscapedChar:'r' withString:@"\r"];
+    p = [p stringByReplacingEscapedChar:'t' withString:@"\t"];
+    p = [p stringByReplacingEscapedHexValuesWithChars];
     return p;
 }
 
