@@ -29,6 +29,7 @@
 #import "BookmarkListView.h"
 #import "WindowArrangements.h"
 #import "TriggerController.h"
+#import "SmartSelectionController.h"
 
 #define OPT_NORMAL 0
 #define OPT_META   1
@@ -54,15 +55,17 @@
 
 @class iTermController;
 @class TriggerController;
+@class SmartSelectionController;
 
 typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 
-@interface PreferencePanel : NSWindowController <BookmarkTableDelegate, TriggerDelegate>
+@interface PreferencePanel : NSWindowController <BookmarkTableDelegate, TriggerDelegate, SmartSelectionDelegate>
 {
     BookmarkModel* dataSource;
     BOOL oneBookmarkMode;
     IBOutlet TriggerController *triggers_;
-    
+    IBOutlet SmartSelectionController *smartSelectionRules_;
+
     // This is actually the tab style. It takes one of these values:
     // 0: Metal
     // 1: Aqua
@@ -532,6 +535,7 @@ typedef enum {
 - (id)initWithDataSource:(BookmarkModel*)model userDefaults:(NSUserDefaults*)userDefaults;
 
 - (void)triggerChanged:(TriggerController *)triggerController;
+- (void)smartSelectionChanged:(SmartSelectionController *)smartSelectionController;
 
 - (void)setOneBookmarkOnly;
 - (void)awakeFromNib;

@@ -292,6 +292,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Time the selection last changed at or 0 if there's no selection.
     NSTimeInterval selectionTime_;
+
+    // Dictionaries with a regex and a priority.
+    NSArray *smartSelectionRules_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -348,6 +351,8 @@ typedef struct PTYFontInfo PTYFontInfo;
 
 - (BOOL)growSelectionLeft;
 - (void)growSelectionRight;
+
+- (void)setSmartSelectionRules:(NSArray *)rules;
 
 //get/set methods
 - (NSFont *)font;

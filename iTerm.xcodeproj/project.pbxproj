@@ -22,6 +22,8 @@
 		1D237D95131D8D66004DD60C /* FindViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D237D93131D8D66004DD60C /* FindViewController.m */; };
 		1D24C284142EF334006B246F /* SendTextTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D24C282142EF334006B246F /* SendTextTrigger.h */; };
 		1D24C285142EF334006B246F /* SendTextTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D24C283142EF334006B246F /* SendTextTrigger.m */; };
+		1D24C2C5142FEACF006B246F /* SmartSelectionController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D24C2C3142FEACF006B246F /* SmartSelectionController.h */; };
+		1D24C2C6142FEACF006B246F /* SmartSelectionController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D24C2C4142FEACF006B246F /* SmartSelectionController.m */; };
 		1D2560AA13EE60E4006B35CD /* ArrangementPreviewView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */; };
 		1D2560AB13EE60E4006B35CD /* ArrangementPreviewView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */; };
 		1D29732714082676004C5DBE /* MovePaneController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D29732514082676004C5DBE /* MovePaneController.h */; };
@@ -364,6 +366,8 @@
 		1D237D93131D8D66004DD60C /* FindViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FindViewController.m; sourceTree = "<group>"; };
 		1D24C282142EF334006B246F /* SendTextTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SendTextTrigger.h; sourceTree = "<group>"; };
 		1D24C283142EF334006B246F /* SendTextTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SendTextTrigger.m; sourceTree = "<group>"; };
+		1D24C2C3142FEACF006B246F /* SmartSelectionController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SmartSelectionController.h; sourceTree = "<group>"; };
+		1D24C2C4142FEACF006B246F /* SmartSelectionController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SmartSelectionController.m; sourceTree = "<group>"; };
 		1D2560A813EE60E4006B35CD /* ArrangementPreviewView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ArrangementPreviewView.h; sourceTree = "<group>"; };
 		1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ArrangementPreviewView.m; sourceTree = "<group>"; };
 		1D29732514082676004C5DBE /* MovePaneController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MovePaneController.h; sourceTree = "<group>"; };
@@ -730,12 +734,12 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				1D24C37714303E00006B246F /* Preferences */,
 				1D9DDE31142E73E300275650 /* Categories */,
 				1D9DDE30142E738800275650 /* Popups */,
 				1D9DDE2F142E735900275650 /* DVR */,
 				1D9DDE2E142E733100275650 /* Toolbelt */,
 				1D9DDE2D142E730700275650 /* Triggers */,
-				1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */,
 				1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */,
 				1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */,
 				1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */,
@@ -758,7 +762,6 @@
 				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
 				1D72438C11F416E500BD4924 /* LineBuffer.m */,
 				1D29732614082676004C5DBE /* MovePaneController.m */,
-				FB019DE103670C6501F955DB /* PreferencePanel.m */,
 				1D988596135D23BD0072023F /* ProcessCache.m */,
 				FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */,
 				E8CF755F026DDA6303A80106 /* PTYScrollView.m */,
@@ -777,7 +780,6 @@
 				1D44218B1290B34500891504 /* TextViewWrapper.m */,
 				E8CF7562026DDA6303A80106 /* VT100Screen.m */,
 				E8CF7563026DDA6303A80106 /* VT100Terminal.m */,
-				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -785,6 +787,7 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				1D24C2C3142FEACF006B246F /* SmartSelectionController.h */,
 				1D24C282142EF334006B246F /* SendTextTrigger.h */,
 				1D67AAA714284BF300D5DA4E /* ToolNotes.h */,
 				1DE214DF128212EE004E3ADF /* Autocomplete.h */,
@@ -968,6 +971,18 @@
 			name = Resources;
 			sourceTree = "<group>";
 		};
+		1D24C37714303E00006B246F /* Preferences */ = {
+			isa = PBXGroup;
+			children = (
+				1D2560A913EE60E4006B35CD /* ArrangementPreviewView.m */,
+				FB019DE103670C6501F955DB /* PreferencePanel.m */,
+				1D24C2C4142FEACF006B246F /* SmartSelectionController.m */,
+				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
+				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
+			);
+			name = Preferences;
+			sourceTree = "<group>";
+		};
 		1D5FD9AD11F61CA900C46BA3 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
@@ -1006,7 +1021,6 @@
 			isa = PBXGroup;
 			children = (
 				1D9DCBFD142D7BA60016228A /* Trigger.m */,
-				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
 				1D9DCC15142D7FC10016228A /* AlertTrigger.m */,
 				1D9DCC0D142D7F5F0016228A /* BellTrigger.m */,
 				1D9DDD91142E5AC600275650 /* CoprocessTrigger.m */,
@@ -1341,6 +1355,7 @@
 				1D9DDD92142E5AC600275650 /* CoprocessTrigger.h in Headers */,
 				1D9DDD9C142E5FBB00275650 /* Coprocess.h in Headers */,
 				1D24C284142EF334006B246F /* SendTextTrigger.h in Headers */,
+				1D24C2C5142FEACF006B246F /* SmartSelectionController.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1653,6 +1668,7 @@
 				1D9DDD93142E5AC600275650 /* CoprocessTrigger.m in Sources */,
 				1D9DDD9D142E5FBB00275650 /* Coprocess.m in Sources */,
 				1D24C285142EF334006B246F /* SendTextTrigger.m in Sources */,
+				1D24C2C6142FEACF006B246F /* SmartSelectionController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

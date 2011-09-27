@@ -236,5 +236,10 @@ static NSMutableArray *gTriggerClasses;
     self.hasSelection = [tableView_ numberOfSelectedRows] > 0;
 }
 
+- (IBAction)help:(id)sender
+{
+    [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://www.iterm2.com/triggers.html"]];
+}
+
 @end
 

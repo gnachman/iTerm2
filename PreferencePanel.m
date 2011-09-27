@@ -38,6 +38,7 @@
 #import "SessionView.h"
 #import "WindowArrangements.h"
 #import "TriggerController.h"
+#import "SmartSelectionController.h"
 
 #define CUSTOM_COLOR_PRESETS @"Custom Color Presets"
 #define HOTKEY_WINDOW_GENERATED_PROFILE_NAME @"Hotkey Window"
@@ -3043,7 +3044,8 @@ static float versionNumber;
 
     // Advanced tab
     [newDict setObject:[triggers_ triggers] forKey:KEY_TRIGGERS];
-    
+    [newDict setObject:[smartSelectionRules_ rules] forKey:KEY_SMART_SELECTION_RULES];
+
     // Epilogue
     [dataSource setBookmark:newDict withGuid:guid];
     [bookmarksTableView reloadData];
@@ -3108,6 +3110,7 @@ static float versionNumber;
         if (bookmarkTable == bookmarksTableView) {
             NSString* guid = [bookmarksTableView selectedGuid];
             triggers_.guid = guid;
+            smartSelectionRules_.guid = guid;
             [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
         }
     }
@@ -3877,6 +3880,7 @@ static float versionNumber;
     };
     NSString *advancedKeys[] = {
         KEY_TRIGGERS,
+        KEY_SMART_SELECTION_RULES,
         nil
     };
     switch (attributes) {
@@ -3946,6 +3950,11 @@ static float versionNumber;
 - (void)triggerChanged:(TriggerController *)triggerController
 {
   [self bookmarkSettingChanged:nil];
+}
+
+- (void)smartSelectionChanged:(SmartSelectionController *)smartSelectionController
+{
+    [self bookmarkSettingChanged:nil];
 }
 
 @end

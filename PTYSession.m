@@ -123,6 +123,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 - (void)dealloc
 {
     [triggerLine_ release];
+    [triggers_ release];
     [pasteboard_ release];
     [pbtext_ release];
     [slowPasteBuffer release];
@@ -1983,6 +1984,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             [triggers_ addObject:trigger];
         }
     }
+    [TEXTVIEW setSmartSelectionRules:[aDict objectForKey:KEY_SMART_SELECTION_RULES]];
 
     [TEXTVIEW setAntiAlias:asciiAA nonAscii:nonasciiAA];
     [self setEncoding:[[aDict objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue]];

@@ -31,5 +31,6 @@
 
 - (IBAction)addTrigger:(id)sender;
 - (IBAction)removeTrigger:(id)sender;
+- (IBAction)help:(id)sender;
 
 @end

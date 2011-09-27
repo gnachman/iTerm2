@@ -61,6 +61,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #import "FontSizeEstimator.h"
 #import "MovePaneController.h"
 #import "FutureMethods.h"
+#import "SmartSelectionController.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -361,6 +362,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)dealloc
 {
+    [smartSelectionRules_ release];
     int i;
 
     if (mouseDownEvent != nil) {
@@ -1970,6 +1972,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                                   targetOffset:&targetOffset
                                         coords:coords];
 
+    const double VERY_LOW_PRECISION = 0.00001;
     const double LOW_PRECISION = 0.001;
     const double NORMAL_PRECISION = 1.0;
     const double HIGH_PRECISION = 1000.0;
@@ -1979,31 +1982,26 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         NSString* regex;
         double precision;
     } SmartMatchRule;
-    static SmartMatchRule* rules = nil;
-    static int numRules = 0;
-    if (!rules) {
-        NSString* plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"SmartSelectionRules"
-                                                                               ofType:@"plist"];
-        NSDictionary* rulesDict = [NSDictionary dictionaryWithContentsOfFile:plistFile];
-        NSArray* rulesArray = [rulesDict objectForKey:@"Rules"];
-        rules = malloc(sizeof(SmartMatchRule) * [rulesArray count]);
-        int i = 0;
-        for (NSDictionary* dict in rulesArray) {
-            rules[i].regex = [[dict objectForKey:@"regex"] retain];
-            NSString* precision = [dict objectForKey:@"precision"];
-            if ([precision isEqualToString:@"low"]) {
-                rules[i].precision = LOW_PRECISION;
-            } else if ([precision isEqualToString:@"normal"]) {
-                rules[i].precision = NORMAL_PRECISION;
-            } else if ([precision isEqualToString:@"high"]) {
-                rules[i].precision = HIGH_PRECISION;
-            } else if ([precision isEqualToString:@"very_high"]) {
-                rules[i].precision = VERY_HIGH_PRECISION;
-            }
-            i++;
+
+    NSArray* rulesArray = smartSelectionRules_ ? smartSelectionRules_ : [SmartSelectionController defaultRules];
+    const int numRules = [rulesArray count];
+    SmartMatchRule rules[numRules];
+    int i = 0;
+    for (NSDictionary* dict in rulesArray) {
+        rules[i].regex = [[dict objectForKey:@"regex"] retain];
+        NSString* precision = [dict objectForKey:@"precision"];
+        if ([precision isEqualToString:@"very_low"]) {
+            rules[i].precision = VERY_LOW_PRECISION;
+        } else if ([precision isEqualToString:@"low"]) {
+            rules[i].precision = LOW_PRECISION;
+        } else if ([precision isEqualToString:@"normal"]) {
+            rules[i].precision = NORMAL_PRECISION;
+        } else if ([precision isEqualToString:@"high"]) {
+            rules[i].precision = HIGH_PRECISION;
+        } else if ([precision isEqualToString:@"very_high"]) {
+            rules[i].precision = VERY_HIGH_PRECISION;
         }
-        numRules = [rulesArray count];
-        //NSLog(@"Loaded %d smart selection rules", numRules);
+        i++;
     }
 
     NSMutableDictionary* matches = [NSMutableDictionary dictionaryWithCapacity:13];
@@ -2012,7 +2010,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     //NSLog(@"Searching for %@", textWindow);
     for (int j = 0; j < numRules; j++) {
         //NSLog(@"Try regex %@", rules[j].regex);
-        for (int i = 0; i <= targetOffset; i++) {
+        for (i = 0; i <= targetOffset; i++) {
             NSString* substring = [textWindow substringWithRange:NSMakeRange(i, [textWindow length] - i)];
             NSError* regexError = nil;
             NSRange temp = [substring rangeOfRegex:rules[j].regex
@@ -4035,6 +4033,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (BOOL)findInProgress
 {
     return _findInProgress || searchingForNextResult_;
+}
+
+- (void)setSmartSelectionRules:(NSArray *)rules
+{
+    [smartSelectionRules_ autorelease];
+    smartSelectionRules_ = [rules copy];
 }
 
 - (BOOL)growSelectionLeft
