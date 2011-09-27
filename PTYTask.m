@@ -1038,6 +1038,7 @@ static void reapchild(int n)
     @synchronized (self) {
         return coprocess_;
     }
+    return nil;
 }
 
 - (BOOL)hasCoprocess
@@ -1045,6 +1046,7 @@ static void reapchild(int n)
     @synchronized (self) {
         return coprocess_ != nil;
     }
+    return NO;
 }
 
 @end
