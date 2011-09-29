@@ -56,6 +56,7 @@
 @class iTermController;
 @class TriggerController;
 @class SmartSelectionController;
+@class TrouterPrefsController;
 
 typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 
@@ -65,6 +66,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     BOOL oneBookmarkMode;
     IBOutlet TriggerController *triggerWindowController_;
     IBOutlet SmartSelectionController *smartSelectionWindowController_;
+    IBOutlet TrouterPrefsController *trouterPrefController_;
 
     // This is actually the tab style. It takes one of these values:
     // 0: Metal

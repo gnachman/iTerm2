@@ -352,6 +352,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (BOOL)growSelectionLeft;
 - (void)growSelectionRight;
 
+- (void)setTrouterPrefs:(NSDictionary *)prefs;
 - (void)setSmartSelectionRules:(NSArray *)rules;
 
 //get/set methods

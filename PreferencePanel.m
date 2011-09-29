@@ -39,6 +39,7 @@
 #import "WindowArrangements.h"
 #import "TriggerController.h"
 #import "SmartSelectionController.h"
+#import "TrouterPrefsController.h"
 
 #define CUSTOM_COLOR_PRESETS @"Custom Color Presets"
 #define HOTKEY_WINDOW_GENERATED_PROFILE_NAME @"Hotkey Window"
@@ -3078,6 +3079,7 @@ static float versionNumber;
     // Advanced tab
     [newDict setObject:[triggerWindowController_ triggers] forKey:KEY_TRIGGERS];
     [newDict setObject:[smartSelectionWindowController_ rules] forKey:KEY_SMART_SELECTION_RULES];
+    [newDict setObject:[trouterPrefController_ prefs] forKey:KEY_TROUTER];
 
     // Epilogue
     [dataSource setBookmark:newDict withGuid:guid];
@@ -3144,6 +3146,7 @@ static float versionNumber;
             NSString* guid = [bookmarksTableView selectedGuid];
             triggerWindowController_.guid = guid;
             smartSelectionWindowController_.guid = guid;
+            trouterPrefController_.guid = guid;
             [self updateBookmarkFields:[dataSource bookmarkWithGuid:guid]];
         }
     }

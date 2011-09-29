@@ -2921,21 +2921,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Command click in place.
             NSString *url = [self _getURLForX:x y:y];
 
-            if (url && ([event modifierFlags] & NSShiftKeyMask)) {
-                // Cmd-shift click executes an alternate semantic history action.
-                NSString *fullPath = [trouter getFullPath:url
-                                         workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
-                                               lineNumber:nil];
-                if ([trouter isDirectory:fullPath]) {
-                    [self _changeDirectory:fullPath];
-                }
-            } else {
-                int mods = [event modifierFlags];
-                BOOL altPressed = (mods & NSAlternateKeyMask) != 0;
-                [self _openURL:url
-                          atLine:y + 1
-                          inBackground:altPressed];
-            }
+            int mods = [event modifierFlags];
+            BOOL altPressed = (mods & NSAlternateKeyMask) != 0;
+            [self _openURL:url
+                      atLine:y + 1
+                      inBackground:altPressed];
         } else {
             lastFindStartX = endX;
             lastFindEndX = endX+1;
@@ -4007,6 +3997,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (BOOL)findInProgress
 {
     return _findInProgress || searchingForNextResult_;
+}
+
+- (void)setTrouterPrefs:(NSDictionary *)prefs
+{
+    trouter.prefs = prefs;
 }
 
 - (void)setSmartSelectionRules:(NSArray *)rules
@@ -6734,12 +6729,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     // I tried respecting hard newlines if that is a legal URL, but that's such a broad definition
     // that it doesn't work well. Hard EOLs mid-url are very common. Let's try always ignoring them.
-    NSString* urlIgnoringHardEOL = [self _getURLForX:x y:y respectingHardNewlines:NO];
-    if ([self _stringLooksLikeURL:urlIgnoringHardEOL]) {
-        return urlIgnoringHardEOL;
-    } else {
-        return @"";
-    }
+    return [self _getURLForX:x y:y respectingHardNewlines:NO];
 }
 
 - (BOOL) _findMatchingParenthesis: (NSString *) parenthesis withX:(int)X Y:(int)Y
@@ -6947,12 +6937,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     return [[workingDirectoryAtLines lastObject] lastObject];
-}
-
-- (void)_changeDirectory:(NSString *)path
-{
-    // TODO: Make this more efficient by calculating the shortest path to target folder
-    [[dataSource shellTask] writeTask:[[NSString stringWithFormat:@"\3cd \"%@\"; ls\n", path] dataUsingEncoding:[[dataSource session] encoding]]];
 }
 
 - (void)_openURL:(NSString *)aURLString atLine:(long long)line inBackground:(BOOL)background

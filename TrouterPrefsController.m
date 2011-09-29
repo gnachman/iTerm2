@@ -1,0 +1,256 @@
+//
+//  TrouterPrefsController.m
+//  iTerm
+//
+//  Created by George Nachman on 9/28/11.
+//  Copyright 2011 Georgetech. All rights reserved.
+//
+
+#import "TrouterPrefsController.h"
+#import "BookmarkModel.h"
+#import "ITAddressBookMgr.h"
+#import "PreferencePanel.h"
+
+NSString *kTrouterActionKey = @"action";
+NSString *kTrouterEditorKey = @"editor";
+NSString *kTrouterTextKey = @"text";
+
+NSString *kSublimeTextIdentifier = @"com.sublimetext.2";
+NSString *kMacVimIdentifier = @"org.vim.MacVim";
+NSString *kTextmateIdentifier = @"com.macromates.textmate";
+NSString *kBBEditIdentifier = @"com.barebones.bbedit";
+    
+NSString *kTrouterBestEditorAction = @"best editor";
+NSString *kTrouterUrlAction = @"url";
+NSString *kTrouterEditorAction = @"editor";
+NSString *kTrouterCommandAction = @"command";
+
+@implementation TrouterPrefsController
+
+enum {
+    kSublimeTextTag = 1,
+    kMacVimTag,
+    kTextmateTag,
+    kBBEditTag
+};
+
+@synthesize guid = guid_;
+
++ (NSDictionary *)defaultPrefs
+{
+    return [NSDictionary dictionaryWithObjectsAndKeys:
+            kTrouterBestEditorAction, kTrouterActionKey,
+            nil];
+}
+
+- (void)dealloc
+{
+    [guid_ release];
+    [super dealloc];
+}
+
++ (BOOL)applicationExists:(NSString *)bundle_id
+{
+    CFURLRef appURL = nil;
+    OSStatus result = LSFindApplicationForInfo(kLSUnknownCreator,
+                                               (CFStringRef)bundle_id,
+                                               NULL,
+                                               NULL,
+                                               &appURL);
+    
+    if (appURL) {
+        CFRelease(appURL);
+    }
+    
+    switch (result) {
+        case noErr:
+            return YES;
+        case kLSApplicationNotFoundErr:
+            return NO;
+        default:
+            return NO;
+    }
+}
+
++ (NSString *)schemeForEditor:(NSString *)editor
+{
+    if ([editor isEqualToString:kSublimeTextIdentifier]) {
+        return @"subl";
+    }
+    if ([editor isEqualToString:kMacVimIdentifier]) {
+        return @"mvim";
+    }
+    if ([editor isEqualToString:kTextmateIdentifier]) {
+        return @"txmt";
+    }
+    if ([editor isEqualToString:kBBEditIdentifier]) {
+        return @"txmt";
+    }
+    return nil;
+}
+
++ (NSString *)bestEditor
+{
+    if ([TrouterPrefsController applicationExists:kSublimeTextIdentifier]) {
+        return kSublimeTextIdentifier;
+    }
+    if ([TrouterPrefsController applicationExists:kMacVimIdentifier]) {
+        return kMacVimIdentifier;
+    }
+    if ([TrouterPrefsController applicationExists:kTextmateIdentifier]) {
+        return kTextmateIdentifier;
+    }
+    if ([TrouterPrefsController applicationExists:kBBEditIdentifier]) {
+        return kBBEditIdentifier;
+    }
+    return nil;
+}
+
+- (void)awakeFromNib
+{
+    [editors_ addItemWithTitle:@"Sublime Text"];
+    [editors_ setAutoenablesItems:NO];
+    [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kSublimeTextTag];
+    if (![TrouterPrefsController applicationExists:kSublimeTextIdentifier]) {
+        [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setEnabled:NO];
+    }
+    [editors_ addItemWithTitle:@"MacVim"];
+    [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kMacVimTag];
+    if (![TrouterPrefsController applicationExists:kMacVimIdentifier]) {
+        [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setEnabled:NO];
+    }
+    [editors_ addItemWithTitle:@"Textmate"];
+    [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kTextmateTag];
+    if (![TrouterPrefsController applicationExists:kTextmateIdentifier]) {
+        [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setEnabled:NO];
+    }
+    [editors_ addItemWithTitle:@"BBEdit"];
+    [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kBBEditTag];
+    if (![TrouterPrefsController applicationExists:kBBEditIdentifier]) {
+        [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setEnabled:NO];
+    }
+    [self actionChanged:nil];
+}
+
+- (NSString *)actionIdentifier
+{
+    switch ([[action_ selectedItem] tag]) {
+        case 1:
+            return kTrouterBestEditorAction;
+            
+        case 2:
+            return kTrouterUrlAction;
+            break;
+            
+        case 3:
+            return kTrouterEditorAction;
+            break;
+            
+        case 4:
+            return kTrouterCommandAction;
+            break;
+    }
+    return nil;
+}
+
+- (NSString *)editorIdentifier
+{
+    switch ([[editors_ selectedItem] tag]) {
+        case kSublimeTextTag:
+            return kSublimeTextIdentifier;
+            
+        case kMacVimTag:
+            return kMacVimIdentifier;
+            
+        case kTextmateTag:
+            return kTextmateIdentifier;
+            
+        case kBBEditTag:
+            return kBBEditIdentifier;
+    }
+    return nil;
+}
+
+- (IBAction)actionChanged:(id)sender
+{
+    [text_ setHidden:YES];
+    [editors_ setHidden:YES];
+    switch ([[action_ selectedItem] tag]) {
+        case 1:
+            [caveat_ setHidden:YES];
+            break;
+            
+        case 2:
+            [[text_ cell] setPlaceholderString:@"Enter URL with \\1 for filename, \\2 for line number"];
+            [caveat_ setStringValue:@"URL will be opened regardless of file type."];
+            [caveat_ setHidden:NO];
+            [text_ setHidden:NO];
+            break;
+            
+        case 3:
+            [editors_ setHidden:NO];
+            [caveat_ setStringValue:@"Applies to text files only. Other files will be opened with their default app."];
+            [caveat_ setHidden:NO];
+            break;
+            
+        case 4:
+            [[text_ cell] setPlaceholderString:@"Enter cmd with \\1 for filename, \\2 for line number"];
+            [caveat_ setStringValue:@"Command will be run regardless of file type."];
+            [text_ setHidden:NO];
+            break;
+    }
+    if (sender) {
+        [text_ setStringValue:@""];
+        [[PreferencePanel sharedInstance] bookmarkSettingChanged:nil];
+    }
+}
+
+- (NSDictionary *)prefs
+{
+    return [NSDictionary dictionaryWithObjectsAndKeys:
+            [self actionIdentifier], kTrouterActionKey,
+            [text_ stringValue], kTrouterTextKey,
+            [self editorIdentifier], kTrouterEditorKey,
+            nil];
+}
+
+- (void)setGuid:(NSString *)guid
+{
+    [guid_ autorelease];
+    guid_ = [guid copy];
+    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:self.guid];
+    NSDictionary *prefs = [bookmark objectForKey:KEY_TROUTER];
+    prefs = prefs ? prefs : [TrouterPrefsController defaultPrefs];
+    NSString *action = [prefs objectForKey:kTrouterActionKey];
+    if ([action isEqualToString:kTrouterBestEditorAction]) {
+        [action_ selectItemWithTag:1];
+    }
+    if ([action isEqualToString:kTrouterUrlAction]) {
+        [action_ selectItemWithTag:2];
+    }
+    if ([action isEqualToString:kTrouterEditorAction]) {
+        [action_ selectItemWithTag:3];
+    }
+    if ([action isEqualToString:kTrouterCommandAction]) {
+        [action_ selectItemWithTag:4];
+    }
+    [self actionChanged:nil];
+    NSString *text = [prefs objectForKey:kTrouterTextKey];
+    if (text) {
+        [text_ setStringValue:text];
+    } else {
+        [text_ setStringValue:@""];
+    }
+    NSString *editor = [prefs objectForKey:kTrouterEditorKey];
+    if ([editor isEqualToString:kSublimeTextIdentifier]) {
+        [editors_ selectItemWithTag:kSublimeTextTag];
+    } else if ([editor isEqualToString:kMacVimIdentifier]) {
+        [editors_ selectItemWithTag:kMacVimTag];
+    } else if ([editor isEqualToString:kTextmateIdentifier]) {
+        [editors_ selectItemWithTag:kTextmateTag];
+    } else if ([editor isEqualToString:kBBEditIdentifier]) {
+        [editors_ selectItemWithTag:kBBEditTag];
+    }
+}
+         
+@end

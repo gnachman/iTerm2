@@ -151,6 +151,7 @@
 // Advanced
 #define KEY_TRIGGERS                         @"Triggers"  // NSArray of NSDictionary
 #define KEY_SMART_SELECTION_RULES            @"Smart Selection Rules"
+#define KEY_TROUTER                          @"Semantic History"
 
 #define WINDOW_TYPE_NORMAL 0
 #define WINDOW_TYPE_FULL_SCREEN 1  // Creates a normal window but all callers to initWithSmartLayout will toggle fullscreen mode if this is the windowType.

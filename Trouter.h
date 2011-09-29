@@ -28,16 +28,14 @@
 #import <Cocoa/Cocoa.h>
 
 @interface Trouter : NSObject {
-    NSString *editor;
+    NSDictionary *prefs_;
     NSFileManager *fileManager;
-    NSString *externalScript;
 }
+
+@property (nonatomic, copy) NSDictionary *prefs;
 
 - (Trouter*)init;
 - (void)dealloc;
-- (void)determineEditor;
-- (BOOL)applicationExists:(NSString *)bundle_id;
-- (BOOL)applicationExists:(NSString *)bundle_id path:(NSString **)path;
 - (BOOL)isTextFile:(NSString *)path;
 - (BOOL)file:(NSString *)path conformsToUTI:(NSString *)uti;
 - (BOOL)isDirectory:(NSString *)path;
