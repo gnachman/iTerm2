@@ -642,6 +642,8 @@ static float versionNumber;
 
 - (IBAction)editSmartSelection:(id)sender
 {
+    [smartSelectionWindowController_ window];
+    [smartSelectionWindowController_ windowWillOpen];
     [NSApp beginSheet:[smartSelectionWindowController_ window]
        modalForWindow:[self window]
         modalDelegate:self

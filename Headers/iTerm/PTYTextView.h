@@ -580,9 +580,6 @@ typedef enum {
 - (void)logWorkingDirectoryAtLine:(long long)line withDirectory:(NSString *)workingDirectory;
 - (NSString *)getWorkingDirectoryAtLine:(long long)line;
 
-// Trouter change directory
-- (void)_changeDirectory:(NSString *)path;
-
 - (BOOL)_findMatchingParenthesis:(NSString *)parenthesis withX:(int)X Y:(int)Y;
 - (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent;
 - (BOOL)_isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old;

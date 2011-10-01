@@ -20,6 +20,8 @@ static NSString *kPrecisionKey = @"precision";
 #define kHighPrecision @"high"
 #define kVeryHighPrecision @"very_high"
 
+#define kLogDebugInfoKey @"Log Smart Selection Debug Info"
+
 static NSString *gPrecisionKeys[] = {
     kVeryLowPrecision,
     kLowPrecision,
@@ -264,6 +266,27 @@ static NSString *gPrecisionKeys[] = {
 - (void)tableViewSelectionDidChange:(NSNotification *)notification
 {
     self.hasSelection = [tableView_ numberOfSelectedRows] > 0;
+}
+
+- (IBAction)logDebugInfoChanged:(id)sender
+{
+    [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithInt:logDebugInfo_.state]
+                                              forKey:kLogDebugInfoKey];
+}
+
++ (BOOL)logDebugInfo
+{
+    NSNumber *n = [[NSUserDefaults standardUserDefaults] valueForKey:kLogDebugInfoKey];
+    if (n) {
+        return [n intValue] == NSOnState;
+    } else {
+        return NO;
+    }
+}
+
+- (void)windowWillOpen
+{
+    [logDebugInfo_ setState:[SmartSelectionController logDebugInfo] ? NSOnState : NSOffState];
 }
 
 @end

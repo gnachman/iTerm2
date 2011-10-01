@@ -1978,12 +1978,17 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     NSMutableDictionary* matches = [NSMutableDictionary dictionaryWithCapacity:13];
     int numCoords = [coords count];
 
-    //NSLog(@"Searching for %@", textWindow);
+    BOOL debug = [SmartSelectionController logDebugInfo];
+    if (debug) {
+        NSLog(@"Perform smart selection on text: %@", textWindow);
+    }
     for (int j = 0; j < numRules; j++) {
         NSDictionary *rule = [smartSelectionRules_ objectAtIndex:j];
         NSString *regex = [SmartSelectionController regexInRule:rule];
         double precision = [SmartSelectionController precisionInRule:rule];
-        //NSLog(@"Try regex %@", regex);
+        if (debug) {
+            NSLog(@"Try regex %@", regex);
+        }
         for (int i = 0; i <= targetOffset; i++) {
             NSString* substring = [textWindow substringWithRange:NSMakeRange(i, [textWindow length] - i)];
             NSError* regexError = nil;
@@ -2008,7 +2013,9 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
                         match->absEndY = endCoord->y + [dataSource totalScrollbackOverflow];
                         [matches setObject:match forKey:result];
 
-                        //NSLog(@"Add result %@ at %d,%lld -> %d,%lld with score %lf", result, match->startX, match->absStartY, match->endX, match->absEndY, match->score);
+                        if (debug) {
+                            NSLog(@"Add result %@ at %d,%lld -> %d,%lld with score %lf", result, match->startX, match->absStartY, match->endX, match->absEndY, match->score);
+                        }
                     }
                     i += temp.location + temp.length - 1;
                 } else {
@@ -2023,12 +2030,18 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     if ([matches count]) {
         NSArray* sortedMatches = [[[matches allValues] sortedArrayUsingSelector:@selector(compare:)] retain];
         SmartMatch* bestMatch = [sortedMatches lastObject];
+        if (debug) {
+            NSLog(@"Select match with score %lf", bestMatch->score);
+        }
         *X1 = bestMatch->startX;
         *Y1 = bestMatch->absStartY - [dataSource totalScrollbackOverflow];
         *X2 = bestMatch->endX;
         *Y2 = bestMatch->absEndY - [dataSource totalScrollbackOverflow];
         return YES;
     } else {
+        if (debug) {
+            NSLog(@"No matches. Fall back on word selection.");
+        }
         // Fall back on word selection
         [self getWordForX:x
                         y:y

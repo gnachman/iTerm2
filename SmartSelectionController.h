@@ -23,12 +23,14 @@
     IBOutlet NSTableColumn *regexColumn_;
     IBOutlet NSTableColumn *notesColumn_;
     IBOutlet NSTableColumn *precisionColumn_;
+    IBOutlet NSButton *logDebugInfo_;
 }
 
 @property (nonatomic, copy) NSString *guid;
 @property (nonatomic, assign) BOOL hasSelection;
 @property (nonatomic, assign) NSObject<SmartSelectionDelegate> *delegate;
 
++ (BOOL)logDebugInfo;
 + (double)precisionInRule:(NSDictionary *)rule;
 + (NSString *)regexInRule:(NSDictionary *)rule;
 + (NSArray *)defaultRules;
@@ -37,5 +39,7 @@
 - (IBAction)removeRule:(id)sender;
 - (IBAction)loadDefaults:(id)sender;
 - (IBAction)help:(id)sender;
+- (IBAction)logDebugInfoChanged:(id)sender;
+- (void)windowWillOpen;
 
 @end
