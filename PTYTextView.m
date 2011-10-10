@@ -1983,7 +1983,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         NSLog(@"Perform smart selection on text: %@", textWindow);
     }
     for (int j = 0; j < numRules; j++) {
-        NSDictionary *rule = [smartSelectionRules_ objectAtIndex:j];
+        NSDictionary *rule = [rulesArray objectAtIndex:j];
         NSString *regex = [SmartSelectionController regexInRule:rule];
         double precision = [SmartSelectionController precisionInRule:rule];
         if (debug) {
