@@ -846,13 +846,23 @@ static BOOL initDone = NO;
         if (windowType == WINDOW_TYPE_LION_FULL_SCREEN && disableLionFullscreen) {
             windowType = WINDOW_TYPE_FULL_SCREEN;
         }
+        if (windowType == WINDOW_TYPE_FULL_SCREEN && disableLionFullscreen) {
+            // This is a shortcut to make fullscreen hotkey windows open
+            // directly in fullscreen mode.
+            windowType = WINDOW_TYPE_FORCE_FULL_SCREEN;
+        }
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                  windowType:windowType
                                                      screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
                                                    isHotkey:disableLionFullscreen] autorelease];
         [self addInTerminals:term];
-        toggle = ([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
-                 ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
+        if (disableLionFullscreen) {
+            // See comment above regarding hotkey windows.
+            toggle = NO;
+        } else {
+            toggle = ([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
+                     ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
+        }
     } else {
         term = theTerm;
     }
@@ -1187,6 +1197,9 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
         case WINDOW_TYPE_FULL_SCREEN:
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
             [[[term window] animator] setAlphaValue:1];
+            [[term window] makeKeyAndOrderFront:nil];
+            // This prevents the findbar, when hidden, from taking focus (bug 1490)
+            [[term currentSession] takeFocus];
             [term hideMenuBar];
             break;
     }

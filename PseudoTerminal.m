@@ -382,10 +382,15 @@ NSString *sessionsKey = @"sessions";
     NSRect aRect = [[[self window] contentView] bounds];
     aRect.size.height = 22;
     tabBarControl = [[PSMTabBarControl alloc] initWithFrame:aRect];
+
     [tabBarControl retain];
     PreferencePanel* pp = [PreferencePanel sharedInstance];
     [tabBarControl setModifier:[pp modifierTagToMask:[pp switchTabModifier]]];
-    [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMinYMargin)];
+    if ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
+        [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMinYMargin)];
+    } else {
+        [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMaxYMargin)];
+    }
     [[[self window] contentView] addSubview:tabBarControl];
     [tabBarControl release];
 
@@ -4020,6 +4025,7 @@ NSString *sessionsKey = @"sessions";
             aRect.origin.y += aRect.size.height;
             aRect.size.height = [tabBarControl frame].size.height;
             [tabBarControl setFrame:aRect];
+            [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMinYMargin)];
         } else {
             PtyLog(@"repositionWidgets - putting tabs at bottom");
             // setup aRect to make room for the tabs at the bottom.
@@ -4032,6 +4038,7 @@ NSString *sessionsKey = @"sessions";
                 aRect.origin.y += [bottomBar frame].size.height;
             }
             [tabBarControl setFrame:aRect];
+            [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMaxYMargin)];
             aRect.origin.y += [tabBarControl frame].size.height;
             aRect.size.height = [[thisWindow contentView] frame].size.height - aRect.origin.y;
             PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
