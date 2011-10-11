@@ -2885,6 +2885,7 @@ NSString *sessionsKey = @"sessions";
         [[[self window] contentView] setAutoresizesSubviews:NO];
         [self fitWindowToTabs];
     }
+    [self repositionWidgets];
 
     // On OS X 10.5.8, the scroll bar and resize indicator are messed up at this point. Resizing the tabview fixes it. This seems to be fixed in 10.6.
     NSRect tvframe = [TABVIEW frame];
