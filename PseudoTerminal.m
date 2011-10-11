@@ -2053,6 +2053,8 @@ NSString *sessionsKey = @"sessions";
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
     lionFullScreen_ = YES;
+    // Set scrollbars appropriately
+    [self fitTabsToWindow];
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
@@ -2065,6 +2067,8 @@ NSString *sessionsKey = @"sessions";
 {
     zooming_ = NO;
     lionFullScreen_ = NO;
+    // Set scrollbars appropriately
+    [self fitTabsToWindow];
     [self repositionWidgets];
 }
 
@@ -3761,7 +3765,6 @@ NSString *sessionsKey = @"sessions";
         return;
     }
     PtyLog(@"adjustFullScreenWindowForBottomBarChange");
-
 
     NSRect aRect = [[self window] frame];
     aRect.origin.x = [self _haveLeftBorder] ? 1 : 0;
