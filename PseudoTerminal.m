@@ -493,6 +493,7 @@ NSString *sessionsKey = @"sessions";
                                           self.window.frame.size.height - kToolbeltMargin);
         toolbelt_ = [[[ToolbeltView alloc] initWithFrame:toolbeltFrame
                                                     term:self] autorelease];
+        [toolbelt_ setHidden:YES];
         [[[self window] contentView] addSubview:toolbelt_
                                      positioned:NSWindowBelow
                                      relativeTo:TABVIEW];
@@ -526,21 +527,14 @@ NSString *sessionsKey = @"sessions";
 {
     if (windowType_ != WINDOW_TYPE_NORMAL) {
         if ([[[iTermApplication sharedApplication] delegate] showToolbelt]) {
-            const CGFloat width = [self fullscreenToolbeltWidth];
-            [toolbelt_ setFrameOrigin:NSMakePoint(self.window.frame.size.width - width, 0)];
-            [TABVIEW setFrame:NSMakeRect(TABVIEW.frame.origin.x,
-                                         TABVIEW.frame.origin.y,
-                                         [self tabviewWidth],
-                                         TABVIEW.frame.size.height)];
+            [toolbelt_ setHidden:NO];
         } else {
-            [TABVIEW setFrame:NSMakeRect(TABVIEW.frame.origin.x,
-                                         TABVIEW.frame.origin.y,
-                                         [self tabviewWidth],
-                                         TABVIEW.frame.size.height)];
+            [toolbelt_ setHidden:YES];
         }
         if (![bottomBar isHidden]) {
             [self fitBottomBarToWindow];
         }
+        [self repositionWidgets];
     } else {
         if ([[[iTermApplication sharedApplication] delegate] showToolbelt]) {
             [drawer_ open];
@@ -1969,7 +1963,8 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"toggleFullScreenMode - call adjustFullScreenWindowForBottomBarChange");
         [newTerminal fitTabsToWindow];
         [newTerminal hideMenuBar];
-        
+
+        [newTerminal->toolbelt_ setHidden:![[[iTermApplication sharedApplication] delegate] showToolbelt]];
         // The toolbelt may try to become the first responder.
         [[newTerminal window] makeFirstResponder:[[newTerminal currentSession] TEXTVIEW]];
     }
@@ -4043,6 +4038,14 @@ NSString *sessionsKey = @"sessions";
             aRect.size.height = [[thisWindow contentView] frame].size.height - aRect.origin.y;
             PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
             [TABVIEW setFrame:aRect];
+        }
+    }
+
+    if (windowType_ != WINDOW_TYPE_NORMAL) {
+        if ([[[iTermApplication sharedApplication] delegate] showToolbelt]) {
+            const CGFloat width = [self fullscreenToolbeltWidth];
+            [toolbelt_ setFrameOrigin:NSMakePoint(self.window.frame.size.width - width,
+                                                  0)];
         }
     }
 
