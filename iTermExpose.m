@@ -639,6 +639,10 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     return (int)a.width == (int)b.width && (int)a.height == (int)b.height;
 }
 
+static NSScreen *ExposeScreen() {
+    return [[[NSApplication sharedApplication] keyWindow] deepestScreen];
+}
+
 - (id)initWithFrame:(NSRect)frame
              images:(NSArray*)images
              labels:(NSArray*)labels
@@ -649,8 +653,9 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
 {
     self = [super initWithFrame:frame];
     if (self) {
-        NSScreen* theScreen = [NSScreen deepestScreen];
+        NSScreen* theScreen = ExposeScreen();
         NSRect screenFrame = [theScreen frame];
+        screenFrame.origin = NSZeroPoint;
         NSRect visibleScreenFrame = [theScreen visibleFrame];
         //NSLog(@"Screen origin is %lf, %lf", screenFrame.origin.x, screenFrame.origin.y);
         frames_ = frames;
@@ -1127,7 +1132,7 @@ static BOOL SizesEqual(NSSize a, NSSize b) {
     }
 
     NSRect* frames = (NSRect*)calloc([images count], sizeof(NSRect));
-    NSScreen* theScreen = [NSScreen deepestScreen];
+    NSScreen* theScreen = ExposeScreen();
     NSRect screenFrame = [theScreen visibleFrame];
     screenFrame.origin = NSZeroPoint;
     if ([search_ numResults] > 0) {
@@ -1558,9 +1563,9 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     NSRect* frames = (NSRect*)calloc([images count], sizeof(NSRect));
 
     // Figure out the right size for a thumbnail.
-    NSScreen* theScreen = [NSScreen deepestScreen];
+    NSScreen* theScreen = ExposeScreen();
     NSRect screenFrame = [theScreen visibleFrame];
-
+    screenFrame.origin = NSZeroPoint;
     // Create the window and its view.
     window_ = [[iTermExposeWindow alloc] initWithContentRect:screenFrame
                                                    styleMask:NSBorderlessWindowMask
