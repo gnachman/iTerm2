@@ -92,6 +92,8 @@ static NSMutableArray *gTriggerClasses;
 
 - (void)setTrigger:(NSDictionary *)trigger forRow:(NSInteger)rowIndex
 {
+    // Stop editing. A reload while editing crashes.
+    [tableView_ reloadData];
     NSMutableArray *triggers = [[[self triggers] mutableCopy] autorelease];
     if (rowIndex < 0) {
         assert(trigger);
@@ -151,6 +153,10 @@ static NSMutableArray *gTriggerClasses;
 - (id)tableView:(NSTableView *)aTableView
           objectValueForTableColumn:(NSTableColumn *)aTableColumn
             row:(NSInteger)rowIndex {
+    if (rowIndex >= [self numberOfRowsInTableView:aTableView]) {
+        // Sanity check.
+        return nil;
+    }
     NSDictionary *trigger = [[self triggers] objectAtIndex:rowIndex];
     if (aTableColumn == regexColumn_) {
         return [trigger objectForKey:kTriggerRegexKey];
