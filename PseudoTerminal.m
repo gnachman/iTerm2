@@ -1496,6 +1496,7 @@ NSString *sessionsKey = @"sessions";
     for (PTYSession* aSession in [self sessions]) {
         [aSession updateDisplay];
         [[aSession view] setBackgroundDimmed:NO];
+        [aSession setFocused:aSession == [self currentSession]];
     }
 }
 
@@ -1642,6 +1643,9 @@ NSString *sessionsKey = @"sessions";
         for (PTYSession* aSession in [self sessions]) {
             [[aSession view] setBackgroundDimmed:YES];
         }
+    }
+    for (PTYSession* aSession in [self sessions]) {
+        [aSession setFocused:NO];
     }
 }
 
@@ -2357,6 +2361,11 @@ NSString *sessionsKey = @"sessions";
     // Post notifications
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
                                                         object:[[tabViewItem identifier] activeSession]];
+
+    PTYSession *activeSession = [self currentSession];
+    for (PTYSession *s in [self sessions]) {
+      [aSession setFocused:(s == activeSession)];
+    }
     [self showOrHideInstantReplayBar];
 }
 

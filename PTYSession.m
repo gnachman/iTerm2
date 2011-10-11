@@ -3140,6 +3140,18 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [TEXTVIEW setNeedsDisplay:YES];
 }
 
+- (void)setFocused:(BOOL)focused
+{
+    if (focused != focused_) {
+        focused_ = focused;
+        if ([TERMINAL reportFocus]) {
+            char flag = focused ? 'I' : 'O';
+            NSString *message = [NSString stringWithFormat:@"%c[%c", 27, flag];
+            [self writeTask:[message dataUsingEncoding:[self encoding]]];
+        }
+    }
+}
+
 @end
 
 @implementation PTYSession (ScriptingSupport)

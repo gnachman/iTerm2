@@ -2235,6 +2235,10 @@ static VT100TCC decode_string(unsigned char *datap,
     return [NSData dataWithBytes: buf length: strlen(buf)];
 }
 
+- (BOOL)reportFocus
+{
+    return REPORT_FOCUS;
+}
 
 - (BOOL)lineMode
 {
@@ -2459,6 +2463,9 @@ static VT100TCC decode_string(unsigned char *datap,
                         MOUSE_MODE = MOUSE_REPORTING_NONE;
                     }
                     [SCREEN mouseModeDidChange:MOUSE_MODE];
+                    break;
+                case 1004:
+                    REPORT_FOCUS = mode;
                     break;
 
                 case 1005:
