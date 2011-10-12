@@ -1742,14 +1742,10 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
     NSString* pbStr = [PTYSession pasteboardString];
     if (pbStr) {
-        NSMutableString *str;
-        str = [[[NSMutableString alloc] initWithString:pbStr] autorelease];
+        NSString *str = [[[NSMutableString alloc] initWithString:pbStr] autorelease];
         if ([sender tag] & 1) {
-            // paste with escape;
-            [str replaceOccurrencesOfString:@"\\" withString:@"\\\\" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
-            [str replaceOccurrencesOfString:@"'" withString:@"\\'" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
-            [str replaceOccurrencesOfString:@"\"" withString:@"\\\"" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
-            [str replaceOccurrencesOfString:@" " withString:@"\\ " options:NSLiteralSearch range:NSMakeRange(0, [str length])];
+            // paste escaping special characters
+            str = [str stringWithEscapedShellCharacters];
         }
         if ([sender tag] & 2) {
             [slowPasteBuffer appendString:[str stringWithLinefeedNewlines]];
