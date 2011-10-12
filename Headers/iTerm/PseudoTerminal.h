@@ -700,6 +700,9 @@ NSWindowDelegate,
 
 - (void)setSplitSelectionMode:(BOOL)mode excludingSession:(PTYSession *)session;
 
+- (IBAction)moveTabLeft:(id)sender;
+- (IBAction)moveTabRight:(id)sender;
+
 @end
 
 @interface PseudoTerminal (KeyValueCoding)

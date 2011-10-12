@@ -290,6 +290,12 @@ static NSDictionary* globalKeyMap;
     auxText = [keyInfo objectForKey: @"Text"];
 
     switch (action) {
+        case KEY_ACTION_MOVE_TAB_LEFT:
+            actionString = @"Move Tab Left";
+            break;
+        case KEY_ACTION_MOVE_TAB_RIGHT:
+            actionString = @"Move Tab Right";
+            break;
         case KEY_ACTION_NEXT_MRU_TAB:
             actionString = @"Cycle Tabs Forward";
             break;

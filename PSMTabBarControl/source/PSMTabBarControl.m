@@ -842,6 +842,34 @@
     [style drawTabBar:self inRect:rect];
 }
 
+- (void)moveTabAtIndex:(NSInteger)sourceIndex toIndex:(NSInteger)destIndex
+{
+    NSTabViewItem *theItem = [tabView tabViewItemAtIndex:sourceIndex];
+    BOOL reselect = ([tabView selectedTabViewItem] == theItem);
+    [theItem retain];
+    
+    id tempDelegate = [tabView delegate];
+    [tabView setDelegate:nil];
+    [theItem retain];
+    [tabView removeTabViewItem:theItem];
+    [tabView insertTabViewItem:theItem atIndex:destIndex];
+    [theItem release];
+    
+    id cell = [_cells objectAtIndex:sourceIndex];
+    [cell retain];
+    [_cells removeObjectAtIndex:sourceIndex];
+    [_cells insertObject:cell atIndex:destIndex];
+    [cell release];
+    
+    [tabView setDelegate:tempDelegate];
+
+    if (reselect) {
+        [tabView selectTabViewItem:theItem];
+    }
+    
+    [self update:YES];
+}
+
 - (void)update
 {
     [self update:NO];

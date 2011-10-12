@@ -2439,6 +2439,14 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (void)_updateTabObjectCounts
+{
+    for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
+        PTYTab *theTab = [[TABVIEW tabViewItemAtIndex:i] identifier];
+        [theTab setObjectCount:i+1];
+    }
+}
+
 - (void)tabView:(NSTabView*)aTabView didDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)aTabBarControl
 {
     PTYTab *aTab = [tabViewItem identifier];
@@ -2449,11 +2457,7 @@ NSString *sessionsKey = @"sessions";
     } else {
         [term fitTabToWindow:aTab];
     }
-    int i;
-    for (i=0; i < [aTabView numberOfTabViewItems]; ++i) {
-        PTYTab *theTab = [[aTabView tabViewItemAtIndex:i] identifier];
-        [theTab setObjectCount:i+1];
-    }
+    [self _updateTabObjectCounts];
 
     // In fullscreen mode reordering the tabs causes the tabview not to be displayed properly.
     // This seems to fix it.
@@ -2568,11 +2572,7 @@ NSString *sessionsKey = @"sessions";
         }
     }
 
-    int i;
-    for (i=0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        PTYTab *aTab = [[TABVIEW tabViewItemAtIndex: i] identifier];
-        [aTab setObjectCount:i+1];
-    }
+    [self _updateTabObjectCounts];
 
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
@@ -3650,6 +3650,31 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (IBAction)moveTabLeft:(id)sender
+{
+    NSInteger selectedIndex = [TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]];
+    NSInteger destinationIndex = selectedIndex - 1;
+    if (destinationIndex < 0) {
+        destinationIndex = [TABVIEW numberOfTabViewItems] - 1;
+    }
+    if (selectedIndex == destinationIndex) {
+        return;
+    }
+    [tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
+    [self _updateTabObjectCounts];
+}
+
+- (IBAction)moveTabRight:(id)sender
+{
+    NSInteger selectedIndex = [TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]];
+    NSInteger destinationIndex = (selectedIndex + 1) % [TABVIEW numberOfTabViewItems];
+    if (selectedIndex == destinationIndex) {
+        return;
+    }
+    [tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
+    [self _updateTabObjectCounts];
+}
+
 @end
 
 @implementation PseudoTerminal (Private)
@@ -4534,6 +4559,10 @@ NSString *sessionsKey = @"sessions";
 
     if ([item action] == @selector(jumpToSavedScrollPosition:)) {
         result = [self hasSavedScrollPosition];
+    } else if ([item action] == @selector(moveTabLeft:)) {
+        result = [TABVIEW numberOfTabViewItems] > 1;
+    } else if ([item action] == @selector(moveTabRight:)) {
+        result = [TABVIEW numberOfTabViewItems] > 1;
     } else if ([item action] == @selector(runCoprocess:)) {
         result = ![[self currentSession] hasCoprocess];
     } else if ([item action] == @selector(stopCoprocess:)) {

@@ -1130,6 +1130,12 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         }
 
         switch (keyBindingAction) {
+            case KEY_ACTION_MOVE_TAB_LEFT:
+                [[[self tab] realParentWindow] moveTabLeft:nil];
+                break;
+            case KEY_ACTION_MOVE_TAB_RIGHT:
+                [[[self tab] realParentWindow] moveTabRight:nil];
+                break;
             case KEY_ACTION_NEXT_MRU_TAB:
                 [[[[self tab] parentWindow] tabView] processMRUEvent:event];
                 break;
