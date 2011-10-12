@@ -510,7 +510,8 @@ static BOOL initDone = NO;
     NSTimeInterval latest = 0;
     PTYSession *best = nil;
     for (PseudoTerminal *term in [self terminals]) {
-        for (PTYSession *aSession in [term sessions]) {
+        PTYTab *aTab = [term currentTab];
+        for (PTYSession *aSession in [aTab sessions]) {
             NSTimeInterval current = [[aSession TEXTVIEW] selectionTime];
             if (current > latest) {
                 latest = current;

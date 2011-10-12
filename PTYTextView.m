@@ -7474,7 +7474,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     }
                     startX = tx1;
                     startY = ty1;
-                    [self setSelectionTime];
                 }
                 // This will update the ending coordinates to the new selected word's end boundaries.
                 // If we had to swap the starting and ending value (see above), the ending value is set
@@ -7507,7 +7506,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     }
                     startX = tx2;
                     startY = ty2;
-                    [self setSelectionTime];
                 }
                 // Continue selecting text backwards. For a complete explanation see above, but read
                 // it upside-down. :p
@@ -7521,17 +7519,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 startX = 0;
                 endX = [dataSource width];
                 endY = y;
-                [self setSelectionTime];
             } else {
                 endX = 0;
                 endY = y;
                 startX = [dataSource width];
-                [self setSelectionTime];
             }
             break;
     }
 
     DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
+    [self setSelectionTime];
     [[[self dataSource] session] refreshAndStartTimerIfNeeded];
 }
 
