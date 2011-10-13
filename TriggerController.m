@@ -83,11 +83,31 @@ static NSMutableArray *gTriggerClasses;
     return [TriggerController triggerAtIndex:i];
 }
 
-- (NSArray *)triggers
+- (Bookmark *)bookmark
 {
     Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:self.guid];
+    if (!bookmark) {
+        bookmark = [[BookmarkModel sessionsInstance] bookmarkWithGuid:self.guid];
+    }
+    return bookmark;
+}
+
+- (NSArray *)triggers
+{
+    Bookmark *bookmark = [self bookmark];
     NSDictionary *triggers = [bookmark objectForKey:KEY_TRIGGERS];
     return triggers ? triggers : [NSArray array];
+}
+
+- (BookmarkModel *)modelForBookmark:(Bookmark *)bookmark
+{
+    if ([[BookmarkModel sharedInstance] bookmarkWithGuid:[bookmark objectForKey:KEY_GUID]]) {
+        return [BookmarkModel sharedInstance];
+    } else if ([[BookmarkModel sessionsInstance] bookmarkWithGuid:[bookmark objectForKey:KEY_GUID]]) {
+        return [BookmarkModel sessionsInstance];
+    } else {
+        return nil;
+    }
 }
 
 - (void)setTrigger:(NSDictionary *)trigger forRow:(NSInteger)rowIndex
@@ -105,8 +125,8 @@ static NSMutableArray *gTriggerClasses;
             [triggers removeObjectAtIndex:rowIndex];
         }
     }
-    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:self.guid];
-    [[BookmarkModel sharedInstance] setObject:triggers forKey:KEY_TRIGGERS inBookmark:bookmark];
+    Bookmark *bookmark = [self bookmark];
+    [[self modelForBookmark:bookmark] setObject:triggers forKey:KEY_TRIGGERS inBookmark:bookmark];
     [tableView_ reloadData];
     [delegate_ triggerChanged:nil];
 }
