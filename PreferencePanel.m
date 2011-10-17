@@ -3701,6 +3701,7 @@ static float versionNumber;
     [newDict setObject:newName forKey:KEY_NAME];
     [newDict setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
     [newDict setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
+    [newDict setObject:@"" forKey:KEY_SHORTCUT];
     [dataSource addBookmark:newDict];
     [bookmarksTableView reloadData];
     [bookmarksTableView selectRowByGuid:[newDict objectForKey:KEY_GUID]];
