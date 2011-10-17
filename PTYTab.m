@@ -330,7 +330,15 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     [self setLabelAttributes];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
                                                         object:activeSession_];
-    
+    // If the active session changed in the active tab in the key window then update the
+    // focused state of all sessions in that window.
+    if ([[self realParentWindow] currentTab] == self &&
+        [[[self realParentWindow] window] isKeyWindow]) {
+      for (PTYSession *aSession in [[self realParentWindow] sessions]) {
+        [aSession setFocused:(aSession == session)];
+      }
+    }
+
     NSUInteger i = [viewOrder_ indexOfObject:[NSNumber numberWithInt:[[session view] viewId]]];
     if (i != NSNotFound) {
         currentViewIndex_ = i;

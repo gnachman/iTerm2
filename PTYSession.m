@@ -1130,6 +1130,12 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         }
 
         switch (keyBindingAction) {
+            case KEY_ACTION_MOVE_TAB_LEFT:
+                [[[self tab] realParentWindow] moveTabLeft:nil];
+                break;
+            case KEY_ACTION_MOVE_TAB_RIGHT:
+                [[[self tab] realParentWindow] moveTabRight:nil];
+                break;
             case KEY_ACTION_NEXT_MRU_TAB:
                 [[[[self tab] parentWindow] tabView] processMRUEvent:event];
                 break;
@@ -1736,14 +1742,10 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
     NSString* pbStr = [PTYSession pasteboardString];
     if (pbStr) {
-        NSMutableString *str;
-        str = [[[NSMutableString alloc] initWithString:pbStr] autorelease];
+        NSString *str = [[[NSMutableString alloc] initWithString:pbStr] autorelease];
         if ([sender tag] & 1) {
-            // paste with escape;
-            [str replaceOccurrencesOfString:@"\\" withString:@"\\\\" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
-            [str replaceOccurrencesOfString:@"'" withString:@"\\'" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
-            [str replaceOccurrencesOfString:@"\"" withString:@"\\\"" options:NSLiteralSearch range:NSMakeRange(0, [str length])];
-            [str replaceOccurrencesOfString:@" " withString:@"\\ " options:NSLiteralSearch range:NSMakeRange(0, [str length])];
+            // paste escaping special characters
+            str = [str stringWithEscapedShellCharacters];
         }
         if ([sender tag] & 2) {
             [slowPasteBuffer appendString:[str stringWithLinefeedNewlines]];
@@ -3138,6 +3140,18 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     Coprocess *coprocess = [Coprocess launchedCoprocessWithCommand:command];
     [SHELL setCoprocess:coprocess];
     [TEXTVIEW setNeedsDisplay:YES];
+}
+
+- (void)setFocused:(BOOL)focused
+{
+    if (focused != focused_) {
+        focused_ = focused;
+        if ([TERMINAL reportFocus]) {
+            char flag = focused ? 'I' : 'O';
+            NSString *message = [NSString stringWithFormat:@"%c[%c", 27, flag];
+            [self writeTask:[message dataUsingEncoding:[self encoding]]];
+        }
+    }
 }
 
 @end

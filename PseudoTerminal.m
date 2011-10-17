@@ -493,6 +493,7 @@ NSString *sessionsKey = @"sessions";
                                           self.window.frame.size.height - kToolbeltMargin);
         toolbelt_ = [[[ToolbeltView alloc] initWithFrame:toolbeltFrame
                                                     term:self] autorelease];
+        [toolbelt_ setHidden:YES];
         [[[self window] contentView] addSubview:toolbelt_
                                      positioned:NSWindowBelow
                                      relativeTo:TABVIEW];
@@ -526,21 +527,14 @@ NSString *sessionsKey = @"sessions";
 {
     if (windowType_ != WINDOW_TYPE_NORMAL) {
         if ([[[iTermApplication sharedApplication] delegate] showToolbelt]) {
-            const CGFloat width = [self fullscreenToolbeltWidth];
-            [toolbelt_ setFrameOrigin:NSMakePoint(self.window.frame.size.width - width, 0)];
-            [TABVIEW setFrame:NSMakeRect(TABVIEW.frame.origin.x,
-                                         TABVIEW.frame.origin.y,
-                                         [self tabviewWidth],
-                                         TABVIEW.frame.size.height)];
+            [toolbelt_ setHidden:NO];
         } else {
-            [TABVIEW setFrame:NSMakeRect(TABVIEW.frame.origin.x,
-                                         TABVIEW.frame.origin.y,
-                                         [self tabviewWidth],
-                                         TABVIEW.frame.size.height)];
+            [toolbelt_ setHidden:YES];
         }
         if (![bottomBar isHidden]) {
             [self fitBottomBarToWindow];
         }
+        [self repositionWidgets];
     } else {
         if ([[[iTermApplication sharedApplication] delegate] showToolbelt]) {
             [drawer_ open];
@@ -1502,6 +1496,7 @@ NSString *sessionsKey = @"sessions";
     for (PTYSession* aSession in [self sessions]) {
         [aSession updateDisplay];
         [[aSession view] setBackgroundDimmed:NO];
+        [aSession setFocused:aSession == [self currentSession]];
     }
 }
 
@@ -1648,6 +1643,9 @@ NSString *sessionsKey = @"sessions";
         for (PTYSession* aSession in [self sessions]) {
             [[aSession view] setBackgroundDimmed:YES];
         }
+    }
+    for (PTYSession* aSession in [self sessions]) {
+        [aSession setFocused:NO];
     }
 }
 
@@ -1969,7 +1967,8 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"toggleFullScreenMode - call adjustFullScreenWindowForBottomBarChange");
         [newTerminal fitTabsToWindow];
         [newTerminal hideMenuBar];
-        
+
+        [newTerminal->toolbelt_ setHidden:![[[iTermApplication sharedApplication] delegate] showToolbelt]];
         // The toolbelt may try to become the first responder.
         [[newTerminal window] makeFirstResponder:[[newTerminal currentSession] TEXTVIEW]];
     }
@@ -2058,6 +2057,8 @@ NSString *sessionsKey = @"sessions";
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
     lionFullScreen_ = YES;
+    // Set scrollbars appropriately
+    [self fitTabsToWindow];
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
@@ -2070,6 +2071,8 @@ NSString *sessionsKey = @"sessions";
 {
     zooming_ = NO;
     lionFullScreen_ = NO;
+    // Set scrollbars appropriately
+    [self fitTabsToWindow];
     [self repositionWidgets];
 }
 
@@ -2358,6 +2361,11 @@ NSString *sessionsKey = @"sessions";
     // Post notifications
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
                                                         object:[[tabViewItem identifier] activeSession]];
+
+    PTYSession *activeSession = [self currentSession];
+    for (PTYSession *s in [self sessions]) {
+      [aSession setFocused:(s == activeSession)];
+    }
     [self showOrHideInstantReplayBar];
 }
 
@@ -2431,6 +2439,14 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (void)_updateTabObjectCounts
+{
+    for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
+        PTYTab *theTab = [[TABVIEW tabViewItemAtIndex:i] identifier];
+        [theTab setObjectCount:i+1];
+    }
+}
+
 - (void)tabView:(NSTabView*)aTabView didDropTabViewItem:(NSTabViewItem *)tabViewItem inTabBar:(PSMTabBarControl *)aTabBarControl
 {
     PTYTab *aTab = [tabViewItem identifier];
@@ -2441,11 +2457,7 @@ NSString *sessionsKey = @"sessions";
     } else {
         [term fitTabToWindow:aTab];
     }
-    int i;
-    for (i=0; i < [aTabView numberOfTabViewItems]; ++i) {
-        PTYTab *theTab = [[aTabView tabViewItemAtIndex:i] identifier];
-        [theTab setObjectCount:i+1];
-    }
+    [self _updateTabObjectCounts];
 
     // In fullscreen mode reordering the tabs causes the tabview not to be displayed properly.
     // This seems to fix it.
@@ -2560,11 +2572,7 @@ NSString *sessionsKey = @"sessions";
         }
     }
 
-    int i;
-    for (i=0; i < [TABVIEW numberOfTabViewItems]; ++i) {
-        PTYTab *aTab = [[TABVIEW tabViewItemAtIndex: i] identifier];
-        [aTab setObjectCount:i+1];
-    }
+    [self _updateTabObjectCounts];
 
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
@@ -2890,6 +2898,7 @@ NSString *sessionsKey = @"sessions";
         [[[self window] contentView] setAutoresizesSubviews:NO];
         [self fitWindowToTabs];
     }
+    [self repositionWidgets];
 
     // On OS X 10.5.8, the scroll bar and resize indicator are messed up at this point. Resizing the tabview fixes it. This seems to be fixed in 10.6.
     NSRect tvframe = [TABVIEW frame];
@@ -3641,6 +3650,31 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (IBAction)moveTabLeft:(id)sender
+{
+    NSInteger selectedIndex = [TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]];
+    NSInteger destinationIndex = selectedIndex - 1;
+    if (destinationIndex < 0) {
+        destinationIndex = [TABVIEW numberOfTabViewItems] - 1;
+    }
+    if (selectedIndex == destinationIndex) {
+        return;
+    }
+    [tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
+    [self _updateTabObjectCounts];
+}
+
+- (IBAction)moveTabRight:(id)sender
+{
+    NSInteger selectedIndex = [TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]];
+    NSInteger destinationIndex = (selectedIndex + 1) % [TABVIEW numberOfTabViewItems];
+    if (selectedIndex == destinationIndex) {
+        return;
+    }
+    [tabBarControl moveTabAtIndex:selectedIndex toIndex:destinationIndex];
+    [self _updateTabObjectCounts];
+}
+
 @end
 
 @implementation PseudoTerminal (Private)
@@ -3765,7 +3799,6 @@ NSString *sessionsKey = @"sessions";
         return;
     }
     PtyLog(@"adjustFullScreenWindowForBottomBarChange");
-
 
     NSRect aRect = [[self window] frame];
     aRect.origin.x = [self _haveLeftBorder] ? 1 : 0;
@@ -4043,6 +4076,14 @@ NSString *sessionsKey = @"sessions";
             aRect.size.height = [[thisWindow contentView] frame].size.height - aRect.origin.y;
             PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
             [TABVIEW setFrame:aRect];
+        }
+    }
+
+    if (windowType_ != WINDOW_TYPE_NORMAL) {
+        if ([[[iTermApplication sharedApplication] delegate] showToolbelt]) {
+            const CGFloat width = [self fullscreenToolbeltWidth];
+            [toolbelt_ setFrameOrigin:NSMakePoint(self.window.frame.size.width - width,
+                                                  0)];
         }
     }
 
@@ -4518,6 +4559,10 @@ NSString *sessionsKey = @"sessions";
 
     if ([item action] == @selector(jumpToSavedScrollPosition:)) {
         result = [self hasSavedScrollPosition];
+    } else if ([item action] == @selector(moveTabLeft:)) {
+        result = [TABVIEW numberOfTabViewItems] > 1;
+    } else if ([item action] == @selector(moveTabRight:)) {
+        result = [TABVIEW numberOfTabViewItems] > 1;
     } else if ([item action] == @selector(runCoprocess:)) {
         result = ![[self currentSession] hasCoprocess];
     } else if ([item action] == @selector(stopCoprocess:)) {

@@ -5,14 +5,14 @@
 		<key>0xf702-0x320000</key>
 		<dict>
 			<key>Action</key>
-			<integer>2</integer>
+			<integer>33</integer>
 			<key>Text</key>
 			<string></string>
 		</dict>
 		<key>0xf703-0x320000</key>
 		<dict>
 			<key>Action</key>
-			<integer>0</integer>
+			<integer>34</integer>
 			<key>Text</key>
 			<string></string>
 		</dict>

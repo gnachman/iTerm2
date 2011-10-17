@@ -26,7 +26,6 @@ if os.environ["CONFIGURATION"] == "Development":
 else:
         revision = time.strftime("%Y%m%d")
 
-revision="1.0.0.20110909"
 buildDir = os.environ["BUILT_PRODUCTS_DIR"]
 infoFile = os.environ["INFOPLIST_PATH"]
 path = os.path.join(buildDir, infoFile)

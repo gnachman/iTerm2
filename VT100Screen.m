@@ -1205,7 +1205,10 @@ static char* FormatCont(int c)
 
     //  VT100 CC
     case VT100CC_ENQ: break;
-    case VT100CC_BEL: [self activateBell]; break;
+    case VT100CC_BEL:
+        [SESSION appendStringToTriggerLine:@"\a"];
+        [self activateBell];
+        break;
     case VT100CC_BS:  [self backSpace]; break;
     case VT100CC_HT:  [self setTab]; break;
     case VT100CC_LF:

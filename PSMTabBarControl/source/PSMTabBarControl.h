@@ -157,6 +157,7 @@ enum {
 - (int)tabLocation;
 - (void)setTabLocation:(int)value;
 - (void)changeIdentifier:(id)newIdentifier atIndex:(int)theIndex;
+- (void)moveTabAtIndex:(NSInteger)i1 toIndex:(NSInteger)i2;
 
 // accessors
 - (NSTabView *)tabView;

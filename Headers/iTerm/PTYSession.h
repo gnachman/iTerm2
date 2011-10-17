@@ -223,6 +223,9 @@ typedef enum {
 
     // The current triggers.
     NSMutableArray *triggers_;
+
+    // Does the terminal think this session is focused?
+    BOOL focused_;
 }
 
 // Return the current pasteboard value as a string.
@@ -497,6 +500,8 @@ typedef enum {
 - (BOOL)hasCoprocess;
 - (void)stopCoprocess;
 - (void)launchCoprocessWithCommand:(NSString *)command;
+
+- (void)setFocused:(BOOL)focused;
 
 @end
 
