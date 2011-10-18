@@ -1268,7 +1268,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
     } else if ([attribute isEqualToString:NSAccessibilityNumberOfCharactersAttribute]) {
         return [NSNumber numberWithInt:[[self _allText] length]];
     } else if ([attribute isEqualToString:NSAccessibilitySelectedTextAttribute]) {
-        return @"";
+        return [self selectedText];
     } else if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
         int x = [dataSource cursorX] - 1;
         int y = [dataSource numberOfLines] - [dataSource height] + [dataSource cursorY] - 1;
