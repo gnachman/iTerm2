@@ -46,11 +46,13 @@
 - (void)addSubview:(PTYTextView*)child
 {
     [super addSubview:child];
-    child_ = child;
-    [self setFrame:NSMakeRect(0, 0, [child frame].size.width, [child frame].size.height)];
-    [child setFrameOrigin:NSMakePoint(0, 0)];
-    [self setPostsFrameChangedNotifications:YES];
-    [self setPostsBoundsChangedNotifications:YES];
+    if ([child isKindOfClass:[PTYTextView class]]) {
+      child_ = child;
+      [self setFrame:NSMakeRect(0, 0, [child frame].size.width, [child frame].size.height)];
+      [child setFrameOrigin:NSMakePoint(0, 0)];
+      [self setPostsFrameChangedNotifications:YES];
+      [self setPostsBoundsChangedNotifications:YES];
+    }
 }
 
 - (NSRect)adjustScroll:(NSRect)proposedVisibleRect
