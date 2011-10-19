@@ -295,6 +295,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Dictionaries with a regex and a priority.
     NSArray *smartSelectionRules_;
+
+    // Show a background indicator when in broadcast input mode
+    BOOL useBackgroundIndicator_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -549,6 +552,7 @@ typedef enum {
 - (unsigned int) _checkForSupportedDragTypes:(id <NSDraggingInfo>) sender;
 
 - (void) _scrollToLine:(int)line;
+- (void)_useBackgroundIndicatorChanged:(NSNotification *)notification;
 - (void)_scrollToCenterLine:(int)line;
 - (BOOL)shouldSelectCharForWord:(unichar)ch
                       isComplex:(BOOL)compled

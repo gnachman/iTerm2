@@ -292,6 +292,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         nil]];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_useBackgroundIndicatorChanged:)
+                                                 name:kUseBackgroundPatternIndicatorChangedNotification
+                                               object:nil];
+    [self _useBackgroundIndicatorChanged:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_settingsChanged:)
                                                  name:@"iTermRefreshTerminal"
                                                object:nil];
@@ -5559,12 +5564,42 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self _drawRuns:initialPoint runs:runs numRuns:numRuns];
 }
 
+- (void)_drawStripesInRect:(NSRect)rect
+{
+    [NSGraphicsContext saveGraphicsState];
+    NSRectClip(rect);
+    [[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOver];
+
+    const CGFloat kStripeWidth = 40;
+    const double kSlope = 1;
+
+    for (CGFloat x = kSlope * -fmod(rect.origin.y, kStripeWidth * 2) -2 * kStripeWidth ;
+         x < rect.origin.x + rect.size.width;
+         x += kStripeWidth * 2) {
+        if (x + 2 * kStripeWidth + rect.size.height * kSlope < rect.origin.x) {
+            continue;
+        }
+        NSBezierPath* thePath = [NSBezierPath bezierPath];
+
+        [thePath moveToPoint:NSMakePoint(x, rect.origin.y + rect.size.height)];
+        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height, rect.origin.y)];
+        [thePath lineToPoint:NSMakePoint(x + kSlope * rect.size.height + kStripeWidth, rect.origin.y)];
+        [thePath lineToPoint:NSMakePoint(x + kStripeWidth, rect.origin.y + rect.size.height)];
+        [thePath closePath];
+
+        [[[NSColor redColor] colorWithAlphaComponent:0.15] set];
+        [thePath fill];
+    }
+    [NSGraphicsContext restoreGraphicsState];
+}
+
 - (BOOL)_drawLine:(int)line AtY:(double)curY toPoint:(NSPoint*)toPoint
 {
     BOOL anyBlinking = NO;
     int screenstartline = [self frame].origin.y / lineHeight;
     DebugLog([NSString stringWithFormat:@"Draw line %d (%d on screen)", line, (line - screenstartline)]);
-
+    const BOOL stripes = useBackgroundIndicator_ &&
+        [[[[dataSource session] tab] realParentWindow] broadcastInputToSession:[dataSource session]];
     int WIDTH = [dataSource width];
     screen_char_t* theLine = [dataSource getLineAtIndex:line];
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
@@ -5762,6 +5797,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
 
             // Draw red stripes in the background if sending input to all sessions
+            if (stripes) {
+                [self _drawStripesInRect:bgRect];
+            }
+
             NSPoint textOrigin;
             if (toPoint) {
                 textOrigin = NSMakePoint(toPoint->x + MARGIN + bgstart * charWidth,
@@ -6380,6 +6419,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     oldCursorX = x1;
     oldCursorY = yStart;
+}
+
+- (void)_useBackgroundIndicatorChanged:(NSNotification *)notification
+{
+    useBackgroundIndicator_ = [(iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate] useBackgroundPatternIndicator];
+    [self setNeedsDisplay:YES];
 }
 
 - (void)_scrollToLine:(int)line

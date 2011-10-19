@@ -3,16 +3,16 @@
 	<data>
 		<int key="IBDocument.SystemTarget">1050</int>
 		<string key="IBDocument.SystemVersion">10J869</string>
-		<string key="IBDocument.InterfaceBuilderVersion">851</string>
+		<string key="IBDocument.InterfaceBuilderVersion">823</string>
 		<string key="IBDocument.AppKitVersion">1038.35</string>
 		<string key="IBDocument.HIToolboxVersion">461.00</string>
 		<object class="NSMutableDictionary" key="IBDocument.PluginVersions">
 			<string key="NS.key.0">com.apple.InterfaceBuilder.CocoaPlugin</string>
-			<string key="NS.object.0">851</string>
+			<string key="NS.object.0">823</string>
 		</object>
 		<object class="NSMutableArray" key="IBDocument.EditedObjectIDs">
 			<bool key="EncodedWithXMLCoder">YES</bool>
-			<integer value="24"/>
+			<integer value="81"/>
 		</object>
 		<object class="NSArray" key="IBDocument.PluginDependencies">
 			<bool key="EncodedWithXMLCoder">YES</bool>
@@ -240,7 +240,7 @@
 								</object>
 								<object class="NSMenuItem" id="39047848">
 									<reference key="NSMenu" ref="360861402"/>
-									<string key="NSTitle">New Tab with Default Profile</string>
+									<string key="NSTitle">New Tab (Default Profile)</string>
 									<string key="NSKeyEquiv">t</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -249,7 +249,7 @@
 								</object>
 								<object class="NSMenuItem" id="813546322">
 									<reference key="NSMenu" ref="360861402"/>
-									<string key="NSTitle">New Tab with Current Profile</string>
+									<string key="NSTitle">New Tab (Current Profile)</string>
 									<string key="NSKeyEquiv">T</string>
 									<int key="NSKeyEquivModMask">1572864</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -373,14 +373,14 @@
 								</object>
 								<object class="NSMenuItem" id="393004483">
 									<reference key="NSMenu" ref="360861402"/>
-									<string key="NSTitle">Send Input To...</string>
+									<string key="NSTitle">Broadcast Input</string>
 									<string key="NSKeyEquiv"/>
 									<int key="NSMnemonicLoc">2147483647</int>
 									<reference key="NSOnImage" ref="643967552"/>
 									<reference key="NSMixedImage" ref="326707852"/>
 									<string key="NSAction">submenuAction:</string>
 									<object class="NSMenu" key="NSSubmenu" id="536673199">
-										<string key="NSTitle">Send Input To...</string>
+										<string key="NSTitle">Broadcast Input</string>
 										<object class="NSMutableArray" key="NSMenuItems">
 											<bool key="EncodedWithXMLCoder">YES</bool>
 											<object class="NSMenuItem" id="592873546">
@@ -406,6 +406,14 @@
 												<string key="NSTitle">Send Input to All Panes in Current Tab</string>
 												<string key="NSKeyEquiv">i</string>
 												<int key="NSKeyEquivModMask">1572864</int>
+												<int key="NSMnemonicLoc">2147483647</int>
+												<reference key="NSOnImage" ref="643967552"/>
+												<reference key="NSMixedImage" ref="326707852"/>
+											</object>
+											<object class="NSMenuItem" id="528110268">
+												<reference key="NSMenu" ref="536673199"/>
+												<string key="NSTitle">Use Background Pattern Indicator</string>
+												<string key="NSKeyEquiv"/>
 												<int key="NSMnemonicLoc">2147483647</int>
 												<reference key="NSOnImage" ref="643967552"/>
 												<reference key="NSMixedImage" ref="326707852"/>
@@ -3097,6 +3105,14 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					</object>
 					<int key="connectionID">1411</int>
 				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">toggleUseBackgroundPatternIndicator:</string>
+						<reference key="source" ref="608955146"/>
+						<reference key="destination" ref="528110268"/>
+					</object>
+					<int key="connectionID">1414</int>
+				</object>
 			</object>
 			<object class="IBMutableOrderedSet" key="objectRecords">
 				<object class="NSArray" key="orderedObjects">
@@ -4227,6 +4243,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<reference ref="181582496"/>
 							<reference ref="41827785"/>
 							<reference ref="592873546"/>
+							<reference ref="528110268"/>
 						</object>
 						<reference key="parent" ref="393004483"/>
 					</object>
@@ -4346,6 +4363,11 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 						<reference key="object" ref="581301589"/>
 						<reference key="parent" ref="704295309"/>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1412</int>
+						<reference key="object" ref="528110268"/>
+						<reference key="parent" ref="536673199"/>
+					</object>
 				</object>
 			</object>
 			<object class="NSMutableDictionary" key="flattenedProperties">
@@ -4438,6 +4460,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>1405.IBPluginDependency</string>
 					<string>1406.IBPluginDependency</string>
 					<string>1408.IBPluginDependency</string>
+					<string>1412.IBPluginDependency</string>
 					<string>143.IBPluginDependency</string>
 					<string>144.IBPluginDependency</string>
 					<string>145.IBPluginDependency</string>
@@ -4619,7 +4642,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{426, 522}, {358, 63}}</string>
+					<string>{{769, 393}, {358, 83}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -4633,6 +4656,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>{{296, 792}, {184, 33}}</string>
+					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -4672,10 +4696,10 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{440, 343}, {312, 393}}</string>
+					<string>{{699, 343}, {312, 393}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{70, 736}, {502, 20}}</string>
+					<string>{{329, 736}, {502, 20}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>{{247, 159}, {354, 164}}</string>
@@ -4719,7 +4743,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
-					<string>{{82, 412}, {358, 413}}</string>
+					<string>{{411, 323}, {358, 413}}</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
 					<string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -4787,7 +4811,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 				</object>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">1411</int>
+			<int key="maxID">1414</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -5954,10 +5978,12 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>toggleFullScreenTabBar:</string>
 							<string>toggleSecureInput:</string>
 							<string>toggleToolbelt:</string>
+							<string>toggleUseBackgroundPatternIndicator:</string>
 							<string>toggleUseTransparency:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
+							<string>id</string>
 							<string>id</string>
 							<string>id</string>
 							<string>id</string>
@@ -6013,6 +6039,7 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							<string>toggleFullScreenTabBar:</string>
 							<string>toggleSecureInput:</string>
 							<string>toggleToolbelt:</string>
+							<string>toggleUseBackgroundPatternIndicator:</string>
 							<string>toggleUseTransparency:</string>
 						</object>
 						<object class="NSMutableArray" key="dict.values">
@@ -6111,6 +6138,10 @@ dy5hbmR5bWF0dXNjaGFrLm9yZy9wYWdlcy9zcGFya2xlCgoKCgoKCgoKCgoKCgoKCg</bytes>
 							</object>
 							<object class="IBActionInfo">
 								<string key="name">toggleToolbelt:</string>
+								<string key="candidateClassName">id</string>
+							</object>
+							<object class="IBActionInfo">
+								<string key="name">toggleUseBackgroundPatternIndicator:</string>
 								<string key="candidateClassName">id</string>
 							</object>
 							<object class="IBActionInfo">

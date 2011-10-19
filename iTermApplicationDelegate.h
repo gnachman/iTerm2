@@ -44,6 +44,7 @@ DebugLog([NSString stringWithFormat:args]); \
 
 @class PseudoTerminal;
 extern BOOL gDebugLogging;
+extern NSString *kUseBackgroundPatternIndicatorChangedNotification;
 void DebugLog(NSString* value);
 
 @interface iTermAboutWindow : NSPanel
@@ -159,6 +160,9 @@ void DebugLog(NSString* value);
 - (IBAction)returnToDefaultSize:(id)sender;
 - (IBAction)exposeForTabs:(id)sender;
 - (IBAction)editCurrentSession:(id)sender;
+
+- (IBAction)toggleUseBackgroundPatternIndicator:(id)sender;
+- (BOOL)useBackgroundPatternIndicator;
 
 - (void)makeHotKeyWindowKeyIfOpen;
 

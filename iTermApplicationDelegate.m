@@ -46,6 +46,8 @@ static NSString *APP_SUPPORT_DIR = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 static NSString* AUTO_LAUNCH_SCRIPT = @"~/Library/Application Support/iTerm/AutoLaunch.scpt";
 static NSString *ITERM2_FLAG = @"~/Library/Application Support/iTerm/version.txt";
+static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
+NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
 static BOOL gStartupActivitiesPerformed = NO;
 // Prior to 8/7/11, there was only one window arrangement, always called Default.
 static NSString *LEGACY_DEFAULT_ARRANGEMENT_NAME = @"Default";
@@ -1175,7 +1177,10 @@ void DebugLog(NSString* value)
 
 - (BOOL)validateMenuItem:(NSMenuItem *)menuItem
 {
-    if (menuItem == maximizePane) {
+    if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
+      [menuItem setState:[self useBackgroundPatternIndicator]];
+      return YES;
+    } else if (menuItem == maximizePane) {
         if ([[[iTermController sharedInstance] currentTerminal] inInstantReplay]) {
             // Things get too complex if you allow this. It crashes.
             return NO;
@@ -1287,6 +1292,19 @@ void DebugLog(NSString* value)
     [pty editCurrentSession:sender];
 }
 
+- (BOOL)useBackgroundPatternIndicator
+{
+    return [[NSUserDefaults standardUserDefaults] boolForKey:kUseBackgroundPatternIndicatorKey];
+}
+
+- (IBAction)toggleUseBackgroundPatternIndicator:(id)sender
+{
+    BOOL value = [self useBackgroundPatternIndicator];
+    value = !value;
+    [[NSUserDefaults standardUserDefaults] setBool:value forKey:kUseBackgroundPatternIndicatorKey];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kUseBackgroundPatternIndicatorChangedNotification
+                                                        object:nil];
+}
 
 @end
 
