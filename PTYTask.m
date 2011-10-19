@@ -331,6 +331,7 @@ static TaskNotifier* taskNotifier = nil;
                     PtyTaskDebugLog(@"Duplicate fd %d", fd);
                     continue;
                 }
+                [task retain];
                 [handledFds addObject:[NSNumber numberWithInt:fd]];
 
                 if (FD_ISSET(fd, &rfds)) {
@@ -371,49 +372,52 @@ static TaskNotifier* taskNotifier = nil;
                         iter = [tasks objectEnumerator];
                     }
                 }
-            }
 
-            // Move input around between coprocess and main process.
-            @synchronized (task) {
-                Coprocess *coprocess = [task coprocess];
-                if (coprocess) {
-                    fd = [coprocess readFileDescriptor];
-                    if ([handledFds containsObject:[NSNumber numberWithInt:fd]]) {
-                        NSLog(@"Duplicate fd %d", fd);
-                        continue;
-                    }
-                    [handledFds addObject:[NSNumber numberWithInt:fd]];
-                    if (![coprocess eof] && FD_ISSET(fd, &rfds)) {
-                        [coprocess read];
-                        [task writeTask:coprocess.inputBuffer];
-                        [coprocess.inputBuffer setLength:0];
-                    }
-                    if (FD_ISSET(fd, &efds)) {
-                        coprocess.eof = YES;
-                    }
+                // Move input around between coprocess and main process.
+                if ([task fd] >= 0 && ![task hasBrokenPipe]) {  // Make sure the pipe wasn't just broken.
+                    @synchronized (task) {
+                        Coprocess *coprocess = [task coprocess];
+                        if (coprocess) {
+                            fd = [coprocess readFileDescriptor];
+                            if ([handledFds containsObject:[NSNumber numberWithInt:fd]]) {
+                                NSLog(@"Duplicate fd %d", fd);
+                                continue;
+                            }
+                            [handledFds addObject:[NSNumber numberWithInt:fd]];
+                            if (![coprocess eof] && FD_ISSET(fd, &rfds)) {
+                                [coprocess read];
+                                [task writeTask:coprocess.inputBuffer];
+                                [coprocess.inputBuffer setLength:0];
+                            }
+                            if (FD_ISSET(fd, &efds)) {
+                                coprocess.eof = YES;
+                            }
 
-                    fd = [coprocess writeFileDescriptor];
-                    if ([handledFds containsObject:[NSNumber numberWithInt:fd]]) {
-                        NSLog(@"Duplicate fd %d", fd);
-                        continue;
-                    }
-                    [handledFds addObject:[NSNumber numberWithInt:fd]];
-                    if (FD_ISSET(fd, &efds)) {
-                        coprocess.eof = YES;
-                    }
-                    if (FD_ISSET(fd, &wfds)) {
-                        if (![coprocess eof]) {
-                            [coprocess write];
+                            fd = [coprocess writeFileDescriptor];
+                            if ([handledFds containsObject:[NSNumber numberWithInt:fd]]) {
+                                NSLog(@"Duplicate fd %d", fd);
+                                continue;
+                            }
+                            [handledFds addObject:[NSNumber numberWithInt:fd]];
+                            if (FD_ISSET(fd, &efds)) {
+                                coprocess.eof = YES;
+                            }
+                            if (FD_ISSET(fd, &wfds)) {
+                                if (![coprocess eof]) {
+                                    [coprocess write];
+                                }
+                            }
+
+                            if ([coprocess eof]) {
+                                [deadpool addObject:[NSNumber numberWithInt:[coprocess pid]]];
+                                [coprocess terminate];
+                                [task setCoprocess:nil];
+                                notifyOfCoprocessChange = YES;
+                            }
                         }
                     }
-
-                    if ([coprocess eof]) {
-                        [deadpool addObject:[NSNumber numberWithInt:[coprocess pid]]];
-                        [coprocess terminate];
-                        [task setCoprocess:nil];
-                        notifyOfCoprocessChange = YES;
-                    }
                 }
+                [task release];
             }
             ++i;
             PtyTaskDebugLog(@"About to get task %d\n", i);
@@ -544,6 +548,11 @@ setup_tty_param(
     }
 
     [super dealloc];
+}
+
+- (BOOL)hasBrokenPipe
+{
+    return brokenPipe_;
 }
 
 static void reapchild(int n)
@@ -794,6 +803,7 @@ static void reapchild(int n)
 
 - (void)brokenPipe
 {
+    brokenPipe_ = YES;
     [[TaskNotifier sharedInstance] deregisterTask:self];
     if ([delegate respondsToSelector:@selector(brokenPipe)]) {
         [delegate performSelectorOnMainThread:@selector(brokenPipe)

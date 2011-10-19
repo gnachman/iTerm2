@@ -63,11 +63,12 @@ extern NSString *kCoprocessStatusChangeNotification;
     NSFileHandle* logHandle;
 
     Coprocess *coprocess_;  // synchronized (self)
+    BOOL brokenPipe_;
 }
 
 - (id)init;
 - (void)dealloc;
-
+- (BOOL)hasBrokenPipe;
 - (void)launchWithPath:(NSString*)progpath
              arguments:(NSArray*)args
            environment:(NSDictionary*)env
