@@ -55,6 +55,14 @@
     }
 }
 
+- (void)willRemoveSubview:(NSView *)subview
+{
+  if (subview == child_) {
+    child_ = nil;
+  }
+  [super willRemoveSubview:subview];
+}
+
 - (NSRect)adjustScroll:(NSRect)proposedVisibleRect
 {
     return [child_ adjustScroll:proposedVisibleRect];
