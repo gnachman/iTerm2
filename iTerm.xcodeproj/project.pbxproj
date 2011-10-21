@@ -36,6 +36,7 @@
 		1D2E813212A18F7500F3D71E /* SessionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E813012A18F7500F3D71E /* SessionView.m */; };
 		1D31BC65142D33CA001F7ECB /* TriggerController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D31BC63142D33CA001F7ECB /* TriggerController.h */; };
 		1D31BC66142D33CA001F7ECB /* TriggerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D31BC64142D33CA001F7ECB /* TriggerController.m */; };
+		1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = F6E2DED70AE2F67200D20B3B /* Sparkle.framework */; };
 		1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D36155312CBF33E00803EA9 /* ScreenChar.h */; };
 		1D36155612CBF33E00803EA9 /* ScreenChar.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D36155412CBF33E00803EA9 /* ScreenChar.m */; };
 		1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D395912134E75B5005A8021 /* SmartSelectionRules.plist */; };
@@ -323,6 +324,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */,
 				5ECE4AE814513F05002A9CC2 /* Growl.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
