@@ -30,7 +30,7 @@
 
 #import <iTermGrowlDelegate.h>
 #import <PreferencePanel.h>
-
+#import "Growl.framework/Headers/GrowlApplicationBridge.h"
 /**
  **  The category is used to extend iTermGrowlDelegate with private methods.
  **
@@ -59,7 +59,17 @@
         notifications = [[NSArray arrayWithObjects:OURNOTIFICATIONS,
                           nil] retain];
 
-        [GrowlApplicationBridge setGrowlDelegate:self];
+        NSBundle *myBundle = [NSBundle bundleForClass:[iTermGrowlDelegate class]];
+        NSString *growlPath = [[myBundle privateFrameworksPath] stringByAppendingPathComponent:@"Growl.framework"];
+        NSBundle *growlBundle = [NSBundle bundleWithPath:growlPath];
+        if (growlBundle && [growlBundle load]) {
+            // Register ourselves as a Growl delegate
+            [GrowlApplicationBridge setGrowlDelegate:self];
+        } else {
+            NSLog(@"Could not load Growl.framework");
+        }
+
+//        [GrowlApplicationBridge setGrowlDelegate:self];
         [self registrationDictionaryForGrowl];
         [self setEnabled:YES];
 
@@ -77,7 +87,7 @@
 
 - (BOOL)isEnabled
 {
-    if ([GrowlApplicationBridge isGrowlInstalled]) {
+    if ([GrowlApplicationBridge isGrowlRunning]) {
         return enabled;
     } else {
         return NO;
@@ -156,6 +166,11 @@
         nil];
 
     return regDict;
+}
+
+- (void) growlIsReady
+{
+    NSLog(@"Growl is ready");
 }
 
 @end
