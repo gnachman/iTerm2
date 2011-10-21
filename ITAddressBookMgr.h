@@ -137,6 +137,7 @@
 #define KEY_SCROLLBACK_WITH_STATUS_BAR        @"Scrollback With Status Bar"
 #define KEY_SCROLLBACK_IN_ALTERNATE_SCREEN    @"Scrollback in Alternate Screen"
 #define KEY_BOOKMARK_GROWL_NOTIFICATIONS      @"BM Growl"
+#define KEY_SET_LOCALE_VARS                   @"Set Local Environment Vars"
 #define KEY_CHARACTER_ENCODING                @"Character Encoding"
 #define KEY_SCROLLBACK_LINES                  @"Scrollback Lines"
 #define KEY_UNLIMITED_SCROLLBACK              @"Unlimited Scrollback"

@@ -584,10 +584,13 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         [env setObject:COLORFGBG_VALUE forKey:COLORFGBG_ENVNAME];
 
     NSString* lang = [self _lang];
-    if (lang) {
-        [env setObject:lang forKey:@"LANG"];
-    } else {
-        [env setObject:[self encodingName] forKey:@"LC_CTYPE"];
+    if (![addressBookEntry objectForKey:KEY_SET_LOCALE_VARS] ||
+        [[addressBookEntry objectForKey:KEY_SET_LOCALE_VARS] boolValue]) {
+        if (lang) {
+            [env setObject:lang forKey:@"LANG"];
+        } else {
+            [env setObject:[self encodingName] forKey:@"LC_CTYPE"];
+        }
     }
 
     if ([env objectForKey:PWD_ENVNAME] == nil) {
@@ -704,7 +707,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     if (debugKeyDown) {
         const char *bytes = [data bytes];
         for (int i = 0; i < [data length]; i++) {
-            NSLog(@"writeTask keydown %d: %d (%c)", (int) bytes[i], bytes[i]);
+            NSLog(@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]);
         }
     }
 
