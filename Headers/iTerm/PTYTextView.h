@@ -154,7 +154,7 @@ typedef struct PTYFontInfo PTYFontInfo;
     BOOL blinkAllowed_;
 
     // trackingRect tab
-    NSTrackingRectTag trackingRectTag;
+    NSTrackingArea *trackingArea;
 
     BOOL keyIsARepeat;
 

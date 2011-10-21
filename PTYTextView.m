@@ -345,9 +345,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)viewWillMoveToWindow:(NSWindow *)win
 {
-    if (!win && [self window] && trackingRectTag) {
-        [self removeTrackingRect:trackingRectTag];
-        trackingRectTag = 0;
+    if (!win && [self window] && trackingArea) {
+        [self removeTrackingArea:trackingArea];
+        trackingArea = nil;
     }
     [super viewWillMoveToWindow:win];
 }
@@ -355,14 +355,15 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (void)viewDidMoveToWindow
 {
     if ([self window]) {
-        if (trackingRectTag) {
-            [self removeTrackingRect:trackingRectTag];
+        if (trackingArea) {
+            [self removeTrackingArea:trackingArea];
         }
 
-        trackingRectTag = [self addTrackingRect:[self frame]
-                                          owner:self
-                                       userData:nil
-                                   assumeInside:NO];
+        trackingArea = [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
+                                                     options:NSTrackingMouseEnteredAndExited | NSTrackingInVisibleRect | NSTrackingActiveAlways | NSTrackingEnabledDuringMouseDrag
+                                                       owner:self
+                                                    userInfo:nil] autorelease];
+        [self addTrackingArea:trackingArea];
     }
 }
 
@@ -376,8 +377,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         mouseDownEvent = nil;
     }
 
-    if (trackingRectTag) {
-        [self removeTrackingRect:trackingRectTag];
+    if (trackingArea) {
+        [self removeTrackingArea:trackingArea];
     }
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
@@ -1348,18 +1349,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
         return YES;
     }
 
-    // reset tracking rect
-    NSRect visibleRect = [self visibleRect];
-    if (!trackingRectTag || !RectsEqual(&visibleRect, &_trackingRect)) {
-        if (trackingRectTag) {
-            [self removeTrackingRect:trackingRectTag];
-        }
-        // This call is very slow.
-        trackingRectTag = [self addTrackingRect:visibleRect owner:self userData:nil assumeInside:NO];
-        _trackingRect = visibleRect;
-    }
-
-    // number of lines that have disappeared if circular buffer is full
+    // number of lines that have disappeared if scrollback buffer is full
     int scrollbackOverflow = [dataSource scrollbackOverflow];
     [dataSource resetScrollbackOverflow];
 
