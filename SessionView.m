@@ -53,6 +53,18 @@ static NSDate* lastResizeDate_;
     lastResizeDate_ = [[NSDate date] retain];
 }
 
+- (void)markUpdateTime
+{
+    [previousUpdate_ release];
+    previousUpdate_ = [[NSDate date] retain];
+}
+
+- (void)clearUpdateTime
+{
+    [previousUpdate_ release];
+    previousUpdate_ = nil;
+}
+
 - (void)_initCommon
 {
     [self registerForDraggedTypes:[NSArray arrayWithObjects:@"iTermDragPanePBType", @"PSMTabBarControlItemPBType", nil]];
@@ -101,6 +113,7 @@ static NSDate* lastResizeDate_;
 
 - (void)dealloc
 {
+    [previousUpdate_ release];
     [self unregisterDraggedTypes];
     [session_ release];
     [super dealloc];
@@ -123,7 +136,7 @@ static NSDate* lastResizeDate_;
     timer_ = nil;
     float elapsed = [[NSDate date] timeIntervalSinceDate:previousUpdate_];
     float newDimmingAmount = currentDimmingAmount_ + elapsed * changePerSecond_;
-    [previousUpdate_ release];
+    [self clearUpdateTime];
     if ((changePerSecond_ > 0 && newDimmingAmount > targetDimmingAmount_) ||
         (changePerSecond_ < 0 && newDimmingAmount < targetDimmingAmount_)) {
         currentDimmingAmount_ = targetDimmingAmount_;
@@ -131,7 +144,7 @@ static NSDate* lastResizeDate_;
     } else {
         [[session_ TEXTVIEW] setDimmingAmount:newDimmingAmount];
         currentDimmingAmount_ = newDimmingAmount;
-        previousUpdate_ = [[NSDate date] retain];
+        [self markUpdateTime];
         timer_ = [NSTimer scheduledTimerWithTimeInterval:1.0/60.0
                                                   target:self
                                                 selector:@selector(fadeAnimation)
@@ -143,7 +156,7 @@ static NSDate* lastResizeDate_;
 - (void)_dimShadeToDimmingAmount:(float)newDimmingAmount
 {
     targetDimmingAmount_ = newDimmingAmount;
-    previousUpdate_ = [[NSDate date] retain];
+    [self markUpdateTime];
     const double kAnimationDuration = 0.1;
     if ([[PreferencePanel sharedInstance] animateDimming]) {
         changePerSecond_ = (targetDimmingAmount_ - currentDimmingAmount_) / kAnimationDuration;
