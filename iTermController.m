@@ -888,7 +888,9 @@ static BOOL initDone = NO;
 }
 
 // I don't think this function is ever called.
-- (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm withCommand:(NSString *)command
+- (id)launchBookmark:(NSDictionary *)bookmarkData
+          inTerminal:(PseudoTerminal *)theTerm
+         withCommand:(NSString *)command
 {
     PseudoTerminal *term;
     NSDictionary *aDict;
@@ -918,14 +920,20 @@ static BOOL initDone = NO;
         term = theTerm;
     }
 
-    id result = [term addNewSession:aDict withCommand:command asLoginSession:NO];
+    id result = [term addNewSession:aDict
+                        withCommand:command
+                     asLoginSession:NO
+                      forObjectType:theTerm ? iTermTabObject : iTermWindowObject];
     if (toggle) {
         [term delayedEnterFullscreen];
     }
     return result;
 }
 
-- (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm withURL:(NSString *)url
+- (id)launchBookmark:(NSDictionary *)bookmarkData
+          inTerminal:(PseudoTerminal *)theTerm
+             withURL:(NSString *)url
+       forObjectType:(iTermObjectType)objectType
 {
     PseudoTerminal *term;
     NSDictionary *aDict;
@@ -1002,7 +1010,7 @@ static BOOL initDone = NO;
         term = theTerm;
     }
 
-    id result = [term addNewSession: aDict withURL: url];
+    id result = [term addNewSession:aDict withURL:url forObjectType:objectType];
     if (toggle) {
         [term delayedEnterFullscreen];
     }

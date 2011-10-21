@@ -58,7 +58,7 @@
             }
         }
     } @catch (NSException *e) {
-        NSLog("exception encountered during core image filtering: %@", e);
+        NSLog(@"exception encountered during core image filtering: %@", e);
     } @finally {
         [before release];
     }

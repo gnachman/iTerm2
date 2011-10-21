@@ -2752,7 +2752,8 @@ NSString *sessionsKey = @"sessions";
             }
             [self addNewSession:prototype
                     withCommand:[commandField stringValue]
-                 asLoginSession:NO];
+                 asLoginSession:NO
+                  forObjectType:iTermTabObject];
             break;
         }
         default:
@@ -3246,7 +3247,7 @@ NSString *sessionsKey = @"sessions";
             targetSession:targetSession
              performSetup:YES];
 
-    [self runCommandInSession:newSession inCwd:oldCWD];
+    [self runCommandInSession:newSession inCwd:oldCWD forObjectType:iTermPaneObject];
 }
 
 - (Bookmark*)_bookmarkToSplit
@@ -4723,9 +4724,11 @@ NSString *sessionsKey = @"sessions";
             id bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:urlType];
 
             if (bm) {
+                PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
                 [[iTermController sharedInstance] launchBookmark:bm
-                                                      inTerminal:[[iTermController sharedInstance] currentTerminal]
-                                                         withURL:command];
+                                                      inTerminal:term
+                                                         withURL:command
+                                                   forObjectType:term ? iTermTabObject : iTermWindowObject];
             } else {
                 [[NSWorkspace sharedWorkspace] openURL:url];
             }
@@ -4803,7 +4806,9 @@ NSString *sessionsKey = @"sessions";
 }
 
 // Used when adding a split pane.
-- (void)runCommandInSession:(PTYSession*)aSession inCwd:(NSString*)oldCWD;
+- (void)runCommandInSession:(PTYSession*)aSession
+                      inCwd:(NSString*)oldCWD
+              forObjectType:(iTermObjectType)objectType
 {
     if ([aSession SCREEN]) {
         NSMutableString *cmd, *name;
@@ -4820,7 +4825,8 @@ NSString *sessionsKey = @"sessions";
 
         [cmd breakDownCommandToPath:&cmd cmdArgs:&arg];
 
-        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
+        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry
+                                           forObjectType:objectType];
         if ([pwd length] == 0) {
             if (oldCWD) {
                 pwd = oldCWD;
@@ -4902,7 +4908,13 @@ NSString *sessionsKey = @"sessions";
     // Add this session to our term and make it current
     [self appendSession:aSession];
     if ([aSession SCREEN]) {
-        [aSession runCommandWithOldCwd:oldCWD];
+        iTermObjectType objectType;
+        if ([TABVIEW numberOfTabViewItems] == 1) {
+            objectType = iTermWindowObject;
+        } else {
+            objectType = iTermTabObject;
+        }
+        [aSession runCommandWithOldCwd:oldCWD forObjectType:objectType];
         if ([[[self window] title] compare:@"Window"] == NSOrderedSame) {
             [self setWindowTitle];
         }
@@ -4993,7 +5005,9 @@ NSString *sessionsKey = @"sessions";
     return result;
 }
 
--(id)addNewSession:(NSDictionary *)addressbookEntry withURL:(NSString *)url
+- (id)addNewSession:(NSDictionary *)addressbookEntry
+           withURL:(NSString *)url
+     forObjectType:(iTermObjectType)objectType
 {
     PtyLog(@"PseudoTerminal: -addNewSession");
     PTYSession *aSession;
@@ -5041,7 +5055,7 @@ NSString *sessionsKey = @"sessions";
         BOOL isUTF8;
         [cmd breakDownCommandToPath:&cmd cmdArgs:&arg];
 
-        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
+        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry forObjectType:objectType];
         if ([pwd length] == 0) {
             pwd = NSHomeDirectory();
         }
@@ -5057,7 +5071,16 @@ NSString *sessionsKey = @"sessions";
     return aSession;
 }
 
--(id)addNewSession:(NSDictionary *)addressbookEntry withCommand:(NSString *)command asLoginSession:(BOOL)loginSession
+- (id)addNewSession:(NSDictionary *)addressbookEntry withURL:(NSString *)url
+{
+    return [self addNewSession:addressbookEntry withURL:url forObjectType:iTermWindowObject];
+}
+
+
+- (id)addNewSession:(NSDictionary *)addressbookEntry
+        withCommand:(NSString *)command
+     asLoginSession:(BOOL)loginSession
+      forObjectType:(iTermObjectType)objectType
 {
     PtyLog(@"PseudoTerminal: addNewSession 2");
     PTYSession *aSession;
@@ -5084,7 +5107,8 @@ NSString *sessionsKey = @"sessions";
 
         [cmd breakDownCommandToPath:&cmd cmdArgs:&arg];
 
-        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
+        pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry
+                                           forObjectType:objectType];
         if ([pwd length] == 0) {
             pwd = NSHomeDirectory();
         }

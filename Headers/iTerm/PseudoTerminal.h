@@ -725,7 +725,13 @@ NSWindowDelegate,
 -(id)valueWithName: (NSString *)uniqueName inPropertyWithKey: (NSString*)propertyKey;
 -(id)valueWithID: (NSString *)uniqueID inPropertyWithKey: (NSString*)propertyKey;
 -(id)addNewSession:(NSDictionary *)addressbookEntry withURL: (NSString *)url;
--(id)addNewSession:(NSDictionary *) addressbookEntry withCommand: (NSString *)command asLoginSession:(BOOL)loginSession;
+-(id)addNewSession:(NSDictionary *)addressbookEntry
+           withURL:(NSString *)url
+     forObjectType:(iTermObjectType)objectType;
+-(id)addNewSession:(NSDictionary *) addressbookEntry
+       withCommand:(NSString *)command
+    asLoginSession:(BOOL)loginSession
+     forObjectType:(iTermObjectType)objectType;
 -(void)appendSession:(PTYSession *)object;
 -(void)removeFromSessionsAtIndex:(unsigned)index;
 -(NSArray*)sessions;
@@ -754,7 +760,9 @@ NSWindowDelegate,
 - (PTYSession*)newSessionWithBookmark:(Bookmark*)bookmark;
 
 // Execute the bookmark command in this session.
-- (void)runCommandInSession:(PTYSession*)aSession inCwd:(NSString*)oldCWD;
+- (void)runCommandInSession:(PTYSession*)aSession
+                      inCwd:(NSString*)oldCWD
+              forObjectType:(iTermObjectType)objectType;
 
 // For full screen mode, draw the window contents in black except for the find
 // bar area.

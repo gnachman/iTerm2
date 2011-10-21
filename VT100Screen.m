@@ -51,6 +51,7 @@
 #include <LineBuffer.h>
 #import "DVRBuffer.h"
 #import "PTYTab.h"
+#import "ITAddressBookMgr.h"
 
 #define MAX_SCROLLBACK_LINES 1000000
 #define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array

@@ -29,6 +29,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import <Carbon/Carbon.h>
+#import "ITAddressBookMgr.h"
 
 @class PseudoTerminal;
 @class PTYTextView;
@@ -112,7 +113,10 @@
     disableLionFullscreen:(BOOL)disableLionFullscreen;
 - (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm;
 - (id)launchBookmark:(NSDictionary *)bookmarkData inTerminal:(PseudoTerminal *)theTerm withCommand:(NSString *)command;
-- (id)launchBookmark:(NSDictionary*)bookmarkData inTerminal:(PseudoTerminal*)theTerm withURL:(NSString*)url;
+- (id)launchBookmark:(NSDictionary*)bookmarkData
+          inTerminal:(PseudoTerminal*)theTerm
+             withURL:(NSString*)url
+       forObjectType:(iTermObjectType)objectType;
 - (PTYTextView*)frontTextView;
 - (int)numberOfTerminals;
 - (PseudoTerminal*)terminalAtIndex:(int)i;

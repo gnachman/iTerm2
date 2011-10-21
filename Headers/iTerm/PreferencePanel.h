@@ -345,6 +345,16 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTextField *bookmarkUrlSchemesHeaderLabel;
     IBOutlet NSTextField *bookmarkUrlSchemesLabel;
     IBOutlet NSPopUpButton* bookmarkUrlSchemes;
+    IBOutlet NSButton* editAdvancedConfigButton;
+
+    // Advanced working dir sheet
+    IBOutlet NSPanel* advancedWorkingDirSheet_;
+    IBOutlet NSMatrix* awdsWindowDirectoryType;
+    IBOutlet NSTextField* awdsWindowDirectory;
+    IBOutlet NSMatrix* awdsTabDirectoryType;
+    IBOutlet NSTextField* awdsTabDirectory;
+    IBOutlet NSMatrix* awdsPaneDirectoryType;
+    IBOutlet NSTextField* awdsPaneDirectory;
 
     // Only visible in Get Info mode
     IBOutlet NSButton* copyToProfileButton;
@@ -544,6 +554,8 @@ typedef enum {
 - (void)handleWindowWillCloseNotification:(NSNotification *)notification;
 - (void)genericCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo;
 - (void)editKeyMapping:(id)sender;
+- (IBAction)showAdvancedWorkingDirConfigPanel:(id)sender;
+- (IBAction)closeAdvancedWorkingDirSheet:(id)sender;
 - (IBAction)editSmartSelection:(id)sender;
 - (IBAction)closeSmartSelectionSheet:(id)sender;
 - (IBAction)editTriggers:(id)sender;

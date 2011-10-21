@@ -62,6 +62,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #import "MovePaneController.h"
 #import "FutureMethods.h"
 #import "SmartSelectionController.h"
+#import "ITAddressBookMgr.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -7085,9 +7086,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     Bookmark *bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:[url scheme]];
 
     if (bm != nil)  {
+        PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
         [[iTermController sharedInstance] launchBookmark:bm
-                                              inTerminal:[[iTermController sharedInstance] currentTerminal]
-                                                 withURL:trimmedURLString];
+                                              inTerminal:term
+                                                 withURL:trimmedURLString
+                                           forObjectType:term ? iTermTabObject : iTermWindowObject];
     } else {
         [self openURL:url inBackground:background];
     }

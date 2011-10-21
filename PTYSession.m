@@ -273,7 +273,10 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 }
 
 
-+ (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement inView:(SessionView*)sessionView inTab:(PTYTab*)theTab
++ (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement
+                               inView:(SessionView*)sessionView
+                                inTab:(PTYTab*)theTab
+                        forObjectType:(iTermObjectType)objectType
 {
     PTYSession* aSession = [[[PTYSession alloc] init] autorelease];
     aSession->view = sessionView;
@@ -299,7 +302,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         [[theTab realParentWindow] setWindowTitle];
     }
     [aSession setTab:theTab];
-    [aSession runCommandWithOldCwd:[arrangement objectForKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY]];
+    [aSession runCommandWithOldCwd:[arrangement objectForKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY]
+                     forObjectType:objectType];
 
     if (needDivorce) {
         [aSession divorceAddressBookEntryFromPreferences];
@@ -405,6 +409,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 }
 
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
+               forObjectType:(iTermObjectType)objectType
 {
     NSMutableString *cmd;
     NSArray *arg;
@@ -421,7 +426,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
     [cmd breakDownCommandToPath:&cmd cmdArgs:&arg];
 
-    pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry];
+    pwd = [ITAddressBookMgr bookmarkWorkingDirectory:addressbookEntry
+                                       forObjectType:objectType];
     if ([pwd length] == 0) {
         if (oldCWD) {
             pwd = oldCWD;

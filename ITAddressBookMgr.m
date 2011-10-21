@@ -488,17 +488,44 @@ static NSString* UserShell() {
     }
 }
 
++ (NSString *)_advancedWorkingDirWithOption:(NSString *)option
+                                  directory:(NSString *)pwd
+{
+    if ([option isEqualToString:@"Yes"]) {
+        return pwd;
+    } else if ([option isEqualToString:@"Recycle"]) {
+        return @"";
+    } else {
+        // Home dir, option == "No"
+        return NSHomeDirectory();
+    }
+}
 
-+ (NSString*)bookmarkWorkingDirectory:(Bookmark*)bookmark
++ (NSString*)bookmarkWorkingDirectory:(Bookmark*)bookmark forObjectType:(iTermObjectType)objectType
 {
     NSString* custom = [bookmark objectForKey:KEY_CUSTOM_DIRECTORY];
     if ([custom isEqualToString:@"Yes"]) {
         return [bookmark objectForKey:KEY_WORKING_DIRECTORY];
-    } else if ([custom isEqualToString:@"No"]) {
-        return NSHomeDirectory();
-    } else {
-        // recycle
+    } else if ([custom isEqualToString:@"Recycle"]) {
         return @"";
+    } else if ([custom isEqualToString:@"Advanced"]) {
+        switch (objectType) {
+          case iTermWindowObject:
+              return [ITAddressBookMgr _advancedWorkingDirWithOption:[bookmark objectForKey:KEY_AWDS_WIN_OPTION]
+                                                           directory:[bookmark objectForKey:KEY_AWDS_WIN_DIRECTORY]];
+          case iTermTabObject:
+              return [ITAddressBookMgr _advancedWorkingDirWithOption:[bookmark objectForKey:KEY_AWDS_TAB_OPTION]
+                                                           directory:[bookmark objectForKey:KEY_AWDS_TAB_DIRECTORY]];
+          case iTermPaneObject:
+              return [ITAddressBookMgr _advancedWorkingDirWithOption:[bookmark objectForKey:KEY_AWDS_PANE_OPTION]
+                                                           directory:[bookmark objectForKey:KEY_AWDS_PANE_DIRECTORY]];
+          default:
+              NSLog(@"Bogus object type %d", (int)objectType);
+              return NSHomeDirectory();  // Shouldn't happen
+        }
+    } else {
+        // Home dir, custom == "No"
+        return NSHomeDirectory();
     }
 }
 

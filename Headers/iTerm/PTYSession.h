@@ -31,6 +31,7 @@
 #import "WindowControllerInterface.h"
 #import "TextViewWrapper.h"
 #import "FindViewController.h"
+#import "ITAddressBookMgr.h"
 
 #include <sys/time.h>
 
@@ -270,9 +271,14 @@ typedef enum {
 - (void)appendStringToTriggerLine:(NSString *)s;
 
 + (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame;
-+ (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement inView:(SessionView*)sessionView inTab:(PTYTab*)theTab;
++ (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement
+                               inView:(SessionView*)sessionView
+                                inTab:(PTYTab*)theTab
+                        forObjectType:(iTermObjectType)objectType;
 
-- (void)runCommandWithOldCwd:(NSString*)oldCWD;
+
+- (void)runCommandWithOldCwd:(NSString*)oldCWD
+               forObjectType:(iTermObjectType)objectType;
 
 - (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv

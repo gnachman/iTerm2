@@ -657,8 +657,11 @@ static BOOL hasBecomeActive = NO;
     }
     id bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:urlType];
     if (bm) {
+        PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
         [[iTermController sharedInstance] launchBookmark:bm
-                                              inTerminal:[[iTermController sharedInstance] currentTerminal] withURL:urlStr];
+                                              inTerminal:term
+                                                 withURL:urlStr
+                                           forObjectType:term ? iTermTabObject : iTermWindowObject];
     }
 }
 

@@ -58,6 +58,14 @@
 #define KEY_DEFAULT_BOOKMARK            @"Default Bookmark"  // deprecated
 #define KEY_ASK_ABOUT_OUTDATED_KEYMAPS  @"Ask About Outdated Keymaps"
 
+// Advanced working directory settings
+#define KEY_AWDS_WIN_OPTION             @"AWDS Window Option"
+#define KEY_AWDS_WIN_DIRECTORY          @"AWDS Window Directory"
+#define KEY_AWDS_TAB_OPTION             @"AWDS Tab Option"
+#define KEY_AWDS_TAB_DIRECTORY          @"AWDS Tab Directory"
+#define KEY_AWDS_PANE_OPTION            @"AWDS Pane Option"
+#define KEY_AWDS_PANE_DIRECTORY         @"AWDS Pane Directory"
+
 // Per-bookmark keys ----------------------------------------------------------
 // IMPORATANT: If you add keys, also modify doCopyFrom in PreferencePanel.m.
 
@@ -160,6 +168,11 @@
 #define WINDOW_TYPE_LION_FULL_SCREEN 4  // Lion-native fullscreen
 #define WINDOW_TYPE_BOTTOM 5
 
+typedef enum {
+  iTermWindowObject,
+  iTermTabObject,
+  iTermPaneObject,
+} iTermObjectType;
 
 @interface ITAddressBookMgr : NSObject
 {
@@ -198,6 +211,7 @@
 - (NSString*) getBonjourServiceType:(NSString*)aType;
 + (NSString*)loginShellCommandForBookmark:(Bookmark*)bookmark;
 + (NSString*)bookmarkCommand:(Bookmark*)bookmark isLoginSession:(BOOL*)isLoginSession;
-+ (NSString*)bookmarkWorkingDirectory:(Bookmark*)bookmark;
++ (NSString*)bookmarkWorkingDirectory:(Bookmark*)bookmark
+                        forObjectType:(iTermObjectType)objectType;
 
 @end

@@ -1798,29 +1798,36 @@ static NSString* FormatRect(NSRect r) {
     }
 }
 
-- (PTYSession*)_recursiveRestoreSessions:(NSDictionary*)arrangement atNode:(NSView*)view inTab:(PTYTab*)theTab
+- (PTYSession*)_recursiveRestoreSessions:(NSDictionary*)arrangement
+                                  atNode:(NSView*)view
+                                   inTab:(PTYTab*)theTab
+                           forObjectType:(iTermObjectType)objectType
 {
     if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
         assert([view isKindOfClass:[NSSplitView class]]);
         NSSplitView* splitter = (NSSplitView*)view;
         NSArray* subArrangements = [arrangement objectForKey:SUBVIEWS];
         PTYSession* active = nil;
+        iTermObjectType subObjectType = objectType;
         for (int i = 0; i < [subArrangements count]; ++i) {
             NSDictionary* subArrangement = [subArrangements objectAtIndex:i];
             PTYSession* session = [self _recursiveRestoreSessions:subArrangement
                                                            atNode:[[splitter subviews] objectAtIndex:i]
-                                                            inTab:theTab];
+                                                            inTab:theTab
+                                                    forObjectType:subObjectType];
             if (session) {
                 active = session;
             }
+            subObjectType = iTermPaneObject;
         }
         return active;
     } else {
         assert([view isKindOfClass:[SessionView class]]);
         SessionView* sessionView = (SessionView*)view;
         PTYSession* session = [PTYSession sessionFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]
-                                                                                    inView:(SessionView*)view
-                                                                                     inTab:theTab];
+                                                          inView:(SessionView*)view
+                                                           inTab:theTab
+                                                   forObjectType:objectType];
         [sessionView setSession:session];
         [self appendSessionToViewOrder:session];
         if ([[arrangement objectForKey:TAB_ARRANGEMENT_IS_ACTIVE] boolValue]) {
@@ -1853,11 +1860,18 @@ static NSString* FormatRect(NSRect r) {
     [newRoot release];
 
     [theTab setObjectCount:[term numberOfTabs] + 1];
-    
+
     // Instantiate sessions in the skeleton view tree.
+    iTermObjectType objectType;
+    if ([term numberOfTabs] == 0) {
+        objectType = iTermWindowObject;
+    } else {
+        objectType = iTermTabObject;
+    }
     [theTab setActiveSession:[theTab _recursiveRestoreSessions:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
                                                         atNode:theTab->root_
-                                                         inTab:theTab]];
+                                                         inTab:theTab
+                                                 forObjectType:objectType]];
 
     // Add the existing tab, which is now fully populated, to the term.
     [term appendTab:theTab];

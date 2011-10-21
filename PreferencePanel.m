@@ -194,6 +194,7 @@ static float versionNumber;
     oneBookmarkOnly = YES;
     [self showBookmarks];
     [toolbar setVisible:NO];
+    [editAdvancedConfigButton setHidden:YES];
     [bookmarksTableView setHidden:YES];
     [addBookmarkButton setHidden:YES];
     [removeBookmarkButton setHidden:YES];
@@ -563,6 +564,8 @@ static float versionNumber;
     appearanceToolbarId = [appearanceToolbarItem itemIdentifier];
     keyboardToolbarId = [keyboardToolbarItem itemIdentifier];
     arrangementsToolbarId = [arrangementsToolbarItem itemIdentifier];
+
+    [globalToolbarItem setEnabled:YES];
     [toolbar setSelectedItemIdentifier:globalToolbarId];
 
     // add list of encodings
@@ -638,6 +641,96 @@ static float versionNumber;
 - (BOOL)_originatorIsBookmark:(id)originator
 {
     return originator == addNewMapping || originator == keyMappings;
+}
+
+- (void)setAdvancedBookmarkMatrix:(NSMatrix *)matrix withValue:(NSString *)value
+{
+    if ([value isEqualToString:@"Yes"]) {
+        [matrix selectCellWithTag:0];
+    } else if ([value isEqualToString:@"Recycle"]) {
+        [matrix selectCellWithTag:2];
+    } else {
+        [matrix selectCellWithTag:1];
+    }
+}
+
+- (void)safelySetStringValue:(NSString *)value in:(NSTextField *)field
+{
+    if (value) {
+        [field setStringValue:value];
+    } else {
+        [field setStringValue:@""];
+    }
+}
+
+- (IBAction)showAdvancedWorkingDirConfigPanel:(id)sender
+{
+    // Populate initial values
+    Bookmark* bookmark = [dataSource bookmarkWithGuid:[bookmarksTableView selectedGuid]];
+
+    [self setAdvancedBookmarkMatrix:awdsWindowDirectoryType
+                          withValue:[bookmark objectForKey:KEY_AWDS_WIN_OPTION]];
+    [self safelySetStringValue:[bookmark objectForKey:KEY_AWDS_WIN_DIRECTORY] 
+                            in:awdsWindowDirectory];
+
+    [self setAdvancedBookmarkMatrix:awdsTabDirectoryType
+                          withValue:[bookmark objectForKey:KEY_AWDS_TAB_OPTION]];
+    [self safelySetStringValue:[bookmark objectForKey:KEY_AWDS_TAB_DIRECTORY]
+                            in:awdsTabDirectory];
+
+    [self setAdvancedBookmarkMatrix:awdsPaneDirectoryType
+                          withValue:[bookmark objectForKey:KEY_AWDS_PANE_OPTION]];
+    [self safelySetStringValue:[bookmark objectForKey:KEY_AWDS_PANE_DIRECTORY]
+                            in:awdsPaneDirectory];
+
+
+    [NSApp beginSheet:advancedWorkingDirSheet_
+       modalForWindow:[self window]
+        modalDelegate:self
+       didEndSelector:@selector(advancedWorkingDirSheetClosed:returnCode:contextInfo:)
+          contextInfo:nil];
+}
+
+- (void)setValueInBookmark:(NSMutableDictionary *)dict
+        forAdvancedWorkingDirMatrix:(NSMatrix *)matrix
+        key:(NSString *)key
+{
+    NSString *value;
+    NSString *values[] = { @"Yes", @"No", @"Recycle" };
+    value = values[matrix.selectedTag];
+    [dict setObject:value forKey:key];
+}
+
+- (IBAction)closeAdvancedWorkingDirSheet:(id)sender
+{
+    Bookmark* bookmark = [dataSource bookmarkWithGuid:[bookmarksTableView selectedGuid]];
+    NSMutableDictionary *dict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
+    [self setValueInBookmark:dict
+          forAdvancedWorkingDirMatrix:awdsWindowDirectoryType
+          key:KEY_AWDS_WIN_OPTION];
+    [dict setObject:[awdsWindowDirectory stringValue] forKey:KEY_AWDS_WIN_DIRECTORY];
+
+    [self setValueInBookmark:dict
+          forAdvancedWorkingDirMatrix:awdsTabDirectoryType
+          key:KEY_AWDS_TAB_OPTION];
+    [dict setObject:[awdsTabDirectory stringValue] forKey:KEY_AWDS_TAB_DIRECTORY];
+
+    [self setValueInBookmark:dict
+          forAdvancedWorkingDirMatrix:awdsPaneDirectoryType
+          key:KEY_AWDS_PANE_OPTION];
+    [dict setObject:[awdsPaneDirectory stringValue] forKey:KEY_AWDS_PANE_DIRECTORY];
+
+    [dataSource setBookmark:dict withGuid:[bookmark objectForKey:KEY_GUID]];
+    [self bookmarkSettingChanged:nil];
+
+    [NSApp endSheet:advancedWorkingDirSheet_];
+}
+
+- (void)advancedWorkingDirSheetClosed:(NSWindow *)sheet
+                           returnCode:(int)returnCode
+                          contextInfo:(void *)contextInfo
+{
+    [sheet close];
 }
 
 - (IBAction)editSmartSelection:(id)sender
@@ -2473,13 +2566,19 @@ static float versionNumber;
     [bookmarkCommand setStringValue:command];
     [initialText setStringValue:text];
 
+    BOOL enabledAdvancedEdit = NO;
     if ([customDir isEqualToString:@"Yes"]) {
-            [bookmarkDirectoryType selectCellWithTag:0];
+        [bookmarkDirectoryType selectCellWithTag:0];
     } else if ([customDir isEqualToString:@"Recycle"]) {
-            [bookmarkDirectoryType selectCellWithTag:2];
+        [bookmarkDirectoryType selectCellWithTag:2];
+    } else if ([customDir isEqualToString:@"Advanced"]) {
+        [bookmarkDirectoryType selectCellWithTag:3];
+        enabledAdvancedEdit = YES;
     } else {
-            [bookmarkDirectoryType selectCellWithTag:1];
+        [bookmarkDirectoryType selectCellWithTag:1];
     }
+    [editAdvancedConfigButton setEnabled:enabledAdvancedEdit];
+
     [bookmarkDirectory setStringValue:dir];
     [self _populateBookmarkUrlSchemesFromDict:dict];
 
@@ -2885,11 +2984,16 @@ static float versionNumber;
             customDir = @"Recycle";
             break;
 
+        case 3:
+            customDir = @"Advanced";
+            break;
+
         case 1:
         default:
             customDir = @"No";
             break;
     }
+    [editAdvancedConfigButton setEnabled:[customDir isEqualToString:@"Advanced"]];
 
     if (sender == optionKeySends && [[optionKeySends selectedCell] tag] == OPT_META) {
         [self _maybeWarnAboutMeta];
@@ -2939,6 +3043,22 @@ static float versionNumber;
     [newDict setObject:dir forKey:KEY_WORKING_DIRECTORY];
     [newDict setObject:customCommand forKey:KEY_CUSTOM_COMMAND];
     [newDict setObject:customDir forKey:KEY_CUSTOM_DIRECTORY];
+
+    // Just copy over advanced working dir settings
+    NSArray *valuesToCopy = [NSArray arrayWithObjects:
+        KEY_AWDS_WIN_OPTION,
+        KEY_AWDS_WIN_DIRECTORY,
+        KEY_AWDS_TAB_OPTION,
+        KEY_AWDS_TAB_DIRECTORY,
+        KEY_AWDS_PANE_OPTION,
+        KEY_AWDS_PANE_DIRECTORY,
+        nil];
+    for (NSString *key in valuesToCopy) {
+        id value = [origBookmark objectForKey:key];
+        if (value) {
+            [newDict setObject:value forKey:key];
+        }
+    }
 
     // Colors tab
     [newDict setObject:[ITAddressBookMgr encodeColor:[ansi0Color color]] forKey:KEY_ANSI_0_COLOR];
