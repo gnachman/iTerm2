@@ -3755,6 +3755,7 @@ NSString *sessionsKey = @"sessions";
     // formerly countless tabs show their counts.
     for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
         PTYTab *aTab = [[TABVIEW tabViewItemAtIndex:i] identifier];
+        [aTab updatePaneTitles];
         [aTab setObjectCount:i+1];
 
         // Update dimmed status of inactive sessions in split panes in case the preference changed.

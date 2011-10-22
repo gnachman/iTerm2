@@ -191,6 +191,11 @@ static const int MIN_SESSION_COLUMNS = 2;
 // Does any session in this tab require prompt on close?
 - (BOOL)promptOnClose;
 
+// Anyone changing the number of sessions must call this after the sessions
+// are "well formed".
+- (void)numberOfSessionsDidChange;
+- (void)updatePaneTitles;
+
 #pragma mark NSSplitView delegate methods
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;
 // This is the implementation of splitViewDidResizeSubviews. The delegate method isn't called when
@@ -198,7 +203,6 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)_splitViewDidResizeSubviews:(NSSplitView*)splitView;
 - (CGFloat)splitView:(NSSplitView *)splitView constrainSplitPosition:(CGFloat)proposedPosition ofSubviewAt:(NSInteger)dividerIndex;
 - (void)_recursiveRemoveView:(NSView*)theView;
-- (void)numberOfSessionsDidChange;
 
 @end
 

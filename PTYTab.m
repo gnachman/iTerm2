@@ -133,14 +133,20 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     deadStateColor = [NSColor grayColor];
 }
 
-- (void)numberOfSessionsDidChange
+- (void)updatePaneTitles
 {
+    const BOOL showTitles = [[PreferencePanel sharedInstance] showPaneTitles];
     NSArray *sessions = [self sessions];
     for (PTYSession *aSession in sessions) {
-        if ([[aSession view] setShowTitle:[sessions count] > 1]) {
+        if ([[aSession view] setShowTitle:showTitles && [sessions count] > 1]) {
             [self fitSessionToCurrentViewSize:aSession];
         }
     }
+}
+
+- (void)numberOfSessionsDidChange
+{
+    [self updatePaneTitles];
 }
 
 - (void)appendSessionViewToViewOrder:(SessionView*)sessionView

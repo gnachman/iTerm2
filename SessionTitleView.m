@@ -51,10 +51,7 @@ static const CGFloat kButtonSize = 17;
                                                      name:NSPopUpButtonWillPopUpNotification
                                                    object:menuButton_];
         [menuButton_ addItemWithTitle:@"Foo"];
-        [menuButton_ addItemWithTitle:@"Bar"];
 
-        NSLog(@"menu button %@", [NSValue valueWithRect:menuButton_.frame]);
-        
         menuButton_.frame = NSMakeRect(frame.size.width - menuButton_.frame.size.width - kMargin,
                                        (frame.size.height - menuButton_.frame.size.height) / 2,
                                        menuButton_.frame.size.width,
