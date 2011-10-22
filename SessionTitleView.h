@@ -22,8 +22,11 @@
     NSButton *closeButton_;
     NSPopUpButton *menuButton_;
     NSObject<SessionTitleViewDelegate> *delegate_;
+    double dimmingAmount_;
 }
 
 @property (nonatomic, copy) NSString *title;
 @property (nonatomic, assign) NSObject<SessionTitleViewDelegate> *delegate;
+@property (nonatomic, assign) double dimmingAmount;
+
 @end

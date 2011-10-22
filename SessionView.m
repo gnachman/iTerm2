@@ -206,6 +206,7 @@ static NSDate* lastResizeDate_;
     double amount = [self adjustedDimmingAmount];
 
     [self _dimShadeToDimmingAmount:amount];
+    [title_ setDimmingAmount:amount];
 }
 
 - (void)setDimmed:(BOOL)isDimmed

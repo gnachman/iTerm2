@@ -15,6 +15,7 @@ static const CGFloat kButtonSize = 17;
 
 @synthesize title = title_;
 @synthesize delegate = delegate_;
+@synthesize dimmingAmount = dimmingAmount_;
 
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
@@ -104,20 +105,33 @@ static const CGFloat kButtonSize = 17;
     [delegate_ close];
 }
 
+- (NSColor *)dimmedColor:(NSColor *)origColor
+{
+    NSColor *color = [origColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    double r = [color redComponent];
+    double g = [color greenComponent];
+    double b = [color blueComponent];
+    double alpha = 1 - dimmingAmount_;
+    r = alpha * r + (1 - alpha) * 0.85;
+    g = alpha * g + (1 - alpha) * 0.85;
+    b = alpha * b + (1 - alpha) * 0.85;
+    return [NSColor colorWithCalibratedRed:r green:g blue:b alpha:1];
+}
+
+- (NSColor *)dimmedBackgroundColor
+{
+    return [self dimmedColor:[NSColor windowFrameColor]];
+}
+
 - (void)drawRect:(NSRect)dirtyRect
 {
-    [[NSColor windowFrameColor] set];
+    [[self dimmedBackgroundColor] set];
     NSRectFill(dirtyRect);
-/*
-    NSGradient *aGradient = [[[NSGradient alloc] initWithStartingColor:[NSColor grayColor] endingColor:[NSColor darkGrayColor]] autorelease];
-    [aGradient drawInRect:NSMakeRect(dirtyRect.origin.x, 0, dirtyRect.size.width, self.frame.size.height) angle:90];
-*/
-    
     [[NSColor blackColor] set];
-    
+
     [[NSColor lightGrayColor] set];
     NSRectFill(NSMakeRect(dirtyRect.origin.x, 1, dirtyRect.size.width, 1));
-    
+
     [[NSColor blackColor] set];
     NSRectFill(NSMakeRect(dirtyRect.origin.x, 0, dirtyRect.size.width, 1));
     NSRectFill(NSMakeRect(self.frame.size.width - 1, 0, 1, self.frame.size.height));
@@ -129,6 +143,13 @@ static const CGFloat kButtonSize = 17;
 {
     [label_ setStringValue:title];
     [self setNeedsDisplay:YES];
+}
+
+- (void)setDimmingAmount:(double)value
+{
+    dimmingAmount_ = value;
+    [self setNeedsDisplay:YES];
+    [label_ setTextColor:[self dimmedColor:[NSColor blackColor]]];
 }
 
 @end
