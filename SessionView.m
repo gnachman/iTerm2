@@ -33,9 +33,11 @@
 #import "SplitSelectionView.h"
 #import "MovePaneController.h"
 #import "PSMTabDragAssistant.h"
+#import "SessionTitleView.h"
 
 static const float kTargetFrameRate = 1.0/60.0;
 static int nextViewId;
+static const double kTitleHeight = 22;
 
 // Last time any window was resized TODO(georgen):it would be better to track per window.
 static NSDate* lastResizeDate_;
@@ -93,7 +95,7 @@ static NSDate* lastResizeDate_;
     self = [self initWithFrame:frame];
     if (self) {
         [self _initCommon];
-        session_ = [session retain];
+        [self setSession:session];
     }
     return self;
 }
@@ -114,6 +116,7 @@ static NSDate* lastResizeDate_;
 - (void)dealloc
 {
     [previousUpdate_ release];
+    [title_ removeFromSuperview];
     [self unregisterDraggedTypes];
     [session_ release];
     [super dealloc];
@@ -256,9 +259,18 @@ static NSDate* lastResizeDate_;
 
 - (void)mouseDown:(NSEvent*)event
 {
+    // A click on the very top of the screen while in full screen mode may not be
+    // in any subview!
+    NSPoint basePoint = [[self window] convertScreenToBase:[NSEvent mouseLocation]];
+    NSPoint relativePoint = [self convertPointFromBase:basePoint];
+    if (title_ && NSPointInRect(relativePoint, [title_ frame])) {
+        [super mouseDown:event];
+        return;
+    }
     if (splitSelectionView_) {
         [splitSelectionView_ mouseDown:event];
-    } else if ([[[self session] TEXTVIEW] mouseDownImpl:event]) {
+    } else if (NSPointInRect(relativePoint, [[[self session] SCROLLVIEW] frame]) &&
+               [[[self session] TEXTVIEW] mouseDownImpl:event]) {
         [super mouseDown:event];
     }
 }
@@ -450,6 +462,54 @@ static NSDate* lastResizeDate_;
 - (BOOL)wantsPeriodicDraggingUpdates
 {
     return YES;
+}
+
+- (BOOL)setShowTitle:(BOOL)value
+{
+    if (value == showTitle_) {
+        return NO;
+    }
+    showTitle_ = value;
+    PTYScrollView *scrollView = [session_ SCROLLVIEW];
+    NSRect frame = [scrollView frame];
+    if (showTitle_) {
+        frame.size.height -= kTitleHeight;
+        title_ = [[[SessionTitleView alloc] initWithFrame:NSMakeRect(0,
+                                                                     self.frame.size.height - kTitleHeight,
+                                                                     self.frame.size.width,
+                                                                     kTitleHeight)] autorelease];
+        [title_ setAutoresizingMask:NSViewWidthSizable | NSViewMinYMargin];
+        title_.delegate = self;
+        [self addSubview:title_];
+    } else {
+        frame.size.height += kTitleHeight;
+        [title_ removeFromSuperview];
+        title_ = nil;
+    }
+    [scrollView setFrame:frame];
+    [self setTitle:[session_ name]];
+    return YES;
+}
+
+- (void)setTitle:(NSString *)title
+{
+    if (!title) {
+        title = @"";
+    }
+    title_.title = title;
+    [title_ setNeedsDisplay:YES];
+}
+
+#pragma mark SessionTitleViewDelegate
+
+- (NSMenu *)menu
+{
+    return [[session_ TEXTVIEW] menuForEvent:nil];
+}
+
+- (void)close
+{
+    [[[session_ tab] realParentWindow] closeSessionWithConfirmation:session_];
 }
 
 @end

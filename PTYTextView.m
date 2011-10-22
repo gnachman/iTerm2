@@ -3425,29 +3425,32 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)_haveShortSelection
 {
-    return startX > -1 && abs(startY - endY) <= 1;
+    return startX > -1 && startY >= 0 && abs(startY - endY) <= 1;
 }
 
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
 {
-    PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-    NSPoint locationInWindow = [theEvent locationInWindow];
-    NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
-    VT100Terminal *terminal = [dataSource terminal];
-    MouseMode mm = [terminal mouseMode];
-    if (frontTextView == self &&
-        ([self xtermMouseReporting]) &&
-        (mm == MOUSE_REPORTING_NORMAL ||
-         mm == MOUSE_REPORTING_BUTTON_MOTION ||
-         mm == MOUSE_REPORTING_ALL_MOTION) &&
-        (locationInTextView.y > visibleRect.origin.y) &&
-        [[frontTextView->dataSource session] tab] == [[dataSource session] tab] &&
-        [theEvent type] == NSLeftMouseDown &&
-        ([theEvent modifierFlags] & NSControlKeyMask) &&
-        [[PreferencePanel sharedInstance] passOnControlLeftClick]) {
-        // All the many conditions are met for having the click passed on via xterm mouse reporting.
-        return nil;
+    if (theEvent) {
+        // Not for "synthetic" events, as the session title view sends.
+        PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
+        NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+        NSPoint locationInWindow = [theEvent locationInWindow];
+        NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
+        VT100Terminal *terminal = [dataSource terminal];
+        MouseMode mm = [terminal mouseMode];
+        if (frontTextView == self &&
+            ([self xtermMouseReporting]) &&
+            (mm == MOUSE_REPORTING_NORMAL ||
+             mm == MOUSE_REPORTING_BUTTON_MOTION ||
+             mm == MOUSE_REPORTING_ALL_MOTION) &&
+            (locationInTextView.y > visibleRect.origin.y) &&
+            [[frontTextView->dataSource session] tab] == [[dataSource session] tab] &&
+            [theEvent type] == NSLeftMouseDown &&
+            ([theEvent modifierFlags] & NSControlKeyMask) &&
+            [[PreferencePanel sharedInstance] passOnControlLeftClick]) {
+            // All the many conditions are met for having the click passed on via xterm mouse reporting.
+            return nil;
+        }
     }
     NSMenu *theMenu;
 
@@ -3489,18 +3492,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Menu items for acting on text selections
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Open Selection as URL",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(browse:) keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Search Google for Selection",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(searchInBrowser:) keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Send Email to Selected Address",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(mail:) keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 
     // Split pane options
     [theMenu addItemWithTitle:@"Split Pane Vertically" action:@selector(splitTextViewVertically:) keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
     [theMenu addItemWithTitle:@"Split Pane Horizontally" action:@selector(splitTextViewHorizontally:) keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
     [theMenu addItemWithTitle:@"Move Session to Split Pane" action:@selector(movePane:) keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
@@ -3508,10 +3517,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Copy,  paste, and save
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Copy",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(copy:) keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Paste",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(paste:) keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Save",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(saveDocumentAs:) keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
@@ -3519,11 +3531,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Select all
     [theMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Select All",@"iTerm", [NSBundle bundleForClass: [self class]], @"Context menu")
                      action:@selector(selectAll:) keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
     // Clear buffer
     [theMenu addItemWithTitle:@"Clear Buffer"
                        action:@selector(clearTextViewBuffer:)
                 keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
@@ -3532,6 +3546,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [theMenu addItemWithTitle:@"Edit Session..."
                        action:@selector(editTextViewSession:)
                 keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
@@ -3540,6 +3555,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [theMenu addItemWithTitle:@"Toggle Broadcasting Input"
                        action:@selector(toggleBroadcastingInput:)
                 keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
@@ -3548,10 +3564,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [theMenu addItemWithTitle:@"Close"
                        action:@selector(closeTextViewSession:)
                 keyEquivalent:@""];
+    [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
 
     // Ask the delegae if there is anything to be added
-    if ([[self delegate] respondsToSelector:@selector(menuForEvent: menu:)])
-        [[self delegate] menuForEvent:theEvent menu: theMenu];
+    if ([[self delegate] respondsToSelector:@selector(menuForEvent: menu:)]) {
+        [[self delegate] menuForEvent:theEvent menu:theMenu];
+    }
 
     return [theMenu autorelease];
 }

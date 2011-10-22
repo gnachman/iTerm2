@@ -58,6 +58,8 @@
 
     [term insertSession:movingSession atIndex:0];
     [oldView autorelease];
+    [theTab numberOfSessionsDidChange];
+    [[term currentTab] numberOfSessionsDidChange];
  }
 
 - (SessionView *)removeAndClearSession
