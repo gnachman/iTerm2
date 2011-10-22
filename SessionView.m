@@ -260,12 +260,24 @@ static NSDate* lastResizeDate_;
 
 - (void)mouseDown:(NSEvent*)event
 {
+    static int inme;
+    if (inme) {
+        // Avoid infinite recursion. Not quite sure why this happens, but a call
+        // to [title_ mouseDown:] or [super mouseDown:] will sometimes (after a
+        // few steps through the OS) bring you back here. It only happens
+        // consistently when dragging the pane title bar, but it happens inconsitently
+        // with clicks in the title bar too.
+        return;
+    }
+    ++inme;
     // A click on the very top of the screen while in full screen mode may not be
     // in any subview!
-    NSPoint basePoint = [[self window] convertScreenToBase:[NSEvent mouseLocation]];
+    NSPoint p = [NSEvent mouseLocation];
+    NSPoint basePoint = [[self window] convertScreenToBase:p];
     NSPoint relativePoint = [self convertPointFromBase:basePoint];
     if (title_ && NSPointInRect(relativePoint, [title_ frame])) {
-        [super mouseDown:event];
+        [title_ mouseDown:event];
+        --inme;
         return;
     }
     if (splitSelectionView_) {
@@ -274,6 +286,7 @@ static NSDate* lastResizeDate_;
                [[[self session] TEXTVIEW] mouseDownImpl:event]) {
         [super mouseDown:event];
     }
+    --inme;
 }
 
 - (FindViewController*)findViewController
@@ -511,6 +524,13 @@ static NSDate* lastResizeDate_;
 - (void)close
 {
     [[[session_ tab] realParentWindow] closeSessionWithConfirmation:session_];
+}
+
+- (void)beginDrag
+{
+    if (![[MovePaneController sharedInstance] session]) {
+        [[MovePaneController sharedInstance] beginDrag:session_];
+    }
 }
 
 @end

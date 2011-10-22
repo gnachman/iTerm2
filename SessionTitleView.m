@@ -72,6 +72,9 @@ static const CGFloat kButtonSize = 17;
         lframe.size.width = menuButton_.frame.origin.x - x - kMargin;
         label_.frame = lframe;
         [self addSubview:label_];
+
+        [self addCursorRect:NSMakeRect(0, 0, frame.size.width, frame.size.height)
+                     cursor:[NSCursor arrowCursor]];
     }
     return self;
 }
@@ -84,9 +87,7 @@ static const CGFloat kButtonSize = 17;
 
 - (void)popupWillOpen:(NSNotification *)notification
 {
-    NSLog(@"popupWillOpen");
     if ([notification object] == menuButton_) {
-        NSLog(@"Set menu");
         NSMenu *menu = [delegate_ menu];
         NSMenuItem *item = [[[NSMenuItem alloc] initWithTitle:@"" action:nil keyEquivalent:@""] autorelease];
         [menu insertItem:item atIndex:0];
@@ -147,6 +148,11 @@ static const CGFloat kButtonSize = 17;
     dimmingAmount_ = value;
     [self setNeedsDisplay:YES];
     [label_ setTextColor:[self dimmedColor:[NSColor blackColor]]];
+}
+
+- (void)mouseDragged:(NSEvent *)theEvent
+{
+    [delegate_ beginDrag];
 }
 
 @end

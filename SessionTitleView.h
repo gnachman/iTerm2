@@ -12,6 +12,7 @@
 
 - (NSMenu *)menu;
 - (void)close;
+- (void)beginDrag;
 
 @end
 
