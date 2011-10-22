@@ -28,11 +28,13 @@
 #import <Cocoa/Cocoa.h>
 #import "FindViewController.h"
 #import "PTYSession.h"
+#import "SessionTitleView.h"
 
 @class PTYSession;
 @class SplitSelectionView;
+@class SessionTitleView;
 
-@interface SessionView : NSView {
+@interface SessionView : NSView <SessionTitleViewDelegate> {
     PTYSession* session_;
     BOOL dim_;
     BOOL backgroundDimmed_;
@@ -56,6 +58,9 @@
     // When moving a pane, a view is put over all sessions to help the user
     // choose how to split the destination.
     SplitSelectionView *splitSelectionView_;
+
+    BOOL showTitle_;
+    SessionTitleView *title_;
 }
 
 + (NSDate*)lastResizeDate;
@@ -75,5 +80,7 @@
 - (void)saveFrameSize;
 - (void)restoreFrameSize;
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode;
+- (BOOL)setShowTitle:(BOOL)value;
+- (void)setTitle:(NSString *)title;
 
 @end

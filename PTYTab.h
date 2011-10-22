@@ -198,6 +198,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)_splitViewDidResizeSubviews:(NSSplitView*)splitView;
 - (CGFloat)splitView:(NSSplitView *)splitView constrainSplitPosition:(CGFloat)proposedPosition ofSubviewAt:(NSInteger)dividerIndex;
 - (void)_recursiveRemoveView:(NSView*)theView;
+- (void)numberOfSessionsDidChange;
 
 @end
 
