@@ -241,6 +241,9 @@ NSWindowDelegate,
     IBOutlet NSPanel *coprocesssPanel_;
     IBOutlet NSButton *coprocessOkButton_;
     IBOutlet NSTextField *coprocessCommand_;
+
+    NSDictionary *lastArrangement_;
+    BOOL wellFormed_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
@@ -320,6 +323,8 @@ NSWindowDelegate,
 - (IBAction)openSplitHorizontallySheet:(id)sender;
 - (IBAction)openSplitVerticallySheet:(id)sender;
 - (IBAction)findCursor:(id)sender;
+
+- (void)futureInvalidateRestorableState;
 
 // Close the active session.
 - (IBAction)closeCurrentSession:(id)sender;
@@ -674,7 +679,9 @@ NSWindowDelegate,
 // Return the smallest allowable width for this terminal.
 - (float)minWidth;
 
++ (PseudoTerminal*)bareTerminalWithArrangement:(NSDictionary*)arrangement;
 + (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement;
+- (void)loadArrangement:(NSDictionary *)arrangement;
 - (NSDictionary*)arrangement;
 
 - (void)appendTab:(PTYTab*)theTab;

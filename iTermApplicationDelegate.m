@@ -178,7 +178,9 @@ static BOOL hasBecomeActive = NO;
             }
         } else if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
             [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
-        } else {
+        } else if (!IsLionOrLater() || ![[NSUserDefaults standardUserDefaults] objectForKey:@"NotFirstRun"]) {
+            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES]
+                                                      forKey:@"NotFirstRun"];
             [self newWindow:nil];
         }
     }

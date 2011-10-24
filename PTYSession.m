@@ -449,6 +449,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [SCREEN resizeWidth:width height:height];
     [SHELL setWidth:width height:height];
     [TEXTVIEW clearHighlights];
+    [[tab_ realParentWindow] futureInvalidateRestorableState];
 }
 
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode
@@ -2015,6 +2016,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         horizontalSpacing:[[aDict objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
         verticalSpacing:[[aDict objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [SCREEN setSaveToScrollbackInAlternateScreen:[aDict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] ? [[aDict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] boolValue] : YES];
+    [[tab_ realParentWindow] futureInvalidateRestorableState];
 }
 
 // Contextual menu
@@ -2674,6 +2676,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     }
     [addressBookEntry release];
     addressBookEntry = [dict retain];
+    [[tab_ realParentWindow] futureInvalidateRestorableState];
 }
 
 - (NSDictionary *)addressBookEntry

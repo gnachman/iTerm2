@@ -289,6 +289,8 @@
 		1DF8AF5813FD781700C8A435 /* SplitPanel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF8AF5613FD781700C8A435 /* SplitPanel.h */; };
 		1DF8AF5913FD781700C8A435 /* SplitPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF8AF5713FD781700C8A435 /* SplitPanel.m */; };
 		49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */ = {isa = PBXBuildFile; fileRef = 49A6E4081211CC6000D9AD6F /* Compatability.h */; };
+		5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */ = {isa = PBXBuildFile; fileRef = 5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */; };
+		5ECE00601454E59B004861E9 /* PseudoTerminalRestorer.m in Sources */ = {isa = PBXBuildFile; fileRef = 5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */; };
 		5ECE4AC51451343E002A9CC2 /* Growl.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5ECE4AC41451343E002A9CC2 /* Growl.framework */; };
 		5ECE4AE714513EFB002A9CC2 /* Growl.framework in Copy Files */ = {isa = PBXBuildFile; fileRef = 5ECE4AC41451343E002A9CC2 /* Growl.framework */; };
 		5ECE4AE814513F05002A9CC2 /* Growl.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = 5ECE4AC41451343E002A9CC2 /* Growl.framework */; };
@@ -511,6 +513,8 @@
 		20E74F4804E9089700000106 /* ITAddressBookMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITAddressBookMgr.h; sourceTree = "<group>"; };
 		20E74F4904E9089700000106 /* ITAddressBookMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ITAddressBookMgr.m; sourceTree = "<group>"; };
 		49A6E4081211CC6000D9AD6F /* Compatability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Compatability.h; sourceTree = "<group>"; };
+		5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PseudoTerminalRestorer.h; sourceTree = "<group>"; };
+		5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PseudoTerminalRestorer.m; sourceTree = "<group>"; };
 		5ECE4AC41451343E002A9CC2 /* Growl.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Growl.framework; sourceTree = "<group>"; };
 		5ECE4AE914514058002A9CC2 /* Growl Registration Ticket.growlRegDict */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "Growl Registration Ticket.growlRegDict"; sourceTree = "<group>"; };
 		872EBC5304E42E320073D10E /* NSStringITerm.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = NSStringITerm.h; path = Headers/iTerm/NSStringITerm.h; sourceTree = "<group>"; };
@@ -663,6 +667,8 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */,
+				5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1DEE9FDB11FCA60F009E18C9 /* credits.rtf */,
@@ -1274,6 +1280,7 @@
 				1D24C2C5142FEACF006B246F /* SmartSelectionController.h in Headers */,
 				1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */,
 				1DEDC8FD1451F67D004F1615 /* SessionTitleView.h in Headers */,
+				5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1544,6 +1551,7 @@
 				1D24C2C6142FEACF006B246F /* SmartSelectionController.m in Sources */,
 				1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */,
 				1DEDC8FE1451F67D004F1615 /* SessionTitleView.m in Sources */,
+				5ECE00601454E59B004861E9 /* PseudoTerminalRestorer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1690,7 +1698,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_LDFLAGS = "-licucore";
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.5;
+				SDKROOT = macosx10.7;
 				SECTORDER_FLAGS = "";
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = "-Wall";
@@ -1728,7 +1736,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_LDFLAGS = "-licucore";
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.5;
+				SDKROOT = macosx10.7;
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = "-Wall";
 				WRAPPER_EXTENSION = app;
@@ -1766,7 +1774,7 @@
 				OTHER_REZFLAGS = "";
 				PRODUCT_NAME = iTerm;
 				REZ_EXECUTABLE = YES;
-				SDKROOT = macosx10.5;
+				SDKROOT = macosx10.7;
 				SECTORDER_FLAGS = "";
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = "-Wall";
@@ -1791,7 +1799,7 @@
 				GENERATE_PROFILING_CODE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
-				SDKROOT = macosx10.5;
+				SDKROOT = macosx10.7;
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = "-Wall";
 			};
@@ -1808,7 +1816,7 @@
 				GCC_WARN_SIGN_COMPARE = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
-				SDKROOT = macosx10.5;
+				SDKROOT = macosx10.7;
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = "-Wall";
 			};
@@ -1824,7 +1832,7 @@
 				GCC_WARN_SIGN_COMPARE = NO;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
-				SDKROOT = macosx10.5;
+				SDKROOT = macosx10.7;
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = "-Wall";
 			};

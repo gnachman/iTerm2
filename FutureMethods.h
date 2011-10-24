@@ -16,3 +16,8 @@
 - (NSArray *)futureTouchesMatchingPhase:(int)phase inView:(NSView *)view;
 @end
 
+@interface NSWindow (Future)
+- (void)futureSetRestorable:(BOOL)value;
+- (void)futureSetRestorationClass:(Class)class;
+- (void)futureInvalidateRestorableState;
+@end

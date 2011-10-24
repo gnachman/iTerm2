@@ -8,6 +8,35 @@
 
 #import "FutureMethods.h"
 
+@implementation NSWindow (Future)
+
+- (void)futureSetRestorable:(BOOL)value
+{
+    if ([self respondsToSelector:@selector(setRestorable:)]) {
+        NSMethodSignature *sig = [[self class] instanceMethodSignatureForSelector:@selector(setRestorable:)];
+        NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+        [inv setTarget:self];
+        [inv setSelector:@selector(setRestorable:)];
+        [inv setArgument:&value atIndex:2];
+        [inv invoke];
+    }
+}
+
+- (void)futureSetRestorationClass:(Class)class
+{
+    if ([self respondsToSelector:@selector(futureSetRestorationClass:)]) {
+        [self performSelector:@selector(setRestorationClass:) withObject:class];
+    }
+}
+
+- (void)futureInvalidateRestorableState
+{
+    if ([self respondsToSelector:@selector(invalidateRestorableState)]) {
+        [self performSelector:@selector(invalidateRestorableState)];
+    }
+}
+
+@end
 @implementation NSView (Future)
 - (void)futureSetAcceptsTouchEvents:(BOOL)value
 {
@@ -47,9 +76,9 @@
         [inv invoke];
         NSArray *result;
         [inv getReturnValue:&result];
-		return result;
+        return result;
     } else {
-		return [NSArray array];
-	}
+        return [NSArray array];
+    }
 }
 @end
