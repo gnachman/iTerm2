@@ -6,6 +6,12 @@ ITERM_PID=$(shell pgrep "iTerm")
 APPS := /Applications
 ITERM_CONF_PLIST = $(HOME)/Library/Preferences/com.googlecode.iterm2.plist
 
+XCB_FLAGS =
+
+ifdef LION
+	XCB_FLAGS = -sdk macosx10.7 MACOSX_DEPLOYMENT_TARGET=10.7
+endif
+
 .PHONY: clean all backup-old-iterm restart
 
 all: Deployment
@@ -18,11 +24,11 @@ install: | Deployment backup-old-iterm
 
 Development:
 	echo "Using PATH for build: $(PATH)"
-	xcodebuild -parallelizeTargets -alltargets -configuration Development && \
+	xcodebuild $(XCB_FLAGS) -parallelizeTargets -alltargets -configuration Development && \
 	chmod -R go+rX build/Development
 
 Deployment:
-	xcodebuild -parallelizeTargets -alltargets -configuration Deployment && \
+	xcodebuild $(XCB_FLAGS) -parallelizeTargets -alltargets -configuration Deployment && \
 	chmod -R go+rX build/Deployment
 
 run: Development
@@ -33,7 +39,7 @@ zip: Deployment
 	zip -r iTerm_$$(cat ../../version.txt).$$(date '+%Y%m%d').zip iTerm.app
 
 clean:
-	xcodebuild -parallelizeTargets -alltargets clean
+	xcodebuild $(XCB_FLAGS) -parallelizeTargets -alltargets clean
 	rm -rf build
 	rm -f *~
 
