@@ -15,6 +15,11 @@
                               state:(NSCoder *)state
                   completionHandler:(void (^)(NSWindow *, NSError *))completionHandler
 {
+    if ([[[NSUserDefaults standardUserDefaults] objectForKey:@"OpenArrangementAtStartup"] boolValue]) {
+        completionHandler(nil, nil);
+        return;
+    }
+
     NSDictionary *arrangement = [state decodeObjectForKey:@"ptyarrangement"];
     if (arrangement) {
         PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement];
