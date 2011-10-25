@@ -667,8 +667,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */,
-				5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1DEE9FDB11FCA60F009E18C9 /* credits.rtf */,
@@ -732,6 +730,7 @@
 				1D29732614082676004C5DBE /* MovePaneController.m */,
 				1D988596135D23BD0072023F /* ProcessCache.m */,
 				FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */,
+				5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */,
 				E8CF755F026DDA6303A80106 /* PTYScrollView.m */,
 				F52ED8DD037F0A7D01A8A066 /* PTYSession.m */,
 				2076B15804E8817300000106 /* PTToolbarController.m */,
@@ -761,6 +760,7 @@
 				1D24C2C3142FEACF006B246F /* SmartSelectionController.h */,
 				1D24C282142EF334006B246F /* SendTextTrigger.h */,
 				1D67AAA714284BF300D5DA4E /* ToolNotes.h */,
+				5ECE005D1454E59B004861E9 /* PseudoTerminalRestorer.h */,
 				1DE214DF128212EE004E3ADF /* Autocomplete.h */,
 				1D31BC63142D33CA001F7ECB /* TriggerController.h */,
 				1D9DDD90142E5AC600275650 /* CoprocessTrigger.h */,
@@ -1698,7 +1698,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_LDFLAGS = "-licucore";
 				PRODUCT_NAME = iTerm;
-				SDKROOT = macosx10.7;
+				SDKROOT = macosx10.6;
 				SECTORDER_FLAGS = "";
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = "-Wall";
@@ -1799,7 +1799,7 @@
 				GENERATE_PROFILING_CODE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				PREBINDING = NO;
-				SDKROOT = macosx10.7;
+				SDKROOT = macosx10.6;
 				VALID_ARCHS = x86_64;
 				WARNING_CFLAGS = "-Wall";
 			};
