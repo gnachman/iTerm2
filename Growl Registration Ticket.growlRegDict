@@ -11,7 +11,12 @@
         </array>
         <key>DefaultNotifications</key>
         <array>
+            <string>Bells</string>
+            <string>Broken Pipes</string>
             <string>Miscellaneous</string>
+            <string>Idle</string>
+            <string>New Output</string>
+            <string>Customized Message</string>
         </array>
         <key>TicketVersion</key>
         <integer>1</integer>
