@@ -32,6 +32,7 @@
 #import "TextViewWrapper.h"
 #import "FindViewController.h"
 #import "ITAddressBookMgr.h"
+#import "LineBuffer.h"
 
 #include <sys/time.h>
 
@@ -227,6 +228,9 @@ typedef enum {
 
     // Does the terminal think this session is focused?
     BOOL focused_;
+
+    FindContext tailFindContext_;
+    NSTimer *tailFindTimer_;
 }
 
 // Return the current pasteboard value as a string.
@@ -508,6 +512,7 @@ typedef enum {
 - (void)launchCoprocessWithCommand:(NSString *)command;
 
 - (void)setFocused:(BOOL)focused;
+- (BOOL)wantsContentChangedNotification;
 
 @end
 
@@ -528,5 +533,8 @@ typedef enum {
 - (NSString*)_lang;
 - (NSString*)encodingName;
 - (void)setDvrFrame;
+- (void)stopTailFind;
+- (void)beginTailFind;
+- (void)continueTailFind;
 
 @end

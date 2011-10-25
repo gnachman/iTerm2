@@ -50,13 +50,35 @@
 }
 @end
 
+#define FindOptCaseInsensitive (1 << 0)
+#define FindOptBackwards       (1 << 1)
+#define FindOptRegex           (1 << 2)
+#define FindMultipleResults    (1 << 3)
 typedef struct FindContext {
+    // Current absolute block number being searched.
     int absBlockNum;
+
+    // The substring to search for.
     NSString* substring;
+
+    // A bitwise OR of the options defined above.
     int options;
+
+    // 1: search forward. -1: search backward.
     int dir;
+
+    // The offset within a block to begin searching. -1 means the end of the
+    // block.
     int offset;
+
+    // The offset within a block at which to stop searching. No results
+    // with an offset at or beyond this position will be returned.
     int stopAt;
+
+    // Searching: a search is in progress and this context can be used to search.
+    // Matched: At least one result has been found. This context can be used to
+    //   search again.
+    // NotFound: No results were found and the end of the buffer was reached.
     enum { Searching, Matched, NotFound } status;
     int matchLength;
     NSMutableArray* results;  // used for multiple results
@@ -245,10 +267,6 @@ typedef struct FindContext {
 // Search for a substring. If found, return the position of the hit. Otherwise return -1. Use 0 for the start to indicate the beginning of the buffer or
 // pass the result of a previous findSubstring result. The number of positions the result occupies will be set in *length (which would be different than the
 // length of the substring in the presence of double-width characters.
-#define FindOptCaseInsensitive (1 << 0)
-#define FindOptBackwards       (1 << 1)
-#define FindOptRegex           (1 << 2)
-#define FindMultipleResults    (1 << 3)
 - (void)initFind:(NSString*)substring startingAt:(int)start options:(int)options withContext:(FindContext*)context;
 - (void)releaseFind:(FindContext*)context;
 - (void)findSubstring:(FindContext*)context stopAt:(int)stopAt;
@@ -269,5 +287,8 @@ typedef struct FindContext {
 
 // Returns the position at the end of the buffer
 - (int) lastPos;
+
+// Set the position of the find context to the end of the buffer.
+- (void)setFindContextPositionToEnd:(FindContext *)context;
 
 @end

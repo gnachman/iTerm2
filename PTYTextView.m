@@ -407,6 +407,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
     [workingDirectoryAtLines release];
     [trouter release];
+    [initialFindContext_.substring release];
 
     [super dealloc];
 }
@@ -4116,7 +4117,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 // Add a match to resultMap_
-- (void)_addResultFromX:(int)resStartX absY:(long long)absStartY toX:(int)resEndX toAbsY:(long long)absEndY
+- (void)addResultFromX:(int)resStartX absY:(long long)absStartY toX:(int)resEndX toAbsY:(long long)absEndY
 {
     int width = [dataSource width];
     for (long long y = absStartY; y <= absEndY; y++) {
@@ -4243,6 +4244,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return found;
 }
 
+- (FindContext *)initialFindContext
+{
+    return &initialFindContext_;
+}
+
 // continueFind is called by a timer in the client until it returns NO. It does
 // two things:
 // 1. If _findInProgress is true, search for more results in the dataSource and
@@ -4266,7 +4272,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Add new results to map.
     for (int i = nextOffset_; i < [findResults_ count]; i++) {
         SearchResult* r = [findResults_ objectAtIndex:i];
-        [self _addResultFromX:r->startX absY:r->absStartY toX:r->endX toAbsY:r->absEndY];
+        [self addResultFromX:r->startX absY:r->absStartY toX:r->endX toAbsY:r->absEndY];
         redraw = YES;
     }
     nextOffset_ = [findResults_ count];
@@ -4330,6 +4336,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         withOffset:0
                          inContext:[dataSource findContext]
                    multipleResults:YES];
+
+        [initialFindContext_.substring release];
+        initialFindContext_ = *[dataSource findContext];
+        initialFindContext_.results = nil;
+        initialFindContext_.substring = [initialFindContext_.substring copy];
+
         _findInProgress = YES;
 
         // Reset every bit of state.
@@ -7411,7 +7423,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
 
-    if (foundDirty && [[iTermExpose sharedInstance] isVisible]) {
+    if (foundDirty && [dataSource shouldSendContentsChangedNotification]) {
         changedSinceLastExpose_ = YES;
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabContentsChanged"
                                                             object:nil

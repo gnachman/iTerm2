@@ -116,12 +116,17 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                                              selector:@selector(coprocessChanged)
                                                  name:@"kCoprocessStatusChangeNotification"
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(sessionContentsChanged:)
+                                                 name:@"iTermTabContentsChanged"
+                                               object:nil];
 
     return self;
 }
 
 - (void)dealloc
 {
+    [self stopTailFind];  // This frees the substring in the tail find context, if needed.
     [triggerLine_ release];
     [triggers_ release];
     [pasteboard_ release];
@@ -2787,6 +2792,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         [updateTimer release];
         updateTimer = nil;
     }
+
+    if (tailFindTimer_ && [[[view findViewController] view] isHidden]) {
+        [self stopTailFind];
+    }
     timerRunning_ = NO;
 }
 
@@ -3164,6 +3173,16 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (BOOL)wantsContentChangedNotification
+{
+    // We want a content change notification if it's worth doing a tail find.
+    // That means the find window is open, we're not already doing a tail find,
+    // and a search was performed in the find window (vs select+cmd-e+cmd-f).
+    return !tailFindTimer_ &&
+           ![[[view findViewController] view] isHidden] &&
+           [TEXTVIEW initialFindContext]->substring != nil;
+}
+
 @end
 
 @implementation PTYSession (ScriptingSupport)
@@ -3371,6 +3390,72 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [SCREEN setFromFrame:s len:len info:info];
     [[[self tab] realParentWindow] resetTempTitle];
     [[[self tab] realParentWindow] setWindowTitle];
+}
+
+- (void)continueTailFind
+{
+    NSMutableArray *results = [NSMutableArray array];
+    BOOL more;
+    more = [SCREEN continueFindAllResults:results
+                                inContext:&tailFindContext_];
+    for (SearchResult *r in results) {
+        [TEXTVIEW addResultFromX:r->startX
+                            absY:r->absStartY
+                             toX:r->endX
+                          toAbsY:r->absEndY];
+    }
+    if ([results count]) {
+        [TEXTVIEW setNeedsDisplay:YES];
+    }
+    if (more) {
+        tailFindTimer_ = [NSTimer scheduledTimerWithTimeInterval:0.01
+                                                          target:self
+                                                        selector:@selector(continueTailFind)
+                                                        userInfo:nil
+                                                         repeats:NO];
+    } else {
+        tailFindTimer_ = nil;
+    }
+}
+
+- (void)beginTailFind
+{
+    FindContext *initialFindContext = [TEXTVIEW initialFindContext];
+    if (!initialFindContext->substring) {
+        return;
+    }
+    [SCREEN initFindString:initialFindContext->substring
+          forwardDirection:YES
+              ignoringCase:!!(initialFindContext->options & FindOptCaseInsensitive)
+                     regex:!!(initialFindContext->options & FindOptRegex)
+               startingAtX:0
+               startingAtY:0
+                withOffset:0
+                 inContext:&tailFindContext_
+           multipleResults:YES];
+
+    // Set the starting position to the block & offset that the backward search
+    // began at. Do a forward search from that location.
+    tailFindContext_.absBlockNum = initialFindContext->absBlockNum;
+    tailFindContext_.offset = initialFindContext->offset;
+
+    [self continueTailFind];
+}
+
+- (void)sessionContentsChanged:(NSNotification *)notification
+{
+    if (!tailFindTimer_) {
+        [self beginTailFind];
+    }
+}
+
+- (void)stopTailFind
+{
+    if (tailFindTimer_) {
+        [SCREEN cancelFindInContext:&tailFindContext_];
+        [tailFindTimer_ invalidate];
+        tailFindTimer_ = nil;
+    }
 }
 
 @end

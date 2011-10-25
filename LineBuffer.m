@@ -1555,5 +1555,21 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return position;
 }
 
+- (void)setFindContextPositionToEnd:(FindContext *)context
+{
+    if (![blocks count]) {
+        context->absBlockNum = 0;
+        context->offset = 0;
+        return;
+    }
+    context->absBlockNum = num_dropped_blocks + [blocks count] - 1;
+    if ([blocks count] > num_dropped_blocks) {
+        LineBlock* block = [blocks lastObject];
+        context->offset = [block rawSpaceUsed] - 1;
+    } else {
+        context->offset = 0;
+    }
+}
+
 
 @end

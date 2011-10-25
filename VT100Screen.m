@@ -52,6 +52,7 @@
 #import "DVRBuffer.h"
 #import "PTYTab.h"
 #import "ITAddressBookMgr.h"
+#import "iTermExpose.h"
 
 #define MAX_SCROLLBACK_LINES 1000000
 #define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array
@@ -3477,6 +3478,11 @@ void DumpBuf(screen_char_t* p, int n) {
                                      maxTime:0.1];
 }
 
+- (void)setFindContextPositionToEnd:(FindContext *)context
+{
+    [linebuffer setFindContextPositionToEnd:context];
+}
+
 - (void)saveToDvr
 {
     if (!dvr || ![[PreferencePanel sharedInstance] instantReplay]) {
@@ -3577,6 +3583,11 @@ void DumpBuf(screen_char_t* p, int n) {
     return dvr;
 }
 
+- (BOOL)shouldSendContentsChangedNotification
+{
+    return [[iTermExpose sharedInstance] isVisible] ||
+           [SESSION wantsContentChangedNotification];
+}
 
 @end
 

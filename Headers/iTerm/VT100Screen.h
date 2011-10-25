@@ -302,6 +302,7 @@ void StringToScreenChars(NSString *s,
 - (BOOL)continueFindAllResults:(NSMutableArray*)results
                      inContext:(FindContext*)context;
 - (void)cancelFindInContext:(FindContext*)context;
+- (void)setFindContextPositionToEnd:(FindContext *)context;
 
 - (void) dumpDebugLog;
 
@@ -316,6 +317,10 @@ void StringToScreenChars(NSString *s,
 
 // Accessor.
 - (DVR*)dvr;
+
+// If this returns true then the textview will broadcast iTermTabContentsChanged
+// when a dirty char is found.
+- (BOOL)shouldSendContentsChangedNotification;
 
 // Load a frame from a dvr decoder.
 - (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info;
