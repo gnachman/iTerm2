@@ -1,5 +1,32 @@
 These release notes are for the development builds of iTerm2. The last stable release was 1.0.0.
 
+iTerm2 1.0.0.20111009
+Lots of stuff!
+
+Enhancements:
+- Add "triggers" (an action that is performed when text matching some regular expression is received in a terminal session). More info here: http://www.iterm2.com/triggers.html
+- Add "coprocesses" (a process, such as a script, that receives input from a terminal and whose output is fed into the terminal session). More info here: http://iterm2.com/coprocesses.html
+- You can now edit the smart selection regexes in Prefs&gt;Profiles&gt;Advanced. More info here: http://www.iterm2.com/smartselection.html
+- You can now configure what happens when you cmd-click on a filename in Prefs&gt;Profiles&gt;Advanced.
+- Add cmd-shift-opt-T to open a new tab using the current session's profile.
+- Make toolbelt work in fullscreen mode.
+- Various minor toolbelt improvements.
+- Ignore hard newlines when you cmd-click on a URL.
+- Add esc]50;RequestAttention=x^G, where if x=1 the dock icon bounces and if x=0 it stops.
+
+Bug fixes:
+- Fix bug where splits in hotkey window get messed up during sleep.
+- When selection is moved past the last characte rin a line, extend it to the end.
+- Save lion fullscreen arrangements.
+- Make middle click paste the most recent selection, even if it's from another session (when copy to clipboard on select is off)
+- If a filename ends in :, allow cmd-click on it.
+- Fix bug with arranging windows horizontally that resulted in the last window in a row to end up in a bogus row below the screen.
+- Fix bug where editing the middle of a note in the notes tool moved the cursor.
+- Fix bug and undo in notes tool.
+- Fix bug where bottom tabs disappear in lion fullscreen.
+- Fix bug where the find field gets focus in fullscreen hotkey windows even though it's hidden.
+- Fix bug where fullscreen hotkey windows don't open the first time.
+
 iTerm2 1.0.0.20110909
 This release is primarily a bugfix for a very common crashing bug in the previous release.
 
