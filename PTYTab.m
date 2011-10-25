@@ -133,6 +133,22 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     deadStateColor = [NSColor grayColor];
 }
 
+- (void)updatePaneTitles
+{
+    const BOOL showTitles = [[PreferencePanel sharedInstance] showPaneTitles];
+    NSArray *sessions = [self sessions];
+    for (PTYSession *aSession in sessions) {
+        if ([[aSession view] setShowTitle:showTitles && [sessions count] > 1]) {
+            [self fitSessionToCurrentViewSize:aSession];
+        }
+    }
+}
+
+- (void)numberOfSessionsDidChange
+{
+    [self updatePaneTitles];
+}
+
 - (void)appendSessionViewToViewOrder:(SessionView*)sessionView
 {
     NSNumber* n = [NSNumber numberWithInt:[sessionView viewId]];
@@ -143,6 +159,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         }
         [viewOrder_ insertObject:n atIndex:i];
     }
+    [self numberOfSessionsDidChange];
 }
 
 - (void)appendSessionToViewOrder:(PTYSession*)session
@@ -1071,9 +1088,10 @@ static NSString* FormatRect(NSRect r) {
     if (aSession == activeSession_) {
         [self setActiveSessionPreservingViewOrder:[(SessionView*)nearestNeighbor session]];
     }
-    
+
     [self recheckBlur];
     [realParentWindow_ sessionWasRemoved];
+    [self numberOfSessionsDidChange];
 }
 
 - (BOOL)canSplitVertically:(BOOL)isVertical withSize:(NSSize)newSessionSize
@@ -1882,6 +1900,8 @@ static NSString* FormatRect(NSRect r) {
         [[root objectForKey:TAB_ARRANGEMENT_IS_MAXIMIZED] boolValue]) {
         [theTab maximize];
     }
+
+    [theTab numberOfSessionsDidChange];
 }
 
 - (NSDictionary*)arrangementWithMap:(NSMutableDictionary*)idMap

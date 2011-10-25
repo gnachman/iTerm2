@@ -1150,6 +1150,7 @@ static float versionNumber;
     defaultQuitWhenAllWindowsClosed = [prefs objectForKey:@"QuitWhenAllWindowsClosed"]?[[prefs objectForKey:@"QuitWhenAllWindowsClosed"] boolValue]: NO;
     defaultCheckUpdate = [prefs objectForKey:@"SUEnableAutomaticChecks"]?[[prefs objectForKey:@"SUEnableAutomaticChecks"] boolValue]: YES;
     defaultHideScrollbar = [prefs objectForKey:@"HideScrollbar"]?[[prefs objectForKey:@"HideScrollbar"] boolValue]: NO;
+    defaultShowPaneTitles = [prefs objectForKey:@"ShowPaneTitles"]?[[prefs objectForKey:@"ShowPaneTitles"] boolValue]: YES;
     defaultDisableFullscreenTransparency = [prefs objectForKey:@"DisableFullscreenTransparency"] ? [[prefs objectForKey:@"DisableFullscreenTransparency"] boolValue] : NO;
     defaultSmartPlacement = [prefs objectForKey:@"SmartPlacement"]?[[prefs objectForKey:@"SmartPlacement"] boolValue]: NO;
     defaultWindowNumber = [prefs objectForKey:@"WindowNumber"]?[[prefs objectForKey:@"WindowNumber"] boolValue]: YES;
@@ -1270,6 +1271,7 @@ static float versionNumber;
     [prefs setBool:defaultQuitWhenAllWindowsClosed forKey:@"QuitWhenAllWindowsClosed"];
     [prefs setBool:defaultCheckUpdate forKey:@"SUEnableAutomaticChecks"];
     [prefs setBool:defaultHideScrollbar forKey:@"HideScrollbar"];
+    [prefs setBool:defaultShowPaneTitles forKey:@"ShowPaneTitles"];
     [prefs setBool:defaultDisableFullscreenTransparency forKey:@"DisableFullscreenTransparency"];
     [prefs setBool:defaultSmartPlacement forKey:@"SmartPlacement"];
     [prefs setBool:defaultWindowNumber forKey:@"WindowNumber"];
@@ -1360,6 +1362,7 @@ static float versionNumber;
     [quitWhenAllWindowsClosed setState: defaultQuitWhenAllWindowsClosed?NSOnState:NSOffState];
     [checkUpdate setState: defaultCheckUpdate?NSOnState:NSOffState];
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
+    [showPaneTitles setState:defaultShowPaneTitles?NSOnState:NSOffState];
     [disableFullscreenTransparency setState:defaultDisableFullscreenTransparency ? NSOnState : NSOffState];
     [smartPlacement setState: defaultSmartPlacement?NSOnState:NSOffState];
     [windowNumber setState: defaultWindowNumber?NSOnState:NSOffState];
@@ -1536,6 +1539,7 @@ static float versionNumber;
         sender == hideActivityIndicator ||
         sender == highlightTabLabels ||
         sender == hideScrollbar ||
+        sender == showPaneTitles ||
         sender == disableFullscreenTransparency ||
         sender == advancedFontRendering ||
         sender == strokeThickness ||
@@ -1551,6 +1555,7 @@ static float versionNumber;
         defaultUseCompactLabel = ([useCompactLabel state] == NSOnState);
         defaultHideActivityIndicator = ([hideActivityIndicator state] == NSOnState);
         defaultHighlightTabLabels = ([highlightTabLabels state] == NSOnState);
+        defaultShowPaneTitles = ([showPaneTitles state] == NSOnState);
         defaultAdvancedFontRendering = ([advancedFontRendering state] == NSOnState);
         [strokeThickness setEnabled:defaultAdvancedFontRendering];
         [strokeThicknessLabel setTextColor:defaultAdvancedFontRendering ? [NSColor blackColor] : [NSColor disabledControlTextColor]];
@@ -1867,6 +1872,11 @@ static float versionNumber;
 - (BOOL)hideScrollbar
 {
     return defaultHideScrollbar;
+}
+
+- (BOOL)showPaneTitles
+{
+    return defaultShowPaneTitles;
 }
 
 - (BOOL)disableFullscreenTransparency

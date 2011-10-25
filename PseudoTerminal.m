@@ -2658,6 +2658,7 @@ NSString *sessionsKey = @"sessions";
     [theTab setTabViewItem:tabViewItem];
     [tabViewItem setLabel:[session name] ? [session name] : @""];
 
+    [theTab numberOfSessionsDidChange];
     return tabViewItem;
 }
 
@@ -3223,7 +3224,8 @@ NSString *sessionsKey = @"sessions";
         [[self currentTab] setActiveSessionPreservingViewOrder:newSession];
     }
     [[self currentTab] recheckBlur];
-    [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
+    [[self currentTab] numberOfSessionsDidChange];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
 
 - (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark targetSession:(PTYSession*)targetSession
@@ -3753,6 +3755,7 @@ NSString *sessionsKey = @"sessions";
     // formerly countless tabs show their counts.
     for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
         PTYTab *aTab = [[TABVIEW tabViewItemAtIndex:i] identifier];
+        [aTab updatePaneTitles];
         [aTab setObjectCount:i+1];
 
         // Update dimmed status of inactive sessions in split panes in case the preference changed.
@@ -4434,7 +4437,7 @@ NSString *sessionsKey = @"sessions";
 
     // Tell the session at this index that it is no longer associated with this tab.
     PTYTab* oldTab = [aTabViewItem identifier];
-    [oldTab setTabViewItem:nil];
+    [oldTab setTabViewItem:nil];  // TODO: This looks like a bug if there are multiple sessions in one tab
 
     // Replace the session for the tab view item.
     PTYTab* newTab = [[PTYTab alloc] initWithSession:aSession];
@@ -4450,6 +4453,7 @@ NSString *sessionsKey = @"sessions";
         [[self window] makeKeyAndOrderFront:self];
     }
     [[iTermController sharedInstance] setCurrentTerminal:self];
+    [newTab numberOfSessionsDidChange];
 }
 
 - (CGFloat)fullscreenToolbeltWidth
@@ -5136,6 +5140,7 @@ NSString *sessionsKey = @"sessions";
     if ([object SCREEN]) {  // screen initialized ok
         [self insertSession:object atIndex:[TABVIEW numberOfTabViewItems]];
     }
+    [[self currentTab] numberOfSessionsDidChange];
 }
 
 -(void)replaceInSessions:(PTYSession *)object atIndex:(unsigned)anIndex
@@ -5168,6 +5173,7 @@ NSString *sessionsKey = @"sessions";
     if ([object SCREEN]) {  // screen initialized ok
         [self insertSession:object atIndex:anIndex];
     }
+    [[self currentTab] numberOfSessionsDidChange];
 }
 
 -(void)removeFromSessionsAtIndex:(unsigned)anIndex

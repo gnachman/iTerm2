@@ -278,6 +278,8 @@
 		1DE8DDAE1415648600F83147 /* ToolPasteHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DDAC1415648600F83147 /* ToolPasteHistory.m */; };
 		1DE8DF361415799700F83147 /* ToolWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DF341415799700F83147 /* ToolWrapper.h */; };
 		1DE8DF371415799700F83147 /* ToolWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DF351415799700F83147 /* ToolWrapper.m */; };
+		1DEDC8FD1451F67D004F1615 /* SessionTitleView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */; };
+		1DEDC8FE1451F67D004F1615 /* SessionTitleView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */; };
 		1DEE9FDD11FCA60F009E18C9 /* credits.rtf in Resources */ = {isa = PBXBuildFile; fileRef = 1DEE9FDB11FCA60F009E18C9 /* credits.rtf */; };
 		1DF0895B13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DF0895713DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h */; };
 		1DF0895C13DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */; };
@@ -490,6 +492,8 @@
 		1DEB29301288885700B2CB9F /* Quartz.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Quartz.framework; path = System/Library/Frameworks/Quartz.framework; sourceTree = SDKROOT; };
 		1DEB29371288887100B2CB9F /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		1DEB293D1288899A00B2CB9F /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = System/Library/Frameworks/Carbon.framework; sourceTree = SDKROOT; };
+		1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SessionTitleView.h; sourceTree = "<group>"; };
+		1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SessionTitleView.m; sourceTree = "<group>"; };
 		1DEE9FDC11FCA60F009E18C9 /* English */ = {isa = PBXFileReference; lastKnownFileType = text.rtf; name = English; path = English.lproj/credits.rtf; sourceTree = "<group>"; };
 		1DF0895713DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSBitmapImageRep+CoreImage.h"; sourceTree = "<group>"; };
 		1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSBitmapImageRep+CoreImage.m"; sourceTree = "<group>"; };
@@ -731,6 +735,7 @@
 				F5E533B403B2959201A8A066 /* PTYTabView.m */,
 				F56B230B03A1B36701A8A066 /* PTYWindow.m */,
 				1D36155412CBF33E00803EA9 /* ScreenChar.m */,
+				1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */,
 				1D2E813012A18F7500F3D71E /* SessionView.m */,
 				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
 				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
@@ -745,6 +750,7 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */,
 				1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */,
 				1D24C2C3142FEACF006B246F /* SmartSelectionController.h */,
 				1D24C282142EF334006B246F /* SendTextTrigger.h */,
@@ -1267,6 +1273,7 @@
 				1D24C284142EF334006B246F /* SendTextTrigger.h in Headers */,
 				1D24C2C5142FEACF006B246F /* SmartSelectionController.h in Headers */,
 				1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */,
+				1DEDC8FD1451F67D004F1615 /* SessionTitleView.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1536,6 +1543,7 @@
 				1D24C285142EF334006B246F /* SendTextTrigger.m in Sources */,
 				1D24C2C6142FEACF006B246F /* SmartSelectionController.m in Sources */,
 				1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */,
+				1DEDC8FE1451F67D004F1615 /* SessionTitleView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
