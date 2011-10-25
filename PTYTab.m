@@ -147,6 +147,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 - (void)numberOfSessionsDidChange
 {
     [self updatePaneTitles];
+    [realParentWindow_ futureInvalidateRestorableState];
 }
 
 - (void)appendSessionViewToViewOrder:(SessionView*)sessionView
@@ -362,6 +363,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 
     --preserveOrder_;
+    [realParentWindow_ futureInvalidateRestorableState];
 }
 
 - (void)setActiveSession:(PTYSession*)session
@@ -1961,6 +1963,7 @@ static NSString* FormatRect(NSRect r) {
     [temp release];
 
     [[root_ window] makeFirstResponder:[activeSession_ TEXTVIEW]];
+    [realParentWindow_ futureInvalidateRestorableState];
 }
 
 - (void)unmaximize
@@ -1993,6 +1996,7 @@ static NSString* FormatRect(NSRect r) {
     isMaximized_ = NO;
 
     [[root_ window] makeFirstResponder:[activeSession_ TEXTVIEW]];
+    [realParentWindow_ futureInvalidateRestorableState];
 }
 
 - (BOOL)promptOnClose

@@ -81,7 +81,7 @@ static NSInteger _compareEncodingByLocalizedName(id a, id b, void *unused)
     return [sa caseInsensitiveCompare: sb];
 }
 
-BOOL IsLionOrLater(void) {
+static BOOL UncachedIsLionOrLater(void) {
     unsigned major;
     unsigned minor;
     if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
@@ -89,6 +89,16 @@ BOOL IsLionOrLater(void) {
     } else {
         return NO;
     }
+}
+
+BOOL IsLionOrLater(void) {
+    static BOOL result;
+    static BOOL initialized;
+    if (!initialized) {
+        initialized = YES;
+        result = UncachedIsLionOrLater();
+    }
+    return result;
 }
 
 BOOL IsSnowLeopardOrLater(void) {

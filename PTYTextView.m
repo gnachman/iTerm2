@@ -891,13 +891,6 @@ NSMutableArray* screens=0;
     [[self superview] setFrameSize:frameSize];
 }
 
-static BOOL RectsEqual(NSRect* a, NSRect* b) {
-        return a->origin.x == b->origin.x &&
-               a->origin.y == b->origin.y &&
-               a->size.width == b->size.width &&
-               a->size.height == b->size.height;
-}
-
 - (void)scheduleSelectionScroll
 {
     if (selectionScrollTimer) {
@@ -2813,7 +2806,7 @@ static BOOL RectsEqual(NSRect* a, NSRect* b) {
 
     DebugLog([NSString stringWithFormat:@"Mouse down. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
     if([_delegate respondsToSelector: @selector(willHandleEvent:)] && [_delegate willHandleEvent: event])
-        [_delegate handleEvent: event];
+        [_delegate handleEvent:event];
     [[[self dataSource] session] refreshAndStartTimerIfNeeded];
 
     return NO;
