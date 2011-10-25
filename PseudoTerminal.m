@@ -591,6 +591,11 @@ NSString *sessionsKey = @"sessions";
     return number_;
 }
 
+- (void)setFrameValue:(NSValue *)value
+{
+    [[self window] setFrame:[value rectValue] display:YES];
+}
+
 - (PTYWindow*)ptyWindow
 {
     return (PTYWindow*) [self window];

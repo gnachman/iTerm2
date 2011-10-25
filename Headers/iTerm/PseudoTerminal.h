@@ -270,6 +270,8 @@ NSWindowDelegate,
 // The window's original screen.
 - (NSScreen*)screen;
 
+- (void)setFrameValue:(NSValue *)value;
+
 // The PTYWindow for this controller.
 - (PTYWindow*)ptyWindow;
 

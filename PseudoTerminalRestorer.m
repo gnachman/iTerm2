@@ -18,6 +18,10 @@
     NSDictionary *arrangement = [state decodeObjectForKey:@"ptyarrangement"];
     if (arrangement) {
         PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement];
+        NSRect rect = [[term window] frame];
+        [term performSelector:@selector(setFrameValue:)
+                   withObject:[NSValue valueWithRect:rect]
+                   afterDelay:0];
         completionHandler([term window], nil);
         [[iTermController sharedInstance] addInTerminals:term];
     } else {
