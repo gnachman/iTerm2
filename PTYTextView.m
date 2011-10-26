@@ -6527,7 +6527,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     static NSMutableCharacterSet* urlChars;
     if (!urlChars) {
-        urlChars = [[NSMutableCharacterSet characterSetWithCharactersInString:@".?\\/:;%=&_-,+~#@!*'()"] retain];
+        urlChars = [[NSMutableCharacterSet characterSetWithCharactersInString:@".?\\/:;%=&_-,+~#@!*'()|"] retain];
         [urlChars formUnionWithCharacterSet:[NSCharacterSet alphanumericCharacterSet]];
         [urlChars retain];
     }
