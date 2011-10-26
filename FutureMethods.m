@@ -24,7 +24,7 @@
 
 - (void)futureSetRestorationClass:(Class)class
 {
-    if ([self respondsToSelector:@selector(futureSetRestorationClass:)]) {
+    if ([self respondsToSelector:@selector(setRestorationClass:)]) {
         [self performSelector:@selector(setRestorationClass:) withObject:class];
     }
 }

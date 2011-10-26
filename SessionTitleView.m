@@ -105,7 +105,7 @@ static const CGFloat kButtonSize = 17;
 
 - (NSColor *)dimmedColor:(NSColor *)origColor
 {
-    NSColor *color = [origColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+    NSColor *color = [origColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
     double r = [color redComponent];
     double g = [color greenComponent];
     double b = [color blueComponent];
@@ -147,7 +147,7 @@ static const CGFloat kButtonSize = 17;
 {
     dimmingAmount_ = value;
     [self setNeedsDisplay:YES];
-    [label_ setTextColor:[self dimmedColor:[NSColor blackColor]]];
+    [label_ setTextColor:[self dimmedColor:[NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1]]];
 }
 
 - (void)mouseDragged:(NSEvent *)theEvent
