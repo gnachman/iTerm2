@@ -1222,7 +1222,10 @@ static char* FormatCont(int c)
         }
         [SESSION clearTriggerLine];
         break;
-    case VT100CC_CR:  [self setCursorX:0 Y:cursorY]; break;
+    case VT100CC_CR:
+        [self setCursorX:0 Y:cursorY];
+        [SESSION clearTriggerLine];
+        break;
     case VT100CC_SO:  break;
     case VT100CC_SI:  break;
     case VT100CC_DC1: break;
