@@ -244,6 +244,8 @@ NSWindowDelegate,
 
     NSDictionary *lastArrangement_;
     BOOL wellFormed_;
+
+    BOOL exitingLionFullscreen_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
@@ -762,6 +764,7 @@ NSWindowDelegate,
 @end
 
 @interface PseudoTerminal (Private)
+- (void)_updateToolbeltParentage;
 
 - (int)_screenAtPoint:(NSPoint)p;
 
