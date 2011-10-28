@@ -140,6 +140,12 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
 #endif
 }
 
+- (void)setFrame:(NSRect)frameRect display:(BOOL)flag
+{
+    NSLog(@"Set frame %@", [NSThread callStackSymbols]);
+    [super setFrame:frameRect display:flag];
+}
+
 - (void)disableBlur
 {
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4

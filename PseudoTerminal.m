@@ -1543,7 +1543,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)screenParametersDidChange
 {
-    PtyLog(@"Screen parameters changed.");
+    NSLog(@"Screen parameters changed for term with frame %@.", [NSValue valueWithRect:[[self window] frame]]);
     NSScreen* screen = [[self window] deepestScreen];
     if (!screen) {
         NSDictionary* aDict = [[self currentSession] addressBookEntry];
@@ -1558,6 +1558,7 @@ NSString *sessionsKey = @"sessions";
         if ([screens count] < screenNumber) {
             screenNumber = 0;
         }
+        NSLog(@"Using screen %d", screenNumber);
         screen = [[NSScreen screens] objectAtIndex:screenNumber];
     }
     NSRect frame = [[self window] frame];
@@ -1578,6 +1579,7 @@ NSString *sessionsKey = @"sessions";
             }
 
             if (frame.size.width > 0) {
+                NSLog(@"Set frame of top window to %@", [NSValue valueWithRect:frame]);
                 [[self window] setFrame:frame display:YES];
             }
             break;
@@ -1594,6 +1596,7 @@ NSString *sessionsKey = @"sessions";
             }
 
             if (frame.size.width > 0) {
+                NSLog(@"Set frame of bottom window to %@", [NSValue valueWithRect:frame]);
                 [[self window] setFrame:frame display:YES];
             }
             break;
@@ -1601,12 +1604,14 @@ NSString *sessionsKey = @"sessions";
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_FULL_SCREEN:
             if ([screen frame].size.width > 0) {
+                NSLog(@"Set frame of lion fullscreen or fullscreen window to %@", [NSValue valueWithRect:frame]);
                 [[self window] setFrame:[screen frame] display:YES];
             }
             break;
 
         case WINDOW_TYPE_NORMAL:
             // fall through, the os takes care of this fine.
+            NSLog(@"Not setting frame of normal window");
         default:
             break;
     }
@@ -3380,6 +3385,8 @@ NSString *sessionsKey = @"sessions";
 
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize
 {
+    NSLog(@"fitWindowToTabSize:%@", [NSValue valueWithSize:tabSize]);
+
     if ([self anyFullScreen]) {
         [self fitTabsToWindow];
         return NO;

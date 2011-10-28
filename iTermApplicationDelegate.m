@@ -460,6 +460,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationDidChangeScreenParameters:(NSNotification *)aNotification
 {
+    NSLog(@"Screen parameters did change");
     // Make sure that all top-of-screen windows are the proper width.
     for (PseudoTerminal* term in [self terminals]) {
         [term screenParametersDidChange];
