@@ -1,5 +1,58 @@
 These release notes are for the development builds of iTerm2. The last stable release was 1.0.0.
 
+iTerm2 1.0.0.20111020
+Bug fixes and features, like always.
+
+Enhnacements:
+- Add "triggers" (an action that is performed when text matching some regular expression is received in a terminal session). More info here: http://www.iterm2.com/triggers.html
+- Add "coprocesses" (a process, such as a script, that receives input from a terminal and whose output is fed into the terminal session). More info here: http://iterm2.com/coprocesses.html
+- You can now edit the smart selection regexes in Prefs&gt;Profiles&gt;Advanced. More info here: http://www.iterm2.com/smartselection.html
+- You can now configure what happens when you cmd-click on a filename in Prefs&gt;Profiles&gt;Advanced.
+- Add support for Growl 1.3.
+- Make toolbelt work in fullscreen mode.
+- Add support for reporting focus lost/gained. esc[?1004h turns it on; then the terminal sends esc[I when focusing, esc[O when de-focusing. Send esc[?1004l to disable.
+- Add esc]50;RequestAttention=x^G, where if x=1 the dock icon bounces and if x=0 it stops.
+- Change default global key bindings to cmd-shift-arrows to move tab left/right.
+- Add menu item to move tab left/right.
+- Add key action to move tab left/right.
+- Add option to show obnoxious background when broadcasting input to multiple sessions.
+- Add "advanced" directory settings for separate tab, window, and pane settings.
+- Add preference for setting locale vars.
+- Add cmd-shift-opt-T to open a new tab using the current session's profile.
+- Various minor toolbelt improvements.
+- Ignore hard newlines when you cmd-click on a URL.
+
+Bug fixes:
+- Fix an occasional (or often, if you're unlucky) crash when a session ends.
+- Fix bug where Exposé always opens on the main screen.
+- Hide toolbelt completely in fullscreen when not open.
+- Make bottom tabs work right in fullscreen + instant replay.
+- Make scrollbars show/hide when toggling fullscreen. 
+- Fix bug where tab bar disappeared on exiting Lion fullscreen.
+- Fix crash when removing a smart selection/trigger row while editing it.
+- Fix bug where making a selection doesn't always work.
+- Make paste selection ignore background tabs.
+- Fix 'paste escaping special characters' to include the full range of shell special characters.
+- Fix smart selection and triggers prefs to work for Edit Current Session panel.
+- When duplicating a profile keep the shortcut with the original profile.
+- Keep session size the same when scrollbar style changes.
+- Fix how selections are reported for accessibility.
+- Fix bug where dimming background is inconsistent while broadcasting input.
+- Fix very minor memory leak.
+- Hopefully fix focus follows mouse tracking bugs.
+- Fix bug where splits in hotkey window get messed up during sleep.
+- When selection is moved past the last characte rin a line, extend it to the end.
+- Save lion fullscreen arrangements.
+- Make middle click paste the most recent selection, even if it's from another session (when copy to clipboard on select is off)
+- If a filename ends in :, allow cmd-click on it.
+- Fix bug with arranging windows horizontally that resulted in the last window in a row to end up in a bogus row below the screen.
+- Fix bug where editing the middle of a note in the notes tool moved the cursor.
+- Fix bug and undo in notes tool.
+- Fix bug where bottom tabs disappear in lion fullscreen.
+- Fix bug where the find field gets focus in fullscreen hotkey windows even though it's hidden.
+- Fix bug where fullscreen hotkey windows don't open the first time.
+
+
 iTerm2 1.0.0.20111009
 Lots of stuff!
 
