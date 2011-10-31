@@ -26,8 +26,12 @@ const int kMaxOutputBufferSize = 1024;
     int outputPipe[2];
     pipe(inputPipe);
     pipe(outputPipe);
+    signal(SIGPIPE, SIG_IGN);
     pid_t pid = fork();
     if (pid == 0) {
+        signal(SIGCHLD, SIG_DFL);
+        signal(SIGPIPE, SIG_DFL);
+
         dup2(inputPipe[0], 0);
         close(inputPipe[0]);
         close(inputPipe[1]);

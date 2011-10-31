@@ -10,8 +10,15 @@
 
 #import <Cocoa/Cocoa.h>
 #import <iTerm/PreferencePanel.h>
+#import <signal.h>
 
 int main(int argc, const char *argv[])
 {
+    signal(SIGPIPE, SIG_IGN);
+    sigset_t signals;
+    sigemptyset(&signals);
+    sigaddset(&signals, SIGPIPE);
+    sigprocmask(SIG_BLOCK, &signals, NULL);
+
     return NSApplicationMain(argc, argv);
 }

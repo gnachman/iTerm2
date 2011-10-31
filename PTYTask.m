@@ -593,6 +593,8 @@ static void reapchild(int n)
         argpath = [[progpath stringByStandardizingPath] UTF8String];
         // Do not start the new process with a signal handler.
         signal(SIGCHLD, SIG_DFL);
+        signal(SIGPIPE, SIG_DFL);
+        
         int max = (args == nil) ? 0 : [args count];
         const char* argv[max + 2];
 
