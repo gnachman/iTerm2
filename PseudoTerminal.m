@@ -5018,6 +5018,9 @@ NSString *sessionsKey = @"sessions";
 
 - (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state
 {
+    if ([self isHotKeyWindow]) {
+        return;
+    }
     if (wellFormed_) {
         [lastArrangement_ release];
         lastArrangement_ = [[self arrangement] retain];
