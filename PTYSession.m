@@ -3439,15 +3439,15 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
     // Set the starting position to the block & offset that the backward search
     // began at. Do a forward search from that location.
-    tailFindContext_.absBlockNum = initialFindContext->absBlockNum;
-    tailFindContext_.offset = initialFindContext->offset;
-
+    [SCREEN restoreSavedPositionToFindContext:&tailFindContext_];
     [self continueTailFind];
 }
 
 - (void)sessionContentsChanged:(NSNotification *)notification
 {
-    if (!tailFindTimer_) {
+    if (!tailFindTimer_ &&
+        [notification object] == self &&
+        [[tab_ realParentWindow] currentTab] == tab_) {
         [self beginTailFind];
     }
 }

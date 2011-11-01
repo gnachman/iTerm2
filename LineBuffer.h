@@ -212,6 +212,9 @@ typedef struct FindContext {
     // Cache of the number of wrapped lines
     int num_wrapped_lines_cache;
     int num_wrapped_lines_width;
+
+    // Number of char that have been dropped
+    long long droppedChars;
 }
 
 - (LineBuffer*) initWithBlockSize: (int) bs;
@@ -288,7 +291,9 @@ typedef struct FindContext {
 // Returns the position at the end of the buffer
 - (int) lastPos;
 
-// Set the position of the find context to the end of the buffer.
-- (void)setFindContextPositionToEnd:(FindContext *)context;
+- (long long)absPositionOfFindContext:(FindContext)findContext;
+- (int)positionForAbsPosition:(long long)absPosition;
 
+- (void)storeLocationOfAbsPos:(long long)absPos
+                    inContext:(FindContext *)context;
 @end

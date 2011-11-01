@@ -4110,7 +4110,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 }
 
 // Add a match to resultMap_
-- (void)addResultFromX:(int)resStartX absY:(long long)absStartY toX:(int)resEndX toAbsY:(long long)absEndY
+- (void)addResultFromX:(int)resStartX
+                  absY:(long long)absStartY
+                   toX:(int)resEndX
+                toAbsY:(long long)absEndY
 {
     int width = [dataSource width];
     for (long long y = absStartY; y <= absEndY; y++) {
@@ -4265,7 +4268,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Add new results to map.
     for (int i = nextOffset_; i < [findResults_ count]; i++) {
         SearchResult* r = [findResults_ objectAtIndex:i];
-        [self addResultFromX:r->startX absY:r->absStartY toX:r->endX toAbsY:r->absEndY];
+        [self addResultFromX:r->startX
+                        absY:r->absStartY
+                         toX:r->endX
+                      toAbsY:r->absEndY];
         redraw = YES;
     }
     nextOffset_ = [findResults_ count];
@@ -4334,7 +4340,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         initialFindContext_ = *[dataSource findContext];
         initialFindContext_.results = nil;
         initialFindContext_.substring = [initialFindContext_.substring copy];
-
+        [dataSource saveFindContextAbsPos];
         _findInProgress = YES;
 
         // Reset every bit of state.
@@ -7419,7 +7425,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (foundDirty && [dataSource shouldSendContentsChangedNotification]) {
         changedSinceLastExpose_ = YES;
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabContentsChanged"
-                                                            object:nil
+                                                            object:[dataSource session]
                                                           userInfo:nil];
     }
 

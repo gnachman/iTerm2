@@ -1658,7 +1658,7 @@ static char* FormatCont(int c)
     [display clearMatches];
 
     scrollback_overflow = 0;
-
+    savedFindContextAbsPos_ = 0;
     DebugLog(@"clearScrollbackBuffer setDirty");
 
     [self setDirty];
@@ -3261,6 +3261,30 @@ void DumpBuf(screen_char_t* p, int n) {
     return &findContext;
 }
 
+- (long long)findContextAbsPosition
+{
+    return [linebuffer absPositionOfFindContext:findContext];
+}
+
+- (void)saveFindContextAbsPos
+{
+    int linesPushed;
+    linesPushed = [self _appendScreenToScrollback:[self _usedHeight]];
+    savedFindContextAbsPos_ = [self findContextAbsPosition];
+    [self _popScrollbackLines:linesPushed];
+}
+
+- (void)restoreSavedPositionToFindContext:(FindContext *)context
+{
+    int linesPushed;
+    linesPushed = [self _appendScreenToScrollback:[self _usedHeight]];
+
+    [linebuffer storeLocationOfAbsPos:savedFindContextAbsPos_
+                            inContext:context];
+
+    [self _popScrollbackLines:linesPushed];
+}
+
 - (void)initFindString:(NSString*)aString
       forwardDirection:(BOOL)direction
           ignoringCase:(BOOL)ignoreCase
@@ -3479,11 +3503,6 @@ void DumpBuf(screen_char_t* p, int n) {
                                        found:found
                                    inContext:context
                                      maxTime:0.1];
-}
-
-- (void)setFindContextPositionToEnd:(FindContext *)context
-{
-    [linebuffer setFindContextPositionToEnd:context];
 }
 
 - (void)saveToDvr

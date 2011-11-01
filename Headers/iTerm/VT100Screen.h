@@ -143,6 +143,7 @@ void StringToScreenChars(NSString *s,
     // Scrollback buffer
     LineBuffer* linebuffer;
     FindContext findContext;
+    long long savedFindContextAbsPos_;
 
     // Used for recording instant replay.
     DVR* dvr;
@@ -302,7 +303,6 @@ void StringToScreenChars(NSString *s,
 - (BOOL)continueFindAllResults:(NSMutableArray*)results
                      inContext:(FindContext*)context;
 - (void)cancelFindInContext:(FindContext*)context;
-- (void)setFindContextPositionToEnd:(FindContext *)context;
 
 - (void) dumpDebugLog;
 
@@ -324,6 +324,10 @@ void StringToScreenChars(NSString *s,
 
 // Load a frame from a dvr decoder.
 - (void)setFromFrame:(screen_char_t*)s len:(int)len info:(DVRFrameInfo)info;
+
+- (void)saveFindContextAbsPos;
+
+- (void)restoreSavedPositionToFindContext:(FindContext *)context;
 
 @end
 
