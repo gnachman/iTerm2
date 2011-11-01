@@ -315,6 +315,7 @@ static BOOL hasBecomeActive = NO;
             NSString *remote = [[PreferencePanel sharedInstance] remotePrefsLocation];
             if ([remote hasPrefix:@"http://"] ||
                 [remote hasPrefix:@"https://"]) {
+                // If the setting is always copy, then ask. Copying isn't an option.
                 if (![[NSUserDefaults standardUserDefaults] objectForKey:@"NoSyncNeverRemindPrefsChangesLost"]) {
                     if (NSRunAlertPanel(@"Preference Changes Will be Lost!",
                                         [NSString stringWithFormat:@"Your preferences are loaded from a URL and differ from your local preferences. To save your local preferences, copy ~/Library/Preferences/com.googlecode.iterm2.plist to %@ after quitting iTerm2.", remote],
@@ -326,6 +327,7 @@ static BOOL hasBecomeActive = NO;
                     }
                 }
             } else {
+                // Not a URL
                 NSString *format;
                 if ([BookmarkModel migrated]) {
                     format = @"Your preferences were modified by iTerm2 as part of an upgrade process (and you might have changed them, too). "
@@ -334,24 +336,36 @@ static BOOL hasBecomeActive = NO;
                     format = @"Your preferences are loaded from a custom location and differ from your local preferences."
                     @"Your local preferences will be lost if not copied to %@.";
                 }
-                if (![[NSUserDefaults standardUserDefaults] objectForKey:@"NoSyncNeverRemindPrefsChangesLost"]) {
-                    switch (NSRunAlertPanel(@"Preference Changes Will be Lost!",
-                                            [NSString stringWithFormat:format,
-                                             remote],
-                                            @"Copy",
-                                            @"Never Remind Me Again",
-                                            @"Lose Changes")) {
+                if ([[NSUserDefaults standardUserDefaults] objectForKey:@"NoSyncNeverRemindPrefsChangesCopy"]) {
+                    // Always copy
+                    [[PreferencePanel sharedInstance] pushToCustomFolder:nil];
+                } else if (![[NSUserDefaults standardUserDefaults] objectForKey:@"NoSyncNeverRemindPrefsChangesLost"]) {
+                    // No "always" action.
+                    NSAlert *alert;
+                    alert = [NSAlert alertWithMessageText:@"Preference Changes Will be Lost!"
+                                            defaultButton:@"Copy"
+                                          alternateButton:@"Lose Changes"
+                                              otherButton:nil
+                                informativeTextWithFormat:format, remote];
+                    [alert setShowsSuppressionButton:YES];
+                    [[alert suppressionButton] setTitle:@"Always use this option."];
+                    BOOL doCopy = NO;
+                    switch ([alert runModal]) {
                         case NSAlertDefaultReturn:
-                            [[PreferencePanel sharedInstance] pushToCustomFolder:nil];
+                            doCopy = YES;
                             break;
 
-                        case NSAlertOtherReturn:
-                            break;
-                            
                         case NSAlertAlternateReturn:
-                            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES]
-                                                                      forKey:@"NoSyncNeverRemindPrefsChangesLost"];
                             break;
+                    }
+                    if ([[alert suppressionButton] state] == NSOnState) {
+                            [[NSUserDefaults standardUserDefaults]
+                                setObject:[NSNumber numberWithBool:YES]
+                                   forKey:doCopy ? @"NoSyncNeverRemindPrefsChangesCopy" :
+                                                   @"NoSyncNeverRemindPrefsChangesLost"];
+                    }
+                    if (doCopy) {
+                        [[PreferencePanel sharedInstance] pushToCustomFolder:nil];
                     }
                 }
             }
