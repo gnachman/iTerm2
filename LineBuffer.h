@@ -291,9 +291,14 @@ typedef struct FindContext {
 // Returns the position at the end of the buffer
 - (int) lastPos;
 
+// Convert the block,offset in a findcontext into an absolute position.
 - (long long)absPositionOfFindContext:(FindContext)findContext;
+// Convert an absolute position into a position.
 - (int)positionForAbsPosition:(long long)absPosition;
+// Convert a position into an absolute position.
+- (long long)absPositionForPosition:(int)pos;
 
+// Set the start location of a find context to an absolute position.
 - (void)storeLocationOfAbsPos:(long long)absPos
                     inContext:(FindContext *)context;
 @end

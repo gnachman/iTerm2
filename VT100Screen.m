@@ -3274,6 +3274,11 @@ void DumpBuf(screen_char_t* p, int n) {
     [self _popScrollbackLines:linesPushed];
 }
 
+- (void)saveTerminalAbsPos
+{
+    savedFindContextAbsPos_ = [linebuffer absPositionForPosition:[linebuffer lastPos]];
+}
+
 - (void)restoreSavedPositionToFindContext:(FindContext *)context
 {
     int linesPushed;

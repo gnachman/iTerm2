@@ -1585,6 +1585,12 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return (int)absPosition;
 }
 
+- (long long)absPositionForPosition:(int)pos
+{
+    long long absPos = pos;
+    return absPos + droppedChars;
+}
+
 - (int)absBlockNumberOfAbsPos:(long long)absPos
 {
     int absBlock = num_dropped_blocks;
