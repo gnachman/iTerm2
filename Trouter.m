@@ -187,15 +187,33 @@
 }
 
 
-- (BOOL)openPath:(NSString *)path workingDirectory:(NSString *)workingDirectory
+- (BOOL)openPath:(NSString *)path
+    workingDirectory:(NSString *)workingDirectory
+    prefix:(NSString *)prefix
+    suffix:(NSString *)suffix
 {
     BOOL isDirectory;
-    NSString* lineNumber;
+    NSString* lineNumber = @"";
 
     path = [self getFullPath:path
             workingDirectory:workingDirectory
                   lineNumber:&lineNumber];
 
+
+    if ([[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterRawCommandAction]) {
+        NSString *script = [prefs_ objectForKey:kTrouterTextKey];
+        script = [script stringByReplacingBackreference:1
+                                             withString:path ? path : @""];
+            script = [script stringByReplacingBackreference:2
+                                                 withString:lineNumber ? lineNumber : @""];
+        script = [script stringByReplacingBackreference:3
+                                             withString:[prefix stringWithEscapedShellCharacters]];
+        script = [script stringByReplacingBackreference:4
+                                             withString:[suffix stringWithEscapedShellCharacters]];
+        [[NSTask launchedTaskWithLaunchPath:@"/bin/sh"
+                                  arguments:[NSArray arrayWithObjects:@"-c", script, nil]] waitUntilExit];
+        return YES;
+    }
 
     if (![fileManager fileExistsAtPath:path isDirectory:&isDirectory]) {
         return NO;
@@ -203,9 +221,10 @@
 
     if ([[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterCommandAction]) {
         NSString *script = [prefs_ objectForKey:kTrouterTextKey];
-        script = [script stringByReplacingBackreference:1 withString:path];
-        script = [script stringByReplacingBackreference:2 withString:lineNumber];
-
+        script = [script stringByReplacingBackreference:1 withString:path ? path : @""];
+        script = [script stringByReplacingBackreference:2 withString:lineNumber ? lineNumber : @""];
+        script = [script stringByReplacingBackreference:3 withString:[prefix stringWithEscapedShellCharacters]];
+        script = [script stringByReplacingBackreference:4 withString:[suffix stringWithEscapedShellCharacters]];
         [[NSTask launchedTaskWithLaunchPath:@"/bin/sh"
                                   arguments:[NSArray arrayWithObjects:@"-c", script, nil]] waitUntilExit];
         return YES;
