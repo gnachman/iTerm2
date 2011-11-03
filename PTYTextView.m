@@ -2970,7 +2970,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Prevent accidental dragging while dragging trouter item.
     BOOL dragThresholdMet = NO;
     NSPoint locationInWindow = [event locationInWindow];
-    NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
+    NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
+    locationInTextView.x = ceil(locationInTextView.x);
+    locationInTextView.y = ceil(locationInTextView.y);
     NSRect  rectInTextView = [self visibleRect];
     int x, y;
     int width = [dataSource width];
