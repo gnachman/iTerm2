@@ -3450,16 +3450,49 @@ static float versionNumber;
     [self _updateLogDirWarning];
 }
 
+// Pick out the digits from s and clamp it to a range.
+- (int)intForString:(NSString *)s inRange:(NSRange)range
+{
+    NSMutableString *i = [NSMutableString string];
+    for (int j = 0; j < s.length; j++) {
+        unichar c = [s characterAtIndex:j];
+        if (c >= '0' && c <= '9') {
+            [i appendFormat:@"%c", (char)c];
+        }
+    }
+
+    int val = 0;
+    if ([i length]) {
+        val = [i intValue];
+    }
+    val = MAX(val, range.location);
+    val = MIN(val, range.location + range.length);
+    return val;
+}
+
 // NSTextField delegate
 - (void)controlTextDidChange:(NSNotification *)aNotification
 {
     id obj = [aNotification object];
     if (obj == wordChars) {
         defaultWordChars = [[wordChars stringValue] retain];
+    } else if (obj == scrollbackLines) {
+        // NSNumberFormatter seems to have lost its mind on Lion. See a description of the problem here:
+        // http://stackoverflow.com/questions/7976951/nsnumberformatter-erasing-value-when-it-violates-constraints
+        int iv = [self intForString:[scrollbackLines stringValue] inRange:NSMakeRange(0, 10 * 1000 * 1000)];
+        unichar lastChar = '0';
+        int numChars = [[scrollbackLines stringValue] length];
+        if (numChars) {
+            lastChar = [[scrollbackLines stringValue] characterAtIndex:numChars - 1];
+        }
+        if (iv != [scrollbackLines intValue] || (lastChar < '0' || lastChar > '9')) {
+            // If the int values don't match up or there are terminal non-number chars, then update the value.
+            [scrollbackLines setIntValue:iv];
+        }
+        [self bookmarkSettingChanged:nil];
     } else if (obj == bookmarkName ||
                obj == columnsField ||
                obj == rowsField ||
-               obj == scrollbackLines ||
                obj == terminalType ||
                obj == initialText ||
                obj == idleCode) {
