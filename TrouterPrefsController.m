@@ -24,6 +24,7 @@ NSString *kTrouterBestEditorAction = @"best editor";
 NSString *kTrouterUrlAction = @"url";
 NSString *kTrouterEditorAction = @"editor";
 NSString *kTrouterCommandAction = @"command";
+NSString *kTrouterRawCommandAction = @"raw command";
 
 @implementation TrouterPrefsController
 
@@ -149,6 +150,10 @@ enum {
         case 4:
             return kTrouterCommandAction;
             break;
+            
+        case 5:
+            return kTrouterRawCommandAction;
+            break;
     }
     return nil;
 }
@@ -177,30 +182,42 @@ enum {
     [editors_ setHidden:YES];
     switch ([[action_ selectedItem] tag]) {
         case 1:
-            [caveat_ setHidden:YES];
+            [caveat_ setStringValue:@"When you activate Semantic History on a filename, the associated app loads the file."];
+            [caveat_ setHidden:NO];
             break;
             
         case 2:
-            [[text_ cell] setPlaceholderString:@"Enter URL with \\1 for filename, \\2 for line number"];
-            [caveat_ setStringValue:@"URL will be opened regardless of file type."];
+            [[text_ cell] setPlaceholderString:@"Enter URL."];
+            [caveat_ setStringValue:@"When you activate Semantic History on a filename, the browser opens a URL.\nUse \\1 for the filename you clicked on and \\2 for the line number."];
             [caveat_ setHidden:NO];
             [text_ setHidden:NO];
             break;
             
         case 3:
             [editors_ setHidden:NO];
-            [caveat_ setStringValue:@"Applies to text files only. Other files will be opened with their default app."];
+            [caveat_ setStringValue:@"When you activate Semantic History on a text file, the specified editor opens it.\nOther kinds of files will be opened with their default apps."];
             [caveat_ setHidden:NO];
             break;
             
         case 4:
-            [[text_ cell] setPlaceholderString:@"Enter cmd with \\1 for filename, \\2 for line number"];
-            [caveat_ setStringValue:@"Command will be run regardless of file type."];
+            [[text_ cell] setPlaceholderString:@"Enter command"];
+            [caveat_ setStringValue:@"Command runs when you activate Semantic History on any filename.\nUse \\1 for filename, \\2 for line number, \\3 for all text before click, \\4 for all text after click."];
+            [caveat_ setHidden:NO];
+            [text_ setHidden:NO];
+            break;
+            
+        case 5:
+            [[text_ cell] setPlaceholderString:@"Enter command"];
+            [caveat_ setStringValue:@"Command runs when you activate Semantic History on any text (even if it's not a valid filename).\nUse \\1 for filename, \\2 for line number, \\3 for all text before click, \\4 for all text after click."];
+            [caveat_ setHidden:NO];
             [text_ setHidden:NO];
             break;
     }
     if (sender) {
-        [text_ setStringValue:@""];
+        if (![text_ isHidden]) {
+            NSString *stringValue = [[self prefs] objectForKey:kTrouterTextKey];
+            [text_ setStringValue:stringValue ? stringValue : @""];
+        }
         [[PreferencePanel sharedInstance] bookmarkSettingChanged:nil];
     }
 }
@@ -222,6 +239,11 @@ enum {
     NSDictionary *prefs = [bookmark objectForKey:KEY_TROUTER];
     prefs = prefs ? prefs : [TrouterPrefsController defaultPrefs];
     NSString *action = [prefs objectForKey:kTrouterActionKey];
+    // Uncheck all items
+    for (NSMenuItem *item in [[action_ menu] itemArray]) {
+        [item setState:NSOffState];
+    }
+    // Set selection in menu
     if ([action isEqualToString:kTrouterBestEditorAction]) {
         [action_ selectItemWithTag:1];
     }
@@ -234,6 +256,11 @@ enum {
     if ([action isEqualToString:kTrouterCommandAction]) {
         [action_ selectItemWithTag:4];
     }
+    if ([action isEqualToString:kTrouterRawCommandAction]) {
+        [action_ selectItemWithTag:5];
+    }
+    // Check selected item
+    [[[action_ menu] itemWithTag:[action_ selectedTag]] setState:NSOnState];
     [self actionChanged:nil];
     NSString *text = [prefs objectForKey:kTrouterTextKey];
     if (text) {

@@ -2926,9 +2926,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
             int mods = [event modifierFlags];
             BOOL altPressed = (mods & NSAlternateKeyMask) != 0;
-            [self _openURL:url
-                      atLine:y + 1
-                      inBackground:altPressed];
+            NSString *prefix = [self wrappedStringAtX:x
+                                                    y:y
+                                                  dir:-1
+                                  respectHardNewlines:NO];
+            NSString *suffix = [self wrappedStringAtX:x
+                                                    y:y
+                                                  dir:1
+                                  respectHardNewlines:NO];
+            [self _openSemanticHistoryForUrl:url
+                                      atLine:y + 1
+                                      inBackground:altPressed
+                                      prefix:prefix
+                                      suffix:suffix];
         } else {
             lastFindStartX = endX;
             lastFindEndX = endX+1;
@@ -3592,14 +3602,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)browse:(id)sender
 {
-    [self _openURL: [self selectedText] inBackground:NO];
+    [self _findUrlInString:[self selectedText]
+          andOpenInBackground:NO];
 }
 
 - (void)searchInBrowser:(id)sender
 {
-    NSString* url = [NSString stringWithFormat:[[PreferencePanel sharedInstance] searchCommand],
-                              [[self selectedText] stringWithPercentEscape]];
-    [self _openURL:url inBackground:NO];
+    NSString* url =
+        [NSString stringWithFormat:[[PreferencePanel sharedInstance] searchCommand],
+                                   [[self selectedText] stringWithPercentEscape]];
+    [self _findUrlInString:url
+          andOpenInBackground:NO];
 }
 
 //
@@ -6686,7 +6699,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // character at xi,yi.
 // If respectHardNewlines is true, then a hard newline always terminates the
 // string.
-- (NSString *)wrappedStringAtX:(int)xi y:(int)yi dir:(int)dir respectHardNewlines:(BOOL)respectHardNewlines
+- (NSString *)wrappedStringAtX:(int)xi
+                             y:(int)yi
+                           dir:(int)dir
+           respectHardNewlines:(BOOL)respectHardNewlines
 {
     int w = [dataSource width];
     int h = [dataSource height];
@@ -7017,21 +7033,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return [[workingDirectoryAtLines lastObject] lastObject];
 }
 
-- (void)_openURL:(NSString *)aURLString atLine:(long long)line inBackground:(BOOL)background
+- (void)_openSemanticHistoryForUrl:(NSString *)aURLString
+                            atLine:(long long)line
+                      inBackground:(BOOL)background
+                            prefix:(NSString *)prefix
+                            suffix:(NSString *)suffix
 {
     NSString* trimmedURLString;
 
     trimmedURLString = [aURLString stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
 
     NSString *workingDirectory = [self getWorkingDirectoryAtLine:line];
-    if (![trouter openPath:trimmedURLString workingDirectory:workingDirectory]) {
-        [self _openURL:aURLString inBackground:background];
+    if (![trouter openPath:trimmedURLString
+              workingDirectory:workingDirectory
+                    prefix:prefix
+                    suffix:suffix]) {
+        [self _findUrlInString:aURLString
+              andOpenInBackground:background];
     }
 
     return;
 }
 
 // Opens a URL in the default browser in background or foreground
+// Don't call this unless you know that iTerm2 is NOT the handler for this scheme!
 - (void)openURL:(NSURL *)url inBackground:(BOOL)background
 {
     if (background) {
@@ -7046,7 +7071,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (void)_openURL:(NSString *)aURLString inBackground:(BOOL)background
+// This handles a few kinds of URLs, after trimming whitespace from the beginning and end:
+// 1. Well formed strings like:
+//    "http://example.com/foo?query#fragment"
+// 2. URLs in parens:
+//    "(http://example.com/foo?query#fragment)" -> http://example.com/foo?query#fragment
+// 3. URLs at the end of a sentence:
+//    "http://example.com/foo?query#fragment." -> http://example.com/foo?query#fragment
+// 4. Case 2 & 3 combined:
+//    "(http://example.com/foo?query#fragment)." -> http://example.com/foo?query#fragment
+// 5. Strings without a scheme (http is assumed, previous cases do not apply)
+//    "example.com/foo?query#fragment" -> http://example.com/foo?query#fragment
+// If iTerm2 is the handler for the scheme, then the bookmark is launched directly.
+// Otherwise it's passed to the OS to launch.
+- (void)_findUrlInString:(NSString *)aURLString andOpenInBackground:(BOOL)background
 {
     NSURL *url;
     NSString* trimmedURLString;
@@ -7097,7 +7135,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                             (CFStringRef)trimmedURLString,
                                                             (CFStringRef)@"!*'();:@&=+$,/?%#[]",
                                                             NULL,
-                                                            kCFStringEncodingUTF8 );
+                                                            kCFStringEncodingUTF8);
 
     url = [NSURL URLWithString:escapedString];
     [escapedString release];
