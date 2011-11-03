@@ -482,7 +482,6 @@ NSString *sessionsKey = @"sessions";
     wellFormed_ = YES;
     [[self window] futureSetRestorable:YES];
     [[self window] futureSetRestorationClass:[PseudoTerminalRestorer class]];
-    NSLog(@"init window of size %@", [NSValue valueWithSize:self.window.frame.size]);
     return self;
 }
 
@@ -1291,7 +1290,6 @@ NSString *sessionsKey = @"sessions";
         [[term window] setFrame:rect display:NO];
     }
 
-    NSLog(@"bare term has rect %@", [NSValue valueWithRect:term.window.frame]);
     return term;
 }
 

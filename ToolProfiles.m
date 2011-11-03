@@ -67,7 +67,6 @@ static const int kPopupHeight = 26;
     NSRect frame = self.frame;
     listView_.frame = NSMakeRect(kMargin, 0, frame.size.width - kMargin * 2, frame.size.height - kPopupHeight - kVerticalMargin);
     popup_.frame = NSMakeRect(0, frame.size.height - kPopupHeight, frame.size.width, kPopupHeight);
-    NSLog(@"Frame height is %d", (int)frame.size.height);
 }
 
 - (BOOL)isFlipped
