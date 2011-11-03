@@ -3296,6 +3296,7 @@ NSString *sessionsKey = @"sessions";
     }
     [[self currentTab] recheckBlur];
     [[self currentTab] numberOfSessionsDidChange];
+    [sessionView updateDim];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
 

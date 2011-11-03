@@ -1222,7 +1222,7 @@ static NSString* FormatRect(NSRect r) {
     [self dump];
 
     [self appendSessionViewToViewOrder:newView];
-    
+
     return newView;
 }
 
