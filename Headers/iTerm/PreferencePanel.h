@@ -315,12 +315,15 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTabViewItem* arrangementsTabViewItem;
     IBOutlet NSToolbarItem* bookmarksToolbarItem;
     IBOutlet NSTabViewItem* bookmarksTabViewItem;
+    IBOutlet NSToolbarItem* mouseToolbarItem;
+    IBOutlet NSTabViewItem* mouseTabViewItem;
     NSString* globalToolbarId;
     NSString* appearanceToolbarId;
     NSString* keyboardToolbarId;
     NSString* arrangementsToolbarId;
     NSString* bookmarksToolbarId;
-
+    NSString *mouseToolbarId;
+  
     // url handler stuff
     NSMutableDictionary *urlHandlersByGuid;
 
@@ -677,6 +680,7 @@ typedef enum {
 - (IBAction)showBookmarksTabView:(id)sender;
 - (IBAction)showKeyboardTabView:(id)sender;
 - (IBAction)showArrangementsTabView:(id)sender;
+- (IBAction)showMouseTabView:(id)sender;
 - (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme;
 - (void)disconnectHandlerForScheme:(NSString*)scheme;
 - (IBAction)closeWindow:(id)sender;

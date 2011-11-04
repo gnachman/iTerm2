@@ -564,7 +564,8 @@ static float versionNumber;
     appearanceToolbarId = [appearanceToolbarItem itemIdentifier];
     keyboardToolbarId = [keyboardToolbarItem itemIdentifier];
     arrangementsToolbarId = [arrangementsToolbarItem itemIdentifier];
-
+    mouseToolbarId = [mouseToolbarItem itemIdentifier];
+  
     [globalToolbarItem setEnabled:YES];
     [toolbar setSelectedItemIdentifier:globalToolbarId];
 
@@ -1039,6 +1040,8 @@ static float versionNumber;
         return keyboardToolbarItem;
     } else if ([itemIdentifier isEqual:arrangementsToolbarId]) {
         return arrangementsToolbarItem;
+    } else if ([itemIdentifier isEqual:mouseToolbarId]) {
+        return mouseToolbarItem;
     } else {
         return nil;
     }
@@ -1051,13 +1054,14 @@ static float versionNumber;
                                      bookmarksToolbarId,
                                      keyboardToolbarId,
                                      arrangementsToolbarId,
+                                     mouseToolbarId,
                                      nil];
 }
 
 - (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar
 {
     return [NSArray arrayWithObjects:globalToolbarId, appearanceToolbarId, bookmarksToolbarId,
-            keyboardToolbarId, arrangementsToolbarId, nil];
+            keyboardToolbarId, arrangementsToolbarId, mouseToolbarId, nil];
 }
 
 - (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar
@@ -1069,6 +1073,7 @@ static float versionNumber;
                                      bookmarksToolbarId,
                                      keyboardToolbarId,
                                      arrangementsToolbarId,
+                                     mouseToolbarId,
                                      nil];
 }
 
@@ -3390,7 +3395,12 @@ static float versionNumber;
 
 - (IBAction)showArrangementsTabView:(id)sender
 {
-    [tabView selectTabViewItem:arrangementsTabViewItem];
+  [tabView selectTabViewItem:arrangementsTabViewItem];
+}
+
+- (IBAction)showMouseTabView:(id)sender
+{
+  [tabView selectTabViewItem:mouseTabViewItem];
 }
 
 - (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme
