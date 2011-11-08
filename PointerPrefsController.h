@@ -23,10 +23,17 @@
     IBOutlet NSButton *editModifiersControl_;
     IBOutlet NSTextField *editActionLabel_;
     IBOutlet NSPopUpButton *editAction_;
-
+    IBOutlet NSTextField *editClickTypeLabel_;
+    IBOutlet NSPopUpButton *editClickType_;
+    
+    NSString *origKey_;
     BOOL hasSelection_;
 }
 
 @property (nonatomic, assign) BOOL hasSelection;
+
+- (IBAction)buttonOrGestureChanged:(id)sender;
+- (IBAction)ok:(id)sender;
+- (IBAction)cancel:(id)sender;
 
 @end

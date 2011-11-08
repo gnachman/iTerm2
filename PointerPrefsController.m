@@ -21,6 +21,11 @@ static NSString *kControlKeyChar = @"^";
 #define kMiddleButton 2
 static int kMaxClicks = 4;
 
+static const int kMinGestureTag = 10;
+#define kThreeFingerTapGestureTag 10
+#define kThreeFingerSwipeRightGestureTag 11
+#define kThreeFingerSwipeLeftGestureTag 12
+
 static NSString *kButtonSchema = @"Button";  // First field of action key
 static NSString *kGestureSchema = @"Gesture";  // First field of action key
 
@@ -32,9 +37,43 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
 - (NSComparisonResult)comparePointerActions:(NSString *)other;
 @end
 
+@interface PointerPrefsController (Private)
++ (NSDictionary *)dictForAction:(NSString *)action;
++ (NSString *)modCharsForMask:(int)modifiers;
++ (int)maskForModChars:(NSString *)modChars;
++ (NSString *)keyForButton:(int)button clicks:(int)clicks modifiers:(int)modifiers;
++ (NSString *)keyForGesture:(NSString *)gestureDescription modifiers:(int)modifiers;
++ (BOOL)keyIsButton:(NSString *)key;
++ (NSArray *)buttonKeyComponents:(NSString *)key;
++ (NSArray *)gestureKeyComponents:(NSString *)key;
++ (int)buttonForKey:(NSString *)key;
++ (int)numClicksForKey:(NSString *)key;
++ (NSString *)localizedNumClicks:(int)n;
++ (NSString *)localizedButtonNameForButtonNumber:(int)n;
++ (NSString *)localizedGestureNameForGestureIdentifier:(NSString *)ident;
++ (NSString *)localizedModifers:(int)keyMods;
++ (NSDictionary *)localizedActionMap;
++ (NSString *)localizedActionForDict:(NSDictionary *)dict;
++ (NSString *)localizedActionForKey:(NSString *)key;
++ (NSString *)gestureIdentifierForKey:(NSString *)key;
++ (int)modifiersForKey:(NSString *)key;
++ (NSDictionary *)defaultActions;
++ (NSDictionary *)settings;
++ (void)setSettings:(NSDictionary *)newSettings;
++ (NSArray *)sortedKeys;
++ (NSString *)keyForRowIndex:(int)rowIndex;
++ (int)tagForGestureIdentifier:(NSString *)ident;
+@end
+
 @implementation PointerPrefsController
 
 @synthesize hasSelection = hasSelection_;
+
+- (void)dealloc
+{
+    [origKey_ release];
+    [super dealloc];
+}
 
 + (NSDictionary *)dictForAction:(NSString *)action
 {
@@ -80,12 +119,12 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
 + (NSString *)keyForButton:(int)button clicks:(int)clicks modifiers:(int)modifiers
 {
     NSString *modStr = [PointerPrefsController modCharsForMask:modifiers];
-    return [NSString stringWithFormat:@"%@,%d,%d,%@", kButtonSchema, button, clicks, modStr];
+    return [NSString stringWithFormat:@"%@,%d,%d,%@,", kButtonSchema, button, clicks, modStr];
 }
 
 + (NSString *)keyForGesture:(NSString *)gestureDescription modifiers:(int)modifiers
 {
-    return [NSString stringWithFormat:@"%@,%@,%@",
+    return [NSString stringWithFormat:@"%@,%@,%@,",
                 kGestureSchema,
                 gestureDescription,
                 [PointerPrefsController modCharsForMask:modifiers]];
@@ -181,19 +220,66 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
     }
 }
 
-+ (NSString *)localizedGestureNameForGestureIdentifier:(NSString *)ident
++ (NSDictionary *)gestureNamesDict
 {
     NSDictionary *names = [NSDictionary dictionaryWithObjectsAndKeys:
-                           @"3-finger click", kThreeFingerClickGesture,
-                           @"3-finger swipe right", kThreeFingerSwipeRight,
-                           @"3-finger swipe left", kThreeFingerSwipeLeft,
+                           @"Three-finger Tap", kThreeFingerClickGesture,
+                           @"Three-finger Swipe Right", kThreeFingerSwipeRight,
+                           @"Three-finger Swipe Left", kThreeFingerSwipeLeft,
                            nil];
+    return names;
+}
+
++ (NSString *)localizedGestureNameForGestureIdentifier:(NSString *)ident
+{
+    NSDictionary *names = [PointerPrefsController gestureNamesDict];
     NSString *name = [names objectForKey:ident];
     if (name) {
         return name;
     } else {
         // Shouldn't happen
         return ident;
+    }
+}
+
++ (int)tagForGestureIdentifier:(NSString *)ident
+{
+    NSArray *keys = [NSArray arrayWithObjects:
+                     kThreeFingerClickGesture,
+                     kThreeFingerSwipeRight,
+                     kThreeFingerSwipeLeft,
+                     nil];
+
+    NSUInteger i = [keys indexOfObject:ident];
+    if (i == NSNotFound) {
+        return -1;
+    }
+    return i + kMinGestureTag;
+}
+
++ (NSString *)actionWithLocalizedName:(NSString *)localizedName
+{
+    NSDictionary *actionMap = [PointerPrefsController localizedActionMap];
+    for (NSString *action in actionMap) {
+        NSString *curName = [actionMap objectForKey:action];
+        if ([curName isEqualToString:localizedName]) {
+            return action;
+        }
+    }
+    return [NSString stringWithFormat:@"Bad name: %@", localizedName];
+}
+
++ (NSString *)gestureIdentifierForTag:(int)tag
+{
+    switch (tag) {
+        case kThreeFingerTapGestureTag:
+            return kThreeFingerClickGesture;
+        case kThreeFingerSwipeRightGestureTag:
+            return kThreeFingerSwipeRight;
+        case kThreeFingerSwipeLeftGestureTag:
+            return kThreeFingerSwipeLeft;
+        default:
+            return [NSString stringWithFormat:@"Bad tag %d", tag];
     }
 }
 
@@ -250,6 +336,12 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
         name = @"(Unknown)";
     }
     return name;
+}
+
++ (NSString *)localizedActionForKey:(NSString *)key
+{
+    NSDictionary *dict = [[PointerPrefsController settings] objectForKey:key];
+    return [PointerPrefsController localizedActionForDict:dict];
 }
 
 + (NSString *)gestureIdentifierForKey:(NSString *)key
@@ -348,6 +440,11 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
     return dict;
 }
 
++ (void)setSettings:(NSDictionary *)newSettings
+{
+    [[NSUserDefaults standardUserDefaults] setObject:newSettings forKey:kPointerActionsKey];
+}
+
 + (NSArray *)sortedKeys
 {
     NSArray *keys = [[PointerPrefsController settings] allKeys];
@@ -356,7 +453,20 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
 
 - (void)awakeFromNib
 {
-    [tableView_ setDoubleAction:@selector(tableViewRowDoubleClicked)];
+    [tableView_ setDoubleAction:@selector(tableViewRowDoubleClicked:)];
+    [tableView_ setTarget:self];
+    NSDictionary *actionMap = [PointerPrefsController localizedActionMap];
+    for (NSString *ident in actionMap) {
+        NSString *localizedName = [actionMap objectForKey:ident];
+        [editAction_ addItemWithTitle:localizedName];
+    }
+}
+
++ (NSString *)keyForRowIndex:(int)rowIndex
+{
+    NSArray *sortedKeys = [PointerPrefsController sortedKeys];
+    NSString *key = [sortedKeys objectAtIndex:rowIndex];
+    return key;
 }
 
 #pragma mark NSTableViewDataSource
@@ -369,8 +479,7 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
 - (id)tableView:(NSTableView *)aTableView
     objectValueForTableColumn:(NSTableColumn *)aTableColumn
     row:(NSInteger)rowIndex {
-    NSArray *sortedKeys = [PointerPrefsController sortedKeys];
-    NSString *key = [sortedKeys objectAtIndex:rowIndex];
+    NSString *key = [PointerPrefsController keyForRowIndex:rowIndex];
     NSDictionary *action = [[PointerPrefsController settings] objectForKey:key];
     BOOL isButton = [PointerPrefsController keyIsButton:key];
     
@@ -417,8 +526,7 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
    forTableColumn:(NSTableColumn *)aTableColumn
               row:(NSInteger)rowIndex
 {
-    NSArray *sortedKeys = [PointerPrefsController sortedKeys];
-    NSString *key = [sortedKeys objectAtIndex:rowIndex];
+    NSString *key = [PointerPrefsController keyForRowIndex:rowIndex];
     NSDictionary *action = [[PointerPrefsController settings] objectForKey:key];
     
     if (aTableColumn == buttonColumn_) {
@@ -428,6 +536,44 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
         [action release];
     } else {
         [PointerPrefsController setActionNumber:[anObject intValue] forKey:key];
+    }
+}
+
+- (void)loadKeyIntoEditPane:(NSString *)key
+{
+    int modMask = [PointerPrefsController modifiersForKey:key];
+    NSString *localizedAction = [PointerPrefsController localizedActionForKey:key];
+    [editModifiersCommand_ setState:(modMask & NSCommandKeyMask) ? NSOnState : NSOffState];
+    [editModifiersOption_ setState:(modMask & NSAlternateKeyMask) ? NSOnState : NSOffState];
+    [editModifiersShift_ setState:(modMask & NSShiftKeyMask) ? NSOnState : NSOffState];
+    [editModifiersControl_ setState:(modMask & NSControlKeyMask) ? NSOnState : NSOffState];
+    [editAction_ selectItemWithTitle:localizedAction];
+
+    BOOL isButton = [PointerPrefsController keyIsButton:key];
+    if (isButton) {
+        int button = [PointerPrefsController buttonForKey:key];
+        int numClicks = [PointerPrefsController numClicksForKey:key];
+        
+        [editButton_ selectItemWithTag:button];
+        [editClickType_ selectItemWithTag:numClicks];
+    } else {
+        NSString *gestureIdent = [PointerPrefsController gestureIdentifierForKey:key];
+        [editButton_ selectItemWithTag:[PointerPrefsController tagForGestureIdentifier:gestureIdent]];
+        [editClickType_ selectItem:nil];
+    }
+    [origKey_ autorelease];
+    origKey_ = [key retain];
+    [self buttonOrGestureChanged:nil];
+}
+
+- (IBAction)buttonOrGestureChanged:(id)sender
+{
+    if ([editButton_ selectedTag] >= kMinGestureTag) {
+        [editClickTypeLabel_ setTextColor:[NSColor disabledControlTextColor]];
+        [editClickType_ setEnabled:NO];
+    } else {
+        [editClickTypeLabel_ setTextColor:[NSColor blackColor]];
+        [editClickType_ setEnabled:YES];        
     }
 }
 
@@ -451,8 +597,7 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
         textColor = [NSColor blackColor];
         enableControls = YES;
 
-        NSArray *sortedKeys = [PointerPrefsController sortedKeys];
-        NSString *key = [sortedKeys objectAtIndex:rowIndex];
+        NSString *key = [PointerPrefsController keyForRowIndex:rowIndex];
         NSDictionary *action = [[PointerPrefsController settings] objectForKey:key];
 
         [editButton_ selectItemWithTag:[PointerPrefsController buttonForKey:key]];
@@ -478,6 +623,7 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
 - (void)tableViewRowDoubleClicked:(id)sender
 {
     NSString *key = [PointerPrefsController keyForRowIndex:[tableView_ selectedRow]];
+    [self loadKeyIntoEditPane:key];
     [NSApp beginSheet:panel_
        modalForWindow:[[PreferencePanel sharedInstance] window]
         modalDelegate:self
@@ -488,6 +634,47 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
 - (void)genericCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo
 {
     [sheet close];
+}
+
+- (IBAction)ok:(id)sender
+{
+    NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:[PointerPrefsController settings]];
+    [temp removeObjectForKey:origKey_];
+    NSDictionary *newValue = [NSDictionary dictionaryWithObject:[PointerPrefsController actionWithLocalizedName:[[editAction_ selectedItem] title]]
+                                                         forKey:kActionKey];
+    NSString *newKey;
+    int modMask = 0;
+    if ([editModifiersCommand_ state] == NSOnState) {
+        modMask |= NSCommandKeyMask;
+    }
+    if ([editModifiersOption_ state] == NSOnState) {
+        modMask |= NSAlternateKeyMask;
+    }
+    if ([editModifiersShift_ state] == NSOnState) {
+        modMask |= NSShiftKeyMask;
+    }
+    if ([editModifiersControl_ state] == NSOnState) {
+        modMask |= NSControlKeyMask;
+    }
+    if ([editButton_ selectedTag] >= kMinGestureTag) {
+        // Gesture
+        newKey = [PointerPrefsController keyForGesture:[PointerPrefsController gestureIdentifierForTag:[editButton_ selectedTag]]
+                                             modifiers:modMask];
+    } else {
+        // Button
+        newKey = [PointerPrefsController keyForButton:[editButton_ selectedTag]
+                                               clicks:[editClickType_ selectedTag]
+                                            modifiers:modMask];
+    }
+    [temp setObject:newValue forKey:newKey];
+    [PointerPrefsController setSettings:temp];
+    [NSApp endSheet:panel_];
+    [tableView_ reloadData];
+}
+
+- (IBAction)cancel:(id)sender
+{
+    [NSApp endSheet:panel_];
 }
 
 @end
