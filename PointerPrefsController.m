@@ -354,6 +354,11 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
     return [keys sortedArrayUsingSelector:@selector(comparePointerActions:)];
 }
 
+- (void)awakeFromNib
+{
+    [tableView_ setDoubleAction:@selector(tableViewRowDoubleClicked)];
+}
+
 #pragma mark NSTableViewDataSource
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
@@ -435,48 +440,54 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
     return NO;
 }
 
-#if 0
-- (NSCell *)tableView:(NSTableView *)tableView
-    dataCellForTableColumn:(NSTableColumn *)tableColumn
-    row:(NSInteger)rowIndex
-{
-    NSArray *sortedKeys = [PointerPrefsController sortedKeys];
-    NSString *key = [sortedKeys objectAtIndex:rowIndex];
-    NSDictionary *action = [[PointerPrefsController settings] objectForKey:key];
-
-    if (tableColumn == buttonColumn_) {
-        NSButtonCell *cell = [[[NSButtonCell alloc] initTextCell:[self tableView:tableView_
-                                                                      objectValueForTableColumn:tableColumn
-                                                                             row:rowIndex]] autorelease];
-        [cell setAction:@selector(buttonOrGestureClicked:)];
-        [cell setTarget:self];
-        [cell setBordered:NO];
-        
-        return cell;
-    } else if (tableColumn == actionColumn_) {
-        NSDictionary *names = [PointerPrefsController localizedActionMap];
-        NSArray *localNames = [[names allValues] sortedArrayUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
-        NSPopUpButtonCell *cell =
-            [[[NSPopUpButtonCell alloc] initTextCell:[localNames objectAtIndex:0] pullsDown:NO] autorelease];
-        for (NSString *title in localNames) {
-            [cell addItemWithTitle:title];
-        }
-        
-        [cell setBordered:NO];
-        
-        return cell;
-    }
-    return nil;
-}
-
-- (void)buttonOrGestureClicked:(id)sender
-{
-    NSLog(@"YOU CLICKED IT");
-}
-#endif
 - (void)tableViewSelectionDidChange:(NSNotification *)notification
 {
     self.hasSelection = [tableView_ numberOfSelectedRows] > 0;
+    int rowIndex = [tableView_ selectedRow];
+    
+    NSColor *textColor = [NSColor disabledControlTextColor];
+    BOOL enableControls = NO;
+    if (self.hasSelection) {
+        textColor = [NSColor blackColor];
+        enableControls = YES;
+
+        NSArray *sortedKeys = [PointerPrefsController sortedKeys];
+        NSString *key = [sortedKeys objectAtIndex:rowIndex];
+        NSDictionary *action = [[PointerPrefsController settings] objectForKey:key];
+
+        [editButton_ selectItemWithTag:[PointerPrefsController buttonForKey:key]];
+        [editAction_ selectItemWithTitle:[PointerPrefsController localizedActionForDict:action]];
+
+        int modflags = [PointerPrefsController modifiersForKey:key];
+        [editModifiersCommand_ setEnabled:!!(modflags & NSCommandKeyMask)];
+        [editModifiersOption_ setEnabled:!!(modflags & NSAlternateKeyMask)];
+        [editModifiersShift_ setEnabled:!!(modflags & NSShiftKeyMask)];
+        [editModifiersControl_ setEnabled:!!(modflags & NSControlKeyMask)];
+    }
+    [editButtonLabel_ setTextColor:textColor];
+    [editButton_ setEnabled:enableControls];
+    [editModifiersLabel_ setTextColor:textColor];
+    [editModifiersCommand_ setEnabled:enableControls];
+    [editModifiersOption_ setEnabled:enableControls];
+    [editModifiersShift_ setEnabled:enableControls];
+    [editModifiersControl_ setEnabled:enableControls];
+    [editActionLabel_ setTextColor:textColor];
+    [editAction_ setEnabled:enableControls];
+}
+
+- (void)tableViewRowDoubleClicked:(id)sender
+{
+    NSString *key = [PointerPrefsController keyForRowIndex:[tableView_ selectedRow]];
+    [NSApp beginSheet:panel_
+       modalForWindow:[[PreferencePanel sharedInstance] window]
+        modalDelegate:self
+       didEndSelector:@selector(genericCloseSheet:returnCode:contextInfo:)
+          contextInfo:key];
+}
+
+- (void)genericCloseSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo
+{
+    [sheet close];
 }
 
 @end
