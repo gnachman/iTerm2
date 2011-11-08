@@ -187,6 +187,11 @@
 		1D7C1D1312772ECC00461E55 /* NSDateFormatterExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */; };
 		1D823C4812F92B3F0028422B /* screen.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D823C4712F92B3F0028422B /* screen.png */; };
 		1D8255F714649F8E007CAE78 /* PrefsMouse.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1D8255F614649F8E007CAE78 /* PrefsMouse.tiff */; };
+		1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */; };
+		1D8255FC14687EE8007CAE78 /* PointerPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */; };
+		1D8255FD14687EE8007CAE78 /* PointerPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8255FB14687EE8007CAE78 /* PointerPrefsController.m */; };
+		1D825600146881EC007CAE78 /* PointerController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D8255FE146881EC007CAE78 /* PointerController.h */; };
+		1D825601146881EC007CAE78 /* PointerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8255FF146881EC007CAE78 /* PointerController.m */; };
 		1D844C8D13FD8B7700CD4F85 /* SplitPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D844C8B13FD8B7700CD4F85 /* SplitPanel.xib */; };
 		1D85D1ED1306687700A3E998 /* RegexKitLite.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D85D1D81306687700A3E998 /* RegexKitLite.h */; };
 		1D85D1EF1306687700A3E998 /* RegexKitLite.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D85D1DA1306687700A3E998 /* RegexKitLite.m */; };
@@ -402,6 +407,11 @@
 		1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSDateFormatterExtras.m; sourceTree = "<group>"; };
 		1D823C4712F92B3F0028422B /* screen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = screen.png; path = images/screen.png; sourceTree = "<group>"; };
 		1D8255F614649F8E007CAE78 /* PrefsMouse.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsMouse.tiff; path = images/PrefsMouse.tiff; sourceTree = "<group>"; };
+		1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultPointerActions.plist; sourceTree = "<group>"; };
+		1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PointerPrefsController.h; sourceTree = "<group>"; };
+		1D8255FB14687EE8007CAE78 /* PointerPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PointerPrefsController.m; sourceTree = "<group>"; };
+		1D8255FE146881EC007CAE78 /* PointerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PointerController.h; sourceTree = "<group>"; };
+		1D8255FF146881EC007CAE78 /* PointerController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PointerController.m; sourceTree = "<group>"; };
 		1D844C8C13FD8B7700CD4F85 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/SplitPanel.xib; sourceTree = "<group>"; };
 		1D85D1D81306687700A3E998 /* RegexKitLite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegexKitLite.h; sourceTree = "<group>"; };
 		1D85D1DA1306687700A3E998 /* RegexKitLite.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RegexKitLite.m; sourceTree = "<group>"; };
@@ -730,6 +740,7 @@
 				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
 				1D72438C11F416E500BD4924 /* LineBuffer.m */,
 				1D29732614082676004C5DBE /* MovePaneController.m */,
+				1D8255FF146881EC007CAE78 /* PointerController.m */,
 				1D988596135D23BD0072023F /* ProcessCache.m */,
 				FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */,
 				5ECE005E1454E59B004861E9 /* PseudoTerminalRestorer.m */,
@@ -757,6 +768,8 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				1D8255FE146881EC007CAE78 /* PointerController.h */,
+				1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */,
 				1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */,
 				1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */,
 				1D24C2C3142FEACF006B246F /* SmartSelectionController.h */,
@@ -942,6 +955,7 @@
 				1DCA8BA8121A1B8000ABDEB5 /* PrefsTerminal.tiff */,
 				1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */,
 				1D1158C913444D29009B366F /* iTerm2 Help */,
+				1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -955,6 +969,7 @@
 				1D31BC64142D33CA001F7ECB /* TriggerController.m */,
 				1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */,
 				1DCA5ECE13EE507800B7725E /* WindowArrangements.m */,
+				1D8255FB14687EE8007CAE78 /* PointerPrefsController.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -1284,6 +1299,8 @@
 				1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */,
 				1DEDC8FD1451F67D004F1615 /* SessionTitleView.h in Headers */,
 				5ECE005F1454E59B004861E9 /* PseudoTerminalRestorer.h in Headers */,
+				1D8255FC14687EE8007CAE78 /* PointerPrefsController.h in Headers */,
+				1D825600146881EC007CAE78 /* PointerController.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1426,6 +1443,7 @@
 				1D9DDE9E142E855D00275650 /* Coprocess.png in Resources */,
 				5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */,
 				1D8255F714649F8E007CAE78 /* PrefsMouse.tiff in Resources */,
+				1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1556,6 +1574,8 @@
 				1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */,
 				1DEDC8FE1451F67D004F1615 /* SessionTitleView.m in Sources */,
 				5ECE00601454E59B004861E9 /* PseudoTerminalRestorer.m in Sources */,
+				1D8255FD14687EE8007CAE78 /* PointerPrefsController.m in Sources */,
+				1D825601146881EC007CAE78 /* PointerController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

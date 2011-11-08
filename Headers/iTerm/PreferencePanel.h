@@ -595,7 +595,9 @@ typedef enum {
 - (BOOL)copySelection;
 - (BOOL)copyLastNewline;
 - (void)setCopySelection:(BOOL)flag;
+- (BOOL)legacyPasteFromClipboard;
 - (BOOL)pasteFromClipboard;
+- (BOOL)legacyThreeFingerEmulatesMiddle;
 - (BOOL)threeFingerEmulatesMiddle;
 - (void)setPasteFromClipboard:(BOOL)flag;
 - (BOOL)hideTab;
@@ -609,7 +611,9 @@ typedef enum {
 // Returns true if ANY profile has growl enabled (preserves interface from back
 // when there was a global growl setting as well as a per-profile setting).
 - (BOOL)enableGrowl;
+- (BOOL)legacyCmdSelection;
 - (BOOL)cmdSelection;
+- (BOOL)legacyPassOnControlLeftClick;
 - (BOOL)passOnControlLeftClick;
 - (BOOL)maxVertically;
 - (BOOL)closingHotkeySwitchesSpaces;

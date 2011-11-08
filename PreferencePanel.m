@@ -1751,9 +1751,19 @@ static float versionNumber;
     defaultCopySelection = flag;
 }
 
+- (BOOL)legacyPasteFromClipboard
+{
+    return defaultPasteFromClipboard;
+}
+
 - (BOOL)pasteFromClipboard
 {
     return defaultPasteFromClipboard;
+}
+
+- (BOOL)legacyThreeFingerEmulatesMiddle
+{
+    return defaultThreeFingerEmulatesMiddle;
 }
 
 - (BOOL)threeFingerEmulatesMiddle
@@ -1821,12 +1831,22 @@ static float versionNumber;
     return NO;
 }
 
+- (BOOL)legacyCmdSelection
+{
+    return defaultCmdSelection;
+}
+
 - (BOOL)cmdSelection
 {
     return defaultCmdSelection;
 }
 
 - (BOOL)passOnControlLeftClick
+{
+    return defaultPassOnControlLeftClick;
+}
+
+- (BOOL)legacyPassOnControlLeftClick
 {
     return defaultPassOnControlLeftClick;
 }
