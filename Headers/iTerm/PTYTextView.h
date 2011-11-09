@@ -32,6 +32,7 @@
 #import "PreferencePanel.h"
 #import "Trouter.h"
 #import "LineBuffer.h"
+#import "PointerController.h"
 
 #include <sys/time.h>
 #define PRETTY_BOLD
@@ -41,7 +42,6 @@
 #define COLOR_KEY_SIZE 4
 
 @class VT100Screen;
-@class PointerController;
 
 // Amount of time to highlight the cursor after beginFindCursor:YES
 static const double kFindCursorHoldTime = 1;
@@ -67,7 +67,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 @end
 
 
-@interface PTYTextView : NSView <NSTextInput>
+@interface PTYTextView : NSView <NSTextInput, PointerControllerDelegate>
 {
     // This is a flag to let us know whether we are handling this
     // particular drag and drop operation. We are using it because
@@ -322,6 +322,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)keyDown:(NSEvent *)event;
 - (BOOL)keyIsARepeat;
 - (void)updateCursor:(NSEvent *)event;
+- (void)swipeWithEvent:(NSEvent *)event;
 - (void)mouseExited:(NSEvent *)event;
 - (void)mouseEntered:(NSEvent *)event;
 - (void)mouseDown:(NSEvent *)event;
@@ -335,6 +336,20 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)rightMouseUp:(NSEvent *)event;
 - (void)rightMouseDragged:(NSEvent *)event;
 - (void)scrollWheel:(NSEvent *)event;
+
+- (void)pasteFromClipboardWithEvent:(NSEvent *)event;
+- (void)pasteFromSelectionWithEvent:(NSEvent *)event;
+- (void)openTargetWithEvent:(NSEvent *)event;
+- (void)openTargetInBackgroundWithEvent:(NSEvent *)event;
+- (void)smartSelectWithEvent:(NSEvent *)event;
+- (void)openContextMenuWithEvent:(NSEvent *)event;
+- (void)nextTabWithEvent:(NSEvent *)event;
+- (void)previousTabWithEvent:(NSEvent *)event;
+- (void)nextWindowWithEvent:(NSEvent *)event;
+- (void)previousWindowWithEvent:(NSEvent *)event;
+- (void)movePaneWithEvent:(NSEvent *)event;
+
+
 - (NSString *)contentFromX:(int)startx Y:(int)starty ToX:(int)endx Y:(int)endy pad: (BOOL) pad;
 - (NSString *)contentFromX:(int)startx
                          Y:(int)starty
@@ -525,6 +540,8 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (BOOL)isFindingCursor;
 - (void)beginFindCursor:(BOOL)hold;
 - (void)endFindCursor;
+
+- (void)movePane:(id)sender;
 
 // Clear working directories for when buffer is cleared
 - (void)clearWorkingDirectories;

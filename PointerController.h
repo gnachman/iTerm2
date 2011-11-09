@@ -8,39 +8,31 @@
 
 #import <Cocoa/Cocoa.h>
 
-extern NSString *kPasteFromClipboardPointerAction;
-extern NSString *kPasteFromSelectionPointerAction;
-extern NSString *kOpenTargetPointerAction;
-extern NSString *kSmartSelectionPointerAction;
-extern NSString *kContextMenuPointerAction;
-extern NSString *kSelectWordPointerAction;
-extern NSString *kSelectLinePointerAction;
-extern NSString *kBlockSelectPointerAction;
-extern NSString *kExtendSelectionPointerAction;
-extern NSString *kExtendSelectionByWordPointerAction;
-extern NSString *kExtendSelectionByLinePointerAction;
-extern NSString *kExtendSelectionBySmartSelectionPointerAction;
-extern NSString *kNextTabPointerAction;
-extern NSString *kPrevTabPointerAction;
-extern NSString *kDragPanePointerAction;
-extern NSString *kNoActionPointerAction;
-
 @protocol PointerControllerDelegate
 
-- (NSPoint)charCoordOfEventLocation:(NSPoint)eventLocation;
+- (void)pasteFromClipboardWithEvent:(NSEvent *)event;
+- (void)pasteFromSelectionWithEvent:(NSEvent *)event;
+- (void)openTargetWithEvent:(NSEvent *)event;
+- (void)openTargetInBackgroundWithEvent:(NSEvent *)event;
+- (void)smartSelectWithEvent:(NSEvent *)event;
+- (void)openContextMenuWithEvent:(NSEvent *)event;
+- (void)nextTabWithEvent:(NSEvent *)event;
+- (void)previousTabWithEvent:(NSEvent *)event;
+- (void)nextWindowWithEvent:(NSEvent *)event;
+- (void)previousWindowWithEvent:(NSEvent *)event;
+- (void)movePaneWithEvent:(NSEvent *)event;
 
 @end
 
 @interface PointerController : NSObject {
     NSObject<PointerControllerDelegate> *delegate_;
+    int mouseDownButton_;
 }
 
 @property (nonatomic, assign) NSObject<PointerControllerDelegate> *delegate;
 
-// Returns true if [super mouseDown] should be run by caller.
-- (BOOL)mouseDown:(NSEvent *)event;
-- (void)mouseUp:(NSEvent *)event;
-- (void)mouseDrag:(NSEvent *)event;
-- (void)mouseMove:(NSEvent *)event;
+- (void)mouseDown:(NSEvent *)event withTouches:(int)numTouches;
+- (void)mouseUp:(NSEvent *)event withTouches:(int)numTouches;
+- (void)swipeWithEvent:(NSEvent *)event;
 
 @end

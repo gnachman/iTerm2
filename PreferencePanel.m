@@ -1831,22 +1831,12 @@ static float versionNumber;
     return NO;
 }
 
-- (BOOL)legacyCmdSelection
-{
-    return defaultCmdSelection;
-}
-
 - (BOOL)cmdSelection
 {
     return defaultCmdSelection;
 }
 
 - (BOOL)passOnControlLeftClick
-{
-    return defaultPassOnControlLeftClick;
-}
-
-- (BOOL)legacyPassOnControlLeftClick
 {
     return defaultPassOnControlLeftClick;
 }

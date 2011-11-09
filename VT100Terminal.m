@@ -2462,7 +2462,7 @@ static VT100TCC decode_string(unsigned char *datap,
                     } else {
                         MOUSE_MODE = MOUSE_REPORTING_NONE;
                     }
-                    [SCREEN arouseModeDidChange:MOUSE_MODE];
+                    [SCREEN mouseModeDidChange:MOUSE_MODE];
                     break;
                 case 1004:
                     REPORT_FOCUS = mode;

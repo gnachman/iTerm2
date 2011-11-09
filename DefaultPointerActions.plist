@@ -2,61 +2,6 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>Button,0,2,,</key>
-  <dict>
-    <key>Action</key>
-    <string>kSelectWordPointerAction</string>
-  </dict>
-  <key>Button,0,3,,</key>
-  <dict>
-    <key>Action</key>
-    <string>kSelectLinePointerAction</string>
-  </dict>
-  <key>Button,0,4,,</key>
-  <dict>
-    <key>Action</key>
-    <string>kSmartSelectionPointerAction</string>
-  </dict>
-  <key>Button,0,1,c,</key>
-  <dict>
-    <key>Action</key>
-    <string>kOpenTargetPointerAction</string>
-  </dict>
-  <key>Button,0,1,co,</key>
-  <dict>
-    <key>Action</key>
-    <string>kBlockSelectPointerAction</string>
-  </dict>
-  <key>Button,0,1,s,</key>
-  <dict>
-    <key>Action</key>
-    <string>kExtendSelectionPointerAction</string>
-  </dict>
-  <key>Button,0,2,s,</key>
-  <dict>
-    <key>Action</key>
-    <string>kExtendSelectionByWordPointerAction</string>
-  </dict>
-  <key>Button,0,3,s,</key>
-  <dict>
-    <key>Action</key>
-    <string>kExtendSelectionByLinePointerAction</string>
-  </dict>
-  <key>Button,0,4,s,</key>
-  <dict>
-    <key>Action</key>
-    <string>kExtendSelectionBySmartSelectionPointerAction</string>
-  </dict>
-  <key>Button,0,0,cso,</key>
-  <dict>
-    <key>Action</key>
-    <string>kDragPanePointerAction</string>
-  </dict>
-  <key>Button,1,1,,</key>
-  <dict>
-    <key>Action</key>
-    <string>kContextMenuPointerAction</string>
-  </dict>
   <key>Button,2,1,,</key>
   <dict>
     <key>Action</key>
@@ -71,6 +16,16 @@
   <dict>
     <key>Action</key>
     <string>kPrevTabPointerAction</string>
+  </dict>
+  <key>Gesture,ThreeFingerSwipeUp,,</key>
+  <dict>
+    <key>Action</key>
+    <string>kNextWindowPointerAction</string>
+  </dict>
+  <key>Gesture,ThreeFingerSwipeDown,,</key>
+  <dict>
+    <key>Action</key>
+    <string>kPrevWindowPointerAction</string>
   </dict>
 </dict>
 </plist>

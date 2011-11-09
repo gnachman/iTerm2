@@ -314,11 +314,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
     pointer_ = [[PointerController alloc] init];
     pointer_.delegate = self;
-    
-    if ([[PreferencePanel sharedInstance] threeFingerEmulatesMiddle]) {
-        [self futureSetAcceptsTouchEvents:YES];
-        [self futureSetWantsRestingTouches:YES];
-    }
+
+    [self futureSetAcceptsTouchEvents:YES];
+    [self futureSetWantsRestingTouches:YES];
 
     return self;
 }
@@ -2267,11 +2265,7 @@ NSMutableArray* screens=0;
         }
     }
 
-    if ([[PreferencePanel sharedInstance] pasteFromClipboard]) {
-        [self paste:nil];
-    } else {
-        [self pasteSelection:nil];
-    }
+    [pointer_ mouseDown:event withTouches:numTouches_];
 }
 
 - (void)otherMouseUp:(NSEvent *)event
@@ -2314,6 +2308,7 @@ NSMutableArray* screens=0;
     if (!mouseDownIsThreeFingerClick_) {
         [super otherMouseUp:event];
     }
+    [pointer_ mouseUp:event withTouches:numTouches_];
 }
 
 - (void)otherMouseDragged:(NSEvent *)event
@@ -2559,6 +2554,11 @@ NSMutableArray* screens=0;
     [super flagsChanged:theEvent];
 }
 
+- (void)swipeWithEvent:(NSEvent *)event
+{
+    [pointer_ swipeWithEvent:event];
+}
+
 - (void)mouseExited:(NSEvent *)event
 {
     mouseInRect_ = NO;
@@ -2588,6 +2588,26 @@ NSMutableArray* screens=0;
     }
 }
 
+- (NSPoint)clickPoint:(NSEvent *)event
+{
+    NSPoint locationInWindow = [event locationInWindow];
+    NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
+    int x, y;
+    int width = [dataSource width];
+    
+    x = (locationInTextView.x - MARGIN + charWidth/2)/charWidth;
+    if (x < 0) {
+        x = 0;
+    }
+    y = locationInTextView.y / lineHeight;
+    
+    if (x >= width) {
+        x = width  - 1;
+    }
+    
+    return NSMakePoint(x, y);
+}
+
 - (void)mouseDown:(NSEvent *)event
 {
     if ([self mouseDownImpl:event]) {
@@ -2603,9 +2623,15 @@ NSMutableArray* screens=0;
         [[MovePaneController sharedInstance] beginDrag:[dataSource session]];
         return NO;
     }
-    if (numTouches_ == 3 && [[PreferencePanel sharedInstance] threeFingerEmulatesMiddle]) {
-        mouseDownIsThreeFingerClick_ = YES;
-        [self otherMouseDown:event];
+    if (numTouches_ == 3) {
+        if ([[PreferencePanel sharedInstance] threeFingerEmulatesMiddle]) {
+            mouseDownIsThreeFingerClick_ = YES;
+            [self otherMouseDown:event];
+        } else {
+            // Perform user-defined gesture action, if any
+            [pointer_ mouseDown:event withTouches:numTouches_];
+            mouseDown = YES;
+        }
         return NO;
     }
     const BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
@@ -2628,21 +2654,13 @@ NSMutableArray* screens=0;
     }
 
     NSPoint locationInWindow, locationInTextView;
-    int x, y;
+    NSPoint clickPoint = [self clickPoint:event];
+    int x = clickPoint.x;
+    int y = clickPoint.y;
     int width = [dataSource width];
 
     locationInWindow = [event locationInWindow];
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
-
-    x = (locationInTextView.x - MARGIN + charWidth/2)/charWidth;
-    if (x < 0) {
-        x = 0;
-    }
-    y = locationInTextView.y / lineHeight;
-
-    if (x >= width) {
-        x = width  - 1;
-    }
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
 
@@ -2800,15 +2818,7 @@ NSMutableArray* screens=0;
         // ignore status of shift key for smart selection because extending was messed up by
         // triple click.
         selectMode = SELECT_SMART;
-        if ([self smartSelectAtX:x y:y]) {
-            int tmpX1, tmpY1, tmpX2, tmpY2;
-            [self getWordForX:x
-                            y:y
-                       startX:&tmpX1
-                       startY:&tmpY1
-                         endX:&tmpX2
-                         endY:&tmpY2];
-        }
+        [self smartSelectWithEvent:event];
     }
 
     DebugLog([NSString stringWithFormat:@"Mouse down. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
@@ -2834,6 +2844,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self otherMouseUp:nil];
         mouseDownIsThreeFingerClick_ = NO;
         return;
+    } else if (numTouches_ == 3 && mouseDown) {
+        // Three finger tap is valid but not emulating middle button
+        [pointer_ mouseUp:event withTouches:numTouches_];
+        mouseDown = NO;
+        return;
     }
     dragOk_ = NO;
     trouterDragged = NO;
@@ -2848,20 +2863,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
 
+    selectionScrollDirection = 0;
+
     NSPoint locationInWindow = [event locationInWindow];
     NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
-    int x, y;
-    int width = [dataSource width];
-
-    x = (locationInTextView.x - MARGIN) / charWidth;
-    if (x < 0) {
-        x = 0;
-    }
-    if (x>=width) {
-        x = width - 1;
-    }
-    selectionScrollDirection = 0;
-    y = locationInTextView.y / lineHeight;
 
     // Send mouse up event to host if xterm mouse reporting is on
     if (frontTextView == self &&
@@ -2927,24 +2932,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         startX=-1;
         if (cmdPressed &&
             [[PreferencePanel sharedInstance] cmdSelection]) {
-            // Command click in place.
-            NSString *url = [self _getURLForX:x y:y];
-
-            int mods = [event modifierFlags];
-            BOOL altPressed = (mods & NSAlternateKeyMask) != 0;
-            NSString *prefix = [self wrappedStringAtX:x
-                                                    y:y
-                                                  dir:-1
-                                  respectHardNewlines:NO];
-            NSString *suffix = [self wrappedStringAtX:x
-                                                    y:y
-                                                  dir:1
-                                  respectHardNewlines:NO];
-            [self _openSemanticHistoryForUrl:url
-                                      atLine:y + 1
-                                      inBackground:altPressed
-                                      prefix:prefix
-                                      suffix:suffix];
+            BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
+            if (altPressed) {
+                [self openTargetInBackgroundWithEvent:event];
+            } else {
+                [self openTargetWithEvent:event];
+            }
         } else {
             lastFindStartX = endX;
             lastFindEndX = endX+1;
@@ -3142,6 +3135,94 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     [self moveSelectionEndpointToX:x Y:y locationInTextView:locationInTextView];
 }
+
+#pragma mark PointerControllerDelegate
+
+- (void)pasteFromClipboardWithEvent:(NSEvent *)event
+{
+    [self paste:nil];
+}
+
+- (void)pasteFromSelectionWithEvent:(NSEvent *)event
+{
+    [self pasteSelection:nil];
+}
+
+- (void)_openTargetWithEvent:(NSEvent *)event inBackground:(BOOL)openInBackground
+{
+    NSPoint clickPoint = [self clickPoint:event];
+    int x = clickPoint.x;
+    int y = clickPoint.y;
+    
+    // Command click in place.
+    NSString *url = [self _getURLForX:x y:y];
+    
+    int mods = [event modifierFlags];
+    NSString *prefix = [self wrappedStringAtX:x
+                                            y:y
+                                          dir:-1
+                          respectHardNewlines:NO];
+    NSString *suffix = [self wrappedStringAtX:x
+                                            y:y
+                                          dir:1
+                          respectHardNewlines:NO];
+    [self _openSemanticHistoryForUrl:url
+                              atLine:y + 1
+                        inBackground:openInBackground
+                              prefix:prefix
+                              suffix:suffix];
+}
+
+- (void)openTargetWithEvent:(NSEvent *)event
+{
+    [self _openTargetWithEvent:event inBackground:NO];
+}
+
+- (void)openTargetInBackgroundWithEvent:(NSEvent *)event
+{
+    [self _openTargetWithEvent:event inBackground:YES];
+}
+
+- (void)smartSelectWithEvent:(NSEvent *)event
+{
+    NSPoint clickPoint = [self clickPoint:event];
+    int x = clickPoint.x;
+    int y = clickPoint.y;
+
+    [self smartSelectAtX:x y:y];
+}
+
+- (void)openContextMenuWithEvent:(NSEvent *)event
+{
+    NSMenu *menu = [self menuForEvent:nil];
+    [NSMenu popUpContextMenu:menu withEvent:event forView:self];
+}
+
+- (void)nextTabWithEvent:(NSEvent *)event
+{
+    [[[[dataSource session] tab] realParentWindow] nextTab:nil];
+}
+
+- (void)previousTabWithEvent:(NSEvent *)event
+{
+    [[[[dataSource session] tab] realParentWindow] previousTab:nil];
+}
+
+- (void)nextWindowWithEvent:(NSEvent *)event
+{
+    [[iTermController sharedInstance] nextTerminal:nil];
+}
+
+- (void)previousWindowWithEvent:(NSEvent *)event
+{
+    [[iTermController sharedInstance] previousTerminal:nil];
+}
+
+- (void)movePaneWithEvent:(NSEvent *)event
+{
+    [self movePane:nil];
+}
+
 
 - (NSString*)contentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad
 {
@@ -7277,10 +7358,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
     [self setNeedsDisplay:YES];
     [self setDimOnlyText:[[PreferencePanel sharedInstance] dimOnlyText]];
-
-    BOOL emulate = [[PreferencePanel sharedInstance] threeFingerEmulatesMiddle];
-    [self futureSetAcceptsTouchEvents:emulate];
-    [self futureSetWantsRestingTouches:emulate];
 }
 
 - (void)_modifyFont:(NSFont*)font baseline:(double)baseline into:(PTYFontInfo*)fontInfo

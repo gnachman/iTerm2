@@ -651,16 +651,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)swipeWithEvent:(NSEvent *)event
 {
-    if ([event deltaX] < 0) {
-        [self nextTab:nil];
-    } else if ([event deltaX] > 0) {
-        [self previousTab:nil];
-    }
-    if ([event deltaY] < 0) {
-        [[iTermController sharedInstance] nextTerminal:nil];
-    } else if ([event deltaY] > 0) {
-        [[iTermController sharedInstance] previousTerminal:nil];
-    }
+    [[[self currentSession] TEXTVIEW] swipeWithEvent:event];
 }
 
 - (void)setTabBarStyle
