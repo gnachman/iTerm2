@@ -63,6 +63,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #import "FutureMethods.h"
 #import "SmartSelectionController.h"
 #import "ITAddressBookMgr.h"
+#import "PointerController.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -311,6 +312,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     trouterDragged = NO;
     workingDirectoryAtLines = [[NSMutableArray alloc] init];
 
+    pointer_ = [[PointerController alloc] init];
+    pointer_.delegate = self;
+    
     if ([[PreferencePanel sharedInstance] threeFingerEmulatesMiddle]) {
         [self futureSetAcceptsTouchEvents:YES];
         [self futureSetWantsRestingTouches:YES];
@@ -408,6 +412,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [workingDirectoryAtLines release];
     [trouter release];
     [initialFindContext_.substring release];
+
+    [pointer_ release];
 
     [super dealloc];
 }

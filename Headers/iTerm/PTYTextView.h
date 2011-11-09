@@ -41,6 +41,7 @@
 #define COLOR_KEY_SIZE 4
 
 @class VT100Screen;
+@class PointerController;
 
 // Amount of time to highlight the cursor after beginFindCursor:YES
 static const double kFindCursorHoldTime = 1;
@@ -302,6 +303,8 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Find context just after initialization.
     FindContext initialFindContext_;
+    
+    PointerController *pointer_;
 }
 
 + (NSCursor *)textViewCursor;

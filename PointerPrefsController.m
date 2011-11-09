@@ -37,6 +37,10 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
 - (NSComparisonResult)comparePointerActions:(NSString *)other;
 @end
 
+@interface NSDictionary (PointerPrefsController)
+- (NSComparisonResult)comparePointerPrefsValue:(NSDictionary *)other;
+@end
+
 @interface PointerPrefsController (Private)
 + (NSDictionary *)dictForAction:(NSString *)action;
 + (NSString *)modCharsForMask:(int)modifiers;
@@ -318,7 +322,7 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
                            @"Extend Selection by Smart Selection", kExtendSelectionBySmartSelectionPointerAction,
                            @"Next Tab", kNextTabPointerAction,
                            @"Previous Tab", kPrevTabPointerAction,
-                           @"Drag Pane", kDragPanePointerAction,
+                           @"Move Pane", kDragPanePointerAction,
                            @"Report Mouse Action Only", kNoActionPointerAction,
                            nil];
     return names;
@@ -447,8 +451,8 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
 
 + (NSArray *)sortedKeys
 {
-    NSArray *keys = [[PointerPrefsController settings] allKeys];
-    return [keys sortedArrayUsingSelector:@selector(comparePointerActions:)];
+    NSArray *keys = [[PointerPrefsController settings] keysSortedByValueUsingSelector:@selector(comparePointerPrefsValue:)];
+    return keys;
 }
 
 - (void)awakeFromNib
@@ -737,6 +741,17 @@ static NSString *kThreeFingerSwipeLeft = @"ThreeFingerSwipeLeft";  // Second fie
         result = [[selfParts objectAtIndex:3] compare:[otherParts objectAtIndex:3]];
         return result;
     }
+}
+
+@end
+
+@implementation NSDictionary (PointerPrefsController)
+
+- (NSComparisonResult)comparePointerPrefsValue:(NSDictionary *)other
+{
+    NSString *selfAction = [PointerPrefsController localizedActionForDict:self];
+    NSString *otherAction = [PointerPrefsController localizedActionForDict:other];
+    return [selfAction localizedCaseInsensitiveCompare:otherAction];
 }
 
 @end
