@@ -52,6 +52,8 @@ extern NSString *kThreeFingerSwipeDown;
 
 @property (nonatomic, assign) BOOL hasSelection;
 
++ (NSString *)localizedButton:(int)buttonNumber numClicks:(int)clicks modifiers:(int)modFlags;
+
 + (NSString *)actionWithButton:(int)buttonNumber
                      numClicks:(int)numClicks
                      modifiers:(int)modMask;
@@ -69,5 +71,6 @@ extern NSString *kThreeFingerSwipeDown;
 - (IBAction)remove:(id)sender;
 - (IBAction)actionChanged:(id)sender;
 - (IBAction)clicksChanged:(id)sender;
+- (void)setButtonNumber:(int)buttonNumber clickCount:(int)clickCount modifiers:(int)modMask;
 
 @end

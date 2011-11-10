@@ -483,7 +483,7 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
     NSString *key = [PointerPrefsController keyForButton:buttonNumber
                                                   clicks:numClicks
                                                modifiers:modMask];
-    NSString *action = [[PointerPrefsController settings] objectForKey:key];
+    NSString *action = [[[PointerPrefsController settings] objectForKey:key] objectForKey:kActionKey];
     return action;
 }
 
@@ -515,22 +515,47 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
     return [[PointerPrefsController settings] count];
 }
 
++ (NSString *)localizedButtonKey:(NSString *)key
+{
+    return [PointerPrefsController localizedButton:[PointerPrefsController buttonForKey:key]
+                                         numClicks:[PointerPrefsController numClicksForKey:key]
+                                         modifiers:[PointerPrefsController modifiersForKey:key]];
+}
+
++ (NSString *)localizedButton:(int)buttonNumber numClicks:(int)clicks modifiers:(int)modFlags
+{
+    NSString *button = [PointerPrefsController localizedButtonNameForButtonNumber:buttonNumber];
+    NSString *numClicks = [PointerPrefsController localizedNumClicks:clicks];
+    NSString *modifiers = [PointerPrefsController localizedModifers:modFlags];
+    if ([modifiers length]) {
+        modifiers = [modifiers stringByAppendingString:@" + "];
+    }
+    return [NSString stringWithFormat:@"%@%@ %@", modifiers, button, numClicks];
+}
+
+- (void)setButtonNumber:(int)buttonNumber clickCount:(int)clickCount modifiers:(int)modMask
+{
+    if (buttonNumber >= 2 && clickCount > 0 && clickCount < 5) {
+        [editButton_ selectItemWithTag:buttonNumber];
+        [editClickType_ selectItemWithTag:clickCount];
+        [editModifiersCommand_ setState:(modMask & NSCommandKeyMask) ? NSOnState : NSOffState];
+        [editModifiersOption_ setState:(modMask & NSAlternateKeyMask) ? NSOnState : NSOffState];
+        [editModifiersShift_ setState:(modMask & NSShiftKeyMask) ? NSOnState : NSOffState];
+        [editModifiersControl_ setState:(modMask & NSControlKeyMask) ? NSOnState : NSOffState];
+        [self buttonOrGestureChanged:nil];
+    }
+}
+
 - (id)tableView:(NSTableView *)aTableView
     objectValueForTableColumn:(NSTableColumn *)aTableColumn
     row:(NSInteger)rowIndex {
     NSString *key = [PointerPrefsController keyForRowIndex:rowIndex];
     NSDictionary *action = [[PointerPrefsController settings] objectForKey:key];
     BOOL isButton = [PointerPrefsController keyIsButton:key];
-    
+
     if (aTableColumn == buttonColumn_) {
         if (isButton) {
-            NSString *button = [PointerPrefsController localizedButtonNameForButtonNumber:[PointerPrefsController buttonForKey:key]];
-            NSString *numClicks = [PointerPrefsController localizedNumClicks:[PointerPrefsController numClicksForKey:key]];
-            NSString *modifiers = [PointerPrefsController localizedModifers:[PointerPrefsController modifiersForKey:key]];
-            if ([modifiers length]) {
-                modifiers = [modifiers stringByAppendingString:@" + "];
-            }
-            return [NSString stringWithFormat:@"%@%@ %@", modifiers, button, numClicks];
+            return [PointerPrefsController localizedButtonKey:key];
         } else {
             NSString *modifiers = [PointerPrefsController localizedModifers:[PointerPrefsController modifiersForKey:key]];
             if ([modifiers length]) {
@@ -633,10 +658,10 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
         [editAction_ selectItemWithTitle:[PointerPrefsController localizedActionForDict:action]];
 
         int modflags = [PointerPrefsController modifiersForKey:key];
-        [editModifiersCommand_ setEnabled:!!(modflags & NSCommandKeyMask)];
-        [editModifiersOption_ setEnabled:!!(modflags & NSAlternateKeyMask)];
-        [editModifiersShift_ setEnabled:!!(modflags & NSShiftKeyMask)];
-        [editModifiersControl_ setEnabled:!!(modflags & NSControlKeyMask)];
+        [editModifiersCommand_ setState:(modflags & NSCommandKeyMask) ? NSOnState : NSOffState];
+        [editModifiersOption_ setState:(modflags & NSAlternateKeyMask) ? NSOnState : NSOffState];
+        [editModifiersShift_ setState:(modflags & NSShiftKeyMask) ? NSOnState : NSOffState];
+        [editModifiersControl_ setState:(modflags & NSControlKeyMask) ? NSOnState : NSOffState];
     }
     [editButtonLabel_ setTextColor:textColor];
     [editModifiersLabel_ setTextColor:textColor];
