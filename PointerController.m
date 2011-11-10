@@ -13,7 +13,9 @@
 
 @synthesize delegate = delegate_;
 
-- (void)performAction:(NSString *)action forEvent:(NSEvent *)event
+- (void)performAction:(NSString *)action
+             forEvent:(NSEvent *)event
+         withArgument:(NSString *)argument
 {
     if ([action isEqualToString:kPasteFromClipboardPointerAction]) {
         [delegate_ pasteFromClipboardWithEvent:event];
@@ -35,6 +37,32 @@
         [delegate_ previousWindowWithEvent:event];
     } else if ([action isEqualToString:kMovePanePointerAction]) {
         [delegate_ movePaneWithEvent:event];
+    } else if ([action isEqualToString:kSendEscapeSequencePointerAction]) {
+        [delegate_ sendEscapeSequence:argument withEvent:event];
+    } else if ([action isEqualToString:kSendHexCodePointerAction]) {
+        [delegate_ sendHexCode:argument withEvent:event];
+    } else if ([action isEqualToString:kSendTextPointerAction]) {
+        [delegate_ sendText:argument withEvent:event];
+    } else if ([action isEqualToString:kSelectPaneLeftPointerAction]) {
+        [delegate_ selectPaneLeftWithEvent:event];
+    } else if ([action isEqualToString:kSelectPaneRightPointerAction]) {
+        [delegate_ selectPaneRightWithEvent:event];
+    } else if ([action isEqualToString:kSelectPaneAbovePointerAction]) {
+        [delegate_ selectPaneAboveWithEvent:event];
+    } else if ([action isEqualToString:kSelectPaneBelowPointerAction]) {
+        [delegate_ selectPaneBelowWithEvent:event];
+    } else if ([action isEqualToString:kNewWindowWithProfilePointerAction]) {
+        [delegate_ newWindowWithProfile:argument withEvent:event];
+    } else if ([action isEqualToString:kNewTabWithProfilePointerAction]) {
+        [delegate_ newTabWithProfile:argument withEvent:event];
+    } else if ([action isEqualToString:kNewVerticalSplitWithProfilePointerAction]) {
+        [delegate_ newVerticalSplitWithProfile:argument withEvent:event];
+    } else if ([action isEqualToString:kNewHorizontalSplitWithProfilePointerAction]) {
+        [delegate_ newHorizontalSplitWithProfile:argument withEvent:event];
+    } else if ([action isEqualToString:kSelectNextPanePointerAction]) {
+        [delegate_ selectNextPaneWithEvent:event];
+    } else if ([action isEqualToString:kSelectPreviousPanePointerAction]) {
+        [delegate_ selectPreviousPaneWithEvent:event];
     }
 }
 
@@ -46,16 +74,22 @@
 - (void)mouseUp:(NSEvent *)event withTouches:(int)numTouches
 {
     NSString *action = nil;
+    NSString *argument = nil;
     if (numTouches <= 2) {
         action = [PointerPrefsController actionWithButton:[event buttonNumber]
                                                 numClicks:[event clickCount]
                                                 modifiers:[event modifierFlags]];
+        argument = [PointerPrefsController argumentWithButton:[event buttonNumber]
+                                                    numClicks:[event clickCount]
+                                                    modifiers:[event modifierFlags]];
     } else {
         action = [PointerPrefsController actionForTapWithTouches:numTouches
                                                        modifiers:[event modifierFlags]];
+        argument = [PointerPrefsController argumentForTapWithTouches:numTouches
+                                                           modifiers:[event modifierFlags]];
     }
     if (action) {
-        [self performAction:action forEvent:event];
+        [self performAction:action forEvent:event withArgument:argument];
     }
 }
 
@@ -74,8 +108,10 @@
     }
     NSString *action = [PointerPrefsController actionForGesture:gesture
                                                       modifiers:[event modifierFlags]];
+    NSString *argument = [PointerPrefsController argumentForGesture:gesture
+                                                          modifiers:[event modifierFlags]];
     if (action) {
-        [self performAction:action forEvent:event];
+        [self performAction:action forEvent:event withArgument:argument];
     }
 }
 

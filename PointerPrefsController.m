@@ -9,9 +9,11 @@
 #import "PointerPrefsController.h"
 #import "PointerController.h"
 #import "PreferencePanel.h"
+#import "ITAddressBookMgr.h"
 
 static NSString *kPointerActionsKey = @"PointerActions";  // Used in NSUserDefaults
 static NSString *kActionKey = @"Action";  // Used within values
+static NSString *kArgumentKey = @"Argument";  // Used within values
 static NSString *kCommandKeyChar = @"c";
 static NSString *kOptionKeyChar = @"o";
 static NSString *kShiftKeyChar = @"s";
@@ -46,6 +48,27 @@ NSString *kPrevTabPointerAction = @"kPrevTabPointerAction";
 NSString *kNextWindowPointerAction = @"kNextWindowPointerAction";
 NSString *kPrevWindowPointerAction = @"kPrevWindowPointerAction";
 NSString *kMovePanePointerAction = @"kMovePanePointerAction";
+NSString *kSendEscapeSequencePointerAction = @"kSendEscapeSequencePointerAction";
+NSString *kSendHexCodePointerAction = @"kSendHexCodePointerAction";
+NSString *kSendTextPointerAction = @"kSendTextPointerAction";
+NSString *kSelectPaneLeftPointerAction = @"kSelectPaneLeftPointerAction";
+NSString *kSelectPaneRightPointerAction = @"kSelectPaneRightPointerAction";
+NSString *kSelectPaneAbovePointerAction = @"kSelectPaneAbovePointerAction";
+NSString *kSelectPaneBelowPointerAction = @"kSelectPaneBelowPointerAction";
+NSString *kNewWindowWithProfilePointerAction = @"kNewWindowWithProfilePointerAction";
+NSString *kNewTabWithProfilePointerAction = @"kNewTabWithProfilePointerAction";
+NSString *kNewVerticalSplitWithProfilePointerAction = @"kNewVerticalSplitWithProfilePointerAction";
+NSString *kNewHorizontalSplitWithProfilePointerAction = @"kNewHorizontalSplitWithProfilePointerAction";
+NSString *kSelectNextPanePointerAction = @"kSelectNextPanePointerAction";
+NSString *kSelectPreviousPanePointerAction = @"kSelectPreviousPanePointerAction";
+
+typedef enum {
+    kNoArg,
+    kEscPlusArg,
+    kHexCodeArg,
+    kTextArg,
+    kProfileArg
+} ArgumentType;
 
 @interface NSString (PointerPrefsController)
 - (NSComparisonResult)comparePointerActions:(NSString *)other;
@@ -203,7 +226,7 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
         return [[parts objectAtIndex:2] intValue];
     } else {
         return -1;
-    }    
+    }
 }
 
 + (NSString *)localizedNumClicks:(int)n
@@ -244,6 +267,8 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
                            @"Three-finger Tap", kThreeFingerClickGesture,
                            @"Three-finger Swipe Right", kThreeFingerSwipeRight,
                            @"Three-finger Swipe Left", kThreeFingerSwipeLeft,
+                           @"Three-finger Swipe Up", kThreeFingerSwipeUp,
+                           @"Three-finger Swipe Down", kThreeFingerSwipeDown,
                            nil];
     return names;
 }
@@ -327,14 +352,47 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
                            @"Open URL/Semantic History", kOpenTargetPointerAction,
                            @"Open URL in background", kOpenTargetInBackgroundPointerAction,
                            @"Smart Selection", kSmartSelectionPointerAction,
-                           @"Context Menu", kContextMenuPointerAction,
+                           @"Open Context Menu", kContextMenuPointerAction,
                            @"Next Tab", kNextTabPointerAction,
                            @"Previous Tab", kPrevTabPointerAction,
                            @"Next Window", kNextWindowPointerAction,
                            @"Previous Window", kPrevWindowPointerAction,
                            @"Move Pane", kMovePanePointerAction,
+                           @"Send Escape Sequence…", kSendEscapeSequencePointerAction,
+                           @"Send Hex Code…", kSendHexCodePointerAction,
+                           @"Send Text…", kSendTextPointerAction,
+                           @"Select Pane Left", kSelectPaneLeftPointerAction,
+                           @"Select Pane Right", kSelectPaneRightPointerAction,
+                           @"Select Pane Above", kSelectPaneAbovePointerAction,
+                           @"Select Pane Below", kSelectPaneBelowPointerAction,
+                           @"New Window With Profile…", kNewWindowWithProfilePointerAction,
+                           @"New Tab With Profile…", kNewWindowWithProfilePointerAction,
+                           @"New Tab With Profile…", kNewTabWithProfilePointerAction,
+                           @"New Vertical Split With Profile…", kNewVerticalSplitWithProfilePointerAction,
+                           @"New Horizontal Split With Profile…", kNewHorizontalSplitWithProfilePointerAction,
+                           @"Select Next Pane", kSelectNextPanePointerAction,
+                           @"Select Previous Pane", kSelectPreviousPanePointerAction,
                            nil];
     return names;
+}
+
++ (ArgumentType)argumentTypeForAction:(NSString *)action
+{
+    NSDictionary *args = [NSDictionary dictionaryWithObjectsAndKeys:
+                          [NSNumber numberWithInt:kEscPlusArg], kSendEscapeSequencePointerAction,
+                          [NSNumber numberWithInt:kHexCodeArg], kSendHexCodePointerAction,
+                          [NSNumber numberWithInt:kTextArg], kSendTextPointerAction,
+                          [NSNumber numberWithInt:kProfileArg], kNewWindowWithProfilePointerAction,
+                          [NSNumber numberWithInt:kProfileArg], kNewTabWithProfilePointerAction,
+                          [NSNumber numberWithInt:kProfileArg], kNewVerticalSplitWithProfilePointerAction,
+                          [NSNumber numberWithInt:kProfileArg], kNewHorizontalSplitWithProfilePointerAction,
+                          nil];
+    NSNumber *n = [args objectForKey:action];
+    if (n) {
+        return (ArgumentType) [n intValue];
+    } else {
+        return (ArgumentType) kNoArg;
+    }
 }
 
 + (NSString *)localizedActionForDict:(NSDictionary *)dict
@@ -348,6 +406,43 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
     if (!name) {
         name = @"(Unknown)";
     }
+    return name;
+}
+
++ (NSString *)formattedLocalizedActionForDict:(NSDictionary *)dict
+{
+    NSDictionary *names = [PointerPrefsController localizedActionMap];
+    NSString *action = [dict objectForKey:kActionKey];
+    NSString *argument = [dict objectForKey:kArgumentKey];
+    NSString *name = nil;
+    if (action) {
+        name = [names objectForKey:action];
+    }
+    if (!name) {
+        name = @"(Unknown)";
+    }
+    if (action) {
+        switch ([PointerPrefsController argumentTypeForAction:action]) {
+            case kNoArg:
+                break;
+            case kEscPlusArg:
+                return [name stringByReplacingOccurrencesOfString:@"…"
+                                                       withString:[NSString stringWithFormat:@" Esc + %@", argument]];
+            case kHexCodeArg:
+            case kTextArg:
+                return [name stringByReplacingOccurrencesOfString:@"…"
+                                                       withString:[NSString stringWithFormat:@" \"%@\"", argument]];
+            case kProfileArg: {
+                NSString *bookmarkName = [[[BookmarkModel sharedInstance] bookmarkWithGuid:argument] objectForKey:KEY_NAME];
+                if (!bookmarkName) {
+                    bookmarkName = @"?";
+                }
+                return [name stringByReplacingOccurrencesOfString:@"…"
+                                                       withString:[NSString stringWithFormat:@" \"%@\"", bookmarkName]];
+            }
+        }
+    }
+
     return name;
 }
 
@@ -368,7 +463,7 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
 }
 
 + (int)modifiersForKey:(NSString *)key
-{    
+{
     NSArray *parts;
     int i;
     if ([PointerPrefsController keyIsButton:key]) {
@@ -476,6 +571,16 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
     return key;
 }
 
++ (NSString *)argumentWithButton:(int)buttonNumber
+                       numClicks:(int)numClicks
+                       modifiers:(int)modMask
+{
+    NSString *key = [PointerPrefsController keyForButton:buttonNumber
+                                                  clicks:numClicks
+                                               modifiers:modMask];
+    return [[[PointerPrefsController settings] objectForKey:key] objectForKey:kArgumentKey];
+}
+
 + (NSString *)actionWithButton:(int)buttonNumber
                      numClicks:(int)numClicks
                      modifiers:(int)modMask
@@ -499,13 +604,34 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
     return [PointerPrefsController actionForGesture:gesture modifiers:modMask];
 }
 
++ (NSString *)argumentForTapWithTouches:(int)numTouches
+                              modifiers:(int)modMask
+{
+    NSString *gesture = @"";
+    if (numTouches == 3) {
+        gesture = kThreeFingerClickGesture;
+    } else {
+        return nil;
+    }
+    return [PointerPrefsController argumentForGesture:gesture modifiers:modMask];
+}
+
 + (NSString *)actionForGesture:(NSString *)gesture
                      modifiers:(int)modMask
 {
     NSString *key;
     key = [PointerPrefsController keyForGesture:gesture
                                       modifiers:modMask];
-    return [[PointerPrefsController settings] objectForKey:key];
+    return [[[PointerPrefsController settings] objectForKey:key] objectForKey:kActionKey];
+}
+
++ (NSString *)argumentForGesture:(NSString *)gesture
+                       modifiers:(int)modMask
+{
+    NSString *key;
+    key = [PointerPrefsController keyForGesture:gesture
+                                      modifiers:modMask];
+    return [[[PointerPrefsController settings] objectForKey:key] objectForKey:kArgumentKey];
 }
 
 #pragma mark NSTableViewDataSource
@@ -513,13 +639,6 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView
 {
     return [[PointerPrefsController settings] count];
-}
-
-+ (NSString *)localizedButtonKey:(NSString *)key
-{
-    return [PointerPrefsController localizedButton:[PointerPrefsController buttonForKey:key]
-                                         numClicks:[PointerPrefsController numClicksForKey:key]
-                                         modifiers:[PointerPrefsController modifiersForKey:key]];
 }
 
 + (NSString *)localizedButton:(int)buttonNumber numClicks:(int)clicks modifiers:(int)modFlags
@@ -531,6 +650,13 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
         modifiers = [modifiers stringByAppendingString:@" + "];
     }
     return [NSString stringWithFormat:@"%@%@ %@", modifiers, button, numClicks];
+}
+
++ (NSString *)localizedButtonKey:(NSString *)key
+{
+    return [PointerPrefsController localizedButton:[PointerPrefsController buttonForKey:key]
+                                         numClicks:[PointerPrefsController numClicksForKey:key]
+                                         modifiers:[PointerPrefsController modifiersForKey:key]];
 }
 
 - (void)setButtonNumber:(int)buttonNumber clickCount:(int)clickCount modifiers:(int)modMask
@@ -566,7 +692,7 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
         }
     } else {
         // Action
-        return [PointerPrefsController localizedActionForDict:action];
+        return [PointerPrefsController formattedLocalizedActionForDict:action];
     }
 }
 
@@ -587,6 +713,73 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
     }
 }
 
++ (NSString *)actionForKey:(NSString *)key
+{
+    return [[[PointerPrefsController settings] objectForKey:key] objectForKey:kActionKey];
+}
+
++ (NSString *)argumentForKey:(NSString *)key
+{
+    return [[[PointerPrefsController settings] objectForKey:key] objectForKey:kArgumentKey];
+}
+
+- (void)updateArgumentFieldsForAction:(NSString *)actionIdent argument:(NSString *)currentArg
+{
+    ArgumentType argType = kNoArg;
+    if (actionIdent) {
+        argType = [PointerPrefsController argumentTypeForAction:actionIdent];
+    }
+    switch (argType) {
+        case kNoArg:
+            [editArgumentLabel_ setHidden:YES];
+            [editArgumentField_ setHidden:YES];
+            [editArgumentButton_ setHidden:YES];
+            break;
+
+        case kEscPlusArg:
+            [editArgumentLabel_ setHidden:NO];
+            [editArgumentField_ setHidden:NO];
+            [editArgumentField_ setEnabled:YES];
+            [editArgumentButton_ setHidden:YES];
+            [editArgumentLabel_ setStringValue:@"Esc +"];
+            [[editArgumentField_ cell] setPlaceholderString:@"characters to send"];
+            [editArgumentField_ setStringValue:currentArg];
+            [editArgumentField_ setRefusesFirstResponder:NO];
+            [editArgumentField_ setSelectable:YES];
+            break;
+
+        case kHexCodeArg:
+            [editArgumentLabel_ setHidden:NO];
+            [editArgumentField_ setHidden:NO];
+            [editArgumentField_ setEnabled:YES];
+            [editArgumentButton_ setHidden:YES];
+            [editArgumentLabel_ setStringValue:@"Hex codes:"];
+            [[editArgumentField_ cell] setPlaceholderString:@"ex: 0x7f 0x20"];
+            [editArgumentField_ setStringValue:currentArg];
+            break;
+
+        case kTextArg:
+            [editArgumentLabel_ setHidden:NO];
+            [editArgumentField_ setHidden:NO];
+            [editArgumentField_ setEnabled:YES];
+            [editArgumentButton_ setHidden:YES];
+            [editArgumentLabel_ setStringValue:@"Text:"];
+            [[editArgumentField_ cell] setPlaceholderString:@"Enter value to send"];
+            [editArgumentField_ setStringValue:currentArg];
+            break;
+
+        case kProfileArg:
+            [editArgumentLabel_ setHidden:NO];
+            [editArgumentField_ setHidden:YES];
+            [editArgumentButton_ setHidden:NO];
+            [PreferencePanel populatePopUpButtonWithBookmarks:editArgumentButton_
+                                                 selectedGuid:currentArg];
+
+            break;
+
+    }
+}
+
 - (void)loadKeyIntoEditPane:(NSString *)key
 {
     int modMask;
@@ -599,6 +792,10 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
     if (key) {
         localizedAction = [PointerPrefsController localizedActionForKey:key];
     }
+    NSString *actionIdent = [PointerPrefsController actionForKey:key];
+    NSString *currentArg = [PointerPrefsController argumentForKey:key];
+    [self updateArgumentFieldsForAction:actionIdent argument:currentArg];
+
     [editModifiersCommand_ setState:(modMask & NSCommandKeyMask) ? NSOnState : NSOffState];
     [editModifiersOption_ setState:(modMask & NSAlternateKeyMask) ? NSOnState : NSOffState];
     [editModifiersShift_ setState:(modMask & NSShiftKeyMask) ? NSOnState : NSOffState];
@@ -608,7 +805,7 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
     if (isButton) {
         int button = key ? [PointerPrefsController buttonForKey:key] : 2;
         int numClicks = key ? [PointerPrefsController numClicksForKey:key] : 1;
-        
+
         [editButton_ selectItemWithTag:button];
         [editClickType_ selectItemWithTag:numClicks];
     } else {
@@ -629,7 +826,7 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
         [editClickType_ setEnabled:NO];
     } else {
         [editClickTypeLabel_ setTextColor:[NSColor blackColor]];
-        [editClickType_ setEnabled:YES];        
+        [editClickType_ setEnabled:YES];
     }
 }
 
@@ -646,7 +843,7 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
 {
     self.hasSelection = [tableView_ numberOfSelectedRows] > 0;
     int rowIndex = [tableView_ selectedRow];
-    
+
     NSColor *textColor = [NSColor disabledControlTextColor];
     if (self.hasSelection) {
         textColor = [NSColor blackColor];
@@ -697,8 +894,26 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
     if (origKey_) {
         [temp removeObjectForKey:origKey_];
     }
-    NSDictionary *newValue = [NSDictionary dictionaryWithObject:[PointerPrefsController actionWithLocalizedName:[[editAction_ selectedItem] title]]
-                                                         forKey:kActionKey];
+    NSString *theAction = [PointerPrefsController actionWithLocalizedName:[[editAction_ selectedItem] title]];
+    NSMutableDictionary *newValue = [NSMutableDictionary dictionaryWithObject:theAction
+                                                                       forKey:kActionKey];
+    if (![editArgumentField_ isHidden]) {
+        [newValue setObject:[editArgumentField_ stringValue]
+                     forKey:kArgumentKey];
+    } else if (![editArgumentButton_ isHidden]) {
+        if ([PointerPrefsController argumentTypeForAction:theAction] == kProfileArg) {
+            NSString *profileName = [[editArgumentButton_ selectedItem] title];
+            NSString *guid = [[[BookmarkModel sharedInstance] bookmarkWithName:profileName] objectForKey:KEY_GUID];
+            if (guid) {
+                [newValue setObject:guid forKey:kArgumentKey];
+            } else {
+                [newValue setObject:@"" forKey:kArgumentKey];
+            }
+        } else {
+            [newValue setObject:[[editArgumentButton_ selectedItem] title]
+                         forKey:kArgumentKey];
+        }
+    }
     NSString *newKey;
     int modMask = 0;
     if ([editModifiersCommand_ state] == NSOnState) {
@@ -755,6 +970,9 @@ NSString *kMovePanePointerAction = @"kMovePanePointerAction";
 - (IBAction)actionChanged:(id)sender
 {
     [ok_ setEnabled:[self okShouldBeEnabled]];
+    NSString *actionIdent = [PointerPrefsController actionWithLocalizedName:[[editAction_ selectedItem] title]];
+    [self updateArgumentFieldsForAction:actionIdent
+                               argument:@""];
 }
 
 - (IBAction)clicksChanged:(id)sender

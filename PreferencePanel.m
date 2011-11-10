@@ -776,7 +776,7 @@ static float versionNumber;
     }
 }
 
-- (void)_populatePopUpButtonWithBookmarks:(NSPopUpButton*)button selectedGuid:(NSString*)selectedGuid
++ (void)populatePopUpButtonWithBookmarks:(NSPopUpButton*)button selectedGuid:(NSString*)selectedGuid
 {
     int selectedIndex = 0;
     int i = 0;
@@ -838,8 +838,8 @@ static float versionNumber;
     }
     NSString* text = [[self keyInfoAtIndex:rowIndex originator:sender] objectForKey:@"Text"];
     [valueToSend setStringValue:text ? text : @""];
-    [self _populatePopUpButtonWithBookmarks:bookmarkPopupButton
-                               selectedGuid:text];
+    [PreferencePanel populatePopUpButtonWithBookmarks:bookmarkPopupButton
+                                         selectedGuid:text];
 
     [self updateValueToSend];
     newMapping = NO;
@@ -1319,8 +1319,8 @@ static float versionNumber;
     if (!hotkeyBookmark) {
         return;
     }
-    [self _populatePopUpButtonWithBookmarks:hotkeyBookmark
-                               selectedGuid:defaultHotKeyBookmarkGuid];
+    [PreferencePanel populatePopUpButtonWithBookmarks:hotkeyBookmark
+                                         selectedGuid:defaultHotKeyBookmarkGuid];
 }
 
 - (void)run
@@ -3649,8 +3649,8 @@ static float versionNumber;
 - (IBAction)actionChanged:(id)sender
 {
     [action setTitle:[[sender selectedItem] title]];
-    [self _populatePopUpButtonWithBookmarks:bookmarkPopupButton
-                               selectedGuid:[[bookmarkPopupButton selectedItem] representedObject]];
+    [PreferencePanel populatePopUpButtonWithBookmarks:bookmarkPopupButton
+                                         selectedGuid:[[bookmarkPopupButton selectedItem] representedObject]];
     [self updateValueToSend];
 }
 

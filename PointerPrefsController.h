@@ -19,6 +19,19 @@ extern NSString *kPrevTabPointerAction;
 extern NSString *kNextWindowPointerAction;
 extern NSString *kPrevWindowPointerAction;
 extern NSString *kMovePanePointerAction;
+extern NSString *kSendEscapeSequencePointerAction;
+extern NSString *kSendHexCodePointerAction;
+extern NSString *kSendTextPointerAction;
+extern NSString *kSelectPaneLeftPointerAction;
+extern NSString *kSelectPaneRightPointerAction;
+extern NSString *kSelectPaneAbovePointerAction;
+extern NSString *kSelectPaneBelowPointerAction;
+extern NSString *kNewWindowWithProfilePointerAction;
+extern NSString *kNewTabWithProfilePointerAction;
+extern NSString *kNewVerticalSplitWithProfilePointerAction;
+extern NSString *kNewHorizontalSplitWithProfilePointerAction;
+extern NSString *kSelectNextPanePointerAction;
+extern NSString *kSelectPreviousPanePointerAction;
 
 extern NSString *kThreeFingerClickGesture;
 extern NSString *kThreeFingerSwipeRight;
@@ -43,6 +56,10 @@ extern NSString *kThreeFingerSwipeDown;
     IBOutlet NSPopUpButton *editAction_;
     IBOutlet NSTextField *editClickTypeLabel_;
     IBOutlet NSPopUpButton *editClickType_;
+    IBOutlet NSTextField *editArgumentLabel_;
+    IBOutlet NSPopUpButton *editArgumentButton_;
+    IBOutlet NSTextField *editArgumentField_;
+
     IBOutlet NSButton *ok_;
     IBOutlet NSButton *remove_;
 
@@ -52,17 +69,22 @@ extern NSString *kThreeFingerSwipeDown;
 
 @property (nonatomic, assign) BOOL hasSelection;
 
-+ (NSString *)localizedButton:(int)buttonNumber numClicks:(int)clicks modifiers:(int)modFlags;
-
 + (NSString *)actionWithButton:(int)buttonNumber
                      numClicks:(int)numClicks
                      modifiers:(int)modMask;
++ (NSString *)argumentWithButton:(int)buttonNumber
+                       numClicks:(int)numClicks
+                       modifiers:(int)modMask;
 
 + (NSString *)actionForTapWithTouches:(int)numTouches
                             modifiers:(int)modMask;
++ (NSString *)argumentForTapWithTouches:(int)numTouches
+                              modifiers:(int)modMask;
 
 + (NSString *)actionForGesture:(NSString *)gesture
                      modifiers:(int)modMask;
++ (NSString *)argumentForGesture:(NSString *)gesture
+                       modifiers:(int)modMask;
 
 - (IBAction)buttonOrGestureChanged:(id)sender;
 - (IBAction)ok:(id)sender;
@@ -71,6 +93,5 @@ extern NSString *kThreeFingerSwipeDown;
 - (IBAction)remove:(id)sender;
 - (IBAction)actionChanged:(id)sender;
 - (IBAction)clicksChanged:(id)sender;
-- (void)setButtonNumber:(int)buttonNumber clickCount:(int)clickCount modifiers:(int)modMask;
 
 @end

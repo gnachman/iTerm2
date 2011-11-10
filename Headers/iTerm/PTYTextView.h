@@ -348,6 +348,20 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)nextWindowWithEvent:(NSEvent *)event;
 - (void)previousWindowWithEvent:(NSEvent *)event;
 - (void)movePaneWithEvent:(NSEvent *)event;
+- (void)sendEscapeSequence:(NSString *)text withEvent:(NSEvent *)event;
+- (void)sendHexCode:(NSString *)codes withEvent:(NSEvent *)event;
+- (void)sendText:(NSString *)text withEvent:(NSEvent *)event;
+- (void)selectPaneLeftWithEvent:(NSEvent *)event;
+- (void)selectPaneRightWithEvent:(NSEvent *)event;
+- (void)selectPaneAboveWithEvent:(NSEvent *)event;
+- (void)selectPaneBelowWithEvent:(NSEvent *)event;
+- (void)newWindowWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
+- (void)newWindowWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
+- (void)newTabWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
+- (void)newVerticalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
+- (void)newHorizontalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
+- (void)selectNextPaneWithEvent:(NSEvent *)event;
+- (void)selectPreviousPaneWithEvent:(NSEvent *)event;
 
 
 - (NSString *)contentFromX:(int)startx Y:(int)starty ToX:(int)endx Y:(int)endy pad: (BOOL) pad;

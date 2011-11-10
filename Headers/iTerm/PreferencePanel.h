@@ -550,6 +550,7 @@ typedef enum {
 + (PreferencePanel*)sessionsInstance;
 + (BOOL)migratePreferences;
 + (BOOL)loadingPrefsFromCustomFolder;
++ (void)populatePopUpButtonWithBookmarks:(NSPopUpButton*)button selectedGuid:(NSString*)selectedGuid;
 
 - (BOOL)loadPrefs;
 - (id)initWithDataSource:(BookmarkModel*)model userDefaults:(NSUserDefaults*)userDefaults;

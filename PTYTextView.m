@@ -3153,11 +3153,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
     int y = clickPoint.y;
-    
+
     // Command click in place.
     NSString *url = [self _getURLForX:x y:y];
-    
-    int mods = [event modifierFlags];
+
     NSString *prefix = [self wrappedStringAtX:x
                                             y:y
                                           dir:-1
@@ -3223,6 +3222,71 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self movePane:nil];
 }
 
+- (void)sendEscapeSequence:(NSString *)text withEvent:(NSEvent *)event
+{
+    [_delegate sendEscapeSequence:text];
+}
+
+- (void)sendHexCode:(NSString *)codes withEvent:(NSEvent *)event
+{
+    [_delegate sendHexCode:codes];
+}
+
+- (void)sendText:(NSString *)text withEvent:(NSEvent *)event
+{
+    [_delegate sendText:text];
+}
+
+- (void)selectPaneLeftWithEvent:(NSEvent *)event
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneLeft:nil];
+}
+
+- (void)selectPaneRightWithEvent:(NSEvent *)event
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneRight:nil];
+}
+
+- (void)selectPaneAboveWithEvent:(NSEvent *)event
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneUp:nil];
+}
+
+- (void)selectPaneBelowWithEvent:(NSEvent *)event
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
+}
+
+- (void)newWindowWithProfile:(NSString *)guid withEvent:(NSEvent *)event
+{
+    [[[[dataSource session] tab] realParentWindow] newWindowWithBookmarkGuid:guid];
+}
+
+- (void)newTabWithProfile:(NSString *)guid withEvent:(NSEvent *)event
+{
+    [[[[dataSource session] tab] realParentWindow] newTabWithBookmarkGuid:guid];
+}
+- (void)newVerticalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event
+{
+    [[[[dataSource session] tab] realParentWindow] splitVertically:YES
+                                                  withBookmarkGuid:guid];
+}
+
+- (void)newHorizontalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event
+{
+    [[[[dataSource session] tab] realParentWindow] splitVertically:NO
+                                                  withBookmarkGuid:guid];
+}
+
+- (void)selectNextPaneWithEvent:(NSEvent *)event
+{
+    [[[dataSource session] tab] nextSession];
+}
+
+- (void)selectPreviousPaneWithEvent:(NSEvent *)event
+{
+    [[[dataSource session] tab] previousSession];
+}
 
 - (NSString*)contentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad
 {

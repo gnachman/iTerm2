@@ -514,6 +514,11 @@ typedef enum {
 - (void)setFocused:(BOOL)focused;
 - (BOOL)wantsContentChangedNotification;
 
+- (void)sendEscapeSequence:(NSString *)text;
+- (void)sendHexCode:(NSString *)codes;
+- (void)sendText:(NSString *)text;
+
+
 @end
 
 @interface PTYSession (ScriptingSupport)
