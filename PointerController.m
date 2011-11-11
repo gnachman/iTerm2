@@ -96,14 +96,14 @@
 - (void)swipeWithEvent:(NSEvent *)event
 {
     NSString *gesture = nil;
-    if ([event deltaX] < 0) {
+    if ([event deltaX] > 0) {
         gesture = kThreeFingerSwipeLeft;
-    } else if ([event deltaX] > 0) {
+    } else if ([event deltaX] < 0) {
         gesture = kThreeFingerSwipeRight;
     }
-    if ([event deltaY] < 0) {
+    if ([event deltaY] > 0) {
         gesture = kThreeFingerSwipeUp;
-    } else if ([event deltaY] > 0) {
+    } else if ([event deltaY] < 0) {
         gesture = kThreeFingerSwipeDown;
     }
     NSString *action = [PointerPrefsController actionForGesture:gesture

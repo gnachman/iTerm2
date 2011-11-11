@@ -27,6 +27,8 @@ static const int kMinGestureTag = 10;
 #define kThreeFingerTapGestureTag 10
 #define kThreeFingerSwipeRightGestureTag 11
 #define kThreeFingerSwipeLeftGestureTag 12
+#define kThreeFingerSwipeUpGestureTag 13
+#define kThreeFingerSwipeDownGestureTag 14
 
 static NSString *kButtonSchema = @"Button";  // First field of action key
 static NSString *kGestureSchema = @"Gesture";  // First field of action key
@@ -321,6 +323,10 @@ typedef enum {
             return kThreeFingerSwipeRight;
         case kThreeFingerSwipeLeftGestureTag:
             return kThreeFingerSwipeLeft;
+        case kThreeFingerSwipeUpGestureTag:
+            return kThreeFingerSwipeUp;
+        case kThreeFingerSwipeDownGestureTag:
+            return kThreeFingerSwipeDown;
         default:
             return [NSString stringWithFormat:@"Bad tag %d", tag];
     }
