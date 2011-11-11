@@ -86,6 +86,8 @@ extern NSString *kThreeFingerSwipeDown;
 + (NSString *)argumentForGesture:(NSString *)gesture
                        modifiers:(int)modMask;
 
+- (void)setButtonNumber:(int)buttonNumber clickCount:(int)clickCount modifiers:(int)modMask;
+- (void)setGesture:(NSString *)gesture modifiers:(int)modMask;
 - (IBAction)buttonOrGestureChanged:(id)sender;
 - (IBAction)ok:(id)sender;
 - (IBAction)cancel:(id)sender;
@@ -93,5 +95,6 @@ extern NSString *kThreeFingerSwipeDown;
 - (IBAction)remove:(id)sender;
 - (IBAction)actionChanged:(id)sender;
 - (IBAction)clicksChanged:(id)sender;
+- (IBAction)loadDefaults:(id)sender;
 
 @end

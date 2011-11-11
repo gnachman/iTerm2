@@ -8,21 +8,45 @@
 
 #import "EventMonitorView.h"
 #import "PointerPrefsController.h"
+#import "FutureMethods.h"
 
 @implementation EventMonitorView
+
+- (void)awakeFromNib
+{
+    [self futureSetAcceptsTouchEvents:YES];
+    [self futureSetWantsRestingTouches:YES];
+}
+
+- (void)touchesBeganWithEvent:(NSEvent *)ev
+{
+    numTouches_ = [[ev futureTouchesMatchingPhase:1 | (1 << 2)/*NSTouchPhasesBegan | NSTouchPhasesStationary*/
+                                           inView:self] count];
+}
+
+- (void)touchesEndedWithEvent:(NSEvent *)ev
+{
+    numTouches_ = [[ev futureTouchesMatchingPhase:(1 << 2)/*NSTouchPhasesStationary*/
+                                           inView:self] count];
+}
 
 - (void)showNotSupported
 {
     [label_ setStringValue:@"You can't customize that button"];
-    [label_ performSelector:@selector(setStringValue:) withObject:@"Click Here to Set Input Fields" afterDelay:1];
+    [label_ performSelector:@selector(setStringValue:) withObject:@"Click or Tap Here to Set Input Fields" afterDelay:1];
 }
 
-- (void)mouseDown:(NSEvent *)theEvent
+- (void)mouseUp:(NSEvent *)theEvent
 {
-    [self showNotSupported];
+    if (numTouches_ == 3) {
+        [pointerPrefs_ setGesture:kThreeFingerClickGesture
+                        modifiers:[theEvent modifierFlags]];
+    } else {
+        [self showNotSupported];
+    }
 }
 
-- (void)rightMouseDown:(NSEvent *)theEvent
+- (void)rightMouseUp:(NSEvent *)theEvent
 {
     [self showNotSupported];
 }

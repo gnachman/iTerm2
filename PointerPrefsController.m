@@ -480,13 +480,18 @@ typedef enum {
     }
 }
 
++ (NSDictionary *)defaultSettings
+{
+    NSString* plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"DefaultPointerActions"
+                                                                           ofType:@"plist"];
+    return [NSDictionary dictionaryWithContentsOfFile:plistFile];
+}
+
 + (NSDictionary *)defaultActions
 {
     static NSDictionary *defaultDict;
     if (!defaultDict) {
-        NSString* plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"DefaultPointerActions"
-                                                                               ofType:@"plist"];
-        NSMutableDictionary *temp = [NSDictionary dictionaryWithContentsOfFile:plistFile];
+        NSMutableDictionary *temp = [NSMutableDictionary dictionaryWithDictionary:[PointerPrefsController defaultSettings]];
         // Migrate old global prefs into the dict.
         if (![[PreferencePanel sharedInstance] legacyPasteFromClipboard]) {
             NSDictionary *middleButtonPastesFromSelection = [PointerPrefsController dictForAction:kPasteFromSelectionPointerAction];
@@ -659,17 +664,29 @@ typedef enum {
                                          modifiers:[PointerPrefsController modifiersForKey:key]];
 }
 
+- (void)setModifierButtons:(int)modMask
+{
+    [editModifiersCommand_ setState:(modMask & NSCommandKeyMask) ? NSOnState : NSOffState];
+    [editModifiersOption_ setState:(modMask & NSAlternateKeyMask) ? NSOnState : NSOffState];
+    [editModifiersShift_ setState:(modMask & NSShiftKeyMask) ? NSOnState : NSOffState];
+    [editModifiersControl_ setState:(modMask & NSControlKeyMask) ? NSOnState : NSOffState];
+}
+
 - (void)setButtonNumber:(int)buttonNumber clickCount:(int)clickCount modifiers:(int)modMask
 {
     if (buttonNumber >= 2 && clickCount > 0 && clickCount < 5) {
         [editButton_ selectItemWithTag:buttonNumber];
         [editClickType_ selectItemWithTag:clickCount];
-        [editModifiersCommand_ setState:(modMask & NSCommandKeyMask) ? NSOnState : NSOffState];
-        [editModifiersOption_ setState:(modMask & NSAlternateKeyMask) ? NSOnState : NSOffState];
-        [editModifiersShift_ setState:(modMask & NSShiftKeyMask) ? NSOnState : NSOffState];
-        [editModifiersControl_ setState:(modMask & NSControlKeyMask) ? NSOnState : NSOffState];
+        [self setModifierButtons:modMask];
         [self buttonOrGestureChanged:nil];
     }
+}
+
+- (void)setGesture:(NSString *)gesture modifiers:(int)modMask
+{
+    [editButton_ selectItemWithTag:[PointerPrefsController tagForGestureIdentifier:gesture]];
+    [self setModifierButtons:modMask];
+    [self buttonOrGestureChanged:nil];
 }
 
 - (id)tableView:(NSTableView *)aTableView
@@ -978,6 +995,12 @@ typedef enum {
 - (IBAction)clicksChanged:(id)sender
 {
     [ok_ setEnabled:[self okShouldBeEnabled]];
+}
+
+- (IBAction)loadDefaults:(id)sender
+{
+    [PointerPrefsController setSettings:[PointerPrefsController defaultSettings]];
+    [tableView_ reloadData];
 }
 
 @end

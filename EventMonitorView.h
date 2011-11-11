@@ -13,6 +13,7 @@
 @interface EventMonitorView : NSView {
     IBOutlet PointerPrefsController *pointerPrefs_;
     IBOutlet NSTextField *label_;
+    int numTouches_;
 }
 
 @end
