@@ -795,6 +795,7 @@ typedef enum {
             [editArgumentLabel_ setHidden:NO];
             [editArgumentField_ setHidden:YES];
             [editArgumentButton_ setHidden:NO];
+            [editArgumentLabel_ setStringValue:@"Profile:"];
             [PreferencePanel populatePopUpButtonWithBookmarks:editArgumentButton_
                                                  selectedGuid:currentArg];
 
