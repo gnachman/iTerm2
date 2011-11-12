@@ -45,7 +45,14 @@
 
 // Amount of time to highlight the cursor after beginFindCursor:YES
 static const double kFindCursorHoldTime = 1;
-enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_SMART, SELECT_BOX };
+enum {
+    SELECT_CHAR,
+    SELECT_WORD,
+    SELECT_LINE,
+    SELECT_SMART,
+    SELECT_BOX,
+    SELECT_WHOLE_LINE
+};
 
 // A collection of data about a font.
 struct PTYFontInfo {

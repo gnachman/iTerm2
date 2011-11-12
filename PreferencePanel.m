@@ -1136,6 +1136,7 @@ static float versionNumber;
     defaultPromptOnQuit = [prefs objectForKey:@"PromptOnQuit"]?[[prefs objectForKey:@"PromptOnQuit"] boolValue]: YES;
     defaultOnlyWhenMoreTabs = [prefs objectForKey:@"OnlyWhenMoreTabs"]?[[prefs objectForKey:@"OnlyWhenMoreTabs"] boolValue]: YES;
     defaultFocusFollowsMouse = [prefs objectForKey:@"FocusFollowsMouse"]?[[prefs objectForKey:@"FocusFollowsMouse"] boolValue]: NO;
+    defaultTripleClickSelectsFullLines = [prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] ? [[prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] boolValue] : NO;
     defaultHotkeyTogglesWindow = [prefs objectForKey:@"HotKeyTogglesWindow"]?[[prefs objectForKey:@"HotKeyTogglesWindow"] boolValue]: NO;
     defaultHotKeyBookmarkGuid = [[prefs objectForKey:@"HotKeyBookmark"] copy];
     defaultEnableBonjour = [prefs objectForKey:@"EnableRendezvous"]?[[prefs objectForKey:@"EnableRendezvous"] boolValue]: NO;
@@ -1257,6 +1258,7 @@ static float versionNumber;
     [prefs setBool:defaultPromptOnQuit forKey:@"PromptOnQuit"];
     [prefs setBool:defaultOnlyWhenMoreTabs forKey:@"OnlyWhenMoreTabs"];
     [prefs setBool:defaultFocusFollowsMouse forKey:@"FocusFollowsMouse"];
+    [prefs setBool:defaultTripleClickSelectsFullLines forKey:@"TripleClickSelectsFullWrappedLines"];
     [prefs setBool:defaultHotkeyTogglesWindow forKey:@"HotKeyTogglesWindow"];
     [prefs setValue:defaultHotKeyBookmarkGuid forKey:@"HotKeyBookmark"];
     [prefs setBool:defaultEnableBonjour forKey:@"EnableRendezvous"];
@@ -1344,6 +1346,7 @@ static float versionNumber;
     [promptOnQuit setState:defaultPromptOnQuit?NSOnState:NSOffState];
     [onlyWhenMoreTabs setState:defaultOnlyWhenMoreTabs?NSOnState:NSOffState];
     [focusFollowsMouse setState: defaultFocusFollowsMouse?NSOnState:NSOffState];
+    [tripleClickSelectsFullLines setState:defaultTripleClickSelectsFullLines?NSOnState:NSOffState];
     [hotkeyTogglesWindow setState: defaultHotkeyTogglesWindow?NSOnState:NSOffState];
     [self _populateHotKeyBookmarksMenu];
     [enableBonjour setState: defaultEnableBonjour?NSOnState:NSOffState];
@@ -1622,6 +1625,7 @@ static float versionNumber;
         defaultPromptOnQuit = ([promptOnQuit state] == NSOnState);
         defaultOnlyWhenMoreTabs = ([onlyWhenMoreTabs state] == NSOnState);
         defaultFocusFollowsMouse = ([focusFollowsMouse state] == NSOnState);
+        defaultTripleClickSelectsFullLines = ([tripleClickSelectsFullLines state] == NSOnState);
         defaultHotkeyTogglesWindow = ([hotkeyTogglesWindow state] == NSOnState);
         [defaultHotKeyBookmarkGuid release];
         defaultHotKeyBookmarkGuid = [[[hotkeyBookmark selectedItem] representedObject] copy];
@@ -1809,6 +1813,11 @@ static float versionNumber;
 - (BOOL)focusFollowsMouse
 {
     return defaultFocusFollowsMouse;
+}
+
+- (BOOL)tripleClickSelectsFullLines
+{
+    return defaultTripleClickSelectsFullLines;
 }
 
 - (BOOL)enableBonjour

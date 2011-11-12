@@ -2615,6 +2615,59 @@ NSMutableArray* screens=0;
     }
 }
 
+- (BOOL)lineHasSoftEol:(int)y
+{
+    screen_char_t *theLine = [dataSource getLineAtIndex:y];
+    int width = [dataSource width];
+    return (theLine[width].code == EOL_SOFT);
+}
+
+- (int)lineNumberWithStartOfWholeLineIncludingLine:(int)y
+{
+    int i = y;
+    while (i > 0 && [self lineHasSoftEol:i - 1]) {
+        i--;
+    }
+    return i;
+}
+
+- (int)lineNumberWithEndOfWholeLineIncludingLine:(int)y
+{
+    int i = y + 1;
+    int maxY = [dataSource numberOfLines];
+    while (i < maxY && [self lineHasSoftEol:i - 1]) {
+        i++;
+    }
+    return i - 1;
+}
+
+- (void)extendWholeLineSelectionToX:(int)x
+                                  y:(int)y
+                          withWidth:(int)width
+{
+    if (startY < y) {
+        // Start of existing selection is before cursor.
+        if (startY > endY) {
+            // start is below end. advance start up to end.
+            startY = endY;
+            startX = 0;
+        }
+        endX = width;
+        endY = [self lineNumberWithEndOfWholeLineIncludingLine:y];
+    } else {
+        // end of existing selection is at or after the cursor
+        if (startY < endY) {
+            // start of selection is before end of selection.
+            // advance start to end.
+            startY = endY;
+            startX = endX;
+        }
+        // set end of selection to current line
+        endX = 0;
+        endY = [self lineNumberWithStartOfWholeLineIncludingLine:y];
+    }
+}
+
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent*)event
 {
@@ -2787,31 +2840,46 @@ NSMutableArray* screens=0;
             [self setSelectionTime];
         }
     } else if (clickCount == 3) {
-        // triple-click; select line
-        selectMode = SELECT_LINE;
-        if (startX > -1 && shiftPressed) {
-            // extend existing selection
-            if (startY < y) {
-                // extend start
-                endX = width;
-                endY = y;
+        if ([[PreferencePanel sharedInstance] tripleClickSelectsFullLines]) {
+            selectMode = SELECT_WHOLE_LINE;
+            if (startX > -1 && shiftPressed) {
+                [self extendWholeLineSelectionToX:x y:y withWidth:width];
             } else {
-                // extend end
-                if (startX + startY * width < endX + endY * width) {
-                    // advance start to end
-                    startX = endX;
-                    startY = endY;
-                    [self setSelectionTime];
-                }
-                endX = 0;
-                endY = y;
-            }
+                // new selection
+                startX = 0;
+                startY = [self lineNumberWithStartOfWholeLineIncludingLine:y];
+                endX = width;
+                endY = [self lineNumberWithEndOfWholeLineIncludingLine:y];
+            }   
         } else {
-            // not holding shift
-            startX = 0;
-            endX = width;
-            startY = endY = y;
-            [self setSelectionTime];
+            // triple-click; select line
+            selectMode = SELECT_LINE;
+            if (startX > -1 && shiftPressed) {
+                // extend existing selection
+                if (startY < y) {
+                    // start of existing selection is before cursor so move end point.
+                    endX = width;
+                    endY = y;
+                } else {
+                    // end of existing selection is at or after the cursor
+                    if (startX + startY * width < endX + endY * width) {
+                        // start of selection is before end of selection.
+                        // advance start to end
+                        startX = endX;
+                        startY = endY;
+                        [self setSelectionTime];
+                    }
+                    // Set end of selection to current line
+                    endX = 0;
+                    endY = y;
+                }
+            } else {
+                // not holding shift
+                startX = 0;
+                endX = width;
+                startY = endY = y;
+                [self setSelectionTime];
+            }
         }
     } else if (clickCount == 4) {
         // quad-click: smart selection
@@ -7779,6 +7847,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 startX = [dataSource width];
             }
             break;
+
+        case SELECT_WHOLE_LINE: {
+            [self extendWholeLineSelectionToX:x y:y withWidth:width];
+            break;
+        }
     }
 
     DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);

@@ -124,6 +124,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton *focusFollowsMouse;
     BOOL defaultFocusFollowsMouse;
 
+    // Triple click selects full, wrapped lines
+    IBOutlet NSButton *tripleClickSelectsFullLines;
+    BOOL defaultTripleClickSelectsFullLines;
+
     // Characters considered part of word
     IBOutlet NSTextField *wordChars;
     NSString *defaultWordChars;
@@ -608,6 +612,7 @@ typedef enum {
 - (BOOL)promptOnQuit;
 - (BOOL)onlyWhenMoreTabs;
 - (BOOL)focusFollowsMouse;
+- (BOOL)tripleClickSelectsFullLines;
 - (BOOL)enableBonjour;
 // Returns true if ANY profile has growl enabled (preserves interface from back
 // when there was a global growl setting as well as a per-profile setting).
