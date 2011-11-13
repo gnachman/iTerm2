@@ -788,13 +788,17 @@ static BOOL hasBecomeActive = NO;
 
     PseudoTerminal *frontTerminal;
     frontTerminal = [[iTermController sharedInstance] currentTerminal];
+    [aMenu addItemWithTitle:@"New Window (Default Profile)"
+                     action:@selector(newWindow:)
+              keyEquivalent:@""];
+    [aMenu addItem:[NSMenuItem separatorItem]];
     [self _newSessionMenu:aMenu
-                    title:@"New Window"
+                    title:@"New Window…"
                    target:[iTermController sharedInstance]
                  selector:@selector(newSessionInWindowAtIndex:)
           openAllSelector:@selector(newSessionsInNewWindow:)];
     [self _newSessionMenu:aMenu
-                    title:@"New Tab"
+                    title:@"New Tab…"
                    target:frontTerminal
                  selector:@selector(newSessionInTabAtIndex:)
           openAllSelector:@selector(newSessionsInWindow:)];
