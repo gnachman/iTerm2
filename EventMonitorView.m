@@ -48,7 +48,11 @@
 
 - (void)rightMouseUp:(NSEvent *)theEvent
 {
-    [self showNotSupported];
+    int buttonNumber = 1;
+    int clickCount = [theEvent clickCount];
+    int modMask = [theEvent modifierFlags];
+    [pointerPrefs_ setButtonNumber:buttonNumber clickCount:clickCount modifiers:modMask];
+    [super mouseDown:theEvent];
 }
 
 - (void)otherMouseDown:(NSEvent *)theEvent

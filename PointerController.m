@@ -8,6 +8,7 @@
 
 #import "PointerController.h"
 #import "PointerPrefsController.h"
+#import "PreferencePanel.h"
 
 @implementation PointerController
 
@@ -66,30 +67,63 @@
     }
 }
 
-- (void)mouseDown:(NSEvent *)event withTouches:(int)numTouches
+- (BOOL)eventEmulatesRightClick:(NSEvent *)event
 {
-    mouseDownButton_ = [event buttonNumber];
+    return ![[PreferencePanel sharedInstance] passOnControlLeftClick] &&
+           [event buttonNumber] == 0 &&
+           [event clickCount] == 1 &&
+           ([event modifierFlags] & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask | NSShiftKeyMask)) == NSControlKeyMask;
 }
 
-- (void)mouseUp:(NSEvent *)event withTouches:(int)numTouches
+- (NSString *)actionForEvent:(NSEvent *)event withTouches:(int)numTouches
 {
-    NSString *action = nil;
-    NSString *argument = nil;
+    if ([self eventEmulatesRightClick:event]) {
+        // Ctrl-click emulates right button
+        return [PointerPrefsController actionWithButton:1 numClicks:1 modifiers:0];
+    }
     if (numTouches <= 2) {
-        action = [PointerPrefsController actionWithButton:[event buttonNumber]
+        return [PointerPrefsController actionWithButton:[event buttonNumber]
+                                              numClicks:[event clickCount]
+                                              modifiers:[event modifierFlags]];
+    } else {
+        return [PointerPrefsController actionForTapWithTouches:numTouches
+                                                     modifiers:[event modifierFlags]];
+    }
+}
+
+- (NSString *)argumentForEvent:(NSEvent *)event withTouches:(int)numTouches
+{
+    if ([self eventEmulatesRightClick:event]) {
+        // Ctrl-click emulates right button
+        return [PointerPrefsController argumentWithButton:1
+                                                numClicks:1
+                                                modifiers:0];
+    }
+    if (numTouches <= 2) {
+        return [PointerPrefsController argumentWithButton:[event buttonNumber]
                                                 numClicks:[event clickCount]
                                                 modifiers:[event modifierFlags]];
-        argument = [PointerPrefsController argumentWithButton:[event buttonNumber]
-                                                    numClicks:[event clickCount]
-                                                    modifiers:[event modifierFlags]];
     } else {
-        action = [PointerPrefsController actionForTapWithTouches:numTouches
+        return [PointerPrefsController argumentForTapWithTouches:numTouches
                                                        modifiers:[event modifierFlags]];
-        argument = [PointerPrefsController argumentForTapWithTouches:numTouches
-                                                           modifiers:[event modifierFlags]];
     }
+}
+
+- (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches
+{
+    mouseDownButton_ = [event buttonNumber];
+    return [self actionForEvent:event withTouches:numTouches] != nil;
+}
+
+- (BOOL)mouseUp:(NSEvent *)event withTouches:(int)numTouches
+{
+    NSString *argument = [self argumentForEvent:event withTouches:numTouches];
+    NSString *action = [self actionForEvent:event withTouches:numTouches];
     if (action) {
         [self performAction:action forEvent:event withArgument:argument];
+        return YES;
+    } else {
+        return NO;
     }
 }
 

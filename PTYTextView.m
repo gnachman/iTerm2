@@ -2361,6 +2361,9 @@ NSMutableArray* screens=0;
 
 - (void)rightMouseDown:(NSEvent*)event
 {
+    if ([pointer_ mouseDown:event withTouches:numTouches_]) {
+        return;
+    }
     NSPoint locationInWindow, locationInTextView;
     locationInWindow = [event locationInWindow];
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
@@ -2399,6 +2402,9 @@ NSMutableArray* screens=0;
 
 - (void)rightMouseUp:(NSEvent *)event
 {
+    if ([pointer_ mouseUp:event withTouches:numTouches_]) {
+        return;
+    }
     NSPoint locationInWindow, locationInTextView;
     locationInWindow = [event locationInWindow];
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
@@ -2687,6 +2693,10 @@ NSMutableArray* screens=0;
         }
         return NO;
     }
+    if ([pointer_ eventEmulatesRightClick:event]) {
+        [pointer_ mouseDown:event withTouches:numTouches_];
+        return NO;
+    }
     const BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
     const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
     const BOOL shiftPressed = ([event modifierFlags] & NSShiftKeyMask) != 0;
@@ -2920,6 +2930,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     dragOk_ = NO;
     trouterDragged = NO;
+    if ([pointer_ eventEmulatesRightClick:event]) {
+        [pointer_ mouseUp:event withTouches:numTouches_];
+        return;
+    }
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
     const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
     if (!cmdPressed &&
@@ -3656,26 +3670,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
 {
     if (theEvent) {
-        // Not for "synthetic" events, as the session title view sends.
-        PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-        NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-        NSPoint locationInWindow = [theEvent locationInWindow];
-        NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
-        VT100Terminal *terminal = [dataSource terminal];
-        MouseMode mm = [terminal mouseMode];
-        if (frontTextView == self &&
-            ([self xtermMouseReporting]) &&
-            (mm == MOUSE_REPORTING_NORMAL ||
-             mm == MOUSE_REPORTING_BUTTON_MOTION ||
-             mm == MOUSE_REPORTING_ALL_MOTION) &&
-            (locationInTextView.y > visibleRect.origin.y) &&
-            [[frontTextView->dataSource session] tab] == [[dataSource session] tab] &&
-            [theEvent type] == NSLeftMouseDown &&
-            ([theEvent modifierFlags] & NSControlKeyMask) &&
-            [[PreferencePanel sharedInstance] passOnControlLeftClick]) {
-            // All the many conditions are met for having the click passed on via xterm mouse reporting.
-            return nil;
-        }
+        // Context menu is opened by the PointerController, not organically.
+        return nil;
     }
     NSMenu *theMenu;
 

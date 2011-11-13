@@ -44,8 +44,9 @@
 
 @property (nonatomic, assign) NSObject<PointerControllerDelegate> *delegate;
 
-- (void)mouseDown:(NSEvent *)event withTouches:(int)numTouches;
-- (void)mouseUp:(NSEvent *)event withTouches:(int)numTouches;
+- (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches;
+- (BOOL)mouseUp:(NSEvent *)event withTouches:(int)numTouches;
 - (void)swipeWithEvent:(NSEvent *)event;
+- (BOOL)eventEmulatesRightClick:(NSEvent *)event;
 
 @end

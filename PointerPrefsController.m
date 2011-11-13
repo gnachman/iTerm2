@@ -680,7 +680,7 @@ typedef enum {
 
 - (void)setButtonNumber:(int)buttonNumber clickCount:(int)clickCount modifiers:(int)modMask
 {
-    if (buttonNumber >= 2 && clickCount > 0 && clickCount < 5) {
+    if (buttonNumber >= 1 && clickCount > 0 && clickCount < 5) {
         [editButton_ selectItemWithTag:buttonNumber];
         [editClickType_ selectItemWithTag:clickCount];
         [self setModifierButtons:modMask];
