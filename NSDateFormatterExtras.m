@@ -3,7 +3,7 @@
 //  iTerm
 //
 //  Created by George Nachman on 10/26/10.
-//  Copyright 2010 __MyCompanyName__. All rights reserved.
+//  Copyright 2010 George Nachman. All rights reserved.
 //
 
 #import "NSDateFormatterExtras.h"
