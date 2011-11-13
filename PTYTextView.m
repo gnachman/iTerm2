@@ -2860,7 +2860,8 @@ NSMutableArray* screens=0;
                 startY = [self lineNumberWithStartOfWholeLineIncludingLine:y];
                 endX = width;
                 endY = [self lineNumberWithEndOfWholeLineIncludingLine:y];
-            }   
+            }
+            [self setSelectionTime];
         } else {
             // triple-click; select line
             selectMode = SELECT_LINE;
@@ -2877,7 +2878,6 @@ NSMutableArray* screens=0;
                         // advance start to end
                         startX = endX;
                         startY = endY;
-                        [self setSelectionTime];
                     }
                     // Set end of selection to current line
                     endX = 0;
@@ -2888,8 +2888,8 @@ NSMutableArray* screens=0;
                 startX = 0;
                 endX = width;
                 startY = endY = y;
-                [self setSelectionTime];
             }
+            [self setSelectionTime];
         }
     } else if (clickCount == 4) {
         // quad-click: smart selection
