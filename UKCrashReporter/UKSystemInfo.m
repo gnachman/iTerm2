@@ -11,27 +11,27 @@
 #include <sys/types.h>
 #include <sys/sysctl.h>
 
-unsigned	UKPhysicalRAMSize()
+unsigned	UKPhysicalRAMSize(void)
 {
-	long		ramSize;
+	SInt32		ramSize;
 	
 	if( Gestalt( gestaltPhysicalRAMSizeInMegabytes, &ramSize ) == noErr )
-		return ramSize;
+		return (unsigned)ramSize;
 	else
 		return 0;
 }
 
 
-NSString*	UKSystemVersionString()
+NSString*	UKSystemVersionString(void)
 {
-	long		vMajor = 10, vMinor = 0, vBugfix = 0;
+	SInt32		vMajor = 10, vMinor = 0, vBugfix = 0;
 	UKGetSystemVersionComponents( &vMajor, &vMinor, &vBugfix );
 	
 	return [NSString stringWithFormat: @"%ld.%ld.%ld", vMajor, vMinor, vBugfix];
 }
 
 
-void	UKGetSystemVersionComponents( long* outMajor, long* outMinor, long* outBugfix )
+void	UKGetSystemVersionComponents( SInt32* outMajor, SInt32* outMinor, SInt32* outBugfix )
 {
 	long		sysVersion = UKSystemVersion();
 	if( sysVersion >= MAC_OS_X_VERSION_10_4 )
@@ -49,9 +49,9 @@ void	UKGetSystemVersionComponents( long* outMajor, long* outMinor, long* outBugf
 }
 
 
-long	UKSystemVersion()
+long	UKSystemVersion(void)
 {
-	long		sysVersion = 0;
+	SInt32		sysVersion = 0;
 	
 	if( Gestalt( gestaltSystemVersion, &sysVersion ) != noErr )
 		return 0;
@@ -60,9 +60,9 @@ long	UKSystemVersion()
 }
 
 
-unsigned	UKClockSpeed()
+unsigned	UKClockSpeed(void)
 {
-	long		speed;
+	SInt32		speed;
 	
 	if( Gestalt( gestaltProcClkSpeed, &speed ) == noErr )
 		return speed / 1000000;
@@ -71,7 +71,7 @@ unsigned	UKClockSpeed()
 }
 
 
-unsigned	UKCountCores()
+unsigned	UKCountCores(void)
 {
 	unsigned	count = 0;
 	size_t		size = sizeof(count);
@@ -83,18 +83,18 @@ unsigned	UKCountCores()
 }
 
 
-NSString*	UKMachineName()
+NSString*	UKMachineName(void)
 {
 	static NSString*	cpuName = nil;
 	if( cpuName )
 		return cpuName;
-	
-	char*				machineName = NULL;
-	
-	if( Gestalt( gestaltUserVisibleMachineName, (long*) &machineName ) == noErr )
-	{
-		NSString*	internalName = [NSString stringWithCString: machineName +1 length: machineName[0]];
 		
+    char temp[1000];
+    size_t tempLen = sizeof(temp) - 1;
+    if (!sysctlbyname("hw.model", temp, &tempLen, 0, 0)) {
+        temp[tempLen] = 0;
+        NSString *internalName = [NSString stringWithUTF8String:temp];
+        
 		NSDictionary* translationDictionary = [[NSDictionary alloc] initWithObjectsAndKeys:
 					@"PowerMac 8500/8600",@"AAPL,8500",
 					@"PowerMac 9500/9600",@"AAPL,9500",
@@ -177,7 +177,7 @@ NSString*	UKMachineName()
 		NSEnumerator	*e=[[[translationDictionary allKeys]
 									sortedArrayUsingSelector:@selector(compare:)]
 									objectEnumerator];
-		while( aKey = [e nextObject] )
+		while( (aKey = [e nextObject]) )
 		{
 			r = [internalName rangeOfString: aKey];
 			if( r.location != NSNotFound )
@@ -204,7 +204,7 @@ NSString*	UKMachineName()
 }
 
 
-NSString*	UKCPUName()
+NSString*	UKCPUName(void)
 {
 	return UKAutoreleasedCPUName( NO );
 }
@@ -212,7 +212,7 @@ NSString*	UKCPUName()
 
 NSString*	UKAutoreleasedCPUName( BOOL releaseIt )
 {
-	long				cpu;
+	SInt32				cpu;
 	static NSString*	cpuName = nil;
 	
 	if( Gestalt( gestaltNativeCPUtype, &cpu ) == noErr )
@@ -262,57 +262,4 @@ NSString*	UKAutoreleasedCPUName( BOOL releaseIt )
 	
 	return cpuName;
 }
-
-
-/*NSString*	UKSystemSerialNumber()
-{
-	mach_port_t				masterPort;
-	kern_return_t			kr = noErr;
-	io_registry_entry_t		entry;
-	CFTypeRef				prop;
-	CFTypeID				propID;
-	NSString*				str = nil;
-
-	kr = IOMasterPort(MACH_PORT_NULL, &masterPort);
-	if( kr != noErr )
-		goto cleanup;
-	entry = IORegistryGetRootEntry( masterPort );
-	if( entry == MACH_PORT_NULL )
-		goto cleanup;
-	prop = IORegistryEntrySearchCFProperty(entry, kIODeviceTreePlane, CFSTR("serial-number"), nil, kIORegistryIterateRecursively);
-	if( prop == nil )
-		goto cleanup;
-	propID = CFGetTypeID( prop );
-	if( propID != CFDataGetTypeID() )
-		goto cleanup;
-	
-	const char*	buf = [(NSData*)prop bytes];
-	int			len = [(NSData*)prop length],
-				 x;
-	
-	char	secondPart[256];
-	char	firstPart[256];
-	char*	currStr = secondPart;
-	int		y = 0;
-	
-	for( x = 0; x < len; x++ )
-	{
-		if( buf[x] > 0 && (y < 255) )
-			currStr[y++] = buf[x];
-		else if( currStr == secondPart )
-		{
-			currStr[y] = 0;		// Terminate string.
-			currStr = firstPart;
-			y = 0;
-		}
-	}
-	currStr[y] = 0;	// Terminate string.
-	
-	str = [NSString stringWithFormat: @"%s%s", firstPart, secondPart];
-	
-cleanup:
-	mach_port_deallocate( mach_task_self(), masterPort );
-	
-	return str;
-}*/
 

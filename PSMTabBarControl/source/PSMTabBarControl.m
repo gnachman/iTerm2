@@ -543,7 +543,7 @@
 
 - (void)removeTabForCell:(PSMTabBarCell *)cell
 {
-    NSObjectController *item = [[cell representedObject] identifier];
+    NSObjectController *item = (NSObjectController *)[[cell representedObject] identifier];
 
     // unbind
     [[cell indicator] unbind:@"animate"];
@@ -1287,7 +1287,7 @@
             }
 
             if ([cell hasIcon]) {
-                [menuItem setImage:[[[cell representedObject] identifier] icon]];
+                [menuItem setImage:[(id)[[cell representedObject] identifier] icon]];
             }
 
             if ([cell count] > 0) {
