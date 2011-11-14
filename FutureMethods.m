@@ -8,6 +8,8 @@
 
 #import "FutureMethods.h"
 
+const int FutureNSWindowCollectionBehaviorStationary = (1 << 4);  // value stolen from 10.6 SDK
+
 @implementation NSWindow (Future)
 
 - (void)futureSetRestorable:(BOOL)value
@@ -81,4 +83,47 @@
         return [NSArray array];
     }
 }
+@end
+
+static FutureNSScrollerStyle GetScrollerStyle(id theObj)
+{
+    NSMethodSignature *sig = [[NSScroller class] instanceMethodSignatureForSelector:@selector(scrollerStyle)];
+    NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+    [inv setTarget:theObj];
+    [inv setSelector:@selector(scrollerStyle)];
+    [inv invoke];
+    FutureNSScrollerStyle result;
+    [inv getReturnValue:&result];
+    return result;
+}
+
+@implementation NSScroller (Future)
+
+- (FutureNSScrollerStyle)futureScrollerStyle
+{
+    if ([self respondsToSelector:@selector(scrollerStyle)]) {
+        return GetScrollerStyle(self);
+    } else {
+        return FutureNSScrollerStyleLegacy;
+    }
+}
+
+@end
+
+@implementation NSScrollView (Future)
+
+- (FutureNSScrollerStyle)futureScrollerStyle
+{
+    if ([self respondsToSelector:@selector(scrollerStyle)]) {
+        return GetScrollerStyle(self);
+    } else {
+        return FutureNSScrollerStyleLegacy;
+    }
+}
+
+@end
+
+@implementation CIImage (Future)
+
+
 @end

@@ -2900,8 +2900,6 @@ NSMutableArray* screens=0;
     }
 
     DebugLog([NSString stringWithFormat:@"Mouse down. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
-    if([_delegate respondsToSelector: @selector(willHandleEvent:)] && [_delegate willHandleEvent: event])
-        [_delegate handleEvent:event];
     [[[self dataSource] session] refreshAndStartTimerIfNeeded];
 
     return NO;
@@ -3922,8 +3920,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 for (i = 0; i < (int)[propertyList count]; i++) {
                     // Ignore text clippings
                     NSString *filename = (NSString*)[propertyList objectAtIndex:i];  // this contains the POSIX path to a file
-                    NSDictionary *filenamesAttributes = [[NSFileManager defaultManager] fileAttributesAtPath:filename
-                                                                                                traverseLink:YES];
+                    NSDictionary *filenamesAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:filename
+                                                                                                         error:nil];
                     if (([filenamesAttributes fileHFSTypeCode] == 'clpt' &&
                          [filenamesAttributes fileHFSCreatorCode] == 'MACS') ||
                         [[filename pathExtension] isEqualToString:@"textClipping"] == YES) {

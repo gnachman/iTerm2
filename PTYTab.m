@@ -863,7 +863,7 @@ static NSString* FormatRect(NSRect r) {
     if ([view isKindOfClass:[SessionView class]]) {
         SessionView* sv = (SessionView*)view;
         NSSize size = [sv frame].size;
-        PtyLog([NSString stringWithFormat:@"%@%lfx%lf", prefix, size.width, size.height]);
+        PtyLog(@"%@%lfx%lf", prefix, size.width, size.height);
     } else {
         NSSplitView* sv = (NSSplitView*)view;
         for (id v in [sv subviews]) {
@@ -1548,7 +1548,8 @@ static NSString* FormatRect(NSRect r) {
         [transform scaleXBy:1.0 yBy:-1.0];
         [transform concat];
         tabFrame.origin.y = -tabFrame.origin.y - tabFrame.size.height;
-        [(id <PSMTabStyle>)[[[realParentWindow_ tabView] delegate] style] drawBackgroundInRect:tabFrame color:nil];  // TODO: use the right color
+        PSMTabBarControl *control = (PSMTabBarControl *)[[realParentWindow_ tabView] delegate];
+        [(id <PSMTabStyle>)[control style] drawBackgroundInRect:tabFrame color:nil];  // TODO: use the right color
         [transform invert];
         [transform concat];
     }

@@ -65,7 +65,7 @@
 @end
 
 
-@interface FindViewController : NSViewController {
+@interface FindViewController : NSViewController <NSTextFieldDelegate> {
     IBOutlet NSSearchField* findBarTextField_;
     IBOutlet NSProgressIndicator* findBarProgressIndicator_;
     // These pointers are just "prototypes" and do not refer to any actual menu

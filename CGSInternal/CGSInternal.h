@@ -25,7 +25,7 @@
 #include <Carbon/Carbon.h>
 #include <ApplicationServices/ApplicationServices.h>
 
-#warning CGSInternal contains PRIVATE FUNCTIONS and should NOT BE USED in shipping applications!
+// WARNING: CGSInternal contains PRIVATE FUNCTIONS and should NOT BE USED in shipping applications!
 
 #ifndef MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_5
 	#define AVAILABLE_MAC_OS_X_VERSION_10_5_AND_LATER UNAVAILABLE_ATTRIBUTE

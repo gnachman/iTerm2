@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ToolbeltView.h"
 
-@interface ToolNotes : NSView <ToolbeltTool> {
+@interface ToolNotes : NSView <ToolbeltTool, NSTextViewDelegate> {
     NSTextView *textView_;
     NSFileManager *filemanager_;
     BOOL ignoreNotification_;

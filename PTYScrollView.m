@@ -33,6 +33,7 @@
 
 #import "iTerm.h"
 #import <iTerm/PTYScrollView.h>
+#import "FutureMethods.h"
 #import <iTerm/PTYTextView.h>
 #import <PreferencePanel.h>
 #include "NSImage+CoreImage.h"
@@ -109,11 +110,7 @@
 
 - (BOOL)isLegacyScroller
 {
-    if ([self respondsToSelector:@selector(scrollerStyle)]) {
-        return (int)[self scrollerStyle] == NSScrollerStyleLegacy;
-    } else {
-        return YES;
-    }
+    return [(NSScroller*)self futureScrollerStyle] == FutureNSScrollerStyleLegacy;
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
@@ -277,11 +274,7 @@
 
 - (BOOL)isLegacyScroller
 {
-    if ([self respondsToSelector:@selector(scrollerStyle)]) {
-        return [self scrollerStyle] == NSScrollerStyleLegacy;
-    } else {
-        return YES;
-    }
+    return [(NSScrollView*)self futureScrollerStyle] == FutureNSScrollerStyleLegacy;
 }
 
 - (void)setHasVerticalScroller:(BOOL)flag

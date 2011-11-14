@@ -60,7 +60,14 @@
 
 typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 
-@interface PreferencePanel : NSWindowController <BookmarkTableDelegate, TriggerDelegate, SmartSelectionDelegate>
+@interface PreferencePanel : NSWindowController <
+    BookmarkTableDelegate,
+    TriggerDelegate,
+    SmartSelectionDelegate,
+    NSTokenFieldDelegate,
+    NSWindowDelegate,
+    NSTextFieldDelegate,
+    NSMenuDelegate>
 {
     BookmarkModel* dataSource;
     BOOL oneBookmarkMode;

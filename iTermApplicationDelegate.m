@@ -788,7 +788,7 @@ static BOOL hasBecomeActive = NO;
 
     PseudoTerminal *frontTerminal;
     frontTerminal = [[iTermController sharedInstance] currentTerminal];
-    [aMenu addItemWithTitle:@"New Window (Default Profile)"
+    [aMenu addItemWithTitle:@"New Window (Default Pkrofile)"
                      action:@selector(newWindow:)
               keyEquivalent:@""];
     [aMenu addItem:[NSMenuItem separatorItem]];
@@ -1358,7 +1358,8 @@ void DebugLog(NSString* value)
 {
     //NSLog(@"iTermApplicationDelegate: setCurrentTerminal '0x%x'", aTerminal);
     [[iTermController sharedInstance] setCurrentTerminal: aTerminal];
-    [[[NSApplication sharedApplication] delegate] updateBroadcastMenuState];
+    iTermApplicationDelegate *itad = [[NSApplication sharedApplication] delegate];
+    [itad updateBroadcastMenuState];
 }
 
 

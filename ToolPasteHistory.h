@@ -10,7 +10,7 @@
 #import "ToolbeltView.h"
 #import "PasteboardHistory.h"
 
-@interface ToolPasteHistory : NSView <ToolbeltTool> {
+@interface ToolPasteHistory : NSView <ToolbeltTool, NSTableViewDataSource, NSTableViewDelegate> {
     NSScrollView *scrollView_;
     NSTableView *tableView_;
     NSButton *clear_;

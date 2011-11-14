@@ -4,6 +4,7 @@
 //  iTerm2
 
 #import "NSImage+CoreImage.h"
+#import "NSBitmapImageRep+CoreImage.h"
 
 @implementation NSImage (CoreImage)
 - (void)drawAtPoint: (NSPoint)point fromRect: (NSRect)fromRect coreImageFilter: (NSString *)filterName arguments: (NSDictionary *)arguments {
@@ -14,18 +15,16 @@
 
     if (filterName) {
         rep = [self bitmapImageRepresentation];
-        [rep
-         drawAtPoint:       point
-         fromRect:      fromRect
-         coreImageFilter:   filterName
-         arguments:     arguments];
+        [rep drawAtPoint:point
+                fromRect:fromRect
+         coreImageFilter:filterName
+               arguments:arguments];
     } else {
         /* bypass core image if no filter is specified */
-        [self
-         drawAtPoint:       point
-         fromRect:      fromRect
-         operation:     NSCompositeSourceOver
-         fraction:      1.0f];
+        [self drawAtPoint:point
+                 fromRect:fromRect
+                operation:NSCompositeSourceOver
+                 fraction:1.0f];
     }
 
     [pool release];

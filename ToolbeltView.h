@@ -18,7 +18,7 @@
 - (void)shutdown;
 @end
 
-@interface ToolbeltView : NSView {
+@interface ToolbeltView : NSView <NSSplitViewDelegate> {
     NSSplitView *splitter_;
     NSMutableDictionary *tools_;
     PseudoTerminal *term_;   // weak

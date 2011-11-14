@@ -147,7 +147,7 @@ typedef struct FindContext {
 
 // Drop lines from the start of the buffer. Returns the number of lines actually dropped
 // (either n or the number of lines in the block).
-- (int) dropLines: (int) n withWidth: (int) width;
+- (int) dropLines:(int)n withWidth:(int)width chars:(int *)charsDropped;
 
 // Returns true if there are no lines in the block
 - (BOOL) isEmpty;

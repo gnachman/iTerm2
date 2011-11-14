@@ -35,7 +35,7 @@ extern NSString *CommandToolbarItem;
 
 @class PseudoTerminal;
 
-@interface PTToolbarController : NSObject
+@interface PTToolbarController : NSObject <NSToolbarDelegate>
 {
     NSToolbar* _toolbar;
     PseudoTerminal* _pseudoTerminal;

@@ -174,14 +174,14 @@ NSString*	gCrashLogString = nil;
 {
 	// Insert the app name into the explanation message:
 	NSString*			appName = [[NSFileManager defaultManager] displayNameAtPath: [[NSBundle mainBundle] bundlePath]];
-	NSMutableString*	expl = nil;
+	NSMutableString*	explanation = nil;
 	if( gCrashLogString )
-		expl = [[[explanationField stringValue] mutableCopy] autorelease];
+		explanation = [[[explanationField stringValue] mutableCopy] autorelease];
 	else
-		expl = [[NSLocalizedStringFromTable(@"FEEDBACK_EXPLANATION_TEXT",@"UKCrashReporter",@"") mutableCopy] autorelease];
-	[expl replaceOccurrencesOfString: @"%%APPNAME" withString: appName
-				options: 0 range: NSMakeRange(0, [expl length])];
-	[explanationField setStringValue: expl];
+		explanation = [[NSLocalizedStringFromTable(@"FEEDBACK_EXPLANATION_TEXT",@"UKCrashReporter",@"") mutableCopy] autorelease];
+	[explanation replaceOccurrencesOfString: @"%%APPNAME" withString: appName
+                                    options: 0 range: NSMakeRange(0, [explanation length])];
+	[explanationField setStringValue: explanation];
 	
 	// Insert user name and e-mail address into the information field:
 	NSMutableString*	userMessage = nil;

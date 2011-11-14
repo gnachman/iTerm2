@@ -423,7 +423,7 @@ NSString *sessionsKey = @"sessions";
 
     // assign tabview and delegates
     [tabBarControl setTabView: TABVIEW];
-    [TABVIEW setDelegate: tabBarControl];
+    [TABVIEW setDelegate:tabBarControl];
     [tabBarControl setDelegate: self];
     [tabBarControl setHideForSingleTab: NO];
 
@@ -483,45 +483,6 @@ NSString *sessionsKey = @"sessions";
     [[self window] futureSetRestorable:YES];
     [[self window] futureSetRestorationClass:[PseudoTerminalRestorer class]];
     return self;
-}
-
-- (void)_updateToolbeltParentage
-{
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-    if ([self anyFullScreen]) {
-        CGFloat width = [self fullscreenToolbeltWidth];
-        NSRect toolbeltFrame = NSMakeRect(self.window.frame.size.width - width,
-                                          0,
-                                          width,
-                                          self.window.frame.size.height - kToolbeltMargin);
-        [toolbelt_ retain];
-        [toolbelt_ removeFromSuperview];
-        [toolbelt_ setFrame:toolbeltFrame];
-        [toolbelt_ setHidden:![itad showToolbelt]];
-        [[[self window] contentView] addSubview:toolbelt_
-                                     positioned:NSWindowBelow
-                                     relativeTo:TABVIEW];
-        [toolbelt_ release];
-        [self repositionWidgets];
-        [drawer_ close];
-    } else {
-        if (!drawer_) {
-            drawer_ = [[NSDrawer alloc] initWithContentSize:NSMakeSize(200, self.window.frame.size.height)
-                                              preferredEdge:CGRectMaxXEdge];
-            [drawer_ setParentWindow:self.window];
-        }
-        NSSize contentSize = [drawer_ contentSize];
-        NSRect toolbeltFrame = NSMakeRect(0, 0, contentSize.width, contentSize.height);
-        [toolbelt_ retain];
-        [toolbelt_ removeFromSuperview];
-        [toolbelt_ setFrame:toolbeltFrame];
-        [drawer_ setContentView:toolbelt_];
-        [toolbelt_ release];
-        [toolbelt_ setHidden:NO];
-        if ([itad showToolbelt]) {
-            [drawer_ open];
-        }
-    }
 }
 
 - (CGFloat)tabviewWidth
@@ -2572,7 +2533,8 @@ NSString *sessionsKey = @"sessions";
         [transform scaleXBy:1.0 yBy:-1.0];
         [transform concat];
         tabFrame.origin.y = -tabFrame.origin.y - tabFrame.size.height;
-        [(id <PSMTabStyle>)[[aTabView delegate] style] drawBackgroundInRect:tabFrame color:nil];
+        PSMTabBarControl *control = (PSMTabBarControl *)[aTabView delegate];
+        [(id <PSMTabStyle>)[control style] drawBackgroundInRect:tabFrame color:nil];
         [transform invert];
         [transform concat];
 
@@ -3866,8 +3828,9 @@ NSString *sessionsKey = @"sessions";
 - (void)showMenuBar
 {
     int flags = NSApplicationPresentationAutoHideDock | NSApplicationPresentationAutoHideMenuBar;
-    [[[iTermApplication sharedApplication] delegate] setFutureApplicationPresentationOptions:0
-                                                                                       unset:flags];
+    iTermApplicationDelegate *itad = [[iTermApplication sharedApplication] delegate];
+    [itad setFutureApplicationPresentationOptions:0
+                                            unset:flags];
 }
 
 - (void)adjustFullScreenWindowForBottomBarChange
@@ -4917,6 +4880,45 @@ NSString *sessionsKey = @"sessions";
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermLoadFindStringFromSharedPasteboard"
                                                         object:nil
                                                       userInfo:nil];
+}
+
+- (void)_updateToolbeltParentage
+{
+    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
+    if ([self anyFullScreen]) {
+        CGFloat width = [self fullscreenToolbeltWidth];
+        NSRect toolbeltFrame = NSMakeRect(self.window.frame.size.width - width,
+                                          0,
+                                          width,
+                                          self.window.frame.size.height - kToolbeltMargin);
+        [toolbelt_ retain];
+        [toolbelt_ removeFromSuperview];
+        [toolbelt_ setFrame:toolbeltFrame];
+        [toolbelt_ setHidden:![itad showToolbelt]];
+        [[[self window] contentView] addSubview:toolbelt_
+                                     positioned:NSWindowBelow
+                                     relativeTo:TABVIEW];
+        [toolbelt_ release];
+        [self repositionWidgets];
+        [drawer_ close];
+    } else {
+        if (!drawer_) {
+            drawer_ = [[NSDrawer alloc] initWithContentSize:NSMakeSize(200, self.window.frame.size.height)
+                                              preferredEdge:CGRectMaxXEdge];
+            [drawer_ setParentWindow:self.window];
+        }
+        NSSize contentSize = [drawer_ contentSize];
+        NSRect toolbeltFrame = NSMakeRect(0, 0, contentSize.width, contentSize.height);
+        [toolbelt_ retain];
+        [toolbelt_ removeFromSuperview];
+        [toolbelt_ setFrame:toolbeltFrame];
+        [drawer_ setContentView:toolbelt_];
+        [toolbelt_ release];
+        [toolbelt_ setHidden:NO];
+        if ([itad showToolbelt]) {
+            [drawer_ open];
+        }
+    }
 }
 
 @end

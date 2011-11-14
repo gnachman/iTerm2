@@ -125,7 +125,7 @@ static float versionNumber;
     }
 
     NSLog(@"Preference file migrated");
-    [mgr copyPath:source toPath:newPrefs handler:nil];
+    [mgr copyItemAtPath:source toPath:newPrefs error:nil];
     [NSUserDefaults resetStandardUserDefaults];
     return (YES);
 }
