@@ -3360,6 +3360,7 @@ NSString *sessionsKey = @"sessions";
 
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize
 {
+    PtyLog(@"fitWindowToTabSize %@", [NSValue valueWithSize:tabSize]);
     if ([self anyFullScreen]) {
         [self fitTabsToWindow];
         return NO;
@@ -3373,6 +3374,14 @@ NSString *sessionsKey = @"sessions";
 
     BOOL mustResizeTabs = NO;
     NSSize maxFrameSize = [self maxFrame].size;
+    PtyLog(@"maxFrameSize=%@, screens=%@", [NSValue valueWithSize:maxFrameSize], [NSScreen screens]);
+    if (maxFrameSize.width <= 0 || maxFrameSize.height <= 0) {
+        // This can happen when scrollers are changing while no monitors are
+        // attached (e.g., plug in mouse+keyboard and external display into
+        // clamshell simultaneously)
+        NSLog(@"* max frame size was not positive; aborting fitWindowToTabSize");
+        return NO;
+    }
     if (winSize.width > maxFrameSize.width ||
         winSize.height > maxFrameSize.height) {
         mustResizeTabs = YES;
