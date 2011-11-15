@@ -63,6 +63,7 @@
     SessionTitleView *title_;
 }
 
++ (double)titleHeight;
 + (NSDate*)lastResizeDate;
 + (void)windowDidResize;
 - (id)initWithFrame:(NSRect)frame session:(PTYSession*)session;
@@ -81,6 +82,7 @@
 - (void)restoreFrameSize;
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode;
 - (BOOL)setShowTitle:(BOOL)value;
+- (BOOL)showTitle;
 - (void)setTitle:(NSString *)title;
 
 @end

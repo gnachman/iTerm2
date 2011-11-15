@@ -44,6 +44,11 @@ static NSDate* lastResizeDate_;
 
 @implementation SessionView
 
++ (double)titleHeight
+{
+    return kTitleHeight;
+}
+
 + (void)initialize
 {
     lastResizeDate_ = [[NSDate date] retain];
@@ -476,6 +481,11 @@ static NSDate* lastResizeDate_;
 - (BOOL)wantsPeriodicDraggingUpdates
 {
     return YES;
+}
+
+- (BOOL)showTitle
+{
+    return showTitle_;
 }
 
 - (BOOL)setShowTitle:(BOOL)value

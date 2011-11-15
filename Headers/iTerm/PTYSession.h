@@ -336,6 +336,13 @@ typedef enum {
 
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode;
 
+// Returns the number of pixels over or under the an ideal size.
+// Will never exceed +/- cell size/2.
+// If vertically is true, proposedSize is a height, else it's a width.
+// Example: If the line height is 10 (no margin) and you give a proposed size of 101,
+// 1 is returned. If you give a proposed size of 99, -1 is returned.
+- (int)overUnder:(int)proposedSize inVerticalDimension:(BOOL)vertically;
+
 // Array of subprocessess names.
 - (NSArray *)childJobNames;
 

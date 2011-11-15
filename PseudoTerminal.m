@@ -1685,7 +1685,7 @@ NSString *sessionsKey = @"sessions";
     float charWidth = [[session TEXTVIEW] charWidth];
     float charHeight = [[session TEXTVIEW] lineHeight];
 
-    // Decide when to snap.  (We snap unless shift is held down.)
+    // Decide when to snap.  (We snap unless control is held down.)
     BOOL modifierDown = (([[NSApp currentEvent] modifierFlags] & NSControlKeyMask) != 0);
     BOOL snapWidth = !modifierDown;
     BOOL snapHeight = !modifierDown;
@@ -3333,7 +3333,7 @@ NSString *sessionsKey = @"sessions";
     for (NSTabViewItem* item in [TABVIEW tabViewItems]) {
         PTYTab* tab = [item identifier];
         NSSize tabSize = [tab currentSize];
-        PtyLog(@"The natrual size of this tab is %lf", tabSize.height);
+        PtyLog(@"The natural size of this tab is %lf", tabSize.height);
         if (tabSize.width > maxTabSize.width) {
             maxTabSize.width = tabSize.width;
         }
@@ -3342,6 +3342,7 @@ NSString *sessionsKey = @"sessions";
         }
 
         tabSize = [tab minSize];
+        PtyLog(@"The min size of this tab is %lf", tabSize.height);
         if (tabSize.width > maxTabSize.width) {
             maxTabSize.width = tabSize.width;
         }

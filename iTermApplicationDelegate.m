@@ -1350,13 +1350,11 @@ void DebugLog(NSString* value)
 // accessors for to-one relationships:
 - (PseudoTerminal *)currentTerminal
 {
-    //NSLog(@"iTermApplicationDelegate: currentTerminal");
     return [[iTermController sharedInstance] currentTerminal];
 }
 
-- (void) setCurrentTerminal: (PseudoTerminal *) aTerminal
+- (void)setCurrentTerminal:(PseudoTerminal *)aTerminal
 {
-    //NSLog(@"iTermApplicationDelegate: setCurrentTerminal '0x%x'", aTerminal);
     [[iTermController sharedInstance] setCurrentTerminal: aTerminal];
     iTermApplicationDelegate *itad = [[NSApplication sharedApplication] delegate];
     [itad updateBroadcastMenuState];
@@ -1369,7 +1367,7 @@ void DebugLog(NSString* value)
     return [[iTermController sharedInstance] terminals];
 }
 
--(void)setTerminals: (NSArray*)terminals
+- (void)setTerminals:(NSArray*)terminals
 {
     // no-op
 }

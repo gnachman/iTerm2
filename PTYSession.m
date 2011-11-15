@@ -462,6 +462,37 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [[self view] setSplitSelectionMode:mode];
 }
 
+- (int)overUnder:(int)proposedSize inVerticalDimension:(BOOL)vertically
+{
+    int x = proposedSize;
+    if (vertically) {
+        if ([view showTitle]) {
+            // x = 50/53
+            x -= [SessionView titleHeight];
+        }
+        // x = 28/31
+        x -= VMARGIN * 2;
+        // x = 18/21
+        // iLineHeight = 10
+        int iLineHeight = [TEXTVIEW lineHeight];
+        x %= iLineHeight;
+        // x = 8/1
+        if (x > iLineHeight / 2) {
+            x -= iLineHeight;
+        }
+        // x = -2/1
+        return x;
+    } else {
+        x -= MARGIN * 2;
+        int iCharWidth = [TEXTVIEW charWidth];
+        x %= iCharWidth;
+        if (x > iCharWidth / 2) {
+            x -= iCharWidth;
+        }
+    }
+    return x;
+}
+
 - (NSArray *)childJobNames
 {
     int skip = 0;
