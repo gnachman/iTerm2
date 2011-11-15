@@ -508,15 +508,17 @@ typedef enum {
         }
         if ([[PreferencePanel sharedInstance] legacyThreeFingerEmulatesMiddle]) {
             // Find all actions that use middle button and add corresponding three-finger gesture.
+            NSMutableDictionary *tempCopy = [[temp mutableCopy] autorelease];
             for (NSString *key in temp) {
                 if ([PointerPrefsController keyIsButton:key] &&
                     [PointerPrefsController buttonForKey:key] == kMiddleButton) {
                     NSDictionary *middleAction = [temp objectForKey:key];
                     NSString *gestureKey = [PointerPrefsController keyForGesture:kThreeFingerClickGesture
                                                                        modifiers:[PointerPrefsController modifiersForKey:key]];
-                    [temp setObject:middleAction forKey:gestureKey];
+                    [tempCopy setObject:middleAction forKey:gestureKey];
                 }
             }
+            temp = tempCopy;
             int modMasks[] = { NSCommandKeyMask, NSAlternateKeyMask, NSControlKeyMask, NSShiftKeyMask };
             int numModCombos = 1 << (sizeof(modMasks) / sizeof(int));
             for (int numClicks = 0; numClicks <= kMaxClicks; numClicks++) {
