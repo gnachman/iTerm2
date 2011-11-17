@@ -304,7 +304,11 @@ void StringToScreenChars(NSString *s,
                      inContext:(FindContext*)context;
 - (void)cancelFindInContext:(FindContext*)context;
 
-- (void) dumpDebugLog;
+- (void)dumpDebugLog;
+
+// Set the colors in the prototype char to all text on screen that matches the regex.
+- (void)highlightTextMatchingRegex:(NSString *)regex
+                     prototypeChar:(screen_char_t)prototypechar;
 
 // Return a human-readable dump of the screen contents.
 - (NSString*)debugString;

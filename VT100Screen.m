@@ -53,6 +53,7 @@
 #import "PTYTab.h"
 #import "ITAddressBookMgr.h"
 #import "iTermExpose.h"
+#import "RegexKitLite.h"
 
 #define MAX_SCROLLBACK_LINES 1000000
 #define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array
@@ -741,6 +742,115 @@ static char* FormatCont(int c)
         line[x] = 0;
         DebugLog([NSString stringWithFormat:@"%04d @ buffer+%2d lines: %s %s", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)]);
         DebugLog([NSString stringWithFormat:@"                 dirty: %s", dirtyline]);
+    }
+}
+
+// Set the color of prototypechar to all chars between startPoint and endPoint on the screen.
+- (void)highlightWithChar:(screen_char_t)prototypechar
+                fromPoint:(NSPoint)startPoint
+                  toPoint:(NSPoint)endPoint
+{
+    int x = startPoint.x;
+    int y = startPoint.y;
+    screen_char_t *theLine = nil;
+    int lineY = -1;
+    [self setDirtyFromX:startPoint.x Y:startPoint.y toX:endPoint.x Y:endPoint.y];
+    while (x != endPoint.x || y != endPoint.y) {
+        if (lineY != y) {
+            theLine = [self getLineAtScreenIndex:y];
+            lineY = y;
+        }
+        theLine[x].alternateBackgroundSemantics = prototypechar.alternateBackgroundSemantics;
+        theLine[x].alternateForegroundSemantics = prototypechar.alternateForegroundSemantics;
+        theLine[x].backgroundColor = prototypechar.backgroundColor;
+        theLine[x].foregroundColor = prototypechar.foregroundColor;
+
+        ++x;
+        if (x == WIDTH) {
+            x = 0;
+            ++y;
+        }
+    }
+}
+
+// Find all the lines starting at startScreenY that have non-hard EOLs. Combine them into a string and return it.
+// Store the number of screen lines in *numLines
+// Store an array of UTF-16 codes in backingStorePtr, which the caller must free
+// Store an array of offsets between chars in the string and screen_char_t indices in deltasPtr, which the caller must free.
+- (NSString *)joinedLineBeginningAtScreenLine:(int)startScreenY
+                            numScreenLinesPtr:(int *)numLines
+                              backingStorePtr:(unichar **)backingStorePtr  // caller must free
+                                    deltasPtr:(int **)deltasPtr            // caller must free
+{
+    // Count the number of screen lines that have soft/dwc newlines beginning at
+    // line startScreenY.
+    int limitY;
+    for (limitY = startScreenY; limitY < HEIGHT; limitY++) {
+        screen_char_t *screenLine = [self getLineAtScreenIndex:limitY];
+        if (screenLine[WIDTH].code == EOL_HARD) {
+            break;
+        }
+    }
+    *numLines = limitY - startScreenY + 1;
+
+    // Create a single array of screen_char_t's that has those screen lines
+    // concatenated together in "temp".
+    screen_char_t *temp = malloc(sizeof(screen_char_t) * WIDTH * *numLines);
+    int i = 0;
+    for (int y = startScreenY; y <= limitY; y++, i++) {
+        screen_char_t *screenLine = [self getLineAtScreenIndex:y];
+        memcpy(temp + WIDTH * i, screenLine, WIDTH * sizeof(screen_char_t));
+    }
+
+    // Convert "temp" into an NSString. backingStorePtr and deltasPtr are filled
+    // in with malloc'ed pointers that the caller must free.
+    NSString *screenLine = ScreenCharArrayToString(temp, 0, WIDTH * *numLines, backingStorePtr, deltasPtr);
+    free(temp);
+
+    return screenLine;
+}
+
+// Change color of text on screen that matches regex to the color of prototypechar.
+- (void)highlightTextMatchingRegex:(NSString *)regex
+                     prototypeChar:(screen_char_t)prototypechar
+{
+    int y = 0;
+    while (y < HEIGHT) {
+        int numLines;
+        unichar *backingStore;
+        int *deltas;
+        NSString *joinedLine = [self joinedLineBeginningAtScreenLine:y
+                                                   numScreenLinesPtr:&numLines
+                                                     backingStorePtr:&backingStore
+                                                           deltasPtr:&deltas];
+        NSRange searchRange = NSMakeRange(0, joinedLine.length);
+        NSRange range;
+        while (1) {
+            range = [joinedLine rangeOfRegex:regex
+                                     options:0
+                                     inRange:searchRange
+                                     capture:0
+                                       error:nil];
+            if (range.location == NSNotFound || range.length == 0) {
+                break;
+            }
+            int start = range.location;
+            int end = range.location + range.length;
+            start += deltas[start];
+            end += deltas[end];
+            int startY = y + start / WIDTH;
+            int startX = start % WIDTH;
+            int endY = y + end / WIDTH;
+            int endX = end % WIDTH;
+
+            [self highlightWithChar:prototypechar fromPoint:NSMakePoint(startX, startY) toPoint:NSMakePoint(endX, endY)];
+
+            searchRange.location = range.location + range.length;
+            searchRange.length = joinedLine.length - searchRange.location;
+        }
+        y += numLines;
+        free(backingStore);
+        free(deltas);
     }
 }
 
@@ -3628,16 +3738,15 @@ void DumpBuf(screen_char_t* p, int n) {
     NSParameterAssert(anIndex >= 0);
 
     // get the line offset from the specified line
-    the_line = aLine + anIndex*REAL_WIDTH;
+    the_line = aLine + anIndex * REAL_WIDTH;
 
     // check if we have gone beyond our buffer; if so, we need to wrap around to the top of buffer
-    if( the_line >= buffer_lines + REAL_WIDTH*HEIGHT)
-    {
+    if (the_line >= buffer_lines + REAL_WIDTH * HEIGHT) {
         the_line -= REAL_WIDTH * HEIGHT;
         NSAssert(the_line >= buffer_lines && the_line < buffer_lines + REAL_WIDTH*HEIGHT, @"out of range.");
     }
 
-    return (the_line);
+    return the_line;
 }
 
 // returns a line set to default character and attributes

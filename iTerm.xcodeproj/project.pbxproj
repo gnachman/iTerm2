@@ -40,6 +40,8 @@
 		1D36155512CBF33E00803EA9 /* ScreenChar.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D36155312CBF33E00803EA9 /* ScreenChar.h */; };
 		1D36155612CBF33E00803EA9 /* ScreenChar.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D36155412CBF33E00803EA9 /* ScreenChar.m */; };
 		1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D395912134E75B5005A8021 /* SmartSelectionRules.plist */; };
+		1D3BBD6B14759D6C00FAB389 /* HighlightTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3BBD6914759D6C00FAB389 /* HighlightTrigger.h */; };
+		1D3BBD6C14759D6C00FAB389 /* HighlightTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3BBD6A14759D6C00FAB389 /* HighlightTrigger.m */; };
 		1D44218C1290B34500891504 /* TextViewWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D44218A1290B34500891504 /* TextViewWrapper.h */; };
 		1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D44218B1290B34500891504 /* TextViewWrapper.m */; };
 		1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */; };
@@ -367,6 +369,8 @@
 		1D36155312CBF33E00803EA9 /* ScreenChar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScreenChar.h; sourceTree = "<group>"; };
 		1D36155412CBF33E00803EA9 /* ScreenChar.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ScreenChar.m; sourceTree = "<group>"; };
 		1D395912134E75B5005A8021 /* SmartSelectionRules.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = SmartSelectionRules.plist; sourceTree = "<group>"; };
+		1D3BBD6914759D6C00FAB389 /* HighlightTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HighlightTrigger.h; sourceTree = "<group>"; };
+		1D3BBD6A14759D6C00FAB389 /* HighlightTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HighlightTrigger.m; sourceTree = "<group>"; };
 		1D44218A1290B34500891504 /* TextViewWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextViewWrapper.h; sourceTree = "<group>"; };
 		1D44218B1290B34500891504 /* TextViewWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TextViewWrapper.m; sourceTree = "<group>"; };
 		1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TrouterPrefsController.h; sourceTree = "<group>"; };
@@ -760,6 +764,7 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				1D3BBD6914759D6C00FAB389 /* HighlightTrigger.h */,
 				1D8255FE146881EC007CAE78 /* PointerController.h */,
 				1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */,
 				1DEDC8FB1451F67D004F1615 /* SessionTitleView.h */,
@@ -1005,6 +1010,7 @@
 		1D9DDE2D142E730700275650 /* Triggers */ = {
 			isa = PBXGroup;
 			children = (
+				1D3BBD6A14759D6C00FAB389 /* HighlightTrigger.m */,
 				1D9DCBFD142D7BA60016228A /* Trigger.m */,
 				1D9DCC15142D7FC10016228A /* AlertTrigger.m */,
 				1D9DCC0D142D7F5F0016228A /* BellTrigger.m */,
@@ -1296,6 +1302,7 @@
 				1D8255FC14687EE8007CAE78 /* PointerPrefsController.h in Headers */,
 				1D825600146881EC007CAE78 /* PointerController.h in Headers */,
 				1D825604146B258A007CAE78 /* EventMonitorView.h in Headers */,
+				1D3BBD6B14759D6C00FAB389 /* HighlightTrigger.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1571,6 +1578,7 @@
 				1D8255FD14687EE8007CAE78 /* PointerPrefsController.m in Sources */,
 				1D825601146881EC007CAE78 /* PointerController.m in Sources */,
 				1D825605146B258A007CAE78 /* EventMonitorView.m in Sources */,
+				1D3BBD6C14759D6C00FAB389 /* HighlightTrigger.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

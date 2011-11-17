@@ -29,6 +29,18 @@ extern NSString * const kTriggerParameterKey;
 - (NSString *)title;
 - (BOOL)takesParameter;
 - (NSString *)paramPlaceholder;
+// Returns true if this kind of action takes a parameter.
+- (BOOL)takesParameter;
+// Returns true if the parameter this action takes is a popupbutton.
+- (BOOL)paramIsPopupButton;
+// Returns a map from NSNumber(tag) -> NSString(title)
+- (NSDictionary *)menuItemsForPoupupButton;
+// Index in tagsSortedByValue of "tag".
+- (int)indexOfTag:(int)theTag;
+// Tag at "index" in tagsSortedByValue.
+- (int)tagAtIndex:(int)index;
+// Tags in menu;ItemsForPopupButton sorted by value (however the subclass sees fit to sort)
+- (NSArray *)tagsSortedByValue;
 
 - (NSString *)paramWithBackreferencesReplacedWithValues:(NSArray *)values;
 - (void)tryString:(NSString *)s inSession:(PTYSession *)aSession;

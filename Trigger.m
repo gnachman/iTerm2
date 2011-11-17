@@ -49,11 +49,21 @@ NSString * const kTriggerParameterKey = @"parameter";
     assert(false);
 }
 
+- (BOOL)paramIsPopupButton
+{
+    return NO;
+}
+
+- (NSDictionary *)menuItemsForPoupupButton
+{
+    return nil;
+}
+
 - (void)dealloc {
     [regex_ release];
     [action_ release];
     [param_ release];
-    
+
     [super dealloc];
 }
 
@@ -97,6 +107,21 @@ NSString * const kTriggerParameterKey = @"parameter";
 - (NSComparisonResult)compareTitle:(Trigger *)other
 {
     return [[self title] compare:[other title]];
+}
+
+- (int)indexOfTag:(int)theTag
+{
+    return theTag;
+}
+
+- (int)tagAtIndex:(int)theIndex
+{
+    return 0;
+}
+
+- (NSArray *)tagsSortedByValue
+{
+    return nil;
 }
 
 @end
