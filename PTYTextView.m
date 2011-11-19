@@ -3273,6 +3273,26 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)openContextMenuWithEvent:(NSEvent *)event
 {
+    NSPoint clickPoint = [self clickPoint:event];
+    int x = clickPoint.x;
+    int y = clickPoint.y;
+    long long clickAt = y;
+    clickAt *= [dataSource width];
+    clickAt += x;
+    
+    long long minAt = startY;
+    minAt *= [dataSource width];
+    minAt += startX;
+    long long maxAt = endY;
+    maxAt *= [dataSource width];
+    maxAt += endX;
+    
+    if (startX < 0 ||
+        clickAt < minAt ||
+        clickAt >= maxAt) {
+        // Didn't click on selection.
+        [self smartSelectWithEvent:event];
+    }
     NSMenu *menu = [self menuForEvent:nil];
     [NSMenu popUpContextMenu:menu withEvent:event forView:self];
 }
@@ -3656,13 +3676,114 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // These commands are allowed only if there is a selection.
         return startX > -1;
     }
-
+    SEL theSel = [item action];
+    if ([NSStringFromSelector(theSel) hasPrefix:@"contextMenuAction"]) {
+        return YES;
+    }
     return NO;
 }
 
 - (BOOL)_haveShortSelection
 {
     return startX > -1 && startY >= 0 && abs(startY - endY) <= 1;
+}
+
+- (BOOL)addCustomActionsToMenu:(NSMenu *)theMenu matchingText:(NSString *)textWindow
+{
+    BOOL didAdd = NO;
+    NSArray* rulesArray = smartSelectionRules_ ? smartSelectionRules_ : [SmartSelectionController defaultRules];
+    const int numRules = [rulesArray count];
+    
+    for (int j = 0; j < numRules; j++) {
+        NSDictionary *rule = [rulesArray objectAtIndex:j];
+        NSString *regex = [SmartSelectionController regexInRule:rule];
+        for (int i = 0; i <= textWindow.length; i++) {
+            NSString* substring = [textWindow substringWithRange:NSMakeRange(i, [textWindow length] - i)];
+            NSError* regexError = nil;
+            NSArray *components = [substring captureComponentsMatchedByRegex:regex
+                                                                     options:0
+                                                                       range:NSMakeRange(0, [substring length])
+                                                                       error:&regexError];
+            if (components.count) {
+                NSLog(@"Components for %@ are %@", regex, components);
+                NSArray *actions = [SmartSelectionController actionsInRule:rule];
+                for (NSDictionary *action in actions) {
+                    SEL mySelector = @selector(bogusSelector:);
+                    // The selector's name must begin with contextMenuAction to
+                    // pass validateMenuItem.
+                    switch ([ContextMenuActionPrefsController actionForActionDict:action]) {
+                        case kOpenFileContextMenuAction:
+                            mySelector = @selector(contextMenuActionOpenFile:);
+                            break;
+                            
+                        case kOpenUrlContextMenuAction:
+                            mySelector = @selector(contextMenuActionOpenURL:);
+                            break;
+                            
+                        case kRunCommandContextMenuAction:
+                            mySelector = @selector(contextMenuActionRunCommand:);
+                            break;
+                            
+                        case kRunCoprocessContextMenuAction:
+                            mySelector = @selector(contextMenuActionRunCoprocess:);
+                            break;
+                    }
+                    NSMenuItem *theItem = [[[NSMenuItem alloc] initWithTitle:[ContextMenuActionPrefsController titleForActionDict:action
+                                                                                                            withCaptureComponents:components]
+                                       action:mySelector
+                                keyEquivalent:@""] autorelease];
+                    [theItem setRepresentedObject:[ContextMenuActionPrefsController parameterForActionDict:action
+                                                                                     withCaptureComponents:components]];
+                    [theItem setTarget:self];
+                    [theMenu addItem:theItem];
+                    didAdd = YES;
+                }
+                break;
+            }
+        }
+    }
+    return didAdd;
+}
+
+- (void)contextMenuActionOpenFile:(id)sender
+{
+    NSLog(@"Open file: '%@'", [sender representedObject]);
+    [[NSWorkspace sharedWorkspace] openFile:[[sender representedObject] stringByExpandingTildeInPath]];
+}
+
+- (void)contextMenuActionOpenURL:(id)sender
+{
+    NSURL *url = [NSURL URLWithString:[sender representedObject]];
+    if (url) {
+        NSLog(@"Open URL: %@", [sender representedObject]);
+        [[NSWorkspace sharedWorkspace] openURL:url];
+    } else {
+        NSLog(@"%@ is not a URL", [sender representedObject]);
+    }
+}
+
+- (void)contextMenuActionRunCommand:(id)sender
+{
+    NSString *command = [sender representedObject];
+    NSLog(@"Run command: %@", command);
+    [NSThread detachNewThreadSelector:@selector(runCommand:)
+                             toTarget:[self class]
+                           withObject:command];
+}
+
++ (void)runCommand:(NSString *)command
+{
+    
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    system([command UTF8String]);
+    [pool drain];
+}
+
+- (void)contextMenuActionRunCoprocess:(id)sender
+{
+    NSString *command = [sender representedObject];
+    NSLog(@"Run coprocess: %@", command);
+    [_delegate launchCoprocessWithCommand:command];
 }
 
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
@@ -3722,6 +3843,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 
+    // Custom actions
+    NSString *selectedText = [self selectedText];
+    if ([self addCustomActionsToMenu:theMenu matchingText:selectedText]) {
+        [theMenu addItem:[NSMenuItem separatorItem]];
+    }
+    
     // Split pane options
     [theMenu addItemWithTitle:@"Split Pane Vertically" action:@selector(splitTextViewVertically:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];

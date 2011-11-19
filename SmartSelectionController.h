@@ -7,6 +7,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "ContextMenuActionPrefsController.h"
 
 @class SmartSelectionController;
 
@@ -15,7 +16,7 @@
 @end
 
 
-@interface SmartSelectionController : NSWindowController {
+@interface SmartSelectionController : NSWindowController <ContextMenuActionPrefsDelegate> {
     NSString *guid_;
     BOOL hasSelection_;
     IBOutlet NSObject<SmartSelectionDelegate> *delegate_;  // weak
@@ -23,6 +24,7 @@
     IBOutlet NSTableColumn *regexColumn_;
     IBOutlet NSTableColumn *notesColumn_;
     IBOutlet NSTableColumn *precisionColumn_;
+    IBOutlet ContextMenuActionPrefsController *contextMenuPrefsController_;
     IBOutlet NSButton *logDebugInfo_;
 }
 
@@ -32,6 +34,7 @@
 
 + (BOOL)logDebugInfo;
 + (double)precisionInRule:(NSDictionary *)rule;
++ (NSArray *)actionsInRule:(NSDictionary *)rule;
 + (NSString *)regexInRule:(NSDictionary *)rule;
 + (NSArray *)defaultRules;
 - (NSArray *)rules;
@@ -40,6 +43,8 @@
 - (IBAction)loadDefaults:(id)sender;
 - (IBAction)help:(id)sender;
 - (IBAction)logDebugInfoChanged:(id)sender;
+- (IBAction)editActions:(id)sender;
 - (void)windowWillOpen;
+- (void)contextMenuActionsChanged:(NSArray *)newActions;
 
 @end

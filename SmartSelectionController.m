@@ -13,6 +13,7 @@
 static NSString *kRegexKey = @"regex";
 static NSString *kNotesKey = @"notes";
 static NSString *kPrecisionKey = @"precision";
+static NSString *kActionsKey = @"actions";
 
 #define kVeryLowPrecision @"very_low"
 #define kLowPrecision @"low"
@@ -52,6 +53,11 @@ static NSString *gPrecisionKeys[] = {
         rulesArray = [[rulesDict objectForKey:@"Rules"] retain];
     }
     return rulesArray;
+}
+
++ (NSArray *)actionsInRule:(NSDictionary *)rule
+{
+    return [rule objectForKey:kActionsKey];
 }
 
 + (NSString *)regexInRule:(NSDictionary *)rule
@@ -304,9 +310,39 @@ static NSString *gPrecisionKeys[] = {
     }
 }
 
+- (IBAction)editActions:(id)sender
+{
+    NSDictionary *rule = [[self rules] objectAtIndex:[tableView_ selectedRow]];
+    NSArray *actions = [SmartSelectionController actionsInRule:rule];
+    [contextMenuPrefsController_ setActions:actions];
+    [contextMenuPrefsController_ window];
+    [contextMenuPrefsController_ setDelegate:self];
+    [NSApp beginSheet:[contextMenuPrefsController_ window]
+        modalForWindow:[self window]
+        modalDelegate:self
+        didEndSelector:@selector(closeSheet:returnCode:contextInfo:)
+        contextInfo:nil];
+}
+
+- (void)closeSheet:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo
+{
+    [sheet close];
+}
+
 - (void)windowWillOpen
 {
     [logDebugInfo_ setState:[SmartSelectionController logDebugInfo] ? NSOnState : NSOffState];
+}
+
+#pragma mark Context Menu Actions Delegate
+
+- (void)contextMenuActionsChanged:(NSArray *)newActions
+{
+    int rowIndex = [tableView_ selectedRow];
+    NSMutableDictionary *rule = [[[[self rules] objectAtIndex:rowIndex] mutableCopy] autorelease];
+    [rule setObject:newActions forKey:kActionsKey];
+    [self setRule:rule forRow:rowIndex];
+    [NSApp endSheet:[contextMenuPrefsController_ window]];    
 }
 
 @end

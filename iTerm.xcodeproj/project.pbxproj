@@ -15,6 +15,8 @@
 		1D19C3631415998E00617E08 /* closebutton.tif in Resources */ = {isa = PBXBuildFile; fileRef = 1D19C3621415998E00617E08 /* closebutton.tif */; };
 		1D19C71414171F1D00617E08 /* ToolJobs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D19C71214171F1D00617E08 /* ToolJobs.h */; };
 		1D19C71514171F1D00617E08 /* ToolJobs.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D19C71314171F1D00617E08 /* ToolJobs.m */; };
+		1D21EE3B147711300066E04A /* ContextMenuActionPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D21EE39147711300066E04A /* ContextMenuActionPrefsController.h */; };
+		1D21EE3C147711300066E04A /* ContextMenuActionPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D21EE3A147711300066E04A /* ContextMenuActionPrefsController.m */; };
 		1D237D28131D8741004DD60C /* FindView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D237D26131D8741004DD60C /* FindView.h */; };
 		1D237D29131D8741004DD60C /* FindView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D237D27131D8741004DD60C /* FindView.m */; };
 		1D237D90131D8BEE004DD60C /* FindView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D237D8E131D8BEE004DD60C /* FindView.xib */; };
@@ -345,6 +347,8 @@
 		1D19C3621415998E00617E08 /* closebutton.tif */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = closebutton.tif; path = images/closebutton.tif; sourceTree = "<group>"; };
 		1D19C71214171F1D00617E08 /* ToolJobs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolJobs.h; sourceTree = "<group>"; };
 		1D19C71314171F1D00617E08 /* ToolJobs.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolJobs.m; sourceTree = "<group>"; };
+		1D21EE39147711300066E04A /* ContextMenuActionPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ContextMenuActionPrefsController.h; sourceTree = "<group>"; };
+		1D21EE3A147711300066E04A /* ContextMenuActionPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ContextMenuActionPrefsController.m; sourceTree = "<group>"; };
 		1D237D26131D8741004DD60C /* FindView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindView.h; sourceTree = "<group>"; };
 		1D237D27131D8741004DD60C /* FindView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FindView.m; sourceTree = "<group>"; };
 		1D237D8F131D8BEE004DD60C /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/FindView.xib; sourceTree = "<group>"; };
@@ -969,6 +973,8 @@
 				1D8255FB14687EE8007CAE78 /* PointerPrefsController.m */,
 				1D825602146B258A007CAE78 /* EventMonitorView.h */,
 				1D825603146B258A007CAE78 /* EventMonitorView.m */,
+				1D21EE39147711300066E04A /* ContextMenuActionPrefsController.h */,
+				1D21EE3A147711300066E04A /* ContextMenuActionPrefsController.m */,
 			);
 			name = Preferences;
 			sourceTree = "<group>";
@@ -1303,6 +1309,7 @@
 				1D825600146881EC007CAE78 /* PointerController.h in Headers */,
 				1D825604146B258A007CAE78 /* EventMonitorView.h in Headers */,
 				1D3BBD6B14759D6C00FAB389 /* HighlightTrigger.h in Headers */,
+				1D21EE3B147711300066E04A /* ContextMenuActionPrefsController.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1579,6 +1586,7 @@
 				1D825601146881EC007CAE78 /* PointerController.m in Sources */,
 				1D825605146B258A007CAE78 /* EventMonitorView.m in Sources */,
 				1D3BBD6C14759D6C00FAB389 /* HighlightTrigger.m in Sources */,
+				1D21EE3C147711300066E04A /* ContextMenuActionPrefsController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
