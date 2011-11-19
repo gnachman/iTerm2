@@ -3293,6 +3293,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // Didn't click on selection.
         [self smartSelectWithEvent:event];
     }
+    [self setNeedsDisplay:YES];
     NSMenu *menu = [self menuForEvent:nil];
     [NSMenu popUpContextMenu:menu withEvent:event forView:self];
 }
