@@ -768,6 +768,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     if ([data length] == 0 || EXIT) {
         return;
     }
+    if ([SHELL hasMuteCoprocess]) {
+        return;
+    }
     if (gDebugLogging) {
       const char* bytes = [data bytes];
       int length = [data length];
@@ -3222,11 +3225,22 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [SHELL hasCoprocess];
 }
 
-- (void)launchCoprocessWithCommand:(NSString *)command
+- (void)launchCoprocessWithCommand:(NSString *)command mute:(BOOL)mute
 {
     Coprocess *coprocess = [Coprocess launchedCoprocessWithCommand:command];
+    coprocess.mute = mute;
     [SHELL setCoprocess:coprocess];
     [TEXTVIEW setNeedsDisplay:YES];
+}
+
+- (void)launchCoprocessWithCommand:(NSString *)command
+{
+    [self launchCoprocessWithCommand:command mute:NO];
+}
+
+- (void)launchSilentCoprocessWithCommand:(NSString *)command
+{
+    [self launchCoprocessWithCommand:command mute:YES];
 }
 
 - (void)setFocused:(BOOL)focused

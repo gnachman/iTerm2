@@ -111,6 +111,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (Coprocess *)coprocess;
 - (BOOL)writeBufferHasRoom;
 - (BOOL)hasCoprocess;
+- (BOOL)hasMuteCoprocess;
 - (void)stopCoprocess;
 
 @end

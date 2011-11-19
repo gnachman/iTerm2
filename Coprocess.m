@@ -19,6 +19,7 @@ const int kMaxOutputBufferSize = 1024;
 @synthesize inputBuffer = inputBuffer_;
 @synthesize outputBuffer = outputBuffer_;
 @synthesize eof = eof_;
+@synthesize mute = mute_;
 
 + (Coprocess *)launchedCoprocessWithCommand:(NSString *)command
 {

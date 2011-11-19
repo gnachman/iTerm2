@@ -36,6 +36,7 @@ static NSMutableArray *gTriggerClasses;
     [gTriggerClasses addObject:[[SendTextTrigger alloc] init]];
     [gTriggerClasses addObject:[[ScriptTrigger alloc] init]];
     [gTriggerClasses addObject:[[CoprocessTrigger alloc] init]];
+    [gTriggerClasses addObject:[[MuteCoprocessTrigger alloc] init]];
     [gTriggerClasses addObject:[[HighlightTrigger alloc] init]];
 
     [gTriggerClasses sortUsingSelector:@selector(compareTitle:)];

@@ -517,6 +517,7 @@ typedef enum {
 - (BOOL)hasCoprocess;
 - (void)stopCoprocess;
 - (void)launchCoprocessWithCommand:(NSString *)command;
+- (void)launchSilentCoprocessWithCommand:(NSString *)command;
 
 - (void)setFocused:(BOOL)focused;
 - (BOOL)wantsContentChangedNotification;
