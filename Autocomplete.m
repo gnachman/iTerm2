@@ -53,9 +53,20 @@ const int kMaxResultContextWords = 4;
 
 @implementation AutocompleteView
 
++ (int)maxOptions
+{
+    NSNumber *n = [[NSUserDefaults standardUserDefaults] objectForKey:@"AutocompleteMaxOptions"];
+    if (n) {
+        int i = [n intValue];
+        return MAX(MIN(i, 100), 2);
+    } else {
+        return 20;
+    }
+}
+
 - (id)init
 {
-    const int kMaxOptions = 20;
+    const int kMaxOptions = [AutocompleteView maxOptions];
     self = [super initWithWindowNibName:@"Autocomplete"
                                tablePtr:&table_
                                   model:[[[PopupModel alloc] initWithMaxEntries:kMaxOptions] autorelease]];
