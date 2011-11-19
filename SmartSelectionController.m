@@ -43,6 +43,11 @@ static NSString *gPrecisionKeys[] = {
     [super dealloc];
 }
 
+- (void)awakeFromNib
+{
+    [tableView_ setDoubleAction:@selector(onDoubleClick:)];
+}
+
 + (NSArray *)defaultRules
 {
     static NSArray *rulesArray;
@@ -81,6 +86,11 @@ static NSString *gPrecisionKeys[] = {
         }
     }
     return 0;
+}
+
+- (void)onDoubleClick:(id)sender
+{
+    [self editActions:sender];
 }
 
 - (Bookmark *)bookmark
