@@ -113,7 +113,7 @@ static NSString* kParameterKey = @"parameter";
         return kParameterKey;
     } else {
         return nil;
-    }    
+    }
 }
 
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
@@ -151,15 +151,15 @@ static NSString* kParameterKey = @"parameter";
                                   @"Enter command",
                                   @"Enter coprocess command",
                                   nil];
-    
-    
+
+
     if (tableColumn == titleColumn_) {
         NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@""] autorelease];
         [cell setPlaceholderString:@"Enter Title"];
         [cell setEditable:YES];
         [cell setTruncatesLastVisibleLine:YES];
         [cell setLineBreakMode:NSLineBreakByTruncatingTail];
-        
+
         return cell;
     } else if (tableColumn == actionColumn_) {
         NSPopUpButtonCell *cell =
@@ -169,9 +169,9 @@ static NSString* kParameterKey = @"parameter";
             NSMenuItem *lastItem = [[[cell menu] itemArray] lastObject];
             [lastItem setTag:i];
         }
-        
+
         [cell setBordered:NO];
-        
+
         return cell;
     } else if (tableColumn == parameterColumn_) {
         NSDictionary *actionDict = [model_ objectAtIndex:row];
@@ -186,7 +186,7 @@ static NSString* kParameterKey = @"parameter";
             return cell;
         } else {
             NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@""] autorelease];
-            [cell setEditable:NO];            
+            [cell setEditable:NO];
             return cell;
         }
     }
