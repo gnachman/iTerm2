@@ -2674,6 +2674,24 @@ NSMutableArray* screens=0;
     }
 }
 
+- (void)extendSelectionToX:(int)x y:(int)y
+{
+    int width = [dataSource width];
+
+    // If you click before the start then flip start and end and extend end to click location. (effectively extends left)
+    // If you click after the start then move the end to the click location. (extends right)
+    // This means that if you click inside the selection it truncates it by moving the end (whichever that is)
+    if (x + y * width < startX + startY * width) {
+        // Clicked before the start. Move the start to the old end.
+        startX = endX;
+        startY = endY;
+        [self setSelectionTime];
+    }
+    // Move the end to the click location.
+    endX = x;
+    endY = y;
+}
+
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent*)event
 {
@@ -2788,18 +2806,7 @@ NSMutableArray* screens=0;
         if (startX > -1 && shiftPressed) {
             // holding down shfit key and there is an existing selection ->
             // extend the selection.
-            // If you click before the start then flip start and end and extend end to click location. (effectively extends left)
-            // If you click after the start then move the end to the click location. (extends right)
-            // This means that if you click inside the selection it truncates it by moving the end (whichever that is)
-            if (x + y * width < startX + startY * width) {
-                // Clicked before the start. Move the start to the old end.
-                startX = endX;
-                startY = endY;
-                [self setSelectionTime];
-            }
-            // Move the end to the click location.
-            endX = x;
-            endY = y;
+            [self extendSelectionToX:x y:y];
             // startX and endX may be reversed, but mouseUp fixes it.
         } else if (startX > -1 &&
                    [self _isCharSelectedInRow:y col:x checkOld:NO]) {
@@ -3296,6 +3303,28 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
     NSMenu *menu = [self menuForEvent:nil];
     [NSMenu popUpContextMenu:menu withEvent:event forView:self];
+}
+
+- (void)extendSelectionWithEvent:(NSEvent *)event
+{
+    if (startX > -1) {
+        NSPoint clickPoint = [self clickPoint:event];
+        int x = clickPoint.x;
+        int y = clickPoint.y;
+
+        [self extendSelectionToX:x y:y];
+        if (startY > endY || (startY == endY && startX > endX)) {
+            // Make sure the start is before the end.
+            int t;
+            t = startY;
+            startY = endY;
+            endY = t;
+
+            t = startX;
+            startX = endX;
+            endX = t;
+        }
+    }
 }
 
 - (void)nextTabWithEvent:(NSEvent *)event

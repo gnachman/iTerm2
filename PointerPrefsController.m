@@ -63,6 +63,7 @@ NSString *kNewVerticalSplitWithProfilePointerAction = @"kNewVerticalSplitWithPro
 NSString *kNewHorizontalSplitWithProfilePointerAction = @"kNewHorizontalSplitWithProfilePointerAction";
 NSString *kSelectNextPanePointerAction = @"kSelectNextPanePointerAction";
 NSString *kSelectPreviousPanePointerAction = @"kSelectPreviousPanePointerAction";
+NSString *kExtendSelectionPointerAction = @"kExtendSelectionPointerAction";
 
 typedef enum {
     kNoArg,
@@ -355,6 +356,7 @@ typedef enum {
     NSDictionary *names = [NSDictionary dictionaryWithObjectsAndKeys:
                            @"Paste from Clipboard", kPasteFromClipboardPointerAction,
                            @"Paste from Selection", kPasteFromSelectionPointerAction,
+                           @"Extend Selection", kExtendSelectionPointerAction,
                            @"Open URL/Semantic History", kOpenTargetPointerAction,
                            @"Open URL in background", kOpenTargetInBackgroundPointerAction,
                            @"Smart Selection", kSmartSelectionPointerAction,

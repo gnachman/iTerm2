@@ -64,6 +64,8 @@
         [delegate_ selectNextPaneWithEvent:event];
     } else if ([action isEqualToString:kSelectPreviousPanePointerAction]) {
         [delegate_ selectPreviousPaneWithEvent:event];
+    } else if ([action isEqualToString:kExtendSelectionPointerAction]) {
+        [delegate_ extendSelectionWithEvent:event];
     }
 }
 

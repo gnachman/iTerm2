@@ -34,6 +34,7 @@
 - (void)newHorizontalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
 - (void)selectNextPaneWithEvent:(NSEvent *)event;
 - (void)selectPreviousPaneWithEvent:(NSEvent *)event;
+- (void)extendSelectionWithEvent:(NSEvent *)event;
 
 @end
 
