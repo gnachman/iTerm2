@@ -210,6 +210,8 @@
                                              withString:[prefix stringWithEscapedShellCharacters]];
         script = [script stringByReplacingBackreference:4
                                              withString:[suffix stringWithEscapedShellCharacters]];
+        script = [script stringByReplacingBackreference:5
+                                             withString:[workingDirectory stringWithEscapedShellCharacters]];
         [[NSTask launchedTaskWithLaunchPath:@"/bin/sh"
                                   arguments:[NSArray arrayWithObjects:@"-c", script, nil]] waitUntilExit];
         return YES;
@@ -225,6 +227,7 @@
         script = [script stringByReplacingBackreference:2 withString:lineNumber ? lineNumber : @""];
         script = [script stringByReplacingBackreference:3 withString:[prefix stringWithEscapedShellCharacters]];
         script = [script stringByReplacingBackreference:4 withString:[suffix stringWithEscapedShellCharacters]];
+        script = [script stringByReplacingBackreference:5 withString:[workingDirectory stringWithEscapedShellCharacters]];
         [[NSTask launchedTaskWithLaunchPath:@"/bin/sh"
                                   arguments:[NSArray arrayWithObjects:@"-c", script, nil]] waitUntilExit];
         return YES;
