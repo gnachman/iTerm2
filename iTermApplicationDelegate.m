@@ -788,7 +788,7 @@ static BOOL hasBecomeActive = NO;
 
     PseudoTerminal *frontTerminal;
     frontTerminal = [[iTermController sharedInstance] currentTerminal];
-    [aMenu addItemWithTitle:@"New Window (Default Pkrofile)"
+    [aMenu addItemWithTitle:@"New Window (Default Profile)"
                      action:@selector(newWindow:)
               keyEquivalent:@""];
     [aMenu addItem:[NSMenuItem separatorItem]];
