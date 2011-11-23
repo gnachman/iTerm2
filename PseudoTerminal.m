@@ -4718,16 +4718,13 @@ NSString *sessionsKey = @"sessions";
         return;
     }
 
-    // create a new terminal window
-    term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
-                                             windowType:WINDOW_TYPE_NORMAL
-                                                 screen:-1] autorelease];
+    NSPoint point = [[self window] frame].origin;
+    point.x += 10;
+    point.y += 10;
+    term = [self terminalDraggedFromAnotherWindowAtPoint:point];
     if (term == nil) {
         return;
     }
-
-    [[iTermController sharedInstance] addInTerminals: term];
-
 
     // temporarily retain the tabViewItem
     [aTabViewItem retain];
@@ -4736,7 +4733,7 @@ NSString *sessionsKey = @"sessions";
     [TABVIEW removeTabViewItem:aTabViewItem];
 
     // add the session to the new terminal
-    [term insertTab:aTab atIndex: 0];
+    [term insertTab:aTab atIndex:0];
     PtyLog(@"moveTabToNewWindowContextMenuAction - call fitWindowToTabs");
     [term fitWindowToTabs];
 
