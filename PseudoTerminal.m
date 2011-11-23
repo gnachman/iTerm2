@@ -3223,7 +3223,8 @@ NSString *sessionsKey = @"sessions";
     SessionView* sessionView = [[self currentTab] splitVertically:isVertical
                                                            before:before
                                                     targetSession:targetSession];
-    if (targetSession != [[self currentTab] activeSession]) {
+    if (targetSession != [[self currentTab] activeSession] &&
+        [[PreferencePanel sharedInstance] dimInactiveSplitPanes]) {
         [sessionView setDimmed:YES];
     }
     [sessionView setSession:newSession];
@@ -3607,7 +3608,8 @@ NSString *sessionsKey = @"sessions";
     broadcastMode_ = mode;
     PTYSession *activeSession = [[self currentTab] activeSession];
     for (PTYSession *aSession in [[self currentTab] sessions]) {
-        if (aSession != activeSession) {
+        if (aSession != activeSession &&
+            [[PreferencePanel sharedInstance] dimInactiveSplitPanes]) {
             [[aSession view] setDimmed:(mode == BROADCAST_OFF)];
         }
         [[aSession view] setNeedsDisplay:YES];

@@ -3036,7 +3036,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (startX > -1 && _delegate) {
         // if we want to copy our selection, do so
         if ([[PreferencePanel sharedInstance] copySelection]) {
-            [self copy: self];
+            [self copy:self];
         }
     }
 

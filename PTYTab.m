@@ -1861,7 +1861,9 @@ static NSString* FormatRect(NSRect r) {
             [sessionView setDimmed:NO];
             return session;
         } else {
-            [sessionView setDimmed:YES];
+            if ([[PreferencePanel sharedInstance] dimInactiveSplitPanes]) {
+                [sessionView setDimmed:YES];
+            }
             return nil;
         }
     }
