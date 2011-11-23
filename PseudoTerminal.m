@@ -1901,6 +1901,7 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"toggleFullScreenMode - set new frame to old frame: %fx%f", oldFrame_.size.width, oldFrame_.size.height);
         [[newTerminal window] setFrame:oldFrame_ display:YES];
     }
+    newTerminal->number_ = number_;
     newTerminal->broadcastMode_ = broadcastMode_;
 
     // Ensure that fullscreen windows (often hotkey windows) don't lose their collection behavior.
