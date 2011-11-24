@@ -2076,6 +2076,13 @@ NSString *sessionsKey = @"sessions";
 - (void)windowWillExitFullScreen:(NSNotification *)notification
 {
     exitingLionFullscreen_ = YES;
+    [fullScreenTabviewTimer_ invalidate];
+    fullScreenTabviewTimer_ = nil;
+    if (temporarilyShowingTabs_) {
+        // If tabs were shown because you were holding cmd, reset that state.
+        [self hideFullScreenTabControl];
+        temporarilyShowingTabs_ = NO;
+    }
     [self fitTabsToWindow];
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     if ([itad showToolbelt]) {
