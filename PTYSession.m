@@ -865,7 +865,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
                              [self name],
                              [[self tab] realObjectCount]]
-            andNotification:@"Broken Pipes"];
+            andNotification:@"Broken Pipes"
+                 andSession:self];
     }
 
     EXIT = YES;
@@ -1923,7 +1924,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                                                                                               @"Growl Alerts"),
                                  [self name],
                                  [[self tab] realObjectCount]]
-                andNotification:@"Bells"];
+                andNotification:@"Bells"
+                     andSession:self];
             }
         }
     }

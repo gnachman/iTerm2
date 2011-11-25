@@ -34,7 +34,8 @@
         withDescription:[NSString stringWithFormat:@"A trigger fired in session \"%@\" in tab #%d.",
                          [aSession name],
                          [[aSession tab] realObjectCount]]
-        andNotification:@"Customized Message"];
+        andNotification:@"Customized Message"
+             andSession:aSession];
 }
 
 @end

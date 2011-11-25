@@ -30,7 +30,13 @@
 
 #import <iTermGrowlDelegate.h>
 #import <PreferencePanel.h>
+#import <PTYSession.h>
+#import <PTYTab.h>
+#import <iTerm/iTermController.h>
+#import <iTerm/PseudoTerminal.h>
 #import "Growl.framework/Headers/GrowlApplicationBridge.h"
+#import "SessionView.h"
+
 /**
  **  The category is used to extend iTermGrowlDelegate with private methods.
  **
@@ -154,6 +160,69 @@
                                        priority:0
                                        isSticky:NO
                                    clickContext:nil];
+    }
+}
+
+- (void)growlNotify:(NSString *)title
+    withDescription:(NSString *)description
+    andNotification:(NSString *)notification
+         andSession:(PTYSession *)session
+{
+    if (![self isEnabled]) {
+        return;
+    }
+
+    NSDictionary *context = [[NSDictionary alloc] initWithObjectsAndKeys:
+                             [NSNumber numberWithInt:[[iTermController sharedInstance] indexOfTerminal:[[session tab] realParentWindow]]],
+                             @"win",
+                             [NSNumber numberWithInt:[[session tab] number]],
+                             @"tab",
+                             [NSNumber numberWithInt:[[session view] viewId]],
+                             @"view",
+                             nil];
+
+    if ([[PreferencePanel sharedInstance] enableGrowl]) {
+        [GrowlApplicationBridge notifyWithTitle:title
+                                    description:description
+                               notificationName:notification
+                                       iconData:nil
+                                       priority:0
+                                       isSticky:NO
+                                   clickContext:context];
+    }
+}
+
+- (void)growlNotificationWasClicked:(id)clickContext
+{
+    int win = [[clickContext objectForKey:@"win"] intValue];
+    int tab = [[clickContext objectForKey:@"tab"] intValue];
+    int view = [[clickContext objectForKey:@"view"] intValue];
+
+    iTermController *controller = [iTermController sharedInstance];
+    if (win >= [controller numberOfTerminals]) {
+        NSBeep();
+        return;
+    }
+    PseudoTerminal *terminal = [controller terminalAtIndex:win];
+    PTYTabView *tabView = [terminal tabView];
+    if (tab >= [tabView numberOfTabViewItems]) {
+        NSBeep();
+        return;
+    }
+
+    if ([terminal isHotKeyWindow]) {
+        [controller showHotKeyWindow];
+    } else {
+        [controller setCurrentTerminal:terminal];
+        [[terminal window] makeKeyAndOrderFront:self];
+        [tabView selectTabViewItemAtIndex:tab];
+    }
+    [[NSApplication sharedApplication] activateIgnoringOtherApps:YES];
+
+    PTYTab *theTab = [terminal currentTab];
+    PTYSession *theSession = [theTab sessionWithViewId:view];
+    if (theSession) {
+        [theTab setActiveSession:theSession];
     }
 }
 

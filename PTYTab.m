@@ -398,6 +398,12 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return nil;
 }
 
+- (PTYSession *)sessionWithViewId:(int)viewId
+{
+    SessionView *sv = [self _recursiveSessionViewWithId:viewId atNode:root_];
+    return [sv session];
+}
+
 - (SessionView *)_savedViewWithId:(int)i
 {
     for (NSNumber *k in idMap_) {
@@ -2749,7 +2755,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
                                                                                                                                @"Growl Alerts"),
                                                                   [[self activeSession] name],
                                                                   [self realObjectCount]]
-                                                 andNotification:@"Idle"];
+                                                 andNotification:@"Idle"
+                                                      andSession:session];
                 [session setGrowlIdle:YES];
                 [session setGrowlNewOutput:NO];
             }
@@ -2781,7 +2788,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
                                          withDescription:[NSString stringWithFormat:@"New output was received in %@, tab #%d.",
                                                           [[self activeSession] name],
                                                           [self realObjectCount]]
-                                         andNotification:@"New Output"];
+                                         andNotification:@"New Output"
+                                              andSession:[self activeSession]];
         [[self activeSession] setGrowlNewOutput:YES];
     }
 

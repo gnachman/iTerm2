@@ -126,6 +126,8 @@ static const int MIN_SESSION_COLUMNS = 2;
 // Tab index.
 - (int)number;
 
+- (PTYSession *)sessionWithViewId:(int)viewId;
+
 - (int)realObjectCount;
 // These values are observed by PSMTTabBarControl:
 // Tab number for display

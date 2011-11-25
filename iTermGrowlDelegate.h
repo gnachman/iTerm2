@@ -54,21 +54,22 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import <PTYSession.h>
 #import "Growl.framework/Headers/GrowlApplicationBridge.h"
 
 
 #define OURGROWLAPPNAME  @"iTerm"
 #define DEFAULTNOTIFICATION @"Miscellaneous"
-#define OURNOTIFICATIONS	@"Bells",			\
-							@"Broken Pipes",	\
-							@"Miscellaneous",	\
-							@"Idle",			\
-							@"New Output",      \
+#define OURNOTIFICATIONS    @"Bells",           \
+                            @"Broken Pipes",    \
+                            @"Miscellaneous",   \
+                            @"Idle",            \
+                            @"New Output",      \
                             @"Customized Message"
 
 @interface iTermGrowlDelegate : NSObject <GrowlApplicationBridgeDelegate> {
-	BOOL enabled;
-	NSArray * notifications;
+    BOOL enabled;
+    NSArray * notifications;
 }
 
 + (id) sharedInstance;
@@ -101,5 +102,13 @@
    **  Generate a 'full' Growl message with a specified notification type.
    **/
 - (void) growlNotify: (NSString *) title withDescription: (NSString *) description andNotification: (NSString *) notification;
+  /**
+   **  Generate a 'full' Growl message with a specified notification type,
+   **  associated with a PTYSession.
+   **/
+- (void)growlNotify:(NSString *)title
+    withDescription:(NSString *)description
+    andNotification:(NSString *)notification
+         andSession:(PTYSession *)session;
 
 @end
