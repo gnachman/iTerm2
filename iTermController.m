@@ -839,6 +839,31 @@ static BOOL initDone = NO;
     }
 }
 
+- (Bookmark *)defaultBookmark
+{
+    Bookmark *aDict = [[BookmarkModel sharedInstance] defaultBookmark];
+    if (!aDict) {
+        NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
+        [ITAddressBookMgr setDefaultsInBookmark:temp];
+        [temp setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
+        aDict = temp;
+    }
+    return aDict;
+}
+
+- (PseudoTerminal *)openWindow
+{
+    Bookmark *bookmark = [self defaultBookmark];
+    [iTermController switchToSpaceInBookmark:bookmark];
+    PseudoTerminal *term;
+    term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
+                                             windowType:WINDOW_TYPE_NORMAL
+                                                 screen:[bookmark objectForKey:KEY_SCREEN] ? [[bookmark objectForKey:KEY_SCREEN] intValue] : -1
+                                               isHotkey:NO] autorelease];
+    [self addInTerminals:term];
+    return term;
+}
+
 // Executes an addressbook command in new window or tab
 - (id)launchBookmark:(NSDictionary *)bookmarkData
                inTerminal:(PseudoTerminal *)theTerm
@@ -849,13 +874,7 @@ static BOOL initDone = NO;
 
     aDict = bookmarkData;
     if (aDict == nil) {
-        aDict = [[BookmarkModel sharedInstance] defaultBookmark];
-        if (!aDict) {
-            NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
-            [ITAddressBookMgr setDefaultsInBookmark:temp];
-            [temp setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
-            aDict = temp;
-        }
+        aDict = [self defaultBookmark];
     }
 
     // Where do we execute this command?

@@ -184,7 +184,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (PTYSession*)_recursiveSessionAtPoint:(NSPoint)point relativeTo:(NSView*)node;
 
 + (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame;
-+ (void)openTabWithArrangement:(NSDictionary*)arrangement inTerminal:(PseudoTerminal*)term;
++ (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement inTerminal:(PseudoTerminal*)term;
 - (NSDictionary*)arrangement;
 
 - (BOOL)hasMaximizedPane;
@@ -205,6 +205,8 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)_splitViewDidResizeSubviews:(NSSplitView*)splitView;
 - (CGFloat)splitView:(NSSplitView *)splitView constrainSplitPosition:(CGFloat)proposedPosition ofSubviewAt:(NSInteger)dividerIndex;
 - (void)_recursiveRemoveView:(NSView*)theView;
+
++ (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree inTerminal:(PseudoTerminal *)term;
 
 @end
 

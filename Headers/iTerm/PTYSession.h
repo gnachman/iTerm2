@@ -33,6 +33,8 @@
 #import "FindViewController.h"
 #import "ITAddressBookMgr.h"
 #import "LineBuffer.h"
+#import "TmuxGateway.h"
+#import "TmuxController.h"
 
 #include <sys/time.h>
 
@@ -69,7 +71,7 @@ typedef enum {
 
 @class PTYTab;
 @class SessionView;
-@interface PTYSession : NSResponder <FindViewControllerDelegate>
+@interface PTYSession : NSResponder <FindViewControllerDelegate, TmuxGatewayDelegate>
 {
     // Owning tab.
     PTYTab* tab_;
@@ -231,6 +233,15 @@ typedef enum {
 
     FindContext tailFindContext_;
     NSTimer *tailFindTimer_;
+
+    enum {
+        TMUX_NONE,
+        TMUX_GATEWAY,
+        TMUX_CLIENT
+    } tmuxMode_;
+    TmuxGateway *tmuxGateway_;
+    TmuxController *tmuxController_;
+    int tmuxPane_;
 }
 
 // Return the current pasteboard value as a string.
@@ -279,6 +290,8 @@ typedef enum {
                                inView:(SessionView*)sessionView
                                 inTab:(PTYTab*)theTab
                         forObjectType:(iTermObjectType)objectType;
++ (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
+                                         bookmark:(Bookmark *)bookmark;
 
 
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
@@ -526,6 +539,12 @@ typedef enum {
 - (void)sendHexCode:(NSString *)codes;
 - (void)sendText:(NSString *)text;
 
+- (void)startTmuxMode;
+- (int)tmuxPane;
+- (void)setTmuxPane:(int)windowPane;
+- (void)setTmuxController:(TmuxController *)tmuxController;
+
+- (TmuxController *)tmuxController;
 
 @end
 

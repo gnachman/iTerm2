@@ -40,6 +40,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermApplicationDelegate.h"
 #import "iTerm/iTermController.h"
+#import "TmuxLayoutParser.h"
 
 //#define PTYTAB_VERBOSE_LOGGING
 #ifdef PTYTAB_VERBOSE_LOGGING
@@ -55,6 +56,11 @@ DebugLog([NSString stringWithFormat:args]); \
 
 // No growl output/idle alerts for a few seconds after a window is resized because there will be bogus bg activity
 const int POST_WINDOW_RESIZE_SILENCE_SEC = 5;
+
+static CGFloat WithGrainDim(BOOL isVertical, NSSize size);
+static CGFloat AgainstGrainDim(BOOL isVertical, NSSize size);
+static void SetWithGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
+static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 
 @interface MySplitView : NSSplitView
 {
@@ -133,9 +139,14 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     deadStateColor = [NSColor grayColor];
 }
 
++ (BOOL)showTitlesPref
+{
+    return [[PreferencePanel sharedInstance] showPaneTitles];
+}
+
 - (void)updatePaneTitles
 {
-    const BOOL showTitles = [[PreferencePanel sharedInstance] showPaneTitles];
+    const BOOL showTitles = [PTYTab showTitlesPref];
     NSArray *sessions = [self sessions];
     for (PTYSession *aSession in sessions) {
         if ([[aSession view] setShowTitle:showTitles && [sessions count] > 1]) {
@@ -375,7 +386,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     [viewOrder_ removeObject:[NSNumber numberWithInt:[[session view] viewId]]];
     [viewOrder_ addObject:[NSNumber numberWithInt:[[session view] viewId]]];
     currentViewIndex_ = [viewOrder_ count] - 1;
-    
+
     [self recheckBlur];
 }
 
@@ -1232,25 +1243,39 @@ static NSString* FormatRect(NSRect r) {
     return newView;
 }
 
-- (NSSize)_sessionSize:(SessionView*)sessionView
++ (NSSize)_sessionSizeWithCellSize:(NSSize)cellSize
+                        dimensions:(NSSize)dimensions
+                        showTitles:(BOOL)showTitles
+                        inTerminal:(id<WindowControllerInterface>)term
 {
+    int rows = dimensions.height;
+    int columns = dimensions.width;
+    double charWidth = cellSize.width;
+    double lineHeight = cellSize.height;
     NSSize size;
-    PTYSession* session = [sessionView session];
-    PtyLog(@"    session size based on %d rows", [session rows]);
-    size.width = [session columns] * [[session TEXTVIEW] charWidth] + MARGIN * 2;
-    size.height = [session rows] * [[session TEXTVIEW] lineHeight] + VMARGIN * 2;
-    const BOOL showTitles = [sessionView showTitle];
+    PtyLog(@"    session size based on %d rows", rows);
+    size.width = columns * charWidth + MARGIN * 2;
+    size.height = rows * lineHeight + VMARGIN * 2;
 
-    BOOL hasScrollbar = ![parentWindow_ anyFullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
+    BOOL hasScrollbar = ![term anyFullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
     NSSize outerSize = [PTYScrollView frameSizeForContentSize:size
-                                             hasHorizontalScroller:NO
-                                               hasVerticalScroller:hasScrollbar
-                                                        borderType:NSNoBorder];
+                                        hasHorizontalScroller:NO
+                                          hasVerticalScroller:hasScrollbar
+                                                   borderType:NSNoBorder];
     if (showTitles) {
         outerSize.height += [SessionView titleHeight];
     }
-    PtyLog(@"session size with %d rows is %@", [session rows], [NSValue valueWithSize:outerSize]);
+    PtyLog(@"session size with %d rows is %@", rows, [NSValue valueWithSize:outerSize]);
     return outerSize;
+}
+
+- (NSSize)_sessionSize:(SessionView*)sessionView
+{
+    PTYSession *session = [sessionView session];
+    return [PTYTab _sessionSizeWithCellSize:NSMakeSize([[session TEXTVIEW] charWidth], [[session TEXTVIEW] lineHeight])
+                                 dimensions:NSMakeSize([session columns], [session rows])
+                                 showTitles:[sessionView showTitle]
+                                 inTerminal:parentWindow_];
 }
 
 - (NSSize)_minSessionSize:(SessionView*)sessionView
@@ -1537,7 +1562,7 @@ static NSString* FormatRect(NSRect r) {
     [viewImage unlockFocus];
 
     float yOrigin = 0;
-    if (withSpaceForFrame && 
+    if (withSpaceForFrame &&
         [[PreferencePanel sharedInstance] tabViewType] == PSMTab_BottomTab) {
         yOrigin += tabFrame.size.height;
     }
@@ -1786,7 +1811,7 @@ static NSString* FormatRect(NSRect r) {
         [[NSColor grayColor] set];
         x = frame.origin.x;
         y = frame.origin.y;
-        for (int i = 0; i < [subviews count]; i++) {            
+        for (int i = 0; i < [subviews count]; i++) {
             NSBezierPath *line = [[[NSBezierPath alloc] init] autorelease];
             [line moveToPoint:NSMakePoint(x, y)];
             [line lineToPoint:NSMakePoint(x + xExtent, y + yExtent)];
@@ -1881,7 +1906,7 @@ static NSString* FormatRect(NSRect r) {
                                        frame:frame];
 }
 
-+ (void)openTabWithArrangement:(NSDictionary*)arrangement inTerminal:(PseudoTerminal*)term
++ (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement inTerminal:(PseudoTerminal*)term
 {
     PTYTab* theTab;
     // Build a tree with splitters and SessionViews but no PTYSessions.
@@ -1919,6 +1944,8 @@ static NSString* FormatRect(NSRect r) {
     }
 
     [theTab numberOfSessionsDidChange];
+
+    return theTab;
 }
 
 - (NSDictionary*)arrangementWithMap:(NSMutableDictionary*)idMap
@@ -1941,6 +1968,148 @@ static NSString* FormatRect(NSRect r) {
     return [self arrangementWithMap:nil];
 }
 
++ (NSSize)cellSizeForBookmark:(Bookmark *)bookmark
+{
+    NSFont *font;
+    double hspace;
+    double vspace;
+
+    font = [ITAddressBookMgr fontWithDesc:[bookmark objectForKey:KEY_NORMAL_FONT]];
+    hspace = [[bookmark objectForKey:KEY_HORIZONTAL_SPACING] doubleValue];
+    vspace = [[bookmark objectForKey:KEY_VERTICAL_SPACING] doubleValue];
+    return [PTYTextView charSizeForFont:font
+                      horizontalSpacing:hspace
+                        verticalSpacing:vspace];
+}
+
++ (NSSize)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
+                                 showTitles:(BOOL)showTitles
+                                   bookmark:(Bookmark *)bookmark
+                                 inTerminal:(PseudoTerminal *)term
+{
+    double splitterSize = 1;  // hack: should use -[NSSplitView dividerThickness], but don't have an instance yet.
+    NSSize totalSize = NSZeroSize;
+    NSSize size;
+
+    switch ([[parseTree objectForKey:kLayoutDictNodeType] intValue]) {
+        BOOL isVertical = NO;
+        case kLeafLayoutNode:
+            size = [PTYTab _sessionSizeWithCellSize:[self cellSizeForBookmark:bookmark]
+                                         dimensions:NSMakeSize([[parseTree objectForKey:kLayoutDictWidthKey] intValue],
+                                                               [[parseTree objectForKey:kLayoutDictHeightKey] intValue])
+                                         showTitles:showTitles
+                                         inTerminal:term];
+            [parseTree setObject:[NSNumber numberWithInt:size.width] forKey:kLayoutDictPixelWidthKey];
+            [parseTree setObject:[NSNumber numberWithInt:size.height] forKey:kLayoutDictPixelHeightKey];
+            return size;
+
+        case kVSplitLayoutNode:
+            isVertical = YES;
+        case kHSplitLayoutNode: {
+            BOOL isFirst = YES;
+            for (NSMutableDictionary *node in [parseTree objectForKey:kLayoutDictChildrenKey]) {
+                size = [self _recursiveSetSizesInTmuxParseTree:[node objectForKey:kLayoutDictChildrenKey]
+                                                    showTitles:showTitles
+                                                      bookmark:bookmark
+                                                    inTerminal:term];
+
+                double splitter = isFirst ? 0 : splitterSize;
+                SetWithGrainDim(isVertical, &totalSize,
+                                WithGrainDim(isVertical, totalSize) + WithGrainDim(isVertical, size) + splitter);
+                SetAgainstGrainDim(isVertical, &totalSize,
+                                   MAX(AgainstGrainDim(isVertical, totalSize),
+                                       AgainstGrainDim(isVertical, size)));
+                isFirst = NO;
+            }
+            [parseTree setObject:[NSNumber numberWithInt:totalSize.width] forKey:kLayoutDictPixelWidthKey];
+            [parseTree setObject:[NSNumber numberWithInt:totalSize.height] forKey:kLayoutDictPixelHeightKey];
+            break;
+        }
+    }
+    return totalSize;
+}
+
++ (NSDictionary *)_recursiveArrangementForDecoratedTmuxParseTree:(NSDictionary *)parseTree bookmark:(Bookmark *)bookmark
+{
+    NSMutableDictionary *dict = [NSMutableDictionary dictionary];
+    BOOL isVertical = YES;
+    switch ([[parseTree objectForKey:kLayoutDictNodeType] intValue]) {
+        case kLeafLayoutNode: {
+            [dict setObject:VIEW_TYPE_SESSIONVIEW forKey:TAB_ARRANGEMENT_VIEW_TYPE];
+            NSRect frame;
+            frame.origin = NSZeroPoint;
+            frame.size.width = [[parseTree objectForKey:kLayoutDictPixelWidthKey] intValue];
+            frame.size.height = [[parseTree objectForKey:kLayoutDictPixelHeightKey] intValue];
+            [dict setObject:[PTYTab frameToDict:frame] forKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME];
+            [dict setObject:[PTYSession arrangementFromTmuxParsedLayout:parseTree bookmark:bookmark]
+                     forKey:TAB_ARRANGEMENT_SESSION];
+            // TODO: tmux doesn't report which session is active. Change that and then set TAB_ARRANGEMENT_IS_ACTIVE
+            break;
+        }
+
+        case kHSplitLayoutNode:
+            isVertical = NO;
+            // fall through
+        case kVSplitLayoutNode: {
+            [dict setObject:VIEW_TYPE_SPLITTER forKey:TAB_ARRANGEMENT_VIEW_TYPE];
+            [dict setObject:[NSNumber numberWithBool:isVertical] forKey:SPLITTER_IS_VERTICAL];
+            NSRect frame;
+            frame.origin = NSZeroPoint;
+            frame.size.width = [[parseTree objectForKey:kLayoutDictPixelWidthKey] intValue];
+            frame.size.height = [[parseTree objectForKey:kLayoutDictPixelHeightKey] intValue];
+            [dict setObject:[PTYTab frameToDict:frame] forKey:TAB_ARRANGEMENT_SPLIITER_FRAME];
+
+            NSMutableArray *subviews = [NSMutableArray array];
+            NSArray *children = [parseTree objectForKey:kLayoutDictChildrenKey];
+            for (NSDictionary *child in children) {
+                [subviews addObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:child
+                                                                                  bookmark:bookmark]];
+            }
+            [dict setObject:subviews forKey:SUBVIEWS];
+            break;
+        }
+    }
+    return dict;
+}
+
++ (NSDictionary *)arrangementForDecoratedTmuxParseTree:(NSDictionary *)parseTree bookmark:(Bookmark *)bookmark
+{
+    NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
+    [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree bookmark:bookmark]
+                    forKey:TAB_ARRANGEMENT_ROOT];
+    return arrangement;
+}
+
++ (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree inTerminal:(PseudoTerminal *)term
+{
+    Bookmark *bookmark = [[BookmarkModel sharedInstance] defaultBookmark];
+
+    BOOL haveMultipleSessions = ([parseTree objectForKey:kLayoutDictChildrenKey] != nil);
+    BOOL showTitles = [PTYTab showTitlesPref] && haveMultipleSessions;
+    // Begin by decorating the tree with pixel sizes.
+    [PTYTab _recursiveSetSizesInTmuxParseTree:parseTree
+                                   showTitles:showTitles
+                                     bookmark:[[BookmarkModel sharedInstance] defaultBookmark]
+                                   inTerminal:term];
+    if ([[parseTree objectForKey:kLayoutDictNodeType] intValue] == kLeafLayoutNode) {
+        // Inject a splitter at the root to follow our convention even if there is only one session.
+        NSMutableDictionary *newRoot = [NSMutableDictionary dictionary];
+        [newRoot setObject:[NSNumber numberWithInt:kVSplitLayoutNode] forKey:kLayoutDictNodeType];
+        [newRoot setObject:[NSNumber numberWithInt:0] forKey:kLayoutDictXOffsetKey];
+        [newRoot setObject:[NSNumber numberWithInt:0] forKey:kLayoutDictYOffsetKey];
+        [newRoot setObject:[parseTree objectForKey:kLayoutDictWidthKey] forKey:kLayoutDictWidthKey];
+        [newRoot setObject:[parseTree objectForKey:kLayoutDictHeightKey] forKey:kLayoutDictHeightKey];
+        [newRoot setObject:[parseTree objectForKey:kLayoutDictPixelWidthKey] forKey:kLayoutDictPixelWidthKey];
+        [newRoot setObject:[parseTree objectForKey:kLayoutDictPixelHeightKey] forKey:kLayoutDictPixelHeightKey];
+        [newRoot setObject:[NSMutableArray arrayWithObject:parseTree] forKey:kLayoutDictChildrenKey];
+        parseTree = newRoot;
+    }
+
+    // Now we can make an arrangement and restore it.
+    NSDictionary *arrangement = [PTYTab arrangementForDecoratedTmuxParseTree:parseTree
+                                                                    bookmark:bookmark];
+    return [self openTabWithArrangement:arrangement inTerminal:term];
+}
 
 - (BOOL)hasMaximizedPane
 {

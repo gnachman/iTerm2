@@ -65,12 +65,14 @@ typedef enum {
 - (NSColor*)color;
 @end
 
+@class TmuxController;
+
 // This class is 1:1 with windows. It controls the tabs, bottombar, toolbar,
 // fullscreen, and coordinates resizing of sessions (either session-initiated
 // or window-initiated).
 // OS 10.5 doesn't support window delegates
 @interface PseudoTerminal : NSWindowController <
-    PTYTabViewDelegateProtocol, 
+    PTYTabViewDelegateProtocol,
     PTYWindowDelegateProtocol,
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
 NSWindowDelegate,
@@ -132,14 +134,14 @@ NSWindowDelegate,
 
     // Is the transparency setting respected?
     BOOL useTransparency_;
-    
+
     // Is this a full screenw indow?
     BOOL _fullScreen;
 
     // When you enter full-screen mode the old frame size is saved here. When
     // full-screen mode is exited that frame is restored.
     NSRect oldFrame_;
-    
+
     // When you enter fullscreen mode, the old use transparency setting is
     // saved, and then restored when you exit FS unless it was changed
     // by the user.
@@ -246,6 +248,10 @@ NSWindowDelegate,
     BOOL wellFormed_;
 
     BOOL exitingLionFullscreen_;
+
+    // If this window is a tmux client, this is the window number defined by
+    // the tmux server.
+    int tmuxWindow_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
@@ -687,6 +693,8 @@ NSWindowDelegate,
 + (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement;
 - (void)loadArrangement:(NSDictionary *)arrangement;
 - (NSDictionary*)arrangement;
+- (void)loadTmuxLayout:(NSString *)layout window:(int)window tmuxController:(TmuxController *)tmuxController;
+- (int)tmuxWindow;
 
 - (void)appendTab:(PTYTab*)theTab;
 

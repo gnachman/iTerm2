@@ -72,6 +72,7 @@
 #import "ToolbeltView.h"
 #import "FutureMethods.h"
 #import "PseudoTerminalRestorer.h"
+#import "TmuxLayoutParser.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -480,6 +481,7 @@ NSString *sessionsKey = @"sessions";
     [self _updateToolbeltParentage];
 
     wellFormed_ = YES;
+    tmuxWindow_ = -1;
     [[self window] futureSetRestorable:YES];
     [[self window] futureSetRestorationClass:[PseudoTerminalRestorer class]];
     return self;
@@ -1250,6 +1252,25 @@ NSString *sessionsKey = @"sessions";
     PseudoTerminal* term = [PseudoTerminal bareTerminalWithArrangement:arrangement];
     [term loadArrangement:arrangement];
     return term;
+}
+
+
+- (int)tmuxWindow
+{
+    return tmuxWindow_;
+}
+
+- (void)loadTmuxLayout:(NSString *)layout window:(int)window tmuxController:(TmuxController *)tmuxController
+{
+    NSMutableDictionary *parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:layout];
+    PTYTab *tab = [PTYTab openTabWithTmuxLayout:parseTree inTerminal:self];
+    tmuxWindow_ = window;
+    [self fitWindowToTabs];
+
+    for (PTYSession *aSession in [tab sessions]) {
+        [tmuxController registerSession:aSession withPane:[aSession tmuxPane] inWindow:window];
+        [aSession setTmuxController:tmuxController];
+    }
 }
 
 - (void)loadArrangement:(NSDictionary *)arrangement

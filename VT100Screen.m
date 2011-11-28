@@ -1740,6 +1740,10 @@ static char* FormatCont(int c)
         }
         break;
 
+    case UNDERSCORE_TMUX1:
+        [SESSION startTmuxMode];
+        break;
+
     default:
         /*NSLog(@"%s(%d): bug?? token.type = %d",
             __FILE__, __LINE__, token.type);*/

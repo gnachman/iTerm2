@@ -148,6 +148,7 @@
 
 // iTerm extension
 #define ITERM_GROWL     5000
+#define UNDERSCORE_TMUX1 5001
 
 #define VT100CSIPARAM_MAX    16
 
@@ -359,6 +360,8 @@ typedef enum {
 - (void)cleanStream;
 - (void)putStreamData:(NSData*)data;
 - (VT100TCC)getNextToken;
+- (NSData *)streamData;
+- (void)clearStream;
 
 - (void)saveCursorAttributes;
 - (void)restoreCursorAttributes;

@@ -47,6 +47,8 @@
 #import "MovePaneController.h"
 #import "Trigger.h"
 #import "Coprocess.h"
+#import "TmuxGateway.h"
+#import "TmuxLayoutParser.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -69,6 +71,7 @@ static NSString* SESSION_ARRANGEMENT_COLUMNS = @"Columns";
 static NSString* SESSION_ARRANGEMENT_ROWS = @"Rows";
 static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
 static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
+static NSString* SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
 
 // init/dealloc
 - (id)init
@@ -151,6 +154,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [updateTimer release];
     [originalAddressBookEntry release];
     [liveSession_ release];
+    [tmuxGateway_ release];
+    [tmuxController_ release];
 
     [SHELL release];
     SHELL = nil;
@@ -314,6 +319,10 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         [aSession divorceAddressBookEntryFromPreferences];
     }
 
+    NSNumber *n = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
+    if (n) {
+        [aSession setTmuxPane:[n intValue]];
+    }
     return aSession;
 }
 
@@ -689,6 +698,12 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     if (EXIT) {
         [self _maybeWarnAboutShortLivedSessions];
     }
+    if (tmuxMode_ == TMUX_CLIENT) {
+        [tmuxController_ deregisterWindow:[[tab_ realParentWindow] tmuxWindow] windowPane:tmuxPane_];
+    }
+    [tmuxController_ release];
+    tmuxController_ = nil;
+
     // The source pane may have just exited. Dogs and cats living together!
     // Mass hysteria!
     [[MovePaneController sharedInstance] exitMovePaneMode];
@@ -776,6 +791,13 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
       int length = [data length];
       DebugLog([NSString stringWithFormat:@"readTask called with %d bytes. The last byte is %d", (int)length, (int)bytes[length-1]]);
     }
+    if (tmuxMode_ == TMUX_GATEWAY) {
+        data = [tmuxGateway_ readTask:data];
+        if (!data) {
+            // All data was consumed.
+            return;
+        }
+    }
 
     [TERMINAL putStreamData:data];
 
@@ -784,6 +806,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     // while loop to process all the tokens we can get
     while (!EXIT &&
            TERMINAL &&
+           tmuxMode_ != TMUX_GATEWAY &&
            ((token = [TERMINAL getNextToken]),
             token.type != VT100_WAIT &&
             token.type != VT100CC_NULL)) {
@@ -2795,6 +2818,18 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     return result;
 }
 
++ (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
+                                         bookmark:(Bookmark *)bookmark
+{
+    NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
+    [result setObject:[parseNode objectForKey:kLayoutDictWidthKey] forKey:SESSION_ARRANGEMENT_COLUMNS];
+    [result setObject:[parseNode objectForKey:kLayoutDictHeightKey] forKey:SESSION_ARRANGEMENT_ROWS];
+    [result setObject:bookmark forKey:SESSION_ARRANGEMENT_BOOKMARK];
+    [result setObject:@"" forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
+    [result setObject:[parseNode objectForKey:kLayoutDictWindowPaneKey] forKey:SESSION_ARRANGEMENT_TMUX_PANE];
+    return result;
+}
+
 - (void)updateScroll
 {
     if (![(PTYScroller*)([SCROLLVIEW verticalScroller]) userScroll]) {
@@ -3265,6 +3300,68 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return !tailFindTimer_ &&
            ![[[view findViewController] view] isHidden] &&
            [TEXTVIEW initialFindContext]->substring != nil;
+}
+
+- (void)startTmuxMode
+{
+    if (tmuxMode_ != TMUX_NONE) {
+        return;
+    }
+    tmuxMode_ = TMUX_GATEWAY;
+    tmuxGateway_ = [[TmuxGateway alloc] initWithDelegate:self];
+    tmuxController_ = [[TmuxController alloc] initWithGateway:tmuxGateway_];
+    [SCREEN setString:@"** TMUX MODE STARTED **" ascii:YES];
+    [tmuxController_ openWindowsInitial];
+    [tmuxGateway_ readTask:[TERMINAL streamData]];
+    [TERMINAL clearStream];
+}
+
+- (int)tmuxPane
+{
+    return tmuxPane_;
+}
+
+- (void)setTmuxPane:(int)windowPane
+{
+    tmuxPane_ = windowPane;
+    tmuxMode_ = TMUX_CLIENT;
+}
+
+- (void)setTmuxController:(TmuxController *)tmuxController
+{
+    [tmuxController_ autorelease];
+    tmuxController_ = [tmuxController retain];
+}
+
+#pragma mark tmux gateway delegate methods
+// TODO (also, capture and throw away keyboard input)
+
+- (TmuxController *)tmuxController
+{
+    return tmuxController_;
+}
+
+- (void)tmuxUpdateLayoutForWindow:(int)windowId
+{
+}
+
+- (void)tmuxWindowsDidChange
+{
+}
+
+- (void)tmuxHostDisconnected
+{
+}
+
+- (void)tmuxWriteData:(NSData *)data
+{
+    NSLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
+    [self writeTask:data];
+}
+
+- (void)tmuxReadTask:(NSData *)data
+{
+    [self readTask:data];
 }
 
 @end
