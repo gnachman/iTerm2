@@ -366,6 +366,9 @@ typedef enum {
 - (void)saveCursorAttributes;
 - (void)restoreCursorAttributes;
 
+- (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem;
+- (void)setBackgroundColor:(int)bgColorCode alternateSemantics:(BOOL)altsem;
+
 - (void)reset;
 
 - (NSData *)keyArrowUp:(unsigned int)modflag;

@@ -540,6 +540,7 @@ typedef enum {
 - (void)sendText:(NSString *)text;
 
 - (void)startTmuxMode;
+- (void)tmuxDetach;
 - (int)tmuxPane;
 - (void)setTmuxPane:(int)windowPane;
 - (void)setTmuxController:(TmuxController *)tmuxController;

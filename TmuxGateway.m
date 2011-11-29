@@ -12,6 +12,7 @@
 static NSString *kCommandTarget = @"target";
 static NSString *kCommandSelector = @"sel";
 static NSString *kCommandString = @"string";
+static NSString *kCommandObject = @"object";
 
 @implementation TmuxGateway
 
@@ -111,7 +112,8 @@ static NSString *kCommandString = @"string";
 {
     id target = [currentCommand_ objectForKey:kCommandTarget];
     SEL selector = NSSelectorFromString([currentCommand_ objectForKey:kCommandSelector]);
-    [target performSelector:selector withObject:currentCommandResponse_];
+    id obj = [currentCommand_ objectForKey:kCommandObject];
+    [target performSelector:selector withObject:currentCommandResponse_ withObject:obj];
     [currentCommand_ release];
     currentCommand_ = nil;
     [currentCommandResponse_ release];
@@ -143,20 +145,17 @@ static NSString *kCommandString = @"string";
         newlineRange = crRange;
     }  // Only 3 cases because the fourth case (crlf & !cr) is impossible
 
-    if (newlineRange.location == 0) {
-        NSLog(@"tmux: Empty command");
-        [stream_ replaceBytesInRange:newlineRange withBytes:"" length:0];
-        return YES;
-    }
-
     NSRange commandRange;
     commandRange.location = 0;
     commandRange.length = newlineRange.location;
     // Command range doesn't include the newline.
     NSString *command = [[[NSString alloc] initWithData:[stream_ subdataWithRange:commandRange]
                                                encoding:NSUTF8StringEncoding] autorelease];
-    if (![command hasPrefix:@"%output "]) {
+    if (![command hasPrefix:@"%output "] &&
+        !currentCommand_) {
         NSLog(@"Read tmux command: \"%@\"", command);
+    } else if (currentCommand_) {
+        NSLog(@"Read command response: \"%@\"", command);
     }
     // Advance range to include newline so we can chop it off
     commandRange.length += newlineRange.length;
@@ -223,13 +222,58 @@ static NSString *kCommandString = @"string";
     return nil;
 }
 
+- (NSString *)keyEncodedByte:(char)byte
+{
+    return [NSString stringWithFormat:@"%02x", (int)byte];
+}
+
+- (NSString *)stringForKeyEncodedData:(NSData *)data
+{
+    NSMutableString *encoded = [NSMutableString string];
+    const char *bytes = [data bytes];
+    for (int i = 0; i < data.length; i++) {
+        [encoded appendString:[self keyEncodedByte:bytes[i]]];
+    }
+    return encoded;
+}
+
+- (void)sendKeys:(NSData *)data toWindow:(int)window windowPane:(int)windowPane
+{
+    NSString *encoded = [self stringForKeyEncodedData:data];
+    NSString *command = [NSString stringWithFormat:@"send-keys -h -t %d.%d %@",
+                         window, windowPane, encoded];
+    [self sendCommand:command
+         responseTarget:self
+         responseSelector:@selector(noopResponseSelector:)];
+}
+
+- (void)detach
+{
+    [self sendCommand:@"detach"
+       responseTarget:self
+     responseSelector:@selector(noopResponseSelector:)];
+}
+
+- (void)noopResponseSelector:(NSString *)response
+{
+}
+
 - (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector
+{
+    [self sendCommand:command
+       responseTarget:target
+     responseSelector:selector
+       responseObject:nil];
+}
+
+- (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector responseObject:(id)obj
 {
     NSString *commandWithNewline = [command stringByAppendingString:@"\n"];
     NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys:
                           commandWithNewline, kCommandString,
                           target, kCommandTarget,
                           NSStringFromSelector(selector), kCommandSelector,
+                          obj, kCommandObject,
                           nil];
     [commandQueue_ addObject:dict];
     [delegate_ tmuxWriteData:[commandWithNewline dataUsingEncoding:NSUTF8StringEncoding]];

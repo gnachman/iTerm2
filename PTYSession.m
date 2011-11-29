@@ -72,6 +72,7 @@ static NSString* SESSION_ARRANGEMENT_ROWS = @"Rows";
 static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
 static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 static NSString* SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
+static NSString* SESSION_ARRANGEMENT_TMUX_HISTORY = @"Tmux History";
 
 // init/dealloc
 - (id)init
@@ -282,7 +283,6 @@ static NSString* SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
     NSRectFill(frame);
 }
 
-
 + (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement
                                inView:(SessionView*)sessionView
                                 inTab:(PTYTab*)theTab
@@ -325,6 +325,10 @@ static NSString* SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
 
     if (n) {
         [aSession setTmuxPane:[n intValue]];
+    }
+    NSArray *history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
+    if (history) {
+        [[aSession SCREEN] setHistory:history];
     }
     return aSession;
 }
@@ -751,7 +755,7 @@ static NSString* SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
     tab_ = nil;
 }
 
-- (void)writeTask:(NSData*)data
+- (void)writeTaskImpl:(NSData *)data
 {
     static BOOL checkedDebug;
     static BOOL debugKeyDown;
@@ -779,6 +783,21 @@ static NSString* SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
         // send to all sessions
         [[[self tab] realParentWindow] sendInputToAllSessions:data];
     }
+}
+
+- (void)writeTask:(NSData*)data
+{
+    if (tmuxMode_ == TMUX_CLIENT) {
+        [[tmuxController_ gateway] sendKeys:data
+                                   toWindow:[[tab_ realParentWindow] tmuxWindow]
+                                 windowPane:tmuxPane_];
+        return;
+    } else if (tmuxMode_ == TMUX_GATEWAY) {
+        // Prevent the user banging on the keyboard from messing up our
+        // protocol.
+        return;
+    }
+    [self writeTaskImpl:data];
 }
 
 - (void)readTask:(NSData*)data
@@ -1200,6 +1219,10 @@ static NSString* SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
         return;
     }
 
+    if (tmuxMode_ == TMUX_GATEWAY && unicode == 27) {
+        [self tmuxDetach];
+        return;
+    }
 
     unsigned short keycode = [event keyCode];
     if (debugKeyDown) {
@@ -2830,6 +2853,8 @@ static NSString* SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
     [result setObject:bookmark forKey:SESSION_ARRANGEMENT_BOOKMARK];
     [result setObject:@"" forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
     [result setObject:[parseNode objectForKey:kLayoutDictWindowPaneKey] forKey:SESSION_ARRANGEMENT_TMUX_PANE];
+    [result setObject:[parseNode objectForKey:kLayoutDictHistoryKey] forKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
+
     return result;
 }
 
@@ -3305,6 +3330,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
            [TEXTVIEW initialFindContext]->substring != nil;
 }
 
+- (void)printTmuxMessage:(NSString *)message
+{
+    screen_char_t savedFgColor = [TERMINAL foregroundColorCode];
+    screen_char_t savedBgColor = [TERMINAL backgroundColorCode];
+    [TERMINAL setForegroundColor:COLORCODE_WHITE alternateSemantics:NO];
+    [TERMINAL setBackgroundColor:COLORCODE_BLACK alternateSemantics:NO];
+    [SCREEN setString:message ascii:YES];
+    [SCREEN crlf];
+    [TERMINAL setForegroundColor:savedFgColor.foregroundColor
+              alternateSemantics:savedFgColor.alternateForegroundSemantics];
+    [TERMINAL setBackgroundColor:savedBgColor.backgroundColor
+              alternateSemantics:savedBgColor.alternateBackgroundSemantics];
+}
+
 - (void)startTmuxMode
 {
     if (tmuxMode_ != TMUX_NONE) {
@@ -3313,10 +3352,22 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     tmuxMode_ = TMUX_GATEWAY;
     tmuxGateway_ = [[TmuxGateway alloc] initWithDelegate:self];
     tmuxController_ = [[TmuxController alloc] initWithGateway:tmuxGateway_];
-    [SCREEN setString:@"** TMUX MODE STARTED **" ascii:YES];
+
+    [SCREEN crlf];
+    [self printTmuxMessage:@"** tmux mode started. Press ESC to detach **"];
+
     [tmuxController_ openWindowsInitial];
     [tmuxGateway_ readTask:[TERMINAL streamData]];
     [TERMINAL clearStream];
+}
+
+- (void)tmuxDetach
+{
+    if (tmuxMode_ != TMUX_GATEWAY) {
+        return;
+    }
+    [self printTmuxMessage:@"Detaching..."];
+    [tmuxGateway_ detach];
 }
 
 - (int)tmuxPane
@@ -3354,12 +3405,23 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)tmuxHostDisconnected
 {
+    [tmuxController_ detach];
+
+    // Autorelease the gateway because it called this function so we can't free
+    // it immediately.
+    [tmuxGateway_ autorelease];
+    tmuxGateway_ = nil;
+    [tmuxController_ release];
+    tmuxController_ = nil;
+    [SCREEN setString:@"Detached" ascii:YES];
+    [SCREEN crlf];
+    tmuxMode_ = TMUX_NONE;
 }
 
 - (void)tmuxWriteData:(NSData *)data
 {
     NSLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
-    [self writeTask:data];
+    [self writeTaskImpl:data];
 }
 
 - (void)tmuxReadTask:(NSData *)data

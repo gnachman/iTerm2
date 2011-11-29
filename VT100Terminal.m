@@ -1714,6 +1714,18 @@ static VT100TCC decode_string(unsigned char *datap,
     alternateBackgroundSemantics = saveAltBackground;
 }
 
+- (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem
+{
+    FG_COLORCODE = fgColorCode;
+    alternateForegroundSemantics = altsem;
+}
+
+- (void)setBackgroundColor:(int)bgColorCode alternateSemantics:(BOOL)altsem
+{
+    BG_COLORCODE = bgColorCode;
+    alternateBackgroundSemantics = altsem;
+}
+
 - (void)reset
 {
     LINE_MODE = NO;

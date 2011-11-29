@@ -9,8 +9,12 @@
 #import "TSVParser.h"
 #import "PseudoTerminal.h"
 #import "iTermController.h"
+#import "TmuxWindowOpener.h"
+#import "PTYTab.h"
 
 @implementation TmuxController
+
+@synthesize gateway = gateway_;
 
 - (id)initWithGateway:(TmuxGateway *)gateway
 {
@@ -34,12 +38,15 @@
                        size:(NSSize)size
                      layout:(NSString *)layout
 {
-    if (!layout) {
-        NSLog(@"Bad layout");
-        return;
-    }
-    PseudoTerminal *term = [[iTermController sharedInstance] openWindow];
-    [term loadTmuxLayout:layout window:windowIndex tmuxController:self name:name];
+    TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
+    windowOpener.windowIndex = windowIndex;
+    windowOpener.name = name;
+    windowOpener.size = size;
+    windowOpener.layout = layout;
+    windowOpener.maxHistory = 1000;
+    windowOpener.controller = self;
+    windowOpener.gateway = gateway_;
+    [windowOpener begin];
 }
 
 - (void)initialListWindowsResponse:(NSString *)response
@@ -85,6 +92,20 @@
 - (void)deregisterWindow:(int)window windowPane:(int)windowPane
 {
     [windowPanes_ removeObjectForKey:[self _keyForWindow:window windowPane:windowPane]];
+}
+
+- (void)detach
+{
+    // Close all sessions.
+    for (NSString *key in windowPanes_) {
+        PTYSession *session = [windowPanes_ objectForKey:key];
+        [[[session tab] realParentWindow] closeSession:session];
+    }
+
+    // Clean up all state to avoid trying to reuse it.
+    [windowPanes_ removeAllObjects];
+    [gateway_ release];
+    gateway_ = nil;
 }
 
 @end

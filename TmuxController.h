@@ -15,6 +15,8 @@
     NSMutableDictionary *windowPanes_;  // [window, pane] -> PTYSession *
 }
 
+@property (nonatomic, readonly) TmuxGateway *gateway;
+
 - (id)initWithGateway:(TmuxGateway *)gateway;
 - (void)openWindowsInitial;
 - (PTYSession *)sessionForWindow:(int)window pane:(int)windowPane;
@@ -22,5 +24,8 @@
                withPane:(int)windowPane
                inWindow:(int)window;
 - (void)deregisterWindow:(int)window windowPane:(int)windowPane;
+
+// This should be called after the host sends an %exit command.
+- (void)detach;
 
 @end

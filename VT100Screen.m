@@ -935,6 +935,54 @@ static char* FormatCont(int c)
     return numLines;
 }
 
+- (void)restoreScreenFromScrollback
+{
+    screen_char_t* defaultLine = [self _getDefaultLineWithWidth:WIDTH];
+
+    // Move scrollback lines into screen
+    int num_lines_in_scrollback = [linebuffer numLinesWithWidth:WIDTH];
+    int dest_y;
+    if (num_lines_in_scrollback >= HEIGHT) {
+        dest_y = HEIGHT - 1;
+    } else {
+        dest_y = num_lines_in_scrollback - 1;
+    }
+
+    BOOL found_cursor = NO;
+    BOOL prevLineStartsWithDoubleWidth = NO;
+    while (dest_y >= 0) {
+        screen_char_t* dest = [self getLineAtScreenIndex: dest_y];
+        memcpy(dest, defaultLine, sizeof(screen_char_t) * WIDTH);
+        if (!found_cursor) {
+            int tempCursor = cursorX;
+            found_cursor = [linebuffer getCursorInLastLineWithWidth:WIDTH atX:&tempCursor];
+            if (found_cursor) {
+                [self setCursorX:tempCursor % WIDTH
+                               Y:dest_y + tempCursor / WIDTH];
+            }
+        }
+        int cont;
+        [linebuffer popAndCopyLastLineInto:dest width:WIDTH includesEndOfLine:&cont];
+        if (cont && dest[WIDTH - 1].code == 0 && prevLineStartsWithDoubleWidth) {
+            // If you pop a soft-wrapped line that's a character short and the
+            // line below it starts with a DWC, it's safe to conclude that a DWC
+            // was wrapped.
+            dest[WIDTH - 1].code = DWC_SKIP;
+            cont = EOL_DWC;
+        }
+        if (dest[1].code == DWC_RIGHT) {
+            prevLineStartsWithDoubleWidth = YES;
+        } else {
+            prevLineStartsWithDoubleWidth = NO;
+        }
+        dest[WIDTH].code = cont;
+        if (cont == EOL_DWC) {
+            dest[WIDTH - 1].code = DWC_SKIP;
+        }
+        --dest_y;
+    }
+}
+
 - (void)resizeWidth:(int)new_width height:(int)new_height
 {
     DLog(@"Resize session to %d height", new_height);
@@ -1040,55 +1088,12 @@ static char* FormatCont(int c)
     memset(dirty, 1, dirtySize * sizeof(char));
     result_line = (screen_char_t*)calloc((new_width + 1), sizeof(screen_char_t));
 
-    // Move scrollback lines into screen
-    int num_lines_in_scrollback = [linebuffer numLinesWithWidth: new_width];
-    int dest_y;
-    if (num_lines_in_scrollback >= new_height) {
-        dest_y = new_height - 1;
-    } else {
-        dest_y = num_lines_in_scrollback - 1;
-    }
-
     // new height and width
     WIDTH = new_width;
     HEIGHT = new_height;
 
-
-    int source_line_num = num_lines_in_scrollback;
-    BOOL found_cursor = NO;
-    BOOL prevLineStartsWithDoubleWidth = NO;
-    while (dest_y >= 0) {
-        screen_char_t* dest = [self getLineAtScreenIndex: dest_y];
-        memcpy(dest, defaultLine, sizeof(screen_char_t) * WIDTH);
-        if (!found_cursor) {
-            int tempCursor = cursorX;
-            found_cursor = [linebuffer getCursorInLastLineWithWidth: new_width atX:&tempCursor];
-            if (found_cursor) {
-                [self setCursorX:tempCursor % new_width
-                               Y:dest_y + tempCursor / new_width];
-            }
-        }
-        int cont;
-        [linebuffer popAndCopyLastLineInto:dest width:WIDTH includesEndOfLine:&cont];
-        if (cont && dest[WIDTH - 1].code == 0 && prevLineStartsWithDoubleWidth) {
-            // If you pop a soft-wrapped line that's a character short and the
-            // line below it starts with a DWC, it's safe to conclude that a DWC
-            // was wrapped.
-            dest[WIDTH - 1].code = DWC_SKIP;
-            cont = EOL_DWC;
-        }
-        if (dest[1].code == DWC_RIGHT) {
-            prevLineStartsWithDoubleWidth = YES;
-        } else {
-            prevLineStartsWithDoubleWidth = NO;
-        }
-        dest[WIDTH].code = cont;
-        if (cont == EOL_DWC) {
-            dest[WIDTH - 1].code = DWC_SKIP;
-        }
-        --dest_y;
-        --source_line_num;
-    }
+    // Restore the screen contents that were pushed onto the linebuffer.
+    [self restoreScreenFromScrollback];
 
 #ifdef DEBUG_RESIZEDWIDTH
     NSLog(@"After pops\n");
@@ -2282,6 +2287,12 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 }
 
+- (void)crlf
+{
+    [self setNewLine];
+    [self setCursorX:0 Y:cursorY];
+}
+
 - (void)setNewLine
 {
     screen_char_t *aLine;
@@ -3368,6 +3379,23 @@ void DumpBuf(screen_char_t* p, int n) {
         NSAssert(isOk, @"Pop shouldn't fail");
     }
     free(dummy);
+}
+
+- (void)setHistory:(NSArray *)history
+{
+    [self clearBuffer];
+    for (NSData *chars in history) {
+        screen_char_t *line = (screen_char_t *) [chars bytes];
+        int length = [chars length] / sizeof(screen_char_t);
+        length--;  // Last position is wrap flag
+
+        BOOL isPartial = (line[length].code == EOL_SOFT);
+        [linebuffer appendLine:line length:length partial:isPartial width:WIDTH];
+    }
+    // We don't know the cursor position yet but give the linebuffer something
+    // so it doesn't get confused in restoreScreenFromScrollback.
+    [linebuffer setCursor:0];
+    [self restoreScreenFromScrollback];
 }
 
 - (FindContext*)findContext

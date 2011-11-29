@@ -25,6 +25,7 @@ NSString *kLayoutDictNodeType = @"type";
 NSString *kLayoutDictPixelWidthKey = @"px-width";
 NSString *kLayoutDictPixelHeightKey = @"px-height";
 NSString *kLayoutDictWindowPaneKey = @"window-pane";
+NSString *kLayoutDictHistoryKey = @"history";
 
 @interface TmuxLayoutParser (Private)
 
@@ -57,6 +58,32 @@ NSString *kLayoutDictWindowPaneKey = @"window-pane";
     NSMutableArray *temp = [NSMutableArray array];
     [self parseLayout:layout range:NSMakeRange(5, layout.length - 5) intoTree:temp];
     return [temp objectAtIndex:0];
+}
+
+- (id)depthFirstSearchParseTree:(NSMutableDictionary *)parseTree
+                callingSelector:(SEL)selector
+                       onTarget:(id)target
+                     withObject:(id)obj
+{
+    if ([[parseTree objectForKey:kLayoutDictNodeType] intValue] == kLeafLayoutNode) {
+        return [target performSelector:selector withObject:parseTree withObject:obj];
+    } else {
+        for (NSDictionary *child in [parseTree objectForKey:kLayoutDictChildrenKey]) {
+            id ret = [target performSelector:selector withObject:parseTree withObject:obj];
+            if (ret) {
+                return ret;
+            }
+        }
+        return nil;
+    }
+}
+
+- (NSMutableDictionary *)windowPane:(int)windowPane inParseTree:(NSMutableDictionary *)parseTree
+{
+    return [self depthFirstSearchParseTree:parseTree
+                           callingSelector:@selector(searchParseTree:forWindowPane:)
+                                  onTarget:self
+                                withObject:[NSNumber numberWithInt:windowPane]];
 }
 
 @end
@@ -230,5 +257,15 @@ NSString *kLayoutDictWindowPaneKey = @"window-pane";
     }
 }
 
+
+- (NSMutableDictionary *)searchParseTree:(NSMutableDictionary *)parseTree
+                           forWindowPane:(NSNumber *)wp
+{
+    if ([[parseTree objectForKey:kLayoutDictWindowPaneKey] intValue] == [wp intValue]) {
+        return parseTree;
+    } else {
+        return  nil;
+    }
+}
 
 @end

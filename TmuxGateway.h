@@ -50,6 +50,10 @@ typedef enum {
 // Returns any unconsumed data if tmux mode is exited.
 - (NSData *)readTask:(NSData *)data;
 - (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector;
+- (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector responseObject:(id)obj;
 - (void)abortWithErrorMessage:(NSString *)message;
+
+- (void)sendKeys:(NSData *)data toWindow:(int)window windowPane:(int)windowPane;
+- (void)detach;
 
 @end

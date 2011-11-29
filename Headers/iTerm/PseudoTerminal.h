@@ -693,7 +693,7 @@ NSWindowDelegate,
 + (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement;
 - (void)loadArrangement:(NSDictionary *)arrangement;
 - (NSDictionary*)arrangement;
-- (void)loadTmuxLayout:(NSString *)layout window:(int)window tmuxController:(TmuxController *)tmuxController name:(NSString *)name;
+- (void)loadTmuxLayout:(NSMutableDictionary *)parseTree window:(int)window tmuxController:(TmuxController *)tmuxController name:(NSString *)name;
 - (int)tmuxWindow;
 
 - (void)appendTab:(PTYTab*)theTab;

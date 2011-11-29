@@ -1260,9 +1260,11 @@ NSString *sessionsKey = @"sessions";
     return tmuxWindow_;
 }
 
-- (void)loadTmuxLayout:(NSString *)layout window:(int)window tmuxController:(TmuxController *)tmuxController name:(NSString *)name
+- (void)loadTmuxLayout:(NSMutableDictionary *)parseTree
+                window:(int)window
+        tmuxController:(TmuxController *)tmuxController
+                  name:(NSString *)name
 {
-    NSMutableDictionary *parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:layout];
     PTYTab *tab = [PTYTab openTabWithTmuxLayout:parseTree inTerminal:self];
     [self setWindowTitle:name];
     tmuxWindow_ = window;
@@ -5051,7 +5053,8 @@ NSString *sessionsKey = @"sessions";
 
 - (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state
 {
-    if ([self isHotKeyWindow]) {
+    if ([self isHotKeyWindow] || tmuxWindow_ >= 0) {
+        // Don't save and restore hotkey windows or tmux windows.
         return;
     }
     if (wellFormed_) {
