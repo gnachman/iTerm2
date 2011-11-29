@@ -2077,6 +2077,15 @@ static NSString* FormatRect(NSRect r) {
     NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
     [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree bookmark:bookmark]
                     forKey:TAB_ARRANGEMENT_ROOT];
+    // -- BEGIN HACK --
+    // HACK! Set the first session we find as the active one.
+    NSMutableDictionary *temp = [arrangement objectForKey:TAB_ARRANGEMENT_ROOT];
+    while ([[temp objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
+        temp = [[temp objectForKey:SUBVIEWS] objectAtIndex:0];
+    }
+    [temp setObject:[NSNumber numberWithBool:YES] forKey:TAB_ARRANGEMENT_IS_ACTIVE];
+    // -- END HACK --
+
     return arrangement;
 }
 
@@ -2104,6 +2113,11 @@ static NSString* FormatRect(NSRect r) {
         [newRoot setObject:[NSMutableArray arrayWithObject:parseTree] forKey:kLayoutDictChildrenKey];
         parseTree = newRoot;
     }
+
+    // Grow the window to fit the tab before adding it
+    NSSize rootSize = NSMakeSize([[parseTree objectForKey:kLayoutDictPixelWidthKey] intValue],
+                                 [[parseTree objectForKey:kLayoutDictPixelHeightKey] intValue]);
+    [term fitWindowToTabSize:rootSize];
 
     // Now we can make an arrangement and restore it.
     NSDictionary *arrangement = [PTYTab arrangementForDecoratedTmuxParseTree:parseTree

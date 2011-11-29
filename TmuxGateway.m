@@ -33,7 +33,6 @@ static NSString *kCommandString = @"string";
     [stream_ release];
     [currentCommand_ release];
     [currentCommandResponse_ release];
-    [inputData_ release];
 
     [super dealloc];
 }
@@ -50,81 +49,37 @@ static NSString *kCommandString = @"string";
          informativeTextWithFormat:@"Reason: %@", message] runModal];
 }
 
-- (void)parsePartialInputData
+- (NSData *)decodeBase64:(NSString *)b64data
 {
-    // Move bytes from the beginning of stream into inputData_, but not beyond the trailing
-    // newline.
-    int availableBytes = [stream_ length];
-    int neededBytes = length_ + 1 - [inputData_ length];
-    int bytesToUse = MIN(neededBytes, availableBytes);
-    [inputData_ appendBytes:[stream_ bytes]
-                     length:bytesToUse];
-    [stream_ replaceBytesInRange:NSMakeRange(0, bytesToUse)
-                       withBytes:""
-                          length:0];
-    const BOOL haveAllInput = ([inputData_ length] == length_ + 1);
-    char lastByteInInput = 0;
-    const char *inputBytes = [inputData_ bytes];
-    if ([inputData_ length] > 0) {
-        lastByteInInput = inputBytes[inputData_.length - 1];
-    }
-    const char *streamBytes = [stream_ bytes];
-    char firstByteAfterInput = 0;
-    if ([stream_ length] > 0) {
-        firstByteAfterInput = streamBytes[0];
-    }
-    // If the input is fully read and we have a CR or CRLF after it...
-    if ((haveAllInput && lastByteInInput == '\n') ||
-        (haveAllInput && lastByteInInput == '\r' && firstByteAfterInput == '\n')){
-        // There are enough bytes in the stream to cover all of length plus a newline.
-        // Truncate the trailing newline and process.
-        [inputData_ setLength:inputData_.length - 1];
-        [[[delegate_ tmuxController] sessionForWindow:window_ pane:windowPane_]  tmuxReadTask:inputData_];
-        if (lastByteInInput == '\r') {
-            // Line terminated with CR LF (\r\n).
-            // Eat up one byte from the start of the stream_ to get rid of the LF
-            [stream_ replaceBytesInRange:NSMakeRange(0, 1) withBytes:"" length:0];
+    // TODO: This is a hack because I don't have a b64 implementation handy on vacation
+    NSMutableData *data = [NSMutableData data];
+    for (int i = 0; i < b64data.length; i += 2) {
+        NSString *hex = [b64data substringWithRange:NSMakeRange(i, 2)];
+        unsigned scanned;
+        if ([[NSScanner scannerWithString:hex] scanHexInt:&scanned]) {
+            char c = scanned;
+            [data appendBytes:&c length:1];
         }
-        state_ = CONTROL_STATE_READY;
-    } else {
-        // Keep reading next time.
-        state_ = CONTROL_STATE_READING_DATA;
-    }        
+    }
+    return data;
 }
 
 - (void)parseOutputCommand:(NSString *)command
 {
-    // %output <window>.<pane> <length> <data...><newline>
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^[^ ]+ +([0-9]+)\\.([0-9]+) ([0-9]+)"];
+    // %output <window>.<pane> <b64 data...><newline>
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^[^ ]+ +([0-9]+)\\.([0-9]+) (.*)"];
     if (components.count != 4) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected num.num num): \"%@\"", command]];
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected num.num b64data): \"%@\"", command]];
         return;
     }
-    window_ = [[components objectAtIndex:1] intValue];
-    windowPane_ = [[components objectAtIndex:2] intValue];
-    length_ = [[components objectAtIndex:3] intValue];
-
-    // Find the offset of the byte after the third space, if any
-    int numSpaces = 0;
-    const char *bytes = [stream_ bytes];
-    int i;
-    for (i = 0; numSpaces < 3 && i < [stream_ length]; i++) {
-        if (bytes[i] == ' ') {
-            ++numSpaces;
-        }
-    }
-    if (numSpaces != 3) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected 3 spaces, got %d): \"%@\"", numSpaces, command]];
-        return;
-    }
-    // Yank everything up to the beginning of the data out of the stream.
-    [stream_ replaceBytesInRange:NSMakeRange(0, i)
-                       withBytes:""
-                          length:0];
-    
-    [inputData_ release];
-    inputData_ = [[NSMutableData alloc] init];
-    [self parsePartialInputData];
+    int window = [[components objectAtIndex:1] intValue];
+    int windowPane = [[components objectAtIndex:2] intValue];
+    NSString *base64data = [components objectAtIndex:3];
+    NSData *decodedCommand = [self decodeBase64:base64data];
+    NSLog(@"Run tmux command: \"%%output %d.%d %@", window, windowPane,
+          [[[NSString alloc] initWithData:decodedCommand encoding:NSUTF8StringEncoding] autorelease]);
+    [[[delegate_ tmuxController] sessionForWindow:window pane:windowPane]  tmuxReadTask:decodedCommand];
+    state_ = CONTROL_STATE_READY;
 }
 
 - (void)parseLayoutChangeCommand:(NSString *)command
@@ -135,8 +90,8 @@ static NSString *kCommandString = @"string";
         [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected an int arg): \"%@\"", command]];
         return;
     }
-    window_ = [[components objectAtIndex:1] intValue];
-    [delegate_ tmuxUpdateLayoutForWindow:window_];
+    int window = [[components objectAtIndex:1] intValue];
+    [delegate_ tmuxUpdateLayoutForWindow:window];
     state_ = CONTROL_STATE_READY;
 }
 
@@ -163,7 +118,7 @@ static NSString *kCommandString = @"string";
     currentCommandResponse_ = nil;
 }
 
-- (void)parseCommand
+- (BOOL)parseCommand
 {
     NSRange crRange = [stream_ rangeOfData:[NSData dataWithBytes:"\n" length:1]
                                    options:0
@@ -175,7 +130,7 @@ static NSString *kCommandString = @"string";
     NSRange newlineRange;
     if (crRange.location == NSNotFound && crlfRange.location == NSNotFound) {
         // No newline of any kind
-        return;
+        return NO;
     } else if (crRange.location != NSNotFound && crlfRange.location != NSNotFound) {
         // CRLF & CR - use the first one
         if (crRange.location < crlfRange.location) {
@@ -187,24 +142,24 @@ static NSString *kCommandString = @"string";
         // CR only
         newlineRange = crRange;
     }  // Only 3 cases because the fourth case (crlf & !cr) is impossible
-    
+
     if (newlineRange.location == 0) {
         NSLog(@"tmux: Empty command");
         [stream_ replaceBytesInRange:newlineRange withBytes:"" length:0];
-        return;
+        return YES;
     }
-    
+
     NSRange commandRange;
     commandRange.location = 0;
     commandRange.length = newlineRange.location;
     // Command range doesn't include the newline.
     NSString *command = [[[NSString alloc] initWithData:[stream_ subdataWithRange:commandRange]
                                                encoding:NSUTF8StringEncoding] autorelease];
-    NSLog(@"Read tmux command: \"%@\"", command);
+    if (![command hasPrefix:@"%output "]) {
+        NSLog(@"Read tmux command: \"%@\"", command);
+    }
     // Advance range to include newline so we can chop it off
     commandRange.length += newlineRange.length;
-    
-    BOOL doTruncation = YES;
 
     if ([command isEqualToString:@"%end"]) {
         [self currentCommandResponseFinished];
@@ -215,7 +170,6 @@ static NSString *kCommandString = @"string";
         [currentCommandResponse_ appendString:command];
     } else if ([command hasPrefix:@"%output "]) {
         [self parseOutputCommand:command];
-        doTruncation = NO;
     } else if ([command hasPrefix:@"%layout-change "]) {
         [self parseLayoutChangeCommand:command];
     } else if ([command hasPrefix:@"%windows-change"]) {
@@ -240,14 +194,13 @@ static NSString *kCommandString = @"string";
         // We'll be tolerant of unrecognized commands.
         NSLog(@"Unrecognized command \"%@\"", command);
     }
-    
-    // Erase the just-handled command from the stream (except for %output,
-    // which is special).
-    if (doTruncation) {
-        [stream_ replaceBytesInRange:commandRange withBytes:"" length:0];
-    }
+
+    // Erase the just-handled command from the stream.
+    [stream_ replaceBytesInRange:commandRange withBytes:"" length:0];
+
+    return YES;
 }
-    
+
 - (NSData *)readTask:(NSData *)data
 {
     [stream_ appendData:data];
@@ -255,13 +208,12 @@ static NSString *kCommandString = @"string";
     while ([stream_ length] > 0) {
         switch (state_) {
             case CONTROL_STATE_READY:
-                [self parseCommand];
+                if (![self parseCommand]) {
+                    // Don't have a full command yet, need to read more.
+                    return nil;
+                }
                 break;
-                
-            case CONTROL_STATE_READING_DATA:
-                [self parsePartialInputData];
-                break;
-                
+
             case CONTROL_STATE_DETACHED:
                 data = [[stream_ copy] autorelease];
                 [stream_ setLength:0];

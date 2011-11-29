@@ -29,7 +29,6 @@ typedef enum {
 
 typedef enum {
     CONTROL_STATE_READY,
-    CONTROL_STATE_READING_DATA,
     CONTROL_STATE_DETACHED,
 } ControlState;
 
@@ -37,14 +36,10 @@ typedef enum {
     NSObject<TmuxGatewayDelegate> *delegate_;  // weak
     ControlState state_;
     NSMutableData *stream_;
-    
+
     // Data from parsing an incoming command
     ControlCommand command_;
-    unsigned int window_;
-    unsigned int windowPane_;
-    int length_;
-    NSMutableData *inputData_;
-    
+
     NSMutableArray *commandQueue_;  // Dictionaries
     NSMutableString *currentCommandResponse_;
     NSMutableDictionary *currentCommand_;  // Set between %begin and %end

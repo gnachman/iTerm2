@@ -312,14 +312,17 @@ static NSString* SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
         [[theTab realParentWindow] setWindowTitle];
     }
     [aSession setTab:theTab];
-    [aSession runCommandWithOldCwd:[arrangement objectForKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY]
-                     forObjectType:objectType];
-
+    NSNumber *n = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
+    if (!n) {
+        [aSession runCommandWithOldCwd:[arrangement objectForKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY]
+                         forObjectType:objectType];
+    } else {
+        [aSession setWindowTitle:[NSString stringWithFormat:@"Tmux session %@", n]];
+    }
     if (needDivorce) {
         [aSession divorceAddressBookEntryFromPreferences];
     }
 
-    NSNumber *n = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
     if (n) {
         [aSession setTmuxPane:[n intValue]];
     }

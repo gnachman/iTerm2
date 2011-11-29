@@ -39,7 +39,7 @@
         return;
     }
     PseudoTerminal *term = [[iTermController sharedInstance] openWindow];
-    [term loadTmuxLayout:layout window:windowIndex tmuxController:self];
+    [term loadTmuxLayout:layout window:windowIndex tmuxController:self name:name];
 }
 
 - (void)initialListWindowsResponse:(NSString *)response

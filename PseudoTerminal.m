@@ -1260,12 +1260,15 @@ NSString *sessionsKey = @"sessions";
     return tmuxWindow_;
 }
 
-- (void)loadTmuxLayout:(NSString *)layout window:(int)window tmuxController:(TmuxController *)tmuxController
+- (void)loadTmuxLayout:(NSString *)layout window:(int)window tmuxController:(TmuxController *)tmuxController name:(NSString *)name
 {
     NSMutableDictionary *parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:layout];
     PTYTab *tab = [PTYTab openTabWithTmuxLayout:parseTree inTerminal:self];
+    [self setWindowTitle:name];
     tmuxWindow_ = window;
+    [tab setReportIdealSizeAsCurrent:YES];
     [self fitWindowToTabs];
+    [tab setReportIdealSizeAsCurrent:NO];
 
     for (PTYSession *aSession in [tab sessions]) {
         [tmuxController registerSession:aSession withPane:[aSession tmuxPane] inWindow:window];
