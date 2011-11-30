@@ -51,7 +51,14 @@ typedef enum {
 - (NSData *)readTask:(NSData *)data;
 - (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector;
 - (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector responseObject:(id)obj;
+- (void)sendCommandList:(NSArray *)commandDicts;
 - (void)abortWithErrorMessage:(NSString *)message;
+
+// Use this to compose a command list for sendCommandList:.
+- (NSDictionary *)dictionaryForCommand:(NSString *)command
+                        responseTarget:(id)target
+                      responseSelector:(SEL)selector
+                        responseObject:(id)obj;
 
 - (void)sendKeys:(NSData *)data toWindow:(int)window windowPane:(int)windowPane;
 - (void)detach;

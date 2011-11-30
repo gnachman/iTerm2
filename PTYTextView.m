@@ -531,6 +531,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [self setSelectionTime];
 }
 
+- (void)setRectangularSelection:(BOOL)isBox
+{
+    selectMode = isBox ? SELECT_BOX : SELECT_CHAR;
+}
+
 - (void)setFGColor:(NSColor*)color
 {
     [defaultFGColor release];

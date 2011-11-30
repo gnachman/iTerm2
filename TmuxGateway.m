@@ -111,9 +111,13 @@ static NSString *kCommandObject = @"object";
 - (void)currentCommandResponseFinished
 {
     id target = [currentCommand_ objectForKey:kCommandTarget];
-    SEL selector = NSSelectorFromString([currentCommand_ objectForKey:kCommandSelector]);
-    id obj = [currentCommand_ objectForKey:kCommandObject];
-    [target performSelector:selector withObject:currentCommandResponse_ withObject:obj];
+    if (target) {
+        SEL selector = NSSelectorFromString([currentCommand_ objectForKey:kCommandSelector]);
+        id obj = [currentCommand_ objectForKey:kCommandObject];
+        [target performSelector:selector
+                     withObject:currentCommandResponse_
+                     withObject:obj];
+    }
     [currentCommand_ release];
     currentCommand_ = nil;
     [currentCommandResponse_ release];
@@ -258,6 +262,24 @@ static NSString *kCommandObject = @"object";
 {
 }
 
+- (NSDictionary *)dictionaryForCommand:(NSString *)command
+                        responseTarget:(id)target
+                      responseSelector:(SEL)selector
+                        responseObject:(id)obj
+{
+    return [NSDictionary dictionaryWithObjectsAndKeys:
+            command, kCommandString,
+            target, kCommandTarget,
+            NSStringFromSelector(selector), kCommandSelector,
+            obj, kCommandObject,
+            nil];
+}
+
+- (void)enqueueCommandDict:(NSDictionary *)dict
+{
+    [commandQueue_ addObject:dict];
+}
+
 - (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector
 {
     [self sendCommand:command
@@ -269,14 +291,26 @@ static NSString *kCommandObject = @"object";
 - (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector responseObject:(id)obj
 {
     NSString *commandWithNewline = [command stringByAppendingString:@"\n"];
-    NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys:
-                          commandWithNewline, kCommandString,
-                          target, kCommandTarget,
-                          NSStringFromSelector(selector), kCommandSelector,
-                          obj, kCommandObject,
-                          nil];
-    [commandQueue_ addObject:dict];
+    NSDictionary *dict = [self dictionaryForCommand:commandWithNewline
+                                     responseTarget:target
+                                   responseSelector:selector
+                                     responseObject:obj];
+    [self enqueueCommandDict:dict];
     [delegate_ tmuxWriteData:[commandWithNewline dataUsingEncoding:NSUTF8StringEncoding]];
+}
+
+- (void)sendCommandList:(NSArray *)commandDicts
+{
+    NSMutableString *cmd = [NSMutableString string];
+    NSString *sep = @"";
+    for (NSDictionary *dict in commandDicts) {
+        [cmd appendString:sep];
+        [cmd appendString:[dict objectForKey:kCommandString]];
+        [self enqueueCommandDict:dict];
+        sep = @"; ";
+    }
+    [cmd appendString:@"\n"];
+    [delegate_ tmuxWriteData:[cmd dataUsingEncoding:NSUTF8StringEncoding]];
 }
 
 @end

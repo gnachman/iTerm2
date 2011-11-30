@@ -16,11 +16,12 @@ extern NSString *kLayoutDictYOffsetKey;   // Y position. String. Use -intValue.
 extern NSString *kLayoutDictNodeType;     // Node type from enum LayoutNodeType. NSNumber.
 extern NSString *kLayoutDictWindowPaneKey;  // window pane number (leaf nodes only)
 
-// These values are filled in by the client:
+// These values are filled in by other classes:
 extern NSString *kLayoutDictPixelWidthKey;
 extern NSString *kLayoutDictPixelHeightKey;
 extern NSString *kLayoutDictHistoryKey;       // Array of screen_char_t-filled NSData
 extern NSString *kLayoutDictAltHistoryKey;    // Alternate screen history
+extern NSString *kLayoutDictStateKey;         // see TmuxStateParser
 
 typedef enum {
     kLeafLayoutNode,

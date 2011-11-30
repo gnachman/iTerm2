@@ -251,6 +251,7 @@ void StringToScreenChars(NSString *s,
 
 - (void)setHistory:(NSArray *)history;
 - (void)setAltScreen:(NSArray *)lines;
+- (void)setTmuxState:(NSDictionary *)state;
 
 - (int)scrollbackOverflow;
 - (long long)totalScrollbackOverflow;

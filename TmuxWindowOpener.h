@@ -23,6 +23,7 @@
     TmuxController *controller_;  // weak
     NSMutableDictionary *histories_;
     NSMutableDictionary *altHistories_;
+    NSMutableDictionary *states_;
 }
 
 @property (nonatomic, assign) int windowIndex;
@@ -35,6 +36,6 @@
 @property (nonatomic, assign) TmuxController *controller;
 
 + (TmuxWindowOpener *)windowOpener;
-- (void)begin;
+- (void)openWindows:(BOOL)initial;
 
 @end

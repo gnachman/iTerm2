@@ -11,18 +11,21 @@
 #import "ScreenChar.h"
 #import "PseudoTerminal.h"
 #import "TmuxHistoryParser.h"
+#import "TmuxStateParser.h"
 
 @interface TmuxWindowOpener (Private)
 
-- (void)requestHistoryFromParseTree:(NSMutableDictionary *)node
-                                alt:(BOOL)alternate;
-- (id)sendRequests:(NSMutableDictionary *)node;
+- (id)appendRequestsForNode:(NSMutableDictionary *)node
+                    toArray:(NSMutableArray *)cmdList;
+- (NSDictionary *)dictForRequestHistoryForNode:(NSMutableDictionary *)node
+                                           alt:(BOOL)alternate;
 - (void)decorateParseTree:(NSMutableDictionary *)parseTree;
 - (id)decorateWindowPane:(NSMutableDictionary *)parseTree;
 - (void)requestDidComplete;
 - (void)dumpHistoryResponse:(NSString *)response
            paneAndAlternate:(NSArray *)info;
-
+- (NSDictionary *)dictForDumpStateForNode:(NSMutableDictionary *)node;
+- (NSDictionary *)dictForStartControlCommand;
 
 @end
 
@@ -48,6 +51,7 @@
     if (self) {
         histories_ = [[NSMutableDictionary alloc] init];
         altHistories_ = [[NSMutableDictionary alloc] init];
+        states_ = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
@@ -56,49 +60,79 @@
 {
     [histories_ release];
     [altHistories_ release];
+    [states_ release];
     [super dealloc];
 }
 
-- (void)begin
+- (void)openWindows:(BOOL)initial
 {
     if (!self.layout) {
         NSLog(@"Bad layout");
         return;
     }
     self.parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
+    NSMutableArray *cmdList = [NSMutableArray array];
     [[TmuxLayoutParser sharedInstance] depthFirstSearchParseTree:self.parseTree
-                                                 callingSelector:@selector(sendRequests:)
+                                                 callingSelector:@selector(appendRequestsForNode:toArray:)
                                                         onTarget:self
-                                                      withObject:nil];
+                                                      withObject:cmdList];
+    if (initial) {
+        [cmdList addObject:[self dictForStartControlCommand]];
+    }
+    // append start-control
+    [gateway_ sendCommandList:cmdList];
 }
 
 @end
 
 @implementation TmuxWindowOpener (Private)
 
+- (NSDictionary *)dictForStartControlCommand
+{
+    ++pendingRequests_;
+    return [gateway_ dictionaryForCommand:@"start-control"
+                           responseTarget:self
+                         responseSelector:@selector(requestDidComplete)
+                           responseObject:nil];
+}
+
 // This is called for each window pane via a DFS. It sends all commands needed
 // to open a window.
-- (id)sendRequests:(NSMutableDictionary *)node
-{
-    [self requestHistoryFromParseTree:node alt:NO];
-    [self requestHistoryFromParseTree:node alt:YES];
+- (id)appendRequestsForNode:(NSMutableDictionary *)node
+                    toArray:(NSMutableArray *)cmdList
+{    
+    [cmdList addObject:[self dictForRequestHistoryForNode:node alt:NO]];
+    [cmdList addObject:[self dictForRequestHistoryForNode:node alt:YES]];
+    [cmdList addObject:[self dictForDumpStateForNode:node]];
     return nil;
 }
 
-- (void)requestHistoryFromParseTree:(NSMutableDictionary *)node
-                                alt:(BOOL)alternate
+- (NSDictionary *)dictForDumpStateForNode:(NSMutableDictionary *)node
+{
+    ++pendingRequests_;
+    NSNumber *wp = [node objectForKey:kLayoutDictWindowPaneKey];
+    NSString *command = [NSString stringWithFormat:@"dump-state -t %d.%d",
+                         windowIndex_, [wp intValue]];
+    return [gateway_ dictionaryForCommand:command
+                           responseTarget:self
+                         responseSelector:@selector(dumpStateResponse:pane:)
+                           responseObject:wp];
+}
+
+- (NSDictionary *)dictForRequestHistoryForNode:(NSMutableDictionary *)node
+                                           alt:(BOOL)alternate
 {
     ++pendingRequests_;
     NSNumber *wp = [node objectForKey:kLayoutDictWindowPaneKey];
     NSString *command = [NSString stringWithFormat:@"dump-history %@-t %d.%d -l 1000",
                          (alternate ? @"-a " : @""), windowIndex_, [wp intValue]];
-    [gateway_ sendCommand:command
-           responseTarget:self
-         responseSelector:@selector(dumpHistoryResponse:paneAndAlternate:)
-           responseObject:[NSArray arrayWithObjects:
-                           wp,
-                           [NSNumber numberWithBool:alternate],
-                           nil]];
+    return [gateway_ dictionaryForCommand:command
+                           responseTarget:self
+                         responseSelector:@selector(dumpHistoryResponse:paneAndAlternate:)
+                           responseObject:[NSArray arrayWithObjects:
+                                           wp,
+                                           [NSNumber numberWithBool:alternate],
+                                           nil]];
 }
 
 // Command response handler for dump-history
@@ -116,6 +150,13 @@
             [histories_ setObject:history forKey:wp];
         }
     }
+    [self requestDidComplete];
+}
+
+- (void)dumpStateResponse:(NSString *)response pane:(NSNumber *)wp
+{
+    NSDictionary *state = [[TmuxStateParser sharedInstance] parsedStateFromString:response];
+    [states_ setObject:state forKey:wp];
     [self requestDidComplete];
 }
 
@@ -152,10 +193,15 @@
     if (history) {
         [parseTree setObject:history forKey:kLayoutDictHistoryKey];
     }
-    
+
     history = [altHistories_ objectForKey:n];
     if (history) {
         [parseTree setObject:history forKey:kLayoutDictAltHistoryKey];
+    }
+
+    NSDictionary *state = [states_ objectForKey:n];
+    if (state) {
+        [parseTree setObject:state forKey:kLayoutDictStateKey];
     }
 
     return nil;

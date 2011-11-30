@@ -46,7 +46,7 @@
     windowOpener.maxHistory = 1000;
     windowOpener.controller = self;
     windowOpener.gateway = gateway_;
-    [windowOpener begin];
+    [windowOpener openWindows:YES];
 }
 
 - (void)initialListWindowsResponse:(NSString *)response

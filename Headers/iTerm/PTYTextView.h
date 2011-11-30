@@ -439,6 +439,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (int)selectionEndX;
 - (int)selectionEndY;
 - (void)setSelectionFromX:(int)fromX fromY:(int)fromY toX:(int)toX toY:(int)toY;
+- (void)setRectangularSelection:(BOOL)isBox;
 
 - (double)excess;
 

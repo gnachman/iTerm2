@@ -54,6 +54,7 @@
 #import "ITAddressBookMgr.h"
 #import "iTermExpose.h"
 #import "RegexKitLite.h"
+#import "TmuxStateParser.h"
 
 #define MAX_SCROLLBACK_LINES 1000000
 #define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array
@@ -3424,6 +3425,41 @@ void DumpBuf(screen_char_t* p, int n) {
                 length * sizeof(screen_char_t));
         temp_buffer[i * REAL_WIDTH + WIDTH].code = (isPartial ? EOL_SOFT : EOL_HARD);
     }
+}
+
+- (void)setTmuxState:(NSDictionary *)state
+{
+    if (![[state objectForKey:kStateDictInAlternateScreen] intValue] && temp_buffer) {
+        free(temp_buffer);
+        temp_buffer = NULL;
+    }
+
+    SAVE_CURSOR_X = [[state objectForKey:kStateDictBaseCursorX] intValue];
+    SAVE_CURSOR_Y = [[state objectForKey:kStateDictBaseCursorY] intValue];
+    cursorX = [[state objectForKey:kStateDictCursorX] intValue];
+    cursorY = [[state objectForKey:kStateDictCursorY] intValue];
+    SCROLL_TOP = [[state objectForKey:kStateDictScrollRegionUpper] intValue];
+    SCROLL_BOTTOM = [[state objectForKey:kStateDictScrollRegionLower] intValue];
+    [tabStops removeAllObjects];
+    for (NSNumber *n in [state objectForKey:kStateDictTabstops]) {
+        [tabStops addObject:n];
+    }
+    int isRect = [[state objectForKey:kStateDictHasRectangularSelection] intValue];
+    if (isRect || [[state objectForKey:kStateDictHasSelection] intValue]) {
+        [display setSelectionFromX:[[state objectForKey:kStateDictSelectionStartX] intValue]
+                             fromY:[[state objectForKey:kStateDictSelectionStartY] intValue]
+                               toX:[[state objectForKey:kStateDictSelectionEndX] intValue]
+                               toY:[[state objectForKey:kStateDictSelectionEndY] intValue]];
+        [display setRectangularSelection:isRect];
+    }
+
+    // TODO: The way that tmux and iterm2 handle saving the cursor position is different and incompatible and only one of us is right.
+    // tmux saves the cursor position for DECSC in one location and for the non-alt screen in a separate location.
+    // iterm2 saves the cursor position for the base screen in one location and for the alternate screen in another location.
+    // At a minimum, we differ in how we handle DECSC. 
+    // After resolving this confusion, do the right thing with these state fields:
+    // kStateDictDECSCCursorX;
+    // kStateDictDECSCCursorY;
 }
 
 - (FindContext*)findContext
