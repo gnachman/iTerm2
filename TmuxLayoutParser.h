@@ -20,6 +20,7 @@ extern NSString *kLayoutDictWindowPaneKey;  // window pane number (leaf nodes on
 extern NSString *kLayoutDictPixelWidthKey;
 extern NSString *kLayoutDictPixelHeightKey;
 extern NSString *kLayoutDictHistoryKey;       // Array of screen_char_t-filled NSData
+extern NSString *kLayoutDictAltHistoryKey;    // Alternate screen history
 
 typedef enum {
     kLeafLayoutNode,

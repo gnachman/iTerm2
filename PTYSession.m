@@ -73,6 +73,7 @@ static NSString* SESSION_ARRANGEMENT_BOOKMARK = @"Bookmark";
 static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 static NSString* SESSION_ARRANGEMENT_TMUX_PANE = @"Tmux Pane";
 static NSString* SESSION_ARRANGEMENT_TMUX_HISTORY = @"Tmux History";
+static NSString* SESSION_ARRANGEMENT_TMUX_ALT_HISTORY = @"Tmux AltHistory";
 
 // init/dealloc
 - (id)init
@@ -329,6 +330,10 @@ static NSString* SESSION_ARRANGEMENT_TMUX_HISTORY = @"Tmux History";
     NSArray *history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
     if (history) {
         [[aSession SCREEN] setHistory:history];
+    }
+    history = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_ALT_HISTORY];
+    if (history) {
+        [[aSession SCREEN] setAltScreen:history];
     }
     return aSession;
 }
@@ -2854,6 +2859,7 @@ static NSString* SESSION_ARRANGEMENT_TMUX_HISTORY = @"Tmux History";
     [result setObject:@"" forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
     [result setObject:[parseNode objectForKey:kLayoutDictWindowPaneKey] forKey:SESSION_ARRANGEMENT_TMUX_PANE];
     [result setObject:[parseNode objectForKey:kLayoutDictHistoryKey] forKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
+    [result setObject:[parseNode objectForKey:kLayoutDictAltHistoryKey] forKey:SESSION_ARRANGEMENT_TMUX_ALT_HISTORY];
 
     return result;
 }

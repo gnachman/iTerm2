@@ -3,7 +3,6 @@
 //  iTerm
 //
 //  Created by George Nachman on 11/29/11.
-//  Copyright (c) 2011 Georgetech. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
@@ -20,9 +19,10 @@
     int maxHistory_;
     TmuxGateway *gateway_;
     NSMutableDictionary *parseTree_;
-    int pendingHistoryDumps_;
+    int pendingRequests_;
     TmuxController *controller_;  // weak
     NSMutableDictionary *histories_;
+    NSMutableDictionary *altHistories_;
 }
 
 @property (nonatomic, assign) int windowIndex;

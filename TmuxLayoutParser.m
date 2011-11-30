@@ -26,6 +26,7 @@ NSString *kLayoutDictPixelWidthKey = @"px-width";
 NSString *kLayoutDictPixelHeightKey = @"px-height";
 NSString *kLayoutDictWindowPaneKey = @"window-pane";
 NSString *kLayoutDictHistoryKey = @"history";
+NSString *kLayoutDictAltHistoryKey = @"alt-history";
 
 @interface TmuxLayoutParser (Private)
 

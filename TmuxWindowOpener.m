@@ -3,7 +3,6 @@
 //  iTerm
 //
 //  Created by George Nachman on 11/29/11.
-//  Copyright (c) 2011 Georgetech. All rights reserved.
 //
 
 #import "TmuxWindowOpener.h"
@@ -11,37 +10,21 @@
 #import "TmuxLayoutParser.h"
 #import "ScreenChar.h"
 #import "PseudoTerminal.h"
+#import "TmuxHistoryParser.h"
 
-typedef struct {
-    int attr;
-    int flags;
-    int fg;
-    int bg;
-    screen_char_t prototype;
-    BOOL isDwcPadding;
-} HistoryParseContext;
+@interface TmuxWindowOpener (Private)
 
-// -- begin section copied from tmux.h --
-/* Grid attributes. */                                           
-#define GRID_ATTR_BRIGHT 0x1                                     
-#define GRID_ATTR_DIM 0x2                                        
-#define GRID_ATTR_UNDERSCORE 0x4                                 
-#define GRID_ATTR_BLINK 0x8                                      
-#define GRID_ATTR_REVERSE 0x10                                   
-#define GRID_ATTR_HIDDEN 0x20                                    
-#define GRID_ATTR_ITALICS 0x40                                   
-#define GRID_ATTR_CHARSET 0x80  /* alternative character set */  
+- (void)requestHistoryFromParseTree:(NSMutableDictionary *)node
+                                alt:(BOOL)alternate;
+- (id)sendRequests:(NSMutableDictionary *)node;
+- (void)decorateParseTree:(NSMutableDictionary *)parseTree;
+- (id)decorateWindowPane:(NSMutableDictionary *)parseTree;
+- (void)requestDidComplete;
+- (void)dumpHistoryResponse:(NSString *)response
+           paneAndAlternate:(NSArray *)info;
 
-/* Grid flags. */                                                
-#define GRID_FLAG_FG256 0x1                                      
-#define GRID_FLAG_BG256 0x2                                      
-#define GRID_FLAG_PADDING 0x4                                    
-#define GRID_FLAG_UTF8 0x8                                       
 
-/* Grid line flags. */                                           
-#define GRID_LINE_WRAPPED 0x1                                    
-// -- end section copied from tmux.h --
-
+@end
 
 @implementation TmuxWindowOpener
 
@@ -64,6 +47,7 @@ typedef struct {
     self = [super init];
     if (self) {
         histories_ = [[NSMutableDictionary alloc] init];
+        altHistories_ = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
@@ -71,6 +55,7 @@ typedef struct {
 - (void)dealloc
 {
     [histories_ release];
+    [altHistories_ release];
     [super dealloc];
 }
 
@@ -82,244 +67,98 @@ typedef struct {
     }
     self.parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
     [[TmuxLayoutParser sharedInstance] depthFirstSearchParseTree:self.parseTree
-                                                 callingSelector:@selector(requestHistoryFromParseTree:)
+                                                 callingSelector:@selector(sendRequests:)
                                                         onTarget:self
                                                       withObject:nil];
 }
 
-- (id)requestHistoryFromParseTree:(NSMutableDictionary *)node
+@end
+
+@implementation TmuxWindowOpener (Private)
+
+// This is called for each window pane via a DFS. It sends all commands needed
+// to open a window.
+- (id)sendRequests:(NSMutableDictionary *)node
 {
-    ++pendingHistoryDumps_;
-    NSNumber *wp = [node objectForKey:kLayoutDictWindowPaneKey];
-    NSString *command = [NSString stringWithFormat:@"dump-history -t %d.%d -l 1000",
-                         windowIndex_, [wp intValue]];
-    [gateway_ sendCommand:command
-           responseTarget:self
-         responseSelector:@selector(dumpHistoryResponse:forPane:)
-           responseObject:wp];
+    [self requestHistoryFromParseTree:node alt:NO];
+    [self requestHistoryFromParseTree:node alt:YES];
     return nil;
 }
 
-- (screen_char_t)prototypeScreenCharWithAttributes:(int)attributes
-                                             flags:(int)flags
-                                                fg:(int)fg
-                                                bg:(int)bg
+- (void)requestHistoryFromParseTree:(NSMutableDictionary *)node
+                                alt:(BOOL)alternate
 {
-    screen_char_t temp;
-    memset(&temp, 0, sizeof(temp));
-
-    if (fg == 8) {
-        // Default fg
-        temp.foregroundColor = ALTSEM_FG_DEFAULT;
-        temp.alternateForegroundSemantics = YES;
-    } else {
-        temp.foregroundColor = fg;
-        temp.alternateForegroundSemantics = NO;
-        // TODO: GRID_ATTR_DIM not supported
-    }
-    if (bg == 8) {
-        temp.backgroundColor = ALTSEM_BG_DEFAULT;
-        temp.alternateBackgroundSemantics = YES;
-    } else {
-        temp.backgroundColor = bg;
-        temp.alternateBackgroundSemantics = NO;
-    }
-
-    if (attributes & GRID_ATTR_BRIGHT) {
-        temp.bold = YES;
-    }
-    if (attributes & GRID_ATTR_UNDERSCORE) {
-        temp.underline = YES;
-    }
-    if (attributes & GRID_ATTR_BLINK) {
-        temp.blink = YES;
-    }
-    if (attributes & GRID_ATTR_REVERSE) {
-        int x = temp.foregroundColor;
-        temp.foregroundColor = temp.backgroundColor;
-        temp.backgroundColor = x;
-
-        x = temp.alternateForegroundSemantics;
-        temp.alternateForegroundSemantics = temp.alternateBackgroundSemantics;
-        temp.alternateBackgroundSemantics = x;
-    }
-
-    if (attributes & GRID_ATTR_HIDDEN) {
-        // TODO not supported (SGR 8)
-    }
-    if (attributes & GRID_ATTR_ITALICS) {
-        // TODO not supported
-    }
-    if (attributes & GRID_ATTR_CHARSET) {
-        // TODO not supported
-    }
-    return temp;
+    ++pendingRequests_;
+    NSNumber *wp = [node objectForKey:kLayoutDictWindowPaneKey];
+    NSString *command = [NSString stringWithFormat:@"dump-history %@-t %d.%d -l 1000",
+                         (alternate ? @"-a " : @""), windowIndex_, [wp intValue]];
+    [gateway_ sendCommand:command
+           responseTarget:self
+         responseSelector:@selector(dumpHistoryResponse:paneAndAlternate:)
+           responseObject:[NSArray arrayWithObjects:
+                           wp,
+                           [NSNumber numberWithBool:alternate],
+                           nil]];
 }
 
-// Convert a hex digit at s into an int placing it in *out and returning the number
-// of characters used in the conversion.
-static int consume_hex(const char *s, int *out)
+// Command response handler for dump-history
+// info is an array: [window pane number, isAlternate flag]
+- (void)dumpHistoryResponse:(NSString *)response
+           paneAndAlternate:(NSArray *)info
 {
-    char const *endptr = s;
-    *out = strtol(s, (char**) &endptr, 16);
-    return endptr - s;
-}
-
-- (NSData *)dataForHistoryLine:(NSString *)hist
-                   withContext:(HistoryParseContext *)ctx
-{
-    NSMutableData *result = [NSMutableData data];
-    BOOL softEol = NO;
-    if ([hist hasSuffix:@"+"]) {
-        softEol = YES;
-        hist = [hist substringWithRange:NSMakeRange(0, hist.length - 1)];
-    }
-
-    const char *s = [hist UTF8String];
-    for (int i = 0; s[i]; ) {
-        if (s[i] == ':') {
-            NSLog(@"found a : at %d", i);
-            // Context update follows
-            i++;
-            int values[4];
-            for (int j = 0; j < 4; j++) {
-                int n = consume_hex(s + i, &values[j]);
-                i += n;
-                if (s[i] == ',') {
-                    i++;
-                } else {
-                    return nil;
-                }
-            }
-            ctx->prototype = [self prototypeScreenCharWithAttributes:values[0]
-                                                               flags:values[1]
-                                                                  fg:values[2]
-                                                                  bg:values[3]];
-            // attr, flags, fg, bg
-            if (values[1] & GRID_FLAG_PADDING) {
-                ctx->isDwcPadding = YES;
-            } else {
-                ctx->isDwcPadding = NO;
-            }
-        }
-        // array of 2-digit hex values interspersed with [ 2 digit hex values ].
-        BOOL utf8 = NO;
-        NSMutableData *utf8Buffer = [NSMutableData data];
-        NSLog(@"Look for hex array at %d", i);
-        while (s[i] != ':' && s[i] && s[i + 1]) {
-            if (s[i] == '[') {
-                NSLog(@"-- begin utf 8 --");
-                if (s[i+1] && s[i+2] && s[i+3]) {
-                    utf8 = YES;
-                    [utf8Buffer setLength:0];
-                } else {
-                    NSLog(@"Malformed text after [ in history");
-                    return nil;
-                }
-                i++;
-            } else if (s[i] == ']') {
-                NSLog(@"-- end utf 8 --");
-                if (utf8) {
-                    utf8 = NO;
-                    ctx->prototype.code = GetOrSetComplexChar([[[NSString alloc] initWithData:utf8Buffer encoding:NSUTF8StringEncoding] autorelease]);
-                    ctx->prototype.complexChar = 1;
-                } else {
-                    NSLog(@"] without [ in history");
-                    return nil;
-                }
-                i++;
-                continue;
-            }
-            unsigned scanned;
-            if ([[NSScanner scannerWithString:[NSString stringWithFormat:@"%c%c", s[i], s[i+1]]] scanHexInt:&scanned]) {
-                if (utf8) {
-                    char c = scanned;
-                    [utf8Buffer appendBytes:&c length:1];
-                } else {
-                    if (ctx->isDwcPadding) {
-                        ctx->prototype.code = DWC_RIGHT;
-                    } else {
-                        ctx->prototype.code = scanned;
-                    }
-                    ctx->prototype.complexChar = 0;
-                    // Skip DWC_RIGHT if it's the first thing in a line. It would
-                    // be better to set the last char of the previous line to DWC_SKIP
-                    // and the eol to EOF_DWC, but I think tmux prevents this from
-                    // happening anyway.
-                    if (result.length > 0 || ctx->prototype.code != DWC_RIGHT) {
-                        [result appendBytes:&ctx->prototype length:sizeof(screen_char_t)];
-                    }
-                }
-                i += 2;
-            } else {
-                NSLog(@"Malformed hex array at %d: \"%c%c\" (%d %d)", i, s[i], s[i+1], (int) s[i], (int) s[i+1]);
-                return nil;
-            }
+    NSNumber *wp = [info objectAtIndex:0];
+    NSNumber *alt = [info objectAtIndex:1];
+    NSArray *history = [[TmuxHistoryParser sharedInstance] parseDumpHistoryResponse:response];
+    if (history) {
+        if ([alt boolValue]) {
+            [altHistories_ setObject:history forKey:wp];
+        } else {
+            [histories_ setObject:history forKey:wp];
         }
     }
-
-    screen_char_t eolSct;
-    if (softEol) {
-        eolSct.code = EOL_SOFT;
-    } else {
-        eolSct.code = EOL_HARD;
-    }
-    [result appendBytes:&eolSct length:sizeof(eolSct)];
-
-    return result;
+    [self requestDidComplete];
 }
 
-// Return an NSArray of NSData's. Each NSData is an array of screen_char_t's,
-// with the last element in each being the newline.
-- (NSArray *)parseDumpHistoryResponse:(NSString *)response
+- (void)requestDidComplete
 {
-    NSArray *lines = [response componentsSeparatedByString:@"\n"];
-    NSMutableArray *screenLines = [NSMutableArray array];
-    HistoryParseContext ctx;
-    memset(&ctx, 0, sizeof(ctx));
-    for (NSString *line in lines) {
-        [screenLines addObject:[self dataForHistoryLine:line
-                                            withContext:&ctx]];
+    --pendingRequests_;
+    if (pendingRequests_ == 0) {
+        PseudoTerminal *term = [[iTermController sharedInstance] openWindow];
+        NSMutableDictionary *parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
+        [self decorateParseTree:parseTree];
+        [term loadTmuxLayout:parseTree window:windowIndex_
+              tmuxController:controller_
+                        name:name_];
     }
-
-    return screenLines;
 }
 
-- (void)decorateParseTree:(NSMutableDictionary *)parseTree withHistories:(NSDictionary *)histories
+// Add info from command responses to leaf nodes of parse tree.
+- (void)decorateParseTree:(NSMutableDictionary *)parseTree
 {
     [[TmuxLayoutParser sharedInstance] depthFirstSearchParseTree:parseTree
-                                                 callingSelector:@selector(decorateWindowPane:withHistories:)
+                                                 callingSelector:@selector(decorateWindowPane:)
                                                         onTarget:self
-                                                      withObject:histories];
+                                                      withObject:nil];
 }
 
-- (id)decorateWindowPane:(NSMutableDictionary *)parseTree withHistories:(NSDictionary *)histories
+// Callback for DFS of parse tree from decorateParseTree:
+- (id)decorateWindowPane:(NSMutableDictionary *)parseTree
 {
     NSNumber *n = [parseTree objectForKey:kLayoutDictWindowPaneKey];
     if (!n) {
         return nil;
     }
-    NSArray *history = [histories objectForKey:n];
-    if (!history) {
-        return nil;
-    }
-    [parseTree setObject:history forKey:kLayoutDictHistoryKey];
-    return nil;
-}
-
-- (void)dumpHistoryResponse:(NSString *)response forPane:(NSNumber *)wp
-{
-    --pendingHistoryDumps_;
-    NSArray *history = [self parseDumpHistoryResponse:response];
+    NSArray *history = [histories_ objectForKey:n];
     if (history) {
-        [histories_ setObject:history forKey:wp];
+        [parseTree setObject:history forKey:kLayoutDictHistoryKey];
     }
-    if (pendingHistoryDumps_ == 0) {
-        PseudoTerminal *term = [[iTermController sharedInstance] openWindow];
-        NSMutableDictionary *parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
-        [self decorateParseTree:parseTree withHistories:histories_];
-        [term loadTmuxLayout:parseTree window:windowIndex_ tmuxController:controller_ name:name_];
+    
+    history = [altHistories_ objectForKey:n];
+    if (history) {
+        [parseTree setObject:history forKey:kLayoutDictAltHistoryKey];
     }
+
+    return nil;
 }
 
 @end

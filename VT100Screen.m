@@ -3398,6 +3398,34 @@ void DumpBuf(screen_char_t* p, int n) {
     [self restoreScreenFromScrollback];
 }
 
+- (void)setAltScreen:(NSArray *)lines
+{
+    // Initialize alternate screen to be empty
+    screen_char_t* aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
+    if (temp_buffer) {
+        free(temp_buffer);
+    }
+    temp_buffer = (screen_char_t*) calloc(REAL_WIDTH * HEIGHT, sizeof(screen_char_t));
+    for (int i = 0; i < HEIGHT; i++) {
+        memcpy(temp_buffer + i * REAL_WIDTH,
+               aDefaultLine,
+               REAL_WIDTH * sizeof(screen_char_t));
+    }
+
+    // Copy the lines back over it
+    for (int i = 0; i < MIN(lines.count, HEIGHT); i++) {
+        NSData *chars = [lines objectAtIndex:i];
+        screen_char_t *line = (screen_char_t *) [chars bytes];
+        int length = [chars length] / sizeof(screen_char_t);
+        length--;  // Last position is wrap flag
+        BOOL isPartial = (line[length].code == EOL_SOFT);
+        memmove(temp_buffer + i * REAL_WIDTH,
+                line,
+                length * sizeof(screen_char_t));
+        temp_buffer[i * REAL_WIDTH + WIDTH].code = (isPartial ? EOL_SOFT : EOL_HARD);
+    }
+}
+
 - (FindContext*)findContext
 {
     return &findContext;

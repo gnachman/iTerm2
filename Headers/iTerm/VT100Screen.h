@@ -250,6 +250,7 @@ void StringToScreenChars(NSString *s,
 - (int)numberOfScrollbackLines;
 
 - (void)setHistory:(NSArray *)history;
+- (void)setAltScreen:(NSArray *)lines;
 
 - (int)scrollbackOverflow;
 - (long long)totalScrollbackOverflow;
