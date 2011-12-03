@@ -70,8 +70,11 @@ NSString *kLayoutDictStateKey = @"state";
     if ([[parseTree objectForKey:kLayoutDictNodeType] intValue] == kLeafLayoutNode) {
         return [target performSelector:selector withObject:parseTree withObject:obj];
     } else {
-        for (NSDictionary *child in [parseTree objectForKey:kLayoutDictChildrenKey]) {
-            id ret = [target performSelector:selector withObject:parseTree withObject:obj];
+        for (NSMutableDictionary *child in [parseTree objectForKey:kLayoutDictChildrenKey]) {
+            id ret = [self depthFirstSearchParseTree:child
+                                     callingSelector:selector
+                                            onTarget:target
+                                          withObject:obj];
             if (ret) {
                 return ret;
             }
@@ -106,14 +109,14 @@ NSString *kLayoutDictStateKey = @"state";
     } else if (squareRange.location != NSNotFound &&
                curlyRange.location != NSNotFound) {
         if (squareRange.location < curlyRange.location) {
-            return kVSplitLayoutNode;
-        } else {
             return kHSplitLayoutNode;
+        } else {
+            return kVSplitLayoutNode;
         }
     } else if (squareRange.location != NSNotFound) {
-        return kVSplitLayoutNode;
-    } else {
         return kHSplitLayoutNode;
+    } else {
+        return kVSplitLayoutNode;
     }
 }
 
@@ -128,7 +131,7 @@ NSString *kLayoutDictStateKey = @"state";
         NSLog(@"Matched wrong number of components in singleton layout \"%@\"", [layout substringWithRange:range]);
         return nil;
     }
-    
+
     NSMutableDictionary *result = [NSMutableDictionary dictionaryWithObjectsAndKeys:
                                    [components objectAtIndex:1], kLayoutDictWidthKey,
                                    [components objectAtIndex:2], kLayoutDictHeightKey,
@@ -149,7 +152,7 @@ NSString *kLayoutDictStateKey = @"state";
 {
     NSRange openRange = [layout rangeOfString:openChar options:0 range:range];
     int count = 0;
-    for (int i = openRange.location; i < range.length; i++) {
+    for (int i = openRange.location; i < range.location + range.length; i++) {
         unichar c = [layout characterAtIndex:i];
         if (c == '[' || c == '{') {
             ++count;
@@ -168,13 +171,17 @@ NSString *kLayoutDictStateKey = @"state";
 {
     return [NSMutableDictionary dictionaryWithObject:[NSNumber numberWithInt:nodeType]
                                               forKey:kLayoutDictNodeType];
-    
+
 }
 
 - (NSString *)splitOffFirstLayoutInLayoutArray:(NSString *)layouts rest:(NSMutableString *)rest
 {
+    if (!layouts.length) {
+        return nil;
+    }
+
     // 204x50,0,0[204x25,0,0,204x12,0,26,204x11,0,39{102x11,0,39,101x11,103,39[101x5,103,39,101x5,103,45{50x5,103,45,50x5,154,45}]}]
-    
+
     // <width>x<height>,<x>,<y>,...
     // <parent-width>x<parent-height>,<parent-x>,<parent-y>{...}
     // <parent-width>x<parent-height>,<parent-x>,<parent-y>[...]
@@ -193,7 +200,7 @@ NSString *kLayoutDictStateKey = @"state";
         unichar c = [suffix characterAtIndex:0];
         if (c == ',') {
             // First item is a singleton
-            [rest setString:[components objectAtIndex:2]];
+            [rest setString:[suffix substringWithRange:NSMakeRange(1, suffix.length - 1)]];
             return [components objectAtIndex:1];
         } else if (c == '[' || c == '{') {
             // Find matching close bracket/brace
@@ -239,12 +246,12 @@ NSString *kLayoutDictStateKey = @"state";
         case kLeafLayoutNode:
             [tree addObject:[self dictForLeafNodeInLayout:layout range:range]];
             break;
-            
-        case kHSplitLayoutNode:
+
+        case kVSplitLayoutNode:
             openChar = @"{";
             closeChar = @"}";
             // fall through
-        case kVSplitLayoutNode: {
+        case kHSplitLayoutNode: {
             NSRange childrenRange = [self rangeOfChildrenInLayout:layout
                                                             range:range
                                                              open:openChar

@@ -42,12 +42,12 @@ static NSString *kCommandObject = @"object";
 {
     // TODO: be more forgiving of errors.
     NSLog(@"TmuxGateway parse errror: %@", message);
-    state_ = CONTROL_STATE_DETACHED;
-    [[NSAlert alertWithMessageText:@"tmux disconnected unexpectedly"
+    [[NSAlert alertWithMessageText:@"A tmux protocol error occurred."
                      defaultButton:@"Ok"
                    alternateButton:@""
                        otherButton:@""
          informativeTextWithFormat:@"Reason: %@", message] runModal];
+    [self detach];
 }
 
 - (NSData *)decodeBase64:(NSString *)b64data
@@ -182,6 +182,8 @@ static NSString *kCommandObject = @"object";
     } else if ([command hasPrefix:@"%exit "]) {
         NSLog(@"tmux exit message: %@", command);
         [self hostDisconnected];
+    } else if ([command hasPrefix:@"%error"]) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@", command]];
     } else if ([command isEqualToString:@"%begin"]) {
         if (currentCommand_) {
             [self abortWithErrorMessage:@"%begin without %end"];

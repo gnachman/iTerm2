@@ -319,7 +319,7 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
         [aSession runCommandWithOldCwd:[arrangement objectForKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY]
                          forObjectType:objectType];
     } else {
-        [aSession setWindowTitle:[NSString stringWithFormat:@"Tmux session %@", n]];
+        [aSession setWindowTitle:[NSString stringWithFormat:@"Tmux session %@", n]];  // TOOD Use name from tmux if available?
     }
     if (needDivorce) {
         [aSession divorceAddressBookEntryFromPreferences];

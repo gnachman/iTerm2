@@ -9,6 +9,7 @@
 #import "TmuxGateway.h"
 
 @class PTYSession;
+@class PseudoTerminal;
 
 @interface TmuxController : NSObject {
     TmuxGateway *gateway_;
@@ -24,6 +25,7 @@
                withPane:(int)windowPane
                inWindow:(int)window;
 - (void)deregisterWindow:(int)window windowPane:(int)windowPane;
+- (void)windowDidResize:(PseudoTerminal *)term;
 
 // This should be called after the host sends an %exit command.
 - (void)detach;

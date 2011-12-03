@@ -11,6 +11,7 @@
 #import "iTermController.h"
 #import "TmuxWindowOpener.h"
 #import "PTYTab.h"
+#import "PseudoTerminal.h"
 
 @implementation TmuxController
 
@@ -96,8 +97,9 @@
 
 - (void)detach
 {
-    // Close all sessions.
-    for (NSString *key in windowPanes_) {
+    // Close all sessions. Iterate over a copy of windowPanes_ because the loop
+    // body modifies it by closing sessions.
+    for (NSString *key in [[windowPanes_ copy] autorelease]) {
         PTYSession *session = [windowPanes_ objectForKey:key];
         [[[session tab] realParentWindow] closeSession:session];
     }
@@ -106,6 +108,15 @@
     [windowPanes_ removeAllObjects];
     [gateway_ release];
     gateway_ = nil;
+}
+
+- (void)windowDidResize:(PseudoTerminal *)term
+{
+    NSSize size = [term tmuxCompatibleSize];
+    [gateway_ sendCommand:[NSString stringWithFormat:@"set-control-client-attr client-size %d,%d", (int) size.width, (int)size.height]
+           responseTarget:nil
+         responseSelector:nil
+           responseObject:nil];
 }
 
 @end

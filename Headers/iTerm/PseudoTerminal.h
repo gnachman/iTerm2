@@ -252,6 +252,12 @@ NSWindowDelegate,
     // If this window is a tmux client, this is the window number defined by
     // the tmux server.
     int tmuxWindow_;
+    // This will be non-null if this is a tmux window.
+    TmuxController *tmuxController_;
+
+    // If positive, then any window resizing that happens is driven by tmux and
+    // shoudn't be reported back to tmux as a user-originated resize.
+    int tmuxOriginatedResizeInProgress_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
@@ -693,6 +699,7 @@ NSWindowDelegate,
 + (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement;
 - (void)loadArrangement:(NSDictionary *)arrangement;
 - (NSDictionary*)arrangement;
+- (NSSize)tmuxCompatibleSize;
 - (void)loadTmuxLayout:(NSMutableDictionary *)parseTree window:(int)window tmuxController:(TmuxController *)tmuxController name:(NSString *)name;
 - (int)tmuxWindow;
 

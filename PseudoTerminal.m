@@ -979,7 +979,7 @@ NSString *sessionsKey = @"sessions";
     [pbHistoryView release];
     [autocompleteView release];
     [tabBarControl release];
-
+    [tmuxController_ release];
     if (fullScreenTabviewTimer_) {
         [fullScreenTabviewTimer_ invalidate];
     }
@@ -1254,6 +1254,16 @@ NSString *sessionsKey = @"sessions";
     return term;
 }
 
+- (NSSize)tmuxCompatibleSize
+{
+    NSSize tmuxSize = NSZeroSize;
+    for (PTYTab *aTab in [self tabs]) {
+        NSSize tabSize = [aTab tmuxSize];
+        tmuxSize.width = MAX(tmuxSize.width, tabSize.width);
+        tmuxSize.height = MAX(tmuxSize.height, tabSize.height);
+    }
+    return tmuxSize;
+}
 
 - (int)tmuxWindow
 {
@@ -1265,9 +1275,11 @@ NSString *sessionsKey = @"sessions";
         tmuxController:(TmuxController *)tmuxController
                   name:(NSString *)name
 {
+    ++tmuxOriginatedResizeInProgress_;
     PTYTab *tab = [PTYTab openTabWithTmuxLayout:parseTree inTerminal:self];
     [self setWindowTitle:name];
     tmuxWindow_ = window;
+    tmuxController_ = [tmuxController retain];
     [tab setReportIdealSizeAsCurrent:YES];
     [self fitWindowToTabs];
     [tab setReportIdealSizeAsCurrent:NO];
@@ -1276,6 +1288,7 @@ NSString *sessionsKey = @"sessions";
         [tmuxController registerSession:aSession withPane:[aSession tmuxPane] inWindow:window];
         [aSession setTmuxController:tmuxController];
     }
+    --tmuxOriginatedResizeInProgress_;
 }
 
 - (void)loadArrangement:(NSDictionary *)arrangement
@@ -1797,6 +1810,10 @@ NSString *sessionsKey = @"sessions";
     lastResizeTime_ = [[NSDate date] timeIntervalSince1970];
     if (zooming_) {
         // Pretend nothing happened to avoid slowing down zooming.
+        return;
+    }
+    if (tmuxController_ && !tmuxOriginatedResizeInProgress_) {
+        [tmuxController_ windowDidResize:self];
         return;
     }
     PtyLog(@"windowDidResize to: %fx%f", [[self window] frame].size.width, [[self window] frame].size.height);

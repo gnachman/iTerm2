@@ -198,6 +198,9 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)numberOfSessionsDidChange;
 - (void)updatePaneTitles;
 
++ (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree inTerminal:(PseudoTerminal *)term;
+- (NSSize)tmuxSize;
+
 #pragma mark NSSplitView delegate methods
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;
 // This is the implementation of splitViewDidResizeSubviews. The delegate method isn't called when
@@ -205,8 +208,6 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)_splitViewDidResizeSubviews:(NSSplitView*)splitView;
 - (CGFloat)splitView:(NSSplitView *)splitView constrainSplitPosition:(CGFloat)proposedPosition ofSubviewAt:(NSInteger)dividerIndex;
 - (void)_recursiveRemoveView:(NSView*)theView;
-
-+ (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree inTerminal:(PseudoTerminal *)term;
 
 @end
 

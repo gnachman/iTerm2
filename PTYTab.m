@@ -2008,7 +2008,7 @@ static NSString* FormatRect(NSRect r) {
         case kHSplitLayoutNode: {
             BOOL isFirst = YES;
             for (NSMutableDictionary *node in [parseTree objectForKey:kLayoutDictChildrenKey]) {
-                size = [self _recursiveSetSizesInTmuxParseTree:[node objectForKey:kLayoutDictChildrenKey]
+                size = [self _recursiveSetSizesInTmuxParseTree:node
                                                     showTitles:showTitles
                                                       bookmark:bookmark
                                                     inTerminal:term];
@@ -2029,7 +2029,9 @@ static NSString* FormatRect(NSRect r) {
     return totalSize;
 }
 
-+ (NSDictionary *)_recursiveArrangementForDecoratedTmuxParseTree:(NSDictionary *)parseTree bookmark:(Bookmark *)bookmark
++ (NSDictionary *)_recursiveArrangementForDecoratedTmuxParseTree:(NSDictionary *)parseTree
+                                                        bookmark:(Bookmark *)bookmark
+                                                          origin:(NSPoint)origin
 {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     BOOL isVertical = YES;
@@ -2037,7 +2039,7 @@ static NSString* FormatRect(NSRect r) {
         case kLeafLayoutNode: {
             [dict setObject:VIEW_TYPE_SESSIONVIEW forKey:TAB_ARRANGEMENT_VIEW_TYPE];
             NSRect frame;
-            frame.origin = NSZeroPoint;
+            frame.origin = origin;
             frame.size.width = [[parseTree objectForKey:kLayoutDictPixelWidthKey] intValue];
             frame.size.height = [[parseTree objectForKey:kLayoutDictPixelHeightKey] intValue];
             [dict setObject:[PTYTab frameToDict:frame] forKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME];
@@ -2054,16 +2056,26 @@ static NSString* FormatRect(NSRect r) {
             [dict setObject:VIEW_TYPE_SPLITTER forKey:TAB_ARRANGEMENT_VIEW_TYPE];
             [dict setObject:[NSNumber numberWithBool:isVertical] forKey:SPLITTER_IS_VERTICAL];
             NSRect frame;
-            frame.origin = NSZeroPoint;
+            frame.origin = origin;
             frame.size.width = [[parseTree objectForKey:kLayoutDictPixelWidthKey] intValue];
             frame.size.height = [[parseTree objectForKey:kLayoutDictPixelHeightKey] intValue];
             [dict setObject:[PTYTab frameToDict:frame] forKey:TAB_ARRANGEMENT_SPLIITER_FRAME];
 
             NSMutableArray *subviews = [NSMutableArray array];
             NSArray *children = [parseTree objectForKey:kLayoutDictChildrenKey];
+            NSPoint childOrigin = NSZeroPoint;
+            double dividerThickness = 1;  // HACK! Don't have a splitter yet :(
             for (NSDictionary *child in children) {
-                [subviews addObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:child
-                                                                                  bookmark:bookmark]];
+                NSDictionary *childDict = [PTYTab _recursiveArrangementForDecoratedTmuxParseTree:child
+                                                                                        bookmark:bookmark
+                                                                                          origin:childOrigin];
+                [subviews addObject:childDict];
+                NSRect childFrame = [PTYTab dictToFrame:[childDict objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
+                if (isVertical) {
+                    childOrigin.x += dividerThickness + childFrame.size.width;
+                } else {
+                    childOrigin.y += dividerThickness + childFrame.size.height;
+                }
             }
             [dict setObject:subviews forKey:SUBVIEWS];
             break;
@@ -2075,7 +2087,9 @@ static NSString* FormatRect(NSRect r) {
 + (NSDictionary *)arrangementForDecoratedTmuxParseTree:(NSDictionary *)parseTree bookmark:(Bookmark *)bookmark
 {
     NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
-    [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree bookmark:bookmark]
+    [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
+                                                                         bookmark:bookmark
+                                                                           origin:NSZeroPoint]
                     forKey:TAB_ARRANGEMENT_ROOT];
     // -- BEGIN HACK --
     // HACK! Set the first session we find as the active one.
@@ -2123,6 +2137,107 @@ static NSString* FormatRect(NSRect r) {
     NSDictionary *arrangement = [PTYTab arrangementForDecoratedTmuxParseTree:parseTree
                                                                     bookmark:bookmark];
     return [self openTabWithArrangement:arrangement inTerminal:term];
+}
+
+- (void)_recursiveAddSplittersUnderNode:(NSSplitView *)splitter
+                              forHeight:(BOOL)forHeight
+                                toArray:(NSMutableArray *)splitterArray
+                 andSaveSessionFramesIn:(NSMutableDictionary *)frameArray
+                                 origin:(NSPoint)origin
+{
+    int dividerThickness = [splitter dividerThickness];
+    for (NSView *v in [splitter subviews]) {
+        NSRect frame = [v frame];
+        NSPoint curOrigin = origin;
+        curOrigin.x = origin.x + frame.origin.x;
+        curOrigin.y = origin.y + frame.origin.y;
+        if ([v isKindOfClass:[NSSplitView class]]) {
+            [self _recursiveAddSplittersUnderNode:(NSSplitView *)v
+                                        forHeight:forHeight
+                                          toArray:splitterArray
+                           andSaveSessionFramesIn:frameArray
+                                           origin:curOrigin];
+        } else {
+            NSRect temp = frame;
+            temp.origin = curOrigin;
+            [frameArray setObject:[NSValue valueWithRect:temp] forKey:[NSValue valueWithPointer:v]];
+        }
+        if (forHeight) {
+            [splitterArray addObject:[NSNumber numberWithInt:curOrigin.x + frame.size.width]];
+        } else {
+            [splitterArray addObject:[NSNumber numberWithInt:curOrigin.y + frame.size.height]];
+        }
+        if ([splitter isVertical]) {
+            origin.x += frame.size.width + dividerThickness;
+        } else {
+            origin.y += frame.size.height + dividerThickness;
+        }
+    }
+}
+
+- (int)tmuxSizeForHeight:(BOOL)forHeight
+{
+    // - Initialize a mapping M: (int, int) -> int
+    // - Do a depth-first search of the splitter tree. Record the x position
+    //   of the right of every session view in a sorted array seeded with 0 (e.g. [0,5,9,11,...]
+    // - Do a depth-first search of the splitter tree. For each session s:
+    //   - For each pair of adjacent values v1, v2 in the array
+    //     - If (s.x1, s.x1 + s.width) intersects (v1, v2) add the number of
+    //       rows in s to the value of a mapping in M of v1,v2 -> sum of rows
+    // - Output the maximum value in M.
+    // Do something similar for finding the horizontal size.
+    NSMutableDictionary *rangeToSize = [NSMutableDictionary dictionary];
+    NSMutableArray *splitters = [NSMutableArray array];
+    [splitters addObject:[NSNumber numberWithInt:0]];
+    NSMutableDictionary *sessionFrames = [NSMutableDictionary dictionary];  // NSValue(Pointer){session} -> NSValue(NSRect)
+    [self _recursiveAddSplittersUnderNode:root_
+                                forHeight:forHeight
+                                  toArray:splitters
+                   andSaveSessionFramesIn:sessionFrames
+                                   origin:NSZeroPoint];
+    NSArray *sortedSplitters = [splitters sortedArrayUsingSelector:@selector(compare:)];
+    for (int i = 0; i < sortedSplitters.count - 1; i++) {
+        int v1 = [[sortedSplitters objectAtIndex:i] intValue];
+        int v2 = [[sortedSplitters objectAtIndex:i + 1] intValue];
+        if (v1 == v2) {
+            continue;
+        }
+        for (NSValue *sessionPtrValue in sessionFrames) {
+            SessionView *sessionView = [sessionPtrValue pointerValue];
+            NSRect frame = [[sessionFrames objectForKey:sessionPtrValue] rectValue];
+            int sessionMin, sessionSize;
+            if (forHeight) {
+                sessionMin = frame.origin.x;
+                sessionSize = frame.size.width;
+            } else {
+                sessionMin = frame.origin.y;
+                sessionSize = frame.size.height;
+            }
+            if (sessionMin < v2 && (sessionMin + sessionSize) >= v1) {
+                NSArray *k = [NSArray arrayWithObjects:[NSNumber numberWithInt:v1],
+                              [NSNumber numberWithInt:v2], nil];
+                int n = [[rangeToSize objectForKey:k] intValue];
+                if (forHeight) {
+                    n += [[sessionView session] rows];
+                } else {
+                    n += [[sessionView session] columns];
+                }
+                assert(n > 0);
+                [rangeToSize setObject:[NSNumber numberWithInt:n] forKey:k];
+            }
+        }
+    }
+    NSArray *sortedValues = [[rangeToSize allValues] sortedArrayUsingSelector:@selector(compare:)];
+    return [[sortedValues lastObject] intValue];
+}
+
+// Returns the size (in characters) of the minimum window size that can contain
+// this tab. It picks the smallest height that can contain every column and
+// every row (counting characters and dividers as 1).
+- (NSSize)tmuxSize
+{
+    return NSMakeSize([self tmuxSizeForHeight:NO],
+                      [self tmuxSizeForHeight:YES]);
 }
 
 - (BOOL)hasMaximizedPane
