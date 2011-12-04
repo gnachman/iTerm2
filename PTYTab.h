@@ -38,6 +38,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 @class PseudoTerminal;
 @class FakeWindow;
 @class SessionView;
+@class TmuxController;
 
 // This implements NSSplitViewDelegate but it was an informal protocol in 10.5. If 10.5 support
 // is eventually dropped, change this to make it official.
@@ -89,6 +90,14 @@ static const int MIN_SESSION_COLUMNS = 2;
 
     // If true, report that the tab's ideal size is its currentSize.
     BOOL reportIdeal_;
+
+    // If this window is a tmux client, this is the window number defined by
+    // the tmux server. -1 if not a tmux client.
+    int tmuxWindow_;
+
+    // If positive, then a tmux-originated resize is in progress and splitter
+    // delegates won't interfere.
+    int tmuxOriginatedResizeInProgress_;
 }
 
 // init/dealloc
@@ -198,8 +207,13 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)numberOfSessionsDidChange;
 - (void)updatePaneTitles;
 
-+ (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree inTerminal:(PseudoTerminal *)term;
++ (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
+                       inTerminal:(PseudoTerminal *)term
+                       tmuxWindow:(int)tmuxWindow;
 - (NSSize)tmuxSize;
+- (int)tmuxWindow;
+- (void)setTmuxLayout:(NSMutableDictionary *)parseTree
+       tmuxController:(TmuxController *)tmuxController;
 
 #pragma mark NSSplitView delegate methods
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;

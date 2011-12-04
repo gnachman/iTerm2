@@ -10,6 +10,7 @@
 
 @class TmuxGateway;
 @class TmuxController;
+@class PTYTab;
 
 @interface TmuxWindowOpener : NSObject {
     int windowIndex_;
@@ -37,5 +38,6 @@
 
 + (TmuxWindowOpener *)windowOpener;
 - (void)openWindows:(BOOL)initial;
+- (void)updateLayoutInTab:(PTYTab *)term;
 
 @end

@@ -198,6 +198,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         [root_ addSubview:[session view]];
         viewOrder_ = [[NSMutableArray alloc] init];
         [self appendSessionToViewOrder:session];
+        tmuxWindow_ = -1;
     }
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)
@@ -229,6 +230,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         [root_ setDelegate:self];
         [PTYTab _recursiveSetDelegateIn:root_ to:self];
         viewOrder_ = [[NSMutableArray alloc] init];
+        tmuxWindow_ = -1;
     }
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)
@@ -2103,17 +2105,35 @@ static NSString* FormatRect(NSRect r) {
     return arrangement;
 }
 
-+ (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree inTerminal:(PseudoTerminal *)term
+- (int)tmuxWindow
 {
-    Bookmark *bookmark = [[BookmarkModel sharedInstance] defaultBookmark];
+    return tmuxWindow_;
+}
+
++ (Bookmark *)tmuxBookmark
+{
+    return [[BookmarkModel sharedInstance] defaultBookmark];
+}
+
++ (void)setSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
+                     inTerminal:(PseudoTerminal *)term
+{
+    Bookmark *bookmark = [PTYTab tmuxBookmark];
 
     BOOL haveMultipleSessions = ([parseTree objectForKey:kLayoutDictChildrenKey] != nil);
     BOOL showTitles = [PTYTab showTitlesPref] && haveMultipleSessions;
     // Begin by decorating the tree with pixel sizes.
     [PTYTab _recursiveSetSizesInTmuxParseTree:parseTree
                                    showTitles:showTitles
-                                     bookmark:[[BookmarkModel sharedInstance] defaultBookmark]
+                                     bookmark:bookmark
                                    inTerminal:term];
+}
+
++ (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
+                       inTerminal:(PseudoTerminal *)term
+                       tmuxWindow:(int)tmuxWindow
+{
+    [PTYTab setSizesInTmuxParseTree:parseTree inTerminal:term];
     if ([[parseTree objectForKey:kLayoutDictNodeType] intValue] == kLeafLayoutNode) {
         // Inject a splitter at the root to follow our convention even if there is only one session.
         NSMutableDictionary *newRoot = [NSMutableDictionary dictionary];
@@ -2135,8 +2155,10 @@ static NSString* FormatRect(NSRect r) {
 
     // Now we can make an arrangement and restore it.
     NSDictionary *arrangement = [PTYTab arrangementForDecoratedTmuxParseTree:parseTree
-                                                                    bookmark:bookmark];
-    return [self openTabWithArrangement:arrangement inTerminal:term];
+                                                                    bookmark:[PTYTab tmuxBookmark]];
+    PTYTab *theTab = [self openTabWithArrangement:arrangement inTerminal:term];
+    theTab->tmuxWindow_ = tmuxWindow;
+    return theTab;
 }
 
 - (void)_recursiveAddSplittersUnderNode:(NSSplitView *)splitter
@@ -2240,6 +2262,65 @@ static NSString* FormatRect(NSRect r) {
                       [self tmuxSizeForHeight:YES]);
 }
 
+- (BOOL)parseTree:(NSMutableDictionary *)parseTree matchesViewHierarchy:(NSView *)view
+{
+    // TODO
+    return YES;
+}
+
+- (void)_recursiveResizeViewsInViewHierarchy:(NSView *)view
+                              forArrangement:(NSDictionary *)arrangement
+{
+    NSDictionary *frameDict;
+    if ([view isKindOfClass:[NSSplitView class]]) {
+        frameDict = [arrangement objectForKey:TAB_ARRANGEMENT_SPLIITER_FRAME];
+    } else {
+        frameDict = [arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME];
+    }
+    NSRect frame = [PTYTab dictToFrame:frameDict];
+    [view setFrame:frame];
+    if ([view isKindOfClass:[NSSplitView class]]) {
+        int i = 0;
+        NSArray *subarrangements = [arrangement objectForKey:SUBVIEWS];
+        for (NSView *child in [view subviews]) {
+            [self _recursiveResizeViewsInViewHierarchy:child
+                                        forArrangement:[subarrangements objectAtIndex:i]];
+            i++;
+        }
+    }
+}
+
+- (void)resizeViewsInViewHierarchy:(NSView *)view forNewLayout:(NSMutableDictionary *)parseTree
+{
+    Bookmark *bookmark = [[BookmarkModel sharedInstance] defaultBookmark];
+    NSDictionary *arrangement = [PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
+                                                                              bookmark:bookmark
+                                                                                origin:NSZeroPoint];
+    ++tmuxOriginatedResizeInProgress_;
+    [realParentWindow_ beginTmuxOriginatedResize];
+    [self _recursiveResizeViewsInViewHierarchy:view forArrangement:arrangement];
+    [realParentWindow_ fitWindowToTabs];
+    [realParentWindow_ endTmuxOriginatedResize];
+    --tmuxOriginatedResizeInProgress_;
+}
+
+- (void)replaceViewHierarchyWithParseTree:(NSMutableDictionary *)parseTree
+{
+    // TODO
+}
+
+- (void)setTmuxLayout:(NSMutableDictionary *)parseTree
+       tmuxController:(TmuxController *)tmuxController
+{
+    [PTYTab setSizesInTmuxParseTree:parseTree
+                         inTerminal:realParentWindow_];
+    if ([self parseTree:parseTree matchesViewHierarchy:root_]) {
+        [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree];
+    } else {
+        [self replaceViewHierarchyWithParseTree:parseTree];
+    }
+}
+
 - (BOOL)hasMaximizedPane
 {
     return isMaximized_;
@@ -2328,6 +2409,11 @@ static NSString* FormatRect(NSRect r) {
 // a divder's movement.
 - (CGFloat)splitView:(NSSplitView *)splitView constrainMinCoordinate:(CGFloat)proposedMin ofSubviewAt:(NSInteger)dividerIndex
 {
+    if (tmuxOriginatedResizeInProgress_) {
+        // Whoever's doing the resizing is responsible for making everything
+        // perfect.
+        return proposedMin;
+    }
     PtyLog(@"PTYTab constrainMin:%f divider:%d", (float)proposedMin, dividerIndex);
     CGFloat dim;
     NSSize minSize = [self _minSizeOfView:[[splitView subviews] objectAtIndex:dividerIndex]];
@@ -2343,6 +2429,11 @@ static NSString* FormatRect(NSRect r) {
 // a divder's movement.
 - (CGFloat)splitView:(NSSplitView *)splitView constrainMaxCoordinate:(CGFloat)proposedMax ofSubviewAt:(NSInteger)dividerIndex
 {
+    if (tmuxOriginatedResizeInProgress_) {
+        // Whoever's doing the resizing is responsible for making everything
+        // perfect.
+        return proposedMax;
+    }
     PtyLog(@"PTYTab constrainMax:%f divider:%d", (float)proposedMax, dividerIndex);
     CGFloat dim;
     NSSize minSize = [self _minSizeOfView:[[splitView subviews] objectAtIndex:dividerIndex+1]];
@@ -2684,6 +2775,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 // with special attention paid to the "locked" session, which never resizes.
 - (void)splitView:(NSSplitView *)splitView resizeSubviewsWithOldSize:(NSSize)oldSize
 {
+    if (tmuxOriginatedResizeInProgress_) {
+        // Whoever's doing the resizing is responsible for making everything
+        // perfect.
+        return;
+    }
     if ([[splitView subviews] count] == 0) {
         // nothing to do!
         return;
@@ -2935,6 +3031,11 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 // being resized.
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification
 {
+    if (tmuxOriginatedResizeInProgress_) {
+        // Whoever's doing the resizing is responsible for making everything
+        // perfect.
+        return;
+    }
     if ([root_ frame].size.width == 0) {
         NSLog(@"Warning: splitViewDidResizeSubviews: resized to 0 width");
         return;
@@ -2986,6 +3087,9 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 // pick the largest on either side of the divider.
 - (CGFloat)splitView:(NSSplitView *)splitView constrainSplitPosition:(CGFloat)proposedPosition ofSubviewAt:(NSInteger)dividerIndex
 {
+    if (tmuxOriginatedResizeInProgress_) {
+        return proposedPosition;
+    }
     PtyLog(@"PTYTab splitView:constraintSplitPosition%f divider:%d case ", (float)proposedPosition, dividerIndex);
     NSArray* subviews = [splitView subviews];
     NSView* childBefore = [subviews objectAtIndex:dividerIndex];

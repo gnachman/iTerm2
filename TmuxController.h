@@ -9,18 +9,25 @@
 #import "TmuxGateway.h"
 
 @class PTYSession;
+@class PTYTab;
 @class PseudoTerminal;
 
 @interface TmuxController : NSObject {
     TmuxGateway *gateway_;
     NSMutableDictionary *windowPanes_;  // [window, pane] -> PTYSession *
+    NSMutableDictionary *windows_;      // window -> [PTYTab *, refcount]
 }
 
 @property (nonatomic, readonly) TmuxGateway *gateway;
 
 - (id)initWithGateway:(TmuxGateway *)gateway;
 - (void)openWindowsInitial;
+- (void)setLayoutInTab:(PTYTab *)tab
+                toSize:(NSSize)size
+             andLayout:(NSString *)layout;
+
 - (PTYSession *)sessionForWindow:(int)window pane:(int)windowPane;
+- (PTYTab *)window:(int)window;
 - (void)registerSession:(PTYSession *)aSession
                withPane:(int)windowPane
                inWindow:(int)window;

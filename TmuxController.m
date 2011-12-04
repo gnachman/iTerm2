@@ -12,6 +12,14 @@
 #import "TmuxWindowOpener.h"
 #import "PTYTab.h"
 #import "PseudoTerminal.h"
+#import "PTYTab.h"
+
+@interface TmuxController (Private)
+
+- (void)retainWindow:(int)window withTab:(PTYTab *)tab;
+- (void)releaseWindow:(int)window;
+
+@end
 
 @implementation TmuxController
 
@@ -23,6 +31,7 @@
     if (self) {
         gateway_ = [gateway retain];
         windowPanes_ = [[NSMutableDictionary alloc] init];
+        windows_ = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
@@ -31,6 +40,7 @@
 {
     [gateway_ release];
     [windowPanes_ release];
+    [windows_ release];
     [super dealloc];
 }
 
@@ -48,6 +58,18 @@
     windowOpener.controller = self;
     windowOpener.gateway = gateway_;
     [windowOpener openWindows:YES];
+}
+
+- (void)setLayoutInTab:(PTYTab *)tab
+                toSize:(NSSize)size
+             andLayout:(NSString *)layout
+{
+    TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
+    windowOpener.size = size;
+    windowOpener.layout = layout;
+    windowOpener.controller = self;
+    windowOpener.gateway = gateway_;
+    [windowOpener updateLayoutInTab:tab];
 }
 
 - (void)initialListWindowsResponse:(NSString *)response
@@ -87,12 +109,19 @@
                withPane:(int)windowPane
                inWindow:(int)window
 {
+    [self retainWindow:window withTab:[aSession tab]];
     [windowPanes_ setObject:aSession forKey:[self _keyForWindow:window windowPane:windowPane]];
 }
 
 - (void)deregisterWindow:(int)window windowPane:(int)windowPane
 {
+    [self releaseWindow:window];
     [windowPanes_ removeObjectForKey:[self _keyForWindow:window windowPane:windowPane]];
+}
+
+- (PTYTab *)window:(int)window
+{
+    return [[windows_ objectForKey:[NSNumber numberWithInt:window]] objectAtIndex:0];
 }
 
 - (void)detach
@@ -117,6 +146,38 @@
            responseTarget:nil
          responseSelector:nil
            responseObject:nil];
+}
+
+@end
+
+@implementation TmuxController (Private)
+
+- (void)retainWindow:(int)window withTab:(PTYTab *)tab
+{
+    NSNumber *k = [NSNumber numberWithInt:window];
+    NSMutableArray *entry = [windows_ objectForKey:k];
+    if (entry) {
+        NSNumber *refcount = [entry objectAtIndex:1];
+        [entry replaceObjectAtIndex:1 withObject:[NSNumber numberWithInt:[refcount intValue] + 1]];
+    } else {
+        entry = [NSMutableArray arrayWithObjects:tab, [NSNumber numberWithInt:1], nil];
+    }
+    [windows_ setObject:entry forKey:k];
+}
+
+- (void)releaseWindow:(int)window
+{
+    NSNumber *k = [NSNumber numberWithInt:window];
+    NSMutableArray *entry = [windows_ objectForKey:k];
+    NSNumber *refcount = [entry objectAtIndex:1];
+    refcount = [NSNumber numberWithInt:[refcount intValue] + 1];
+    if ([refcount intValue]) {
+        [entry replaceObjectAtIndex:1 withObject:refcount];
+        [windows_ setObject:entry forKey:k];
+    } else {
+        [windows_ removeObjectForKey:k];
+        return;
+    }
 }
 
 @end

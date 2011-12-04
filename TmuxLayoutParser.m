@@ -185,7 +185,7 @@ NSString *kLayoutDictStateKey = @"state";
     // <width>x<height>,<x>,<y>,...
     // <parent-width>x<parent-height>,<parent-x>,<parent-y>{...}
     // <parent-width>x<parent-height>,<parent-x>,<parent-y>[...]
-    NSArray *components = [layouts captureComponentsMatchedByRegex:@"(^[0-9]+x[0-9]+,[0-9]+,[0-9]+,[0-9]+)(.*)"];
+    NSArray *components = [layouts captureComponentsMatchedByRegex:@"(^[0-9]+x[0-9]+,[0-9]+,[0-9]+,[0-9na]+)(.*)"];
     if (components.count != 3) {
         NSLog(@"Wrong number of components in layouts array \"%@\"", layouts);
         return nil;
@@ -208,7 +208,7 @@ NSString *kLayoutDictStateKey = @"state";
                                                             range:NSMakeRange(0, suffix.length)
                                                              open:c == '[' ? @"[" : @"{"
                                                             close:c == '[' ? @"]" : @"}"];
-            int nextItemOffset = childrenRange.location + childrenRange.length + 2;
+            int nextItemOffset = childrenRange.location + childrenRange.length + 1;
             [rest setString:[suffix substringWithRange:NSMakeRange(nextItemOffset,
                                                                    suffix.length - nextItemOffset)]];
             return [NSString stringWithFormat:@"%@%@",

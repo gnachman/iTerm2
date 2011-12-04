@@ -85,14 +85,20 @@ static NSString *kCommandObject = @"object";
 
 - (void)parseLayoutChangeCommand:(NSString *)command
 {
-    // %layout-change <window><newline>
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^[^ ]* ([0-9]+)"];
-    if (components.count != 2) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected an int arg): \"%@\"", command]];
+    // %layout-change <window> <int>x<int> <layout>
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%layout-change ([0-9]+) ([0-9]+)x([0-9]+) (.*)"];
+    if (components.count != 5) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %layout-change <window> <int>x<int> <layout>): \"%@\"",
+                                     command]];
         return;
     }
     int window = [[components objectAtIndex:1] intValue];
-    [delegate_ tmuxUpdateLayoutForWindow:window];
+    NSSize size = NSMakeSize([[components objectAtIndex:2] intValue],
+                             [[components objectAtIndex:3] intValue]);
+    NSString *layout = [components objectAtIndex:4];
+    [delegate_ tmuxUpdateLayoutForWindow:window
+                                    size:size
+                                  layout:layout];
     state_ = CONTROL_STATE_READY;
 }
 
@@ -126,35 +132,21 @@ static NSString *kCommandObject = @"object";
 
 - (BOOL)parseCommand
 {
-    NSRange crRange = [stream_ rangeOfData:[NSData dataWithBytes:"\n" length:1]
-                                   options:0
-                                     range:NSMakeRange(0, stream_.length)];
-    NSRange crlfRange = [stream_ rangeOfData:[NSData dataWithBytes:"\r\n" length:2]
-                                     options:0
-                                       range:NSMakeRange(0, stream_.length)];
-
-    NSRange newlineRange;
-    if (crRange.location == NSNotFound && crlfRange.location == NSNotFound) {
-        // No newline of any kind
+    NSRange newlineRange = [stream_ rangeOfData:[NSData dataWithBytes:"\n" length:1]
+                                        options:0
+                                          range:NSMakeRange(0, stream_.length)];
+    if (newlineRange.location == NSNotFound) {
         return NO;
-    } else if (crRange.location != NSNotFound && crlfRange.location != NSNotFound) {
-        // CRLF & CR - use the first one
-        if (crRange.location < crlfRange.location) {
-            newlineRange = crRange;
-        } else {
-            newlineRange = crlfRange;
-        }
-    } else {
-        // CR only
-        newlineRange = crRange;
-    }  // Only 3 cases because the fourth case (crlf & !cr) is impossible
-
+    }
     NSRange commandRange;
     commandRange.location = 0;
     commandRange.length = newlineRange.location;
     // Command range doesn't include the newline.
     NSString *command = [[[NSString alloc] initWithData:[stream_ subdataWithRange:commandRange]
                                                encoding:NSUTF8StringEncoding] autorelease];
+    // At least on osx, the terminal driver adds \r at random places, sometimes adding two of them in a row!
+    // We split on \n, which is safe, and just throw out any \r's that we see.
+    command = [command stringByReplacingOccurrencesOfString:@"\r" withString:@""];
     if (![command hasPrefix:@"%output "] &&
         !currentCommand_) {
         NSLog(@"Read tmux command: \"%@\"", command);

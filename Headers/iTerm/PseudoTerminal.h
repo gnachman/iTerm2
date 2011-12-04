@@ -249,15 +249,15 @@ NSWindowDelegate,
 
     BOOL exitingLionFullscreen_;
 
-    // If this window is a tmux client, this is the window number defined by
-    // the tmux server.
-    int tmuxWindow_;
     // This will be non-null if this is a tmux window.
     TmuxController *tmuxController_;
 
     // If positive, then any window resizing that happens is driven by tmux and
     // shoudn't be reported back to tmux as a user-originated resize.
     int tmuxOriginatedResizeInProgress_;
+
+    // If true then all tabs are tmux "windows"
+    BOOL isTmuxWindow_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
@@ -701,7 +701,9 @@ NSWindowDelegate,
 - (NSDictionary*)arrangement;
 - (NSSize)tmuxCompatibleSize;
 - (void)loadTmuxLayout:(NSMutableDictionary *)parseTree window:(int)window tmuxController:(TmuxController *)tmuxController name:(NSString *)name;
-- (int)tmuxWindow;
+
+- (void)beginTmuxOriginatedResize;
+- (void)endTmuxOriginatedResize;
 
 - (void)appendTab:(PTYTab*)theTab;
 

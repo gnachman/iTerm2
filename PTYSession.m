@@ -48,6 +48,7 @@
 #import "Trigger.h"
 #import "Coprocess.h"
 #import "TmuxGateway.h"
+#import "TmuxController.h"
 #import "TmuxLayoutParser.h"
 #include <stdlib.h>
 #include <unistd.h>
@@ -716,7 +717,8 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
         [self _maybeWarnAboutShortLivedSessions];
     }
     if (tmuxMode_ == TMUX_CLIENT) {
-        [tmuxController_ deregisterWindow:[[tab_ realParentWindow] tmuxWindow] windowPane:tmuxPane_];
+        [tmuxController_ deregisterWindow:[tab_ tmuxWindow]
+                               windowPane:tmuxPane_];
     }
     [tmuxController_ release];
     tmuxController_ = nil;
@@ -799,7 +801,7 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
 {
     if (tmuxMode_ == TMUX_CLIENT) {
         [[tmuxController_ gateway] sendKeys:data
-                                   toWindow:[[tab_ realParentWindow] tmuxWindow]
+                                   toWindow:[tab_ tmuxWindow]
                                  windowPane:tmuxPane_];
         return;
     } else if (tmuxMode_ == TMUX_GATEWAY) {
@@ -2863,9 +2865,18 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
     [result setObject:bookmark forKey:SESSION_ARRANGEMENT_BOOKMARK];
     [result setObject:@"" forKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY];
     [result setObject:[parseNode objectForKey:kLayoutDictWindowPaneKey] forKey:SESSION_ARRANGEMENT_TMUX_PANE];
-    [result setObject:[parseNode objectForKey:kLayoutDictHistoryKey] forKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
-    [result setObject:[parseNode objectForKey:kLayoutDictAltHistoryKey] forKey:SESSION_ARRANGEMENT_TMUX_ALT_HISTORY];
-    [result setObject:[parseNode objectForKey:kLayoutDictStateKey] forKey:SESSION_ARRANGEMENT_TMUX_STATE];
+    NSObject *value = [parseNode objectForKey:kLayoutDictHistoryKey];
+    if (value) {
+        [result setObject:value forKey:SESSION_ARRANGEMENT_TMUX_HISTORY];
+    }
+    value = [parseNode objectForKey:kLayoutDictAltHistoryKey];
+    if (value) {
+        [result setObject:value forKey:SESSION_ARRANGEMENT_TMUX_ALT_HISTORY];
+    }
+    value = [parseNode objectForKey:kLayoutDictStateKey];
+    if (value) {
+        [result setObject:value forKey:SESSION_ARRANGEMENT_TMUX_STATE];
+    }
 
     return result;
 }
@@ -3408,7 +3419,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)tmuxUpdateLayoutForWindow:(int)windowId
+                             size:(NSSize)size
+                           layout:(NSString *)layout
 {
+    PTYTab *tab = [tmuxController_ window:windowId];
+    [tmuxController_ setLayoutInTab:tab toSize:size andLayout:layout];
 }
 
 - (void)tmuxWindowsDidChange

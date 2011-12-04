@@ -481,7 +481,6 @@ NSString *sessionsKey = @"sessions";
     [self _updateToolbeltParentage];
 
     wellFormed_ = YES;
-    tmuxWindow_ = -1;
     [[self window] futureSetRestorable:YES];
     [[self window] futureSetRestorationClass:[PseudoTerminalRestorer class]];
     return self;
@@ -1257,6 +1256,7 @@ NSString *sessionsKey = @"sessions";
 - (NSSize)tmuxCompatibleSize
 {
     NSSize tmuxSize = NSZeroSize;
+    assert(isTmuxWindow_);
     for (PTYTab *aTab in [self tabs]) {
         NSSize tabSize = [aTab tmuxSize];
         tmuxSize.width = MAX(tmuxSize.width, tabSize.width);
@@ -1265,20 +1265,17 @@ NSString *sessionsKey = @"sessions";
     return tmuxSize;
 }
 
-- (int)tmuxWindow
-{
-    return tmuxWindow_;
-}
-
 - (void)loadTmuxLayout:(NSMutableDictionary *)parseTree
                 window:(int)window
         tmuxController:(TmuxController *)tmuxController
                   name:(NSString *)name
 {
-    ++tmuxOriginatedResizeInProgress_;
-    PTYTab *tab = [PTYTab openTabWithTmuxLayout:parseTree inTerminal:self];
+    assert(isTmuxWindow_ || [TABVIEW numberOfTabViewItems] == 0);
+    isTmuxWindow_ = YES;
+    [self beginTmuxOriginatedResize];
+    PTYTab *tab = [PTYTab openTabWithTmuxLayout:parseTree inTerminal:self tmuxWindow:window];
     [self setWindowTitle:name];
-    tmuxWindow_ = window;
+    isTmuxWindow_ = YES;
     tmuxController_ = [tmuxController retain];
     [tab setReportIdealSizeAsCurrent:YES];
     [self fitWindowToTabs];
@@ -1288,6 +1285,16 @@ NSString *sessionsKey = @"sessions";
         [tmuxController registerSession:aSession withPane:[aSession tmuxPane] inWindow:window];
         [aSession setTmuxController:tmuxController];
     }
+    [self endTmuxOriginatedResize];
+}
+
+- (void)beginTmuxOriginatedResize
+{
+    ++tmuxOriginatedResizeInProgress_;
+}
+
+- (void)endTmuxOriginatedResize
+{
     --tmuxOriginatedResizeInProgress_;
 }
 
@@ -5070,7 +5077,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state
 {
-    if ([self isHotKeyWindow] || tmuxWindow_ >= 0) {
+    if ([self isHotKeyWindow] || isTmuxWindow_) {
         // Don't save and restore hotkey windows or tmux windows.
         return;
     }

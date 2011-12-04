@@ -12,6 +12,7 @@
 #import "PseudoTerminal.h"
 #import "TmuxHistoryParser.h"
 #import "TmuxStateParser.h"
+#import "PTYTab.h"
 
 @interface TmuxWindowOpener (Private)
 
@@ -81,6 +82,33 @@
     }
     // append start-control
     [gateway_ sendCommandList:cmdList];
+}
+
+- (void)updateLayoutInTab:(PTYTab *)tab;
+{
+    if (!self.layout) {
+        NSLog(@"Bad layout");
+        return;
+    }
+    if (!self.controller) {
+        NSLog(@"No controller");
+        return;
+    }
+    if (!self.gateway) {
+        NSLog(@"No gateway");
+        return;
+    }
+    if (NSEqualSizes(NSZeroSize, self.size)) {
+        NSLog(@"No size");
+        return;
+    }
+
+    self.parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
+    // TODO: Use guids for window panes. If a window pane moves from one window to another,
+    // it must be notified as the removal first and then the addition to avoid having one pane
+    // in two windows.
+    [tab setTmuxLayout:self.parseTree
+         tmuxController:controller_];
 }
 
 @end
