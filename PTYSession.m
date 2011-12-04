@@ -797,6 +797,35 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
     }
 }
 
+- (void)handleKeypressInTmuxGateway:(unichar)unicode
+{
+    if (unicode == 27) {
+        [self tmuxDetach];
+    } else if (unicode == 'L') {
+        tmuxLogging_ = !tmuxLogging_;
+        [self printTmuxMessage:[NSString stringWithFormat:@"tmux logging %@", (tmuxLogging_ ? @"on" : @"off")]];
+    } else if (unicode == 'C') {
+        NSAlert *alert = [NSAlert alertWithMessageText:@"Enter command to send tmux:"
+                                         defaultButton:@"Ok"
+                                       alternateButton:@"Cancel"
+                                           otherButton:nil
+                             informativeTextWithFormat:@""];
+        NSTextField *tmuxCommand = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
+        [tmuxCommand setEditable:YES];
+        [tmuxCommand setSelectable:YES];
+        [alert setAccessoryView:tmuxCommand];
+        if ([alert runModal] == NSAlertDefaultReturn && [[tmuxCommand stringValue] length]) {
+            [self printTmuxMessage:[NSString stringWithFormat:@"Run command \"%@\"", [tmuxCommand stringValue]]];
+            [tmuxGateway_ sendCommand:[tmuxCommand stringValue]
+                       responseTarget:self
+                     responseSelector:@selector(printTmuxCommandOutputToScreen:)];
+        }
+    } else if (unicode == 'X') {
+        [self printTmuxMessage:@"Exiting tmux mode, but tmux client may still be running."];
+        [self tmuxHostDisconnected];
+    }
+}
+
 - (void)writeTask:(NSData*)data
 {
     if (tmuxMode_ == TMUX_CLIENT) {
@@ -805,8 +834,12 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
                                  windowPane:tmuxPane_];
         return;
     } else if (tmuxMode_ == TMUX_GATEWAY) {
-        // Prevent the user banging on the keyboard from messing up our
-        // protocol.
+        // Use keypresses for tmux gateway commands for development and debugging.
+        NSString *s = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
+        for (int i = 0; i < s.length; i++) {
+            unichar unicode = [s characterAtIndex:i];
+            [self handleKeypressInTmuxGateway:unicode];
+        }
         return;
     }
     [self writeTaskImpl:data];
@@ -826,6 +859,9 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
       DebugLog([NSString stringWithFormat:@"readTask called with %d bytes. The last byte is %d", (int)length, (int)bytes[length-1]]);
     }
     if (tmuxMode_ == TMUX_GATEWAY) {
+        if (tmuxLogging_) {
+            [self printTmuxCommandOutputToScreen:[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]];
+        }
         data = [tmuxGateway_ readTask:data];
         if (!data) {
             // All data was consumed.
@@ -1231,8 +1267,8 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
         return;
     }
 
-    if (tmuxMode_ == TMUX_GATEWAY && unicode == 27) {
-        [self tmuxDetach];
+    if (tmuxMode_ == TMUX_GATEWAY) {
+        [self handleKeypressInTmuxGateway:unicode];
         return;
     }
 
@@ -3353,20 +3389,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
            [TEXTVIEW initialFindContext]->substring != nil;
 }
 
-- (void)printTmuxMessage:(NSString *)message
-{
-    screen_char_t savedFgColor = [TERMINAL foregroundColorCode];
-    screen_char_t savedBgColor = [TERMINAL backgroundColorCode];
-    [TERMINAL setForegroundColor:COLORCODE_WHITE alternateSemantics:NO];
-    [TERMINAL setBackgroundColor:COLORCODE_BLACK alternateSemantics:NO];
-    [SCREEN setString:message ascii:YES];
-    [SCREEN crlf];
-    [TERMINAL setForegroundColor:savedFgColor.foregroundColor
-              alternateSemantics:savedFgColor.alternateForegroundSemantics];
-    [TERMINAL setBackgroundColor:savedBgColor.backgroundColor
-              alternateSemantics:savedBgColor.alternateBackgroundSemantics];
-}
-
 - (void)startTmuxMode
 {
     if (tmuxMode_ != TMUX_NONE) {
@@ -3376,8 +3398,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     tmuxGateway_ = [[TmuxGateway alloc] initWithDelegate:self];
     tmuxController_ = [[TmuxController alloc] initWithGateway:tmuxGateway_];
 
+    [self printTmuxMessage:@"** tmux mode started **"];
     [SCREEN crlf];
-    [self printTmuxMessage:@"** tmux mode started. Press ESC to detach **"];
+    [self printTmuxMessage:@"Command Menu"];
+    [self printTmuxMessage:@"----------------------------"];
+    [self printTmuxMessage:@"esc    Detach cleanly."];
+    [self printTmuxMessage:@"  X    Force-quit tmux mode."];
+    [self printTmuxMessage:@"  L    Toggle logging."];
+    [self printTmuxMessage:@"  C    Run tmux command."];
 
     [tmuxController_ openWindowsInitial];
     [tmuxGateway_ readTask:[TERMINAL streamData]];
@@ -3442,11 +3470,15 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [SCREEN setString:@"Detached" ascii:YES];
     [SCREEN crlf];
     tmuxMode_ = TMUX_NONE;
+    tmuxLogging_ = NO;
 }
 
 - (void)tmuxWriteData:(NSData *)data
 {
     NSLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
+    if (tmuxLogging_) {
+        [self printTmuxMessage:[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]];
+    }
     [self writeTaskImpl:data];
 }
 
@@ -3729,6 +3761,28 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         [SCREEN cancelFindInContext:&tailFindContext_];
         [tailFindTimer_ invalidate];
         tailFindTimer_ = nil;
+    }
+}
+
+- (void)printTmuxMessage:(NSString *)message
+{
+    screen_char_t savedFgColor = [TERMINAL foregroundColorCode];
+    screen_char_t savedBgColor = [TERMINAL backgroundColorCode];
+    [TERMINAL setForegroundColor:COLORCODE_WHITE alternateSemantics:NO];
+    [TERMINAL setBackgroundColor:COLORCODE_BLACK alternateSemantics:NO];
+    [SCREEN setString:message ascii:YES];
+    [SCREEN crlf];
+    [TERMINAL setForegroundColor:savedFgColor.foregroundColor
+              alternateSemantics:savedFgColor.alternateForegroundSemantics];
+    [TERMINAL setBackgroundColor:savedBgColor.backgroundColor
+              alternateSemantics:savedBgColor.alternateBackgroundSemantics];
+}
+
+- (void)printTmuxCommandOutputToScreen:(NSString *)response
+{
+    for (NSString *aLine in [response componentsSeparatedByString:@"\n"]) {
+        aLine = [aLine stringByReplacingOccurrencesOfString:@"\r" withString:@""];
+        [self printTmuxMessage:aLine];
     }
 }
 

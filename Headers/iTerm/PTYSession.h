@@ -242,6 +242,7 @@ typedef enum {
     TmuxGateway *tmuxGateway_;
     TmuxController *tmuxController_;
     int tmuxPane_;
+    BOOL tmuxLogging_;  // log to gateway client
 }
 
 // Return the current pasteboard value as a string.
@@ -569,5 +570,7 @@ typedef enum {
 - (void)stopTailFind;
 - (void)beginTailFind;
 - (void)continueTailFind;
+- (void)printTmuxMessage:(NSString *)message;
+- (void)printTmuxCommandOutputToScreen:(NSString *)response;
 
 @end
