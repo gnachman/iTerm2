@@ -41,6 +41,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTerm/iTermController.h"
 #import "TmuxLayoutParser.h"
+#import "BookmarkModel.h"
 
 //#define PTYTAB_VERBOSE_LOGGING
 #ifdef PTYTAB_VERBOSE_LOGGING
@@ -117,6 +118,7 @@ static NSString* TAB_ARRANGEMENT_SESSION = @"Session";
 static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
 static NSString* TAB_ARRANGEMENT_ID = @"ID";  // only for maximize/unmaximize
 static NSString* TAB_ARRANGEMENT_IS_MAXIMIZED = @"Maximized";
+static NSString* TAB_ARRANGEMENT_TMUX_WINDOW_PANE = @"tmux window pane";
 
 static const BOOL USE_THIN_SPLITTERS = YES;
 
@@ -1843,17 +1845,40 @@ static NSString* FormatRect(NSRect r) {
                                                         fromMap:theMap];
             if (subView) {
                 [splitter addSubview:subView];
-                [subView release];
             }
         }
         return splitter;
     } else {
         if (theMap) {
-            SessionView *sv = [[theMap objectForKey:[arrangement objectForKey:TAB_ARRANGEMENT_ID]] retain];
-            [sv restoreFrameSize];
-            return sv;
+            NSNumber *wp = [arrangement objectForKey:TAB_ARRANGEMENT_TMUX_WINDOW_PANE];
+            if (wp) {
+                // Creating splitters for a tmux tab. The arrangement is marked
+                // up with window pane IDs, whcih may or may not already exist.
+                // When restoring a tmux tab, then all session dicts in the
+                // arrangement have a window pane. The presence of a
+                // TAB_ARRANGEMENT_TMUX_WINDOW_PANE implies that theMap is
+                // window pane->SessionView.
+                SessionView *sv = [theMap objectForKey:wp];
+                NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
+                if (sv) {
+                    // Recycle an existing session view.
+                    [sv setFrame:frame];
+                } else {
+                    // This session is new, so set a nonnegative pending window
+                    // pane and we'll create a session for it later.
+                    sv = [[[SessionView alloc] initWithFrame:frame] autorelease];
+                }
+                return sv;
+            } else {
+                // Exiting a maximized-pane state, so we can get a session view from theMap, a map from arrangement id -> SessionView*
+                // where arrangement IDs are stored in the arrangement dict.
+                SessionView *sv = [theMap objectForKey:[arrangement objectForKey:TAB_ARRANGEMENT_ID]];
+                [sv restoreFrameSize];
+                return sv;
+            }
         } else {
-            return [[SessionView alloc] initWithFrame:[PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]]];
+            NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
+            return [[[SessionView alloc] initWithFrame:frame] autorelease];
         }
     }
 }
@@ -1884,12 +1909,22 @@ static NSString* FormatRect(NSRect r) {
     } else {
         assert([view isKindOfClass:[SessionView class]]);
         SessionView* sessionView = (SessionView*)view;
-        PTYSession* session = [PTYSession sessionFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]
-                                                          inView:(SessionView*)view
-                                                           inTab:theTab
-                                                   forObjectType:objectType];
-        [sessionView setSession:session];
-        [self appendSessionToViewOrder:session];
+
+        NSNumber *wp = [arrangement objectForKey:TAB_ARRANGEMENT_TMUX_WINDOW_PANE];
+        PTYSession *session;
+        if (wp && [sessionView session]) {
+            // Re-use existing session because the session view was recycled
+            // from the existing view hierarchy when the tmux layout changed but
+            // this session was not added or removed.
+            session = [sessionView session];
+        } else {
+            session = [PTYSession sessionFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]
+                                                  inView:(SessionView*)view
+                                                   inTab:theTab
+                                           forObjectType:objectType];
+            [sessionView setSession:session];
+            [self appendSessionToViewOrder:session];
+        }
         if ([[arrangement objectForKey:TAB_ARRANGEMENT_IS_ACTIVE] boolValue]) {
             [sessionView setDimmed:NO];
             return session;
@@ -2034,6 +2069,7 @@ static NSString* FormatRect(NSRect r) {
 + (NSDictionary *)_recursiveArrangementForDecoratedTmuxParseTree:(NSDictionary *)parseTree
                                                         bookmark:(Bookmark *)bookmark
                                                           origin:(NSPoint)origin
+                                                activeWindowPane:(int)activeWp
 {
     NSMutableDictionary *dict = [NSMutableDictionary dictionary];
     BOOL isVertical = YES;
@@ -2047,7 +2083,12 @@ static NSString* FormatRect(NSRect r) {
             [dict setObject:[PTYTab frameToDict:frame] forKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME];
             [dict setObject:[PTYSession arrangementFromTmuxParsedLayout:parseTree bookmark:bookmark]
                      forKey:TAB_ARRANGEMENT_SESSION];
-            // TODO: tmux doesn't report which session is active. Change that and then set TAB_ARRANGEMENT_IS_ACTIVE
+            int wp = [[parseTree objectForKey:kLayoutDictWindowPaneKey] intValue];
+            [dict setObject:[NSNumber numberWithInt:wp]
+                     forKey:TAB_ARRANGEMENT_TMUX_WINDOW_PANE];
+            if (wp == activeWp) {
+                [dict setObject:[NSNumber numberWithBool:YES] forKey:TAB_ARRANGEMENT_IS_ACTIVE];
+            }
             break;
         }
 
@@ -2070,7 +2111,8 @@ static NSString* FormatRect(NSRect r) {
             for (NSDictionary *child in children) {
                 NSDictionary *childDict = [PTYTab _recursiveArrangementForDecoratedTmuxParseTree:child
                                                                                         bookmark:bookmark
-                                                                                          origin:childOrigin];
+                                                                                          origin:childOrigin
+                                                                                activeWindowPane:activeWp];
                 [subviews addObject:childDict];
                 NSRect childFrame = [PTYTab dictToFrame:[childDict objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
                 if (isVertical) {
@@ -2086,12 +2128,15 @@ static NSString* FormatRect(NSRect r) {
     return dict;
 }
 
-+ (NSDictionary *)arrangementForDecoratedTmuxParseTree:(NSDictionary *)parseTree bookmark:(Bookmark *)bookmark
++ (NSDictionary *)arrangementForDecoratedTmuxParseTree:(NSDictionary *)parseTree
+                                              bookmark:(Bookmark *)bookmark
+                                      activeWindowPane:(int)activeWp
 {
     NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
     [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
                                                                          bookmark:bookmark
-                                                                           origin:NSZeroPoint]
+                                                                           origin:NSZeroPoint
+                                                                 activeWindowPane:activeWp]
                     forKey:TAB_ARRANGEMENT_ROOT];
     // -- BEGIN HACK --
     // HACK! Set the first session we find as the active one.
@@ -2129,11 +2174,8 @@ static NSString* FormatRect(NSRect r) {
                                    inTerminal:term];
 }
 
-+ (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
-                       inTerminal:(PseudoTerminal *)term
-                       tmuxWindow:(int)tmuxWindow
++ (NSMutableDictionary *)parseTreeWithInjectedRootSplit:(NSMutableDictionary *)parseTree
 {
-    [PTYTab setSizesInTmuxParseTree:parseTree inTerminal:term];
     if ([[parseTree objectForKey:kLayoutDictNodeType] intValue] == kLeafLayoutNode) {
         // Inject a splitter at the root to follow our convention even if there is only one session.
         NSMutableDictionary *newRoot = [NSMutableDictionary dictionary];
@@ -2145,8 +2187,18 @@ static NSString* FormatRect(NSRect r) {
         [newRoot setObject:[parseTree objectForKey:kLayoutDictPixelWidthKey] forKey:kLayoutDictPixelWidthKey];
         [newRoot setObject:[parseTree objectForKey:kLayoutDictPixelHeightKey] forKey:kLayoutDictPixelHeightKey];
         [newRoot setObject:[NSMutableArray arrayWithObject:parseTree] forKey:kLayoutDictChildrenKey];
-        parseTree = newRoot;
+        return newRoot;
+    } else {
+        return parseTree;
     }
+}
+
++ (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
+                       inTerminal:(PseudoTerminal *)term
+                       tmuxWindow:(int)tmuxWindow
+{
+    [PTYTab setSizesInTmuxParseTree:parseTree inTerminal:term];
+    parseTree = [PTYTab parseTreeWithInjectedRootSplit:parseTree];
 
     // Grow the window to fit the tab before adding it
     NSSize rootSize = NSMakeSize([[parseTree objectForKey:kLayoutDictPixelWidthKey] intValue],
@@ -2155,7 +2207,8 @@ static NSString* FormatRect(NSRect r) {
 
     // Now we can make an arrangement and restore it.
     NSDictionary *arrangement = [PTYTab arrangementForDecoratedTmuxParseTree:parseTree
-                                                                    bookmark:[PTYTab tmuxBookmark]];
+                                                                    bookmark:[PTYTab tmuxBookmark]
+                                                            activeWindowPane:0];
     PTYTab *theTab = [self openTabWithArrangement:arrangement inTerminal:term];
     theTab->tmuxWindow_ = tmuxWindow;
     return theTab;
@@ -2264,7 +2317,37 @@ static NSString* FormatRect(NSRect r) {
 
 - (BOOL)parseTree:(NSMutableDictionary *)parseTree matchesViewHierarchy:(NSView *)view
 {
-    // TODO
+    LayoutNodeType layoutNodeType = [[parseTree objectForKey:kLayoutDictNodeType] intValue];
+    LayoutNodeType typeOfView;
+    if ([view isKindOfClass:[NSSplitView class]]) {
+        NSSplitView *split = (NSSplitView *) view;
+        if ([split isVertical]) {
+            typeOfView = kVSplitLayoutNode;
+        } else {
+            typeOfView = kHSplitLayoutNode;
+        }
+    } else {
+        typeOfView = kLeafLayoutNode;
+    }
+
+    if (layoutNodeType != typeOfView) {
+        return NO;
+    }
+    if (typeOfView == kLeafLayoutNode) {
+        return YES;
+    }
+
+    NSArray *treeChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
+    NSArray *subviews = [view subviews];
+    if ([treeChildren count] != [subviews count]) {
+        return NO;
+    }
+    for (int i = 0; i < treeChildren.count; i++) {
+        if (![self parseTree:[treeChildren objectAtIndex:i]
+                   matchesViewHierarchy:[subviews objectAtIndex:i]]) {
+            return NO;
+        }
+    }
     return YES;
 }
 
@@ -2295,7 +2378,8 @@ static NSString* FormatRect(NSRect r) {
     Bookmark *bookmark = [[BookmarkModel sharedInstance] defaultBookmark];
     NSDictionary *arrangement = [PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
                                                                               bookmark:bookmark
-                                                                                origin:NSZeroPoint];
+                                                                                origin:NSZeroPoint
+                                                                      activeWindowPane:[activeSession_ tmuxPane]];
     ++tmuxOriginatedResizeInProgress_;
     [realParentWindow_ beginTmuxOriginatedResize];
     [self _recursiveResizeViewsInViewHierarchy:view forArrangement:arrangement];
@@ -2304,9 +2388,75 @@ static NSString* FormatRect(NSRect r) {
     --tmuxOriginatedResizeInProgress_;
 }
 
+- (void)setRoot:(NSSplitView *)newRoot
+{
+    [root_ release];
+    root_ = [newRoot retain];
+    if (USE_THIN_SPLITTERS) {
+        [root_ setDividerStyle:NSSplitViewDividerStyleThin];
+    }
+    [root_ setAutoresizesSubviews:YES];
+    [root_ setDelegate:self];
+    [PTYTab _recursiveSetDelegateIn:root_ to:self];
+    [tabViewItem_ setView:root_];
+}
+
 - (void)replaceViewHierarchyWithParseTree:(NSMutableDictionary *)parseTree
 {
-    // TODO
+    NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
+    parseTree = [PTYTab parseTreeWithInjectedRootSplit:parseTree];
+    [arrangement setObject:[PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
+                                                                         bookmark:[PTYTab tmuxBookmark]
+                                                                           origin:NSZeroPoint
+                                                                 activeWindowPane:[activeSession_ tmuxPane]]
+                    forKey:TAB_ARRANGEMENT_ROOT];
+
+    // Create a map of window pane -> SessionView *
+    NSMutableDictionary *theMap = [NSMutableDictionary dictionary];
+    for (PTYSession *aSession in [self sessions]) {
+        [theMap setObject:[aSession view]
+                   forKey:[NSNumber numberWithInt:[aSession tmuxPane]]];
+    }
+    NSSplitView* newRoot = (NSSplitView*)[PTYTab _recusiveRestoreSplitters:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
+                                                                   fromMap:theMap];
+    // Instantiate sessions in the skeleton view tree.
+    iTermObjectType objectType;
+    if ([realParentWindow_ numberOfTabs] == 0) {
+        objectType = iTermWindowObject;
+    } else {
+        objectType = iTermTabObject;
+    }
+    // TODO does this preserve the active session correctly? i don't think so
+    PTYSession *activeSession = [self _recursiveRestoreSessions:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
+                                                    atNode:newRoot
+                                                     inTab:self
+                                             forObjectType:objectType];
+    if (activeSession) {
+        [self setActiveSession:activeSession];
+    }
+
+    // All sessions that remain in this tab have had their parentage changed so
+    // -[sessions] returns only the ones that are to be terminated.
+    NSArray *sessionsToTerminate = [self sessions];
+
+    // Swap in the new root split view.
+    [self setRoot:newRoot];
+
+    // Terminate sessions that were removed from this tab.
+    for (PTYSession *aSession in sessionsToTerminate) {
+        [aSession terminate];
+        [viewOrder_ removeObject:[NSNumber numberWithInt:[[aSession view] viewId]]];
+    }
+
+    if (!activeSession) {
+        NSArray *sessions = [self sessions];
+        if ([sessions count]) {
+            [self setActiveSession:[sessions objectAtIndex:0]];
+        }
+    }
+
+    [self numberOfSessionsDidChange];
+    [realParentWindow_ fitWindowToTabs];
 }
 
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
