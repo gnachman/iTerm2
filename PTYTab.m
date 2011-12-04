@@ -2775,11 +2775,10 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
 // with special attention paid to the "locked" session, which never resizes.
 - (void)splitView:(NSSplitView *)splitView resizeSubviewsWithOldSize:(NSSize)oldSize
 {
-    if (tmuxOriginatedResizeInProgress_) {
-        // Whoever's doing the resizing is responsible for making everything
-        // perfect.
-        return;
-    }
+    // While we'd prefer not to do this if tmuxOriginatedResizeInProgress_>0,
+    // it's necessary to avoid a warning. It should be harmless because after
+    // setting a splitter's size we go back and set each child's size in
+    // -[_recursiveSetSizesInTmuxParseTree:showTitles:bookmark:inTerminal:].
     if ([[splitView subviews] count] == 0) {
         // nothing to do!
         return;
