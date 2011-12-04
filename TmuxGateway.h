@@ -13,7 +13,6 @@
 
 - (TmuxController *)tmuxController;
 - (void)tmuxUpdateLayoutForWindow:(int)windowId
-                             size:(NSSize)size
                            layout:(NSString *)layout;
 - (void)tmuxWindowsDidChange;
 - (void)tmuxHostDisconnected;

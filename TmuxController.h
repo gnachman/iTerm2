@@ -23,8 +23,7 @@
 - (id)initWithGateway:(TmuxGateway *)gateway;
 - (void)openWindowsInitial;
 - (void)setLayoutInTab:(PTYTab *)tab
-                toSize:(NSSize)size
-             andLayout:(NSString *)layout;
+                toLayout:(NSString *)layout;
 
 - (PTYSession *)sessionForWindow:(int)window pane:(int)windowPane;
 - (PTYTab *)window:(int)window;

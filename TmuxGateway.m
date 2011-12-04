@@ -85,19 +85,16 @@ static NSString *kCommandObject = @"object";
 
 - (void)parseLayoutChangeCommand:(NSString *)command
 {
-    // %layout-change <window> <int>x<int> <layout>
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^%layout-change ([0-9]+) ([0-9]+)x([0-9]+) (.*)"];
-    if (components.count != 5) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %layout-change <window> <int>x<int> <layout>): \"%@\"",
+    // %layout-change <window> <layout>
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%layout-change ([0-9]+) (.*)"];
+    if (components.count != 3) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %layout-change <window> <layout>): \"%@\"",
                                      command]];
         return;
     }
     int window = [[components objectAtIndex:1] intValue];
-    NSSize size = NSMakeSize([[components objectAtIndex:2] intValue],
-                             [[components objectAtIndex:3] intValue]);
-    NSString *layout = [components objectAtIndex:4];
+    NSString *layout = [components objectAtIndex:2];
     [delegate_ tmuxUpdateLayoutForWindow:window
-                                    size:size
                                   layout:layout];
     state_ = CONTROL_STATE_READY;
 }

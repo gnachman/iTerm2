@@ -3419,11 +3419,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 }
 
 - (void)tmuxUpdateLayoutForWindow:(int)windowId
-                             size:(NSSize)size
                            layout:(NSString *)layout
 {
     PTYTab *tab = [tmuxController_ window:windowId];
-    [tmuxController_ setLayoutInTab:tab toSize:size andLayout:layout];
+    [tmuxController_ setLayoutInTab:tab toLayout:layout];
 }
 
 - (void)tmuxWindowsDidChange

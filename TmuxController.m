@@ -61,11 +61,9 @@
 }
 
 - (void)setLayoutInTab:(PTYTab *)tab
-                toSize:(NSSize)size
-             andLayout:(NSString *)layout
+                toLayout:(NSString *)layout
 {
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
-    windowOpener.size = size;
     windowOpener.layout = layout;
     windowOpener.controller = self;
     windowOpener.gateway = gateway_;

@@ -98,10 +98,6 @@
         NSLog(@"No gateway");
         return;
     }
-    if (NSEqualSizes(NSZeroSize, self.size)) {
-        NSLog(@"No size");
-        return;
-    }
 
     self.parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
     // TODO: Use guids for window panes. If a window pane moves from one window to another,
