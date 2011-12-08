@@ -25,6 +25,7 @@
     NSMutableDictionary *histories_;
     NSMutableDictionary *altHistories_;
     NSMutableDictionary *states_;
+    PTYTab *tabToUpdate_;
 }
 
 @property (nonatomic, assign) int windowIndex;

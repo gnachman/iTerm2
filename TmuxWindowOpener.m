@@ -18,15 +18,17 @@
 
 - (id)appendRequestsForNode:(NSMutableDictionary *)node
                     toArray:(NSMutableArray *)cmdList;
-- (NSDictionary *)dictForRequestHistoryForNode:(NSMutableDictionary *)node
-                                           alt:(BOOL)alternate;
 - (void)decorateParseTree:(NSMutableDictionary *)parseTree;
 - (id)decorateWindowPane:(NSMutableDictionary *)parseTree;
 - (void)requestDidComplete;
 - (void)dumpHistoryResponse:(NSString *)response
            paneAndAlternate:(NSArray *)info;
-- (NSDictionary *)dictForDumpStateForNode:(NSMutableDictionary *)node;
 - (NSDictionary *)dictForStartControlCommand;
+- (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp;
+- (NSDictionary *)dictForRequestHistoryForWindowPane:(NSNumber *)wp
+                                                 alt:(BOOL)alternate;
+- (void)appendRequestsForWindowPane:(NSNumber *)wp
+                            toArray:(NSMutableArray *)cmdList;
 
 @end
 
@@ -62,6 +64,7 @@
     [histories_ release];
     [altHistories_ release];
     [states_ release];
+    [tabToUpdate_ release];
     [super dealloc];
 }
 
@@ -99,12 +102,26 @@
         return;
     }
 
-    self.parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
-    // TODO: Use guids for window panes. If a window pane moves from one window to another,
-    // it must be notified as the removal first and then the addition to avoid having one pane
-    // in two windows.
-    [tab setTmuxLayout:self.parseTree
-         tmuxController:controller_];
+    TmuxLayoutParser *parser = [TmuxLayoutParser sharedInstance];
+    self.parseTree = [parser parsedLayoutFromString:self.layout];
+    NSSet *oldPanes = [NSSet setWithArray:[tab windowPanes]];
+    NSMutableArray *cmdList = [NSMutableArray array];
+    for (NSNumber *addedPane in [parser windowPanesInParseTree:self.parseTree]) {
+        if (![oldPanes containsObject:addedPane]) {
+            [self appendRequestsForWindowPane:addedPane
+                                      toArray:cmdList];
+        }
+    }
+    if (cmdList.count) {
+        tabToUpdate_ = [tab retain];
+        [gateway_ sendCommandList:cmdList];
+    } else {
+        // TODO: Use guids for window panes. If a window pane moves from one window to another,
+        // it must be notified as the removal first and then the addition to avoid having one pane
+        // in two windows.
+        [tab setTmuxLayout:self.parseTree
+             tmuxController:controller_];
+    }
 }
 
 @end
@@ -124,17 +141,23 @@
 // to open a window.
 - (id)appendRequestsForNode:(NSMutableDictionary *)node
                     toArray:(NSMutableArray *)cmdList
-{    
-    [cmdList addObject:[self dictForRequestHistoryForNode:node alt:NO]];
-    [cmdList addObject:[self dictForRequestHistoryForNode:node alt:YES]];
-    [cmdList addObject:[self dictForDumpStateForNode:node]];
-    return nil;
+{
+    NSNumber *wp = [node objectForKey:kLayoutDictWindowPaneKey];
+    [self appendRequestsForWindowPane:wp toArray:cmdList];
+    return nil;  // returning nil means keep going with the DFS
 }
 
-- (NSDictionary *)dictForDumpStateForNode:(NSMutableDictionary *)node
+- (void)appendRequestsForWindowPane:(NSNumber *)wp
+                            toArray:(NSMutableArray *)cmdList
+{
+    [cmdList addObject:[self dictForRequestHistoryForWindowPane:wp alt:NO]];
+    [cmdList addObject:[self dictForRequestHistoryForWindowPane:wp alt:YES]];
+    [cmdList addObject:[self dictForDumpStateForWindowPane:wp]];
+}
+
+- (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp
 {
     ++pendingRequests_;
-    NSNumber *wp = [node objectForKey:kLayoutDictWindowPaneKey];
     NSString *command = [NSString stringWithFormat:@"dump-state -t %d.%d",
                          windowIndex_, [wp intValue]];
     return [gateway_ dictionaryForCommand:command
@@ -143,11 +166,10 @@
                            responseObject:wp];
 }
 
-- (NSDictionary *)dictForRequestHistoryForNode:(NSMutableDictionary *)node
-                                           alt:(BOOL)alternate
+ - (NSDictionary *)dictForRequestHistoryForWindowPane:(NSNumber *)wp
+                        alt:(BOOL)alternate
 {
     ++pendingRequests_;
-    NSNumber *wp = [node objectForKey:kLayoutDictWindowPaneKey];
     NSString *command = [NSString stringWithFormat:@"dump-history %@-t %d.%d -l 1000",
                          (alternate ? @"-a " : @""), windowIndex_, [wp intValue]];
     return [gateway_ dictionaryForCommand:command
@@ -191,9 +213,14 @@
         PseudoTerminal *term = [[iTermController sharedInstance] openWindow];
         NSMutableDictionary *parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
         [self decorateParseTree:parseTree];
-        [term loadTmuxLayout:parseTree window:windowIndex_
-              tmuxController:controller_
-                        name:name_];
+        if (tabToUpdate_) {
+            [tabToUpdate_ setTmuxLayout:parseTree
+                         tmuxController:controller_];
+        } else {
+            [term loadTmuxLayout:parseTree window:windowIndex_
+                  tmuxController:controller_
+                            name:name_];
+        }
     }
 }
 

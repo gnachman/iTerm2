@@ -6,6 +6,7 @@
 //
 
 #import "TmuxController.h"
+#import "TmuxGateway.h"
 #import "TSVParser.h"
 #import "PseudoTerminal.h"
 #import "iTermController.h"
@@ -13,6 +14,7 @@
 #import "PTYTab.h"
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
+#import "RegexKitLite.h"
 
 @interface TmuxController (Private)
 
@@ -67,6 +69,7 @@
     windowOpener.layout = layout;
     windowOpener.controller = self;
     windowOpener.gateway = gateway_;
+    windowOpener.windowIndex = [tab tmuxWindow];
     [windowOpener updateLayoutInTab:tab];
 }
 
@@ -140,15 +143,44 @@
 - (void)windowDidResize:(PseudoTerminal *)term
 {
     NSSize size = [term tmuxCompatibleSize];
+    ++numOutstandingWindowResizes_;
     [gateway_ sendCommand:[NSString stringWithFormat:@"set-control-client-attr client-size %d,%d", (int) size.width, (int)size.height]
-           responseTarget:nil
-         responseSelector:nil
+           responseTarget:self
+         responseSelector:@selector(clientSizeChangeResponse:)
            responseObject:nil];
+}
+
+- (BOOL)hasOutstandingWindowResize
+{
+    return numOutstandingWindowResizes_ > 0;
 }
 
 @end
 
 @implementation TmuxController (Private)
+
+// When an iTerm2 window is resized, a set-control-client-attr client-size w,h
+// command is sent. It responds with new layouts for all the windows in the
+// client's session. Update the layouts for the affected tabs.
+- (void)clientSizeChangeResponse:(NSString *)response
+{
+    --numOutstandingWindowResizes_;
+    NSArray *layoutStrings = [response componentsSeparatedByString:@"\n"];
+    for (NSString *layoutString in layoutStrings) {
+        NSArray *components = [layoutString captureComponentsMatchedByRegex:@"^([0-9]+) (.*)"];
+        if ([components count] != 3) {
+            NSLog(@"Bogus layout string: \"%@\"", layoutString);
+        } else {
+            int window = [[components objectAtIndex:1] intValue];
+            NSString *layout = [components objectAtIndex:2];
+            PTYTab *tab = [self window:window];
+            if (tab) {
+                [[gateway_ delegate] tmuxUpdateLayoutForWindow:window
+                                                        layout:layout];
+            }
+        }
+    }
+}
 
 - (void)retainWindow:(int)window withTab:(PTYTab *)tab
 {

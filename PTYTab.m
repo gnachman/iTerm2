@@ -190,12 +190,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         activeSession_ = session;
         [session setLastActiveAt:[NSDate date]];
         [[session view] setDimmed:NO];
-        root_ = [[MySplitView alloc] init];
-        if (USE_THIN_SPLITTERS) {
-            [root_ setDividerStyle:NSSplitViewDividerStyleThin];
-        }
-        [root_ setAutoresizesSubviews:YES];
-        [root_ setDelegate:self];
+        [self setRoot:[[MySplitView alloc] init]];
         [session setTab:self];
         [root_ addSubview:[session view]];
         viewOrder_ = [[NSMutableArray alloc] init];
@@ -227,9 +222,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     PtyLog(@"PTYTab initWithRoot %p", self);
     if (self) {
         activeSession_ = nil;
-        root_ = [root retain];
-        [root_ setAutoresizesSubviews:YES];
-        [root_ setDelegate:self];
+        [self setRoot:root];
         [PTYTab _recursiveSetDelegateIn:root_ to:self];
         viewOrder_ = [[NSMutableArray alloc] init];
         tmuxWindow_ = -1;
@@ -265,11 +258,14 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     }
 
     root_ = nil;
+    [flexibleView_ release];
+    flexibleView_ = nil;
     [viewOrder_ release];
     [fakeParentWindow_ release];
     [icon_ release];
     [idMap_ release];
     [savedArrangement_ release];
+    [tmuxController_ release];
     [super dealloc];
 }
 
@@ -517,7 +513,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     tabViewItem_ = theTabViewItem;
     if (theTabViewItem != nil) {
         [tabViewItem_ setLabel:[[self activeSession] name]];
-        [tabViewItem_ setView:root_];
+        [tabViewItem_ setView:tabView_];
     }
 }
 
@@ -794,6 +790,16 @@ static NSString* FormatRect(NSRect r) {
         }
     }
     return sessionViews;
+}
+
+- (NSArray *)windowPanes
+{
+    NSArray *sessions = [self sessions];
+    NSMutableArray *panes = [NSMutableArray array];
+    for (PTYSession *session in sessions) {
+        [panes addObject:[NSNumber numberWithInt:[session tmuxPane]]];
+    }
+    return panes;
 }
 
 - (NSArray*)sessions
@@ -1480,12 +1486,16 @@ static NSString* FormatRect(NSRect r) {
 
 - (void)setSize:(NSSize)newSize
 {
-    PtyLog(@"PTYTab setSize:%fx%f", (float)newSize.width, (float)newSize.height);
-    [self dumpSubviewsOf:root_];
-    [root_ setFrameSize:newSize];
-    //[root_ adjustSubviews];
-    [self adjustSubviewsOf:root_];
-    [self _splitViewDidResizeSubviews:root_];
+    if ([self isTmuxTab]) {
+        [tabView_ setFrameSize:newSize];
+    } else {
+        PtyLog(@"PTYTab setSize:%fx%f", (float)newSize.width, (float)newSize.height);
+        [self dumpSubviewsOf:root_];
+        [root_ setFrameSize:newSize];
+        //[root_ adjustSubviews];
+        [self adjustSubviewsOf:root_];
+        [self _splitViewDidResizeSubviews:root_];
+    }
 }
 
 - (void)_drawSession:(PTYSession*)session inImage:(NSImage*)viewImage atOrigin:(NSPoint)origin
@@ -1943,7 +1953,36 @@ static NSString* FormatRect(NSRect r) {
                                        frame:frame];
 }
 
-+ (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement inTerminal:(PseudoTerminal*)term
+- (void)enableFlexibleView
+{
+    static NSColor *linenColor;
+    if (!linenColor) {
+        NSBundle* bundle = [NSBundle bundleForClass:[self class]];
+        NSString* imageFile = [bundle
+                              pathForResource:@"linen"
+                              ofType:@"jpg"];
+        NSImage* image = [[[NSImage alloc] initWithContentsOfFile:imageFile] autorelease];
+        linenColor = [[NSColor colorWithPatternImage:image] retain];
+    }
+
+    assert(!flexibleView_);
+    // Interpose a vew between the tab and the root so the root can be smaller than the tab.
+    flexibleView_ = [[SolidColorView alloc] initWithFrame:root_.frame
+                                                    color:linenColor];
+    [flexibleView_ setFlipped:YES];
+    tabView_ = flexibleView_;
+    [root_ setAutoresizingMask:NSViewMaxXMargin | NSViewMaxYMargin];
+    [tabView_ setAutoresizesSubviews:YES];
+    [root_ retain];
+    [root_ removeFromSuperview];
+    [tabView_ addSubview:root_];
+    [root_ release];
+    [tabViewItem_ setView:tabView_];
+}
+
++ (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
+                        inTerminal:(PseudoTerminal*)term
+                   hasFlexibleView:(BOOL)hasFlexible
 {
     PTYTab* theTab;
     // Build a tree with splitters and SessionViews but no PTYSessions.
@@ -1952,6 +1991,9 @@ static NSString* FormatRect(NSRect r) {
 
     // Create a tab.
     theTab = [[PTYTab alloc] initWithRoot:newRoot];
+    if (hasFlexible) {
+        [theTab enableFlexibleView];
+    }
     [theTab setParentWindow:term];
     [theTab->tabViewItem_ setLabel:@"Restoring..."];
     [newRoot release];
@@ -2150,6 +2192,11 @@ static NSString* FormatRect(NSRect r) {
     return arrangement;
 }
 
+- (BOOL)isTmuxTab
+{
+    return tmuxController_ != nil;
+}
+
 - (int)tmuxWindow
 {
     return tmuxWindow_;
@@ -2196,6 +2243,7 @@ static NSString* FormatRect(NSRect r) {
 + (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
                        inTerminal:(PseudoTerminal *)term
                        tmuxWindow:(int)tmuxWindow
+                   tmuxController:(TmuxController *)tmuxController
 {
     [PTYTab setSizesInTmuxParseTree:parseTree inTerminal:term];
     parseTree = [PTYTab parseTreeWithInjectedRootSplit:parseTree];
@@ -2209,8 +2257,10 @@ static NSString* FormatRect(NSRect r) {
     NSDictionary *arrangement = [PTYTab arrangementForDecoratedTmuxParseTree:parseTree
                                                                     bookmark:[PTYTab tmuxBookmark]
                                                             activeWindowPane:0];
-    PTYTab *theTab = [self openTabWithArrangement:arrangement inTerminal:term];
+    PTYTab *theTab = [self openTabWithArrangement:arrangement inTerminal:term hasFlexibleView:YES];
     theTab->tmuxWindow_ = tmuxWindow;
+    theTab->tmuxController_ = [tmuxController retain];
+
     return theTab;
 }
 
@@ -2271,6 +2321,7 @@ static NSString* FormatRect(NSRect r) {
                    andSaveSessionFramesIn:sessionFrames
                                    origin:NSZeroPoint];
     NSArray *sortedSplitters = [splitters sortedArrayUsingSelector:@selector(compare:)];
+    NSSize cellSize = [PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]];
     for (int i = 0; i < sortedSplitters.count - 1; i++) {
         int v1 = [[sortedSplitters objectAtIndex:i] intValue];
         int v2 = [[sortedSplitters objectAtIndex:i + 1] intValue];
@@ -2288,14 +2339,14 @@ static NSString* FormatRect(NSRect r) {
                 sessionMin = frame.origin.y;
                 sessionSize = frame.size.height;
             }
-            if (sessionMin < v2 && (sessionMin + sessionSize) >= v1) {
+            if (sessionMin < v2 && (sessionMin + sessionSize) > v1) {
                 NSArray *k = [NSArray arrayWithObjects:[NSNumber numberWithInt:v1],
                               [NSNumber numberWithInt:v2], nil];
                 int n = [[rangeToSize objectForKey:k] intValue];
                 if (forHeight) {
-                    n += [[sessionView session] rows];
+                    n += (sessionView.frame.size.height - VMARGIN * 2) / cellSize.height;
                 } else {
-                    n += [[sessionView session] columns];
+                    n += (sessionView.frame.size.width - MARGIN * 2) / cellSize.width;
                 }
                 assert(n > 0);
                 [rangeToSize setObject:[NSNumber numberWithInt:n] forKey:k];
@@ -2311,8 +2362,31 @@ static NSString* FormatRect(NSRect r) {
 // every row (counting characters and dividers as 1).
 - (NSSize)tmuxSize
 {
-    return NSMakeSize([self tmuxSizeForHeight:NO],
-                      [self tmuxSizeForHeight:YES]);
+    // The current size of the sessions in this tab in characters
+    NSSize rootSizeChars = NSMakeSize([self tmuxSizeForHeight:NO], [self tmuxSizeForHeight:YES]);
+
+    // The size in pixels we need to get it to (at most)
+    NSSize targetSizePixels = [tabView_ frame].size;
+
+    // The current size in pixels
+    NSSize rootSizePixels = [root_ frame].size;
+
+    // The pixel growth (+ for growth, - for shrinkage) needed to attain the target
+    NSSize sizeDiff = NSMakeSize(targetSizePixels.width - rootSizePixels.width,
+                                 targetSizePixels.height - rootSizePixels.height);
+
+    // The size of a character
+    NSSize charSize = [PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]];
+
+    // The characters growth (+ growth, - shrinkage) needed to attain the target
+    NSSize charsDiff = NSMakeSize(sizeDiff.width / charSize.width,
+                                  sizeDiff.height / charSize.height);
+
+    // The character size closest to the target.
+    NSSize tmuxSize = NSMakeSize(rootSizeChars.width + charsDiff.width,
+                                 rootSizeChars.height + charsDiff.height);
+
+    return tmuxSize;
 }
 
 - (BOOL)parseTree:(NSMutableDictionary *)parseTree matchesViewHierarchy:(NSView *)view
@@ -2370,6 +2444,10 @@ static NSString* FormatRect(NSRect r) {
                                         forArrangement:[subarrangements objectAtIndex:i]];
             i++;
         }
+    } else {
+        SessionView *sv = (SessionView *)view;
+        PTYSession *theSession = [sv session];
+        [theSession resizeFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]];
     }
 }
 
@@ -2383,14 +2461,14 @@ static NSString* FormatRect(NSRect r) {
     ++tmuxOriginatedResizeInProgress_;
     [realParentWindow_ beginTmuxOriginatedResize];
     [self _recursiveResizeViewsInViewHierarchy:view forArrangement:arrangement];
-    [realParentWindow_ fitWindowToTabs];
+    [realParentWindow_ tmuxTabLayoutDidChange:NO];
     [realParentWindow_ endTmuxOriginatedResize];
     --tmuxOriginatedResizeInProgress_;
 }
 
 - (void)setRoot:(NSSplitView *)newRoot
 {
-    [root_ release];
+    [root_ autorelease];
     root_ = [newRoot retain];
     if (USE_THIN_SPLITTERS) {
         [root_ setDividerStyle:NSSplitViewDividerStyleThin];
@@ -2398,7 +2476,18 @@ static NSString* FormatRect(NSRect r) {
     [root_ setAutoresizesSubviews:YES];
     [root_ setDelegate:self];
     [PTYTab _recursiveSetDelegateIn:root_ to:self];
-    [tabViewItem_ setView:root_];
+    [flexibleView_ setSubviews:[NSArray array]];
+    [flexibleView_ addSubview:newRoot];
+    if (!flexibleView_) {
+        [root_ setAutoresizingMask:NSViewMaxXMargin | NSViewMaxYMargin];
+        tabView_ = newRoot;
+    }
+    [tabViewItem_ setView:tabView_];
+}
+
+- (TmuxController *)tmuxController
+{
+    return tmuxController_;
 }
 
 - (void)replaceViewHierarchyWithParseTree:(NSMutableDictionary *)parseTree
@@ -2417,6 +2506,7 @@ static NSString* FormatRect(NSRect r) {
         [theMap setObject:[aSession view]
                    forKey:[NSNumber numberWithInt:[aSession tmuxPane]]];
     }
+    NSArray *preexistingPanes = [[[theMap allKeys] copy] autorelease];
     NSSplitView* newRoot = (NSSplitView*)[PTYTab _recusiveRestoreSplitters:[arrangement objectForKey:TAB_ARRANGEMENT_ROOT]
                                                                    fromMap:theMap];
     // Instantiate sessions in the skeleton view tree.
@@ -2455,8 +2545,23 @@ static NSString* FormatRect(NSRect r) {
         }
     }
 
+    for (PTYSession *aSession in [self sessions]) {
+        NSNumber *n = [NSNumber numberWithInt:[aSession tmuxPane]];
+        if (![preexistingPanes containsObject:n]) {
+            // This is a new pane so register it.
+            [tmuxController_ registerSession:aSession
+                                    withPane:[aSession tmuxPane]
+                                    inWindow:tmuxWindow_];
+            [aSession setTmuxController:tmuxController_];
+        }
+    }
+
     [self numberOfSessionsDidChange];
-    [realParentWindow_ fitWindowToTabs];
+    ++tmuxOriginatedResizeInProgress_;
+    [realParentWindow_ beginTmuxOriginatedResize];
+    [realParentWindow_ tmuxTabLayoutDidChange:YES];
+    [realParentWindow_ endTmuxOriginatedResize];
+    --tmuxOriginatedResizeInProgress_;
 }
 
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
@@ -2492,14 +2597,9 @@ static NSString* FormatRect(NSRect r) {
     NSRect oldRootFrame = [root_ frame];
     [root_ removeFromSuperview];
 
-    root_ = [[MySplitView alloc] init];
-    [root_ setFrame:oldRootFrame];
-    if (USE_THIN_SPLITTERS) {
-        [root_ setDividerStyle:NSSplitViewDividerStyleThin];
-    }
-    [root_ setAutoresizesSubviews:YES];
-    [root_ setDelegate:self];
-    [tabViewItem_ setView:root_];
+    NSSplitView *newRoot = [[MySplitView alloc] init];
+    [newRoot setFrame:oldRootFrame];
+    [self setRoot:newRoot];
 
     [temp retain];
     [temp removeFromSuperview];
@@ -2529,9 +2629,7 @@ static NSString* FormatRect(NSRect r) {
     [PTYTab _recursiveSetDelegateIn:newRoot to:self];
 
     // Create a tab.
-    [tabViewItem_ setView:newRoot];
-    [root_ release];
-    root_ = newRoot;
+    [self setRoot:newRoot];
 
     [idMap_ release];
     idMap_ = nil;

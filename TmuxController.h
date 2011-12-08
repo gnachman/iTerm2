@@ -16,6 +16,7 @@
     TmuxGateway *gateway_;
     NSMutableDictionary *windowPanes_;  // [window, pane] -> PTYSession *
     NSMutableDictionary *windows_;      // window -> [PTYTab *, refcount]
+    int numOutstandingWindowResizes_;
 }
 
 @property (nonatomic, readonly) TmuxGateway *gateway;
@@ -31,9 +32,11 @@
                withPane:(int)windowPane
                inWindow:(int)window;
 - (void)deregisterWindow:(int)window windowPane:(int)windowPane;
-- (void)windowDidResize:(PseudoTerminal *)term;
+
 
 // This should be called after the host sends an %exit command.
 - (void)detach;
+- (void)windowDidResize:(PseudoTerminal *)term;
+- (BOOL)hasOutstandingWindowResize;
 
 @end

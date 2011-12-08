@@ -294,6 +294,8 @@ typedef enum {
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
                                          bookmark:(Bookmark *)bookmark;
 
+// Set rows, columns from arrangement.
+- (void)resizeFromArrangement:(NSDictionary *)arrangement;
 
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
                forObjectType:(iTermObjectType)objectType;

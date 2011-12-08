@@ -91,6 +91,19 @@ NSString *kLayoutDictStateKey = @"state";
                                 withObject:[NSNumber numberWithInt:windowPane]];
 }
 
+- (NSArray *)windowPanesInParseTree:(NSDictionary *)parseTree
+{
+    NSMutableArray *result = [NSMutableArray array];
+    if ([[parseTree objectForKey:kLayoutDictNodeType] intValue] == kLeafLayoutNode) {
+        [result addObject:[NSNumber numberWithInt:[[parseTree objectForKey:kLayoutDictWindowPaneKey] intValue]]];
+    } else {
+        for (NSDictionary *child in [parseTree objectForKey:kLayoutDictChildrenKey]) {
+            [result addObjectsFromArray:[self windowPanesInParseTree:child]];
+        }
+    }
+    return result;
+}
+
 @end
 
 @implementation TmuxLayoutParser (Private)
@@ -140,7 +153,8 @@ NSString *kLayoutDictStateKey = @"state";
                                    [NSNumber numberWithInt:kLeafLayoutNode], kLayoutDictNodeType,
                                    nil];
     if (![[components objectAtIndex:5] isEqualToString:@"na"]) {
-        [result setObject:[components objectAtIndex:5] forKey:kLayoutDictWindowPaneKey];
+        [result setObject:[NSNumber numberWithInt:[[components objectAtIndex:5] intValue]]
+                   forKey:kLayoutDictWindowPaneKey];
     }
     return result;
 }

@@ -39,6 +39,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 @class FakeWindow;
 @class SessionView;
 @class TmuxController;
+@class SolidColorView;
 
 // This implements NSSplitViewDelegate but it was an informal protocol in 10.5. If 10.5 support
 // is eventually dropped, change this to make it official.
@@ -63,6 +64,14 @@ static const int MIN_SESSION_COLUMNS = 2;
 
     // Does any session have new output?
     BOOL newOutput_;
+
+    // The root view of this tab. May be a SolidColorView for tmux tabs or the
+    // same as root_ otherwise (the normal case).
+    NSView *tabView_;  // weak
+
+    // If there is a flexible root view, this is set and is the tabview's view.
+    // Otherwise it is nil.
+    SolidColorView *flexibleView_;
 
     // The root of a tree of split views whose leaves are SessionViews. The root is the view of the
     // NSTabViewItem.
@@ -98,12 +107,16 @@ static const int MIN_SESSION_COLUMNS = 2;
     // If positive, then a tmux-originated resize is in progress and splitter
     // delegates won't interfere.
     int tmuxOriginatedResizeInProgress_;
+
+    // The tmux controller used by all sessions in this tab.
+    TmuxController *tmuxController_;
 }
 
 // init/dealloc
 - (id)initWithSession:(PTYSession*)session;
 - (id)initWithRoot:(NSSplitView*)root;
 - (void)dealloc;
+- (void)setRoot:(NSSplitView *)newRoot;
 
 - (NSRect)absoluteFrame;
 - (PTYSession*)activeSession;
@@ -156,6 +169,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)closeSession:(PTYSession*)session;
 - (void)terminateAllSessions;
 - (NSArray*)sessions;
+- (NSArray *)windowPanes;
 - (NSArray*)sessionViews;
 - (BOOL)allSessionsExited;
 - (void)setDvrInSession:(PTYSession*)newSession;
@@ -193,7 +207,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (PTYSession*)_recursiveSessionAtPoint:(NSPoint)point relativeTo:(NSView*)node;
 
 + (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame;
-+ (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement inTerminal:(PseudoTerminal*)term;
++ (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement inTerminal:(PseudoTerminal*)term hasFlexibleView:(BOOL)hasFlexible;
 - (NSDictionary*)arrangement;
 
 - (BOOL)hasMaximizedPane;
@@ -209,11 +223,14 @@ static const int MIN_SESSION_COLUMNS = 2;
 
 + (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
                        inTerminal:(PseudoTerminal *)term
-                       tmuxWindow:(int)tmuxWindow;
+                       tmuxWindow:(int)tmuxWindow
+                   tmuxController:(TmuxController *)tmuxController;
 - (NSSize)tmuxSize;
 - (int)tmuxWindow;
+- (BOOL)isTmuxTab;
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
        tmuxController:(TmuxController *)tmuxController;
+- (TmuxController *)tmuxController;
 
 #pragma mark NSSplitView delegate methods
 - (void)splitViewDidResizeSubviews:(NSNotification *)aNotification;

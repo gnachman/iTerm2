@@ -35,6 +35,7 @@ typedef enum {
 - (NSMutableDictionary *)parsedLayoutFromString:(NSString *)layout;
 - (NSMutableDictionary *)windowPane:(int)windowPane
                         inParseTree:(NSMutableDictionary *)parseTree;
+- (NSArray *)windowPanesInParseTree:(NSDictionary *)parseTree;
 
 // For each leaf node, perform selector taking the NSMutableDictionary for the
 // current node as the first arg and obj as the second arg. If it returns

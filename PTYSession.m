@@ -3438,6 +3438,12 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     tmuxController_ = [tmuxController retain];
 }
 
+- (void)resizeFromArrangement:(NSDictionary *)arrangement
+{
+    [self setWidth:[[arrangement objectForKey:SESSION_ARRANGEMENT_COLUMNS] intValue]
+            height:[[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue]];
+}
+
 #pragma mark tmux gateway delegate methods
 // TODO (also, capture and throw away keyboard input)
 

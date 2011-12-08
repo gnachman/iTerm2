@@ -35,6 +35,7 @@
 #import "PasteboardHistory.h"
 #import "Autocomplete.h"
 #import "ToolbeltView.h"
+#import "SolidColorView.h"
 
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
 @class ToolbeltView;
@@ -52,17 +53,6 @@ typedef enum {
 }
 - (void)drawRect:(NSRect)dirtyRect;
 
-@end
-
-@interface SolidColorView : NSView
-{
-    NSColor* color_;
-}
-
-- (id)initWithFrame:(NSRect)frame color:(NSColor*)color;
-- (void)drawRect:(NSRect)dirtyRect;
-- (void)setColor:(NSColor*)color;
-- (NSColor*)color;
 @end
 
 @class TmuxController;
@@ -249,15 +239,15 @@ NSWindowDelegate,
 
     BOOL exitingLionFullscreen_;
 
-    // This will be non-null if this is a tmux window.
-    TmuxController *tmuxController_;
-
     // If positive, then any window resizing that happens is driven by tmux and
     // shoudn't be reported back to tmux as a user-originated resize.
     int tmuxOriginatedResizeInProgress_;
 
     // If true then all tabs are tmux "windows"
     BOOL isTmuxWindow_;
+
+    BOOL liveResize_;
+    BOOL postponedTmuxTabLayoutChange_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
@@ -699,8 +689,12 @@ NSWindowDelegate,
 + (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement;
 - (void)loadArrangement:(NSDictionary *)arrangement;
 - (NSDictionary*)arrangement;
+- (void)tmuxTabLayoutDidChange:(BOOL)nontrivialChange;
 - (NSSize)tmuxCompatibleSize;
-- (void)loadTmuxLayout:(NSMutableDictionary *)parseTree window:(int)window tmuxController:(TmuxController *)tmuxController name:(NSString *)name;
+- (void)loadTmuxLayout:(NSMutableDictionary *)parseTree
+                window:(int)window
+        tmuxController:(TmuxController *)tmuxController
+                  name:(NSString *)name;
 
 - (void)beginTmuxOriginatedResize;
 - (void)endTmuxOriginatedResize;

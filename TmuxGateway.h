@@ -63,5 +63,6 @@ typedef enum {
 
 - (void)sendKeys:(NSData *)data toWindow:(int)window windowPane:(int)windowPane;
 - (void)detach;
+- (NSObject<TmuxGatewayDelegate> *)delegate;
 
 @end

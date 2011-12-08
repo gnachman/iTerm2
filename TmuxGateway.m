@@ -249,6 +249,11 @@ static NSString *kCommandObject = @"object";
      responseSelector:@selector(noopResponseSelector:)];
 }
 
+- (NSObject<TmuxGatewayDelegate> *)delegate
+{
+    return delegate_;
+}
+
 - (void)noopResponseSelector:(NSString *)response
 {
 }
