@@ -524,6 +524,11 @@ static NSDate* lastResizeDate_;
     [title_ setNeedsDisplay:YES];
 }
 
+- (NSString *)description
+{
+    return [NSString stringWithFormat:@"sv %@ %dx%d", [NSValue valueWithRect:[self frame]], [session_ columns], [session_ rows]];
+}
+
 #pragma mark SessionTitleViewDelegate
 
 - (NSMenu *)menu

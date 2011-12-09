@@ -192,6 +192,8 @@
 		1D6C50A81226EEFB00E0AA3E /* BookmarkListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */; };
 		1D72439011F416F300BD4924 /* LineBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72438F11F416F300BD4924 /* LineBuffer.h */; };
 		1D72477411F55E5700BD4924 /* LineBufferTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72477211F55E5700BD4924 /* LineBufferTest.h */; };
+		1D7B9A691491D82F003A2A22 /* IntervalMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7B9A671491D82F003A2A22 /* IntervalMap.h */; };
+		1D7B9A6A1491D82F003A2A22 /* IntervalMap.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7B9A681491D82F003A2A22 /* IntervalMap.m */; };
 		1D7C18811275D22900461E55 /* PasteboardHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7C187F1275D22900461E55 /* PasteboardHistory.h */; };
 		1D7C18821275D22900461E55 /* PasteboardHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C18801275D22900461E55 /* PasteboardHistory.m */; };
 		1D7C1AD31276FD6E00461E55 /* PasteboardHistory.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */; };
@@ -423,6 +425,8 @@
 		1D72438F11F416F300BD4924 /* LineBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBuffer.h; sourceTree = "<group>"; };
 		1D72477211F55E5700BD4924 /* LineBufferTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferTest.h; sourceTree = "<group>"; };
 		1D72477311F55E5700BD4924 /* LineBufferTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferTest.m; sourceTree = "<group>"; };
+		1D7B9A671491D82F003A2A22 /* IntervalMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntervalMap.h; sourceTree = "<group>"; };
+		1D7B9A681491D82F003A2A22 /* IntervalMap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalMap.m; sourceTree = "<group>"; };
 		1D7C187F1275D22900461E55 /* PasteboardHistory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PasteboardHistory.h; sourceTree = "<group>"; };
 		1D7C18801275D22900461E55 /* PasteboardHistory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PasteboardHistory.m; sourceTree = "<group>"; };
 		1D7C1AD21276FD6E00461E55 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/PasteboardHistory.xib; sourceTree = "<group>"; };
@@ -713,6 +717,8 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				1D7B9A671491D82F003A2A22 /* IntervalMap.h */,
+				1D7B9A681491D82F003A2A22 /* IntervalMap.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1DEE9FDB11FCA60F009E18C9 /* credits.rtf */,
@@ -1377,6 +1383,7 @@
 				1DB67CF11485C578005849A1 /* TmuxHistoryParser.h in Headers */,
 				1DB67CF51486BD3D005849A1 /* TmuxStateParser.h in Headers */,
 				1DC38818148E840700B89F7C /* SolidColorView.h in Headers */,
+				1D7B9A691491D82F003A2A22 /* IntervalMap.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1663,6 +1670,7 @@
 				1DB67CF21485C578005849A1 /* TmuxHistoryParser.m in Sources */,
 				1DB67CF61486BD3D005849A1 /* TmuxStateParser.m in Sources */,
 				1DC38819148E840700B89F7C /* SolidColorView.m in Sources */,
+				1D7B9A6A1491D82F003A2A22 /* IntervalMap.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -42,6 +42,7 @@
 #import "iTerm/iTermController.h"
 #import "TmuxLayoutParser.h"
 #import "BookmarkModel.h"
+#import "IntervalMap.h"
 
 //#define PTYTAB_VERBOSE_LOGGING
 #ifdef PTYTAB_VERBOSE_LOGGING
@@ -72,6 +73,17 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 @end
 
 @implementation MySplitView
+
+- (NSString *)description
+{
+    NSMutableString *d = [NSMutableString string];
+    [d appendFormat:@"%@ %@ [", [NSValue valueWithRect:[self frame]], [self isVertical] ? @"|" : @"--"];
+    for (NSView *view in [self subviews]) {
+        [d appendFormat:@" (%@)", [view description]];
+    }
+    [d appendFormat:@"]"];
+    return d;
+}
 
 - (void)mouseDown:(NSEvent *)theEvent
 {
@@ -2361,60 +2373,83 @@ static NSString* FormatRect(NSRect r) {
     }
 }
 
-- (int)tmuxSizeForHeight:(BOOL)forHeight
+- (void)addSplitter:(NSSplitView *)splitter
+        toIntervalMap:(IntervalMap *)intervalMap
+          forHeight:(BOOL)forHeight
+             origin:(NSPoint)origin
 {
-    // - Initialize a mapping M: (int, int) -> int
-    // - Do a depth-first search of the splitter tree. Record the x position
-    //   of the right of every session view in a sorted array seeded with 0 (e.g. [0,5,9,11,...]
-    // - Do a depth-first search of the splitter tree. For each session s:
-    //   - For each pair of adjacent values v1, v2 in the array
-    //     - If (s.x1, s.x1 + s.width) intersects (v1, v2) add the number of
-    //       rows in s to the value of a mapping in M of v1,v2 -> sum of rows
-    // - Output the maximum value in M.
-    // Do something similar for finding the horizontal size.
-    NSMutableDictionary *rangeToSize = [NSMutableDictionary dictionary];
-    NSMutableArray *splitters = [NSMutableArray array];
-    [splitters addObject:[NSNumber numberWithInt:0]];
-    NSMutableDictionary *sessionFrames = [NSMutableDictionary dictionary];  // NSValue(Pointer){session} -> NSValue(NSRect)
-    [self _recursiveAddSplittersUnderNode:root_
-                                forHeight:forHeight
-                                  toArray:splitters
-                   andSaveSessionFramesIn:sessionFrames
-                                   origin:NSZeroPoint];
-    NSArray *sortedSplitters = [splitters sortedArrayUsingSelector:@selector(compare:)];
+    BOOL first = YES;
+    int minPos, size;
     NSSize cellSize = [PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]];
-    for (int i = 0; i < sortedSplitters.count - 1; i++) {
-        int v1 = [[sortedSplitters objectAtIndex:i] intValue];
-        int v2 = [[sortedSplitters objectAtIndex:i + 1] intValue];
-        if (v1 == v2) {
-            continue;
-        }
-        for (NSValue *sessionPtrValue in sessionFrames) {
-            SessionView *sessionView = [sessionPtrValue pointerValue];
-            NSRect frame = [[sessionFrames objectForKey:sessionPtrValue] rectValue];
-            int sessionMin, sessionSize;
-            if (forHeight) {
-                sessionMin = frame.origin.x;
-                sessionSize = frame.size.width;
-            } else {
-                sessionMin = frame.origin.y;
-                sessionSize = frame.size.height;
-            }
-            if (sessionMin < v2 && (sessionMin + sessionSize) > v1) {
-                NSArray *k = [NSArray arrayWithObjects:[NSNumber numberWithInt:v1],
-                              [NSNumber numberWithInt:v2], nil];
-                int n = [[rangeToSize objectForKey:k] intValue];
-                if (forHeight) {
-                    n += (sessionView.frame.size.height - VMARGIN * 2) / cellSize.height;
-                } else {
-                    n += (sessionView.frame.size.width - MARGIN * 2) / cellSize.width;
-                }
-                assert(n > 0);
-                [rangeToSize setObject:[NSNumber numberWithInt:n] forKey:k];
-            }
+    if (forHeight != [splitter isVertical]) {
+        if (forHeight) {
+            minPos = splitter.frame.origin.x + origin.x;
+            size = splitter.frame.size.width;
+        } else {
+            minPos = splitter.frame.origin.y + origin.y;
+            size = splitter.frame.size.height;
         }
     }
-    NSArray *sortedValues = [[rangeToSize allValues] sortedArrayUsingSelector:@selector(compare:)];
+    for (NSView *view in [splitter subviews]) {
+        if (forHeight == [splitter isVertical]) {
+            if ([splitter isVertical]) {
+                minPos = origin.x;
+                size = view.frame.size.width;
+            } else {
+                minPos = origin.y;
+                size = view.frame.size.height;
+            }
+        }
+        if ([view isKindOfClass:[NSSplitView class]]) {
+            NSSplitView *sub = (NSSplitView *)view;
+            [self addSplitter:sub
+                  toIntervalMap:intervalMap
+                    forHeight:forHeight
+                       origin:origin];
+        } else {
+            SessionView *sv = (SessionView *)view;
+            PTYSession *session = [sv session];
+            NSRect svFrame = [[session SCROLLVIEW] frame];
+            int chars = forHeight ? (svFrame.size.height - VMARGIN * 2) / cellSize.height :
+                                    (svFrame.size.width - MARGIN * 2) / cellSize.width;
+            [intervalMap incrementNumbersBy:chars
+                                    inRange:[IntRange rangeWithMin:minPos size:size]];
+        }
+        if (!first && [splitter isVertical] != forHeight) {
+            // Splitters have to be counted and there is a splitter before this view
+            [intervalMap incrementNumbersBy:1
+                                    inRange:[IntRange rangeWithMin:minPos size:size]];
+        }
+        first = NO;
+        if ([splitter isVertical]) {
+            origin.x += view.frame.size.width + [splitter dividerThickness];
+        } else {
+            origin.y += view.frame.size.height + [splitter dividerThickness];
+        }
+    }
+}
+
+- (int)tmuxSizeForHeight:(BOOL)forHeight
+{
+    // The minimum size of a splitter is determined thus:
+    // Keep an interval map M: [min, max) -> count
+    // Where intervals are in the space perpindicular to the size we're measuring.
+    // Increment [min, max) by the number of splitters.
+    // If a subview is a splitter, recurse
+    // If a subview is a sessionview, add its number of rows/cols based on pixels
+    // Pick the largest interval
+
+    // So:
+    // When forHeight is true, we want the tallest column.
+    // intervalMap maps (min x pixel, max x pixel) -> number of rows (plus 1 for each splitter)
+    // Then the largest value is the tallest column.
+    IntervalMap *intervalMap = [[[IntervalMap alloc] init] autorelease];
+    [self addSplitter:root_
+          toIntervalMap:intervalMap
+            forHeight:forHeight
+               origin:NSZeroPoint];
+    NSArray *values = [intervalMap allValues];
+    NSArray *sortedValues = [values sortedArrayUsingSelector:@selector(compare:)];
     return [[sortedValues lastObject] intValue];
 }
 
@@ -2444,8 +2479,8 @@ static NSString* FormatRect(NSRect r) {
                                   sizeDiff.height / charSize.height);
 
     // The character size closest to the target.
-    NSSize tmuxSize = NSMakeSize(rootSizeChars.width + charsDiff.width,
-                                 rootSizeChars.height + charsDiff.height);
+    NSSize tmuxSize = NSMakeSize((int) (rootSizeChars.width + charsDiff.width),
+                                 (int) (rootSizeChars.height + charsDiff.height));
 
     return tmuxSize;
 }
@@ -2497,6 +2532,7 @@ static NSString* FormatRect(NSRect r) {
     }
     NSRect frame = [PTYTab dictToFrame:frameDict];
     [view setFrame:frame];
+    [view setNeedsDisplay:YES];
     if ([view isKindOfClass:[NSSplitView class]]) {
         int i = 0;
         NSArray *subarrangements = [arrangement objectForKey:SUBVIEWS];
@@ -2525,6 +2561,8 @@ static NSString* FormatRect(NSRect r) {
     [realParentWindow_ tmuxTabLayoutDidChange:NO];
     [realParentWindow_ endTmuxOriginatedResize];
     --tmuxOriginatedResizeInProgress_;
+    [root_ setNeedsDisplay:YES];
+    [flexibleView_ setNeedsDisplay:YES];
 }
 
 - (void)setRoot:(NSSplitView *)newRoot
