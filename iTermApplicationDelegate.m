@@ -825,6 +825,11 @@ static BOOL hasBecomeActive = NO;
 }
 
 // font control
+- (IBAction) originalFont: (id) sender
+{
+    [[[[iTermController sharedInstance] currentTerminal] currentSession] resetFontSize];
+}
+
 - (IBAction) biggerFont: (id) sender
 {
     [[[[iTermController sharedInstance] currentTerminal] currentSession] changeFontSizeDirection:1];

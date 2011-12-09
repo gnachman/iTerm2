@@ -153,6 +153,7 @@ void DebugLog(NSString* value);
 - (void) nonTerminalWindowBecameKey: (NSNotification *) aNotification;
 
 // font control
+- (IBAction) originalFont: (id) sender;
 - (IBAction) biggerFont: (id) sender;
 - (IBAction) smallerFont: (id) sender;
 
