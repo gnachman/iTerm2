@@ -155,6 +155,34 @@
     return numOutstandingWindowResizes_ > 0;
 }
 
+- (void)windowPane:(int)wp
+          inWindow:(int)window
+         resizedBy:(int)amount
+      horizontally:(BOOL)wasHorizontal
+{
+    NSString *dir;
+    if (wasHorizontal) {
+        if (amount > 0) {
+            dir = @"R";
+        } else {
+            dir = @"L";
+        }
+    } else {
+        if (amount > 0) {
+            dir = @"D";
+        } else {
+            dir = @"U";
+        }
+    }
+    NSString *cmdStr = [NSString stringWithFormat:@"resize-pane -%@ -t %d.%d %d",
+                        dir, window, wp, abs(amount)];
+    ++numOutstandingWindowResizes_;
+    [gateway_ sendCommand:cmdStr
+           responseTarget:self
+         responseSelector:@selector(clientSizeChangeResponse:)
+           responseObject:nil];
+}
+
 @end
 
 @implementation TmuxController (Private)

@@ -38,5 +38,9 @@
 - (void)detach;
 - (void)windowDidResize:(PseudoTerminal *)term;
 - (BOOL)hasOutstandingWindowResize;
+- (void)windowPane:(int)wp
+          inWindow:(int)window
+         resizedBy:(int)amount
+      horizontally:(BOOL)wasHorizontal;
 
 @end

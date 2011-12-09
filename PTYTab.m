@@ -73,6 +73,67 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 
 @implementation MySplitView
 
+- (void)mouseDown:(NSEvent *)theEvent
+{
+    // First, find the splitter that was clicked on. It will be the one closest
+    // to the mouse. The OS seems to give a bit of wiggle room so it's not
+    // necessary exactly under the mouse.
+    int clickedOnSplitterIndex = -1;
+    NSArray *subviews = [self subviews];
+    NSPoint locationInWindow = [theEvent locationInWindow];
+    locationInWindow.y--;
+    NSPoint locationInView = [self convertPointFromBase:locationInWindow];
+    int x, y;
+    int bestDistance = -1;
+    if ([self isVertical]) {
+        int mouseX = locationInView.x;
+        x = 0;
+        int bestX;
+        for (int i = 0; i < subviews.count; i++) {
+            x += [[subviews objectAtIndex:i] frame].size.width;
+            if (bestDistance < 0 || abs(x - mouseX) < bestDistance) {
+                bestDistance = abs(x - mouseX);
+                clickedOnSplitterIndex = i;
+                bestX = x;
+            }
+            x += [self dividerThickness];
+        }
+        x = bestX;
+    } else {
+        int mouseY = locationInView.y;
+        int bestY;
+        y = 0;
+        for (int i = 0; i < subviews.count; i++) {
+            y += [[subviews objectAtIndex:i] frame].size.height;
+            if (bestDistance < 0 || abs(y - mouseY) < bestDistance) {
+                bestDistance = abs(y - mouseY);
+                clickedOnSplitterIndex = i;
+                bestY = y;
+            }
+            y += [self dividerThickness];
+        }
+        y = bestY;
+    }
+
+    // mouseDown blocks and lets the user drag things around.
+    assert(clickedOnSplitterIndex >= 0);
+    [super mouseDown:theEvent];
+
+    // See how much the view after the splitter moved
+    NSSize changePx = NSZeroSize;
+    NSRect frame = [[subviews objectAtIndex:clickedOnSplitterIndex] frame];
+    if ([self isVertical]) {
+        changePx.width = (frame.origin.x + frame.size.width) - x;
+    } else {
+        changePx.height = (frame.origin.y + frame.size.height) - y;
+    }
+
+    // Run our delegate method.
+    [[self delegate] splitView:self
+                     draggingDidEndOfSplit:clickedOnSplitterIndex
+                     pixels:changePx];
+}
+
 - (void)adjustSubviews
 {
     PtyLog(@"@@@@@@@@@@ begin adjustSubviews");
@@ -2652,6 +2713,41 @@ static NSString* FormatRect(NSRect r) {
 }
 
 #pragma mark NSSplitView delegate methods
+
+- (void)splitView:(NSSplitView *)splitView draggingDidEndOfSplit:(int)splitterIndex pixels:(NSSize)pxMoved
+{
+    if (![self isTmuxTab]) {
+        // Don't care for non-tmux tabs.
+        return;
+    }
+    // Find a session view adjacent to the moved splitter.
+    NSArray *subviews = [splitView subviews];
+    NSView *theView = [subviews objectAtIndex:splitterIndex];  // the view right of or below the dragged splitter.
+    NSSplitView *parentSplitView = splitView;
+    while ([theView isKindOfClass:[NSSplitView class]]) {
+        NSSplitView *subSplitView = (NSSplitView *)theView;
+        parentSplitView = subSplitView;
+        theView = [[subSplitView subviews] objectAtIndex:0];
+    }
+    SessionView *sessionView = (SessionView *)theView;
+    PTYSession *session = [sessionView session];
+
+    // Determine the number of characters moved
+    NSSize cellSize = [PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]];
+    int amount;
+    if (pxMoved.width) {
+        amount = pxMoved.width / cellSize.width;
+    } else {
+        amount = pxMoved.height / cellSize.height;
+    }
+
+    // Ask the tmux server to perform the move and we'll update our layout when
+    // it finishes.
+    [tmuxController_ windowPane:[session tmuxPane]
+                       inWindow:tmuxWindow_
+                      resizedBy:amount
+                   horizontally:[splitView isVertical]];
+}
 
 // Prevent any session from becoming smaller than its minimum size because of
 // a divder's movement.
