@@ -16,12 +16,6 @@ NSString *kStateDictCursorY = @"cursor_y";
 NSString *kStateDictScrollRegionUpper = @"scroll_region_upper";
 NSString *kStateDictScrollRegionLower = @"scroll_region_lower";
 NSString *kStateDictTabstops = @"tabstops";
-NSString *kStateDictHasSelection = @"has_selection";
-NSString *kStateDictHasRectangularSelection = @"has_rectangular_selection";
-NSString *kStateDictSelectionStartX = @"selection_start_x";
-NSString *kStateDictSelectionStartY = @"selection_start_y";
-NSString *kStateDictSelectionEndX = @"selection_end_x";
-NSString *kStateDictSelectionEndY = @"selection_end_y";
 NSString *kStateDictDECSCCursorX = @"decsc_cursor_x";
 NSString *kStateDictDECSCCursorY = @"decsc_cursor_y";
 
@@ -78,12 +72,6 @@ NSString *kStateDictDECSCCursorY = @"decsc_cursor_y";
                                 uintType, kStateDictScrollRegionUpper,
                                 uintType, kStateDictScrollRegionLower,
                                 intlistType, kStateDictTabstops,
-                                intType, kStateDictHasSelection,
-                                intType, kStateDictHasRectangularSelection,
-                                uintType, kStateDictSelectionStartX,
-                                uintType, kStateDictSelectionStartY,
-                                uintType, kStateDictSelectionEndX,
-                                uintType, kStateDictSelectionEndY,
                                 intType, kStateDictDECSCCursorX,
                                 intType, kStateDictDECSCCursorY,
                                 nil];

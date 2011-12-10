@@ -147,6 +147,9 @@
 
 - (void)beginDrag:(PTYSession *)session
 {
+    if ([session tmuxController]) {
+        return;
+    }
     [self exitMovePaneMode];
     session_ = session;
     self.dragFailed = NO;

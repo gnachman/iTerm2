@@ -3444,14 +3444,6 @@ void DumpBuf(screen_char_t* p, int n) {
     for (NSNumber *n in [state objectForKey:kStateDictTabstops]) {
         [tabStops addObject:n];
     }
-    int isRect = [[state objectForKey:kStateDictHasRectangularSelection] intValue];
-    if (isRect || [[state objectForKey:kStateDictHasSelection] intValue]) {
-        [display setSelectionFromX:[[state objectForKey:kStateDictSelectionStartX] intValue]
-                             fromY:[[state objectForKey:kStateDictSelectionStartY] intValue]
-                               toX:[[state objectForKey:kStateDictSelectionEndX] intValue]
-                               toY:[[state objectForKey:kStateDictSelectionEndY] intValue]];
-        [display setRectangularSelection:isRect];
-    }
 
     // TODO: The way that tmux and iterm2 handle saving the cursor position is different and incompatible and only one of us is right.
     // tmux saves the cursor position for DECSC in one location and for the non-alt screen in a separate location.

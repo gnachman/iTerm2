@@ -16,12 +16,6 @@ extern NSString *kStateDictCursorY;
 extern NSString *kStateDictScrollRegionUpper;
 extern NSString *kStateDictScrollRegionLower;
 extern NSString *kStateDictTabstops;
-extern NSString *kStateDictHasSelection;
-extern NSString *kStateDictHasRectangularSelection;
-extern NSString *kStateDictSelectionStartX;
-extern NSString *kStateDictSelectionStartY;
-extern NSString *kStateDictSelectionEndX;
-extern NSString *kStateDictSelectionEndY;
 extern NSString *kStateDictDECSCCursorX;
 extern NSString *kStateDictDECSCCursorY;
 

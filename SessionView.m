@@ -393,6 +393,9 @@ static NSDate* lastResizeDate_;
 
 - (NSDragOperation)draggingSourceOperationMaskForLocal:(BOOL)isLocal
 {
+    if ([session_ tmuxController]) {
+        return NSDragOperationNone;
+    }
     return (isLocal ? NSDragOperationMove : NSDragOperationNone);
 }
 
@@ -411,6 +414,9 @@ static NSDate* lastResizeDate_;
 #pragma mark NSDraggingDestination protocol
 - (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender
 {
+    if ([session_ tmuxController]) {
+        return NSDragOperationNone;
+    }
     if ([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
         // Dragging a tab handle. Source is a PSMTabBarControl.
         PTYTab *theTab = (PTYTab *)[[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];

@@ -2282,7 +2282,16 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
 
 - (void)setTab:(PTYTab*)tab
 {
+    if (tmuxController_) {
+        [tmuxController_ deregisterWindow:[tab_ tmuxWindow]
+                               windowPane:tmuxPane_];
+    }
     tab_ = tab;
+    if (tmuxController_) {
+        [tmuxController_ registerSession:self
+                                withPane:tmuxPane_
+                                inWindow:[tab_ tmuxWindow]];
+    }
 }
 
 - (struct timeval)lastOutput
@@ -2312,14 +2321,7 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
 
 - (NSString*)name
 {
-    NSString *s = [self formattedName:name];
-    for (int i = 0; i < s.length; i++) {
-        unichar c = [s characterAtIndex:i];
-        if (c > 127) {
-            NSLog(@"got it");
-        }
-    }
-    return s;
+    return [self formattedName:name];
 }
 
 - (NSString*)rawName
