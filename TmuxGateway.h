@@ -61,7 +61,7 @@ typedef enum {
                       responseSelector:(SEL)selector
                         responseObject:(id)obj;
 
-- (void)sendKeys:(NSData *)data toWindow:(int)window windowPane:(int)windowPane;
+- (void)sendKeys:(NSData *)data toWindowPane:(int)windowPane;
 - (void)detach;
 - (NSObject<TmuxGatewayDelegate> *)delegate;
 

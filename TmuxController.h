@@ -26,7 +26,7 @@
 - (void)setLayoutInTab:(PTYTab *)tab
                 toLayout:(NSString *)layout;
 
-- (PTYSession *)sessionForWindow:(int)window pane:(int)windowPane;
+- (PTYSession *)sessionForWindowPane:(int)windowPane;
 - (PTYTab *)window:(int)window;
 - (void)registerSession:(PTYSession *)aSession
                withPane:(int)windowPane
@@ -39,7 +39,6 @@
 - (void)windowDidResize:(PseudoTerminal *)term;
 - (BOOL)hasOutstandingWindowResize;
 - (void)windowPane:(int)wp
-          inWindow:(int)window
          resizedBy:(int)amount
       horizontally:(BOOL)wasHorizontal;
 

@@ -286,6 +286,12 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
     NSRectFill(frame);
 }
 
+- (void)setSizeFromArrangement:(NSDictionary*)arrangement
+{
+    [self setWidth:[[arrangement objectForKey:SESSION_ARRANGEMENT_COLUMNS] intValue]
+            height:[[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue]];
+}
+
 + (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement
                                inView:(SessionView*)sessionView
                                 inTab:(PTYTab*)theTab
@@ -834,8 +840,7 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
 {
     if (tmuxMode_ == TMUX_CLIENT) {
         [[tmuxController_ gateway] sendKeys:data
-                                   toWindow:[tab_ tmuxWindow]
-                                 windowPane:tmuxPane_];
+                                 toWindowPane:tmuxPane_];
         return;
     } else if (tmuxMode_ == TMUX_GATEWAY) {
         // Use keypresses for tmux gateway commands for development and debugging.

@@ -287,6 +287,7 @@ typedef enum {
 - (void)appendStringToTriggerLine:(NSString *)s;
 
 + (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame;
+- (void)setSizeFromArrangement:(NSDictionary*)arrangement;
 + (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement
                                inView:(SessionView*)sessionView
                                 inTab:(PTYTab*)theTab

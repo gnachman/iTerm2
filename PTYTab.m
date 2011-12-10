@@ -2000,6 +2000,7 @@ static NSString* FormatRect(NSRect r) {
             // from the existing view hierarchy when the tmux layout changed but
             // this session was not added or removed.
             session = [sessionView session];
+            [session setSizeFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]];
         } else {
             session = [PTYSession sessionFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]
                                                   inView:(SessionView*)view
@@ -2782,7 +2783,6 @@ static NSString* FormatRect(NSRect r) {
     // Ask the tmux server to perform the move and we'll update our layout when
     // it finishes.
     [tmuxController_ windowPane:[session tmuxPane]
-                       inWindow:tmuxWindow_
                       resizedBy:amount
                    horizontally:[splitView isVertical]];
 }

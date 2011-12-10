@@ -67,19 +67,18 @@ static NSString *kCommandObject = @"object";
 
 - (void)parseOutputCommand:(NSString *)command
 {
-    // %output <window>.<pane> <b64 data...><newline>
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^[^ ]+ +([0-9]+)\\.([0-9]+) (.*)"];
-    if (components.count != 4) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected num.num b64data): \"%@\"", command]];
+    // %output %<pane id> <b64 data...><newline>
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^[^ ]+ %([0-9]+) (.*)"];
+    if (components.count != 3) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%num b64data): \"%@\"", command]];
         return;
     }
-    int window = [[components objectAtIndex:1] intValue];
-    int windowPane = [[components objectAtIndex:2] intValue];
-    NSString *base64data = [components objectAtIndex:3];
+    int windowPane = [[components objectAtIndex:1] intValue];
+    NSString *base64data = [components objectAtIndex:2];
     NSData *decodedCommand = [self decodeBase64:base64data];
-    NSLog(@"Run tmux command: \"%%output %d.%d %@", window, windowPane,
+    NSLog(@"Run tmux command: \"%%output %%%d %@", windowPane,
           [[[NSString alloc] initWithData:decodedCommand encoding:NSUTF8StringEncoding] autorelease]);
-    [[[delegate_ tmuxController] sessionForWindow:window pane:windowPane]  tmuxReadTask:decodedCommand];
+    [[[delegate_ tmuxController] sessionForWindowPane:windowPane]  tmuxReadTask:decodedCommand];
     state_ = CONTROL_STATE_READY;
 }
 
@@ -232,11 +231,11 @@ static NSString *kCommandObject = @"object";
     return encoded;
 }
 
-- (void)sendKeys:(NSData *)data toWindow:(int)window windowPane:(int)windowPane
+- (void)sendKeys:(NSData *)data toWindowPane:(int)windowPane
 {
     NSString *encoded = [self stringForKeyEncodedData:data];
-    NSString *command = [NSString stringWithFormat:@"send-keys -h -t %d.%d %@",
-                         window, windowPane, encoded];
+    NSString *command = [NSString stringWithFormat:@"send-keys -h -t %%%d %@",
+                         windowPane, encoded];
     [self sendCommand:command
          responseTarget:self
          responseSelector:@selector(noopResponseSelector:)];

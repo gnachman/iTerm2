@@ -158,8 +158,7 @@
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp
 {
     ++pendingRequests_;
-    NSString *command = [NSString stringWithFormat:@"dump-state -t %d.%d",
-                         windowIndex_, [wp intValue]];
+    NSString *command = [NSString stringWithFormat:@"dump-state -t %%%d", [wp intValue]];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
                          responseSelector:@selector(dumpStateResponse:pane:)
@@ -170,8 +169,8 @@
                         alt:(BOOL)alternate
 {
     ++pendingRequests_;
-    NSString *command = [NSString stringWithFormat:@"dump-history %@-t %d.%d -l 1000",
-                         (alternate ? @"-a " : @""), windowIndex_, [wp intValue]];
+    NSString *command = [NSString stringWithFormat:@"dump-history %@-t %%%d -l 1000",
+                         (alternate ? @"-a " : @""), [wp intValue]];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
                          responseSelector:@selector(dumpHistoryResponse:paneAndAlternate:)

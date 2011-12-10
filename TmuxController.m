@@ -96,14 +96,14 @@
          responseSelector:@selector(initialListWindowsResponse:)];
 }
 
-- (NSString *)_keyForWindow:(int)window windowPane:(int)windowPane
+- (NSNumber *)_keyForWindowPane:(int)windowPane
 {
-    return [NSString stringWithFormat:@"%d.%d", window, windowPane];
+    return [NSNumber numberWithInt:windowPane];
 }
 
-- (PTYSession *)sessionForWindow:(int)window pane:(int)windowPane
+- (PTYSession *)sessionForWindowPane:(int)windowPane
 {
-    return [windowPanes_ objectForKey:[self _keyForWindow:window windowPane:windowPane]];
+    return [windowPanes_ objectForKey:[self _keyForWindowPane:windowPane]];
 }
 
 - (void)registerSession:(PTYSession *)aSession
@@ -111,13 +111,13 @@
                inWindow:(int)window
 {
     [self retainWindow:window withTab:[aSession tab]];
-    [windowPanes_ setObject:aSession forKey:[self _keyForWindow:window windowPane:windowPane]];
+    [windowPanes_ setObject:aSession forKey:[self _keyForWindowPane:windowPane]];
 }
 
 - (void)deregisterWindow:(int)window windowPane:(int)windowPane
 {
     [self releaseWindow:window];
-    [windowPanes_ removeObjectForKey:[self _keyForWindow:window windowPane:windowPane]];
+    [windowPanes_ removeObjectForKey:[self _keyForWindowPane:windowPane]];
 }
 
 - (PTYTab *)window:(int)window
@@ -156,7 +156,6 @@
 }
 
 - (void)windowPane:(int)wp
-          inWindow:(int)window
          resizedBy:(int)amount
       horizontally:(BOOL)wasHorizontal
 {
@@ -174,8 +173,8 @@
             dir = @"U";
         }
     }
-    NSString *cmdStr = [NSString stringWithFormat:@"resize-pane -%@ -t %d.%d %d",
-                        dir, window, wp, abs(amount)];
+    NSString *cmdStr = [NSString stringWithFormat:@"resize-pane -%@ -t %%%d %d",
+                        dir, wp, abs(amount)];
     ++numOutstandingWindowResizes_;
     [gateway_ sendCommand:cmdStr
            responseTarget:self
