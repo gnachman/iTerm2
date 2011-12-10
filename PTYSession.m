@@ -315,12 +315,17 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
         [[theTab realParentWindow] setWindowTitle];
     }
     [aSession setTab:theTab];
+    NSDictionary *state = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_STATE];
     NSNumber *n = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
     if (!n) {
         [aSession runCommandWithOldCwd:[arrangement objectForKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY]
                          forObjectType:objectType];
     } else {
-        [aSession setWindowTitle:[NSString stringWithFormat:@"Tmux session %@", n]];  // TOOD Use name from tmux if available?
+        NSString *title = [state objectForKey:@"title"];
+        if (title) {
+            [aSession setName:title];
+            [aSession setWindowTitle:title];
+        }
     }
     if (needDivorce) {
         [aSession divorceAddressBookEntryFromPreferences];
@@ -337,7 +342,6 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
     if (history) {
         [[aSession SCREEN] setAltScreen:history];
     }
-    NSDictionary *state = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_STATE];
     if (state) {
         [[aSession SCREEN] setTmuxState:state];
     }
@@ -2213,19 +2217,21 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
 
 - (NSString*)formattedName:(NSString*)base
 {
+    NSString *prefix = tmuxController_ ? @"↣ " : @"";
+
     BOOL baseIsBookmarkName = [base isEqualToString:bookmarkName];
     PreferencePanel* panel = [PreferencePanel sharedInstance];
     if ([panel jobName] && jobName_) {
         if (baseIsBookmarkName && ![panel showBookmarkName]) {
-            return [NSString stringWithString:[self jobName]];
+            return [NSString stringWithFormat:@"%@%@", prefix, [self jobName]];
         } else {
-            return [NSString stringWithFormat:@"%@ (%@)", base, [self jobName]];
+            return [NSString stringWithFormat:@"%@%@ (%@)", prefix, base, [self jobName]];
         }
     } else {
         if (baseIsBookmarkName && ![panel showBookmarkName]) {
-            return @"Shell";
+            return [NSString stringWithFormat:@"%@Shell", prefix];
         } else {
-            return base;
+            return [NSString stringWithFormat:@"%@%@", prefix, base];
         }
     }
 }
@@ -2306,7 +2312,14 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
 
 - (NSString*)name
 {
-    return [self formattedName:name];
+    NSString *s = [self formattedName:name];
+    for (int i = 0; i < s.length; i++) {
+        unichar c = [s characterAtIndex:i];
+        if (c > 127) {
+            NSLog(@"got it");
+        }
+    }
+    return s;
 }
 
 - (NSString*)rawName
