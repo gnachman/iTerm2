@@ -81,7 +81,7 @@
         return;
     }
     for (NSArray *record in doc.records) {
-        [self openWindowWithIndex:[[doc valueInRecord:record forField:@"window_index"] intValue]
+        [self openWindowWithIndex:[[doc valueInRecord:record forField:@"window_id"] intValue]
                              name:[doc valueInRecord:record forField:@"window_name"]
                              size:NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
                                              [[doc valueInRecord:record forField:@"window_height"] intValue])

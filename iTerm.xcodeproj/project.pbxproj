@@ -292,6 +292,8 @@
 		1DCF3F001224EEBD00AD56F1 /* MigrationMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */; };
 		1DCF3F4A1225F6F200AD56F1 /* BookmarkModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */; };
 		1DD1BB6E148FD08A00567DF0 /* linen.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 1DD1BB6D148FD08A00567DF0 /* linen.jpg */; };
+		1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD6707514934ADE008E4361 /* PTYSplitView.h */; };
+		1DD6707814934ADE008E4361 /* PTYSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD6707614934ADE008E4361 /* PTYSplitView.m */; };
 		1DD736411283C2FA009B7829 /* Popup.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD7363F1283C2FA009B7829 /* Popup.h */; };
 		1DD736421283C2FA009B7829 /* Popup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD736401283C2FA009B7829 /* Popup.m */; };
 		1DDBC61E12E2BCDC00BC3868 /* iTermExpose.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DDBC61C12E2BCDC00BC3868 /* iTermExpose.h */; };
@@ -524,6 +526,8 @@
 		1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = MigrationMap.plist; sourceTree = "<group>"; };
 		1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BookmarkModel.h; path = Headers/iTerm/BookmarkModel.h; sourceTree = "<group>"; };
 		1DD1BB6D148FD08A00567DF0 /* linen.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = linen.jpg; path = images/linen.jpg; sourceTree = "<group>"; };
+		1DD6707514934ADE008E4361 /* PTYSplitView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYSplitView.h; sourceTree = "<group>"; };
+		1DD6707614934ADE008E4361 /* PTYSplitView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYSplitView.m; sourceTree = "<group>"; };
 		1DD7363F1283C2FA009B7829 /* Popup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Popup.h; sourceTree = "<group>"; };
 		1DD736401283C2FA009B7829 /* Popup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Popup.m; sourceTree = "<group>"; };
 		1DDBC61C12E2BCDC00BC3868 /* iTermExpose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermExpose.h; sourceTree = "<group>"; };
@@ -717,8 +721,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				1D7B9A671491D82F003A2A22 /* IntervalMap.h */,
-				1D7B9A681491D82F003A2A22 /* IntervalMap.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1DEE9FDB11FCA60F009E18C9 /* credits.rtf */,
@@ -770,6 +772,7 @@
 				1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */,
 				1DAED28712E9395E005E49ED /* GlobalSearch.m */,
 				1D624BC71386E09E00111319 /* GTMCarbonEvent.m */,
+				1D7B9A681491D82F003A2A22 /* IntervalMap.m */,
 				20E74F4904E9089700000106 /* ITAddressBookMgr.m */,
 				20B8892B04E9342100000106 /* ITViewLocalizer.m */,
 				DDF0FD64062916F70080EF74 /* iTermApplication.m */,
@@ -789,6 +792,8 @@
 				F52ED8DD037F0A7D01A8A066 /* PTYSession.m */,
 				2076B15804E8817300000106 /* PTToolbarController.m */,
 				1D2E802D129DA45A00F3D71E /* PTYTab.m */,
+				1DD6707514934ADE008E4361 /* PTYSplitView.h */,
+				1DD6707614934ADE008E4361 /* PTYSplitView.m */,
 				E8CF7560026DDA6303A80106 /* PTYTask.m */,
 				E8CF7561026DDA6303A80106 /* PTYTextView.m */,
 				F5E533B403B2959201A8A066 /* PTYTabView.m */,
@@ -811,6 +816,7 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				1D7B9A671491D82F003A2A22 /* IntervalMap.h */,
 				1D3D21851482E0E500FAC8E7 /* TmuxGateway.h */,
 				1D3D218E1482F18A00FAC8E7 /* TmuxController.h */,
 				1D3D21931483144600FAC8E7 /* TSVParser.h */,
@@ -1384,6 +1390,7 @@
 				1DB67CF51486BD3D005849A1 /* TmuxStateParser.h in Headers */,
 				1DC38818148E840700B89F7C /* SolidColorView.h in Headers */,
 				1D7B9A691491D82F003A2A22 /* IntervalMap.h in Headers */,
+				1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1671,6 +1678,7 @@
 				1DB67CF61486BD3D005849A1 /* TmuxStateParser.m in Sources */,
 				1DC38819148E840700B89F7C /* SolidColorView.m in Sources */,
 				1D7B9A6A1491D82F003A2A22 /* IntervalMap.m in Sources */,
+				1DD6707814934ADE008E4361 /* PTYSplitView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

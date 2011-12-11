@@ -30,6 +30,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "WindowControllerInterface.h"
+#import "PTYSplitView.h"
 
 static const int MIN_SESSION_ROWS = 2;
 static const int MIN_SESSION_COLUMNS = 2;
@@ -43,7 +44,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 
 // This implements NSSplitViewDelegate but it was an informal protocol in 10.5. If 10.5 support
 // is eventually dropped, change this to make it official.
-@interface PTYTab : NSObject <NSSplitViewDelegate> {
+@interface PTYTab : NSObject <NSSplitViewDelegate, PTYSplitViewDelegate> {
     PTYSession* activeSession_;
 
     // Owning tab view item

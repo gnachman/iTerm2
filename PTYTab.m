@@ -64,105 +64,6 @@ static CGFloat AgainstGrainDim(BOOL isVertical, NSSize size);
 static void SetWithGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value);
 
-@interface MySplitView : NSSplitView
-{
-}
-
-- (void)adjustSubviews;
-
-@end
-
-@implementation MySplitView
-
-- (NSString *)description
-{
-    NSMutableString *d = [NSMutableString string];
-    [d appendFormat:@"%@ %@ [", [NSValue valueWithRect:[self frame]], [self isVertical] ? @"|" : @"--"];
-    for (NSView *view in [self subviews]) {
-        [d appendFormat:@" (%@)", [view description]];
-    }
-    [d appendFormat:@"]"];
-    return d;
-}
-
-- (void)mouseDown:(NSEvent *)theEvent
-{
-    // First, find the splitter that was clicked on. It will be the one closest
-    // to the mouse. The OS seems to give a bit of wiggle room so it's not
-    // necessary exactly under the mouse.
-    int clickedOnSplitterIndex = -1;
-    NSArray *subviews = [self subviews];
-    NSPoint locationInWindow = [theEvent locationInWindow];
-    locationInWindow.y--;
-    NSPoint locationInView = [self convertPointFromBase:locationInWindow];
-    int x, y;
-    int bestDistance = -1;
-    if ([self isVertical]) {
-        int mouseX = locationInView.x;
-        x = 0;
-        int bestX;
-        for (int i = 0; i < subviews.count; i++) {
-            x += [[subviews objectAtIndex:i] frame].size.width;
-            if (bestDistance < 0 || abs(x - mouseX) < bestDistance) {
-                bestDistance = abs(x - mouseX);
-                clickedOnSplitterIndex = i;
-                bestX = x;
-            }
-            x += [self dividerThickness];
-        }
-        x = bestX;
-    } else {
-        int mouseY = locationInView.y;
-        int bestY;
-        y = 0;
-        for (int i = 0; i < subviews.count; i++) {
-            y += [[subviews objectAtIndex:i] frame].size.height;
-            if (bestDistance < 0 || abs(y - mouseY) < bestDistance) {
-                bestDistance = abs(y - mouseY);
-                clickedOnSplitterIndex = i;
-                bestY = y;
-            }
-            y += [self dividerThickness];
-        }
-        y = bestY;
-    }
-
-    // mouseDown blocks and lets the user drag things around.
-    assert(clickedOnSplitterIndex >= 0);
-    [super mouseDown:theEvent];
-
-    // See how much the view after the splitter moved
-    NSSize changePx = NSZeroSize;
-    NSRect frame = [[subviews objectAtIndex:clickedOnSplitterIndex] frame];
-    if ([self isVertical]) {
-        changePx.width = (frame.origin.x + frame.size.width) - x;
-    } else {
-        changePx.height = (frame.origin.y + frame.size.height) - y;
-    }
-
-    // Run our delegate method.
-    [[self delegate] splitView:self
-                     draggingDidEndOfSplit:clickedOnSplitterIndex
-                     pixels:changePx];
-}
-
-- (void)adjustSubviews
-{
-    PtyLog(@"@@@@@@@@@@ begin adjustSubviews");
-    for (NSView* v in [self subviews]) {
-        PtyLog(@"View %p has height %lf", v, [v frame].size.height);
-    }
-    [super adjustSubviews];
-    PtyLog(@"AFTER:");
-    for (NSView* v in [self subviews]) {
-        PtyLog(@"View %p has height %lf", v, [v frame].size.height);
-    }
-    PtyLog(@"@@@@@@@@ END @@@@@@@");
-}
-
-@end
-
-
 @implementation PTYTab
 
 // tab label attributes
@@ -263,7 +164,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         activeSession_ = session;
         [session setLastActiveAt:[NSDate date]];
         [[session view] setDimmed:NO];
-        [self setRoot:[[MySplitView alloc] init]];
+        [self setRoot:[[PTYSplitView alloc] init]];
         [session setTab:self];
         [root_ addSubview:[session view]];
         viewOrder_ = [[NSMutableArray alloc] init];
@@ -1290,7 +1191,7 @@ static NSString* FormatRect(NSRect r) {
         // 2. Replace it with an 'isVertical'-orientation NSSplitView
         // 3. Add two children to the 'isVertical'-orientation NSSplitView: the active session and the new view.
         [targetSessionView retain];
-        NSSplitView* newSplit = [[MySplitView alloc] initWithFrame:[targetSessionView frame]];
+        NSSplitView* newSplit = [[PTYSplitView alloc] initWithFrame:[targetSessionView frame]];
         if (USE_THIN_SPLITTERS) {
             [newSplit setDividerStyle:NSSplitViewDividerStyleThin];
         }
@@ -1916,7 +1817,7 @@ static NSString* FormatRect(NSRect r) {
 {
     if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
         NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SPLIITER_FRAME]];
-        NSSplitView *splitter = [[MySplitView alloc] initWithFrame:frame];
+        NSSplitView *splitter = [[PTYSplitView alloc] initWithFrame:frame];
         if (USE_THIN_SPLITTERS) {
             [splitter setDividerStyle:NSSplitViewDividerStyleThin];
         }
@@ -2697,7 +2598,7 @@ static NSString* FormatRect(NSRect r) {
     NSRect oldRootFrame = [root_ frame];
     [root_ removeFromSuperview];
 
-    NSSplitView *newRoot = [[MySplitView alloc] init];
+    NSSplitView *newRoot = [[PTYSplitView alloc] init];
     [newRoot setFrame:oldRootFrame];
     [self setRoot:newRoot];
 
@@ -2753,7 +2654,7 @@ static NSString* FormatRect(NSRect r) {
 
 #pragma mark NSSplitView delegate methods
 
-- (void)splitView:(NSSplitView *)splitView draggingDidEndOfSplit:(int)splitterIndex pixels:(NSSize)pxMoved
+- (void)splitView:(PTYSplitView *)splitView draggingDidEndOfSplit:(int)splitterIndex pixels:(NSSize)pxMoved
 {
     if (![self isTmuxTab]) {
         // Don't care for non-tmux tabs.
