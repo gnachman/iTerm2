@@ -1224,6 +1224,21 @@ NSString *sessionsKey = @"sessions";
     return term;
 }
 
+- (IBAction)detachTmux:(id)sender
+{
+    [[[self currentSession] tmuxController] detach];
+}
+
+- (IBAction)newTmuxWindow:(id)sender
+{
+    [[[self currentSession] tmuxController] newWindowWithAffinity:-1];
+}
+
+- (IBAction)newTmuxTab:(id)sender
+{
+    [[[self currentSession] tmuxController] newWindowWithAffinity:[[self currentSession] tmuxPane]];
+}
+
 - (NSSize)tmuxCompatibleSize
 {
     NSSize tmuxSize = NSMakeSize(INT_MAX, INT_MAX);
@@ -4701,9 +4716,13 @@ NSString *sessionsKey = @"sessions";
           __FILE__, __LINE__, item );
 #endif
 
-    if ([item action] == @selector(openSplitHorizontallySheet:) ||
-        [item action] == @selector(openSplitVerticallySheet:)) {
+    if ([item action] == @selector(detachTmux) ||
+        [item action] == @selector(newTmuxWindow:) ||
+        [item action] == @selector(newTmuxTab:)) {
         result = [[self currentTab] isTmuxTab];
+    } else if ([item action] == @selector(openSplitHorizontallySheet:) ||
+        [item action] == @selector(openSplitVerticallySheet:)) {
+        result = ![[self currentTab] isTmuxTab];
     } else if ([item action] == @selector(jumpToSavedScrollPosition:)) {
         result = [self hasSavedScrollPosition];
     } else if ([item action] == @selector(moveTabLeft:)) {

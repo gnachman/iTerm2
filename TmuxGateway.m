@@ -98,9 +98,25 @@ static NSString *kCommandObject = @"object";
     state_ = CONTROL_STATE_READY;
 }
 
-- (void)parseWindowsChangeCommand:(NSString *)command
+- (void)parseWindowAddCommand:(NSString *)command
 {
-    [delegate_ tmuxWindowsDidChange];
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%window-add ([0-9]+)$"];
+    if (components.count != 2) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%window-add id): \"%@\"", command]];
+        return;
+    }
+    [delegate_ tmuxWindowAddedWithId:[[components objectAtIndex:1] intValue]];
+    state_ = CONTROL_STATE_READY;
+}
+
+- (void)parseWindowCloseCommand:(NSString *)command
+{
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%window-close ([0-9]+)$"];
+    if (components.count != 2) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%window-close id): \"%@\"", command]];
+        return;
+    }
+    [delegate_ tmuxWindowClosedWithId:[[components objectAtIndex:1] intValue]];
     state_ = CONTROL_STATE_READY;
 }
 
@@ -163,8 +179,10 @@ static NSString *kCommandObject = @"object";
         [self parseOutputCommand:command];
     } else if ([command hasPrefix:@"%layout-change "]) {
         [self parseLayoutChangeCommand:command];
-    } else if ([command hasPrefix:@"%windows-change"]) {
-        [self parseWindowsChangeCommand:command];
+    } else if ([command hasPrefix:@"%window-add"]) {
+        [self parseWindowAddCommand:command];
+    } else if ([command hasPrefix:@"%window-close"]) {
+        [self parseWindowCloseCommand:command];
     } else if ([command hasPrefix:@"%noop"]) {
         NSLog(@"tmux noop: %@", command);
     } else if ([command hasPrefix:@"%exit "]) {

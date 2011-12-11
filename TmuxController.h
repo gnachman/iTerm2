@@ -23,6 +23,9 @@
 
 - (id)initWithGateway:(TmuxGateway *)gateway;
 - (void)openWindowsInitial;
+- (void)openWindowWithId:(int)windowId;
+- (PTYSession *)sessionWithAffinityForTmuxWindowId:(int)windowId;
+
 - (void)setLayoutInTab:(PTYTab *)tab
                 toLayout:(NSString *)layout;
 
@@ -41,5 +44,6 @@
          resizedBy:(int)amount
       horizontally:(BOOL)wasHorizontal;
 - (void)splitWindowPane:(int)wp vertically:(BOOL)splitVertically;
+- (void)newWindowWithAffinity:(int)paneNumber;
 
 @end

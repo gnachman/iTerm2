@@ -191,9 +191,63 @@
          responseSelector:nil];
 }
 
+- (void)newWindowWithAffinity:(int)paneNumber
+{
+    if (paneNumber >= 0) {
+        [gateway_ sendCommand:@"new-window -I"
+               responseTarget:self
+             responseSelector:@selector(newWindowWithAffinityCreated:affinityPane:)
+               responseObject:[NSNumber numberWithInt:paneNumber]];
+    } else {
+        [gateway_ sendCommand:@"new-window"
+               responseTarget:nil
+             responseSelector:nil];
+    }
+}
+
+- (void)openWindowWithId:(int)windowId
+{
+    // Get the window's basic info to prep the creation of a TmuxWindowOpener.
+    [gateway_ sendCommand:[NSString stringWithFormat:@"list-windows -C -I %d", windowId]
+           responseTarget:self
+         responseSelector:@selector(listedWindowsToOpenOne:forWindowId:)
+           responseObject:[NSNumber numberWithInt:windowId]];
+}
+
+- (PTYSession *)sessionWithAffinityForTmuxWindowId:(int)windowId
+{
+    NSNumber *n = [NSNumber numberWithInt:windowId];
+    for (NSNumber *k in windowPanes_) {
+        PTYSession *aSession = [windowPanes_ objectForKey:k];
+        if ([aSession.futureWindowAffinities containsObject:n]) {
+            return aSession;
+        }
+    }
+    return nil;
+}
+
 @end
 
 @implementation TmuxController (Private)
+
+- (void)listedWindowsToOpenOne:(NSString *)response forWindowId:(NSNumber *)windowId
+{
+    TSVDocument *doc = [response tsvDocument];
+    if (!doc) {
+        [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Bad response for list windows request: %@",
+                                         response]];
+        return;
+    }
+    for (NSArray *record in doc.records) {
+        if ([[doc valueInRecord:record forField:@"window_id"] intValue] == [windowId intValue]) {
+            [self openWindowWithIndex:[[doc valueInRecord:record forField:@"window_id"] intValue]
+                                 name:[doc valueInRecord:record forField:@"window_name"]
+                                 size:NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
+                                                 [[doc valueInRecord:record forField:@"window_height"] intValue])
+                               layout:[doc valueInRecord:record forField:@"window_layout"]];
+        }
+    }
+}
 
 // When an iTerm2 window is resized, a set-control-client-attr client-size w,h
 // command is sent. It responds with new layouts for all the windows in the
@@ -244,6 +298,12 @@
         [windows_ removeObjectForKey:k];
         return;
     }
+}
+
+- (void)newWindowWithAffinityCreated:(NSString *)responseStr affinityPane:(NSNumber *)affinityPane
+{
+    PTYSession *theSession = [self sessionForWindowPane:[affinityPane intValue]];
+    [theSession.futureWindowAffinities addObject:[NSNumber numberWithInt:[responseStr intValue]]];
 }
 
 @end

@@ -14,7 +14,8 @@
 - (TmuxController *)tmuxController;
 - (void)tmuxUpdateLayoutForWindow:(int)windowId
                            layout:(NSString *)layout;
-- (void)tmuxWindowsDidChange;
+- (void)tmuxWindowAddedWithId:(int)windowId;
+- (void)tmuxWindowClosedWithId:(int)windowId;
 - (void)tmuxHostDisconnected;
 - (void)tmuxWriteData:(NSData *)data;
 - (void)tmuxReadTask:(NSData *)data;

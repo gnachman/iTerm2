@@ -209,7 +209,16 @@
 {
     --pendingRequests_;
     if (pendingRequests_ == 0) {
-        PseudoTerminal *term = [[iTermController sharedInstance] openWindow];
+        PseudoTerminal *term = nil;
+        if (!tabToUpdate_) {
+            PTYSession *neighbor = [self.controller sessionWithAffinityForTmuxWindowId:self.windowIndex];
+            // Remove affinity since it's no longer needed.
+            [neighbor.futureWindowAffinities removeObject:[NSNumber numberWithInt:self.windowIndex]];
+            term = [[neighbor tab] realParentWindow];
+        }
+        if (!term) {
+            term = [[iTermController sharedInstance] openWindow];
+        }
         NSMutableDictionary *parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
         [self decorateParseTree:parseTree];
         if (tabToUpdate_) {

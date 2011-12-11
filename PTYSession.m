@@ -62,6 +62,8 @@
 
 @implementation PTYSession
 
+@synthesize futureWindowAffinities = futureWindowAffinities_;
+
 static NSString *TERM_ENVNAME = @"TERM";
 static NSString *COLORFGBG_ENVNAME = @"COLORFGBG";
 static NSString *PWD_ENVNAME = @"PWD";
@@ -114,6 +116,7 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
 
     slowPasteBuffer = [[NSMutableString alloc] init];
     creationDate_ = [[NSDate date] retain];
+    futureWindowAffinities_ = [[NSMutableSet alloc] init];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(windowResized)
@@ -160,6 +163,7 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
     [liveSession_ release];
     [tmuxGateway_ release];
     [tmuxController_ release];
+    [futureWindowAffinities_ release];
 
     [SHELL release];
     SHELL = nil;
@@ -3484,8 +3488,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [tmuxController_ setLayoutInTab:tab toLayout:layout];
 }
 
-- (void)tmuxWindowsDidChange
+- (void)tmuxWindowAddedWithId:(int)windowId
 {
+    [tmuxController_ openWindowWithId:windowId];
+}
+
+- (void)tmuxWindowClosedWithId:(int)windowId
+{
+    PTYTab *tab = [tmuxController_ window:windowId];
+    if (tab) {
+        [[tab realParentWindow] closeTab:tab];
+    }
 }
 
 - (void)tmuxHostDisconnected
