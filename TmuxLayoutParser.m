@@ -199,7 +199,8 @@ NSString *kLayoutDictStateKey = @"state";
     // <width>x<height>,<x>,<y>,...
     // <parent-width>x<parent-height>,<parent-x>,<parent-y>{...}
     // <parent-width>x<parent-height>,<parent-x>,<parent-y>[...]
-    NSArray *components = [layouts captureComponentsMatchedByRegex:@"(^[0-9]+x[0-9]+,[0-9]+,[0-9]+,[0-9na]+)(.*)"];
+    // Tolerate an optional comma at the beginning
+    NSArray *components = [layouts captureComponentsMatchedByRegex:@"^(?:,?)([0-9]+x[0-9]+,[0-9]+,[0-9]+,[0-9na]+)(.*)"];
     if (components.count != 3) {
         NSLog(@"Wrong number of components in layouts array \"%@\"", layouts);
         return nil;
