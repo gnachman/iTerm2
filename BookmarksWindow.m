@@ -102,7 +102,9 @@ typedef enum {
         }
         Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
         if (inPane != NO_PANE && terminal != nil) {
-            [terminal splitVertically:(inPane == VERTICAL_PANE) withBookmark:bookmark targetSession:[[terminal currentTab] activeSession]];
+            [terminal splitVertically:(inPane == VERTICAL_PANE)
+                         withBookmark:bookmark
+                        targetSession:[[terminal currentTab] activeSession]];
         } else {
             [[iTermController sharedInstance] launchBookmark:bookmark
                                                   inTerminal:terminal];

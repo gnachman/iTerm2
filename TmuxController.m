@@ -182,6 +182,15 @@
            responseObject:nil];
 }
 
+// The splitVertically parameter uses the iTerm2 conventions.
+- (void)splitWindowPane:(int)wp vertically:(BOOL)splitVertically
+{
+    // No need for a callback. We should get a layout-changed message and act on it.
+    [gateway_ sendCommand:[NSString stringWithFormat:@"split-window -%@ -t %%%d", splitVertically ? @"h": @"v", wp]
+           responseTarget:nil
+         responseSelector:nil];
+}
+
 @end
 
 @implementation TmuxController (Private)

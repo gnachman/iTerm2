@@ -250,6 +250,8 @@ typedef enum {
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
 + (void)selectMenuItem:(NSString*)theName;
 
+- (BOOL)isTmuxClient;
+
 // init/dealloc
 - (id)init;
 - (void)dealloc;

@@ -3401,6 +3401,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     [[[[dataSource session] tab] realParentWindow] newTabWithBookmarkGuid:guid];
 }
+
 - (void)newVerticalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event
 {
     [[[[dataSource session] tab] realParentWindow] splitVertically:YES

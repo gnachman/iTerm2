@@ -3286,6 +3286,10 @@ NSString *sessionsKey = @"sessions";
 
 - (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid
 {
+    if ([[self currentTab] isTmuxTab]) {
+        [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane] vertically:isVertical];
+        return;
+    }
     Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
     if (bookmark) {
         [self splitVertically:isVertical withBookmark:bookmark targetSession:[self currentSession]];
@@ -3334,8 +3338,14 @@ NSString *sessionsKey = @"sessions";
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
 
-- (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark targetSession:(PTYSession*)targetSession
+- (void)splitVertically:(BOOL)isVertical
+           withBookmark:(Bookmark*)theBookmark
+          targetSession:(PTYSession*)targetSession
 {
+    if ([targetSession isTmuxClient]) {
+        [[targetSession tmuxController] splitWindowPane:[targetSession tmuxPane] vertically:isVertical];
+        return;
+    }
     PtyLog(@"--------- splitVertically -----------");
     if (![self canSplitPaneVertically:isVertical withBookmark:theBookmark]) {
         NSBeep();
@@ -4691,7 +4701,10 @@ NSString *sessionsKey = @"sessions";
           __FILE__, __LINE__, item );
 #endif
 
-    if ([item action] == @selector(jumpToSavedScrollPosition:)) {
+    if ([item action] == @selector(openSplitHorizontallySheet:) ||
+        [item action] == @selector(openSplitVerticallySheet:)) {
+        result = [[self currentTab] isTmuxTab];
+    } else if ([item action] == @selector(jumpToSavedScrollPosition:)) {
         result = [self hasSavedScrollPosition];
     } else if ([item action] == @selector(moveTabLeft:)) {
         result = [TABVIEW numberOfTabViewItems] > 1;

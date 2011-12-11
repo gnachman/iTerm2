@@ -3432,6 +3432,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [TERMINAL clearStream];
 }
 
+- (BOOL)isTmuxClient
+{
+    return tmuxMode_ == TMUX_CLIENT;
+}
+
 - (void)tmuxDetach
 {
     if (tmuxMode_ != TMUX_GATEWAY) {

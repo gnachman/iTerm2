@@ -33,7 +33,6 @@
                inWindow:(int)window;
 - (void)deregisterWindow:(int)window windowPane:(int)windowPane;
 
-
 // This should be called after the host sends an %exit command.
 - (void)detach;
 - (void)windowDidResize:(PseudoTerminal *)term;
@@ -41,5 +40,6 @@
 - (void)windowPane:(int)wp
          resizedBy:(int)amount
       horizontally:(BOOL)wasHorizontal;
+- (void)splitWindowPane:(int)wp vertically:(BOOL)splitVertically;
 
 @end
