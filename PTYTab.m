@@ -1073,6 +1073,11 @@ static NSString* FormatRect(NSRect r) {
         int neighborIndex = theIndex > 0 ? theIndex - 1 : theIndex + 1;
         nearestNeighbor = [[parentSplit subviews] objectAtIndex:neighborIndex];
         while ([nearestNeighbor isKindOfClass:[NSSplitView class]]) {
+            if ([[nearestNeighbor subviews] count] == 0) {
+                // This happens during replaceViewHierarchyWithParseTree
+                nearestNeighbor = nil;
+                break;
+            }
             nearestNeighbor = [[nearestNeighbor subviews] objectAtIndex:0];
         }
     } else {
@@ -2045,8 +2050,8 @@ static NSString* FormatRect(NSRect r) {
     NSSize totalSize = NSZeroSize;
     NSSize size;
 
+    BOOL isVertical = NO;
     switch ([[parseTree objectForKey:kLayoutDictNodeType] intValue]) {
-        BOOL isVertical = NO;
         case kLeafLayoutNode:
             size = [PTYTab _sessionSizeWithCellSize:[self cellSizeForBookmark:bookmark]
                                          dimensions:NSMakeSize([[parseTree objectForKey:kLayoutDictWidthKey] intValue],
@@ -2295,11 +2300,23 @@ static NSString* FormatRect(NSRect r) {
     for (NSView *view in [splitter subviews]) {
         if (forHeight == [splitter isVertical]) {
             if ([splitter isVertical]) {
+                // want to know height
                 minPos = origin.x;
                 size = view.frame.size.width;
             } else {
+                // want to know width
                 minPos = origin.y;
                 size = view.frame.size.height;
+            }
+        } else {
+            if ([splitter isVertical]) {
+                // want to know width
+                minPos = origin.y;
+                size = view.frame.size.height;
+            } else {
+                // want to know height
+                minPos = origin.x;
+                size = view.frame.size.width;
             }
         }
         if ([view isKindOfClass:[NSSplitView class]]) {
