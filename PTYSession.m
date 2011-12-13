@@ -3745,9 +3745,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     int len = [dvrDecoder_ length];
     DVRFrameInfo info = [dvrDecoder_ info];
     if (info.width != [SCREEN width] || info.height != [SCREEN height]) {
-        [[[self tab] realParentWindow] sessionInitiatedResize:self
-                                                        width:info.width
-                                                       height:info.height];
+        if (![liveSession_ isTmuxClient]) {
+            [[[self tab] realParentWindow] sessionInitiatedResize:self
+                                                            width:info.width
+                                                           height:info.height];
+        }
     }
     [SCREEN setFromFrame:s len:len info:info];
     [[[self tab] realParentWindow] resetTempTitle];
