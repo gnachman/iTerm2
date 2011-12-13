@@ -126,8 +126,15 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     NSArray *sessions = [self sessions];
     for (PTYSession *aSession in sessions) {
         if ([[aSession view] setShowTitle:showTitles && [sessions count] > 1]) {
-            [self fitSessionToCurrentViewSize:aSession];
+            if (![self isTmuxTab]) {
+                [self fitSessionToCurrentViewSize:aSession];
+            }
         }
+    }
+    if ([self isTmuxTab]) {
+        [tmuxController_ performSelector:@selector(windowDidResize:)
+                              withObject:realParentWindow_
+                              afterDelay:0];
     }
 }
 
