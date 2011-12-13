@@ -3900,9 +3900,12 @@ NSString *sessionsKey = @"sessions";
     // Assign counts to each session. This causes tabs to show their tab number,
     // called an objectCount. When the "compact tab" pref is toggled, this makes
     // formerly countless tabs show their counts.
+    BOOL needResize = NO;
     for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
         PTYTab *aTab = [[TABVIEW tabViewItemAtIndex:i] identifier];
-        [aTab updatePaneTitles];
+        if ([aTab updatePaneTitles]) {
+            needResize = YES;
+        }
         [aTab setObjectCount:i+1];
 
         // Update dimmed status of inactive sessions in split panes in case the preference changed.
@@ -3918,6 +3921,14 @@ NSString *sessionsKey = @"sessions";
 
             // In case dimming amount slider moved update the dimming amount.
             [[aSession view] updateDim];
+        }
+    }
+
+    // If updatePaneTitles caused any session to change dimensions, then tell tmux
+    // controllers that our capacity has changed.
+    if (needResize) {
+        for (TmuxController *c in [self uniqueTmuxControllers]) {
+            [c windowDidResize:self];
         }
     }
 }

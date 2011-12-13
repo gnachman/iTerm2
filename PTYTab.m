@@ -120,27 +120,36 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return [[PreferencePanel sharedInstance] showPaneTitles];
 }
 
-- (void)updatePaneTitles
+- (BOOL)updatePaneTitles
 {
+    BOOL anyChange = NO;
     const BOOL showTitles = [PTYTab showTitlesPref];
     NSArray *sessions = [self sessions];
     for (PTYSession *aSession in sessions) {
         if ([[aSession view] setShowTitle:showTitles && [sessions count] > 1]) {
             if (![self isTmuxTab]) {
-                [self fitSessionToCurrentViewSize:aSession];
+                if ([self fitSessionToCurrentViewSize:aSession]) {
+                    anyChange = YES;
+                }
+            } else {
+                // Get the proper size and return yes if it should change.
+                NSSize size = [self sessionSizeForViewSize:aSession];
+                if (size.width != [aSession columns] ||
+                    size.height != [aSession rows]) {
+                    anyChange = YES;
+                }
             }
         }
     }
-    if ([self isTmuxTab]) {
-        [tmuxController_ performSelector:@selector(windowDidResize:)
-                              withObject:realParentWindow_
-                              afterDelay:0];
-    }
+    return anyChange;
 }
 
 - (void)numberOfSessionsDidChange
 {
     [self updatePaneTitles];
+    if ([self isTmuxTab]) {
+        [tmuxController_ windowDidResize:realParentWindow_];
+    }
     [realParentWindow_ futureInvalidateRestorableState];
 }
 
@@ -1594,9 +1603,7 @@ static NSString* FormatRect(NSRect r) {
     return viewImage;
 }
 
-// Resize a session's rows and columns for the existing pixel size of its
-// containing view.
-- (void)fitSessionToCurrentViewSize:(PTYSession*)aSession
+- (NSSize)sessionSizeForViewSize:(PTYSession *)aSession
 {
     PtyLog(@"PTYTab fitSessionToCurrentViewSzie");
     PtyLog(@"fitSessionToCurrentViewSize begins");
@@ -1614,17 +1621,27 @@ static NSString* FormatRect(NSRect r) {
         NSLog(@"WARNING: Session has %d height", height);
         height = 1;
     }
+
+    PtyLog(@"PTYTab sessionSizeForViewSize: view is %fx%f, set screen to %dx%d", size.width, size.height, width, height);
+    return NSMakeSize(width, height);
+}
+
+// Resize a session's rows and columns for the existing pixel size of its
+// containing view.
+- (BOOL)fitSessionToCurrentViewSize:(PTYSession*)aSession
+{
+    NSSize temp = [self sessionSizeForViewSize:aSession];
+    int width = temp.width;
+    int height = temp.height;
     if ([aSession rows] == height &&
         [aSession columns] == width) {
         PtyLog(@"PTYTab fitSessionToCurrentViewSize: noop");
-        return;
+        return NO;
     }
-    PtyLog(@"PTYTab fitSessionToCurrentViewSize: view is %fx%f, set screen to %dx%d", size.width, size.height, width, height);
     if (width == [aSession columns] && height == [aSession rows]) {
         PtyLog(@"fitSessionToWindow - terminating early because session size doesn't change");
-        return;
+        return NO;
     }
-    PtyLog(@"PTYTab fitSessionToCurrentViewSize - Given a scrollview size of %fx%f, can fit %dx%d chars", size.width, size.height, width, height);
 
     [aSession setWidth:width height:height];
     PtyLog(@"fitSessionToCurrentViewSize -  calling setWidth:%d height:%d", width, height);
@@ -1634,6 +1651,7 @@ static NSString* FormatRect(NSRect r) {
         [aSession setBackgroundImagePath:[aSession backgroundImagePath]];
     }
     PtyLog(@"PTYTab fitSessionToCurrentViewSize returns");
+    return YES;
 }
 
 - (BOOL)hasMultipleSessions
@@ -2597,6 +2615,9 @@ static NSString* FormatRect(NSRect r) {
     if ([self parseTree:parseTree matchesViewHierarchy:root_]) {
         [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree];
     } else {
+        if ([[self realParentWindow] inInstantReplay]) {
+            [[self realParentWindow] showHideInstantReplay];
+        }
         [self replaceViewHierarchyWithParseTree:parseTree];
     }
 }

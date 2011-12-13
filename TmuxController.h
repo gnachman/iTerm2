@@ -18,6 +18,7 @@
     NSMutableDictionary *windows_;      // window -> [PTYTab *, refcount]
     int numOutstandingWindowResizes_;
     NSMutableDictionary *windowPositions_;
+    NSSize lastSize_;  // last size for windowDidChange:
 }
 
 @property (nonatomic, readonly) TmuxGateway *gateway;

@@ -146,6 +146,14 @@
 - (void)windowDidResize:(PseudoTerminal *)term
 {
     NSSize size = [term tmuxCompatibleSize];
+    if (size.width == 0 || size.height == 0) {
+        // After the last session closes a size of 0 is reported.
+        return;
+    }
+    if (NSEqualSizes(size, lastSize_)) {
+        return;
+    }
+    lastSize_ = size;
     ++numOutstandingWindowResizes_;
     [gateway_ sendCommand:[NSString stringWithFormat:@"set-control-client-attr client-size %d,%d", (int) size.width, (int)size.height]
            responseTarget:self

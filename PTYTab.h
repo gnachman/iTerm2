@@ -144,7 +144,8 @@ static const int MIN_SESSION_COLUMNS = 2;
 
 - (BOOL)isForegroundTab;
 - (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
-- (void)fitSessionToCurrentViewSize:(PTYSession*)aSession;
+- (NSSize)sessionSizeForViewSize:(PTYSession *)aSession;
+- (BOOL)fitSessionToCurrentViewSize:(PTYSession*)aSession;
 
 // Tab index.
 - (int)number;
@@ -220,7 +221,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 // Anyone changing the number of sessions must call this after the sessions
 // are "well formed".
 - (void)numberOfSessionsDidChange;
-- (void)updatePaneTitles;
+- (BOOL)updatePaneTitles;
 
 + (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
                        inTerminal:(PseudoTerminal *)term
