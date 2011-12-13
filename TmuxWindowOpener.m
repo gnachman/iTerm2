@@ -61,6 +61,10 @@
 
 - (void)dealloc
 {
+    [name_ release];
+    [layout_ release];
+    [gateway_ release];
+    [parseTree_ release];
     [histories_ release];
     [altHistories_ release];
     [states_ release];
@@ -225,9 +229,17 @@
             [tabToUpdate_ setTmuxLayout:parseTree
                          tmuxController:controller_];
         } else {
-            [term loadTmuxLayout:parseTree window:windowIndex_
+            [term loadTmuxLayout:parseTree
+                          window:windowIndex_
                   tmuxController:controller_
                             name:name_];
+
+            // Check if we know the position for the window
+            NSArray *panes = [[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree];
+            NSValue *windowPos = [self.controller positionForWindowWithPanes:panes];
+            if (windowPos) {
+                [[term window] setFrameOrigin:[windowPos pointValue]];
+            }
         }
     }
 }

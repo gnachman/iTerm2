@@ -17,9 +17,11 @@
     NSMutableDictionary *windowPanes_;  // [window, pane] -> PTYSession *
     NSMutableDictionary *windows_;      // window -> [PTYTab *, refcount]
     int numOutstandingWindowResizes_;
+    NSMutableDictionary *windowPositions_;
 }
 
 @property (nonatomic, readonly) TmuxGateway *gateway;
+@property (nonatomic, retain) NSMutableDictionary *windowPositions;
 
 - (id)initWithGateway:(TmuxGateway *)gateway;
 - (void)openWindowsInitial;
@@ -35,6 +37,7 @@
                withPane:(int)windowPane
                inWindow:(int)window;
 - (void)deregisterWindow:(int)window windowPane:(int)windowPane;
+- (NSValue *)positionForWindowWithPanes:(NSArray *)panes;
 
 // This should be called after the host sends an %exit command.
 - (void)detach;
@@ -45,5 +48,10 @@
       horizontally:(BOOL)wasHorizontal;
 - (void)splitWindowPane:(int)wp vertically:(BOOL)splitVertically;
 - (void)newWindowWithAffinity:(int)paneNumber;
+- (void)movePane:(int)srcPane
+        intoPane:(int)destPane
+      isVertical:(BOOL)splitVertical
+          before:(BOOL)addBefore;
+- (void)breakOutWindowPane:(int)windowPane toPoint:(NSPoint)screenPoint;
 
 @end

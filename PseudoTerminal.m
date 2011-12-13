@@ -1242,7 +1242,6 @@ NSString *sessionsKey = @"sessions";
 - (NSSize)tmuxCompatibleSize
 {
     NSSize tmuxSize = NSMakeSize(INT_MAX, INT_MAX);
-    assert(isTmuxWindow_);
     BOOL foundTmuxTab = NO;
     for (PTYTab *aTab in [self tabs]) {
         if ([aTab isTmuxTab]) {
@@ -1252,7 +1251,6 @@ NSString *sessionsKey = @"sessions";
             tmuxSize.height = (int) MIN(tmuxSize.height, tabSize.height);
         }
     }
-    assert(foundTmuxTab);
     return tmuxSize;
 }
 
@@ -1261,15 +1259,12 @@ NSString *sessionsKey = @"sessions";
         tmuxController:(TmuxController *)tmuxController
                   name:(NSString *)name
 {
-    assert(isTmuxWindow_ || [TABVIEW numberOfTabViewItems] == 0);
-    isTmuxWindow_ = YES;
     [self beginTmuxOriginatedResize];
     PTYTab *tab = [PTYTab openTabWithTmuxLayout:parseTree
                                      inTerminal:self
                                      tmuxWindow:window
                                  tmuxController:tmuxController];
     [self setWindowTitle:name];
-    isTmuxWindow_ = YES;
     [tab setReportIdealSizeAsCurrent:YES];
     [self fitWindowToTabs];
     [tab setReportIdealSizeAsCurrent:NO];
@@ -1320,7 +1315,7 @@ NSString *sessionsKey = @"sessions";
     [self fitTabsToWindow];
 }
 
-- (NSDictionary*)arrangement
+- (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux
 {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:7];
     NSRect rect = [[self window] frame];
@@ -1361,7 +1356,10 @@ NSString *sessionsKey = @"sessions";
     // Save tabs.
     NSMutableArray* tabs = [NSMutableArray arrayWithCapacity:[self numberOfTabs]];
     for (NSTabViewItem* tabViewItem in [TABVIEW tabViewItems]) {
-        [tabs addObject:[[tabViewItem identifier] arrangement]];
+        PTYTab *theTab = [tabViewItem identifier];
+        if (!excludeTmux || ![theTab isTmuxTab]) {
+            [tabs addObject:[[tabViewItem identifier] arrangement]];
+        }
     }
     [result setObject:tabs forKey:TERMINAL_ARRANGEMENT_TABS];
 
@@ -1370,6 +1368,11 @@ NSString *sessionsKey = @"sessions";
                forKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX];
 
     return result;
+}
+
+- (NSDictionary*)arrangement
+{
+    return [self arrangementExcludingTmuxTabs:NO];
 }
 
 // NSWindow delegate methods
@@ -5129,15 +5132,25 @@ NSString *sessionsKey = @"sessions";
     [self loadArrangement:[state decodeObjectForKey:@"ptyarrangement"]];
 }
 
+- (BOOL)allTabsAreTmuxTabs
+{
+    for (PTYTab *aTab in [self tabs]) {
+        if (![aTab isTmuxTab]) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
 - (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state
 {
-    if ([self isHotKeyWindow] || isTmuxWindow_) {
+    if ([self isHotKeyWindow] || [self allTabsAreTmuxTabs]) {
         // Don't save and restore hotkey windows or tmux windows.
         return;
     }
     if (wellFormed_) {
         [lastArrangement_ release];
-        lastArrangement_ = [[self arrangement] retain];
+        lastArrangement_ = [[self arrangementExcludingTmuxTabs:YES] retain];
     }
     [state encodeObject:lastArrangement_ forKey:@"ptyarrangement"];
 }

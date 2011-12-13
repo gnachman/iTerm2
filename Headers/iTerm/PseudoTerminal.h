@@ -243,9 +243,6 @@ NSWindowDelegate,
     // shoudn't be reported back to tmux as a user-originated resize.
     int tmuxOriginatedResizeInProgress_;
 
-    // If true then all tabs are tmux "windows"
-    BOOL isTmuxWindow_;
-
     BOOL liveResize_;
     BOOL postponedTmuxTabLayoutChange_;
 }

@@ -393,9 +393,6 @@ static NSDate* lastResizeDate_;
 
 - (NSDragOperation)draggingSourceOperationMaskForLocal:(BOOL)isLocal
 {
-    if ([session_ tmuxController]) {
-        return NSDragOperationNone;
-    }
     return (isLocal ? NSDragOperationMove : NSDragOperationNone);
 }
 
@@ -414,17 +411,23 @@ static NSDate* lastResizeDate_;
 #pragma mark NSDraggingDestination protocol
 - (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender
 {
-    if ([session_ tmuxController]) {
-        return NSDragOperationNone;
-    }
+    PTYSession *movingSession = [[MovePaneController sharedInstance] session];
     if ([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
         // Dragging a tab handle. Source is a PSMTabBarControl.
         PTYTab *theTab = (PTYTab *)[[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
         if (theTab == [session_ tab] || [[theTab sessions] count] > 1) {
             return NSDragOperationNone;
         }
+        if (![[theTab activeSession] isCompatibleWith:[self session]]) {
+            // Can't have heterogeneous tmux controllers in one tab.
+            return NSDragOperationNone;
+        }
     } else if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
+        // Moving me onto myself
         return NSDragOperationMove;
+    } else if (![movingSession isCompatibleWith:[self session]]) {
+        // We must both be non-tmux or belong to the same session.
+        return NSDragOperationNone;
     }
     NSRect frame = [self frame];
     splitSelectionView_ = [[SplitSelectionView alloc] initWithFrame:NSMakeRect(0,

@@ -3473,6 +3473,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
             height:[[arrangement objectForKey:SESSION_ARRANGEMENT_ROWS] intValue]];
 }
 
+- (BOOL)isCompatibleWith:(PTYSession *)otherSession
+{
+    if (tmuxMode_ != TMUX_CLIENT && otherSession->tmuxMode_ != TMUX_CLIENT) {
+        // Non-clients are always compatible
+        return YES;
+    } else if (tmuxMode_ == TMUX_CLIENT && otherSession->tmuxMode_ == TMUX_CLIENT) {
+        // Clients are compatible with other clients from the same controller.
+        return (tmuxController_ == otherSession->tmuxController_);
+    } else {
+        // Clients are never compatible with non-clients.
+        return NO;
+    }
+}
+
 #pragma mark tmux gateway delegate methods
 // TODO (also, capture and throw away keyboard input)
 

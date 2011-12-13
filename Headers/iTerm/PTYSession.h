@@ -552,6 +552,9 @@ typedef enum {
 - (void)startTmuxMode;
 - (void)tmuxDetach;
 - (int)tmuxPane;
+// Two sessions are compatible if they may share the same tab. Tmux clients
+// impose this restriction because they must belong to the same controller.
+- (BOOL)isCompatibleWith:(PTYSession *)otherSession;
 - (void)setTmuxPane:(int)windowPane;
 - (void)setTmuxController:(TmuxController *)tmuxController;
 

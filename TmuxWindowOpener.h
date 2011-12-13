@@ -35,7 +35,7 @@
 @property (nonatomic, assign) int maxHistory;
 @property (nonatomic, retain) TmuxGateway *gateway;
 @property (nonatomic, retain) NSMutableDictionary *parseTree;
-@property (nonatomic, assign) TmuxController *controller;
+@property (nonatomic, assign) TmuxController *controller;  // weak
 
 + (TmuxWindowOpener *)windowOpener;
 - (void)openWindows:(BOOL)initial;

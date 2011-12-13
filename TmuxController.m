@@ -26,6 +26,7 @@
 @implementation TmuxController
 
 @synthesize gateway = gateway_;
+@synthesize windowPositions = windowPositions_;
 
 - (id)initWithGateway:(TmuxGateway *)gateway
 {
@@ -34,6 +35,7 @@
         gateway_ = [gateway retain];
         windowPanes_ = [[NSMutableDictionary alloc] init];
         windows_ = [[NSMutableDictionary alloc] init];
+        windowPositions_ = [[NSMutableDictionary alloc] init];
     }
     return self;
 }
@@ -43,6 +45,7 @@
     [gateway_ release];
     [windowPanes_ release];
     [windows_ release];
+    [windowPositions_ release];
     [super dealloc];
 }
 
@@ -205,6 +208,27 @@
     }
 }
 
+- (void)movePane:(int)srcPane
+        intoPane:(int)destPane
+      isVertical:(BOOL)splitVertical
+          before:(BOOL)addBefore
+{
+    [gateway_ sendCommand:[NSString stringWithFormat:@"move-pane -s %%%d -t %%%d %@%@",
+                           srcPane, destPane, splitVertical ? @"-h" : @"-v",
+                           addBefore ? @" -b" : @""]
+           responseTarget:nil
+         responseSelector:nil];
+}
+
+- (void)breakOutWindowPane:(int)windowPane toPoint:(NSPoint)screenPoint
+{
+    [windowPositions_ setObject:[NSValue valueWithPoint:screenPoint]
+                         forKey:[NSNumber numberWithInt:windowPane]];
+    [gateway_ sendCommand:[NSString stringWithFormat:@"break-pane -t %%%d", windowPane]
+           responseTarget:nil
+         responseSelector:nil];
+}
+
 - (void)openWindowWithId:(int)windowId
 {
     // Get the window's basic info to prep the creation of a TmuxWindowOpener.
@@ -225,6 +249,22 @@
     }
     return nil;
 }
+
+// Find a position for any key in panes and remove all entries with keys in panes.
+- (NSValue *)positionForWindowWithPanes:(NSArray *)panes
+{
+    NSValue *pos = nil;
+    for (NSNumber *n in panes) {
+        pos = [windowPositions_ objectForKey:n];
+        if (pos) {
+            [[pos retain] autorelease];
+            break;
+        }
+    }
+    [windowPositions_ removeObjectsForKeys:panes];
+    return pos;
+}
+
 
 @end
 
