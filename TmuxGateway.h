@@ -45,6 +45,8 @@ typedef enum {
     NSMutableArray *commandQueue_;  // Dictionaries
     NSMutableString *currentCommandResponse_;
     NSMutableDictionary *currentCommand_;  // Set between %begin and %end
+
+    BOOL detachSent_;
 }
 
 - (id)initWithDelegate:(NSObject<TmuxGatewayDelegate> *)delegate;

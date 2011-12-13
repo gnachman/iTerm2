@@ -264,6 +264,7 @@ static NSString *kCommandObject = @"object";
     [self sendCommand:@"detach"
        responseTarget:self
      responseSelector:@selector(noopResponseSelector:)];
+    detachSent_ = YES;
 }
 
 - (NSObject<TmuxGatewayDelegate> *)delegate
@@ -303,6 +304,9 @@ static NSString *kCommandObject = @"object";
 
 - (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector responseObject:(id)obj
 {
+    if (detachSent_) {
+        return;
+    }
     NSString *commandWithNewline = [command stringByAppendingString:@"\n"];
     NSDictionary *dict = [self dictionaryForCommand:commandWithNewline
                                      responseTarget:target
@@ -314,6 +318,9 @@ static NSString *kCommandObject = @"object";
 
 - (void)sendCommandList:(NSArray *)commandDicts
 {
+    if (detachSent_) {
+        return;
+    }
     NSMutableString *cmd = [NSMutableString string];
     NSString *sep = @"";
     for (NSDictionary *dict in commandDicts) {

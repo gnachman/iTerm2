@@ -317,7 +317,11 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
     [aSession setAddressBookEntry:theBookmark];
 
     [aSession setScreenSize:[sessionView frame] parent:[theTab realParentWindow]];
-
+    NSDictionary *state = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_STATE];
+    if (state) {
+        // For tmux tabs, get the size from the arrangement instead of the containing view because it helps things to line up correctly.
+        [aSession setSizeFromArrangement:arrangement];
+    }
     [aSession setPreferencesFromAddressBookEntry:theBookmark];
     [[aSession SCREEN] setDisplay:[aSession TEXTVIEW]];
     [aSession setName:[theBookmark objectForKey:KEY_NAME]];
@@ -325,7 +329,6 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
         [[theTab realParentWindow] setWindowTitle];
     }
     [aSession setTab:theTab];
-    NSDictionary *state = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_STATE];
     NSNumber *n = [arrangement objectForKey:SESSION_ARRANGEMENT_TMUX_PANE];
     if (!n) {
         [aSession runCommandWithOldCwd:[arrangement objectForKey:SESSION_ARRANGEMENT_WORKING_DIRECTORY]
