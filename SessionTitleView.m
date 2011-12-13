@@ -3,7 +3,7 @@
 //  iTerm
 //
 //  Created by George Nachman on 10/21/11.
-//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//  Copyright 2011 George Nachman. All rights reserved.
 //
 
 #import "SessionTitleView.h"
@@ -67,6 +67,8 @@ static const CGFloat kButtonSize = 17;
         [label_ setSelectable:NO];
         [label_ setFont:[NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]]];
         [label_ sizeToFit];
+        [label_ setAutoresizingMask:NSViewMaxYMargin | NSViewWidthSizable];
+
         NSRect lframe = label_.frame;
         lframe.origin.y += (frame.size.height - lframe.size.height) / 2 + kBottomMargin;
         lframe.size.width = menuButton_.frame.origin.x - x - kMargin;

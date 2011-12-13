@@ -3,7 +3,7 @@
 //  iTerm
 //
 //  Created by George Nachman on 10/21/11.
-//  Copyright 2011 __MyCompanyName__. All rights reserved.
+//  Copyright 2011 George Nachman. All rights reserved.
 //
 
 #import <Cocoa/Cocoa.h>

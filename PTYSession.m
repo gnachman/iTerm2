@@ -384,11 +384,11 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         [self setName:@"Shell"];
         [self setDefaultName:@"Shell"];
 
-        [TEXTVIEW setDataSource: SCREEN];
-        [TEXTVIEW setDelegate: self];
+        [TEXTVIEW setDataSource:SCREEN];
+        [TEXTVIEW setDelegate:self];
         [SCROLLVIEW setDocumentView:WRAPPER];
         [WRAPPER release];
-        [SCROLLVIEW setDocumentCursor: [PTYTextView textViewCursor]];
+        [SCROLLVIEW setDocumentCursor:[PTYTextView textViewCursor]];
         [SCROLLVIEW setLineScroll:[TEXTVIEW lineHeight]];
         [SCROLLVIEW setPageScroll:2*[TEXTVIEW lineHeight]];
         [SCROLLVIEW setHasVerticalScroller:(![parent anyFullScreen] &&
@@ -404,9 +404,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         [SCREEN release];
         SCREEN = nil;
         [TEXTVIEW release];
-        NSRunCriticalAlertPanel(NSLocalizedStringFromTableInBundle(@"Out of memory",@"iTerm", [NSBundle bundleForClass: [self class]], @"Error"),
-                         NSLocalizedStringFromTableInBundle(@"New sesssion cannot be created. Try smaller buffer sizes.",@"iTerm", [NSBundle bundleForClass: [self class]], @"Error"),
-                         NSLocalizedStringFromTableInBundle(@"OK",@"iTerm", [NSBundle bundleForClass: [self class]], @"OK"),
+        NSRunCriticalAlertPanel(NSLocalizedStringFromTableInBundle(@"Out of memory",@"iTerm", [NSBundle bundleForClass:[self class]], @"Error"),
+                                NSLocalizedStringFromTableInBundle(@"New sesssion cannot be created. Try smaller buffer sizes.",@"iTerm", [NSBundle bundleForClass:[self class]], @"Error"),
+                                NSLocalizedStringFromTableInBundle(@"OK",@"iTerm", [NSBundle bundleForClass:[self class]], @"OK"),
                          nil, nil);
 
         return NO;
@@ -440,7 +440,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             pwd = NSHomeDirectory();
         }
     }
-    NSDictionary *env = [NSDictionary dictionaryWithObject: pwd forKey:@"PWD"];
+    NSDictionary *env = [NSDictionary dictionaryWithObject:pwd forKey:@"PWD"];
     isUTF8 = ([[addressbookEntry objectForKey:KEY_CHARACTER_ENCODING] unsignedIntValue] == NSUTF8StringEncoding);
 
     [[[self tab] realParentWindow] setName:theName forSession:self];
@@ -460,6 +460,37 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode
 {
     [[self view] setSplitSelectionMode:mode];
+}
+
+- (int)overUnder:(int)proposedSize inVerticalDimension:(BOOL)vertically
+{
+    int x = proposedSize;
+    if (vertically) {
+        if ([view showTitle]) {
+            // x = 50/53
+            x -= [SessionView titleHeight];
+        }
+        // x = 28/31
+        x -= VMARGIN * 2;
+        // x = 18/21
+        // iLineHeight = 10
+        int iLineHeight = [TEXTVIEW lineHeight];
+        x %= iLineHeight;
+        // x = 8/1
+        if (x > iLineHeight / 2) {
+            x -= iLineHeight;
+        }
+        // x = -2/1
+        return x;
+    } else {
+        x -= MARGIN * 2;
+        int iCharWidth = [TEXTVIEW charWidth];
+        x %= iCharWidth;
+        if (x > iCharWidth / 2) {
+            x -= iCharWidth;
+        }
+    }
+    return x;
 }
 
 - (NSArray *)childJobNames
@@ -525,7 +556,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         return;
     }
 
-    NSString* filename = [[NSBundle bundleForClass: [self class]] pathForResource:@"xterm-terminfo" ofType:@"txt"];
+    NSString* filename = [[NSBundle bundleForClass:[self class]] pathForResource:@"xterm-terminfo" ofType:@"txt"];
     if (!filename) {
         return;
     }
@@ -675,8 +706,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     // final update of display
     [self updateDisplay];
 
-    [TEXTVIEW setDataSource: nil];
-    [TEXTVIEW setDelegate: nil];
+    [TEXTVIEW setDataSource:nil];
+    [TEXTVIEW setDelegate:nil];
     [TEXTVIEW removeFromSuperview];
     TEXTVIEW = nil;
 
@@ -735,6 +766,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 - (void)readTask:(NSData*)data
 {
     if ([data length] == 0 || EXIT) {
+        return;
+    }
+    if ([SHELL hasMuteCoprocess]) {
         return;
     }
     if (gDebugLogging) {
@@ -831,7 +865,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
             withDescription:[NSString stringWithFormat:@"Session \"%@\" in tab #%d just terminated.",
                              [self name],
                              [[self tab] realObjectCount]]
-            andNotification:@"Broken Pipes"];
+            andNotification:@"Broken Pipes"
+                 andSession:self];
     }
 
     EXIT = YES;
@@ -867,7 +902,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     keyBindingAction = [iTermKeyBindingMgr actionForKeyCode:unmodunicode
                                                   modifiers:modflag
                                                        text:&keyBindingText
-                                                keyMappings:[[self addressBookEntry] objectForKey: KEY_KEYBOARD_MAP]];
+                                                keyMappings:[[self addressBookEntry] objectForKey:KEY_KEYBOARD_MAP]];
     return keyBindingAction;
 }
 
@@ -1013,6 +1048,62 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     }
 }
 
+- (void)sendEscapeSequence:(NSString *)text
+{
+    if (EXIT) {
+        return;
+    }
+    if ([text length] > 0) {
+        NSString *aString = [NSString stringWithFormat:@"\e%@", text];
+        [self writeTask:[aString dataUsingEncoding:NSUTF8StringEncoding]];
+    }
+}
+
+- (void)sendHexCode:(NSString *)codes
+{
+    if (EXIT) {
+        return;
+    }
+    if ([codes length]) {
+        NSArray* components = [codes componentsSeparatedByString:@" "];
+        for (NSString* part in components) {
+            const char* utf8 = [part UTF8String];
+            char* endPtr;
+            unsigned char c = strtol(utf8, &endPtr, 16);
+            if (endPtr != utf8) {
+                [self writeTask:[NSData dataWithBytes:&c length:sizeof(c)]];
+            }
+        }
+    }
+}
+
+- (void)sendText:(NSString *)text
+{
+    if (EXIT) {
+        return;
+    }
+    if ([text length] > 0) {
+        NSMutableString *temp = [NSMutableString stringWithString:text];
+        [temp replaceOccurrencesOfString:@"\\n"
+                              withString:@"\n"
+                                 options:NSLiteralSearch
+                                   range:NSMakeRange(0, [temp length])];
+        [temp replaceOccurrencesOfString:@"\\e"
+                              withString:@"\e"
+                                 options:NSLiteralSearch
+                                   range:NSMakeRange(0, [temp length])];
+        [temp replaceOccurrencesOfString:@"\\a"
+                              withString:@"\a"
+                                 options:NSLiteralSearch
+                                   range:NSMakeRange(0, [temp length])];
+        [temp replaceOccurrencesOfString:@"\\t"
+                              withString:@"\t"
+                                 options:NSLiteralSearch
+                                   range:NSMakeRange(0, [temp length])];
+        [self writeTask:[temp dataUsingEncoding:NSUTF8StringEncoding]];
+    }
+}
+
 // Handle bookmark- and global-scope keybindings. If there is no keybinding then
 // pass the keystroke as input.
 - (void)keyDown:(NSEvent *)event
@@ -1102,8 +1193,6 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
         }
         DebugLog([NSString stringWithFormat:@"keyBindingAction=%d", keyBindingAction]);
         // A special action was bound to this key combination.
-        NSString *aString;
-
         NSString* temp;
         int profileAction = [iTermKeyBindingMgr localActionForKeyCode:unmodunicode
                                                             modifiers:modflag
@@ -1200,39 +1289,19 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                 if (EXIT) {
                     return;
                 }
-                if ([keyBindingText length] > 0) {
-                    aString = [NSString stringWithFormat:@"\e%@", keyBindingText];
-                    [self writeTask:[aString dataUsingEncoding:NSUTF8StringEncoding]];
-                }
+                [self sendEscapeSequence:keyBindingText];
                 break;
             case KEY_ACTION_HEX_CODE:
                 if (EXIT) {
                     return;
                 }
-                if ([keyBindingText length]) {
-                    NSArray* components = [keyBindingText componentsSeparatedByString:@" "];
-                    for (NSString* part in components) {
-                        const char* utf8 = [part UTF8String];
-                        char* endPtr;
-                        unsigned char c = strtol(utf8, &endPtr, 16);
-                        if (endPtr != utf8) {
-                            [self writeTask:[NSData dataWithBytes:&c length:sizeof(c)]];
-                        }
-                    }
-                }
+                [self sendHexCode:keyBindingText];
                 break;
             case KEY_ACTION_TEXT:
                 if (EXIT) {
                     return;
                 }
-                if([keyBindingText length] > 0) {
-                    NSMutableString *bindingText = [NSMutableString stringWithString:keyBindingText];
-                    [bindingText replaceOccurrencesOfString:@"\\n" withString:@"\n" options:NSLiteralSearch range:NSMakeRange(0,[bindingText length])];
-                    [bindingText replaceOccurrencesOfString:@"\\e" withString:@"\e" options:NSLiteralSearch range:NSMakeRange(0,[bindingText length])];
-                    [bindingText replaceOccurrencesOfString:@"\\a" withString:@"\a" options:NSLiteralSearch range:NSMakeRange(0,[bindingText length])];
-                    [bindingText replaceOccurrencesOfString:@"\\t" withString:@"\t" options:NSLiteralSearch range:NSMakeRange(0,[bindingText length])];
-                    [self writeTask:[bindingText dataUsingEncoding:NSUTF8StringEncoding]];
-                }
+                [self sendText:keyBindingText];
                 break;
             case KEY_ACTION_SELECT_MENU_ITEM:
                 [PTYSession selectMenuItem:keyBindingText];
@@ -1527,7 +1596,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     return NO;
 }
 
-- (void)handleEvent:(NSEvent *) theEvent
+- (void)handleEvent:(NSEvent *)theEvent
 {
 }
 
@@ -1804,7 +1873,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [self writeTask:[NSData dataWithBytes:&p length:1]];
 }
 
-- (void) textViewDidChangeSelection: (NSNotification *) aNotification
+- (void)textViewDidChangeSelection:(NSNotification *) aNotification
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PTYSession textViewDidChangeSelection]",
@@ -1812,11 +1881,11 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 #endif
 
     if ([[PreferencePanel sharedInstance] copySelection]) {
-        [TEXTVIEW copy: self];
+        [TEXTVIEW copy:self];
     }
 }
 
-- (void) textViewResized: (NSNotification *) aNotification;
+- (void) textViewResized:(NSNotification *) aNotification;
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s: textView = 0x%x", __PRETTY_FUNCTION__, TEXTVIEW);
@@ -1855,7 +1924,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
                                                                                               @"Growl Alerts"),
                                  [self name],
                                  [[self tab] realObjectCount]]
-                andNotification:@"Bells"];
+                andNotification:@"Bells"
+                     andSession:self];
             }
         }
     }
@@ -1872,10 +1942,10 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     int fgNum = -1;
     for(int i = 0; i < 16; ++i) {
         NSString* key = [NSString stringWithFormat:KEYTEMPLATE_ANSI_X_COLOR, i];
-        if ([fgColor isEqual: [ITAddressBookMgr decodeColor:[aDict objectForKey:key]]]) {
+        if ([fgColor isEqual:[ITAddressBookMgr decodeColor:[aDict objectForKey:key]]]) {
             fgNum = i;
         }
-        if ([bgColor isEqual: [ITAddressBookMgr decodeColor:[aDict objectForKey:key]]]) {
+        if ([bgColor isEqual:[ITAddressBookMgr decodeColor:[aDict objectForKey:key]]]) {
             bgNum = i;
         }
     }
@@ -1947,9 +2017,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [self setBackgroundImagePath:[aDict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
 
     // colour scheme
-    [self setCOLORFGBG_VALUE: [self ansiColorsMatchingForeground:[aDict objectForKey:KEY_FOREGROUND_COLOR]
-                                                   andBackground:[aDict objectForKey:KEY_BACKGROUND_COLOR]
-                                                      inBookmark:aDict]];
+    [self setCOLORFGBG_VALUE:[self ansiColorsMatchingForeground:[aDict objectForKey:KEY_FOREGROUND_COLOR]
+                                                  andBackground:[aDict objectForKey:KEY_BACKGROUND_COLOR]
+                                                     inBookmark:aDict]];
 
     // transparency
     [self setTransparency:[[aDict objectForKey:KEY_TRANSPARENCY] floatValue]];
@@ -1972,9 +2042,9 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     [SCREEN setShowBellFlag:[[aDict objectForKey:KEY_VISUAL_BELL] boolValue]];
     [SCREEN setFlashBellFlag:[[aDict objectForKey:KEY_FLASHING_BELL] boolValue]];
     [SCREEN setGrowlFlag:[[aDict objectForKey:KEY_BOOKMARK_GROWL_NOTIFICATIONS] boolValue]];
-    [SCREEN setBlinkingCursor:[[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];
+    [SCREEN setBlinkingCursor:[[aDict objectForKey:KEY_BLINKING_CURSOR] boolValue]];
     [TEXTVIEW setBlinkAllowed:[[aDict objectForKey:KEY_BLINK_ALLOWED] boolValue]];
-    [TEXTVIEW setBlinkingCursor:[[aDict objectForKey: KEY_BLINKING_CURSOR] boolValue]];
+    [TEXTVIEW setBlinkingCursor:[[aDict objectForKey:KEY_BLINKING_CURSOR] boolValue]];
     [TEXTVIEW setCursorType:([aDict objectForKey:KEY_CURSOR_TYPE] ? [[aDict objectForKey:KEY_CURSOR_TYPE] intValue] : [[PreferencePanel sharedInstance] legacyCursorType])];
 
     PTYTab* currentTab = [[[self tab] parentWindow] currentTab];
@@ -2029,8 +2099,8 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 {
     // Ask the parent if it has anything to add
     if ([[self tab] realParentWindow] &&
-        [[[self tab] realParentWindow] respondsToSelector:@selector(menuForEvent: menu:)]) {
-        [[[self tab] realParentWindow] menuForEvent:theEvent menu: theMenu];
+        [[[self tab] realParentWindow] respondsToSelector:@selector(menuForEvent:menu:)]) {
+        [[[self tab] realParentWindow] menuForEvent:theEvent menu:theMenu];
     }
 }
 
@@ -2396,7 +2466,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     if (([TEXTVIEW defaultFGColor] != color) ||
        ([[TEXTVIEW defaultFGColor] alphaComponent] != [color alphaComponent])) {
         // Change the fg color for future stuff
-        [TEXTVIEW setFGColor: color];
+        [TEXTVIEW setFGColor:color];
     }
 }
 
@@ -2413,10 +2483,10 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
     if (([TEXTVIEW defaultBGColor] != color) ||
         ([[TEXTVIEW defaultBGColor] alphaComponent] != [color alphaComponent])) {
         // Change the bg color for future stuff
-        [TEXTVIEW setBGColor: color];
+        [TEXTVIEW setBGColor:color];
     }
 
-    [[self SCROLLVIEW] setBackgroundColor: color];
+    [[self SCROLLVIEW] setBackgroundColor:color];
 }
 
 - (NSColor *) boldColor
@@ -2426,7 +2496,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setBoldColor:(NSColor*)color
 {
-    [[self TEXTVIEW] setBoldColor: color];
+    [[self TEXTVIEW] setBoldColor:color];
 }
 
 - (NSColor *)cursorColor
@@ -2436,7 +2506,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setCursorColor:(NSColor*)color
 {
-    [[self TEXTVIEW] setCursorColor: color];
+    [[self TEXTVIEW] setCursorColor:color];
 }
 
 - (void)setSmartCursorColor:(BOOL)value
@@ -2466,7 +2536,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setSelectedTextColor:(NSColor *)aColor
 {
-    [TEXTVIEW setSelectedTextColor: aColor];
+    [TEXTVIEW setSelectedTextColor:aColor];
 }
 
 - (NSColor *)cursorTextColor
@@ -2476,7 +2546,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
 - (void)setCursorTextColor:(NSColor *)aColor
 {
-    [TEXTVIEW setCursorTextColor: aColor];
+    [TEXTVIEW setCursorTextColor:aColor];
 }
 
 // Changes transparency
@@ -2706,7 +2776,7 @@ static NSString* SESSION_ARRANGEMENT_WORKING_DIRECTORY = @"Working Directory";
 
     if (command != nil) {
         aString = [NSString stringWithFormat:@"%@\n", command];
-        data = [aString dataUsingEncoding: [TERMINAL encoding]];
+        data = [aString dataUsingEncoding:[TERMINAL encoding]];
     }
 
     if (data != nil) {
@@ -3157,11 +3227,22 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [SHELL hasCoprocess];
 }
 
-- (void)launchCoprocessWithCommand:(NSString *)command
+- (void)launchCoprocessWithCommand:(NSString *)command mute:(BOOL)mute
 {
     Coprocess *coprocess = [Coprocess launchedCoprocessWithCommand:command];
+    coprocess.mute = mute;
     [SHELL setCoprocess:coprocess];
     [TEXTVIEW setNeedsDisplay:YES];
+}
+
+- (void)launchCoprocessWithCommand:(NSString *)command
+{
+    [self launchCoprocessWithCommand:command mute:NO];
+}
+
+- (void)launchSilentCoprocessWithCommand:(NSString *)command
+{
+    [self launchCoprocessWithCommand:command mute:YES];
 }
 
 - (void)setFocused:(BOOL)focused
@@ -3209,10 +3290,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         classDescription = [containerRef keyClassDescription];
         //create and return the specifier
         return [[[NSIndexSpecifier allocWithZone:[self zone]]
-               initWithContainerClassDescription: classDescription
-                              containerSpecifier: containerRef
-                                             key: @ "sessions"
-                                           index: theIndex] autorelease];
+                 initWithContainerClassDescription:classDescription
+                 containerSpecifier:containerRef
+                 key:@ "sessions"
+                 index:theIndex] autorelease];
     } else {
         // NSLog(@"recipient not found!");
         return nil;
@@ -3248,7 +3329,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [[[[self tab] parentWindow] tabView] selectTabViewItemWithIdentifier:[self tab]];
 }
 
--(void)handleWriteScriptCommand: (NSScriptCommand *)command
+-(void)handleWriteScriptCommand:(NSScriptCommand *)command
 {
     // Get the command's arguments:
     NSDictionary *args = [command evaluatedArguments];
@@ -3307,7 +3388,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     // Fix up lowercase letters.
     static NSDictionary* lowerCaseEncodings;
     if (!lowerCaseEncodings) {
-        NSString* plistFile = [[NSBundle bundleForClass: [self class]] pathForResource:@"EncodingsWithLowerCase" ofType:@"plist"];
+        NSString* plistFile = [[NSBundle bundleForClass:[self class]] pathForResource:@"EncodingsWithLowerCase" ofType:@"plist"];
         lowerCaseEncodings = [NSDictionary dictionaryWithContentsOfFile:plistFile];
         [lowerCaseEncodings retain];
     }
@@ -3417,6 +3498,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                                                         userInfo:nil
                                                          repeats:NO];
     } else {
+        // Update the saved position to just before the screen.
+        [SCREEN saveTerminalAbsPos];
         tailFindTimer_ = nil;
     }
 }

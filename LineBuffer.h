@@ -147,7 +147,7 @@ typedef struct FindContext {
 
 // Drop lines from the start of the buffer. Returns the number of lines actually dropped
 // (either n or the number of lines in the block).
-- (int) dropLines: (int) n withWidth: (int) width;
+- (int) dropLines:(int)n withWidth:(int)width chars:(int *)charsDropped;
 
 // Returns true if there are no lines in the block
 - (BOOL) isEmpty;
@@ -291,9 +291,14 @@ typedef struct FindContext {
 // Returns the position at the end of the buffer
 - (int) lastPos;
 
+// Convert the block,offset in a findcontext into an absolute position.
 - (long long)absPositionOfFindContext:(FindContext)findContext;
+// Convert an absolute position into a position.
 - (int)positionForAbsPosition:(long long)absPosition;
+// Convert a position into an absolute position.
+- (long long)absPositionForPosition:(int)pos;
 
+// Set the start location of a find context to an absolute position.
 - (void)storeLocationOfAbsPos:(long long)absPos
                     inContext:(FindContext *)context;
 @end

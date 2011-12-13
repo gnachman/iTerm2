@@ -63,6 +63,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #import "FutureMethods.h"
 #import "SmartSelectionController.h"
 #import "ITAddressBookMgr.h"
+#import "PointerController.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -311,10 +312,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     trouterDragged = NO;
     workingDirectoryAtLines = [[NSMutableArray alloc] init];
 
-    if ([[PreferencePanel sharedInstance] threeFingerEmulatesMiddle]) {
-        [self futureSetAcceptsTouchEvents:YES];
-        [self futureSetWantsRestingTouches:YES];
-    }
+    pointer_ = [[PointerController alloc] init];
+    pointer_.delegate = self;
+
+    [self futureSetAcceptsTouchEvents:YES];
+    [self futureSetWantsRestingTouches:YES];
 
     return self;
 }
@@ -408,6 +410,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [workingDirectoryAtLines release];
     [trouter release];
     [initialFindContext_.substring release];
+
+    [pointer_ release];
 
     [super dealloc];
 }
@@ -2261,11 +2265,7 @@ NSMutableArray* screens=0;
         }
     }
 
-    if ([[PreferencePanel sharedInstance] pasteFromClipboard]) {
-        [self paste:nil];
-    } else {
-        [self pasteSelection:nil];
-    }
+    [pointer_ mouseDown:event withTouches:numTouches_];
 }
 
 - (void)otherMouseUp:(NSEvent *)event
@@ -2308,6 +2308,7 @@ NSMutableArray* screens=0;
     if (!mouseDownIsThreeFingerClick_) {
         [super otherMouseUp:event];
     }
+    [pointer_ mouseUp:event withTouches:numTouches_];
 }
 
 - (void)otherMouseDragged:(NSEvent *)event
@@ -2360,6 +2361,9 @@ NSMutableArray* screens=0;
 
 - (void)rightMouseDown:(NSEvent*)event
 {
+    if ([pointer_ mouseDown:event withTouches:numTouches_]) {
+        return;
+    }
     NSPoint locationInWindow, locationInTextView;
     locationInWindow = [event locationInWindow];
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
@@ -2398,6 +2402,9 @@ NSMutableArray* screens=0;
 
 - (void)rightMouseUp:(NSEvent *)event
 {
+    if ([pointer_ mouseUp:event withTouches:numTouches_]) {
+        return;
+    }
     NSPoint locationInWindow, locationInTextView;
     locationInWindow = [event locationInWindow];
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
@@ -2553,6 +2560,11 @@ NSMutableArray* screens=0;
     [super flagsChanged:theEvent];
 }
 
+- (void)swipeWithEvent:(NSEvent *)event
+{
+    [pointer_ swipeWithEvent:event];
+}
+
 - (void)mouseExited:(NSEvent *)event
 {
     mouseInRect_ = NO;
@@ -2582,11 +2594,102 @@ NSMutableArray* screens=0;
     }
 }
 
+- (NSPoint)clickPoint:(NSEvent *)event
+{
+    NSPoint locationInWindow = [event locationInWindow];
+    NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
+    int x, y;
+    int width = [dataSource width];
+    
+    x = (locationInTextView.x - MARGIN + charWidth/2)/charWidth;
+    if (x < 0) {
+        x = 0;
+    }
+    y = locationInTextView.y / lineHeight;
+    
+    if (x >= width) {
+        x = width  - 1;
+    }
+    
+    return NSMakePoint(x, y);
+}
+
 - (void)mouseDown:(NSEvent *)event
 {
     if ([self mouseDownImpl:event]) {
         [super mouseDown:event];
     }
+}
+
+- (BOOL)lineHasSoftEol:(int)y
+{
+    screen_char_t *theLine = [dataSource getLineAtIndex:y];
+    int width = [dataSource width];
+    return (theLine[width].code == EOL_SOFT);
+}
+
+- (int)lineNumberWithStartOfWholeLineIncludingLine:(int)y
+{
+    int i = y;
+    while (i > 0 && [self lineHasSoftEol:i - 1]) {
+        i--;
+    }
+    return i;
+}
+
+- (int)lineNumberWithEndOfWholeLineIncludingLine:(int)y
+{
+    int i = y + 1;
+    int maxY = [dataSource numberOfLines];
+    while (i < maxY && [self lineHasSoftEol:i - 1]) {
+        i++;
+    }
+    return i - 1;
+}
+
+- (void)extendWholeLineSelectionToX:(int)x
+                                  y:(int)y
+                          withWidth:(int)width
+{
+    if (startY < y) {
+        // Start of existing selection is before cursor.
+        if (startY > endY) {
+            // start is below end. advance start up to end.
+            startY = endY;
+            startX = 0;
+        }
+        endX = width;
+        endY = [self lineNumberWithEndOfWholeLineIncludingLine:y];
+    } else {
+        // end of existing selection is at or after the cursor
+        if (startY < endY) {
+            // start of selection is before end of selection.
+            // advance start to end.
+            startY = endY;
+            startX = endX;
+        }
+        // set end of selection to current line
+        endX = 0;
+        endY = [self lineNumberWithStartOfWholeLineIncludingLine:y];
+    }
+}
+
+- (void)extendSelectionToX:(int)x y:(int)y
+{
+    int width = [dataSource width];
+
+    // If you click before the start then flip start and end and extend end to click location. (effectively extends left)
+    // If you click after the start then move the end to the click location. (extends right)
+    // This means that if you click inside the selection it truncates it by moving the end (whichever that is)
+    if (x + y * width < startX + startY * width) {
+        // Clicked before the start. Move the start to the old end.
+        startX = endX;
+        startY = endY;
+        [self setSelectionTime];
+    }
+    // Move the end to the click location.
+    endX = x;
+    endY = y;
 }
 
 // Returns yes if [super mouseDown:event] should be run by caller.
@@ -2597,9 +2700,19 @@ NSMutableArray* screens=0;
         [[MovePaneController sharedInstance] beginDrag:[dataSource session]];
         return NO;
     }
-    if (numTouches_ == 3 && [[PreferencePanel sharedInstance] threeFingerEmulatesMiddle]) {
-        mouseDownIsThreeFingerClick_ = YES;
-        [self otherMouseDown:event];
+    if (numTouches_ == 3) {
+        if ([[PreferencePanel sharedInstance] threeFingerEmulatesMiddle]) {
+            mouseDownIsThreeFingerClick_ = YES;
+            [self otherMouseDown:event];
+        } else {
+            // Perform user-defined gesture action, if any
+            [pointer_ mouseDown:event withTouches:numTouches_];
+            mouseDown = YES;
+        }
+        return NO;
+    }
+    if ([pointer_ eventEmulatesRightClick:event]) {
+        [pointer_ mouseDown:event withTouches:numTouches_];
         return NO;
     }
     const BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
@@ -2622,21 +2735,13 @@ NSMutableArray* screens=0;
     }
 
     NSPoint locationInWindow, locationInTextView;
-    int x, y;
+    NSPoint clickPoint = [self clickPoint:event];
+    int x = clickPoint.x;
+    int y = clickPoint.y;
     int width = [dataSource width];
 
     locationInWindow = [event locationInWindow];
     locationInTextView = [self convertPoint: locationInWindow fromView: nil];
-
-    x = (locationInTextView.x - MARGIN + charWidth/2)/charWidth;
-    if (x < 0) {
-        x = 0;
-    }
-    y = locationInTextView.y / lineHeight;
-
-    if (x >= width) {
-        x = width  - 1;
-    }
 
     NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
 
@@ -2701,18 +2806,7 @@ NSMutableArray* screens=0;
         if (startX > -1 && shiftPressed) {
             // holding down shfit key and there is an existing selection ->
             // extend the selection.
-            // If you click before the start then flip start and end and extend end to click location. (effectively extends left)
-            // If you click after the start then move the end to the click location. (extends right)
-            // This means that if you click inside the selection it truncates it by moving the end (whichever that is)
-            if (x + y * width < startX + startY * width) {
-                // Clicked before the start. Move the start to the old end.
-                startX = endX;
-                startY = endY;
-                [self setSelectionTime];
-            }
-            // Move the end to the click location.
-            endX = x;
-            endY = y;
+            [self extendSelectionToX:x y:y];
             // startX and endX may be reversed, but mouseUp fixes it.
         } else if (startX > -1 &&
                    [self _isCharSelectedInRow:y col:x checkOld:NO]) {
@@ -2763,30 +2857,45 @@ NSMutableArray* screens=0;
             [self setSelectionTime];
         }
     } else if (clickCount == 3) {
-        // triple-click; select line
-        selectMode = SELECT_LINE;
-        if (startX > -1 && shiftPressed) {
-            // extend existing selection
-            if (startY < y) {
-                // extend start
-                endX = width;
-                endY = y;
+        if ([[PreferencePanel sharedInstance] tripleClickSelectsFullLines]) {
+            selectMode = SELECT_WHOLE_LINE;
+            if (startX > -1 && shiftPressed) {
+                [self extendWholeLineSelectionToX:x y:y withWidth:width];
             } else {
-                // extend end
-                if (startX + startY * width < endX + endY * width) {
-                    // advance start to end
-                    startX = endX;
-                    startY = endY;
-                    [self setSelectionTime];
-                }
-                endX = 0;
-                endY = y;
+                // new selection
+                startX = 0;
+                startY = [self lineNumberWithStartOfWholeLineIncludingLine:y];
+                endX = width;
+                endY = [self lineNumberWithEndOfWholeLineIncludingLine:y];
             }
+            [self setSelectionTime];
         } else {
-            // not holding shift
-            startX = 0;
-            endX = width;
-            startY = endY = y;
+            // triple-click; select line
+            selectMode = SELECT_LINE;
+            if (startX > -1 && shiftPressed) {
+                // extend existing selection
+                if (startY < y) {
+                    // start of existing selection is before cursor so move end point.
+                    endX = width;
+                    endY = y;
+                } else {
+                    // end of existing selection is at or after the cursor
+                    if (startX + startY * width < endX + endY * width) {
+                        // start of selection is before end of selection.
+                        // advance start to end
+                        startX = endX;
+                        startY = endY;
+                    }
+                    // Set end of selection to current line
+                    endX = 0;
+                    endY = y;
+                }
+            } else {
+                // not holding shift
+                startX = 0;
+                endX = width;
+                startY = endY = y;
+            }
             [self setSelectionTime];
         }
     } else if (clickCount == 4) {
@@ -2794,20 +2903,10 @@ NSMutableArray* screens=0;
         // ignore status of shift key for smart selection because extending was messed up by
         // triple click.
         selectMode = SELECT_SMART;
-        if ([self smartSelectAtX:x y:y]) {
-            int tmpX1, tmpY1, tmpX2, tmpY2;
-            [self getWordForX:x
-                            y:y
-                       startX:&tmpX1
-                       startY:&tmpY1
-                         endX:&tmpX2
-                         endY:&tmpY2];
-        }
+        [self smartSelectWithEvent:event];
     }
 
     DebugLog([NSString stringWithFormat:@"Mouse down. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
-    if([_delegate respondsToSelector: @selector(willHandleEvent:)] && [_delegate willHandleEvent: event])
-        [_delegate handleEvent:event];
     [[[self dataSource] session] refreshAndStartTimerIfNeeded];
 
     return NO;
@@ -2828,9 +2927,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [self otherMouseUp:nil];
         mouseDownIsThreeFingerClick_ = NO;
         return;
+    } else if (numTouches_ == 3 && mouseDown) {
+        // Three finger tap is valid but not emulating middle button
+        [pointer_ mouseUp:event withTouches:numTouches_];
+        mouseDown = NO;
+        return;
     }
     dragOk_ = NO;
     trouterDragged = NO;
+    if ([pointer_ eventEmulatesRightClick:event]) {
+        [pointer_ mouseUp:event withTouches:numTouches_];
+        return;
+    }
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
     const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
     if (!cmdPressed &&
@@ -2842,20 +2950,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
 
+    selectionScrollDirection = 0;
+
     NSPoint locationInWindow = [event locationInWindow];
     NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
-    int x, y;
-    int width = [dataSource width];
-
-    x = (locationInTextView.x - MARGIN) / charWidth;
-    if (x < 0) {
-        x = 0;
-    }
-    if (x>=width) {
-        x = width - 1;
-    }
-    selectionScrollDirection = 0;
-    y = locationInTextView.y / lineHeight;
 
     // Send mouse up event to host if xterm mouse reporting is on
     if (frontTextView == self &&
@@ -2921,24 +3019,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         startX=-1;
         if (cmdPressed &&
             [[PreferencePanel sharedInstance] cmdSelection]) {
-            // Command click in place.
-            NSString *url = [self _getURLForX:x y:y];
-
-            int mods = [event modifierFlags];
-            BOOL altPressed = (mods & NSAlternateKeyMask) != 0;
-            NSString *prefix = [self wrappedStringAtX:x
-                                                    y:y
-                                                  dir:-1
-                                  respectHardNewlines:NO];
-            NSString *suffix = [self wrappedStringAtX:x
-                                                    y:y
-                                                  dir:1
-                                  respectHardNewlines:NO];
-            [self _openSemanticHistoryForUrl:url
-                                      atLine:y + 1
-                                      inBackground:altPressed
-                                      prefix:prefix
-                                      suffix:suffix];
+            BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
+            if (altPressed) {
+                [self openTargetInBackgroundWithEvent:event];
+            } else {
+                [self openTargetWithEvent:event];
+            }
         } else {
             lastFindStartX = endX;
             lastFindEndX = endX+1;
@@ -2950,7 +3036,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (startX > -1 && _delegate) {
         // if we want to copy our selection, do so
         if ([[PreferencePanel sharedInstance] copySelection]) {
-            [self copy: self];
+            [self copy:self];
         }
     }
 
@@ -2970,7 +3056,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Prevent accidental dragging while dragging trouter item.
     BOOL dragThresholdMet = NO;
     NSPoint locationInWindow = [event locationInWindow];
-    NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
+    NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
+    locationInTextView.x = ceil(locationInTextView.x);
+    locationInTextView.y = ceil(locationInTextView.y);
     NSRect  rectInTextView = [self visibleRect];
     int x, y;
     int width = [dataSource width];
@@ -3133,6 +3221,201 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     [self moveSelectionEndpointToX:x Y:y locationInTextView:locationInTextView];
+}
+
+#pragma mark PointerControllerDelegate
+
+- (void)pasteFromClipboardWithEvent:(NSEvent *)event
+{
+    [self paste:nil];
+}
+
+- (void)pasteFromSelectionWithEvent:(NSEvent *)event
+{
+    [self pasteSelection:nil];
+}
+
+- (void)_openTargetWithEvent:(NSEvent *)event inBackground:(BOOL)openInBackground
+{
+    NSPoint clickPoint = [self clickPoint:event];
+    int x = clickPoint.x;
+    int y = clickPoint.y;
+
+    // Command click in place.
+    NSString *url = [self _getURLForX:x y:y];
+
+    NSString *prefix = [self wrappedStringAtX:x
+                                            y:y
+                                          dir:-1
+                          respectHardNewlines:NO];
+    NSString *suffix = [self wrappedStringAtX:x
+                                            y:y
+                                          dir:1
+                          respectHardNewlines:NO];
+    [self _openSemanticHistoryForUrl:url
+                              atLine:y + 1
+                        inBackground:openInBackground
+                              prefix:prefix
+                              suffix:suffix];
+}
+
+- (void)openTargetWithEvent:(NSEvent *)event
+{
+    [self _openTargetWithEvent:event inBackground:NO];
+}
+
+- (void)openTargetInBackgroundWithEvent:(NSEvent *)event
+{
+    [self _openTargetWithEvent:event inBackground:YES];
+}
+
+- (void)smartSelectWithEvent:(NSEvent *)event
+{
+    NSPoint clickPoint = [self clickPoint:event];
+    int x = clickPoint.x;
+    int y = clickPoint.y;
+
+    [self smartSelectAtX:x y:y];
+}
+
+- (void)openContextMenuWithEvent:(NSEvent *)event
+{
+    NSPoint clickPoint = [self clickPoint:event];
+    int x = clickPoint.x;
+    int y = clickPoint.y;
+    long long clickAt = y;
+    clickAt *= [dataSource width];
+    clickAt += x;
+    
+    long long minAt = startY;
+    minAt *= [dataSource width];
+    minAt += startX;
+    long long maxAt = endY;
+    maxAt *= [dataSource width];
+    maxAt += endX;
+    
+    if (startX < 0 ||
+        clickAt < minAt ||
+        clickAt >= maxAt) {
+        // Didn't click on selection.
+        [self smartSelectWithEvent:event];
+    }
+    [self setNeedsDisplay:YES];
+    NSMenu *menu = [self menuForEvent:nil];
+    [NSMenu popUpContextMenu:menu withEvent:event forView:self];
+}
+
+- (void)extendSelectionWithEvent:(NSEvent *)event
+{
+    if (startX > -1) {
+        NSPoint clickPoint = [self clickPoint:event];
+        int x = clickPoint.x;
+        int y = clickPoint.y;
+
+        [self extendSelectionToX:x y:y];
+        if (startY > endY || (startY == endY && startX > endX)) {
+            // Make sure the start is before the end.
+            int t;
+            t = startY;
+            startY = endY;
+            endY = t;
+
+            t = startX;
+            startX = endX;
+            endX = t;
+        }
+    }
+}
+
+- (void)nextTabWithEvent:(NSEvent *)event
+{
+    [[[[dataSource session] tab] realParentWindow] nextTab:nil];
+}
+
+- (void)previousTabWithEvent:(NSEvent *)event
+{
+    [[[[dataSource session] tab] realParentWindow] previousTab:nil];
+}
+
+- (void)nextWindowWithEvent:(NSEvent *)event
+{
+    [[iTermController sharedInstance] nextTerminal:nil];
+}
+
+- (void)previousWindowWithEvent:(NSEvent *)event
+{
+    [[iTermController sharedInstance] previousTerminal:nil];
+}
+
+- (void)movePaneWithEvent:(NSEvent *)event
+{
+    [self movePane:nil];
+}
+
+- (void)sendEscapeSequence:(NSString *)text withEvent:(NSEvent *)event
+{
+    [_delegate sendEscapeSequence:text];
+}
+
+- (void)sendHexCode:(NSString *)codes withEvent:(NSEvent *)event
+{
+    [_delegate sendHexCode:codes];
+}
+
+- (void)sendText:(NSString *)text withEvent:(NSEvent *)event
+{
+    [_delegate sendText:text];
+}
+
+- (void)selectPaneLeftWithEvent:(NSEvent *)event
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneLeft:nil];
+}
+
+- (void)selectPaneRightWithEvent:(NSEvent *)event
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneRight:nil];
+}
+
+- (void)selectPaneAboveWithEvent:(NSEvent *)event
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneUp:nil];
+}
+
+- (void)selectPaneBelowWithEvent:(NSEvent *)event
+{
+    [[[iTermController sharedInstance] currentTerminal] selectPaneDown:nil];
+}
+
+- (void)newWindowWithProfile:(NSString *)guid withEvent:(NSEvent *)event
+{
+    [[[[dataSource session] tab] realParentWindow] newWindowWithBookmarkGuid:guid];
+}
+
+- (void)newTabWithProfile:(NSString *)guid withEvent:(NSEvent *)event
+{
+    [[[[dataSource session] tab] realParentWindow] newTabWithBookmarkGuid:guid];
+}
+- (void)newVerticalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event
+{
+    [[[[dataSource session] tab] realParentWindow] splitVertically:YES
+                                                  withBookmarkGuid:guid];
+}
+
+- (void)newHorizontalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event
+{
+    [[[[dataSource session] tab] realParentWindow] splitVertically:NO
+                                                  withBookmarkGuid:guid];
+}
+
+- (void)selectNextPaneWithEvent:(NSEvent *)event
+{
+    [[[dataSource session] tab] nextSession];
+}
+
+- (void)selectPreviousPaneWithEvent:(NSEvent *)event
+{
+    [[[dataSource session] tab] previousSession];
 }
 
 - (NSString*)contentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad
@@ -3423,7 +3706,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // These commands are allowed only if there is a selection.
         return startX > -1;
     }
-
+    SEL theSel = [item action];
+    if ([NSStringFromSelector(theSel) hasPrefix:@"contextMenuAction"]) {
+        return YES;
+    }
     return NO;
 }
 
@@ -3432,29 +3718,109 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return startX > -1 && startY >= 0 && abs(startY - endY) <= 1;
 }
 
+- (BOOL)addCustomActionsToMenu:(NSMenu *)theMenu matchingText:(NSString *)textWindow
+{
+    BOOL didAdd = NO;
+    NSArray* rulesArray = smartSelectionRules_ ? smartSelectionRules_ : [SmartSelectionController defaultRules];
+    const int numRules = [rulesArray count];
+    
+    for (int j = 0; j < numRules; j++) {
+        NSDictionary *rule = [rulesArray objectAtIndex:j];
+        NSString *regex = [SmartSelectionController regexInRule:rule];
+        for (int i = 0; i <= textWindow.length; i++) {
+            NSString* substring = [textWindow substringWithRange:NSMakeRange(i, [textWindow length] - i)];
+            NSError* regexError = nil;
+            NSArray *components = [substring captureComponentsMatchedByRegex:regex
+                                                                     options:0
+                                                                       range:NSMakeRange(0, [substring length])
+                                                                       error:&regexError];
+            if (components.count) {
+                NSLog(@"Components for %@ are %@", regex, components);
+                NSArray *actions = [SmartSelectionController actionsInRule:rule];
+                for (NSDictionary *action in actions) {
+                    SEL mySelector = @selector(bogusSelector:);
+                    // The selector's name must begin with contextMenuAction to
+                    // pass validateMenuItem.
+                    switch ([ContextMenuActionPrefsController actionForActionDict:action]) {
+                        case kOpenFileContextMenuAction:
+                            mySelector = @selector(contextMenuActionOpenFile:);
+                            break;
+                            
+                        case kOpenUrlContextMenuAction:
+                            mySelector = @selector(contextMenuActionOpenURL:);
+                            break;
+                            
+                        case kRunCommandContextMenuAction:
+                            mySelector = @selector(contextMenuActionRunCommand:);
+                            break;
+                            
+                        case kRunCoprocessContextMenuAction:
+                            mySelector = @selector(contextMenuActionRunCoprocess:);
+                            break;
+                    }
+                    NSMenuItem *theItem = [[[NSMenuItem alloc] initWithTitle:[ContextMenuActionPrefsController titleForActionDict:action
+                                                                                                            withCaptureComponents:components]
+                                       action:mySelector
+                                keyEquivalent:@""] autorelease];
+                    [theItem setRepresentedObject:[ContextMenuActionPrefsController parameterForActionDict:action
+                                                                                     withCaptureComponents:components]];
+                    [theItem setTarget:self];
+                    [theMenu addItem:theItem];
+                    didAdd = YES;
+                }
+                break;
+            }
+        }
+    }
+    return didAdd;
+}
+
+- (void)contextMenuActionOpenFile:(id)sender
+{
+    NSLog(@"Open file: '%@'", [sender representedObject]);
+    [[NSWorkspace sharedWorkspace] openFile:[[sender representedObject] stringByExpandingTildeInPath]];
+}
+
+- (void)contextMenuActionOpenURL:(id)sender
+{
+    NSURL *url = [NSURL URLWithString:[sender representedObject]];
+    if (url) {
+        NSLog(@"Open URL: %@", [sender representedObject]);
+        [[NSWorkspace sharedWorkspace] openURL:url];
+    } else {
+        NSLog(@"%@ is not a URL", [sender representedObject]);
+    }
+}
+
+- (void)contextMenuActionRunCommand:(id)sender
+{
+    NSString *command = [sender representedObject];
+    NSLog(@"Run command: %@", command);
+    [NSThread detachNewThreadSelector:@selector(runCommand:)
+                             toTarget:[self class]
+                           withObject:command];
+}
+
++ (void)runCommand:(NSString *)command
+{
+    
+    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
+    system([command UTF8String]);
+    [pool drain];
+}
+
+- (void)contextMenuActionRunCoprocess:(id)sender
+{
+    NSString *command = [sender representedObject];
+    NSLog(@"Run coprocess: %@", command);
+    [_delegate launchCoprocessWithCommand:command];
+}
+
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
 {
     if (theEvent) {
-        // Not for "synthetic" events, as the session title view sends.
-        PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];
-        NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
-        NSPoint locationInWindow = [theEvent locationInWindow];
-        NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
-        VT100Terminal *terminal = [dataSource terminal];
-        MouseMode mm = [terminal mouseMode];
-        if (frontTextView == self &&
-            ([self xtermMouseReporting]) &&
-            (mm == MOUSE_REPORTING_NORMAL ||
-             mm == MOUSE_REPORTING_BUTTON_MOTION ||
-             mm == MOUSE_REPORTING_ALL_MOTION) &&
-            (locationInTextView.y > visibleRect.origin.y) &&
-            [[frontTextView->dataSource session] tab] == [[dataSource session] tab] &&
-            [theEvent type] == NSLeftMouseDown &&
-            ([theEvent modifierFlags] & NSControlKeyMask) &&
-            [[PreferencePanel sharedInstance] passOnControlLeftClick]) {
-            // All the many conditions are met for having the click passed on via xterm mouse reporting.
-            return nil;
-        }
+        // Context menu is opened by the PointerController, not organically.
+        return nil;
     }
     NSMenu *theMenu;
 
@@ -3507,6 +3873,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
 
+    // Custom actions
+    NSString *selectedText = [self selectedText];
+    if ([self addCustomActionsToMenu:theMenu matchingText:selectedText]) {
+        [theMenu addItem:[NSMenuItem separatorItem]];
+    }
+    
     // Split pane options
     [theMenu addItemWithTitle:@"Split Pane Vertically" action:@selector(splitTextViewVertically:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
@@ -3705,8 +4077,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 for (i = 0; i < (int)[propertyList count]; i++) {
                     // Ignore text clippings
                     NSString *filename = (NSString*)[propertyList objectAtIndex:i];  // this contains the POSIX path to a file
-                    NSDictionary *filenamesAttributes = [[NSFileManager defaultManager] fileAttributesAtPath:filename
-                                                                                                traverseLink:YES];
+                    NSDictionary *filenamesAttributes = [[NSFileManager defaultManager] attributesOfItemAtPath:filename
+                                                                                                         error:nil];
                     if (([filenamesAttributes fileHFSTypeCode] == 'clpt' &&
                          [filenamesAttributes fileHFSCreatorCode] == 'MACS') ||
                         [[filename pathExtension] isEqualToString:@"textClipping"] == YES) {
@@ -6558,7 +6930,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     static NSMutableCharacterSet* urlChars;
     if (!urlChars) {
-        urlChars = [[NSMutableCharacterSet characterSetWithCharactersInString:@".?\\/:;%=&_-,+~#@!*'()|"] retain];
+        NSString *chars = [[NSUserDefaults standardUserDefaults] stringForKey:@"URLCharacterSet"];
+        if (!chars) {
+            chars = @".?\\/:;%=&_-,+~#@!*'()|";
+        }
+        urlChars = [[NSMutableCharacterSet characterSetWithCharactersInString:chars] retain];
         [urlChars formUnionWithCharacterSet:[NSCharacterSet alphanumericCharacterSet]];
         [urlChars retain];
     }
@@ -7269,10 +7645,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
     [self setNeedsDisplay:YES];
     [self setDimOnlyText:[[PreferencePanel sharedInstance] dimOnlyText]];
-
-    BOOL emulate = [[PreferencePanel sharedInstance] threeFingerEmulatesMiddle];
-    [self futureSetAcceptsTouchEvents:emulate];
-    [self futureSetWantsRestingTouches:emulate];
 }
 
 - (void)_modifyFont:(NSFont*)font baseline:(double)baseline into:(PTYFontInfo*)fontInfo
@@ -7630,6 +8002,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 startX = [dataSource width];
             }
             break;
+
+        case SELECT_WHOLE_LINE: {
+            [self extendWholeLineSelectionToX:x y:y withWidth:width];
+            break;
+        }
     }
 
     DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);

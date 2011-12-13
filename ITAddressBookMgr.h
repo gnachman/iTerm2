@@ -175,7 +175,7 @@ typedef enum {
   iTermPaneObject,
 } iTermObjectType;
 
-@interface ITAddressBookMgr : NSObject
+@interface ITAddressBookMgr : NSObject <NSNetServiceBrowserDelegate, NSNetServiceDelegate>
 {
     NSNetServiceBrowser *sshBonjourBrowser;
     NSNetServiceBrowser *ftpBonjourBrowser;

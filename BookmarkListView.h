@@ -91,7 +91,7 @@
 - (NSMenu*)bookmarkTable:(id)bookmarkTable menuForEvent:(NSEvent*)theEvent;
 @end
 
-@interface BookmarkListView : NSView {
+@interface BookmarkListView : NSView <NSTextFieldDelegate, NSTableViewDataSource, NSTableViewDelegate> {
     int normalRowHeight_;
     int rowHeightWithTags_;
     NSScrollView* scrollView_;

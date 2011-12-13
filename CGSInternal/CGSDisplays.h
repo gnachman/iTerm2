@@ -30,7 +30,7 @@ CG_EXTERN_C_BEGIN
 CG_EXTERN CGDisplayErr CGSBeginDisplayConfiguration(CGDisplayConfigRef *config);
 
 /*! Sets the origin of a display relative to the main display. The main display is at (0, 0) and contains the menubar. */
-CG_EXTERN CGDisplayErr CGSConfigureDisplayOrigin(CGDisplayConfigRef config, CGDirectDisplayID display, CGDisplayCoord x, CGDisplayCoord y);
+CG_EXTERN CGDisplayErr CGSConfigureDisplayOrigin(CGDisplayConfigRef config, CGDirectDisplayID display, int32_t x, int32_t y);
 
 /*! Applies the configuration changes made in this transaction. */
 CG_EXTERN CGDisplayErr CGSCompleteDisplayConfiguration(CGDisplayConfigRef config);

@@ -1057,5 +1057,13 @@ static void reapchild(int n)
     return NO;
 }
 
+- (BOOL)hasMuteCoprocess
+{
+    @synchronized (self) {
+        return coprocess_ != nil && coprocess_.mute;
+    }
+    return NO;
+}
+
 @end
 

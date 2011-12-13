@@ -32,6 +32,7 @@
 #import "PreferencePanel.h"
 #import "Trouter.h"
 #import "LineBuffer.h"
+#import "PointerController.h"
 
 #include <sys/time.h>
 #define PRETTY_BOLD
@@ -44,7 +45,14 @@
 
 // Amount of time to highlight the cursor after beginFindCursor:YES
 static const double kFindCursorHoldTime = 1;
-enum { SELECT_CHAR, SELECT_WORD, SELECT_LINE, SELECT_SMART, SELECT_BOX };
+enum {
+    SELECT_CHAR,
+    SELECT_WORD,
+    SELECT_LINE,
+    SELECT_SMART,
+    SELECT_BOX,
+    SELECT_WHOLE_LINE
+};
 
 // A collection of data about a font.
 struct PTYFontInfo {
@@ -66,7 +74,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 @end
 
 
-@interface PTYTextView : NSView <NSTextInput>
+@interface PTYTextView : NSView <NSTextInput, PointerControllerDelegate>
 {
     // This is a flag to let us know whether we are handling this
     // particular drag and drop operation. We are using it because
@@ -302,6 +310,8 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Find context just after initialization.
     FindContext initialFindContext_;
+    
+    PointerController *pointer_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -319,6 +329,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)keyDown:(NSEvent *)event;
 - (BOOL)keyIsARepeat;
 - (void)updateCursor:(NSEvent *)event;
+- (void)swipeWithEvent:(NSEvent *)event;
 - (void)mouseExited:(NSEvent *)event;
 - (void)mouseEntered:(NSEvent *)event;
 - (void)mouseDown:(NSEvent *)event;
@@ -332,6 +343,34 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)rightMouseUp:(NSEvent *)event;
 - (void)rightMouseDragged:(NSEvent *)event;
 - (void)scrollWheel:(NSEvent *)event;
+
+- (void)pasteFromClipboardWithEvent:(NSEvent *)event;
+- (void)pasteFromSelectionWithEvent:(NSEvent *)event;
+- (void)openTargetWithEvent:(NSEvent *)event;
+- (void)openTargetInBackgroundWithEvent:(NSEvent *)event;
+- (void)smartSelectWithEvent:(NSEvent *)event;
+- (void)openContextMenuWithEvent:(NSEvent *)event;
+- (void)nextTabWithEvent:(NSEvent *)event;
+- (void)previousTabWithEvent:(NSEvent *)event;
+- (void)nextWindowWithEvent:(NSEvent *)event;
+- (void)previousWindowWithEvent:(NSEvent *)event;
+- (void)movePaneWithEvent:(NSEvent *)event;
+- (void)sendEscapeSequence:(NSString *)text withEvent:(NSEvent *)event;
+- (void)sendHexCode:(NSString *)codes withEvent:(NSEvent *)event;
+- (void)sendText:(NSString *)text withEvent:(NSEvent *)event;
+- (void)selectPaneLeftWithEvent:(NSEvent *)event;
+- (void)selectPaneRightWithEvent:(NSEvent *)event;
+- (void)selectPaneAboveWithEvent:(NSEvent *)event;
+- (void)selectPaneBelowWithEvent:(NSEvent *)event;
+- (void)newWindowWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
+- (void)newWindowWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
+- (void)newTabWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
+- (void)newVerticalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
+- (void)newHorizontalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
+- (void)selectNextPaneWithEvent:(NSEvent *)event;
+- (void)selectPreviousPaneWithEvent:(NSEvent *)event;
+
+
 - (NSString *)contentFromX:(int)startx Y:(int)starty ToX:(int)endx Y:(int)endy pad: (BOOL) pad;
 - (NSString *)contentFromX:(int)startx
                          Y:(int)starty
@@ -522,6 +561,8 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (BOOL)isFindingCursor;
 - (void)beginFindCursor:(BOOL)hold;
 - (void)endFindCursor;
+
+- (void)movePane:(id)sender;
 
 // Clear working directories for when buffer is cleared
 - (void)clearWorkingDirectories;

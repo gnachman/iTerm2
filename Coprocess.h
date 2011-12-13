@@ -15,6 +15,7 @@
     NSMutableData *outputBuffer_;
     NSMutableData *inputBuffer_;
     BOOL eof_;
+    BOOL mute_;
 }
 
 @property (nonatomic, assign) pid_t pid;
@@ -23,6 +24,7 @@
 @property (nonatomic, readonly) NSMutableData *outputBuffer;
 @property (nonatomic, readonly) NSMutableData *inputBuffer;
 @property (nonatomic, assign) BOOL eof;
+@property (nonatomic, assign) BOOL mute;
 
 + (Coprocess *)launchedCoprocessWithCommand:(NSString *)command;
 

@@ -288,9 +288,11 @@ end:
 
 - (void)makeKeyAndOrderFront:(id)sender
 {
-    if(!layoutDone) {
+    if (!layoutDone) {
         layoutDone = YES;
-        [[self delegate] windowWillShowInitial];
+        if ([[self delegate] respondsToSelector:@selector(windowWillShowInitial)]) {
+            [[self delegate] performSelector:@selector(windowWillShowInitial)];
+        }
     }
     PtyLog(@"PTYWindow - calling makeKeyAndOrderFont, which triggers a window resize");
     PtyLog(@"The current window frame is %fx%f", [self frame].size.width, [self frame].size.height);

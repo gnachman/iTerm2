@@ -207,7 +207,7 @@
 
 - (iTermApplicationDelegate *)delegate
 {
-    return [super delegate];
+    return (iTermApplicationDelegate *)[super delegate];
 }
 
 @end

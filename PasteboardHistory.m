@@ -55,11 +55,22 @@
 
 @implementation PasteboardHistory
 
++ (int)maxEntries
+{
+    NSNumber *n = [[NSUserDefaults standardUserDefaults] objectForKey:@"PasteHistoryMaxOptions"];
+    if (n) {
+        int i = [n intValue];
+        return MAX(MIN(i, 100), 2);
+    } else {
+        return 20;
+    }
+}
+
 + (PasteboardHistory*)sharedInstance
 {
     static PasteboardHistory* instance;
     if (!instance) {
-        int maxEntries = 20;
+        int maxEntries = [PasteboardHistory maxEntries];
         if ([[NSUserDefaults standardUserDefaults] objectForKey:@"MaxPasteHistoryEntries"]) {
             maxEntries = [[NSUserDefaults standardUserDefaults] integerForKey:@"MaxPasteHistoryEntries"];
             if (maxEntries < 0) {

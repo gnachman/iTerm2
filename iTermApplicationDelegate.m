@@ -788,13 +788,17 @@ static BOOL hasBecomeActive = NO;
 
     PseudoTerminal *frontTerminal;
     frontTerminal = [[iTermController sharedInstance] currentTerminal];
+    [aMenu addItemWithTitle:@"New Window (Default Profile)"
+                     action:@selector(newWindow:)
+              keyEquivalent:@""];
+    [aMenu addItem:[NSMenuItem separatorItem]];
     [self _newSessionMenu:aMenu
-                    title:@"New Window"
+                    title:@"New Window…"
                    target:[iTermController sharedInstance]
                  selector:@selector(newSessionInWindowAtIndex:)
           openAllSelector:@selector(newSessionsInNewWindow:)];
     [self _newSessionMenu:aMenu
-                    title:@"New Tab"
+                    title:@"New Tab…"
                    target:frontTerminal
                  selector:@selector(newSessionInTabAtIndex:)
           openAllSelector:@selector(newSessionsInWindow:)];
@@ -1346,15 +1350,14 @@ void DebugLog(NSString* value)
 // accessors for to-one relationships:
 - (PseudoTerminal *)currentTerminal
 {
-    //NSLog(@"iTermApplicationDelegate: currentTerminal");
     return [[iTermController sharedInstance] currentTerminal];
 }
 
-- (void) setCurrentTerminal: (PseudoTerminal *) aTerminal
+- (void)setCurrentTerminal:(PseudoTerminal *)aTerminal
 {
-    //NSLog(@"iTermApplicationDelegate: setCurrentTerminal '0x%x'", aTerminal);
     [[iTermController sharedInstance] setCurrentTerminal: aTerminal];
-    [[[NSApplication sharedApplication] delegate] updateBroadcastMenuState];
+    iTermApplicationDelegate *itad = [[NSApplication sharedApplication] delegate];
+    [itad updateBroadcastMenuState];
 }
 
 
@@ -1364,7 +1367,7 @@ void DebugLog(NSString* value)
     return [[iTermController sharedInstance] terminals];
 }
 
--(void)setTerminals: (NSArray*)terminals
+- (void)setTerminals:(NSArray*)terminals
 {
     // no-op
 }

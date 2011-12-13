@@ -398,6 +398,12 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return nil;
 }
 
+- (PTYSession *)sessionWithViewId:(int)viewId
+{
+    SessionView *sv = [self _recursiveSessionViewWithId:viewId atNode:root_];
+    return [sv session];
+}
+
 - (SessionView *)_savedViewWithId:(int)i
 {
     for (NSNumber *k in idMap_) {
@@ -863,7 +869,7 @@ static NSString* FormatRect(NSRect r) {
     if ([view isKindOfClass:[SessionView class]]) {
         SessionView* sv = (SessionView*)view;
         NSSize size = [sv frame].size;
-        PtyLog([NSString stringWithFormat:@"%@%lfx%lf", prefix, size.width, size.height]);
+        PtyLog(@"%@%lfx%lf", prefix, size.width, size.height);
     } else {
         NSSplitView* sv = (NSSplitView*)view;
         for (id v in [sv subviews]) {
@@ -1222,7 +1228,7 @@ static NSString* FormatRect(NSRect r) {
     [self dump];
 
     [self appendSessionViewToViewOrder:newView];
-    
+
     return newView;
 }
 
@@ -1233,13 +1239,18 @@ static NSString* FormatRect(NSRect r) {
     PtyLog(@"    session size based on %d rows", [session rows]);
     size.width = [session columns] * [[session TEXTVIEW] charWidth] + MARGIN * 2;
     size.height = [session rows] * [[session TEXTVIEW] lineHeight] + VMARGIN * 2;
+    const BOOL showTitles = [sessionView showTitle];
 
     BOOL hasScrollbar = ![parentWindow_ anyFullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
-    NSSize scrollViewSize = [PTYScrollView frameSizeForContentSize:size
+    NSSize outerSize = [PTYScrollView frameSizeForContentSize:size
                                              hasHorizontalScroller:NO
                                                hasVerticalScroller:hasScrollbar
                                                         borderType:NSNoBorder];
-    return scrollViewSize;
+    if (showTitles) {
+        outerSize.height += [SessionView titleHeight];
+    }
+    PtyLog(@"session size with %d rows is %@", [session rows], [NSValue valueWithSize:outerSize]);
+    return outerSize;
 }
 
 - (NSSize)_minSessionSize:(SessionView*)sessionView
@@ -1548,7 +1559,8 @@ static NSString* FormatRect(NSRect r) {
         [transform scaleXBy:1.0 yBy:-1.0];
         [transform concat];
         tabFrame.origin.y = -tabFrame.origin.y - tabFrame.size.height;
-        [(id <PSMTabStyle>)[[[realParentWindow_ tabView] delegate] style] drawBackgroundInRect:tabFrame color:nil];  // TODO: use the right color
+        PSMTabBarControl *control = (PSMTabBarControl *)[[realParentWindow_ tabView] delegate];
+        [(id <PSMTabStyle>)[control style] drawBackgroundInRect:tabFrame color:nil];  // TODO: use the right color
         [transform invert];
         [transform concat];
     }
@@ -1568,6 +1580,7 @@ static NSString* FormatRect(NSRect r) {
     NSSize size = [[aSession SCROLLVIEW] documentVisibleRect].size;
     int width = (size.width - MARGIN*2) / [[aSession TEXTVIEW] charWidth];
     int height = (size.height - VMARGIN*2) / [[aSession TEXTVIEW] lineHeight];
+    PtyLog(@"fitSessionToCurrentViewSize %@ gives %d rows", [NSValue valueWithSize:size], height);
     if (width <= 0) {
         NSLog(@"WARNING: Session has %d width", width);
         width = 1;
@@ -1854,7 +1867,9 @@ static NSString* FormatRect(NSRect r) {
             [sessionView setDimmed:NO];
             return session;
         } else {
-            [sessionView setDimmed:YES];
+            if ([[PreferencePanel sharedInstance] dimInactiveSplitPanes]) {
+                [sessionView setDimmed:YES];
+            }
             return nil;
         }
     }
@@ -2440,7 +2455,7 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
             [maxSizes addObject:[NSNumber numberWithDouble:theMaxSize]];
             const double initialGuess = sizeChangeCoeff * WithGrainDim(isVertical, [aSubview frame].size);
             const double size = lround(MIN(MAX(initialGuess, theMinSize), theMaxSize));
-            PtyLog(@"splitView:resizeSubviewsWithOldSize - initial guess of %p is %lf, clamped is %lf", aSubview, initialGuess, size);
+            PtyLog(@"splitView:resizeSubviewsWithOldSize - initial guess of %p is %lf (based on size of %lf), clamped is %lf", aSubview, initialGuess, (double)WithGrainDim(isVertical, [aSubview frame].size), size);
             [sizes addObject:[NSNumber numberWithDouble:size]];
             currentSumOfSizes += size;
             if (size == theMinSize) {
@@ -2550,7 +2565,61 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
                                     maxSizes:maxSizes];
     }
 
-    // Set subview frames to computed sizes.
+    // If all subviews are leaf nodes, redistribute extra pixels among the subviews
+    // so that as few as possible of them has extra space "with the grain".
+    BOOL allSubviewsAreLeafNodes = YES;
+    for (id aSubview in [splitView subviews]) {
+        if (![aSubview isKindOfClass:[SessionView class]]) {
+            allSubviewsAreLeafNodes = NO;
+            break;
+        }
+    }
+    if (allSubviewsAreLeafNodes) {
+        // index -> overage
+        NSMutableDictionary *over = [NSMutableDictionary dictionary];
+        // index -> underage
+        NSMutableDictionary *under = [NSMutableDictionary dictionary];
+        for (int i = 0; i < sizes.count; i++) {
+            NSSize size;
+            SetWithGrainDim(isVertical, &size, [[sizes objectAtIndex:i] doubleValue]);
+            SessionView *sessionView = (SessionView *) [[splitView subviews] objectAtIndex:i];
+            PTYSession *aSession = [sessionView session];
+            int ou = [aSession overUnder:WithGrainDim(isVertical, size) inVerticalDimension:!isVertical];
+            if (ou > 0) {
+                [over setObject:[NSNumber numberWithInt:ou] forKey:[NSNumber numberWithInt:i]];
+            } else if (ou < 0) {
+                [under setObject:[NSNumber numberWithInt:-ou] forKey:[NSNumber numberWithInt:i]];
+            }
+        }
+
+        // Get indices of subviews with extra/lacking pixels
+        NSMutableArray *overKeys = [NSMutableArray arrayWithArray:[[over allKeys] sortedArrayUsingSelector:@selector(compare:)]];
+        NSMutableArray *underKeys = [NSMutableArray arrayWithArray:[[under allKeys] sortedArrayUsingSelector:@selector(compare:)]];
+        while (overKeys.count && underKeys.count) {
+            // Pick the last over and under values and cancel the out as much as possible.
+            int mostOverIndex = [[overKeys lastObject] intValue];
+            int mostOverValue = [[over objectForKey:[overKeys lastObject]] intValue];
+            int mostUnderIndex = [[underKeys lastObject] intValue];
+            int mostUnderValue = [[under objectForKey:[underKeys lastObject]] intValue];
+
+            int currentValue = MIN(mostOverValue, mostUnderValue);
+            mostOverValue -= currentValue;
+            mostUnderValue -= currentValue;
+            double overSize = [[sizes objectAtIndex:mostOverIndex] doubleValue];
+            double underSize = [[sizes objectAtIndex:mostUnderIndex] doubleValue];
+            [sizes replaceObjectAtIndex:mostOverIndex withObject:[NSNumber numberWithDouble:overSize - currentValue]];
+            [sizes replaceObjectAtIndex:mostUnderIndex withObject:[NSNumber numberWithDouble:underSize + currentValue]];
+            if (!mostOverValue) {
+                [overKeys removeObject:[NSNumber numberWithInt:mostOverIndex]];
+            }
+            if (!mostUnderValue) {
+                [underKeys removeObject:[NSNumber numberWithInt:mostUnderIndex]];
+            }
+            [over setObject:[NSNumber numberWithInt:mostOverValue] forKey:[NSNumber numberWithInt:mostOverIndex]];
+            [under setObject:[NSNumber numberWithInt:mostUnderValue] forKey:[NSNumber numberWithInt:mostUnderIndex]];
+        }
+    }
+
     NSRect frame = NSZeroRect;
     SetAgainstGrainDim(isVertical, &frame.size, AgainstGrainDim(isVertical, [splitView frame].size));
     for (int i = 0; i < [sizes count]; ++i) {
@@ -2686,7 +2755,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
                                                                                                                                @"Growl Alerts"),
                                                                   [[self activeSession] name],
                                                                   [self realObjectCount]]
-                                                 andNotification:@"Idle"];
+                                                 andNotification:@"Idle"
+                                                      andSession:session];
                 [session setGrowlIdle:YES];
                 [session setGrowlNewOutput:NO];
             }
@@ -2718,7 +2788,8 @@ static void SetAgainstGrainDim(BOOL isVertical, NSSize* dest, CGFloat value)
                                          withDescription:[NSString stringWithFormat:@"New output was received in %@, tab #%d.",
                                                           [[self activeSession] name],
                                                           [self realObjectCount]]
-                                         andNotification:@"New Output"];
+                                         andNotification:@"New Output"
+                                              andSession:[self activeSession]];
         [[self activeSession] setGrowlNewOutput:YES];
     }
 

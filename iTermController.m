@@ -48,6 +48,7 @@
 #import "iTermKeyBindingMgr.h"
 #import "iTerm/PseudoTerminal.h"
 #import "iTermExpose.h"
+#import "FutureMethods.h"
 #import "GTMCarbonEvent.h"
 #import "iTerm.h"
 #import "WindowArrangements.h"
@@ -163,11 +164,19 @@ static BOOL initDone = NO;
         NSFileManager *fileManager = [NSFileManager defaultManager];
 
         // create the "~/Library/Application Support" directory if it does not exist
-        if([fileManager fileExistsAtPath: [APPLICATION_SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO)
-            [fileManager createDirectoryAtPath: [APPLICATION_SUPPORT_DIRECTORY stringByExpandingTildeInPath] attributes: nil];
+        if ([fileManager fileExistsAtPath: [APPLICATION_SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO) {
+            [fileManager createDirectoryAtPath:[APPLICATION_SUPPORT_DIRECTORY stringByExpandingTildeInPath]
+                   withIntermediateDirectories:YES
+                                    attributes:nil
+                                         error:nil];
+        }
 
-        if([fileManager fileExistsAtPath: [SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO)
-            [fileManager createDirectoryAtPath: [SUPPORT_DIRECTORY stringByExpandingTildeInPath] attributes: nil];
+        if ([fileManager fileExistsAtPath: [SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO) {
+            [fileManager createDirectoryAtPath:[SUPPORT_DIRECTORY stringByExpandingTildeInPath]
+                   withIntermediateDirectories:YES
+                                    attributes:nil
+                                         error:nil];
+        }
 
         terminalWindows = [[NSMutableArray alloc] init];
         keyWindowIndexMemo_ = -1;
@@ -1313,8 +1322,7 @@ static BOOL OpenHotkeyWindow()
             if (IsSnowLeopardOrLater() && !IsLionOrLater()) {
                 // TODO: When upgrading to the 10.6 SDK, remove the conditional and the
                 // const below:
-                const int NSWindowCollectionBehaviorStationary = (1 << 4);  // value stolen from 10.6 SDK
-                [[term window] setCollectionBehavior:[[term window] collectionBehavior] | NSWindowCollectionBehaviorStationary];
+                [[term window] setCollectionBehavior:[[term window] collectionBehavior] | FutureNSWindowCollectionBehaviorStationary];
             }
             if (IsLionOrLater()) {
                 [[term window] setCollectionBehavior:[[term window] collectionBehavior] & ~NSWindowCollectionBehaviorFullScreenPrimary];

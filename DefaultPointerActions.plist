@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Button,1,1,,</key>
+  <dict>
+    <key>Action</key>
+    <string>kContextMenuPointerAction</string>
+  </dict>
+  <key>Button,2,1,,</key>
+  <dict>
+    <key>Action</key>
+    <string>kPasteFromClipboardPointerAction</string>
+  </dict>
+  <key>Gesture,ThreeFingerSwipeRight,,</key>
+  <dict>
+    <key>Action</key>
+    <string>kNextTabPointerAction</string>
+  </dict>
+  <key>Gesture,ThreeFingerSwipeLeft,,</key>
+  <dict>
+    <key>Action</key>
+    <string>kPrevTabPointerAction</string>
+  </dict>
+  <key>Gesture,ThreeFingerSwipeUp,,</key>
+  <dict>
+    <key>Action</key>
+    <string>kNextWindowPointerAction</string>
+  </dict>
+  <key>Gesture,ThreeFingerSwipeDown,,</key>
+  <dict>
+    <key>Action</key>
+    <string>kPrevWindowPointerAction</string>
+  </dict>
+</dict>
+</plist>

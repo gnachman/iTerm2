@@ -60,7 +60,14 @@
 
 typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 
-@interface PreferencePanel : NSWindowController <BookmarkTableDelegate, TriggerDelegate, SmartSelectionDelegate>
+@interface PreferencePanel : NSWindowController <
+    BookmarkTableDelegate,
+    TriggerDelegate,
+    SmartSelectionDelegate,
+    NSTokenFieldDelegate,
+    NSWindowDelegate,
+    NSTextFieldDelegate,
+    NSMenuDelegate>
 {
     BookmarkModel* dataSource;
     BOOL oneBookmarkMode;
@@ -123,6 +130,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     // Focus follows mouse
     IBOutlet NSButton *focusFollowsMouse;
     BOOL defaultFocusFollowsMouse;
+
+    // Triple click selects full, wrapped lines
+    IBOutlet NSButton *tripleClickSelectsFullLines;
+    BOOL defaultTripleClickSelectsFullLines;
 
     // Characters considered part of word
     IBOutlet NSTextField *wordChars;
@@ -315,12 +326,15 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSTabViewItem* arrangementsTabViewItem;
     IBOutlet NSToolbarItem* bookmarksToolbarItem;
     IBOutlet NSTabViewItem* bookmarksTabViewItem;
+    IBOutlet NSToolbarItem* mouseToolbarItem;
+    IBOutlet NSTabViewItem* mouseTabViewItem;
     NSString* globalToolbarId;
     NSString* appearanceToolbarId;
     NSString* keyboardToolbarId;
     NSString* arrangementsToolbarId;
     NSString* bookmarksToolbarId;
-
+    NSString *mouseToolbarId;
+  
     // url handler stuff
     NSMutableDictionary *urlHandlersByGuid;
 
@@ -547,6 +561,7 @@ typedef enum {
 + (PreferencePanel*)sessionsInstance;
 + (BOOL)migratePreferences;
 + (BOOL)loadingPrefsFromCustomFolder;
++ (void)populatePopUpButtonWithBookmarks:(NSPopUpButton*)button selectedGuid:(NSString*)selectedGuid;
 
 - (BOOL)loadPrefs;
 - (id)initWithDataSource:(BookmarkModel*)model userDefaults:(NSUserDefaults*)userDefaults;
@@ -592,7 +607,9 @@ typedef enum {
 - (BOOL)copySelection;
 - (BOOL)copyLastNewline;
 - (void)setCopySelection:(BOOL)flag;
+- (BOOL)legacyPasteFromClipboard;
 - (BOOL)pasteFromClipboard;
+- (BOOL)legacyThreeFingerEmulatesMiddle;
 - (BOOL)threeFingerEmulatesMiddle;
 - (void)setPasteFromClipboard:(BOOL)flag;
 - (BOOL)hideTab;
@@ -602,6 +619,7 @@ typedef enum {
 - (BOOL)promptOnQuit;
 - (BOOL)onlyWhenMoreTabs;
 - (BOOL)focusFollowsMouse;
+- (BOOL)tripleClickSelectsFullLines;
 - (BOOL)enableBonjour;
 // Returns true if ANY profile has growl enabled (preserves interface from back
 // when there was a global growl setting as well as a per-profile setting).
@@ -677,6 +695,7 @@ typedef enum {
 - (IBAction)showBookmarksTabView:(id)sender;
 - (IBAction)showKeyboardTabView:(id)sender;
 - (IBAction)showArrangementsTabView:(id)sender;
+- (IBAction)showMouseTabView:(id)sender;
 - (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme;
 - (void)disconnectHandlerForScheme:(NSString*)scheme;
 - (IBAction)closeWindow:(id)sender;

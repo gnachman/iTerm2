@@ -198,17 +198,17 @@ enum {
             [caveat_ setStringValue:@"When you activate Semantic History on a text file, the specified editor opens it.\nOther kinds of files will be opened with their default apps."];
             [caveat_ setHidden:NO];
             break;
-            
+
         case 4:
             [[text_ cell] setPlaceholderString:@"Enter command"];
-            [caveat_ setStringValue:@"Command runs when you activate Semantic History on any filename.\nUse \\1 for filename, \\2 for line number, \\3 for all text before click, \\4 for all text after click."];
+            [caveat_ setStringValue:@"Command runs when you activate Semantic History on any filename.\nUse \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
             [caveat_ setHidden:NO];
             [text_ setHidden:NO];
             break;
-            
+
         case 5:
             [[text_ cell] setPlaceholderString:@"Enter command"];
-            [caveat_ setStringValue:@"Command runs when you activate Semantic History on any text (even if it's not a valid filename).\nUse \\1 for filename, \\2 for line number, \\3 for all text before click, \\4 for all text after click."];
+            [caveat_ setStringValue:@"Command runs when you activate Semantic History on any text (even if it's not a valid filename).\nUse \\1 for filename, \\2 for line number, \\3 for text before click, \\4 for text after click, \\5 for pwd."];
             [caveat_ setHidden:NO];
             [text_ setHidden:NO];
             break;

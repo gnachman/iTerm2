@@ -125,7 +125,7 @@ static float versionNumber;
     }
 
     NSLog(@"Preference file migrated");
-    [mgr copyPath:source toPath:newPrefs handler:nil];
+    [mgr copyItemAtPath:source toPath:newPrefs error:nil];
     [NSUserDefaults resetStandardUserDefaults];
     return (YES);
 }
@@ -564,7 +564,8 @@ static float versionNumber;
     appearanceToolbarId = [appearanceToolbarItem itemIdentifier];
     keyboardToolbarId = [keyboardToolbarItem itemIdentifier];
     arrangementsToolbarId = [arrangementsToolbarItem itemIdentifier];
-
+    mouseToolbarId = [mouseToolbarItem itemIdentifier];
+  
     [globalToolbarItem setEnabled:YES];
     [toolbar setSelectedItemIdentifier:globalToolbarId];
 
@@ -775,7 +776,7 @@ static float versionNumber;
     }
 }
 
-- (void)_populatePopUpButtonWithBookmarks:(NSPopUpButton*)button selectedGuid:(NSString*)selectedGuid
++ (void)populatePopUpButtonWithBookmarks:(NSPopUpButton*)button selectedGuid:(NSString*)selectedGuid
 {
     int selectedIndex = 0;
     int i = 0;
@@ -837,8 +838,8 @@ static float versionNumber;
     }
     NSString* text = [[self keyInfoAtIndex:rowIndex originator:sender] objectForKey:@"Text"];
     [valueToSend setStringValue:text ? text : @""];
-    [self _populatePopUpButtonWithBookmarks:bookmarkPopupButton
-                               selectedGuid:text];
+    [PreferencePanel populatePopUpButtonWithBookmarks:bookmarkPopupButton
+                                         selectedGuid:text];
 
     [self updateValueToSend];
     newMapping = NO;
@@ -1039,6 +1040,8 @@ static float versionNumber;
         return keyboardToolbarItem;
     } else if ([itemIdentifier isEqual:arrangementsToolbarId]) {
         return arrangementsToolbarItem;
+    } else if ([itemIdentifier isEqual:mouseToolbarId]) {
+        return mouseToolbarItem;
     } else {
         return nil;
     }
@@ -1051,13 +1054,14 @@ static float versionNumber;
                                      bookmarksToolbarId,
                                      keyboardToolbarId,
                                      arrangementsToolbarId,
+                                     mouseToolbarId,
                                      nil];
 }
 
 - (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar *)toolbar
 {
     return [NSArray arrayWithObjects:globalToolbarId, appearanceToolbarId, bookmarksToolbarId,
-            keyboardToolbarId, arrangementsToolbarId, nil];
+            keyboardToolbarId, arrangementsToolbarId, mouseToolbarId, nil];
 }
 
 - (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar
@@ -1069,6 +1073,7 @@ static float versionNumber;
                                      bookmarksToolbarId,
                                      keyboardToolbarId,
                                      arrangementsToolbarId,
+                                     mouseToolbarId,
                                      nil];
 }
 
@@ -1131,6 +1136,7 @@ static float versionNumber;
     defaultPromptOnQuit = [prefs objectForKey:@"PromptOnQuit"]?[[prefs objectForKey:@"PromptOnQuit"] boolValue]: YES;
     defaultOnlyWhenMoreTabs = [prefs objectForKey:@"OnlyWhenMoreTabs"]?[[prefs objectForKey:@"OnlyWhenMoreTabs"] boolValue]: YES;
     defaultFocusFollowsMouse = [prefs objectForKey:@"FocusFollowsMouse"]?[[prefs objectForKey:@"FocusFollowsMouse"] boolValue]: NO;
+    defaultTripleClickSelectsFullLines = [prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] ? [[prefs objectForKey:@"TripleClickSelectsFullWrappedLines"] boolValue] : NO;
     defaultHotkeyTogglesWindow = [prefs objectForKey:@"HotKeyTogglesWindow"]?[[prefs objectForKey:@"HotKeyTogglesWindow"] boolValue]: NO;
     defaultHotKeyBookmarkGuid = [[prefs objectForKey:@"HotKeyBookmark"] copy];
     defaultEnableBonjour = [prefs objectForKey:@"EnableRendezvous"]?[[prefs objectForKey:@"EnableRendezvous"] boolValue]: NO;
@@ -1252,6 +1258,7 @@ static float versionNumber;
     [prefs setBool:defaultPromptOnQuit forKey:@"PromptOnQuit"];
     [prefs setBool:defaultOnlyWhenMoreTabs forKey:@"OnlyWhenMoreTabs"];
     [prefs setBool:defaultFocusFollowsMouse forKey:@"FocusFollowsMouse"];
+    [prefs setBool:defaultTripleClickSelectsFullLines forKey:@"TripleClickSelectsFullWrappedLines"];
     [prefs setBool:defaultHotkeyTogglesWindow forKey:@"HotKeyTogglesWindow"];
     [prefs setValue:defaultHotKeyBookmarkGuid forKey:@"HotKeyBookmark"];
     [prefs setBool:defaultEnableBonjour forKey:@"EnableRendezvous"];
@@ -1314,8 +1321,8 @@ static float versionNumber;
     if (!hotkeyBookmark) {
         return;
     }
-    [self _populatePopUpButtonWithBookmarks:hotkeyBookmark
-                               selectedGuid:defaultHotKeyBookmarkGuid];
+    [PreferencePanel populatePopUpButtonWithBookmarks:hotkeyBookmark
+                                         selectedGuid:defaultHotKeyBookmarkGuid];
 }
 
 - (void)run
@@ -1339,6 +1346,7 @@ static float versionNumber;
     [promptOnQuit setState:defaultPromptOnQuit?NSOnState:NSOffState];
     [onlyWhenMoreTabs setState:defaultOnlyWhenMoreTabs?NSOnState:NSOffState];
     [focusFollowsMouse setState: defaultFocusFollowsMouse?NSOnState:NSOffState];
+    [tripleClickSelectsFullLines setState:defaultTripleClickSelectsFullLines?NSOnState:NSOffState];
     [hotkeyTogglesWindow setState: defaultHotkeyTogglesWindow?NSOnState:NSOffState];
     [self _populateHotKeyBookmarksMenu];
     [enableBonjour setState: defaultEnableBonjour?NSOnState:NSOffState];
@@ -1617,6 +1625,7 @@ static float versionNumber;
         defaultPromptOnQuit = ([promptOnQuit state] == NSOnState);
         defaultOnlyWhenMoreTabs = ([onlyWhenMoreTabs state] == NSOnState);
         defaultFocusFollowsMouse = ([focusFollowsMouse state] == NSOnState);
+        defaultTripleClickSelectsFullLines = ([tripleClickSelectsFullLines state] == NSOnState);
         defaultHotkeyTogglesWindow = ([hotkeyTogglesWindow state] == NSOnState);
         [defaultHotKeyBookmarkGuid release];
         defaultHotKeyBookmarkGuid = [[[hotkeyBookmark selectedItem] representedObject] copy];
@@ -1746,9 +1755,19 @@ static float versionNumber;
     defaultCopySelection = flag;
 }
 
+- (BOOL)legacyPasteFromClipboard
+{
+    return defaultPasteFromClipboard;
+}
+
 - (BOOL)pasteFromClipboard
 {
     return defaultPasteFromClipboard;
+}
+
+- (BOOL)legacyThreeFingerEmulatesMiddle
+{
+    return defaultThreeFingerEmulatesMiddle;
 }
 
 - (BOOL)threeFingerEmulatesMiddle
@@ -1794,6 +1813,11 @@ static float versionNumber;
 - (BOOL)focusFollowsMouse
 {
     return defaultFocusFollowsMouse;
+}
+
+- (BOOL)tripleClickSelectsFullLines
+{
+    return defaultTripleClickSelectsFullLines;
 }
 
 - (BOOL)enableBonjour
@@ -3390,7 +3414,12 @@ static float versionNumber;
 
 - (IBAction)showArrangementsTabView:(id)sender
 {
-    [tabView selectTabViewItem:arrangementsTabViewItem];
+  [tabView selectTabViewItem:arrangementsTabViewItem];
+}
+
+- (IBAction)showMouseTabView:(id)sender
+{
+  [tabView selectTabViewItem:mouseTabViewItem];
 }
 
 - (void)connectBookmarkWithGuid:(NSString*)guid toScheme:(NSString*)scheme
@@ -3450,16 +3479,49 @@ static float versionNumber;
     [self _updateLogDirWarning];
 }
 
+// Pick out the digits from s and clamp it to a range.
+- (int)intForString:(NSString *)s inRange:(NSRange)range
+{
+    NSMutableString *i = [NSMutableString string];
+    for (int j = 0; j < s.length; j++) {
+        unichar c = [s characterAtIndex:j];
+        if (c >= '0' && c <= '9') {
+            [i appendFormat:@"%c", (char)c];
+        }
+    }
+
+    int val = 0;
+    if ([i length]) {
+        val = [i intValue];
+    }
+    val = MAX(val, range.location);
+    val = MIN(val, range.location + range.length);
+    return val;
+}
+
 // NSTextField delegate
 - (void)controlTextDidChange:(NSNotification *)aNotification
 {
     id obj = [aNotification object];
     if (obj == wordChars) {
         defaultWordChars = [[wordChars stringValue] retain];
+    } else if (obj == scrollbackLines) {
+        // NSNumberFormatter seems to have lost its mind on Lion. See a description of the problem here:
+        // http://stackoverflow.com/questions/7976951/nsnumberformatter-erasing-value-when-it-violates-constraints
+        int iv = [self intForString:[scrollbackLines stringValue] inRange:NSMakeRange(0, 10 * 1000 * 1000)];
+        unichar lastChar = '0';
+        int numChars = [[scrollbackLines stringValue] length];
+        if (numChars) {
+            lastChar = [[scrollbackLines stringValue] characterAtIndex:numChars - 1];
+        }
+        if (iv != [scrollbackLines intValue] || (lastChar < '0' || lastChar > '9')) {
+            // If the int values don't match up or there are terminal non-number chars, then update the value.
+            [scrollbackLines setIntValue:iv];
+        }
+        [self bookmarkSettingChanged:nil];
     } else if (obj == bookmarkName ||
                obj == columnsField ||
                obj == rowsField ||
-               obj == scrollbackLines ||
                obj == terminalType ||
                obj == initialText ||
                obj == idleCode) {
@@ -3596,8 +3658,8 @@ static float versionNumber;
 - (IBAction)actionChanged:(id)sender
 {
     [action setTitle:[[sender selectedItem] title]];
-    [self _populatePopUpButtonWithBookmarks:bookmarkPopupButton
-                               selectedGuid:[[bookmarkPopupButton selectedItem] representedObject]];
+    [PreferencePanel populatePopUpButtonWithBookmarks:bookmarkPopupButton
+                                         selectedGuid:[[bookmarkPopupButton selectedItem] representedObject]];
     [self updateValueToSend];
 }
 

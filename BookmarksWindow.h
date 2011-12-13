@@ -25,7 +25,7 @@
 #import <Cocoa/Cocoa.h>
 #import "BookmarkListView.h"
 
-@interface BookmarksWindow : NSWindowController <BookmarkTableDelegate> {
+@interface BookmarksWindow : NSWindowController <BookmarkTableDelegate, NSWindowDelegate> {
     IBOutlet BookmarkListView* tableView_;
     IBOutlet NSSegmentedControl* actions_;
     IBOutlet NSButton* horizontalPaneButton_;

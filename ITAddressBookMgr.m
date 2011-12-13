@@ -271,7 +271,7 @@
     // resolving works.
     [bonjourServices addObject:aNetService];
     [aNetService setDelegate:self];
-    [aNetService resolve];
+    [aNetService resolveWithTimeout:5];
 }
 
 

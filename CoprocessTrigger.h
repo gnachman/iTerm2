@@ -10,9 +10,8 @@
 #import "ScriptTrigger.h"
 
 
-@interface CoprocessTrigger : Trigger {
+@interface CoprocessTrigger : Trigger
+@end
 
-}
-
-
+@interface MuteCoprocessTrigger : CoprocessTrigger
 @end

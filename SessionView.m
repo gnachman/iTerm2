@@ -44,6 +44,11 @@ static NSDate* lastResizeDate_;
 
 @implementation SessionView
 
++ (double)titleHeight
+{
+    return kTitleHeight;
+}
+
 + (void)initialize
 {
     lastResizeDate_ = [[NSDate date] retain];
@@ -408,7 +413,7 @@ static NSDate* lastResizeDate_;
 {
     if ([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
         // Dragging a tab handle. Source is a PSMTabBarControl.
-        PTYTab *theTab = [[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
+        PTYTab *theTab = (PTYTab *)[[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
         if (theTab == [session_ tab] || [[theTab sessions] count] > 1) {
             return NSDragOperationNone;
         }
@@ -460,7 +465,7 @@ static NSDate* lastResizeDate_;
         SplitSessionHalf half = [splitSelectionView_ half];
         [splitSelectionView_ removeFromSuperview];
         splitSelectionView_ = nil;
-        PTYTab *theTab = [[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
+        PTYTab *theTab = (PTYTab *)[[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
         return [[MovePaneController sharedInstance] dropTab:theTab
                                                   inSession:[self session]
                                                        half:half
@@ -476,6 +481,11 @@ static NSDate* lastResizeDate_;
 - (BOOL)wantsPeriodicDraggingUpdates
 {
     return YES;
+}
+
+- (BOOL)showTitle
+{
+    return showTitle_;
 }
 
 - (BOOL)setShowTitle:(BOOL)value

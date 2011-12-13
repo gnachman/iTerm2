@@ -34,7 +34,7 @@ NSString*	UKCrashReporterFindTenFiveCrashReportPath( NSString* appName, NSString
 //		application.
 // -----------------------------------------------------------------------------
 
-void	UKCrashReporterCheckForCrash()
+void	UKCrashReporterCheckForCrash(void)
 {
 	NSAutoreleasePool*	pool = [[NSAutoreleasePool alloc] init];
 	
@@ -48,7 +48,7 @@ void	UKCrashReporterCheckForCrash()
 			NS_VOIDRETURN;
 		}
 		
-		long	sysvMajor = 0, sysvMinor = 0, sysvBugfix = 0;
+		SInt32	sysvMajor = 0, sysvMinor = 0, sysvBugfix = 0;
 		UKGetSystemVersionComponents( &sysvMajor, &sysvMinor, &sysvBugfix );
 		BOOL	isTenFiveOrBetter = sysvMajor >= 10 && sysvMinor >= 5;
 		
@@ -61,7 +61,8 @@ void	UKCrashReporterCheckForCrash()
 			crashLogPath = [crashLogsFolder stringByAppendingPathComponent: crashLogName];
 		else
 			crashLogPath = UKCrashReporterFindTenFiveCrashReportPath( appName, crashLogsFolder );
-		NSDictionary*	fileAttrs = [[NSFileManager defaultManager] fileAttributesAtPath: crashLogPath traverseLink: YES];
+        NSDictionary*	fileAttrs = [[NSFileManager defaultManager] 
+                                     attributesOfItemAtPath: crashLogPath error: nil];
 		NSDate*			lastTimeCrashLogged = (fileAttrs == nil) ? nil : [fileAttrs fileModificationDate];
 		NSTimeInterval	lastCrashReportInterval = [[NSUserDefaults standardUserDefaults] floatForKey: @"UKCrashReporterLastCrashReportDate"];
 		NSDate*			lastTimeCrashReported = [NSDate dateWithTimeIntervalSince1970: lastCrashReportInterval];
@@ -72,7 +73,10 @@ void	UKCrashReporterCheckForCrash()
 			if( [lastTimeCrashReported compare: lastTimeCrashLogged] == NSOrderedAscending )
 			{
 				// Fetch the newest report from the log:
-				NSString*			crashLog = [NSString stringWithContentsOfFile: crashLogPath];
+				NSString*			crashLog = [NSString stringWithContentsOfFile:crashLogPath
+                                                                 encoding:NSUTF8StringEncoding
+                                                                    error:nil];
+
 				NSArray*			separateReports = [crashLog componentsSeparatedByString: @"\n\n**********\n\n"];
 				NSString*			currentReport = [separateReports count] > 0 ? [separateReports objectAtIndex: [separateReports count] -1] : @"*** Couldn't read Report ***";	// 1 since report 0 is empty (file has a delimiter at the top).
 				unsigned			numCores = UKCountCores();
@@ -174,14 +178,14 @@ NSString*	gCrashLogString = nil;
 {
 	// Insert the app name into the explanation message:
 	NSString*			appName = [[NSFileManager defaultManager] displayNameAtPath: [[NSBundle mainBundle] bundlePath]];
-	NSMutableString*	expl = nil;
+	NSMutableString*	explanation = nil;
 	if( gCrashLogString )
-		expl = [[[explanationField stringValue] mutableCopy] autorelease];
+		explanation = [[[explanationField stringValue] mutableCopy] autorelease];
 	else
-		expl = [[NSLocalizedStringFromTable(@"FEEDBACK_EXPLANATION_TEXT",@"UKCrashReporter",@"") mutableCopy] autorelease];
-	[expl replaceOccurrencesOfString: @"%%APPNAME" withString: appName
-				options: 0 range: NSMakeRange(0, [expl length])];
-	[explanationField setStringValue: expl];
+		explanation = [[NSLocalizedStringFromTable(@"FEEDBACK_EXPLANATION_TEXT",@"UKCrashReporter",@"") mutableCopy] autorelease];
+	[explanation replaceOccurrencesOfString: @"%%APPNAME" withString: appName
+                                    options: 0 range: NSMakeRange(0, [explanation length])];
+	[explanationField setStringValue: explanation];
 	
 	// Insert user name and e-mail address into the information field:
 	NSMutableString*	userMessage = nil;

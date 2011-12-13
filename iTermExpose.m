@@ -157,7 +157,7 @@ static NSString* FormatRect(NSRect r) {
 
 @end
 
-@interface iTermExpose (Private)
+@interface iTermExpose (Private) <NSWindowDelegate>
 - (void)_toggleOn;
 - (void)_toggleOff;
 - (int)_populateArrays:(NSMutableArray *)images

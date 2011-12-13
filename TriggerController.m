@@ -13,17 +13,10 @@
 #import "BellTrigger.h"
 #import "ScriptTrigger.h"
 #import "AlertTrigger.h"
+#import "HighlightTrigger.h"
 #import "Trigger.h"
 #import "CoprocessTrigger.h"
 #import "SendTextTrigger.h"
-
-enum {
-    kGrowlAction,
-    kBounceAction,
-    kBellAction,
-    kScriptAction,
-    kAlertAction
-};
 
 static NSMutableArray *gTriggerClasses;
 
@@ -43,6 +36,9 @@ static NSMutableArray *gTriggerClasses;
     [gTriggerClasses addObject:[[SendTextTrigger alloc] init]];
     [gTriggerClasses addObject:[[ScriptTrigger alloc] init]];
     [gTriggerClasses addObject:[[CoprocessTrigger alloc] init]];
+    [gTriggerClasses addObject:[[MuteCoprocessTrigger alloc] init]];
+    [gTriggerClasses addObject:[[HighlightTrigger alloc] init]];
+
     [gTriggerClasses sortUsingSelector:@selector(compareTitle:)];
 }
 
@@ -63,6 +59,17 @@ static NSMutableArray *gTriggerClasses;
     for (int i = 0; i < n; i++) {
         NSString *className = NSStringFromClass([[gTriggerClasses objectAtIndex:i] class]);
         if ([className isEqualToString:action]) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// Index in gTriggerClasses of an object of class "c"
++ (NSInteger)indexOfTriggerClass:(Class)c
+{
+    for (int i = 0; i < gTriggerClasses.count; i++) {
+        if ([[gTriggerClasses objectAtIndex:i] isKindOfClass:c]) {
             return i;
         }
     }
@@ -140,7 +147,7 @@ static NSMutableArray *gTriggerClasses;
 {
     return [NSDictionary dictionaryWithObjectsAndKeys:
             @"", kTriggerRegexKey,
-            [[TriggerController triggerAtIndex:kBounceAction] action], kTriggerActionKey,
+            [[TriggerController triggerAtIndex:[TriggerController indexOfTriggerClass:[BounceTrigger class]]] action], kTriggerActionKey,
             nil];
 }
 
@@ -182,8 +189,19 @@ static NSMutableArray *gTriggerClasses;
         return [trigger objectForKey:kTriggerRegexKey];
     } else if (aTableColumn == parametersColumn_) {
         NSString *action = [trigger objectForKey:kTriggerActionKey];
-        if ([[TriggerController triggerWithAction:action] takesParameter]) {
-            return [trigger objectForKey:kTriggerParameterKey];
+        Trigger *triggerObj = [TriggerController triggerWithAction:action];
+        if ([triggerObj takesParameter]) {
+            id param = [trigger objectForKey:kTriggerParameterKey];
+            if ([triggerObj paramIsPopupButton]) {
+                if (!param) {
+                    // Force popup buttons to have the first item selected by default
+                    return [NSNumber numberWithInt:0];
+                } else {
+                    return [NSNumber numberWithInt:[triggerObj indexOfTag:[param intValue]]];
+                }
+            } else {
+                return param;
+            }
         } else {
             return @"";
         }
@@ -200,10 +218,18 @@ static NSMutableArray *gTriggerClasses;
     if (aTableColumn == regexColumn_) {
         [trigger setObject:anObject forKey:kTriggerRegexKey];
     } else if (aTableColumn == parametersColumn_) {
-        [trigger setObject:anObject forKey:kTriggerParameterKey];
+        Trigger *triggerObj = [TriggerController triggerWithAction:[trigger objectForKey:kTriggerActionKey]];
+        if ([triggerObj paramIsPopupButton]) {
+            int theTag = [triggerObj tagAtIndex:[anObject intValue]];
+            [trigger setObject:[NSNumber numberWithInt:theTag] forKey:kTriggerParameterKey];
+        } else {
+            [trigger setObject:anObject forKey:kTriggerParameterKey];
+        }
     } else {
+        // Action column
         [trigger setObject:[[TriggerController triggerAtIndex:[anObject intValue]] action]
                     forKey:kTriggerActionKey];
+        [trigger removeObjectForKey:kTriggerParameterKey];
     }
     [self setTrigger:trigger forRow:rowIndex];
 }
@@ -243,10 +269,25 @@ static NSMutableArray *gTriggerClasses;
     } else if (tableColumn == parametersColumn_) {
         Trigger *trigger = [TriggerController triggerWithAction:[[[self triggers] objectAtIndex:row] objectForKey:kTriggerActionKey]];
         if ([trigger takesParameter]) {
-            NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@""] autorelease];
-            [cell setPlaceholderString:[trigger paramPlaceholder]];
-            [cell setEditable:YES];
-            return cell;
+            if ([trigger paramIsPopupButton]) {
+                NSPopUpButtonCell *cell = [[[NSPopUpButtonCell alloc] initTextCell:@"" pullsDown:NO] autorelease];
+                NSMenu *theMenu = [cell menu];
+                NSDictionary *items = [trigger menuItemsForPoupupButton];
+                for (NSNumber *n in [trigger tagsSortedByValue]) {
+                    NSString *theTitle = [items objectForKey:n];
+                    NSMenuItem *anItem = [[[NSMenuItem alloc] initWithTitle:theTitle action:nil keyEquivalent:@""] autorelease];
+                    [anItem setTag:[n intValue]];
+                    [theMenu addItem:anItem];
+                }
+                [cell setBordered:NO];
+                return cell;
+            } else {
+                // If not a popup button, then text by default.
+                NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@""] autorelease];
+                [cell setPlaceholderString:[trigger paramPlaceholder]];
+                [cell setEditable:YES];
+                return cell;
+            }
         } else {
             NSTextFieldCell *cell = [[[NSTextFieldCell alloc] initTextCell:@""] autorelease];
             [cell setPlaceholderString:@""];

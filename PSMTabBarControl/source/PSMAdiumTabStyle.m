@@ -365,7 +365,7 @@
         NSImage *closeButton = nil;
 
         if ([cell hasIcon]) {
-            closeButton = [[[cell representedObject] identifier] icon];
+            closeButton = [(id)[[cell representedObject] identifier] icon];
             closeButtonRect.origin.y += 1;
         } else {
             closeButton = _closeButton;
@@ -390,7 +390,7 @@
         labelPosition += [_closeButton size].width + kPSMTabBarCellPadding;
     } else if ([cell hasIcon]) {
         NSRect iconRect = [self iconRectForTabCell:cell];
-        NSImage *icon = [[[cell representedObject] identifier] icon];
+        NSImage *icon = [(id)[[cell representedObject] identifier] icon];
         if ([controlView isFlipped]) {
             iconRect.origin.y += iconRect.size.height;
         }
