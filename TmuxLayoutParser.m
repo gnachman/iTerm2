@@ -39,8 +39,8 @@ NSString *kLayoutDictStateKey = @"state";
                              close:(NSString *)closeChar;
 - (NSMutableDictionary *)splitDictWithType:(LayoutNodeType)nodeType;
 - (NSString *)splitOffFirstLayoutInLayoutArray:(NSString *)layouts rest:(NSMutableString *)rest;
-- (void)parseLayoutArray:(NSString *)layout range:(NSRange)range intoTree:(NSMutableArray *)tree;
-- (void)parseLayout:(NSString *)layout range:(NSRange)range intoTree:(NSMutableArray *)tree;
+- (BOOL)parseLayoutArray:(NSString *)layout range:(NSRange)range intoTree:(NSMutableArray *)tree;
+- (BOOL)parseLayout:(NSString *)layout range:(NSRange)range intoTree:(NSMutableArray *)tree;
 
 @end
 
@@ -58,8 +58,11 @@ NSString *kLayoutDictStateKey = @"state";
 - (NSMutableDictionary *)parsedLayoutFromString:(NSString *)layout
 {
     NSMutableArray *temp = [NSMutableArray array];
-    [self parseLayout:layout range:NSMakeRange(5, layout.length - 5) intoTree:temp];
-    return [temp objectAtIndex:0];
+    if ([self parseLayout:layout range:NSMakeRange(5, layout.length - 5) intoTree:temp]) {
+        return [temp objectAtIndex:0];
+    } else {
+        return nil;
+    }
 }
 
 - (id)depthFirstSearchParseTree:(NSMutableDictionary *)parseTree
@@ -237,29 +240,37 @@ NSString *kLayoutDictStateKey = @"state";
     }
 }
 
-- (void)parseLayoutArray:(NSString *)layout range:(NSRange)range intoTree:(NSMutableArray *)tree
+- (BOOL)parseLayoutArray:(NSString *)layout range:(NSRange)range intoTree:(NSMutableArray *)tree
 {
     // layout,layout,...
     NSMutableString *rest = [NSMutableString string];
     NSString *first = [self splitOffFirstLayoutInLayoutArray:[layout substringWithRange:range]
                                                         rest:rest];
     while (first) {
-        [self parseLayout:first
-                    range:NSMakeRange(0, first.length)
-                 intoTree:tree];
+        if (![self parseLayout:first
+                         range:NSMakeRange(0, first.length)
+                      intoTree:tree]) {
+            return NO;
+        }
         first = [self splitOffFirstLayoutInLayoutArray:rest
                                                   rest:rest];
     }
+    return YES;
 }
 
-- (void)parseLayout:(NSString *)layout range:(NSRange)range intoTree:(NSMutableArray *)tree
+- (BOOL)parseLayout:(NSString *)layout range:(NSRange)range intoTree:(NSMutableArray *)tree
 {
     NSString *openChar = @"[";
     NSString *closeChar = @"]";
     LayoutNodeType nodeType = [self nodeTypeInLayout:layout range:range];
+    NSDictionary *dict;
     switch (nodeType) {
         case kLeafLayoutNode:
-            [tree addObject:[self dictForLeafNodeInLayout:layout range:range]];
+            dict = [self dictForLeafNodeInLayout:layout range:range];
+            if (!dict) {
+                return NO;
+            }
+            [tree addObject:dict];
             break;
 
         case kVSplitLayoutNode:
@@ -273,12 +284,18 @@ NSString *kLayoutDictStateKey = @"state";
                                                             close:closeChar];
             NSMutableArray *children = [NSMutableArray array];
             NSMutableDictionary *splitDict = [self splitDictWithType:nodeType];
-            [self parseLayoutArray:layout range:childrenRange intoTree:children];
+            if (!splitDict) {
+                return NO;
+            }
+            if (![self parseLayoutArray:layout range:childrenRange intoTree:children]) {
+                return NO;
+            }
             [splitDict setObject:children forKey:kLayoutDictChildrenKey];
             [tree addObject:splitDict];
             break;
         }
     }
+    return YES;
 }
 
 

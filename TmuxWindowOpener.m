@@ -79,6 +79,10 @@
         return;
     }
     self.parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
+    if (!self.parseTree) {
+        [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
+        return;
+    }
     NSMutableArray *cmdList = [NSMutableArray array];
     [[TmuxLayoutParser sharedInstance] depthFirstSearchParseTree:self.parseTree
                                                  callingSelector:@selector(appendRequestsForNode:toArray:)
@@ -108,6 +112,10 @@
 
     TmuxLayoutParser *parser = [TmuxLayoutParser sharedInstance];
     self.parseTree = [parser parsedLayoutFromString:self.layout];
+    if (!self.parseTree) {
+        [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
+        return;
+    }
     NSSet *oldPanes = [NSSet setWithArray:[tab windowPanes]];
     NSMutableArray *cmdList = [NSMutableArray array];
     for (NSNumber *addedPane in [parser windowPanesInParseTree:self.parseTree]) {
@@ -224,6 +232,10 @@
             term = [[iTermController sharedInstance] openWindow];
         }
         NSMutableDictionary *parseTree = [[TmuxLayoutParser sharedInstance] parsedLayoutFromString:self.layout];
+        if (!parseTree) {
+            [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Error parsing layout %@", self.layout]];
+            return;
+        }
         [self decorateParseTree:parseTree];
         if (tabToUpdate_) {
             [tabToUpdate_ setTmuxLayout:parseTree
