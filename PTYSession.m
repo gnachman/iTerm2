@@ -3418,6 +3418,16 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)startTmuxMode
 {
+    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        if ([[term uniqueTmuxControllers] count]) {
+            const char *message = "detach\n";
+            [self printTmuxMessage:@"Can't enter tmux mode: another tmux is already attached"];
+            [SCREEN crlf];
+            [self writeTaskImpl:[NSData dataWithBytes:message length:strlen(message)]];
+            return;
+        }
+    }
+
     if (tmuxMode_ != TMUX_NONE) {
         return;
     }

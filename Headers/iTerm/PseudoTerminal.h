@@ -686,6 +686,7 @@ NSWindowDelegate,
 + (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement;
 - (void)loadArrangement:(NSDictionary *)arrangement;
 - (NSDictionary*)arrangement;
+- (NSArray *)uniqueTmuxControllers;
 - (IBAction)detachTmux:(id)sender;
 - (IBAction)newTmuxWindow:(id)sender;
 - (IBAction)newTmuxTab:(id)sender;
