@@ -146,8 +146,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 - (void)numberOfSessionsDidChange
 {
-    [self updatePaneTitles];
-    if ([self isTmuxTab]) {
+    if ([self updatePaneTitles] && [self isTmuxTab]) {
         [tmuxController_ windowDidResize:realParentWindow_];
     }
     [realParentWindow_ futureInvalidateRestorableState];
