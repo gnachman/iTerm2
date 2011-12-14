@@ -54,5 +54,7 @@
       isVertical:(BOOL)splitVertical
           before:(BOOL)addBefore;
 - (void)breakOutWindowPane:(int)windowPane toPoint:(NSPoint)screenPoint;
+- (void)killWindowPane:(int)windowPane;
+- (void)killWindow:(int)window;
 
 @end

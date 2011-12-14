@@ -228,6 +228,20 @@
          responseSelector:nil];
 }
 
+- (void)killWindowPane:(int)windowPane
+{
+    [gateway_ sendCommand:[NSString stringWithFormat:@"kill-pane -t %%%d", windowPane]
+           responseTarget:nil
+         responseSelector:nil];
+}
+
+- (void)killWindow:(int)window
+{
+    [gateway_ sendCommand:[NSString stringWithFormat:@"kill-window -t @%d", window]
+           responseTarget:nil
+         responseSelector:nil];
+}
+
 - (void)breakOutWindowPane:(int)windowPane toPoint:(NSPoint)screenPoint
 {
     [windowPositions_ setObject:[NSValue valueWithPoint:screenPoint]

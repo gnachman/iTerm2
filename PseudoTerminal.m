@@ -652,7 +652,9 @@ NSString *sessionsKey = @"sessions";
 
 - (void)closeSession:(PTYSession *)aSession
 {
-    if ([[[aSession tab] sessions] count] == 1) {
+    if ([aSession isTmuxClient]) {
+        [[aSession tmuxController] killWindowPane:[aSession tmuxPane]];
+    } else if ([[[aSession tab] sessions] count] == 1) {
         [self closeTab:[aSession tab]];
     } else {
         [aSession terminate];
