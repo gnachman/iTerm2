@@ -2172,6 +2172,7 @@ NSString *sessionsKey = @"sessions";
     [self _updateToolbeltParentage];
     [self fitTabsToWindow];
     [self futureInvalidateRestorableState];
+    [self notifyTmuxOfWindowResize];
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
