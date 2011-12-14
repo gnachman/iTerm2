@@ -1841,6 +1841,16 @@ NSString *sessionsKey = @"sessions";
     [self endTmuxOriginatedResize];
 }
 
+- (void)notifyTmuxOfWindowResize
+{
+    NSArray *tmuxControllers = [self uniqueTmuxControllers];
+    if (tmuxControllers.count && !tmuxOriginatedResizeInProgress_) {
+        for (TmuxController *controller in tmuxControllers) {
+            [controller windowDidResize:self];
+        }
+    }
+}
+
 - (void)windowDidResize:(NSNotification *)aNotification
 {
     lastResizeTime_ = [[NSDate date] timeIntervalSince1970];
@@ -1849,12 +1859,8 @@ NSString *sessionsKey = @"sessions";
         return;
     }
 
-    NSArray *tmuxControllers = [self uniqueTmuxControllers];
-    if (tmuxControllers.count && !tmuxOriginatedResizeInProgress_) {
-        for (TmuxController *controller in tmuxControllers) {
-            [controller windowDidResize:self];
-        }
-    }
+    [self notifyTmuxOfWindowResize];
+
     PtyLog(@"windowDidResize to: %fx%f", [[self window] frame].size.width, [[self window] frame].size.height);
     [SessionView windowDidResize];
     if (togglingFullScreen_) {
@@ -2098,6 +2104,9 @@ NSString *sessionsKey = @"sessions";
     [newTerminal setWindowTitle];
     PtyLog(@"toggleFullScreenMode - calling window update");
     [[newTerminal window] update];
+    if (fs) {
+        [newTerminal notifyTmuxOfWindowResize];
+    }
     PtyLog(@"toggleFullScreenMode returning");
     togglingFullScreen_ = false;
     [self release];
