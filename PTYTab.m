@@ -2619,6 +2619,7 @@ static NSString* FormatRect(NSRect r) {
         }
         [self replaceViewHierarchyWithParseTree:parseTree];
     }
+    [[root_ window] makeFirstResponder:[[self activeSession] TEXTVIEW]];
 }
 
 - (BOOL)hasMaximizedPane
