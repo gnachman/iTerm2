@@ -128,8 +128,14 @@
     return [[windows_ objectForKey:[NSNumber numberWithInt:window]] objectAtIndex:0];
 }
 
+- (BOOL)isAttached
+{
+    return !detached_;
+}
+
 - (void)detach
 {
+    detached_ = YES;
     // Close all sessions. Iterate over a copy of windowPanes_ because the loop
     // body modifies it by closing sessions.
     for (NSString *key in [[windowPanes_ copy] autorelease]) {

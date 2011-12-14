@@ -19,6 +19,7 @@
     int numOutstandingWindowResizes_;
     NSMutableDictionary *windowPositions_;
     NSSize lastSize_;  // last size for windowDidChange:
+    BOOL detached_;
 }
 
 @property (nonatomic, readonly) TmuxGateway *gateway;
@@ -56,5 +57,6 @@
 - (void)breakOutWindowPane:(int)windowPane toPoint:(NSPoint)screenPoint;
 - (void)killWindowPane:(int)windowPane;
 - (void)killWindow:(int)window;
+- (BOOL)isAttached;
 
 @end
