@@ -786,8 +786,17 @@ NSString *sessionsKey = @"sessions";
 
 - (void)closeTab:(PTYTab*)aTab
 {
-    NSTabViewItem *aTabViewItem;
+    if ([aTab isTmuxTab] && [[aTab sessions] count] > 0 && [[aTab tmuxController] isAttached]) {
+        [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
+        return;
+    }
+    [self removeTab:(PTYTab *)aTab];
+}
 
+// Just like closeTab but skips the tmux code. Terminates sessions, removes the
+// tab, and closes the window if there are no tabs left.
+- (void)removeTab:(PTYTab *)aTab
+{
     int numberOfTabs = [TABVIEW numberOfTabViewItems];
     for (PTYSession* session in [aTab sessions]) {
         [session terminate];
@@ -795,6 +804,7 @@ NSString *sessionsKey = @"sessions";
     if (numberOfTabs == 1 && [self windowInited]) {
         [[self window] close];
     } else {
+        NSTabViewItem *aTabViewItem;
         // now get rid of this tab
         aTabViewItem = [aTab tabViewItem];
         [TABVIEW removeTabViewItem:aTabViewItem];
@@ -1431,11 +1441,24 @@ NSString *sessionsKey = @"sessions";
         needPrompt = YES;
     }
 
+    BOOL shouldClose;
     if (needPrompt) {
-        return [self showCloseWindow];
+        shouldClose = [self showCloseWindow];
     } else {
-        return YES;
+        shouldClose = YES;
     }
+    if (shouldClose) {
+        // If there are tmux tabs, tell the tmux server to kill the window, but
+        // go ahead and close the window anyway because there might be non-tmux
+        // tabs as well. This is a rare instance of performing an action on a
+        // tmux object without waiting for the server to tell us to do it.
+        for (PTYTab *aTab in [self tabs]) {
+            if ([aTab isTmuxTab]) {
+                [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
+            }
+        }
+    }
+    return shouldClose;
 }
 
 - (void)windowWillClose:(NSNotification *)aNotification
@@ -4842,7 +4865,7 @@ NSString *sessionsKey = @"sessions";
 }
 
 // closes a tab
-- (void) closeTabContextualMenuAction: (id) sender
+- (void)closeTabContextualMenuAction: (id) sender
 {
     [self closeTab:(id)[[sender representedObject] identifier]];
 }

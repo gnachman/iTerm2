@@ -43,7 +43,7 @@ extern NSString *kCoprocessStatusChangeNotification;
 @class Coprocess;
 
 @protocol PTYTaskDelegate
-- (void) closeTab:(PTYTab*)aSession;
+- (void)closeTab:(PTYTab*)aSession;
 @end
 
 @interface PTYTask : NSObject

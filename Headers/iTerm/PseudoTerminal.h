@@ -307,8 +307,10 @@ NSWindowDelegate,
 // [sender representedObject]. Used by menu items in the Bookmarks menu.
 - (void)newSessionInTabAtIndex:(id)sender;
 
-// Close a tab and resize/close the window if needed.
+// Kill tmux window if applicable, or close a tab and resize/close the window if needed.
 - (void)closeTab:(PTYTab*)aTab;
+// Close a tab and resize/close the window if needed.
+- (void)removeTab:(PTYTab *)aTab;
 
 // Get the window type
 - (int)windowType;

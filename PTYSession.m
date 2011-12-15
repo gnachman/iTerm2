@@ -3524,7 +3524,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 {
     PTYTab *tab = [tmuxController_ window:windowId];
     if (tab) {
-        [[tab realParentWindow] closeTab:tab];
+        [[tab realParentWindow] removeTab:tab];
     }
 }
 
