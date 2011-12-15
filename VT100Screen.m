@@ -1736,7 +1736,8 @@ static char* FormatCont(int c)
                              [SESSION name],
                              [[SESSION tab] realObjectCount],
                              token.u.string]
-            andNotification:@"Customized Message"];
+            andNotification:@"Customized Message"
+                 andSession:SESSION];
         }
         break;
 
