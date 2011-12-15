@@ -107,60 +107,25 @@
 
 - (void)growlNotify:(NSString *)title
 {
-    if (![self isEnabled]) {
-        //NSLog(@"%s(%d):-[Growl not enabled.]",  __FILE__, __LINE__);
-        return;
-    }
-
-    if ([[PreferencePanel sharedInstance] enableGrowl]) {
-        [GrowlApplicationBridge
-            notifyWithTitle:title
-                description:nil
-           notificationName:DEFAULTNOTIFICATION
-                   iconData:nil
-                   priority:0
-                   isSticky:NO
-               clickContext:nil];
-    }
+    [self growlNotify:title withDescription:nil];
 }
 
 - (void)growlNotify:(NSString *)title
      withDescription:(NSString *)description
 {
-    if (![self isEnabled]) {
-        //NSLog(@"%s(%d):-[Growl not enabled.]",  __FILE__, __LINE__);
-        return;
-    }
-
-    if ([[PreferencePanel sharedInstance] enableGrowl]) {
-        [GrowlApplicationBridge notifyWithTitle:title
-                                    description:description
-                               notificationName:DEFAULTNOTIFICATION
-                                       iconData:nil
-                                       priority:0
-                                       isSticky:NO
-                                   clickContext:nil];
-    }
+    [self growlNotify:title
+      withDescription:description
+      andNotification:DEFAULTNOTIFICATION];
 }
 
 - (void)growlNotify:(NSString *)title
     withDescription:(NSString *)description
     andNotification:(NSString *)notification
 {
-    if (![self isEnabled]) {
-        //NSLog(@"%s(%d):-[Growl not enabled.]",  __FILE__, __LINE__);
-        return;
-    }
-
-    if ([[PreferencePanel sharedInstance] enableGrowl]) {
-        [GrowlApplicationBridge notifyWithTitle:title
-                                    description:description
-                               notificationName:notification
-                                       iconData:nil
-                                       priority:0
-                                       isSticky:NO
-                                   clickContext:nil];
-    }
+      [self growlNotify:title
+        withDescription:description
+        andNotification:notification
+             andSession:nil];
 }
 
 - (void)growlNotify:(NSString *)title
@@ -172,14 +137,17 @@
         return;
     }
 
-    NSDictionary *context = [[NSDictionary alloc] initWithObjectsAndKeys:
-                             [NSNumber numberWithInt:[[iTermController sharedInstance] indexOfTerminal:[[session tab] realParentWindow]]],
-                             @"win",
-                             [NSNumber numberWithInt:[[session tab] number]],
-                             @"tab",
-                             [NSNumber numberWithInt:[[session view] viewId]],
-                             @"view",
-                             nil];
+    NSDictionary *context = nil;
+    if (session) {
+      context = [[NSDictionary alloc] initWithObjectsAndKeys:
+                 [NSNumber numberWithInt:[[iTermController sharedInstance] indexOfTerminal:[[session tab] realParentWindow]]],
+                 @"win",
+                 [NSNumber numberWithInt:[[session tab] number]],
+                 @"tab",
+                 [NSNumber numberWithInt:[[session view] viewId]],
+                 @"view",
+                 nil];
+    }
 
     if ([[PreferencePanel sharedInstance] enableGrowl]) {
         [GrowlApplicationBridge notifyWithTitle:title
