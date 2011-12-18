@@ -255,6 +255,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     [idMap_ release];
     [savedArrangement_ release];
     [tmuxController_ release];
+    [parseTree_ release];
     [super dealloc];
 }
 
@@ -1629,6 +1630,9 @@ static NSString* FormatRect(NSRect r) {
 // containing view.
 - (BOOL)fitSessionToCurrentViewSize:(PTYSession*)aSession
 {
+    if ([aSession isTmuxClient]) {
+        return;
+    }
     NSSize temp = [self sessionSizeForViewSize:aSession];
     int width = temp.width;
     int height = temp.height;
@@ -2244,6 +2248,13 @@ static NSString* FormatRect(NSRect r) {
     }
 }
 
+- (void)reloadTmuxLayout
+{
+    [PTYTab setSizesInTmuxParseTree:parseTree_ inTerminal:realParentWindow_];
+    [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree_];
+    [[root_ window] makeFirstResponder:[[self activeSession] TEXTVIEW]];
+}
+
 + (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
                        inTerminal:(PseudoTerminal *)term
                        tmuxWindow:(int)tmuxWindow
@@ -2264,6 +2275,7 @@ static NSString* FormatRect(NSRect r) {
     PTYTab *theTab = [self openTabWithArrangement:arrangement inTerminal:term hasFlexibleView:YES];
     theTab->tmuxWindow_ = tmuxWindow;
     theTab->tmuxController_ = [tmuxController retain];
+    theTab->parseTree_ = [parseTree retain];
 
     return theTab;
 }
@@ -2353,8 +2365,9 @@ static NSString* FormatRect(NSRect r) {
             SessionView *sv = (SessionView *)view;
             PTYSession *session = [sv session];
             NSRect svFrame = [[session SCROLLVIEW] frame];
+            NSRect visibleFrame = [[session SCROLLVIEW] documentVisibleRect];  // excludes scrollbar, if any
             int chars = forHeight ? (svFrame.size.height - VMARGIN * 2) / cellSize.height :
-                                    (svFrame.size.width - MARGIN * 2) / cellSize.width;
+                                    (visibleFrame.size.width - MARGIN * 2) / cellSize.width;
             [intervalMap incrementNumbersBy:chars
                                     inRange:[IntRange rangeWithMin:minPos size:size]];
         }
@@ -2402,6 +2415,16 @@ static NSString* FormatRect(NSRect r) {
 - (NSSize)tmuxSize
 {
     // The current size of the sessions in this tab in characters
+    // ** BUG **
+    // This rounds off fractional parts. We really need to know the maximum capacity, and fractional parts can add up to more than one whole char.
+    // Here's a real world example. When scrollbars come into being, every pane interior shrinks by 15px width.
+    // In this case, there are two panes side-by-side [|], 345 and 338px. The sizeDiff is 30px. It should add up to 99 chars:
+    // (gdb) p (345.0 - 10.0)/7.0 + (338.0 - 10.0)/7.0 + 30.0/7.0
+    // $28 = 99
+    // But rounding errors shrink it to 97 chars:
+    // (gdb) p (345 - 10)/7 + (338 - 10)/7 + 30/7
+    // $29 = 97
+    // For now, we work around this problem with respect to scrollbars by handling them specially.
     NSSize rootSizeChars = NSMakeSize([self tmuxSizeForHeight:NO], [self tmuxSizeForHeight:YES]);
 
     // The size in pixels we need to get it to (at most)
@@ -2620,6 +2643,8 @@ static NSString* FormatRect(NSRect r) {
         [self replaceViewHierarchyWithParseTree:parseTree];
     }
     [[root_ window] makeFirstResponder:[[self activeSession] TEXTVIEW]];
+    [parseTree_ release];
+    parseTree_ = [parseTree retain];
 }
 
 - (BOOL)hasMaximizedPane

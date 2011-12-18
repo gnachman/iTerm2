@@ -111,6 +111,9 @@ static const int MIN_SESSION_COLUMNS = 2;
 
     // The tmux controller used by all sessions in this tab.
     TmuxController *tmuxController_;
+
+    // The last tmux parse tree
+    NSMutableDictionary *parseTree_;
 }
 
 // init/dealloc
@@ -223,6 +226,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)numberOfSessionsDidChange;
 - (BOOL)updatePaneTitles;
 
+- (void)reloadTmuxLayout;
 + (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
                        inTerminal:(PseudoTerminal *)term
                        tmuxWindow:(int)tmuxWindow
