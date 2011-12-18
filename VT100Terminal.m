@@ -734,7 +734,7 @@ static VT100TCC decode_underscore(unsigned char *datap,
         }
 
         if (found) {
-            if ([result.u.string isEqualToString:@"tmux1"]) {
+            if ([result.u.string isEqualToString:@"tmux0.1"]) {
                 result.type = UNDERSCORE_TMUX1;
             } else {
                 result.type = VT100_NOTSUPPORT;

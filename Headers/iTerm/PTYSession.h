@@ -300,6 +300,7 @@ typedef enum {
                         forObjectType:(iTermObjectType)objectType;
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
                                          bookmark:(Bookmark *)bookmark;
+- (void)textViewFontDidChange;
 
 // Set rows, columns from arrangement.
 - (void)resizeFromArrangement:(NSDictionary *)arrangement;

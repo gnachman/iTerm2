@@ -1,3 +1,4 @@
+
 // -*- mode:objc -*-
 // $Id: PTYTextView.m,v 1.325 2009-02-06 14:33:17 delx Exp $
 /*
@@ -807,6 +808,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     NSScrollView* scrollview = [self enclosingScrollView];
     [scrollview setLineScroll:[self lineHeight]];
     [scrollview setPageScroll:2 * [self lineHeight]];
+    [_delegate textViewFontDidChange];
 }
 
 - (void)changeFont:(id)fontManager

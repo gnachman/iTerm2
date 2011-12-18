@@ -1837,9 +1837,18 @@ NSString *sessionsKey = @"sessions";
 {
     NSMutableSet *controllers = [NSMutableSet set];
     for (PTYTab *tab in [self tabs]) {
-        TmuxController *c = [tab tmuxController];
-        if (c) {
-            [controllers addObject:c];
+        BOOL hasClient = NO;
+        for (PTYSession *aSession in [tab sessions]) {
+            if ([aSession isTmuxClient]) {
+                hasClient = YES;
+                break;
+            }
+        }
+        if (hasClient) {
+            TmuxController *c = [tab tmuxController];
+            if (c) {
+                [controllers addObject:c];
+            }
         }
     }
     return [controllers allObjects];
@@ -3860,6 +3869,20 @@ NSString *sessionsKey = @"sessions";
     [self _updateTabObjectCounts];
 }
 
+- (void)refreshTmuxLayoutsAndWindow
+{
+    for (PTYTab *aTab in [self tabs]) {
+        [aTab setReportIdealSizeAsCurrent:YES];
+        if ([aTab isTmuxTab]) {
+            [aTab reloadTmuxLayout];
+        }
+    }
+    [self fitWindowToTabs];
+    for (PTYTab *aTab in [self tabs]) {
+        [aTab setReportIdealSizeAsCurrent:NO];
+    }
+}
+
 @end
 
 @implementation PseudoTerminal (Private)
@@ -3906,16 +3929,7 @@ NSString *sessionsKey = @"sessions";
         // The scrollbar has already been added so tabs' current sizes are wrong.
         // Use ideal sizes instead, to fit to the session dimensions instead of
         // the existing pixel dimensions of the tabs.
-        for (PTYTab *aTab in [self tabs]) {
-            [aTab setReportIdealSizeAsCurrent:YES];
-            if ([aTab isTmuxTab]) {
-                [aTab reloadTmuxLayout];
-            }
-        }
-        [self fitWindowToTabs];
-        for (PTYTab *aTab in [self tabs]) {
-            [aTab setReportIdealSizeAsCurrent:NO];
-        }
+        [self refreshTmuxLayoutsAndWindow];
     }
 }
 

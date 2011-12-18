@@ -226,11 +226,19 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)numberOfSessionsDidChange;
 - (BOOL)updatePaneTitles;
 
+- (void)resizeViewsInViewHierarchy:(NSView *)view
+                      forNewLayout:(NSMutableDictionary *)parseTree;
 - (void)reloadTmuxLayout;
 + (PTYTab *)openTabWithTmuxLayout:(NSMutableDictionary *)parseTree
                        inTerminal:(PseudoTerminal *)term
                        tmuxWindow:(int)tmuxWindow
                    tmuxController:(TmuxController *)tmuxController;
++ (void)setTmuxFont:(NSFont *)font
+             nafont:(NSFont *)nafont
+           hSpacing:(double)hs
+           vSpacing:(double)vs;
+- (BOOL)viewIsSuperfluousRoot:(NSView *)view;
+
 - (NSSize)tmuxSize;
 - (int)tmuxWindow;
 - (BOOL)isTmuxTab;

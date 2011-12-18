@@ -59,7 +59,16 @@ NSString *kLayoutDictStateKey = @"state";
 {
     NSMutableArray *temp = [NSMutableArray array];
     if ([self parseLayout:layout range:NSMakeRange(5, layout.length - 5) intoTree:temp]) {
-        return [temp objectAtIndex:0];
+        NSMutableDictionary *tree = [temp objectAtIndex:0];
+        if ([[tree objectForKey:kLayoutDictNodeType] intValue] == kLeafLayoutNode) {
+            // Add a do-nothing root splitter so that the root is always a splitter.
+            NSMutableDictionary *oldRoot = tree;
+            tree = [[oldRoot mutableCopy]  autorelease];
+            [tree setObject:[NSNumber numberWithInt:kVSplitLayoutNode] forKey:kLayoutDictNodeType];
+            [tree setObject:[NSArray arrayWithObject:oldRoot] forKey:kLayoutDictChildrenKey];
+            [tree removeObjectForKey:kLayoutDictWindowPaneKey];
+        }
+        return tree;
     } else {
         return nil;
     }

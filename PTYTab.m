@@ -1631,7 +1631,7 @@ static NSString* FormatRect(NSRect r) {
 - (BOOL)fitSessionToCurrentViewSize:(PTYSession*)aSession
 {
     if ([aSession isTmuxClient]) {
-        return;
+        return NO;
     }
     NSSize temp = [self sessionSizeForViewSize:aSession];
     int width = temp.width;
@@ -2212,7 +2212,37 @@ static NSString* FormatRect(NSRect r) {
 
 + (Bookmark *)tmuxBookmark
 {
-    return [[BookmarkModel sharedInstance] defaultBookmark];
+    Bookmark *bookmark = [[BookmarkModel sharedInstance] bookmarkWithName:@"tmux"];
+    if (!bookmark) {
+        Bookmark *defaultBookmark = [[BookmarkModel sharedInstance] defaultBookmark];
+        NSMutableDictionary *tmuxBookmark = [[defaultBookmark mutableCopy] autorelease];
+        [tmuxBookmark setObject:@"tmux" forKey:KEY_NAME];
+        [tmuxBookmark setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
+        [[BookmarkModel sharedInstance] addBookmark:tmuxBookmark];
+        [[BookmarkModel sharedInstance] postChangeNotification];
+        bookmark = tmuxBookmark;
+    }
+    return bookmark;
+}
+
++ (void)setTmuxFont:(NSFont *)font
+             nafont:(NSFont *)nafont
+           hSpacing:(double)hs
+           vSpacing:(double)vs
+{
+    [[BookmarkModel sharedInstance] setObject:[ITAddressBookMgr descFromFont:font]
+                                       forKey:KEY_NORMAL_FONT
+                                   inBookmark:[PTYTab tmuxBookmark]];
+    [[BookmarkModel sharedInstance] setObject:[ITAddressBookMgr descFromFont:nafont]
+                                       forKey:KEY_NON_ASCII_FONT
+                                   inBookmark:[PTYTab tmuxBookmark]];
+    [[BookmarkModel sharedInstance] setObject:[NSNumber numberWithDouble:hs]
+                                       forKey:KEY_HORIZONTAL_SPACING
+                                   inBookmark:[PTYTab tmuxBookmark]];
+    [[BookmarkModel sharedInstance] setObject:[NSNumber numberWithDouble:vs]
+                                       forKey:KEY_VERTICAL_SPACING
+                                   inBookmark:[PTYTab tmuxBookmark]];
+    [[BookmarkModel sharedInstance] postChangeNotification];
 }
 
 + (void)setSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
@@ -2220,7 +2250,8 @@ static NSString* FormatRect(NSRect r) {
 {
     Bookmark *bookmark = [PTYTab tmuxBookmark];
 
-    BOOL haveMultipleSessions = ([parseTree objectForKey:kLayoutDictChildrenKey] != nil);
+    NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
+    BOOL haveMultipleSessions = ([theChildren count] > 1);
     BOOL showTitles = [PTYTab showTitlesPref] && haveMultipleSessions;
     // Begin by decorating the tree with pixel sizes.
     [PTYTab _recursiveSetSizesInTmuxParseTree:parseTree
@@ -2451,7 +2482,7 @@ static NSString* FormatRect(NSRect r) {
     return tmuxSize;
 }
 
-- (BOOL)parseTree:(NSMutableDictionary *)parseTree matchesViewHierarchy:(NSView *)view
+- (BOOL)_recursiveParseTree:(NSMutableDictionary *)parseTree matchesViewHierarchy:(NSView *)view
 {
     LayoutNodeType layoutNodeType = [[parseTree objectForKey:kLayoutDictNodeType] intValue];
     LayoutNodeType typeOfView;
@@ -2479,17 +2510,23 @@ static NSString* FormatRect(NSRect r) {
         return NO;
     }
     for (int i = 0; i < treeChildren.count; i++) {
-        if (![self parseTree:[treeChildren objectAtIndex:i]
-                   matchesViewHierarchy:[subviews objectAtIndex:i]]) {
+        if (![self _recursiveParseTree:[treeChildren objectAtIndex:i]
+                  matchesViewHierarchy:[subviews objectAtIndex:i]]) {
             return NO;
         }
     }
     return YES;
 }
 
+- (BOOL)parseTree:(NSMutableDictionary *)parseTree matchesViewHierarchy:(NSView *)view
+{
+    return [self _recursiveParseTree:parseTree matchesViewHierarchy:view];
+}
+
 - (void)_recursiveResizeViewsInViewHierarchy:(NSView *)view
                               forArrangement:(NSDictionary *)arrangement
 {
+    assert(arrangement);
     NSDictionary *frameDict;
     if ([view isKindOfClass:[NSSplitView class]]) {
         frameDict = [arrangement objectForKey:TAB_ARRANGEMENT_SPLIITER_FRAME];

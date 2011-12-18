@@ -79,6 +79,8 @@ static NSString* SESSION_ARRANGEMENT_TMUX_HISTORY = @"Tmux History";
 static NSString* SESSION_ARRANGEMENT_TMUX_ALT_HISTORY = @"Tmux AltHistory";
 static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
 
+static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
+
 // init/dealloc
 - (id)init
 {
@@ -130,7 +132,10 @@ static NSString* SESSION_ARRANGEMENT_TMUX_STATE = @"Tmux State";
                                              selector:@selector(sessionContentsChanged:)
                                                  name:@"iTermTabContentsChanged"
                                                object:nil];
-
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(synchronizeTmuxFonts:)
+                                                 name:kTmuxFontChanged
+                                               object:nil];
     return self;
 }
 
@@ -3103,7 +3108,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [NSFont fontWithName:[font fontName] size:newSize];
 }
 
-- (void)setFont:(NSFont*)font nafont:(NSFont*)nafont horizontalSpacing:(float)horizontalSpacing verticalSpacing:(float)verticalSpacing
+- (void)setFont:(NSFont*)font
+         nafont:(NSFont*)nafont
+    horizontalSpacing:(float)horizontalSpacing
+    verticalSpacing:(float)verticalSpacing
 {
     if ([[TEXTVIEW font] isEqualTo:font] &&
         [[TEXTVIEW nafont] isEqualTo:nafont] &&
@@ -3118,6 +3126,52 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     // If the window isn't able to adjust, or adjust enough, make the session
     // work with whatever size we ended up having.
     [[self tab] fitSessionToCurrentViewSize:self];
+}
+
+- (void)synchronizeTmuxFonts:(NSNotification *)notification
+{
+    if (!EXIT && [self isTmuxClient]) {
+        NSArray *fonts = [notification object];
+        NSFont *font = [fonts objectAtIndex:0];
+        NSFont *nafont = [fonts objectAtIndex:1];
+        NSNumber *hSpacing = [fonts objectAtIndex:2];
+        NSNumber *vSpacing = [fonts objectAtIndex:3];
+        [TEXTVIEW setFont:font
+                   nafont:nafont
+            horizontalSpacing:[hSpacing doubleValue]
+            verticalSpacing:[vSpacing doubleValue]];
+    }
+}
+
+- (void)notifyTmuxFontChange
+{
+    static BOOL fontChangeNotificationInProgress;
+    if (!fontChangeNotificationInProgress) {
+        fontChangeNotificationInProgress = YES;
+        [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxFontChanged
+                                                            object:[NSArray arrayWithObjects:[TEXTVIEW font],
+                                                                    [TEXTVIEW nafont],
+                                                                    [NSNumber numberWithDouble:[TEXTVIEW horizontalSpacing]],
+                                                                    [NSNumber numberWithDouble:[TEXTVIEW verticalSpacing]],
+                                                                    nil]];
+        fontChangeNotificationInProgress = NO;
+        [PTYTab setTmuxFont:[TEXTVIEW font]
+                     nafont:[TEXTVIEW nafont]
+                   hSpacing:[TEXTVIEW horizontalSpacing]
+                   vSpacing:[TEXTVIEW verticalSpacing]];
+        for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+            if ([[term uniqueTmuxControllers] count]) {
+                [term refreshTmuxLayoutsAndWindow];
+            }
+        }
+    }
+}
+
+- (void)textViewFontDidChange
+{
+    if ([self isTmuxClient]) {
+        [self notifyTmuxFontChange];
+    }
 }
 
 - (void)setIgnoreResizeNotifications:(BOOL)ignore
