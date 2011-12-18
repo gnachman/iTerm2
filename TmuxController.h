@@ -58,5 +58,6 @@
 - (void)killWindowPane:(int)windowPane;
 - (void)killWindow:(int)window;
 - (BOOL)isAttached;
+- (void)requestDetach;
 
 @end

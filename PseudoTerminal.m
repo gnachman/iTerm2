@@ -1238,7 +1238,7 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)detachTmux:(id)sender
 {
-    [[[self currentSession] tmuxController] detach];
+    [[[self currentSession] tmuxController] requestDetach];
 }
 
 - (IBAction)newTmuxWindow:(id)sender

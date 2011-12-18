@@ -133,6 +133,13 @@
     return !detached_;
 }
 
+- (void)requestDetach
+{
+    [self.gateway sendCommand:@"detach"
+               responseTarget:nil
+             responseSelector:nil];
+}
+
 - (void)detach
 {
     detached_ = YES;
