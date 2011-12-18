@@ -2983,9 +2983,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)resetFontSize
 {
-    PseudoTerminal *frontTerminal = [[iTermController sharedInstance] currentTerminal];
-    PTYTab* theTab = [frontTerminal currentTab];
-    PTYSession* aSession = [theTab activeSession];
+    PTYSession* aSession = [tab_ activeSession];
 
     NSDictionary *abEntry = [aSession originalAddressBookEntry];
 
