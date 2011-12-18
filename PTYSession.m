@@ -3546,6 +3546,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)tmuxWriteData:(NSData *)data
 {
+    if (EXIT) {
+        return;
+    }
     NSLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
     if (tmuxLogging_) {
         [self printTmuxMessage:[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]];
@@ -3839,6 +3842,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)printTmuxMessage:(NSString *)message
 {
+    if (EXIT) {
+        return;
+    }
     screen_char_t savedFgColor = [TERMINAL foregroundColorCode];
     screen_char_t savedBgColor = [TERMINAL backgroundColorCode];
     [TERMINAL setForegroundColor:COLORCODE_WHITE alternateSemantics:NO];
