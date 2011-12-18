@@ -119,6 +119,7 @@ static int consume_hex(const char *s, int *out)
                    withContext:(HistoryParseContext *)ctx
 {
     NSMutableData *result = [NSMutableData data];
+    screen_char_t lastChar;
     BOOL softEol = NO;
     if ([hist hasSuffix:@"+"]) {
         softEol = YES;
@@ -151,11 +152,39 @@ static int consume_hex(const char *s, int *out)
             } else {
                 ctx->isDwcPadding = NO;
             }
+        } else if (s[i] == '*') {
+ //           NSLog(@"found a * at %d", i);
+            i++;
+            NSInteger repeats;
+            // We have a "*<number> " sequence. Scan the number.
+            if ([[NSScanner scannerWithString:[NSString stringWithUTF8String:s + i]] scanInteger:&repeats]) {
+                // Append the last character repeats-1 times.
+                for (int j = 0; j < repeats - 1; j++) {
+                    [result appendBytes:&lastChar length:sizeof(screen_char_t)];
+                }
+                // Advance up to and then past the terminal space, if present.
+                while (s[i] && s[i] != ' ') {
+                    i++;
+                }
+                if (s[i] == ' ') {
+                    i++;
+                } else {
+                    NSLog(@"malformed dump history lacks a space after *n: <<%@>>", hist);
+                    return nil;
+                }
+            } else {
+                NSLog(@"malformed dump history lacks a number after *: <<%@>>", hist);
+                return nil;
+            }
         }
+
         // array of 2-digit hex values interspersed with [ 2 digit hex values ].
         BOOL utf8 = NO;
         NSMutableData *utf8Buffer = [NSMutableData data];
-        while (s[i] != ':' && s[i] && s[i + 1]) {
+        while (s[i] == '[' ||
+               s[i] == ']' ||
+               (ishexnumber(s[i]) && ishexnumber(s[i + 1]))) {
+//            NSLog(@"top of while loop: i=%d", i);
             if (s[i] == '[') {
 //                NSLog(@"-- begin utf 8 --");
                 if (s[i+1] && s[i+2] && s[i+3]) {
@@ -167,43 +196,54 @@ static int consume_hex(const char *s, int *out)
                 }
                 i++;
             } else if (s[i] == ']') {
-                NSLog(@"-- end utf 8 --");
+//                NSLog(@"-- end utf 8 --");
                 if (utf8) {
                     utf8 = NO;
-                    ctx->prototype.code = GetOrSetComplexChar([[[NSString alloc] initWithData:utf8Buffer encoding:NSUTF8StringEncoding] autorelease]);
+                    NSString *stringValue = [[[NSString alloc] initWithData:utf8Buffer encoding:NSUTF8StringEncoding] autorelease];
+                    ctx->prototype.code = GetOrSetComplexChar(stringValue);
                     ctx->prototype.complexChar = 1;
+                    lastChar = ctx->prototype;
+                    [result appendBytes:&ctx->prototype length:sizeof(screen_char_t)];
                 } else {
                     NSLog(@"] without [ in history");
                     return nil;
                 }
                 i++;
                 continue;
-            }
-            unsigned scanned;
-            if ([[NSScanner scannerWithString:[NSString stringWithFormat:@"%c%c", s[i], s[i+1]]] scanHexInt:&scanned]) {
-                if (utf8) {
-                    char c = scanned;
-                    [utf8Buffer appendBytes:&c length:1];
-                } else {
-                    if (ctx->isDwcPadding) {
-                        ctx->prototype.code = DWC_RIGHT;
-                    } else {
-                        ctx->prototype.code = scanned;
-                    }
-                    ctx->prototype.complexChar = 0;
-                    // Skip DWC_RIGHT if it's the first thing in a line. It would
-                    // be better to set the last char of the previous line to DWC_SKIP
-                    // and the eol to EOF_DWC, but I think tmux prevents this from
-                    // happening anyway.
-                    if (result.length > 0 || ctx->prototype.code != DWC_RIGHT) {
-                        [result appendBytes:&ctx->prototype length:sizeof(screen_char_t)];
-                    }
-                }
-                i += 2;
             } else {
-                NSLog(@"Malformed hex array at %d: \"%c%c\" (%d %d)", i, s[i], s[i+1], (int) s[i], (int) s[i+1]);
-                return nil;
+                // Read a hex digit
+                unsigned scanned;
+                if ([[NSScanner scannerWithString:[NSString stringWithFormat:@"%c%c", s[i], s[i+1]]] scanHexInt:&scanned]) {
+//                    NSLog(@"scanned %@", [NSString stringWithFormat:@"%c%c", s[i], s[i+1]]);
+                    if (utf8) {
+                        char c = scanned;
+                        [utf8Buffer appendBytes:&c length:1];
+                    } else {
+                        if (ctx->isDwcPadding) {
+                            ctx->prototype.code = DWC_RIGHT;
+                        } else {
+                            ctx->prototype.code = scanned;
+                        }
+                        ctx->prototype.complexChar = 0;
+                        // Skip DWC_RIGHT if it's the first thing in a line. It would
+                        // be better to set the last char of the previous line to DWC_SKIP
+                        // and the eol to EOF_DWC, but I think tmux prevents this from
+                        // happening anyway.
+                        if (result.length > 0 || ctx->prototype.code != DWC_RIGHT) {
+                            lastChar = ctx->prototype;
+                            [result appendBytes:&ctx->prototype length:sizeof(screen_char_t)];
+                        }
+                    }
+                    i += 2;
+                } else {
+                    NSLog(@"Malformed hex array at %d: \"%c%c\" (%d %d)", i, s[i], s[i+1], (int) s[i], (int) s[i+1]);
+                    return nil;
+                }
             }
+        }
+        if (utf8) {
+            NSLog(@"Malformed history line has unclosed utf8 at %d: %@", i, hist);
+            return nil;
         }
     }
 

@@ -237,7 +237,6 @@ static const int MIN_SESSION_COLUMNS = 2;
              nafont:(NSFont *)nafont
            hSpacing:(double)hs
            vSpacing:(double)vs;
-- (BOOL)viewIsSuperfluousRoot:(NSView *)view;
 
 - (NSSize)tmuxSize;
 - (int)tmuxWindow;
