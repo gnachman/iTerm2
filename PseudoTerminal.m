@@ -1882,8 +1882,6 @@ NSString *sessionsKey = @"sessions";
         return;
     }
 
-    [self notifyTmuxOfWindowResize];
-
     PtyLog(@"windowDidResize to: %fx%f", [[self window] frame].size.width, [[self window] frame].size.height);
     [SessionView windowDidResize];
     if (togglingFullScreen_) {
@@ -1894,6 +1892,8 @@ NSString *sessionsKey = @"sessions";
     // Adjust the size of all the sessions.
     PtyLog(@"windowDidResize - call repositionWidgets");
     [self repositionWidgets];
+
+    [self notifyTmuxOfWindowResize];
 
     PTYSession* session = [self currentSession];
     NSString *aTitle = [NSString stringWithFormat:@"%@ (%d,%d)",
@@ -3908,6 +3908,9 @@ NSString *sessionsKey = @"sessions";
         // the existing pixel dimensions of the tabs.
         for (PTYTab *aTab in [self tabs]) {
             [aTab setReportIdealSizeAsCurrent:YES];
+            if ([aTab isTmuxTab]) {
+                [aTab reloadTmuxLayout];
+            }
         }
         [self fitWindowToTabs];
         for (PTYTab *aTab in [self tabs]) {
