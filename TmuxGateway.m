@@ -304,7 +304,7 @@ static NSString *kCommandObject = @"object";
 
 - (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector responseObject:(id)obj
 {
-    if (detachSent_) {
+    if (detachSent_ || state_ == CONTROL_STATE_DETACHED) {
         return;
     }
     NSString *commandWithNewline = [command stringByAppendingString:@"\n"];
@@ -318,7 +318,7 @@ static NSString *kCommandObject = @"object";
 
 - (void)sendCommandList:(NSArray *)commandDicts
 {
-    if (detachSent_) {
+    if (detachSent_ || state_ == CONTROL_STATE_DETACHED) {
         return;
     }
     NSMutableString *cmd = [NSMutableString string];

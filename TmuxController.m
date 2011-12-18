@@ -135,9 +135,7 @@
 
 - (void)requestDetach
 {
-    [self.gateway sendCommand:@"detach"
-               responseTarget:nil
-             responseSelector:nil];
+    [self.gateway detach];
 }
 
 - (void)detach

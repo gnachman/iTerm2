@@ -252,6 +252,11 @@
             if (windowPos) {
                 [[term window] setFrameOrigin:[windowPos pointValue]];
             }
+
+            // This is to handle the case where we couldn't create a window as
+            // large as we were asked to (for instance, if the gateway is full-
+            // screen).
+            [controller_ windowDidResize:term];
         }
     }
 }
