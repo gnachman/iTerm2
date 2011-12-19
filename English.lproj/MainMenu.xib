@@ -1020,10 +1020,19 @@
 									<reference key="NSOnImage" ref="643967552"/>
 									<reference key="NSMixedImage" ref="326707852"/>
 								</object>
+								<object class="NSMenuItem" id="854744668">
+									<reference key="NSMenu" ref="203853260"/>
+									<string key="NSTitle">Make Text Bigger</string>
+									<string key="NSKeyEquiv">+</string>
+									<int key="NSKeyEquivModMask">1048576</int>
+									<int key="NSMnemonicLoc">2147483647</int>
+									<reference key="NSOnImage" ref="643967552"/>
+									<reference key="NSMixedImage" ref="326707852"/>
+								</object>
 								<object class="NSMenuItem" id="562301803">
 									<reference key="NSMenu" ref="203853260"/>
-									<string key="NSTitle">Bigger Font</string>
-									<string key="NSKeyEquiv">+</string>
+									<string key="NSTitle">Make Text Normal Size</string>
+									<string key="NSKeyEquiv">0</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
 									<reference key="NSOnImage" ref="643967552"/>
@@ -1031,7 +1040,7 @@
 								</object>
 								<object class="NSMenuItem" id="135910236">
 									<reference key="NSMenu" ref="203853260"/>
-									<string key="NSTitle">Smaller Font</string>
+									<string key="NSTitle">Make Text Smaller</string>
 									<string key="NSKeyEquiv">-</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -1546,7 +1555,7 @@
 				<nil key="NSUserInterfaceItemIdentifier"/>
 				<string key="NSWindowContentMinSize">{213, 107}</string>
 				<object class="NSView" key="NSWindowView" id="813030389">
-					<reference key="NSNextResponder"/>
+					<nil key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
 					<array class="NSMutableArray" key="NSSubviews">
 						<object class="NSTextField" id="198376688">
@@ -1554,8 +1563,6 @@
 							<int key="NSvFlags">256</int>
 							<string key="NSFrame">{{211, 117}, {90, 27}}</string>
 							<reference key="NSSuperview" ref="813030389"/>
-							<reference key="NSWindow"/>
-							<reference key="NSNextKeyView"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSTextFieldCell" key="NSCell" id="26136141">
 								<int key="NSCellFlags">67239424</int>
@@ -1600,7 +1607,6 @@
 											<int key="NSvFlags">2322</int>
 											<string key="NSFrameSize">{165, 14}</string>
 											<reference key="NSSuperview" ref="829948544"/>
-											<reference key="NSWindow"/>
 											<object class="NSTextContainer" key="NSTextContainer" id="700346087">
 												<object class="NSLayoutManager" key="NSLayoutManager">
 													<object class="NSTextStorage" key="NSTextStorage">
@@ -1620,7 +1626,7 @@
 												<int key="NSTCFlags">1</int>
 											</object>
 											<object class="NSTextViewSharedData" key="NSSharedData">
-												<int key="NSFlags">2917</int>
+												<int key="NSFlags">67111781</int>
 												<int key="NSTextCheckingTypes">0</int>
 												<nil key="NSMarkedAttributes"/>
 												<reference key="NSBackgroundColor" ref="178467331"/>
@@ -1652,7 +1658,6 @@
 									</array>
 									<string key="NSFrameSize">{165, 92}</string>
 									<reference key="NSSuperview" ref="949675429"/>
-									<reference key="NSWindow"/>
 									<reference key="NSNextKeyView" ref="637673380"/>
 									<reference key="NSDocView" ref="637673380"/>
 									<reference key="NSBGColor" ref="178467331"/>
@@ -1687,7 +1692,6 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 									<int key="NSvFlags">-2147483392</int>
 									<string key="NSFrame">{{-100, -100}, {15, 54}}</string>
 									<reference key="NSSuperview" ref="949675429"/>
-									<reference key="NSWindow"/>
 									<int key="NSsFlags">256</int>
 									<reference key="NSTarget" ref="949675429"/>
 									<string key="NSAction">_doScroller:</string>
@@ -1698,7 +1702,6 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 									<int key="NSvFlags">-2147483392</int>
 									<string key="NSFrame">{{-100, -100}, {87, 18}}</string>
 									<reference key="NSSuperview" ref="949675429"/>
-									<reference key="NSWindow"/>
 									<int key="NSsFlags">257</int>
 									<reference key="NSTarget" ref="949675429"/>
 									<string key="NSAction">_doScroller:</string>
@@ -1708,7 +1711,6 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 							</array>
 							<string key="NSFrame">{{169, 20}, {165, 92}}</string>
 							<reference key="NSSuperview" ref="813030389"/>
-							<reference key="NSWindow"/>
 							<reference key="NSNextKeyView" ref="829948544"/>
 							<int key="NSsFlags">133120</int>
 							<reference key="NSVScroller" ref="770850232"/>
@@ -1728,7 +1730,6 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 							</set>
 							<string key="NSFrame">{{20, 32}, {128, 128}}</string>
 							<reference key="NSSuperview" ref="813030389"/>
-							<reference key="NSWindow"/>
 							<reference key="NSNextKeyView" ref="198376688"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSImageCell" key="NSCell" id="423045545">
@@ -1747,11 +1748,9 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 						</object>
 					</array>
 					<string key="NSFrameSize">{354, 164}</string>
-					<reference key="NSSuperview"/>
-					<reference key="NSWindow"/>
 					<reference key="NSNextKeyView" ref="174023371"/>
 				</object>
-				<string key="NSScreenRect">{{0, 0}, {1440, 878}}</string>
+				<string key="NSScreenRect">{{0, 0}, {2560, 1418}}</string>
 				<string key="NSMinSize">{213, 129}</string>
 				<string key="NSMaxSize">{10000000000000, 10000000000000}</string>
 				<bool key="NSWindowIsRestorable">YES</bool>
@@ -2380,14 +2379,6 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBActionConnection" key="connection">
-						<string key="label">biggerFont:</string>
-						<reference key="source" ref="608955146"/>
-						<reference key="destination" ref="562301803"/>
-					</object>
-					<int key="connectionID">808</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBActionConnection" key="connection">
 						<string key="label">smallerFont:</string>
 						<reference key="source" ref="608955146"/>
 						<reference key="destination" ref="135910236"/>
@@ -2633,6 +2624,22 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 						<reference key="destination" ref="637673380"/>
 					</object>
 					<int key="connectionID">641</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">biggerFont:</string>
+						<reference key="source" ref="608955146"/>
+						<reference key="destination" ref="854744668"/>
+					</object>
+					<int key="connectionID">1423</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBActionConnection" key="connection">
+						<string key="label">originalFont:</string>
+						<reference key="source" ref="608955146"/>
+						<reference key="destination" ref="562301803"/>
+					</object>
+					<int key="connectionID">1424</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBActionConnection" key="connection">
@@ -3250,7 +3257,6 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 						<int key="objectID">803</int>
 						<reference key="object" ref="203853260"/>
 						<array class="NSMutableArray" key="children">
-							<reference ref="562301803"/>
 							<reference ref="135910236"/>
 							<reference ref="640558134"/>
 							<reference ref="705292119"/>
@@ -3265,6 +3271,8 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 							<reference ref="640505350"/>
 							<reference ref="675837179"/>
 							<reference ref="672316615"/>
+							<reference ref="562301803"/>
+							<reference ref="854744668"/>
 						</array>
 						<reference key="parent" ref="549291896"/>
 					</object>
@@ -3820,6 +3828,11 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 						<reference key="object" ref="637673380"/>
 						<reference key="parent" ref="949675429"/>
 					</object>
+					<object class="IBObjectRecord">
+						<int key="objectID">1422</int>
+						<reference key="object" ref="854744668"/>
+						<reference key="parent" ref="203853260"/>
+					</object>
 				</array>
 			</object>
 			<dictionary class="NSMutableDictionary" key="flattenedProperties">
@@ -3904,6 +3917,7 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 				<string key="1406.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="1408.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="1412.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+				<string key="1422.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="143.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="144.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
 				<string key="145.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -4012,7 +4026,7 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">1421</int>
+			<int key="maxID">1424</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -4575,6 +4589,7 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 						<string key="newSessionWithSameProfile:">id</string>
 						<string key="newWindow:">id</string>
 						<string key="nextTerminal:">id</string>
+						<string key="originalFont:">id</string>
 						<string key="previousTerminal:">id</string>
 						<string key="returnToDefaultSize:">id</string>
 						<string key="saveWindowArrangement:">id</string>
@@ -4643,6 +4658,10 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 						</object>
 						<object class="IBActionInfo" key="nextTerminal:">
 							<string key="name">nextTerminal:</string>
+							<string key="candidateClassName">id</string>
+						</object>
+						<object class="IBActionInfo" key="originalFont:">
+							<string key="name">originalFont:</string>
 							<string key="candidateClassName">id</string>
 						</object>
 						<object class="IBActionInfo" key="previousTerminal:">

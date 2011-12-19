@@ -2981,11 +2981,34 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return ignoreResizeNotifications_;
 }
 
+- (void)resetFontSize
+{
+    PTYSession* aSession = [tab_ activeSession];
+
+    NSDictionary *abEntry = [aSession originalAddressBookEntry];
+
+    NSString* fontDesc = [abEntry objectForKey:KEY_NORMAL_FONT];
+    NSFont* font = [ITAddressBookMgr fontWithDesc:fontDesc];
+    NSFont* nafont = [ITAddressBookMgr fontWithDesc:[abEntry objectForKey:KEY_NON_ASCII_FONT]];
+
+    [self setFont:font nafont:nafont horizontalSpacing:[TEXTVIEW horizontalSpacing] verticalSpacing:[TEXTVIEW verticalSpacing]];
+
+    [self updateAssociatedBookmarkAndPreferenceDialog];
+}
+
 - (void)changeFontSizeDirection:(int)dir
 {
     NSFont* font = [self fontWithRelativeSize:dir from:[TEXTVIEW font]];
     NSFont* nafont = [self fontWithRelativeSize:dir from:[TEXTVIEW nafont]];
     [self setFont:font nafont:nafont horizontalSpacing:[TEXTVIEW horizontalSpacing] verticalSpacing:[TEXTVIEW verticalSpacing]];
+
+    [self updateAssociatedBookmarkAndPreferenceDialog];
+}
+
+- (void)updateAssociatedBookmarkAndPreferenceDialog
+{
+    NSFont* font = [TEXTVIEW font];
+    NSFont* nafont = [TEXTVIEW nafont];
 
     // Move this bookmark into the sessions model.
     NSString* guid = [self divorceAddressBookEntryFromPreferences];
