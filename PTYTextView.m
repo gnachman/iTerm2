@@ -1,4 +1,3 @@
-
 // -*- mode:objc -*-
 // $Id: PTYTextView.m,v 1.325 2009-02-06 14:33:17 delx Exp $
 /*
@@ -65,6 +64,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #import "SmartSelectionController.h"
 #import "ITAddressBookMgr.h"
 #import "PointerController.h"
+#import "PointerPrefsController.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -303,6 +303,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                              selector:@selector(_settingsChanged:)
                                                  name:@"iTermRefreshTerminal"
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_pointerSettingsChanged:)
+                                                 name:kPointerPrefsChangedNotification
+                                               object:nil];
 
     advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
@@ -316,8 +320,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     pointer_ = [[PointerController alloc] init];
     pointer_.delegate = self;
 
-    [self futureSetAcceptsTouchEvents:YES];
-    [self futureSetWantsRestingTouches:YES];
+    if ([pointer_ viewShouldTrackTouches]) {
+        [self futureSetAcceptsTouchEvents:YES];
+        [self futureSetWantsRestingTouches:YES];
+    }
 
     return self;
 }
@@ -7644,6 +7650,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return YES;
     } else {
         return NO;
+    }
+}
+
+- (void)_pointerSettingsChanged:(NSNotification *)notification
+{
+    BOOL track = [pointer_ viewShouldTrackTouches];
+    [self futureSetAcceptsTouchEvents:track];
+    [self futureSetWantsRestingTouches:track];
+    if (!track) {
+        numTouches_ = 0;
     }
 }
 

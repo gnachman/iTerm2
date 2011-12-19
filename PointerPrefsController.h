@@ -40,6 +40,8 @@ extern NSString *kThreeFingerSwipeLeft;
 extern NSString *kThreeFingerSwipeUp;
 extern NSString *kThreeFingerSwipeDown;
 
+extern NSString *kPointerPrefsChangedNotification;
+
 @interface PointerPrefsController : NSObject {
     IBOutlet NSTableView *tableView_;
     IBOutlet NSTableColumn *buttonColumn_;
@@ -86,6 +88,7 @@ extern NSString *kThreeFingerSwipeDown;
                      modifiers:(int)modMask;
 + (NSString *)argumentForGesture:(NSString *)gesture
                        modifiers:(int)modMask;
++ (BOOL)haveThreeFingerTapEvents;
 
 - (void)setButtonNumber:(int)buttonNumber clickCount:(int)clickCount modifiers:(int)modMask;
 - (void)setGesture:(NSString *)gesture modifiers:(int)modMask;
