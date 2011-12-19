@@ -8,6 +8,18 @@
 #import "TmuxGateway.h"
 #import "RegexKitLite.h"
 #import "TmuxController.h"
+#import "iTermApplicationDelegate.h"
+
+#ifdef TMUX_VERBOSE_LOGGING
+#define TmuxLog NSLog
+#else
+#define TmuxLog(args...) \
+do { \
+if (gDebugLogging) { \
+DebugLog([NSString stringWithFormat:args]); \
+} \
+} while (0)
+#endif
 
 static NSString *kCommandTarget = @"target";
 static NSString *kCommandSelector = @"sel";
@@ -76,8 +88,8 @@ static NSString *kCommandObject = @"object";
     int windowPane = [[components objectAtIndex:1] intValue];
     NSString *base64data = [components objectAtIndex:2];
     NSData *decodedCommand = [self decodeBase64:base64data];
-    NSLog(@"Run tmux command: \"%%output %%%d %@", windowPane,
-          [[[NSString alloc] initWithData:decodedCommand encoding:NSUTF8StringEncoding] autorelease]);
+    TmuxLog(@"Run tmux command: \"%%output %%%d %@", windowPane,
+            [[[NSString alloc] initWithData:decodedCommand encoding:NSUTF8StringEncoding] autorelease]);
     [[[delegate_ tmuxController] sessionForWindowPane:windowPane]  tmuxReadTask:decodedCommand];
     state_ = CONTROL_STATE_READY;
 }
@@ -161,9 +173,9 @@ static NSString *kCommandObject = @"object";
     command = [command stringByReplacingOccurrencesOfString:@"\r" withString:@""];
     if (![command hasPrefix:@"%output "] &&
         !currentCommand_) {
-        NSLog(@"Read tmux command: \"%@\"", command);
+        TmuxLog(@"Read tmux command: \"%@\"", command);
     } else if (currentCommand_) {
-        NSLog(@"Read command response: \"%@\"", command);
+        TmuxLog(@"Read command response: \"%@\"", command);
     }
     // Advance range to include newline so we can chop it off
     commandRange.length += newlineRange.length;
@@ -184,9 +196,9 @@ static NSString *kCommandObject = @"object";
     } else if ([command hasPrefix:@"%window-close"]) {
         [self parseWindowCloseCommand:command];
     } else if ([command hasPrefix:@"%noop"]) {
-        NSLog(@"tmux noop: %@", command);
+        TmuxLog(@"tmux noop: %@", command);
     } else if ([command hasPrefix:@"%exit "]) {
-        NSLog(@"tmux exit message: %@", command);
+        TmuxLog(@"tmux exit message: %@", command);
         [self hostDisconnected];
     } else if ([command hasPrefix:@"%error"]) {
         [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@", command]];

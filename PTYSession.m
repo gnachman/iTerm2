@@ -60,6 +60,17 @@
 #define DEBUG_KEYDOWNDUMP     0
 #define ASK_ABOUT_OUTDATED_FORMAT @"AskAboutOutdatedKeyMappingForGuid%@"
 
+#ifdef TMUX_VERBOSE_LOGGING
+#define TmuxLog NSLog
+#else
+#define TmuxLog(args...) \
+do { \
+if (gDebugLogging) { \
+DebugLog([NSString stringWithFormat:args]); \
+} \
+} while (0)
+#endif
+
 @implementation PTYSession
 
 @synthesize futureWindowAffinities = futureWindowAffinities_;
@@ -3603,7 +3614,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (EXIT) {
         return;
     }
-    NSLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
+    TmuxLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
     if (tmuxLogging_) {
         [self printTmuxMessage:[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]];
     }
