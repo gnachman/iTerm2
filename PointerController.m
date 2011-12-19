@@ -71,7 +71,8 @@
 
 - (BOOL)viewShouldTrackTouches
 {
-    return [PointerPrefsController haveThreeFingerTapEvents];
+    return [[PreferencePanel sharedInstance] threeFingerEmulatesMiddle] ||
+           [PointerPrefsController haveThreeFingerTapEvents];
 }
 
 - (BOOL)eventEmulatesRightClick:(NSEvent *)event

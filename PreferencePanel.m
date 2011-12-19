@@ -40,6 +40,7 @@
 #import "TriggerController.h"
 #import "SmartSelectionController.h"
 #import "TrouterPrefsController.h"
+#import "PointerPrefsController.h"
 
 #define CUSTOM_COLOR_PRESETS @"Custom Color Presets"
 #define HOTKEY_WINDOW_GENERATED_PROFILE_NAME @"Hotkey Window"
@@ -1583,6 +1584,11 @@ static float versionNumber;
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermRefreshTerminal"
                                                             object:nil
                                                           userInfo:nil];
+        if (sender == threeFingerEmulatesMiddle) {
+            [[NSNotificationCenter defaultCenter] postNotificationName:kPointerPrefsChangedNotification
+                                                                object:nil
+                                                              userInfo:nil];
+        }
     } else if (sender == windowNumber ||
                sender == jobName ||
                sender == showBookmarkName) {
