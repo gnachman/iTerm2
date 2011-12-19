@@ -33,6 +33,8 @@
 #import "FindViewController.h"
 #import "ITAddressBookMgr.h"
 #import "LineBuffer.h"
+#import "TmuxGateway.h"
+#import "TmuxController.h"
 
 #include <sys/time.h>
 
@@ -69,7 +71,7 @@ typedef enum {
 
 @class PTYTab;
 @class SessionView;
-@interface PTYSession : NSResponder <FindViewControllerDelegate>
+@interface PTYSession : NSResponder <FindViewControllerDelegate, TmuxGatewayDelegate>
 {
     // Owning tab.
     PTYTab* tab_;
@@ -231,12 +233,28 @@ typedef enum {
 
     FindContext tailFindContext_;
     NSTimer *tailFindTimer_;
+
+    enum {
+        TMUX_NONE,
+        TMUX_GATEWAY,
+        TMUX_CLIENT
+    } tmuxMode_;
+    TmuxGateway *tmuxGateway_;
+    TmuxController *tmuxController_;
+    int tmuxPane_;
+    BOOL tmuxLogging_;  // log to gateway client
+
+    NSMutableSet *futureWindowAffinities_;
 }
+
+@property (nonatomic, readonly) NSMutableSet *futureWindowAffinities;
 
 // Return the current pasteboard value as a string.
 + (NSString*)pasteboardString;
 + (BOOL)handleShortcutWithoutTerminal:(NSEvent*)event;
 + (void)selectMenuItem:(NSString*)theName;
+
+- (BOOL)isTmuxClient;
 
 // init/dealloc
 - (id)init;
@@ -275,11 +293,17 @@ typedef enum {
 - (void)appendStringToTriggerLine:(NSString *)s;
 
 + (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame;
+- (void)setSizeFromArrangement:(NSDictionary*)arrangement;
 + (PTYSession*)sessionFromArrangement:(NSDictionary*)arrangement
                                inView:(SessionView*)sessionView
                                 inTab:(PTYTab*)theTab
                         forObjectType:(iTermObjectType)objectType;
++ (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
+                                         bookmark:(Bookmark *)bookmark;
+- (void)textViewFontDidChange;
 
+// Set rows, columns from arrangement.
+- (void)resizeFromArrangement:(NSDictionary *)arrangement;
 
 - (void)runCommandWithOldCwd:(NSString*)oldCWD
                forObjectType:(iTermObjectType)objectType;
@@ -526,6 +550,16 @@ typedef enum {
 - (void)sendHexCode:(NSString *)codes;
 - (void)sendText:(NSString *)text;
 
+- (void)startTmuxMode;
+- (void)tmuxDetach;
+- (int)tmuxPane;
+// Two sessions are compatible if they may share the same tab. Tmux clients
+// impose this restriction because they must belong to the same controller.
+- (BOOL)isCompatibleWith:(PTYSession *)otherSession;
+- (void)setTmuxPane:(int)windowPane;
+- (void)setTmuxController:(TmuxController *)tmuxController;
+
+- (TmuxController *)tmuxController;
 
 @end
 
@@ -549,5 +583,7 @@ typedef enum {
 - (void)stopTailFind;
 - (void)beginTailFind;
 - (void)continueTailFind;
+- (void)printTmuxMessage:(NSString *)message;
+- (void)printTmuxCommandOutputToScreen:(NSString *)response;
 
 @end

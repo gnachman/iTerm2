@@ -69,6 +69,11 @@
     }
 }
 
+- (BOOL)viewShouldTrackTouches
+{
+    return [PointerPrefsController haveThreeFingerTapEvents];
+}
+
 - (BOOL)eventEmulatesRightClick:(NSEvent *)event
 {
     return ![[PreferencePanel sharedInstance] passOnControlLeftClick] &&

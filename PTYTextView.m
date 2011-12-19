@@ -64,6 +64,7 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #import "SmartSelectionController.h"
 #import "ITAddressBookMgr.h"
 #import "PointerController.h"
+#import "PointerPrefsController.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -302,6 +303,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                              selector:@selector(_settingsChanged:)
                                                  name:@"iTermRefreshTerminal"
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(_pointerSettingsChanged:)
+                                                 name:kPointerPrefsChangedNotification
+                                               object:nil];
 
     advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
@@ -315,8 +320,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     pointer_ = [[PointerController alloc] init];
     pointer_.delegate = self;
 
-    [self futureSetAcceptsTouchEvents:YES];
-    [self futureSetWantsRestingTouches:YES];
+    if ([pointer_ viewShouldTrackTouches]) {
+        [self futureSetAcceptsTouchEvents:YES];
+        [self futureSetWantsRestingTouches:YES];
+    }
 
     return self;
 }
@@ -529,6 +536,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     endX = toX;
     endY = toY;
     [self setSelectionTime];
+}
+
+- (void)setRectangularSelection:(BOOL)isBox
+{
+    selectMode = isBox ? SELECT_BOX : SELECT_CHAR;
 }
 
 - (void)setFGColor:(NSColor*)color
@@ -802,6 +814,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     NSScrollView* scrollview = [self enclosingScrollView];
     [scrollview setLineScroll:[self lineHeight]];
     [scrollview setPageScroll:2 * [self lineHeight]];
+    [_delegate textViewFontDidChange];
 }
 
 - (void)changeFont:(id)fontManager
@@ -3396,6 +3409,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     [[[[dataSource session] tab] realParentWindow] newTabWithBookmarkGuid:guid];
 }
+
 - (void)newVerticalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event
 {
     [[[[dataSource session] tab] realParentWindow] splitVertically:YES
@@ -7636,6 +7650,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return YES;
     } else {
         return NO;
+    }
+}
+
+- (void)_pointerSettingsChanged:(NSNotification *)notification
+{
+    BOOL track = [pointer_ viewShouldTrackTouches];
+    [self futureSetAcceptsTouchEvents:track];
+    [self futureSetWantsRestingTouches:track];
+    if (!track) {
+        numTouches_ = 0;
     }
 }
 

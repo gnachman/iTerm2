@@ -411,14 +411,23 @@ static NSDate* lastResizeDate_;
 #pragma mark NSDraggingDestination protocol
 - (NSDragOperation)draggingEntered:(id < NSDraggingInfo >)sender
 {
+    PTYSession *movingSession = [[MovePaneController sharedInstance] session];
     if ([[[sender draggingPasteboard] types] indexOfObject:@"PSMTabBarControlItemPBType"] != NSNotFound) {
         // Dragging a tab handle. Source is a PSMTabBarControl.
         PTYTab *theTab = (PTYTab *)[[[[PSMTabDragAssistant sharedDragAssistant] draggedCell] representedObject] identifier];
         if (theTab == [session_ tab] || [[theTab sessions] count] > 1) {
             return NSDragOperationNone;
         }
+        if (![[theTab activeSession] isCompatibleWith:[self session]]) {
+            // Can't have heterogeneous tmux controllers in one tab.
+            return NSDragOperationNone;
+        }
     } else if ([[MovePaneController sharedInstance] isMovingSession:[self session]]) {
+        // Moving me onto myself
         return NSDragOperationMove;
+    } else if (![movingSession isCompatibleWith:[self session]]) {
+        // We must both be non-tmux or belong to the same session.
+        return NSDragOperationNone;
     }
     NSRect frame = [self frame];
     splitSelectionView_ = [[SplitSelectionView alloc] initWithFrame:NSMakeRect(0,
@@ -522,6 +531,11 @@ static NSDate* lastResizeDate_;
     }
     title_.title = title;
     [title_ setNeedsDisplay:YES];
+}
+
+- (NSString *)description
+{
+    return [NSString stringWithFormat:@"sv %@ %dx%d", [NSValue valueWithRect:[self frame]], [session_ columns], [session_ rows]];
 }
 
 #pragma mark SessionTitleViewDelegate

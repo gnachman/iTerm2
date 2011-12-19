@@ -198,6 +198,9 @@ int AppendToComplexChar(int key, unichar codePoint);
 // Create a new complex char from two code points. A key is returned.
 int BeginComplexChar(unichar initialCodePoint, unichar combiningChar);
 
+// Create or lookup & return the code for a complex char.
+int GetOrSetComplexChar(NSString* str);
+
 // Returns true if the given character is a combining mark, per chapter 3 of
 // the Unicode 6.0 spec, D52.
 BOOL IsCombiningMark(UTF32Char c);

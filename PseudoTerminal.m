@@ -72,6 +72,7 @@
 #import "ToolbeltView.h"
 #import "FutureMethods.h"
 #import "PseudoTerminalRestorer.h"
+#import "TmuxLayoutParser.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -159,34 +160,6 @@ NSString *sessionsKey = @"sessions";
 
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
 
-@implementation SolidColorView
-- (id)initWithFrame:(NSRect)frame color:(NSColor*)color
-{
-    self = [super initWithFrame:frame];
-    if (self) {
-        color_ = [color retain];
-    }
-    return self;
-}
-
-- (void)drawRect:(NSRect)dirtyRect
-{
-    [color_ setFill];
-    NSRectFill(dirtyRect);
-}
-
-- (void)setColor:(NSColor*)color
-{
-    [color_ autorelease];
-    color_ = [color retain];
-}
-
-- (NSColor*)color
-{
-    return color_;
-}
-
-@end
 @implementation BottomBarView
 - (void)drawRect:(NSRect)dirtyRect
 {
@@ -679,7 +652,9 @@ NSString *sessionsKey = @"sessions";
 
 - (void)closeSession:(PTYSession *)aSession
 {
-    if ([[[aSession tab] sessions] count] == 1) {
+    if ([aSession isTmuxClient] && [[aSession tmuxController] isAttached]) {
+        [[aSession tmuxController] killWindowPane:[aSession tmuxPane]];
+    } else if ([[[aSession tab] sessions] count] == 1) {
         [self closeTab:[aSession tab]];
     } else {
         [aSession terminate];
@@ -811,8 +786,17 @@ NSString *sessionsKey = @"sessions";
 
 - (void)closeTab:(PTYTab*)aTab
 {
-    NSTabViewItem *aTabViewItem;
+    if ([aTab isTmuxTab] && [[aTab sessions] count] > 0 && [[aTab tmuxController] isAttached]) {
+        [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
+        return;
+    }
+    [self removeTab:(PTYTab *)aTab];
+}
 
+// Just like closeTab but skips the tmux code. Terminates sessions, removes the
+// tab, and closes the window if there are no tabs left.
+- (void)removeTab:(PTYTab *)aTab
+{
     int numberOfTabs = [TABVIEW numberOfTabViewItems];
     for (PTYSession* session in [aTab sessions]) {
         [session terminate];
@@ -820,6 +804,7 @@ NSString *sessionsKey = @"sessions";
     if (numberOfTabs == 1 && [self windowInited]) {
         [[self window] close];
     } else {
+        NSTabViewItem *aTabViewItem;
         // now get rid of this tab
         aTabViewItem = [aTab tabViewItem];
         [TABVIEW removeTabViewItem:aTabViewItem];
@@ -977,7 +962,6 @@ NSString *sessionsKey = @"sessions";
     [pbHistoryView release];
     [autocompleteView release];
     [tabBarControl release];
-
     if (fullScreenTabviewTimer_) {
         [fullScreenTabviewTimer_ invalidate];
     }
@@ -1252,10 +1236,72 @@ NSString *sessionsKey = @"sessions";
     return term;
 }
 
+- (IBAction)detachTmux:(id)sender
+{
+    [[[self currentSession] tmuxController] requestDetach];
+}
+
+- (IBAction)newTmuxWindow:(id)sender
+{
+    [[[self currentSession] tmuxController] newWindowWithAffinity:-1];
+}
+
+- (IBAction)newTmuxTab:(id)sender
+{
+    [[[self currentSession] tmuxController] newWindowWithAffinity:[[self currentSession] tmuxPane]];
+}
+
+- (NSSize)tmuxCompatibleSize
+{
+    NSSize tmuxSize = NSMakeSize(INT_MAX, INT_MAX);
+    BOOL foundTmuxTab = NO;
+    for (PTYTab *aTab in [self tabs]) {
+        if ([aTab isTmuxTab]) {
+            foundTmuxTab = YES;
+            NSSize tabSize = [aTab tmuxSize];
+            tmuxSize.width = (int) MIN(tmuxSize.width, tabSize.width);
+            tmuxSize.height = (int) MIN(tmuxSize.height, tabSize.height);
+        }
+    }
+    return tmuxSize;
+}
+
+- (void)loadTmuxLayout:(NSMutableDictionary *)parseTree
+                window:(int)window
+        tmuxController:(TmuxController *)tmuxController
+                  name:(NSString *)name
+{
+    [self beginTmuxOriginatedResize];
+    PTYTab *tab = [PTYTab openTabWithTmuxLayout:parseTree
+                                     inTerminal:self
+                                     tmuxWindow:window
+                                 tmuxController:tmuxController];
+    [self setWindowTitle:name];
+    [tab setReportIdealSizeAsCurrent:YES];
+    [self fitWindowToTabs];
+    [tab setReportIdealSizeAsCurrent:NO];
+
+    for (PTYSession *aSession in [tab sessions]) {
+        [tmuxController registerSession:aSession withPane:[aSession tmuxPane] inWindow:window];
+        [aSession setTmuxController:tmuxController];
+    }
+    [self endTmuxOriginatedResize];
+}
+
+- (void)beginTmuxOriginatedResize
+{
+    ++tmuxOriginatedResizeInProgress_;
+}
+
+- (void)endTmuxOriginatedResize
+{
+    --tmuxOriginatedResizeInProgress_;
+}
+
 - (void)loadArrangement:(NSDictionary *)arrangement
 {
     for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
-        [PTYTab openTabWithArrangement:tabArrangement inTerminal:self];
+        [PTYTab openTabWithArrangement:tabArrangement inTerminal:self hasFlexibleView:NO];
     }
     int windowType = [PseudoTerminal _windowTypeForArrangement:arrangement];
     if (windowType == WINDOW_TYPE_NORMAL) {
@@ -1281,7 +1327,7 @@ NSString *sessionsKey = @"sessions";
     [self fitTabsToWindow];
 }
 
-- (NSDictionary*)arrangement
+- (NSDictionary *)arrangementExcludingTmuxTabs:(BOOL)excludeTmux
 {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:7];
     NSRect rect = [[self window] frame];
@@ -1322,7 +1368,10 @@ NSString *sessionsKey = @"sessions";
     // Save tabs.
     NSMutableArray* tabs = [NSMutableArray arrayWithCapacity:[self numberOfTabs]];
     for (NSTabViewItem* tabViewItem in [TABVIEW tabViewItems]) {
-        [tabs addObject:[[tabViewItem identifier] arrangement]];
+        PTYTab *theTab = [tabViewItem identifier];
+        if (!excludeTmux || ![theTab isTmuxTab]) {
+            [tabs addObject:[[tabViewItem identifier] arrangement]];
+        }
     }
     [result setObject:tabs forKey:TERMINAL_ARRANGEMENT_TABS];
 
@@ -1331,6 +1380,11 @@ NSString *sessionsKey = @"sessions";
                forKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX];
 
     return result;
+}
+
+- (NSDictionary*)arrangement
+{
+    return [self arrangementExcludingTmuxTabs:NO];
 }
 
 // NSWindow delegate methods
@@ -1387,11 +1441,24 @@ NSString *sessionsKey = @"sessions";
         needPrompt = YES;
     }
 
+    BOOL shouldClose;
     if (needPrompt) {
-        return [self showCloseWindow];
+        shouldClose = [self showCloseWindow];
     } else {
-        return YES;
+        shouldClose = YES;
     }
+    if (shouldClose) {
+        // If there are tmux tabs, tell the tmux server to kill the window, but
+        // go ahead and close the window anyway because there might be non-tmux
+        // tabs as well. This is a rare instance of performing an action on a
+        // tmux object without waiting for the server to tell us to do it.
+        for (PTYTab *aTab in [self tabs]) {
+            if ([aTab isTmuxTab]) {
+                [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
+            }
+        }
+    }
+    return shouldClose;
 }
 
 - (void)windowWillClose:(NSNotification *)aNotification
@@ -1766,6 +1833,56 @@ NSString *sessionsKey = @"sessions";
     [[self window] futureInvalidateRestorableState];
 }
 
+- (NSArray *)uniqueTmuxControllers
+{
+    NSMutableSet *controllers = [NSMutableSet set];
+    for (PTYTab *tab in [self tabs]) {
+        BOOL hasClient = NO;
+        for (PTYSession *aSession in [tab sessions]) {
+            if ([aSession isTmuxClient]) {
+                hasClient = YES;
+                break;
+            }
+        }
+        if (hasClient) {
+            TmuxController *c = [tab tmuxController];
+            if (c) {
+                [controllers addObject:c];
+            }
+        }
+    }
+    return [controllers allObjects];
+}
+
+- (void)tmuxTabLayoutDidChange:(BOOL)nontrivialChange
+{
+    if (liveResize_) {
+        if (nontrivialChange) {
+            postponedTmuxTabLayoutChange_ = YES;
+        }
+        return;
+    }
+    for (TmuxController *controller in [self uniqueTmuxControllers]) {
+        if ([controller hasOutstandingWindowResize]) {
+            return;
+        }
+    }
+
+    [self beginTmuxOriginatedResize];
+    [self fitWindowToTabs];
+    [self endTmuxOriginatedResize];
+}
+
+- (void)notifyTmuxOfWindowResize
+{
+    NSArray *tmuxControllers = [self uniqueTmuxControllers];
+    if (tmuxControllers.count && !tmuxOriginatedResizeInProgress_) {
+        for (TmuxController *controller in tmuxControllers) {
+            [controller windowDidResize:self];
+        }
+    }
+}
+
 - (void)windowDidResize:(NSNotification *)aNotification
 {
     lastResizeTime_ = [[NSDate date] timeIntervalSince1970];
@@ -1773,6 +1890,7 @@ NSString *sessionsKey = @"sessions";
         // Pretend nothing happened to avoid slowing down zooming.
         return;
     }
+
     PtyLog(@"windowDidResize to: %fx%f", [[self window] frame].size.width, [[self window] frame].size.height);
     [SessionView windowDidResize];
     if (togglingFullScreen_) {
@@ -1783,6 +1901,8 @@ NSString *sessionsKey = @"sessions";
     // Adjust the size of all the sessions.
     PtyLog(@"windowDidResize - call repositionWidgets");
     [self repositionWidgets];
+
+    [self notifyTmuxOfWindowResize];
 
     PTYSession* session = [self currentSession];
     NSString *aTitle = [NSString stringWithFormat:@"%@ (%d,%d)",
@@ -2016,6 +2136,9 @@ NSString *sessionsKey = @"sessions";
     [newTerminal setWindowTitle];
     PtyLog(@"toggleFullScreenMode - calling window update");
     [[newTerminal window] update];
+    if (fs) {
+        [newTerminal notifyTmuxOfWindowResize];
+    }
     PtyLog(@"toggleFullScreenMode returning");
     togglingFullScreen_ = false;
     [self release];
@@ -2046,13 +2169,23 @@ NSString *sessionsKey = @"sessions";
             ![[PreferencePanel sharedInstance] hideScrollbar]);
 }
 
+- (void)windowWillStartLiveResize:(NSNotification *)notification
+{
+    liveResize_ = YES;
+}
+
 - (void)windowDidEndLiveResize:(NSNotification *)notification
 {
+    liveResize_ = NO;
     BOOL wasZooming = zooming_;
     zooming_ = NO;
     if (wasZooming) {
         // Reached zoom size. Update size.
         [self windowDidResize:nil];
+    }
+    if (postponedTmuxTabLayoutChange_) {
+        [self tmuxTabLayoutDidChange:YES];
+        postponedTmuxTabLayoutChange_ = NO;
     }
 }
 
@@ -2071,6 +2204,7 @@ NSString *sessionsKey = @"sessions";
     [self _updateToolbeltParentage];
     [self fitTabsToWindow];
     [self futureInvalidateRestorableState];
+    [self notifyTmuxOfWindowResize];
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
@@ -3214,6 +3348,10 @@ NSString *sessionsKey = @"sessions";
 
 - (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid
 {
+    if ([[self currentTab] isTmuxTab]) {
+        [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane] vertically:isVertical];
+        return;
+    }
     Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
     if (bookmark) {
         [self splitVertically:isVertical withBookmark:bookmark targetSession:[self currentSession]];
@@ -3262,8 +3400,14 @@ NSString *sessionsKey = @"sessions";
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
 
-- (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark targetSession:(PTYSession*)targetSession
+- (void)splitVertically:(BOOL)isVertical
+           withBookmark:(Bookmark*)theBookmark
+          targetSession:(PTYSession*)targetSession
 {
+    if ([targetSession isTmuxClient]) {
+        [[targetSession tmuxController] splitWindowPane:[targetSession tmuxPane] vertically:isVertical];
+        return;
+    }
     PtyLog(@"--------- splitVertically -----------");
     if (![self canSplitPaneVertically:isVertical withBookmark:theBookmark]) {
         NSBeep();
@@ -3725,6 +3869,20 @@ NSString *sessionsKey = @"sessions";
     [self _updateTabObjectCounts];
 }
 
+- (void)refreshTmuxLayoutsAndWindow
+{
+    for (PTYTab *aTab in [self tabs]) {
+        [aTab setReportIdealSizeAsCurrent:YES];
+        if ([aTab isTmuxTab]) {
+            [aTab reloadTmuxLayout];
+        }
+    }
+    [self fitWindowToTabs];
+    for (PTYTab *aTab in [self tabs]) {
+        [aTab setReportIdealSizeAsCurrent:NO];
+    }
+}
+
 @end
 
 @implementation PseudoTerminal (Private)
@@ -3771,13 +3929,7 @@ NSString *sessionsKey = @"sessions";
         // The scrollbar has already been added so tabs' current sizes are wrong.
         // Use ideal sizes instead, to fit to the session dimensions instead of
         // the existing pixel dimensions of the tabs.
-        for (PTYTab *aTab in [self tabs]) {
-            [aTab setReportIdealSizeAsCurrent:YES];
-        }
-        [self fitWindowToTabs];
-        for (PTYTab *aTab in [self tabs]) {
-            [aTab setReportIdealSizeAsCurrent:NO];
-        }
+        [self refreshTmuxLayoutsAndWindow];
     }
 }
 
@@ -3800,9 +3952,12 @@ NSString *sessionsKey = @"sessions";
     // Assign counts to each session. This causes tabs to show their tab number,
     // called an objectCount. When the "compact tab" pref is toggled, this makes
     // formerly countless tabs show their counts.
+    BOOL needResize = NO;
     for (int i = 0; i < [TABVIEW numberOfTabViewItems]; ++i) {
         PTYTab *aTab = [[TABVIEW tabViewItemAtIndex:i] identifier];
-        [aTab updatePaneTitles];
+        if ([aTab updatePaneTitles]) {
+            needResize = YES;
+        }
         [aTab setObjectCount:i+1];
 
         // Update dimmed status of inactive sessions in split panes in case the preference changed.
@@ -3818,6 +3973,14 @@ NSString *sessionsKey = @"sessions";
 
             // In case dimming amount slider moved update the dimming amount.
             [[aSession view] updateDim];
+        }
+    }
+
+    // If updatePaneTitles caused any session to change dimensions, then tell tmux
+    // controllers that our capacity has changed.
+    if (needResize) {
+        for (TmuxController *c in [self uniqueTmuxControllers]) {
+            [c windowDidResize:self];
         }
     }
 }
@@ -4619,7 +4782,14 @@ NSString *sessionsKey = @"sessions";
           __FILE__, __LINE__, item );
 #endif
 
-    if ([item action] == @selector(jumpToSavedScrollPosition:)) {
+    if ([item action] == @selector(detachTmux) ||
+        [item action] == @selector(newTmuxWindow:) ||
+        [item action] == @selector(newTmuxTab:)) {
+        result = [[self currentTab] isTmuxTab];
+    } else if ([item action] == @selector(openSplitHorizontallySheet:) ||
+        [item action] == @selector(openSplitVerticallySheet:)) {
+        result = ![[self currentTab] isTmuxTab];
+    } else if ([item action] == @selector(jumpToSavedScrollPosition:)) {
         result = [self hasSavedScrollPosition];
     } else if ([item action] == @selector(moveTabLeft:)) {
         result = [TABVIEW numberOfTabViewItems] > 1;
@@ -4712,7 +4882,7 @@ NSString *sessionsKey = @"sessions";
 }
 
 // closes a tab
-- (void) closeTabContextualMenuAction: (id) sender
+- (void)closeTabContextualMenuAction: (id) sender
 {
     [self closeTab:(id)[[sender representedObject] identifier]];
 }
@@ -5025,14 +5195,25 @@ NSString *sessionsKey = @"sessions";
     [self loadArrangement:[state decodeObjectForKey:@"ptyarrangement"]];
 }
 
+- (BOOL)allTabsAreTmuxTabs
+{
+    for (PTYTab *aTab in [self tabs]) {
+        if (![aTab isTmuxTab]) {
+            return NO;
+        }
+    }
+    return YES;
+}
+
 - (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state
 {
-    if ([self isHotKeyWindow]) {
+    if ([self isHotKeyWindow] || [self allTabsAreTmuxTabs]) {
+        // Don't save and restore hotkey windows or tmux windows.
         return;
     }
     if (wellFormed_) {
         [lastArrangement_ release];
-        lastArrangement_ = [[self arrangement] retain];
+        lastArrangement_ = [[self arrangementExcludingTmuxTabs:YES] retain];
     }
     [state encodeObject:lastArrangement_ forKey:@"ptyarrangement"];
 }

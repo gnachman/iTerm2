@@ -184,6 +184,14 @@ static BOOL isANSI(unsigned char *code, size_t len)
     return NO;
 }
 
+static BOOL isUNDERSCORE(unsigned char *code, size_t len)
+{
+    if (len >= 2 && code[0] == ESC && code[1] == '_') {
+        return YES;
+    }
+    return NO;
+}
+
 static BOOL isString(unsigned char *code,
                      NSStringEncoding encoding)
 {
@@ -692,6 +700,49 @@ static VT100TCC decode_csi(unsigned char *datap,
     return result;
 }
 
+static VT100TCC decode_underscore(unsigned char *datap,
+                                  size_t datalen,
+                                  size_t *rmlen,
+                                  NSStringEncoding enc)
+{
+    VT100TCC result;
+    result.type = VT100_WAIT;
+    // Can assume we have "ESC _" so skip past that.
+    datap += 2;
+    datalen -= 2;
+    *rmlen=2;
+    if (datalen > 0) {
+        int i;
+        BOOL found = NO;
+        // Search for esc \ terminator.
+        for (i = 0; i < datalen; i++) {
+            if (i > 0 && datap[i - 1] == ESC && datap[i] == '\\') {
+                // Found esc \. Grab text from datap to char before esc and
+                // save in result.u.string.
+                NSData *data = [NSData dataWithBytes:datap length:i - 1];
+                result.u.string = [[[NSString alloc] initWithData:data
+                                                         encoding:enc] autorelease];
+                // Consume everything up to the backslash
+                (*rmlen) += i + 1;
+                found = YES;
+                break;
+            } else if (i > 0 && datap[i - 1] == ESC) {
+                // Stop on ESC <anything> to avoid getting stuck after a broken escape code
+                result.type = VT100_NOTSUPPORT;
+                return result;
+            }
+        }
+
+        if (found) {
+            if ([result.u.string isEqualToString:@"tmux0.1"]) {
+                result.type = UNDERSCORE_TMUX1;
+            } else {
+                result.type = VT100_NOTSUPPORT;
+            }
+        }
+    }
+    return result;
+}
 
 static VT100TCC decode_xterm(unsigned char *datap,
                              size_t datalen,
@@ -1004,6 +1055,8 @@ static VT100TCC decode_control(unsigned char *datap,
         result = decode_xterm(datap, datalen, rmlen, enc);
     } else if (isANSI(datap, datalen)) {
         result = decode_ansi(datap, datalen, rmlen, SCREEN);
+    } else if (isUNDERSCORE(datap, datalen)) {
+        result = decode_underscore(datap, datalen, rmlen, enc);
     } else {
         NSCParameterAssert(datalen > 0);
 
@@ -1661,6 +1714,18 @@ static VT100TCC decode_string(unsigned char *datap,
     alternateBackgroundSemantics = saveAltBackground;
 }
 
+- (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem
+{
+    FG_COLORCODE = fgColorCode;
+    alternateForegroundSemantics = altsem;
+}
+
+- (void)setBackgroundColor:(int)bgColorCode alternateSemantics:(BOOL)altsem
+{
+    BG_COLORCODE = bgColorCode;
+    alternateBackgroundSemantics = altsem;
+}
+
 - (void)reset
 {
     LINE_MODE = NO;
@@ -1751,6 +1816,17 @@ static VT100TCC decode_string(unsigned char *datap,
     current_stream_length += [data length];
     if(current_stream_length == 0)
         streamOffset = 0;
+}
+
+- (NSData *)streamData
+{
+    return [NSData dataWithBytes:STREAM + streamOffset
+                          length:current_stream_length - streamOffset];
+}
+
+- (void)clearStream
+{
+    streamOffset = current_stream_length;
 }
 
 - (VT100TCC)getNextToken

@@ -461,9 +461,10 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
 
         //split off the dragged tab into a new window
         if ([self destinationTabBar] == nil &&
-                sourceDelegate && [sourceDelegate respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
-                [sourceDelegate tabView:[[self sourceTabBar] tabView] shouldDropTabViewItem:[[self draggedCell] representedObject] inTabBar:nil] &&
-                [sourceDelegate respondsToSelector:@selector(tabView:newTabBarForDraggedTabViewItem:atPoint:)]) {
+            sourceDelegate && [sourceDelegate respondsToSelector:@selector(tabView:shouldDropTabViewItem:inTabBar:)] &&
+            [sourceDelegate tabView:[[self sourceTabBar] tabView] shouldDropTabViewItem:[[self draggedCell] representedObject] inTabBar:nil] &&
+            [sourceDelegate respondsToSelector:@selector(tabView:newTabBarForDraggedTabViewItem:atPoint:)]) {
+
             PSMTabBarControl *control = [sourceDelegate tabView:[[self sourceTabBar] tabView] newTabBarForDraggedTabViewItem:[[self draggedCell] representedObject] atPoint:aPoint];
 
             if (control) {
@@ -498,6 +499,7 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
             } else {
                 NSLog(@"Delegate returned no control to add to.");
                 [[[self sourceTabBar] cells] insertObject:[self draggedCell] atIndex:[self draggedCellIndex]];
+                [[[self sourceTabBar] window] setAlphaValue:1];  // Make the window visible again.
             }
 
         } else {

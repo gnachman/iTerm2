@@ -18,6 +18,7 @@ static NSString *kCommandKeyChar = @"c";
 static NSString *kOptionKeyChar = @"o";
 static NSString *kShiftKeyChar = @"s";
 static NSString *kControlKeyChar = @"^";
+
 #define kLeftButton 0
 #define kRightButton 1
 #define kMiddleButton 2
@@ -65,6 +66,8 @@ NSString *kSelectNextPanePointerAction = @"kSelectNextPanePointerAction";
 NSString *kSelectPreviousPanePointerAction = @"kSelectPreviousPanePointerAction";
 NSString *kExtendSelectionPointerAction = @"kExtendSelectionPointerAction";
 
+NSString *kPointerPrefsChangedNotification = @"kPointerPrefsChangedNotification";
+
 typedef enum {
     kNoArg,
     kEscPlusArg,
@@ -109,6 +112,7 @@ typedef enum {
 + (int)tagForGestureIdentifier:(NSString *)ident;
 - (BOOL)okShouldBeEnabled;
 - (void)editKey:(NSString *)key;
++ (BOOL)keyIsThreeFingerTap:(NSString *)key;
 @end
 
 @implementation PointerPrefsController
@@ -179,6 +183,16 @@ typedef enum {
 + (BOOL)keyIsButton:(NSString *)key
 {
     return [key hasPrefix:kButtonSchema];
+}
+
++ (BOOL)keyIsThreeFingerTap:(NSString *)key
+{
+    if (![key hasPrefix:kGestureSchema]) {
+        return NO;
+    }
+    NSArray *components = [PointerPrefsController gestureKeyComponents:key];
+    NSString *gesture = [components objectAtIndex:1];
+    return [gesture isEqualToString:kThreeFingerClickGesture];
 }
 
 + (NSArray *)buttonKeyComponents:(NSString *)key
@@ -562,6 +576,8 @@ typedef enum {
 + (void)setSettings:(NSDictionary *)newSettings
 {
     [[NSUserDefaults standardUserDefaults] setObject:newSettings forKey:kPointerActionsKey];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kPointerPrefsChangedNotification
+                                                        object:nil];
 }
 
 + (NSArray *)sortedKeys
@@ -647,6 +663,16 @@ typedef enum {
     key = [PointerPrefsController keyForGesture:gesture
                                       modifiers:modMask];
     return [[[PointerPrefsController settings] objectForKey:key] objectForKey:kArgumentKey];
+}
+
++ (BOOL)haveThreeFingerTapEvents
+{
+    for (NSString *key in [PointerPrefsController sortedKeys]) {
+        if ([PointerPrefsController keyIsThreeFingerTap:key]) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 #pragma mark NSTableViewDataSource

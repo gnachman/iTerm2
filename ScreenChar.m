@@ -95,7 +95,7 @@ UTF32Char CharToLongChar(unichar code, BOOL isComplex)
     }
 }
 
-static int GetOrSetComplexChar(NSString* str)
+int GetOrSetComplexChar(NSString* str)
 {
     if (!complexCharMap) {
         complexCharMap = [[NSMutableDictionary alloc] initWithCapacity:1000];

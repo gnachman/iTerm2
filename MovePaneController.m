@@ -10,7 +10,7 @@
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
 #import "SessionView.h"
-
+#import "TmuxController.h"
 @implementation MovePaneController
 
 @synthesize dragFailed = dragFailed_;
@@ -46,6 +46,11 @@
 
 - (void)moveSessionToNewWindow:(PTYSession *)movingSession atPoint:(NSPoint)point
 {
+    if ([movingSession isTmuxClient]) {
+        [[movingSession tmuxController] breakOutWindowPane:[movingSession tmuxPane]
+                                                   toPoint:point];
+        return;
+    }
     PTYTab *theTab = [movingSession tab];
     PseudoTerminal *term = [[theTab realParentWindow] terminalDraggedFromAnotherWindowAtPoint:point];
 
@@ -93,14 +98,16 @@
 
 // This function is either called once or twice at the end of a drag.
 // If only one call is made, then dest will be nil and the session will be moved to a new window.
-// If two calls are made, the first has dest non-null and will perform a split. The second call will
-// be ignored.
-// It isn't called at all if a session is dragged into an existing tab bar, though.
+// If two calls are made, the both have dest non-null but only the first call will perform a split.
+// The second call will do nothing.
+// It isn't called at all if a session is dragged into an existing tab bar.
 - (BOOL)dropInSession:(PTYSession *)dest
                  half:(SplitSessionHalf)half
               atPoint:(NSPoint)point
 {
-    if (dest == session_ || !session_) {
+    if ((dest && ![session_ isCompatibleWith:dest]) ||  // Would create hetero-tmuxual splits in tab
+        dest == session_ ||  // move to self
+        !session_) {         // no source (?)
         didSplit_ = YES;
         return NO;
     }
@@ -110,11 +117,22 @@
         [self moveSessionToNewWindow:session_ atPoint:point];
         return YES;
     } else if (!dest) {
-        // This is the second call and a split has already been performed.
+        // This is the second call and a split has already been performed/aborted.
         return NO;
     }
 
     didSplit_ = YES;
+
+    if ([self.session isTmuxClient]) {
+        // Do this after setting didSplit becaue a second call to this method
+        // will happen no matter what and we want it to do nothing if we get
+        // here.
+        [[self.session tmuxController] movePane:[self.session tmuxPane]
+                                       intoPane:[dest tmuxPane]
+                                     isVertical:(half == kEastHalf || half == kWestHalf)
+                                         before:(half == kNorthHalf || half == kWestHalf)];
+        return NO;
+    }
 
     PTYSession *movingSession = session_;
     BOOL isVertical = (half == kWestHalf || half == kEastHalf);

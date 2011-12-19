@@ -44,6 +44,14 @@
 		1D395913134E75B5005A8021 /* SmartSelectionRules.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D395912134E75B5005A8021 /* SmartSelectionRules.plist */; };
 		1D3BBD6B14759D6C00FAB389 /* HighlightTrigger.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3BBD6914759D6C00FAB389 /* HighlightTrigger.h */; };
 		1D3BBD6C14759D6C00FAB389 /* HighlightTrigger.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3BBD6A14759D6C00FAB389 /* HighlightTrigger.m */; };
+		1D3D21871482E0E500FAC8E7 /* TmuxGateway.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3D21851482E0E500FAC8E7 /* TmuxGateway.h */; };
+		1D3D21881482E0E500FAC8E7 /* TmuxGateway.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D21861482E0E500FAC8E7 /* TmuxGateway.m */; };
+		1D3D21901482F18A00FAC8E7 /* TmuxController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3D218E1482F18A00FAC8E7 /* TmuxController.h */; };
+		1D3D21911482F18A00FAC8E7 /* TmuxController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D218F1482F18A00FAC8E7 /* TmuxController.m */; };
+		1D3D21951483144600FAC8E7 /* TSVParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3D21931483144600FAC8E7 /* TSVParser.h */; };
+		1D3D21961483144600FAC8E7 /* TSVParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D21941483144600FAC8E7 /* TSVParser.m */; };
+		1D3D21AF14839AAB00FAC8E7 /* TmuxLayoutParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3D21AD14839AAB00FAC8E7 /* TmuxLayoutParser.h */; };
+		1D3D21B014839AAB00FAC8E7 /* TmuxLayoutParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D21AE14839AAB00FAC8E7 /* TmuxLayoutParser.m */; };
 		1D44218C1290B34500891504 /* TextViewWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D44218A1290B34500891504 /* TextViewWrapper.h */; };
 		1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D44218B1290B34500891504 /* TextViewWrapper.m */; };
 		1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */; };
@@ -184,6 +192,8 @@
 		1D6C50A81226EEFB00E0AA3E /* BookmarkListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */; };
 		1D72439011F416F300BD4924 /* LineBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72438F11F416F300BD4924 /* LineBuffer.h */; };
 		1D72477411F55E5700BD4924 /* LineBufferTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72477211F55E5700BD4924 /* LineBufferTest.h */; };
+		1D7B9A691491D82F003A2A22 /* IntervalMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7B9A671491D82F003A2A22 /* IntervalMap.h */; };
+		1D7B9A6A1491D82F003A2A22 /* IntervalMap.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7B9A681491D82F003A2A22 /* IntervalMap.m */; };
 		1D7C18811275D22900461E55 /* PasteboardHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7C187F1275D22900461E55 /* PasteboardHistory.h */; };
 		1D7C18821275D22900461E55 /* PasteboardHistory.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C18801275D22900461E55 /* PasteboardHistory.m */; };
 		1D7C1AD31276FD6E00461E55 /* PasteboardHistory.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */; };
@@ -256,7 +266,15 @@
 		1DAED5B212ECC485005E49ED /* FakeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D173858126C820A004622DC /* FakeWindow.m */; };
 		1DAED99212EDF923005E49ED /* iTermSearchField.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DAED99012EDF923005E49ED /* iTermSearchField.h */; };
 		1DAED99312EDF923005E49ED /* iTermSearchField.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DAED99112EDF923005E49ED /* iTermSearchField.m */; };
+		1DB67CED14850D53005849A1 /* TmuxWindowOpener.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CEB14850D53005849A1 /* TmuxWindowOpener.h */; };
+		1DB67CEE14850D53005849A1 /* TmuxWindowOpener.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB67CEC14850D53005849A1 /* TmuxWindowOpener.m */; };
+		1DB67CF11485C578005849A1 /* TmuxHistoryParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CEF1485C578005849A1 /* TmuxHistoryParser.h */; };
+		1DB67CF21485C578005849A1 /* TmuxHistoryParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB67CF01485C578005849A1 /* TmuxHistoryParser.m */; };
+		1DB67CF51486BD3D005849A1 /* TmuxStateParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DB67CF31486BD3D005849A1 /* TmuxStateParser.h */; };
+		1DB67CF61486BD3D005849A1 /* TmuxStateParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DB67CF41486BD3D005849A1 /* TmuxStateParser.m */; };
 		1DB72CF61396059200EB1005 /* xterm-terminfo.txt in Resources */ = {isa = PBXBuildFile; fileRef = 1DB72CF51396059200EB1005 /* xterm-terminfo.txt */; };
+		1DC38818148E840700B89F7C /* SolidColorView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DC38816148E840600B89F7C /* SolidColorView.h */; };
+		1DC38819148E840700B89F7C /* SolidColorView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC38817148E840700B89F7C /* SolidColorView.m */; };
 		1DC742A0127C96F90069594C /* IBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC7429F127C96F90069594C /* IBarCursor.png */; };
 		1DCA5ECC13EE4DA800B7725E /* arrangement.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA5ECB13EE4DA800B7725E /* arrangement.png */; };
 		1DCA5ECF13EE507800B7725E /* WindowArrangements.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCA5ECD13EE507800B7725E /* WindowArrangements.h */; };
@@ -273,6 +291,9 @@
 		1DCF3EC61224D03D00AD56F1 /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		1DCF3F001224EEBD00AD56F1 /* MigrationMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */; };
 		1DCF3F4A1225F6F200AD56F1 /* BookmarkModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */; };
+		1DD1BB6E148FD08A00567DF0 /* linen.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 1DD1BB6D148FD08A00567DF0 /* linen.jpg */; };
+		1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD6707514934ADE008E4361 /* PTYSplitView.h */; };
+		1DD6707814934ADE008E4361 /* PTYSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD6707614934ADE008E4361 /* PTYSplitView.m */; };
 		1DD736411283C2FA009B7829 /* Popup.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD7363F1283C2FA009B7829 /* Popup.h */; };
 		1DD736421283C2FA009B7829 /* Popup.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD736401283C2FA009B7829 /* Popup.m */; };
 		1DDBC61E12E2BCDC00BC3868 /* iTermExpose.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DDBC61C12E2BCDC00BC3868 /* iTermExpose.h */; };
@@ -375,6 +396,14 @@
 		1D395912134E75B5005A8021 /* SmartSelectionRules.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = SmartSelectionRules.plist; sourceTree = "<group>"; };
 		1D3BBD6914759D6C00FAB389 /* HighlightTrigger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HighlightTrigger.h; sourceTree = "<group>"; };
 		1D3BBD6A14759D6C00FAB389 /* HighlightTrigger.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HighlightTrigger.m; sourceTree = "<group>"; };
+		1D3D21851482E0E500FAC8E7 /* TmuxGateway.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxGateway.h; sourceTree = "<group>"; };
+		1D3D21861482E0E500FAC8E7 /* TmuxGateway.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxGateway.m; sourceTree = "<group>"; };
+		1D3D218E1482F18A00FAC8E7 /* TmuxController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxController.h; sourceTree = "<group>"; };
+		1D3D218F1482F18A00FAC8E7 /* TmuxController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxController.m; sourceTree = "<group>"; };
+		1D3D21931483144600FAC8E7 /* TSVParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TSVParser.h; sourceTree = "<group>"; };
+		1D3D21941483144600FAC8E7 /* TSVParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TSVParser.m; sourceTree = "<group>"; };
+		1D3D21AD14839AAB00FAC8E7 /* TmuxLayoutParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxLayoutParser.h; sourceTree = "<group>"; };
+		1D3D21AE14839AAB00FAC8E7 /* TmuxLayoutParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxLayoutParser.m; sourceTree = "<group>"; };
 		1D44218A1290B34500891504 /* TextViewWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextViewWrapper.h; sourceTree = "<group>"; };
 		1D44218B1290B34500891504 /* TextViewWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TextViewWrapper.m; sourceTree = "<group>"; };
 		1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TrouterPrefsController.h; sourceTree = "<group>"; };
@@ -398,6 +427,8 @@
 		1D72438F11F416F300BD4924 /* LineBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBuffer.h; sourceTree = "<group>"; };
 		1D72477211F55E5700BD4924 /* LineBufferTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferTest.h; sourceTree = "<group>"; };
 		1D72477311F55E5700BD4924 /* LineBufferTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBufferTest.m; sourceTree = "<group>"; };
+		1D7B9A671491D82F003A2A22 /* IntervalMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IntervalMap.h; sourceTree = "<group>"; };
+		1D7B9A681491D82F003A2A22 /* IntervalMap.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = IntervalMap.m; sourceTree = "<group>"; };
 		1D7C187F1275D22900461E55 /* PasteboardHistory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PasteboardHistory.h; sourceTree = "<group>"; };
 		1D7C18801275D22900461E55 /* PasteboardHistory.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PasteboardHistory.m; sourceTree = "<group>"; };
 		1D7C1AD21276FD6E00461E55 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/PasteboardHistory.xib; sourceTree = "<group>"; };
@@ -469,7 +500,15 @@
 		1DAED28712E9395E005E49ED /* GlobalSearch.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GlobalSearch.m; sourceTree = "<group>"; };
 		1DAED99012EDF923005E49ED /* iTermSearchField.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSearchField.h; sourceTree = "<group>"; };
 		1DAED99112EDF923005E49ED /* iTermSearchField.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermSearchField.m; sourceTree = "<group>"; };
+		1DB67CEB14850D53005849A1 /* TmuxWindowOpener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxWindowOpener.h; sourceTree = "<group>"; };
+		1DB67CEC14850D53005849A1 /* TmuxWindowOpener.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxWindowOpener.m; sourceTree = "<group>"; };
+		1DB67CEF1485C578005849A1 /* TmuxHistoryParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxHistoryParser.h; sourceTree = "<group>"; };
+		1DB67CF01485C578005849A1 /* TmuxHistoryParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxHistoryParser.m; sourceTree = "<group>"; };
+		1DB67CF31486BD3D005849A1 /* TmuxStateParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxStateParser.h; sourceTree = "<group>"; };
+		1DB67CF41486BD3D005849A1 /* TmuxStateParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxStateParser.m; sourceTree = "<group>"; };
 		1DB72CF51396059200EB1005 /* xterm-terminfo.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "xterm-terminfo.txt"; sourceTree = "<group>"; };
+		1DC38816148E840600B89F7C /* SolidColorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SolidColorView.h; sourceTree = "<group>"; };
+		1DC38817148E840700B89F7C /* SolidColorView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SolidColorView.m; sourceTree = "<group>"; };
 		1DC7429F127C96F90069594C /* IBarCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = IBarCursor.png; path = images/IBarCursor.png; sourceTree = "<group>"; };
 		1DCA5ECB13EE4DA800B7725E /* arrangement.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = arrangement.png; path = images/arrangement.png; sourceTree = "<group>"; };
 		1DCA5ECD13EE507800B7725E /* WindowArrangements.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WindowArrangements.h; sourceTree = "<group>"; };
@@ -486,6 +525,9 @@
 		1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultBookmark.plist; sourceTree = "<group>"; };
 		1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = MigrationMap.plist; sourceTree = "<group>"; };
 		1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BookmarkModel.h; path = Headers/iTerm/BookmarkModel.h; sourceTree = "<group>"; };
+		1DD1BB6D148FD08A00567DF0 /* linen.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = linen.jpg; path = images/linen.jpg; sourceTree = "<group>"; };
+		1DD6707514934ADE008E4361 /* PTYSplitView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYSplitView.h; sourceTree = "<group>"; };
+		1DD6707614934ADE008E4361 /* PTYSplitView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYSplitView.m; sourceTree = "<group>"; };
 		1DD7363F1283C2FA009B7829 /* Popup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Popup.h; sourceTree = "<group>"; };
 		1DD736401283C2FA009B7829 /* Popup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Popup.m; sourceTree = "<group>"; };
 		1DDBC61C12E2BCDC00BC3868 /* iTermExpose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermExpose.h; sourceTree = "<group>"; };
@@ -712,6 +754,7 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				1D3D21921483142800FAC8E7 /* tmux */,
 				1D24C37714303E00006B246F /* Preferences */,
 				1D9DDE31142E73E300275650 /* Categories */,
 				1D9DDE30142E738800275650 /* Popups */,
@@ -729,6 +772,7 @@
 				1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */,
 				1DAED28712E9395E005E49ED /* GlobalSearch.m */,
 				1D624BC71386E09E00111319 /* GTMCarbonEvent.m */,
+				1D7B9A681491D82F003A2A22 /* IntervalMap.m */,
 				20E74F4904E9089700000106 /* ITAddressBookMgr.m */,
 				20B8892B04E9342100000106 /* ITViewLocalizer.m */,
 				DDF0FD64062916F70080EF74 /* iTermApplication.m */,
@@ -748,6 +792,8 @@
 				F52ED8DD037F0A7D01A8A066 /* PTYSession.m */,
 				2076B15804E8817300000106 /* PTToolbarController.m */,
 				1D2E802D129DA45A00F3D71E /* PTYTab.m */,
+				1DD6707514934ADE008E4361 /* PTYSplitView.h */,
+				1DD6707614934ADE008E4361 /* PTYSplitView.m */,
 				E8CF7560026DDA6303A80106 /* PTYTask.m */,
 				E8CF7561026DDA6303A80106 /* PTYTextView.m */,
 				F5E533B403B2959201A8A066 /* PTYTabView.m */,
@@ -761,6 +807,8 @@
 				1D44218B1290B34500891504 /* TextViewWrapper.m */,
 				E8CF7562026DDA6303A80106 /* VT100Screen.m */,
 				E8CF7563026DDA6303A80106 /* VT100Terminal.m */,
+				1DC38816148E840600B89F7C /* SolidColorView.h */,
+				1DC38817148E840700B89F7C /* SolidColorView.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -768,6 +816,13 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				1D7B9A671491D82F003A2A22 /* IntervalMap.h */,
+				1D3D21851482E0E500FAC8E7 /* TmuxGateway.h */,
+				1D3D218E1482F18A00FAC8E7 /* TmuxController.h */,
+				1D3D21931483144600FAC8E7 /* TSVParser.h */,
+				1D3D21AD14839AAB00FAC8E7 /* TmuxLayoutParser.h */,
+				1DB67CEB14850D53005849A1 /* TmuxWindowOpener.h */,
+				1DB67CEF1485C578005849A1 /* TmuxHistoryParser.h */,
 				1D3BBD6914759D6C00FAB389 /* HighlightTrigger.h */,
 				1D8255FE146881EC007CAE78 /* PointerController.h */,
 				1D8255FA14687EE8007CAE78 /* PointerPrefsController.h */,
@@ -928,6 +983,7 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1DD1BB6D148FD08A00567DF0 /* linen.jpg */,
 				1D8255F614649F8E007CAE78 /* PrefsMouse.tiff */,
 				5ECE4AE914514058002A9CC2 /* Growl Registration Ticket.growlRegDict */,
 				1D9DDE9D142E855D00275650 /* Coprocess.png */,
@@ -977,6 +1033,21 @@
 				1D21EE3A147711300066E04A /* ContextMenuActionPrefsController.m */,
 			);
 			name = Preferences;
+			sourceTree = "<group>";
+		};
+		1D3D21921483142800FAC8E7 /* tmux */ = {
+			isa = PBXGroup;
+			children = (
+				1D3D21861482E0E500FAC8E7 /* TmuxGateway.m */,
+				1D3D218F1482F18A00FAC8E7 /* TmuxController.m */,
+				1D3D21941483144600FAC8E7 /* TSVParser.m */,
+				1D3D21AE14839AAB00FAC8E7 /* TmuxLayoutParser.m */,
+				1DB67CEC14850D53005849A1 /* TmuxWindowOpener.m */,
+				1DB67CF01485C578005849A1 /* TmuxHistoryParser.m */,
+				1DB67CF31486BD3D005849A1 /* TmuxStateParser.h */,
+				1DB67CF41486BD3D005849A1 /* TmuxStateParser.m */,
+			);
+			name = tmux;
 			sourceTree = "<group>";
 		};
 		1D5FD9AD11F61CA900C46BA3 /* Tests */ = {
@@ -1310,6 +1381,16 @@
 				1D825604146B258A007CAE78 /* EventMonitorView.h in Headers */,
 				1D3BBD6B14759D6C00FAB389 /* HighlightTrigger.h in Headers */,
 				1D21EE3B147711300066E04A /* ContextMenuActionPrefsController.h in Headers */,
+				1D3D21871482E0E500FAC8E7 /* TmuxGateway.h in Headers */,
+				1D3D21901482F18A00FAC8E7 /* TmuxController.h in Headers */,
+				1D3D21951483144600FAC8E7 /* TSVParser.h in Headers */,
+				1D3D21AF14839AAB00FAC8E7 /* TmuxLayoutParser.h in Headers */,
+				1DB67CED14850D53005849A1 /* TmuxWindowOpener.h in Headers */,
+				1DB67CF11485C578005849A1 /* TmuxHistoryParser.h in Headers */,
+				1DB67CF51486BD3D005849A1 /* TmuxStateParser.h in Headers */,
+				1DC38818148E840700B89F7C /* SolidColorView.h in Headers */,
+				1D7B9A691491D82F003A2A22 /* IntervalMap.h in Headers */,
+				1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1452,6 +1533,7 @@
 				5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */,
 				1D8255F714649F8E007CAE78 /* PrefsMouse.tiff in Resources */,
 				1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */,
+				1DD1BB6E148FD08A00567DF0 /* linen.jpg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1587,6 +1669,16 @@
 				1D825605146B258A007CAE78 /* EventMonitorView.m in Sources */,
 				1D3BBD6C14759D6C00FAB389 /* HighlightTrigger.m in Sources */,
 				1D21EE3C147711300066E04A /* ContextMenuActionPrefsController.m in Sources */,
+				1D3D21881482E0E500FAC8E7 /* TmuxGateway.m in Sources */,
+				1D3D21911482F18A00FAC8E7 /* TmuxController.m in Sources */,
+				1D3D21961483144600FAC8E7 /* TSVParser.m in Sources */,
+				1D3D21B014839AAB00FAC8E7 /* TmuxLayoutParser.m in Sources */,
+				1DB67CEE14850D53005849A1 /* TmuxWindowOpener.m in Sources */,
+				1DB67CF21485C578005849A1 /* TmuxHistoryParser.m in Sources */,
+				1DB67CF61486BD3D005849A1 /* TmuxStateParser.m in Sources */,
+				1DC38819148E840700B89F7C /* SolidColorView.m in Sources */,
+				1D7B9A6A1491D82F003A2A22 /* IntervalMap.m in Sources */,
+				1DD6707814934ADE008E4361 /* PTYSplitView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

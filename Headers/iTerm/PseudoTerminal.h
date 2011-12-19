@@ -35,6 +35,7 @@
 #import "PasteboardHistory.h"
 #import "Autocomplete.h"
 #import "ToolbeltView.h"
+#import "SolidColorView.h"
 
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
 @class ToolbeltView;
@@ -54,23 +55,14 @@ typedef enum {
 
 @end
 
-@interface SolidColorView : NSView
-{
-    NSColor* color_;
-}
-
-- (id)initWithFrame:(NSRect)frame color:(NSColor*)color;
-- (void)drawRect:(NSRect)dirtyRect;
-- (void)setColor:(NSColor*)color;
-- (NSColor*)color;
-@end
+@class TmuxController;
 
 // This class is 1:1 with windows. It controls the tabs, bottombar, toolbar,
 // fullscreen, and coordinates resizing of sessions (either session-initiated
 // or window-initiated).
 // OS 10.5 doesn't support window delegates
 @interface PseudoTerminal : NSWindowController <
-    PTYTabViewDelegateProtocol, 
+    PTYTabViewDelegateProtocol,
     PTYWindowDelegateProtocol,
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
 NSWindowDelegate,
@@ -132,14 +124,14 @@ NSWindowDelegate,
 
     // Is the transparency setting respected?
     BOOL useTransparency_;
-    
+
     // Is this a full screenw indow?
     BOOL _fullScreen;
 
     // When you enter full-screen mode the old frame size is saved here. When
     // full-screen mode is exited that frame is restored.
     NSRect oldFrame_;
-    
+
     // When you enter fullscreen mode, the old use transparency setting is
     // saved, and then restored when you exit FS unless it was changed
     // by the user.
@@ -246,6 +238,13 @@ NSWindowDelegate,
     BOOL wellFormed_;
 
     BOOL exitingLionFullscreen_;
+
+    // If positive, then any window resizing that happens is driven by tmux and
+    // shoudn't be reported back to tmux as a user-originated resize.
+    int tmuxOriginatedResizeInProgress_;
+
+    BOOL liveResize_;
+    BOOL postponedTmuxTabLayoutChange_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
@@ -308,8 +307,10 @@ NSWindowDelegate,
 // [sender representedObject]. Used by menu items in the Bookmarks menu.
 - (void)newSessionInTabAtIndex:(id)sender;
 
-// Close a tab and resize/close the window if needed.
+// Kill tmux window if applicable, or close a tab and resize/close the window if needed.
 - (void)closeTab:(PTYTab*)aTab;
+// Close a tab and resize/close the window if needed.
+- (void)removeTab:(PTYTab *)aTab;
 
 // Get the window type
 - (int)windowType;
@@ -687,6 +688,20 @@ NSWindowDelegate,
 + (PseudoTerminal*)terminalWithArrangement:(NSDictionary*)arrangement;
 - (void)loadArrangement:(NSDictionary *)arrangement;
 - (NSDictionary*)arrangement;
+- (void)refreshTmuxLayoutsAndWindow;
+- (NSArray *)uniqueTmuxControllers;
+- (IBAction)detachTmux:(id)sender;
+- (IBAction)newTmuxWindow:(id)sender;
+- (IBAction)newTmuxTab:(id)sender;
+- (void)tmuxTabLayoutDidChange:(BOOL)nontrivialChange;
+- (NSSize)tmuxCompatibleSize;
+- (void)loadTmuxLayout:(NSMutableDictionary *)parseTree
+                window:(int)window
+        tmuxController:(TmuxController *)tmuxController
+                  name:(NSString *)name;
+
+- (void)beginTmuxOriginatedResize;
+- (void)endTmuxOriginatedResize;
 
 - (void)appendTab:(PTYTab*)theTab;
 

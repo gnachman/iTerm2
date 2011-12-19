@@ -211,6 +211,7 @@ void StringToScreenChars(NSString *s,
               string:(NSString *)string
                ascii:(BOOL)ascii;
 - (void)addLineToScrollback;
+- (void)crlf;
 - (void)setNewLine;
 - (void)deleteCharacters:(int)n;
 - (void)backSpace;
@@ -247,6 +248,10 @@ void StringToScreenChars(NSString *s,
 
 - (int)numberOfLines;
 - (int)numberOfScrollbackLines;
+
+- (void)setHistory:(NSArray *)history;
+- (void)setAltScreen:(NSArray *)lines;
+- (void)setTmuxState:(NSDictionary *)state;
 
 - (int)scrollbackOverflow;
 - (long long)totalScrollbackOverflow;
