@@ -16,6 +16,12 @@
 #import "PTYTab.h"
 #import "RegexKitLite.h"
 
+static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
+    "#{window_name}\t"
+    "#{window_width}\t#{window_height}\t"
+    "#{window_layout_ex}\t"
+    "#{?window_active,1,0}\"";
+
 @interface TmuxController (Private)
 
 - (void)retainWindow:(int)window withTab:(PTYTab *)tab;
@@ -76,9 +82,17 @@
     [windowOpener updateLayoutInTab:tab];
 }
 
+- (NSArray *)listWindowFields
+{
+    return [NSArray arrayWithObjects:@"session_name", @"window_id",
+            @"window_name", @"window_width", @"window_height",
+            @"window_layout", @"window_active", nil];
+
+}
+
 - (void)initialListWindowsResponse:(NSString *)response
 {
-    TSVDocument *doc = [response tsvDocument];
+    TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields]];
     if (!doc) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Bad response for initial list windows request: %@", response]];
         return;
@@ -94,7 +108,7 @@
 
 - (void)openWindowsInitial
 {
-    [gateway_ sendCommand:@"list-windows -C"
+    [gateway_ sendCommand:[NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat]
            responseTarget:self
          responseSelector:@selector(initialListWindowsResponse:)];
 }
@@ -265,7 +279,7 @@
 - (void)openWindowWithId:(int)windowId
 {
     // Get the window's basic info to prep the creation of a TmuxWindowOpener.
-    [gateway_ sendCommand:[NSString stringWithFormat:@"list-windows -C -I %d", windowId]
+    [gateway_ sendCommand:[NSString stringWithFormat:@"list-windows -F %@ -I %d", kListWindowsFormat, windowId]
            responseTarget:self
          responseSelector:@selector(listedWindowsToOpenOne:forWindowId:)
            responseObject:[NSNumber numberWithInt:windowId]];
@@ -305,7 +319,7 @@
 
 - (void)listedWindowsToOpenOne:(NSString *)response forWindowId:(NSNumber *)windowId
 {
-    TSVDocument *doc = [response tsvDocument];
+    TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields]];
     if (!doc) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Bad response for list windows request: %@",
                                          response]];

@@ -23,12 +23,12 @@
 
 @interface TSVParser : NSObject
 
-+ (TSVDocument *)documentFromString:(NSString *)string;
++ (TSVDocument *)documentFromString:(NSString *)string withFields:(NSArray *)fields;
 
 @end
 
 @interface NSString (TSV)
 
-- (TSVDocument *)tsvDocument;
+- (TSVDocument *)tsvDocumentWithFields:(NSArray *)fields;
 
 @end

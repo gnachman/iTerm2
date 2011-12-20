@@ -60,6 +60,7 @@
 #define DEBUG_KEYDOWNDUMP     0
 #define ASK_ABOUT_OUTDATED_FORMAT @"AskAboutOutdatedKeyMappingForGuid%@"
 
+//#define TMUX_VERBOSE_LOGGING
 #ifdef TMUX_VERBOSE_LOGGING
 #define TmuxLog NSLog
 #else

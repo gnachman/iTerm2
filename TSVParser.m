@@ -52,16 +52,15 @@
 
 @implementation TSVParser
 
-+ (TSVDocument *)documentFromString:(NSString *)string
++ (TSVDocument *)documentFromString:(NSString *)string withFields:(NSArray *)fields
 {
     NSArray *lines = [string componentsSeparatedByString:@"\n"];
     if ([lines count] == 0) {
         return nil;
     }
     TSVDocument *doc = [[[TSVDocument alloc] init] autorelease];
-    NSString *header = [lines objectAtIndex:0];
-    doc.columns = [[[header componentsSeparatedByString:@"\t"] mutableCopy] autorelease];
-    for (int i = 1; i < lines.count; i++) {
+    doc.columns = [[fields copy] autorelease];
+    for (int i = 0; i < lines.count; i++) {
         NSString *row = [lines objectAtIndex:i];
         [doc.records addObject:[row componentsSeparatedByString:@"\t"]];
     }
@@ -72,9 +71,9 @@
 
 @implementation NSString (TSV)
 
-- (TSVDocument *)tsvDocument
+- (TSVDocument *)tsvDocumentWithFields:(NSArray *)fields
 {
-    return [TSVParser documentFromString:self];
+    return [TSVParser documentFromString:self withFields:fields];
 }
 
 @end

@@ -88,10 +88,10 @@
                                                  callingSelector:@selector(appendRequestsForNode:toArray:)
                                                         onTarget:self
                                                       withObject:cmdList];
+    // append start-control
     if (initial) {
         [cmdList addObject:[self dictForStartControlCommand]];
     }
-    // append start-control
     [gateway_ sendCommandList:cmdList];
 }
 
@@ -143,7 +143,8 @@
 - (NSDictionary *)dictForStartControlCommand
 {
     ++pendingRequests_;
-    return [gateway_ dictionaryForCommand:@"start-control"
+    NSString *command = @"set-control-client-attr ready";
+    return [gateway_ dictionaryForCommand:command
                            responseTarget:self
                          responseSelector:@selector(requestDidComplete)
                            responseObject:nil];
@@ -170,7 +171,7 @@
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp
 {
     ++pendingRequests_;
-    NSString *command = [NSString stringWithFormat:@"dump-state -t %%%d", [wp intValue]];
+    NSString *command = [NSString stringWithFormat:@"dump-state -e -t %%%d", [wp intValue]];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
                          responseSelector:@selector(dumpStateResponse:pane:)
@@ -181,7 +182,7 @@
                         alt:(BOOL)alternate
 {
     ++pendingRequests_;
-    NSString *command = [NSString stringWithFormat:@"dump-history %@-t %%%d -l 1000",
+    NSString *command = [NSString stringWithFormat:@"dump-state -h %@-t %%%d -l 1000",
                          (alternate ? @"-a " : @""), [wp intValue]];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
