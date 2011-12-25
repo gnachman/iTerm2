@@ -15,7 +15,12 @@
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
 #import "RegexKitLite.h"
+#import "TmuxDashboardController.h"
+#import "NSStringITerm.h"
 
+NSString *kTmuxControllerSessionsDidChange = @"kTmuxControllerSessionsDidChange";
+NSString *kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotification";
+NSString *kTmuxControllerWindowsChangeNotification = @"kTmuxControllerWindowsChangeNotification";
 static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     "#{window_name}\t"
     "#{window_width}\t#{window_height}\t"
@@ -26,6 +31,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)retainWindow:(int)window withTab:(PTYTab *)tab;
 - (void)releaseWindow:(int)window;
+- (void)closeAllPanes;
+- (void)windowDidOpen:(NSNumber *)windowIndex;
+- (void)listSessions;
 
 @end
 
@@ -33,6 +41,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 @synthesize gateway = gateway_;
 @synthesize windowPositions = windowPositions_;
+@synthesize sessionName = sessionName_;
+@synthesize sessions = sessions_;
 
 - (id)initWithGateway:(TmuxGateway *)gateway
 {
@@ -42,6 +52,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         windowPanes_ = [[NSMutableDictionary alloc] init];
         windows_ = [[NSMutableDictionary alloc] init];
         windowPositions_ = [[NSMutableDictionary alloc] init];
+        pendingWindowOpens_ = [[NSMutableSet alloc] init];
     }
     return self;
 }
@@ -52,6 +63,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [windowPanes_ release];
     [windows_ release];
     [windowPositions_ release];
+    [pendingWindowOpens_ release];
     [super dealloc];
 }
 
@@ -60,6 +72,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                        size:(NSSize)size
                      layout:(NSString *)layout
 {
+    NSNumber *n = [NSNumber numberWithInt:windowIndex];
+    if ([pendingWindowOpens_ containsObject:n]) {
+        return;
+    }
+    [pendingWindowOpens_ addObject:n];
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
     windowOpener.windowIndex = windowIndex;
     windowOpener.name = name;
@@ -68,6 +85,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.maxHistory = 1000;
     windowOpener.controller = self;
     windowOpener.gateway = gateway_;
+    windowOpener.target = self;
+    windowOpener.selector = @selector(windowDidOpen:);
     [windowOpener openWindows:YES];
 }
 
@@ -80,6 +99,33 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.gateway = gateway_;
     windowOpener.windowIndex = [tab tmuxWindow];
     [windowOpener updateLayoutInTab:tab];
+}
+
+- (void)sessionChangedTo:(NSString *)newSessionName {
+    self.sessionName = newSessionName;
+    [self closeAllPanes];
+    if (dashboard_) {
+        [dashboard_ close];
+        [dashboard_ release];
+        dashboard_ = nil;
+    }
+    [self openWindowsInitial];
+}
+
+- (void)sessionsChanged
+{
+    [self listSessions];
+}
+
+- (void)sessionRenamedTo:(NSString *)newName
+{
+    self.sessionName = newName;
+}
+
+- (void)windowsChanged
+{
+    [[NSNotificationCenter defaultCenter]  postNotificationName:kTmuxControllerWindowsChangeNotification
+                                                         object:self];
 }
 
 - (NSArray *)listWindowFields
@@ -108,9 +154,19 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)openWindowsInitial
 {
-    [gateway_ sendCommand:[NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat]
-           responseTarget:self
-         responseSelector:@selector(initialListWindowsResponse:)];
+    NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
+    NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
+    NSArray *commands = [NSArray arrayWithObjects:
+                         [gateway_ dictionaryForCommand:listSessionsCommand
+                                         responseTarget:self
+                                       responseSelector:@selector(listSessionsResponse:)
+                                         responseObject:nil],
+                         [gateway_ dictionaryForCommand:listWindowsCommand
+                                         responseTarget:self
+                                       responseSelector:@selector(initialListWindowsResponse:)
+                                         responseObject:nil],
+                         nil];
+    [gateway_ sendCommandList:commands];
 }
 
 - (NSNumber *)_keyForWindowPane:(int)windowPane
@@ -155,17 +211,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)detach
 {
     detached_ = YES;
-    // Close all sessions. Iterate over a copy of windowPanes_ because the loop
-    // body modifies it by closing sessions.
-    for (NSString *key in [[windowPanes_ copy] autorelease]) {
-        PTYSession *session = [windowPanes_ objectForKey:key];
-        [[[session tab] realParentWindow] closeSession:session];
-    }
-
-    // Clean up all state to avoid trying to reuse it.
-    [windowPanes_ removeAllObjects];
+    [self closeAllPanes];
     [gateway_ release];
     gateway_ = nil;
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDetachedNotification
+                                                        object:self];
 }
 
 - (void)windowDidResize:(PseudoTerminal *)term
@@ -312,10 +362,65 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     return pos;
 }
 
+- (void)renameSession:(NSString *)oldName to:(NSString *)newName
+{
+    NSString *renameCommand = [NSString stringWithFormat:@"rename-session -t \"%@\" \"%@\"",
+                               [oldName stringByEscapingQuotes],
+                               [newName stringByEscapingQuotes]];
+    [gateway_ sendCommand:renameCommand responseTarget:nil responseSelector:nil];
+}
+
+- (void)killSession:(NSString *)sessionName
+{
+    NSString *killCommand = [NSString stringWithFormat:@"kill-session -t \"%@\"",
+                                [sessionName stringByEscapingQuotes]];
+    [gateway_ sendCommand:killCommand responseTarget:nil responseSelector:nil];
+}
+
+- (void)listWindowsInSession:(NSString *)sessionName
+                      target:(id)target
+                    selector:(SEL)selector
+                      object:(id)object
+{
+    NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@ -t \"%@\"",
+                                    kListWindowsFormat, sessionName];
+    [gateway_ sendCommand:listWindowsCommand
+           responseTarget:self
+         responseSelector:@selector(didListWindows:userData:)
+           responseObject:[NSArray arrayWithObjects:object,
+                           NSStringFromSelector(selector),
+                           target,
+                           nil]];
+}
+
+- (TmuxDashboardController *)dashboard
+{
+    if (!dashboard_) {
+        dashboard_ = [[TmuxDashboardController alloc] initWithTmuxController:self];
+        [dashboard_ showWindow:nil];
+    }
+    return dashboard_;
+}
 
 @end
 
 @implementation TmuxController (Private)
+
+- (void)didListWindows:(NSString *)response userData:(NSArray *)userData
+{
+    TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields]];
+    id object = [userData objectAtIndex:0];
+    SEL selector = NSSelectorFromString([userData objectAtIndex:1]);
+    id target = [userData objectAtIndex:2];
+    [target performSelector:selector withObject:doc withObject:object];
+}
+
+- (void)listSessionsResponse:(NSString *)result
+{
+    self.sessions = [result componentsSeparatedByRegex:@"\n"];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerSessionsDidChange
+                                                        object:self.sessions];
+}
 
 - (void)listedWindowsToOpenOne:(NSString *)response forWindowId:(NSNumber *)windowId
 {
@@ -377,7 +482,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSNumber *k = [NSNumber numberWithInt:window];
     NSMutableArray *entry = [windows_ objectForKey:k];
     NSNumber *refcount = [entry objectAtIndex:1];
-    refcount = [NSNumber numberWithInt:[refcount intValue] + 1];
+    refcount = [NSNumber numberWithInt:[refcount intValue] - 1];
     if ([refcount intValue]) {
         [entry replaceObjectAtIndex:1 withObject:refcount];
         [windows_ setObject:entry forKey:k];
@@ -391,6 +496,32 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 {
     PTYSession *theSession = [self sessionForWindowPane:[affinityPane intValue]];
     [theSession.futureWindowAffinities addObject:[NSNumber numberWithInt:[responseStr intValue]]];
+}
+
+- (void)closeAllPanes
+{
+    // Close all sessions. Iterate over a copy of windowPanes_ because the loop
+    // body modifies it by closing sessions.
+    for (NSString *key in [[windowPanes_ copy] autorelease]) {
+        PTYSession *session = [windowPanes_ objectForKey:key];
+        [[[session tab] realParentWindow] softCloseSession:session];
+    }
+
+    // Clean up all state to avoid trying to reuse it.
+    [windowPanes_ removeAllObjects];
+}
+
+- (void)listSessions
+{
+    NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
+    [gateway_ sendCommand:listSessionsCommand
+           responseTarget:self
+         responseSelector:@selector(listSessionsResponse:)];
+}
+
+- (void)windowDidOpen:(NSNumber *)windowIndex
+{
+    [pendingWindowOpens_ removeObject:windowIndex];
 }
 
 @end

@@ -43,6 +43,7 @@
 #import "TmuxLayoutParser.h"
 #import "BookmarkModel.h"
 #import "IntervalMap.h"
+#import "TmuxDashboardController.h"
 
 //#define PTYTAB_VERBOSE_LOGGING
 #ifdef PTYTAB_VERBOSE_LOGGING

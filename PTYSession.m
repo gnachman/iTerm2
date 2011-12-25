@@ -60,7 +60,7 @@
 #define DEBUG_KEYDOWNDUMP     0
 #define ASK_ABOUT_OUTDATED_FORMAT @"AskAboutOutdatedKeyMappingForGuid%@"
 
-//#define TMUX_VERBOSE_LOGGING
+#define TMUX_VERBOSE_LOGGING
 #ifdef TMUX_VERBOSE_LOGGING
 #define TmuxLog NSLog
 #else
@@ -3510,7 +3510,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self printTmuxMessage:@"  L    Toggle logging."];
     [self printTmuxMessage:@"  C    Run tmux command."];
 
-    [tmuxController_ openWindowsInitial];
     [tmuxGateway_ readTask:[TERMINAL streamData]];
     [TERMINAL clearStream];
 }
@@ -3578,12 +3577,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                            layout:(NSString *)layout
 {
     PTYTab *tab = [tmuxController_ window:windowId];
-    [tmuxController_ setLayoutInTab:tab toLayout:layout];
+    if (tab) {
+        [tmuxController_ setLayoutInTab:tab toLayout:layout];
+    }
 }
 
 - (void)tmuxWindowAddedWithId:(int)windowId
 {
-    [tmuxController_ openWindowWithId:windowId];
+    if (![tmuxController_ window:windowId]) {
+        [tmuxController_ openWindowWithId:windowId];
+    }
+    [tmuxController_ windowsChanged];
 }
 
 - (void)tmuxWindowClosedWithId:(int)windowId
@@ -3592,6 +3596,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if (tab) {
         [[tab realParentWindow] removeTab:tab];
     }
+    [tmuxController_ windowsChanged];
 }
 
 - (void)tmuxHostDisconnected
@@ -3625,6 +3630,26 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)tmuxReadTask:(NSData *)data
 {
     [self readTask:data];
+}
+
+- (void)tmuxSessionChanged:(NSString *)sessionName
+{
+    [tmuxController_ sessionChangedTo:sessionName];
+}
+
+- (void)tmuxSessionsChanged
+{
+    [tmuxController_ sessionsChanged];
+}
+
+- (void)tmuxWindowsDidChange
+{
+    [tmuxController_ windowsChanged];
+}
+
+- (void)tmuxSessionRenamed:(NSString *)newName
+{
+    [tmuxController_ sessionRenamedTo:newName];
 }
 
 @end

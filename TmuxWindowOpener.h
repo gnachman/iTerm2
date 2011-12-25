@@ -26,6 +26,8 @@
     NSMutableDictionary *altHistories_;
     NSMutableDictionary *states_;
     PTYTab *tabToUpdate_;
+    id target_;
+    SEL selector_;
 }
 
 @property (nonatomic, assign) int windowIndex;
@@ -36,6 +38,8 @@
 @property (nonatomic, retain) TmuxGateway *gateway;
 @property (nonatomic, retain) NSMutableDictionary *parseTree;
 @property (nonatomic, assign) TmuxController *controller;  // weak
+@property (nonatomic, retain) id target;
+@property (nonatomic, assign) SEL selector;
 
 + (TmuxWindowOpener *)windowOpener;
 - (void)openWindows:(BOOL)initial;

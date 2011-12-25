@@ -11,19 +11,33 @@
 @class PTYSession;
 @class PTYTab;
 @class PseudoTerminal;
+@class TmuxDashboardController;
+
+// Posted when sessions change (names, addition, deletion)
+extern NSString *kTmuxControllerSessionsDidChange;
+// Posted after detaching
+extern NSString *kTmuxControllerDetachedNotification;
+// Posted when a window changes.
+extern NSString *kTmuxControllerWindowsChangeNotification;
 
 @interface TmuxController : NSObject {
     TmuxGateway *gateway_;
     NSMutableDictionary *windowPanes_;  // [window, pane] -> PTYSession *
     NSMutableDictionary *windows_;      // window -> [PTYTab *, refcount]
+    NSArray *sessions_;
     int numOutstandingWindowResizes_;
     NSMutableDictionary *windowPositions_;
     NSSize lastSize_;  // last size for windowDidChange:
     BOOL detached_;
+    NSString *sessionName_;
+    TmuxDashboardController *dashboard_;
+    NSMutableSet *pendingWindowOpens_;
 }
 
 @property (nonatomic, readonly) TmuxGateway *gateway;
 @property (nonatomic, retain) NSMutableDictionary *windowPositions;
+@property (nonatomic, copy) NSString *sessionName;
+@property (nonatomic, retain) NSArray *sessions;
 
 - (id)initWithGateway:(TmuxGateway *)gateway;
 - (void)openWindowsInitial;
@@ -32,6 +46,10 @@
 
 - (void)setLayoutInTab:(PTYTab *)tab
                 toLayout:(NSString *)layout;
+- (void)sessionChangedTo:(NSString *)newSessionName;
+- (void)sessionsChanged;
+- (void)sessionRenamedTo:(NSString *)newName;
+- (void)windowsChanged;
 
 - (PTYSession *)sessionForWindowPane:(int)windowPane;
 - (PTYTab *)window:(int)window;
@@ -59,5 +77,14 @@
 - (void)killWindow:(int)window;
 - (BOOL)isAttached;
 - (void)requestDetach;
+
+- (void)renameSession:(NSString *)oldName to:(NSString *)newName;
+- (void)killSession:(NSString *)sessionName;
+- (void)listWindowsInSession:(NSString *)sessionName
+                      target:(id)target
+                    selector:(SEL)selector
+                      object:(id)object;
+
+- (TmuxDashboardController *)dashboard;
 
 @end

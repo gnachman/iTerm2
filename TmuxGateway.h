@@ -19,6 +19,10 @@
 - (void)tmuxHostDisconnected;
 - (void)tmuxWriteData:(NSData *)data;
 - (void)tmuxReadTask:(NSData *)data;
+- (void)tmuxSessionChanged:(NSString *)sessionName;
+- (void)tmuxSessionsChanged;
+- (void)tmuxWindowsDidChange;
+- (void)tmuxSessionRenamed:(NSString *)newName;
 
 @end
 

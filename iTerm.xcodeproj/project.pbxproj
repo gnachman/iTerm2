@@ -260,6 +260,8 @@
 		1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */; };
 		1DA8117E13CEA30A00CCA89A /* FontSizeEstimator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */; };
 		1DA8117F13CEA30A00CCA89A /* FontSizeEstimator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */; };
+		1DA9AEEA14A51CA000BEB37B /* TmuxSessionsTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA9AEE814A51CA000BEB37B /* TmuxSessionsTable.h */; };
+		1DA9AEEB14A51CA000BEB37B /* TmuxSessionsTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA9AEE914A51CA000BEB37B /* TmuxSessionsTable.m */; };
 		1DA9BD0D122F1077002FCC65 /* star-gold24.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA9BD0C122F1077002FCC65 /* star-gold24.png */; };
 		1DAED28812E9395E005E49ED /* GlobalSearch.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DAED28612E9395E005E49ED /* GlobalSearch.h */; };
 		1DAED28912E9395E005E49ED /* GlobalSearch.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DAED28712E9395E005E49ED /* GlobalSearch.m */; };
@@ -292,6 +294,9 @@
 		1DCF3F001224EEBD00AD56F1 /* MigrationMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */; };
 		1DCF3F4A1225F6F200AD56F1 /* BookmarkModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */; };
 		1DD1BB6E148FD08A00567DF0 /* linen.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 1DD1BB6D148FD08A00567DF0 /* linen.jpg */; };
+		1DD4CE7D14A5163B00ED182E /* TmuxDashboard.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */; };
+		1DD4CE8014A51C0D00ED182E /* TmuxDashboardController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD4CE7E14A51C0D00ED182E /* TmuxDashboardController.h */; };
+		1DD4CE8114A51C0D00ED182E /* TmuxDashboardController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD4CE7F14A51C0D00ED182E /* TmuxDashboardController.m */; };
 		1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD6707514934ADE008E4361 /* PTYSplitView.h */; };
 		1DD6707814934ADE008E4361 /* PTYSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD6707614934ADE008E4361 /* PTYSplitView.m */; };
 		1DD736411283C2FA009B7829 /* Popup.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD7363F1283C2FA009B7829 /* Popup.h */; };
@@ -495,6 +500,8 @@
 		1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wrap_to_top.png; path = images/wrap_to_top.png; sourceTree = "<group>"; };
 		1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FontSizeEstimator.h; sourceTree = "<group>"; };
 		1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FontSizeEstimator.m; sourceTree = "<group>"; };
+		1DA9AEE814A51CA000BEB37B /* TmuxSessionsTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxSessionsTable.h; sourceTree = "<group>"; };
+		1DA9AEE914A51CA000BEB37B /* TmuxSessionsTable.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxSessionsTable.m; sourceTree = "<group>"; };
 		1DA9BD0C122F1077002FCC65 /* star-gold24.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "star-gold24.png"; path = "images/star-gold24.png"; sourceTree = "<group>"; };
 		1DAED28612E9395E005E49ED /* GlobalSearch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GlobalSearch.h; sourceTree = "<group>"; };
 		1DAED28712E9395E005E49ED /* GlobalSearch.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GlobalSearch.m; sourceTree = "<group>"; };
@@ -526,6 +533,9 @@
 		1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = MigrationMap.plist; sourceTree = "<group>"; };
 		1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BookmarkModel.h; path = Headers/iTerm/BookmarkModel.h; sourceTree = "<group>"; };
 		1DD1BB6D148FD08A00567DF0 /* linen.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = linen.jpg; path = images/linen.jpg; sourceTree = "<group>"; };
+		1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = TmuxDashboard.xib; sourceTree = "<group>"; };
+		1DD4CE7E14A51C0D00ED182E /* TmuxDashboardController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxDashboardController.h; sourceTree = "<group>"; };
+		1DD4CE7F14A51C0D00ED182E /* TmuxDashboardController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxDashboardController.m; sourceTree = "<group>"; };
 		1DD6707514934ADE008E4361 /* PTYSplitView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYSplitView.h; sourceTree = "<group>"; };
 		1DD6707614934ADE008E4361 /* PTYSplitView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYSplitView.m; sourceTree = "<group>"; };
 		1DD7363F1283C2FA009B7829 /* Popup.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Popup.h; sourceTree = "<group>"; };
@@ -721,6 +731,7 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1DEE9FDB11FCA60F009E18C9 /* credits.rtf */,
@@ -1046,6 +1057,10 @@
 				1DB67CF01485C578005849A1 /* TmuxHistoryParser.m */,
 				1DB67CF31486BD3D005849A1 /* TmuxStateParser.h */,
 				1DB67CF41486BD3D005849A1 /* TmuxStateParser.m */,
+				1DD4CE7E14A51C0D00ED182E /* TmuxDashboardController.h */,
+				1DD4CE7F14A51C0D00ED182E /* TmuxDashboardController.m */,
+				1DA9AEE814A51CA000BEB37B /* TmuxSessionsTable.h */,
+				1DA9AEE914A51CA000BEB37B /* TmuxSessionsTable.m */,
 			);
 			name = tmux;
 			sourceTree = "<group>";
@@ -1391,6 +1406,8 @@
 				1DC38818148E840700B89F7C /* SolidColorView.h in Headers */,
 				1D7B9A691491D82F003A2A22 /* IntervalMap.h in Headers */,
 				1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */,
+				1DD4CE8014A51C0D00ED182E /* TmuxDashboardController.h in Headers */,
+				1DA9AEEA14A51CA000BEB37B /* TmuxSessionsTable.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1534,6 +1551,7 @@
 				1D8255F714649F8E007CAE78 /* PrefsMouse.tiff in Resources */,
 				1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */,
 				1DD1BB6E148FD08A00567DF0 /* linen.jpg in Resources */,
+				1DD4CE7D14A5163B00ED182E /* TmuxDashboard.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1679,6 +1697,8 @@
 				1DC38819148E840700B89F7C /* SolidColorView.m in Sources */,
 				1D7B9A6A1491D82F003A2A22 /* IntervalMap.m in Sources */,
 				1DD6707814934ADE008E4361 /* PTYSplitView.m in Sources */,
+				1DD4CE8114A51C0D00ED182E /* TmuxDashboardController.m in Sources */,
+				1DA9AEEB14A51CA000BEB37B /* TmuxSessionsTable.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

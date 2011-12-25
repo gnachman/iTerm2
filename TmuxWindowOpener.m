@@ -42,6 +42,8 @@
 @synthesize gateway = gateway_;
 @synthesize parseTree = parseTree_;
 @synthesize controller = controller_;
+@synthesize target = target_;
+@synthesize selector = selector_;
 
 + (TmuxWindowOpener *)windowOpener
 {
@@ -258,6 +260,10 @@
             // large as we were asked to (for instance, if the gateway is full-
             // screen).
             [controller_ windowDidResize:term];
+        }
+        if (self.target) {
+            [self.target performSelector:self.selector
+                              withObject:[NSNumber numberWithInt:windowIndex_]];
         }
     }
 }

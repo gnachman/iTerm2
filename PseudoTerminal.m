@@ -650,15 +650,27 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
-- (void)closeSession:(PTYSession *)aSession
+- (void)closeSession:(PTYSession *)aSession soft:(BOOL)soft
 {
-    if ([aSession isTmuxClient] && [[aSession tmuxController] isAttached]) {
+    if (!soft &&
+        [aSession isTmuxClient] &&
+        [[aSession tmuxController] isAttached]) {
         [[aSession tmuxController] killWindowPane:[aSession tmuxPane]];
     } else if ([[[aSession tab] sessions] count] == 1) {
-        [self closeTab:[aSession tab]];
+        [self closeTab:[aSession tab] soft:soft];
     } else {
         [aSession terminate];
     }
+}
+
+- (void)closeSession:(PTYSession *)aSession
+{
+    [self closeSession:aSession soft:NO];
+}
+
+- (void)softCloseSession:(PTYSession *)aSession
+{
+    [self closeSession:aSession soft:YES];
 }
 
 - (int)windowType
@@ -784,13 +796,21 @@ NSString *sessionsKey = @"sessions";
     return YES;
 }
 
-- (void)closeTab:(PTYTab*)aTab
+- (void)closeTab:(PTYTab *)aTab soft:(BOOL)soft
 {
-    if ([aTab isTmuxTab] && [[aTab sessions] count] > 0 && [[aTab tmuxController] isAttached]) {
+    if (!soft &&
+        [aTab isTmuxTab] &&
+        [[aTab sessions] count] > 0 &&
+        [[aTab tmuxController] isAttached]) {
         [[aTab tmuxController] killWindow:[aTab tmuxWindow]];
         return;
     }
     [self removeTab:(PTYTab *)aTab];
+}
+
+- (void)closeTab:(PTYTab*)aTab
+{
+    [self closeTab:aTab soft:NO];
 }
 
 // Just like closeTab but skips the tmux code. Terminates sessions, removes the
@@ -811,6 +831,11 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"closeSession - calling fitWindowToTabs");
         [self fitWindowToTabs];
     }
+}
+
+- (IBAction)openDashboard:(id)sender
+{
+    [[[[[self currentTab] tmuxController] dashboard] window] makeKeyAndOrderFront:nil];
 }
 
 - (IBAction)findCursor:(id)sender
@@ -4784,7 +4809,8 @@ NSString *sessionsKey = @"sessions";
 
     if ([item action] == @selector(detachTmux) ||
         [item action] == @selector(newTmuxWindow:) ||
-        [item action] == @selector(newTmuxTab:)) {
+        [item action] == @selector(newTmuxTab:) ||
+        [item action] == @selector(openDashboard:)) {
         result = [[self currentTab] isTmuxTab];
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||
         [item action] == @selector(openSplitVerticallySheet:)) {

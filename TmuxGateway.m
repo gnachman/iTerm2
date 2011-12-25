@@ -10,7 +10,7 @@
 #import "TmuxController.h"
 #import "iTermApplicationDelegate.h"
 
-//#define TMUX_VERBOSE_LOGGING
+#define TMUX_VERBOSE_LOGGING
 #ifdef TMUX_VERBOSE_LOGGING
 #define TmuxLog NSLog
 #else
@@ -111,6 +111,11 @@ static NSString *kCommandObject = @"object";
     state_ = CONTROL_STATE_READY;
 }
 
+- (void)broadcastWindowChange
+{
+    [delegate_ tmuxWindowsDidChange];
+}
+
 - (void)parseWindowAddCommand:(NSString *)command
 {
     NSArray *components = [command captureComponentsMatchedByRegex:@"^%window-add ([0-9]+)$"];
@@ -130,6 +135,39 @@ static NSString *kCommandObject = @"object";
         return;
     }
     [delegate_ tmuxWindowClosedWithId:[[components objectAtIndex:1] intValue]];
+    state_ = CONTROL_STATE_READY;
+}
+
+- (void)parseSessionRenamedCommand:(NSString *)command
+{
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%session-renamed (.+)$"];
+    if (components.count != 2) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%session-renamed name): \"%@\"", command]];
+        return;
+    }
+    [delegate_ tmuxSessionRenamed:[components objectAtIndex:1]];
+    state_ = CONTROL_STATE_READY;
+}
+
+- (void)parseSessionChangeCommand:(NSString *)command
+{
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%session-changed (.+)$"];
+    if (components.count != 2) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%session-changed name): \"%@\"", command]];
+        return;
+    }
+    [delegate_ tmuxSessionChanged:[components objectAtIndex:1]];
+    state_ = CONTROL_STATE_READY;
+}
+
+- (void)parseSessionsChangedCommand:(NSString *)command
+{
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%sessions-changed$"];
+    if (components.count != 1) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%sessions-changed id): \"%@\"", command]];
+        return;
+    }
+    [delegate_ tmuxSessionsChanged];
     state_ = CONTROL_STATE_READY;
 }
 
@@ -196,6 +234,15 @@ static NSString *kCommandObject = @"object";
         [self parseWindowAddCommand:command];
     } else if ([command hasPrefix:@"%window-close"]) {
         [self parseWindowCloseCommand:command];
+    } else if ([command hasPrefix:@"%unlinked-window-add"] ||
+               [command hasPrefix:@"%unlinked-window-close"]) {
+        [self broadcastWindowChange];
+    } else if ([command hasPrefix:@"%session-changed"]) {
+        [self parseSessionChangeCommand:command];
+    } else if ([command hasPrefix:@"%session-renamed"]) {
+        [self parseSessionRenamedCommand:command];
+    } else if ([command hasPrefix:@"%sessions-changed"]) {
+        [self parseSessionsChangedCommand:command];
     } else if ([command hasPrefix:@"%noop"]) {
         TmuxLog(@"tmux noop: %@", command);
     } else if ([command hasPrefix:@"%exit "]) {

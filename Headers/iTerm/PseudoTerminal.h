@@ -309,14 +309,19 @@ NSWindowDelegate,
 
 // Kill tmux window if applicable, or close a tab and resize/close the window if needed.
 - (void)closeTab:(PTYTab*)aTab;
+// If soft is true, don't kill tmux session. Otherwise is just like closeTab.
+- (void)closeTab:(PTYTab *)aTab soft:(BOOL)soft;
 // Close a tab and resize/close the window if needed.
 - (void)removeTab:(PTYTab *)aTab;
 
 // Get the window type
 - (int)windowType;
 
-// Close a session (TODO: currently just closes the tab the session is in).
+// Close a session
 - (void)closeSession:(PTYSession *)aSession;
+
+// Close a session but don't kill the underlying window pane if it's a tmux session.
+- (void)softCloseSession:(PTYSession *)aSession;
 
 - (void)toggleFullScreenTabBar;
 
@@ -327,6 +332,7 @@ NSWindowDelegate,
 
 - (IBAction)openSplitHorizontallySheet:(id)sender;
 - (IBAction)openSplitVerticallySheet:(id)sender;
+- (IBAction)openDashboard:(id)sender;
 - (IBAction)findCursor:(id)sender;
 
 - (void)futureInvalidateRestorableState;

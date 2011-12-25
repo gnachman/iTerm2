@@ -426,4 +426,12 @@ static int fromhex(unichar c) {
     return newString;
 }
 
+// foo"bar -> foo\"bar
+// foo\bar -> foo\\bar
+// foo\"bar -> foo\\\"bar
+- (NSString *)stringByEscapingQuotes {
+    return [[self stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"]
+               stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
+}
+
 @end
