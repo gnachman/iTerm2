@@ -44,6 +44,7 @@
 @synthesize controller = controller_;
 @synthesize target = target_;
 @synthesize selector = selector_;
+@synthesize affinities = affinities_;
 
 + (TmuxWindowOpener *)windowOpener
 {
@@ -57,6 +58,7 @@
         histories_ = [[NSMutableDictionary alloc] init];
         altHistories_ = [[NSMutableDictionary alloc] init];
         states_ = [[NSMutableDictionary alloc] init];
+        affinities_ = [[NSMutableArray alloc] init];
     }
     return self;
 }
@@ -70,6 +72,7 @@
     [histories_ release];
     [altHistories_ release];
     [states_ release];
+    [affinities_ release];
     [tabToUpdate_ release];
     [super dealloc];
 }
@@ -224,11 +227,29 @@
 {
     --pendingRequests_;
     if (pendingRequests_ == 0) {
+        if ([self.controller window:windowIndex_]) {
+            // Safety valuve
+            if (self.target) {
+                [self.target performSelector:self.selector
+                                  withObject:[NSNumber numberWithInt:windowIndex_]];
+            }
+            return;
+        }
         PseudoTerminal *term = nil;
         if (!tabToUpdate_) {
             PTYSession *neighbor = [self.controller sessionWithAffinityForTmuxWindowId:self.windowIndex];
-            // Remove affinity since it's no longer needed.
-            [neighbor.futureWindowAffinities removeObject:[NSNumber numberWithInt:self.windowIndex]];
+            if (neighbor) {
+                // Remove affinity since it's no longer needed.
+                [neighbor.futureWindowAffinities removeObject:[NSNumber numberWithInt:self.windowIndex]];
+            } else {
+                // Try the "reverse affinities", which may refer to future window panes.
+                for (NSNumber *n in self.affinities) {
+                    neighbor = [self.controller sessionForWindowPane:[n intValue]];
+                    if (neighbor) {
+                        break;
+                    }
+                }
+            }
             term = [[neighbor tab] realParentWindow];
         }
         if (!term) {

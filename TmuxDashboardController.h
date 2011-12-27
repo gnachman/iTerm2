@@ -8,16 +8,15 @@
 
 #import <Cocoa/Cocoa.h>
 #import "TmuxSessionsTable.h"
+#import "TmuxWindowsTable.h"
 
 @class TmuxController;
 
-@interface TmuxDashboardController : NSWindowController <TmuxSessionsTableProtocol> {
-    TmuxController *tmuxController_;  // weak TODO make this a delegate
+@interface TmuxDashboardController : NSWindowController <TmuxSessionsTableProtocol, TmuxWindowsTableProtocol> {
     IBOutlet TmuxSessionsTable *sessionsTable_;
+    IBOutlet TmuxWindowsTable *windowsTable_;
 }
 
-@property (nonatomic, assign) TmuxController *tmuxController;
-
-- (id)initWithTmuxController:(TmuxController *)tmuxController;
++ (TmuxDashboardController *)sharedInstance;
 
 @end

@@ -11,7 +11,6 @@
 @class PTYSession;
 @class PTYTab;
 @class PseudoTerminal;
-@class TmuxDashboardController;
 
 // Posted when sessions change (names, addition, deletion)
 extern NSString *kTmuxControllerSessionsDidChange;
@@ -19,6 +18,12 @@ extern NSString *kTmuxControllerSessionsDidChange;
 extern NSString *kTmuxControllerDetachedNotification;
 // Posted when a window changes.
 extern NSString *kTmuxControllerWindowsChangeNotification;
+// Posted when a window changes name
+extern NSString *kTmuxControllerWindowWasRenamed;
+// Posted when a window opens
+extern NSString *kTmuxControllerWindowDidOpen;
+// Posted when a window closes
+extern NSString *kTmuxControllerWindowDidClose;
 
 @interface TmuxController : NSObject {
     TmuxGateway *gateway_;
@@ -30,7 +35,6 @@ extern NSString *kTmuxControllerWindowsChangeNotification;
     NSSize lastSize_;  // last size for windowDidChange:
     BOOL detached_;
     NSString *sessionName_;
-    TmuxDashboardController *dashboard_;
     NSMutableSet *pendingWindowOpens_;
 }
 
@@ -42,6 +46,7 @@ extern NSString *kTmuxControllerWindowsChangeNotification;
 - (id)initWithGateway:(TmuxGateway *)gateway;
 - (void)openWindowsInitial;
 - (void)openWindowWithId:(int)windowId;
+- (void)openWindowWithId:(int)windowId affinities:(NSArray *)affinities;
 - (PTYSession *)sessionWithAffinityForTmuxWindowId:(int)windowId;
 
 - (void)setLayoutInTab:(PTYTab *)tab
@@ -50,6 +55,7 @@ extern NSString *kTmuxControllerWindowsChangeNotification;
 - (void)sessionsChanged;
 - (void)sessionRenamedTo:(NSString *)newName;
 - (void)windowsChanged;
+- (void)windowWasRenamedWithId:(int)id to:(NSString *)newName;
 
 - (PTYSession *)sessionForWindowPane:(int)windowPane;
 - (PTYTab *)window:(int)window;
@@ -67,6 +73,8 @@ extern NSString *kTmuxControllerWindowsChangeNotification;
          resizedBy:(int)amount
       horizontally:(BOOL)wasHorizontal;
 - (void)splitWindowPane:(int)wp vertically:(BOOL)splitVertically;
+- (void)newWindowInSession:(NSString *)targetSession afterWindowWithName:(NSString *)predecessorWindow;
+
 - (void)newWindowWithAffinity:(int)paneNumber;
 - (void)movePane:(int)srcPane
         intoPane:(int)destPane
@@ -75,16 +83,18 @@ extern NSString *kTmuxControllerWindowsChangeNotification;
 - (void)breakOutWindowPane:(int)windowPane toPoint:(NSPoint)screenPoint;
 - (void)killWindowPane:(int)windowPane;
 - (void)killWindow:(int)window;
+- (void)unlinkWindowWithId:(int)windowId inSession:(NSString *)sessionName;
 - (BOOL)isAttached;
 - (void)requestDetach;
+- (void)renameWindowWithId:(int)windowId toName:(NSString *)newName;
 
 - (void)renameSession:(NSString *)oldName to:(NSString *)newName;
 - (void)killSession:(NSString *)sessionName;
+- (void)attachToSession:(NSString *)sessionName;
+- (void)addSessionWithName:(NSString *)sessionName;
 - (void)listWindowsInSession:(NSString *)sessionName
                       target:(id)target
                     selector:(SEL)selector
                       object:(id)object;
-
-- (TmuxDashboardController *)dashboard;
 
 @end

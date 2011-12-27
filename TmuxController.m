@@ -15,12 +15,16 @@
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
 #import "RegexKitLite.h"
-#import "TmuxDashboardController.h"
 #import "NSStringITerm.h"
+#import "TmuxControllerRegistry.h"
 
 NSString *kTmuxControllerSessionsDidChange = @"kTmuxControllerSessionsDidChange";
 NSString *kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotification";
 NSString *kTmuxControllerWindowsChangeNotification = @"kTmuxControllerWindowsChangeNotification";
+NSString *kTmuxControllerWindowWasRenamed = @"kTmuxControllerWindowWasRenamed";
+NSString *kTmuxControllerWindowDidOpen = @"kTmuxControllerWindowDidOpen";
+NSString *kTmuxControllerWindowDidClose = @"kTmuxControllerWindowDidClose";
+
 static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     "#{window_name}\t"
     "#{window_width}\t#{window_height}\t"
@@ -53,12 +57,16 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         windows_ = [[NSMutableDictionary alloc] init];
         windowPositions_ = [[NSMutableDictionary alloc] init];
         pendingWindowOpens_ = [[NSMutableSet alloc] init];
+        [[TmuxControllerRegistry sharedInstance] setController:self
+                                                     forClient:@""];  // Set a proper client name
     }
     return self;
 }
 
 - (void)dealloc
 {
+    [[TmuxControllerRegistry sharedInstance] setController:nil
+                                                 forClient:@""];  // Set a proper client name
     [gateway_ release];
     [windowPanes_ release];
     [windows_ release];
@@ -71,6 +79,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                        name:(NSString *)name
                        size:(NSSize)size
                      layout:(NSString *)layout
+                 affinities:(NSArray *)affinities
 {
     NSNumber *n = [NSNumber numberWithInt:windowIndex];
     if ([pendingWindowOpens_ containsObject:n]) {
@@ -86,6 +95,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.controller = self;
     windowOpener.gateway = gateway_;
     windowOpener.target = self;
+    windowOpener.affinities = affinities;
     windowOpener.selector = @selector(windowDidOpen:);
     [windowOpener openWindows:YES];
 }
@@ -98,17 +108,14 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.controller = self;
     windowOpener.gateway = gateway_;
     windowOpener.windowIndex = [tab tmuxWindow];
+    windowOpener.target = self;
+    windowOpener.selector = @selector(windowDidOpen:);
     [windowOpener updateLayoutInTab:tab];
 }
 
 - (void)sessionChangedTo:(NSString *)newSessionName {
     self.sessionName = newSessionName;
     [self closeAllPanes];
-    if (dashboard_) {
-        [dashboard_ close];
-        [dashboard_ release];
-        dashboard_ = nil;
-    }
     [self openWindowsInitial];
 }
 
@@ -120,6 +127,15 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)sessionRenamedTo:(NSString *)newName
 {
     self.sessionName = newName;
+}
+
+- (void)windowWasRenamedWithId:(int)wid to:(NSString *)newName
+{
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerWindowWasRenamed
+                                                        object:[NSArray arrayWithObjects:
+                                                                [NSNumber numberWithInt:wid],
+                                                                newName,
+                                                                nil]];
 }
 
 - (void)windowsChanged
@@ -148,7 +164,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                              name:[doc valueInRecord:record forField:@"window_name"]
                              size:NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
                                              [[doc valueInRecord:record forField:@"window_height"] intValue])
-                           layout:[doc valueInRecord:record forField:@"window_layout"]];
+                           layout:[doc valueInRecord:record forField:@"window_layout"]
+                       affinities:nil];
     }
 }
 
@@ -277,6 +294,16 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
          responseSelector:nil];
 }
 
+- (void)newWindowInSession:(NSString *)targetSession
+       afterWindowWithName:(NSString *)predecessorWindow
+{
+    [gateway_ sendCommand:[NSString stringWithFormat:@"new-window -a -t \"%@:%@\"",
+                           [targetSession stringByEscapingQuotes],
+                           [predecessorWindow  stringByEscapingQuotes]]
+           responseTarget:nil
+         responseSelector:nil];
+}
+
 - (void)newWindowWithAffinity:(int)paneNumber
 {
     if (paneNumber >= 0) {
@@ -310,6 +337,22 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
          responseSelector:nil];
 }
 
+- (void)unlinkWindowWithId:(int)windowId inSession:(NSString *)sessionName
+{
+    [gateway_ sendCommand:[NSString stringWithFormat:@"unlink-window -k -t \"%@:@%d\"",
+                           [sessionName stringByEscapingQuotes],
+                           windowId]
+           responseTarget:nil
+         responseSelector:nil];
+}
+
+- (void)renameWindowWithId:(int)windowId toName:(NSString *)newName
+{
+    [gateway_ sendCommand:[NSString stringWithFormat:@"rename-window -t @%d \"%@\"", windowId, newName]
+           responseTarget:nil
+         responseSelector:nil];
+}
+
 - (void)killWindow:(int)window
 {
     [gateway_ sendCommand:[NSString stringWithFormat:@"kill-window -t @%d", window]
@@ -326,13 +369,20 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
          responseSelector:nil];
 }
 
-- (void)openWindowWithId:(int)windowId
+- (void)openWindowWithId:(int)windowId affinities:(NSArray *)affinities
 {
     // Get the window's basic info to prep the creation of a TmuxWindowOpener.
     [gateway_ sendCommand:[NSString stringWithFormat:@"list-windows -F %@ -I %d", kListWindowsFormat, windowId]
            responseTarget:self
          responseSelector:@selector(listedWindowsToOpenOne:forWindowId:)
-           responseObject:[NSNumber numberWithInt:windowId]];
+           responseObject:[NSArray arrayWithObjects:[NSNumber numberWithInt:windowId],
+                           affinities,
+                           nil]];
+}
+
+- (void)openWindowWithId:(int)windowId
+{
+    [self openWindowWithId:windowId affinities:[NSArray array]];
 }
 
 - (PTYSession *)sessionWithAffinityForTmuxWindowId:(int)windowId
@@ -377,6 +427,24 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [gateway_ sendCommand:killCommand responseTarget:nil responseSelector:nil];
 }
 
+- (void)addSessionWithName:(NSString *)sessionName
+{
+    NSString *attachCommand = [NSString stringWithFormat:@"new-session -s \"%@\"",
+                               [sessionName stringByEscapingQuotes]];
+    [gateway_ sendCommand:attachCommand
+           responseTarget:nil
+         responseSelector:nil];
+}
+
+- (void)attachToSession:(NSString *)sessionName
+{
+    NSString *attachCommand = [NSString stringWithFormat:@"attach-session -t \"%@\"",
+                             [sessionName stringByEscapingQuotes]];
+    [gateway_ sendCommand:attachCommand
+           responseTarget:nil
+         responseSelector:nil];
+}
+
 - (void)listWindowsInSession:(NSString *)sessionName
                       target:(id)target
                     selector:(SEL)selector
@@ -391,15 +459,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                            NSStringFromSelector(selector),
                            target,
                            nil]];
-}
-
-- (TmuxDashboardController *)dashboard
-{
-    if (!dashboard_) {
-        dashboard_ = [[TmuxDashboardController alloc] initWithTmuxController:self];
-        [dashboard_ showWindow:nil];
-    }
-    return dashboard_;
 }
 
 @end
@@ -422,8 +481,10 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                                         object:self.sessions];
 }
 
-- (void)listedWindowsToOpenOne:(NSString *)response forWindowId:(NSNumber *)windowId
+- (void)listedWindowsToOpenOne:(NSString *)response forWindowId:(NSArray *)values
 {
+    NSNumber *windowId = [values objectAtIndex:0];
+    NSArray *affinities = [values objectAtIndex:1];
     TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields]];
     if (!doc) {
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Bad response for list windows request: %@",
@@ -436,7 +497,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                  name:[doc valueInRecord:record forField:@"window_name"]
                                  size:NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
                                                  [[doc valueInRecord:record forField:@"window_height"] intValue])
-                               layout:[doc valueInRecord:record forField:@"window_layout"]];
+                               layout:[doc valueInRecord:record forField:@"window_layout"]
+                           affinities:affinities];
         }
     }
 }
@@ -487,6 +549,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         [entry replaceObjectAtIndex:1 withObject:refcount];
         [windows_ setObject:entry forKey:k];
     } else {
+        [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerWindowDidClose
+                                                            object:nil];
         [windows_ removeObjectForKey:k];
         return;
     }
@@ -522,6 +586,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)windowDidOpen:(NSNumber *)windowIndex
 {
     [pendingWindowOpens_ removeObject:windowIndex];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerWindowDidOpen
+                                                        object:nil];
 }
 
 @end

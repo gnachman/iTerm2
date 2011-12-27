@@ -9,6 +9,10 @@
 /* Begin PBXBuildFile section */
 		1D06A050134CDBED00C414EF /* Trouter.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06A04F134CDBED00C414EF /* Trouter.m */; };
 		1D06A052134CDBF800C414EF /* Trouter.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06A051134CDBF800C414EF /* Trouter.h */; };
+		1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0B613614A7BC1200C57C33 /* TmuxControllerRegistry.h */; };
+		1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0B613714A7BC1200C57C33 /* TmuxControllerRegistry.m */; };
+		1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */; };
+		1D0B613D14A7C76500C57C33 /* TmuxWindowsTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0B613B14A7C76500C57C33 /* TmuxWindowsTable.m */; };
 		1D1158CE13444D29009B366F /* iTerm2 Help in Resources */ = {isa = PBXBuildFile; fileRef = 1D1158C913444D29009B366F /* iTerm2 Help */; };
 		1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D13EADB12113A2D00909F9C /* libncurses.dylib */; };
 		1D173859126C820A004622DC /* FakeWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D173857126C820A004622DC /* FakeWindow.h */; };
@@ -366,6 +370,10 @@
 		0464AB30006CD2EC7F000001 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
 		1D06A04F134CDBED00C414EF /* Trouter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Trouter.m; sourceTree = "<group>"; };
 		1D06A051134CDBF800C414EF /* Trouter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Trouter.h; sourceTree = "<group>"; };
+		1D0B613614A7BC1200C57C33 /* TmuxControllerRegistry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxControllerRegistry.h; sourceTree = "<group>"; };
+		1D0B613714A7BC1200C57C33 /* TmuxControllerRegistry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxControllerRegistry.m; sourceTree = "<group>"; };
+		1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxWindowsTable.h; sourceTree = "<group>"; };
+		1D0B613B14A7C76500C57C33 /* TmuxWindowsTable.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxWindowsTable.m; sourceTree = "<group>"; };
 		1D1158CA13444D29009B366F /* English */ = {isa = PBXFileReference; lastKnownFileType = folder; name = English; path = "English.lproj/iTerm2 Help"; sourceTree = "<group>"; };
 		1D13EADB12113A2D00909F9C /* libncurses.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libncurses.dylib; path = usr/lib/libncurses.dylib; sourceTree = SDKROOT; };
 		1D173857126C820A004622DC /* FakeWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FakeWindow.h; sourceTree = "<group>"; };
@@ -731,7 +739,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				1DEE9FDB11FCA60F009E18C9 /* credits.rtf */,
@@ -939,6 +946,7 @@
 				9325FF3C0FB54DF1004EC67C /* PseudoTerminal.xib */,
 				9325FF400FB54DF1004EC67C /* PreferencePanel.xib */,
 				9325FF460FB54DF1004EC67C /* BookmarksWindow.xib */,
+				1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */,
 				E8EDCE69015E0A5703000001 /* iTerm.icns */,
 				FBBB8B60039FC04E01F955DB /* iTerm.png */,
 				DD9C1AE2051F45C000A8A065 /* iTerm-Aqua.jpg */,
@@ -1060,6 +1068,10 @@
 				1DD4CE7E14A51C0D00ED182E /* TmuxDashboardController.h */,
 				1DD4CE7F14A51C0D00ED182E /* TmuxDashboardController.m */,
 				1DA9AEE814A51CA000BEB37B /* TmuxSessionsTable.h */,
+				1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */,
+				1D0B613B14A7C76500C57C33 /* TmuxWindowsTable.m */,
+				1D0B613614A7BC1200C57C33 /* TmuxControllerRegistry.h */,
+				1D0B613714A7BC1200C57C33 /* TmuxControllerRegistry.m */,
 				1DA9AEE914A51CA000BEB37B /* TmuxSessionsTable.m */,
 			);
 			name = tmux;
@@ -1408,6 +1420,8 @@
 				1DD6707714934ADE008E4361 /* PTYSplitView.h in Headers */,
 				1DD4CE8014A51C0D00ED182E /* TmuxDashboardController.h in Headers */,
 				1DA9AEEA14A51CA000BEB37B /* TmuxSessionsTable.h in Headers */,
+				1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */,
+				1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1699,6 +1713,8 @@
 				1DD6707814934ADE008E4361 /* PTYSplitView.m in Sources */,
 				1DD4CE8114A51C0D00ED182E /* TmuxDashboardController.m in Sources */,
 				1DA9AEEB14A51CA000BEB37B /* TmuxSessionsTable.m in Sources */,
+				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,
+				1D0B613D14A7C76500C57C33 /* TmuxWindowsTable.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -16,6 +16,7 @@
 - (void)addSessionWithName:(NSString *)sessionName;
 - (void)attachToSessionWithName:(NSString *)sessionName;
 - (NSString *)nameOfAttachedSession;
+- (void)selectedSessionChangedTo:(NSString *)newName;
 
 @end
 
@@ -24,8 +25,11 @@
     BOOL canAttachToSelectedSession_;
     NSObject<TmuxSessionsTableProtocol> *delegate_;  // weak
 
+    IBOutlet NSTableColumn *checkColumn_;
+    IBOutlet NSTableColumn *nameColumn_;
     IBOutlet NSTableView *tableView_;
     IBOutlet NSButton *attachButton_;
+    IBOutlet NSButton *detachButton_;
     IBOutlet NSButton *removeButton_;
 }
 

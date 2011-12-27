@@ -3599,6 +3599,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [tmuxController_ windowsChanged];
 }
 
+- (void)tmuxWindowRenamedWithId:(int)windowId to:(NSString *)newName
+{
+    [tmuxController_ windowWasRenamedWithId:windowId to:newName];
+}
+
 - (void)tmuxHostDisconnected
 {
     [tmuxController_ detach];

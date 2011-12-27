@@ -16,6 +16,7 @@
                            layout:(NSString *)layout;
 - (void)tmuxWindowAddedWithId:(int)windowId;
 - (void)tmuxWindowClosedWithId:(int)windowId;
+- (void)tmuxWindowRenamedWithId:(int)windowId to:(NSString *)newName;
 - (void)tmuxHostDisconnected;
 - (void)tmuxWriteData:(NSData *)data;
 - (void)tmuxReadTask:(NSData *)data;

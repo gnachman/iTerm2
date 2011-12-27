@@ -138,6 +138,18 @@ static NSString *kCommandObject = @"object";
     state_ = CONTROL_STATE_READY;
 }
 
+- (void)parseWindowRenamedCommand:(NSString *)command
+{
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%window-renamed ([0-9]+) (.*)$"];
+    if (components.count != 3) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%window-renamed id new_name): \"%@\"", command]];
+        return;
+    }
+    [delegate_ tmuxWindowRenamedWithId:[[components objectAtIndex:1] intValue]
+                                    to:[components objectAtIndex:2]];
+    state_ = CONTROL_STATE_READY;
+}
+
 - (void)parseSessionRenamedCommand:(NSString *)command
 {
     NSArray *components = [command captureComponentsMatchedByRegex:@"^%session-renamed (.+)$"];
@@ -234,6 +246,8 @@ static NSString *kCommandObject = @"object";
         [self parseWindowAddCommand:command];
     } else if ([command hasPrefix:@"%window-close"]) {
         [self parseWindowCloseCommand:command];
+    } else if ([command hasPrefix:@"%window-renamed"]) {
+        [self parseWindowRenamedCommand:command];
     } else if ([command hasPrefix:@"%unlinked-window-add"] ||
                [command hasPrefix:@"%unlinked-window-close"]) {
         [self broadcastWindowChange];

@@ -73,6 +73,7 @@
 #import "FutureMethods.h"
 #import "PseudoTerminalRestorer.h"
 #import "TmuxLayoutParser.h"
+#import "TmuxDashboardController.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -835,7 +836,7 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)openDashboard:(id)sender
 {
-    [[[[[self currentTab] tmuxController] dashboard] window] makeKeyAndOrderFront:nil];
+    [[TmuxDashboardController sharedInstance] showWindow:nil];
 }
 
 - (IBAction)findCursor:(id)sender

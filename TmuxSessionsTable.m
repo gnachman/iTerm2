@@ -88,10 +88,19 @@
     objectValueForTableColumn:(NSTableColumn *)aTableColumn
             row:(NSInteger)rowIndex
 {
-    if (rowIndex < model_.count) {
-        return [model_ objectAtIndex:rowIndex];
+    NSString *name = [model_ objectAtIndex:rowIndex];
+    if (aTableColumn == checkColumn_) {
+        if ([[delegate_ nameOfAttachedSession] isEqualToString:name]) {
+            return @"✓";
+        } else {
+            return @"";
+        }
     } else {
-        return nil;
+        if (rowIndex < model_.count) {
+            return name;
+        } else {
+            return nil;
+        }
     }
 }
 
@@ -111,10 +120,11 @@
                                  row:(NSInteger)rowIndex {
     return YES;
 }
-     
+
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
 {
     [self updateEnabledStateOfButtons];
+    [delegate_ selectedSessionChangedTo:[self selectedSessionName]];
 }
 
 - (NSString *)selectedSessionName
@@ -155,10 +165,12 @@
 {
     if ([tableView_ selectedRow] < 0) {
         [attachButton_ setEnabled:NO];
+        [detachButton_ setEnabled:NO];
         [removeButton_ setEnabled:NO];
     } else {
         BOOL isAttachedSession = [[delegate_ nameOfAttachedSession] isEqualToString:[self selectedSessionName]];
         [attachButton_ setEnabled:!isAttachedSession];
+        [detachButton_ setEnabled:isAttachedSession];
         [removeButton_ setEnabled:YES];
     }
 }
