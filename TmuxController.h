@@ -86,7 +86,7 @@ extern NSString *kTmuxControllerWindowDidClose;
 - (void)unlinkWindowWithId:(int)windowId inSession:(NSString *)sessionName;
 - (BOOL)isAttached;
 - (void)requestDetach;
-- (void)renameWindowWithId:(int)windowId toName:(NSString *)newName;
+- (void)renameWindowWithId:(int)windowId inSession:(NSString *)sessionName toName:(NSString *)newName;
 
 - (void)renameSession:(NSString *)oldName to:(NSString *)newName;
 - (void)killSession:(NSString *)sessionName;

@@ -346,9 +346,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
          responseSelector:nil];
 }
 
-- (void)renameWindowWithId:(int)windowId toName:(NSString *)newName
+- (void)renameWindowWithId:(int)windowId inSession:(NSString *)sessionName toName:(NSString *)newName
 {
-    [gateway_ sendCommand:[NSString stringWithFormat:@"rename-window -t @%d \"%@\"", windowId, newName]
+    [gateway_ sendCommand:[NSString stringWithFormat:@"rename-window -t \"%@:@%d\" \"%@\"", sessionName, windowId, newName]
            responseTarget:nil
          responseSelector:nil];
 }

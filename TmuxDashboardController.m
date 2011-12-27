@@ -144,13 +144,17 @@
 
 - (void)renameWindowWithId:(int)windowId toName:(NSString *)newName
 {
-    [[self tmuxController] renameWindowWithId:windowId toName:newName];
+    [[self tmuxController] renameWindowWithId:windowId
+                                    inSession:[sessionsTable_ selectedSessionName]
+                                       toName:newName];
+    [self reloadWindows];
 }
 
 - (void)unlinkWindowWithId:(int)windowId
 {
     [[self tmuxController] unlinkWindowWithId:windowId
                                     inSession:[sessionsTable_ selectedSessionName]];
+    [self reloadWindows];
 }
 
 - (void)addWindow

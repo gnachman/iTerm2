@@ -168,8 +168,10 @@
 
 - (void)controlTextDidChange:(NSNotification *)aNotification
 {
-    [self resetFilteredModel];
-    [tableView_ reloadData];
+    if ([aNotification object] == searchField_) {
+        [self resetFilteredModel];
+        [tableView_ reloadData];
+    }
 }
 
 @end
