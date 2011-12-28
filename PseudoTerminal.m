@@ -1342,7 +1342,10 @@ NSString *sessionsKey = @"sessions";
         [[self window] setFrame:rect display:YES];
     }
 
-    [TABVIEW selectTabViewItemAtIndex:[[arrangement objectForKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] intValue]];
+    const int tabIndex = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX] intValue];
+    if (tabIndex >= 0 && tabIndex < [TABVIEW numberOfTabViewItems]) {
+        [TABVIEW selectTabViewItemAtIndex:tabIndex];
+    }
 
     Bookmark* addressbookEntry = [[[[[self tabs] objectAtIndex:0] sessions] objectAtIndex:0] addressBookEntry];
     if ([addressbookEntry objectForKey:KEY_SPACE] &&
