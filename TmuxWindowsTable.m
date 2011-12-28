@@ -90,7 +90,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     [removeWindowButton_ setEnabled:[delegate_ haveSelectedSession] && [tableView_ numberOfSelectedRows] > 0];
     [openInTabsButton_ setEnabled:[delegate_ currentSessionSelected] && [tableView_ numberOfSelectedRows] > 1 && ![self anySelectedWindowIsOpen]];
     [openInWindowsButton_ setEnabled:[delegate_ currentSessionSelected] && [tableView_ numberOfSelectedRows] > 0 && ![self anySelectedWindowIsOpen]];
-    if ([tableView_ numberOfSelectedRows] == 1) {
+    if ([openInWindowsButton_ isEnabled] && [tableView_ numberOfSelectedRows] == 1) {
         [openInWindowsButton_ setTitle:@"Open in Window"];
     } else {
         [openInWindowsButton_ setTitle:@"Open in Windows"];
@@ -116,17 +116,34 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 - (IBAction)showInWindows:(id)sender
 {
     [delegate_ showWindowsWithIds:[self selectedWindowIds] inTabs:NO];
+    [tableView_ reloadData];
 }
 
 - (IBAction)showInTabs:(id)sender
 {
     [delegate_ showWindowsWithIds:[self selectedWindowIds] inTabs:YES];
+    [tableView_ reloadData];
 }
 
 - (IBAction)hideWindow:(id)sender
 {
     for (NSNumber *n in [self selectedWindowIds]) {
         [delegate_ hideWindowWithId:[n intValue]];
+    }
+    [tableView_ reloadData];
+}
+
+#pragma mark NSTableViewDelegate
+
+- (void)tableView:(NSTableView *)tableView
+  willDisplayCell:(id)cell
+   forTableColumn:(NSTableColumn *)tableColumn
+              row:(NSInteger)row
+{
+    if ([delegate_ haveOpenWindowWithId:[[[[self filteredModel] objectAtIndex:row] objectAtIndex:1] intValue]]) {
+        [cell setTextColor:[[cell textColor] colorWithAlphaComponent:1]];
+    } else {
+        [cell setTextColor:[[cell textColor] colorWithAlphaComponent:0.5]];
     }
 }
 
