@@ -8,6 +8,8 @@
 
 #import <Cocoa/Cocoa.h>
 
+extern NSString *kWindowPasteboardType;
+
 @protocol TmuxWindowsTableProtocol
 
 - (void)reloadWindows;
@@ -19,6 +21,7 @@
 - (BOOL)haveSelectedSession;
 - (BOOL)currentSessionSelected;
 - (BOOL)haveOpenWindowWithId:(int)windowId;
+- (NSString *)selectedSessionName;
 
 @end
 

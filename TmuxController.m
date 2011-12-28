@@ -23,6 +23,7 @@ NSString *kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotific
 NSString *kTmuxControllerWindowsChangeNotification = @"kTmuxControllerWindowsChangeNotification";
 NSString *kTmuxControllerWindowWasRenamed = @"kTmuxControllerWindowWasRenamed";
 NSString *kTmuxControllerWindowDidOpen = @"kTmuxControllerWindowDidOpen";
+NSString *kTmuxControllerAttachedSessionDidChange = @"kTmuxControllerAttachedSessionDidChange";
 NSString *kTmuxControllerWindowDidClose = @"kTmuxControllerWindowDidClose";
 
 static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
@@ -117,6 +118,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     self.sessionName = newSessionName;
     [self closeAllPanes];
     [self openWindowsInitial];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerAttachedSessionDidChange
+                                                        object:nil];
 }
 
 - (void)sessionsChanged
@@ -383,6 +386,16 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)openWindowWithId:(int)windowId
 {
     [self openWindowWithId:windowId affinities:[NSArray array]];
+}
+
+- (void)linkWindowId:(int)windowId
+           inSession:(NSString *)sessionName
+           toSession:(NSString *)targetSession
+{
+    [gateway_ sendCommand:[NSString stringWithFormat:@"link-window -s \"%@:@%d\" -t \"%@:+\"",
+                           sessionName, windowId, targetSession, windowId]
+           responseTarget:nil
+         responseSelector:nil];
 }
 
 - (PTYSession *)sessionWithAffinityForTmuxWindowId:(int)windowId

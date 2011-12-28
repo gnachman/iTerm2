@@ -8,6 +8,8 @@
 
 #import "TmuxWindowsTable.h"
 
+NSString *kWindowPasteboardType = @"kWindowPasteboardType";
+
 @interface TmuxWindowsTable (Private)
 
 - (NSArray *)selectedWindowNames;
@@ -30,6 +32,11 @@
         model_ = [[NSMutableArray alloc] init];
     }
     return self;
+}
+
+- (void)awakeFromNib
+{
+    [tableView_ setDraggingSourceOperationMask:NSDragOperationLink forLocal:NO];
 }
 
 - (void)dealloc
@@ -151,8 +158,6 @@
                            toName:anObject];
 }
 
-#pragma mark NSTableViewDataSource
-
 - (BOOL)tableView:(NSTableView *)aTableView
     shouldEditTableColumn:(NSTableColumn *)aTableColumn
               row:(NSInteger)rowIndex {
@@ -162,6 +167,17 @@
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
 {
     [self updateEnabledStateOfButtons];
+}
+
+- (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard *)pboard {
+    NSArray* selectedItems = [[self filteredModel] objectsAtIndexes:rowIndexes];
+    [pboard declareTypes:[NSArray arrayWithObject:kWindowPasteboardType] owner:self];
+    [pboard setPropertyList:[NSArray arrayWithObjects:
+                             [delegate_ selectedSessionName],
+                             selectedItems,
+                             nil]
+                    forType:kWindowPasteboardType];
+    return YES;
 }
 
 #pragma mark NSSearchField delegate

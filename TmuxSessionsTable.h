@@ -17,6 +17,10 @@
 - (void)attachToSessionWithName:(NSString *)sessionName;
 - (NSString *)nameOfAttachedSession;
 - (void)selectedSessionChangedTo:(NSString *)newName;
+- (void)linkWindowId:(int)windowId
+           inSession:(NSString *)sessionName
+           toSession:(NSString *)targetSession;
+- (void)detach;
 
 @end
 
@@ -44,5 +48,6 @@
 - (IBAction)addSession:(id)sender;
 - (IBAction)removeSession:(id)sender;
 - (IBAction)attach:(id)sender;
+- (IBAction)detach:(id)sender;
 
 @end

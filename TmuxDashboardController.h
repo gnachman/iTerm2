@@ -18,5 +18,6 @@
 }
 
 + (TmuxDashboardController *)sharedInstance;
+- (IBAction)close:(id)sender;
 
 @end

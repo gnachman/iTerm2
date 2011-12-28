@@ -8,6 +8,8 @@
 
 #import "TmuxSessionsTable.h"
 
+extern NSString *kWindowPasteboardType;
+
 @interface TmuxSessionsTable (Private)
 
 - (NSString *)newSessionName;
@@ -27,6 +29,12 @@
         model_ = [[NSMutableArray alloc] init];
     }
     return self;
+}
+
+- (void)awakeFromNib
+{
+    [tableView_ registerForDraggedTypes:[NSArray arrayWithObjects:kWindowPasteboardType, nil]];
+    [tableView_ setDraggingDestinationFeedbackStyle:NSTableViewDraggingDestinationFeedbackStyleRegular];
 }
 
 - (void)dealloc
@@ -55,6 +63,7 @@
         [tableView_ selectRowIndexes:[NSIndexSet indexSetWithIndex:i]
                 byExtendingSelection:NO];
     }
+    [self updateEnabledStateOfButtons];
 }
 
 - (IBAction)addSession:(id)sender
@@ -74,6 +83,13 @@
     NSString *name = [self selectedSessionName];
     if (name) {
         [delegate_ attachToSessionWithName:name];
+    }
+}
+
+- (IBAction)detach:(id)sender {
+    NSString *name = [self selectedSessionName];
+    if (name) {
+        [delegate_ detach];
     }
 }
 
@@ -134,6 +150,36 @@
         return [model_ objectAtIndex:i];
     } else {
         return nil;
+    }
+}
+
+- (BOOL)tableView:(NSTableView *)aTableView
+       acceptDrop:(id <NSDraggingInfo>)info
+              row:(NSInteger)row
+    dropOperation:(NSTableViewDropOperation)operation {
+    NSPasteboard *pb = [info draggingPasteboard];
+    NSArray* pair = [pb propertyListForType:kWindowPasteboardType];
+    NSString *sessionName = [pair objectAtIndex:0];
+    NSArray *draggedItems = [pair objectAtIndex:1];
+    NSString *targetSession = [model_ objectAtIndex:row];
+    for (NSArray *tuple in draggedItems) {
+        NSNumber *windowId = [tuple objectAtIndex:1];
+        [delegate_ linkWindowId:[windowId intValue]
+                      inSession:sessionName
+                      toSession:targetSession];
+    }
+    return YES;
+}
+
+- (NSDragOperation)tableView:(NSTableView *)aTableView
+                validateDrop:(id < NSDraggingInfo >)info
+                 proposedRow:(NSInteger)row
+       proposedDropOperation:(NSTableViewDropOperation)operation
+{
+    if (operation == NSTableViewDropOn) {
+        return NSDragOperationLink;
+    } else {
+        return NSDragOperationNone;
     }
 }
 

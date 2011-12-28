@@ -64,6 +64,10 @@
                                                  selector:@selector(tmuxControllerWindowOpenedOrClosed:)
                                                      name:kTmuxControllerWindowDidClose
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(tmuxControllerAttachedSessionChanged:)
+                                                     name:kTmuxControllerAttachedSessionDidChange
+                                                   object:nil];
     }
 
     return self;
@@ -78,6 +82,11 @@
     [super windowDidLoad];
     [sessionsTable_ setDelegate:self];
     [windowsTable_ setDelegate:self];
+}
+
+- (IBAction)close:(id)sender
+{
+    [self close];
 }
 
 #pragma mark TmuxSessionsTableProtocol
@@ -102,6 +111,11 @@
     [[self tmuxController] attachToSession:sessionName];
 }
 
+- (void)detach
+{
+    [[self tmuxController] requestDetach];
+}
+
 - (NSString *)nameOfAttachedSession
 {
     return [[self tmuxController] sessionName];
@@ -116,6 +130,15 @@
 {
     [windowsTable_ setWindows:[NSArray array]];
     [self reloadWindows];
+}
+
+- (void)linkWindowId:(int)windowId
+           inSession:(NSString *)sessionName
+           toSession:(NSString *)targetSession
+{
+    [[self tmuxController] linkWindowId:windowId
+                              inSession:sessionName
+                              toSession:targetSession];
 }
 
 #pragma mark TmuxWindowsTableProtocol
@@ -204,6 +227,11 @@
     return [[self tmuxController] window:windowId] != nil;
 }
 
+- (NSString *)selectedSessionName
+{
+    return [sessionsTable_ selectedSessionName];
+}
+
 @end
 
 @implementation TmuxDashboardController (Private)
@@ -222,6 +250,14 @@
 {
     if ([[self window] isVisible]) {
         [self reloadWindows];
+    }
+}
+
+- (void)tmuxControllerAttachedSessionChanged:(NSNotification *)notification
+{
+    if ([[self window] isVisible]) {
+        [sessionsTable_ selectSessionWithName:[[self tmuxController] sessionName]];
+        [windowsTable_ updateEnabledStateOfButtons];
     }
 }
 
