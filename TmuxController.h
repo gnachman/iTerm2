@@ -11,6 +11,7 @@
 @class PTYSession;
 @class PTYTab;
 @class PseudoTerminal;
+@class EquivalenceClassSet;
 
 // Posted when sessions change (names, addition, deletion)
 extern NSString *kTmuxControllerSessionsDidChange;
@@ -37,7 +38,12 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
     NSSize lastSize_;  // last size for windowDidChange:
     BOOL detached_;
     NSString *sessionName_;
+    int sessionId_;
     NSMutableSet *pendingWindowOpens_;
+    NSString *lastSaveAffinityCommand_;
+	// tmux windows that want to open as tabs in the same physical window
+	// belong to the same equivalence class.
+    EquivalenceClassSet *affinities_;
 }
 
 @property (nonatomic, readonly) TmuxGateway *gateway;
@@ -49,11 +55,10 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
 - (void)openWindowsInitial;
 - (void)openWindowWithId:(int)windowId;
 - (void)openWindowWithId:(int)windowId affinities:(NSArray *)affinities;
-- (PTYSession *)sessionWithAffinityForTmuxWindowId:(int)windowId;
 
 - (void)setLayoutInTab:(PTYTab *)tab
                 toLayout:(NSString *)layout;
-- (void)sessionChangedTo:(NSString *)newSessionName;
+- (void)sessionChangedTo:(NSString *)newSessionName sessionId:(int)sessionid;
 - (void)sessionsChanged;
 - (void)sessionRenamedTo:(NSString *)newName;
 - (void)windowsChanged;
@@ -77,7 +82,8 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
 - (void)splitWindowPane:(int)wp vertically:(BOOL)splitVertically;
 - (void)newWindowInSession:(NSString *)targetSession afterWindowWithName:(NSString *)predecessorWindow;
 
-- (void)newWindowWithAffinity:(int)paneNumber;
+- (PseudoTerminal *)windowWithAffinityForWindowId:(int)wid;
+- (void)newWindowWithAffinity:(int)windowId;
 - (void)movePane:(int)srcPane
         intoPane:(int)destPane
       isVertical:(BOOL)splitVertical
@@ -101,5 +107,6 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
                       target:(id)target
                     selector:(SEL)selector
                       object:(id)object;
+- (void)saveAffinities;
 
 @end

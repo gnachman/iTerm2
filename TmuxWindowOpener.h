@@ -28,7 +28,6 @@
     PTYTab *tabToUpdate_;
     id target_;
     SEL selector_;
-    NSArray *affinities_;
 }
 
 @property (nonatomic, assign) int windowIndex;
@@ -42,7 +41,6 @@
 @property (nonatomic, retain) id target;
 // Selector is called even if the window is already open and nothing is done.
 @property (nonatomic, assign) SEL selector;
-@property (nonatomic, retain) NSArray *affinities;
 
 + (TmuxWindowOpener *)windowOpener;
 - (void)openWindows:(BOOL)initial;

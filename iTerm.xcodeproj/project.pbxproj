@@ -212,6 +212,8 @@
 		1D825601146881EC007CAE78 /* PointerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8255FF146881EC007CAE78 /* PointerController.m */; };
 		1D825604146B258A007CAE78 /* EventMonitorView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D825602146B258A007CAE78 /* EventMonitorView.h */; };
 		1D825605146B258A007CAE78 /* EventMonitorView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D825603146B258A007CAE78 /* EventMonitorView.m */; };
+		1D82FF6114ABC38700B34CEA /* EquivalenceClassSetTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D82FF5F14ABC38700B34CEA /* EquivalenceClassSetTest.h */; };
+		1D82FF6214ABC38700B34CEA /* EquivalenceClassSetTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D82FF6014ABC38700B34CEA /* EquivalenceClassSetTest.m */; };
 		1D844C8D13FD8B7700CD4F85 /* SplitPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D844C8B13FD8B7700CD4F85 /* SplitPanel.xib */; };
 		1D85D1ED1306687700A3E998 /* RegexKitLite.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D85D1D81306687700A3E998 /* RegexKitLite.h */; };
 		1D85D1EF1306687700A3E998 /* RegexKitLite.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D85D1DA1306687700A3E998 /* RegexKitLite.m */; };
@@ -267,6 +269,8 @@
 		1DA9AEEA14A51CA000BEB37B /* TmuxSessionsTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA9AEE814A51CA000BEB37B /* TmuxSessionsTable.h */; };
 		1DA9AEEB14A51CA000BEB37B /* TmuxSessionsTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA9AEE914A51CA000BEB37B /* TmuxSessionsTable.m */; };
 		1DA9BD0D122F1077002FCC65 /* star-gold24.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA9BD0C122F1077002FCC65 /* star-gold24.png */; };
+		1DAE714D14AAF24200DA144B /* EquivalenceClassSet.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DAE714B14AAF24200DA144B /* EquivalenceClassSet.h */; };
+		1DAE714E14AAF24200DA144B /* EquivalenceClassSet.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DAE714C14AAF24200DA144B /* EquivalenceClassSet.m */; };
 		1DAED28812E9395E005E49ED /* GlobalSearch.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DAED28612E9395E005E49ED /* GlobalSearch.h */; };
 		1DAED28912E9395E005E49ED /* GlobalSearch.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DAED28712E9395E005E49ED /* GlobalSearch.m */; };
 		1DAED5B212ECC485005E49ED /* FakeWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D173858126C820A004622DC /* FakeWindow.m */; };
@@ -456,6 +460,8 @@
 		1D8255FF146881EC007CAE78 /* PointerController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PointerController.m; sourceTree = "<group>"; };
 		1D825602146B258A007CAE78 /* EventMonitorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EventMonitorView.h; sourceTree = "<group>"; };
 		1D825603146B258A007CAE78 /* EventMonitorView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EventMonitorView.m; sourceTree = "<group>"; };
+		1D82FF5F14ABC38700B34CEA /* EquivalenceClassSetTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EquivalenceClassSetTest.h; sourceTree = "<group>"; };
+		1D82FF6014ABC38700B34CEA /* EquivalenceClassSetTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EquivalenceClassSetTest.m; sourceTree = "<group>"; };
 		1D844C8C13FD8B7700CD4F85 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/SplitPanel.xib; sourceTree = "<group>"; };
 		1D85D1D81306687700A3E998 /* RegexKitLite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RegexKitLite.h; sourceTree = "<group>"; };
 		1D85D1DA1306687700A3E998 /* RegexKitLite.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = RegexKitLite.m; sourceTree = "<group>"; };
@@ -511,6 +517,8 @@
 		1DA9AEE814A51CA000BEB37B /* TmuxSessionsTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxSessionsTable.h; sourceTree = "<group>"; };
 		1DA9AEE914A51CA000BEB37B /* TmuxSessionsTable.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxSessionsTable.m; sourceTree = "<group>"; };
 		1DA9BD0C122F1077002FCC65 /* star-gold24.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "star-gold24.png"; path = "images/star-gold24.png"; sourceTree = "<group>"; };
+		1DAE714B14AAF24200DA144B /* EquivalenceClassSet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EquivalenceClassSet.h; sourceTree = "<group>"; };
+		1DAE714C14AAF24200DA144B /* EquivalenceClassSet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EquivalenceClassSet.m; sourceTree = "<group>"; };
 		1DAED28612E9395E005E49ED /* GlobalSearch.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GlobalSearch.h; sourceTree = "<group>"; };
 		1DAED28712E9395E005E49ED /* GlobalSearch.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GlobalSearch.m; sourceTree = "<group>"; };
 		1DAED99012EDF923005E49ED /* iTermSearchField.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermSearchField.h; sourceTree = "<group>"; };
@@ -1057,6 +1065,8 @@
 		1D3D21921483142800FAC8E7 /* tmux */ = {
 			isa = PBXGroup;
 			children = (
+				1DAE714B14AAF24200DA144B /* EquivalenceClassSet.h */,
+				1DAE714C14AAF24200DA144B /* EquivalenceClassSet.m */,
 				1D3D21861482E0E500FAC8E7 /* TmuxGateway.m */,
 				1D3D218F1482F18A00FAC8E7 /* TmuxController.m */,
 				1D3D21941483144600FAC8E7 /* TSVParser.m */,
@@ -1082,6 +1092,8 @@
 			children = (
 				1D72477211F55E5700BD4924 /* LineBufferTest.h */,
 				1D72477311F55E5700BD4924 /* LineBufferTest.m */,
+				1D82FF5F14ABC38700B34CEA /* EquivalenceClassSetTest.h */,
+				1D82FF6014ABC38700B34CEA /* EquivalenceClassSetTest.m */,
 			);
 			name = Tests;
 			sourceTree = "<group>";
@@ -1422,6 +1434,8 @@
 				1DA9AEEA14A51CA000BEB37B /* TmuxSessionsTable.h in Headers */,
 				1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */,
 				1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */,
+				1DAE714D14AAF24200DA144B /* EquivalenceClassSet.h in Headers */,
+				1D82FF6114ABC38700B34CEA /* EquivalenceClassSetTest.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1715,6 +1729,8 @@
 				1DA9AEEB14A51CA000BEB37B /* TmuxSessionsTable.m in Sources */,
 				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,
 				1D0B613D14A7C76500C57C33 /* TmuxWindowsTable.m in Sources */,
+				1DAE714E14AAF24200DA144B /* EquivalenceClassSet.m in Sources */,
+				1D82FF6214ABC38700B34CEA /* EquivalenceClassSetTest.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

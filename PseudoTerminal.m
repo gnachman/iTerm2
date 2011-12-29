@@ -1274,7 +1274,7 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)newTmuxTab:(id)sender
 {
-    [[[self currentSession] tmuxController] newWindowWithAffinity:[[self currentSession] tmuxPane]];
+    [[[self currentSession] tmuxController] newWindowWithAffinity:[[self currentTab] tmuxWindow]];
 }
 
 - (NSSize)tmuxCompatibleSize
@@ -2572,11 +2572,19 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (void)saveAffinitiesLater:(PTYTab *)theTab
+{
+    if ([theTab isTmuxTab]) {
+        [[theTab tmuxController] performSelector:@selector(saveAffinities) withObject:nil afterDelay:0];
+    }
+}
+
 - (void)tabView:(NSTabView *)tabView willRemoveTabViewItem:(NSTabViewItem *)tabViewItem
 {
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[PseudoTerminal tabView:willRemoveTabViewItem]", __FILE__, __LINE__);
 #endif
+    [self saveAffinitiesLater:[tabViewItem identifier]];
 }
 
 - (void)tabView:(NSTabView *)tabView willAddTabViewItem:(NSTabViewItem *)tabViewItem
@@ -2586,6 +2594,7 @@ NSString *sessionsKey = @"sessions";
 #endif
 
     [self tabView:tabView willInsertTabViewItem:tabViewItem atIndex:[tabView numberOfTabViewItems]];
+    [self saveAffinitiesLater:[tabViewItem identifier]];
 }
 
 - (void)tabView:(NSTabView *)tabView willInsertTabViewItem:(NSTabViewItem *)tabViewItem atIndex:(int)anIndex
@@ -2595,6 +2604,7 @@ NSString *sessionsKey = @"sessions";
 #endif
     PTYTab* theTab = [tabViewItem identifier];
     [theTab setParentWindow:self];
+    [self saveAffinitiesLater:[tabViewItem identifier]];
 }
 
 - (BOOL)tabView:(NSTabView*)tabView shouldCloseTabViewItem:(NSTabViewItem *)tabViewItem

@@ -74,8 +74,6 @@ DebugLog([NSString stringWithFormat:args]); \
 
 @implementation PTYSession
 
-@synthesize futureWindowAffinities = futureWindowAffinities_;
-
 static NSString *TERM_ENVNAME = @"TERM";
 static NSString *COLORFGBG_ENVNAME = @"COLORFGBG";
 static NSString *PWD_ENVNAME = @"PWD";
@@ -130,7 +128,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     slowPasteBuffer = [[NSMutableString alloc] init];
     creationDate_ = [[NSDate date] retain];
-    futureWindowAffinities_ = [[NSMutableSet alloc] init];
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(windowResized)
@@ -180,7 +177,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [liveSession_ release];
     [tmuxGateway_ release];
     [tmuxController_ release];
-    [futureWindowAffinities_ release];
 
     [SHELL release];
     SHELL = nil;
@@ -3637,9 +3633,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self readTask:data];
 }
 
-- (void)tmuxSessionChanged:(NSString *)sessionName
+- (void)tmuxSessionChanged:(NSString *)sessionName sessionId:(int)sessionId
 {
-    [tmuxController_ sessionChangedTo:sessionName];
+    [tmuxController_ sessionChangedTo:sessionName sessionId:sessionId];
 }
 
 - (void)tmuxSessionsChanged

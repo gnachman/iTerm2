@@ -44,7 +44,6 @@
 @synthesize controller = controller_;
 @synthesize target = target_;
 @synthesize selector = selector_;
-@synthesize affinities = affinities_;
 
 + (TmuxWindowOpener *)windowOpener
 {
@@ -58,7 +57,6 @@
         histories_ = [[NSMutableDictionary alloc] init];
         altHistories_ = [[NSMutableDictionary alloc] init];
         states_ = [[NSMutableDictionary alloc] init];
-        affinities_ = [[NSMutableArray alloc] init];
     }
     return self;
 }
@@ -72,7 +70,6 @@
     [histories_ release];
     [altHistories_ release];
     [states_ release];
-    [affinities_ release];
     [tabToUpdate_ release];
     [super dealloc];
 }
@@ -227,30 +224,9 @@
 {
     --pendingRequests_;
     if (pendingRequests_ == 0) {
-        if ([self.controller window:windowIndex_]) {
-            // Safety valuve
-            if (self.target) {
-                [self.target performSelector:self.selector
-                                  withObject:[NSNumber numberWithInt:windowIndex_]];
-            }
-            return;
-        }
         PseudoTerminal *term = nil;
         if (!tabToUpdate_) {
-            PTYSession *neighbor = [self.controller sessionWithAffinityForTmuxWindowId:self.windowIndex];
-            if (neighbor) {
-                // Remove affinity since it's no longer needed.
-                [neighbor.futureWindowAffinities removeObject:[NSNumber numberWithInt:self.windowIndex]];
-            } else {
-                // Try the "reverse affinities", which may refer to future window panes.
-                for (NSNumber *n in self.affinities) {
-                    neighbor = [self.controller sessionForWindowPane:[n intValue]];
-                    if (neighbor) {
-                        break;
-                    }
-                }
-            }
-            term = [[neighbor tab] realParentWindow];
+            term = [self.controller windowWithAffinityForWindowId:self.windowIndex];
         }
         if (!term) {
             term = [[iTermController sharedInstance] openWindow];
@@ -265,22 +241,25 @@
             [tabToUpdate_ setTmuxLayout:parseTree
                          tmuxController:controller_];
         } else {
-            [term loadTmuxLayout:parseTree
-                          window:windowIndex_
-                  tmuxController:controller_
-                            name:name_];
+            if (![self.controller window:windowIndex_]) {
+                // Safety valve: don't open an existing tmux window.
+                [term loadTmuxLayout:parseTree
+                              window:windowIndex_
+                      tmuxController:controller_
+                                name:name_];
 
-            // Check if we know the position for the window
-            NSArray *panes = [[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree];
-            NSValue *windowPos = [self.controller positionForWindowWithPanes:panes];
-            if (windowPos) {
-                [[term window] setFrameOrigin:[windowPos pointValue]];
+                // Check if we know the position for the window
+                NSArray *panes = [[TmuxLayoutParser sharedInstance] windowPanesInParseTree:parseTree];
+                NSValue *windowPos = [self.controller positionForWindowWithPanes:panes];
+                if (windowPos) {
+                    [[term window] setFrameOrigin:[windowPos pointValue]];
+                }
+
+                // This is to handle the case where we couldn't create a window as
+                // large as we were asked to (for instance, if the gateway is full-
+                // screen).
+                [controller_ windowDidResize:term];
             }
-
-            // This is to handle the case where we couldn't create a window as
-            // large as we were asked to (for instance, if the gateway is full-
-            // screen).
-            [controller_ windowDidResize:term];
         }
         if (self.target) {
             [self.target performSelector:self.selector

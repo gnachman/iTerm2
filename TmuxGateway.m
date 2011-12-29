@@ -163,12 +163,12 @@ static NSString *kCommandObject = @"object";
 
 - (void)parseSessionChangeCommand:(NSString *)command
 {
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^%session-changed (.+)$"];
-    if (components.count != 2) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%session-changed name): \"%@\"", command]];
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%session-changed ([0-9]+) (.+)$"];
+    if (components.count != 3) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%session-changed id name): \"%@\"", command]];
         return;
     }
-    [delegate_ tmuxSessionChanged:[components objectAtIndex:1]];
+    [delegate_ tmuxSessionChanged:[components objectAtIndex:2] sessionId:[[components objectAtIndex:1] intValue]];
     state_ = CONTROL_STATE_READY;
 }
 
@@ -176,7 +176,7 @@ static NSString *kCommandObject = @"object";
 {
     NSArray *components = [command captureComponentsMatchedByRegex:@"^%sessions-changed$"];
     if (components.count != 1) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%sessions-changed id): \"%@\"", command]];
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%sessions-changed): \"%@\"", command]];
         return;
     }
     [delegate_ tmuxSessionsChanged];

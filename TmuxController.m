@@ -17,6 +17,7 @@
 #import "RegexKitLite.h"
 #import "NSStringITerm.h"
 #import "TmuxControllerRegistry.h"
+#import "EquivalenceClassSet.h"
 
 NSString *kTmuxControllerSessionsDidChange = @"kTmuxControllerSessionsDidChange";
 NSString *kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotification";
@@ -73,6 +74,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [windows_ release];
     [windowPositions_ release];
     [pendingWindowOpens_ release];
+    [affinities_ release];
+    [lastSaveAffinityCommand_ release];
     [super dealloc];
 }
 
@@ -86,6 +89,10 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     if ([pendingWindowOpens_ containsObject:n]) {
         return;
     }
+    for (NSNumber *a in affinities) {
+        [affinities_ setValue:a
+				 equalToValue:[NSNumber numberWithInt:windowIndex]];
+    }
     [pendingWindowOpens_ addObject:n];
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
     windowOpener.windowIndex = windowIndex;
@@ -96,7 +103,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.controller = self;
     windowOpener.gateway = gateway_;
     windowOpener.target = self;
-    windowOpener.affinities = affinities;
     windowOpener.selector = @selector(windowDidOpen:);
     [windowOpener openWindows:YES];
 }
@@ -114,8 +120,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [windowOpener updateLayoutInTab:tab];
 }
 
-- (void)sessionChangedTo:(NSString *)newSessionName {
+- (void)sessionChangedTo:(NSString *)newSessionName sessionId:(int)sessionid {
     self.sessionName = newSessionName;
+    sessionId_ = sessionid;
     [self closeAllPanes];
     [self openWindowsInitial];
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerAttachedSessionDidChange
@@ -155,6 +162,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 }
 
+- (NSArray *)savedAffinitiesForWindow:(int)wid
+{
+    return [affinities_ valuesEqualTo:[NSNumber numberWithInt:wid]];
+}
+
 - (void)initialListWindowsResponse:(NSString *)response
 {
     TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields]];
@@ -163,12 +175,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         return;
     }
     for (NSArray *record in doc.records) {
-        [self openWindowWithIndex:[[doc valueInRecord:record forField:@"window_id"] intValue]
+        int wid = [[doc valueInRecord:record forField:@"window_id"] intValue];
+        [self openWindowWithIndex:wid
                              name:[doc valueInRecord:record forField:@"window_name"]
                              size:NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
                                              [[doc valueInRecord:record forField:@"window_height"] intValue])
                            layout:[doc valueInRecord:record forField:@"window_layout"]
-                       affinities:nil];
+                       affinities:[self savedAffinitiesForWindow:wid]];
     }
 }
 
@@ -176,7 +189,12 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 {
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
+    NSString *getAffinitiesCommand = [NSString stringWithFormat:@"dump-state -k affinities%d", sessionId_];
     NSArray *commands = [NSArray arrayWithObjects:
+                         [gateway_ dictionaryForCommand:getAffinitiesCommand
+                                         responseTarget:self
+                                       responseSelector:@selector(getAffinitiesResponse:)
+                                         responseObject:nil],
                          [gateway_ dictionaryForCommand:listSessionsCommand
                                          responseTarget:self
                                        responseSelector:@selector(listSessionsResponse:)
@@ -300,24 +318,24 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)newWindowInSession:(NSString *)targetSession
        afterWindowWithName:(NSString *)predecessorWindow
 {
-    [gateway_ sendCommand:[NSString stringWithFormat:@"new-window -a -t \"%@:%@\"",
-                           [targetSession stringByEscapingQuotes],
-                           [predecessorWindow  stringByEscapingQuotes]]
+    [gateway_ sendCommand:[NSString stringWithFormat:@"new-window -a -t \"%@:+\"",
+                           [targetSession stringByEscapingQuotes]]
            responseTarget:nil
          responseSelector:nil];
 }
 
-- (void)newWindowWithAffinity:(int)paneNumber
+- (void)newWindowWithAffinity:(int)windowId
 {
-    if (paneNumber >= 0) {
+    if (windowId >= 0) {
         [gateway_ sendCommand:@"new-window -I"
                responseTarget:self
-             responseSelector:@selector(newWindowWithAffinityCreated:affinityPane:)
-               responseObject:[NSNumber numberWithInt:paneNumber]];
+             responseSelector:@selector(newWindowWithAffinityCreated:affinityWindow:)
+               responseObject:[NSNumber numberWithInt:windowId]];
     } else {
-        [gateway_ sendCommand:@"new-window"
-               responseTarget:nil
-             responseSelector:nil];
+        [gateway_ sendCommand:@"new-window -I"
+               responseTarget:self
+             responseSelector:@selector(newWindowWithoutAffinityCreated:)
+               responseObject:nil];
     }
 }
 
@@ -398,18 +416,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
          responseSelector:nil];
 }
 
-- (PTYSession *)sessionWithAffinityForTmuxWindowId:(int)windowId
-{
-    NSNumber *n = [NSNumber numberWithInt:windowId];
-    for (NSNumber *k in windowPanes_) {
-        PTYSession *aSession = [windowPanes_ objectForKey:k];
-        if ([aSession.futureWindowAffinities containsObject:n]) {
-            return aSession;
-        }
-    }
-    return nil;
-}
-
 // Find a position for any key in panes and remove all entries with keys in panes.
 - (NSValue *)positionForWindowWithPanes:(NSArray *)panes
 {
@@ -474,6 +480,48 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                            nil]];
 }
 
+- (void)saveAffinities
+{
+    if (pendingWindowOpens_.count) {
+        return;
+    }
+    iTermController *cont = [iTermController sharedInstance];
+    NSArray *terminals = [cont terminals];
+    NSMutableArray *affinities = [NSMutableArray array];
+    for (PseudoTerminal *term in terminals) {
+        NSMutableArray *siblings = [NSMutableArray array];
+        for (PTYTab *aTab in [term tabs]) {
+            if ([aTab isTmuxTab]) {
+                NSString *n = [NSString stringWithFormat:@"%d", (int) [aTab tmuxWindow]];
+                [siblings addObject:n];
+            }
+        }
+        if (siblings.count > 1) {
+            [affinities addObject:[siblings componentsJoinedByString:@","]];
+        }
+    }
+    NSString *arg = [affinities componentsJoinedByString:@" "];
+    NSString *command = [NSString stringWithFormat:@"set-control-client-attr set \"affinities%d=%@\"",
+                         sessionId_, [arg stringByEscapingQuotes]];
+    if ([command isEqualToString:lastSaveAffinityCommand_]) {
+        return;
+    }
+    [lastSaveAffinityCommand_ release];
+    lastSaveAffinityCommand_ = [command retain];
+    [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
+}
+
+- (PseudoTerminal *)windowWithAffinityForWindowId:(int)wid
+{
+    for (NSNumber *n in [self savedAffinitiesForWindow:wid]) {
+        PTYTab *tab = [self window:[n intValue]];
+        if (tab) {
+            return [tab realParentWindow];
+        }
+    }
+    return nil;
+}
+
 @end
 
 @implementation TmuxController (Private)
@@ -485,6 +533,29 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     SEL selector = NSSelectorFromString([userData objectAtIndex:1]);
     id target = [userData objectAtIndex:2];
     [target performSelector:selector withObject:doc withObject:object];
+}
+
+- (void)getAffinitiesResponse:(NSString *)result
+{
+	// Replace the existing equivalence classes with those defined by the
+	// affinity response.
+	// For example "1,2,3 4,5,6" has two equivalence classes.
+	// 1=2=3 and 4=5=6.
+    NSArray *affinities = [result componentsSeparatedByString:@" "];
+    [affinities_ release];
+    affinities_ = [[EquivalenceClassSet alloc] init];
+
+    for (NSString *affset in affinities) {
+        NSArray *siblings = [affset componentsSeparatedByString:@","];
+        NSNumber *exemplar = [NSNumber numberWithInt:[[siblings lastObject] intValue]];
+        for (NSString *widString in siblings) {
+            NSNumber *n = [NSNumber numberWithInt:[widString intValue]];
+            if (![n isEqualToNumber:exemplar]) {
+                [affinities_ setValue:n
+                         equalToValue:exemplar];
+            }
+        }
+    }
 }
 
 - (void)listSessionsResponse:(NSString *)result
@@ -569,10 +640,16 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
-- (void)newWindowWithAffinityCreated:(NSString *)responseStr affinityPane:(NSNumber *)affinityPane
+- (void)newWindowWithoutAffinityCreated:(NSString *)responseStr
 {
-    PTYSession *theSession = [self sessionForWindowPane:[affinityPane intValue]];
-    [theSession.futureWindowAffinities addObject:[NSNumber numberWithInt:[responseStr intValue]]];
+    [affinities_ removeValue:[NSNumber numberWithInt:[responseStr intValue]]];
+}
+
+- (void)newWindowWithAffinityCreated:(NSString *)responseStr
+					  affinityWindow:(NSNumber *)affinityWindow
+{
+    [affinities_ setValue:[NSNumber numberWithInt:[responseStr intValue]]
+             equalToValue:affinityWindow];
 }
 
 - (void)closeAllPanes
@@ -601,6 +678,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [pendingWindowOpens_ removeObject:windowIndex];
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerWindowDidOpen
                                                         object:nil];
+    [self saveAffinities];
 }
 
 @end

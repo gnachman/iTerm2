@@ -243,11 +243,7 @@ typedef enum {
     TmuxController *tmuxController_;
     int tmuxPane_;
     BOOL tmuxLogging_;  // log to gateway client
-
-    NSMutableSet *futureWindowAffinities_;
 }
-
-@property (nonatomic, readonly) NSMutableSet *futureWindowAffinities;
 
 // Return the current pasteboard value as a string.
 + (NSString*)pasteboardString;

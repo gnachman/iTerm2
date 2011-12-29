@@ -11,3 +11,7 @@ build/
 .DS_Store
 iTerm.xcodeproj/*
 *.pbxproj
+canary.xml
+testing.xml
+testing_changes.html
+.gitignore
