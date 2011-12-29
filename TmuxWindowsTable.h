@@ -45,6 +45,7 @@ extern NSString *kWindowPasteboardType;
 - (void)setNameOfWindowWithId:(int)wid to:(NSString *)newName;
 - (NSArray *)names;
 - (void)updateEnabledStateOfButtons;
+- (void)reloadData;
 
 #pragma mark Interface Builder actions
 

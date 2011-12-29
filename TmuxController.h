@@ -30,7 +30,7 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
 
 @interface TmuxController : NSObject {
     TmuxGateway *gateway_;
-    NSMutableDictionary *windowPanes_;  // [window, pane] -> PTYSession *
+    NSMutableDictionary *windowPanes_;  // paneId -> PTYSession *
     NSMutableDictionary *windows_;      // window -> [PTYTab *, refcount]
     NSArray *sessions_;
     int numOutstandingWindowResizes_;
@@ -44,6 +44,10 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
 	// tmux windows that want to open as tabs in the same physical window
 	// belong to the same equivalence class.
     EquivalenceClassSet *affinities_;
+	BOOL windowOriginsDirty_;
+	BOOL haveOutstandingSaveWindowOrigins_;
+	NSMutableDictionary *origins_;  // window id -> NSValue(Point) window origin
+	NSMutableSet *hiddenWindows_;
 }
 
 @property (nonatomic, readonly) TmuxGateway *gateway;
@@ -53,8 +57,12 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
 
 - (id)initWithGateway:(TmuxGateway *)gateway;
 - (void)openWindowsInitial;
-- (void)openWindowWithId:(int)windowId;
-- (void)openWindowWithId:(int)windowId affinities:(NSArray *)affinities;
+- (void)openWindowWithId:(int)windowId
+			 intentional:(BOOL)intentional;
+- (void)openWindowWithId:(int)windowId
+			  affinities:(NSArray *)affinities
+			 intentional:(BOOL)intentional;
+- (void)hideWindow:(int)windowId;
 
 - (void)setLayoutInTab:(PTYTab *)tab
                 toLayout:(NSString *)layout;
@@ -108,5 +116,7 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
                     selector:(SEL)selector
                       object:(id)object;
 - (void)saveAffinities;
+- (void)saveWindowOrigins;
+- (void)saveHiddenWindows;
 
 @end

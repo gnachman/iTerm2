@@ -18,6 +18,7 @@
 #import "NSStringITerm.h"
 #import "TmuxControllerRegistry.h"
 #import "EquivalenceClassSet.h"
+#import "TmuxDashboardController.h"
 
 NSString *kTmuxControllerSessionsDidChange = @"kTmuxControllerSessionsDidChange";
 NSString *kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotification";
@@ -58,7 +59,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         windowPanes_ = [[NSMutableDictionary alloc] init];
         windows_ = [[NSMutableDictionary alloc] init];
         windowPositions_ = [[NSMutableDictionary alloc] init];
+        origins_ = [[NSMutableDictionary alloc] init];
         pendingWindowOpens_ = [[NSMutableSet alloc] init];
+		hiddenWindows_ = [[NSMutableSet alloc] init];
         [[TmuxControllerRegistry sharedInstance] setController:self
                                                      forClient:@""];  // Set a proper client name
     }
@@ -73,9 +76,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [windowPanes_ release];
     [windows_ release];
     [windowPositions_ release];
+    [origins_ release];
     [pendingWindowOpens_ release];
     [affinities_ release];
     [lastSaveAffinityCommand_ release];
+	[hiddenWindows_ release];
     [super dealloc];
 }
 
@@ -176,6 +181,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
     for (NSArray *record in doc.records) {
         int wid = [[doc valueInRecord:record forField:@"window_id"] intValue];
+		if (hiddenWindows_ && [hiddenWindows_ containsObject:[NSNumber numberWithInt:wid]]) {
+			NSLog(@"Don't open window %d because it was saved hidden.", wid);
+			// Let the user know something is up.
+			[[TmuxDashboardController sharedInstance] showWindow:nil];
+			[[[TmuxDashboardController sharedInstance] window] makeKeyAndOrderFront:nil];
+			continue;
+		}
         [self openWindowWithIndex:wid
                              name:[doc valueInRecord:record forField:@"window_name"]
                              size:NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
@@ -190,10 +202,21 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
     NSString *getAffinitiesCommand = [NSString stringWithFormat:@"dump-state -k affinities%d", sessionId_];
+    NSString *getOriginsCommand = [NSString stringWithFormat:@"dump-state -k origins%d", sessionId_];
+    NSString *getHiddenWindowsCommand =
+		[NSString stringWithFormat:@"dump-state -k hidden%d", sessionId_];
     NSArray *commands = [NSArray arrayWithObjects:
+                         [gateway_ dictionaryForCommand:getHiddenWindowsCommand
+                                         responseTarget:self
+									   responseSelector:@selector(getHiddenWindowsResponse:)
+                                         responseObject:nil],
                          [gateway_ dictionaryForCommand:getAffinitiesCommand
                                          responseTarget:self
                                        responseSelector:@selector(getAffinitiesResponse:)
+                                         responseObject:nil],
+                         [gateway_ dictionaryForCommand:getOriginsCommand
+                                         responseTarget:self
+                                       responseSelector:@selector(getOriginsResponse:)
                                          responseObject:nil],
                          [gateway_ dictionaryForCommand:listSessionsCommand
                                          responseTarget:self
@@ -390,8 +413,26 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
          responseSelector:nil];
 }
 
-- (void)openWindowWithId:(int)windowId affinities:(NSArray *)affinities
+- (void)hideWindow:(int)windowId
 {
+	NSLog(@"hideWindow: Add these window IDS to hidden: %d", windowId);
+	[hiddenWindows_ addObject:[NSNumber numberWithInt:windowId]];
+	[self saveHiddenWindows];
+    PTYTab *theTab = [self window:windowId];
+    if (theTab) {
+        [[theTab realParentWindow] closeTab:theTab soft:YES];
+    }
+}
+
+- (void)openWindowWithId:(int)windowId
+			  affinities:(NSArray *)affinities
+			 intentional:(BOOL)intentional
+{
+	if (intentional) {
+		NSLog(@"open intentional: Remove these window IDS to hidden: %d", windowId);
+		[hiddenWindows_ removeObject:[NSNumber numberWithInt:windowId]];
+		[self saveHiddenWindows];
+	}
     // Get the window's basic info to prep the creation of a TmuxWindowOpener.
     [gateway_ sendCommand:[NSString stringWithFormat:@"list-windows -F %@ -I %d", kListWindowsFormat, windowId]
            responseTarget:self
@@ -402,8 +443,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)openWindowWithId:(int)windowId
+			 intentional:(BOOL)intentional
 {
-    [self openWindowWithId:windowId affinities:[NSArray array]];
+	[self openWindowWithId:windowId affinities:[NSArray array] intentional:intentional];
 }
 
 - (void)linkWindowId:(int)windowId
@@ -480,6 +522,59 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                            nil]];
 }
 
+- (void)saveHiddenWindows
+{
+	NSString *hidden = [[hiddenWindows_ allObjects] componentsJoinedByString:@","];
+	NSString *command = [NSString stringWithFormat:
+		@"set-control-client-attr set hidden%d=%@",
+		sessionId_, hidden];
+	[gateway_ sendCommand:command
+		   responseTarget:nil
+		 responseSelector:nil
+		   responseObject:nil];
+}
+
+- (void)saveWindowOrigins
+{
+	if (haveOutstandingSaveWindowOrigins_) {
+		windowOriginsDirty_ = YES;
+		return;
+	}
+	windowOriginsDirty_ = NO;
+	[self saveAffinities];  // Make sure the equivalence classes are up to date.
+	NSMutableArray *maps = [NSMutableArray array];
+	for (NSSet *c in [affinities_ classes]) {
+		NSString *windowIds = [[c allObjects] componentsJoinedByString:@","];
+		PTYTab *tab = nil;
+		for (NSNumber *wid in c) {
+			tab = [self window:[wid intValue]];
+			if (tab) {
+				break;
+			}
+		}
+		if (tab) {
+			PseudoTerminal *term = [tab realParentWindow];
+			NSPoint origin = [[term window] frame].origin;
+			[maps addObject:[NSString stringWithFormat:@"%@:%d,%d", windowIds,
+				(int)origin.x, (int)origin.y]];
+		}
+	}
+	NSString *enc = [maps componentsJoinedByString:@" "];
+	NSString *command = [NSString stringWithFormat:@"set-control-client-attr set \"origins%d=%@\"",
+			 sessionId_, [enc stringByEscapingQuotes]];
+	haveOutstandingSaveWindowOrigins_ = YES;
+	[gateway_ sendCommand:command responseTarget:self
+		 responseSelector:@selector(saveWindowOriginsResponse:)];
+}
+
+- (void)saveWindowOriginsResponse:(NSString *)response
+{
+	haveOutstandingSaveWindowOrigins_ = NO;
+	if (windowOriginsDirty_) {
+		[self saveWindowOrigins];
+	}
+}
+
 - (void)saveAffinities
 {
     if (pendingWindowOpens_.count) {
@@ -491,7 +586,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     for (PseudoTerminal *term in terminals) {
         NSMutableArray *siblings = [NSMutableArray array];
         for (PTYTab *aTab in [term tabs]) {
-            if ([aTab isTmuxTab]) {
+            if ([aTab isTmuxTab] && [aTab tmuxController] == self) {
                 NSString *n = [NSString stringWithFormat:@"%d", (int) [aTab tmuxWindow]];
                 [siblings addObject:n];
             }
@@ -535,6 +630,19 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [target performSelector:selector withObject:doc withObject:object];
 }
 
+- (void)getHiddenWindowsResponse:(NSString *)response
+{
+	if (response.length == 0) {
+		return;
+	}
+	NSArray *windowIds = [response componentsSeparatedByString:@","];
+	[hiddenWindows_ removeAllObjects];
+	NSLog(@"getHiddneWindowsResponse: Add these window IDS to hidden: %@", windowIds);
+	for (NSString *wid in windowIds) {
+		[hiddenWindows_ addObject:[NSNumber numberWithInt:[wid intValue]]];
+	}
+}
+
 - (void)getAffinitiesResponse:(NSString *)result
 {
 	// Replace the existing equivalence classes with those defined by the
@@ -556,6 +664,31 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
             }
         }
     }
+}
+
+- (void)getOriginsResponse:(NSString *)result
+{
+	NSArray *windows = [result componentsSeparatedByString:@" "];
+	[origins_ removeAllObjects];
+	for (NSString *wstr in windows) {
+		NSArray *tuple = [wstr componentsSeparatedByString:@":"];
+		if (tuple.count != 2) {
+			continue;
+		}
+		NSString *windowsStr = [tuple objectAtIndex:0];
+		NSString *coords = [tuple objectAtIndex:1];
+		NSArray *windowIds = [windowsStr componentsSeparatedByString:@","];
+		NSArray *xy = [coords componentsSeparatedByString:@","];
+		if (xy.count != 2) {
+			continue;
+		}
+		NSPoint origin = NSMakePoint([[xy objectAtIndex:0] intValue],
+									 [[xy objectAtIndex:1] intValue]);
+		for (NSString *wid in windowIds) {
+			[origins_ setObject:[NSValue valueWithPoint:origin]
+						 forKey:[NSNumber numberWithInt:[wid intValue]]];
+		}
+	}
 }
 
 - (void)listSessionsResponse:(NSString *)result
@@ -614,13 +747,19 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 {
     NSNumber *k = [NSNumber numberWithInt:window];
     NSMutableArray *entry = [windows_ objectForKey:k];
+	BOOL notify = NO;
     if (entry) {
         NSNumber *refcount = [entry objectAtIndex:1];
         [entry replaceObjectAtIndex:1 withObject:[NSNumber numberWithInt:[refcount intValue] + 1]];
     } else {
         entry = [NSMutableArray arrayWithObjects:tab, [NSNumber numberWithInt:1], nil];
+		notify = YES;
     }
     [windows_ setObject:entry forKey:k];
+	if (notify) {
+		[[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerWindowDidOpen
+															object:nil];
+	}
 }
 
 - (void)releaseWindow:(int)window
@@ -678,6 +817,12 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [pendingWindowOpens_ removeObject:windowIndex];
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerWindowDidOpen
                                                         object:nil];
+	PTYTab *tab = [self window:[windowIndex intValue]];
+	PseudoTerminal *term = [tab realParentWindow];
+	NSValue *p = [origins_ objectForKey:windowIndex];
+	if (term && p) {
+		[[term window] setFrameOrigin:[p pointValue]];
+	}
     [self saveAffinities];
 }
 

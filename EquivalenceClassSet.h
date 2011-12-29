@@ -16,5 +16,6 @@
 - (NSArray *)valuesEqualTo:(NSObject *)target;
 - (void)setValue:(NSObject *)value equalToValue:(NSObject *)otherValue;
 - (void)removeValue:(NSObject *)target;
+- (NSArray *)classes;
 
 @end

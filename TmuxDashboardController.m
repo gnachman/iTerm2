@@ -84,9 +84,12 @@
     [windowsTable_ setDelegate:self];
 }
 
-- (IBAction)close:(id)sender
+// cmd-w
+- (IBAction)closeCurrentSession:(id)sender
 {
-    [self close];
+    if ([[self window] isKeyWindow]) {
+        [self close];
+    }
 }
 
 #pragma mark TmuxSessionsTableProtocol
@@ -194,21 +197,21 @@
     if (inTabs) {
         for (NSNumber *wid in windowIds) {
             [[self tmuxController] openWindowWithId:[wid intValue]
-                                         affinities:windowIds];
+                                         affinities:windowIds
+										intentional:YES];
         }
     } else {
         for (NSNumber *wid in windowIds) {
-            [[self tmuxController] openWindowWithId:[wid intValue]];
+            [[self tmuxController] openWindowWithId:[wid intValue]
+										intentional:YES];
         }
     }
+	[[self tmuxController] saveHiddenWindows];
 }
 
 - (void)hideWindowWithId:(int)windowId
 {
-    PTYTab *theTab = [[self tmuxController] window:windowId];
-    if (theTab) {
-        [[theTab realParentWindow] closeTab:theTab soft:YES];
-    }
+	[[self tmuxController] hideWindow:windowId];
     [windowsTable_ updateEnabledStateOfButtons];
 }
 
@@ -265,6 +268,7 @@
 {
     if ([[self window] isVisible]) {
         [windowsTable_ updateEnabledStateOfButtons];
+        [windowsTable_ reloadData];
     }
 }
 

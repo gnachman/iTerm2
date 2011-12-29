@@ -98,6 +98,11 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
     [hideWindowButton_ setEnabled:[tableView_ numberOfSelectedRows] > 0 && [self allSelectedWindowsAreOpen]];
 }
 
+- (void)reloadData
+{
+	[tableView_ reloadData];
+}
+
 #pragma mark Interface Builder actions
 
 - (IBAction)addWindow:(id)sender

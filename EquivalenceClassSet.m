@@ -104,4 +104,9 @@
     }
 }
 
+- (NSArray *)classes
+{
+	return [classes_ allValues];
+}
+
 @end

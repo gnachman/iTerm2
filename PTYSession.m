@@ -3581,7 +3581,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (void)tmuxWindowAddedWithId:(int)windowId
 {
     if (![tmuxController_ window:windowId]) {
-        [tmuxController_ openWindowWithId:windowId];
+		[tmuxController_ openWindowWithId:windowId
+							  intentional:NO];
     }
     [tmuxController_ windowsChanged];
 }

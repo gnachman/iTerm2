@@ -1912,6 +1912,13 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (void)windowDidMove:(NSNotification *)notification
+{
+	for (TmuxController *tc in [self uniqueTmuxControllers]) {
+		[tc saveWindowOrigins];
+	}
+}
+
 - (void)windowDidResize:(NSNotification *)aNotification
 {
     lastResizeTime_ = [[NSDate date] timeIntervalSince1970];
