@@ -508,7 +508,7 @@ static float versionNumber;
 
 - (BOOL)_prefsDirIsWritable
 {
-    return [self _dirIsWritable:defaultPrefsCustomFolder];
+    return [self _dirIsWritable:[defaultPrefsCustomFolder stringByExpandingTildeInPath]];
 }
 
 - (void)_updatePrefsDirWarning
@@ -2090,7 +2090,9 @@ static float versionNumber;
         [folder hasPrefix:@"https://"]) {
 
         filename = folder;
-    }
+    } else {
+		filename = [filename stringByExpandingTildeInPath];
+	}
     return filename;
 }
 
@@ -2974,7 +2976,7 @@ static float versionNumber;
 {
     [[NSUserDefaults standardUserDefaults] synchronize];
 
-    NSString *folder = [prefs objectForKey:@"PrefsCustomFolder"] ? [prefs objectForKey:@"PrefsCustomFolder"] : @"";
+    NSString *folder = [prefs objectForKey:@"PrefsCustomFolder"] ? [[prefs objectForKey:@"PrefsCustomFolder"] stringByExpandingTildeInPath] : @"";
     NSString *filename = [self _prefsFilenameWithBaseDir:folder];
     NSFileManager *mgr = [NSFileManager defaultManager];
 
