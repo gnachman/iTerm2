@@ -9,10 +9,9 @@ ITERM_CONF_PLIST = $(HOME)/Library/Preferences/com.googlecode.iterm2.plist
 .PHONY: clean all backup-old-iterm restart
 
 all: Deployment
+dev: Development
 debug: Development
 	/Developer/usr/bin/gdb build/Development/iTerm.app/Contents/MacOS/iTerm
-run: Development
-	build/Development/iTerm.app/Contents/MacOS/iTerm
 
 TAGS:
 	find . -name "*.[mhMH]" -exec etags -o ./TAGS -a '{}' +
