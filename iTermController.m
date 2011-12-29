@@ -53,7 +53,7 @@
 #import "iTerm.h"
 #import "WindowArrangements.h"
 
-#define HOTKEY_WINDOW_VERBOSE_LOGGING
+//#define HOTKEY_WINDOW_VERBOSE_LOGGING
 #ifdef HOTKEY_WINDOW_VERBOSE_LOGGING
 #define HKWLog NSLog
 #else
