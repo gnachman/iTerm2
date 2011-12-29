@@ -209,7 +209,7 @@ static const CGFloat kMargin = 4;
 - (void)fixCursor
 {
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
-    [[[wrapper.term currentSession] TEXTVIEW] updateCursor:[[NSApplication sharedApplication] currentEvent]];
+	[[[wrapper.term currentSession] TEXTVIEW] updateCursor:[[NSApplication sharedApplication] currentEvent]];
 }
 
 - (BOOL)isFlipped

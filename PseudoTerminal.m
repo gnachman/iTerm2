@@ -4225,6 +4225,10 @@ NSString *sessionsKey = @"sessions";
 
 - (void)flagsChanged:(NSEvent *)theEvent
 {
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermFlagsChanged"
+														object:theEvent
+													  userInfo:nil];
+
     [TABVIEW processMRUEvent:theEvent];
 
     NSUInteger modifierFlags = [theEvent modifierFlags];

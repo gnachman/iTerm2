@@ -307,6 +307,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                              selector:@selector(_pointerSettingsChanged:)
                                                  name:kPointerPrefsChangedNotification
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(flagsChangedNotification:)
+                                                 name:@"iTermFlagsChanged"
+                                               object:nil];
 
     advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
@@ -419,6 +423,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [initialFindContext_.substring release];
 
     [pointer_ release];
+	[cursor_ release];
 
     [super dealloc];
 }
@@ -2545,32 +2550,48 @@ NSMutableArray* screens=0;
     [super scrollWheel:event];
 }
 
+- (BOOL)setCursor:(NSCursor *)cursor
+{
+	if (cursor == cursor_) {
+		return NO;
+	}
+	[cursor_ autorelease];
+	cursor_ = [cursor retain];
+	return YES;
+}
+
 - (void)updateCursor:(NSEvent *)event
 {
-    if (!mouseInRect_) {
-        return;
-    }
     MouseMode mouseMode = [[dataSource terminal] mouseMode];
 
+	BOOL changed = NO;
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
-        [[NSCursor openHandCursor] set];
+		changed = [self setCursor:[NSCursor openHandCursor]];
     } else if (([event modifierFlags] & (NSCommandKeyMask | NSAlternateKeyMask)) == (NSCommandKeyMask | NSAlternateKeyMask)) {
-        [[NSCursor crosshairCursor] set];
+		changed = [self setCursor:[NSCursor crosshairCursor]];
     } else if (([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask) {
-        [[NSCursor pointingHandCursor] set];
+		changed = [self setCursor:[NSCursor pointingHandCursor]];
     } else if ([self xtermMouseReporting] &&
                mouseMode != MOUSE_REPORTING_NONE &&
                mouseMode != MOUSE_REPORTING_HILITE) {
-        [xmrCursor set];
+		changed = [self setCursor:xmrCursor];
     } else {
-        [textViewCursor set];
+		changed = [self setCursor:textViewCursor];
     }
+	if (changed) {
+		[[_delegate SCROLLVIEW] setDocumentCursor:cursor_];
+	}
 }
 
 - (void)flagsChanged:(NSEvent *)theEvent
 {
-    [self updateCursor:theEvent];
+	[self updateCursor:theEvent];
     [super flagsChanged:theEvent];
+}
+
+- (void)flagsChangedNotification:(NSNotification *)notification
+{
+	[self updateCursor:(NSEvent *)[notification object]];
 }
 
 - (void)swipeWithEvent:(NSEvent *)event
@@ -2586,7 +2607,7 @@ NSMutableArray* screens=0;
 - (void)mouseEntered:(NSEvent *)event
 {
     mouseInRect_ = YES;
-    [self updateCursor:event];
+	[self updateCursor:event];
     if ([[PreferencePanel sharedInstance] focusFollowsMouse] &&
             [[self window] alphaValue] > 0) {
         // Some windows automatically close when they lose key status and are
@@ -4138,12 +4159,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     extendedDragNDrop = NO;
-}
-
-- (void)resetCursorRects
-{
-    [self addCursorRect:[self visibleRect] cursor:textViewCursor];
-    [textViewCursor setOnMouseEntered:YES];
 }
 
 // Save method

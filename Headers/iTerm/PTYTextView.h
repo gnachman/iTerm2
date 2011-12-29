@@ -73,7 +73,6 @@ typedef struct PTYFontInfo PTYFontInfo;
 
 @end
 
-
 @interface PTYTextView : NSView <NSTextInput, PointerControllerDelegate>
 {
     // This is a flag to let us know whether we are handling this
@@ -311,8 +310,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Find context just after initialization.
     FindContext initialFindContext_;
-    
+
     PointerController *pointer_;
+	NSCursor *cursor_;
 }
 
 + (NSCursor *)textViewCursor;
@@ -490,9 +490,6 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (BOOL)prepareForDragOperation: (id<NSDraggingInfo>) sender;
 - (BOOL)performDragOperation: (id<NSDraggingInfo>) sender;
 - (void)concludeDragOperation: (id<NSDraggingInfo>) sender;
-
-// Cursor control
-- (void)resetCursorRects;
 
 // Scrolling control
 - (NSRect)adjustScroll:(NSRect)proposedVisibleRect;

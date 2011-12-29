@@ -61,6 +61,7 @@
 
     BOOL showTitle_;
     SessionTitleView *title_;
+	NSCursor *cursor_;
 }
 
 + (double)titleHeight;

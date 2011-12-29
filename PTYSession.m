@@ -423,9 +423,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     horizontalSpacing:[[addressBookEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
       verticalSpacing:[[addressBookEntry objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [self setTransparency:[[addressBookEntry objectForKey:KEY_TRANSPARENCY] floatValue]];
-	const float blend = [addressBookEntry objectForKey:KEY_BLEND] ?
-					   [[addressBookEntry objectForKey:KEY_BLEND] floatValue] : 0.5;
-    [self setBlend:blend];
+	const float theBlend = [addressBookEntry objectForKey:KEY_BLEND] ?
+						  [[addressBookEntry objectForKey:KEY_BLEND] floatValue] : 0.5;
+    [self setBlend:theBlend];
 
     [WRAPPER addSubview:TEXTVIEW];
     [TEXTVIEW setFrame:NSMakeRect(0, VMARGIN, aSize.width, aSize.height - VMARGIN)];
@@ -2800,7 +2800,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (void)setXtermMouseReporting:(BOOL)set
 {
     xtermMouseReporting = set;
-    [TEXTVIEW updateCursor:[NSApp currentEvent]];
+	[TEXTVIEW updateCursor:[NSApp currentEvent]];
 }
 
 

@@ -1825,7 +1825,7 @@ static char* FormatCont(int c)
 
 - (void)mouseModeDidChange:(MouseMode)mouseMode
 {
-    [display updateCursor:nil];
+	[display updateCursor:nil];
 }
 
 - (BOOL)printToAnsi
