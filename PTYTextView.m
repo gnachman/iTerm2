@@ -4781,6 +4781,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
+- (double)blend
+{
+    return blend;
+}
+
+- (void)setBlend:(double)fVal
+{
+    blend = MIN(MAX(0.3, fVal), 1);
+    [self setNeedsDisplay:YES];
+}
+
 - (void)setSmartCursorColor:(BOOL)value
 {
     colorInvertedCursor = value;
@@ -5024,10 +5035,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                                      toPoint:dest
                                                              useTransparency:[self useTransparency]];
-    }
-    if (!hasBGImage || ![self useTransparency]) {
-        // Either draw a normal bg or, if transparency is off, blend the default bg color over the bg image.
-        if (!hasBGImage && ![self useTransparency]) {
+		// Blend default bg color
+        NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
+						  alternateSemantics:YES
+										bold:NO
+								isBackground:YES];
+		[[aColor colorWithAlphaComponent:1 - blend] set];
+		NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
+											dest.y + bgRect.origin.y,
+											bgRect.size.width,
+											bgRect.size.height), NSCompositeSourceOver);
+    } else {
+		// No bg image
+        if (![self useTransparency]) {
             alpha = 1;
         }
         if (!dimOnlyText_) {
@@ -5037,8 +5057,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
         NSRect fillDest = bgRect;
         fillDest.origin.y += fillDest.size.height;
-        NSRectFillUsingOperation(fillDest,
-                                 hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
+        NSRectFillUsingOperation(fillDest, NSCompositeCopy);
     }
 }
 
@@ -5051,10 +5070,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                                      toPoint:dest
                                                              useTransparency:[self useTransparency]];
-    }
-    if (!hasBGImage || ![self useTransparency]) {
-        // Either draw a normal bg or, if transparency is off, blend the default bg color over the bg image.
-        if (!hasBGImage && ![self useTransparency]) {
+		// Blend default bg color over bg iamge.
+		NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
+						  alternateSemantics:YES
+										bold:NO
+								isBackground:YES];
+		[[aColor colorWithAlphaComponent:1 - blend] set];
+		NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
+											dest.y + bgRect.origin.y,
+											bgRect.size.width,
+											bgRect.size.height),
+								 NSCompositeSourceOver);
+    } else {
+        // No bg image
+        if (![self useTransparency]) {
             alpha = 1;
         }
         if (!dimOnlyText_) {
@@ -5062,8 +5091,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         } else {
             [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
         }
-        NSRectFillUsingOperation(bgRect,
-                                 hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
+        NSRectFillUsingOperation(bgRect, NSCompositeCopy);
     }
 }
 
@@ -5075,10 +5103,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                              useTransparency:[self useTransparency]];
-    }
-    if (!hasBGImage || ![self useTransparency]) {
+		// Blend default bg color over bg iamge.
+		NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
+						  alternateSemantics:YES
+										bold:NO
+								isBackground:YES];
+		[[aColor colorWithAlphaComponent:1 - blend] set];
+		NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
+    } else {
         // Either draw a normal bg or, if transparency is off, blend the default bg color over the bg image.
-        if (!hasBGImage && ![self useTransparency]) {
+        if (![self useTransparency]) {
             alpha = 1;
         }
         if (!dimOnlyText_) {
@@ -5086,7 +5120,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         } else {
             [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
         }
-        NSRectFillUsingOperation(bgRect, hasBGImage?NSCompositeSourceOver:NSCompositeCopy);
+        NSRectFillUsingOperation(bgRect, NSCompositeCopy);
     }
 }
 
@@ -6054,16 +6088,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                         toPoint:NSMakePoint(toPoint->x + rightMargin.origin.x,
                                                             toPoint->y + rightMargin.size.height)
                                 useTransparency:[self useTransparency]];
-        } else {
+			// Blend default bg color over bg iamge.
+			[[aColor colorWithAlphaComponent:1 - blend] set];
+			NSRectFillUsingOperation(NSMakeRect(toPoint->x + leftMargin.origin.x,
+												toPoint->y + leftMargin.origin.y,
+												leftMargin.size.width,
+												leftMargin.size.height), NSCompositeSourceOver);
+			NSRectFillUsingOperation(NSMakeRect(toPoint->x + rightMargin.origin.x,
+												toPoint->y + rightMargin.origin.y,
+												rightMargin.size.width,
+												rightMargin.size.height), NSCompositeSourceOver);
+		} else {
             [scrollView drawBackgroundImageRect:leftMargin
                                 useTransparency:[self useTransparency]];
             [scrollView drawBackgroundImageRect:rightMargin
                                 useTransparency:[self useTransparency]];
-        }
-    }
-    if (!hasBGImage || ![self useTransparency]) {
-        // Blend fg over bgimage (because transparency is off), or there is no
-        // bg image and just draw the fg.
+
+			// Blend default bg color over bg iamge.
+			[[aColor colorWithAlphaComponent:1 - blend] set];
+			NSRectFillUsingOperation(leftMargin, NSCompositeSourceOver);
+			NSRectFillUsingOperation(rightMargin, NSCompositeSourceOver);
+		}
+		[aColor set];
+    } else {
+		// No BG image
         if (toPoint) {
             NSRectFill(NSMakeRect(toPoint->x + leftMargin.origin.x,
                                   toPoint->y,
@@ -6202,17 +6250,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 NSRectFillUsingOperation(bgRect,
                                          hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
             } else if (hasBGImage) {
-                // There is a bg image and no special background on it. Blend in the
-                // default background color. But don't blend in the bg color if transparency is on.
+				// There is a bg image and no special background on it. Blend
+				// in the default background color.
                 aColor = [self colorForCode:ALTSEM_BG_DEFAULT
                          alternateSemantics:YES
                                        bold:NO
                                isBackground:YES];
-                aColor = [aColor colorWithAlphaComponent:selectedAlpha];
+                aColor = [aColor colorWithAlphaComponent:1 - blend];
                 [aColor set];
-                if (![self useTransparency]) {
-                    NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
-                }
+				NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
             }
 
             // Draw red stripes in the background if sending input to all sessions

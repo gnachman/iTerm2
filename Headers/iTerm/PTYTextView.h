@@ -131,6 +131,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // transparency
     double transparency;
+	double blend;
 
     // data source
     VT100Screen *dataSource;
@@ -469,7 +470,9 @@ typedef struct PTYFontInfo PTYFontInfo;
 
 // transparency
 - (double)transparency;
+- (double)blend;
 - (void)setTransparency:(double)fVal;
+- (void)setBlend:(double)blend;
 - (BOOL)useTransparency;
 
 - (void)setSmartCursorColor:(BOOL)value;

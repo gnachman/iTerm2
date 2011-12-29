@@ -423,6 +423,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     horizontalSpacing:[[addressBookEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue]
       verticalSpacing:[[addressBookEntry objectForKey:KEY_VERTICAL_SPACING] floatValue]];
     [self setTransparency:[[addressBookEntry objectForKey:KEY_TRANSPARENCY] floatValue]];
+	const float blend = [addressBookEntry objectForKey:KEY_BLEND] ?
+					   [[addressBookEntry objectForKey:KEY_BLEND] floatValue] : 0.5;
+    [self setBlend:blend];
 
     [WRAPPER addSubview:TEXTVIEW];
     [TEXTVIEW setFrame:NSMakeRect(0, VMARGIN, aSize.width, aSize.height - VMARGIN)];
@@ -2153,6 +2156,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     // transparency
     [self setTransparency:[[aDict objectForKey:KEY_TRANSPARENCY] floatValue]];
+    [self setBlend:[[aDict objectForKey:KEY_BLEND] floatValue]];
 
     // bold
     NSNumber* useBoldFontEntry = [aDict objectForKey:KEY_USE_BOLD_FONT];
@@ -2697,6 +2701,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     return [TEXTVIEW transparency];
 }
 
+- (float)blend
+{
+    return [TEXTVIEW blend];
+}
+
 - (void)setTransparency:(float)transparency
 {
     // Limit transparency because fully transparent windows can't be clicked on.
@@ -2707,6 +2716,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     // set transparency of background image
     [SCROLLVIEW setTransparency:transparency];
     [TEXTVIEW setTransparency:transparency];
+}
+
+- (void)setBlend:(float)blendVal
+{
+    [TEXTVIEW setBlend:blendVal];
 }
 
 - (void)setColorTable:(int)theIndex color:(NSColor *)theColor
@@ -3818,24 +3832,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return theLocale;
 }
 
-- (BOOL)_localeIsSupported:(NSString*)theLocale
-{
-    // Keep a copy of the current locale setting for this process
-    char* backupLocale = setlocale(LC_CTYPE, NULL);
-
-    // Try to set it to the proposed locale
-    BOOL supported;
-    if (setlocale(LC_CTYPE, [theLocale UTF8String])) {
-        supported = YES;
-    } else {
-        supported = NO;
-    }
-
-    // Restore locale and return
-    setlocale(LC_CTYPE, backupLocale);
-    return supported;
-}
-
 - (NSString*)_lang
 {
     NSString* theLocale = [self _getLocale];
@@ -3960,6 +3956,24 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         aLine = [aLine stringByReplacingOccurrencesOfString:@"\r" withString:@""];
         [self printTmuxMessage:aLine];
     }
+}
+
+- (BOOL)_localeIsSupported:(NSString*)theLocale
+{
+    // Keep a copy of the current locale setting for this process
+    char* backupLocale = setlocale(LC_CTYPE, NULL);
+
+    // Try to set it to the proposed locale
+    BOOL supported;
+    if (setlocale(LC_CTYPE, [theLocale UTF8String])) {
+        supported = YES;
+    } else {
+        supported = NO;
+    }
+
+    // Restore locale and return
+    setlocale(LC_CTYPE, backupLocale);
+    return supported;
 }
 
 @end

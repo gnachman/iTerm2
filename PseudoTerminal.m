@@ -2105,7 +2105,8 @@ NSString *sessionsKey = @"sessions";
         aTabViewItem = [[TABVIEW tabViewItemAtIndex:0] retain];
         PTYTab* theTab = [aTabViewItem identifier];
         for (PTYSession* aSession in [theTab sessions]) {
-            [aSession setTransparency:[[[aSession addressBookEntry] objectForKey:KEY_TRANSPARENCY] floatValue]];
+            [aSession setTransparency:[[[aSession addressBookEntry]
+						 objectForKey:KEY_TRANSPARENCY] floatValue]];
         }
         // remove from our window
         PtyLog(@"toggleFullScreenMode - remove tab %d from old window", i);

@@ -115,6 +115,7 @@
 #define KEY_USE_BOLD_FONT          @"Use Bold Font"
 #define KEY_USE_BRIGHT_BOLD        @"Use Bright Bold"
 #define KEY_TRANSPARENCY           @"Transparency"
+#define KEY_BLEND                  @"Blend"
 #define KEY_BLUR                   @"Blur"
 #define KEY_BLUR_RADIUS            @"Blur Radius"
 #define KEY_ANTI_ALIASING          @"Anti Aliasing"  // DEPRECATED

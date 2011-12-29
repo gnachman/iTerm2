@@ -456,6 +456,8 @@ typedef enum {
 - (void)setCursorTextColor: (NSColor *)aColor;
 - (float)transparency;
 - (void)setTransparency:(float)transparency;
+- (float)blend;
+- (void)setBlend:(float)blend;
 - (BOOL)useBoldFont;
 - (void)setUseBoldFont:(BOOL)boldFlag;
 - (void)setColorTable:(int)index color:(NSColor *)c;
@@ -581,5 +583,6 @@ typedef enum {
 - (void)continueTailFind;
 - (void)printTmuxMessage:(NSString *)message;
 - (void)printTmuxCommandOutputToScreen:(NSString *)response;
+- (BOOL)_localeIsSupported:(NSString*)theLocale;
 
 @end
