@@ -1015,9 +1015,11 @@ void DebugLog(NSString* value)
     PTYSession* session = [frontTerminal currentSession];
     PTYTextView* textview = [session TEXTVIEW];
     [textview setFont:font nafont:nafont horizontalSpacing:hs verticalSpacing:vs];
-    [frontTerminal sessionInitiatedResize:session
-                                    width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
-                                   height:[[abEntry objectForKey:KEY_ROWS] intValue]];
+	if ([sender isAlternate]) {
+		[frontTerminal sessionInitiatedResize:session
+										width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
+									   height:[[abEntry objectForKey:KEY_ROWS] intValue]];
+	}
 }
 
 - (IBAction)exposeForTabs:(id)sender
