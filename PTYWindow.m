@@ -121,7 +121,7 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
         return;
     }
     CGSSetWindowBackgroundBlurRadiusFunction* function = GetCGSSetWindowBackgroundBlurRadiusFunction();
-    if (function) {
+    if (IsLionOrLater() && function) {
         // If CGSSetWindowBackgroundBlurRadius() is available (10.6 and up) use it because it works
         // right in Exposé.
         function(con, [self windowNumber], (int)radius);
@@ -152,7 +152,7 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
     }
 
     CGSSetWindowBackgroundBlurRadiusFunction* function = GetCGSSetWindowBackgroundBlurRadiusFunction();
-    if (function) {
+    if (IsLionOrLater() && function) {
         function(con, [self windowNumber], 0);
     } else if (blurFilter) {
         CGSRemoveWindowFilter(con, (CGSWindowID)[self windowNumber], blurFilter);
