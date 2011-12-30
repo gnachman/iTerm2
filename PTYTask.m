@@ -580,57 +580,56 @@ static void reapchild(int n)
 
     path = [progpath copy];
 
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[launchWithPath:%@ arguments:%@ environment:%@ width:%d height:%d", __FILE__, __LINE__, progpath, args, env, width, height);
-#endif
-
     setup_tty_param(&term, &win, width, height, isUTF8);
     // Register a handler for the child death signal.
     signal(SIGCHLD, reapchild);
+    const char* argpath;
+    argpath = [[progpath stringByStandardizingPath] UTF8String];
+
+    int max = (args == nil) ? 0 : [args count];
+    const char* argv[max + 2];
+
+    if (asLoginSession) {
+        argv[0] = [[NSString stringWithFormat:@"-%@", [progpath stringByStandardizingPath]] UTF8String];
+    } else {
+        argv[0] = [[progpath stringByStandardizingPath] UTF8String];
+    }
+    if (args != nil) {
+        int i;
+        for (i = 0; i < max; ++i) {
+            argv[i + 1] = [[args objectAtIndex:i] cString];
+        }
+    }
+    argv[max + 1] = NULL;
+    const int envsize = env.count;
+    const char *envKeys[envsize];
+    const char *envValues[envsize];
+    // Copy values from env (our custom environment vars) into envDict
+    int i = 0;
+    for (NSString *k in env) {
+        NSString *v = [env objectForKey:k];
+        envKeys[i] = [k UTF8String];
+        envValues[i] = [v UTF8String];
+        i++;
+    }
+
+    // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
+    const char *initialPwd = [[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String];
     pid = forkpty(&fd, theTtyname, &term, &win);
     if (pid == (pid_t)0) {
-        const char* argpath;
-        argpath = [[progpath stringByStandardizingPath] UTF8String];
         // Do not start the new process with a signal handler.
         signal(SIGCHLD, SIG_DFL);
         signal(SIGPIPE, SIG_DFL);
-        
-        int max = (args == nil) ? 0 : [args count];
-        const char* argv[max + 2];
 
-        if (asLoginSession) {
-            argv[0] = [[NSString stringWithFormat:@"-%@", [progpath stringByStandardizingPath]] UTF8String];
-        } else {
-            argv[0] = [[progpath stringByStandardizingPath] UTF8String];
+        chdir(initialPwd);
+        for (i = 0; i < envsize; i++) {
+            setenv(envKeys[i], envValues[i], 1);
         }
-        if (args != nil) {
-            int i;
-            for (i = 0; i < max; ++i) {
-                argv[i + 1] = [[args objectAtIndex:i] cString];
-            }
-        }
-        argv[max + 1] = NULL;
-
-        if (env != nil) {
-            NSArray* keys = [env allKeys];
-            int i, theMax = [keys count];
-            for (i = 0; i < theMax; ++i) {
-                NSString* key;
-                NSString* value;
-                key = [keys objectAtIndex:i];
-                value = [env objectForKey:key];
-                if (key != nil && value != nil) {
-                    setenv([key UTF8String], [value UTF8String], 1);
-                }
-            }
-        }
-        // Note: stringByStandardizingPath will automatically call stringByExpandingTildeInPath.
-        chdir([[[env objectForKey:@"PWD"] stringByStandardizingPath] UTF8String]);
         sts = execvp(argpath, (char* const*)argv);
 
         /* exec error */
         fprintf(stdout, "## exec failed ##\n");
-        fprintf(stdout, "%s %s\n", argpath, strerror(errno));
+        fprintf(stdout, "argpath=%s error=%s\n", argpath, strerror(errno));
 
         sleep(1);
         _exit(-1);
