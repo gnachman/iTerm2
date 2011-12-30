@@ -99,6 +99,9 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
         NSString *theName = [[tools_ allKeys] objectAtIndex:0];
 
         ToolWrapper *wrapper = [tools_ objectForKey:theName];
+		if ([wrapper.tool respondsToSelector:@selector(shutdown)]) {
+			[wrapper.tool shutdown];
+		}
 		[wrapper setDelegate:nil];
         [tools_ removeObjectForKey:theName];
         [wrapper removeFromSuperview];
