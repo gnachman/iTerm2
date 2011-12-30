@@ -1660,6 +1660,11 @@ NSString *sessionsKey = @"sessions";
             }
             break;
 
+        case WINDOW_TYPE_NORMAL:
+			if (![self lionFullScreen]) {
+				break;
+			}
+			// fall through
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_FULL_SCREEN:
             if ([screen frame].size.width > 0) {
@@ -1667,8 +1672,6 @@ NSString *sessionsKey = @"sessions";
             }
             break;
 
-        case WINDOW_TYPE_NORMAL:
-            // fall through, the os takes care of this fine.
         default:
             break;
     }
@@ -4636,7 +4639,7 @@ NSString *sessionsKey = @"sessions";
 - (void)fitTabToWindow:(PTYTab*)aTab
 {
     NSSize size = [TABVIEW contentRect].size;
-    PtyLog(@"fitTabToWindow calling setSize for content size of height %lf", size.height);
+	PtyLog(@"fitTabToWindow calling setSize for content size of %@", [NSValue valueWithSize:size]);
     [aTab setSize:size];
 }
 
