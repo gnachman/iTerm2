@@ -11,6 +11,8 @@
 const int kMaxInputBufferSize = 1024;
 const int kMaxOutputBufferSize = 1024;
 
+static NSString *kCoprocessMruKey = @"Coprocess MRU";
+
 @implementation Coprocess
 
 @synthesize pid = pid_;
@@ -21,8 +23,32 @@ const int kMaxOutputBufferSize = 1024;
 @synthesize eof = eof_;
 @synthesize mute = mute_;
 
++ (void)addCommandToMostRecentlyUsed:(NSString *)command
+{
+	NSArray *oldMru = [[NSUserDefaults standardUserDefaults] stringArrayForKey:kCoprocessMruKey];
+	NSMutableArray *newMru;
+	if (oldMru) {
+		newMru = [[oldMru mutableCopy] autorelease];
+	} else {
+		newMru = [NSMutableArray array];
+	}
+	[newMru removeObject:command];
+	[newMru insertObject:command atIndex:0];
+	const int kMaxMru = 20;
+	while (newMru.count > kMaxMru) {
+		[newMru removeLastObject];
+	}
+	[[NSUserDefaults standardUserDefaults] setObject:newMru forKey:kCoprocessMruKey];
+}
+
++ (NSArray *)mostRecentlyUsedCommands
+{
+	return [[NSUserDefaults standardUserDefaults] stringArrayForKey:kCoprocessMruKey];
+}
+
 + (Coprocess *)launchedCoprocessWithCommand:(NSString *)command
 {
+	[Coprocess addCommandToMostRecentlyUsed:command];
     int inputPipe[2];
     int outputPipe[2];
     pipe(inputPipe);

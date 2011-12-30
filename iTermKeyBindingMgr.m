@@ -389,6 +389,10 @@ static NSDictionary* globalKeyMap;
                                                    @"Key Binding Actions"),
                 auxText];
             break;
+        case KEY_ACTION_RUN_COPROCESS:
+            actionString = [NSString stringWithFormat:@"Run Coprocess \"%@\"",
+						    auxText];
+            break;
         case KEY_ACTION_SELECT_MENU_ITEM:
             actionString = [NSString stringWithFormat:@"%@ \"%@\"",
                             NSLocalizedStringFromTableInBundle(@"Select Menu Item",

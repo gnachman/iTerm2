@@ -74,6 +74,7 @@
 #import "PseudoTerminalRestorer.h"
 #import "TmuxLayoutParser.h"
 #import "TmuxDashboardController.h"
+#import "Coprocess.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -3302,6 +3303,11 @@ NSString *sessionsKey = @"sessions";
        didEndSelector:nil
           contextInfo:nil];
 
+    NSArray *mru = [Coprocess mostRecentlyUsedCommands];
+	[coprocessCommand_ removeAllItems];
+	if (mru.count) {
+		[coprocessCommand_ addItemsWithObjectValues:mru];
+	}
     [NSApp runModalForWindow:coprocesssPanel_];
 
     [NSApp endSheet:coprocesssPanel_];

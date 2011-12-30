@@ -232,7 +232,7 @@ NSWindowDelegate,
 
     IBOutlet NSPanel *coprocesssPanel_;
     IBOutlet NSButton *coprocessOkButton_;
-    IBOutlet NSTextField *coprocessCommand_;
+    IBOutlet NSComboBox *coprocessCommand_;
 
     NSDictionary *lastArrangement_;
     BOOL wellFormed_;

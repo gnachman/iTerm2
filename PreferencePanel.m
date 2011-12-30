@@ -2735,7 +2735,7 @@ static float versionNumber;
 	  [blend setFloatValue:[[dict objectForKey:KEY_BLEND] floatValue]];
 	} else {
 		// Old clients used transparency for blending
-	    [blend setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
+		[blend setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
 	}
     [blurRadius setFloatValue:[dict objectForKey:KEY_BLUR_RADIUS] ? [[dict objectForKey:KEY_BLUR_RADIUS] floatValue] : 2.0];
     [blur setState:[[dict objectForKey:KEY_BLUR] boolValue] ? NSOnState : NSOffState];
@@ -3631,6 +3631,12 @@ static float versionNumber;
     } else if (tag == KEY_ACTION_TEXT) {
         [valueToSend setHidden:NO];
         [[valueToSend cell] setPlaceholderString:@"Enter value to send"];
+        [escPlus setHidden:YES];
+        [bookmarkPopupButton setHidden:YES];
+        [profileLabel setHidden:YES];
+    } else if (tag == KEY_ACTION_RUN_COPROCESS) {
+        [valueToSend setHidden:NO];
+        [[valueToSend cell] setPlaceholderString:@"Enter command to run"];
         [escPlus setHidden:YES];
         [bookmarkPopupButton setHidden:YES];
         [profileLabel setHidden:YES];

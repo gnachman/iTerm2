@@ -1057,6 +1057,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         case KEY_ACTION_ESCAPE_SEQUENCE:
         case KEY_ACTION_HEX_CODE:
         case KEY_ACTION_TEXT:
+        case KEY_ACTION_RUN_COPROCESS:
         case KEY_ACTION_IGNORE:
         case KEY_ACTION_SEND_C_H_BACKSPACE:
         case KEY_ACTION_SEND_C_QM_BACKSPACE:
@@ -1450,6 +1451,12 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                     return;
                 }
                 [self sendText:keyBindingText];
+                break;
+            case KEY_ACTION_RUN_COPROCESS:
+                if (EXIT) {
+                    return;
+                }
+                [self launchCoprocessWithCommand:keyBindingText];
                 break;
             case KEY_ACTION_SELECT_MENU_ITEM:
                 [PTYSession selectMenuItem:keyBindingText];

@@ -11,7 +11,7 @@
       <string key="NS.object.0">804</string>
     </object>
     <array class="NSMutableArray" key="IBDocument.EditedObjectIDs">
-      <integer value="803"/>
+      <integer value="81"/>
     </array>
     <array key="IBDocument.PluginDependencies">
       <string>com.apple.InterfaceBuilder.CocoaPlugin</string>
@@ -426,7 +426,8 @@
                 <object class="NSMenuItem" id="932048131">
                   <reference key="NSMenu" ref="360861402"/>
                   <string key="NSTitle">Run Coprocess…</string>
-                  <string key="NSKeyEquiv"/>
+                  <string key="NSKeyEquiv">r</string>
+                  <int key="NSKeyEquivModMask">1572864</int>
                   <int key="NSMnemonicLoc">2147483647</int>
                   <reference key="NSOnImage" ref="643967552"/>
                   <reference key="NSMixedImage" ref="326707852"/>
@@ -434,7 +435,8 @@
                 <object class="NSMenuItem" id="821580870">
                   <reference key="NSMenu" ref="360861402"/>
                   <string key="NSTitle">Stop Coprocess</string>
-                  <string key="NSKeyEquiv"/>
+                  <string key="NSKeyEquiv">R</string>
+                  <int key="NSKeyEquivModMask">1572864</int>
                   <int key="NSMnemonicLoc">2147483647</int>
                   <reference key="NSOnImage" ref="643967552"/>
                   <reference key="NSMixedImage" ref="326707852"/>
@@ -1082,7 +1084,7 @@
                   <reference key="NSOnImage" ref="643967552"/>
                   <reference key="NSMixedImage" ref="326707852"/>
                 </object>
-                <object class="NSMenuItem" id="940403475">
+                <object class="NSMenuItem" id="782718348">
                   <reference key="NSMenu" ref="203853260"/>
                   <string key="NSTitle">Make Text Normal Size</string>
                   <string key="NSKeyEquiv">0</string>
@@ -1091,7 +1093,7 @@
                   <reference key="NSOnImage" ref="643967552"/>
                   <reference key="NSMixedImage" ref="326707852"/>
                 </object>
-                <object class="NSMenuItem" id="912087526">
+                <object class="NSMenuItem" id="55106471">
                   <reference key="NSMenu" ref="203853260"/>
                   <bool key="NSIsAlternate">YES</bool>
                   <string key="NSTitle">Restore Text and Session Size</string>
@@ -1337,7 +1339,7 @@
                   <reference key="NSOnImage" ref="643967552"/>
                   <reference key="NSMixedImage" ref="326707852"/>
                 </object>
-                <object class="NSMenuItem" id="576175121">
+                <object class="NSMenuItem" id="574582962">
                   <reference key="NSMenu" ref="704295309"/>
                   <bool key="NSIsDisabled">YES</bool>
                   <bool key="NSIsSeparator">YES</bool>
@@ -2831,7 +2833,7 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
           <object class="IBActionConnection" key="connection">
             <string key="label">returnToDefaultSize:</string>
             <reference key="source" ref="608955146"/>
-            <reference key="destination" ref="940403475"/>
+            <reference key="destination" ref="782718348"/>
           </object>
           <int key="connectionID">1465</int>
         </object>
@@ -2839,7 +2841,7 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
           <object class="IBActionConnection" key="connection">
             <string key="label">returnToDefaultSize:</string>
             <reference key="source" ref="608955146"/>
-            <reference key="destination" ref="912087526"/>
+            <reference key="destination" ref="55106471"/>
           </object>
           <int key="connectionID">1468</int>
         </object>
@@ -2920,7 +2922,7 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
               <reference ref="891844290"/>
               <reference ref="581301589"/>
               <reference ref="249023174"/>
-              <reference ref="576175121"/>
+              <reference ref="574582962"/>
             </array>
             <reference key="parent" ref="914464345"/>
           </object>
@@ -3458,8 +3460,8 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
               <reference ref="640505350"/>
               <reference ref="675837179"/>
               <reference ref="672316615"/>
-              <reference ref="940403475"/>
-              <reference ref="912087526"/>
+              <reference ref="782718348"/>
+              <reference ref="55106471"/>
             </array>
             <reference key="parent" ref="549291896"/>
           </object>
@@ -4123,7 +4125,7 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
           </object>
           <object class="IBObjectRecord">
             <int key="objectID">1464</int>
-            <reference key="object" ref="940403475"/>
+            <reference key="object" ref="782718348"/>
             <reference key="parent" ref="203853260"/>
           </object>
           <object class="IBObjectRecord">
@@ -4133,12 +4135,12 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
           </object>
           <object class="IBObjectRecord">
             <int key="objectID">1466</int>
-            <reference key="object" ref="576175121"/>
+            <reference key="object" ref="574582962"/>
             <reference key="parent" ref="704295309"/>
           </object>
           <object class="IBObjectRecord">
             <int key="objectID">1467</int>
-            <reference key="object" ref="912087526"/>
+            <reference key="object" ref="55106471"/>
             <reference key="parent" ref="203853260"/>
           </object>
         </array>
@@ -4311,6 +4313,7 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
         <string key="805.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
         <string key="806.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
         <string key="807.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
+        <string key="81.IBEditorWindowLastContentRect">{{82, 371}, {358, 443}}</string>
         <string key="81.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
         <string key="822.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>
         <string key="823.IBPluginDependency">com.apple.InterfaceBuilder.CocoaPlugin</string>

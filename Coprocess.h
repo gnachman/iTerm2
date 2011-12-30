@@ -31,6 +31,7 @@
 + (Coprocess *)coprocessWithPid:(pid_t)pid
                         outputFd:(int)inputFd
                        inputFd:(int)inputFd;
++ (NSArray *)mostRecentlyUsedCommands;
 
 // Write from outputBuffer
 - (int)write;
