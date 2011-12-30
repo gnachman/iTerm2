@@ -7,18 +7,11 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "ToolWrapper.h"
 
 @class PseudoTerminal;
 
-@protocol ToolbeltTool
-@optional
-- (void)relayout;
-
-@optional
-- (void)shutdown;
-@end
-
-@interface ToolbeltView : NSView <NSSplitViewDelegate> {
+@interface ToolbeltView : NSView <NSSplitViewDelegate, ToolWrapperDelegate> {
     NSSplitView *splitter_;
     NSMutableDictionary *tools_;
     PseudoTerminal *term_;   // weak

@@ -20,6 +20,7 @@ static const CGFloat kButtonSize = 17;
 @synthesize name;
 @synthesize container = container_;
 @synthesize term;
+@synthesize delegate = delegate_;
 
 - (id)initWithFrame:(NSRect)frame
 {
@@ -51,7 +52,7 @@ static const CGFloat kButtonSize = 17;
         [container_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [self addSubview:container_];
         [container_ release];
-        
+
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(someWrapperDidClose:) name:@"iTermToolWrapperDidClose" object:nil];
     }
     return self;
@@ -77,24 +78,6 @@ static const CGFloat kButtonSize = 17;
     }
 }
 
-- (void)bindCloseButton
-{
-    [closeButton_ bind:@"hidden"
-              toObject:self.superview.superview
-           withKeyPath:@"haveOnlyOneTool"
-               options:nil];
-}
-
-- (void)unbind
-{
-    [title_ unbind:@"value"];
-    [closeButton_ unbind:@"hidden"];
-    NSObject<ToolbeltTool> *subview = [self tool];
-    if ([subview respondsToSelector:@selector(shutdown)]) {
-        [subview performSelector:@selector(shutdown)];
-    }
-}
-
 - (BOOL)isFlipped
 {
     return YES;
@@ -102,7 +85,11 @@ static const CGFloat kButtonSize = 17;
 
 - (void)close:(id)sender
 {
-    [ToolbeltView toggleShouldShowTool:self.name];
+	if ([delegate_ haveOnlyOneTool]) {
+		[delegate_ hideToolbelt];
+	} else {
+		[delegate_ toggleShowToolWithName:self.name];
+	}
 }
 
 - (void)someWrapperDidClose

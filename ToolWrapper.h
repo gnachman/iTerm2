@@ -7,9 +7,24 @@
 //
 
 #import <Cocoa/Cocoa.h>
-#import "ToolbeltView.h"
 
 @class PseudoTerminal;
+
+@protocol ToolWrapperDelegate
+
+- (BOOL)haveOnlyOneTool;
+- (void)hideToolbelt;
+- (void)toggleShowToolWithName:(NSString *)theName;
+
+@end
+
+@protocol ToolbeltTool
+@optional
+- (void)relayout;
+
+@optional
+- (void)shutdown;
+@end
 
 @interface ToolWrapper : NSView {
     NSTextField *title_;
@@ -17,15 +32,15 @@
     NSString *name;
     NSView *container_;
     PseudoTerminal *term;
+	id<ToolWrapperDelegate> delegate_;  // weak
 }
 
 @property (nonatomic, copy) NSString *name;
 @property (nonatomic, readonly) NSView *container;
 @property (nonatomic, assign) PseudoTerminal *term;
+@property (nonatomic, assign) id<ToolWrapperDelegate> delegate;
 
 - (void)relayout;
-- (void)bindCloseButton;
-- (void)unbind;
 - (NSObject<ToolbeltTool> *)tool;
 
 @end
