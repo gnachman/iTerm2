@@ -3418,10 +3418,6 @@ NSString *sessionsKey = @"sessions";
     SessionView* sessionView = [[self currentTab] splitVertically:isVertical
                                                            before:before
                                                     targetSession:targetSession];
-    if (targetSession != [[self currentTab] activeSession] &&
-        [[PreferencePanel sharedInstance] dimInactiveSplitPanes]) {
-        [sessionView setDimmed:YES];
-    }
     [sessionView setSession:newSession];
     [newSession setTab:[self currentTab]];
     scrollView = [[[newSession view] subviews] objectAtIndex:0];
@@ -3446,6 +3442,7 @@ NSString *sessionsKey = @"sessions";
     }
     [[self currentTab] recheckBlur];
     [[self currentTab] numberOfSessionsDidChange];
+	[self setDimmingForSession:targetSession];
     [sessionView updateDim];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
 }
@@ -3807,14 +3804,7 @@ NSString *sessionsKey = @"sessions";
         }
     }
     broadcastMode_ = mode;
-    PTYSession *activeSession = [[self currentTab] activeSession];
-    for (PTYSession *aSession in [[self currentTab] sessions]) {
-        if (aSession != activeSession &&
-            [[PreferencePanel sharedInstance] dimInactiveSplitPanes]) {
-            [[aSession view] setDimmed:(mode == BROADCAST_OFF)];
-        }
-        [[aSession view] setNeedsDisplay:YES];
-    }
+	[self setDimmingForSessions];
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [itad updateBroadcastMenuState];
 }
@@ -3876,6 +3866,8 @@ NSString *sessionsKey = @"sessions";
             [[aSession view] setNeedsDisplay:YES];
         }
     }
+	// Update dimming of panes.
+	[self _refreshTerminal:nil];
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [itad updateBroadcastMenuState];
 }
@@ -3931,6 +3923,35 @@ NSString *sessionsKey = @"sessions";
     for (PTYTab *aTab in [self tabs]) {
         [aTab setReportIdealSizeAsCurrent:NO];
     }
+}
+
+- (void)setDimmingForSession:(PTYSession *)aSession
+{
+    BOOL canDim = [[PreferencePanel sharedInstance] dimInactiveSplitPanes];
+	if (!canDim) {
+		[[aSession view] setDimmed:NO];
+	} else if (aSession == [[aSession tab] activeSession]) {
+		[[aSession view] setDimmed:NO];
+	} else if (![self broadcastInputToSession:aSession]) {
+		// Session is not the active session and we're not broadcasting to it.
+		[[aSession view] setDimmed:YES];
+	} else if ([self broadcastInputToSession:[self currentSession]]) {
+		// Session is not active, we are broadcasting to it, and the current
+		// session is also broadcasting.
+		[[aSession view] setDimmed:NO];
+	} else {
+		// Session is is not active, we are broadcasting to it, but we are not
+		// broadcasting to the current session.
+		[[aSession view] setDimmed:YES];
+	}
+	[[aSession view] setNeedsDisplay:YES];
+}
+
+- (void)setDimmingForSessions
+{
+	for (PTYSession *aSession in [self sessions]) {
+		[self setDimmingForSession:aSession];
+	}
 }
 
 @end
@@ -3998,7 +4019,6 @@ NSString *sessionsKey = @"sessions";
         }
     }
 
-    BOOL canDim = [[PreferencePanel sharedInstance] dimInactiveSplitPanes];
     // Assign counts to each session. This causes tabs to show their tab number,
     // called an objectCount. When the "compact tab" pref is toggled, this makes
     // formerly countless tabs show their counts.
@@ -4012,13 +4032,7 @@ NSString *sessionsKey = @"sessions";
 
         // Update dimmed status of inactive sessions in split panes in case the preference changed.
         for (PTYSession* aSession in [aTab sessions]) {
-            if (canDim) {
-                if (aSession != [aTab activeSession]) {
-                    [[aSession view] setDimmed:YES];
-                }
-            } else {
-                [[aSession view] setDimmed:NO];
-            }
+			[self setDimmingForSession:aSession];
             [[aSession view] setBackgroundDimmed:![[self window] isKeyWindow]];
 
             // In case dimming amount slider moved update the dimming amount.

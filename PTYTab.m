@@ -338,10 +338,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
             // a invisible textview the first responder.
             [[realParentWindow_ window] makeFirstResponder:[session TEXTVIEW]];
         }
-        [[session view] setDimmed:NO];
-        if (oldSession && [[PreferencePanel sharedInstance] dimInactiveSplitPanes]) {
-            [[oldSession view] setDimmed:YES];
-        }
+		[realParentWindow_ setDimmingForSessions];
     }
     for (PTYSession* aSession in [self sessions]) {
         [[aSession TEXTVIEW] refresh];
@@ -1945,12 +1942,8 @@ static NSString* FormatRect(NSRect r) {
             [self appendSessionToViewOrder:session];
         }
         if ([[arrangement objectForKey:TAB_ARRANGEMENT_IS_ACTIVE] boolValue]) {
-            [sessionView setDimmed:NO];
             return session;
         } else {
-            if ([[PreferencePanel sharedInstance] dimInactiveSplitPanes]) {
-                [sessionView setDimmed:YES];
-            }
             return nil;
         }
     }
@@ -2032,6 +2025,7 @@ static NSString* FormatRect(NSRect r) {
     }
 
     [theTab numberOfSessionsDidChange];
+	[term setDimmingForSessions];
 
     return theTab;
 }
@@ -2665,6 +2659,7 @@ static NSString* FormatRect(NSRect r) {
     [realParentWindow_ tmuxTabLayoutDidChange:YES];
     [realParentWindow_ endTmuxOriginatedResize];
     --tmuxOriginatedResizeInProgress_;
+	[realParentWindow_ setDimmingForSessions];
 }
 
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree

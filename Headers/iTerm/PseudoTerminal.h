@@ -735,6 +735,9 @@ NSWindowDelegate,
 - (IBAction)moveTabLeft:(id)sender;
 - (IBAction)moveTabRight:(id)sender;
 
+- (void)setDimmingForSession:(PTYSession *)aSession;
+- (void)setDimmingForSessions;
+
 @end
 
 @interface PseudoTerminal (KeyValueCoding)
@@ -785,6 +788,7 @@ NSWindowDelegate,
 @end
 
 @interface PseudoTerminal (Private)
+- (void)_refreshTerminal:(NSNotification *)aNotification;
 - (void)_updateToolbeltParentage;
 
 - (int)_screenAtPoint:(NSPoint)p;
