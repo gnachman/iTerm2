@@ -383,6 +383,23 @@ static NSDate* lastResizeDate_;
     }
 }
 
+- (void)drawRect:(NSRect)dirtyRect
+{
+	// Fill in background color in the area around a scrollview if it's smaller
+	// than the session view.
+	[super drawRect:dirtyRect];
+	NSColor *bgColor = [[session_ TEXTVIEW] defaultBGColor];
+	[bgColor set];
+    PTYScrollView *scrollView = [session_ SCROLLVIEW];
+	NSRect svFrame = [scrollView frame];
+	if (svFrame.size.width < self.frame.size.width) {
+		double widthDiff = self.frame.size.width - svFrame.size.width;
+		NSRectFill(NSMakeRect(self.frame.size.width - widthDiff, 0, widthDiff, self.frame.size.height));
+	}
+	if (svFrame.origin.y != 0) {
+		NSRectFill(NSMakeRect(0, 0, self.frame.size.width, svFrame.origin.y));
+	}
+}
 
 #pragma mark NSDraggingSource protocol
 
@@ -522,6 +539,27 @@ static NSDate* lastResizeDate_;
     [scrollView setFrame:frame];
     [self setTitle:[session_ name]];
     return YES;
+}
+
+- (void)updateTitleFrame
+{
+	NSRect aRect = [self frame];
+	NSView *scrollView = (NSView *)[session_ SCROLLVIEW];
+	if (showTitle_) {
+		[title_ setFrame:NSMakeRect(0,
+									aRect.size.height - kTitleHeight,
+									aRect.size.width,
+									kTitleHeight)];
+		[scrollView setFrameOrigin:NSMakePoint(
+			0,
+			aRect.size.height - scrollView.frame.size.height - kTitleHeight)];
+	} else {
+		[scrollView setFrameOrigin:NSMakePoint(
+			0,
+			aRect.size.height - scrollView.frame.size.height)];
+	}
+	[findView_ setFrameOrigin:NSMakePoint(aRect.size.width - [[findView_ view] frame].size.width - 30,
+										  aRect.size.height - [[findView_ view] frame].size.height)];
 }
 
 - (void)setTitle:(NSString *)title

@@ -347,6 +347,10 @@ typedef enum {
 - (void)textViewDidChangeSelection: (NSNotification *)aNotification;
 - (void)textViewResized: (NSNotification *)aNotification;
 
+// Returns the frame size for a scrollview that perfectly contains the contents
+// of this session based on rows/cols, and taking into acount the presence of
+// a scrollbar.
+- (NSSize)idealScrollViewSize;
 
 // misc
 - (void)setWidth:(int)width height:(int)height;

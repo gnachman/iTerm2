@@ -15,6 +15,8 @@
      draggingDidEndOfSplit:(int)clickedOnSplitterIndex
                     pixels:(NSSize)changePx;
 
+- (void)splitView:(PTYSplitView *)splitView draggingWillBeginOfSplit:(int)splitterIndex;
+
 @end
 
 /* This extends NSSplitView by adding a delegate method that's called when

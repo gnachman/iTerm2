@@ -85,5 +85,8 @@
 - (BOOL)setShowTitle:(BOOL)value;
 - (BOOL)showTitle;
 - (void)setTitle:(NSString *)title;
+// For tmux sessions, autoresizing is turned off so the title must be moved
+// manually. This repositions the title view and the find view.
+- (void)updateTitleFrame;
 
 @end

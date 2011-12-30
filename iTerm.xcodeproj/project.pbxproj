@@ -195,7 +195,6 @@
 		1D6C50A71226EEFB00E0AA3E /* BookmarkListView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */; };
 		1D6C50A81226EEFB00E0AA3E /* BookmarkListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */; };
 		1D72439011F416F300BD4924 /* LineBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72438F11F416F300BD4924 /* LineBuffer.h */; };
-		1D72477411F55E5700BD4924 /* LineBufferTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72477211F55E5700BD4924 /* LineBufferTest.h */; };
 		1D7B9A691491D82F003A2A22 /* IntervalMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7B9A671491D82F003A2A22 /* IntervalMap.h */; };
 		1D7B9A6A1491D82F003A2A22 /* IntervalMap.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7B9A681491D82F003A2A22 /* IntervalMap.m */; };
 		1D7C18811275D22900461E55 /* PasteboardHistory.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7C187F1275D22900461E55 /* PasteboardHistory.h */; };
@@ -212,8 +211,6 @@
 		1D825601146881EC007CAE78 /* PointerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D8255FF146881EC007CAE78 /* PointerController.m */; };
 		1D825604146B258A007CAE78 /* EventMonitorView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D825602146B258A007CAE78 /* EventMonitorView.h */; };
 		1D825605146B258A007CAE78 /* EventMonitorView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D825603146B258A007CAE78 /* EventMonitorView.m */; };
-		1D82FF6114ABC38700B34CEA /* EquivalenceClassSetTest.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D82FF5F14ABC38700B34CEA /* EquivalenceClassSetTest.h */; };
-		1D82FF6214ABC38700B34CEA /* EquivalenceClassSetTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D82FF6014ABC38700B34CEA /* EquivalenceClassSetTest.m */; };
 		1D844C8D13FD8B7700CD4F85 /* SplitPanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D844C8B13FD8B7700CD4F85 /* SplitPanel.xib */; };
 		1D85D1ED1306687700A3E998 /* RegexKitLite.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D85D1D81306687700A3E998 /* RegexKitLite.h */; };
 		1D85D1EF1306687700A3E998 /* RegexKitLite.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D85D1DA1306687700A3E998 /* RegexKitLite.m */; };
@@ -302,7 +299,6 @@
 		1DCF3EC61224D03D00AD56F1 /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		1DCF3F001224EEBD00AD56F1 /* MigrationMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */; };
 		1DCF3F4A1225F6F200AD56F1 /* BookmarkModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */; };
-		1DD1BB6E148FD08A00567DF0 /* linen.jpg in Resources */ = {isa = PBXBuildFile; fileRef = 1DD1BB6D148FD08A00567DF0 /* linen.jpg */; };
 		1DD4CE7D14A5163B00ED182E /* TmuxDashboard.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */; };
 		1DD4CE8014A51C0D00ED182E /* TmuxDashboardController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DD4CE7E14A51C0D00ED182E /* TmuxDashboardController.h */; };
 		1DD4CE8114A51C0D00ED182E /* TmuxDashboardController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DD4CE7F14A51C0D00ED182E /* TmuxDashboardController.m */; };
@@ -547,7 +543,6 @@
 		1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultBookmark.plist; sourceTree = "<group>"; };
 		1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = MigrationMap.plist; sourceTree = "<group>"; };
 		1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BookmarkModel.h; path = Headers/iTerm/BookmarkModel.h; sourceTree = "<group>"; };
-		1DD1BB6D148FD08A00567DF0 /* linen.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = linen.jpg; path = images/linen.jpg; sourceTree = "<group>"; };
 		1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = TmuxDashboard.xib; sourceTree = "<group>"; };
 		1DD4CE7E14A51C0D00ED182E /* TmuxDashboardController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxDashboardController.h; sourceTree = "<group>"; };
 		1DD4CE7F14A51C0D00ED182E /* TmuxDashboardController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxDashboardController.m; sourceTree = "<group>"; };
@@ -1008,7 +1003,6 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				1DD1BB6D148FD08A00567DF0 /* linen.jpg */,
 				1D8255F614649F8E007CAE78 /* PrefsMouse.tiff */,
 				5ECE4AE914514058002A9CC2 /* Growl Registration Ticket.growlRegDict */,
 				1D9DDE9D142E855D00275650 /* Coprocess.png */,
@@ -1347,7 +1341,6 @@
 				1D72439011F416F300BD4924 /* LineBuffer.h in Headers */,
 				874206490564169600CFC3F1 /* iTermApplicationDelegate.h in Headers */,
 				DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */,
-				1D72477411F55E5700BD4924 /* LineBufferTest.h in Headers */,
 				49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */,
 				1DCF3F4A1225F6F200AD56F1 /* BookmarkModel.h in Headers */,
 				1D6C50A71226EEFB00E0AA3E /* BookmarkListView.h in Headers */,
@@ -1433,7 +1426,6 @@
 				1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */,
 				1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */,
 				1DAE714D14AAF24200DA144B /* EquivalenceClassSet.h in Headers */,
-				1D82FF6114ABC38700B34CEA /* EquivalenceClassSetTest.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1576,7 +1568,6 @@
 				5ECE4AEA14514058002A9CC2 /* Growl Registration Ticket.growlRegDict in Resources */,
 				1D8255F714649F8E007CAE78 /* PrefsMouse.tiff in Resources */,
 				1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */,
-				1DD1BB6E148FD08A00567DF0 /* linen.jpg in Resources */,
 				1DD4CE7D14A5163B00ED182E /* TmuxDashboard.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1728,7 +1719,6 @@
 				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,
 				1D0B613D14A7C76500C57C33 /* TmuxWindowsTable.m in Sources */,
 				1DAE714E14AAF24200DA144B /* EquivalenceClassSet.m in Sources */,
-				1D82FF6214ABC38700B34CEA /* EquivalenceClassSetTest.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
