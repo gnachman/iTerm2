@@ -19,6 +19,7 @@
 #import "TmuxControllerRegistry.h"
 #import "EquivalenceClassSet.h"
 #import "TmuxDashboardController.h"
+#import "PreferencePanel.h"
 
 NSString *kTmuxControllerSessionsDidChange = @"kTmuxControllerSessionsDidChange";
 NSString *kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotification";
@@ -179,15 +180,41 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         [gateway_ abortWithErrorMessage:[NSString stringWithFormat:@"Bad response for initial list windows request: %@", response]];
         return;
     }
+	NSMutableArray *windowsToOpen = [NSMutableArray array];
+	BOOL haveHidden = NO;
+	NSNumber *newWindowAffinity = nil;
+	BOOL newWindowsInTabs =
+		[[PreferencePanel sharedInstance] openTmuxWindowsIn] == OPEN_TMUX_WINDOWS_IN_TABS;
     for (NSArray *record in doc.records) {
         int wid = [[doc valueInRecord:record forField:@"window_id"] intValue];
 		if (hiddenWindows_ && [hiddenWindows_ containsObject:[NSNumber numberWithInt:wid]]) {
 			NSLog(@"Don't open window %d because it was saved hidden.", wid);
+			haveHidden = YES;
 			// Let the user know something is up.
-			[[TmuxDashboardController sharedInstance] showWindow:nil];
-			[[[TmuxDashboardController sharedInstance] window] makeKeyAndOrderFront:nil];
 			continue;
 		}
+		NSNumber *n = [NSNumber numberWithInt:wid];
+		if (![affinities_ valuesEqualTo:n] && newWindowsInTabs) {
+			// Create an equivalence class of all unrecognied windows to each other.
+			if (!newWindowAffinity) {
+				newWindowAffinity = n;
+			} else {
+			  [affinities_ setValue:n
+					   equalToValue:newWindowAffinity];
+			}
+		}
+		[windowsToOpen addObject:record];
+	}
+	if (windowsToOpen.count > [[PreferencePanel sharedInstance] tmuxDashboardLimit]) {
+		haveHidden = YES;
+		[windowsToOpen removeAllObjects];
+	}
+	if (haveHidden) {
+		[[TmuxDashboardController sharedInstance] showWindow:nil];
+		[[[TmuxDashboardController sharedInstance] window] makeKeyAndOrderFront:nil];
+	}
+	for (NSArray *record in windowsToOpen) {
+        int wid = [[doc valueInRecord:record forField:@"window_id"] intValue];
         [self openWindowWithIndex:wid
                              name:[doc valueInRecord:record forField:@"window_name"]
                              size:NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
@@ -591,9 +618,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                 [siblings addObject:n];
             }
         }
-        if (siblings.count > 1) {
+        if (siblings.count > 0) {
             [affinities addObject:[siblings componentsJoinedByString:@","]];
-        }
+		}
     }
     NSString *arg = [affinities componentsJoinedByString:@" "];
     NSString *command = [NSString stringWithFormat:@"set-control-client-attr set \"affinities%d=%@\"",
@@ -656,6 +683,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     for (NSString *affset in affinities) {
         NSArray *siblings = [affset componentsSeparatedByString:@","];
         NSNumber *exemplar = [NSNumber numberWithInt:[[siblings lastObject] intValue]];
+		if (siblings.count == 1) {
+			// This is a wee hack. If a tmux Window is in a native window with one tab
+			// then create an equivalence class containing only (wid, -wid). We'll never
+			// see a window id that's negative, but the equivalence class's existance signals
+			// not to apply the default mode for unrecognized windows.
+			exemplar = [NSNumber numberWithInt:-[exemplar intValue]];
+		}
         for (NSString *widString in siblings) {
             NSNumber *n = [NSNumber numberWithInt:[widString intValue]];
             if (![n isEqualToNumber:exemplar]) {

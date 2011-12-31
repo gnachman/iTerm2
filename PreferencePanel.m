@@ -1126,6 +1126,7 @@ static float versionNumber;
     [prefs setInteger:0 forKey:@"AppleScrollAnimationEnabled"];
 
     defaultWindowStyle=[prefs objectForKey:@"WindowStyle"]?[prefs integerForKey:@"WindowStyle"]:0;
+    defaultOpenTmuxWindowsIn = [prefs objectForKey:@"OpenTmuxWindowsIn"]?[prefs integerForKey:@"OpenTmuxWindowsIn"]:OPEN_TMUX_WINDOWS_IN_WINDOWS;
     defaultTabViewType=[prefs objectForKey:@"TabViewType"]?[prefs integerForKey:@"TabViewType"]:0;
     if (defaultTabViewType > 1) {
         defaultTabViewType = 0;
@@ -1154,6 +1155,7 @@ static float versionNumber;
     defaultStrokeThickness = [prefs objectForKey:@"HiddenAFRStrokeThickness"] ? [[prefs objectForKey:@"HiddenAFRStrokeThickness"] floatValue] : 0;
     [defaultWordChars release];
     defaultWordChars = [prefs objectForKey: @"WordCharacters"]?[[prefs objectForKey: @"WordCharacters"] retain]:@"/-+\\~_.";
+    defaultTmuxDashboardLimit = [prefs objectForKey: @"TmuxDashboardLimit"]?[[prefs objectForKey:@"TmuxDashboardLimit"] intValue]:10;
     defaultOpenBookmark = [prefs objectForKey:@"OpenBookmark"]?[[prefs objectForKey:@"OpenBookmark"] boolValue]: NO;
     defaultQuitWhenAllWindowsClosed = [prefs objectForKey:@"QuitWhenAllWindowsClosed"]?[[prefs objectForKey:@"QuitWhenAllWindowsClosed"] boolValue]: NO;
     defaultCheckUpdate = [prefs objectForKey:@"SUEnableAutomaticChecks"]?[[prefs objectForKey:@"SUEnableAutomaticChecks"] boolValue]: YES;
@@ -1256,6 +1258,7 @@ static float versionNumber;
     [prefs setBool:defaultThreeFingerEmulatesMiddle forKey:@"ThreeFingerEmulates"];
     [prefs setBool:defaultHideTab forKey:@"HideTab"];
     [prefs setInteger:defaultWindowStyle forKey:@"WindowStyle"];
+	[prefs setInteger:defaultOpenTmuxWindowsIn forKey:@"OpenTmuxWindowsIn"];
     [prefs setInteger:defaultTabViewType forKey:@"TabViewType"];
     [prefs setBool:defaultPromptOnQuit forKey:@"PromptOnQuit"];
     [prefs setBool:defaultOnlyWhenMoreTabs forKey:@"OnlyWhenMoreTabs"];
@@ -1274,7 +1277,9 @@ static float versionNumber;
     [prefs setBool:defaultHighlightTabLabels forKey:@"HighlightTabLabels"];
     [prefs setBool:defaultAdvancedFontRendering forKey:@"HiddenAdvancedFontRendering"];
     [prefs setFloat:defaultStrokeThickness forKey:@"HiddenAFRStrokeThickness"];
-    [prefs setObject: defaultWordChars forKey: @"WordCharacters"];
+    [prefs setObject:defaultWordChars forKey: @"WordCharacters"];
+    [prefs setObject:[NSNumber numberWithInt:defaultTmuxDashboardLimit]
+			  forKey:@"TmuxDashboardLimit"];
     [prefs setBool:defaultOpenBookmark forKey:@"OpenBookmark"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
     [prefs setBool:defaultQuitWhenAllWindowsClosed forKey:@"QuitWhenAllWindowsClosed"];
@@ -1339,6 +1344,7 @@ static float versionNumber;
     [wordChars setDelegate: self];
 
     [windowStyle selectItemAtIndex: defaultWindowStyle];
+    [openTmuxWindows selectItemAtIndex: defaultOpenTmuxWindowsIn];
     [tabPosition selectItemAtIndex: defaultTabViewType];
     [selectionCopiesText setState:defaultCopySelection?NSOnState:NSOffState];
     [copyLastNewline setState:defaultCopyLastNewline ? NSOnState : NSOffState];
@@ -1369,6 +1375,7 @@ static float versionNumber;
 
     [openBookmark setState: defaultOpenBookmark?NSOnState:NSOffState];
     [wordChars setStringValue: ([defaultWordChars length] > 0)?defaultWordChars:@""];
+    [tmuxDashboardLimit setIntValue:defaultTmuxDashboardLimit];
     [quitWhenAllWindowsClosed setState: defaultQuitWhenAllWindowsClosed?NSOnState:NSOffState];
     [checkUpdate setState: defaultCheckUpdate?NSOnState:NSOffState];
     [hideScrollbar setState: defaultHideScrollbar?NSOnState:NSOffState];
@@ -1559,9 +1566,11 @@ static float versionNumber;
         sender == animateDimming ||
         sender == dimOnlyText ||
         sender == dimmingAmount ||
+		sender == openTmuxWindows ||
         sender == threeFingerEmulatesMiddle ||
         sender == showWindowBorder) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
+        defaultOpenTmuxWindowsIn = [[openTmuxWindows selectedItem] tag];
         defaultTabViewType=[tabPosition indexOfSelectedItem];
         defaultUseCompactLabel = ([useCompactLabel state] == NSOnState);
         defaultHideActivityIndicator = ([hideActivityIndicator state] == NSOnState);
@@ -1667,6 +1676,7 @@ static float versionNumber;
         defaultOpenBookmark = ([openBookmark state] == NSOnState);
         [defaultWordChars release];
         defaultWordChars = [[wordChars stringValue] retain];
+		defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
         defaultQuitWhenAllWindowsClosed = ([quitWhenAllWindowsClosed state] == NSOnState);
         defaultCheckUpdate = ([checkUpdate state] == NSOnState);
         defaultSmartPlacement = ([smartPlacement state] == NSOnState);
@@ -1806,6 +1816,16 @@ static float versionNumber;
 - (int)windowStyle
 {
     return defaultWindowStyle;
+}
+
+- (int)openTmuxWindowsIn
+{
+	return defaultOpenTmuxWindowsIn;
+}
+
+- (int)tmuxDashboardLimit
+{
+	return defaultTmuxDashboardLimit;
 }
 
 - (BOOL)promptOnQuit
@@ -3516,25 +3536,37 @@ static float versionNumber;
     return val;
 }
 
+- (void)forceTextFieldToBeNumber:(NSTextField *)textField
+				 acceptableRange:(NSRange)range
+{
+	// NSNumberFormatter seems to have lost its mind on Lion. See a description of the problem here:
+	// http://stackoverflow.com/questions/7976951/nsnumberformatter-erasing-value-when-it-violates-constraints
+	int iv = [self intForString:[textField stringValue] inRange:range];
+	unichar lastChar = '0';
+	int numChars = [[textField stringValue] length];
+	if (numChars) {
+		lastChar = [[textField stringValue] characterAtIndex:numChars - 1];
+	}
+	if (iv != [textField intValue] || (lastChar < '0' || lastChar > '9')) {
+		// If the int values don't match up or there are terminal non-number
+		// chars, then update the value.
+		[textField setIntValue:iv];
+	}
+}
+
 // NSTextField delegate
 - (void)controlTextDidChange:(NSNotification *)aNotification
 {
     id obj = [aNotification object];
     if (obj == wordChars) {
         defaultWordChars = [[wordChars stringValue] retain];
+	} else if (obj == tmuxDashboardLimit) {
+		[self forceTextFieldToBeNumber:tmuxDashboardLimit
+					   acceptableRange:NSMakeRange(0, 1000)];
+		defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
     } else if (obj == scrollbackLines) {
-        // NSNumberFormatter seems to have lost its mind on Lion. See a description of the problem here:
-        // http://stackoverflow.com/questions/7976951/nsnumberformatter-erasing-value-when-it-violates-constraints
-        int iv = [self intForString:[scrollbackLines stringValue] inRange:NSMakeRange(0, 10 * 1000 * 1000)];
-        unichar lastChar = '0';
-        int numChars = [[scrollbackLines stringValue] length];
-        if (numChars) {
-            lastChar = [[scrollbackLines stringValue] characterAtIndex:numChars - 1];
-        }
-        if (iv != [scrollbackLines intValue] || (lastChar < '0' || lastChar > '9')) {
-            // If the int values don't match up or there are terminal non-number chars, then update the value.
-            [scrollbackLines setIntValue:iv];
-        }
+		[self forceTextFieldToBeNumber:scrollbackLines
+					   acceptableRange:NSMakeRange(0, 10 * 1000 * 1000)];
         [self bookmarkSettingChanged:nil];
     } else if (obj == bookmarkName ||
                obj == columnsField ||

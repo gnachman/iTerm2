@@ -53,6 +53,9 @@
 // Prompt on close if jobs (excluding some in a list) are running.
 #define PROMPT_EX_JOBS 2
 
+#define OPEN_TMUX_WINDOWS_IN_WINDOWS 0
+#define OPEN_TMUX_WINDOWS_IN_TABS 1
+
 @class iTermController;
 @class TriggerController;
 @class SmartSelectionController;
@@ -235,6 +238,14 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     // Lion-style fullscreen
     IBOutlet NSButton* lionStyleFullscreen;
     BOOL defaultLionStyleFullscreen;
+
+	// Open tmux dashboard if there are more than N windows
+	IBOutlet NSTextField *tmuxDashboardLimit;
+	int defaultTmuxDashboardLimit;
+
+	// Open tmux windows in
+	IBOutlet NSPopUpButton *openTmuxWindows;
+	int defaultOpenTmuxWindowsIn;
 
     // Load prefs from custom folder
     IBOutlet NSButton *loadPrefsFromCustomFolder;
@@ -731,7 +742,8 @@ typedef enum {
 - (void)openToBookmark:(NSString*)guid;
 - (id)tokenFieldCell:(NSTokenFieldCell *)tokenFieldCell representedObjectForEditingString:(NSString *)editingString;
 - (void)underlyingBookmarkDidChange;
-
+- (int)openTmuxWindowsIn;
+- (int)tmuxDashboardLimit;
 - (IBAction)openCopyBookmarks:(id)sender;
 - (IBAction)copyBookmarks:(id)sender;
 - (IBAction)cancelCopyBookmarks:(id)sender;
