@@ -620,6 +620,10 @@ static void reapchild(int n)
         // Do not start the new process with a signal handler.
         signal(SIGCHLD, SIG_DFL);
         signal(SIGPIPE, SIG_DFL);
+		sigset_t signals;
+		sigemptyset(&signals);
+		sigaddset(&signals, SIGPIPE);
+		sigprocmask(SIG_UNBLOCK, &signals, NULL);
 
         chdir(initialPwd);
         for (i = 0; i < envsize; i++) {
