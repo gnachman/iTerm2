@@ -245,6 +245,10 @@ NSWindowDelegate,
 
     BOOL liveResize_;
     BOOL postponedTmuxTabLayoutChange_;
+	// A unique string for this window. Used for tmux to remember which window
+	// a tmux window should be opened in as a tab. A window restored from a
+	// saved arrangement will also restore its guid.
+	NSString *terminalGuid_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
@@ -302,6 +306,8 @@ NSWindowDelegate,
 // side by side, and one needs to determine which index it has, so it can be
 // selected when leaving iTerm expose.
 - (NSInteger)indexOfTab:(PTYTab*)aTab;
+
+- (NSString *)terminalGuid;
 
 // Open a new tab with the bookmark given by the guid in
 // [sender representedObject]. Used by menu items in the Bookmarks menu.

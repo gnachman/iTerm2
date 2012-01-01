@@ -110,6 +110,7 @@ static NSString* TERMINAL_ARRANGEMENT_LION_FULLSCREEN = @"LionFullscreen";
 static NSString* TERMINAL_ARRANGEMENT_WINDOW_TYPE = @"Window Type";
 static NSString* TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX = @"Selected Tab Index";
 static NSString* TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
+static NSString* TERMINAL_GUID = @"TerminalGuid";
 
 // In full screen, leave a bit of space at the top of the toolbar for aesthetics.
 static const CGFloat kToolbeltMargin = 8;
@@ -457,6 +458,8 @@ NSString *sessionsKey = @"sessions";
     wellFormed_ = YES;
     [[self window] futureSetRestorable:YES];
     [[self window] futureSetRestorationClass:[PseudoTerminalRestorer class]];
+	terminalGuid_ = [[NSString stringWithFormat:@"pty-%@", [BookmarkModel freshGuid]] retain];
+
     return self;
 }
 
@@ -989,6 +992,7 @@ NSString *sessionsKey = @"sessions";
     [pbHistoryView release];
     [autocompleteView release];
     [tabBarControl release];
+	[terminalGuid_ release];
     if (fullScreenTabviewTimer_) {
         [fullScreenTabviewTimer_ invalidate];
     }
@@ -1325,6 +1329,11 @@ NSString *sessionsKey = @"sessions";
     --tmuxOriginatedResizeInProgress_;
 }
 
+- (NSString *)terminalGuid
+{
+	return terminalGuid_;
+}
+
 - (void)loadArrangement:(NSDictionary *)arrangement
 {
     for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
@@ -1353,6 +1362,10 @@ NSString *sessionsKey = @"sessions";
         [[addressbookEntry objectForKey:KEY_SPACE] intValue] == -1) {
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
     }
+	if ([arrangement objectForKey:TERMINAL_GUID]) {
+		[terminalGuid_ autorelease];
+		terminalGuid_ = [arrangement objectForKey:TERMINAL_GUID];
+	}
 
     [self fitTabsToWindow];
 }
@@ -1368,6 +1381,8 @@ NSString *sessionsKey = @"sessions";
         }
         ++screenNumber;
     }
+
+	[result setObject:terminalGuid_ forKey:TERMINAL_GUID];
 
     // Save window frame
     [result setObject:[NSNumber numberWithDouble:rect.origin.x]

@@ -14,6 +14,7 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 
 - (NSArray *)selectedWindowNames;
 - (NSArray *)selectedWindowIds;
+- (NSArray *)selectedWindowIdsAsStrings;
 - (BOOL)allSelectedWindowsAreOpen;
 - (BOOL)anySelectedWindowIsOpen;
 - (NSArray *)filteredModel;
@@ -120,13 +121,13 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 
 - (IBAction)showInWindows:(id)sender
 {
-    [delegate_ showWindowsWithIds:[self selectedWindowIds] inTabs:NO];
+    [delegate_ showWindowsWithIds:[self selectedWindowIdsAsStrings] inTabs:NO];
     [tableView_ reloadData];
 }
 
 - (IBAction)showInTabs:(id)sender
 {
-    [delegate_ showWindowsWithIds:[self selectedWindowIds] inTabs:YES];
+    [delegate_ showWindowsWithIds:[self selectedWindowIdsAsStrings] inTabs:YES];
     [tableView_ reloadData];
 }
 
@@ -216,17 +217,27 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 
 @implementation TmuxWindowsTable (Private)
 
+- (NSArray *)selectedWindowIdsAsStrings
+{
+	NSArray *ids = [self selectedWindowIds];
+    NSMutableArray *result = [NSMutableArray array];
+	for (NSNumber *n in ids) {
+		[result addObject:[n stringValue]];
+	}
+	return result;
+}
+
 - (NSArray *)selectedWindowIds
 {
     NSMutableArray *result = [NSMutableArray array];
     NSIndexSet *anIndexSet = [tableView_ selectedRowIndexes];
     NSUInteger i = [anIndexSet firstIndex];
-    
+
     while (i != NSNotFound) {
         [result addObject:[[[self filteredModel] objectAtIndex:i] objectAtIndex:1]];
         i = [anIndexSet indexGreaterThanIndex:i];
     }
-    
+
     return result;
 }
 

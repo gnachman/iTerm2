@@ -95,9 +95,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     if ([pendingWindowOpens_ containsObject:n]) {
         return;
     }
-    for (NSNumber *a in affinities) {
+    for (NSString *a in affinities) {
         [affinities_ setValue:a
-				 equalToValue:[NSNumber numberWithInt:windowIndex]];
+				 equalToValue:[NSString stringWithInt:windowIndex]];
     }
     [pendingWindowOpens_ addObject:n];
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
@@ -170,7 +170,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (NSArray *)savedAffinitiesForWindow:(int)wid
 {
-    return [affinities_ valuesEqualTo:[NSNumber numberWithInt:wid]];
+    return [affinities_ valuesEqualTo:[NSString stringWithInt:wid]];
 }
 
 - (void)initialListWindowsResponse:(NSString *)response
@@ -194,13 +194,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 			continue;
 		}
 		NSNumber *n = [NSNumber numberWithInt:wid];
-		if (![affinities_ valuesEqualTo:n] && newWindowsInTabs) {
+		if (![affinities_ valuesEqualTo:[n stringValue]] && newWindowsInTabs) {
 			// Create an equivalence class of all unrecognied windows to each other.
 			if (!newWindowAffinity) {
 				newWindowAffinity = n;
 			} else {
-			  [affinities_ setValue:n
-					   equalToValue:newWindowAffinity];
+			  [affinities_ setValue:[n stringValue]
+					   equalToValue:[newWindowAffinity stringValue]];
 			}
 		}
 		[windowsToOpen addObject:record];
@@ -380,7 +380,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         [gateway_ sendCommand:@"new-window -I"
                responseTarget:self
              responseSelector:@selector(newWindowWithAffinityCreated:affinityWindow:)
-               responseObject:[NSNumber numberWithInt:windowId]];
+               responseObject:[NSString stringWithInt:windowId]];
     } else {
         [gateway_ sendCommand:@"new-window -I"
                responseTarget:self
@@ -463,7 +463,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     // Get the window's basic info to prep the creation of a TmuxWindowOpener.
     [gateway_ sendCommand:[NSString stringWithFormat:@"list-windows -F %@ -I %d", kListWindowsFormat, windowId]
            responseTarget:self
-         responseSelector:@selector(listedWindowsToOpenOne:forWindowId:)
+         responseSelector:@selector(listedWindowsToOpenOne:forWindowIdAndAffinities:)
            responseObject:[NSArray arrayWithObjects:[NSNumber numberWithInt:windowId],
                            affinities,
                            nil]];
@@ -571,14 +571,19 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 	[self saveAffinities];  // Make sure the equivalence classes are up to date.
 	NSMutableArray *maps = [NSMutableArray array];
 	for (NSSet *c in [affinities_ classes]) {
-		NSString *windowIds = [[c allObjects] componentsJoinedByString:@","];
+		// temp will hold an array of tmux window IDs as strings, excluding
+		// placeholders and pty guids.
+		NSMutableArray *temp = [NSMutableArray array];
 		PTYTab *tab = nil;
-		for (NSNumber *wid in c) {
-			tab = [self window:[wid intValue]];
-			if (tab) {
-				break;
+		for (NSString *wid in c) {
+			if (![wid hasPrefix:@"pty-"] && ![wid hasSuffix:@"_ph"]) {
+				if (!tab) {
+					tab = [self window:[wid intValue]];
+				}
+				[temp addObject:wid];
 			}
 		}
+		NSString *windowIds = [temp componentsJoinedByString:@","];
 		if (tab) {
 			PseudoTerminal *term = [tab realParentWindow];
 			NSPoint origin = [[term window] frame].origin;
@@ -618,6 +623,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                 [siblings addObject:n];
             }
         }
+		if ([term terminalGuid]) {
+			[siblings addObject:[term terminalGuid]];
+		}
         if (siblings.count > 0) {
             [affinities addObject:[siblings componentsJoinedByString:@","]];
 		}
@@ -633,13 +641,30 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [gateway_ sendCommand:command responseTarget:nil responseSelector:nil];
 }
 
+- (PseudoTerminal *)terminalWithGuid:(NSString *)guid
+{
+	for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+		if ([[term terminalGuid] isEqualToString:guid]) {
+			return term;
+		}
+	}
+	return nil;
+}
+
 - (PseudoTerminal *)windowWithAffinityForWindowId:(int)wid
 {
-    for (NSNumber *n in [self savedAffinitiesForWindow:wid]) {
-        PTYTab *tab = [self window:[n intValue]];
-        if (tab) {
-            return [tab realParentWindow];
-        }
+    for (NSString *n in [self savedAffinitiesForWindow:wid]) {
+		if ([n hasPrefix:@"pty-"]) {
+			PseudoTerminal *term = [self terminalWithGuid:n];
+			if (term) {
+				return term;
+			}
+		} else if (![n hasSuffix:@"_ph"]) {
+			PTYTab *tab = [self window:[n intValue]];
+			if (tab) {
+				return [tab realParentWindow];
+			}
+		}
     }
     return nil;
 }
@@ -682,18 +707,18 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
     for (NSString *affset in affinities) {
         NSArray *siblings = [affset componentsSeparatedByString:@","];
-        NSNumber *exemplar = [NSNumber numberWithInt:[[siblings lastObject] intValue]];
+        NSString *exemplar = [siblings lastObject];
 		if (siblings.count == 1) {
 			// This is a wee hack. If a tmux Window is in a native window with one tab
-			// then create an equivalence class containing only (wid, -wid). We'll never
-			// see a window id that's negative, but the equivalence class's existance signals
-			// not to apply the default mode for unrecognized windows.
-			exemplar = [NSNumber numberWithInt:-[exemplar intValue]];
+			// then create an equivalence class containing only (wid, wid+"_ph"). ph=placeholder
+			// We'll never see a window id that's negative, but the equivalence
+			// class's existance signals not to apply the default mode for
+			// unrecognized windows.
+			exemplar = [exemplar stringByAppendingString:@"_ph"];
 		}
         for (NSString *widString in siblings) {
-            NSNumber *n = [NSNumber numberWithInt:[widString intValue]];
-            if (![n isEqualToNumber:exemplar]) {
-                [affinities_ setValue:n
+            if (![widString isEqualToString:exemplar]) {
+                [affinities_ setValue:widString
                          equalToValue:exemplar];
             }
         }
@@ -732,7 +757,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                                         object:self.sessions];
 }
 
-- (void)listedWindowsToOpenOne:(NSString *)response forWindowId:(NSArray *)values
+- (void)listedWindowsToOpenOne:(NSString *)response forWindowIdAndAffinities:(NSArray *)values
 {
     NSNumber *windowId = [values objectAtIndex:0];
     NSArray *affinities = [values objectAtIndex:1];
@@ -815,13 +840,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)newWindowWithoutAffinityCreated:(NSString *)responseStr
 {
-    [affinities_ removeValue:[NSNumber numberWithInt:[responseStr intValue]]];
+    [affinities_ removeValue:[NSString stringWithInt:[responseStr intValue]]];
 }
 
 - (void)newWindowWithAffinityCreated:(NSString *)responseStr
-					  affinityWindow:(NSNumber *)affinityWindow
+					  affinityWindow:(NSString  *)affinityWindow
 {
-    [affinities_ setValue:[NSNumber numberWithInt:[responseStr intValue]]
+    [affinities_ setValue:[NSString stringWithInt:[responseStr intValue]]
              equalToValue:affinityWindow];
 }
 
