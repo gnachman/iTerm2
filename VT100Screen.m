@@ -1747,6 +1747,15 @@ static char* FormatCont(int c)
         }
         break;
 
+	case UNDERSCORE_TMUX_UNSUPPORTED:
+		[self crlf];
+		[self setString:@"You have run an unsupported version of tmux. Please "
+			@"install a version that is compatible with this build of iTerm2."
+					ascii:YES];
+		[self crlf];
+		[SHELL writeTask:[@"detach\n" dataUsingEncoding:NSUTF8StringEncoding]];
+		break;
+
     case UNDERSCORE_TMUX1:
         [SESSION startTmuxMode];
         break;
