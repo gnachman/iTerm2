@@ -78,11 +78,13 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
                withPane:(int)windowPane
                inWindow:(int)window;
 - (void)deregisterWindow:(int)window windowPane:(int)windowPane;
+- (void)changeWindow:(int)window tabTo:(PTYTab *)tab;
 - (NSValue *)positionForWindowWithPanes:(NSArray *)panes;
 
 // This should be called after the host sends an %exit command.
 - (void)detach;
 - (void)windowDidResize:(PseudoTerminal *)term;
+- (void)setClientSize:(NSSize)size;
 - (BOOL)hasOutstandingWindowResize;
 - (void)windowPane:(int)wp
          resizedBy:(int)amount

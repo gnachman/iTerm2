@@ -316,9 +316,15 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     if (NSEqualSizes(size, lastSize_)) {
         return;
     }
+	[self setClientSize:size];
+}
+
+- (void)setClientSize:(NSSize)size
+{
     lastSize_ = size;
     ++numOutstandingWindowResizes_;
-    [gateway_ sendCommand:[NSString stringWithFormat:@"set-control-client-attr client-size %d,%d", (int) size.width, (int)size.height]
+    [gateway_ sendCommand:[NSString stringWithFormat:@"set-control-client-attr client-size %d,%d",
+						   (int)size.width, (int)size.height]
            responseTarget:self
          responseSelector:@selector(clientSizeChangeResponse:)
            responseObject:nil];
@@ -669,6 +675,16 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     return nil;
 }
 
+- (void)changeWindow:(int)window tabTo:(PTYTab *)tab
+{
+    NSNumber *k = [NSNumber numberWithInt:window];
+    NSMutableArray *entry = [windows_ objectForKey:k];
+    if (entry) {
+        [entry replaceObjectAtIndex:0
+						 withObject:tab];
+	}
+}
+
 @end
 
 @implementation TmuxController (Private)
@@ -834,7 +850,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerWindowDidClose
                                                             object:nil];
         [windows_ removeObjectForKey:k];
-        return;
     }
 }
 

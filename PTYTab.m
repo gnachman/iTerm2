@@ -181,11 +181,19 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         [session setLastActiveAt:[NSDate date]];
         [[session view] setDimmed:NO];
         [self setRoot:[[PTYSplitView alloc] init]];
+		PTYTab *oldTab = [session tab];
+		if (oldTab && [oldTab tmuxWindow] >= 0) {
+			tmuxWindow_ = [oldTab tmuxWindow];
+			tmuxController_ = [[oldTab tmuxController] retain];
+			parseTree_ = [oldTab->parseTree_ retain];
+			[tmuxController_ changeWindow:tmuxWindow_ tabTo:self];
+		} else {
+			tmuxWindow_ = -1;
+		}
         [session setTab:self];
         [root_ addSubview:[session view]];
         viewOrder_ = [[NSMutableArray alloc] init];
         [self appendSessionToViewOrder:session];
-        tmuxWindow_ = -1;
     }
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(_refreshLabels:)

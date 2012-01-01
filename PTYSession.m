@@ -756,6 +756,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [self _maybeWarnAboutShortLivedSessions];
     }
     if (tmuxMode_ == TMUX_CLIENT) {
+		assert([tab_ tmuxWindow] >= 0);
         [tmuxController_ deregisterWindow:[tab_ tmuxWindow]
                                windowPane:tmuxPane_];
     }
@@ -3536,6 +3537,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     tmuxMode_ = TMUX_GATEWAY;
     tmuxGateway_ = [[TmuxGateway alloc] initWithDelegate:self];
     tmuxController_ = [[TmuxController alloc] initWithGateway:tmuxGateway_];
+	NSSize theSize;
+	Bookmark *tmuxBookmark = [PTYTab tmuxBookmark];
+	theSize.width = [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue];
+	theSize.height = [[tmuxBookmark objectForKey:KEY_ROWS] intValue];
+	[tmuxController_ setClientSize:theSize];
 
     [self printTmuxMessage:@"** tmux mode started **"];
     [SCREEN crlf];

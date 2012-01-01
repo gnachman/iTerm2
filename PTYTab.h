@@ -149,6 +149,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)sessionInitiatedResize:(PTYSession*)session width:(int)width height:(int)height;
 - (NSSize)sessionSizeForViewSize:(PTYSession *)aSession;
 - (BOOL)fitSessionToCurrentViewSize:(PTYSession*)aSession;
++ (NSDictionary *)tmuxBookmark;
 
 // Tab index.
 - (int)number;
