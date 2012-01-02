@@ -83,7 +83,7 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
 
 // This should be called after the host sends an %exit command.
 - (void)detach;
-- (void)windowDidResize:(PseudoTerminal *)term;
+- (BOOL)windowDidResize:(PseudoTerminal *)term;
 - (void)setClientSize:(NSSize)size;
 - (BOOL)hasOutstandingWindowResize;
 - (void)windowPane:(int)wp

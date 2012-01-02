@@ -4095,8 +4095,15 @@ NSString *sessionsKey = @"sessions";
     // If updatePaneTitles caused any session to change dimensions, then tell tmux
     // controllers that our capacity has changed.
     if (needResize) {
-        for (TmuxController *c in [self uniqueTmuxControllers]) {
+        NSArray *tmuxControllers = [self uniqueTmuxControllers];
+        for (TmuxController *c in tmuxControllers) {
             [c windowDidResize:self];
+        }
+        if (tmuxControllers.count) {
+            for (PTYTab *aTab in [self tabs]) {
+                [aTab recompact];
+            }
+            [self fitWindowToTabs];
         }
     }
 }

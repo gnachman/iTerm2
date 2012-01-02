@@ -82,11 +82,21 @@
 - (void)saveFrameSize;
 - (void)restoreFrameSize;
 - (void)setSplitSelectionMode:(SplitSelectionMode)mode;
-- (BOOL)setShowTitle:(BOOL)value;
+- (BOOL)setShowTitle:(BOOL)value adjustScrollView:(BOOL)adjustScrollView;
 - (BOOL)showTitle;
 - (void)setTitle:(NSString *)title;
 // For tmux sessions, autoresizing is turned off so the title must be moved
 // manually. This repositions the title view and the find view.
 - (void)updateTitleFrame;
+
+// Returns the largest possible scrollview frame size that can fit in
+// this SessionView.
+// It only differs from the scrollview's size for tmux tabs, for which
+// autoresizing is off.
+- (NSSize)maximumPossibleScrollViewContentSize;
+
+// Smallest SessionView frame that contains our contents based on the session's
+// rows and columns.
+- (NSSize)compactFrame;
 
 @end

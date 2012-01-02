@@ -514,7 +514,7 @@ static NSDate* lastResizeDate_;
     return showTitle_;
 }
 
-- (BOOL)setShowTitle:(BOOL)value
+- (BOOL)setShowTitle:(BOOL)value adjustScrollView:(BOOL)adjustScrollView
 {
     if (value == showTitle_) {
         return NO;
@@ -528,7 +528,9 @@ static NSDate* lastResizeDate_;
                                                                      self.frame.size.height - kTitleHeight,
                                                                      self.frame.size.width,
                                                                      kTitleHeight)] autorelease];
-        [title_ setAutoresizingMask:NSViewWidthSizable | NSViewMinYMargin];
+        if (adjustScrollView) {
+            [title_ setAutoresizingMask:NSViewWidthSizable | NSViewMinYMargin];
+        }
         title_.delegate = self;
         [self addSubview:title_];
     } else {
@@ -536,9 +538,41 @@ static NSDate* lastResizeDate_;
         [title_ removeFromSuperview];
         title_ = nil;
     }
-    [scrollView setFrame:frame];
+    if (adjustScrollView) {
+        [scrollView setFrame:frame];
+    } else {
+        [self updateTitleFrame];
+    }
     [self setTitle:[session_ name]];
     return YES;
+}
+
+- (NSSize)compactFrame
+{
+    NSSize cellSize = NSMakeSize([[session_ TEXTVIEW] charWidth], [[session_ TEXTVIEW] lineHeight]);
+    NSSize dim = NSMakeSize([session_ columns], [session_ rows]);
+    NSSize innerSize = NSMakeSize(cellSize.width * dim.width + MARGIN * 2,
+                                  cellSize.height * dim.height + VMARGIN * 2);
+    NSSize size = [NSScrollView frameSizeForContentSize:innerSize
+                                  hasHorizontalScroller:NO
+                                    hasVerticalScroller:[[session_ SCROLLVIEW] hasVerticalScroller]
+                                             borderType:[[session_ SCROLLVIEW] borderType]];
+    if (showTitle_) {
+        size.height += kTitleHeight;
+    }
+    return size;
+}
+
+- (NSSize)maximumPossibleScrollViewContentSize
+{
+    NSSize size = self.frame.size;
+    if (showTitle_) {
+        size.height -= kTitleHeight;
+    }
+    return [NSScrollView contentSizeForFrameSize:size
+                           hasHorizontalScroller:NO
+                             hasVerticalScroller:[[session_ SCROLLVIEW] hasVerticalScroller]
+                                      borderType:[[session_ SCROLLVIEW] borderType]];
 }
 
 - (void)updateTitleFrame

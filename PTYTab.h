@@ -150,6 +150,12 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (NSSize)sessionSizeForViewSize:(PTYSession *)aSession;
 - (BOOL)fitSessionToCurrentViewSize:(PTYSession*)aSession;
 + (NSDictionary *)tmuxBookmark;
+// Fit session views to scroll views.
+// This is useful for a tmux tab where scrollviews sizes are not tightly coupled to the
+// SessionView size because autoresizing is turned off. When something changes, such as
+// toggling the pane title bars, it's necessary to grow or shrink session views for a
+// tight fit. This should be followed by fitting the window to tabs.
+- (void)recompact;
 
 // Tab index.
 - (int)number;

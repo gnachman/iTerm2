@@ -306,17 +306,18 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                                         object:self];
 }
 
-- (void)windowDidResize:(PseudoTerminal *)term
+- (BOOL)windowDidResize:(PseudoTerminal *)term
 {
     NSSize size = [term tmuxCompatibleSize];
     if (size.width == 0 || size.height == 0) {
         // After the last session closes a size of 0 is reported.
-        return;
+        return YES;
     }
     if (NSEqualSizes(size, lastSize_)) {
-        return;
+        return NO;
     }
 	[self setClientSize:size];
+    return YES;
 }
 
 - (void)setClientSize:(NSSize)size

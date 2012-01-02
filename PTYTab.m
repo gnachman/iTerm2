@@ -127,7 +127,8 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     const BOOL showTitles = [PTYTab showTitlesPref];
     NSArray *sessions = [self sessions];
     for (PTYSession *aSession in sessions) {
-        if ([[aSession view] setShowTitle:showTitles && [sessions count] > 1]) {
+        if ([[aSession view] setShowTitle:(showTitles && [sessions count] > 1)
+                         adjustScrollView:![self isTmuxTab]]) {
             if (![self isTmuxTab]) {
                 if ([self fitSessionToCurrentViewSize:aSession]) {
                     anyChange = YES;
@@ -1092,6 +1093,23 @@ static NSString* FormatRect(NSRect r) {
     return nil;
 }
 
+- (void)fitSubviewsToRoot
+{
+    // Make SessionViews full-size.
+	[root_ adjustSubviews];
+
+	// Make scrollbars the right size and put them at the tops of their session views.
+	for (PTYSession *theSession in [self sessions]) {
+		NSSize theSize = [theSession idealScrollViewSize];
+		[[theSession SCROLLVIEW] setFrame:NSMakeRect(0,
+													 0,
+													 theSize.width,
+													 theSize.height)];
+		[[theSession view] setAutoresizesSubviews:NO];
+		[[theSession view] updateTitleFrame];
+	}
+}
+
 - (void)removeSession:(PTYSession*)aSession
 {
     if (idMap_) {
@@ -1135,6 +1153,9 @@ static NSString* FormatRect(NSRect r) {
 
     [self recheckBlur];
     [realParentWindow_ sessionWasRemoved];
+    if ([self isTmuxTab]) {
+        [self fitSubviewsToRoot];
+    }
     [self numberOfSessionsDidChange];
 }
 
@@ -1623,13 +1644,61 @@ static NSString* FormatRect(NSRect r) {
     return viewImage;
 }
 
+- (NSSize)_recursiveRecompact:(NSSplitView *)splitView
+{
+    double offset = 0;
+    double maxAgainstGrain = 0;
+    double dividerThickness = [splitView dividerThickness];
+    BOOL isVertical = [splitView isVertical];
+    for (NSView *node in [splitView subviews]) {
+        if ([node isKindOfClass:[NSSplitView class]]) {
+            NSSize size = [self _recursiveRecompact:(NSSplitView *)node];
+            if (isVertical) {
+                offset += node.frame.size.width + dividerThickness;
+                [node setFrame:NSMakeRect(0, offset, size.width, size.height)];
+                maxAgainstGrain = MAX(maxAgainstGrain, size.height);
+            } else {
+                offset += node.frame.size.height + dividerThickness;
+                [node setFrame:NSMakeRect(offset, 0, size.width, size.height)];
+                maxAgainstGrain = MAX(maxAgainstGrain, size.width);
+            }
+        } else {
+            SessionView *sv = (SessionView *)node;
+            NSRect frame;
+            frame.size = [sv compactFrame];
+            if (isVertical) {
+                frame.origin.x = offset;
+                frame.origin.y = 0;
+                offset += frame.size.width + dividerThickness;
+                maxAgainstGrain = MAX(maxAgainstGrain, frame.size.height);
+            } else {
+                frame.origin.x = 0;
+                frame.origin.y = offset;
+                offset += frame.size.height + dividerThickness;
+                maxAgainstGrain = MAX(maxAgainstGrain, frame.size.width);
+            }
+            [sv setFrame:frame];
+        }
+    }
+    return (isVertical ? 
+            NSMakeSize(offset - dividerThickness, maxAgainstGrain) :
+            NSMakeSize(maxAgainstGrain, offset - dividerThickness));
+}
+
+- (void)recompact
+{
+    NSSize size = [self _recursiveRecompact:root_];
+    [root_ setFrame:NSMakeRect(0, 0, size.width, size.height)];
+    [self fitSubviewsToRoot];
+}
+
 - (NSSize)sessionSizeForViewSize:(PTYSession *)aSession
 {
     PtyLog(@"PTYTab fitSessionToCurrentViewSzie");
     PtyLog(@"fitSessionToCurrentViewSize begins");
     BOOL hasScrollbar = ![parentWindow_ anyFullScreen] && ![[PreferencePanel sharedInstance] hideScrollbar];
     [[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
-    NSSize size = [[aSession SCROLLVIEW] documentVisibleRect].size;
+    NSSize size = [[aSession view] maximumPossibleScrollViewContentSize];
     int width = (size.width - MARGIN*2) / [[aSession TEXTVIEW] charWidth];
     int height = (size.height - VMARGIN*2) / [[aSession TEXTVIEW] lineHeight];
     PtyLog(@"fitSessionToCurrentViewSize %@ gives %d rows", [NSValue valueWithSize:size], height);
@@ -2702,7 +2771,7 @@ static NSString* FormatRect(NSRect r) {
             [aSession setTmuxController:tmuxController_];
         }
     }
-
+    [self fitSubviewsToRoot];
     [self numberOfSessionsDidChange];
     ++tmuxOriginatedResizeInProgress_;
     [realParentWindow_ beginTmuxOriginatedResize];
@@ -2719,25 +2788,13 @@ static NSString* FormatRect(NSRect r) {
                          inTerminal:realParentWindow_];
     if ([self parseTree:parseTree matchesViewHierarchy:root_]) {
         [self resizeViewsInViewHierarchy:root_ forNewLayout:parseTree];
+        [self fitSubviewsToRoot];
     } else {
         if ([[self realParentWindow] inInstantReplay]) {
             [[self realParentWindow] showHideInstantReplay];
         }
         [self replaceViewHierarchyWithParseTree:parseTree];
     }
-	// Make SessionViews full-size.
-	[root_ adjustSubviews];
-
-	// Make scrollbars the right size and put them at the tops of their session views.
-	for (PTYSession *theSession in [self sessions]) {
-		NSSize theSize = [theSession idealScrollViewSize];
-		[[theSession SCROLLVIEW] setFrame:NSMakeRect(0,
-													 0,
-													 theSize.width,
-													 theSize.height)];
-		[[theSession view] setAutoresizesSubviews:NO];
-		[[theSession view] updateTitleFrame];
-	}
     [[root_ window] makeFirstResponder:[[self activeSession] TEXTVIEW]];
     [parseTree_ release];
     parseTree_ = [parseTree retain];
