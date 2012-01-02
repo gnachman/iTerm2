@@ -5,6 +5,9 @@ PATH := /usr/bin:/bin:/usr/sbin:/sbin
 ITERM_PID=$(shell pgrep "iTerm")
 APPS := /Applications
 ITERM_CONF_PLIST = $(HOME)/Library/Preferences/com.googlecode.iterm2.plist
+COMPACTDATE=$(shell date +"%Y%m%d")
+VERSION = $(shell cat version.txt | sed -e "s/%(extra)s/$(COMPACTDATE)/")
+NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
 
 .PHONY: clean all backup-old-iterm restart
 
@@ -33,7 +36,7 @@ run: Development
 
 zip: Deployment
 	cd build/Deployment && \
-	zip -r iTerm_$$(cat ../../version.txt).$$(date '+%Y%m%d').zip iTerm.app
+	zip -r iTerm2-$(NAME).zip iTerm.app
 
 clean:
 	xcodebuild -parallelizeTargets -alltargets clean
