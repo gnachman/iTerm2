@@ -541,6 +541,7 @@ setup_tty_param(
     [writeBuffer release];
     [tty release];
     [path release];
+	[command_ release];
 
     @synchronized (self) {
         [[self coprocess] mainProcessDidTerminate];
@@ -565,6 +566,11 @@ static void reapchild(int n)
   // we reap our children when our select() loop sees that a pipes is broken.
 }
 
+- (NSString *)command
+{
+	return command_;
+}
+
 - (void)launchWithPath:(NSString*)progpath
              arguments:(NSArray*)args
            environment:(NSDictionary*)env
@@ -578,6 +584,8 @@ static void reapchild(int n)
     char theTtyname[PATH_MAX];
     int sts;
 
+	[command_ autorelease];
+	command_ = [progpath copy];
     path = [progpath copy];
 
     setup_tty_param(&term, &win, width, height, isUTF8);

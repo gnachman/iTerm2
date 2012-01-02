@@ -989,7 +989,9 @@ static BOOL initDone = NO;
     // Automatically fill in ssh command if command is exactly equal to $$ or it's a login shell.
     BOOL ignore;
     if (aDict == nil ||
-        [[ITAddressBookMgr bookmarkCommand:aDict isLoginSession:&ignore] isEqualToString:@"$$"] ||
+		[[ITAddressBookMgr bookmarkCommand:aDict
+							isLoginSession:&ignore
+							 forObjectType:objectType] isEqualToString:@"$$"] ||
         ![[aDict objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
         Bookmark* prototype = aDict;
         if (!prototype) {

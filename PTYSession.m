@@ -486,7 +486,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     // Grab the addressbook command
     Bookmark* addressbookEntry = [self addressBookEntry];
     BOOL loginSession;
-    cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry isLoginSession:&loginSession]] autorelease];
+    cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
+									                                  isLoginSession:&loginSession
+																	   forObjectType:objectType]] autorelease];
     NSMutableString* theName = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
     // Get session parameters
     [[[self tab] realParentWindow] getSessionParameters:cmd withName:theName];

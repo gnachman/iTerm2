@@ -64,11 +64,13 @@ extern NSString *kCoprocessStatusChangeNotification;
 
     Coprocess *coprocess_;  // synchronized (self)
     BOOL brokenPipe_;
+	NSString *command_;  // Command that was run if launchWithPath:arguments:etc was called
 }
 
 - (id)init;
 - (void)dealloc;
 - (BOOL)hasBrokenPipe;
+- (NSString *)command;
 - (void)launchWithPath:(NSString*)progpath
              arguments:(NSArray*)args
            environment:(NSDictionary*)env

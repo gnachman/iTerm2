@@ -2917,17 +2917,10 @@ NSString *sessionsKey = @"sessions";
 
 - (NSString *)tabView:(NSTabView *)aTabView toolTipForTabViewItem:(NSTabViewItem *)aTabViewItem
 {
-    NSDictionary *ade = [[[aTabViewItem identifier] activeSession] addressBookEntry];
-    BOOL ignore;
-    NSString *temp = [NSString stringWithFormat:NSLocalizedStringFromTableInBundle(@"Name: %@\nCommand: %@",
-                                                                                   @"iTerm",
-                                                                                   [NSBundle bundleForClass:[self class]],
-                                                                                   @"Tab Tooltips"),
-                      [ade objectForKey:KEY_NAME],
-                      [ITAddressBookMgr bookmarkCommand:ade isLoginSession:&ignore]];
-
-    return temp;
-
+	PTYSession *session = [[aTabViewItem identifier] activeSession];
+	return  [NSString stringWithFormat:@"Profile: %@\nCommand: %@",
+				[[session addressBookEntry] objectForKey:KEY_NAME],
+				[[session SHELL] command]];
 }
 
 - (void)tabView:(NSTabView *)tabView doubleClickTabViewItem:(NSTabViewItem *)tabViewItem
@@ -5144,7 +5137,9 @@ NSString *sessionsKey = @"sessions";
         // Grab the addressbook command
         Bookmark* addressbookEntry = [aSession addressBookEntry];
         BOOL loginSession;
-        cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry isLoginSession:&loginSession]] autorelease];
+        cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
+																		  isLoginSession:&loginSession
+																		   forObjectType:objectType]] autorelease];
         name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
         // Get session parameters
         [self getSessionParameters:cmd withName:name];
@@ -5417,7 +5412,8 @@ NSString *sessionsKey = @"sessions";
         // We process the cmd to insert URL parts
         BOOL loginSession;
         NSMutableString *cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
-                                                                                           isLoginSession:&loginSession]] autorelease];
+                                                                                           isLoginSession:&loginSession
+																							forObjectType:objectType]] autorelease];
         NSMutableString *name = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey: KEY_NAME]] autorelease];
         NSURL *urlRep = [NSURL URLWithString: url];
 
