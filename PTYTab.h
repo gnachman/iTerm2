@@ -216,6 +216,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 + (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement inTerminal:(PseudoTerminal*)term hasFlexibleView:(BOOL)hasFlexible;
 - (NSDictionary*)arrangement;
 
+- (void)notifyFullscreenToggled;
 - (BOOL)hasMaximizedPane;
 - (void)maximize;
 - (void)unmaximize;

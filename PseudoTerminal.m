@@ -2059,6 +2059,16 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (void)updateSessionScrollbars
+{
+
+	for (PTYSession *aSession in [self sessions]) {
+		BOOL hasScrollbar = (![self anyFullScreen] &&
+							 ![[PreferencePanel sharedInstance] hideScrollbar]);
+		[[aSession SCROLLVIEW] setHasVerticalScroller:hasScrollbar];
+	}
+}
+
 - (void)toggleTraditionalFullScreenMode
 {
     [SessionView windowDidResize];
@@ -2208,6 +2218,10 @@ NSString *sessionsKey = @"sessions";
     [newTerminal setWindowTitle];
     PtyLog(@"toggleFullScreenMode - calling window update");
     [[newTerminal window] update];
+	for (PTYTab *aTab in [newTerminal tabs]) {
+		[aTab notifyFullscreenToggled];
+	}
+	[newTerminal updateSessionScrollbars];
     if (fs) {
         [newTerminal notifyTmuxOfWindowResize];
     }
@@ -2277,6 +2291,10 @@ NSString *sessionsKey = @"sessions";
     [self fitTabsToWindow];
     [self futureInvalidateRestorableState];
     [self notifyTmuxOfWindowResize];
+	for (PTYTab *aTab in [self tabs]) {
+		[aTab notifyFullscreenToggled];
+	}
+	[self updateSessionScrollbars];
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
@@ -2310,6 +2328,10 @@ NSString *sessionsKey = @"sessions";
     // TODO this is only ok because top, bottom, and non-lion fullscreen windows
     // can't become lion fullscreen windows:
     windowType_ = WINDOW_TYPE_NORMAL;
+	for (PTYTab *aTab in [self tabs]) {
+		[aTab notifyFullscreenToggled];
+	}
+	[self updateSessionScrollbars];
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame

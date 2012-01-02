@@ -478,10 +478,25 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return realParentWindow_;
 }
 
+- (NSColor *)flexibleViewColor
+{
+	if ([realParentWindow_ anyFullScreen]) {
+		return [NSColor blackColor];
+	} else {
+		return [NSColor windowBackgroundColor];
+	}
+}
+
+- (void)updateFlexibleViewColors
+{
+	[flexibleView_ setColor:[self flexibleViewColor]];
+}
+
 - (void)setParentWindow:(PseudoTerminal*)theParent
 {
     // Parent holds a reference to us (indirectly) so we mustn't reference it.
     parentWindow_ = realParentWindow_ = theParent;
+	[self updateFlexibleViewColors];
 }
 
 - (void)setFakeParentWindow:(FakeWindow*)theParent
@@ -1962,12 +1977,17 @@ static NSString* FormatRect(NSRect r) {
                                        frame:frame];
 }
 
+- (void)notifyFullscreenToggled
+{
+	[self updateFlexibleViewColors];
+}
+
 - (void)enableFlexibleView
 {
     assert(!flexibleView_);
     // Interpose a vew between the tab and the root so the root can be smaller than the tab.
     flexibleView_ = [[SolidColorView alloc] initWithFrame:root_.frame
-											   color:[NSColor windowBackgroundColor]];
+											   color:[self flexibleViewColor]];
     [flexibleView_ setFlipped:YES];
     tabView_ = flexibleView_;
     [root_ setAutoresizingMask:NSViewMaxXMargin | NSViewMaxYMargin];
