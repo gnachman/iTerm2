@@ -249,6 +249,9 @@ NSWindowDelegate,
 	// a tmux window should be opened in as a tab. A window restored from a
 	// saved arrangement will also restore its guid.
 	NSString *terminalGuid_;
+
+	// Recalls if this was a hide-after-opening window.
+	BOOL hideAfterOpening_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
@@ -308,6 +311,7 @@ NSWindowDelegate,
 - (NSInteger)indexOfTab:(PTYTab*)aTab;
 
 - (NSString *)terminalGuid;
+- (void)hideAfterOpening;
 
 // Open a new tab with the bookmark given by the guid in
 // [sender representedObject]. Used by menu items in the Bookmarks menu.

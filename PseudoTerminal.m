@@ -110,6 +110,7 @@ static NSString* TERMINAL_ARRANGEMENT_LION_FULLSCREEN = @"LionFullscreen";
 static NSString* TERMINAL_ARRANGEMENT_WINDOW_TYPE = @"Window Type";
 static NSString* TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX = @"Selected Tab Index";
 static NSString* TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
+static NSString* TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING = @"Hide After Opening";
 static NSString* TERMINAL_GUID = @"TerminalGuid";
 
 // In full screen, leave a bit of space at the top of the toolbar for aesthetics.
@@ -1257,6 +1258,9 @@ NSString *sessionsKey = @"sessions";
         [[term window] setFrame:rect display:NO];
     }
 
+	if ([[arrangement objectForKey:TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING] boolValue]) {
+		[term hideAfterOpening];
+	}
     return term;
 }
 
@@ -1334,6 +1338,14 @@ NSString *sessionsKey = @"sessions";
 	return terminalGuid_;
 }
 
+- (void)hideAfterOpening
+{
+	hideAfterOpening_ = YES;
+	[[self window] performSelector:@selector(miniaturize:)
+						withObject:nil
+						afterDelay:0];
+}
+
 - (void)loadArrangement:(NSDictionary *)arrangement
 {
     for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
@@ -1362,7 +1374,8 @@ NSString *sessionsKey = @"sessions";
         [[addressbookEntry objectForKey:KEY_SPACE] intValue] == -1) {
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
     }
-	if ([arrangement objectForKey:TERMINAL_GUID]) {
+	if ([arrangement objectForKey:TERMINAL_GUID] &&
+        [[arrangement objectForKey:TERMINAL_GUID] isKindOfClass:[NSString class]]) {
 		[terminalGuid_ autorelease];
 		terminalGuid_ = [arrangement objectForKey:TERMINAL_GUID];
 	}
@@ -1423,6 +1436,8 @@ NSString *sessionsKey = @"sessions";
     // Save index of selected tab.
     [result setObject:[NSNumber numberWithInt:[TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]]]
                forKey:TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX];
+	[result setObject:[NSNumber numberWithBool:hideAfterOpening_]
+			   forKey:TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING];
 
     return result;
 }
@@ -2076,6 +2091,7 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"toggleFullScreenMode - set new frame to old frame: %fx%f", oldFrame_.size.width, oldFrame_.size.height);
         [[newTerminal window] setFrame:oldFrame_ display:YES];
     }
+	newTerminal->hideAfterOpening_ = hideAfterOpening_;
     newTerminal->number_ = number_;
     newTerminal->broadcastMode_ = broadcastMode_;
 
@@ -5645,6 +5661,9 @@ NSString *sessionsKey = @"sessions";
         [self initWithSmartLayout:NO
                        windowType:windowType
                            screen:-1];
+		if ([[abEntry objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
+			[self hideAfterOpening];
+		}
         toggle = ([self windowType] == WINDOW_TYPE_FULL_SCREEN) ||
                  ([self windowType] == WINDOW_TYPE_LION_FULL_SCREEN);
     }
