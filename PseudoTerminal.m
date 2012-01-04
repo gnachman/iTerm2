@@ -486,6 +486,16 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (void)notifyTmuxOfWindowResize
+{
+    NSArray *tmuxControllers = [self uniqueTmuxControllers];
+    if (tmuxControllers.count && !tmuxOriginatedResizeInProgress_) {
+        for (TmuxController *controller in tmuxControllers) {
+            [controller windowDidResize:self];
+        }
+    }
+}
+
 - (void)_updateDrawerVisibility:(id)sender
 {
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
@@ -499,6 +509,7 @@ NSString *sessionsKey = @"sessions";
             [self fitBottomBarToWindow];
         }
         [self repositionWidgets];
+		[self notifyTmuxOfWindowResize];
     } else {
         if ([itad showToolbelt]) {
             [drawer_ open];
@@ -1934,16 +1945,6 @@ NSString *sessionsKey = @"sessions";
     [self beginTmuxOriginatedResize];
     [self fitWindowToTabs];
     [self endTmuxOriginatedResize];
-}
-
-- (void)notifyTmuxOfWindowResize
-{
-    NSArray *tmuxControllers = [self uniqueTmuxControllers];
-    if (tmuxControllers.count && !tmuxOriginatedResizeInProgress_) {
-        for (TmuxController *controller in tmuxControllers) {
-            [controller windowDidResize:self];
-        }
-    }
 }
 
 - (void)windowDidMove:(NSNotification *)notification
