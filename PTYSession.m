@@ -3708,6 +3708,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [tmuxController_ sessionRenamedTo:newName];
 }
 
+- (NSSize)tmuxBookmarkSize
+{
+	NSDictionary *dict = [PTYTab tmuxBookmark];
+	return NSMakeSize([[dict objectForKey:KEY_COLUMNS] intValue],
+					  [[dict objectForKey:KEY_ROWS] intValue]);
+}
+
 @end
 
 @implementation PTYSession (ScriptingSupport)

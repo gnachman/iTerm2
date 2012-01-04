@@ -25,6 +25,7 @@
 - (void)tmuxSessionsChanged;
 - (void)tmuxWindowsDidChange;
 - (void)tmuxSessionRenamed:(NSString *)newName;
+- (NSSize)tmuxBookmarkSize;  // rows, cols
 
 @end
 

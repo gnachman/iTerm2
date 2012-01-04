@@ -226,6 +226,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)openWindowsInitial
 {
+	NSSize size = [[gateway_ delegate] tmuxBookmarkSize];
+    NSString *setSizeCommand = [NSString stringWithFormat:@"set-control-client-attr client-size %d,%d",
+			                       (int)size.width, (int)size.height];
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
     NSString *getAffinitiesCommand = [NSString stringWithFormat:@"dump-state -k affinities%d", sessionId_];
@@ -233,6 +236,10 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     NSString *getHiddenWindowsCommand =
 		[NSString stringWithFormat:@"dump-state -k hidden%d", sessionId_];
     NSArray *commands = [NSArray arrayWithObjects:
+                         [gateway_ dictionaryForCommand:setSizeCommand
+                                         responseTarget:nil
+									   responseSelector:nil
+                                         responseObject:nil],
                          [gateway_ dictionaryForCommand:getHiddenWindowsCommand
                                          responseTarget:self
 									   responseSelector:@selector(getHiddenWindowsResponse:)
