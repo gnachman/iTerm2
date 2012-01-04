@@ -1947,11 +1947,16 @@ NSString *sessionsKey = @"sessions";
     [self endTmuxOriginatedResize];
 }
 
-- (void)windowDidMove:(NSNotification *)notification
+- (void)saveTmuxWindowOrigins
 {
 	for (TmuxController *tc in [self uniqueTmuxControllers]) {
 		[tc saveWindowOrigins];
 	}
+}
+
+- (void)windowDidMove:(NSNotification *)notification
+{
+	[self saveTmuxWindowOrigins];
 }
 
 - (void)windowDidResize:(NSNotification *)aNotification
@@ -2638,10 +2643,18 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (void)saveAffinitiesAndOriginsForController:(TmuxController *)tmuxController
+{
+	[tmuxController saveAffinities];
+	[tmuxController saveWindowOrigins];
+}
+
 - (void)saveAffinitiesLater:(PTYTab *)theTab
 {
     if ([theTab isTmuxTab]) {
-        [[theTab tmuxController] performSelector:@selector(saveAffinities) withObject:nil afterDelay:0];
+		[self performSelector:@selector(saveAffinitiesAndOriginsForController:)
+				   withObject:[theTab tmuxController]
+				   afterDelay:0];
     }
 }
 
@@ -2930,6 +2943,7 @@ NSString *sessionsKey = @"sessions";
     [tabViewItem setLabel:[session name] ? [session name] : @""];
 
     [theTab numberOfSessionsDidChange];
+	[self saveTmuxWindowOrigins];
     return tabViewItem;
 }
 

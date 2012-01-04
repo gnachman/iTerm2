@@ -36,6 +36,7 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
     int numOutstandingWindowResizes_;
     NSMutableDictionary *windowPositions_;
     NSSize lastSize_;  // last size for windowDidChange:
+	NSString *lastOrigins_;
     BOOL detached_;
     NSString *sessionName_;
     int sessionId_;

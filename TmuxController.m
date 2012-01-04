@@ -82,6 +82,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [affinities_ release];
     [lastSaveAffinityCommand_ release];
 	[hiddenWindows_ release];
+	[lastOrigins_ release];
     [super dealloc];
 }
 
@@ -228,7 +229,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 {
 	NSSize size = [[gateway_ delegate] tmuxBookmarkSize];
     NSString *setSizeCommand = [NSString stringWithFormat:@"set-control-client-attr client-size %d,%d",
-			                       (int)size.width, (int)size.height];
+								   (int)size.width, (int)size.height];
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
     NSString *getAffinitiesCommand = [NSString stringWithFormat:@"dump-state -k affinities%d", sessionId_];
@@ -582,6 +583,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 		return;
 	}
 	windowOriginsDirty_ = NO;
+    if (pendingWindowOpens_.count) {
+        return;
+    }
 	[self saveAffinities];  // Make sure the equivalence classes are up to date.
 	NSMutableArray *maps = [NSMutableArray array];
 	for (NSSet *c in [affinities_ classes]) {
@@ -608,9 +612,15 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 	NSString *enc = [maps componentsJoinedByString:@" "];
 	NSString *command = [NSString stringWithFormat:@"set-control-client-attr set \"origins%d=%@\"",
 			 sessionId_, [enc stringByEscapingQuotes]];
-	haveOutstandingSaveWindowOrigins_ = YES;
-	[gateway_ sendCommand:command responseTarget:self
-		 responseSelector:@selector(saveWindowOriginsResponse:)];
+	if (!lastOrigins_ || ![command isEqualToString:lastOrigins_]) {
+		[lastOrigins_ release];
+		lastOrigins_ = [command copy];
+		haveOutstandingSaveWindowOrigins_ = YES;
+		[gateway_ sendCommand:command
+			   responseTarget:self
+			 responseSelector:@selector(saveWindowOriginsResponse:)];
+	}
+
 }
 
 - (void)saveWindowOriginsResponse:(NSString *)response
