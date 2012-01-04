@@ -75,6 +75,15 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 const double kFindCursorHoleRadius = 30;
 
 const int kDragPaneModifiers = (NSAlternateKeyMask | NSCommandKeyMask | NSShiftKeyMask);
+// If the cursor's background color is too close to nearby background colors,
+// force it to the "most different" color. This is the difference threshold
+// that triggers that change. 0 means always trigger, 1 means never trigger.
+static double gSmartCursorBgThreshold = 0.5;
+
+// The cursor's text is forced to black or white if it is too similar to the
+// background. If the brightness difference is below a threshold then the
+// B/W text mode is triggered. 0 means always trigger, 1 means never trigger.
+static double gSmartCursorFgThreshold = 0.75;
 
 @implementation FindCursorView
 
@@ -253,6 +262,21 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                                                     ofType:@"png"];
     coprocessImage = [[NSImage alloc] initWithContentsOfFile:coprocessFile];
     [coprocessImage setFlipped:YES];
+
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"SmartCursorColorBgThreshold"]) {
+        // Override the default.
+        double d = [[NSUserDefaults standardUserDefaults] doubleForKey:@"SmartCursorColorBgThreshold"];
+        if (d > 0) {
+            gSmartCursorBgThreshold = d;
+        }
+    }
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"SmartCursorColorFgThreshold"]) {
+        // Override the default.
+        double d = [[NSUserDefaults standardUserDefaults] doubleForKey:@"SmartCursorColorFgThreshold"];
+        if (d > 0) {
+            gSmartCursorFgThreshold = d;
+        }
+    }
 }
 
 - (BOOL)xtermMouseReporting
@@ -6767,7 +6791,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 if (lineBelow) {
                     [constraints addObject:[NSNumber numberWithDouble:[self _brightnessOfCharBackground:lineBelow[x1]]]];
                 }
-                if ([self _minimumDistanceOf:bgBrightness fromAnyValueIn:constraints] < 0.5) {
+                if ([self _minimumDistanceOf:bgBrightness fromAnyValueIn:constraints] < gSmartCursorBgThreshold) {
                     CGFloat b = [self _farthestValueFromAnyValueIn:constraints];
                     bgColor = [NSColor colorWithCalibratedRed:b green:b blue:b alpha:1];
                 }
@@ -6805,16 +6829,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         if (colorInvertedCursor && !frameOnly) {
                             int fgColor;
                             BOOL fgAlt;
+							BOOL fgBold;
                             if ([[self window] isKeyWindow]) {
                                 // Draw a character in background color when
                                 // window is key.
                                 fgColor = screenChar.backgroundColor;
                                 fgAlt = screenChar.alternateBackgroundSemantics;
+								fgBold = NO;
                             } else {
                                 // Draw character in foreground color when there
                                 // is just a frame around it.
                                 fgColor = screenChar.foregroundColor;
                                 fgAlt = screenChar.alternateForegroundSemantics;
+								fgBold = screenChar.bold;
                             }
 
                             // Pick background color for text if is key window, otherwise use fg color for text.
@@ -6834,12 +6861,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             // Ensure text has enough contrast by making it black/white if the char's color would be close to the cursor bg.
                             NSColor* proposedForeground = [[self colorForCode:fgColor
                                                            alternateSemantics:fgAlt
-                                                                         bold:screenChar.bold
+                                                                         bold:fgBold
                                                                  isBackground:NO] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
                             CGFloat fgBrightness = [self perceivedBrightness:proposedForeground];
                             CGFloat bgBrightness = [self perceivedBrightness:[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
                             NSColor* overrideColor = nil;
-                            if (!frameOnly && fabs(fgBrightness - bgBrightness) < 0.5) {
+                            if (!frameOnly && fabs(fgBrightness - bgBrightness) < gSmartCursorFgThreshold) {
                                 // foreground and background are very similar. Just use black and
                                 // white.
                                 if (bgBrightness < 0.5) {
