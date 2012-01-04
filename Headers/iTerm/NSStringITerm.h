@@ -57,4 +57,7 @@
 - (NSString *)stringByReplacingEscapedHexValuesWithChars;
 - (NSString *)stringByEscapingQuotes;
 
+// Convert a string of hex values (an even number of [0-9A-Fa-f]) into data.
+- (NSData *)dataFromHexValues;
+
 @end

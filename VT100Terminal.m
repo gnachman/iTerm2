@@ -1814,10 +1814,11 @@ static VT100TCC decode_string(unsigned char *datap,
         STREAM = reallocf(STREAM, total_stream_length);
     }
 
-    memcpy(STREAM+current_stream_length, [data bytes], [data length]);
+    memcpy(STREAM + current_stream_length, [data bytes], [data length]);
     current_stream_length += [data length];
-    if(current_stream_length == 0)
+    if (current_stream_length == 0) {
         streamOffset = 0;
+	}
 }
 
 - (NSData *)streamData

@@ -361,6 +361,18 @@ static int fromhex(unichar c) {
     return c - 'A' + 10;
 }
 
+- (NSData *)dataFromHexValues
+{
+	NSMutableData *data = [NSMutableData data];
+	for (int i = 0; i < self.length - 1; i+=2) {
+		const char high = fromhex([self characterAtIndex:i]) << 4;
+		const char low = fromhex([self characterAtIndex:i + 1]);
+		const char b = high | low;
+		[data appendBytes:&b length:1];
+	}
+	return data;
+}
+
 - (NSString *)stringByReplacingEscapedHexValuesWithChars
 {
     NSMutableArray *ranges = [NSMutableArray array];

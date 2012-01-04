@@ -370,6 +370,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
     if (state) {
         [[aSession SCREEN] setTmuxState:state];
+		NSString *pendingOutput = [state objectForKey:@"pending_output"];
+		if (pendingOutput) {
+			NSData *data = [pendingOutput dataFromHexValues];
+			[[aSession TERMINAL] putStreamData:data];
+		}
     }
     return aSession;
 }
@@ -487,7 +492,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     Bookmark* addressbookEntry = [self addressBookEntry];
     BOOL loginSession;
     cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
-									                                  isLoginSession:&loginSession
+																	  isLoginSession:&loginSession
 																	   forObjectType:objectType]] autorelease];
     NSMutableString* theName = [[[NSMutableString alloc] initWithString:[addressbookEntry objectForKey:KEY_NAME]] autorelease];
     // Get session parameters
@@ -782,6 +787,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     // final update of display
     [self updateDisplay];
 
+    [tab_ removeSession:self];
+
     [TEXTVIEW setDataSource:nil];
     [TEXTVIEW setDelegate:nil];
     [TEXTVIEW removeFromSuperview];
@@ -805,7 +812,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         slowPasteTimer = nil;
     }
 
-    [tab_ removeSession:self];
     tab_ = nil;
 }
 
