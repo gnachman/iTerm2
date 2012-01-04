@@ -1377,7 +1377,7 @@ NSString *sessionsKey = @"sessions";
 	if ([arrangement objectForKey:TERMINAL_GUID] &&
         [[arrangement objectForKey:TERMINAL_GUID] isKindOfClass:[NSString class]]) {
 		[terminalGuid_ autorelease];
-		terminalGuid_ = [arrangement objectForKey:TERMINAL_GUID];
+		terminalGuid_ = [[arrangement objectForKey:TERMINAL_GUID] retain];
 	}
 
     [self fitTabsToWindow];
