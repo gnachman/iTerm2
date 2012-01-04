@@ -877,8 +877,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (void)writeTask:(NSData*)data
 {
     if (tmuxMode_ == TMUX_CLIENT) {
+        [self setBell:NO];
         [[tmuxController_ gateway] sendKeys:data
                                  toWindowPane:tmuxPane_];
+        PTYScroller* ptys = (PTYScroller*)[SCROLLVIEW verticalScroller];
+        [ptys setUserScroll:NO];
         return;
     } else if (tmuxMode_ == TMUX_GATEWAY) {
         // Use keypresses for tmux gateway commands for development and debugging.
