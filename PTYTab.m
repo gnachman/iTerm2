@@ -488,9 +488,38 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 	}
 }
 
++ (NSSize)cellSizeForBookmark:(Bookmark *)bookmark
+{
+    NSFont *font;
+    double hspace;
+    double vspace;
+
+    font = [ITAddressBookMgr fontWithDesc:[bookmark objectForKey:KEY_NORMAL_FONT]];
+    hspace = [[bookmark objectForKey:KEY_HORIZONTAL_SPACING] doubleValue];
+    vspace = [[bookmark objectForKey:KEY_VERTICAL_SPACING] doubleValue];
+    return [PTYTextView charSizeForFont:font
+                      horizontalSpacing:hspace
+                        verticalSpacing:vspace];
+}
+
 - (void)updateFlexibleViewColors
 {
-	[flexibleView_ setColor:[self flexibleViewColor]];
+    NSSize cellSize = [PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]];
+    if (![realParentWindow_ anyFullScreen] &&
+        flexibleView_.frame.size.width > root_.frame.size.width &&
+        flexibleView_.frame.size.width - root_.frame.size.width < cellSize.width &&
+        flexibleView_.frame.size.height > root_.frame.size.height &&
+        flexibleView_.frame.size.height - root_.frame.size.height < cellSize.height) {
+        // Root is just slightly smaller than flexibleView, by less than the size of a character.
+        // Set flexible view's color to the default background color for tmux tabs.
+        NSColor *bgColor;
+        Bookmark *bm = [PTYTab tmuxBookmark];
+        bgColor = [ITAddressBookMgr decodeColor:[bm objectForKey:KEY_BACKGROUND_COLOR]];
+        [flexibleView_ setColor:bgColor];
+    } else {
+        // Fullscreen, overly large flexible view, or exact size flex view.
+        [flexibleView_ setColor:[self flexibleViewColor]];
+    }
 }
 
 - (void)setParentWindow:(PseudoTerminal*)theParent
@@ -2152,20 +2181,6 @@ static NSString* FormatRect(NSRect r) {
     return [self arrangementWithMap:nil];
 }
 
-+ (NSSize)cellSizeForBookmark:(Bookmark *)bookmark
-{
-    NSFont *font;
-    double hspace;
-    double vspace;
-
-    font = [ITAddressBookMgr fontWithDesc:[bookmark objectForKey:KEY_NORMAL_FONT]];
-    hspace = [[bookmark objectForKey:KEY_HORIZONTAL_SPACING] doubleValue];
-    vspace = [[bookmark objectForKey:KEY_VERTICAL_SPACING] doubleValue];
-    return [PTYTextView charSizeForFont:font
-                      horizontalSpacing:hspace
-                        verticalSpacing:vspace];
-}
-
 + (NSSize)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
                                  showTitles:(BOOL)showTitles
                                    bookmark:(Bookmark *)bookmark
@@ -2797,6 +2812,7 @@ static NSString* FormatRect(NSRect r) {
         }
         [self replaceViewHierarchyWithParseTree:parseTree];
     }
+    [self updateFlexibleViewColors];
     [[root_ window] makeFirstResponder:[[self activeSession] TEXTVIEW]];
     [parseTree_ release];
     parseTree_ = [parseTree retain];

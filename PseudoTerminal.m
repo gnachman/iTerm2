@@ -1980,6 +1980,12 @@ NSString *sessionsKey = @"sessions";
 
     [self notifyTmuxOfWindowResize];
 
+    for (PTYTab *aTab in [self tabs]) {
+        if ([aTab isTmuxTab]) {
+            [aTab updateFlexibleViewColors];
+        }
+    }
+
     PTYSession* session = [self currentSession];
     NSString *aTitle = [NSString stringWithFormat:@"%@ (%d,%d)",
                         [self currentSessionName],

@@ -220,6 +220,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 
 + (void)drawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame;
 + (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement inTerminal:(PseudoTerminal*)term hasFlexibleView:(BOOL)hasFlexible;
+- (void)updateFlexibleViewColors;
 - (NSDictionary*)arrangement;
 
 - (void)notifyFullscreenToggled;
