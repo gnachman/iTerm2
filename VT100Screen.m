@@ -3403,6 +3403,10 @@ void DumpBuf(screen_char_t* p, int n) {
         BOOL isPartial = (line[length].code == EOL_SOFT);
         [linebuffer appendLine:line length:length partial:isPartial width:WIDTH];
     }
+    if (!unlimitedScrollback_) {
+        [linebuffer dropExcessLinesWithWidth:WIDTH];
+    }
+
     // We don't know the cursor position yet but give the linebuffer something
     // so it doesn't get confused in restoreScreenFromScrollback.
     [linebuffer setCursor:0];

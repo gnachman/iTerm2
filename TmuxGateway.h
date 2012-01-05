@@ -26,6 +26,7 @@
 - (void)tmuxWindowsDidChange;
 - (void)tmuxSessionRenamed:(NSString *)newName;
 - (NSSize)tmuxBookmarkSize;  // rows, cols
+- (int)tmuxNumHistoryLinesInBookmark;
 
 @end
 

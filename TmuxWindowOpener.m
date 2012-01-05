@@ -184,8 +184,8 @@
                         alt:(BOOL)alternate
 {
     ++pendingRequests_;
-    NSString *command = [NSString stringWithFormat:@"dump-state -h %@-t %%%d -l 1000",
-                         (alternate ? @"-a " : @""), [wp intValue]];
+    NSString *command = [NSString stringWithFormat:@"dump-state -h %@-t %%%d -l %d",
+                         (alternate ? @"-a " : @""), [wp intValue], self.maxHistory];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
                          responseSelector:@selector(dumpHistoryResponse:paneAndAlternate:)

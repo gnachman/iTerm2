@@ -106,7 +106,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     windowOpener.name = name;
     windowOpener.size = size;
     windowOpener.layout = layout;
-    windowOpener.maxHistory = 1000;
+    windowOpener.maxHistory =
+		MAX([[gateway_ delegate] tmuxBookmarkSize].height,
+			[[gateway_ delegate] tmuxNumHistoryLinesInBookmark]);
     windowOpener.controller = self;
     windowOpener.gateway = gateway_;
     windowOpener.target = self;
@@ -119,6 +121,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 {
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
     windowOpener.layout = layout;
+    windowOpener.maxHistory =
+		MAX([[gateway_ delegate] tmuxBookmarkSize].height,
+			[[gateway_ delegate] tmuxNumHistoryLinesInBookmark]);
     windowOpener.controller = self;
     windowOpener.gateway = gateway_;
     windowOpener.windowIndex = [tab tmuxWindow];

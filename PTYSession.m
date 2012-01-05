@@ -3718,6 +3718,17 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 					  [[dict objectForKey:KEY_ROWS] intValue]);
 }
 
+- (int)tmuxNumHistoryLinesInBookmark
+{
+	NSDictionary *dict = [PTYTab tmuxBookmark];
+    if ([[dict objectForKey:KEY_UNLIMITED_SCROLLBACK] boolValue]) {
+		// 10M is close enough to infinity to be indistinguishable.
+		return 10 * 1000 * 1000;
+	} else {
+		return [[dict objectForKey:KEY_SCROLLBACK_LINES] intValue];
+	}
+}
+
 @end
 
 @implementation PTYSession (ScriptingSupport)

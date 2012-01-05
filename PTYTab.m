@@ -2315,6 +2315,8 @@ static NSString* FormatRect(NSRect r) {
         NSMutableDictionary *tmuxBookmark = [[defaultBookmark mutableCopy] autorelease];
         [tmuxBookmark setObject:@"tmux" forKey:KEY_NAME];
         [tmuxBookmark setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
+		[tmuxBookmark setObject:[NSNumber numberWithInt:1000]
+						 forKey:KEY_SCROLLBACK_LINES];
         [[BookmarkModel sharedInstance] addBookmark:tmuxBookmark];
         [[BookmarkModel sharedInstance] postChangeNotification];
         bookmark = tmuxBookmark;
