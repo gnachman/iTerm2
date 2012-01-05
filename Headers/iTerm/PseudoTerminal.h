@@ -633,6 +633,13 @@ NSWindowDelegate,
 // Resize window to be just large enough to fit the largest tab without changing session sizes.
 - (void)fitWindowToTabs;
 
+// If excludeTmux is NO, then this is just like fitWindowToTabs. Otherwise, we resize
+// the window to be just large enough to fit the largest tab without changing session sizes,
+// but ignore tmux tabs when looking for the largest tab (assuming that a pending resize has
+// been sent to the server, this lets you anticipate its response). Does nothing if all tabs
+// are tmux tabs.
+- (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux;
+
 // Fit the window to exactly fit a tab of the given size. Returns true if the window was resized.
 - (BOOL)fitWindowToTabSize:(NSSize)tabSize;
 

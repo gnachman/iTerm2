@@ -2218,7 +2218,10 @@ NSString *sessionsKey = @"sessions";
     [newTerminal repositionWidgets];
     [newTerminal fitTabsToWindow];
     PtyLog(@"toggleFullScreenMode - calling fitWindowToTabs");
-    [newTerminal fitWindowToTabs];
+    [newTerminal fitWindowToTabsExcludingTmuxTabs:YES];
+    for (TmuxController *c in [newTerminal uniqueTmuxControllers]) {
+        [c windowDidResize:newTerminal];
+    }
 
     PtyLog(@"toggleFullScreenMode - calling setWindowTitle");
     [newTerminal setWindowTitle];
@@ -3590,6 +3593,11 @@ NSString *sessionsKey = @"sessions";
 
 - (void)fitWindowToTabs
 {
+    [self fitWindowToTabsExcludingTmuxTabs:NO];
+}
+
+- (void)fitWindowToTabsExcludingTmuxTabs:(BOOL)excludeTmux
+{
     if (togglingFullScreen_) {
         return;
     }
@@ -3599,6 +3607,9 @@ NSString *sessionsKey = @"sessions";
     PtyLog(@"fitWindowToTabs.......");
     for (NSTabViewItem* item in [TABVIEW tabViewItems]) {
         PTYTab* tab = [item identifier];
+        if ([tab isTmuxTab] && excludeTmux) {
+            continue;
+        }
         NSSize tabSize = [tab currentSize];
         PtyLog(@"The natural size of this tab is %lf", tabSize.height);
         if (tabSize.width > maxTabSize.width) {
@@ -3616,6 +3627,10 @@ NSString *sessionsKey = @"sessions";
         if (tabSize.height > maxTabSize.height) {
             maxTabSize.height = tabSize.height;
         }
+    }
+    if (NSEqualSizes(NSZeroSize, maxTabSize)) {
+        // all tabs are tmux tabs.
+        return;
     }
     PtyLog(@"fitWindowToTabs - calling fitWindowToTabSize");
     if (![self fitWindowToTabSize:maxTabSize]) {
