@@ -157,6 +157,7 @@ typedef enum {
 {
     NSSet* guids = [tableView_ selectedGuids];
     if ([guids count]) {
+        BOOL windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
         // tabButton is enabled even if windowExists==false because its shortcut is enter and we
         // don't want to break that.
         [tabButton_ setEnabled:YES];
@@ -167,8 +168,8 @@ typedef enum {
             [verticalPaneButton_ setEnabled:YES];
         } else {
             [newTabsInNewWindowButton_ setEnabled:NO];
-            [horizontalPaneButton_ setEnabled:NO];
-            [verticalPaneButton_ setEnabled:NO];
+            [horizontalPaneButton_ setEnabled:windowExists];
+            [verticalPaneButton_ setEnabled:windowExists];
         }
     } else {
         [horizontalPaneButton_ setEnabled:NO];
