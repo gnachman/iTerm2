@@ -3997,8 +3997,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
     screen_char_t savedFgColor = [TERMINAL foregroundColorCode];
     screen_char_t savedBgColor = [TERMINAL backgroundColorCode];
-    [TERMINAL setForegroundColor:COLORCODE_WHITE alternateSemantics:NO];
-    [TERMINAL setBackgroundColor:COLORCODE_BLACK alternateSemantics:NO];
+    [TERMINAL setForegroundColor:ALTSEM_FG_DEFAULT
+			  alternateSemantics:YES];
+    [TERMINAL setBackgroundColor:ALTSEM_BG_DEFAULT
+			  alternateSemantics:YES];
     [SCREEN setString:message ascii:YES];
     [SCREEN crlf];
     [TERMINAL setForegroundColor:savedFgColor.foregroundColor
