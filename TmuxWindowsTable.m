@@ -221,8 +221,8 @@ NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 {
 	NSArray *ids = [self selectedWindowIds];
     NSMutableArray *result = [NSMutableArray array];
-	for (NSNumber *n in ids) {
-		[result addObject:[n stringValue]];
+	for (NSString *n in ids) {
+		[result addObject:n];
 	}
 	return result;
 }

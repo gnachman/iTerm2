@@ -223,7 +223,7 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (void)updateFlexibleViewColors;
 - (NSDictionary*)arrangement;
 
-- (void)notifyFullscreenToggled;
+- (void)notifyWindowChanged;
 - (BOOL)hasMaximizedPane;
 - (void)maximize;
 - (void)unmaximize;

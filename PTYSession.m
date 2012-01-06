@@ -763,9 +763,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [self _maybeWarnAboutShortLivedSessions];
     }
     if (tmuxMode_ == TMUX_CLIENT) {
-		assert([tab_ tmuxWindow] >= 0);
+        assert([tab_ tmuxWindow] >= 0);
         [tmuxController_ deregisterWindow:[tab_ tmuxWindow]
                                windowPane:tmuxPane_];
+    } else if (tmuxMode_ == TMUX_GATEWAY) {
+        [tmuxController_ detach];
     }
     [tmuxController_ release];
     tmuxController_ = nil;

@@ -182,15 +182,15 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         [session setLastActiveAt:[NSDate date]];
         [[session view] setDimmed:NO];
         [self setRoot:[[PTYSplitView alloc] init]];
-		PTYTab *oldTab = [session tab];
-		if (oldTab && [oldTab tmuxWindow] >= 0) {
-			tmuxWindow_ = [oldTab tmuxWindow];
-			tmuxController_ = [[oldTab tmuxController] retain];
-			parseTree_ = [oldTab->parseTree_ retain];
-			[tmuxController_ changeWindow:tmuxWindow_ tabTo:self];
-		} else {
-			tmuxWindow_ = -1;
-		}
+                PTYTab *oldTab = [session tab];
+                if (oldTab && [oldTab tmuxWindow] >= 0) {
+                        tmuxWindow_ = [oldTab tmuxWindow];
+                        tmuxController_ = [[oldTab tmuxController] retain];
+                        parseTree_ = [oldTab->parseTree_ retain];
+                        [tmuxController_ changeWindow:tmuxWindow_ tabTo:self];
+                } else {
+                        tmuxWindow_ = -1;
+                }
         [session setTab:self];
         [root_ addSubview:[session view]];
         viewOrder_ = [[NSMutableArray alloc] init];
@@ -346,7 +346,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
             // a invisible textview the first responder.
             [[realParentWindow_ window] makeFirstResponder:[session TEXTVIEW]];
         }
-		[realParentWindow_ setDimmingForSessions];
+                [realParentWindow_ setDimmingForSessions];
     }
     for (PTYSession* aSession in [self sessions]) {
         [[aSession TEXTVIEW] refresh];
@@ -481,11 +481,11 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 - (NSColor *)flexibleViewColor
 {
-	if ([realParentWindow_ anyFullScreen]) {
-		return [NSColor blackColor];
-	} else {
-		return [NSColor windowBackgroundColor];
-	}
+        if ([realParentWindow_ anyFullScreen]) {
+                return [NSColor blackColor];
+        } else {
+                return [NSColor windowBackgroundColor];
+        }
 }
 
 + (NSSize)cellSizeForBookmark:(Bookmark *)bookmark
@@ -526,7 +526,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 {
     // Parent holds a reference to us (indirectly) so we mustn't reference it.
     parentWindow_ = realParentWindow_ = theParent;
-	[self updateFlexibleViewColors];
+    [self updateFlexibleViewColors];
 }
 
 - (void)setFakeParentWindow:(FakeWindow*)theParent
@@ -1125,18 +1125,18 @@ static NSString* FormatRect(NSRect r) {
 - (void)fitSubviewsToRoot
 {
     // Make SessionViews full-size.
-	[root_ adjustSubviews];
+        [root_ adjustSubviews];
 
-	// Make scrollbars the right size and put them at the tops of their session views.
-	for (PTYSession *theSession in [self sessions]) {
-		NSSize theSize = [theSession idealScrollViewSize];
-		[[theSession SCROLLVIEW] setFrame:NSMakeRect(0,
-													 0,
-													 theSize.width,
-													 theSize.height)];
-		[[theSession view] setAutoresizesSubviews:NO];
-		[[theSession view] updateTitleFrame];
-	}
+        // Make scrollbars the right size and put them at the tops of their session views.
+        for (PTYSession *theSession in [self sessions]) {
+                NSSize theSize = [theSession idealScrollViewSize];
+                [[theSession SCROLLVIEW] setFrame:NSMakeRect(0,
+                                                                                                         0,
+                                                                                                         theSize.width,
+                                                                                                         theSize.height)];
+                [[theSession view] setAutoresizesSubviews:NO];
+                [[theSession view] updateTitleFrame];
+        }
 }
 
 - (void)removeSession:(PTYSession*)aSession
@@ -2075,17 +2075,12 @@ static NSString* FormatRect(NSRect r) {
                                        frame:frame];
 }
 
-- (void)notifyFullscreenToggled
-{
-	[self updateFlexibleViewColors];
-}
-
 - (void)enableFlexibleView
 {
     assert(!flexibleView_);
     // Interpose a vew between the tab and the root so the root can be smaller than the tab.
     flexibleView_ = [[SolidColorView alloc] initWithFrame:root_.frame
-											   color:[self flexibleViewColor]];
+                                                                                           color:[self flexibleViewColor]];
     [flexibleView_ setFlipped:YES];
     tabView_ = flexibleView_;
     [root_ setAutoresizingMask:NSViewMaxXMargin | NSViewMaxYMargin];
@@ -2097,9 +2092,25 @@ static NSString* FormatRect(NSRect r) {
     [tabViewItem_ setView:tabView_];
 }
 
+- (void)notifyWindowChanged
+{
+  if (![self isTmuxTab]) {
+    return;
+  }
+  if (!flexibleView_) {
+    [self enableFlexibleView];
+  }
+  [self updateFlexibleViewColors];
+  [flexibleView_ setFrameSize:[[realParentWindow_ tabView] frame].size];
+  for (PTYSession *aSession in [self sessions]) {
+    [[aSession view] setAutoresizesSubviews:NO];
+    [[aSession view] updateTitleFrame];
+  }
+}
+
 + (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
-					inTerminal:(PseudoTerminal*)term
-			   hasFlexibleView:(BOOL)hasFlexible
+                                        inTerminal:(PseudoTerminal*)term
+                           hasFlexibleView:(BOOL)hasFlexible
 {
     PTYTab* theTab;
     // Build a tree with splitters and SessionViews but no PTYSessions.
@@ -2128,7 +2139,7 @@ static NSString* FormatRect(NSRect r) {
                                                         atNode:theTab->root_
                                                          inTab:theTab
                                                  forObjectType:objectType]];
-	return theTab;
+        return theTab;
 }
 
 // This can only be used in conjunction with
@@ -2146,19 +2157,19 @@ static NSString* FormatRect(NSRect r) {
     }
 
     [self numberOfSessionsDidChange];
-	[term setDimmingForSessions];
+        [term setDimmingForSessions];
 }
 
 + (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
                         inTerminal:(PseudoTerminal*)term
                    hasFlexibleView:(BOOL)hasFlexible
 {
-	PTYTab *theTab = [PTYTab tabWithArrangement:arrangement
-									 inTerminal:term
-								hasFlexibleView:hasFlexible];
-	[theTab addToTerminal:term
-		  withArrangement:arrangement];
-	return theTab;
+        PTYTab *theTab = [PTYTab tabWithArrangement:arrangement
+                                                                         inTerminal:term
+                                                                hasFlexibleView:hasFlexible];
+        [theTab addToTerminal:term
+                  withArrangement:arrangement];
+        return theTab;
 }
 
 - (NSDictionary*)arrangementWithMap:(NSMutableDictionary*)idMap
@@ -2330,8 +2341,8 @@ static NSString* FormatRect(NSRect r) {
         NSMutableDictionary *tmuxBookmark = [[defaultBookmark mutableCopy] autorelease];
         [tmuxBookmark setObject:@"tmux" forKey:KEY_NAME];
         [tmuxBookmark setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
-		[tmuxBookmark setObject:[NSNumber numberWithInt:1000]
-						 forKey:KEY_SCROLLBACK_LINES];
+                [tmuxBookmark setObject:[NSNumber numberWithInt:1000]
+                                                 forKey:KEY_SCROLLBACK_LINES];
         [[BookmarkModel sharedInstance] addBookmark:tmuxBookmark];
         [[BookmarkModel sharedInstance] postChangeNotification];
         bookmark = tmuxBookmark;
@@ -2421,12 +2432,12 @@ static NSString* FormatRect(NSRect r) {
     theTab->tmuxWindow_ = tmuxWindow;
     theTab->tmuxController_ = [tmuxController retain];
     theTab->parseTree_ = [parseTree retain];
-	// The only way a tmux view should resize is because the server told it to.
-	for (PTYSession *aSession in [theTab sessions]) {
-		[[aSession view] setAutoresizesSubviews:NO];
-	}
-	[theTab addToTerminal:term
-		  withArrangement:arrangement];
+        // The only way a tmux view should resize is because the server told it to.
+        for (PTYSession *aSession in [theTab sessions]) {
+                [[aSession view] setAutoresizesSubviews:NO];
+        }
+        [theTab addToTerminal:term
+                  withArrangement:arrangement];
 
     return theTab;
 }
@@ -2668,17 +2679,17 @@ static NSString* FormatRect(NSRect r) {
         SessionView *sv = (SessionView *)view;
         PTYSession *theSession = [sv session];
         [theSession resizeFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]];
-		assert([arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]);
+                assert([arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]);
 
-		NSRect aFrame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
-		[sv setFrame:aFrame];
-		NSSize theSize = [theSession idealScrollViewSize];
-		[[theSession SCROLLVIEW] setFrame:NSMakeRect(0,
-													 0,
-													 theSize.width,
-													 theSize.height)];
-		[[theSession view] setAutoresizesSubviews:NO];
-		[[theSession view] updateTitleFrame];
+                NSRect aFrame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
+                [sv setFrame:aFrame];
+                NSSize theSize = [theSession idealScrollViewSize];
+                [[theSession SCROLLVIEW] setFrame:NSMakeRect(0,
+                                                                                                         0,
+                                                                                                         theSize.width,
+                                                                                                         theSize.height)];
+                [[theSession view] setAutoresizesSubviews:NO];
+                [[theSession view] updateTitleFrame];
     }
 }
 
@@ -2795,7 +2806,7 @@ static NSString* FormatRect(NSRect r) {
     [realParentWindow_ tmuxTabLayoutDidChange:YES];
     [realParentWindow_ endTmuxOriginatedResize];
     --tmuxOriginatedResizeInProgress_;
-	[realParentWindow_ setDimmingForSessions];
+        [realParentWindow_ setDimmingForSessions];
 }
 
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
@@ -2901,10 +2912,10 @@ static NSString* FormatRect(NSRect r) {
         // Don't care for non-tmux tabs.
         return;
     }
-	// Dragging looks a lot better if we turn on resizing subviews temporarily.
-	for (SessionView *sv in [self sessionViews]) {
-		[sv setAutoresizesSubviews:YES];
-	}
+        // Dragging looks a lot better if we turn on resizing subviews temporarily.
+        for (SessionView *sv in [self sessionViews]) {
+                [sv setAutoresizesSubviews:YES];
+        }
 }
 
 - (void)splitView:(PTYSplitView *)splitView draggingDidEndOfSplit:(int)splitterIndex pixels:(NSSize)pxMoved
@@ -2913,9 +2924,9 @@ static NSString* FormatRect(NSRect r) {
         // Don't care for non-tmux tabs.
         return;
     }
-	for (SessionView *sv in [self sessionViews]) {
-		[sv setAutoresizesSubviews:NO];
-	}
+        for (SessionView *sv in [self sessionViews]) {
+                [sv setAutoresizesSubviews:NO];
+        }
     // Find a session view adjacent to the moved splitter.
     NSArray *subviews = [splitView subviews];
     NSView *theView = [subviews objectAtIndex:splitterIndex];  // the view right of or below the dragged splitter.
