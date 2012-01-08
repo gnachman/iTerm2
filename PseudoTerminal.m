@@ -1455,7 +1455,7 @@ NSString *sessionsKey = @"sessions";
 
 - (NSDictionary*)arrangement
 {
-    return [self arrangementExcludingTmuxTabs:NO];
+    return [self arrangementExcludingTmuxTabs:YES];
 }
 
 // NSWindow delegate methods
@@ -2233,10 +2233,10 @@ NSString *sessionsKey = @"sessions";
     [newTerminal setWindowTitle];
     PtyLog(@"toggleFullScreenMode - calling window update");
     [[newTerminal window] update];
-	for (PTYTab *aTab in [newTerminal tabs]) {
-		[aTab notifyFullscreenToggled];
-	}
-	[newTerminal updateSessionScrollbars];
+    for (PTYTab *aTab in [newTerminal tabs]) {
+      [aTab notifyWindowChanged];
+    }
+    [newTerminal updateSessionScrollbars];
     if (fs) {
         [newTerminal notifyTmuxOfWindowResize];
     }
@@ -2692,6 +2692,11 @@ NSString *sessionsKey = @"sessions";
 #endif
     PTYTab* theTab = [tabViewItem identifier];
     [theTab setParentWindow:self];
+    if ([theTab isTmuxTab]) {
+      [theTab recompact];
+      [theTab notifyWindowChanged];
+      [[theTab tmuxController] setClientSize:[theTab tmuxSize]];
+    }
     [self saveAffinitiesLater:[tabViewItem identifier]];
 }
 
@@ -2952,7 +2957,7 @@ NSString *sessionsKey = @"sessions";
     [tabViewItem setLabel:[session name] ? [session name] : @""];
 
     [theTab numberOfSessionsDidChange];
-	[self saveTmuxWindowOrigins];
+    [self saveTmuxWindowOrigins];
     return tabViewItem;
 }
 

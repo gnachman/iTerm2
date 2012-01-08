@@ -558,7 +558,7 @@ typedef enum {
                 }
             }
         }
-        defaultDict = temp;
+        defaultDict = [temp retain];
     }
     return defaultDict;
 }
