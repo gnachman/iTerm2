@@ -2307,7 +2307,7 @@ NSString *sessionsKey = @"sessions";
     [self futureInvalidateRestorableState];
     [self notifyTmuxOfWindowResize];
 	for (PTYTab *aTab in [self tabs]) {
-		[aTab notifyFullscreenToggled];
+		[aTab notifyWindowChanged];
 	}
 	[self updateSessionScrollbars];
 }
@@ -2344,7 +2344,7 @@ NSString *sessionsKey = @"sessions";
     // can't become lion fullscreen windows:
     windowType_ = WINDOW_TYPE_NORMAL;
 	for (PTYTab *aTab in [self tabs]) {
-		[aTab notifyFullscreenToggled];
+		[aTab notifyWindowChanged];
 	}
 	[self updateSessionScrollbars];
 }

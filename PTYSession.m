@@ -768,7 +768,10 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                                windowPane:tmuxPane_];
     } else if (tmuxMode_ == TMUX_GATEWAY) {
         [tmuxController_ detach];
+		[tmuxGateway_ release];
+		tmuxGateway_ = nil;
     }
+	tmuxMode_ = TMUX_NONE;
     [tmuxController_ release];
     tmuxController_ = nil;
 
@@ -1333,7 +1336,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         return;
     }
 
-    if (tmuxMode_ == TMUX_GATEWAY) {
+    if (!EXIT && tmuxMode_ == TMUX_GATEWAY) {
         [self handleKeypressInTmuxGateway:unicode];
         return;
     }
