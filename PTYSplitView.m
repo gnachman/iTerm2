@@ -75,7 +75,11 @@
     [[self delegate] splitView:self draggingWillBeginOfSplit:clickedOnSplitterIndex];
 
     // mouseDown blocks and lets the user drag things around.
-    assert(clickedOnSplitterIndex >= 0);
+    if (clickedOnSplitterIndex < 0) {
+        // You don't seem to have clicked on a splitter.
+		NSLog(@"Click in PTYSplitView was not on splitter");
+        return;
+    }
     [super mouseDown:theEvent];
 
     // See how much the view after the splitter moved
