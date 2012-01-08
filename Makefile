@@ -54,3 +54,17 @@ restart:
 	PATH=$(ORIG_PATH) /usr/bin/open /Applications/iTerm.app &
 	/bin/kill -TERM $(ITERM_PID)
 
+canary:
+	cp canary-iTerm.plist iTerm.plist
+	sudo rm /Developer
+	sudo ln -sf /Developer3 /Developer
+	make Deployment
+	sudo ln -sf /Developer4 /Developer
+	./canary.sh
+
+release:
+	cp release-iTerm.plist iTerm.plist
+	sudo ln -sf /Developer3 /Developer
+	make Deployment
+	sudo ln -sf /Developer4 /Developer
+	./release.sh
