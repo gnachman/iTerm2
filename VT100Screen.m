@@ -756,7 +756,8 @@ static char* FormatCont(int c)
     screen_char_t *theLine = nil;
     int lineY = -1;
     [self setDirtyFromX:startPoint.x Y:startPoint.y toX:endPoint.x Y:endPoint.y];
-    while (x != endPoint.x || y != endPoint.y) {
+    int n = endPoint.x + endPoint.y * WIDTH;
+    while (x + y * WIDTH < n) {
         if (lineY != y) {
             theLine = [self getLineAtScreenIndex:y];
             lineY = y;
@@ -844,6 +845,10 @@ static char* FormatCont(int c)
             int endY = y + end / WIDTH;
             int endX = end % WIDTH;
 
+            if (endY >= HEIGHT) {
+                endY = HEIGHT - 1;
+                endX = WIDTH;
+            }
             [self highlightWithChar:prototypechar fromPoint:NSMakePoint(startX, startY) toPoint:NSMakePoint(endX, endY)];
 
             searchRange.location = range.location + range.length;
