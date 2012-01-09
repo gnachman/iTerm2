@@ -11,8 +11,9 @@ NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
 
 .PHONY: clean all backup-old-iterm restart
 
-all: Deployment
+all: Development
 dev: Development
+prod: Deployment
 debug: Development
 	/Developer/usr/bin/gdb build/Development/iTerm.app/Contents/MacOS/iTerm
 
