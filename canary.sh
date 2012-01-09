@@ -11,6 +11,12 @@ ruby "/Users/georgen/Downloads/Sparkle 1.5b6/Extras/Signing Tools/sign_update.rb
 SIG=$(cat /tmp/sig.txt)
 DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
 cp ../../appcasts/template.xml /tmp
+cat /tmp/template.xml | \
+sed -e "s/%VER%/${VERSION}/" | \
+sed -e "s/%DATE%/${DATE}/" | \
+sed -e "s/%NAME%/${NAME}/" | \
+sed -e "s/%LENGTH%/$LENGTH/" |
+sed -e "s,%SIG%,${SIG}," > ../../appcasts/canary.xml
 echo "Go upload the iTerm2-${NAME}.zip, then run:"
 echo "git tag v${VERSION}"
 echo "git push --tags"
