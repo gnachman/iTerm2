@@ -6875,6 +6875,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                     overrideColor = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1]];
                                 }
                             }
+                            BOOL saved = useBrightBold;
+                            useBrightBold = NO;
                             [self _drawCharacter:screenChar
                                          fgColor:theColor
                               alternateSemantics:alt
@@ -6883,6 +6885,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                Y:curY + cursorHeight - lineHeight
                                      doubleWidth:double_width
                                    overrideColor:overrideColor];
+                            useBrightBold = saved;
                         } else {
                             // Non-inverted cursor or cursor is frame
                             int theColor;
