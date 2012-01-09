@@ -72,7 +72,7 @@
  */
 
 #import "ITAddressBookMgr.h"
-#import <iTerm/iTermKeyBindingMgr.h>
+#import "iTermKeyBindingMgr.h"
 #import <Carbon/Carbon.h>
 #import "PreferencePanel.h"
 

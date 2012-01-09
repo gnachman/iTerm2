@@ -32,10 +32,10 @@
 #define DEBUG_METHOD_TRACE    0
 
 #import "iTerm.h"
-#import <iTerm/PTYScrollView.h>
+#import "PTYScrollView.h"
 #import "FutureMethods.h"
-#import <iTerm/PTYTextView.h>
-#import <PreferencePanel.h>
+#import "PTYTextView.h"
+#import "PreferencePanel.h"
 #include "NSImage+CoreImage.h"
 #import <Cocoa/Cocoa.h>
 

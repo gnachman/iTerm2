@@ -26,7 +26,7 @@
 
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
-#import <iTerm/BookmarkModel.h>
+#import "BookmarkModel.h"
 #import "DVR.h"
 #import "WindowControllerInterface.h"
 #import "TextViewWrapper.h"

@@ -24,22 +24,22 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <iTerm/iTerm.h>
-#import <iTerm/PTYSession.h>
-#import <iTerm/PTYTask.h>
-#import <iTerm/PTYTextView.h>
-#import <iTerm/PTYScrollView.h>
-#import <iTerm/VT100Screen.h>
-#import <iTerm/VT100Terminal.h>
-#import <iTerm/PreferencePanel.h>
-#import <WindowControllerInterface.h>
-#import <iTerm/iTermController.h>
-#import <iTerm/PseudoTerminal.h>
-#import <FakeWindow.h>
-#import <iTerm/NSStringITerm.h>
-#import <iTerm/iTermKeyBindingMgr.h>
-#import <iTerm/ITAddressBookMgr.h>
-#import <iTerm/iTermGrowlDelegate.h>
+#import "iTerm.h"
+#import "PTYSession.h"
+#import "PTYTask.h"
+#import "PTYTextView.h"
+#import "PTYScrollView.h"
+#import "VT100Screen.h"
+#import "VT100Terminal.h"
+#import "PreferencePanel.h"
+#import "WindowControllerInterface.h"
+#import "iTermController.h"
+#import "PseudoTerminal.h"
+#import "FakeWindow.h"
+#import "NSStringITerm.h"
+#import "iTermKeyBindingMgr.h"
+#import "ITAddressBookMgr.h"
+#import "iTermGrowlDelegate.h"
 #import "iTermApplicationDelegate.h"
 #import "SessionView.h"
 #import "PTYTab.h"

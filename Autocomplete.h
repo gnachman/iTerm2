@@ -28,7 +28,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import "iTerm/PTYSession.h"
+#import "PTYSession.h"
 #import "LineBuffer.h"
 #import "Popup.h"
 

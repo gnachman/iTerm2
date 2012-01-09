@@ -27,8 +27,8 @@
 #import "ITAddressBookMgr.h"
 #import "iTerm.h"
 
-#import <iTerm/PreferencePanel.h>
-#import <iTerm/iTermKeyBindingMgr.h>
+#import "PreferencePanel.h"
+#import "iTermKeyBindingMgr.h"
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/types.h>

@@ -33,19 +33,19 @@
 #define DEBUG_METHOD_TRACE    0
 //#define DEBUG_CORRUPTION
 
-#import <iTerm/iTerm.h>
-#import <iTerm/VT100Screen.h>
-#import <iTerm/NSStringITerm.h>
+#import "iTerm.h"
+#import "VT100Screen.h"
+#import "NSStringITerm.h"
 #import "WindowControllerInterface.h"
-#import <iTerm/PTYTextView.h>
-#import <iTerm/PTYScrollView.h>
-#import <iTerm/charmaps.h>
-#import <iTerm/PTYSession.h>
-#import <iTerm/PTYTask.h>
-#import <iTerm/PreferencePanel.h>
+#import "PTYTextView.h"
+#import "PTYScrollView.h"
+#import "charmaps.h"
+#import "PTYSession.h"
+#import "PTYTask.h"
+#import "PreferencePanel.h"
 #import "iTermApplicationDelegate.h"
-#import <iTerm/iTermGrowlDelegate.h>
-#import <iTerm/ITAddressBookMgr.h>
+#import "iTermGrowlDelegate.h"
+#import "ITAddressBookMgr.h"
 #include <string.h>
 #include <unistd.h>
 #include <LineBuffer.h>

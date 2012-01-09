@@ -31,14 +31,14 @@
 #define DEBUG_ALLOC           0
 #define DEBUG_METHOD_TRACE    0
 
-#import <iTerm/iTermController.h>
-#import <iTerm/PreferencePanel.h>
-#import <iTerm/PseudoTerminal.h>
-#import <iTerm/PTYSession.h>
-#import <iTerm/VT100Screen.h>
-#import <iTerm/NSStringITerm.h>
-#import <iTerm/ITAddressBookMgr.h>
-#import <iTerm/iTermGrowlDelegate.h>
+#import "iTermController.h"
+#import "PreferencePanel.h"
+#import "PseudoTerminal.h"
+#import "PTYSession.h"
+#import "VT100Screen.h"
+#import "NSStringITerm.h"
+#import "ITAddressBookMgr.h"
+#import <iTermGrowlDelegate.h>
 #import "PasteboardHistory.h"
 #import <Carbon/Carbon.h>
 #import "iTermApplicationDelegate.h"
@@ -46,7 +46,7 @@
 #import "UKCrashReporter/UKCrashReporter.h"
 #import "PTYTab.h"
 #import "iTermKeyBindingMgr.h"
-#import "iTerm/PseudoTerminal.h"
+#import "PseudoTerminal.h"
 #import "iTermExpose.h"
 #import "FutureMethods.h"
 #import "GTMCarbonEvent.h"

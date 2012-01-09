@@ -28,7 +28,7 @@
 
 #include <wctype.h>
 #import "PasteboardHistory.h"
-#import "iTerm/iTermController.h"
+#import "iTermController.h"
 #import "NSDateFormatterExtras.h"
 #import "PreferencePanel.h"
 #define PBHKEY_ENTRIES @"Entries"

@@ -27,7 +27,7 @@
  */
 
 #import "FakeWindow.h"
-#import "iTerm/PTYSession.h"
+#import "PTYSession.h"
 #import "PTYTab.h"
 
 @implementation FakeWindow

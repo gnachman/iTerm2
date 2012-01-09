@@ -25,7 +25,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import <iTerm/BookmarkModel.h>
+#import "BookmarkModel.h"
 #import "BookmarkListView.h"
 #import "WindowArrangements.h"
 #import "TriggerController.h"

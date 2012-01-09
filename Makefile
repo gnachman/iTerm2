@@ -29,7 +29,9 @@ Development:
 	chmod -R go+rX build/Development
 
 Deployment:
+	sudo ln -sf /Developer3 /Developer
 	xcodebuild -parallelizeTargets -alltargets -configuration Deployment && \
+	sudo ln -sf /Developer4 /Developer
 	chmod -R go+rX build/Deployment
 
 run: Development

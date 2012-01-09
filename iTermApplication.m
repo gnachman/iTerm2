@@ -29,12 +29,12 @@
  */
 
 #import "iTermApplication.h"
-#import <iTerm/iTermController.h>
-#import <iTerm/PTYWindow.h>
-#import <iTerm/PseudoTerminal.h>
-#import <iTerm/PTYSession.h>
-#import <iTerm/PreferencePanel.h>
-#import <iTerm/PTYTextView.h>
+#import "iTermController.h"
+#import "PTYWindow.h"
+#import "PseudoTerminal.h"
+#import "PTYSession.h"
+#import "PreferencePanel.h"
+#import "PTYTextView.h"
 #import "iTermKeyBindingMgr.h"
 
 @implementation iTermApplication

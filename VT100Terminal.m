@@ -28,10 +28,10 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <iTerm/VT100Terminal.h>
-#import <iTerm/PTYSession.h>
-#import <iTerm/VT100Screen.h>
-#import <iTerm/NSStringITerm.h>
+#import "VT100Terminal.h"
+#import "PTYSession.h"
+#import "VT100Screen.h"
+#import "NSStringITerm.h"
 #import "iTermApplicationDelegate.h"
 #import "ITAddressBookMgr.h"
 #import "PTYTab.h"

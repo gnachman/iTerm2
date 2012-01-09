@@ -40,24 +40,24 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 
 #define SWAPINT(a, b) { int temp; temp = a; a = b; b = temp; }
 
-#import <iTerm/iTerm.h>
-#import <iTerm/PTYTextView.h>
-#import <iTerm/PseudoTerminal.h>
-#import <iTerm/PTYSession.h>
-#import <iTerm/VT100Screen.h>
-#import <iTerm/FindCommandHandler.h>
-#import <iTerm/PreferencePanel.h>
-#import <iTerm/PTYScrollView.h>
-#import <iTerm/PTYTask.h>
-#import <iTerm/iTermController.h>
-#import <iTerm/NSStringITerm.h>
+#import "iTerm.h"
+#import "PTYTextView.h"
+#import "PseudoTerminal.h"
+#import "PTYSession.h"
+#import "VT100Screen.h"
+#import "FindCommandHandler.h"
+#import "PreferencePanel.h"
+#import "PTYScrollView.h"
+#import "PTYTask.h"
+#import "iTermController.h"
+#import "NSStringITerm.h"
 #import "iTermApplicationDelegate.h"
 #import "PreferencePanel.h"
 #import "PasteboardHistory.h"
 #import "PTYTab.h"
 #import "iTermExpose.h"
 #import "RegexKitLite/RegexKitLite.h"
-#import "iTerm/NSStringITerm.h"
+#import "NSStringITerm.h"
 #import "FontSizeEstimator.h"
 #import "MovePaneController.h"
 #import "FutureMethods.h"

@@ -23,10 +23,10 @@
 */
 
 #import "BookmarksWindow.h"
-#import <iTerm/BookmarkModel.h>
-#import <iTerm/iTermController.h>
-#import <iTerm/PreferencePanel.h>
-#import <iTerm/PseudoTerminal.h>
+#import "BookmarkModel.h"
+#import "iTermController.h"
+#import "PreferencePanel.h"
+#import "PseudoTerminal.h"
 #import "PTYTab.h"
 
 typedef enum {

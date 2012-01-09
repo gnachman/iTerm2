@@ -28,12 +28,12 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <iTermGrowlDelegate.h>
-#import <PreferencePanel.h>
-#import <PTYSession.h>
-#import <PTYTab.h>
-#import <iTerm/iTermController.h>
-#import <iTerm/PseudoTerminal.h>
+#import "iTermGrowlDelegate.h"
+#import "PreferencePanel.h"
+#import "PTYSession.h"
+#import "PTYTab.h"
+#import "iTermController.h"
+#import "PseudoTerminal.h"
 #import "Growl.framework/Headers/GrowlApplicationBridge.h"
 #import "SessionView.h"
 

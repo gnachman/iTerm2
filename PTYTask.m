@@ -43,8 +43,8 @@
 #include <sys/select.h>
 #include <libproc.h>
 
-#import <iTerm/PTYTask.h>
-#import <iTerm/PreferencePanel.h>
+#import "PTYTask.h"
+#import "PreferencePanel.h"
 #import "ProcessCache.h"
 
 #include <dlfcn.h>

@@ -26,14 +26,14 @@
  */
 
 #include <stdlib.h>
-#import <iTerm/PreferencePanel.h>
-#import <iTerm/NSStringITerm.h>
-#import <iTerm/iTermController.h>
-#import <iTerm/ITAddressBookMgr.h>
-#import <iTerm/iTermKeyBindingMgr.h>
-#import <iTerm/PTYSession.h>
-#import <iTerm/PseudoTerminal.h>
-#import <iTerm/BookmarkModel.h>
+#import "PreferencePanel.h"
+#import "NSStringITerm.h"
+#import "iTermController.h"
+#import "ITAddressBookMgr.h"
+#import "iTermKeyBindingMgr.h"
+#import "PTYSession.h"
+#import "PseudoTerminal.h"
+#import "BookmarkModel.h"
 #import "PasteboardHistory.h"
 #import "SessionView.h"
 #import "WindowArrangements.h"

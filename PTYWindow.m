@@ -28,11 +28,11 @@
  **  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#import <iTerm/iTerm.h>
-#import <iTerm/PTYWindow.h>
-#import <iTerm/PreferencePanel.h>
-#import <iTerm/PseudoTerminal.h>
-#import <iTerm/iTermController.h>
+#import "iTerm.h"
+#import "PTYWindow.h"
+#import "PreferencePanel.h"
+#import "PseudoTerminal.h"
+#import "iTermController.h"
 // This is included because the blurring code uses undocumented APIs to do its thing.
 #import <CGSInternal.h>
 

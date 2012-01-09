@@ -28,8 +28,8 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import <iTerm/VT100Terminal.h>
-#import <LineBuffer.h>
+#import "VT100Terminal.h"
+#import "LineBuffer.h"
 #import "DVR.h"
 
 @class PTYTask;

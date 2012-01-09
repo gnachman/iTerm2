@@ -54,7 +54,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import <PTYSession.h>
+#import "PTYSession.h"
 #import "Growl.framework/Headers/GrowlApplicationBridge.h"
 
 

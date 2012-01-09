@@ -26,7 +26,7 @@
  */
 
 #import "FindView.h"
-#import "iTerm/PseudoTerminal.h"
+#import "PseudoTerminal.h"
 
 @implementation FindView
 

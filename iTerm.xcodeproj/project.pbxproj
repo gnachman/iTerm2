@@ -56,6 +56,24 @@
 		1D3D21961483144600FAC8E7 /* TSVParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D21941483144600FAC8E7 /* TSVParser.m */; };
 		1D3D21AF14839AAB00FAC8E7 /* TmuxLayoutParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3D21AD14839AAB00FAC8E7 /* TmuxLayoutParser.h */; };
 		1D3D21B014839AAB00FAC8E7 /* TmuxLayoutParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D21AE14839AAB00FAC8E7 /* TmuxLayoutParser.m */; };
+		1D407A3414BABE8700BD5035 /* BookmarkModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2214BABE8700BD5035 /* BookmarkModel.h */; };
+		1D407A3514BABE8700BD5035 /* BookmarksController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2314BABE8700BD5035 /* BookmarksController.h */; };
+		1D407A3614BABE8700BD5035 /* charmaps.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2414BABE8700BD5035 /* charmaps.h */; };
+		1D407A3714BABE8700BD5035 /* FindCommandHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2514BABE8700BD5035 /* FindCommandHandler.h */; };
+		1D407A3814BABE8700BD5035 /* iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2614BABE8700BD5035 /* iTerm.h */; };
+		1D407A3914BABE8700BD5035 /* iTermController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2714BABE8700BD5035 /* iTermController.h */; };
+		1D407A3A14BABE8700BD5035 /* iTermKeyBindingMgr.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2814BABE8700BD5035 /* iTermKeyBindingMgr.h */; };
+		1D407A3B14BABE8700BD5035 /* NSStringITerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2914BABE8700BD5035 /* NSStringITerm.h */; };
+		1D407A3C14BABE8700BD5035 /* PreferencePanel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2A14BABE8700BD5035 /* PreferencePanel.h */; };
+		1D407A3D14BABE8700BD5035 /* PseudoTerminal.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2B14BABE8700BD5035 /* PseudoTerminal.h */; };
+		1D407A3E14BABE8700BD5035 /* PTYScrollView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2C14BABE8700BD5035 /* PTYScrollView.h */; };
+		1D407A3F14BABE8700BD5035 /* PTYSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2D14BABE8700BD5035 /* PTYSession.h */; };
+		1D407A4014BABE8700BD5035 /* PTYTabView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2E14BABE8700BD5035 /* PTYTabView.h */; };
+		1D407A4114BABE8700BD5035 /* PTYTask.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2F14BABE8700BD5035 /* PTYTask.h */; };
+		1D407A4214BABE8700BD5035 /* PTYTextView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3014BABE8700BD5035 /* PTYTextView.h */; };
+		1D407A4314BABE8700BD5035 /* PTYWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3114BABE8700BD5035 /* PTYWindow.h */; };
+		1D407A4414BABE8700BD5035 /* VT100Screen.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3214BABE8700BD5035 /* VT100Screen.h */; };
+		1D407A4514BABE8700BD5035 /* VT100Terminal.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A3314BABE8700BD5035 /* VT100Terminal.h */; };
 		1D44218C1290B34500891504 /* TextViewWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D44218A1290B34500891504 /* TextViewWrapper.h */; };
 		1D44218D1290B34500891504 /* TextViewWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D44218B1290B34500891504 /* TextViewWrapper.m */; };
 		1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */; };
@@ -414,6 +432,24 @@
 		1D3D21941483144600FAC8E7 /* TSVParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TSVParser.m; sourceTree = "<group>"; };
 		1D3D21AD14839AAB00FAC8E7 /* TmuxLayoutParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxLayoutParser.h; sourceTree = "<group>"; };
 		1D3D21AE14839AAB00FAC8E7 /* TmuxLayoutParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxLayoutParser.m; sourceTree = "<group>"; };
+		1D407A2214BABE8700BD5035 /* BookmarkModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkModel.h; sourceTree = "<group>"; };
+		1D407A2314BABE8700BD5035 /* BookmarksController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarksController.h; sourceTree = "<group>"; };
+		1D407A2414BABE8700BD5035 /* charmaps.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = charmaps.h; sourceTree = "<group>"; };
+		1D407A2514BABE8700BD5035 /* FindCommandHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindCommandHandler.h; sourceTree = "<group>"; };
+		1D407A2614BABE8700BD5035 /* iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTerm.h; sourceTree = "<group>"; };
+		1D407A2714BABE8700BD5035 /* iTermController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermController.h; sourceTree = "<group>"; };
+		1D407A2814BABE8700BD5035 /* iTermKeyBindingMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermKeyBindingMgr.h; sourceTree = "<group>"; };
+		1D407A2914BABE8700BD5035 /* NSStringITerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSStringITerm.h; sourceTree = "<group>"; };
+		1D407A2A14BABE8700BD5035 /* PreferencePanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PreferencePanel.h; sourceTree = "<group>"; };
+		1D407A2B14BABE8700BD5035 /* PseudoTerminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PseudoTerminal.h; sourceTree = "<group>"; };
+		1D407A2C14BABE8700BD5035 /* PTYScrollView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYScrollView.h; sourceTree = "<group>"; };
+		1D407A2D14BABE8700BD5035 /* PTYSession.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYSession.h; sourceTree = "<group>"; };
+		1D407A2E14BABE8700BD5035 /* PTYTabView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYTabView.h; sourceTree = "<group>"; };
+		1D407A2F14BABE8700BD5035 /* PTYTask.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYTask.h; sourceTree = "<group>"; };
+		1D407A3014BABE8700BD5035 /* PTYTextView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = PTYTextView.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		1D407A3114BABE8700BD5035 /* PTYWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYWindow.h; sourceTree = "<group>"; };
+		1D407A3214BABE8700BD5035 /* VT100Screen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100Screen.h; sourceTree = "<group>"; };
+		1D407A3314BABE8700BD5035 /* VT100Terminal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100Terminal.h; sourceTree = "<group>"; };
 		1D44218A1290B34500891504 /* TextViewWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextViewWrapper.h; sourceTree = "<group>"; };
 		1D44218B1290B34500891504 /* TextViewWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TextViewWrapper.m; sourceTree = "<group>"; };
 		1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TrouterPrefsController.h; sourceTree = "<group>"; };
@@ -432,7 +468,7 @@
 		1D6A5FDE140D7AA000DE19F8 /* IBarCursorXMR.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = IBarCursorXMR.png; path = images/IBarCursorXMR.png; sourceTree = "<group>"; };
 		1D6C4D59122329F000E0AA3E /* ColorPresets.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ColorPresets.plist; sourceTree = "<group>"; };
 		1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkListView.h; sourceTree = "<group>"; };
-		1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarkListView.m; sourceTree = "<group>"; };
+		1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = BookmarkListView.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1D72438C11F416E500BD4924 /* LineBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBuffer.m; sourceTree = "<group>"; };
 		1D72438F11F416F300BD4924 /* LineBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBuffer.h; sourceTree = "<group>"; };
 		1D72477211F55E5700BD4924 /* LineBufferTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferTest.h; sourceTree = "<group>"; };
@@ -538,7 +574,7 @@
 		1DCA8BA8121A1B8000ABDEB5 /* PrefsTerminal.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsTerminal.tiff; path = images/PrefsTerminal.tiff; sourceTree = "<group>"; };
 		1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WindowControllerInterface.h; sourceTree = "<group>"; };
 		1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = PresetKeyMappings.plist; sourceTree = "<group>"; };
-		1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarkModel.m; sourceTree = "<group>"; };
+		1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = BookmarkModel.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultBookmark.plist; sourceTree = "<group>"; };
 		1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = MigrationMap.plist; sourceTree = "<group>"; };
 		1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BookmarkModel.h; path = Headers/iTerm/BookmarkModel.h; sourceTree = "<group>"; };
@@ -551,11 +587,11 @@
 		1DD736401283C2FA009B7829 /* Popup.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Popup.m; sourceTree = "<group>"; };
 		1DDBC61C12E2BCDC00BC3868 /* iTermExpose.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermExpose.h; sourceTree = "<group>"; };
 		1DDBC61D12E2BCDC00BC3868 /* iTermExpose.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermExpose.m; sourceTree = "<group>"; };
-		1DE214DF128212EE004E3ADF /* Autocomplete.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Autocomplete.h; sourceTree = "<group>"; };
-		1DE214E0128212EE004E3ADF /* Autocomplete.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Autocomplete.m; sourceTree = "<group>"; };
+		1DE214DF128212EE004E3ADF /* Autocomplete.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Autocomplete.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
+		1DE214E0128212EE004E3ADF /* Autocomplete.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = Autocomplete.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1DE2154212821F1C004E3ADF /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/Autocomplete.xib; sourceTree = "<group>"; };
 		1DE5EBE6122B892900C736B0 /* BookmarksWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarksWindow.h; sourceTree = "<group>"; };
-		1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarksWindow.m; sourceTree = "<group>"; };
+		1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = BookmarksWindow.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1DE8DC871415513A00F83147 /* ToolbeltView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolbeltView.h; sourceTree = "<group>"; };
 		1DE8DC881415513A00F83147 /* ToolbeltView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolbeltView.m; sourceTree = "<group>"; };
 		1DE8DC8B1415546000F83147 /* ToolProfiles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolProfiles.h; sourceTree = "<group>"; };
@@ -581,7 +617,7 @@
 		20B8892A04E9342100000106 /* ITViewLocalizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITViewLocalizer.h; sourceTree = "<group>"; };
 		20B8892B04E9342100000106 /* ITViewLocalizer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ITViewLocalizer.m; sourceTree = "<group>"; };
 		20D5CC6304E7AA0500000106 /* iTermApplicationDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermApplicationDelegate.h; sourceTree = "<group>"; };
-		20D5CC6404E7AA0500000106 /* iTermApplicationDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermApplicationDelegate.m; sourceTree = "<group>"; };
+		20D5CC6404E7AA0500000106 /* iTermApplicationDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermApplicationDelegate.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		20E74F4804E9089700000106 /* ITAddressBookMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ITAddressBookMgr.h; sourceTree = "<group>"; };
 		20E74F4904E9089700000106 /* ITAddressBookMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ITAddressBookMgr.m; sourceTree = "<group>"; };
 		49A6E4081211CC6000D9AD6F /* Compatability.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Compatability.h; sourceTree = "<group>"; };
@@ -650,25 +686,25 @@
 		DD02577109CB93C2008F320C /* Warning.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Warning.png; sourceTree = "<group>"; };
 		DD48F1C703EBB1C400A8A065 /* iTerm.scriptSuite */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = iTerm.scriptSuite; sourceTree = "<group>"; };
 		DD48F1CD03EBB20500A8A065 /* English */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = English; path = English.lproj/iTerm.scriptTerminology; sourceTree = "<group>"; };
-		DD4BAB7C0470C44C00A8A065 /* FindCommandHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FindCommandHandler.m; sourceTree = "<group>"; };
+		DD4BAB7C0470C44C00A8A065 /* FindCommandHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = FindCommandHandler.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		DD57633005653C2E00F1905E /* iTerm_Framework.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = iTerm_Framework.plist; sourceTree = "<group>"; };
 		DD57633605653C5F00F1905E /* iTerm.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = iTerm.plist; sourceTree = "<group>"; };
 		DD9C1AE2051F45C000A8A065 /* iTerm-Aqua.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "iTerm-Aqua.jpg"; path = "images/iTerm-Aqua.jpg"; sourceTree = "<group>"; };
 		DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermKeyBindingMgr.m; sourceTree = "<group>"; };
 		DDDB7AD605D773B400E197C2 /* iTermKeyBindingMgr.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = iTermKeyBindingMgr.h; path = Headers/iTerm/iTermKeyBindingMgr.h; sourceTree = "<group>"; };
 		DDF0FD63062916F70080EF74 /* iTermApplication.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermApplication.h; sourceTree = "<group>"; };
-		DDF0FD64062916F70080EF74 /* iTermApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermApplication.m; sourceTree = "<group>"; };
-		E8A66F030272453F03A80106 /* iTermController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = iTermController.m; sourceTree = "<group>"; };
-		E8CF755F026DDA6303A80106 /* PTYScrollView.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PTYScrollView.m; sourceTree = "<group>"; };
+		DDF0FD64062916F70080EF74 /* iTermApplication.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermApplication.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		E8A66F030272453F03A80106 /* iTermController.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermController.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		E8CF755F026DDA6303A80106 /* PTYScrollView.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PTYScrollView.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		E8CF7560026DDA6303A80106 /* PTYTask.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PTYTask.m; sourceTree = "<group>"; };
-		E8CF7561026DDA6303A80106 /* PTYTextView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYTextView.m; sourceTree = "<group>"; };
-		E8CF7562026DDA6303A80106 /* VT100Screen.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = VT100Screen.m; sourceTree = "<group>"; };
+		E8CF7561026DDA6303A80106 /* PTYTextView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PTYTextView.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		E8CF7562026DDA6303A80106 /* VT100Screen.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = VT100Screen.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		E8CF7563026DDA6303A80106 /* VT100Terminal.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = VT100Terminal.m; sourceTree = "<group>"; };
 		E8CF757F026DDAD703A80106 /* main.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		E8E901A202743CA303A80106 /* NSStringITerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSStringITerm.m; sourceTree = "<group>"; };
 		E8EDCE69015E0A5703000001 /* iTerm.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = iTerm.icns; sourceTree = "<group>"; };
-		F52ED8DD037F0A7D01A8A066 /* PTYSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYSession.m; sourceTree = "<group>"; };
-		F56B230B03A1B36701A8A066 /* PTYWindow.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PTYWindow.m; sourceTree = "<group>"; };
+		F52ED8DD037F0A7D01A8A066 /* PTYSession.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PTYSession.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		F56B230B03A1B36701A8A066 /* PTYWindow.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PTYWindow.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		F5E533B403B2959201A8A066 /* PTYTabView.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PTYTabView.m; sourceTree = "<group>"; };
 		F62D15EE0AA64B2F0075A287 /* PSMAdiumTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMAdiumTabStyle.h; sourceTree = "<group>"; };
 		F62D15EF0AA64B2F0075A287 /* PSMAdiumTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMAdiumTabStyle.m; sourceTree = "<group>"; };
@@ -691,7 +727,7 @@
 		F6441F700E748404000EC682 /* CGSWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSWindow.h; sourceTree = "<group>"; };
 		F6441F710E748404000EC682 /* CGSWorkspace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CGSWorkspace.h; sourceTree = "<group>"; };
 		F69E774A0AB78CDB001EC0FF /* Growl-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Growl-Info.plist"; sourceTree = "<group>"; };
-		F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = iTermGrowlDelegate.m; sourceTree = "<group>"; };
+		F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = iTermGrowlDelegate.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		F69E78910AB7AC85001EC0FF /* iTermGrowlDelegate.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = iTermGrowlDelegate.h; sourceTree = "<group>"; };
 		F6C9AFEF0EA70D0200D318A8 /* sort.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = sort.png; path = images/sort.png; sourceTree = "<group>"; };
 		F6CDC4E60AE6D3E2005E7D4F /* folder.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = folder.png; path = images/folder.png; sourceTree = "<group>"; };
@@ -703,7 +739,7 @@
 		F6E708B80A9D0EA400D0C4EF /* PSMTabDragAssistant.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMTabDragAssistant.m; sourceTree = "<group>"; };
 		F6E708B90A9D0EA400D0C4EF /* PSMUnifiedTabStyle.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PSMUnifiedTabStyle.h; sourceTree = "<group>"; };
 		F6E708BA0A9D0EA400D0C4EF /* PSMUnifiedTabStyle.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = PSMUnifiedTabStyle.m; sourceTree = "<group>"; };
-		FB019DE103670C6501F955DB /* PreferencePanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PreferencePanel.m; sourceTree = "<group>"; };
+		FB019DE103670C6501F955DB /* PreferencePanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PreferencePanel.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		FB094A14033D58AE01F955DB /* addressbook.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = addressbook.png; path = images/addressbook.png; sourceTree = "<group>"; };
 		FB094A16033D58B601F955DB /* close.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = close.png; path = images/close.png; sourceTree = "<group>"; };
 		FB094A18033D58BD01F955DB /* new.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = new.png; path = images/new.png; sourceTree = "<group>"; };
@@ -713,7 +749,7 @@
 		FB896717038D935801F955DB /* newwin.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = newwin.png; path = images/newwin.png; sourceTree = "<group>"; };
 		FBB2EBCD040AC7C201F955DB /* important.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = important.png; path = images/important.png; sourceTree = "<group>"; };
 		FBBB8B60039FC04E01F955DB /* iTerm.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = iTerm.png; path = images/iTerm.png; sourceTree = "<group>"; };
-		FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PseudoTerminal.m; sourceTree = "<group>"; };
+		FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = PseudoTerminal.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -826,6 +862,24 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
+				1D407A2214BABE8700BD5035 /* BookmarkModel.h */,
+				1D407A2314BABE8700BD5035 /* BookmarksController.h */,
+				1D407A2414BABE8700BD5035 /* charmaps.h */,
+				1D407A2514BABE8700BD5035 /* FindCommandHandler.h */,
+				1D407A2614BABE8700BD5035 /* iTerm.h */,
+				1D407A2714BABE8700BD5035 /* iTermController.h */,
+				1D407A2814BABE8700BD5035 /* iTermKeyBindingMgr.h */,
+				1D407A2914BABE8700BD5035 /* NSStringITerm.h */,
+				1D407A2A14BABE8700BD5035 /* PreferencePanel.h */,
+				1D407A2B14BABE8700BD5035 /* PseudoTerminal.h */,
+				1D407A2C14BABE8700BD5035 /* PTYScrollView.h */,
+				1D407A2D14BABE8700BD5035 /* PTYSession.h */,
+				1D407A2E14BABE8700BD5035 /* PTYTabView.h */,
+				1D407A2F14BABE8700BD5035 /* PTYTask.h */,
+				1D407A3014BABE8700BD5035 /* PTYTextView.h */,
+				1D407A3114BABE8700BD5035 /* PTYWindow.h */,
+				1D407A3214BABE8700BD5035 /* VT100Screen.h */,
+				1D407A3314BABE8700BD5035 /* VT100Terminal.h */,
 				1D7B9A671491D82F003A2A22 /* IntervalMap.h */,
 				1D3D21851482E0E500FAC8E7 /* TmuxGateway.h */,
 				1D3D218E1482F18A00FAC8E7 /* TmuxController.h */,
@@ -1413,6 +1467,24 @@
 				1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */,
 				1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */,
 				1DAE714D14AAF24200DA144B /* EquivalenceClassSet.h in Headers */,
+				1D407A3414BABE8700BD5035 /* BookmarkModel.h in Headers */,
+				1D407A3514BABE8700BD5035 /* BookmarksController.h in Headers */,
+				1D407A3614BABE8700BD5035 /* charmaps.h in Headers */,
+				1D407A3714BABE8700BD5035 /* FindCommandHandler.h in Headers */,
+				1D407A3814BABE8700BD5035 /* iTerm.h in Headers */,
+				1D407A3914BABE8700BD5035 /* iTermController.h in Headers */,
+				1D407A3A14BABE8700BD5035 /* iTermKeyBindingMgr.h in Headers */,
+				1D407A3B14BABE8700BD5035 /* NSStringITerm.h in Headers */,
+				1D407A3C14BABE8700BD5035 /* PreferencePanel.h in Headers */,
+				1D407A3D14BABE8700BD5035 /* PseudoTerminal.h in Headers */,
+				1D407A3E14BABE8700BD5035 /* PTYScrollView.h in Headers */,
+				1D407A3F14BABE8700BD5035 /* PTYSession.h in Headers */,
+				1D407A4014BABE8700BD5035 /* PTYTabView.h in Headers */,
+				1D407A4114BABE8700BD5035 /* PTYTask.h in Headers */,
+				1D407A4214BABE8700BD5035 /* PTYTextView.h in Headers */,
+				1D407A4314BABE8700BD5035 /* PTYWindow.h in Headers */,
+				1D407A4414BABE8700BD5035 /* VT100Screen.h in Headers */,
+				1D407A4514BABE8700BD5035 /* VT100Terminal.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1837,7 +1909,7 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = Headers/iTerm/;
+				HEADER_SEARCH_PATHS = .;
 				INFOPLIST_FILE = iTerm.plist;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1885,6 +1957,7 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = .;
 				INFOPLIST_FILE = iTerm.plist;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1929,6 +2002,7 @@
 				GCC_WARN_UNUSED_PARAMETER = NO;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = .;
 				INFOPLIST_FILE = iTerm.plist;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",

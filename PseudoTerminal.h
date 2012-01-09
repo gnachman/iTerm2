@@ -28,9 +28,9 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import <iTerm/PTYTabView.h>
-#import <iTerm/PTYWindow.h>
-#import <BookmarkListView.h>
+#import "PTYTabView.h"
+#import "PTYWindow.h"
+#import "BookmarkListView.h"
 #import "WindowControllerInterface.h"
 #import "PasteboardHistory.h"
 #import "Autocomplete.h"
