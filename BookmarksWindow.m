@@ -96,7 +96,7 @@ typedef enum {
     BOOL isFirst = YES;
     for (NSString* guid in guids) {
         PseudoTerminal* terminal = nil;
-        BOOL openInTab = inTab & !(isFirst && firstInWindow);
+        BOOL openInTab = inTab && !(isFirst && firstInWindow);
         if (openInTab) {
             terminal = [[iTermController sharedInstance] currentTerminal];
         }
