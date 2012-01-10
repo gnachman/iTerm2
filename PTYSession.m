@@ -3408,6 +3408,24 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     return [TEXTVIEW selectedText];
 }
 
+- (BOOL)canSearch
+{
+    return TEXTVIEW != nil && tab_ && [tab_ realParentWindow];
+}
+
+- (BOOL)findString:(NSString *)aString
+  forwardDirection:(BOOL)direction
+      ignoringCase:(BOOL)ignoreCase
+             regex:(BOOL)regex
+        withOffset:(int)offset
+{
+    return [TEXTVIEW findString:aString
+               forwardDirection:direction
+                   ignoringCase:ignoreCase
+                          regex:regex
+                     withOffset:offset];
+}
+
 - (NSString*)unpaddedSelectedText
 {
     return [TEXTVIEW selectedTextWithPad:NO];

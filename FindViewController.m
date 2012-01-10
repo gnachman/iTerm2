@@ -27,12 +27,23 @@
  */
 
 #import "FindViewController.h"
-#import "FindCommandHandler.h"
 #import "iTermApplication.h"
 
 static const float FINDVIEW_DURATION = 0.075;
+static BOOL gDefaultIgnoresCase;
+static BOOL gDefaultRegex;
+static NSString *gSearchString;
 
 @implementation FindViewController
+
++ (void)initialize
+{
+    gDefaultIgnoresCase =
+        [[NSUserDefaults standardUserDefaults] objectForKey:@"findIgnoreCase_iTerm"] ?
+            [[NSUserDefaults standardUserDefaults] boolForKey:@"findIgnoreCase_iTerm"] :
+            YES;
+    gDefaultRegex = [[NSUserDefaults standardUserDefaults] boolForKey:@"findRegex_iTerm"];
+}
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -40,8 +51,8 @@ static const float FINDVIEW_DURATION = 0.075;
     if (self) {
         previousFindString_ = [[NSMutableString alloc] init];
         [findBarTextField_ setDelegate:self];
-        ignoreCase_ = [[FindCommandHandler sharedInstance] ignoresCase];
-        regex_ = [[FindCommandHandler sharedInstance] regex];
+        ignoreCase_ = gDefaultIgnoresCase;
+        regex_ = gDefaultRegex;
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(_loadFindStringFromSharedPasteboard)
                                                      name:@"iTermLoadFindStringFromSharedPasteboard"
@@ -207,20 +218,74 @@ static const float FINDVIEW_DURATION = 0.075;
     }
 }
 
+- (void)_setSearchString:(NSString *)s
+{
+    [gSearchString autorelease];
+    gSearchString = [s retain];
+}
+
+- (void)_setIgnoreCase:(BOOL)set
+{
+    gDefaultIgnoresCase = set;
+    [[NSUserDefaults standardUserDefaults] setBool:set
+                                            forKey:@"findIgnoreCase_iTerm"];
+}
+
+- (void)_setRegex:(BOOL)set
+{
+    gDefaultRegex = set;
+    [[NSUserDefaults standardUserDefaults] setBool:set
+                                            forKey:@"findRegex_iTerm"];
+}
+
+- (void)_setSearchDefaults
+{
+    [self _setSearchString:[findBarTextField_ stringValue]];
+    [self _setIgnoreCase:ignoreCase_];
+    [self _setRegex:regex_];
+}
+
+- (BOOL)findSubString:(NSString *)subString
+     forwardDirection:(BOOL)direction
+         ignoringCase:(BOOL)caseCheck
+                regex:(BOOL)regex
+           withOffset:(int)offset
+{
+    if ([delegate_ canSearch]) {
+        if ([subString length] <= 0) {
+            NSBeep();
+            return NO;
+        }
+
+        return [delegate_ findString:subString
+                   forwardDirection:direction
+                       ignoringCase:caseCheck
+                              regex:regex
+                         withOffset:offset];
+    }
+    return NO;
+}
+
 - (void)searchNext
 {
-    [[FindCommandHandler sharedInstance] setSearchString:[findBarTextField_ stringValue]];
-    [[FindCommandHandler sharedInstance] setIgnoresCase:ignoreCase_];
-    [[FindCommandHandler sharedInstance] setRegex:regex_];
-    [self _newSearch:[[FindCommandHandler sharedInstance] findNext]];
+    [self _setSearchDefaults];
+    BOOL timer = [self findSubString:gSearchString
+                    forwardDirection:YES
+                        ignoringCase:ignoreCase_
+                               regex:regex_
+                          withOffset:1];
+    [self _newSearch:timer];
 }
 
 - (void)searchPrevious;
 {
-    [[FindCommandHandler sharedInstance] setSearchString:[findBarTextField_ stringValue]];
-    [[FindCommandHandler sharedInstance] setIgnoresCase:ignoreCase_];
-    [[FindCommandHandler sharedInstance] setRegex:regex_];
-    [self _newSearch:[[FindCommandHandler sharedInstance] findPreviousWithOffset:1]];
+    [self _setSearchDefaults];
+    BOOL timer = [self findSubString:gSearchString
+                    forwardDirection:NO
+                        ignoringCase:ignoreCase_
+                               regex:regex_
+                          withOffset:1];
+    [self _newSearch:timer];
 }
 
 - (IBAction)searchNextPrev:(id)sender
@@ -247,13 +312,13 @@ static const float FINDVIEW_DURATION = 0.075;
 - (IBAction)toggleIgnoreCase:(id)sender
 {
     ignoreCase_ = !ignoreCase_;
-    [[FindCommandHandler sharedInstance] setIgnoresCase:ignoreCase_];
+    [self _setIgnoreCase:ignoreCase_];
 }
 
 - (IBAction)toggleRegex:(id)sender
 {
     regex_ = !regex_;
-    [[FindCommandHandler sharedInstance] setRegex:regex_];
+    [self _setRegex:regex_];
 }
 
 - (void)_loadFindStringIntoSharedPasteboard
@@ -292,25 +357,31 @@ static const float FINDVIEW_DURATION = 0.075;
         }
     }
     [previousFindString_ setString:[findBarTextField_ stringValue]];
-    [[FindCommandHandler sharedInstance] setSearchString:[findBarTextField_ stringValue]];
-    [[FindCommandHandler sharedInstance] setIgnoresCase:ignoreCase_];
-    [[FindCommandHandler sharedInstance] setRegex:regex_];
-    [self _newSearch:[[FindCommandHandler sharedInstance] findPreviousWithOffset:0]];
+    [self _setSearchDefaults];
+    BOOL timer = [self findSubString:gSearchString
+                    forwardDirection:NO
+                        ignoringCase:ignoreCase_
+                               regex:regex_
+                          withOffset:0];
+    [self _newSearch:timer];
 }
 
 - (void)deselectFindBarTextField
 {
-    NSText* fieldEditor = [[[self view] window] fieldEditor:YES forObject:findBarTextField_];
+    NSText* fieldEditor = [[[self view] window] fieldEditor:YES
+                                                  forObject:findBarTextField_];
     [fieldEditor setSelectedRange:NSMakeRange([[fieldEditor string] length], 0)];
     [fieldEditor setNeedsDisplay:YES];
 }
 
-- (BOOL)control:(NSControl*)control textView:(NSTextView*)textView doCommandBySelector:(SEL)commandSelector
+- (BOOL)control:(NSControl*)control
+       textView:(NSTextView*)textView
+    doCommandBySelector:(SEL)commandSelector
 {
     if (control != findBarTextField_) {
         return NO;
     }
-    
+
     if (commandSelector == @selector(cancelOperation:)) {
         // Have the esc key close the find bar instead of erasing its contents.
         [self close];

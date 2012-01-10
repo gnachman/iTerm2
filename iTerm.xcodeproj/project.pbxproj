@@ -59,7 +59,6 @@
 		1D407A3414BABE8700BD5035 /* BookmarkModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2214BABE8700BD5035 /* BookmarkModel.h */; };
 		1D407A3514BABE8700BD5035 /* BookmarksController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2314BABE8700BD5035 /* BookmarksController.h */; };
 		1D407A3614BABE8700BD5035 /* charmaps.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2414BABE8700BD5035 /* charmaps.h */; };
-		1D407A3714BABE8700BD5035 /* FindCommandHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2514BABE8700BD5035 /* FindCommandHandler.h */; };
 		1D407A3814BABE8700BD5035 /* iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2614BABE8700BD5035 /* iTerm.h */; };
 		1D407A3914BABE8700BD5035 /* iTermController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2714BABE8700BD5035 /* iTermController.h */; };
 		1D407A3A14BABE8700BD5035 /* iTermKeyBindingMgr.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2814BABE8700BD5035 /* iTermKeyBindingMgr.h */; };
@@ -178,7 +177,6 @@
 		1D5FDDAE1208E93600C46BA3 /* PTYSession.m in Sources */ = {isa = PBXBuildFile; fileRef = F52ED8DD037F0A7D01A8A066 /* PTYSession.m */; };
 		1D5FDDAF1208E93600C46BA3 /* PTYTabView.m in Sources */ = {isa = PBXBuildFile; fileRef = F5E533B403B2959201A8A066 /* PTYTabView.m */; };
 		1D5FDDB01208E93600C46BA3 /* PTYWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = F56B230B03A1B36701A8A066 /* PTYWindow.m */; };
-		1D5FDDB11208E93600C46BA3 /* FindCommandHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = DD4BAB7C0470C44C00A8A065 /* FindCommandHandler.m */; };
 		1D5FDDB21208E93600C46BA3 /* PTToolbarController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2076B15804E8817300000106 /* PTToolbarController.m */; };
 		1D5FDDB31208E93600C46BA3 /* ITAddressBookMgr.m in Sources */ = {isa = PBXBuildFile; fileRef = 20E74F4904E9089700000106 /* ITAddressBookMgr.m */; };
 		1D5FDDB41208E93600C46BA3 /* ITViewLocalizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 20B8892B04E9342100000106 /* ITViewLocalizer.m */; };
@@ -435,7 +433,6 @@
 		1D407A2214BABE8700BD5035 /* BookmarkModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkModel.h; sourceTree = "<group>"; };
 		1D407A2314BABE8700BD5035 /* BookmarksController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarksController.h; sourceTree = "<group>"; };
 		1D407A2414BABE8700BD5035 /* charmaps.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = charmaps.h; sourceTree = "<group>"; };
-		1D407A2514BABE8700BD5035 /* FindCommandHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FindCommandHandler.h; sourceTree = "<group>"; };
 		1D407A2614BABE8700BD5035 /* iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTerm.h; sourceTree = "<group>"; };
 		1D407A2714BABE8700BD5035 /* iTermController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermController.h; sourceTree = "<group>"; };
 		1D407A2814BABE8700BD5035 /* iTermKeyBindingMgr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermKeyBindingMgr.h; sourceTree = "<group>"; };
@@ -686,7 +683,6 @@
 		DD02577109CB93C2008F320C /* Warning.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Warning.png; sourceTree = "<group>"; };
 		DD48F1C703EBB1C400A8A065 /* iTerm.scriptSuite */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = iTerm.scriptSuite; sourceTree = "<group>"; };
 		DD48F1CD03EBB20500A8A065 /* English */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = English; path = English.lproj/iTerm.scriptTerminology; sourceTree = "<group>"; };
-		DD4BAB7C0470C44C00A8A065 /* FindCommandHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = FindCommandHandler.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		DD57633005653C2E00F1905E /* iTerm_Framework.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = iTerm_Framework.plist; sourceTree = "<group>"; };
 		DD57633605653C5F00F1905E /* iTerm.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = iTerm.plist; sourceTree = "<group>"; };
 		DD9C1AE2051F45C000A8A065 /* iTerm-Aqua.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = "iTerm-Aqua.jpg"; path = "images/iTerm-Aqua.jpg"; sourceTree = "<group>"; };
@@ -811,7 +807,6 @@
 				1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */,
 				1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */,
 				1D9DDD9B142E5FBB00275650 /* Coprocess.m */,
-				DD4BAB7C0470C44C00A8A065 /* FindCommandHandler.m */,
 				1D237D27131D8741004DD60C /* FindView.m */,
 				1D237D93131D8D66004DD60C /* FindViewController.m */,
 				1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */,
@@ -865,7 +860,6 @@
 				1D407A2214BABE8700BD5035 /* BookmarkModel.h */,
 				1D407A2314BABE8700BD5035 /* BookmarksController.h */,
 				1D407A2414BABE8700BD5035 /* charmaps.h */,
-				1D407A2514BABE8700BD5035 /* FindCommandHandler.h */,
 				1D407A2614BABE8700BD5035 /* iTerm.h */,
 				1D407A2714BABE8700BD5035 /* iTermController.h */,
 				1D407A2814BABE8700BD5035 /* iTermKeyBindingMgr.h */,
@@ -1470,7 +1464,6 @@
 				1D407A3414BABE8700BD5035 /* BookmarkModel.h in Headers */,
 				1D407A3514BABE8700BD5035 /* BookmarksController.h in Headers */,
 				1D407A3614BABE8700BD5035 /* charmaps.h in Headers */,
-				1D407A3714BABE8700BD5035 /* FindCommandHandler.h in Headers */,
 				1D407A3814BABE8700BD5035 /* iTerm.h in Headers */,
 				1D407A3914BABE8700BD5035 /* iTermController.h in Headers */,
 				1D407A3A14BABE8700BD5035 /* iTermKeyBindingMgr.h in Headers */,
@@ -1677,7 +1670,6 @@
 				1D5FDDAE1208E93600C46BA3 /* PTYSession.m in Sources */,
 				1D5FDDAF1208E93600C46BA3 /* PTYTabView.m in Sources */,
 				1D5FDDB01208E93600C46BA3 /* PTYWindow.m in Sources */,
-				1D5FDDB11208E93600C46BA3 /* FindCommandHandler.m in Sources */,
 				1D5FDDB21208E93600C46BA3 /* PTToolbarController.m in Sources */,
 				1D5FDDB31208E93600C46BA3 /* ITAddressBookMgr.m in Sources */,
 				1D5FDDB41208E93600C46BA3 /* ITViewLocalizer.m in Sources */,

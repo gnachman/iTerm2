@@ -32,7 +32,6 @@
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "VT100Terminal.h"
-#import "FindCommandHandler.h"
 #import "PTYWindow.h"
 #import "PTYTextView.h"
 #import "NSStringITerm.h"
@@ -1454,9 +1453,16 @@ void DebugLog(NSString* value)
     }
 }
 
-- (IBAction) jumpToSelection: (id) sender
+- (IBAction)jumpToSelection:(id)sender
 {
-    [[FindCommandHandler sharedInstance] jumpToSelection];
+    id obj = [[NSApp mainWindow] firstResponder];
+    PTYTextView *textView = 
+        (obj && [obj isKindOfClass:[PTYTextView class]]) ? obj : nil;
+    if (textView) {
+        [textView scrollToSelection];
+    } else {
+        NSBeep();
+    }
 }
 
 @end

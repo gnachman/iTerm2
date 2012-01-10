@@ -45,7 +45,6 @@ static const int MAX_WORKING_DIR_COUNT = 50;
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
 #import "VT100Screen.h"
-#import "FindCommandHandler.h"
 #import "PreferencePanel.h"
 #import "PTYScrollView.h"
 #import "PTYTask.h"
