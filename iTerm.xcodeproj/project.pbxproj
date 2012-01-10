@@ -9,6 +9,12 @@
 /* Begin PBXBuildFile section */
 		1D06A050134CDBED00C414EF /* Trouter.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06A04F134CDBED00C414EF /* Trouter.m */; };
 		1D06A052134CDBF800C414EF /* Trouter.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06A051134CDBF800C414EF /* Trouter.h */; };
+		1D06E7D314BC04510097C0ED /* BookmarkRow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D114BC04510097C0ED /* BookmarkRow.h */; };
+		1D06E7D414BC04510097C0ED /* BookmarkRow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06E7D214BC04510097C0ED /* BookmarkRow.m */; };
+		1D06E7D714BC04E20097C0ED /* BookmarkModelWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D514BC04E20097C0ED /* BookmarkModelWrapper.h */; };
+		1D06E7D814BC04E20097C0ED /* BookmarkModelWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06E7D614BC04E20097C0ED /* BookmarkModelWrapper.m */; };
+		1D06E7DB14BC05DB0097C0ED /* BookmarkTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D914BC05DB0097C0ED /* BookmarkTableView.h */; };
+		1D06E7DC14BC05DB0097C0ED /* BookmarkTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06E7DA14BC05DB0097C0ED /* BookmarkTableView.m */; };
 		1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0B613614A7BC1200C57C33 /* TmuxControllerRegistry.h */; };
 		1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0B613714A7BC1200C57C33 /* TmuxControllerRegistry.m */; };
 		1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */; };
@@ -383,6 +389,12 @@
 		0464AB2F006CD2EC7F000001 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		1D06A04F134CDBED00C414EF /* Trouter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Trouter.m; sourceTree = "<group>"; };
 		1D06A051134CDBF800C414EF /* Trouter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Trouter.h; sourceTree = "<group>"; };
+		1D06E7D114BC04510097C0ED /* BookmarkRow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkRow.h; sourceTree = "<group>"; };
+		1D06E7D214BC04510097C0ED /* BookmarkRow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarkRow.m; sourceTree = "<group>"; };
+		1D06E7D514BC04E20097C0ED /* BookmarkModelWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkModelWrapper.h; sourceTree = "<group>"; };
+		1D06E7D614BC04E20097C0ED /* BookmarkModelWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarkModelWrapper.m; sourceTree = "<group>"; };
+		1D06E7D914BC05DB0097C0ED /* BookmarkTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkTableView.h; sourceTree = "<group>"; };
+		1D06E7DA14BC05DB0097C0ED /* BookmarkTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarkTableView.m; sourceTree = "<group>"; };
 		1D0B613614A7BC1200C57C33 /* TmuxControllerRegistry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxControllerRegistry.h; sourceTree = "<group>"; };
 		1D0B613714A7BC1200C57C33 /* TmuxControllerRegistry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxControllerRegistry.m; sourceTree = "<group>"; };
 		1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxWindowsTable.h; sourceTree = "<group>"; };
@@ -796,6 +808,8 @@
 		0464AB0E006CD2EC7F000001 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				1D06E7D014BC04110097C0ED /* Profiles */,
+				1D06E7CF14BC03BE0097C0ED /* GTM */,
 				1D3D21921483142800FAC8E7 /* tmux */,
 				1D24C37714303E00006B246F /* Preferences */,
 				1D9DDE31142E73E300275650 /* Categories */,
@@ -803,16 +817,12 @@
 				1D9DDE2F142E735900275650 /* DVR */,
 				1D9DDE2E142E733100275650 /* Toolbelt */,
 				1D9DDE2D142E730700275650 /* Triggers */,
-				1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */,
-				1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */,
-				1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */,
 				1D9DDD9B142E5FBB00275650 /* Coprocess.m */,
 				1D237D27131D8741004DD60C /* FindView.m */,
 				1D237D93131D8D66004DD60C /* FindViewController.m */,
 				1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */,
 				1D9F6AB7140C9DC4009B5CD4 /* FutureMethods.m */,
 				1DAED28712E9395E005E49ED /* GlobalSearch.m */,
-				1D624BC71386E09E00111319 /* GTMCarbonEvent.m */,
 				1D7B9A681491D82F003A2A22 /* IntervalMap.m */,
 				20E74F4904E9089700000106 /* ITAddressBookMgr.m */,
 				20B8892B04E9342100000106 /* ITViewLocalizer.m */,
@@ -1040,6 +1050,30 @@
 				8742065A0564169600CFC3F1 /* iTerm.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		1D06E7CF14BC03BE0097C0ED /* GTM */ = {
+			isa = PBXGroup;
+			children = (
+				1D624BC71386E09E00111319 /* GTMCarbonEvent.m */,
+			);
+			name = GTM;
+			sourceTree = "<group>";
+		};
+		1D06E7D014BC04110097C0ED /* Profiles */ = {
+			isa = PBXGroup;
+			children = (
+				1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */,
+				1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */,
+				1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */,
+				1D06E7D114BC04510097C0ED /* BookmarkRow.h */,
+				1D06E7D214BC04510097C0ED /* BookmarkRow.m */,
+				1D06E7D514BC04E20097C0ED /* BookmarkModelWrapper.h */,
+				1D06E7D614BC04E20097C0ED /* BookmarkModelWrapper.m */,
+				1D06E7D914BC05DB0097C0ED /* BookmarkTableView.h */,
+				1D06E7DA14BC05DB0097C0ED /* BookmarkTableView.m */,
+			);
+			name = Profiles;
 			sourceTree = "<group>";
 		};
 		1D093C131217412B0029F9AD /* Resources */ = {
@@ -1478,6 +1512,9 @@
 				1D407A4314BABE8700BD5035 /* PTYWindow.h in Headers */,
 				1D407A4414BABE8700BD5035 /* VT100Screen.h in Headers */,
 				1D407A4514BABE8700BD5035 /* VT100Terminal.h in Headers */,
+				1D06E7D314BC04510097C0ED /* BookmarkRow.h in Headers */,
+				1D06E7D714BC04E20097C0ED /* BookmarkModelWrapper.h in Headers */,
+				1D06E7DB14BC05DB0097C0ED /* BookmarkTableView.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1769,6 +1806,9 @@
 				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,
 				1D0B613D14A7C76500C57C33 /* TmuxWindowsTable.m in Sources */,
 				1DAE714E14AAF24200DA144B /* EquivalenceClassSet.m in Sources */,
+				1D06E7D414BC04510097C0ED /* BookmarkRow.m in Sources */,
+				1D06E7D814BC04E20097C0ED /* BookmarkModelWrapper.m in Sources */,
+				1D06E7DC14BC05DB0097C0ED /* BookmarkTableView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

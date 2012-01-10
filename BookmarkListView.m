@@ -27,238 +27,14 @@
 #import "ITAddressBookMgr.h"
 #import "PTYSession.h"
 #import "iTermSearchField.h"
+#import "BookmarkRow.h"
+#import "BookmarkModelWrapper.h"
+#import "BookmarkTableView.h"
 
 #define BookmarkTableViewDataType @"iTerm2BookmarkGuid"
 
 const int kSearchWidgetHeight = 22;
 const int kInterWidgetMargin = 10;
-
-// This wraps a single bookmark and adds a KeyValueCoding. To keep things simple
-// it will hold only the bookmark's GUID, since bookmark dictionaries themselves
-// are evanescent.
-//
-// It implements a KeyValueCoding so that sort descriptors will work.
-@interface BookmarkRow : NSObject
-{
-    NSString* guid;
-    BookmarkModel* underlyingModel;
-}
-
-- (id)initWithBookmark:(Bookmark*)bookmark underlyingModel:(BookmarkModel*)underlyingModel;
-- (void)dealloc;
-- (Bookmark*)bookmark;
-
-@end
-
-@interface BookmarkRow (KeyValueCoding)
-// We need ascending order to sort default before not-default so we can't use
-// anything senible like BOOL or "Yes"/"No" because they'd sort wrong.
-typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
-- (NSNumber*)default;
-- (NSString*)name;
-- (NSString*)shortcut;
-- (NSString*)command;
-- (NSString*)guid;
-@end
-
-@implementation BookmarkRow
-
-- (id)initWithBookmark:(Bookmark*)bookmark underlyingModel:(BookmarkModel*)newUnderlyingModel;
-{
-    self = [super init];
-    if (self) {
-        guid = [[bookmark objectForKey:KEY_GUID] retain];
-        self->underlyingModel = [newUnderlyingModel retain];
-    }
-    return self;
-}
-
-- (void)dealloc
-{
-    [underlyingModel release];
-    [guid release];
-    [super dealloc];
-}
-
-- (Bookmark*)bookmark
-{
-    return [underlyingModel bookmarkWithGuid:guid];
-}
-
-@end
-
-@implementation BookmarkRow (KeyValueCoding)
-
-- (NSNumber*)default
-{
-    BOOL isDefault = [[[self bookmark] objectForKey:KEY_GUID] isEqualToString:[[[BookmarkModel sharedInstance] defaultBookmark] objectForKey:KEY_GUID]];
-    return [NSNumber numberWithInt:isDefault ? IsDefault : IsNotDefault];
-}
-
-- (NSString*)name
-{
-    return [[self bookmark] objectForKey:KEY_NAME];
-}
-
-- (NSString*)shortcut
-{
-    return [[self bookmark] objectForKey:KEY_SHORTCUT];
-}
-
-- (NSString*)command
-{
-    return [[self bookmark] objectForKey:KEY_COMMAND];
-}
-
-- (NSString*)guid
-{
-    return [[self bookmark] objectForKey:KEY_GUID];
-}
-
-@end
-
-@implementation BookmarkModelWrapper
-
-- (id)initWithModel:(BookmarkModel*)model
-{
-    self = [super init];
-    if (self) {
-        underlyingModel = model;
-        bookmarks = [[NSMutableArray alloc] init];
-        filter = [[NSMutableString alloc] init];
-        [self sync];
-    }
-    return self;
-}
-
-- (void)dealloc
-{
-    [bookmarks release];
-    [filter release];
-    [super dealloc];
-}
-
-- (void)setSortDescriptors:(NSArray*)newSortDescriptors
-{
-    [sortDescriptors autorelease];
-    sortDescriptors = [newSortDescriptors retain];
-}
-
-- (void)dump
-{
-    for (int i = 0; i < [self numberOfBookmarks]; ++i) {
-        NSLog(@"Dump of %p: At %d: %@", self, i, [[self bookmarkRowAtIndex:i] name]);
-    }
-}
-
-- (void)sort
-{
-    if ([sortDescriptors count] > 0) {
-        [bookmarks sortUsingDescriptors:sortDescriptors];
-    }
-}
-
-- (int)numberOfBookmarks
-{
-    return [bookmarks count];
-}
-
-- (BookmarkRow*)bookmarkRowAtIndex:(int)i
-{
-    return [bookmarks objectAtIndex:i];
-}
-
-- (Bookmark*)bookmarkAtIndex:(int)i
-{
-    return [[bookmarks objectAtIndex:i] bookmark];
-}
-
-- (int)indexOfBookmarkWithGuid:(NSString*)guid
-{
-    for (int i = 0; i < [bookmarks count]; ++i) {
-        if ([[[bookmarks objectAtIndex:i] guid] isEqualToString:guid]) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-- (BookmarkModel*)underlyingModel
-{
-    return underlyingModel;
-}
-
-- (void)sync
-{
-    [bookmarks removeAllObjects];
-    NSArray* filteredBookmarks = [underlyingModel bookmarkIndicesMatchingFilter:filter];
-    for (NSNumber* n in filteredBookmarks) {
-        int i = [n intValue];
-        //NSLog(@"Wrapper at %p add bookmark %@ at index %d", self, [[underlyingModel bookmarkAtIndex:i] objectForKey:KEY_NAME], i);
-        [bookmarks addObject:[[[BookmarkRow alloc] initWithBookmark:[underlyingModel bookmarkAtIndex:i] 
-                                                    underlyingModel:underlyingModel] autorelease]];
-    }
-    [self sort];
-}
-
-- (void)moveBookmarkWithGuid:(NSString*)guid toIndex:(int)row
-{
-    // Make the change locally.
-    int origRow = [self indexOfBookmarkWithGuid:guid];
-    if (origRow < row) {
-        [bookmarks insertObject:[bookmarks objectAtIndex:origRow] atIndex:row];
-        [bookmarks removeObjectAtIndex:origRow];
-    } else if (origRow > row) {
-        BookmarkRow* temp = [[bookmarks objectAtIndex:origRow] retain];
-        [bookmarks removeObjectAtIndex:origRow];
-        [bookmarks insertObject:temp atIndex:row];
-        [temp release];
-    }
-}
-
-- (void)pushOrderToUnderlyingModel
-{
-    // Since we may have a filter, let's ensure that the visible bookmarks occur
-    // in the same order in the underlying model without regard to how invisible
-    // bookmarks fit into the order. This also prevents instability when the
-    // reload happens.
-    int i = 0;
-    for (BookmarkRow* theRow in bookmarks) {
-        [underlyingModel moveGuid:[theRow guid] toRow:i++];
-    }
-    [underlyingModel rebuildMenus];
-}
-
-- (NSArray*)sortDescriptors
-{
-    return sortDescriptors;
-}
-
-- (void)setFilter:(NSString*)newFilter
-{
-    [filter release];
-    filter = [[NSString stringWithString:newFilter] retain];
-}
-
-@end
-
-
-@implementation BookmarkTableView
-
-- (void)setParent:(id)parent
-{
-    parent_ = parent;
-}
-
-- (NSMenu *)menuForEvent:(NSEvent *)theEvent
-{
-    if ([[parent_ delegate] respondsToSelector:@selector(bookmarkTable:menuForEvent:)]) {
-        return [[parent_ delegate] bookmarkTable:parent_ menuForEvent:theEvent];
-    }
-    return nil;
-}
-
-@end
 
 @implementation BookmarkListView
 
@@ -451,7 +227,7 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
                                    borderType:[scrollView_ borderType]];
 
     tableView_ = [[BookmarkTableView alloc] initWithFrame:tableViewFrame];
-    [tableView_ setParent:self];
+    [tableView_ setMenuHandler:self];
     [tableView_ registerForDraggedTypes:[NSArray arrayWithObject:BookmarkTableViewDataType]];
     normalRowHeight_ = 21;
     rowHeightWithTags_ = 29;
@@ -521,6 +297,13 @@ typedef enum { IsDefault = 1, IsNotDefault = 2 } BookmarkRowIsDefault;
 - (void)setDelegate:(NSObject<BookmarkTableDelegate> *)delegate
 {
     delegate_ = delegate;
+}
+
+#pragma mark BookmarkTableView menu handler
+
+- (NSMenu *)menuForEvent:(NSEvent *)theEvent
+{
+    return [delegate_ bookmarkTable:self menuForEvent:theEvent];
 }
 
 #pragma mark NSTableView data source
