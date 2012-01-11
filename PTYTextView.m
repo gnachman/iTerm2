@@ -91,14 +91,19 @@ static double gSmartCursorFgThreshold = 0.75;
 - (void)drawRect:(NSRect)dirtyRect
 {
     const double initialAlpha = 0.7;
-    [[NSColor colorWithDeviceWhite:0.5 alpha:initialAlpha] set];
-    NSRectFill(dirtyRect);
+    NSGradient *grad = [[NSGradient alloc] initWithStartingColor:[NSColor whiteColor]
+                                                     endingColor:[NSColor blackColor]];
+    NSPoint relativeCursorPosition = NSMakePoint(2 * (cursor.x / self.frame.size.width - 0.5),
+                                                 2 * (cursor.y / self.frame.size.height - 0.5));
+    [grad drawInRect:NSMakeRect(0, 0, self.frame.size.width, self.frame.size.height)
+        relativeCenterPosition:relativeCursorPosition];
+    [grad release];
 
     double x = cursor.x;
     double y = cursor.y;
 
-    const double numSteps = 2;
-    const double stepSize = 2;
+    const double numSteps = 1;
+    const double stepSize = 1;
     const double initialRadius = kFindCursorHoleRadius + numSteps * stepSize;
     double a = initialAlpha;
     for (double focusRadius = initialRadius; a > 0 && focusRadius >= initialRadius - numSteps * stepSize; focusRadius -= stepSize) {
@@ -446,7 +451,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [initialFindContext_.substring release];
 
     [pointer_ release];
-	[cursor_ release];
+        [cursor_ release];
 
     [super dealloc];
 }
@@ -2575,46 +2580,46 @@ NSMutableArray* screens=0;
 
 - (BOOL)setCursor:(NSCursor *)cursor
 {
-	if (cursor == cursor_) {
-		return NO;
-	}
-	[cursor_ autorelease];
-	cursor_ = [cursor retain];
-	return YES;
+        if (cursor == cursor_) {
+                return NO;
+        }
+        [cursor_ autorelease];
+        cursor_ = [cursor retain];
+        return YES;
 }
 
 - (void)updateCursor:(NSEvent *)event
 {
     MouseMode mouseMode = [[dataSource terminal] mouseMode];
 
-	BOOL changed = NO;
+        BOOL changed = NO;
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
-		changed = [self setCursor:[NSCursor openHandCursor]];
+                changed = [self setCursor:[NSCursor openHandCursor]];
     } else if (([event modifierFlags] & (NSCommandKeyMask | NSAlternateKeyMask)) == (NSCommandKeyMask | NSAlternateKeyMask)) {
-		changed = [self setCursor:[NSCursor crosshairCursor]];
+                changed = [self setCursor:[NSCursor crosshairCursor]];
     } else if (([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask) {
-		changed = [self setCursor:[NSCursor pointingHandCursor]];
+                changed = [self setCursor:[NSCursor pointingHandCursor]];
     } else if ([self xtermMouseReporting] &&
                mouseMode != MOUSE_REPORTING_NONE &&
                mouseMode != MOUSE_REPORTING_HILITE) {
-		changed = [self setCursor:xmrCursor];
+                changed = [self setCursor:xmrCursor];
     } else {
-		changed = [self setCursor:textViewCursor];
+                changed = [self setCursor:textViewCursor];
     }
-	if (changed) {
-		[[_delegate SCROLLVIEW] setDocumentCursor:cursor_];
-	}
+        if (changed) {
+                [[_delegate SCROLLVIEW] setDocumentCursor:cursor_];
+        }
 }
 
 - (void)flagsChanged:(NSEvent *)theEvent
 {
-	[self updateCursor:theEvent];
+        [self updateCursor:theEvent];
     [super flagsChanged:theEvent];
 }
 
 - (void)flagsChangedNotification:(NSNotification *)notification
 {
-	[self updateCursor:(NSEvent *)[notification object]];
+        [self updateCursor:(NSEvent *)[notification object]];
 }
 
 - (void)swipeWithEvent:(NSEvent *)event
@@ -2630,7 +2635,7 @@ NSMutableArray* screens=0;
 - (void)mouseEntered:(NSEvent *)event
 {
     mouseInRect_ = YES;
-	[self updateCursor:event];
+        [self updateCursor:event];
     if ([[PreferencePanel sharedInstance] focusFollowsMouse] &&
             [[self window] alphaValue] > 0) {
         // Some windows automatically close when they lose key status and are
@@ -4931,11 +4936,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self setNeedsDisplay:YES];
 }
 
-- (NSPoint)cursorLocationInScreenCoordinates
+- (NSRect)cursorRect
 {
     NSRect frame = [self visibleRect];
-    double x = MARGIN + charWidth * ([dataSource cursorX] - 1) + charWidth/2;
-    double y = frame.origin.y + VMARGIN + lineHeight * ([dataSource cursorY] - 1) + lineHeight/2;
+    double x = MARGIN + charWidth * ([dataSource cursorX] - 1);
+    double y = frame.origin.y + lineHeight * ([dataSource cursorY] - 1);
+    return NSMakeRect(x, y, charWidth, lineHeight);
+}
+
+- (NSPoint)cursorLocationInScreenCoordinates
+{
+    NSRect cursorFrame = [self cursorRect];
+    double x = cursorFrame.origin.x + cursorFrame.size.width / 2;
+    double y = cursorFrame.origin.y + cursorFrame.size.height / 2;
     if ([self hasMarkedText]) {
         x = imeCursorLastPos_.x + 1;
         y = imeCursorLastPos_.y + lineHeight / 2;
@@ -4983,7 +4996,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [findCursorWindow_ setAlphaValue:0];
     [findCursorWindow_ setFrame:[self _cursorScreenFrame] display:YES];
     [[NSAnimationContext currentContext] setDuration:0.5];
-    [[findCursorWindow_ animator] setAlphaValue:1];
+    [[findCursorWindow_ animator] setAlphaValue:0.7];
 
     findCursorView_ = [[FindCursorView alloc] initWithFrame:NSMakeRect(0, 0, [[self window] frame].size.width, [[self window] frame].size.height)];
     NSPoint p = [self globalCursorLocation];
@@ -5000,7 +5013,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)invalidateCursor
 {
-    [self setNeedsDisplay:YES];
+    int HEIGHT = [dataSource height];
+    NSRect rect = [self cursorRect];
+    int yStart = [dataSource cursorY] - 1;
+    rect.origin.y = (yStart + [dataSource numberOfLines] - HEIGHT + 1) * lineHeight - [self cursorHeight];
+    rect.size.height = [self cursorHeight];
+    [self setNeedsDisplayInRect:rect];
 }
 
 - (void)beginFindCursor:(BOOL)hold
@@ -5073,18 +5091,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                                      toPoint:dest
                                                              useTransparency:[self useTransparency]];
-		// Blend default bg color
+                // Blend default bg color
         NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
-						  alternateSemantics:YES
-										bold:NO
-								isBackground:YES];
-		[[aColor colorWithAlphaComponent:1 - blend] set];
-		NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
-											dest.y + bgRect.origin.y,
-											bgRect.size.width,
-											bgRect.size.height), NSCompositeSourceOver);
+                                                  alternateSemantics:YES
+                                                                                bold:NO
+                                                                isBackground:YES];
+                [[aColor colorWithAlphaComponent:1 - blend] set];
+                NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
+                                                                                        dest.y + bgRect.origin.y,
+                                                                                        bgRect.size.width,
+                                                                                        bgRect.size.height), NSCompositeSourceOver);
     } else {
-		// No bg image
+                // No bg image
         if (![self useTransparency]) {
             alpha = 1;
         }
@@ -5108,17 +5126,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                                      toPoint:dest
                                                              useTransparency:[self useTransparency]];
-		// Blend default bg color over bg iamge.
-		NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
-						  alternateSemantics:YES
-										bold:NO
-								isBackground:YES];
-		[[aColor colorWithAlphaComponent:1 - blend] set];
-		NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
-											dest.y + bgRect.origin.y,
-											bgRect.size.width,
-											bgRect.size.height),
-								 NSCompositeSourceOver);
+                // Blend default bg color over bg iamge.
+                NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
+                                                  alternateSemantics:YES
+                                                                                bold:NO
+                                                                isBackground:YES];
+                [[aColor colorWithAlphaComponent:1 - blend] set];
+                NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
+                                                                                        dest.y + bgRect.origin.y,
+                                                                                        bgRect.size.width,
+                                                                                        bgRect.size.height),
+                                                                 NSCompositeSourceOver);
     } else {
         // No bg image
         if (![self useTransparency]) {
@@ -5141,13 +5159,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                              useTransparency:[self useTransparency]];
-		// Blend default bg color over bg iamge.
-		NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
-						  alternateSemantics:YES
-										bold:NO
-								isBackground:YES];
-		[[aColor colorWithAlphaComponent:1 - blend] set];
-		NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
+                // Blend default bg color over bg iamge.
+                NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
+                                                  alternateSemantics:YES
+                                                                                bold:NO
+                                                                isBackground:YES];
+                [[aColor colorWithAlphaComponent:1 - blend] set];
+                NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
     } else {
         // Either draw a normal bg or, if transparency is off, blend the default bg color over the bg image.
         if (![self useTransparency]) {
@@ -6126,30 +6144,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                         toPoint:NSMakePoint(toPoint->x + rightMargin.origin.x,
                                                             toPoint->y + rightMargin.size.height)
                                 useTransparency:[self useTransparency]];
-			// Blend default bg color over bg iamge.
-			[[aColor colorWithAlphaComponent:1 - blend] set];
-			NSRectFillUsingOperation(NSMakeRect(toPoint->x + leftMargin.origin.x,
-												toPoint->y + leftMargin.origin.y,
-												leftMargin.size.width,
-												leftMargin.size.height), NSCompositeSourceOver);
-			NSRectFillUsingOperation(NSMakeRect(toPoint->x + rightMargin.origin.x,
-												toPoint->y + rightMargin.origin.y,
-												rightMargin.size.width,
-												rightMargin.size.height), NSCompositeSourceOver);
-		} else {
+                        // Blend default bg color over bg iamge.
+                        [[aColor colorWithAlphaComponent:1 - blend] set];
+                        NSRectFillUsingOperation(NSMakeRect(toPoint->x + leftMargin.origin.x,
+                                                                                                toPoint->y + leftMargin.origin.y,
+                                                                                                leftMargin.size.width,
+                                                                                                leftMargin.size.height), NSCompositeSourceOver);
+                        NSRectFillUsingOperation(NSMakeRect(toPoint->x + rightMargin.origin.x,
+                                                                                                toPoint->y + rightMargin.origin.y,
+                                                                                                rightMargin.size.width,
+                                                                                                rightMargin.size.height), NSCompositeSourceOver);
+                } else {
             [scrollView drawBackgroundImageRect:leftMargin
                                 useTransparency:[self useTransparency]];
             [scrollView drawBackgroundImageRect:rightMargin
                                 useTransparency:[self useTransparency]];
 
-			// Blend default bg color over bg iamge.
-			[[aColor colorWithAlphaComponent:1 - blend] set];
-			NSRectFillUsingOperation(leftMargin, NSCompositeSourceOver);
-			NSRectFillUsingOperation(rightMargin, NSCompositeSourceOver);
-		}
-		[aColor set];
+                        // Blend default bg color over bg iamge.
+                        [[aColor colorWithAlphaComponent:1 - blend] set];
+                        NSRectFillUsingOperation(leftMargin, NSCompositeSourceOver);
+                        NSRectFillUsingOperation(rightMargin, NSCompositeSourceOver);
+                }
+                [aColor set];
     } else {
-		// No BG image
+                // No BG image
         if (toPoint) {
             NSRectFill(NSMakeRect(toPoint->x + leftMargin.origin.x,
                                   toPoint->y,
@@ -6288,15 +6306,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 NSRectFillUsingOperation(bgRect,
                                          hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
             } else if (hasBGImage) {
-				// There is a bg image and no special background on it. Blend
-				// in the default background color.
+                                // There is a bg image and no special background on it. Blend
+                                // in the default background color.
                 aColor = [self colorForCode:ALTSEM_BG_DEFAULT
                          alternateSemantics:YES
                                        bold:NO
                                isBackground:YES];
                 aColor = [aColor colorWithAlphaComponent:1 - blend];
                 [aColor set];
-				NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
+                                NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
             }
 
             // Draw red stripes in the background if sending input to all sessions
@@ -6828,19 +6846,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         if (colorInvertedCursor && !frameOnly) {
                             int fgColor;
                             BOOL fgAlt;
-							BOOL fgBold;
+                                                        BOOL fgBold;
                             if ([[self window] isKeyWindow]) {
                                 // Draw a character in background color when
                                 // window is key.
                                 fgColor = screenChar.backgroundColor;
                                 fgAlt = screenChar.alternateBackgroundSemantics;
-								fgBold = NO;
+                                                                fgBold = NO;
                             } else {
                                 // Draw character in foreground color when there
                                 // is just a frame around it.
                                 fgColor = screenChar.foregroundColor;
                                 fgAlt = screenChar.alternateForegroundSemantics;
-								fgBold = screenChar.bold;
+                                                                fgBold = screenChar.bold;
                             }
 
                             // Pick background color for text if is key window, otherwise use fg color for text.
