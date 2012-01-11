@@ -1,11 +1,11 @@
 /*
- **  BookmarkTableController.m
+ **  ProfileListView.h
  **  iTerm
  **
  **  Created by George Nachman on 8/26/10.
  **  Project: iTerm
  **
- **  Description: Custom view that shows a search field and table of bookmarks
+ **  Description: Custom view that shows a search field and table of profiles
  **    and integrates them.
  **
  **  This program is free software; you can redistribute it and/or modify
@@ -23,57 +23,57 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import "BookmarkModel.h"
-#import "BookmarkTableView.h"
+#import "ProfileModel.h"
+#import "ProfileTableView.h"
 
-@class BookmarkModelWrapper;
+@class ProfileModelWrapper;
 @class iTermSearchField;
-@class BookmarkRow;
-@class BookmarkTableView;
+@class ProfileTableRow;
+@class ProfileTableView;
 
-@protocol BookmarkTableDelegate
+@protocol ProfileListViewDelegate
 @optional
-- (void)bookmarkTableSelectionDidChange:(id)bookmarkTable;
-
-@optional
-- (void)bookmarkTableSelectionWillChange:(id)bookmarkTable;
+- (void)profileTableSelectionDidChange:(id)profileTable;
 
 @optional
-- (void)bookmarkTableRowSelected:(id)bookmarkTable;
+- (void)profileTableSelectionWillChange:(id)profileTable;
 
 @optional
-- (NSMenu*)bookmarkTable:(id)bookmarkTable menuForEvent:(NSEvent*)theEvent;
+- (void)profileTableRowSelected:(id)profileTable;
+
+@optional
+- (NSMenu*)profileTable:(id)profileTable menuForEvent:(NSEvent*)theEvent;
 @end
 
-@interface BookmarkListView : NSView <
+@interface ProfileListView : NSView <
       NSTextFieldDelegate,
 	  NSTableViewDataSource,
 	  NSTableViewDelegate,
-	  BookmarkTableMenuHandler> {
+	  ProfileTableMenuHandler> {
     int normalRowHeight_;
     int rowHeightWithTags_;
     NSScrollView* scrollView_;
     iTermSearchField* searchField_;
-    BookmarkTableView* tableView_;
+    ProfileTableView* tableView_;
     NSTableColumn* tableColumn_;
     NSTableColumn* commandColumn_;
     NSTableColumn* shortcutColumn_;
     NSTableColumn* starColumn_;
     NSTableColumn* tagsColumn_;
-    NSObject<BookmarkTableDelegate> *delegate_;
+    NSObject<ProfileListViewDelegate> *delegate_;
     NSSet* selectedGuids_;
     BOOL debug;
-    BookmarkModelWrapper* dataSource_;
+    ProfileModelWrapper* dataSource_;
     int margin_;
 }
 
 - (void)awakeFromNib;
 - (id)initWithFrame:(NSRect)frameRect;
-- (id)initWithFrame:(NSRect)frameRect model:(BookmarkModel*)dataSource;
-- (void)setDelegate:(NSObject<BookmarkTableDelegate> *)delegate;
+- (id)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource;
+- (void)setDelegate:(NSObject<ProfileListViewDelegate> *)delegate;
 - (void)dealloc;
-- (BookmarkModelWrapper*)dataSource;
-- (void)setUnderlyingDatasource:(BookmarkModel*)dataSource;
+- (ProfileModelWrapper*)dataSource;
+- (void)setUnderlyingDatasource:(ProfileModel*)dataSource;
 - (void)focusSearchField;
 
 // Drag drop

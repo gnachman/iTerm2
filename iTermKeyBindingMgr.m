@@ -277,7 +277,7 @@ static NSDictionary* globalKeyMap;
 
 + (NSString*)_bookmarkNameForGuid:(NSString*)guid
 {
-    return [[[BookmarkModel sharedInstance] bookmarkWithGuid:guid] objectForKey:KEY_NAME];
+    return [[[ProfileModel sharedInstance] bookmarkWithGuid:guid] objectForKey:KEY_NAME];
 }
 
 + (NSString *)formatAction:(NSDictionary *)keyInfo
@@ -471,7 +471,7 @@ static NSDictionary* globalKeyMap;
     return [[self globalKeyMap] objectForKey:keyString] != nil;
 }
 
-+ (BOOL)haveKeyMappingForKeyString:(NSString*)keyString inBookmark:(Bookmark*)bookmark
++ (BOOL)haveKeyMappingForKeyString:(NSString*)keyString inBookmark:(Profile*)bookmark
 {
     NSDictionary *dict = [bookmark objectForKey:KEY_KEYBOARD_MAP];
     return [dict objectForKey:keyString] != nil;
@@ -663,7 +663,7 @@ static NSDictionary* globalKeyMap;
     [bookmark setObject:km forKey:KEY_KEYBOARD_MAP];
 }
 
-+ (NSString*)shortcutAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark
++ (NSString*)shortcutAtIndex:(int)rowIndex forBookmark:(Profile*)bookmark
 {
     NSDictionary* km = [bookmark objectForKey:KEY_KEYBOARD_MAP];
     NSArray* allKeys = [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
@@ -685,7 +685,7 @@ static NSDictionary* globalKeyMap;
     }
 }
 
-+ (NSDictionary*)mappingAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark
++ (NSDictionary*)mappingAtIndex:(int)rowIndex forBookmark:(Profile*)bookmark
 {
     NSDictionary* km = [bookmark objectForKey:KEY_KEYBOARD_MAP];
     NSArray* allKeys = [[km allKeys] sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
@@ -707,7 +707,7 @@ static NSDictionary* globalKeyMap;
     }
 }
 
-+ (int)numberOfMappingsForBookmark:(Bookmark*)bmDict
++ (int)numberOfMappingsForBookmark:(Profile*)bmDict
 {
     NSDictionary* keyMapDict = [bmDict objectForKey:KEY_KEYBOARD_MAP];
     return [keyMapDict count];
@@ -924,7 +924,7 @@ static NSDictionary* globalKeyMap;
                                                                        prefPanel:pp]];
 }
 
-+ (Bookmark*)removeMappingsReferencingGuid:(NSString*)guid fromBookmark:(Bookmark*)bookmark
++ (Profile*)removeMappingsReferencingGuid:(NSString*)guid fromBookmark:(Profile*)bookmark
 {
     if (bookmark) {
         NSMutableDictionary* mutableBookmark = [NSMutableDictionary dictionaryWithDictionary:bookmark];

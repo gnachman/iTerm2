@@ -455,7 +455,7 @@ typedef enum {
                 return [name stringByReplacingOccurrencesOfString:@"…"
                                                        withString:[NSString stringWithFormat:@" \"%@\"", argument]];
             case kProfileArg: {
-                NSString *bookmarkName = [[[BookmarkModel sharedInstance] bookmarkWithGuid:argument] objectForKey:KEY_NAME];
+                NSString *bookmarkName = [[[ProfileModel sharedInstance] bookmarkWithGuid:argument] objectForKey:KEY_NAME];
                 if (!bookmarkName) {
                     bookmarkName = @"?";
                 }
@@ -957,7 +957,7 @@ typedef enum {
     } else if (![editArgumentButton_ isHidden]) {
         if ([PointerPrefsController argumentTypeForAction:theAction] == kProfileArg) {
             NSString *profileName = [[editArgumentButton_ selectedItem] title];
-            NSString *guid = [[[BookmarkModel sharedInstance] bookmarkWithName:profileName] objectForKey:KEY_GUID];
+            NSString *guid = [[[ProfileModel sharedInstance] bookmarkWithName:profileName] objectForKey:KEY_GUID];
             if (guid) {
                 [newValue setObject:guid forKey:kArgumentKey];
             } else {

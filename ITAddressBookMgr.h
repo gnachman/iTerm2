@@ -29,7 +29,7 @@
 
 #import <Foundation/Foundation.h>
 #import <Cocoa/Cocoa.h>
-#import "BookmarkModel.h"
+#import "ProfileModel.h"
 
 // Prefs-level keys
 #define KEY_DEFAULT_GUID                @"Default Bookmark Guid"  // use this instead (not in a bookmark)
@@ -204,7 +204,7 @@ typedef enum {
 + (NSFont *)fontWithDesc:(NSString *)fontDesc;
 + (NSString*)descFromFont:(NSFont*)font;
 - (void)setBookmarks:(NSArray*)newBookmarksArray defaultGuid:(NSString*)guid;
-- (BookmarkModel*)model;
+- (ProfileModel*)model;
 - (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didFindService:(NSNetService *)aNetService moreComing:(BOOL)moreComing;
 - (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didRemoveService:(NSNetService *)aNetService moreComing:(BOOL)moreComing;
 - (void)netServiceDidResolveAddress:(NSNetService *)sender;
@@ -212,13 +212,13 @@ typedef enum {
 - (void)netServiceWillResolve:(NSNetService *)aNetService;
 - (void)netServiceDidStop:(NSNetService *)aNetService;
 - (NSString*) getBonjourServiceType:(NSString*)aType;
-+ (NSString*)loginShellCommandForBookmark:(Bookmark*)bookmark
++ (NSString*)loginShellCommandForBookmark:(Profile*)bookmark
 							 asLoginShell:(BOOL*)asLoginShell
 							forObjectType:(iTermObjectType)objectType;
-+ (NSString*)bookmarkCommand:(Bookmark*)bookmark
++ (NSString*)bookmarkCommand:(Profile*)bookmark
 			  isLoginSession:(BOOL*)isLoginSession
 			   forObjectType:(iTermObjectType)objectType;
-+ (NSString*)bookmarkWorkingDirectory:(Bookmark*)bookmark
++ (NSString*)bookmarkWorkingDirectory:(Profile*)bookmark
                         forObjectType:(iTermObjectType)objectType;
 
 @end

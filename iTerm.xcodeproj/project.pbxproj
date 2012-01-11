@@ -9,12 +9,12 @@
 /* Begin PBXBuildFile section */
 		1D06A050134CDBED00C414EF /* Trouter.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06A04F134CDBED00C414EF /* Trouter.m */; };
 		1D06A052134CDBF800C414EF /* Trouter.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06A051134CDBF800C414EF /* Trouter.h */; };
-		1D06E7D314BC04510097C0ED /* BookmarkRow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D114BC04510097C0ED /* BookmarkRow.h */; };
-		1D06E7D414BC04510097C0ED /* BookmarkRow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06E7D214BC04510097C0ED /* BookmarkRow.m */; };
-		1D06E7D714BC04E20097C0ED /* BookmarkModelWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D514BC04E20097C0ED /* BookmarkModelWrapper.h */; };
-		1D06E7D814BC04E20097C0ED /* BookmarkModelWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06E7D614BC04E20097C0ED /* BookmarkModelWrapper.m */; };
-		1D06E7DB14BC05DB0097C0ED /* BookmarkTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D914BC05DB0097C0ED /* BookmarkTableView.h */; };
-		1D06E7DC14BC05DB0097C0ED /* BookmarkTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06E7DA14BC05DB0097C0ED /* BookmarkTableView.m */; };
+		1D06E7D314BC04510097C0ED /* ProfileTableRow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D114BC04510097C0ED /* ProfileTableRow.h */; };
+		1D06E7D414BC04510097C0ED /* ProfileTableRow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06E7D214BC04510097C0ED /* ProfileTableRow.m */; };
+		1D06E7D714BC04E20097C0ED /* ProfileModelWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D514BC04E20097C0ED /* ProfileModelWrapper.h */; };
+		1D06E7D814BC04E20097C0ED /* ProfileModelWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06E7D614BC04E20097C0ED /* ProfileModelWrapper.m */; };
+		1D06E7DB14BC05DB0097C0ED /* ProfileTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D914BC05DB0097C0ED /* ProfileTableView.h */; };
+		1D06E7DC14BC05DB0097C0ED /* ProfileTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06E7DA14BC05DB0097C0ED /* ProfileTableView.m */; };
 		1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0B613614A7BC1200C57C33 /* TmuxControllerRegistry.h */; };
 		1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0B613714A7BC1200C57C33 /* TmuxControllerRegistry.m */; };
 		1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */; };
@@ -62,7 +62,7 @@
 		1D3D21961483144600FAC8E7 /* TSVParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D21941483144600FAC8E7 /* TSVParser.m */; };
 		1D3D21AF14839AAB00FAC8E7 /* TmuxLayoutParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D3D21AD14839AAB00FAC8E7 /* TmuxLayoutParser.h */; };
 		1D3D21B014839AAB00FAC8E7 /* TmuxLayoutParser.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D3D21AE14839AAB00FAC8E7 /* TmuxLayoutParser.m */; };
-		1D407A3414BABE8700BD5035 /* BookmarkModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2214BABE8700BD5035 /* BookmarkModel.h */; };
+		1D407A3414BABE8700BD5035 /* ProfileModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2214BABE8700BD5035 /* ProfileModel.h */; };
 		1D407A3514BABE8700BD5035 /* BookmarksController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2314BABE8700BD5035 /* BookmarksController.h */; };
 		1D407A3614BABE8700BD5035 /* charmaps.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2414BABE8700BD5035 /* charmaps.h */; };
 		1D407A3814BABE8700BD5035 /* iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D407A2614BABE8700BD5035 /* iTerm.h */; };
@@ -170,7 +170,7 @@
 		1D5FDD9D1208E91100C46BA3 /* sort.png in Resources */ = {isa = PBXBuildFile; fileRef = F6C9AFEF0EA70D0200D318A8 /* sort.png */; };
 		1D5FDD9E1208E91100C46BA3 /* PseudoTerminal.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9325FF3C0FB54DF1004EC67C /* PseudoTerminal.xib */; };
 		1D5FDDA01208E91100C46BA3 /* PreferencePanel.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9325FF400FB54DF1004EC67C /* PreferencePanel.xib */; };
-		1D5FDDA21208E91100C46BA3 /* BookmarksWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9325FF460FB54DF1004EC67C /* BookmarksWindow.xib */; };
+		1D5FDDA21208E91100C46BA3 /* ProfilesWindow.xib in Resources */ = {isa = PBXBuildFile; fileRef = 9325FF460FB54DF1004EC67C /* ProfilesWindow.xib */; };
 		1D5FDDA51208E93600C46BA3 /* PseudoTerminal.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */; };
 		1D5FDDA61208E93600C46BA3 /* PTYScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF755F026DDA6303A80106 /* PTYScrollView.m */; };
 		1D5FDDA71208E93600C46BA3 /* PTYTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = E8CF7561026DDA6303A80106 /* PTYTextView.m */; };
@@ -214,8 +214,8 @@
 		1D6A5FDF140D7AA000DE19F8 /* IBarCursorXMR.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D6A5FDE140D7AA000DE19F8 /* IBarCursorXMR.png */; };
 		1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB293D1288899A00B2CB9F /* Carbon.framework */; };
 		1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D6C4D59122329F000E0AA3E /* ColorPresets.plist */; };
-		1D6C50A71226EEFB00E0AA3E /* BookmarkListView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */; };
-		1D6C50A81226EEFB00E0AA3E /* BookmarkListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */; };
+		1D6C50A71226EEFB00E0AA3E /* ProfileListView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6C50A51226EEFB00E0AA3E /* ProfileListView.h */; };
+		1D6C50A81226EEFB00E0AA3E /* ProfileListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6C50A61226EEFB00E0AA3E /* ProfileListView.m */; };
 		1D72439011F416F300BD4924 /* LineBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72438F11F416F300BD4924 /* LineBuffer.h */; };
 		1D7B9A691491D82F003A2A22 /* IntervalMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7B9A671491D82F003A2A22 /* IntervalMap.h */; };
 		1D7B9A6A1491D82F003A2A22 /* IntervalMap.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7B9A681491D82F003A2A22 /* IntervalMap.m */; };
@@ -317,7 +317,7 @@
 		1DCA8BAE121A1B8000ABDEB5 /* PrefsTerminal.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA8121A1B8000ABDEB5 /* PrefsTerminal.tiff */; };
 		1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */; };
 		1DCF3CB71222FF1400AD56F1 /* PresetKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */; };
-		1DCF3E8F122419D200AD56F1 /* BookmarkModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */; };
+		1DCF3E8F122419D200AD56F1 /* ProfileModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DCF3E8D122419D200AD56F1 /* ProfileModel.m */; };
 		1DCF3EC61224D03D00AD56F1 /* DefaultBookmark.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */; };
 		1DCF3F001224EEBD00AD56F1 /* MigrationMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */; };
 		1DCF3F4A1225F6F200AD56F1 /* BookmarkModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */; };
@@ -333,8 +333,8 @@
 		1DE214E1128212EE004E3ADF /* Autocomplete.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE214DF128212EE004E3ADF /* Autocomplete.h */; };
 		1DE214E2128212EE004E3ADF /* Autocomplete.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE214E0128212EE004E3ADF /* Autocomplete.m */; };
 		1DE2154312821F1C004E3ADF /* Autocomplete.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1DE2154112821F1C004E3ADF /* Autocomplete.xib */; };
-		1DE5EBE8122B892900C736B0 /* BookmarksWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* BookmarksWindow.h */; };
-		1DE5EBE9122B892900C736B0 /* BookmarksWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */; };
+		1DE5EBE8122B892900C736B0 /* ProfilesWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE5EBE6122B892900C736B0 /* ProfilesWindow.h */; };
+		1DE5EBE9122B892900C736B0 /* ProfilesWindow.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE5EBE7122B892900C736B0 /* ProfilesWindow.m */; };
 		1DE8DC891415513A00F83147 /* ToolbeltView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC871415513A00F83147 /* ToolbeltView.h */; };
 		1DE8DC8A1415513A00F83147 /* ToolbeltView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DE8DC881415513A00F83147 /* ToolbeltView.m */; };
 		1DE8DC8D1415546000F83147 /* ToolProfiles.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DE8DC8B1415546000F83147 /* ToolProfiles.h */; };
@@ -389,12 +389,12 @@
 		0464AB2F006CD2EC7F000001 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = /System/Library/Frameworks/AppKit.framework; sourceTree = "<absolute>"; };
 		1D06A04F134CDBED00C414EF /* Trouter.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Trouter.m; sourceTree = "<group>"; };
 		1D06A051134CDBF800C414EF /* Trouter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Trouter.h; sourceTree = "<group>"; };
-		1D06E7D114BC04510097C0ED /* BookmarkRow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkRow.h; sourceTree = "<group>"; };
-		1D06E7D214BC04510097C0ED /* BookmarkRow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarkRow.m; sourceTree = "<group>"; };
-		1D06E7D514BC04E20097C0ED /* BookmarkModelWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkModelWrapper.h; sourceTree = "<group>"; };
-		1D06E7D614BC04E20097C0ED /* BookmarkModelWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarkModelWrapper.m; sourceTree = "<group>"; };
-		1D06E7D914BC05DB0097C0ED /* BookmarkTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkTableView.h; sourceTree = "<group>"; };
-		1D06E7DA14BC05DB0097C0ED /* BookmarkTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BookmarkTableView.m; sourceTree = "<group>"; };
+		1D06E7D114BC04510097C0ED /* ProfileTableRow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileTableRow.h; sourceTree = "<group>"; };
+		1D06E7D214BC04510097C0ED /* ProfileTableRow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileTableRow.m; sourceTree = "<group>"; };
+		1D06E7D514BC04E20097C0ED /* ProfileModelWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileModelWrapper.h; sourceTree = "<group>"; };
+		1D06E7D614BC04E20097C0ED /* ProfileModelWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileModelWrapper.m; sourceTree = "<group>"; };
+		1D06E7D914BC05DB0097C0ED /* ProfileTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileTableView.h; sourceTree = "<group>"; };
+		1D06E7DA14BC05DB0097C0ED /* ProfileTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileTableView.m; sourceTree = "<group>"; };
 		1D0B613614A7BC1200C57C33 /* TmuxControllerRegistry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxControllerRegistry.h; sourceTree = "<group>"; };
 		1D0B613714A7BC1200C57C33 /* TmuxControllerRegistry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxControllerRegistry.m; sourceTree = "<group>"; };
 		1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxWindowsTable.h; sourceTree = "<group>"; };
@@ -442,7 +442,7 @@
 		1D3D21941483144600FAC8E7 /* TSVParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TSVParser.m; sourceTree = "<group>"; };
 		1D3D21AD14839AAB00FAC8E7 /* TmuxLayoutParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxLayoutParser.h; sourceTree = "<group>"; };
 		1D3D21AE14839AAB00FAC8E7 /* TmuxLayoutParser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxLayoutParser.m; sourceTree = "<group>"; };
-		1D407A2214BABE8700BD5035 /* BookmarkModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkModel.h; sourceTree = "<group>"; };
+		1D407A2214BABE8700BD5035 /* ProfileModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileModel.h; sourceTree = "<group>"; };
 		1D407A2314BABE8700BD5035 /* BookmarksController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarksController.h; sourceTree = "<group>"; };
 		1D407A2414BABE8700BD5035 /* charmaps.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = charmaps.h; sourceTree = "<group>"; };
 		1D407A2614BABE8700BD5035 /* iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTerm.h; sourceTree = "<group>"; };
@@ -476,8 +476,8 @@
 		1D67ABAA14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSFileManager+DirectoryLocations.m"; sourceTree = "<group>"; };
 		1D6A5FDE140D7AA000DE19F8 /* IBarCursorXMR.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = IBarCursorXMR.png; path = images/IBarCursorXMR.png; sourceTree = "<group>"; };
 		1D6C4D59122329F000E0AA3E /* ColorPresets.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ColorPresets.plist; sourceTree = "<group>"; };
-		1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarkListView.h; sourceTree = "<group>"; };
-		1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = BookmarkListView.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		1D6C50A51226EEFB00E0AA3E /* ProfileListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileListView.h; sourceTree = "<group>"; };
+		1D6C50A61226EEFB00E0AA3E /* ProfileListView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ProfileListView.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1D72438C11F416E500BD4924 /* LineBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBuffer.m; sourceTree = "<group>"; };
 		1D72438F11F416F300BD4924 /* LineBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBuffer.h; sourceTree = "<group>"; };
 		1D72477211F55E5700BD4924 /* LineBufferTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferTest.h; sourceTree = "<group>"; };
@@ -583,7 +583,7 @@
 		1DCA8BA8121A1B8000ABDEB5 /* PrefsTerminal.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsTerminal.tiff; path = images/PrefsTerminal.tiff; sourceTree = "<group>"; };
 		1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WindowControllerInterface.h; sourceTree = "<group>"; };
 		1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = PresetKeyMappings.plist; sourceTree = "<group>"; };
-		1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = BookmarkModel.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		1DCF3E8D122419D200AD56F1 /* ProfileModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ProfileModel.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultBookmark.plist; sourceTree = "<group>"; };
 		1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = MigrationMap.plist; sourceTree = "<group>"; };
 		1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = BookmarkModel.h; path = Headers/iTerm/BookmarkModel.h; sourceTree = "<group>"; };
@@ -599,8 +599,8 @@
 		1DE214DF128212EE004E3ADF /* Autocomplete.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; lineEnding = 0; path = Autocomplete.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objcpp; };
 		1DE214E0128212EE004E3ADF /* Autocomplete.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = Autocomplete.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1DE2154212821F1C004E3ADF /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/Autocomplete.xib; sourceTree = "<group>"; };
-		1DE5EBE6122B892900C736B0 /* BookmarksWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BookmarksWindow.h; sourceTree = "<group>"; };
-		1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = BookmarksWindow.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		1DE5EBE6122B892900C736B0 /* ProfilesWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfilesWindow.h; sourceTree = "<group>"; };
+		1DE5EBE7122B892900C736B0 /* ProfilesWindow.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ProfilesWindow.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
 		1DE8DC871415513A00F83147 /* ToolbeltView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolbeltView.h; sourceTree = "<group>"; };
 		1DE8DC881415513A00F83147 /* ToolbeltView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolbeltView.m; sourceTree = "<group>"; };
 		1DE8DC8B1415546000F83147 /* ToolProfiles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToolProfiles.h; sourceTree = "<group>"; };
@@ -867,7 +867,10 @@
 		0464AB15006CD2EC7F000001 /* Headers */ = {
 			isa = PBXGroup;
 			children = (
-				1D407A2214BABE8700BD5035 /* BookmarkModel.h */,
+				1D06E7D114BC04510097C0ED /* ProfileTableRow.h */,
+				1D06E7D514BC04E20097C0ED /* ProfileModelWrapper.h */,
+				1D06E7D914BC05DB0097C0ED /* ProfileTableView.h */,
+				1D407A2214BABE8700BD5035 /* ProfileModel.h */,
 				1D407A2314BABE8700BD5035 /* BookmarksController.h */,
 				1D407A2414BABE8700BD5035 /* charmaps.h */,
 				1D407A2614BABE8700BD5035 /* iTerm.h */,
@@ -925,8 +928,8 @@
 				1D29732914082A52004C5DBE /* SplitSelectionView.h */,
 				1DF8AF5613FD781700C8A435 /* SplitPanel.h */,
 				1DCF3F491225F6F200AD56F1 /* BookmarkModel.h */,
-				1D6C50A51226EEFB00E0AA3E /* BookmarkListView.h */,
-				1DE5EBE6122B892900C736B0 /* BookmarksWindow.h */,
+				1D6C50A51226EEFB00E0AA3E /* ProfileListView.h */,
+				1DE5EBE6122B892900C736B0 /* ProfilesWindow.h */,
 				872EBC6B04E42E320073D10E /* charmaps.h */,
 				1D93D33312695442007F741B /* DVR.h */,
 				1D67ABA914285D6000D5DA4E /* NSFileManager+DirectoryLocations.h */,
@@ -995,7 +998,7 @@
 				9325FF4E0FB54E00004EC67C /* MainMenu.xib */,
 				9325FF3C0FB54DF1004EC67C /* PseudoTerminal.xib */,
 				9325FF400FB54DF1004EC67C /* PreferencePanel.xib */,
-				9325FF460FB54DF1004EC67C /* BookmarksWindow.xib */,
+				9325FF460FB54DF1004EC67C /* ProfilesWindow.xib */,
 				1DD4CE7C14A5163B00ED182E /* TmuxDashboard.xib */,
 				1D237D8E131D8BEE004DD60C /* FindView.xib */,
 				1D844C8B13FD8B7700CD4F85 /* SplitPanel.xib */,
@@ -1063,15 +1066,12 @@
 		1D06E7D014BC04110097C0ED /* Profiles */ = {
 			isa = PBXGroup;
 			children = (
-				1D6C50A61226EEFB00E0AA3E /* BookmarkListView.m */,
-				1DCF3E8D122419D200AD56F1 /* BookmarkModel.m */,
-				1DE5EBE7122B892900C736B0 /* BookmarksWindow.m */,
-				1D06E7D114BC04510097C0ED /* BookmarkRow.h */,
-				1D06E7D214BC04510097C0ED /* BookmarkRow.m */,
-				1D06E7D514BC04E20097C0ED /* BookmarkModelWrapper.h */,
-				1D06E7D614BC04E20097C0ED /* BookmarkModelWrapper.m */,
-				1D06E7D914BC05DB0097C0ED /* BookmarkTableView.h */,
-				1D06E7DA14BC05DB0097C0ED /* BookmarkTableView.m */,
+				1D6C50A61226EEFB00E0AA3E /* ProfileListView.m */,
+				1DCF3E8D122419D200AD56F1 /* ProfileModel.m */,
+				1DE5EBE7122B892900C736B0 /* ProfilesWindow.m */,
+				1D06E7D214BC04510097C0ED /* ProfileTableRow.m */,
+				1D06E7D614BC04E20097C0ED /* ProfileModelWrapper.m */,
+				1D06E7DA14BC05DB0097C0ED /* ProfileTableView.m */,
 			);
 			name = Profiles;
 			sourceTree = "<group>";
@@ -1412,8 +1412,8 @@
 				DDF0FD65062916F70080EF74 /* iTermApplication.h in Headers */,
 				49A6E4091211CC6000D9AD6F /* Compatability.h in Headers */,
 				1DCF3F4A1225F6F200AD56F1 /* BookmarkModel.h in Headers */,
-				1D6C50A71226EEFB00E0AA3E /* BookmarkListView.h in Headers */,
-				1DE5EBE8122B892900C736B0 /* BookmarksWindow.h in Headers */,
+				1D6C50A71226EEFB00E0AA3E /* ProfileListView.h in Headers */,
+				1DE5EBE8122B892900C736B0 /* ProfilesWindow.h in Headers */,
 				1D93D33512695442007F741B /* DVR.h in Headers */,
 				1D93D3471269741B007F741B /* DVRBuffer.h in Headers */,
 				1D93D34B1269746F007F741B /* DVRIndexEntry.h in Headers */,
@@ -1495,7 +1495,7 @@
 				1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */,
 				1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */,
 				1DAE714D14AAF24200DA144B /* EquivalenceClassSet.h in Headers */,
-				1D407A3414BABE8700BD5035 /* BookmarkModel.h in Headers */,
+				1D407A3414BABE8700BD5035 /* ProfileModel.h in Headers */,
 				1D407A3514BABE8700BD5035 /* BookmarksController.h in Headers */,
 				1D407A3614BABE8700BD5035 /* charmaps.h in Headers */,
 				1D407A3814BABE8700BD5035 /* iTerm.h in Headers */,
@@ -1512,9 +1512,9 @@
 				1D407A4314BABE8700BD5035 /* PTYWindow.h in Headers */,
 				1D407A4414BABE8700BD5035 /* VT100Screen.h in Headers */,
 				1D407A4514BABE8700BD5035 /* VT100Terminal.h in Headers */,
-				1D06E7D314BC04510097C0ED /* BookmarkRow.h in Headers */,
-				1D06E7D714BC04E20097C0ED /* BookmarkModelWrapper.h in Headers */,
-				1D06E7DB14BC05DB0097C0ED /* BookmarkTableView.h in Headers */,
+				1D06E7D314BC04510097C0ED /* ProfileTableRow.h in Headers */,
+				1D06E7D714BC04E20097C0ED /* ProfileModelWrapper.h in Headers */,
+				1D06E7DB14BC05DB0097C0ED /* ProfileTableView.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1614,7 +1614,7 @@
 				1D5FDD9D1208E91100C46BA3 /* sort.png in Resources */,
 				1D5FDD9E1208E91100C46BA3 /* PseudoTerminal.xib in Resources */,
 				1D5FDDA01208E91100C46BA3 /* PreferencePanel.xib in Resources */,
-				1D5FDDA21208E91100C46BA3 /* BookmarksWindow.xib in Resources */,
+				1D5FDDA21208E91100C46BA3 /* ProfilesWindow.xib in Resources */,
 				8742064D0564169600CFC3F1 /* iTerm.icns in Resources */,
 				F6CDC4E70AE6D3E2005E7D4F /* folder.png in Resources */,
 				9325FF500FB54E00004EC67C /* MainMenu.xib in Resources */,
@@ -1727,9 +1727,9 @@
 				1D5FDDC91208E93600C46BA3 /* LineBuffer.m in Sources */,
 				874206500564169600CFC3F1 /* iTermApplicationDelegate.m in Sources */,
 				DDF0FD66062916F70080EF74 /* iTermApplication.m in Sources */,
-				1DCF3E8F122419D200AD56F1 /* BookmarkModel.m in Sources */,
-				1D6C50A81226EEFB00E0AA3E /* BookmarkListView.m in Sources */,
-				1DE5EBE9122B892900C736B0 /* BookmarksWindow.m in Sources */,
+				1DCF3E8F122419D200AD56F1 /* ProfileModel.m in Sources */,
+				1D6C50A81226EEFB00E0AA3E /* ProfileListView.m in Sources */,
+				1DE5EBE9122B892900C736B0 /* ProfilesWindow.m in Sources */,
 				1D93D33612695442007F741B /* DVR.m in Sources */,
 				1D93D350126974BC007F741B /* DVRDecoder.m in Sources */,
 				1D93D35412697529007F741B /* DVREncoder.m in Sources */,
@@ -1806,9 +1806,9 @@
 				1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */,
 				1D0B613D14A7C76500C57C33 /* TmuxWindowsTable.m in Sources */,
 				1DAE714E14AAF24200DA144B /* EquivalenceClassSet.m in Sources */,
-				1D06E7D414BC04510097C0ED /* BookmarkRow.m in Sources */,
-				1D06E7D814BC04E20097C0ED /* BookmarkModelWrapper.m in Sources */,
-				1D06E7DC14BC05DB0097C0ED /* BookmarkTableView.m in Sources */,
+				1D06E7D414BC04510097C0ED /* ProfileTableRow.m in Sources */,
+				1D06E7D814BC04E20097C0ED /* ProfileModelWrapper.m in Sources */,
+				1D06E7DC14BC05DB0097C0ED /* ProfileTableView.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1879,12 +1879,12 @@
 			name = PreferencePanel.xib;
 			sourceTree = "<group>";
 		};
-		9325FF460FB54DF1004EC67C /* BookmarksWindow.xib */ = {
+		9325FF460FB54DF1004EC67C /* ProfilesWindow.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
 				9325FF470FB54DF1004EC67C /* English */,
 			);
-			name = BookmarksWindow.xib;
+			name = ProfilesWindow.xib;
 			sourceTree = "<group>";
 		};
 		9325FF4E0FB54E00004EC67C /* MainMenu.xib */ = {

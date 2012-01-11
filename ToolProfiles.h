@@ -8,10 +8,10 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ToolbeltView.h"
-#import "BookmarkListView.h"
+#import "ProfileListView.h"
 
-@interface ToolProfiles : NSView <ToolbeltTool, BookmarkTableDelegate> {
-    BookmarkListView *listView_;
+@interface ToolProfiles : NSView <ToolbeltTool, ProfileListViewDelegate> {
+    ProfileListView *listView_;
     NSPopUpButton *popup_;
 }
 

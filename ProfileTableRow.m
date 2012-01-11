@@ -1,16 +1,16 @@
 //
-//  BookmarkRow.m
+//  ProfileTableRow.m
 //  iTerm
 //
 //  Created by George Nachman on 1/9/12.
 //
 
-#import "BookmarkRow.h"
+#import "ProfileTableRow.h"
 #import "ITAddressBookMgr.h"
 
-@implementation BookmarkRow
+@implementation ProfileTableRow
 
-- (id)initWithBookmark:(Bookmark*)bookmark underlyingModel:(BookmarkModel*)newUnderlyingModel;
+- (id)initWithBookmark:(Profile*)bookmark underlyingModel:(ProfileModel*)newUnderlyingModel;
 {
     self = [super init];
     if (self) {
@@ -27,18 +27,18 @@
     [super dealloc];
 }
 
-- (Bookmark*)bookmark
+- (Profile*)bookmark
 {
     return [underlyingModel bookmarkWithGuid:guid];
 }
 
 @end
 
-@implementation BookmarkRow (KeyValueCoding)
+@implementation ProfileTableRow (KeyValueCoding)
 
 - (NSNumber*)default
 {
-    BOOL isDefault = [[[self bookmark] objectForKey:KEY_GUID] isEqualToString:[[[BookmarkModel sharedInstance] defaultBookmark] objectForKey:KEY_GUID]];
+    BOOL isDefault = [[[self bookmark] objectForKey:KEY_GUID] isEqualToString:[[[ProfileModel sharedInstance] defaultBookmark] objectForKey:KEY_GUID]];
     return [NSNumber numberWithInt:isDefault ? IsDefault : IsNotDefault];
 }
 

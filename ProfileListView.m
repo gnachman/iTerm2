@@ -1,11 +1,11 @@
 /*
- **  BookmarkListView.m
+ **  ProfileListView.m
  **  iTerm
  **
  **  Created by George Nachman on 8/26/10.
  **  Project: iTerm
  **
- **  Description: Custom view that shows a search field and table of bookmarks
+ **  Description: Custom view that shows a search field and table of profiles
  **    and integrates them.
  **
  **  This program is free software; you can redistribute it and/or modify
@@ -22,21 +22,21 @@
  **  along with this program; if not, write to the Free Software
  */
 
-#import "BookmarkListView.h"
-#import "BookmarkModel.h"
+#import "ProfileListView.h"
+#import "ProfileModel.h"
 #import "ITAddressBookMgr.h"
 #import "PTYSession.h"
 #import "iTermSearchField.h"
-#import "BookmarkRow.h"
-#import "BookmarkModelWrapper.h"
-#import "BookmarkTableView.h"
+#import "ProfileTableRow.h"
+#import "ProfileModelWrapper.h"
+#import "ProfileTableView.h"
 
-#define BookmarkTableViewDataType @"iTerm2BookmarkGuid"
+#define kProfileTableViewDataType @"iTerm2ProfileGuid"
 
 const int kSearchWidgetHeight = 22;
 const int kInterWidgetMargin = 10;
 
-@implementation BookmarkListView
+@implementation ProfileListView
 
 
 - (void)awakeFromNib
@@ -55,15 +55,15 @@ const int kInterWidgetMargin = 10;
     NSInteger rowIndex = [rowIndexes firstIndex];
     NSMutableSet* guids = [[[NSMutableSet alloc] init] autorelease];
     while (rowIndex != NSNotFound) {
-        Bookmark* bookmark = [dataSource_ bookmarkAtIndex:rowIndex];
-        NSString* guid = [bookmark objectForKey:KEY_GUID];
+        Profile* profile = [dataSource_ profileAtIndex:rowIndex];
+        NSString* guid = [profile objectForKey:KEY_GUID];
         [guids addObject:guid];
         rowIndex = [rowIndexes indexGreaterThanIndex:rowIndex];
     }
 
     NSData *data = [NSKeyedArchiver archivedDataWithRootObject:guids];
-    [pboard declareTypes:[NSArray arrayWithObject:BookmarkTableViewDataType] owner:self];
-    [pboard setData:data forType:BookmarkTableViewDataType];
+    [pboard declareTypes:[NSArray arrayWithObject:kProfileTableViewDataType] owner:self];
+    [pboard setData:data forType:kProfileTableViewDataType];
     return YES;
 }
 
@@ -90,12 +90,12 @@ const int kInterWidgetMargin = 10;
               row:(NSInteger)row dropOperation:(NSTableViewDropOperation)operation
 {
     NSPasteboard* pboard = [info draggingPasteboard];
-    NSData* rowData = [pboard dataForType:BookmarkTableViewDataType];
+    NSData* rowData = [pboard dataForType:kProfileTableViewDataType];
     NSSet* guids = [NSKeyedUnarchiver unarchiveObjectWithData:rowData];
     NSMutableDictionary* map = [[[NSMutableDictionary alloc] init] autorelease];
 
     for (NSString* guid in guids) {
-        [map setObject:guid forKey:[NSNumber numberWithInt:[dataSource_ indexOfBookmarkWithGuid:guid]]];
+        [map setObject:guid forKey:[NSNumber numberWithInt:[dataSource_ indexOfProfileWithGuid:guid]]];
     }
     NSArray* sortedIndexes = [map allKeys];
     sortedIndexes = [sortedIndexes sortedArrayUsingSelector:@selector(compare:)];
@@ -103,7 +103,7 @@ const int kInterWidgetMargin = 10;
         NSString* guid = [map objectForKey:mapIndex];
 
         [dataSource_ moveBookmarkWithGuid:guid toIndex:row];
-        row = [dataSource_ indexOfBookmarkWithGuid:guid] + 1;
+        row = [dataSource_ indexOfProfileWithGuid:guid] + 1;
     }
 
     // Save the (perhaps partial) order of the current view in the underlying
@@ -126,7 +126,7 @@ const int kInterWidgetMargin = 10;
 
     NSMutableIndexSet* newIndexes = [[[NSMutableIndexSet alloc] init] autorelease];
     for (NSString* guid in guids) {
-        row = [dataSource_ indexOfBookmarkWithGuid:guid];
+        row = [dataSource_ indexOfProfileWithGuid:guid];
         [newIndexes addIndex:row];
     }
     [tableView_ selectRowIndexes:newIndexes byExtendingSelection:NO];
@@ -176,18 +176,18 @@ const int kInterWidgetMargin = 10;
     [searchCell setSearchMenuTemplate:cellMenu];
 }
 
-- (void)setUnderlyingDatasource:(BookmarkModel*)dataSource
+- (void)setUnderlyingDatasource:(ProfileModel*)dataSource
 {
     [dataSource_ autorelease];
-    dataSource_ = [[BookmarkModelWrapper alloc] initWithModel:dataSource];
+    dataSource_ = [[ProfileModelWrapper alloc] initWithModel:dataSource];
 }
 
 - (id)initWithFrame:(NSRect)frameRect
 {
-    return [self initWithFrame:frameRect model:[BookmarkModel sharedInstance]];
+    return [self initWithFrame:frameRect model:[ProfileModel sharedInstance]];
 }
 
-- (id)initWithFrame:(NSRect)frameRect model:(BookmarkModel*)dataSource
+- (id)initWithFrame:(NSRect)frameRect model:(ProfileModel*)dataSource
 {
     self = [super initWithFrame:frameRect];
 
@@ -226,9 +226,9 @@ const int kInterWidgetMargin = 10;
                           hasVerticalScroller:YES
                                    borderType:[scrollView_ borderType]];
 
-    tableView_ = [[BookmarkTableView alloc] initWithFrame:tableViewFrame];
+    tableView_ = [[ProfileTableView alloc] initWithFrame:tableViewFrame];
     [tableView_ setMenuHandler:self];
-    [tableView_ registerForDraggedTypes:[NSArray arrayWithObject:BookmarkTableViewDataType]];
+    [tableView_ registerForDraggedTypes:[NSArray arrayWithObject:kProfileTableViewDataType]];
     normalRowHeight_ = 21;
     rowHeightWithTags_ = 29;
     [tableView_ setRowHeight:rowHeightWithTags_];
@@ -281,7 +281,7 @@ const int kInterWidgetMargin = 10;
     return self;
 }
 
-- (BookmarkModelWrapper*)dataSource
+- (ProfileModelWrapper*)dataSource
 {
     return dataSource_;
 }
@@ -294,7 +294,7 @@ const int kInterWidgetMargin = 10;
     [super dealloc];
 }
 
-- (void)setDelegate:(NSObject<BookmarkTableDelegate> *)delegate
+- (void)setDelegate:(NSObject<ProfileListViewDelegate> *)delegate
 {
     delegate_ = delegate;
 }
@@ -303,7 +303,7 @@ const int kInterWidgetMargin = 10;
 
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
 {
-    return [delegate_ bookmarkTable:self menuForEvent:theEvent];
+    return [delegate_ profileTable:self menuForEvent:theEvent];
 }
 
 #pragma mark NSTableView data source
@@ -337,7 +337,7 @@ const int kInterWidgetMargin = 10;
 
 - (CGFloat)tableView:(NSTableView *)tableView heightOfRow:(NSInteger)rowIndex
 {
-    Bookmark* bookmark = [dataSource_ bookmarkAtIndex:rowIndex];
+    Profile* bookmark = [dataSource_ profileAtIndex:rowIndex];
     NSArray* tags = [bookmark objectForKey:KEY_TAGS];
     if ([tags count] == 0) {
         return normalRowHeight_;
@@ -348,7 +348,7 @@ const int kInterWidgetMargin = 10;
 
 - (id)tableView:(NSTableView *)aTableView objectValueForTableColumn:(NSTableColumn *)aTableColumn row:(NSInteger)rowIndex
 {
-    Bookmark* bookmark = [dataSource_ bookmarkAtIndex:rowIndex];
+    Profile* bookmark = [dataSource_ profileAtIndex:rowIndex];
 
     if (aTableColumn == tableColumn_) {
         NSColor* textColor;
@@ -408,7 +408,7 @@ const int kInterWidgetMargin = 10;
         rect.origin.y = 0;
         rect.size = size;
         [image lockFocus];
-        if ([[bookmark objectForKey:KEY_GUID] isEqualToString:[[[BookmarkModel sharedInstance] defaultBookmark] objectForKey:KEY_GUID]]) {
+        if ([[bookmark objectForKey:KEY_GUID] isEqualToString:[[[ProfileModel sharedInstance] defaultBookmark] objectForKey:KEY_GUID]]) {
             NSPoint destPoint;
             destPoint.x = (size.width - [starImage size].width) / 2;
             destPoint.y = (rowHeightWithTags_ - [starImage size].height) / 2;
@@ -455,8 +455,8 @@ const int kInterWidgetMargin = 10;
 
 - (BOOL)selectionShouldChangeInTableView:(NSTableView *)aTableView
 {
-    if (delegate_ && [delegate_ respondsToSelector:@selector(bookmarkTableSelectionWillChange:)]) {
-        [delegate_ bookmarkTableSelectionWillChange:self];
+    if (delegate_ && [delegate_ respondsToSelector:@selector(profileTableSelectionWillChange:)]) {
+        [delegate_ profileTableSelectionWillChange:self];
     }
     return YES;
 }
@@ -464,8 +464,8 @@ const int kInterWidgetMargin = 10;
 - (void)tableViewSelectionIsChanging:(NSNotification *)aNotification
 {
     // Mouse is being dragged across rows
-    if (delegate_ && [delegate_ respondsToSelector:@selector(bookmarkTableSelectionDidChange:)]) {
-        [delegate_ bookmarkTableSelectionDidChange:self];
+    if (delegate_ && [delegate_ respondsToSelector:@selector(profileTableSelectionDidChange:)]) {
+        [delegate_ profileTableSelectionDidChange:self];
     }
     [selectedGuids_ release];
     selectedGuids_ = [self selectedGuids];
@@ -485,8 +485,8 @@ const int kInterWidgetMargin = 10;
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification
 {
     // There was a click on a row
-    if (delegate_ && [delegate_ respondsToSelector:@selector(bookmarkTableSelectionDidChange:)]) {
-        [delegate_ bookmarkTableSelectionDidChange:self];
+    if (delegate_ && [delegate_ respondsToSelector:@selector(profileTableSelectionDidChange:)]) {
+        [delegate_ profileTableSelectionDidChange:self];
     }
     [selectedGuids_ release];
     selectedGuids_ = [self selectedGuids];
@@ -509,8 +509,8 @@ const int kInterWidgetMargin = 10;
         [selectedGuids_ release];
         selectedGuids_ = [self selectedGuids];
         [selectedGuids_ retain];
-        if ([delegate_ respondsToSelector:@selector(bookmarkTableSelectionDidChange:)]) {
-            [delegate_ bookmarkTableSelectionDidChange:self];
+        if ([delegate_ respondsToSelector:@selector(profileTableSelectionDidChange:)]) {
+            [delegate_ profileTableSelectionDidChange:self];
         }
     }
 }
@@ -524,7 +524,7 @@ const int kInterWidgetMargin = 10;
 
 - (void)selectRowByGuid:(NSString*)guid
 {
-    int theRow = [dataSource_ indexOfBookmarkWithGuid:guid];
+    int theRow = [dataSource_ indexOfProfileWithGuid:guid];
     if (theRow == -1) {
         [self deselectAll];
         return;
@@ -582,7 +582,7 @@ const int kInterWidgetMargin = 10;
     if (row < 0) {
         return nil;
     }
-    Bookmark* bookmark = [dataSource_ bookmarkAtIndex:row];
+    Profile* bookmark = [dataSource_ profileAtIndex:row];
     if (!bookmark) {
         return nil;
     }
@@ -595,7 +595,7 @@ const int kInterWidgetMargin = 10;
     NSIndexSet* indexes = [tableView_ selectedRowIndexes];
     NSUInteger theIndex = [indexes firstIndex];
     while (theIndex != NSNotFound) {
-        Bookmark* bookmark = [dataSource_ bookmarkAtIndex:theIndex];
+        Profile* bookmark = [dataSource_ profileAtIndex:theIndex];
         if (bookmark) {
             [result addObject:[bookmark objectForKey:KEY_GUID]];
         }
@@ -646,8 +646,8 @@ const int kInterWidgetMargin = 10;
 
 - (void)onDoubleClick:(id)sender
 {
-    if (delegate_ && [delegate_ respondsToSelector:@selector(bookmarkTableRowSelected:)]) {
-        [delegate_ bookmarkTableRowSelected:self];
+    if (delegate_ && [delegate_ respondsToSelector:@selector(profileTableRowSelected:)]) {
+        [delegate_ profileTableRowSelected:self];
     }
 }
 

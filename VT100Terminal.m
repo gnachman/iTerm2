@@ -2779,11 +2779,11 @@ static VT100TCC decode_string(unsigned char *datap,
             [[[SCREEN session] TEXTVIEW] logWorkingDirectoryAtLine:lineNumber
                                                      withDirectory:value];
         } else if ([key isEqualToString:@"SetProfile"]) {
-            Bookmark *newProfile;
+            Profile *newProfile;
             if ([value length]) {
-                newProfile = [[BookmarkModel sharedInstance] bookmarkWithName:value];
+                newProfile = [[ProfileModel sharedInstance] bookmarkWithName:value];
             } else {
-                newProfile = [[BookmarkModel sharedInstance] defaultBookmark];
+                newProfile = [[ProfileModel sharedInstance] defaultBookmark];
             }
             if (newProfile) {
                 NSString *name = [[[SCREEN session] addressBookEntry] objectForKey:KEY_NAME];

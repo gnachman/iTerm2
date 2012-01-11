@@ -1,5 +1,5 @@
 /*
- **  BookmarkModel.m
+ **  ProfileModel.m
  **  iTerm
  **
  **  Created by George Nachman on 8/24/10.
@@ -23,7 +23,7 @@
  */
 
 #import "ITAddressBookMgr.h"
-#import "BookmarkModel.h"
+#import "ProfileModel.h"
 #import "PreferencePanel.h"
 
 id gAltOpenAllRepresentedObject;
@@ -31,7 +31,7 @@ id gAltOpenAllRepresentedObject;
 // standard.
 int gMigrated;
 
-@implementation BookmarkModel
+@implementation ProfileModel
 
 + (void)initialize
 {
@@ -43,7 +43,7 @@ int gMigrated;
     return gMigrated;
 }
 
-- (BookmarkModel*)init
+- (ProfileModel*)init
 {
     bookmarks_ = [[NSMutableArray alloc] init];
     defaultBookmarkGuid_ = @"";
@@ -51,12 +51,12 @@ int gMigrated;
     return self;
 }
 
-+ (BookmarkModel*)sharedInstance
++ (ProfileModel*)sharedInstance
 {
-    static BookmarkModel* shared = nil;
+    static ProfileModel* shared = nil;
 
     if (!shared) {
-        shared = [[BookmarkModel alloc] init];
+        shared = [[ProfileModel alloc] init];
         shared->prefs_ = [NSUserDefaults standardUserDefaults];
         shared->postChanges_ = YES;
     }
@@ -64,12 +64,12 @@ int gMigrated;
     return shared;
 }
 
-+ (BookmarkModel*)sessionsInstance
++ (ProfileModel*)sessionsInstance
 {
-    static BookmarkModel* shared = nil;
+    static ProfileModel* shared = nil;
 
     if (!shared) {
-        shared = [[BookmarkModel alloc] init];
+        shared = [[ProfileModel alloc] init];
         shared->prefs_ = nil;
         shared->postChanges_ = NO;
     }
@@ -107,7 +107,7 @@ int gMigrated;
 }
 - (BOOL)doesBookmarkAtIndex:(int)theIndex matchFilter:(NSArray*)tokens
 {
-    Bookmark* bookmark = [self bookmarkAtIndex:theIndex];
+    Profile* bookmark = [self profileAtIndex:theIndex];
     NSArray* tags = [bookmark objectForKey:KEY_TAGS];
     NSArray* nameWords = [[bookmark objectForKey:KEY_NAME] componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
     for (int i = 0; i < [tokens count]; ++i) {
@@ -166,7 +166,7 @@ int gMigrated;
     return n;
 }
 
-- (Bookmark*)bookmarkAtIndex:(int)i
+- (Profile*)profileAtIndex:(int)i
 {
     if (i < 0 || i >= [bookmarks_ count]) {
         return nil;
@@ -174,7 +174,7 @@ int gMigrated;
     return [bookmarks_ objectAtIndex:i];
 }
 
-- (Bookmark*)bookmarkAtIndex:(int)theIndex withFilter:(NSString*)filter
+- (Profile*)profileAtIndex:(int)theIndex withFilter:(NSString*)filter
 {
     NSArray* tokens = [self parseFilter:filter];
     int count = [bookmarks_ count];
@@ -182,7 +182,7 @@ int gMigrated;
     for (int i = 0; i < count; ++i) {
         if ([self doesBookmarkAtIndex:i matchFilter:tokens]) {
             if (n == theIndex) {
-                return [self bookmarkAtIndex:i];
+                return [self profileAtIndex:i];
             }
             ++n;
         }
@@ -190,7 +190,7 @@ int gMigrated;
     return nil;
 }
 
-- (void)addBookmark:(Bookmark*)bookmark
+- (void)addBookmark:(Profile*)bookmark
 {
     [self addBookmark:bookmark inSortedOrder:NO];
 }
@@ -239,7 +239,7 @@ int gMigrated;
     }
 }
 
-- (void)addBookmark:(Bookmark*)bookmark inSortedOrder:(BOOL)sort
+- (void)addBookmark:(Profile*)bookmark inSortedOrder:(BOOL)sort
 {
 
     NSMutableDictionary *newBookmark = [[bookmark mutableCopy] autorelease];
@@ -258,12 +258,12 @@ int gMigrated;
         [newBookmark setObject:@"/bin/bash --login" forKey:KEY_COMMAND];
     }
     if (![newBookmark objectForKey:KEY_GUID]) {
-        [newBookmark setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
+        [newBookmark setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
     }
     if (![newBookmark objectForKey:KEY_DEFAULT_BOOKMARK]) {
         [newBookmark setObject:@"No" forKey:KEY_DEFAULT_BOOKMARK];
     }
-    [BookmarkModel migratePromptOnCloseInMutableBookmark:newBookmark];
+    [ProfileModel migratePromptOnCloseInMutableBookmark:newBookmark];
 
     bookmark = [[newBookmark copy] autorelease];
 
@@ -274,7 +274,7 @@ int gMigrated;
         NSString* newName = [bookmark objectForKey:KEY_NAME];
         BOOL hasBonjour = [self bookmark:bookmark hasTag:@"bonjour"];
         for (int i = 0; i < [bookmarks_ count]; ++i) {
-            Bookmark* bookmarkAtI = [bookmarks_ objectAtIndex:i];
+            Profile* bookmarkAtI = [bookmarks_ objectAtIndex:i];
             NSComparisonResult order = NSOrderedSame;
             BOOL currentHasBonjour = [self bookmark:bookmarkAtI hasTag:@"bonjour"];
             if (hasBonjour != currentHasBonjour) {
@@ -316,7 +316,7 @@ int gMigrated;
     [self postChangeNotification];
 }
 
-- (BOOL)bookmark:(Bookmark*)bookmark hasTag:(NSString*)tag
+- (BOOL)bookmark:(Profile*)bookmark hasTag:(NSString*)tag
 {
     NSArray* tags = [bookmark objectForKey:KEY_TAGS];
     return [tags containsObject:tag];
@@ -372,14 +372,14 @@ int gMigrated;
 
 - (void)removeBookmarkWithGuid:(NSString*)guid
 {
-    int i = [self indexOfBookmarkWithGuid:guid];
+    int i = [self indexOfProfileWithGuid:guid];
     if (i >= 0) {
         [self removeBookmarkAtIndex:i];
     }
 }
 
 // A change in bookmarks is journal-worthy only if the name, shortcut, tags, or guid changes.
-- (BOOL)bookmark:(Bookmark*)a differsJournalablyFrom:(Bookmark*)b
+- (BOOL)bookmark:(Profile*)a differsJournalablyFrom:(Profile*)b
 {
     // Any field that is shown in a view (profiles window, menus, bookmark list views, etc.) must
     // be a criteria for journalability for it to be updated immediately.
@@ -395,15 +395,15 @@ int gMigrated;
     }
 }
 
-- (void)setBookmark:(Bookmark*)bookmark atIndex:(int)i
+- (void)setBookmark:(Profile*)bookmark atIndex:(int)i
 {
-    Bookmark* orig = [bookmarks_ objectAtIndex:i];
+    Profile* orig = [bookmarks_ objectAtIndex:i];
     BOOL isDefault = NO;
     if ([[orig objectForKey:KEY_GUID] isEqualToString:defaultBookmarkGuid_]) {
         isDefault = YES;
     }
 
-    Bookmark* before = [bookmarks_ objectAtIndex:i];
+    Profile* before = [bookmarks_ objectAtIndex:i];
     BOOL needJournal = [self bookmark:bookmark differsJournalablyFrom:before];
     if (needJournal) {
         [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE bookmark:[bookmarks_ objectAtIndex:i] model:self]];
@@ -422,9 +422,9 @@ int gMigrated;
     }
 }
 
-- (void)setBookmark:(Bookmark*)bookmark withGuid:(NSString*)guid
+- (void)setBookmark:(Profile*)bookmark withGuid:(NSString*)guid
 {
-    int i = [self indexOfBookmarkWithGuid:guid];
+    int i = [self indexOfProfileWithGuid:guid];
     if (i >= 0) {
         [self setBookmark:bookmark atIndex:i];
     }
@@ -447,7 +447,7 @@ int gMigrated;
 {
     [bookmarks_ removeAllObjects];
     for (int i = 0; i < [prefs count]; ++i) {
-        Bookmark* bookmark = [prefs objectAtIndex:i];
+        Profile* bookmark = [prefs objectAtIndex:i];
         NSArray* tags = [bookmark objectForKey:KEY_TAGS];
         if (![tags containsObject:@"bonjour"]) {
             [self addBookmark:bookmark];
@@ -465,12 +465,12 @@ int gMigrated;
     return [uuidString autorelease];
 }
 
-- (int)indexOfBookmarkWithGuid:(NSString*)guid
+- (int)indexOfProfileWithGuid:(NSString*)guid
 {
-    return [self indexOfBookmarkWithGuid:guid withFilter:@""];
+    return [self indexOfProfileWithGuid:guid withFilter:@""];
 }
 
-- (int)indexOfBookmarkWithGuid:(NSString*)guid withFilter:(NSString*)filter
+- (int)indexOfProfileWithGuid:(NSString*)guid withFilter:(NSString*)filter
 {
     NSArray* tokens = [self parseFilter:filter];
     int count = [bookmarks_ count];
@@ -487,12 +487,12 @@ int gMigrated;
     return -1;
 }
 
-- (Bookmark*)defaultBookmark
+- (Profile*)defaultBookmark
 {
     return [self bookmarkWithGuid:defaultBookmarkGuid_];
 }
 
-- (Bookmark*)bookmarkWithName:(NSString*)name
+- (Profile*)bookmarkWithName:(NSString*)name
 {
     int count = [bookmarks_ count];
     for (int i = 0; i < count; ++i) {
@@ -503,7 +503,7 @@ int gMigrated;
     return nil;
 }
 
-- (Bookmark*)bookmarkWithGuid:(NSString*)guid
+- (Profile*)bookmarkWithGuid:(NSString*)guid
 {
     int count = [bookmarks_ count];
     for (int i = 0; i < count; ++i) {
@@ -529,7 +529,7 @@ int gMigrated;
 {
     NSMutableDictionary* temp = [[[NSMutableDictionary alloc] init] autorelease];
     for (int i = 0; i < [self numberOfBookmarks]; ++i) {
-        Bookmark* bookmark = [self bookmarkAtIndex:i];
+        Profile* bookmark = [self profileAtIndex:i];
         NSArray* tags = [bookmark objectForKey:KEY_TAGS];
         for (int j = 0; j < [tags count]; ++j) {
             NSString* tag = [tags objectAtIndex:j];
@@ -539,7 +539,7 @@ int gMigrated;
     return [temp allKeys];
 }
 
-- (Bookmark*)setObject:(id)object forKey:(NSString*)key inBookmark:(Bookmark*)bookmark
+- (Profile*)setObject:(id)object forKey:(NSString*)key inBookmark:(Profile*)bookmark
 {
     NSMutableDictionary* newDict = [NSMutableDictionary dictionaryWithDictionary:bookmark];
     if (object == nil) {
@@ -548,7 +548,7 @@ int gMigrated;
         [newDict setObject:object forKey:key];
     }
     NSString* guid = [bookmark objectForKey:KEY_GUID];
-    Bookmark* newBookmark = [NSDictionary dictionaryWithDictionary:newDict];
+    Profile* newBookmark = [NSDictionary dictionaryWithDictionary:newDict];
     [self setBookmark:newBookmark
              withGuid:guid];
     return newBookmark;
@@ -570,11 +570,11 @@ int gMigrated;
 
 - (void)moveGuid:(NSString*)guid toRow:(int)destinationRow
 {
-    int sourceRow = [self indexOfBookmarkWithGuid:guid];
+    int sourceRow = [self indexOfProfileWithGuid:guid];
     if (sourceRow < 0) {
         return;
     }
-    Bookmark* bookmark = [bookmarks_ objectAtIndex:sourceRow];
+    Profile* bookmark = [bookmarks_ objectAtIndex:sourceRow];
     [bookmark retain];
     [bookmarks_ removeObjectAtIndex:sourceRow];
     if (sourceRow < destinationRow) {
@@ -588,7 +588,7 @@ int gMigrated;
 {
     [journal_ addObject:[BookmarkJournalEntry journalWithAction:JOURNAL_REMOVE_ALL bookmark:nil model:self]];
     int i = 0;
-    for (Bookmark* b in bookmarks_) {
+    for (Profile* b in bookmarks_) {
         BookmarkJournalEntry* e = [BookmarkJournalEntry journalWithAction:JOURNAL_ADD bookmark:b model:self];
         e->index = i++;
         [journal_ addObject:e];
@@ -610,7 +610,7 @@ int gMigrated;
 - (void)dump
 {
     for (int i = 0; i < [self numberOfBookmarks]; ++i) {
-        Bookmark* bookmark = [self bookmarkAtIndex:i];
+        Profile* bookmark = [self profileAtIndex:i];
         NSLog(@"%d: %@ %@", i, [bookmark objectForKey:KEY_NAME], [bookmark objectForKey:KEY_GUID]);
     }
 }
@@ -623,7 +623,7 @@ int gMigrated;
 - (NSArray*)guids
 {
     NSMutableArray* guids = [NSMutableArray arrayWithCapacity:[bookmarks_ count]];
-    for (Bookmark* bookmark in bookmarks_) {
+    for (Profile* bookmark in bookmarks_) {
         [guids addObject:[bookmark objectForKey:KEY_GUID]];
     }
     return guids;
@@ -686,12 +686,12 @@ int gMigrated;
     return ([[items objectAtIndex:n-1] representedObject] == gAltOpenAllRepresentedObject);
 }
 
-- (int)positionOfBookmark:(Bookmark*)b startingAtItem:(int)skip inMenu:(NSMenu*)menu
+- (int)positionOfBookmark:(Profile*)b startingAtItem:(int)skip inMenu:(NSMenu*)menu
 {
     // Find position of bookmark in menu
     NSString* name = [b objectForKey:KEY_NAME];
     int N = [menu numberOfItems];
-    if ([BookmarkModel menuHasOpenAll:menu]) {
+    if ([ProfileModel menuHasOpenAll:menu]) {
         N -= 3;
     }
     NSArray* items = [menu itemArray];
@@ -717,7 +717,7 @@ int gMigrated;
 {
     // Find position of bookmark in menu
     int N = [menu numberOfItems];
-    if ([BookmarkModel menuHasOpenAll:menu]) {
+    if ([ProfileModel menuHasOpenAll:menu]) {
         N -= 3;
     }
     NSArray* items = [menu itemArray];
@@ -739,7 +739,7 @@ int gMigrated;
     return pos;
 }
 
-- (void)addBookmark:(Bookmark*)b
+- (void)addBookmark:(Profile*)b
              toMenu:(NSMenu*)menu
          atPosition:(int)pos
          withParams:(JournalParams*)params
@@ -764,7 +764,7 @@ int gMigrated;
     [item release];
 }
 
-- (void)addBookmark:(Bookmark*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params atPos:(int)theIndex
+- (void)addBookmark:(Profile*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params atPos:(int)theIndex
 {
     int pos;
     if (theIndex == -1) {
@@ -782,22 +782,22 @@ int gMigrated;
 
     // Add to tag submenus
     for (NSString* tag in [NSSet setWithArray:tags]) {
-        NSMenu* tagSubMenu = [BookmarkModel findOrCreateTagSubmenuInMenu:menu
+        NSMenu* tagSubMenu = [ProfileModel findOrCreateTagSubmenuInMenu:menu
                                                           startingAtItem:skip
                                                                 withName:tag
                                                                   params:params];
         [self addBookmark:b toMenu:tagSubMenu startingAtItem:0 withTags:nil params:params atPos:theIndex];
     }
 
-    if ([menu numberOfItems] > skip + 2 && ![BookmarkModel menuHasOpenAll:menu]) {
-        [BookmarkModel addOpenAllToMenu:menu params:params];
+    if ([menu numberOfItems] > skip + 2 && ![ProfileModel menuHasOpenAll:menu]) {
+        [ProfileModel addOpenAllToMenu:menu params:params];
     }
 }
 
 + (void)applyAddJournalEntry:(BookmarkJournalEntry*)e toMenu:(NSMenu*)menu startingAtItem:(int)skip params:(JournalParams*)params
 {
-    BookmarkModel* model = e->model;
-    Bookmark* b = [model bookmarkWithGuid:e->guid];
+    ProfileModel* model = e->model;
+    Profile* b = [model bookmarkWithGuid:e->guid];
     if (!b) {
         return;
     }
@@ -817,7 +817,7 @@ int gMigrated;
         NSMenuItem* item = [menu itemWithTitle:tag];
         NSMenu* submenu = [item submenu];
         if (submenu) {
-            [BookmarkModel applyRemoveJournalEntry:e toMenu:submenu startingAtItem:0 params:params];
+            [ProfileModel applyRemoveJournalEntry:e toMenu:submenu startingAtItem:0 params:params];
             if ([submenu numberOfItems] == 0) {
                 [menu removeItem:item];
             }
@@ -826,7 +826,7 @@ int gMigrated;
 
     // Remove "open all" section if it's no longer needed.
     // [0, ..., skip-1, bm1, bm1alt, separator, open all, open all alternate]
-    if (([BookmarkModel menuHasOpenAll:menu] && [menu numberOfItems] <= skip + 5)) {
+    if (([ProfileModel menuHasOpenAll:menu] && [menu numberOfItems] <= skip + 5)) {
         [menu removeItemAtIndex:[menu numberOfItems] - 1];
         [menu removeItemAtIndex:[menu numberOfItems] - 1];
         [menu removeItemAtIndex:[menu numberOfItems] - 1];
@@ -850,19 +850,19 @@ int gMigrated;
     for (BookmarkJournalEntry* e in journal) {
         switch (e->action) {
             case JOURNAL_ADD:
-                [BookmarkModel applyAddJournalEntry:e toMenu:menu startingAtItem:skip params:params];
+                [ProfileModel applyAddJournalEntry:e toMenu:menu startingAtItem:skip params:params];
                 break;
 
             case JOURNAL_REMOVE:
-                [BookmarkModel applyRemoveJournalEntry:e toMenu:menu startingAtItem:skip params:params];
+                [ProfileModel applyRemoveJournalEntry:e toMenu:menu startingAtItem:skip params:params];
                 break;
 
             case JOURNAL_REMOVE_ALL:
-                [BookmarkModel applyRemoveAllJournalEntry:e toMenu:menu startingAtItem:skip params:params];
+                [ProfileModel applyRemoveAllJournalEntry:e toMenu:menu startingAtItem:skip params:params];
                 break;
 
             case JOURNAL_SET_DEFAULT:
-                [BookmarkModel applySetDefaultJournalEntry:e toMenu:menu startingAtItem:skip params:params];
+                [ProfileModel applySetDefaultJournalEntry:e toMenu:menu startingAtItem:skip params:params];
                 break;
 
             default:
@@ -873,7 +873,7 @@ int gMigrated;
 
 + (void)applyJournal:(NSDictionary*)journal toMenu:(NSMenu*)menu params:(JournalParams*)params
 {
-    [BookmarkModel applyJournal:journal toMenu:menu startingAtItem:0 params:params];
+    [ProfileModel applyJournal:journal toMenu:menu startingAtItem:0 params:params];
 }
 
 
@@ -883,8 +883,8 @@ int gMigrated;
 
 
 + (BookmarkJournalEntry*)journalWithAction:(JournalAction)action
-                                  bookmark:(Bookmark*)bookmark
-                                     model:(BookmarkModel*)model
+                                  bookmark:(Profile*)bookmark
+                                     model:(ProfileModel*)model
 {
     BookmarkJournalEntry* entry = [[[BookmarkJournalEntry alloc] init] autorelease];
     entry->action = action;

@@ -30,7 +30,7 @@
 #import <Cocoa/Cocoa.h>
 #import "PTYTabView.h"
 #import "PTYWindow.h"
-#import "BookmarkListView.h"
+#import "ProfileListView.h"
 #import "WindowControllerInterface.h"
 #import "PasteboardHistory.h"
 #import "Autocomplete.h"
@@ -681,9 +681,9 @@ NSWindowDelegate,
 - (void)newTabWithBookmarkGuid:(NSString*)guid;
 
 // Splitting
-- (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark;
+- (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Profile*)theBookmark;
 - (void)splitVertically:(BOOL)isVertical withBookmarkGuid:(NSString*)guid;
-- (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark targetSession:(PTYSession*)targetSession;
+- (void)splitVertically:(BOOL)isVertical withBookmark:(Profile*)theBookmark targetSession:(PTYSession*)targetSession;
 - (void)splitVertically:(BOOL)isVertical
                  before:(BOOL)before
           addingSession:(PTYSession*)newSession
@@ -693,7 +693,7 @@ NSWindowDelegate,
 // selector for menu item to split current session vertically.
 - (IBAction)splitVertically:(id)sender;
 - (IBAction)splitHorizontally:(id)sender;
-- (void)splitVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark targetSession:(PTYSession*)targetSession;
+- (void)splitVertically:(BOOL)isVertical withBookmark:(Profile*)theBookmark targetSession:(PTYSession*)targetSession;
 
 // Change active pane.
 - (IBAction)selectPaneLeft:(id)sender;
@@ -811,7 +811,7 @@ NSWindowDelegate,
 - (int)_screenAtPoint:(NSPoint)p;
 
 // Allocate a new session and assign it a bookmark.
-- (PTYSession*)newSessionWithBookmark:(Bookmark*)bookmark;
+- (PTYSession*)newSessionWithBookmark:(Profile*)bookmark;
 
 // Execute the bookmark command in this session.
 - (void)runCommandInSession:(PTYSession*)aSession

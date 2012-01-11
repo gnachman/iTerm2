@@ -8,7 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 
-@class BookmarkListView;
+@class ProfileListView;
 @class PseudoTerminal;
 
 @interface SplitPanel : NSWindowController {
@@ -16,7 +16,7 @@
     IBOutlet NSTextField *label_;
     IBOutlet NSButton *splitButton_;
     BOOL isVertical_;
-    IBOutlet BookmarkListView *bookmarks_;
+    IBOutlet ProfileListView *bookmarks_;
     NSString *guid_;
 }
 

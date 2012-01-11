@@ -29,7 +29,8 @@
 #import "iTermController.h"
 #import "PseudoTerminal.h"
 #import "ITAddressBookMgr.h"
-#import "BookmarksWindow.h"
+#import "ProfilesWindow.h"
+#import "ProfileModel.h"
 
 NSString *NewToolbarItem = @"New";
 NSString *BookmarksToolbarItem = @"Profiles";
@@ -188,7 +189,7 @@ NSString *CommandToolbarItem = @"Command";
 
 - (IBAction)toggleBookmarksView:(id)sender
 {
-    [[BookmarksWindow sharedInstance] showWindow:self];
+    [[ProfilesWindow sharedInstance] showWindow:self];
 }
 
 @end
@@ -306,8 +307,8 @@ NSString *CommandToolbarItem = @"Command";
         params.alternateOpenAllSelector = @selector(newSessionsInWindow:);
         params.target = [iTermController sharedInstance];
 
-        [BookmarkModel applyJournal:[aNotification userInfo] toMenu:iconMenu_ startingAtItem:1 params:&params];
-        [BookmarkModel applyJournal:[aNotification userInfo] toMenu:textMenu_ params:&params];
+        [ProfileModel applyJournal:[aNotification userInfo] toMenu:iconMenu_ startingAtItem:1 params:&params];
+        [ProfileModel applyJournal:[aNotification userInfo] toMenu:textMenu_ params:&params];
     }
 }
 

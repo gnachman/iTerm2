@@ -64,7 +64,7 @@
 #import "PTYTab.h"
 #import "SessionView.h"
 #import "iTermApplication.h"
-#import "BookmarksWindow.h"
+#import "ProfilesWindow.h"
 #import "FindViewController.h"
 #import "SplitPanel.h"
 #import "ProcessCache.h"
@@ -459,7 +459,7 @@ NSString *sessionsKey = @"sessions";
     wellFormed_ = YES;
     [[self window] futureSetRestorable:YES];
     [[self window] futureSetRestorationClass:[PseudoTerminalRestorer class]];
-	terminalGuid_ = [[NSString stringWithFormat:@"pty-%@", [BookmarkModel freshGuid]] retain];
+	terminalGuid_ = [[NSString stringWithFormat:@"pty-%@", [ProfileModel freshGuid]] retain];
 
     return self;
 }
@@ -647,7 +647,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)newSessionInTabAtIndex:(id)sender
 {
-    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
+    Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
     if (bookmark) {
         [self addNewSession:bookmark];
     }
@@ -659,7 +659,7 @@ NSString *sessionsKey = @"sessions";
     for (NSMenuItem* item in [parent itemArray]) {
         if (![item isSeparatorItem] && ![item submenu]) {
             NSString* guid = [item representedObject];
-            Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+            Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
             if (bookmark) {
                 [self addNewSession:bookmark];
             }
@@ -1380,7 +1380,7 @@ NSString *sessionsKey = @"sessions";
         [TABVIEW selectTabViewItemAtIndex:tabIndex];
     }
 
-    Bookmark* addressbookEntry = [[[[[self tabs] objectAtIndex:0] sessions] objectAtIndex:0] addressBookEntry];
+    Profile* addressbookEntry = [[[[[self tabs] objectAtIndex:0] sessions] objectAtIndex:0] addressBookEntry];
     if ([addressbookEntry objectForKey:KEY_SPACE] &&
         [[addressbookEntry objectForKey:KEY_SPACE] intValue] == -1) {
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorCanJoinAllSpaces];
@@ -1737,7 +1737,7 @@ NSString *sessionsKey = @"sessions";
         // be called at all because it makes us key before closing itself.
         // If a popup is opening, though, we shouldn't close ourselves.
         if (![[NSApp keyWindow] isKindOfClass:[PopupWindow class]] &&
-            ![[[NSApp keyWindow] windowController] isKindOfClass:[BookmarksWindow class]] &&
+            ![[[NSApp keyWindow] windowController] isKindOfClass:[ProfilesWindow class]] &&
             ![[[NSApp keyWindow] windowController] isKindOfClass:[PreferencePanel class]]) {
             PtyLog(@"windowDidResignKey: new key window isn't popup so hide myself");
             if ([[[NSApp keyWindow] windowController] isKindOfClass:[PseudoTerminal class]]) {
@@ -2467,7 +2467,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)editSession:(PTYSession*)session
 {
-    Bookmark* bookmark = [session addressBookEntry];
+    Profile* bookmark = [session addressBookEntry];
     if (!bookmark) {
         return;
     }
@@ -2982,11 +2982,11 @@ NSString *sessionsKey = @"sessions";
 
 - (void)tabViewDoubleClickTabBar:(NSTabView *)tabView
 {
-    Bookmark* prototype = [[BookmarkModel sharedInstance] defaultBookmark];
+    Profile* prototype = [[ProfileModel sharedInstance] defaultBookmark];
     if (!prototype) {
         NSMutableDictionary* aDict = [[[NSMutableDictionary alloc] init] autorelease];
         [ITAddressBookMgr setDefaultsInBookmark:aDict];
-        [aDict setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
+        [aDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
         prototype = aDict;
     }
     [self addNewSession:prototype];
@@ -3036,11 +3036,11 @@ NSString *sessionsKey = @"sessions";
             break;
         case NSTabTextMovement:
         {
-            Bookmark* prototype = [[BookmarkModel sharedInstance] defaultBookmark];
+            Profile* prototype = [[ProfileModel sharedInstance] defaultBookmark];
             if (!prototype) {
                 NSMutableDictionary* aDict = [[[NSMutableDictionary alloc] init] autorelease];
                 [ITAddressBookMgr setDefaultsInBookmark:aDict];
-                [aDict setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
+                [aDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
                 prototype = aDict;
             }
             [self addNewSession:prototype
@@ -3430,7 +3430,7 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
-- (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Bookmark*)theBookmark
+- (BOOL)canSplitPaneVertically:(BOOL)isVertical withBookmark:(Profile*)theBookmark
 {
     if (![bottomBar isHidden]) {
     // Things get very complicated in this case. Just disallow it.
@@ -3463,7 +3463,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)newWindowWithBookmarkGuid:(NSString*)guid
 {
-    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+    Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     if (bookmark) {
         [[iTermController sharedInstance] launchBookmark:bookmark inTerminal:nil];
     }
@@ -3471,7 +3471,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)newTabWithBookmarkGuid:(NSString*)guid
 {
-    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+    Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     if (bookmark) {
         [[iTermController sharedInstance] launchBookmark:bookmark inTerminal:self];
     }
@@ -3483,7 +3483,7 @@ NSString *sessionsKey = @"sessions";
         [[[self currentSession] tmuxController] splitWindowPane:[[self currentSession] tmuxPane] vertically:isVertical];
         return;
     }
-    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+    Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
     if (bookmark) {
         [self splitVertically:isVertical withBookmark:bookmark targetSession:[self currentSession]];
     }
@@ -3529,7 +3529,7 @@ NSString *sessionsKey = @"sessions";
 }
 
 - (void)splitVertically:(BOOL)isVertical
-           withBookmark:(Bookmark*)theBookmark
+           withBookmark:(Profile*)theBookmark
           targetSession:(PTYSession*)targetSession
 {
     if ([targetSession isTmuxClient]) {
@@ -3558,16 +3558,16 @@ NSString *sessionsKey = @"sessions";
     [self runCommandInSession:newSession inCwd:oldCWD forObjectType:iTermPaneObject];
 }
 
-- (Bookmark*)_bookmarkToSplit
+- (Profile*)_bookmarkToSplit
 {
-    Bookmark* theBookmark = nil;
+    Profile* theBookmark = nil;
 
     // Get the bookmark this session was originally created with. But look it up from its GUID because
     // it might have changed since it was copied into originalAddressBookEntry when the bookmark was
     // first created.
-    Bookmark* originalBookmark = [[self currentSession] originalAddressBookEntry];
+    Profile* originalBookmark = [[self currentSession] originalAddressBookEntry];
     if (originalBookmark && [originalBookmark objectForKey:KEY_GUID]) {
-        theBookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:[originalBookmark objectForKey:KEY_GUID]];
+        theBookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[originalBookmark objectForKey:KEY_GUID]];
     }
 
     // If that fails, use its current bookmark.
@@ -3583,7 +3583,7 @@ NSString *sessionsKey = @"sessions";
     // I really don't think this'll ever happen, but there's always a default bookmark to fall back
     // on.
     if (!theBookmark) {
-        theBookmark = [[BookmarkModel sharedInstance] defaultBookmark];
+        theBookmark = [[ProfileModel sharedInstance] defaultBookmark];
     }
     return theBookmark;
 }
@@ -4603,7 +4603,7 @@ NSString *sessionsKey = @"sessions";
 
     // set some default parameters
     if ([aSession addressBookEntry] == nil) {
-        tempPrefs = [[BookmarkModel sharedInstance] defaultBookmark];
+        tempPrefs = [[ProfileModel sharedInstance] defaultBookmark];
         if (tempPrefs != nil) {
             // Use the default bookmark. This path is taken with applescript's
             // "make new session at the end of sessions" command.
@@ -4612,7 +4612,7 @@ NSString *sessionsKey = @"sessions";
             // get the hardcoded defaults
             NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
             [ITAddressBookMgr setDefaultsInBookmark:dict];
-            [dict setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
+            [dict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
             [aSession setAddressBookEntry:dict];
             tempPrefs = dict;
         }
@@ -5131,13 +5131,13 @@ NSString *sessionsKey = @"sessions";
 - (void)reloadBookmarks
 {
     for (PTYSession* session in [self allSessions]) {
-        Bookmark *oldBookmark = [session addressBookEntry];
+        Profile *oldBookmark = [session addressBookEntry];
         NSString* oldName = [oldBookmark objectForKey:KEY_NAME];
         [oldName retain];
         NSString* guid = [oldBookmark objectForKey:KEY_GUID];
-        Bookmark* newBookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+        Profile* newBookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         if (!newBookmark) {
-            newBookmark = [[BookmarkModel sessionsInstance] bookmarkWithGuid:guid];
+            newBookmark = [[ProfileModel sessionsInstance] bookmarkWithGuid:guid];
         }
         if (newBookmark && newBookmark != oldBookmark) {
             // Same guid but different pointer means it has changed.
@@ -5178,7 +5178,7 @@ NSString *sessionsKey = @"sessions";
     return result;
 }
 
-- (PTYSession*)newSessionWithBookmark:(Bookmark*)bookmark
+- (PTYSession*)newSessionWithBookmark:(Profile*)bookmark
 {
     assert(bookmark);
     PTYSession *aSession;
@@ -5205,7 +5205,7 @@ NSString *sessionsKey = @"sessions";
         NSString *pwd;
         BOOL isUTF8;
         // Grab the addressbook command
-        Bookmark* addressbookEntry = [aSession addressBookEntry];
+        Profile* addressbookEntry = [aSession addressBookEntry];
         BOOL loginSession;
         cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
 																		  isLoginSession:&loginSession
@@ -5704,14 +5704,14 @@ NSString *sessionsKey = @"sessions";
     NSString *session = [args objectForKey:@"session"];
     NSDictionary *abEntry;
 
-    abEntry = [[BookmarkModel sharedInstance] bookmarkWithName:session];
+    abEntry = [[ProfileModel sharedInstance] bookmarkWithName:session];
     if (abEntry == nil) {
-        abEntry = [[BookmarkModel sharedInstance] defaultBookmark];
+        abEntry = [[ProfileModel sharedInstance] defaultBookmark];
     }
     if (abEntry == nil) {
         NSMutableDictionary* aDict = [[[NSMutableDictionary alloc] init] autorelease];
         [ITAddressBookMgr setDefaultsInBookmark:aDict];
-        [aDict setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
+        [aDict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
         abEntry = aDict;
     }
 

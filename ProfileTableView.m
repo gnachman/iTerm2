@@ -1,15 +1,15 @@
 //
-//  BookmarkTableView.m
+//  ProfileTableView.m
 //  iTerm
 //
 //  Created by George Nachman on 1/9/12.
 //
 
-#import "BookmarkTableView.h"
+#import "ProfileTableView.h"
 
-@implementation BookmarkTableView
+@implementation ProfileTableView
 
-- (void)setMenuHandler:(NSObject<BookmarkTableMenuHandler> *)handler
+- (void)setMenuHandler:(NSObject<ProfileTableMenuHandler> *)handler
 {
     handler_ = handler;
 }

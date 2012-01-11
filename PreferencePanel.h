@@ -25,8 +25,8 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import "BookmarkModel.h"
-#import "BookmarkListView.h"
+#import "ProfileModel.h"
+#import "ProfileListView.h"
 #import "WindowArrangements.h"
 #import "TriggerController.h"
 #import "SmartSelectionController.h"
@@ -64,7 +64,7 @@
 typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 
 @interface PreferencePanel : NSWindowController <
-    BookmarkTableDelegate,
+    ProfileListViewDelegate,
     TriggerDelegate,
     SmartSelectionDelegate,
     NSTokenFieldDelegate,
@@ -72,7 +72,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     NSTextFieldDelegate,
     NSMenuDelegate>
 {
-    BookmarkModel* dataSource;
+    ProfileModel* dataSource;
     BOOL oneBookmarkMode;
     IBOutlet TriggerController *triggerWindowController_;
     IBOutlet SmartSelectionController *smartSelectionWindowController_;
@@ -350,7 +350,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     NSMutableDictionary *urlHandlersByGuid;
 
     // Bookmarks -----------------------------
-    IBOutlet BookmarkListView *bookmarksTableView;
+    IBOutlet ProfileListView *bookmarksTableView;
     IBOutlet NSTableColumn *shellImageColumn;
     IBOutlet NSTableColumn *nameShortcutColumn;
     IBOutlet NSButton *removeBookmarkButton;
@@ -388,7 +388,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     // Only visible in Get Info mode
     IBOutlet NSButton* copyToProfileButton;
     IBOutlet NSTextField* setProfileLabel;
-    IBOutlet BookmarkListView* setProfileBookmarkListView;
+    IBOutlet ProfileListView* setProfileBookmarkListView;
     IBOutlet NSButton* changeProfileButton;
 
     // Colors tab
@@ -527,7 +527,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* copyKeyboard;
     IBOutlet NSButton* copySession;
     IBOutlet NSButton* copyAdvanced;
-    IBOutlet BookmarkListView* copyTo;
+    IBOutlet ProfileListView* copyTo;
     IBOutlet NSButton* copyButton;
 
     // Keyboard ------------------------------
@@ -577,7 +577,7 @@ typedef enum {
 + (void)populatePopUpButtonWithBookmarks:(NSPopUpButton*)button selectedGuid:(NSString*)selectedGuid;
 
 - (BOOL)loadPrefs;
-- (id)initWithDataSource:(BookmarkModel*)model userDefaults:(NSUserDefaults*)userDefaults;
+- (id)initWithDataSource:(ProfileModel*)model userDefaults:(NSUserDefaults*)userDefaults;
 
 - (void)triggerChanged:(TriggerController *)triggerController;
 - (void)smartSelectionChanged:(SmartSelectionController *)smartSelectionController;
@@ -681,7 +681,7 @@ typedef enum {
 - (int)optimumTabWidth;
 - (float)hotkeyTermAnimationDuration;
 - (NSString *)searchCommand;
-- (Bookmark *)handlerBookmarkForURL:(NSString *)url;
+- (Profile *)handlerBookmarkForURL:(NSString *)url;
 - (int)numberOfRowsInTableView: (NSTableView *)aTableView;
 - (NSString*)keyComboAtIndex:(int)rowIndex originator:(id)originator;
 - (NSDictionary*)keyInfoAtIndex:(int)rowIndex originator:(id)originator;
@@ -735,10 +735,10 @@ typedef enum {
 - (IBAction)duplicateBookmark:(id)sender;
 - (IBAction)setAsDefault:(id)sender;
 - (NSArray *)tokenField:(NSTokenField *)tokenField completionsForSubstring:(NSString *)substring indexOfToken:(NSInteger)tokenIndex indexOfSelectedItem:(NSInteger *)selectedIndex;
-- (NSMenu*)bookmarkTable:(id)bookmarkTable menuForEvent:(NSEvent*)theEvent;
-- (void)bookmarkTableSelectionDidChange:(id)bookmarkTable;
-- (void)bookmarkTableSelectionWillChange:(id)aBookmarkTableView;
-- (void)bookmarkTableRowSelected:(id)bookmarkTable;
+- (NSMenu*)profileTable:(id)profileTable menuForEvent:(NSEvent*)theEvent;
+- (void)profileTableSelectionDidChange:(id)profileTable;
+- (void)profileTableSelectionWillChange:(id)profileTable;
+- (void)profileTableRowSelected:(id)profileTable;
 - (void)showBookmarks;
 - (void)openToBookmark:(NSString*)guid;
 - (id)tokenFieldCell:(NSTokenFieldCell *)tokenFieldCell representedObjectForEditingString:(NSString *)editingString;
@@ -762,7 +762,7 @@ typedef enum {
 - (BOOL)remappingDisabledTemporarily;
 - (BOOL)hotkeyTogglesWindow;
 - (BOOL)dockIconTogglesWindow;
-- (Bookmark*)hotkeyBookmark;
+- (Profile*)hotkeyBookmark;
 
 - (BOOL)importColorPresetFromFile:(NSString*)filename;
 

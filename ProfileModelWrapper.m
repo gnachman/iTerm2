@@ -1,15 +1,15 @@
 //
-//  BookmarkModelWrapper.m
+//  ProfileModelWrapper.m
 //  iTerm
 //
 //  Created by George Nachman on 1/9/12.
 //
 
-#import "BookmarkModelWrapper.h"
+#import "ProfileModelWrapper.h"
 
-@implementation BookmarkModelWrapper
+@implementation ProfileModelWrapper
 
-- (id)initWithModel:(BookmarkModel*)model
+- (id)initWithModel:(ProfileModel*)model
 {
     self = [super init];
     if (self) {
@@ -37,7 +37,7 @@
 - (void)dump
 {
     for (int i = 0; i < [self numberOfBookmarks]; ++i) {
-        NSLog(@"Dump of %p: At %d: %@", self, i, [[self bookmarkRowAtIndex:i] name]);
+        NSLog(@"Dump of %p: At %d: %@", self, i, [[self profileTableRowAtIndex:i] name]);
     }
 }
 
@@ -53,17 +53,17 @@
     return [bookmarks count];
 }
 
-- (BookmarkRow*)bookmarkRowAtIndex:(int)i
+- (ProfileTableRow *)profileTableRowAtIndex:(int)i
 {
     return [bookmarks objectAtIndex:i];
 }
 
-- (Bookmark*)bookmarkAtIndex:(int)i
+- (Profile*)profileAtIndex:(int)i
 {
     return [[bookmarks objectAtIndex:i] bookmark];
 }
 
-- (int)indexOfBookmarkWithGuid:(NSString*)guid
+- (int)indexOfProfileWithGuid:(NSString*)guid
 {
     for (int i = 0; i < [bookmarks count]; ++i) {
         if ([[[bookmarks objectAtIndex:i] guid] isEqualToString:guid]) {
@@ -73,7 +73,7 @@
     return -1;
 }
 
-- (BookmarkModel*)underlyingModel
+- (ProfileModel*)underlyingModel
 {
     return underlyingModel;
 }
@@ -84,8 +84,8 @@
     NSArray* filteredBookmarks = [underlyingModel bookmarkIndicesMatchingFilter:filter];
     for (NSNumber* n in filteredBookmarks) {
         int i = [n intValue];
-        //NSLog(@"Wrapper at %p add bookmark %@ at index %d", self, [[underlyingModel bookmarkAtIndex:i] objectForKey:KEY_NAME], i);
-        [bookmarks addObject:[[[BookmarkRow alloc] initWithBookmark:[underlyingModel bookmarkAtIndex:i] 
+        //NSLog(@"Wrapper at %p add bookmark %@ at index %d", self, [[underlyingModel profileAtIndex:i] objectForKey:KEY_NAME], i);
+        [bookmarks addObject:[[[ProfileTableRow alloc] initWithBookmark:[underlyingModel profileAtIndex:i] 
                                                     underlyingModel:underlyingModel] autorelease]];
     }
     [self sort];
@@ -94,12 +94,12 @@
 - (void)moveBookmarkWithGuid:(NSString*)guid toIndex:(int)row
 {
     // Make the change locally.
-    int origRow = [self indexOfBookmarkWithGuid:guid];
+    int origRow = [self indexOfProfileWithGuid:guid];
     if (origRow < row) {
         [bookmarks insertObject:[bookmarks objectAtIndex:origRow] atIndex:row];
         [bookmarks removeObjectAtIndex:origRow];
     } else if (origRow > row) {
-        BookmarkRow* temp = [[bookmarks objectAtIndex:origRow] retain];
+        ProfileTableRow* temp = [[bookmarks objectAtIndex:origRow] retain];
         [bookmarks removeObjectAtIndex:origRow];
         [bookmarks insertObject:temp atIndex:row];
         [temp release];
@@ -113,7 +113,7 @@
     // bookmarks fit into the order. This also prevents instability when the
     // reload happens.
     int i = 0;
-    for (BookmarkRow* theRow in bookmarks) {
+    for (ProfileTableRow* theRow in bookmarks) {
         [underlyingModel moveGuid:[theRow guid] toRow:i++];
     }
     [underlyingModel rebuildMenus];

@@ -7,7 +7,7 @@
 //
 
 #import "SplitPanel.h"
-#import "BookmarkListView.h"
+#import "ProfileListView.h"
 
 @implementation SplitPanel
 
@@ -87,16 +87,16 @@
 
 #pragma mark BookmarkListView delegate methods
 
-- (void)bookmarkTableSelectionDidChange:(id)bookmarkTable
+- (void)profileTableSelectionDidChange:(id)profileTable
 {
-    [splitButton_ setEnabled:([bookmarkTable selectedGuid] != nil)];
+    [splitButton_ setEnabled:([profileTable selectedGuid] != nil)];
 }
 
-- (void)bookmarkTableSelectionWillChange:(id)bookmarkTable
+- (void)profileTableSelectionWillChange:(id)profileTable
 {
 }
 
-- (void)bookmarkTableRowSelected:(id)bookmarkTable
+- (void)profileTableRowSelected:(id)profileTable
 {
 }
 

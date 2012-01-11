@@ -41,7 +41,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "TmuxLayoutParser.h"
-#import "BookmarkModel.h"
+#import "ProfileModel.h"
 #import "IntervalMap.h"
 #import "TmuxDashboardController.h"
 
@@ -488,7 +488,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         }
 }
 
-+ (NSSize)cellSizeForBookmark:(Bookmark *)bookmark
++ (NSSize)cellSizeForBookmark:(Profile *)bookmark
 {
     NSFont *font;
     double hspace;
@@ -513,7 +513,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         // Root is just slightly smaller than flexibleView, by less than the size of a character.
         // Set flexible view's color to the default background color for tmux tabs.
         NSColor *bgColor;
-        Bookmark *bm = [PTYTab tmuxBookmark];
+        Profile *bm = [PTYTab tmuxBookmark];
         bgColor = [ITAddressBookMgr decodeColor:[bm objectForKey:KEY_BACKGROUND_COLOR]];
         [flexibleView_ setColor:bgColor];
     } else {
@@ -2194,7 +2194,7 @@ static NSString* FormatRect(NSRect r) {
 
 + (NSSize)_recursiveSetSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
                                  showTitles:(BOOL)showTitles
-                                   bookmark:(Bookmark *)bookmark
+                                   bookmark:(Profile *)bookmark
                                  inTerminal:(PseudoTerminal *)term
 {
     double splitterSize = 1;  // hack: should use -[NSSplitView dividerThickness], but don't have an instance yet.
@@ -2240,7 +2240,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 + (NSDictionary *)_recursiveArrangementForDecoratedTmuxParseTree:(NSDictionary *)parseTree
-                                                        bookmark:(Bookmark *)bookmark
+                                                        bookmark:(Profile *)bookmark
                                                           origin:(NSPoint)origin
                                                 activeWindowPane:(int)activeWp
 {
@@ -2302,7 +2302,7 @@ static NSString* FormatRect(NSRect r) {
 }
 
 + (NSDictionary *)arrangementForDecoratedTmuxParseTree:(NSDictionary *)parseTree
-                                              bookmark:(Bookmark *)bookmark
+                                              bookmark:(Profile *)bookmark
                                       activeWindowPane:(int)activeWp
 {
     NSMutableDictionary *arrangement = [NSMutableDictionary dictionary];
@@ -2333,18 +2333,18 @@ static NSString* FormatRect(NSRect r) {
     return tmuxWindow_;
 }
 
-+ (Bookmark *)tmuxBookmark
++ (Profile *)tmuxBookmark
 {
-    Bookmark *bookmark = [[BookmarkModel sharedInstance] bookmarkWithName:@"tmux"];
+    Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithName:@"tmux"];
     if (!bookmark) {
-        Bookmark *defaultBookmark = [[BookmarkModel sharedInstance] defaultBookmark];
+        Profile *defaultBookmark = [[ProfileModel sharedInstance] defaultBookmark];
         NSMutableDictionary *tmuxBookmark = [[defaultBookmark mutableCopy] autorelease];
         [tmuxBookmark setObject:@"tmux" forKey:KEY_NAME];
-        [tmuxBookmark setObject:[BookmarkModel freshGuid] forKey:KEY_GUID];
+        [tmuxBookmark setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
                 [tmuxBookmark setObject:[NSNumber numberWithInt:1000]
                                                  forKey:KEY_SCROLLBACK_LINES];
-        [[BookmarkModel sharedInstance] addBookmark:tmuxBookmark];
-        [[BookmarkModel sharedInstance] postChangeNotification];
+        [[ProfileModel sharedInstance] addBookmark:tmuxBookmark];
+        [[ProfileModel sharedInstance] postChangeNotification];
         bookmark = tmuxBookmark;
     }
     return bookmark;
@@ -2355,25 +2355,25 @@ static NSString* FormatRect(NSRect r) {
            hSpacing:(double)hs
            vSpacing:(double)vs
 {
-    [[BookmarkModel sharedInstance] setObject:[ITAddressBookMgr descFromFont:font]
+    [[ProfileModel sharedInstance] setObject:[ITAddressBookMgr descFromFont:font]
                                        forKey:KEY_NORMAL_FONT
                                    inBookmark:[PTYTab tmuxBookmark]];
-    [[BookmarkModel sharedInstance] setObject:[ITAddressBookMgr descFromFont:nafont]
+    [[ProfileModel sharedInstance] setObject:[ITAddressBookMgr descFromFont:nafont]
                                        forKey:KEY_NON_ASCII_FONT
                                    inBookmark:[PTYTab tmuxBookmark]];
-    [[BookmarkModel sharedInstance] setObject:[NSNumber numberWithDouble:hs]
+    [[ProfileModel sharedInstance] setObject:[NSNumber numberWithDouble:hs]
                                        forKey:KEY_HORIZONTAL_SPACING
                                    inBookmark:[PTYTab tmuxBookmark]];
-    [[BookmarkModel sharedInstance] setObject:[NSNumber numberWithDouble:vs]
+    [[ProfileModel sharedInstance] setObject:[NSNumber numberWithDouble:vs]
                                        forKey:KEY_VERTICAL_SPACING
                                    inBookmark:[PTYTab tmuxBookmark]];
-    [[BookmarkModel sharedInstance] postChangeNotification];
+    [[ProfileModel sharedInstance] postChangeNotification];
 }
 
 + (void)setSizesInTmuxParseTree:(NSMutableDictionary *)parseTree
                      inTerminal:(PseudoTerminal *)term
 {
-    Bookmark *bookmark = [PTYTab tmuxBookmark];
+    Profile *bookmark = [PTYTab tmuxBookmark];
 
     NSArray *theChildren = [parseTree objectForKey:kLayoutDictChildrenKey];
     BOOL haveMultipleSessions = ([theChildren count] > 1);
@@ -2695,7 +2695,7 @@ static NSString* FormatRect(NSRect r) {
 
 - (void)resizeViewsInViewHierarchy:(NSView *)view forNewLayout:(NSMutableDictionary *)parseTree
 {
-    Bookmark *bookmark = [[BookmarkModel sharedInstance] defaultBookmark];
+    Profile *bookmark = [[ProfileModel sharedInstance] defaultBookmark];
     NSDictionary *arrangement = [PTYTab _recursiveArrangementForDecoratedTmuxParseTree:parseTree
                                                                               bookmark:bookmark
                                                                                 origin:NSZeroPoint

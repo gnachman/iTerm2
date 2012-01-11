@@ -3633,14 +3633,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)splitTextViewVertically:(id)sender
 {
     [[[[dataSource session] tab] realParentWindow] splitVertically:YES
-                                                      withBookmark:[[BookmarkModel sharedInstance] defaultBookmark]
+                                                      withBookmark:[[ProfileModel sharedInstance] defaultBookmark]
                                                      targetSession:[dataSource session]];
 }
 
 - (void)splitTextViewHorizontally:(id)sender
 {
     [[[[dataSource session] tab] realParentWindow] splitVertically:NO
-                                                      withBookmark:[[BookmarkModel sharedInstance] defaultBookmark]
+                                                      withBookmark:[[ProfileModel sharedInstance] defaultBookmark]
                                                      targetSession:[dataSource session]];
 }
 
@@ -7620,7 +7620,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     url = [NSURL URLWithString:escapedString];
     [escapedString release];
 
-    Bookmark *bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:[url scheme]];
+    Profile *bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:[url scheme]];
 
     if (bm != nil)  {
         PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];

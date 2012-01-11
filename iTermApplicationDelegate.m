@@ -35,7 +35,7 @@
 #import "PTYWindow.h"
 #import "PTYTextView.h"
 #import "NSStringITerm.h"
-#import "BookmarksWindow.h"
+#import "ProfilesWindow.h"
 #import "PTYTab.h"
 #import "iTermExpose.h"
 #include <unistd.h>
@@ -328,7 +328,7 @@ static BOOL hasBecomeActive = NO;
             } else {
                 // Not a URL
                 NSString *format;
-                if ([BookmarkModel migrated]) {
+                if ([ProfileModel migrated]) {
                     format = @"Your preferences were modified by iTerm2 as part of an upgrade process (and you might have changed them, too). "
                     @"Since you load prefs from a custom location, your local preferences will be lost if not copied to %@.";
                 } else {
@@ -638,10 +638,10 @@ static BOOL hasBecomeActive = NO;
         NSLog(@"Bad host: %@", [url host]);
         return;
     }
-    Bookmark *profile = nil;
+    Profile *profile = nil;
     if ([query objectForKey:@"profile"]) {
         NSString *bookmarkName = [[query objectForKey:@"profile"] stringByReplacingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
-        profile = [[BookmarkModel sharedInstance] bookmarkWithName:bookmarkName];
+        profile = [[ProfileModel sharedInstance] bookmarkWithName:bookmarkName];
     }
     PTYSession *aSession;
     if (!doLaunch) {
@@ -731,7 +731,7 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)showBookmarkWindow:(id)sender
 {
-    [[BookmarksWindow sharedInstance] showWindow:sender];
+    [[ProfilesWindow sharedInstance] showWindow:sender];
 }
 
 - (IBAction)instantReplayPrev:(id)sender
@@ -1152,7 +1152,7 @@ void DebugLog(NSString* value)
     params.alternateOpenAllSelector = @selector(newSessionsInWindow:);
     params.target = [iTermController sharedInstance];
 
-    [BookmarkModel applyJournal:[aNotification userInfo]
+    [ProfileModel applyJournal:[aNotification userInfo]
                          toMenu:bookmarkMenu
                  startingAtItem:5
                          params:&params];

@@ -190,21 +190,21 @@
              inDictionary:(NSMutableDictionary*)km;
 
 // Return a shortcut (0xKeycode-0xModifier) by index from a bookmark.
-+ (NSString*)shortcutAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark;
++ (NSString*)shortcutAtIndex:(int)rowIndex forBookmark:(Profile*)bookmark;
 
 // Return a shortcut (0xKeycode-0xModifier) from the global keymappings.
 + (NSString*)globalShortcutAtIndex:(int)rowIndex;
 
 // Return a keymapping dict (having keys Action, Text) at a given index from a
 // bookmark.
-+ (NSDictionary*)mappingAtIndex:(int)rowIndex forBookmark:(Bookmark*)bookmark;
++ (NSDictionary*)mappingAtIndex:(int)rowIndex forBookmark:(Profile*)bookmark;
 
 // Return a keymapping dict (having keys Action, Text) at a given index from the
 // global key mappings.
 + (NSDictionary*)globalMappingAtIndex:(int)rowIndex;
 
 // Return the number of key mappings in a bookmark.
-+ (int)numberOfMappingsForBookmark:(Bookmark*)bmDict;
++ (int)numberOfMappingsForBookmark:(Profile*)bmDict;
 
 // Remove a keymapping with a given keycode and modifier mask from a bookmark.
 + (void)removeMappingWithCode:(unichar)keyCode
@@ -235,13 +235,13 @@
 + (BOOL)haveGlobalKeyMappingForKeyString:(NSString*)keyString;
 
 // True if a bookmark has a mapping for a 0xKeycode-0xModifiers keystring.
-+ (BOOL)haveKeyMappingForKeyString:(NSString*)keyString inBookmark:(Bookmark*)bookmark;
++ (BOOL)haveKeyMappingForKeyString:(NSString*)keyString inBookmark:(Profile*)bookmark;
 
 // Remove any keymappings that reference a guid from either a bookmark or the global
 // keymappings (if bookmark is nil). If a bookmark is specified but no change is made then
 // it returns nil. If a bookmark is specified and changed, an autorelease copy of the modified
 // bookmark is returned.
-+ (Bookmark*)removeMappingsReferencingGuid:(NSString*)guid fromBookmark:(Bookmark*)bookmark;
++ (Profile*)removeMappingsReferencingGuid:(NSString*)guid fromBookmark:(Profile*)bookmark;
 
 @end
 

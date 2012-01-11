@@ -1,5 +1,5 @@
 /*
- **  BookmarkModel.h
+ **  ProfileModel.h
  **  iTerm
  **
  **  Created by George Nachman on 8/24/10.
@@ -26,7 +26,7 @@
 
 #define BMKEY_BOOKMARKS_ARRAY @"Bookmarks Array"
 
-typedef NSDictionary Bookmark;
+typedef NSDictionary Profile;
 typedef struct {
     SEL selector;                  // normal action
     SEL alternateSelector;         // opt+click
@@ -35,7 +35,7 @@ typedef struct {
     id target;                     // receiver of selector
 } JournalParams;
 
-@interface BookmarkModel : NSObject {
+@interface ProfileModel : NSObject {
     NSMutableArray* bookmarks_;
     NSString* defaultBookmarkGuid_;
 
@@ -46,36 +46,36 @@ typedef struct {
     BOOL postChanges_;              // should change notifications be posted?
 }
 
-+ (BookmarkModel*)sharedInstance;
-+ (BookmarkModel*)sessionsInstance;
++ (ProfileModel*)sharedInstance;
++ (ProfileModel*)sessionsInstance;
 + (NSString*)freshGuid;
 + (void)migratePromptOnCloseInMutableBookmark:(NSMutableDictionary *)dict;
 + (BOOL)migrated;
 - (int)numberOfBookmarks;
 - (int)numberOfBookmarksWithFilter:(NSString*)filter;
 - (NSArray*)bookmarkIndicesMatchingFilter:(NSString*)filter;
-- (int)indexOfBookmarkWithGuid:(NSString*)guid;
-- (int)indexOfBookmarkWithGuid:(NSString*)guid withFilter:(NSString*)filter;
-- (Bookmark*)bookmarkAtIndex:(int)index;
-- (Bookmark*)bookmarkAtIndex:(int)index withFilter:(NSString*)filter;
-- (void)addBookmark:(Bookmark*)bookmark;
-- (void)addBookmark:(Bookmark*)bookmark inSortedOrder:(BOOL)sort;
+- (int)indexOfProfileWithGuid:(NSString*)guid;
+- (int)indexOfProfileWithGuid:(NSString*)guid withFilter:(NSString*)filter;
+- (Profile*)profileAtIndex:(int)index;
+- (Profile*)profileAtIndex:(int)index withFilter:(NSString*)filter;
+- (void)addBookmark:(Profile*)bookmark;
+- (void)addBookmark:(Profile*)bookmark inSortedOrder:(BOOL)sort;
 - (void)removeBookmarkWithGuid:(NSString*)guid;
 - (void)removeBookmarksAtIndices:(NSArray*)indices;
 - (void)removeBookmarkAtIndex:(int)index;
 - (void)removeBookmarkAtIndex:(int)index withFilter:(NSString*)filter;
-- (void)setBookmark:(Bookmark*)bookmark atIndex:(int)index;
-- (void)setBookmark:(Bookmark*)bookmark withGuid:(NSString*)guid;
+- (void)setBookmark:(Profile*)bookmark atIndex:(int)index;
+- (void)setBookmark:(Profile*)bookmark withGuid:(NSString*)guid;
 - (void)removeAllBookmarks;
 - (NSArray*)rawData;
 - (void)load:(NSArray*)prefs;
-- (Bookmark*)defaultBookmark;
-- (Bookmark*)bookmarkWithName:(NSString*)name;
-- (Bookmark*)bookmarkWithGuid:(NSString*)guid;
+- (Profile*)defaultBookmark;
+- (Profile*)bookmarkWithName:(NSString*)name;
+- (Profile*)bookmarkWithGuid:(NSString*)guid;
 - (int)indexOfBookmarkWithName:(NSString*)name;
 - (NSArray*)allTags;
-- (BOOL)bookmark:(Bookmark*)bookmark hasTag:(NSString*)tag;
-- (Bookmark*)setObject:(id)object forKey:(NSString*)key inBookmark:(Bookmark*)bookmark;
+- (BOOL)bookmark:(Profile*)bookmark hasTag:(NSString*)tag;
+- (Profile*)setObject:(id)object forKey:(NSString*)key inBookmark:(Profile*)bookmark;
 - (void)setDefaultByGuid:(NSString*)guid;
 - (void)moveGuid:(NSString*)guid toRow:(int)row;
 - (void)rebuildMenus;
@@ -84,7 +84,7 @@ typedef struct {
 - (void)dump;
 - (NSArray*)bookmarks;
 - (NSArray*)guids;
-- (void)addBookmark:(Bookmark*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params atPos:(int)pos;
+- (void)addBookmark:(Profile*)b toMenu:(NSMenu*)menu startingAtItem:(int)skip withTags:(NSArray*)tags params:(JournalParams*)params atPos:(int)pos;
 
 // Tell all listeners that the model has changed.
 - (void)postChangeNotification;
@@ -111,14 +111,14 @@ typedef enum {
   @public
     JournalAction action;
     NSString* guid;
-    BookmarkModel* model;
+    ProfileModel* model;
     // Tags before the action was applied.
     NSArray* tags;
     int index;  // Index of bookmark
 }
 
 + (BookmarkJournalEntry*)journalWithAction:(JournalAction)action
-                                  bookmark:(Bookmark*)bookmark
-                                     model:(BookmarkModel*)model;
+                                  bookmark:(Profile*)bookmark
+                                     model:(ProfileModel*)model;
 
 @end

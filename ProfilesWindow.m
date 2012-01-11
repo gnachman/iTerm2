@@ -1,5 +1,5 @@
 /*
-**  BookmarksWindow.m
+**  ProfilesWindow.m
 **  iTerm
 **
 **  Created by George Nachman on 8/29/10.
@@ -22,8 +22,8 @@
 **  along with this program; if not, write to the Free Software
 */
 
-#import "BookmarksWindow.h"
-#import "BookmarkModel.h"
+#import "ProfilesWindow.h"
+#import "ProfileModel.h"
 #import "iTermController.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
@@ -35,13 +35,13 @@ typedef enum {
     NO_PANE // no gane
 } PaneMode;
 
-@implementation BookmarksWindow
+@implementation ProfilesWindow
 
-+ (BookmarksWindow*)sharedInstance
++ (ProfilesWindow*)sharedInstance
 {
-    static BookmarksWindow* instance;
+    static ProfilesWindow* instance;
     if (!instance) {
-        instance = [[BookmarksWindow alloc] init];
+        instance = [[ProfilesWindow alloc] init];
     }
     return instance;
 }
@@ -96,11 +96,11 @@ typedef enum {
     BOOL isFirst = YES;
     for (NSString* guid in guids) {
         PseudoTerminal* terminal = nil;
-        BOOL openInTab = inTab & !(isFirst && firstInWindow);
+        BOOL openInTab = inTab && !(isFirst && firstInWindow);
         if (openInTab) {
             terminal = [[iTermController sharedInstance] currentTerminal];
         }
-        Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+        Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         if (inPane != NO_PANE && terminal != nil) {
             [terminal splitVertically:(inPane == VERTICAL_PANE)
                          withBookmark:bookmark
@@ -115,7 +115,8 @@ typedef enum {
 
 - (IBAction)openBookmarkInVerticalPane:(id)sender
 {
-    [self _openBookmarkInTab:YES firstInWindow:NO inPane:VERTICAL_PANE];
+    BOOL windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
+    [self _openBookmarkInTab:YES firstInWindow:!windowExists inPane:VERTICAL_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];
     }
@@ -123,7 +124,8 @@ typedef enum {
 
 - (IBAction)openBookmarkInHorizontalPane:(id)sender
 {
-    [self _openBookmarkInTab:YES firstInWindow:NO inPane:HORIZONTAL_PANE];
+    BOOL windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
+    [self _openBookmarkInTab:YES firstInWindow:!windowExists inPane:HORIZONTAL_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];
     }
@@ -147,25 +149,27 @@ typedef enum {
 
 - (void)updatePaneButtons:(id)sender
 {
-    [self bookmarkTableSelectionDidChange:tableView_];
+    [self profileTableSelectionDidChange:tableView_];
 }
 
 
-- (void)bookmarkTableSelectionDidChange:(id)bookmarkTable
+- (void)profileTableSelectionDidChange:(id)profileTable
 {
     NSSet* guids = [tableView_ selectedGuids];
     if ([guids count]) {
         BOOL windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
-        [horizontalPaneButton_ setEnabled:windowExists];
-        [verticalPaneButton_ setEnabled:windowExists];
         // tabButton is enabled even if windowExists==false because its shortcut is enter and we
         // don't want to break that.
         [tabButton_ setEnabled:YES];
         [windowButton_ setEnabled:YES];
         if ([guids count] > 1) {
             [newTabsInNewWindowButton_ setEnabled:YES];
+            [horizontalPaneButton_ setEnabled:YES];
+            [verticalPaneButton_ setEnabled:YES];
         } else {
             [newTabsInNewWindowButton_ setEnabled:NO];
+            [horizontalPaneButton_ setEnabled:windowExists];
+            [verticalPaneButton_ setEnabled:windowExists];
         }
     } else {
         [horizontalPaneButton_ setEnabled:NO];
@@ -178,16 +182,16 @@ typedef enum {
     }
 }
 
-- (void)bookmarkTableSelectionWillChange:(id)bookmarkTable
+- (void)profileTableSelectionWillChange:(id)profileTable
 {
 }
 
-- (void)bookmarkTableRowSelected:(id)bookmarkTable
+- (void)profileTableRowSelected:(id)profileTable
 {
     NSSet* guids = [tableView_ selectedGuids];
     for (NSString* guid in guids) {
         PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
-        Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+        Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         [[iTermController sharedInstance] launchBookmark:bookmark
                                               inTerminal:terminal];
     }
@@ -210,11 +214,11 @@ typedef enum {
     }
 }
 
-- (NSMenu*)bookmarkTable:(id)bookmarkTable menuForEvent:(NSEvent*)theEvent
+- (NSMenu*)profileTable:(id)profileTable menuForEvent:(NSEvent*)theEvent
 {
     NSMenu* menu =[[[NSMenu alloc] initWithTitle:@"Contextual Menu"] autorelease];
 
-    int count = [[bookmarkTable selectedGuids] count];
+    int count = [[profileTable selectedGuids] count];
     if (count == 1) {
         [menu addItemWithTitle:@"Edit Bookmark..."
                         action:@selector(editSelectedBookmark:)

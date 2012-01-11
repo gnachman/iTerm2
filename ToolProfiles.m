@@ -9,7 +9,7 @@
 #import "ToolProfiles.h"
 #import "PseudoTerminal.h"
 #import "iTermController.h"
-#import "BookmarkModel.h"
+#import "ProfileModel.h"
 
 static const int kVerticalMargin = 5;
 static const int kMargin = 0;
@@ -20,7 +20,7 @@ static const int kPopupHeight = 26;
 - (id)initWithFrame:(NSRect)frame {
     self = [super initWithFrame:frame];
     if (self) {
-        listView_ = [[BookmarkListView alloc] initWithFrame:NSMakeRect(kMargin, 0, frame.size.width - kMargin * 2, frame.size.height - kPopupHeight - kVerticalMargin)];
+        listView_ = [[ProfileListView alloc] initWithFrame:NSMakeRect(kMargin, 0, frame.size.width - kMargin * 2, frame.size.height - kPopupHeight - kVerticalMargin)];
         [listView_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [listView_ setDelegate:self];
         [listView_ setFont:[NSFont systemFontOfSize:[NSFont smallSystemFontSize]]];
@@ -78,7 +78,7 @@ static const int kPopupHeight = 26;
 {
     PseudoTerminal* terminal = [[iTermController sharedInstance] currentTerminal];
     for (NSString* guid in [listView_ selectedGuids]) {
-        Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+        Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         [[iTermController sharedInstance] launchBookmark:bookmark
                                               inTerminal:terminal];
     }    
@@ -87,7 +87,7 @@ static const int kPopupHeight = 26;
 - (void)toolProfilesNewWindow:(id)sender
 {
     for (NSString* guid in [listView_ selectedGuids]) {
-        Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:guid];
+        Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:guid];
         [[iTermController sharedInstance] launchBookmark:bookmark
                                               inTerminal:nil];
     }    
@@ -109,7 +109,7 @@ static const int kPopupHeight = 26;
     }
 }
 
-- (void)bookmarkTableRowSelected:(id)bookmarkTable
+- (void)profileTableRowSelected:(id)profileTable
 {
     NSEvent *event = [[NSApplication sharedApplication] currentEvent];
     if ([event modifierFlags] & (NSControlKeyMask)) {

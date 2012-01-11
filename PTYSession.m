@@ -294,7 +294,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 + (void)drawArrangementPreview:(NSDictionary *)arrangement frame:(NSRect)frame
 {
-    Bookmark* theBookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:[[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK] objectForKey:KEY_GUID]];
+    Profile* theBookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK] objectForKey:KEY_GUID]];
     if (!theBookmark) {
         theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
     }
@@ -317,7 +317,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     PTYSession* aSession = [[[PTYSession alloc] init] autorelease];
     aSession->view = sessionView;
     [[sessionView findViewController] setDelegate:aSession];
-    Bookmark* theBookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:[[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK] objectForKey:KEY_GUID]];
+    Profile* theBookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[[arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK] objectForKey:KEY_GUID]];
     BOOL needDivorce = NO;
     if (!theBookmark) {
         theBookmark = [arrangement objectForKey:SESSION_ARRANGEMENT_BOOKMARK];
@@ -489,7 +489,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     BOOL isUTF8;
 
     // Grab the addressbook command
-    Bookmark* addressbookEntry = [self addressBookEntry];
+    Profile* addressbookEntry = [self addressBookEntry];
     BOOL loginSession;
     cmd = [[[NSMutableString alloc] initWithString:[ITAddressBookMgr bookmarkCommand:addressbookEntry
 																	  isLoginSession:&loginSession
@@ -1120,11 +1120,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                                     modifiers:NSCommandKeyMask | NSAlternateKeyMask | NSNumericPadKeyMask
                                    inBookmark:temp];
 
-    BookmarkModel* model;
+    ProfileModel* model;
     if (isDivorced) {
-        model = [BookmarkModel sessionsInstance];
+        model = [ProfileModel sessionsInstance];
     } else {
-        model = [BookmarkModel sharedInstance];
+        model = [ProfileModel sharedInstance];
     }
     [model setBookmark:temp withGuid:[temp objectForKey:KEY_GUID]];
     [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermKeyBindingsChanged"
@@ -1135,11 +1135,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)_setKeepOutdatedKeyMapping
 {
-    BookmarkModel* model;
+    ProfileModel* model;
     if (isDivorced) {
-        model = [BookmarkModel sessionsInstance];
+        model = [ProfileModel sessionsInstance];
     } else {
-        model = [BookmarkModel sharedInstance];
+        model = [ProfileModel sharedInstance];
     }
     [model setObject:[NSNumber numberWithBool:NO]
                                        forKey:KEY_ASK_ABOUT_OUTDATED_KEYMAPS
@@ -2103,7 +2103,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
 }
 
-- (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Bookmark*)aDict
+- (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Profile*)aDict
 {
     NSColor *fgColor;
     NSColor *bgColor;
@@ -2137,7 +2137,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     aDict = aePrefs;
     if (aDict == nil) {
-        aDict = [[BookmarkModel sharedInstance] defaultBookmark];
+        aDict = [[ProfileModel sharedInstance] defaultBookmark];
     }
     if (aDict == nil) {
         return;
@@ -2937,7 +2937,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     // This is the most practical way to migrate the bopy of a
     // profile that's stored in a saved window arrangement. It doesn't get
     // saved back into the arrangement, unfortunately.
-    [BookmarkModel migratePromptOnCloseInMutableBookmark:dict];
+    [ProfileModel migratePromptOnCloseInMutableBookmark:dict];
 
     if (!originalAddressBookEntry) {
         originalAddressBookEntry = [NSDictionary dictionaryWithDictionary:dict];
@@ -2990,7 +2990,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 }
 
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
-                                         bookmark:(Bookmark *)bookmark
+                                         bookmark:(Profile *)bookmark
 {
     NSMutableDictionary* result = [NSMutableDictionary dictionaryWithCapacity:3];
     [result setObject:[parseNode objectForKey:kLayoutDictWidthKey] forKey:SESSION_ARRANGEMENT_COLUMNS];
@@ -3267,7 +3267,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self setAddressBookEntry:[NSDictionary dictionaryWithDictionary:temp]];
 
     // Update the model's copy of the bookmark.
-    [[BookmarkModel sessionsInstance] setBookmark:[self addressBookEntry] withGuid:guid];
+    [[ProfileModel sessionsInstance] setBookmark:[self addressBookEntry] withGuid:guid];
 
     // Update an existing one-bookmark prefs dialog, if open.
     if ([[[PreferencePanel sessionsInstance] window] isVisible]) {
@@ -3282,27 +3282,27 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (NSString*)divorceAddressBookEntryFromPreferences
 {
-    Bookmark* bookmark = [self addressBookEntry];
+    Profile* bookmark = [self addressBookEntry];
     NSString* guid = [bookmark objectForKey:KEY_GUID];
     if (isDivorced) {
         return guid;
     }
     isDivorced = YES;
-    [[BookmarkModel sessionsInstance] removeBookmarkWithGuid:guid];
-    [[BookmarkModel sessionsInstance] addBookmark:bookmark];
+    [[ProfileModel sessionsInstance] removeBookmarkWithGuid:guid];
+    [[ProfileModel sessionsInstance] addBookmark:bookmark];
 
     // Change the GUID so that this session can follow a different path in life
     // than its bookmark. Changes to the bookmark will no longer affect this
     // session, and changes to this session won't affect its originating bookmark
     // (which may not evene exist any longer).
-    bookmark = [[BookmarkModel sessionsInstance] setObject:guid
+    bookmark = [[ProfileModel sessionsInstance] setObject:guid
                                                     forKey:KEY_ORIGINAL_GUID
                                                 inBookmark:bookmark];
-    guid = [BookmarkModel freshGuid];
-    [[BookmarkModel sessionsInstance] setObject:guid
+    guid = [ProfileModel freshGuid];
+    [[ProfileModel sessionsInstance] setObject:guid
                                          forKey:KEY_GUID
                                      inBookmark:bookmark];
-    [self setAddressBookEntry:[[BookmarkModel sessionsInstance] bookmarkWithGuid:guid]];
+    [self setAddressBookEntry:[[ProfileModel sessionsInstance] bookmarkWithGuid:guid]];
     return guid;
 }
 
@@ -3572,7 +3572,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     tmuxGateway_ = [[TmuxGateway alloc] initWithDelegate:self];
     tmuxController_ = [[TmuxController alloc] initWithGateway:tmuxGateway_];
 	NSSize theSize;
-	Bookmark *tmuxBookmark = [PTYTab tmuxBookmark];
+	Profile *tmuxBookmark = [PTYTab tmuxBookmark];
 	theSize.width = [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue];
 	theSize.height = [[tmuxBookmark objectForKey:KEY_ROWS] intValue];
 	[tmuxController_ setClientSize:theSize];

@@ -7,7 +7,7 @@
 //
 
 #import "TrouterPrefsController.h"
-#import "BookmarkModel.h"
+#import "ProfileModel.h"
 #import "ITAddressBookMgr.h"
 #import "PreferencePanel.h"
 
@@ -235,7 +235,7 @@ enum {
 {
     [guid_ autorelease];
     guid_ = [guid copy];
-    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:self.guid];
+    Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:self.guid];
     NSDictionary *prefs = [bookmark objectForKey:KEY_TROUTER];
     prefs = prefs ? prefs : [TrouterPrefsController defaultPrefs];
     NSString *action = [prefs objectForKey:kTrouterActionKey];

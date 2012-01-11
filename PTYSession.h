@@ -26,7 +26,7 @@
 
 #import <Foundation/Foundation.h>
 #import <AppKit/AppKit.h>
-#import "BookmarkModel.h"
+#import "ProfileModel.h"
 #import "DVR.h"
 #import "WindowControllerInterface.h"
 #import "TextViewWrapper.h"
@@ -153,7 +153,7 @@ typedef enum {
 
     // The bookmark the session was originally created with so those settings can be restored if
     // needed.
-    Bookmark* originalAddressBookEntry;
+    Profile* originalAddressBookEntry;
 
     // Growl stuff
     iTermGrowlDelegate* gd;
@@ -175,7 +175,7 @@ typedef enum {
     // than tab colors.
     BOOL growlNewOutput;
 
-    // Has this session's bookmark been divorced from the bookmark in the BookmarkModel? Changes
+    // Has this session's bookmark been divorced from the profile in the ProfileModel? Changes
     // in this bookmark may happen indepentendly of the persistent bookmark.
     bool isDivorced;
 
@@ -295,7 +295,7 @@ typedef enum {
                                 inTab:(PTYTab*)theTab
                         forObjectType:(iTermObjectType)objectType;
 + (NSDictionary *)arrangementFromTmuxParsedLayout:(NSDictionary *)parseNode
-                                         bookmark:(Bookmark *)bookmark;
+                                         bookmark:(Profile *)bookmark;
 - (void)textViewFontDidChange;
 
 // Set rows, columns from arrangement.
@@ -428,7 +428,7 @@ typedef enum {
 - (NSDictionary *)addressBookEntry;
 
 // Return the address book that the session was originally created with.
-- (Bookmark *)originalAddressBookEntry;
+- (Profile *)originalAddressBookEntry;
 - (void)setAddressBookEntry:(NSDictionary*)entry;
 - (NSString *)tty;
 - (NSString *)contents;
@@ -482,7 +482,7 @@ typedef enum {
 // Display timer stuff
 - (void)updateDisplay;
 - (void)doAntiIdle;
-- (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Bookmark*)aDict;
+- (NSString*)ansiColorsMatchingForeground:(NSDictionary*)fg andBackground:(NSDictionary*)bg inBookmark:(Profile*)aDict;
 - (void)updateScroll;
 
 - (int)columns;

@@ -1,5 +1,5 @@
 /*
- **  BookmarksWindow.h
+ **  ProfilesWindow.h
  **  iTerm
  **
  **  Created by George Nachman on 8/29/10.
@@ -23,10 +23,10 @@
  */
 
 #import <Cocoa/Cocoa.h>
-#import "BookmarkListView.h"
+#import "ProfileListView.h"
 
-@interface BookmarksWindow : NSWindowController <BookmarkTableDelegate, NSWindowDelegate> {
-    IBOutlet BookmarkListView* tableView_;
+@interface ProfilesWindow : NSWindowController <ProfileListViewDelegate, NSWindowDelegate> {
+    IBOutlet ProfileListView* tableView_;
     IBOutlet NSSegmentedControl* actions_;
     IBOutlet NSButton* horizontalPaneButton_;
     IBOutlet NSButton* verticalPaneButton_;
@@ -36,17 +36,17 @@
 	IBOutlet NSButton* newTabsInNewWindowButton_;
 }
 
-+ (BookmarksWindow*)sharedInstance;
++ (ProfilesWindow*)sharedInstance;
 - (id)init;
 - (id)initWithWindowNibName:(NSString *)windowNibName;
 - (IBAction)openBookmarkInHorizontalPane:(id)sender;
 - (IBAction)openBookmarkInVerticalPane:(id)sender;
 - (IBAction)openBookmarkInTab:(id)sender;
 - (IBAction)openBookmarkInWindow:(id)sender;
-- (void)bookmarkTableSelectionDidChange:(id)bookmarkTable;
-- (void)bookmarkTableSelectionWillChange:(id)bookmarkTable;
-- (void)bookmarkTableRowSelected:(id)bookmarkTable;
-- (NSMenu*)bookmarkTable:(id)bookmarkTable menuForEvent:(NSEvent*)theEvent;
+- (void)profileTableSelectionDidChange:(id)profileTable;
+- (void)profileTableSelectionWillChange:(id)profileTable;
+- (void)profileTableRowSelected:(id)profileTable;
+- (NSMenu*)profileTable:(id)profileTable menuForEvent:(NSEvent*)theEvent;
 - (IBAction)editBookmarks:(id)sender;
 - (IBAction)closeAfterOpeningChanged:(id)sender;
 - (IBAction)newTabsInNewWindow:(id)sender;

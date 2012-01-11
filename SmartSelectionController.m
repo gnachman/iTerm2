@@ -7,7 +7,7 @@
 //
 
 #import "SmartSelectionController.h"
-#import "BookmarkModel.h"
+#import "ProfileModel.h"
 #import "ITAddressBookMgr.h"
 
 static NSString *kRegexKey = @"regex";
@@ -93,21 +93,21 @@ static NSString *gPrecisionKeys[] = {
     [self editActions:sender];
 }
 
-- (Bookmark *)bookmark
+- (Profile *)bookmark
 {
-    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:self.guid];
+    Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:self.guid];
     if (!bookmark) {
-        bookmark = [[BookmarkModel sessionsInstance] bookmarkWithGuid:self.guid];
+        bookmark = [[ProfileModel sessionsInstance] bookmarkWithGuid:self.guid];
     }
     return bookmark;
 }
 
-- (BookmarkModel *)modelForBookmark:(Bookmark *)bookmark
+- (ProfileModel *)modelForBookmark:(Profile *)bookmark
 {
-    if ([[BookmarkModel sharedInstance] bookmarkWithGuid:[bookmark objectForKey:KEY_GUID]]) {
-        return [BookmarkModel sharedInstance];
-    } else if ([[BookmarkModel sessionsInstance] bookmarkWithGuid:[bookmark objectForKey:KEY_GUID]]) {
-        return [BookmarkModel sessionsInstance];
+    if ([[ProfileModel sharedInstance] bookmarkWithGuid:[bookmark objectForKey:KEY_GUID]]) {
+        return [ProfileModel sharedInstance];
+    } else if ([[ProfileModel sessionsInstance] bookmarkWithGuid:[bookmark objectForKey:KEY_GUID]]) {
+        return [ProfileModel sessionsInstance];
     } else {
         return nil;
     }
@@ -115,7 +115,7 @@ static NSString *gPrecisionKeys[] = {
 
 - (NSArray *)rules
 {
-    Bookmark* bookmark = [self bookmark];
+    Profile* bookmark = [self bookmark];
     NSArray *rules = [bookmark objectForKey:KEY_SMART_SELECTION_RULES];
     return rules ? rules : [SmartSelectionController defaultRules];
 }
@@ -141,7 +141,7 @@ static NSString *gPrecisionKeys[] = {
             [rules removeObjectAtIndex:rowIndex];
         }
     }
-    Bookmark* bookmark = [self bookmark];
+    Profile* bookmark = [self bookmark];
     [[self modelForBookmark:bookmark] setObject:rules forKey:KEY_SMART_SELECTION_RULES inBookmark:bookmark];
     [tableView_ reloadData];
     [delegate_ smartSelectionChanged:nil];
@@ -167,7 +167,7 @@ static NSString *gPrecisionKeys[] = {
 
 - (IBAction)loadDefaults:(id)sender
 {
-    Bookmark* bookmark = [self bookmark];
+    Profile* bookmark = [self bookmark];
     [[self modelForBookmark:bookmark] setObject:[SmartSelectionController defaultRules]
                                          forKey:KEY_SMART_SELECTION_RULES
                                      inBookmark:bookmark];

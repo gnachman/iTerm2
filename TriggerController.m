@@ -6,7 +6,7 @@
 //
 
 #import "TriggerController.h"
-#import "BookmarkModel.h"
+#import "ProfileModel.h"
 #import "ITAddressBookMgr.h"
 #import "GrowlTrigger.h"
 #import "BounceTrigger.h"
@@ -90,28 +90,28 @@ static NSMutableArray *gTriggerClasses;
     return [TriggerController triggerAtIndex:i];
 }
 
-- (Bookmark *)bookmark
+- (Profile *)bookmark
 {
-    Bookmark* bookmark = [[BookmarkModel sharedInstance] bookmarkWithGuid:self.guid];
+    Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:self.guid];
     if (!bookmark) {
-        bookmark = [[BookmarkModel sessionsInstance] bookmarkWithGuid:self.guid];
+        bookmark = [[ProfileModel sessionsInstance] bookmarkWithGuid:self.guid];
     }
     return bookmark;
 }
 
 - (NSArray *)triggers
 {
-    Bookmark *bookmark = [self bookmark];
+    Profile *bookmark = [self bookmark];
     NSDictionary *triggers = [bookmark objectForKey:KEY_TRIGGERS];
     return triggers ? triggers : [NSArray array];
 }
 
-- (BookmarkModel *)modelForBookmark:(Bookmark *)bookmark
+- (ProfileModel *)modelForBookmark:(Profile *)bookmark
 {
-    if ([[BookmarkModel sharedInstance] bookmarkWithGuid:[bookmark objectForKey:KEY_GUID]]) {
-        return [BookmarkModel sharedInstance];
-    } else if ([[BookmarkModel sessionsInstance] bookmarkWithGuid:[bookmark objectForKey:KEY_GUID]]) {
-        return [BookmarkModel sessionsInstance];
+    if ([[ProfileModel sharedInstance] bookmarkWithGuid:[bookmark objectForKey:KEY_GUID]]) {
+        return [ProfileModel sharedInstance];
+    } else if ([[ProfileModel sessionsInstance] bookmarkWithGuid:[bookmark objectForKey:KEY_GUID]]) {
+        return [ProfileModel sessionsInstance];
     } else {
         return nil;
     }
@@ -132,7 +132,7 @@ static NSMutableArray *gTriggerClasses;
             [triggers removeObjectAtIndex:rowIndex];
         }
     }
-    Bookmark *bookmark = [self bookmark];
+    Profile *bookmark = [self bookmark];
     [[self modelForBookmark:bookmark] setObject:triggers forKey:KEY_TRIGGERS inBookmark:bookmark];
     [tableView_ reloadData];
     [delegate_ triggerChanged:nil];

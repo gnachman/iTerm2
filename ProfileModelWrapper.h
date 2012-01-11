@@ -1,28 +1,28 @@
 //
-//  BookmarkModelWrapper.h
+//  ProfileModelWrapper.h
 //  iTerm
 //
 //  Created by George Nachman on 1/9/12.
 //
 
 #import <Foundation/Foundation.h>
-#import "BookmarkModel.h"
-#import "BookmarkRow.h"
+#import "ProfileModel.h"
+#import "ProfileTableRow.h"
 
-// This is an intermediate model that wraps BookmarkModel and allows
+// This is an intermediate model that wraps ProfileModel and allows
 // each BookmarkListView to have a different ordering of bookmarks.
-// It represents bookmarks are BookmarkRow objects which have a
+// It represents bookmarks are ProfileTableRow objects which have a
 // key-value coding and can be sorted by the columns relevant to
 // BookmarkListView.
-@interface BookmarkModelWrapper : NSObject
+@interface ProfileModelWrapper : NSObject
 {
-    BookmarkModel* underlyingModel;
+    ProfileModel* underlyingModel;
     NSMutableArray* bookmarks;
     NSMutableString* filter;
     NSArray* sortDescriptors;
 }
 
-- (id)initWithModel:(BookmarkModel*)model;
+- (id)initWithModel:(ProfileModel*)model;
 - (void)dealloc;
 - (void)setSortDescriptors:(NSArray*)newSortDescriptors;
 - (NSArray*)sortDescriptors;
@@ -36,12 +36,12 @@
 
 // These functions take the filter (set with setFilter) into account with respect to indices.
 - (int)numberOfBookmarks;
-- (BookmarkRow*)bookmarkRowAtIndex:(int)index;
-- (Bookmark*)bookmarkAtIndex:(int)index;
-- (int)indexOfBookmarkWithGuid:(NSString*)guid;
+- (ProfileTableRow*)profileTableRowAtIndex:(int)index;
+- (Profile*)profileAtIndex:(int)index;
+- (int)indexOfProfileWithGuid:(NSString*)guid;
 - (void)moveBookmarkWithGuid:(NSString*)guid toIndex:(int)index;
 
-- (BookmarkModel*)underlyingModel;
+- (ProfileModel*)underlyingModel;
 
 // Copy bookmarks matchin the filter from the underlying model.
 - (void)sync;
