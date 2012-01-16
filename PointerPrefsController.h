@@ -13,6 +13,7 @@ extern NSString *kPasteFromSelectionPointerAction;
 extern NSString *kOpenTargetPointerAction;
 extern NSString *kOpenTargetInBackgroundPointerAction;
 extern NSString *kSmartSelectionPointerAction;
+extern NSString *kSmartSelectionIgnoringNewlinesPointerAction;
 extern NSString *kContextMenuPointerAction;
 extern NSString *kNextTabPointerAction;
 extern NSString *kPrevTabPointerAction;

@@ -45,6 +45,7 @@ NSString *kPasteFromSelectionPointerAction = @"kPasteFromSelectionPointerAction"
 NSString *kOpenTargetPointerAction = @"kOpenTargetPointerAction";
 NSString *kOpenTargetInBackgroundPointerAction = @"kOpenTargetInBackgroundPointerAction";
 NSString *kSmartSelectionPointerAction = @"kSmartSelectionPointerAction";
+NSString *kSmartSelectionIgnoringNewlinesPointerAction = @"kSmartSelectionIgnoringNewlinesPointerAction";
 NSString *kContextMenuPointerAction = @"kContextMenuPointerAction";
 NSString *kNextTabPointerAction = @"kNextTabPointerAction";
 NSString *kPrevTabPointerAction = @"kPrevTabPointerAction";
@@ -374,6 +375,7 @@ typedef enum {
                            @"Open URL/Semantic History", kOpenTargetPointerAction,
                            @"Open URL in background", kOpenTargetInBackgroundPointerAction,
                            @"Smart Selection", kSmartSelectionPointerAction,
+                           @"Smart Selection Ignoring Newlines", kSmartSelectionIgnoringNewlinesPointerAction,
                            @"Open Context Menu", kContextMenuPointerAction,
                            @"Next Tab", kNextTabPointerAction,
                            @"Previous Tab", kPrevTabPointerAction,

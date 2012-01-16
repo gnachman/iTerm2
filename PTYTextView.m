@@ -231,9 +231,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                           pathForResource:@"IBarCursorXMR"
                           ofType:@"png"];
     NSImage* xmrImage = [[[NSImage alloc] initWithContentsOfFile:xmrFile] autorelease];
-    
+
     xmrCursor = [[NSCursor alloc] initWithImage:xmrImage hotSpot:hotspot];
-    
+
     NSString* bellFile = [bundle
                           pathForResource:@"bell"
                           ofType:@"png"];
@@ -1942,13 +1942,17 @@ NSMutableArray* screens=0;
                             numLines:(int)numLines
                         targetOffset:(int*)targetOffset
                               coords:(NSMutableArray*)coords
+                    ignoringNewlines:(BOOL)ignoringNewlines
 {
     const int width = [dataSource width];
     NSMutableString* joinedLines = [NSMutableString stringWithCapacity:numLines * width];
 
     *targetOffset = -1;
 
-    BOOL rejectAtHardEol = YES;
+    // If rejectAtHardEol is true, then stop when you hit a hard EOL.
+    // If false, stop when you hit a hard EOL that has an unused cell before it,
+    // otherwise keep going.
+    BOOL rejectAtHardEol = !ignoringNewlines;
     int xMin, xMax;
     xMin = 0;
     xMax = width;
@@ -1960,8 +1964,10 @@ NSMutableArray* screens=0;
             continue;
         }
         screen_char_t* theLine = [dataSource getLineAtIndex:i];
-        if (i < y && rejectAtHardEol && theLine[width].code == EOL_HARD) {
-            continue;
+        if (i < y && theLine[width].code == EOL_HARD) {
+            if (rejectAtHardEol || theLine[width - 1].code == 0) {
+                continue;
+            }
         }
         unichar* backingStore;
         int* deltas;
@@ -1984,17 +1990,25 @@ NSMutableArray* screens=0;
         free(backingStore);
 
         j++;
-        if (i >= y && rejectAtHardEol && theLine[width].code == EOL_HARD) {
-            [coords addObject:[Coord coordWithX:o
-                                              y:i]];
-            break;
+        if (i >= y && theLine[width].code == EOL_HARD) {
+            if (rejectAtHardEol || theLine[width - 1].code == 0) {
+                [coords addObject:[Coord coordWithX:o
+                                                  y:i]];
+                break;
+            }
         }
     }
     // TODO: What if it's multiple lines ending in a soft eol and the selection goes to the end?
     return joinedLines;
 }
 
-- (BOOL)smartSelectAtX:(int)x y:(int)y toStartX:(int*)X1 toStartY:(int*)Y1 toEndX:(int*)X2 toEndY:(int*)Y2
+- (BOOL)smartSelectAtX:(int)x
+                     y:(int)y
+              toStartX:(int*)X1
+              toStartY:(int*)Y1
+                toEndX:(int*)X2
+                toEndY:(int*)Y2
+      ignoringNewlines:(BOOL)ignoringNewlines
 {
     NSString* textWindow;
     int targetOffset;
@@ -2005,7 +2019,8 @@ NSMutableArray* screens=0;
                                              y:y
                                       numLines:2
                                   targetOffset:&targetOffset
-                                        coords:coords];
+                                        coords:coords
+                              ignoringNewlines:ignoringNewlines];
 
     NSArray* rulesArray = smartSelectionRules_ ? smartSelectionRules_ : [SmartSelectionController defaultRules];
     const int numRules = [rulesArray count];
@@ -2088,9 +2103,15 @@ NSMutableArray* screens=0;
     }
 }
 
-- (BOOL)smartSelectAtX:(int)x y:(int)y
+- (BOOL)smartSelectAtX:(int)x y:(int)y ignoringNewlines:(BOOL)ignoringNewlines
 {
-    return [self smartSelectAtX:x y:y toStartX:&startX toStartY:&startY toEndX:&endX toEndY:&endY];
+    return [self smartSelectAtX:x
+                              y:y
+                       toStartX:&startX
+                       toStartY:&startY
+                         toEndX:&endX
+                         toEndY:&endY
+               ignoringNewlines:ignoringNewlines];
 }
 
 // Control-pgup and control-pgdown are handled at this level by NSWindow if no
@@ -2159,7 +2180,7 @@ NSMutableArray* screens=0;
         NSLog(@"modflag == alt && optionKey != NORMAL = %d", (int)(modflag == NSAlternateKeyMask && [delegate optionKey] != OPT_NORMAL));
         NSLog(@"modflag & rightAlt == rightAlt && rightOptionKey != NORMAL = %d", (int)((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL));
         NSLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
-        NSLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));                 
+        NSLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
     }
 
     // Hide the cursor
@@ -2657,17 +2678,17 @@ NSMutableArray* screens=0;
     NSPoint locationInTextView = [self convertPoint: locationInWindow fromView: nil];
     int x, y;
     int width = [dataSource width];
-    
+
     x = (locationInTextView.x - MARGIN + charWidth/2)/charWidth;
     if (x < 0) {
         x = 0;
     }
     y = locationInTextView.y / lineHeight;
-    
+
     if (x >= width) {
         x = width  - 1;
     }
-    
+
     return NSMakePoint(x, y);
 }
 
@@ -3333,7 +3354,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int x = clickPoint.x;
     int y = clickPoint.y;
 
-    [self smartSelectAtX:x y:y];
+    [self smartSelectAtX:x y:y ignoringNewlines:NO];
+}
+
+- (void)smartSelectIgnoringNewlinesWithEvent:(NSEvent *)event
+{
+    NSPoint clickPoint = [self clickPoint:event];
+    int x = clickPoint.x;
+    int y = clickPoint.y;
+
+    [self smartSelectAtX:x y:y ignoringNewlines:YES];
 }
 
 - (void)openContextMenuWithEvent:(NSEvent *)event
@@ -3344,14 +3374,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     long long clickAt = y;
     clickAt *= [dataSource width];
     clickAt += x;
-    
+
     long long minAt = startY;
     minAt *= [dataSource width];
     minAt += startX;
     long long maxAt = endY;
     maxAt *= [dataSource width];
     maxAt += endX;
-    
+
     if (startX < 0 ||
         clickAt < minAt ||
         clickAt >= maxAt) {
@@ -3782,7 +3812,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL didAdd = NO;
     NSArray* rulesArray = smartSelectionRules_ ? smartSelectionRules_ : [SmartSelectionController defaultRules];
     const int numRules = [rulesArray count];
-    
+
     for (int j = 0; j < numRules; j++) {
         NSDictionary *rule = [rulesArray objectAtIndex:j];
         NSString *regex = [SmartSelectionController regexInRule:rule];
@@ -3804,15 +3834,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         case kOpenFileContextMenuAction:
                             mySelector = @selector(contextMenuActionOpenFile:);
                             break;
-                            
+
                         case kOpenUrlContextMenuAction:
                             mySelector = @selector(contextMenuActionOpenURL:);
                             break;
-                            
+
                         case kRunCommandContextMenuAction:
                             mySelector = @selector(contextMenuActionRunCommand:);
                             break;
-                            
+
                         case kRunCoprocessContextMenuAction:
                             mySelector = @selector(contextMenuActionRunCoprocess:);
                             break;
@@ -3862,7 +3892,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 + (void)runCommand:(NSString *)command
 {
-    
+
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
     system([command UTF8String]);
     [pool drain];
@@ -3937,7 +3967,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if ([self addCustomActionsToMenu:theMenu matchingText:selectedText]) {
         [theMenu addItem:[NSMenuItem separatorItem]];
     }
-    
+
     // Split pane options
     [theMenu addItemWithTitle:@"Split Pane Vertically" action:@selector(splitTextViewVertically:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
@@ -7118,7 +7148,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int h = [dataSource numberOfLines];
     int minX = 0;
     int maxX = w - 1;
-    
+
     // Find lines of at least two | characters on either side of xi,yi to define the min and max
     // horizontal bounds.
     for (int i = xi; i >= 0; i--) {
@@ -8028,7 +8058,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             toStartX:&tmpX1
                             toStartY:&tmpY1
                               toEndX:&tmpX2
-                              toEndY:&tmpY2];
+                              toEndY:&tmpY2
+                    ignoringNewlines:NO];
             }
 
             // Now the complicated bit...
@@ -8062,7 +8093,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                     toStartX:&tx1
                                     toStartY:&ty1
                                       toEndX:&tx2
-                                      toEndY:&ty2];
+                                      toEndY:&ty2
+                            ignoringNewlines:NO];
                     }
                     startX = tx1;
                     startY = ty1;
@@ -8094,7 +8126,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                     toStartX:&tx1
                                     toStartY:&ty1
                                       toEndX:&tx2
-                                      toEndY:&ty2];
+                                      toEndY:&ty2
+                            ignoringNewlines:NO];
                     }
                     startX = tx2;
                     startY = ty2;
