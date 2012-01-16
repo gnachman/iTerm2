@@ -2758,6 +2758,10 @@ NSString *sessionsKey = @"sessions";
     // In fullscreen mode reordering the tabs causes the tabview not to be displayed properly.
     // This seems to fix it.
     [TABVIEW display];
+
+    for (PTYSession* aSession in [aTab sessions]) {
+        [aSession setIgnoreResizeNotifications:NO];
+    }
 }
 
 - (void)tabView:(NSTabView *)aTabView closeWindowForLastTabViewItem:(NSTabViewItem *)tabViewItem
