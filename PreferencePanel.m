@@ -806,6 +806,49 @@ static float versionNumber;
     [button selectItemAtIndex:selectedIndex];
 }
 
++ (void)recursiveAddMenu:(NSMenu *)menu
+            toButtonMenu:(NSMenu *)buttonMenu
+                   depth:(int)depth{
+    for (NSMenuItem* item in [menu itemArray]) {
+        if ([item isSeparatorItem]) {
+            continue;
+        }
+        if ([[item title] isEqualToString:@"Services"] ||  // exclude services menu
+            isnumber([[item title] characterAtIndex:0])) {  // exclude windows in window menu
+            continue;
+        }
+        NSMenuItem *theItem = [[[NSMenuItem alloc] init] autorelease];
+        [theItem setTitle:[item title]];
+        [theItem setIndentationLevel:depth];
+        if ([item hasSubmenu]) {
+            if (depth == 0 && [[buttonMenu itemArray] count]) {
+                [buttonMenu addItem:[NSMenuItem separatorItem]];
+            }
+            [theItem setEnabled:NO];
+            [buttonMenu addItem:theItem];
+            [PreferencePanel recursiveAddMenu:[item submenu]
+                                 toButtonMenu:buttonMenu
+                                        depth:depth + 1];
+        } else {
+            [buttonMenu addItem:theItem];
+        }
+    }
+}
+
++ (void)populatePopUpButtonWithMenuItems:(NSPopUpButton *)button
+                           selectedValue:(NSString *)selectedValue {
+    [PreferencePanel recursiveAddMenu:[NSApp mainMenu]
+                         toButtonMenu:[button menu]
+                                depth:0];
+    if (selectedValue) {
+        NSMenuItem *theItem = [[button menu] itemWithTitle:selectedValue];
+        if (theItem) {
+            [button setTitle:selectedValue];
+            [theItem setState:NSOnState];
+        }
+    }
+}
+
 - (void)editKeyMapping:(id)sender
 {
     int rowIndex;
@@ -842,7 +885,8 @@ static float versionNumber;
     [valueToSend setStringValue:text ? text : @""];
     [PreferencePanel populatePopUpButtonWithBookmarks:bookmarkPopupButton
                                          selectedGuid:text];
-
+    [PreferencePanel populatePopUpButtonWithMenuItems:menuToSelect
+                                         selectedValue:text];
     [self updateValueToSend];
     newMapping = NO;
     [NSApp beginSheet:editKeyMappingWindow
@@ -960,7 +1004,9 @@ static float versionNumber;
     NSMutableDictionary* dict;
     NSString* theParam = [valueToSend stringValue];
     int theAction = [[action selectedItem] tag];
-    if (theAction == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
+    if (theAction == KEY_ACTION_SELECT_MENU_ITEM) {
+        theParam = [[menuToSelect selectedItem] title];
+    } else if (theAction == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
         theAction == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE ||
         theAction == KEY_ACTION_NEW_TAB_WITH_PROFILE ||
         theAction == KEY_ACTION_NEW_WINDOW_WITH_PROFILE) {
@@ -3662,23 +3708,27 @@ static float versionNumber;
         [escPlus setHidden:YES];
         [bookmarkPopupButton setHidden:YES];
         [profileLabel setHidden:YES];
+        [menuToSelect setHidden:YES];
     } else if (tag == KEY_ACTION_TEXT) {
         [valueToSend setHidden:NO];
         [[valueToSend cell] setPlaceholderString:@"Enter value to send"];
         [escPlus setHidden:YES];
         [bookmarkPopupButton setHidden:YES];
         [profileLabel setHidden:YES];
+        [menuToSelect setHidden:YES];
     } else if (tag == KEY_ACTION_RUN_COPROCESS) {
         [valueToSend setHidden:NO];
         [[valueToSend cell] setPlaceholderString:@"Enter command to run"];
         [escPlus setHidden:YES];
         [bookmarkPopupButton setHidden:YES];
         [profileLabel setHidden:YES];
+        [menuToSelect setHidden:YES];
     } else if (tag == KEY_ACTION_SELECT_MENU_ITEM) {
-        [valueToSend setHidden:NO];
+        [valueToSend setHidden:YES];
         [[valueToSend cell] setPlaceholderString:@"Enter name of menu item"];
         [escPlus setHidden:YES];
         [bookmarkPopupButton setHidden:YES];
+        [menuToSelect setHidden:NO];
         [profileLabel setHidden:YES];
     } else if (tag == KEY_ACTION_ESCAPE_SEQUENCE) {
         [valueToSend setHidden:NO];
@@ -3687,6 +3737,7 @@ static float versionNumber;
         [escPlus setStringValue:@"Esc+"];
         [bookmarkPopupButton setHidden:YES];
         [profileLabel setHidden:YES];
+        [menuToSelect setHidden:YES];
     } else if (tag == KEY_ACTION_SPLIT_VERTICALLY_WITH_PROFILE ||
                tag == KEY_ACTION_SPLIT_HORIZONTALLY_WITH_PROFILE ||
                tag == KEY_ACTION_NEW_TAB_WITH_PROFILE ||
@@ -3695,6 +3746,7 @@ static float versionNumber;
         [profileLabel setHidden:NO];
         [bookmarkPopupButton setHidden:NO];
         [escPlus setHidden:YES];
+        [menuToSelect setHidden:YES];
     } else if (tag == KEY_ACTION_DO_NOT_REMAP_MODIFIERS ||
                tag == KEY_ACTION_REMAP_LOCALLY) {
         [valueToSend setHidden:YES];
@@ -3703,12 +3755,14 @@ static float versionNumber;
         [escPlus setStringValue:@"Modifier remapping disabled: type the actual key combo you want to affect."];
         [bookmarkPopupButton setHidden:YES];
         [profileLabel setHidden:YES];
+        [menuToSelect setHidden:YES];
     } else {
         [valueToSend setHidden:YES];
         [valueToSend setStringValue:@""];
         [escPlus setHidden:YES];
         [bookmarkPopupButton setHidden:YES];
         [profileLabel setHidden:YES];
+        [menuToSelect setHidden:YES];
     }
 }
 
@@ -3717,6 +3771,8 @@ static float versionNumber;
     [action setTitle:[[sender selectedItem] title]];
     [PreferencePanel populatePopUpButtonWithBookmarks:bookmarkPopupButton
                                          selectedGuid:[[bookmarkPopupButton selectedItem] representedObject]];
+    [PreferencePanel populatePopUpButtonWithMenuItems:menuToSelect
+                                        selectedValue:[[menuToSelect selectedItem] title]];
     [self updateValueToSend];
 }
 

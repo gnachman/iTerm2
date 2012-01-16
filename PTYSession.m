@@ -1168,7 +1168,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         } else if ([theName isEqualToString:[item title]]) {
             [NSApp sendAction:[item action]
                            to:[item target]
-                         from:nil];
+                         from:item];
             return YES;
         }
     }
