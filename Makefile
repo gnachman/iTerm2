@@ -37,6 +37,10 @@ Deployment:
 run: Development
 	build/Development/iTerm.app/Contents/MacOS/iTerm
 
+devzip: Development
+	cd build/Development && \
+	zip -r iTerm2-$(NAME).zip iTerm.app
+
 zip: Deployment
 	cd build/Deployment && \
 	zip -r iTerm2-$(NAME).zip iTerm.app
