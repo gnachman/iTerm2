@@ -2752,6 +2752,7 @@ NSMutableArray* screens=0;
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent*)event
 {
+    [pointer_ notifyLeftMouseDown];
     mouseDownIsThreeFingerClick_ = NO;
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         [[MovePaneController sharedInstance] beginDrag:[dataSource session]];

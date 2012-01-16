@@ -75,23 +75,25 @@
            [PointerPrefsController haveThreeFingerTapEvents];
 }
 
+// Caller is responsible to check that it's a single click
 - (BOOL)eventEmulatesRightClick:(NSEvent *)event
 {
     return ![[PreferencePanel sharedInstance] passOnControlLeftClick] &&
            [event buttonNumber] == 0 &&
-           [event clickCount] == 1 &&
            ([event modifierFlags] & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask | NSShiftKeyMask)) == NSControlKeyMask;
 }
 
-- (NSString *)actionForEvent:(NSEvent *)event withTouches:(int)numTouches
+- (NSString *)actionForEvent:(NSEvent *)event
+                      clicks:(int)clicks
+                 withTouches:(int)numTouches
 {
-    if ([self eventEmulatesRightClick:event]) {
+    if (clicks == 1 && [self eventEmulatesRightClick:event]) {
         // Ctrl-click emulates right button
         return [PointerPrefsController actionWithButton:1 numClicks:1 modifiers:0];
     }
     if (numTouches <= 2) {
         return [PointerPrefsController actionWithButton:[event buttonNumber]
-                                              numClicks:[event clickCount]
+                                              numClicks:clicks
                                               modifiers:[event modifierFlags]];
     } else {
         return [PointerPrefsController actionForTapWithTouches:numTouches
@@ -99,9 +101,11 @@
     }
 }
 
-- (NSString *)argumentForEvent:(NSEvent *)event withTouches:(int)numTouches
+- (NSString *)argumentForEvent:(NSEvent *)event
+                        clicks:(int)clicks
+                   withTouches:(int)numTouches
 {
-    if ([self eventEmulatesRightClick:event]) {
+    if (clicks == 1 && [self eventEmulatesRightClick:event]) {
         // Ctrl-click emulates right button
         return [PointerPrefsController argumentWithButton:1
                                                 numClicks:1
@@ -109,7 +113,7 @@
     }
     if (numTouches <= 2) {
         return [PointerPrefsController argumentWithButton:[event buttonNumber]
-                                                numClicks:[event clickCount]
+                                                numClicks:clicks
                                                 modifiers:[event modifierFlags]];
     } else {
         return [PointerPrefsController argumentForTapWithTouches:numTouches
@@ -117,16 +121,37 @@
     }
 }
 
+- (void)notifyLeftMouseDown
+{
+    mouseDownButton_ = 0;
+}
+
+
 - (BOOL)mouseDown:(NSEvent *)event withTouches:(int)numTouches
 {
+    // A double left click plus an immediate right click reports a triple right
+    // click! So we keep our own click count and use the lower of the OS's
+    // value and ours. Theirs is lower when the time between clicks is long.
+    if ([event buttonNumber] != mouseDownButton_) {
+        clicks_ = 1;
+    } else {
+        clicks_++;
+    }
+    clicks_ = MIN(clicks_, [event clickCount]);
     mouseDownButton_ = [event buttonNumber];
-    return [self actionForEvent:event withTouches:numTouches] != nil;
+    return [self actionForEvent:event
+                         clicks:clicks_
+                    withTouches:numTouches] != nil;
 }
 
 - (BOOL)mouseUp:(NSEvent *)event withTouches:(int)numTouches
 {
-    NSString *argument = [self argumentForEvent:event withTouches:numTouches];
-    NSString *action = [self actionForEvent:event withTouches:numTouches];
+    NSString *argument = [self argumentForEvent:event
+                                         clicks:clicks_
+                                    withTouches:numTouches];
+    NSString *action = [self actionForEvent:event
+                                     clicks:clicks_
+                                withTouches:numTouches];
     if (action) {
         [self performAction:action forEvent:event withArgument:argument];
         return YES;
