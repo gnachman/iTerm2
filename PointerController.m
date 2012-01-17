@@ -25,9 +25,11 @@
     } else if ([action isEqualToString:kOpenTargetPointerAction]) {
         [delegate_ openTargetWithEvent:event];
     } else if ([action isEqualToString:kSmartSelectionPointerAction]) {
-        [delegate_ smartSelectWithEvent:event];
+        [delegate_ smartSelectAndMaybeCopyWithEvent:event
+                                   ignoringNewlines:NO];
     } else if ([action isEqualToString:kSmartSelectionIgnoringNewlinesPointerAction]) {
-        [delegate_ smartSelectIgnoringNewlinesWithEvent:event];
+        [delegate_ smartSelectAndMaybeCopyWithEvent:event
+                                   ignoringNewlines:YES];
     } else if ([action isEqualToString:kContextMenuPointerAction]) {
         [delegate_ openContextMenuWithEvent:event];
     } else if ([action isEqualToString:kNextTabPointerAction]) {
