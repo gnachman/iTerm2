@@ -1173,6 +1173,7 @@ static float versionNumber;
 
     defaultWindowStyle=[prefs objectForKey:@"WindowStyle"]?[prefs integerForKey:@"WindowStyle"]:0;
     defaultOpenTmuxWindowsIn = [prefs objectForKey:@"OpenTmuxWindowsIn"]?[prefs integerForKey:@"OpenTmuxWindowsIn"]:OPEN_TMUX_WINDOWS_IN_WINDOWS;
+    defaultAutoHideTmuxClientSession = [prefs objectForKey:@"AutoHideTmuxClientSession"] ? [[prefs objectForKey:@"AutoHideTmuxClientSession"] boolValue] : NO;
     defaultTabViewType=[prefs objectForKey:@"TabViewType"]?[prefs integerForKey:@"TabViewType"]:0;
     if (defaultTabViewType > 1) {
         defaultTabViewType = 0;
@@ -1305,6 +1306,7 @@ static float versionNumber;
     [prefs setBool:defaultHideTab forKey:@"HideTab"];
     [prefs setInteger:defaultWindowStyle forKey:@"WindowStyle"];
 	[prefs setInteger:defaultOpenTmuxWindowsIn forKey:@"OpenTmuxWindowsIn"];
+    [prefs setBool:defaultAutoHideTmuxClientSession forKey:@"AutoHideTmuxClientSession"];
     [prefs setInteger:defaultTabViewType forKey:@"TabViewType"];
     [prefs setBool:defaultPromptOnQuit forKey:@"PromptOnQuit"];
     [prefs setBool:defaultOnlyWhenMoreTabs forKey:@"OnlyWhenMoreTabs"];
@@ -1391,6 +1393,7 @@ static float versionNumber;
 
     [windowStyle selectItemAtIndex: defaultWindowStyle];
     [openTmuxWindows selectItemAtIndex: defaultOpenTmuxWindowsIn];
+    [autoHideTmuxClientSession setState:defaultAutoHideTmuxClientSession?NSOnState:NSOffState];
     [tabPosition selectItemAtIndex: defaultTabViewType];
     [selectionCopiesText setState:defaultCopySelection?NSOnState:NSOffState];
     [copyLastNewline setState:defaultCopyLastNewline ? NSOnState : NSOffState];
@@ -1614,9 +1617,11 @@ static float versionNumber;
         sender == dimmingAmount ||
 		sender == openTmuxWindows ||
         sender == threeFingerEmulatesMiddle ||
+        sender == autoHideTmuxClientSession ||
         sender == showWindowBorder) {
         defaultWindowStyle = [windowStyle indexOfSelectedItem];
         defaultOpenTmuxWindowsIn = [[openTmuxWindows selectedItem] tag];
+        defaultAutoHideTmuxClientSession = ([autoHideTmuxClientSession state] == NSOnState);
         defaultTabViewType=[tabPosition indexOfSelectedItem];
         defaultUseCompactLabel = ([useCompactLabel state] == NSOnState);
         defaultHideActivityIndicator = ([hideActivityIndicator state] == NSOnState);
@@ -1867,6 +1872,11 @@ static float versionNumber;
 - (int)openTmuxWindowsIn
 {
 	return defaultOpenTmuxWindowsIn;
+}
+
+- (BOOL)autoHideTmuxClientSession
+{
+    return defaultAutoHideTmuxClientSession;
 }
 
 - (int)tmuxDashboardLimit

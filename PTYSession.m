@@ -50,6 +50,7 @@
 #import "TmuxGateway.h"
 #import "TmuxController.h"
 #import "TmuxLayoutParser.h"
+#import "MovePaneController.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -1604,7 +1605,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
             }
         } else if (((modflag & NSLeftAlternateKeyMask) == NSLeftAlternateKeyMask &&
                     ([self optionKey] != OPT_NORMAL)) ||
-                   (modflag == NSAlternateKeyMask && 
+                   (modflag == NSAlternateKeyMask &&
                     ([self optionKey] != OPT_NORMAL)) ||  /// synergy
                    ((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask &&
                     ([self rightOptionKey] != OPT_NORMAL))) {
@@ -2354,12 +2355,12 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)setTab:(PTYTab*)tab
 {
-    if (tmuxController_) {
+    if ([self isTmuxClient]) {
         [tmuxController_ deregisterWindow:[tab_ tmuxWindow]
                                windowPane:tmuxPane_];
     }
     tab_ = tab;
-    if (tmuxController_) {
+    if ([self isTmuxClient]) {
         [tmuxController_ registerSession:self
                                 withPane:tmuxPane_
                                 inWindow:[tab_ tmuxWindow]];
@@ -3553,6 +3554,13 @@ static long long timeInTenthsOfSeconds(struct timeval t)
            [TEXTVIEW initialFindContext]->substring != nil;
 }
 
+- (void)hideSession
+{
+    [[MovePaneController sharedInstance] moveSessionToNewWindow:self
+                                                        atPoint:[[view window] convertBaseToScreen:NSMakePoint(0, 0)]];
+    [[[tab_ realParentWindow] window] miniaturize:self];
+}
+
 - (void)startTmuxMode
 {
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
@@ -3585,6 +3593,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self printTmuxMessage:@"  X    Force-quit tmux mode."];
     [self printTmuxMessage:@"  L    Toggle logging."];
     [self printTmuxMessage:@"  C    Run tmux command."];
+
+    if ([[PreferencePanel sharedInstance] autoHideTmuxClientSession]) {
+        [self hideSession];
+    }
 
     [tmuxGateway_ readTask:[TERMINAL streamData]];
     [TERMINAL clearStream];
@@ -3695,6 +3707,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [SCREEN crlf];
     tmuxMode_ = TMUX_NONE;
     tmuxLogging_ = NO;
+
+    if ([[PreferencePanel sharedInstance] autoHideTmuxClientSession] &&
+        [[[tab_ realParentWindow] window] isMiniaturized]) {
+        [[[tab_ realParentWindow] window] deminiaturize:self];
+    }
 }
 
 - (void)tmuxWriteData:(NSData *)data

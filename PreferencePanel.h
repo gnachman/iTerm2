@@ -239,13 +239,17 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* lionStyleFullscreen;
     BOOL defaultLionStyleFullscreen;
 
-	// Open tmux dashboard if there are more than N windows
-	IBOutlet NSTextField *tmuxDashboardLimit;
-	int defaultTmuxDashboardLimit;
+    // Open tmux dashboard if there are more than N windows
+    IBOutlet NSTextField *tmuxDashboardLimit;
+    int defaultTmuxDashboardLimit;
 
-	// Open tmux windows in
-	IBOutlet NSPopUpButton *openTmuxWindows;
-	int defaultOpenTmuxWindowsIn;
+    // Open tmux windows in
+    IBOutlet NSPopUpButton *openTmuxWindows;
+    int defaultOpenTmuxWindowsIn;
+
+    // Hide the tmux client session
+    IBOutlet NSButton *autoHideTmuxClientSession;
+    BOOL defaultAutoHideTmuxClientSession;
 
     // Load prefs from custom folder
     IBOutlet NSButton *loadPrefsFromCustomFolder;
@@ -744,6 +748,7 @@ typedef enum {
 - (id)tokenFieldCell:(NSTokenFieldCell *)tokenFieldCell representedObjectForEditingString:(NSString *)editingString;
 - (void)underlyingBookmarkDidChange;
 - (int)openTmuxWindowsIn;
+- (BOOL)autoHideTmuxClientSession;
 - (int)tmuxDashboardLimit;
 - (IBAction)openCopyBookmarks:(id)sender;
 - (IBAction)copyBookmarks:(id)sender;
