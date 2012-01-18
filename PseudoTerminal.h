@@ -944,6 +944,9 @@ NSWindowDelegate,
 // Move a tab to a new window due to a context menu selection.
 - (void)moveTabToNewWindowContextualMenuAction:(id)sender;
 
+// Change the tab color to the selected menu color
+- (void)changeTabColorToMenuAction:(id)sender;
+
 // Close this window.
 - (IBAction)closeWindow:(id)sender;
 
