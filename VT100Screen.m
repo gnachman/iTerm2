@@ -1675,7 +1675,7 @@ static char* FormatCont(int c)
         {
             char buf[64];
             snprintf(buf, sizeof(buf), "\033[%dt", [[[SESSION tab] parentWindow] windowIsMiniaturized] ? 2 : 1);
-            [SHELL writeTask:[NSData dataWithBytes:buf
+            [SESSION writeTask:[NSData dataWithBytes:buf
                                             length:strlen(buf)]];
         }
         break;
@@ -1685,7 +1685,7 @@ static char* FormatCont(int c)
             NSRect frame = [[[SESSION tab] parentWindow] windowFrame];
             // TODO: Figure out wtf to do if there are multiple sessions in one tab.
             snprintf(buf, sizeof(buf), "\033[3;%d;%dt", (int) frame.origin.x, (int) frame.origin.y);
-            [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
+            [SESSION writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
         break;
     case XTERMCC_REPORT_WIN_PIX_SIZE:
@@ -1694,7 +1694,7 @@ static char* FormatCont(int c)
             NSRect frame = [[[SESSION tab] parentWindow] windowFrame];
             // TODO: Some kind of adjustment for panes?
             snprintf(buf, sizeof(buf), "\033[4;%d;%dt", (int) frame.size.height, (int) frame.size.width);
-            [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
+            [SESSION writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
         break;
     case XTERMCC_REPORT_WIN_SIZE:
@@ -1702,7 +1702,7 @@ static char* FormatCont(int c)
             char buf[64];
             // TODO: Some kind of adjustment for panes
             snprintf(buf, sizeof(buf), "\033[8;%d;%dt", HEIGHT, WIDTH);
-            [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
+            [SESSION writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
         break;
     case XTERMCC_REPORT_SCREEN_SIZE:
@@ -1718,21 +1718,21 @@ static char* FormatCont(int c)
             int w =  (screenSize.size.width - wch - MARGIN * 2) / [display charWidth];
 
             snprintf(buf, sizeof(buf), "\033[9;%d;%dt", h, w);
-            [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
+            [SESSION writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
         break;
     case XTERMCC_REPORT_ICON_TITLE:
         {
             char buf[64];
             snprintf(buf, sizeof(buf), "\033]L%s\033\\", [[SESSION name] UTF8String]);
-            [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
+            [SESSION writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
         break;
     case XTERMCC_REPORT_WIN_TITLE:
         {
             char buf[64];
             snprintf(buf, sizeof(buf), "\033]l%s\033\\", [[SESSION windowTitle] UTF8String]);
-            [SHELL writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
+            [SESSION writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
         break;
 
@@ -1758,7 +1758,7 @@ static char* FormatCont(int c)
 			@"install a version that is compatible with this build of iTerm2."
 					ascii:YES];
 		[self crlf];
-		[SHELL writeTask:[@"detach\n" dataUsingEncoding:NSUTF8StringEncoding]];
+		[SESSION writeTask:[@"detach\n" dataUsingEncoding:NSUTF8StringEncoding]];
 		break;
 
     case UNDERSCORE_TMUX1:
@@ -3254,7 +3254,7 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 
     if (report != nil) {
-        [SHELL writeTask:report];
+        [SESSION writeTask:report];
     }
 }
 
@@ -3275,7 +3275,7 @@ void DumpBuf(screen_char_t* p, int n) {
         report = [TERMINAL reportDeviceAttribute];
 
     if (report != nil) {
-        [SHELL writeTask:report];
+        [SESSION writeTask:report];
     }
 }
 
