@@ -3371,6 +3371,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [self smartSelectAtX:x y:y ignoringNewlines:YES];
 }
 
+- (void)smartSelectAndMaybeCopyWithEvent:(NSEvent *)event
+                        ignoringNewlines:(BOOL)ignoringNewlines
+{
+    NSPoint clickPoint = [self clickPoint:event];
+    int x = clickPoint.x;
+    int y = clickPoint.y;
+    
+    [self smartSelectAtX:x y:y ignoringNewlines:ignoringNewlines];
+    [self setSelectionTime];
+    if (startX > -1 && _delegate) {
+        // if we want to copy our selection, do so
+        if ([[PreferencePanel sharedInstance] copySelection]) {
+            [self copy:self];
+        }
+    }
+}
+
 - (void)openContextMenuWithEvent:(NSEvent *)event
 {
     NSPoint clickPoint = [self clickPoint:event];
