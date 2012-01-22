@@ -92,7 +92,7 @@ NSString *kStateDictDECSCCursorY = @"decsc_cursor_y";
                 [result setObject:value forKey:key];
             }
         } else {
-            NSLog(@"Bogus result in dump-state: \"%@\"", kvp);
+            NSLog(@"Bogus result in control command: \"%@\"", kvp);
         }
     }
     return result;

@@ -233,14 +233,14 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)openWindowsInitial
 {
 	NSSize size = [[gateway_ delegate] tmuxBookmarkSize];
-    NSString *setSizeCommand = [NSString stringWithFormat:@"set-control-client-attr client-size %d,%d",
+    NSString *setSizeCommand = [NSString stringWithFormat:@"control -s client-size %d,%d",
 								   (int)size.width, (int)size.height];
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
-    NSString *getAffinitiesCommand = [NSString stringWithFormat:@"dump-state -k affinities%d", sessionId_];
-    NSString *getOriginsCommand = [NSString stringWithFormat:@"dump-state -k origins%d", sessionId_];
+    NSString *getAffinitiesCommand = [NSString stringWithFormat:@"control -k affinities%d", sessionId_];
+    NSString *getOriginsCommand = [NSString stringWithFormat:@"control -k origins%d", sessionId_];
     NSString *getHiddenWindowsCommand =
-		[NSString stringWithFormat:@"dump-state -k hidden%d", sessionId_];
+		[NSString stringWithFormat:@"control -k hidden%d", sessionId_];
     NSArray *commands = [NSArray arrayWithObjects:
                          [gateway_ dictionaryForCommand:setSizeCommand
                                          responseTarget:nil
@@ -337,7 +337,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 {
     lastSize_ = size;
     ++numOutstandingWindowResizes_;
-    [gateway_ sendCommand:[NSString stringWithFormat:@"set-control-client-attr client-size %d,%d",
+    [gateway_ sendCommand:[NSString stringWithFormat:@"control -s client-size %d,%d",
 						   (int)size.width, (int)size.height]
            responseTarget:self
          responseSelector:@selector(clientSizeChangeResponse:)
@@ -573,7 +573,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 {
 	NSString *hidden = [[hiddenWindows_ allObjects] componentsJoinedByString:@","];
 	NSString *command = [NSString stringWithFormat:
-		@"set-control-client-attr set hidden%d=%@",
+		@"control -s set hidden%d=%@",
 		sessionId_, hidden];
 	[gateway_ sendCommand:command
 		   responseTarget:nil
@@ -615,7 +615,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 		}
 	}
 	NSString *enc = [maps componentsJoinedByString:@" "];
-	NSString *command = [NSString stringWithFormat:@"set-control-client-attr set \"origins%d=%@\"",
+	NSString *command = [NSString stringWithFormat:@"control -s set \"origins%d=%@\"",
 			 sessionId_, [enc stringByEscapingQuotes]];
 	if (!lastOrigins_ || ![command isEqualToString:lastOrigins_]) {
 		[lastOrigins_ release];
@@ -660,7 +660,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 		}
     }
     NSString *arg = [affinities componentsJoinedByString:@" "];
-    NSString *command = [NSString stringWithFormat:@"set-control-client-attr set \"affinities%d=%@\"",
+    NSString *command = [NSString stringWithFormat:@"control -s set \"affinities%d=%@\"",
                          sessionId_, [arg stringByEscapingQuotes]];
     if ([command isEqualToString:lastSaveAffinityCommand_]) {
         return;
@@ -818,7 +818,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
-// When an iTerm2 window is resized, a set-control-client-attr client-size w,h
+// When an iTerm2 window is resized, a control -s client-size w,h
 // command is sent. It responds with new layouts for all the windows in the
 // client's session. Update the layouts for the affected tabs.
 - (void)clientSizeChangeResponse:(NSString *)response
