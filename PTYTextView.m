@@ -31,6 +31,9 @@
 #define DEBUG_METHOD_TRACE    0
 #define GREED_KEYDOWN         1
 static const int MAX_WORKING_DIR_COUNT = 50;
+static const int kMaxSelectedTextLengthForCustomActions = 8192;
+static const int kMaxSelectedTextLinesForCustomActions = 100;
+
 //#define DEBUG_DRAWING
 
 // Constants for converting RGB to luma.
@@ -3933,11 +3936,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [theMenu addItem:[NSMenuItem separatorItem]];
 
     // Custom actions
-    NSString *selectedText = [self selectedText];
-    if ([self addCustomActionsToMenu:theMenu matchingText:selectedText]) {
-        [theMenu addItem:[NSMenuItem separatorItem]];
+    if (startX >= 0 && abs(endY - startY) < kMaxSelectedTextLinesForCustomActions) {
+        NSString *selectedText = [self selectedText];
+        if ([selectedText length] < kMaxSelectedTextLengthForCustomActions) {
+            if ([self addCustomActionsToMenu:theMenu matchingText:selectedText]) {
+                [theMenu addItem:[NSMenuItem separatorItem]];
+            }
+        }
     }
-    
+
     // Split pane options
     [theMenu addItemWithTitle:@"Split Pane Vertically" action:@selector(splitTextViewVertically:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
