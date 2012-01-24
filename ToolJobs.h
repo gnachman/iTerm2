@@ -18,6 +18,7 @@
     NSMutableArray *names_;
     NSMutableArray *pids_;
     BOOL hasSelection;
+    BOOL shutdown_;
 }
 
 @property (nonatomic, assign) BOOL hasSelection;
