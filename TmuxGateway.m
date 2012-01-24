@@ -310,7 +310,7 @@ static NSString *kCommandObject = @"object";
 
 - (NSString *)keyEncodedByte:(char)byte
 {
-    return [NSString stringWithFormat:@"%02x", (int)byte];
+    return [NSString stringWithFormat:@"%02x", (((int)byte) & 0xff)];
 }
 
 - (NSString *)stringForKeyEncodedData:(NSData *)data
