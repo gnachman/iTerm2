@@ -203,7 +203,7 @@
     if ([[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterRawCommandAction]) {
         NSString *script = [prefs_ objectForKey:kTrouterTextKey];
         script = [script stringByReplacingBackreference:1
-                                             withString:path ? path : @""];
+                                             withString:path ? [path stringWithEscapedShellCharacters] : @""];
             script = [script stringByReplacingBackreference:2
                                                  withString:lineNumber ? lineNumber : @""];
         script = [script stringByReplacingBackreference:3
@@ -223,7 +223,7 @@
 
     if ([[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterCommandAction]) {
         NSString *script = [prefs_ objectForKey:kTrouterTextKey];
-        script = [script stringByReplacingBackreference:1 withString:path ? path : @""];
+        script = [script stringByReplacingBackreference:1 withString:path ? [path stringWithEscapedShellCharacters] : @""];
         script = [script stringByReplacingBackreference:2 withString:lineNumber ? lineNumber : @""];
         script = [script stringByReplacingBackreference:3 withString:[prefix stringWithEscapedShellCharacters]];
         script = [script stringByReplacingBackreference:4 withString:[suffix stringWithEscapedShellCharacters]];
