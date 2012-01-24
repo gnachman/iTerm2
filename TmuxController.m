@@ -333,6 +333,25 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     return YES;
 }
 
+- (void)fitLayoutToWindows
+{
+    NSSize minSize = NSMakeSize(INFINITY, INFINITY);
+    for (id windowKey in windows_) {
+        PTYTab *tab = [[windows_ objectForKey:windowKey] objectAtIndex:0];
+        NSSize size = [tab maxTmuxSize];
+        minSize.width = MIN(minSize.width, size.width);
+        minSize.height = MIN(minSize.height, size.height);
+    }
+    if (minSize.width == 0 || minSize.height == 0) {
+        // After the last session closes a size of 0 is reported.
+        return;
+    }
+    if (NSEqualSizes(minSize, lastSize_)) {
+        return;
+    }
+    [self setClientSize:minSize];
+}
+
 - (void)setClientSize:(NSSize)size
 {
     lastSize_ = size;

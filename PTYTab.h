@@ -247,11 +247,17 @@ static const int MIN_SESSION_COLUMNS = 2;
            hSpacing:(double)hs
            vSpacing:(double)vs;
 
+// Size we should report to fit the current layout
 - (NSSize)tmuxSize;
+// Size we are given the current layout
+- (NSSize)maxTmuxSize;
+
 - (int)tmuxWindow;
 - (BOOL)isTmuxTab;
 - (void)setTmuxLayout:(NSMutableDictionary *)parseTree
        tmuxController:(TmuxController *)tmuxController;
+// Returns true if the tmux layout is too large for the window to accommodate.
+- (BOOL)layoutIsTooLarge;
 - (TmuxController *)tmuxController;
 
 #pragma mark NSSplitView delegate methods

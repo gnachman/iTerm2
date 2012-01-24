@@ -135,6 +135,9 @@
         // in two windows.
         [tab setTmuxLayout:self.parseTree
              tmuxController:controller_];
+        if ([tab layoutIsTooLarge]) {
+            [controller_ fitLayoutToWindows];
+        }
     }
 }
 
@@ -240,6 +243,9 @@
         if (tabToUpdate_) {
             [tabToUpdate_ setTmuxLayout:parseTree
                          tmuxController:controller_];
+            if ([tabToUpdate_ layoutIsTooLarge]) {
+                [controller_ fitLayoutToWindows];
+            }
         } else {
             if (![self.controller window:windowIndex_]) {
                 // Safety valve: don't open an existing tmux window.

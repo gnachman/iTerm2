@@ -2571,6 +2571,21 @@ static NSString* FormatRect(NSRect r) {
     return [[sortedValues lastObject] intValue];
 }
 
+// Returns the size (in characters) of the largest layout that can fit in this tab.
+- (NSSize)maxTmuxSize
+{
+    NSSize rootSize = root_.frame.size;
+    NSSize containerSize = flexibleView_.frame.size;
+    NSSize overage = NSMakeSize(MAX(0, rootSize.width - containerSize.width),
+                                MAX(0, rootSize.height - containerSize.height));
+    NSSize charSize = [PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]];
+    overage.width = ceil(overage.width / charSize.width);
+    overage.height = ceil(overage.height / charSize.height);
+    NSSize tmuxSize = [self tmuxSize];
+    return NSMakeSize(tmuxSize.width - overage.width,
+                      tmuxSize.height - overage.height);
+}
+
 // Returns the size (in characters) of the minimum window size that can contain
 // this tab. It picks the smallest height that can contain every column and
 // every row (counting characters and dividers as 1).
@@ -2827,6 +2842,15 @@ static NSString* FormatRect(NSRect r) {
     [[root_ window] makeFirstResponder:[[self activeSession] TEXTVIEW]];
     [parseTree_ release];
     parseTree_ = [parseTree retain];
+}
+
+- (BOOL)layoutIsTooLarge
+{
+    if (!flexibleView_) {
+        return NO;
+    }
+    return (root_.frame.size.width > flexibleView_.frame.size.width ||
+            root_.frame.size.height > flexibleView_.frame.size.height);
 }
 
 - (BOOL)hasMaximizedPane
