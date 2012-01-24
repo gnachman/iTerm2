@@ -55,6 +55,38 @@ NSString *kLayoutDictStateKey = @"state";
     return instance;
 }
 
+// When a child has the same node type as its parent, add its children to
+// the parent's children.
+- (NSMutableDictionary *)coalescedTree:(NSMutableDictionary *)node
+{
+    int nodeType = [[node objectForKey:kLayoutDictNodeType] intValue];
+    if (nodeType == kVSplitLayoutNode || nodeType == kHSplitLayoutNode) {
+        NSSize size;
+        size.width = [[node objectForKey:kLayoutDictWidthKey] intValue];
+        size.height = [[node objectForKey:kLayoutDictHeightKey] intValue];
+        NSArray *children = [node objectForKey:kLayoutDictChildrenKey];
+        NSMutableArray *coalescedChildren = [NSMutableArray array];
+        for (NSMutableDictionary *child in children) {
+            // Recursively apply this algorithm to the child (does nothing if it's a leaf node)
+            NSMutableDictionary *coalescedChild = [self coalescedTree:child];
+
+            if ([[coalescedChild objectForKey:kLayoutDictNodeType] intValue] == nodeType) {
+                // The child is a split of the same orientation as this node.
+                // Iterate over its children (this node's grandchildren) and hoist each up to
+                // be a child of this node.
+                [coalescedChildren addObjectsFromArray:[coalescedChild objectForKey:kLayoutDictChildrenKey]];
+            } else {
+                // The child is not a splitter of the same orientation, so just add it.
+                [coalescedChildren addObject:coalescedChild];
+            }
+        }
+        // Done coalescing children--if at all--and replace our existing children
+        // with the new ones.
+        [node setObject:coalescedChildren forKey:kLayoutDictChildrenKey];
+    }
+    return node;
+}
+
 - (NSMutableDictionary *)parsedLayoutFromString:(NSString *)layout
 {
     NSMutableArray *temp = [NSMutableArray array];
@@ -68,7 +100,7 @@ NSString *kLayoutDictStateKey = @"state";
             [tree setObject:[NSArray arrayWithObject:oldRoot] forKey:kLayoutDictChildrenKey];
             [tree removeObjectForKey:kLayoutDictWindowPaneKey];
         }
-        return tree;
+        return [self coalescedTree:tree];
     } else {
         return nil;
     }

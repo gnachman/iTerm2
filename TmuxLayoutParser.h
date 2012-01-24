@@ -8,12 +8,17 @@
 #import <Cocoa/Cocoa.h>
 
 // Trees consist of arrays of dictionaries. The dictionaries have these keys defined:
+// All nodes:
+extern NSString *kLayoutDictNodeType;     // Node type from enum LayoutNodeType. NSNumber.
+
+// Intermediate nodes only:
 extern NSString *kLayoutDictChildrenKey;  // Sub-tree. Returns an array.
+
+// Leaf nodes only:
 extern NSString *kLayoutDictWidthKey;     // Width of node. String. Use -intValue.
 extern NSString *kLayoutDictHeightKey;    // Height. String. Use -intValue.
 extern NSString *kLayoutDictXOffsetKey;   // X position. String. Use -intValue.
 extern NSString *kLayoutDictYOffsetKey;   // Y position. String. Use -intValue.
-extern NSString *kLayoutDictNodeType;     // Node type from enum LayoutNodeType. NSNumber.
 extern NSString *kLayoutDictWindowPaneKey;  // window pane number (leaf nodes only)
 
 // These values are filled in by other classes:
