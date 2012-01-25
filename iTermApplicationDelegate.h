@@ -133,6 +133,9 @@ void DebugLog(NSString* value);
     // About window
 - (IBAction)showAbout:(id)sender;
 
+- (IBAction)makeDefaultTerminal:(id)sender;
+- (IBAction)unmakeDefaultTerminal:(id)sender;
+
 - (IBAction)saveWindowArrangement:(id)sender;
 - (IBAction)loadWindowArrangement:(id)sender;
 

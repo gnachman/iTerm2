@@ -228,12 +228,37 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
+- (void)setDefaultTerminal:(NSString *)bundleId
 {
-    // Make us the default handler for iterm2:// urls
+    CFStringRef unixExecutableContentType = (CFStringRef)@"public.unix-executable";
+    LSSetDefaultRoleHandlerForContentType(unixExecutableContentType,
+                                          kLSRolesShell,
+                                          (CFStringRef) bundleId);
+}
+
+- (IBAction)makeDefaultTerminal:(id)sender
+{
+    NSString *iTermBundleId = [[NSBundle mainBundle] bundleIdentifier];
+    [self setDefaultTerminal:iTermBundleId];
+}
+
+- (IBAction)unmakeDefaultTerminal:(id)sender
+{
+    [self setDefaultTerminal:@"com.apple.terminal"];
+}
+
+- (BOOL)isDefaultTerminal
+{
     LSSetDefaultHandlerForURLScheme((CFStringRef)@"iterm2",
                                     (CFStringRef)[[NSBundle mainBundle] bundleIdentifier]);
+    CFStringRef unixExecutableContentType = (CFStringRef)@"public.unix-executable";
+    CFStringRef unixHandler = LSCopyDefaultRoleHandlerForContentType(unixExecutableContentType, kLSRolesShell);
+    NSString *iTermBundleId = [[NSBundle mainBundle] bundleIdentifier];
+    return [iTermBundleId isEqualToString:(NSString *)unixHandler];
+}
 
+- (void)applicationDidFinishLaunching:(NSNotification *)aNotification
+{
     // Create the app support directory
     [self _createFlag];
 
@@ -1204,6 +1229,8 @@ void DebugLog(NSString* value)
     if ([menuItem action] == @selector(toggleUseBackgroundPatternIndicator:)) {
       [menuItem setState:[self useBackgroundPatternIndicator]];
       return YES;
+    } else if ([menuItem action] == @selector(makeDefaultTerminal:)) {
+        return ![self isDefaultTerminal];
     } else if (menuItem == maximizePane) {
         if ([[[iTermController sharedInstance] currentTerminal] inInstantReplay]) {
             // Things get too complex if you allow this. It crashes.
