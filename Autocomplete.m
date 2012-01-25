@@ -564,6 +564,10 @@ const int kMaxResultContextWords = 4;
 
         if (!more_ && [findResults_ count] == 0) {
             AcLog(@"no more and no unprocessed results");
+            if (populateTimer_) {
+               [populateTimer_ invalidate];
+               populateTimer_ = nil;
+            }
             break;
         }
 
