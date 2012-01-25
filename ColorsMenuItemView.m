@@ -125,25 +125,25 @@ enum {
     NSGradient *outlineGradient = [[NSGradient alloc] initWithStartingColor:[NSColor colorWithCalibratedWhite:0.0 alpha:0.3] 
                                                                 endingColor:[NSColor colorWithCalibratedWhite:0.0 alpha:0.7]];
     
-	for (NSInteger i = 0; i < kNumberOfColors; i++) {
-		NSRect outlineArea = NSMakeRect(kColorAreaOffsetX + kColorAreaDistanceX * i, kColorAreaOffsetY,
-                                            kColorAreaDimension, kColorAreaDimension);
+    for (NSInteger i = 0; i < kNumberOfColors; i++) {
+        NSRect outlineArea = NSMakeRect(kColorAreaOffsetX + kColorAreaDistanceX * i, kColorAreaOffsetY,
+                                        kColorAreaDimension, kColorAreaDimension);
         // draw the outline
-		[outlineGradient drawInRect:outlineArea angle:-90.0];
-
+        [outlineGradient drawInRect:outlineArea angle:-90.0];
+        
         // draw the color
-		NSRect colorArea = NSInsetRect(outlineArea, kColorAreaBorder, kColorAreaBorder);
+        NSRect colorArea = NSInsetRect(outlineArea, kColorAreaBorder, kColorAreaBorder);
         NSGradient *gradient = [self gradientForColorIndex:i];
-		[gradient drawInRect:colorArea angle:-90.0];
-	}
+        [gradient drawInRect:colorArea angle:-90.0];
+    }
     [outlineGradient release];
-	
-	// draw the menu label
-	NSMutableDictionary *fontAtts = [[NSMutableDictionary alloc] init];
-	[fontAtts setObject: [NSFont menuFontOfSize: kMenuFontOfSize] forKey: NSFontAttributeName];
-	NSString *labelTitle = @"Tab Color:";
-	[labelTitle drawAtPoint:NSMakePoint(kMenuLabelOffsetX, kMenuLabelOffsetY) withAttributes:fontAtts];
-	[fontAtts release];
+    
+    // draw the menu label
+    NSMutableDictionary *fontAtts = [[NSMutableDictionary alloc] init];
+    [fontAtts setObject: [NSFont menuFontOfSize: kMenuFontOfSize] forKey: NSFontAttributeName];
+    NSString *labelTitle = @"Tab Color:";
+    [labelTitle drawAtPoint:NSMakePoint(kMenuLabelOffsetX, kMenuLabelOffsetY) withAttributes:fontAtts];
+    [fontAtts release];
 }
 
 - (void)mouseUp:(NSEvent*) event {
