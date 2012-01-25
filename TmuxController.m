@@ -335,6 +335,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)fitLayoutToWindows
 {
+    if (!windows_.count) {
+        return;
+    }
     NSSize minSize = NSMakeSize(INFINITY, INFINITY);
     for (id windowKey in windows_) {
         PTYTab *tab = [[windows_ objectForKey:windowKey] objectAtIndex:0];

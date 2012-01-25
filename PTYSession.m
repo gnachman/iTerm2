@@ -767,6 +767,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         assert([tab_ tmuxWindow] >= 0);
         [tmuxController_ deregisterWindow:[tab_ tmuxWindow]
                                windowPane:tmuxPane_];
+        [tmuxController_ fitLayoutToWindows];
     } else if (tmuxMode_ == TMUX_GATEWAY) {
         [tmuxController_ detach];
 		[tmuxGateway_ release];
@@ -2365,6 +2366,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                                 withPane:tmuxPane_
                                 inWindow:[tab_ tmuxWindow]];
     }
+    [tmuxController_ fitLayoutToWindows];
 }
 
 - (struct timeval)lastOutput
