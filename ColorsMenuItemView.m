@@ -34,12 +34,15 @@ const int kColorAreaOffsetY = 10;
 const int kColorAreaDistanceX = 18;
 const int kColorAreaDimension = 12;
 const int kColorAreaBorder = 1;
+const int kDefaulColorOffset = 2;
+const int kDefaultColorDimension = 8;
+const int kDefaultColorStokeWidth = 2;
 const int kMenuFontOfSize = 14;
 const int kMenuLabelOffsetX = 20;
 const int kMenuLabelOffsetY = 32;
 
 enum {
-    kMenuItemWhite = 0,
+    kMenuItemDefault = 0,
     kMenuItemRed = 1,
     kMenuItemOrange = 2,
     kMenuItemYellow = 3,
@@ -63,12 +66,8 @@ enum {
 	NSGradient *gradient = nil;
 	
 	switch (colorIndex) {
-		case kMenuItemWhite:
-			gradient = [[NSGradient alloc] initWithColorsAndLocations:
-						[NSColor colorWithCalibratedWhite:255.0/255.0 alpha:1.0], 1.0,
-						[NSColor colorWithCalibratedWhite:255.0/255.0 alpha:1.0], 1.0,
-						[NSColor colorWithCalibratedWhite:255.0/255.0 alpha:1.0], 1.0, nil];
-			break;
+		case kMenuItemDefault:
+			return nil;
 
 		case kMenuItemRed:
 			gradient = [[NSGradient alloc] initWithColorsAndLocations:
@@ -122,10 +121,24 @@ enum {
 
 - (void)drawRect:(NSRect)rect
 {    
+    // draw the "x" (reset color to default)
+    NSColor *color = [NSColor grayColor];    
+    [color set];
+    [NSBezierPath setDefaultLineWidth: kDefaultColorStokeWidth];
+    float defaultX0 = kColorAreaOffsetX + kDefaulColorOffset;
+    float defaultX1 = defaultX0 + kDefaultColorDimension;
+    float defaultY0 = kColorAreaOffsetY + kDefaulColorOffset;
+    float defaultY1 = defaultY0 + kDefaultColorDimension;    
+    [NSBezierPath strokeLineFromPoint:NSMakePoint(defaultX0, defaultY0)
+                              toPoint:NSMakePoint(defaultX1, defaultY1)];
+    [NSBezierPath strokeLineFromPoint:NSMakePoint(defaultX1, defaultY0)
+                              toPoint:NSMakePoint(defaultX0, defaultY1)];
+
+    // draw the colors
     NSGradient *outlineGradient = [[NSGradient alloc] initWithStartingColor:[NSColor colorWithCalibratedWhite:0.0 alpha:0.3] 
                                                                 endingColor:[NSColor colorWithCalibratedWhite:0.0 alpha:0.7]];
-    
-    for (NSInteger i = 0; i < kNumberOfColors; i++) {
+
+    for (NSInteger i = 1; i < kNumberOfColors; i++) {
         NSRect outlineArea = NSMakeRect(kColorAreaOffsetX + kColorAreaDistanceX * i, kColorAreaOffsetY,
                                         kColorAreaDimension, kColorAreaDimension);
         // draw the outline
@@ -162,8 +175,8 @@ enum {
         if (offset >= 0 && offset < kColorAreaDimension &&
                 colorIndex >= 0 && colorIndex < kNumberOfColors) {
             switch (colorIndex) {
-                case kMenuItemWhite:
-                    color_ = [NSColor whiteColor];
+                case kMenuItemDefault:
+                    color_ = nil;
                     break;            
                 case kMenuItemRed:
                     color_ = [NSColor redColor];

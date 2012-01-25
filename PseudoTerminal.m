@@ -5111,8 +5111,6 @@ NSString *sessionsKey = @"sessions";
 {
     ColorsMenuItemView *menuItem = (ColorsMenuItemView *)[sender view];    
     NSColor *color = menuItem.color;
-    if (!color)
-        return;    
     NSTabViewItem *aTabViewItem = [sender representedObject];
     [tabBarControl setTabColor:color forTabViewItem:aTabViewItem];
     if ([TABVIEW selectedTabViewItem] == aTabViewItem) {
