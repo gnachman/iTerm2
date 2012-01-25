@@ -2860,6 +2860,10 @@ static NSString* FormatRect(NSRect r) {
 
 - (void)maximize
 {
+    if ([self isTmuxTab]) {
+        NSBeep();
+        return;
+    }
     assert(!savedArrangement_);
     assert(!idMap_);
     assert(!isMaximized_);
