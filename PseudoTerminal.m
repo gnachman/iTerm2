@@ -75,6 +75,7 @@
 #import "TmuxLayoutParser.h"
 #import "TmuxDashboardController.h"
 #import "Coprocess.h"
+#import "ColorsMenuItemView.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -2920,6 +2921,17 @@ NSString *sessionsKey = @"sessions";
         [rootMenu addItem:item];
     }
 
+    // add label
+    [rootMenu addItem: [NSMenuItem separatorItem]];
+    ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
+                                              initWithFrame:NSMakeRect(0, 0, 180, 50)] autorelease];
+    item = [[[NSMenuItem alloc] initWithTitle:ITLocalizedString(@"Tab Color")
+                                       action:@selector(changeTabColorToMenuAction:)
+                                keyEquivalent:@""] autorelease];
+    [item setView:labelTrackView];
+    [item setRepresentedObject:tabViewItem];
+    [rootMenu addItem:item];
+    
     return rootMenu;
 }
 
@@ -5092,6 +5104,25 @@ NSString *sessionsKey = @"sessions";
 
     // release the tabViewItem
     [aTabViewItem release];
+}
+
+// change the tab color to the selected menu color
+- (void)changeTabColorToMenuAction:(id)sender
+{
+    ColorsMenuItemView *menuItem = (ColorsMenuItemView *)[sender view];    
+    NSColor *color = menuItem.color;
+    NSTabViewItem *aTabViewItem = [sender representedObject];
+    [tabBarControl setTabColor:color forTabViewItem:aTabViewItem];
+    if ([TABVIEW selectedTabViewItem] == aTabViewItem) {
+        NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:aTabViewItem];
+        if (!newTabColor) {
+            [[self window] setBackgroundColor:nil];
+            [background_ setColor:normalBackgroundColor];
+        } else {
+            [[self window] setBackgroundColor:newTabColor];
+            [background_ setColor:newTabColor];
+        }
+    }
 }
 
 - (IBAction)closeWindow:(id)sender
