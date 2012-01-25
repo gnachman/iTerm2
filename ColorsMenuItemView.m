@@ -63,58 +63,58 @@ enum {
 
 - (NSGradient *)gradientForColorIndex:(NSInteger)colorIndex
 {
-	NSGradient *gradient = nil;
-	
-	switch (colorIndex) {
-		case kMenuItemDefault:
-			return nil;
+    NSGradient *gradient = nil;
+    
+    switch (colorIndex) {
+        case kMenuItemDefault:
+            return nil;
 
-		case kMenuItemRed:
-			gradient = [[NSGradient alloc] initWithColorsAndLocations:
-						[NSColor colorWithDeviceRed:241.0/255.0 green:152.0/255.0 blue:139.0/255.0 alpha:1.0], 0.0,
-						[NSColor colorWithDeviceRed:228.0/255.0 green:116.0/255.0 blue:102.0/255.0 alpha:1.0], 0.5,
-						[NSColor colorWithDeviceRed:192.0/255.0 green:86.0/255.0 blue:73.0/255.0 alpha:1.0], 1.0, nil];
-			break;
-		case kMenuItemOrange:
-			gradient = [[NSGradient alloc] initWithColorsAndLocations:
-						[NSColor colorWithDeviceRed:248.0/255.0 green:201.0/255.0 blue:148.0/255.0 alpha:1.0], 0.0,
-						[NSColor colorWithDeviceRed:237.0/255.0 green:174.0/255.0 blue:107.0/255.0 alpha:1.0], 0.5,
-						[NSColor colorWithDeviceRed:210.0/255.0 green:143.0/255.0 blue:77.0/255.0 alpha:1.0], 1.0, nil];
-			break;
-		case kMenuItemYellow:
-			gradient = [[NSGradient alloc] initWithColorsAndLocations:
-						[NSColor colorWithDeviceRed:240.0/255.0 green:229.0/255.0 blue:164.0/255.0 alpha:1.0], 0.0,
-						[NSColor colorWithDeviceRed:227.0/255.0 green:213.0/255.0 blue:119.0/255.0 alpha:1.0], 0.5,
-						[NSColor colorWithDeviceRed:201.0/255.0 green:188.0/255.0 blue:92.0/255.0 alpha:1.0], 1.0, nil];
-			break;
-		case kMenuItemGreen:
-			gradient = [[NSGradient alloc] initWithColorsAndLocations:
-						[NSColor colorWithDeviceRed:209.0/255.0 green:236.0/255.0 blue:156.0/255.0 alpha:1.0], 0.0,
-						[NSColor colorWithDeviceRed:175.0/255.0 green:215.0/255.0 blue:119.0/255.0 alpha:1.0], 0.5,
-						[NSColor colorWithDeviceRed:142.0/255.0 green:182.0/255.0 blue:102.0/255.0 alpha:1.0], 1.0, nil];
-			break;
-		case kMenuItemBlue:
-			gradient = [[NSGradient alloc] initWithColorsAndLocations:
-						[NSColor colorWithDeviceRed:165.0/255.0 green:216.0/255.0 blue:249.0/255.0 alpha:1.0], 0.0,
-						[NSColor colorWithDeviceRed:118.0/255.0 green:185.0/255.0 blue:232.0/255.0 alpha:1.0], 0.5,
-						[NSColor colorWithDeviceRed:90.0/255.0 green:152.0/255.0 blue:201.0/255.0 alpha:1.0], 1.0, nil];
-			break;
-		case kMenuItemPurple:
-			gradient = [[NSGradient alloc] initWithColorsAndLocations:
-						[NSColor colorWithDeviceRed:232.0/255.0 green:191.0/255.0 blue:248.0/255.0 alpha:1.0], 0.0,
-						[NSColor colorWithDeviceRed:202.0/255.0 green:152.0/255.0 blue:224.0/255.0 alpha:1.0], 0.5,
-						[NSColor colorWithDeviceRed:163.0/255.0 green:121.0/255.0 blue:186.0/255.0 alpha:1.0], 1.0, nil];
-			break;
-		case kMenuItemGray:
-			gradient = [[NSGradient alloc] initWithColorsAndLocations:
-						[NSColor colorWithCalibratedWhite:212.0/255.0 alpha:1.0], 0.0,
-						[NSColor colorWithCalibratedWhite:182.0/255.0 alpha:1.0], 0.5,
-						[NSColor colorWithCalibratedWhite:151.0/255.0 alpha:1.0], 1.0, nil];
-			break;
-			
-	}
-	
-	return [gradient autorelease];
+        case kMenuItemRed:
+            gradient = [[NSGradient alloc] initWithColorsAndLocations:
+                        [NSColor colorWithDeviceRed:241.0/255.0 green:152.0/255.0 blue:139.0/255.0 alpha:1.0], 0.0,
+                        [NSColor colorWithDeviceRed:228.0/255.0 green:116.0/255.0 blue:102.0/255.0 alpha:1.0], 0.5,
+                        [NSColor colorWithDeviceRed:192.0/255.0 green:86.0/255.0 blue:73.0/255.0 alpha:1.0], 1.0, nil];
+            break;
+        case kMenuItemOrange:
+            gradient = [[NSGradient alloc] initWithColorsAndLocations:
+                        [NSColor colorWithDeviceRed:248.0/255.0 green:201.0/255.0 blue:148.0/255.0 alpha:1.0], 0.0,
+                        [NSColor colorWithDeviceRed:237.0/255.0 green:174.0/255.0 blue:107.0/255.0 alpha:1.0], 0.5,
+                        [NSColor colorWithDeviceRed:210.0/255.0 green:143.0/255.0 blue:77.0/255.0 alpha:1.0], 1.0, nil];
+            break;
+        case kMenuItemYellow:
+            gradient = [[NSGradient alloc] initWithColorsAndLocations:
+                        [NSColor colorWithDeviceRed:240.0/255.0 green:229.0/255.0 blue:164.0/255.0 alpha:1.0], 0.0,
+                        [NSColor colorWithDeviceRed:227.0/255.0 green:213.0/255.0 blue:119.0/255.0 alpha:1.0], 0.5,
+                        [NSColor colorWithDeviceRed:201.0/255.0 green:188.0/255.0 blue:92.0/255.0 alpha:1.0], 1.0, nil];
+            break;
+        case kMenuItemGreen:
+            gradient = [[NSGradient alloc] initWithColorsAndLocations:
+                        [NSColor colorWithDeviceRed:209.0/255.0 green:236.0/255.0 blue:156.0/255.0 alpha:1.0], 0.0,
+                        [NSColor colorWithDeviceRed:175.0/255.0 green:215.0/255.0 blue:119.0/255.0 alpha:1.0], 0.5,
+                        [NSColor colorWithDeviceRed:142.0/255.0 green:182.0/255.0 blue:102.0/255.0 alpha:1.0], 1.0, nil];
+            break;
+        case kMenuItemBlue:
+            gradient = [[NSGradient alloc] initWithColorsAndLocations:
+                        [NSColor colorWithDeviceRed:165.0/255.0 green:216.0/255.0 blue:249.0/255.0 alpha:1.0], 0.0,
+                        [NSColor colorWithDeviceRed:118.0/255.0 green:185.0/255.0 blue:232.0/255.0 alpha:1.0], 0.5,
+                        [NSColor colorWithDeviceRed:90.0/255.0 green:152.0/255.0 blue:201.0/255.0 alpha:1.0], 1.0, nil];
+            break;
+        case kMenuItemPurple:
+            gradient = [[NSGradient alloc] initWithColorsAndLocations:
+                        [NSColor colorWithDeviceRed:232.0/255.0 green:191.0/255.0 blue:248.0/255.0 alpha:1.0], 0.0,
+                        [NSColor colorWithDeviceRed:202.0/255.0 green:152.0/255.0 blue:224.0/255.0 alpha:1.0], 0.5,
+                        [NSColor colorWithDeviceRed:163.0/255.0 green:121.0/255.0 blue:186.0/255.0 alpha:1.0], 1.0, nil];
+            break;
+        case kMenuItemGray:
+            gradient = [[NSGradient alloc] initWithColorsAndLocations:
+                        [NSColor colorWithCalibratedWhite:212.0/255.0 alpha:1.0], 0.0,
+                        [NSColor colorWithCalibratedWhite:182.0/255.0 alpha:1.0], 0.5,
+                        [NSColor colorWithCalibratedWhite:151.0/255.0 alpha:1.0], 1.0, nil];
+            break;
+            
+    }
+    
+    return [gradient autorelease];
 }
 
 // Draw the menu item (label and colors)
@@ -133,6 +133,7 @@ enum {
                               toPoint:NSMakePoint(defaultX1, defaultY1)];
     [NSBezierPath strokeLineFromPoint:NSMakePoint(defaultX1, defaultY0)
                               toPoint:NSMakePoint(defaultX0, defaultY1)];
+    [color release];
 
     // draw the colors
     NSGradient *outlineGradient = [[NSGradient alloc] initWithStartingColor:[NSColor colorWithCalibratedWhite:0.0 alpha:0.3] 
@@ -179,25 +180,25 @@ enum {
                     color_ = nil;
                     break;            
                 case kMenuItemRed:
-                    color_ = [NSColor redColor];
+                    color_ = [NSColor colorWithDeviceRed:251.0/255.0 green:107.0/255.0 blue:98.0/255.0 alpha:1.0];
                     break;
                 case kMenuItemOrange:
-                    color_ = [NSColor orangeColor];
+                    color_ = [NSColor colorWithDeviceRed:246.0/255.0 green:172.0/255.0 blue:71.0/255.0 alpha:1.0];
                     break;
                 case kMenuItemYellow:
-                    color_ = [NSColor yellowColor];
+                    color_ = [NSColor colorWithDeviceRed:240.0/255.0 green:220.0/255.0 blue:79.0/255.0 alpha:1.0];
                     break;
                 case kMenuItemGreen:
-                    color_ = [NSColor greenColor];
+                    color_ = [NSColor colorWithDeviceRed:181.0/255.0 green:215.0/255.0 blue:73.0/255.0 alpha:1.0];
                     break;
                 case kMenuItemBlue:
-                    color_ = [NSColor blueColor];
+                    color_ = [NSColor colorWithDeviceRed:95.0/255.0 green:163.0/255.0 blue:248.0/255.0 alpha:1.0];
                     break;
                 case kMenuItemPurple:
-                    color_ = [NSColor purpleColor];
+                    color_ = [NSColor colorWithDeviceRed:193.0/255.0 green:142.0/255.0 blue:217.0/255.0 alpha:1.0];
                     break;
                 case kMenuItemGray:
-                    color_ = [NSColor grayColor];
+                    color_ = [NSColor colorWithCalibratedWhite:174.0/255.0 alpha:1.0];
                     break;
             }
             // perform the menu action (set the color)
