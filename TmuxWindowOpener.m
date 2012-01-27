@@ -130,12 +130,18 @@
         tabToUpdate_ = [tab retain];
         [gateway_ sendCommandList:cmdList];
     } else {
-        // TODO: Use guids for window panes. If a window pane moves from one window to another,
-        // it must be notified as the removal first and then the addition to avoid having one pane
-        // in two windows.
         [tab setTmuxLayout:self.parseTree
              tmuxController:controller_];
         if ([tab layoutIsTooLarge]) {
+            // The tab's root splitter is larger than the window's tabview.
+            // If there are no outstanding window resizes then setTmuxLayout:tmuxController:
+            // has called fitWindowToTabs:, and it's still too big, so shrink
+            // the layout.
+            for (TmuxController *controller in [[tab realParentWindow] uniqueTmuxControllers]) {
+                if ([controller hasOutstandingWindowResize]) {
+                    return;
+                }
+            }
             [controller_ fitLayoutToWindows];
         }
     }
