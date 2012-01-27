@@ -67,6 +67,11 @@
     [[term currentTab] numberOfSessionsDidChange];
  }
 
+- (void)clearSession
+{
+    session_ = nil;
+}
+
 - (SessionView *)removeAndClearSession
 {
     SessionView *oldView = [session_ view];

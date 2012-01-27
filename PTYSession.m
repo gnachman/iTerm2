@@ -767,7 +767,19 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         assert([tab_ tmuxWindow] >= 0);
         [tmuxController_ deregisterWindow:[tab_ tmuxWindow]
                                windowPane:tmuxPane_];
-        [tmuxController_ fitLayoutToWindows];
+        // This call to fitLayoutToWindows is necessary to handle the case where
+        // a small window closes and leaves behind a larger (e.g., fullscreen)
+	// window. We want to set the client size to that of the smallest
+	// remaining window.
+        int n = [[tab_ sessions] count];
+        if ([[tab_ sessions] indexOfObjectIdenticalTo:self] != NSNotFound) {
+            n--;
+        }
+        if (n == 0) {
+            // The last session in this tab closed so check if the client has
+            // changed size
+            [tmuxController_ fitLayoutToWindows];
+        }
     } else if (tmuxMode_ == TMUX_GATEWAY) {
         [tmuxController_ detach];
 		[tmuxGateway_ release];

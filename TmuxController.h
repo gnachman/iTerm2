@@ -101,6 +101,8 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
       isVertical:(BOOL)splitVertical
           before:(BOOL)addBefore;
 - (void)breakOutWindowPane:(int)windowPane toPoint:(NSPoint)screenPoint;
+- (void)breakOutWindowPane:(int)windowPane toTabAside:(NSString *)sibling;
+
 - (void)killWindowPane:(int)windowPane;
 - (void)killWindow:(int)window;
 - (void)unlinkWindowWithId:(int)windowId inSession:(NSString *)sessionName;
@@ -122,5 +124,6 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
 - (void)saveAffinities;
 - (void)saveWindowOrigins;
 - (void)saveHiddenWindows;
-
+- (void)addAffinityBetweenPane:(int)windowPane
+                   andTerminal:(PseudoTerminal *)term;
 @end

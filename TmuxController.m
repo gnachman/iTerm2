@@ -116,6 +116,12 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [windowOpener openWindows:YES];
 }
 
+- (void)addAffinityBetweenPane:(int)windowPane
+                   andTerminal:(PseudoTerminal *)term {
+    [affinities_ setValue:[[NSNumber numberWithInt:windowPane] stringValue]
+             equalToValue:[term terminalGuid]];
+}
+
 - (void)setLayoutInTab:(PTYTab *)tab
                 toLayout:(NSString *)layout
 {
@@ -329,7 +335,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     if (NSEqualSizes(size, lastSize_)) {
         return NO;
     }
-	[self setClientSize:size];
+    [self setClientSize:size];
     return YES;
 }
 
@@ -357,6 +363,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)setClientSize:(NSSize)size
 {
+    assert(size.width > 0 && size.height > 0);
     lastSize_ = size;
     ++numOutstandingWindowResizes_;
     [gateway_ sendCommand:[NSString stringWithFormat:@"control -s client-size %d,%d",
@@ -480,6 +487,20 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [gateway_ sendCommand:[NSString stringWithFormat:@"break-pane -t %%%d", windowPane]
            responseTarget:nil
          responseSelector:nil];
+}
+
+- (void)breakOutWindowPane:(int)windowPane toTabAside:(NSString *)sibling
+{
+    [gateway_ sendCommand:[NSString stringWithFormat:@"break-pane -t %%%d", windowPane]
+           responseTarget:self
+         responseSelector:@selector(windowPaneBrokeOutWithWindowId:setAffinityTo:)
+           responseObject:sibling];
+}
+
+- (void)windowPaneBrokeOutWithWindowId:(NSString *)windowId
+                         setAffinityTo:(NSString *)windowGuid
+{
+    [affinities_ setValue:windowGuid equalToValue:windowId];
 }
 
 - (void)hideWindow:(int)windowId
@@ -846,6 +867,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)clientSizeChangeResponse:(NSString *)response
 {
     --numOutstandingWindowResizes_;
+    if (numOutstandingWindowResizes_ > 0) {
+        return;
+    }
     NSArray *layoutStrings = [response componentsSeparatedByString:@"\n"];
     for (NSString *layoutString in layoutStrings) {
         NSArray *components = [layoutString captureComponentsMatchedByRegex:@"^([0-9]+) (.*)"];

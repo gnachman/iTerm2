@@ -2952,6 +2952,16 @@ NSString *sessionsKey = @"sessions";
 - (NSTabViewItem *)tabView:(NSTabView *)tabView unknownObjectWasDropped:(id<NSDraggingInfo>)sender
 {
     PTYSession *session = [[MovePaneController sharedInstance] session];
+    BOOL tabSurvives = [[[session tab] sessions] count] > 1;
+    if ([session isTmuxClient] && tabSurvives) {
+	// Cause the "normal" drop handle to do nothing.
+        [[MovePaneController sharedInstance] clearSession];
+	// Tell the server to move the pane into its own window and sets
+	// an affinity to the destination window.
+        [[session tmuxController] breakOutWindowPane:[session tmuxPane]
+                                          toTabAside:[self terminalGuid]];
+        return nil;
+    }
     [[[MovePaneController sharedInstance] removeAndClearSession] autorelease];
     PTYTab *theTab = [[PTYTab alloc] initWithSession:session];
     [theTab setActiveSession:session];

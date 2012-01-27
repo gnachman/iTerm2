@@ -362,15 +362,18 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
             }
         }
 
-        [[[self destinationTabBar] tabView] insertTabViewItem:newTabViewItem atIndex:insertIndex];
-        insertIndex = [[[self destinationTabBar] tabView] indexOfTabViewItem:newTabViewItem];
-        // I'm not sure why, but calling -bindPropertiesForCell:andTabViewItem:
-        // here causes there to be an extra binding. It seems to have its
-        // bindings set when it's added to the control. Other paths through this
-        // function do explicitly set the bindings.
+	// If newTabViewItem is nil then simply cancel the drop.
+        if (newTabViewItem) {
+            [[[self destinationTabBar] tabView] insertTabViewItem:newTabViewItem atIndex:insertIndex];
+            insertIndex = [[[self destinationTabBar] tabView] indexOfTabViewItem:newTabViewItem];
+            // I'm not sure why, but calling -bindPropertiesForCell:andTabViewItem:
+            // here causes there to be an extra binding. It seems to have its
+            // bindings set when it's added to the control. Other paths through this
+            // function do explicitly set the bindings.
 
-        // Select the newly moved item in the destination tab view.
-        [[[self destinationTabBar] tabView] selectTabViewItem:newTabViewItem];
+            // Select the newly moved item in the destination tab view.
+            [[[self destinationTabBar] tabView] selectTabViewItem:newTabViewItem];
+        }
     } else {
         [[[self destinationTabBar] cells] replaceObjectAtIndex:destinationIndex withObject:[self draggedCell]];
         [[self draggedCell] setControlView:[self destinationTabBar]];
