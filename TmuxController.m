@@ -443,7 +443,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
       isVertical:(BOOL)splitVertical
           before:(BOOL)addBefore
 {
-    [gateway_ sendCommand:[NSString stringWithFormat:@"move-pane -s %%%d -t %%%d %@%@",
+    [gateway_ sendCommand:[NSString stringWithFormat:@"join-pane -m -s %%%d -t %%%d %@%@",
                            srcPane, destPane, splitVertical ? @"-h" : @"-v",
                            addBefore ? @" -b" : @""]
            responseTarget:nil
