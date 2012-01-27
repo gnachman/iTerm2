@@ -38,6 +38,7 @@
 #import "ProfilesWindow.h"
 #import "PTYTab.h"
 #import "iTermExpose.h"
+#import "ColorsMenuItemView.h"
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -573,6 +574,20 @@ static BOOL hasBecomeActive = NO;
 - (void)awakeFromNib
 {
     secureInputDesired_ = [[[NSUserDefaults standardUserDefaults] objectForKey:@"Secure Input"] boolValue];
+
+    NSMenu *appMenu = [NSApp mainMenu];
+    NSMenuItem *viewMenuItem = [appMenu itemWithTitle:@"View"];
+    NSMenu *viewMenu = [viewMenuItem submenu];
+
+    [viewMenu addItem: [NSMenuItem separatorItem]];
+    ColorsMenuItemView *labelTrackView = [[[ColorsMenuItemView alloc]
+                                           initWithFrame:NSMakeRect(0, 0, 180, 50)] autorelease];
+    NSMenuItem *item;
+    item = [[[NSMenuItem alloc] initWithTitle:@"Current Tab Color"
+                                       action:@selector(changeTabColorToMenuAction:)
+                                keyEquivalent:@""] autorelease];
+    [item setView:labelTrackView];
+    [viewMenu addItem:item];
 }
 
 - (BOOL)showToolbelt
@@ -1039,11 +1054,11 @@ void DebugLog(NSString* value)
     PTYSession* session = [frontTerminal currentSession];
     PTYTextView* textview = [session TEXTVIEW];
     [textview setFont:font nafont:nafont horizontalSpacing:hs verticalSpacing:vs];
-	if ([sender isAlternate]) {
-		[frontTerminal sessionInitiatedResize:session
-										width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
-									   height:[[abEntry objectForKey:KEY_ROWS] intValue]];
-	}
+        if ([sender isAlternate]) {
+                [frontTerminal sessionInitiatedResize:session
+                                                                                width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
+                                                                           height:[[abEntry objectForKey:KEY_ROWS] intValue]];
+        }
 }
 
 - (IBAction)exposeForTabs:(id)sender
