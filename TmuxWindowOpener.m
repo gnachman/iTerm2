@@ -154,7 +154,7 @@
 - (NSDictionary *)dictForStartControlCommand
 {
     ++pendingRequests_;
-    NSString *command = @"control -s ready";
+    NSString *command = @"control set-ready";
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
                          responseSelector:@selector(requestDidComplete)
@@ -182,7 +182,7 @@
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp
 {
     ++pendingRequests_;
-    NSString *command = [NSString stringWithFormat:@"control -e -t %%%d", [wp intValue]];
+    NSString *command = [NSString stringWithFormat:@"control -t %%%d get-emulator", [wp intValue]];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
                          responseSelector:@selector(dumpStateResponse:pane:)
@@ -193,7 +193,7 @@
                         alt:(BOOL)alternate
 {
     ++pendingRequests_;
-    NSString *command = [NSString stringWithFormat:@"control -h %@-t %%%d -l %d",
+    NSString *command = [NSString stringWithFormat:@"control %@-t %%%d -l %d get-history",
                          (alternate ? @"-a " : @""), [wp intValue], self.maxHistory];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
