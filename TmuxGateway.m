@@ -10,6 +10,8 @@
 #import "TmuxController.h"
 #import "iTermApplicationDelegate.h"
 
+#define NEWLINE @"\r\n"
+
 #define TMUX_VERBOSE_LOGGING
 #ifdef TMUX_VERBOSE_LOGGING
 #define TmuxLog NSLog
@@ -381,7 +383,7 @@ static NSString *kCommandObject = @"object";
     if (detachSent_ || state_ == CONTROL_STATE_DETACHED) {
         return;
     }
-    NSString *commandWithNewline = [command stringByAppendingString:@"\n"];
+    NSString *commandWithNewline = [command stringByAppendingString:NEWLINE];
     NSDictionary *dict = [self dictionaryForCommand:commandWithNewline
                                      responseTarget:target
                                    responseSelector:selector
@@ -403,7 +405,7 @@ static NSString *kCommandObject = @"object";
         [self enqueueCommandDict:dict];
         sep = @"; ";
     }
-    [cmd appendString:@"\n"];
+    [cmd appendString:NEWLINE];
     [delegate_ tmuxWriteData:[cmd dataUsingEncoding:NSUTF8StringEncoding]];
 }
 
