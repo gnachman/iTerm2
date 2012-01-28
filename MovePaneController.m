@@ -136,7 +136,7 @@
                                        intoPane:[dest tmuxPane]
                                      isVertical:(half == kEastHalf || half == kWestHalf)
                                          before:(half == kNorthHalf || half == kWestHalf)];
-        return NO;
+        return YES;
     }
 
     PTYSession *movingSession = session_;
