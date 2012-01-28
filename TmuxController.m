@@ -524,7 +524,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 		[self saveHiddenWindows];
 	}
     // Get the window's basic info to prep the creation of a TmuxWindowOpener.
-    [gateway_ sendCommand:[NSString stringWithFormat:@"list-windows -F %@ -I %d", kListWindowsFormat, windowId]
+    [gateway_ sendCommand:[NSString stringWithFormat:@"list-windows -F %@ -t :@%d",
+                           kListWindowsFormat, windowId]
            responseTarget:self
          responseSelector:@selector(listedWindowsToOpenOne:forWindowIdAndAffinities:)
            responseObject:[NSArray arrayWithObjects:[NSNumber numberWithInt:windowId],
