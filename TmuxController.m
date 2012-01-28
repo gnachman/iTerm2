@@ -32,7 +32,7 @@ NSString *kTmuxControllerWindowDidClose = @"kTmuxControllerWindowDidClose";
 static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     "#{window_name}\t"
     "#{window_width}\t#{window_height}\t"
-    "#{window_layout_ex}\t"
+    "#{window_layout}\t"
     "#{?window_active,1,0}\"";
 
 @interface TmuxController (Private)
