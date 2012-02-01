@@ -865,6 +865,16 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
 }
 
+- (void)writeTaskNoBroadcast:(NSData *)data
+{
+    if (tmuxMode_ == TMUX_CLIENT) {
+        [[tmuxController_ gateway] sendKeys:data
+                               toWindowPane:tmuxPane_];
+        return;
+    }
+    [self writeTaskImpl:data];
+}
+
 - (void)handleKeypressInTmuxGateway:(unichar)unicode
 {
     if (unicode == 27) {
@@ -898,8 +908,12 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 {
     if (tmuxMode_ == TMUX_CLIENT) {
         [self setBell:NO];
-        [[tmuxController_ gateway] sendKeys:data
-                                 toWindowPane:tmuxPane_];
+        if ([[tab_ realParentWindow] broadcastInputToSession:self]) {
+            [[tab_ realParentWindow] sendInputToAllSessions:data];
+        } else {
+            [[tmuxController_ gateway] sendKeys:data
+                                     toWindowPane:tmuxPane_];
+        }
         PTYScroller* ptys = (PTYScroller*)[SCROLLVIEW verticalScroller];
         [ptys setUserScroll:NO];
         return;
@@ -3620,6 +3634,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (BOOL)isTmuxClient
 {
     return tmuxMode_ == TMUX_CLIENT;
+}
+
+- (BOOL)isTmuxGateway
+{
+    return tmuxMode_ == TMUX_GATEWAY;
 }
 
 - (void)tmuxDetach

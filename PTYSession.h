@@ -251,6 +251,7 @@ typedef enum {
 + (void)selectMenuItem:(NSString*)theName;
 
 - (BOOL)isTmuxClient;
+- (BOOL)isTmuxGateway;
 
 // init/dealloc
 - (id)init;
@@ -321,6 +322,7 @@ typedef enum {
 
 // PTYTask
 - (void)writeTask:(NSData*)data;
+- (void)writeTaskNoBroadcast:(NSData *)data;
 - (void)readTask:(NSData*)data;
 - (void)brokenPipe;
 

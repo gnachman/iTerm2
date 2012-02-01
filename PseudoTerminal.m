@@ -450,7 +450,7 @@ NSString *sessionsKey = @"sessions";
     }
     if (isHotkey && IsSnowLeopardOrLater()) {
         [[self window] setCollectionBehavior:[[self window] collectionBehavior] | NSWindowCollectionBehaviorIgnoresCycle];
-        [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];        
+        [[self window] setCollectionBehavior:[[self window] collectionBehavior] & ~NSWindowCollectionBehaviorParticipatesInCycle];
     }
 
     toolbelt_ = [[[ToolbeltView alloc] initWithFrame:NSMakeRect(0, 0, 200, self.window.frame.size.height - kToolbeltMargin)
@@ -1051,19 +1051,19 @@ NSString *sessionsKey = @"sessions";
     tempTitle = NO;
 }
 
-- (void)sendInputToAllSessions:(NSData *)data
+- (NSArray *)broadcastSessions
 {
+    NSMutableArray *sessions = [NSMutableArray array];
     int i;
-
     int n = [TABVIEW numberOfTabViewItems];
     switch (broadcastMode_) {
         case BROADCAST_OFF:
-            return;
+            break;
 
         case BROADCAST_TO_ALL_PANES:
             for (PTYSession* aSession in [[self currentTab] sessions]) {
                 if (![aSession exited]) {
-                    [[aSession SHELL] writeTask:data];
+                    [sessions addObject:aSession];
                 }
             }
             break;
@@ -1072,7 +1072,7 @@ NSString *sessionsKey = @"sessions";
             for (i = 0; i < n; ++i) {
                 for (PTYSession* aSession in [[[TABVIEW tabViewItemAtIndex:i] identifier] sessions]) {
                     if (![aSession exited]) {
-                        [[aSession SHELL] writeTask:data];
+                        [sessions addObject:aSession];
                     }
                 }
             }
@@ -1083,12 +1083,24 @@ NSString *sessionsKey = @"sessions";
                 for (PTYSession *aSession in [aTab sessions]) {
                     if ([broadcastViewIds_ containsObject:[NSNumber numberWithInt:[[aSession view] viewId]]]) {
                         if (![aSession exited]) {
-                            [[aSession SHELL] writeTask:data];
+                            [sessions addObject:aSession];
                         }
                     }
                 }
             }
             break;
+        }
+    }
+    return sessions;
+}
+
+- (void)sendInputToAllSessions:(NSData *)data
+{
+    for (PTYSession *aSession in [self broadcastSessions]) {
+        if ([aSession isTmuxClient]) {
+            [aSession writeTaskNoBroadcast:data];
+        } else if (![aSession isTmuxGateway]) {
+            [[aSession SHELL] writeTask:data];
         }
     }
 }
@@ -1239,7 +1251,7 @@ NSString *sessionsKey = @"sessions";
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
                                                  windowType:WINDOW_TYPE_FORCE_FULL_SCREEN
                                                      screen:screenIndex] autorelease];
-        
+
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_X_ORIGIN] doubleValue];
         rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_OLD_Y_ORIGIN] doubleValue];
@@ -1260,7 +1272,7 @@ NSString *sessionsKey = @"sessions";
         }
         // TODO: this looks like a bug - are top-of-screen windows not restored to the right screen?
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO windowType:windowType screen:-1] autorelease];
-        
+
         NSRect rect;
         rect.origin.x = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_X_ORIGIN] doubleValue];
         rect.origin.y = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_Y_ORIGIN] doubleValue];
@@ -5444,6 +5456,7 @@ NSString *sessionsKey = @"sessions";
 {
     if ([self isHotKeyWindow] || [self allTabsAreTmuxTabs]) {
         // Don't save and restore hotkey windows or tmux windows.
+        [[self ptyWindow] setRestoreState:nil];
         return;
     }
     if (wellFormed_) {

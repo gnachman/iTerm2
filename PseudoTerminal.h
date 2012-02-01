@@ -403,6 +403,9 @@ NSWindowDelegate,
 // Set the window title to non-transient.
 - (void)resetTempTitle;
 
+// Sessions in the broadcast group.
+- (NSArray *)broadcastSessions;
+
 // Call writeTask: for each session's shell with the given data.
 - (void)sendInputToAllSessions:(NSData *)data;
 
