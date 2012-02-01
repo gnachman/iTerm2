@@ -481,8 +481,8 @@ setup_tty_param(
     term->c_cc[VDSUSP] = CTRLKEY('Y');
     term->c_cc[VSTART] = CTRLKEY('Q');
     term->c_cc[VSTOP] = CTRLKEY('S');
-    term->c_cc[VLNEXT] = -1;
-    term->c_cc[VDISCARD] = -1;
+    term->c_cc[VLNEXT] = CTRLKEY('V');
+    term->c_cc[VDISCARD] = CTRLKEY('O');
     term->c_cc[VMIN] = 1;
     term->c_cc[VTIME] = 0;
     term->c_cc[VSTATUS] = CTRLKEY('T');
