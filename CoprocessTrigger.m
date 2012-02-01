@@ -7,7 +7,7 @@
 //
 
 #import "CoprocessTrigger.h"
-#import "PTYsession.h"
+#import "PTYSession.h"
 
 @implementation CoprocessTrigger
 
