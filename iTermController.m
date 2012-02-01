@@ -899,7 +899,10 @@ static BOOL initDone = NO;
                                                    isHotkey:disableLionFullscreen] autorelease];
 		if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
 			[term hideAfterOpening];
-		}
+		} else {
+            [NSApp activateIgnoringOtherApps:YES];
+            [[term window] makeKeyAndOrderFront:nil];
+        }
         [self addInTerminals:term];
         if (disableLionFullscreen) {
             // See comment above regarding hotkey windows.
@@ -910,6 +913,8 @@ static BOOL initDone = NO;
         }
     } else {
         term = theTerm;
+        [NSApp activateIgnoringOtherApps:YES];
+        [[term window] makeKeyAndOrderFront:nil];
     }
 
     PTYSession* session = [term addNewSession:aDict];
