@@ -209,9 +209,15 @@ static NSString *kCommandObject = @"object";
 
 - (BOOL)parseCommand
 {
-    NSRange newlineRange = [stream_ rangeOfData:[NSData dataWithBytes:"\n" length:1]
-                                        options:0
-                                          range:NSMakeRange(0, stream_.length)];
+    NSRange newlineRange = NSMakeRange(NSNotFound, 0);
+    unsigned char *streamBytes = [stream_ mutableBytes];
+    for (int i = 0; i < stream_.length; i++) {
+        if (streamBytes[i] == '\n') {
+            newlineRange.location = i;
+            newlineRange.length = 1;
+            break;
+        }
+    }
     if (newlineRange.location == NSNotFound) {
         return NO;
     }
