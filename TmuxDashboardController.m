@@ -161,7 +161,7 @@
         for (NSArray *record in doc.records) {
             [windows addObject:[NSMutableArray arrayWithObjects:
                                 [doc valueInRecord:record forField:@"window_name"],
-                                [doc valueInRecord:record forField:@"window_id"],
+                                [[doc valueInRecord:record forField:@"window_id"] substringFromIndex:1],
                                 nil]];
         }
         [windowsTable_ setWindows:windows];

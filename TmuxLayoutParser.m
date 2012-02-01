@@ -180,11 +180,11 @@ NSString *kLayoutDictStateKey = @"state";
 
 - (NSMutableDictionary *)dictForLeafNodeInLayout:(NSString *)layout range:(NSRange)range
 {
-    NSArray *components = [layout captureComponentsMatchedByRegex:@"([0-9]+)x([0-9]+),([0-9]+),([0-9]+),([0-9na]+)"
+    NSArray *components = [layout captureComponentsMatchedByRegex:@"([0-9]+)x([0-9]+),([0-9]+),([0-9]+),?([0-9]+)?"
                                                           options:0
                                                             range:range
                                                             error:nil];
-    if (components.count != 6) {
+    if (components.count != 6 && components.count != 5) {
         NSLog(@"Matched wrong number of components in singleton layout \"%@\"", [layout substringWithRange:range]);
         return nil;
     }
@@ -196,7 +196,7 @@ NSString *kLayoutDictStateKey = @"state";
                                    [components objectAtIndex:4], kLayoutDictYOffsetKey,
                                    [NSNumber numberWithInt:kLeafLayoutNode], kLayoutDictNodeType,
                                    nil];
-    if (![[components objectAtIndex:5] isEqualToString:@"na"]) {
+    if (components.count == 6) {
         [result setObject:[NSNumber numberWithInt:[[components objectAtIndex:5] intValue]]
                    forKey:kLayoutDictWindowPaneKey];
     }
@@ -244,7 +244,7 @@ NSString *kLayoutDictStateKey = @"state";
     // <parent-width>x<parent-height>,<parent-x>,<parent-y>{...}
     // <parent-width>x<parent-height>,<parent-x>,<parent-y>[...]
     // Tolerate an optional comma at the beginning
-    NSArray *components = [layouts captureComponentsMatchedByRegex:@"^(?:,?)([0-9]+x[0-9]+,[0-9]+,[0-9]+,[0-9na]+)(.*)"];
+    NSArray *components = [layouts captureComponentsMatchedByRegex:@"^(?:,?)([0-9]+x[0-9]+,[0-9]+,[0-9]+(?:(?:,[0-9]+)?))(.*)"];
     if (components.count != 3) {
         NSLog(@"Wrong number of components in layouts array \"%@\"", layouts);
         return nil;

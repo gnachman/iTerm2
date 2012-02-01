@@ -100,9 +100,9 @@ static NSString *kCommandObject = @"object";
 - (void)parseLayoutChangeCommand:(NSString *)command
 {
     // %layout-change <window> <layout>
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^%layout-change ([0-9]+) (.*)"];
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%layout-change @([0-9]+) (.*)"];
     if (components.count != 3) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %layout-change <window> <layout>): \"%@\"",
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%layout-change <window> <layout>): \"%@\"",
                                      command]];
         return;
     }

@@ -37,6 +37,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 @interface TmuxController (Private)
 
+- (int)windowIdFromString:(NSString *)s;
 - (void)retainWindow:(int)window withTab:(PTYTab *)tab;
 - (void)releaseWindow:(int)window;
 - (void)closeAllPanes;
@@ -198,7 +199,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 	BOOL newWindowsInTabs =
 		[[PreferencePanel sharedInstance] openTmuxWindowsIn] == OPEN_TMUX_WINDOWS_IN_TABS;
     for (NSArray *record in doc.records) {
-        int wid = [[doc valueInRecord:record forField:@"window_id"] intValue];
+        int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
 		if (hiddenWindows_ && [hiddenWindows_ containsObject:[NSNumber numberWithInt:wid]]) {
 			NSLog(@"Don't open window %d because it was saved hidden.", wid);
 			haveHidden = YES;
@@ -226,7 +227,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 		[[[TmuxDashboardController sharedInstance] window] makeKeyAndOrderFront:nil];
 	}
 	for (NSArray *record in windowsToOpen) {
-        int wid = [[doc valueInRecord:record forField:@"window_id"] intValue];
+        int wid = [self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]];
         [self openWindowWithIndex:wid
                              name:[doc valueInRecord:record forField:@"window_name"]
                              size:NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
@@ -426,12 +427,12 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)newWindowWithAffinity:(int)windowId
 {
     if (windowId >= 0) {
-        [gateway_ sendCommand:@"new-window -I"
+        [gateway_ sendCommand:@"new-window"
                responseTarget:self
              responseSelector:@selector(newWindowWithAffinityCreated:affinityWindow:)
                responseObject:[NSString stringWithInt:windowId]];
     } else {
-        [gateway_ sendCommand:@"new-window -I"
+        [gateway_ sendCommand:@"new-window"
                responseTarget:self
              responseSelector:@selector(newWindowWithoutAffinityCreated:)
                responseObject:nil];
@@ -756,6 +757,14 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 @implementation TmuxController (Private)
 
+- (int)windowIdFromString:(NSString *)s
+{
+    if (s.length < 2 || [s characterAtIndex:0] != '@') {
+        return -1;
+    }
+    return [[s substringFromIndex:1] intValue];
+}
+
 - (void)didListWindows:(NSString *)response userData:(NSArray *)userData
 {
     TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields]];
@@ -851,8 +860,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         return;
     }
     for (NSArray *record in doc.records) {
-        if ([[doc valueInRecord:record forField:@"window_id"] intValue] == [windowId intValue]) {
-            [self openWindowWithIndex:[[doc valueInRecord:record forField:@"window_id"] intValue]
+        NSString *recordWindowId = [doc valueInRecord:record forField:@"window_id"];
+        if ([self windowIdFromString:recordWindowId] == [windowId intValue]) {
+            [self openWindowWithIndex:[self windowIdFromString:[doc valueInRecord:record forField:@"window_id"]]
                                  name:[doc valueInRecord:record forField:@"window_name"]
                                  size:NSMakeSize([[doc valueInRecord:record forField:@"window_width"] intValue],
                                                  [[doc valueInRecord:record forField:@"window_height"] intValue])
