@@ -1274,6 +1274,7 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
     rollingIn_ = NO;
     PseudoTerminal* term = GetHotkeyWindow();
     [[term window] makeKeyAndOrderFront:nil];
+    [[term window] makeFirstResponder:[[term currentSession] TEXTVIEW]];
 }
 
 // http://www.cocoadev.com/index.pl?DeterminingOSVersion
