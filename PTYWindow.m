@@ -50,9 +50,7 @@
 
 - (void) dealloc
 {
-#if DEBUG_METHOD_ALLOC
-    NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
-#endif
+    [restoreState_ release];
 
     [super dealloc];
 
@@ -78,6 +76,7 @@
 
     return self;
 }
+
 typedef CGError CGSSetWindowBackgroundBlurRadiusFunction(CGSConnectionID cid, CGSWindowID wid, NSUInteger blur);
 
 static void *GetFunctionByName(NSString *library, char *func) {
@@ -103,6 +102,21 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
                                       "CGSSetWindowBackgroundBlurRadius");
     }
     return function;
+}
+
+- (void)encodeRestorableStateWithCoder:(NSCoder *)coder
+{
+    // This gives a warning, but this method won't be called except in 10.7 where this
+    // method does exist in our superclass. The only way to avoid the warning
+    // is to do some really gnarly stuff. See here for more:
+    // http://www.cocoabuilder.com/archive/cocoa/214903-using-performselector-on-super.html
+    [super encodeRestorableStateWithCoder:coder];
+    [coder encodeObject:restoreState_ forKey:@"ptyarrangement"];
+}
+
+- (void)setRestoreState:(NSObject *)restoreState {
+    [restoreState_ autorelease];
+    restoreState_ = [restoreState retain];
 }
 
 - (void)enableBlur:(double)radius

@@ -52,6 +52,7 @@
 
     // True while in -[NSWindow toggleFullScreen:].
     BOOL isTogglingLionFullScreen_;
+    NSObject *restoreState_;
 }
 
 - initWithContentRect:(NSRect)contentRect
@@ -69,6 +70,8 @@
 
 - (int)screenNumber;
 - (BOOL)isTogglingLionFullScreen;
+
+- (void)setRestoreState:(NSObject *)restoreState;
 
 @end
 

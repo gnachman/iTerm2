@@ -5450,7 +5450,10 @@ NSString *sessionsKey = @"sessions";
         [lastArrangement_ release];
         lastArrangement_ = [[self arrangementExcludingTmuxTabs:YES] retain];
     }
-    [state encodeObject:lastArrangement_ forKey:@"ptyarrangement"];
+    // For whatever reason, setting the value in the coder here doesn't work but
+    // doing it in PTYWindow immediately after this method's caller returns does
+    // work.
+    [[self ptyWindow] setRestoreState:lastArrangement_];
 }
 
 - (NSApplicationPresentationOptions)window:(NSWindow *)window
