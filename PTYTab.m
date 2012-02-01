@@ -504,6 +504,9 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 - (void)updateFlexibleViewColors
 {
+    if (!flexibleView_) {
+        return;
+    }
     NSSize cellSize = [PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]];
     if (![realParentWindow_ anyFullScreen] &&
         flexibleView_.frame.size.width > root_.frame.size.width &&
