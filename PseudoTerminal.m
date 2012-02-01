@@ -4713,6 +4713,13 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (void)moveSessionToWindow:(id)sender
+{
+    [[MovePaneController sharedInstance] moveSessionToNewWindow:[self currentSession]
+                                                        atPoint:[[self window] convertBaseToScreen:NSMakePoint(10, -10)]];
+
+}
+
 - (NSRect)maxFrame
 {
     NSRect visibleFrame = NSZeroRect;
@@ -4985,6 +4992,8 @@ NSString *sessionsKey = @"sessions";
         [item action] == @selector(newTmuxTab:) ||
         [item action] == @selector(openDashboard:)) {
         result = [[self currentTab] isTmuxTab];
+    } else if ([item action] == @selector(moveSessionToWindow:)) {
+        result = ([[self sessions] count] > 1);
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||
         [item action] == @selector(openSplitVerticallySheet:)) {
         result = ![[self currentTab] isTmuxTab];

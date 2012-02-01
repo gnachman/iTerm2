@@ -4004,6 +4004,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
     [theMenu addItemWithTitle:@"Move Session to Split Pane" action:@selector(movePane:) keyEquivalent:@""];
     [[theMenu itemAtIndex:[theMenu numberOfItems] - 1] setTarget:self];
+    [theMenu addItemWithTitle:@"Move Session to Window" action:@selector(moveSessionToWindow:) keyEquivalent:@""];
 
     // Separator
     [theMenu addItem:[NSMenuItem separatorItem]];
