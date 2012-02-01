@@ -151,7 +151,7 @@ static size_t getCSIParam(unsigned char *, size_t, CSIParam *, VT100Screen *);
 static VT100TCC decode_csi(unsigned char *, size_t, size_t *,VT100Screen *);
 static VT100TCC decode_xterm(unsigned char *, size_t, size_t *,NSStringEncoding);
 static VT100TCC decode_ansi(unsigned char *,size_t, size_t *,VT100Screen *);
-static VT100TCC decode_other(unsigned char *, size_t, size_t *);
+static VT100TCC decode_other(unsigned char *, size_t, size_t *, NSStringEncoding);
 static VT100TCC decode_control(unsigned char *, size_t, size_t *,NSStringEncoding,VT100Screen *);
 static int decode_utf8_char(unsigned char *, size_t, unsigned int *);
 static VT100TCC decode_utf8(unsigned char *, size_t, size_t *);
@@ -891,7 +891,8 @@ static VT100TCC decode_xterm(unsigned char *datap,
 
 static VT100TCC decode_other(unsigned char *datap,
                              size_t datalen,
-                             size_t *rmlen)
+                             size_t *rmlen,
+                             NSStringEncoding enc)
 {
     VT100TCC result;
     int c1, c2, c3;
@@ -1011,6 +1012,35 @@ static VT100TCC decode_other(unsigned char *datap,
             result.type = VT100CSI_RIS;
             *rmlen = 2;
             break;
+
+        case 'k':
+            // The screen term uses <esc>k<title><cr|esc> to set the title.
+            if (datalen > 0) {
+                int i;
+                BOOL found = NO;
+                // Search for esc or newline terminator.
+                for (i = 2; i < datalen; i++) {
+                    if (datap[i] == ESC || datap[i] == '\n' || datap[i] == '\r') {
+                        // Found terminator. Grab text from datap to char before it
+                        // save in result.u.string.
+                        NSData *data = [NSData dataWithBytes:datap + 2 length:i - 2];
+                        result.u.string = [[[NSString alloc] initWithData:data
+                                                                 encoding:enc] autorelease];
+                        // Consume everything up to the terminator
+                        *rmlen = i;
+                        if (datap[i] != ESC) {
+                            ++(*rmlen);
+                        }
+                        found = YES;
+                        break;
+                    }
+                }
+                result.type = XTERMCC_WINICON_TITLE;
+            } else {
+                result.type = VT100_WAIT;
+            }
+            break;
+
         case ' ':
             if (c2<0) {
                 result.type = VT100_WAIT;
@@ -1078,7 +1108,7 @@ static VT100TCC decode_control(unsigned char *datap,
                     result.type = VT100_WAIT;
                 }
                 else {
-                    result = decode_other(datap, datalen, rmlen);
+                    result = decode_other(datap, datalen, rmlen, enc);
                 }
                 break;
 
