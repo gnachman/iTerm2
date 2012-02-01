@@ -169,19 +169,22 @@ static BOOL hasBecomeActive = NO;
             [WindowArrangements arrangementWithName:LEGACY_DEFAULT_ARRANGEMENT_NAME] != nil) {
             [WindowArrangements makeDefaultArrangement:LEGACY_DEFAULT_ARRANGEMENT_NAME];
         }
-        
+
         if ([[PreferencePanel sharedInstance] openBookmark]) {
+            // Open bookmarks window at startup.
             [self showBookmarkWindow:nil];
             if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
                 // Open both bookmark window and arrangement!
                 [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
             }
         } else if ([[PreferencePanel sharedInstance] openArrangementAtStartup]) {
+            // Open the saved arrangement at startup.
             [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
-        } else if (!IsLionOrLater() || ![[NSUserDefaults standardUserDefaults] objectForKey:@"NotFirstRun"]) {
-            [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:YES]
-                                                      forKey:@"NotFirstRun"];
-            [self newWindow:nil];
+        } else {
+            // Make sure at least one window is open.
+            if ([[[iTermController sharedInstance] terminals] count] == 0) {
+                [self newWindow:nil];
+            }
         }
     }
     ranAutoLaunchScript = YES;
@@ -454,9 +457,7 @@ static BOOL hasBecomeActive = NO;
 
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication
 {
-    if (hasBecomeActive) {
-        [self _performIdempotentStartupActivities];
-    }
+    [self newWindow:nil];
     return YES;
 }
 
