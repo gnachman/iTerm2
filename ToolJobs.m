@@ -198,10 +198,15 @@ static const CGFloat kMargin = 4;
     int i = 0;
     for (NSNumber *pid in pids_) {
         BOOL fg;
-        [names_ addObject:[[ProcessCache sharedInstance] getNameOfPid:[pid intValue] isForeground:&fg]];
-        i++;
-        if (i > kMaxJobs) {
-            break;
+        NSString *pidName;
+        pidName = [[ProcessCache sharedInstance] getNameOfPid:[pid intValue]
+                                                 isForeground:&fg];
+        if (pidName) {
+            [names_ addObject:pidName];
+            i++;
+            if (i > kMaxJobs) {
+                break;
+            }
         }
     }
     [tableView_ reloadData];
