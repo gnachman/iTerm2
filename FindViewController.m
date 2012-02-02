@@ -344,9 +344,10 @@ static NSString *gSearchString;
     if (field != findBarTextField_) {
         return;
     }
-    
+
     [self _loadFindStringIntoSharedPasteboard];
-    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermLoadFindStringFromSharedPasteboard"
+                                                        object:nil];
     // Search.
     if ([previousFindString_ length] == 0) {
         [delegate_ resetFindCursor];
