@@ -3410,8 +3410,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (startX < 0 ||
         clickAt < minAt ||
         clickAt >= maxAt) {
+        int savedStartX = startX;
+        int savedStartY = startY;
+        int savedEndX = endX;
+        int savedEndY = endY;
         // Didn't click on selection.
         [self smartSelectWithEvent:event];
+        NSCharacterSet *nonWhiteSpaceSet = [[NSCharacterSet whitespaceAndNewlineCharacterSet] invertedSet];
+        NSString *text = [self selectedText];
+        if (!text ||
+            !text.length ||
+            [text rangeOfCharacterFromSet:nonWhiteSpaceSet].location == NSNotFound) {
+            // If all we selected was white space, undo it.
+            startX = savedStartX;
+            startY = savedStartY;
+            endX = savedEndX;
+            endY = savedEndY;
+        }
     }
     [self setNeedsDisplay:YES];
     NSMenu *menu = [self menuForEvent:nil];
