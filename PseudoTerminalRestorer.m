@@ -23,10 +23,16 @@
     NSDictionary *arrangement = [state decodeObjectForKey:@"ptyarrangement"];
     if (arrangement) {
         PseudoTerminal *term = [PseudoTerminal bareTerminalWithArrangement:arrangement];
-        NSRect rect = [[term window] frame];
-        [term performSelector:@selector(setFrameValue:)
-                   withObject:[NSValue valueWithRect:rect]
-                   afterDelay:0];
+        // We have to set the frame for fullscreen windows because the OS tries
+        // to move it up 22 pixels for no good reason.
+        // We MUST NOT set it for lion fullscreen because the OS knows what
+        // to do with those, and we'd set it to some crazy wrong size.
+        // Normal, top, and bottom windows take care of themselves.
+        if ([term windowType] == WINDOW_TYPE_FULL_SCREEN) {
+            [term performSelector:@selector(setFrameValue:)
+                       withObject:[NSValue valueWithRect:[[[term window] screen] frame]]
+                       afterDelay:0];
+        }
         completionHandler([term window], nil);
         [[iTermController sharedInstance] addInTerminals:term];
     } else {

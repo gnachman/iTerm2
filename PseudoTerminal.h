@@ -252,6 +252,10 @@ NSWindowDelegate,
 
 	// Recalls if this was a hide-after-opening window.
 	BOOL hideAfterOpening_;
+
+        // After dealloc starts, the restorable state should not be updated
+        // because the window's state is a shambles.
+        BOOL doNotSetRestorableState_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement

@@ -970,6 +970,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)dealloc
 {
+    doNotSetRestorableState_ = YES;
     wellFormed_ = NO;
     [toolbelt_ shutdown];
     [drawer_ release];
@@ -2045,6 +2046,28 @@ NSString *sessionsKey = @"sessions";
     return useTransparency_;
 }
 
+// Like toggleFullScreenMode but does nothing if it's already fullscreen.
+// Save to call from a timer.
+- (void)enterFullScreenMode
+{
+    if (!togglingFullScreen_ &&
+        !togglingLionFullScreen_ &&
+        ![self anyFullScreen]) {
+        [self toggleFullScreenMode:nil];
+    }
+}
+
+// Like toggleTraditionalFullScreenMode but does nothing if it's already
+// fullscreen. Save to call from a timer.
+- (void)enterTraditionalFullScreenMode
+{
+    if (!togglingFullScreen_ &&
+        !togglingLionFullScreen_ &&
+        ![self anyFullScreen]) {
+        [self toggleTraditionalFullScreenMode];
+    }
+}
+
 - (IBAction)toggleFullScreenMode:(id)sender
 {
     if ([self lionFullScreen] ||
@@ -2073,12 +2096,15 @@ NSString *sessionsKey = @"sessions";
         windowType_ == WINDOW_TYPE_LION_FULL_SCREEN &&
         [[PreferencePanel sharedInstance] lionStyleFullscreen]) {
         if (![[[iTermController sharedInstance] keyTerminalWindow] lionFullScreen]) {
-            [self performSelector:@selector(toggleFullScreenMode:)
+	    // call enter(Traditional)FullScreenMode instead of toggle... because
+	    // when doing a lion resume, the window may be toggled immediately
+	    // after creation by the window restorer.
+            [self performSelector:@selector(enterFullScreenMode)
                        withObject:nil
                        afterDelay:0];
         }
     } else if (!_fullScreen) {
-        [self performSelector:@selector(toggleTraditionalFullScreenMode)
+        [self performSelector:@selector(enterTraditionalFullScreenMode)
                    withObject:nil
                    afterDelay:0];
     }
@@ -5454,6 +5480,11 @@ NSString *sessionsKey = @"sessions";
 
 - (void)window:(NSWindow *)window willEncodeRestorableState:(NSCoder *)state
 {
+    if (doNotSetRestorableState_) {
+        // The window has been destroyed beyond recognition at this point and
+        // there is nothing to save.
+        return;
+    }
     if ([self isHotKeyWindow] || [self allTabsAreTmuxTabs]) {
         // Don't save and restore hotkey windows or tmux windows.
         [[self ptyWindow] setRestoreState:nil];
