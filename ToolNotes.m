@@ -86,4 +86,7 @@ static NSString *kToolNotesSetTextNotification = @"kToolNotesSetTextNotification
     }
 }
 
+- (void)shutdown {
+}
+
 @end

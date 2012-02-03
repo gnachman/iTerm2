@@ -123,4 +123,7 @@ static const int kPopupHeight = 26;
     }
 }
 
+- (void)shutdown
+{
+}
 @end

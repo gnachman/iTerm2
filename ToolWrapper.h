@@ -22,7 +22,6 @@
 @optional
 - (void)relayout;
 
-@optional
 - (void)shutdown;
 @end
 

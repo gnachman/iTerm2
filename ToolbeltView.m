@@ -164,6 +164,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
 {
     ToolWrapper *wrapper = [tools_ objectForKey:theName];
     if (wrapper) {
+        [[wrapper tool] shutdown];
         [tools_ removeObjectForKey:theName];
         [wrapper removeFromSuperview];
 		[wrapper setDelegate:nil];
