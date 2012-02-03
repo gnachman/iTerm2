@@ -85,6 +85,7 @@ static const CGFloat kMargin = 4;
 
 - (void)shutdown
 {
+    shutdown_ = YES;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [minuteRefreshTimer_ invalidate];
     minuteRefreshTimer_ = nil;
@@ -131,6 +132,9 @@ static const CGFloat kMargin = 4;
 
 - (void)fixCursor
 {
+    if (shutdown_) {
+        return;
+    }
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
 	[[[wrapper.term currentSession] TEXTVIEW] updateCursor:[[NSApplication sharedApplication] currentEvent]];
 }

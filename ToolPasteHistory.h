@@ -16,6 +16,7 @@
     NSButton *clear_;
     PasteboardHistory *pasteHistory_;
     NSTimer *minuteRefreshTimer_;
+    BOOL shutdown_;
 }
 
 - (id)initWithFrame:(NSRect)frame;
