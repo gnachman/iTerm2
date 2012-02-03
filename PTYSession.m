@@ -1043,7 +1043,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                              [self name],
                              [[self tab] realObjectCount]]
             andNotification:@"Broken Pipes"
-                 andSession:self];
+                 andSession:nil];
     }
 
     EXIT = YES;
