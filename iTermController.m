@@ -882,6 +882,7 @@ static BOOL initDone = NO;
 
     // Where do we execute this command?
     BOOL toggle = NO;
+    BOOL makeKey = NO;
     if (theTerm == nil) {
         [iTermController switchToSpaceInBookmark:aDict];
         int windowType = [self _windowTypeForBookmark:aDict];
@@ -900,8 +901,7 @@ static BOOL initDone = NO;
 		if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
 			[term hideAfterOpening];
 		} else {
-            [NSApp activateIgnoringOtherApps:YES];
-            [[term window] makeKeyAndOrderFront:nil];
+            makeKey = YES;
         }
         [self addInTerminals:term];
         if (disableLionFullscreen) {
@@ -913,8 +913,7 @@ static BOOL initDone = NO;
         }
     } else {
         term = theTerm;
-        [NSApp activateIgnoringOtherApps:YES];
-        [[term window] makeKeyAndOrderFront:nil];
+        makeKey = YES;
     }
 
     PTYSession* session = [term addNewSession:aDict];
@@ -925,6 +924,8 @@ static BOOL initDone = NO;
     // that the new window is on top of all other apps' windows. For some reason,
     // makeKeyAndOrderFront does nothing.
     if (![[term window] isKeyWindow]) {
+        [NSApp activateIgnoringOtherApps:YES];
+        [[term window] makeKeyAndOrderFront:nil];
         [NSApp arrangeInFront:self];
     }
 
