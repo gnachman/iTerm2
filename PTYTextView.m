@@ -5793,9 +5793,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         BOOL isSelection = NO;
 
         // Figure out the color for this char.
-        if (bgselected &&
-            theLine[i].alternateForegroundSemantics &&
-            theLine[i].foregroundColor == ALTSEM_FG_DEFAULT) {
+        if (bgselected) {
             // Is a selection.
             isSelection = YES;
             thisCharColor = [self _dimmedColorFrom:selectedTextColor];
