@@ -230,6 +230,10 @@ static NSMutableArray *gTriggerClasses;
         [trigger setObject:[[TriggerController triggerAtIndex:[anObject intValue]] action]
                     forKey:kTriggerActionKey];
         [trigger removeObjectForKey:kTriggerParameterKey];
+        Trigger *triggerObj = [TriggerController triggerWithAction:[trigger objectForKey:kTriggerActionKey]];
+        if ([triggerObj paramIsPopupButton]) {
+            [trigger setObject:[NSNumber numberWithInt:0] forKey:kTriggerParameterKey];
+        }
     }
     [self setTrigger:trigger forRow:rowIndex];
 }
