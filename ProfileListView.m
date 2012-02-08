@@ -654,7 +654,7 @@ const int kInterWidgetMargin = 10;
 - (void)eraseQuery
 {
     [searchField_ setStringValue:@""];
-    [self reloadData];
+    [self controlTextDidChange:nil];
 }
 
 - (void)resizeSubviewsWithOldSize:(NSSize)oldBoundsSize

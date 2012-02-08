@@ -2643,7 +2643,7 @@ static float versionNumber;
     if ([dataSource numberOfBookmarks] < 2 || !dict) {
         [removeBookmarkButton setEnabled:NO];
     } else {
-        [removeBookmarkButton setEnabled:[[bookmarksTableView selectedGuids] count] < [[bookmarksTableView dataSource] numberOfBookmarks]];
+        [removeBookmarkButton setEnabled:[[bookmarksTableView selectedGuids] count] < [dataSource numberOfBookmarks]];
     }
     if (!dict) {
         [bookmarksSettingsTabViewParent setHidden:YES];
@@ -3626,8 +3626,7 @@ static float versionNumber;
 		[self forceTextFieldToBeNumber:scrollbackLines
 					   acceptableRange:NSMakeRange(0, 10 * 1000 * 1000)];
         [self bookmarkSettingChanged:nil];
-    } else if (obj == bookmarkName ||
-               obj == columnsField ||
+    } else if (obj == columnsField ||
                obj == rowsField ||
                obj == terminalType ||
                obj == initialText ||
