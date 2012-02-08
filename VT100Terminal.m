@@ -1035,7 +1035,11 @@ static VT100TCC decode_other(unsigned char *datap,
                         break;
                     }
                 }
-                result.type = XTERMCC_WINICON_TITLE;
+                if (found) {
+                    result.type = XTERMCC_WINICON_TITLE;
+                } else {
+                    result.type = VT100_WAIT;
+                }
             } else {
                 result.type = VT100_WAIT;
             }
