@@ -263,6 +263,7 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
+    finishedLaunching_ = YES;
     // Create the app support directory
     [self _createFlag];
 
@@ -457,6 +458,13 @@ static BOOL hasBecomeActive = NO;
 
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)theApplication
 {
+    if (!finishedLaunching_ &&
+        [[PreferencePanel sharedInstance] openArrangementAtStartup]) {
+        // This happens if the OS is pre 10.7 or restore windows is off in
+        // 10.7's prefs->general, and the window arrangement has no windows,
+        // and it's set to load the arrangement on startup.
+        return NO;
+    }
     [self newWindow:nil];
     return YES;
 }
