@@ -831,6 +831,22 @@ NSString *sessionsKey = @"sessions";
     [self closeTab:aTab soft:NO];
 }
 
+- (void)adjustWindowHeightBy:(float)heightChange 
+{
+    CGRect windowFrame = [[self window] frame];
+    windowFrame.size.height = windowFrame.size.height + heightChange;
+    windowFrame.origin.y = windowFrame.origin.y - heightChange;
+    [[self window] setFrame:windowFrame display:YES animate:YES];
+}
+
+- (void)adjustWindowSizeAfterTabBarDidDisappear
+{
+    if( [TABVIEW numberOfTabViewItems] == 1 && [[PreferencePanel sharedInstance] hideTab] ) 
+    {
+        [self adjustWindowHeightBy:22.0f];
+    }
+}
+
 // Just like closeTab but skips the tmux code. Terminates sessions, removes the
 // tab, and closes the window if there are no tabs left.
 - (void)removeTab:(PTYTab *)aTab
@@ -849,6 +865,7 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"closeSession - calling fitWindowToTabs");
         [self fitWindowToTabs];
     }
+    [self adjustWindowSizeAfterTabBarDidDisappear];
 }
 
 - (IBAction)openDashboard:(id)sender
@@ -4832,6 +4849,14 @@ NSString *sessionsKey = @"sessions";
     [aTab setSize:size];
 }
 
+- (void)adjustWindowSizeAfterTabBarDidAppear
+{
+    if( [TABVIEW numberOfTabViewItems] == 2 && [[PreferencePanel sharedInstance] hideTab] ) 
+    {
+        [self adjustWindowHeightBy:-22.0f];
+    }
+}
+
 - (void)insertTab:(PTYTab*)aTab atIndex:(int)anIndex
 {
     PtyLog(@"insertTab:atIndex:%d", anIndex);
@@ -4852,6 +4877,7 @@ NSString *sessionsKey = @"sessions";
             [[self window] makeKeyAndOrderFront:self];
         }
         [[iTermController sharedInstance] setCurrentTerminal:self];
+        [self adjustWindowSizeAfterTabBarDidAppear];
     }
 }
 
