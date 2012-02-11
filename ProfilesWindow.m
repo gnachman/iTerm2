@@ -115,7 +115,14 @@ typedef enum {
 
 - (IBAction)openBookmarkInVerticalPane:(id)sender
 {
-    BOOL windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
+    BOOL windowExists;
+    if (([[NSApp currentEvent] modifierFlags] & NSAlternateKeyMask) != 0) {
+        // Force open in new window when Option key pressed
+        windowExists = false;
+    }
+    else {
+        windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
+    }
     [self _openBookmarkInTab:YES firstInWindow:!windowExists inPane:VERTICAL_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];
@@ -124,7 +131,14 @@ typedef enum {
 
 - (IBAction)openBookmarkInHorizontalPane:(id)sender
 {
-    BOOL windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
+    BOOL windowExists;
+    if (([[NSApp currentEvent] modifierFlags] & NSAlternateKeyMask) != 0) {
+        // Force open in new window when Option key pressed
+        windowExists = false;
+    }
+    else {
+        windowExists = [[iTermController sharedInstance] currentTerminal] != nil;
+    }
     [self _openBookmarkInTab:YES firstInWindow:!windowExists inPane:HORIZONTAL_PANE];
     if ([closeAfterOpeningBookmark_ state] == NSOnState) {
         [[self window] close];
