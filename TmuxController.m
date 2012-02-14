@@ -883,7 +883,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
     NSArray *layoutStrings = [response componentsSeparatedByString:@"\n"];
     for (NSString *layoutString in layoutStrings) {
-        NSArray *components = [layoutString captureComponentsMatchedByRegex:@"^([0-9]+) (.*)"];
+        NSArray *components = [layoutString captureComponentsMatchedByRegex:@"^@([0-9]+) (.*)"];
         if ([components count] != 3) {
             NSLog(@"Bogus layout string: \"%@\"", layoutString);
         } else {
