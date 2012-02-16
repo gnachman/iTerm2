@@ -205,7 +205,8 @@ typedef struct FindContext {
     // The maximum number of lines to store. In truth, more lines will be stored, but no more
     // than max_lines will be exposed by the interface.
     int max_lines;
-
+    BOOL unlimited;
+    
     // The number of blocks at the head of the list that have been removed.
     int num_dropped_blocks;
 
@@ -216,6 +217,8 @@ typedef struct FindContext {
     // Number of char that have been dropped
     long long droppedChars;
 }
+
+@property (nonatomic, assign) BOOL unlimited;
 
 - (LineBuffer*) initWithBlockSize: (int) bs;
 

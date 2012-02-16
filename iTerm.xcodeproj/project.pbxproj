@@ -306,6 +306,8 @@
 		1DC38818148E840700B89F7C /* SolidColorView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DC38816148E840600B89F7C /* SolidColorView.h */; };
 		1DC38819148E840700B89F7C /* SolidColorView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC38817148E840700B89F7C /* SolidColorView.m */; };
 		1DC742A0127C96F90069594C /* IBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC7429F127C96F90069594C /* IBarCursor.png */; };
+		1DC9DADF14EAE36B00CFD604 /* VT100Grid.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DC9DADD14EAE36B00CFD604 /* VT100Grid.h */; };
+		1DC9DAE014EAE36B00CFD604 /* VT100Grid.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DC9DADE14EAE36B00CFD604 /* VT100Grid.m */; };
 		1DCA5ECC13EE4DA800B7725E /* arrangement.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA5ECB13EE4DA800B7725E /* arrangement.png */; };
 		1DCA5ECF13EE507800B7725E /* WindowArrangements.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCA5ECD13EE507800B7725E /* WindowArrangements.h */; };
 		1DCA5ED013EE507800B7725E /* WindowArrangements.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DCA5ECE13EE507800B7725E /* WindowArrangements.m */; };
@@ -574,6 +576,8 @@
 		1DC38816148E840600B89F7C /* SolidColorView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SolidColorView.h; sourceTree = "<group>"; };
 		1DC38817148E840700B89F7C /* SolidColorView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SolidColorView.m; sourceTree = "<group>"; };
 		1DC7429F127C96F90069594C /* IBarCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = IBarCursor.png; path = images/IBarCursor.png; sourceTree = "<group>"; };
+		1DC9DADD14EAE36B00CFD604 /* VT100Grid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VT100Grid.h; sourceTree = "<group>"; };
+		1DC9DADE14EAE36B00CFD604 /* VT100Grid.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = VT100Grid.m; sourceTree = "<group>"; };
 		1DCA5ECB13EE4DA800B7725E /* arrangement.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = arrangement.png; path = images/arrangement.png; sourceTree = "<group>"; };
 		1DCA5ECD13EE507800B7725E /* WindowArrangements.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WindowArrangements.h; sourceTree = "<group>"; };
 		1DCA5ECE13EE507800B7725E /* WindowArrangements.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WindowArrangements.m; sourceTree = "<group>"; };
@@ -865,6 +869,8 @@
 				1DC38816148E840600B89F7C /* SolidColorView.h */,
 				1DC38817148E840700B89F7C /* SolidColorView.m */,
 				A073973F14C7694600786414 /* ColorsMenuItemView.m */,
+				1DC9DADD14EAE36B00CFD604 /* VT100Grid.h */,
+				1DC9DADE14EAE36B00CFD604 /* VT100Grid.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -1522,6 +1528,7 @@
 				1D06E7D714BC04E20097C0ED /* ProfileModelWrapper.h in Headers */,
 				1D06E7DB14BC05DB0097C0ED /* ProfileTableView.h in Headers */,
 				A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */,
+				1DC9DADF14EAE36B00CFD604 /* VT100Grid.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1820,6 +1827,7 @@
 				1D06E7D814BC04E20097C0ED /* ProfileModelWrapper.m in Sources */,
 				1D06E7DC14BC05DB0097C0ED /* ProfileTableView.m in Sources */,
 				A073974014C7694600786414 /* ColorsMenuItemView.m in Sources */,
+				1DC9DAE014EAE36B00CFD604 /* VT100Grid.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

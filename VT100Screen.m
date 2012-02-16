@@ -1145,7 +1145,7 @@ static char* FormatCont(int c)
     NSLog(@"Before dropExcessLines have %d\n", [linebuffer numLinesWithWidth: WIDTH]);
 #endif
     int linesDropped = 0;
-    if (!unlimitedScrollback_) {
+    if (!linebuffer.unlimited) {
         linesDropped = [linebuffer dropExcessLinesWithWidth: WIDTH];
     }
     int lines = [linebuffer numLinesWithWidth: WIDTH];
@@ -1215,14 +1215,14 @@ static char* FormatCont(int c)
 {
     max_scrollback_lines = lines;
     [linebuffer setMaxLines: lines];
-    if (!unlimitedScrollback_) {
+    if (!linebuffer.unlimited) {
         [linebuffer dropExcessLinesWithWidth: WIDTH];
     }
 }
 
 - (void)setUnlimitedScrollback:(BOOL)enable
 {
-    unlimitedScrollback_ = enable;
+    linebuffer.unlimited = enable;
 }
 
 - (PTYSession *)session
@@ -1787,9 +1787,11 @@ static char* FormatCont(int c)
 
 - (void)clearScrollbackBuffer
 {
+    BOOL unlimited = linebuffer.unlimited;
     [linebuffer release];
     linebuffer = [[LineBuffer alloc] init];
     [linebuffer setMaxLines:max_scrollback_lines];
+    linebuffer.unlimited = unlimited;
     [display clearMatches];
 
     scrollback_overflow = 0;
@@ -3408,7 +3410,7 @@ void DumpBuf(screen_char_t* p, int n) {
         BOOL isPartial = (line[length].code == EOL_SOFT);
         [linebuffer appendLine:line length:length partial:isPartial width:WIDTH];
     }
-    if (!unlimitedScrollback_) {
+    if (!linebuffer.unlimited) {
         [linebuffer dropExcessLinesWithWidth:WIDTH];
     }
 
@@ -3911,7 +3913,7 @@ void DumpBuf(screen_char_t* p, int n) {
     }
     [linebuffer appendLine:screen_top length:len partial:(screen_top[WIDTH].code != EOL_HARD) width:WIDTH];
     int dropped;
-    if (!unlimitedScrollback_) {
+    if (!linebuffer.unlimited) {
         dropped = [linebuffer dropExcessLinesWithWidth: WIDTH];
     } else {
         dropped = 0;
