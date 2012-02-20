@@ -178,12 +178,19 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
 
 - (void)toggleFullScreen:(id)sender
 {
-    // This is a way of calling [super toggleFullScreen:] that doesn't give a warning if
-    // the method doesn't exist (it's new in 10.7) but we build against 10.5 sdk.
-    IMP functionPointer = [NSWindow instanceMethodForSelector:_cmd];
-    isTogglingLionFullScreen_ = true;
-    functionPointer(self, _cmd, sender);
-    isTogglingLionFullScreen_ = false;
+    if (![[PreferencePanel sharedInstance] lionStyleFullscreen]) {
+        // The user must have clicked on the toolbar arrow, but the pref is set
+        // to use traditional fullscreen.
+        [[self delegate] performSelector:@selector(toggleTraditionalFullScreenMode)
+                              withObject:nil];
+    } else {
+        // This is a way of calling [super toggleFullScreen:] that doesn't give a warning if
+        // the method doesn't exist (it's new in 10.7) but we build against 10.5 sdk.
+        IMP functionPointer = [NSWindow instanceMethodForSelector:_cmd];
+        isTogglingLionFullScreen_ = true;
+        functionPointer(self, _cmd, sender);
+        isTogglingLionFullScreen_ = false;
+    }
 }
 
 - (BOOL)isTogglingLionFullScreen
