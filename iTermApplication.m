@@ -108,7 +108,7 @@
         PTYSession* currentSession = [currentTerminal currentSession];
         NSResponder *responder;
 
-        if (([event modifierFlags] & (NSCommandKeyMask | NSAlternateKeyMask)) == [prefPanel modifierTagToMask:[prefPanel switchWindowModifier]]) {
+        if (([event modifierFlags] & (NSControlKeyMask | NSCommandKeyMask | NSAlternateKeyMask)) == [prefPanel modifierTagToMask:[prefPanel switchWindowModifier]]) {
             // Command-Alt (or selected modifier) + number: Switch to window by number.
             int digit = [[event charactersIgnoringModifiers] intValue];
             if (!digit) {
