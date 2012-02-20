@@ -532,8 +532,23 @@ NSString *sessionsKey = @"sessions";
     }
 
     // create a new terminal window
+    int newWindowType;
+    switch (windowType_) {
+        case WINDOW_TYPE_FULL_SCREEN:
+            newWindowType = WINDOW_TYPE_FORCE_FULL_SCREEN;
+            break;
+
+        case WINDOW_TYPE_TOP:
+        case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LION_FULL_SCREEN:
+            newWindowType = WINDOW_TYPE_NORMAL;
+            break;
+
+        default:
+            newWindowType = windowType_;
+    }
     term = [[[PseudoTerminal alloc] initWithSmartLayout:NO
-                                             windowType:windowType_ == WINDOW_TYPE_FULL_SCREEN ? WINDOW_TYPE_FORCE_FULL_SCREEN : windowType_
+                                             windowType:newWindowType
                                                  screen:screen] autorelease];
     if (term == nil) {
         return nil;
@@ -543,9 +558,9 @@ NSString *sessionsKey = @"sessions";
 
     [[iTermController sharedInstance] addInTerminals:term];
 
-    if (windowType_ == WINDOW_TYPE_NORMAL) {
+    if (newWindowType == WINDOW_TYPE_NORMAL) {
         [[term window] setFrameOrigin:point];
-    } else if (windowType_ == WINDOW_TYPE_FULL_SCREEN) {
+    } else if (newWindowType == WINDOW_TYPE_FORCE_FULL_SCREEN) {
         [[term window] makeKeyAndOrderFront:nil];
         [term hideMenuBar];
     }
