@@ -32,9 +32,7 @@ Dep:
 	xcodebuild -parallelizeTargets -alltargets -configuration Deployment
 
 Deployment:
-	sudo ln -sf /Developer3 /Developer
 	xcodebuild -parallelizeTargets -alltargets -configuration Deployment && \
-	sudo ln -sf /Developer4 /Developer
 	chmod -R go+rX build/Deployment
 
 run: Development
@@ -66,15 +64,10 @@ restart:
 
 canary:
 	cp canary-iTerm.plist iTerm.plist
-	sudo rm /Developer
-	sudo ln -sf /Developer3 /Developer
 	make Deployment
-	sudo ln -sf /Developer4 /Developer
 	./canary.sh
 
 release:
 	cp release-iTerm.plist iTerm.plist
-	sudo ln -sf /Developer3 /Developer
 	make Deployment
-	sudo ln -sf /Developer4 /Developer
 	./release.sh
