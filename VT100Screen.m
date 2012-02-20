@@ -2453,15 +2453,14 @@ void DumpBuf(screen_char_t* p, int n) {
 
 - (void)backSpace
 {
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen backSpace]", __FILE__, __LINE__);
-#endif
     if (cursorX > 0) {
         if (cursorX >= WIDTH) {
             [self setCursorX:cursorX - 2 Y:cursorY];
         } else {
             [self setCursorX:cursorX - 1 Y:cursorY];
         }
+    } else if (cursorX == 0 && cursorY > 0) {
+        [self setCursorX:WIDTH - 1 Y:cursorY - 1];
     }
 }
 
