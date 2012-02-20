@@ -741,6 +741,8 @@ static VT100TCC decode_underscore(unsigned char *datap,
             } else {
                 result.type = VT100_NOTSUPPORT;
             }
+        } else if (found) {
+            result.type = VT100_NOTSUPPORT;
         }
     }
     return result;
