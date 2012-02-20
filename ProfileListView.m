@@ -48,6 +48,11 @@ const int kInterWidgetMargin = 10;
     [[self window] makeFirstResponder:searchField_];
 }
 
+- (BOOL)searchFieldHasText
+{
+    return [[searchField_ stringValue] length] > 0;
+}
+
 // Drag drop -------------------------------
 - (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard*)pboard
 {
@@ -618,6 +623,9 @@ const int kInterWidgetMargin = 10;
     if ([self selectedRow] < 0 && [self numberOfRows] > 0) {
         [self selectRowIndex:0];
         [tableView_ scrollRowToVisible:0];
+    }
+    if ([delegate_ respondsToSelector:@selector(profileTableFilterDidChange:)]) {
+        [delegate_ profileTableFilterDidChange:self];
     }
 }
 

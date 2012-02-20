@@ -3372,6 +3372,10 @@ static float versionNumber;
     return nil;
 }
 
+- (void)profileTableFilterDidChange:(ProfileListView*)profileListView
+{
+    [addBookmarkButton setEnabled:![profileListView searchFieldHasText]];
+}
 
 - (void)profileTableSelectionWillChange:(id)profileTable
 {

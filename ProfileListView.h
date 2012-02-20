@@ -30,6 +30,7 @@
 @class iTermSearchField;
 @class ProfileTableRow;
 @class ProfileTableView;
+@class ProfileListView;
 
 @protocol ProfileListViewDelegate
 @optional
@@ -43,6 +44,9 @@
 
 @optional
 - (NSMenu*)profileTable:(id)profileTable menuForEvent:(NSEvent*)theEvent;
+
+@optional
+- (void)profileTableFilterDidChange:(ProfileListView *)profileListView;
 @end
 
 @interface ProfileListView : NSView <
@@ -75,6 +79,7 @@
 - (ProfileModelWrapper*)dataSource;
 - (void)setUnderlyingDatasource:(ProfileModel*)dataSource;
 - (void)focusSearchField;
+- (BOOL)searchFieldHasText;
 
 // Drag drop
 - (BOOL)tableView:(NSTableView *)tv writeRowsWithIndexes:(NSIndexSet *)rowIndexes toPasteboard:(NSPasteboard*)pboard;
