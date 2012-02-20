@@ -305,6 +305,9 @@ NSWindowDelegate,
 // Returns true if the window is in 10.7-style fullscreen.
 - (BOOL)lionFullScreen;
 
+// Fix the window frame for fullscreen, top, bottom windows.
+- (void)canonicalizeWindowFrame;
+
 // Make the tab at [sender tag] the foreground tab.
 - (void)selectSessionAtIndexAction:(id)sender;
 

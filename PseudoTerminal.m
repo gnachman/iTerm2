@@ -1659,9 +1659,7 @@ NSString *sessionsKey = @"sessions";
     return isHotKeyWindow_;
 }
 
-- (void)screenParametersDidChange
-{
-    PtyLog(@"Screen parameters changed.");
+- (void)canonicalizeWindowFrame {
     NSScreen* screen = [[self window] deepestScreen];
     if (!screen) {
         NSDictionary* aDict = [[self currentSession] addressBookEntry];
@@ -1670,8 +1668,8 @@ NSString *sessionsKey = @"sessions";
         int screenNumber = [aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : 0;
         NSArray* screens = [NSScreen screens];
         if ([screens count] == 0) {
-          // Nothing we can do if we're headless.
-          return;
+            // Nothing we can do if we're headless.
+            return;
         }
         if ([screens count] < screenNumber) {
             screenNumber = 0;
@@ -1717,10 +1715,10 @@ NSString *sessionsKey = @"sessions";
             break;
 
         case WINDOW_TYPE_NORMAL:
-                        if (![self lionFullScreen]) {
-                                break;
-                        }
-                        // fall through
+            if (![self lionFullScreen]) {
+                break;
+            }
+            // fall through
         case WINDOW_TYPE_LION_FULL_SCREEN:
         case WINDOW_TYPE_FULL_SCREEN:
             if ([screen frame].size.width > 0) {
@@ -1731,6 +1729,12 @@ NSString *sessionsKey = @"sessions";
         default:
             break;
     }
+}
+
+- (void)screenParametersDidChange
+{
+    PtyLog(@"Screen parameters changed.");
+    [self canonicalizeWindowFrame];
 }
 
 - (void)windowDidResignKey:(NSNotification *)aNotification
