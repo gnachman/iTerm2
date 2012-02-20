@@ -234,6 +234,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 - (screen_char_t*)_getDefaultLineWithWidth:(int)width;
 - (int)_addLineToScrollbackImpl;
 - (void)_setInitialTabStops;
+- (screen_char_t)defaultChar;
 
 @end
 
@@ -941,10 +942,8 @@ static char* FormatCont(int c)
     return numLines;
 }
 
-- (void)restoreScreenFromScrollback
+- (void)restoreScreenFromScrollbackWithDefaultLine:(screen_char_t *)defaultLine
 {
-    screen_char_t* defaultLine = [self _getDefaultLineWithWidth:WIDTH];
-
     // Move scrollback lines into screen
     int num_lines_in_scrollback = [linebuffer numLinesWithWidth:WIDTH];
     int dest_y;
@@ -1036,6 +1035,34 @@ static char* FormatCont(int c)
         [self _appendScreenToScrollback:HEIGHT];
     }
 
+    // If we're in the alternate screen, create a temporary linebuffer and append
+    // the base screen's contents to it.
+    LineBuffer *tempLineBuffer = [[[LineBuffer alloc] init] autorelease];
+    if (temp_buffer) {
+        screen_char_t *saved_buffer_lines = buffer_lines;
+        screen_char_t *saved_screen_top = screen_top;
+        LineBuffer *saved_line_buffer = linebuffer;
+        
+        linebuffer = tempLineBuffer;
+        buffer_lines = temp_buffer;
+        screen_top = temp_buffer;
+        
+        int altUsedHeight = [self _usedHeight];
+        if (HEIGHT - new_height >= altUsedHeight) {
+            // Height is decreasing but pushing HEIGHT lines into the buffer would scroll all the used
+            // lines off the top, leaving the cursor floating without any text. Keep all used lines that
+            // fit onscreen.
+            [self _appendScreenToScrollback:MAX(altUsedHeight, new_height)];
+        } else {
+            // Keep last used line a fixed distance from the bottom of the screen
+            [self _appendScreenToScrollback:HEIGHT];
+        }
+        
+        linebuffer = saved_line_buffer;
+        buffer_lines = saved_buffer_lines;
+        screen_top = saved_screen_top;
+    }
+
     BOOL startPositionBeforeEnd = NO;
     BOOL endPostionBeforeEnd = NO;
     if (hasSelection) {
@@ -1099,7 +1126,34 @@ static char* FormatCont(int c)
     HEIGHT = new_height;
 
     // Restore the screen contents that were pushed onto the linebuffer.
-    [self restoreScreenFromScrollback];
+    [self restoreScreenFromScrollbackWithDefaultLine:[self _getDefaultLineWithWidth:WIDTH]];
+    
+    // If we're in the alternate screen, restore its contents from the temporary
+    // linebuffer.
+    if (temp_buffer) {
+        screen_char_t *saved_buffer_lines = buffer_lines;
+        screen_char_t *saved_screen_top = screen_top;
+        LineBuffer *saved_line_buffer = linebuffer;
+        
+        // Allocate a new temp_buffer of the right size.
+        screen_char_t* aDefaultLine = [self _getDefaultLineWithChar:temp_default_char];
+        free(temp_buffer);
+        temp_buffer = (screen_char_t*)calloc(REAL_WIDTH * HEIGHT, (sizeof(screen_char_t)));
+        for(i = 0; i < HEIGHT; i++) {
+            memcpy(temp_buffer+i*REAL_WIDTH, aDefaultLine, REAL_WIDTH*sizeof(screen_char_t));
+        }        
+
+        linebuffer = tempLineBuffer;
+        buffer_lines = temp_buffer;
+        screen_top = temp_buffer;
+
+        [self restoreScreenFromScrollbackWithDefaultLine:aDefaultLine];
+        temp_buffer = buffer_lines;
+        
+        linebuffer = saved_line_buffer;
+        buffer_lines = saved_buffer_lines;
+        screen_top = saved_screen_top;
+    }
 
 #ifdef DEBUG_RESIZEDWIDTH
     NSLog(@"After pops\n");
@@ -1128,16 +1182,6 @@ static char* FormatCont(int c)
     }
     if (ALT_SAVE_CURSOR_Y >= new_height) {
         ALT_SAVE_CURSOR_Y = new_height-1;
-    }
-
-    // if we did the resize in SAVE_BUFFER mode, too bad, get rid of it
-    if (temp_buffer) {
-        screen_char_t* aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
-        free(temp_buffer);
-        temp_buffer = (screen_char_t*)calloc(REAL_WIDTH * HEIGHT, (sizeof(screen_char_t)));
-        for(i = 0; i < HEIGHT; i++) {
-            memcpy(temp_buffer+i*REAL_WIDTH, aDefaultLine, REAL_WIDTH*sizeof(screen_char_t));
-        }
     }
 
     // The linebuffer may have grown. Ensure it doesn't have too many lines.
@@ -1814,6 +1858,7 @@ static char* FormatCont(int c)
         memcpy(temp_buffer, screen_top, (HEIGHT-n)*REAL_WIDTH*sizeof(screen_char_t));
         memcpy(temp_buffer + (HEIGHT - n) * REAL_WIDTH, buffer_lines, n * REAL_WIDTH * sizeof(screen_char_t));
     }
+    temp_default_char = [self defaultChar];
 }
 
 - (void)restoreBuffer
@@ -3415,7 +3460,7 @@ void DumpBuf(screen_char_t* p, int n) {
     // We don't know the cursor position yet but give the linebuffer something
     // so it doesn't get confused in restoreScreenFromScrollback.
     [linebuffer setCursor:0];
-    [self restoreScreenFromScrollback];
+    [self restoreScreenFromScrollbackWithDefaultLine:[self _getDefaultLineWithWidth:WIDTH]];
 }
 
 - (void)setAltScreen:(NSArray *)lines
@@ -3431,6 +3476,7 @@ void DumpBuf(screen_char_t* p, int n) {
                aDefaultLine,
                REAL_WIDTH * sizeof(screen_char_t));
     }
+    temp_default_char = [self defaultChar];
 
     // Copy the lines back over it
     for (int i = 0; i < MIN(lines.count, HEIGHT); i++) {
@@ -3856,6 +3902,18 @@ void DumpBuf(screen_char_t* p, int n) {
     return the_line;
 }
 
+- (screen_char_t *)_getDefaultLineWithChar:(screen_char_t)defaultChar {
+    NSMutableData *data = [NSMutableData data];
+    for (int i = 0; i < WIDTH; i++) {
+        [data appendBytes:&defaultChar length:sizeof(defaultChar)];
+    }
+    screen_char_t eol;
+    memset(&eol, 0, sizeof(eol));
+    eol.code = EOL_HARD;
+    [data appendBytes:&eol length:sizeof(eol)];
+    return data.bytes;
+}
+
 // returns a line set to default character and attributes
 // released when session is closed
 - (screen_char_t*)_getDefaultLineWithWidth:(int)width
@@ -3920,6 +3978,16 @@ void DumpBuf(screen_char_t* p, int n) {
     assert(dropped == 0 || dropped == 1);
 
     return dropped;
+}
+
+- (screen_char_t)defaultChar {
+    screen_char_t fg = [TERMINAL foregroundColorCodeReal];
+    screen_char_t bg = [TERMINAL backgroundColorCodeReal];
+    screen_char_t c;
+    memset(&c, 0, sizeof(c));
+    CopyForegroundColor(&c, fg);
+    CopyBackgroundColor(&c, bg);
+    return c;
 }
 
 - (void)_setInitialTabStops

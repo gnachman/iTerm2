@@ -118,6 +118,7 @@ void StringToScreenChars(NSString *s,
 
     // temporary buffer to store main buffer in SAVE_BUFFER/RESET_BUFFER mode
     screen_char_t *temp_buffer;
+    screen_char_t temp_default_char;
 
     // default line stuff
     screen_char_t default_bg_code;
