@@ -53,7 +53,9 @@
 
     NSUserDefaults* prefs = [NSUserDefaults standardUserDefaults];
 
-    if ([prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] && ![prefs objectForKey:KEY_NEW_BOOKMARKS]) {
+    if ([prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] &&
+        [[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] isKindOfClass:[NSDictionary class]] &&
+        ![prefs objectForKey:KEY_NEW_BOOKMARKS]) {
         // Have only old-style bookmarks. Load them and convert them to new-style
         // bookmarks.
         [self recursiveMigrateBookmarks:[prefs objectForKey:KEY_DEPRECATED_BOOKMARKS] path:[NSArray arrayWithObjects:nil]];
