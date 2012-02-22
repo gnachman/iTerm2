@@ -699,7 +699,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         } else {
             // Try just the encoding by itself, which might work.
             NSString *encName = [self encodingName];
-            if ([self _localeIsSupported:encName]) {
+            if (encName && [self _localeIsSupported:encName]) {
                 [env setObject:encName forKey:@"LC_CTYPE"];
             }
         }
