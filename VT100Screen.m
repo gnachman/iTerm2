@@ -2460,7 +2460,12 @@ void DumpBuf(screen_char_t* p, int n) {
             [self setCursorX:cursorX - 1 Y:cursorY];
         }
     } else if (cursorX == 0 && cursorY > 0) {
-        [self setCursorX:WIDTH - 1 Y:cursorY - 1];
+        screen_char_t* aLine = [self getLineAtScreenIndex:cursorY - 1];
+        if (aLine[WIDTH].code == EOL_SOFT) {
+            [self setCursorX:WIDTH - 1 Y:cursorY - 1];
+        } else if (aLine[WIDTH].code == EOL_DWC) {
+            [self setCursorX:WIDTH - 2 Y:cursorY - 1];
+        }
     }
 }
 
