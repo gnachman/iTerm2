@@ -1016,29 +1016,65 @@ static VT100TCC decode_other(unsigned char *datap,
             break;
 
         case 'k':
-            // The screen term uses <esc>k<title><cr|esc> to set the title.
+            // The screen term uses <esc>k<title><cr|esc\> to set the title.
             if (datalen > 0) {
                 int i;
                 BOOL found = NO;
                 // Search for esc or newline terminator.
                 for (i = 2; i < datalen; i++) {
-                    if (datap[i] == ESC || datap[i] == '\n' || datap[i] == '\r') {
+                    BOOL isTerminator = NO;
+                    if (datap[i] == ESC && i + 1 == datalen) {
+                        break;
+                    } else if (datap[i] == ESC && datap[i + 1] == '\\') {
+                        i++;  // cause the backslash to be consumed below
+                        isTerminator = YES;
+                    } else if (datap[i] == '\n' || datap[i] == '\r') {
+                        isTerminator = YES;
+                    }
+                    if (isTerminator) {
                         // Found terminator. Grab text from datap to char before it
                         // save in result.u.string.
                         NSData *data = [NSData dataWithBytes:datap + 2 length:i - 2];
                         result.u.string = [[[NSString alloc] initWithData:data
                                                                  encoding:enc] autorelease];
                         // Consume everything up to the terminator
-                        *rmlen = i;
-                        if (datap[i] != ESC) {
-                            ++(*rmlen);
-                        }
+                        *rmlen = i + 1;
                         found = YES;
                         break;
                     }
                 }
                 if (found) {
-                    result.type = XTERMCC_WINICON_TITLE;
+                    if (result.u.string.length == 0) {
+                        // Ignore 0-length titles to avoid getting bitten by a screen
+                        // feature/hack described here: 
+                        // http://www.gnu.org/software/screen/manual/screen.html#Dynamic-Titles
+                        //
+                        // screen has a shell-specific heuristic that is enabled by setting the
+                        // window's name to search|name and arranging to have a null title 
+                        // escape-sequence output as a part of your prompt. The search portion
+                        // specifies an end-of-prompt search string, while the name portion
+                        // specifies the default shell name for the window. If the name ends in
+                        // a Ô:Õ screen will add what it believes to be the current command
+                        // running in the window to the end of the specified name (e.g. name:cmd).
+                        // Otherwise the current command name supersedes the shell name while it
+                        // is running.
+                        //
+                        // Here's how it works: you must modify your shell prompt to output a null
+                        // title-escape-sequence (<ESC> k <ESC> \) as a part of your prompt. The
+                        // last part of your prompt must be the same as the string you specified
+                        // for the search portion of the title. Once this is set up, screen will
+                        // use the title-escape-sequence to clear the previous command name and
+                        // get ready for the next command. Then, when a newline is received from
+                        // the shell, a search is made for the end of the prompt. If found, it
+                        // will grab the first word after the matched string and use it as the
+                        // command name. If the command name begins with Ô!Õ, Ô%Õ, or Ô^Õ, screen
+                        // will use the first word on the following line (if found) in preference
+                        // to the just-found name. This helps csh users get more accurate titles
+                        // when using job control or history recall commands.
+                        result.type = VT100_NOTSUPPORT;
+                    } else {
+                        result.type = XTERMCC_WINICON_TITLE;
+                    }
                 } else {
                     result.type = VT100_WAIT;
                 }
