@@ -2447,6 +2447,11 @@ static VT100TCC decode_string(unsigned char *datap,
     return KEYPAD_MODE;
 }
 
+- (void)setKeypadMode:(BOOL)mode
+{
+    KEYPAD_MODE = YES;
+}
+
 - (BOOL)insertMode
 {
     return INSERT_MODE;
@@ -2542,6 +2547,15 @@ static VT100TCC decode_string(unsigned char *datap,
                           length:conststr_sizeof(REPORT_SDA)];
 }
 
+- (void)setInsertMode:(BOOL)mode
+{
+    INSERT_MODE = mode;
+}
+
+- (void)setCursorMode:(BOOL)mode
+{
+    CURSOR_MODE = mode;
+}
 
 - (void)_setMode:(VT100TCC)token
 {
@@ -2554,7 +2568,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
             switch (token.u.csi.p[0]) {
                 case 20: LINE_MODE = mode; break;
-                case 1:  CURSOR_MODE = mode; break;
+                case 1:  [self setCursorMode:mode]; break;
                 case 2:  ANSI_MODE = mode; break;
                 case 3:  COLUMN_MODE = mode; break;
                 case 4:  SCROLL_MODE = mode; break;
@@ -2642,14 +2656,14 @@ static VT100TCC decode_string(unsigned char *datap,
 
             switch (token.u.csi.p[0]) {
                 case 4:
-                    INSERT_MODE = mode; break;
+                    [self setInsertMode:mode]; break;
             }
                 break;
         case VT100CSI_DECKPAM:
-            KEYPAD_MODE = YES;
+            [self setKeypadMode:YES];
             break;
         case VT100CSI_DECKPNM:
-            KEYPAD_MODE = NO;
+            [self setKeypadMode:NO];
             break;
         case VT100CC_SI:
             CHARSET = 0;
@@ -3039,6 +3053,17 @@ static VT100TCC decode_string(unsigned char *datap,
 - (BOOL)bracketedPasteMode
 {
     return bracketedPasteMode_;
+}
+
+- (void)setMouseMode:(MouseMode)mode
+{
+    MOUSE_MODE = mode;
+    [SCREEN mouseModeDidChange:MOUSE_MODE];
+}
+
+- (void)setMouseFormat:(MouseFormat)format
+{
+    MOUSE_FORMAT = format;
 }
 
 @end

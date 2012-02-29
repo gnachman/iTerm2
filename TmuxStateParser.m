@@ -18,6 +18,15 @@ NSString *kStateDictScrollRegionLower = @"scroll_region_lower";
 NSString *kStateDictTabstops = @"tabstops";
 NSString *kStateDictDECSCCursorX = @"decsc_cursor_x";
 NSString *kStateDictDECSCCursorY = @"decsc_cursor_y";
+NSString *kStateDictCursorMode = @"cursor_mode";
+NSString *kStateDictInsertMode = @"insert_mode";
+NSString *kStateDictKCursorMode = @"kcursor_mode";
+NSString *kStateDictKKeypadMode = @"kkeypad_mode";
+NSString *kStateDictWrapMode = @"wrap_mode";
+NSString *kStateDictMouseStandardMode = @"mouse_standard_mode";
+NSString *kStateDictMouseButtonMode = @"mouse_button_mode";
+NSString *kStateDictMouseAnyMode = @"mouse_any_mode";
+NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_mode";
 
 @interface NSString (TmuxStateParser)
 - (NSArray *)intlistValue;

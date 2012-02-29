@@ -18,6 +18,15 @@ extern NSString *kStateDictScrollRegionLower;
 extern NSString *kStateDictTabstops;
 extern NSString *kStateDictDECSCCursorX;
 extern NSString *kStateDictDECSCCursorY;
+extern NSString *kStateDictCursorMode;
+extern NSString *kStateDictInsertMode;
+extern NSString *kStateDictKCursorMode;
+extern NSString *kStateDictKKeypadMode;
+extern NSString *kStateDictWrapMode;
+extern NSString *kStateDictMouseStandardMode;
+extern NSString *kStateDictMouseButtonMode;
+extern NSString *kStateDictMouseAnyMode;
+extern NSString *kStateDictMouseUTF8Mode;
 
 @interface TmuxStateParser : NSObject
 

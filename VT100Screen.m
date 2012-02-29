@@ -231,6 +231,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 @interface VT100Screen (Private)
 
 - (screen_char_t *)_getLineAtIndex:(int)anIndex fromLine:(screen_char_t *)aLine;
+- (screen_char_t *)_getDefaultLineWithChar:(screen_char_t)defaultChar;
 - (screen_char_t*)_getDefaultLineWithWidth:(int)width;
 - (int)_addLineToScrollbackImpl;
 - (void)_setInitialTabStops;
@@ -3509,6 +3510,8 @@ void DumpBuf(screen_char_t* p, int n) {
     cursorY = [[state objectForKey:kStateDictCursorY] intValue];
     SCROLL_TOP = [[state objectForKey:kStateDictScrollRegionUpper] intValue];
     SCROLL_BOTTOM = [[state objectForKey:kStateDictScrollRegionLower] intValue];
+    [self showCursor:[[state objectForKey:kStateDictCursorMode] boolValue]];
+
     [tabStops removeAllObjects];
     for (NSNumber *n in [state objectForKey:kStateDictTabstops]) {
         [tabStops addObject:n];
@@ -3915,7 +3918,7 @@ void DumpBuf(screen_char_t* p, int n) {
     memset(&eol, 0, sizeof(eol));
     eol.code = EOL_HARD;
     [data appendBytes:&eol length:sizeof(eol)];
-    return data.bytes;
+    return data.mutableBytes;
 }
 
 // returns a line set to default character and attributes

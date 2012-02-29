@@ -51,6 +51,7 @@
 #import "TmuxController.h"
 #import "TmuxLayoutParser.h"
 #import "MovePaneController.h"
+#import "TmuxStateParser.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -377,6 +378,19 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 			NSData *data = [pendingOutput dataFromHexValues];
 			[[aSession TERMINAL] putStreamData:data];
 		}
+        [[aSession TERMINAL] setInsertMode:[[state objectForKey:kStateDictInsertMode] boolValue]];
+        [[aSession TERMINAL] setCursorMode:[[state objectForKey:kStateDictKCursorMode] boolValue]];
+        [[aSession TERMINAL] setKeypadMode:[[state objectForKey:kStateDictKKeypadMode] boolValue]];
+        if ([[state objectForKey:kStateDictMouseStandardMode] boolValue]) {
+            [[aSession TERMINAL] setMouseMode:MOUSE_REPORTING_NORMAL];
+        } else if ([[state objectForKey:kStateDictMouseButtonMode] boolValue]) {
+            [[aSession TERMINAL] setMouseMode:MOUSE_REPORTING_BUTTON_MOTION];
+        } else if ([[state objectForKey:kStateDictMouseAnyMode] boolValue]) {
+            [[aSession TERMINAL] setMouseMode:MOUSE_REPORTING_ALL_MOTION];
+        } else {
+            [[aSession TERMINAL] setMouseMode:MOUSE_REPORTING_NONE];
+        }
+        [[aSession TERMINAL] setMouseFormat:[[state objectForKey:kStateDictMouseUTF8Mode] boolValue] ? MOUSE_FORMAT_XTERM_EXT : MOUSE_FORMAT_XTERM];
     }
     return aSession;
 }

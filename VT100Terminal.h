@@ -428,5 +428,11 @@ typedef enum {
 
 - (BOOL)bracketedPasteMode;
 
+- (void)setInsertMode:(BOOL)mode;
+- (void)setCursorMode:(BOOL)mode;
+- (void)setKeypadMode:(BOOL)mode;
+- (void)setMouseMode:(MouseMode)mode;
+- (void)setMouseFormat:(MouseFormat)format;
+
 @end
 
