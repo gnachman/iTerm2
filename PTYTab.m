@@ -1811,20 +1811,22 @@ static NSString* FormatRect(NSRect r) {
     }
 }
 
-// Blur the window if most sessions are blurred.
+// Blur the window if any session is blurred.
 - (bool)blur
 {
     int n = 0;
     int y = 0;
     NSArray* sessions = [self sessions];
     for (PTYSession* session in sessions) {
-        if ([[[session addressBookEntry] objectForKey:KEY_BLUR] boolValue]) {
+        if ([session transparency] > 0 &&
+            [[session TEXTVIEW] useTransparency] &&
+            [[[session addressBookEntry] objectForKey:KEY_BLUR] boolValue]) {
             ++y;
         } else {
             ++n;
         }
     }
-    return y > n;
+    return y > 0;
 }
 
 - (double)blurRadius
