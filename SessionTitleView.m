@@ -53,7 +53,7 @@ static const CGFloat kButtonSize = 17;
         [menuButton_ addItemWithTitle:@"Foo"];
 
         menuButton_.frame = NSMakeRect(frame.size.width - menuButton_.frame.size.width - kMargin,
-                                       (frame.size.height - menuButton_.frame.size.height) / 2,
+                                       (frame.size.height - menuButton_.frame.size.height) / 2 + 1,
                                        menuButton_.frame.size.width,
                                        menuButton_.frame.size.height);
         [menuButton_ setAutoresizingMask:NSViewMinXMargin];
