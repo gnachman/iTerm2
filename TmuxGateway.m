@@ -318,7 +318,7 @@ static NSString *kCommandObject = @"object";
 
 - (NSString *)keyEncodedByte:(char)byte
 {
-    return [NSString stringWithFormat:@"%02x", (((int)byte) & 0xff)];
+    return [NSString stringWithFormat:@"0x%02x", (((int)byte) & 0xff)];
 }
 
 - (NSString *)stringForKeyEncodedData:(NSData *)data
@@ -326,6 +326,9 @@ static NSString *kCommandObject = @"object";
     NSMutableString *encoded = [NSMutableString string];
     const char *bytes = [data bytes];
     for (int i = 0; i < data.length; i++) {
+        if (i > 0) {
+            [encoded appendString:@" "];
+        }
         [encoded appendString:[self keyEncodedByte:bytes[i]]];
     }
     return encoded;
@@ -334,7 +337,7 @@ static NSString *kCommandObject = @"object";
 - (void)sendKeys:(NSData *)data toWindowPane:(int)windowPane
 {
     NSString *encoded = [self stringForKeyEncodedData:data];
-    NSString *command = [NSString stringWithFormat:@"send-keys -h -t %%%d %@",
+    NSString *command = [NSString stringWithFormat:@"send-keys -t %%%d %@",
                          windowPane, encoded];
     [self sendCommand:command
          responseTarget:self
