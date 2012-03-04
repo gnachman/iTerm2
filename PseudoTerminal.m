@@ -2055,6 +2055,7 @@ NSString *sessionsKey = @"sessions";
         [[aSession view] setNeedsDisplay:YES];
     }
     restoreUseTransparency_ = NO;
+    [[self currentTab] recheckBlur];
 }
 
 - (BOOL)useTransparency

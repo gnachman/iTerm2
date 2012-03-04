@@ -29,6 +29,7 @@
 
 #import <LineBuffer.h>
 #import "RegexKitLite/RegexKitLite.h"
+#import "BackgroundThread.h"
 
 @implementation ResultRange
 @end
@@ -941,6 +942,13 @@ static int Search(NSString* needle,
 
 - (void)dealloc
 {
+    // This causes the blocks to be released in a background thread.
+    // When a LineBuffer is really gigantic, it can take
+    // quite a bit of time to release all the blocks.
+    [blocks performSelector:@selector(removeAllObjects)
+                   onThread:[BackgroundThread backgroundThread]
+                 withObject:nil
+              waitUntilDone:NO];
     [blocks release];
     [super dealloc];
 }
