@@ -325,6 +325,29 @@
 #pragma mark -
 #pragma mark ---- drawing ----
 
+- (NSGradient *)tabGradientForColor:(NSColor *)tabColor brightness:(double)brightness
+{
+    tabColor = [tabColor colorUsingColorSpace:[NSColorSpace deviceRGBColorSpace]];
+    float r = [tabColor redComponent];
+    float g = [tabColor greenComponent];
+    float b = [tabColor blueComponent];
+    NSColor *startColor = [NSColor colorWithDeviceRed:(1 + r)/2.0
+                                                green:(1 + g)/2.0
+                                                 blue:(1 + b)/2.0
+                                                alpha:brightness];
+    NSColor *midColor = [tabColor colorWithAlphaComponent:0.6 * brightness];
+    NSColor *endColor = [tabColor colorWithAlphaComponent:1 * brightness];
+    NSColor *shadowColor = [NSColor colorWithDeviceRed:r/1.3
+                                                 green:g/1.3
+                                                  blue:b/1.3
+                                                 alpha:brightness];
+    CGFloat locations[] = { 0, 0.4, 0.8, 1 };
+    return [[[NSGradient alloc] initWithColors:[NSArray arrayWithObjects:
+                                                startColor, midColor, endColor, shadowColor, nil]
+                                   atLocations:locations
+                                    colorSpace:[NSColorSpace deviceRGBColorSpace]] autorelease];
+}
+
 - (void)drawTabCell:(PSMTabBarCell *)cell
 {
     NSRect cellFrame = [cell frame];
@@ -335,29 +358,25 @@
     //disable antialiasing of bezier paths
     [NSGraphicsContext saveGraphicsState];
     [[NSGraphicsContext currentContext] setShouldAntialias:NO];
-
+    NSColor* tabColor = [cell tabColor];
+    NSGradient *tabGradient = nil;
     if ([cell state] == NSOnState) {
         // selected tab
         if (orientation == PSMTabBarHorizontalOrientation) {
             NSRect aRect = NSMakeRect(cellFrame.origin.x, cellFrame.origin.y, cellFrame.size.width, cellFrame.size.height-2.5);
-
+            if (tabColor) {
+              aRect.size.height += 2.0;
+            }
             // background
             aRect.origin.x += 1.0;
             aRect.size.width--;
             aRect.size.height -= 0.5;
-            NSColor* tabColor = [cell tabColor];
-            if (tabColor) {
-                [tabColor set];
-                NSRectFill(aRect);
-            } else {
-                NSDrawWindowBackground(aRect);
-            }
+            NSDrawWindowBackground(aRect);
             aRect.size.width++;
             aRect.size.height += 0.5;
 
             // frame
             aRect.origin.x -= 0.5;
-            [lineColor set];
             [bezier setLineWidth:1.0];
             [bezier moveToPoint:NSMakePoint(aRect.origin.x, aRect.origin.y)];
             [bezier lineToPoint:NSMakePoint(aRect.origin.x, aRect.origin.y+aRect.size.height-1.5)];
@@ -381,7 +400,6 @@
             aRect.size.height++;
 
             // frame
-            [lineColor set];
             [bezier setLineWidth:1.0];
             [bezier moveToPoint:NSMakePoint(aRect.origin.x + aRect.size.width, aRect.origin.y)];
             [bezier lineToPoint:NSMakePoint(aRect.origin.x + 2, aRect.origin.y)];
@@ -390,10 +408,21 @@
             [bezier lineToPoint:NSMakePoint(aRect.origin.x + 3, aRect.origin.y + aRect.size.height)];
             [bezier lineToPoint:NSMakePoint(aRect.origin.x + aRect.size.width, aRect.origin.y + aRect.size.height)];
         }
-
+        if (tabColor) {
+            NSRect temp = NSMakeRect(cellFrame.origin.x, cellFrame.origin.y, cellFrame.size.width, cellFrame.size.height);
+            temp.origin.y += 0.5;
+            temp.origin.x += 1.5;
+            temp.size.width -= 2;
+            temp.size.height -= 1;
+            tabGradient = [self tabGradientForColor:tabColor brightness:1];
+            [tabGradient drawInBezierPath:[NSBezierPath bezierPathWithRoundedRect:temp
+                                                                          xRadius:2
+                                                                          yRadius:2]
+                                    angle:90];
+        }
+        [lineColor set];
         [bezier stroke];
     } else {
-
         // unselected tab
         NSRect aRect = NSMakeRect(cellFrame.origin.x, cellFrame.origin.y, cellFrame.size.width, cellFrame.size.height);
         aRect.origin.y += 0.5;
@@ -405,23 +434,15 @@
             [[NSColor colorWithCalibratedWhite:0.0 alpha:0.1] set];
             NSRectFillUsingOperation(aRect, NSCompositeSourceAtop);
         }
-        NSColor* tabColor = [cell tabColor];
         NSRect bgRect = NSMakeRect(aRect.origin.x,
                                    aRect.origin.y,
                                    aRect.size.width,
                                    aRect.size.height - 2);
-        if (tabColor) {
-            [tabColor set];
-            NSRectFill(bgRect);
-        } else {
-            [[NSColor windowBackgroundColor] set];
-            NSRectFill(bgRect);
+        [[NSColor windowBackgroundColor] set];
+        NSRectFill(bgRect);
 
-            [[NSColor colorWithCalibratedWhite:0.0 alpha:0.2] set];
-            NSRectFillUsingOperation(bgRect, NSCompositeSourceAtop);
-        }
-
-        [lineColor set];
+        [[NSColor colorWithCalibratedWhite:0.0 alpha:0.2] set];
+        NSRectFillUsingOperation(bgRect, NSCompositeSourceAtop);
 
         if (orientation == PSMTabBarHorizontalOrientation) {
             aRect.origin.x -= 1;
@@ -444,6 +465,16 @@
                 [bezier lineToPoint:NSMakePoint(aRect.origin.x + aRect.size.width, aRect.origin.y + aRect.size.height)];
             }
         }
+        if (tabColor) {
+          NSRect temp = aRect;
+          temp.size.height -= 3;
+          temp.origin.y += 2;
+          temp.origin.x += 1;
+          temp.size.width -= 2;
+          tabGradient = [self tabGradientForColor:tabColor brightness:0.5];
+          [tabGradient drawInRect:temp angle:270];
+        }
+        [lineColor set];
         [bezier stroke];
     }
 
@@ -590,7 +621,7 @@
         }
     }
 
-    [self drawBackgroundInRect:rect color:[activeCell tabColor]];
+    [self drawBackgroundInRect:rect color:nil];
 
     // no tab view == not connected
     if(![bar tabView]){
