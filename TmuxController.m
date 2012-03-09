@@ -397,13 +397,21 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
             dir = @"U";
         }
     }
-    NSString *cmdStr = [NSString stringWithFormat:@"resize-pane -%@ -t %%%d %d",
-                        dir, wp, abs(amount)];
+    NSString *resizeStr = [NSString stringWithFormat:@"resize-pane -%@ -t %%%d %d",
+                           dir, wp, abs(amount)];
+    NSString *listStr = [NSString stringWithFormat:@"list-windows -F \"#{window_id} #{window_layout}\""];
+    NSArray *commands = [NSArray arrayWithObjects:
+                         [gateway_ dictionaryForCommand:resizeStr
+                                         responseTarget:nil
+									   responseSelector:nil
+                                         responseObject:nil],
+                         [gateway_ dictionaryForCommand:listStr
+                                         responseTarget:self
+									   responseSelector:@selector(clientSizeChangeResponse:)
+                                         responseObject:nil],
+                         nil];
     ++numOutstandingWindowResizes_;
-    [gateway_ sendCommand:cmdStr
-           responseTarget:self
-         responseSelector:@selector(clientSizeChangeResponse:)
-           responseObject:nil];
+    [gateway_ sendCommandList:commands];
 }
 
 // The splitVertically parameter uses the iTerm2 conventions.
@@ -492,7 +500,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)breakOutWindowPane:(int)windowPane toTabAside:(NSString *)sibling
 {
-    [gateway_ sendCommand:[NSString stringWithFormat:@"break-pane -t %%%d", windowPane]
+    [gateway_ sendCommand:[NSString stringWithFormat:@"break-pane -P -F \"#{window_id}\" -t %%%d", windowPane]
            responseTarget:self
          responseSelector:@selector(windowPaneBrokeOutWithWindowId:setAffinityTo:)
            responseObject:sibling];
@@ -501,7 +509,10 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)windowPaneBrokeOutWithWindowId:(NSString *)windowId
                          setAffinityTo:(NSString *)windowGuid
 {
-    [affinities_ setValue:windowGuid equalToValue:windowId];
+    if ([windowId hasPrefix:@"@"]) {
+        windowId = [windowId substringFromIndex:1];
+        [affinities_ setValue:windowGuid equalToValue:windowId];
+    }
 }
 
 - (void)hideWindow:(int)windowId
