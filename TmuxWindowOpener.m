@@ -236,6 +236,8 @@
         PseudoTerminal *term = nil;
         if (!tabToUpdate_) {
             term = [self.controller windowWithAffinityForWindowId:self.windowIndex];
+        } else {
+            term = [tabToUpdate_ realParentWindow];
         }
         if (!term) {
             term = [[iTermController sharedInstance] openWindow];
