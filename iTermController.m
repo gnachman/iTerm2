@@ -310,6 +310,8 @@ static BOOL initDone = NO;
     NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
     [input setStringValue:defaultValue];
     [alert setAccessoryView:input];
+    [alert layout];
+    [[alert window] makeFirstResponder:input];
     NSInteger button = [alert runModal];
     if (button == NSAlertDefaultReturn) {
         [input validateEditing];

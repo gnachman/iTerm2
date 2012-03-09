@@ -1675,18 +1675,22 @@ NSString *sessionsKey = @"sessions";
 }
 
 - (void)canonicalizeWindowFrame {
+    PtyLog(@"canonicalizeWindowFrame");
     NSScreen* screen = [[self window] deepestScreen];
     if (!screen) {
+        PtyLog(@"No deepest screen");
         NSDictionary* aDict = [[self currentSession] addressBookEntry];
         // Try to use the screen of the current session. Fall back to the main
         // screen if that's not an option.
         int screenNumber = [aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : 0;
         NSArray* screens = [NSScreen screens];
         if ([screens count] == 0) {
+            PtyLog(@"We are headless");
             // Nothing we can do if we're headless.
             return;
         }
         if ([screens count] < screenNumber) {
+            PtyLog(@"Using screen 0 because the preferred screen isn't around any more");
             screenNumber = 0;
         }
         screen = [[NSScreen screens] objectAtIndex:screenNumber];
@@ -1698,6 +1702,7 @@ NSString *sessionsKey = @"sessions";
     // window's frame.
     switch (windowType_) {
         case WINDOW_TYPE_TOP:
+            PtyLog(@"Window type = TOP");
             frame.size.width = [screen visibleFrame].size.width;
             frame.origin.x = [screen visibleFrame].origin.x;
             if ([[self window] alphaValue] == 0) {
@@ -1714,6 +1719,7 @@ NSString *sessionsKey = @"sessions";
             break;
 
         case WINDOW_TYPE_BOTTOM:
+            PtyLog(@"Window type = BOTTOM");
             frame.size.width = [screen visibleFrame].size.width;
             frame.origin.x = [screen visibleFrame].origin.x;
             if ([[self window] alphaValue] == 0) {
@@ -1730,13 +1736,18 @@ NSString *sessionsKey = @"sessions";
             break;
 
         case WINDOW_TYPE_NORMAL:
+            PtyLog(@"Window type = NORMAL");
             if (![self lionFullScreen]) {
+                PtyLog(@"Window type = NORMAL BUT it's not lion fullscreen");
                 break;
             }
             // fall through
         case WINDOW_TYPE_LION_FULL_SCREEN:
+            PtyLog(@"Window type = LION");
         case WINDOW_TYPE_FULL_SCREEN:
+            PtyLog(@"Window type = FULL SCREEN");
             if ([screen frame].size.width > 0) {
+                PtyLog(@"set window to screen's frame");
                 [[self window] setFrame:[screen frame] display:YES];
             }
             break;
@@ -2116,9 +2127,9 @@ NSString *sessionsKey = @"sessions";
         windowType_ == WINDOW_TYPE_LION_FULL_SCREEN &&
         [[PreferencePanel sharedInstance] lionStyleFullscreen]) {
         if (![[[iTermController sharedInstance] keyTerminalWindow] lionFullScreen]) {
-	    // call enter(Traditional)FullScreenMode instead of toggle... because
-	    // when doing a lion resume, the window may be toggled immediately
-	    // after creation by the window restorer.
+            // call enter(Traditional)FullScreenMode instead of toggle... because
+            // when doing a lion resume, the window may be toggled immediately
+            // after creation by the window restorer.
             [self performSelector:@selector(enterFullScreenMode)
                        withObject:nil
                        afterDelay:0];
@@ -2637,10 +2648,14 @@ NSString *sessionsKey = @"sessions";
         [autocompleteView close];
     }
     NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:tabViewItem];
-    if (newTabColor) {
+    if ([tabView numberOfTabViewItems] == 1 &&
+        [[PreferencePanel sharedInstance] hideTab] &&
+        newTabColor) {
+        // Draw colored title bar (and tab bar, and tab bar background).
         [[self window] setBackgroundColor:newTabColor];
         [background_ setColor:newTabColor];
     } else {
+        // Draw normal title bar.
         [[self window] setBackgroundColor:nil];
         [background_ setColor:normalBackgroundColor];
     }
@@ -2936,6 +2951,22 @@ NSString *sessionsKey = @"sessions";
         }
     }
 
+    BOOL setWindowBackground = NO;
+    if ([tabView numberOfTabViewItems] == 1) {
+        NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:[tabView tabViewItemAtIndex:0]];
+        if ([[PreferencePanel sharedInstance] hideTab] && newTabColor) {
+            // Draw colored title bar (and tab bar, and tab bar background).
+            [[self window] setBackgroundColor:newTabColor];
+            [background_ setColor:newTabColor];
+            setWindowBackground = YES;
+        }
+    }
+    if (!setWindowBackground) {
+        // Draw normal title bar.
+        [[self window] setBackgroundColor:nil];
+        [background_ setColor:normalBackgroundColor];
+    }
+
     [self _updateTabObjectCounts];
 
     [[NSNotificationCenter defaultCenter] postNotificationName: @"iTermNumberOfSessionsDidChange" object: self userInfo: nil];
@@ -3028,10 +3059,10 @@ NSString *sessionsKey = @"sessions";
     PTYSession *session = [[MovePaneController sharedInstance] session];
     BOOL tabSurvives = [[[session tab] sessions] count] > 1;
     if ([session isTmuxClient] && tabSurvives) {
-	// Cause the "normal" drop handle to do nothing.
+        // Cause the "normal" drop handle to do nothing.
         [[MovePaneController sharedInstance] clearSession];
-	// Tell the server to move the pane into its own window and sets
-	// an affinity to the destination window.
+        // Tell the server to move the pane into its own window and sets
+        // an affinity to the destination window.
         [[session tmuxController] breakOutWindowPane:[session tmuxPane]
                                           toTabAside:[self terminalGuid]];
         return nil;
@@ -3094,12 +3125,14 @@ NSString *sessionsKey = @"sessions";
     [tabBarControl setTabColor:color forTabViewItem:tabViewItem];
     if ([TABVIEW selectedTabViewItem] == tabViewItem) {
         NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:tabViewItem];
-        if (!newTabColor) {
-            [[self window] setBackgroundColor:nil];
-            [background_ setColor:normalBackgroundColor];
-        } else {
+        if ([TABVIEW numberOfTabViewItems] == 1 &&
+            [[PreferencePanel sharedInstance] hideTab] &&
+            newTabColor) {
             [[self window] setBackgroundColor:newTabColor];
             [background_ setColor:newTabColor];
+        } else {
+              [[self window] setBackgroundColor:nil];
+              [background_ setColor:normalBackgroundColor];
         }
     }
 }
@@ -5202,12 +5235,14 @@ NSString *sessionsKey = @"sessions";
     [tabBarControl setTabColor:color forTabViewItem:aTabViewItem];
     if ([TABVIEW selectedTabViewItem] == aTabViewItem) {
         NSColor* newTabColor = [tabBarControl tabColorForTabViewItem:aTabViewItem];
-        if (!newTabColor) {
-            [[self window] setBackgroundColor:nil];
-            [background_ setColor:normalBackgroundColor];
-        } else {
+        if ([TABVIEW numberOfTabViewItems] == 1 &&
+            [[PreferencePanel sharedInstance] hideTab] &&
+            newTabColor) {
             [[self window] setBackgroundColor:newTabColor];
             [background_ setColor:newTabColor];
+        } else {
+            [[self window] setBackgroundColor:nil];
+            [background_ setColor:normalBackgroundColor];
         }
     }
 }
