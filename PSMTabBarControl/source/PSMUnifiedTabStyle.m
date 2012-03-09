@@ -297,6 +297,18 @@
 #pragma mark -
 #pragma mark ---- drawing ----
 
+- (void)overlayTabColor:(NSColor *)tabColor
+                inFrame:(NSRect)cellFrame
+                  alpha:(CGFloat)alpha
+{
+  [[tabColor colorWithAlphaComponent:alpha] set];
+  NSRectFillUsingOperation(NSMakeRect(cellFrame.origin.x + 0.5,
+                                      cellFrame.origin.y + 0.5,
+                                      cellFrame.size.width,
+                                      cellFrame.size.height),
+                           NSCompositeSourceOver);
+}
+
 - (void)drawTabCell:(PSMTabBarCell *)cell
 {
     NSRect cellFrame = [cell frame];
@@ -311,6 +323,7 @@
     NSColor * lineColor = nil;
     NSBezierPath* bezier = [NSBezierPath bezierPath];
     lineColor = [NSColor colorWithCalibratedWhite:0.576 alpha:1.0];
+    NSColor* tabColor = [cell tabColor];
 
     if (!showsBaselineSeparator || [cell state] == NSOnState)
     {
@@ -366,6 +379,9 @@
                                                 endColor:[NSColor colorWithCalibratedWhite:0.843 alpha:1.0]];
             }
         }
+        if (tabColor) {
+          [self overlayTabColor:tabColor inFrame:cellFrame alpha:([cell state] == NSOnState) ? 1.0 : 0.3];
+        }
 
         [lineColor set];
         [bezier stroke];
@@ -386,6 +402,9 @@
         {
             [[NSColor colorWithCalibratedWhite:0.0 alpha:0.1] set];
             NSRectFillUsingOperation(aRect, NSCompositeSourceAtop);
+        }
+        if (tabColor) {
+          [self overlayTabColor:tabColor inFrame:cellFrame alpha:([cell state] == NSOnState) ? 1.0 : 0.3];
         }
 
         // frame
@@ -417,19 +436,6 @@
         }
     }
 
-    NSColor* tabColor = [cell tabColor];
-    if (tabColor) {
-        if ([cell state] == NSOnState) {
-            [[tabColor colorWithAlphaComponent:0.5] set];
-        } else {
-            [tabColor set];
-        }
-        NSRectFillUsingOperation(NSMakeRect(cellFrame.origin.x + 0.5,
-                                            cellFrame.origin.y + 0.5,
-                                            cellFrame.size.width,
-                                            cellFrame.size.height),
-                                 NSCompositeSourceOver);
-    }
     [self drawInteriorWithTabCell:cell inView:[cell controlView]];
 }
 
