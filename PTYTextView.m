@@ -2906,6 +2906,10 @@ NSMutableArray* screens=0;
             endX = startX = x;
             endY = startY = y;
             [self setSelectionTime];
+            
+            if (altPressed) {
+                [self placeCursorOnCurrentLineWithEvent:event];
+            }
         }
     } else if (clickCount == 2) {
         int tmpX1, tmpY1, tmpX2, tmpY2;
@@ -3545,6 +3549,42 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)selectPreviousPaneWithEvent:(NSEvent *)event
 {
     [[[dataSource session] tab] previousSession];
+}
+
+- (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event
+{
+    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+    
+    if (debugKeyDown) {
+        NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
+    }
+    DebugLog(@"PTYTextView placeCursorOnCurrentLineWithEvent");
+
+    NSPoint clickPoint = [self clickPoint:event];
+    int x = clickPoint.x;
+    int y = clickPoint.y;
+    int cursorY = [dataSource absoluteLineNumberOfCursor];
+    int cursorX = [dataSource cursorX];
+    VT100Terminal *terminal = [dataSource terminal];
+    PTYSession* session = [dataSource session];
+    
+    if (debugKeyDown) {
+        NSLog(@"cursor at %d,%d (x,y) will be moved to %d,%d (x,y)", cursorX, cursorY, x, y);
+    }
+    if(y == cursorY) {
+        int i = abs(cursorX - x);
+        while (i > 0) {
+            if( cursorX > x) {
+                [session writeTask:[terminal keyArrowLeft:0]];
+            } else {
+                [session writeTask:[terminal keyArrowRight:0]];
+            }
+            i--;
+        }
+    }
+    if (debugKeyDown) {
+        NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent END");
+    }
 }
 
 - (NSString*)contentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad

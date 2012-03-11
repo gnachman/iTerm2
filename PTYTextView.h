@@ -371,6 +371,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (void)newHorizontalSplitWithProfile:(NSString *)guid withEvent:(NSEvent *)event;
 - (void)selectNextPaneWithEvent:(NSEvent *)event;
 - (void)selectPreviousPaneWithEvent:(NSEvent *)event;
+- (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event;
 
 
 - (NSString *)contentFromX:(int)startx Y:(int)starty ToX:(int)endx Y:(int)endy pad: (BOOL) pad;
