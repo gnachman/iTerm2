@@ -3565,23 +3565,37 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int y = clickPoint.y;
     int cursorY = [dataSource absoluteLineNumberOfCursor];
     int cursorX = [dataSource cursorX];
+    int width = [dataSource width];
     VT100Terminal *terminal = [dataSource terminal];
     PTYSession* session = [dataSource session];
     
-    if (debugKeyDown) {
-        NSLog(@"cursor at %d,%d (x,y) will be moved to %d,%d (x,y)", cursorX, cursorY, x, y);
+	int i = 0;
+	if (y == cursorY) {
+		// if the new position is on the same line
+		i = abs(cursorX - x);
+	} else if (cursorY > y) {
+		// new position is on a line below the current
+		i = (cursorY - y - 1 ) * width + width - x + cursorX ;
+	} else {
+		// new position is on a line above the current
+		i = (y - cursorY - 1 ) * width + width - cursorX + x ;
+	}
+
+	if (debugKeyDown) {
+        NSLog(@"cursor at %d,%d (x,y) will be moved to %d,%d (x,y) -> %d moves [window width: %d]",
+			  cursorX, cursorY, x, y, i, width);
     }
-    if(y == cursorY) {
-        int i = abs(cursorX - x);
-        while (i > 0) {
-            if( cursorX > x) {
-                [session writeTask:[terminal keyArrowLeft:0]];
-            } else {
-                [session writeTask:[terminal keyArrowRight:0]];
-            }
-            i--;
-        }
-    }
+	
+	while (i > 0) {
+		if (((y == cursorY) && (cursorX <= x)) ||
+			(cursorY < y)) {
+			[session writeTask:[terminal keyArrowRight:0]];
+		} else {
+			[session writeTask:[terminal keyArrowLeft:0]];
+		}
+		i--;
+	}
+
     if (debugKeyDown) {
         NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent END");
     }
