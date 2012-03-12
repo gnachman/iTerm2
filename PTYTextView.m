@@ -2895,8 +2895,18 @@ NSMutableArray* screens=0;
             // extend the selection.
             [self extendSelectionToX:x y:y];
             // startX and endX may be reversed, but mouseUp fixes it.
+
+            if (altPressed && !cmdPressed) {
+                [self placeCursorOnCurrentLineWithEvent:event];
+                return NO;
+            }
         } else if (startX > -1 &&
                    [self _isCharSelectedInRow:y col:x checkOld:NO]) {
+            if (altPressed && !cmdPressed) {
+                [self placeCursorOnCurrentLineWithEvent:event];
+                return NO;
+            }
+
             // not holding down shift key but there is an existing selection.
             // Possibly a drag coming up.
             mouseDownOnSelection = YES;
@@ -2906,8 +2916,8 @@ NSMutableArray* screens=0;
             endX = startX = x;
             endY = startY = y;
             [self setSelectionTime];
-            
-            if (altPressed) {
+
+            if (altPressed && !cmdPressed) {
                 [self placeCursorOnCurrentLineWithEvent:event];
             }
         }
@@ -3568,33 +3578,40 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int width = [dataSource width];
     VT100Terminal *terminal = [dataSource terminal];
     PTYSession* session = [dataSource session];
-    
-	int i = 0;
-	if (y == cursorY) {
-		// if the new position is on the same line
-		i = abs(cursorX - x);
-	} else if (cursorY > y) {
-		// new position is on a line below the current
-		i = (cursorY - y - 1 ) * width + width - x + cursorX ;
-	} else {
-		// new position is on a line above the current
-		i = (y - cursorY - 1 ) * width + width - cursorX + x ;
-	}
 
-	if (debugKeyDown) {
-        NSLog(@"cursor at %d,%d (x,y) will be moved to %d,%d (x,y) -> %d moves [window width: %d]",
-			  cursorX, cursorY, x, y, i, width);
+    int i = abs(cursorX - x);
+    int j = abs(cursorY - y);
+
+    if (cursorX > x) {
+        // current position is right of going-to-be x,
+        // so first move to left, and (if necessary)
+        // up or down afterwards
+        while (i > 0) {
+            [session writeTask:[terminal keyArrowLeft:0]];
+            i--;
+        }
     }
-	
-	while (i > 0) {
-		if (((y == cursorY) && (cursorX <= x)) ||
-			(cursorY < y)) {
-			[session writeTask:[terminal keyArrowRight:0]];
-		} else {
-			[session writeTask:[terminal keyArrowLeft:0]];
-		}
-		i--;
-	}
+    while (j > 0) {
+        if (cursorY > y) {
+            [session writeTask:[terminal keyArrowUp:0]];
+        } else {
+            [session writeTask:[terminal keyArrowDown:0]];
+        }
+        j--;
+    }
+    if (cursorX < x) {
+        // current position is left of going-to-be x
+        // so first moved up/down (if necessary)
+        // and then/now to the right
+        while (i > 0) {
+            [session writeTask:[terminal keyArrowRight:0]];
+            i--;
+        }
+    }
+    if (debugKeyDown) {
+        NSLog(@"cursor at %d,%d (x,y) moved to %d,%d (x,y) [window width: %d]",
+              cursorX, cursorY, x, y, width);
+    }
 
     if (debugKeyDown) {
         NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent END");
