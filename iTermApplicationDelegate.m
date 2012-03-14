@@ -433,19 +433,18 @@ static BOOL hasBecomeActive = NO;
     if ([filename isEqualToString:[ITERM2_FLAG stringByExpandingTildeInPath]]) {
         return YES;
     }
-    filename = [filename stringWithEscapedShellCharacters];
     if (filename) {
         // Verify whether filename is a script or a folder
         BOOL isDir;
         [[NSFileManager defaultManager] fileExistsAtPath:filename isDirectory:&isDir];
         if (!isDir) {
-            NSString *aString = [NSString stringWithFormat:@"%@; exit;\n", filename];
+            NSString *aString = [NSString stringWithFormat:@"%@; exit;\n", [filename stringWithEscapedShellCharacters]];
             [[iTermController sharedInstance] launchBookmark:nil inTerminal:[self currentTerminal]];
             // Sleeping a while waiting for the login.
             sleep(1);
             [[[[iTermController sharedInstance] currentTerminal] currentSession] insertText:aString];
         } else {
-            NSString *aString = [NSString stringWithFormat:@"cd %@\n", filename];
+            NSString *aString = [NSString stringWithFormat:@"cd %@\n", [filename stringWithEscapedShellCharacters]];
             [[iTermController sharedInstance] launchBookmark:nil inTerminal:[self currentTerminal]];
             // Sleeping a while waiting for the login.
             sleep(1);
