@@ -3103,10 +3103,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                !mouseDragged &&
                !([event modifierFlags] & NSShiftKeyMask)) {
         // Just a click in the window.
+
+        BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
+        if (altPressed && !cmdPressed) {
+            [self placeCursorOnCurrentLineWithEvent:event];
+        }
+
         startX=-1;
         if (cmdPressed &&
             [[PreferencePanel sharedInstance] cmdSelection]) {
-            BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
             if (altPressed) {
                 [self openTargetInBackgroundWithEvent:event];
             } else {
@@ -3545,6 +3550,63 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)selectPreviousPaneWithEvent:(NSEvent *)event
 {
     [[[dataSource session] tab] previousSession];
+}
+
+- (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event
+{
+    BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
+    
+    if (debugKeyDown) {
+        NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
+    }
+    DebugLog(@"PTYTextView placeCursorOnCurrentLineWithEvent");
+
+    NSPoint clickPoint = [self clickPoint:event];
+    int x = clickPoint.x;
+    int y = clickPoint.y;
+    int cursorY = [dataSource absoluteLineNumberOfCursor];
+    int cursorX = [dataSource cursorX];
+    int width = [dataSource width];
+    VT100Terminal *terminal = [dataSource terminal];
+    PTYSession* session = [dataSource session];
+
+    int i = abs(cursorX - x);
+    int j = abs(cursorY - y);
+
+    if (cursorX > x) {
+        // current position is right of going-to-be x,
+        // so first move to left, and (if necessary)
+        // up or down afterwards
+        while (i > 0) {
+            [session writeTask:[terminal keyArrowLeft:0]];
+            i--;
+        }
+    }
+    while (j > 0) {
+        if (cursorY > y) {
+            [session writeTask:[terminal keyArrowUp:0]];
+        } else {
+            [session writeTask:[terminal keyArrowDown:0]];
+        }
+        j--;
+    }
+    if (cursorX < x) {
+        // current position is left of going-to-be x
+        // so first moved up/down (if necessary)
+        // and then/now to the right
+        while (i > 0) {
+            [session writeTask:[terminal keyArrowRight:0]];
+            i--;
+        }
+    }
+    if (debugKeyDown) {
+        NSLog(@"cursor at %d,%d (x,y) moved to %d,%d (x,y) [window width: %d]",
+              cursorX, cursorY, x, y, width);
+    }
+
+    if (debugKeyDown) {
+        NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent END");
+    }
 }
 
 - (NSString*)contentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad

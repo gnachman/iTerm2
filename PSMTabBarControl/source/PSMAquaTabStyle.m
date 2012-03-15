@@ -50,7 +50,7 @@ static CGImageRef CGImageCreateWithNSImage(NSImage *image, CGRect sourceRect) {
   [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithGraphicsPort:bitmapContext
                                                                                   flipped:NO]];
   [image drawInRect:NSMakeRect(0, 0, imageSize.width, imageSize.height)
-           fromRect:sourceRect
+           fromRect:NSRectFromCGRect(sourceRect)
           operation:NSCompositeCopy
            fraction:1.0];
   [NSGraphicsContext restoreGraphicsState];
@@ -376,15 +376,15 @@ static CGImageRef CGImageCreateWithNSImage(NSImage *image, CGRect sourceRect) {
   if (tabColor) {
     CGContextSetBlendMode(context, kCGBlendModeNormal);
     CGContextSetFillColorWithColor(context, [tabColor CGColor]);
-    CGContextFillRect(context, NSMakeRect(cellFrame.origin.x + 0.5,
+    CGContextFillRect(context, NSRectToCGRect(NSMakeRect(cellFrame.origin.x + 0.5,
                                           cellFrame.origin.y + 0.5,
                                           cellFrame.size.width,
-                                          cellFrame.size.height));
+                                          cellFrame.size.height)));
 
     CGImageRef cgBgImage = CGImageCreateWithNSImage(bgImage, CGRectMake(0, 0, 1, 22));
     CGContextSetBlendMode(context, kCGBlendModeLuminosity);
     CGContextSetAlpha(context, 0.7);
-    CGContextDrawImage(context, cellFrame, cgBgImage);
+    CGContextDrawImage(context, NSRectToCGRect(cellFrame), cgBgImage);
     CFRelease(cgBgImage);
   } else {
     [bgImage drawInRect:cellFrame
