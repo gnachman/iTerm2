@@ -2895,18 +2895,8 @@ NSMutableArray* screens=0;
             // extend the selection.
             [self extendSelectionToX:x y:y];
             // startX and endX may be reversed, but mouseUp fixes it.
-
-            if (altPressed && !cmdPressed) {
-                [self placeCursorOnCurrentLineWithEvent:event];
-                return NO;
-            }
         } else if (startX > -1 &&
                    [self _isCharSelectedInRow:y col:x checkOld:NO]) {
-            if (altPressed && !cmdPressed) {
-                [self placeCursorOnCurrentLineWithEvent:event];
-                return NO;
-            }
-
             // not holding down shift key but there is an existing selection.
             // Possibly a drag coming up.
             mouseDownOnSelection = YES;
@@ -2916,10 +2906,6 @@ NSMutableArray* screens=0;
             endX = startX = x;
             endY = startY = y;
             [self setSelectionTime];
-
-            if (altPressed && !cmdPressed) {
-                [self placeCursorOnCurrentLineWithEvent:event];
-            }
         }
     } else if (clickCount == 2) {
         int tmpX1, tmpY1, tmpX2, tmpY2;
@@ -3117,10 +3103,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                !mouseDragged &&
                !([event modifierFlags] & NSShiftKeyMask)) {
         // Just a click in the window.
+
+        BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
+        if (altPressed && !cmdPressed) {
+            [self placeCursorOnCurrentLineWithEvent:event];
+        }
+
         startX=-1;
         if (cmdPressed &&
             [[PreferencePanel sharedInstance] cmdSelection]) {
-            BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
             if (altPressed) {
                 [self openTargetInBackgroundWithEvent:event];
             } else {
