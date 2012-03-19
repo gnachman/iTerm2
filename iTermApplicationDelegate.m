@@ -39,6 +39,7 @@
 #import "PTYTab.h"
 #import "iTermExpose.h"
 #import "ColorsMenuItemView.h"
+#import "iTermFontPanel.h"
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -263,6 +264,8 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
+    [iTermFontPanel makeDefault];
+
     finishedLaunching_ = YES;
     // Create the app support directory
     [self _createFlag];

@@ -46,6 +46,8 @@
 		1D2E802F129DA45A00F3D71E /* PTYTab.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E802D129DA45A00F3D71E /* PTYTab.m */; };
 		1D2E813112A18F7500F3D71E /* SessionView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2E812F12A18F7500F3D71E /* SessionView.h */; };
 		1D2E813212A18F7500F3D71E /* SessionView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2E813012A18F7500F3D71E /* SessionView.m */; };
+		1D2F3B3D1516BA470044C337 /* iTermFontPanel.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D2F3B3B1516BA460044C337 /* iTermFontPanel.h */; };
+		1D2F3B3E1516BA470044C337 /* iTermFontPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */; };
 		1D31BC65142D33CA001F7ECB /* TriggerController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D31BC63142D33CA001F7ECB /* TriggerController.h */; };
 		1D31BC66142D33CA001F7ECB /* TriggerController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D31BC64142D33CA001F7ECB /* TriggerController.m */; };
 		1D3452471451475D007B1ECD /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = F6E2DED70AE2F67200D20B3B /* Sparkle.framework */; };
@@ -431,6 +433,8 @@
 		1D2E802D129DA45A00F3D71E /* PTYTab.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYTab.m; sourceTree = "<group>"; };
 		1D2E812F12A18F7500F3D71E /* SessionView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SessionView.h; sourceTree = "<group>"; };
 		1D2E813012A18F7500F3D71E /* SessionView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SessionView.m; sourceTree = "<group>"; };
+		1D2F3B3B1516BA460044C337 /* iTermFontPanel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = iTermFontPanel.h; sourceTree = "<group>"; };
+		1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = iTermFontPanel.m; sourceTree = "<group>"; };
 		1D31BC63142D33CA001F7ECB /* TriggerController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TriggerController.h; sourceTree = "<group>"; };
 		1D31BC64142D33CA001F7ECB /* TriggerController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TriggerController.m; sourceTree = "<group>"; };
 		1D36155312CBF33E00803EA9 /* ScreenChar.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ScreenChar.h; sourceTree = "<group>"; };
@@ -789,6 +793,8 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				1D2F3B3B1516BA460044C337 /* iTermFontPanel.h */,
+				1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -1529,6 +1535,7 @@
 				1D06E7DB14BC05DB0097C0ED /* ProfileTableView.h in Headers */,
 				A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */,
 				1DA26AC015007507004B5792 /* BackgroundThread.h in Headers */,
+				1D2F3B3D1516BA470044C337 /* iTermFontPanel.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1828,6 +1835,7 @@
 				1D06E7DC14BC05DB0097C0ED /* ProfileTableView.m in Sources */,
 				A073974014C7694600786414 /* ColorsMenuItemView.m in Sources */,
 				1DA26AC115007507004B5792 /* BackgroundThread.m in Sources */,
+				1D2F3B3E1516BA470044C337 /* iTermFontPanel.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

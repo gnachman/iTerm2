@@ -41,6 +41,7 @@
 #import "SmartSelectionController.h"
 #import "TrouterPrefsController.h"
 #import "PointerPrefsController.h"
+#import "iTermFontPanel.h"
 
 #define CUSTOM_COLOR_PRESETS @"Custom Color Presets"
 #define HOTKEY_WINDOW_GENERATED_PROFILE_NAME @"Hotkey Window"
@@ -2905,6 +2906,10 @@ static float versionNumber;
     [[NSFontManager sharedFontManager] orderFrontFontPanel:self];
 }
 
+- (NSUInteger)validModesForFontPanel:(NSFontPanel *)fontPanel
+{
+    return kValidModesForFontPanel;
+}
 
 - (IBAction)displaySelectFont:(id)sender
 {

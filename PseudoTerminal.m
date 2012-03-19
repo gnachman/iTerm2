@@ -76,6 +76,7 @@
 #import "TmuxDashboardController.h"
 #import "Coprocess.h"
 #import "ColorsMenuItemView.h"
+#import "iTermFontPanel.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -5434,6 +5435,11 @@ NSString *sessionsKey = @"sessions";
             [drawer_ open];
         }
     }
+}
+
+- (NSUInteger)validModesForFontPanel:(NSFontPanel *)fontPanel
+{
+    return kValidModesForFontPanel;
 }
 
 @end

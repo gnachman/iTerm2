@@ -1,3 +1,4 @@
+
 // -*- mode:objc -*-
 // $Id: VT100Screen.m,v 1.289 2008-10-22 00:43:30 yfabian Exp $
 //
