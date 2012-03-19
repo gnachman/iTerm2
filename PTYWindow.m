@@ -245,8 +245,8 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
     NSRect placementRect = NSMakeRect(
         screenRect.origin.x,
         screenRect.origin.y,
-        screenRect.size.width-[self frame].size.width,
-        screenRect.size.height-[self frame].size.height
+        MAX(1, screenRect.size.width-[self frame].size.width),
+        MAX(1, screenRect.size.height-[self frame].size.height)
     );
 
     for(int x = 0; x < placementRect.size.width/2; x += 50) {
