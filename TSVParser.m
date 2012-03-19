@@ -62,7 +62,10 @@
     doc.columns = [[fields copy] autorelease];
     for (int i = 0; i < lines.count; i++) {
         NSString *row = [lines objectAtIndex:i];
-        [doc.records addObject:[row componentsSeparatedByString:@"\t"]];
+        NSArray *rowArray = [row componentsSeparatedByString:@"\t"];
+        if (rowArray.count >= fields.count) {
+            [doc.records addObject:rowArray];
+        }
     }
     return doc;
 }
