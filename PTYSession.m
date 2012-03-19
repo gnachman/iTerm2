@@ -775,6 +775,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)terminate
 {
+    if ([[self TEXTVIEW] isFindingCursor]) {
+        [[self TEXTVIEW] endFindCursor];
+    }
     if (EXIT) {
         [self _maybeWarnAboutShortLivedSessions];
     }
@@ -784,8 +787,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                                windowPane:tmuxPane_];
         // This call to fitLayoutToWindows is necessary to handle the case where
         // a small window closes and leaves behind a larger (e.g., fullscreen)
-	// window. We want to set the client size to that of the smallest
-	// remaining window.
+        // window. We want to set the client size to that of the smallest
+        // remaining window.
         int n = [[tab_ sessions] count];
         if ([[tab_ sessions] indexOfObjectIdenticalTo:self] != NSNotFound) {
             n--;

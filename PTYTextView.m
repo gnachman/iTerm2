@@ -424,6 +424,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     if (trackingArea) {
         [self removeTrackingArea:trackingArea];
     }
+    if ([self isFindingCursor]) {
+        [findCursorWindow_ close];
+    }
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     for (i = 0; i < 256; i++) {

@@ -2692,6 +2692,11 @@ NSString *sessionsKey = @"sessions";
         [aSession scheduleUpdateIn:kFastTimerIntervalSec];
     }
 
+    for (PTYSession *session in [self sessions]) {
+        if ([[session TEXTVIEW] isFindingCursor]) {
+            [[session TEXTVIEW] endFindCursor];
+        }
+    }
     PTYSession* aSession = [[tabViewItem identifier] activeSession];
     if (_fullScreen) {
         [self _drawFullScreenBlackBackground];
