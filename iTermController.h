@@ -31,6 +31,8 @@
 #import <Carbon/Carbon.h>
 #import "ITAddressBookMgr.h"
 
+#define kApplicationDidFinishLaunchingNotification @"kApplicationDidFinishLaunchingNotification"
+
 @class PseudoTerminal;
 @class PTYTextView;
 @class ItermGrowlDelegate;

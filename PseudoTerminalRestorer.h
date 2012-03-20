@@ -15,4 +15,6 @@
 
 + (void)restoreWindowWithIdentifier:(NSString *)identifier state:(NSCoder *)state completionHandler:(void (^)(NSWindow *, NSError *))completionHandler;
 
++ (BOOL)willOpenWindows;
+
 @end

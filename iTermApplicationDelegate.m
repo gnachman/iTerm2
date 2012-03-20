@@ -40,6 +40,7 @@
 #import "iTermExpose.h"
 #import "ColorsMenuItemView.h"
 #import "iTermFontPanel.h"
+#import "PseudoTerminalRestorer.h"
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -182,9 +183,10 @@ static BOOL hasBecomeActive = NO;
             // Open the saved arrangement at startup.
             [[iTermController sharedInstance] loadWindowArrangementWithName:[WindowArrangements defaultArrangementName]];
         } else {
-            // Make sure at least one window is open.
-            if ([[[iTermController sharedInstance] terminals] count] == 0) {
-                [self newWindow:nil];
+            if (![PseudoTerminalRestorer willOpenWindows]) {
+                if ([[[iTermController sharedInstance] terminals] count] == 0) {
+                    [self newWindow:nil];
+                }
             }
         }
     }
@@ -297,6 +299,8 @@ static BOOL hasBecomeActive = NO;
     [self performSelector:@selector(_performStartupActivities)
                withObject:nil
                afterDelay:0];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kApplicationDidFinishLaunchingNotification
+                                                        object:nil];
 }
 
 - (BOOL)applicationShouldTerminate:(NSNotification *)theNotification
