@@ -187,6 +187,7 @@ static NSString *kCommandObject = @"object";
 
 - (void)hostDisconnected
 {
+    [delegate_ tmuxWriteData:[@"#ack-exit" NEWLINE dataUsingEncoding:NSUTF8StringEncoding]];
     [delegate_ tmuxHostDisconnected];
     state_ = CONTROL_STATE_DETACHED;
 }
@@ -267,7 +268,8 @@ static NSString *kCommandObject = @"object";
         [self parseSessionsChangedCommand:command];
     } else if ([command hasPrefix:@"%noop"]) {
         TmuxLog(@"tmux noop: %@", command);
-    } else if ([command hasPrefix:@"%exit "]) {
+    } else if ([command hasPrefix:@"%exit "] ||
+               [command isEqualToString:@"%exit"]) {
         TmuxLog(@"tmux exit message: %@", command);
         [self hostDisconnected];
     } else if ([command hasPrefix:@"%error"]) {
