@@ -566,6 +566,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     } else {
         selectionTime_ = [[NSDate date] timeIntervalSince1970];
     }
+    DLog(@"Update selection time to %lf. (%d,%d) to (%d,%d)", (double)selectionTime_, startX, startY, endX, endY);
 }
 
 - (void)setSelectionFromX:(int)fromX fromY:(int)fromY toX:(int)toX toY:(int)toY
@@ -1738,11 +1739,11 @@ NSMutableArray* screens=0;
         NSLog(@"Last was bad.");
         prevBad = NO;
     }
-#endif
     DebugLog([NSString stringWithFormat:@"%s(0x%x): rect=(%f,%f,%f,%f) frameRect=(%f,%f,%f,%f)]",
           __PRETTY_FUNCTION__, self,
           rect.origin.x, rect.origin.y, rect.size.width, rect.size.height,
           [self frame].origin.x, [self frame].origin.y, [self frame].size.width, [self frame].size.height]);
+#endif
 
     double curLineWidth = [dataSource width] * charWidth;
     if (lineHeight <= 0 || curLineWidth <= 0) {
@@ -1775,9 +1776,9 @@ NSMutableArray* screens=0;
         lineEnd = firstVisibleRow + visibleRows;
     }
 
+#ifdef DEBUG_DRAWING
     DebugLog([NSString stringWithFormat:@"drawRect: Draw lines in range [%d, %d)", lineStart, lineEnd]);
     // Draw each line
-#ifdef DEBUG_DRAWING
     NSMutableDictionary* dct =
     [NSDictionary dictionaryWithObjectsAndKeys:
     [NSColor textBackgroundColor], NSBackgroundColorAttributeName,
@@ -1812,6 +1813,7 @@ NSMutableArray* screens=0;
                 }
                 anyBlinking |= [self _drawLine:line-overflow AtY:y toPoint:toOrigin ? &temp : nil];
             }
+#ifdef DEBUG_DRAWING
             // if overflow > line then the requested line cannot be drawn
             // because it has been lost to the sands of time.
             if (gDebugLogging) {
@@ -1828,7 +1830,6 @@ NSMutableArray* screens=0;
                 DebugLog([NSString stringWithUTF8String:dl]);
             }
 
-#ifdef DEBUG_DRAWING
             screen_char_t* theLine = [dataSource getLineAtIndex:line-overflow];
             for (int i = 0; i < [dataSource width]; ++i) {
                 [lineDebug appendFormat:@"%@", ScreenCharToStr(&theLine[i])];
@@ -2705,6 +2706,7 @@ NSMutableArray* screens=0;
 
 - (void)mouseDown:(NSEvent *)event
 {
+    DLog(@"Mouse Down with event %@", event);
     if ([self mouseDownImpl:event]) {
         [super mouseDown:event];
     }
@@ -2856,6 +2858,7 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
+                DebugLog(@"Do xterm mouse reporting");
                 reportingMouseDown = YES;
                 [session writeTask:[terminal mousePress:0
                                           withModifiers:[event modifierFlags]
@@ -2885,6 +2888,7 @@ NSMutableArray* screens=0;
     mouseDownOnSelection = NO;
 
     int clickCount = [event clickCount];
+    DLog(@"clickCount=%d altPressed=%d cmdPressed=%d", clickCount, (int)altPressed, (int)cmdPressed);
     if (clickCount < 2) {
         // single click
         if (altPressed && cmdPressed) {
@@ -2896,16 +2900,19 @@ NSMutableArray* screens=0;
         if (startX > -1 && shiftPressed) {
             // holding down shfit key and there is an existing selection ->
             // extend the selection.
+            DLog(@"extend selection to %d, %d", (int)x, (int)y);
             [self extendSelectionToX:x y:y];
             // startX and endX may be reversed, but mouseUp fixes it.
         } else if (startX > -1 &&
                    [self _isCharSelectedInRow:y col:x checkOld:NO]) {
             // not holding down shift key but there is an existing selection.
             // Possibly a drag coming up.
+            DLog(@"mouse down on selection");
             mouseDownOnSelection = YES;
             return YES;
         } else if (!cmdPressed || altPressed) {
             // start a new selection
+            DLog(@"start new selection at %d, %d", (int)x, (int)y);
             endX = startX = x;
             endY = startY = y;
             [self setSelectionTime];
@@ -3012,6 +3019,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseUp:(NSEvent *)event
 {
+    DLog(@"mouseUp");
     firstMouseEventNumber_ = -1;  // Synergy seems to interfere with event numbers, so reset it here.
     if (mouseDownIsThreeFingerClick_) {
         [self otherMouseUp:nil];
@@ -3098,6 +3106,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (startY > endY ||
         (startY == endY && startX > endX)) {
         // Make sure the start is before the end.
+        DLog(@"swap selection start and end");
         int t;
         t = startY; startY = endY; endY = t;
         t = startX; startX = endX; endX = t;
@@ -3106,6 +3115,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                !mouseDragged &&
                !([event modifierFlags] & NSShiftKeyMask)) {
         // Just a click in the window.
+        DLog(@"is a click in the window");
 
         BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
         if (altPressed && !cmdPressed) {
@@ -3145,7 +3155,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseDragged:(NSEvent *)event
 {
+    DLog(@"mouseDragged");
     if (mouseDownIsThreeFingerClick_) {
+        DLog(@"is three finger click");
         return;
     }
     // Prevent accidental dragging while dragging trouter item.
@@ -3183,6 +3195,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return;
     }
     if (!dragOk_) {
+        DLog(@"drag not ok");
         return;
     }
     NSString *theSelectedText;
@@ -3223,13 +3236,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     BOOL pressingCmdOnly = ([event modifierFlags] & (NSAlternateKeyMask | NSCommandKeyMask)) == NSCommandKeyMask;
     if (!pressingCmdOnly || dragThresholdMet) {
-      mouseDragged = YES;
+        DLog(@"mousedragged = yes");
+        mouseDragged = YES;
     }
 
 
     if (mouseDownOnSelection == YES &&
         ([event modifierFlags] & NSCommandKeyMask) &&
         dragThresholdMet) {
+        DLog(@"drag and drop a selection");
         // Drag and drop a selection
         if (selectMode == SELECT_BOX) {
             theSelectedText = [self contentInBoxFromX:startX Y:startY ToX:endX Y:endY pad:NO];
@@ -3247,6 +3262,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         // If you're holding cmd (but not opt) then you're either trying to click on a link and
         // accidentally dragged a little bit, or you're trying to drag a selection. Do nothing until
         // the threshold is met.
+        DLog(@"drag during cmd click");
         return;
     }
     if (mouseDownOnSelection == YES &&
@@ -3254,10 +3270,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         !dragThresholdMet) {
         // Would be a drag of a rect region but mouse hasn't moved far enough yet. Prevent the
         // selection from changing.
+        DLog(@"too-short drag of rect region");
         return;
     }
 
     if (startX < 0 && pressingCmdOnly && trouterDragged == NO) {
+        DLog(@"do trouter check");
         // Only one Trouter check per drag
         trouterDragged = YES;
 
@@ -3267,6 +3285,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                    workingDirectory:[self getWorkingDirectoryAtLine:y + 1]
                          lineNumber:nil];
         if (path == nil) {
+            DLog(@"path is nil");
             return;
         }
 
@@ -3292,6 +3311,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         // Valid drag, so we reset the flag because mouseUp doesn't get called when a drag is done
         trouterDragged = NO;
+        DLog(@"did trouter drag");
 
         return;
 
@@ -3299,19 +3319,23 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
     int prevScrolling = selectionScrollDirection;
     if (locationInTextView.y <= rectInTextView.origin.y) {
+        DLog(@"selection scroll up");
         selectionScrollDirection = -1;
         scrollingX = x;
         scrollingY = y;
         scrollingLocation = locationInTextView;
     } else if (locationInTextView.y >= rectInTextView.origin.y + rectInTextView.size.height) {
+        DLog(@"selection scroll down");
         selectionScrollDirection = 1;
         scrollingX = x;
         scrollingY = y;
         scrollingLocation = locationInTextView;
     } else {
+        DLog(@"selection scroll off");
         selectionScrollDirection = 0;
     }
     if (selectionScrollDirection && !prevScrolling) {
+        DLog(@"selection scroll scheduling");
         [self scheduleSelectionScroll];
     }
 
@@ -6239,8 +6263,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (BOOL)_drawLine:(int)line AtY:(double)curY toPoint:(NSPoint*)toPoint
 {
     BOOL anyBlinking = NO;
+#ifdef DEBUG_DRAWING
     int screenstartline = [self frame].origin.y / lineHeight;
     DebugLog([NSString stringWithFormat:@"Draw line %d (%d on screen)", line, (line - screenstartline)]);
+#endif
     const BOOL stripes = useBackgroundIndicator_ &&
         [[[[dataSource session] tab] realParentWindow] broadcastInputToSession:[dataSource session]];
     int WIDTH = [dataSource width];
@@ -7992,8 +8018,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 #ifdef DEBUG_DRAWING
     [self appendDebug:[NSString stringWithFormat:@"updateDirtyRects called. Scrollback overflow is %d. Screen is: %@", [dataSource scrollbackOverflow], [dataSource debugString]]];
-#endif
     DebugLog(@"updateDirtyRects called");
+#endif
 
     // Check each line for dirty selected text
     // If any is found then deselect everything
@@ -8020,11 +8046,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int lineEnd = [dataSource numberOfLines];
     // lineStart to lineEnd is the region that is the screen when the scrollbar
     // is at the bottom of the frame.
+#ifdef DEBUG_DRAWING
     if (gDebugLogging) {
         DebugLog([NSString stringWithFormat:@"Search lines [%d, %d) for dirty", lineStart, lineEnd]);
     }
 
-#ifdef DEBUG_DRAWING
     NSMutableString* dirtyDebug = [NSMutableString stringWithString:@"updateDirtyRects found these dirty lines:\n"];
     int screenindex=0;
 #endif
@@ -8097,12 +8123,16 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [dataSource saveToDvr];
     }
 
-
     if (foundDirty && [dataSource shouldSendContentsChangedNotification]) {
         changedSinceLastExpose_ = YES;
         [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermTabContentsChanged"
                                                             object:[dataSource session]
                                                           userInfo:nil];
+    }
+
+    if (foundDirty && gDebugLogging) {
+        // Dump the screen contents
+        DebugLog([dataSource debugString]);
     }
 
     return blinkAllowed_ && anythingIsBlinking;
@@ -8131,6 +8161,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)moveSelectionEndpointToX:(int)x Y:(int)y locationInTextView:(NSPoint)locationInTextView
 {
+    DLog(@"Move selection endpoint to %d,%d", x, y);
     int width = [dataSource width];
     // if we are on an empty line, we select the current line to the end
     if (y >= 0 && [self _isBlankLine: y]) {

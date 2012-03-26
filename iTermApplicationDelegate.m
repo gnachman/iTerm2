@@ -991,16 +991,18 @@ static void FlushDebugLog() {
         }
 }
 
-void DebugLog(NSString* value)
+int DebugLogImpl(const char *file, int line, const char *function, NSString* value)
 {
-        if (gDebugLogging) {
-                [gDebugLogStr appendString:value];
-                [gDebugLogStr appendString:@"\n"];
-                if ([gDebugLogStr length] > 100000000) {
-                        SwapDebugLog();
-                        [gDebugLogStr2 setString:@""];
-                }
+    if (gDebugLogging) {
+        [gDebugLogStr appendFormat:@"%s:%d (%s): ", file, line, function];
+        [gDebugLogStr appendString:value];
+        [gDebugLogStr appendString:@"\n"];
+        if ([gDebugLogStr length] > 100000000) {
+            SwapDebugLog();
+            [gDebugLogStr2 setString:@""];
         }
+    }
+    return 1;
 }
 
 /// About window
