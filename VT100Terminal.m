@@ -43,6 +43,7 @@
 #define DEBUG_ALLOC 0
 #define LOG_UNKNOWN 0
 #define STANDARD_STREAM_SIZE 100000
+#define MAX_BUFFER_LENGTH 1024
 
 @implementation VT100Terminal
 
@@ -754,20 +755,19 @@ static VT100TCC decode_xterm(unsigned char *datap,
                              size_t *rmlen,
                              NSStringEncoding enc)
 {
-#define MAX_BUFFER_LENGTH 1024
-    int mode=0;
+    int mode = 0;
     VT100TCC result;
     NSData *data;
-    BOOL unrecognized=NO;
-    char s[MAX_BUFFER_LENGTH]={0}, *c=nil;
+    BOOL unrecognized = NO;
+    char s[MAX_BUFFER_LENGTH] = { 0 }, *c = nil;
 
-    NSCParameterAssert(datap != NULL);
-    NSCParameterAssert(datalen >= 2);
-    NSCParameterAssert(datap[0] == ESC);
-    NSCParameterAssert(datap[1] == ']');
+    assert(datap != NULL);
+    assert(datalen >= 2);
+    assert(datap[0] == ESC);
+    assert(datap[1] == ']');
     datap += 2;
     datalen -= 2;
-    *rmlen=2;
+    *rmlen = 2;
 
     if (datalen > 0 && isdigit(*datap)) {
         // read an integer from datap and store it in mode.
@@ -785,67 +785,65 @@ static VT100TCC decode_xterm(unsigned char *datap,
     }
     if (datalen > 0) {
         if (*datap != ';' && *datap != 'P') {
-            unrecognized=YES;
-        } else {
-            if (*datap == 'P') {
-                mode = -1;
-            }
-            BOOL str_end = NO;
-            c=s;
+            unrecognized = YES;
+        }
+        if (*datap == 'P') {
+            mode = -1;
+        }
+        BOOL str_end = NO;
+        c = s;
+        if (!unrecognized) {
             datalen--;
             datap++;
             (*rmlen)++;
-            // Search for the end of a ^G/ST terminated string (but see the note below about other ways to terminate it).
-            while (*datap != 7 && datalen > 0) {
-                // Technically, only ^G or esc + \ ought to terminate a string. But sometimes an application is buggy and it forgets to terminate it.
-                // xterm has a very complicated state machine that determines when a string is terminated. Effectively, it allows you to terminate
-                // an OSC with ESC + anything except ], 0x9d, and 0xdd. Other bogus values may do strange things in xterm.
-                if (*datap == 0x1b &&  // 0x1b == ESC
-                    datalen > 2 &&
-                    (*(datap+1) != ']' &&
-                     *(datap+1) != 0x9d &&
-                     *(datap+1) != 0xdd)) {
-                    // Esc+backslash (called ST in the spec), or equivalent
-                    datap++;
-                    datalen--;
-                    (*rmlen)++;
-                    str_end=YES;
-                    break;
-                }
-                if (c - s < MAX_BUFFER_LENGTH) {
-                    *c=*datap;
-                    c++;
-                }
-                datalen--;
-                datap++;
-                (*rmlen)++;
-            }
-            if ((*datap != 0x007 && !str_end) || datalen==0) {
-                if (datalen>0) unrecognized=YES;
-                else {
-                    *rmlen=0;
-                }
-            }
-            else {
-                datap++;
-                datalen--;
-                (*rmlen)++;
-            }
         }
-    }
-    else {
+        // Search for the end of a ^G/ST terminated string (but see the note below about other ways to terminate it).
+        while (*datap != 7 && datalen > 0) {
+            // Technically, only ^G or esc + \ ought to terminate a string. But sometimes an application is buggy and it forgets to terminate it.
+            // xterm has a very complicated state machine that determines when a string is terminated. Effectively, it allows you to terminate
+            // an OSC with ESC + anything except ], 0x9d, and 0xdd. Other bogus values may do strange things in xterm.
+            if (*datap == 0x1b &&  // 0x1b == ESC
+                datalen > 2 &&
+                (*(datap+1) != ']' &&
+                 *(datap+1) != 0x9d &&
+                 *(datap+1) != 0xdd)) {
+                // Esc+backslash (called ST in the spec), or equivalent
+                datap++;
+                datalen--;
+                (*rmlen)++;
+                str_end = YES;
+                break;
+            }
+            if (c - s < MAX_BUFFER_LENGTH) {
+                *c=*datap;
+                c++;
+            }
+            datalen--;
+            datap++;
+            (*rmlen)++;
+        }
+        if (*datap == 7) {
+            str_end = YES;
+        }
+        if (!str_end && datalen == 0) {
+            // Ran out of data before terminator. Keep trying.
+            *rmlen = 0;
+        } else {
+            // Consume terminator.
+            datap++;
+            datalen--;
+            (*rmlen)++;
+        }
+    } else {
+        // No data yet, keep trying.
         *rmlen=0;
     }
 
     if (unrecognized) {
-        //NSLog(@"invalid: %d",*rmlen);
         result.type = VT100_NOTSUPPORT;
-        *rmlen = 2;
-    }
-    else if (!(*rmlen)) {
+    } else if (!(*rmlen)) {
         result.type = VT100_WAIT;
-    }
-    else {
+    } else {
         data = [NSData dataWithBytes:s length:c-s];
         result.u.string = [[[NSString alloc] initWithData:data
                                                  encoding:enc] autorelease];
