@@ -3462,7 +3462,6 @@ void DumpBuf(screen_char_t* p, int n) {
     assert(dirty[dirtySize] == DIRTY_MAGIC);
     memset(dirty, 0, dirtySize*sizeof(char));
     assert(dirty[dirtySize] == DIRTY_MAGIC);
-    DebugLog(@"resetDirty");
 }
 
 - (void)setDirty
