@@ -6758,13 +6758,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (double)cursorHeight
 {
-    double cursorHeight;
-    if (lineHeight < charHeightWithoutSpacing) {
-        cursorHeight = lineHeight;
-    } else {
-        cursorHeight = charHeightWithoutSpacing;
-    }
-    return cursorHeight;
+    return MAX(lineHeight, charHeightWithoutSpacing);
 }
 
 - (void)_drawCursor
