@@ -738,8 +738,8 @@ static VT100TCC decode_underscore(unsigned char *datap,
             if ([result.u.string isEqualToString:@"tmux1.0"] ||
                 [result.u.string hasPrefix:@"tmux1.0;"]) {
                 result.type = UNDERSCORE_TMUX1;
-			} else if ([result.u.string hasPrefix:@"tmux"]) {
-				result.type = UNDERSCORE_TMUX_UNSUPPORTED;
+            } else if ([result.u.string hasPrefix:@"tmux"]) {
+                result.type = UNDERSCORE_TMUX_UNSUPPORTED;
             } else {
                 result.type = VT100_NOTSUPPORT;
             }
