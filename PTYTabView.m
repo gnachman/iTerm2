@@ -31,7 +31,6 @@
 #define DEBUG_METHOD_TRACE    0
 
 #define kTabMRUKey kVK_Tab
-#define kTabMRUModifierMask NSControlKeyMask
 
 @implementation PTYTabView
 
@@ -225,9 +224,20 @@
 
 - (BOOL)onKeyPressed:(NSEvent*)event
 {
-    if ([event modifierFlags] & kTabMRUModifierMask && [event keyCode] == kTabMRUKey) {
-        wereTabsNavigatedWithMRU = YES;  
-        [self nextMRU];
+    if ([event keyCode] == kTabMRUKey) {
+        if (!isModifierPressed) {
+            // Initial press; set modifier mask from current modifiers
+            tabMRUModifierMask_ =
+                ([event modifierFlags] & (NSControlKeyMask |
+                                          NSCommandKeyMask |
+                                          NSAlternateKeyMask |
+                                          NSShiftKeyMask));
+            isModifierPressed = (tabMRUModifierMask_ != 0);
+        }
+        if (isModifierPressed) {
+            wereTabsNavigatedWithMRU = YES;
+            [self nextMRU];
+        }
         return YES;
     }
     return NO;
@@ -235,16 +245,12 @@
 
 - (BOOL)onFlagsChanged:(NSEvent*)event
 {
-    if ([event modifierFlags] & kTabMRUModifierMask) {
-        isModifierPressed = YES;
-        return YES;
-    }
-
-    if (isModifierPressed && (([event modifierFlags] & kTabMRUModifierMask) == 0)) {
+    if (isModifierPressed && (([event modifierFlags] & tabMRUModifierMask_) == 0)) {
+	// Modifiers released while cycling.
         isModifierPressed = NO;
         if (wereTabsNavigatedWithMRU) {
             wereTabsNavigatedWithMRU = NO;
-            
+
             // While this looks like a no-op, it has the effect of re-ordering the MRU list.
             [self selectTabViewItem:[self selectedTabViewItem]];
         }

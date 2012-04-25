@@ -65,12 +65,11 @@ static NSString *kCommandObject = @"object";
     [self detach];
 }
 
-- (NSData *)decodeBase64:(NSString *)b64data
+- (NSData *)decodeHex:(NSString *)hexdata
 {
-    // TODO: This is a hack because I don't have a b64 implementation handy on vacation
     NSMutableData *data = [NSMutableData data];
-    for (int i = 0; i < b64data.length; i += 2) {
-        NSString *hex = [b64data substringWithRange:NSMakeRange(i, 2)];
+    for (int i = 0; i < hexdata.length; i += 2) {
+        NSString *hex = [hexdata substringWithRange:NSMakeRange(i, 2)];
         unsigned scanned;
         if ([[NSScanner scannerWithString:hex] scanHexInt:&scanned]) {
             char c = scanned;
@@ -82,15 +81,19 @@ static NSString *kCommandObject = @"object";
 
 - (void)parseOutputCommand:(NSString *)command
 {
-    // %output %<pane id> <b64 data...><newline>
+    // %output %<pane id> <hex data...><newline>
     NSArray *components = [command captureComponentsMatchedByRegex:@"^[^ ]+ %([0-9]+) (.*)"];
     if (components.count != 3) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%num b64data): \"%@\"", command]];
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%num hexdata): \"%@\"", command]];
         return;
     }
     int windowPane = [[components objectAtIndex:1] intValue];
-    NSString *base64data = [components objectAtIndex:2];
-    NSData *decodedCommand = [self decodeBase64:base64data];
+    NSString *hexdata = [components objectAtIndex:2];
+    if (hexdata.length % 2) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed output (odd number of hex bytes): \"%@\"", command]];
+        return;
+    }
+    NSData *decodedCommand = [self decodeHex:hexdata];
     TmuxLog(@"Run tmux command: \"%%output %%%d %@", windowPane,
             [[[NSString alloc] initWithData:decodedCommand encoding:NSUTF8StringEncoding] autorelease]);
     [[[delegate_ tmuxController] sessionForWindowPane:windowPane]  tmuxReadTask:decodedCommand];

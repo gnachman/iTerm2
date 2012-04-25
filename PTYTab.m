@@ -552,10 +552,15 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 - (void)setTabViewItem:(NSTabViewItem *)theTabViewItem
 {
     PtyLog(@"PTYTab setTabViewItem:%p", theTabViewItem);
-    // The tab view item holds a refernece to us. So we don't hold a reference to it.
+    // The tab view item holds a reference to us. So we don't hold a reference to it.
     tabViewItem_ = theTabViewItem;
     if (theTabViewItem != nil) {
-        [tabViewItem_ setLabel:[[self activeSession] name]];
+        // While Lion-restoring windows, there may be no active session.
+        if ([self activeSession]) {
+            [tabViewItem_ setLabel:[[self activeSession] name]];
+        } else {
+            [tabViewItem_ setLabel:@""];
+        }
         [tabViewItem_ setView:tabView_];
     }
 }
