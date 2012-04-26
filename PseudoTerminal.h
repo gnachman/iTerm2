@@ -351,6 +351,7 @@ NSWindowDelegate,
 - (IBAction)openSplitVerticallySheet:(id)sender;
 - (IBAction)openDashboard:(id)sender;
 - (IBAction)findCursor:(id)sender;
+- (IBAction)wrapToggleToolbarShown:(id)sender;
 
 - (void)futureInvalidateRestorableState;
 
