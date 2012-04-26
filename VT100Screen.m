@@ -1894,7 +1894,7 @@ static char* FormatCont(int c)
 			@"install a version that is compatible with this build of iTerm2."
 					ascii:YES];
 		[self crlf];
-		[SESSION writeTask:[@"detach\n" dataUsingEncoding:NSUTF8StringEncoding]];
+		[SESSION writeTask:[@"detach\n\n" dataUsingEncoding:NSUTF8StringEncoding]];
 		break;
 
     case UNDERSCORE_TMUX1:
