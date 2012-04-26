@@ -9,6 +9,12 @@ COMPACTDATE=$(shell date +"%Y%m%d")
 VERSION = $(shell cat version.txt | sed -e "s/%(extra)s/$(COMPACTDATE)/")
 NAME=$(shell echo $(VERSION) | sed -e "s/\\./_/g")
 
+XCB_FLAGS =
+
+ifdef LION
+	XCB_FLAGS = -sdk macosx10.7 MACOSX_DEPLOYMENT_TARGET=10.7
+endif
+
 .PHONY: clean all backup-old-iterm restart
 
 all: Development
@@ -25,14 +31,14 @@ install: | Deployment backup-old-iterm
 
 Development:
 	echo "Using PATH for build: $(PATH)"
-	xcodebuild -parallelizeTargets -alltargets -configuration Development && \
+	xcodebuild $(XCB_FLAGS) -parallelizeTargets -alltargets -configuration Development && \
 	chmod -R go+rX build/Development
 
 Dep:
 	xcodebuild -parallelizeTargets -alltargets -configuration Deployment
 
 Deployment:
-	xcodebuild -parallelizeTargets -alltargets -configuration Deployment && \
+	xcodebuild $(XCB_FLAGS) -parallelizeTargets -alltargets -configuration Deployment && \
 	chmod -R go+rX build/Deployment
 
 run: Development
@@ -47,7 +53,7 @@ zip: Deployment
 	zip -r iTerm2-$(NAME).zip iTerm.app
 
 clean:
-	xcodebuild -parallelizeTargets -alltargets clean
+	xcodebuild $(XCB_FLAGS) -parallelizeTargets -alltargets clean
 	rm -rf build
 	rm -f *~
 
