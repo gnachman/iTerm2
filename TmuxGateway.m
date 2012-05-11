@@ -10,7 +10,7 @@
 #import "TmuxController.h"
 #import "iTermApplicationDelegate.h"
 
-#define NEWLINE @"\r\n"
+#define NEWLINE @"\r"
 
 #define TMUX_VERBOSE_LOGGING
 #ifdef TMUX_VERBOSE_LOGGING
