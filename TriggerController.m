@@ -312,5 +312,12 @@ static NSMutableArray *gTriggerClasses;
     [[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:@"http://www.iterm2.com/triggers.html"]];
 }
 
+#pragma mark NSWindowDelegate
+
+- (void)windowWillClose:(NSNotification *)notification
+{
+    [tableView_ reloadData];
+}
+
 @end
 

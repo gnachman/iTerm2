@@ -205,4 +205,11 @@ static NSString* kParameterKey = @"parameter";
     self.hasSelection = [tableView_ numberOfSelectedRows] > 0;
 }
 
+#pragma mark NSWindowDelegate
+
+- (void)windowWillClose:(NSNotification *)notification
+{
+    [tableView_ reloadData];
+}
+
 @end
