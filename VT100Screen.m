@@ -3603,8 +3603,15 @@ void DumpBuf(screen_char_t* p, int n) {
     [self showCursor:[[state objectForKey:kStateDictCursorMode] boolValue]];
 
     [tabStops removeAllObjects];
+    int maxTab = 0;
     for (NSNumber *n in [state objectForKey:kStateDictTabstops]) {
         [tabStops addObject:n];
+        maxTab = MAX(maxTab, [n intValue]);
+    }
+    for (int i = 0; i < 1000; i += 8) {
+        if (i > maxTab) {
+            [tabStops addObject:[NSNumber numberWithInt:i]];
+        }
     }
 
     // TODO: The way that tmux and iterm2 handle saving the cursor position is different and incompatible and only one of us is right.
