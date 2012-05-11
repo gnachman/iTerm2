@@ -906,6 +906,11 @@ static VT100TCC decode_other(unsigned char *datap,
     c3 = (datalen >= 4 ? datap[3]: -1);
 
     switch (c1) {
+        case 27: // esc: two esc's in a row. Ignore the first one.
+            result.type = VT100_NOTSUPPORT;
+            *rmlen = 1;
+            break;
+
         case '#':
             if (c2 < 0) {
                 result.type = VT100_WAIT;
@@ -1147,8 +1152,7 @@ static VT100TCC decode_control(unsigned char *datap,
             case VT100CC_ESC:
                 if (datalen == 1) {
                     result.type = VT100_WAIT;
-                }
-                else {
+                } else {
                     result = decode_other(datap, datalen, rmlen, enc);
                 }
                 break;
