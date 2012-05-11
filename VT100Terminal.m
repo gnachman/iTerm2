@@ -428,8 +428,7 @@ static VT100TCC decode_csi(unsigned char *datap,
     result.type = VT100_WAIT;
 
     // Check for unkown
-    if(param.cmd == 0xff)
-    {
+    if (param.cmd == 0xff) {
         result.type = VT100_UNKNOWNCHAR;
         *rmlen = paramlen;
     }
