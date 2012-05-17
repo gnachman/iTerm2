@@ -1584,11 +1584,12 @@ static char* FormatCont(int c)
      *
      * I'm going to throw this out there (4/15/2012) and see if this breaks
      * anything for anyone.
+     *
+     * UPDATE: In bug 1997, we see that it breaks line-drawing chars, which
+     * are in SCS0. Indeed, mosh fails to draw these as well.
      */
     case VT100CSI_SCS0:
-            if ([TERMINAL encoding] != NSUTF8StringEncoding) {
-                charset[0] = (token.u.code=='0');
-            }
+            charset[0] = (token.u.code=='0');
             break;
     case VT100CSI_SCS1:
             if ([TERMINAL encoding] != NSUTF8StringEncoding) {
