@@ -2363,13 +2363,19 @@ NSMutableArray* screens=0;
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
+        int bnum = [event buttonNumber];
+        if (bnum == 2) {
+            bnum = 1;
+        }
+        
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseReleaseWithModifiers:[event modifierFlags]
-                                                                   atX:rx
-                                                                     Y:ry]];
+                [session writeTask:[terminal mouseRelease:bnum
+                                            withModifiers:[event modifierFlags]
+                                                      atX:rx
+                                                        Y:ry]];
                 return;
                 break;
 
@@ -2504,9 +2510,10 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseReleaseWithModifiers:[event modifierFlags]
-                                                                   atX:rx
-                                                                     Y:ry]];
+                [session writeTask:[terminal mouseRelease:2
+                                            withModifiers:[event modifierFlags]
+                                                      atX:rx
+                                                        Y:ry]];
                 return;
                 break;
 
@@ -3076,9 +3083,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseReleaseWithModifiers:[event modifierFlags]
-                                                                   atX:rx
-                                                                     Y:ry]];
+                [session writeTask:[terminal mouseRelease:0
+                                            withModifiers:[event modifierFlags]
+                                                      atX:rx
+                                                        Y:ry]];
                 return;
                 break;
 

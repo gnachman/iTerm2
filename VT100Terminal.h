@@ -273,8 +273,12 @@ typedef enum {
 typedef enum {
     MOUSE_FORMAT_XTERM = 0,       // Regular 1000 mode
     MOUSE_FORMAT_XTERM_EXT = 1,   // UTF-8 1005 mode
-    MOUSE_FORMAT_URXVT = 2        // rxvt's 1015 mode
+    MOUSE_FORMAT_URXVT = 2,       // rxvt's 1015 mode
+    MOUSE_FORMAT_SGR = 3          // SGR 1006 mode
 } MouseFormat;
+
+#define SGR_STYLE_MASK_BUTTON  3
+#define SGR_STYLE_MASK_RELEASE 4
 
 @interface VT100Terminal : NSObject
 {
@@ -389,7 +393,7 @@ typedef enum {
 - (char *)mouseReport:(int)button atX:(int)x Y:(int)y;
 - (BOOL)reportFocus;
 - (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
-- (NSData *)mouseReleaseWithModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
+- (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
 - (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
 
 - (BOOL)lineMode;

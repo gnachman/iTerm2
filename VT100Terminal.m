@@ -2326,6 +2326,13 @@ static VT100TCC decode_string(unsigned char *datap,
         case MOUSE_FORMAT_URXVT:
             snprintf(buf, sizeof(buf), "\033[%d;%d;%dM", 32 + button, x, y);
             break;
+        case MOUSE_FORMAT_SGR:
+            if (button & SGR_STYLE_MASK_RELEASE) {
+                snprintf(buf, sizeof(buf), "\033[<%d;%d;%dm", button & SGR_STYLE_MASK_BUTTON, x, y);
+            } else {
+                snprintf(buf, sizeof(buf), "\033[<%d;%d;%dM", button & SGR_STYLE_MASK_BUTTON, x, y);            
+            }
+            break;
         case MOUSE_FORMAT_XTERM:
         default:
             snprintf(buf, sizeof(buf), "\033[M%c%c%c", 32 + button, 32 + x, 32 + y);
@@ -2348,9 +2355,15 @@ static VT100TCC decode_string(unsigned char *datap,
     return [NSData dataWithBytes: buf length: strlen(buf)];
 }
 
-- (NSData *)mouseReleaseWithModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
+- (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
 {
-    char cb = 3;
+    char cb;
+    
+    if (MOUSE_FORMAT == MOUSE_FORMAT_SGR) {
+        cb = button % 3 | SGR_STYLE_MASK_RELEASE;
+    } else {
+        cb = 3;
+    }
 
     if (modflag & NSControlKeyMask) {
       cb |= 16;
@@ -2643,6 +2656,15 @@ static VT100TCC decode_string(unsigned char *datap,
                     }
                     break;
 
+                    
+                case 1006:
+                    if (mode) {
+                        MOUSE_FORMAT = MOUSE_FORMAT_SGR;
+                    } else {
+                        MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
+                    }
+                    break;
+                
                 case 1015:
                     if (mode) {
                         MOUSE_FORMAT = MOUSE_FORMAT_URXVT;
