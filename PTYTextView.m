@@ -2315,9 +2315,10 @@ NSMutableArray* screens=0;
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
-        int bnum = [event buttonNumber];
-        if (bnum == 2) {
-            bnum = 1;
+        int buttonNumber = [event buttonNumber];
+        if (buttonNumber == 2) {
+            // treat middle button as right button
+            buttonNumber = 1;
         }
 
         switch ([terminal mouseMode]) {
@@ -2325,7 +2326,7 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
                 reportingMouseDown = YES;
-                [session writeTask:[terminal mousePress:bnum
+                [session writeTask:[terminal mousePress:buttonNumber
                                           withModifiers:[event modifierFlags]
                                                     atX:rx
                                                       Y:ry]];
@@ -2363,16 +2364,17 @@ NSMutableArray* screens=0;
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
-        int bnum = [event buttonNumber];
-        if (bnum == 2) {
-            bnum = 1;
+        int buttonNumber = [event buttonNumber];
+        if (buttonNumber == 2) {
+            // treat middle button as right button
+            buttonNumber = 1;
         }
         
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseRelease:bnum
+                [session writeTask:[terminal mouseRelease:buttonNumber
                                             withModifiers:[event modifierFlags]
                                                       atX:rx
                                                         Y:ry]];
@@ -2414,16 +2416,17 @@ NSMutableArray* screens=0;
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
-        int bnum = [event buttonNumber];
-        if (bnum == 2) {
-            bnum = 1;
+        int buttonNumber = [event buttonNumber];
+        if (buttonNumber == 2) {
+            // treat middle button as right button
+            buttonNumber = 1;
         }
 
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseMotion:bnum
+                [session writeTask:[terminal mouseMotion:buttonNumber
                                            withModifiers:[event modifierFlags]
                                                      atX:rx
                                                        Y:ry]];
