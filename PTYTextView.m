@@ -2317,7 +2317,7 @@ NSMutableArray* screens=0;
 
         int buttonNumber = [event buttonNumber];
         if (buttonNumber == 2) {
-            // treat middle button as right button
+            // convert NSEvent's "middle button" to X11's one
             buttonNumber = 1;
         }
 
@@ -2366,7 +2366,7 @@ NSMutableArray* screens=0;
 
         int buttonNumber = [event buttonNumber];
         if (buttonNumber == 2) {
-            // treat middle button as right button
+            // convert NSEvent's "middle button" to X11's one
             buttonNumber = 1;
         }
         
@@ -2418,7 +2418,7 @@ NSMutableArray* screens=0;
 
         int buttonNumber = [event buttonNumber];
         if (buttonNumber == 2) {
-            // treat middle button as right button
+            // convert NSEvent's "middle button" to X11's one
             buttonNumber = 1;
         }
 
