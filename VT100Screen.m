@@ -1802,13 +1802,19 @@ static char* FormatCont(int c)
             [[[SESSION tab] parentWindow] windowOrderBack: nil];
         break;
     case XTERMCC_SU:
-        for (i=0; i<MIN(MAX_SCROLL_AT_ONCE, token.u.csi.p[0]); i++)
+        for (i = 0;
+             i < MIN(MAX(HEIGHT, MAX_SCROLL_AT_ONCE), token.u.csi.p[0]);
+             i++) {
             [self scrollUp];
+        }
         [SESSION clearTriggerLine];
         break;
     case XTERMCC_SD:
-        for (i=0; i<MIN(MAX_SCROLL_AT_ONCE, token.u.csi.p[0]); i++)
+        for (i = 0;
+             i < MIN(MAX(HEIGHT, MAX_SCROLL_AT_ONCE), token.u.csi.p[0]);
+             i++) {
             [self scrollDown];
+        }
         [SESSION clearTriggerLine];
         break;
     case XTERMCC_REPORT_WIN_STATE:
