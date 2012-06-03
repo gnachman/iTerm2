@@ -2315,7 +2315,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (char *)mouseReport:(int)button atX:(int)x Y:(int)y
 {
-    static char buf[32]; // This should be enough for all formats.
+    static char buf[64]; // This should be enough for all formats.
     switch (MOUSE_FORMAT) {
         case MOUSE_FORMAT_XTERM_EXT:
             snprintf(buf, sizeof(buf), "\033[M%c%lc%lc",
@@ -2348,7 +2348,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
 {
-    char cb;
+    int cb;
 
     cb = button;
     if (button > 3) cb += 64 - 4; // Subtract 4 for scroll wheel buttons
@@ -2361,18 +2361,18 @@ static VT100TCC decode_string(unsigned char *datap,
     if (modflag & NSAlternateKeyMask) {
         cb |= MOUSE_BUTTON_META_MASK;
     }
-    char *buf = [self mouseReport:(cb) atX:(x + 1) Y:(y + 1)];
+    char *buf = [self mouseReport:cb atX:(x + 1) Y:(y + 1)];
 
     return [NSData dataWithBytes: buf length: strlen(buf)];
 }
 
 - (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
 {
-    char cb;
+    int cb;
     
     if (MOUSE_FORMAT == MOUSE_FORMAT_SGR) {
         // for SGR 1006 mode
-        cb = button % 3 | MOUSE_BUTTON_SGR_RELEASE_MASK;
+        cb = button | MOUSE_BUTTON_SGR_RELEASE_MASK;
     } else {
         // for 1000/1005/1015 mode
         cb = 3;
@@ -2394,7 +2394,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
 {
-    char cb;
+    int cb;
 
     cb = button % 3;
     if (button > 3) {
