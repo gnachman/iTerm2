@@ -2327,10 +2327,15 @@ static VT100TCC decode_string(unsigned char *datap,
             snprintf(buf, sizeof(buf), "\033[%d;%d;%dM", 32 + button, x, y);
             break;
         case MOUSE_FORMAT_SGR:
-            if (button & SGR_STYLE_MASK_RELEASE) {
-                snprintf(buf, sizeof(buf), "\033[<%d;%d;%dm", button & SGR_STYLE_MASK_BUTTON, x, y);
+            if (button & MOUSE_BUTTON_SGR_RELEASE_MASK) {
+                // for mouse release event
+                snprintf(buf, sizeof(buf), "\033[<%d;%d;%dm", 
+                         button ^ MOUSE_BUTTON_SGR_RELEASE_MASK, 
+                         x, 
+                         y);
             } else {
-                snprintf(buf, sizeof(buf), "\033[<%d;%d;%dM", button & SGR_STYLE_MASK_BUTTON, x, y);            
+                // for mouse press/motion event
+                snprintf(buf, sizeof(buf), "\033[<%d;%d;%dM", button, x, y);            
             }
             break;
         case MOUSE_FORMAT_XTERM:
@@ -2347,9 +2352,15 @@ static VT100TCC decode_string(unsigned char *datap,
 
     cb = button;
     if (button > 3) cb += 64 - 4; // Subtract 4 for scroll wheel buttons
-    if (modflag & NSControlKeyMask) cb += 16;
-    if (modflag & NSShiftKeyMask) cb += 4;
-    if (modflag & NSAlternateKeyMask) cb += 8;
+    if (modflag & NSControlKeyMask) {
+        cb |= MOUSE_BUTTON_CTRL_MASK;
+    }
+    if (modflag & NSShiftKeyMask) {
+        cb |= MOUSE_BUTTON_SHIFT_MASK;
+    }
+    if (modflag & NSAlternateKeyMask) {
+        cb |= MOUSE_BUTTON_META_MASK;
+    }
     char *buf = [self mouseReport:(cb) atX:(x + 1) Y:(y + 1)];
 
     return [NSData dataWithBytes: buf length: strlen(buf)];
@@ -2360,19 +2371,21 @@ static VT100TCC decode_string(unsigned char *datap,
     char cb;
     
     if (MOUSE_FORMAT == MOUSE_FORMAT_SGR) {
-        cb = button % 3 | SGR_STYLE_MASK_RELEASE;
+        // for SGR 1006 mode
+        cb = button % 3 | MOUSE_BUTTON_SGR_RELEASE_MASK;
     } else {
+        // for 1000/1005/1015 mode
         cb = 3;
     }
 
     if (modflag & NSControlKeyMask) {
-      cb |= 16;
+        cb |= MOUSE_BUTTON_CTRL_MASK;
     }
     if (modflag & NSShiftKeyMask) {
-      cb |= 4;
+        cb |= MOUSE_BUTTON_SHIFT_MASK;
     }
     if (modflag & NSAlternateKeyMask) {
-      cb |= 8;
+        cb |= MOUSE_BUTTON_META_MASK;
     }
     char *buf = [self mouseReport:cb atX:(x + 1) Y:(y + 1)];
 
@@ -2385,16 +2398,16 @@ static VT100TCC decode_string(unsigned char *datap,
 
     cb = button % 3;
     if (button > 3) {
-      cb |= 64;
+        cb |= MOUSE_BUTTON_SCROLL_MASK;
     }
     if (modflag & NSControlKeyMask) {
-      cb |= 16;
+        cb |= MOUSE_BUTTON_CTRL_MASK;
     }
     if (modflag & NSShiftKeyMask) {
-      cb |= 4;
+        cb |= MOUSE_BUTTON_SHIFT_MASK;
     }
     if (modflag & NSAlternateKeyMask) {
-      cb |= 8;
+        cb |= MOUSE_BUTTON_META_MASK;
     }
     char *buf = [self mouseReport:(32 + cb) atX:(x + 1) Y:(y + 1)];
 
