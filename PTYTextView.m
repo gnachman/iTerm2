@@ -2318,7 +2318,7 @@ NSMutableArray* screens=0;
         int buttonNumber = [event buttonNumber];
         if (buttonNumber == 2) {
             // convert NSEvent's "middle button" to X11's one
-            buttonNumber = 1;
+            buttonNumber = MOUSE_BUTTON_MIDDLE;
         }
 
         switch ([terminal mouseMode]) {
@@ -2367,7 +2367,7 @@ NSMutableArray* screens=0;
         int buttonNumber = [event buttonNumber];
         if (buttonNumber == 2) {
             // convert NSEvent's "middle button" to X11's one
-            buttonNumber = 1;
+            buttonNumber = MOUSE_BUTTON_MIDDLE;
         }
         
         switch ([terminal mouseMode]) {
@@ -2419,7 +2419,7 @@ NSMutableArray* screens=0;
         int buttonNumber = [event buttonNumber];
         if (buttonNumber == 2) {
             // convert NSEvent's "middle button" to X11's one
-            buttonNumber = 1;
+            buttonNumber = MOUSE_BUTTON_MIDDLE;
         }
 
         switch ([terminal mouseMode]) {
@@ -2467,7 +2467,7 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
                 reportingMouseDown = YES;
-                [session writeTask:[terminal mousePress:2
+                [session writeTask:[terminal mousePress:MOUSE_BUTTON_RIGHT
                                           withModifiers:[event modifierFlags]
                                                     atX:rx
                                                       Y:ry]];
@@ -2513,7 +2513,7 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseRelease:2
+                [session writeTask:[terminal mouseRelease:MOUSE_BUTTON_RIGHT
                                             withModifiers:[event modifierFlags]
                                                       atX:rx
                                                         Y:ry]];
@@ -2556,7 +2556,7 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseMotion:2
+                [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_RIGHT
                                            withModifiers:[event modifierFlags]
                                                      atX:rx
                                                        Y:ry]];
@@ -2593,13 +2593,19 @@ NSMutableArray* screens=0;
         }
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
+        
+        int buttonNumber;
+        if ([event deltaY] > 0)
+            buttonNumber = MOUSE_BUTTON_SCROLLDOWN;
+        else
+            buttonNumber = MOUSE_BUTTON_SCROLLUP;
 
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
                 if ([event deltaY] != 0) {
-                    [session writeTask:[terminal mousePress:([event deltaY] > 0 ? 4:5)
+                    [session writeTask:[terminal mousePress:buttonNumber
                                               withModifiers:[event modifierFlags]
                                                         atX:rx
                                                           Y:ry]];
@@ -2870,7 +2876,7 @@ NSMutableArray* screens=0;
             case MOUSE_REPORTING_ALL_MOTION:
                 DebugLog(@"Do xterm mouse reporting");
                 reportingMouseDown = YES;
-                [session writeTask:[terminal mousePress:0
+                [session writeTask:[terminal mousePress:MOUSE_BUTTON_LEFT
                                           withModifiers:[event modifierFlags]
                                                     atX:rx
                                                       Y:ry]];
@@ -3086,7 +3092,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseRelease:0
+                [session writeTask:[terminal mouseRelease:MOUSE_BUTTON_LEFT
                                             withModifiers:[event modifierFlags]
                                                       atX:rx
                                                         Y:ry]];
@@ -3229,7 +3235,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_BUTTON_MOTION:
             case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseMotion:0
+                [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_LEFT
                                            withModifiers:[event modifierFlags]
                                                      atX:rx
                                                        Y:ry]];

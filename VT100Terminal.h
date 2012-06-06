@@ -278,31 +278,34 @@ typedef enum {
 } MouseFormat;
 
 typedef enum {
+    // X11 button number
+    MOUSE_BUTTON_LEFT = 0,       // left button
+    MOUSE_BUTTON_MIDDLE = 1,     // middle button
+    MOUSE_BUTTON_RIGHT = 2,      // right button
+    MOUSE_BUTTON_RELEASE = 3,    // release - for 1000/1005/1015 mode
+    MOUSE_BUTTON_SCROLLDOWN = 4, // scroll down
+    MOUSE_BUTTON_SCROLLUP = 5    // scroll up
+} MouseButtonNumber;
 
-    // with this mask, we retrive button number from packed button code.
-    //  0 - left 
-    //  1 - right
-    //  2 - middle
-    //  3 - release  :for 1000/1005/1015 mode
-    MOUSE_BUTTON_NUMBER_MASK = 3,
+typedef enum {
 
-    // keyboard modifier mask
+    // keyboard modifier flag
     //  4 - shit
     //  8 - meta
     //  16 - ctrl
-    MOUSE_BUTTON_SHIFT_MASK = 4,
-    MOUSE_BUTTON_META_MASK = 8,
-    MOUSE_BUTTON_CTRL_MASK = 16,
+    MOUSE_BUTTON_SHIFT_FLAG = 4,
+    MOUSE_BUTTON_META_FLAG = 8,
+    MOUSE_BUTTON_CTRL_FLAG = 16,
 
-    // scroll mask
+    // scroll flag
     //  64 - this is scroll event
-    MOUSE_BUTTON_SCROLL_MASK = 64,
+    MOUSE_BUTTON_SCROLL_FLAG = 64,
 
     // for SGR 1006 style, internal use only 
     //  128 - mouse button is released
-    MOUSE_BUTTON_SGR_RELEASE_MASK = 128
+    MOUSE_BUTTON_SGR_RELEASE_FLAG = 128
 
-} MouseButtonModifierMask;
+} MouseButtonModifierFlag;
 
 @interface VT100Terminal : NSObject
 {
