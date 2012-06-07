@@ -2351,7 +2351,12 @@ static VT100TCC decode_string(unsigned char *datap,
     int cb;
 
     cb = button;
-    if (button > 3) cb += 64 - 4; // Subtract 4 for scroll wheel buttons
+    if (button == MOUSE_BUTTON_SCROLLDOWN || button == MOUSE_BUTTON_SCROLLUP) {
+        // convert x11 scroll button number to terminal button code
+        const int offset = MOUSE_BUTTON_SCROLLDOWN;
+        cb -= offset;
+        cb |= MOUSE_BUTTON_SCROLL_FLAG;
+    }
     if (modflag & NSControlKeyMask) {
         cb |= MOUSE_BUTTON_CTRL_FLAG;
     }
