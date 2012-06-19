@@ -823,7 +823,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
         if (*datap == 7) {
             str_end = YES;
         }
-        if (!str_end && datalen == 0) {
+        if (!str_end && datalen == 0 && !unrecognized) {
             // Ran out of data before terminator. Keep trying.
             *rmlen = 0;
         } else {
