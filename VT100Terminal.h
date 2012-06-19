@@ -273,8 +273,39 @@ typedef enum {
 typedef enum {
     MOUSE_FORMAT_XTERM = 0,       // Regular 1000 mode
     MOUSE_FORMAT_XTERM_EXT = 1,   // UTF-8 1005 mode
-    MOUSE_FORMAT_URXVT = 2        // rxvt's 1015 mode
+    MOUSE_FORMAT_URXVT = 2,       // rxvt's 1015 mode
+    MOUSE_FORMAT_SGR = 3          // SGR 1006 mode
 } MouseFormat;
+
+typedef enum {
+    // X11 button number
+    MOUSE_BUTTON_LEFT = 0,       // left button
+    MOUSE_BUTTON_MIDDLE = 1,     // middle button
+    MOUSE_BUTTON_RIGHT = 2,      // right button
+    MOUSE_BUTTON_RELEASE = 3,    // release - for 1000/1005/1015 mode
+    MOUSE_BUTTON_SCROLLDOWN = 4, // scroll down
+    MOUSE_BUTTON_SCROLLUP = 5    // scroll up
+} MouseButtonNumber;
+
+typedef enum {
+
+    // keyboard modifier flag
+    //  4 - shit
+    //  8 - meta
+    //  16 - ctrl
+    MOUSE_BUTTON_SHIFT_FLAG = 4,
+    MOUSE_BUTTON_META_FLAG = 8,
+    MOUSE_BUTTON_CTRL_FLAG = 16,
+
+    // scroll flag
+    //  64 - this is scroll event
+    MOUSE_BUTTON_SCROLL_FLAG = 64,
+
+    // for SGR 1006 style, internal use only 
+    //  128 - mouse button is released
+    MOUSE_BUTTON_SGR_RELEASE_FLAG = 128
+
+} MouseButtonModifierFlag;
 
 @interface VT100Terminal : NSObject
 {
@@ -389,7 +420,7 @@ typedef enum {
 - (char *)mouseReport:(int)button atX:(int)x Y:(int)y;
 - (BOOL)reportFocus;
 - (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
-- (NSData *)mouseReleaseWithModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
+- (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
 - (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y;
 
 - (BOOL)lineMode;
