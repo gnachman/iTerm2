@@ -757,7 +757,6 @@ static VT100TCC decode_xterm(unsigned char *datap,
     int mode = 0;
     VT100TCC result;
     NSData *data;
-    BOOL unrecognized = NO;
     char s[MAX_BUFFER_LENGTH] = { 0 }, *c = nil;
 
     assert(datap != NULL);
@@ -784,18 +783,18 @@ static VT100TCC decode_xterm(unsigned char *datap,
     }
     if (datalen > 0) {
         if (*datap != ';' && *datap != 'P') {
-            unrecognized = YES;
+            // Bogus first char after "esc ]". Consume only those two chars.
+            result.type = VT100_NOTSUPPORT;
+            return result;
         }
         if (*datap == 'P') {
             mode = -1;
         }
         BOOL str_end = NO;
         c = s;
-        if (!unrecognized) {
-            datalen--;
-            datap++;
-            (*rmlen)++;
-        }
+        datalen--;
+        datap++;
+        (*rmlen)++;
         // Search for the end of a ^G/ST terminated string (but see the note below about other ways to terminate it).
         while (*datap != 7 && datalen > 0) {
             // Technically, only ^G or esc + \ ought to terminate a string. But sometimes an application is buggy and it forgets to terminate it.
@@ -838,9 +837,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
         *rmlen=0;
     }
 
-    if (unrecognized) {
-        result.type = VT100_NOTSUPPORT;
-    } else if (!(*rmlen)) {
+    if (!(*rmlen)) {
         result.type = VT100_WAIT;
     } else {
         data = [NSData dataWithBytes:s length:c-s];
