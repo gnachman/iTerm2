@@ -1262,6 +1262,12 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
             [[[term window] animator] setAlphaValue:1];
             break;
 
+        case WINDOW_TYPE_LEFT:
+            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
+            [[[term window] animator] setFrame:rect display:YES];
+            [[[term window] animator] setAlphaValue:1];
+            break;
+
         case WINDOW_TYPE_LION_FULL_SCREEN:  // Shouldn't happen
         case WINDOW_TYPE_FULL_SCREEN:
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
@@ -1357,6 +1363,8 @@ static BOOL OpenHotkeyWindow()
                 rect.origin.y = screenFrame.origin.y + screenFrame.size.height + rect.size.height;
             } else if ([term windowType] == WINDOW_TYPE_BOTTOM) {
                  rect.origin.y = screenFrame.origin.y - rect.size.height;
+            } else if ([term windowType] == WINDOW_TYPE_LEFT) {
+              rect.origin.x = screenFrame.origin.x - rect.size.width;
             } else {
                 rect.origin.y = -rect.size.height;
                 rect.origin.x = -rect.size.width;
@@ -1425,6 +1433,12 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
 
         case WINDOW_TYPE_BOTTOM:
             rect.origin.y = screenFrame.origin.y-rect.size.height;
+            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
+            [[[term window] animator] setFrame:rect display:YES];
+            [[[term window] animator] setAlphaValue:0];
+            break;
+
+        case WINDOW_TYPE_LEFT:
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
             [[[term window] animator] setFrame:rect display:YES];
             [[[term window] animator] setAlphaValue:0];
@@ -1567,6 +1581,12 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
                 break;
             case WINDOW_TYPE_BOTTOM:
                 rect.origin.y = screenFrame.origin.y - rect.size.height;
+                HKWLog(@"FAST: Set y=%f", rect.origin.y);
+                [[term window] setFrame:rect display:YES];
+                break;
+
+            case WINDOW_TYPE_LEFT:
+                rect.origin.x = screenFrame.origin.x - rect.size.width;
                 HKWLog(@"FAST: Set y=%f", rect.origin.y);
                 [[term window] setFrame:rect display:YES];
                 break;

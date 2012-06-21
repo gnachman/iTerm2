@@ -218,7 +218,8 @@ NSString *sessionsKey = @"sessions";
             screenNumber = n;
         }
     }
-    if (windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_BOTTOM) {
+    if (windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_BOTTOM
+        || windowType == WINDOW_TYPE_LEFT) {
         smartLayout = NO;
     }
     if (windowType == WINDOW_TYPE_NORMAL) {
@@ -252,6 +253,7 @@ NSString *sessionsKey = @"sessions";
     switch (windowType) {
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
             initialFrame = [screen visibleFrame];
             break;
 
@@ -309,6 +311,7 @@ NSString *sessionsKey = @"sessions";
     switch (windowType) {
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_BOTTOM:
+        case WINDOW_TYPE_LEFT:
             styleMask = NSBorderlessWindowMask;
             break;
 
@@ -324,7 +327,8 @@ NSString *sessionsKey = @"sessions";
                                             styleMask:styleMask
                                               backing:NSBackingStoreBuffered
                                                 defer:NO];
-    if (windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_BOTTOM) {
+    if (windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_BOTTOM
+        || windowType == WINDOW_TYPE_LEFT) {
         [myWindow setHasShadow:YES];
     }
     [myWindow _setContentHasShadow:NO];
@@ -1227,6 +1231,11 @@ NSString *sessionsKey = @"sessions";
         rect.size.width = virtualScreenFrame.size.width;
         rect.size.height = yScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_HEIGHT] doubleValue];
         rect.origin.y = virtualScreenFrame.size.height - rect.size.height;
+    } else if (windowType == WINDOW_TYPE_LEFT) {
+      rect.origin.x = xOrigin;
+      rect.origin.y = yOrigin;
+      rect.size.width = virtualScreenFrame.size.width / 1.8;
+      rect.size.height = virtualScreenFrame.size.height;
     }
 
     [[NSColor blackColor] set];
@@ -1741,6 +1750,22 @@ NSString *sessionsKey = @"sessions";
             }
             break;
 
+        case WINDOW_TYPE_LEFT:
+          frame.size.width = [screen visibleFrame].size.width / 1.8;
+          frame.origin.y = [screen visibleFrame].origin.y;
+          if ([[self window] alphaValue] == 0) {
+            // Is hidden hotkey window
+            frame.origin.y = [screen visibleFrame].origin.y + frame.size.width;
+          } else {
+            // Normal case
+            frame.origin.y = [screen visibleFrame].origin.y;
+          }
+
+          if (frame.size.width > 0) {
+            [[self window] setFrame:frame display:YES];
+          }
+          break;
+
         case WINDOW_TYPE_NORMAL:
             PtyLog(@"Window type = NORMAL");
             if (![self lionFullScreen]) {
@@ -2111,6 +2136,7 @@ NSString *sessionsKey = @"sessions";
         (windowType_ != WINDOW_TYPE_FULL_SCREEN &&
          windowType_ != WINDOW_TYPE_TOP &&
          windowType_ != WINDOW_TYPE_BOTTOM &&
+         windowType_ != WINDOW_TYPE_LEFT &&
          IsLionOrLater() &&
          [[PreferencePanel sharedInstance] lionStyleFullscreen])) {
         // Is 10.7 Lion or later.
@@ -2160,7 +2186,8 @@ NSString *sessionsKey = @"sessions";
 - (void)toggleTraditionalFullScreenMode
 {
     [SessionView windowDidResize];
-    if (windowType_ == WINDOW_TYPE_TOP || windowType_ == WINDOW_TYPE_BOTTOM) {
+    if (windowType_ == WINDOW_TYPE_TOP || windowType_ == WINDOW_TYPE_BOTTOM
+        || windowType_ == WINDOW_TYPE_LEFT) {
         // TODO: would be nice if you could toggle top windows to fullscreen
         return;
     }
@@ -3827,6 +3854,13 @@ NSString *sessionsKey = @"sessions";
         frame.origin.x = [[self window] frame].origin.x;
     }
 
+    if (windowType_ == WINDOW_TYPE_LEFT) {
+      frame.size.width = [[self window] frame].size.width / 1.8;
+      frame.size.height = [[self window] frame].size.height;
+      frame.origin.x = [[self window] frame].origin.x;
+      frame.origin.y = [[self window] frame].origin.y;
+    }
+
     // Set the origin again to the bottom of screen
     if (windowType_ == WINDOW_TYPE_BOTTOM) {
         frame.origin.y = self.screen.visibleFrame.origin.y;
@@ -4372,7 +4406,8 @@ NSString *sessionsKey = @"sessions";
 {
     if (![[PreferencePanel sharedInstance] showWindowBorder]) {
         return NO;
-    } else if ([self anyFullScreen]) {
+    } else if ([self anyFullScreen] ||
+               windowType_ == WINDOW_TYPE_LEFT) {
         return NO;
     } else {
         return YES;
@@ -4786,7 +4821,8 @@ NSString *sessionsKey = @"sessions";
                                    verticalSpacing:[[tempPrefs objectForKey:KEY_VERTICAL_SPACING] floatValue]];
 
     if (windowType_ == WINDOW_TYPE_TOP ||
-        windowType_ == WINDOW_TYPE_BOTTOM) {
+        windowType_ == WINDOW_TYPE_BOTTOM ||
+        windowType_ == WINDOW_TYPE_LEFT) {
         NSRect windowFrame = [[self window] frame];
         BOOL hasScrollbar = [self scrollbarShouldBeVisible];
         NSSize contentSize = [PTYScrollView contentSizeForFrameSize:windowFrame.size
