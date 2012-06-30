@@ -670,8 +670,8 @@ static NSString* FormatRect(NSRect r) {
     if (sign * targetPoint.x > maxAllowed) {
         targetPoint.x -= sign * rootSize.width;
     }
-    int offset = 0;
-    int defaultOffset = myRect.size.height / 2;
+    CGFloat offset = 0;
+    CGFloat defaultOffset = myRect.size.height / 2;
     NSPoint origPoint = targetPoint;
     PtyLog(@"OrigPoint is %lf,%lf", origPoint.x, origPoint.y);
     PTYSession* bestResult = nil;
@@ -727,7 +727,7 @@ static NSString* FormatRect(NSRect r) {
             SwapSize(&rootRelativeResultRect.size);
         }
         offset = rootRelativeResultRect.origin.y - origPoint.y + rootRelativeResultRect.size.height;
-        PtyLog(@"set offset to %d", offset);
+        PtyLog(@"set offset to %f", (float)offset);
         if (verticalDir) {
             SwapPoint(&rootRelativeResultRect.origin);
             SwapSize(&rootRelativeResultRect.size);
