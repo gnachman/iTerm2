@@ -1234,7 +1234,7 @@ NSString *sessionsKey = @"sessions";
     } else if (windowType == WINDOW_TYPE_LEFT) {
       rect.origin.x = xOrigin;
       rect.origin.y = yOrigin;
-      rect.size.width = virtualScreenFrame.size.width / 1.8;
+      rect.size.width = virtualScreenFrame.size.width / 1.99;
       rect.size.height = virtualScreenFrame.size.height;
     }
 
@@ -1751,14 +1751,15 @@ NSString *sessionsKey = @"sessions";
             break;
 
         case WINDOW_TYPE_LEFT:
-          frame.size.width = [screen visibleFrame].size.width / 1.8;
+          frame.size.width = [screen visibleFrame].size.width / 1.99;
+          frame.size.height = [screen visibleFrame].size.height;
           frame.origin.y = [screen visibleFrame].origin.y;
           if ([[self window] alphaValue] == 0) {
             // Is hidden hotkey window
-            frame.origin.y = [screen visibleFrame].origin.y + frame.size.width;
+            frame.origin.x = [screen visibleFrame].origin.x - frame.size.width;
           } else {
             // Normal case
-            frame.origin.y = [screen visibleFrame].origin.y;
+            frame.origin.x = [screen visibleFrame].origin.x;
           }
 
           if (frame.size.width > 0) {
@@ -3855,14 +3856,14 @@ NSString *sessionsKey = @"sessions";
     }
 
     if (windowType_ == WINDOW_TYPE_LEFT) {
-      frame.size.width = [[self window] frame].size.width / 1.8;
-      frame.size.height = [[self window] frame].size.height;
+      frame.size.height = self.screen.visibleFrame.size.height;
+      frame.size.width = self.screen.visibleFrame.size.width / 1.99;
       frame.origin.x = [[self window] frame].origin.x;
-      frame.origin.y = [[self window] frame].origin.y;
     }
 
     // Set the origin again to the bottom of screen
-    if (windowType_ == WINDOW_TYPE_BOTTOM) {
+    if (windowType_ == WINDOW_TYPE_BOTTOM
+        || windowType_ == WINDOW_TYPE_LEFT) {
         frame.origin.y = self.screen.visibleFrame.origin.y;
     }
 
