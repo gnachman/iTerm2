@@ -2834,6 +2834,7 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     if (token.type == XTERMCC_SET_RGB) {
         // The format of this command is "<index>;rgb:<redhex>/<greenhex>/<bluehex>", e.g. "105;rgb:00/cc/ff"
+        // TODO(georgen): xterm has extended this quite a bit and we're behind. Catch up.
         const char *s = [token.u.string UTF8String];
         int theIndex = 0;
         while (isdigit(*s)) {
@@ -2871,8 +2872,10 @@ static VT100TCC decode_string(unsigned char *datap,
         while (isxdigit(*s)) {
             b = 16*b + (*s>='a' ? *s++ - 'a' + 10 : *s>='A' ? *s++ - 'A' + 10 : *s++ - '0');
         }
-        if (theIndex >= 16 && theIndex <= 255 && // ignore assigns to the systems colors or outside the palette
-             r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) { // ignore bad colors
+        if (theIndex >= 0 && theIndex <= 255 &&
+            r >= 0 && r <= 255 &&
+            g >= 0 && g <= 255 &&
+            b >= 0 && b <= 255) {
             [[SCREEN session] setColorTable:theIndex
                                               color:[NSColor colorWithCalibratedRed:r/256.0 green:g/256.0 blue:b/256.0 alpha:1]];
         }
