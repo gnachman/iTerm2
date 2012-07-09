@@ -781,20 +781,23 @@ static VT100TCC decode_xterm(unsigned char *datap,
         }
         mode = n;
     }
+    BOOL unrecognized = NO;
     if (datalen > 0) {
         if (*datap != ';' && *datap != 'P') {
-            // Bogus first char after "esc ]". Consume only those two chars.
-            result.type = VT100_NOTSUPPORT;
-            return result;
-        }
-        if (*datap == 'P') {
-            mode = -1;
+	    // Bogus first char after "esc ] [number]". Consume up to and
+	    // including terminator and then return VT100_NOTSUPPORT.
+            unrecognized = YES;
+        } else {
+            if (*datap == 'P') {
+                mode = -1;
+            }
+            // Consume ';' or 'P'.
+            datalen--;
+            datap++;
+            (*rmlen)++;
         }
         BOOL str_end = NO;
         c = s;
-        datalen--;
-        datap++;
-        (*rmlen)++;
         // Search for the end of a ^G/ST terminated string (but see the note below about other ways to terminate it).
         while (*datap != 7 && datalen > 0) {
             // Technically, only ^G or esc + \ ought to terminate a string. But sometimes an application is buggy and it forgets to terminate it.
@@ -839,6 +842,9 @@ static VT100TCC decode_xterm(unsigned char *datap,
 
     if (!(*rmlen)) {
         result.type = VT100_WAIT;
+    } else if (unrecognized) {
+        // Found terminator but it's malformed.
+        result.type = VT100_NOTSUPPORT;
     } else {
         data = [NSData dataWithBytes:s length:c-s];
         result.u.string = [[[NSString alloc] initWithData:data
