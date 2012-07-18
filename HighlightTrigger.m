@@ -96,6 +96,7 @@ enum {
   sct.alternateBackgroundSemantics = NO;
   sct.alternateForegroundSemantics = NO;
   sct.bold = NO;
+  sct.italic = NO;
   sct.blink = NO;
   sct.underline = NO;
   switch ([self.param intValue]) {
