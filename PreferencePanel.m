@@ -2807,7 +2807,10 @@ static float versionNumber;
         [useBrightBold setState:NSOnState];
     }
 
-    [transparency setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
+    [useItalicFont setState:[[dict objectForKey:KEY_USE_ITALIC_FONT] boolValue] ? NSOnState : NSOffState];
+    [skewAmount setFloatValue:[[dict objectForKey:KEY_SKEW_AMOUNT] floatValue]];
+
+    [transparency setFloatValue:[dict objectForKey:KEY_TRANSPARENCY] ? [[dict objectForKey:KEY_TRANSPARENCY] floatValue] : 0.2];
 	if ([dict objectForKey:KEY_BLEND]) {
 	  [blend setFloatValue:[[dict objectForKey:KEY_BLEND] floatValue]];
 	} else {
@@ -3251,6 +3254,8 @@ static float versionNumber;
     [newDict setObject:[NSNumber numberWithInt:[[cursorType selectedCell] tag]] forKey:KEY_CURSOR_TYPE];
     [newDict setObject:[NSNumber numberWithBool:([useBoldFont state]==NSOnState)] forKey:KEY_USE_BOLD_FONT];
     [newDict setObject:[NSNumber numberWithBool:([useBrightBold state]==NSOnState)] forKey:KEY_USE_BRIGHT_BOLD];
+    [newDict setObject:[NSNumber numberWithBool:([useItalicFont state]==NSOnState)] forKey:KEY_USE_ITALIC_FONT];
+    [newDict setObject:[NSNumber numberWithFloat:[skewAmount floatValue]] forKey:KEY_SKEW_AMOUNT];
     [newDict setObject:[NSNumber numberWithFloat:[transparency floatValue]] forKey:KEY_TRANSPARENCY];
     [newDict setObject:[NSNumber numberWithFloat:[blend floatValue]] forKey:KEY_BLEND];
     [newDict setObject:[NSNumber numberWithFloat:[blurRadius floatValue]] forKey:KEY_BLUR_RADIUS];
@@ -4193,6 +4198,8 @@ static float versionNumber;
         KEY_CURSOR_TYPE,
         KEY_USE_BOLD_FONT,
         KEY_USE_BRIGHT_BOLD,
+        KEY_USE_ITALIC_FONT,
+        KEY_SKEW_AMOUNT,
         KEY_ASCII_ANTI_ALIASED,
         KEY_NONASCII_ANTI_ALIASED,
         KEY_ANTI_ALIASING,

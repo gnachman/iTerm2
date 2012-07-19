@@ -172,12 +172,14 @@ typedef struct {
 // character attributes
 #define VT100CHARATTR_ALLOFF   0
 #define VT100CHARATTR_BOLD     1
+#define VT100CHARATTR_ITALIC   3
 #define VT100CHARATTR_UNDER    4
 #define VT100CHARATTR_BLINK    5
 #define VT100CHARATTR_REVERSE  7
 
 // xterm additions
 #define VT100CHARATTR_NORMAL        22
+#define VT100CHARATTR_NOT_ITALIC    23
 #define VT100CHARATTR_NOT_UNDER     24
 #define VT100CHARATTR_STEADY        25
 #define VT100CHARATTR_POSITIVE      27
@@ -341,9 +343,9 @@ typedef enum {
     BOOL alternateForegroundSemantics;
     int BG_COLORCODE;
     BOOL alternateBackgroundSemantics;
-    int bold, under, blink, reversed;
+    int bold, italic, under, blink, reversed;
 
-    int saveBold, saveUnder, saveBlink, saveReversed;
+    int saveBold, saveItalic, saveUnder, saveBlink, saveReversed;
     int saveCHARSET;
     int saveForeground;
     BOOL saveAltForeground;

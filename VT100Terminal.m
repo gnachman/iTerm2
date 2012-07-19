@@ -1661,8 +1661,8 @@ static VT100TCC decode_string(unsigned char *datap,
     INSERT_MODE = NO;
     saveCHARSET=CHARSET = NO;
     XON = YES;
-    bold = blink = reversed = under = NO;
-    saveBold = saveBlink = saveReversed = saveUnder = NO;
+    bold = italic = blink = reversed = under = NO;
+    saveBold = saveItalic = saveBlink = saveReversed = saveUnder = NO;
     FG_COLORCODE = ALTSEM_FG_DEFAULT;
     alternateForegroundSemantics = YES;
     BG_COLORCODE = ALTSEM_BG_DEFAULT;
@@ -1770,6 +1770,7 @@ static VT100TCC decode_string(unsigned char *datap,
 - (void)saveCursorAttributes
 {
     saveBold = bold;
+    saveItalic = italic;
     saveUnder = under;
     saveBlink = blink;
     saveReversed = reversed;
@@ -1783,6 +1784,7 @@ static VT100TCC decode_string(unsigned char *datap,
 - (void)restoreCursorAttributes
 {
     bold=saveBold;
+    italic=saveItalic;
     under=saveUnder;
     blink=saveBlink;
     reversed=saveReversed;
@@ -1820,8 +1822,8 @@ static VT100TCC decode_string(unsigned char *datap,
     INSERT_MODE = NO;
     saveCHARSET=CHARSET = NO;
     XON = YES;
-    bold = blink = reversed = under = NO;
-    saveBold = saveBlink = saveReversed = saveUnder = NO;
+    bold = italic = blink = reversed = under = NO;
+    saveBold = saveItalic = saveBlink = saveReversed = saveUnder = NO;
     FG_COLORCODE = ALTSEM_FG_DEFAULT;
     alternateForegroundSemantics = YES;
     BG_COLORCODE = ALTSEM_BG_DEFAULT;
@@ -2519,6 +2521,7 @@ static VT100TCC decode_string(unsigned char *datap,
         result.alternateForegroundSemantics = alternateForegroundSemantics;
     }
     result.bold = bold;
+    result.italic = italic;
     result.underline = under;
     result.blink = blink;
     return result;
@@ -2543,6 +2546,7 @@ static VT100TCC decode_string(unsigned char *datap,
     result.foregroundColor = FG_COLORCODE;
     result.alternateForegroundSemantics = alternateForegroundSemantics;
     result.bold = bold;
+    result.italic = italic;
     result.underline = under;
     result.blink = blink;
     return result;
@@ -2737,7 +2741,7 @@ static VT100TCC decode_string(unsigned char *datap,
     if (token.type == VT100CSI_SGR) {
         if (token.u.csi.count == 0) {
             // all attribute off
-            bold = under = blink = reversed = NO;
+            bold = italic = under = blink = reversed = NO;
             FG_COLORCODE = ALTSEM_FG_DEFAULT;
             alternateForegroundSemantics = YES;
             BG_COLORCODE = ALTSEM_BG_DEFAULT;
@@ -2749,7 +2753,7 @@ static VT100TCC decode_string(unsigned char *datap,
                 switch (n) {
                     case VT100CHARATTR_ALLOFF:
                         // all attribute off
-                        bold = under = blink = reversed = NO;
+                        bold = italic = under = blink = reversed = NO;
                         FG_COLORCODE = ALTSEM_FG_DEFAULT;
                         alternateForegroundSemantics = YES;
                         BG_COLORCODE = ALTSEM_BG_DEFAULT;
@@ -2761,6 +2765,12 @@ static VT100TCC decode_string(unsigned char *datap,
                         break;
                     case VT100CHARATTR_NORMAL:
                         bold = NO;
+                        break;
+                    case VT100CHARATTR_ITALIC:
+                        italic = YES;
+                        break;
+                    case VT100CHARATTR_NOT_ITALIC:
+                        italic = NO;
                         break;
                     case VT100CHARATTR_UNDER:
                         under = YES;

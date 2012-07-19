@@ -466,6 +466,10 @@ typedef enum {
 - (void)setBlend:(float)blend;
 - (BOOL)useBoldFont;
 - (void)setUseBoldFont:(BOOL)boldFlag;
+- (BOOL)useItalicFont;
+- (void)setUseItalicFont:(BOOL)boldFlag;
+- (float)skewAmount;
+- (void)setSkewAmount:(float)skewAmount;
 - (void)setColorTable:(int)index color:(NSColor *)c;
 - (int)optionKey;
 - (int)rightOptionKey;
