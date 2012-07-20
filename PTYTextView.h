@@ -381,6 +381,7 @@ typedef struct PTYFontInfo PTYFontInfo;
                          Y:(int)endy
                        pad:(BOOL)pad
         includeLastNewline:(BOOL)includeLastNewline;
+- (NSAttributedString *)attributedContentFromX:(int)startx Y:(int)starty ToX:(int)endx Y:(int)endy pad: (BOOL) pad;
 - (NSString*)contentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad;
 - (NSString *)selectedText;
 - (NSString *)selectedTextWithPad: (BOOL) pad;
@@ -654,6 +655,7 @@ typedef enum {
                      isComplex:(BOOL)complex
                        fgColor:(int)fgColor
                     renderBold:(BOOL*)renderBold;
+- (NSDictionary *)charAttributes:(screen_char_t)c;
 
 - (PTYFontInfo*)getOrAddFallbackFont:(NSFont*)font;
 - (void)releaseAllFallbackFonts;
