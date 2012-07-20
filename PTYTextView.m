@@ -3752,6 +3752,102 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
            includeLastNewline:NO];
 }
 
+static inline void appendToAttributedString(NSMutableAttributedString *target, NSString *source, NSDictionary *attributes)
+{
+    NSAttributedString *string;
+
+    if (attributes == nil) {
+        string = [[NSAttributedString alloc] initWithString:source];
+    } else {
+        string = [[NSAttributedString alloc] initWithString:source
+                                                 attributes:attributes];
+    }
+    [target appendAttributedString:string];
+    [string release];
+}
+
+- (NSAttributedString*)attributedContentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad
+{
+    int i;
+    NSMutableAttributedString* result = [[[NSMutableAttributedString alloc] initWithString:@""] autorelease];
+    for (i = starty; i < endy; ++i) {
+        NSAttributedString* line = [self attributedContentFromX:startx Y:i ToX:nonInclusiveEndx Y:i pad:pad];
+        [result appendAttributedString:line];
+        if (i < endy-1) {
+            appendToAttributedString(result, @"\n", nil);
+        }
+    }
+    return result;
+}
+
+- (NSAttributedString *)attributedContentFromX:(int)startx
+                                             Y:(int)starty
+                                           ToX:(int)nonInclusiveEndx
+                                             Y:(int)endy
+                                           pad:(BOOL) pad
+{
+    int endx = nonInclusiveEndx-1;
+    int width = [dataSource width];
+    NSMutableAttributedString* result = [[[NSMutableAttributedString alloc] initWithString:@""] autorelease];
+    int y, x1, x2;
+    screen_char_t *theLine;
+    BOOL endOfLine;
+    int i;
+
+    for (y = starty; y <= endy; y++) {
+        theLine = [dataSource getLineAtIndex:y];
+
+        x1 = y == starty ? startx : 0;
+        x2 = y == endy ? endx : width-1;
+        for ( ; x1 <= x2; x1++) {
+            screen_char_t c = theLine[x1];
+            if (c.code == TAB_FILLER) {
+                // Convert orphan tab fillers (those without a subsequent
+                // tab character) into spaces.
+                if ([self isTabFillerOrphanAtX:x1 Y:y]) {
+                    appendToAttributedString(result, @" ", [self charAttributes:c]);
+                }
+            } else if (c.code != DWC_RIGHT &&
+                       c.code != DWC_SKIP) {
+                if (c.code == 0) { // end of line?
+                    // If there is no text after this, insert a hard line break.
+                    endOfLine = YES;
+                    for (i = x1 + 1; i <= x2 && endOfLine; i++) {
+                        if (theLine[i].code != 0) {
+                            endOfLine = NO;
+                        }
+                    }
+                    if (endOfLine) {
+                        if (pad) {
+                            for (i = x1; i <= x2; i++) {
+                                appendToAttributedString(result, @" ", [self charAttributes:theLine[i]]);
+                            }
+                        }
+                        if (y < endy && theLine[width].code == EOL_HARD) {
+                            appendToAttributedString(result, @"\n", [self charAttributes:theLine[width]]);
+                        }
+                        break;
+                    } else {
+                        // represent end-of-line blank with space
+                        appendToAttributedString(result, @" ", [self charAttributes:c]);
+                    }
+                } else if (x1 == x2 &&
+                           y < endy &&
+                           theLine[width].code == EOL_HARD) {
+                    // Hard line break
+                    appendToAttributedString(result, ScreenCharToStr(&c), [self charAttributes:c]);
+                    appendToAttributedString(result, @"\n", [self charAttributes:theLine[width]]);
+                } else {
+                    // Normal character
+                    appendToAttributedString(result, ScreenCharToStr(&c), [self charAttributes:c]);
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
 - (IBAction)selectAll:(id)sender
 {
     // set the selection region for the whole text
@@ -3794,6 +3890,31 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                  Y:endY
                                pad:pad
                 includeLastNewline:[[PreferencePanel sharedInstance] copyLastNewline]]);
+    }
+}
+
+- (NSAttributedString *)selectedAttributedText
+{
+    return [self selectedAttributedTextWithPad:NO];
+}
+
+- (NSAttributedString *)selectedAttributedTextWithPad:(BOOL)pad
+{
+    if (startX <= -1) {
+        return nil;
+    }
+    if (selectMode == SELECT_BOX) {
+        return [self attributedContentInBoxFromX:startX
+                                               Y:startY
+                                             ToX:endX
+                                               Y:endY
+                                             pad:pad];
+    } else {
+        return ([self attributedContentFromX:startX
+                                           Y:startY
+                                         ToX:endX
+                                           Y:endY
+                                         pad:pad]);
     }
 }
 
@@ -3853,13 +3974,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)copy:(id)sender
 {
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
-    NSString *copyString;
-
-    copyString = [self selectedText];
+    NSString *copyString = [self selectedText];
+    NSAttributedString *copyAttributedString = [self selectedAttributedText];
 
     if (copyString) {
-        [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
+        if (copyAttributedString) {
+            [pboard declareTypes:[NSArray arrayWithObjects:NSStringPboardType,
+                                   NSRTFPboardType, nil] owner:self];
+        } else {
+            [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
+        }
         [pboard setString:copyString forType:NSStringPboardType];
+        if (copyAttributedString) {
+            NSData *RTFData = [copyAttributedString RTFFromRange:NSMakeRange(0, [copyAttributedString length]) documentAttributes:nil];
+            [pboard setData:RTFData forType:NSRTFPboardType];
+        }
     }
 
     [[PasteboardHistory sharedInstance] save:copyString];
@@ -5575,6 +5704,31 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 
     return theFont;
+}
+
+// Returns a dictionary to pass to NSAttributedString.
+- (NSDictionary *)charAttributes:(screen_char_t)c
+{
+    NSColor *fgColor = [self colorForCode:c.foregroundColor alternateSemantics:c.alternateForegroundSemantics bold:c.bold isBackground:NO];
+    NSColor *bgColor = [self colorForCode:c.backgroundColor alternateSemantics:c.alternateBackgroundSemantics bold:false isBackground:YES];
+    int underlineStyle = c.underline ? (NSUnderlineStyleSingle|NSUnderlineByWordMask) : 0;
+    BOOL isBold = c.bold;
+    // We force-enable the use of bold fonts for our call, and restore the state when we've finished.
+    BOOL couldUseBoldFont = useBoldFont;
+    useBoldFont = YES;
+    // The fgColor in this method call is entirely unused.
+    PTYFontInfo *info = [self getFontForChar:c.code
+                                   isComplex:c.complexChar
+                                     fgColor:0
+                                  renderBold:&isBold];
+    useBoldFont = couldUseBoldFont;
+
+    return [NSDictionary dictionaryWithObjectsAndKeys:
+            fgColor, NSForegroundColorAttributeName,
+            bgColor, NSBackgroundColorAttributeName,
+            info->font, NSFontAttributeName,
+            [NSNumber numberWithInt:underlineStyle], NSUnderlineStyleAttributeName,
+            NULL];
 }
 
 // Returns true if the sequence of characters starting at (x, y) is not repeated
