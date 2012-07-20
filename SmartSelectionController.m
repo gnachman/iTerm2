@@ -352,7 +352,7 @@ static NSString *gPrecisionKeys[] = {
     NSMutableDictionary *rule = [[[[self rules] objectAtIndex:rowIndex] mutableCopy] autorelease];
     [rule setObject:newActions forKey:kActionsKey];
     [self setRule:rule forRow:rowIndex];
-    [NSApp endSheet:[contextMenuPrefsController_ window]];    
+    [NSApp endSheet:[contextMenuPrefsController_ window]];
 }
 
 @end

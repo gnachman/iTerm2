@@ -58,6 +58,7 @@
 #import "TmuxStateParser.h"
 
 #define MAX_SCROLLBACK_LINES 1000000
+#define MAX_SCROLL_AT_ONCE 1024
 #define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array
 
 // Wait this long between calls to NSBeep().
@@ -1584,11 +1585,12 @@ static char* FormatCont(int c)
      *
      * I'm going to throw this out there (4/15/2012) and see if this breaks
      * anything for anyone.
+     *
+     * UPDATE: In bug 1997, we see that it breaks line-drawing chars, which
+     * are in SCS0. Indeed, mosh fails to draw these as well.
      */
     case VT100CSI_SCS0:
-            if ([TERMINAL encoding] != NSUTF8StringEncoding) {
-                charset[0] = (token.u.code=='0');
-            }
+            charset[0] = (token.u.code=='0');
             break;
     case VT100CSI_SCS1:
             if ([TERMINAL encoding] != NSUTF8StringEncoding) {
@@ -1800,11 +1802,19 @@ static char* FormatCont(int c)
             [[[SESSION tab] parentWindow] windowOrderBack: nil];
         break;
     case XTERMCC_SU:
-        for (i=0; i<token.u.csi.p[0]; i++) [self scrollUp];
+        for (i = 0;
+             i < MIN(MAX(HEIGHT, MAX_SCROLL_AT_ONCE), token.u.csi.p[0]);
+             i++) {
+            [self scrollUp];
+        }
         [SESSION clearTriggerLine];
         break;
     case XTERMCC_SD:
-        for (i=0; i<token.u.csi.p[0]; i++) [self scrollDown];
+        for (i = 0;
+             i < MIN(MAX(HEIGHT, MAX_SCROLL_AT_ONCE), token.u.csi.p[0]);
+             i++) {
+            [self scrollDown];
+        }
         [SESSION clearTriggerLine];
         break;
     case XTERMCC_REPORT_WIN_STATE:
@@ -1894,7 +1904,7 @@ static char* FormatCont(int c)
 			@"install a version that is compatible with this build of iTerm2."
 					ascii:YES];
 		[self crlf];
-		[SESSION writeTask:[@"detach\n" dataUsingEncoding:NSUTF8StringEncoding]];
+		[SESSION writeTask:[@"detach\n\n" dataUsingEncoding:NSUTF8StringEncoding]];
 		break;
 
     case UNDERSCORE_TMUX1:
@@ -3603,8 +3613,15 @@ void DumpBuf(screen_char_t* p, int n) {
     [self showCursor:[[state objectForKey:kStateDictCursorMode] boolValue]];
 
     [tabStops removeAllObjects];
+    int maxTab = 0;
     for (NSNumber *n in [state objectForKey:kStateDictTabstops]) {
         [tabStops addObject:n];
+        maxTab = MAX(maxTab, [n intValue]);
+    }
+    for (int i = 0; i < 1000; i += 8) {
+        if (i > maxTab) {
+            [tabStops addObject:[NSNumber numberWithInt:i]];
+        }
     }
 
     // TODO: The way that tmux and iterm2 handle saving the cursor position is different and incompatible and only one of us is right.

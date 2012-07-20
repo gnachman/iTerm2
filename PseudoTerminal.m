@@ -5079,6 +5079,10 @@ NSString *sessionsKey = @"sessions";
                                                         object:[self currentSession]];
 }
 
+- (IBAction)wrapToggleToolbarShown:(id)sender {
+    [[self ptyWindow] toggleToolbarShown:sender];
+}
+
 - (BOOL)validateMenuItem:(NSMenuItem *)item
 {
     BOOL logging = [[self currentSession] logging];
@@ -5094,6 +5098,8 @@ NSString *sessionsKey = @"sessions";
         [item action] == @selector(newTmuxTab:) ||
         [item action] == @selector(openDashboard:)) {
         result = [[self currentTab] isTmuxTab];
+    } else if ([item action] == @selector(wrapToggleToolbarShown:)) {
+        result = ![self lionFullScreen];
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self sessions] count] > 1);
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||

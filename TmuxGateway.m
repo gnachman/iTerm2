@@ -10,7 +10,7 @@
 #import "TmuxController.h"
 #import "iTermApplicationDelegate.h"
 
-#define NEWLINE @"\r\n"
+#define NEWLINE @"\r"
 
 #define TMUX_VERBOSE_LOGGING
 #ifdef TMUX_VERBOSE_LOGGING
@@ -190,9 +190,10 @@ static NSString *kCommandObject = @"object";
 
 - (void)hostDisconnected
 {
-    [delegate_ tmuxWriteData:[@"#ack-exit" NEWLINE dataUsingEncoding:NSUTF8StringEncoding]];
-    [delegate_ tmuxHostDisconnected];
-    state_ = CONTROL_STATE_DETACHED;
+   // Send a newline to ACK the exit command.
+  [delegate_ tmuxWriteData:[NEWLINE dataUsingEncoding:NSUTF8StringEncoding]];
+  [delegate_ tmuxHostDisconnected];
+  state_ = CONTROL_STATE_DETACHED;
 }
 
 - (void)currentCommandResponseFinished

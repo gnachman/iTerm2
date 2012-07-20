@@ -22,7 +22,7 @@ typedef enum {
 @end
 
 
-@interface ContextMenuActionPrefsController : NSWindowController <NSTableViewDelegate, NSTableViewDataSource> {
+@interface ContextMenuActionPrefsController : NSWindowController <NSWindowDelegate, NSTableViewDelegate, NSTableViewDataSource> {
     IBOutlet NSTableView *tableView_;
     IBOutlet NSTableColumn *titleColumn_;
     IBOutlet NSTableColumn *actionColumn_;

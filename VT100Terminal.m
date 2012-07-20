@@ -428,8 +428,7 @@ static VT100TCC decode_csi(unsigned char *datap,
     result.type = VT100_WAIT;
 
     // Check for unkown
-    if(param.cmd == 0xff)
-    {
+    if (param.cmd == 0xff) {
         result.type = VT100_UNKNOWNCHAR;
         *rmlen = paramlen;
     }
@@ -735,11 +734,11 @@ static VT100TCC decode_underscore(unsigned char *datap,
         }
 
         if (found && [result.u.string hasPrefix:@"tmux"]) {
-            if ([result.u.string isEqualToString:@"tmux1.0"] ||
-                [result.u.string hasPrefix:@"tmux1.0;"]) {
+            if ([result.u.string isEqualToString:@"tmux0.5"] ||
+                [result.u.string hasPrefix:@"tmux0.5;"]) {
                 result.type = UNDERSCORE_TMUX1;
-			} else if ([result.u.string hasPrefix:@"tmux"]) {
-				result.type = UNDERSCORE_TMUX_UNSUPPORTED;
+            } else if ([result.u.string hasPrefix:@"tmux"]) {
+                result.type = UNDERSCORE_TMUX_UNSUPPORTED;
             } else {
                 result.type = VT100_NOTSUPPORT;
             }
@@ -758,7 +757,6 @@ static VT100TCC decode_xterm(unsigned char *datap,
     int mode = 0;
     VT100TCC result;
     NSData *data;
-    BOOL unrecognized = NO;
     char s[MAX_BUFFER_LENGTH] = { 0 }, *c = nil;
 
     assert(datap != NULL);
@@ -783,20 +781,23 @@ static VT100TCC decode_xterm(unsigned char *datap,
         }
         mode = n;
     }
+    BOOL unrecognized = NO;
     if (datalen > 0) {
         if (*datap != ';' && *datap != 'P') {
+	    // Bogus first char after "esc ] [number]". Consume up to and
+	    // including terminator and then return VT100_NOTSUPPORT.
             unrecognized = YES;
-        }
-        if (*datap == 'P') {
-            mode = -1;
-        }
-        BOOL str_end = NO;
-        c = s;
-        if (!unrecognized) {
+        } else {
+            if (*datap == 'P') {
+                mode = -1;
+            }
+            // Consume ';' or 'P'.
             datalen--;
             datap++;
             (*rmlen)++;
         }
+        BOOL str_end = NO;
+        c = s;
         // Search for the end of a ^G/ST terminated string (but see the note below about other ways to terminate it).
         while (*datap != 7 && datalen > 0) {
             // Technically, only ^G or esc + \ ought to terminate a string. But sometimes an application is buggy and it forgets to terminate it.
@@ -839,10 +840,11 @@ static VT100TCC decode_xterm(unsigned char *datap,
         *rmlen=0;
     }
 
-    if (unrecognized) {
-        result.type = VT100_NOTSUPPORT;
-    } else if (!(*rmlen)) {
+    if (!(*rmlen)) {
         result.type = VT100_WAIT;
+    } else if (unrecognized) {
+        // Found terminator but it's malformed.
+        result.type = VT100_NOTSUPPORT;
     } else {
         data = [NSData dataWithBytes:s length:c-s];
         result.u.string = [[[NSString alloc] initWithData:data
@@ -906,6 +908,11 @@ static VT100TCC decode_other(unsigned char *datap,
     c3 = (datalen >= 4 ? datap[3]: -1);
 
     switch (c1) {
+        case 27: // esc: two esc's in a row. Ignore the first one.
+            result.type = VT100_NOTSUPPORT;
+            *rmlen = 1;
+            break;
+
         case '#':
             if (c2 < 0) {
                 result.type = VT100_WAIT;
@@ -1147,8 +1154,7 @@ static VT100TCC decode_control(unsigned char *datap,
             case VT100CC_ESC:
                 if (datalen == 1) {
                     result.type = VT100_WAIT;
-                }
-                else {
+                } else {
                     result = decode_other(datap, datalen, rmlen, enc);
                 }
                 break;
@@ -2312,7 +2318,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (char *)mouseReport:(int)button atX:(int)x Y:(int)y
 {
-    static char buf[32]; // This should be enough for all formats.
+    static char buf[64]; // This should be enough for all formats.
     switch (MOUSE_FORMAT) {
         case MOUSE_FORMAT_XTERM_EXT:
             snprintf(buf, sizeof(buf), "\033[M%c%lc%lc",
@@ -2322,6 +2328,18 @@ static VT100TCC decode_string(unsigned char *datap,
             break;
         case MOUSE_FORMAT_URXVT:
             snprintf(buf, sizeof(buf), "\033[%d;%d;%dM", 32 + button, x, y);
+            break;
+        case MOUSE_FORMAT_SGR:
+            if (button & MOUSE_BUTTON_SGR_RELEASE_FLAG) {
+                // for mouse release event
+                snprintf(buf, sizeof(buf), "\033[<%d;%d;%dm", 
+                         button ^ MOUSE_BUTTON_SGR_RELEASE_FLAG, 
+                         x, 
+                         y);
+            } else {
+                // for mouse press/motion event
+                snprintf(buf, sizeof(buf), "\033[<%d;%d;%dM", button, x, y);            
+            }
             break;
         case MOUSE_FORMAT_XTERM:
         default:
@@ -2333,30 +2351,49 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (NSData *)mousePress:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
 {
-    char cb;
+    int cb;
 
     cb = button;
-    if (button > 3) cb += 64 - 4; // Subtract 4 for scroll wheel buttons
-    if (modflag & NSControlKeyMask) cb += 16;
-    if (modflag & NSShiftKeyMask) cb += 4;
-    if (modflag & NSAlternateKeyMask) cb += 8;
-    char *buf = [self mouseReport:(cb) atX:(x + 1) Y:(y + 1)];
+    if (button == MOUSE_BUTTON_SCROLLDOWN || button == MOUSE_BUTTON_SCROLLUP) {
+        // convert x11 scroll button number to terminal button code
+        const int offset = MOUSE_BUTTON_SCROLLDOWN;
+        cb -= offset;
+        cb |= MOUSE_BUTTON_SCROLL_FLAG;
+    }
+    if (modflag & NSControlKeyMask) {
+        cb |= MOUSE_BUTTON_CTRL_FLAG;
+    }
+    if (modflag & NSShiftKeyMask) {
+        cb |= MOUSE_BUTTON_SHIFT_FLAG;
+    }
+    if (modflag & NSAlternateKeyMask) {
+        cb |= MOUSE_BUTTON_META_FLAG;
+    }
+    char *buf = [self mouseReport:cb atX:(x + 1) Y:(y + 1)];
 
     return [NSData dataWithBytes: buf length: strlen(buf)];
 }
 
-- (NSData *)mouseReleaseWithModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
+- (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
 {
-    char cb = 3;
+    int cb;
+    
+    if (MOUSE_FORMAT == MOUSE_FORMAT_SGR) {
+        // for SGR 1006 mode
+        cb = button | MOUSE_BUTTON_SGR_RELEASE_FLAG;
+    } else {
+        // for 1000/1005/1015 mode
+        cb = 3;
+    }
 
     if (modflag & NSControlKeyMask) {
-      cb |= 16;
+        cb |= MOUSE_BUTTON_CTRL_FLAG;
     }
     if (modflag & NSShiftKeyMask) {
-      cb |= 4;
+        cb |= MOUSE_BUTTON_SHIFT_FLAG;
     }
     if (modflag & NSAlternateKeyMask) {
-      cb |= 8;
+        cb |= MOUSE_BUTTON_META_FLAG;
     }
     char *buf = [self mouseReport:cb atX:(x + 1) Y:(y + 1)];
 
@@ -2365,20 +2402,20 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (NSData *)mouseMotion:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
 {
-    char cb;
+    int cb;
 
     cb = button % 3;
     if (button > 3) {
-      cb |= 64;
+        cb |= MOUSE_BUTTON_SCROLL_FLAG;
     }
     if (modflag & NSControlKeyMask) {
-      cb |= 16;
+        cb |= MOUSE_BUTTON_CTRL_FLAG;
     }
     if (modflag & NSShiftKeyMask) {
-      cb |= 4;
+        cb |= MOUSE_BUTTON_SHIFT_FLAG;
     }
     if (modflag & NSAlternateKeyMask) {
-      cb |= 8;
+        cb |= MOUSE_BUTTON_META_FLAG;
     }
     char *buf = [self mouseReport:(32 + cb) atX:(x + 1) Y:(y + 1)];
 
@@ -2640,6 +2677,15 @@ static VT100TCC decode_string(unsigned char *datap,
                     }
                     break;
 
+                    
+                case 1006:
+                    if (mode) {
+                        MOUSE_FORMAT = MOUSE_FORMAT_SGR;
+                    } else {
+                        MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
+                    }
+                    break;
+                
                 case 1015:
                     if (mode) {
                         MOUSE_FORMAT = MOUSE_FORMAT_URXVT;
@@ -2788,6 +2834,7 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     if (token.type == XTERMCC_SET_RGB) {
         // The format of this command is "<index>;rgb:<redhex>/<greenhex>/<bluehex>", e.g. "105;rgb:00/cc/ff"
+        // TODO(georgen): xterm has extended this quite a bit and we're behind. Catch up.
         const char *s = [token.u.string UTF8String];
         int theIndex = 0;
         while (isdigit(*s)) {
@@ -2825,8 +2872,10 @@ static VT100TCC decode_string(unsigned char *datap,
         while (isxdigit(*s)) {
             b = 16*b + (*s>='a' ? *s++ - 'a' + 10 : *s>='A' ? *s++ - 'A' + 10 : *s++ - '0');
         }
-        if (theIndex >= 16 && theIndex <= 255 && // ignore assigns to the systems colors or outside the palette
-             r >= 0 && r <= 255 && g >= 0 && g <= 255 && b >= 0 && b <= 255) { // ignore bad colors
+        if (theIndex >= 0 && theIndex <= 255 &&
+            r >= 0 && r <= 255 &&
+            g >= 0 && g <= 255 &&
+            b >= 0 && b <= 255) {
             [[SCREEN session] setColorTable:theIndex
                                               color:[NSColor colorWithCalibratedRed:r/256.0 green:g/256.0 blue:b/256.0 alpha:1]];
         }

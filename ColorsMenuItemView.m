@@ -123,7 +123,8 @@ enum {
     // draw the "x" (reset color to default)
     NSColor *color = [NSColor grayColor];
     [color set];
-    [NSBezierPath setDefaultLineWidth: kDefaultColorStokeWidth];
+    CGFloat savedWidth = [NSBezierPath defaultLineWidth];
+    [NSBezierPath setDefaultLineWidth:kDefaultColorStokeWidth];
     float defaultX0 = kColorAreaOffsetX + kDefaulColorOffset;
     float defaultX1 = defaultX0 + kDefaultColorDimension;
     float defaultY0 = kColorAreaOffsetY + kDefaulColorOffset;
@@ -157,6 +158,7 @@ enum {
     NSString *labelTitle = @"Tab Color:";
     [labelTitle drawAtPoint:NSMakePoint(kMenuLabelOffsetX, kMenuLabelOffsetY) withAttributes:fontAtts];
     [fontAtts release];
+    [NSBezierPath setDefaultLineWidth:savedWidth];
 }
 
 - (void)mouseUp:(NSEvent*) event {
