@@ -6866,6 +6866,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)_drawCursorTo:(NSPoint*)toOrigin
 {
+    NSLog(@"Draw cursor at %d, %d", [dataSource cursorX]-1, [dataSource cursorY]-1);
     int WIDTH, HEIGHT;
     screen_char_t* theLine;
     int yStart, x1;
@@ -6884,9 +6885,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int lastVisibleLine = docVisibleRect.origin.y / [self lineHeight] + HEIGHT;
     int cursorLine = [dataSource numberOfLines] - [dataSource height] + [dataSource cursorY] - [dataSource scrollbackOverflow];
     if (cursorLine > lastVisibleLine) {
+      NSLog(@"Cursor line %d > lastVisibleLine %d", cursorLine, lastVisibleLine);
         return;
     }
     if (cursorLine < 0) {
+      NSLog(@"Cursor line %d < 0", cursorLine);
         return;
     }
 
@@ -6909,6 +6912,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     } else {
         showCursor = YES;
     }
+
+    NSLog(@"blinking=%d isKey=%d tab is active=%d x changed=%d y changed=%d blinkshow=%d showCursor=%d hasMarkedText=%d CURSOR=%d x1=%d yStart=%d WIDTH=%d HEIGHT=%d",
+          (int)([self blinkingCursor]),
+          (int)([[self window] isKeyWindow]),
+          (int)([[[dataSource session] tab] activeSession] == [dataSource session]),
+          (int)(x1 == oldCursorX),
+          (int)(yStart == oldCursorY),
+          (int)blinkShow,
+          (int)showCursor,
+          (int)[self hasMarkedText],
+          (int)CURSOR,
+          (int)x1,
+          (int)yStart,
+          (int)WIDTH,
+          (int)HEIGHT);
 
     // Draw the regular cursor only if there's not an IME open as it draws its
     // own cursor.
@@ -6994,8 +7012,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
 
             BOOL frameOnly;
+            NSLog(@"cursorType_ = %d", (int)cursorType_);
             switch (cursorType_) {
                 case CURSOR_BOX:
+                  NSLog(@"Draw a box");
                     // draw the box
                     if ([[self window] isKeyWindow] &&
                         [[[dataSource session] tab] activeSession] == [dataSource session]) {
@@ -7102,10 +7122,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     break;
 
                 case CURSOR_VERTICAL:
+                    NSLog(@"Draw vertical");
                     NSRectFill(NSMakeRect(curX, curY, 1, cursorHeight));
                     break;
 
                 case CURSOR_UNDERLINE:
+                    NSLog(@"Draw underline rect %@", [NSValue valueWithRect:NSMakeRect(curX,
+                                          curY + lineHeight - 2,
+                                          ceil(cursorWidth * (double_width ? 2 : 1)),
+                                          2)]);
                     NSRectFill(NSMakeRect(curX,
                                           curY + lineHeight - 2,
                                           ceil(cursorWidth * (double_width ? 2 : 1)),
