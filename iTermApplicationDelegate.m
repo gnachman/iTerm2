@@ -933,7 +933,7 @@ static void FlushDebugLog() {
     }
 
     // Set the state of the control to the new true state.
-    [secureInput setState:IsSecureEventInputEnabled() ? NSOnState : NSOffState];
+    [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
 
     // Save the preference, independent of whether it succeeded or not.
     [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:secureInputDesired_]
@@ -949,7 +949,7 @@ static void FlushDebugLog() {
         }
     }
     // Set the state of the control to the new true state.
-    [secureInput setState:IsSecureEventInputEnabled() ? NSOnState : NSOffState];
+    [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
 }
 
 - (void)applicationDidResignActive:(NSNotification *)aNotification
@@ -960,7 +960,7 @@ static void FlushDebugLog() {
         }
     }
     // Set the state of the control to the new true state.
-    [secureInput setState:IsSecureEventInputEnabled() ? NSOnState : NSOffState];
+    [secureInput setState:(secureInputDesired_ && IsSecureEventInputEnabled()) ? NSOnState : NSOffState];
 }
 
 // Debug logging
