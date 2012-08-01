@@ -3135,7 +3135,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"is a click in the window");
 
         BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
-        if (altPressed && !cmdPressed) {
+        if (altPressed && !cmdPressed && ![[self delegate] xtermMouseReporting]) {
             [self placeCursorOnCurrentLineWithEvent:event];
         }
 
@@ -3599,7 +3599,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)placeCursorOnCurrentLineWithEvent:(NSEvent *)event
 {
     BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
-    
+
     if (debugKeyDown) {
         NSLog(@"PTYTextView placeCursorOnCurrentLineWithEvent BEGIN %@", event);
     }

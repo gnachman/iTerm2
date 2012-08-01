@@ -793,8 +793,6 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
-				1D2F3B3B1516BA460044C337 /* iTermFontPanel.h */,
-				1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -846,6 +844,8 @@
 				20D5CC6404E7AA0500000106 /* iTermApplicationDelegate.m */,
 				E8A66F030272453F03A80106 /* iTermController.m */,
 				1DDBC61D12E2BCDC00BC3868 /* iTermExpose.m */,
+				1D2F3B3B1516BA460044C337 /* iTermFontPanel.h */,
+				1D2F3B3C1516BA460044C337 /* iTermFontPanel.m */,
 				F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */,
 				DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */,
 				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
