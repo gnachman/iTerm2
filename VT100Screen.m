@@ -124,6 +124,7 @@ void StringToScreenChars(NSString *s,
             buf[j].foregroundColor = fg.foregroundColor;
             buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
             buf[j].bold = fg.bold;
+            buf[j].italic = fg.italic;
             buf[j].blink = fg.blink;
             buf[j].underline = fg.underline;
 
@@ -151,6 +152,7 @@ void StringToScreenChars(NSString *s,
             buf[j].foregroundColor = fg.foregroundColor;
             buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
             buf[j].bold = fg.bold;
+            buf[j].italic = fg.italic;
             buf[j].blink = fg.blink;
             buf[j].underline = fg.underline;
 
@@ -186,6 +188,7 @@ void StringToScreenChars(NSString *s,
                         buf[j].foregroundColor = fg.foregroundColor;
                         buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
                         buf[j].bold = fg.bold;
+                        buf[j].italic = fg.italic;
                         buf[j].blink = fg.blink;
                         buf[j].underline = fg.underline;
 
