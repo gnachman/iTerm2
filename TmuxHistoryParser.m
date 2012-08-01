@@ -98,7 +98,7 @@ typedef struct {
         // TODO not supported (SGR 8)
     }
     if (attributes & GRID_ATTR_ITALICS) {
-        // TODO not supported
+        temp.italic = YES;
     }
     if (attributes & GRID_ATTR_CHARSET) {
         // TODO not supported

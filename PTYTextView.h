@@ -61,7 +61,9 @@ struct PTYFontInfo {
     // Metrics
     double baselineOffset;
 
-    struct PTYFontInfo* boldVersion;  // may be NULL
+    struct PTYFontInfo* boldVersion;        // may be NULL
+    struct PTYFontInfo* italicVersion;      // may be NULL
+    struct PTYFontInfo* boldItalicVersion;  // may be NULL
 };
 typedef struct PTYFontInfo PTYFontInfo;
 
@@ -98,6 +100,10 @@ typedef struct PTYFontInfo PTYFontInfo;
     // Option to draw bold text as brighter colors.
     BOOL useBrightBold;
     
+    // option to not render in italic
+    BOOL useItalicFont;
+    float skewAmount;
+
     // NSTextInput support
     BOOL IM_INPUT_INSERT;
     NSRange IM_INPUT_SELRANGE;
@@ -413,6 +419,10 @@ typedef struct PTYFontInfo PTYFontInfo;
 - (BOOL)useBoldFont;
 - (void)setUseBoldFont:(BOOL)boldFlag;
 - (void)setUseBrightBold:(BOOL)flag;
+- (BOOL)useItalicFont;
+- (void)setUseItalicFont:(BOOL)italicFlag;
+- (float)skewAmount;
+- (void)setSkewAmount:(float)skewAmount;
 - (BOOL)blinkingCursor;
 - (void)setBlinkingCursor:(BOOL)bFlag;
 - (void)setBlinkAllowed:(BOOL)value;
@@ -653,7 +663,8 @@ typedef enum {
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)complex
                        fgColor:(int)fgColor
-                    renderBold:(BOOL*)renderBold;
+                    renderBold:(BOOL*)renderBold
+                  renderItalic:(BOOL*)renderItalic;
 
 - (PTYFontInfo*)getOrAddFallbackFont:(NSFont*)font;
 - (void)releaseAllFallbackFonts;
