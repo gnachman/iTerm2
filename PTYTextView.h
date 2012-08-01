@@ -95,10 +95,10 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // option to not render in bold
     BOOL useBoldFont;
-    
+
     // Option to draw bold text as brighter colors.
     BOOL useBrightBold;
-    
+
     // option to not render in italic
     BOOL useItalicFont;
 
@@ -134,7 +134,7 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // transparency
     double transparency;
-	double blend;
+        double blend;
 
     // data source
     VT100Screen *dataSource;
@@ -316,7 +316,7 @@ typedef struct PTYFontInfo PTYFontInfo;
     FindContext initialFindContext_;
 
     PointerController *pointer_;
-	NSCursor *cursor_;
+        NSCursor *cursor_;
 }
 
 + (NSCursor *)textViewCursor;

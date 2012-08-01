@@ -128,10 +128,10 @@ typedef struct screen_char_t
     unsigned int italic : 1;
     unsigned int blink : 1;
     unsigned int underline : 1;
-   
-    // These bits aren't used by are defined here so that the entire memory
+
+    // These bits aren't used but are defined here so that the entire memory
     // region can be initialized.
-    unsigned int unused : 26;
+    unsigned int unused : 25;
 } screen_char_t;
 
 // Standard unicode replacement string. Is a double-width character.
