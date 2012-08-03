@@ -6447,6 +6447,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 }
             }
             if (!hasBGImage ||
+                (isMatch && !bgselected) ||
                 !(bgColor == ALTSEM_BG_DEFAULT && bgAlt) ||
                 bgselected) {
                 // There's no bg image, or there's a nondefault bg on a bg image.
