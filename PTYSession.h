@@ -243,6 +243,7 @@ typedef enum {
     TmuxController *tmuxController_;
     int tmuxPane_;
     BOOL tmuxLogging_;  // log to gateway client
+    BOOL tmuxSecureLogging_;
 }
 
 // Return the current pasteboard value as a string.

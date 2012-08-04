@@ -130,6 +130,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     slowPasteBuffer = [[NSMutableString alloc] init];
     creationDate_ = [[NSDate date] retain];
+    tmuxSecureLogging_ = NO;
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(windowResized)
@@ -3765,12 +3766,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (BOOL)tmuxSetSecureLogging:(BOOL)secureLogging {
+    tmuxSecureLogging_ = secureLogging;
+}
+
 - (void)tmuxWriteData:(NSData *)data
 {
     if (EXIT) {
         return;
     }
-    TmuxLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
+    if (tmuxSecureLogging_) {
+        TmuxLog(@"Write to tmux.");
+    } else {
+        TmuxLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
+    }
     if (tmuxLogging_) {
         [self printTmuxMessage:[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]];
     }
