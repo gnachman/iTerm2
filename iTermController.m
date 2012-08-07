@@ -1263,6 +1263,9 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
             break;
 
         case WINDOW_TYPE_LEFT:
+            rect.origin.x = screenFrame.origin.x;
+            rect.origin.y = screenFrame.origin.y;
+
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
             [[[term window] animator] setFrame:rect display:YES];
             [[[term window] animator] setAlphaValue:1];
