@@ -309,6 +309,8 @@ typedef enum {
                      kThreeFingerClickGesture,
                      kThreeFingerSwipeRight,
                      kThreeFingerSwipeLeft,
+                     kThreeFingerSwipeUp,
+                     kThreeFingerSwipeDown,
                      nil];
 
     NSUInteger i = [keys indexOfObject:ident];
