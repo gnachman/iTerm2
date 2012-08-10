@@ -1214,9 +1214,12 @@ NSMutableArray* screens=0;
         NSPoint position = [(NSValue*)parameter pointValue];
         int x = position.x / charWidth;
         NSRect myFrame = [self frame];
-        myFrame.size.height = 0;
         int y = (myFrame.size.height - position.y) / lineHeight;
-        return [NSValue valueWithRange:[self _rangeOfCharAtX:x y:y]];
+        if (y < 0) {
+            return [NSValue valueWithRange:NSMakeRange(0, 0)];
+        } else {
+            return [NSValue valueWithRange:[self _rangeOfCharAtX:x y:y]];
+        }
     } else if ([attribute isEqualToString:NSAccessibilityRangeForIndexParameterizedAttribute]) {
         //(NSValue *)  - (rangeValue) composed char range; param:(NSNumber *)
         NSUInteger theIndex = [(NSNumber*)parameter unsignedLongValue];
@@ -1239,10 +1242,10 @@ NSMutableArray* screens=0;
         int xMax = MAX(xStart, x2);
         NSRect myFrame = [self frame];
         myFrame.size.height = 0;
-        NSRect result = NSMakeRect(xMin * charWidth,
-                                   myFrame.size.height - yMin * lineHeight,
-                                   (xMax - xMin + 1) * charWidth,
-                                   (yMax - yMin + 1) * lineHeight);
+        NSRect result = NSMakeRect(MAX(0, xMin * charWidth),
+                                   MAX(0, myFrame.size.height - yMin * lineHeight),
+                                   MAX(0, (xMax - xMin + 1) * charWidth),
+                                   MAX(0, (yMax - yMin + 1) * lineHeight));
         return [NSValue valueWithRect:result];
     } else {
         return [super accessibilityAttributeValue:attribute forParameter:parameter];
@@ -1309,12 +1312,12 @@ NSMutableArray* screens=0;
     return allText_;
 }
 
-- (id)accessibilityAttributeValue:(NSString *)attribute
+- (id)_accessibilityAttributeValue:(NSString *)attribute
 {
     if ([attribute isEqualToString:NSAccessibilityRoleAttribute]) {
         return NSAccessibilityTextAreaRole;
     } else if ([attribute isEqualToString:NSAccessibilityRoleDescriptionAttribute]) {
-        return NSAccessibilityRoleDescriptionForUIElement(NSAccessibilityTextAreaRole);
+        return @"Terminal window";
     } else if ([attribute isEqualToString:NSAccessibilityHelpAttribute]) {
         return nil;
     } else if ([attribute isEqualToString:NSAccessibilityFocusedAttribute]) {
@@ -1347,6 +1350,11 @@ NSMutableArray* screens=0;
     } else {
         return [super accessibilityAttributeValue:attribute];
     }
+}
+
+- (id)accessibilityAttributeValue:(NSString *)attribute {
+    id result = [self _accessibilityAttributeValue:attribute];
+    return result;
 }
 
 - (BOOL)_isCursorBlinking
