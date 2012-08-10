@@ -990,6 +990,7 @@ NSWindowDelegate,
 
 - (BOOL)_haveLeftBorder;
 - (BOOL)_haveBottomBorder;
+- (BOOL)_haveTopBorder;
 - (BOOL)_haveRightBorder;
 
 @end

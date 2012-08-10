@@ -2296,6 +2296,9 @@ NSString *sessionsKey = @"sessions";
         if ([newTerminal _haveBottomBorder]) {
             --contentSize.height;
         }
+        if ([newTerminal _haveTopBorder]) {
+            --contentSize.height;
+        }
 
         [newTerminal fitWindowToTabSize:contentSize];
     }
@@ -4369,9 +4372,7 @@ NSString *sessionsKey = @"sessions";
 {
     if (![[PreferencePanel sharedInstance] showWindowBorder]) {
         return NO;
-    } else if ([self anyFullScreen] ||
-               windowType_ == WINDOW_TYPE_TOP ||
-               windowType_ == WINDOW_TYPE_BOTTOM) {
+    } else if ([self anyFullScreen]) {
         return NO;
     } else {
         return YES;
@@ -4385,9 +4386,7 @@ NSString *sessionsKey = @"sessions";
     if (![[PreferencePanel sharedInstance] showWindowBorder]) {
         return NO;
     } else if ([self anyFullScreen] ||
-               windowType_ == WINDOW_TYPE_TOP ||
                windowType_ == WINDOW_TYPE_BOTTOM) {
-        // Only normal windows can have a left border
         return NO;
     } else if (![bottomBar isHidden]) {
         // Bottom bar visible so no need for a lower border
@@ -4404,13 +4403,21 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (BOOL)_haveTopBorder
+{
+    BOOL tabBarVisible = [self tabBarShouldBeVisible];
+    BOOL topTabBar = ([[PreferencePanel sharedInstance] tabViewType] == PSMTab_TopTab);
+    BOOL visibleTopTabBar = (tabBarVisible && topTabBar);
+    return ([[PreferencePanel sharedInstance] showWindowBorder] &&
+            !visibleTopTabBar
+            && windowType_ == WINDOW_TYPE_BOTTOM);
+}
+
 - (BOOL)_haveRightBorder
 {
     if (![[PreferencePanel sharedInstance] showWindowBorder]) {
         return NO;
-    } else if ([self anyFullScreen] ||
-               windowType_ == WINDOW_TYPE_TOP ||
-               windowType_ == WINDOW_TYPE_BOTTOM) {
+    } else if ([self anyFullScreen]) {
         return NO;
     } else if (![[[self currentSession] SCROLLVIEW] isLegacyScroller] ||
                ![self scrollbarShouldBeVisible]) {
@@ -4443,7 +4450,9 @@ NSString *sessionsKey = @"sessions";
     if ([self _haveBottomBorder]) {
         ++contentSize.height;
     }
-
+    if ([self _haveTopBorder]) {
+        ++contentSize.height;
+    }
     return [[self window] frameRectForContentRect:NSMakeRect(0, 0, contentSize.width, contentSize.height)].size;
 }
 
@@ -4555,6 +4564,9 @@ NSString *sessionsKey = @"sessions";
         }
         aRect.size = [[thisWindow contentView] frame].size;
         aRect.size.height -= aRect.origin.y;
+        if ([self _haveTopBorder]) {
+            aRect.size.height -= 1;
+        }
         aRect.size.width = [self tabviewWidth];
         PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
         [TABVIEW setFrame:aRect];
@@ -4575,6 +4587,9 @@ NSString *sessionsKey = @"sessions";
             }
             aRect.size.height -= aRect.origin.y;
             aRect.size.height -= [tabBarControl frame].size.height;
+            if ([self _haveTopBorder]) {
+                aRect.size.height -= 1;
+            }
             aRect.size.width = [self tabviewWidth];
             PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
             [TABVIEW setFrame:aRect];
@@ -4597,6 +4612,9 @@ NSString *sessionsKey = @"sessions";
             [tabBarControl setAutoresizingMask:(NSViewWidthSizable | NSViewMaxYMargin)];
             aRect.origin.y += [tabBarControl frame].size.height;
             aRect.size.height = [[thisWindow contentView] frame].size.height - aRect.origin.y;
+            if ([self _haveTopBorder]) {
+                aRect.size.height -= 1;
+            }
             PtyLog(@"repositionWidgets - Set tab view size to %fx%f", aRect.size.width, aRect.size.height);
             [TABVIEW setFrame:aRect];
         }
