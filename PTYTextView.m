@@ -6077,6 +6077,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                  color, NSForegroundColorAttributeName,
                  nil];
     }
+    NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
+    [ctx saveGraphicsState];
+    [ctx setCompositingOperation:NSCompositeSourceOver];
     NSMutableAttributedString* attributedString = [[[NSMutableAttributedString alloc] initWithString:str
                                                                                           attributes:attrs] autorelease];
     // Note that drawInRect doesn't use the right baseline, but drawWithRect
@@ -6109,6 +6112,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                   lineHeight)
                                options:0];  // NSStringDrawingUsesLineFragmentOrigin
     }
+    [ctx restoreGraphicsState];
 }
 
 - (void)_drawComplexCharRun:(CharRun *)currentRun
