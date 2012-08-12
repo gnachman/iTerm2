@@ -882,6 +882,10 @@ static VT100TCC decode_xterm(unsigned char *datap,
                 // <Esc>]50;key=value^G
                 result.type = XTERMCC_SET_KVP;
                 break;
+            case 52:
+                // base64 copy/paste (OPT_PASTE64)
+                result.type = XTERMCC_PASTE64;
+                break;
             default:
                 result.type = VT100_NOTSUPPORT;
                 break;

@@ -57,6 +57,9 @@
 #import "RegexKitLite.h"
 #import "TmuxStateParser.h"
 
+// for OSC52 base64 decoding
+#import <apr-1/apr_base64.h>
+
 #define MAX_SCROLLBACK_LINES 1000000
 #define MAX_SCROLL_AT_ONCE 1024
 #define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array
@@ -1395,6 +1398,51 @@ static char* FormatCont(int c)
     blinkingCursor = flag;
 }
 
+- (void)processOSC52: (NSString*) commandString
+{
+    //
+    // - set access
+    //   ESC ] 5 2 ; Pc ; <base64 encoded string> ST
+    //
+    // - get access
+    //   ESC ] 5 2 ; Pc ; ? ST
+    //
+    // Pc consists from:
+    //   'p', 's', 'c', '0', '1', '2', '3', '4', '5', '6', '7'
+    //
+    // Note: Pc is ignored now.
+    //
+    
+    char *buffer = (char*)[commandString cStringUsingEncoding:NSASCIIStringEncoding];
+
+    // ignore first parameter now
+    while (strchr("psc01234567", *buffer)) {
+        ++buffer;
+    }
+    if (*buffer != ';') {
+        return; // fail to parse
+    }
+    ++buffer;    
+    if (*buffer == '?') { // OSC 52 get access
+        // TODO: Now get access is not implemented.
+    } else { // OSC 52 set access
+        
+        // decode base64 string.
+        int destLength = apr_base64_decode_len(buffer);
+        char *decodedBuffer = malloc(destLength);
+        apr_base64_decode(decodedBuffer, buffer);
+        NSString *resultString = [[[NSString alloc] initWithBytesNoCopy: decodedBuffer
+                                                                 length: destLength
+                                                               encoding: [TERMINAL encoding]
+                                                           freeWhenDone: YES]
+                                  autorelease];
+        // set the result to paste board.
+        NSPasteboard* thePasteboard = [NSPasteboard generalPasteboard];
+        [thePasteboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
+        [thePasteboard setString:resultString forType:NSStringPboardType];
+    }
+}
+
 // Should the profile name be inculded in the window/tab title? Requires both
 // a per-profile option to be on as well as the global option.
 - (BOOL)_syncTitle
@@ -1734,6 +1782,9 @@ static char* FormatCont(int c)
         }
         [SESSION setWindowTitle: newTitle];
         [SESSION setName: newTitle];
+        break;
+    case XTERMCC_PASTE64:
+        [self processOSC52: [[token.u.string copy] autorelease]];
         break;
     case XTERMCC_ICON_TITLE:
         newTitle = [[token.u.string copy] autorelease];
