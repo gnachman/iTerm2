@@ -1429,13 +1429,19 @@ static char* FormatCont(int c)
         
         // decode base64 string.
         int destLength = apr_base64_decode_len(buffer);
+        if (destLength < 1) {
+            return;
+        }
         char *decodedBuffer = malloc(destLength);
-        apr_base64_decode(decodedBuffer, buffer);
+        int resultLength = apr_base64_decode(decodedBuffer, buffer);
+        if (resultLength < 0) {
+            return;
+        }
 
         // sanitize buffer
         char *inputIterator = decodedBuffer;
         char *outputIterator = decodedBuffer;
-        while (true) {
+        for (int i = 0; i < resultLength + 1; ++i) {
             char c = *inputIterator;
             if (c == 0x00) {
                 *outputIterator = 0x00; // terminate string with NULL
@@ -1443,7 +1449,7 @@ static char* FormatCont(int c)
             }
             if (c < 0x20) { // if c is control character
                 // check if c is TAB/LF/CR
-                if (c != 0x09 || c != 0x0a || c != 0x0d) {
+                if (c != 0x09 && c != 0x0a && c != 0x0d) {
                     // skip it
                     ++inputIterator;
                     continue;
