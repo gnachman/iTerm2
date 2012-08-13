@@ -1431,6 +1431,29 @@ static char* FormatCont(int c)
         int destLength = apr_base64_decode_len(buffer);
         char *decodedBuffer = malloc(destLength);
         apr_base64_decode(decodedBuffer, buffer);
+
+        // sanitize buffer
+        char *inputIterator = decodedBuffer;
+        char *outputIterator = decodedBuffer;
+        while (true) {
+            char c = *inputIterator;
+            if (c == 0x00) {
+                *outputIterator = 0x00; // terminate string with NULL
+                break;
+            }
+            if (c < 0x20) { // if c is control character
+                // check if c is TAB/LF/CR
+                if (c != 0x09 || c != 0x0a || c != 0x0d) {
+                    // skip it
+                    ++inputIterator;
+                    continue;
+                }
+            }
+            *outputIterator = c;
+            ++inputIterator;
+            ++outputIterator;
+        } 
+
         NSString *resultString = [[[NSString alloc] initWithBytesNoCopy: decodedBuffer
                                                                  length: destLength
                                                                encoding: [TERMINAL encoding]
