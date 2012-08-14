@@ -473,6 +473,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* visualBell;
     IBOutlet NSButton* flashingBell;
     IBOutlet NSButton* xtermMouseReporting;
+    IBOutlet NSButton* xtermOSC52SetAccess;
     IBOutlet NSButton* disableSmcupRmcup;
     IBOutlet NSButton* disablePrinting;
     IBOutlet NSButton* scrollbackWithStatusBar;
