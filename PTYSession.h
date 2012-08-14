@@ -142,6 +142,9 @@ typedef enum {
     // True if mouse movements are sent to the host.
     BOOL xtermMouseReporting;
 
+    // True if OSC 52 set access is enabled.
+    BOOL xtermOSC52SetAccess;
+    
     // This is not used as far as I can tell.
     int bell;
 
@@ -428,6 +431,8 @@ typedef enum {
 - (void)setDoubleWidth:(BOOL)set;
 - (BOOL)xtermMouseReporting;
 - (void)setXtermMouseReporting:(BOOL)set;
+- (BOOL)xtermOSC52SetAccess;
+- (void)setXtermOSC52SetAccess:(BOOL)set;
 - (NSDictionary *)addressBookEntry;
 
 // Return the address book that the session was originally created with.

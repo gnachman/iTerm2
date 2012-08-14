@@ -1427,6 +1427,10 @@ static char* FormatCont(int c)
         // TODO: Now get access is not implemented.
     } else { // OSC 52 set access
         
+        // check the configuration
+        if (![SESSION xtermOSC52SetAccess]) {
+            return;
+        }
         // decode base64 string.
         int destLength = apr_base64_decode_len(buffer);
         if (destLength < 1) {
