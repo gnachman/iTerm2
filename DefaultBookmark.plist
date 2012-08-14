@@ -532,6 +532,8 @@
 	</dict>
 	<key>Tags</key>
 	<array/>
+	<key>Clipboard Set Access</key>
+	<false/>
 	<key>Mouse Reporting</key>
 	<true/>
 	<key>Name</key>
