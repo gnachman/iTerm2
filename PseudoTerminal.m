@@ -1234,7 +1234,7 @@ NSString *sessionsKey = @"sessions";
     } else if (windowType == WINDOW_TYPE_LEFT) {
       rect.origin.x = xOrigin;
       rect.origin.y = yOrigin;
-      rect.size.width = virtualScreenFrame.size.width / 1.99;
+      rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
       rect.size.height = virtualScreenFrame.size.height;
     }
 
@@ -1691,13 +1691,14 @@ NSString *sessionsKey = @"sessions";
 
 - (void)canonicalizeWindowFrame {
     PtyLog(@"canonicalizeWindowFrame");
+    PTYSession* session = [self currentSession];
+    NSDictionary* abDict = [session addressBookEntry];
     NSScreen* screen = [[self window] deepestScreen];
     if (!screen) {
         PtyLog(@"No deepest screen");
-        NSDictionary* aDict = [[self currentSession] addressBookEntry];
         // Try to use the screen of the current session. Fall back to the main
         // screen if that's not an option.
-        int screenNumber = [aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : 0;
+        int screenNumber = [abDict objectForKey:KEY_SCREEN] ? [[abDict objectForKey:KEY_SCREEN] intValue] : 0;
         NSArray* screens = [NSScreen screens];
         if ([screens count] == 0) {
             PtyLog(@"We are headless");
@@ -1751,7 +1752,7 @@ NSString *sessionsKey = @"sessions";
             break;
 
         case WINDOW_TYPE_LEFT:
-          frame.size.width = [screen visibleFrame].size.width / 1.99;
+          frame.size.width = [[session TEXTVIEW] charWidth] * [[abDict objectForKey:KEY_COLUMNS] intValue];
           frame.size.height = [screen visibleFrame].size.height;
           frame.origin.y = [screen visibleFrame].origin.y;
           if ([[self window] alphaValue] == 0) {
@@ -3857,7 +3858,11 @@ NSString *sessionsKey = @"sessions";
 
     if (windowType_ == WINDOW_TYPE_LEFT) {
       frame.size.height = self.screen.visibleFrame.size.height;
-      frame.size.width = self.screen.visibleFrame.size.width / 1.99;
+
+      PTYSession* session = [self currentSession];
+      NSDictionary* abDict = [session addressBookEntry];
+      frame.size.width = [[session TEXTVIEW] charWidth] * [[abDict objectForKey:KEY_COLUMNS] intValue];
+
       frame.origin.x = [[self window] frame].origin.x;
     }
 
