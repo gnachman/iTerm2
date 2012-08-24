@@ -3861,7 +3861,8 @@ NSString *sessionsKey = @"sessions";
 
       PTYSession* session = [self currentSession];
       NSDictionary* abDict = [session addressBookEntry];
-      frame.size.width = [[session TEXTVIEW] charWidth] * [[abDict objectForKey:KEY_COLUMNS] intValue];
+      frame.size.width = ceil([[session TEXTVIEW] charWidth] *
+                              [[abDict objectForKey:KEY_COLUMNS] intValue]) + decorationSize.width;
 
       frame.origin.x = [[self window] frame].origin.x;
     }
