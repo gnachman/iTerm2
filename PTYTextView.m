@@ -2766,26 +2766,27 @@ NSMutableArray* screens=0;
                                   y:(int)y
                           withWidth:(int)width
 {
-    if (startY < y) {
-        // Start of existing selection is before cursor.
-        if (startY > endY) {
-            // start is below end. advance start up to end.
-            startY = endY;
-            startX = 0;
-        }
-        endX = width;
-        endY = [self lineNumberWithEndOfWholeLineIncludingLine:y];
-    } else {
-        // end of existing selection is at or after the cursor
+    // Move startY or endY to include y.
+    endY = y;
+
+    // Bump start and end to include full lines, if needed.
+    if ([[PreferencePanel sharedInstance] tripleClickSelectsFullLines]) {
         if (startY < endY) {
-            // start of selection is before end of selection.
-            // advance start to end.
-            startY = endY;
-            startX = endX;
+            startY = [self lineNumberWithStartOfWholeLineIncludingLine:startY];
+            endY = [self lineNumberWithEndOfWholeLineIncludingLine:endY];
+        } else {
+            startY = [self lineNumberWithEndOfWholeLineIncludingLine:startY];
+            endY = [self lineNumberWithStartOfWholeLineIncludingLine:endY];
         }
-        // set end of selection to current line
+    }
+
+    // Ensure startX and endX are correct.
+    if (startY < endY) {
+        startX = 0;
+        endX = width;
+    } else {
+        startX = width;
         endX = 0;
-        endY = [self lineNumberWithStartOfWholeLineIncludingLine:y];
     }
 }
 
