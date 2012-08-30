@@ -1413,7 +1413,7 @@ static char* FormatCont(int c)
     // Note: Pc is ignored now.
     //
     
-    char *buffer = (char*)[commandString cStringUsingEncoding:NSASCIIStringEncoding];
+    const char *buffer = [commandString UTF8String];
 
     // ignore first parameter now
     while (strchr("psc01234567", *buffer)) {
@@ -1435,15 +1435,16 @@ static char* FormatCont(int c)
         int destLength = apr_base64_decode_len(buffer);
         if (destLength < 1) {
             return;
-        }
-        char *decodedBuffer = malloc(destLength);
+        }        
+        NSMutableData *data = [NSMutableData dataWithLength: destLength];
+        char *decodedBuffer = [data mutableBytes];
         int resultLength = apr_base64_decode(decodedBuffer, buffer);
         if (resultLength < 0) {
             return;
         }
 
         // sanitize buffer
-        char *inputIterator = decodedBuffer;
+        const char *inputIterator = decodedBuffer;
         char *outputIterator = decodedBuffer;
         for (int i = 0; i < resultLength + 1; ++i) {
             char c = *inputIterator;
@@ -1464,11 +1465,8 @@ static char* FormatCont(int c)
             ++outputIterator;
         } 
 
-        NSString *resultString = [[[NSString alloc] initWithBytesNoCopy: decodedBuffer
-                                                                 length: destLength
-                                                               encoding: [TERMINAL encoding]
-                                                           freeWhenDone: YES]
-                                  autorelease];
+        NSString *resultString = [[[NSString alloc] initWithData:data
+                                                        encoding:[TERMINAL encoding]] autorelease];
         // set the result to paste board.
         NSPasteboard* thePasteboard = [NSPasteboard generalPasteboard];
         [thePasteboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
