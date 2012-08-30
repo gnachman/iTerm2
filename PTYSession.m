@@ -2302,7 +2302,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [self setAutoClose:[[aDict objectForKey:KEY_CLOSE_SESSIONS_ON_END] boolValue]];
     [self setDoubleWidth:[[aDict objectForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH] boolValue]];
     [self setXtermMouseReporting:[[aDict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue]];
-    [self setXtermOSC52SetAccess:[[aDict objectForKey:KEY_XTERM_OSC52_SET_ACCESS] boolValue]];
+    [self setXtermAllowClipboardAccess:[[aDict objectForKey:KEY_XTERM_ALLOW_CLIPBOARD_ACCESS] boolValue]];
     [TERMINAL setDisableSmcupRmcup:[[aDict objectForKey:KEY_DISABLE_SMCUP_RMCUP] boolValue]];
     [SCREEN setUnlimitedScrollback:[[aDict objectForKey:KEY_UNLIMITED_SCROLLBACK] intValue]];
     [SCREEN setScrollback:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
@@ -2891,14 +2891,14 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 	[TEXTVIEW updateCursor:[NSApp currentEvent]];
 }
 
-- (BOOL)xtermOSC52SetAccess
+- (BOOL)xtermAllowClipboardAccess
 {
-    return xtermOSC52SetAccess;
+    return xtermAllowClipboardAccess;
 }
 
-- (void)setXtermOSC52SetAccess:(BOOL)set
+- (void)setXtermAllowClipboardAccess:(BOOL)set
 {
-    xtermOSC52SetAccess = set;
+    xtermAllowClipboardAccess = set;
 }
 
 

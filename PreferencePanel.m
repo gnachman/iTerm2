@@ -2844,7 +2844,7 @@ static float versionNumber;
     [visualBell setState:[[dict objectForKey:KEY_VISUAL_BELL] boolValue] ? NSOnState : NSOffState];
     [flashingBell setState:[[dict objectForKey:KEY_FLASHING_BELL] boolValue] ? NSOnState : NSOffState];
     [xtermMouseReporting setState:[[dict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue] ? NSOnState : NSOffState];
-    [xtermOSC52SetAccess setState:[[dict objectForKey:KEY_XTERM_OSC52_SET_ACCESS] boolValue] ? NSOnState : NSOffState];
+    [xtermAllowClipboardAccess setState:[[dict objectForKey:KEY_XTERM_ALLOW_CLIPBOARD_ACCESS] boolValue] ? NSOnState : NSOffState];
     [disableSmcupRmcup setState:[[dict objectForKey:KEY_DISABLE_SMCUP_RMCUP] boolValue] ? NSOnState : NSOffState];
     [disablePrinting setState:[[dict objectForKey:KEY_DISABLE_PRINTING] boolValue] ? NSOnState : NSOffState];
     [scrollbackWithStatusBar setState:[[dict objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue] ? NSOnState : NSOffState];
@@ -3283,7 +3283,7 @@ static float versionNumber;
     [newDict setObject:[NSNumber numberWithBool:([visualBell state]==NSOnState)] forKey:KEY_VISUAL_BELL];
     [newDict setObject:[NSNumber numberWithBool:([flashingBell state]==NSOnState)] forKey:KEY_FLASHING_BELL];
     [newDict setObject:[NSNumber numberWithBool:([xtermMouseReporting state]==NSOnState)] forKey:KEY_XTERM_MOUSE_REPORTING];
-    [newDict setObject:[NSNumber numberWithBool:([xtermOSC52SetAccess state]==NSOnState)] forKey:KEY_XTERM_OSC52_SET_ACCESS];
+    [newDict setObject:[NSNumber numberWithBool:([xtermAllowClipboardAccess state]==NSOnState)] forKey:KEY_XTERM_ALLOW_CLIPBOARD_ACCESS];
     [newDict setObject:[NSNumber numberWithBool:([disableSmcupRmcup state]==NSOnState)] forKey:KEY_DISABLE_SMCUP_RMCUP];
     [newDict setObject:[NSNumber numberWithBool:([disablePrinting state]==NSOnState)] forKey:KEY_DISABLE_PRINTING];
     [newDict setObject:[NSNumber numberWithBool:([scrollbackWithStatusBar state]==NSOnState)] forKey:KEY_SCROLLBACK_WITH_STATUS_BAR];
@@ -4222,7 +4222,7 @@ static float versionNumber;
         KEY_VISUAL_BELL,
         KEY_FLASHING_BELL,
         KEY_XTERM_MOUSE_REPORTING,
-        KEY_XTERM_OSC52_SET_ACCESS,
+        KEY_XTERM_ALLOW_CLIPBOARD_ACCESS,
         KEY_DISABLE_SMCUP_RMCUP,
         KEY_DISABLE_PRINTING,
         KEY_CHARACTER_ENCODING,

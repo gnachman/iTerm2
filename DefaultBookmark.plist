@@ -532,7 +532,7 @@
 	</dict>
 	<key>Tags</key>
 	<array/>
-	<key>Clipboard Set Access</key>
+	<key>Allow Clipboard Access</key>
 	<false/>
 	<key>Mouse Reporting</key>
 	<true/>

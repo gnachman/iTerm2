@@ -57,7 +57,7 @@
 #import "RegexKitLite.h"
 #import "TmuxStateParser.h"
 
-// for OSC52 base64 decoding
+// for xterm's base64 decoding (paste64)
 #import <apr-1/apr_base64.h>
 
 #define MAX_SCROLLBACK_LINES 1000000
@@ -1398,13 +1398,13 @@ static char* FormatCont(int c)
     blinkingCursor = flag;
 }
 
-- (void)processOSC52: (NSString*) commandString
+- (void)processXtermPaste64:(NSString *)commandString
 {
     //
-    // - set access
+    // - write access
     //   ESC ] 5 2 ; Pc ; <base64 encoded string> ST
     //
-    // - get access
+    // - read access
     //   ESC ] 5 2 ; Pc ; ? ST
     //
     // Pc consists from:
@@ -1423,12 +1423,12 @@ static char* FormatCont(int c)
         return; // fail to parse
     }
     ++buffer;    
-    if (*buffer == '?') { // OSC 52 get access
-        // TODO: Now get access is not implemented.
-    } else { // OSC 52 set access
+    if (*buffer == '?') { // PASTE64(OSC 52) read access
+        // Now read access is not implemented due to security issues.
+    } else { // PASTE64(OSC 52) write access
         
         // check the configuration
-        if (![SESSION xtermOSC52SetAccess]) {
+        if (![SESSION xtermAllowClipboardAccess]) {
             return;
         }
         // decode base64 string.
@@ -1817,7 +1817,7 @@ static char* FormatCont(int c)
         [SESSION setName: newTitle];
         break;
     case XTERMCC_PASTE64:
-        [self processOSC52: [[token.u.string copy] autorelease]];
+        [self processXtermPaste64: [[token.u.string copy] autorelease]];
         break;
     case XTERMCC_ICON_TITLE:
         newTitle = [[token.u.string copy] autorelease];
