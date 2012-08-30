@@ -2933,7 +2933,7 @@ static VT100TCC decode_string(unsigned char *datap,
                 [[SCREEN session] remarry];
             }
         } else if ([key isEqualToString:@"CopyToClipboard"]) {
-            if ([[SCREEN session] xtermAllowClipboardAccess]) {
+            if ([[SCREEN session] allowClipboardAccess]) {
                 if ([value isEqualToString:@"ruler"]) {
                     [[SCREEN session] setPasteboard:NSGeneralPboard];
                 } else if ([value isEqualToString:@"find"]) {

@@ -1428,7 +1428,7 @@ static char* FormatCont(int c)
     } else { // PASTE64(OSC 52) write access
         
         // check the configuration
-        if (![SESSION xtermAllowClipboardAccess]) {
+        if (![SESSION allowClipboardAccess]) {
             return;
         }
         // decode base64 string.

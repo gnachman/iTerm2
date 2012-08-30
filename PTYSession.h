@@ -143,7 +143,7 @@ typedef enum {
     BOOL xtermMouseReporting;
 
     // True if Clipboard access is enabled.
-    BOOL xtermAllowClipboardAccess;
+    BOOL allowClipboardAccess;
     
     // This is not used as far as I can tell.
     int bell;
@@ -431,8 +431,8 @@ typedef enum {
 - (void)setDoubleWidth:(BOOL)set;
 - (BOOL)xtermMouseReporting;
 - (void)setXtermMouseReporting:(BOOL)set;
-- (BOOL)xtermAllowClipboardAccess;
-- (void)setXtermAllowClipboardAccess:(BOOL)set;
+- (BOOL)allowClipboardAccess;
+- (void)setAllowClipboardAccess:(BOOL)set;
 - (NSDictionary *)addressBookEntry;
 
 // Return the address book that the session was originally created with.
