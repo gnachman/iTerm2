@@ -72,7 +72,6 @@
 				<string key="NSFrameSize">{261, 342}</string>
 				<reference key="NSSuperview"/>
 				<reference key="NSWindow"/>
-				<reference key="NSNextKeyView"/>
 				<string key="NSClassName">ProfileListView</string>
 			</object>
 			<object class="NSCustomObject" id="517491535">
@@ -933,7 +932,6 @@
 							<string key="NSFrame">{{13, 20}, {891, 434}}</string>
 							<reference key="NSSuperview" ref="130574301"/>
 							<reference key="NSWindow"/>
-							<reference key="NSNextKeyView" ref="105539794"/>
 							<object class="NSMutableArray" key="NSTabViewItems">
 								<bool key="EncodedWithXMLCoder">YES</bool>
 								<object class="NSTabViewItem" id="403608584">
@@ -2662,7 +2660,6 @@
 												<string key="NSFrame">{{320, -10}, {579, 450}}</string>
 												<reference key="NSSuperview" ref="105539794"/>
 												<reference key="NSWindow"/>
-												<reference key="NSNextKeyView" ref="974784023"/>
 												<object class="NSMutableArray" key="NSTabViewItems">
 													<bool key="EncodedWithXMLCoder">YES</bool>
 													<object class="NSTabViewItem" id="1020441673">
@@ -6838,7 +6835,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																	<string key="NSFrame">{{28, 19}, {231, 18}}</string>
 																	<reference key="NSSuperview" ref="974784023"/>
 																	<reference key="NSWindow"/>
-																	<reference key="NSNextKeyView"/>
 																	<bool key="NSEnabled">YES</bool>
 																	<object class="NSButtonCell" key="NSCell" id="645669415">
 																		<int key="NSCellFlags">-2080244224</int>
@@ -9797,7 +9793,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																<int key="NSvFlags">256</int>
 																<string key="NSFrameSize">{849, 247}</string>
 																<reference key="NSSuperview" ref="31243526"/>
-																<reference key="NSNextKeyView" ref="111409567"/>
+																<reference key="NSNextKeyView" ref="252509478"/>
 																<bool key="NSEnabled">YES</bool>
 																<object class="NSTableHeaderView" key="NSHeaderView" id="511468618">
 																	<reference key="NSNextResponder" ref="252509478"/>
@@ -9937,7 +9933,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 												</object>
 												<string key="NSFrame">{{20, 124}, {851, 265}}</string>
 												<reference key="NSSuperview" ref="418643664"/>
-												<reference key="NSNextKeyView" ref="252509478"/>
+												<reference key="NSNextKeyView" ref="31243526"/>
 												<int key="NSsFlags">133682</int>
 												<reference key="NSVScroller" ref="111409567"/>
 												<reference key="NSHScroller" ref="144867827"/>
@@ -16888,6 +16884,14 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 						<reference key="destination" ref="760066010"/>
 					</object>
 					<int key="connectionID">6377</int>
+				</object>
+				<object class="IBConnectionRecord">
+					<object class="IBOutletConnection" key="connection">
+						<string key="label">allowClipboardAccess</string>
+						<reference key="source" ref="155244235"/>
+						<reference key="destination" ref="760066010"/>
+					</object>
+					<int key="connectionID">6378</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
@@ -29446,7 +29450,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 				<reference key="dict.values" ref="0"/>
 			</object>
 			<nil key="sourceID"/>
-			<int key="maxID">6377</int>
+			<int key="maxID">6378</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -30129,6 +30133,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>addNewMapping</string>
 							<string>advancedFontRendering</string>
 							<string>advancedWorkingDirSheet_</string>
+							<string>allowClipboardAccess</string>
 							<string>animateDimming</string>
 							<string>ansi0Color</string>
 							<string>ansi10Color</string>
@@ -30370,7 +30375,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>windowTypeLabel</string>
 							<string>wordChars</string>
 							<string>xtermMouseReporting</string>
-							<string>xtermOSC52SetAccess</string>
 						</object>
 						<object class="NSArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
@@ -30380,6 +30384,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>NSButton</string>
 							<string>NSButton</string>
 							<string>NSPanel</string>
+							<string>NSButton</string>
 							<string>NSButton</string>
 							<string>NSColorWell</string>
 							<string>NSColorWell</string>
@@ -30621,7 +30626,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>NSTextField</string>
 							<string>NSTextField</string>
 							<string>NSButton</string>
-							<string>NSButton</string>
 						</object>
 					</object>
 					<object class="NSMutableDictionary" key="toOneOutletInfosByName">
@@ -30634,6 +30638,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>addNewMapping</string>
 							<string>advancedFontRendering</string>
 							<string>advancedWorkingDirSheet_</string>
+							<string>allowClipboardAccess</string>
 							<string>animateDimming</string>
 							<string>ansi0Color</string>
 							<string>ansi10Color</string>
@@ -30875,7 +30880,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<string>windowTypeLabel</string>
 							<string>wordChars</string>
 							<string>xtermMouseReporting</string>
-							<string>xtermOSC52SetAccess</string>
 						</object>
 						<object class="NSArray" key="dict.values">
 							<bool key="EncodedWithXMLCoder">YES</bool>
@@ -30902,6 +30906,10 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							<object class="IBToOneOutletInfo">
 								<string key="name">advancedWorkingDirSheet_</string>
 								<string key="candidateClassName">NSPanel</string>
+							</object>
+							<object class="IBToOneOutletInfo">
+								<string key="name">allowClipboardAccess</string>
+								<string key="candidateClassName">NSButton</string>
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">animateDimming</string>
@@ -31865,10 +31873,6 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 							</object>
 							<object class="IBToOneOutletInfo">
 								<string key="name">xtermMouseReporting</string>
-								<string key="candidateClassName">NSButton</string>
-							</object>
-							<object class="IBToOneOutletInfo">
-								<string key="name">xtermOSC52SetAccess</string>
 								<string key="candidateClassName">NSButton</string>
 							</object>
 						</object>
