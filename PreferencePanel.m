@@ -2295,10 +2295,11 @@ static float versionNumber;
     }
     NSDictionary *remotePrefs = [self _remotePrefs];
     if (remotePrefs && [remotePrefs count]) {
-        NSDictionary *localPrefs = [NSDictionary dictionaryWithContentsOfFile:[self _prefsFilename]];
+        NSDictionary *localPrefs = [prefs dictionaryRepresentation];
         // Iterate over each set of prefs and validate that the other has the same value for each key.
         NSArray *exemptKeys = [NSArray arrayWithObjects:@"LoadPrefsFromCustomFolder",
                                @"PrefsCustomFolder", @"iTerm Version", nil];
+
         for (NSString *key in localPrefs) {
             if (![exemptKeys containsObject:key]) {
                 if (![key hasPrefix:@"NS"] &&

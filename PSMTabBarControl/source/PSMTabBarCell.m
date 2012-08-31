@@ -19,6 +19,8 @@
 
 @implementation PSMTabBarCell
 
+@synthesize isLast = _isLast;
+
 #pragma mark -
 #pragma mark Creation/Destruction
 - (id)initWithControlView:(PSMTabBarControl *)controlView

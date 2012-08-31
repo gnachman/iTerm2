@@ -332,7 +332,13 @@ static CGImageRef CGImageCreateWithNSImage(NSImage *image, CGRect sourceRect) {
 #else
     NSString *contents = [NSString stringWithFormat:@"%d", [cell count]];
 #endif
-    contents = [NSString stringWithFormat:@"%@%@", [cell modifierString], contents];
+    if ([cell count] < 9) {
+        contents = [NSString stringWithFormat:@"%@%@", [cell modifierString], contents];
+    } else if ([cell isLast]) {
+        contents = [NSString stringWithFormat:@"%@9", [cell modifierString]];
+    } else {
+        contents = @"";
+    }
     attrStr = [[[NSMutableAttributedString alloc] initWithString:contents] autorelease];
     NSRange range = NSMakeRange(0, [contents length]);
 

@@ -281,7 +281,13 @@
 #else
     NSString *contents = [NSString stringWithFormat:@"%d", [cell count]];
 #endif
-    contents = [NSString stringWithFormat:@"%@%@", [cell modifierString], contents];
+    if ([cell count] < 9) {
+        contents = [NSString stringWithFormat:@"%@%@", [cell modifierString], contents];
+    } else if ([cell isLast]) {
+        contents = [NSString stringWithFormat:@"%@9", [cell modifierString]];
+    } else {
+        contents = @"";
+    }
     return [[[NSMutableAttributedString alloc] initWithString:contents attributes:_objectCountStringAttributes] autorelease];
 }
 
