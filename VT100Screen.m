@@ -1452,7 +1452,7 @@ static char* FormatCont(int c)
                 *outputIterator = 0x00; // terminate string with NULL
                 break;
             }
-            if (c < 0x20) { // if c is control character
+            if (c > 0x00 && c < 0x20) { // if c is control character
                 // check if c is TAB/LF/CR
                 if (c != 0x09 && c != 0x0a && c != 0x0d) {
                     // skip it
