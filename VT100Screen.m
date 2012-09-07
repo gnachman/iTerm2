@@ -1412,7 +1412,6 @@ static char* FormatCont(int c)
     //
     // Note: Pc is ignored now.
     //
-    
     const char *buffer = [commandString UTF8String];
 
     // ignore first parameter now
@@ -1426,7 +1425,6 @@ static char* FormatCont(int c)
     if (*buffer == '?') { // PASTE64(OSC 52) read access
         // Now read access is not implemented due to security issues.
     } else { // PASTE64(OSC 52) write access
-        
         // check the configuration
         if (![[PreferencePanel sharedInstance] allowClipboardAccess]) {
             return;
