@@ -136,7 +136,9 @@ typedef struct PTYFontInfo PTYFontInfo;
     VT100Screen *dataSource;
     id _delegate;
 
-    //selection
+    // selection goes from startX,startY to endX,endY. The end may be before or after the start.
+    // While the selection is being made (the mouse was clicked and is being dragged) the end
+    // position moves with the cursor.
     int startX, startY, endX, endY;
     int oldStartX, oldStartY, oldEndX, oldEndY;
     char oldSelectMode;
