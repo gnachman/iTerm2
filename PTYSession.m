@@ -2898,7 +2898,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 	[TEXTVIEW updateCursor:[NSApp currentEvent]];
 }
 
-
 - (BOOL)logging
 {
     return [SHELL logging];

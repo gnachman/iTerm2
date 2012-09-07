@@ -1976,7 +1976,10 @@
 				);
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				OTHER_LDFLAGS = "-licucore";
+				OTHER_LDFLAGS = (
+					"-laprutil-1",
+					"-licucore",
+				);
 				PRODUCT_NAME = iTerm;
 				SDKROOT = macosx10.7;
 				SECTORDER_FLAGS = "";
@@ -2025,7 +2028,10 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
 				OTHER_CODE_SIGN_FLAGS = "";
-				OTHER_LDFLAGS = "-licucore";
+				OTHER_LDFLAGS = (
+					"-laprutil-1",
+					"-licucore",
+				);
 				PRODUCT_NAME = iTerm;
 				SDKROOT = macosx10.6;
 				VALID_ARCHS = "ppc i386 x86_64";
@@ -2070,7 +2076,10 @@
 					"\"$(SRCROOT)/Growl.framework\"",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.5;
-				OTHER_LDFLAGS = "-licucore";
+				OTHER_LDFLAGS = (
+					"-laprutil-1",
+					"-licucore",
+				);
 				OTHER_REZFLAGS = "";
 				PRODUCT_NAME = iTerm;
 				REZ_EXECUTABLE = YES;

@@ -177,6 +177,7 @@ void StringToScreenChars(NSString *s,
 
 - (BOOL) blinkingCursor;
 - (void) setBlinkingCursor: (BOOL) flag;
+- (void)processXtermPaste64: (NSString*) commandString;
 - (void)showCursor:(BOOL)show;
 - (void)setPlayBellFlag:(BOOL)flag;
 - (void)setShowBellFlag:(BOOL)flag;
