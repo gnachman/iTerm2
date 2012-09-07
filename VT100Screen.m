@@ -1428,7 +1428,7 @@ static char* FormatCont(int c)
     } else { // PASTE64(OSC 52) write access
         
         // check the configuration
-        if (![SESSION allowClipboardAccess]) {
+        if (![[PreferencePanel sharedInstance] allowClipboardAccess]) {
             return;
         }
         // decode base64 string.

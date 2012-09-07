@@ -134,7 +134,6 @@
 #define KEY_VISUAL_BELL                       @"Visual Bell"
 #define KEY_FLASHING_BELL                     @"Flashing Bell"
 #define KEY_XTERM_MOUSE_REPORTING             @"Mouse Reporting"
-#define KEY_ALLOW_CLIPBOARD_ACCESS            @"Allow Clipboard Access"
 #define KEY_DISABLE_SMCUP_RMCUP               @"Disable Smcup Rmcup"
 #define KEY_DISABLE_PRINTING                  @"Disable Printing"
 #define KEY_SCROLLBACK_WITH_STATUS_BAR        @"Scrollback With Status Bar"
