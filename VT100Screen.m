@@ -1434,7 +1434,7 @@ static char* FormatCont(int c)
         if (destLength < 1) {
             return;
         }        
-        NSMutableData *data = [NSMutableData dataWithLength: destLength];
+        NSMutableData *data = [NSMutableData dataWithLength:destLength];
         char *decodedBuffer = [data mutableBytes];
         int resultLength = apr_base64_decode(decodedBuffer, buffer);
         if (resultLength < 0) {
