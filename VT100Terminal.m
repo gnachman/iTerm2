@@ -2943,6 +2943,8 @@ static VT100TCC decode_string(unsigned char *datap,
                 } else {
                     [[SCREEN session] setPasteboard:NSGeneralPboard];
                 }
+            } else {
+                NSLog(@"Clipboard access denied for CopyToClipboard");
             }
         } else if ([key isEqualToString:@"EndCopy"]) {
             [[SCREEN session] setPasteboard:nil];
