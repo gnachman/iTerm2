@@ -102,7 +102,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 
     IBOutlet NSTextField* tagFilter;
 
-    // Allow clipboard access from terminal applications
+    // Allow clipboard access by terminal applications
     IBOutlet NSButton *allowClipboardAccessFromTerminal;
     BOOL defaultAllowClipboardAccess;
 
