@@ -1383,11 +1383,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         return;
     }
 
-    if (!EXIT && tmuxMode_ == TMUX_GATEWAY) {
-        [self handleKeypressInTmuxGateway:unicode];
-        return;
-    }
-
     unsigned short keycode = [event keyCode];
     if (debugKeyDown) {
         NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
@@ -1446,6 +1441,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
             }
         }
 
+        BOOL isTmuxGateway = (!EXIT && tmuxMode_ == TMUX_GATEWAY);
+
         switch (keyBindingAction) {
             case KEY_ACTION_MOVE_TAB_LEFT:
                 [[[self tab] realParentWindow] moveTabLeft:nil];
@@ -1499,25 +1496,25 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                 [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll];
                 break;
             case KEY_ACTION_ESCAPE_SEQUENCE:
-                if (EXIT) {
+                if (EXIT || isTmuxGateway) {
                     return;
                 }
                 [self sendEscapeSequence:keyBindingText];
                 break;
             case KEY_ACTION_HEX_CODE:
-                if (EXIT) {
+                if (EXIT || isTmuxGateway) {
                     return;
                 }
                 [self sendHexCode:keyBindingText];
                 break;
             case KEY_ACTION_TEXT:
-                if (EXIT) {
+                if (EXIT || isTmuxGateway) {
                     return;
                 }
                 [self sendText:keyBindingText];
                 break;
             case KEY_ACTION_RUN_COPROCESS:
-                if (EXIT) {
+                if (EXIT || isTmuxGateway) {
                     return;
                 }
                 [self launchCoprocessWithCommand:keyBindingText];
@@ -1527,13 +1524,13 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                 break;
 
             case KEY_ACTION_SEND_C_H_BACKSPACE:
-                if (EXIT) {
+                if (EXIT || isTmuxGateway) {
                     return;
                 }
                 [self writeTask:[@"\010" dataUsingEncoding:NSUTF8StringEncoding]];
                 break;
             case KEY_ACTION_SEND_C_QM_BACKSPACE:
-                if (EXIT) {
+                if (EXIT || isTmuxGateway) {
                     return;
                 }
                 [self writeTask:[@"\177" dataUsingEncoding:NSUTF8StringEncoding]]; // decimal 127
@@ -1541,9 +1538,15 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
             case KEY_ACTION_IGNORE:
                 break;
             case KEY_ACTION_IR_FORWARD:
+                if (isTmuxGateway) {
+                    return;
+                }
                 [[iTermController sharedInstance] irAdvance:1];
                 break;
             case KEY_ACTION_IR_BACKWARD:
+                if (isTmuxGateway) {
+                    return;
+                }
                 [[iTermController sharedInstance] irAdvance:-1];
                 break;
             case KEY_ACTION_SELECT_PANE_LEFT:
@@ -1581,6 +1584,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                 break;
         }
     } else {
+        // Key is not bound to an action.
+        if (!EXIT && tmuxMode_ == TMUX_GATEWAY) {
+            [self handleKeypressInTmuxGateway:unicode];
+            return;
+        }
         if (debugKeyDown) {
             NSLog(@"PTYSession keyDown no keybinding action");
         }
