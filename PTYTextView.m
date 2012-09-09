@@ -305,6 +305,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     firstMouseEventNumber_ = -1;
     fallbackFonts = [[NSMutableDictionary alloc] init];
 
+    dimmedColorCache_ = [[NSMutableDictionary alloc] init];
     [self setMarkedTextAttributes:
         [NSDictionary dictionaryWithObjectsAndKeys:
             defaultBGColor, NSBackgroundColorAttributeName,
@@ -429,10 +430,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     }
 
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [dimmedColorCache_ release];
+    [memoizedContrastingColor_ release];
     for (i = 0; i < 256; i++) {
         [colorTable[i] release];
     }
     [lastFlashUpdate_ release];
+    [cachedBackgroundColor_ release];
     [resultMap_ release];
     [findResults_ release];
     [findString_ release];
@@ -492,12 +496,14 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (void)setUseBoldFont:(BOOL)boldFlag
 {
     useBoldFont = boldFlag;
+    [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
 
 - (void)setUseBrightBold:(BOOL)flag
 {
     useBrightBold = flag;
+    [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
 
@@ -524,6 +530,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (void)setDimOnlyText:(BOOL)value
 {
     dimOnlyText_ = value;
+    [dimmedColorCache_ removeAllObjects];
     [[self superview] setNeedsDisplay:YES];
 }
 
@@ -588,6 +595,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [defaultFGColor release];
     [color retain];
     defaultFGColor = color;
+    [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
 
@@ -600,6 +608,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     BOOL isDark = ([self perceivedBrightness:color] < kBackgroundConsideredDarkThreshold);
     backgroundBrightness_ = PerceivedBrightness([color redComponent], [color greenComponent], [color blueComponent]);
     [scroller setHasDarkBackground:isDark];
+    [dimmedColorCache_ removeAllObjects];
+    [cachedBackgroundColor_ release];
+    cachedBackgroundColor_ = nil;
     [self setNeedsDisplay:YES];
 }
 
@@ -608,6 +619,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [defaultBoldColor release];
     [color retain];
     defaultBoldColor = color;
+    [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
 
@@ -616,6 +628,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [defaultCursorColor release];
     [color retain];
     defaultCursorColor = color;
+    [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
 
@@ -624,6 +637,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [selectedTextColor release];
     [aColor retain];
     selectedTextColor = aColor;
+    [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
 
@@ -632,6 +646,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [cursorTextColor release];
     [aColor retain];
     cursorTextColor = aColor;
+    [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
 
@@ -671,6 +686,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [colorTable[theIndex] release];
     [theColor retain];
     colorTable[theIndex] = theColor;
+    [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
 
@@ -723,7 +739,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     double r = [orig redComponent];
     double g = [orig greenComponent];
     double b = [orig blueComponent];
-
+    double alpha = [orig alphaComponent];
     // This algorithm limits the dynamic range of colors as well as brightening
     // them. Both attributes change in proportion to the dimmingAmount_.
 
@@ -735,24 +751,66 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         return [NSColor colorWithCalibratedRed:(1 - dimmingAmount_) * r + dimmingAmount_ * kCenter
                                          green:(1 - dimmingAmount_) * g + dimmingAmount_ * kCenter
                                           blue:(1 - dimmingAmount_) * b + dimmingAmount_ * kCenter
-                                         alpha:[orig alphaComponent]];
+                                         alpha:alpha];
     } else {
         return [NSColor colorWithCalibratedRed:(1 - dimmingAmount_) * r + dimmingAmount_ * backgroundBrightness_
                                          green:(1 - dimmingAmount_) * g + dimmingAmount_ * backgroundBrightness_
                                           blue:(1 - dimmingAmount_) * b + dimmingAmount_ * backgroundBrightness_
-                                         alpha:[orig alphaComponent]];
+                                         alpha:alpha];
     }
 }
 
-- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold isBackground:(BOOL)isBackground
+// Provide a dimmed version of a color. It includes a caching optimization that
+// really helps when dimming is on.
+- (NSColor *)_dimmedColorForCode:(int)theIndex
+	      alternateSemantics:(BOOL)alt
+			    bold:(BOOL)isBold
+		      background:(BOOL)isBackground
 {
-    NSColor *theColor = [self _colorForCode:theIndex
-                         alternateSemantics:alt
-                                       bold:isBold];
+    if (dimmingAmount_ == 0) {
+	// No dimming: return plain-vanilla color.
+	NSColor *theColor = [self _colorForCode:theIndex
+			        alternateSemantics:alt
+					      bold:isBold];
+        return theColor;
+    }
+
+    // Dimming is on. See if the dimmed version of the color is cached.
+    // The max number of keys is 2^11 so this won't take too much memory.
+    // This cache provides a 20%ish performance gain when dimming is on.
+    int key = (((theIndex & 0xff) << 3) |
+               ((alt ? 1 : 0) << 2) |
+               ((isBold ? 1 : 0) << 1) |
+               ((isBackground ? 1 : 0) << 0));
+    NSNumber *numKey = [NSNumber numberWithInt:key];
+    NSColor *cacheEntry = [dimmedColorCache_ objectForKey:numKey];
+    if (cacheEntry ) {
+        return cacheEntry;
+    } else {
+	NSColor *theColor = [self _colorForCode:theIndex
+			        alternateSemantics:alt
+					      bold:isBold];
+        NSColor *dimmedColor = [self _dimmedColorFrom:theColor];
+        [dimmedColorCache_ setObject:dimmedColor forKey:numKey];
+        return dimmedColor;
+    }
+}
+
+- (NSColor*)colorForCode:(int)theIndex
+      alternateSemantics:(BOOL)alt
+                    bold:(BOOL)isBold
+            isBackground:(BOOL)isBackground
+{
     if (isBackground && dimOnlyText_) {
+	NSColor *theColor = [self _colorForCode:theIndex
+			     alternateSemantics:alt
+					   bold:isBold];
         return theColor;
     } else {
-        return [self _dimmedColorFrom:theColor];
+        return [self _dimmedColorForCode:theIndex
+		      alternateSemantics:alt
+				    bold:isBold
+			      background:isBackground];
     }
 }
 
@@ -766,6 +824,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [selectionColor release];
     [aColor retain];
     selectionColor = aColor;
+    [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
 
@@ -2191,7 +2250,7 @@ NSMutableArray* screens=0;
     keyIsARepeat = [event isARepeat];
     if (debugKeyDown) {
         NSLog(@"PTYTextView keyDown modflag=%d keycode=%d", modflag, (int)keyCode);
-        NSLog(@"prev=%@", prev);
+        NSLog(@"prev=%d", (int)prev);
         NSLog(@"hasActionableKeyMappingForEvent=%d", (int)[delegate hasActionableKeyMappingForEvent:event]);
         NSLog(@"modFlag & (NSNumericPadKeyMask | NSFUnctionKeyMask)=%d", (modflag & (NSNumericPadKeyMask | NSFunctionKeyMask)));
         NSLog(@"charactersIgnoringModififiers length=%d", (int)[[event charactersIgnoringModifiers] length]);
@@ -5007,6 +5066,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)setTransparency:(double)fVal
 {
     transparency = fVal;
+    [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
 
@@ -5018,22 +5078,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)setBlend:(double)fVal
 {
     blend = MIN(MAX(0.3, fVal), 1);
+    [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
 
 - (void)setSmartCursorColor:(BOOL)value
 {
     colorInvertedCursor = value;
+    [dimmedColorCache_ removeAllObjects];
 }
 
 - (void)setMinimumContrast:(double)value
 {
     minimumContrast_ = value;
+    [memoizedContrastingColor_ release];
+    memoizedContrastingColor_ = nil;
+    [dimmedColorCache_ removeAllObjects];
 }
 
 - (void)setDimmingAmount:(double)value
 {
     dimmingAmount_ = value;
+    [cachedBackgroundColor_ release];
+    cachedBackgroundColor_ = nil;
+    [dimmedColorCache_ removeAllObjects];
     [[self superview] setNeedsDisplay:YES];
 }
 
@@ -5268,6 +5336,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     findCursorView_ = nil;
 }
 
+// The background color is cached separately from other dimmed colors because
+// it may be used with different alpha values than foreground colors.
+- (NSColor *)cachedDimmedBackgroundColorWithAlpha:(double)alpha
+{
+    if (!cachedBackgroundColor_ || cachedBackgroundColorAlpha_ != alpha) {
+        [cachedBackgroundColor_ release];
+        cachedBackgroundColor_ = [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] retain];
+        cachedBackgroundColorAlpha_ = alpha;
+    }
+    return cachedBackgroundColor_;
+}
+
 - (void)drawFlippedBackground:(NSRect)bgRect toPoint:(NSPoint)dest
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
@@ -5279,21 +5359,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                              useTransparency:[self useTransparency]];
                 // Blend default bg color
         NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
-                                                  alternateSemantics:YES
-                                                                                bold:NO
-                                                                isBackground:YES];
-                [[aColor colorWithAlphaComponent:1 - blend] set];
-                NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
-                                                                                        dest.y + bgRect.origin.y,
-                                                                                        bgRect.size.width,
-                                                                                        bgRect.size.height), NSCompositeSourceOver);
+                              alternateSemantics:YES
+					    bold:NO
+				    isBackground:YES];
+	[[aColor colorWithAlphaComponent:1 - blend] set];
+        NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
+                                            dest.y + bgRect.origin.y,
+                                            bgRect.size.width,
+                                            bgRect.size.height), NSCompositeSourceOver);
     } else {
-                // No bg image
+        // No bg image
         if (![self useTransparency]) {
             alpha = 1;
         }
         if (!dimOnlyText_) {
-            [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+            [[self cachedDimmedBackgroundColorWithAlpha:alpha] set];
         } else {
             [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
         }
@@ -5312,24 +5392,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                                      toPoint:dest
                                                              useTransparency:[self useTransparency]];
-                // Blend default bg color over bg iamge.
-                NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
-                                                  alternateSemantics:YES
-                                                                                bold:NO
-                                                                isBackground:YES];
-                [[aColor colorWithAlphaComponent:1 - blend] set];
-                NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
-                                                                                        dest.y + bgRect.origin.y,
-                                                                                        bgRect.size.width,
-                                                                                        bgRect.size.height),
-                                                                 NSCompositeSourceOver);
+	// Blend default bg color over bg image.
+        NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
+                              alternateSemantics:YES
+					    bold:NO
+				    isBackground:YES];
+        [[aColor colorWithAlphaComponent:1 - blend] set];
+        NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
+                                            dest.y + bgRect.origin.y,
+                                            bgRect.size.width,
+                                            bgRect.size.height),
+                                 NSCompositeSourceOver);
     } else {
         // No bg image
         if (![self useTransparency]) {
             alpha = 1;
         }
         if (!dimOnlyText_) {
-            [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+            [[self cachedDimmedBackgroundColorWithAlpha:alpha] set];
         } else {
             [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
         }
@@ -5346,19 +5426,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                              useTransparency:[self useTransparency]];
                 // Blend default bg color over bg iamge.
-                NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
-                                                  alternateSemantics:YES
-                                                                                bold:NO
-                                                                isBackground:YES];
-                [[aColor colorWithAlphaComponent:1 - blend] set];
-                NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
+        NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
+                          alternateSemantics:YES
+                                        bold:NO
+                                isBackground:YES];
+	[[aColor colorWithAlphaComponent:1 - blend] set];
+	NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
     } else {
         // Either draw a normal bg or, if transparency is off, blend the default bg color over the bg image.
         if (![self useTransparency]) {
             alpha = 1;
         }
         if (!dimOnlyText_) {
-            [[self _dimmedColorFrom:[[self defaultBGColor] colorWithAlphaComponent:alpha]] set];
+            [[self cachedDimmedBackgroundColorWithAlpha:alpha] set];
         } else {
             [[[self defaultBGColor] colorWithAlphaComponent:alpha] set];
         }
@@ -5810,15 +5890,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:x1 green:x2 blue:x3 alpha:a]];
 }
 
-- (NSColor*)color:(NSColor*)mainColor withContrastAgainst:(NSColor*)otherColor
+- (NSColor*)computeColorWithComponents:(double *)mainComponents
+         withContrastAgainstComponents:(double *)otherComponents
 {
-    double r = [mainColor redComponent];
-    double g = [mainColor greenComponent];
-    double b = [mainColor blueComponent];
+    const double r = mainComponents[0];
+    const double g = mainComponents[1];
+    const double b = mainComponents[2];
+    const double a = mainComponents[3];
+
+    const double or = otherComponents[0];
+    const double og = otherComponents[1];
+    const double ob = otherComponents[2];
+
     double mainBrightness = PerceivedBrightness(r, g, b);
-    double otherBrightness = PerceivedBrightness([otherColor redComponent],
-                                                 [otherColor greenComponent],
-                                                 [otherColor blueComponent]);
+    double otherBrightness = PerceivedBrightness(or, og, ob);
     CGFloat brightnessDiff = fabs(mainBrightness - otherBrightness);
     if (brightnessDiff < minimumContrast_) {
         CGFloat error = fabs(brightnessDiff - minimumContrast_);
@@ -5848,11 +5933,43 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         return [self colorWithRed:r
                             green:g
                              blue:b
-                            alpha:[mainColor alphaComponent]
+                            alpha:a
                     withPerceivedBrightness:targetBrightness];
     } else {
-        return mainColor;
+        return nil;
     }
+}
+
+- (NSColor*)color:(NSColor*)mainColor withContrastAgainst:(NSColor*)otherColor
+{
+    double rgb[4];
+    rgb[0] = [mainColor redComponent];
+    rgb[1] = [mainColor greenComponent];
+    rgb[2] = [mainColor blueComponent];
+    rgb[3] = [mainColor alphaComponent];
+
+    double orgb[3];
+    orgb[0] = [otherColor redComponent];
+    orgb[1] = [otherColor greenComponent];
+    orgb[2] = [otherColor blueComponent];
+
+    if (!memoizedContrastingColor_ ||
+	memcmp(rgb, memoizedMainRGB_, sizeof(rgb)) ||
+	memcmp(orgb, memoizedOtherRGB_, sizeof(orgb))) {
+	// We memoize the last returned value not so much for performance as for
+	// consistency. It ensures that two consecutive calls for the same color
+	// will return the same pointer. See the note at the call site in
+	// _constructRuns:theLine:...matches:.
+        [memoizedContrastingColor_ release];
+        memoizedContrastingColor_ = [[self computeColorWithComponents:rgb
+					withContrastAgainstComponents:orgb] retain];
+        if (!memoizedContrastingColor_) {
+            memoizedContrastingColor_ = [mainColor retain];
+        }
+        memmove(memoizedMainRGB_, rgb, sizeof(rgb));
+        memmove(memoizedOtherRGB_, orgb, sizeof(orgb));
+    }
+    return memoizedContrastingColor_;
 }
 
 - (int)_constructRuns:(NSPoint)initialPoint
@@ -5911,6 +6028,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (bgselected) {
             // Is a selection.
             isSelection = YES;
+	    // NOTE: This could be optimized by caching the color.
             thisCharColor = [self _dimmedColorFrom:selectedTextColor];
         } else {
             // Not a selection.
@@ -5989,6 +6107,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
             // Create a new run if needed (this char differs from the previous
             // or is the first in this line or comes after a nondrawable.
+	    // NOTE: The test for thisCharColor == prevCharColor is a gross hack
+	    // but I think it's safe. Obviously, == is a wrong way to compare
+	    // colors. Because colors are never dealloced within this loop,
+	    // pointer equality implies color equality (but color equality does NOT
+	    // imply pointer equality). This is fragile but fast and any false
+	    // negatives have a minor performance hit.
             BOOL beginNewRun = NO;
             if (!havePrevChar ||
                 prevCharRunType == MULTIPLE_CODE_POINT_RUN ||
@@ -7960,6 +8084,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     advancedFontRendering = [[PreferencePanel sharedInstance] advancedFontRendering];
     strokeThickness = [[PreferencePanel sharedInstance] strokeThickness];
+    [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
     [self setDimOnlyText:[[PreferencePanel sharedInstance] dimOnlyText]];
 }

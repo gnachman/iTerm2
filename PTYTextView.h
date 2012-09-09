@@ -177,6 +177,19 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     NSMutableDictionary* fallbackFonts;
 
+    // Maps a NSNumber int consisting of color index, alternate fg semantics
+    // flag, bold flag, and background flag to NSColor*s.
+    NSMutableDictionary* dimmedColorCache_;
+
+    // Dimmed background color with alpha.
+    NSColor *cachedBackgroundColor_;
+    double cachedBackgroundColorAlpha_;  // cached alpha value (comparable to another double)
+
+    // Previuos contrasting color returned
+    NSColor *memoizedContrastingColor_;
+    double memoizedMainRGB_[4];  // rgba for "main" color memoized.
+    double memoizedOtherRGB_[3];  // rgb for "other" color memoized.
+
     // Indicates if a selection that scrolls the window is in progress.
     // Negative value: scroll up.
     // Positive value: scroll down.
