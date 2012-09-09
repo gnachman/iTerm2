@@ -3965,10 +3965,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (BOOL)_broadcastToggleable
 {
-    PseudoTerminal *pty = [[[dataSource session] tab] realParentWindow];
-    if ([pty broadcastMode] == BROADCAST_OFF && [[pty currentSession] TEXTVIEW] == self) {
-        return NO;
-    }
+    // There used to be a restriction that you could not toggle broadcasting on
+    // the current session if no others were on, but that broke the feature for
+    // focus-follows-mouse users. This is an experiment to see if removing that
+    // restriction works. 9/8/12
     return YES;
 }
 

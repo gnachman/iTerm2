@@ -4124,19 +4124,16 @@ NSString *sessionsKey = @"sessions";
     } else if ([broadcastViewIds_ count] == 1) {
         // Turned on one session so add the current session.
         [broadcastViewIds_ addObject:[NSNumber numberWithInt:[[[self currentSession] view] viewId]]];
-        if ([broadcastViewIds_ count] == 1) {
-            // The client did a bad thing by allowing you to toggle the current session! Abort!
-            broadcastMode_ = BROADCAST_OFF;
-            [broadcastViewIds_ removeAllObjects];
-        }
+	// NOTE: There may still be only one session. This is of use to focus
+	// follows mouse users who want to toggle particular panes.
     }
     for (PTYTab *aTab in [self tabs]) {
         for (PTYSession *aSession in [aTab sessions]) {
             [[aSession view] setNeedsDisplay:YES];
         }
     }
-        // Update dimming of panes.
-        [self _refreshTerminal:nil];
+    // Update dimming of panes.
+    [self _refreshTerminal:nil];
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     [itad updateBroadcastMenuState];
 }
