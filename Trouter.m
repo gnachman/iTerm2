@@ -171,8 +171,16 @@
                 path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
             }
 
-            [NSTask launchedTaskWithLaunchPath:@"/usr/bin/env" arguments:[NSArray arrayWithObjects:
-                                                                          @"subl", path, nil]];
+            NSString *bundlePath = [[NSWorkspace sharedWorkspace]
+                                       absolutePathForAppBundleWithIdentifier:@"com.sublimetext.2"];
+            NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
+            NSString *executable = [NSString stringWithFormat:@"%@/Contents/MacOS/%@",
+                                       bundlePath,
+                                       [bundle objectForInfoDictionaryKey:@"CFBundleExecutable"]];
+            if (bundlePath && bundle && executable) {
+                [NSTask launchedTaskWithLaunchPath:executable
+                                         arguments:[NSArray arrayWithObjects:executable, path, nil]];
+            }
         } else {
             path = [path stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding];
             NSURL *url = [NSURL URLWithString:[NSString stringWithFormat:
