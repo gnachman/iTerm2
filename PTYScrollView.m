@@ -114,7 +114,7 @@
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    if (IsLionOrLater() &&
+    if (IsLion() &&
         ![self isLegacyScroller] &&
         self.hasDarkBackground &&
         dirtyRect.size.width > 0 &&
