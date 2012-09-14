@@ -1292,23 +1292,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         return;
     }
     if ([text length] > 0) {
-        NSMutableString *temp = [NSMutableString stringWithString:text];
-        [temp replaceOccurrencesOfString:@"\\n"
-                              withString:@"\n"
-                                 options:NSLiteralSearch
-                                   range:NSMakeRange(0, [temp length])];
-        [temp replaceOccurrencesOfString:@"\\e"
-                              withString:@"\e"
-                                 options:NSLiteralSearch
-                                   range:NSMakeRange(0, [temp length])];
-        [temp replaceOccurrencesOfString:@"\\a"
-                              withString:@"\a"
-                                 options:NSLiteralSearch
-                                   range:NSMakeRange(0, [temp length])];
-        [temp replaceOccurrencesOfString:@"\\t"
-                              withString:@"\t"
-                                 options:NSLiteralSearch
-                                   range:NSMakeRange(0, [temp length])];
+        NSString *temp = text;
+        temp = [temp stringByReplacingEscapedChar:'n' withString:@"\n"];
+        temp = [temp stringByReplacingEscapedChar:'e' withString:@"\e"];
+        temp = [temp stringByReplacingEscapedChar:'a' withString:@"\a"];
+        temp = [temp stringByReplacingEscapedChar:'t' withString:@"\t"];
         [self writeTask:[temp dataUsingEncoding:NSUTF8StringEncoding]];
     }
 }
