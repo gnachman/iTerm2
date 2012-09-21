@@ -1111,7 +1111,19 @@ static char* FormatCont(int c)
                                                          withWidth:WIDTH
                                                         toPosition:&selectionStartPosition
                                                             offset:0];
-        endPostionBeforeEnd = [linebuffer convertCoordinatesAtX:[display selectionEndX]
+        int modifiedSelectionEndX = 0;
+        // Move the modifiedSelectionEndX back to the first nonzero character because linebuffer
+        // positions can't represent nul positions correctly.
+        screen_char_t *theLine = [self getLineAtIndex:[display selectionEndY]];
+        if (theLine) {
+            for (int j = [display selectionEndX] - 1; j >= 0; j--) {
+                if (theLine[j].code != 0) {
+                    modifiedSelectionEndX = j + 1;
+                    break;
+                }
+            }
+        }
+        endPostionBeforeEnd = [linebuffer convertCoordinatesAtX:modifiedSelectionEndX
                                                             atY:[display selectionEndY]
                                                       withWidth:WIDTH
                                                      toPosition:&selectionEndPosition
@@ -1898,14 +1910,14 @@ static char* FormatCont(int c)
         }
         break;
 
-	case UNDERSCORE_TMUX_UNSUPPORTED:
-		[self crlf];
-		[self setString:@"You have run an unsupported version of tmux. Please "
-			@"install a version that is compatible with this build of iTerm2."
-					ascii:YES];
-		[self crlf];
-		[SESSION writeTask:[@"detach\n\n" dataUsingEncoding:NSUTF8StringEncoding]];
-		break;
+        case UNDERSCORE_TMUX_UNSUPPORTED:
+                [self crlf];
+                [self setString:@"You have run an unsupported version of tmux. Please "
+                        @"install a version that is compatible with this build of iTerm2."
+                                        ascii:YES];
+                [self crlf];
+                [SESSION writeTask:[@"detach\n\n" dataUsingEncoding:NSUTF8StringEncoding]];
+                break;
 
     case UNDERSCORE_TMUX1:
         [SESSION startTmuxMode];
@@ -1986,7 +1998,7 @@ static char* FormatCont(int c)
 
 - (void)mouseModeDidChange:(MouseMode)mouseMode
 {
-	[display updateCursor:nil];
+        [display updateCursor:nil];
 }
 
 - (BOOL)printToAnsi
