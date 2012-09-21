@@ -1046,6 +1046,9 @@ static char* FormatCont(int c)
         linebuffer = tempLineBuffer;
     }
 
+    // Append the screen to the current line buffer. If in alternate screen mode, this appends the
+    // alternate screen to an empty line buffer. If not, this appends the base screen to the normal
+    // line buffer.
     if (HEIGHT - new_height >= usedHeight) {
         // Height is decreasing but pushing HEIGHT lines into the buffer would scroll all the used
         // lines off the top, leaving the cursor floating without any text. Keep all used lines that
@@ -1062,47 +1065,35 @@ static char* FormatCont(int c)
             [self _appendScreenToScrollback:HEIGHT];
         }
     }
+    
+    THIS IS ALL FUCKED UP! When you are in alt screen mode, changing the size adds lots of garbage from the base screen into the scrollback buffer that shouldn't be there.
 
-    int altUsedHeight = 0;
+    int altScreenLinesAppended = 0;
     if (temp_buffer) {
-        // In alternate screen mode.
-        screen_char_t *saved_buffer_lines = buffer_lines;
-        screen_char_t *saved_screen_top = screen_top;
-        int savedCursorY = cursorY;
-        int savedCursorX = cursorX;
-
-        // Use the "real" line buffer for the base screen.
+        // Append alt screen contents to primary line buffer so that we can get positions for selection ranges.
         linebuffer = saved_line_buffer;
-        buffer_lines = temp_buffer;
-        screen_top = temp_buffer;
-        cursorX = SAVE_CURSOR_X;
-        cursorY = SAVE_CURSOR_Y;
-
-        altUsedHeight = [self _usedHeight];
-        if (HEIGHT - new_height >= altUsedHeight) {
+        // Append the screen to the current line buffer. If in alternate screen mode, this appends the
+        // alternate screen to an empty line buffer. If not, this appends the base screen to the normal
+        // line buffer.
+        if (HEIGHT - new_height >= usedHeight) {
             // Height is decreasing but pushing HEIGHT lines into the buffer would scroll all the used
             // lines off the top, leaving the cursor floating without any text. Keep all used lines that
             // fit onscreen.
-            [self _appendScreenToScrollback:MAX(altUsedHeight, new_height)];
+            altScreenLinesAppended = [self _appendScreenToScrollback:MAX(usedHeight, new_height)];
         } else {
             if (new_height < HEIGHT) {
                 // Screen is shrinking.
                 // If possible, keep the last used line a fixed distance from the top of
                 // the screen. If not, at least save all the used lines.
-                [self _appendScreenToScrollback:altUsedHeight];
+                altScreenLinesAppended = [self _appendScreenToScrollback:usedHeight];
             } else {
-                // Keep last used line a fixed distance from the bottom of the screen
-                [self _appendScreenToScrollback:HEIGHT];
+                // Screen is growing. New content may be brought in on top.
+                altScreenLinesAppended = [self _appendScreenToScrollback:HEIGHT];
             }
         }
-
-        linebuffer = tempLineBuffer;
-        buffer_lines = saved_buffer_lines;
-        screen_top = saved_screen_top;
-        cursorX = savedCursorX;
-        cursorY = savedCursorY;
     }
 
+    // save selection position
     BOOL startPositionBeforeEnd = NO;
     BOOL endPostionBeforeEnd = NO;
     if (hasSelection) {
@@ -1130,6 +1121,7 @@ static char* FormatCont(int c)
                                                          offset:0];
     }
 
+    // Convert selection endpoints (if legit) to x,y coords in the new width.
     int newSelStartX = -1, newSelStartY = -1;
     int newSelEndX = -1, newSelEndY = -1;
     if (hasSelection && startPositionBeforeEnd) {
@@ -1146,6 +1138,56 @@ static char* FormatCont(int c)
             newSelEndX = WIDTH;
             newSelEndY = [linebuffer numLinesWithWidth: new_width] + HEIGHT - 1;
         }
+    }
+
+    // baseUsedHeight gives the number of lines in the base screen that have
+    // content. It's only set if there is an alternate screen so the base
+    // screen can be restored with new line wrapping later on. It's only set
+    // when in alternate screen mode (in "normal" mode, only the base screen and
+    // solitary line buffer are re-wrapped).
+    int baseUsedHeight = 0;
+    if (temp_buffer) {
+        // In alternate screen mode.
+        // Remove pushed-on alt screen (it was only there for computing
+        // selection locations in the context of the full line buffer):
+        [self _popScrollbackLines:altScreenLinesAppended];
+
+        // Append _base_ screen to the permanent line buffer so we can pop it
+        // off later with new line wrapping.
+        screen_char_t *saved_buffer_lines = buffer_lines;
+        screen_char_t *saved_screen_top = screen_top;
+        int savedCursorY = cursorY;
+        int savedCursorX = cursorX;
+
+        // Use the "real" line buffer for the base screen.
+        buffer_lines = temp_buffer;
+        screen_top = temp_buffer;
+        cursorX = SAVE_CURSOR_X;
+        cursorY = SAVE_CURSOR_Y;
+
+        baseUsedHeight = [self _usedHeight];
+        if (HEIGHT - new_height >= baseUsedHeight) {
+            // Height is decreasing but pushing HEIGHT lines into the buffer would scroll all the used
+            // lines off the top, leaving the cursor floating without any text. Keep all used lines that
+            // fit onscreen.
+            [self _appendScreenToScrollback:MAX(baseUsedHeight, new_height)];
+        } else {
+            if (new_height < HEIGHT) {
+                // Screen is shrinking.
+                // If possible, keep the last used line a fixed distance from the top of
+                // the screen. If not, at least save all the used lines.
+                [self _appendScreenToScrollback:baseUsedHeight];
+            } else {
+                // Keep last used line a fixed distance from the bottom of the screen
+                [self _appendScreenToScrollback:HEIGHT];
+            }
+        }
+
+        linebuffer = tempLineBuffer;  // restore line buffer to temporary alt-screen version
+        buffer_lines = saved_buffer_lines;
+        screen_top = saved_screen_top;
+        cursorX = savedCursorX;
+        cursorY = savedCursorY;
     }
 
 #ifdef DEBUG_RESIZEDWIDTH
@@ -1182,7 +1224,7 @@ static char* FormatCont(int c)
     // Restore the screen contents that were pushed onto the linebuffer.
     [self restoreScreenFromScrollbackWithDefaultLine:[self _getDefaultLineWithWidth:WIDTH]];
 
-    // If we're in the alternate screen, restore its contents from the temporary
+    // If we're in the alternate screen, restore the base screen's contents from the temporary
     // linebuffer.
     if (temp_buffer) {
         screen_char_t *saved_buffer_lines = buffer_lines;
@@ -1213,7 +1255,7 @@ static char* FormatCont(int c)
             // Shrinking (avoid pulling in stuff from scrollback, pull in no more
             // than might have been pushed, even if more is available)
             [self restoreScreenFromScrollbackWithDefaultLine:aDefaultLine
-                                                        upTo:altUsedHeight];
+                                                        upTo:baseUsedHeight];
         }
         SAVE_CURSOR_X = cursorX;
         SAVE_CURSOR_Y = cursorY;
@@ -1277,10 +1319,12 @@ static char* FormatCont(int c)
     if (hasSelection &&
         newSelStartY >= linesDropped &&
         newSelEndY >= linesDropped) {
+        // TODO(georgen): There's a wee bug here. If you're in alternate screen mode and the screen becomes smaller, the top N lines are thrown away. That makes Y offsets below that point wrong and Y offsets within that range totally insanely wrong. The right thing to do would be to decrease offsets beneath that point by N.
+        int maxY = [self numberOfLines];
         [display setSelectionFromX:newSelStartX
-                             fromY:newSelStartY - linesDropped
+                             fromY:MAX(0, MIN(maxY, newSelStartY - linesDropped))
                                toX:newSelEndX
-                               toY:newSelEndY - linesDropped];
+                               toY:MAX(0, MIN(maxY, newSelEndY - linesDropped))];
     } else {
         [display deselect];
     }
