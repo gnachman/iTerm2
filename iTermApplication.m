@@ -161,14 +161,14 @@
                 if (!digit) {
                     digit = [[event characters] intValue];
                 }
-                if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
-                    // Command (or selected modifier)+number: Switch to tab by number.
-                    [tabView selectTabViewItemAtIndex:digit-1];
-                    return;
-                }
                 if (digit == 9 && [tabView numberOfTabViewItems] > 0) {
                     // Command (or selected modifier)+9: Switch to last tab if there are fewer than 9.
                     [tabView selectTabViewItemAtIndex:[tabView numberOfTabViewItems]-1];
+                    return;
+                }
+                if (digit >= 1 && digit <= [tabView numberOfTabViewItems]) {
+                    // Command (or selected modifier)+number: Switch to tab by number.
+                    [tabView selectTabViewItemAtIndex:digit-1];
                     return;
                 }
             }

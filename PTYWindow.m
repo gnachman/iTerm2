@@ -178,7 +178,8 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
 
 - (void)toggleFullScreen:(id)sender
 {
-    if (![[PreferencePanel sharedInstance] lionStyleFullscreen]) {
+    if (![[self delegate] lionFullScreen]  &&
+        ![[PreferencePanel sharedInstance] lionStyleFullscreen]) {
         // The user must have clicked on the toolbar arrow, but the pref is set
         // to use traditional fullscreen.
         [[self delegate] performSelector:@selector(toggleTraditionalFullScreenMode)

@@ -34,6 +34,7 @@
 @protocol PTYWindowDelegateProtocol
 - (void) windowWillToggleToolbarVisibility: (id) sender;
 - (void) windowDidToggleToolbarVisibility: (id) sender;
+- (BOOL) lionFullScreen;
 @end
 
 // See http://www.google.com/search?sourceid=chrome&ie=UTF-8&q=_setContentHasShadow

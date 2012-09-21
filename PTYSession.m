@@ -130,6 +130,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     slowPasteBuffer = [[NSMutableString alloc] init];
     creationDate_ = [[NSDate date] retain];
+    tmuxSecureLogging_ = NO;
 
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(windowResized)
@@ -1291,23 +1292,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         return;
     }
     if ([text length] > 0) {
-        NSMutableString *temp = [NSMutableString stringWithString:text];
-        [temp replaceOccurrencesOfString:@"\\n"
-                              withString:@"\n"
-                                 options:NSLiteralSearch
-                                   range:NSMakeRange(0, [temp length])];
-        [temp replaceOccurrencesOfString:@"\\e"
-                              withString:@"\e"
-                                 options:NSLiteralSearch
-                                   range:NSMakeRange(0, [temp length])];
-        [temp replaceOccurrencesOfString:@"\\a"
-                              withString:@"\a"
-                                 options:NSLiteralSearch
-                                   range:NSMakeRange(0, [temp length])];
-        [temp replaceOccurrencesOfString:@"\\t"
-                              withString:@"\t"
-                                 options:NSLiteralSearch
-                                   range:NSMakeRange(0, [temp length])];
+        NSString *temp = text;
+        temp = [temp stringByReplacingEscapedChar:'n' withString:@"\n"];
+        temp = [temp stringByReplacingEscapedChar:'e' withString:@"\e"];
+        temp = [temp stringByReplacingEscapedChar:'a' withString:@"\a"];
+        temp = [temp stringByReplacingEscapedChar:'t' withString:@"\t"];
         [self writeTask:[temp dataUsingEncoding:NSUTF8StringEncoding]];
     }
 }
@@ -1382,11 +1371,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         return;
     }
 
-    if (!EXIT && tmuxMode_ == TMUX_GATEWAY) {
-        [self handleKeypressInTmuxGateway:unicode];
-        return;
-    }
-
     unsigned short keycode = [event keyCode];
     if (debugKeyDown) {
         NSLog(@"event:%@ (%x+%x)[%@][%@]:%x(%c) <%d>", event,modflag,keycode,keystr,unmodkeystr,unicode,unicode,(modflag & NSNumericPadKeyMask));
@@ -1445,6 +1429,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
             }
         }
 
+        BOOL isTmuxGateway = (!EXIT && tmuxMode_ == TMUX_GATEWAY);
+
         switch (keyBindingAction) {
             case KEY_ACTION_MOVE_TAB_LEFT:
                 [[[self tab] realParentWindow] moveTabLeft:nil];
@@ -1498,25 +1484,25 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                 [(PTYScrollView *)[TEXTVIEW enclosingScrollView] detectUserScroll];
                 break;
             case KEY_ACTION_ESCAPE_SEQUENCE:
-                if (EXIT) {
+                if (EXIT || isTmuxGateway) {
                     return;
                 }
                 [self sendEscapeSequence:keyBindingText];
                 break;
             case KEY_ACTION_HEX_CODE:
-                if (EXIT) {
+                if (EXIT || isTmuxGateway) {
                     return;
                 }
                 [self sendHexCode:keyBindingText];
                 break;
             case KEY_ACTION_TEXT:
-                if (EXIT) {
+                if (EXIT || isTmuxGateway) {
                     return;
                 }
                 [self sendText:keyBindingText];
                 break;
             case KEY_ACTION_RUN_COPROCESS:
-                if (EXIT) {
+                if (EXIT || isTmuxGateway) {
                     return;
                 }
                 [self launchCoprocessWithCommand:keyBindingText];
@@ -1526,13 +1512,13 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                 break;
 
             case KEY_ACTION_SEND_C_H_BACKSPACE:
-                if (EXIT) {
+                if (EXIT || isTmuxGateway) {
                     return;
                 }
                 [self writeTask:[@"\010" dataUsingEncoding:NSUTF8StringEncoding]];
                 break;
             case KEY_ACTION_SEND_C_QM_BACKSPACE:
-                if (EXIT) {
+                if (EXIT || isTmuxGateway) {
                     return;
                 }
                 [self writeTask:[@"\177" dataUsingEncoding:NSUTF8StringEncoding]]; // decimal 127
@@ -1540,9 +1526,15 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
             case KEY_ACTION_IGNORE:
                 break;
             case KEY_ACTION_IR_FORWARD:
+                if (isTmuxGateway) {
+                    return;
+                }
                 [[iTermController sharedInstance] irAdvance:1];
                 break;
             case KEY_ACTION_IR_BACKWARD:
+                if (isTmuxGateway) {
+                    return;
+                }
                 [[iTermController sharedInstance] irAdvance:-1];
                 break;
             case KEY_ACTION_SELECT_PANE_LEFT:
@@ -1580,6 +1572,11 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                 break;
         }
     } else {
+        // Key is not bound to an action.
+        if (!EXIT && tmuxMode_ == TMUX_GATEWAY) {
+            [self handleKeypressInTmuxGateway:unicode];
+            return;
+        }
         if (debugKeyDown) {
             NSLog(@"PTYSession keyDown no keybinding action");
         }
@@ -3765,12 +3762,20 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (BOOL)tmuxSetSecureLogging:(BOOL)secureLogging {
+    tmuxSecureLogging_ = secureLogging;
+}
+
 - (void)tmuxWriteData:(NSData *)data
 {
     if (EXIT) {
         return;
     }
-    TmuxLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
+    if (tmuxSecureLogging_) {
+        TmuxLog(@"Write to tmux.");
+    } else {
+        TmuxLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
+    }
     if (tmuxLogging_) {
         [self printTmuxMessage:[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]];
     }

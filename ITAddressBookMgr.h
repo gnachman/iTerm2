@@ -170,6 +170,7 @@
 #define WINDOW_TYPE_FORCE_FULL_SCREEN 3  // Used internally, never reported by windowType API. Causes initWithSmartLayout to create a window with fullscreen chrome. It will set its windowType to FULL_SCREEN
 #define WINDOW_TYPE_LION_FULL_SCREEN 4  // Lion-native fullscreen
 #define WINDOW_TYPE_BOTTOM 5
+#define WINDOW_TYPE_LEFT 6
 
 typedef enum {
   iTermWindowObject,

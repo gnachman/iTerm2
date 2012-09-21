@@ -36,7 +36,12 @@
     NSColor             *_labelColor;
     NSColor             *_tabColor;
     NSString            *_modifierString;
+
+    BOOL _isLast;
 }
+
+// Is this the last cell? Only valid while drawing.
+@property (nonatomic, assign) BOOL isLast;
 
 // creation/destruction
 - (id)initWithControlView:(PSMTabBarControl *)controlView;

@@ -343,11 +343,13 @@ static NSString *kCommandObject = @"object";
 - (void)sendKeys:(NSData *)data toWindowPane:(int)windowPane
 {
     NSString *encoded = [self stringForKeyEncodedData:data];
+    [delegate_ tmuxSetSecureLogging:YES];
     NSString *command = [NSString stringWithFormat:@"send-keys -t %%%d %@",
                          windowPane, encoded];
     [self sendCommand:command
          responseTarget:self
          responseSelector:@selector(noopResponseSelector:)];
+    [delegate_ tmuxSetSecureLogging:NO];
 }
 
 - (void)detach

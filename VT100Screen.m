@@ -1879,21 +1879,28 @@ static char* FormatCont(int c)
             [SESSION writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
         break;
-    case XTERMCC_REPORT_ICON_TITLE:
-        {
-            char buf[64];
-            snprintf(buf, sizeof(buf), "\033]L%s\033\\", [[SESSION name] UTF8String]);
-            [SESSION writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
+    case XTERMCC_REPORT_ICON_TITLE: {
+        NSString *theString;
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AllowInsecureTitleReporting"]) {
+            theString = [NSString stringWithFormat:@"\033]L%@\033\\", [SESSION windowTitle]];
+        } else {
+            theString = @"\033]L\033\\";
         }
+        NSData *theData = [theString dataUsingEncoding:NSUTF8StringEncoding];
+        [SESSION writeTask:theData];
         break;
-    case XTERMCC_REPORT_WIN_TITLE:
-        {
-            char buf[64];
-            snprintf(buf, sizeof(buf), "\033]l%s\033\\", [[SESSION windowTitle] UTF8String]);
-            [SESSION writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
+    }
+    case XTERMCC_REPORT_WIN_TITLE: {
+        NSString *theString;
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AllowInsecureTitleReporting"]) {
+            theString = [NSString stringWithFormat:@"\033]l%@\033\\", [SESSION windowTitle]];
+        } else {
+            theString = @"\033]l\033\\";
         }
+        NSData *theData = [theString dataUsingEncoding:NSUTF8StringEncoding];
+        [SESSION writeTask:theData];
         break;
-
+    }
     // Our iTerm specific codes
     case ITERM_GROWL:
         if (GROWL) {

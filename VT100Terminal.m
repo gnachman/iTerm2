@@ -1029,6 +1029,7 @@ static VT100TCC decode_other(unsigned char *datap,
                 // Search for esc or newline terminator.
                 for (i = 2; i < datalen; i++) {
                     BOOL isTerminator = NO;
+                    int length = i - 2;
                     if (datap[i] == ESC && i + 1 == datalen) {
                         break;
                     } else if (datap[i] == ESC && datap[i + 1] == '\\') {
@@ -1040,7 +1041,7 @@ static VT100TCC decode_other(unsigned char *datap,
                     if (isTerminator) {
                         // Found terminator. Grab text from datap to char before it
                         // save in result.u.string.
-                        NSData *data = [NSData dataWithBytes:datap + 2 length:i - 2];
+                        NSData *data = [NSData dataWithBytes:datap + 2 length:length];
                         result.u.string = [[[NSString alloc] initWithData:data
                                                                  encoding:enc] autorelease];
                         // Consume everything up to the terminator
