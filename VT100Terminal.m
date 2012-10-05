@@ -134,7 +134,7 @@
 #define REPORT_VT52          "\033/Z"
 
 #define conststr_sizeof(n)   ((sizeof(n)) - 1)
-#define MAKE_COMMAND(first, second) ((first << 8) | second)
+#define MAKE_CSI_COMMAND(first, second) ((first << 8) | second)
 
 
 typedef struct {
@@ -325,7 +325,7 @@ static size_t getCSIParam(unsigned char *datap,
             datalen--;
             switch (*datap) {
                 case 'q':
-                    param->cmd = MAKE_COMMAND(' ', 'q');
+                    param->cmd = MAKE_CSI_COMMAND(' ', 'q');
                     datap++;
                     datalen--;
                     return datap - orgp;
@@ -557,7 +557,7 @@ static VT100TCC decode_csi(unsigned char *datap,
                     SET_PARAM_DEFAULT(param, 0, 0);
                     break;
                     
-                case MAKE_COMMAND(' ', 'q'):
+                case MAKE_CSI_COMMAND(' ', 'q'):
                     result.type = VT100CSI_DECSCUSR;
                     SET_PARAM_DEFAULT(param, 0, 0);
                     break;
