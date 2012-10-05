@@ -1617,9 +1617,9 @@ NSMutableArray* screens=0;
 {
     NSRect scrollRect;
 
-    scrollRect= [self visibleRect];
-    scrollRect.origin.y-= scrollRect.size.height - [[self enclosingScrollView] verticalPageScroll];
-    [self scrollRectToVisible: scrollRect];
+    scrollRect = [self visibleRect];
+    scrollRect.origin.y -= scrollRect.size.height - [[self enclosingScrollView] verticalPageScroll];
+    [self scrollRectToVisible:scrollRect];
 }
 
 - (void)scrollPageDown:(id)sender
@@ -1648,7 +1648,9 @@ NSMutableArray* screens=0;
     NSRect lastLine = [self visibleRect];
     lastLine.origin.y = ([dataSource numberOfLines] - 1) * lineHeight + [self excess] + imeOffset * lineHeight;
     lastLine.size.height = lineHeight;
-    [self scrollRectToVisible:lastLine];
+    if (!NSContainsRect(self.visibleRect, lastLine)) {
+        [self scrollRectToVisible:lastLine];
+    }
 }
 
 - (long long)absoluteScrollPosition
