@@ -1943,7 +1943,7 @@ static char* FormatCont(int c)
     [linebuffer release];
     linebuffer = [[LineBuffer alloc] init];
     [linebuffer setMaxLines:max_scrollback_lines];
-    [display clearMatches];
+    [display clearHighlights];
 
     scrollback_overflow = 0;
     savedFindContextAbsPos_ = 0;
