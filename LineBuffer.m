@@ -858,7 +858,11 @@ static int Search(NSString* needle,
     }
 }
 
-- (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y
+// Returns YES if the position is valid for this block.
+- (BOOL)convertPosition:(int)position
+              withWidth:(int)width
+                    toX:(int*)x
+                    toY:(int*)y
 {
     int i;
     *x = 0;
@@ -1477,7 +1481,11 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return result;
 }
 
-- (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y
+// Returns YES if the position is valid.
+- (BOOL)convertPosition:(int)position
+              withWidth:(int)width
+                    toX:(int*)x
+                    toY:(int*)y
 {
     int i;
     int yoffset = 0;
@@ -1488,15 +1496,23 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             position -= used;
             yoffset += [block getNumLinesWithWrapWidth:width];
         } else {
-            BOOL result = [block convertPosition: position withWidth: width toX: x toY: y];
+            BOOL positionIsValid = [block convertPosition:position
+                                                withWidth:width
+                                                      toX:x
+                                                      toY:y];
             *y += yoffset;
-            return result;
+            return positionIsValid;
         }
     }
     return NO;
 }
 
-- (BOOL) convertCoordinatesAtX: (int) x atY: (int) y withWidth: (int) width toPosition: (int*) position offset:(int)offset
+// Returns YES if the (x,y) coord exists within the scrollback buffer.
+- (BOOL)convertCoordinatesAtX:(int)x
+                          atY:(int)y
+                    withWidth:(int)width
+                   toPosition:(int*)position
+                       offset:(int)offset
 {
     int line = y;
     int i;
@@ -1525,7 +1541,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             // offset = additional offset the user requested
             // but we need to see if the position actually exists after adding offset. If it can be
             // converted to an x,y position the it's all right.
-            if ([self convertPosition:*position+pos+offset withWidth:width toX:&tempx toY:&tempy] && tempy >= 0 && tempx >= 0) {
+            const BOOL positionIsValid = [self convertPosition:*position + pos + offset
+                                                     withWidth:width
+                                                           toX:&tempx
+                                                           toY:&tempy];
+            if (positionIsValid &&
+                tempy >= 0 &&
+                tempx >= 0) {
                 *position += pos + offset;
                 return YES;
             } else {

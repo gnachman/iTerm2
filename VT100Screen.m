@@ -61,6 +61,13 @@
 #define MAX_SCROLL_AT_ONCE 1024
 #define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array
 
+typedef struct {
+    screen_char_t *saved_buffer_lines;
+    screen_char_t *saved_screen_top;
+    int savedCursorX;
+    int savedCursorY;
+} SavedScreenInfo;
+
 // Wait this long between calls to NSBeep().
 static const double kInterBellQuietPeriod = 0.1;
 
@@ -999,53 +1006,10 @@ static char* FormatCont(int c)
                                                 upTo:[linebuffer numLinesWithWidth:WIDTH]];
 }
 
-- (void)resizeWidth:(int)new_width height:(int)new_height
+// This assumes the window's height is going to change to new_height but the ivar HEIGHT is still the
+// "old" height.
+- (void)_appendScreenToScrollbackWithUsedHeight:(int)usedHeight newHeight:(int)new_height
 {
-    DLog(@"Resize session to %d height", new_height);
-    int i;
-    screen_char_t *new_buffer_lines;
-
-#ifdef DEBUG_RESIZEDWIDTH
-    NSLog(@"Resize from %dx%d to %dx%d\n", WIDTH, HEIGHT, new_width, new_height);
-    [self dumpScreen];
-#endif
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s:%d :%d]", __PRETTY_FUNCTION__, new_width, new_height);
-#endif
-
-    if (WIDTH == 0 || HEIGHT == 0 || (new_width==WIDTH && new_height==HEIGHT)) {
-        return;
-    }
-    new_width = MAX(new_width, 1);
-    new_height = MAX(new_height, 1);
-
-    // create a new buffer and fill it with the default line.
-    new_buffer_lines = (screen_char_t*)calloc(new_height * (new_width+1),
-                                              sizeof(screen_char_t));
-#ifdef DEBUG_CORRUPTION
-    memset(new_buffer_lines, -1, new_height*(new_width+1)*sizeof(screen_char_t));
-#endif
-    screen_char_t* defaultLine = [self _getDefaultLineWithWidth:new_width];
-    for (i = 0; i < new_height; ++i) {
-        memcpy(new_buffer_lines + (new_width + 1) * i, defaultLine, sizeof(screen_char_t) * (new_width+1));
-    }
-
-    int selectionStartPosition = -1;
-    int selectionEndPosition = -1;
-    BOOL hasSelection = display && [display selectionStartX] != -1;
-
-    int usedHeight = [self _usedHeight];
-
-    // If we're in the alternate screen, create a temporary linebuffer and append
-    // the base screen's contents to it.
-    LineBuffer *tempLineBuffer = [[[LineBuffer alloc] init] autorelease];
-    LineBuffer *saved_line_buffer = nil;
-    if (temp_buffer) {
-        saved_line_buffer = linebuffer;
-        linebuffer = tempLineBuffer;
-    }
-
     if (HEIGHT - new_height >= usedHeight) {
         // Height is decreasing but pushing HEIGHT lines into the buffer would scroll all the used
         // lines off the top, leaving the cursor floating without any text. Keep all used lines that
@@ -1062,78 +1026,186 @@ static char* FormatCont(int c)
             [self _appendScreenToScrollback:HEIGHT];
         }
     }
+}
+
+- (void)convertCurrentSelectionToWidth:(int)new_width
+                           toNewStartX:(int *)newStartXPtr
+                           toNewStartY:(int *)newStartYPtr
+                             toNewEndX:(int *)newEndXPtr
+                             toNewEndY:(int *)newEndYPtr
+{
+    int selectionStartPosition = -1;
+    int selectionEndPosition = -1;
+    BOOL selectionStartPositionIsValid = [linebuffer convertCoordinatesAtX:[display selectionStartX]
+                                                                       atY:[display selectionStartY]
+                                                                 withWidth:WIDTH
+                                                                toPosition:&selectionStartPosition
+                                                                    offset:0];
+    BOOL selectionEndPostionIsValid = [linebuffer convertCoordinatesAtX:[display selectionEndX]
+                                                                    atY:[display selectionEndY]
+                                                              withWidth:WIDTH
+                                                             toPosition:&selectionEndPosition
+                                                                 offset:0];
+    if (selectionStartPositionIsValid) {
+        [linebuffer convertPosition:selectionStartPosition
+                          withWidth:new_width
+                                toX:newEndXPtr
+                                toY:newEndYPtr];
+        if (selectionEndPostionIsValid) {
+            [linebuffer convertPosition:selectionEndPosition
+                              withWidth:new_width
+                                    toX:newStartXPtr
+                                    toY:newStartYPtr];
+        } else {
+            *newStartXPtr = WIDTH;
+            *newStartYPtr = [linebuffer numLinesWithWidth:new_width] + HEIGHT - 1;
+        }
+    }
+}
+
+- (void)saveScreenInfoTo:(SavedScreenInfo *)savedInfo {
+    savedInfo->saved_buffer_lines = buffer_lines;
+    savedInfo->saved_screen_top = screen_top;
+    savedInfo->savedCursorY = cursorY;
+    savedInfo->savedCursorX = cursorX;
+}
+
+- (void)restoreScreenInfoFrom:(SavedScreenInfo *)savedInfo {
+    buffer_lines = savedInfo->saved_buffer_lines;
+    screen_top = savedInfo->saved_screen_top;
+    cursorX = savedInfo->savedCursorX;
+    cursorY = savedInfo->savedCursorY;
+}
+
+- (void)swapToScreenInfo:(SavedScreenInfo *)restore savingCurrentScreenTo:(SavedScreenInfo *)save
+{
+    [self saveScreenInfoTo:save];
+    [self restoreScreenInfoFrom:restore];
+}
+
+// Returns the number of lines of used height in the screen with the saved info
+- (int)appendScreenWithInfo:(SavedScreenInfo *)savedInfoToUse
+                  andHeight:(int)new_height
+               toLineBuffer:(LineBuffer *)lineBufferToUse
+{
+    SavedScreenInfo savedInfo;
+    [self swapToScreenInfo:savedInfoToUse savingCurrentScreenTo:&savedInfo];
+
+    // Use the designated line buffer
+    LineBuffer *savedLineBuffer = linebuffer;
+    linebuffer = lineBufferToUse;
+
+    int usedHeight = [self _usedHeight];
+    [self _appendScreenToScrollbackWithUsedHeight:usedHeight newHeight:new_height];
+
+    linebuffer = savedLineBuffer;
+    [self restoreScreenInfoFrom:&savedInfo];
+
+    return usedHeight;
+}
+
+- (screen_char_t *)mallocedScreenBufferWithDefaultChar:(screen_char_t)defaultChar
+{
+    screen_char_t* aDefaultLine = [self _getDefaultLineWithChar:defaultChar];
+    screen_char_t *newBuffer = (screen_char_t*)calloc(REAL_WIDTH * HEIGHT, (sizeof(screen_char_t)));
+    for (int i = 0; i < HEIGHT; i++) {
+        memcpy(newBuffer + i * REAL_WIDTH, aDefaultLine, REAL_WIDTH * sizeof(screen_char_t));
+    }
+    return newBuffer;
+}
+
+- (void)loadAltScreenInfoInto:(SavedScreenInfo *)info
+{
+    info->saved_buffer_lines = temp_buffer;
+    info->saved_screen_top = temp_buffer;
+    info->savedCursorX = SAVE_CURSOR_X;
+    info->savedCursorY = SAVE_CURSOR_Y;
+}
+
+- (void)clampCursorPositionToValid
+{
+    if (cursorX >= WIDTH) {
+        [self setCursorX:WIDTH - 1 Y:cursorY];
+    }
+    if (cursorY >= HEIGHT) {
+        [self setCursorX:cursorX Y:HEIGHT - 1];
+    }
+    if (SAVE_CURSOR_X >= WIDTH) {
+        SAVE_CURSOR_X = WIDTH - 1;
+    }
+    if (ALT_SAVE_CURSOR_X >= WIDTH) {
+        ALT_SAVE_CURSOR_X = WIDTH - 1;
+    }
+    if (SAVE_CURSOR_Y >= HEIGHT) {
+        SAVE_CURSOR_Y = HEIGHT-1;
+    }
+    if (ALT_SAVE_CURSOR_Y >= HEIGHT) {
+        ALT_SAVE_CURSOR_Y = HEIGHT - 1;
+    }
+}
+
+- (void)resizeWidth:(int)new_width height:(int)new_height
+{
+    DLog(@"Resize session to %d height", new_height);
+    int i;
+    screen_char_t *new_buffer_lines;
+
+#ifdef DEBUG_RESIZEDWIDTH
+    NSLog(@"Resize from %dx%d to %dx%d\n", WIDTH, HEIGHT, new_width, new_height);
+    [self dumpScreen];
+#endif
+
+    if (WIDTH == 0 || HEIGHT == 0 || (new_width == WIDTH && new_height == HEIGHT)) {
+        return;
+    }
+    new_width = MAX(new_width, 1);
+    new_height = MAX(new_height, 1);
+
+    // create a new buffer and fill it with the default line.
+    new_buffer_lines = (screen_char_t*)calloc(new_height * (new_width+1),
+                                              sizeof(screen_char_t));
+#ifdef DEBUG_CORRUPTION
+    memset(new_buffer_lines, -1, new_height*(new_width+1)*sizeof(screen_char_t));
+#endif
+    screen_char_t* defaultLine = [self _getDefaultLineWithWidth:new_width];
+    for (i = 0; i < new_height; ++i) {
+        memcpy(new_buffer_lines + (new_width + 1) * i, defaultLine, sizeof(screen_char_t) * (new_width+1));
+    }
+
+    BOOL hasSelection = display && [display selectionStartX] != -1;
+
+    int usedHeight = [self _usedHeight];
+
+    SavedScreenInfo altScreenInfo;
+    [self loadAltScreenInfoInto:&altScreenInfo];
+
+    // If we're in the alternate screen, create a temporary linebuffer and append
+    // the base screen's contents to it.
+    LineBuffer *tempLineBuffer = [[[LineBuffer alloc] init] autorelease];
+    LineBuffer *realLineBuffer = nil;
+    if (temp_buffer) {
+        realLineBuffer = linebuffer;
+        linebuffer = tempLineBuffer;
+    }
+
+    [self _appendScreenToScrollbackWithUsedHeight:usedHeight newHeight:new_height];
 
     int altUsedHeight = 0;
     if (temp_buffer) {
-        // In alternate screen mode.
-        screen_char_t *saved_buffer_lines = buffer_lines;
-        screen_char_t *saved_screen_top = screen_top;
-        int savedCursorY = cursorY;
-        int savedCursorX = cursorX;
-
-        // Use the "real" line buffer for the base screen.
-        linebuffer = saved_line_buffer;
-        buffer_lines = temp_buffer;
-        screen_top = temp_buffer;
-        cursorX = SAVE_CURSOR_X;
-        cursorY = SAVE_CURSOR_Y;
-
-        altUsedHeight = [self _usedHeight];
-        if (HEIGHT - new_height >= altUsedHeight) {
-            // Height is decreasing but pushing HEIGHT lines into the buffer would scroll all the used
-            // lines off the top, leaving the cursor floating without any text. Keep all used lines that
-            // fit onscreen.
-            [self _appendScreenToScrollback:MAX(altUsedHeight, new_height)];
-        } else {
-            if (new_height < HEIGHT) {
-                // Screen is shrinking.
-                // If possible, keep the last used line a fixed distance from the top of
-                // the screen. If not, at least save all the used lines.
-                [self _appendScreenToScrollback:altUsedHeight];
-            } else {
-                // Keep last used line a fixed distance from the bottom of the screen
-                [self _appendScreenToScrollback:HEIGHT];
-            }
-        }
-
-        linebuffer = tempLineBuffer;
-        buffer_lines = saved_buffer_lines;
-        screen_top = saved_screen_top;
-        cursorX = savedCursorX;
-        cursorY = savedCursorY;
-    }
-
-    BOOL startPositionBeforeEnd = NO;
-    BOOL endPostionBeforeEnd = NO;
-    if (hasSelection) {
-        startPositionBeforeEnd = [linebuffer convertCoordinatesAtX:[display selectionStartX]
-                                                               atY:[display selectionStartY]
-                                                         withWidth:WIDTH
-                                                        toPosition:&selectionStartPosition
-                                                            offset:0];
-        endPostionBeforeEnd = [linebuffer convertCoordinatesAtX:[display selectionEndX]
-                                                            atY:[display selectionEndY]
-                                                      withWidth:WIDTH
-                                                     toPosition:&selectionEndPosition
-                                                         offset:0];
+	// We are in alternate screen mode.
+        altUsedHeight = [self appendScreenWithInfo:&altScreenInfo
+                                         andHeight:new_height
+                                      toLineBuffer:realLineBuffer];
     }
 
     int newSelStartX = -1, newSelStartY = -1;
     int newSelEndX = -1, newSelEndY = -1;
-    if (hasSelection && startPositionBeforeEnd) {
-        [linebuffer convertPosition:selectionStartPosition
-                          withWidth:new_width
-                                toX:&newSelStartX
-                                toY:&newSelStartY];
-        if (endPostionBeforeEnd) {
-            [linebuffer convertPosition:selectionEndPosition
-                              withWidth:new_width
-                                    toX:&newSelEndX
-                                    toY:&newSelEndY];
-        } else {
-            newSelEndX = WIDTH;
-            newSelEndY = [linebuffer numLinesWithWidth: new_width] + HEIGHT - 1;
-        }
+    if (hasSelection) {
+        [self convertCurrentSelectionToWidth:new_width
+                                 toNewStartX:&newSelEndX
+                                 toNewStartY:&newSelEndY
+                                   toNewEndX:&newSelStartX
+                                   toNewEndY:&newSelStartY];
     }
 
 #ifdef DEBUG_RESIZEDWIDTH
@@ -1173,48 +1245,38 @@ static char* FormatCont(int c)
     // If we're in the alternate screen, restore its contents from the temporary
     // linebuffer.
     if (temp_buffer) {
-        screen_char_t *saved_buffer_lines = buffer_lines;
-        screen_char_t *saved_screen_top = screen_top;
-        int savedCursorX = cursorX;
-        int savedCursorY = cursorY;
-        cursorX = SAVE_CURSOR_X;
-        cursorY = SAVE_CURSOR_Y;
+        SavedScreenInfo savedInfo;
+        [self saveScreenInfoTo:&savedInfo];
 
         // Allocate a new temp_buffer of the right size.
-        screen_char_t* aDefaultLine = [self _getDefaultLineWithChar:temp_default_char];
         free(temp_buffer);
-        temp_buffer = (screen_char_t*)calloc(REAL_WIDTH * HEIGHT, (sizeof(screen_char_t)));
-        for(i = 0; i < HEIGHT; i++) {
-            memcpy(temp_buffer+i*REAL_WIDTH, aDefaultLine, REAL_WIDTH*sizeof(screen_char_t));
-        }
+        temp_buffer = [self mallocedScreenBufferWithDefaultChar:temp_default_char];
+        [self loadAltScreenInfoInto:&altScreenInfo];
 
-        linebuffer = saved_line_buffer;
-        buffer_lines = temp_buffer;
-        screen_top = temp_buffer;
+        // Temporarily enter alt screen mode.
+        [self restoreScreenInfoFrom:&altScreenInfo];
 
+        linebuffer = realLineBuffer;
         if (old_height < new_height) {
             // Growing (avoid pulling in stuff from scrollback. Add blank lines
-            // at bottom instead)
-            [self restoreScreenFromScrollbackWithDefaultLine:aDefaultLine
+            // at bottom instead). Note there's a little hack here: we use temp_buffer as the default
+            // line because it was just initialized with default lines.
+            [self restoreScreenFromScrollbackWithDefaultLine:temp_buffer
                                                         upTo:old_height];
         } else {
             // Shrinking (avoid pulling in stuff from scrollback, pull in no more
-            // than might have been pushed, even if more is available)
-            [self restoreScreenFromScrollbackWithDefaultLine:aDefaultLine
+            // than might have been pushed, even if more is available). Note there's a little hack
+            // here: we use temp_buffer as the default line because it was just initialized with
+            // default lines.
+            [self restoreScreenFromScrollbackWithDefaultLine:temp_buffer
                                                         upTo:altUsedHeight];
         }
+
         SAVE_CURSOR_X = cursorX;
         SAVE_CURSOR_Y = cursorY;
-        cursorX = savedCursorX;
-        cursorY = savedCursorY;
+        [self restoreScreenInfoFrom:&savedInfo];
 
-        temp_buffer = buffer_lines;
-
-        // If in alternate screen mode, go back to the real line buffer instead
-        // of the temporary one we were using. So explicitly DON'T restore
-        // linebuffer; leave it as saved_line_buffer, which is the "real" one.
-        buffer_lines = saved_buffer_lines;
-        screen_top = saved_screen_top;
+        // NOTE: linebuffer remains set to realLineBuffer at this point.
     }
 
 #ifdef DEBUG_RESIZEDWIDTH
@@ -1226,35 +1288,17 @@ static char* FormatCont(int c)
     SCROLL_TOP = 0;
     SCROLL_BOTTOM = HEIGHT - 1;
 
-    // adjust X coordinate of cursor
-    if (cursorX >= WIDTH) {
-        [self setCursorX:WIDTH - 1 Y:cursorY];
-    }
-    if (cursorY >= new_height) {
-        [self setCursorX:cursorX Y:new_height - 1];
-    }
-    if (SAVE_CURSOR_X >= WIDTH) {
-        SAVE_CURSOR_X = WIDTH-1;
-    }
-    if (ALT_SAVE_CURSOR_X >= WIDTH) {
-        ALT_SAVE_CURSOR_X = WIDTH-1;
-    }
-    if (SAVE_CURSOR_Y >= new_height) {
-        SAVE_CURSOR_Y = new_height-1;
-    }
-    if (ALT_SAVE_CURSOR_Y >= new_height) {
-        ALT_SAVE_CURSOR_Y = new_height-1;
-    }
+    [self clampCursorPositionToValid];
 
     // The linebuffer may have grown. Ensure it doesn't have too many lines.
 #ifdef DEBUG_RESIZEDWIDTH
-    NSLog(@"Before dropExcessLines have %d\n", [linebuffer numLinesWithWidth: WIDTH]);
+    NSLog(@"Before dropExcessLines have %d\n", [linebuffer numLinesWithWidth:WIDTH]);
 #endif
     int linesDropped = 0;
     if (!unlimitedScrollback_) {
-        linesDropped = [linebuffer dropExcessLinesWithWidth: WIDTH];
+        linesDropped = [linebuffer dropExcessLinesWithWidth:WIDTH];
     }
-    int lines = [linebuffer numLinesWithWidth: WIDTH];
+    int lines = [linebuffer numLinesWithWidth:WIDTH];
     NSAssert(lines >= 0, @"Negative lines");
 
     // An immediate refresh is needed so that the size of TEXTVIEW can be
@@ -3634,7 +3678,7 @@ void DumpBuf(screen_char_t* p, int n) {
     // TODO: The way that tmux and iterm2 handle saving the cursor position is different and incompatible and only one of us is right.
     // tmux saves the cursor position for DECSC in one location and for the non-alt screen in a separate location.
     // iterm2 saves the cursor position for the base screen in one location and for the alternate screen in another location.
-    // At a minimum, we differ in how we handle DECSC. 
+    // At a minimum, we differ in how we handle DECSC.
     // After resolving this confusion, do the right thing with these state fields:
     // kStateDictDECSCCursorX;
     // kStateDictDECSCCursorY;
