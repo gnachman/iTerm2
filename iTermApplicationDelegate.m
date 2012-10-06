@@ -48,6 +48,7 @@ static NSString *APP_SUPPORT_DIR = @"~/Library/Application Support/iTerm";
 static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Scripts";
 static NSString* AUTO_LAUNCH_SCRIPT = @"~/Library/Application Support/iTerm/AutoLaunch.scpt";
 static NSString *ITERM2_FLAG = @"~/Library/Application Support/iTerm/version.txt";
+static NSString *ITERM2_QUIET = @"~/Library/Application Support/iTerm/quiet";
 static NSString *kUseBackgroundPatternIndicatorKey = @"Use background pattern indicator";
 NSString *kUseBackgroundPatternIndicatorChangedNotification = @"kUseBackgroundPatternIndicatorChangedNotification";
 static BOOL gStartupActivitiesPerformed = NO;
@@ -264,6 +265,28 @@ static BOOL hasBecomeActive = NO;
     return [iTermBundleId isEqualToString:(NSString *)unixHandler];
 }
 
+- (NSString *)quietFileName {
+    return [ITERM2_QUIET stringByExpandingTildeInPath];
+}
+
+- (BOOL)quietFileExists {
+    return [[NSFileManager defaultManager] fileExistsAtPath:[self quietFileName]];
+}
+
+- (void)checkForQuietMode {
+    if ([self quietFileExists]) {
+        NSError *error = nil;
+        [[NSFileManager defaultManager] removeItemAtPath:[self quietFileName]
+                                                   error:&error];
+        if (error) {
+            NSLog(@"Failed to remove %@: %@; not launching in quiet mode", [self quietFileName], error);
+        } else {
+            NSLog(@"%@ exists, launching in quiet mode", [self quietFileName]);
+            quiet_ = YES;
+        }
+    }
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
     [iTermFontPanel makeDefault];
@@ -296,6 +319,7 @@ static BOOL hasBecomeActive = NO;
                                                        returnTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSStringPboardType, nil]];
     // Sometimes, open untitled doc isn't called in Lion. We need to give application:openFile:
     // a chance to run because a "special" filename cancels _performStartupActivities.
+    [self checkForQuietMode];
     [self performSelector:@selector(_performStartupActivities)
                withObject:nil
                afterDelay:0];
