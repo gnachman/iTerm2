@@ -134,6 +134,7 @@
 #define REPORT_VT52          "\033/Z"
 
 #define conststr_sizeof(n)   ((sizeof(n)) - 1)
+#define MAKE_CSI_COMMAND(first, second) ((first << 8) | second)
 
 
 typedef struct {
@@ -318,6 +319,23 @@ static size_t getCSIParam(unsigned char *datap,
             param->cmd = unrecognized?0xff:*datap;
             datap++;
             break;
+        }
+        else if (*datap == ' ') {
+            datap++;
+            datalen--;
+            switch (*datap) {
+                case 'q':
+                    param->cmd = MAKE_CSI_COMMAND(' ', 'q');
+                    datap++;
+                    datalen--;
+                    return datap - orgp;
+                default:
+                    //NSLog(@"Unrecognized sequence: CSI SP %c (0x%x)", *datap, *datap);
+                    datap++;
+                    datalen--;
+                    param->cmd = 0xff;
+                    break;
+            }
         }
         else if (*datap=='\'') {
             datap++;
@@ -536,6 +554,11 @@ static VT100TCC decode_csi(unsigned char *datap,
 
                 case 'g':
                     result.type = VT100CSI_TBC;
+                    SET_PARAM_DEFAULT(param, 0, 0);
+                    break;
+                    
+                case MAKE_CSI_COMMAND(' ', 'q'):
+                    result.type = VT100CSI_DECSCUSR;
                     SET_PARAM_DEFAULT(param, 0, 0);
                     break;
 

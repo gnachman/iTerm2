@@ -100,6 +100,7 @@
 #define VT100CSI_SGR         2045       // Select Graphic Rendition
 #define VT100CSI_SM          2046       // Set Mode
 #define VT100CSI_TBC         2047       // Tabulation Clear
+#define VT100CSI_DECSCUSR    2048       // Select the Style of the Cursor
 
 // some xterm extension
 #define XTERMCC_WIN_TITLE        86       // Set window title

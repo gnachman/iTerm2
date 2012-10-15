@@ -231,11 +231,11 @@
     NSRect scrollRect;
     PTYScroller *verticalScroller = (PTYScroller *)[self verticalScroller];
 
-    scrollRect= [self documentVisibleRect];
-    if(scrollRect.origin.y+scrollRect.size.height < [[self documentView] frame].size.height)
-        [verticalScroller setUserScroll: YES];
+    scrollRect = [self documentVisibleRect];
+    if (scrollRect.origin.y + scrollRect.size.height < [[self documentView] frame].size.height)
+        [verticalScroller setUserScroll:YES];
     else
-        [verticalScroller setUserScroll: NO];
+        [verticalScroller setUserScroll:NO];
 }
 
 // background image
