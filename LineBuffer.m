@@ -67,6 +67,27 @@
     [super dealloc];
 }
 
+- (LineBlock *)copy {
+    LineBlock *theCopy = [[LineBlock alloc] init];
+    theCopy->raw_buffer = (screen_char_t*) malloc(sizeof(screen_char_t) * buffer_size);
+    memmove(theCopy->raw_buffer, raw_buffer, sizeof(screen_char_t) * buffer_size);
+    size_t bufferStartOffset = (buffer_start - raw_buffer);
+    theCopy->buffer_start = theCopy->raw_buffer + bufferStartOffset;
+    theCopy->start_offset = start_offset;
+    theCopy->first_entry = first_entry;
+    theCopy->buffer_size = buffer_size;
+    size_t cll_size = sizeof(int) * cll_capacity;
+    theCopy->cumulative_line_lengths = (int*) malloc(cll_size);
+    memmove(theCopy->cumulative_line_lengths, cumulative_line_lengths, cll_size);
+    theCopy->cll_capacity = cll_capacity;
+    theCopy->cll_entries = cll_entries;
+    theCopy->is_partial = is_partial;
+    theCopy->cached_numlines = cached_numlines;
+    theCopy->cached_numlines_width = cached_numlines_width;
+
+    return theCopy;
+}
+
 - (int) rawSpaceUsed
 {
     if (cll_entries == 0) {
@@ -1650,6 +1671,26 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     context->absBlockNum = [self absBlockNumberOfAbsPos:absPos];
     long long absOffset = [self absPositionOfAbsBlock:context->absBlockNum];
     context->offset = MAX(0, absPos - absOffset);
+}
+
+- (LineBuffer *)appendOnlyCopy {
+    LineBuffer *theCopy = [[LineBuffer alloc] init];
+    theCopy->blocks = [[NSMutableArray alloc] initWithArray:blocks];
+    LineBlock *lastBlock = [blocks lastObject];
+    if (lastBlock) {
+        [theCopy->blocks removeLastObject];
+        [theCopy->blocks addObject:[[lastBlock copy] autorelease]];
+    }
+    theCopy->block_size = block_size;
+    theCopy->cursor_x = cursor_x;
+    theCopy->cursor_rawline = cursor_rawline;
+    theCopy->max_lines = max_lines;
+    theCopy->num_dropped_blocks = num_dropped_blocks;
+    theCopy->num_wrapped_lines_cache = num_wrapped_lines_cache;
+    theCopy->num_wrapped_lines_width = num_wrapped_lines_width;
+    theCopy->droppedChars = droppedChars;
+
+    return theCopy;
 }
 
 @end
