@@ -1931,6 +1931,38 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
             break;
     case VT100CSI_RM:
             break;
+    case VT100CSI_DECSCUSR:
+        switch (token.u.csi.p[0]) {
+            case 0:
+            case 1:
+                [[SESSION TEXTVIEW] setBlinkingCursor:true];
+                [[SESSION TEXTVIEW] setCursorType:CURSOR_BOX];
+                break;
+            case 2:
+                [[SESSION TEXTVIEW] setBlinkingCursor:false];
+                [[SESSION TEXTVIEW] setCursorType:CURSOR_BOX];
+                break;
+            case 3:
+                [[SESSION TEXTVIEW] setBlinkingCursor:true];
+                [[SESSION TEXTVIEW] setCursorType:CURSOR_UNDERLINE];
+                break;
+            case 4:
+                [[SESSION TEXTVIEW] setBlinkingCursor:false];
+                [[SESSION TEXTVIEW] setCursorType:CURSOR_UNDERLINE];
+                break;
+            case 5:
+                [[SESSION TEXTVIEW] setBlinkingCursor:true];
+                [[SESSION TEXTVIEW] setCursorType:CURSOR_VERTICAL];
+                break;
+            case 6:
+                [[SESSION TEXTVIEW] setBlinkingCursor:false];
+                [[SESSION TEXTVIEW] setCursorType:CURSOR_VERTICAL];
+                break;
+            default:
+                //NSLog(@"DECSCUSR: Unrecognized parameter: %d", token.u.csi.p[0]);
+                break;
+        }
+        break;
 
     /* My interpretation of this:
      * http://www.cl.cam.ac.uk/~mgk25/unicode.html#term
