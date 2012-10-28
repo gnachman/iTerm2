@@ -1064,9 +1064,11 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
     // Advance start position until it hits a non-null or equals the end position.
     int x = actualStartX;
     int y = actualStartY;
+    if (x == WIDTH) {
+        x = 0;
+        y++;
+    }
     screen_char_t *theLine = [self getLineAtIndex:y];
-    NSLog(@"Selection begins on this line:");
-    [self printLine:theLine];
     while (XYIsBeforeXY(x, y, actualEndX, actualEndY)) {
         if (theLine[x].code) {
             break;
@@ -1084,6 +1086,10 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
 
     x = actualEndX;
     y = actualEndY;
+    if (x == WIDTH) {
+        x = 0;
+        y++;
+    }
     theLine = [self getLineAtIndex:y];
 
     while (XYIsBeforeXY(*nonNullStartX, *nonNullStartY, x, y)) {
@@ -1105,15 +1111,14 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
     *nonNullEndY = y;
 }
 
-- (BOOL)convertCurrentSelectionToWidth:(int)new_width
-                           toNewStartX:(int *)newStartXPtr
-                           toNewStartY:(int *)newStartYPtr
-                             toNewEndX:(int *)newEndXPtr
-                             toNewEndY:(int *)newEndYPtr
-                 toIsFullLineSelection:(BOOL *)isFullLineSelection
+- (BOOL)getNullCorrectedSelectionStartPosition:(int *)startPos
+                                   endPosition:(int *)endPos
+                           isFullLineSelection:(BOOL *)isFullLineSelection
+                 selectionStartPositionIsValid:(BOOL *)selectionStartPositionIsValid
+                    selectionEndPostionIsValid:(BOOL *)selectionEndPostionIsValid
 {
-    int selectionStartPosition = -1;
-    int selectionEndPosition = -1;
+    *startPos = -1;
+    *endPos = -1;
 
     int actualStartX = [display selectionStartX];
     int actualStartY = [display selectionStartY];
@@ -1132,40 +1137,85 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
                       toNonNullY:&nonNullStartY
                       toNonNullX:&nonNullEndX
                       toNonNullY:&nonNullEndY];
-    if (!XYIsBeforeXY(nonNullStartX, nonNullStartY, nonNullEndX, nonNullEndY)) {
+    BOOL endsAfterStart = XYIsBeforeXY(nonNullStartX, nonNullStartY, nonNullEndX, nonNullEndY);
+    if (!endsAfterStart) {
         return NO;
     }
-    if (actualStartX == 0 && actualEndX == WIDTH) {
-        *isFullLineSelection = YES;
-    } else {
-        *isFullLineSelection = NO;
+    if (isFullLineSelection) {
+        if (actualStartX == 0 && actualEndX == WIDTH) {
+            *isFullLineSelection = YES;
+        } else {
+            *isFullLineSelection = NO;
+        }
     }
-    BOOL selectionStartPositionIsValid = [linebuffer convertCoordinatesAtX:nonNullStartX
-                                                                       atY:nonNullStartY
-                                                                 withWidth:WIDTH
-                                                                toPosition:&selectionStartPosition
-                                                                    offset:0];
-    BOOL selectionEndPostionIsValid = [linebuffer convertCoordinatesAtX:nonNullEndX
-                                                                    atY:nonNullEndY
-                                                              withWidth:WIDTH
-                                                             toPosition:&selectionEndPosition
-                                                                 offset:0];
+    BOOL v;
+    v = [linebuffer convertCoordinatesAtX:nonNullStartX
+                                      atY:nonNullStartY
+                                withWidth:WIDTH
+                               toPosition:startPos
+                                   offset:0];
+    if (selectionStartPositionIsValid) {
+        *selectionStartPositionIsValid = v;
+    }
+    v = [linebuffer convertCoordinatesAtX:nonNullEndX
+                                      atY:nonNullEndY
+                                withWidth:WIDTH
+                               toPosition:endPos
+                                   offset:0];
+    if (selectionEndPostionIsValid) {
+        *selectionEndPostionIsValid = v;
+    }
+    return YES;
+}
+
+- (BOOL)convertCurrentSelectionToWidth:(int)new_width
+                           toNewStartX:(int *)newStartXPtr
+                           toNewStartY:(int *)newStartYPtr
+                             toNewEndX:(int *)newEndXPtr
+                             toNewEndY:(int *)newEndYPtr
+                 toIsFullLineSelection:(BOOL *)isFullLineSelection
+{
+    int selectionStartPosition;
+    int selectionEndPosition;
+    BOOL selectionStartPositionIsValid;
+    BOOL selectionEndPostionIsValid;
+    BOOL hasSelection = [self getNullCorrectedSelectionStartPosition:&selectionStartPosition
+                                                         endPosition:&selectionEndPosition
+                                                 isFullLineSelection:isFullLineSelection
+                                       selectionStartPositionIsValid:&selectionStartPositionIsValid
+                                          selectionEndPostionIsValid:&selectionEndPostionIsValid];
+
+    if (!hasSelection) {
+        return NO;
+    }
     if (selectionStartPositionIsValid) {
         [linebuffer convertPosition:selectionStartPosition
                           withWidth:new_width
-                                toX:newEndXPtr
-                                toY:newEndYPtr];
+                                toX:newStartXPtr
+                                toY:newStartYPtr];
         if (selectionEndPostionIsValid) {
             [linebuffer convertPosition:selectionEndPosition
                               withWidth:new_width
-                                    toX:newStartXPtr
-                                    toY:newStartYPtr];
+                                    toX:newEndXPtr
+                                    toY:newEndYPtr];
         } else {
-            *newStartXPtr = WIDTH;
-            *newStartYPtr = [linebuffer numLinesWithWidth:new_width] + HEIGHT - 1;
+            *newEndXPtr = WIDTH;
+            *newEndYPtr = [linebuffer numLinesWithWidth:new_width] + HEIGHT - 1;
         }
     }
     return YES;
+}
+
+- (void)saveAutoreleasedCopyOfScreenInfoTo:(SavedScreenInfo *)savedInfo {
+    NSMutableData *originalScreenCopy = [[[NSMutableData alloc] init] autorelease];
+    int screenTopLine = (screen_top - buffer_lines) / REAL_WIDTH;
+    [originalScreenCopy appendBytes:screen_top length:REAL_WIDTH * (HEIGHT - screenTopLine) * sizeof(screen_char_t)];
+    [originalScreenCopy appendBytes:buffer_lines length:REAL_WIDTH * screenTopLine * sizeof(screen_char_t)];
+
+    savedInfo->saved_buffer_lines = originalScreenCopy.bytes;
+    savedInfo->saved_screen_top = originalScreenCopy.bytes;
+    savedInfo->savedCursorY = cursorY;
+    savedInfo->savedCursorX = cursorX;
 }
 
 - (void)saveScreenInfoTo:(SavedScreenInfo *)savedInfo {
@@ -1251,8 +1301,10 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
 
 - (void)resizeWidth:(int)new_width height:(int)new_height
 {
+#ifdef DEBUG_RESIZEDWIDTH
     NSLog(@"Size before resizing is %dx%d", WIDTH, HEIGHT);
     [self dumpAll];
+#endif
     DLog(@"Resize session to %d height", new_height);
     int i;
     screen_char_t *new_buffer_lines;
@@ -1283,14 +1335,42 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
 
     int usedHeight = [self _usedHeight];
 
+    SavedScreenInfo originalScreenInfo;
+    [self saveAutoreleasedCopyOfScreenInfoTo:&originalScreenInfo];
+
     SavedScreenInfo baseScreenInfo;
     [self loadAltScreenInfoInto:&baseScreenInfo];
 
+    LineBuffer *realLineBuffer = linebuffer;
+
+    int originalLastPos = [linebuffer lastPos];
+    int originalStartPos;
+    int originalEndPos;
+    BOOL originalIsFullLine;
+    if (hasSelection && temp_buffer) {
+        // In alternate screen mode, get the original positions of the
+        // selection. Later this will be used to set the selection positions
+        // relative to the end of the udpated linebuffer (which could change as
+        // lines from the base screen are pushed onto it).
+        BOOL ok1, ok2;
+        LineBuffer *lineBufferWithAltScreen = [[linebuffer appendOnlyCopy] autorelease];
+        linebuffer = lineBufferWithAltScreen;
+        [self _appendScreenToScrollbackWithUsedHeight:usedHeight newHeight:new_height];
+
+        [self getNullCorrectedSelectionStartPosition:&originalStartPos
+                                         endPosition:&originalEndPos
+                                 isFullLineSelection:&originalIsFullLine
+                       selectionStartPositionIsValid:&ok1
+                          selectionEndPostionIsValid:&ok2];
+
+        linebuffer = realLineBuffer;
+        hasSelection = ok1 && ok2;
+    }
     // If we're in the alternate screen, create a temporary linebuffer and append
     // the base screen's contents to it.
-    LineBuffer *tempLineBuffer = [[[LineBuffer alloc] init] autorelease];
-    LineBuffer *realLineBuffer = nil;
+    LineBuffer *tempLineBuffer = nil;
     if (temp_buffer) {
+        tempLineBuffer = [[[LineBuffer alloc] init] autorelease];
         realLineBuffer = linebuffer;
         linebuffer = tempLineBuffer;
     }
@@ -1307,7 +1387,7 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
     BOOL isFullLineSelection = NO;
     if (temp_buffer) {
         // We are in alternate screen mode.
-        originalLineBufferLines = [realLineBuffer numLinesWithWidth:new_width];
+        originalLineBufferLines = [realLineBuffer numLinesWithWidth:WIDTH];
 
         // Append base screen to real line buffer
         [self appendScreenWithInfo:&baseScreenInfo
@@ -1322,10 +1402,10 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
 
     } else if (hasSelection) {
         hasSelection = [self convertCurrentSelectionToWidth:new_width
-                                                toNewStartX:&newSelEndX
-                                                toNewStartY:&newSelEndY
-                                                  toNewEndX:&newSelStartX
-                                                  toNewEndY:&newSelStartY
+                                                toNewStartX:&newSelStartX
+                                                toNewStartY:&newSelStartY
+                                                  toNewEndX:&newSelEndX
+                                                  toNewEndY:&newSelEndY
                                       toIsFullLineSelection:&isFullLineSelection];
     }
 
@@ -1355,13 +1435,17 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
     result_line = (screen_char_t*)calloc((new_width + 1), sizeof(screen_char_t));
 
     int old_height = HEIGHT;
+    int old_width = WIDTH;
 
     // new height and width
     WIDTH = new_width;
     HEIGHT = new_height;
 
     // Restore the screen contents that were pushed onto the linebuffer.
-    [self restoreScreenFromScrollbackWithDefaultLine:[self _getDefaultLineWithWidth:WIDTH]];  ***** Must append to append-only line buffer with ORIGINAL alt screen
+    [self restoreScreenFromScrollbackWithDefaultLine:[self _getDefaultLineWithWidth:WIDTH]];
+    // In alternate screen mode, the screen contents move up when a line wraps.
+    int linesMovedUp = [linebuffer numLinesWithWidth:WIDTH];
+
     /* **************
      * tempLineBuffer   realLineBuffer  appendOnlyLineBuffer
      *                  real data
@@ -1372,7 +1456,6 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
 
     // If we're in the alternate screen, restore its contents from the temporary
     // linebuffer.
-    int lineBufferGain = 0;
     if (temp_buffer) {
         SavedScreenInfo savedInfo;
         [self saveScreenInfoTo:&savedInfo];
@@ -1382,7 +1465,7 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
         temp_buffer = [self mallocedScreenBufferWithDefaultChar:temp_default_char];
         [self loadAltScreenInfoInto:&baseScreenInfo];
 
-        // Temporarily enter alt screen mode.
+        // Temporarily exit alt screen mode.
         [self restoreScreenInfoFrom:&baseScreenInfo];
 
         linebuffer = realLineBuffer;
@@ -1403,8 +1486,6 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
             // than might have been pushed, even if more is available). Note there's a little hack
             // here: we use temp_buffer as the default line because it was just initialized with
             // default lines.
-
-            // TODO: Is new_height right?
             [self restoreScreenFromScrollbackWithDefaultLine:temp_buffer
                                                         upTo:new_height];
         }
@@ -1415,13 +1496,11 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
          *                  base screen-pop
          */
 
+        int newLastPos = [realLineBuffer lastPos];
         SAVE_CURSOR_X = cursorX;
         SAVE_CURSOR_Y = cursorY;
-        [self restoreScreenInfoFrom:&savedInfo];
 
         ///////////////////////////////////////
-        lineBufferGain = [realLineBuffer numLinesWithWidth:new_width] - originalLineBufferLines;
-        
         // Create a cheap append-only copy of the line buffer and add the
         // screen to it. This sets up the current state so that if there is a
         // selection, linebuffer has the configuration that the user actually
@@ -1436,42 +1515,75 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
          *                  real data
          * alt screen-pop
          *                  base screen-pop
-         *                                  weak copy of real line buffer
+         *                                  weak copy of real line buffer + base screen - pop
          */
-        
-        [self _appendScreenToScrollbackWithUsedHeight:usedHeight newHeight:new_height];  <-- THIS APPEND IS THE PROBLEM! I APPEND THE ALT SCREEN POST-WRAPPING (it was wrapped in the starred call above)
-        /*                  **************
+        [self restoreScreenInfoFrom:&originalScreenInfo];
+        WIDTH = old_width;
+        HEIGHT = old_height;
+        [self _appendScreenToScrollbackWithUsedHeight:usedHeight newHeight:new_height];
+        WIDTH = new_width;
+        HEIGHT = new_height;
+        /*                                  **************
          * tempLineBuffer   realLineBuffer  appendOnlyLineBuffer
          *                  real data
          * alt screen-pop
          *                  base screen-pop
-         *                                  weak copy of real line buffer
+         *                                  weak copy of real data + base screen - pop
          *                                  alt screen
          */
-        
-        NSLog(@"lineBufferGain=%d", lineBufferGain);
+
+#ifdef DEBUG_RESIZEDWIDTH
         NSLog(@"Selection at %d,%d - %d,%d", [display selectionStartX], [display selectionStartY], [display selectionEndX], [display selectionEndY]);
+#endif
         if (hasSelection) {
-            if ([display selectionStartY] > originalLineBufferLines && lineBufferGain != 0) {
-                NSLog(@"Adjust selection by linebuffergain lines");
-                [display setSelectionFromX:[display selectionStartX]
-                                     fromY:[display selectionStartY] + lineBufferGain
-                                       toX:[display selectionEndX]
-                                       toY:[display selectionEndY] + lineBufferGain];
-            }  // TODO lots of other cases
-            NSLog(@"After adjusting for line buffer game, selection at %d,%d - %d,%d", [display selectionStartX], [display selectionStartY], [display selectionEndX], [display selectionEndY]);
-            NSLog(@"Size after resizing is %dx%d", new_width, new_height);
-            [self dumpAll];
-            
-            THE PROBLEM: WIDTH and HEIGHT have already changed so when I append the screen to the scrollback, it's already wrapped and the selection x,y values are senseless.'
-            hasSelection = [self convertCurrentSelectionToWidth:new_width
-                                                    toNewStartX:&newSelEndX
-                                                    toNewStartY:&newSelEndY
-                                                      toNewEndX:&newSelStartX
-                                                      toNewEndY:&newSelStartY
-                                          toIsFullLineSelection:&isFullLineSelection];
+            // Compute selection positions relative to the end of the line buffer, which may have
+            // grown or shrunk.
+
+            int growth = newLastPos - originalLastPos;
+            int startPos = originalStartPos;
+            int endPos = originalEndPos;
+            if (growth > 0) {
+                if (startPos >= originalLastPos) {
+                    startPos += growth;
+                }
+                if (endPos >= originalLastPos) {
+                    endPos += growth;
+                }
+            } else if (growth < 0) {
+                if (startPos >= newLastPos && startPos < originalLastPos) {
+                    // Started in deleted region
+                    startPos = newLastPos;
+                } else if (startPos >= originalLastPos) {
+                    startPos += growth;
+                }
+                if (endPos >= newLastPos && endPos < originalLastPos) {
+                    // Ended in deleted region
+                    endPos = newLastPos;
+                } else if (endPos >= originalLastPos) {
+                    endPos += growth;
+                }
+            }
+            if (startPos == endPos) {
+                hasSelection = NO;
+            }
+            [linebuffer convertPosition:startPos
+                              withWidth:new_width
+                                    toX:&newSelStartX
+                                    toY:&newSelStartY];
+            int numScrollbackLines = [realLineBuffer numLinesWithWidth:new_width];
+            if (newSelStartY >= numScrollbackLines) {
+                newSelStartY -= linesMovedUp;
+            }
+            [linebuffer convertPosition:endPos
+                              withWidth:new_width
+                                    toX:&newSelEndX
+                                    toY:&newSelEndY];
+            if (newSelEndY >= numScrollbackLines) {
+                newSelEndY -= linesMovedUp;
+            }
         }
-        linebuffer = realLineBuffer;
+
+        [self restoreScreenInfoFrom:&savedInfo];
         /* **************
          * tempLineBuffer   realLineBuffer  appendOnlyLineBuffer
          *                  real data
@@ -1480,8 +1592,7 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
          *                                  weak copy of real line buffer
          *                                  alt screen
          */
-        ///////////////////////////////////////
-
+        linebuffer = realLineBuffer;
         // NOTE: linebuffer remains set to realLineBuffer at this point.
     }
 
