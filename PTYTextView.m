@@ -3336,7 +3336,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (selectMode == SELECT_BOX) {
             theSelectedText = [self contentInBoxFromX:startX Y:startY ToX:endX Y:endY pad:NO];
         } else {
-            theSelectedText = [self contentFromX:startX Y:startY ToX:endX Y:endY pad:NO includeLastNewline:[[PreferencePanel sharedInstance] copyLastNewline]];
+            theSelectedText = [self contentFromX:startX
+                                               Y:startY
+                                             ToX:endX
+                                               Y:endY
+                                             pad:NO
+                              includeLastNewline:[[PreferencePanel sharedInstance] copyLastNewline]
+                          trimTrailingWhitespace:[[PreferencePanel sharedInstance] trimTrailingWhitespace]];
         }
         if ([theSelectedText length] > 0) {
             [self _dragText: theSelectedText forEvent: event];
@@ -3723,13 +3729,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
 }
 
-- (NSString*)contentInBoxFromX:(int)startx Y:(int)starty ToX:(int)nonInclusiveEndx Y:(int)endy pad: (BOOL) pad
+- (NSString*)contentInBoxFromX:(int)startx
+                             Y:(int)starty
+                           ToX:(int)nonInclusiveEndx
+                             Y:(int)endy
+                           pad:(BOOL)pad
 {
     int i;
     int estimated_size = abs((endy-startx) * [dataSource width]) + abs(nonInclusiveEndx - startx);
+    const BOOL shouldTrim = [[PreferencePanel sharedInstance] trimTrailingWhitespace];
     NSMutableString* result = [NSMutableString stringWithCapacity:estimated_size];
     for (i = starty; i < endy; ++i) {
-        NSString* line = [self contentFromX:startx Y:i ToX:nonInclusiveEndx Y:i pad:pad];
+        NSString* line = [self contentFromX:startx
+                                          Y:i
+                                        ToX:nonInclusiveEndx
+                                          Y:i
+                                        pad:pad
+                         includeLastNewline:NO
+                     trimTrailingWhitespace:shouldTrim];
         [result appendString:line];
         if (i < endy-1) {
             [result appendString:@"\n"];
@@ -3738,12 +3755,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return result;
 }
 
+- (void)trimTrailingWhitespaceFromString:(NSMutableString *)string {
+    NSCharacterSet *nonWhitespaceSet = [[NSCharacterSet whitespaceCharacterSet] invertedSet];
+    NSRange rangeOfLastWantedCharacter = [string rangeOfCharacterFromSet:nonWhitespaceSet
+                                                                 options:NSBackwardsSearch];
+    if (rangeOfLastWantedCharacter.location == NSNotFound) {
+        [string deleteCharactersInRange:NSMakeRange(0, string.length)];
+    } else if (rangeOfLastWantedCharacter.location < string.length - 1) {
+        NSUInteger i = rangeOfLastWantedCharacter.location + 1;
+        [string deleteCharactersInRange:NSMakeRange(i, string.length - i)];
+    }
+}
+
 - (NSString *)contentFromX:(int)startx
                          Y:(int)starty
                        ToX:(int)nonInclusiveEndx
                          Y:(int)endy
                        pad:(BOOL)pad
         includeLastNewline:(BOOL)includeLastNewline
+    trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 {
     int endx = nonInclusiveEndx-1;
     int width = [dataSource width];
@@ -3783,6 +3813,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             }
                         }
                         if (theLine[width].code == EOL_HARD) {
+                            if (trimSelectionTrailingSpaces) {
+                                [self trimTrailingWhitespaceFromString:result];
+                            }
                             if (includeLastNewline || y < endy) {
                                 [result appendString:@"\n"];
                             }
@@ -3796,6 +3829,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                            theLine[width].code == EOL_HARD) {
                     // Hard line break
                     [result appendString:ScreenCharToStr(&theLine[x1])];
+                    if (trimSelectionTrailingSpaces) {
+                        [self trimTrailingWhitespaceFromString:result];
+                    }
                     [result appendString:@"\n"];  // hard break
                 } else {
                     // Normal character
@@ -3805,21 +3841,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
     }
 
+    if (trimSelectionTrailingSpaces) {
+        [self trimTrailingWhitespaceFromString:result];
+    }
     return result;
-}
-
-- (NSString *)contentFromX:(int)startx
-                         Y:(int)starty
-                       ToX:(int)nonInclusiveEndx
-                         Y:(int)endy
-                       pad:(BOOL)pad
-{
-    return [self contentFromX:startx
-                            Y:starty
-                          ToX:nonInclusiveEndx
-                            Y:endy
-                          pad:pad
-           includeLastNewline:NO];
 }
 
 - (IBAction)selectAll:(id)sender
@@ -3863,7 +3888,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                ToX:endX
                                  Y:endY
                                pad:pad
-                includeLastNewline:[[PreferencePanel sharedInstance] copyLastNewline]]);
+                includeLastNewline:[[PreferencePanel sharedInstance] copyLastNewline]
+            trimTrailingWhitespace:[[PreferencePanel sharedInstance] trimTrailingWhitespace]]);
     }
 }
 
@@ -3874,7 +3900,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                           ToX:[dataSource width]
                             Y:[dataSource numberOfLines] - 1
                           pad:NO
-           includeLastNewline:YES];
+           includeLastNewline:YES
+       trimTrailingWhitespace:NO];
 }
 
 - (void)splitTextViewVertically:(id)sender
@@ -4494,7 +4521,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                               ToX:[dataSource width]
                                                 Y:lineOffset + numLines - 1
                                                pad:NO
-                               includeLastNewline:YES]];
+                               includeLastNewline:YES
+                           trimTrailingWhitespace:NO]];
             break;
         case 1: // text selection
             [self printContent: [self selectedTextWithPad:NO]];
@@ -5604,7 +5632,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     x2 = tmpX+1;
     y2 = tmpY;
 
-    return [self contentFromX:x1 Y:yStart ToX:x2 Y:y2 pad:YES includeLastNewline:NO];
+    return [self contentFromX:x1
+                            Y:yStart
+                          ToX:x2
+                            Y:y2
+                          pad:YES
+           includeLastNewline:NO
+       trimTrailingWhitespace:NO];
 }
 
 - (double)perceivedBrightness:(NSColor*) c
@@ -7788,7 +7822,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                   ToX:[dataSource width]
                                     Y:y
                                   pad:YES
-                   includeLastNewline:NO];
+                   includeLastNewline:NO
+               trimTrailingWhitespace:NO];
     const char* utf8 = [lineContents UTF8String];
     for (int i = 0; utf8[i]; ++i) {
         if (utf8[i] != ' ') {

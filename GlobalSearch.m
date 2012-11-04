@@ -229,16 +229,18 @@ const double GLOBAL_SEARCH_MARGIN = 10;
         return NO;
     }
     [matchLocations_ addObject:setObj];
-    
+
     NSString* theContext = [textView_ contentFromX:0
                                                  Y:startY
                                                ToX:[theScreen_ width] - 1
                                                  Y:endY
-                                               pad:NO];
+                                               pad:NO
+                                includeLastNewline:NO
+                            trimTrailingWhitespace:YES];
     theContext = [theContext stringByReplacingOccurrencesOfString:@"\n"
                                                        withString:@" "];
     [results_ addObject:[[GlobalSearchResult alloc] initWithInstance:self
-                                                             context:theContext 
+                                                             context:theContext
                                                                    x:startX
                                                                 absY:absY
                                                                 endX:endX

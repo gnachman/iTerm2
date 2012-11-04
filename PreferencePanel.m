@@ -1519,6 +1519,16 @@ static float versionNumber;
     return defaultFsTabDelay;
 }
 
+- (BOOL)trimTrailingWhitespace
+{
+    NSNumber *n = [[NSUserDefaults standardUserDefaults] objectForKey:@"TrimWhitespaceOnCopy"];
+    if (n) {
+        return [n boolValue];
+    } else {
+        return YES;
+    }
+}
+
 - (BOOL)advancedFontRendering
 {
     return defaultAdvancedFontRendering;

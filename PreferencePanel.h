@@ -615,6 +615,7 @@ typedef enum {
 - (void)run;
 - (IBAction)settingChanged:(id)sender;
 - (float)fsTabDelay;
+- (BOOL)trimTrailingWhitespace;
 - (BOOL)advancedFontRendering;
 - (float)strokeThickness;
 - (int)modifierTagToMask:(int)tag;
