@@ -1941,11 +1941,15 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     NSString* info = nil;
     if ([bestType isEqualToString:NSFilenamesPboardType]) {
         NSArray *filenames = [board propertyListForType:NSFilenamesPboardType];
-        if ([filenames count] > 0) {
-            info = [filenames componentsJoinedByString:@"\n"];
-            if ([info length] == 0) {
-                info = nil;
-            }
+        NSMutableArray *escapedFilenames = [NSMutableArray array];
+        for (NSString *filename in filenames) {
+            [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
+        }
+        if (escapedFilenames.count > 0) {
+            info = [escapedFilenames componentsJoinedByString:@"\n"];
+        }
+        if ([info length] == 0) {
+            info = nil;
         }
     } else {
         info = [board stringForType:NSStringPboardType];
