@@ -682,6 +682,10 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
             (int)arc4random()];
 }
 
+- (BOOL)shouldSetCtype {
+    return ![[NSUserDefaults standardUserDefaults] boolForKey:@"DoNotSetCtype"];
+}
+
 - (void)startProgram:(NSString *)program
            arguments:(NSArray *)prog_argv
          environment:(NSDictionary *)prog_env
@@ -711,7 +715,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [[addressBookEntry objectForKey:KEY_SET_LOCALE_VARS] boolValue]) {
         if (lang) {
             [env setObject:lang forKey:@"LANG"];
-        } else {
+        } else if ([self shouldSetCtype]){
             // Try just the encoding by itself, which might work.
             NSString *encName = [self encodingName];
             if (encName && [self _localeIsSupported:encName]) {
