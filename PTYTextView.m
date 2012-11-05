@@ -768,10 +768,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 		      background:(BOOL)isBackground
 {
     if (dimmingAmount_ == 0) {
-	// No dimming: return plain-vanilla color.
-	NSColor *theColor = [self _colorForCode:theIndex
-			        alternateSemantics:alt
-					      bold:isBold];
+        // No dimming: return plain-vanilla color.
+        NSColor *theColor = [self _colorForCode:theIndex
+                             alternateSemantics:alt
+                                           bold:isBold];
         return theColor;
     }
 
@@ -808,9 +808,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         return theColor;
     } else {
         return [self _dimmedColorForCode:theIndex
-		      alternateSemantics:alt
-				    bold:isBold
-			      background:isBackground];
+                      alternateSemantics:alt
+                                    bold:isBold
+                              background:isBackground];
     }
 }
 
