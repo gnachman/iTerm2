@@ -21,6 +21,38 @@ enum {
     kOrangeOnBlackHighlight,
     kBlackOnPurpleHighlight,
     kPurpleOnBlackHighlight,
+    
+    kBlackHighlight,
+    kDarkGrayHighlight,
+    kLighGrayHighlight,
+    kWhiteHighlight,
+    kGrayHighlight,
+    kRedHighlight,
+    kGreenHighlight,
+    kBlueHighlight,
+    kCyanHighlight,
+    kYellowHighlight,
+    kMagentaHighlight,
+    kOrangeHighlight,
+    kPurpleHighlight,
+    kBrownHighlight,
+    
+    kBlackBackgroundHighlight,
+    kDarkGrayBackgroundHighlight,
+    kLighGrayBackgroundHighlight,
+    kWhiteBackgroundHighlight,
+    kGrayBackgroundHighlight,
+    kRedBackgroundHighlight,
+    kGreenBackgroundHighlight,
+    kBlueBackgroundHighlight,
+    kCyanBackgroundHighlight,
+    kYellowBackgroundHighlight,
+    kMagentaBackgroundHighlight,
+    kOrangeBackgroundHighlight,
+    kPurpleBackgroundHighlight,
+    kBrownBackgroundHighlight,
+    
+    
 };
 
 @implementation HighlightTrigger
@@ -56,6 +88,43 @@ enum {
       @"Orange on Black", [NSNumber numberWithInt:(int)kOrangeOnBlackHighlight],
       @"Purple on Black", [NSNumber numberWithInt:(int)kPurpleOnBlackHighlight],
       @"Black on Purple", [NSNumber numberWithInt:(int)kBlackOnPurpleHighlight],
+      @"Red", [NSNumber numberWithInt:(int)kRedHighlight],
+      @"Green", [NSNumber numberWithInt:(int)kGreenHighlight],
+      @"Gray", [NSNumber numberWithInt:(int)kGrayHighlight],
+      @"Darkgray", [NSNumber numberWithInt:(int)kDarkGrayHighlight],
+      @"White", [NSNumber numberWithInt:(int)kWhiteHighlight],
+       
+      @"Black",  [NSNumber numberWithInt:(int)kBlackHighlight],
+      @"DarkGray",  [NSNumber numberWithInt:(int)kDarkGrayHighlight],
+      @"LightGray",  [NSNumber numberWithInt:(int)kLighGrayHighlight],
+      @"White",  [NSNumber numberWithInt:(int)kWhiteHighlight],
+      @"Gray",  [NSNumber numberWithInt:(int)kGrayHighlight],
+      @"Red",  [NSNumber numberWithInt:(int)kRedHighlight],
+      @"Green",  [NSNumber numberWithInt:(int)kGreenHighlight],
+      @"Blue",  [NSNumber numberWithInt:(int)kBlueHighlight],
+      @"Cyan",  [NSNumber numberWithInt:(int)kCyanHighlight],
+      @"Yellow",  [NSNumber numberWithInt:(int)kYellowHighlight],
+      @"Magenta",  [NSNumber numberWithInt:(int)kMagentaHighlight],
+      @"Orange",  [NSNumber numberWithInt:(int)kOrangeHighlight],
+      @"Purple",  [NSNumber numberWithInt:(int)kPurpleHighlight],
+      @"Brown",  [NSNumber numberWithInt:(int)kBrownHighlight],
+            
+      @"Black Background",  [NSNumber numberWithInt:(int)kBlackBackgroundHighlight],
+      @"Gray Background",  [NSNumber numberWithInt:(int)kDarkGrayBackgroundHighlight],
+      @"LighGray Background",  [NSNumber numberWithInt:(int)kLighGrayBackgroundHighlight],
+      @"White Background",  [NSNumber numberWithInt:(int)kWhiteBackgroundHighlight],
+      @"Gray Background",  [NSNumber numberWithInt:(int)kGrayBackgroundHighlight],
+      @"Red Background",  [NSNumber numberWithInt:(int)kRedBackgroundHighlight],
+      @"Gren Background",  [NSNumber numberWithInt:(int)kGreenBackgroundHighlight],
+      @"Blue Background",  [NSNumber numberWithInt:(int)kBlueBackgroundHighlight],
+      @"Cyan Background",  [NSNumber numberWithInt:(int)kCyanBackgroundHighlight],
+      @"Yellow Background",  [NSNumber numberWithInt:(int)kYellowBackgroundHighlight],
+      @"Magenta Background",  [NSNumber numberWithInt:(int)kMagentaBackgroundHighlight],
+      @"Orange Background",  [NSNumber numberWithInt:(int)kOrangeBackgroundHighlight],
+      @"Purple Background",  [NSNumber numberWithInt:(int)kPurpleBackgroundHighlight],
+      @"Brown Background",  [NSNumber numberWithInt:(int)kBrownBackgroundHighlight],
+            
+            
       nil];
 }
 
@@ -138,6 +207,122 @@ enum {
       sct.foregroundColor = [self colorCodeForColor:[NSColor purpleColor]];
       sct.backgroundColor = [self colorCodeForColor:[NSColor blackColor]];
       break;
+          
+      case kBlackHighlight:
+          sct.foregroundColor = [self colorCodeForColor:[NSColor blackColor]];
+          break;
+          
+      case kDarkGrayHighlight:
+          sct.foregroundColor = [self colorCodeForColor:[NSColor darkGrayColor]];
+          break;
+          
+      case kLighGrayHighlight:
+          sct.foregroundColor = [self colorCodeForColor:[NSColor lightGrayColor]];
+          break;
+          
+      case kWhiteHighlight:
+          sct.foregroundColor = [self colorCodeForColor:[NSColor whiteColor]];
+          break;
+          
+      case kGrayHighlight:
+          sct.foregroundColor = [self colorCodeForColor:[NSColor grayColor]];
+          break;
+          
+      case kRedHighlight:
+          sct.foregroundColor = [self colorCodeForColor:[NSColor redColor]];
+          break;
+          
+      case kGreenHighlight:
+          sct.foregroundColor = [self colorCodeForColor:[NSColor greenColor]];
+          break;
+          
+      case kBlueHighlight:
+          sct.foregroundColor = [self colorCodeForColor:[NSColor blueColor]];
+          break;
+          
+      case kCyanHighlight:
+          sct.foregroundColor = [self colorCodeForColor:[NSColor cyanColor]];
+          break;
+          
+      case kYellowHighlight:
+          sct.foregroundColor = [self colorCodeForColor:[NSColor yellowColor]];
+          break;
+          
+      case kMagentaHighlight:
+          sct.foregroundColor = [self colorCodeForColor:[NSColor magentaColor]];
+          break;
+          
+      case kOrangeHighlight:
+          sct.foregroundColor = [self colorCodeForColor:[NSColor orangeColor]];
+          break;
+          
+      case kPurpleHighlight:
+          sct.foregroundColor = [self colorCodeForColor:[NSColor purpleColor]];
+          break;
+          
+      case kBrownHighlight:
+          sct.foregroundColor = [self colorCodeForColor:[NSColor brownColor]];
+          break;
+          
+          
+          // --------------
+      case kBlackBackgroundHighlight:
+          sct.backgroundColor = [self colorCodeForColor:[NSColor blackColor]];
+          break;
+          
+      case kDarkGrayBackgroundHighlight:
+          sct.backgroundColor = [self colorCodeForColor:[NSColor darkGrayColor]];
+          break;
+          
+      case kLighGrayBackgroundHighlight:
+          sct.backgroundColor = [self colorCodeForColor:[NSColor lightGrayColor]];
+          break;
+          
+      case kWhiteBackgroundHighlight:
+          sct.backgroundColor = [self colorCodeForColor:[NSColor whiteColor]];
+          break;
+          
+      case kGrayBackgroundHighlight:
+          sct.backgroundColor = [self colorCodeForColor:[NSColor grayColor]];
+          break;
+          
+      case kRedBackgroundHighlight:
+          sct.backgroundColor = [self colorCodeForColor:[NSColor redColor]];
+          break;
+          
+      case kGreenBackgroundHighlight:
+          sct.backgroundColor = [self colorCodeForColor:[NSColor greenColor]];
+          break;
+          
+      case kBlueBackgroundHighlight:
+          sct.backgroundColor = [self colorCodeForColor:[NSColor blueColor]];
+          break;
+          
+      case kCyanBackgroundHighlight:
+          sct.backgroundColor = [self colorCodeForColor:[NSColor cyanColor]];
+          break;
+          
+      case kYellowBackgroundHighlight:
+          sct.backgroundColor = [self colorCodeForColor:[NSColor yellowColor]];
+          break;
+          
+      case kMagentaBackgroundHighlight:
+          sct.backgroundColor = [self colorCodeForColor:[NSColor magentaColor]];
+          break;
+          
+      case kOrangeBackgroundHighlight:
+          sct.backgroundColor = [self colorCodeForColor:[NSColor orangeColor]];
+          break;
+          
+      case kPurpleBackgroundHighlight:
+          sct.backgroundColor = [self colorCodeForColor:[NSColor purpleColor]];
+          break;
+          
+      case kBrownBackgroundHighlight:
+          sct.backgroundColor = [self colorCodeForColor:[NSColor brownColor]];
+          break;
+      
+
   }
   return sct;
 }

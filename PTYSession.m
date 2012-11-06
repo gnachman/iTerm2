@@ -1747,7 +1747,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                           modflag, send_strlen, send_str[0]]);
                 if (debugKeyDown) {
                     DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %d; send_str[0] = '%c (0x%x)'",
-                              modflag, send_strlen, send_str[0]]);
+                              modflag, send_strlen, send_str[0], send_str[0]]);
                 }
             }
 
@@ -3772,6 +3772,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (BOOL)tmuxSetSecureLogging:(BOOL)secureLogging {
     tmuxSecureLogging_ = secureLogging;
+    return 0;
 }
 
 - (void)tmuxWriteData:(NSData *)data

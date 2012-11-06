@@ -704,8 +704,8 @@ static char* FormatCont(int c)
         }
         line[x] = 0;
         dirtyline[x] = 0;
-        [result appendFormat:@"%04d @ buffer+%2d lines: %s %s\n", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)];
-        [result appendFormat:@"%04d @ buffer+%2d dirty: %s\n", y, ((p - buffer_lines) / REAL_WIDTH), dirtyline];
+        [result appendFormat:@"%04d @ buffer+%lu lines: %s %s\n", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)];
+        [result appendFormat:@"%04d @ buffer+%lu dirty: %s\n", y, ((p - buffer_lines) / REAL_WIDTH), dirtyline];
     }
     return result;
 }
@@ -759,7 +759,7 @@ static char* FormatCont(int c)
         }
         dirtyline[x] = 0;
         line[x] = 0;
-        DebugLog([NSString stringWithFormat:@"%04d @ buffer+%2d lines: %s %s", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)]);
+        DebugLog([NSString stringWithFormat:@"%04d @ buffer+%lu lines: %s %s", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)]);
         DebugLog([NSString stringWithFormat:@"                 dirty: %s", dirtyline]);
     }
 }
@@ -1035,10 +1035,10 @@ static char* FormatCont(int c)
     }
 }
 
-static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
-    if (y1 == y2) {
-        return x1 < x2;
-    } else if (y1 < y2) {
+static BOOL XYIsBeforeXY(int _x1, int _y1, int _x2, int _y2) {
+    if (_y1 == _y2) {
+        return _x1 < _x2;
+    } else if (_y1 < _y2) {
         return YES;
     } else {
         return NO;
@@ -2456,7 +2456,7 @@ void DumpBuf(screen_char_t* p, int n) {
     screen_char_t *aLine;
 
     if (gDebugLogging) {
-        DebugLog([NSString stringWithFormat:@"setString: %d chars starting with %c at x=%d, y=%d, line=%d",
+        DebugLog([NSString stringWithFormat:@"setString: %ld chars starting with %c at x=%d, y=%d, line=%d",
                   [string length], [string characterAtIndex:0],
                   cursorX, cursorY, cursorY + [linebuffer numLinesWithWidth: WIDTH]]);
     }
