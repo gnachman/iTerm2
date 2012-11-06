@@ -492,6 +492,11 @@ NSString *sessionsKey = @"sessions";
     }
 }
 
+- (void)toggleBroadcastingToCurrentSession:(id)sender
+{
+    [self toggleBroadcastingInputToSession:[self currentSession]];
+}
+
 - (void)notifyTmuxOfWindowResize
 {
     NSArray *tmuxControllers = [self uniqueTmuxControllers];
@@ -5169,6 +5174,8 @@ NSString *sessionsKey = @"sessions";
         result = [TABVIEW numberOfTabViewItems] > 1;
     } else if ([item action] == @selector(moveTabRight:)) {
         result = [TABVIEW numberOfTabViewItems] > 1;
+    } else if ([item action] == @selector(toggleBroadcastingToCurrentSession:)) {
+        result = ![[self currentSession] exited];
     } else if ([item action] == @selector(runCoprocess:)) {
         result = ![[self currentSession] hasCoprocess];
     } else if ([item action] == @selector(stopCoprocess:)) {

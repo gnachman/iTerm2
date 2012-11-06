@@ -67,6 +67,27 @@
     [super dealloc];
 }
 
+- (LineBlock *)copy {
+    LineBlock *theCopy = [[LineBlock alloc] init];
+    theCopy->raw_buffer = (screen_char_t*) malloc(sizeof(screen_char_t) * buffer_size);
+    memmove(theCopy->raw_buffer, raw_buffer, sizeof(screen_char_t) * buffer_size);
+    size_t bufferStartOffset = (buffer_start - raw_buffer);
+    theCopy->buffer_start = theCopy->raw_buffer + bufferStartOffset;
+    theCopy->start_offset = start_offset;
+    theCopy->first_entry = first_entry;
+    theCopy->buffer_size = buffer_size;
+    size_t cll_size = sizeof(int) * cll_capacity;
+    theCopy->cumulative_line_lengths = (int*) malloc(cll_size);
+    memmove(theCopy->cumulative_line_lengths, cumulative_line_lengths, cll_size);
+    theCopy->cll_capacity = cll_capacity;
+    theCopy->cll_entries = cll_entries;
+    theCopy->is_partial = is_partial;
+    theCopy->cached_numlines = cached_numlines;
+    theCopy->cached_numlines_width = cached_numlines_width;
+
+    return theCopy;
+}
+
 - (int) rawSpaceUsed
 {
     if (cll_entries == 0) {
@@ -858,7 +879,11 @@ static int Search(NSString* needle,
     }
 }
 
-- (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y
+// Returns YES if the position is valid for this block.
+- (BOOL)convertPosition:(int)position
+              withWidth:(int)width
+                    toX:(int*)x
+                    toY:(int*)y
 {
     int i;
     *x = 0;
@@ -1477,7 +1502,11 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     return result;
 }
 
-- (BOOL) convertPosition: (int) position withWidth: (int) width toX: (int*) x toY: (int*) y
+// Returns YES if the position is valid.
+- (BOOL)convertPosition:(int)position
+              withWidth:(int)width
+                    toX:(int*)x
+                    toY:(int*)y
 {
     int i;
     int yoffset = 0;
@@ -1488,15 +1517,23 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             position -= used;
             yoffset += [block getNumLinesWithWrapWidth:width];
         } else {
-            BOOL result = [block convertPosition: position withWidth: width toX: x toY: y];
+            BOOL positionIsValid = [block convertPosition:position
+                                                withWidth:width
+                                                      toX:x
+                                                      toY:y];
             *y += yoffset;
-            return result;
+            return positionIsValid;
         }
     }
     return NO;
 }
 
-- (BOOL) convertCoordinatesAtX: (int) x atY: (int) y withWidth: (int) width toPosition: (int*) position offset:(int)offset
+// Returns YES if the (x,y) coord exists within the scrollback buffer.
+- (BOOL)convertCoordinatesAtX:(int)x
+                          atY:(int)y
+                    withWidth:(int)width
+                   toPosition:(int*)position
+                       offset:(int)offset
 {
     int line = y;
     int i;
@@ -1525,7 +1562,13 @@ static int RawNumLines(LineBuffer* buffer, int width) {
             // offset = additional offset the user requested
             // but we need to see if the position actually exists after adding offset. If it can be
             // converted to an x,y position the it's all right.
-            if ([self convertPosition:*position+pos+offset withWidth:width toX:&tempx toY:&tempy] && tempy >= 0 && tempx >= 0) {
+            const BOOL positionIsValid = [self convertPosition:*position + pos + offset
+                                                     withWidth:width
+                                                           toX:&tempx
+                                                           toY:&tempy];
+            if (positionIsValid &&
+                tempy >= 0 &&
+                tempx >= 0) {
                 *position += pos + offset;
                 return YES;
             } else {
@@ -1628,6 +1671,26 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     context->absBlockNum = [self absBlockNumberOfAbsPos:absPos];
     long long absOffset = [self absPositionOfAbsBlock:context->absBlockNum];
     context->offset = MAX(0, absPos - absOffset);
+}
+
+- (LineBuffer *)appendOnlyCopy {
+    LineBuffer *theCopy = [[LineBuffer alloc] init];
+    theCopy->blocks = [[NSMutableArray alloc] initWithArray:blocks];
+    LineBlock *lastBlock = [blocks lastObject];
+    if (lastBlock) {
+        [theCopy->blocks removeLastObject];
+        [theCopy->blocks addObject:[[lastBlock copy] autorelease]];
+    }
+    theCopy->block_size = block_size;
+    theCopy->cursor_x = cursor_x;
+    theCopy->cursor_rawline = cursor_rawline;
+    theCopy->max_lines = max_lines;
+    theCopy->num_dropped_blocks = num_dropped_blocks;
+    theCopy->num_wrapped_lines_cache = num_wrapped_lines_cache;
+    theCopy->num_wrapped_lines_width = num_wrapped_lines_width;
+    theCopy->droppedChars = droppedChars;
+
+    return theCopy;
 }
 
 @end

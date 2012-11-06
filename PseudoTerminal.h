@@ -342,6 +342,7 @@ NSWindowDelegate,
 
 - (void)toggleFullScreenTabBar;
 
+- (IBAction)toggleBroadcastingToCurrentSession:(id)sender;
 - (IBAction)runCoprocess:(id)sender;
 - (IBAction)stopCoprocess:(id)sender;
 - (IBAction)coprocessPanelEnd:(id)sender;
