@@ -21,8 +21,8 @@ enum {
     kOrangeOnBlackHighlight,
     kBlackOnPurpleHighlight,
     kPurpleOnBlackHighlight,
-    
-    kBlackHighlight,
+
+    kBlackHighlight = 1000,
     kDarkGrayHighlight,
     kLighGrayHighlight,
     kWhiteHighlight,
@@ -37,7 +37,7 @@ enum {
     kPurpleHighlight,
     kBrownHighlight,
     
-    kBlackBackgroundHighlight,
+    kBlackBackgroundHighlight = 2000,
     kDarkGrayBackgroundHighlight,
     kLighGrayBackgroundHighlight,
     kWhiteBackgroundHighlight,
@@ -88,66 +88,123 @@ enum {
       @"Orange on Black", [NSNumber numberWithInt:(int)kOrangeOnBlackHighlight],
       @"Purple on Black", [NSNumber numberWithInt:(int)kPurpleOnBlackHighlight],
       @"Black on Purple", [NSNumber numberWithInt:(int)kBlackOnPurpleHighlight],
-      @"Red", [NSNumber numberWithInt:(int)kRedHighlight],
-      @"Green", [NSNumber numberWithInt:(int)kGreenHighlight],
-      @"Gray", [NSNumber numberWithInt:(int)kGrayHighlight],
-      @"Darkgray", [NSNumber numberWithInt:(int)kDarkGrayHighlight],
-      @"White", [NSNumber numberWithInt:(int)kWhiteHighlight],
-       
-      @"Black",  [NSNumber numberWithInt:(int)kBlackHighlight],
-      @"DarkGray",  [NSNumber numberWithInt:(int)kDarkGrayHighlight],
-      @"LightGray",  [NSNumber numberWithInt:(int)kLighGrayHighlight],
-      @"White",  [NSNumber numberWithInt:(int)kWhiteHighlight],
-      @"Gray",  [NSNumber numberWithInt:(int)kGrayHighlight],
-      @"Red",  [NSNumber numberWithInt:(int)kRedHighlight],
-      @"Green",  [NSNumber numberWithInt:(int)kGreenHighlight],
-      @"Blue",  [NSNumber numberWithInt:(int)kBlueHighlight],
-      @"Cyan",  [NSNumber numberWithInt:(int)kCyanHighlight],
-      @"Yellow",  [NSNumber numberWithInt:(int)kYellowHighlight],
-      @"Magenta",  [NSNumber numberWithInt:(int)kMagentaHighlight],
-      @"Orange",  [NSNumber numberWithInt:(int)kOrangeHighlight],
-      @"Purple",  [NSNumber numberWithInt:(int)kPurpleHighlight],
-      @"Brown",  [NSNumber numberWithInt:(int)kBrownHighlight],
+
+      @"Black Foreground",  [NSNumber numberWithInt:(int)kBlackHighlight],
+      @"Blue Foreground",  [NSNumber numberWithInt:(int)kBlueHighlight],
+      @"Brown Foreground",  [NSNumber numberWithInt:(int)kBrownHighlight],
+      @"Cyan Foreground",  [NSNumber numberWithInt:(int)kCyanHighlight],
+      @"Dark Gray Foreground",  [NSNumber numberWithInt:(int)kDarkGrayHighlight],
+      @"Gray Foreground",  [NSNumber numberWithInt:(int)kGrayHighlight],
+      @"Green Foreground",  [NSNumber numberWithInt:(int)kGreenHighlight],
+      @"Light Gray Foreground",  [NSNumber numberWithInt:(int)kLighGrayHighlight],
+      @"Magenta Foreground",  [NSNumber numberWithInt:(int)kMagentaHighlight],
+      @"Orange Foreground",  [NSNumber numberWithInt:(int)kOrangeHighlight],
+      @"Purple Foreground",  [NSNumber numberWithInt:(int)kPurpleHighlight],
+      @"Red Foreground",  [NSNumber numberWithInt:(int)kRedHighlight],
+      @"White Foreground",  [NSNumber numberWithInt:(int)kWhiteHighlight],
+      @"Yellow Foreground",  [NSNumber numberWithInt:(int)kYellowHighlight],
             
       @"Black Background",  [NSNumber numberWithInt:(int)kBlackBackgroundHighlight],
-      @"Gray Background",  [NSNumber numberWithInt:(int)kDarkGrayBackgroundHighlight],
-      @"LighGray Background",  [NSNumber numberWithInt:(int)kLighGrayBackgroundHighlight],
-      @"White Background",  [NSNumber numberWithInt:(int)kWhiteBackgroundHighlight],
-      @"Gray Background",  [NSNumber numberWithInt:(int)kGrayBackgroundHighlight],
-      @"Red Background",  [NSNumber numberWithInt:(int)kRedBackgroundHighlight],
-      @"Gren Background",  [NSNumber numberWithInt:(int)kGreenBackgroundHighlight],
       @"Blue Background",  [NSNumber numberWithInt:(int)kBlueBackgroundHighlight],
+      @"Brown Background",  [NSNumber numberWithInt:(int)kBrownBackgroundHighlight],
       @"Cyan Background",  [NSNumber numberWithInt:(int)kCyanBackgroundHighlight],
-      @"Yellow Background",  [NSNumber numberWithInt:(int)kYellowBackgroundHighlight],
+      @"Gray Background",  [NSNumber numberWithInt:(int)kDarkGrayBackgroundHighlight],
+      @"Gray Background",  [NSNumber numberWithInt:(int)kGrayBackgroundHighlight],
+      @"Gren Background",  [NSNumber numberWithInt:(int)kGreenBackgroundHighlight],
+      @"Light Gray Background",  [NSNumber numberWithInt:(int)kLighGrayBackgroundHighlight],
       @"Magenta Background",  [NSNumber numberWithInt:(int)kMagentaBackgroundHighlight],
       @"Orange Background",  [NSNumber numberWithInt:(int)kOrangeBackgroundHighlight],
       @"Purple Background",  [NSNumber numberWithInt:(int)kPurpleBackgroundHighlight],
-      @"Brown Background",  [NSNumber numberWithInt:(int)kBrownBackgroundHighlight],
-            
+      @"Red Background",  [NSNumber numberWithInt:(int)kRedBackgroundHighlight],
+      @"White Background",  [NSNumber numberWithInt:(int)kWhiteBackgroundHighlight],
+      @"Yellow Background",  [NSNumber numberWithInt:(int)kYellowBackgroundHighlight],
             
       nil];
 }
 
-- (NSArray *)tagsSortedByValue
-{
-    return [[self menuItemsForPoupupButton] keysSortedByValueUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
+- (NSArray *)groupedMenuItemsForPopupButton {
+    NSDictionary *fgbg = [NSDictionary dictionaryWithObjectsAndKeys:
+                          @"Yellow on Black", [NSNumber numberWithInt:(int)kYellowOnBlackHighlight],
+                          @"Black on Yellow", [NSNumber numberWithInt:(int)kBlackOnYellowHighlight],
+                          @"White on Red",    [NSNumber numberWithInt:(int)kWhiteOnRedHighlight],
+                          @"Red on White",    [NSNumber numberWithInt:(int)kRedOnWhiteHighlight],
+                          @"Black on Orange", [NSNumber numberWithInt:(int)kBlackOnOrangeHighlight],
+                          @"Orange on Black", [NSNumber numberWithInt:(int)kOrangeOnBlackHighlight],
+                          @"Purple on Black", [NSNumber numberWithInt:(int)kPurpleOnBlackHighlight],
+                          @"Black on Purple", [NSNumber numberWithInt:(int)kBlackOnPurpleHighlight],
+                          nil];
+    NSDictionary *fg = [NSDictionary dictionaryWithObjectsAndKeys:
+                        @"Black Foreground",  [NSNumber numberWithInt:(int)kBlackHighlight],
+                        @"Blue Foreground",  [NSNumber numberWithInt:(int)kBlueHighlight],
+                        @"Brown Foreground",  [NSNumber numberWithInt:(int)kBrownHighlight],
+                        @"Cyan Foreground",  [NSNumber numberWithInt:(int)kCyanHighlight],
+                        @"Dark Gray Foreground",  [NSNumber numberWithInt:(int)kDarkGrayHighlight],
+                        @"Gray Foreground",  [NSNumber numberWithInt:(int)kGrayHighlight],
+                        @"Green Foreground",  [NSNumber numberWithInt:(int)kGreenHighlight],
+                        @"Light Gray Foreground",  [NSNumber numberWithInt:(int)kLighGrayHighlight],
+                        @"Magenta Foreground",  [NSNumber numberWithInt:(int)kMagentaHighlight],
+                        @"Orange Foreground",  [NSNumber numberWithInt:(int)kOrangeHighlight],
+                        @"Purple Foreground",  [NSNumber numberWithInt:(int)kPurpleHighlight],
+                        @"Red Foreground",  [NSNumber numberWithInt:(int)kRedHighlight],
+                        @"White Foreground",  [NSNumber numberWithInt:(int)kWhiteHighlight],
+                        @"Yellow Foreground",  [NSNumber numberWithInt:(int)kYellowHighlight],
+                        nil];
+
+    NSDictionary *bg = [NSDictionary dictionaryWithObjectsAndKeys:
+                        @"Black Background",  [NSNumber numberWithInt:(int)kBlackBackgroundHighlight],
+                        @"Blue Background",  [NSNumber numberWithInt:(int)kBlueBackgroundHighlight],
+                        @"Brown Background",  [NSNumber numberWithInt:(int)kBrownBackgroundHighlight],
+                        @"Cyan Background",  [NSNumber numberWithInt:(int)kCyanBackgroundHighlight],
+                        @"Gray Background",  [NSNumber numberWithInt:(int)kDarkGrayBackgroundHighlight],
+                        @"Gray Background",  [NSNumber numberWithInt:(int)kGrayBackgroundHighlight],
+                        @"Gren Background",  [NSNumber numberWithInt:(int)kGreenBackgroundHighlight],
+                        @"Light Gray Background",  [NSNumber numberWithInt:(int)kLighGrayBackgroundHighlight],
+                        @"Magenta Background",  [NSNumber numberWithInt:(int)kMagentaBackgroundHighlight],
+                        @"Orange Background",  [NSNumber numberWithInt:(int)kOrangeBackgroundHighlight],
+                        @"Purple Background",  [NSNumber numberWithInt:(int)kPurpleBackgroundHighlight],
+                        @"Red Background",  [NSNumber numberWithInt:(int)kRedBackgroundHighlight],
+                        @"White Background",  [NSNumber numberWithInt:(int)kWhiteBackgroundHighlight],
+                        @"Yellow Background",  [NSNumber numberWithInt:(int)kYellowBackgroundHighlight],
+                        nil];
+    return [NSArray arrayWithObjects:fgbg, fg, bg, nil];
 }
 
 - (int)indexOfTag:(int)theTag
 {
     int i = 0;
-    for (NSNumber *n in [self tagsSortedByValue]) {
-        if ([n intValue] == theTag) {
-            return i;
+    BOOL isFirst = YES;
+    for (NSDictionary *dict in [self groupedMenuItemsForPopupButton]) {
+        if (!isFirst) {
+            ++i;
         }
-        i++;
+        isFirst = NO;
+        for (NSNumber *n in [self tagsSortedByValueInDict:dict]) {
+            if ([n intValue] == theTag) {
+                return i;
+            }
+            i++;
+        }
     }
     return -1;
 }
 
 - (int)tagAtIndex:(int)theIndex
 {
-    return [[[self tagsSortedByValue] objectAtIndex:theIndex] intValue];
+    int i = 0;
+    BOOL isFirst = YES;
+    for (NSDictionary *dict in [self groupedMenuItemsForPopupButton]) {
+        if (!isFirst) {
+            ++i;
+        }
+        isFirst = NO;
+        for (NSNumber *n in [self tagsSortedByValueInDict:dict]) {
+            if (i == theIndex) {
+                return [n intValue];
+            }
+            i++;
+        }
+    }
+    return -1;
 }
 
 - (int)colorCodeForColor:(NSColor *)theColor

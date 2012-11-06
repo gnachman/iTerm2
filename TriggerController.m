@@ -276,12 +276,20 @@ static NSMutableArray *gTriggerClasses;
             if ([trigger paramIsPopupButton]) {
                 NSPopUpButtonCell *cell = [[[NSPopUpButtonCell alloc] initTextCell:@"" pullsDown:NO] autorelease];
                 NSMenu *theMenu = [cell menu];
-                NSDictionary *items = [trigger menuItemsForPoupupButton];
-                for (NSNumber *n in [trigger tagsSortedByValue]) {
-                    NSString *theTitle = [items objectForKey:n];
-                    NSMenuItem *anItem = [[[NSMenuItem alloc] initWithTitle:theTitle action:nil keyEquivalent:@""] autorelease];
-                    [anItem setTag:[n intValue]];
-                    [theMenu addItem:anItem];
+                BOOL isFirst = YES;
+                for (NSDictionary *items in [trigger groupedMenuItemsForPopupButton]) {
+                    if (!isFirst) {
+                        [theMenu addItem:[NSMenuItem separatorItem]];
+                    }
+                    isFirst = NO;
+                    for (NSNumber *n in [trigger tagsSortedByValueInDict:items]) {
+                        NSString *theTitle = [items objectForKey:n];
+                        if (theTitle) {
+                            NSMenuItem *anItem = [[[NSMenuItem alloc] initWithTitle:theTitle action:nil keyEquivalent:@""] autorelease];
+                            [anItem setTag:[n intValue]];
+                            [theMenu addItem:anItem];
+                        }
+                    }
                 }
                 [cell setBordered:NO];
                 return cell;

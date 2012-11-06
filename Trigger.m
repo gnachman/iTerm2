@@ -59,6 +59,16 @@ NSString * const kTriggerParameterKey = @"parameter";
     return nil;
 }
 
+- (NSArray *)groupedMenuItemsForPopupButton
+{
+  NSDictionary *menuItems = [self menuItemsForPoupupButton];
+  if (menuItems) {
+    return [NSArray arrayWithObject:menuItems];
+  } else {
+    return nil;
+  }
+}
+
 - (void)dealloc {
     [regex_ release];
     [action_ release];
@@ -119,9 +129,9 @@ NSString * const kTriggerParameterKey = @"parameter";
     return 0;
 }
 
-- (NSArray *)tagsSortedByValue
+- (NSArray *)tagsSortedByValueInDict:(NSDictionary *)dict
 {
-    return nil;
+    return [dict keysSortedByValueUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
 }
 
 @end
