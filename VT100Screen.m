@@ -1035,10 +1035,10 @@ static char* FormatCont(int c)
     }
 }
 
-static BOOL XYIsBeforeXY(int _x1, int _y1, int _x2, int _y2) {
-    if (_y1 == _y2) {
-        return _x1 < _x2;
-    } else if (_y1 < _y2) {
+static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
+    if (py1 == py2) {
+        return px1 < px2;
+    } else if (py1 < py2) {
         return YES;
     } else {
         return NO;

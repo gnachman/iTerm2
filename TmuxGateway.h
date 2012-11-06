@@ -27,7 +27,7 @@
 - (void)tmuxSessionRenamed:(NSString *)newName;
 - (NSSize)tmuxBookmarkSize;  // rows, cols
 - (int)tmuxNumHistoryLinesInBookmark;
-- (BOOL)tmuxSetSecureLogging:(BOOL)secureLogging;
+- (void)tmuxSetSecureLogging:(BOOL)secureLogging;
 
 @end
 

@@ -3770,9 +3770,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
-- (BOOL)tmuxSetSecureLogging:(BOOL)secureLogging {
+- (void)tmuxSetSecureLogging:(BOOL)secureLogging {
     tmuxSecureLogging_ = secureLogging;
-    return 0;
 }
 
 - (void)tmuxWriteData:(NSData *)data
