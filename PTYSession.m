@@ -3238,7 +3238,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
     [TEXTVIEW setFont:font nafont:nafont horizontalSpacing:horizontalSpacing verticalSpacing:verticalSpacing];
     if (![[[self tab] parentWindow] anyFullScreen]) {
-        [[[self tab] parentWindow] fitWindowToTab:[self tab]];
+        if ([[PreferencePanel sharedInstance] adjustWindowForFontSizeChange]) {
+            [[[self tab] parentWindow] fitWindowToTab:[self tab]];
+        }
     }
     // If the window isn't able to adjust, or adjust enough, make the session
     // work with whatever size we ended up having.
