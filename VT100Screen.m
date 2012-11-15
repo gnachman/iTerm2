@@ -707,8 +707,8 @@ static char* FormatCont(int c)
         }
         line[x] = 0;
         dirtyline[x] = 0;
-        [result appendFormat:@"%04d @ buffer+%2d lines: %s %s\n", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)];
-        [result appendFormat:@"%04d @ buffer+%2d dirty: %s\n", y, ((p - buffer_lines) / REAL_WIDTH), dirtyline];
+        [result appendFormat:@"%04d @ buffer+%lu lines: %s %s\n", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)];
+        [result appendFormat:@"%04d @ buffer+%lu dirty: %s\n", y, ((p - buffer_lines) / REAL_WIDTH), dirtyline];
     }
     return result;
 }
@@ -762,7 +762,7 @@ static char* FormatCont(int c)
         }
         dirtyline[x] = 0;
         line[x] = 0;
-        DebugLog([NSString stringWithFormat:@"%04d @ buffer+%2d lines: %s %s", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)]);
+        DebugLog([NSString stringWithFormat:@"%04d @ buffer+%lu lines: %s %s", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)]);
         DebugLog([NSString stringWithFormat:@"                 dirty: %s", dirtyline]);
     }
 }
@@ -1038,10 +1038,10 @@ static char* FormatCont(int c)
     }
 }
 
-static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
-    if (y1 == y2) {
-        return x1 < x2;
-    } else if (y1 < y2) {
+static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
+    if (py1 == py2) {
+        return px1 < px2;
+    } else if (py1 < py2) {
         return YES;
     } else {
         return NO;
@@ -2377,14 +2377,14 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
         }
         break;
 
-	case UNDERSCORE_TMUX_UNSUPPORTED:
-		[self crlf];
-		[self setString:@"You have run an unsupported version of tmux. Please "
-			@"install a version that is compatible with this build of iTerm2."
-					ascii:YES];
-		[self crlf];
-		[SESSION writeTask:[@"detach\n\n" dataUsingEncoding:NSUTF8StringEncoding]];
-		break;
+        case UNDERSCORE_TMUX_UNSUPPORTED:
+                [self crlf];
+                [self setString:@"You have run an unsupported version of tmux. Please "
+                        @"install a version that is compatible with this build of iTerm2."
+                                        ascii:YES];
+                [self crlf];
+                [SESSION writeTask:[@"detach\n\n" dataUsingEncoding:NSUTF8StringEncoding]];
+                break;
 
     case UNDERSCORE_TMUX1:
         [SESSION startTmuxMode];
@@ -2465,7 +2465,7 @@ static BOOL XYIsBeforeXY(int x1, int y1, int x2, int y2) {
 
 - (void)mouseModeDidChange:(MouseMode)mouseMode
 {
-	[display updateCursor:nil];
+        [display updateCursor:nil];
 }
 
 - (BOOL)printToAnsi
@@ -2536,7 +2536,7 @@ void DumpBuf(screen_char_t* p, int n) {
     screen_char_t *aLine;
 
     if (gDebugLogging) {
-        DebugLog([NSString stringWithFormat:@"setString: %d chars starting with %c at x=%d, y=%d, line=%d",
+        DebugLog([NSString stringWithFormat:@"setString: %ld chars starting with %c at x=%d, y=%d, line=%d",
                   [string length], [string characterAtIndex:0],
                   cursorX, cursorY, cursorY + [linebuffer numLinesWithWidth: WIDTH]]);
     }

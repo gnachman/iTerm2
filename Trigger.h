@@ -35,12 +35,15 @@ extern NSString * const kTriggerParameterKey;
 - (BOOL)paramIsPopupButton;
 // Returns a map from NSNumber(tag) -> NSString(title)
 - (NSDictionary *)menuItemsForPoupupButton;
-// Index in tagsSortedByValue of "tag".
+// Returns an array of NSDictionaries mapping NSNumber(tag) -> NSString(title)
+- (NSArray *)groupedMenuItemsForPopupButton;
+// Index of "tag" in menu; inverse of tagAtIndex.
 - (int)indexOfTag:(int)theTag;
-// Tag at "index" in tagsSortedByValue.
+// Tag at "index" in menu.
 - (int)tagAtIndex:(int)index;
-// Tags in menu;ItemsForPopupButton sorted by value (however the subclass sees fit to sort)
-- (NSArray *)tagsSortedByValue;
+
+// Utility that returns keys sorted by values for a tag dict (i.e., an element of groupedMenuItemsForPopupButton)
+- (NSArray *)tagsSortedByValueInDict:(NSDictionary *)dict;
 
 - (NSString *)paramWithBackreferencesReplacedWithValues:(NSArray *)values;
 - (void)tryString:(NSString *)s inSession:(PTYSession *)aSession;
