@@ -1184,6 +1184,7 @@ static float versionNumber;
     if (defaultTabViewType > 1) {
         defaultTabViewType = 0;
     }
+    defaultAllowClipboardAccess=[prefs objectForKey:@"AllowClipboardAccess"]?[[prefs objectForKey:@"AllowClipboardAccess"] boolValue]:NO;
     defaultCopySelection=[prefs objectForKey:@"CopySelection"]?[[prefs objectForKey:@"CopySelection"] boolValue]:YES;
     defaultCopyLastNewline = [prefs objectForKey:@"CopyLastNewline"] ? [[prefs objectForKey:@"CopyLastNewline"] boolValue] : NO;
     defaultPasteFromClipboard=[prefs objectForKey:@"PasteFromClipboard"]?[[prefs objectForKey:@"PasteFromClipboard"] boolValue]:YES;
@@ -1305,6 +1306,7 @@ static float versionNumber;
         return;
     }
 
+    [prefs setBool:defaultAllowClipboardAccess forKey:@"AllowClipboardAccess"];
     [prefs setBool:defaultCopySelection forKey:@"CopySelection"];
     [prefs setBool:defaultCopyLastNewline forKey:@"CopyLastNewline"];
     [prefs setBool:defaultPasteFromClipboard forKey:@"PasteFromClipboard"];
@@ -1401,6 +1403,7 @@ static float versionNumber;
     [openTmuxWindows selectItemAtIndex: defaultOpenTmuxWindowsIn];
     [autoHideTmuxClientSession setState:defaultAutoHideTmuxClientSession?NSOnState:NSOffState];
     [tabPosition selectItemAtIndex: defaultTabViewType];
+    [allowClipboardAccessFromTerminal setState:defaultAllowClipboardAccess?NSOnState:NSOffState];
     [selectionCopiesText setState:defaultCopySelection?NSOnState:NSOffState];
     [copyLastNewline setState:defaultCopyLastNewline ? NSOnState : NSOffState];
     [middleButtonPastesFromClipboard setState:defaultPasteFromClipboard?NSOnState:NSOffState];
@@ -1703,6 +1706,7 @@ static float versionNumber;
         }
 
         defaultFsTabDelay = [fsTabDelay floatValue];
+        defaultAllowClipboardAccess = ([allowClipboardAccessFromTerminal state]==NSOnState);
         defaultCopySelection = ([selectionCopiesText state]==NSOnState);
         defaultCopyLastNewline = ([copyLastNewline state] == NSOnState);
         defaultPasteFromClipboard=([middleButtonPastesFromClipboard state]==NSOnState);
@@ -1824,6 +1828,16 @@ static float versionNumber;
 
 // accessors for preferences
 
+
+- (BOOL)allowClipboardAccess
+{
+    return defaultAllowClipboardAccess;
+}
+
+- (void) setAllowClipboardAccess:(BOOL)flag
+{
+    defaultAllowClipboardAccess = flag;
+}
 
 - (BOOL)copySelection
 {

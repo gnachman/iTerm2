@@ -905,6 +905,10 @@ static VT100TCC decode_xterm(unsigned char *datap,
                 // <Esc>]50;key=value^G
                 result.type = XTERMCC_SET_KVP;
                 break;
+            case 52:
+                // base64 copy/paste (OPT_PASTE64)
+                result.type = XTERMCC_PASTE64;
+                break;
             default:
                 result.type = VT100_NOTSUPPORT;
                 break;
@@ -2952,14 +2956,18 @@ static VT100TCC decode_string(unsigned char *datap,
                 [[SCREEN session] remarry];
             }
         } else if ([key isEqualToString:@"CopyToClipboard"]) {
-            if ([value isEqualToString:@"ruler"]) {
-                [[SCREEN session] setPasteboard:NSGeneralPboard];
-            } else if ([value isEqualToString:@"find"]) {
-                [[SCREEN session] setPasteboard:NSFindPboard];
-            } else if ([value isEqualToString:@"font"]) {
-                [[SCREEN session] setPasteboard:NSFontPboard];
+            if ([[PreferencePanel sharedInstance] allowClipboardAccess]) {
+                if ([value isEqualToString:@"ruler"]) {
+                    [[SCREEN session] setPasteboard:NSGeneralPboard];
+                } else if ([value isEqualToString:@"find"]) {
+                    [[SCREEN session] setPasteboard:NSFindPboard];
+                } else if ([value isEqualToString:@"font"]) {
+                    [[SCREEN session] setPasteboard:NSFontPboard];
+                } else {
+                    [[SCREEN session] setPasteboard:NSGeneralPboard];
+                }
             } else {
-                [[SCREEN session] setPasteboard:NSGeneralPboard];
+                NSLog(@"Clipboard access denied for CopyToClipboard");
             }
         } else if ([key isEqualToString:@"EndCopy"]) {
             [[SCREEN session] setPasteboard:nil];
