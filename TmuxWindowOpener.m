@@ -182,7 +182,7 @@
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp
 {
     ++pendingRequests_;
-    NSString *command = [NSString stringWithFormat:@"control -t %%%d get-emulator", [wp intValue]];
+    NSString *command = [NSString stringWithFormat:@"control -t %%%d get-emulatorstate", [wp intValue]];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
                          responseSelector:@selector(dumpStateResponse:pane:)

@@ -8,9 +8,12 @@
 
 #import "TmuxStateParser.h"
 
-NSString *kStateDictInAlternateScreen = @"in_alternate_screen";
+NSString *kStateDictInAlternateScreen = @"in_alternate_screen";  // Deprecated: same as kStateDictSavedGrid below.
+NSString *kStateDictSavedGrid = @"saved_grid";
 NSString *kStateDictBaseCursorX = @"base_cursor_x";
 NSString *kStateDictBaseCursorY = @"base_cursor_y";
+NSString *kStateDictSavedCX = @"saved_cx";
+NSString *kStateDictSavedCY = @"saved_cy";
 NSString *kStateDictCursorX = @"cursor_x";
 NSString *kStateDictCursorY = @"cursor_y";
 NSString *kStateDictScrollRegionUpper = @"scroll_region_upper";
@@ -74,8 +77,11 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_mode";
 
     NSDictionary *fieldTypes = [NSDictionary dictionaryWithObjectsAndKeys:
                                 intType, kStateDictInAlternateScreen,
+                                intType, kStateDictSavedGrid,
                                 uintType, kStateDictBaseCursorX,
                                 uintType, kStateDictBaseCursorY,
+                                uintType, kStateDictSavedCX,
+                                uintType, kStateDictSavedCY,
                                 uintType, kStateDictCursorX,
                                 uintType, kStateDictCursorY,
                                 uintType, kStateDictScrollRegionUpper,
