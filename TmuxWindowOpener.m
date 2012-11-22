@@ -23,7 +23,6 @@
 - (void)requestDidComplete;
 - (void)dumpHistoryResponse:(NSString *)response
            paneAndAlternate:(NSArray *)info;
-- (NSDictionary *)dictForStartControlCommand;
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp;
 - (NSDictionary *)dictForRequestHistoryForWindowPane:(NSNumber *)wp
                                                  alt:(BOOL)alternate;
@@ -90,11 +89,7 @@
                                                  callingSelector:@selector(appendRequestsForNode:toArray:)
                                                         onTarget:self
                                                       withObject:cmdList];
-    // append start-control
-    if (initial) {
-        [cmdList addObject:[self dictForStartControlCommand]];
-    }
-    [gateway_ sendCommandList:cmdList];
+    [gateway_ sendCommandList:cmdList initial:initial];
 }
 
 - (void)updateLayoutInTab:(PTYTab *)tab;
@@ -150,16 +145,6 @@
 @end
 
 @implementation TmuxWindowOpener (Private)
-
-- (NSDictionary *)dictForStartControlCommand
-{
-    ++pendingRequests_;
-    NSString *command = @"control set-ready";
-    return [gateway_ dictionaryForCommand:command
-                           responseTarget:self
-                         responseSelector:@selector(requestDidComplete)
-                           responseObject:nil];
-}
 
 // This is called for each window pane via a DFS. It sends all commands needed
 // to open a window.
