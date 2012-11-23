@@ -128,15 +128,23 @@ static int consume_hex(const char *s, int *out)
 
     const char *s = [hist UTF8String];
     for (int i = 0; s[i]; ) {
-        if (s[i] == ':') {
-//            NSLog(@"found a : at %d", i);
+        if (s[i] == ':' || s[i] == '<') {  // : is deprecated, new tmuxen use <
+            // Old style:
+            // :attr,flags,fg,bg,char,char,char,...
+            // New style:
+            // <attr,flags,fg,bg>char,char,char,...
+            BOOL isOldStyle = (s[i] == ':');
             // Context update follows
             i++;
             int values[4];
             for (int j = 0; j < 4; j++) {
                 int n = consume_hex(s + i, &values[j]);
                 i += n;
-                if (s[i] == ',') {
+                char expected = ',';
+                if (!isOldStyle && j == 3) {
+                    expected = '>';
+                }
+                if (s[i] == expected) {
                     i++;
                 } else {
                     return nil;

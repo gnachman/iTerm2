@@ -4076,15 +4076,36 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 }
 
+- (NSValue *)valueFromDictionary:(NSDictionary *)dict withFirstKeyFrom:(NSArray *)keys {
+    for (NSString *key in keys) {
+        NSObject *object = [dict objectForKey:key];
+        if (object) {
+            return object;
+        }
+    }
+    return nil;
+}
+
 - (void)setTmuxState:(NSDictionary *)state
 {
-    if (![[state objectForKey:kStateDictInAlternateScreen] intValue] && temp_buffer) {
+    int savedGrid = [[self valueFromDictionary:state
+                              withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedGrid,
+                                                                         kStateDictInAlternateScreen,
+                                                                         nil]] intValue];
+    if (!savedGrid && temp_buffer) {
         free(temp_buffer);
         temp_buffer = NULL;
     }
+    // TODO(georgen): Get the alt screen contents and fill temp_buffer.
 
-    SAVE_CURSOR_X = [[state objectForKey:kStateDictBaseCursorX] intValue];
-    SAVE_CURSOR_Y = [[state objectForKey:kStateDictBaseCursorY] intValue];
+    SAVE_CURSOR_X = [[self valueFromDictionary:state
+                              withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedCX,
+                                                                         kStateDictBaseCursorX,
+                                                                         nil]] intValue];
+    SAVE_CURSOR_Y = [[self valueFromDictionary:state
+                              withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedCY,
+                                                                         kStateDictBaseCursorY,
+                                                                         nil]] intValue];
     cursorX = [[state objectForKey:kStateDictCursorX] intValue];
     cursorY = [[state objectForKey:kStateDictCursorY] intValue];
     SCROLL_TOP = [[state objectForKey:kStateDictScrollRegionUpper] intValue];

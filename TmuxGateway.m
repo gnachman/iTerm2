@@ -28,6 +28,7 @@ static NSString *kCommandTarget = @"target";
 static NSString *kCommandSelector = @"sel";
 static NSString *kCommandString = @"string";
 static NSString *kCommandObject = @"object";
+static NSString *kCommandIsInitial = @"isInitial";
 
 @implementation TmuxGateway
 
@@ -206,6 +207,9 @@ static NSString *kCommandObject = @"object";
                      withObject:currentCommandResponse_
                      withObject:obj];
     }
+    if ([[currentCommand_ objectForKey:kCommandIsInitial] boolValue]) {
+        acceptNotifications_ = YES;
+    }
     [currentCommand_ release];
     currentCommand_ = nil;
     [currentCommandResponse_ release];
@@ -245,6 +249,7 @@ static NSString *kCommandObject = @"object";
     commandRange.length += newlineRange.length;
 
     if ([command isEqualToString:@"%end"]) {
+        TmuxLog(@"End for command %@", currentCommand_);
         [self currentCommandResponseFinished];
     } else if (currentCommand_) {
         if (currentCommandResponse_.length) {
@@ -252,24 +257,24 @@ static NSString *kCommandObject = @"object";
         }
         [currentCommandResponse_ appendString:command];
     } else if ([command hasPrefix:@"%output "]) {
-        [self parseOutputCommand:command];
+        if (acceptNotifications_) [self parseOutputCommand:command];
     } else if ([command hasPrefix:@"%layout-change "]) {
-        [self parseLayoutChangeCommand:command];
+        if (acceptNotifications_) [self parseLayoutChangeCommand:command];
     } else if ([command hasPrefix:@"%window-add"]) {
-        [self parseWindowAddCommand:command];
+        if (acceptNotifications_) [self parseWindowAddCommand:command];
     } else if ([command hasPrefix:@"%window-close"]) {
-        [self parseWindowCloseCommand:command];
+        if (acceptNotifications_) [self parseWindowCloseCommand:command];
     } else if ([command hasPrefix:@"%window-renamed"]) {
-        [self parseWindowRenamedCommand:command];
+        if (acceptNotifications_) [self parseWindowRenamedCommand:command];
     } else if ([command hasPrefix:@"%unlinked-window-add"] ||
                [command hasPrefix:@"%unlinked-window-close"]) {
-        [self broadcastWindowChange];
+        if (acceptNotifications_) [self broadcastWindowChange];
     } else if ([command hasPrefix:@"%session-changed"]) {
         [self parseSessionChangeCommand:command];
     } else if ([command hasPrefix:@"%session-renamed"]) {
-        [self parseSessionRenamedCommand:command];
+        if (acceptNotifications_) [self parseSessionRenamedCommand:command];
     } else if ([command hasPrefix:@"%sessions-changed"]) {
-        [self parseSessionsChangedCommand:command];
+        if (acceptNotifications_) [self parseSessionsChangedCommand:command];
     } else if ([command hasPrefix:@"%noop"]) {
         TmuxLog(@"tmux noop: %@", command);
     } else if ([command hasPrefix:@"%exit "] ||
@@ -409,7 +414,11 @@ static NSString *kCommandObject = @"object";
     [delegate_ tmuxWriteData:[commandWithNewline dataUsingEncoding:NSUTF8StringEncoding]];
 }
 
-- (void)sendCommandList:(NSArray *)commandDicts
+- (void)sendCommandList:(NSArray *)commandDicts {
+    [self sendCommandList:commandDicts initial:NO];
+}
+
+- (void)sendCommandList:(NSArray *)commandDicts initial:(BOOL)initial
 {
     if (detachSent_ || state_ == CONTROL_STATE_DETACHED) {
         return;
@@ -419,7 +428,13 @@ static NSString *kCommandObject = @"object";
     for (NSDictionary *dict in commandDicts) {
         [cmd appendString:sep];
         [cmd appendString:[dict objectForKey:kCommandString]];
-        [self enqueueCommandDict:dict];
+        if (initial && dict == [commandDicts lastObject]) {
+            NSMutableDictionary *amended = [NSMutableDictionary dictionaryWithDictionary:dict];
+            [amended setObject:[NSNumber numberWithBool:YES] forKey:kCommandIsInitial];
+            [self enqueueCommandDict:amended];
+        } else {
+            [self enqueueCommandDict:dict];
+        }
         sep = @"; ";
     }
     [cmd appendString:NEWLINE];

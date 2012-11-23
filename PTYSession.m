@@ -375,10 +375,10 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     if (state) {
         [[aSession SCREEN] setTmuxState:state];
 		NSString *pendingOutput = [state objectForKey:@"pending_output"];
-		if (pendingOutput) {
-			NSData *data = [pendingOutput dataFromHexValues];
-			[[aSession TERMINAL] putStreamData:data];
-		}
+        if (pendingOutput && [pendingOutput length]) {
+            NSData *data = [pendingOutput dataFromHexValues];
+            [[aSession TERMINAL] putStreamData:data];
+        }
         [[aSession TERMINAL] setInsertMode:[[state objectForKey:kStateDictInsertMode] boolValue]];
         [[aSession TERMINAL] setCursorMode:[[state objectForKey:kStateDictKCursorMode] boolValue]];
         [[aSession TERMINAL] setKeypadMode:[[state objectForKey:kStateDictKKeypadMode] boolValue]];

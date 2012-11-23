@@ -375,7 +375,8 @@ static int fromhex(unichar c) {
 - (NSData *)dataFromHexValues
 {
 	NSMutableData *data = [NSMutableData data];
-	for (int i = 0; i < self.length - 1; i+=2) {
+        int length = self.length;  // Convert to signed so length-1 is safe below.
+	for (int i = 0; i < length - 1; i+=2) {
 		const char high = fromhex([self characterAtIndex:i]) << 4;
 		const char low = fromhex([self characterAtIndex:i + 1]);
 		const char b = high | low;
