@@ -36,7 +36,6 @@
 #import "FutureMethods.h"
 #import "PTYTextView.h"
 #import "PreferencePanel.h"
-#include "NSImage+CoreImage.h"
 #import <Cocoa/Cocoa.h>
 
 @interface PTYScrollView (Private)
@@ -47,7 +46,7 @@
 
 @implementation PTYScroller
 
-@synthesize hasDarkBackground;
+@synthesize hasDarkBackground = hasDarkBackground_;
 
 - (id)init
 {
@@ -58,6 +57,16 @@
 + (BOOL)isCompatibleWithOverlayScrollers
 {
     return YES;
+}
+
+- (void)setHasDarkBackground:(BOOL)value {
+    if (IsLionOrLater()) {
+        // Values copied from NSScroller.h to avoid 10.7 SDK dependency.
+        const int defaultStyle = 0;  // NSScrollerKnobStyleDefault
+        const int lightStyle = 2;  // NSScrollerKnobStyleLight
+        [self setKnobStyle:value ? lightStyle : defaultStyle];
+    }
+    hasDarkBackground_ = value;
 }
 
 - (void) mouseDown: (NSEvent *)theEvent
@@ -111,37 +120,6 @@
 - (BOOL)isLegacyScroller
 {
     return [(NSScroller*)self futureScrollerStyle] == FutureNSScrollerStyleLegacy;
-}
-
-- (void)drawRect:(NSRect)dirtyRect {
-    if (IsLionOrLater() &&
-        ![self isLegacyScroller] &&
-        self.hasDarkBackground &&
-        dirtyRect.size.width > 0 &&
-        dirtyRect.size.height > 0) {
-        NSImage *superDrawn = [[NSImage alloc] initWithSize:NSMakeSize(dirtyRect.origin.x + dirtyRect.size.width,
-                                                                       dirtyRect.origin.y + dirtyRect.size.height)];
-        [superDrawn lockFocus];
-        [super drawRect:dirtyRect];
-        [superDrawn unlockFocus];
-
-        NSImage *temp = [[NSImage alloc] initWithSize:[superDrawn size]];
-        [temp lockFocus];
-        [superDrawn drawAtPoint:dirtyRect.origin
-                       fromRect:dirtyRect
-                coreImageFilter:@"CIColorControls"
-                      arguments:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithDouble:0.5], @"inputBrightness", nil]];
-        [temp unlockFocus];
-
-        [temp drawAtPoint:dirtyRect.origin
-                 fromRect:dirtyRect
-                operation:NSCompositeCopy
-                 fraction:1.0];
-        [temp release];
-        [superDrawn release];
-    } else {
-        [super drawRect:dirtyRect];
-    }
 }
 
 @end
