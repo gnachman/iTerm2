@@ -114,7 +114,7 @@
 }
 
 - (void)drawRect:(NSRect)dirtyRect {
-    if (IsLionOrLater() &&
+    if (IsLion() &&
         ![self isLegacyScroller] &&
         self.hasDarkBackground &&
         dirtyRect.size.width > 0 &&
@@ -161,6 +161,7 @@
     PTYScroller *aScroller;
 
     aScroller = [[PTYScroller alloc] init];
+    [aScroller addObserver:self forKeyPath:@"hasDarkBackground" options:NSKeyValueObservingOptionNew context:nil];
     [self setVerticalScroller:aScroller];
     [aScroller release];
 
@@ -171,12 +172,25 @@
 
 - (void) dealloc
 {
+    [[self verticalScroller] removeObserver:self forKeyPath:@"hasDarkBackground"];
     [backgroundImage release];
     [creationDate_ release];
     [timer_ invalidate];
     timer_ = nil;
 
     [super dealloc];
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+    if([keyPath isEqualToString:@"hasDarkBackground"]) {
+        PTYScroller *scroller = (PTYScroller*)object;
+        if(scroller.hasDarkBackground) {
+            [self setScrollerKnobStyle:NSScrollerKnobStyleLight];
+        }
+        else {
+            [self setScrollerKnobStyle:NSScrollerKnobStyleDefault];
+        }
+    }
 }
 
 - (void)drawBackgroundImageRect:(NSRect)rect useTransparency:(BOOL)useTransparency

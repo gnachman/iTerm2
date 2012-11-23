@@ -122,6 +122,26 @@ BOOL IsLeopard(void) {
     }
 }
 
+static BOOL UncachedIsLion(void) {
+    unsigned major;
+    unsigned minor;
+    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
+        return (major == 10 && minor == 7);
+    } else {
+        return NO;
+    }
+}
+
+BOOL IsLion(void) {
+    static BOOL result;
+    static BOOL initialized;
+    if (!initialized) {
+        initialized = YES;
+        result = UncachedIsLion();
+    }
+    return result;
+}
+
 @interface iTermController ()
 - (void)restorePreviouslyActiveApp;
 @end
