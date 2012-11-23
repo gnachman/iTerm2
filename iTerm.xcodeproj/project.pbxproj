@@ -287,6 +287,8 @@
 		1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */; };
 		1DA26AC015007507004B5792 /* BackgroundThread.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA26ABE15007507004B5792 /* BackgroundThread.h */; };
 		1DA26AC115007507004B5792 /* BackgroundThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA26ABF15007507004B5792 /* BackgroundThread.m */; };
+		1DA34E04165F268F00AA91C4 /* IBarCursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */; };
+		1DA34E05165F268F00AA91C4 /* IBarCursorXMR@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E03165F268F00AA91C4 /* IBarCursorXMR@2x.png */; };
 		1DA7894814AC19F500C8FBD9 /* Growl in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DA7894714AC19F500C8FBD9 /* Growl */; };
 		1DA8117E13CEA30A00CCA89A /* FontSizeEstimator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */; };
 		1DA8117F13CEA30A00CCA89A /* FontSizeEstimator.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */; };
@@ -560,6 +562,8 @@
 		1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wrap_to_top.png; path = images/wrap_to_top.png; sourceTree = "<group>"; };
 		1DA26ABE15007507004B5792 /* BackgroundThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BackgroundThread.h; sourceTree = "<group>"; };
 		1DA26ABF15007507004B5792 /* BackgroundThread.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BackgroundThread.m; sourceTree = "<group>"; };
+		1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "IBarCursor@2x.png"; path = "images/IBarCursor@2x.png"; sourceTree = "<group>"; };
+		1DA34E03165F268F00AA91C4 /* IBarCursorXMR@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "IBarCursorXMR@2x.png"; path = "images/IBarCursorXMR@2x.png"; sourceTree = "<group>"; };
 		1DA7894714AC19F500C8FBD9 /* Growl */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = Growl; path = Growl.framework/Growl; sourceTree = "<absolute>"; };
 		1DA8117C13CEA30A00CCA89A /* FontSizeEstimator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FontSizeEstimator.h; sourceTree = "<group>"; };
 		1DA8117D13CEA30A00CCA89A /* FontSizeEstimator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FontSizeEstimator.m; sourceTree = "<group>"; };
@@ -1097,12 +1101,14 @@
 		1D093C131217412B0029F9AD /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */,
 				1D8255F614649F8E007CAE78 /* PrefsMouse.tiff */,
 				5ECE4AE914514058002A9CC2 /* Growl Registration Ticket.growlRegDict */,
 				1D9DDE9D142E855D00275650 /* Coprocess.png */,
 				1D19C3621415998E00617E08 /* closebutton.tif */,
 				1DCA5ECB13EE4DA800B7725E /* arrangement.png */,
 				1D6A5FDE140D7AA000DE19F8 /* IBarCursorXMR.png */,
+				1DA34E03165F268F00AA91C4 /* IBarCursorXMR@2x.png */,
 				1D8F396A13EB7A2C0025B80B /* BroadcastInput.png */,
 				1D395912134E75B5005A8021 /* SmartSelectionRules.plist */,
 				1DA02CFA1327612600D7E7DB /* bell.png */,
@@ -1681,6 +1687,8 @@
 				1D8255F714649F8E007CAE78 /* PrefsMouse.tiff in Resources */,
 				1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */,
 				1DD4CE7D14A5163B00ED182E /* TmuxDashboard.xib in Resources */,
+				1DA34E04165F268F00AA91C4 /* IBarCursor@2x.png in Resources */,
+				1DA34E05165F268F00AA91C4 /* IBarCursorXMR@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

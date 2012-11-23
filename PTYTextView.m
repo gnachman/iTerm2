@@ -228,17 +228,12 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     NSPoint hotspot = NSMakePoint(4, 5);
 
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
-    NSString* ibarFile = [bundle
-                          pathForResource:@"IBarCursor"
-                          ofType:@"png"];
-    NSImage* image = [[[NSImage alloc] initWithContentsOfFile:ibarFile] autorelease];
+
+    NSImage* image = [NSImage imageNamed:@"IBarCursor"];
 
     textViewCursor = [[NSCursor alloc] initWithImage:image hotSpot:hotspot];
 
-    NSString* xmrFile = [bundle
-                          pathForResource:@"IBarCursorXMR"
-                          ofType:@"png"];
-    NSImage* xmrImage = [[[NSImage alloc] initWithContentsOfFile:xmrFile] autorelease];
+    NSImage* xmrImage = [NSImage imageNamed:@"IBarCursorXMR"];
 
     xmrCursor = [[NSCursor alloc] initWithImage:xmrImage hotSpot:hotspot];
 
@@ -6171,7 +6166,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 // Begin a new run.
                 currentRun->runType = thisCharRunType;
                 currentRun->fontInfo = thisCharFont;
-                currentRun->color = thisCharColor;
+                // TODO(georgen): Remove this and the associated release below.
+                // Not sure why this is getting released unexpectedly.
+                currentRun->color = [thisCharColor retain];
                 currentRun->fakeBold = thisCharFakeBold;
                 currentRun->codes = codeStorage + nextFreeCode;
                 currentRun->numCodes = 0;
@@ -6419,6 +6416,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                matches:matches];
 
     [self _drawRuns:initialPoint runs:runs numRuns:numRuns];
+
+    // TODO(georgen): Remove this and the associated retain noted above.
+    for (int i = 0; i < numRuns; i++) {
+        NSColor *color = runs[i].color;
+        [color release];
+    }
 }
 
 - (void)_drawStripesInRect:(NSRect)rect
