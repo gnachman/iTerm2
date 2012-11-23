@@ -26,9 +26,9 @@
 - (id) init
 {
     if( (self = [super init]) ) {
-        metalCloseButton = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"TabClose_Front"]];
-        metalCloseButtonDown = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"TabClose_Front_Pressed"]];
-        metalCloseButtonOver = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"TabClose_Front_Rollover"]];
+        metalCloseButton = [[NSImage imageNamed:@"TabClose_Front"] retain];
+        metalCloseButtonDown = [[NSImage imageNamed:@"TabClose_Front_Pressed"] retain];
+        metalCloseButtonOver = [[NSImage imageNamed:@"TabClose_Front_Rollover"] retain];
 
         _addTabButtonImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"TabNewMetal"]];
         _addTabButtonPressedImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"TabNewMetalPressed"]];

@@ -32,9 +32,9 @@
 {
     if((self = [super init]))
     {
-        unifiedCloseButton = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabClose_Front"]];
-        unifiedCloseButtonDown = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabClose_Front_Pressed"]];
-        unifiedCloseButtonOver = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabClose_Front_Rollover"]];
+        unifiedCloseButton = [[NSImage imageNamed:@"AquaTabClose_Front"] retain];
+        unifiedCloseButtonDown = [[NSImage imageNamed:@"AquaTabClose_Front_Pressed"] retain];
+        unifiedCloseButtonOver = [[NSImage imageNamed:@"AquaTabClose_Front_Rollover"] retain];
 
         _addTabButtonImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabNew"]];
         _addTabButtonPressedImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabNewPressed"]];
