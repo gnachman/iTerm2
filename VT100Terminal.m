@@ -846,7 +846,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
             datap++;
             (*rmlen)++;
         }
-        if (*datap == 7) {
+        if (datalen > 0 && *datap == 7) {
             str_end = YES;
         }
         if (!str_end && datalen == 0) {
