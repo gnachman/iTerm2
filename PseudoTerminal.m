@@ -2530,9 +2530,11 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowWillShowInitial
 {
+    PtyLog(@"windowWillShowInitial");
     PTYWindow* window = (PTYWindow*)[self window];
     // If it's a full or top-of-screen window with a screen number preference, always honor that.
     if (haveScreenPreference_) {
+        PtyLog(@"have screen preference is set");
         NSRect frame = [window frame];
         frame.origin = preferredOrigin_;
         [window setFrame:frame display:NO];
@@ -2540,6 +2542,7 @@ NSString *sessionsKey = @"sessions";
     }
     if (([[[iTermController sharedInstance] terminals] count] == 1) ||
         (![[PreferencePanel sharedInstance] smartPlacement])) {
+        PtyLog(@"No smart layout");
         NSRect frame = [window frame];
         [self setFramePos];
         if ([window setFrameUsingName:[NSString stringWithFormat:WINDOW_NAME, framePos]]) {
@@ -2550,6 +2553,7 @@ NSString *sessionsKey = @"sessions";
         }
         [window setFrame:frame display:NO];
     } else {
+        PtyLog(@"Invoking smartLayout");
         [window smartLayout];
     }
 }
