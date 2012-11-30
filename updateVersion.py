@@ -23,6 +23,8 @@ if os.environ["CONFIGURATION"] == "Development":
                 if key == "revision":
                         revision = "svn" + value
                         break
+elif os.environ["CONFIGURATION"] == "Nightly":
+        revision = time.strftime("%Y%m%d-nightly")
 else:
         revision = time.strftime("%Y%m%d")
 
