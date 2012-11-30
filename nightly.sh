@@ -12,3 +12,4 @@ NAME=$(echo $VERSION | sed -e "s/\\./_/g")
 zip -r iTerm2-${NAME}.zip iTerm.app
 scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@themcnachmans.com:iterm2.com/nightly/iTerm2-${NAME}.zip
 ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@themcnachmans.com newnightly.sh iTerm2-${NAME}.zip
+
