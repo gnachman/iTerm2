@@ -605,6 +605,9 @@ NSString *sessionsKey = @"sessions";
 
 - (void)magnifyWithEvent:(NSEvent *)event
 {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"PinchToChangeFontSizeDisabled"]) {
+        return;
+    }
     const double kMagTimeout = 0.2;
     if ([[NSDate date] timeIntervalSinceDate:[NSDate dateWithTimeIntervalSince1970:lastMagChangeTime_]] > kMagTimeout) {
         cumulativeMag_ = 0;
