@@ -2008,6 +2008,28 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             break;
     case VT100CSI_RM:
             break;
+    case VT100CSI_DECSTR: {
+            // VT100CSI_DECSC
+            // See note in xterm-terminfo.txt (search for DECSTR).
+
+            // save cursor (fixes origin-mode side-effect)
+            [self saveCursorPosition];
+
+            // reset scrolling margins
+            VT100TCC wholeScreen;
+            wholeScreen.u.csi.p[0] = 0;
+            wholeScreen.u.csi.p[1] = 0;
+            [self setTopBottom:wholeScreen];
+
+            // reset SGR (done in VT100Terminal)
+            // reset wraparound mode (done in VT100Terminal)
+            // reset application cursor keys (done in VT100Terminal)
+            // reset origin mode (done in VT100Terminal)
+            // restore cursor
+            [self restoreCursorPosition];
+            [SESSION clearTriggerLine];
+            break;
+    }
     case VT100CSI_DECSCUSR:
         switch (token.u.csi.p[0]) {
             case 0:
