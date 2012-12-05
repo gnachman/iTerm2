@@ -865,10 +865,15 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
         checkedDebug = YES;
     }
-    if (debugKeyDown) {
+    if (debugKeyDown || gDebugLogging) {
         const char *bytes = [data bytes];
         for (int i = 0; i < [data length]; i++) {
-            NSLog(@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]);
+            if (debugKeyDown) {
+                NSLog(@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]);
+            }
+            if (gDebugLogging) {
+                DebugLog([NSString stringWithFormat:@"writeTask keydown %d: %d (%c)", i, (int) bytes[i], bytes[i]]);
+            }
         }
     }
 
