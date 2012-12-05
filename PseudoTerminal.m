@@ -220,6 +220,7 @@ NSString *sessionsKey = @"sessions";
     }
     if (windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_BOTTOM
         || windowType == WINDOW_TYPE_LEFT) {
+        PtyLog(@"Window type is %d so disable smart layout", windowType);
         smartLayout = NO;
     }
     if (windowType == WINDOW_TYPE_NORMAL) {
@@ -351,6 +352,7 @@ NSString *sessionsKey = @"sessions";
     _resizeInProgressFlag = NO;
 
     if (!smartLayout || windowType == WINDOW_TYPE_FORCE_FULL_SCREEN) {
+        PtyLog(@"no smart layout or is full screen, so set layout done");
         [(PTYWindow*)[self window] setLayoutDone];
     }
 
@@ -434,6 +436,7 @@ NSString *sessionsKey = @"sessions";
                                              selector:@selector(_updateDrawerVisibility:)
                                                  name:@"iTermToolbeltVisibilityChanged"
                                                object:nil];
+    PtyLog(@"set window inited");
     [self setWindowInited: YES];
     useTransparency_ = YES;
     fullscreenTabs_ = [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowFullScreenTabBar"] ?
@@ -4984,6 +4987,8 @@ NSString *sessionsKey = @"sessions";
         [TABVIEW selectTabViewItemAtIndex:anIndex];
         if ([self windowInited] && !_fullScreen) {
             [[self window] makeKeyAndOrderFront:self];
+        } else {
+            PtyLog(@"window not initialized or is fullscreen %@", [NSThread callStackSymbols]);
         }
         [[iTermController sharedInstance] setCurrentTerminal:self];
     }
