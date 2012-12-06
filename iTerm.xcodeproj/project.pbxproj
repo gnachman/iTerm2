@@ -97,6 +97,8 @@
 		1D48B292165F405A000046EE /* important@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B291165F405A000046EE /* important@2x.png */; };
 		1D48B294165F4416000046EE /* star.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B293165F4416000046EE /* star.png */; };
 		1D48B2F9165F45BA000046EE /* star@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B2F8165F45BA000046EE /* star@2x.png */; };
+		1D48B32316706FC3000046EE /* NSView+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D48B32116706FC3000046EE /* NSView+iTerm.h */; };
+		1D48B32416706FC3000046EE /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D48B32216706FC3000046EE /* NSView+iTerm.m */; };
 		1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */; };
 		1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */; };
 		1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */; };
@@ -492,6 +494,8 @@
 		1D48B291165F405A000046EE /* important@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "important@2x.png"; path = "images/important@2x.png"; sourceTree = "<group>"; };
 		1D48B293165F4416000046EE /* star.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = star.png; path = images/star.png; sourceTree = "<group>"; };
 		1D48B2F8165F45BA000046EE /* star@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "star@2x.png"; path = "images/star@2x.png"; sourceTree = "<group>"; };
+		1D48B32116706FC3000046EE /* NSView+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSView+iTerm.h"; sourceTree = "<group>"; };
+		1D48B32216706FC3000046EE /* NSView+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSView+iTerm.m"; sourceTree = "<group>"; };
 		1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TrouterPrefsController.h; sourceTree = "<group>"; };
 		1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TrouterPrefsController.m; sourceTree = "<group>"; };
 		1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultGlobalKeyMap.plist; sourceTree = "<group>"; };
@@ -1286,6 +1290,8 @@
 		1D9DDE31142E73E300275650 /* Categories */ = {
 			isa = PBXGroup;
 			children = (
+				1D48B32116706FC3000046EE /* NSView+iTerm.h */,
+				1D48B32216706FC3000046EE /* NSView+iTerm.m */,
 				1DF0895813DBAE1F00A52AD8 /* NSBitmapImageRep+CoreImage.m */,
 				1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */,
 				1D67ABAA14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m */,
@@ -1563,6 +1569,7 @@
 				A073973E14C768E400786414 /* ColorsMenuItemView.h in Headers */,
 				1DA26AC015007507004B5792 /* BackgroundThread.h in Headers */,
 				1D2F3B3D1516BA470044C337 /* iTermFontPanel.h in Headers */,
+				1D48B32316706FC3000046EE /* NSView+iTerm.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1872,6 +1879,7 @@
 				A073974014C7694600786414 /* ColorsMenuItemView.m in Sources */,
 				1DA26AC115007507004B5792 /* BackgroundThread.m in Sources */,
 				1D2F3B3E1516BA470044C337 /* iTermFontPanel.m in Sources */,
+				1D48B32416706FC3000046EE /* NSView+iTerm.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

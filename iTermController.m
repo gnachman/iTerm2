@@ -52,6 +52,7 @@
 #import "GTMCarbonEvent.h"
 #import "iTerm.h"
 #import "WindowArrangements.h"
+#import "NSView+iTerm.h"
 
 //#define HOTKEY_WINDOW_VERBOSE_LOGGING
 #ifdef HOTKEY_WINDOW_VERBOSE_LOGGING
@@ -1921,6 +1922,13 @@ static CGEventRef OnTappedEvent(CGEventTapProxy proxy, CGEventType type, CGEvent
                 [[NSWorkspace sharedWorkspace] openFile:@"/System/Library/PreferencePanes/UniversalAccessPref.prefPane"];
                 break;
         }
+    }
+}
+
+- (void)dumpViewHierarchy {
+    for (PseudoTerminal *term in [self terminals]) {
+        DebugLog([NSString stringWithFormat:@"Terminal %@ at %@", [term window], [NSValue valueWithRect:[[term window] frame]]]);
+        DebugLog([[[term window] contentView] hierarchicalDescription]);
     }
 }
 

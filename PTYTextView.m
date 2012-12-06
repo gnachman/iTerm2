@@ -2867,6 +2867,16 @@ NSMutableArray* screens=0;
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent*)event
 {
+    const BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
+    const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
+    const BOOL shiftPressed = ([event modifierFlags] & NSShiftKeyMask) != 0;
+    const BOOL ctrlPressed = ([event modifierFlags] & NSControlKeyMask) != 0;
+    if (gDebugLogging && altPressed && cmdPressed && shiftPressed && ctrlPressed) {
+        // Dump view hierarchy
+        NSBeep();
+        [[iTermController sharedInstance] dumpViewHierarchy];
+        return NO;
+    }
     [pointer_ notifyLeftMouseDown];
     mouseDownIsThreeFingerClick_ = NO;
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
@@ -2888,9 +2898,6 @@ NSMutableArray* screens=0;
         [pointer_ mouseDown:event withTouches:numTouches_];
         return NO;
     }
-    const BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
-    const BOOL cmdPressed = ([event modifierFlags] & NSCommandKeyMask) != 0;
-    const BOOL shiftPressed = ([event modifierFlags] & NSShiftKeyMask) != 0;
 
     dragOk_ = YES;
     PTYTextView* frontTextView = [[iTermController sharedInstance] frontTextView];

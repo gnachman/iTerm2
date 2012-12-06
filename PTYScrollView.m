@@ -157,6 +157,10 @@
     [super dealloc];
 }
 
+- (NSString *)description {
+    return [NSString stringWithFormat:@"%@ visibleRect:%@", [super description], [NSValue valueWithRect:[self visibleRect]]];
+}
+
 - (void)drawBackgroundImageRect:(NSRect)rect useTransparency:(BOOL)useTransparency
 {
     [self drawBackgroundImageRect:rect

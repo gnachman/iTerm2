@@ -131,6 +131,7 @@
 - (BOOL)haveEventTap;
 - (BOOL)registerHotkey:(int)keyCode modifiers:(int)modifiers;
 - (void)beginRemappingModifiers;
+- (void)dumpViewHierarchy;
 
 @end
 
