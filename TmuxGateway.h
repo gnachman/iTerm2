@@ -56,6 +56,7 @@ typedef enum {
     NSMutableDictionary *currentCommand_;  // Set between %begin and %end
 
     BOOL detachSent_;
+    BOOL acceptNotifications_;  // Initially NO. When YES, respond to notifications.
 }
 
 - (id)initWithDelegate:(NSObject<TmuxGatewayDelegate> *)delegate;
@@ -65,6 +66,9 @@ typedef enum {
 - (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector;
 - (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector responseObject:(id)obj;
 - (void)sendCommandList:(NSArray *)commandDicts;
+// Set initial to YES when notifications should be accepted after the last
+// command gets a response.
+- (void)sendCommandList:(NSArray *)commandDicts initial:(BOOL)initial;
 - (void)abortWithErrorMessage:(NSString *)message;
 
 // Use this to compose a command list for sendCommandList:.

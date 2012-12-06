@@ -8,9 +8,12 @@
 
 #import <Foundation/Foundation.h>
 
-extern NSString *kStateDictInAlternateScreen;
-extern NSString *kStateDictBaseCursorX;
-extern NSString *kStateDictBaseCursorY;
+extern NSString *kStateDictInAlternateScreen;  // Deprecated, use SavedGrid
+extern NSString *kStateDictSavedGrid;
+extern NSString *kStateDictBaseCursorX;  // Deprecated, use SavedCX
+extern NSString *kStateDictBaseCursorY;  // Deprecated, use SavedCY
+extern NSString *kStateDictSavedCX;
+extern NSString *kStateDictSavedCY;
 extern NSString *kStateDictCursorX;
 extern NSString *kStateDictCursorY;
 extern NSString *kStateDictScrollRegionUpper;

@@ -35,6 +35,10 @@ Deployment:
 	xcodebuild -parallelizeTargets -alltargets -configuration Deployment && \
 	chmod -R go+rX build/Deployment
 
+Nightly:
+	xcodebuild -parallelizeTargets -alltargets -configuration Nightly && \
+	chmod -R go+rX build/Nightly
+
 run: Development
 	build/Development/iTerm.app/Contents/MacOS/iTerm
 

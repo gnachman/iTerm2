@@ -220,6 +220,7 @@ NSString *sessionsKey = @"sessions";
     }
     if (windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_BOTTOM
         || windowType == WINDOW_TYPE_LEFT) {
+        PtyLog(@"Window type is %d so disable smart layout", windowType);
         smartLayout = NO;
     }
     if (windowType == WINDOW_TYPE_NORMAL) {
@@ -351,6 +352,7 @@ NSString *sessionsKey = @"sessions";
     _resizeInProgressFlag = NO;
 
     if (!smartLayout || windowType == WINDOW_TYPE_FORCE_FULL_SCREEN) {
+        PtyLog(@"no smart layout or is full screen, so set layout done");
         [(PTYWindow*)[self window] setLayoutDone];
     }
 
@@ -434,6 +436,7 @@ NSString *sessionsKey = @"sessions";
                                              selector:@selector(_updateDrawerVisibility:)
                                                  name:@"iTermToolbeltVisibilityChanged"
                                                object:nil];
+    PtyLog(@"set window inited");
     [self setWindowInited: YES];
     useTransparency_ = YES;
     fullscreenTabs_ = [[NSUserDefaults standardUserDefaults] objectForKey:@"ShowFullScreenTabBar"] ?
@@ -605,6 +608,9 @@ NSString *sessionsKey = @"sessions";
 
 - (void)magnifyWithEvent:(NSEvent *)event
 {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"PinchToChangeFontSizeDisabled"]) {
+        return;
+    }
     const double kMagTimeout = 0.2;
     if ([[NSDate date] timeIntervalSinceDate:[NSDate dateWithTimeIntervalSince1970:lastMagChangeTime_]] > kMagTimeout) {
         cumulativeMag_ = 0;
@@ -2530,9 +2536,11 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowWillShowInitial
 {
+    PtyLog(@"windowWillShowInitial");
     PTYWindow* window = (PTYWindow*)[self window];
     // If it's a full or top-of-screen window with a screen number preference, always honor that.
     if (haveScreenPreference_) {
+        PtyLog(@"have screen preference is set");
         NSRect frame = [window frame];
         frame.origin = preferredOrigin_;
         [window setFrame:frame display:NO];
@@ -2540,6 +2548,7 @@ NSString *sessionsKey = @"sessions";
     }
     if (([[[iTermController sharedInstance] terminals] count] == 1) ||
         (![[PreferencePanel sharedInstance] smartPlacement])) {
+        PtyLog(@"No smart layout");
         NSRect frame = [window frame];
         [self setFramePos];
         if ([window setFrameUsingName:[NSString stringWithFormat:WINDOW_NAME, framePos]]) {
@@ -2550,6 +2559,7 @@ NSString *sessionsKey = @"sessions";
         }
         [window setFrame:frame display:NO];
     } else {
+        PtyLog(@"Invoking smartLayout");
         [window smartLayout];
     }
 }
@@ -4977,6 +4987,8 @@ NSString *sessionsKey = @"sessions";
         [TABVIEW selectTabViewItemAtIndex:anIndex];
         if ([self windowInited] && !_fullScreen) {
             [[self window] makeKeyAndOrderFront:self];
+        } else {
+            PtyLog(@"window not initialized or is fullscreen %@", [NSThread callStackSymbols]);
         }
         [[iTermController sharedInstance] setCurrentTerminal:self];
     }

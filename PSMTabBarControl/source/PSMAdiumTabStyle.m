@@ -36,9 +36,9 @@
 
 - (void)loadImages
 {
-    _closeButton = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabClose_Front"]];
-    _closeButtonDown = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabClose_Front_Pressed"]];
-    _closeButtonOver = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabClose_Front_Rollover"]];
+    _closeButton = [[NSImage imageNamed:@"AquaTabClose_Front"] retain];
+    _closeButtonDown = [[NSImage imageNamed:@"AquaTabClose_Front_Pressed"] retain];
+    _closeButtonOver = [[NSImage imageNamed:@"AquaTabClose_Front_Rollover"] retain];
 
     _addTabButtonImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabNew"]];
     _addTabButtonPressedImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabNewPressed"]];

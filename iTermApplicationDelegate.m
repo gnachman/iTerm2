@@ -990,35 +990,38 @@ static void FlushDebugLog() {
 // Debug logging
 -(IBAction)debugLogging:(id)sender
 {
-        if (!gDebugLogging) {
-                NSRunAlertPanel(@"Debug Logging Enabled",
-                                                @"Writing to /tmp/debuglog.txt",
-                                                @"OK", nil, nil);
-                gDebugLogFile = open("/tmp/debuglog.txt", O_TRUNC | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
-                gDebugLogStr = [[NSMutableString alloc] init];
-                gDebugLogStr2 = [[NSMutableString alloc] init];
-                gDebugLogging = !gDebugLogging;
-        } else {
-                gDebugLogging = !gDebugLogging;
-                SwapDebugLog();
-                FlushDebugLog();
-                SwapDebugLog();
-                FlushDebugLog();
-
-                close(gDebugLogFile);
-                gDebugLogFile=-1;
-                NSRunAlertPanel(@"Debug Logging Stopped",
-                                                @"Please compress and send /tmp/debuglog.txt to the developers.",
-                                                @"OK", nil, nil);
-                [gDebugLogStr release];
-                [gDebugLogStr2 release];
-        }
+    if (!gDebugLogging) {
+        NSRunAlertPanel(@"Debug Logging Enabled",
+                        @"Writing to /tmp/debuglog.txt",
+                        @"OK", nil, nil);
+        gDebugLogFile = open("/tmp/debuglog.txt", O_TRUNC | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR);
+        gDebugLogStr = [[NSMutableString alloc] init];
+        gDebugLogStr2 = [[NSMutableString alloc] init];
+        gDebugLogging = !gDebugLogging;
+    } else {
+        gDebugLogging = !gDebugLogging;
+        SwapDebugLog();
+        FlushDebugLog();
+        SwapDebugLog();
+        FlushDebugLog();
+        
+        close(gDebugLogFile);
+        gDebugLogFile=-1;
+        NSRunAlertPanel(@"Debug Logging Stopped",
+                        @"Please compress and send /tmp/debuglog.txt to the developers.",
+                        @"OK", nil, nil);
+        [gDebugLogStr release];
+        [gDebugLogStr2 release];
+    }
 }
 
 int DebugLogImpl(const char *file, int line, const char *function, NSString* value)
 {
     if (gDebugLogging) {
-        [gDebugLogStr appendFormat:@"%s:%d (%s): ", file, line, function];
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+
+        [gDebugLogStr appendFormat:@"%ld.%08ld %s:%d (%s): ", (long long)tv.tv_sec, (long long)tv.tv_usec, file, line, function];
         [gDebugLogStr appendString:value];
         [gDebugLogStr appendString:@"\n"];
         if ([gDebugLogStr length] > 100000000) {

@@ -101,6 +101,7 @@
 #define VT100CSI_SM          2046       // Set Mode
 #define VT100CSI_TBC         2047       // Tabulation Clear
 #define VT100CSI_DECSCUSR    2048       // Select the Style of the Cursor
+#define VT100CSI_DECSTR      2049       // Soft reset
 
 // some xterm extension
 #define XTERMCC_WIN_TITLE        86       // Set window title
@@ -130,6 +131,7 @@
 #define XTERMCC_PROPRIETARY_ETERM_EXT 110
 #define XTERMCC_SET_PALETTE 111
 #define XTERMCC_SET_KVP 112
+#define XTERMCC_PASTE64 113
 
 // Some ansi stuff
 #define ANSICSI_CHA      3000   // Cursor Horizontal Absolute

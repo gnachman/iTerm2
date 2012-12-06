@@ -102,6 +102,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
 
     IBOutlet NSTextField* tagFilter;
 
+    // Allow clipboard access by terminal applications
+    IBOutlet NSButton *allowClipboardAccessFromTerminal;
+    BOOL defaultAllowClipboardAccess;
+
     // Copy to clipboard on selection
     IBOutlet NSButton *selectionCopiesText;
     BOOL defaultCopySelection;
@@ -626,6 +630,8 @@ typedef enum {
 - (void)windowWillLoad;
 - (void)windowWillClose:(NSNotification *)aNotification;
 - (void)windowDidBecomeKey:(NSNotification *)aNotification;
+- (BOOL)allowClipboardAccess;
+- (void)setAllowClipboardAccess:(BOOL)flag;
 - (BOOL)copySelection;
 - (BOOL)copyLastNewline;
 - (void)setCopySelection:(BOOL)flag;

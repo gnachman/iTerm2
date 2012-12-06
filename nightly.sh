@@ -1,7 +1,15 @@
 #!/bin/bash
-# Run this before uploading.
-NAME=$1
+
+set -x
+cd ~/nightly/iTerm2/
+# todo: git pull origin master
+make Nightly
+./sign.sh
 cd build/Deployment
-NAME=`date +'iTerm2-nightly-%Y-%m-%d.zip'`
-zip -r $NAME iTerm.app
-echo `pwd`/$NAME
+COMPACTDATE=$(date +"%Y%m%d")-nightly
+VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
+NAME=$(echo $VERSION | sed -e "s/\\./_/g")
+zip -r iTerm2-${NAME}.zip iTerm.app
+scp  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@themcnachmans.com:iterm2.com/nightly/iTerm2-${NAME}.zip
+ssh  -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no iTerm2-${NAME}.zip gnachman@themcnachmans.com newnightly.sh iTerm2-${NAME}.zip
+

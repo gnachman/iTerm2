@@ -99,15 +99,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
 
 + (void)initialize
 {
-    NSBundle *thisBundle;
-    NSString *imagePath;
-
-    thisBundle = [NSBundle bundleForClass:[self class]];
-    imagePath = [thisBundle pathForResource:@"important"
-                                     ofType:@"png"];
-    if (imagePath) {
-        warningImage = [[NSImage alloc] initByReferencingFile: imagePath];
-    }
+    warningImage = [[NSImage imageNamed:@"important"] retain];
 
     normalStateColor = [NSColor blackColor];
     chosenStateColor = [NSColor blackColor];

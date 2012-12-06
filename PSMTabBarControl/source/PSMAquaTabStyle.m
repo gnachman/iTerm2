@@ -109,9 +109,9 @@ static CGImageRef CGImageCreateWithNSImage(NSImage *image, CGRect sourceRect) {
     aquaDivider = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabsSeparator"]];
     [aquaDivider setFlipped:NO];
 
-    aquaCloseButton = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabClose_Front"]];
-    aquaCloseButtonDown = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabClose_Front_Pressed"]];
-    aquaCloseButtonOver = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabClose_Front_Rollover"]];
+    aquaCloseButton = [[NSImage imageNamed:@"AquaTabClose_Front"] retain];
+    aquaCloseButtonDown = [[NSImage imageNamed:@"AquaTabClose_Front_Pressed"] retain];
+    aquaCloseButtonOver = [[NSImage imageNamed:@"AquaTabClose_Front_Rollover"] retain];
 
     _addTabButtonImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabNew"]];
     _addTabButtonPressedImage = [[NSImage alloc] initByReferencingFile:[[PSMTabBarControl bundle] pathForImageResource:@"AquaTabNewPressed"]];

@@ -377,6 +377,22 @@ static size_t getCSIParam(unsigned char *datap,
             }
             break;
         }
+        else if (*datap == '!') {
+            datap++;
+            datalen--;
+            switch (*datap) {
+                case 'p':
+                    param->cmd = MAKE_CSI_COMMAND('!', 'p');
+                    datap++;
+                    datalen--;
+                    return datap - orgp;
+                default:
+                    datap++;
+                    datalen--;
+                    param->cmd=0xff;
+                    break;
+            }
+        }
         else {
             switch (*datap) {
                 case VT100CC_ENQ: break;
@@ -400,8 +416,7 @@ static size_t getCSIParam(unsigned char *datap,
                     unrecognized=YES;
                     break;
             }
-            if(unrecognized == NO)
-            {
+            if (unrecognized == NO) {
                 datalen--;
                 datap++;
             }
@@ -556,9 +571,14 @@ static VT100TCC decode_csi(unsigned char *datap,
                     result.type = VT100CSI_TBC;
                     SET_PARAM_DEFAULT(param, 0, 0);
                     break;
-                    
+
                 case MAKE_CSI_COMMAND(' ', 'q'):
                     result.type = VT100CSI_DECSCUSR;
+                    SET_PARAM_DEFAULT(param, 0, 0);
+                    break;
+
+                case MAKE_CSI_COMMAND('!', 'p'):
+                    result.type = VT100CSI_DECSTR;
                     SET_PARAM_DEFAULT(param, 0, 0);
                     break;
 
@@ -846,7 +866,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
             datap++;
             (*rmlen)++;
         }
-        if (*datap == 7) {
+        if (datalen > 0 && *datap == 7) {
             str_end = YES;
         }
         if (!str_end && datalen == 0) {
@@ -904,6 +924,10 @@ static VT100TCC decode_xterm(unsigned char *datap,
                 // Nonstandard escape code implemented by Konsole.
                 // <Esc>]50;key=value^G
                 result.type = XTERMCC_SET_KVP;
+                break;
+            case 52:
+                // base64 copy/paste (OPT_PASTE64)
+                result.type = XTERMCC_PASTE64;
                 break;
             default:
                 result.type = VT100_NOTSUPPORT;
@@ -2752,20 +2776,28 @@ static VT100TCC decode_string(unsigned char *datap,
         case VT100CSI_DECSC:
             [self saveCursorAttributes];
             break;
+        case VT100CSI_DECSTR:
+            WRAPAROUND_MODE = 0;
+            [self setCursorMode:mode];
+            ORIGIN_MODE = 0;
+            break;
     }
 }
 
+- (void)resetSGR {
+    // all attributes off
+    bold = under = blink = reversed = NO;
+    FG_COLORCODE = ALTSEM_FG_DEFAULT;
+    alternateForegroundSemantics = YES;
+    BG_COLORCODE = ALTSEM_BG_DEFAULT;
+    alternateBackgroundSemantics = YES;
+}
 
 - (void)_setCharAttr:(VT100TCC)token
 {
     if (token.type == VT100CSI_SGR) {
         if (token.u.csi.count == 0) {
-            // all attribute off
-            bold = under = blink = reversed = NO;
-            FG_COLORCODE = ALTSEM_FG_DEFAULT;
-            alternateForegroundSemantics = YES;
-            BG_COLORCODE = ALTSEM_BG_DEFAULT;
-            alternateBackgroundSemantics = YES;
+            [self resetSGR];
         } else {
             int i;
             for (i = 0; i < token.u.csi.count; ++i) {
@@ -2850,6 +2882,8 @@ static VT100TCC decode_string(unsigned char *datap,
                 }
             }
         }
+    } else if (token.type == VT100CSI_DECSTR) {
+        [self resetSGR];
     }
 }
 
@@ -2952,14 +2986,18 @@ static VT100TCC decode_string(unsigned char *datap,
                 [[SCREEN session] remarry];
             }
         } else if ([key isEqualToString:@"CopyToClipboard"]) {
-            if ([value isEqualToString:@"ruler"]) {
-                [[SCREEN session] setPasteboard:NSGeneralPboard];
-            } else if ([value isEqualToString:@"find"]) {
-                [[SCREEN session] setPasteboard:NSFindPboard];
-            } else if ([value isEqualToString:@"font"]) {
-                [[SCREEN session] setPasteboard:NSFontPboard];
+            if ([[PreferencePanel sharedInstance] allowClipboardAccess]) {
+                if ([value isEqualToString:@"ruler"]) {
+                    [[SCREEN session] setPasteboard:NSGeneralPboard];
+                } else if ([value isEqualToString:@"find"]) {
+                    [[SCREEN session] setPasteboard:NSFindPboard];
+                } else if ([value isEqualToString:@"font"]) {
+                    [[SCREEN session] setPasteboard:NSFontPboard];
+                } else {
+                    [[SCREEN session] setPasteboard:NSGeneralPboard];
+                }
             } else {
-                [[SCREEN session] setPasteboard:NSGeneralPboard];
+                NSLog(@"Clipboard access denied for CopyToClipboard");
             }
         } else if ([key isEqualToString:@"EndCopy"]) {
             [[SCREEN session] setPasteboard:nil];

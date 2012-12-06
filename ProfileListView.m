@@ -394,13 +394,10 @@ const int kInterWidgetMargin = 10;
             return @"";
         }
     } else if (aTableColumn == starColumn_) {
-        // FIXME: use imageNamed and clean up drawing code
+        // FIXME: clean up drawing code
         static NSImage* starImage;
         if (!starImage) {
-            NSString* starFile = [[NSBundle bundleForClass:[self class]]
-                                  pathForResource:@"star-gold24"
-                                  ofType:@"png"];
-            starImage = [[NSImage alloc] initWithContentsOfFile:starFile];
+            starImage = [[NSImage imageNamed:@"star"] retain];
         }
         NSImage *image = [[[NSImage alloc] init] autorelease];
         NSSize size;

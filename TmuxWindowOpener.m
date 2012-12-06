@@ -23,7 +23,6 @@
 - (void)requestDidComplete;
 - (void)dumpHistoryResponse:(NSString *)response
            paneAndAlternate:(NSArray *)info;
-- (NSDictionary *)dictForStartControlCommand;
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp;
 - (NSDictionary *)dictForRequestHistoryForWindowPane:(NSNumber *)wp
                                                  alt:(BOOL)alternate;
@@ -90,11 +89,7 @@
                                                  callingSelector:@selector(appendRequestsForNode:toArray:)
                                                         onTarget:self
                                                       withObject:cmdList];
-    // append start-control
-    if (initial) {
-        [cmdList addObject:[self dictForStartControlCommand]];
-    }
-    [gateway_ sendCommandList:cmdList];
+    [gateway_ sendCommandList:cmdList initial:initial];
 }
 
 - (void)updateLayoutInTab:(PTYTab *)tab;
@@ -151,16 +146,6 @@
 
 @implementation TmuxWindowOpener (Private)
 
-- (NSDictionary *)dictForStartControlCommand
-{
-    ++pendingRequests_;
-    NSString *command = @"control set-ready";
-    return [gateway_ dictionaryForCommand:command
-                           responseTarget:self
-                         responseSelector:@selector(requestDidComplete)
-                           responseObject:nil];
-}
-
 // This is called for each window pane via a DFS. It sends all commands needed
 // to open a window.
 - (id)appendRequestsForNode:(NSMutableDictionary *)node
@@ -182,7 +167,7 @@
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp
 {
     ++pendingRequests_;
-    NSString *command = [NSString stringWithFormat:@"control -t %%%d get-emulator", [wp intValue]];
+    NSString *command = [NSString stringWithFormat:@"control -t %%%d get-emulatorstate", [wp intValue]];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
                          responseSelector:@selector(dumpStateResponse:pane:)

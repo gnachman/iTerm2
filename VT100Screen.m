@@ -57,6 +57,9 @@
 #import "RegexKitLite.h"
 #import "TmuxStateParser.h"
 
+// for xterm's base64 decoding (paste64)
+#import <apr-1/apr_base64.h>
+
 #define MAX_SCROLLBACK_LINES 1000000
 #define MAX_SCROLL_AT_ONCE 1024
 #define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array
@@ -1755,6 +1758,80 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     blinkingCursor = flag;
 }
 
+- (void)processXtermPaste64:(NSString *)commandString
+{
+    //
+    // - write access
+    //   ESC ] 5 2 ; Pc ; <base64 encoded string> ST
+    //
+    // - read access
+    //   ESC ] 5 2 ; Pc ; ? ST
+    //
+    // Pc consists from:
+    //   'p', 's', 'c', '0', '1', '2', '3', '4', '5', '6', '7'
+    //
+    // Note: Pc is ignored now.
+    //
+    const char *buffer = [commandString UTF8String];
+
+    // ignore first parameter now
+    while (strchr("psc01234567", *buffer)) {
+        ++buffer;
+    }
+    if (*buffer != ';') {
+        return; // fail to parse
+    }
+    ++buffer;    
+    if (*buffer == '?') { // PASTE64(OSC 52) read access
+        // Now read access is not implemented due to security issues.
+    } else { // PASTE64(OSC 52) write access
+        // check the configuration
+        if (![[PreferencePanel sharedInstance] allowClipboardAccess]) {
+            return;
+        }
+        // decode base64 string.
+        int destLength = apr_base64_decode_len(buffer);
+        if (destLength < 1) {
+            return;
+        }        
+        NSMutableData *data = [NSMutableData dataWithLength:destLength];
+        char *decodedBuffer = [data mutableBytes];
+        int resultLength = apr_base64_decode(decodedBuffer, buffer);
+        if (resultLength < 0) {
+            return;
+        }
+
+        // sanitize buffer
+        const char *inputIterator = decodedBuffer;
+        char *outputIterator = decodedBuffer;
+        for (int i = 0; i < resultLength + 1; ++i) {
+            char c = *inputIterator;
+            if (c == 0x00) {
+                *outputIterator = 0x00; // terminate string with NULL
+                break;
+            }
+            if (c > 0x00 && c < 0x20) { // if c is control character
+                // check if c is TAB/LF/CR
+                if (c != 0x09 && c != 0x0a && c != 0x0d) {
+                    // skip it
+                    ++inputIterator;
+                    continue;
+                }
+            }
+            *outputIterator = c;
+            ++inputIterator;
+            ++outputIterator;
+        } 
+
+        NSString *resultString = [[[NSString alloc] initWithData:data
+                                                        encoding:[TERMINAL encoding]] autorelease];
+        // set the result to paste board.
+        NSPasteboard* thePasteboard = [NSPasteboard generalPasteboard];
+        [thePasteboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
+        [thePasteboard setString:resultString forType:NSStringPboardType];
+    }
+}
+
 // Should the profile name be inculded in the window/tab title? Requires both
 // a per-profile option to be on as well as the global option.
 - (BOOL)_syncTitle
@@ -1931,6 +2008,28 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             break;
     case VT100CSI_RM:
             break;
+    case VT100CSI_DECSTR: {
+            // VT100CSI_DECSC
+            // See note in xterm-terminfo.txt (search for DECSTR).
+
+            // save cursor (fixes origin-mode side-effect)
+            [self saveCursorPosition];
+
+            // reset scrolling margins
+            VT100TCC wholeScreen;
+            wholeScreen.u.csi.p[0] = 0;
+            wholeScreen.u.csi.p[1] = 0;
+            [self setTopBottom:wholeScreen];
+
+            // reset SGR (done in VT100Terminal)
+            // reset wraparound mode (done in VT100Terminal)
+            // reset application cursor keys (done in VT100Terminal)
+            // reset origin mode (done in VT100Terminal)
+            // restore cursor
+            [self restoreCursorPosition];
+            [SESSION clearTriggerLine];
+            break;
+    }
     case VT100CSI_DECSCUSR:
         switch (token.u.csi.p[0]) {
             case 0:
@@ -2126,6 +2225,9 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         }
         [SESSION setWindowTitle: newTitle];
         [SESSION setName: newTitle];
+        break;
+    case XTERMCC_PASTE64:
+        [self processXtermPaste64: [[token.u.string copy] autorelease]];
         break;
     case XTERMCC_ICON_TITLE:
         newTitle = [[token.u.string copy] autorelease];
@@ -3996,15 +4098,36 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 }
 
+- (NSValue *)valueFromDictionary:(NSDictionary *)dict withFirstKeyFrom:(NSArray *)keys {
+    for (NSString *key in keys) {
+        NSObject *object = [dict objectForKey:key];
+        if (object) {
+            return object;
+        }
+    }
+    return nil;
+}
+
 - (void)setTmuxState:(NSDictionary *)state
 {
-    if (![[state objectForKey:kStateDictInAlternateScreen] intValue] && temp_buffer) {
+    int savedGrid = [[self valueFromDictionary:state
+                              withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedGrid,
+                                                                         kStateDictInAlternateScreen,
+                                                                         nil]] intValue];
+    if (!savedGrid && temp_buffer) {
         free(temp_buffer);
         temp_buffer = NULL;
     }
+    // TODO(georgen): Get the alt screen contents and fill temp_buffer.
 
-    SAVE_CURSOR_X = [[state objectForKey:kStateDictBaseCursorX] intValue];
-    SAVE_CURSOR_Y = [[state objectForKey:kStateDictBaseCursorY] intValue];
+    SAVE_CURSOR_X = [[self valueFromDictionary:state
+                              withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedCX,
+                                                                         kStateDictBaseCursorX,
+                                                                         nil]] intValue];
+    SAVE_CURSOR_Y = [[self valueFromDictionary:state
+                              withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedCY,
+                                                                         kStateDictBaseCursorY,
+                                                                         nil]] intValue];
     cursorX = [[state objectForKey:kStateDictCursorX] intValue];
     cursorY = [[state objectForKey:kStateDictCursorY] intValue];
     SCROLL_TOP = [[state objectForKey:kStateDictScrollRegionUpper] intValue];

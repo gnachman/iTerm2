@@ -33,6 +33,7 @@
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "iTermController.h"
+#import "iTermApplicationDelegate.h"
 // This is included because the blurring code uses undocumented APIs to do its thing.
 #import <CGSInternal.h>
 
@@ -43,7 +44,12 @@
 #ifdef PSEUDOTERMINAL_VERBOSE_LOGGING
 #define PtyLog NSLog
 #else
-#define PtyLog(args...)
+#define PtyLog(args...) \
+    do { \
+        if (gDebugLogging) { \
+            DebugLog([NSString stringWithFormat:args]); \
+        } \
+    } while (0)
 #endif
 
 @implementation PTYWindow
@@ -206,11 +212,15 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
 
 - (void)smartLayout
 {
+    PtyLog(@"enter smartLayout");
     NSEnumerator* iterator;
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
     CGSConnectionID con = CGSMainConnectionID();
-    if (!con) return;
+    if (!con) {
+        PtyLog(@"CGSMainConnectionID failed");
+        return;
+    }
     CGSWorkspaceID currentSpace = -1;
     CGSGetWorkspace(con, &currentSpace);
 #endif
@@ -222,19 +232,29 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
     NSMutableArray* windows = [[NSMutableArray alloc] init];
     iterator = [[[iTermController sharedInstance] terminals] objectEnumerator];
     PseudoTerminal* term;
+    PtyLog(@"Begin iterating over terminals");
     while ((term = [iterator nextObject])) {
         PTYWindow* otherWindow = (PTYWindow*)[term window];
-        if(otherWindow == self) continue;
-
+        PtyLog(@"See window %@ at %@", otherWindow, [NSValue valueWithRect:[otherWindow frame]]);
+        if (otherWindow == self) {
+            PtyLog(@" skip - is self");
+            continue;
+        }
         int otherScreen = [otherWindow screenNumber];
-        if(otherScreen != currentScreen) continue;
-
+        if (otherScreen != currentScreen) {
+            PtyLog(@" skip - screen %d vs my %d", otherScreen, currentScreen);
+            continue;
+        }
+        
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
         CGSWorkspaceID otherSpace = -1;
         CGSGetWindowWorkspace(con, [otherWindow windowNumber], &otherSpace);
-        if(otherSpace != currentSpace) continue;
+        if (otherSpace != currentSpace) {
+            PtyLog(@" skip - different space %d vs my %d", otherSpace, currentSpace);
+            continue;
+        }
 #endif
-
+        PtyLog(@" add window to array of windows");
         [windows addObject:otherWindow];
     }
 
@@ -249,9 +269,12 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
         MAX(1, screenRect.size.width-[self frame].size.width),
         MAX(1, screenRect.size.height-[self frame].size.height)
     );
+    PtyLog(@"PlacementRect is %@", [NSValue valueWithRect:placementRect]);
 
     for(int x = 0; x < placementRect.size.width/2; x += 50) {
         for(int y = 0; y < placementRect.size.height/2; y += 50) {
+            PtyLog(@"Try coord %d,%d", x, y);
+
             NSRect testRects[4] = {[self frame]};
 
             // Top Left
@@ -270,7 +293,9 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
             testRects[3] = testRects[1];
             testRects[3].origin.y = placementRect.origin.y + y;
 
-            for(int i = 0; i < sizeof(testRects)/sizeof(NSRect); i++) {
+            for (int i = 0; i < sizeof(testRects)/sizeof(NSRect); i++) {
+                PtyLog(@"compute badness of test rect %d %@", i, [NSValue valueWithRect:testRects[i]]);
+
                 iterator = [windows objectEnumerator];
                 PTYWindow* other;
                 float badness = 0.0f;
@@ -278,20 +303,23 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
                     NSRect otherFrame = [other frame];
                     NSRect intersection = NSIntersectionRect(testRects[i], otherFrame);
                     badness += intersection.size.width * intersection.size.height;
+                    PtyLog(@"badness of %@ is %.2f", other, intersection.size.width * intersection.size.height);
                 }
 
-#if DEBUG_WINDOW_LAYOUT
-                static const char const * names[] = {"TL", "TR", "BL", "BR"};
-                NSLog(@"%s: testRect:%@, bad:%.2f", names[i], NSStringFromRect(testRects[i]), badness);
-#endif
 
-                if(badness < bestIntersect) {
+                const char const * names[] = {"TL", "TR", "BL", "BR"};
+                PtyLog(@"%s: testRect:%@, bad:%.2f",
+                        names[i], NSStringFromRect(testRects[i]), badness);
+
+                if (badness < bestIntersect) {
+                    PtyLog(@"This is the best coordinate found so far");
                     bestIntersect = badness;
                     bestFrame = testRects[i];
                 }
 
                 // Shortcut if we've found an empty spot
-                if(bestIntersect == 0) {
+                if (bestIntersect == 0) {
+                    PtyLog(@"zero badness. Done.");
                     goto end;
                 }
             }
@@ -300,20 +328,26 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
 
 end:
     [windows release];
+    PtyLog(@"set frame to %@", [NSValue valueWithPoint:bestFrame.origin]);
     [super setFrameOrigin:bestFrame.origin];
 }
 
 - (void)setLayoutDone
 {
+    PtyLog(@"setLayoutDone %@", [NSThread callStackSymbols]);
     layoutDone = YES;
 }
 
 - (void)makeKeyAndOrderFront:(id)sender
 {
+    PtyLog(@"PTYWindow makeKeyAndOrderFront: layoutDone=%d %@", (int)layoutDone, [NSThread callStackSymbols]);
     if (!layoutDone) {
-        layoutDone = YES;
+        PtyLog(@"try to call windowWillShowInitial");
+        [self setLayoutDone];
         if ([[self delegate] respondsToSelector:@selector(windowWillShowInitial)]) {
             [[self delegate] performSelector:@selector(windowWillShowInitial)];
+        } else {
+            PtyLog(@"delegate %@ does not respond", [self delegate]);
         }
     }
     PtyLog(@"PTYWindow - calling makeKeyAndOrderFont, which triggers a window resize");
