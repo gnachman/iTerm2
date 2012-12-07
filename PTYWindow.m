@@ -258,14 +258,9 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
 
         if (IsMountainLionOrLater()) {
             // CGSGetWindowWorkspace broke in 10.8.
-            if ([otherWindow respondsToSelector:@selector(_isInSomeVisibleSpace)]) {
-                if (![otherWindow performSelectorReturningBool:@selector(_isInSomeVisibleSpace)
-                                                   withObjects:nil]) {
-                        PtyLog(@"  skip - not in some visible space");
-                        continue;
-                }
-            } else {
-                NSLog(@"** _isInSomeVisibleSpace not defined! Smart window placement treating all windows like they're in the same space :(");
+            if (![otherWindow isOnActiveSpace]) {
+                PtyLog(@"  skip - not in active space");
+                continue;
             }
         } else {
             CGSWorkspaceID otherSpace = -1;
