@@ -255,8 +255,6 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
         }
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-        CGSWorkspaceID otherSpace = -1;
-        CGSGetWindowWorkspace(con, [otherWindow windowNumber], &otherSpace);
 
         if (IsMountainLionOrLater()) {
             // CGSGetWindowWorkspace broke in 10.8.
@@ -270,6 +268,8 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
                 NSLog(@"** _isInSomeVisibleSpace not defined! Smart window placement treating all windows like they're in the same space :(");
             }
         } else {
+            CGSWorkspaceID otherSpace = -1;
+            CGSGetWindowWorkspace(con, [otherWindow windowNumber], &otherSpace);
             if (otherSpace != currentSpace) {
                 PtyLog(@" skip - different space %d vs my %d", otherSpace, currentSpace);
                 continue;
