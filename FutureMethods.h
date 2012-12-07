@@ -40,3 +40,7 @@ typedef NSInteger FutureNSScrollerStyle;
 
 @interface CIImage (Future)
 @end
+
+@interface NSObject (Future)
+- (BOOL)performSelectorReturningBool:(SEL)selector withObjects:(NSArray *)objects;
+@end

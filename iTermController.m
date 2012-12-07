@@ -83,6 +83,26 @@ static NSInteger _compareEncodingByLocalizedName(id a, id b, void *unused)
     return [sa caseInsensitiveCompare: sb];
 }
 
+static BOOL UncachedIsMountainLionOrLater(void) {
+    unsigned major;
+    unsigned minor;
+    if ([iTermController getSystemVersionMajor:&major minor:&minor bugFix:nil]) {
+        return (major == 10 && minor >= 8) || (major > 10);
+    } else {
+        return NO;
+    }
+}
+
+BOOL IsMountainLionOrLater(void) {
+    static BOOL result;
+    static BOOL initialized;
+    if (!initialized) {
+        initialized = YES;
+        result = UncachedIsMountainLionOrLater();
+    }
+    return result;
+}
+
 static BOOL UncachedIsLionOrLater(void) {
     unsigned major;
     unsigned minor;

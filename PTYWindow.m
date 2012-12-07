@@ -32,6 +32,7 @@
 #import "PTYWindow.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
+#import "FutureMethods.h"
 #import "iTermController.h"
 #import "iTermApplicationDelegate.h"
 // This is included because the blurring code uses undocumented APIs to do its thing.
@@ -182,9 +183,13 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
 #endif
 }
 
+- (id<PTYWindowDelegateProtocol>)ptyDelegate {
+    return (id<PTYWindowDelegateProtocol>)[self delegate];
+}
+
 - (void)toggleFullScreen:(id)sender
 {
-    if (![[self delegate] lionFullScreen]  &&
+    if (![[self ptyDelegate] lionFullScreen]  &&
         ![[PreferencePanel sharedInstance] lionStyleFullscreen]) {
         // The user must have clicked on the toolbar arrow, but the pref is set
         // to use traditional fullscreen.
@@ -216,13 +221,16 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
     NSEnumerator* iterator;
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
-    CGSConnectionID con = CGSMainConnectionID();
-    if (!con) {
-        PtyLog(@"CGSMainConnectionID failed");
-        return;
+    CGSWorkspaceID currentSpace = -1;  // Valid only before 10.8 Mountain Lion.
+    CGSConnectionID con;
+    if (!IsMountainLionOrLater()) {
+        con = CGSMainConnectionID();
+        if (!con) {
+            PtyLog(@"CGSMainConnectionID failed");
+            return;
+        }
+        CGSGetWorkspace(con, &currentSpace);
     }
-    CGSWorkspaceID currentSpace = -1;
-    CGSGetWorkspace(con, &currentSpace);
 #endif
 
     int currentScreen = [self screenNumber];
@@ -245,13 +253,27 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
             PtyLog(@" skip - screen %d vs my %d", otherScreen, currentScreen);
             continue;
         }
-        
+
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
         CGSWorkspaceID otherSpace = -1;
         CGSGetWindowWorkspace(con, [otherWindow windowNumber], &otherSpace);
-        if (otherSpace != currentSpace) {
-            PtyLog(@" skip - different space %d vs my %d", otherSpace, currentSpace);
-            continue;
+
+        if (IsMountainLionOrLater()) {
+            // CGSGetWindowWorkspace broke in 10.8.
+            if ([otherWindow respondsToSelector:@selector(_isInSomeVisibleSpace)]) {
+                if (![otherWindow performSelectorReturningBool:@selector(_isInSomeVisibleSpace)
+                                                   withObjects:nil]) {
+                        PtyLog(@"  skip - not in some visible space");
+                        continue;
+                }
+            } else {
+                NSLog(@"** _isInSomeVisibleSpace not defined! Smart window placement treating all windows like they're in the same space :(");
+            }
+        } else {
+            if (otherSpace != currentSpace) {
+                PtyLog(@" skip - different space %d vs my %d", otherSpace, currentSpace);
+                continue;
+            }
         }
 #endif
         PtyLog(@" add window to array of windows");
