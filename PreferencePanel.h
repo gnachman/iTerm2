@@ -280,7 +280,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     // smart window placement
     IBOutlet NSButton *smartPlacement;
     BOOL defaultSmartPlacement;
-    
+
     // Adjust window size when changing font size
     IBOutlet NSButton *adjustWindowForFontSizeChange;
     BOOL defaultAdjustWindowForFontSizeChange;
