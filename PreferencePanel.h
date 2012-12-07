@@ -280,6 +280,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     // smart window placement
     IBOutlet NSButton *smartPlacement;
     BOOL defaultSmartPlacement;
+    
+    // Adjust window size when changing font size
+    IBOutlet NSButton *adjustWindowForFontSizeChange;
+    BOOL defaultAdjustWindowForFontSizeChange;
 
     // Delay before showing tabs in fullscreen mode
     IBOutlet NSSlider* fsTabDelay;
@@ -662,6 +666,7 @@ typedef enum {
 - (BOOL)showPaneTitles;
 - (BOOL)disableFullscreenTransparency;
 - (BOOL)smartPlacement;
+- (BOOL)adjustWindowForFontSizeChange;
 - (BOOL)windowNumber;
 - (BOOL)jobName;
 - (BOOL)showBookmarkName;
