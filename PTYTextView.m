@@ -5992,15 +5992,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     orgb[2] = [otherColor blueComponent];
 
     if (!memoizedContrastingColor_ ||
-	memcmp(rgb, memoizedMainRGB_, sizeof(rgb)) ||
-	memcmp(orgb, memoizedOtherRGB_, sizeof(orgb))) {
-	// We memoize the last returned value not so much for performance as for
-	// consistency. It ensures that two consecutive calls for the same color
-	// will return the same pointer. See the note at the call site in
-	// _constructRuns:theLine:...matches:.
+        memcmp(rgb, memoizedMainRGB_, sizeof(rgb)) ||
+        memcmp(orgb, memoizedOtherRGB_, sizeof(orgb))) {
+        // We memoize the last returned value not so much for performance as for
+        // consistency. It ensures that two consecutive calls for the same color
+        // will return the same pointer. See the note at the call site in
+        // _constructRuns:theLine:...matches:.
         [memoizedContrastingColor_ release];
         memoizedContrastingColor_ = [[self computeColorWithComponents:rgb
-					withContrastAgainstComponents:orgb] retain];
+                                        withContrastAgainstComponents:orgb] retain];
         if (!memoizedContrastingColor_) {
             memoizedContrastingColor_ = [mainColor retain];
         }
@@ -6173,9 +6173,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 // Begin a new run.
                 currentRun->runType = thisCharRunType;
                 currentRun->fontInfo = thisCharFont;
-                // TODO(georgen): Remove this and the associated release below.
-                // Not sure why this is getting released unexpectedly.
-                currentRun->color = [thisCharColor retain];
+                currentRun->color = thisCharColor;
                 currentRun->fakeBold = thisCharFakeBold;
                 currentRun->codes = codeStorage + nextFreeCode;
                 currentRun->numCodes = 0;
@@ -6423,12 +6421,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                matches:matches];
 
     [self _drawRuns:initialPoint runs:runs numRuns:numRuns];
-
-    // TODO(georgen): Remove this and the associated retain noted above.
-    for (int i = 0; i < numRuns; i++) {
-        NSColor *color = runs[i].color;
-        [color release];
-    }
 }
 
 - (void)_drawStripesInRect:(NSRect)rect
