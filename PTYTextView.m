@@ -5988,7 +5988,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     [runs addObjectsFromArray:[currentRun runsWithGlyphs]];
                 }
                 // Begin a new run.
-                currentRun = [thisChar copy];
+                currentRun = [[thisChar copy] autorelease];
                 currentRun.range = NSMakeRange(sharedData.freeRange.location, 0);
                 currentRun.sharedData = sharedData;
                 currentRun.x = curX;
@@ -6126,8 +6126,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                       ctx:(CGContextRef)ctx
              initialPoint:(NSPoint)initialPoint
 {
-    const int width = [dataSource width];
-    CGGlyph glyphs[width];
+    CGGlyph *glyphs = [currentRun glyphs];
 
     CGContextSelectFont(ctx,
                         [[currentRun.fontInfo.font fontName] UTF8String],

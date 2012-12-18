@@ -11,6 +11,10 @@
 
 @interface SharedCharacterRunData : NSObject {
     int capacity_;  // Allocated entries in codes, advances, glyphs arrays.
+    __weak unichar *codes_;
+    __weak CGSize *advances_;
+    __weak CGGlyph *glyphs_;
+    NSRange freeRange_;
 }
 
 @property (nonatomic, assign) __weak unichar* codes;    // Shared pointer to code point(s) for this char.
@@ -37,7 +41,16 @@ typedef enum {
 
 // When drawing lines, we use this object represents a run of cells of
 // the same font and attributes, differing only in the characters displayed.
-@interface CharacterRun : NSObject <NSCopying>
+@interface CharacterRun : NSObject <NSCopying> {
+    BOOL antiAlias_;
+    NSColor *color_;
+    RunType runType_;
+    BOOL fakeBold_;
+    CGFloat x_;
+    PTYFontInfo *fontInfo_;
+    SharedCharacterRunData *sharedData_;
+    NSRange range_;
+}
 
 @property (nonatomic, assign) BOOL antiAlias;           // Use anti-aliasing?
 @property (nonatomic, retain) NSColor *color;           // Foreground color

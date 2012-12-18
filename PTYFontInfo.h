@@ -9,7 +9,11 @@
 #import <Cocoa/Cocoa.h>
 
 // A collection of data about a font.
-@interface PTYFontInfo : NSObject
+@interface PTYFontInfo : NSObject {
+    NSFont *font_;
+    double baselineOffset_;
+    PTYFontInfo *boldVersion_;
+}
 
 @property (nonatomic, retain) NSFont *font;
 @property (nonatomic, assign) double baselineOffset;
