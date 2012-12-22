@@ -81,6 +81,7 @@
 
 - (id)copyWithZone:(NSZone *)zone {
     CharacterRun *theCopy = [[CharacterRun alloc] init];
+    theCopy.antiAlias = antiAlias_;
     theCopy.runType = runType_;
     theCopy.fontInfo = fontInfo_;
     theCopy.color = color_;
