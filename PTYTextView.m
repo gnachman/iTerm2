@@ -1434,7 +1434,7 @@ NSMutableArray* screens=0;
 
     double excess = [self excess];
 
-    if ((int)(height + excess + imeOffset * lineHeight) != frame.size.height) {
+    if ((int)(height + excess + imeOffset * lineHeight) != (int)frame.size.height) {
         // The old iTerm code had a comment about a hack at this location
         // that worked around an (alleged) bug in NSClipView not respecting
         // setCopiesOnScroll:YES and a gross workaround. The workaround caused
