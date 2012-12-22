@@ -1263,6 +1263,16 @@ NSMutableArray* screens=0;
                                    MAX(0, (xMax - xMin + 1) * charWidth),
                                    MAX(0, (yMax - yMin + 1) * lineHeight));
         return [NSValue valueWithRect:result];
+    } else if ([attribute isEqualToString:NSAccessibilityAttributedStringForRangeParameterizedAttribute]) {
+        //(NSAttributedString *) - substring; param:(NSValue * - rangeValue)
+        NSRange range = [(NSValue*)parameter rangeValue];
+        if (range.location == NSNotFound) {
+            return nil;
+        } else {
+            NSString *theString = [allText_ substringWithRange:range];
+            NSAttributedString *attributedString = [[[NSAttributedString alloc] initWithString:theString] autorelease];
+            return attributedString;
+        }
     } else {
         return [super accessibilityAttributeValue:attribute forParameter:parameter];
     }
@@ -1270,7 +1280,9 @@ NSMutableArray* screens=0;
 
 - (id)accessibilityAttributeValue:(NSString *)attribute forParameter:(id)parameter
 {
+    // NSLog(@"accessibilityAttributeValue:%@ forParameter:%@", attribute, parameter);
     id result = [self _accessibilityAttributeValue:attribute forParameter:parameter];
+    // NSLog(@"  returns %@", result);
     return result;
 }
 
@@ -1369,7 +1381,9 @@ NSMutableArray* screens=0;
 }
 
 - (id)accessibilityAttributeValue:(NSString *)attribute {
+    // NSLog(@"accessibilityAttributeValue:%@", attribute);
     id result = [self _accessibilityAttributeValue:attribute];
+    // NSLog(@"  returns %@", result);
     return result;
 }
 
