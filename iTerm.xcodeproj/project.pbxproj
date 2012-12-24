@@ -2135,6 +2135,74 @@
 			};
 			name = Nightly;
 		};
+		1D3BD8A21688FBC0006CCF37 /* Leopard Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					ppc,
+					i386,
+					x86_64,
+				);
+				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_WARN_PROTOTYPE_CONVERSION = NO;
+				GCC_WARN_SIGN_COMPARE = NO;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				SDKROOT = macosx;
+				VALID_ARCHS = "i386 ppc x86_64";
+				WARNING_CFLAGS = "-Wall";
+			};
+			name = "Leopard Deployment";
+		};
+		1D3BD8A31688FBC0006CCF37 /* Leopard Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				CODE_SIGN_IDENTITY = "Don't Code Sign";
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)\"",
+				);
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=*]" = BLOCKS_NOT_AVAILABLE;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_MISSING_PARENTHESES = YES;
+				GCC_WARN_SHADOW = YES;
+				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = NO;
+				GCC_WARN_UNUSED_VALUE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = .;
+				INFOPLIST_FILE = iTerm.plist;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/Growl.framework\"",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				OTHER_CODE_SIGN_FLAGS = "";
+				OTHER_LDFLAGS = (
+					"-laprutil-1",
+					"-licucore",
+				);
+				PRODUCT_NAME = iTerm;
+				SDKROOT = macosx10.7;
+				VALID_ARCHS = "i386 x86_64";
+				WARNING_CFLAGS = "-Wall";
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = NO;
+			};
+			name = "Leopard Deployment";
+		};
 		BB024D36096EE4080021E793 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2347,6 +2415,7 @@
 			buildConfigurations = (
 				BB024D36096EE4080021E793 /* Development */,
 				BB024D37096EE4080021E793 /* Deployment */,
+				1D3BD8A31688FBC0006CCF37 /* Leopard Deployment */,
 				1809E7B11665E2CB0069C439 /* Nightly */,
 				1809E7AE1665DA140069C439 /* LegacyDeployment */,
 				BB024D38096EE4080021E793 /* Default */,
@@ -2359,6 +2428,7 @@
 			buildConfigurations = (
 				BB024D3A096EE4080021E793 /* Development */,
 				BB024D3B096EE4080021E793 /* Deployment */,
+				1D3BD8A21688FBC0006CCF37 /* Leopard Deployment */,
 				1809E7B01665E2CB0069C439 /* Nightly */,
 				1809E7AD1665DA140069C439 /* LegacyDeployment */,
 				BB024D3C096EE4080021E793 /* Default */,

@@ -467,8 +467,10 @@ NSString *sessionsKey = @"sessions";
 
     wellFormed_ = YES;
     [[self window] futureSetRestorable:YES];
+#ifndef BLOCKS_NOT_AVAILABLE
     [[self window] futureSetRestorationClass:[PseudoTerminalRestorer class]];
-        terminalGuid_ = [[NSString stringWithFormat:@"pty-%@", [ProfileModel freshGuid]] retain];
+#endif
+    terminalGuid_ = [[NSString stringWithFormat:@"pty-%@", [ProfileModel freshGuid]] retain];
 
     return self;
 }
