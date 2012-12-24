@@ -2332,7 +2332,7 @@ NSMutableArray* screens=0;
     return (keyIsARepeat);
 }
 
-// TODO: disable other, righxt mouse for inactive panes
+// TODO: disable other, right mouse for inactive panes
 - (void)otherMouseDown: (NSEvent *) event
 {
     NSPoint locationInWindow, locationInTextView;
@@ -2840,6 +2840,37 @@ NSMutableArray* screens=0;
     endY = y;
 }
 
+// Emulates a third mouse button event (up or down, based on 'isDown').
+// Requires a real mouse event 'event' to build off of. This has the side
+// effect of setting mouseDownIsThreeFingerClick_, which (when set) indicates
+// that the current mouse-down state is "special" and disables certain actions
+// such as dragging.
+- (void)emulateThirdButtonPressDown:(BOOL)isDown withEvent:(NSEvent *)event {
+    if (isDown) {
+        mouseDownIsThreeFingerClick_ = isDown;
+    }
+    CGEventRef cgEvent = [event CGEvent];
+    CGEventRef fakeCgEvent = CGEventCreateMouseEvent(NULL,
+                                                     isDown ? kCGEventOtherMouseDown : kCGEventOtherMouseUp,
+                                                     CGEventGetLocation(cgEvent),
+                                                     2);
+    CGEventSetIntegerValueField(fakeCgEvent, kCGMouseEventClickState, [event clickCount]);
+    CGEventSetFlags(fakeCgEvent, CGEventGetFlags(cgEvent));
+    NSEvent *fakeEvent = [NSEvent eventWithCGEvent:fakeCgEvent];
+    int saved = numTouches_;
+    numTouches_ = 1;
+    if (isDown) {
+        [self otherMouseDown:fakeEvent];
+    } else {
+        [self otherMouseUp:fakeEvent];
+    }
+    numTouches_ = saved;
+    CFRelease(fakeCgEvent);
+    if (!isDown) {
+        mouseDownIsThreeFingerClick_ = isDown;
+    }
+}
+
 // Returns yes if [super mouseDown:event] should be run by caller.
 - (BOOL)mouseDownImpl:(NSEvent*)event
 {
@@ -2861,8 +2892,7 @@ NSMutableArray* screens=0;
     }
     if (numTouches_ == 3) {
         if ([[PreferencePanel sharedInstance] threeFingerEmulatesMiddle]) {
-            mouseDownIsThreeFingerClick_ = YES;
-            [self otherMouseDown:event];
+            [self emulateThirdButtonPressDown:YES withEvent:event];
         } else {
             // Perform user-defined gesture action, if any
             [pointer_ mouseDown:event withTouches:numTouches_];
@@ -3086,8 +3116,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DLog(@"mouseUp");
     firstMouseEventNumber_ = -1;  // Synergy seems to interfere with event numbers, so reset it here.
     if (mouseDownIsThreeFingerClick_) {
-        [self otherMouseUp:nil];
-        mouseDownIsThreeFingerClick_ = NO;
+        [self emulateThirdButtonPressDown:NO withEvent:event];
         return;
     } else if (numTouches_ == 3 && mouseDown) {
         // Three finger tap is valid but not emulating middle button
