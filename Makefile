@@ -21,7 +21,7 @@ TAGS:
 	find . -name "*.[mhMH]" -exec etags -o ./TAGS -a '{}' +
 
 install: | Deployment backup-old-iterm
-	cp -r build/Deployment/iTerm.app $(APPS)
+	cp -R build/Deployment/iTerm.app $(APPS)
 
 Development:
 	echo "Using PATH for build: $(PATH)"
