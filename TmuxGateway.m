@@ -290,6 +290,7 @@ static NSString *kCommandIsInitial = @"isInitial";
             [self abortWithErrorMessage:@"%begin with empty command queue"];
         } else {
             currentCommand_ = [[commandQueue_ objectAtIndex:0] retain];
+            TmuxLog(@"Begin response to %@", currentCommand_);
             [currentCommandResponse_ release];
             currentCommandResponse_ = [[NSMutableString alloc] init];
             [commandQueue_ removeObjectAtIndex:0];
