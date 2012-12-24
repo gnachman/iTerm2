@@ -7,6 +7,7 @@
 //
 
 #import "PointerController.h"
+#import "iTermApplicationDelegate.h"
 #import "PointerPrefsController.h"
 #import "PreferencePanel.h"
 
@@ -18,6 +19,7 @@
              forEvent:(NSEvent *)event
          withArgument:(NSString *)argument
 {
+    DLog(@"Perform action %@", action);
     if ([action isEqualToString:kPasteFromClipboardPointerAction]) {
         [delegate_ pasteFromClipboardWithEvent:event];
     } else if ([action isEqualToString:kPasteFromSelectionPointerAction]) {
@@ -91,15 +93,19 @@
                       clicks:(int)clicks
                  withTouches:(int)numTouches
 {
+    DLog(@"actionForEvent:%@ cicks:%d withTouches:%d", event, clicks, numTouches);
     if (clicks == 1 && [self eventEmulatesRightClick:event]) {
         // Ctrl-click emulates right button
+        DLog(@"Look up action for an emulated right-click");
         return [PointerPrefsController actionWithButton:1 numClicks:1 modifiers:0];
     }
     if (numTouches <= 2) {
+        DLog(@"Look up action for a two or one-finger touch click");
         return [PointerPrefsController actionWithButton:[event buttonNumber]
                                               numClicks:clicks
                                               modifiers:[event modifierFlags]];
     } else {
+        DLog(@"Look up action for a three-or-more finger tap");
         return [PointerPrefsController actionForTapWithTouches:numTouches
                                                      modifiers:[event modifierFlags]];
     }
@@ -156,6 +162,7 @@
     NSString *action = [self actionForEvent:event
                                      clicks:clicks_
                                 withTouches:numTouches];
+    DLog(@"mouseUp action=%@", action);
     if (action) {
         [self performAction:action forEvent:event withArgument:argument];
         return YES;

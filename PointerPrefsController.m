@@ -9,6 +9,7 @@
 #import "PointerPrefsController.h"
 #import "PointerController.h"
 #import "PreferencePanel.h"
+#import "iTermApplicationDelegate.h"
 #import "ITAddressBookMgr.h"
 
 static NSString *kPointerActionsKey = @"PointerActions";  // Used in NSUserDefaults
@@ -623,6 +624,7 @@ typedef enum {
     NSString *key = [PointerPrefsController keyForButton:buttonNumber
                                                   clicks:numClicks
                                                modifiers:modMask];
+    DLog(@"Look up key %@", key);
     NSString *action = [[[PointerPrefsController settings] objectForKey:key] objectForKey:kActionKey];
     return action;
 }
@@ -657,6 +659,7 @@ typedef enum {
     NSString *key;
     key = [PointerPrefsController keyForGesture:gesture
                                       modifiers:modMask];
+    DLog(@"Look up action for gesture %@", key);
     return [[[PointerPrefsController settings] objectForKey:key] objectForKey:kActionKey];
 }
 

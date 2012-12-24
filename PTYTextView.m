@@ -315,8 +315,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     secondaryFont = [[PTYFontInfo alloc] init];
 
     if ([pointer_ viewShouldTrackTouches]) {
+        DLog(@"Begin tracking touches in view %@", self);
         [self futureSetAcceptsTouchEvents:YES];
         [self futureSetWantsRestingTouches:YES];
+    } else {
+        DLog(@"Not tracking touches in view %@", self);
     }
 
     return self;
@@ -326,12 +329,14 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 {
     numTouches_ = [[ev futureTouchesMatchingPhase:1 | (1 << 2)/*NSTouchPhasesBegan | NSTouchPhasesStationary*/
                                            inView:self] count];
+    DLog(@"%@ Begin touch. numTouches_ -> %d", self, numTouches_);
 }
 
 - (void)touchesEndedWithEvent:(NSEvent *)ev
 {
     numTouches_ = [[ev futureTouchesMatchingPhase:(1 << 2)/*NSTouchPhasesStationary*/
                                            inView:self] count];
+    DLog(@"%@ End touch. numTouches_ -> %d", self, numTouches_);
 }
 
 - (BOOL)resignFirstResponder
@@ -2428,8 +2433,10 @@ NSMutableArray* screens=0;
         }
     }
     if (!mouseDownIsThreeFingerClick_) {
+        DLog(@"Sending third button press up to super");
         [super otherMouseUp:event];
     }
+    DLog(@"Sending third button press up to pointer controller");
     [pointer_ mouseUp:event withTouches:numTouches_];
 }
 
@@ -2762,7 +2769,7 @@ NSMutableArray* screens=0;
 
 - (void)mouseDown:(NSEvent *)event
 {
-    DLog(@"Mouse Down with event %@", event);
+    DLog(@"Mouse Down on %@ with event %@, num touches=%d", self, event, numTouches_);
     if ([self mouseDownImpl:event]) {
         [super mouseDown:event];
     }
@@ -2848,6 +2855,7 @@ NSMutableArray* screens=0;
 - (void)emulateThirdButtonPressDown:(BOOL)isDown withEvent:(NSEvent *)event {
     if (isDown) {
         mouseDownIsThreeFingerClick_ = isDown;
+        DLog(@"emulateThirdButtonPressDown - set mouseDownIsThreeFingerClick=YES");
     }
     CGEventRef cgEvent = [event CGEvent];
     CGEventRef fakeCgEvent = CGEventCreateMouseEvent(NULL,
@@ -2860,14 +2868,17 @@ NSMutableArray* screens=0;
     int saved = numTouches_;
     numTouches_ = 1;
     if (isDown) {
+        DLog(@"Emulate third button press down");
         [self otherMouseDown:fakeEvent];
     } else {
+        DLog(@"Emulate third button press up");
         [self otherMouseUp:fakeEvent];
     }
     numTouches_ = saved;
     CFRelease(fakeCgEvent);
     if (!isDown) {
         mouseDownIsThreeFingerClick_ = isDown;
+        DLog(@"emulateThirdButtonPressDown - set mouseDownIsThreeFingerClick=NO");
     }
 }
 
@@ -2886,6 +2897,7 @@ NSMutableArray* screens=0;
     }
     [pointer_ notifyLeftMouseDown];
     mouseDownIsThreeFingerClick_ = NO;
+    DLog(@"mouseDownImpl - set mouseDownIsThreeFingerClick=NO");
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
         [[MovePaneController sharedInstance] beginDrag:[dataSource session]];
         return NO;
@@ -3113,7 +3125,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseUp:(NSEvent *)event
 {
-    DLog(@"mouseUp");
+    DLog(@"Mouse Up on %@ with event %@, numTouches=%d", self, event, numTouches_);
     firstMouseEventNumber_ = -1;  // Synergy seems to interfere with event numbers, so reset it here.
     if (mouseDownIsThreeFingerClick_) {
         [self emulateThirdButtonPressDown:NO withEvent:event];
