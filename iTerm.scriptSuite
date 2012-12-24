@@ -273,6 +273,8 @@
 			</dict>
 			<key>CommandClass</key>
 			<string>NSScriptCommand</string>
+			<key>ResultAppleEventCode</key>
+			<string>Pssn</string>
             <key>Type</key>
             <string>PTYSession</string>
 		</dict>
