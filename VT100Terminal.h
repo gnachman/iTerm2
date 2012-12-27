@@ -360,7 +360,7 @@ typedef enum {
 
     BOOL allowKeypadMode;
 
-    unsigned int streamOffset;
+    int streamOffset;
 
     BOOL IS_ANSI;
     BOOL disableSmcupRmcup;
