@@ -906,7 +906,7 @@ static BOOL initDone = NO;
     // Where do we execute this command?
     BOOL toggle = NO;
     BOOL makeKey = NO;
-    if (theTerm == nil) {
+    if (theTerm == nil || bookmarkData != nil) {
         [iTermController switchToSpaceInBookmark:aDict];
         int windowType = [self _windowTypeForBookmark:aDict];
         if (windowType == WINDOW_TYPE_LION_FULL_SCREEN && disableLionFullscreen) {
@@ -981,7 +981,7 @@ static BOOL initDone = NO;
 
     // Where do we execute this command?
     BOOL toggle = NO;
-    if (theTerm == nil) {
+    if (theTerm == nil || bookmarkData != nil) {
         [iTermController switchToSpaceInBookmark:aDict];
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                  windowType:[self _windowTypeForBookmark:aDict]
@@ -1076,7 +1076,7 @@ static BOOL initDone = NO;
 
     // Where do we execute this command?
     BOOL toggle = NO;
-    if (theTerm == nil) {
+    if (theTerm == nil || bookmarkData != nil) {
         [iTermController switchToSpaceInBookmark:aDict];
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                  windowType:[self _windowTypeForBookmark:aDict]
