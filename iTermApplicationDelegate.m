@@ -950,6 +950,8 @@ static void FlushDebugLog() {
     }
     // Set the state of the control to the new true state.
     [secureInput setState:IsSecureEventInputEnabled() ? NSOnState : NSOffState];
+    
+    [[iTermController sharedInstance] showHotKeyWindowIfPreviouslyActive];
 }
 
 - (void)applicationDidResignActive:(NSNotification *)aNotification
