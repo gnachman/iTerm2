@@ -1551,6 +1551,15 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
     }
 }
 
+- (void)showHotKeyWindowIfPreviouslyActive
+{
+    if (previouslyActiveHotKeyTerminal_) {
+        HKWLog(@"Reopening deactivated visor");
+        rollingIn_ = YES;
+        RollInHotkeyTerm(previouslyActiveHotKeyTerminal_);
+    }
+}
+
 - (BOOL)isHotKeyWindowOpen
 {
     PseudoTerminal* term = GetHotkeyWindow();
@@ -1633,6 +1642,8 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
 
 - (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm
 {
+    previouslyActiveHotKeyTerminal_ = [NSApp isActive]? nil: hotkeyTerm;
+
     HKWLog(@"Hide visor.");
     if ([[hotkeyTerm window] isVisible]) {
         HKWLog(@"key window is %@", [NSApp keyWindow]);
