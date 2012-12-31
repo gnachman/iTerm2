@@ -266,8 +266,7 @@ static NSString *kCommandIsInitial = @"isInitial";
         if (acceptNotifications_) [self parseWindowCloseCommand:command];
     } else if ([command hasPrefix:@"%window-renamed"]) {
         if (acceptNotifications_) [self parseWindowRenamedCommand:command];
-    } else if ([command hasPrefix:@"%unlinked-window-add"] ||
-               [command hasPrefix:@"%unlinked-window-close"]) {
+    } else if ([command hasPrefix:@"%unlinked-window-add"]) {
         if (acceptNotifications_) [self broadcastWindowChange];
     } else if ([command hasPrefix:@"%session-changed"]) {
         [self parseSessionChangeCommand:command];
@@ -290,6 +289,7 @@ static NSString *kCommandIsInitial = @"isInitial";
             [self abortWithErrorMessage:@"%begin with empty command queue"];
         } else {
             currentCommand_ = [[commandQueue_ objectAtIndex:0] retain];
+            TmuxLog(@"Begin response to %@", currentCommand_);
             [currentCommandResponse_ release];
             currentCommandResponse_ = [[NSMutableString alloc] init];
             [commandQueue_ removeObjectAtIndex:0];

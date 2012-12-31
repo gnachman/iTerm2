@@ -5,6 +5,8 @@
 //  Created by George Nachman on 10/24/11.
 //
 
+// This ifndef affects only the Leopard configuration.
+
 #import "PseudoTerminalRestorer.h"
 #import "PseudoTerminal.h"
 #import "iTermController.h"
@@ -14,6 +16,7 @@ typedef void (^VoidBlock)(void);
 
 @implementation PseudoTerminalRestorer
 
+#ifndef BLOCKS_NOT_AVAILABLE
 + (BOOL)willOpenWindows
 {
     return queuedBlocks.count > 0;
@@ -80,4 +83,14 @@ typedef void (^VoidBlock)(void);
     }
 }
 
+#else  // BLOCKS_NOT_AVAILABLE
+
++ (BOOL)willOpenWindows
+{
+    return NO;
+}
+
+#endif  // BLOCKS_NOT_AVAILABLE
+
 @end
+

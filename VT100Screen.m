@@ -1804,6 +1804,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         // sanitize buffer
         const char *inputIterator = decodedBuffer;
         char *outputIterator = decodedBuffer;
+        int outputLength = 0;
         for (int i = 0; i < resultLength + 1; ++i) {
             char c = *inputIterator;
             if (c == 0x00) {
@@ -1821,7 +1822,9 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             *outputIterator = c;
             ++inputIterator;
             ++outputIterator;
-        } 
+            ++outputLength;
+        }
+        [data setLength:outputLength];
 
         NSString *resultString = [[[NSString alloc] initWithData:data
                                                         encoding:[TERMINAL encoding]] autorelease];

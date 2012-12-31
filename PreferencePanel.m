@@ -4011,32 +4011,73 @@ static float versionNumber;
     [[PreferencePanel sessionsInstance]->keyMappings reloadData];
 }
 
+- (BOOL)confirmProfileDeletion:(NSArray *)guids {
+    NSMutableString *question = [NSMutableString stringWithString:@"Delete profile"];
+    if (guids.count > 1) {
+        [question appendString:@"s "];
+    } else {
+        [question appendString:@" "];
+    }
+    NSMutableArray *names = [NSMutableArray array];
+    for (NSString *guid in guids) {
+        Profile *profile = [dataSource bookmarkWithGuid:guid];
+        NSString *name = [profile objectForKey:KEY_NAME];
+        [names addObject:[NSString stringWithFormat:@"\"%@\"", name]];
+    }
+    [question appendString:[names componentsJoinedByString:@", "]];
+    [question appendString:@"?"];
+    static NSTimeInterval lastQuell;
+    NSTimeInterval now = [[NSDate date] timeIntervalSinceReferenceDate];
+    if (lastQuell && (now - lastQuell) < 600) {
+        return YES;
+    }
+
+    NSAlert *alert;
+    alert = [NSAlert alertWithMessageText:@"Confirm Deletion"
+                            defaultButton:@"Delete"
+                          alternateButton:@"Cancel"
+                              otherButton:nil
+                informativeTextWithFormat:@"%@", question];
+    [alert setShowsSuppressionButton:YES];
+    [[alert suppressionButton] setTitle:@"Suppress deletion confirmations temporarily."];
+    BOOL result = NO;
+    if ([alert runModal] == NSAlertDefaultReturn) {
+        result = YES;
+    }
+    if ([[alert suppressionButton] state] == NSOnState) {
+        lastQuell = now;
+    }
+    return result;
+}
+
 - (IBAction)removeBookmark:(id)sender
 {
     if ([dataSource numberOfBookmarks] == 1) {
         NSBeep();
     } else {
-        BOOL found = NO;
-        int lastIndex = 0;
-        int numRemoved = 0;
-        for (NSString* guid in [bookmarksTableView selectedGuids]) {
-            found = YES;
-            int i = [bookmarksTableView selectedRow];
-            if (i > lastIndex) {
-                lastIndex = i;
+        if ([self confirmProfileDeletion:[[bookmarksTableView selectedGuids] allObjects]]) {
+            BOOL found = NO;
+            int lastIndex = 0;
+            int numRemoved = 0;
+            for (NSString* guid in [bookmarksTableView selectedGuids]) {
+                found = YES;
+                int i = [bookmarksTableView selectedRow];
+                if (i > lastIndex) {
+                    lastIndex = i;
+                }
+                ++numRemoved;
+                [self _removeKeyMappingsReferringToBookmarkGuid:guid];
+                [dataSource removeBookmarkWithGuid:guid];
             }
-            ++numRemoved;
-            [self _removeKeyMappingsReferringToBookmarkGuid:guid];
-            [dataSource removeBookmarkWithGuid:guid];
-        }
-        [bookmarksTableView reloadData];
-        int toSelect = lastIndex - numRemoved;
-        if (toSelect < 0) {
-            toSelect = 0;
-        }
-        [bookmarksTableView selectRowIndex:toSelect];
-        if (!found) {
-            NSBeep();
+            [bookmarksTableView reloadData];
+            int toSelect = lastIndex - numRemoved;
+            if (toSelect < 0) {
+                toSelect = 0;
+            }
+            [bookmarksTableView selectRowIndex:toSelect];
+            if (!found) {
+                NSBeep();
+            }
         }
     }
 }

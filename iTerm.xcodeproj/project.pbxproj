@@ -99,6 +99,8 @@
 		1D48B2F9165F45BA000046EE /* star@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D48B2F8165F45BA000046EE /* star@2x.png */; };
 		1D48B32316706FC3000046EE /* NSView+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D48B32116706FC3000046EE /* NSView+iTerm.h */; };
 		1D48B32416706FC3000046EE /* NSView+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D48B32216706FC3000046EE /* NSView+iTerm.m */; };
+		1D48B379167E809D000046EE /* CharacterRun.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D48B377167E809D000046EE /* CharacterRun.h */; };
+		1D48B37A167E809D000046EE /* CharacterRun.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D48B378167E809D000046EE /* CharacterRun.m */; };
 		1D4AE8FE14343A760092EB49 /* TrouterPrefsController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */; };
 		1D4AE8FF14343A760092EB49 /* TrouterPrefsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */; };
 		1D53A6AF1232DA3B00B7767B /* DefaultGlobalKeyMap.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */; };
@@ -228,6 +230,8 @@
 		1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D6C4D59122329F000E0AA3E /* ColorPresets.plist */; };
 		1D6C50A71226EEFB00E0AA3E /* ProfileListView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6C50A51226EEFB00E0AA3E /* ProfileListView.h */; };
 		1D6C50A81226EEFB00E0AA3E /* ProfileListView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6C50A61226EEFB00E0AA3E /* ProfileListView.m */; };
+		1D70BA351680158700824B72 /* PTYFontInfo.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D70BA331680158700824B72 /* PTYFontInfo.h */; };
+		1D70BA361680158700824B72 /* PTYFontInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D70BA341680158700824B72 /* PTYFontInfo.m */; };
 		1D72439011F416F300BD4924 /* LineBuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D72438F11F416F300BD4924 /* LineBuffer.h */; };
 		1D7B9A691491D82F003A2A22 /* IntervalMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7B9A671491D82F003A2A22 /* IntervalMap.h */; };
 		1D7B9A6A1491D82F003A2A22 /* IntervalMap.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7B9A681491D82F003A2A22 /* IntervalMap.m */; };
@@ -496,6 +500,8 @@
 		1D48B2F8165F45BA000046EE /* star@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "star@2x.png"; path = "images/star@2x.png"; sourceTree = "<group>"; };
 		1D48B32116706FC3000046EE /* NSView+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSView+iTerm.h"; sourceTree = "<group>"; };
 		1D48B32216706FC3000046EE /* NSView+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSView+iTerm.m"; sourceTree = "<group>"; };
+		1D48B377167E809D000046EE /* CharacterRun.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CharacterRun.h; sourceTree = "<group>"; };
+		1D48B378167E809D000046EE /* CharacterRun.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CharacterRun.m; sourceTree = "<group>"; };
 		1D4AE8FC14343A760092EB49 /* TrouterPrefsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TrouterPrefsController.h; sourceTree = "<group>"; };
 		1D4AE8FD14343A760092EB49 /* TrouterPrefsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TrouterPrefsController.m; sourceTree = "<group>"; };
 		1D53A6AE1232DA3B00B7767B /* DefaultGlobalKeyMap.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultGlobalKeyMap.plist; sourceTree = "<group>"; };
@@ -513,6 +519,8 @@
 		1D6C4D59122329F000E0AA3E /* ColorPresets.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ColorPresets.plist; sourceTree = "<group>"; };
 		1D6C50A51226EEFB00E0AA3E /* ProfileListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileListView.h; sourceTree = "<group>"; };
 		1D6C50A61226EEFB00E0AA3E /* ProfileListView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ProfileListView.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
+		1D70BA331680158700824B72 /* PTYFontInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PTYFontInfo.h; sourceTree = "<group>"; };
+		1D70BA341680158700824B72 /* PTYFontInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PTYFontInfo.m; sourceTree = "<group>"; };
 		1D72438C11F416E500BD4924 /* LineBuffer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LineBuffer.m; sourceTree = "<group>"; };
 		1D72438F11F416F300BD4924 /* LineBuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBuffer.h; sourceTree = "<group>"; };
 		1D72477211F55E5700BD4924 /* LineBufferTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LineBufferTest.h; sourceTree = "<group>"; };
@@ -887,6 +895,8 @@
 				E8CF7561026DDA6303A80106 /* PTYTextView.m */,
 				F5E533B403B2959201A8A066 /* PTYTabView.m */,
 				F56B230B03A1B36701A8A066 /* PTYWindow.m */,
+				1D48B377167E809D000046EE /* CharacterRun.h */,
+				1D48B378167E809D000046EE /* CharacterRun.m */,
 				1D36155412CBF33E00803EA9 /* ScreenChar.m */,
 				1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */,
 				1D2E813012A18F7500F3D71E /* SessionView.m */,
@@ -899,6 +909,8 @@
 				1DC38816148E840600B89F7C /* SolidColorView.h */,
 				1DC38817148E840700B89F7C /* SolidColorView.m */,
 				A073973F14C7694600786414 /* ColorsMenuItemView.m */,
+				1D70BA331680158700824B72 /* PTYFontInfo.h */,
+				1D70BA341680158700824B72 /* PTYFontInfo.m */,
 			);
 			name = Classes;
 			sourceTree = "<group>";
@@ -1570,6 +1582,8 @@
 				1DA26AC015007507004B5792 /* BackgroundThread.h in Headers */,
 				1D2F3B3D1516BA470044C337 /* iTermFontPanel.h in Headers */,
 				1D48B32316706FC3000046EE /* NSView+iTerm.h in Headers */,
+				1D48B379167E809D000046EE /* CharacterRun.h in Headers */,
+				1D70BA351680158700824B72 /* PTYFontInfo.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1880,6 +1894,8 @@
 				1DA26AC115007507004B5792 /* BackgroundThread.m in Sources */,
 				1D2F3B3E1516BA470044C337 /* iTermFontPanel.m in Sources */,
 				1D48B32416706FC3000046EE /* NSView+iTerm.m in Sources */,
+				1D48B37A167E809D000046EE /* CharacterRun.m in Sources */,
+				1D70BA361680158700824B72 /* PTYFontInfo.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -2119,6 +2135,74 @@
 			};
 			name = Nightly;
 		};
+		1D3BD8A21688FBC0006CCF37 /* Leopard Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = (
+					ppc,
+					i386,
+					x86_64,
+				);
+				FRAMEWORK_SEARCH_PATHS = "$(SRCROOT)";
+				GCC_C_LANGUAGE_STANDARD = c99;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_WARN_PROTOTYPE_CONVERSION = NO;
+				GCC_WARN_SIGN_COMPARE = NO;
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				SDKROOT = macosx;
+				VALID_ARCHS = "i386 ppc x86_64";
+				WARNING_CFLAGS = "-Wall";
+			};
+			name = "Leopard Deployment";
+		};
+		1D3BD8A31688FBC0006CCF37 /* Leopard Deployment */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				CODE_SIGN_IDENTITY = "Don't Code Sign";
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = YES;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)\"",
+				);
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 3;
+				"GCC_PREPROCESSOR_DEFINITIONS[arch=*]" = BLOCKS_NOT_AVAILABLE;
+				GCC_VERSION = com.apple.compilers.llvmgcc42;
+				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
+				GCC_WARN_FOUR_CHARACTER_CONSTANTS = NO;
+				GCC_WARN_MISSING_PARENTHESES = YES;
+				GCC_WARN_SHADOW = YES;
+				GCC_WARN_TYPECHECK_CALLS_TO_PRINTF = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = NO;
+				GCC_WARN_UNKNOWN_PRAGMAS = NO;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_LABEL = YES;
+				GCC_WARN_UNUSED_PARAMETER = NO;
+				GCC_WARN_UNUSED_VALUE = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				HEADER_SEARCH_PATHS = .;
+				INFOPLIST_FILE = iTerm.plist;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/Growl.framework\"",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.5;
+				OTHER_CODE_SIGN_FLAGS = "";
+				OTHER_LDFLAGS = (
+					"-laprutil-1",
+					"-licucore",
+				);
+				PRODUCT_NAME = iTerm;
+				SDKROOT = macosx10.7;
+				VALID_ARCHS = "i386 x86_64";
+				WARNING_CFLAGS = "-Wall";
+				WRAPPER_EXTENSION = app;
+				ZERO_LINK = NO;
+			};
+			name = "Leopard Deployment";
+		};
 		BB024D36096EE4080021E793 /* Development */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2331,6 +2415,7 @@
 			buildConfigurations = (
 				BB024D36096EE4080021E793 /* Development */,
 				BB024D37096EE4080021E793 /* Deployment */,
+				1D3BD8A31688FBC0006CCF37 /* Leopard Deployment */,
 				1809E7B11665E2CB0069C439 /* Nightly */,
 				1809E7AE1665DA140069C439 /* LegacyDeployment */,
 				BB024D38096EE4080021E793 /* Default */,
@@ -2343,6 +2428,7 @@
 			buildConfigurations = (
 				BB024D3A096EE4080021E793 /* Development */,
 				BB024D3B096EE4080021E793 /* Deployment */,
+				1D3BD8A21688FBC0006CCF37 /* Leopard Deployment */,
 				1809E7B01665E2CB0069C439 /* Nightly */,
 				1809E7AD1665DA140069C439 /* LegacyDeployment */,
 				BB024D3C096EE4080021E793 /* Default */,

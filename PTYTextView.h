@@ -33,6 +33,7 @@
 #import "Trouter.h"
 #import "LineBuffer.h"
 #import "PointerController.h"
+#import "PTYFontInfo.h"
 
 #include <sys/time.h>
 #define PRETTY_BOLD
@@ -53,17 +54,6 @@ enum {
     SELECT_BOX,
     SELECT_WHOLE_LINE
 };
-
-// A collection of data about a font.
-struct PTYFontInfo {
-    NSFont* font;  // Toll-free bridged to CTFontRef
-
-    // Metrics
-    double baselineOffset;
-
-    struct PTYFontInfo* boldVersion;  // may be NULL
-};
-typedef struct PTYFontInfo PTYFontInfo;
 
 @interface FindCursorView : NSView {
     NSPoint cursor;
@@ -116,8 +106,8 @@ typedef struct PTYFontInfo PTYFontInfo;
     double horizontalSpacing_;
     double  verticalSpacing_;
 
-    PTYFontInfo primaryFont;
-    PTYFontInfo secondaryFont;
+    PTYFontInfo *primaryFont;
+    PTYFontInfo *secondaryFont;
 
     NSColor* colorTable[256];
     NSColor* defaultFGColor;
@@ -174,8 +164,6 @@ typedef struct PTYFontInfo PTYFontInfo;
 
     // Previous tracking rect to avoid expensive calls to addTrackingRect.
     NSRect _trackingRect;
-
-    NSMutableDictionary* fallbackFonts;
 
     // Maps a NSNumber int consisting of color index, alternate fg semantics
     // flag, bold flag, and background flag to NSColor*s.
@@ -615,9 +603,6 @@ typedef enum {
     CHARTYPE_OTHER,       // Symbols, etc. Anything that doesn't fall into the other categories.
 } PTYCharType;
 
-- (void)modifyFont:(NSFont*)font baseline:(double)baseline info:(PTYFontInfo*)fontInfo;
-- (void)releaseFontInfo:(PTYFontInfo*)fontInfo;
-
 - (unsigned int) _checkForSupportedDragTypes:(id <NSDraggingInfo>) sender;
 
 - (void) _scrollToLine:(int)line;
@@ -665,14 +650,11 @@ typedef enum {
 - (void)_dragText:(NSString *)aString forEvent:(NSEvent *)theEvent;
 - (BOOL)_isCharSelectedInRow:(int)row col:(int)col checkOld:(BOOL)old;
 - (void)_settingsChanged:(NSNotification *)notification;
-- (void)_modifyFont:(NSFont*)font baseline:(double)baseline into:(PTYFontInfo*)fontInfo;
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)complex
                        fgColor:(int)fgColor
                     renderBold:(BOOL*)renderBold;
 
-- (PTYFontInfo*)getOrAddFallbackFont:(NSFont*)font;
-- (void)releaseAllFallbackFonts;
 // Returns true if any onscreen text is blinking
 - (BOOL)updateDirtyRects;
 - (BOOL)isFutureTabSelectedAfterX:(int)x Y:(int)y;
