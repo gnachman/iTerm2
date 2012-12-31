@@ -1215,8 +1215,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     [originalScreenCopy appendBytes:screen_top length:REAL_WIDTH * (HEIGHT - screenTopLine) * sizeof(screen_char_t)];
     [originalScreenCopy appendBytes:buffer_lines length:REAL_WIDTH * screenTopLine * sizeof(screen_char_t)];
 
-    savedInfo->saved_buffer_lines = originalScreenCopy.bytes;
-    savedInfo->saved_screen_top = originalScreenCopy.bytes;
+    savedInfo->saved_buffer_lines = originalScreenCopy.mutableBytes;
+    savedInfo->saved_screen_top = originalScreenCopy.mutableBytes;
     savedInfo->savedCursorY = cursorY;
     savedInfo->savedCursorX = cursorX;
 }
@@ -4101,7 +4101,7 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 }
 
-- (NSValue *)valueFromDictionary:(NSDictionary *)dict withFirstKeyFrom:(NSArray *)keys {
+- (id)objectInDictionary:(NSDictionary *)dict withFirstKeyFrom:(NSArray *)keys {
     for (NSString *key in keys) {
         NSObject *object = [dict objectForKey:key];
         if (object) {
@@ -4113,24 +4113,24 @@ void DumpBuf(screen_char_t* p, int n) {
 
 - (void)setTmuxState:(NSDictionary *)state
 {
-    int savedGrid = [[self valueFromDictionary:state
-                              withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedGrid,
-                                                                         kStateDictInAlternateScreen,
-                                                                         nil]] intValue];
+    int savedGrid = [[self objectInDictionary:state
+                             withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedGrid,
+                                                                        kStateDictInAlternateScreen,
+                                                                        nil]] intValue];
     if (!savedGrid && temp_buffer) {
         free(temp_buffer);
         temp_buffer = NULL;
     }
     // TODO(georgen): Get the alt screen contents and fill temp_buffer.
 
-    SAVE_CURSOR_X = [[self valueFromDictionary:state
-                              withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedCX,
-                                                                         kStateDictBaseCursorX,
-                                                                         nil]] intValue];
-    SAVE_CURSOR_Y = [[self valueFromDictionary:state
-                              withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedCY,
-                                                                         kStateDictBaseCursorY,
-                                                                         nil]] intValue];
+    SAVE_CURSOR_X = [[self objectInDictionary:state
+                             withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedCX,
+                                                                        kStateDictBaseCursorX,
+                                                                        nil]] intValue];
+    SAVE_CURSOR_Y = [[self objectInDictionary:state
+                             withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedCY,
+                                                                        kStateDictBaseCursorY,
+                                                                        nil]] intValue];
     cursorX = [[state objectForKey:kStateDictCursorX] intValue];
     cursorY = [[state objectForKey:kStateDictCursorY] intValue];
     SCROLL_TOP = [[state objectForKey:kStateDictScrollRegionUpper] intValue];
