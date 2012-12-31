@@ -112,7 +112,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     savedScrollPosition_ = -1;
     updateTimer = nil;
     antiIdleTimer = nil;
-    addressBookEntry=nil;
+    addressBookEntry = nil;
+    windowTitleStack = nil;
+    iconTitleStack = nil;
 
 #if DEBUG_ALLOC
     NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
@@ -170,6 +172,12 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [COLORFGBG_VALUE release];
     [name release];
     [windowTitle release];
+    if (windowTitleStack) {
+        [windowTitleStack release];
+    }
+    if (iconTitleStack) {
+        [iconTitleStack release];
+    }
     [addressBookEntry release];
     [backgroundImagePath release];
     [antiIdleTimer invalidate];
@@ -2529,6 +2537,64 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     if ([[[self tab] parentWindow] currentTab] == [self tab]) {
         [[[self tab] parentWindow] setWindowTitle];
+    }
+}
+
+- (void)pushWindowTitle
+{
+    if (!windowTitleStack) {
+        // initialize lazily
+        windowTitleStack = [[NSMutableArray alloc] init];
+    }
+    NSString *title = windowTitle;
+    if (!title) {
+        // if current title is nil, treat it as an empty string.
+        title = @"";
+    }
+    // push it
+    [windowTitleStack addObject:title];
+}
+
+- (void)popWindowTitle
+{
+    // Ignore if title stack is nil or stack count == 0
+    if (!windowTitleStack) {
+        return;
+    }
+    NSUInteger count = [windowTitleStack count];
+    if (count > 0) {
+        // pop window title
+        [self setWindowTitle:[windowTitleStack objectAtIndex:count - 1]];
+        [windowTitleStack removeObjectAtIndex:count - 1];
+    }
+}
+
+- (void)pushIconTitle
+{
+    if (!iconTitleStack) {
+        // initialize lazily
+        iconTitleStack = [[NSMutableArray alloc] init];
+    }
+    NSString *title = name;
+    if (!title) {
+        // if current icon title is nil, treat it as an empty string.
+        title = @"";
+    }
+    // push it
+    [iconTitleStack addObject:title];
+}
+
+- (void)popIconTitle
+{
+    // Ignore if icon title stack is nil or stack count == 0.
+    if (!iconTitleStack) {
+        return;
+    }
+    NSUInteger count = [iconTitleStack count];
+    if (count > 0) {
+        // pop icon title
+        [self setName:[iconTitleStack objectAtIndex:count - 1]];
+        [iconTitleStack removeObjectAtIndex:count - 1];
     }
 }
 

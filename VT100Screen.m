@@ -2383,6 +2383,37 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         [SESSION writeTask:theData];
         break;
     }
+    case XTERMCC_PUSH_TITLE: {
+        switch (token.u.csi.p[1]) {
+            case 0:
+                [SESSION pushWindowTitle];
+                [SESSION pushIconTitle];
+                break;
+            case 1:
+                [SESSION pushIconTitle];
+                break;
+            case 2:
+                [SESSION pushWindowTitle];
+                break;
+            break;
+        }
+        break;
+    }
+    case XTERMCC_POP_TITLE: {
+        switch (token.u.csi.p[1]) {
+            case 0:
+                [SESSION popWindowTitle];
+                [SESSION popTabTitle];
+                break;
+            case 1:
+                [SESSION popTabTitle];
+                break;
+            case 2:
+                [SESSION popWindowTitle];
+                break;
+        }
+        break;
+    }
     // Our iTerm specific codes
     case ITERM_GROWL:
         if (GROWL) {
