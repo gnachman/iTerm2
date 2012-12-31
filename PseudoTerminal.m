@@ -334,7 +334,7 @@ NSString *sessionsKey = @"sessions";
     }
     [myWindow _setContentHasShadow:NO];
 
-    PtyLog(@"initWithSmartLayout - new window is at %d", myWindow);
+    PtyLog(@"initWithSmartLayout - new window is at %p", myWindow);
     [self setWindow:myWindow];
     [myWindow release];
 
@@ -792,7 +792,7 @@ NSString *sessionsKey = @"sessions";
     } else if ([sortedNames count] > 1 && [sortedNames count] <= 10) {
         message = [NSString stringWithFormat:@"%@ is running the following jobs: %@.", identifier, [self prettyListOfStrings:sortedNames]];
     } else if ([sortedNames count] > 10) {
-        message = [NSString stringWithFormat:@"%@ is running the following jobs: %@, plus %d %@.",
+        message = [NSString stringWithFormat:@"%@ is running the following jobs: %@, plus %ld %@.",
                    identifier,
                    [self prettyListOfStrings:sortedNames],
                    [sortedNames count] - 10,
@@ -956,8 +956,7 @@ NSString *sessionsKey = @"sessions";
       okToClose = [self confirmCloseForSessions:[NSArray arrayWithObject:aSession]
                                      identifier:@"This session"
                                     genericName:[NSString stringWithFormat:@"session \"%@\"",
-                                                    [aSession name],
-                                                    [[aSession tab] realObjectCount]]];
+                                                    [aSession name]]];
     }
     if (okToClose) {
         // Just in case IR is open, close it first.
@@ -1905,7 +1904,7 @@ NSString *sessionsKey = @"sessions";
 
 - (NSSize)windowWillResize:(NSWindow *)sender toSize:(NSSize)proposedFrameSize
 {
-    PtyLog(@"%s(%d):-[PseudoTerminal windowWillResize: obj=%d, proposedFrameSize width = %f; height = %f]",
+    PtyLog(@"%s(%d):-[PseudoTerminal windowWillResize: obj=%p, proposedFrameSize width = %f; height = %f]",
            __FILE__, __LINE__, [self window], proposedFrameSize.width, proposedFrameSize.height);
 
     // Find the session for the current pane of the current tab.
@@ -2294,7 +2293,7 @@ NSString *sessionsKey = @"sessions";
         NSTabViewItem *newTabViewItem = [theTab tabViewItem];
         [newTerminal setTabColor:tabColor forTabViewItem:newTabViewItem];
         [tabColor release];
-        PtyLog(@"toggleFullScreenMode - done inserting session", i);
+        PtyLog(@"toggleFullScreenMode - done inserting session");
 
         // release the tabViewItem
         [aTabViewItem release];
@@ -2302,7 +2301,7 @@ NSString *sessionsKey = @"sessions";
     newTerminal->_resizeInProgressFlag = NO;
     [[newTerminal tabView] selectTabViewItemWithIdentifier:[currentSession tab]];
     BOOL fs = _fullScreen;
-    PtyLog(@"toggleFullScreenMode - close old window", i);
+    PtyLog(@"toggleFullScreenMode - close old window");
     // The window close call below also releases the window controller (self).
     // This causes havoc because we keep running for a while, so we'll retain a
     // copy of ourselves and release it when we're all done.
@@ -3043,7 +3042,7 @@ NSString *sessionsKey = @"sessions";
         NSMenu *tabMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
         NSUInteger count = 1;
         for (NSTabViewItem *aTabViewItem in [TABVIEW tabViewItems]) {
-            NSString *title = [NSString stringWithFormat:@"%@ #%d", [aTabViewItem label], count++];
+            NSString *title = [NSString stringWithFormat:@"%@ #%ld", [aTabViewItem label], count++];
             item = [[[NSMenuItem alloc] initWithTitle:title
                                                action:@selector(selectTab:)
                                         keyEquivalent:@""] autorelease];
@@ -4998,8 +4997,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)insertSession:(PTYSession *)aSession atIndex:(int)anIndex
 {
-    PtyLog(@"%s(%d):-[PseudoTerminal insertSession: 0x%x atIndex: %d]",
-           __FILE__, __LINE__, aSession, index);
+    PtyLog(@"-[PseudoTerminal insertSession: %p atIndex: %d]", aSession, anIndex);
 
     if (aSession == nil) {
         return;
@@ -5020,8 +5018,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)replaceSession:(PTYSession *)aSession atIndex:(int)anIndex
 {
-    PtyLog(@"%s(%d):-[PseudoTerminal insertSession: 0x%x atIndex: %d]",
-           __FILE__, __LINE__, aSession, index);
+    PtyLog(@"-[PseudoTerminal insertSession: %p atIndex: %d]", aSession, anIndex);
 
     if (aSession == nil) {
         return;
@@ -5070,7 +5067,7 @@ NSString *sessionsKey = @"sessions";
         [aSession setName:theSessionName];
     } else {
         NSMutableString *title = [NSMutableString string];
-        NSString *progpath = [NSString stringWithFormat: @"%@ #%d",
+        NSString *progpath = [NSString stringWithFormat: @"%@ #%ld",
                               [[[[aSession SHELL] path] pathComponents] lastObject],
                               [TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]]];
 
@@ -5853,7 +5850,7 @@ NSString *sessionsKey = @"sessions";
 
 -(void)appendSession:(PTYSession *)object
 {
-    PtyLog(@"PseudoTerminal: -appendSession: 0x%x", object);
+    PtyLog(@"PseudoTerminal: -appendSession: %p", object);
     // Increment tabViewItemsBeingAdded so that the maximum content size will
     // be calculated with the tab bar if it's about to open.
     ++tabViewItemsBeingAdded;
@@ -5867,7 +5864,7 @@ NSString *sessionsKey = @"sessions";
 
 -(void)replaceInSessions:(PTYSession *)object atIndex:(unsigned)anIndex
 {
-    PtyLog(@"PseudoTerminal: -replaceInSessions: 0x%x atIndex: %d", object, anIndex);
+    PtyLog(@"PseudoTerminal: -replaceInSessions: %p atIndex: %d", object, anIndex);
     // TODO: Test this
     [self setupSession:object title:nil withSize:nil];
     if ([object SCREEN]) {  // screen initialized ok
@@ -5877,19 +5874,19 @@ NSString *sessionsKey = @"sessions";
 
 -(void)addInSessions:(PTYSession *)object
 {
-    PtyLog(@"PseudoTerminal: -addInSessions: 0x%x", object);
+    PtyLog(@"PseudoTerminal: -addInSessions: %p", object);
     [self insertInSessions: object];
 }
 
 -(void)insertInSessions:(PTYSession *)object
 {
-    PtyLog(@"PseudoTerminal: -insertInSessions: 0x%x", object);
+    PtyLog(@"PseudoTerminal: -insertInSessions: %p", object);
     [self insertInSessions: object atIndex:[TABVIEW numberOfTabViewItems]];
 }
 
 -(void)insertInSessions:(PTYSession *)object atIndex:(unsigned)anIndex
 {
-    PtyLog(@"PseudoTerminal: -insertInSessions: 0x%x atIndex: %d", object, anIndex);
+    PtyLog(@"PseudoTerminal: -insertInSessions: %p atIndex: %d", object, anIndex);
     // TODO: test this
     [self setupSession:object title:nil withSize:nil];
     if ([object SCREEN]) {  // screen initialized ok
