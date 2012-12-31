@@ -1295,7 +1295,7 @@ static VT100TCC decode_utf8(unsigned char *datap,
     unsigned char *p = datap;
     int len = datalen;
     int utf8DecodeResult;
-    unsigned int theChar = 0;
+    int theChar = 0;
 
     while (true) {
         utf8DecodeResult = decode_utf8_char(p, len, &theChar);
@@ -2785,9 +2785,8 @@ static VT100TCC decode_string(unsigned char *datap,
             [self saveCursorAttributes];
             break;
         case VT100CSI_DECSTR:
-            WRAPAROUND_MODE = 0;
-            [self setCursorMode:mode];
-            ORIGIN_MODE = 0;
+            WRAPAROUND_MODE = NO;
+            ORIGIN_MODE = NO;
             break;
     }
 }
