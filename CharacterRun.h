@@ -8,31 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "PTYFontInfo.h"
-
-@interface SharedCharacterRunData : NSObject {
-    int capacity_;  // Allocated entries in codes, advances, glyphs arrays.
-    __weak unichar *codes_;
-    __weak CGSize *advances_;
-    __weak CGGlyph *glyphs_;
-    NSRange freeRange_;
-}
-
-@property (nonatomic, assign) __weak unichar* codes;    // Shared pointer to code point(s) for this char.
-@property (nonatomic, assign) __weak CGSize* advances;  // Shared pointer to advances for each code.
-@property (nonatomic, assign) __weak CGGlyph* glyphs;   // Shared pointer to glyphs for these chars (single code point only)
-@property (nonatomic, assign) NSRange freeRange;        // Unused space at the end of the arrays.
-
-+ (SharedCharacterRunData *)sharedCharacterRunDataWithCapacity:(int)capacity;
-
-// Mark a number of cells beginning at freeRange.location as used.
-- (void)advance:(int)positions;
-
-// Makes sure there is room for at least 'space' more codes/advances/glyphs beyond what is used.
-// Allocates more space if necessary. Call this before writing to shared pointers and before
-// calling -advance:.
-- (void)reserve:(int)space;
-
-@end
+#import "SharedCharacterRunData.h"
 
 typedef enum {
     kCharacterRunMultipleSimpleChars,           // A run of cells with one code point each.
@@ -74,8 +50,9 @@ typedef enum {
 - (void)appendCodesFromString:(NSString *)string withAdvance:(CGFloat)advance;
 - (void)appendCode:(unichar)code withAdvance:(CGFloat)advance;
 
-// For kCharacterRunMultipleSimpleChars, there is one advance but many parallel codes/glyphs.
-// For kCharacterRunSingleCharWithCombiningMarks, codes/glyphs/advances are all parallel.
+// Clear the allocated range.
+- (void)clearAllocation;
+
 - (unichar *)codes;
 - (CGSize *)advances;
 - (CGGlyph *)glyphs;

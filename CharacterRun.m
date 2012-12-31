@@ -9,50 +9,6 @@
 #import "CharacterRun.h"
 #import "ScreenChar.h"
 
-@implementation SharedCharacterRunData
-
-@synthesize codes = codes_;
-@synthesize advances = advances_;
-@synthesize glyphs = glyphs_;
-@synthesize freeRange = freeRange_;
-
-+ (SharedCharacterRunData *)sharedCharacterRunDataWithCapacity:(int)capacity {
-    SharedCharacterRunData *data = [[[SharedCharacterRunData alloc] init] autorelease];
-    data->capacity_ = capacity;
-    data.codes = malloc(sizeof(unichar) * capacity);
-    data.advances = malloc(sizeof(CGSize) * capacity);
-    data.glyphs = malloc(sizeof(CGGlyph) * capacity);
-    data.freeRange = NSMakeRange(0, capacity);
-    return data;
-}
-
-- (void)dealloc {
-    free(codes_);
-    free(advances_);
-    free(glyphs_);
-    [super dealloc];
-}
-
-- (void)advance:(int)positions {
-    freeRange_.location += positions;
-    assert(freeRange_.length >= positions);
-    freeRange_.length -= positions;
-}
-
-- (void)reserve:(int)space {
-    if (freeRange_.length < space) {
-        int newSize = (capacity_ + space) * 2;
-        int growth = newSize - capacity_;
-        capacity_ = newSize;
-        freeRange_.length += growth;
-        codes_ = realloc(codes_, sizeof(unichar) * capacity_);
-        advances_ = realloc(advances_, sizeof(CGSize) * capacity_);
-        glyphs_ = realloc(glyphs_, sizeof(CGGlyph) * capacity_);
-    }
-}
-
-@end
-
 @implementation CharacterRun
 
 @synthesize antiAlias = antiAlias_;
@@ -96,24 +52,23 @@
     NSMutableString *d = [NSMutableString string];
     [d appendFormat:@"<CharacterRun: %p codes=\"", self];
     unichar *c = [self codes];
-    c += range_.location;
     for (int i = 0; i < range_.length; i++) {
-        [d appendFormat:@"%x ", (int)c[i + range_.location]];
+        [d appendFormat:@"%x ", (((int)c[i]) & 0xffff)];
     }
     [d appendFormat:@"\">"];
     return d;
 }
 
 - (unichar *)codes {
-    return sharedData_.codes + range_.location;
+    return [sharedData_ codesInRange:range_];
 }
 
 - (CGSize *)advances {
-    return sharedData_.advances + range_.location;
+    return [sharedData_ advancesInRange:range_];
 }
 
 - (CGGlyph *)glyphs {
-    return sharedData_.glyphs + range_.location;
+    return [sharedData_ glyphsInRange:range_];
 }
 
 // Given a run with codes x1,x2,...,xn, change self to have codes x1,x2,...,x(i-1).
@@ -121,14 +76,13 @@
 - (CharacterRun *)splitBeforeIndex:(int)truncateBeforeIndex
 {
     CharacterRun *tailRun = [[self copy] autorelease];
+    assert(range_.length >= truncateBeforeIndex);
     CGSize *advances = [self advances];
-
     for (int i = 0; i < truncateBeforeIndex; ++i) {
         tailRun.x += advances[i].width;
     }
-    tailRun.range = NSMakeRange(tailRun.range.location + truncateBeforeIndex,
-                                tailRun.range.length - truncateBeforeIndex);
-    range_.length = truncateBeforeIndex;
+    [sharedData_ advanceAllocation:&tailRun->range_ by:truncateBeforeIndex];
+    [sharedData_ truncateAllocation:&range_ toSize:truncateBeforeIndex];
 
     return tailRun;
 }
@@ -144,9 +98,7 @@
     return -1;
 }
 
-// NOTE: Not idempotent! This calls [sharedData_ advance:].
 - (void)appendRunsWithGlyphsToArray:(NSMutableArray *)newRuns {
-    [sharedData_ advance:range_.length];
     [newRuns addObject:self];
     if (runType_ == kCharacterRunSingleCharWithCombiningMarks) {
         // These don't actually need glyphs. This algorithm is incompatible
@@ -225,15 +177,20 @@
         }
         if (i >= 0) {
             isOk = CTFontGetGlyphsForCharacters((CTFontRef)currentRun.fontInfo.font,
-                                                [currentRun codes],
-                                                [currentRun glyphs],
+                                                [self codes],
+                                                [self glyphs],
                                                 currentRun.range.length);
+        } else {
+            break;
         }
     }
 }
 
 - (NSArray *)runsWithGlyphs
 {
+    if (!range_.length) {
+        return nil;
+    }
     NSMutableArray *newRuns = [NSMutableArray array];
     [self appendRunsWithGlyphsToArray:newRuns];
     return newRuns;
@@ -248,24 +205,26 @@
             antiAlias_ == otherRun.antiAlias);
 }
 
-- (void)appendAdvance:(CGFloat)width {
-    sharedData_.advances[range_.location + range_.length] = CGSizeMake(width, 0);
-}
-
 - (void)appendCode:(unichar)code withAdvance:(CGFloat)advance {
-    sharedData_.codes[range_.location + range_.length] = code;
-    [sharedData_ reserve:1];
-    [self appendAdvance:advance];
-    ++range_.length;
+    [sharedData_ growAllocation:&range_ by:1];
+    unichar *codes = [self codes];
+    CGSize *advances = [self advances];
+    codes[range_.length - 1] = code;
+    advances[range_.length - 1] = CGSizeMake(advance, 0);
 }
 
 - (void)appendCodesFromString:(NSString *)string withAdvance:(CGFloat)advance {
+    int offset = range_.length;
     int length = [string length];
-    [sharedData_ reserve:length];
-    [string getCharacters:[self codes]
+    [sharedData_ growAllocation:&range_ by:length];
+    [string getCharacters:[self codes] + offset
                     range:NSMakeRange(0, length)];
-    [self appendAdvance:advance];
-    range_.length += length;
+    CGSize *advances = [self advances];
+    advances[offset] = CGSizeMake(advance, 0);
+}
+
+- (void)clearAllocation {
+    range_ = NSMakeRange(0, 0);
 }
 
 @end

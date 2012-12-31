@@ -6044,7 +6044,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 }
                 // Begin a new run.
                 currentRun = [[thisChar copy] autorelease];
-                currentRun.range = NSMakeRange(sharedData.freeRange.location, 0);
+                [currentRun clearAllocation];
                 currentRun.sharedData = sharedData;
                 currentRun.x = curX;
             }
@@ -6263,7 +6263,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
               indexRange:indexRange
                  bgColor:bgColor
                  matches:matches];
-    
+
     [self _drawRuns:initialPoint runs:runs];
 }
 
