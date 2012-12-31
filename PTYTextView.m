@@ -6044,7 +6044,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 }
                 // Begin a new run.
                 currentRun = [[thisChar copy] autorelease];
-                [currentRun clearAllocation];
+                [currentRun clearRange];
                 currentRun.sharedData = sharedData;
                 currentRun.x = curX;
             }

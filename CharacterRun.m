@@ -223,7 +223,7 @@
     advances[offset] = CGSizeMake(advance, 0);
 }
 
-- (void)clearAllocation {
+- (void)clearRange {
     range_ = NSMakeRange(0, 0);
 }
 

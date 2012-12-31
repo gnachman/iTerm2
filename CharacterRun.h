@@ -51,7 +51,7 @@ typedef enum {
 - (void)appendCode:(unichar)code withAdvance:(CGFloat)advance;
 
 // Clear the allocated range.
-- (void)clearAllocation;
+- (void)clearRange;
 
 - (unichar *)codes;
 - (CGSize *)advances;
