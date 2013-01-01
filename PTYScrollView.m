@@ -64,7 +64,7 @@
         // Values copied from NSScroller.h to avoid 10.7 SDK dependency.
         const int defaultStyle = 0;  // NSScrollerKnobStyleDefault
         const int lightStyle = 2;  // NSScrollerKnobStyleLight
-        [self setKnobStyle:value ? lightStyle : defaultStyle];
+        [self futureSetKnobStyle:value ? lightStyle : defaultStyle];
     }
     hasDarkBackground_ = value;
 }

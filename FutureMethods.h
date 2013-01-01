@@ -44,3 +44,7 @@ typedef NSInteger FutureNSScrollerStyle;
 @interface NSObject (Future)
 - (BOOL)performSelectorReturningBool:(SEL)selector withObjects:(NSArray *)objects;
 @end
+
+@interface NSScroller (future)
+- (void)futureSetKnobStyle:(NSInteger)newKnobStyle;
+@end
