@@ -4089,7 +4089,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 NSLog(@"Components for %@ are %@", regex, components);
                 NSArray *actions = [SmartSelectionController actionsInRule:rule];
                 for (NSDictionary *action in actions) {
-                    SEL mySelector = @selector(bogusSelector:);
+                    SEL mySelector;
                     // The selector's name must begin with contextMenuAction to
                     // pass validateMenuItem.
                     switch ([ContextMenuActionPrefsController actionForActionDict:action]) {
@@ -7274,24 +7274,36 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     return YES;
 }
 
-- (NSMutableString *)_bruteforcePathFromBeforeString:(NSMutableString *)beforeString afterString:(NSMutableString *) afterString workingDirectory:(NSString *)workingDirectory {
+// Any sequence of words separated by spaces or tabs could be a filename. Search the neighborhood
+// of words for a valid filename. For example, beforeString could be "blah blah ~/Library/Appli" and
+// afterString could be "cation Support/Screen Sharing foo bar baz". This searches outward from
+// the point between beforeString and afterString to find a valid path, and would return
+// "~/Library/Application Support/Screen sharing" if such a file exists.
+- (NSMutableString *)_bruteforcePathFromBeforeString:(NSMutableString *)beforeString
+                                         afterString:(NSMutableString *)afterString
+                                    workingDirectory:(NSString *)workingDirectory {
     // Remove escaping slashes
     NSString *removeEscapingSlashes = @"\\\\([ \\(\\[\\]\\\\)])";
+
     [beforeString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
     [afterString replaceOccurrencesOfRegex:removeEscapingSlashes withString:@"$1"];
-
+    beforeString = [[beforeString copy] autorelease];
     // The parens here cause "Foo bar" to become {"Foo", " ", "bar"} rather than {"Foo", "bar"}.
-    NSMutableArray *beforeChunks = [[beforeString componentsSeparatedByRegex:@"([\t ])"] mutableCopy];
-    NSMutableArray *afterChunks = [[afterString componentsSeparatedByRegex:@"([\t ])"] mutableCopy];
-
+    // Also, there is some kind of weird bug in regexkit. If you do [[beforeChunks mutableCopy] autoRelease]
+    // then the items in the array get over-released.
+    NSArray *beforeChunks = [beforeString componentsSeparatedByRegex:@"([\t ])"];
+    NSArray *afterChunks = [afterString componentsSeparatedByRegex:@"([\t ])"];
     NSMutableString *left = [NSMutableString string];
-
-    [beforeChunks addObject:@""]; // So there is an attempt with no left chunks
     // Bail after 100 iterations if nothing is still found.
     int limit = 100;
 
-    for (int i = [beforeChunks count] - 1; i >= 0; i--) {
-        [left insertString:[beforeChunks objectAtIndex:i] atIndex:0];
+    for (int i = [beforeChunks count]; i >= 0; i--) {
+        NSString *beforeChunk = @"";
+        if (i < [beforeChunks count]) {
+            beforeChunk = [beforeChunks objectAtIndex:i];
+        }
+
+        [left insertString:beforeChunk atIndex:0];
         NSMutableString *possiblePath = [NSMutableString stringWithString:left];
 
         // Do not search more than 10 chunks forward to avoid starving leftward search.
