@@ -783,11 +783,13 @@ static char* FormatCont(int c)
             theLine = [self getLineAtScreenIndex:y];
             lineY = y;
         }
-        theLine[x].alternateBackgroundSemantics = prototypechar.alternateBackgroundSemantics;
-        theLine[x].alternateForegroundSemantics = prototypechar.alternateForegroundSemantics;
-        theLine[x].backgroundColor = prototypechar.backgroundColor;
-        theLine[x].foregroundColor = prototypechar.foregroundColor;
-
+        assert(theLine);
+        if (theLine) {
+            theLine[x].alternateBackgroundSemantics = prototypechar.alternateBackgroundSemantics;
+            theLine[x].alternateForegroundSemantics = prototypechar.alternateForegroundSemantics;
+            theLine[x].backgroundColor = prototypechar.backgroundColor;
+            theLine[x].foregroundColor = prototypechar.foregroundColor;
+        }
         ++x;
         if (x == WIDTH) {
             x = 0;
@@ -1347,8 +1349,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     LineBuffer *realLineBuffer = linebuffer;
 
     int originalLastPos = [linebuffer lastPos];
-    int originalStartPos;
-    int originalEndPos;
+    int originalStartPos = 0;
+    int originalEndPos = 0;
     BOOL originalIsFullLine;
     if (hasSelection && temp_buffer) {
         // In alternate screen mode, get the original positions of the
@@ -1384,14 +1386,11 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
      * alt screen
      */
     [self _appendScreenToScrollbackWithUsedHeight:usedHeight newHeight:new_height];
-    int originalLineBufferLines;
     int newSelStartX = -1, newSelStartY = -1;
     int newSelEndX = -1, newSelEndY = -1;
     BOOL isFullLineSelection = NO;
     if (temp_buffer) {
         // We are in alternate screen mode.
-        originalLineBufferLines = [realLineBuffer numLinesWithWidth:WIDTH];
-
         // Append base screen to real line buffer
         [self appendScreenWithInfo:&baseScreenInfo
                          andHeight:new_height
@@ -2012,26 +2011,26 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     case VT100CSI_RM:
             break;
     case VT100CSI_DECSTR: {
-            // VT100CSI_DECSC
-            // See note in xterm-terminfo.txt (search for DECSTR).
+        // VT100CSI_DECSC
+        // See note in xterm-terminfo.txt (search for DECSTR).
 
-            // save cursor (fixes origin-mode side-effect)
-            [self saveCursorPosition];
+        // save cursor (fixes origin-mode side-effect)
+        [self saveCursorPosition];
 
-            // reset scrolling margins
-            VT100TCC wholeScreen;
-            wholeScreen.u.csi.p[0] = 0;
-            wholeScreen.u.csi.p[1] = 0;
-            [self setTopBottom:wholeScreen];
+        // reset scrolling margins
+        VT100TCC wholeScreen = { 0 };
+        wholeScreen.u.csi.p[0] = 0;
+        wholeScreen.u.csi.p[1] = 0;
+        [self setTopBottom:wholeScreen];
 
-            // reset SGR (done in VT100Terminal)
-            // reset wraparound mode (done in VT100Terminal)
-            // reset application cursor keys (done in VT100Terminal)
-            // reset origin mode (done in VT100Terminal)
-            // restore cursor
-            [self restoreCursorPosition];
-            [SESSION clearTriggerLine];
-            break;
+        // reset SGR (done in VT100Terminal)
+        // reset wraparound mode (done in VT100Terminal)
+        // reset application cursor keys (done in VT100Terminal)
+        // reset origin mode (done in VT100Terminal)
+        // restore cursor
+        [self restoreCursorPosition];
+        [SESSION clearTriggerLine];
+        break;
     }
     case VT100CSI_DECSCUSR:
         switch (token.u.csi.p[0]) {
@@ -3185,7 +3184,6 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 
     aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
-    aLine = aDefaultLine;
     // make the current line the first line and clear everything else
     for (i = cursorY - 1; i >= 0; i--) {
         aLine = [self getLineAtScreenIndex:i];

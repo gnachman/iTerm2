@@ -822,7 +822,7 @@ NSWindowDelegate,
 
 - (int)_screenAtPoint:(NSPoint)p;
 
-// Allocate a new session and assign it a bookmark.
+// Allocate a new session and assign it a bookmark. Returns a retained object.
 - (PTYSession*)newSessionWithBookmark:(Profile*)bookmark;
 
 // Execute the bookmark command in this session.

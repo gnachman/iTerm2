@@ -83,7 +83,7 @@
         [[theTab realParentWindow] closeTab:theTab];
     }
     session_ = nil;
-    return oldView;
+    return [oldView autorelease];
 }
 
 - (BOOL)dropTab:(PTYTab *)tab

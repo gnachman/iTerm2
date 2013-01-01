@@ -2135,7 +2135,7 @@ NSMutableArray* screens=0;
     }
 
     if ([matches count]) {
-        NSArray* sortedMatches = [[[matches allValues] sortedArrayUsingSelector:@selector(compare:)] retain];
+        NSArray* sortedMatches = [[matches allValues] sortedArrayUsingSelector:@selector(compare:)];
         SmartMatch* bestMatch = [sortedMatches lastObject];
         if (debug) {
             NSLog(@"Select match with score %lf", bestMatch->score);
