@@ -952,16 +952,19 @@ static int Search(NSString* needle,
     return block;
 }
 
-// The real implementation of init. We prefer not to explose the notion of block sizes to
+// The designated initializer. We prefer not to explose the notion of block sizes to
 // clients, so this is internal.
-- (LineBuffer*) initWithBlockSize: (int) bs
+- (LineBuffer*)initWithBlockSize:(int)bs
 {
-    block_size = bs;
-    blocks = [[NSMutableArray alloc] initWithCapacity: 1];
-    [self _addBlockOfSize: block_size];
-    max_lines = -1;
-    num_wrapped_lines_width = -1;
-    num_dropped_blocks = 0;
+    self = [super init];
+    if (self) {
+        block_size = bs;
+        blocks = [[NSMutableArray alloc] initWithCapacity: 1];
+        [self _addBlockOfSize: block_size];
+        max_lines = -1;
+        num_wrapped_lines_width = -1;
+        num_dropped_blocks = 0;
+    }
     return self;
 }
 
@@ -1053,7 +1056,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     }
 }
 
-- (LineBuffer*) init
+- (LineBuffer*)init
 {
     // I picked 8k because it's a multiple of the page size and should hold about 100-200 lines
     // on average. Very small blocks make finding a wrapped line expensive because caching the
@@ -1062,8 +1065,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     // in the middle. Ideally, the number of blocks would equal the number of wrapped lines per
     // block, and this should be in that neighborhood for typical uses.
     const int BLOCK_SIZE = 1024 * 8;
-    [self initWithBlockSize: BLOCK_SIZE];
-    return self;
+    return [self initWithBlockSize:BLOCK_SIZE];
 }
 
 - (void) appendLine: (screen_char_t*) buffer length: (int) length partial: (BOOL) partial width:(int) width
@@ -1673,7 +1675,7 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     context->offset = MAX(0, absPos - absOffset);
 }
 
-- (LineBuffer *)appendOnlyCopy {
+- (LineBuffer *)newAppendOnlyCopy {
     LineBuffer *theCopy = [[LineBuffer alloc] init];
     theCopy->blocks = [[NSMutableArray alloc] initWithArray:blocks];
     LineBlock *lastBlock = [blocks lastObject];

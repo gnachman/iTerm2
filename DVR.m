@@ -35,17 +35,15 @@
 
 - (id)initWithBufferCapacity:(int)bytes
 {
-    if ([super init] == nil) {
-        return nil;
+    self = [super init];
+    if (self) {
+        buffer_ = [DVRBuffer alloc];
+        [buffer_ initWithBufferCapacity:bytes];
+        capacity_ = bytes;
+        decoders_ = [[NSMutableArray alloc] init];
+        encoder_ = [DVREncoder alloc];
+        [encoder_ initWithBuffer:buffer_];
     }
-
-    buffer_ = [DVRBuffer alloc];
-    [buffer_ initWithBufferCapacity:bytes];
-    capacity_ = bytes;
-    decoders_ = [[NSMutableArray alloc] init];
-    encoder_ = [DVREncoder alloc];
-    [encoder_ initWithBuffer:buffer_];
-
     return self;
 }
 

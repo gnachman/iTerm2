@@ -38,7 +38,7 @@ static const CGFloat kMargin = 4;
 
         tableView_ = [[NSTableView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
         NSTableColumn *col;
-        col = [[NSTableColumn alloc] initWithIdentifier:@"contents"];
+        col = [[[NSTableColumn alloc] initWithIdentifier:@"contents"] autorelease];
         [col setEditable:NO];
         [tableView_ addTableColumn:col];
         [[col headerCell] setStringValue:@"Contents"];

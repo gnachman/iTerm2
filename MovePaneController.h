@@ -42,7 +42,7 @@
 // doesn't do anything.
 - (void)clearSession;
 
-// Returns a retained session view. Add the session view to something useful and release it.
+// Returns an autoreleased session view. Add the session view to something useful and release it.
 - (SessionView *)removeAndClearSession;
 - (void)moveSessionToNewWindow:(PTYSession *)movingSession
                        atPoint:(NSPoint)point;

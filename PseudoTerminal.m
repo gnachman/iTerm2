@@ -1218,7 +1218,7 @@ NSString *sessionsKey = @"sessions";
     double xOrigin = virtualScreenFrame.origin.x;
     double yOrigin = virtualScreenFrame.origin.y;
 
-    NSRect rect;
+    NSRect rect = NSZeroRect;
     if (windowType == WINDOW_TYPE_FULL_SCREEN || windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
         rect = virtualScreenFrame;
     } else if (windowType == WINDOW_TYPE_NORMAL) {
@@ -1305,9 +1305,6 @@ NSString *sessionsKey = @"sessions";
                                                      screen:screenIndex] autorelease];
         [term delayedEnterFullscreen];
     } else {
-        if (windowType == WINDOW_TYPE_NORMAL) {
-            screenIndex = -1;
-        }
         // TODO: this looks like a bug - are top-of-screen windows not restored to the right screen?
         term = [[[PseudoTerminal alloc] initWithSmartLayout:NO windowType:windowType screen:-1] autorelease];
 
@@ -1320,9 +1317,9 @@ NSString *sessionsKey = @"sessions";
         [[term window] setFrame:rect display:NO];
     }
 
-        if ([[arrangement objectForKey:TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING] boolValue]) {
-                [term hideAfterOpening];
-        }
+    if ([[arrangement objectForKey:TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING] boolValue]) {
+        [term hideAfterOpening];
+    }
     return term;
 }
 
@@ -1351,10 +1348,8 @@ NSString *sessionsKey = @"sessions";
 - (NSSize)tmuxCompatibleSize
 {
     NSSize tmuxSize = NSMakeSize(INT_MAX, INT_MAX);
-    BOOL foundTmuxTab = NO;
     for (PTYTab *aTab in [self tabs]) {
         if ([aTab isTmuxTab]) {
-            foundTmuxTab = YES;
             NSSize tabSize = [aTab tmuxSize];
             tmuxSize.width = (int) MIN(tmuxSize.width, tabSize.width);
             tmuxSize.height = (int) MIN(tmuxSize.height, tabSize.height);
@@ -3126,8 +3121,8 @@ NSString *sessionsKey = @"sessions";
                                           toTabAside:[self terminalGuid]];
         return nil;
     }
-    [[[MovePaneController sharedInstance] removeAndClearSession] autorelease];
-    PTYTab *theTab = [[PTYTab alloc] initWithSession:session];
+    [[MovePaneController sharedInstance] removeAndClearSession];
+    PTYTab *theTab = [[[PTYTab alloc] initWithSession:session] autorelease];
     [theTab setActiveSession:session];
     [theTab setParentWindow:self];
     NSTabViewItem *tabViewItem = [[[NSTabViewItem alloc] initWithIdentifier:(id)theTab] autorelease];
@@ -3728,7 +3723,7 @@ NSString *sessionsKey = @"sessions";
         oldCWD = [[[self currentSession] SHELL] getWorkingDirectory];
     }
 
-    PTYSession* newSession = [self newSessionWithBookmark:theBookmark];
+    PTYSession* newSession = [[self newSessionWithBookmark:theBookmark] autorelease];
     [self splitVertically:isVertical
                    before:NO
             addingSession:newSession
@@ -4815,7 +4810,7 @@ NSString *sessionsKey = @"sessions";
             [aSession setAddressBookEntry:tempPrefs];
         } else {
             // get the hardcoded defaults
-            NSMutableDictionary* dict = [[NSMutableDictionary alloc] init];
+            NSMutableDictionary* dict = [[[NSMutableDictionary alloc] init] autorelease];
             [ITAddressBookMgr setDefaultsInBookmark:dict];
             [dict setObject:[ProfileModel freshGuid] forKey:KEY_GUID];
             [aSession setAddressBookEntry:dict];
@@ -5033,7 +5028,7 @@ NSString *sessionsKey = @"sessions";
     [oldTab setTabViewItem:nil];  // TODO: This looks like a bug if there are multiple sessions in one tab
 
     // Replace the session for the tab view item.
-    PTYTab* newTab = [[PTYTab alloc] initWithSession:aSession];
+    PTYTab* newTab = [[[PTYTab alloc] initWithSession:aSession] autorelease];
     [tabBarControl changeIdentifier:newTab atIndex:anIndex];
     [newTab setTabViewItem:aTabViewItem];
 
@@ -5441,7 +5436,7 @@ NSString *sessionsKey = @"sessions";
 
     // set our preferences
     [aSession setAddressBookEntry:bookmark];
-    return [aSession autorelease];
+    return aSession;
 }
 
 // Used when adding a split pane.

@@ -225,7 +225,7 @@ typedef struct FindContext {
 // Returns a copy of this buffer that can be appended to but that you must not
 // pop lines from. Only the last block is deep-copied; references are held to
 // all earlier blocks.
-- (LineBuffer *)appendOnlyCopy;
+- (LineBuffer *)newAppendOnlyCopy;
 
 // Call this immediately after init. Otherwise the buffer will hold unlimited lines (until you
 // run out of memory).

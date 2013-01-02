@@ -95,7 +95,7 @@ NSWindowDelegate,
     ////////////////////////////////////////////////////////////////////////////
     // Tab View
     // The tabview occupies almost the entire window. Each tab has an identifier
-    // which is a PTYSession.
+    // which is a PTYTab.
     PTYTabView *TABVIEW;
 
     // This is a sometimes-visible control that shows the tabs and lets the user
@@ -822,7 +822,7 @@ NSWindowDelegate,
 
 - (int)_screenAtPoint:(NSPoint)p;
 
-// Allocate a new session and assign it a bookmark.
+// Allocate a new session and assign it a bookmark. Returns a retained object.
 - (PTYSession*)newSessionWithBookmark:(Profile*)bookmark;
 
 // Execute the bookmark command in this session.

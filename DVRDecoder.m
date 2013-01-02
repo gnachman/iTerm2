@@ -35,13 +35,13 @@
 
 - (id)initWithBuffer:(DVRBuffer*)buffer
 {
-    if ([super init] == nil) {
-        return nil;
+    self = [super init];
+    if (self) {
+        buffer_ = buffer;
+        frame_ = 0;
+        length_ = 0;
+        key_ = -1;
     }
-    buffer_ = buffer;
-    frame_ = 0;
-    length_ = 0;
-    key_ = -1;
     return self;
 }
 

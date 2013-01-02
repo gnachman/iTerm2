@@ -328,7 +328,7 @@ static BOOL initDone = NO;
                                        otherButton:nil
                          informativeTextWithFormat:@""];
 
-    NSTextField *input = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
+    NSTextField *input = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
     [input setStringValue:defaultValue];
     [alert setAccessoryView:input];
     [alert layout];
@@ -905,7 +905,6 @@ static BOOL initDone = NO;
 
     // Where do we execute this command?
     BOOL toggle = NO;
-    BOOL makeKey = NO;
     if (theTerm == nil) {
         [iTermController switchToSpaceInBookmark:aDict];
         int windowType = [self _windowTypeForBookmark:aDict];
@@ -923,8 +922,6 @@ static BOOL initDone = NO;
                                                    isHotkey:disableLionFullscreen] autorelease];
 		if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
 			[term hideAfterOpening];
-		} else {
-            makeKey = YES;
         }
         [self addInTerminals:term];
         if (disableLionFullscreen) {
@@ -936,7 +933,6 @@ static BOOL initDone = NO;
         }
     } else {
         term = theTerm;
-        makeKey = YES;
     }
 
     PTYSession* session = [term addNewSession:aDict];

@@ -619,14 +619,6 @@
         tabBar = bar;
     }
 
-    PSMTabBarCell* activeCell = nil;
-    for (PSMTabBarCell *cell in [bar cells]) {
-        if ([cell state] == NSOnState) {
-            activeCell = cell;
-            break;
-        }
-    }
-
     [self drawBackgroundInRect:rect color:nil];
 
     // no tab view == not connected

@@ -91,13 +91,13 @@ static void *GetFunctionByName(NSString *library, char *func) {
     CFURLRef bundleURL = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (CFStringRef) library, kCFURLPOSIXPathStyle, true);
     CFStringRef functionName = CFStringCreateWithCString(kCFAllocatorDefault, func, kCFStringEncodingASCII);    
     bundle = CFBundleCreate(kCFAllocatorDefault, bundleURL);
-    if (!bundle) {
-        return NULL;
+    void *f = NULL;
+    if (bundle) {
+        f = CFBundleGetFunctionPointerForName(bundle, functionName);
+        CFRelease(bundle);
     }
-    void *f = CFBundleGetFunctionPointerForName(bundle, functionName);
     CFRelease(functionName);
     CFRelease(bundleURL);
-    CFRelease(bundle);
     return f;
 }
 
@@ -107,6 +107,7 @@ static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRa
     if (!tried) {
         function  = GetFunctionByName(@"/System/Library/Frameworks/ApplicationServices.framework",
                                       "CGSSetWindowBackgroundBlurRadius");
+        tried = YES;
     }
     return function;
 }

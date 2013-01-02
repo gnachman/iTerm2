@@ -23,7 +23,7 @@ NSString * const kTriggerParameterKey = @"parameter";
 {
     NSString *className = [dict objectForKey:kTriggerActionKey];
     Class class = NSClassFromString(className);
-    Trigger *trigger = [[class alloc] init];
+    Trigger *trigger = [[[class alloc] init] autorelease];
     trigger.regex = [dict objectForKey:kTriggerRegexKey];
     trigger.param = [dict objectForKey:kTriggerParameterKey];
     return trigger;

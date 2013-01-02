@@ -1460,10 +1460,12 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
     for (i = 0; i < n; ) {
         int j;
         for (j = i; j < n; j++) {
+            // The analyzer warning here is bogus (all frames from 0 to n-1 are initialized above).
             if (frames[j].origin.y != frames[i].origin.y) {
                 break;
             }
         }
+        // The analyzer warning here is bogus (all frames from 0 to n-1 are initialized above).
         const float horizontalSpan = frames[j-1].origin.x + frames[j-1].size.width - frames[i].origin.x;
         const float horizontalShift = (screenFrame.size.width - horizontalSpan) / 2;
         for (int k = i; k < j; k++) {

@@ -376,7 +376,7 @@
     //NSRect cellFrame = [self frame];
 
     [_controlView lockFocus];
-    NSBitmapImageRep *rep = [[NSBitmapImageRep alloc] initWithFocusedViewRect:cellFrame];
+    NSBitmapImageRep *rep = [[[NSBitmapImageRep alloc] initWithFocusedViewRect:cellFrame] autorelease];
     [_controlView unlockFocus];
     NSImage *image = [[[NSImage alloc] initWithSize:[rep size]] autorelease];
     [image addRepresentation:rep];

@@ -114,6 +114,9 @@ static const int MIN_SESSION_COLUMNS = 2;
 
     // The last tmux parse tree
     NSMutableDictionary *parseTree_;
+
+    // Temporarily hidden live views (this is needed to hold a reference count).
+    NSMutableArray *hiddenLiveViews_;  // SessionView objects
 }
 
 // init/dealloc

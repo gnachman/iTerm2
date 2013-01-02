@@ -139,14 +139,14 @@
 
     NSDictionary *context = nil;
     if (session) {
-      context = [[NSDictionary alloc] initWithObjectsAndKeys:
-                 [NSNumber numberWithInt:[[iTermController sharedInstance] indexOfTerminal:[[session tab] realParentWindow]]],
-                 @"win",
-                 [NSNumber numberWithInt:[[session tab] number]],
-                 @"tab",
-                 [NSNumber numberWithInt:[[session view] viewId]],
-                 @"view",
-                 nil];
+      context = [[[NSDictionary alloc] initWithObjectsAndKeys:
+                     [NSNumber numberWithInt:[[iTermController sharedInstance] indexOfTerminal:[[session tab] realParentWindow]]],
+                     @"win",
+                     [NSNumber numberWithInt:[[session tab] number]],
+                     @"tab",
+                     [NSNumber numberWithInt:[[session view] viewId]],
+                     @"view",
+                     nil] autorelease];
     }
 
     if ([[PreferencePanel sharedInstance] enableGrowl]) {

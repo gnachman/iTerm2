@@ -47,7 +47,7 @@
     [theSet addObject:value];
 }
 
-- (NSNumber *)newEquivalenceClass
+- (NSNumber *)addEquivalenceClass
 {
     int i = 0;
     while ([classes_ objectForKey:[NSNumber numberWithInt:i]]) {
@@ -80,7 +80,7 @@
             [self addValue:n1 toClass:n2Class];
         } else {
             // Neither n1 nor n2 has an existing relation so create a new equivalence class
-            NSNumber *ec = [self newEquivalenceClass];
+            NSNumber *ec = [self addEquivalenceClass];
             [self addValue:n2 toClass:ec];
             [self addValue:n1 toClass:ec];
         }

@@ -47,14 +47,13 @@ static long long now()
 
 - (id)initWithBuffer:(DVRBuffer*)buffer
 {
-    if ([super init] == nil) {
-        return nil;
+    self = [super init];
+    if (self) {
+        buffer_ = [buffer retain];
+        lastFrame_ = nil;
+        count_ = 0;
+        haveReservation_ = NO;
     }
-
-    buffer_ = [buffer retain];
-    lastFrame_ = nil;
-    count_ = 0;
-    haveReservation_ = NO;
     return self;
 }
 

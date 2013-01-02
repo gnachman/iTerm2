@@ -45,7 +45,7 @@
     if ([self isVertical]) {
         int mouseX = locationInView.x;
         x = 0;
-        int bestX;
+        int bestX = 0;
         for (int i = 0; i < subviews.count; i++) {
             x += [[subviews objectAtIndex:i] frame].size.width;
             if (bestDistance < 0 || abs(x - mouseX) < bestDistance) {
@@ -58,7 +58,7 @@
         x = bestX;
     } else {
         int mouseY = locationInView.y;
-        int bestY;
+        int bestY = 0;
         y = 0;
         for (int i = 0; i < subviews.count; i++) {
             y += [[subviews objectAtIndex:i] frame].size.height;

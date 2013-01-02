@@ -133,7 +133,6 @@ enum {
                               toPoint:NSMakePoint(defaultX1, defaultY1)];
     [NSBezierPath strokeLineFromPoint:NSMakePoint(defaultX1, defaultY0)
                               toPoint:NSMakePoint(defaultX0, defaultY1)];
-    [color release];
 
     // draw the colors
     NSGradient *outlineGradient = [[NSGradient alloc] initWithStartingColor:[NSColor colorWithDeviceWhite:0.0 alpha:0.3]

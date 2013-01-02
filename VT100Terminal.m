@@ -948,14 +948,15 @@ static VT100TCC decode_other(unsigned char *datap,
                              NSStringEncoding enc)
 {
     VT100TCC result;
-    int c1, c2, c3;
+    int c1, c2;
 
     NSCParameterAssert(datap[0] == ESC);
     NSCParameterAssert(datalen > 1);
 
     c1 = (datalen >= 2 ? datap[1]: -1);
     c2 = (datalen >= 3 ? datap[2]: -1);
-    c3 = (datalen >= 4 ? datap[3]: -1);
+    // A third parameter could be available but isn't currently used.
+    // c3 = (datalen >= 4 ? datap[3]: -1);
 
     switch (c1) {
         case 27: // esc: two esc's in a row. Ignore the first one.
@@ -1687,56 +1688,55 @@ static VT100TCC decode_string(unsigned char *datap,
 #endif
     int i;
 
-    if ([super init] == nil)
-        return nil;
+    self = [super init];
+    if (self) {
+        ENCODING = NSASCIIStringEncoding;
+        total_stream_length = STANDARD_STREAM_SIZE;
+        STREAM = malloc(total_stream_length);
+        current_stream_length = 0;
 
-    ENCODING = NSASCIIStringEncoding;
-    total_stream_length = STANDARD_STREAM_SIZE;
-    STREAM = malloc(total_stream_length);
-    current_stream_length = 0;
+        termType = nil;
+        for(i = 0; i < TERMINFO_KEYS; i ++) {
+            key_strings[i]=NULL;
+        }
 
-    termType = nil;
-    for(i = 0; i < TERMINFO_KEYS; i ++) {
-        key_strings[i]=NULL;
+
+        LINE_MODE = NO;
+        CURSOR_MODE = NO;
+        COLUMN_MODE = NO;
+        SCROLL_MODE = NO;
+        SCREEN_MODE = NO;
+        ORIGIN_MODE = NO;
+        WRAPAROUND_MODE = YES;
+        AUTOREPEAT_MODE = NO;
+        INTERLACE_MODE = NO;
+        KEYPAD_MODE = NO;
+        INSERT_MODE = NO;
+        saveCHARSET=CHARSET = NO;
+        XON = YES;
+        bold = blink = reversed = under = NO;
+        saveBold = saveBlink = saveReversed = saveUnder = NO;
+        FG_COLORCODE = ALTSEM_FG_DEFAULT;
+        alternateForegroundSemantics = YES;
+        BG_COLORCODE = ALTSEM_BG_DEFAULT;
+        alternateBackgroundSemantics = YES;
+        saveForeground = FG_COLORCODE;
+        saveAltForeground = alternateForegroundSemantics;
+        saveBackground = BG_COLORCODE;
+        saveAltBackground = alternateBackgroundSemantics;
+        MOUSE_MODE = MOUSE_REPORTING_NONE;
+        MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
+
+        TRACE = NO;
+
+        strictAnsiMode = NO;
+        allowColumnMode = YES;
+        allowKeypadMode = YES;
+
+        streamOffset = 0;
+
+        numLock = YES;
     }
-
-
-    LINE_MODE = NO;
-    CURSOR_MODE = NO;
-    COLUMN_MODE = NO;
-    SCROLL_MODE = NO;
-    SCREEN_MODE = NO;
-    ORIGIN_MODE = NO;
-    WRAPAROUND_MODE = YES;
-    AUTOREPEAT_MODE = NO;
-    INTERLACE_MODE = NO;
-    KEYPAD_MODE = NO;
-    INSERT_MODE = NO;
-    saveCHARSET=CHARSET = NO;
-    XON = YES;
-    bold = blink = reversed = under = NO;
-    saveBold = saveBlink = saveReversed = saveUnder = NO;
-    FG_COLORCODE = ALTSEM_FG_DEFAULT;
-    alternateForegroundSemantics = YES;
-    BG_COLORCODE = ALTSEM_BG_DEFAULT;
-    alternateBackgroundSemantics = YES;
-    saveForeground = FG_COLORCODE;
-    saveAltForeground = alternateForegroundSemantics;
-    saveBackground = BG_COLORCODE;
-    saveAltBackground = alternateBackgroundSemantics;
-    MOUSE_MODE = MOUSE_REPORTING_NONE;
-    MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
-
-    TRACE = NO;
-
-    strictAnsiMode = NO;
-    allowColumnMode = YES;
-    allowKeypadMode = YES;
-
-    streamOffset = 0;
-
-    numLock = YES;
-
     return self;
 }
 

@@ -64,7 +64,7 @@
 - (BOOL)isTextFile:(NSString *)path
 {
     // TODO(chendo): link in the "magic" library from file instead of calling it.
-    NSTask *task = [[NSTask alloc] init];
+    NSTask *task = [[[NSTask alloc] init] autorelease];
     NSPipe *myPipe = [NSPipe pipe];
     NSFileHandle *file = [myPipe fileHandleForReading];
 

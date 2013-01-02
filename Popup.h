@@ -106,6 +106,9 @@
 - (id)initWithWindowNibName:(NSString*)nibName tablePtr:(NSTableView**)table model:(PopupModel*)model;
 - (void)dealloc;
 
+// Call this after initWithWindowNibName:tablePtr:model: if table was nil.
+- (void)setTableView:(NSTableView *)table;
+
 // Turn off focus follows mouse while this window is key.
 - (BOOL)disableFocusFollowsMouse;
 

@@ -170,19 +170,20 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     self = [super init];
     PtyLog(@"PTYTab initWithSession %p", self);
     if (self) {
+        hiddenLiveViews_ = [[NSMutableArray alloc] init];
         activeSession_ = session;
         [session setLastActiveAt:[NSDate date]];
         [[session view] setDimmed:NO];
-        [self setRoot:[[PTYSplitView alloc] init]];
-                PTYTab *oldTab = [session tab];
-                if (oldTab && [oldTab tmuxWindow] >= 0) {
-                        tmuxWindow_ = [oldTab tmuxWindow];
-                        tmuxController_ = [[oldTab tmuxController] retain];
-                        parseTree_ = [oldTab->parseTree_ retain];
-                        [tmuxController_ changeWindow:tmuxWindow_ tabTo:self];
-                } else {
-                        tmuxWindow_ = -1;
-                }
+        [self setRoot:[[[PTYSplitView alloc] init] autorelease]];
+        PTYTab *oldTab = [session tab];
+        if (oldTab && [oldTab tmuxWindow] >= 0) {
+            tmuxWindow_ = [oldTab tmuxWindow];
+            tmuxController_ = [[oldTab tmuxController] retain];
+            parseTree_ = [oldTab->parseTree_ retain];
+            [tmuxController_ changeWindow:tmuxWindow_ tabTo:self];
+        } else {
+            tmuxWindow_ = -1;
+        }
         [session setTab:self];
         [root_ addSubview:[session view]];
         viewOrder_ = [[NSMutableArray alloc] init];
@@ -213,6 +214,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     PtyLog(@"PTYTab initWithRoot %p", self);
     if (self) {
         activeSession_ = nil;
+        hiddenLiveViews_ = [[NSMutableArray alloc] init];
         [self setRoot:root];
         [PTYTab _recursiveSetDelegateIn:root_ to:self];
         viewOrder_ = [[NSMutableArray alloc] init];
@@ -258,6 +260,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     [savedArrangement_ release];
     [tmuxController_ release];
     [parseTree_ release];
+    [hiddenLiveViews_ release];
     [super dealloc];
 }
 
@@ -885,7 +888,7 @@ static NSString* FormatRect(NSRect r) {
     SessionView* newView = [newSession view];
     SessionView* oldView = [oldSession view];
     NSSplitView* parentSplit = (NSSplitView*)[oldView superview];
-    [oldView retain];
+    [hiddenLiveViews_ addObject:oldView];
     [parentSplit replaceSubview:oldView with:newView];
 
     [newSession setName:[oldSession name]];
@@ -902,8 +905,8 @@ static NSString* FormatRect(NSRect r) {
     // needs to pass that on to the SCREEN. Otherwise the DVR playback into the
     // time after cmd-d was pressed (but before the present) has the wrong
     // window size.
-    [self setFakeParentWindow:[[FakeWindow alloc] initFromRealWindow:realParentWindow_
-                                                             session:oldSession]];
+    [self setFakeParentWindow:[[[FakeWindow alloc] initFromRealWindow:realParentWindow_
+                                                              session:oldSession] autorelease]];
 
     // This starts the new session's update timer
     [newSession updateDisplay];
@@ -919,7 +922,7 @@ static NSString* FormatRect(NSRect r) {
     SessionView* newView = [liveSession view];
     NSSplitView* parentSplit = (NSSplitView*)[oldView superview];
     [parentSplit replaceSubview:oldView with:newView];
-    [newView release];
+    [hiddenLiveViews_ removeObject:newView];
     activeSession_ = liveSession;
 
     [fakeParentWindow_ rejoin:realParentWindow_];
@@ -1970,7 +1973,7 @@ static NSString* FormatRect(NSRect r) {
 {
     if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
         NSRect frame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SPLIITER_FRAME]];
-        NSSplitView *splitter = [[PTYSplitView alloc] initWithFrame:frame];
+        NSSplitView *splitter = [[[PTYSplitView alloc] initWithFrame:frame] autorelease];
         if (USE_THIN_SPLITTERS) {
             [splitter setDividerStyle:NSSplitViewDividerStyleThin];
         }
@@ -2120,13 +2123,12 @@ static NSString* FormatRect(NSRect r) {
                                                                    fromMap:nil];
 
     // Create a tab.
-    theTab = [[PTYTab alloc] initWithRoot:newRoot];
+    theTab = [[[PTYTab alloc] initWithRoot:newRoot] autorelease];
     if (hasFlexible) {
         [theTab enableFlexibleView];
     }
     [theTab setParentWindow:term];
     [theTab->tabViewItem_ setLabel:@"Restoring..."];
-    [newRoot release];
 
     [theTab setObjectCount:[term numberOfTabs] + 1];
 
@@ -2141,7 +2143,7 @@ static NSString* FormatRect(NSRect r) {
                                                         atNode:theTab->root_
                                                          inTab:theTab
                                                  forObjectType:objectType]];
-        return theTab;
+    return theTab;
 }
 
 // This can only be used in conjunction with
@@ -2150,7 +2152,6 @@ static NSString* FormatRect(NSRect r) {
 {
     // Add the existing tab, which is now fully populated, to the term.
     [term appendTab:self];
-    [self release];
 
     NSDictionary* root = [arrangement objectForKey:TAB_ARRANGEMENT_ROOT];
     if ([root objectForKey:TAB_ARRANGEMENT_IS_MAXIMIZED] &&
@@ -2159,19 +2160,19 @@ static NSString* FormatRect(NSRect r) {
     }
 
     [self numberOfSessionsDidChange];
-        [term setDimmingForSessions];
+    [term setDimmingForSessions];
 }
 
 + (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
                         inTerminal:(PseudoTerminal*)term
                    hasFlexibleView:(BOOL)hasFlexible
 {
-        PTYTab *theTab = [PTYTab tabWithArrangement:arrangement
-                                                                         inTerminal:term
-                                                                hasFlexibleView:hasFlexible];
-        [theTab addToTerminal:term
-                  withArrangement:arrangement];
-        return theTab;
+    PTYTab *theTab = [PTYTab tabWithArrangement:arrangement
+                                     inTerminal:term
+                                hasFlexibleView:hasFlexible];
+    [theTab addToTerminal:term
+          withArrangement:arrangement];
+    return theTab;
 }
 
 - (NSDictionary*)arrangementWithMap:(NSMutableDictionary*)idMap
@@ -2434,12 +2435,12 @@ static NSString* FormatRect(NSRect r) {
     theTab->tmuxWindow_ = tmuxWindow;
     theTab->tmuxController_ = [tmuxController retain];
     theTab->parseTree_ = [parseTree retain];
-        // The only way a tmux view should resize is because the server told it to.
-        for (PTYSession *aSession in [theTab sessions]) {
-                [[aSession view] setAutoresizesSubviews:NO];
-        }
-        [theTab addToTerminal:term
-                  withArrangement:arrangement];
+    // The only way a tmux view should resize is because the server told it to.
+    for (PTYSession *aSession in [theTab sessions]) {
+        [[aSession view] setAutoresizesSubviews:NO];
+    }
+    [theTab addToTerminal:term
+          withArrangement:arrangement];
 
     return theTab;
 }
@@ -2488,15 +2489,6 @@ static NSString* FormatRect(NSRect r) {
     BOOL first = YES;
     int minPos, size;
     NSSize cellSize = [PTYTab cellSizeForBookmark:[PTYTab tmuxBookmark]];
-    if (forHeight != [splitter isVertical]) {
-        if (forHeight) {
-            minPos = splitter.frame.origin.x + origin.x;
-            size = splitter.frame.size.width;
-        } else {
-            minPos = splitter.frame.origin.y + origin.y;
-            size = splitter.frame.size.height;
-        }
-    }
     for (NSView *view in [splitter subviews]) {
         if (forHeight == [splitter isVertical]) {
             if ([splitter isVertical]) {
@@ -2879,7 +2871,7 @@ static NSString* FormatRect(NSRect r) {
     NSRect oldRootFrame = [root_ frame];
     [root_ removeFromSuperview];
 
-    NSSplitView *newRoot = [[PTYSplitView alloc] init];
+    NSSplitView *newRoot = [[[PTYSplitView alloc] init] autorelease];
     [newRoot setFrame:oldRootFrame];
     [self setRoot:newRoot];
 
@@ -2901,7 +2893,9 @@ static NSString* FormatRect(NSRect r) {
     // Pull the formerly maximized sessionview out of the old root.
     assert([[root_ subviews] count] == 1);
     SessionView* formerlyMaximizedSessionView = [[root_ subviews] objectAtIndex:0];
-    [formerlyMaximizedSessionView retain];
+
+    // I'm not convinced this is necessary but I'm afraid to remove it. idMap_ should hold refs to all SessionViews that matter.
+    [[formerlyMaximizedSessionView retain] autorelease];
     [formerlyMaximizedSessionView removeFromSuperview];
     [formerlyMaximizedSessionView setFrameSize:savedSize_];
 
@@ -2959,10 +2953,8 @@ static NSString* FormatRect(NSRect r) {
     // Find a session view adjacent to the moved splitter.
     NSArray *subviews = [splitView subviews];
     NSView *theView = [subviews objectAtIndex:splitterIndex];  // the view right of or below the dragged splitter.
-    NSSplitView *parentSplitView = splitView;
     while ([theView isKindOfClass:[NSSplitView class]]) {
         NSSplitView *subSplitView = (NSSplitView *)theView;
-        parentSplitView = subSplitView;
         theView = [[subSplitView subviews] objectAtIndex:0];
     }
     SessionView *sessionView = (SessionView *)theView;

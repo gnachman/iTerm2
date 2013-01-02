@@ -147,4 +147,24 @@ static FutureNSScrollerStyle GetScrollerStyle(id theObj)
     return result;
 }
 
+- (void)performSelector:(SEL)selector takingNSInteger:(NSInteger)arg {
+    NSMethodSignature *mySignature = [[self class] instanceMethodSignatureForSelector:selector];
+    NSInvocation *myInvocation = [NSInvocation invocationWithMethodSignature:mySignature];
+    [myInvocation setTarget:self];
+    [myInvocation setSelector:selector];
+    [myInvocation setArgument:&arg
+                      atIndex:2];
+    [myInvocation invoke];
+}
+
+@end
+
+@implementation NSScroller (future)
+
+- (void)futureSetKnobStyle:(NSInteger)newKnobStyle {
+    if ([self respondsToSelector:@selector(setKnobStyle:)]) {
+        [self performSelector:@selector(setKnobStyle:) takingNSInteger:newKnobStyle];
+    }
+}
+
 @end

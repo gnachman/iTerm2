@@ -249,7 +249,7 @@ const int kInterWidgetMargin = 10;
 
     starColumn_ = [[NSTableColumn alloc] initWithIdentifier:@"default"];
     [starColumn_ setEditable:NO];
-    [starColumn_ setDataCell:[[NSImageCell alloc] initImageCell:nil]];
+    [starColumn_ setDataCell:[[[NSImageCell alloc] initImageCell:nil] autorelease]];
     [starColumn_ setWidth:34];
     [tableView_ addTableColumn:starColumn_];
 
@@ -266,7 +266,7 @@ const int kInterWidgetMargin = 10;
 
     [tableView_ setDoubleAction:@selector(onDoubleClick:)];
 
-    NSTableHeaderView* header = [[NSTableHeaderView alloc] init];
+    NSTableHeaderView* header = [[[NSTableHeaderView alloc] init] autorelease];
     [tableView_ setHeaderView:header];
     [[tableColumn_ headerCell] setStringValue:@"Name"];
     [[starColumn_ headerCell] setStringValue:@"Default"];
