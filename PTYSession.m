@@ -1748,10 +1748,10 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
             if (data != nil) {
                 send_str = (unsigned char *)[data bytes];
                 send_strlen = [data length];
-                DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %d; send_str[0] = '%c (0x%x)'",
-                          modflag, send_strlen, send_str[0]]);
+                DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
+                          modflag, send_strlen, send_str[0], send_str[0]]);
                 if (debugKeyDown) {
-                    DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %d; send_str[0] = '%c (0x%x)'",
+                    DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
                               modflag, send_strlen, send_str[0], send_str[0]]);
                 }
             }
