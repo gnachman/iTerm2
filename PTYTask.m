@@ -835,7 +835,7 @@ static void reapchild(int n)
 {
     PtyTaskDebugLog(@"Set terminal size to %dx%d", width, height);
     struct winsize winsize;
-
+    // TODO(georgen): Access to fd should be synchronoized or else it should not be allowed to call this function from the main thread.
     if (fd == -1) {
         return;
     }
