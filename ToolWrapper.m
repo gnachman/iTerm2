@@ -36,8 +36,8 @@ static const CGFloat kButtonSize = 17;
         [self addSubview:title_];
         [title_ release];
 
-        NSImage *closeImage = [[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"closebutton"
-                                                                                                      ofType:@"tif"]];
+        NSImage *closeImage = [[[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"closebutton"
+                                                                                                       ofType:@"tif"]] autorelease];
         closeButton_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, kButtonSize, kButtonSize)];
         [closeButton_ setButtonType:NSMomentaryPushInButton];
         [closeButton_ setImage:closeImage];
@@ -48,10 +48,12 @@ static const CGFloat kButtonSize = 17;
         [self addSubview:closeButton_];
         [closeButton_ release];
 
-        container_ = [[NSView alloc] initWithFrame:NSMakeRect(kLeftMargin, kTitleHeight + kMargin, frame.size.width - kLeftMargin - kRightMargin, frame.size.height - kTitleHeight - kMargin - kBottomMargin)];
+        container_ = [[[NSView alloc] initWithFrame:NSMakeRect(kLeftMargin,
+                                                               kTitleHeight + kMargin,
+                                                               frame.size.width - kLeftMargin - kRightMargin,
+                                                               frame.size.height - kTitleHeight - kMargin - kBottomMargin)] autorelease];
         [container_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [self addSubview:container_];
-        [container_ release];
 
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(someWrapperDidClose:) name:@"iTermToolWrapperDidClose" object:nil];
     }
@@ -60,7 +62,7 @@ static const CGFloat kButtonSize = 17;
 
 - (void)dealloc
 {
-    [self.name release];
+    [name release];
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [super dealloc];
 }
@@ -76,6 +78,12 @@ static const CGFloat kButtonSize = 17;
     if ([tool respondsToSelector:@selector(relayout)]) {
         [tool relayout];
     }
+}
+
+- (void)removeToolSubviews {
+    [container_ removeFromSuperview];
+    container_ = nil;
+    [title_ unbind:@"value"];
 }
 
 - (BOOL)isFlipped

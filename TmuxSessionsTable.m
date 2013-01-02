@@ -12,7 +12,7 @@ extern NSString *kWindowPasteboardType;
 
 @interface TmuxSessionsTable (Private)
 
-- (NSString *)newSessionName;
+- (NSString *)nameForNewSession;
 - (NSString *)nameForNewSessionWithNumber:(int)n;
 - (void)updateEnabledStateOfButtons;
 
@@ -68,7 +68,7 @@ extern NSString *kWindowPasteboardType;
 
 - (IBAction)addSession:(id)sender
 {
-    [delegate_ addSessionWithName:[self newSessionName]];
+    [delegate_ addSessionWithName:[self nameForNewSession]];
 }
 
 - (IBAction)removeSession:(id)sender
@@ -196,7 +196,7 @@ extern NSString *kWindowPasteboardType;
     }
 }
 
-- (NSString *)newSessionName
+- (NSString *)nameForNewSession
 {
     int n = 0;
     NSString *candidate = [self nameForNewSessionWithNumber:n];

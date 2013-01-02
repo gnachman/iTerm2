@@ -70,10 +70,10 @@
 - (void)_showMessage:(NSString *)message inRect:(NSRect)frame
 {
     [[NSColor whiteColor] set];
-    NSMutableParagraphStyle *pStyle = [[NSMutableParagraphStyle alloc] init];
+    NSMutableParagraphStyle *pStyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
     [pStyle setParagraphStyle:[NSParagraphStyle defaultParagraphStyle]];
     [pStyle setAlignment:NSCenterTextAlignment];
-    
+
     CGFloat fontSize = 25;
     NSMutableAttributedString* attributedString;
     NSRect rect;

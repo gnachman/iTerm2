@@ -82,6 +82,7 @@ NSString *PID_INFO_NAME = @"name";
                                                selector:@selector(_run)
                                                  object:nil];
     [thread start];
+    // The analyzer flags this as a leak but it's really just a singleton.
 }
 
 - (id)init
