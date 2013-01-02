@@ -95,7 +95,7 @@ NSWindowDelegate,
     ////////////////////////////////////////////////////////////////////////////
     // Tab View
     // The tabview occupies almost the entire window. Each tab has an identifier
-    // which is a PTYSession.
+    // which is a PTYTab.
     PTYTabView *TABVIEW;
 
     // This is a sometimes-visible control that shows the tabs and lets the user

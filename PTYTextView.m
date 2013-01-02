@@ -6859,7 +6859,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     if (1 - maxVal > bestDistance) {
         bestValue = 1;
-        bestDistance = 1 - maxVal;
+        bestDistance = 1 - maxVal;  // Analyzer warning is ok here; best to keep this to avoid future bugs.
     }
 
     return bestValue;

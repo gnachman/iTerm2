@@ -33,18 +33,17 @@
 
 - (id)initWithBufferCapacity:(long long)maxsize
 {
-    if ([super init] == nil) {
-        return nil;
+    self = [super init];
+    if (self) {
+        capacity_ = maxsize;
+        store_ = malloc(maxsize);
+        index_ = [[NSMutableDictionary alloc] init];
+        sanityCheck = index_;
+        firstKey_ = 0;
+        nextKey_ = 0;
+        begin_ = 0;
+        end_ = 0;
     }
-    capacity_ = maxsize;
-    store_ = malloc(maxsize);
-    index_ = [[NSMutableDictionary alloc] init];
-    sanityCheck = index_;
-    firstKey_ = 0;
-    nextKey_ = 0;
-    begin_ = 0;
-    end_ = 0;
-
     return self;
 }
 

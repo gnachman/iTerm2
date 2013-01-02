@@ -69,7 +69,7 @@
     [path curveToPoint:NSMakePoint(nx, ny)
          controlPoint1:NSMakePoint((nx+x)/2, y)
          controlPoint2:NSMakePoint(nx, (ny+y)/2)];
-    x = nx; y = ny;
+    y = ny;
     ny = y + height - 2*radius;
     [path lineToPoint:NSMakePoint(nx, ny)];
     x = nx; y = ny;
@@ -78,7 +78,7 @@
     [path curveToPoint:NSMakePoint(nx, ny)
          controlPoint1:NSMakePoint(x, (y + ny)/2)
          controlPoint2:NSMakePoint((x+nx)/2, ny)];
-    x = nx; y = ny;
+    x = nx;
     nx = x + width - 4*radius;
     [path lineToPoint:NSMakePoint(nx, ny)];
     x = nx; y = ny;
@@ -87,7 +87,7 @@
     [path curveToPoint:NSMakePoint(nx, ny)
          controlPoint1:NSMakePoint((nx+x)/2, y)
          controlPoint2:NSMakePoint(nx, (ny+y)/2)];
-    x = nx; y = ny;
+    y = ny;
     ny = y - height + 2*radius;
     [path lineToPoint:NSMakePoint(nx, ny)];
     x = nx; y = ny;

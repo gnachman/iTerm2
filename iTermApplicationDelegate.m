@@ -262,7 +262,11 @@ static BOOL hasBecomeActive = NO;
     CFStringRef unixExecutableContentType = (CFStringRef)@"public.unix-executable";
     CFStringRef unixHandler = LSCopyDefaultRoleHandlerForContentType(unixExecutableContentType, kLSRolesShell);
     NSString *iTermBundleId = [[NSBundle mainBundle] bundleIdentifier];
-    return [iTermBundleId isEqualToString:(NSString *)unixHandler];
+    BOOL result = [iTermBundleId isEqualToString:(NSString *)unixHandler];
+    if (unixHandler) {
+        CFRelease(unixHandler);
+    }
+    return result;
 }
 
 - (NSString *)quietFileName {
@@ -1327,7 +1331,7 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     [scriptIcon setSize: NSMakeSize(16, 16)];
 
     // create menu item with no title and set image
-    NSMenuItem *scriptMenuItem = [[NSMenuItem alloc] initWithTitle: @"" action: nil keyEquivalent: @""];
+    NSMenuItem *scriptMenuItem = [[[NSMenuItem alloc] initWithTitle: @"" action: nil keyEquivalent: @""] autorelease];
     [scriptMenuItem setImage: scriptIcon];
 
     // create submenu
@@ -1373,7 +1377,6 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     // add new menu item
     if (count) {
         [[NSApp mainMenu] insertItem:scriptMenuItem atIndex:5];
-        [scriptMenuItem release];
         [scriptMenuItem setTitle:NSLocalizedStringFromTableInBundle(@"Script",
                                                                     @"iTerm",
                                                                     [NSBundle bundleForClass:[iTermController class]],

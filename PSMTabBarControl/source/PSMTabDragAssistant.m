@@ -331,9 +331,9 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
         destinationIndex = [[[self destinationTabBar] cells] count] - 1;
     }
 
-    if (![self draggedCell]) {        
+    if (![self draggedCell]) {
         // Find the index of where the dragged object was just dropped.
-        int i, insertIndex;
+        int i, insertIndex = 0;
         NSArray *cells = [[self destinationTabBar] cells];
         PSMTabBarCell *before = nil;
         if (destinationIndex > 0) {
@@ -365,7 +365,7 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
 	// If newTabViewItem is nil then simply cancel the drop.
         if (newTabViewItem) {
             [[[self destinationTabBar] tabView] insertTabViewItem:newTabViewItem atIndex:insertIndex];
-            insertIndex = [[[self destinationTabBar] tabView] indexOfTabViewItem:newTabViewItem];
+            [[[self destinationTabBar] tabView] indexOfTabViewItem:newTabViewItem];
             // I'm not sure why, but calling -bindPropertiesForCell:andTabViewItem:
             // here causes there to be an extra binding. It seems to have its
             // bindings set when it's added to the control. Other paths through this
@@ -436,6 +436,7 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
             [item retain];
             [tabView removeTabViewItem:item];
             [tabView insertTabViewItem:item atIndex:theIndex];
+            [item release];
             if (reselect) {
                 [tabView selectTabViewItem:item];
             }

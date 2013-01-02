@@ -366,7 +366,6 @@
 
     //draw the close button and icon combined
     if ([cell hasCloseButton] && ![cell isCloseButtonSuppressed]) {
-        NSSize closeButtonSize = NSZeroSize;
         NSRect closeButtonRect = [cell closeButtonRectForFrame:cellFrame];
         NSImage *closeButton = nil;
 
@@ -385,7 +384,6 @@
             closeButton = _closeButtonDown;
         }
 
-        closeButtonSize = [closeButton size];
         if ([controlView isFlipped]) {
             closeButtonRect.origin.y += closeButtonRect.size.height;
         }
@@ -740,7 +738,7 @@
         NSMutableParagraphStyle *centeredParagraphStyle = nil;
 
         if (!centeredParagraphStyle) {
-            centeredParagraphStyle = [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] retain];
+            centeredParagraphStyle = [[[NSParagraphStyle defaultParagraphStyle] mutableCopy] autorelease];
             [centeredParagraphStyle setAlignment:NSCenterTextAlignment];
         }
 

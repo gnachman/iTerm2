@@ -2443,6 +2443,7 @@ static float versionNumber;
     NSString* handlerId = (NSString*) LSCopyDefaultHandlerForURLScheme((CFStringRef) url);
     if ([handlerId isEqualToString:@"com.googlecode.iterm2"] ||
         [handlerId isEqualToString:@"net.sourceforge.iterm"]) {
+        CFRelease(handlerId);
         NSString* guid = [urlHandlersByGuid objectForKey:url];
         if (!guid) {
             return nil;
@@ -2453,6 +2454,9 @@ static float versionNumber;
         }
         return [dataSource profileAtIndex:theIndex];
     } else {
+        if (handlerId) {
+            CFRelease(handlerId);
+        }
         return nil;
     }
 }
@@ -3957,7 +3961,7 @@ static float versionNumber;
 
 - (IBAction)addBookmark:(id)sender
 {
-    NSMutableDictionary* newDict = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary* newDict = [[[NSMutableDictionary alloc] init] autorelease];
     // Copy the default bookmark's settings in
     Profile* prototype = [dataSource defaultBookmark];
     if (!prototype) {

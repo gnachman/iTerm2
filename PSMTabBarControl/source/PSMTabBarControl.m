@@ -850,8 +850,7 @@
 {
     NSTabViewItem *theItem = [tabView tabViewItemAtIndex:sourceIndex];
     BOOL reselect = ([tabView selectedTabViewItem] == theItem);
-    [theItem retain];
-    
+
     id tempDelegate = [tabView delegate];
     [tabView setDelegate:nil];
     [theItem retain];
@@ -939,7 +938,6 @@
                 if (!_useOverflowMenu) {
                     int j, averageWidth = (availableWidth / cellCount);
 
-                    numberOfVisibleCells = cellCount;
                     [newWidths removeAllObjects];
 
                     for (j = 0; j < cellCount; j++) {
@@ -1024,8 +1022,6 @@
                         if (totalOccupiedWidth < availableWidth) {
                             [newWidths replaceObjectAtIndex:0 withObject:[NSNumber numberWithFloat:availableWidth - [cellWidth floatValue]]];
                         }
-
-                        numberOfVisibleCells = 2;
                     }
 
                     break; // done assigning widths; remaining cells go in overflow menu

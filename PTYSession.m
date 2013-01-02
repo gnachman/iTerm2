@@ -915,7 +915,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                                        alternateButton:@"Cancel"
                                            otherButton:nil
                              informativeTextWithFormat:@""];
-        NSTextField *tmuxCommand = [[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)];
+        NSTextField *tmuxCommand = [[[NSTextField alloc] initWithFrame:NSMakeRect(0, 0, 200, 24)] autorelease];
         [tmuxCommand setEditable:YES];
         [tmuxCommand setSelectable:YES];
         [alert setAccessoryView:tmuxCommand];

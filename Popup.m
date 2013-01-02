@@ -315,7 +315,9 @@ DebugLog([NSString stringWithFormat:args]); \
 
     [self window];
 
-    tableView_ = [*table retain];
+    if (table){
+        tableView_ = [*table retain];
+    }
     model_ = [[PopupModel alloc] init];
     substring_ = [[NSMutableString alloc] init];
     unfilteredModel_ = [model retain];
@@ -347,6 +349,10 @@ DebugLog([NSString stringWithFormat:args]); \
     [self close];
 }
 
+- (void)setTableView:(NSTableView *)table {
+    [tableView_ autorelease];
+    tableView_ = [table retain];
+}
 
 - (BOOL)disableFocusFollowsMouse
 {

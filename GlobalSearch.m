@@ -239,13 +239,13 @@ const double GLOBAL_SEARCH_MARGIN = 10;
                             trimTrailingWhitespace:YES];
     theContext = [theContext stringByReplacingOccurrencesOfString:@"\n"
                                                        withString:@" "];
-    [results_ addObject:[[GlobalSearchResult alloc] initWithInstance:self
-                                                             context:theContext
-                                                                   x:startX
-                                                                absY:absY
-                                                                endX:endX
-                                                                   y:endY + [[textView_ dataSource] totalScrollbackOverflow]
-                                                          findString:findString_]];
+    [results_ addObject:[[[GlobalSearchResult alloc] initWithInstance:self
+                                                              context:theContext
+                                                                    x:startX
+                                                                 absY:absY
+                                                                 endX:endX
+                                                                    y:endY + [[textView_ dataSource] totalScrollbackOverflow]
+                                                           findString:findString_] autorelease]];
     return YES;
 }
 
@@ -550,11 +550,11 @@ const double GLOBAL_SEARCH_MARGIN = 10;
                 }
             }
             GlobalSearchInstance* aSearch;
-            aSearch = [[GlobalSearchInstance alloc] initWithTextView:[aSession TEXTVIEW]
-                                                          findString:findString
-                                                               label:[iTermExpose labelForTab:[aSession tab]
-                                                                                 windowNumber:i+1
-                                                                                    tabNumber:j+1]];
+            aSearch = [[[GlobalSearchInstance alloc] initWithTextView:[aSession TEXTVIEW]
+                                                           findString:findString
+                                                                label:[iTermExpose labelForTab:[aSession tab]
+                                                                                  windowNumber:i+1
+                                                                                     tabNumber:j+1]] autorelease];
             [searches_ addObject:aSearch];
         }
         i++;

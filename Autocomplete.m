@@ -68,12 +68,12 @@ const int kMaxResultContextWords = 4;
 {
     const int kMaxOptions = [AutocompleteView maxOptions];
     self = [super initWithWindowNibName:@"Autocomplete"
-                               tablePtr:&table_
+                               tablePtr:nil
                                   model:[[[PopupModel alloc] initWithMaxEntries:kMaxOptions] autorelease]];
     if (!self) {
         return nil;
     }
-
+    [self setTableView:table_];
     prefix_ = [[NSMutableString alloc] init];
     context_ = [[NSMutableArray alloc] init];
     stack_ = [[NSMutableArray alloc] init];

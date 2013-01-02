@@ -84,21 +84,20 @@
 
 - (id)initWithMaxEntries:(int)maxEntries
 {
-    if (![super init]) {
-        return nil;
+    self = [super init];
+    if (self) {
+        maxEntries_ = maxEntries;
+        entries_ = [[NSMutableArray alloc] init];
+
+
+        path_ = [NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) lastObject];
+        NSString *appname = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString *)kCFBundleNameKey];
+        path_ = [path_ stringByAppendingPathComponent:appname];
+        [[NSFileManager defaultManager] createDirectoryAtPath:path_ withIntermediateDirectories:YES attributes:nil error:NULL];
+        path_ = [[path_ stringByAppendingPathComponent:@"pbhistory.plist"] copyWithZone:[self zone]];
+
+        [self _loadHistoryFromDisk];
     }
-    maxEntries_ = maxEntries;
-    entries_ = [[NSMutableArray alloc] init];
-
-
-    path_ = [NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) lastObject];
-    NSString *appname = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString *)kCFBundleNameKey];
-    path_ = [path_ stringByAppendingPathComponent:appname];
-    [[NSFileManager defaultManager] createDirectoryAtPath:path_ withIntermediateDirectories:YES attributes:nil error:NULL];
-    path_ = [[path_ stringByAppendingPathComponent:@"pbhistory.plist"] copyWithZone:[self zone]];
-
-    [self _loadHistoryFromDisk];
-
     return self;
 }
 
@@ -207,11 +206,12 @@
 
 - (id)init
 {
-    self = [super initWithWindowNibName:@"PasteboardHistory" tablePtr:&table_ model:[[[PopupModel alloc] init] autorelease]];
+    self = [super initWithWindowNibName:@"PasteboardHistory" tablePtr:nil model:[[[PopupModel alloc] init] autorelease]];
     if (!self) {
         return nil;
     }
 
+    [self setTableView:table_];
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(pasteboardHistoryDidChange:)
                                                  name:kPasteboardHistoryDidChange

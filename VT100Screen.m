@@ -1358,7 +1358,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         // relative to the end of the udpated linebuffer (which could change as
         // lines from the base screen are pushed onto it).
         BOOL ok1, ok2;
-        LineBuffer *lineBufferWithAltScreen = [[linebuffer appendOnlyCopy] autorelease];
+        LineBuffer *lineBufferWithAltScreen = [[linebuffer newAppendOnlyCopy] autorelease];
         linebuffer = lineBufferWithAltScreen;
         [self _appendScreenToScrollbackWithUsedHeight:usedHeight newHeight:new_height];
 
@@ -1510,7 +1510,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         // convertCurrentSelectionToWidth:... happy (the selection's Y values
         // will be able to be looked up) and then after that's done we can swap
         // back to the tempLineBuffer.
-        LineBuffer *appendOnlyLineBuffer = [[realLineBuffer appendOnlyCopy] autorelease];
+        LineBuffer *appendOnlyLineBuffer = [[realLineBuffer newAppendOnlyCopy] autorelease];
         linebuffer = appendOnlyLineBuffer;
         /*                                  **************
          * tempLineBuffer   realLineBuffer  appendOnlyLineBuffer

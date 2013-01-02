@@ -102,23 +102,21 @@ static TaskNotifier* taskNotifier = nil;
 
 - (id)init
 {
-    if ([super init] == nil) {
-        return nil;
+    self = [super init];
+    if (self) {
+        deadpool = [[NSMutableSet alloc] init];
+        tasks = [[NSMutableArray alloc] init];
+        tasksLock = [[NSRecursiveLock alloc] init];
+        tasksChanged = NO;
+
+        int unblockPipe[2];
+        if (pipe(unblockPipe) != 0) {
+            return nil;
+        }
+        fcntl(unblockPipe[0], F_SETFL, O_NONBLOCK);
+        unblockPipeR = unblockPipe[0];
+        unblockPipeW = unblockPipe[1];
     }
-
-    deadpool = [[NSMutableSet alloc] init];
-    tasks = [[NSMutableArray alloc] init];
-    tasksLock = [[NSRecursiveLock alloc] init];
-    tasksChanged = NO;
-
-    int unblockPipe[2];
-    if (pipe(unblockPipe) != 0) {
-        return nil;
-    }
-    fcntl(unblockPipe[0], F_SETFL, O_NONBLOCK);
-    unblockPipeR = unblockPipe[0];
-    unblockPipeW = unblockPipe[1];
-
     return self;
 }
 
@@ -180,6 +178,9 @@ static TaskNotifier* taskNotifier = nil;
 
 - (void)run
 {
+    // There's an analyzer warning here because outerPool never gets drained due to the
+    // loop being infinite. I'm not quite sure why there is an outer pool, but I'm afraid to mess
+    // with it.
     NSAutoreleasePool* outerPool = [[NSAutoreleasePool alloc] init];
 
     fd_set rfds;
@@ -501,23 +502,22 @@ setup_tty_param(
 #if DEBUG_ALLOC
     PtyTaskDebugLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
 #endif
-    if ([super init] == nil)
-        return nil;
+    self = [super init];
+    if (self) {
+        pid = (pid_t)-1;
+        status = 0;
+        delegate = nil;
+        fd = -1;
+        tty = nil;
+        logPath = nil;
+        @synchronized(logHandle) {
+            logHandle = nil;
+        }
+        hasOutput = NO;
 
-    pid = (pid_t)-1;
-    status = 0;
-    delegate = nil;
-    fd = -1;
-    tty = nil;
-    logPath = nil;
-    @synchronized(logHandle) {
-        logHandle = nil;
+        writeBuffer = [[NSMutableData alloc] init];
+        writeLock = [[NSLock alloc] init];
     }
-    hasOutput = NO;
-
-    writeBuffer = [[NSMutableData alloc] init];
-    writeLock = [[NSLock alloc] init];
-
     return self;
 }
 
@@ -582,7 +582,6 @@ static void reapchild(int n)
     struct termios term;
     struct winsize win;
     char theTtyname[PATH_MAX];
-    int sts;
 
 	[command_ autorelease];
 	command_ = [progpath copy];
@@ -635,9 +634,10 @@ static void reapchild(int n)
 
         chdir(initialPwd);
         for (i = 0; i < envsize; i++) {
+            // The analyzer warning below is an obvious lie.
             setenv(envKeys[i], envValues[i], 1);
         }
-        sts = execvp(argpath, (char* const*)argv);
+        execvp(argpath, (char* const*)argv);
 
         /* exec error */
         fprintf(stdout, "## exec failed ##\n");
