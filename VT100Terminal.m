@@ -2785,7 +2785,7 @@ static VT100TCC decode_string(unsigned char *datap,
             [self saveCursorAttributes];
             break;
         case VT100CSI_DECSTR:
-            WRAPAROUND_MODE = NO;
+            WRAPAROUND_MODE = YES;
             ORIGIN_MODE = NO;
             break;
     }
