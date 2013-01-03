@@ -316,6 +316,9 @@ enum {
 
     PointerController *pointer_;
 	NSCursor *cursor_;
+
+    // True while the context menu is being opened.
+    BOOL openingContextMenu_;
 }
 
 + (NSCursor *)textViewCursor;

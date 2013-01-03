@@ -3574,7 +3574,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     [self setNeedsDisplay:YES];
     NSMenu *menu = [self menuForEvent:nil];
+    openingContextMenu_ = YES;
     [NSMenu popUpContextMenu:menu withEvent:event forView:self];
+    openingContextMenu_ = NO;
 }
 
 - (void)extendSelectionWithEvent:(NSEvent *)event
@@ -5173,7 +5175,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     NSString *copyString;
 
-    copyString = [self selectedText];
+    if (openingContextMenu_) {
+        // It is agonizingly slow to copy hundreds of thousands of lines just because the context
+        // menu is opening. Services use this to get access to the clipboard contents but
+        // it's lousy to hang for a few minutes for a feature that won't be used very much, esp. for
+        // such large selections.
+        int savedEndY = endY;
+        const int maxLinesToWrite = 10000;
+        endY = MIN(startY + maxLinesToWrite, endY);
+        copyString = [self selectedText];
+        endY = savedEndY;
+    } else {
+        copyString = [self selectedText];
+    }
 
     if (copyString && [copyString length]>0) {
         [pboard declareTypes: [NSArray arrayWithObject: NSStringPboardType] owner: self];
