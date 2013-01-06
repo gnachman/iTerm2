@@ -58,6 +58,7 @@
     int keyWindowIndexMemo_;
     BOOL itermWasActiveWhenHotkeyOpened;
     BOOL rollingIn_;
+    PseudoTerminal *previouslyActiveHotKeyTerminal_;
 
     // For restoring previously active app when exiting hotkey window
     NSNumber *previouslyActiveAppPID_;
@@ -90,6 +91,7 @@
 - (int)keyWindowIndexMemo;
 - (void)setKeyWindowIndexMemo:(int)i;
 - (void)showHotKeyWindow;
+- (void)showHotKeyWindowIfPreviouslyActive;
 - (void)doNotOrderOutWhenHidingHotkeyWindow;
 - (void)fastHideHotKeyWindow;
 - (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm;
