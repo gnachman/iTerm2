@@ -483,9 +483,19 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     blinkAllowed_ = value;
 }
 
+- (void)markCursorAsDirty {
+    int cursorX = [dataSource cursorX] - 1;
+    int cursorY = [dataSource cursorY] - 1;
+    // Set a different bit for the cursor's dirty position because we don't
+    // want to save an instant replay from when only the cursor is dirty.
+    [dataSource setCharDirtyAtX:cursorX Y:cursorY value:2];
+}
+
 - (void)setCursorType:(ITermCursorType)value
 {
     cursorType_ = value;
+    [self markCursorAsDirty];
+    [self refresh];
 }
 
 - (void)setDimOnlyText:(BOOL)value
@@ -2265,7 +2275,7 @@ NSMutableArray* screens=0;
     }
     if (modflag & NSCommandKeyMask) {
         // You pressed cmd+something but it's not handled by the delegate. Going further would
-        // send the unmodified key to the terminal which doesn't make sense.adsjflsd
+        // send the unmodified key to the terminal which doesn't make sense.
         if (debugKeyDown) {
             NSLog(@"PTYTextView keyDown You pressed cmd+something");
         }
@@ -8341,11 +8351,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if ([self blinkingCursor] &&
             [[self window] isKeyWindow]) {
             // Blink flag flipped and there is a blinking cursor. Mark it dirty.
-            int cursorX = [dataSource cursorX] - 1;
-            int cursorY = [dataSource cursorY] - 1;
-            // Set a different bit for the cursor's dirty position because we don't
-            // want to save an instant replay from when only the cursor is dirty.
-            [dataSource setCharDirtyAtX:cursorX Y:cursorY value:2];
+            [self markCursorAsDirty];
         }
         DebugLog(@"time to redraw blinking text");
     }
