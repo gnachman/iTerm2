@@ -108,6 +108,7 @@
 - (PTYSession *)sessionWithMostRecentSelection;
 
 - (PseudoTerminal *)currentTerminal;
+- (PseudoTerminal *)previouslyActiveHotKeyTerminal;
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow;
 - (NSArray*)sortedEncodingList;
 - (void)addBookmarksToMenu:(NSMenu *)aMenu startingAt:(int)startingAt;
@@ -145,6 +146,7 @@
 -(NSArray*)terminals;
 -(void)setTerminals: (NSArray*)terminals;
 - (void) setCurrentTerminal: (PseudoTerminal *) aTerminal;
+- (void) setPreviouslyActiveHotKeyTerminal: (PseudoTerminal *) aPreviouslyActiveHotKeyTerminal;
 
 -(id)valueInTerminalsAtIndex:(unsigned)index;
 -(void)replaceInTerminals:(PseudoTerminal *)object atIndex:(unsigned)index;

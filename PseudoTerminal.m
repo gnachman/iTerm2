@@ -1013,6 +1013,9 @@ NSString *sessionsKey = @"sessions";
         NSLog(@"Red alert! Current terminal is being freed!");
         [[iTermController sharedInstance] setCurrentTerminal:nil];
     }
+    if ([[iTermController sharedInstance] previouslyActiveHotKeyTerminal] == self) {
+       [[iTermController sharedInstance] setPreviouslyActiveHotKeyTerminal:nil];
+    }
     [broadcastViewIds_ release];
     [commandField release];
     [bottomBar release];

@@ -548,6 +548,11 @@ static BOOL initDone = NO;
     return FRONT;
 }
 
+- (PseudoTerminal*)previouslyActiveHotKeyTerminal
+{
+   return previouslyActiveHotKeyTerminal_;
+}
+
 - (void)terminalWillClose:(PseudoTerminal*)theTerminalWindow
 {
     if ([theTerminalWindow isHotKeyWindow]) {
@@ -1514,7 +1519,7 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
 
 - (void)showHotKeyWindowIfPreviouslyActive
 {
-    if (previouslyActiveHotKeyTerminal_) {
+    if ([[PreferencePanel sharedInstance] hotkeyWindowReactivates] && previouslyActiveHotKeyTerminal_) {
         HKWLog(@"Reopening deactivated visor");
         rollingIn_ = YES;
         RollInHotkeyTerm(previouslyActiveHotKeyTerminal_);
@@ -1597,7 +1602,10 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
 
 - (void)hideHotKeyWindow:(PseudoTerminal*)hotkeyTerm
 {
-    previouslyActiveHotKeyTerminal_ = [NSApp isActive]? nil: hotkeyTerm;
+    if ([[PreferencePanel sharedInstance] hotkeyWindowReactivates] && ![NSApp isActive])
+        [self setPreviouslyActiveHotKeyTerminal:hotkeyTerm];
+    else
+        [self setPreviouslyActiveHotKeyTerminal:nil];
 
     HKWLog(@"Hide visor.");
     if ([[hotkeyTerm window] isVisible]) {
@@ -1964,6 +1972,12 @@ NSString *terminalsKey = @"terminals";
                                                         object:thePseudoTerminal
                                                       userInfo:nil];
 
+}
+
+- (void)setPreviouslyActiveHotKeyTerminal:(PseudoTerminal*)aPreviouslyActiveHotKeyTerminal
+{
+   [previouslyActiveHotKeyTerminal_ release];
+   previouslyActiveHotKeyTerminal_ = [aPreviouslyActiveHotKeyTerminal retain];
 }
 
 -(void)replaceInTerminals:(PseudoTerminal *)object atIndex:(unsigned)theIndex

@@ -1195,6 +1195,7 @@ static float versionNumber;
     defaultPassOnControlLeftClick = [prefs objectForKey:@"PassOnControlClick"]?[[prefs objectForKey:@"PassOnControlClick"] boolValue] : NO;
     defaultMaxVertically = [prefs objectForKey:@"MaxVertically"] ? [[prefs objectForKey:@"MaxVertically"] boolValue] : NO;
     defaultClosingHotkeySwitchesSpaces = [prefs objectForKey:@"ClosingHotkeySwitchesSpaces"] ? [[prefs objectForKey:@"ClosingHotkeySwitchesSpaces"] boolValue] : YES;
+    defaultHotkeyWindowReactivates = [prefs objectForKey:@"HotkeyWindowReactivates"] ? [[prefs objectForKey:@"HotkeyWindowReactivates"] boolValue] : YES;
     defaultFsTabDelay = [prefs objectForKey:@"FsTabDelay"] ? [[prefs objectForKey:@"FsTabDelay"] floatValue] : 1.0;
     defaultUseCompactLabel = [prefs objectForKey:@"UseCompactLabel"]?[[prefs objectForKey:@"UseCompactLabel"] boolValue]: YES;
     defaultHideActivityIndicator = [prefs objectForKey:@"HideActivityIndicator"]?[[prefs objectForKey:@"HideActivityIndicator"] boolValue]: NO;
@@ -1321,6 +1322,7 @@ static float versionNumber;
     [prefs setBool:defaultPassOnControlLeftClick forKey:@"PassOnControlClick"];
     [prefs setBool:defaultMaxVertically forKey:@"MaxVertically"];
     [prefs setBool:defaultClosingHotkeySwitchesSpaces forKey:@"ClosingHotkeySwitchesSpaces"];
+    [prefs setBool:defaultHotkeyWindowReactivates forKey:@"HotkeyWindowReactivates"];
     [prefs setBool:defaultUseCompactLabel forKey:@"UseCompactLabel"];
     [prefs setBool:defaultHideActivityIndicator forKey:@"HideActivityIndicator"];
     [prefs setBool:defaultHighlightTabLabels forKey:@"HighlightTabLabels"];
@@ -1412,6 +1414,7 @@ static float versionNumber;
     [passOnControlLeftClick setState: defaultPassOnControlLeftClick?NSOnState:NSOffState];
     [maxVertically setState: defaultMaxVertically?NSOnState:NSOffState];
     [closingHotkeySwitchesSpaces setState:defaultClosingHotkeySwitchesSpaces?NSOnState:NSOffState];
+    [hotkeyWindowReactivates setState:defaultHotkeyWindowReactivates?NSOnState:NSOffState];
     [useCompactLabel setState: defaultUseCompactLabel?NSOnState:NSOffState];
     [hideActivityIndicator setState:defaultHideActivityIndicator?NSOnState:NSOffState];
     [highlightTabLabels setState: defaultHighlightTabLabels?NSOnState:NSOffState];
@@ -1725,6 +1728,7 @@ static float versionNumber;
         defaultPassOnControlLeftClick = ([passOnControlLeftClick state] == NSOnState);
         defaultMaxVertically = ([maxVertically state] == NSOnState);
         defaultClosingHotkeySwitchesSpaces = ([closingHotkeySwitchesSpaces state] == NSOnState);
+        defaultHotkeyWindowReactivates = ([hotkeyWindowReactivates state] == NSOnState);
         defaultOpenBookmark = ([openBookmark state] == NSOnState);
         [defaultWordChars release];
         defaultWordChars = [[wordChars stringValue] retain];
@@ -1943,6 +1947,11 @@ static float versionNumber;
 - (BOOL)closingHotkeySwitchesSpaces
 {
     return defaultClosingHotkeySwitchesSpaces;
+}
+
+- (BOOL)hotkeyWindowReactivates
+{
+    return defaultHotkeyWindowReactivates;
 }
 
 - (BOOL)useCompactLabel

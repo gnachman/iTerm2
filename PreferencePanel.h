@@ -167,6 +167,10 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     // Closing hotkey window may switch Spaces
     IBOutlet NSButton* closingHotkeySwitchesSpaces;
     BOOL defaultClosingHotkeySwitchesSpaces;
+   
+    // Hotkey window reactivates
+    IBOutlet NSButton* hotkeyWindowReactivates;
+    BOOL defaultHotkeyWindowReactivates;
 
     // use compact tab labels
     IBOutlet NSButton *useCompactLabel;
@@ -645,6 +649,7 @@ typedef enum {
 - (BOOL)passOnControlLeftClick;
 - (BOOL)maxVertically;
 - (BOOL)closingHotkeySwitchesSpaces;
+- (BOOL)hotkeyWindowReactivates;
 - (BOOL)useCompactLabel;
 - (BOOL)hideActivityIndicator;
 - (BOOL)highlightTabLabels;
