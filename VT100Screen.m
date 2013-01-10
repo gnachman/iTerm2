@@ -2406,10 +2406,10 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         switch (token.u.csi.p[1]) {
             case 0:
                 [SESSION popWindowTitle];
-                [SESSION popTabTitle];
+                [SESSION popIconTitle];
                 break;
             case 1:
-                [SESSION popTabTitle];
+                [SESSION popIconTitle];
                 break;
             case 2:
                 [SESSION popWindowTitle];
