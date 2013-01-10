@@ -7261,7 +7261,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (!urlChars) {
         NSString *chars = [[NSUserDefaults standardUserDefaults] stringForKey:@"URLCharacterSet"];
         if (!chars) {
-            chars = @".?\\/:;%=&_-,+~#@!*'()|";
+            // Note: square brackets are included for ipv6 addresses like http://[2600:3c03::f03c:91ff:fe96:6a7a]/
+            chars = @".?\\/:;%=&_-,+~#@!*'()|[]";
+
         }
         urlChars = [[NSMutableCharacterSet characterSetWithCharactersInString:chars] retain];
         [urlChars formUnionWithCharacterSet:[NSCharacterSet alphanumericCharacterSet]];
