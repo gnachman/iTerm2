@@ -172,12 +172,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [COLORFGBG_VALUE release];
     [name release];
     [windowTitle release];
-    if (windowTitleStack) {
-        [windowTitleStack release];
-    }
-    if (iconTitleStack) {
-        [iconTitleStack release];
-    }
+    [windowTitleStack release];
+    [iconTitleStack release];
     [addressBookEntry release];
     [backgroundImagePath release];
     [antiIdleTimer invalidate];
@@ -2558,9 +2554,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (void)popWindowTitle
 {
     // Ignore if title stack is nil or stack count == 0
-    if (!windowTitleStack) {
-        return;
-    }
     NSUInteger count = [windowTitleStack count];
     if (count > 0) {
         // pop window title
@@ -2587,9 +2580,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (void)popIconTitle
 {
     // Ignore if icon title stack is nil or stack count == 0.
-    if (!iconTitleStack) {
-        return;
-    }
     NSUInteger count = [iconTitleStack count];
     if (count > 0) {
         // pop icon title
