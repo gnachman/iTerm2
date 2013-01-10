@@ -225,6 +225,8 @@
 		1D67AAAA14284BF300D5DA4E /* ToolNotes.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67AAA814284BF300D5DA4E /* ToolNotes.m */; };
 		1D67ABAB14285D6000D5DA4E /* NSFileManager+DirectoryLocations.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D67ABA914285D6000D5DA4E /* NSFileManager+DirectoryLocations.h */; };
 		1D67ABAC14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D67ABAA14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m */; };
+		1D6944D7169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D6944D5169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h */; };
+		1D6944D8169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */; };
 		1D6A5FDF140D7AA000DE19F8 /* IBarCursorXMR.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D6A5FDE140D7AA000DE19F8 /* IBarCursorXMR.png */; };
 		1D6C18BE12951A3C00937A4A /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DEB293D1288899A00B2CB9F /* Carbon.framework */; };
 		1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D6C4D59122329F000E0AA3E /* ColorPresets.plist */; };
@@ -517,6 +519,8 @@
 		1D67AAA814284BF300D5DA4E /* ToolNotes.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToolNotes.m; sourceTree = "<group>"; };
 		1D67ABA914285D6000D5DA4E /* NSFileManager+DirectoryLocations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSFileManager+DirectoryLocations.h"; sourceTree = "<group>"; };
 		1D67ABAA14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSFileManager+DirectoryLocations.m"; sourceTree = "<group>"; };
+		1D6944D5169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreeFingerTapGestureRecognizer.h; sourceTree = "<group>"; };
+		1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ThreeFingerTapGestureRecognizer.m; sourceTree = "<group>"; };
 		1D6A5FDE140D7AA000DE19F8 /* IBarCursorXMR.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = IBarCursorXMR.png; path = images/IBarCursorXMR.png; sourceTree = "<group>"; };
 		1D6C4D59122329F000E0AA3E /* ColorPresets.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = ColorPresets.plist; sourceTree = "<group>"; };
 		1D6C50A51226EEFB00E0AA3E /* ProfileListView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileListView.h; sourceTree = "<group>"; };
@@ -908,6 +912,8 @@
 				1DA3323A1692175800C77F53 /* SharedCharacterRunData.m */,
 				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
 				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
+				1D6944D5169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h */,
+				1D6944D6169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m */,
 				1D06A04F134CDBED00C414EF /* Trouter.m */,
 				1D44218B1290B34500891504 /* TextViewWrapper.m */,
 				E8CF7562026DDA6303A80106 /* VT100Screen.m */,
@@ -1591,6 +1597,7 @@
 				1D48B379167E809D000046EE /* CharacterRun.h in Headers */,
 				1D70BA351680158700824B72 /* PTYFontInfo.h in Headers */,
 				1DA3323B1692175800C77F53 /* SharedCharacterRunData.h in Headers */,
+				1D6944D7169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1904,6 +1911,7 @@
 				1D48B37A167E809D000046EE /* CharacterRun.m in Sources */,
 				1D70BA361680158700824B72 /* PTYFontInfo.m in Sources */,
 				1DA3323C1692175800C77F53 /* SharedCharacterRunData.m in Sources */,
+				1D6944D8169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

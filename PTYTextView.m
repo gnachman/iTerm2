@@ -68,6 +68,7 @@ static const int kMaxSelectedTextLinesForCustomActions = 100;
 #import "PointerController.h"
 #import "PointerPrefsController.h"
 #import "CharacterRun.h"
+#import "ThreeFingerTapGestureRecognizer.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -255,6 +256,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return textViewCursor;
 }
 
+- (BOOL)useThreeFingerTapGestureRecognizer {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"ThreeFingerTapEmulatesThreeFingerClick"];
+}
+
 - (id)initWithFrame:(NSRect)aRect
 {
     self = [super initWithFrame: aRect];
@@ -318,6 +323,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         DLog(@"Begin tracking touches in view %@", self);
         [self futureSetAcceptsTouchEvents:YES];
         [self futureSetWantsRestingTouches:YES];
+        if ([self useThreeFingerTapGestureRecognizer]) {
+            threeFingerTapGestureRecognizer_ = [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
+                                                                                              selector:@selector(threeFingerTap:)];
+        }
     } else {
         DLog(@"Not tracking touches in view %@", self);
     }
@@ -325,10 +334,38 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return self;
 }
 
+- (void)sendFakeThreeFingerClickDown:(BOOL)isDown basedOnEvent:(NSEvent *)event {
+    CGEventRef cgEvent = [event CGEvent];
+    CGEventRef fakeCgEvent = CGEventCreateMouseEvent(NULL,
+                                                     isDown ? kCGEventLeftMouseDown : kCGEventLeftMouseUp,
+                                                     CGEventGetLocation(cgEvent),
+                                                     2);
+    CGEventSetIntegerValueField(fakeCgEvent, kCGMouseEventClickState, 1);  // always a single click
+    CGEventSetFlags(fakeCgEvent, CGEventGetFlags(cgEvent));
+    NSEvent *fakeEvent = [NSEvent eventWithCGEvent:fakeCgEvent];
+    int saved = numTouches_;
+    numTouches_ = 3;
+    if (isDown) {
+        DLog(@"Emulate three finger click down");
+        [self mouseDown:fakeEvent];
+    } else {
+        DLog(@"Emulate three finger click up");
+        [self mouseUp:fakeEvent];
+    }
+    numTouches_ = saved;
+    CFRelease(fakeCgEvent);
+}
+
+- (void)threeFingerTap:(NSEvent *)ev {
+    [self sendFakeThreeFingerClickDown:YES basedOnEvent:ev];
+    [self sendFakeThreeFingerClickDown:NO basedOnEvent:ev];
+}
+
 - (void)touchesBeganWithEvent:(NSEvent *)ev
 {
     numTouches_ = [[ev futureTouchesMatchingPhase:1 | (1 << 2)/*NSTouchPhasesBegan | NSTouchPhasesStationary*/
                                            inView:self] count];
+    [threeFingerTapGestureRecognizer_ touchesBeganWithEvent:ev];
     DLog(@"%@ Begin touch. numTouches_ -> %d", self, numTouches_);
 }
 
@@ -336,6 +373,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 {
     numTouches_ = [[ev futureTouchesMatchingPhase:(1 << 2)/*NSTouchPhasesStationary*/
                                            inView:self] count];
+    [threeFingerTapGestureRecognizer_ touchesEndedWithEvent:ev];
     DLog(@"%@ End touch. numTouches_ -> %d", self, numTouches_);
 }
 
@@ -422,7 +460,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [initialFindContext_.substring release];
 
     [pointer_ release];
-        [cursor_ release];
+    [cursor_ release];
+    [threeFingerTapGestureRecognizer_ disconnectTarget];
+    [threeFingerTapGestureRecognizer_ release];
 
     [super dealloc];
 }
@@ -2501,6 +2541,10 @@ NSMutableArray* screens=0;
 
 - (void)rightMouseDown:(NSEvent*)event
 {
+    if ([threeFingerTapGestureRecognizer_ rightMouseDown:event]) {
+        DLog(@"Cancel right mouse down");
+        return;
+    }
     if ([pointer_ mouseDown:event withTouches:numTouches_]) {
         return;
     }
@@ -2542,6 +2586,10 @@ NSMutableArray* screens=0;
 
 - (void)rightMouseUp:(NSEvent *)event
 {
+    if ([threeFingerTapGestureRecognizer_ rightMouseUp:event]) {
+        return;
+    }
+
     if ([pointer_ mouseUp:event withTouches:numTouches_]) {
         return;
     }
@@ -2779,6 +2827,9 @@ NSMutableArray* screens=0;
 
 - (void)mouseDown:(NSEvent *)event
 {
+    if ([threeFingerTapGestureRecognizer_ mouseDown:event]) {
+        return;
+    }
     DLog(@"Mouse Down on %@ with event %@, num touches=%d", self, event, numTouches_);
     if ([self mouseDownImpl:event]) {
         [super mouseDown:event];
@@ -3135,6 +3186,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseUp:(NSEvent *)event
 {
+    if ([threeFingerTapGestureRecognizer_ mouseUp:event]) {
+        return;
+    }
     DLog(@"Mouse Up on %@ with event %@, numTouches=%d", self, event, numTouches_);
     firstMouseEventNumber_ = -1;  // Synergy seems to interfere with event numbers, so reset it here.
     if (mouseDownIsThreeFingerClick_) {
@@ -7988,7 +8042,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL track = [pointer_ viewShouldTrackTouches];
     [self futureSetAcceptsTouchEvents:track];
     [self futureSetWantsRestingTouches:track];
-    if (!track) {
+    [threeFingerTapGestureRecognizer_ release];
+    threeFingerTapGestureRecognizer_ = nil;
+    if (track) {
+        if ([self useThreeFingerTapGestureRecognizer]) {
+            threeFingerTapGestureRecognizer_ = [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
+                                                                                              selector:@selector(threeFingerTap:)];
+        }
+    } else {
         numTouches_ = 0;
     }
 }
