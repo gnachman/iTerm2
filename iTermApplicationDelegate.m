@@ -753,6 +753,9 @@ static BOOL hasBecomeActive = NO;
         return;
     }
     id bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:urlType];
+    if (!bm) {
+        bm = [[ProfileModel sharedInstance] defaultBookmark];
+    }
     if (bm) {
         PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
         [[iTermController sharedInstance] launchBookmark:bm
