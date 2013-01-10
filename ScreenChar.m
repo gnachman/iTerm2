@@ -43,7 +43,7 @@ static BOOL hasWrapped = NO;
 
 NSString* ComplexCharToStr(int key)
 {
-    if (key == UNKNOWN) {
+    if (key == UNICODE_REPLACEMENT_CHAR) {
         return ReplacementString();
     }
 
@@ -57,7 +57,7 @@ NSString* ScreenCharToStr(screen_char_t* sct)
 
 NSString* CharToStr(unichar code, BOOL isComplex)
 {
-    if (code == UNKNOWN) {
+    if (code == UNICODE_REPLACEMENT_CHAR) {
         return ReplacementString();
     }
 
@@ -70,7 +70,7 @@ NSString* CharToStr(unichar code, BOOL isComplex)
 
 int ExpandScreenChar(screen_char_t* sct, unichar* dest) {
     NSString* value = nil;
-    if (sct->code == UNKNOWN) {
+    if (sct->code == UNICODE_REPLACEMENT_CHAR) {
         value = ReplacementString();
     } else if (sct->complexChar) {
         value = ComplexCharToStr(sct->code);
@@ -126,8 +126,8 @@ int GetOrSetComplexChar(NSString* str)
 
 int AppendToComplexChar(int key, unichar codePoint)
 {
-    if (key == UNKNOWN) {
-        return UNKNOWN;
+    if (key == UNICODE_REPLACEMENT_CHAR) {
+        return UNICODE_REPLACEMENT_CHAR;
     }
 
     NSString* str = [complexCharMap objectForKey:[NSNumber numberWithInt:key]];
@@ -145,8 +145,8 @@ int AppendToComplexChar(int key, unichar codePoint)
 
 int BeginComplexChar(unichar initialCodePoint, unichar combiningChar)
 {
-    if (initialCodePoint == UNKNOWN) {
-        return UNKNOWN;
+    if (initialCodePoint == UNICODE_REPLACEMENT_CHAR) {
+        return UNICODE_REPLACEMENT_CHAR;
     }
 
     unichar temp[2];

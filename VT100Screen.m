@@ -144,11 +144,11 @@ void StringToScreenChars(NSString *s,
             lastInitializedChar = j;
         }
 
-        if ((sc[i] >= 0xe000 && sc[i] <= ITERM2_PRIVATE_END) ||
-            sc[i] >= 0xfffd) {
-            // Translate private-use characters into a replacement char.
-            // Unfortunately, the proper replacement char U+fffd is double-width
-            // (at least for some fonts) which screws up formatting.
+        if (sc[i] >= ITERM2_PRIVATE_BEGIN && sc[i] <= ITERM2_PRIVATE_END) {
+            // Translate iTerm2's private-use characters into a "?". Although the replacement
+            // character renders as a double-width char in a single-width char's space and is ugly,
+            // some fonts use dwc's to add extra glyphs. It's kinda sketch, but it's better form to
+            // render what you get than to try to be clever and break such edge cases.
             buf[j].code = '?';
         } else if (sc[i] > 0xa0 && [NSString isDoubleWidthCharacter:sc[i]
                                                            encoding:encoding
@@ -166,10 +166,10 @@ void StringToScreenChars(NSString *s,
 
             buf[j].backgroundColor = bg.backgroundColor;
             buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
-        } else if (sc[i] == 0xfeff ||
-                   sc[i] == 0x200b ||
-                   sc[i] == 0x200c ||
-                   sc[i] == 0x200d) {
+        } else if (sc[i] == 0xfeff ||  // zero width no-break space
+                   sc[i] == 0x200b ||  // zero width space
+                   sc[i] == 0x200c ||  // zero width non-joiner
+                   sc[i] == 0x200d) {  // zero width joiner
             j--;
             lastInitializedChar--;
         } else if (IsCombiningMark(sc[i]) || IsLowSurrogate(sc[i])) {
@@ -2702,6 +2702,7 @@ void DumpBuf(screen_char_t* p, int n) {
         NSAssert(buffer[idx].code != DWC_RIGHT, @"DWC cut off");
 
         if (buffer[idx].code == DWC_SKIP) {
+            // I'm pretty sure this can never happen and that this code is just a historical leftover.
             // This is an invalid unicode character that iTerm2 has appropriated
             // for internal use. Change it to something invalid but safe.
             buffer[idx].code = BOGUS_CHAR;
