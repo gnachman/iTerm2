@@ -1882,6 +1882,7 @@ static VT100TCC decode_string(unsigned char *datap,
     MOUSE_MODE = MOUSE_REPORTING_NONE;
     MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
     [SCREEN mouseModeDidChange:MOUSE_MODE];
+    REPORT_FOCUS = NO;
     
     TRACE = NO;
 
