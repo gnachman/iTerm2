@@ -517,10 +517,13 @@ static float versionNumber;
     return [self _dirIsWritable:[defaultPrefsCustomFolder stringByExpandingTildeInPath]];
 }
 
+- (BOOL)_stringIsUrlLike:(NSString *)theString {
+    return [theString hasPrefix:@"http://"] || [theString hasPrefix:@"https://"];
+}
+
 - (void)_updatePrefsDirWarning
 {
-    if (([defaultPrefsCustomFolder hasPrefix:@"http://"] ||
-         [defaultPrefsCustomFolder hasPrefix:@"https://"]) &&
+    if ([self _stringIsUrlLike:defaultPrefsCustomFolder] &&
         [NSURL URLWithString:defaultPrefsCustomFolder]) {
         // Don't warn about URLs, too expensive to check
         [prefsDirWarning setHidden:YES];
@@ -1587,6 +1590,21 @@ static float versionNumber;
     [[ProfileModel sharedInstance] addBookmark:dict];
 }
 
+- (BOOL)choosePrefsCustomFolder {
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    [panel setCanChooseFiles:NO];
+    [panel setCanChooseDirectories:YES];
+    [panel setAllowsMultipleSelection:NO];
+
+    if ([panel runModal] == NSOKButton) {
+        [prefsCustomFolder setStringValue:[panel directory]];
+        [self settingChanged:prefsCustomFolder];
+        return YES;
+    }  else {
+        return NO;
+    }
+}
+
 - (IBAction)settingChanged:(id)sender
 {
     if (sender == lionStyleFullscreen) {
@@ -1597,16 +1615,17 @@ static float versionNumber;
             // Just turned it on.
             if ([[prefsCustomFolder stringValue] length] == 0) {
                 // Field was initially empty so browse for a dir.
-                [self browseCustomFolder:nil];
-            }
-            if ([prefsDirWarning isHidden]) {
-                // The directory is valid and it's probably the user's first time downt this path.
-                if ([[NSAlert alertWithMessageText:@"Copy local preferences to custom folder now?"
-                                 defaultButton:@"Copy"
-                               alternateButton:@"Don't Copy"
-                                   otherButton:nil
-                         informativeTextWithFormat:@""] runModal] == NSOKButton) {
-                    [self pushToCustomFolder:nil];
+                if ([self choosePrefsCustomFolder]) {
+                    // User didn't hit cancel; if he chose a writable directory ask if he wants to write to it.
+                    if ([self _prefsDirIsWritable]) {
+                        if ([[NSAlert alertWithMessageText:@"Copy local preferences to custom folder now?"
+                                         defaultButton:@"Copy"
+                                       alternateButton:@"Don't Copy"
+                                           otherButton:nil
+                                 informativeTextWithFormat:@""] runModal] == NSOKButton) {
+                            [self pushToCustomFolder:nil];
+                        }
+                    }
                 }
             }
         }
@@ -2203,9 +2222,7 @@ static float versionNumber;
 {
     NSString *folder = [prefs objectForKey:@"PrefsCustomFolder"] ? [prefs objectForKey:@"PrefsCustomFolder"] : @"";
     NSString *filename = [self _prefsFilenameWithBaseDir:folder];
-    if ([folder hasPrefix:@"http://"] ||
-        [folder hasPrefix:@"https://"]) {
-
+    if ([self _stringIsUrlLike:folder]) {
         filename = folder;
     } else {
 		filename = [filename stringByExpandingTildeInPath];
@@ -2221,8 +2238,7 @@ static float versionNumber;
     }
     NSString *filename = [self remotePrefsLocation];
     NSDictionary *remotePrefs;
-    if ([filename hasPrefix:@"http://"] ||
-        [filename hasPrefix:@"https://"]) {
+    if ([self _stringIsUrlLike:filename]) {
         // Download the URL's contents.
         NSURL *url = [NSURL URLWithString:filename];
         const NSTimeInterval kFetchTimeout = 5.0;
@@ -3089,15 +3105,7 @@ static float versionNumber;
 
 - (IBAction)browseCustomFolder:(id)sender
 {
-    NSOpenPanel* panel = [NSOpenPanel openPanel];
-    [panel setCanChooseFiles:NO];
-    [panel setCanChooseDirectories:YES];
-    [panel setAllowsMultipleSelection:NO];
-
-    if ([panel runModal] == NSOKButton) {
-        [prefsCustomFolder setStringValue:[panel directory]];
-        [self settingChanged:prefsCustomFolder];
-    }
+    [self choosePrefsCustomFolder];
 }
 
 - (BOOL)customFolderChanged
@@ -3119,8 +3127,7 @@ static float versionNumber;
     [self savePreferences];
     NSDictionary *myDict = [[NSUserDefaults standardUserDefaults] persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
     BOOL isOk;
-    if ([filename hasPrefix:@"http://"] ||
-        [filename hasPrefix:@"https://"]) {
+    if ([self _stringIsUrlLike:filename]) {
         [[NSAlert alertWithMessageText:@"Sorry, preferences cannot be copied to a URL by iTerm2."
                          defaultButton:@"OK"
                        alternateButton:nil
