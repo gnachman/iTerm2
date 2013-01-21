@@ -145,6 +145,9 @@ typedef enum {
     // This is not used as far as I can tell.
     int bell;
 
+    // True if background image should be tiled
+    BOOL backgroundImageTiled;
+    
     // Filename of background image.
     NSString* backgroundImagePath;
 
@@ -443,6 +446,8 @@ typedef enum {
 - (BOOL)logging;
 - (void)logStart;
 - (void)logStop;
+- (BOOL)backgroundImageTiled;
+- (void)setBackgroundImageTiled:(BOOL)set;
 - (NSString *)backgroundImagePath;
 - (void)setBackgroundImagePath: (NSString *)imageFilePath;
 - (NSColor *)foregroundColor;
