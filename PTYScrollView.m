@@ -227,11 +227,26 @@
     return (backgroundImage);
 }
 
-- (void) setBackgroundImage: (NSImage *) anImage
+- (void) setBackgroundImage:(NSImage *)anImage
+{
+    [self setBackgroundImage:anImage asPattern:NO];
+}
+
+- (void) setBackgroundImage:(NSImage *)anImage asPattern:(BOOL)asPattern
 {
     [backgroundImage release];
     [anImage retain];
-    backgroundImage = anImage;
+    if (asPattern && anImage != nil) {
+        backgroundPattern = [NSColor colorWithPatternImage:anImage];
+        backgroundImage = [[NSImage alloc] initWithSize:[self documentVisibleRect].size];
+        [backgroundImage lockFocus];
+        [backgroundPattern drawSwatchInRect:NSMakeRect(0, 0,
+                                                       [self documentVisibleRect].size.width,
+                                                       [self documentVisibleRect].size.height)];
+        [backgroundImage unlockFocus];
+    } else {
+        backgroundImage = anImage;
+    }
     [backgroundImage setScalesWhenResized: YES];
     [backgroundImage setSize: [self documentVisibleRect].size];
 }

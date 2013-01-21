@@ -50,6 +50,7 @@
 @interface PTYScrollView : NSScrollView
 {
     NSImage *backgroundImage;
+    NSColor *backgroundPattern;
     float transparency;
 
     // Used for working around Lion bug described in setHasVerticalScroller:inInit:
@@ -66,6 +67,7 @@
 // background image
 - (NSImage *)backgroundImage;
 - (void)setBackgroundImage: (NSImage *) anImage;
+- (void)setBackgroundImage: (NSImage *) anImage asPattern:(BOOL)asPattern;
 - (void)drawBackgroundImageRect:(NSRect)rect useTransparency:(BOOL)useTransparency;
 - (void)drawBackgroundImageRect:(NSRect)rect toPoint:(NSPoint)dest useTransparency:(BOOL)useTransparency;
 - (float)transparency;

@@ -2307,7 +2307,13 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     // background image
     [self setBackgroundImagePath:[aDict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
-
+    NSNumber *bgImageTiledEntry = [aDict objectForKey:KEY_BACKGROUND_IMAGE_TILED];
+    if (bgImageTiledEntry) {
+        [self setBackgroundImageTiled:[bgImageTiledEntry boolValue]];
+    } else {
+        [self setBackgroundImageTiled:YES];
+    }
+    
     // colour scheme
     [self setCOLORFGBG_VALUE:[self ansiColorsMatchingForeground:[aDict objectForKey:KEY_FOREGROUND_COLOR]
                                                   andBackground:[aDict objectForKey:KEY_BACKGROUND_COLOR]
@@ -2774,6 +2780,17 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     return [TEXTVIEW content];
 }
 
+- (BOOL)backgroundImageTiled
+{
+    return backgroundImageTiled;
+}
+
+- (void)setBackgroundImageTiled:(BOOL)set
+{
+    backgroundImageTiled = set;
+    [self setBackgroundImagePath:backgroundImagePath];
+}
+
 - (NSString *)backgroundImagePath
 {
     return backgroundImagePath;
@@ -2797,7 +2814,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         NSImage *anImage = [[NSImage alloc] initWithContentsOfFile:backgroundImagePath];
         if (anImage != nil) {
             [SCROLLVIEW setDrawsBackground:NO];
-            [SCROLLVIEW setBackgroundImage:anImage];
+            [SCROLLVIEW setBackgroundImage:anImage asPattern:[self backgroundImageTiled]];
             [anImage release];
         } else {
             [SCROLLVIEW setDrawsBackground:YES];

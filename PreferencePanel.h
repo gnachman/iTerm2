@@ -463,6 +463,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* nonasciiAntiAliased;
     IBOutlet NSButton* backgroundImage;
     NSString* backgroundImageFilename;
+    IBOutlet NSButton* backgroundImageTiled;
     IBOutlet NSImageView* backgroundImagePreview;
     IBOutlet NSTextField* displayFontsLabel;
     IBOutlet NSButton* displayRegularFontButton;
