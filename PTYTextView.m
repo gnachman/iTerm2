@@ -2256,6 +2256,13 @@ NSMutableArray* screens=0;
 
 - (void)keyDown:(NSEvent*)event
 {
+    static BOOL isFirstInteraction = YES;
+    if (isFirstInteraction) {
+        iTermApplicationDelegate *appDelegate = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
+        [appDelegate userDidInteractWithASession];
+        isFirstInteraction = NO;
+    }
+
     BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
 
     if (debugKeyDown) {

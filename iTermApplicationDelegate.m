@@ -502,12 +502,20 @@ static BOOL hasBecomeActive = NO;
     return YES;
 }
 
+- (void)userDidInteractWithASession
+{
+    userHasInteractedWithAnySession_ = YES;
+}
+
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app
 {
-    NSNumber* pref = [[NSUserDefaults standardUserDefaults] objectForKey:@"MinRunningTime"];
-    const double kMinRunningTime =  pref ? [pref floatValue] : 10;
-    if ([[NSDate date] timeIntervalSinceDate:launchTime_] < kMinRunningTime) {
-        return NO;
+    if (!userHasInteractedWithAnySession_) {
+        NSNumber* pref = [[NSUserDefaults standardUserDefaults] objectForKey:@"MinRunningTime"];
+        const double kMinRunningTime =  pref ? [pref floatValue] : 10;
+        if ([[NSDate date] timeIntervalSinceDate:launchTime_] < kMinRunningTime) {
+            NSLog(@"Not quitting iTerm2 because it ran very briefly and had no user interaction. Set the MinRunningTime float preference to 0 to turn this feature off.");
+            return NO;
+        }
     }
     quittingBecauseLastWindowClosed_ = [[PreferencePanel sharedInstance] quitWhenAllWindowsClosed];
     return quittingBecauseLastWindowClosed_;

@@ -102,6 +102,8 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 
     // Set to YES when applicationDidFinishLaunching: is called.
     BOOL finishedLaunching_;
+
+    BOOL userHasInteractedWithAnySession_;  // Disables min 10-second running time
 }
 
 - (void)awakeFromNib;
@@ -183,6 +185,9 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (void)updateBroadcastMenuState;
 
 - (BOOL)showToolbelt;
+
+// Call this when the user has any nontrivial interaction with a session, such as typing in it or closing a window.
+- (void)userDidInteractWithASession;
 
 @end
 
