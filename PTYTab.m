@@ -1923,7 +1923,6 @@ static NSString* FormatRect(NSRect r) {
 
 + (void)_recursiveDrawArrangementPreview:(NSDictionary*)arrangement frame:(NSRect)frame
 {
-    NSLog(@"Frame=%@", [NSValue valueWithRect:frame]);
     if ([[arrangement objectForKey:TAB_ARRANGEMENT_VIEW_TYPE] isEqualToString:VIEW_TYPE_SPLITTER]) {
         BOOL isVerticalSplitter = [[arrangement objectForKey:SPLITTER_IS_VERTICAL] boolValue];
         float xExtent = 0;
