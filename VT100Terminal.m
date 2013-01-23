@@ -1438,7 +1438,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
     VT100TCC result;
     NSData *data;
     char s[MAX_BUFFER_LENGTH] = { 0 }, *c = nil;
-
+    
     assert(datap != NULL);
     assert(datalen >= 2);
     assert(datap[0] == ESC);
@@ -1454,10 +1454,9 @@ static VT100TCC decode_xterm(unsigned char *datap,
         (*rmlen)++;
         while (datalen > 0 && isdigit(*datap)) {
             n = n * 10 + *datap - '0';
-
+            datalen--;
             (*rmlen)++;
             datap++;
-            datalen--;
         }
         mode = n;
     }
@@ -1479,45 +1478,97 @@ static VT100TCC decode_xterm(unsigned char *datap,
         BOOL str_end = NO;
         c = s;
         // Search for the end of a ^G/ST terminated string (but see the note below about other ways to terminate it).
-        while (*datap != 7 && datalen > 0) {
-            // Technically, only ^G or esc + \ ought to terminate a string. But sometimes an application is buggy and it forgets to terminate it.
-            // xterm has a very complicated state machine that determines when a string is terminated. Effectively, it allows you to terminate
-            // an OSC with ESC + anything except ], 0x9d, and 0xdd. Other bogus values may do strange things in xterm.
-            if (*datap == 0x1b &&  // 0x1b == ESC
-                datalen > 2 &&
-                (*(datap+1) != ']' &&
-                 *(datap+1) != 0x9d &&
-                 *(datap+1) != 0xdd)) {
-                // Esc+backslash (called ST in the spec), or equivalent
+        while (datalen > 0) {
+            // broken OSC (ESC ] P NRRGGBB) does not need any terminator
+            if (mode == -1 && c - s >= 7) {
+                str_end = YES;
+                break;
+            }
+            // A string control should be canceled by CAN or SUB.
+            if (*datap == VT100CC_CAN || *datap == VT100CC_SUB) {
+                datap++;
+                datalen--;
+                (*rmlen)++;
+                str_end = YES;
+                unrecognized = YES;
+                break;
+            }
+            // BEL terminator
+            if (*datap == VT100CC_BEL) {
                 datap++;
                 datalen--;
                 (*rmlen)++;
                 str_end = YES;
                 break;
             }
+            // Technically, only ^G or esc + \ ought to terminate a string. But sometimes an application is buggy
+            // and it forgets to terminate it.
+            // xterm has a very complicated state machine that determines when a string is terminated.
+            // Effectively, it allows you to terminate an OSC with ESC + anything except ].
+            // Other bogus values may do strange things in xterm.
+            if (*datap == VT100CC_ESC) {
+                if (datalen > 2 && *(datap + 1) == ']') {
+                    // if Esc + ] is present recursively, skip it simply.
+                    //
+                    // Example:
+                    //
+                    //    ESC ] 0 ; a b c ESC ] d e f BEL
+                    //
+                    // title string "abcdef" should be accepted.
+                    //
+                    datap += 2;
+                    datalen -= 2;
+                    (*rmlen) += 2;
+                    continue;
+                } else if (datalen > 2 && *(datap + 1) == '\\') {
+                    // if Esc + \ is present, terminate OSC successfully".
+                    //
+                    // Example:
+                    //
+                    //    ESC ] 0 ; a b c ESC '\\'
+                    //
+                    // title string "abc" should be accepted.
+                    //
+                    datap += 2;
+                    datalen -= 2;
+                    (*rmlen) += 2;
+                    str_end = YES;
+                    break;
+                } else {
+                    // otherwise, terminate OSC unsuccessfully and backtrack before ESC.
+                    //
+                    // Example:
+                    //
+                    //    ESC ] 0 ; a b c ESC c
+                    //
+                    // "abc" should be discarded.
+                    // ESC c is also accepted and causes hard reset(RIS).
+                    //
+                    str_end = YES;
+                    unrecognized = YES;
+                    break;
+                }
+            }
             if (c - s < MAX_BUFFER_LENGTH) {
-                *c=*datap;
+                // if 0 <= mode <=2 and current *datap is a control character, replace it with '?'. 
+                if ((*datap < 0x20 || *datap == 0x7f) && (mode == 0 || mode == 1 || mode == 2)) {
+                    *c = '?';
+                } else {
+                    *c = *datap;
+                }
                 c++;
             }
             datalen--;
             datap++;
             (*rmlen)++;
         }
-        if (datalen > 0 && *datap == 7) {
-            str_end = YES;
-        }
         if (!str_end && datalen == 0) {
             // Ran out of data before terminator. Keep trying.
             *rmlen = 0;
-        } else {
-            // Consume terminator.
-            datap++;
-            datalen--;
-            (*rmlen)++;
         }
     } else {
         // No data yet, keep trying.
-        *rmlen=0;
+        *rmlen = 0;
     }
 
     if (!(*rmlen)) {
@@ -1526,7 +1577,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
         // Found terminator but it's malformed.
         result.type = VT100_NOTSUPPORT;
     } else {
-        data = [NSData dataWithBytes:s length:c-s];
+        data = [NSData dataWithBytes:s length:c - s];
         result.u.string = [[[NSString alloc] initWithData:data
                                                  encoding:enc] autorelease];
         switch (mode) {
