@@ -411,7 +411,7 @@ const int kInterWidgetMargin = 10;
             [image setSize:NSMakeSize(thisRowHeight, thisRowHeight)];
             [image lockFocus];
             CGFloat margin = (thisRowHeight - starHeight) / 2;
-            NSRect dest = CGRectMake(margin, margin, thisRowHeight - 2*margin, thisRowHeight - 2*margin);
+            NSRect dest = NSMakeRect(margin, margin, thisRowHeight - 2*margin, thisRowHeight - 2*margin);
             [starImage drawInRect:dest fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
             [image unlockFocus];
             return image;
