@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+# DO NOT RUN THIS DIRECTLY! Use "make release" instead.
 # Run this before uploading.
 COMPACTDATE=$(date +"%Y%m%d")
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
@@ -12,8 +12,9 @@ ORIG_DIR=`pwd`
 cd ~/tmux
 git checkout mountainlion
 make
+rm *.o
 cd ..
-tar cvfz tmux-for-iTerm2-$COMPACTDATE.tar.gz tmux/*
+tar cvfz tmux-for-iTerm2-$COMPACTDATE.tar.gz tmux/* tmux/.deps
 cd $ORIG_DIR
 mv ~/tmux-for-iTerm2-$COMPACTDATE.tar.gz build/Deployment
 cd build/Deployment
@@ -26,7 +27,7 @@ vi $SVNDIR/appcasts/testing_changes.html
 
 # Prepare the sparkle xml file
 LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
-ruby "/Users/georgen/Downloads/Sparkle 1.5b6/Extras/Signing Tools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt
+ruby "../../SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt
 SIG=$(cat /tmp/sig.txt)
 DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
 cp $SVNDIR/appcasts/template.xml /tmp
