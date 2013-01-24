@@ -387,6 +387,7 @@ typedef enum {
 - (void)setGrowlNewOutput:(BOOL)value;
 - (BOOL)growlNewOutput;
 
+- (NSString *)windowName;
 - (NSString *)name;
 - (NSString*)rawName;
 - (void)setBookmarkName:(NSString*)theName;

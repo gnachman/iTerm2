@@ -1720,6 +1720,10 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     return TERMINAL;
 }
 
+- (void)setAllowTitleReporting:(BOOL)allow {
+    allowTitleReporting_ = allow;
+}
+
 - (void)setShellTask:(PTYTask *)shell
 {
 #if DEBUG_METHOD_TRACE
@@ -2365,9 +2369,10 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         break;
     case XTERMCC_REPORT_ICON_TITLE: {
         NSString *theString;
-        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AllowInsecureTitleReporting"]) {
-            theString = [NSString stringWithFormat:@"\033]L%@\033\\", [SESSION windowTitle]];
+        if (allowTitleReporting_) {
+            theString = [NSString stringWithFormat:@"\033]L%@\033\\", [SESSION windowTitle] ? [SESSION windowTitle] : [SESSION defaultName]];
         } else {
+            NSLog(@"Not reporting icon title. You can enable this in prefs>profiles>terminal");
             theString = @"\033]L\033\\";
         }
         NSData *theData = [theString dataUsingEncoding:NSUTF8StringEncoding];
@@ -2376,9 +2381,10 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     }
     case XTERMCC_REPORT_WIN_TITLE: {
         NSString *theString;
-        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AllowInsecureTitleReporting"]) {
-            theString = [NSString stringWithFormat:@"\033]l%@\033\\", [SESSION windowTitle]];
+        if (allowTitleReporting_) {
+            theString = [NSString stringWithFormat:@"\033]l%@\033\\", [SESSION windowName]];
         } else {
+            NSLog(@"Not reporting window title. You can enable this in prefs>profiles>terminal");
             theString = @"\033]l\033\\";
         }
         NSData *theData = [theString dataUsingEncoding:NSUTF8StringEncoding];

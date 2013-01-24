@@ -2312,6 +2312,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [self setDoubleWidth:[[aDict objectForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH] boolValue]];
     [self setXtermMouseReporting:[[aDict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue]];
     [TERMINAL setDisableSmcupRmcup:[[aDict objectForKey:KEY_DISABLE_SMCUP_RMCUP] boolValue]];
+    [SCREEN setAllowTitleReporting:[[aDict objectForKey:KEY_ALLOW_TITLE_REPORTING] boolValue]];
     [SCREEN setUnlimitedScrollback:[[aDict objectForKey:KEY_UNLIMITED_SCROLLBACK] intValue]];
     [SCREEN setScrollback:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
@@ -2446,6 +2447,10 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (BOOL)growlNewOutput
 {
     return growlNewOutput;
+}
+
+- (NSString *)windowName {
+    return [[[self tab] realParentWindow] currentSessionName];
 }
 
 - (NSString*)name

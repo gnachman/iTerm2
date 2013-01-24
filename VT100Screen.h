@@ -149,6 +149,8 @@ void StringToScreenChars(NSString *s,
     // Used for recording instant replay.
     DVR* dvr;
     BOOL saveToScrollbackInAlternateScreen_;
+
+    BOOL allowTitleReporting_;
 }
 
 
@@ -344,6 +346,9 @@ void StringToScreenChars(NSString *s,
 
 // Restore the saved position into a passed-in find context (see saveFindContextAbsPos and saveTerminalAbsPos).
 - (void)restoreSavedPositionToFindContext:(FindContext *)context;
+
+// Set whether title reporting is allowed. Defaults to no.
+- (void)setAllowTitleReporting:(BOOL)allow;
 
 @end
 
