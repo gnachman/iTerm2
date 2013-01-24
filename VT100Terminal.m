@@ -1438,7 +1438,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
     VT100TCC result;
     NSData *data;
     char s[MAX_BUFFER_LENGTH] = { 0 }, *c = nil;
-    
+
     assert(datap != NULL);
     assert(datalen >= 2);
     assert(datap[0] == ESC);
