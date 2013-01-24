@@ -798,9 +798,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     if (cacheEntry ) {
         return cacheEntry;
     } else {
-	NSColor *theColor = [self _colorForCode:theIndex
-			        alternateSemantics:alt
-					      bold:isBold];
+        NSColor *theColor = [self _colorForCode:theIndex
+                             alternateSemantics:alt
+                                           bold:isBold];
         NSColor *dimmedColor = [self _dimmedColorFrom:theColor];
         [dimmedColorCache_ setObject:dimmedColor forKey:numKey];
         return dimmedColor;
@@ -813,9 +813,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             isBackground:(BOOL)isBackground
 {
     if (isBackground && dimOnlyText_) {
-	NSColor *theColor = [self _colorForCode:theIndex
-			     alternateSemantics:alt
-					   bold:isBold];
+        NSColor *theColor = [self _colorForCode:theIndex
+                             alternateSemantics:alt
+                                           bold:isBold];
         return theColor;
     } else {
         return [self _dimmedColorForCode:theIndex
@@ -6004,17 +6004,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     CharacterRun* currentRun = NULL;
     const char* matchBytes = [matches bytes];
+    int lastForegroundColor = -1;
+    int lastAlternateForegroundSemantics = -1;
+    int lastBold = 2;  // Bold is a one-bit field so it can never equal 2.
+    NSColor *lastColor = nil;
 
     CharacterRun *prevChar = [[[CharacterRun alloc] init] autorelease];
     BOOL havePrevChar = NO;
     CGFloat curX = initialPoint.x;
-
+    CharacterRun *thisChar = [[[CharacterRun alloc] init] autorelease];
     for (int i = indexRange.location; i < indexRange.location + indexRange.length; i++) {
         if (theLine[i].code == DWC_RIGHT) {
             continue;
         }
         BOOL doubleWidth = i < width - 1 && (theLine[i + 1].code == DWC_RIGHT);
-        CharacterRun *thisChar = [[[CharacterRun alloc] init] autorelease];
         unichar thisCharUnichar = 0;
         NSString* thisCharString = nil;
         CGFloat thisCharAdvance;
@@ -6044,12 +6047,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     thisChar.color = defaultBGColor;
                 }
             } else {
-                // Not reversed or not subject to reversing (only default
-                // foreground color is drawn in reverse video).
-                thisChar.color = [self colorForCode:theLine[i].foregroundColor
-                                 alternateSemantics:theLine[i].alternateForegroundSemantics
-                                               bold:theLine[i].bold
-                                       isBackground:NO];
+                if (theLine[i].foregroundColor == lastForegroundColor &&
+                    theLine[i].alternateForegroundSemantics == lastAlternateForegroundSemantics &&
+                    theLine[i].bold == lastBold) {
+                    // Looking up colors with -colorForCode:... is expensive and it's common to
+                    // have consecutive characters with the same color.
+                    thisChar.color = lastColor;
+                } else {
+                    // Not reversed or not subject to reversing (only default
+                    // foreground color is drawn in reverse video).
+                    thisChar.color = [self colorForCode:theLine[i].foregroundColor
+                                     alternateSemantics:theLine[i].alternateForegroundSemantics
+                                                   bold:theLine[i].bold
+                                           isBackground:NO];
+                    lastForegroundColor = theLine[i].foregroundColor;
+                    lastAlternateForegroundSemantics = theLine[i].alternateForegroundSemantics;
+                    lastBold = theLine[i].bold;
+                    lastColor = thisChar.color;
+                }
             }
         }
 
@@ -6141,6 +6156,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         } else {
             havePrevChar = NO;
+            thisChar.fakeBold = NO;
+            thisChar.fontInfo = nil;
         }
 
         // draw underline
@@ -6588,15 +6605,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 NSRectFillUsingOperation(bgRect,
                                          hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
             } else if (hasBGImage) {
-                                // There is a bg image and no special background on it. Blend
-                                // in the default background color.
+                // There is a bg image and no special background on it. Blend
+                // in the default background color.
                 aColor = [self colorForCode:ALTSEM_BG_DEFAULT
                          alternateSemantics:YES
                                        bold:NO
                                isBackground:YES];
                 aColor = [aColor colorWithAlphaComponent:1 - blend];
                 [aColor set];
-                                NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
+                NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
             }
 
             // Draw red stripes in the background if sending input to all sessions
