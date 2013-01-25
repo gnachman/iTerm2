@@ -549,7 +549,13 @@ static int getCSIParam(unsigned char *datap,
         if (unrecognized) {
             param->cmd = 0xff;
         }
-    }
+    } else {
+        param->cmd = 0x00;
+    }    
+    return datap - orgp;
+
+cancel:
+    param->cmd = 0xff;
     return datap - orgp;
 
 cancel:
