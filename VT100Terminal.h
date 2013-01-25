@@ -364,6 +364,7 @@ typedef enum {
 
     BOOL IS_ANSI;
     BOOL disableSmcupRmcup;
+    BOOL useCanonicalParser;
 
     //terminfo
     char  *key_strings[TERMINFO_KEYS];
@@ -459,6 +460,7 @@ typedef enum {
 - (void) setScreen:(VT100Screen *)sc;
 
 - (void)setDisableSmcupRmcup:(BOOL)value;
+- (void)setUseCanonicalParser:(BOOL)value;
 
 - (BOOL)bracketedPasteMode;
 

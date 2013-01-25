@@ -2926,6 +2926,7 @@ static float versionNumber;
     [terminalType setStringValue:[dict objectForKey:KEY_TERMINAL_TYPE]];
     [sendCodeWhenIdle setState:[[dict objectForKey:KEY_SEND_CODE_WHEN_IDLE] boolValue] ? NSOnState : NSOffState];
     [idleCode setIntValue:[[dict objectForKey:KEY_IDLE_CODE] intValue]];
+    [useCanonicalParser setState:[[dict objectForKey:KEY_USE_CANONICAL_PARSER] boolValue] ? NSOnState : NSOffState];
 
     // Keyboard tab
     int rowIndex = [keyMappings selectedRow];
@@ -3359,6 +3360,7 @@ static float versionNumber;
     [newDict setObject:[terminalType stringValue] forKey:KEY_TERMINAL_TYPE];
     [newDict setObject:[NSNumber numberWithBool:([sendCodeWhenIdle state]==NSOnState)] forKey:KEY_SEND_CODE_WHEN_IDLE];
     [newDict setObject:[NSNumber numberWithInt:[idleCode intValue]] forKey:KEY_IDLE_CODE];
+    [newDict setObject:[NSNumber numberWithBool:([useCanonicalParser state]==NSOnState)] forKey:KEY_USE_CANONICAL_PARSER];
 
     // Keyboard tab
     [newDict setObject:[origBookmark objectForKey:KEY_KEYBOARD_MAP] forKey:KEY_KEYBOARD_MAP];
@@ -4322,6 +4324,7 @@ static float versionNumber;
         KEY_SCROLLBACK_IN_ALTERNATE_SCREEN,
         KEY_UNLIMITED_SCROLLBACK,
         KEY_TERMINAL_TYPE,
+        KEY_USE_CANONICAL_PARSER,
         nil
     };
     NSString *sessionKeys[] = {

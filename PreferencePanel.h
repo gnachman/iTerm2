@@ -492,6 +492,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSComboBox* terminalType;
     IBOutlet NSPopUpButton* characterEncoding;
     IBOutlet NSButton* setLocaleVars;
+    IBOutlet NSButton* useCanonicalParser;
 
     // Keyboard tab
     IBOutlet NSTableView* keyMappings;
