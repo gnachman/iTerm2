@@ -423,9 +423,9 @@ static int getCSIParam(unsigned char *datap,
                 }
                 if(param->count < VT100CSIPARAM_MAX) {
                     param->p[param->count] = n;
+                    // increment the parameter count
+                    param->count++;
                 }
-                // increment the parameter count
-                param->count++;
                 
                 // set the numeric parameter flag
                 readNumericParameter = YES;
@@ -435,15 +435,14 @@ static int getCSIParam(unsigned char *datap,
 
             case ';':
                 // If we got an implied (blank) parameter, increment the parameter count again
-                if(readNumericParameter == NO) {
+                if (param->count >= VT100CSIPARAM_MAX) {
+                    unrecognized = YES;
+                } else if(readNumericParameter == NO) {
                     param->count++;
                 }
                 // reset the parameter flag
                 readNumericParameter = NO;
                 
-                if (param->count >= VT100CSIPARAM_MAX) {
-                    unrecognized = YES;
-                }
                 if (!advanceAndEatControlChars(&datap, &datalen, SCREEN)) {
                     goto cancel;
                 }
