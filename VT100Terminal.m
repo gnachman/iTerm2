@@ -134,13 +134,15 @@
 #define REPORT_VT52          "\033/Z"
 
 #define conststr_sizeof(n)   ((sizeof(n)) - 1)
-#define PACK_CSI_COMMAND(first, second) ((first << 8) | second)
-
+#define MAKE_CSI_COMMAND(first, second) ((first << 8) | second) // used by old parser
+#define PACK_CSI_COMMAND(first, second) ((first << 8) | second) // used by new parser
 
 typedef struct {
     int p[VT100CSIPARAM_MAX];
     int count;
     int cmd;
+    BOOL question; // used by old parser
+    int modifier;  // used by old parser
 } CSIParam;
 
 // functions
@@ -148,11 +150,13 @@ static BOOL isCSI(unsigned char *, int);
 static BOOL isXTERM(unsigned char *, int);
 static BOOL isString(unsigned char *, NSStringEncoding);
 static int getCSIParam(unsigned char *, int, CSIParam *, VT100Screen *);
+static int getCSIParamCanonically(unsigned char *, int, CSIParam *, VT100Screen *);
 static VT100TCC decode_csi(unsigned char *, int, int *,VT100Screen *);
+static VT100TCC decode_csi_canonically(unsigned char *, int, int *,VT100Screen *);
 static VT100TCC decode_xterm(unsigned char *, int, int *,NSStringEncoding);
 static VT100TCC decode_ansi(unsigned char *,int, int *,VT100Screen *);
 static VT100TCC decode_other(unsigned char *, int, int *, NSStringEncoding);
-static VT100TCC decode_control(unsigned char *, int, int *,NSStringEncoding,VT100Screen *);
+static VT100TCC decode_control(unsigned char *, int, int *, NSStringEncoding, VT100Screen *, BOOL);
 static int decode_utf8_char(unsigned char *, int, int *);
 static VT100TCC decode_utf8(unsigned char *, int, int *);
 static VT100TCC decode_euccn(unsigned char *, int, int *);
@@ -288,6 +292,203 @@ static int advanceAndEatControlChars(unsigned char **ppdata,
 }
 
 static int getCSIParam(unsigned char *datap,
+                       int datalen,
+                       CSIParam *param, VT100Screen *SCREEN)
+{
+    int i;
+    BOOL unrecognized=NO;
+    unsigned char *orgp = datap;
+    BOOL readNumericParameter = NO;
+
+    NSCParameterAssert(datap != NULL);
+    NSCParameterAssert(datalen >= 2);
+    NSCParameterAssert(param != NULL);
+
+    param->count = 0;
+    param->cmd = 0;
+    for (i = 0; i < VT100CSIPARAM_MAX; ++i )
+        param->p[i] = -1;
+
+    NSCParameterAssert(datap[0] == ESC);
+    NSCParameterAssert(datap[1] == '[');
+    datap += 2;
+    datalen -= 2;
+
+    if (datalen > 0 && *datap == '?') {
+        param->question = YES;
+        datap ++;
+        datalen --;
+    }
+    // check for secondsry device attribute modifier
+    else if (datalen > 0 && *datap == '>')
+    {
+        param->modifier = '>';
+        param->question = NO;
+        datap++;
+        datalen--;
+    }
+    else
+        param->question = NO;
+
+
+    while (datalen > 0) {
+
+        if (isdigit(*datap)) {
+            int n = *datap - '0';
+            datap++;
+            datalen--;
+
+            while (datalen > 0 && isdigit(*datap)) {
+                n = n * 10 + *datap - '0';
+
+                datap++;
+                datalen--;
+            }
+            //if (param->count == 0 )
+            //param->count = 1;
+            //param->p[param->count - 1] = n;
+            if(param->count < VT100CSIPARAM_MAX)
+                param->p[param->count] = n;
+            // increment the parameter count
+            param->count++;
+
+            // set the numeric parameter flag
+            readNumericParameter = YES;
+
+        }
+        else if (*datap == ';') {
+            datap++;
+            datalen--;
+
+            // If we got an implied (blank) parameter, increment the parameter count again
+            if(readNumericParameter == NO)
+                param->count++;
+            // reset the parameter flag
+            readNumericParameter = NO;
+
+            if (param->count >= VT100CSIPARAM_MAX) {
+                // broken
+                //param->cmd = 0xff;
+                unrecognized=YES;
+                //break;
+            }
+        }
+        else if (isalpha(*datap)||*datap=='@') {
+            datalen--;
+            param->cmd = unrecognized?0xff:*datap;
+            datap++;
+            break;
+        }
+        else if (*datap == ' ') {
+            datap++;
+            datalen--;
+            switch (*datap) {
+                case 'q':
+                    param->cmd = MAKE_CSI_COMMAND(' ', 'q');
+                    datap++;
+                    datalen--;
+                    return datap - orgp;
+                default:
+                    //NSLog(@"Unrecognized sequence: CSI SP %c (0x%x)", *datap, *datap);
+                    datap++;
+                    datalen--;
+                    param->cmd = 0xff;
+                    break;
+            }
+        }
+        else if (*datap=='\'') {
+            datap++;
+            datalen--;
+            switch (*datap) {
+                case 'z':
+                case '|':
+                case 'w':
+                    //NSLog(@"Unsupported locator sequence");
+                    param->cmd=0xff;
+                    datap++;
+                    datalen--;
+                    break;
+                default:
+                    //NSLog(@"Unrecognized locator sequence");
+                    datap++;
+                    datalen--;
+                    param->cmd=0xff;
+                    break;
+            }
+            break;
+        }
+        else if (*datap=='&') {
+            datap++;
+            datalen--;
+            switch (*datap) {
+                case 'w':
+                    //NSLog(@"Unsupported locator sequence");
+                    param->cmd=0xff;
+                    datap++;
+                    datalen--;
+                    break;
+                default:
+                    //NSLog(@"Unrecognized locator sequence");
+                    datap++;
+                    datalen--;
+                    param->cmd=0xff;
+                    break;
+            }
+            break;
+        }
+        else if (*datap == '!') {
+            datap++;
+            datalen--;
+            if (datalen == 0) {
+                return -1;
+            }
+            switch (*datap) {
+                case 'p':
+                    param->cmd = MAKE_CSI_COMMAND('!', 'p');
+                    datap++;
+                    datalen--;
+                    return datap - orgp;
+                default:
+                    datap++;
+                    datalen--;
+                    param->cmd=0xff;
+                    break;
+            }
+        }
+        else {
+            switch (*datap) {
+                case VT100CC_ENQ: break;
+                case VT100CC_BEL: [SCREEN activateBell]; break;
+                case VT100CC_BS:  [SCREEN backSpace]; break;
+                case VT100CC_HT:  [SCREEN setTab]; break;
+                case VT100CC_LF:
+                case VT100CC_VT:
+                case VT100CC_FF:  [SCREEN setNewLine]; break;
+                case VT100CC_CR:  [SCREEN cursorToX:1 Y:[SCREEN cursorY]]; break;
+                case VT100CC_SO:  break;
+                case VT100CC_SI:  break;
+                case VT100CC_DC1: break;
+                case VT100CC_DC3: break;
+                case VT100CC_CAN:
+                case VT100CC_SUB: break;
+                case VT100CC_DEL: [SCREEN deleteCharacters:1];break;
+                default:
+                    //NSLog(@"Unrecognized escape sequence: %c (0x%x)", *datap, *datap);
+                    param->cmd=0xff;
+                    unrecognized=YES;
+                    break;
+            }
+            if (unrecognized == NO) {
+                datalen--;
+                datap++;
+            }
+        }
+        if (unrecognized) break;
+    }
+    return datap - orgp;
+}
+
+static int getCSIParamCanonically(unsigned char *datap,
                        int datalen,
                        CSIParam *param, VT100Screen *SCREEN)
 {
@@ -581,9 +782,11 @@ static VT100TCC decode_ansi(unsigned char *datap,
     return result;
 }
 
+
 static VT100TCC decode_csi(unsigned char *datap,
                            int datalen,
-                           int *rmlen,VT100Screen *SCREEN)
+                           int *rmlen,
+                           VT100Screen *SCREEN)
 {
     VT100TCC result;
     CSIParam param={{0},0};
@@ -591,6 +794,302 @@ static VT100TCC decode_csi(unsigned char *datap,
     int i;
 
     paramlen = getCSIParam(datap, datalen, &param, SCREEN);
+    result.type = VT100_WAIT;
+
+    // Check for unkown
+    if (param.cmd == 0xff) {
+        result.type = VT100_UNKNOWNCHAR;
+        *rmlen = paramlen;
+    }
+    // process
+    else if (paramlen > 0 && param.cmd > 0) {
+        if (!param.question) {
+            switch (param.cmd) {
+                case 'D':       // Cursor Backward
+                    result.type = VT100CSI_CUB;
+                    SET_PARAM_DEFAULT(param, 0, 1);
+                    break;
+
+                case 'B':       // Cursor Down
+                    result.type = VT100CSI_CUD;
+                    SET_PARAM_DEFAULT(param, 0, 1);
+                    break;
+
+                case 'C':       // Cursor Forward
+                    result.type = VT100CSI_CUF;
+                    SET_PARAM_DEFAULT(param, 0, 1);
+                    break;
+
+                case 'A':       // Cursor Up
+                    result.type = VT100CSI_CUU;
+                    SET_PARAM_DEFAULT(param, 0, 1);
+                    break;
+
+                case 'H':
+                    result.type = VT100CSI_CUP;
+                    SET_PARAM_DEFAULT(param, 0, 1);
+                    SET_PARAM_DEFAULT(param, 1, 1);
+                    break;
+
+                case 'c':
+                    result.type = VT100CSI_DA;
+                    SET_PARAM_DEFAULT(param, 0, 0);
+                    break;
+
+                case 'q':
+                    result.type = VT100CSI_DECLL;
+                    SET_PARAM_DEFAULT(param, 0, 0);
+                    break;
+
+                case 'x':
+                    if (param.count == 1)
+                        result.type = VT100CSI_DECREQTPARM;
+                    else
+                        result.type = VT100CSI_DECREPTPARM;
+                    break;
+
+                case 'r':
+                    result.type = VT100CSI_DECSTBM;
+                    SET_PARAM_DEFAULT(param, 0, 1);
+                    SET_PARAM_DEFAULT(param, 1, [SCREEN height]);
+                    break;
+
+                case 'y':
+                    if (param.count == 2)
+                        result.type = VT100CSI_DECTST;
+                    else
+                    {
+#if LOG_UNKNOWN
+                        NSLog(@"1: Unknown token %c", param.cmd);
+#endif
+                        result.type = VT100_NOTSUPPORT;
+                    }
+                        break;
+
+                case 'n':
+                    result.type = VT100CSI_DSR;
+                    SET_PARAM_DEFAULT(param, 0, 0);
+                    break;
+
+                case 'J':
+                    result.type = VT100CSI_ED;
+                    SET_PARAM_DEFAULT(param, 0, 0);
+                    break;
+
+                case 'K':
+                    result.type = VT100CSI_EL;
+                    SET_PARAM_DEFAULT(param, 0, 0);
+                    break;
+
+                case 'f':
+                    result.type = VT100CSI_HVP;
+                    SET_PARAM_DEFAULT(param, 0, 1);
+                    SET_PARAM_DEFAULT(param, 1, 1);
+                    break;
+
+                case 'l':
+                    result.type = VT100CSI_RM;
+                    break;
+
+                case 'm':
+                    result.type = VT100CSI_SGR;
+                    for (i = 0; i < param.count; ++i) {
+                        SET_PARAM_DEFAULT(param, i, 0);
+                        //                        NSLog(@"m[%d]=%d",i,param.p[i]);
+                    }
+                    break;
+
+                case 'h':
+                    result.type = VT100CSI_SM;
+                    break;
+
+                case 'g':
+                    result.type = VT100CSI_TBC;
+                    SET_PARAM_DEFAULT(param, 0, 0);
+                    break;
+
+                case MAKE_CSI_COMMAND(' ', 'q'):
+                    result.type = VT100CSI_DECSCUSR;
+                    SET_PARAM_DEFAULT(param, 0, 0);
+                    break;
+
+                case MAKE_CSI_COMMAND('!', 'p'):
+                    result.type = VT100CSI_DECSTR;
+                    SET_PARAM_DEFAULT(param, 0, 0);
+                    break;
+
+                    // these are xterm controls
+                case '@':
+                    result.type = XTERMCC_INSBLNK;
+                    SET_PARAM_DEFAULT(param,0,1);
+                    break;
+                case 'L':
+                    result.type = XTERMCC_INSLN;
+                    SET_PARAM_DEFAULT(param,0,1);
+                    break;
+                case 'P':
+                    result.type = XTERMCC_DELCH;
+                    SET_PARAM_DEFAULT(param,0,1);
+                    break;
+                case 'M':
+                    result.type = XTERMCC_DELLN;
+                    SET_PARAM_DEFAULT(param,0,1);
+                    break;
+                case 't':
+                    switch (param.p[0]) {
+                        case 8:
+                            result.type = XTERMCC_WINDOWSIZE;
+                            SET_PARAM_DEFAULT(param, 1, 0);     // columns or Y
+                            SET_PARAM_DEFAULT(param, 2, 0);     // rows or X
+                            break;
+                        case 3:
+                            result.type = XTERMCC_WINDOWPOS;
+                            SET_PARAM_DEFAULT(param, 1, 0);     // columns or Y
+                            SET_PARAM_DEFAULT(param, 2, 0);     // rows or X
+                            break;
+                        case 4:
+                            result.type = XTERMCC_WINDOWSIZE_PIXEL;
+                            SET_PARAM_DEFAULT(param, 1, 0);     // columns or Y
+                            SET_PARAM_DEFAULT(param, 2, 0);     // rows or X
+                            break;
+                        case 2:
+                            result.type = XTERMCC_ICONIFY;
+                            break;
+                        case 1:
+                            result.type = XTERMCC_DEICONIFY;
+                            break;
+                        case 5:
+                            result.type = XTERMCC_RAISE;
+                            break;
+                        case 6:
+                            result.type = XTERMCC_LOWER;
+                            break;
+                        case 11:
+                            result.type = XTERMCC_REPORT_WIN_STATE;
+                            break;
+                        case 13:
+                            result.type = XTERMCC_REPORT_WIN_POS;
+                            break;
+                        case 14:
+                            result.type = XTERMCC_REPORT_WIN_PIX_SIZE;
+                            break;
+                        case 18:
+                            result.type = XTERMCC_REPORT_WIN_SIZE;
+                            break;
+                        case 19:
+                            result.type = XTERMCC_REPORT_SCREEN_SIZE;
+                            break;
+                        case 20:
+                            result.type = XTERMCC_REPORT_ICON_TITLE;
+                            break;
+                        case 21:
+                            result.type = XTERMCC_REPORT_WIN_TITLE;
+                            break;
+                        default:
+                            result.type = VT100_NOTSUPPORT;
+                            break;
+                    }
+                    break;
+                case 'S':
+                    result.type = XTERMCC_SU;
+                    SET_PARAM_DEFAULT(param,0,1);
+                    break;
+                case 'T':
+                    if (param.count<2) {
+                        result.type = XTERMCC_SD;
+                        SET_PARAM_DEFAULT(param,0,1);
+                    }
+                    else
+                        result.type = VT100_NOTSUPPORT;
+
+                    break;
+
+
+                    // ANSI
+                case 'Z':
+                    result.type = ANSICSI_CBT;
+                    SET_PARAM_DEFAULT(param,0,1);
+                    break;
+                case 'G':
+                    result.type = ANSICSI_CHA;
+                    SET_PARAM_DEFAULT(param,0,1);
+                    break;
+                case 'd':
+                    result.type = ANSICSI_VPA;
+                    SET_PARAM_DEFAULT(param,0,1);
+                    break;
+                case 'e':
+                    result.type = ANSICSI_VPR;
+                    SET_PARAM_DEFAULT(param,0,1);
+                    break;
+                case 'X':
+                    result.type = ANSICSI_ECH;
+                    SET_PARAM_DEFAULT(param,0,1);
+                    break;
+                case 'i':
+                    result.type = ANSICSI_PRINT;
+                    SET_PARAM_DEFAULT(param,0,0);
+                    break;
+                case 's':
+                    result.type = ANSICSI_SCP;
+                    SET_PARAM_DEFAULT(param,0,0);
+                    break;
+                case 'u':
+                    result.type = ANSICSI_RCP;
+                    SET_PARAM_DEFAULT(param,0,0);
+                    break;
+                default:
+#if LOG_UNKNOWN
+                    NSLog(@"2: Unknown token (%c); %s", param.cmd, datap);
+#endif
+                    result.type = VT100_NOTSUPPORT;
+                    break;
+            }
+        }
+        else {
+            switch (param.cmd) {
+                case 'h':       // Dec private mode set
+                    result.type = VT100CSI_DECSET;
+                    SET_PARAM_DEFAULT(param, 0, 0);
+                    break;
+                case 'l':       // Dec private mode reset
+                    result.type = VT100CSI_DECRST;
+                    SET_PARAM_DEFAULT(param, 0, 0);
+                    break;
+                default:
+#if LOG_UNKNOWN
+                    NSLog(@"3: Unknown token %c", param.cmd);
+#endif
+                    result.type = VT100_NOTSUPPORT;
+                    break;
+
+            }
+        }
+
+        // copy CSI parameter
+        for (i = 0; i < VT100CSIPARAM_MAX; ++i)
+            result.u.csi.p[i] = param.p[i];
+        result.u.csi.count = param.count;
+        result.u.csi.question = param.question;
+        result.u.csi.modifier = param.modifier;
+
+        *rmlen = paramlen;
+    }
+
+    return result;
+}
+
+static VT100TCC decode_csi_canonically(unsigned char *datap,
+                                       int datalen,
+                                       int *rmlen,
+                                       VT100Screen *SCREEN)
+{
+    VT100TCC result;
+    CSIParam param={{0},0};
+    int paramlen;
+    int i;
+
+    paramlen = getCSIParamCanonically(datap, datalen, &param, SCREEN);
     result.type = VT100_WAIT;
 
     // Check for unkown
@@ -1301,12 +1800,17 @@ static VT100TCC decode_other(unsigned char *datap,
 static VT100TCC decode_control(unsigned char *datap,
                                int datalen,
                                int *rmlen,
-                               NSStringEncoding enc, VT100Screen *SCREEN)
+                               NSStringEncoding enc, VT100Screen *SCREEN,
+                               BOOL canonical)
 {
     VT100TCC result;
 
     if (isCSI(datap, datalen)) {
-        result = decode_csi(datap, datalen, rmlen, SCREEN);
+        if (canonical) {
+            result = decode_csi_canonically(datap, datalen, rmlen, SCREEN);
+        } else {
+            result = decode_csi(datap, datalen, rmlen, SCREEN);
+        }
     } else if (isXTERM(datap,datalen)) {
         result = decode_xterm(datap, datalen, rmlen, enc);
     } else if (isANSI(datap, datalen)) {
@@ -2118,13 +2622,12 @@ static VT100TCC decode_string(unsigned char *datap,
         }
     } else {
         int rmlen = 0;
-
         if (*datap >= 0x20 && *datap <= 0x7f) {
             result = decode_ascii_string(datap, datalen, &rmlen);
             result.length = rmlen;
             result.position = datap;
         } else if (iscontrol(datap[0])) {
-            result = decode_control(datap, datalen, &rmlen, ENCODING, SCREEN);
+            result = decode_control(datap, datalen, &rmlen, ENCODING, SCREEN, useCanonicalParser);
             result.length = rmlen;
             result.position = datap;
             [self _setMode:result];

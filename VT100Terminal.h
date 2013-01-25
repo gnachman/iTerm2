@@ -168,6 +168,8 @@ typedef struct {
     struct {
         int p[VT100CSIPARAM_MAX];
         int count;
+        BOOL question; // used by old parser
+        int modifier;  // used by old parser
     } csi;
     } u;
 } VT100TCC;
