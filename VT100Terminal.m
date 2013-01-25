@@ -557,10 +557,6 @@ static int getCSIParam(unsigned char *datap,
 cancel:
     param->cmd = 0xff;
     return datap - orgp;
-
-cancel:
-    param->cmd = 0xff;
-    return datap - orgp;
 }
 
 #define SET_PARAM_DEFAULT(pm,n,d) \
