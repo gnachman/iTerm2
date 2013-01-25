@@ -3292,6 +3292,11 @@ static VT100TCC decode_string(unsigned char *datap,
     disableSmcupRmcup = value;
 }
 
+- (void)setUseCanonicalParser:(BOOL)value
+{
+    useCanonicalParser = value;
+}
+
 - (BOOL)bracketedPasteMode
 {
     return bracketedPasteMode_;

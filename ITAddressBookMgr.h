@@ -145,6 +145,7 @@
 #define KEY_SCROLLBACK_LINES                  @"Scrollback Lines"
 #define KEY_UNLIMITED_SCROLLBACK              @"Unlimited Scrollback"
 #define KEY_TERMINAL_TYPE                     @"Terminal Type"
+#define KEY_USE_CANONICAL_PARSER              @"Use Canonical Parser"
 
 // Session
 #define KEY_AUTOLOG                           @"Automatically Log"
