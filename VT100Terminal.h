@@ -68,7 +68,8 @@
 #define VT100CSI_CUP         2004       // Cursor Position
 #define VT100CSI_CUU         2005       // Cursor Up
 #define VT100CSI_DA          2006       // Device Attributes
-#define VT100CSI_DECALN      2007       // Screen Alignment Display
+#define VT100CSI_DA2         2007       // Secondary Device Attributes
+#define VT100CSI_DECALN      2008       // Screen Alignment Display
 #define VT100CSI_DECDHL      2013       // Double Height Line
 #define VT100CSI_DECDWL      2014       // Double Width Line
 #define VT100CSI_DECID       2015       // Identify Terminal
@@ -102,6 +103,7 @@
 #define VT100CSI_TBC         2047       // Tabulation Clear
 #define VT100CSI_DECSCUSR    2048       // Select the Style of the Cursor
 #define VT100CSI_DECSTR      2049       // Soft reset
+#define VT100CSI_DECDSR      2050       // Device Status Report (DEC specific)
 
 // some xterm extension
 #define XTERMCC_WIN_TITLE        86       // Set window title
@@ -166,8 +168,6 @@ typedef struct {
     struct {
         int p[VT100CSIPARAM_MAX];
         int count;
-        BOOL question;
-        int modifier;
     } csi;
     } u;
 } VT100TCC;

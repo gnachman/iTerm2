@@ -241,11 +241,12 @@ void StringToScreenChars(NSString *s,
 - (void)scrollUp;
 - (void)scrollDown;
 - (void)activateBell;
-- (void)deviceReport:(VT100TCC)token;
+- (void)deviceReport:(VT100TCC)token withQuestion:(BOOL)question;
 - (void)deviceAttribute:(VT100TCC)token;
-- (void)insertBlank: (int)n;
-- (void)insertLines: (int)n;
-- (void)deleteLines: (int)n;
+- (void)secondaryDeviceAttribute:(VT100TCC)token;
+- (void)insertBlank:(int)n;
+- (void)insertLines:(int)n;
+- (void)deleteLines:(int)n;
 - (void)blink;
 - (int)cursorX;
 - (int)cursorY;
