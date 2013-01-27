@@ -1496,7 +1496,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
             // Effectively, it allows you to terminate an OSC with ESC + anything except ].
             // Other bogus values may do strange things in xterm.
             if (*datap == VT100CC_ESC) {
-                if (datalen > 2 && *(datap + 1) == ']') {
+                if (datalen >= 2 && *(datap + 1) == ']') {
                     // if Esc + ] is present recursively, skip it simply.
                     //
                     // Example:
@@ -1508,7 +1508,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
                     ADVANCE(datap, datalen ,rmlen);
                     ADVANCE(datap, datalen ,rmlen);
                     continue;
-                } else if (datalen > 2 && *(datap + 1) == '\\') {
+                } else if (datalen >= 2 && *(datap + 1) == '\\') {
                     // if Esc + \ is present, terminate OSC successfully".
                     //
                     // Example:
