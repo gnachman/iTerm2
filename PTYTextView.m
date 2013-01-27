@@ -3025,6 +3025,8 @@ NSMutableArray* screens=0;
         if (ry < 0) {
             ry = -1;
         }
+        lastReportedX_ = rx;
+        lastReportedY_ = ry;
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
@@ -3245,6 +3247,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (ry < 0) {
             ry = -1;
         }
+        lastReportedX_ = rx;
+        lastReportedY_ = ry;
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
@@ -3389,25 +3393,29 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (ry < 0) {
             ry = -1;
         }
-        VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
+        if (rx != lastReportedX_ || ry != lastReportedY_) {
+            lastReportedX_ = rx;
+            lastReportedY_ = ry;
+            VT100Terminal *terminal = [dataSource terminal];
+            PTYSession* session = [dataSource session];
 
-        switch ([terminal mouseMode]) {
-            case MOUSE_REPORTING_BUTTON_MOTION:
-            case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_LEFT
-                                           withModifiers:[event modifierFlags]
-                                                     atX:rx
-                                                       Y:ry]];
-            case MOUSE_REPORTING_NORMAL:
-                DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
-                return;
-                break;
+            switch ([terminal mouseMode]) {
+                case MOUSE_REPORTING_BUTTON_MOTION:
+                case MOUSE_REPORTING_ALL_MOTION:
+                    [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_LEFT
+                                               withModifiers:[event modifierFlags]
+                                                         atX:rx
+                                                           Y:ry]];
+                case MOUSE_REPORTING_NORMAL:
+                    DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
+                    return;
+                    break;
 
-            case MOUSE_REPORTING_NONE:
-            case MOUSE_REPORTING_HILITE:
-                // fall through
-                break;
+                case MOUSE_REPORTING_NONE:
+                case MOUSE_REPORTING_HILITE:
+                    // fall through
+                    break;
+            }
         }
     }
 
