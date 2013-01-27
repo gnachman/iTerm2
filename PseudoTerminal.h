@@ -253,9 +253,13 @@ NSWindowDelegate,
 	// Recalls if this was a hide-after-opening window.
 	BOOL hideAfterOpening_;
 
-        // After dealloc starts, the restorable state should not be updated
-        // because the window's state is a shambles.
-        BOOL doNotSetRestorableState_;
+    // After dealloc starts, the restorable state should not be updated
+    // because the window's state is a shambles.
+    BOOL doNotSetRestorableState_;
+
+	// For top/left/bottom of screen windows, this is the size it really wants to be.
+	// Initialized to -1 in -init and then set to the size of the first session forever.
+    int desiredRows_, desiredColumns_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement

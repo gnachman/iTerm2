@@ -250,6 +250,7 @@ NSString *sessionsKey = @"sessions";
         haveScreenPreference_ = YES;
     }
 
+    desiredRows_ = desiredColumns_ = -1;
     NSRect initialFrame;
     switch (windowType) {
         case WINDOW_TYPE_TOP:
@@ -1732,6 +1733,10 @@ NSString *sessionsKey = @"sessions";
     switch (windowType_) {
         case WINDOW_TYPE_TOP:
             PtyLog(@"Window type = TOP");
+            // If the screen grew and the window was smaller than the desired number of rows, grow it.
+            CGSize decorationSize = [self windowDecorationSize];
+            frame.size.height = MIN([screen visibleFrame].size.height,
+                                    ceil([[session TEXTVIEW] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
             frame.size.width = [screen visibleFrame].size.width;
             frame.origin.x = [screen visibleFrame].origin.x;
             if ([[self window] alphaValue] == 0) {
@@ -1749,6 +1754,9 @@ NSString *sessionsKey = @"sessions";
 
         case WINDOW_TYPE_BOTTOM:
             PtyLog(@"Window type = BOTTOM");
+            // If the screen grew and the window was smaller than the desired number of rows, grow it.
+            frame.size.height = MIN([screen visibleFrame].size.height,
+                                    ceil([[session TEXTVIEW] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
             frame.size.width = [screen visibleFrame].size.width;
             frame.origin.x = [screen visibleFrame].origin.x;
             if ([[self window] alphaValue] == 0) {
@@ -1765,21 +1773,23 @@ NSString *sessionsKey = @"sessions";
             break;
 
         case WINDOW_TYPE_LEFT:
-          frame.size.width = [[session TEXTVIEW] charWidth] * [[abDict objectForKey:KEY_COLUMNS] intValue];
-          frame.size.height = [screen visibleFrame].size.height;
-          frame.origin.y = [screen visibleFrame].origin.y;
-          if ([[self window] alphaValue] == 0) {
-            // Is hidden hotkey window
-            frame.origin.x = [screen visibleFrame].origin.x - frame.size.width;
-          } else {
-            // Normal case
-            frame.origin.x = [screen visibleFrame].origin.x;
-          }
-
-          if (frame.size.width > 0) {
-            [[self window] setFrame:frame display:YES];
-          }
-          break;
+            // If the screen grew and the window was smaller than the desired number of columns, grow it.
+            frame.size.width = MIN([screen visibleFrame].size.width,
+                                   [[session TEXTVIEW] charWidth] * desiredColumns_ + 2 * MARGIN);
+            frame.size.height = [screen visibleFrame].size.height;
+            frame.origin.y = [screen visibleFrame].origin.y;
+            if ([[self window] alphaValue] == 0) {
+                // Is hidden hotkey window
+                frame.origin.x = [screen visibleFrame].origin.x - frame.size.width;
+            } else {
+                // Normal case
+                frame.origin.x = [screen visibleFrame].origin.x;
+            }
+            
+            if (frame.size.width > 0) {
+                [[self window] setFrame:frame display:YES];
+            }
+            break;
 
         case WINDOW_TYPE_NORMAL:
             PtyLog(@"Window type = NORMAL");
@@ -3878,8 +3888,9 @@ NSString *sessionsKey = @"sessions";
 
       PTYSession* session = [self currentSession];
       NSDictionary* abDict = [session addressBookEntry];
-      frame.size.width = ceil([[session TEXTVIEW] charWidth] *
-                              [[abDict objectForKey:KEY_COLUMNS] intValue]) + decorationSize.width;
+      frame.size.width = MIN(winSize.width,
+                             ceil([[session TEXTVIEW] charWidth] *
+                               desiredColumns_) + decorationSize.width + 2 * MARGIN);
 
       frame.origin.x = [[self window] frame].origin.x;
     }
@@ -4827,6 +4838,10 @@ NSString *sessionsKey = @"sessions";
     }
     int rows = [[tempPrefs objectForKey:KEY_ROWS] intValue];
     int columns = [[tempPrefs objectForKey:KEY_COLUMNS] intValue];
+    if (desiredRows_ < 0) {
+        desiredRows_ = rows;
+        desiredColumns_ = columns;
+    }
     if (nextSessionRows_) {
         rows = nextSessionRows_;
         nextSessionRows_ = 0;
@@ -4850,8 +4865,9 @@ NSString *sessionsKey = @"sessions";
                                               hasHorizontalScroller:NO
                                                 hasVerticalScroller:hasScrollbar
                                                          borderType:NSNoBorder];
-
-        columns = (contentSize.width - MARGIN*2) / charSize.width;
+        if (windowType_ != WINDOW_TYPE_LEFT) {
+            columns = (contentSize.width - MARGIN*2) / charSize.width;
+        }
     }
     if (size == nil && [TABVIEW numberOfTabViewItems] != 0) {
         NSSize contentSize = [[[self currentSession] SCROLLVIEW] documentVisibleRect].size;
