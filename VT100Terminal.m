@@ -136,6 +136,7 @@
 #define conststr_sizeof(n)   ((sizeof(n)) - 1)
 #define MAKE_CSI_COMMAND(first, second) ((first << 8) | second) // used by old parser
 #define PACK_CSI_COMMAND(first, second) ((first << 8) | second) // used by new parser
+#define ADVANCE(datap, datalen, rmlen) do { datap++; datalen--; (*rmlen)++; } while (0)
 
 typedef struct {
     int p[VT100CSIPARAM_MAX];
@@ -1441,22 +1442,19 @@ static VT100TCC decode_xterm(unsigned char *datap,
 
     assert(datap != NULL);
     assert(datalen >= 2);
-    assert(datap[0] == ESC);
-    assert(datap[1] == ']');
-    datap += 2;
-    datalen -= 2;
-    *rmlen = 2;
+    *rmlen = 0;
+    assert(*datap == ESC);
+    ADVANCE(datap, datalen ,rmlen);
+    assert(*datap == ']');
+    ADVANCE(datap, datalen ,rmlen);
 
     if (datalen > 0 && isdigit(*datap)) {
         // read an integer from datap and store it in mode.
-        int n = *datap++ - '0';
-        datalen--;
-        (*rmlen)++;
+        int n = *datap - '0';
+        ADVANCE(datap, datalen ,rmlen);
         while (datalen > 0 && isdigit(*datap)) {
             n = n * 10 + *datap - '0';
-            datalen--;
-            (*rmlen)++;
-            datap++;
+            ADVANCE(datap, datalen ,rmlen);
         }
         mode = n;
     }
@@ -1471,9 +1469,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
                 mode = -1;
             }
             // Consume ';' or 'P'.
-            datalen--;
-            datap++;
-            (*rmlen)++;
+            ADVANCE(datap, datalen ,rmlen);
         }
         BOOL str_end = NO;
         c = s;
@@ -1486,18 +1482,14 @@ static VT100TCC decode_xterm(unsigned char *datap,
             }
             // A string control should be canceled by CAN or SUB.
             if (*datap == VT100CC_CAN || *datap == VT100CC_SUB) {
-                datap++;
-                datalen--;
-                (*rmlen)++;
+                ADVANCE(datap, datalen ,rmlen);
                 str_end = YES;
                 unrecognized = YES;
                 break;
             }
             // BEL terminator
             if (*datap == VT100CC_BEL) {
-                datap++;
-                datalen--;
-                (*rmlen)++;
+                ADVANCE(datap, datalen ,rmlen);
                 str_end = YES;
                 break;
             }
@@ -1516,9 +1508,8 @@ static VT100TCC decode_xterm(unsigned char *datap,
                     //
                     // title string "abcdef" should be accepted.
                     //
-                    datap += 2;
-                    datalen -= 2;
-                    (*rmlen) += 2;
+                    ADVANCE(datap, datalen ,rmlen);
+                    ADVANCE(datap, datalen ,rmlen);
                     continue;
                 } else if (datalen > 2 && *(datap + 1) == '\\') {
                     // if Esc + \ is present, terminate OSC successfully".
@@ -1529,9 +1520,8 @@ static VT100TCC decode_xterm(unsigned char *datap,
                     //
                     // title string "abc" should be accepted.
                     //
-                    datap += 2;
-                    datalen -= 2;
-                    (*rmlen) += 2;
+                    ADVANCE(datap, datalen ,rmlen);
+                    ADVANCE(datap, datalen ,rmlen);
                     str_end = YES;
                     break;
                 } else {
@@ -1558,9 +1548,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
                 }
                 c++;
             }
-            datalen--;
-            datap++;
-            (*rmlen)++;
+            ADVANCE(datap, datalen ,rmlen);
         }
         if (!str_end && datalen == 0) {
             // Ran out of data before terminator. Keep trying.
