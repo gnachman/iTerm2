@@ -339,6 +339,10 @@ static int getCSIParam(unsigned char *datap,
             datalen--;
 
             while (datalen > 0 && isdigit(*datap)) {
+                if (n > (INT_MAX - 10) / 10) {
+                    param->cmd = 0xff;
+                    unrecognized = YES;
+                }                
                 n = n * 10 + *datap - '0';
 
                 datap++;
@@ -617,6 +621,9 @@ static int getCSIParamCanonically(unsigned char *datap,
             {
                 int n = 0;
                 while (datalen > 0 && *datap >= '0' && *datap <= '9') {
+                    if (n > (INT_MAX - 10) / 10) {
+                        unrecognized = YES;
+                    }
                     n = n * 10 + *datap - '0';
                     if (!advanceAndEatControlChars(&datap, &datalen, SCREEN)) {
                         goto cancel;
