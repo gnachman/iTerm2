@@ -62,6 +62,8 @@
 
 #define MAX_SCROLLBACK_LINES 1000000
 #define MAX_SCROLL_AT_ONCE 1024
+#define MAX_COLUMNS 4096
+#define MAX_ROWS 4096
 #define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array
 
 typedef struct {
@@ -2271,8 +2273,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             ![[[SESSION tab] parentWindow] anyFullScreen]) {
             // set the column
             [[SESSION tab] sessionInitiatedResize:SESSION
-                                            width:token.u.csi.p[2]
-                                           height:token.u.csi.p[1]];
+                                            width:MIN(token.u.csi.p[2], MAX_COLUMNS)
+                                           height:MIN(token.u.csi.p[1], MAX_ROWS)];
 
         }
         break;
@@ -2281,8 +2283,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             ![[[SESSION tab] parentWindow] anyFullScreen]) {
             // TODO: Only allow this if there is a single session in the tab.
             [[SESSION tab] sessionInitiatedResize:SESSION
-                                            width:(token.u.csi.p[2] / [display charWidth])
-                                           height:(token.u.csi.p[1] / [display lineHeight])];
+                                            width:MIN(token.u.csi.p[2] / [display charWidth], MAX_COLUMNS)
+                                           height:MIN(token.u.csi.p[1] / [display lineHeight], MAX_ROWS)];
         }
         break;
     case XTERMCC_WINDOWPOS:
