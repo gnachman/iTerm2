@@ -1930,7 +1930,12 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         [self cursorUp:token.u.csi.p[0]];
         [SESSION clearTriggerLine];
         break;
-    case VT100CSI_DA:   [self deviceAttribute:token]; break;
+    case VT100CSI_DA:
+        [self deviceAttribute:token];
+        break;
+    case VT100CSI_DA2:
+        [self secondaryDeviceAttribute:token];
+        break;
     case VT100CSI_DECALN:
         for (i = 0; i < HEIGHT; i++) {
             aLine = [self getLineAtScreenIndex:i];
@@ -1961,7 +1966,12 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     case VT100CSI_DECSTBM: [self setTopBottom:token]; break;
     case VT100CSI_DECSWL: break;
     case VT100CSI_DECTST: break;
-    case VT100CSI_DSR:  [self deviceReport:token]; break;
+    case VT100CSI_DSR:
+        [self deviceReport:token withQuestion:NO];
+        break;
+    case VT100CSI_DECDSR:
+        [self deviceReport:token withQuestion:YES];
+        break;
     case VT100CSI_ED:
         [self eraseInDisplay:token];
         [SESSION clearTriggerLine];
@@ -3904,7 +3914,7 @@ void DumpBuf(screen_char_t* p, int n) {
     return GROWL;
 }
 
-- (void)deviceReport:(VT100TCC)token
+- (void)deviceReport:(VT100TCC)token withQuestion:(BOOL)question
 {
     NSData *report = nil;
 
@@ -3935,7 +3945,7 @@ void DumpBuf(screen_char_t* p, int n) {
                 x = cursorX + 1;
                 y = cursorY + 1;
             }
-            report = [TERMINAL reportActivePositionWithX:x Y:y withQuestion:token.u.csi.question];
+            report = [TERMINAL reportActivePositionWithX:x Y:y withQuestion:question];
         }
             break;
 
@@ -3954,16 +3964,31 @@ void DumpBuf(screen_char_t* p, int n) {
     NSData *report = nil;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen deviceAttribute:%d, modifier = '%c']",
-          __FILE__, __LINE__, token.u.csi.p[0], token.u.csi.modifier);
+    NSLog(@"%s(%d):-[VT100Screen deviceAttribute:%d]",
+          __FILE__, __LINE__, token.u.csi.p[0]);
 #endif
     if (SHELL == nil)
         return;
 
-    if(token.u.csi.modifier == '>')
-        report = [TERMINAL reportSecondaryDeviceAttribute];
-    else
-        report = [TERMINAL reportDeviceAttribute];
+    report = [TERMINAL reportDeviceAttribute];
+
+    if (report != nil) {
+        [SESSION writeTask:report];
+    }
+}
+
+- (void)secondaryDeviceAttribute:(VT100TCC)token
+{
+    NSData *report = nil;
+
+#if DEBUG_METHOD_TRACE
+    NSLog(@"%s(%d):-[VT100Screen secondaryDeviceAttribute:%d]",
+          __FILE__, __LINE__, token.u.csi.p[0]);
+#endif
+    if (SHELL == nil)
+        return;
+
+    report = [TERMINAL reportSecondaryDeviceAttribute];
 
     if (report != nil) {
         [SESSION writeTask:report];
