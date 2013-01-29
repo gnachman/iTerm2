@@ -2538,7 +2538,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 
 - (void)mouseModeDidChange:(MouseMode)mouseMode
 {
-        [display updateCursor:nil];
+    [display updateCursor:nil];
+    [display updateTrackingAreas];
 }
 
 - (BOOL)printToAnsi

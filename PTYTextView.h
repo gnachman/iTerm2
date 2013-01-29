@@ -347,6 +347,7 @@ enum {
 - (void)mouseDown:(NSEvent *)event;
 - (BOOL)mouseDownImpl:(NSEvent*)event;
 - (void)mouseUp:(NSEvent *)event;
+- (void)mouseMoved:(NSEvent *)event;
 - (void)mouseDragged:(NSEvent *)event;
 - (void)otherMouseDown: (NSEvent *) event;
 - (void)otherMouseUp:(NSEvent *)event;

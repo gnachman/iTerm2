@@ -3134,7 +3134,11 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     int cb;
 
-    cb = button % 3;
+    if (button == MOUSE_BUTTON_RELEASE) {
+        cb = button;
+    } else {
+        cb = button % 3;
+    }
     if (button > 3) {
         cb |= MOUSE_BUTTON_SCROLL_FLAG;
     }
