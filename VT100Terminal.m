@@ -372,8 +372,8 @@ static int getCSIParam(unsigned char *datap,
 
             if (param->count >= VT100CSIPARAM_MAX) {
                 // broken
-                //param->cmd = 0xff;
-                unrecognized=YES;
+                param->cmd = 0xff;
+                unrecognized = YES;
                 //break;
             }
         }
