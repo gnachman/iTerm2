@@ -985,6 +985,14 @@ static VT100TCC decode_csi(unsigned char *datap,
                         case 21:
                             result.type = XTERMCC_REPORT_WIN_TITLE;
                             break;
+                        case 22:
+                            result.type = XTERMCC_PUSH_TITLE;
+                            SET_PARAM_DEFAULT(param, 0, 0);
+                            break;
+                        case 23:
+                            result.type = XTERMCC_POP_TITLE;
+                            SET_PARAM_DEFAULT(param, 0, 0);
+                            break;
                         default:
                             result.type = VT100_NOTSUPPORT;
                             break;
