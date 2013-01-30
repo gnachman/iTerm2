@@ -1444,17 +1444,18 @@ static VT100TCC decode_xterm(unsigned char *datap,
     assert(datalen >= 2);
     *rmlen = 0;
     assert(*datap == ESC);
-    ADVANCE(datap, datalen ,rmlen);
+    ADVANCE(datap, datalen, rmlen);
     assert(*datap == ']');
-    ADVANCE(datap, datalen ,rmlen);
+    ADVANCE(datap, datalen, rmlen);
 
     if (datalen > 0 && isdigit(*datap)) {
         // read an integer from datap and store it in mode.
         int n = *datap - '0';
-        ADVANCE(datap, datalen ,rmlen);
+        ADVANCE(datap, datalen, rmlen);
         while (datalen > 0 && isdigit(*datap)) {
+            // TODO(georgen): Handle integer overflow
             n = n * 10 + *datap - '0';
-            ADVANCE(datap, datalen ,rmlen);
+            ADVANCE(datap, datalen, rmlen);
         }
         mode = n;
     }
@@ -1469,7 +1470,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
                 mode = -1;
             }
             // Consume ';' or 'P'.
-            ADVANCE(datap, datalen ,rmlen);
+            ADVANCE(datap, datalen, rmlen);
         }
         BOOL str_end = NO;
         c = s;
@@ -1482,25 +1483,20 @@ static VT100TCC decode_xterm(unsigned char *datap,
             }
             // A string control should be canceled by CAN or SUB.
             if (*datap == VT100CC_CAN || *datap == VT100CC_SUB) {
-                ADVANCE(datap, datalen ,rmlen);
+                ADVANCE(datap, datalen, rmlen);
                 str_end = YES;
                 unrecognized = YES;
                 break;
             }
             // BEL terminator
             if (*datap == VT100CC_BEL) {
-                ADVANCE(datap, datalen ,rmlen);
+                ADVANCE(datap, datalen, rmlen);
                 str_end = YES;
                 break;
             }
-            // Technically, only ^G or esc + \ ought to terminate a string. But sometimes an application is buggy
-            // and it forgets to terminate it.
-            // xterm has a very complicated state machine that determines when a string is terminated.
-            // Effectively, it allows you to terminate an OSC with ESC + anything except ].
-            // Other bogus values may do strange things in xterm.
             if (*datap == VT100CC_ESC) {
                 if (datalen >= 2 && *(datap + 1) == ']') {
-                    // if Esc + ] is present recursively, skip it simply.
+                    // if Esc + ] is present recursively, simply skip it.
                     //
                     // Example:
                     //
@@ -1508,11 +1504,11 @@ static VT100TCC decode_xterm(unsigned char *datap,
                     //
                     // title string "abcdef" should be accepted.
                     //
-                    ADVANCE(datap, datalen ,rmlen);
-                    ADVANCE(datap, datalen ,rmlen);
+                    ADVANCE(datap, datalen, rmlen);
+                    ADVANCE(datap, datalen, rmlen);
                     continue;
                 } else if (datalen >= 2 && *(datap + 1) == '\\') {
-                    // if Esc + \ is present, terminate OSC successfully".
+                    // if Esc + \ is present, terminate OSC successfully.
                     //
                     // Example:
                     //
@@ -1520,8 +1516,8 @@ static VT100TCC decode_xterm(unsigned char *datap,
                     //
                     // title string "abc" should be accepted.
                     //
-                    ADVANCE(datap, datalen ,rmlen);
-                    ADVANCE(datap, datalen ,rmlen);
+                    ADVANCE(datap, datalen, rmlen);
+                    ADVANCE(datap, datalen, rmlen);
                     str_end = YES;
                     break;
                 } else {
@@ -1548,7 +1544,7 @@ static VT100TCC decode_xterm(unsigned char *datap,
                 }
                 c++;
             }
-            ADVANCE(datap, datalen ,rmlen);
+            ADVANCE(datap, datalen, rmlen);
         }
         if (!str_end && datalen == 0) {
             // Ran out of data before terminator. Keep trying.
