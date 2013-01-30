@@ -342,16 +342,13 @@ static int getCSIParam(unsigned char *datap,
                 if (n > (INT_MAX - 10) / 10) {
                     param->cmd = 0xff;
                     unrecognized = YES;
-                }                
+                }
                 n = n * 10 + *datap - '0';
 
                 datap++;
                 datalen--;
             }
-            //if (param->count == 0 )
-            //param->count = 1;
-            //param->p[param->count - 1] = n;
-            if(param->count < VT100CSIPARAM_MAX)
+            if (param->count < VT100CSIPARAM_MAX)
                 param->p[param->count] = n;
             // increment the parameter count
             param->count++;
@@ -374,7 +371,6 @@ static int getCSIParam(unsigned char *datap,
                 // broken
                 param->cmd = 0xff;
                 unrecognized = YES;
-                //break;
             }
         }
         else if (isalpha(*datap)||*datap=='@') {
@@ -629,15 +625,15 @@ static int getCSIParamCanonically(unsigned char *datap,
                         goto cancel;
                     }
                 }
-                if(param->count < VT100CSIPARAM_MAX) {
+                if (param->count < VT100CSIPARAM_MAX) {
                     param->p[param->count] = n;
                     // increment the parameter count
                     param->count++;
                 }
-                
+
                 // set the numeric parameter flag
                 readNumericParameter = YES;
-                
+
                 break;
             }
 
@@ -650,7 +646,7 @@ static int getCSIParamCanonically(unsigned char *datap,
                 }
                 // reset the parameter flag
                 readNumericParameter = NO;
-                
+
                 if (!advanceAndEatControlChars(&datap, &datalen, SCREEN)) {
                     goto cancel;
                 }
@@ -759,7 +755,7 @@ static int getCSIParamCanonically(unsigned char *datap,
         }
     } else {
         param->cmd = 0x00;
-    }    
+    }
     return datap - orgp;
 
 cancel:
@@ -1145,12 +1141,12 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
                 result.type = VT100CSI_DA;
                 SET_PARAM_DEFAULT(param, 0, 0);
                 break;
-                
+
             case PACK_CSI_COMMAND('>', 'c'):
                 result.type = VT100CSI_DA2;
                 SET_PARAM_DEFAULT(param, 0, 0);
                 break;
-                
+
             case 'q':
                 result.type = VT100CSI_DECLL;
                 SET_PARAM_DEFAULT(param, 0, 0);
@@ -1742,11 +1738,11 @@ static VT100TCC decode_other(unsigned char *datap,
                 if (found) {
                     if (result.u.string.length == 0) {
                         // Ignore 0-length titles to avoid getting bitten by a screen
-                        // feature/hack described here: 
+                        // feature/hack described here:
                         // http://www.gnu.org/software/screen/manual/screen.html#Dynamic-Titles
                         //
                         // screen has a shell-specific heuristic that is enabled by setting the
-                        // window's name to search|name and arranging to have a null title 
+                        // window's name to search|name and arranging to have a null title
                         // escape-sequence output as a part of your prompt. The search portion
                         // specifies an end-of-prompt search string, while the name portion
                         // specifies the default shell name for the window. If the name ends in
@@ -2526,7 +2522,7 @@ static VT100TCC decode_string(unsigned char *datap,
     MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
     [SCREEN mouseModeDidChange:MOUSE_MODE];
     REPORT_FOCUS = NO;
-    
+
     TRACE = NO;
 
     strictAnsiMode = NO;
@@ -2762,36 +2758,36 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (NSData *)keyArrowUp:(unsigned int)modflag
 {
-    return [self specialKey:TERMINFO_KEY_UP 
-                  cursorMod:CURSOR_MOD_UP 
-                  cursorSet:CURSOR_SET_UP 
-                cursorReset:CURSOR_RESET_UP 
+    return [self specialKey:TERMINFO_KEY_UP
+                  cursorMod:CURSOR_MOD_UP
+                  cursorSet:CURSOR_SET_UP
+                cursorReset:CURSOR_RESET_UP
                     modflag:modflag];
 }
 
 - (NSData *)keyArrowDown:(unsigned int)modflag
 {
-    return [self specialKey:TERMINFO_KEY_DOWN 
-                  cursorMod:CURSOR_MOD_DOWN 
-                  cursorSet:CURSOR_SET_DOWN 
-                cursorReset:CURSOR_RESET_DOWN 
+    return [self specialKey:TERMINFO_KEY_DOWN
+                  cursorMod:CURSOR_MOD_DOWN
+                  cursorSet:CURSOR_SET_DOWN
+                cursorReset:CURSOR_RESET_DOWN
                     modflag:modflag];
 }
 
 - (NSData *)keyArrowLeft:(unsigned int)modflag
 {
-    return [self specialKey:TERMINFO_KEY_LEFT 
-                  cursorMod:CURSOR_MOD_LEFT 
-                  cursorSet:CURSOR_SET_LEFT 
-                cursorReset:CURSOR_RESET_LEFT 
+    return [self specialKey:TERMINFO_KEY_LEFT
+                  cursorMod:CURSOR_MOD_LEFT
+                  cursorSet:CURSOR_SET_LEFT
+                cursorReset:CURSOR_RESET_LEFT
                     modflag:modflag];
 }
 
 - (NSData *)keyArrowRight:(unsigned int)modflag
 {
-    return [self specialKey:TERMINFO_KEY_RIGHT 
-                  cursorMod:CURSOR_MOD_RIGHT 
-                  cursorSet:CURSOR_SET_RIGHT 
+    return [self specialKey:TERMINFO_KEY_RIGHT
+                  cursorMod:CURSOR_MOD_RIGHT
+                  cursorSet:CURSOR_SET_RIGHT
                 cursorReset:CURSOR_RESET_RIGHT
                     modflag:modflag];
 }
@@ -3031,13 +3027,13 @@ static VT100TCC decode_string(unsigned char *datap,
         case MOUSE_FORMAT_SGR:
             if (button & MOUSE_BUTTON_SGR_RELEASE_FLAG) {
                 // for mouse release event
-                snprintf(buf, sizeof(buf), "\033[<%d;%d;%dm", 
-                         button ^ MOUSE_BUTTON_SGR_RELEASE_FLAG, 
-                         x, 
+                snprintf(buf, sizeof(buf), "\033[<%d;%d;%dm",
+                         button ^ MOUSE_BUTTON_SGR_RELEASE_FLAG,
+                         x,
                          y);
             } else {
                 // for mouse press/motion event
-                snprintf(buf, sizeof(buf), "\033[<%d;%d;%dM", button, x, y);            
+                snprintf(buf, sizeof(buf), "\033[<%d;%d;%dM", button, x, y);
             }
             break;
         case MOUSE_FORMAT_XTERM:
@@ -3076,7 +3072,7 @@ static VT100TCC decode_string(unsigned char *datap,
 - (NSData *)mouseRelease:(int)button withModifiers:(unsigned int)modflag atX:(int)x Y:(int)y
 {
     int cb;
-    
+
     if (MOUSE_FORMAT == MOUSE_FORMAT_SGR) {
         // for SGR 1006 mode
         cb = button | MOUSE_BUTTON_SGR_RELEASE_FLAG;
@@ -3322,7 +3318,7 @@ static VT100TCC decode_string(unsigned char *datap,
                     // cursor save/restore.  Unlike the existing escape sequence, this
                     // clears the alternate screen when switching to it rather than when
                     // switching to the normal screen, thus retaining the alternate screen
-                    // contents for select/paste operations. 
+                    // contents for select/paste operations.
                     if (!disableSmcupRmcup) {
                         if (mode) {
                             [self saveCursorAttributes];
@@ -3376,7 +3372,7 @@ static VT100TCC decode_string(unsigned char *datap,
                     }
                     break;
 
-                    
+
                 case 1006:
                     if (mode) {
                         MOUSE_FORMAT = MOUSE_FORMAT_SGR;
@@ -3384,7 +3380,7 @@ static VT100TCC decode_string(unsigned char *datap,
                         MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
                     }
                     break;
-                
+
                 case 1015:
                     if (mode) {
                         MOUSE_FORMAT = MOUSE_FORMAT_URXVT;
