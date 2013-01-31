@@ -42,10 +42,13 @@
 "Copy" = "Copy";
 
 /* Context menu */
-"New Tab" = "New Tab";
+"New" = "New";
 
 /* Context menu */
-"New Window" = "New Window";
+"Press Option for New Window" = "Press Option for New Window";
+
+/* Context menu */
+"Open In New Window" = "Open In New Window";
 
 
 /* Removal Alert */
