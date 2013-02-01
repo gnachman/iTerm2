@@ -3461,6 +3461,9 @@ static VT100TCC decode_string(unsigned char *datap,
         case VT100CSI_DECSTR:
             WRAPAROUND_MODE = YES;
             ORIGIN_MODE = NO;
+            INSERT_MODE = NO;
+            KEYPAD_MODE = NO;
+            CURSOR_MODE = NO;
             break;
     }
 }
@@ -3564,7 +3567,9 @@ static VT100TCC decode_string(unsigned char *datap,
             }
         }
     } else if (token.type == VT100CSI_DECSTR) {
+        CHARSET = 0;
         [self resetSGR];
+        [self saveCursorAttributes];
     }
 }
 

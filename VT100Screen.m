@@ -2029,6 +2029,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     case VT100CSI_DECSTR: {
         // VT100CSI_DECSC
         // See note in xterm-terminfo.txt (search for DECSTR).
+        [self showCursor: YES];
 
         // save cursor (fixes origin-mode side-effect)
         [self saveCursorPosition];
