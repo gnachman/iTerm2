@@ -47,7 +47,8 @@
 
 @implementation VT100Terminal
 
-#define iscontrol(c)  ((c) <= 0x1f)
+#define iscontrol(c)  ((c) <= 0x1f || (c) == 0x7f)
+#define isprintable_ascii(c)  ((c) > 0x1f && (c) < 0x7f)
 
 /*
  Traditional Chinese (Big5)
@@ -2222,7 +2223,7 @@ static VT100TCC decode_ascii_string(unsigned char *datap,
     int len = datalen;
 
     while (len > 0) {
-        if (*p >= 0x20 && *p <= 0x7f) {
+        if (isprintable_ascii(*p)) {
             p++;
             len--;
         } else {
@@ -2668,11 +2669,11 @@ static VT100TCC decode_string(unsigned char *datap,
         }
     } else {
         int rmlen = 0;
-        if (*datap >= 0x20 && *datap <= 0x7f) {
+        if (isprintable_ascii(*datap)) {
             result = decode_ascii_string(datap, datalen, &rmlen);
             result.length = rmlen;
             result.position = datap;
-        } else if (iscontrol(datap[0])) {
+        } else if (iscontrol(*datap)) {
             result = decode_control(datap, datalen, &rmlen, ENCODING, SCREEN, useCanonicalParser);
             result.length = rmlen;
             result.position = datap;
