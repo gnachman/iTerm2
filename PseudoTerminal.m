@@ -1,3 +1,5 @@
+int george=0;
+
 // -*- mode:objc -*-
 // $Id: PseudoTerminal.m,v 1.437 2009-02-06 15:07:23 delx Exp $
 //
@@ -2051,14 +2053,14 @@ NSString *sessionsKey = @"sessions";
 
 - (void)saveTmuxWindowOrigins
 {
-        for (TmuxController *tc in [self uniqueTmuxControllers]) {
-                [tc saveWindowOrigins];
-        }
+    for (TmuxController *tc in [self uniqueTmuxControllers]) {
+            [tc saveWindowOrigins];
+    }
 }
 
 - (void)windowDidMove:(NSNotification *)notification
 {
-        [self saveTmuxWindowOrigins];
+    [self saveTmuxWindowOrigins];
 }
 
 - (void)windowDidResize:(NSNotification *)aNotification
@@ -3879,7 +3881,23 @@ NSString *sessionsKey = @"sessions";
     frame.size = winSize;
     frame.origin.y -= heightChange;
 
-    [[[self window] contentView] setAutoresizesSubviews:NO];
+    // Ok, so some silly things are happening here. Issue 2096 reported that
+    // when a session-initiated resize grows a window, the window's background
+    // color becomes almost solid (it's actually a very gentle gradient between
+    // two almost identical grays). For reasons that escape me, this happens if
+    // the window's content view does not have a subview with an autoresizing
+    // mask or autoresizing is off for the content view. I'm sure this isn't
+    // the best fix, but it's all I could find: I turn off the autoresizing
+    // mask for the TABVIEW (which I really don't want autoresized--it needs to
+    // be done by hand in fitTabToWindow), and add a silly one pixel view
+    // that lives just long enough to be resized in this function. I don't know
+    // why it works but it does.
+    NSView *bugFixView = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, 1, 1)] autorelease];
+    bugFixView.autoresizingMask = (NSViewWidthSizable | NSViewHeightSizable);
+    [[[self window] contentView] addSubview:bugFixView];
+    NSUInteger savedMask = TABVIEW.autoresizingMask;
+    TABVIEW.autoresizingMask = 0;
+
     if (windowType_ == WINDOW_TYPE_TOP || windowType_ == WINDOW_TYPE_BOTTOM) {
         frame.size.width = [[self window] frame].size.width;
         frame.origin.x = [[self window] frame].origin.x;
@@ -3889,7 +3907,6 @@ NSString *sessionsKey = @"sessions";
       frame.size.height = self.screen.visibleFrame.size.height;
 
       PTYSession* session = [self currentSession];
-      NSDictionary* abDict = [session addressBookEntry];
       frame.size.width = MIN(winSize.width,
                              ceil([[session TEXTVIEW] charWidth] *
                                desiredColumns_) + decorationSize.width + 2 * MARGIN);
@@ -3905,8 +3922,11 @@ NSString *sessionsKey = @"sessions";
 
     BOOL didResize = NSEqualRects([[self window] frame], frame);
     [[self window] setFrame:frame display:YES];
-    [[[self window] contentView] setAutoresizesSubviews:YES];
 
+    // Restore TABVIEW's autoresizingMask and remove the stupid bugFixView.
+    TABVIEW.autoresizingMask = savedMask;
+    [bugFixView removeFromSuperview];
+    [[[self window] contentView] setAutoresizesSubviews:YES];
     [self fitBottomBarToWindow];
 
     PtyLog(@"fitWindowToTabs - refresh textview");
