@@ -1727,6 +1727,8 @@ NSString *sessionsKey = @"sessions";
     }
     NSRect frame = [[self window] frame];
 
+    PtyLog(@"The new screen visible frame is %@", [NSValue valueWithRect:[screen visibleFrame]]);
+
     // NOTE: In bug 1347, we see that for some machines, [screen frame].size.width==0 at some point
     // during sleep/wake from sleep. That is why we check that width is positive before setting the
     // window's frame.

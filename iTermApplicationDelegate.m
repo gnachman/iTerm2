@@ -552,9 +552,13 @@ static BOOL hasBecomeActive = NO;
     // The screens' -visibleFrame is not updated when this is called. Doing a delayed perform with
     // a delay of 0 is usually, but not always enough. Not that 1 second is always enough either,
     // I suppose, but I don't want to die on this hill.
+    NSNumber *delay = [[NSUserDefaults standardUserDefaults] objectForKey:@"UpdateScreenParamsDelay"];
+    if (!delay) {
+        delay = [NSNumber numberWithInt:1];
+    }
     [self performSelector:@selector(updateScreenParametersInAllTerminals)
                withObject:nil
-               afterDelay:1];
+               afterDelay:[delay intValue]];
 }
 
 - (void)updateScreenParametersInAllTerminals {
@@ -936,8 +940,6 @@ static BOOL hasBecomeActive = NO;
     [[[[iTermController sharedInstance] currentTerminal] currentSession] changeFontSizeDirection:-1];
 }
 
-
-
 static void SwapDebugLog() {
         NSMutableString* temp;
         temp = gDebugLogStr;
@@ -1123,8 +1125,8 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     [textview setFont:font nafont:nafont horizontalSpacing:hs verticalSpacing:vs];
         if ([sender isAlternate]) {
                 [frontTerminal sessionInitiatedResize:session
-                                                                                width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
-                                                                           height:[[abEntry objectForKey:KEY_ROWS] intValue]];
+                                                width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
+                                               height:[[abEntry objectForKey:KEY_ROWS] intValue]];
         }
 }
 
