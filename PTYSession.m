@@ -687,7 +687,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 }
 
 - (BOOL)shouldSetCtype {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"SetCtype"];
+    return ![[NSUserDefaults standardUserDefaults] boolForKey:@"DoNotSetCtype"];
 }
 
 - (void)startProgram:(NSString *)program
