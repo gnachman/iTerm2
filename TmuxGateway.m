@@ -64,6 +64,8 @@ static NSString *kCommandIsInitial = @"isInitial";
                        otherButton:@""
          informativeTextWithFormat:@"Reason: %@", message] runModal];
     [self detach];
+    [delegate_ tmuxHostDisconnected];  // Force the client to quit
+    [stream_ replaceBytesInRange:NSMakeRange(0, stream_.length) withBytes:"" length:0];
 }
 
 - (NSData *)decodeHex:(NSString *)hexdata
@@ -236,6 +238,11 @@ static NSString *kCommandIsInitial = @"isInitial";
     // Command range doesn't include the newline.
     NSString *command = [[[NSString alloc] initWithData:[stream_ subdataWithRange:commandRange]
                                                encoding:NSUTF8StringEncoding] autorelease];
+    if (!command) {
+        NSLog(@"Non-UTF-8 command in stream %@", [stream_ subdataWithRange:commandRange]);
+        [self abortWithErrorMessage:@"Non-UTF-8 command in stream (please copy hex data from Console.app into a bug report)"];
+        return NO;
+    }
     // At least on osx, the terminal driver adds \r at random places, sometimes adding two of them in a row!
     // We split on \n, which is safe, and just throw out any \r's that we see.
     command = [command stringByReplacingOccurrencesOfString:@"\r" withString:@""];
