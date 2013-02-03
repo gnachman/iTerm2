@@ -3362,8 +3362,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     DLog(@"mouseMoved");
     VT100Terminal *terminal = [dataSource terminal];
-    assert([self xtermMouseReporting]);
+    if (![self xtermMouseReporting]) {
+        DLog(@"Mouse move event is dispatched but xtermMouseReporting is not enabled");
+        return;
+    }
+#if DEBUG
     assert([terminal mouseMode] == MOUSE_REPORTING_ALL_MOTION);
+#endif
+    if ([terminal mouseMode] != MOUSE_REPORTING_ALL_MOTION) {
+        DLog(@"Mouse move event is dispatched but mouseMode is not MOUSE_REPORTING_ALL_MOTION");
+        return;
+    }
     NSPoint locationInWindow = [event locationInWindow];
     NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
     int rx, ry;
