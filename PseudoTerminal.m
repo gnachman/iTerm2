@@ -1,5 +1,3 @@
-int george=0;
-
 // -*- mode:objc -*-
 // $Id: PseudoTerminal.m,v 1.437 2009-02-06 15:07:23 delx Exp $
 //
@@ -1738,7 +1736,7 @@ NSString *sessionsKey = @"sessions";
         case WINDOW_TYPE_TOP:
             PtyLog(@"Window type = TOP");
             // If the screen grew and the window was smaller than the desired number of rows, grow it.
-            CGSize decorationSize = [self windowDecorationSize];
+            NSSize decorationSize = [self windowDecorationSize];
             frame.size.height = MIN([screen visibleFrame].size.height,
                                     ceil([[session TEXTVIEW] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
             frame.size.width = [screen visibleFrame].size.width;
