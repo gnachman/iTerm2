@@ -128,6 +128,7 @@ static int consume_hex(const char *s, int *out)
 
     const char *s = [hist UTF8String];
     for (int i = 0; s[i]; ) {
+        int i_prev = i;
         if (s[i] == ':' || s[i] == '<') {  // : is deprecated, new tmuxen use <
             // Old style:
             // :attr,flags,fg,bg,char,char,char,...
@@ -147,6 +148,7 @@ static int consume_hex(const char *s, int *out)
                 if (s[i] == expected) {
                     i++;
                 } else {
+                    NSLog(@"Malformed history line: invalid prefix: expected '%c' but got '%c' at %d: <<%@>>", expected, s[i], i, hist);
                     return nil;
                 }
             }
@@ -161,7 +163,7 @@ static int consume_hex(const char *s, int *out)
                 ctx->isDwcPadding = NO;
             }
         } else if (s[i] == '*') {
- //           NSLog(@"found a * at %d", i);
+//            NSLog(@"found a * at %d", i);
             i++;
             NSInteger repeats;
             // We have a "*<number> " sequence. Scan the number.
@@ -177,11 +179,11 @@ static int consume_hex(const char *s, int *out)
                 if (s[i] == ' ') {
                     i++;
                 } else {
-                    NSLog(@"malformed dump history lacks a space after *n: <<%@>>", hist);
+                    NSLog(@"Malformed history line: lacks a space after '*n' at %d: <<%@>>", i, hist);
                     return nil;
                 }
             } else {
-                NSLog(@"malformed dump history lacks a number after *: <<%@>>", hist);
+                NSLog(@"Malformed history line: lacks a number after '*' at %d: <<%@>>", i, hist);
                 return nil;
             }
         }
@@ -199,7 +201,7 @@ static int consume_hex(const char *s, int *out)
                     utf8 = YES;
                     [utf8Buffer setLength:0];
                 } else {
-                    NSLog(@"Malformed text after [ in history");
+                    NSLog(@"Malformed history line: malformed text after '[': <<%@>>", hist);
                     return nil;
                 }
                 i++;
@@ -213,7 +215,7 @@ static int consume_hex(const char *s, int *out)
                     lastChar = ctx->prototype;
                     [result appendBytes:&ctx->prototype length:sizeof(screen_char_t)];
                 } else {
-                    NSLog(@"] without [ in history");
+                    NSLog(@"Malformed history line: ']' without '[': <<%@>>", hist);
                     return nil;
                 }
                 i++;
@@ -244,13 +246,17 @@ static int consume_hex(const char *s, int *out)
                     }
                     i += 2;
                 } else {
-                    NSLog(@"Malformed hex array at %d: \"%c%c\" (%d %d)", i, s[i], s[i+1], (int) s[i], (int) s[i+1]);
+                    NSLog(@"Malformed history line: malformed hex array at %d: \"%c%c\" (%d %d): <<%@>>", i, s[i], s[i+1], (int) s[i], (int) s[i+1], hist);
                     return nil;
                 }
             }
         }
         if (utf8) {
-            NSLog(@"Malformed history line has unclosed utf8 at %d: %@", i, hist);
+            NSLog(@"Malformed history line: unclosed utf8 at %d: <<%@>>", i, hist);
+            return nil;
+        }
+        if (i == i_prev) {
+            NSLog(@"Malformed history line: bad hex digit stream at %d: <<%@>>", i, hist);
             return nil;
         }
     }
