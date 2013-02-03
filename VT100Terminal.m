@@ -836,7 +836,11 @@ static VT100TCC decode_csi(unsigned char *datap,
                     break;
 
                 case 'c':
-                    result.type = VT100CSI_DA;
+                    if (param.modifier == '>') {
+                        result.type = VT100CSI_DA2;
+                    } else {
+                        result.type = VT100CSI_DA;
+                    }
                     SET_PARAM_DEFAULT(param, 0, 0);
                     break;
 
