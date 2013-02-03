@@ -409,6 +409,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [super viewWillMoveToWindow:win];
 }
 
+- (void)viewDidMoveToWindow
+{
+    [self updateTrackingAreas];
+}
+
 - (void)updateTrackingAreas
 {
     int trackingOptions;
