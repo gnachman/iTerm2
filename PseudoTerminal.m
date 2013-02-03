@@ -2634,20 +2634,42 @@ NSString *sessionsKey = @"sessions";
     }
 
     // Bookmarks
-    [theMenu insertItemWithTitle:NSLocalizedStringFromTableInBundle(@"New Window",
+    [theMenu insertItemWithTitle:NSLocalizedStringFromTableInBundle(@"New",
                                                                     @"iTerm",
                                                                     [NSBundle bundleForClass:[self class]],
                                                                     @"Context menu")
                           action:nil
                    keyEquivalent:@""
-                         atIndex:nextIndex++];
-    [theMenu insertItemWithTitle:NSLocalizedStringFromTableInBundle(@"New Tab",
-                                                                    @"iTerm",
-                                                                    [NSBundle bundleForClass:[self class]],
-                                                                    @"Context menu")
-                          action:nil
-                   keyEquivalent:@""
-                         atIndex:nextIndex++];
+                         atIndex:nextIndex];
+
+    // Build the bookmarks menu
+    NSMenu *aMenu = [[[NSMenu alloc] init] autorelease];
+
+    [aMenu addItemWithTitle:NSLocalizedStringFromTableInBundle(@"Press Option for New Window",
+							       @"iTerm",
+							       [NSBundle bundleForClass:[self class]],
+							       @"Context menu")
+		     action:nil
+	      keyEquivalent:@""];
+
+    NSMenuItem* altMsg = [NSMenuItem alloc];
+    [altMsg initWithTitle:NSLocalizedStringFromTableInBundle(@"Open In New Window",
+							     @"iTerm",
+							     [NSBundle bundleForClass:[self class]],
+							     @"Context menu")
+		   action:nil
+	    keyEquivalent:@""];
+    [altMsg setKeyEquivalentModifierMask:NSAlternateKeyMask];
+    [altMsg setAlternate:YES];
+    [aMenu addItem:altMsg];
+
+    [aMenu addItem:[NSMenuItem separatorItem]];
+
+    [[iTermController sharedInstance] addBookmarksToMenu:aMenu
+                                              startingAt:2];
+
+    [theMenu setSubmenu:aMenu forItem:[theMenu itemAtIndex:nextIndex]];
+    ++nextIndex;
 
     // Create a menu with a submenu to navigate between tabs if there are more than one
     if ([TABVIEW numberOfTabViewItems] > 1) {
@@ -2680,24 +2702,6 @@ NSString *sessionsKey = @"sessions";
 
     // Separator
     [theMenu insertItem:[NSMenuItem separatorItem] atIndex: nextIndex];
-
-    // Build the bookmarks menu
-    NSMenu *aMenu = [[[NSMenu alloc] init] autorelease];
-
-    [[iTermController sharedInstance] addBookmarksToMenu:aMenu
-                                            withSelector:@selector(newSessionInWindowAtIndex:)
-                                         openAllSelector:@selector(newSessionsInNewWindow:)
-                                              startingAt:0];
-
-    [theMenu setSubmenu:aMenu forItem:[theMenu itemAtIndex:0]];
-
-    aMenu = [[[NSMenu alloc] init] autorelease];
-    [[iTermController sharedInstance] addBookmarksToMenu:aMenu
-                                            withSelector:@selector(newSessionInTabAtIndex:)
-                                         openAllSelector:@selector(newSessionsInWindow:)
-                                              startingAt:0];
-
-    [theMenu setSubmenu:aMenu forItem:[theMenu itemAtIndex:1]];
 }
 
 // NSTabView
