@@ -203,6 +203,12 @@
         } else {
             [histories_ setObject:history forKey:wp];
         }
+    } else {
+        [[NSAlert alertWithMessageText:@"Error: malformed history line from tmux."
+                         defaultButton:@"Ok"
+                       alternateButton:@""
+                           otherButton:@""
+             informativeTextWithFormat:@"See Console.app for details"] runModal];
     }
     [self requestDidComplete];
 }

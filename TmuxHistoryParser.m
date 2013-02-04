@@ -115,6 +115,7 @@ static int consume_hex(const char *s, int *out)
     return endptr - s;
 }
 
+// Returns nil on error
 - (NSData *)dataForHistoryLine:(NSString *)hist
                    withContext:(HistoryParseContext *)ctx
 {
@@ -273,7 +274,7 @@ static int consume_hex(const char *s, int *out)
 }
 
 // Return an NSArray of NSData's. Each NSData is an array of screen_char_t's,
-// with the last element in each being the newline.
+// with the last element in each being the newline. Returns nil on error.
 - (NSArray *)parseDumpHistoryResponse:(NSString *)response
 {
     NSArray *lines = [response componentsSeparatedByString:@"\n"];
@@ -281,8 +282,12 @@ static int consume_hex(const char *s, int *out)
     HistoryParseContext ctx;
     memset(&ctx, 0, sizeof(ctx));
     for (NSString *line in lines) {
-        [screenLines addObject:[self dataForHistoryLine:line
-                                            withContext:&ctx]];
+        NSData *data = [self dataForHistoryLine:line
+                                    withContext:&ctx];
+        if (!data) {
+            return nil;
+        }
+        [screenLines addObject:data];
     }
 
     return screenLines;
