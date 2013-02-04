@@ -62,18 +62,6 @@
 #define DEBUG_KEYDOWNDUMP     0
 #define ASK_ABOUT_OUTDATED_FORMAT @"AskAboutOutdatedKeyMappingForGuid%@"
 
-//#define TMUX_VERBOSE_LOGGING
-#ifdef TMUX_VERBOSE_LOGGING
-#define TmuxLog NSLog
-#else
-#define TmuxLog(args...) \
-do { \
-if (gDebugLogging) { \
-DebugLog([NSString stringWithFormat:args]); \
-} \
-} while (0)
-#endif
-
 @implementation PTYSession
 
 static NSString *TERM_ENVNAME = @"TERM";
@@ -714,15 +702,21 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     if ([env objectForKey:COLORFGBG_ENVNAME] == nil && COLORFGBG_VALUE != nil)
         [env setObject:COLORFGBG_VALUE forKey:COLORFGBG_ENVNAME];
 
-    NSString* lang = [self _lang];
+    DLog(@"Begin locale logic");
     if (![addressBookEntry objectForKey:KEY_SET_LOCALE_VARS] ||
         [[addressBookEntry objectForKey:KEY_SET_LOCALE_VARS] boolValue]) {
+        DLog(@"Setting locale vars...");
+        NSString* lang = [self _lang];
         if (lang) {
+            DLog(@"set LANG=%@", lang);
             [env setObject:lang forKey:@"LANG"];
         } else if ([self shouldSetCtype]){
+            DLog(@"should set ctype...");
             // Try just the encoding by itself, which might work.
             NSString *encName = [self encodingName];
+            DLog(@"See if encoding %@ is supported...", encName);
             if (encName && [self _localeIsSupported:encName]) {
+                DLog(@"Set LC_CTYPE=%@", encName);
                 [env setObject:encName forKey:@"LC_CTYPE"];
             }
         }
@@ -3848,9 +3842,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         return;
     }
     if (tmuxSecureLogging_) {
-        TmuxLog(@"Write to tmux.");
+        DLog(@"Write to tmux.");
     } else {
-        TmuxLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
+        DLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
     }
     if (tmuxLogging_) {
         [self printTmuxMessage:[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]];
@@ -4018,7 +4012,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     CFStringEncoding cfEncoding = CFStringConvertNSStringEncodingToEncoding([self encoding]);
     // Convert it to the expected (IANA) format.
     NSString* ianaEncoding = (NSString*)CFStringConvertEncodingToIANACharSetName(cfEncoding);
-
+    DLog(@"iana encoding is %@", ianaEncoding);
     // Fix up lowercase letters.
     static NSDictionary* lowerCaseEncodings;
     if (!lowerCaseEncodings) {
@@ -4033,6 +4027,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         if (lowerCaseEncodings) {
             if (![lowerCaseEncodings objectForKey:ianaEncoding]) {
                 ianaEncoding = [ianaEncoding uppercaseString];
+                DLog(@"Convert to uppser case. ianaEncoding is now %@", ianaEncoding);
             }
         }
     }
@@ -4042,8 +4037,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         NSMutableString* encoding = [[[NSMutableString alloc] initWithString:ianaEncoding] autorelease];
         [encoding replaceOccurrencesOfString:@"ISO-" withString:@"ISO" options:0 range:NSMakeRange(0, [encoding length])];
         [encoding replaceOccurrencesOfString:@"EUC-" withString:@"euc" options:0 range:NSMakeRange(0, [encoding length])];
+        DLog(@"After mangling, encoding is now %@", encoding);
         return encoding;
     }
+
+    DLog(@"Return nil encoding");
 
     return nil;
 }
@@ -4053,10 +4051,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSString* theLocale = nil;
     NSString* languageCode = [[NSLocale currentLocale] objectForKey:NSLocaleLanguageCode];
     NSString* countryCode = [[NSLocale currentLocale] objectForKey:NSLocaleCountryCode];
+    DLog(@"getLocale: languageCode=%@, countryCode=%@", languageCode, countryCode);
     if (languageCode && countryCode) {
         theLocale = [NSString stringWithFormat:@"%@_%@", languageCode, countryCode];
+        DLog(@"Return combined language/country locale %@", theLocale);
     } else {
-        return [[NSLocale currentLocale] localeIdentifier];
+        NSString *localeId = [[NSLocale currentLocale] localeIdentifier];
+        DLog(@"Return local identifier of %@", localeId);
+        return localeId;
     }
     return theLocale;
 }
@@ -4065,14 +4067,19 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 {
     NSString* theLocale = [self _getLocale];
     NSString* encoding = [self encodingName];
+    DLog(@"locale=%@, encoding=%@", theLocale, encoding);
     if (encoding && theLocale) {
         NSString* result = [NSString stringWithFormat:@"%@.%@", theLocale, encoding];
+        DLog(@"Tentative locale is %@", result);
         if ([self _localeIsSupported:result]) {
+            DLog(@"Locale is supported");
             return result;
         } else {
+            DLog(@"Locale is NOT supported");
             return nil;
         }
     } else {
+        DLog(@"No locale or encoding, returning nil language");
         return nil;
     }
 }
