@@ -382,15 +382,15 @@ end:
     id delegate = [self delegate];
 
     // Let our delegate know
-    if([delegate conformsToProtocol: @protocol(PTYWindowDelegateProtocol)])
-    [delegate windowWillToggleToolbarVisibility: self];
-
-    [super toggleToolbarShown: sender];
+    if ([delegate conformsToProtocol:@protocol(PTYWindowDelegateProtocol)]) {
+        [delegate windowWillToggleToolbarVisibility:self];
+    }
+    [super toggleToolbarShown:sender];
 
     // Let our delegate know
-    if([delegate conformsToProtocol: @protocol(PTYWindowDelegateProtocol)])
-    [delegate windowDidToggleToolbarVisibility: self];
-
+    if ([delegate conformsToProtocol:@protocol(PTYWindowDelegateProtocol)]) {
+        [delegate windowDidToggleToolbarVisibility:self];
+    }
 }
 
 - (BOOL)canBecomeKeyWindow

@@ -260,6 +260,10 @@ NSWindowDelegate,
 	// For top/left/bottom of screen windows, this is the size it really wants to be.
 	// Initialized to -1 in -init and then set to the size of the first session forever.
     int desiredRows_, desiredColumns_;
+
+    // Toggling the toolbar in fullscreen senselessly resizes the window. This is the frame before
+    // it was senselessly resized so it can be restored.
+    NSRect preToolbarToggleFrame_;
 }
 
 + (void)drawArrangementPreview:(NSDictionary*)terminalArrangement
@@ -820,6 +824,7 @@ NSWindowDelegate,
 @end
 
 @interface PseudoTerminal (Private)
+- (void)forceToolbarIntoCorrectState;
 - (IBAction)wrapToggleToolbarShown:(id)sender;
 - (void)_refreshTerminal:(NSNotification *)aNotification;
 - (void)_updateToolbeltParentage;
