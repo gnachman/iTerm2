@@ -35,7 +35,7 @@ Deployment:
 	xcodebuild -parallelizeTargets -alltargets -configuration Deployment && \
 	chmod -R go+rX build/Deployment
 
-Nightly:
+Nightly: force
 	xcodebuild -parallelizeTargets -alltargets -configuration Nightly && \
 	chmod -R go+rX build/Nightly
 
@@ -75,3 +75,5 @@ release:
 	cp release-iTerm.plist iTerm.plist
 	make Deployment
 	./release.sh
+
+force:
