@@ -6097,7 +6097,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (theLine[i].complexChar) {
                 thisChar.runType = kCharacterRunSingleCharWithCombiningMarks;
                 thisCharString = ComplexCharToStr(theLine[i].code);
-                drawable = YES;  // TODO: not all unicode is drawable
+                // TODO: not all unicode is drawable
+                // What we know is that `nil' is NOT drawable
+                drawable = (thisCharString != nil);
             } else {
                 // Non-complex char
                 thisChar.runType = kCharacterRunMultipleSimpleChars;
