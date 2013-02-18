@@ -29,6 +29,7 @@
 // method on the recognizer.
 - (void)touchesBeganWithEvent:(NSEvent *)event;
 - (void)touchesEndedWithEvent:(NSEvent *)event;
+- (void)touchesCancelledWithEvent:(NSEvent *)event;
 
 // If these return YES then do not continue processing them or run [super ...].
 - (BOOL)rightMouseDown:(NSEvent*)event;

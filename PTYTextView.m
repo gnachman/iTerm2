@@ -377,6 +377,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     DLog(@"%@ End touch. numTouches_ -> %d", self, numTouches_);
 }
 
+- (void)touchesCancelledWithEvent:(NSEvent *)event
+{
+    numTouches_ = 0;
+    [threeFingerTapGestureRecognizer_ touchesCancelledWithEvent:event];
+    DLog(@"%@ Cancel touch. numTouches_ -> %d", self, numTouches_);
+}
+
 - (BOOL)resignFirstResponder
 {
     return YES;
