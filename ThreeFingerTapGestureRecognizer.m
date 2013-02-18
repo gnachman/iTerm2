@@ -76,6 +76,13 @@ static const NSTimeInterval kDelay = 0.35;  // Just a bit longer than the system
     DLog(@"%@ End touch. numTouches_ -> %d (first=%d, three=%d, dt=%d)", self, numTouches_, (int)firstTouchTime_, (int)threeTouchTime_, (int)([NSDate timeIntervalSinceReferenceDate] - firstTouchTime_));
 }
 
+- (void)touchesCancelledWithEvent:(NSEvent *)event {
+    DLog(@"%@ canceled", self);
+    numTouches_ = 0;
+    firstTouchTime_ = 0;
+    threeTouchTime_ = 0;
+}
+
 - (BOOL)getAndResetFired {
     // This is called for [right]mouseUp events. It returns and resets the value of fired_ so it doesn't get stuck.
     BOOL value = fired_;
