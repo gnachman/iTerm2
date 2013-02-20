@@ -2230,13 +2230,13 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
     for (i = 0; i < 216; i++) {
         [self setColorTable:i+16
-                      color:[NSColor colorWithCalibratedRed:(i/36) ? ((i/36)*40+55)/256.0 : 0
-                                                      green:(i%36)/6 ? (((i%36)/6)*40+55)/256.0:0
-                                                       blue:(i%6) ?((i%6)*40+55)/256.0:0
+                      color:[NSColor colorWithCalibratedRed:(i/36) ? ((i/36)*40+55)/255.0 : 0
+                                                      green:(i%36)/6 ? (((i%36)/6)*40+55)/255.0:0
+                                                       blue:(i%6) ?((i%6)*40+55)/255.0:0
                                                       alpha:1]];
     }
     for (i = 0; i < 24; i++) {
-        [self setColorTable:i+232 color:[NSColor colorWithCalibratedWhite:(i*10+8)/256.0 alpha:1]];
+        [self setColorTable:i+232 color:[NSColor colorWithCalibratedWhite:(i*10+8)/255.0 alpha:1]];
     }
 
     // background image
