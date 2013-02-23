@@ -3620,7 +3620,7 @@ static VT100TCC decode_string(unsigned char *datap,
             g >= 0 && g <= 255 &&
             b >= 0 && b <= 255) {
             [[SCREEN session] setColorTable:theIndex
-                                              color:[NSColor colorWithCalibratedRed:r/256.0 green:g/256.0 blue:b/256.0 alpha:1]];
+                                              color:[NSColor colorWithCalibratedRed:r/255.0 green:g/255.0 blue:b/255.0 alpha:1]];
         }
     } else if (token.type == XTERMCC_SET_KVP) {
         // argument is of the form key=value
@@ -3725,9 +3725,9 @@ static VT100TCC decode_string(unsigned char *datap,
                 g <= 255 &&
                 b >= 0 &&
                 b <= 255) {
-                NSColor* theColor = [NSColor colorWithCalibratedRed:((double)r)/256.0
-                                                              green:((double)g)/256.0
-                                                               blue:((double)b)/256.0
+                NSColor* theColor = [NSColor colorWithCalibratedRed:((double)r)/255.0
+                                                              green:((double)g)/255.0
+                                                               blue:((double)b)/255.0
                                                               alpha:1];
                 switch (n) {
                     case 16:
