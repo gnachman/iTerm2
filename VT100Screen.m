@@ -3048,6 +3048,7 @@ void DumpBuf(screen_char_t* p, int n) {
         }
         for (i = 0; i < n; i++) {
             aLine[WIDTH-n+i].code = 0;
+            aLine[WIDTH-n+i].complexChar = NO;
             CopyForegroundColor(&aLine[WIDTH-n+i], [TERMINAL foregroundColorCodeReal]);
             CopyBackgroundColor(&aLine[WIDTH-n+i], [TERMINAL backgroundColorCodeReal]);
         }
@@ -3299,6 +3300,7 @@ void DumpBuf(screen_char_t* p, int n) {
             assert(aScreenChar < (buffer_lines + HEIGHT*REAL_WIDTH));  // Tried to go way past the end of the screen
         }
         aScreenChar->code = 0;
+        aScreenChar->complexChar = NO;
         CopyForegroundColor(aScreenChar, [TERMINAL foregroundColorCodeReal]);
         CopyBackgroundColor(aScreenChar, [TERMINAL backgroundColorCodeReal]);
     }

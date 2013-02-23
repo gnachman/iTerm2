@@ -214,6 +214,7 @@
 }
 
 - (void)appendCodesFromString:(NSString *)string withAdvance:(CGFloat)advance {
+    assert(string);
     int offset = range_.length;
     int length = [string length];
     [sharedData_ growAllocation:&range_ by:length];
