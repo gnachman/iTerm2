@@ -258,7 +258,17 @@ static NSDate* lastResizeDate_;
 - (void)rightMouseDown:(NSEvent*)event
 {
     if (!splitSelectionView_) {
+        static int inme;
+        if (inme) {
+            // Avoid infinite recursion. Not quite sure why this happens, but a call
+            // to -[PTYTextView rightMouseDown:] will sometimes (after a
+            // few steps through the OS) bring you back here. It happens when randomly touching
+            // a bunch of fingers on the trackpad.
+            return;
+        }
+        ++inme;
         [[[self session] TEXTVIEW] rightMouseDown:event];
+        --inme;
     }
 }
 

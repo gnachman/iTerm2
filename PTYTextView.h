@@ -43,6 +43,7 @@
 #define COLOR_KEY_SIZE 4
 
 @class VT100Screen;
+@class ThreeFingerTapGestureRecognizer;
 
 // Amount of time to highlight the cursor after beginFindCursor:YES
 static const double kFindCursorHoldTime = 1;
@@ -137,6 +138,7 @@ enum {
     char selectMode;
     BOOL mouseDownOnSelection;
     NSEvent *mouseDownEvent;
+    int lastReportedX_, lastReportedY_;
 
     //find support
     int lastFindStartX, lastFindEndX;
@@ -316,6 +318,12 @@ enum {
 
     PointerController *pointer_;
 	NSCursor *cursor_;
+
+    // True while the context menu is being opened.
+    BOOL openingContextMenu_;
+
+	// Experimental feature gated by ThreeFingerTapEmulatesThreeFingerClick bool pref.
+    ThreeFingerTapGestureRecognizer *threeFingerTapGestureRecognizer_;
 }
 
 + (NSCursor *)textViewCursor;

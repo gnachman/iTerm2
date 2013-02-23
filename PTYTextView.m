@@ -68,6 +68,7 @@ static const int kMaxSelectedTextLinesForCustomActions = 100;
 #import "PointerController.h"
 #import "PointerPrefsController.h"
 #import "CharacterRun.h"
+#import "ThreeFingerTapGestureRecognizer.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -255,6 +256,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return textViewCursor;
 }
 
+- (BOOL)useThreeFingerTapGestureRecognizer {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"ThreeFingerTapEmulatesThreeFingerClick"];
+}
+
 - (id)initWithFrame:(NSRect)aRect
 {
     self = [super initWithFrame: aRect];
@@ -318,6 +323,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         DLog(@"Begin tracking touches in view %@", self);
         [self futureSetAcceptsTouchEvents:YES];
         [self futureSetWantsRestingTouches:YES];
+        if ([self useThreeFingerTapGestureRecognizer]) {
+            threeFingerTapGestureRecognizer_ = [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
+                                                                                              selector:@selector(threeFingerTap:)];
+        }
     } else {
         DLog(@"Not tracking touches in view %@", self);
     }
@@ -325,10 +334,38 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     return self;
 }
 
+- (void)sendFakeThreeFingerClickDown:(BOOL)isDown basedOnEvent:(NSEvent *)event {
+    CGEventRef cgEvent = [event CGEvent];
+    CGEventRef fakeCgEvent = CGEventCreateMouseEvent(NULL,
+                                                     isDown ? kCGEventLeftMouseDown : kCGEventLeftMouseUp,
+                                                     CGEventGetLocation(cgEvent),
+                                                     2);
+    CGEventSetIntegerValueField(fakeCgEvent, kCGMouseEventClickState, 1);  // always a single click
+    CGEventSetFlags(fakeCgEvent, CGEventGetFlags(cgEvent));
+    NSEvent *fakeEvent = [NSEvent eventWithCGEvent:fakeCgEvent];
+    int saved = numTouches_;
+    numTouches_ = 3;
+    if (isDown) {
+        DLog(@"Emulate three finger click down");
+        [self mouseDown:fakeEvent];
+    } else {
+        DLog(@"Emulate three finger click up");
+        [self mouseUp:fakeEvent];
+    }
+    numTouches_ = saved;
+    CFRelease(fakeCgEvent);
+}
+
+- (void)threeFingerTap:(NSEvent *)ev {
+    [self sendFakeThreeFingerClickDown:YES basedOnEvent:ev];
+    [self sendFakeThreeFingerClickDown:NO basedOnEvent:ev];
+}
+
 - (void)touchesBeganWithEvent:(NSEvent *)ev
 {
     numTouches_ = [[ev futureTouchesMatchingPhase:1 | (1 << 2)/*NSTouchPhasesBegan | NSTouchPhasesStationary*/
                                            inView:self] count];
+    [threeFingerTapGestureRecognizer_ touchesBeganWithEvent:ev];
     DLog(@"%@ Begin touch. numTouches_ -> %d", self, numTouches_);
 }
 
@@ -336,7 +373,15 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 {
     numTouches_ = [[ev futureTouchesMatchingPhase:(1 << 2)/*NSTouchPhasesStationary*/
                                            inView:self] count];
+    [threeFingerTapGestureRecognizer_ touchesEndedWithEvent:ev];
     DLog(@"%@ End touch. numTouches_ -> %d", self, numTouches_);
+}
+
+- (void)touchesCancelledWithEvent:(NSEvent *)event
+{
+    numTouches_ = 0;
+    [threeFingerTapGestureRecognizer_ touchesCancelledWithEvent:event];
+    DLog(@"%@ Cancel touch. numTouches_ -> %d", self, numTouches_);
 }
 
 - (BOOL)resignFirstResponder
@@ -422,7 +467,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [initialFindContext_.substring release];
 
     [pointer_ release];
-        [cursor_ release];
+    [cursor_ release];
+    [threeFingerTapGestureRecognizer_ disconnectTarget];
+    [threeFingerTapGestureRecognizer_ release];
 
     [super dealloc];
 }
@@ -483,9 +530,19 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     blinkAllowed_ = value;
 }
 
+- (void)markCursorAsDirty {
+    int cursorX = [dataSource cursorX] - 1;
+    int cursorY = [dataSource cursorY] - 1;
+    // Set a different bit for the cursor's dirty position because we don't
+    // want to save an instant replay from when only the cursor is dirty.
+    [dataSource setCharDirtyAtX:cursorX Y:cursorY value:2];
+}
+
 - (void)setCursorType:(ITermCursorType)value
 {
     cursorType_ = value;
+    [self markCursorAsDirty];
+    [self refresh];
 }
 
 - (void)setDimOnlyText:(BOOL)value
@@ -748,9 +805,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     if (cacheEntry ) {
         return cacheEntry;
     } else {
-	NSColor *theColor = [self _colorForCode:theIndex
-			        alternateSemantics:alt
-					      bold:isBold];
+        NSColor *theColor = [self _colorForCode:theIndex
+                             alternateSemantics:alt
+                                           bold:isBold];
         NSColor *dimmedColor = [self _dimmedColorFrom:theColor];
         [dimmedColorCache_ setObject:dimmedColor forKey:numKey];
         return dimmedColor;
@@ -763,9 +820,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             isBackground:(BOOL)isBackground
 {
     if (isBackground && dimOnlyText_) {
-	NSColor *theColor = [self _colorForCode:theIndex
-			     alternateSemantics:alt
-					   bold:isBold];
+        NSColor *theColor = [self _colorForCode:theIndex
+                             alternateSemantics:alt
+                                           bold:isBold];
         return theColor;
     } else {
         return [self _dimmedColorForCode:theIndex
@@ -2206,6 +2263,13 @@ NSMutableArray* screens=0;
 
 - (void)keyDown:(NSEvent*)event
 {
+    static BOOL isFirstInteraction = YES;
+    if (isFirstInteraction) {
+        iTermApplicationDelegate *appDelegate = (iTermApplicationDelegate *)[[NSApplication sharedApplication] delegate];
+        [appDelegate userDidInteractWithASession];
+        isFirstInteraction = NO;
+    }
+
     BOOL debugKeyDown = [[[NSUserDefaults standardUserDefaults] objectForKey:@"DebugKeyDown"] boolValue];
 
     if (debugKeyDown) {
@@ -2265,7 +2329,7 @@ NSMutableArray* screens=0;
     }
     if (modflag & NSCommandKeyMask) {
         // You pressed cmd+something but it's not handled by the delegate. Going further would
-        // send the unmodified key to the terminal which doesn't make sense.adsjflsd
+        // send the unmodified key to the terminal which doesn't make sense.
         if (debugKeyDown) {
             NSLog(@"PTYTextView keyDown You pressed cmd+something");
         }
@@ -2491,6 +2555,10 @@ NSMutableArray* screens=0;
 
 - (void)rightMouseDown:(NSEvent*)event
 {
+    if ([threeFingerTapGestureRecognizer_ rightMouseDown:event]) {
+        DLog(@"Cancel right mouse down");
+        return;
+    }
     if ([pointer_ mouseDown:event withTouches:numTouches_]) {
         return;
     }
@@ -2532,6 +2600,10 @@ NSMutableArray* screens=0;
 
 - (void)rightMouseUp:(NSEvent *)event
 {
+    if ([threeFingerTapGestureRecognizer_ rightMouseUp:event]) {
+        return;
+    }
+
     if ([pointer_ mouseUp:event withTouches:numTouches_]) {
         return;
     }
@@ -2769,6 +2841,9 @@ NSMutableArray* screens=0;
 
 - (void)mouseDown:(NSEvent *)event
 {
+    if ([threeFingerTapGestureRecognizer_ mouseDown:event]) {
+        return;
+    }
     DLog(@"Mouse Down on %@ with event %@, num touches=%d", self, event, numTouches_);
     if ([self mouseDownImpl:event]) {
         [super mouseDown:event];
@@ -2957,6 +3032,8 @@ NSMutableArray* screens=0;
         if (ry < 0) {
             ry = -1;
         }
+        lastReportedX_ = rx;
+        lastReportedY_ = ry;
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
@@ -3125,6 +3202,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)mouseUp:(NSEvent *)event
 {
+    if ([threeFingerTapGestureRecognizer_ mouseUp:event]) {
+        return;
+    }
     DLog(@"Mouse Up on %@ with event %@, numTouches=%d", self, event, numTouches_);
     firstMouseEventNumber_ = -1;  // Synergy seems to interfere with event numbers, so reset it here.
     if (mouseDownIsThreeFingerClick_) {
@@ -3174,6 +3254,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (ry < 0) {
             ry = -1;
         }
+        lastReportedX_ = rx;
+        lastReportedY_ = ry;
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
@@ -3318,25 +3400,29 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (ry < 0) {
             ry = -1;
         }
-        VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
+        if (rx != lastReportedX_ || ry != lastReportedY_) {
+            lastReportedX_ = rx;
+            lastReportedY_ = ry;
+            VT100Terminal *terminal = [dataSource terminal];
+            PTYSession* session = [dataSource session];
 
-        switch ([terminal mouseMode]) {
-            case MOUSE_REPORTING_BUTTON_MOTION:
-            case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_LEFT
-                                           withModifiers:[event modifierFlags]
-                                                     atX:rx
-                                                       Y:ry]];
-            case MOUSE_REPORTING_NORMAL:
-                DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
-                return;
-                break;
+            switch ([terminal mouseMode]) {
+                case MOUSE_REPORTING_BUTTON_MOTION:
+                case MOUSE_REPORTING_ALL_MOTION:
+                    [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_LEFT
+                                               withModifiers:[event modifierFlags]
+                                                         atX:rx
+                                                           Y:ry]];
+                case MOUSE_REPORTING_NORMAL:
+                    DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
+                    return;
+                    break;
 
-            case MOUSE_REPORTING_NONE:
-            case MOUSE_REPORTING_HILITE:
-                // fall through
-                break;
+                case MOUSE_REPORTING_NONE:
+                case MOUSE_REPORTING_HILITE:
+                    // fall through
+                    break;
+            }
         }
     }
 
@@ -3574,7 +3660,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     }
     [self setNeedsDisplay:YES];
     NSMenu *menu = [self menuForEvent:nil];
+    openingContextMenu_ = YES;
     [NSMenu popUpContextMenu:menu withEvent:event forView:self];
+    openingContextMenu_ = NO;
 }
 
 - (void)extendSelectionWithEvent:(NSEvent *)event
@@ -5173,7 +5261,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     NSString *copyString;
 
-    copyString = [self selectedText];
+    if (openingContextMenu_) {
+        // It is agonizingly slow to copy hundreds of thousands of lines just because the context
+        // menu is opening. Services use this to get access to the clipboard contents but
+        // it's lousy to hang for a few minutes for a feature that won't be used very much, esp. for
+        // such large selections.
+        int savedEndY = endY;
+        const int maxLinesToWrite = 10000;
+        endY = MIN(startY + maxLinesToWrite, endY);
+        copyString = [self selectedText];
+        endY = savedEndY;
+    } else {
+        copyString = [self selectedText];
+    }
 
     if (copyString && [copyString length]>0) {
         [pboard declareTypes: [NSArray arrayWithObject: NSStringPboardType] owner: self];
@@ -5919,17 +6019,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 {
     CharacterRun* currentRun = NULL;
     const char* matchBytes = [matches bytes];
+    int lastForegroundColor = -1;
+    int lastAlternateForegroundSemantics = -1;
+    int lastBold = 2;  // Bold is a one-bit field so it can never equal 2.
+    NSColor *lastColor = nil;
 
     CharacterRun *prevChar = [[[CharacterRun alloc] init] autorelease];
     BOOL havePrevChar = NO;
     CGFloat curX = initialPoint.x;
-
+    CharacterRun *thisChar = [[[CharacterRun alloc] init] autorelease];
     for (int i = indexRange.location; i < indexRange.location + indexRange.length; i++) {
         if (theLine[i].code == DWC_RIGHT) {
             continue;
         }
         BOOL doubleWidth = i < width - 1 && (theLine[i + 1].code == DWC_RIGHT);
-        CharacterRun *thisChar = [[[CharacterRun alloc] init] autorelease];
         unichar thisCharUnichar = 0;
         NSString* thisCharString = nil;
         CGFloat thisCharAdvance;
@@ -5959,12 +6062,24 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     thisChar.color = defaultBGColor;
                 }
             } else {
-                // Not reversed or not subject to reversing (only default
-                // foreground color is drawn in reverse video).
-                thisChar.color = [self colorForCode:theLine[i].foregroundColor
-                                 alternateSemantics:theLine[i].alternateForegroundSemantics
-                                               bold:theLine[i].bold
-                                       isBackground:NO];
+                if (theLine[i].foregroundColor == lastForegroundColor &&
+                    theLine[i].alternateForegroundSemantics == lastAlternateForegroundSemantics &&
+                    theLine[i].bold == lastBold) {
+                    // Looking up colors with -colorForCode:... is expensive and it's common to
+                    // have consecutive characters with the same color.
+                    thisChar.color = lastColor;
+                } else {
+                    // Not reversed or not subject to reversing (only default
+                    // foreground color is drawn in reverse video).
+                    thisChar.color = [self colorForCode:theLine[i].foregroundColor
+                                     alternateSemantics:theLine[i].alternateForegroundSemantics
+                                                   bold:theLine[i].bold
+                                           isBackground:NO];
+                    lastForegroundColor = theLine[i].foregroundColor;
+                    lastAlternateForegroundSemantics = theLine[i].alternateForegroundSemantics;
+                    lastBold = theLine[i].bold;
+                    lastColor = thisChar.color;
+                }
             }
         }
 
@@ -6057,6 +6172,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         } else {
             havePrevChar = NO;
+            thisChar.fakeBold = NO;
+            thisChar.fontInfo = nil;
         }
 
         // draw underline
@@ -6504,15 +6621,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 NSRectFillUsingOperation(bgRect,
                                          hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
             } else if (hasBGImage) {
-                                // There is a bg image and no special background on it. Blend
-                                // in the default background color.
+                // There is a bg image and no special background on it. Blend
+                // in the default background color.
                 aColor = [self colorForCode:ALTSEM_BG_DEFAULT
                          alternateSemantics:YES
                                        bold:NO
                                isBackground:YES];
                 aColor = [aColor colorWithAlphaComponent:1 - blend];
                 [aColor set];
-                                NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
+                NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
             }
 
             // Draw red stripes in the background if sending input to all sessions
@@ -7239,7 +7356,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (!urlChars) {
         NSString *chars = [[NSUserDefaults standardUserDefaults] stringForKey:@"URLCharacterSet"];
         if (!chars) {
-            chars = @".?\\/:;%=&_-,+~#@!*'()|";
+            // Note: square brackets are included for ipv6 addresses like http://[2600:3c03::f03c:91ff:fe96:6a7a]/
+            chars = @".?\\/:;%=&_-,+~#@!*'()|[]";
+
         }
         urlChars = [[NSMutableCharacterSet characterSetWithCharactersInString:chars] retain];
         [urlChars formUnionWithCharacterSet:[NSCharacterSet alphanumericCharacterSet]];
@@ -7964,7 +8083,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL track = [pointer_ viewShouldTrackTouches];
     [self futureSetAcceptsTouchEvents:track];
     [self futureSetWantsRestingTouches:track];
-    if (!track) {
+    [threeFingerTapGestureRecognizer_ release];
+    threeFingerTapGestureRecognizer_ = nil;
+    if (track) {
+        if ([self useThreeFingerTapGestureRecognizer]) {
+            threeFingerTapGestureRecognizer_ = [[ThreeFingerTapGestureRecognizer alloc] initWithTarget:self
+                                                                                              selector:@selector(threeFingerTap:)];
+        }
+    } else {
         numTouches_ = 0;
     }
 }
@@ -8329,11 +8455,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if ([self blinkingCursor] &&
             [[self window] isKeyWindow]) {
             // Blink flag flipped and there is a blinking cursor. Mark it dirty.
-            int cursorX = [dataSource cursorX] - 1;
-            int cursorY = [dataSource cursorY] - 1;
-            // Set a different bit for the cursor's dirty position because we don't
-            // want to save an instant replay from when only the cursor is dirty.
-            [dataSource setCharDirtyAtX:cursorX Y:cursorY value:2];
+            [self markCursorAsDirty];
         }
         DebugLog(@"time to redraw blinking text");
     }

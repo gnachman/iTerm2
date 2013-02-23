@@ -62,18 +62,6 @@
 #define DEBUG_KEYDOWNDUMP     0
 #define ASK_ABOUT_OUTDATED_FORMAT @"AskAboutOutdatedKeyMappingForGuid%@"
 
-#define TMUX_VERBOSE_LOGGING
-#ifdef TMUX_VERBOSE_LOGGING
-#define TmuxLog NSLog
-#else
-#define TmuxLog(args...) \
-do { \
-if (gDebugLogging) { \
-DebugLog([NSString stringWithFormat:args]); \
-} \
-} while (0)
-#endif
-
 @implementation PTYSession
 
 static NSString *TERM_ENVNAME = @"TERM";
@@ -112,7 +100,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     savedScrollPosition_ = -1;
     updateTimer = nil;
     antiIdleTimer = nil;
-    addressBookEntry=nil;
+    addressBookEntry = nil;
+    windowTitleStack = nil;
+    iconTitleStack = nil;
 
 #if DEBUG_ALLOC
     NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
@@ -170,6 +160,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [COLORFGBG_VALUE release];
     [name release];
     [windowTitle release];
+    [windowTitleStack release];
+    [iconTitleStack release];
     [addressBookEntry release];
     [backgroundImagePath release];
     [antiIdleTimer invalidate];
@@ -683,7 +675,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 }
 
 - (BOOL)shouldSetCtype {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"SetCtype"];
+    return ![[NSUserDefaults standardUserDefaults] boolForKey:@"DoNotSetCtype"];
 }
 
 - (void)startProgram:(NSString *)program
@@ -710,15 +702,21 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     if ([env objectForKey:COLORFGBG_ENVNAME] == nil && COLORFGBG_VALUE != nil)
         [env setObject:COLORFGBG_VALUE forKey:COLORFGBG_ENVNAME];
 
-    NSString* lang = [self _lang];
+    DLog(@"Begin locale logic");
     if (![addressBookEntry objectForKey:KEY_SET_LOCALE_VARS] ||
         [[addressBookEntry objectForKey:KEY_SET_LOCALE_VARS] boolValue]) {
+        DLog(@"Setting locale vars...");
+        NSString* lang = [self _lang];
         if (lang) {
+            DLog(@"set LANG=%@", lang);
             [env setObject:lang forKey:@"LANG"];
         } else if ([self shouldSetCtype]){
+            DLog(@"should set ctype...");
             // Try just the encoding by itself, which might work.
             NSString *encName = [self encodingName];
+            DLog(@"See if encoding %@ is supported...", encName);
             if (encName && [self _localeIsSupported:encName]) {
+                DLog(@"Set LC_CTYPE=%@", encName);
                 [env setObject:encName forKey:@"LC_CTYPE"];
             }
         }
@@ -2312,6 +2310,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [self setDoubleWidth:[[aDict objectForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH] boolValue]];
     [self setXtermMouseReporting:[[aDict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue]];
     [TERMINAL setDisableSmcupRmcup:[[aDict objectForKey:KEY_DISABLE_SMCUP_RMCUP] boolValue]];
+    [SCREEN setAllowTitleReporting:[[aDict objectForKey:KEY_ALLOW_TITLE_REPORTING] boolValue]];
+    [TERMINAL setUseCanonicalParser:[[aDict objectForKey:KEY_USE_CANONICAL_PARSER] boolValue]];
     [SCREEN setUnlimitedScrollback:[[aDict objectForKey:KEY_UNLIMITED_SCROLLBACK] intValue]];
     [SCREEN setScrollback:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
@@ -2448,6 +2448,10 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     return growlNewOutput;
 }
 
+- (NSString *)windowName {
+    return [[[self tab] realParentWindow] currentSessionName];
+}
+
 - (NSString*)name
 {
     return [self formattedName:name];
@@ -2529,6 +2533,58 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     if ([[[self tab] parentWindow] currentTab] == [self tab]) {
         [[[self tab] parentWindow] setWindowTitle];
+    }
+}
+
+- (void)pushWindowTitle
+{
+    if (!windowTitleStack) {
+        // initialize lazily
+        windowTitleStack = [[NSMutableArray alloc] init];
+    }
+    NSString *title = windowTitle;
+    if (!title) {
+        // if current title is nil, treat it as an empty string.
+        title = @"";
+    }
+    // push it
+    [windowTitleStack addObject:title];
+}
+
+- (void)popWindowTitle
+{
+    // Ignore if title stack is nil or stack count == 0
+    NSUInteger count = [windowTitleStack count];
+    if (count > 0) {
+        // pop window title
+        [self setWindowTitle:[windowTitleStack objectAtIndex:count - 1]];
+        [windowTitleStack removeObjectAtIndex:count - 1];
+    }
+}
+
+- (void)pushIconTitle
+{
+    if (!iconTitleStack) {
+        // initialize lazily
+        iconTitleStack = [[NSMutableArray alloc] init];
+    }
+    NSString *title = name;
+    if (!title) {
+        // if current icon title is nil, treat it as an empty string.
+        title = @"";
+    }
+    // push it
+    [iconTitleStack addObject:title];
+}
+
+- (void)popIconTitle
+{
+    // Ignore if icon title stack is nil or stack count == 0.
+    NSUInteger count = [iconTitleStack count];
+    if (count > 0) {
+        // pop icon title
+        [self setName:[iconTitleStack objectAtIndex:count - 1]];
+        [iconTitleStack removeObjectAtIndex:count - 1];
     }
 }
 
@@ -3638,8 +3694,8 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     tmuxController_ = [[TmuxController alloc] initWithGateway:tmuxGateway_];
 	NSSize theSize;
 	Profile *tmuxBookmark = [PTYTab tmuxBookmark];
-	theSize.width = [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue];
-	theSize.height = [[tmuxBookmark objectForKey:KEY_ROWS] intValue];
+	theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
+	theSize.height = MAX(1, [[tmuxBookmark objectForKey:KEY_ROWS] intValue]);
 	[tmuxController_ setClientSize:theSize];
 
     [self printTmuxMessage:@"** tmux mode started **"];
@@ -3786,9 +3842,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         return;
     }
     if (tmuxSecureLogging_) {
-        TmuxLog(@"Write to tmux.");
+        DLog(@"Write to tmux.");
     } else {
-        TmuxLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
+        DLog(@"Write to tmux: \"%@\"", [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]);
     }
     if (tmuxLogging_) {
         [self printTmuxMessage:[[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease]];
@@ -3956,7 +4012,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     CFStringEncoding cfEncoding = CFStringConvertNSStringEncodingToEncoding([self encoding]);
     // Convert it to the expected (IANA) format.
     NSString* ianaEncoding = (NSString*)CFStringConvertEncodingToIANACharSetName(cfEncoding);
-
+    DLog(@"iana encoding is %@", ianaEncoding);
     // Fix up lowercase letters.
     static NSDictionary* lowerCaseEncodings;
     if (!lowerCaseEncodings) {
@@ -3971,6 +4027,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         if (lowerCaseEncodings) {
             if (![lowerCaseEncodings objectForKey:ianaEncoding]) {
                 ianaEncoding = [ianaEncoding uppercaseString];
+                DLog(@"Convert to uppser case. ianaEncoding is now %@", ianaEncoding);
             }
         }
     }
@@ -3980,8 +4037,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
         NSMutableString* encoding = [[[NSMutableString alloc] initWithString:ianaEncoding] autorelease];
         [encoding replaceOccurrencesOfString:@"ISO-" withString:@"ISO" options:0 range:NSMakeRange(0, [encoding length])];
         [encoding replaceOccurrencesOfString:@"EUC-" withString:@"euc" options:0 range:NSMakeRange(0, [encoding length])];
+        DLog(@"After mangling, encoding is now %@", encoding);
         return encoding;
     }
+
+    DLog(@"Return nil encoding");
 
     return nil;
 }
@@ -3991,10 +4051,14 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     NSString* theLocale = nil;
     NSString* languageCode = [[NSLocale currentLocale] objectForKey:NSLocaleLanguageCode];
     NSString* countryCode = [[NSLocale currentLocale] objectForKey:NSLocaleCountryCode];
+    DLog(@"getLocale: languageCode=%@, countryCode=%@", languageCode, countryCode);
     if (languageCode && countryCode) {
         theLocale = [NSString stringWithFormat:@"%@_%@", languageCode, countryCode];
+        DLog(@"Return combined language/country locale %@", theLocale);
     } else {
-        return [[NSLocale currentLocale] localeIdentifier];
+        NSString *localeId = [[NSLocale currentLocale] localeIdentifier];
+        DLog(@"Return local identifier of %@", localeId);
+        return localeId;
     }
     return theLocale;
 }
@@ -4003,14 +4067,19 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 {
     NSString* theLocale = [self _getLocale];
     NSString* encoding = [self encodingName];
+    DLog(@"locale=%@, encoding=%@", theLocale, encoding);
     if (encoding && theLocale) {
         NSString* result = [NSString stringWithFormat:@"%@.%@", theLocale, encoding];
+        DLog(@"Tentative locale is %@", result);
         if ([self _localeIsSupported:result]) {
+            DLog(@"Locale is supported");
             return result;
         } else {
+            DLog(@"Locale is NOT supported");
             return nil;
         }
     } else {
+        DLog(@"No locale or encoding, returning nil language");
         return nil;
     }
 }

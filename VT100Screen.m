@@ -62,6 +62,8 @@
 
 #define MAX_SCROLLBACK_LINES 1000000
 #define MAX_SCROLL_AT_ONCE 1024
+#define MAX_COLUMNS 4096
+#define MAX_ROWS 4096
 #define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array
 
 typedef struct {
@@ -144,11 +146,11 @@ void StringToScreenChars(NSString *s,
             lastInitializedChar = j;
         }
 
-        if ((sc[i] >= 0xe000 && sc[i] <= ITERM2_PRIVATE_END) ||
-            sc[i] >= 0xfffd) {
-            // Translate private-use characters into a replacement char.
-            // Unfortunately, the proper replacement char U+fffd is double-width
-            // (at least for some fonts) which screws up formatting.
+        if (sc[i] >= ITERM2_PRIVATE_BEGIN && sc[i] <= ITERM2_PRIVATE_END) {
+            // Translate iTerm2's private-use characters into a "?". Although the replacement
+            // character renders as a double-width char in a single-width char's space and is ugly,
+            // some fonts use dwc's to add extra glyphs. It's kinda sketch, but it's better form to
+            // render what you get than to try to be clever and break such edge cases.
             buf[j].code = '?';
         } else if (sc[i] > 0xa0 && [NSString isDoubleWidthCharacter:sc[i]
                                                            encoding:encoding
@@ -166,10 +168,10 @@ void StringToScreenChars(NSString *s,
 
             buf[j].backgroundColor = bg.backgroundColor;
             buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
-        } else if (sc[i] == 0xfeff ||
-                   sc[i] == 0x200b ||
-                   sc[i] == 0x200c ||
-                   sc[i] == 0x200d) {
+        } else if (sc[i] == 0xfeff ||  // zero width no-break space
+                   sc[i] == 0x200b ||  // zero width space
+                   sc[i] == 0x200c ||  // zero width non-joiner
+                   sc[i] == 0x200d) {  // zero width joiner
             j--;
             lastInitializedChar--;
         } else if (IsCombiningMark(sc[i]) || IsLowSurrogate(sc[i])) {
@@ -1720,6 +1722,10 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     return TERMINAL;
 }
 
+- (void)setAllowTitleReporting:(BOOL)allow {
+    allowTitleReporting_ = allow;
+}
+
 - (void)setShellTask:(PTYTask *)shell
 {
 #if DEBUG_METHOD_TRACE
@@ -1926,7 +1932,12 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         [self cursorUp:token.u.csi.p[0]];
         [SESSION clearTriggerLine];
         break;
-    case VT100CSI_DA:   [self deviceAttribute:token]; break;
+    case VT100CSI_DA:
+        [self deviceAttribute:token];
+        break;
+    case VT100CSI_DA2:
+        [self secondaryDeviceAttribute:token];
+        break;
     case VT100CSI_DECALN:
         for (i = 0; i < HEIGHT; i++) {
             aLine = [self getLineAtScreenIndex:i];
@@ -1957,7 +1968,12 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     case VT100CSI_DECSTBM: [self setTopBottom:token]; break;
     case VT100CSI_DECSWL: break;
     case VT100CSI_DECTST: break;
-    case VT100CSI_DSR:  [self deviceReport:token]; break;
+    case VT100CSI_DSR:
+        [self deviceReport:token withQuestion:NO];
+        break;
+    case VT100CSI_DECDSR:
+        [self deviceReport:token withQuestion:YES];
+        break;
     case VT100CSI_ED:
         [self eraseInDisplay:token];
         [SESSION clearTriggerLine];
@@ -2257,8 +2273,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             ![[[SESSION tab] parentWindow] anyFullScreen]) {
             // set the column
             [[SESSION tab] sessionInitiatedResize:SESSION
-                                            width:token.u.csi.p[2]
-                                           height:token.u.csi.p[1]];
+                                            width:MIN(token.u.csi.p[2], MAX_COLUMNS)
+                                           height:MIN(token.u.csi.p[1], MAX_ROWS)];
 
         }
         break;
@@ -2267,8 +2283,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             ![[[SESSION tab] parentWindow] anyFullScreen]) {
             // TODO: Only allow this if there is a single session in the tab.
             [[SESSION tab] sessionInitiatedResize:SESSION
-                                            width:(token.u.csi.p[2] / [display charWidth])
-                                           height:(token.u.csi.p[1] / [display lineHeight])];
+                                            width:MIN(token.u.csi.p[2] / [display charWidth], MAX_COLUMNS)
+                                           height:MIN(token.u.csi.p[1] / [display lineHeight], MAX_ROWS)];
         }
         break;
     case XTERMCC_WINDOWPOS:
@@ -2365,9 +2381,10 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         break;
     case XTERMCC_REPORT_ICON_TITLE: {
         NSString *theString;
-        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AllowInsecureTitleReporting"]) {
-            theString = [NSString stringWithFormat:@"\033]L%@\033\\", [SESSION windowTitle]];
+        if (allowTitleReporting_) {
+            theString = [NSString stringWithFormat:@"\033]L%@\033\\", [SESSION windowTitle] ? [SESSION windowTitle] : [SESSION defaultName]];
         } else {
+            NSLog(@"Not reporting icon title. You can enable this in prefs>profiles>terminal");
             theString = @"\033]L\033\\";
         }
         NSData *theData = [theString dataUsingEncoding:NSUTF8StringEncoding];
@@ -2376,13 +2393,45 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     }
     case XTERMCC_REPORT_WIN_TITLE: {
         NSString *theString;
-        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AllowInsecureTitleReporting"]) {
-            theString = [NSString stringWithFormat:@"\033]l%@\033\\", [SESSION windowTitle]];
+        if (allowTitleReporting_) {
+            theString = [NSString stringWithFormat:@"\033]l%@\033\\", [SESSION windowName]];
         } else {
+            NSLog(@"Not reporting window title. You can enable this in prefs>profiles>terminal");
             theString = @"\033]l\033\\";
         }
         NSData *theData = [theString dataUsingEncoding:NSUTF8StringEncoding];
         [SESSION writeTask:theData];
+        break;
+    }
+    case XTERMCC_PUSH_TITLE: {
+        switch (token.u.csi.p[1]) {
+            case 0:
+                [SESSION pushWindowTitle];
+                [SESSION pushIconTitle];
+                break;
+            case 1:
+                [SESSION pushIconTitle];
+                break;
+            case 2:
+                [SESSION pushWindowTitle];
+                break;
+            break;
+        }
+        break;
+    }
+    case XTERMCC_POP_TITLE: {
+        switch (token.u.csi.p[1]) {
+            case 0:
+                [SESSION popWindowTitle];
+                [SESSION popIconTitle];
+                break;
+            case 1:
+                [SESSION popIconTitle];
+                break;
+            case 2:
+                [SESSION popWindowTitle];
+                break;
+        }
         break;
     }
     // Our iTerm specific codes
@@ -2702,6 +2751,7 @@ void DumpBuf(screen_char_t* p, int n) {
         NSAssert(buffer[idx].code != DWC_RIGHT, @"DWC cut off");
 
         if (buffer[idx].code == DWC_SKIP) {
+            // I'm pretty sure this can never happen and that this code is just a historical leftover.
             // This is an invalid unicode character that iTerm2 has appropriated
             // for internal use. Change it to something invalid but safe.
             buffer[idx].code = BOGUS_CHAR;
@@ -3868,7 +3918,7 @@ void DumpBuf(screen_char_t* p, int n) {
     return GROWL;
 }
 
-- (void)deviceReport:(VT100TCC)token
+- (void)deviceReport:(VT100TCC)token withQuestion:(BOOL)question
 {
     NSData *report = nil;
 
@@ -3899,7 +3949,7 @@ void DumpBuf(screen_char_t* p, int n) {
                 x = cursorX + 1;
                 y = cursorY + 1;
             }
-            report = [TERMINAL reportActivePositionWithX:x Y:y withQuestion:token.u.csi.question];
+            report = [TERMINAL reportActivePositionWithX:x Y:y withQuestion:question];
         }
             break;
 
@@ -3918,16 +3968,31 @@ void DumpBuf(screen_char_t* p, int n) {
     NSData *report = nil;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen deviceAttribute:%d, modifier = '%c']",
-          __FILE__, __LINE__, token.u.csi.p[0], token.u.csi.modifier);
+    NSLog(@"%s(%d):-[VT100Screen deviceAttribute:%d]",
+          __FILE__, __LINE__, token.u.csi.p[0]);
 #endif
     if (SHELL == nil)
         return;
 
-    if(token.u.csi.modifier == '>')
-        report = [TERMINAL reportSecondaryDeviceAttribute];
-    else
-        report = [TERMINAL reportDeviceAttribute];
+    report = [TERMINAL reportDeviceAttribute];
+
+    if (report != nil) {
+        [SESSION writeTask:report];
+    }
+}
+
+- (void)secondaryDeviceAttribute:(VT100TCC)token
+{
+    NSData *report = nil;
+
+#if DEBUG_METHOD_TRACE
+    NSLog(@"%s(%d):-[VT100Screen secondaryDeviceAttribute:%d]",
+          __FILE__, __LINE__, token.u.csi.p[0]);
+#endif
+    if (SHELL == nil)
+        return;
+
+    report = [TERMINAL reportSecondaryDeviceAttribute];
 
     if (report != nil) {
         [SESSION writeTask:report];

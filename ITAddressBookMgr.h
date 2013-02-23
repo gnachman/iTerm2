@@ -135,6 +135,7 @@
 #define KEY_FLASHING_BELL                     @"Flashing Bell"
 #define KEY_XTERM_MOUSE_REPORTING             @"Mouse Reporting"
 #define KEY_DISABLE_SMCUP_RMCUP               @"Disable Smcup Rmcup"
+#define KEY_ALLOW_TITLE_REPORTING             @"Allow Title Reporting"
 #define KEY_DISABLE_PRINTING                  @"Disable Printing"
 #define KEY_SCROLLBACK_WITH_STATUS_BAR        @"Scrollback With Status Bar"
 #define KEY_SCROLLBACK_IN_ALTERNATE_SCREEN    @"Scrollback in Alternate Screen"
@@ -144,6 +145,7 @@
 #define KEY_SCROLLBACK_LINES                  @"Scrollback Lines"
 #define KEY_UNLIMITED_SCROLLBACK              @"Unlimited Scrollback"
 #define KEY_TERMINAL_TYPE                     @"Terminal Type"
+#define KEY_USE_CANONICAL_PARSER              @"Use Canonical Parser"
 
 // Session
 #define KEY_AUTOLOG                           @"Automatically Log"

@@ -337,9 +337,10 @@
 
 - (void)_addBonjourHostProfileWithName:(NSString *)serviceName
                        ipAddressString:(NSString *)ipAddressString
+                                  port:(int)port
                            serviceType:(NSString *)serviceType
 {
-  NSMutableDictionary *newBookmark;
+    NSMutableDictionary *newBookmark;
     Profile* prototype = [[ProfileModel sharedInstance] defaultBookmark];
     if (prototype) {
         newBookmark = [NSMutableDictionary dictionaryWithDictionary:prototype];
@@ -351,7 +352,11 @@
 
     [newBookmark setObject:serviceName forKey:KEY_NAME];
     [newBookmark setObject:serviceName forKey:KEY_DESCRIPTION];
-    [newBookmark setObject:[NSString stringWithFormat:@"%@ %@", serviceType, ipAddressString] forKey:KEY_COMMAND];
+    NSString *optionalPortArg = @"";
+    if ([serviceType isEqualToString:@"ssh"] && port != 22) {
+        optionalPortArg = [NSString stringWithFormat:@"-p %d ", port];
+    }
+    [newBookmark setObject:[NSString stringWithFormat:@"%@ %@%@", serviceType, optionalPortArg, ipAddressString] forKey:KEY_COMMAND];
     [newBookmark setObject:@"" forKey:KEY_WORKING_DIRECTORY];
     [newBookmark setObject:@"Yes" forKey:KEY_CUSTOM_COMMAND];
     [newBookmark setObject:@"No" forKey:KEY_CUSTOM_DIRECTORY];
@@ -400,6 +405,7 @@
     if (strAddr) {
           [self _addBonjourHostProfileWithName:serviceName
                                ipAddressString:[NSString stringWithFormat:@"%s", strAddr]
+                                          port:htons(socketAddress->sin_port)
                                    serviceType:serviceType];
 
         // remove from array now that resolving is done

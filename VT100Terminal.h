@@ -68,7 +68,8 @@
 #define VT100CSI_CUP         2004       // Cursor Position
 #define VT100CSI_CUU         2005       // Cursor Up
 #define VT100CSI_DA          2006       // Device Attributes
-#define VT100CSI_DECALN      2007       // Screen Alignment Display
+#define VT100CSI_DA2         2007       // Secondary Device Attributes
+#define VT100CSI_DECALN      2008       // Screen Alignment Display
 #define VT100CSI_DECDHL      2013       // Double Height Line
 #define VT100CSI_DECDWL      2014       // Double Width Line
 #define VT100CSI_DECID       2015       // Identify Terminal
@@ -102,6 +103,7 @@
 #define VT100CSI_TBC         2047       // Tabulation Clear
 #define VT100CSI_DECSCUSR    2048       // Select the Style of the Cursor
 #define VT100CSI_DECSTR      2049       // Soft reset
+#define VT100CSI_DECDSR      2050       // Device Status Report (DEC specific)
 
 // some xterm extension
 #define XTERMCC_WIN_TITLE        86       // Set window title
@@ -120,18 +122,20 @@
 #define XTERMCC_LOWER        99
 #define XTERMCC_SU           100     // scroll up
 #define XTERMCC_SD           101     // scroll down
-#define XTERMCC_REPORT_WIN_STATE    102
-#define XTERMCC_REPORT_WIN_POS      103
-#define XTERMCC_REPORT_WIN_PIX_SIZE 104
-#define XTERMCC_REPORT_WIN_SIZE     105
-#define XTERMCC_REPORT_SCREEN_SIZE  106
-#define XTERMCC_REPORT_ICON_TITLE   107
-#define XTERMCC_REPORT_WIN_TITLE    108
-#define XTERMCC_SET_RGB 109
-#define XTERMCC_PROPRIETARY_ETERM_EXT 110
-#define XTERMCC_SET_PALETTE 111
-#define XTERMCC_SET_KVP 112
-#define XTERMCC_PASTE64 113
+#define XTERMCC_REPORT_WIN_STATE      102
+#define XTERMCC_REPORT_WIN_POS        103
+#define XTERMCC_REPORT_WIN_PIX_SIZE   104
+#define XTERMCC_REPORT_WIN_SIZE       105
+#define XTERMCC_REPORT_SCREEN_SIZE    106
+#define XTERMCC_REPORT_ICON_TITLE     107
+#define XTERMCC_REPORT_WIN_TITLE      108
+#define XTERMCC_PUSH_TITLE            109
+#define XTERMCC_POP_TITLE             110
+#define XTERMCC_SET_RGB               111
+#define XTERMCC_PROPRIETARY_ETERM_EXT 112
+#define XTERMCC_SET_PALETTE           113
+#define XTERMCC_SET_KVP               114
+#define XTERMCC_PASTE64               115
 
 // Some ansi stuff
 #define ANSICSI_CHA      3000   // Cursor Horizontal Absolute
@@ -166,8 +170,8 @@ typedef struct {
     struct {
         int p[VT100CSIPARAM_MAX];
         int count;
-        BOOL question;
-        int modifier;
+        BOOL question; // used by old parser
+        int modifier;  // used by old parser
     } csi;
     } u;
 } VT100TCC;
@@ -364,6 +368,7 @@ typedef enum {
 
     BOOL IS_ANSI;
     BOOL disableSmcupRmcup;
+    BOOL useCanonicalParser;
 
     //terminfo
     char  *key_strings[TERMINFO_KEYS];
@@ -459,6 +464,7 @@ typedef enum {
 - (void) setScreen:(VT100Screen *)sc;
 
 - (void)setDisableSmcupRmcup:(BOOL)value;
+- (void)setUseCanonicalParser:(BOOL)value;
 
 - (BOOL)bracketedPasteMode;
 

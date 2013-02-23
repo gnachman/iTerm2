@@ -88,6 +88,12 @@ typedef enum {
     // The window title that should be used when this session is current. Otherwise defaultName
     // should be used.
     NSString* windowTitle;
+    
+    // The window title stack
+    NSMutableArray* windowTitleStack;
+    
+    // The icon title stack
+    NSMutableArray* iconTitleStack;
 
     // The original bookmark name.
     NSString* bookmarkName;
@@ -387,6 +393,7 @@ typedef enum {
 - (void)setGrowlNewOutput:(BOOL)value;
 - (BOOL)growlNewOutput;
 
+- (NSString *)windowName;
 - (NSString *)name;
 - (NSString*)rawName;
 - (void)setBookmarkName:(NSString*)theName;
@@ -399,6 +406,10 @@ typedef enum {
 - (NSString*)formattedName:(NSString*)base;
 - (NSString *)windowTitle;
 - (void)setWindowTitle: (NSString *)theTitle;
+- (void)pushWindowTitle;
+- (void)popWindowTitle;
+- (void)pushIconTitle;
+- (void)popIconTitle;
 - (PTYTask *)SHELL;
 - (void)setSHELL: (PTYTask *)theSHELL;
 - (VT100Terminal *)TERMINAL;

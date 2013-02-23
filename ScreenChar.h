@@ -43,8 +43,8 @@
 // copy-pasting.
 #define TAB_FILLER 0xf001
 
-// If a private-use character is received as input, we convert it to this
-// meaningless character.
+// If DWC_SKIP appears in the input, we convert it to this to avoid causing confusion.
+// NOTE: I think this isn't used because DWC_SKIP is caught early and converted to a '?'.
 #define BOGUS_CHAR 0xf002
 
 // Double-width characters have their "real" code in one cell and this code in
@@ -57,15 +57,15 @@
 #define EOL_SOFT 1 // Soft line break (a long line was wrapped)
 #define EOL_DWC  2 // Double-width character wrapped to next line
 
-// The range of private codes we use, with specific instances defined right
+// The range of private codes we use, with specific instances defined
 // above here.
 #define ITERM2_PRIVATE_BEGIN 0xf000
-#define ITERM2_PRIVATE_END 0xf8fe
+#define ITERM2_PRIVATE_END 0xf003
 
 // This is the standard unicode replacement character for when input couldn't
 // be parsed properly but we need to render something there.
-#define UNKNOWN 0xfffd
-#define ONECHAR_UNKNOWN ('#')   // Used for encodings other than utf-8.
+#define UNICODE_REPLACEMENT_CHAR 0xfffd
+#define ONECHAR_UNKNOWN ('?')   // Used for encodings other than utf-8.
 
 // Alternate semantics definitions
 // Default background color
@@ -136,7 +136,7 @@ typedef struct screen_char_t
 // Standard unicode replacement string. Is a double-width character.
 static inline NSString* ReplacementString()
 {
-    const unichar kReplacementCharacter = 0xfffd;
+    const unichar kReplacementCharacter = UNICODE_REPLACEMENT_CHAR;
     return [NSString stringWithCharacters:&kReplacementCharacter length:1];
 }
 

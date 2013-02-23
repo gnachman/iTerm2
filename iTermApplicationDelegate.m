@@ -291,8 +291,13 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
+- (void)updateToggleToolbarTitle {
+    [toggleToolbar setTitle:[self toolbarShouldBeVisible] ? @"Hide Toolbar" : @"Show Toolbar"];
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
+    [self updateToggleToolbarTitle];
     [iTermFontPanel makeDefault];
 
     finishedLaunching_ = YES;
@@ -502,12 +507,20 @@ static BOOL hasBecomeActive = NO;
     return YES;
 }
 
+- (void)userDidInteractWithASession
+{
+    userHasInteractedWithAnySession_ = YES;
+}
+
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)app
 {
-    NSNumber* pref = [[NSUserDefaults standardUserDefaults] objectForKey:@"MinRunningTime"];
-    const double kMinRunningTime =  pref ? [pref floatValue] : 10;
-    if ([[NSDate date] timeIntervalSinceDate:launchTime_] < kMinRunningTime) {
-        return NO;
+    if (!userHasInteractedWithAnySession_) {
+        NSNumber* pref = [[NSUserDefaults standardUserDefaults] objectForKey:@"MinRunningTime"];
+        const double kMinRunningTime =  pref ? [pref floatValue] : 10;
+        if ([[NSDate date] timeIntervalSinceDate:launchTime_] < kMinRunningTime) {
+            NSLog(@"Not quitting iTerm2 because it ran very briefly and had no user interaction. Set the MinRunningTime float preference to 0 to turn this feature off.");
+            return NO;
+        }
     }
     quittingBecauseLastWindowClosed_ = [[PreferencePanel sharedInstance] quitWhenAllWindowsClosed];
     return quittingBecauseLastWindowClosed_;
@@ -541,6 +554,19 @@ static BOOL hasBecomeActive = NO;
 
 - (void)applicationDidChangeScreenParameters:(NSNotification *)aNotification
 {
+    // The screens' -visibleFrame is not updated when this is called. Doing a delayed perform with
+    // a delay of 0 is usually, but not always enough. Not that 1 second is always enough either,
+    // I suppose, but I don't want to die on this hill.
+    NSNumber *delay = [[NSUserDefaults standardUserDefaults] objectForKey:@"UpdateScreenParamsDelay"];
+    if (!delay) {
+        delay = [NSNumber numberWithInt:1];
+    }
+    [self performSelector:@selector(updateScreenParametersInAllTerminals)
+               withObject:nil
+               afterDelay:[delay intValue]];
+}
+
+- (void)updateScreenParametersInAllTerminals {
     // Make sure that all top-of-screen windows are the proper width.
     for (PseudoTerminal* term in [self terminals]) {
         [term screenParametersDidChange];
@@ -639,6 +665,16 @@ static BOOL hasBecomeActive = NO;
         n = [NSNumber numberWithBool:NO];
     }
     return [n boolValue];
+}
+
+- (BOOL)toolbarShouldBeVisible {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"ToolbarVisible"];
+}
+
+- (void)setToolbarShouldBeVisible:(BOOL)value {
+    [[NSUserDefaults standardUserDefaults] setBool:value
+                                            forKey:@"ToolbarVisible"];
+    [self updateToggleToolbarTitle];
 }
 
 - (IBAction)toggleToolbelt:(id)sender
@@ -753,6 +789,9 @@ static BOOL hasBecomeActive = NO;
         return;
     }
     id bm = [[PreferencePanel sharedInstance] handlerBookmarkForURL:urlType];
+    if (!bm) {
+        bm = [[ProfileModel sharedInstance] defaultBookmark];
+    }
     if (bm) {
         PseudoTerminal *term = [[iTermController sharedInstance] currentTerminal];
         [[iTermController sharedInstance] launchBookmark:bm
@@ -915,8 +954,6 @@ static BOOL hasBecomeActive = NO;
 {
     [[[[iTermController sharedInstance] currentTerminal] currentSession] changeFontSizeDirection:-1];
 }
-
-
 
 static void SwapDebugLog() {
         NSMutableString* temp;
@@ -1103,8 +1140,8 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     [textview setFont:font nafont:nafont horizontalSpacing:hs verticalSpacing:vs];
         if ([sender isAlternate]) {
                 [frontTerminal sessionInitiatedResize:session
-                                                                                width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
-                                                                           height:[[abEntry objectForKey:KEY_ROWS] intValue]];
+                                                width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
+                                               height:[[abEntry objectForKey:KEY_ROWS] intValue]];
         }
 }
 

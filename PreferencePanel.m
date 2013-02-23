@@ -517,10 +517,13 @@ static float versionNumber;
     return [self _dirIsWritable:[defaultPrefsCustomFolder stringByExpandingTildeInPath]];
 }
 
+- (BOOL)_stringIsUrlLike:(NSString *)theString {
+    return [theString hasPrefix:@"http://"] || [theString hasPrefix:@"https://"];
+}
+
 - (void)_updatePrefsDirWarning
 {
-    if (([defaultPrefsCustomFolder hasPrefix:@"http://"] ||
-         [defaultPrefsCustomFolder hasPrefix:@"https://"]) &&
+    if ([self _stringIsUrlLike:defaultPrefsCustomFolder] &&
         [NSURL URLWithString:defaultPrefsCustomFolder]) {
         // Don't warn about URLs, too expensive to check
         [prefsDirWarning setHidden:YES];
@@ -1587,6 +1590,21 @@ static float versionNumber;
     [[ProfileModel sharedInstance] addBookmark:dict];
 }
 
+- (BOOL)choosePrefsCustomFolder {
+    NSOpenPanel* panel = [NSOpenPanel openPanel];
+    [panel setCanChooseFiles:NO];
+    [panel setCanChooseDirectories:YES];
+    [panel setAllowsMultipleSelection:NO];
+
+    if ([panel runModal] == NSOKButton) {
+        [prefsCustomFolder setStringValue:[panel directory]];
+        [self settingChanged:prefsCustomFolder];
+        return YES;
+    }  else {
+        return NO;
+    }
+}
+
 - (IBAction)settingChanged:(id)sender
 {
     if (sender == lionStyleFullscreen) {
@@ -1597,16 +1615,17 @@ static float versionNumber;
             // Just turned it on.
             if ([[prefsCustomFolder stringValue] length] == 0) {
                 // Field was initially empty so browse for a dir.
-                [self browseCustomFolder:nil];
-            }
-            if ([prefsDirWarning isHidden]) {
-                // The directory is valid and it's probably the user's first time downt this path.
-                if ([[NSAlert alertWithMessageText:@"Copy local preferences to custom folder now?"
-                                 defaultButton:@"Copy"
-                               alternateButton:@"Don't Copy"
-                                   otherButton:nil
-                         informativeTextWithFormat:@""] runModal] == NSOKButton) {
-                    [self pushToCustomFolder:nil];
+                if ([self choosePrefsCustomFolder]) {
+                    // User didn't hit cancel; if he chose a writable directory ask if he wants to write to it.
+                    if ([self _prefsDirIsWritable]) {
+                        if ([[NSAlert alertWithMessageText:@"Copy local preferences to custom folder now?"
+                                         defaultButton:@"Copy"
+                                       alternateButton:@"Don't Copy"
+                                           otherButton:nil
+                                 informativeTextWithFormat:@""] runModal] == NSOKButton) {
+                            [self pushToCustomFolder:nil];
+                        }
+                    }
                 }
             }
         }
@@ -2203,9 +2222,7 @@ static float versionNumber;
 {
     NSString *folder = [prefs objectForKey:@"PrefsCustomFolder"] ? [prefs objectForKey:@"PrefsCustomFolder"] : @"";
     NSString *filename = [self _prefsFilenameWithBaseDir:folder];
-    if ([folder hasPrefix:@"http://"] ||
-        [folder hasPrefix:@"https://"]) {
-
+    if ([self _stringIsUrlLike:folder]) {
         filename = folder;
     } else {
 		filename = [filename stringByExpandingTildeInPath];
@@ -2221,8 +2238,7 @@ static float versionNumber;
     }
     NSString *filename = [self remotePrefsLocation];
     NSDictionary *remotePrefs;
-    if ([filename hasPrefix:@"http://"] ||
-        [filename hasPrefix:@"https://"]) {
+    if ([self _stringIsUrlLike:filename]) {
         // Download the URL's contents.
         NSURL *url = [NSURL URLWithString:filename];
         const NSTimeInterval kFetchTimeout = 5.0;
@@ -2888,6 +2904,7 @@ static float versionNumber;
     [flashingBell setState:[[dict objectForKey:KEY_FLASHING_BELL] boolValue] ? NSOnState : NSOffState];
     [xtermMouseReporting setState:[[dict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue] ? NSOnState : NSOffState];
     [disableSmcupRmcup setState:[[dict objectForKey:KEY_DISABLE_SMCUP_RMCUP] boolValue] ? NSOnState : NSOffState];
+    [allowTitleReporting setState:[[dict objectForKey:KEY_ALLOW_TITLE_REPORTING] boolValue] ? NSOnState : NSOffState];
     [disablePrinting setState:[[dict objectForKey:KEY_DISABLE_PRINTING] boolValue] ? NSOnState : NSOffState];
     [scrollbackWithStatusBar setState:[[dict objectForKey:KEY_SCROLLBACK_WITH_STATUS_BAR] boolValue] ? NSOnState : NSOffState];
     [scrollbackInAlternateScreen setState:[dict objectForKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN] ? 
@@ -2909,6 +2926,7 @@ static float versionNumber;
     [terminalType setStringValue:[dict objectForKey:KEY_TERMINAL_TYPE]];
     [sendCodeWhenIdle setState:[[dict objectForKey:KEY_SEND_CODE_WHEN_IDLE] boolValue] ? NSOnState : NSOffState];
     [idleCode setIntValue:[[dict objectForKey:KEY_IDLE_CODE] intValue]];
+    [useCanonicalParser setState:[[dict objectForKey:KEY_USE_CANONICAL_PARSER] boolValue] ? NSOnState : NSOffState];
 
     // Keyboard tab
     int rowIndex = [keyMappings selectedRow];
@@ -3089,15 +3107,7 @@ static float versionNumber;
 
 - (IBAction)browseCustomFolder:(id)sender
 {
-    NSOpenPanel* panel = [NSOpenPanel openPanel];
-    [panel setCanChooseFiles:NO];
-    [panel setCanChooseDirectories:YES];
-    [panel setAllowsMultipleSelection:NO];
-
-    if ([panel runModal] == NSOKButton) {
-        [prefsCustomFolder setStringValue:[panel directory]];
-        [self settingChanged:prefsCustomFolder];
-    }
+    [self choosePrefsCustomFolder];
 }
 
 - (BOOL)customFolderChanged
@@ -3119,8 +3129,7 @@ static float versionNumber;
     [self savePreferences];
     NSDictionary *myDict = [[NSUserDefaults standardUserDefaults] persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
     BOOL isOk;
-    if ([filename hasPrefix:@"http://"] ||
-        [filename hasPrefix:@"https://"]) {
+    if ([self _stringIsUrlLike:filename]) {
         [[NSAlert alertWithMessageText:@"Sorry, preferences cannot be copied to a URL by iTerm2."
                          defaultButton:@"OK"
                        alternateButton:nil
@@ -3326,6 +3335,7 @@ static float versionNumber;
     [newDict setObject:[NSNumber numberWithBool:([flashingBell state]==NSOnState)] forKey:KEY_FLASHING_BELL];
     [newDict setObject:[NSNumber numberWithBool:([xtermMouseReporting state]==NSOnState)] forKey:KEY_XTERM_MOUSE_REPORTING];
     [newDict setObject:[NSNumber numberWithBool:([disableSmcupRmcup state]==NSOnState)] forKey:KEY_DISABLE_SMCUP_RMCUP];
+    [newDict setObject:[NSNumber numberWithBool:([allowTitleReporting state]==NSOnState)] forKey:KEY_ALLOW_TITLE_REPORTING];
     [newDict setObject:[NSNumber numberWithBool:([disablePrinting state]==NSOnState)] forKey:KEY_DISABLE_PRINTING];
     [newDict setObject:[NSNumber numberWithBool:([scrollbackWithStatusBar state]==NSOnState)] forKey:KEY_SCROLLBACK_WITH_STATUS_BAR];
     [newDict setObject:[NSNumber numberWithBool:([scrollbackInAlternateScreen state]==NSOnState)] forKey:KEY_SCROLLBACK_IN_ALTERNATE_SCREEN];
@@ -3350,6 +3360,7 @@ static float versionNumber;
     [newDict setObject:[terminalType stringValue] forKey:KEY_TERMINAL_TYPE];
     [newDict setObject:[NSNumber numberWithBool:([sendCodeWhenIdle state]==NSOnState)] forKey:KEY_SEND_CODE_WHEN_IDLE];
     [newDict setObject:[NSNumber numberWithInt:[idleCode intValue]] forKey:KEY_IDLE_CODE];
+    [newDict setObject:[NSNumber numberWithBool:([useCanonicalParser state]==NSOnState)] forKey:KEY_USE_CANONICAL_PARSER];
 
     // Keyboard tab
     [newDict setObject:[origBookmark objectForKey:KEY_KEYBOARD_MAP] forKey:KEY_KEYBOARD_MAP];
@@ -4305,6 +4316,7 @@ static float versionNumber;
         KEY_FLASHING_BELL,
         KEY_XTERM_MOUSE_REPORTING,
         KEY_DISABLE_SMCUP_RMCUP,
+        KEY_ALLOW_TITLE_REPORTING,
         KEY_DISABLE_PRINTING,
         KEY_CHARACTER_ENCODING,
         KEY_SCROLLBACK_LINES,
@@ -4312,6 +4324,7 @@ static float versionNumber;
         KEY_SCROLLBACK_IN_ALTERNATE_SCREEN,
         KEY_UNLIMITED_SCROLLBACK,
         KEY_TERMINAL_TYPE,
+        KEY_USE_CANONICAL_PARSER,
         nil
     };
     NSString *sessionKeys[] = {

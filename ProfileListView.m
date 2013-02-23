@@ -394,30 +394,30 @@ const int kInterWidgetMargin = 10;
             return @"";
         }
     } else if (aTableColumn == starColumn_) {
-        // FIXME: clean up drawing code
-        static NSImage* starImage;
-        if (!starImage) {
-            starImage = [[NSImage imageNamed:@"star"] retain];
-        }
-        NSImage *image = [[[NSImage alloc] init] autorelease];
-        NSSize size;
-        size.width = [aTableColumn width];
-        size.height = rowHeightWithTags_;
-        [image setSize:size];
-
-        NSRect rect;
-        rect.origin.x = 0;
-        rect.origin.y = 0;
-        rect.size = size;
-        [image lockFocus];
         if ([[bookmark objectForKey:KEY_GUID] isEqualToString:[[[ProfileModel sharedInstance] defaultBookmark] objectForKey:KEY_GUID]]) {
-            NSPoint destPoint;
-            destPoint.x = (size.width - [starImage size].width) / 2;
-            destPoint.y = (rowHeightWithTags_ - [starImage size].height) / 2;
-            [starImage drawAtPoint:destPoint fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
+            static NSImage* starImage;
+            if (!starImage) {
+                starImage = [[NSImage imageNamed:@"star"] retain];
+            }
+            CGFloat thisRowHeight;
+            if ([[bookmark objectForKey:KEY_TAGS] count]) {
+                thisRowHeight = rowHeightWithTags_;
+            } else {
+                thisRowHeight = normalRowHeight_;
+            }
+            CGFloat starHeight = normalRowHeight_ - 2;
+
+            NSImage *image = [[[NSImage alloc] init] autorelease];
+            [image setSize:NSMakeSize(thisRowHeight, thisRowHeight)];
+            [image lockFocus];
+            CGFloat margin = (thisRowHeight - starHeight) / 2;
+            NSRect dest = NSMakeRect(margin, margin, thisRowHeight - 2*margin, thisRowHeight - 2*margin);
+            [starImage drawInRect:dest fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
+            [image unlockFocus];
+            return image;
+        } else {
+            return nil;
         }
-        [image unlockFocus];
-        return image;
     }
 
     return @"";
