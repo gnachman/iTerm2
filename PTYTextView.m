@@ -5989,6 +5989,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (theLine[i].complexChar) {
                 thisChar.runType = kCharacterRunSingleCharWithCombiningMarks;
                 thisCharString = ComplexCharToStr(theLine[i].code);
+                assert(thisCharString);
                 drawable = YES;  // TODO: not all unicode is drawable
             } else {
                 // Non-complex char
@@ -6941,6 +6942,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (x1 == WIDTH) {
                 screenChar = theLine[x1 - 1];
                 screenChar.code = 0;
+                screenChar.complexChar = NO;
             }
             int aChar = screenChar.code;
             if (aChar) {
