@@ -83,7 +83,7 @@ static const double kInterBellQuietPeriod = 0.1;
 @end
 
 /* translates normal char into graphics char */
-static void translate(screen_char_t *s, int len)
+void TranslateCharacterSet(screen_char_t *s, int len)
 {
     int i;
 
@@ -100,7 +100,6 @@ void StringToScreenChars(NSString *s,
                          screen_char_t fg,
                          screen_char_t bg,
                          int *len,
-                         NSStringEncoding encoding,
                          BOOL ambiguousIsDoubleWidth,
                          int* cursorIndex) {
     unichar *sc;
@@ -153,7 +152,6 @@ void StringToScreenChars(NSString *s,
             // render what you get than to try to be clever and break such edge cases.
             buf[j].code = '?';
         } else if (sc[i] > 0xa0 && [NSString isDoubleWidthCharacter:sc[i]
-                                                           encoding:encoding
                                              ambiguousIsDoubleWidth:ambiguousIsDoubleWidth]) {
             // This code path is for double-width characters in BMP only.
             j++;
@@ -189,7 +187,6 @@ void StringToScreenChars(NSString *s,
                 if (IsLowSurrogate(sc[i])) {
                     NSString* str = ComplexCharToStr(buf[j].code);
                     if ([NSString isDoubleWidthCharacter:DecodeSurrogatePair([str characterAtIndex:0], [str characterAtIndex:1])
-                                                encoding:encoding
                                   ambiguousIsDoubleWidth:ambiguousIsDoubleWidth]) {
                         j++;
                         buf[j].code = DWC_RIGHT;
@@ -2450,16 +2447,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         }
         break;
 
-        case UNDERSCORE_TMUX_UNSUPPORTED:
-                [self crlf];
-                [self setString:@"You have run an unsupported version of tmux. Please "
-                        @"install a version that is compatible with this build of iTerm2."
-                                        ascii:YES];
-                [self crlf];
-                [SESSION writeTask:[@"detach\n\n" dataUsingEncoding:NSUTF8StringEncoding]];
-                break;
-
-    case UNDERSCORE_TMUX1:
+    case DCS_TMUX:
         [SESSION startTmuxMode];
         break;
 
@@ -2669,7 +2657,7 @@ void DumpBuf(screen_char_t* p, int n) {
         // If a graphics character set was selected then translate buffer
         // characters into graphics charaters.
         if (charset[[TERMINAL charset]]) {
-            translate(buffer, len);
+            TranslateCharacterSet(buffer, len);
         }
         if (dynamicTemp) {
             free(dynamicTemp);
@@ -2727,7 +2715,6 @@ void DumpBuf(screen_char_t* p, int n) {
                             [TERMINAL foregroundColorCode],
                             [TERMINAL backgroundColorCode],
                             &len,
-                            [TERMINAL encoding],
                             [SESSION doubleWidth],
                             NULL);
     }
@@ -4097,7 +4084,6 @@ void DumpBuf(screen_char_t* p, int n) {
 - (BOOL)isDoubleWidthCharacter:(unichar)c
 {
     return [NSString isDoubleWidthCharacter:c
-                                   encoding:[TERMINAL encoding]
                      ambiguousIsDoubleWidth:[SESSION doubleWidth]];
 }
 

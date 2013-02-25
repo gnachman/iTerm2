@@ -10,6 +10,8 @@
 #import "TmuxController.h"
 #import "iTermApplicationDelegate.h"
 
+NSString * const kTmuxGatewayErrorDomain = @"kTmuxGatewayErrorDomain";;
+
 #define NEWLINE @"\r"
 
 //#define TMUX_VERBOSE_LOGGING
@@ -29,6 +31,7 @@ static NSString *kCommandSelector = @"sel";
 static NSString *kCommandString = @"string";
 static NSString *kCommandObject = @"object";
 static NSString *kCommandIsInitial = @"isInitial";
+static NSString *kCommandToleratesErrors = @"toleratesErrors";
 
 @implementation TmuxGateway
 
@@ -199,15 +202,26 @@ static NSString *kCommandIsInitial = @"isInitial";
   state_ = CONTROL_STATE_DETACHED;
 }
 
-- (void)currentCommandResponseFinished
+- (void)currentCommandResponseFinishedWithError:(BOOL)withError
 {
     id target = [currentCommand_ objectForKey:kCommandTarget];
     if (target) {
         SEL selector = NSSelectorFromString([currentCommand_ objectForKey:kCommandSelector]);
         id obj = [currentCommand_ objectForKey:kCommandObject];
-        [target performSelector:selector
-                     withObject:currentCommandResponse_
-                     withObject:obj];
+        if (withError) {
+            if ([[currentCommand_ objectForKey:kCommandToleratesErrors] boolValue]) {
+                [target performSelector:selector
+                             withObject:nil
+                             withObject:obj];
+            } else {
+                [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@", currentCommand_]];
+                return;
+            }
+        } else {
+            [target performSelector:selector
+                         withObject:currentCommandResponse_
+                         withObject:obj];
+        }
     }
     if ([[currentCommand_ objectForKey:kCommandIsInitial] boolValue]) {
         acceptNotifications_ = YES;
@@ -257,7 +271,7 @@ static NSString *kCommandIsInitial = @"isInitial";
 
     if ([command isEqualToString:@"%end"]) {
         TmuxLog(@"End for command %@", currentCommand_);
-        [self currentCommandResponseFinished];
+        [self currentCommandResponseFinishedWithError:NO];
     } else if (currentCommand_) {
         if (currentCommandResponse_.length) {
             [currentCommandResponse_ appendString:@"\n"];
@@ -385,12 +399,14 @@ static NSString *kCommandIsInitial = @"isInitial";
                         responseTarget:(id)target
                       responseSelector:(SEL)selector
                         responseObject:(id)obj
+                       toleratesErrors:(BOOL)toleratesErrors
 {
     return [NSDictionary dictionaryWithObjectsAndKeys:
             command, kCommandString,
             target, kCommandTarget,
             NSStringFromSelector(selector), kCommandSelector,
             obj, kCommandObject,
+            [NSNumber numberWithBool:toleratesErrors], kCommandToleratesErrors,
             nil];
 }
 
@@ -404,10 +420,15 @@ static NSString *kCommandIsInitial = @"isInitial";
     [self sendCommand:command
        responseTarget:target
      responseSelector:selector
-       responseObject:nil];
+       responseObject:nil
+      toleratesErrors:NO];
 }
 
-- (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector responseObject:(id)obj
+- (void)sendCommand:(NSString *)command
+     responseTarget:(id)target
+   responseSelector:(SEL)selector
+     responseObject:(id)obj
+    toleratesErrors:(BOOL)toleratesErrors
 {
     if (detachSent_ || state_ == CONTROL_STATE_DETACHED) {
         return;
@@ -416,7 +437,8 @@ static NSString *kCommandIsInitial = @"isInitial";
     NSDictionary *dict = [self dictionaryForCommand:commandWithNewline
                                      responseTarget:target
                                    responseSelector:selector
-                                     responseObject:obj];
+                                     responseObject:obj
+                                    toleratesErrors:toleratesErrors];
     [self enqueueCommandDict:dict];
     [delegate_ tmuxWriteData:[commandWithNewline dataUsingEncoding:NSUTF8StringEncoding]];
 }

@@ -189,9 +189,9 @@ static BOOL isANSI(unsigned char *code, int len)
     return NO;
 }
 
-static BOOL isUNDERSCORE(unsigned char *code, int len)
+static BOOL isDCS(unsigned char *code, int len)
 {
-    if (len >= 2 && code[0] == ESC && code[1] == '_') {
+    if (len >= 2 && code[0] == ESC && code[1] == 'P') {
         return YES;
     }
     return NO;
@@ -1385,49 +1385,23 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
     return result;
 }
 
-static VT100TCC decode_underscore(unsigned char *datap,
-                                  int datalen,
-                                  int *rmlen,
-                                  NSStringEncoding enc)
+static VT100TCC decode_dcs(unsigned char *datap,
+                           int datalen,
+                           int *rmlen,
+                           NSStringEncoding enc)
 {
+    // DCS is kind of messy to parse, but we only support one code, so we just check if it's that.
     VT100TCC result;
     result.type = VT100_WAIT;
-    // Can assume we have "ESC _" so skip past that.
+    // Can assume we have "ESC P" so skip past that.
     datap += 2;
     datalen -= 2;
     *rmlen=2;
-    if (datalen > 0) {
-        int i;
-        BOOL found = NO;
-        // Search for esc \ terminator.
-        for (i = 0; i < datalen; i++) {
-            if (i > 0 && datap[i - 1] == ESC && datap[i] == '\\') {
-                // Found esc \. Grab text from datap to char before esc and
-                // save in result.u.string.
-                NSData *data = [NSData dataWithBytes:datap length:i - 1];
-                result.u.string = [[[NSString alloc] initWithData:data
-                                                         encoding:enc] autorelease];
-                // Consume everything up to the backslash
-                (*rmlen) += i + 1;
-                found = YES;
-                break;
-            } else if (i > 0 && datap[i - 1] == ESC) {
-                // Stop on ESC <anything> to avoid getting stuck after a broken escape code
-                result.type = VT100_NOTSUPPORT;
-                return result;
-            }
-        }
-
-        if (found && [result.u.string hasPrefix:@"tmux"]) {
-            if ([result.u.string isEqualToString:@"tmux0.5"] ||
-                [result.u.string hasPrefix:@"tmux0.5;"]) {
-                result.type = UNDERSCORE_TMUX1;
-            } else if ([result.u.string hasPrefix:@"tmux"]) {
-                result.type = UNDERSCORE_TMUX_UNSUPPORTED;
-            } else {
-                result.type = VT100_NOTSUPPORT;
-            }
-        } else if (found) {
+    if (datalen >= 5) {
+        if (!strncmp((char *)datap, "1000p", 5)) {
+            result.type = DCS_TMUX;
+            *rmlen += 5;
+        } else {
             result.type = VT100_NOTSUPPORT;
         }
     }
@@ -1865,8 +1839,8 @@ static VT100TCC decode_control(unsigned char *datap,
         result = decode_xterm(datap, datalen, rmlen, enc);
     } else if (isANSI(datap, datalen)) {
         result = decode_ansi(datap, datalen, rmlen, SCREEN);
-    } else if (isUNDERSCORE(datap, datalen)) {
-        result = decode_underscore(datap, datalen, rmlen, enc);
+    } else if (isDCS(datap, datalen)) {
+        result = decode_dcs(datap, datalen, rmlen, enc);
     } else {
         NSCParameterAssert(datalen > 0);
 
@@ -3620,7 +3594,10 @@ static VT100TCC decode_string(unsigned char *datap,
             g >= 0 && g <= 255 &&
             b >= 0 && b <= 255) {
             [[SCREEN session] setColorTable:theIndex
-                                              color:[NSColor colorWithCalibratedRed:r/255.0 green:g/255.0 blue:b/255.0 alpha:1]];
+                                              color:[NSColor colorWithCalibratedRed:r/255.0
+                                                                              green:g/255.0
+                                                                               blue:b/255.0
+                                                                              alpha:1]];
         }
     } else if (token.type == XTERMCC_SET_KVP) {
         // argument is of the form key=value

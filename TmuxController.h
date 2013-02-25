@@ -55,6 +55,7 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
 @property (nonatomic, retain) NSMutableDictionary *windowPositions;
 @property (nonatomic, copy) NSString *sessionName;
 @property (nonatomic, retain) NSArray *sessions;
+@property (nonatomic, assign) BOOL ambiguousIsDoubleWidth;
 
 - (id)initWithGateway:(TmuxGateway *)gateway;
 - (void)openWindowsInitial;

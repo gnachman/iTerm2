@@ -39,7 +39,6 @@
 
 + (NSString *)stringWithInt:(int)num;
 + (BOOL)isDoubleWidthCharacter:(int)unicode
-                      encoding:(NSStringEncoding)e
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth;
 
 - (NSMutableString *)stringReplaceSubstringFrom:(NSString *)oldSubstring to:(NSString *)newSubstring;

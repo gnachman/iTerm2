@@ -71,7 +71,6 @@ static const int ambiguous_chars[] = {
 }
 
 + (BOOL)isDoubleWidthCharacter:(int)unicode
-                      encoding:(NSStringEncoding)e
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 {
     if (unicode <= 0xa0 ||

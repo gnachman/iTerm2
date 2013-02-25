@@ -2942,6 +2942,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (void)setDoubleWidth:(BOOL)set
 {
     doubleWidth = set;
+    tmuxController_.ambiguousIsDoubleWidth = set;
 }
 
 - (BOOL)xtermMouseReporting
@@ -3692,6 +3693,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     tmuxMode_ = TMUX_GATEWAY;
     tmuxGateway_ = [[TmuxGateway alloc] initWithDelegate:self];
     tmuxController_ = [[TmuxController alloc] initWithGateway:tmuxGateway_];
+    tmuxController_.ambiguousIsDoubleWidth = doubleWidth;
 	NSSize theSize;
 	Profile *tmuxBookmark = [PTYTab tmuxBookmark];
 	theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
@@ -3710,6 +3712,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     if ([[PreferencePanel sharedInstance] autoHideTmuxClientSession]) {
         [self hideSession];
     }
+    tmuxLogging_ = YES;  // TODOXXXXXXXXXXXXX
 
     [tmuxGateway_ readTask:[TERMINAL streamData]];
     [TERMINAL clearStream];

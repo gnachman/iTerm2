@@ -9,27 +9,27 @@
 #import "TmuxStateParser.h"
 
 NSString *kStateDictInAlternateScreen = @"in_alternate_screen";  // Deprecated: same as kStateDictSavedGrid below.
-NSString *kStateDictSavedGrid = @"saved_grid";
-NSString *kStateDictBaseCursorX = @"base_cursor_x";
-NSString *kStateDictBaseCursorY = @"base_cursor_y";
-NSString *kStateDictSavedCX = @"saved_cx";
-NSString *kStateDictSavedCY = @"saved_cy";
+NSString *kStateDictSavedGrid = @"alternate_on";
+NSString *kStateDictBaseCursorX = @"base_cursor_x";  // Deprecated: use saved_cx
+NSString *kStateDictBaseCursorY = @"base_cursor_y";  // Deprecated: use saved_cy
+NSString *kStateDictSavedCX = @"alternate_saved_x";
+NSString *kStateDictSavedCY = @"alternate_saved_y";
 NSString *kStateDictCursorX = @"cursor_x";
 NSString *kStateDictCursorY = @"cursor_y";
 NSString *kStateDictScrollRegionUpper = @"scroll_region_upper";
 NSString *kStateDictScrollRegionLower = @"scroll_region_lower";
-NSString *kStateDictTabstops = @"tabstops";
-NSString *kStateDictDECSCCursorX = @"decsc_cursor_x";
-NSString *kStateDictDECSCCursorY = @"decsc_cursor_y";
-NSString *kStateDictCursorMode = @"cursor_mode";
-NSString *kStateDictInsertMode = @"insert_mode";
-NSString *kStateDictKCursorMode = @"kcursor_mode";
-NSString *kStateDictKKeypadMode = @"kkeypad_mode";
-NSString *kStateDictWrapMode = @"wrap_mode";
-NSString *kStateDictMouseStandardMode = @"mouse_standard_mode";
-NSString *kStateDictMouseButtonMode = @"mouse_button_mode";
-NSString *kStateDictMouseAnyMode = @"mouse_any_mode";
-NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_mode";
+NSString *kStateDictTabstops = @"pane_tabs";
+NSString *kStateDictDECSCCursorX = @"saved_cursor_x";
+NSString *kStateDictDECSCCursorY = @"saved_cursor_y";
+NSString *kStateDictCursorMode = @"cursor_flag";
+NSString *kStateDictInsertMode = @"insert_flag";
+NSString *kStateDictKCursorMode = @"keypad_cursor_flag";
+NSString *kStateDictKKeypadMode = @"keypad_flag";
+NSString *kStateDictWrapMode = @"wrap_flag";
+NSString *kStateDictMouseStandardMode = @"mouse_standard_flag";
+NSString *kStateDictMouseButtonMode = @"mouse_button_flag";
+NSString *kStateDictMouseAnyMode = @"mouse_any_flag";
+NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
 
 @interface NSString (TmuxStateParser)
 - (NSArray *)intlistValue;
@@ -57,6 +57,22 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_mode";
 
 @implementation TmuxStateParser
 
++ (NSString *)format {
+    NSMutableString *format = [NSMutableString string];
+    NSArray *theModes = [NSArray arrayWithObjects:
+                         kStateDictSavedGrid, kStateDictSavedCX, kStateDictSavedCY,
+                         kStateDictCursorX, kStateDictCursorY, kStateDictScrollRegionUpper,
+                         kStateDictScrollRegionLower, kStateDictTabstops, kStateDictDECSCCursorX,
+                         kStateDictDECSCCursorY, kStateDictCursorMode, kStateDictInsertMode,
+                         kStateDictKCursorMode, kStateDictKKeypadMode, kStateDictWrapMode,
+                         kStateDictMouseStandardMode, kStateDictMouseButtonMode,
+                         kStateDictMouseAnyMode, kStateDictMouseUTF8Mode, nil];
+    for (NSString *value in theModes) {
+        [format appendFormat:@"%@=#{%@}\t", value, value];
+    }
+    return format;
+}
+    
 + (TmuxStateParser *)sharedInstance
 {
     static TmuxStateParser *instance;

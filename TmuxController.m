@@ -52,6 +52,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 @synthesize windowPositions = windowPositions_;
 @synthesize sessionName = sessionName_;
 @synthesize sessions = sessions_;
+@synthesize ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
 
 - (id)initWithGateway:(TmuxGateway *)gateway
 {
@@ -103,6 +104,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
     [pendingWindowOpens_ addObject:n];
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
+    windowOpener.ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
     windowOpener.windowIndex = windowIndex;
     windowOpener.name = name;
     windowOpener.size = size;
@@ -127,6 +129,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                 toLayout:(NSString *)layout
 {
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
+    windowOpener.ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
     windowOpener.layout = layout;
     windowOpener.maxHistory =
 		MAX([[gateway_ delegate] tmuxBookmarkSize].height,
@@ -240,39 +243,44 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)openWindowsInitial
 {
 	NSSize size = [[gateway_ delegate] tmuxBookmarkSize];
-    NSString *setSizeCommand = [NSString stringWithFormat:@"control set-client-size %d,%d",
+    NSString *setSizeCommand = [NSString stringWithFormat:@"control-helper set-client-size %d,%d",
 								   (int)size.width, (int)size.height];
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
-    NSString *getAffinitiesCommand = [NSString stringWithFormat:@"control get-value affinities%d", sessionId_];
-    NSString *getOriginsCommand = [NSString stringWithFormat:@"control get-value origins%d", sessionId_];
-    NSString *getHiddenWindowsCommand =
-		[NSString stringWithFormat:@"control get-value hidden%d", sessionId_];
+    NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -t %d @affinities", sessionId_];
+    NSString *getOriginsCommand = [NSString stringWithFormat:@"show -v -t %d @origins", sessionId_];
+    NSString *getHiddenWindowsCommand = [NSString stringWithFormat:@"show -v -t %d @hidden", sessionId_];
     NSArray *commands = [NSArray arrayWithObjects:
                          [gateway_ dictionaryForCommand:setSizeCommand
                                          responseTarget:nil
 									   responseSelector:nil
-                                         responseObject:nil],
+                                         responseObject:nil
+                                        toleratesErrors:NO],
                          [gateway_ dictionaryForCommand:getHiddenWindowsCommand
                                          responseTarget:self
 									   responseSelector:@selector(getHiddenWindowsResponse:)
-                                         responseObject:nil],
+                                         responseObject:nil
+                                        toleratesErrors:YES],
                          [gateway_ dictionaryForCommand:getAffinitiesCommand
                                          responseTarget:self
                                        responseSelector:@selector(getAffinitiesResponse:)
-                                         responseObject:nil],
+                                         responseObject:nil
+                                        toleratesErrors:YES],
                          [gateway_ dictionaryForCommand:getOriginsCommand
                                          responseTarget:self
                                        responseSelector:@selector(getOriginsResponse:)
-                                         responseObject:nil],
+                                         responseObject:nil
+                                        toleratesErrors:YES],
                          [gateway_ dictionaryForCommand:listSessionsCommand
                                          responseTarget:self
                                        responseSelector:@selector(listSessionsResponse:)
-                                         responseObject:nil],
+                                         responseObject:nil
+                                        toleratesErrors:NO],
                          [gateway_ dictionaryForCommand:listWindowsCommand
                                          responseTarget:self
                                        responseSelector:@selector(initialListWindowsResponse:)
-                                         responseObject:nil],
+                                         responseObject:nil
+                                        toleratesErrors:NO],
                          nil];
     [gateway_ sendCommandList:commands];
 }
@@ -366,12 +374,22 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 {
     assert(size.width > 0 && size.height > 0);
     lastSize_ = size;
+    NSString *listStr = [NSString stringWithFormat:@"list-windows -F \"#{window_id} #{window_layout}\""];
+    NSArray *commands = [NSArray arrayWithObjects:
+                         [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"control-helper set-client-size %d,%d",
+                                                         (int)size.width, (int)size.height]
+                                         responseTarget:nil
+									   responseSelector:nil
+                                         responseObject:nil
+                                        toleratesErrors:NO],
+                         [gateway_ dictionaryForCommand:listStr
+                                         responseTarget:self
+									   responseSelector:@selector(listWindowsResponse:)
+                                         responseObject:nil
+                                        toleratesErrors:NO],
+                         nil];
     ++numOutstandingWindowResizes_;
-    [gateway_ sendCommand:[NSString stringWithFormat:@"control set-client-size %d,%d",
-						   (int)size.width, (int)size.height]
-           responseTarget:self
-         responseSelector:@selector(clientSizeChangeResponse:)
-           responseObject:nil];
+    [gateway_ sendCommandList:commands];
 }
 
 - (BOOL)hasOutstandingWindowResize
@@ -404,11 +422,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                          [gateway_ dictionaryForCommand:resizeStr
                                          responseTarget:nil
 									   responseSelector:nil
-                                         responseObject:nil],
+                                         responseObject:nil
+                                        toleratesErrors:NO],
                          [gateway_ dictionaryForCommand:listStr
                                          responseTarget:self
-									   responseSelector:@selector(clientSizeChangeResponse:)
-                                         responseObject:nil],
+									   responseSelector:@selector(listWindowsResponse:)
+                                         responseObject:nil
+                                        toleratesErrors:NO],
                          nil];
     ++numOutstandingWindowResizes_;
     [gateway_ sendCommandList:commands];
@@ -438,12 +458,14 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         [gateway_ sendCommand:@"new-window -PF '#{window_id}'"
                responseTarget:self
              responseSelector:@selector(newWindowWithAffinityCreated:affinityWindow:)
-               responseObject:[NSString stringWithInt:windowId]];
+               responseObject:[NSString stringWithInt:windowId]
+              toleratesErrors:NO];
     } else {
         [gateway_ sendCommand:@"new-window -PF '#{window_id}'"
                responseTarget:self
              responseSelector:@selector(newWindowWithoutAffinityCreated:)
-               responseObject:nil];
+               responseObject:nil
+              toleratesErrors:NO];
     }
 }
 
@@ -503,7 +525,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [gateway_ sendCommand:[NSString stringWithFormat:@"break-pane -P -F \"#{window_id}\" -t %%%d", windowPane]
            responseTarget:self
          responseSelector:@selector(windowPaneBrokeOutWithWindowId:setAffinityTo:)
-           responseObject:sibling];
+           responseObject:sibling
+          toleratesErrors:NO];
 }
 
 - (void)windowPaneBrokeOutWithWindowId:(NSString *)windowId
@@ -542,7 +565,8 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
          responseSelector:@selector(listedWindowsToOpenOne:forWindowIdAndAffinities:)
            responseObject:[NSArray arrayWithObjects:[NSNumber numberWithInt:windowId],
                            affinities,
-                           nil]];
+                           nil]
+          toleratesErrors:NO];
 }
 
 - (void)openWindowWithId:(int)windowId
@@ -622,19 +646,21 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
            responseObject:[NSArray arrayWithObjects:object,
                            NSStringFromSelector(selector),
                            target,
-                           nil]];
+                           nil]
+          toleratesErrors:NO];
 }
 
 - (void)saveHiddenWindows
 {
 	NSString *hidden = [[hiddenWindows_ allObjects] componentsJoinedByString:@","];
 	NSString *command = [NSString stringWithFormat:
-		@"control set-value hidden%d=%@",
+		@"set -t %d @hidden% \"%@\"",
 		sessionId_, hidden];
 	[gateway_ sendCommand:command
 		   responseTarget:nil
 		 responseSelector:nil
-		   responseObject:nil];
+		   responseObject:nil
+          toleratesErrors:NO];
 }
 
 - (void)saveWindowOrigins
@@ -671,7 +697,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 		}
 	}
 	NSString *enc = [maps componentsJoinedByString:@" "];
-	NSString *command = [NSString stringWithFormat:@"control set-value \"origins%d=%@\"",
+	NSString *command = [NSString stringWithFormat:@"set -t %d @origins \"%@\"",
 			 sessionId_, [enc stringByEscapingQuotes]];
 	if (!lastOrigins_ || ![command isEqualToString:lastOrigins_]) {
 		[lastOrigins_ release];
@@ -716,7 +742,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 		}
     }
     NSString *arg = [affinities componentsJoinedByString:@" "];
-    NSString *command = [NSString stringWithFormat:@"control set-value \"affinities%d=%@\"",
+    NSString *command = [NSString stringWithFormat:@"set -t %d @affinities \"%@\"",
                          sessionId_, [arg stringByEscapingQuotes]];
     if ([command isEqualToString:lastSaveAffinityCommand_]) {
         return;
@@ -787,9 +813,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)getHiddenWindowsResponse:(NSString *)response
 {
-	if (response.length == 0) {
-		return;
-	}
 	NSArray *windowIds = [response componentsSeparatedByString:@","];
 	[hiddenWindows_ removeAllObjects];
 	NSLog(@"getHiddneWindowsResponse: Add these window IDS to hidden: %@", windowIds);
@@ -886,7 +909,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 // When an iTerm2 window is resized, a control -s client-size w,h
 // command is sent. It responds with new layouts for all the windows in the
 // client's session. Update the layouts for the affected tabs.
-- (void)clientSizeChangeResponse:(NSString *)response
+- (void)listWindowsResponse:(NSString *)response
 {
     --numOutstandingWindowResizes_;
     if (numOutstandingWindowResizes_ > 0) {
