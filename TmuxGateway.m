@@ -14,7 +14,7 @@ NSString * const kTmuxGatewayErrorDomain = @"kTmuxGatewayErrorDomain";;
 
 #define NEWLINE @"\r"
 
-//#define TMUX_VERBOSE_LOGGING
+#define TMUX_VERBOSE_LOGGING
 #ifdef TMUX_VERBOSE_LOGGING
 #define TmuxLog NSLog
 #else
@@ -232,6 +232,15 @@ static NSString *kCommandToleratesErrors = @"toleratesErrors";
     currentCommandResponse_ = nil;
 }
 
+- (void)stripLastNewline {
+    if ([currentCommandResponse_ hasSuffix:@"\n"]) {
+        // Strip the last newline.
+        NSRange theRange = NSMakeRange(currentCommandResponse_.length - 1, 1);
+        [currentCommandResponse_ replaceCharactersInRange:theRange
+                                               withString:@""];
+    }
+}
+
 - (BOOL)parseCommand
 {
     NSRange newlineRange = NSMakeRange(NSNotFound, 0);
@@ -271,12 +280,12 @@ static NSString *kCommandToleratesErrors = @"toleratesErrors";
 
     if ([command isEqualToString:@"%end"]) {
         TmuxLog(@"End for command %@", currentCommand_);
+        [self stripLastNewline];
         [self currentCommandResponseFinishedWithError:NO];
     } else if (currentCommand_) {
-        if (currentCommandResponse_.length) {
-            [currentCommandResponse_ appendString:@"\n"];
-        }
         [currentCommandResponse_ appendString:command];
+        // Always append a newline; then at the end, remove the last one.
+        [currentCommandResponse_ appendString:@"\n"];
     } else if ([command hasPrefix:@"%output "]) {
         if (acceptNotifications_) [self parseOutputCommand:command];
     } else if ([command hasPrefix:@"%layout-change "]) {
@@ -302,6 +311,7 @@ static NSString *kCommandToleratesErrors = @"toleratesErrors";
         TmuxLog(@"tmux exit message: %@", command);
         [self hostDisconnected];
     } else if ([command hasPrefix:@"%error"]) {
+        [self stripLastNewline];
         [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@", command]];
     } else if ([command isEqualToString:@"%begin"]) {
         if (currentCommand_) {
@@ -321,7 +331,9 @@ static NSString *kCommandToleratesErrors = @"toleratesErrors";
     }
 
     // Erase the just-handled command from the stream.
-    [stream_ replaceBytesInRange:commandRange withBytes:"" length:0];
+    if (stream_.length > 0) {  // length could be 0 if abortWtihErrorMessage: was called.
+        [stream_ replaceBytesInRange:commandRange withBytes:"" length:0];
+    }
 
     return YES;
 }

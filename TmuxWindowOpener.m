@@ -181,7 +181,7 @@
                         alt:(BOOL)alternate
 {
     ++pendingRequests_;
-    NSString *command = [NSString stringWithFormat:@"capture-pane -pJ %@-t %%%d -S -%d",
+    NSString *command = [NSString stringWithFormat:@"capture-pane -peqJ %@-t %%%d -S -%d",
                          (alternate ? @"-a " : @""), [wp intValue], self.maxHistory];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self

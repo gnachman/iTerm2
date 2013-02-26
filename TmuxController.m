@@ -247,9 +247,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 								   (int)size.width, (int)size.height];
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
-    NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -t %d @affinities", sessionId_];
-    NSString *getOriginsCommand = [NSString stringWithFormat:@"show -v -t %d @origins", sessionId_];
-    NSString *getHiddenWindowsCommand = [NSString stringWithFormat:@"show -v -t %d @hidden", sessionId_];
+    NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -q -t %d @affinities", sessionId_];
+    NSString *getOriginsCommand = [NSString stringWithFormat:@"show -v -q -t %d @origins", sessionId_];
+    NSString *getHiddenWindowsCommand = [NSString stringWithFormat:@"show -v -q -t %d @hidden", sessionId_];
     NSArray *commands = [NSArray arrayWithObjects:
                          [gateway_ dictionaryForCommand:setSizeCommand
                                          responseTarget:nil
@@ -654,7 +654,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 {
 	NSString *hidden = [[hiddenWindows_ allObjects] componentsJoinedByString:@","];
 	NSString *command = [NSString stringWithFormat:
-		@"set -t %d @hidden% \"%@\"",
+		@"set -t %d @hidden \"%@\"",
 		sessionId_, hidden];
 	[gateway_ sendCommand:command
 		   responseTarget:nil
