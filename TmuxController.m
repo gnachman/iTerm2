@@ -247,9 +247,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 								   (int)size.width, (int)size.height];
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
-    NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -q -t %d @affinities", sessionId_];
-    NSString *getOriginsCommand = [NSString stringWithFormat:@"show -v -q -t %d @origins", sessionId_];
-    NSString *getHiddenWindowsCommand = [NSString stringWithFormat:@"show -v -q -t %d @hidden", sessionId_];
+    NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -q -t $%d @affinities", sessionId_];
+    NSString *getOriginsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @origins", sessionId_];
+    NSString *getHiddenWindowsCommand = [NSString stringWithFormat:@"show -v -q -t $%d @hidden", sessionId_];
     NSArray *commands = [NSArray arrayWithObjects:
                          [gateway_ dictionaryForCommand:setSizeCommand
                                          responseTarget:nil
@@ -647,14 +647,14 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                            NSStringFromSelector(selector),
                            target,
                            nil]
-          toleratesErrors:NO];
+          toleratesErrors:YES];  // Tolerates errors because the session may have been detached while the command was on the wire, and this command is called automatically.
 }
 
 - (void)saveHiddenWindows
 {
 	NSString *hidden = [[hiddenWindows_ allObjects] componentsJoinedByString:@","];
 	NSString *command = [NSString stringWithFormat:
-		@"set -t %d @hidden \"%@\"",
+		@"set -t $%d @hidden \"%@\"",
 		sessionId_, hidden];
 	[gateway_ sendCommand:command
 		   responseTarget:nil
@@ -697,7 +697,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 		}
 	}
 	NSString *enc = [maps componentsJoinedByString:@" "];
-	NSString *command = [NSString stringWithFormat:@"set -t %d @origins \"%@\"",
+	NSString *command = [NSString stringWithFormat:@"set -t $%d @origins \"%@\"",
 			 sessionId_, [enc stringByEscapingQuotes]];
 	if (!lastOrigins_ || ![command isEqualToString:lastOrigins_]) {
 		[lastOrigins_ release];
@@ -742,7 +742,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 		}
     }
     NSString *arg = [affinities componentsJoinedByString:@" "];
-    NSString *command = [NSString stringWithFormat:@"set -t %d @affinities \"%@\"",
+    NSString *command = [NSString stringWithFormat:@"set -t $%d @affinities \"%@\"",
                          sessionId_, [arg stringByEscapingQuotes]];
     if ([command isEqualToString:lastSaveAffinityCommand_]) {
         return;
@@ -804,6 +804,10 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)didListWindows:(NSString *)response userData:(NSArray *)userData
 {
+    if (!response) {
+        // In case of error.
+        response = @"";
+    }
     TSVDocument *doc = [response tsvDocumentWithFields:[self listWindowFields]];
     id object = [userData objectAtIndex:0];
     SEL selector = NSSelectorFromString([userData objectAtIndex:1]);
@@ -813,35 +817,42 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)getHiddenWindowsResponse:(NSString *)response
 {
-	NSArray *windowIds = [response componentsSeparatedByString:@","];
-	[hiddenWindows_ removeAllObjects];
-	NSLog(@"getHiddneWindowsResponse: Add these window IDS to hidden: %@", windowIds);
-	for (NSString *wid in windowIds) {
-		[hiddenWindows_ addObject:[NSNumber numberWithInt:[wid intValue]]];
-	}
+    NSArray *windowIds = [response componentsSeparatedByString:@","];
+    [hiddenWindows_ removeAllObjects];
+    NSLog(@"getHiddneWindowsResponse: Add these window IDS to hidden: %@", windowIds);
+    if ([response length] == 0) {
+        return;
+    }
+    for (NSString *wid in windowIds) {
+        [hiddenWindows_ addObject:[NSNumber numberWithInt:[wid intValue]]];
+    }
 }
 
 - (void)getAffinitiesResponse:(NSString *)result
 {
-	// Replace the existing equivalence classes with those defined by the
-	// affinity response.
-	// For example "1,2,3 4,5,6" has two equivalence classes.
-	// 1=2=3 and 4=5=6.
+    // Replace the existing equivalence classes with those defined by the
+    // affinity response.
+    // For example "1,2,3 4,5,6" has two equivalence classes.
+    // 1=2=3 and 4=5=6.
     NSArray *affinities = [result componentsSeparatedByString:@" "];
     [affinities_ release];
     affinities_ = [[EquivalenceClassSet alloc] init];
 
+    if (![result length]) {
+        return;
+    }
+
     for (NSString *affset in affinities) {
         NSArray *siblings = [affset componentsSeparatedByString:@","];
         NSString *exemplar = [siblings lastObject];
-		if (siblings.count == 1) {
-			// This is a wee hack. If a tmux Window is in a native window with one tab
-			// then create an equivalence class containing only (wid, wid+"_ph"). ph=placeholder
-			// We'll never see a window id that's negative, but the equivalence
-			// class's existance signals not to apply the default mode for
-			// unrecognized windows.
-			exemplar = [exemplar stringByAppendingString:@"_ph"];
-		}
+        if (siblings.count == 1) {
+            // This is a wee hack. If a tmux Window is in a native window with one tab
+            // then create an equivalence class containing only (wid, wid+"_ph"). ph=placeholder
+            // We'll never see a window id that's negative, but the equivalence
+            // class's existance signals not to apply the default mode for
+            // unrecognized windows.
+            exemplar = [exemplar stringByAppendingString:@"_ph"];
+        }
         for (NSString *widString in siblings) {
             if (![widString isEqualToString:exemplar]) {
                 [affinities_ setValue:widString
@@ -853,27 +864,30 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)getOriginsResponse:(NSString *)result
 {
-	NSArray *windows = [result componentsSeparatedByString:@" "];
-	[origins_ removeAllObjects];
-	for (NSString *wstr in windows) {
-		NSArray *tuple = [wstr componentsSeparatedByString:@":"];
-		if (tuple.count != 2) {
-			continue;
-		}
-		NSString *windowsStr = [tuple objectAtIndex:0];
-		NSString *coords = [tuple objectAtIndex:1];
-		NSArray *windowIds = [windowsStr componentsSeparatedByString:@","];
-		NSArray *xy = [coords componentsSeparatedByString:@","];
-		if (xy.count != 2) {
-			continue;
-		}
-		NSPoint origin = NSMakePoint([[xy objectAtIndex:0] intValue],
-									 [[xy objectAtIndex:1] intValue]);
-		for (NSString *wid in windowIds) {
-			[origins_ setObject:[NSValue valueWithPoint:origin]
-						 forKey:[NSNumber numberWithInt:[wid intValue]]];
-		}
-	}
+    if (![result length]) {
+        return;
+    }
+    NSArray *windows = [result componentsSeparatedByString:@" "];
+    [origins_ removeAllObjects];
+    for (NSString *wstr in windows) {
+        NSArray *tuple = [wstr componentsSeparatedByString:@":"];
+        if (tuple.count != 2) {
+            continue;
+        }
+        NSString *windowsStr = [tuple objectAtIndex:0];
+        NSString *coords = [tuple objectAtIndex:1];
+        NSArray *windowIds = [windowsStr componentsSeparatedByString:@","];
+        NSArray *xy = [coords componentsSeparatedByString:@","];
+        if (xy.count != 2) {
+            continue;
+        }
+        NSPoint origin = NSMakePoint([[xy objectAtIndex:0] intValue],
+                                     [[xy objectAtIndex:1] intValue]);
+        for (NSString *wid in windowIds) {
+            [origins_ setObject:[NSValue valueWithPoint:origin]
+                         forKey:[NSNumber numberWithInt:[wid intValue]]];
+        }
+    }
 }
 
 - (void)listSessionsResponse:(NSString *)result
@@ -1012,7 +1026,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 	PTYTab *tab = [self window:[windowIndex intValue]];
 	PseudoTerminal *term = [tab realParentWindow];
 	NSValue *p = [origins_ objectForKey:windowIndex];
-	if (term && p) {
+	if (term && p && !![term anyFullScreen]) {
 		[[term window] setFrameOrigin:[p pointValue]];
 	}
     [self saveAffinities];

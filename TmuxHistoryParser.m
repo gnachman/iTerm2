@@ -38,7 +38,8 @@
             switch (token.type) {
                 case VT100_STRING:
                 case VT100_ASCIISTRING:
-                    screenChars = malloc(sizeof(screen_char_t) * token.u.string.length);
+                    // Allocate double space in case they're all double-width characters.
+                    screenChars = malloc(sizeof(screen_char_t) * 2 * token.u.string.length);
                     StringToScreenChars(token.u.string,
                                         screenChars,
                                         [terminal foregroundColorCode],
@@ -50,7 +51,7 @@
                         TranslateCharacterSet(screenChars, len);
                     }
                     [result appendBytes:screenChars
-                                 length:sizeof(screen_char_t) * token.u.string.length];
+                                 length:sizeof(screen_char_t) * len];
                     free(screenChars);
                     break;
 
@@ -76,6 +77,7 @@
     NSArray *lines = [response componentsSeparatedByString:@"\n"];
     NSMutableArray *screenLines = [NSMutableArray array];
     VT100Terminal *terminal = [[[VT100Terminal alloc] init] autorelease];
+    [terminal setEncoding:NSUTF8StringEncoding];
     for (NSString *line in lines) {
         NSData *data = [self dataForHistoryLine:line
                                    withTerminal:terminal

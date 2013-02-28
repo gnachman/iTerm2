@@ -235,3 +235,5 @@ NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,
 
 // Convert an array of chars to a string, quickly.
 NSString* CharArrayToString(unichar* charHaystack, int o);
+
+void DumpScreenCharArray(screen_char_t* screenChars, int lineLength);

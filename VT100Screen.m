@@ -4107,17 +4107,11 @@ void DumpBuf(screen_char_t* p, int n) {
     [self clearBuffer];
     for (NSData *chars in history) {
         screen_char_t *line = (screen_char_t *) [chars bytes];
-        int length = [chars length] / sizeof(screen_char_t);
-        do {
-            // Add up to WIDTH characters at a time until they're all used.
-            BOOL isPartial = (length > WIDTH);
-            [linebuffer appendLine:line
-                            length:MIN(WIDTH, length)
-                           partial:isPartial
-                             width:WIDTH];
-            length -= WIDTH;
-            line += WIDTH;
-        } while (length > 0);
+        const int len = [chars length] / sizeof(screen_char_t);
+        [linebuffer appendLine:line
+                        length:len
+                       partial:NO
+                         width:WIDTH];
     }
     if (!unlimitedScrollback_) {
         [linebuffer dropExcessLinesWithWidth:WIDTH];
