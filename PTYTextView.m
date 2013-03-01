@@ -348,10 +348,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     if (isDown) {
         DLog(@"Emulate three finger click down");
         [self mouseDown:fakeEvent];
+        DLog(@"Returned from mouseDown");
     } else {
         DLog(@"Emulate three finger click up");
         [self mouseUp:fakeEvent];
+        DLog(@"Returned from mouseDown");
     }
+    DLog(@"Restore numTouches to saved value of %d", saved);
     numTouches_ = saved;
     CFRelease(fakeCgEvent);
 }
@@ -7617,6 +7620,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString *suffix = [self wrappedStringAtX:x y:y dir:1 respectHardNewlines:respectHardNewlines];
     NSString *joined = [prefix stringByAppendingString:suffix];
     NSString *possibleUrl = [self stringInString:joined includingOffset:[prefix length] fromCharacterSet:[PTYTextView urlCharacterSet]];
+    NSArray *punctuation = [NSArray arrayWithObjects:@".", @",", nil];
+    for (NSString *pchar in punctuation) {
+        if ([possibleUrl hasSuffix:pchar]) {
+            possibleUrl = [possibleUrl substringToIndex:possibleUrl.length - 1];
+            break;
+        }
+    }
     NSString *possibleFilePart1 = [self stringInString:prefix includingOffset:[prefix length] - 1 fromCharacterSet:[PTYTextView filenameCharacterSet]];
     NSString *possibleFilePart2 = [self stringInString:suffix includingOffset:0 fromCharacterSet:[PTYTextView filenameCharacterSet]];
 
