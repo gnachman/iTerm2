@@ -53,7 +53,7 @@ typedef enum {
     // Data from parsing an incoming command
     ControlCommand command_;
 
-    NSMutableArray *commandQueue_;  // Dictionaries
+    NSMutableArray *commandQueue_;  // NSMutableDictionary objects
     NSMutableString *currentCommandResponse_;
     NSMutableDictionary *currentCommand_;  // Set between %begin and %end
 

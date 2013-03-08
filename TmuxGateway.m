@@ -32,6 +32,7 @@ static NSString *kCommandString = @"string";
 static NSString *kCommandObject = @"object";
 static NSString *kCommandIsInitial = @"isInitial";
 static NSString *kCommandToleratesErrors = @"toleratesErrors";
+static NSString *kCommandId = @"id";
 
 @implementation TmuxGateway
 
@@ -232,6 +233,23 @@ static NSString *kCommandToleratesErrors = @"toleratesErrors";
     currentCommandResponse_ = nil;
 }
 
+- (void)parseBegin:(NSString *)command
+{
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%begin ([0-9]+)$"];
+    if (components.count != 2) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%begin command_id): \"%@\"", command]];
+        return;
+    }
+    NSString *commandId = [components objectAtIndex:1];
+
+    currentCommand_ = [[commandQueue_ objectAtIndex:0] retain];
+    [currentCommand_ setObject:commandId forKey:kCommandId];
+    TmuxLog(@"Begin response to %@", [currentCommand_ objectForKey:kCommandString]);
+    [currentCommandResponse_ release];
+    currentCommandResponse_ = [[NSMutableString alloc] init];
+    [commandQueue_ removeObjectAtIndex:0];
+}
+
 - (BOOL)parseCommand
 {
     NSRange newlineRange = NSMakeRange(NSNotFound, 0);
@@ -269,9 +287,15 @@ static NSString *kCommandToleratesErrors = @"toleratesErrors";
     // Advance range to include newline so we can chop it off
     commandRange.length += newlineRange.length;
 
-    if ([command isEqualToString:@"%end"]) {
+    NSString *endCommand = [NSString stringWithFormat:@"%%end %@", [currentCommand_ objectForKey:kCommandId]];
+    NSString *errorCommand = [NSString stringWithFormat:@"%%error %@", [currentCommand_ objectForKey:kCommandId]];
+    if (currentCommand_ && [command isEqualToString:endCommand]) {
         TmuxLog(@"End for command %@", currentCommand_);
         [self currentCommandResponseFinishedWithError:NO];
+    } else if (currentCommand_ && [command hasPrefix:errorCommand]) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Error in %@: %@",
+                                     [currentCommand_ objectForKey:kCommandString],
+                                     currentCommandResponse_]];
     } else if (currentCommand_) {
         if (currentCommandResponse_.length) {
             [currentCommandResponse_ appendString:@"\n"];
@@ -301,19 +325,13 @@ static NSString *kCommandToleratesErrors = @"toleratesErrors";
                [command isEqualToString:@"%exit"]) {
         TmuxLog(@"tmux exit message: %@", command);
         [self hostDisconnected];
-    } else if ([command hasPrefix:@"%error"]) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Error: %@", command]];
-    } else if ([command isEqualToString:@"%begin"]) {
+    } else if ([command hasPrefix:@"%begin "]) {
         if (currentCommand_) {
             [self abortWithErrorMessage:@"%begin without %end"];
         } else if (!commandQueue_.count) {
             [self abortWithErrorMessage:@"%begin with empty command queue"];
         } else {
-            currentCommand_ = [[commandQueue_ objectAtIndex:0] retain];
-            TmuxLog(@"Begin response to %@", currentCommand_);
-            [currentCommandResponse_ release];
-            currentCommandResponse_ = [[NSMutableString alloc] init];
-            [commandQueue_ removeObjectAtIndex:0];
+            [self parseBegin:command];
         }
     } else {
         // We'll be tolerant of unrecognized commands.
@@ -321,7 +339,9 @@ static NSString *kCommandToleratesErrors = @"toleratesErrors";
     }
 
     // Erase the just-handled command from the stream.
-    [stream_ replaceBytesInRange:commandRange withBytes:"" length:0];
+    if (stream_.length >= commandRange.location + commandRange.length) {
+        [stream_ replaceBytesInRange:commandRange withBytes:"" length:0];
+    }
 
     return YES;
 }
@@ -412,7 +432,7 @@ static NSString *kCommandToleratesErrors = @"toleratesErrors";
 
 - (void)enqueueCommandDict:(NSDictionary *)dict
 {
-    [commandQueue_ addObject:dict];
+    [commandQueue_ addObject:[NSMutableDictionary dictionaryWithDictionary:dict]];
 }
 
 - (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector
@@ -440,6 +460,7 @@ static NSString *kCommandToleratesErrors = @"toleratesErrors";
                                      responseObject:obj
                                     toleratesErrors:toleratesErrors];
     [self enqueueCommandDict:dict];
+    TmuxLog(@"Send command: %@", commandWithNewline);
     [delegate_ tmuxWriteData:[commandWithNewline dataUsingEncoding:NSUTF8StringEncoding]];
 }
 
@@ -467,6 +488,7 @@ static NSString *kCommandToleratesErrors = @"toleratesErrors";
         sep = @"; ";
     }
     [cmd appendString:NEWLINE];
+    TmuxLog(@"Send command: %@", cmd);
     [delegate_ tmuxWriteData:[cmd dataUsingEncoding:NSUTF8StringEncoding]];
 }
 

@@ -243,13 +243,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)openWindowsInitial
 {
 	NSSize size = [[gateway_ delegate] tmuxBookmarkSize];
-    NSString *setSizeCommand = [NSString stringWithFormat:@"control-helper set-client-size %d,%d",
+    NSString *setSizeCommand = [NSString stringWithFormat:@"refresh-client -C %d,%d",
 								   (int)size.width, (int)size.height];
     NSString *listWindowsCommand = [NSString stringWithFormat:@"list-windows -F %@", kListWindowsFormat];
     NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
-    NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -t %d @affinities", sessionId_];
-    NSString *getOriginsCommand = [NSString stringWithFormat:@"show -v -t %d @origins", sessionId_];
-    NSString *getHiddenWindowsCommand = [NSString stringWithFormat:@"show -v -t %d @hidden", sessionId_];
+    NSString *getAffinitiesCommand = [NSString stringWithFormat:@"show -v -q -t %d @affinities", sessionId_];
+    NSString *getOriginsCommand = [NSString stringWithFormat:@"show -v -q -t %d @origins", sessionId_];
+    NSString *getHiddenWindowsCommand = [NSString stringWithFormat:@"show -v -q -t %d @hidden", sessionId_];
     NSArray *commands = [NSArray arrayWithObjects:
                          [gateway_ dictionaryForCommand:setSizeCommand
                                          responseTarget:nil
@@ -376,7 +376,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     lastSize_ = size;
     NSString *listStr = [NSString stringWithFormat:@"list-windows -F \"#{window_id} #{window_layout}\""];
     NSArray *commands = [NSArray arrayWithObjects:
-                         [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"control-helper set-client-size %d,%d",
+                         [gateway_ dictionaryForCommand:[NSString stringWithFormat:@"refresh-client -C %d,%d",
                                                          (int)size.width, (int)size.height]
                                          responseTarget:nil
 									   responseSelector:nil
@@ -813,12 +813,14 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)getHiddenWindowsResponse:(NSString *)response
 {
-	NSArray *windowIds = [response componentsSeparatedByString:@","];
 	[hiddenWindows_ removeAllObjects];
-	NSLog(@"getHiddneWindowsResponse: Add these window IDS to hidden: %@", windowIds);
-	for (NSString *wid in windowIds) {
-		[hiddenWindows_ addObject:[NSNumber numberWithInt:[wid intValue]]];
-	}
+    if ([response length] > 0) {
+        NSArray *windowIds = [response componentsSeparatedByString:@","];
+        NSLog(@"getHiddneWindowsResponse: Add these window IDS to hidden: %@", windowIds);
+        for (NSString *wid in windowIds) {
+            [hiddenWindows_ addObject:[NSNumber numberWithInt:[wid intValue]]];
+        }
+    }
 }
 
 - (void)getAffinitiesResponse:(NSString *)result
@@ -831,21 +833,23 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     [affinities_ release];
     affinities_ = [[EquivalenceClassSet alloc] init];
 
-    for (NSString *affset in affinities) {
-        NSArray *siblings = [affset componentsSeparatedByString:@","];
-        NSString *exemplar = [siblings lastObject];
-		if (siblings.count == 1) {
-			// This is a wee hack. If a tmux Window is in a native window with one tab
-			// then create an equivalence class containing only (wid, wid+"_ph"). ph=placeholder
-			// We'll never see a window id that's negative, but the equivalence
-			// class's existance signals not to apply the default mode for
-			// unrecognized windows.
-			exemplar = [exemplar stringByAppendingString:@"_ph"];
-		}
-        for (NSString *widString in siblings) {
-            if (![widString isEqualToString:exemplar]) {
-                [affinities_ setValue:widString
-                         equalToValue:exemplar];
+    if ([result length] > 0) {
+        for (NSString *affset in affinities) {
+            NSArray *siblings = [affset componentsSeparatedByString:@","];
+            NSString *exemplar = [siblings lastObject];
+            if (siblings.count == 1) {
+                // This is a wee hack. If a tmux Window is in a native window with one tab
+                // then create an equivalence class containing only (wid, wid+"_ph"). ph=placeholder
+                // We'll never see a window id that's negative, but the equivalence
+                // class's existance signals not to apply the default mode for
+                // unrecognized windows.
+                exemplar = [exemplar stringByAppendingString:@"_ph"];
+            }
+            for (NSString *widString in siblings) {
+                if (![widString isEqualToString:exemplar]) {
+                    [affinities_ setValue:widString
+                             equalToValue:exemplar];
+                }
             }
         }
     }
@@ -853,27 +857,29 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)getOriginsResponse:(NSString *)result
 {
-	NSArray *windows = [result componentsSeparatedByString:@" "];
 	[origins_ removeAllObjects];
-	for (NSString *wstr in windows) {
-		NSArray *tuple = [wstr componentsSeparatedByString:@":"];
-		if (tuple.count != 2) {
-			continue;
-		}
-		NSString *windowsStr = [tuple objectAtIndex:0];
-		NSString *coords = [tuple objectAtIndex:1];
-		NSArray *windowIds = [windowsStr componentsSeparatedByString:@","];
-		NSArray *xy = [coords componentsSeparatedByString:@","];
-		if (xy.count != 2) {
-			continue;
-		}
-		NSPoint origin = NSMakePoint([[xy objectAtIndex:0] intValue],
-									 [[xy objectAtIndex:1] intValue]);
-		for (NSString *wid in windowIds) {
-			[origins_ setObject:[NSValue valueWithPoint:origin]
-						 forKey:[NSNumber numberWithInt:[wid intValue]]];
-		}
-	}
+    if ([result length] > 0) {
+        NSArray *windows = [result componentsSeparatedByString:@" "];
+        for (NSString *wstr in windows) {
+            NSArray *tuple = [wstr componentsSeparatedByString:@":"];
+            if (tuple.count != 2) {
+                continue;
+            }
+            NSString *windowsStr = [tuple objectAtIndex:0];
+            NSString *coords = [tuple objectAtIndex:1];
+            NSArray *windowIds = [windowsStr componentsSeparatedByString:@","];
+            NSArray *xy = [coords componentsSeparatedByString:@","];
+            if (xy.count != 2) {
+                continue;
+            }
+            NSPoint origin = NSMakePoint([[xy objectAtIndex:0] intValue],
+                                         [[xy objectAtIndex:1] intValue]);
+            for (NSString *wid in windowIds) {
+                [origins_ setObject:[NSValue valueWithPoint:origin]
+                             forKey:[NSNumber numberWithInt:[wid intValue]]];
+            }
+        }
+    }
 }
 
 - (void)listSessionsResponse:(NSString *)result

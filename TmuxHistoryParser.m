@@ -73,6 +73,9 @@
 - (NSArray *)parseDumpHistoryResponse:(NSString *)response
                ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 {
+    if (![response length]) {
+        return [NSArray array];
+    }
     NSArray *lines = [response componentsSeparatedByString:@"\n"];
     NSMutableArray *screenLines = [NSMutableArray array];
     VT100Terminal *terminal = [[[VT100Terminal alloc] init] autorelease];

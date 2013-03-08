@@ -107,7 +107,7 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
                                 intType, kStateDictDECSCCursorY,
                                 nil];
 
-    NSArray *fields = [layout componentsSeparatedByString:@"\n"];
+    NSArray *fields = [layout componentsSeparatedByString:@"\t"];
     NSMutableDictionary *result = [NSMutableDictionary dictionary];
     for (NSString *kvp in fields) {
         NSRange eq = [kvp rangeOfString:@"="];
@@ -122,7 +122,7 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
             } else {
                 [result setObject:value forKey:key];
             }
-        } else {
+        } else if ([kvp length] > 0){
             NSLog(@"Bogus result in control command: \"%@\"", kvp);
         }
     }

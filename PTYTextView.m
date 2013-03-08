@@ -7618,7 +7618,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString *suffix = [self wrappedStringAtX:x y:y dir:1 respectHardNewlines:respectHardNewlines];
     NSString *joined = [prefix stringByAppendingString:suffix];
     NSString *possibleUrl = [self stringInString:joined includingOffset:[prefix length] fromCharacterSet:[PTYTextView urlCharacterSet]];
-    NSArray *punctuation = [NSArray arrayWithObjects:@".", @",", nil];
+    NSArray *punctuation = [NSArray arrayWithObjects:@".", @",", @";", nil];
     for (NSString *pchar in punctuation) {
         if ([possibleUrl hasSuffix:pchar]) {
             possibleUrl = [possibleUrl substringToIndex:possibleUrl.length - 1];
