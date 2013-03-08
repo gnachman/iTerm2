@@ -220,7 +220,8 @@
 
 - (void)dumpStateResponse:(NSString *)response pane:(NSNumber *)wp
 {
-    NSDictionary *state = [[TmuxStateParser sharedInstance] parsedStateFromString:response];
+    NSDictionary *state = [[TmuxStateParser sharedInstance] parsedStateFromString:response
+                                                                        forPaneId:[wp intValue]];
     [states_ setObject:state forKey:wp];
     [self requestDidComplete];
 }

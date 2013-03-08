@@ -18,6 +18,7 @@ NSString *kStateDictCursorX = @"cursor_x";
 NSString *kStateDictCursorY = @"cursor_y";
 NSString *kStateDictScrollRegionUpper = @"scroll_region_upper";
 NSString *kStateDictScrollRegionLower = @"scroll_region_lower";
+NSString *kStateDictPaneId = @"pane_id";
 NSString *kStateDictTabstops = @"pane_tabs";
 NSString *kStateDictDECSCCursorX = @"saved_cursor_x";
 NSString *kStateDictDECSCCursorY = @"saved_cursor_y";
@@ -34,9 +35,20 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
 @interface NSString (TmuxStateParser)
 - (NSArray *)intlistValue;
 - (NSNumber *)numberValue;
+- (NSNumber *)paneIdNumberValue;
 @end
 
 @implementation NSString (TmuxStateParser)
+
+- (NSNumber *)paneIdNumberValue
+{
+    if ([self hasPrefix:@"%"] && [self length] > 1) {
+        return [NSNumber numberWithInt:[[self substringFromIndex:1] intValue]];
+    } else {
+        NSLog(@"WARNING: Bogus pane id %@", self);
+        return [NSNumber numberWithInt:-1];
+    }
+}
 
 - (NSNumber *)numberValue
 {
@@ -60,7 +72,7 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
 + (NSString *)format {
     NSMutableString *format = [NSMutableString string];
     NSArray *theModes = [NSArray arrayWithObjects:
-                         kStateDictSavedGrid, kStateDictSavedCX, kStateDictSavedCY,
+                         kStateDictPaneId, kStateDictSavedGrid, kStateDictSavedCX, kStateDictSavedCY,
                          kStateDictCursorX, kStateDictCursorY, kStateDictScrollRegionUpper,
                          kStateDictScrollRegionLower, kStateDictTabstops, kStateDictDECSCCursorX,
                          kStateDictDECSCCursorY, kStateDictCursorMode, kStateDictInsertMode,
@@ -85,7 +97,7 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
     return instance;
 }
 
-- (NSMutableDictionary *)parsedStateFromString:(NSString *)layout
++ (NSMutableDictionary *)dictionaryForState:(NSString *)state
 {
     // State is a collection of key-value pairs. Each KVP is delimited by
     // newlines. The key is to the left of the first =, the value is to the
@@ -93,6 +105,7 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
     NSString *intType = @"numberValue";
     NSString *uintType = @"numberValue";
     NSString *intlistType = @"intlistValue";
+    NSString *paneIdNumberType = @"paneIdNumberValue";
 
     NSDictionary *fieldTypes = [NSDictionary dictionaryWithObjectsAndKeys:
                                 intType, kStateDictInAlternateScreen,
@@ -105,12 +118,13 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
                                 uintType, kStateDictCursorY,
                                 uintType, kStateDictScrollRegionUpper,
                                 uintType, kStateDictScrollRegionLower,
+                                paneIdNumberType, kStateDictPaneId,
                                 intlistType, kStateDictTabstops,
                                 intType, kStateDictDECSCCursorX,
                                 intType, kStateDictDECSCCursorY,
                                 nil];
 
-    NSArray *fields = [layout componentsSeparatedByString:@"\t"];
+    NSArray *fields = [state componentsSeparatedByString:@"\t"];
     NSMutableDictionary *result = [NSMutableDictionary dictionary];
     for (NSString *kvp in fields) {
         NSRange eq = [kvp rangeOfString:@"="];
@@ -125,12 +139,25 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
             } else {
                 [result setObject:value forKey:key];
             }
-        } else if ([kvp length] > 0){
+        } else if ([kvp length] > 0) {
             NSLog(@"Bogus result in control command: \"%@\"", kvp);
         }
     }
     return result;
 }
 
+- (NSMutableDictionary *)parsedStateFromString:(NSString *)stateLines
+                                     forPaneId:(int)paneId
+{
+    NSArray *states = [stateLines componentsSeparatedByString:@"\n"];
+    for (NSString *state in states) {
+        NSMutableDictionary *dict = [[self class] dictionaryForState:state];
+        NSNumber *paneIdNumber = [dict objectForKey:kStateDictPaneId];
+        if (paneIdNumber && [paneIdNumber intValue] == paneId) {
+            return dict;
+        }
+    }
+    return [NSMutableDictionary dictionary];
+}
 
 @end
