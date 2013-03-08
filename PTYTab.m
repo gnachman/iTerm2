@@ -2113,8 +2113,8 @@ static NSString* FormatRect(NSRect r) {
 }
 
 + (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
-                                        inTerminal:(PseudoTerminal*)term
-                           hasFlexibleView:(BOOL)hasFlexible
+                    inTerminal:(PseudoTerminal*)term
+               hasFlexibleView:(BOOL)hasFlexible
 {
     PTYTab* theTab;
     // Build a tree with splitters and SessionViews but no PTYSessions.
@@ -2970,9 +2970,11 @@ static NSString* FormatRect(NSRect r) {
 
     // Ask the tmux server to perform the move and we'll update our layout when
     // it finishes.
-    [tmuxController_ windowPane:[session tmuxPane]
-                      resizedBy:amount
-                   horizontally:[splitView isVertical]];
+    if (amount > 0) {
+        [tmuxController_ windowPane:[session tmuxPane]
+                          resizedBy:amount
+                       horizontally:[splitView isVertical]];
+    }
 }
 
 // Prevent any session from becoming smaller than its minimum size because of

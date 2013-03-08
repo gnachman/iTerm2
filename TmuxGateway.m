@@ -14,7 +14,7 @@ NSString * const kTmuxGatewayErrorDomain = @"kTmuxGatewayErrorDomain";;
 
 #define NEWLINE @"\r"
 
-//#define TMUX_VERBOSE_LOGGING
+#define TMUX_VERBOSE_LOGGING
 #ifdef TMUX_VERBOSE_LOGGING
 #define TmuxLog NSLog
 #else
@@ -33,6 +33,8 @@ static NSString *kCommandObject = @"object";
 static NSString *kCommandIsInitial = @"isInitial";
 static NSString *kCommandToleratesErrors = @"toleratesErrors";
 static NSString *kCommandId = @"id";
+static NSString *kCommandIsInList = @"inList";
+static NSString *kCommandIsLastInList = @"lastInList";
 
 @implementation TmuxGateway
 
@@ -61,7 +63,6 @@ static NSString *kCommandId = @"id";
 - (void)abortWithErrorMessage:(NSString *)message
 {
     // TODO: be more forgiving of errors.
-    NSLog(@"TmuxGateway parse errror: %@", message);
     [[NSAlert alertWithMessageText:@"A tmux protocol error occurred."
                      defaultButton:@"Ok"
                    alternateButton:@""
@@ -250,6 +251,15 @@ static NSString *kCommandId = @"id";
     [commandQueue_ removeObjectAtIndex:0];
 }
 
+- (void)stripLastNewline {
+    if ([currentCommandResponse_ hasSuffix:@"\n"]) {
+        // Strip the last newline.
+        NSRange theRange = NSMakeRange(currentCommandResponse_.length - 1, 1);
+        [currentCommandResponse_ replaceCharactersInRange:theRange
+                                               withString:@""];
+    }
+}
+
 - (BOOL)parseCommand
 {
     NSRange newlineRange = NSMakeRange(NSNotFound, 0);
@@ -286,21 +296,23 @@ static NSString *kCommandId = @"id";
     }
     // Advance range to include newline so we can chop it off
     commandRange.length += newlineRange.length;
+    if (!currentCommand_ && !acceptNotifications_) {
+        TmuxLog(@"Ignoring notification %@", command);
+    }
 
     NSString *endCommand = [NSString stringWithFormat:@"%%end %@", [currentCommand_ objectForKey:kCommandId]];
     NSString *errorCommand = [NSString stringWithFormat:@"%%error %@", [currentCommand_ objectForKey:kCommandId]];
     if (currentCommand_ && [command isEqualToString:endCommand]) {
         TmuxLog(@"End for command %@", currentCommand_);
+        [self stripLastNewline];
         [self currentCommandResponseFinishedWithError:NO];
-    } else if (currentCommand_ && [command hasPrefix:errorCommand]) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Error in %@: %@",
-                                     [currentCommand_ objectForKey:kCommandString],
-                                     currentCommandResponse_]];
+    } else if (currentCommand_ && [command isEqualToString:errorCommand]) {
+        [self stripLastNewline];
+        [self currentCommandResponseFinishedWithError:YES];
     } else if (currentCommand_) {
-        if (currentCommandResponse_.length) {
-            [currentCommandResponse_ appendString:@"\n"];
-        }
         [currentCommandResponse_ appendString:command];
+        // Always append a newline; then at the end, remove the last one.
+        [currentCommandResponse_ appendString:@"\n"];
     } else if ([command hasPrefix:@"%output "]) {
         if (acceptNotifications_) [self parseOutputCommand:command];
     } else if ([command hasPrefix:@"%layout-change "]) {
@@ -339,7 +351,7 @@ static NSString *kCommandId = @"id";
     }
 
     // Erase the just-handled command from the stream.
-    if (stream_.length >= commandRange.location + commandRange.length) {
+    if (stream_.length > 0) {  // length could be 0 if abortWtihErrorMessage: was called.
         [stream_ replaceBytesInRange:commandRange withBytes:"" length:0];
     }
 
@@ -462,6 +474,7 @@ static NSString *kCommandId = @"id";
     [self enqueueCommandDict:dict];
     TmuxLog(@"Send command: %@", commandWithNewline);
     [delegate_ tmuxWriteData:[commandWithNewline dataUsingEncoding:NSUTF8StringEncoding]];
+    TmuxLog(@"Send command: %@", [dict objectForKey:kCommandString]);
 }
 
 - (void)sendCommandList:(NSArray *)commandDicts {
@@ -475,18 +488,23 @@ static NSString *kCommandId = @"id";
     }
     NSMutableString *cmd = [NSMutableString string];
     NSString *sep = @"";
+    TmuxLog(@"-- Begin command list --");
     for (NSDictionary *dict in commandDicts) {
         [cmd appendString:sep];
         [cmd appendString:[dict objectForKey:kCommandString]];
-        if (initial && dict == [commandDicts lastObject]) {
-            NSMutableDictionary *amended = [NSMutableDictionary dictionaryWithDictionary:dict];
-            [amended setObject:[NSNumber numberWithBool:YES] forKey:kCommandIsInitial];
-            [self enqueueCommandDict:amended];
-        } else {
-            [self enqueueCommandDict:dict];
+        NSMutableDictionary *amended = [NSMutableDictionary dictionaryWithDictionary:dict];
+        if (dict == [commandDicts lastObject]) {
+            [amended setObject:[NSNumber numberWithBool:YES] forKey:kCommandIsLastInList];
         }
+        [amended setObject:[NSNumber numberWithBool:YES] forKey:kCommandIsInList];
+        if (initial && dict == [commandDicts lastObject]) {
+            [amended setObject:[NSNumber numberWithBool:YES] forKey:kCommandIsInitial];
+        }
+        [self enqueueCommandDict:amended];
         sep = @"; ";
+        TmuxLog(@"Send command: %@", [dict objectForKey:kCommandString]);
     }
+    TmuxLog(@"-- End command list --");
     [cmd appendString:NEWLINE];
     TmuxLog(@"Send command: %@", cmd);
     [delegate_ tmuxWriteData:[cmd dataUsingEncoding:NSUTF8StringEncoding]];

@@ -3305,7 +3305,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
     // If the window isn't able to adjust, or adjust enough, make the session
     // work with whatever size we ended up having.
-    [[self tab] fitSessionToCurrentViewSize:self];
+    if ([self isTmuxClient]) {
+        [tmuxController_ windowDidResize:[[self tab] realParentWindow]];
+    } else {
+        [[self tab] fitSessionToCurrentViewSize:self];
+    }
 }
 
 - (void)synchronizeTmuxFonts:(NSNotification *)notification

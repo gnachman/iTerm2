@@ -4107,11 +4107,11 @@ void DumpBuf(screen_char_t* p, int n) {
     [self clearBuffer];
     for (NSData *chars in history) {
         screen_char_t *line = (screen_char_t *) [chars bytes];
-        int length = [chars length] / sizeof(screen_char_t);
-        length--;  // Last position is wrap flag
-
-        BOOL isPartial = (line[length].code == EOL_SOFT);
-        [linebuffer appendLine:line length:length partial:isPartial width:WIDTH];
+        const int len = [chars length] / sizeof(screen_char_t);
+        [linebuffer appendLine:line
+                        length:len
+                       partial:NO
+                         width:WIDTH];
     }
     if (!unlimitedScrollback_) {
         [linebuffer dropExcessLinesWithWidth:WIDTH];
@@ -4139,16 +4139,23 @@ void DumpBuf(screen_char_t* p, int n) {
     temp_default_char = [self defaultChar];
 
     // Copy the lines back over it
-    for (int i = 0; i < MIN(lines.count, HEIGHT); i++) {
+    int o = 0;
+    for (int i = 0; o < HEIGHT && i < MIN(lines.count, HEIGHT); i++) {
         NSData *chars = [lines objectAtIndex:i];
         screen_char_t *line = (screen_char_t *) [chars bytes];
         int length = [chars length] / sizeof(screen_char_t);
-        length--;  // Last position is wrap flag
-        BOOL isPartial = (line[length].code == EOL_SOFT);
-        memmove(temp_buffer + i * REAL_WIDTH,
-                line,
-                length * sizeof(screen_char_t));
-        temp_buffer[i * REAL_WIDTH + WIDTH].code = (isPartial ? EOL_SOFT : EOL_HARD);
+
+        do {
+            // Add up to WIDTH characters at a time until they're all used.
+            memmove(temp_buffer + o * REAL_WIDTH,
+                    line,
+                    MIN(WIDTH, length) * sizeof(screen_char_t));
+            const BOOL isPartial = (length > WIDTH);
+            temp_buffer[o * REAL_WIDTH + WIDTH].code = (isPartial ? EOL_SOFT : EOL_HARD);
+            length -= WIDTH;
+            line += WIDTH;
+            o++;
+        } while (o < HEIGHT && length > 0);
     }
 }
 

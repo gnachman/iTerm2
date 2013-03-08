@@ -68,7 +68,10 @@ NSString *kStateDictMouseUTF8Mode = @"mouse_utf8_flag";
                          kStateDictMouseStandardMode, kStateDictMouseButtonMode,
                          kStateDictMouseAnyMode, kStateDictMouseUTF8Mode, nil];
     for (NSString *value in theModes) {
-        [format appendFormat:@"%@=#{%@}\t", value, value];
+        [format appendFormat:@"%@=#{%@}", value, value];
+        if (value != [theModes lastObject]) {
+            [format appendString:@"\t"];
+        }
     }
     return format;
 }

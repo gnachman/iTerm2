@@ -335,6 +335,10 @@ NSString* CharArrayToString(unichar* charHaystack, int o)
                                      freeWhenDone:NO] autorelease];
 }
 
+void DumpScreenCharArray(screen_char_t* screenChars, int lineLength) {
+    NSLog("%@", ScreenCharArrayToStringDebug(screenChars, lineLength));
+}
+
 NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,
                                        int lineLength) {
   NSMutableString* result = [NSMutableString stringWithCapacity:lineLength];
