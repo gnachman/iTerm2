@@ -11,6 +11,7 @@
 #import "PreferencePanel.h"
 #import "iTermApplicationDelegate.h"
 #import "ITAddressBookMgr.h"
+#import "FutureMethods.h"
 
 static NSString *kPointerActionsKey = @"PointerActions";  // Used in NSUserDefaults
 static NSString *kActionKey = @"Action";  // Used within values

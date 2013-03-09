@@ -30,6 +30,7 @@
 #import "PseudoTerminal.h"
 #import "PTYTab.h"
 #import "GlobalSearch.h"
+#import "FutureMethods.h"
 
 static const float THUMB_MARGIN = 25;
 /*

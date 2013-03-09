@@ -25,6 +25,7 @@
 #import <Cocoa/Cocoa.h>
 #import "ProfileModel.h"
 #import "ProfileTableView.h"
+#import "FutureMethods.h"
 
 @class ProfileModelWrapper;
 @class iTermSearchField;

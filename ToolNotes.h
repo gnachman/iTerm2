@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ToolbeltView.h"
+#import "FutureMethods.h"
 
 @interface ToolNotes : NSView <ToolbeltTool, NSTextViewDelegate> {
     NSTextView *textView_;

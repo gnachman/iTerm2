@@ -69,6 +69,7 @@ static const int kMaxSelectedTextLinesForCustomActions = 100;
 #import "PointerPrefsController.h"
 #import "CharacterRun.h"
 #import "ThreeFingerTapGestureRecognizer.h"
+#import "FutureMethods.h"
 
 #include <sys/time.h>
 #include <math.h>

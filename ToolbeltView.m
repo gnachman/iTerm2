@@ -14,6 +14,7 @@
 #import "ToolNotes.h"
 #import "iTermApplicationDelegate.h"
 #import "iTermApplication.h"
+#import "FutureMethods.h"
 
 @interface ToolbeltSplitView : NSSplitView {
     NSColor *dividerColor_;

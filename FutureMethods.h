@@ -7,6 +7,47 @@
 
 #import <Cocoa/Cocoa.h>
 
+#ifdef BLOCKS_NOT_AVAILABLE
+// OS 10.5 Compatibility
+
+@protocol NSControlTextEditingDelegate
+@end
+
+@protocol NSMenuDelegate
+@end
+
+@protocol NSNetServiceBrowserDelegate
+@end
+
+@protocol NSNetServiceDelegate
+@end
+
+@protocol NSSplitViewDelegate
+@end
+
+@protocol NSTableViewDataSource
+@end
+
+@protocol NSTableViewDelegate
+@end
+
+@protocol NSTextFieldDelegate
+@end
+
+@protocol NSTextViewDelegate
+@end
+
+@protocol NSTokenFieldDelegate
+@end
+
+@protocol NSToolbarDelegate
+@end
+
+@protocol NSWindowDelegate
+@end
+
+#endif
+
 extern const int FutureNSWindowCollectionBehaviorStationary;
 
 @interface NSView (Future)

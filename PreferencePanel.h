@@ -30,6 +30,7 @@
 #import "WindowArrangements.h"
 #import "TriggerController.h"
 #import "SmartSelectionController.h"
+#import "FutureMethods.h"
 
 #define OPT_NORMAL 0
 #define OPT_META   1

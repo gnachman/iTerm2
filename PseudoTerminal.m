@@ -77,6 +77,7 @@
 #import "Coprocess.h"
 #import "ColorsMenuItemView.h"
 #import "iTermFontPanel.h"
+#import "FutureMethods.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 

@@ -8,6 +8,7 @@
 
 #import "ContextMenuActionPrefsController.h"
 #import "NSStringITerm.h"
+#import "FutureMethods.h"
 
 static NSString* kTitleKey = @"title";
 static NSString* kActionKey = @"action";

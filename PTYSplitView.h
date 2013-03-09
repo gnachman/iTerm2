@@ -6,6 +6,7 @@
 //
 
 #import <AppKit/AppKit.h>
+#import "FutureMethods.h"
 
 @class PTYSplitView;
 

@@ -27,6 +27,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "FutureMethods.h"
 
 @interface GlobalSearchView : NSView
 {

@@ -7,6 +7,7 @@
 
 #import <Foundation/Foundation.h>
 #import "TmuxGateway.h"
+#import "FutureMethods.h"
 
 @class TmuxGateway;
 @class TmuxController;
