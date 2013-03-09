@@ -2542,7 +2542,7 @@ static VT100TCC decode_string(unsigned char *datap,
 
 - (void)setKeypadMode:(BOOL)mode
 {
-    KEYPAD_MODE = YES;
+    KEYPAD_MODE = mode;
 }
 
 - (BOOL)insertMode
