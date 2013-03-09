@@ -11,6 +11,7 @@
 #import <Cocoa/Cocoa.h>
 #import "PreferencePanel.h"
 #import <signal.h>
+#import "FutureMethods.h"
 
 int main(int argc, const char *argv[])
 {

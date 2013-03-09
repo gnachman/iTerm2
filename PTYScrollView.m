@@ -36,6 +36,7 @@
 #import "FutureMethods.h"
 #import "PTYTextView.h"
 #import "PreferencePanel.h"
+#import "FutureMethods.h"
 #import <Cocoa/Cocoa.h>
 
 @interface PTYScrollView (Private)

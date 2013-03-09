@@ -9,6 +9,7 @@
 #import "SmartSelectionController.h"
 #import "ProfileModel.h"
 #import "ITAddressBookMgr.h"
+#import "FutureMethods.h"
 
 static NSString *kRegexKey = @"regex";
 static NSString *kNotesKey = @"notes";

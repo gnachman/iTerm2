@@ -36,6 +36,7 @@
 #import "Autocomplete.h"
 #import "ToolbeltView.h"
 #import "SolidColorView.h"
+#import "FutureMethods.h"
 
 @class PTYSession, iTermController, PTToolbarController, PSMTabBarControl;
 @class ToolbeltView;

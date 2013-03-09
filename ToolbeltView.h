@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ToolWrapper.h"
+#import "FutureMethods.h"
 
 @class PseudoTerminal;
 

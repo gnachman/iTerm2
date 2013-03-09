@@ -26,6 +26,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "FutureMethods.h"
 
 @class iTermExposeView;
 @class PTYTab;

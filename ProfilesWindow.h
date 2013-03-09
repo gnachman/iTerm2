@@ -24,6 +24,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ProfileListView.h"
+#import "FutureMethods.h"
 
 @interface ProfilesWindow : NSWindowController <ProfileListViewDelegate, NSWindowDelegate> {
     IBOutlet ProfileListView* tableView_;
