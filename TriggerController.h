@@ -6,6 +6,7 @@
 //
 
 #import <Cocoa/Cocoa.h>
+#import "FutureMethods.h"
 
 @class TriggerController;
 

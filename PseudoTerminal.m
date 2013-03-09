@@ -77,6 +77,7 @@
 #import "Coprocess.h"
 #import "ColorsMenuItemView.h"
 #import "iTermFontPanel.h"
+#import "FutureMethods.h"
 
 #define CACHED_WINDOW_POSITIONS 100
 
@@ -113,6 +114,8 @@ static NSString* TERMINAL_ARRANGEMENT_WINDOW_TYPE = @"Window Type";
 static NSString* TERMINAL_ARRANGEMENT_SELECTED_TAB_INDEX = @"Selected Tab Index";
 static NSString* TERMINAL_ARRANGEMENT_SCREEN_INDEX = @"Screen";
 static NSString* TERMINAL_ARRANGEMENT_HIDE_AFTER_OPENING = @"Hide After Opening";
+static NSString* TERMINAL_ARRANGEMENT_DESIRED_COLUMNS = @"Desired Columns";
+static NSString* TERMINAL_ARRANGEMENT_DESIRED_ROWS = @"Desired Rows";
 static NSString* TERMINAL_GUID = @"TerminalGuid";
 
 // In full screen, leave a bit of space at the top of the toolbar for aesthetics.
@@ -1416,6 +1419,12 @@ NSString *sessionsKey = @"sessions";
 
 - (void)loadArrangement:(NSDictionary *)arrangement
 {
+    if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS]) {
+        desiredRows_ = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS] intValue];
+    }
+    if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_COLUMNS]) {
+        desiredColumns_ = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_COLUMNS] intValue];
+    }
     for (NSDictionary* tabArrangement in [arrangement objectForKey:TERMINAL_ARRANGEMENT_TABS]) {
         [PTYTab openTabWithArrangement:tabArrangement inTerminal:self hasFlexibleView:NO];
     }
@@ -1491,6 +1500,10 @@ NSString *sessionsKey = @"sessions";
                forKey:TERMINAL_ARRANGEMENT_WINDOW_TYPE];
     [result setObject:[NSNumber numberWithInt:[[NSScreen screens] indexOfObjectIdenticalTo:[[self window] screen]]]
                                        forKey:TERMINAL_ARRANGEMENT_SCREEN_INDEX];
+    [result setObject:[NSNumber numberWithInt:desiredRows_]
+               forKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS];
+    [result setObject:[NSNumber numberWithInt:desiredColumns_]
+               forKey:TERMINAL_ARRANGEMENT_DESIRED_COLUMNS];
     // Save tabs.
     NSMutableArray* tabs = [NSMutableArray arrayWithCapacity:[self numberOfTabs]];
     for (NSTabViewItem* tabViewItem in [TABVIEW tabViewItems]) {
@@ -2114,7 +2127,10 @@ NSString *sessionsKey = @"sessions";
 
 - (void)saveFrameBeforeToolbarToggle {
     if (!preToolbarToggleFrame_.size.width) {
+        PtyLog(@"Save frame of %@", NSStringFromRect(self.window.frame));
         preToolbarToggleFrame_ = self.window.frame;
+    } else {
+        PtyLog(@"Not saving the frame");
     }
 }
 
@@ -2122,17 +2138,21 @@ NSString *sessionsKey = @"sessions";
     if (preToolbarToggleFrame_.size.width) {
         [[self window] setFrame:preToolbarToggleFrame_ display:YES];
     }
+    PtyLog(@"Restoring the frame");
     preToolbarToggleFrame_ = NSZeroRect;
 }
 
 // PTYWindowDelegateProtocol
 - (void)windowWillToggleToolbarVisibility:(id)sender
 {
+    PtyLog(@"-- windowWillToggleToolbarVisibility from %@", [NSThread callStackSymbols]);
     // All fullscreen windows need to save their frames because the OS will shrink them when you
     // toggle the toolbar while in lion fullscreen. We restore it for all fullscreen windows in
     // -windowDidToggleToolbarVisibility.
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
+        PtyLog(@"  consider term %@", term);
         if ([term lionFullScreen]) {
+            PtyLog(@"    is lion fullscreen. Save its frame");
             [term saveFrameBeforeToolbarToggle];
         }
     }
@@ -2140,19 +2160,21 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidToggleToolbarVisibility:(id)sender
 {
+    PtyLog(@"windowDidToggleToolbarVisibility");
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-    [itad setToolbarShouldBeVisible:[[[self window] toolbar] isVisible]];
-
     // Fix up the frames of all lion fullscreen windows.
     for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
         if ([term lionFullScreen]) {
             [term restoreFrameAfterToolbarToggle];
+        } else {
+            PtyLog(@"zeroing preToolbarToggleFrame_");
+            preToolbarToggleFrame_ = NSZeroRect;
         }
         if ([[[term window] toolbar] isVisible] != [itad toolbarShouldBeVisible]) {
             // Sometimes a window will have its toolbar left unchanged after another one is toggled!
             // This can happen if you hide the toolbar by clicking the menu in a lion fullscreen
             // window; it will change but a non-fullscreen window won't.
-            [term wrapToggleToolbarShown:nil];
+            [[term ptyWindow] toggleToolbarShownNoSave:nil];
         }
     }
 
@@ -2483,7 +2505,10 @@ NSString *sessionsKey = @"sessions";
 {
     [toolbelt_ setUseDarkDividers:YES];
     // The OS kindly toggles the toolbar for you when entering fullscreen. Undo that.
-    [self forceToolbarIntoCorrectState];
+
+    [self performSelector:@selector(forceToolbarIntoCorrectState)
+               withObject:nil
+               afterDelay:0];
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
     lionFullScreen_ = YES;
@@ -4330,7 +4355,7 @@ NSString *sessionsKey = @"sessions";
     iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
     if ([itad toolbarShouldBeVisible] != [[[self window] toolbar] isVisible]) {
         PtyLog(@"Force-toggling toolbar");
-        [[self window] toggleToolbarShown:nil];
+        [[self ptyWindow] toggleToolbarShownNoSave:nil];
     }
 }
 

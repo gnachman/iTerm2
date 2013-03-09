@@ -17,6 +17,7 @@
 #import "Trigger.h"
 #import "CoprocessTrigger.h"
 #import "SendTextTrigger.h"
+#import "FutureMethods.h"
 
 static NSMutableArray *gTriggerClasses;
 

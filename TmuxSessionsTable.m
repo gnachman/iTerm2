@@ -7,6 +7,7 @@
 //
 
 #import "TmuxSessionsTable.h"
+#import "FutureMethods.h"
 
 extern NSString *kWindowPasteboardType;
 
@@ -34,7 +35,9 @@ extern NSString *kWindowPasteboardType;
 - (void)awakeFromNib
 {
     [tableView_ registerForDraggedTypes:[NSArray arrayWithObjects:kWindowPasteboardType, nil]];
+#ifndef BLOCKS_NOT_AVAILABLE
     [tableView_ setDraggingDestinationFeedbackStyle:NSTableViewDraggingDestinationFeedbackStyleRegular];
+#endif
 }
 
 - (void)dealloc

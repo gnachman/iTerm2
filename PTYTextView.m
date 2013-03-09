@@ -69,6 +69,7 @@ static const int kMaxSelectedTextLinesForCustomActions = 100;
 #import "PointerPrefsController.h"
 #import "CharacterRun.h"
 #import "ThreeFingerTapGestureRecognizer.h"
+#import "FutureMethods.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -3357,6 +3358,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
     locationInTextView.x = ceil(locationInTextView.x);
     locationInTextView.y = ceil(locationInTextView.y);
+    // Clamp the y position to be within the view. Sometimes we get events we probably shouldn't.
+    locationInTextView.y = MIN(self.frame.size.height - 1,
+                               MAX(0, locationInTextView.y));
     NSRect  rectInTextView = [self visibleRect];
     int x, y;
     int width = [dataSource width];

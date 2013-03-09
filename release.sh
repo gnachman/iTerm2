@@ -5,8 +5,10 @@ COMPACTDATE=$(date +"%Y%m%d")
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")
 SVNDIR=~/svn/iterm2
-./sign.sh
 ORIG_DIR=`pwd`
+
+make Deployment || exit
+./sign.sh
 
 # Build tmux and move its tar.gz into the Deployment build directory
 cd ~/tmux
@@ -20,7 +22,7 @@ mv ~/tmux-for-iTerm2-$COMPACTDATE.tar.gz build/Deployment
 cd build/Deployment
 
 # Create the zip file
-zip -r iTerm2-${NAME}.zip iTerm.app tmux-for-iTerm2-$COMPACTDATE.tar.gz
+zip -r iTerm2-${NAME}.zip iTerm.app
 
 # Update the list of changes
 vi $SVNDIR/appcasts/testing_changes.html

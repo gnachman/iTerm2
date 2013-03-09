@@ -8,6 +8,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "ToolWrapper.h"
+#import "FutureMethods.h"
 
 @interface ToolJobs : NSView <ToolbeltTool, NSTableViewDelegate, NSTableViewDataSource> {
     NSScrollView *scrollView_;

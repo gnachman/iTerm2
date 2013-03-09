@@ -7,6 +7,7 @@
 //
 
 #import "TmuxWindowsTable.h"
+#import "FutureMethods.h"
 
 NSString *kWindowPasteboardType = @"kWindowPasteboardType";
 

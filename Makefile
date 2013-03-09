@@ -31,6 +31,10 @@ Development:
 Dep:
 	xcodebuild -parallelizeTargets -alltargets -configuration Deployment
 
+LeopardPPC:
+	xcodebuild -parallelizeTargets -alltargets -configuration "Leopard Deployment" && \
+	chmod -R go+rX build/"Leopard Deployment"
+
 Deployment:
 	xcodebuild -parallelizeTargets -alltargets -configuration Deployment && \
 	chmod -R go+rX build/Deployment
