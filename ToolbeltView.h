@@ -10,10 +10,11 @@
 #import "ToolWrapper.h"
 #import "FutureMethods.h"
 
+@class ToolbeltSplitView;
 @class PseudoTerminal;
 
 @interface ToolbeltView : NSView <NSSplitViewDelegate, ToolWrapperDelegate> {
-    NSSplitView *splitter_;
+    ToolbeltSplitView *splitter_;
     NSMutableDictionary *tools_;
     PseudoTerminal *term_;   // weak
 }
@@ -36,5 +37,7 @@
 
 - (BOOL)haveOnlyOneTool;
 - (void)shutdown;
+
+- (void)setUseDarkDividers:(BOOL)useDarkDividers;
 
 @end

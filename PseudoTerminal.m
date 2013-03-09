@@ -472,6 +472,7 @@ NSString *sessionsKey = @"sessions";
 
     toolbelt_ = [[[ToolbeltView alloc] initWithFrame:NSMakeRect(0, 0, 200, self.window.frame.size.height - kToolbeltMargin)
                                                 term:self] autorelease];
+    [toolbelt_ setUseDarkDividers:windowType_ == WINDOW_TYPE_LION_FULL_SCREEN];
     [self _updateToolbeltParentage];
 
     wellFormed_ = YES;
@@ -2490,6 +2491,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
 {
+    [toolbelt_ setUseDarkDividers:YES];
     // The OS kindly toggles the toolbar for you when entering fullscreen. Undo that.
 
     [self performSelector:@selector(forceToolbarIntoCorrectState)
@@ -2529,6 +2531,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification
 {
+    [toolbelt_ setUseDarkDividers:NO];
     // Since we try to work around the OS turning on the toolbar when you enter
     // fullscreen, we also have to work around its confusion on exit.
     [self forceToolbarIntoCorrectState];

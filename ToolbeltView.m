@@ -16,6 +16,33 @@
 #import "iTermApplication.h"
 #import "FutureMethods.h"
 
+@interface ToolbeltSplitView : NSSplitView {
+    NSColor *dividerColor_;
+}
+
+- (void)setDividerColor:(NSColor *)dividerColor;
+
+@end
+
+@implementation ToolbeltSplitView
+
+- (void)dealloc {
+    [dividerColor_ release];
+    [super dealloc];
+}
+
+- (void)setDividerColor:(NSColor *)dividerColor {
+    [dividerColor_ autorelease];
+    dividerColor_ = [dividerColor retain];
+    [self setNeedsDisplay:YES];
+}
+
+- (NSColor *)dividerColor {
+    return dividerColor_;
+}
+
+@end
+
 @interface ToolbeltView (Private)
 
 + (NSDictionary *)toolsDictionary;
@@ -70,7 +97,7 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
             [[NSUserDefaults standardUserDefaults] setObject:items forKey:kToolbeltPrefKey];
         }
 
-        splitter_ = [[NSSplitView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height)];
+        splitter_ = [[ToolbeltSplitView alloc] initWithFrame:NSMakeRect(0, 0, frame.size.width, frame.size.height)];
         [splitter_ setVertical:NO];
         [splitter_ setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
         [splitter_ setDividerStyle:NSSplitViewDividerStyleThin];
@@ -92,6 +119,10 @@ static NSString *kToolbeltPrefKey = @"ToolbeltTools";
     [splitter_ release];
     [tools_ release];
     [super dealloc];
+}
+
+- (void)setUseDarkDividers:(BOOL)useDarkDividers {
+    [splitter_ setDividerColor:useDarkDividers ? [NSColor darkGrayColor] : [NSColor lightGrayColor]];
 }
 
 - (void)shutdown
