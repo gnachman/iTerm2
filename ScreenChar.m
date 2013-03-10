@@ -336,7 +336,7 @@ NSString* CharArrayToString(unichar* charHaystack, int o)
 }
 
 void DumpScreenCharArray(screen_char_t* screenChars, int lineLength) {
-    NSLog("%@", ScreenCharArrayToStringDebug(screenChars, lineLength));
+    NSLog(@"%@", ScreenCharArrayToStringDebug(screenChars, lineLength));
 }
 
 NSString* ScreenCharArrayToStringDebug(screen_char_t* screenChars,

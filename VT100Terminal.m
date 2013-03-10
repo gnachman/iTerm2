@@ -158,7 +158,6 @@ static VT100TCC decode_xterm(unsigned char *, int, int *,NSStringEncoding);
 static VT100TCC decode_ansi(unsigned char *,int, int *,VT100Screen *);
 static VT100TCC decode_other(unsigned char *, int, int *, NSStringEncoding);
 static VT100TCC decode_control(unsigned char *, int, int *, NSStringEncoding, VT100Screen *, BOOL);
-static int decode_utf8_char(unsigned char *, int, int *);
 static VT100TCC decode_utf8(unsigned char *, int, int *);
 static VT100TCC decode_euccn(unsigned char *, int, int *);
 static VT100TCC decode_big5(unsigned char *,int, int *);
@@ -1870,74 +1869,6 @@ static VT100TCC decode_control(unsigned char *datap,
         }
     }
     return result;
-}
-
-// Examine the leading UTF-8 sequence in a char array and check that it
-// is properly encoded. Computes the number of bytes to use for the
-// first code point.
-//
-// Return value:
-// positive: This many bytes compose a legal Unicode character.
-// negative: abs(this many) bytes are illegal, should be replaced by one
-//   single replacement symbol.
-// zero: Unfinished sequence, input needs to grow.
-static int decode_utf8_char(unsigned char *datap,
-                            int datalen,
-                            int *result)
-{
-    unsigned int theChar;
-    int utf8Length;
-    unsigned char c;
-    // This maps a utf-8 sequence length to the smallest code point it should
-    // encode (e.g., using 5 bytes to encode an ascii character would be
-    // considered an error).
-    unsigned int smallest[7] = { 0, 0, 0x80UL, 0x800UL, 0x10000UL, 0x200000UL, 0x4000000UL };
-
-    if (datalen == 0) {
-        return 0;
-    }
-
-    c = *datap;
-    if ((c & 0x80) == 0x00) {
-        *result = c;
-        return 1;
-    } else if ((c & 0xE0) == 0xC0) {
-        theChar = c & 0x1F;
-        utf8Length = 2;
-    } else if ((c & 0xF0) == 0xE0) {
-        theChar = c & 0x0F;
-        utf8Length = 3;
-    } else if ((c & 0xF8) == 0xF0) {
-        theChar = c & 0x07;
-        utf8Length = 4;
-    } else if ((c & 0xFC) == 0xF8) {
-        theChar = c & 0x03;
-        utf8Length = 5;
-    } else if ((c & 0xFE) == 0xFC) {
-        theChar = c & 0x01;
-        utf8Length = 6;
-    } else {
-        return -1;
-    }
-    for (int i = 1; i < utf8Length; i++) {
-        if (datalen <= i) {
-            return 0;
-        }
-        c = datap[i];
-        if ((c & 0xc0) != 0x80) {
-            // Expected a continuation character but did not get one.
-            return -i;
-        }
-        theChar = (theChar << 6) | (c & 0x3F);
-    }
-
-    if (theChar < smallest[utf8Length]) {
-        // Reject overlong sequences.
-        return -utf8Length;
-    }
-
-    *result = (int)theChar;
-    return utf8Length;
 }
 
 static VT100TCC decode_utf8(unsigned char *datap,

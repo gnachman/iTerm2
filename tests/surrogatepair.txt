@@ -1,2 +1,2 @@
 This is an ancient greek numeral that looks like a christmas tree:
-𐅐
+𐅐 bad char: �

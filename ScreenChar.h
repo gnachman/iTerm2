@@ -30,6 +30,7 @@
  */
 
 #import <Cocoa/Cocoa.h>
+#import "NSStringITerm.h"
 
 // This is used in the rightmost column when a double-width character would
 // have been split in half and was wrapped to the next line. It is nonprintable
@@ -62,10 +63,7 @@
 #define ITERM2_PRIVATE_BEGIN 0xf000
 #define ITERM2_PRIVATE_END 0xf003
 
-// This is the standard unicode replacement character for when input couldn't
-// be parsed properly but we need to render something there.
-#define UNICODE_REPLACEMENT_CHAR 0xfffd
-#define ONECHAR_UNKNOWN ('?')   // Used for encodings other than utf-8.
+#define ONECHAR_UNKNOWN ('?')   // Relacement character for encodings other than utf-8.
 
 // Alternate semantics definitions
 // Default background color

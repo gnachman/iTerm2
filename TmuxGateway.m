@@ -9,6 +9,7 @@
 #import "RegexKitLite.h"
 #import "TmuxController.h"
 #import "iTermApplicationDelegate.h"
+#import "NSStringITerm.h"
 
 NSString * const kTmuxGatewayErrorDomain = @"kTmuxGatewayErrorDomain";;
 
@@ -281,9 +282,9 @@ static NSString *kCommandIsLastInList = @"lastInList";
     NSString *command = [[[NSString alloc] initWithData:[stream_ subdataWithRange:commandRange]
                                                encoding:NSUTF8StringEncoding] autorelease];
     if (!command) {
-        NSLog(@"Non-UTF-8 command in stream %@", [stream_ subdataWithRange:commandRange]);
-        [self abortWithErrorMessage:@"Non-UTF-8 command in stream (please copy hex data from Console.app into a bug report)"];
-        return NO;
+        // The command was not UTF-8. Unfortunately, this can happen. If tmux has a non-UTF-8
+        // character in a pane, it will just output it.
+        command = [[[NSString alloc] initWithUTF8DataIgnoringErrors:[stream_ subdataWithRange:commandRange]] autorelease];
     }
     // At least on osx, the terminal driver adds \r at random places, sometimes adding two of them in a row!
     // We split on \n, which is safe, and just throw out any \r's that we see.

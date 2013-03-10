@@ -2337,7 +2337,7 @@ static NSString* FormatRect(NSRect r) {
 
 - (NSString *)tmuxWindowName
 {
-    return tmuxWindowName_ ? tmuxWindowName_ : @"tmux window";
+    return tmuxWindowName_ ? tmuxWindowName_ : @"tmux";
 }
 
 - (void)setTmuxWindowName:(NSString *)tmuxWindowName
