@@ -2335,6 +2335,18 @@ static NSString* FormatRect(NSRect r) {
     return tmuxWindow_;
 }
 
+- (NSString *)tmuxWindowName
+{
+    return tmuxWindowName_ ? tmuxWindowName_ : @"tmux window";
+}
+
+- (void)setTmuxWindowName:(NSString *)tmuxWindowName
+{
+    [tmuxWindowName_ autorelease];
+    tmuxWindowName_ = [tmuxWindowName retain];
+    [[self realParentWindow] setWindowTitle];
+}
+
 + (Profile *)tmuxBookmark
 {
     Profile *bookmark = [[ProfileModel sharedInstance] bookmarkWithName:@"tmux"];

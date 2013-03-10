@@ -2345,7 +2345,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (NSString*)formattedName:(NSString*)base
 {
-    NSString *prefix = tmuxController_ ? @"↣ " : @"";
+    NSString *prefix = tmuxController_ ? [NSString stringWithFormat:@"↣ %@: ", [[self tab] tmuxWindowName]] : @"";
 
     BOOL baseIsBookmarkName = [base isEqualToString:bookmarkName];
     PreferencePanel* panel = [PreferencePanel sharedInstance];
@@ -3815,6 +3815,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)tmuxWindowRenamedWithId:(int)windowId to:(NSString *)newName
 {
+    PTYTab *tab = [tmuxController_ window:windowId];
+    if (tab) {
+        [tab setTmuxWindowName:newName];
+    }
     [tmuxController_ windowWasRenamedWithId:windowId to:newName];
 }
 
