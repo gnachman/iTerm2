@@ -237,15 +237,16 @@ static NSString *kCommandIsLastInList = @"lastInList";
 
 - (void)parseBegin:(NSString *)command
 {
+    currentCommand_ = [[commandQueue_ objectAtIndex:0] retain];
+#ifdef BEGIN_END_ERROR_HAVE_CMD_ID
     NSArray *components = [command captureComponentsMatchedByRegex:@"^%begin ([0-9]+)$"];
     if (components.count != 2) {
         [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%begin command_id): \"%@\"", command]];
         return;
     }
     NSString *commandId = [components objectAtIndex:1];
-
-    currentCommand_ = [[commandQueue_ objectAtIndex:0] retain];
     [currentCommand_ setObject:commandId forKey:kCommandId];
+#endif
     TmuxLog(@"Begin response to %@", [currentCommand_ objectForKey:kCommandString]);
     [currentCommandResponse_ release];
     currentCommandResponse_ = [[NSMutableString alloc] init];
@@ -301,8 +302,13 @@ static NSString *kCommandIsLastInList = @"lastInList";
         TmuxLog(@"Ignoring notification %@", command);
     }
 
+#ifdef BEGIN_END_ERROR_HAVE_CMD_ID
     NSString *endCommand = [NSString stringWithFormat:@"%%end %@", [currentCommand_ objectForKey:kCommandId]];
     NSString *errorCommand = [NSString stringWithFormat:@"%%error %@", [currentCommand_ objectForKey:kCommandId]];
+#else
+    NSString *endCommand = @"%end";
+    NSString *errorCommand = @"%error";
+#endif
     if (currentCommand_ && [command isEqualToString:endCommand]) {
         TmuxLog(@"End for command %@", currentCommand_);
         [self stripLastNewline];
@@ -338,7 +344,7 @@ static NSString *kCommandIsLastInList = @"lastInList";
                [command isEqualToString:@"%exit"]) {
         TmuxLog(@"tmux exit message: %@", command);
         [self hostDisconnected];
-    } else if ([command hasPrefix:@"%begin "]) {
+    } else if ([command hasPrefix:@"%begin"]) {
         if (currentCommand_) {
             [self abortWithErrorMessage:@"%begin without %end"];
         } else if (!commandQueue_.count) {
