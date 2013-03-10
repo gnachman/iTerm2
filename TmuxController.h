@@ -55,6 +55,7 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
 @property (nonatomic, retain) NSMutableDictionary *windowPositions;
 @property (nonatomic, copy) NSString *sessionName;
 @property (nonatomic, retain) NSArray *sessions;
+@property (nonatomic, assign) BOOL ambiguousIsDoubleWidth;
 
 - (id)initWithGateway:(TmuxGateway *)gateway;
 - (void)openWindowsInitial;
@@ -117,6 +118,7 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
 - (void)killSession:(NSString *)sessionName;
 - (void)attachToSession:(NSString *)sessionName;
 - (void)addSessionWithName:(NSString *)sessionName;
+// NOTE: If the session name is bogus (or any other error occurs) the selector will not be called.
 - (void)listWindowsInSession:(NSString *)sessionName
                       target:(id)target
                     selector:(SEL)selector

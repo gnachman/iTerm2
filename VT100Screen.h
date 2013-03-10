@@ -67,9 +67,9 @@ void StringToScreenChars(NSString *s,
                          screen_char_t fg,
                          screen_char_t bg,
                          int *len,
-                         NSStringEncoding encoding,
                          BOOL ambiguousIsDoubleWidth,
                          int* cursorIndex);
+void TranslateCharacterSet(screen_char_t *s, int len);
 
 @interface VT100Screen : NSObject
 {

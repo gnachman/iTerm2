@@ -1382,7 +1382,7 @@ NSString *sessionsKey = @"sessions";
                                      inTerminal:self
                                      tmuxWindow:window
                                  tmuxController:tmuxController];
-    [self setWindowTitle:name];
+    [tab setTmuxWindowName:name];
     [tab setReportIdealSizeAsCurrent:YES];
     [self fitWindowToTabs];
     [tab setReportIdealSizeAsCurrent:NO];
@@ -2167,7 +2167,7 @@ NSString *sessionsKey = @"sessions";
         if ([term lionFullScreen]) {
             [term restoreFrameAfterToolbarToggle];
         } else {
-	    PtyLog(@"zeroing preToolbarToggleFrame_");
+            PtyLog(@"zeroing preToolbarToggleFrame_");
             preToolbarToggleFrame_ = NSZeroRect;
         }
         if ([[[term window] toolbar] isVisible] != [itad toolbarShouldBeVisible]) {

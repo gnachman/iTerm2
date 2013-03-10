@@ -2339,7 +2339,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (NSString*)formattedName:(NSString*)base
 {
-    NSString *prefix = tmuxController_ ? @"↣ " : @"";
+    NSString *prefix = tmuxController_ ? [NSString stringWithFormat:@"↣ %@: ", [[self tab] tmuxWindowName]] : @"";
 
     BOOL baseIsBookmarkName = [base isEqualToString:bookmarkName];
     PreferencePanel* panel = [PreferencePanel sharedInstance];
@@ -2880,6 +2880,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (void)setDoubleWidth:(BOOL)set
 {
     doubleWidth = set;
+    tmuxController_.ambiguousIsDoubleWidth = set;
 }
 
 - (BOOL)xtermMouseReporting
@@ -3242,7 +3243,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
     // If the window isn't able to adjust, or adjust enough, make the session
     // work with whatever size we ended up having.
-    [[self tab] fitSessionToCurrentViewSize:self];
+    if ([self isTmuxClient]) {
+        [tmuxController_ windowDidResize:[[self tab] realParentWindow]];
+    } else {
+        [[self tab] fitSessionToCurrentViewSize:self];
+    }
 }
 
 - (void)synchronizeTmuxFonts:(NSNotification *)notification
@@ -3630,6 +3635,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     tmuxMode_ = TMUX_GATEWAY;
     tmuxGateway_ = [[TmuxGateway alloc] initWithDelegate:self];
     tmuxController_ = [[TmuxController alloc] initWithGateway:tmuxGateway_];
+    tmuxController_.ambiguousIsDoubleWidth = doubleWidth;
 	NSSize theSize;
 	Profile *tmuxBookmark = [PTYTab tmuxBookmark];
 	theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
@@ -3746,6 +3752,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)tmuxWindowRenamedWithId:(int)windowId to:(NSString *)newName
 {
+    PTYTab *tab = [tmuxController_ window:windowId];
+    if (tab) {
+        [tab setTmuxWindowName:newName];
+    }
     [tmuxController_ windowWasRenamedWithId:windowId to:newName];
 }
 

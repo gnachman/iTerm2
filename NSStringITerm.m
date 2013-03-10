@@ -71,7 +71,6 @@ static const int ambiguous_chars[] = {
 }
 
 + (BOOL)isDoubleWidthCharacter:(int)unicode
-                      encoding:(NSStringEncoding)e
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth
 {
     if (unicode <= 0xa0 ||
@@ -456,6 +455,100 @@ static int fromhex(unichar c) {
 - (NSString *)stringByEscapingQuotes {
     return [[self stringByReplacingOccurrencesOfString:@"\\" withString:@"\\\\"]
                stringByReplacingOccurrencesOfString:@"\"" withString:@"\\\""];
+}
+
+int decode_utf8_char(const unsigned char *datap,
+                     int datalen,
+                     int * restrict result)
+{
+    unsigned int theChar;
+    int utf8Length;
+    unsigned char c;
+    // This maps a utf-8 sequence length to the smallest code point it should
+    // encode (e.g., using 5 bytes to encode an ascii character would be
+    // considered an error).
+    unsigned int smallest[7] = { 0, 0, 0x80UL, 0x800UL, 0x10000UL, 0x200000UL, 0x4000000UL };
+
+    if (datalen == 0) {
+        return 0;
+    }
+
+    c = *datap;
+    if ((c & 0x80) == 0x00) {
+        *result = c;
+        return 1;
+    } else if ((c & 0xE0) == 0xC0) {
+        theChar = c & 0x1F;
+        utf8Length = 2;
+    } else if ((c & 0xF0) == 0xE0) {
+        theChar = c & 0x0F;
+        utf8Length = 3;
+    } else if ((c & 0xF8) == 0xF0) {
+        theChar = c & 0x07;
+        utf8Length = 4;
+    } else if ((c & 0xFC) == 0xF8) {
+        theChar = c & 0x03;
+        utf8Length = 5;
+    } else if ((c & 0xFE) == 0xFC) {
+        theChar = c & 0x01;
+        utf8Length = 6;
+    } else {
+        return -1;
+    }
+    for (int i = 1; i < utf8Length; i++) {
+        if (datalen <= i) {
+            return 0;
+        }
+        c = datap[i];
+        if ((c & 0xc0) != 0x80) {
+            // Expected a continuation character but did not get one.
+            return -i;
+        }
+        theChar = (theChar << 6) | (c & 0x3F);
+    }
+
+    if (theChar < smallest[utf8Length]) {
+        // Reject overlong sequences.
+        return -utf8Length;
+    }
+
+    *result = (int)theChar;
+    return utf8Length;
+}
+
+- (NSString *)initWithUTF8DataIgnoringErrors:(NSData *)data {
+    const unsigned char *p = data.bytes;
+    int len = data.length;
+    int utf8DecodeResult;
+    int theChar = 0;
+    NSMutableData *utf16Data = [NSMutableData data];
+
+    while (len > 0) {
+        utf8DecodeResult = decode_utf8_char(p, len, &theChar);
+        if (utf8DecodeResult == 0) {
+            // Stop on end of stream.
+            break;
+        } else if (utf8DecodeResult < 0) {
+            theChar = UNICODE_REPLACEMENT_CHAR;
+            utf8DecodeResult = -utf8DecodeResult;
+        } else if (theChar > 0xFFFF) {
+            // Convert to surrogate pair.
+           UniChar high, low;
+           high = ((theChar - 0x10000) >> 10) + 0xd800;
+           low = (theChar & 0x3ff) + 0xdc00;
+
+           [utf16Data appendBytes:&high length:sizeof(high)];
+           theChar = low;
+        }
+
+        UniChar c = theChar;
+        [utf16Data appendBytes:&c length:sizeof(c)];
+
+        p += utf8DecodeResult;
+        len -= utf8DecodeResult;
+    }
+
+    return [self initWithData:utf16Data encoding:NSUTF16LittleEndianStringEncoding];
 }
 
 @end

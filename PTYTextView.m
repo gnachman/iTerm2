@@ -6732,7 +6732,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         fg,
                         bg,
                         &len,
-                        0,
                         [[dataSource session] doubleWidth],
                         NULL);
 
@@ -6778,7 +6777,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             fg,
                             bg,
                             &len,
-                            0,
                             [[dataSource session] doubleWidth],
                             &cursorIndex);
         int cursorX = 0;

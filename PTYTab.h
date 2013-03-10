@@ -118,6 +118,8 @@ static const int MIN_SESSION_COLUMNS = 2;
 
     // Temporarily hidden live views (this is needed to hold a reference count).
     NSMutableArray *hiddenLiveViews_;  // SessionView objects
+
+    NSString *tmuxWindowName_;
 }
 
 // init/dealloc
@@ -255,6 +257,8 @@ static const int MIN_SESSION_COLUMNS = 2;
 - (NSSize)tmuxSize;
 // Size we are given the current layout
 - (NSSize)maxTmuxSize;
+- (NSString *)tmuxWindowName;
+- (void)setTmuxWindowName:(NSString *)tmuxWindowName;
 
 - (int)tmuxWindow;
 - (BOOL)isTmuxTab;

@@ -42,6 +42,7 @@
 @property (nonatomic, retain) id target;
 // Selector is called even if the window is already open and nothing is done.
 @property (nonatomic, assign) SEL selector;
+@property (nonatomic, assign) BOOL ambiguousIsDoubleWidth;
 
 + (TmuxWindowOpener *)windowOpener;
 - (void)openWindows:(BOOL)initial;

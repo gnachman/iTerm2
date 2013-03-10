@@ -151,8 +151,7 @@
 
 // iTerm extension
 #define ITERM_GROWL     5000
-#define UNDERSCORE_TMUX1 5001
-#define UNDERSCORE_TMUX_UNSUPPORTED 5002
+#define DCS_TMUX        5001
 
 #define VT100CSIPARAM_MAX    16
 
