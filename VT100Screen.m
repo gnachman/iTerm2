@@ -2475,6 +2475,15 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     temp_buffer = NULL;
 }
 
+- (void)setSendModifiers:(int *)modifiers
+               numValues:(int)numValues {
+    NSMutableArray *array = [NSMutableArray array];
+    for (int i = 0; i < numValues; i++) {
+        [array addObject:[NSNumber numberWithInt:modifiers[i]]];
+    }
+    [SESSION setSendModifiers:array];
+}
+
 - (void)mouseModeDidChange:(MouseMode)mouseMode
 {
         [display updateCursor:nil];

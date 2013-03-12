@@ -244,6 +244,8 @@ typedef enum {
     int tmuxPane_;
     BOOL tmuxLogging_;  // log to gateway client
     BOOL tmuxSecureLogging_;
+
+    NSArray *sendModifiers_;
 }
 
 // Return the current pasteboard value as a string.
@@ -429,6 +431,7 @@ typedef enum {
 - (BOOL)xtermMouseReporting;
 - (void)setXtermMouseReporting:(BOOL)set;
 - (NSDictionary *)addressBookEntry;
+- (void)setSendModifiers:(NSArray *)sendModifiers;
 
 // Return the address book that the session was originally created with.
 - (Profile *)originalAddressBookEntry;

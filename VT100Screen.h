@@ -204,6 +204,9 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)saveBuffer;
 - (void)restoreBuffer;
 
+- (void)setSendModifiers:(int *)modifiers
+               numValues:(int)numValues;
+
 - (void)mouseModeDidChange:(MouseMode)mouseMode;
 
 // internal
