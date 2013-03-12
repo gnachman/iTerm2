@@ -308,7 +308,10 @@ const int kInterWidgetMargin = 10;
 
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent
 {
-    return [delegate_ profileTable:self menuForEvent:theEvent];
+    if ([delegate_ respondsToSelector:@selector(profileTable:menuForEvent:)]) {
+        return [delegate_ profileTable:self menuForEvent:theEvent];
+    }
+    return nil;
 }
 
 #pragma mark NSTableView data source
