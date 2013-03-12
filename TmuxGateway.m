@@ -74,39 +74,75 @@ static NSString *kCommandIsLastInList = @"lastInList";
     [stream_ replaceBytesInRange:NSMakeRange(0, stream_.length) withBytes:"" length:0];
 }
 
-- (NSData *)decodeHex:(NSString *)hexdata
+- (NSData *)decodeEscapedOutput:(const char *)bytes
 {
     NSMutableData *data = [NSMutableData data];
-    for (int i = 0; i < hexdata.length; i += 2) {
-        NSString *hex = [hexdata substringWithRange:NSMakeRange(i, 2)];
-        unsigned scanned;
-        if ([[NSScanner scannerWithString:hex] scanHexInt:&scanned]) {
-            char c = scanned;
-            [data appendBytes:&c length:1];
+    unsigned char c;
+    for (int i = 0; bytes[i]; i++) {
+        c = bytes[i];
+        if (c < ' ') {
+            continue;
         }
+        if (c == '\\') {
+            // Read exactly three bytes of octal values, or else set c to '?'.
+            c = 0;
+            for (int j = 0; j < 3; j++) {
+                i++;
+                if (bytes[i] == '\r') {
+                    // Ignore \r's that the line driver sprinkles in at its pleasure.
+                    continue;
+                }
+                if (bytes[i] < '0' || bytes[i] > '7') {
+                    c = '?';
+                    i--;  // Back up in case bytes[i] is a null; we don't want to go off the end.
+                    break;
+                }
+                c *= 8;
+                c += bytes[i] - '0';
+            }
+        }
+        [data appendBytes:&c length:1];
     }
     return data;
 }
 
-- (void)parseOutputCommand:(NSString *)command
+- (void)parseOutputCommandData:(NSData *)data
 {
-    // %output %<pane id> <hex data...><newline>
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^[^ ]+ %([0-9]+) (.*)"];
-    if (components.count != 3) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%num hexdata): \"%@\"", command]];
-        return;
+    // This one is tricky to parse because the string version of the command could have bogus UTF-8.
+    // %output %<pane id> <data...><newline>
+    const char *command = [data bytes];
+    char *space = strchr(command, ' ');
+    if (!space) {
+        goto error;
     }
-    int windowPane = [[components objectAtIndex:1] intValue];
-    NSString *hexdata = [components objectAtIndex:2];
-    if (hexdata.length % 2) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed output (odd number of hex bytes): \"%@\"", command]];
-        return;
+    const char *outputCommand = "%output";
+    if (strncmp(outputCommand, command, strlen(outputCommand))) {
+        goto error;
     }
-    NSData *decodedCommand = [self decodeHex:hexdata];
-    TmuxLog(@"Run tmux command: \"%%output %%%d %@", windowPane,
-            [[[NSString alloc] initWithData:decodedCommand encoding:NSUTF8StringEncoding] autorelease]);
-    [[[delegate_ tmuxController] sessionForWindowPane:windowPane]  tmuxReadTask:decodedCommand];
+    const char *paneId = space + 1;
+    if (*paneId != '%') {
+        goto error;
+    }
+    paneId++;
+    space = strchr(paneId, ' ');
+    if (!space) {
+        goto error;
+    }
+    char *endptr = NULL;
+    int windowPane = strtol(paneId, &endptr, 10);
+    if (windowPane < 0 || endptr != space) {
+        goto error;
+    }
+
+    NSData *decodedData = [self decodeEscapedOutput:space + 1];
+
+    TmuxLog(@"Run tmux command: \"%%output %%%d %.*s", windowPane, [data length], [data bytes] i);
+    [[[delegate_ tmuxController] sessionForWindowPane:windowPane]  tmuxReadTask:decodedData];
     state_ = CONTROL_STATE_READY;
+
+    return;
+error:
+    [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%num data): \"%@\"", command]];
 }
 
 - (void)parseLayoutChangeCommand:(NSString *)command
@@ -238,15 +274,13 @@ static NSString *kCommandIsLastInList = @"lastInList";
 - (void)parseBegin:(NSString *)command
 {
     currentCommand_ = [[commandQueue_ objectAtIndex:0] retain];
-#ifdef BEGIN_END_ERROR_HAVE_CMD_ID
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^%begin ([0-9]+)$"];
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%begin ([0-9 ]+)$"];
     if (components.count != 2) {
         [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%begin command_id): \"%@\"", command]];
         return;
     }
     NSString *commandId = [components objectAtIndex:1];
     [currentCommand_ setObject:commandId forKey:kCommandId];
-#endif
     TmuxLog(@"Begin response to %@", [currentCommand_ objectForKey:kCommandString]);
     [currentCommandResponse_ release];
     currentCommandResponse_ = [[NSMutableString alloc] init];
@@ -302,13 +336,8 @@ static NSString *kCommandIsLastInList = @"lastInList";
         TmuxLog(@"Ignoring notification %@", command);
     }
 
-#ifdef BEGIN_END_ERROR_HAVE_CMD_ID
     NSString *endCommand = [NSString stringWithFormat:@"%%end %@", [currentCommand_ objectForKey:kCommandId]];
     NSString *errorCommand = [NSString stringWithFormat:@"%%error %@", [currentCommand_ objectForKey:kCommandId]];
-#else
-    NSString *endCommand = @"%end";
-    NSString *errorCommand = @"%error";
-#endif
     if (currentCommand_ && [command isEqualToString:endCommand]) {
         TmuxLog(@"End for command %@", currentCommand_);
         [self stripLastNewline];
@@ -321,7 +350,7 @@ static NSString *kCommandIsLastInList = @"lastInList";
         // Always append a newline; then at the end, remove the last one.
         [currentCommandResponse_ appendString:@"\n"];
     } else if ([command hasPrefix:@"%output "]) {
-        if (acceptNotifications_) [self parseOutputCommand:command];
+        if (acceptNotifications_) [self parseOutputCommandData:[stream_ subdataWithRange:commandRange]];
     } else if ([command hasPrefix:@"%layout-change "]) {
         if (acceptNotifications_) [self parseLayoutChangeCommand:command];
     } else if ([command hasPrefix:@"%window-add"]) {
