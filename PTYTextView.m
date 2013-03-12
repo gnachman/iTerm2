@@ -349,13 +349,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     if (isDown) {
         DLog(@"Emulate three finger click down");
         [self mouseDown:fakeEvent];
-        DLog(@"Returned from mouseDown");
     } else {
         DLog(@"Emulate three finger click up");
         [self mouseUp:fakeEvent];
-        DLog(@"Returned from mouseDown");
     }
-    DLog(@"Restore numTouches to saved value of %d", saved);
     numTouches_ = saved;
     CFRelease(fakeCgEvent);
 }
@@ -3036,8 +3033,6 @@ NSMutableArray* screens=0;
         if (ry < 0) {
             ry = -1;
         }
-        lastReportedX_ = rx;
-        lastReportedY_ = ry;
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
@@ -3258,8 +3253,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (ry < 0) {
             ry = -1;
         }
-        lastReportedX_ = rx;
-        lastReportedY_ = ry;
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
@@ -3407,29 +3400,25 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (ry < 0) {
             ry = -1;
         }
-        if (rx != lastReportedX_ || ry != lastReportedY_) {
-            lastReportedX_ = rx;
-            lastReportedY_ = ry;
-            VT100Terminal *terminal = [dataSource terminal];
-            PTYSession* session = [dataSource session];
+        VT100Terminal *terminal = [dataSource terminal];
+        PTYSession* session = [dataSource session];
 
-            switch ([terminal mouseMode]) {
-                case MOUSE_REPORTING_BUTTON_MOTION:
-                case MOUSE_REPORTING_ALL_MOTION:
-                    [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_LEFT
-                                               withModifiers:[event modifierFlags]
-                                                         atX:rx
-                                                           Y:ry]];
-                case MOUSE_REPORTING_NORMAL:
-                    DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
-                    return;
-                    break;
+        switch ([terminal mouseMode]) {
+            case MOUSE_REPORTING_BUTTON_MOTION:
+            case MOUSE_REPORTING_ALL_MOTION:
+                [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_LEFT
+                                           withModifiers:[event modifierFlags]
+                                                     atX:rx
+                                                       Y:ry]];
+            case MOUSE_REPORTING_NORMAL:
+                DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
+                return;
+                break;
 
-                case MOUSE_REPORTING_NONE:
-                case MOUSE_REPORTING_HILITE:
-                    // fall through
-                    break;
-            }
+            case MOUSE_REPORTING_NONE:
+            case MOUSE_REPORTING_HILITE:
+                // fall through
+                break;
         }
     }
 
@@ -6743,7 +6732,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         fg,
                         bg,
                         &len,
-                        0,
                         [[dataSource session] doubleWidth],
                         NULL);
 
@@ -6789,7 +6777,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             fg,
                             bg,
                             &len,
-                            0,
                             [[dataSource session] doubleWidth],
                             &cursorIndex);
         int cursorX = 0;
@@ -7624,13 +7611,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString *suffix = [self wrappedStringAtX:x y:y dir:1 respectHardNewlines:respectHardNewlines];
     NSString *joined = [prefix stringByAppendingString:suffix];
     NSString *possibleUrl = [self stringInString:joined includingOffset:[prefix length] fromCharacterSet:[PTYTextView urlCharacterSet]];
-    NSArray *punctuation = [NSArray arrayWithObjects:@".", @",", @";", nil];
-    for (NSString *pchar in punctuation) {
-        if ([possibleUrl hasSuffix:pchar]) {
-            possibleUrl = [possibleUrl substringToIndex:possibleUrl.length - 1];
-            break;
-        }
-    }
     NSString *possibleFilePart1 = [self stringInString:prefix includingOffset:[prefix length] - 1 fromCharacterSet:[PTYTextView filenameCharacterSet]];
     NSString *possibleFilePart2 = [self stringInString:suffix includingOffset:0 fromCharacterSet:[PTYTextView filenameCharacterSet]];
 

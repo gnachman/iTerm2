@@ -9,6 +9,8 @@
 
 @class TmuxController;
 
+extern NSString * const kTmuxGatewayErrorDomain;
+
 @protocol TmuxGatewayDelegate
 
 - (TmuxController *)tmuxController;
@@ -51,7 +53,7 @@ typedef enum {
     // Data from parsing an incoming command
     ControlCommand command_;
 
-    NSMutableArray *commandQueue_;  // Dictionaries
+    NSMutableArray *commandQueue_;  // NSMutableDictionary objects
     NSMutableString *currentCommandResponse_;
     NSMutableDictionary *currentCommand_;  // Set between %begin and %end
 
@@ -63,8 +65,16 @@ typedef enum {
 
 // Returns any unconsumed data if tmux mode is exited.
 - (NSData *)readTask:(NSData *)data;
-- (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector;
-- (void)sendCommand:(NSString *)command responseTarget:(id)target responseSelector:(SEL)selector responseObject:(id)obj;
+- (void)sendCommand:(NSString *)command
+     responseTarget:(id)target
+   responseSelector:(SEL)selector;
+
+- (void)sendCommand:(NSString *)command
+     responseTarget:(id)target
+   responseSelector:(SEL)selector
+     responseObject:(id)obj
+    toleratesErrors:(BOOL)toleratesErrors;
+
 - (void)sendCommandList:(NSArray *)commandDicts;
 // Set initial to YES when notifications should be accepted after the last
 // command gets a response.
@@ -75,7 +85,8 @@ typedef enum {
 - (NSDictionary *)dictionaryForCommand:(NSString *)command
                         responseTarget:(id)target
                       responseSelector:(SEL)selector
-                        responseObject:(id)obj;
+                        responseObject:(id)obj
+                       toleratesErrors:(BOOL)toleratesErrors;
 
 - (void)sendKeys:(NSData *)data toWindowPane:(int)windowPane;
 - (void)detach;

@@ -10,6 +10,7 @@
 @interface TmuxHistoryParser : NSObject
 
 + (TmuxHistoryParser *)sharedInstance;
-- (NSArray *)parseDumpHistoryResponse:(NSString *)response;
+- (NSArray *)parseDumpHistoryResponse:(NSString *)response
+               ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth;
 
 @end

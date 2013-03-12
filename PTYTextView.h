@@ -138,7 +138,6 @@ enum {
     char selectMode;
     BOOL mouseDownOnSelection;
     NSEvent *mouseDownEvent;
-    int lastReportedX_, lastReportedY_;
 
     //find support
     int lastFindStartX, lastFindEndX;

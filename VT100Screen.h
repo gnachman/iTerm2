@@ -67,9 +67,9 @@ void StringToScreenChars(NSString *s,
                          screen_char_t fg,
                          screen_char_t bg,
                          int *len,
-                         NSStringEncoding encoding,
                          BOOL ambiguousIsDoubleWidth,
                          int* cursorIndex);
+void TranslateCharacterSet(screen_char_t *s, int len);
 
 @interface VT100Screen : NSObject
 {
@@ -149,8 +149,6 @@ void StringToScreenChars(NSString *s,
     // Used for recording instant replay.
     DVR* dvr;
     BOOL saveToScrollbackInAlternateScreen_;
-
-    BOOL allowTitleReporting_;
 }
 
 
@@ -206,6 +204,9 @@ void StringToScreenChars(NSString *s,
 - (void)saveBuffer;
 - (void)restoreBuffer;
 
+- (void)setSendModifiers:(int *)modifiers
+               numValues:(int)numValues;
+
 - (void)mouseModeDidChange:(MouseMode)mouseMode;
 
 // internal
@@ -241,12 +242,11 @@ void StringToScreenChars(NSString *s,
 - (void)scrollUp;
 - (void)scrollDown;
 - (void)activateBell;
-- (void)deviceReport:(VT100TCC)token withQuestion:(BOOL)question;
+- (void)deviceReport:(VT100TCC)token;
 - (void)deviceAttribute:(VT100TCC)token;
-- (void)secondaryDeviceAttribute:(VT100TCC)token;
-- (void)insertBlank:(int)n;
-- (void)insertLines:(int)n;
-- (void)deleteLines:(int)n;
+- (void)insertBlank: (int)n;
+- (void)insertLines: (int)n;
+- (void)deleteLines: (int)n;
 - (void)blink;
 - (int)cursorX;
 - (int)cursorY;
@@ -347,9 +347,6 @@ void StringToScreenChars(NSString *s,
 
 // Restore the saved position into a passed-in find context (see saveFindContextAbsPos and saveTerminalAbsPos).
 - (void)restoreSavedPositionToFindContext:(FindContext *)context;
-
-// Set whether title reporting is allowed. Defaults to no.
-- (void)setAllowTitleReporting:(BOOL)allow;
 
 @end
 

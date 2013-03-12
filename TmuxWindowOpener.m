@@ -43,6 +43,7 @@
 @synthesize controller = controller_;
 @synthesize target = target_;
 @synthesize selector = selector_;
+@synthesize ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
 
 + (TmuxWindowOpener *)windowOpener
 {
@@ -66,6 +67,7 @@
     [layout_ release];
     [gateway_ release];
     [parseTree_ release];
+    [target_ release];
     [histories_ release];
     [altHistories_ release];
     [states_ release];
@@ -167,18 +169,20 @@
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp
 {
     ++pendingRequests_;
-    NSString *command = [NSString stringWithFormat:@"control -t %%%d get-emulatorstate", [wp intValue]];
+    NSString *command = [NSString stringWithFormat:@"list-panes -t %%%d -F \"%@\"", [wp intValue],
+                         [TmuxStateParser format]];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
                          responseSelector:@selector(dumpStateResponse:pane:)
-                           responseObject:wp];
+                           responseObject:wp
+                          toleratesErrors:NO];
 }
 
  - (NSDictionary *)dictForRequestHistoryForWindowPane:(NSNumber *)wp
                         alt:(BOOL)alternate
 {
     ++pendingRequests_;
-    NSString *command = [NSString stringWithFormat:@"control %@-t %%%d -l %d get-history",
+    NSString *command = [NSString stringWithFormat:@"capture-pane -peqJ %@-t %%%d -S -%d",
                          (alternate ? @"-a " : @""), [wp intValue], self.maxHistory];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
@@ -186,7 +190,8 @@
                            responseObject:[NSArray arrayWithObjects:
                                            wp,
                                            [NSNumber numberWithBool:alternate],
-                                           nil]];
+                                           nil]
+                          toleratesErrors:NO];
 }
 
 // Command response handler for dump-history
@@ -196,7 +201,8 @@
 {
     NSNumber *wp = [info objectAtIndex:0];
     NSNumber *alt = [info objectAtIndex:1];
-    NSArray *history = [[TmuxHistoryParser sharedInstance] parseDumpHistoryResponse:response];
+    NSArray *history = [[TmuxHistoryParser sharedInstance] parseDumpHistoryResponse:response
+                                                             ambiguousIsDoubleWidth:ambiguousIsDoubleWidth_];
     if (history) {
         if ([alt boolValue]) {
             [altHistories_ setObject:history forKey:wp];
@@ -215,7 +221,8 @@
 
 - (void)dumpStateResponse:(NSString *)response pane:(NSNumber *)wp
 {
-    NSDictionary *state = [[TmuxStateParser sharedInstance] parsedStateFromString:response];
+    NSDictionary *state = [[TmuxStateParser sharedInstance] parsedStateFromString:response
+                                                                        forPaneId:[wp intValue]];
     [states_ setObject:state forKey:wp];
     [self requestDidComplete];
 }
