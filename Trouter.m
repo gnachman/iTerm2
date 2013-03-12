@@ -173,13 +173,25 @@
 
             NSString *bundlePath = [[NSWorkspace sharedWorkspace]
                                        absolutePathForAppBundleWithIdentifier:@"com.sublimetext.2"];
-            NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
-            NSString *executable = [NSString stringWithFormat:@"%@/Contents/MacOS/%@",
-                                       bundlePath,
-                                       [bundle objectForInfoDictionaryKey:@"CFBundleExecutable"]];
-            if (bundlePath && bundle && executable) {
-                [NSTask launchedTaskWithLaunchPath:executable
-                                         arguments:[NSArray arrayWithObjects:executable, path, nil]];
+            if (bundlePath) {
+                NSString *sublExecutable = [NSString stringWithFormat:@"%@/Contents/SharedSupport/bin/subl",
+                                            bundlePath];
+                if ([[NSFileManager defaultManager] fileExistsAtPath:sublExecutable]) {
+                    [NSTask launchedTaskWithLaunchPath:sublExecutable
+                                             arguments:[NSArray arrayWithObjects:path, nil]];
+                } else {
+                    // This isn't as good as opening "subl" because it always opens a new instance
+                    // of the app but it's the OS-sanctioned way of running Sublimetext.  We can't
+                    // use Applescript because it won't open the file to a particular line number.
+                    NSBundle *bundle = [NSBundle bundleWithPath:bundlePath];
+                    NSString *sublimeTextExecutable = [NSString stringWithFormat:@"%@/Contents/MacOS/%@",
+                                                       bundlePath,
+                                                       [bundle objectForInfoDictionaryKey:@"CFBundleExecutable"]];
+                    if (bundle && sublimeTextExecutable) {
+                        [NSTask launchedTaskWithLaunchPath:sublimeTextExecutable
+                                                 arguments:[NSArray arrayWithObjects:sublimeTextExecutable, path, nil]];
+                    }
+                }
             }
         } else {
             path = [path stringByAddingPercentEscapesUsingEncoding:NSASCIIStringEncoding];
