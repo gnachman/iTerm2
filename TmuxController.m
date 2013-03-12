@@ -65,6 +65,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         origins_ = [[NSMutableDictionary alloc] init];
         pendingWindowOpens_ = [[NSMutableSet alloc] init];
 		hiddenWindows_ = [[NSMutableSet alloc] init];
+#ifdef TMUX_CRASH_DEBUG
+        NSLog(@"Register %@ with the controller registry");
+#endif
         [[TmuxControllerRegistry sharedInstance] setController:self
                                                      forClient:@""];  // Set a proper client name
     }
@@ -73,8 +76,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)dealloc
 {
-    [[TmuxControllerRegistry sharedInstance] setController:nil
-                                                 forClient:@""];  // Set a proper client name
     [gateway_ release];
     [windowPanes_ release];
     [windows_ release];
@@ -87,6 +88,25 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 	[lastOrigins_ release];
     [super dealloc];
 }
+
+#ifdef TMUX_CRASH_DEBUG
+- (oneway void)release {
+    NSLog(@"Release %@ to %d from %@", self, [self retainCount] - 1, [NSThread callStackSymbols]);
+    [super release];
+}
+
+- (id)retain {
+    id x = [super retain];
+    NSLog(@"Retain %@ to %d from %@", self, [self retainCount], [NSThread callStackSymbols]);
+    return x;
+}
+
+- (id)autorelease {
+    id x = [super autorelease];
+    NSLog(@"Autorelease %@ to %d from %@",  self, [self retainCount], [NSThread callStackSymbols]);
+    return x;
+}
+#endif
 
 - (void)openWindowWithIndex:(int)windowIndex
                        name:(NSString *)name
@@ -332,6 +352,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     gateway_ = nil;
     [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerDetachedNotification
                                                         object:self];
+#ifdef TMUX_CRASH_DEBUG
+    NSLog(@"Deallocating TmuxController. Removing it from registry");
+#endif
+    [[TmuxControllerRegistry sharedInstance] setController:nil
+                                                 forClient:@""];  // Set a proper client name
 }
 
 - (BOOL)windowDidResize:(PseudoTerminal *)term
