@@ -4,7 +4,7 @@ MINORVERSION=$1
 BUGVERSION=$2
 NAME=1.$MINORVERSION.$BUGVERSION
 cd build/Deployment
-zip -r iTerm2-${NAME}.zip iTerm.app
+zip -ry iTerm2-${NAME}.zip iTerm.app
 vi ../../appcasts/full_changes.html
 LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
 ruby "/Users/georgen/Downloads/Sparkle 1.5b6/Extras/Signing Tools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt
