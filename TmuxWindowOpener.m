@@ -67,6 +67,7 @@
     [layout_ release];
     [gateway_ release];
     [parseTree_ release];
+    [target_ release];
     [histories_ release];
     [altHistories_ release];
     [states_ release];
