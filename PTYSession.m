@@ -4049,16 +4049,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 - (NSString*)_getLocale
 {
     NSString* theLocale = nil;
-    NSArray *languages = [NSLocale preferredLanguages];
-    NSString *localeLanguage = [[NSLocale currentLocale] objectForKey:NSLocaleLanguageCode];
-    NSString* languageCode;
-    if ([languages count] > 0) {
-        languageCode = [languages objectAtIndex:0];
-    } else {
-        languageCode = localeLanguage;
-    }
+    NSString* languageCode = [[NSLocale currentLocale] objectForKey:NSLocaleLanguageCode];
     NSString* countryCode = [[NSLocale currentLocale] objectForKey:NSLocaleCountryCode];
-    DLog(@"getLocale: localeLanguage=%@ preferredLanguages=%@   selected languageCode=%@, countryCode=%@", localeLanguage, languages, languageCode, countryCode);
+    DLog(@"getLocale: languageCode=%@, countryCode=%@", languageCode, countryCode);
     if (languageCode && countryCode) {
         theLocale = [NSString stringWithFormat:@"%@_%@", languageCode, countryCode];
         DLog(@"Return combined language/country locale %@", theLocale);
