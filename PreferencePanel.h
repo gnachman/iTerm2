@@ -483,6 +483,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSButton* flashingBell;
     IBOutlet NSButton* xtermMouseReporting;
     IBOutlet NSButton* disableSmcupRmcup;
+    IBOutlet NSButton* allowTitleReporting;
     IBOutlet NSButton* disablePrinting;
     IBOutlet NSButton* scrollbackWithStatusBar;
     IBOutlet NSButton* scrollbackInAlternateScreen;
@@ -492,6 +493,7 @@ typedef enum { CURSOR_UNDERLINE, CURSOR_VERTICAL, CURSOR_BOX } ITermCursorType;
     IBOutlet NSComboBox* terminalType;
     IBOutlet NSPopUpButton* characterEncoding;
     IBOutlet NSButton* setLocaleVars;
+    IBOutlet NSButton* useCanonicalParser;
 
     // Keyboard tab
     IBOutlet NSTableView* keyMappings;

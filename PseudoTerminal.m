@@ -1382,6 +1382,7 @@ NSString *sessionsKey = @"sessions";
                                      inTerminal:self
                                      tmuxWindow:window
                                  tmuxController:tmuxController];
+    [self setWindowTitle:name];
     [tab setTmuxWindowName:name];
     [tab setReportIdealSizeAsCurrent:YES];
     [self fitWindowToTabs];
