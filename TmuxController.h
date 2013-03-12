@@ -36,19 +36,21 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
     int numOutstandingWindowResizes_;
     NSMutableDictionary *windowPositions_;
     NSSize lastSize_;  // last size for windowDidChange:
-	NSString *lastOrigins_;
+    NSString *lastOrigins_;
     BOOL detached_;
     NSString *sessionName_;
     int sessionId_;
     NSMutableSet *pendingWindowOpens_;
     NSString *lastSaveAffinityCommand_;
-	// tmux windows that want to open as tabs in the same physical window
-	// belong to the same equivalence class.
+    // tmux windows that want to open as tabs in the same physical window
+    // belong to the same equivalence class.
     EquivalenceClassSet *affinities_;
-	BOOL windowOriginsDirty_;
-	BOOL haveOutstandingSaveWindowOrigins_;
-	NSMutableDictionary *origins_;  // window id -> NSValue(Point) window origin
-	NSMutableSet *hiddenWindows_;
+    BOOL windowOriginsDirty_;
+    BOOL haveOutstandingSaveWindowOrigins_;
+    NSMutableDictionary *origins_;  // window id -> NSValue(Point) window origin
+    NSMutableSet *hiddenWindows_;
+    NSTimer *listSessionsTimer_;  // Used to do a cancelable delayed perform of listSessions.
+    NSTimer *listWindowsTimer_;  // Used to do a cancelable delayed perform of listWindows.
 }
 
 @property (nonatomic, readonly) TmuxGateway *gateway;
