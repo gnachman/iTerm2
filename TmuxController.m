@@ -28,6 +28,7 @@ NSString *kTmuxControllerWindowWasRenamed = @"kTmuxControllerWindowWasRenamed";
 NSString *kTmuxControllerWindowDidOpen = @"kTmuxControllerWindowDidOpen";
 NSString *kTmuxControllerAttachedSessionDidChange = @"kTmuxControllerAttachedSessionDidChange";
 NSString *kTmuxControllerWindowDidClose = @"kTmuxControllerWindowDidClose";
+NSString *kTmuxControllerSessionWasRenamed = @"kTmuxControllerSessionWasRenamed";
 
 static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     "#{window_name}\t"
@@ -42,7 +43,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)releaseWindow:(int)window;
 - (void)closeAllPanes;
 - (void)windowDidOpen:(NSNumber *)windowIndex;
-- (void)listSessions;
 
 @end
 
@@ -167,9 +167,16 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                                          repeats:NO];
 }
 
-- (void)sessionRenamedTo:(NSString *)newName
+- (void)session:(int)sessionId renamedTo:(NSString *)newName
 {
-    self.sessionName = newName;
+    if (sessionId == sessionId_) {
+        self.sessionName = newName;
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerSessionWasRenamed
+                                                        object:[NSArray arrayWithObjects:
+                                                                [NSNumber numberWithInt:sessionId],
+                                                                newName,
+                                                                nil]];
 }
 
 - (void)windowWasRenamedWithId:(int)wid to:(NSString *)newName
@@ -836,6 +843,16 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
+- (void)listSessions
+{
+    [listSessionsTimer_ invalidate];
+    listSessionsTimer_ = nil;
+    NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
+    [gateway_ sendCommand:listSessionsCommand
+           responseTarget:self
+         responseSelector:@selector(listSessionsResponse:)];
+}
+
 @end
 
 @implementation TmuxController (Private)
@@ -1052,16 +1069,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
     // Clean up all state to avoid trying to reuse it.
     [windowPanes_ removeAllObjects];
-}
-
-- (void)listSessions
-{
-    [listSessionsTimer_ invalidate];
-    listSessionsTimer_ = nil;
-    NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
-    [gateway_ sendCommand:listSessionsCommand
-           responseTarget:self
-         responseSelector:@selector(listSessionsResponse:)];
 }
 
 - (void)windowDidOpen:(NSNumber *)windowIndex

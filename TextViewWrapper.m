@@ -43,11 +43,11 @@
     [child_ drawOutlineInRect:rect topOnly:YES];
 }
 
-- (void)addSubview:(PTYTextView*)child
+- (void)addSubview:(NSView *)child
 {
     [super addSubview:child];
     if ([child isKindOfClass:[PTYTextView class]]) {
-      child_ = child;
+      child_ = (PTYTextView *)child;
       [self setFrame:NSMakeRect(0, 0, [child frame].size.width, [child frame].size.height)];
       [child setFrameOrigin:NSMakePoint(0, 0)];
       [self setPostsFrameChangedNotifications:YES];

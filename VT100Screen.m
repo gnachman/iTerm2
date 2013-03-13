@@ -4093,7 +4093,6 @@ void DumpBuf(screen_char_t* p, int n) {
 - (BOOL)isDoubleWidthCharacter:(unichar)c
 {
     return [NSString isDoubleWidthCharacter:c
-                                   encoding:[TERMINAL encoding]
                      ambiguousIsDoubleWidth:[SESSION doubleWidth]];
 }
 

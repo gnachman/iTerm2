@@ -142,7 +142,7 @@ static NSString *kCommandIsLastInList = @"lastInList";
 
     return;
 error:
-    [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%num data): \"%@\"", command]];
+    [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%num data): \"%s\"", command]];
 }
 
 - (void)parseLayoutChangeCommand:(NSString *)command
@@ -168,7 +168,7 @@ error:
 
 - (void)parseWindowAddCommand:(NSString *)command
 {
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^%window-add ([0-9]+)$"];
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%window-add @([0-9]+)$"];
     if (components.count != 2) {
         [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%window-add id): \"%@\"", command]];
         return;
@@ -179,7 +179,7 @@ error:
 
 - (void)parseWindowCloseCommand:(NSString *)command
 {
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^%window-close ([0-9]+)$"];
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%window-close @([0-9]+)$"];
     if (components.count != 2) {
         [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%window-close id): \"%@\"", command]];
         return;
@@ -190,7 +190,7 @@ error:
 
 - (void)parseWindowRenamedCommand:(NSString *)command
 {
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^%window-renamed ([0-9]+) (.*)$"];
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%window-renamed @([0-9]+) (.*)$"];
     if (components.count != 3) {
         [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%window-renamed id new_name): \"%@\"", command]];
         return;
@@ -202,18 +202,18 @@ error:
 
 - (void)parseSessionRenamedCommand:(NSString *)command
 {
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^%session-renamed (.+)$"];
-    if (components.count != 2) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%session-renamed name): \"%@\"", command]];
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%session-renamed \\$([0-9]+) (.+)$"];
+    if (components.count != 3) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%session-renamed id name): \"%@\"", command]];
         return;
     }
-    [delegate_ tmuxSessionRenamed:[components objectAtIndex:1]];
+    [delegate_ tmuxSession:[[components objectAtIndex:1] intValue] renamed:[components objectAtIndex:2]];
     state_ = CONTROL_STATE_READY;
 }
 
 - (void)parseSessionChangeCommand:(NSString *)command
 {
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^%session-changed ([0-9]+) (.+)$"];
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%session-changed \\$([0-9]+) (.+)$"];
     if (components.count != 3) {
         [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%session-changed id name): \"%@\"", command]];
         return;
@@ -235,9 +235,8 @@ error:
 
 - (void)hostDisconnected
 {
-   // Send a newline to ACK the exit command.
-  [delegate_ tmuxWriteData:[NEWLINE dataUsingEncoding:NSUTF8StringEncoding]];
   [delegate_ tmuxHostDisconnected];
+  [commandQueue_ removeAllObjects];
   state_ = CONTROL_STATE_DETACHED;
 }
 
@@ -332,9 +331,6 @@ error:
     }
     // Advance range to include newline so we can chop it off
     commandRange.length += newlineRange.length;
-    if (!currentCommand_ && !acceptNotifications_) {
-        TmuxLog(@"Ignoring notification %@", command);
-    }
 
     NSString *endCommand = [NSString stringWithFormat:@"%%end %@", [currentCommand_ objectForKey:kCommandId]];
     NSString *errorCommand = [NSString stringWithFormat:@"%%error %@", [currentCommand_ objectForKey:kCommandId]];

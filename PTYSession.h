@@ -35,7 +35,7 @@
 #import "LineBuffer.h"
 #import "TmuxGateway.h"
 #import "TmuxController.h"
-
+#import "PasteViewController.h"
 #include <sys/time.h>
 
 #define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
@@ -51,6 +51,7 @@
 @class iTermGrowlDelegate;
 @class FakeWindow;
 @class PseudoTerminal;
+@class PasteContext;
 
 // Timer period when all we have to do is update blinking text/cursor.
 static const float kBlinkTimerIntervalSec = 1.0 / 2.0;
@@ -71,7 +72,7 @@ typedef enum {
 
 @class PTYTab;
 @class SessionView;
-@interface PTYSession : NSResponder <FindViewControllerDelegate, TmuxGatewayDelegate>
+@interface PTYSession : NSResponder <FindViewControllerDelegate, PasteViewControllerDelegate, TmuxGatewayDelegate>
 {
     // Owning tab.
     PTYTab* tab_;
@@ -252,6 +253,9 @@ typedef enum {
     BOOL tmuxSecureLogging_;
 
     NSArray *sendModifiers_;
+    NSMutableArray *eventQueue_;
+    PasteViewController *pasteViewController_;
+    PasteContext *pasteContext_;
 }
 
 // Return the current pasteboard value as a string.
@@ -351,6 +355,7 @@ typedef enum {
 - (void)pageUp:(id)sender;
 - (void)pageDown:(id)sender;
 - (void)paste:(id)sender;
+- (void)pasteString:(NSString *)str flags:(int)flags;
 - (void)pasteString: (NSString *)aString;
 - (void)pasteSlowly:(id)sender;
 - (void)deleteBackward:(id)sender;
@@ -451,6 +456,8 @@ typedef enum {
 - (NSString *)contents;
 - (iTermGrowlDelegate*)growlDelegate;
 
+- (BOOL)isPasting;
+- (void)queueKeyDown:(NSEvent *)event;
 
 - (void)clearBuffer;
 - (void)clearScrollbackBuffer;

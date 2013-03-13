@@ -27,6 +27,8 @@ extern NSString *kTmuxControllerWindowDidOpen;
 extern NSString *kTmuxControllerWindowDidClose;
 // Posted when the attached session changes
 extern NSString *kTmuxControllerAttachedSessionDidChange;
+// Posted when a session changes name
+extern NSString *kTmuxControllerSessionWasRenamed;
 
 @interface TmuxController : NSObject {
     TmuxGateway *gateway_;
@@ -72,7 +74,7 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
                 toLayout:(NSString *)layout;
 - (void)sessionChangedTo:(NSString *)newSessionName sessionId:(int)sessionid;
 - (void)sessionsChanged;
-- (void)sessionRenamedTo:(NSString *)newName;
+- (void)session:(int)sessionId renamedTo:(NSString *)newName;
 - (void)windowsChanged;
 - (void)windowWasRenamedWithId:(int)id to:(NSString *)newName;
 
@@ -125,6 +127,7 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
                       target:(id)target
                     selector:(SEL)selector
                       object:(id)object;
+- (void)listSessions;
 - (void)saveAffinities;
 - (void)saveWindowOrigins;
 - (void)saveHiddenWindows;
