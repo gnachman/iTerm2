@@ -3831,9 +3831,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [tmuxController_ windowsChanged];
 }
 
-- (void)tmuxSessionRenamed:(NSString *)newName
+- (void)tmuxSession:(int)sessionId renamed:(NSString *)newName
 {
-    [tmuxController_ sessionRenamedTo:newName];
+    [tmuxController_ session:sessionId renamedTo:newName];
 }
 
 - (NSSize)tmuxBookmarkSize

@@ -26,7 +26,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 				 sessionId:(int)sessionId;
 - (void)tmuxSessionsChanged;
 - (void)tmuxWindowsDidChange;
-- (void)tmuxSessionRenamed:(NSString *)newName;
+- (void)tmuxSession:(int)sessionId renamed:(NSString *)newName;
 - (NSSize)tmuxBookmarkSize;  // rows, cols
 - (int)tmuxNumHistoryLinesInBookmark;
 - (void)tmuxSetSecureLogging:(BOOL)secureLogging;

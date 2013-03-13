@@ -28,6 +28,7 @@ NSString *kTmuxControllerWindowWasRenamed = @"kTmuxControllerWindowWasRenamed";
 NSString *kTmuxControllerWindowDidOpen = @"kTmuxControllerWindowDidOpen";
 NSString *kTmuxControllerAttachedSessionDidChange = @"kTmuxControllerAttachedSessionDidChange";
 NSString *kTmuxControllerWindowDidClose = @"kTmuxControllerWindowDidClose";
+NSString *kTmuxControllerSessionWasRenamed = @"kTmuxControllerSessionWasRenamed";
 
 static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     "#{window_name}\t"
@@ -167,9 +168,16 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                                          repeats:NO];
 }
 
-- (void)sessionRenamedTo:(NSString *)newName
+- (void)session:(int)sessionId renamedTo:(NSString *)newName
 {
-    self.sessionName = newName;
+    if (sessionId == sessionId_) {
+        self.sessionName = newName;
+    }
+    [[NSNotificationCenter defaultCenter] postNotificationName:kTmuxControllerSessionWasRenamed
+                                                        object:[NSArray arrayWithObjects:
+                                                                [NSNumber numberWithInt:sessionId],
+                                                                newName,
+                                                                nil]];
 }
 
 - (void)windowWasRenamedWithId:(int)wid to:(NSString *)newName

@@ -68,6 +68,10 @@
                                                  selector:@selector(tmuxControllerAttachedSessionChanged:)
                                                      name:kTmuxControllerAttachedSessionDidChange
                                                    object:nil];
+        [[NSNotificationCenter defaultCenter] addObserver:self
+                                                 selector:@selector(tmuxControllerSessionWasRenamed:)
+                                                     name:kTmuxControllerSessionWasRenamed
+                                                   object:nil];
     }
 
     return self;
@@ -280,6 +284,12 @@
         NSString *newName = [objects objectAtIndex:1];
         [windowsTable_ setNameOfWindowWithId:wid to:newName];
     }
+}
+
+- (void)tmuxControllerSessionWasRenamed:(NSNotification *)notification
+{
+    // This is a bit of extra work but the sessions table wasn't built knowing about session IDs.
+    [[self tmuxController] listSessions];
 }
 
 - (TmuxController *)tmuxController
