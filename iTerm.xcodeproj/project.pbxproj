@@ -15,6 +15,17 @@
 		1D06E7D814BC04E20097C0ED /* ProfileModelWrapper.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06E7D614BC04E20097C0ED /* ProfileModelWrapper.m */; };
 		1D06E7DB14BC05DB0097C0ED /* ProfileTableView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D06E7D914BC05DB0097C0ED /* ProfileTableView.h */; };
 		1D06E7DC14BC05DB0097C0ED /* ProfileTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D06E7DA14BC05DB0097C0ED /* ProfileTableView.m */; };
+		1D085F8616F02E7400B7FCE9 /* PasteContext.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D085F8416F02E7400B7FCE9 /* PasteContext.h */; };
+		1D085F8716F02E7400B7FCE9 /* PasteContext.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F8516F02E7400B7FCE9 /* PasteContext.m */; };
+		1D085F8916F030FB00B7FCE9 /* PasteView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D085F8816F030FB00B7FCE9 /* PasteView.xib */; };
+		1D085F8D16F0328B00B7FCE9 /* PasteViewController.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D085F8A16F0328B00B7FCE9 /* PasteViewController.h */; };
+		1D085F8E16F0328B00B7FCE9 /* PasteViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F8B16F0328B00B7FCE9 /* PasteViewController.m */; };
+		1D085F9216F03E5400B7FCE9 /* PasteView.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D085F9016F03E5400B7FCE9 /* PasteView.h */; };
+		1D085F9316F03E5400B7FCE9 /* PasteView.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9116F03E5400B7FCE9 /* PasteView.m */; };
+		1D085F9616F04D0900B7FCE9 /* NSBezierPath+iTerm.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D085F9416F04D0900B7FCE9 /* NSBezierPath+iTerm.h */; };
+		1D085F9716F04D0900B7FCE9 /* NSBezierPath+iTerm.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */; };
+		1D085F9A16F1135F00B7FCE9 /* PasteEvent.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D085F9816F1135F00B7FCE9 /* PasteEvent.h */; };
+		1D085F9B16F1135F00B7FCE9 /* PasteEvent.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D085F9916F1135F00B7FCE9 /* PasteEvent.m */; };
 		1D0B613814A7BC1200C57C33 /* TmuxControllerRegistry.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0B613614A7BC1200C57C33 /* TmuxControllerRegistry.h */; };
 		1D0B613914A7BC1200C57C33 /* TmuxControllerRegistry.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D0B613714A7BC1200C57C33 /* TmuxControllerRegistry.m */; };
 		1D0B613C14A7C76500C57C33 /* TmuxWindowsTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */; };
@@ -420,6 +431,17 @@
 		1D06E7D614BC04E20097C0ED /* ProfileModelWrapper.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileModelWrapper.m; sourceTree = "<group>"; };
 		1D06E7D914BC05DB0097C0ED /* ProfileTableView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProfileTableView.h; sourceTree = "<group>"; };
 		1D06E7DA14BC05DB0097C0ED /* ProfileTableView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ProfileTableView.m; sourceTree = "<group>"; };
+		1D085F8416F02E7400B7FCE9 /* PasteContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PasteContext.h; sourceTree = "<group>"; };
+		1D085F8516F02E7400B7FCE9 /* PasteContext.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PasteContext.m; sourceTree = "<group>"; };
+		1D085F8816F030FB00B7FCE9 /* PasteView.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = PasteView.xib; sourceTree = "<group>"; };
+		1D085F8A16F0328B00B7FCE9 /* PasteViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PasteViewController.h; sourceTree = "<group>"; };
+		1D085F8B16F0328B00B7FCE9 /* PasteViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PasteViewController.m; sourceTree = "<group>"; };
+		1D085F9016F03E5400B7FCE9 /* PasteView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PasteView.h; sourceTree = "<group>"; };
+		1D085F9116F03E5400B7FCE9 /* PasteView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PasteView.m; sourceTree = "<group>"; };
+		1D085F9416F04D0900B7FCE9 /* NSBezierPath+iTerm.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSBezierPath+iTerm.h"; sourceTree = "<group>"; };
+		1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSBezierPath+iTerm.m"; sourceTree = "<group>"; };
+		1D085F9816F1135F00B7FCE9 /* PasteEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PasteEvent.h; sourceTree = "<group>"; };
+		1D085F9916F1135F00B7FCE9 /* PasteEvent.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PasteEvent.m; sourceTree = "<group>"; };
 		1D0B613614A7BC1200C57C33 /* TmuxControllerRegistry.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxControllerRegistry.h; sourceTree = "<group>"; };
 		1D0B613714A7BC1200C57C33 /* TmuxControllerRegistry.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TmuxControllerRegistry.m; sourceTree = "<group>"; };
 		1D0B613A14A7C76500C57C33 /* TmuxWindowsTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TmuxWindowsTable.h; sourceTree = "<group>"; };
@@ -891,6 +913,14 @@
 				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
 				1D72438C11F416E500BD4924 /* LineBuffer.m */,
 				1D29732614082676004C5DBE /* MovePaneController.m */,
+				1D085F8416F02E7400B7FCE9 /* PasteContext.h */,
+				1D085F8516F02E7400B7FCE9 /* PasteContext.m */,
+				1D085F9816F1135F00B7FCE9 /* PasteEvent.h */,
+				1D085F9916F1135F00B7FCE9 /* PasteEvent.m */,
+				1D085F9016F03E5400B7FCE9 /* PasteView.h */,
+				1D085F9116F03E5400B7FCE9 /* PasteView.m */,
+				1D085F8A16F0328B00B7FCE9 /* PasteViewController.h */,
+				1D085F8B16F0328B00B7FCE9 /* PasteViewController.m */,
 				1D8255FF146881EC007CAE78 /* PointerController.m */,
 				1D988596135D23BD0072023F /* ProcessCache.m */,
 				FBD0AD0A0337A5B701F955DB /* PseudoTerminal.m */,
@@ -1059,6 +1089,7 @@
 		0464AB22006CD2EC7F000001 /* Interfaces */ = {
 			isa = PBXGroup;
 			children = (
+				1D085F8816F030FB00B7FCE9 /* PasteView.xib */,
 				9325FF4E0FB54E00004EC67C /* MainMenu.xib */,
 				9325FF3C0FB54DF1004EC67C /* PseudoTerminal.xib */,
 				9325FF400FB54DF1004EC67C /* PreferencePanel.xib */,
@@ -1321,6 +1352,8 @@
 				1D67ABAA14285D6000D5DA4E /* NSFileManager+DirectoryLocations.m */,
 				1DF0895A13DBAE1F00A52AD8 /* NSImage+CoreImage.m */,
 				E8E901A202743CA303A80106 /* NSStringITerm.m */,
+				1D085F9416F04D0900B7FCE9 /* NSBezierPath+iTerm.h */,
+				1D085F9516F04D0900B7FCE9 /* NSBezierPath+iTerm.m */,
 			);
 			name = Categories;
 			sourceTree = "<group>";
@@ -1598,6 +1631,11 @@
 				1D70BA351680158700824B72 /* PTYFontInfo.h in Headers */,
 				1DA3323B1692175800C77F53 /* SharedCharacterRunData.h in Headers */,
 				1D6944D7169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h in Headers */,
+				1D085F8616F02E7400B7FCE9 /* PasteContext.h in Headers */,
+				1D085F8D16F0328B00B7FCE9 /* PasteViewController.h in Headers */,
+				1D085F9216F03E5400B7FCE9 /* PasteView.h in Headers */,
+				1D085F9616F04D0900B7FCE9 /* NSBezierPath+iTerm.h in Headers */,
+				1D085F9A16F1135F00B7FCE9 /* PasteEvent.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1752,6 +1790,7 @@
 				1D48B292165F405A000046EE /* important@2x.png in Resources */,
 				1D48B294165F4416000046EE /* star.png in Resources */,
 				1D48B2F9165F45BA000046EE /* star@2x.png in Resources */,
+				1D085F8916F030FB00B7FCE9 /* PasteView.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1912,6 +1951,11 @@
 				1D70BA361680158700824B72 /* PTYFontInfo.m in Sources */,
 				1DA3323C1692175800C77F53 /* SharedCharacterRunData.m in Sources */,
 				1D6944D8169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m in Sources */,
+				1D085F8716F02E7400B7FCE9 /* PasteContext.m in Sources */,
+				1D085F8E16F0328B00B7FCE9 /* PasteViewController.m in Sources */,
+				1D085F9316F03E5400B7FCE9 /* PasteView.m in Sources */,
+				1D085F9716F04D0900B7FCE9 /* NSBezierPath+iTerm.m in Sources */,
+				1D085F9B16F1135F00B7FCE9 /* PasteEvent.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

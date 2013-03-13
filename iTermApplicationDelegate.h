@@ -169,6 +169,12 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (IBAction) biggerFont: (id) sender;
 - (IBAction) smallerFont: (id) sender;
 
+// Paste speed control
+- (IBAction)pasteFaster:(id)sender;
+- (IBAction)pasteSlower:(id)sender;
+- (IBAction)pasteSlowlyFaster:(id)sender;
+- (IBAction)pasteSlowlySlower:(id)sender;
+
 // size
 - (IBAction)returnToDefaultSize:(id)sender;
 - (IBAction)exposeForTabs:(id)sender;

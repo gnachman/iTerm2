@@ -2278,6 +2278,10 @@ NSMutableArray* screens=0;
     }
     DebugLog(@"PTYTextView keyDown");
     id delegate = [self delegate];
+    if ([delegate isPasting]) {
+        [delegate queueKeyDown:event];
+        return;
+    }
     if ([[[[[self dataSource] session] tab] realParentWindow] inInstantReplay]) {
         if (debugKeyDown) {
             NSLog(@"PTYTextView keyDown: in instant replay, send to delegate");

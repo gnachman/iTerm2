@@ -43,7 +43,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)releaseWindow:(int)window;
 - (void)closeAllPanes;
 - (void)windowDidOpen:(NSNumber *)windowIndex;
-- (void)listSessions;
 
 @end
 
@@ -844,6 +843,16 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
     }
 }
 
+- (void)listSessions
+{
+    [listSessionsTimer_ invalidate];
+    listSessionsTimer_ = nil;
+    NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
+    [gateway_ sendCommand:listSessionsCommand
+           responseTarget:self
+         responseSelector:@selector(listSessionsResponse:)];
+}
+
 @end
 
 @implementation TmuxController (Private)
@@ -1060,16 +1069,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
     // Clean up all state to avoid trying to reuse it.
     [windowPanes_ removeAllObjects];
-}
-
-- (void)listSessions
-{
-    [listSessionsTimer_ invalidate];
-    listSessionsTimer_ = nil;
-    NSString *listSessionsCommand = @"list-sessions -F \"#{session_name}\"";
-    [gateway_ sendCommand:listSessionsCommand
-           responseTarget:self
-         responseSelector:@selector(listSessionsResponse:)];
 }
 
 - (void)windowDidOpen:(NSNumber *)windowIndex

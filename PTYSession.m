@@ -52,6 +52,9 @@
 #import "TmuxLayoutParser.h"
 #import "MovePaneController.h"
 #import "TmuxStateParser.h"
+#import "PasteContext.h"
+#import "PasteEvent.h"
+#import "PasteViewController.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -100,8 +103,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     savedScrollPosition_ = -1;
     updateTimer = nil;
     antiIdleTimer = nil;
-    addressBookEntry=nil;
-
+    addressBookEntry = nil;
+    eventQueue_ = [[NSMutableArray alloc] init];
 #if DEBUG_ALLOC
     NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
 #endif
@@ -159,6 +162,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [name release];
     [windowTitle release];
     [addressBookEntry release];
+    [eventQueue_ release];
     [backgroundImagePath release];
     [antiIdleTimer invalidate];
     [antiIdleTimer release];
@@ -169,7 +173,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [tmuxGateway_ release];
     [tmuxController_ release];
     [sendModifiers_ release];
-
+    [pasteViewController_ release];
+    [pasteContext_ release];
     [SHELL release];
     SHELL = nil;
     [SCREEN release];
@@ -847,6 +852,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     if (slowPasteTimer) {
         [slowPasteTimer invalidate];
         slowPasteTimer = nil;
+        [eventQueue_ removeAllObjects];
     }
 
     tab_ = nil;
@@ -1932,6 +1938,22 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [self writeTask:[TERMINAL keyPageDown:0]];
 }
 
+- (void)emptyEventQueue {
+    int eventsSent = 0;
+    for (NSEvent *event in eventQueue_) {
+        ++eventsSent;
+        if ([event isKindOfClass:[PasteEvent class]]) {
+            PasteEvent *pasteEvent = (PasteEvent *)event;
+            [self pasteString:pasteEvent.string flags:pasteEvent.flags];
+            // Can't empty while pasting.
+            break;
+        } else {
+            [TEXTVIEW keyDown:event];
+        }
+    }
+    [eventQueue_ removeObjectsInRange:NSMakeRange(0, eventsSent)];
+}
+
 + (NSString*)pasteboardString
 {
     NSPasteboard *board;
@@ -1961,6 +1983,27 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     return info;
 }
 
+- (void)showPasteUI {
+    pasteViewController_ = [[PasteViewController alloc] initWithContext:pasteContext_
+                                                                 length:slowPasteBuffer.length];
+    pasteViewController_.delegate = self;
+    pasteViewController_.view.frame = NSMakeRect(20,
+                                                 view.frame.size.height - pasteViewController_.view.frame.size.height,
+                                                 pasteViewController_.view.frame.size.width,
+                                                 pasteViewController_.view.frame.size.height);
+    [view addSubview:pasteViewController_.view];
+    [pasteViewController_ updateFrame];
+}
+
+- (void)hidePasteUI {
+    [pasteViewController_ close];
+    [pasteViewController_ release];
+    pasteViewController_ = nil;
+}
+
+- (void)updatePasteUI {
+    [pasteViewController_ setRemainingLength:slowPasteBuffer.length];
+}
 
 - (void)_pasteStringImmediately:(NSString*)aString
 {
@@ -1972,28 +2015,18 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
 }
 
-- (void)_pasteWithBytePerCallPrefKey:(NSString*)bytesPerCallKey
-                        defaultValue:(int)bytesPerCallDefault
-            delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
-                        defaultValue:(float)delayBetweenCallsDefault
-                            selector:(SEL)selector
-{
+- (void)pasteAgain {
     NSRange range;
     range.location = 0;
-    NSNumber* pref = [[NSUserDefaults standardUserDefaults] valueForKey:bytesPerCallKey];
-    NSNumber* delay = [[NSUserDefaults standardUserDefaults] valueForKey:delayBetweenCallsKey];
-    const int kBatchSize = pref ? [pref intValue] : bytesPerCallDefault;
-    if ([slowPasteBuffer length] > kBatchSize) {
-        range.length = kBatchSize;
-    } else {
-        range.length = [slowPasteBuffer length];
-    }
+    range.length = MIN(pasteContext_.bytesPerCall, [slowPasteBuffer length]);
     [self _pasteStringImmediately:[slowPasteBuffer substringWithRange:range]];
     [slowPasteBuffer deleteCharactersInRange:range];
+    [self updatePasteUI];
     if ([slowPasteBuffer length] > 0) {
-        slowPasteTimer = [NSTimer scheduledTimerWithTimeInterval:delay ? [delay floatValue] : delayBetweenCallsDefault
+        [pasteContext_ updateValues];
+        slowPasteTimer = [NSTimer scheduledTimerWithTimeInterval:pasteContext_.delayBetweenCalls
                                                           target:self
-                                                        selector:selector
+                                                        selector:@selector(pasteAgain)
                                                         userInfo:nil
                                                          repeats:NO];
     } else {
@@ -2003,7 +2036,29 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                              allowLossyConversion:YES]];
         }
         slowPasteTimer = nil;
+        [self hidePasteUI];
+        [pasteContext_ release];
+        pasteContext_ = nil;
+        [self emptyEventQueue];
     }
+}
+
+- (void)_pasteWithBytePerCallPrefKey:(NSString*)bytesPerCallKey
+                        defaultValue:(int)bytesPerCallDefault
+            delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
+                        defaultValue:(float)delayBetweenCallsDefault
+{
+    [pasteContext_ release];
+    pasteContext_ = [[PasteContext alloc] initWithBytesPerCallPrefKey:bytesPerCallKey
+                                                         defaultValue:bytesPerCallDefault
+                                             delayBetweenCallsPrefKey:delayBetweenCallsKey
+                                                         defaultValue:delayBetweenCallsDefault];
+    const int kPasteBytesPerSecond = 10000;  // This is a wild-ass guess.
+    if (pasteContext_.delayBetweenCalls * slowPasteBuffer.length / pasteContext_.bytesPerCall + slowPasteBuffer.length / kPasteBytesPerSecond > 3) {
+        [self showPasteUI];
+    }
+
+    [self pasteAgain];
 }
 
 // Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
@@ -2013,17 +2068,15 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [self _pasteWithBytePerCallPrefKey:@"SlowPasteBytesPerCall"
                           defaultValue:16
               delayBetweenCallsPrefKey:@"SlowPasteDelayBetweenCalls"
-                          defaultValue:0.125
-                              selector:@selector(pasteSlowly:)];
+                          defaultValue:0.125];
 }
 
 - (void)_pasteStringMore
 {
     [self _pasteWithBytePerCallPrefKey:@"QuickPasteBytesPerCall"
-                          defaultValue:256
+                          defaultValue:1024
               delayBetweenCallsPrefKey:@"QuickPasteDelayBetweenCalls"
-                          defaultValue:0.01
-                              selector:@selector(_pasteStringMore)];
+                          defaultValue:0.01];
 }
 
 - (void)_pasteString:(NSString *)aString
@@ -2039,26 +2092,37 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
 }
 
-- (void)paste:(id)sender
+- (void)pasteString:(NSString *)str flags:(int)flags
 {
+    if (flags & 1) {
+        // paste escaping special characters
+        str = [str stringWithEscapedShellCharacters];
+    }
     if ([TERMINAL bracketedPasteMode]) {
         [self writeTask:[[NSString stringWithFormat:@"%c[200~", 27]
                          dataUsingEncoding:[TERMINAL encoding]
                          allowLossyConversion:YES]];
     }
+    if (flags & 2) {
+        [slowPasteBuffer appendString:[str stringWithLinefeedNewlines]];
+        [self pasteSlowly:nil];
+    } else {
+        [self _pasteString:str];
+    }
+}
 
+- (void)paste:(id)sender
+{
     NSString* pbStr = [PTYSession pasteboardString];
     if (pbStr) {
-        NSString *str = [[[NSMutableString alloc] initWithString:pbStr] autorelease];
-        if ([sender tag] & 1) {
-            // paste escaping special characters
-            str = [str stringWithEscapedShellCharacters];
-        }
-        if ([sender tag] & 2) {
-            [slowPasteBuffer appendString:[str stringWithLinefeedNewlines]];
-            [self pasteSlowly:nil];
+        if ([self isPasting]) {
+            if ([pbStr length] == 0) {
+                NSBeep();
+            } else {
+                [eventQueue_ addObject:[PasteEvent pasteEventWithString:pbStr flags:[sender tag]]];
+            }
         } else {
-            [self _pasteString:str];
+            [self pasteString:pbStr flags:[sender tag]];
         }
     }
 }
@@ -2892,7 +2956,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (void)setXtermMouseReporting:(BOOL)set
 {
     xtermMouseReporting = set;
-	[TEXTVIEW updateCursor:[NSApp currentEvent]];
+    [TEXTVIEW updateCursor:[NSApp currentEvent]];
 }
 
 - (BOOL)logging
@@ -3023,6 +3087,14 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (iTermGrowlDelegate*)growlDelegate
 {
     return gd;
+}
+
+- (BOOL)isPasting {
+    return slowPasteTimer != nil;
+}
+
+- (void)queueKeyDown:(NSEvent *)event {
+    [eventQueue_ addObject:event];
 }
 
 - (void)sendCommand:(NSString *)command
@@ -3852,6 +3924,16 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 	} else {
 		return [[dict objectForKey:KEY_SCROLLBACK_LINES] intValue];
 	}
+}
+
+- (void)pasteViewControllerDidCancel
+{
+    [self hidePasteUI];
+    [slowPasteTimer invalidate];
+    slowPasteTimer = nil;
+    [slowPasteBuffer release];
+    slowPasteBuffer = [[NSMutableString alloc] init];
+    [self emptyEventQueue];
 }
 
 @end

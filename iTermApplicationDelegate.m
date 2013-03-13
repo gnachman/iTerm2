@@ -964,6 +964,65 @@ static BOOL hasBecomeActive = NO;
     [[[[iTermController sharedInstance] currentTerminal] currentSession] changeFontSizeDirection:-1];
 }
 
+- (void)changePasteSpeedBy:(double)factor
+                  bytesKey:(NSString *)bytesKey
+              defaultBytes:(int)defaultBytes
+                  delayKey:(NSString *)delayKey
+              defaultDelay:(float)defaultDelay
+{
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    int bytes = [defaults integerForKey:bytesKey];
+    if (!bytes) {
+        bytes = defaultBytes;
+    }
+    float delay = [defaults floatForKey:delayKey];
+    if (!delay) {
+        delay = defaultDelay;
+    }
+    bytes *= factor;
+    delay /= factor;
+    bytes = MAX(1, MIN(1024 * 1024, bytes));
+    delay = MAX(0.001, MIN(10, delay));
+    [defaults setInteger:bytes forKey:bytesKey];
+    [defaults setFloat:delay forKey:delayKey];
+}
+
+- (IBAction)pasteFaster:(id)sender
+{
+    [self changePasteSpeedBy:1.5
+                    bytesKey:@"QuickPasteBytesPerCall"
+                defaultBytes:1024
+                    delayKey:@"QuickPasteDelayBetweenCalls"
+                defaultDelay:.01];
+}
+
+- (IBAction)pasteSlower:(id)sender
+{
+    [self changePasteSpeedBy:0.66
+                    bytesKey:@"QuickPasteBytesPerCall"
+                defaultBytes:1024
+                    delayKey:@"QuickPasteDelayBetweenCalls"
+                defaultDelay:.01];
+}
+
+- (IBAction)pasteSlowlyFaster:(id)sender
+{
+    [self changePasteSpeedBy:1.5
+                    bytesKey:@"SlowPasteBytesPerCall"
+                defaultBytes:16
+                    delayKey:@"SlowPasteDelayBetweenCalls"
+                defaultDelay:0.125];
+}
+
+- (IBAction)pasteSlowlySlower:(id)sender
+{
+    [self changePasteSpeedBy:0.66
+                    bytesKey:@"SlowPasteBytesPerCall"
+                defaultBytes:16
+                    delayKey:@"SlowPasteDelayBetweenCalls"
+                defaultDelay:0.125];
+}
+
 static void SwapDebugLog() {
         NSMutableString* temp;
         temp = gDebugLogStr;
