@@ -53,6 +53,7 @@ extern NSString *kTmuxControllerSessionWasRenamed;
     NSMutableSet *hiddenWindows_;
     NSTimer *listSessionsTimer_;  // Used to do a cancelable delayed perform of listSessions.
     NSTimer *listWindowsTimer_;  // Used to do a cancelable delayed perform of listWindows.
+    BOOL ambiguousIsDoubleWidth_;
 }
 
 @property (nonatomic, readonly) TmuxGateway *gateway;
