@@ -1128,18 +1128,18 @@ static NSString* FormatRect(NSRect r) {
 - (void)fitSubviewsToRoot
 {
     // Make SessionViews full-size.
-        [root_ adjustSubviews];
+    [root_ adjustSubviews];
 
-        // Make scrollbars the right size and put them at the tops of their session views.
-        for (PTYSession *theSession in [self sessions]) {
-                NSSize theSize = [theSession idealScrollViewSize];
-                [[theSession SCROLLVIEW] setFrame:NSMakeRect(0,
-                                                                                                         0,
-                                                                                                         theSize.width,
-                                                                                                         theSize.height)];
-                [[theSession view] setAutoresizesSubviews:NO];
-                [[theSession view] updateTitleFrame];
-        }
+    // Make scrollbars the right size and put them at the tops of their session views.
+    for (PTYSession *theSession in [self sessions]) {
+        NSSize theSize = [theSession idealScrollViewSize];
+        [[theSession SCROLLVIEW] setFrame:NSMakeRect(0,
+                                                     0,
+                                                     theSize.width,
+                                                     theSize.height)];
+        [[theSession view] setAutoresizesSubviews:NO];
+        [[theSession view] updateTitleFrame];
+    }
 }
 
 - (void)removeSession:(PTYSession*)aSession
@@ -2084,7 +2084,7 @@ static NSString* FormatRect(NSRect r) {
     assert(!flexibleView_);
     // Interpose a vew between the tab and the root so the root can be smaller than the tab.
     flexibleView_ = [[SolidColorView alloc] initWithFrame:root_.frame
-                                                                                           color:[self flexibleViewColor]];
+                                                    color:[self flexibleViewColor]];
     [flexibleView_ setFlipped:YES];
     tabView_ = flexibleView_;
     [root_ setAutoresizingMask:NSViewMaxXMargin | NSViewMaxYMargin];
@@ -2591,9 +2591,10 @@ static NSString* FormatRect(NSRect r) {
                       tmuxSize.height - overage.height);
 }
 
-// Returns the size (in characters) of the minimum window size that can contain
-// this tab. It picks the smallest height that can contain every column and
-// every row (counting characters and dividers as 1).
+// Returns the size (in characters) of the window size that fits this tab's
+// contents, while going over as little as possible.  It picks the smallest
+// height that can contain every column and every row (counting characters and
+// dividers as 1).
 - (NSSize)tmuxSize
 {
     // The current size of the sessions in this tab in characters
@@ -2609,8 +2610,13 @@ static NSString* FormatRect(NSRect r) {
     // For now, we work around this problem with respect to scrollbars by handling them specially.
     NSSize rootSizeChars = NSMakeSize([self tmuxSizeForHeight:NO], [self tmuxSizeForHeight:YES]);
 
-    // The size in pixels we need to get it to (at most)
-    NSSize targetSizePixels = [tabView_ frame].size;
+    // The size in pixels we need to get it to (at most). Only the current tab will have the proper
+    // frame, but during window creation there might not be a current tab.
+    PTYTab *currentTab = [realParentWindow_ currentTab];
+    if (!currentTab) {
+        currentTab = self;
+    }
+    NSSize targetSizePixels = [currentTab->tabView_ frame].size;
 
     // The current size in pixels
     NSSize rootSizePixels = [root_ frame].size;
