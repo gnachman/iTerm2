@@ -9,6 +9,8 @@
 #import "TmuxGateway.h"
 #import "FutureMethods.h"
 
+extern NSString * const kTmuxWindowOpenerStatePendingOutput;
+
 @class TmuxGateway;
 @class TmuxController;
 @class PTYTab;

@@ -52,6 +52,7 @@
 #import "TmuxLayoutParser.h"
 #import "MovePaneController.h"
 #import "TmuxStateParser.h"
+#import "TmuxWindowOpener.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -363,10 +364,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
     if (state) {
         [[aSession SCREEN] setTmuxState:state];
-		NSString *pendingOutput = [state objectForKey:@"pending_output"];
+		NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
         if (pendingOutput && [pendingOutput length]) {
-            NSData *data = [pendingOutput dataFromHexValues];
-            [[aSession TERMINAL] putStreamData:data];
+            [[aSession TERMINAL] putStreamData:pendingOutput];
         }
         [[aSession TERMINAL] setInsertMode:[[state objectForKey:kStateDictInsertMode] boolValue]];
         [[aSession TERMINAL] setCursorMode:[[state objectForKey:kStateDictKCursorMode] boolValue]];
