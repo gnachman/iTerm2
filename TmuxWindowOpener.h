@@ -31,6 +31,7 @@ extern NSString * const kTmuxWindowOpenerStatePendingOutput;
     PTYTab *tabToUpdate_;
     id target_;
     SEL selector_;
+    BOOL ambiguousIsDoubleWidth_;
 }
 
 @property (nonatomic, assign) int windowIndex;
