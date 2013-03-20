@@ -27,6 +27,8 @@ extern NSString *kTmuxControllerWindowDidOpen;
 extern NSString *kTmuxControllerWindowDidClose;
 // Posted when the attached session changes
 extern NSString *kTmuxControllerAttachedSessionDidChange;
+// Posted when a session changes name
+extern NSString *kTmuxControllerSessionWasRenamed;
 
 @interface TmuxController : NSObject {
     TmuxGateway *gateway_;
@@ -36,19 +38,21 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
     int numOutstandingWindowResizes_;
     NSMutableDictionary *windowPositions_;
     NSSize lastSize_;  // last size for windowDidChange:
-	NSString *lastOrigins_;
+    NSString *lastOrigins_;
     BOOL detached_;
     NSString *sessionName_;
     int sessionId_;
     NSMutableSet *pendingWindowOpens_;
     NSString *lastSaveAffinityCommand_;
-	// tmux windows that want to open as tabs in the same physical window
-	// belong to the same equivalence class.
+    // tmux windows that want to open as tabs in the same physical window
+    // belong to the same equivalence class.
     EquivalenceClassSet *affinities_;
-	BOOL windowOriginsDirty_;
-	BOOL haveOutstandingSaveWindowOrigins_;
-	NSMutableDictionary *origins_;  // window id -> NSValue(Point) window origin
-	NSMutableSet *hiddenWindows_;
+    BOOL windowOriginsDirty_;
+    BOOL haveOutstandingSaveWindowOrigins_;
+    NSMutableDictionary *origins_;  // window id -> NSValue(Point) window origin
+    NSMutableSet *hiddenWindows_;
+    NSTimer *listSessionsTimer_;  // Used to do a cancelable delayed perform of listSessions.
+    NSTimer *listWindowsTimer_;  // Used to do a cancelable delayed perform of listWindows.
 }
 
 @property (nonatomic, readonly) TmuxGateway *gateway;
@@ -70,7 +74,7 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
                 toLayout:(NSString *)layout;
 - (void)sessionChangedTo:(NSString *)newSessionName sessionId:(int)sessionid;
 - (void)sessionsChanged;
-- (void)sessionRenamedTo:(NSString *)newName;
+- (void)session:(int)sessionId renamedTo:(NSString *)newName;
 - (void)windowsChanged;
 - (void)windowWasRenamedWithId:(int)id to:(NSString *)newName;
 
@@ -123,6 +127,7 @@ extern NSString *kTmuxControllerAttachedSessionDidChange;
                       target:(id)target
                     selector:(SEL)selector
                       object:(id)object;
+- (void)listSessions;
 - (void)saveAffinities;
 - (void)saveWindowOrigins;
 - (void)saveHiddenWindows;

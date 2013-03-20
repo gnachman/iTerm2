@@ -558,7 +558,11 @@ static VT100TCC decode_csi(unsigned char *datap,
                     break;
 
                 case 'm':
-                    result.type = VT100CSI_SGR;
+                    if (param.modifier == '>') {
+                        result.type = VT100CSI_SET_MODIFIERS;
+                    } else {
+                        result.type = VT100CSI_SGR;
+                    }
                     for (i = 0; i < param.count; ++i) {
                         SET_PARAM_DEFAULT(param, i, 0);
                         //                        NSLog(@"m[%d]=%d",i,param.p[i]);
@@ -566,7 +570,11 @@ static VT100TCC decode_csi(unsigned char *datap,
                     break;
 
                 case 'h':
-                    result.type = VT100CSI_SM;
+                    if (param.modifier == '>') {
+                        result.type = VT100CSI_RESET_MODIFIERS;
+                    } else {
+                        result.type = VT100CSI_SM;
+                    }
                     break;
 
                 case 'g':
@@ -2694,6 +2702,40 @@ static VT100TCC decode_string(unsigned char *datap,
             WRAPAROUND_MODE = YES;
             ORIGIN_MODE = NO;
             break;
+        case VT100CSI_RESET_MODIFIERS:
+            if (token.u.csi.count == 0) {
+                sendModifiers_[2] = -1;
+            } else {
+                int resource = token.u.csi.p[0];
+                if (resource >= 0 && resource <= NUM_MODIFIABLE_RESOURCES) {
+                    sendModifiers_[resource] = -1;
+                }
+            }
+            [SCREEN setSendModifiers:sendModifiers_
+                           numValues:NUM_MODIFIABLE_RESOURCES];
+            break;
+
+        case VT100CSI_SET_MODIFIERS: {
+            if (token.u.csi.count == 0) {
+                for (int i = 0; i < NUM_MODIFIABLE_RESOURCES; i++) {
+                    sendModifiers_[i] = 0;
+                }
+            } else {
+                int resource = token.u.csi.p[0];
+                int value;
+                if (token.u.csi.count == 1) {
+                    value = 0;
+                } else {
+                    value = token.u.csi.p[1];
+                }
+                if (resource >= 0 && resource < NUM_MODIFIABLE_RESOURCES && value >= 0) {
+                    sendModifiers_[resource] = value;
+                }
+            }
+            [SCREEN setSendModifiers:sendModifiers_
+                           numValues:NUM_MODIFIABLE_RESOURCES];
+            break;
+        }
     }
 }
 

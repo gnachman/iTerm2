@@ -449,6 +449,15 @@ static BOOL hasBecomeActive = NO;
     [[iTermController sharedInstance] stopEventTap];
 }
 
+- (PseudoTerminal *)terminalToOpenFileIn
+{
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"OpenFileInNewWindows"]) {
+        return nil;
+    } else {
+        return [self currentTerminal];
+    }
+}
+
 /**
  * The following applescript invokes this method before
  * _performStartupActivites is run and prevents it from being run. Scripts can
@@ -479,13 +488,13 @@ static BOOL hasBecomeActive = NO;
         [[NSFileManager defaultManager] fileExistsAtPath:filename isDirectory:&isDir];
         if (!isDir) {
             NSString *aString = [NSString stringWithFormat:@"%@; exit;\n", [filename stringWithEscapedShellCharacters]];
-            [[iTermController sharedInstance] launchBookmark:nil inTerminal:[self currentTerminal]];
+            [[iTermController sharedInstance] launchBookmark:nil inTerminal:[self terminalToOpenFileIn]];
             // Sleeping a while waiting for the login.
             sleep(1);
             [[[[iTermController sharedInstance] currentTerminal] currentSession] insertText:aString];
         } else {
             NSString *aString = [NSString stringWithFormat:@"cd %@\n", [filename stringWithEscapedShellCharacters]];
-            [[iTermController sharedInstance] launchBookmark:nil inTerminal:[self currentTerminal]];
+            [[iTermController sharedInstance] launchBookmark:nil inTerminal:[self terminalToOpenFileIn]];
             // Sleeping a while waiting for the login.
             sleep(1);
             [[[[iTermController sharedInstance] currentTerminal] currentSession] insertText:aString];

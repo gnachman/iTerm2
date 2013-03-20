@@ -7,6 +7,9 @@
 
 #import <Cocoa/Cocoa.h>
 
+extern const int kTmuxGatewayCommandShouldTolerateErrors;
+extern const int kTmuxGatewayCommandWantsData;
+
 @class TmuxController;
 
 extern NSString * const kTmuxGatewayErrorDomain;
@@ -26,7 +29,7 @@ extern NSString * const kTmuxGatewayErrorDomain;
 				 sessionId:(int)sessionId;
 - (void)tmuxSessionsChanged;
 - (void)tmuxWindowsDidChange;
-- (void)tmuxSessionRenamed:(NSString *)newName;
+- (void)tmuxSession:(int)sessionId renamed:(NSString *)newName;
 - (NSSize)tmuxBookmarkSize;  // rows, cols
 - (int)tmuxNumHistoryLinesInBookmark;
 - (void)tmuxSetSecureLogging:(BOOL)secureLogging;
@@ -56,6 +59,7 @@ typedef enum {
     NSMutableArray *commandQueue_;  // NSMutableDictionary objects
     NSMutableString *currentCommandResponse_;
     NSMutableDictionary *currentCommand_;  // Set between %begin and %end
+    NSMutableData *currentCommandData_;
 
     BOOL detachSent_;
     BOOL acceptNotifications_;  // Initially NO. When YES, respond to notifications.
@@ -69,11 +73,12 @@ typedef enum {
      responseTarget:(id)target
    responseSelector:(SEL)selector;
 
+// flags is one of the kTmuxGateway... constants.
 - (void)sendCommand:(NSString *)command
      responseTarget:(id)target
    responseSelector:(SEL)selector
      responseObject:(id)obj
-    toleratesErrors:(BOOL)toleratesErrors;
+              flags:(int)flags;
 
 - (void)sendCommandList:(NSArray *)commandDicts;
 // Set initial to YES when notifications should be accepted after the last
@@ -82,11 +87,12 @@ typedef enum {
 - (void)abortWithErrorMessage:(NSString *)message;
 
 // Use this to compose a command list for sendCommandList:.
+// flags is one of the kTmuxGateway... constants.
 - (NSDictionary *)dictionaryForCommand:(NSString *)command
                         responseTarget:(id)target
                       responseSelector:(SEL)selector
                         responseObject:(id)obj
-                       toleratesErrors:(BOOL)toleratesErrors;
+                                 flags:(int)flags;
 
 - (void)sendKeys:(NSData *)data toWindowPane:(int)windowPane;
 - (void)detach;

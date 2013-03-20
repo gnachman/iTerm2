@@ -102,6 +102,8 @@
 #define VT100CSI_TBC         2047       // Tabulation Clear
 #define VT100CSI_DECSCUSR    2048       // Select the Style of the Cursor
 #define VT100CSI_DECSTR      2049       // Soft reset
+#define VT100CSI_SET_MODIFIERS 2050     // CSI > Ps; Pm m (Whether to set modifiers for different kinds of key presses; no official name)
+#define VT100CSI_RESET_MODIFIERS 2051     // CSI > Ps n (Set all modifiers values to -1, disabled)
 
 // some xterm extension
 #define XTERMCC_WIN_TITLE        86       // Set window title
@@ -154,6 +156,7 @@
 #define DCS_TMUX        5001
 
 #define VT100CSIPARAM_MAX    16
+#define NUM_MODIFIABLE_RESOURCES 5
 
 typedef struct {
     int type;
@@ -369,6 +372,7 @@ typedef enum {
 
     // http://www.xfree86.org/current/ctlseqs.html#Bracketed%20Paste%20Mode
     BOOL bracketedPasteMode_;
+    int sendModifiers_[NUM_MODIFIABLE_RESOURCES];
 }
 
 + (void)initialize;
