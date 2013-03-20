@@ -14,6 +14,8 @@
 #import "TmuxStateParser.h"
 #import "PTYTab.h"
 
+NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
+
 @interface TmuxWindowOpener (Private)
 
 - (id)appendRequestsForNode:(NSMutableDictionary *)node
@@ -26,6 +28,7 @@
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp;
 - (NSDictionary *)dictForRequestHistoryForWindowPane:(NSNumber *)wp
                                                  alt:(BOOL)alternate;
+- (NSDictionary *)dictForGetPendingOutputForWindowPane:(NSNumber *)wp;
 - (void)appendRequestsForWindowPane:(NSNumber *)wp
                             toArray:(NSMutableArray *)cmdList;
 
@@ -164,6 +167,18 @@
     [cmdList addObject:[self dictForRequestHistoryForWindowPane:wp alt:NO]];
     [cmdList addObject:[self dictForRequestHistoryForWindowPane:wp alt:YES]];
     [cmdList addObject:[self dictForDumpStateForWindowPane:wp]];
+    [cmdList addObject:[self dictForGetPendingOutputForWindowPane:wp]];
+}
+
+- (NSDictionary *)dictForGetPendingOutputForWindowPane:(NSNumber *)wp
+{
+    ++pendingRequests_;
+    NSString *command = [NSString stringWithFormat:@"capture-pane -p -P -C -t %%%d", [wp intValue]];
+    return [gateway_ dictionaryForCommand:command
+                           responseTarget:self
+                         responseSelector:@selector(getPendingOutputResponse:pane:)
+                           responseObject:wp
+                                    flags:kTmuxGatewayCommandWantsData];
 }
 
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp
@@ -175,7 +190,7 @@
                            responseTarget:self
                          responseSelector:@selector(dumpStateResponse:pane:)
                            responseObject:wp
-                          toleratesErrors:NO];
+                                    flags:0];
 }
 
  - (NSDictionary *)dictForRequestHistoryForWindowPane:(NSNumber *)wp
@@ -191,7 +206,7 @@
                                            wp,
                                            [NSNumber numberWithBool:alternate],
                                            nil]
-                          toleratesErrors:NO];
+                                    flags:0];
 }
 
 // Command response handler for dump-history
@@ -216,6 +231,40 @@
                            otherButton:@""
              informativeTextWithFormat:@"See Console.app for details"] runModal];
     }
+    [self requestDidComplete];
+}
+
+- (void)getPendingOutputResponse:(NSData *)response pane:(NSNumber *)wp
+{
+    const char *bytes = response.bytes;
+    NSMutableData *pending = [NSMutableData data];
+    for (int i = 0; i < response.length; i++) {
+        char c = bytes[i];
+        if (c == '\\') {
+            if (i + 3 >= response.length) {
+                NSLog(@"Bogus pending output (truncated): %@", response);
+                return;
+            }
+            i++;
+            int value = 0;
+            for (int j = 0; j < 3; j++, i++) {
+                c = bytes[i];
+                if (c < '0' || c > '7') {
+                    NSLog(@"Bogus pending output (non-octal): %@", response);
+                    return;
+                }
+                value *= 8;
+                value += (c - '0');
+            }
+            i--;
+            c = value;
+        }
+        [pending appendBytes:&c length:1];
+    }
+
+    NSMutableDictionary *state = [[[states_ objectForKey:wp] mutableCopy] autorelease];
+    [state setObject:pending forKey:kTmuxWindowOpenerStatePendingOutput];
+    [states_ setObject:state forKey:wp];
     [self requestDidComplete];
 }
 
