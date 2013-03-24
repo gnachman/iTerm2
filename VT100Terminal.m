@@ -2330,7 +2330,7 @@ static VT100TCC decode_string(unsigned char *datap,
         TRACE = NO;
 
         strictAnsiMode = NO;
-        allowColumnMode = YES;
+        allowColumnMode = NO;
         allowKeypadMode = YES;
 
         streamOffset = 0;
@@ -2487,7 +2487,7 @@ static VT100TCC decode_string(unsigned char *datap,
     TRACE = NO;
 
     strictAnsiMode = NO;
-    allowColumnMode = YES;
+    allowColumnMode = NO;
     [SCREEN reset];
 }
 
