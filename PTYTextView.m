@@ -2281,6 +2281,10 @@ NSMutableArray* screens=0;
     }
     DebugLog(@"PTYTextView keyDown");
     id delegate = [self delegate];
+    if ([delegate isPasting]) {
+        [delegate queueKeyDown:event];
+        return;
+    }
     if ([[[[[self dataSource] session] tab] realParentWindow] inInstantReplay]) {
         if (debugKeyDown) {
             NSLog(@"PTYTextView keyDown: in instant replay, send to delegate");
@@ -6111,8 +6115,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (theLine[i].complexChar) {
                 thisChar.runType = kCharacterRunSingleCharWithCombiningMarks;
                 thisCharString = ComplexCharToStr(theLine[i].code);
-                assert(thisCharString);
-                drawable = YES;  // TODO: not all unicode is drawable
+                if (!thisCharString) {
+                    NSLog(@"No complex char for code %d", (int)theLine[i].code);
+                    thisCharString = @"";
+                    drawable = NO;
+                } else {
+                    drawable = YES;  // TODO: not all unicode is drawable
+                }
+                // Mar 19, 2013: removing assert temporarily to debug its cause (bug 2397).
+                // assert(thisCharString);
             } else {
                 // Non-complex char
                 thisChar.runType = kCharacterRunMultipleSimpleChars;
@@ -6743,7 +6754,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         fg,
                         bg,
                         &len,
-                        0,
                         [[dataSource session] doubleWidth],
                         NULL);
 
@@ -6789,7 +6799,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                             fg,
                             bg,
                             &len,
-                            0,
                             [[dataSource session] doubleWidth],
                             &cursorIndex);
         int cursorX = 0;

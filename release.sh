@@ -12,7 +12,8 @@ make Deployment || exit
 
 # Build tmux and move its tar.gz into the Deployment build directory
 cd ~/tmux
-git checkout mountainlion
+git checkout master
+git pull origin master
 make
 rm *.o
 cd ..
@@ -22,7 +23,7 @@ mv ~/tmux-for-iTerm2-$COMPACTDATE.tar.gz build/Deployment
 cd build/Deployment
 
 # Create the zip file
-zip -r iTerm2-${NAME}.zip iTerm.app
+zip -ry iTerm2-${NAME}.zip iTerm.app
 
 # Update the list of changes
 vi $SVNDIR/appcasts/testing_changes.html

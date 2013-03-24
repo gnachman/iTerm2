@@ -14,6 +14,8 @@
 #import "TmuxStateParser.h"
 #import "PTYTab.h"
 
+NSString * const kTmuxWindowOpenerStatePendingOutput = @"pending_output";
+
 @interface TmuxWindowOpener (Private)
 
 - (id)appendRequestsForNode:(NSMutableDictionary *)node
@@ -26,6 +28,7 @@
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp;
 - (NSDictionary *)dictForRequestHistoryForWindowPane:(NSNumber *)wp
                                                  alt:(BOOL)alternate;
+- (NSDictionary *)dictForGetPendingOutputForWindowPane:(NSNumber *)wp;
 - (void)appendRequestsForWindowPane:(NSNumber *)wp
                             toArray:(NSMutableArray *)cmdList;
 
@@ -43,6 +46,7 @@
 @synthesize controller = controller_;
 @synthesize target = target_;
 @synthesize selector = selector_;
+@synthesize ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
 
 + (TmuxWindowOpener *)windowOpener
 {
@@ -66,6 +70,7 @@
     [layout_ release];
     [gateway_ release];
     [parseTree_ release];
+    [target_ release];
     [histories_ release];
     [altHistories_ release];
     [states_ release];
@@ -162,23 +167,37 @@
     [cmdList addObject:[self dictForRequestHistoryForWindowPane:wp alt:NO]];
     [cmdList addObject:[self dictForRequestHistoryForWindowPane:wp alt:YES]];
     [cmdList addObject:[self dictForDumpStateForWindowPane:wp]];
+    [cmdList addObject:[self dictForGetPendingOutputForWindowPane:wp]];
+}
+
+- (NSDictionary *)dictForGetPendingOutputForWindowPane:(NSNumber *)wp
+{
+    ++pendingRequests_;
+    NSString *command = [NSString stringWithFormat:@"capture-pane -p -P -C -t %%%d", [wp intValue]];
+    return [gateway_ dictionaryForCommand:command
+                           responseTarget:self
+                         responseSelector:@selector(getPendingOutputResponse:pane:)
+                           responseObject:wp
+                                    flags:kTmuxGatewayCommandWantsData];
 }
 
 - (NSDictionary *)dictForDumpStateForWindowPane:(NSNumber *)wp
 {
     ++pendingRequests_;
-    NSString *command = [NSString stringWithFormat:@"control -t %%%d get-emulatorstate", [wp intValue]];
+    NSString *command = [NSString stringWithFormat:@"list-panes -t %%%d -F \"%@\"", [wp intValue],
+                         [TmuxStateParser format]];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
                          responseSelector:@selector(dumpStateResponse:pane:)
-                           responseObject:wp];
+                           responseObject:wp
+                                    flags:0];
 }
 
  - (NSDictionary *)dictForRequestHistoryForWindowPane:(NSNumber *)wp
                         alt:(BOOL)alternate
 {
     ++pendingRequests_;
-    NSString *command = [NSString stringWithFormat:@"control %@-t %%%d -l %d get-history",
+    NSString *command = [NSString stringWithFormat:@"capture-pane -peqJ %@-t %%%d -S -%d",
                          (alternate ? @"-a " : @""), [wp intValue], self.maxHistory];
     return [gateway_ dictionaryForCommand:command
                            responseTarget:self
@@ -186,7 +205,8 @@
                            responseObject:[NSArray arrayWithObjects:
                                            wp,
                                            [NSNumber numberWithBool:alternate],
-                                           nil]];
+                                           nil]
+                                    flags:0];
 }
 
 // Command response handler for dump-history
@@ -196,7 +216,8 @@
 {
     NSNumber *wp = [info objectAtIndex:0];
     NSNumber *alt = [info objectAtIndex:1];
-    NSArray *history = [[TmuxHistoryParser sharedInstance] parseDumpHistoryResponse:response];
+    NSArray *history = [[TmuxHistoryParser sharedInstance] parseDumpHistoryResponse:response
+                                                             ambiguousIsDoubleWidth:ambiguousIsDoubleWidth_];
     if (history) {
         if ([alt boolValue]) {
             [altHistories_ setObject:history forKey:wp];
@@ -213,9 +234,44 @@
     [self requestDidComplete];
 }
 
+- (void)getPendingOutputResponse:(NSData *)response pane:(NSNumber *)wp
+{
+    const char *bytes = response.bytes;
+    NSMutableData *pending = [NSMutableData data];
+    for (int i = 0; i < response.length; i++) {
+        char c = bytes[i];
+        if (c == '\\') {
+            if (i + 3 >= response.length) {
+                NSLog(@"Bogus pending output (truncated): %@", response);
+                return;
+            }
+            i++;
+            int value = 0;
+            for (int j = 0; j < 3; j++, i++) {
+                c = bytes[i];
+                if (c < '0' || c > '7') {
+                    NSLog(@"Bogus pending output (non-octal): %@", response);
+                    return;
+                }
+                value *= 8;
+                value += (c - '0');
+            }
+            i--;
+            c = value;
+        }
+        [pending appendBytes:&c length:1];
+    }
+
+    NSMutableDictionary *state = [[[states_ objectForKey:wp] mutableCopy] autorelease];
+    [state setObject:pending forKey:kTmuxWindowOpenerStatePendingOutput];
+    [states_ setObject:state forKey:wp];
+    [self requestDidComplete];
+}
+
 - (void)dumpStateResponse:(NSString *)response pane:(NSNumber *)wp
 {
-    NSDictionary *state = [[TmuxStateParser sharedInstance] parsedStateFromString:response];
+    NSDictionary *state = [[TmuxStateParser sharedInstance] parsedStateFromString:response
+                                                                        forPaneId:[wp intValue]];
     [states_ setObject:state forKey:wp];
     [self requestDidComplete];
 }
