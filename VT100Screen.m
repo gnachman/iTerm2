@@ -3395,39 +3395,26 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     int y = cursorY - (n > 0 ? n : 1);
 
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen cursorUp:%d]",
-          __FILE__, __LINE__, n);
-#endif
+    int x = MIN(cursorX, WIDTH - 1);
     if (cursorY >= SCROLL_TOP) {
-        [self setCursorX:cursorX Y:y < SCROLL_TOP ? SCROLL_TOP : y];
+        [self setCursorX:x Y:y < SCROLL_TOP ? SCROLL_TOP : y];
     } else {
-        [self setCursorX:cursorX Y:y];
+        [self setCursorX:x Y:y];
     }
-    if (cursorX < WIDTH) {
-        [self setCharAtCursorDirty:1];
-        DebugLog(@"cursorUp");
-    }
+    DebugLog(@"cursorUp");
 }
 
 - (void)cursorDown:(int)n
 {
     int y = cursorY + (n > 0 ? n : 1);
 
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen cursorDown:%d, Y = %d; SCROLL_BOTTOM = %d]",
-          __FILE__, __LINE__, n, cursorY, SCROLL_BOTTOM);
-#endif
+    int x = MIN(cursorX, WIDTH - 1);
     if (cursorY <= SCROLL_BOTTOM) {
-        [self setCursorX:cursorX Y:y > SCROLL_BOTTOM ? SCROLL_BOTTOM : y];
+        [self setCursorX:x Y:y > SCROLL_BOTTOM ? SCROLL_BOTTOM : y];
     } else {
-        [self setCursorX:cursorX Y:MAX(0, MIN(HEIGHT-1, y))];
+        [self setCursorX:x Y:MAX(0, MIN(HEIGHT-1, y))];
     }
-
-    if (cursorX < WIDTH) {
-        [self setCharAtCursorDirty:1];
-        DebugLog(@"cursorDown");
-    }
+    DebugLog(@"cursorDown");
 }
 
 - (void)cursorToX:(int)x
