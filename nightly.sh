@@ -3,7 +3,7 @@
 set -x
 cd ~/nightly/iTerm2/
 # todo: git pull origin master
-make Nightly || (echo "Nightly build failed" | mail -s "Nightly build failure" gnachman@gmail.com; exit)
+make Nightly || (echo "Nightly build failed" | mail -s "Nightly build failure" $MY_EMAIL_ADDR; exit)
 ./sign.sh
 COMPACTDATE=$(date +"%Y%m%d")-nightly
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
