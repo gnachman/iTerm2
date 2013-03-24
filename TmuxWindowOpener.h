@@ -9,6 +9,8 @@
 #import "TmuxGateway.h"
 #import "FutureMethods.h"
 
+extern NSString * const kTmuxWindowOpenerStatePendingOutput;
+
 @class TmuxGateway;
 @class TmuxController;
 @class PTYTab;
@@ -29,6 +31,7 @@
     PTYTab *tabToUpdate_;
     id target_;
     SEL selector_;
+    BOOL ambiguousIsDoubleWidth_;
 }
 
 @property (nonatomic, assign) int windowIndex;
@@ -42,6 +45,7 @@
 @property (nonatomic, retain) id target;
 // Selector is called even if the window is already open and nothing is done.
 @property (nonatomic, assign) SEL selector;
+@property (nonatomic, assign) BOOL ambiguousIsDoubleWidth;
 
 + (TmuxWindowOpener *)windowOpener;
 - (void)openWindows:(BOOL)initial;

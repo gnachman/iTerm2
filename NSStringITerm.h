@@ -34,12 +34,27 @@
 
 #import <Foundation/Foundation.h>
 
+// This is the standard unicode replacement character for when input couldn't
+// be parsed properly but we need to render something there.
+#define UNICODE_REPLACEMENT_CHAR 0xfffd
+
+// Examine the leading UTF-8 sequence in a char array and check that it
+// is properly encoded. Computes the number of bytes to use for the
+// first code point. Returns the first code point, if it exists, in *result.
+//
+// Return value:
+// positive: This many bytes compose a legal Unicode character.
+// negative: abs(this many) bytes are illegal, should be replaced by one
+//   single replacement symbol.
+// zero: Unfinished sequence, input needs to grow.
+int decode_utf8_char(const unsigned char * restrict datap,
+                     int datalen,
+                     int * restrict result);
 
 @interface NSString (iTerm)
 
 + (NSString *)stringWithInt:(int)num;
 + (BOOL)isDoubleWidthCharacter:(int)unicode
-                      encoding:(NSStringEncoding)e
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth;
 
 - (NSMutableString *)stringReplaceSubstringFrom:(NSString *)oldSubstring to:(NSString *)newSubstring;
@@ -59,5 +74,9 @@
 
 // Convert a string of hex values (an even number of [0-9A-Fa-f]) into data.
 - (NSData *)dataFromHexValues;
+
+// Always returns a non-null vaule, but it may contain replacement chars for
+// malformed utf-8 sequences.
+- (NSString *)initWithUTF8DataIgnoringErrors:(NSData *)data;
 
 @end

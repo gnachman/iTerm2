@@ -1382,7 +1382,7 @@ NSString *sessionsKey = @"sessions";
                                      inTerminal:self
                                      tmuxWindow:window
                                  tmuxController:tmuxController];
-    [self setWindowTitle:name];
+    [tab setTmuxWindowName:name];
     [tab setReportIdealSizeAsCurrent:YES];
     [self fitWindowToTabs];
     [tab setReportIdealSizeAsCurrent:NO];
@@ -2167,7 +2167,7 @@ NSString *sessionsKey = @"sessions";
         if ([term lionFullScreen]) {
             [term restoreFrameAfterToolbarToggle];
         } else {
-	    PtyLog(@"zeroing preToolbarToggleFrame_");
+            PtyLog(@"zeroing preToolbarToggleFrame_");
             preToolbarToggleFrame_ = NSZeroRect;
         }
         if ([[[term window] toolbar] isVisible] != [itad toolbarShouldBeVisible]) {
@@ -2558,10 +2558,11 @@ NSString *sessionsKey = @"sessions";
     // TODO this is only ok because top, bottom, and non-lion fullscreen windows
     // can't become lion fullscreen windows:
     windowType_ = WINDOW_TYPE_NORMAL;
-        for (PTYTab *aTab in [self tabs]) {
-                [aTab notifyWindowChanged];
-        }
-        [self updateSessionScrollbars];
+    for (PTYTab *aTab in [self tabs]) {
+        [aTab notifyWindowChanged];
+    }
+    [self updateSessionScrollbars];
+    [self notifyTmuxOfWindowResize];
 }
 
 - (NSRect)windowWillUseStandardFrame:(NSWindow *)sender defaultFrame:(NSRect)defaultFrame

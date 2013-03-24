@@ -52,6 +52,7 @@
 #import "TmuxLayoutParser.h"
 #import "MovePaneController.h"
 #import "TmuxStateParser.h"
+#import "TmuxWindowOpener.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -168,6 +169,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [liveSession_ release];
     [tmuxGateway_ release];
     [tmuxController_ release];
+    [sendModifiers_ release];
 
     [SHELL release];
     SHELL = nil;
@@ -362,10 +364,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
     if (state) {
         [[aSession SCREEN] setTmuxState:state];
-		NSString *pendingOutput = [state objectForKey:@"pending_output"];
+		NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
         if (pendingOutput && [pendingOutput length]) {
-            NSData *data = [pendingOutput dataFromHexValues];
-            [[aSession TERMINAL] putStreamData:data];
+            [[aSession TERMINAL] putStreamData:pendingOutput];
         }
         [[aSession TERMINAL] setInsertMode:[[state objectForKey:kStateDictInsertMode] boolValue]];
         [[aSession TERMINAL] setCursorMode:[[state objectForKey:kStateDictKCursorMode] boolValue]];
@@ -2339,7 +2340,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (NSString*)formattedName:(NSString*)base
 {
-    NSString *prefix = tmuxController_ ? @"↣ " : @"";
+    NSString *prefix = tmuxController_ ? [NSString stringWithFormat:@"↣ %@: ", [[self tab] tmuxWindowName]] : @"";
 
     BOOL baseIsBookmarkName = [base isEqualToString:bookmarkName];
     PreferencePanel* panel = [PreferencePanel sharedInstance];
@@ -2880,6 +2881,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (void)setDoubleWidth:(BOOL)set
 {
     doubleWidth = set;
+    tmuxController_.ambiguousIsDoubleWidth = set;
 }
 
 - (BOOL)xtermMouseReporting
@@ -2979,6 +2981,16 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         return [self optionKey];
     }
     return [rightOptPref intValue];
+}
+
+- (void)setSendModifiers:(NSArray *)sendModifiers {
+    [sendModifiers_ autorelease];
+    sendModifiers_ = [sendModifiers retain];
+    // TODO(georgen): Actually use this. It's not well documented and the xterm code is a crazy mess :(.
+    // For future reference, in tmux commit 8df3ec612a8c496fc2c975b8241f4e95faef5715 the list of xterm
+    // keys gives a hint about how this is supposed to work (e.g., control-! sends a long CSI code). See also
+    // the xterm manual (look for modifyOtherKeys, etc.) for valid values, and ctlseqs.html on invisible-island
+    // for the meaning of the indices (under CSI > Ps; Pm m).
 }
 
 - (void)setAddressBookEntry:(NSDictionary*)entry
@@ -3242,7 +3254,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
     // If the window isn't able to adjust, or adjust enough, make the session
     // work with whatever size we ended up having.
-    [[self tab] fitSessionToCurrentViewSize:self];
+    if ([self isTmuxClient]) {
+        [tmuxController_ windowDidResize:[[self tab] realParentWindow]];
+    } else {
+        [[self tab] fitSessionToCurrentViewSize:self];
+    }
 }
 
 - (void)synchronizeTmuxFonts:(NSNotification *)notification
@@ -3630,6 +3646,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     tmuxMode_ = TMUX_GATEWAY;
     tmuxGateway_ = [[TmuxGateway alloc] initWithDelegate:self];
     tmuxController_ = [[TmuxController alloc] initWithGateway:tmuxGateway_];
+    tmuxController_.ambiguousIsDoubleWidth = doubleWidth;
 	NSSize theSize;
 	Profile *tmuxBookmark = [PTYTab tmuxBookmark];
 	theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
@@ -3746,6 +3763,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)tmuxWindowRenamedWithId:(int)windowId to:(NSString *)newName
 {
+    PTYTab *tab = [tmuxController_ window:windowId];
+    if (tab) {
+        [tab setTmuxWindowName:newName];
+    }
     [tmuxController_ windowWasRenamedWithId:windowId to:newName];
 }
 
@@ -3810,9 +3831,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [tmuxController_ windowsChanged];
 }
 
-- (void)tmuxSessionRenamed:(NSString *)newName
+- (void)tmuxSession:(int)sessionId renamed:(NSString *)newName
 {
-    [tmuxController_ sessionRenamedTo:newName];
+    [tmuxController_ session:sessionId renamedTo:newName];
 }
 
 - (NSSize)tmuxBookmarkSize
