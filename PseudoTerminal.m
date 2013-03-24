@@ -1754,11 +1754,11 @@ NSString *sessionsKey = @"sessions";
     // NOTE: In bug 1347, we see that for some machines, [screen frame].size.width==0 at some point
     // during sleep/wake from sleep. That is why we check that width is positive before setting the
     // window's frame.
+    NSSize decorationSize = [self windowDecorationSize];
     switch (windowType_) {
         case WINDOW_TYPE_TOP:
             PtyLog(@"Window type = TOP");
             // If the screen grew and the window was smaller than the desired number of rows, grow it.
-            NSSize decorationSize = [self windowDecorationSize];
             frame.size.height = MIN([screen visibleFrame].size.height,
                                     ceil([[session TEXTVIEW] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
             frame.size.width = [screen visibleFrame].size.width;
