@@ -18,6 +18,7 @@ NSString *kTrouterTextKey = @"text";
 NSString *kSublimeTextIdentifier = @"com.sublimetext.2";
 NSString *kMacVimIdentifier = @"org.vim.MacVim";
 NSString *kTextmateIdentifier = @"com.macromates.textmate";
+NSString *kTextmate2Identifier = @"com.macromates.textmate.preview";
 NSString *kBBEditIdentifier = @"com.barebones.bbedit";
     
 NSString *kTrouterBestEditorAction = @"best editor";
@@ -32,7 +33,8 @@ enum {
     kSublimeTextTag = 1,
     kMacVimTag,
     kTextmateTag,
-    kBBEditTag
+    kBBEditTag,
+    // Only append to the end of the list; never delete or change.
 };
 
 @synthesize guid = guid_;
@@ -98,7 +100,8 @@ enum {
     if ([TrouterPrefsController applicationExists:kMacVimIdentifier]) {
         return kMacVimIdentifier;
     }
-    if ([TrouterPrefsController applicationExists:kTextmateIdentifier]) {
+    if ([TrouterPrefsController applicationExists:kTextmateIdentifier] ||
+        [TrouterPrefsController applicationExists:kTextmate2Identifier]) {
         return kTextmateIdentifier;
     }
     if ([TrouterPrefsController applicationExists:kBBEditIdentifier]) {
@@ -122,7 +125,8 @@ enum {
     }
     [editors_ addItemWithTitle:@"Textmate"];
     [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kTextmateTag];
-    if (![TrouterPrefsController applicationExists:kTextmateIdentifier]) {
+    if (![TrouterPrefsController applicationExists:kTextmateIdentifier] &&
+        ![TrouterPrefsController applicationExists:kTextmate2Identifier]) {
         [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setEnabled:NO];
     }
     [editors_ addItemWithTitle:@"BBEdit"];
@@ -169,7 +173,7 @@ enum {
             
         case kTextmateTag:
             return kTextmateIdentifier;
-            
+
         case kBBEditTag:
             return kBBEditIdentifier;
     }
