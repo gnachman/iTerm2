@@ -12,7 +12,8 @@ extern NSString *kTrouterActionKey;
 extern NSString *kTrouterEditorKey;
 extern NSString *kTrouterTextKey;
 
-extern NSString *kSublimeTextIdentifier;
+extern NSString *kSublimeText2Identifier;
+extern NSString *kSublimeText3Identifier;
 extern NSString *kMacVimIdentifier;
 extern NSString *kTextmateIdentifier;
 extern NSString *kBBEditIdentifier;

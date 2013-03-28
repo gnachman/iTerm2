@@ -15,12 +15,13 @@ NSString *kTrouterActionKey = @"action";
 NSString *kTrouterEditorKey = @"editor";
 NSString *kTrouterTextKey = @"text";
 
-NSString *kSublimeTextIdentifier = @"com.sublimetext.2";
+NSString *kSublimeText2Identifier = @"com.sublimetext.2";
+NSString *kSublimeText3Identifier = @"com.sublimetext.3";
 NSString *kMacVimIdentifier = @"org.vim.MacVim";
 NSString *kTextmateIdentifier = @"com.macromates.textmate";
 NSString *kTextmate2Identifier = @"com.macromates.textmate.preview";
 NSString *kBBEditIdentifier = @"com.barebones.bbedit";
-    
+
 NSString *kTrouterBestEditorAction = @"best editor";
 NSString *kTrouterUrlAction = @"url";
 NSString *kTrouterEditorAction = @"editor";
@@ -30,10 +31,11 @@ NSString *kTrouterRawCommandAction = @"raw command";
 @implementation TrouterPrefsController
 
 enum {
-    kSublimeTextTag = 1,
+    kSublimeText2Tag = 1,
     kMacVimTag,
     kTextmateTag,
     kBBEditTag,
+    kSublimeText3Tag
     // Only append to the end of the list; never delete or change.
 };
 
@@ -60,11 +62,11 @@ enum {
                                                NULL,
                                                NULL,
                                                &appURL);
-    
+
     if (appURL) {
         CFRelease(appURL);
     }
-    
+
     switch (result) {
         case noErr:
             return YES;
@@ -77,7 +79,10 @@ enum {
 
 + (NSString *)schemeForEditor:(NSString *)editor
 {
-    if ([editor isEqualToString:kSublimeTextIdentifier]) {
+    if ([editor isEqualToString:kSublimeText2Identifier]) {
+        return @"subl";
+    }
+    if ([editor isEqualToString:kSublimeText3Identifier]) {
         return @"subl";
     }
     if ([editor isEqualToString:kMacVimIdentifier]) {
@@ -94,8 +99,11 @@ enum {
 
 + (NSString *)bestEditor
 {
-    if ([TrouterPrefsController applicationExists:kSublimeTextIdentifier]) {
-        return kSublimeTextIdentifier;
+    if ([TrouterPrefsController applicationExists:kSublimeText3Identifier]) {
+        return kSublimeText3Identifier;
+    }
+    if ([TrouterPrefsController applicationExists:kSublimeText2Identifier]) {
+        return kSublimeText2Identifier;
     }
     if ([TrouterPrefsController applicationExists:kMacVimIdentifier]) {
         return kMacVimIdentifier;
@@ -112,10 +120,16 @@ enum {
 
 - (void)awakeFromNib
 {
-    [editors_ addItemWithTitle:@"Sublime Text"];
+    [editors_ addItemWithTitle:@"Sublime Text 3"];
     [editors_ setAutoenablesItems:NO];
-    [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kSublimeTextTag];
-    if (![TrouterPrefsController applicationExists:kSublimeTextIdentifier]) {
+    [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kSublimeText3Tag];
+    if (![TrouterPrefsController applicationExists:kSublimeText3Identifier]) {
+        [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setEnabled:NO];
+    }
+    [editors_ addItemWithTitle:@"Sublime Text 2"];
+    [editors_ setAutoenablesItems:NO];
+    [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kSublimeText2Tag];
+    if (![TrouterPrefsController applicationExists:kSublimeText2Identifier]) {
         [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setEnabled:NO];
     }
     [editors_ addItemWithTitle:@"MacVim"];
@@ -142,19 +156,19 @@ enum {
     switch ([[action_ selectedItem] tag]) {
         case 1:
             return kTrouterBestEditorAction;
-            
+
         case 2:
             return kTrouterUrlAction;
             break;
-            
+
         case 3:
             return kTrouterEditorAction;
             break;
-            
+
         case 4:
             return kTrouterCommandAction;
             break;
-            
+
         case 5:
             return kTrouterRawCommandAction;
             break;
@@ -165,12 +179,15 @@ enum {
 - (NSString *)editorIdentifier
 {
     switch ([[editors_ selectedItem] tag]) {
-        case kSublimeTextTag:
-            return kSublimeTextIdentifier;
-            
+        case kSublimeText2Tag:
+            return kSublimeText2Identifier;
+
+        case kSublimeText3Tag:
+            return kSublimeText3Identifier;
+
         case kMacVimTag:
             return kMacVimIdentifier;
-            
+
         case kTextmateTag:
             return kTextmateIdentifier;
 
@@ -189,14 +206,14 @@ enum {
             [caveat_ setStringValue:@"When you activate Semantic History on a filename, the associated app loads the file."];
             [caveat_ setHidden:NO];
             break;
-            
+
         case 2:
             [[text_ cell] setPlaceholderString:@"Enter URL."];
             [caveat_ setStringValue:@"When you activate Semantic History on a filename, the browser opens a URL.\nUse \\1 for the filename you clicked on and \\2 for the line number."];
             [caveat_ setHidden:NO];
             [text_ setHidden:NO];
             break;
-            
+
         case 3:
             [editors_ setHidden:NO];
             [caveat_ setStringValue:@"When you activate Semantic History on a text file, the specified editor opens it.\nOther kinds of files will be opened with their default apps."];
@@ -273,8 +290,10 @@ enum {
         [text_ setStringValue:@""];
     }
     NSString *editor = [prefs objectForKey:kTrouterEditorKey];
-    if ([editor isEqualToString:kSublimeTextIdentifier]) {
-        [editors_ selectItemWithTag:kSublimeTextTag];
+    if ([editor isEqualToString:kSublimeText3Identifier]) {
+        [editors_ selectItemWithTag:kSublimeText3Tag];
+    } else if ([editor isEqualToString:kSublimeText2Identifier]) {
+        [editors_ selectItemWithTag:kSublimeText2Tag];
     } else if ([editor isEqualToString:kMacVimIdentifier]) {
         [editors_ selectItemWithTag:kMacVimTag];
     } else if ([editor isEqualToString:kTextmateIdentifier]) {
@@ -283,5 +302,5 @@ enum {
         [editors_ selectItemWithTag:kBBEditTag];
     }
 }
-         
+
 @end

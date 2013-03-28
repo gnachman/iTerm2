@@ -114,8 +114,8 @@
         return nil;
     }
 
-    // strip any trailing period or parenthesis
-    path = [path stringByReplacingOccurrencesOfRegex:@"[.)]$"
+    // strip any trailing comma, period or parenthesis
+    path = [path stringByReplacingOccurrencesOfRegex:@"[,.)]$"
                                           withString:@""];
 
     if (lineNumber != nil) {
@@ -166,13 +166,18 @@
 
 - (BOOL)openFileInEditor:(NSString *)path lineNumber:(NSString *)lineNumber {
     if ([self editor]) {
-        if ([[self editor] isEqualToString:kSublimeTextIdentifier]) {
+        if ([[self editor] isEqualToString:kSublimeText2Identifier] || [[self editor] isEqualToString:kSublimeText3Identifier]) {
             if (lineNumber != nil) {
                 path = [NSString stringWithFormat:@"%@:%@", path, lineNumber];
             }
 
             NSString *bundlePath = [[NSWorkspace sharedWorkspace]
-                                       absolutePathForAppBundleWithIdentifier:@"com.sublimetext.2"];
+                                    absolutePathForAppBundleWithIdentifier:@"com.sublimetext.3"];
+            if (!bundlePath) {
+                bundlePath = [[NSWorkspace sharedWorkspace]
+                              absolutePathForAppBundleWithIdentifier:@"com.sublimetext.2"];
+            }
+
             if (bundlePath) {
                 NSString *sublExecutable = [NSString stringWithFormat:@"%@/Contents/SharedSupport/bin/subl",
                                             bundlePath];
