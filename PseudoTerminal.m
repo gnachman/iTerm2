@@ -360,15 +360,8 @@ NSString *sessionsKey = @"sessions";
         [(PTYWindow*)[self window] setLayoutDone];
     }
 
-    if (windowType == WINDOW_TYPE_NORMAL ||
-        windowType == WINDOW_TYPE_LION_FULL_SCREEN) {
+    if (windowType == WINDOW_TYPE_NORMAL) {
         _toolbarController = [[PTToolbarController alloc] initWithPseudoTerminal:self];
-        if (IsLionOrLater() && windowType == WINDOW_TYPE_NORMAL) {
-            // Lion-Full-screen windows get forced in their windowDidEnterFullScreen call;
-            // it is too early to do that here. Other than them, only normal windows have
-            // toolbars, so fix the toolbar setting now before it displays.
-            [self forceToolbarIntoCorrectState];
-        }
         if ([[self window] respondsToSelector:@selector(setBottomCornerRounded:)])
             [[self window] setBottomCornerRounded:NO];
     }
@@ -2125,53 +2118,15 @@ NSString *sessionsKey = @"sessions";
     [self futureInvalidateRestorableState];
 }
 
-- (void)saveFrameBeforeToolbarToggle {
-    if (!preToolbarToggleFrame_.size.width) {
-        preToolbarToggleFrame_ = self.window.frame;
-    }
-}
-
-- (void)restoreFrameAfterToolbarToggle {
-    if (preToolbarToggleFrame_.size.width) {
-        [[self window] setFrame:preToolbarToggleFrame_ display:YES];
-    }
-    preToolbarToggleFrame_ = NSZeroRect;
-}
-
 // PTYWindowDelegateProtocol
 - (void)windowWillToggleToolbarVisibility:(id)sender
 {
-    // All fullscreen windows need to save their frames because the OS will shrink them when you
-    // toggle the toolbar while in lion fullscreen. We restore it for all fullscreen windows in
-    // -windowDidToggleToolbarVisibility.
-    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-        if ([term lionFullScreen]) {
-            [term saveFrameBeforeToolbarToggle];
-        }
-    }
 }
 
 - (void)windowDidToggleToolbarVisibility:(id)sender
 {
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-    [itad setToolbarShouldBeVisible:[[[self window] toolbar] isVisible]];
-
-    // Fix up the frames of all lion fullscreen windows.
-    for (PseudoTerminal *term in [[iTermController sharedInstance] terminals]) {
-        if ([term lionFullScreen]) {
-            [term restoreFrameAfterToolbarToggle];
-        }
-        if ([[[term window] toolbar] isVisible] != [itad toolbarShouldBeVisible]) {
-            // Sometimes a window will have its toolbar left unchanged after another one is toggled!
-            // This can happen if you hide the toolbar by clicking the menu in a lion fullscreen
-            // window; it will change but a non-fullscreen window won't.
-            [term wrapToggleToolbarShown:nil];
-        }
-    }
-
-    if (!lionFullScreen_ && !togglingLionFullScreen_) {  // Avoid doing extra work in Lion fullscreen.
-        [self fitWindowToTabs];
-    }
+    PtyLog(@"windowDidToggleToolbarVisibility - calling fitWindowToTabs");
+    [self fitWindowToTabs];
 }
 
 - (IBAction)toggleUseTransparency:(id)sender
@@ -2495,8 +2450,6 @@ NSString *sessionsKey = @"sessions";
 - (void)windowDidEnterFullScreen:(NSNotification *)notification
 {
     [toolbelt_ setUseDarkDividers:YES];
-    // The OS kindly toggles the toolbar for you when entering fullscreen. Undo that.
-    [self forceToolbarIntoCorrectState];
     zooming_ = NO;
     togglingLionFullScreen_ = NO;
     lionFullScreen_ = YES;
@@ -2505,10 +2458,10 @@ NSString *sessionsKey = @"sessions";
     [self fitTabsToWindow];
     [self futureInvalidateRestorableState];
     [self notifyTmuxOfWindowResize];
-    for (PTYTab *aTab in [self tabs]) {
-        [aTab notifyWindowChanged];
-    }
-    [self updateSessionScrollbars];
+        for (PTYTab *aTab in [self tabs]) {
+                [aTab notifyWindowChanged];
+        }
+        [self updateSessionScrollbars];
 }
 
 - (void)windowWillExitFullScreen:(NSNotification *)notification
@@ -2532,9 +2485,6 @@ NSString *sessionsKey = @"sessions";
 - (void)windowDidExitFullScreen:(NSNotification *)notification
 {
     [toolbelt_ setUseDarkDividers:NO];
-    // Since we try to work around the OS turning on the toolbar when you enter
-    // fullscreen, we also have to work around its confusion on exit.
-    [self forceToolbarIntoCorrectState];
     exitingLionFullscreen_ = NO;
     zooming_ = NO;
     lionFullScreen_ = NO;
@@ -4330,23 +4280,14 @@ NSString *sessionsKey = @"sessions";
 
 - (void)setDimmingForSessions
 {
-    for (PTYSession *aSession in [self sessions]) {
-        [self setDimmingForSession:aSession];
-    }
+        for (PTYSession *aSession in [self sessions]) {
+                [self setDimmingForSession:aSession];
+        }
 }
 
 @end
 
 @implementation PseudoTerminal (Private)
-
-- (void)forceToolbarIntoCorrectState {
-    assert(IsLionOrLater());
-    iTermApplicationDelegate *itad = (iTermApplicationDelegate *)[[iTermApplication sharedApplication] delegate];
-    if ([itad toolbarShouldBeVisible] != [[[self window] toolbar] isVisible]) {
-        PtyLog(@"Force-toggling toolbar");
-        [[self window] toggleToolbarShown:nil];
-    }
-}
 
 - (int)_screenAtPoint:(NSPoint)p
 {
@@ -5286,7 +5227,7 @@ NSString *sessionsKey = @"sessions";
         [item action] == @selector(openDashboard:)) {
         result = [[self currentTab] isTmuxTab];
     } else if ([item action] == @selector(wrapToggleToolbarShown:)) {
-        result = YES;
+        result = ![self lionFullScreen];
     } else if ([item action] == @selector(moveSessionToWindow:)) {
         result = ([[self sessions] count] > 1);
     } else if ([item action] == @selector(openSplitHorizontallySheet:) ||

@@ -291,13 +291,8 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-- (void)updateToggleToolbarTitle {
-    [toggleToolbar setTitle:[self toolbarShouldBeVisible] ? @"Hide Toolbar" : @"Show Toolbar"];
-}
-
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-    [self updateToggleToolbarTitle];
     [iTermFontPanel makeDefault];
 
     finishedLaunching_ = YES;
@@ -674,16 +669,6 @@ static BOOL hasBecomeActive = NO;
         n = [NSNumber numberWithBool:NO];
     }
     return [n boolValue];
-}
-
-- (BOOL)toolbarShouldBeVisible {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"ToolbarVisible"];
-}
-
-- (void)setToolbarShouldBeVisible:(BOOL)value {
-    [[NSUserDefaults standardUserDefaults] setBool:value
-                                            forKey:@"ToolbarVisible"];
-    [self updateToggleToolbarTitle];
 }
 
 - (IBAction)toggleToolbelt:(id)sender
