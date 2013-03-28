@@ -273,32 +273,32 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                          responseTarget:nil
                                        responseSelector:nil
                                          responseObject:nil
-                                        toleratesErrors:NO],
+                                                  flags:0],
                          [gateway_ dictionaryForCommand:getHiddenWindowsCommand
                                          responseTarget:self
                                        responseSelector:@selector(getHiddenWindowsResponse:)
                                          responseObject:nil
-                                        toleratesErrors:YES],
+                                                  flags:kTmuxGatewayCommandShouldTolerateErrors],
                          [gateway_ dictionaryForCommand:getAffinitiesCommand
                                          responseTarget:self
                                        responseSelector:@selector(getAffinitiesResponse:)
                                          responseObject:nil
-                                        toleratesErrors:YES],
+                                                  flags:kTmuxGatewayCommandShouldTolerateErrors],
                          [gateway_ dictionaryForCommand:getOriginsCommand
                                          responseTarget:self
                                        responseSelector:@selector(getOriginsResponse:)
                                          responseObject:nil
-                                        toleratesErrors:YES],
+                                                  flags:kTmuxGatewayCommandShouldTolerateErrors],
                          [gateway_ dictionaryForCommand:listSessionsCommand
                                          responseTarget:self
                                        responseSelector:@selector(listSessionsResponse:)
                                          responseObject:nil
-                                        toleratesErrors:NO],
+                                                  flags:0],
                          [gateway_ dictionaryForCommand:listWindowsCommand
                                          responseTarget:self
                                        responseSelector:@selector(initialListWindowsResponse:)
                                          responseObject:nil
-                                        toleratesErrors:NO],
+                                                  flags:0],
                          nil];
     [gateway_ sendCommandList:commands];
 }
@@ -405,12 +405,12 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                          responseTarget:nil
                                        responseSelector:nil
                                          responseObject:nil
-                                        toleratesErrors:NO],
+                                                  flags:0],
                          [gateway_ dictionaryForCommand:listStr
                                          responseTarget:self
                                        responseSelector:@selector(listWindowsResponse:)
                                          responseObject:nil
-                                        toleratesErrors:NO],
+                                                  flags:0],
                          nil];
     ++numOutstandingWindowResizes_;
     [gateway_ sendCommandList:commands];
@@ -447,12 +447,12 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                          responseTarget:nil
                                        responseSelector:nil
                                          responseObject:nil
-                                        toleratesErrors:NO],
+                                                  flags:0],
                          [gateway_ dictionaryForCommand:listStr
                                          responseTarget:self
                                        responseSelector:@selector(listWindowsResponse:)
                                          responseObject:nil
-                                        toleratesErrors:NO],
+                                                  flags:0],
                          nil];
     ++numOutstandingWindowResizes_;
     [gateway_ sendCommandList:commands];
@@ -483,13 +483,13 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                responseTarget:self
              responseSelector:@selector(newWindowWithAffinityCreated:affinityWindow:)
                responseObject:[NSString stringWithInt:windowId]
-              toleratesErrors:NO];
+                        flags:0];
     } else {
         [gateway_ sendCommand:@"new-window -PF '#{window_id}'"
                responseTarget:self
              responseSelector:@selector(newWindowWithoutAffinityCreated:)
                responseObject:nil
-              toleratesErrors:NO];
+                        flags:0];
     }
 }
 
@@ -550,7 +550,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
            responseTarget:self
          responseSelector:@selector(windowPaneBrokeOutWithWindowId:setAffinityTo:)
            responseObject:sibling
-          toleratesErrors:NO];
+                    flags:0];
 }
 
 - (void)windowPaneBrokeOutWithWindowId:(NSString *)windowId
@@ -590,7 +590,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
            responseObject:[NSArray arrayWithObjects:[NSNumber numberWithInt:windowId],
                            affinities,
                            nil]
-          toleratesErrors:NO];
+                    flags:0];
 }
 
 - (void)openWindowWithId:(int)windowId
@@ -700,7 +700,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                            selector,
                            target,
                            nil]
-          toleratesErrors:YES];  // Tolerates errors because the session may have been detached by the time we get the notification or the timer fires.
+                    flags:kTmuxGatewayCommandShouldTolerateErrors];  // Tolerates errors because the session may have been detached by the time we get the notification or the timer fires.
 }
 
 - (void)saveHiddenWindows
@@ -713,7 +713,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
            responseTarget:nil
          responseSelector:nil
            responseObject:nil
-          toleratesErrors:NO];
+                    flags:0];
 }
 
 - (void)saveWindowOrigins

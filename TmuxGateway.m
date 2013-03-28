@@ -12,10 +12,14 @@
 #import "NSStringITerm.h"
 
 NSString * const kTmuxGatewayErrorDomain = @"kTmuxGatewayErrorDomain";;
+// Command may fail with an error and selector is still run but with nil output.
+const int kTmuxGatewayCommandShouldTolerateErrors = (1 << 0);
+// Send NSData, not NSString, for output (allowing busted/partial utf-8 sequences).
+const int kTmuxGatewayCommandWantsData = (1 << 1);
 
 #define NEWLINE @"\r"
 
-//#define TMUX_VERBOSE_LOGGING
+#define TMUX_VERBOSE_LOGGING
 #ifdef TMUX_VERBOSE_LOGGING
 #define TmuxLog NSLog
 #else
@@ -32,7 +36,7 @@ static NSString *kCommandSelector = @"sel";
 static NSString *kCommandString = @"string";
 static NSString *kCommandObject = @"object";
 static NSString *kCommandIsInitial = @"isInitial";
-static NSString *kCommandToleratesErrors = @"toleratesErrors";
+static NSString *kCommandFlags = @"flags";
 static NSString *kCommandId = @"id";
 static NSString *kCommandIsInList = @"inList";
 static NSString *kCommandIsLastInList = @"lastInList";
@@ -57,6 +61,7 @@ static NSString *kCommandIsLastInList = @"lastInList";
     [stream_ release];
     [currentCommand_ release];
     [currentCommandResponse_ release];
+    [currentCommandData_ release];
 
     [super dealloc];
 }
@@ -106,8 +111,12 @@ static NSString *kCommandIsLastInList = @"lastInList";
     return data;
 }
 
-- (void)parseOutputCommandData:(NSData *)data
+- (void)parseOutputCommandData:(NSData *)input
 {
+    // Null terminate so we can do some string parsing without too much pain.
+    NSMutableData *data = [NSMutableData dataWithData:input];
+    [data appendBytes:"" length:1];
+
     // This one is tricky to parse because the string version of the command could have bogus UTF-8.
     // %output %<pane id> <data...><newline>
     const char *command = [data bytes];
@@ -136,7 +145,7 @@ static NSString *kCommandIsLastInList = @"lastInList";
 
     NSData *decodedData = [self decodeEscapedOutput:space + 1];
 
-    TmuxLog(@"Run tmux command: \"%%output %%%d %.*s", windowPane, [data length], [data bytes]);
+    TmuxLog(@"Run tmux command: \"%%output %%%d %.*s", windowPane, [decodedData length], [decodedData bytes]);
     [[[delegate_ tmuxController] sessionForWindowPane:windowPane]  tmuxReadTask:decodedData];
     state_ = CONTROL_STATE_READY;
 
@@ -245,9 +254,9 @@ error:
     id target = [currentCommand_ objectForKey:kCommandTarget];
     if (target) {
         SEL selector = NSSelectorFromString([currentCommand_ objectForKey:kCommandSelector]);
-        id obj = [currentCommand_ objectForKey:kCommandObject];
+        id obj = [currentCommand_ objectForKey:kCommandObject];;
         if (withError) {
-            if ([[currentCommand_ objectForKey:kCommandToleratesErrors] boolValue]) {
+            if ([[currentCommand_ objectForKey:kCommandFlags] intValue] & kTmuxGatewayCommandShouldTolerateErrors) {
                 [target performSelector:selector
                              withObject:nil
                              withObject:obj];
@@ -256,9 +265,15 @@ error:
                 return;
             }
         } else {
-            [target performSelector:selector
-                         withObject:currentCommandResponse_
-                         withObject:obj];
+            if ([[currentCommand_ objectForKey:kCommandFlags] intValue] & kTmuxGatewayCommandWantsData) {
+                [target performSelector:selector
+                             withObject:currentCommandData_
+                             withObject:obj];
+            } else {
+                [target performSelector:selector
+                             withObject:currentCommandResponse_
+                             withObject:obj];
+            }
         }
     }
     if ([[currentCommand_ objectForKey:kCommandIsInitial] boolValue]) {
@@ -268,6 +283,8 @@ error:
     currentCommand_ = nil;
     [currentCommandResponse_ release];
     currentCommandResponse_ = nil;
+    [currentCommandData_ release];
+    currentCommandData_ = nil;
 }
 
 - (void)parseBegin:(NSString *)command
@@ -282,7 +299,9 @@ error:
     [currentCommand_ setObject:commandId forKey:kCommandId];
     TmuxLog(@"Begin response to %@", [currentCommand_ objectForKey:kCommandString]);
     [currentCommandResponse_ release];
+    [currentCommandData_ release];
     currentCommandResponse_ = [[NSMutableString alloc] init];
+    currentCommandData_ = [[NSMutableData alloc] init];
     [commandQueue_ removeObjectAtIndex:0];
 }
 
@@ -292,6 +311,7 @@ error:
         NSRange theRange = NSMakeRange(currentCommandResponse_.length - 1, 1);
         [currentCommandResponse_ replaceCharactersInRange:theRange
                                                withString:@""];
+        [currentCommandData_ setLength:currentCommandData_.length - 1];
     }
 }
 
@@ -311,14 +331,31 @@ error:
     }
     NSRange commandRange;
     commandRange.location = 0;
-    commandRange.length = newlineRange.location;
-    // Command range doesn't include the newline.
-    NSString *command = [[[NSString alloc] initWithData:[stream_ subdataWithRange:commandRange]
+    commandRange.length = newlineRange.location; // Command range doesn't include the newline.
+
+    // Make a temp copy of the data, and remove linefeeds. Line drivers randomly add linefeeds.
+    NSMutableData *data = [NSMutableData dataWithCapacity:commandRange.length];
+    const char *bytes = [stream_ bytes] + commandRange.location;
+    int lastIndex = 0;
+    int i;
+    for (i = 0; i < commandRange.length; i++) {
+        if (bytes[i] == '\r') {
+            if (i > lastIndex) {
+                [data appendBytes:bytes + lastIndex length:i - lastIndex];
+            }
+            lastIndex = i + 1;
+        }
+    }
+    if (i > lastIndex) {
+        [data appendBytes:bytes + lastIndex length:i - lastIndex];
+    }
+
+    NSString *command = [[[NSString alloc] initWithData:data
                                                encoding:NSUTF8StringEncoding] autorelease];
     if (!command) {
         // The command was not UTF-8. Unfortunately, this can happen. If tmux has a non-UTF-8
         // character in a pane, it will just output it in capture-pane.
-        command = [[[NSString alloc] initWithUTF8DataIgnoringErrors:[stream_ subdataWithRange:commandRange]] autorelease];
+        command = [[[NSString alloc] initWithUTF8DataIgnoringErrors:data] autorelease];
     }
     // At least on osx, the terminal driver adds \r at random places, sometimes adding two of them in a row!
     // We split on \n, which is safe, and just throw out any \r's that we see.
@@ -345,8 +382,10 @@ error:
         [currentCommandResponse_ appendString:command];
         // Always append a newline; then at the end, remove the last one.
         [currentCommandResponse_ appendString:@"\n"];
+        [currentCommandData_ appendData:data];
+        [currentCommandData_ appendBytes:"\n" length:1];
     } else if ([command hasPrefix:@"%output "]) {
-        if (acceptNotifications_) [self parseOutputCommandData:[stream_ subdataWithRange:commandRange]];
+        if (acceptNotifications_) [self parseOutputCommandData:data];
     } else if ([command hasPrefix:@"%layout-change "]) {
         if (acceptNotifications_) [self parseLayoutChangeCommand:command];
     } else if ([command hasPrefix:@"%window-add"]) {
@@ -463,14 +502,14 @@ error:
                         responseTarget:(id)target
                       responseSelector:(SEL)selector
                         responseObject:(id)obj
-                       toleratesErrors:(BOOL)toleratesErrors
+                                 flags:(int)flags
 {
     return [NSDictionary dictionaryWithObjectsAndKeys:
             command, kCommandString,
             target, kCommandTarget,
             NSStringFromSelector(selector), kCommandSelector,
             obj, kCommandObject,
-            [NSNumber numberWithBool:toleratesErrors], kCommandToleratesErrors,
+            [NSNumber numberWithInt:flags], kCommandFlags,
             nil];
 }
 
@@ -485,14 +524,14 @@ error:
        responseTarget:target
      responseSelector:selector
        responseObject:nil
-      toleratesErrors:NO];
+                flags:0];
 }
 
 - (void)sendCommand:(NSString *)command
      responseTarget:(id)target
    responseSelector:(SEL)selector
      responseObject:(id)obj
-    toleratesErrors:(BOOL)toleratesErrors
+              flags:(int)flags
 {
     if (detachSent_ || state_ == CONTROL_STATE_DETACHED) {
         return;
@@ -502,7 +541,7 @@ error:
                                      responseTarget:target
                                    responseSelector:selector
                                      responseObject:obj
-                                    toleratesErrors:toleratesErrors];
+                                              flags:flags];
     [self enqueueCommandDict:dict];
     TmuxLog(@"Send command: %@", commandWithNewline);
     [delegate_ tmuxWriteData:[commandWithNewline dataUsingEncoding:NSUTF8StringEncoding]];

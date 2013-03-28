@@ -12,7 +12,8 @@ make Deployment || exit
 
 # Build tmux and move its tar.gz into the Deployment build directory
 cd ~/tmux
-git checkout mountainlion
+git checkout master
+git pull origin master
 make
 rm *.o
 cd ..
