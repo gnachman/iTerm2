@@ -1332,12 +1332,12 @@ NSMutableArray* screens=0;
         int yMax = MAX(yStart, y2);
         int xMin = MIN(xStart, x2);
         int xMax = MAX(xStart, x2);
-        NSRect myFrame = [self frame];
-        myFrame.size.height = 0;
         NSRect result = NSMakeRect(MAX(0, xMin * charWidth),
-                                   MAX(0, myFrame.size.height - yMin * lineHeight),
+                                   MAX(0, yMin * lineHeight),
                                    MAX(0, (xMax - xMin + 1) * charWidth),
                                    MAX(0, (yMax - yMin + 1) * lineHeight));
+        result = [self convertRect:result toView:nil];
+        result = [[self window] convertRectToScreen:result];
         return [NSValue valueWithRect:result];
     } else if ([attribute isEqualToString:NSAccessibilityAttributedStringForRangeParameterizedAttribute]) {
         //(NSAttributedString *) - substring; param:(NSValue * - rangeValue)
@@ -1408,9 +1408,9 @@ NSMutableArray* screens=0;
             // Add a newline and update offsets arrays that track line break locations.
             [allText_ appendString:@"\n"];
             ++offset;
-            [lineBreakCharOffsets_ addObject:[NSNumber numberWithUnsignedLong:[allText_ length]]];
-            [lineBreakIndexOffsets_ addObject:[NSNumber numberWithUnsignedLong:offset]];
         }
+        [lineBreakCharOffsets_ addObject:[NSNumber numberWithUnsignedLong:[allText_ length]]];
+        [lineBreakIndexOffsets_ addObject:[NSNumber numberWithUnsignedLong:offset]];
     }
 
     return allText_;
