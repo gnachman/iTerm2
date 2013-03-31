@@ -274,9 +274,9 @@ enum {
 
     // For accessibility. This is a giant string with the entire scrollback buffer plus screen concatenated with newlines for hard eol's.
     NSMutableString* allText_;
-    // For accessibility. This is the indices at which newlines occur in allText_, ignoring multi-char compositing characters.
+    // For accessibility. This is the indices at which soft newlines occur in allText_, ignoring multi-char compositing characters.
     NSMutableArray* lineBreakIndexOffsets_;
-    // For accessibility. This is the actual indices at which newlines occcur in allText_.
+    // For accessibility. This is the actual indices at which soft newlines occcur in allText_.
     NSMutableArray* lineBreakCharOffsets_;
 
     // Brightness of background color
