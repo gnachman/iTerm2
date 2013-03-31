@@ -2189,7 +2189,7 @@
     int i, cellCount = [_cells count];
     for(i = 0; i < cellCount; i++){
         if([[_cells objectAtIndex:i] isInOverflowMenu])
-            return i+1;
+            return i;
     }
     return cellCount;
 }
