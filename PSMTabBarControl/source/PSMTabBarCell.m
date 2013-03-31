@@ -451,11 +451,26 @@
     return NO;
 }
 
+- (NSArray*)accessibilityAttributeNames
+{
+    static NSArray *attributes = nil;
+    if (!attributes) {
+        NSSet *set = [NSSet setWithArray:[super accessibilityAttributeNames]];
+        set = [set setByAddingObjectsFromArray:[NSArray arrayWithObjects:
+                                                NSAccessibilityTitleAttribute,
+                                                NSAccessibilityValueAttribute,
+                                                nil]];
+        attributes = [[set allObjects] retain];
+    }
+    return attributes;
+}
+
+
 - (id)accessibilityAttributeValue:(NSString *)attribute {
     id attributeValue = nil;
 
     if ([attribute isEqualToString: NSAccessibilityRoleAttribute]) {
-        attributeValue = NSAccessibilityButtonRole;
+        attributeValue = NSAccessibilityRadioButtonRole;
     } else if ([attribute isEqualToString: NSAccessibilityHelpAttribute]) {
         if ([[[self controlView] delegate] respondsToSelector:@selector(accessibilityStringForTabView:objectCount:)]) {
             attributeValue = [NSString stringWithFormat:@"%@, %i %@", [self stringValue],
@@ -464,7 +479,17 @@
         } else {
             attributeValue = [self stringValue];
         }
-    } else if ([attribute isEqualToString: NSAccessibilityFocusedAttribute]) {
+    } else if ([attribute isEqualToString:NSAccessibilityPositionAttribute] || [attribute isEqualToString:NSAccessibilitySizeAttribute]) {
+        NSRect rect = [self frame];
+        rect = [[self controlView] convertRect:rect toView:nil];
+        rect = [[[self controlView] window] convertRectToScreen:rect];
+        if ([attribute isEqualToString:NSAccessibilityPositionAttribute])
+            attributeValue = [NSValue valueWithPoint:rect.origin];
+        else
+            attributeValue = [NSValue valueWithSize:rect.size];
+    } else if ([attribute isEqualToString:NSAccessibilityTitleAttribute]) {
+        attributeValue = [self stringValue];
+    } else if ([attribute isEqualToString: NSAccessibilityValueAttribute]) {
         attributeValue = [NSNumber numberWithBool:([self tabState] == 2)];
     } else {
         attributeValue = [super accessibilityAttributeValue:attribute];
