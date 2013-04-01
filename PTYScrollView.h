@@ -50,6 +50,7 @@
 @interface PTYScrollView : NSScrollView
 {
     NSImage *backgroundImage;
+    // If the pattern is set, the backgroundImage is a cached rendered version of it.
     NSColor *backgroundPattern;
     float transparency;
 
@@ -65,7 +66,7 @@
 - (BOOL)isLegacyScroller;
 
 // background image
-- (NSImage *)backgroundImage;
+- (BOOL)hasBackgroundImage;
 - (void)setBackgroundImage: (NSImage *) anImage;
 - (void)setBackgroundImage: (NSImage *) anImage asPattern:(BOOL)asPattern;
 - (void)drawBackgroundImageRect:(NSRect)rect useTransparency:(BOOL)useTransparency;

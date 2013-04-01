@@ -3314,8 +3314,8 @@ static float versionNumber;
 
     if (sender == backgroundImage) {
         NSString* filename = nil;
-                if ([sender state] == NSOnState) {
-                        filename = [self _chooseBackgroundImage];
+        if ([sender state] == NSOnState) {
+            filename = [self _chooseBackgroundImage];
         }
         if (!filename) {
                         [backgroundImagePreview setImage: nil];
@@ -4307,6 +4307,7 @@ static float versionNumber;
         KEY_BLUR_RADIUS,
         KEY_BLUR,
         KEY_BACKGROUND_IMAGE_LOCATION,
+        KEY_BACKGROUND_IMAGE_TILED,
         KEY_SYNC_TITLE,
         KEY_DISABLE_WINDOW_RESIZING,
         KEY_HIDE_AFTER_OPENING,

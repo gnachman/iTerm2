@@ -1850,7 +1850,6 @@ NSMutableArray* screens=0;
           rect.origin.x, rect.origin.y, rect.size.width, rect.size.height,
           [self frame].origin.x, [self frame].origin.y, [self frame].size.width, [self frame].size.height]);
 #endif
-
     double curLineWidth = [dataSource width] * charWidth;
     if (lineHeight <= 0 || curLineWidth <= 0) {
         DebugLog(@"height or width too small");
@@ -5511,7 +5510,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)drawFlippedBackground:(NSRect)bgRect toPoint:(NSPoint)dest
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView backgroundImage] != nil;
+    BOOL hasBGImage = [scrollView hasBackgroundImage];
     double alpha = 1.0 - transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
@@ -5546,7 +5545,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)drawBackground:(NSRect)bgRect toPoint:(NSPoint)dest
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView backgroundImage] != nil;
+    BOOL hasBGImage = [scrollView hasBackgroundImage];
     double alpha = 1.0 - transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
@@ -5580,7 +5579,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)drawBackground:(NSRect)bgRect
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView backgroundImage] != nil;
+    BOOL hasBGImage = [scrollView hasBackgroundImage];
     double alpha = 1.0 - transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
@@ -6444,7 +6443,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int WIDTH = [dataSource width];
     screen_char_t* theLine = [dataSource getLineAtIndex:line];
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView backgroundImage] != nil;
+    BOOL hasBGImage = [scrollView hasBackgroundImage];
     double selectedAlpha = 1.0 - transparency;
     double alphaIfTransparencyInUse = [self useTransparency] ? 1.0 - transparency : 1.0;
     BOOL reversed = [[dataSource terminal] screenMode];
@@ -6476,30 +6475,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                         toPoint:NSMakePoint(toPoint->x + rightMargin.origin.x,
                                                             toPoint->y + rightMargin.size.height)
                                 useTransparency:[self useTransparency]];
-                        // Blend default bg color over bg iamge.
-                        [[aColor colorWithAlphaComponent:1 - blend] set];
-                        NSRectFillUsingOperation(NSMakeRect(toPoint->x + leftMargin.origin.x,
-                                                                                                toPoint->y + leftMargin.origin.y,
-                                                                                                leftMargin.size.width,
-                                                                                                leftMargin.size.height), NSCompositeSourceOver);
-                        NSRectFillUsingOperation(NSMakeRect(toPoint->x + rightMargin.origin.x,
-                                                                                                toPoint->y + rightMargin.origin.y,
-                                                                                                rightMargin.size.width,
-                                                                                                rightMargin.size.height), NSCompositeSourceOver);
-                } else {
+            // Blend default bg color over bg iamge.
+            [[aColor colorWithAlphaComponent:1 - blend] set];
+            NSRectFillUsingOperation(NSMakeRect(toPoint->x + leftMargin.origin.x,
+                                                toPoint->y + leftMargin.origin.y,
+                                                leftMargin.size.width,
+                                                leftMargin.size.height), NSCompositeSourceOver);
+            NSRectFillUsingOperation(NSMakeRect(toPoint->x + rightMargin.origin.x,
+                                                toPoint->y + rightMargin.origin.y,
+                                                rightMargin.size.width,
+                                                rightMargin.size.height), NSCompositeSourceOver);
+        } else {
             [scrollView drawBackgroundImageRect:leftMargin
                                 useTransparency:[self useTransparency]];
             [scrollView drawBackgroundImageRect:rightMargin
                                 useTransparency:[self useTransparency]];
-
-                        // Blend default bg color over bg iamge.
-                        [[aColor colorWithAlphaComponent:1 - blend] set];
-                        NSRectFillUsingOperation(leftMargin, NSCompositeSourceOver);
-                        NSRectFillUsingOperation(rightMargin, NSCompositeSourceOver);
-                }
-                [aColor set];
+            
+            // Blend default bg color over bg iamge.
+            [[aColor colorWithAlphaComponent:1 - blend] set];
+            NSRectFillUsingOperation(leftMargin, NSCompositeSourceOver);
+            NSRectFillUsingOperation(rightMargin, NSCompositeSourceOver);
+        }
+        [aColor set];
     } else {
-                // No BG image
+        // No BG image
         if (toPoint) {
             NSRectFill(NSMakeRect(toPoint->x + leftMargin.origin.x,
                                   toPoint->y,

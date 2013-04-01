@@ -154,7 +154,7 @@ typedef enum {
 
     // True if background image should be tiled
     BOOL backgroundImageTiled;
-    
+
     // Filename of background image.
     NSString* backgroundImagePath;
 
@@ -430,7 +430,6 @@ typedef enum {
 - (void)setCOLORFGBG_VALUE: (NSString *)theCOLORFGBG_VALUE;
 - (VT100Screen *)SCREEN;
 - (void)setSCREEN: (VT100Screen *)theSCREEN;
-- (NSImage *)image;
 - (SessionView *)view;
 - (void)setView:(SessionView*)newView;
 - (PTYTextView *)TEXTVIEW;

@@ -70,7 +70,7 @@
     hasDarkBackground_ = value;
 }
 
-- (void) mouseDown: (NSEvent *)theEvent
+- (void)mouseDown: (NSEvent *)theEvent
 {
     [super mouseDown:theEvent];
 
@@ -148,9 +148,10 @@
     return self;
 }
 
-- (void) dealloc
+- (void)dealloc
 {
     [backgroundImage release];
+    [backgroundPattern release];
     [creationDate_ release];
     [timer_ invalidate];
     timer_ = nil;
@@ -174,10 +175,23 @@
 {
     NSRect srcRect;
 
-    // resize image if we need to
-    if ([backgroundImage size].width != [self documentVisibleRect].size.width ||
-        [backgroundImage size].height != [self documentVisibleRect].size.height) {
-        [backgroundImage setSize: [self documentVisibleRect].size];
+    float alpha = useTransparency ? (1.0 - [self transparency]) : 1;
+    // resize/create image if we need to
+    if ((!backgroundImage && backgroundPattern) ||
+        !NSEqualSizes(backgroundImage.size, self.documentVisibleRect.size)) {
+        if (backgroundPattern) {
+            [backgroundImage release];
+            backgroundImage = [[NSImage alloc] initWithSize:self.documentVisibleRect.size];
+            [backgroundImage lockFocus];
+            [[backgroundPattern colorWithAlphaComponent:alpha] set];
+            [backgroundPattern drawSwatchInRect:NSMakeRect(0,
+                                                           0,
+                                                           self.documentVisibleRect.size.width,
+                                                           self.documentVisibleRect.size.height)];
+            [backgroundImage unlockFocus];
+        } else {
+            [backgroundImage setSize:[self documentVisibleRect].size];
+        }
     }
 
     srcRect = rect;
@@ -187,10 +201,10 @@
     srcRect.origin.y = [backgroundImage size].height - srcRect.origin.y - srcRect.size.height - VMARGIN;
 
     // draw the image rect
-    [[self backgroundImage] compositeToPoint:dest
-                                    fromRect:srcRect
-                                   operation:NSCompositeCopy
-                                    fraction:useTransparency ? (1.0 - [self transparency]) : 1];
+    [backgroundImage compositeToPoint:dest
+                             fromRect:srcRect
+                            operation:NSCompositeCopy
+                             fraction:alpha];
 }
 
 - (void)scrollWheel:(NSEvent *)theEvent
@@ -221,37 +235,33 @@
         [verticalScroller setUserScroll:NO];
 }
 
-// background image
-- (NSImage *) backgroundImage
-{
-    return (backgroundImage);
+- (BOOL)hasBackgroundImage {
+    return backgroundImage != nil || backgroundPattern != nil;
 }
 
-- (void) setBackgroundImage:(NSImage *)anImage
+- (void)setBackgroundImage:(NSImage *)anImage
 {
     [self setBackgroundImage:anImage asPattern:NO];
 }
 
-- (void) setBackgroundImage:(NSImage *)anImage asPattern:(BOOL)asPattern
+- (void)setBackgroundImage:(NSImage *)anImage asPattern:(BOOL)asPattern
 {
-    [backgroundImage release];
-    [anImage retain];
-    if (asPattern && anImage != nil) {
-        backgroundPattern = [NSColor colorWithPatternImage:anImage];
-        backgroundImage = [[NSImage alloc] initWithSize:[self documentVisibleRect].size];
-        [backgroundImage lockFocus];
-        [backgroundPattern drawSwatchInRect:NSMakeRect(0, 0,
-                                                       [self documentVisibleRect].size.width,
-                                                       [self documentVisibleRect].size.height)];
-        [backgroundImage unlockFocus];
+    [backgroundPattern release];
+    backgroundPattern = nil;
+    [backgroundImage autorelease];
+    backgroundImage = nil;
+    if (asPattern) {
+        if (anImage) {
+            backgroundPattern = [[NSColor colorWithPatternImage:anImage] retain];
+        }
     } else {
-        backgroundImage = anImage;
+        backgroundImage = [anImage retain];
+        [backgroundImage setScalesWhenResized:YES];
+        [backgroundImage setSize:[self documentVisibleRect].size];
     }
-    [backgroundImage setScalesWhenResized: YES];
-    [backgroundImage setSize: [self documentVisibleRect].size];
 }
 
-- (float) transparency
+- (float)transparency
 {
     return (transparency);
 }

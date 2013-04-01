@@ -2307,13 +2307,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     // background image
     [self setBackgroundImagePath:[aDict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
-    NSNumber *bgImageTiledEntry = [aDict objectForKey:KEY_BACKGROUND_IMAGE_TILED];
-    if (bgImageTiledEntry) {
-        [self setBackgroundImageTiled:[bgImageTiledEntry boolValue]];
-    } else {
-        [self setBackgroundImageTiled:YES];
-    }
-    
+    [self setBackgroundImageTiled:[[aDict objectForKey:KEY_BACKGROUND_IMAGE_TILED] boolValue]];
+
     // colour scheme
     [self setCOLORFGBG_VALUE:[self ansiColorsMatchingForeground:[aDict objectForKey:KEY_FOREGROUND_COLOR]
                                                   andBackground:[aDict objectForKey:KEY_BACKGROUND_COLOR]
@@ -2714,11 +2709,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 {
     [SCREEN autorelease];
     SCREEN = [theSCREEN retain];
-}
-
-- (NSImage *)image
-{
-    return [SCROLLVIEW backgroundImage];
 }
 
 - (SessionView *)view
