@@ -114,8 +114,8 @@
         return nil;
     }
 
-    // strip any trailing comma, period or parenthesis
-    path = [path stringByReplacingOccurrencesOfRegex:@"[,.)]$"
+    // strip any trailing comma, period, parenthesis, or colon
+    path = [path stringByReplacingOccurrencesOfRegex:@"[,.):]$"
                                           withString:@""];
 
     if (lineNumber != nil) {
