@@ -18,7 +18,7 @@ const int kTmuxGatewayCommandHasEndGuardBug = (1 << 2);
 
 #define NEWLINE @"\r"
 
-#define TMUX_VERBOSE_LOGGING
+//#define TMUX_VERBOSE_LOGGING
 #ifdef TMUX_VERBOSE_LOGGING
 #define TmuxLog NSLog
 #else
