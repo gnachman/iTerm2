@@ -411,13 +411,23 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)viewDidMoveToWindow
 {
+    [self updateTrackingAreas];
+}
+
+- (void)updateTrackingAreas
+{
+    int trackingOptions;
+    
     if ([self window]) {
+        trackingOptions = NSTrackingMouseEnteredAndExited | NSTrackingInVisibleRect | NSTrackingActiveAlways | NSTrackingEnabledDuringMouseDrag;
         if (trackingArea) {
             [self removeTrackingArea:trackingArea];
         }
-
+        if ([[dataSource terminal] mouseMode] == MOUSE_REPORTING_ALL_MOTION) {
+            trackingOptions |= NSTrackingMouseMoved;
+        }
         trackingArea = [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
-                                                     options:NSTrackingMouseEnteredAndExited | NSTrackingInVisibleRect | NSTrackingActiveAlways | NSTrackingEnabledDuringMouseDrag
+                                                     options:trackingOptions
                                                        owner:self
                                                     userInfo:nil] autorelease];
         [self addTrackingArea:trackingArea];
@@ -3346,6 +3356,44 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DebugLog([NSString stringWithFormat:@"Mouse up. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
 
     [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+}
+
+- (void)mouseMoved:(NSEvent *)event
+{
+    DLog(@"mouseMoved");
+    VT100Terminal *terminal = [dataSource terminal];
+    if (![self xtermMouseReporting]) {
+        DLog(@"Mouse move event is dispatched but xtermMouseReporting is not enabled");
+        return;
+    }
+#if DEBUG
+    assert([terminal mouseMode] == MOUSE_REPORTING_ALL_MOTION);
+#endif
+    if ([terminal mouseMode] != MOUSE_REPORTING_ALL_MOTION) {
+        DLog(@"Mouse move event is dispatched but mouseMode is not MOUSE_REPORTING_ALL_MOTION");
+        return;
+    }
+    NSPoint locationInWindow = [event locationInWindow];
+    NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
+    int rx, ry;
+    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+    rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
+    ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
+    if (rx < 0) {
+        rx = -1;
+    }
+    if (ry < 0) {
+        ry = -1;
+    }
+    if (rx != lastReportedX_ || ry != lastReportedY_) {
+        lastReportedX_ = rx;
+        lastReportedY_ = ry;
+        PTYSession* session = [dataSource session];
+        [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_RELEASE
+                                   withModifiers:[event modifierFlags]
+                                             atX:rx
+                                               Y:ry]];
+    }
 }
 
 - (void)mouseDragged:(NSEvent *)event
