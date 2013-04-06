@@ -78,9 +78,9 @@ static NSString *SCRIPT_DIRECTORY = @"~/Library/Application Support/iTerm/Script
 // Comparator for sorting encodings
 static NSInteger _compareEncodingByLocalizedName(id a, id b, void *unused)
 {
-    NSString *sa = [NSString localizedNameOfStringEncoding: [a unsignedIntValue]];
-    NSString *sb = [NSString localizedNameOfStringEncoding: [b unsignedIntValue]];
-    return [sa caseInsensitiveCompare: sb];
+    NSString *sa = [NSString localizedNameOfStringEncoding:[a unsignedIntValue]];
+    NSString *sb = [NSString localizedNameOfStringEncoding:[b unsignedIntValue]];
+    return [sa caseInsensitiveCompare:sb];
 }
 
 static BOOL UncachedIsMountainLionOrLater(void) {
@@ -185,14 +185,14 @@ static BOOL initDone = NO;
         NSFileManager *fileManager = [NSFileManager defaultManager];
 
         // create the "~/Library/Application Support" directory if it does not exist
-        if ([fileManager fileExistsAtPath: [APPLICATION_SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO) {
+        if ([fileManager fileExistsAtPath:[APPLICATION_SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO) {
             [fileManager createDirectoryAtPath:[APPLICATION_SUPPORT_DIRECTORY stringByExpandingTildeInPath]
                    withIntermediateDirectories:YES
                                     attributes:nil
                                          error:nil];
         }
 
-        if ([fileManager fileExistsAtPath: [SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO) {
+        if ([fileManager fileExistsAtPath:[SUPPORT_DIRECTORY stringByExpandingTildeInPath]] == NO) {
             [fileManager createDirectoryAtPath:[SUPPORT_DIRECTORY stringByExpandingTildeInPath]
                    withIntermediateDirectories:YES
                                     attributes:nil
@@ -257,10 +257,21 @@ static BOOL initDone = NO;
 // Action methods
 - (IBAction)newWindow:(id)sender
 {
-    [self launchBookmark:nil inTerminal: nil];
+    [self newWindow:sender possiblyTmux:NO];
 }
 
-- (void) newSessionInTabAtIndex: (id) sender
+- (void)newWindow:(id)sender possiblyTmux:(BOOL)possiblyTmux
+{
+    if (possiblyTmux &&
+        FRONT &&
+        [[FRONT currentSession] isTmuxClient]) {
+        [FRONT newTmuxWindow:sender];
+    } else {
+        [self launchBookmark:nil inTerminal:nil];
+    }
+}
+
+- (void)newSessionInTabAtIndex:(id)sender
 {
     Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
     if (bookmark) {
@@ -283,7 +294,7 @@ static BOOL initDone = NO;
     keyWindowIndexMemo_ = i;
 }
 
-- (void)newSessionInWindowAtIndex: (id) sender
+- (void)newSessionInWindowAtIndex:(id) sender
 {
     Profile* bookmark = [[ProfileModel sharedInstance] bookmarkWithGuid:[sender representedObject]];
     if (bookmark) {
@@ -292,7 +303,7 @@ static BOOL initDone = NO;
 }
 
 // meant for action for menu items that have a submenu
-- (void) noAction: (id) sender
+- (void) noAction:(id) sender
 {
 
 }
@@ -308,7 +319,20 @@ static BOOL initDone = NO;
 
 - (IBAction)newSession:(id)sender
 {
-    [self launchBookmark:nil inTerminal: FRONT];
+    [self newSession:sender possiblyTmux:NO];
+}
+
+// Launch a new session using the default profile. If the current session is
+// tmux and possiblyTmux is true, open a new tmux session.
+- (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux
+{
+    if (possiblyTmux &&
+        FRONT &&
+        [[FRONT currentSession] isTmuxClient]) {
+        [FRONT newTmuxTab:sender];
+    } else {
+        [self launchBookmark:nil inTerminal:FRONT];
+    }
 }
 
 // navigation
@@ -575,7 +599,7 @@ static BOOL initDone = NO;
         [self restorePreviouslyActiveApp];
     }
     if (FRONT == theTerminalWindow) {
-        [self setCurrentTerminal: nil];
+        [self setCurrentTerminal:nil];
     }
     if (theTerminalWindow) {
         [self removeFromTerminalsAtIndex:[terminalWindows indexOfObject:theTerminalWindow]];
@@ -590,7 +614,7 @@ static BOOL initDone = NO;
 
     for (p = [NSString availableStringEncodings]; *p; ++p)
         [tmp addObject:[NSNumber numberWithUnsignedInt:*p]];
-    [tmp sortUsingFunction: _compareEncodingByLocalizedName context:NULL];
+    [tmp sortUsingFunction:_compareEncodingByLocalizedName context:NULL];
 
     return (tmp);
 }
@@ -1030,7 +1054,7 @@ static BOOL initDone = NO;
         }
 
         NSMutableDictionary *tempDict = [NSMutableDictionary dictionaryWithDictionary:prototype];
-        NSURL *urlRep = [NSURL URLWithString: url];
+        NSURL *urlRep = [NSURL URLWithString:url];
         NSString *urlType = [urlRep scheme];
 
         if ([urlType compare:@"ssh" options:NSCaseInsensitiveSearch] == NSOrderedSame) {
@@ -1080,7 +1104,7 @@ static BOOL initDone = NO;
 		if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
 			[term hideAfterOpening];
 		}
-        [self addInTerminals: term];
+        [self addInTerminals:term];
         toggle = (([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
                   ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN));
     } else {
@@ -1096,18 +1120,18 @@ static BOOL initDone = NO;
 
 - (void)launchScript:(id)sender
 {
-    NSString *fullPath = [NSString stringWithFormat: @"%@/%@", [SCRIPT_DIRECTORY stringByExpandingTildeInPath], [sender title]];
+    NSString *fullPath = [NSString stringWithFormat:@"%@/%@", [SCRIPT_DIRECTORY stringByExpandingTildeInPath], [sender title]];
 
-    if ([[[sender title] pathExtension] isEqualToString: @"scpt"]) {
+    if ([[[sender title] pathExtension] isEqualToString:@"scpt"]) {
         NSAppleScript *script;
         NSDictionary *errorInfo = [NSDictionary dictionary];
-        NSURL *aURL = [NSURL fileURLWithPath: fullPath];
+        NSURL *aURL = [NSURL fileURLWithPath:fullPath];
 
         // Make sure our script suite registry is loaded
         [NSScriptSuiteRegistry sharedScriptSuiteRegistry];
 
-        script = [[NSAppleScript alloc] initWithContentsOfURL: aURL error: &errorInfo];
-        [script executeAndReturnError: &errorInfo];
+        script = [[NSAppleScript alloc] initWithContentsOfURL:aURL error:&errorInfo];
+        [script executeAndReturnError:&errorInfo];
         [script release];
     }
     else {
@@ -1981,7 +2005,7 @@ NSString *terminalsKey = @"terminals";
 -(id)valueInTerminalsAtIndex:(unsigned)theIndex
 {
     //NSLog(@"iTerm: valueInTerminalsAtIndex %d: %@", theIndex, [terminalWindows objectAtIndex: theIndex]);
-    return ([terminalWindows objectAtIndex: theIndex]);
+    return ([terminalWindows objectAtIndex:theIndex]);
 }
 
 - (void)setCurrentTerminal:(PseudoTerminal*)thePseudoTerminal
@@ -1990,7 +2014,7 @@ NSString *terminalsKey = @"terminals";
 
     // make sure this window is the key window
     if ([thePseudoTerminal windowInited] && [[thePseudoTerminal window] isKeyWindow] == NO) {
-        [[thePseudoTerminal window] makeKeyAndOrderFront: self];
+        [[thePseudoTerminal window] makeKeyAndOrderFront:self];
         if ([thePseudoTerminal fullScreen]) {
           [thePseudoTerminal hideMenuBar];
         }
@@ -2006,7 +2030,7 @@ NSString *terminalsKey = @"terminals";
 -(void)replaceInTerminals:(PseudoTerminal *)object atIndex:(unsigned)theIndex
 {
     // NSLog(@"iTerm: replaceInTerminals 0x%x atIndex %d", object, theIndex);
-    [terminalWindows replaceObjectAtIndex: theIndex withObject: object];
+    [terminalWindows replaceObjectAtIndex:theIndex withObject:object];
     [self updateWindowTitles];
 }
 
@@ -2026,7 +2050,7 @@ NSString *terminalsKey = @"terminals";
 
 -(void)insertInTerminals:(PseudoTerminal *)object atIndex:(unsigned)theIndex
 {
-    if ([terminalWindows containsObject: object] == YES) {
+    if ([terminalWindows containsObject:object] == YES) {
         return;
     }
 
@@ -2042,7 +2066,7 @@ NSString *terminalsKey = @"terminals";
 -(void)removeFromTerminalsAtIndex:(unsigned)theIndex
 {
     // NSLog(@"iTerm: removeFromTerminalsAtInde %d", theIndex);
-    [terminalWindows removeObjectAtIndex: theIndex];
+    [terminalWindows removeObjectAtIndex:theIndex];
     [self updateWindowTitles];
 }
 

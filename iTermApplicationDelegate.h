@@ -84,6 +84,8 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
     IBOutlet NSMenuItem *irNext;
     IBOutlet NSMenuItem *irPrev;
     IBOutlet NSMenuItem *windowArrangements_;
+    IBOutlet NSMenuItem *newTab_;
+    IBOutlet NSMenuItem *newWindow_;
 
     IBOutlet NSMenuItem *toggleToolbar;
     IBOutlet NSMenuItem *secureInput;

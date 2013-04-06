@@ -810,7 +810,7 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-- (void) dealloc
+- (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
@@ -825,7 +825,7 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)newWindow:(id)sender
 {
-    [[iTermController sharedInstance] newWindow:sender];
+    [[iTermController sharedInstance] newWindow:sender possiblyTmux:YES];
 }
 
 - (IBAction)newSessionWithSameProfile:(id)sender
@@ -835,16 +835,16 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)newSession:(id)sender
 {
-    [[iTermController sharedInstance] newSession:sender];
+    [[iTermController sharedInstance] newSession:sender possiblyTmux:YES];
 }
 
 // navigation
-- (IBAction) previousTerminal: (id) sender
+- (IBAction)previousTerminal:(id)sender
 {
     [[iTermController sharedInstance] previousTerminal:sender];
 }
 
-- (IBAction) nextTerminal: (id) sender
+- (IBAction)nextTerminal:(id)sender
 {
     [[iTermController sharedInstance] nextTerminal:sender];
 }
