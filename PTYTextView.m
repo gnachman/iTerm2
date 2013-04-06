@@ -1401,7 +1401,7 @@ NSMutableArray* screens=0;
         }
         // Append this line to allText_.
         offset += o;
-        if (k > 0) {
+        if (k >= 0) {
             [allText_ appendString:[NSString stringWithCharacters:chars length:o]];
         }
         if (line[width].code == EOL_HARD) {
