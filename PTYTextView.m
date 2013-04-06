@@ -1332,9 +1332,9 @@ NSMutableArray* screens=0;
         int yMax = MAX(yStart, y2);
         int xMin = MIN(xStart, x2);
         int xMax = MAX(xStart, x2);
-        NSRect result = NSMakeRect(MAX(0, xMin * charWidth),
+        NSRect result = NSMakeRect(MAX(0, floor(xMin * charWidth + MARGIN)),
                                    MAX(0, yMin * lineHeight),
-                                   MAX(0, (xMax - xMin + 1) * charWidth),
+                                   MAX(0, (xMax - xMin) * charWidth),
                                    MAX(0, (yMax - yMin + 1) * lineHeight));
         result = [self convertRect:result toView:nil];
         result = [[self window] convertRectToScreen:result];
