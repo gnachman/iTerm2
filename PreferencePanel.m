@@ -2289,6 +2289,19 @@ static float versionNumber;
     return [[NSUserDefaults standardUserDefaults] objectForKey:@"LoadPrefsFromCustomFolder"] ? [[[NSUserDefaults standardUserDefaults] objectForKey:@"LoadPrefsFromCustomFolder"] boolValue] : NO;
 }
 
+- (BOOL)preferenceKeyIsSyncable:(NSString *)key
+{
+    NSArray *exemptKeys = [NSArray arrayWithObjects:@"LoadPrefsFromCustomFolder",
+                           @"PrefsCustomFolder",
+                           @"iTerm Version",
+                           nil];
+    return ![exemptKeys containsObject:key] &&
+           ![key hasPrefix:@"NS"] &&
+           ![key hasPrefix:@"SU"] &&
+           ![key hasPrefix:@"NoSync"] &&
+           ![key hasPrefix:@"UK"];
+}
+
 - (BOOL)loadPrefs
 {
     static BOOL done;
@@ -2306,26 +2319,14 @@ static float versionNumber;
     if (remotePrefs && [remotePrefs count]) {
         NSDictionary *localPrefs = [NSDictionary dictionaryWithContentsOfFile:[self _prefsFilename]];
         // Empty out the current prefs
-        NSArray *exemptKeys = [NSArray arrayWithObjects:@"LoadPrefsFromCustomFolder",
-                               @"PrefsCustomFolder", @"iTerm Version", nil];
         for (NSString *key in localPrefs) {
-            if (![exemptKeys containsObject:key] &&
-                ![key hasPrefix:@"NS"] && 
-                ![key hasPrefix:@"SU"] &&
-                ![key hasPrefix:@"NoSync"] &&
-                ![key hasPrefix:@"UK"]) {
-
+            if ([self preferenceKeyIsSyncable:key]) {
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
             }
         }
 
         for (NSString *key in remotePrefs) {
-            if (![exemptKeys containsObject:key] &&
-                ![key hasPrefix:@"NS"] && 
-                ![key hasPrefix:@"SU"] &&
-                ![key hasPrefix:@"NoSync"] &&
-                ![key hasPrefix:@"UK"]) {
-
+            if ([self preferenceKeyIsSyncable:key]) {
                 [[NSUserDefaults standardUserDefaults] setObject:[remotePrefs objectForKey:key]
                                                           forKey:key];
             }
@@ -2349,32 +2350,28 @@ static float versionNumber;
     }
     NSDictionary *remotePrefs = [self _remotePrefs];
     if (remotePrefs && [remotePrefs count]) {
-        NSDictionary *localPrefs = [prefs dictionaryRepresentation];
+        // Grab all prefs from our bundle only (no globals, etc.).
+        NSDictionary *localPrefs = [prefs persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
         // Iterate over each set of prefs and validate that the other has the same value for each key.
-        NSArray *exemptKeys = [NSArray arrayWithObjects:@"LoadPrefsFromCustomFolder",
-                               @"PrefsCustomFolder", @"iTerm Version", nil];
-
         for (NSString *key in localPrefs) {
-            if (![exemptKeys containsObject:key]) {
-                if (![key hasPrefix:@"NS"] &&
-                    ![key hasPrefix:@"SU"] &&
-                    ![key hasPrefix:@"NoSync"] &&
-                    ![key hasPrefix:@"UK"] &&
-                    ![[remotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
-                    return YES;
-                }
+            if ([self preferenceKeyIsSyncable:key] &&
+                ![[remotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
+                NSLog(@"Prefs differ for key %@. local=\"%@\", remote=\"%@\" [case 1]",
+                      key,
+                      [localPrefs objectForKey:key],
+                      [remotePrefs objectForKey:key]);
+                return YES;
             }
         }
 
         for (NSString *key in remotePrefs) {
-            if (![exemptKeys containsObject:key]) {
-                if (![key hasPrefix:@"NS"] &&
-                    ![key hasPrefix:@"SU"] &&
-                    ![key hasPrefix:@"NoSync"] &&
-                    ![key hasPrefix:@"UK"] &&
-                    ![[remotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
-                    return YES;
-                }
+            if ([self preferenceKeyIsSyncable:key] &&
+                ![[remotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
+                NSLog(@"Prefs differ for key %@. local=\"%@\", remote=\"%@\" [case 2]",
+                      key,
+                      [localPrefs objectForKey:key],
+                      [remotePrefs objectForKey:key]);
+                return YES;
             }
         }
         return NO;
