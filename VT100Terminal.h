@@ -272,11 +272,11 @@ enum {
 };
 
 typedef enum {
-    MOUSE_REPORTING_NONE          = -1,
-    MOUSE_REPORTING_NORMAL        = 0,
-    MOUSE_REPORTING_HILITE        = 1,
+    MOUSE_REPORTING_NONE = -1,
+    MOUSE_REPORTING_NORMAL = 0,
+    MOUSE_REPORTING_HILITE = 1,
     MOUSE_REPORTING_BUTTON_MOTION = 2,
-    MOUSE_REPORTING_ALL_MOTION    = 3,
+    MOUSE_REPORTING_ALL_MOTION = 3,
 } MouseMode;
 
 typedef enum {
@@ -291,7 +291,7 @@ typedef enum {
     MOUSE_BUTTON_LEFT = 0,       // left button
     MOUSE_BUTTON_MIDDLE = 1,     // middle button
     MOUSE_BUTTON_RIGHT = 2,      // right button
-    MOUSE_BUTTON_RELEASE = 3,    // release - for 1000/1005/1015 mode
+    MOUSE_BUTTON_NONE = 3,       // no button pressed - for 1000/1005/1015 mode
     MOUSE_BUTTON_SCROLLDOWN = 4, // scroll down
     MOUSE_BUTTON_SCROLLUP = 5    // scroll up
 } MouseButtonNumber;

@@ -3060,7 +3060,7 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     int cb;
 
-    if (button == MOUSE_BUTTON_RELEASE) {
+    if (button == MOUSE_BUTTON_NONE) {
         cb = button;
     } else {
         cb = button % 3;

@@ -3389,7 +3389,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         lastReportedX_ = rx;
         lastReportedY_ = ry;
         PTYSession* session = [dataSource session];
-        [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_RELEASE
+        [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_NONE
                                    withModifiers:[event modifierFlags]
                                              atX:rx
                                                Y:ry]];
