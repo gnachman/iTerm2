@@ -1441,6 +1441,10 @@ NSMutableArray* screens=0;
     } else if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
         int x = [dataSource cursorX] - 1;
         int y = [dataSource numberOfLines] - [dataSource height] + [dataSource cursorY] - 1;
+        // quick fix for ZoomText for Mac - it does not query AXValue or other
+        // attributes that (re)generate allText_ and especially lineBreak{Char,Index}Offsets_
+        // which are needed for _rangeOfCharAtX:y:
+        (void)[self _allText];
         NSRange range = [self _rangeOfCharAtX:x y:y];
         range.length--;
         return [NSValue valueWithRange:range];
