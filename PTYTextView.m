@@ -1363,6 +1363,7 @@ NSMutableArray* screens=0;
     // NSLog(@"accessibilityAttributeValue:%@ forParameter:%@", attribute, parameter);
     id result = [self _accessibilityAttributeValue:attribute forParameter:parameter];
     // NSLog(@"  returns %@", result);
+    // NSLog(@"%@(%@) = %@", attribute, parameter, result);
     return result;
 }
 
@@ -1464,6 +1465,7 @@ NSMutableArray* screens=0;
     // NSLog(@"accessibilityAttributeValue:%@", attribute);
     id result = [self _accessibilityAttributeValue:attribute];
     // NSLog(@"  returns %@", result);
+    // NSLog(@"%@ = %@", attribute, result);
     return result;
 }
 
