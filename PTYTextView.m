@@ -184,6 +184,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 @end
 
+@interface PTYTextView ()
+- (NSRect)cursorRect;
+@end
+
 
 @implementation PTYTextView
 
@@ -1626,6 +1630,14 @@ NSMutableArray* screens=0;
         NSAccessibilityPostNotification(self, NSAccessibilitySelectedColumnsChangedNotification);
         accX = [dataSource cursorX];
         accY = absCursorY;
+        if (UAZoomEnabled())
+        {
+            CGRect viewRect = NSRectToCGRect([[self window] convertRectToScreen:[self convertRect:[self visibleRect] toView:nil]]);
+            CGRect selectedRect = NSRectToCGRect([[self window] convertRectToScreen:[self convertRect:[self cursorRect] toView:nil]]);
+            viewRect.origin.y = [[NSScreen mainScreen] frame].size.height - (viewRect.origin.y + viewRect.size.height);
+            selectedRect.origin.y = [[NSScreen mainScreen] frame].size.height - (selectedRect.origin.y + selectedRect.size.height);
+            UAZoomChangeFocus(&viewRect, &selectedRect, kUAZoomFocusTypeInsertionPoint);
+        }
     }
 
     return [self updateDirtyRects] || [self _isCursorBlinking];
