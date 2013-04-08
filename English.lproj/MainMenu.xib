@@ -271,7 +271,7 @@
 								</object>
 								<object class="NSMenuItem" id="39047848">
 									<reference key="NSMenu" ref="360861402"/>
-									<string key="NSTitle">New Tab (Default Profile)</string>
+									<string key="NSTitle">New Tab</string>
 									<string key="NSKeyEquiv">t</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -280,7 +280,7 @@
 								</object>
 								<object class="NSMenuItem" id="813546322">
 									<reference key="NSMenu" ref="360861402"/>
-									<string key="NSTitle">New Tab (Current Profile)</string>
+									<string key="NSTitle">New Tab with Current Profile</string>
 									<string key="NSKeyEquiv">T</string>
 									<int key="NSKeyEquivModMask">1572864</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -1756,7 +1756,7 @@
 												<int key="NSTCFlags">1</int>
 											</object>
 											<object class="NSTextViewSharedData" key="NSSharedData">
-												<int key="NSFlags">67111781</int>
+												<int key="NSFlags">2917</int>
 												<int key="NSTextCheckingTypes">0</int>
 												<nil key="NSMarkedAttributes"/>
 												<reference key="NSBackgroundColor" ref="178467331"/>

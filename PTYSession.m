@@ -364,7 +364,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
     if (state) {
         [[aSession SCREEN] setTmuxState:state];
-		NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
+        NSData *pendingOutput = [state objectForKey:kTmuxWindowOpenerStatePendingOutput];
         if (pendingOutput && [pendingOutput length]) {
             [[aSession TERMINAL] putStreamData:pendingOutput];
         }
