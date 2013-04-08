@@ -62,7 +62,6 @@
                 defer:(BOOL)flag;
 
 - (void)toggleToolbarShown:(id)sender;
-- (void)toggleToolbarShownNoSave:(id)sender;
 
 - (void)smartLayout;
 - (void)setLayoutDone;

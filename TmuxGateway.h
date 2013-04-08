@@ -7,8 +7,16 @@
 
 #import <Cocoa/Cocoa.h>
 
+// Constant values for flags:
+// Command may fail with an error and selector is still run but with nil
+// output.
 extern const int kTmuxGatewayCommandShouldTolerateErrors;
+// Send NSData, not NSString, for output (allowing busted/partial utf-8
+// sequences).
 extern const int kTmuxGatewayCommandWantsData;
+// Bug in tmux 1.8. %end guard not printed, so watch for %error in command
+// output.
+extern const int kTmuxGatewayCommandHasEndGuardBug;
 
 @class TmuxController;
 

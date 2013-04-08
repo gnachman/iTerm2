@@ -2964,9 +2964,9 @@ static NSString* FormatRect(NSRect r) {
         // Don't care for non-tmux tabs.
         return;
     }
-        for (SessionView *sv in [self sessionViews]) {
-                [sv setAutoresizesSubviews:NO];
-        }
+    for (SessionView *sv in [self sessionViews]) {
+        [sv setAutoresizesSubviews:NO];
+    }
     // Find a session view adjacent to the moved splitter.
     NSArray *subviews = [splitView subviews];
     NSView *theView = [subviews objectAtIndex:splitterIndex];  // the view right of or below the dragged splitter.
@@ -2988,7 +2988,7 @@ static NSString* FormatRect(NSRect r) {
 
     // Ask the tmux server to perform the move and we'll update our layout when
     // it finishes.
-    if (amount > 0) {
+    if (amount != 0) {
         [tmuxController_ windowPane:[session tmuxPane]
                           resizedBy:amount
                        horizontally:[splitView isVertical]];
