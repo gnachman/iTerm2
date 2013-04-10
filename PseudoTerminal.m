@@ -2819,8 +2819,8 @@ NSString *sessionsKey = @"sessions";
 
 - (void)saveAffinitiesAndOriginsForController:(TmuxController *)tmuxController
 {
-        [tmuxController saveAffinities];
-        [tmuxController saveWindowOrigins];
+    [tmuxController saveAffinities];
+    [tmuxController saveWindowOrigins];
 }
 
 - (void)saveAffinitiesLater:(PTYTab *)theTab
