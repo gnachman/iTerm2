@@ -303,9 +303,8 @@ static BOOL initDone = NO;
 }
 
 // meant for action for menu items that have a submenu
-- (void) noAction:(id) sender
+- (void)noAction:(id)sender
 {
-
 }
 
 - (IBAction)newSessionWithSameProfile:(id)sender

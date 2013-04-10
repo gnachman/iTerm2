@@ -1059,7 +1059,7 @@
 							<array class="NSMutableArray" key="NSMenuItems">
 								<object class="NSMenuItem" id="640558134">
 									<reference key="NSMenu" ref="203853260"/>
-									<string key="NSTitle">Show Toolbar</string>
+									<string key="NSTitle">Toggle Toolbar</string>
 									<string key="NSKeyEquiv">t</string>
 									<int key="NSKeyEquivModMask">1572864</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -1680,7 +1680,7 @@
 				<nil key="NSUserInterfaceItemIdentifier"/>
 				<string key="NSWindowContentMinSize">{213, 107}</string>
 				<object class="NSView" key="NSWindowView" id="813030389">
-					<nil key="NSNextResponder"/>
+					<reference key="NSNextResponder"/>
 					<int key="NSvFlags">256</int>
 					<array class="NSMutableArray" key="NSSubviews">
 						<object class="NSTextField" id="198376688">
@@ -1688,6 +1688,7 @@
 							<int key="NSvFlags">256</int>
 							<string key="NSFrame">{{211, 117}, {90, 27}}</string>
 							<reference key="NSSuperview" ref="813030389"/>
+							<reference key="NSWindow"/>
 							<reference key="NSNextKeyView" ref="949675429"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSTextFieldCell" key="NSCell" id="26136141">
@@ -1734,7 +1735,8 @@
 											<int key="NSvFlags">2322</int>
 											<string key="NSFrameSize">{165, 92}</string>
 											<reference key="NSSuperview" ref="829948544"/>
-											<reference key="NSNextKeyView" ref="770850232"/>
+											<reference key="NSWindow"/>
+											<reference key="NSNextKeyView"/>
 											<object class="NSTextContainer" key="NSTextContainer" id="700346087">
 												<object class="NSLayoutManager" key="NSLayoutManager">
 													<object class="NSTextStorage" key="NSTextStorage">
@@ -1785,6 +1787,7 @@
 									</array>
 									<string key="NSFrameSize">{165, 92}</string>
 									<reference key="NSSuperview" ref="949675429"/>
+									<reference key="NSWindow"/>
 									<reference key="NSNextKeyView" ref="637673380"/>
 									<reference key="NSDocView" ref="637673380"/>
 									<reference key="NSBGColor" ref="178467331"/>
@@ -1819,6 +1822,7 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 									<int key="NSvFlags">-2147483392</int>
 									<string key="NSFrame">{{-100, -100}, {15, 54}}</string>
 									<reference key="NSSuperview" ref="949675429"/>
+									<reference key="NSWindow"/>
 									<reference key="NSNextKeyView" ref="607292965"/>
 									<bool key="NSAllowsLogicalLayoutDirection">NO</bool>
 									<int key="NSsFlags">256</int>
@@ -1831,6 +1835,7 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 									<int key="NSvFlags">-2147483392</int>
 									<string key="NSFrame">{{-100, -100}, {87, 18}}</string>
 									<reference key="NSSuperview" ref="949675429"/>
+									<reference key="NSWindow"/>
 									<reference key="NSNextKeyView" ref="829948544"/>
 									<bool key="NSAllowsLogicalLayoutDirection">NO</bool>
 									<int key="NSsFlags">257</int>
@@ -1842,7 +1847,8 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 							</array>
 							<string key="NSFrame">{{169, 20}, {165, 92}}</string>
 							<reference key="NSSuperview" ref="813030389"/>
-							<reference key="NSNextKeyView" ref="829948544"/>
+							<reference key="NSWindow"/>
+							<reference key="NSNextKeyView" ref="770850232"/>
 							<int key="NSsFlags">133120</int>
 							<reference key="NSVScroller" ref="770850232"/>
 							<reference key="NSHScroller" ref="607292965"/>
@@ -1864,6 +1870,7 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 							</set>
 							<string key="NSFrame">{{20, 32}, {128, 128}}</string>
 							<reference key="NSSuperview" ref="813030389"/>
+							<reference key="NSWindow"/>
 							<reference key="NSNextKeyView" ref="198376688"/>
 							<bool key="NSEnabled">YES</bool>
 							<object class="NSImageCell" key="NSCell" id="423045545">
@@ -1883,6 +1890,8 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 						</object>
 					</array>
 					<string key="NSFrameSize">{354, 164}</string>
+					<reference key="NSSuperview"/>
+					<reference key="NSWindow"/>
 					<reference key="NSNextKeyView" ref="174023371"/>
 				</object>
 				<string key="NSScreenRect">{{0, 0}, {1440, 878}}</string>
@@ -2927,30 +2936,6 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 						<reference key="destination" ref="269141603"/>
 					</object>
 					<int key="connectionID">1475</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBOutletConnection" key="connection">
-						<string key="label">toggleToolbar</string>
-						<reference key="source" ref="608955146"/>
-						<reference key="destination" ref="640558134"/>
-					</object>
-					<int key="connectionID">1481</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBOutletConnection" key="connection">
-						<string key="label">newWindow_</string>
-						<reference key="source" ref="608955146"/>
-						<reference key="destination" ref="205523462"/>
-					</object>
-					<int key="connectionID">1482</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBOutletConnection" key="connection">
-						<string key="label">newTab_</string>
-						<reference key="source" ref="608955146"/>
-						<reference key="destination" ref="39047848"/>
-					</object>
-					<int key="connectionID">1483</int>
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBActionConnection" key="connection">
@@ -4504,7 +4489,7 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 			<nil key="activeLocalization"/>
 			<dictionary class="NSMutableDictionary" key="localizations"/>
 			<nil key="sourceID"/>
-			<int key="maxID">1483</int>
+			<int key="maxID">1480</int>
 		</object>
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<array class="NSMutableArray" key="referencedPartialClassDescriptions">
@@ -4765,7 +4750,6 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 						<string key="splitHorizontally:">id</string>
 						<string key="splitVertically:">id</string>
 						<string key="stopCoprocess:">id</string>
-						<string key="toggleBroadcastingToCurrentSession:">id</string>
 						<string key="toggleFullScreenMode:">id</string>
 						<string key="toggleUseTransparency:">id</string>
 						<string key="wrapToggleToolbarShown:">id</string>
@@ -4937,10 +4921,6 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 						</object>
 						<object class="IBActionInfo" key="stopCoprocess:">
 							<string key="name">stopCoprocess:</string>
-							<string key="candidateClassName">id</string>
-						</object>
-						<object class="IBActionInfo" key="toggleBroadcastingToCurrentSession:">
-							<string key="name">toggleBroadcastingToCurrentSession:</string>
 							<string key="candidateClassName">id</string>
 						</object>
 						<object class="IBActionInfo" key="toggleFullScreenMode:">
@@ -5237,8 +5217,6 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 						<string key="logStart">NSMenuItem</string>
 						<string key="logStop">NSMenuItem</string>
 						<string key="maximizePane">NSMenuItem</string>
-						<string key="newTab_">NSMenuItem</string>
-						<string key="newWindow_">NSMenuItem</string>
 						<string key="nextTerminal">NSMenuItem</string>
 						<string key="previousTerminal">NSMenuItem</string>
 						<string key="secureInput">NSMenuItem</string>
@@ -5249,7 +5227,6 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 						<string key="showFullScreenTabs">NSMenuItem</string>
 						<string key="showToolbeltItem">NSMenuItem</string>
 						<string key="toggleBookmarksView">NSMenuItem</string>
-						<string key="toggleToolbar">NSMenuItem</string>
 						<string key="toolbeltMenu">NSMenu</string>
 						<string key="useTransparency">NSMenuItem</string>
 						<string key="windowArrangements_">NSMenuItem</string>
@@ -5295,14 +5272,6 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 							<string key="name">maximizePane</string>
 							<string key="candidateClassName">NSMenuItem</string>
 						</object>
-						<object class="IBToOneOutletInfo" key="newTab_">
-							<string key="name">newTab_</string>
-							<string key="candidateClassName">NSMenuItem</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="newWindow_">
-							<string key="name">newWindow_</string>
-							<string key="candidateClassName">NSMenuItem</string>
-						</object>
 						<object class="IBToOneOutletInfo" key="nextTerminal">
 							<string key="name">nextTerminal</string>
 							<string key="candidateClassName">NSMenuItem</string>
@@ -5341,10 +5310,6 @@ AAEAAQAAAT0AAwAAAAEAAgAAAVIAAwAAAAEAAQAAAVMAAwAAAAIAAQABAAAAAA</bytes>
 						</object>
 						<object class="IBToOneOutletInfo" key="toggleBookmarksView">
 							<string key="name">toggleBookmarksView</string>
-							<string key="candidateClassName">NSMenuItem</string>
-						</object>
-						<object class="IBToOneOutletInfo" key="toggleToolbar">
-							<string key="name">toggleToolbar</string>
 							<string key="candidateClassName">NSMenuItem</string>
 						</object>
 						<object class="IBToOneOutletInfo" key="toolbeltMenu">
