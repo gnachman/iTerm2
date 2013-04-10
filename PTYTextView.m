@@ -782,9 +782,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 // Provide a dimmed version of a color. It includes a caching optimization that
 // really helps when dimming is on.
 - (NSColor *)_dimmedColorForCode:(int)theIndex
-	      alternateSemantics:(BOOL)alt
-			    bold:(BOOL)isBold
-		      background:(BOOL)isBackground
+              alternateSemantics:(BOOL)alt
+                            bold:(BOOL)isBold
+                      background:(BOOL)isBackground
 {
     if (dimmingAmount_ == 0) {
         // No dimming: return plain-vanilla color.
@@ -2756,7 +2756,7 @@ NSMutableArray* screens=0;
 {
     MouseMode mouseMode = [[dataSource terminal] mouseMode];
 
-        BOOL changed = NO;
+    BOOL changed = NO;
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
                 changed = [self setCursor:[NSCursor openHandCursor]];
     } else if (([event modifierFlags] & (NSCommandKeyMask | NSAlternateKeyMask)) == (NSCommandKeyMask | NSAlternateKeyMask)) {
@@ -5505,9 +5505,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 // Blend default bg color
         NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
                               alternateSemantics:YES
-					    bold:NO
-				    isBackground:YES];
-	[[aColor colorWithAlphaComponent:1 - blend] set];
+                                            bold:NO
+                                    isBackground:YES];
+        [[aColor colorWithAlphaComponent:1 - blend] set];
         NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
                                             dest.y + bgRect.origin.y,
                                             bgRect.size.width,
@@ -5537,11 +5537,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
                                                                      toPoint:dest
                                                              useTransparency:[self useTransparency]];
-	// Blend default bg color over bg image.
+        // Blend default bg color over bg image.
         NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
                               alternateSemantics:YES
-					    bold:NO
-				    isBackground:YES];
+                                            bold:NO
+                                    isBackground:YES];
         [[aColor colorWithAlphaComponent:1 - blend] set];
         NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
                                             dest.y + bgRect.origin.y,
@@ -5575,8 +5575,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                           alternateSemantics:YES
                                         bold:NO
                                 isBackground:YES];
-	[[aColor colorWithAlphaComponent:1 - blend] set];
-	NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
+        [[aColor colorWithAlphaComponent:1 - blend] set];
+        NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
     } else {
         // Either draw a normal bg or, if transparency is off, blend the default bg color over the bg image.
         if (![self useTransparency]) {
@@ -6044,7 +6044,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (bgselected) {
             // Is a selection.
             isSelection = YES;
-	    // NOTE: This could be optimized by caching the color.
+            // NOTE: This could be optimized by caching the color.
             thisChar.color = [self _dimmedColorFrom:selectedTextColor];
         } else {
             // Not a selection.
