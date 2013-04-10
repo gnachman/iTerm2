@@ -267,7 +267,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
 #endif
     if ((self = [super init]) == nil)
-    return nil;
+        return nil;
 
     WIDTH = DEFAULT_WIDTH;
     HEIGHT = DEFAULT_HEIGHT;
@@ -351,17 +351,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (NSString *)description
 {
-    NSString *basestr;
-    NSString *result;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen description]", __FILE__, __LINE__);
-#endif
-    basestr = [NSString stringWithFormat:@"WIDTH %d, HEIGHT %d, CURSOR (%d,%d)",
-           WIDTH, HEIGHT, cursorX, cursorY];
-    result = [NSString stringWithFormat:@"%@\n%@", basestr, @""]; //colstr];
-
-    return result;
+    return [NSString stringWithFormat:@"<%@: %p WIDTH %d, HEIGHT %d, CURSOR (%d,%d)>", [self class], self, WIDTH, HEIGHT, cursorX, cursorY];
 }
 
 -(screen_char_t *)initScreenWithWidth:(int)width Height:(int)height

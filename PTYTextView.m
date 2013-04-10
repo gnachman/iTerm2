@@ -2756,7 +2756,7 @@ NSMutableArray* screens=0;
 {
     MouseMode mouseMode = [[dataSource terminal] mouseMode];
 
-        BOOL changed = NO;
+    BOOL changed = NO;
     if (([event modifierFlags] & kDragPaneModifiers) == kDragPaneModifiers) {
                 changed = [self setCursor:[NSCursor openHandCursor]];
     } else if (([event modifierFlags] & (NSCommandKeyMask | NSAlternateKeyMask)) == (NSCommandKeyMask | NSAlternateKeyMask)) {

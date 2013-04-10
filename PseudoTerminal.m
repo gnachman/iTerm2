@@ -1655,9 +1655,7 @@ NSString *sessionsKey = @"sessions";
 
     // Kill sessions so their timers stop and they are freed.
     for (PTYSession* session in [self sessions]) {
-        if (![session exited]) {
-            [session terminate];
-        }
+        [session terminate];
     }
 
     // This releases the last reference to self.
