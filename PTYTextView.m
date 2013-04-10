@@ -7654,6 +7654,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 // including some character in the middle of the "haystack" (source) string.
 - (NSString *)stringInString:(NSString *)haystack includingOffset:(int)offset fromCharacterSet:(NSCharacterSet *)charSet
 {
+    if (![haystack length]) {
+        return @"";
+    }
     NSRange firstBadCharRange = [haystack rangeOfCharacterFromSet:[charSet invertedSet]
                                                           options:NSBackwardsSearch
                                                             range:NSMakeRange(0, offset)];
