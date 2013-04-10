@@ -48,6 +48,25 @@
 
 #endif
 
+// From proc_info.h, available on 10.7 and 10.8 only.
+#define FUTURE_PROC_PIDT_SHORTBSDINFO		13
+#define FUTURE_MAXCOMLEN 16
+struct future_proc_bsdshortinfo {
+  uint32_t                pbsi_pid;		/* process id */
+  uint32_t                pbsi_ppid;		/* process parent id */
+  uint32_t                pbsi_pgid;		/* process perp id */
+  int32_t                pbsi_status;		/* p_stat value, SZOMB, SRUN, etc */
+  char                    pbsi_comm[FUTURE_MAXCOMLEN];	/* upto 16 characters of process name */
+  uint32_t                pbsi_flags;              /* 64bit; emulated etc */
+  uid_t                   pbsi_uid;		/* current uid on process */
+  gid_t                   pbsi_gid;		/* current gid on process */
+  uid_t                   pbsi_ruid;		/* current ruid on process */
+  gid_t                   pbsi_rgid;		/* current tgid on process */
+  uid_t                   pbsi_svuid;		/* current svuid on process */
+  gid_t                   pbsi_svgid;		/* current svgid on process */
+  uint32_t                pbsi_rfu;		/* reserved for future use*/
+};
+
 extern const int FutureNSWindowCollectionBehaviorStationary;
 
 @interface NSView (Future)
