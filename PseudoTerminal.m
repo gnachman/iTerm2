@@ -2827,9 +2827,10 @@ NSString *sessionsKey = @"sessions";
 - (void)saveAffinitiesLater:(PTYTab *)theTab
 {
     if ([theTab isTmuxTab]) {
-                [self performSelector:@selector(saveAffinitiesAndOriginsForController:)
-                                   withObject:[theTab tmuxController]
-                                   afterDelay:0];
+        PtyLog(@"Queueing call to saveAffinitiesLater from %@", [NSThread callStackSymbols]);
+        [self performSelector:@selector(saveAffinitiesAndOriginsForController:)
+                   withObject:[theTab tmuxController]
+                   afterDelay:0];
     }
 }
 
