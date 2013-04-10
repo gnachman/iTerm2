@@ -39,7 +39,6 @@ static NSString *kCommandFlags = @"flags";
 static NSString *kCommandId = @"id";
 static NSString *kCommandIsInList = @"inList";
 static NSString *kCommandIsLastInList = @"lastInList";
-static NSString *kCommandHasEndGuardBug = @"endGuardBug";
 
 @implementation TmuxGateway
 

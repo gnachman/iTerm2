@@ -43,6 +43,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 - (void)releaseWindow:(int)window;
 - (void)closeAllPanes;
 - (void)windowDidOpen:(NSNumber *)windowIndex;
+- (void)getOriginsResponse:(NSString *)result;
 
 @end
 
@@ -124,7 +125,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)setLayoutInTab:(PTYTab *)tab
-                toLayout:(NSString *)layout
+              toLayout:(NSString *)layout
 {
     TmuxWindowOpener *windowOpener = [TmuxWindowOpener windowOpener];
     windowOpener.ambiguousIsDoubleWidth = ambiguousIsDoubleWidth_;
@@ -763,7 +764,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                responseTarget:self
              responseSelector:@selector(saveWindowOriginsResponse:)];
     }
-
+  [self getOriginsResponse:enc];
 }
 
 - (void)saveWindowOriginsResponse:(NSString *)response
@@ -860,6 +861,33 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 @implementation TmuxController (Private)
 
+- (void)getOriginsResponse:(NSString *)result
+{
+  [origins_ removeAllObjects];
+  if ([result length] > 0) {
+    NSArray *windows = [result componentsSeparatedByString:@" "];
+    for (NSString *wstr in windows) {
+      NSArray *tuple = [wstr componentsSeparatedByString:@":"];
+      if (tuple.count != 2) {
+        continue;
+      }
+      NSString *windowsStr = [tuple objectAtIndex:0];
+      NSString *coords = [tuple objectAtIndex:1];
+      NSArray *windowIds = [windowsStr componentsSeparatedByString:@","];
+      NSArray *xy = [coords componentsSeparatedByString:@","];
+      if (xy.count != 2) {
+        continue;
+      }
+      NSPoint origin = NSMakePoint([[xy objectAtIndex:0] intValue],
+                                   [[xy objectAtIndex:1] intValue]);
+      for (NSString *wid in windowIds) {
+        [origins_ setObject:[NSValue valueWithPoint:origin]
+                     forKey:[NSNumber numberWithInt:[wid intValue]]];
+      }
+    }
+  }
+}
+
 - (int)windowIdFromString:(NSString *)s
 {
     if (s.length < 2 || [s characterAtIndex:0] != '@') {
@@ -922,33 +950,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
             if (![widString isEqualToString:exemplar]) {
                 [affinities_ setValue:widString
                          equalToValue:exemplar];
-            }
-        }
-    }
-}
-
-- (void)getOriginsResponse:(NSString *)result
-{
-    [origins_ removeAllObjects];
-    if ([result length] > 0) {
-        NSArray *windows = [result componentsSeparatedByString:@" "];
-        for (NSString *wstr in windows) {
-            NSArray *tuple = [wstr componentsSeparatedByString:@":"];
-            if (tuple.count != 2) {
-                continue;
-            }
-            NSString *windowsStr = [tuple objectAtIndex:0];
-            NSString *coords = [tuple objectAtIndex:1];
-            NSArray *windowIds = [windowsStr componentsSeparatedByString:@","];
-            NSArray *xy = [coords componentsSeparatedByString:@","];
-            if (xy.count != 2) {
-                continue;
-            }
-            NSPoint origin = NSMakePoint([[xy objectAtIndex:0] intValue],
-                                         [[xy objectAtIndex:1] intValue]);
-            for (NSString *wid in windowIds) {
-                [origins_ setObject:[NSValue valueWithPoint:origin]
-                             forKey:[NSNumber numberWithInt:[wid intValue]]];
             }
         }
     }
