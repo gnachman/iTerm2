@@ -28,6 +28,7 @@
 #import "iTermApplicationDelegate.h"
 #import "iTermController.h"
 #import "ITAddressBookMgr.h"
+#import "LightSensor.h"
 #import "PreferencePanel.h"
 #import "PseudoTerminal.h"
 #import "PTYSession.h"
@@ -587,7 +588,9 @@ static BOOL hasBecomeActive = NO;
 - (id)init
 {
     self = [super init];
-
+    LightSensor *ls = [[LightSensor alloc] init];
+    [ls startMonitoringWithDarkTriggerLevel:100 lightTriggerLevel:200 target:nil];
+    
     // Add ourselves as an observer for notifications.
     [[NSNotificationCenter defaultCenter] addObserver:self
                                              selector:@selector(reloadMenus:)

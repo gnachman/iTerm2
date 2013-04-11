@@ -257,6 +257,9 @@
 		1D7C1AD31276FD6E00461E55 /* PasteboardHistory.xib in Resources */ = {isa = PBXBuildFile; fileRef = 1D7C1AD11276FD6E00461E55 /* PasteboardHistory.xib */; };
 		1D7C1D1212772ECC00461E55 /* NSDateFormatterExtras.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */; };
 		1D7C1D1312772ECC00461E55 /* NSDateFormatterExtras.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */; };
+		1D7EE094171679FF0035BAD2 /* LightSensor.h in Headers */ = {isa = PBXBuildFile; fileRef = 1D7EE092171679FF0035BAD2 /* LightSensor.h */; };
+		1D7EE095171679FF0035BAD2 /* LightSensor.m in Sources */ = {isa = PBXBuildFile; fileRef = 1D7EE093171679FF0035BAD2 /* LightSensor.m */; };
+		1D7EE097171682040035BAD2 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1D7EE096171682040035BAD2 /* IOKit.framework */; };
 		1D823C4812F92B3F0028422B /* screen.png in Resources */ = {isa = PBXBuildFile; fileRef = 1D823C4712F92B3F0028422B /* screen.png */; };
 		1D8255F714649F8E007CAE78 /* PrefsMouse.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1D8255F614649F8E007CAE78 /* PrefsMouse.tiff */; };
 		1D8255F9146869D8007CAE78 /* DefaultPointerActions.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */; };
@@ -568,6 +571,9 @@
 		1D7C1AD21276FD6E00461E55 /* English */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = English; path = English.lproj/PasteboardHistory.xib; sourceTree = "<group>"; };
 		1D7C1D1012772ECC00461E55 /* NSDateFormatterExtras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NSDateFormatterExtras.h; sourceTree = "<group>"; };
 		1D7C1D1112772ECC00461E55 /* NSDateFormatterExtras.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NSDateFormatterExtras.m; sourceTree = "<group>"; };
+		1D7EE092171679FF0035BAD2 /* LightSensor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LightSensor.h; sourceTree = "<group>"; };
+		1D7EE093171679FF0035BAD2 /* LightSensor.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LightSensor.m; sourceTree = "<group>"; };
+		1D7EE096171682040035BAD2 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.6.sdk/System/Library/Frameworks/IOKit.framework; sourceTree = DEVELOPER_DIR; };
 		1D823C4712F92B3F0028422B /* screen.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = screen.png; path = images/screen.png; sourceTree = "<group>"; };
 		1D8255F614649F8E007CAE78 /* PrefsMouse.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsMouse.tiff; path = images/PrefsMouse.tiff; sourceTree = "<group>"; };
 		1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = DefaultPointerActions.plist; sourceTree = "<group>"; };
@@ -845,6 +851,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1D7EE097171682040035BAD2 /* IOKit.framework in Frameworks */,
 				874206530564169600CFC3F1 /* AppKit.framework in Frameworks */,
 				F6E2DEDA0AE2F67200D20B3B /* Sparkle.framework in Frameworks */,
 				1D13EADC12113A2D00909F9C /* libncurses.dylib in Frameworks */,
@@ -861,6 +868,7 @@
 		0464AB0D006CD2EC7F000001 /* JTerminal */ = {
 			isa = PBXGroup;
 			children = (
+				1D7EE096171682040035BAD2 /* IOKit.framework */,
 				0464AB0E006CD2EC7F000001 /* Classes */,
 				0464AB15006CD2EC7F000001 /* Headers */,
 				0464AB1F006CD2EC7F000001 /* Other Sources */,
@@ -919,6 +927,8 @@
 				F69E788C0AB7AC6D001EC0FF /* iTermGrowlDelegate.m */,
 				DDDB7ABD05D7736600E197C2 /* iTermKeyBindingMgr.m */,
 				1DAED99112EDF923005E49ED /* iTermSearchField.m */,
+				1D7EE092171679FF0035BAD2 /* LightSensor.h */,
+				1D7EE093171679FF0035BAD2 /* LightSensor.m */,
 				1D72438C11F416E500BD4924 /* LineBuffer.m */,
 				1D29732614082676004C5DBE /* MovePaneController.m */,
 				1D085F8416F02E7400B7FCE9 /* PasteContext.h */,
@@ -1650,6 +1660,7 @@
 				1D085F9A16F1135F00B7FCE9 /* PasteEvent.h in Headers */,
 				1D085F9E16F137D900B7FCE9 /* RoundedRectView.h in Headers */,
 				1D085FA216F138A100B7FCE9 /* ToastWindowController.h in Headers */,
+				1D7EE094171679FF0035BAD2 /* LightSensor.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1972,6 +1983,7 @@
 				1D085F9B16F1135F00B7FCE9 /* PasteEvent.m in Sources */,
 				1D085F9F16F137D900B7FCE9 /* RoundedRectView.m in Sources */,
 				1D085FA316F138A100B7FCE9 /* ToastWindowController.m in Sources */,
+				1D7EE095171679FF0035BAD2 /* LightSensor.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
