@@ -220,7 +220,7 @@ typedef enum {
 
     int count = [[profileTable selectedGuids] count];
     if (count == 1) {
-        [menu addItemWithTitle:@"Edit Bookmark..."
+        [menu addItemWithTitle:@"Edit Profile..."
                         action:@selector(editSelectedBookmark:)
                  keyEquivalent:@""];
         [menu addItemWithTitle:@"Open in New Tab"
