@@ -66,6 +66,9 @@
 #define MAX_ROWS 4096
 #define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array
 
+NSString * const kHighlightForegroundColor = @"kHighlightForegroundColor";
+NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
+
 typedef struct {
     screen_char_t *saved_buffer_lines;
     screen_char_t *saved_screen_top;
@@ -756,11 +759,30 @@ static char* FormatCont(int c)
     }
 }
 
-// Set the color of prototypechar to all chars between startPoint and endPoint on the screen.
-- (void)highlightWithChar:(screen_char_t)prototypechar
-                fromPoint:(NSPoint)startPoint
-                  toPoint:(NSPoint)endPoint
+- (int)colorCodeForColor:(NSColor *)theColor
 {
+    theColor = [theColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+    int r = 5 * [theColor redComponent];
+    int g = 5 * [theColor greenComponent];
+    int b = 5 * [theColor blueComponent];
+    return 16 + b + g*6 + r*36;
+}
+
+// Set the color of prototypechar to all chars between startPoint and endPoint on the screen.
+- (void)highlightWithColors:(NSDictionary *)colors
+                  fromPoint:(NSPoint)startPoint
+                    toPoint:(NSPoint)endPoint
+{
+    NSColor *fgColor = [colors objectForKey:kHighlightForegroundColor];
+    NSColor *bgColor = [colors objectForKey:kHighlightBackgroundColor];
+    int fgColorCode, bgColorCode;
+    if (fgColor) {
+        fgColorCode = [self colorCodeForColor:fgColor];
+    }
+    if (bgColor) {
+        bgColorCode = [self colorCodeForColor:bgColor];
+    }
+
     int x = startPoint.x;
     int y = startPoint.y;
     screen_char_t *theLine = nil;
@@ -774,10 +796,14 @@ static char* FormatCont(int c)
         }
         assert(theLine);
         if (theLine) {
-            theLine[x].alternateBackgroundSemantics = prototypechar.alternateBackgroundSemantics;
-            theLine[x].alternateForegroundSemantics = prototypechar.alternateForegroundSemantics;
-            theLine[x].backgroundColor = prototypechar.backgroundColor;
-            theLine[x].foregroundColor = prototypechar.foregroundColor;
+            if (fgColor) {
+                theLine[x].alternateForegroundSemantics = NO;
+                theLine[x].foregroundColor = fgColorCode;
+            }
+            if (bgColor) {
+                theLine[x].alternateBackgroundSemantics = NO;
+                theLine[x].backgroundColor = bgColorCode;
+            }
         }
         ++x;
         if (x == WIDTH) {
@@ -826,7 +852,7 @@ static char* FormatCont(int c)
 
 // Change color of text on screen that matches regex to the color of prototypechar.
 - (void)highlightTextMatchingRegex:(NSString *)regex
-                     prototypeChar:(screen_char_t)prototypechar
+                            colors:(NSDictionary *)colors
 {
     int y = 0;
     while (y < HEIGHT) {
@@ -861,7 +887,7 @@ static char* FormatCont(int c)
                 endY = HEIGHT - 1;
                 endX = WIDTH;
             }
-            [self highlightWithChar:prototypechar fromPoint:NSMakePoint(startX, startY) toPoint:NSMakePoint(endX, endY)];
+            [self highlightWithColors:colors fromPoint:NSMakePoint(startX, startY) toPoint:NSMakePoint(endX, endY)];
 
             searchRange.location = range.location + range.length;
             searchRange.length = joinedLine.length - searchRange.location;

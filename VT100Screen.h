@@ -32,6 +32,9 @@
 #import "LineBuffer.h"
 #import "DVR.h"
 
+extern NSString * const kHighlightForegroundColor;
+extern NSString * const kHighlightBackgroundColor;
+
 @class PTYTask;
 @class PTYSession;
 @class PTYTextView;
@@ -320,8 +323,9 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)dumpDebugLog;
 
 // Set the colors in the prototype char to all text on screen that matches the regex.
+// See kHighlightXxxColor constants at the top of this file for dict keys, values are NSColor*s.
 - (void)highlightTextMatchingRegex:(NSString *)regex
-                     prototypeChar:(screen_char_t)prototypechar;
+                            colors:(NSDictionary *)colors;
 
 // Return a human-readable dump of the screen contents.
 - (NSString*)debugString;
