@@ -1445,7 +1445,7 @@ NSMutableArray* screens=0;
         // quick fix for ZoomText for Mac - it does not query AXValue or other
         // attributes that (re)generate allText_ and especially lineBreak{Char,Index}Offsets_
         // which are needed for _rangeOfCharAtX:y:
-        (void)[self _allText];
+        [self _allText];
         NSRange range = [self _rangeOfCharAtX:x y:y];
         range.length--;
         return [NSValue valueWithRange:range];
@@ -1636,8 +1636,7 @@ NSMutableArray* screens=0;
         NSAccessibilityPostNotification(self, NSAccessibilitySelectedColumnsChangedNotification);
         accX = [dataSource cursorX];
         accY = absCursorY;
-        if (UAZoomEnabled())
-        {
+        if (UAZoomEnabled()) {
             CGRect viewRect = NSRectToCGRect([[self window] convertRectToScreen:[self convertRect:[self visibleRect] toView:nil]]);
             CGRect selectedRect = NSRectToCGRect([[self window] convertRectToScreen:[self convertRect:[self cursorRect] toView:nil]]);
             viewRect.origin.y = [[NSScreen mainScreen] frame].size.height - (viewRect.origin.y + viewRect.size.height);
