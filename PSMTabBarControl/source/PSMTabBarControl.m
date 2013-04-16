@@ -2188,8 +2188,9 @@
 {
     int i, cellCount = [_cells count];
     for(i = 0; i < cellCount; i++){
-        if([[_cells objectAtIndex:i] isInOverflowMenu])
+        if ([[_cells objectAtIndex:i] isInOverflowMenu]) {
             return i;
+        }
     }
     return cellCount;
 }
@@ -2221,10 +2222,12 @@
         attributeValue = NSAccessibilityTabGroupRole;
     } else if ([attribute isEqualToString: NSAccessibilityChildrenAttribute]) {
         NSMutableArray *children = [NSMutableArray arrayWithArray:[_cells objectsAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, [self numberOfVisibleTabs])]]];
-        if(![_overflowPopUpButton isHidden])
+        if (![_overflowPopUpButton isHidden]) {
             [children addObject:_overflowPopUpButton];
-        if(![_addTabButton isHidden])
+        }
+        if (![_addTabButton isHidden]) {
             [children addObject:_addTabButton];
+        }
         attributeValue = NSAccessibilityUnignoredChildren(children);
     } else if ([attribute isEqualToString: NSAccessibilityTabsAttribute]) {
         attributeValue = NSAccessibilityUnignoredChildren(_cells);

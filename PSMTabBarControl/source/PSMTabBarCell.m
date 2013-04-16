@@ -457,9 +457,9 @@
     if (!attributes) {
         NSSet *set = [NSSet setWithArray:[super accessibilityAttributeNames]];
         set = [set setByAddingObjectsFromArray:[NSArray arrayWithObjects:
-                                                NSAccessibilityTitleAttribute,
-                                                NSAccessibilityValueAttribute,
-                                                nil]];
+                                                   NSAccessibilityTitleAttribute,
+                                                   NSAccessibilityValueAttribute,
+                                                   nil]];
         attributes = [[set allObjects] retain];
     }
     return attributes;
@@ -483,10 +483,11 @@
         NSRect rect = [self frame];
         rect = [[self controlView] convertRect:rect toView:nil];
         rect = [[[self controlView] window] convertRectToScreen:rect];
-        if ([attribute isEqualToString:NSAccessibilityPositionAttribute])
+        if ([attribute isEqualToString:NSAccessibilityPositionAttribute]) {
             attributeValue = [NSValue valueWithPoint:rect.origin];
-        else
+        } else {
             attributeValue = [NSValue valueWithSize:rect.size];
+        }
     } else if ([attribute isEqualToString:NSAccessibilityTitleAttribute]) {
         attributeValue = [self stringValue];
     } else if ([attribute isEqualToString: NSAccessibilityValueAttribute]) {
