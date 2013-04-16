@@ -10053,7 +10053,7 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 												<bool key="NSEnabled">YES</bool>
 												<object class="NSTextFieldCell" key="NSCell" id="896498167">
 													<int key="NSCellFlags">-1804599231</int>
-													<int key="NSCellFlags2">272630784</int>
+													<int key="NSCellFlags2">306185216</int>
 													<string key="NSContents"/>
 													<reference key="NSSupport" ref="966507434"/>
 													<reference key="NSControlView" ref="599268235"/>
