@@ -173,7 +173,7 @@ NSString *PID_INFO_NAME = @"name";
 + (pid_t)ppidForPid:(pid_t)thePid
 {
   if (IsLionOrLater()) {
-    struct proc_bsdshortinfo taskShortInfo;
+    struct future_proc_bsdshortinfo taskShortInfo;
     memset(&taskShortInfo, 0, sizeof(taskShortInfo));
     int rc;
     @synchronized ([ProcessCache class]) {
