@@ -15,7 +15,8 @@ NSString *kTrouterActionKey = @"action";
 NSString *kTrouterEditorKey = @"editor";
 NSString *kTrouterTextKey = @"text";
 
-NSString *kSublimeTextIdentifier = @"com.sublimetext.2";
+NSString *kSublimeText2Identifier = @"com.sublimetext.2";
+NSString *kSublimeText3Identifier = @"com.sublimetext.3";
 NSString *kMacVimIdentifier = @"org.vim.MacVim";
 NSString *kTextmateIdentifier = @"com.macromates.textmate";
 NSString *kTextmate2Identifier = @"com.macromates.textmate.preview";
@@ -30,10 +31,11 @@ NSString *kTrouterRawCommandAction = @"raw command";
 @implementation TrouterPrefsController
 
 enum {
-    kSublimeTextTag = 1,
+    kSublimeText2Tag = 1,
     kMacVimTag,
     kTextmateTag,
     kBBEditTag,
+    kSublimeText3Tag
     // Only append to the end of the list; never delete or change.
 };
 
@@ -67,7 +69,17 @@ enum {
     
     switch (result) {
         case noErr:
-            return YES;
+            if ([bundle_id isEqualToString:kSublimeText2Identifier] ||
+                [bundle_id isEqualToString:kSublimeText3Identifier]) {
+                // Extra check for sublime text.
+                if (![[NSWorkspace sharedWorkspace] absolutePathForAppBundleWithIdentifier:bundle_id]) {
+                    return NO;
+                } else {
+                    return YES;
+                }
+            } else {
+                return YES;
+            }
         case kLSApplicationNotFoundErr:
             return NO;
         default:
@@ -77,7 +89,8 @@ enum {
 
 + (NSString *)schemeForEditor:(NSString *)editor
 {
-    if ([editor isEqualToString:kSublimeTextIdentifier]) {
+    if ([editor isEqualToString:kSublimeText2Identifier] ||
+        [editor isEqualToString:kSublimeText3Identifier]) {
         return @"subl";
     }
     if ([editor isEqualToString:kMacVimIdentifier]) {
@@ -94,8 +107,11 @@ enum {
 
 + (NSString *)bestEditor
 {
-    if ([TrouterPrefsController applicationExists:kSublimeTextIdentifier]) {
-        return kSublimeTextIdentifier;
+    if ([TrouterPrefsController applicationExists:kSublimeText3Identifier]) {
+        return kSublimeText3Identifier;
+    }
+    if ([TrouterPrefsController applicationExists:kSublimeText2Identifier]) {
+        return kSublimeText2Identifier;
     }
     if ([TrouterPrefsController applicationExists:kMacVimIdentifier]) {
         return kMacVimIdentifier;
@@ -112,10 +128,15 @@ enum {
 
 - (void)awakeFromNib
 {
-    [editors_ addItemWithTitle:@"Sublime Text"];
+    [editors_ addItemWithTitle:@"Sublime Text 3"];
     [editors_ setAutoenablesItems:NO];
-    [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kSublimeTextTag];
-    if (![TrouterPrefsController applicationExists:kSublimeTextIdentifier]) {
+    [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kSublimeText3Tag];
+    if (![TrouterPrefsController applicationExists:kSublimeText3Identifier]) {
+        [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setEnabled:NO];
+    }
+    [editors_ addItemWithTitle:@"Sublime Text 2"];
+    [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setTag:kSublimeText2Tag];
+    if (![TrouterPrefsController applicationExists:kSublimeText2Identifier]) {
         [(NSMenuItem *)[[[editors_ menu] itemArray] lastObject] setEnabled:NO];
     }
     [editors_ addItemWithTitle:@"MacVim"];
@@ -165,8 +186,11 @@ enum {
 - (NSString *)editorIdentifier
 {
     switch ([[editors_ selectedItem] tag]) {
-        case kSublimeTextTag:
-            return kSublimeTextIdentifier;
+        case kSublimeText3Tag:
+            return kSublimeText3Identifier;
+            
+        case kSublimeText2Tag:
+            return kSublimeText2Identifier;
             
         case kMacVimTag:
             return kMacVimIdentifier;
@@ -273,8 +297,10 @@ enum {
         [text_ setStringValue:@""];
     }
     NSString *editor = [prefs objectForKey:kTrouterEditorKey];
-    if ([editor isEqualToString:kSublimeTextIdentifier]) {
-        [editors_ selectItemWithTag:kSublimeTextTag];
+    if ([editor isEqualToString:kSublimeText2Identifier]) {
+        [editors_ selectItemWithTag:kSublimeText2Tag];
+    } else if ([editor isEqualToString:kSublimeText3Identifier]) {
+        [editors_ selectItemWithTag:kSublimeText3Tag];
     } else if ([editor isEqualToString:kMacVimIdentifier]) {
         [editors_ selectItemWithTag:kMacVimTag];
     } else if ([editor isEqualToString:kTextmateIdentifier]) {

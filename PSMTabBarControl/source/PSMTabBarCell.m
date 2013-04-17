@@ -90,6 +90,12 @@
     [super dealloc];
 }
 
+// we don't want this to be the first responder in the chain
+- (BOOL)acceptsFirstResponder
+{
+  return NO;
+}
+
 #pragma mark -
 #pragma mark Accessors
 

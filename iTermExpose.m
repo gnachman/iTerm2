@@ -1257,6 +1257,7 @@ static NSScreen *ExposeScreen() {
     window_ = nil;
     [view_ release];
     view_ = nil;
+    SetSystemUIMode(kUIModeNormal, 0);
 }
 
 - (void)showWindows:(BOOL)fade
@@ -1567,8 +1568,8 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
 
     // Figure out the right size for a thumbnail.
     NSScreen* theScreen = ExposeScreen();
-    NSRect screenFrame = [theScreen visibleFrame];
-    screenFrame.origin = NSZeroPoint;
+    SetSystemUIMode(kUIModeAllHidden, 0);
+    NSRect screenFrame = [theScreen frame];
     // Create the window and its view.
     window_ = [[iTermExposeWindow alloc] initWithContentRect:screenFrame
                                                    styleMask:NSBorderlessWindowMask
@@ -1662,6 +1663,7 @@ static BOOL AdvanceCell(float* x, float* y, NSRect screenFrame, NSSize size) {
 
 - (void)_toggleOff
 {
+    SetSystemUIMode(kUIModeNormal, 0);
     [[view_ grid] onSelection:nil session:nil];
 }
 
