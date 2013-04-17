@@ -85,10 +85,10 @@ enum {
 
     // option to not render in bold
     BOOL useBoldFont;
-    
+
     // Option to draw bold text as brighter colors.
     BOOL useBrightBold;
-    
+
     // NSTextInput support
     BOOL IM_INPUT_INSERT;
     NSRange IM_INPUT_SELRANGE;
@@ -121,7 +121,7 @@ enum {
 
     // transparency
     double transparency;
-	double blend;
+    double blend;
 
     // data source
     VT100Screen *dataSource;
