@@ -115,6 +115,7 @@
 #define KEY_DISABLE_BOLD           @"Disable Bold"  // DEPRECATED
 #define KEY_USE_BOLD_FONT          @"Use Bold Font"
 #define KEY_USE_BRIGHT_BOLD        @"Use Bright Bold"
+#define KEY_USE_ITALIC_FONT        @"Use Italic Font"
 #define KEY_TRANSPARENCY           @"Transparency"
 #define KEY_BLEND                  @"Blend"
 #define KEY_BLUR                   @"Blur"

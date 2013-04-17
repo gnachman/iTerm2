@@ -2331,6 +2331,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
     [TEXTVIEW setUseBrightBold:[aDict objectForKey:KEY_USE_BRIGHT_BOLD] ? [[aDict objectForKey:KEY_USE_BRIGHT_BOLD] boolValue] : YES];
 
+    // italic
+    [self setUseItalicFont:[[aDict objectForKey:KEY_USE_ITALIC_FONT] boolValue]];
+
     // set up the rest of the preferences
     [SCREEN setPlayBellFlag:![[aDict objectForKey:KEY_SILENCE_BELL] boolValue]];
     [SCREEN setShowBellFlag:[[aDict objectForKey:KEY_VISUAL_BELL] boolValue]];
@@ -3005,6 +3008,16 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (void)setUseBoldFont:(BOOL)boldFlag
 {
     [TEXTVIEW setUseBoldFont:boldFlag];
+}
+
+- (BOOL)useItalicFont
+{
+    return [TEXTVIEW useItalicFont];
+}
+
+- (void)setUseItalicFont:(BOOL)italicFlag
+{
+    [TEXTVIEW setUseItalicFont:italicFlag];
 }
 
 - (BOOL)doubleWidth

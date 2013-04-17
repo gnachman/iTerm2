@@ -89,6 +89,9 @@ enum {
     // Option to draw bold text as brighter colors.
     BOOL useBrightBold;
 
+    // option to not render in italic
+    BOOL useItalicFont;
+
     // NSTextInput support
     BOOL IM_INPUT_INSERT;
     NSRange IM_INPUT_SELRANGE;
@@ -426,6 +429,8 @@ enum {
 - (BOOL)useBoldFont;
 - (void)setUseBoldFont:(BOOL)boldFlag;
 - (void)setUseBrightBold:(BOOL)flag;
+- (BOOL)useItalicFont;
+- (void)setUseItalicFont:(BOOL)italicFlag;
 - (BOOL)blinkingCursor;
 - (void)setBlinkingCursor:(BOOL)bFlag;
 - (void)setBlinkAllowed:(BOOL)value;
@@ -662,7 +667,8 @@ typedef enum {
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)complex
                        fgColor:(int)fgColor
-                    renderBold:(BOOL*)renderBold;
+                    renderBold:(BOOL*)renderBold
+                  renderItalic:(BOOL)renderItalic;
 
 // Returns true if any onscreen text is blinking
 - (BOOL)updateDirtyRects;
