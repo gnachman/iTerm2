@@ -72,6 +72,8 @@ extern const int FutureNSWindowCollectionBehaviorStationary;
 @interface NSView (Future)
 - (void)futureSetAcceptsTouchEvents:(BOOL)value;
 - (void)futureSetWantsRestingTouches:(BOOL)value;
+- (NSRect)futureConvertRectToScreen:(NSRect)rect;
+- (NSRect)futureConvertRectFromScreen:(NSRect)rect;
 @end
 
 @interface NSEvent (Future)

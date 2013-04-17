@@ -13,6 +13,7 @@
     NSFont *font_;
     double baselineOffset_;
     PTYFontInfo *boldVersion_;
+    PTYFontInfo *italicVersion_;
 }
 
 @property (nonatomic, retain) NSFont *font;

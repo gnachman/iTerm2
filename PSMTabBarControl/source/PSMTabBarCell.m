@@ -11,6 +11,7 @@
 #import "PSMTabStyle.h"
 #import "PSMProgressIndicator.h"
 #import "PSMTabDragAssistant.h"
+#import "FutureMethods.h"
 
 @interface PSMTabBarControl (Private)
 - (void)update;
@@ -488,7 +489,7 @@
     } else if ([attribute isEqualToString:NSAccessibilityPositionAttribute] || [attribute isEqualToString:NSAccessibilitySizeAttribute]) {
         NSRect rect = [self frame];
         rect = [[self controlView] convertRect:rect toView:nil];
-        rect = [[[self controlView] window] convertRectToScreen:rect];
+        rect = [[self controlView] futureConvertRectToScreen:rect];
         if ([attribute isEqualToString:NSAccessibilityPositionAttribute]) {
             attributeValue = [NSValue valueWithPoint:rect.origin];
         } else {
