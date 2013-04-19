@@ -323,20 +323,36 @@ error:
 
 - (void)parseBegin:(NSString *)command
 {
-    currentCommand_ = [[commandQueue_ objectAtIndex:0] retain];
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^%begin ([0-9 ]+)$"];
-    if (components.count != 2) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%begin command_id): \"%@\"", command]];
-        return;
+    if ([command hasPrefix:@"%begin auto"]) {
+        NSArray *components = [command captureComponentsMatchedByRegex:@"^%begin auto ([0-9 ]+)$"];
+        if (components.count != 2) {
+            [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%begin command_id): \"%@\"", command]];
+            return;
+        }
+        TmuxLog(@"Begin auto response");
+        currentCommand_ = [[NSMutableDictionary dictionaryWithObjectsAndKeys:
+                               [components objectAtIndex:1], kCommandId,
+                               nil] retain];
+        [currentCommandResponse_ release];
+        [currentCommandData_ release];
+        currentCommandResponse_ = [[NSMutableString alloc] init];
+        currentCommandData_ = [[NSMutableData alloc] init];
+    } else {
+        currentCommand_ = [[commandQueue_ objectAtIndex:0] retain];
+        NSArray *components = [command captureComponentsMatchedByRegex:@"^%begin ([0-9 ]+)$"];
+        if (components.count != 2) {
+            [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%begin command_id): \"%@\"", command]];
+            return;
+        }
+        NSString *commandId = [components objectAtIndex:1];
+        [currentCommand_ setObject:commandId forKey:kCommandId];
+        TmuxLog(@"Begin response to %@", [currentCommand_ objectForKey:kCommandString]);
+        [currentCommandResponse_ release];
+        [currentCommandData_ release];
+        currentCommandResponse_ = [[NSMutableString alloc] init];
+        currentCommandData_ = [[NSMutableData alloc] init];
+        [commandQueue_ removeObjectAtIndex:0];
     }
-    NSString *commandId = [components objectAtIndex:1];
-    [currentCommand_ setObject:commandId forKey:kCommandId];
-    TmuxLog(@"Begin response to %@", [currentCommand_ objectForKey:kCommandString]);
-    [currentCommandResponse_ release];
-    [currentCommandData_ release];
-    currentCommandResponse_ = [[NSMutableString alloc] init];
-    currentCommandData_ = [[NSMutableData alloc] init];
-    [commandQueue_ removeObjectAtIndex:0];
 }
 
 - (void)stripLastNewline {
