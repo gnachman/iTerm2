@@ -1708,6 +1708,17 @@ NSString *sessionsKey = @"sessions";
         [[aSession view] setBackgroundDimmed:NO];
         [aSession setFocused:aSession == [self currentSession]];
     }
+    // Some users report that the first responder isn't always set properly. Let's try to fix that.
+    // This attempt (4/20/13) is to fix bug 2431.
+    if ([self currentSession]) {
+        PtyLog(@"Queue makeFirstResponder:%@. The current first responder is %@",
+               [[self currentSession] TEXTVIEW], [[self window] firstResponder]);
+        [[self window] performSelector:@selector(makeFirstResponder:)
+                            withObject:[[self currentSession] TEXTVIEW]
+                            afterDelay:0];
+    } else {
+        PtyLog(@"There is no current session to make the first responder");
+    }
 }
 
 // Forbid FFM from changing key window if is hotkey window.
