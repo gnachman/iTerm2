@@ -1,9 +1,14 @@
 #!/bin/bash
+function die {
+    echo "$@"
+    echo "$@" | mail -s "Nightly build failure" $MY_EMAIL_ADDR
+    exit 1
+}
 
 set -x
 cd ~/nightly/iTerm2/
 # todo: git pull origin master
-make Nightly || (echo "Nightly build failed" | mail -s "Nightly build failure" $MY_EMAIL_ADDR; exit)
+make Nightly || die "Nightly build failed"
 ./sign.sh
 COMPACTDATE=$(date +"%Y%m%d")-nightly
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
