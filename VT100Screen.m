@@ -3126,8 +3126,21 @@ void DumpBuf(screen_char_t* p, int n) {
     [self setCharAtCursorDirty:1];
 }
 
+- (BOOL)haveTabStopBefore:(int)limit {
+    for (NSNumber *number in tabStops) {
+        if ([number intValue] < limit) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (void)setTab
 {
+    if (![self haveTabStopBefore:WIDTH+1]) {
+        // No legal tabstop so stop; otherwise the for loop would never exit.
+        return;
+    }
     screen_char_t* aLine = [self getLineAtScreenIndex:cursorY];
     int positions = 0;
     BOOL allNulls = YES;
