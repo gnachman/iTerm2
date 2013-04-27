@@ -5875,11 +5875,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     *renderBold = NO;
     PTYFontInfo* theFont;
     BOOL usePrimary = !complex && (ch < 128);
-    if (!usePrimary && !complex) {
-        // Try to use the primary font for non-ascii characters, but only
-        // if it has the glyph.
-        usePrimary = [primaryFont hasGlyphForCharacter:ch];
-    }
 
     if (usePrimary) {
         if (isBold) {
