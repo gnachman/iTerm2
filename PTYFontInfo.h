@@ -31,7 +31,4 @@
 // nil if none is available).
 - (PTYFontInfo *)computedItalicVersion;
 
-// Returns true if this font can render this character with core text.
-- (BOOL)hasGlyphForCharacter:(unichar)theChar;
-
 @end
