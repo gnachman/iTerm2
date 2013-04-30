@@ -535,13 +535,28 @@ error:
 
 - (void)sendKeys:(NSData *)data toWindowPane:(int)windowPane
 {
-    NSString *encoded = [self stringForKeyEncodedData:data];
+    // tmux 1.8 has a bug where commands longer than 1024 characters crash the server.
+    // This is the only place I've found where we send such a long command, so split it up into
+    // multiple parts.
+    const int kMaxChunkSize = 180;  // This is safely under the limit.
+    NSMutableArray *commands = [NSMutableArray array];
+    int offset = 0;
+    while (offset < data.length) {
+        NSRange range = NSMakeRange(offset, MIN(kMaxChunkSize, data.length - offset));
+        offset += range.length;
+        NSString *encoded = [self stringForKeyEncodedData:[data subdataWithRange:range]];
+        NSString *command = [NSString stringWithFormat:@"send-keys -t %%%d %@",
+                             windowPane, encoded];
+        NSDictionary *dict = [self dictionaryForCommand:command
+                                         responseTarget:self
+                                       responseSelector:@selector(noopResponseSelector:)
+                                         responseObject:nil
+                                                  flags:0];
+        [commands addObject:dict];
+    }
+
     [delegate_ tmuxSetSecureLogging:YES];
-    NSString *command = [NSString stringWithFormat:@"send-keys -t %%%d %@",
-                         windowPane, encoded];
-    [self sendCommand:command
-         responseTarget:self
-         responseSelector:@selector(noopResponseSelector:)];
+    [self sendCommandList:commands];
     [delegate_ tmuxSetSecureLogging:NO];
 }
 
