@@ -1355,7 +1355,7 @@ static int CompareFrames(const void* aPtr, const void* bPtr)
 
 - (void)recomputeIndices:(NSNotification*)notification
 {
-    if (![[view_ grid] recomputeIndices]) {
+    if (![[view_ grid] recomputeIndices] && [iTermExpose sharedInstance]->window_) {
         [self _toggleOff];
     }
     NSMutableArray* allSessions = [NSMutableArray arrayWithCapacity:100];

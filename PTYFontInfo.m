@@ -49,9 +49,4 @@
     }
 }
 
-- (BOOL)hasGlyphForCharacter:(unichar)theChar {
-    CGGlyph tempGlyph;
-    return CTFontGetGlyphsForCharacters((CTFontRef)font_, &theChar, &tempGlyph, 1);
-}
-
 @end
