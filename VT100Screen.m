@@ -66,6 +66,9 @@
 #define MAX_ROWS 4096
 #define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array
 
+NSString * const kHighlightForegroundColor = @"kHighlightForegroundColor";
+NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
+
 typedef struct {
     screen_char_t *saved_buffer_lines;
     screen_char_t *saved_screen_top;
@@ -269,7 +272,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
 #endif
     if ((self = [super init]) == nil)
-    return nil;
+        return nil;
 
     WIDTH = DEFAULT_WIDTH;
     HEIGHT = DEFAULT_HEIGHT;
@@ -353,17 +356,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (NSString *)description
 {
-    NSString *basestr;
-    NSString *result;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen description]", __FILE__, __LINE__);
-#endif
-    basestr = [NSString stringWithFormat:@"WIDTH %d, HEIGHT %d, CURSOR (%d,%d)",
-           WIDTH, HEIGHT, cursorX, cursorY];
-    result = [NSString stringWithFormat:@"%@\n%@", basestr, @""]; //colstr];
-
-    return result;
+    return [NSString stringWithFormat:@"<%@: %p WIDTH %d, HEIGHT %d, CURSOR (%d,%d)>", [self class], self, WIDTH, HEIGHT, cursorX, cursorY];
 }
 
 -(screen_char_t *)initScreenWithWidth:(int)width Height:(int)height
@@ -766,11 +759,30 @@ static char* FormatCont(int c)
     }
 }
 
-// Set the color of prototypechar to all chars between startPoint and endPoint on the screen.
-- (void)highlightWithChar:(screen_char_t)prototypechar
-                fromPoint:(NSPoint)startPoint
-                  toPoint:(NSPoint)endPoint
+- (int)colorCodeForColor:(NSColor *)theColor
 {
+    theColor = [theColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+    int r = 5 * [theColor redComponent];
+    int g = 5 * [theColor greenComponent];
+    int b = 5 * [theColor blueComponent];
+    return 16 + b + g*6 + r*36;
+}
+
+// Set the color of prototypechar to all chars between startPoint and endPoint on the screen.
+- (void)highlightWithColors:(NSDictionary *)colors
+                  fromPoint:(NSPoint)startPoint
+                    toPoint:(NSPoint)endPoint
+{
+    NSColor *fgColor = [colors objectForKey:kHighlightForegroundColor];
+    NSColor *bgColor = [colors objectForKey:kHighlightBackgroundColor];
+    int fgColorCode, bgColorCode;
+    if (fgColor) {
+        fgColorCode = [self colorCodeForColor:fgColor];
+    }
+    if (bgColor) {
+        bgColorCode = [self colorCodeForColor:bgColor];
+    }
+
     int x = startPoint.x;
     int y = startPoint.y;
     screen_char_t *theLine = nil;
@@ -784,10 +796,14 @@ static char* FormatCont(int c)
         }
         assert(theLine);
         if (theLine) {
-            theLine[x].alternateBackgroundSemantics = prototypechar.alternateBackgroundSemantics;
-            theLine[x].alternateForegroundSemantics = prototypechar.alternateForegroundSemantics;
-            theLine[x].backgroundColor = prototypechar.backgroundColor;
-            theLine[x].foregroundColor = prototypechar.foregroundColor;
+            if (fgColor) {
+                theLine[x].alternateForegroundSemantics = NO;
+                theLine[x].foregroundColor = fgColorCode;
+            }
+            if (bgColor) {
+                theLine[x].alternateBackgroundSemantics = NO;
+                theLine[x].backgroundColor = bgColorCode;
+            }
         }
         ++x;
         if (x == WIDTH) {
@@ -836,7 +852,7 @@ static char* FormatCont(int c)
 
 // Change color of text on screen that matches regex to the color of prototypechar.
 - (void)highlightTextMatchingRegex:(NSString *)regex
-                     prototypeChar:(screen_char_t)prototypechar
+                            colors:(NSDictionary *)colors
 {
     int y = 0;
     while (y < HEIGHT) {
@@ -871,7 +887,7 @@ static char* FormatCont(int c)
                 endY = HEIGHT - 1;
                 endX = WIDTH;
             }
-            [self highlightWithChar:prototypechar fromPoint:NSMakePoint(startX, startY) toPoint:NSMakePoint(endX, endY)];
+            [self highlightWithColors:colors fromPoint:NSMakePoint(startX, startY) toPoint:NSMakePoint(endX, endY)];
 
             searchRange.location = range.location + range.length;
             searchRange.length = joinedLine.length - searchRange.location;
@@ -2171,6 +2187,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             aLine = [self getLineAtScreenIndex:cursorY];
             for (k = 0; cursorX + k < WIDTH && k < j; k++) {
                 aLine[cursorX + k].code = 0;
+                aLine[cursorX + k].complexChar = NO;
                 assert(cursorX + k < WIDTH);
                 CopyForegroundColor(&aLine[cursorX + k], [TERMINAL foregroundColorCodeReal]);
                 CopyBackgroundColor(&aLine[cursorX + k], [TERMINAL backgroundColorCodeReal]);
@@ -3159,8 +3176,21 @@ void DumpBuf(screen_char_t* p, int n) {
     [self setCharAtCursorDirty:1];
 }
 
+- (BOOL)haveTabStopBefore:(int)limit {
+    for (NSNumber *number in tabStops) {
+        if ([number intValue] < limit) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
 - (void)setTab
 {
+    if (![self haveTabStopBefore:WIDTH+1]) {
+        // No legal tabstop so stop; otherwise the for loop would never exit.
+        return;
+    }
     screen_char_t* aLine = [self getLineAtScreenIndex:cursorY];
     int positions = 0;
     BOOL allNulls = YES;
@@ -3444,39 +3474,26 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     int y = cursorY - (n > 0 ? n : 1);
 
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen cursorUp:%d]",
-          __FILE__, __LINE__, n);
-#endif
+    int x = MIN(cursorX, WIDTH - 1);
     if (cursorY >= SCROLL_TOP) {
-        [self setCursorX:cursorX Y:y < SCROLL_TOP ? SCROLL_TOP : y];
+        [self setCursorX:x Y:y < SCROLL_TOP ? SCROLL_TOP : y];
     } else {
-        [self setCursorX:cursorX Y:y];
+        [self setCursorX:x Y:y];
     }
-    if (cursorX < WIDTH) {
-        [self setCharAtCursorDirty:1];
-        DebugLog(@"cursorUp");
-    }
+    DebugLog(@"cursorUp");
 }
 
 - (void)cursorDown:(int)n
 {
     int y = cursorY + (n > 0 ? n : 1);
 
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen cursorDown:%d, Y = %d; SCROLL_BOTTOM = %d]",
-          __FILE__, __LINE__, n, cursorY, SCROLL_BOTTOM);
-#endif
+    int x = MIN(cursorX, WIDTH - 1);
     if (cursorY <= SCROLL_BOTTOM) {
-        [self setCursorX:cursorX Y:y > SCROLL_BOTTOM ? SCROLL_BOTTOM : y];
+        [self setCursorX:x Y:y > SCROLL_BOTTOM ? SCROLL_BOTTOM : y];
     } else {
-        [self setCursorX:cursorX Y:MAX(0, MIN(HEIGHT-1, y))];
+        [self setCursorX:x Y:MAX(0, MIN(HEIGHT-1, y))];
     }
-
-    if (cursorX < WIDTH) {
-        [self setCharAtCursorDirty:1];
-        DebugLog(@"cursorDown");
-    }
+    DebugLog(@"cursorDown");
 }
 
 - (void)cursorToX:(int)x

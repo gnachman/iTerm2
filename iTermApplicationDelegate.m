@@ -292,13 +292,8 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-- (void)updateToggleToolbarTitle {
-    [toggleToolbar setTitle:[self toolbarShouldBeVisible] ? @"Hide Toolbar" : @"Show Toolbar"];
-}
-
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
-    [self updateToggleToolbarTitle];
     [iTermFontPanel makeDefault];
 
     finishedLaunching_ = YES;
@@ -677,16 +672,6 @@ static BOOL hasBecomeActive = NO;
     return [n boolValue];
 }
 
-- (BOOL)toolbarShouldBeVisible {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"ToolbarVisible"];
-}
-
-- (void)setToolbarShouldBeVisible:(BOOL)value {
-    [[NSUserDefaults standardUserDefaults] setBool:value
-                                            forKey:@"ToolbarVisible"];
-    [self updateToggleToolbarTitle];
-}
-
 - (IBAction)toggleToolbelt:(id)sender
 {
     [[NSUserDefaults standardUserDefaults] setObject:[NSNumber numberWithBool:![self showToolbelt]]
@@ -811,7 +796,7 @@ static BOOL hasBecomeActive = NO;
     }
 }
 
-- (void) dealloc
+- (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
@@ -826,7 +811,7 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)newWindow:(id)sender
 {
-    [[iTermController sharedInstance] newWindow:sender];
+    [[iTermController sharedInstance] newWindow:sender possiblyTmux:YES];
 }
 
 - (IBAction)newSessionWithSameProfile:(id)sender
@@ -836,16 +821,16 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)newSession:(id)sender
 {
-    [[iTermController sharedInstance] newSession:sender];
+    [[iTermController sharedInstance] newSession:sender possiblyTmux:YES];
 }
 
 // navigation
-- (IBAction) previousTerminal: (id) sender
+- (IBAction)previousTerminal:(id)sender
 {
     [[iTermController sharedInstance] previousTerminal:sender];
 }
 
-- (IBAction) nextTerminal: (id) sender
+- (IBAction)nextTerminal:(id)sender
 {
     [[iTermController sharedInstance] nextTerminal:sender];
 }

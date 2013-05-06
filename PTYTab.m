@@ -406,8 +406,22 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return [sv session];
 }
 
+- (void)sanityCheckViewOrder {
+    // I've seen an occasional crash where we try to dereference an empty viewOrder array. I can't
+    // see why it happens, so we should at least be able to recover from it.
+    if ([viewOrder_ count] < currentViewIndex_) {
+        NSLog(@"View order %@ fails sanity check at %@", viewOrder_, [NSThread callStackSymbols]);
+        [viewOrder_ removeAllObjects];
+        for (SessionView *view in [self sessionViews]) {
+            [viewOrder_ addObject:[NSNumber numberWithInt:[view viewId]]];
+        }
+        currentViewIndex_ = 0;
+    }
+}
+
 - (SessionView *)_savedViewWithId:(int)i
 {
+    [self sanityCheckViewOrder];
     for (NSNumber *k in idMap_) {
         SessionView *cur = [idMap_ objectForKey:k];
         if ([cur viewId] == [[viewOrder_ objectAtIndex:i] intValue]) {
@@ -429,6 +443,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]
                          with:sv];
     } else {
+        [self sanityCheckViewOrder];
         sv = [self _recursiveSessionViewWithId:[[viewOrder_ objectAtIndex:currentViewIndex_] intValue]
                                         atNode:root_];
     }
@@ -450,6 +465,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]
                          with:sv];
     } else {
+        [self sanityCheckViewOrder];
         sv = [self _recursiveSessionViewWithId:[[viewOrder_ objectAtIndex:currentViewIndex_] intValue]
                                         atNode:root_];
     }
@@ -2964,9 +2980,9 @@ static NSString* FormatRect(NSRect r) {
         // Don't care for non-tmux tabs.
         return;
     }
-        for (SessionView *sv in [self sessionViews]) {
-                [sv setAutoresizesSubviews:NO];
-        }
+    for (SessionView *sv in [self sessionViews]) {
+        [sv setAutoresizesSubviews:NO];
+    }
     // Find a session view adjacent to the moved splitter.
     NSArray *subviews = [splitView subviews];
     NSView *theView = [subviews objectAtIndex:splitterIndex];  // the view right of or below the dragged splitter.
@@ -2988,7 +3004,7 @@ static NSString* FormatRect(NSRect r) {
 
     // Ask the tmux server to perform the move and we'll update our layout when
     // it finishes.
-    if (amount > 0) {
+    if (amount != 0) {
         [tmuxController_ windowPane:[session tmuxPane]
                           resizedBy:amount
                        horizontally:[splitView isVertical]];
