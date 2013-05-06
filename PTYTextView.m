@@ -6204,14 +6204,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 thisChar.runType = kCharacterRunSingleCharWithCombiningMarks;
                 thisCharString = ComplexCharToStr(theLine[i].code);
                 if (!thisCharString) {
+                    // A bug that's happened more than once is that code gets
+                    // set to 0 but complexChar is left set to true.
                     NSLog(@"No complex char for code %d", (int)theLine[i].code);
                     thisCharString = @"";
                     drawable = NO;
                 } else {
                     drawable = YES;  // TODO: not all unicode is drawable
                 }
-                // Mar 19, 2013: removing assert temporarily to debug its cause (bug 2397).
-                // assert(thisCharString);
             } else {
                 // Non-complex char
                 thisChar.runType = kCharacterRunMultipleSimpleChars;

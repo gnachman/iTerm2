@@ -2190,6 +2190,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             aLine = [self getLineAtScreenIndex:cursorY];
             for (k = 0; cursorX + k < WIDTH && k < j; k++) {
                 aLine[cursorX + k].code = 0;
+                aLine[cursorX + k].complexChar = NO;
                 assert(cursorX + k < WIDTH);
                 CopyForegroundColor(&aLine[cursorX + k], [TERMINAL foregroundColorCodeReal]);
                 CopyBackgroundColor(&aLine[cursorX + k], [TERMINAL backgroundColorCodeReal]);
