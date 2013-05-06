@@ -115,6 +115,7 @@
 #define KEY_DISABLE_BOLD           @"Disable Bold"  // DEPRECATED
 #define KEY_USE_BOLD_FONT          @"Use Bold Font"
 #define KEY_USE_BRIGHT_BOLD        @"Use Bright Bold"
+#define KEY_USE_ITALIC_FONT        @"Use Italic Font"
 #define KEY_TRANSPARENCY           @"Transparency"
 #define KEY_BLEND                  @"Blend"
 #define KEY_BLUR                   @"Blur"
@@ -123,6 +124,7 @@
 #define KEY_ASCII_ANTI_ALIASED     @"ASCII Anti Aliased"
 #define KEY_NONASCII_ANTI_ALIASED  @"Non-ASCII Anti Aliased"
 #define KEY_BACKGROUND_IMAGE_LOCATION @"Background Image Location"
+#define KEY_BACKGROUND_IMAGE_TILED @"Background Image Is Tiled"
 
 // Terminal
 #define KEY_DISABLE_WINDOW_RESIZING           @"Disable Window Resizing"

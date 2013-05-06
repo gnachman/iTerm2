@@ -2289,6 +2289,19 @@ static float versionNumber;
     return [[NSUserDefaults standardUserDefaults] objectForKey:@"LoadPrefsFromCustomFolder"] ? [[[NSUserDefaults standardUserDefaults] objectForKey:@"LoadPrefsFromCustomFolder"] boolValue] : NO;
 }
 
+- (BOOL)preferenceKeyIsSyncable:(NSString *)key
+{
+    NSArray *exemptKeys = [NSArray arrayWithObjects:@"LoadPrefsFromCustomFolder",
+                           @"PrefsCustomFolder",
+                           @"iTerm Version",
+                           nil];
+    return ![exemptKeys containsObject:key] &&
+           ![key hasPrefix:@"NS"] &&
+           ![key hasPrefix:@"SU"] &&
+           ![key hasPrefix:@"NoSync"] &&
+           ![key hasPrefix:@"UK"];
+}
+
 - (BOOL)loadPrefs
 {
     static BOOL done;
@@ -2306,26 +2319,14 @@ static float versionNumber;
     if (remotePrefs && [remotePrefs count]) {
         NSDictionary *localPrefs = [NSDictionary dictionaryWithContentsOfFile:[self _prefsFilename]];
         // Empty out the current prefs
-        NSArray *exemptKeys = [NSArray arrayWithObjects:@"LoadPrefsFromCustomFolder",
-                               @"PrefsCustomFolder", @"iTerm Version", nil];
         for (NSString *key in localPrefs) {
-            if (![exemptKeys containsObject:key] &&
-                ![key hasPrefix:@"NS"] && 
-                ![key hasPrefix:@"SU"] &&
-                ![key hasPrefix:@"NoSync"] &&
-                ![key hasPrefix:@"UK"]) {
-
+            if ([self preferenceKeyIsSyncable:key]) {
                 [[NSUserDefaults standardUserDefaults] removeObjectForKey:key];
             }
         }
 
         for (NSString *key in remotePrefs) {
-            if (![exemptKeys containsObject:key] &&
-                ![key hasPrefix:@"NS"] && 
-                ![key hasPrefix:@"SU"] &&
-                ![key hasPrefix:@"NoSync"] &&
-                ![key hasPrefix:@"UK"]) {
-
+            if ([self preferenceKeyIsSyncable:key]) {
                 [[NSUserDefaults standardUserDefaults] setObject:[remotePrefs objectForKey:key]
                                                           forKey:key];
             }
@@ -2349,32 +2350,28 @@ static float versionNumber;
     }
     NSDictionary *remotePrefs = [self _remotePrefs];
     if (remotePrefs && [remotePrefs count]) {
-        NSDictionary *localPrefs = [prefs dictionaryRepresentation];
+        // Grab all prefs from our bundle only (no globals, etc.).
+        NSDictionary *localPrefs = [prefs persistentDomainForName:[[NSBundle mainBundle] bundleIdentifier]];
         // Iterate over each set of prefs and validate that the other has the same value for each key.
-        NSArray *exemptKeys = [NSArray arrayWithObjects:@"LoadPrefsFromCustomFolder",
-                               @"PrefsCustomFolder", @"iTerm Version", nil];
-
         for (NSString *key in localPrefs) {
-            if (![exemptKeys containsObject:key]) {
-                if (![key hasPrefix:@"NS"] &&
-                    ![key hasPrefix:@"SU"] &&
-                    ![key hasPrefix:@"NoSync"] &&
-                    ![key hasPrefix:@"UK"] &&
-                    ![[remotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
-                    return YES;
-                }
+            if ([self preferenceKeyIsSyncable:key] &&
+                ![[remotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
+                NSLog(@"Prefs differ for key %@. local=\"%@\", remote=\"%@\" [case 1]",
+                      key,
+                      [localPrefs objectForKey:key],
+                      [remotePrefs objectForKey:key]);
+                return YES;
             }
         }
 
         for (NSString *key in remotePrefs) {
-            if (![exemptKeys containsObject:key]) {
-                if (![key hasPrefix:@"NS"] &&
-                    ![key hasPrefix:@"SU"] &&
-                    ![key hasPrefix:@"NoSync"] &&
-                    ![key hasPrefix:@"UK"] &&
-                    ![[remotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
-                    return YES;
-                }
+            if ([self preferenceKeyIsSyncable:key] &&
+                ![[remotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
+                NSLog(@"Prefs differ for key %@. local=\"%@\", remote=\"%@\" [case 2]",
+                      key,
+                      [localPrefs objectForKey:key],
+                      [remotePrefs objectForKey:key]);
+                return YES;
             }
         }
         return NO;
@@ -2866,6 +2863,8 @@ static float versionNumber;
         [useBrightBold setState:NSOnState];
     }
 
+    [useItalicFont setState:[[dict objectForKey:KEY_USE_ITALIC_FONT] boolValue] ? NSOnState : NSOffState];
+
     [transparency setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
 	if ([dict objectForKey:KEY_BLEND]) {
 	  [blend setFloatValue:[[dict objectForKey:KEY_BLEND] floatValue]];
@@ -2892,6 +2891,7 @@ static float versionNumber;
     [backgroundImage setState:[imageFilename length] > 0 ? NSOnState : NSOffState];
     [backgroundImagePreview setImage:[[[NSImage alloc] initByReferencingFile:imageFilename] autorelease]];
     backgroundImageFilename = imageFilename;
+    [backgroundImageTiled setState:[[dict objectForKey:KEY_BACKGROUND_IMAGE_TILED] boolValue] ? NSOnState : NSOffState];
 
     // Terminal tab
     [disableWindowResizing setState:[[dict objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] ? NSOnState : NSOffState];
@@ -3303,6 +3303,7 @@ static float versionNumber;
     [newDict setObject:[NSNumber numberWithInt:[[cursorType selectedCell] tag]] forKey:KEY_CURSOR_TYPE];
     [newDict setObject:[NSNumber numberWithBool:([useBoldFont state]==NSOnState)] forKey:KEY_USE_BOLD_FONT];
     [newDict setObject:[NSNumber numberWithBool:([useBrightBold state]==NSOnState)] forKey:KEY_USE_BRIGHT_BOLD];
+    [newDict setObject:[NSNumber numberWithBool:([useItalicFont state]==NSOnState)] forKey:KEY_USE_ITALIC_FONT];
     [newDict setObject:[NSNumber numberWithFloat:[transparency floatValue]] forKey:KEY_TRANSPARENCY];
     [newDict setObject:[NSNumber numberWithFloat:[blend floatValue]] forKey:KEY_BLEND];
     [newDict setObject:[NSNumber numberWithFloat:[blurRadius floatValue]] forKey:KEY_BLUR_RADIUS];
@@ -3313,8 +3314,8 @@ static float versionNumber;
 
     if (sender == backgroundImage) {
         NSString* filename = nil;
-                if ([sender state] == NSOnState) {
-                        filename = [self _chooseBackgroundImage];
+        if ([sender state] == NSOnState) {
+            filename = [self _chooseBackgroundImage];
         }
         if (!filename) {
                         [backgroundImagePreview setImage: nil];
@@ -3323,6 +3324,7 @@ static float versionNumber;
         backgroundImageFilename = filename;
     }
     [newDict setObject:backgroundImageFilename forKey:KEY_BACKGROUND_IMAGE_LOCATION];
+    [newDict setObject:[NSNumber numberWithBool:([backgroundImageTiled state]==NSOnState)] forKey:KEY_BACKGROUND_IMAGE_TILED];
 
     // Terminal tab
     [newDict setObject:[NSNumber numberWithBool:([disableWindowResizing state]==NSOnState)] forKey:KEY_DISABLE_WINDOW_RESIZING];
@@ -4288,6 +4290,7 @@ static float versionNumber;
         KEY_CURSOR_TYPE,
         KEY_USE_BOLD_FONT,
         KEY_USE_BRIGHT_BOLD,
+        KEY_USE_ITALIC_FONT,
         KEY_ASCII_ANTI_ALIASED,
         KEY_NONASCII_ANTI_ALIASED,
         KEY_ANTI_ALIASING,
@@ -4305,6 +4308,7 @@ static float versionNumber;
         KEY_BLUR_RADIUS,
         KEY_BLUR,
         KEY_BACKGROUND_IMAGE_LOCATION,
+        KEY_BACKGROUND_IMAGE_TILED,
         KEY_SYNC_TITLE,
         KEY_DISABLE_WINDOW_RESIZING,
         KEY_HIDE_AFTER_OPENING,

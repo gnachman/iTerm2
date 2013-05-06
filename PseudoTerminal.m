@@ -1708,6 +1708,22 @@ NSString *sessionsKey = @"sessions";
         [[aSession view] setBackgroundDimmed:NO];
         [aSession setFocused:aSession == [self currentSession]];
     }
+    // Some users report that the first responder isn't always set properly. Let's try to fix that.
+    // This attempt (4/20/13) is to fix bug 2431.
+    [self performSelector:@selector(makeCurrentSessionFirstResponder)
+               withObject:nil
+               afterDelay:0];
+}
+
+- (void)makeCurrentSessionFirstResponder
+{
+    if ([self currentSession]) {
+        PtyLog(@"makeCurrentSessionFirstResponder. New first responder will be %@. The current first responder is %@",
+               [[self currentSession] TEXTVIEW], [[self window] firstResponder]);
+        [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+    } else {
+        PtyLog(@"There is no current session to make the first responder");
+    }
 }
 
 // Forbid FFM from changing key window if is hotkey window.
@@ -2827,9 +2843,10 @@ NSString *sessionsKey = @"sessions";
 - (void)saveAffinitiesLater:(PTYTab *)theTab
 {
     if ([theTab isTmuxTab]) {
-                [self performSelector:@selector(saveAffinitiesAndOriginsForController:)
-                                   withObject:[theTab tmuxController]
-                                   afterDelay:0];
+        PtyLog(@"Queueing call to saveAffinitiesLater from %@", [NSThread callStackSymbols]);
+        [self performSelector:@selector(saveAffinitiesAndOriginsForController:)
+                   withObject:[theTab tmuxController]
+                   afterDelay:0];
     }
 }
 

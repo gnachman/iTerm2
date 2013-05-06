@@ -821,6 +821,7 @@ static BOOL hasBecomeActive = NO;
 
 - (IBAction)newSession:(id)sender
 {
+    DLog(@"iTermApplicationDelegate newSession:");
     [[iTermController sharedInstance] newSession:sender possiblyTmux:YES];
 }
 

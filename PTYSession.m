@@ -2327,6 +2327,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
     // background image
     [self setBackgroundImagePath:[aDict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
+    [self setBackgroundImageTiled:[[aDict objectForKey:KEY_BACKGROUND_IMAGE_TILED] boolValue]];
 
     // colour scheme
     [self setCOLORFGBG_VALUE:[self ansiColorsMatchingForeground:[aDict objectForKey:KEY_FOREGROUND_COLOR]
@@ -2349,6 +2350,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [self setUseBoldFont:YES];
     }
     [TEXTVIEW setUseBrightBold:[aDict objectForKey:KEY_USE_BRIGHT_BOLD] ? [[aDict objectForKey:KEY_USE_BRIGHT_BOLD] boolValue] : YES];
+
+    // italic
+    [self setUseItalicFont:[[aDict objectForKey:KEY_USE_ITALIC_FONT] boolValue]];
 
     // set up the rest of the preferences
     [SCREEN setPlayBellFlag:![[aDict objectForKey:KEY_SILENCE_BELL] boolValue]];
@@ -2730,11 +2734,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     SCREEN = [theSCREEN retain];
 }
 
-- (NSImage *)image
-{
-    return [SCROLLVIEW backgroundImage];
-}
-
 - (SessionView *)view
 {
     return view;
@@ -2794,6 +2793,17 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     return [TEXTVIEW content];
 }
 
+- (BOOL)backgroundImageTiled
+{
+    return backgroundImageTiled;
+}
+
+- (void)setBackgroundImageTiled:(BOOL)set
+{
+    backgroundImageTiled = set;
+    [self setBackgroundImagePath:backgroundImagePath];
+}
+
 - (NSString *)backgroundImagePath
 {
     return backgroundImagePath;
@@ -2817,7 +2827,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         NSImage *anImage = [[NSImage alloc] initWithContentsOfFile:backgroundImagePath];
         if (anImage != nil) {
             [SCROLLVIEW setDrawsBackground:NO];
-            [SCROLLVIEW setBackgroundImage:anImage];
+            [SCROLLVIEW setBackgroundImage:anImage asPattern:[self backgroundImageTiled]];
             [anImage release];
         } else {
             [SCROLLVIEW setDrawsBackground:YES];
@@ -3018,6 +3028,16 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (void)setUseBoldFont:(BOOL)boldFlag
 {
     [TEXTVIEW setUseBoldFont:boldFlag];
+}
+
+- (BOOL)useItalicFont
+{
+    return [TEXTVIEW useItalicFont];
+}
+
+- (void)setUseItalicFont:(BOOL)italicFlag
+{
+    [TEXTVIEW setUseItalicFont:italicFlag];
 }
 
 - (BOOL)doubleWidth

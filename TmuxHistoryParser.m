@@ -22,6 +22,7 @@
 }
 
 // Returns nil on error
+// TODO: Test with italics
 - (NSData *)dataForHistoryLine:(NSString *)hist
                   withTerminal:(VT100Terminal *)terminal
         ambiguousIsDoubleWidth:(BOOL)ambiguousIsDoubleWidth

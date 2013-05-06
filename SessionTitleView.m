@@ -11,6 +11,19 @@
 const double kBottomMargin = 0;
 static const CGFloat kButtonSize = 17;
 
+@interface NoFirstResponderButton : NSButton
+@end
+
+@implementation NoFirstResponderButton
+
+// Sometimes the button becomes the first responder for some weird reason.
+// Prevent that from happening. Bug 1924. This is just an experiment to see if it works (4/16/13)
+- (BOOL)acceptsFirstResponder {
+    return NO;
+}
+
+@end
+
 @implementation SessionTitleView
 
 @synthesize title = title_;
@@ -25,7 +38,7 @@ static const CGFloat kButtonSize = 17;
 
         NSImage *closeImage = [[[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"closebutton"
                                                                                                        ofType:@"tif"]] autorelease];
-        closeButton_ = [[NSButton alloc] initWithFrame:NSMakeRect(x, (frame.size.height - kButtonSize) / 2, kButtonSize, kButtonSize)];
+        closeButton_ = [[NoFirstResponderButton alloc] initWithFrame:NSMakeRect(x, (frame.size.height - kButtonSize) / 2, kButtonSize, kButtonSize)];
         [closeButton_ setButtonType:NSMomentaryPushInButton];
         [closeButton_ setImage:closeImage];
         [closeButton_ setTarget:self];

@@ -184,6 +184,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 @end
 
+@interface PTYTextView ()
+- (NSRect)cursorRect;
+@end
+
 
 @implementation PTYTextView
 
@@ -411,13 +415,23 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)viewDidMoveToWindow
 {
+    [self updateTrackingAreas];
+}
+
+- (void)updateTrackingAreas
+{
+    int trackingOptions;
+    
     if ([self window]) {
+        trackingOptions = NSTrackingMouseEnteredAndExited | NSTrackingInVisibleRect | NSTrackingActiveAlways | NSTrackingEnabledDuringMouseDrag;
         if (trackingArea) {
             [self removeTrackingArea:trackingArea];
         }
-
+        if ([[dataSource terminal] mouseMode] == MOUSE_REPORTING_ALL_MOTION) {
+            trackingOptions |= NSTrackingMouseMoved;
+        }
         trackingArea = [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
-                                                     options:NSTrackingMouseEnteredAndExited | NSTrackingInVisibleRect | NSTrackingActiveAlways | NSTrackingEnabledDuringMouseDrag
+                                                     options:trackingOptions
                                                        owner:self
                                                     userInfo:nil] autorelease];
         [self addTrackingArea:trackingArea];
@@ -511,6 +525,18 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
+
+- (BOOL)useItalicFont
+{
+    return useItalicFont;
+}
+
+- (void)setUseItalicFont:(BOOL)italicFlag
+{
+    useItalicFont = italicFlag;
+    [self setNeedsDisplay:YES];
+}
+
 
 - (void)setUseBrightBold:(BOOL)flag
 {
@@ -908,10 +934,12 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     primaryFont.font = aFont;
     primaryFont.baselineOffset = baseline;
     primaryFont.boldVersion = [primaryFont computedBoldVersion];
+    primaryFont.italicVersion = [primaryFont computedItalicVersion];
 
     secondaryFont.font = naFont;
     secondaryFont.baselineOffset = baseline;
     secondaryFont.boldVersion = [secondaryFont computedBoldVersion];
+    secondaryFont.italicVersion = [secondaryFont computedItalicVersion];
 
     // Force the secondary font to use the same baseline as the primary font.
     secondaryFont.baselineOffset = primaryFont.baselineOffset;
@@ -920,6 +948,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             secondaryFont.boldVersion.baselineOffset = primaryFont.boldVersion.baselineOffset;
         } else {
             secondaryFont.boldVersion.baselineOffset = secondaryFont.baselineOffset;
+        }
+    }
+    if (secondaryFont.italicVersion) {
+        if (primaryFont.italicVersion) {
+            secondaryFont.italicVersion.baselineOffset = primaryFont.italicVersion.baselineOffset;
+        } else {
+            secondaryFont.italicVersion.baselineOffset = secondaryFont.baselineOffset;
         }
     }
 
@@ -1322,12 +1357,12 @@ NSMutableArray* screens=0;
         int yMax = MAX(yStart, y2);
         int xMin = MIN(xStart, x2);
         int xMax = MAX(xStart, x2);
-        NSRect myFrame = [self frame];
-        myFrame.size.height = 0;
-        NSRect result = NSMakeRect(MAX(0, xMin * charWidth),
-                                   MAX(0, myFrame.size.height - yMin * lineHeight),
-                                   MAX(0, (xMax - xMin + 1) * charWidth),
+        NSRect result = NSMakeRect(MAX(0, floor(xMin * charWidth + MARGIN)),
+                                   MAX(0, yMin * lineHeight),
+                                   MAX(0, (xMax - xMin) * charWidth),
                                    MAX(0, (yMax - yMin + 1) * lineHeight));
+        result = [self convertRect:result toView:nil];
+        result = [self futureConvertRectToScreen:result];
         return [NSValue valueWithRect:result];
     } else if ([attribute isEqualToString:NSAccessibilityAttributedStringForRangeParameterizedAttribute]) {
         //(NSAttributedString *) - substring; param:(NSValue * - rangeValue)
@@ -1349,6 +1384,7 @@ NSMutableArray* screens=0;
     // NSLog(@"accessibilityAttributeValue:%@ forParameter:%@", attribute, parameter);
     id result = [self _accessibilityAttributeValue:attribute forParameter:parameter];
     // NSLog(@"  returns %@", result);
+    // NSLog(@"%@(%@) = %@", attribute, parameter, result);
     return result;
 }
 
@@ -1391,16 +1427,16 @@ NSMutableArray* screens=0;
         }
         // Append this line to allText_.
         offset += o;
-        if (k > 0) {
+        if (k >= 0) {
             [allText_ appendString:[NSString stringWithCharacters:chars length:o]];
         }
         if (line[width].code == EOL_HARD) {
             // Add a newline and update offsets arrays that track line break locations.
             [allText_ appendString:@"\n"];
             ++offset;
-            [lineBreakCharOffsets_ addObject:[NSNumber numberWithUnsignedLong:[allText_ length]]];
-            [lineBreakIndexOffsets_ addObject:[NSNumber numberWithUnsignedLong:offset]];
         }
+        [lineBreakCharOffsets_ addObject:[NSNumber numberWithUnsignedLong:[allText_ length]]];
+        [lineBreakIndexOffsets_ addObject:[NSNumber numberWithUnsignedLong:offset]];
     }
 
     return allText_;
@@ -1411,7 +1447,7 @@ NSMutableArray* screens=0;
     if ([attribute isEqualToString:NSAccessibilityRoleAttribute]) {
         return NSAccessibilityTextAreaRole;
     } else if ([attribute isEqualToString:NSAccessibilityRoleDescriptionAttribute]) {
-        return @"Terminal window";
+        return NSAccessibilityRoleDescriptionForUIElement(self);
     } else if ([attribute isEqualToString:NSAccessibilityHelpAttribute]) {
         return nil;
     } else if ([attribute isEqualToString:NSAccessibilityFocusedAttribute]) {
@@ -1427,16 +1463,16 @@ NSMutableArray* screens=0;
     } else if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
         int x = [dataSource cursorX] - 1;
         int y = [dataSource numberOfLines] - [dataSource height] + [dataSource cursorY] - 1;
+        // quick fix for ZoomText for Mac - it does not query AXValue or other
+        // attributes that (re)generate allText_ and especially lineBreak{Char,Index}Offsets_
+        // which are needed for _rangeOfCharAtX:y:
+        [self _allText];
         NSRange range = [self _rangeOfCharAtX:x y:y];
         range.length--;
         return [NSValue valueWithRange:range];
     } else if ([attribute isEqualToString:NSAccessibilitySelectedTextRangesAttribute]) {
-        int x = [dataSource cursorX] - 1;
-        int y = [dataSource numberOfLines] - [dataSource height] + [dataSource cursorY] - 1;
-        NSRange range = [self _rangeOfCharAtX:x y:y];
-        range.length--;
         return [NSArray arrayWithObject:
-                [NSValue valueWithRange:range]];
+                [self _accessibilityAttributeValue:NSAccessibilitySelectedTextRangeAttribute]];
     } else if ([attribute isEqualToString:NSAccessibilityInsertionPointLineNumberAttribute]) {
         return [NSNumber numberWithInt:[dataSource cursorY]-1 + [dataSource numberOfScrollbackLines]];
     } else if ([attribute isEqualToString:NSAccessibilityVisibleCharacterRangeAttribute]) {
@@ -1450,6 +1486,7 @@ NSMutableArray* screens=0;
     // NSLog(@"accessibilityAttributeValue:%@", attribute);
     id result = [self _accessibilityAttributeValue:attribute];
     // NSLog(@"  returns %@", result);
+    // NSLog(@"%@ = %@", attribute, result);
     return result;
 }
 
@@ -1620,6 +1657,13 @@ NSMutableArray* screens=0;
         NSAccessibilityPostNotification(self, NSAccessibilitySelectedColumnsChangedNotification);
         accX = [dataSource cursorX];
         accY = absCursorY;
+        if (UAZoomEnabled()) {
+            CGRect viewRect = NSRectToCGRect([self futureConvertRectToScreen:[self convertRect:[self visibleRect] toView:nil]]);
+            CGRect selectedRect = NSRectToCGRect([self futureConvertRectToScreen:[self convertRect:[self cursorRect] toView:nil]]);
+            viewRect.origin.y = [[NSScreen mainScreen] frame].size.height - (viewRect.origin.y + viewRect.size.height);
+            selectedRect.origin.y = [[NSScreen mainScreen] frame].size.height - (selectedRect.origin.y + selectedRect.size.height);
+            UAZoomChangeFocus(&viewRect, &selectedRect, kUAZoomFocusTypeInsertionPoint);
+        }
     }
 
     return [self updateDirtyRects] || [self _isCursorBlinking];
@@ -1850,7 +1894,6 @@ NSMutableArray* screens=0;
           rect.origin.x, rect.origin.y, rect.size.width, rect.size.height,
           [self frame].origin.x, [self frame].origin.y, [self frame].size.width, [self frame].size.height]);
 #endif
-
     double curLineWidth = [dataSource width] * charWidth;
     if (lineHeight <= 0 || curLineWidth <= 0) {
         DebugLog(@"height or width too small");
@@ -3347,6 +3390,44 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     DebugLog([NSString stringWithFormat:@"Mouse up. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
 
     [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+}
+
+- (void)mouseMoved:(NSEvent *)event
+{
+    DLog(@"mouseMoved");
+    VT100Terminal *terminal = [dataSource terminal];
+    if (![self xtermMouseReporting]) {
+        DLog(@"Mouse move event is dispatched but xtermMouseReporting is not enabled");
+        return;
+    }
+#if DEBUG
+    assert([terminal mouseMode] == MOUSE_REPORTING_ALL_MOTION);
+#endif
+    if ([terminal mouseMode] != MOUSE_REPORTING_ALL_MOTION) {
+        DLog(@"Mouse move event is dispatched but mouseMode is not MOUSE_REPORTING_ALL_MOTION");
+        return;
+    }
+    NSPoint locationInWindow = [event locationInWindow];
+    NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
+    int rx, ry;
+    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+    rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
+    ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
+    if (rx < 0) {
+        rx = -1;
+    }
+    if (ry < 0) {
+        ry = -1;
+    }
+    if (rx != lastReportedX_ || ry != lastReportedY_) {
+        lastReportedX_ = rx;
+        lastReportedY_ = ry;
+        PTYSession* session = [dataSource session];
+        [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_NONE
+                                   withModifiers:[event modifierFlags]
+                                             atX:rx
+                                               Y:ry]];
+    }
 }
 
 - (void)mouseDragged:(NSEvent *)event
@@ -5511,7 +5592,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)drawFlippedBackground:(NSRect)bgRect toPoint:(NSPoint)dest
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView backgroundImage] != nil;
+    BOOL hasBGImage = [scrollView hasBackgroundImage];
     double alpha = 1.0 - transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
@@ -5546,7 +5627,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)drawBackground:(NSRect)bgRect toPoint:(NSPoint)dest
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView backgroundImage] != nil;
+    BOOL hasBGImage = [scrollView hasBackgroundImage];
     double alpha = 1.0 - transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
@@ -5580,7 +5661,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)drawBackground:(NSRect)bgRect
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView backgroundImage] != nil;
+    BOOL hasBGImage = [scrollView hasBackgroundImage];
     double alpha = 1.0 - transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
@@ -5787,16 +5868,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                      isComplex:(BOOL)complex
                        fgColor:(int)fgColor
                     renderBold:(BOOL*)renderBold
+                  renderItalic:(BOOL)renderItalic
 {
     BOOL isBold = *renderBold && useBoldFont;
+    BOOL isItalic = renderItalic && useItalicFont;
     *renderBold = NO;
     PTYFontInfo* theFont;
     BOOL usePrimary = !complex && (ch < 128);
-    if (!usePrimary && !complex) {
-        // Try to use the primary font for non-ascii characters, but only
-        // if it has the glyph.
-        usePrimary = [primaryFont hasGlyphForCharacter:ch];
-    }
 
     if (usePrimary) {
         if (isBold) {
@@ -5804,6 +5882,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (!theFont) {
                 theFont = primaryFont;
                 *renderBold = YES;
+            }
+        } else if (isItalic) {
+            theFont = primaryFont.italicVersion;
+            if (!theFont) {
+                theFont = primaryFont;
             }
         } else {
             theFont = primaryFont;
@@ -5814,6 +5897,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (!theFont) {
                 theFont = secondaryFont;
                 *renderBold = YES;
+            }
+        } else if (isItalic) {
+            theFont = secondaryFont.italicVersion;
+            if (!theFont) {
+                theFont = secondaryFont;
             }
         } else {
             theFont = secondaryFont;
@@ -6116,14 +6204,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 thisChar.runType = kCharacterRunSingleCharWithCombiningMarks;
                 thisCharString = ComplexCharToStr(theLine[i].code);
                 if (!thisCharString) {
+                    // A bug that's happened more than once is that code gets
+                    // set to 0 but complexChar is left set to true.
                     NSLog(@"No complex char for code %d", (int)theLine[i].code);
                     thisCharString = @"";
                     drawable = NO;
                 } else {
                     drawable = YES;  // TODO: not all unicode is drawable
                 }
-                // Mar 19, 2013: removing assert temporarily to debug its cause (bug 2397).
-                // assert(thisCharString);
             } else {
                 // Non-complex char
                 thisChar.runType = kCharacterRunMultipleSimpleChars;
@@ -6156,7 +6244,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             thisChar.fontInfo = [self getFontForChar:theLine[i].code
                                            isComplex:theLine[i].complexChar
                                              fgColor:theLine[i].foregroundColor
-                                          renderBold:&fakeBold];
+                                          renderBold:&fakeBold
+                                        renderItalic:theLine[i].italic];
             thisChar.fakeBold = fakeBold;
 
             // Create a new run if needed (this char differs from the previous
@@ -6444,7 +6533,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int WIDTH = [dataSource width];
     screen_char_t* theLine = [dataSource getLineAtIndex:line];
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView backgroundImage] != nil;
+    BOOL hasBGImage = [scrollView hasBackgroundImage];
     double selectedAlpha = 1.0 - transparency;
     double alphaIfTransparencyInUse = [self useTransparency] ? 1.0 - transparency : 1.0;
     BOOL reversed = [[dataSource terminal] screenMode];
@@ -6476,30 +6565,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                         toPoint:NSMakePoint(toPoint->x + rightMargin.origin.x,
                                                             toPoint->y + rightMargin.size.height)
                                 useTransparency:[self useTransparency]];
-                        // Blend default bg color over bg iamge.
-                        [[aColor colorWithAlphaComponent:1 - blend] set];
-                        NSRectFillUsingOperation(NSMakeRect(toPoint->x + leftMargin.origin.x,
-                                                                                                toPoint->y + leftMargin.origin.y,
-                                                                                                leftMargin.size.width,
-                                                                                                leftMargin.size.height), NSCompositeSourceOver);
-                        NSRectFillUsingOperation(NSMakeRect(toPoint->x + rightMargin.origin.x,
-                                                                                                toPoint->y + rightMargin.origin.y,
-                                                                                                rightMargin.size.width,
-                                                                                                rightMargin.size.height), NSCompositeSourceOver);
-                } else {
+            // Blend default bg color over bg iamge.
+            [[aColor colorWithAlphaComponent:1 - blend] set];
+            NSRectFillUsingOperation(NSMakeRect(toPoint->x + leftMargin.origin.x,
+                                                toPoint->y + leftMargin.origin.y,
+                                                leftMargin.size.width,
+                                                leftMargin.size.height), NSCompositeSourceOver);
+            NSRectFillUsingOperation(NSMakeRect(toPoint->x + rightMargin.origin.x,
+                                                toPoint->y + rightMargin.origin.y,
+                                                rightMargin.size.width,
+                                                rightMargin.size.height), NSCompositeSourceOver);
+        } else {
             [scrollView drawBackgroundImageRect:leftMargin
                                 useTransparency:[self useTransparency]];
             [scrollView drawBackgroundImageRect:rightMargin
                                 useTransparency:[self useTransparency]];
-
-                        // Blend default bg color over bg iamge.
-                        [[aColor colorWithAlphaComponent:1 - blend] set];
-                        NSRectFillUsingOperation(leftMargin, NSCompositeSourceOver);
-                        NSRectFillUsingOperation(rightMargin, NSCompositeSourceOver);
-                }
-                [aColor set];
+            
+            // Blend default bg color over bg iamge.
+            [[aColor colorWithAlphaComponent:1 - blend] set];
+            NSRectFillUsingOperation(leftMargin, NSCompositeSourceOver);
+            NSRectFillUsingOperation(rightMargin, NSCompositeSourceOver);
+        }
+        [aColor set];
     } else {
-                // No BG image
+        // No BG image
         if (toPoint) {
             NSRectFill(NSMakeRect(toPoint->x + leftMargin.origin.x,
                                   toPoint->y,
@@ -6789,6 +6878,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         fg.foregroundColor = ALTSEM_FG_DEFAULT;
         fg.alternateForegroundSemantics = YES;
         fg.bold = NO;
+        fg.italic = NO;
         fg.blink = NO;
         fg.underline = NO;
         memset(&bg, 0, sizeof(bg));

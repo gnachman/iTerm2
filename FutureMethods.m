@@ -63,6 +63,44 @@ const int FutureNSWindowCollectionBehaviorStationary = (1 << 4);  // value stole
         [inv invoke];
     }
 }
+
+- (NSRect)futureConvertRectToScreen:(NSRect)rect
+{
+    if ([[self window] respondsToSelector:@selector(convertRectToScreen:)]) {
+        NSMethodSignature *sig = [[[self window] class] instanceMethodSignatureForSelector:@selector(convertRectToScreen:)];
+        NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+        [inv setTarget:[self window]];
+        [inv setSelector:@selector(convertRectToScreen:)];
+        [inv setArgument:&rect atIndex:2];
+        [inv invoke];
+        NSRect result;
+        [inv getReturnValue:&result];
+        return result;
+    } else {
+        NSPoint p1 = [self convertPointToBase:rect.origin];
+        NSPoint p2 = [self convertPointToBase:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + rect.size.width)];
+        return NSMakeRect(MIN(p1.x, p2.x), MIN(p1.y, p2.y), fabs(p1.x - p2.x), fabs(p1.y - p2.y));
+    }
+}
+
+- (NSRect)futureConvertRectFromScreen:(NSRect)rect {
+    if ([[self window] respondsToSelector:@selector(convertRectFromScreen:)]) {
+        NSMethodSignature *sig = [[[self window] class] instanceMethodSignatureForSelector:@selector(convertRectFromScreen:)];
+        NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
+        [inv setTarget:[self window]];
+        [inv setSelector:@selector(convertRectFromScreen:)];
+        [inv setArgument:&rect atIndex:2];
+        [inv invoke];
+        NSRect result;
+        [inv getReturnValue:&result];
+        return result;
+    } else {
+        NSPoint p1 = [self convertPointFromBase:rect.origin];
+        NSPoint p2 = [self convertPointFromBase:NSMakePoint(rect.origin.x + rect.size.width, rect.origin.y + rect.size.width)];
+        return NSMakeRect(MIN(p1.x, p2.x), MIN(p1.y, p2.y), fabs(p1.x - p2.x), fabs(p1.y - p2.y));
+    }
+}
+
 @end
 
 @implementation NSEvent (Future)
