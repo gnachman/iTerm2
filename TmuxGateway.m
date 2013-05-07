@@ -323,20 +323,36 @@ error:
 
 - (void)parseBegin:(NSString *)command
 {
-    currentCommand_ = [[commandQueue_ objectAtIndex:0] retain];
-    NSArray *components = [command captureComponentsMatchedByRegex:@"^%begin ([0-9 ]+)$"];
-    if (components.count != 2) {
-        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%begin command_id): \"%@\"", command]];
-        return;
+    if ([command hasPrefix:@"%begin auto"]) {
+        NSArray *components = [command captureComponentsMatchedByRegex:@"^%begin auto ([0-9 ]+)$"];
+        if (components.count != 2) {
+            [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%begin command_id): \"%@\"", command]];
+            return;
+        }
+        TmuxLog(@"Begin auto response");
+        currentCommand_ = [[NSMutableDictionary dictionaryWithObjectsAndKeys:
+                               [components objectAtIndex:1], kCommandId,
+                               nil] retain];
+        [currentCommandResponse_ release];
+        [currentCommandData_ release];
+        currentCommandResponse_ = [[NSMutableString alloc] init];
+        currentCommandData_ = [[NSMutableData alloc] init];
+    } else {
+        currentCommand_ = [[commandQueue_ objectAtIndex:0] retain];
+        NSArray *components = [command captureComponentsMatchedByRegex:@"^%begin ([0-9 ]+)$"];
+        if (components.count != 2) {
+            [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%begin command_id): \"%@\"", command]];
+            return;
+        }
+        NSString *commandId = [components objectAtIndex:1];
+        [currentCommand_ setObject:commandId forKey:kCommandId];
+        TmuxLog(@"Begin response to %@", [currentCommand_ objectForKey:kCommandString]);
+        [currentCommandResponse_ release];
+        [currentCommandData_ release];
+        currentCommandResponse_ = [[NSMutableString alloc] init];
+        currentCommandData_ = [[NSMutableData alloc] init];
+        [commandQueue_ removeObjectAtIndex:0];
     }
-    NSString *commandId = [components objectAtIndex:1];
-    [currentCommand_ setObject:commandId forKey:kCommandId];
-    TmuxLog(@"Begin response to %@", [currentCommand_ objectForKey:kCommandString]);
-    [currentCommandResponse_ release];
-    [currentCommandData_ release];
-    currentCommandResponse_ = [[NSMutableString alloc] init];
-    currentCommandData_ = [[NSMutableData alloc] init];
-    [commandQueue_ removeObjectAtIndex:0];
 }
 
 - (void)stripLastNewline {
@@ -519,13 +535,28 @@ error:
 
 - (void)sendKeys:(NSData *)data toWindowPane:(int)windowPane
 {
-    NSString *encoded = [self stringForKeyEncodedData:data];
+    // tmux 1.8 has a bug where commands longer than 1024 characters crash the server.
+    // This is the only place I've found where we send such a long command, so split it up into
+    // multiple parts.
+    const int kMaxChunkSize = 180;  // This is safely under the limit.
+    NSMutableArray *commands = [NSMutableArray array];
+    int offset = 0;
+    while (offset < data.length) {
+        NSRange range = NSMakeRange(offset, MIN(kMaxChunkSize, data.length - offset));
+        offset += range.length;
+        NSString *encoded = [self stringForKeyEncodedData:[data subdataWithRange:range]];
+        NSString *command = [NSString stringWithFormat:@"send-keys -t %%%d %@",
+                             windowPane, encoded];
+        NSDictionary *dict = [self dictionaryForCommand:command
+                                         responseTarget:self
+                                       responseSelector:@selector(noopResponseSelector:)
+                                         responseObject:nil
+                                                  flags:0];
+        [commands addObject:dict];
+    }
+
     [delegate_ tmuxSetSecureLogging:YES];
-    NSString *command = [NSString stringWithFormat:@"send-keys -t %%%d %@",
-                         windowPane, encoded];
-    [self sendCommand:command
-         responseTarget:self
-         responseSelector:@selector(noopResponseSelector:)];
+    [self sendCommandList:commands];
     [delegate_ tmuxSetSecureLogging:NO];
 }
 

@@ -536,7 +536,9 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 {
     [gateway_ sendCommand:[NSString stringWithFormat:@"kill-window -t @%d", window]
            responseTarget:nil
-         responseSelector:nil];
+         responseSelector:nil
+           responseObject:nil
+                    flags:kTmuxGatewayCommandHasEndGuardBug];
 }
 
 - (void)breakOutWindowPane:(int)windowPane toPoint:(NSPoint)screenPoint
