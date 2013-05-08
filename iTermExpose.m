@@ -1355,6 +1355,9 @@ static int CompareFrames(const void* aPtr, const void* bPtr)
 
 - (void)recomputeIndices:(NSNotification*)notification
 {
+    if (![self isVisible]) {
+        return;
+    }
     if (![[view_ grid] recomputeIndices]) {
         [self _toggleOff];
     }

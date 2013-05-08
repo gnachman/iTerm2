@@ -94,6 +94,7 @@ static NSString* TAB_ARRANGEMENT_IS_ACTIVE = @"Is Active";
 static NSString* TAB_ARRANGEMENT_ID = @"ID";  // only for maximize/unmaximize
 static NSString* TAB_ARRANGEMENT_IS_MAXIMIZED = @"Maximized";
 static NSString* TAB_ARRANGEMENT_TMUX_WINDOW_PANE = @"tmux window pane";
+static NSString* TAB_ARRANGEMENT_COLOR = @"Tab color";
 
 static const BOOL USE_THIN_SPLITTERS = YES;
 
@@ -406,8 +407,22 @@ static const BOOL USE_THIN_SPLITTERS = YES;
     return [sv session];
 }
 
+- (void)sanityCheckViewOrder {
+    // I've seen an occasional crash where we try to dereference an empty viewOrder array. I can't
+    // see why it happens, so we should at least be able to recover from it.
+    if ([viewOrder_ count] < currentViewIndex_) {
+        NSLog(@"View order %@ fails sanity check at %@", viewOrder_, [NSThread callStackSymbols]);
+        [viewOrder_ removeAllObjects];
+        for (SessionView *view in [self sessionViews]) {
+            [viewOrder_ addObject:[NSNumber numberWithInt:[view viewId]]];
+        }
+        currentViewIndex_ = 0;
+    }
+}
+
 - (SessionView *)_savedViewWithId:(int)i
 {
+    [self sanityCheckViewOrder];
     for (NSNumber *k in idMap_) {
         SessionView *cur = [idMap_ objectForKey:k];
         if ([cur viewId] == [[viewOrder_ objectAtIndex:i] intValue]) {
@@ -429,6 +444,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]
                          with:sv];
     } else {
+        [self sanityCheckViewOrder];
         sv = [self _recursiveSessionViewWithId:[[viewOrder_ objectAtIndex:currentViewIndex_] intValue]
                                         atNode:root_];
     }
@@ -450,6 +466,7 @@ static const BOOL USE_THIN_SPLITTERS = YES;
         [root_ replaceSubview:[[root_ subviews] objectAtIndex:0]
                          with:sv];
     } else {
+        [self sanityCheckViewOrder];
         sv = [self _recursiveSessionViewWithId:[[viewOrder_ objectAtIndex:currentViewIndex_] intValue]
                                         atNode:root_];
     }
@@ -2112,6 +2129,28 @@ static NSString* FormatRect(NSRect r) {
   }
 }
 
++ (NSString *)htmlNameForColor:(NSColor *)color {
+    return [NSString stringWithFormat:@"%02x%02x%02x",
+            (int) (color.redComponent * 255.0),
+            (int) (color.greenComponent * 255.0),
+            (int) (color.blueComponent * 255.0)];
+}
+
++ (NSColor *)colorForHtmlName:(NSString *)name {
+    if (!name || [name length] != 6) {
+        return nil;
+    }
+    unsigned int i;
+    [[NSScanner scannerWithString:name] scanHexInt:&i];
+    CGFloat r = (i >> 16) & 0xff;
+    CGFloat g = (i >> 8) & 0xff;
+    CGFloat b = (i >> 0) & 0xff;
+    return [NSColor colorWithCalibratedRed:r / 255.0
+                                     green:g / 255.0
+                                      blue:b / 255.0
+                                     alpha:1.0];
+}
+
 + (PTYTab *)tabWithArrangement:(NSDictionary*)arrangement
                     inTerminal:(PseudoTerminal*)term
                hasFlexibleView:(BOOL)hasFlexible
@@ -2160,6 +2199,13 @@ static NSString* FormatRect(NSRect r) {
 
     [self numberOfSessionsDidChange];
     [term setDimmingForSessions];
+
+    NSColor *tabColor;
+    NSString *colorName = [arrangement objectForKey:TAB_ARRANGEMENT_COLOR];
+    tabColor = [[self class] colorForHtmlName:colorName];
+    if (tabColor) {
+        [term setTabColor:tabColor forTabViewItem:tabViewItem_];
+    }
 }
 
 + (PTYTab *)openTabWithArrangement:(NSDictionary*)arrangement
@@ -2182,6 +2228,10 @@ static NSString* FormatRect(NSRect r) {
         [self unmaximize];
     }
     [result setObject:[self _recursiveArrangement:root_ idMap:idMap isMaximized:temp] forKey:TAB_ARRANGEMENT_ROOT];
+    NSColor *color = [[realParentWindow_ tabBarControl] tabColorForTabViewItem:tabViewItem_];
+    if (color) {
+        [result setObject:[[self class] htmlNameForColor:color] forKey:TAB_ARRANGEMENT_COLOR];
+    }
     if (temp) {
         [self maximize];
     }
