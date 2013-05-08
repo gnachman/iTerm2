@@ -906,9 +906,9 @@ static BOOL initDone = NO;
                                              windowType:WINDOW_TYPE_NORMAL
                                                  screen:[bookmark objectForKey:KEY_SCREEN] ? [[bookmark objectForKey:KEY_SCREEN] intValue] : -1
                                                isHotkey:NO] autorelease];
-	if ([[bookmark objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
-		[term hideAfterOpening];
-	}
+        if ([[bookmark objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
+                [term hideAfterOpening];
+        }
     [self addInTerminals:term];
     return term;
 }
@@ -943,8 +943,8 @@ static BOOL initDone = NO;
                                                  windowType:windowType
                                                      screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1
                                                    isHotkey:disableLionFullscreen] autorelease];
-		if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
-			[term hideAfterOpening];
+                if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
+                        [term hideAfterOpening];
         }
         [self addInTerminals:term];
         if (disableLionFullscreen) {
@@ -1005,9 +1005,9 @@ static BOOL initDone = NO;
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                  windowType:[self _windowTypeForBookmark:aDict]
                                                      screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
-		if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
-			[term hideAfterOpening];
-		}
+                if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
+                        [term hideAfterOpening];
+                }
         [self addInTerminals:term];
         toggle = (([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
                   ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN));
@@ -1037,9 +1037,9 @@ static BOOL initDone = NO;
     // Automatically fill in ssh command if command is exactly equal to $$ or it's a login shell.
     BOOL ignore;
     if (aDict == nil ||
-		[[ITAddressBookMgr bookmarkCommand:aDict
-							isLoginSession:&ignore
-							 forObjectType:objectType] isEqualToString:@"$$"] ||
+                [[ITAddressBookMgr bookmarkCommand:aDict
+                                                        isLoginSession:&ignore
+                                                         forObjectType:objectType] isEqualToString:@"$$"] ||
         ![[aDict objectForKey:KEY_CUSTOM_COMMAND] isEqualToString:@"Yes"]) {
         Profile* prototype = aDict;
         if (!prototype) {
@@ -1100,9 +1100,9 @@ static BOOL initDone = NO;
         term = [[[PseudoTerminal alloc] initWithSmartLayout:YES
                                                  windowType:[self _windowTypeForBookmark:aDict]
                                                      screen:[aDict objectForKey:KEY_SCREEN] ? [[aDict objectForKey:KEY_SCREEN] intValue] : -1] autorelease];
-		if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
-			[term hideAfterOpening];
-		}
+                if ([[aDict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue]) {
+                        [term hideAfterOpening];
+                }
         [self addInTerminals:term];
         toggle = (([term windowType] == WINDOW_TYPE_FULL_SCREEN) ||
                   ([term windowType] == WINDOW_TYPE_LION_FULL_SCREEN));

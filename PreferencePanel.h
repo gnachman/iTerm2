@@ -676,6 +676,7 @@ typedef enum {
 - (BOOL)openArrangementAtStartup;
 - (int)irMemory;
 - (BOOL)hotkey;
+- (short)hotkeyChar;  // Nonzero if hotkey is set validly
 - (int)hotkeyCode;
 - (int)hotkeyModifiers;
 - (NSTextField*)hotkeyField;
@@ -767,6 +768,7 @@ typedef enum {
 - (IBAction)copyBookmarks:(id)sender;
 - (IBAction)cancelCopyBookmarks:(id)sender;
 - (void)copyAttributes:(BulkCopySettings)attributes fromBookmark:(NSString*)guid toBookmark:(NSString*)destGuid;
+- (void)sanityCheckHotKey;
 
 - (int)control;
 - (int)leftOption;
