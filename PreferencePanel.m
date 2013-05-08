@@ -1317,7 +1317,7 @@ static float versionNumber;
     [prefs setBool:defaultThreeFingerEmulatesMiddle forKey:@"ThreeFingerEmulates"];
     [prefs setBool:defaultHideTab forKey:@"HideTab"];
     [prefs setInteger:defaultWindowStyle forKey:@"WindowStyle"];
-	[prefs setInteger:defaultOpenTmuxWindowsIn forKey:@"OpenTmuxWindowsIn"];
+        [prefs setInteger:defaultOpenTmuxWindowsIn forKey:@"OpenTmuxWindowsIn"];
     [prefs setBool:defaultAutoHideTmuxClientSession forKey:@"AutoHideTmuxClientSession"];
     [prefs setInteger:defaultTabViewType forKey:@"TabViewType"];
     [prefs setBool:defaultPromptOnQuit forKey:@"PromptOnQuit"];
@@ -1339,7 +1339,7 @@ static float versionNumber;
     [prefs setFloat:defaultStrokeThickness forKey:@"HiddenAFRStrokeThickness"];
     [prefs setObject:defaultWordChars forKey: @"WordCharacters"];
     [prefs setObject:[NSNumber numberWithInt:defaultTmuxDashboardLimit]
-			  forKey:@"TmuxDashboardLimit"];
+                          forKey:@"TmuxDashboardLimit"];
     [prefs setBool:defaultOpenBookmark forKey:@"OpenBookmark"];
     [prefs setObject:[dataSource rawData] forKey: @"New Bookmarks"];
     [prefs setBool:defaultQuitWhenAllWindowsClosed forKey:@"QuitWhenAllWindowsClosed"];
@@ -1656,7 +1656,7 @@ static float versionNumber;
         sender == animateDimming ||
         sender == dimOnlyText ||
         sender == dimmingAmount ||
-		sender == openTmuxWindows ||
+                sender == openTmuxWindows ||
         sender == threeFingerEmulatesMiddle ||
         sender == autoHideTmuxClientSession ||
         sender == showWindowBorder) {
@@ -1769,7 +1769,7 @@ static float versionNumber;
         defaultOpenBookmark = ([openBookmark state] == NSOnState);
         [defaultWordChars release];
         defaultWordChars = [[wordChars stringValue] retain];
-		defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
+                defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
         defaultQuitWhenAllWindowsClosed = ([quitWhenAllWindowsClosed state] == NSOnState);
         defaultCheckUpdate = ([checkUpdate state] == NSOnState);
         defaultSmartPlacement = ([smartPlacement state] == NSOnState);
@@ -1785,7 +1785,8 @@ static float versionNumber;
         defaultHotkey = ([hotkey state] == NSOnState);
         if (defaultHotkey != oldDefaultHotkey) {
             if (defaultHotkey) {
-                [[iTermController sharedInstance] registerHotkey:defaultHotkeyCode modifiers:defaultHotkeyModifiers];
+                // Hotkey was enabled but might be unassigned; give it a default value if needed.
+                [self sanityCheckHotKey];
             } else {
                 [[iTermController sharedInstance] unregisterHotkey];
             }
@@ -1924,7 +1925,7 @@ static float versionNumber;
 
 - (int)openTmuxWindowsIn
 {
-	return defaultOpenTmuxWindowsIn;
+        return defaultOpenTmuxWindowsIn;
 }
 
 - (BOOL)autoHideTmuxClientSession
@@ -1934,7 +1935,7 @@ static float versionNumber;
 
 - (int)tmuxDashboardLimit
 {
-	return defaultTmuxDashboardLimit;
+        return defaultTmuxDashboardLimit;
 }
 
 - (BOOL)promptOnQuit
@@ -2139,6 +2140,11 @@ static float versionNumber;
     return defaultHotkey;
 }
 
+- (short)hotkeyChar
+{
+    return defaultHotkeyChar;
+}
+
 - (int)hotkeyCode
 {
     return defaultHotkeyCode;
@@ -2225,8 +2231,8 @@ static float versionNumber;
     if ([self _stringIsUrlLike:folder]) {
         filename = folder;
     } else {
-		filename = [filename stringByExpandingTildeInPath];
-	}
+                filename = [filename stringByExpandingTildeInPath];
+        }
     return filename;
 }
 
@@ -2866,12 +2872,12 @@ static float versionNumber;
     [useItalicFont setState:[[dict objectForKey:KEY_USE_ITALIC_FONT] boolValue] ? NSOnState : NSOffState];
 
     [transparency setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
-	if ([dict objectForKey:KEY_BLEND]) {
-	  [blend setFloatValue:[[dict objectForKey:KEY_BLEND] floatValue]];
-	} else {
-		// Old clients used transparency for blending
-		[blend setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
-	}
+        if ([dict objectForKey:KEY_BLEND]) {
+          [blend setFloatValue:[[dict objectForKey:KEY_BLEND] floatValue]];
+        } else {
+                // Old clients used transparency for blending
+                [blend setFloatValue:[[dict objectForKey:KEY_TRANSPARENCY] floatValue]];
+        }
     [blurRadius setFloatValue:[dict objectForKey:KEY_BLUR_RADIUS] ? [[dict objectForKey:KEY_BLUR_RADIUS] floatValue] : 2.0];
     [blur setState:[[dict objectForKey:KEY_BLUR] boolValue] ? NSOnState : NSOffState];
     if ([dict objectForKey:KEY_ASCII_ANTI_ALIASED]) {
@@ -2895,7 +2901,7 @@ static float versionNumber;
 
     // Terminal tab
     [disableWindowResizing setState:[[dict objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] ? NSOnState : NSOffState];
-	[hideAfterOpening setState:[[dict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue] ? NSOnState : NSOffState];
+        [hideAfterOpening setState:[[dict objectForKey:KEY_HIDE_AFTER_OPENING] boolValue] ? NSOnState : NSOffState];
     [syncTitle setState:[[dict objectForKey:KEY_SYNC_TITLE] boolValue] ? NSOnState : NSOffState];
     [closeSessionsOnEnd setState:[[dict objectForKey:KEY_CLOSE_SESSIONS_ON_END] boolValue] ? NSOnState : NSOffState];
     [nonAsciiDoubleWidth setState:[[dict objectForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH] boolValue] ? NSOnState : NSOffState];
@@ -3660,21 +3666,21 @@ static float versionNumber;
 }
 
 - (void)forceTextFieldToBeNumber:(NSTextField *)textField
-				 acceptableRange:(NSRange)range
+                                 acceptableRange:(NSRange)range
 {
-	// NSNumberFormatter seems to have lost its mind on Lion. See a description of the problem here:
-	// http://stackoverflow.com/questions/7976951/nsnumberformatter-erasing-value-when-it-violates-constraints
-	int iv = [self intForString:[textField stringValue] inRange:range];
-	unichar lastChar = '0';
-	int numChars = [[textField stringValue] length];
-	if (numChars) {
-		lastChar = [[textField stringValue] characterAtIndex:numChars - 1];
-	}
-	if (iv != [textField intValue] || (lastChar < '0' || lastChar > '9')) {
-		// If the int values don't match up or there are terminal non-number
-		// chars, then update the value.
-		[textField setIntValue:iv];
-	}
+        // NSNumberFormatter seems to have lost its mind on Lion. See a description of the problem here:
+        // http://stackoverflow.com/questions/7976951/nsnumberformatter-erasing-value-when-it-violates-constraints
+        int iv = [self intForString:[textField stringValue] inRange:range];
+        unichar lastChar = '0';
+        int numChars = [[textField stringValue] length];
+        if (numChars) {
+                lastChar = [[textField stringValue] characterAtIndex:numChars - 1];
+        }
+        if (iv != [textField intValue] || (lastChar < '0' || lastChar > '9')) {
+                // If the int values don't match up or there are terminal non-number
+                // chars, then update the value.
+                [textField setIntValue:iv];
+        }
 }
 
 // NSTextField delegate
@@ -3683,13 +3689,13 @@ static float versionNumber;
     id obj = [aNotification object];
     if (obj == wordChars) {
         defaultWordChars = [[wordChars stringValue] retain];
-	} else if (obj == tmuxDashboardLimit) {
-		[self forceTextFieldToBeNumber:tmuxDashboardLimit
-					   acceptableRange:NSMakeRange(0, 1000)];
-		defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
+        } else if (obj == tmuxDashboardLimit) {
+                [self forceTextFieldToBeNumber:tmuxDashboardLimit
+                                           acceptableRange:NSMakeRange(0, 1000)];
+                defaultTmuxDashboardLimit = [[tmuxDashboardLimit stringValue] intValue];
     } else if (obj == scrollbackLines) {
-		[self forceTextFieldToBeNumber:scrollbackLines
-					   acceptableRange:NSMakeRange(0, 10 * 1000 * 1000)];
+                [self forceTextFieldToBeNumber:scrollbackLines
+                                           acceptableRange:NSMakeRange(0, 10 * 1000 * 1000)];
         [self bookmarkSettingChanged:nil];
     } else if (obj == columnsField ||
                obj == rowsField ||
@@ -3750,6 +3756,26 @@ static float versionNumber;
     [keyPress setStringValue:[iTermKeyBindingMgr formatKeyCombination:keyString]];
 }
 
+// Set the local copy of the hotkey, update the pref panel, and register it after a delay.
+- (void)setHotKeyChar:(unsigned short)keyChar code:(unsigned int)keyCode mods:(unsigned int)keyMods
+{
+    defaultHotkeyChar = keyChar;
+    defaultHotkeyCode = keyCode;
+    defaultHotkeyModifiers = keyMods;
+    [[[PreferencePanel sharedInstance] window] makeFirstResponder:[[PreferencePanel sharedInstance] window]];
+    [hotkeyField setStringValue:[iTermKeyBindingMgr formatKeyCombination:[NSString stringWithFormat:@"0x%x-0x%x", keyChar, keyMods]]];
+    [self performSelector:@selector(setHotKey) withObject:self afterDelay:0.01];
+}
+
+- (void)sanityCheckHotKey
+{
+    if (!defaultHotkeyChar) {
+        [self setHotKeyChar:' ' code:kVK_Space mods:NSAlternateKeyMask];
+    } else {
+        [self setHotKeyChar:defaultHotkeyChar code:defaultHotkeyCode mods:defaultHotkeyModifiers];
+    }
+}
+
 - (void)hotkeyKeyDown:(NSEvent*)event
 {
     unsigned int keyMods;
@@ -3760,12 +3786,7 @@ static float versionNumber;
     unsigned short keyChar = [unmodkeystr length] > 0 ? [unmodkeystr characterAtIndex:0] : 0;
     unsigned int keyCode = [event keyCode];
 
-    defaultHotkeyChar = keyChar;
-    defaultHotkeyCode = keyCode;
-    defaultHotkeyModifiers = keyMods;
-    [[[PreferencePanel sharedInstance] window] makeFirstResponder:[[PreferencePanel sharedInstance] window]];
-    [hotkeyField setStringValue:[iTermKeyBindingMgr formatKeyCombination:[NSString stringWithFormat:@"0x%x-0x%x", keyChar, keyMods]]];
-    [self performSelector:@selector(setHotKey) withObject:self afterDelay:0.01];
+    [self setHotKeyChar:keyChar code:keyCode mods:keyMods];
 }
 
 - (void)setHotKey
