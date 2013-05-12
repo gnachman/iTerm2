@@ -1413,6 +1413,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)loadArrangement:(NSDictionary *)arrangement
 {
+    PtyLog(@"Restore arrangement: %@", arrangement);
     if ([arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS]) {
         desiredRows_ = [[arrangement objectForKey:TERMINAL_ARRANGEMENT_DESIRED_ROWS] intValue];
     }
@@ -1762,9 +1763,11 @@ NSString *sessionsKey = @"sessions";
     // during sleep/wake from sleep. That is why we check that width is positive before setting the
     // window's frame.
     NSSize decorationSize = [self windowDecorationSize];
+    PtyLog(@"Decoration size is %@", [NSValue valueWithSize:decorationSize]);
+    PtyLog(@"Line height is %f, char width is %f", (float) [[session TEXTVIEW] lineHeight], [[session TEXTVIEW] charWidth]);
     switch (windowType_) {
         case WINDOW_TYPE_TOP:
-            PtyLog(@"Window type = TOP");
+            PtyLog(@"Window type = TOP, desired rows=%d", desiredRows_);
             // If the screen grew and the window was smaller than the desired number of rows, grow it.
             frame.size.height = MIN([screen visibleFrame].size.height,
                                     ceil([[session TEXTVIEW] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
@@ -1784,7 +1787,7 @@ NSString *sessionsKey = @"sessions";
             break;
 
         case WINDOW_TYPE_BOTTOM:
-            PtyLog(@"Window type = BOTTOM");
+            PtyLog(@"Window type = BOTTOM, desired rows=%d", desiredRows_);
             // If the screen grew and the window was smaller than the desired number of rows, grow it.
             frame.size.height = MIN([screen visibleFrame].size.height,
                                     ceil([[session TEXTVIEW] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
@@ -1804,6 +1807,7 @@ NSString *sessionsKey = @"sessions";
             break;
 
         case WINDOW_TYPE_LEFT:
+            PtyLog(@"Window type = LEFT, desired cols=%d", desiredColumns_);
             // If the screen grew and the window was smaller than the desired number of columns, grow it.
             frame.size.width = MIN([screen visibleFrame].size.width,
                                    [[session TEXTVIEW] charWidth] * desiredColumns_ + 2 * MARGIN);
@@ -4889,6 +4893,7 @@ NSString *sessionsKey = @"sessions";
     } else {
         tempPrefs = [aSession addressBookEntry];
     }
+    PtyLog(@"Open session with prefs: %@", tempPrefs);
     int rows = [[tempPrefs objectForKey:KEY_ROWS] intValue];
     int columns = [[tempPrefs objectForKey:KEY_COLUMNS] intValue];
     if (desiredRows_ < 0) {
