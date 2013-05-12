@@ -2016,7 +2016,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     int start = 0;
     int i = 0;
     for (i = 0; i < data.length; i++) {
-        if (p[i] < ' ' && p[i] != '\n' && p[i] != '\r') {
+        if (p[i] < ' ' && p[i] != '\n' && p[i] != '\r' && p[i] != '\t' && p[i] != 12) {
             if (i > start) {
                 [output appendBytes:p + start length:i - start];
             }
