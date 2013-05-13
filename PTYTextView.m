@@ -421,7 +421,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 - (void)updateTrackingAreas
 {
     int trackingOptions;
-    
+
     if ([self window]) {
         trackingOptions = NSTrackingMouseEnteredAndExited | NSTrackingInVisibleRect | NSTrackingActiveAlways | NSTrackingEnabledDuringMouseDrag;
         if (trackingArea) {
@@ -2529,7 +2529,7 @@ NSMutableArray* screens=0;
             // convert NSEvent's "middle button" to X11's one
             buttonNumber = MOUSE_BUTTON_MIDDLE;
         }
-        
+
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
@@ -2763,7 +2763,7 @@ NSMutableArray* screens=0;
         }
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
-        
+
         int buttonNumber;
         if ([event deltaY] > 0)
             buttonNumber = MOUSE_BUTTON_SCROLLDOWN;
@@ -3702,7 +3702,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
     int y = clickPoint.y;
-    
+
     [self smartSelectAtX:x y:y ignoringNewlines:ignoringNewlines];
     [self setSelectionTime];
     if (startX > -1 && _delegate) {
@@ -6107,7 +6107,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)_constructRuns:(NSPoint)initialPoint
                theLine:(screen_char_t *)theLine
-            sharedData:(SharedCharacterRunData *)sharedData
                   runs:(NSMutableArray *)runs
               reversed:(BOOL)reversed
             bgselected:(BOOL)bgselected
@@ -6127,6 +6126,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL havePrevChar = NO;
     CGFloat curX = initialPoint.x;
     CharacterRun *thisChar = [[[CharacterRun alloc] init] autorelease];
+    thisChar.advancedFontRendering = advancedFontRendering;
     for (int i = indexRange.location; i < indexRange.location + indexRange.length; i++) {
         if (theLine[i].code == DWC_RIGHT) {
             continue;
@@ -6201,7 +6201,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
             // Set the character type and its unichar/string.
             if (theLine[i].complexChar) {
-                thisChar.runType = kCharacterRunSingleCharWithCombiningMarks;
                 thisCharString = ComplexCharToStr(theLine[i].code);
                 if (!thisCharString) {
                     // A bug that's happened more than once is that code gets
@@ -6213,9 +6212,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     drawable = YES;  // TODO: not all unicode is drawable
                 }
             } else {
+                thisCharString = nil;
                 // Non-complex char
-                thisChar.runType = kCharacterRunMultipleSimpleChars;
-
                 // TODO: There are other spaces in unicode that should be supported.
                 drawable = (theLine[i].code != 0 &&
                             theLine[i].code != '\t' &&
@@ -6228,7 +6226,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         } else {
             // Chatacter hidden because of blinking.
-            thisChar.runType = kCharacterRunMultipleSimpleChars;
             drawable = NO;
         }
 
@@ -6263,16 +6260,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
             if (beginNewRun) {
                 if (currentRun) {
-                    [runs addObjectsFromArray:[currentRun runsWithGlyphs]];
+                    [currentRun commit];
+                    [runs addObject:currentRun];
                 }
                 // Begin a new run.
                 currentRun = [[thisChar copy] autorelease];
-                [currentRun clearRange];
-                currentRun.sharedData = sharedData;
                 currentRun.x = curX;
             }
 
-            if (thisChar.runType == kCharacterRunMultipleSimpleChars) {
+            if (!thisCharString) {
                 [currentRun appendCode:thisCharUnichar withAdvance:thisCharAdvance];
             } else {
                 [currentRun appendCodesFromString:thisCharString withAdvance:thisCharAdvance];
@@ -6293,152 +6289,75 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                   1));
         }
         curX += thisCharAdvance;
-        prevChar.runType = thisChar.runType;
         prevChar.fontInfo = thisChar.fontInfo;
         prevChar.color = thisChar.color;
         prevChar.fakeBold = thisChar.fakeBold;
         prevChar.antiAlias = thisChar.antiAlias;
     }
+    [currentRun commit];
 
     if (currentRun) {
-        [runs addObjectsFromArray:[currentRun runsWithGlyphs]];
+        [runs addObject:currentRun];
     }
 }
 
-- (void)_advancedDrawChar:(unichar*)codes
-                 numCodes:(int)numCodes
-                 fontInfo:(PTYFontInfo*)fontInfo
-                    color:(NSColor*)color
-                       at:(NSPoint)pos
-                    width:(CGFloat)width
-                 fakeBold:(BOOL)fakeBold
-                antiAlias:(BOOL)antiAlias
-{
-    NSString* str = [NSString stringWithCharacters:codes
-                                            length:numCodes];
-    NSDictionary* attrs;
-    if (advancedFontRendering && antiAlias) {
-        attrs = [NSDictionary dictionaryWithObjectsAndKeys:
-                               fontInfo.font, NSFontAttributeName,
-                               color, NSForegroundColorAttributeName,
-                               [NSNumber numberWithFloat:strokeThickness], NSStrokeWidthAttributeName,
-                               nil];
-    } else {
-        attrs = [NSDictionary dictionaryWithObjectsAndKeys:
-                 fontInfo.font, NSFontAttributeName,
-                 color, NSForegroundColorAttributeName,
-                 nil];
-    }
-    NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
-    [ctx saveGraphicsState];
-    [ctx setCompositingOperation:NSCompositeSourceOver];
-    NSMutableAttributedString* attributedString = [[[NSMutableAttributedString alloc] initWithString:str
-                                                                                          attributes:attrs] autorelease];
-    // Note that drawInRect doesn't use the right baseline, but drawWithRect
-    // does.
-    //
-    // This technique was picked because it can find glyphs that aren't in the
-    // selected font (e.g., tests/radical.txt). It does a fairly nice job on
-    // laying out combining marks. For now, it fails in two known cases:
-    // 1. Enclosing marks (q in a circle shows as a q)
-    // 2. U+239d, a part of a paren for graphics drawing, doesn't quite render
-    //    right (though it appears to need to render in another char's cell).
-    // Other rejected approaches included using CTFontGetGlyphsForCharacters+
-    // CGContextShowGlyphsWithAdvances, which doesn't render thai characters
-    // correctly in UTF-8-demo.txt.
-    //
-    // We use width*2 so that wide characters that are not double width chars
-    // render properly. These are font-dependent. See tests/suits.txt for an
-    // example.
-    [attributedString drawWithRect:NSMakeRect(pos.x,
-                                              pos.y + fontInfo.baselineOffset + lineHeight,
-                                              width*2,
-                                              lineHeight)
-                           options:0];  // NSStringDrawingUsesLineFragmentOrigin
-    if (fakeBold) {
-        // If anti-aliased, drawing twice at the same position makes the strokes thicker.
-        // If not anti-alised, draw one pixel to the right.
-        [attributedString drawWithRect:NSMakeRect(pos.x + (antiAlias ? 0 : 1),
-                                                  pos.y + fontInfo.baselineOffset + lineHeight,
-                                                  width*2,
-                                                  lineHeight)
-                               options:0];  // NSStringDrawingUsesLineFragmentOrigin
-    }
-    [ctx restoreGraphicsState];
-}
-
-- (void)_drawComplexCharRun:(CharacterRun *)currentRun
-                        ctx:(CGContextRef)ctx
-               initialPoint:(NSPoint)initialPoint
-                  antiAlias:(BOOL)antiAlias
-{
-    [self _advancedDrawChar:[currentRun codes]
-                   numCodes:currentRun.range.length
-                   fontInfo:currentRun.fontInfo
-                      color:currentRun.color
-                         at:NSMakePoint(currentRun.x,
-                                        initialPoint.y)
-                      width:[currentRun advances][0].width
-                   fakeBold:currentRun.fakeBold
-                  antiAlias:antiAlias];
-}
-
-- (void)_drawBasicCharRunAdvanced:(CharacterRun *)currentRun
-                              ctx:(CGContextRef)ctx
-                     initialPoint:(NSPoint)initialPoint
-{
-    CGFloat x = currentRun.x;
-    for (int i = 0; i < currentRun.range.length; i++) {
-        [self _advancedDrawChar:[currentRun codes] + i
-                       numCodes:1
-                       fontInfo:currentRun.fontInfo
-                          color:currentRun.color
-                             at:NSMakePoint(x,
-                                            initialPoint.y)
-                          width:[currentRun advances][i].width
-                       fakeBold:currentRun.fakeBold
-                      antiAlias:currentRun.antiAlias];
-        x += [currentRun advances][i].width;
-    }
-}
-
-- (void)_drawBasicCharRun:(CharacterRun *)currentRun
-                      ctx:(CGContextRef)ctx
-             initialPoint:(NSPoint)initialPoint
-{
-    CGGlyph *glyphs = [currentRun glyphs];
-
-    CGContextSelectFont(ctx,
-                        [[currentRun.fontInfo.font fontName] UTF8String],
-                        [currentRun.fontInfo.font pointSize],
-                        kCGEncodingMacRoman);
-    CGContextSetFillColorSpace(ctx, [[currentRun.color colorSpace] CGColorSpace]);
-    int componentCount = [currentRun.color numberOfComponents];
-
-    CGFloat components[componentCount];
-    [currentRun.color getComponents:components];
-    CGContextSetFillColor(ctx, components);
-
-    double y = initialPoint.y + lineHeight + currentRun.fontInfo.baselineOffset;
+- (void)drawRun:(CharacterRun *)currentRun
+            ctx:(CGContextRef)ctx
+   initialPoint:(NSPoint)initialPoint {
+    CTLineRef line = [currentRun newLine];
+    NSArray *runs = (NSArray *)CTLineGetGlyphRuns(line);
     int x = currentRun.x;
-    // Flip vertically and translate to (x, y).
-    CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
-                                                      0.0, -1.0,
-                                                      x,    y));
 
-    CGContextShowGlyphsWithAdvances(ctx, glyphs, [currentRun advances], currentRun.range.length);
+    CGContextSetShouldAntialias(ctx, currentRun.antiAlias);
+    CTRunRef run;
+    for (int i = 0; i < runs.count; i++) {
+        run = (CTRunRef) [runs objectAtIndex:i];
 
-    if (currentRun.fakeBold) {
-        // If anti-aliased, drawing twice at the same position makes the strokes thicker.
-        // If not anti-alised, draw one pixel to the right.
+        CFIndex glyphCount = CTRunGetGlyphCount(run);
+        const CGSize *suggestedAdvances = CTRunGetAdvancesPtr(run);
+        const CGGlyph *glyphs = CTRunGetGlyphsPtr(run);
+        CGSize advances[glyphCount];
+        [currentRun updateAdvances:advances forSuggestedAdvances:suggestedAdvances count:glyphCount];
+
+
+        CTFontRef runFont =
+                CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
+
+        CGFontRef cgFont = CTFontCopyGraphicsFont(runFont, NULL);
+        CGContextSetFont(ctx, cgFont);
+        CGContextSetFontSize(ctx, CTFontGetSize(runFont));
+        CGContextSetFillColorSpace(ctx, [[currentRun.color colorSpace] CGColorSpace]);
+        int componentCount = [currentRun.color numberOfComponents];
+
+        CGFloat components[componentCount];
+        [currentRun.color getComponents:components];
+        CGContextSetFillColor(ctx, components);
+
+        double y = initialPoint.y + lineHeight + currentRun.fontInfo.baselineOffset;
+        // Flip vertically and translate to (x, y).
         CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
                                                           0.0, -1.0,
-                                                          x + (currentRun.antiAlias ? 0 : 1),
-                                                          y));
+                                                          x,    y));
 
-        CGContextShowGlyphsWithAdvances(ctx, glyphs, [currentRun advances], currentRun.range.length);
+        CGContextShowGlyphsWithAdvances(ctx, glyphs, advances, glyphCount);
+
+        if (currentRun.fakeBold) {
+            // If anti-aliased, drawing twice at the same position makes the strokes thicker.
+            // If not anti-alised, draw one pixel to the right.
+            CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
+                                                              0.0, -1.0,
+                                                              x + (currentRun.antiAlias ? 0 : 1),
+                                                              y));
+
+            CGContextShowGlyphsWithAdvances(ctx, glyphs, advances, glyphCount);
+        }
+        for (int j = 0; j < glyphCount; j++) {
+            x += advances[j].width;
+        }
     }
+    CFRelease(line);
 }
+
 
 - (void)_drawRuns:(NSPoint)initialPoint runs:(NSArray *)runs
 {
@@ -6446,24 +6365,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     CGContextSetTextDrawingMode(ctx, kCGTextFill);
 
     for (CharacterRun *currentRun in runs) {
-        CGContextSetShouldAntialias(ctx, currentRun.antiAlias);
-
-        if (currentRun.runType == kCharacterRunMultipleSimpleChars) {
-            if (currentRun.antiAlias && advancedFontRendering) {
-                [self _drawBasicCharRunAdvanced:currentRun
-                                            ctx:ctx
-                                   initialPoint:initialPoint];
-            } else {
-                [self _drawBasicCharRun:currentRun
-                                    ctx:ctx
-                           initialPoint:initialPoint];
-            }
-        } else {
-            [self _drawComplexCharRun:currentRun
-                                  ctx:ctx
-                         initialPoint:initialPoint
-                            antiAlias:currentRun.antiAlias];
-        }
+        [self drawRun:currentRun ctx:ctx initialPoint:initialPoint];
     }
 }
 
@@ -6476,11 +6378,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                       matches:(NSData*)matches
 {
     const int width = [dataSource width];
-    SharedCharacterRunData *sharedData = [SharedCharacterRunData sharedCharacterRunDataWithCapacity:width];
     NSMutableArray *runs = [NSMutableArray arrayWithCapacity:width];
     [self _constructRuns:initialPoint
                  theLine:theLine
-              sharedData:sharedData
                     runs:runs
                 reversed:reversed
               bgselected:bgselected
@@ -6580,7 +6480,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                 useTransparency:[self useTransparency]];
             [scrollView drawBackgroundImageRect:rightMargin
                                 useTransparency:[self useTransparency]];
-            
+
             // Blend default bg color over bg iamge.
             [[aColor colorWithAlphaComponent:1 - blend] set];
             NSRectFillUsingOperation(leftMargin, NSCompositeSourceOver);
@@ -6784,13 +6684,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     temp.foregroundColor = fgColor;
     temp.alternateForegroundSemantics = fgAlt;
     temp.bold = fgBold;
-    SharedCharacterRunData *sharedData = [SharedCharacterRunData sharedCharacterRunDataWithCapacity:kMaxParts];
     NSMutableArray *runs = [NSMutableArray arrayWithCapacity:kMaxParts];
 
     // Draw the characters.
     [self _constructRuns:NSMakePoint(X, Y)
                  theLine:&temp
-              sharedData:sharedData
                     runs:runs
                 reversed:NO
               bgselected:NO
@@ -6901,7 +6799,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         BOOL justWrapped = NO;
         BOOL foundCursor = NO;
         for (i = 0; i < len; ) {
-            SharedCharacterRunData *sharedData = [SharedCharacterRunData sharedCharacterRunDataWithCapacity:width * kMaxParts];
             NSMutableArray *runs = [NSMutableArray arrayWithCapacity:width * kMaxParts];
             const int remainingCharsInBuffer = len - i;
             const int remainingCharsInLine = width - xStart;
@@ -6931,7 +6828,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Draw the characters.
             [self _constructRuns:NSMakePoint(x, y)
                          theLine:buf
-                      sharedData:sharedData
                             runs:runs
                         reversed:NO
                       bgselected:NO

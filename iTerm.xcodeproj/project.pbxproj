@@ -318,8 +318,6 @@
 		1DA030FA1328BD7C00D7E7DB /* wrap_to_top.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */; };
 		1DA26AC015007507004B5792 /* BackgroundThread.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA26ABE15007507004B5792 /* BackgroundThread.h */; };
 		1DA26AC115007507004B5792 /* BackgroundThread.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA26ABF15007507004B5792 /* BackgroundThread.m */; };
-		1DA3323B1692175800C77F53 /* SharedCharacterRunData.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DA332391692175800C77F53 /* SharedCharacterRunData.h */; };
-		1DA3323C1692175800C77F53 /* SharedCharacterRunData.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DA3323A1692175800C77F53 /* SharedCharacterRunData.m */; };
 		1DA34E04165F268F00AA91C4 /* IBarCursor@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */; };
 		1DA34E05165F268F00AA91C4 /* IBarCursorXMR@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DA34E03165F268F00AA91C4 /* IBarCursorXMR@2x.png */; };
 		1DA7894814AC19F500C8FBD9 /* Growl in Frameworks */ = {isa = PBXBuildFile; fileRef = 1DA7894714AC19F500C8FBD9 /* Growl */; };
@@ -631,8 +629,6 @@
 		1DA030F81328BD7C00D7E7DB /* wrap_to_top.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = wrap_to_top.png; path = images/wrap_to_top.png; sourceTree = "<group>"; };
 		1DA26ABE15007507004B5792 /* BackgroundThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BackgroundThread.h; sourceTree = "<group>"; };
 		1DA26ABF15007507004B5792 /* BackgroundThread.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = BackgroundThread.m; sourceTree = "<group>"; };
-		1DA332391692175800C77F53 /* SharedCharacterRunData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SharedCharacterRunData.h; sourceTree = "<group>"; };
-		1DA3323A1692175800C77F53 /* SharedCharacterRunData.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SharedCharacterRunData.m; sourceTree = "<group>"; };
 		1DA34E02165F268F00AA91C4 /* IBarCursor@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "IBarCursor@2x.png"; path = "images/IBarCursor@2x.png"; sourceTree = "<group>"; };
 		1DA34E03165F268F00AA91C4 /* IBarCursorXMR@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "IBarCursorXMR@2x.png"; path = "images/IBarCursorXMR@2x.png"; sourceTree = "<group>"; };
 		1DA7894714AC19F500C8FBD9 /* Growl */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = Growl; path = Growl.framework/Growl; sourceTree = "<absolute>"; };
@@ -948,8 +944,6 @@
 				1D36155412CBF33E00803EA9 /* ScreenChar.m */,
 				1DEDC8FC1451F67D004F1615 /* SessionTitleView.m */,
 				1D2E813012A18F7500F3D71E /* SessionView.m */,
-				1DA332391692175800C77F53 /* SharedCharacterRunData.h */,
-				1DA3323A1692175800C77F53 /* SharedCharacterRunData.m */,
 				1D29732A14082A52004C5DBE /* SplitSelectionView.m */,
 				1DF8AF5713FD781700C8A435 /* SplitPanel.m */,
 				1D6944D5169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h */,
@@ -1641,7 +1635,6 @@
 				1D48B32316706FC3000046EE /* NSView+iTerm.h in Headers */,
 				1D48B379167E809D000046EE /* CharacterRun.h in Headers */,
 				1D70BA351680158700824B72 /* PTYFontInfo.h in Headers */,
-				1DA3323B1692175800C77F53 /* SharedCharacterRunData.h in Headers */,
 				1D6944D7169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.h in Headers */,
 				1D085F8616F02E7400B7FCE9 /* PasteContext.h in Headers */,
 				1D085F8D16F0328B00B7FCE9 /* PasteViewController.h in Headers */,
@@ -1963,7 +1956,6 @@
 				1D48B32416706FC3000046EE /* NSView+iTerm.m in Sources */,
 				1D48B37A167E809D000046EE /* CharacterRun.m in Sources */,
 				1D70BA361680158700824B72 /* PTYFontInfo.m in Sources */,
-				1DA3323C1692175800C77F53 /* SharedCharacterRunData.m in Sources */,
 				1D6944D8169E96AC00C7048A /* ThreeFingerTapGestureRecognizer.m in Sources */,
 				1D085F8716F02E7400B7FCE9 /* PasteContext.m in Sources */,
 				1D085F8E16F0328B00B7FCE9 /* PasteViewController.m in Sources */,
