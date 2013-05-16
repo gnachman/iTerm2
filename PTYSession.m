@@ -1963,7 +1963,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (NSData *)dataByRemovingControlCodes:(NSData *)data {
     NSMutableData *output = [NSMutableData dataWithCapacity:[data length]];
-    const char *p = data.bytes;
+    const unsigned char *p = data.bytes;
     int start = 0;
     int i = 0;
     for (i = 0; i < data.length; i++) {
