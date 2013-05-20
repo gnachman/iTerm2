@@ -2460,6 +2460,10 @@ static VT100TCC decode_string(unsigned char *datap,
     alternateBackgroundSemantics = altsem;
 }
 
+- (void)resetCharset {
+    CHARSET = NO;
+}
+
 - (void)reset
 {
     LINE_MODE = NO;

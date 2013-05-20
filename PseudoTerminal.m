@@ -5198,6 +5198,12 @@ NSString *sessionsKey = @"sessions";
     [[self currentSession] updateDisplay];
 }
 
+- (IBAction)resetCharset:(id)sender
+{
+    [[[self currentSession] TERMINAL] resetCharset];
+    [[[self currentSession] SCREEN] resetCharset];
+}
+
 - (void)clearBuffer:(id)sender
 {
     [[self currentSession] clearBuffer];
@@ -5289,6 +5295,8 @@ NSString *sessionsKey = @"sessions";
         } else {
             result = NO;
         }
+    } else if ([item action] == @selector(resetCharset:)) {
+        result = ![[[self currentSession] SCREEN] usingDefaultCharset];
     }
     return result;
 }

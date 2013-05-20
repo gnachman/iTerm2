@@ -1660,6 +1660,24 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 #endif
 }
 
+- (BOOL)usingDefaultCharset {
+    for (int i = 0; i < 4; i++) {
+        if (charset[i]) {
+            return NO;
+        }
+    }
+    if ([TERMINAL charset]) {
+        return NO;
+    }
+    return YES;
+}
+
+- (void)resetCharset {
+    for (int i = 0; i < 4; i++) {
+        charset[i] = 0;
+    }
+}
+
 - (void)reset
 {
     [SESSION clearTriggerLine];
