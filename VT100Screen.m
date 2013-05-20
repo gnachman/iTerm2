@@ -2336,8 +2336,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         if (![[[SESSION addressBookEntry] objectForKey:KEY_DISABLE_WINDOW_RESIZING] boolValue] &&
             ![[[SESSION tab] parentWindow] anyFullScreen])
             // TODO: Only allow this if there is a single session in the tab.
-            [[[SESSION tab] parentWindow] windowSetFrameTopLeftPoint:NSMakePoint(token.u.csi.p[2],
-                                                                                 [[[[SESSION tab] parentWindow] windowScreen] frame].size.height - token.u.csi.p[1])];
+            [[[SESSION tab] parentWindow] windowSetFrameTopLeftPoint:NSMakePoint(token.u.csi.p[1],
+                                                                                 [[[[SESSION tab] parentWindow] windowScreen] frame].size.height - token.u.csi.p[2])];
         break;
     case XTERMCC_ICONIFY:
         // TODO: Only allow this if there is a single session in the tab.
@@ -2384,9 +2384,15 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     case XTERMCC_REPORT_WIN_POS:
         {
             char buf[64];
-            NSRect frame = [[[SESSION tab] parentWindow] windowFrame];
+            id<WindowControllerInterface> term = [[SESSION tab] parentWindow];
+            NSRect frame = [term windowFrame];
+            NSScreen *screen = [term windowScreen];
+            // Report the Y coordinate in a non-Macish way; give the distance
+            // from the top of the usable part of the display to the top of the
+            // window frame.
+            int y = [screen frame].size.height - frame.origin.y - frame.size.height;
             // TODO: Figure out wtf to do if there are multiple sessions in one tab.
-            snprintf(buf, sizeof(buf), "\033[3;%d;%dt", (int) frame.origin.x, (int) frame.origin.y);
+            snprintf(buf, sizeof(buf), "\033[3;%d;%dt", (int) frame.origin.x, y);
             [SESSION writeTask: [NSData dataWithBytes:buf length:strlen(buf)]];
         }
         break;

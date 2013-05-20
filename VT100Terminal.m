@@ -959,8 +959,8 @@ static VT100TCC decode_csi(unsigned char *datap,
                             break;
                         case 3:
                             result.type = XTERMCC_WINDOWPOS;
-                            SET_PARAM_DEFAULT(param, 1, 0);     // columns or Y
-                            SET_PARAM_DEFAULT(param, 2, 0);     // rows or X
+                            SET_PARAM_DEFAULT(param, 1, 0);     // X position in px
+                            SET_PARAM_DEFAULT(param, 2, 0);     // Y position in px
                             break;
                         case 4:
                             result.type = XTERMCC_WINDOWSIZE_PIXEL;
