@@ -3925,7 +3925,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         }
                         break;
                     } else {
-                        [result appendString:@" "]; // represent end-of-line blank with space
+                        [result appendString:@" "]; // replace mid-line null char with space
                     }
                 } else if (x1 == x2 &&
                            y < endy &&
