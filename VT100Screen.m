@@ -2113,24 +2113,32 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
      *
      * UPDATE: In bug 1997, we see that it breaks line-drawing chars, which
      * are in SCS0. Indeed, mosh fails to draw these as well.
+     *
+     * UPDATE: In bug 2358, we see that SCS1 is also legitimately used in
+     * UTF-8.
+     *
+     * Here's my take on the way things work. There are four charsets: G0
+     * (default), G1, G2, and G3. They are switched between with codes like SI
+     * (^O), SO (^N), LS2 (ESC n), and LS3 (ESC o). You can get the current
+     * character set from [TERMINAL charset], and that gives you a number from
+     * 0 to 3 inclusive. It is an index into Screen's charset array. In iTerm2,
+     * it is an array of booleans where 0 means normal behavior and 1 means
+     * line-drawing. There should be a bunch of other values too (like
+     * locale-specific char sets). This is pretty far away from the spec,
+     * but it works well enough for common behavior, and it seems the spec
+     * doesn't work well with common behavior (esp line drawing).
      */
     case VT100CSI_SCS0:
             charset[0] = (token.u.code=='0');
             break;
     case VT100CSI_SCS1:
-            if ([TERMINAL encoding] != NSUTF8StringEncoding) {
-                charset[1] = (token.u.code=='0');
-            }
+            charset[1] = (token.u.code=='0');
             break;
     case VT100CSI_SCS2:
-            if ([TERMINAL encoding] != NSUTF8StringEncoding) {
-                charset[2] = (token.u.code=='0');
-            }
+            charset[2] = (token.u.code=='0');
             break;
     case VT100CSI_SCS3:
-            if ([TERMINAL encoding] != NSUTF8StringEncoding) {
-                charset[3] = (token.u.code=='0');
-            }
+            charset[3] = (token.u.code=='0');
             break;
     case VT100CSI_SGR:  [self selectGraphicRendition:token]; break;
     case VT100CSI_SM: break;
@@ -3423,7 +3431,7 @@ void DumpBuf(screen_char_t* p, int n) {
         CopyForegroundColor(&aLine[i], fgCode);
         CopyBackgroundColor(&aLine[i], bgCode);
     }
-
+    // TODO: If erasing all the way to the end of the line, set the newline type to hard.
     idx = cursorY * WIDTH + x1;
     [self setRangeDirty:NSMakeRange(idx, (x2 - x1))];
     DebugLog(@"eraseInLine");
