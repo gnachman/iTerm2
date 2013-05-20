@@ -2221,6 +2221,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
                 CopyForegroundColor(&aLine[cursorX + k], [TERMINAL foregroundColorCodeReal]);
                 CopyBackgroundColor(&aLine[cursorX + k], [TERMINAL backgroundColorCodeReal]);
             }
+            aLine[WIDTH].code = EOL_HARD;
 
             int endX = MIN(WIDTH, dirtyX + j);
             [self setDirtyFromX:dirtyX
@@ -3133,7 +3134,7 @@ void DumpBuf(screen_char_t* p, int n) {
         // get the appropriate screen line
         aLine = [self getLineAtScreenIndex:cursorY];
 
-        if (n<WIDTH) {
+        if (n < WIDTH) {
             memmove(aLine + cursorX,
                     aLine + cursorX + n,
                     (WIDTH - cursorX - n) * sizeof(screen_char_t));
@@ -3404,7 +3405,7 @@ void DumpBuf(screen_char_t* p, int n) {
             aScreenChar -= HEIGHT * REAL_WIDTH; // wrap around to top of buffer
             assert(aScreenChar < (buffer_lines + HEIGHT*REAL_WIDTH));  // Tried to go way past the end of the screen
         }
-        aScreenChar->code = 0;
+        aScreenChar->code = 0;  // This happens to be EOL_HARD, which happens to work.
         aScreenChar->complexChar = NO;
         CopyForegroundColor(aScreenChar, [TERMINAL foregroundColorCodeReal]);
         CopyBackgroundColor(aScreenChar, [TERMINAL backgroundColorCodeReal]);
@@ -3449,7 +3450,11 @@ void DumpBuf(screen_char_t* p, int n) {
         CopyForegroundColor(&aLine[i], fgCode);
         CopyBackgroundColor(&aLine[i], bgCode);
     }
-    // TODO: If erasing all the way to the end of the line, set the newline type to hard.
+    if (x2 == WIDTH && x1 < x2) {
+        // If erasing all the way to the end of the line, set the newline type
+        // to hard so that selections will be copied to the clipboard properly.
+        aLine[WIDTH].code = EOL_HARD;
+    }
     idx = cursorY * WIDTH + x1;
     [self setRangeDirty:NSMakeRange(idx, (x2 - x1))];
     DebugLog(@"eraseInLine");
@@ -3769,17 +3774,10 @@ void DumpBuf(screen_char_t* p, int n) {
     DebugLog(@"scrollDown");
 }
 
-- (void) insertBlank: (int)n
+- (void)insertBlank:(int)n
 {
     screen_char_t *aLine;
     int i;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen insertBlank; %d]", __FILE__, __LINE__, n);
-#endif
-
-
-//    NSLog(@"insertBlank[%d@(%d,%d)]",n,cursorX,cursorY);
 
     if (cursorX >= WIDTH) {
         return;
