@@ -34,6 +34,7 @@
 #import "MovePaneController.h"
 #import "PSMTabDragAssistant.h"
 #import "SessionTitleView.h"
+#import "iTermApplicationDelegate.h"  // For DLog
 
 static const float kTargetFrameRate = 1.0/60.0;
 static int nextViewId;
@@ -292,10 +293,10 @@ static NSDate* lastResizeDate_;
     if (IsLionOrLater()) {
         NSRect windowRect = [[self window] convertRectFromScreen:NSMakeRect(p.x, p.y, 0, 0)];
         pointInSessionView = [self convertRect:windowRect fromView:nil].origin;
-        NSLog(@"Point in screen coords=%@, point in window coords=%@, point in session view=%@",
-              NSStringFromPoint(p),
-              NSStringFromPoint(windowRect.origin),
-              NSStringFromPoint(pointInSessionView));
+        DLog(@"Point in screen coords=%@, point in window coords=%@, point in session view=%@",
+             NSStringFromPoint(p),
+             NSStringFromPoint(windowRect.origin),
+             NSStringFromPoint(pointInSessionView));
     } else {
         NSPoint basePoint = [[self window] convertScreenToBase:p];
         pointInSessionView = [self convertPointFromBase:basePoint];

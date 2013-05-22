@@ -6,6 +6,7 @@
 //
 
 #import "PTYSplitView.h"
+#import "iTermApplicationDelegate.h"  // For DLog
 
 @implementation PTYSplitView
 
@@ -78,7 +79,7 @@
     // mouseDown blocks and lets the user drag things around.
     if (clickedOnSplitterIndex < 0) {
         // You don't seem to have clicked on a splitter.
-        NSLog(@"Click in PTYSplitView was not on splitter");
+        DLog(@"Click in PTYSplitView was not on splitter");
         return;
     }
     [super mouseDown:theEvent];
