@@ -3056,8 +3056,11 @@ NSMutableArray* screens=0;
         }
     }
 
-    // Lock auto scrolling while the user is selecting text
-    [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+    if ([event eventNumber] != firstMouseEventNumber_) {
+        // Lock auto scrolling while the user is selecting text, but not for a first-mouse event
+        // because drags are ignored for those.
+        [(PTYScroller*)([[self enclosingScrollView] verticalScroller]) setUserScroll:YES];
+    }
 
     if (mouseDownEvent != nil) {
         [mouseDownEvent release];
