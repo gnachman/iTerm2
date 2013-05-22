@@ -950,6 +950,8 @@ NSWindowDelegate,
 - (IBAction)enableSendInputToAllPanes:(id)sender;
 - (IBAction)disableBroadcasting:(id)sender;
 
+- (BOOL)anyTabIsTmuxTab;
+
 // Show a dialog confirming close. Returns YES if the window should be closed.
 - (BOOL)showCloseWindow;
 

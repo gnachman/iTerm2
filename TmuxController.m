@@ -480,19 +480,11 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 
 - (void)newWindowWithAffinity:(int)windowId
 {
-    if (windowId >= 0) {
-        [gateway_ sendCommand:@"new-window -PF '#{window_id}'"
-               responseTarget:self
-             responseSelector:@selector(newWindowWithAffinityCreated:affinityWindow:)
-               responseObject:[NSString stringWithInt:windowId]
-                        flags:0];
-    } else {
-        [gateway_ sendCommand:@"new-window -PF '#{window_id}'"
-               responseTarget:self
-             responseSelector:@selector(newWindowWithoutAffinityCreated:)
-               responseObject:nil
-                        flags:0];
-    }
+    [gateway_ sendCommand:@"new-window -PF '#{window_id}'"
+           responseTarget:self
+         responseSelector:@selector(newWindowWithAffinityCreated:affinityWindow:)
+           responseObject:[NSString stringWithInt:windowId]
+                    flags:0];
 }
 
 - (void)movePane:(int)srcPane
@@ -831,6 +823,12 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
             if (term) {
                 return term;
             }
+        } else if ([n hasPrefix:@"-"]) {
+            // Attach to window without a tmux tab; the window number is
+            // -(n+1). It may not exist, which means to open a new window.
+            int value = -[n intValue];
+            value -= 1;  // Correct for -1 based index.
+            return [[iTermController sharedInstance] terminalWithNumber:value];
         } else if (![n hasSuffix:@"_ph"]) {
             PTYTab *tab = [self window:[n intValue]];
             if (tab) {
@@ -945,8 +943,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         if (siblings.count == 1) {
             // This is a wee hack. If a tmux Window is in a native window with one tab
             // then create an equivalence class containing only (wid, wid+"_ph"). ph=placeholder
-            // We'll never see a window id that's negative, but the equivalence
-            // class's existance signals not to apply the default mode for
+            // The equivalence class's existance signals not to apply the default mode for
             // unrecognized windows.
             exemplar = [exemplar stringByAppendingString:@"_ph"];
         }
@@ -1048,11 +1045,6 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
                                                             object:nil];
         [windows_ removeObjectForKey:k];
     }
-}
-
-- (void)newWindowWithoutAffinityCreated:(NSString *)responseStr
-{
-    [affinities_ removeValue:[NSString stringWithInt:[responseStr intValue]]];
 }
 
 - (void)newWindowWithAffinityCreated:(NSString *)responseStr

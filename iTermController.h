@@ -86,6 +86,8 @@
 - (void)newSessionInWindowAtIndex:(id)sender;
 - (void)showHideFindBar;
 - (PseudoTerminal*)keyTerminalWindow;
+- (BOOL)haveTmuxConnection;
+- (PTYSession *)anyTmuxSession;
 
 - (void)stopEventTap;
 
