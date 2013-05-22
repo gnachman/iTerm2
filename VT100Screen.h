@@ -152,6 +152,8 @@ void TranslateCharacterSet(screen_char_t *s, int len);
     // Used for recording instant replay.
     DVR* dvr;
     BOOL saveToScrollbackInAlternateScreen_;
+
+    BOOL allowTitleReporting_;
 }
 
 
@@ -163,6 +165,8 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (screen_char_t*)initScreenWithWidth:(int)width Height:(int)height;
 - (void)resizeWidth:(int)new_width height:(int)height;
 - (void)reset;
+- (void)resetCharset;
+- (BOOL)usingDefaultCharset;
 - (void)setWidth:(int)width height:(int)height;
 - (int)width;
 - (int)height;
@@ -245,11 +249,12 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)scrollUp;
 - (void)scrollDown;
 - (void)activateBell;
-- (void)deviceReport:(VT100TCC)token;
+- (void)deviceReport:(VT100TCC)token withQuestion:(BOOL)question;
 - (void)deviceAttribute:(VT100TCC)token;
-- (void)insertBlank: (int)n;
-- (void)insertLines: (int)n;
-- (void)deleteLines: (int)n;
+- (void)secondaryDeviceAttribute:(VT100TCC)token;
+- (void)insertBlank:(int)n;
+- (void)insertLines:(int)n;
+- (void)deleteLines:(int)n;
 - (void)blink;
 - (int)cursorX;
 - (int)cursorY;
@@ -351,6 +356,9 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 
 // Restore the saved position into a passed-in find context (see saveFindContextAbsPos and saveTerminalAbsPos).
 - (void)restoreSavedPositionToFindContext:(FindContext *)context;
+
+// Set whether title reporting is allowed. Defaults to no.
+- (void)setAllowTitleReporting:(BOOL)allow;
 
 @end
 

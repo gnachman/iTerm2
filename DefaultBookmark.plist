@@ -239,6 +239,8 @@
 	<true/>
 	<key>Use Bright Bold</key>
 	<true/>
+	<key>Use Italic Font</key>
+	<true/>
 	<key>Disable Window Resizing</key>
 	<true/>
 	<key>Flashing Bell</key>

@@ -123,12 +123,13 @@ typedef struct screen_char_t
     // and may be rendered as some combination of font choice and color
     // intensity.
     unsigned int bold : 1;
+    unsigned int italic : 1;
     unsigned int blink : 1;
     unsigned int underline : 1;
-   
-    // These bits aren't used by are defined here so that the entire memory
+
+    // These bits aren't used but are defined here so that the entire memory
     // region can be initialized.
-    unsigned int unused : 26;
+    unsigned int unused : 25;
 } screen_char_t;
 
 // Standard unicode replacement string. Is a double-width character.
@@ -144,6 +145,7 @@ static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t fr
     to->foregroundColor = from.foregroundColor;
     to->alternateForegroundSemantics = from.alternateForegroundSemantics;
     to->bold = from.bold;
+    to->italic = from.italic;
     to->blink = from.blink;
     to->underline = from.underline;
 }
@@ -170,6 +172,7 @@ static inline BOOL ForegroundColorsEqual(const screen_char_t a,
     return a.foregroundColor == b.foregroundColor &&
            a.alternateForegroundSemantics == b.alternateForegroundSemantics &&
            a.bold == b.bold &&
+           a.italic == b.italic &&
            a.blink == b.blink &&
            a.underline == b.underline;
 }

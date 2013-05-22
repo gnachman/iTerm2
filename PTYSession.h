@@ -35,7 +35,7 @@
 #import "LineBuffer.h"
 #import "TmuxGateway.h"
 #import "TmuxController.h"
-
+#import "PasteViewController.h"
 #include <sys/time.h>
 
 #define NSLeftAlternateKeyMask  (0x000020 | NSAlternateKeyMask)
@@ -51,6 +51,7 @@
 @class iTermGrowlDelegate;
 @class FakeWindow;
 @class PseudoTerminal;
+@class PasteContext;
 
 // Timer period when all we have to do is update blinking text/cursor.
 static const float kBlinkTimerIntervalSec = 1.0 / 2.0;
@@ -71,7 +72,7 @@ typedef enum {
 
 @class PTYTab;
 @class SessionView;
-@interface PTYSession : NSResponder <FindViewControllerDelegate, TmuxGatewayDelegate>
+@interface PTYSession : NSResponder <FindViewControllerDelegate, PasteViewControllerDelegate, TmuxGatewayDelegate>
 {
     // Owning tab.
     PTYTab* tab_;
@@ -88,6 +89,12 @@ typedef enum {
     // The window title that should be used when this session is current. Otherwise defaultName
     // should be used.
     NSString* windowTitle;
+    
+    // The window title stack
+    NSMutableArray* windowTitleStack;
+    
+    // The icon title stack
+    NSMutableArray* iconTitleStack;
 
     // The original bookmark name.
     NSString* bookmarkName;
@@ -144,6 +151,9 @@ typedef enum {
 
     // This is not used as far as I can tell.
     int bell;
+
+    // True if background image should be tiled
+    BOOL backgroundImageTiled;
 
     // Filename of background image.
     NSString* backgroundImagePath;
@@ -246,6 +256,9 @@ typedef enum {
     BOOL tmuxSecureLogging_;
 
     NSArray *sendModifiers_;
+    NSMutableArray *eventQueue_;
+    PasteViewController *pasteViewController_;
+    PasteContext *pasteContext_;
 }
 
 // Return the current pasteboard value as a string.
@@ -345,6 +358,7 @@ typedef enum {
 - (void)pageUp:(id)sender;
 - (void)pageDown:(id)sender;
 - (void)paste:(id)sender;
+- (void)pasteString:(NSString *)str flags:(int)flags;
 - (void)pasteString: (NSString *)aString;
 - (void)pasteSlowly:(id)sender;
 - (void)deleteBackward:(id)sender;
@@ -389,6 +403,7 @@ typedef enum {
 - (void)setGrowlNewOutput:(BOOL)value;
 - (BOOL)growlNewOutput;
 
+- (NSString *)windowName;
 - (NSString *)name;
 - (NSString*)rawName;
 - (void)setBookmarkName:(NSString*)theName;
@@ -401,6 +416,10 @@ typedef enum {
 - (NSString*)formattedName:(NSString*)base;
 - (NSString *)windowTitle;
 - (void)setWindowTitle: (NSString *)theTitle;
+- (void)pushWindowTitle;
+- (void)popWindowTitle;
+- (void)pushIconTitle;
+- (void)popIconTitle;
 - (PTYTask *)SHELL;
 - (void)setSHELL: (PTYTask *)theSHELL;
 - (VT100Terminal *)TERMINAL;
@@ -411,7 +430,6 @@ typedef enum {
 - (void)setCOLORFGBG_VALUE: (NSString *)theCOLORFGBG_VALUE;
 - (VT100Screen *)SCREEN;
 - (void)setSCREEN: (VT100Screen *)theSCREEN;
-- (NSImage *)image;
 - (SessionView *)view;
 - (void)setView:(SessionView*)newView;
 - (PTYTextView *)TEXTVIEW;
@@ -440,12 +458,16 @@ typedef enum {
 - (NSString *)contents;
 - (iTermGrowlDelegate*)growlDelegate;
 
+- (BOOL)isPasting;
+- (void)queueKeyDown:(NSEvent *)event;
 
 - (void)clearBuffer;
 - (void)clearScrollbackBuffer;
 - (BOOL)logging;
 - (void)logStart;
 - (void)logStop;
+- (BOOL)backgroundImageTiled;
+- (void)setBackgroundImageTiled:(BOOL)set;
 - (NSString *)backgroundImagePath;
 - (void)setBackgroundImagePath: (NSString *)imageFilePath;
 - (NSColor *)foregroundColor;
@@ -470,6 +492,8 @@ typedef enum {
 - (void)setBlend:(float)blend;
 - (BOOL)useBoldFont;
 - (void)setUseBoldFont:(BOOL)boldFlag;
+- (BOOL)useItalicFont;
+- (void)setUseItalicFont:(BOOL)boldFlag;
 - (void)setColorTable:(int)index color:(NSColor *)c;
 - (int)optionKey;
 - (int)rightOptionKey;

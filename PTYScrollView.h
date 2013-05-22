@@ -50,6 +50,8 @@
 @interface PTYScrollView : NSScrollView
 {
     NSImage *backgroundImage;
+    // If the pattern is set, the backgroundImage is a cached rendered version of it.
+    NSColor *backgroundPattern;
     float transparency;
 
     // Used for working around Lion bug described in setHasVerticalScroller:inInit:
@@ -64,8 +66,9 @@
 - (BOOL)isLegacyScroller;
 
 // background image
-- (NSImage *)backgroundImage;
+- (BOOL)hasBackgroundImage;
 - (void)setBackgroundImage: (NSImage *) anImage;
+- (void)setBackgroundImage: (NSImage *) anImage asPattern:(BOOL)asPattern;
 - (void)drawBackgroundImageRect:(NSRect)rect useTransparency:(BOOL)useTransparency;
 - (void)drawBackgroundImageRect:(NSRect)rect toPoint:(NSPoint)dest useTransparency:(BOOL)useTransparency;
 - (float)transparency;

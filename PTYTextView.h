@@ -85,10 +85,13 @@ enum {
 
     // option to not render in bold
     BOOL useBoldFont;
-    
+
     // Option to draw bold text as brighter colors.
     BOOL useBrightBold;
-    
+
+    // option to not render in italic
+    BOOL useItalicFont;
+
     // NSTextInput support
     BOOL IM_INPUT_INSERT;
     NSRange IM_INPUT_SELRANGE;
@@ -121,7 +124,7 @@ enum {
 
     // transparency
     double transparency;
-	double blend;
+    double blend;
 
     // data source
     VT100Screen *dataSource;
@@ -138,6 +141,7 @@ enum {
     char selectMode;
     BOOL mouseDownOnSelection;
     NSEvent *mouseDownEvent;
+    int lastReportedX_, lastReportedY_;
 
     //find support
     int lastFindStartX, lastFindEndX;
@@ -273,9 +277,9 @@ enum {
 
     // For accessibility. This is a giant string with the entire scrollback buffer plus screen concatenated with newlines for hard eol's.
     NSMutableString* allText_;
-    // For accessibility. This is the indices at which newlines occur in allText_, ignoring multi-char compositing characters.
+    // For accessibility. This is the indices at which soft newlines occur in allText_, ignoring multi-char compositing characters.
     NSMutableArray* lineBreakIndexOffsets_;
-    // For accessibility. This is the actual indices at which newlines occcur in allText_.
+    // For accessibility. This is the actual indices at which soft newlines occcur in allText_.
     NSMutableArray* lineBreakCharOffsets_;
 
     // Brightness of background color
@@ -346,6 +350,7 @@ enum {
 - (void)mouseDown:(NSEvent *)event;
 - (BOOL)mouseDownImpl:(NSEvent*)event;
 - (void)mouseUp:(NSEvent *)event;
+- (void)mouseMoved:(NSEvent *)event;
 - (void)mouseDragged:(NSEvent *)event;
 - (void)otherMouseDown: (NSEvent *) event;
 - (void)otherMouseUp:(NSEvent *)event;
@@ -424,6 +429,8 @@ enum {
 - (BOOL)useBoldFont;
 - (void)setUseBoldFont:(BOOL)boldFlag;
 - (void)setUseBrightBold:(BOOL)flag;
+- (BOOL)useItalicFont;
+- (void)setUseItalicFont:(BOOL)italicFlag;
 - (BOOL)blinkingCursor;
 - (void)setBlinkingCursor:(BOOL)bFlag;
 - (void)setBlinkAllowed:(BOOL)value;
@@ -660,7 +667,8 @@ typedef enum {
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)complex
                        fgColor:(int)fgColor
-                    renderBold:(BOOL*)renderBold;
+                    renderBold:(BOOL*)renderBold
+                  renderItalic:(BOOL)renderItalic;
 
 // Returns true if any onscreen text is blinking
 - (BOOL)updateDirtyRects;

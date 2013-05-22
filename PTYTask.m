@@ -583,8 +583,8 @@ static void reapchild(int n)
     struct winsize win;
     char theTtyname[PATH_MAX];
 
-	[command_ autorelease];
-	command_ = [progpath copy];
+    [command_ autorelease];
+    command_ = [progpath copy];
     path = [progpath copy];
 
     setup_tty_param(&term, &win, width, height, isUTF8);
@@ -627,10 +627,10 @@ static void reapchild(int n)
         // Do not start the new process with a signal handler.
         signal(SIGCHLD, SIG_DFL);
         signal(SIGPIPE, SIG_DFL);
-		sigset_t signals;
-		sigemptyset(&signals);
-		sigaddset(&signals, SIGPIPE);
-		sigprocmask(SIG_UNBLOCK, &signals, NULL);
+        sigset_t signals;
+        sigemptyset(&signals);
+        sigaddset(&signals, SIGPIPE);
+        sigprocmask(SIG_UNBLOCK, &signals, NULL);
 
         chdir(initialPwd);
         for (i = 0; i < envsize; i++) {

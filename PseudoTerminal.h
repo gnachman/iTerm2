@@ -927,6 +927,7 @@ NSWindowDelegate,
 
 // Send a reset to the current session's terminal.
 - (void)reset:(id)sender;
+- (IBAction)resetCharset:(id)sender;
 
 // Clear the buffer of the current session.
 - (void)clearBuffer:(id)sender;

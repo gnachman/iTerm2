@@ -335,6 +335,7 @@ static BOOL initDone = NO;
 
 - (IBAction)newSession:(id)sender
 {
+    DLog(@"iTermController newSession:");
     [self newSession:sender possiblyTmux:NO];
 }
 
@@ -342,6 +343,7 @@ static BOOL initDone = NO;
 // tmux and possiblyTmux is true, open a new tmux session.
 - (void)newSession:(id)sender possiblyTmux:(BOOL)possiblyTmux
 {
+    DLog(@"newSession:%@ possiblyTmux:%d from %@", sender, (int)possiblyTmux, [NSThread callStackSymbols]);
     if (possiblyTmux &&
         FRONT &&
         [[FRONT currentSession] isTmuxClient]) {

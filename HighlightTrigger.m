@@ -321,16 +321,16 @@ enum {
 
         case kYellowBackgroundHighlight:
             return [self dictionaryWithBackgroundColor:[NSColor yellowColor]];
-            
+
         case kMagentaBackgroundHighlight:
             return [self dictionaryWithBackgroundColor:[NSColor magentaColor]];
-            
+
         case kOrangeBackgroundHighlight:
             return [self dictionaryWithBackgroundColor:[NSColor orangeColor]];
-            
+
         case kPurpleBackgroundHighlight:
             return [self dictionaryWithBackgroundColor:[NSColor purpleColor]];
-            
+
         case kBrownBackgroundHighlight:
             return [self dictionaryWithBackgroundColor:[NSColor brownColor]];
     }

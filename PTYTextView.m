@@ -184,6 +184,10 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 @end
 
+@interface PTYTextView ()
+- (NSRect)cursorRect;
+@end
+
 
 @implementation PTYTextView
 
@@ -349,10 +353,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     if (isDown) {
         DLog(@"Emulate three finger click down");
         [self mouseDown:fakeEvent];
+        DLog(@"Returned from mouseDown");
     } else {
         DLog(@"Emulate three finger click up");
         [self mouseUp:fakeEvent];
+        DLog(@"Returned from mouseDown");
     }
+    DLog(@"Restore numTouches to saved value of %d", saved);
     numTouches_ = saved;
     CFRelease(fakeCgEvent);
 }
@@ -408,13 +415,23 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)viewDidMoveToWindow
 {
+    [self updateTrackingAreas];
+}
+
+- (void)updateTrackingAreas
+{
+    int trackingOptions;
+
     if ([self window]) {
+        trackingOptions = NSTrackingMouseEnteredAndExited | NSTrackingInVisibleRect | NSTrackingActiveAlways | NSTrackingEnabledDuringMouseDrag;
         if (trackingArea) {
             [self removeTrackingArea:trackingArea];
         }
-
+        if ([[dataSource terminal] mouseMode] == MOUSE_REPORTING_ALL_MOTION) {
+            trackingOptions |= NSTrackingMouseMoved;
+        }
         trackingArea = [[[NSTrackingArea alloc] initWithRect:[self visibleRect]
-                                                     options:NSTrackingMouseEnteredAndExited | NSTrackingInVisibleRect | NSTrackingActiveAlways | NSTrackingEnabledDuringMouseDrag
+                                                     options:trackingOptions
                                                        owner:self
                                                     userInfo:nil] autorelease];
         [self addTrackingArea:trackingArea];
@@ -508,6 +525,18 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [dimmedColorCache_ removeAllObjects];
     [self setNeedsDisplay:YES];
 }
+
+- (BOOL)useItalicFont
+{
+    return useItalicFont;
+}
+
+- (void)setUseItalicFont:(BOOL)italicFlag
+{
+    useItalicFont = italicFlag;
+    [self setNeedsDisplay:YES];
+}
+
 
 - (void)setUseBrightBold:(BOOL)flag
 {
@@ -905,10 +934,12 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     primaryFont.font = aFont;
     primaryFont.baselineOffset = baseline;
     primaryFont.boldVersion = [primaryFont computedBoldVersion];
+    primaryFont.italicVersion = [primaryFont computedItalicVersion];
 
     secondaryFont.font = naFont;
     secondaryFont.baselineOffset = baseline;
     secondaryFont.boldVersion = [secondaryFont computedBoldVersion];
+    secondaryFont.italicVersion = [secondaryFont computedItalicVersion];
 
     // Force the secondary font to use the same baseline as the primary font.
     secondaryFont.baselineOffset = primaryFont.baselineOffset;
@@ -917,6 +948,13 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             secondaryFont.boldVersion.baselineOffset = primaryFont.boldVersion.baselineOffset;
         } else {
             secondaryFont.boldVersion.baselineOffset = secondaryFont.baselineOffset;
+        }
+    }
+    if (secondaryFont.italicVersion) {
+        if (primaryFont.italicVersion) {
+            secondaryFont.italicVersion.baselineOffset = primaryFont.italicVersion.baselineOffset;
+        } else {
+            secondaryFont.italicVersion.baselineOffset = secondaryFont.baselineOffset;
         }
     }
 
@@ -1319,12 +1357,12 @@ NSMutableArray* screens=0;
         int yMax = MAX(yStart, y2);
         int xMin = MIN(xStart, x2);
         int xMax = MAX(xStart, x2);
-        NSRect myFrame = [self frame];
-        myFrame.size.height = 0;
-        NSRect result = NSMakeRect(MAX(0, xMin * charWidth),
-                                   MAX(0, myFrame.size.height - yMin * lineHeight),
-                                   MAX(0, (xMax - xMin + 1) * charWidth),
+        NSRect result = NSMakeRect(MAX(0, floor(xMin * charWidth + MARGIN)),
+                                   MAX(0, yMin * lineHeight),
+                                   MAX(0, (xMax - xMin) * charWidth),
                                    MAX(0, (yMax - yMin + 1) * lineHeight));
+        result = [self convertRect:result toView:nil];
+        result = [self futureConvertRectToScreen:result];
         return [NSValue valueWithRect:result];
     } else if ([attribute isEqualToString:NSAccessibilityAttributedStringForRangeParameterizedAttribute]) {
         //(NSAttributedString *) - substring; param:(NSValue * - rangeValue)
@@ -1346,6 +1384,7 @@ NSMutableArray* screens=0;
     // NSLog(@"accessibilityAttributeValue:%@ forParameter:%@", attribute, parameter);
     id result = [self _accessibilityAttributeValue:attribute forParameter:parameter];
     // NSLog(@"  returns %@", result);
+    // NSLog(@"%@(%@) = %@", attribute, parameter, result);
     return result;
 }
 
@@ -1388,16 +1427,16 @@ NSMutableArray* screens=0;
         }
         // Append this line to allText_.
         offset += o;
-        if (k > 0) {
+        if (k >= 0) {
             [allText_ appendString:[NSString stringWithCharacters:chars length:o]];
         }
         if (line[width].code == EOL_HARD) {
             // Add a newline and update offsets arrays that track line break locations.
             [allText_ appendString:@"\n"];
             ++offset;
-            [lineBreakCharOffsets_ addObject:[NSNumber numberWithUnsignedLong:[allText_ length]]];
-            [lineBreakIndexOffsets_ addObject:[NSNumber numberWithUnsignedLong:offset]];
         }
+        [lineBreakCharOffsets_ addObject:[NSNumber numberWithUnsignedLong:[allText_ length]]];
+        [lineBreakIndexOffsets_ addObject:[NSNumber numberWithUnsignedLong:offset]];
     }
 
     return allText_;
@@ -1408,7 +1447,7 @@ NSMutableArray* screens=0;
     if ([attribute isEqualToString:NSAccessibilityRoleAttribute]) {
         return NSAccessibilityTextAreaRole;
     } else if ([attribute isEqualToString:NSAccessibilityRoleDescriptionAttribute]) {
-        return @"Terminal window";
+        return NSAccessibilityRoleDescriptionForUIElement(self);
     } else if ([attribute isEqualToString:NSAccessibilityHelpAttribute]) {
         return nil;
     } else if ([attribute isEqualToString:NSAccessibilityFocusedAttribute]) {
@@ -1424,16 +1463,16 @@ NSMutableArray* screens=0;
     } else if ([attribute isEqualToString:NSAccessibilitySelectedTextRangeAttribute]) {
         int x = [dataSource cursorX] - 1;
         int y = [dataSource numberOfLines] - [dataSource height] + [dataSource cursorY] - 1;
+        // quick fix for ZoomText for Mac - it does not query AXValue or other
+        // attributes that (re)generate allText_ and especially lineBreak{Char,Index}Offsets_
+        // which are needed for _rangeOfCharAtX:y:
+        [self _allText];
         NSRange range = [self _rangeOfCharAtX:x y:y];
         range.length--;
         return [NSValue valueWithRange:range];
     } else if ([attribute isEqualToString:NSAccessibilitySelectedTextRangesAttribute]) {
-        int x = [dataSource cursorX] - 1;
-        int y = [dataSource numberOfLines] - [dataSource height] + [dataSource cursorY] - 1;
-        NSRange range = [self _rangeOfCharAtX:x y:y];
-        range.length--;
         return [NSArray arrayWithObject:
-                [NSValue valueWithRange:range]];
+                [self _accessibilityAttributeValue:NSAccessibilitySelectedTextRangeAttribute]];
     } else if ([attribute isEqualToString:NSAccessibilityInsertionPointLineNumberAttribute]) {
         return [NSNumber numberWithInt:[dataSource cursorY]-1 + [dataSource numberOfScrollbackLines]];
     } else if ([attribute isEqualToString:NSAccessibilityVisibleCharacterRangeAttribute]) {
@@ -1447,6 +1486,7 @@ NSMutableArray* screens=0;
     // NSLog(@"accessibilityAttributeValue:%@", attribute);
     id result = [self _accessibilityAttributeValue:attribute];
     // NSLog(@"  returns %@", result);
+    // NSLog(@"%@ = %@", attribute, result);
     return result;
 }
 
@@ -1617,6 +1657,13 @@ NSMutableArray* screens=0;
         NSAccessibilityPostNotification(self, NSAccessibilitySelectedColumnsChangedNotification);
         accX = [dataSource cursorX];
         accY = absCursorY;
+        if (UAZoomEnabled()) {
+            CGRect viewRect = NSRectToCGRect([self futureConvertRectToScreen:[self convertRect:[self visibleRect] toView:nil]]);
+            CGRect selectedRect = NSRectToCGRect([self futureConvertRectToScreen:[self convertRect:[self cursorRect] toView:nil]]);
+            viewRect.origin.y = [[NSScreen mainScreen] frame].size.height - (viewRect.origin.y + viewRect.size.height);
+            selectedRect.origin.y = [[NSScreen mainScreen] frame].size.height - (selectedRect.origin.y + selectedRect.size.height);
+            UAZoomChangeFocus(&viewRect, &selectedRect, kUAZoomFocusTypeInsertionPoint);
+        }
     }
 
     return [self updateDirtyRects] || [self _isCursorBlinking];
@@ -1847,7 +1894,6 @@ NSMutableArray* screens=0;
           rect.origin.x, rect.origin.y, rect.size.width, rect.size.height,
           [self frame].origin.x, [self frame].origin.y, [self frame].size.width, [self frame].size.height]);
 #endif
-
     double curLineWidth = [dataSource width] * charWidth;
     if (lineHeight <= 0 || curLineWidth <= 0) {
         DebugLog(@"height or width too small");
@@ -2278,6 +2324,10 @@ NSMutableArray* screens=0;
     }
     DebugLog(@"PTYTextView keyDown");
     id delegate = [self delegate];
+    if ([delegate isPasting]) {
+        [delegate queueKeyDown:event];
+        return;
+    }
     if ([[[[[self dataSource] session] tab] realParentWindow] inInstantReplay]) {
         if (debugKeyDown) {
             NSLog(@"PTYTextView keyDown: in instant replay, send to delegate");
@@ -2479,7 +2529,7 @@ NSMutableArray* screens=0;
             // convert NSEvent's "middle button" to X11's one
             buttonNumber = MOUSE_BUTTON_MIDDLE;
         }
-        
+
         switch ([terminal mouseMode]) {
             case MOUSE_REPORTING_NORMAL:
             case MOUSE_REPORTING_BUTTON_MOTION:
@@ -2713,7 +2763,7 @@ NSMutableArray* screens=0;
         }
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
-        
+
         int buttonNumber;
         if ([event deltaY] > 0)
             buttonNumber = MOUSE_BUTTON_SCROLLDOWN;
@@ -3033,6 +3083,8 @@ NSMutableArray* screens=0;
         if (ry < 0) {
             ry = -1;
         }
+        lastReportedX_ = rx;
+        lastReportedY_ = ry;
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
@@ -3256,6 +3308,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (ry < 0) {
             ry = -1;
         }
+        lastReportedX_ = rx;
+        lastReportedY_ = ry;
         VT100Terminal *terminal = [dataSource terminal];
         PTYSession* session = [dataSource session];
 
@@ -3354,6 +3408,44 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [[[self dataSource] session] refreshAndStartTimerIfNeeded];
 }
 
+- (void)mouseMoved:(NSEvent *)event
+{
+    DLog(@"mouseMoved");
+    VT100Terminal *terminal = [dataSource terminal];
+    if (![self xtermMouseReporting]) {
+        DLog(@"Mouse move event is dispatched but xtermMouseReporting is not enabled");
+        return;
+    }
+#if DEBUG
+    assert([terminal mouseMode] == MOUSE_REPORTING_ALL_MOTION);
+#endif
+    if ([terminal mouseMode] != MOUSE_REPORTING_ALL_MOTION) {
+        DLog(@"Mouse move event is dispatched but mouseMode is not MOUSE_REPORTING_ALL_MOTION");
+        return;
+    }
+    NSPoint locationInWindow = [event locationInWindow];
+    NSPoint locationInTextView = [self convertPoint:locationInWindow fromView:nil];
+    int rx, ry;
+    NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+    rx = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
+    ry = (locationInTextView.y - visibleRect.origin.y) / lineHeight;
+    if (rx < 0) {
+        rx = -1;
+    }
+    if (ry < 0) {
+        ry = -1;
+    }
+    if (rx != lastReportedX_ || ry != lastReportedY_) {
+        lastReportedX_ = rx;
+        lastReportedY_ = ry;
+        PTYSession* session = [dataSource session];
+        [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_NONE
+                                   withModifiers:[event modifierFlags]
+                                             atX:rx
+                                               Y:ry]];
+    }
+}
+
 - (void)mouseDragged:(NSEvent *)event
 {
     DLog(@"mouseDragged");
@@ -3416,25 +3508,29 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         if (ry < 0) {
             ry = -1;
         }
-        VT100Terminal *terminal = [dataSource terminal];
-        PTYSession* session = [dataSource session];
+        if (rx != lastReportedX_ || ry != lastReportedY_) {
+            lastReportedX_ = rx;
+            lastReportedY_ = ry;
+            VT100Terminal *terminal = [dataSource terminal];
+            PTYSession* session = [dataSource session];
 
-        switch ([terminal mouseMode]) {
-            case MOUSE_REPORTING_BUTTON_MOTION:
-            case MOUSE_REPORTING_ALL_MOTION:
-                [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_LEFT
-                                           withModifiers:[event modifierFlags]
-                                                     atX:rx
-                                                       Y:ry]];
-            case MOUSE_REPORTING_NORMAL:
-                DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
-                return;
-                break;
+            switch ([terminal mouseMode]) {
+                case MOUSE_REPORTING_BUTTON_MOTION:
+                case MOUSE_REPORTING_ALL_MOTION:
+                    [session writeTask:[terminal mouseMotion:MOUSE_BUTTON_LEFT
+                                               withModifiers:[event modifierFlags]
+                                                         atX:rx
+                                                           Y:ry]];
+                case MOUSE_REPORTING_NORMAL:
+                    DebugLog([NSString stringWithFormat:@"Mouse drag. startx=%d starty=%d, endx=%d, endy=%d", startX, startY, endX, endY]);
+                    return;
+                    break;
 
-            case MOUSE_REPORTING_NONE:
-            case MOUSE_REPORTING_HILITE:
-                // fall through
-                break;
+                case MOUSE_REPORTING_NONE:
+                case MOUSE_REPORTING_HILITE:
+                    // fall through
+                    break;
+            }
         }
     }
 
@@ -3622,7 +3718,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPoint clickPoint = [self clickPoint:event];
     int x = clickPoint.x;
     int y = clickPoint.y;
-    
+
     [self smartSelectAtX:x y:y ignoringNewlines:ignoringNewlines];
     [self setSelectionTime];
     if (startX > -1 && _delegate) {
@@ -5512,7 +5608,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)drawFlippedBackground:(NSRect)bgRect toPoint:(NSPoint)dest
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView backgroundImage] != nil;
+    BOOL hasBGImage = [scrollView hasBackgroundImage];
     double alpha = 1.0 - transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
@@ -5547,7 +5643,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)drawBackground:(NSRect)bgRect toPoint:(NSPoint)dest
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView backgroundImage] != nil;
+    BOOL hasBGImage = [scrollView hasBackgroundImage];
     double alpha = 1.0 - transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
@@ -5581,7 +5677,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (void)drawBackground:(NSRect)bgRect
 {
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView backgroundImage] != nil;
+    BOOL hasBGImage = [scrollView hasBackgroundImage];
     double alpha = 1.0 - transparency;
     if (hasBGImage) {
         [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
@@ -5788,16 +5884,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                      isComplex:(BOOL)complex
                        fgColor:(int)fgColor
                     renderBold:(BOOL*)renderBold
+                  renderItalic:(BOOL)renderItalic
 {
     BOOL isBold = *renderBold && useBoldFont;
+    BOOL isItalic = renderItalic && useItalicFont;
     *renderBold = NO;
     PTYFontInfo* theFont;
     BOOL usePrimary = !complex && (ch < 128);
-    if (!usePrimary && !complex) {
-        // Try to use the primary font for non-ascii characters, but only
-        // if it has the glyph.
-        usePrimary = [primaryFont hasGlyphForCharacter:ch];
-    }
 
     if (usePrimary) {
         if (isBold) {
@@ -5805,6 +5898,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (!theFont) {
                 theFont = primaryFont;
                 *renderBold = YES;
+            }
+        } else if (isItalic) {
+            theFont = primaryFont.italicVersion;
+            if (!theFont) {
+                theFont = primaryFont;
             }
         } else {
             theFont = primaryFont;
@@ -5815,6 +5913,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             if (!theFont) {
                 theFont = secondaryFont;
                 *renderBold = YES;
+            }
+        } else if (isItalic) {
+            theFont = secondaryFont.italicVersion;
+            if (!theFont) {
+                theFont = secondaryFont;
             }
         } else {
             theFont = secondaryFont;
@@ -6020,7 +6123,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (void)_constructRuns:(NSPoint)initialPoint
                theLine:(screen_char_t *)theLine
-            sharedData:(SharedCharacterRunData *)sharedData
                   runs:(NSMutableArray *)runs
               reversed:(BOOL)reversed
             bgselected:(BOOL)bgselected
@@ -6040,6 +6142,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     BOOL havePrevChar = NO;
     CGFloat curX = initialPoint.x;
     CharacterRun *thisChar = [[[CharacterRun alloc] init] autorelease];
+    thisChar.advancedFontRendering = advancedFontRendering;
     for (int i = indexRange.location; i < indexRange.location + indexRange.length; i++) {
         if (theLine[i].code == DWC_RIGHT) {
             continue;
@@ -6114,21 +6217,19 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
             // Set the character type and its unichar/string.
             if (theLine[i].complexChar) {
-                thisChar.runType = kCharacterRunSingleCharWithCombiningMarks;
                 thisCharString = ComplexCharToStr(theLine[i].code);
                 if (!thisCharString) {
+                    // A bug that's happened more than once is that code gets
+                    // set to 0 but complexChar is left set to true.
                     NSLog(@"No complex char for code %d", (int)theLine[i].code);
                     thisCharString = @"";
                     drawable = NO;
                 } else {
                     drawable = YES;  // TODO: not all unicode is drawable
                 }
-                // Mar 19, 2013: removing assert temporarily to debug its cause (bug 2397).
-                // assert(thisCharString);
             } else {
+                thisCharString = nil;
                 // Non-complex char
-                thisChar.runType = kCharacterRunMultipleSimpleChars;
-
                 // TODO: There are other spaces in unicode that should be supported.
                 drawable = (theLine[i].code != 0 &&
                             theLine[i].code != '\t' &&
@@ -6141,7 +6242,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
         } else {
             // Chatacter hidden because of blinking.
-            thisChar.runType = kCharacterRunMultipleSimpleChars;
             drawable = NO;
         }
 
@@ -6157,7 +6257,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             thisChar.fontInfo = [self getFontForChar:theLine[i].code
                                            isComplex:theLine[i].complexChar
                                              fgColor:theLine[i].foregroundColor
-                                          renderBold:&fakeBold];
+                                          renderBold:&fakeBold
+                                        renderItalic:theLine[i].italic];
             thisChar.fakeBold = fakeBold;
 
             // Create a new run if needed (this char differs from the previous
@@ -6175,16 +6276,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             }
             if (beginNewRun) {
                 if (currentRun) {
-                    [runs addObjectsFromArray:[currentRun runsWithGlyphs]];
+                    [currentRun commit];
+                    [runs addObject:currentRun];
                 }
                 // Begin a new run.
                 currentRun = [[thisChar copy] autorelease];
-                [currentRun clearRange];
-                currentRun.sharedData = sharedData;
                 currentRun.x = curX;
             }
 
-            if (thisChar.runType == kCharacterRunMultipleSimpleChars) {
+            if (!thisCharString) {
                 [currentRun appendCode:thisCharUnichar withAdvance:thisCharAdvance];
             } else {
                 [currentRun appendCodesFromString:thisCharString withAdvance:thisCharAdvance];
@@ -6205,152 +6305,75 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                   1));
         }
         curX += thisCharAdvance;
-        prevChar.runType = thisChar.runType;
         prevChar.fontInfo = thisChar.fontInfo;
         prevChar.color = thisChar.color;
         prevChar.fakeBold = thisChar.fakeBold;
         prevChar.antiAlias = thisChar.antiAlias;
     }
+    [currentRun commit];
 
     if (currentRun) {
-        [runs addObjectsFromArray:[currentRun runsWithGlyphs]];
+        [runs addObject:currentRun];
     }
 }
 
-- (void)_advancedDrawChar:(unichar*)codes
-                 numCodes:(int)numCodes
-                 fontInfo:(PTYFontInfo*)fontInfo
-                    color:(NSColor*)color
-                       at:(NSPoint)pos
-                    width:(CGFloat)width
-                 fakeBold:(BOOL)fakeBold
-                antiAlias:(BOOL)antiAlias
-{
-    NSString* str = [NSString stringWithCharacters:codes
-                                            length:numCodes];
-    NSDictionary* attrs;
-    if (advancedFontRendering && antiAlias) {
-        attrs = [NSDictionary dictionaryWithObjectsAndKeys:
-                               fontInfo.font, NSFontAttributeName,
-                               color, NSForegroundColorAttributeName,
-                               [NSNumber numberWithFloat:strokeThickness], NSStrokeWidthAttributeName,
-                               nil];
-    } else {
-        attrs = [NSDictionary dictionaryWithObjectsAndKeys:
-                 fontInfo.font, NSFontAttributeName,
-                 color, NSForegroundColorAttributeName,
-                 nil];
-    }
-    NSGraphicsContext *ctx = [NSGraphicsContext currentContext];
-    [ctx saveGraphicsState];
-    [ctx setCompositingOperation:NSCompositeSourceOver];
-    NSMutableAttributedString* attributedString = [[[NSMutableAttributedString alloc] initWithString:str
-                                                                                          attributes:attrs] autorelease];
-    // Note that drawInRect doesn't use the right baseline, but drawWithRect
-    // does.
-    //
-    // This technique was picked because it can find glyphs that aren't in the
-    // selected font (e.g., tests/radical.txt). It does a fairly nice job on
-    // laying out combining marks. For now, it fails in two known cases:
-    // 1. Enclosing marks (q in a circle shows as a q)
-    // 2. U+239d, a part of a paren for graphics drawing, doesn't quite render
-    //    right (though it appears to need to render in another char's cell).
-    // Other rejected approaches included using CTFontGetGlyphsForCharacters+
-    // CGContextShowGlyphsWithAdvances, which doesn't render thai characters
-    // correctly in UTF-8-demo.txt.
-    //
-    // We use width*2 so that wide characters that are not double width chars
-    // render properly. These are font-dependent. See tests/suits.txt for an
-    // example.
-    [attributedString drawWithRect:NSMakeRect(pos.x,
-                                              pos.y + fontInfo.baselineOffset + lineHeight,
-                                              width*2,
-                                              lineHeight)
-                           options:0];  // NSStringDrawingUsesLineFragmentOrigin
-    if (fakeBold) {
-        // If anti-aliased, drawing twice at the same position makes the strokes thicker.
-        // If not anti-alised, draw one pixel to the right.
-        [attributedString drawWithRect:NSMakeRect(pos.x + (antiAlias ? 0 : 1),
-                                                  pos.y + fontInfo.baselineOffset + lineHeight,
-                                                  width*2,
-                                                  lineHeight)
-                               options:0];  // NSStringDrawingUsesLineFragmentOrigin
-    }
-    [ctx restoreGraphicsState];
-}
-
-- (void)_drawComplexCharRun:(CharacterRun *)currentRun
-                        ctx:(CGContextRef)ctx
-               initialPoint:(NSPoint)initialPoint
-                  antiAlias:(BOOL)antiAlias
-{
-    [self _advancedDrawChar:[currentRun codes]
-                   numCodes:currentRun.range.length
-                   fontInfo:currentRun.fontInfo
-                      color:currentRun.color
-                         at:NSMakePoint(currentRun.x,
-                                        initialPoint.y)
-                      width:[currentRun advances][0].width
-                   fakeBold:currentRun.fakeBold
-                  antiAlias:antiAlias];
-}
-
-- (void)_drawBasicCharRunAdvanced:(CharacterRun *)currentRun
-                              ctx:(CGContextRef)ctx
-                     initialPoint:(NSPoint)initialPoint
-{
-    CGFloat x = currentRun.x;
-    for (int i = 0; i < currentRun.range.length; i++) {
-        [self _advancedDrawChar:[currentRun codes] + i
-                       numCodes:1
-                       fontInfo:currentRun.fontInfo
-                          color:currentRun.color
-                             at:NSMakePoint(x,
-                                            initialPoint.y)
-                          width:[currentRun advances][i].width
-                       fakeBold:currentRun.fakeBold
-                      antiAlias:currentRun.antiAlias];
-        x += [currentRun advances][i].width;
-    }
-}
-
-- (void)_drawBasicCharRun:(CharacterRun *)currentRun
-                      ctx:(CGContextRef)ctx
-             initialPoint:(NSPoint)initialPoint
-{
-    CGGlyph *glyphs = [currentRun glyphs];
-
-    CGContextSelectFont(ctx,
-                        [[currentRun.fontInfo.font fontName] UTF8String],
-                        [currentRun.fontInfo.font pointSize],
-                        kCGEncodingMacRoman);
-    CGContextSetFillColorSpace(ctx, [[currentRun.color colorSpace] CGColorSpace]);
-    int componentCount = [currentRun.color numberOfComponents];
-
-    CGFloat components[componentCount];
-    [currentRun.color getComponents:components];
-    CGContextSetFillColor(ctx, components);
-
-    double y = initialPoint.y + lineHeight + currentRun.fontInfo.baselineOffset;
+- (void)drawRun:(CharacterRun *)currentRun
+            ctx:(CGContextRef)ctx
+   initialPoint:(NSPoint)initialPoint {
+    CTLineRef line = [currentRun newLine];
+    NSArray *runs = (NSArray *)CTLineGetGlyphRuns(line);
     int x = currentRun.x;
-    // Flip vertically and translate to (x, y).
-    CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
-                                                      0.0, -1.0,
-                                                      x,    y));
 
-    CGContextShowGlyphsWithAdvances(ctx, glyphs, [currentRun advances], currentRun.range.length);
+    CGContextSetShouldAntialias(ctx, currentRun.antiAlias);
+    CTRunRef run;
+    for (int i = 0; i < runs.count; i++) {
+        run = (CTRunRef) [runs objectAtIndex:i];
 
-    if (currentRun.fakeBold) {
-        // If anti-aliased, drawing twice at the same position makes the strokes thicker.
-        // If not anti-alised, draw one pixel to the right.
+        CFIndex glyphCount = CTRunGetGlyphCount(run);
+        const CGSize *suggestedAdvances = CTRunGetAdvancesPtr(run);
+        const CGGlyph *glyphs = CTRunGetGlyphsPtr(run);
+        CGSize advances[glyphCount];
+        [currentRun updateAdvances:advances forSuggestedAdvances:suggestedAdvances count:glyphCount];
+
+
+        CTFontRef runFont =
+                CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
+
+        CGFontRef cgFont = CTFontCopyGraphicsFont(runFont, NULL);
+        CGContextSetFont(ctx, cgFont);
+        CGContextSetFontSize(ctx, CTFontGetSize(runFont));
+        CGContextSetFillColorSpace(ctx, [[currentRun.color colorSpace] CGColorSpace]);
+        int componentCount = [currentRun.color numberOfComponents];
+
+        CGFloat components[componentCount];
+        [currentRun.color getComponents:components];
+        CGContextSetFillColor(ctx, components);
+
+        double y = initialPoint.y + lineHeight + currentRun.fontInfo.baselineOffset;
+        // Flip vertically and translate to (x, y).
         CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
                                                           0.0, -1.0,
-                                                          x + (currentRun.antiAlias ? 0 : 1),
-                                                          y));
+                                                          x,    y));
 
-        CGContextShowGlyphsWithAdvances(ctx, glyphs, [currentRun advances], currentRun.range.length);
+        CGContextShowGlyphsWithAdvances(ctx, glyphs, advances, glyphCount);
+
+        if (currentRun.fakeBold) {
+            // If anti-aliased, drawing twice at the same position makes the strokes thicker.
+            // If not anti-alised, draw one pixel to the right.
+            CGContextSetTextMatrix(ctx, CGAffineTransformMake(1.0,  0.0,
+                                                              0.0, -1.0,
+                                                              x + (currentRun.antiAlias ? 0 : 1),
+                                                              y));
+
+            CGContextShowGlyphsWithAdvances(ctx, glyphs, advances, glyphCount);
+        }
+        for (int j = 0; j < glyphCount; j++) {
+            x += advances[j].width;
+        }
     }
+    CFRelease(line);
 }
+
 
 - (void)_drawRuns:(NSPoint)initialPoint runs:(NSArray *)runs
 {
@@ -6358,24 +6381,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     CGContextSetTextDrawingMode(ctx, kCGTextFill);
 
     for (CharacterRun *currentRun in runs) {
-        CGContextSetShouldAntialias(ctx, currentRun.antiAlias);
-
-        if (currentRun.runType == kCharacterRunMultipleSimpleChars) {
-            if (currentRun.antiAlias && advancedFontRendering) {
-                [self _drawBasicCharRunAdvanced:currentRun
-                                            ctx:ctx
-                                   initialPoint:initialPoint];
-            } else {
-                [self _drawBasicCharRun:currentRun
-                                    ctx:ctx
-                           initialPoint:initialPoint];
-            }
-        } else {
-            [self _drawComplexCharRun:currentRun
-                                  ctx:ctx
-                         initialPoint:initialPoint
-                            antiAlias:currentRun.antiAlias];
-        }
+        [self drawRun:currentRun ctx:ctx initialPoint:initialPoint];
     }
 }
 
@@ -6388,11 +6394,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                       matches:(NSData*)matches
 {
     const int width = [dataSource width];
-    SharedCharacterRunData *sharedData = [SharedCharacterRunData sharedCharacterRunDataWithCapacity:width];
     NSMutableArray *runs = [NSMutableArray arrayWithCapacity:width];
     [self _constructRuns:initialPoint
                  theLine:theLine
-              sharedData:sharedData
                     runs:runs
                 reversed:reversed
               bgselected:bgselected
@@ -6445,7 +6449,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int WIDTH = [dataSource width];
     screen_char_t* theLine = [dataSource getLineAtIndex:line];
     PTYScrollView* scrollView = (PTYScrollView*)[self enclosingScrollView];
-    BOOL hasBGImage = [scrollView backgroundImage] != nil;
+    BOOL hasBGImage = [scrollView hasBackgroundImage];
     double selectedAlpha = 1.0 - transparency;
     double alphaIfTransparencyInUse = [self useTransparency] ? 1.0 - transparency : 1.0;
     BOOL reversed = [[dataSource terminal] screenMode];
@@ -6477,30 +6481,30 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                         toPoint:NSMakePoint(toPoint->x + rightMargin.origin.x,
                                                             toPoint->y + rightMargin.size.height)
                                 useTransparency:[self useTransparency]];
-                        // Blend default bg color over bg iamge.
-                        [[aColor colorWithAlphaComponent:1 - blend] set];
-                        NSRectFillUsingOperation(NSMakeRect(toPoint->x + leftMargin.origin.x,
-                                                                                                toPoint->y + leftMargin.origin.y,
-                                                                                                leftMargin.size.width,
-                                                                                                leftMargin.size.height), NSCompositeSourceOver);
-                        NSRectFillUsingOperation(NSMakeRect(toPoint->x + rightMargin.origin.x,
-                                                                                                toPoint->y + rightMargin.origin.y,
-                                                                                                rightMargin.size.width,
-                                                                                                rightMargin.size.height), NSCompositeSourceOver);
-                } else {
+            // Blend default bg color over bg iamge.
+            [[aColor colorWithAlphaComponent:1 - blend] set];
+            NSRectFillUsingOperation(NSMakeRect(toPoint->x + leftMargin.origin.x,
+                                                toPoint->y + leftMargin.origin.y,
+                                                leftMargin.size.width,
+                                                leftMargin.size.height), NSCompositeSourceOver);
+            NSRectFillUsingOperation(NSMakeRect(toPoint->x + rightMargin.origin.x,
+                                                toPoint->y + rightMargin.origin.y,
+                                                rightMargin.size.width,
+                                                rightMargin.size.height), NSCompositeSourceOver);
+        } else {
             [scrollView drawBackgroundImageRect:leftMargin
                                 useTransparency:[self useTransparency]];
             [scrollView drawBackgroundImageRect:rightMargin
                                 useTransparency:[self useTransparency]];
 
-                        // Blend default bg color over bg iamge.
-                        [[aColor colorWithAlphaComponent:1 - blend] set];
-                        NSRectFillUsingOperation(leftMargin, NSCompositeSourceOver);
-                        NSRectFillUsingOperation(rightMargin, NSCompositeSourceOver);
-                }
-                [aColor set];
+            // Blend default bg color over bg iamge.
+            [[aColor colorWithAlphaComponent:1 - blend] set];
+            NSRectFillUsingOperation(leftMargin, NSCompositeSourceOver);
+            NSRectFillUsingOperation(rightMargin, NSCompositeSourceOver);
+        }
+        [aColor set];
     } else {
-                // No BG image
+        // No BG image
         if (toPoint) {
             NSRectFill(NSMakeRect(toPoint->x + leftMargin.origin.x,
                                   toPoint->y,
@@ -6696,13 +6700,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     temp.foregroundColor = fgColor;
     temp.alternateForegroundSemantics = fgAlt;
     temp.bold = fgBold;
-    SharedCharacterRunData *sharedData = [SharedCharacterRunData sharedCharacterRunDataWithCapacity:kMaxParts];
     NSMutableArray *runs = [NSMutableArray arrayWithCapacity:kMaxParts];
 
     // Draw the characters.
     [self _constructRuns:NSMakePoint(X, Y)
                  theLine:&temp
-              sharedData:sharedData
                     runs:runs
                 reversed:NO
               bgselected:NO
@@ -6790,6 +6792,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         fg.foregroundColor = ALTSEM_FG_DEFAULT;
         fg.alternateForegroundSemantics = YES;
         fg.bold = NO;
+        fg.italic = NO;
         fg.blink = NO;
         fg.underline = NO;
         memset(&bg, 0, sizeof(bg));
@@ -6812,7 +6815,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         BOOL justWrapped = NO;
         BOOL foundCursor = NO;
         for (i = 0; i < len; ) {
-            SharedCharacterRunData *sharedData = [SharedCharacterRunData sharedCharacterRunDataWithCapacity:width * kMaxParts];
             NSMutableArray *runs = [NSMutableArray arrayWithCapacity:width * kMaxParts];
             const int remainingCharsInBuffer = len - i;
             const int remainingCharsInLine = width - xStart;
@@ -6842,7 +6844,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Draw the characters.
             [self _constructRuns:NSMakePoint(x, y)
                          theLine:buf
-                      sharedData:sharedData
                             runs:runs
                         reversed:NO
                       bgselected:NO
@@ -7637,6 +7638,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSString *suffix = [self wrappedStringAtX:x y:y dir:1 respectHardNewlines:respectHardNewlines];
     NSString *joined = [prefix stringByAppendingString:suffix];
     NSString *possibleUrl = [self stringInString:joined includingOffset:[prefix length] fromCharacterSet:[PTYTextView urlCharacterSet]];
+    NSArray *punctuation = [NSArray arrayWithObjects:@".", @",", @";", nil];
+    for (NSString *pchar in punctuation) {
+        if ([possibleUrl hasSuffix:pchar]) {
+            possibleUrl = [possibleUrl substringToIndex:possibleUrl.length - 1];
+            break;
+        }
+    }
     NSString *possibleFilePart1 = [self stringInString:prefix includingOffset:[prefix length] - 1 fromCharacterSet:[PTYTextView filenameCharacterSet]];
     NSString *possibleFilePart2 = [self stringInString:suffix includingOffset:0 fromCharacterSet:[PTYTextView filenameCharacterSet]];
 

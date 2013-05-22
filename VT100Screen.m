@@ -62,6 +62,8 @@
 
 #define MAX_SCROLLBACK_LINES 1000000
 #define MAX_SCROLL_AT_ONCE 1024
+#define MAX_COLUMNS 4096
+#define MAX_ROWS 4096
 #define DIRTY_MAGIC 0x76  // Used to ensure we don't go off end of dirty array
 
 NSString * const kHighlightForegroundColor = @"kHighlightForegroundColor";
@@ -136,6 +138,7 @@ void StringToScreenChars(NSString *s,
             buf[j].foregroundColor = fg.foregroundColor;
             buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
             buf[j].bold = fg.bold;
+            buf[j].italic = fg.italic;
             buf[j].blink = fg.blink;
             buf[j].underline = fg.underline;
 
@@ -162,6 +165,7 @@ void StringToScreenChars(NSString *s,
             buf[j].foregroundColor = fg.foregroundColor;
             buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
             buf[j].bold = fg.bold;
+            buf[j].italic = fg.italic;
             buf[j].blink = fg.blink;
             buf[j].underline = fg.underline;
 
@@ -196,6 +200,7 @@ void StringToScreenChars(NSString *s,
                         buf[j].foregroundColor = fg.foregroundColor;
                         buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
                         buf[j].bold = fg.bold;
+                        buf[j].italic = fg.italic;
                         buf[j].blink = fg.blink;
                         buf[j].underline = fg.underline;
 
@@ -1655,6 +1660,24 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 #endif
 }
 
+- (BOOL)usingDefaultCharset {
+    for (int i = 0; i < 4; i++) {
+        if (charset[i]) {
+            return NO;
+        }
+    }
+    if ([TERMINAL charset]) {
+        return NO;
+    }
+    return YES;
+}
+
+- (void)resetCharset {
+    for (int i = 0; i < 4; i++) {
+        charset[i] = 0;
+    }
+}
+
 - (void)reset
 {
     [SESSION clearTriggerLine];
@@ -1731,6 +1754,10 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 - (VT100Terminal *)terminal
 {
     return TERMINAL;
+}
+
+- (void)setAllowTitleReporting:(BOOL)allow {
+    allowTitleReporting_ = allow;
 }
 
 - (void)setShellTask:(PTYTask *)shell
@@ -1939,7 +1966,12 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         [self cursorUp:token.u.csi.p[0]];
         [SESSION clearTriggerLine];
         break;
-    case VT100CSI_DA:   [self deviceAttribute:token]; break;
+    case VT100CSI_DA:
+        [self deviceAttribute:token];
+        break;
+    case VT100CSI_DA2:
+        [self secondaryDeviceAttribute:token];
+        break;
     case VT100CSI_DECALN:
         for (i = 0; i < HEIGHT; i++) {
             aLine = [self getLineAtScreenIndex:i];
@@ -1970,7 +2002,12 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     case VT100CSI_DECSTBM: [self setTopBottom:token]; break;
     case VT100CSI_DECSWL: break;
     case VT100CSI_DECTST: break;
-    case VT100CSI_DSR:  [self deviceReport:token]; break;
+    case VT100CSI_DSR:
+        [self deviceReport:token withQuestion:NO];
+        break;
+    case VT100CSI_DECDSR:
+        [self deviceReport:token withQuestion:YES];
+        break;
     case VT100CSI_ED:
         [self eraseInDisplay:token];
         [SESSION clearTriggerLine];
@@ -2184,6 +2221,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
                 CopyForegroundColor(&aLine[cursorX + k], [TERMINAL foregroundColorCodeReal]);
                 CopyBackgroundColor(&aLine[cursorX + k], [TERMINAL backgroundColorCodeReal]);
             }
+            aLine[WIDTH].code = EOL_HARD;
 
             int endX = MIN(WIDTH, dirtyX + j);
             [self setDirtyFromX:dirtyX
@@ -2279,8 +2317,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             ![[[SESSION tab] parentWindow] anyFullScreen]) {
             // set the column
             [[SESSION tab] sessionInitiatedResize:SESSION
-                                            width:token.u.csi.p[2]
-                                           height:token.u.csi.p[1]];
+                                            width:MIN(token.u.csi.p[2], MAX_COLUMNS)
+                                           height:MIN(token.u.csi.p[1], MAX_ROWS)];
 
         }
         break;
@@ -2289,8 +2327,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             ![[[SESSION tab] parentWindow] anyFullScreen]) {
             // TODO: Only allow this if there is a single session in the tab.
             [[SESSION tab] sessionInitiatedResize:SESSION
-                                            width:(token.u.csi.p[2] / [display charWidth])
-                                           height:(token.u.csi.p[1] / [display lineHeight])];
+                                            width:MIN(token.u.csi.p[2] / [display charWidth], MAX_COLUMNS)
+                                           height:MIN(token.u.csi.p[1] / [display lineHeight], MAX_ROWS)];
         }
         break;
     case XTERMCC_WINDOWPOS:
@@ -2393,9 +2431,10 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         break;
     case XTERMCC_REPORT_ICON_TITLE: {
         NSString *theString;
-        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AllowInsecureTitleReporting"]) {
-            theString = [NSString stringWithFormat:@"\033]L%@\033\\", [SESSION windowTitle]];
+        if (allowTitleReporting_) {
+            theString = [NSString stringWithFormat:@"\033]L%@\033\\", [SESSION windowTitle] ? [SESSION windowTitle] : [SESSION defaultName]];
         } else {
+            NSLog(@"Not reporting icon title. You can enable this in prefs>profiles>terminal");
             theString = @"\033]L\033\\";
         }
         NSData *theData = [theString dataUsingEncoding:NSUTF8StringEncoding];
@@ -2404,13 +2443,45 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     }
     case XTERMCC_REPORT_WIN_TITLE: {
         NSString *theString;
-        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"AllowInsecureTitleReporting"]) {
-            theString = [NSString stringWithFormat:@"\033]l%@\033\\", [SESSION windowTitle]];
+        if (allowTitleReporting_) {
+            theString = [NSString stringWithFormat:@"\033]l%@\033\\", [SESSION windowName]];
         } else {
+            NSLog(@"Not reporting window title. You can enable this in prefs>profiles>terminal");
             theString = @"\033]l\033\\";
         }
         NSData *theData = [theString dataUsingEncoding:NSUTF8StringEncoding];
         [SESSION writeTask:theData];
+        break;
+    }
+    case XTERMCC_PUSH_TITLE: {
+        switch (token.u.csi.p[1]) {
+            case 0:
+                [SESSION pushWindowTitle];
+                [SESSION pushIconTitle];
+                break;
+            case 1:
+                [SESSION pushIconTitle];
+                break;
+            case 2:
+                [SESSION pushWindowTitle];
+                break;
+            break;
+        }
+        break;
+    }
+    case XTERMCC_POP_TITLE: {
+        switch (token.u.csi.p[1]) {
+            case 0:
+                [SESSION popWindowTitle];
+                [SESSION popIconTitle];
+                break;
+            case 1:
+                [SESSION popIconTitle];
+                break;
+            case 2:
+                [SESSION popWindowTitle];
+                break;
+        }
         break;
     }
     // Our iTerm specific codes
@@ -2517,7 +2588,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 
 - (void)mouseModeDidChange:(MouseMode)mouseMode
 {
-        [display updateCursor:nil];
+    [display updateCursor:nil];
+    [display updateTrackingAreas];
 }
 
 - (BOOL)printToAnsi
@@ -3068,7 +3140,7 @@ void DumpBuf(screen_char_t* p, int n) {
         // get the appropriate screen line
         aLine = [self getLineAtScreenIndex:cursorY];
 
-        if (n<WIDTH) {
+        if (n < WIDTH) {
             memmove(aLine + cursorX,
                     aLine + cursorX + n,
                     (WIDTH - cursorX - n) * sizeof(screen_char_t));
@@ -3339,7 +3411,7 @@ void DumpBuf(screen_char_t* p, int n) {
             aScreenChar -= HEIGHT * REAL_WIDTH; // wrap around to top of buffer
             assert(aScreenChar < (buffer_lines + HEIGHT*REAL_WIDTH));  // Tried to go way past the end of the screen
         }
-        aScreenChar->code = 0;
+        aScreenChar->code = 0;  // This happens to be EOL_HARD, which happens to work.
         aScreenChar->complexChar = NO;
         CopyForegroundColor(aScreenChar, [TERMINAL foregroundColorCodeReal]);
         CopyBackgroundColor(aScreenChar, [TERMINAL backgroundColorCodeReal]);
@@ -3384,7 +3456,11 @@ void DumpBuf(screen_char_t* p, int n) {
         CopyForegroundColor(&aLine[i], fgCode);
         CopyBackgroundColor(&aLine[i], bgCode);
     }
-    // TODO: If erasing all the way to the end of the line, set the newline type to hard.
+    if (x2 == WIDTH && x1 < x2) {
+        // If erasing all the way to the end of the line, set the newline type
+        // to hard so that selections will be copied to the clipboard properly.
+        aLine[WIDTH].code = EOL_HARD;
+    }
     idx = cursorY * WIDTH + x1;
     [self setRangeDirty:NSMakeRange(idx, (x2 - x1))];
     DebugLog(@"eraseInLine");
@@ -3704,17 +3780,10 @@ void DumpBuf(screen_char_t* p, int n) {
     DebugLog(@"scrollDown");
 }
 
-- (void) insertBlank: (int)n
+- (void)insertBlank:(int)n
 {
     screen_char_t *aLine;
     int i;
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen insertBlank; %d]", __FILE__, __LINE__, n);
-#endif
-
-
-//    NSLog(@"insertBlank[%d@(%d,%d)]",n,cursorX,cursorY);
 
     if (cursorX >= WIDTH) {
         return;
@@ -3896,7 +3965,7 @@ void DumpBuf(screen_char_t* p, int n) {
     return GROWL;
 }
 
-- (void)deviceReport:(VT100TCC)token
+- (void)deviceReport:(VT100TCC)token withQuestion:(BOOL)question
 {
     NSData *report = nil;
 
@@ -3927,7 +3996,7 @@ void DumpBuf(screen_char_t* p, int n) {
                 x = cursorX + 1;
                 y = cursorY + 1;
             }
-            report = [TERMINAL reportActivePositionWithX:x Y:y withQuestion:token.u.csi.question];
+            report = [TERMINAL reportActivePositionWithX:x Y:y withQuestion:question];
         }
             break;
 
@@ -3946,16 +4015,31 @@ void DumpBuf(screen_char_t* p, int n) {
     NSData *report = nil;
 
 #if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[VT100Screen deviceAttribute:%d, modifier = '%c']",
-          __FILE__, __LINE__, token.u.csi.p[0], token.u.csi.modifier);
+    NSLog(@"%s(%d):-[VT100Screen deviceAttribute:%d]",
+          __FILE__, __LINE__, token.u.csi.p[0]);
 #endif
     if (SHELL == nil)
         return;
 
-    if(token.u.csi.modifier == '>')
-        report = [TERMINAL reportSecondaryDeviceAttribute];
-    else
-        report = [TERMINAL reportDeviceAttribute];
+    report = [TERMINAL reportDeviceAttribute];
+
+    if (report != nil) {
+        [SESSION writeTask:report];
+    }
+}
+
+- (void)secondaryDeviceAttribute:(VT100TCC)token
+{
+    NSData *report = nil;
+
+#if DEBUG_METHOD_TRACE
+    NSLog(@"%s(%d):-[VT100Screen secondaryDeviceAttribute:%d]",
+          __FILE__, __LINE__, token.u.csi.p[0]);
+#endif
+    if (SHELL == nil)
+        return;
+
+    report = [TERMINAL reportSecondaryDeviceAttribute];
 
     if (report != nil) {
         [SESSION writeTask:report];

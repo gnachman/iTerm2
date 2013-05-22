@@ -68,7 +68,8 @@
 #define VT100CSI_CUP         2004       // Cursor Position
 #define VT100CSI_CUU         2005       // Cursor Up
 #define VT100CSI_DA          2006       // Device Attributes
-#define VT100CSI_DECALN      2007       // Screen Alignment Display
+#define VT100CSI_DA2         2007       // Secondary Device Attributes
+#define VT100CSI_DECALN      2008       // Screen Alignment Display
 #define VT100CSI_DECDHL      2013       // Double Height Line
 #define VT100CSI_DECDWL      2014       // Double Width Line
 #define VT100CSI_DECID       2015       // Identify Terminal
@@ -102,8 +103,9 @@
 #define VT100CSI_TBC         2047       // Tabulation Clear
 #define VT100CSI_DECSCUSR    2048       // Select the Style of the Cursor
 #define VT100CSI_DECSTR      2049       // Soft reset
-#define VT100CSI_SET_MODIFIERS 2050     // CSI > Ps; Pm m (Whether to set modifiers for different kinds of key presses; no official name)
-#define VT100CSI_RESET_MODIFIERS 2051     // CSI > Ps n (Set all modifiers values to -1, disabled)
+#define VT100CSI_DECDSR      2050       // Device Status Report (DEC specific)
+#define VT100CSI_SET_MODIFIERS 2051     // CSI > Ps; Pm m (Whether to set modifiers for different kinds of key presses; no official name)
+#define VT100CSI_RESET_MODIFIERS 2052     // CSI > Ps n (Set all modifiers values to -1, disabled)
 
 // some xterm extension
 #define XTERMCC_WIN_TITLE        86       // Set window title
@@ -122,18 +124,20 @@
 #define XTERMCC_LOWER        99
 #define XTERMCC_SU           100     // scroll up
 #define XTERMCC_SD           101     // scroll down
-#define XTERMCC_REPORT_WIN_STATE    102
-#define XTERMCC_REPORT_WIN_POS      103
-#define XTERMCC_REPORT_WIN_PIX_SIZE 104
-#define XTERMCC_REPORT_WIN_SIZE     105
-#define XTERMCC_REPORT_SCREEN_SIZE  106
-#define XTERMCC_REPORT_ICON_TITLE   107
-#define XTERMCC_REPORT_WIN_TITLE    108
-#define XTERMCC_SET_RGB 109
-#define XTERMCC_PROPRIETARY_ETERM_EXT 110
-#define XTERMCC_SET_PALETTE 111
-#define XTERMCC_SET_KVP 112
-#define XTERMCC_PASTE64 113
+#define XTERMCC_REPORT_WIN_STATE      102
+#define XTERMCC_REPORT_WIN_POS        103
+#define XTERMCC_REPORT_WIN_PIX_SIZE   104
+#define XTERMCC_REPORT_WIN_SIZE       105
+#define XTERMCC_REPORT_SCREEN_SIZE    106
+#define XTERMCC_REPORT_ICON_TITLE     107
+#define XTERMCC_REPORT_WIN_TITLE      108
+#define XTERMCC_PUSH_TITLE            109
+#define XTERMCC_POP_TITLE             110
+#define XTERMCC_SET_RGB               111
+#define XTERMCC_PROPRIETARY_ETERM_EXT 112
+#define XTERMCC_SET_PALETTE           113
+#define XTERMCC_SET_KVP               114
+#define XTERMCC_PASTE64               115
 
 // Some ansi stuff
 #define ANSICSI_CHA      3000   // Cursor Horizontal Absolute
@@ -168,8 +172,8 @@ typedef struct {
     struct {
         int p[VT100CSIPARAM_MAX];
         int count;
-        BOOL question;
-        int modifier;
+        BOOL question; // used by old parser
+        int modifier;  // used by old parser
     } csi;
     } u;
 } VT100TCC;
@@ -177,12 +181,14 @@ typedef struct {
 // character attributes
 #define VT100CHARATTR_ALLOFF   0
 #define VT100CHARATTR_BOLD     1
+#define VT100CHARATTR_ITALIC   3
 #define VT100CHARATTR_UNDER    4
 #define VT100CHARATTR_BLINK    5
 #define VT100CHARATTR_REVERSE  7
 
 // xterm additions
 #define VT100CHARATTR_NORMAL        22
+#define VT100CHARATTR_NOT_ITALIC    23
 #define VT100CHARATTR_NOT_UNDER     24
 #define VT100CHARATTR_STEADY        25
 #define VT100CHARATTR_POSITIVE      27
@@ -270,9 +276,9 @@ enum {
 typedef enum {
     MOUSE_REPORTING_NONE = -1,
     MOUSE_REPORTING_NORMAL = 0,
-    MOUSE_REPORTING_HILITE,
-    MOUSE_REPORTING_BUTTON_MOTION,
-    MOUSE_REPORTING_ALL_MOTION,
+    MOUSE_REPORTING_HILITE = 1,
+    MOUSE_REPORTING_BUTTON_MOTION = 2,
+    MOUSE_REPORTING_ALL_MOTION = 3,
 } MouseMode;
 
 typedef enum {
@@ -287,7 +293,7 @@ typedef enum {
     MOUSE_BUTTON_LEFT = 0,       // left button
     MOUSE_BUTTON_MIDDLE = 1,     // middle button
     MOUSE_BUTTON_RIGHT = 2,      // right button
-    MOUSE_BUTTON_RELEASE = 3,    // release - for 1000/1005/1015 mode
+    MOUSE_BUTTON_NONE = 3,       // no button pressed - for 1000/1005/1015 mode
     MOUSE_BUTTON_SCROLLDOWN = 4, // scroll down
     MOUSE_BUTTON_SCROLLUP = 5    // scroll up
 } MouseButtonNumber;
@@ -346,9 +352,9 @@ typedef enum {
     BOOL alternateForegroundSemantics;
     int BG_COLORCODE;
     BOOL alternateBackgroundSemantics;
-    int bold, under, blink, reversed;
+    int bold, italic, under, blink, reversed;
 
-    int saveBold, saveUnder, saveBlink, saveReversed;
+    int saveBold, saveItalic, saveUnder, saveBlink, saveReversed;
     int saveCHARSET;
     int saveForeground;
     BOOL saveAltForeground;
@@ -366,6 +372,7 @@ typedef enum {
 
     BOOL IS_ANSI;
     BOOL disableSmcupRmcup;
+    BOOL useCanonicalParser;
 
     //terminfo
     char  *key_strings[TERMINFO_KEYS];
@@ -407,6 +414,7 @@ typedef enum {
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem;
 - (void)setBackgroundColor:(int)bgColorCode alternateSemantics:(BOOL)altsem;
 
+- (void)resetCharset;
 - (void)reset;
 
 - (NSData *)keyArrowUp:(unsigned int)modflag;
@@ -462,6 +470,7 @@ typedef enum {
 - (void) setScreen:(VT100Screen *)sc;
 
 - (void)setDisableSmcupRmcup:(BOOL)value;
+- (void)setUseCanonicalParser:(BOOL)value;
 
 - (BOOL)bracketedPasteMode;
 

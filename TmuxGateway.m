@@ -586,7 +586,7 @@ error:
     return [NSDictionary dictionaryWithObjectsAndKeys:
             command, kCommandString,
             target ? target : [NSNull null], kCommandTarget,
-            selector ? NSStringFromSelector(selector) : [NSNull null], kCommandSelector,
+            selector ? (id) NSStringFromSelector(selector) : (id) [NSNull null], kCommandSelector,
             obj ? obj : [NSNull null], kCommandObject,
             [NSNumber numberWithInt:flags], kCommandFlags,
             nil];

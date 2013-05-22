@@ -52,6 +52,9 @@
 #import "TmuxLayoutParser.h"
 #import "MovePaneController.h"
 #import "TmuxStateParser.h"
+#import "PasteContext.h"
+#import "PasteEvent.h"
+#import "PasteViewController.h"
 #import "TmuxWindowOpener.h"
 #include <stdlib.h>
 #include <unistd.h>
@@ -101,7 +104,10 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     savedScrollPosition_ = -1;
     updateTimer = nil;
     antiIdleTimer = nil;
-    addressBookEntry=nil;
+    addressBookEntry = nil;
+    windowTitleStack = nil;
+    iconTitleStack = nil;
+    eventQueue_ = [[NSMutableArray alloc] init];
 
 #if DEBUG_ALLOC
     NSLog(@"%s: 0x%x", __PRETTY_FUNCTION__, self);
@@ -159,7 +165,10 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [COLORFGBG_VALUE release];
     [name release];
     [windowTitle release];
+    [windowTitleStack release];
+    [iconTitleStack release];
     [addressBookEntry release];
+    [eventQueue_ release];
     [backgroundImagePath release];
     [antiIdleTimer invalidate];
     [antiIdleTimer release];
@@ -170,7 +179,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [tmuxGateway_ release];
     [tmuxController_ release];
     [sendModifiers_ release];
-
+    [pasteViewController_ release];
+    [pasteContext_ release];
     [SHELL release];
     SHELL = nil;
     [SCREEN release];
@@ -847,6 +857,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     if (slowPasteTimer) {
         [slowPasteTimer invalidate];
         slowPasteTimer = nil;
+        [eventQueue_ removeAllObjects];
     }
 
     tab_ = nil;
@@ -1932,6 +1943,22 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [self writeTask:[TERMINAL keyPageDown:0]];
 }
 
+- (void)emptyEventQueue {
+    int eventsSent = 0;
+    for (NSEvent *event in eventQueue_) {
+        ++eventsSent;
+        if ([event isKindOfClass:[PasteEvent class]]) {
+            PasteEvent *pasteEvent = (PasteEvent *)event;
+            [self pasteString:pasteEvent.string flags:pasteEvent.flags];
+            // Can't empty while pasting.
+            break;
+        } else {
+            [TEXTVIEW keyDown:event];
+        }
+    }
+    [eventQueue_ removeObjectsInRange:NSMakeRange(0, eventsSent)];
+}
+
 + (NSString*)pasteboardString
 {
     NSPasteboard *board;
@@ -1959,6 +1986,28 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         info = [board stringForType:NSStringPboardType];
     }
     return info;
+}
+
+- (void)showPasteUI {
+    pasteViewController_ = [[PasteViewController alloc] initWithContext:pasteContext_
+                                                                 length:slowPasteBuffer.length];
+    pasteViewController_.delegate = self;
+    pasteViewController_.view.frame = NSMakeRect(20,
+                                                 view.frame.size.height - pasteViewController_.view.frame.size.height,
+                                                 pasteViewController_.view.frame.size.width,
+                                                 pasteViewController_.view.frame.size.height);
+    [view addSubview:pasteViewController_.view];
+    [pasteViewController_ updateFrame];
+}
+
+- (void)hidePasteUI {
+    [pasteViewController_ close];
+    [pasteViewController_ release];
+    pasteViewController_ = nil;
+}
+
+- (void)updatePasteUI {
+    [pasteViewController_ setRemainingLength:slowPasteBuffer.length];
 }
 
 - (NSData *)dataByRemovingControlCodes:(NSData *)data {
@@ -1991,28 +2040,18 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
 }
 
-- (void)_pasteWithBytePerCallPrefKey:(NSString*)bytesPerCallKey
-                        defaultValue:(int)bytesPerCallDefault
-            delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
-                        defaultValue:(float)delayBetweenCallsDefault
-                            selector:(SEL)selector
-{
+- (void)pasteAgain {
     NSRange range;
     range.location = 0;
-    NSNumber* pref = [[NSUserDefaults standardUserDefaults] valueForKey:bytesPerCallKey];
-    NSNumber* delay = [[NSUserDefaults standardUserDefaults] valueForKey:delayBetweenCallsKey];
-    const int kBatchSize = pref ? [pref intValue] : bytesPerCallDefault;
-    if ([slowPasteBuffer length] > kBatchSize) {
-        range.length = kBatchSize;
-    } else {
-        range.length = [slowPasteBuffer length];
-    }
+    range.length = MIN(pasteContext_.bytesPerCall, [slowPasteBuffer length]);
     [self _pasteStringImmediately:[slowPasteBuffer substringWithRange:range]];
     [slowPasteBuffer deleteCharactersInRange:range];
+    [self updatePasteUI];
     if ([slowPasteBuffer length] > 0) {
-        slowPasteTimer = [NSTimer scheduledTimerWithTimeInterval:delay ? [delay floatValue] : delayBetweenCallsDefault
+        [pasteContext_ updateValues];
+        slowPasteTimer = [NSTimer scheduledTimerWithTimeInterval:pasteContext_.delayBetweenCalls
                                                           target:self
-                                                        selector:selector
+                                                        selector:@selector(pasteAgain)
                                                         userInfo:nil
                                                          repeats:NO];
     } else {
@@ -2022,7 +2061,29 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
                              allowLossyConversion:YES]];
         }
         slowPasteTimer = nil;
+        [self hidePasteUI];
+        [pasteContext_ release];
+        pasteContext_ = nil;
+        [self emptyEventQueue];
     }
+}
+
+- (void)_pasteWithBytePerCallPrefKey:(NSString*)bytesPerCallKey
+                        defaultValue:(int)bytesPerCallDefault
+            delayBetweenCallsPrefKey:(NSString*)delayBetweenCallsKey
+                        defaultValue:(float)delayBetweenCallsDefault
+{
+    [pasteContext_ release];
+    pasteContext_ = [[PasteContext alloc] initWithBytesPerCallPrefKey:bytesPerCallKey
+                                                         defaultValue:bytesPerCallDefault
+                                             delayBetweenCallsPrefKey:delayBetweenCallsKey
+                                                         defaultValue:delayBetweenCallsDefault];
+    const int kPasteBytesPerSecond = 10000;  // This is a wild-ass guess.
+    if (pasteContext_.delayBetweenCalls * slowPasteBuffer.length / pasteContext_.bytesPerCall + slowPasteBuffer.length / kPasteBytesPerSecond > 3) {
+        [self showPasteUI];
+    }
+
+    [self pasteAgain];
 }
 
 // Outputs 16 bytes every 125ms so that clients that don't buffer input can handle pasting large buffers.
@@ -2032,17 +2093,15 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [self _pasteWithBytePerCallPrefKey:@"SlowPasteBytesPerCall"
                           defaultValue:16
               delayBetweenCallsPrefKey:@"SlowPasteDelayBetweenCalls"
-                          defaultValue:0.125
-                              selector:@selector(pasteSlowly:)];
+                          defaultValue:0.125];
 }
 
 - (void)_pasteStringMore
 {
     [self _pasteWithBytePerCallPrefKey:@"QuickPasteBytesPerCall"
-                          defaultValue:256
+                          defaultValue:1024
               delayBetweenCallsPrefKey:@"QuickPasteDelayBetweenCalls"
-                          defaultValue:0.01
-                              selector:@selector(_pasteStringMore)];
+                          defaultValue:0.01];
 }
 
 - (void)_pasteString:(NSString *)aString
@@ -2058,26 +2117,37 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
 }
 
-- (void)paste:(id)sender
+- (void)pasteString:(NSString *)str flags:(int)flags
 {
+    if (flags & 1) {
+        // paste escaping special characters
+        str = [str stringWithEscapedShellCharacters];
+    }
     if ([TERMINAL bracketedPasteMode]) {
         [self writeTask:[[NSString stringWithFormat:@"%c[200~", 27]
                          dataUsingEncoding:[TERMINAL encoding]
                          allowLossyConversion:YES]];
     }
+    if (flags & 2) {
+        [slowPasteBuffer appendString:[str stringWithLinefeedNewlines]];
+        [self pasteSlowly:nil];
+    } else {
+        [self _pasteString:str];
+    }
+}
 
+- (void)paste:(id)sender
+{
     NSString* pbStr = [PTYSession pasteboardString];
     if (pbStr) {
-        NSString *str = [[[NSMutableString alloc] initWithString:pbStr] autorelease];
-        if ([sender tag] & 1) {
-            // paste escaping special characters
-            str = [str stringWithEscapedShellCharacters];
-        }
-        if ([sender tag] & 2) {
-            [slowPasteBuffer appendString:[str stringWithLinefeedNewlines]];
-            [self pasteSlowly:nil];
+        if ([self isPasting]) {
+            if ([pbStr length] == 0) {
+                NSBeep();
+            } else {
+                [eventQueue_ addObject:[PasteEvent pasteEventWithString:pbStr flags:[sender tag]]];
+            }
         } else {
-            [self _pasteString:str];
+            [self pasteString:pbStr flags:[sender tag]];
         }
     }
 }
@@ -2246,17 +2316,18 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
     for (i = 0; i < 216; i++) {
         [self setColorTable:i+16
-                      color:[NSColor colorWithCalibratedRed:(i/36) ? ((i/36)*40+55)/256.0 : 0
-                                                      green:(i%36)/6 ? (((i%36)/6)*40+55)/256.0:0
-                                                       blue:(i%6) ?((i%6)*40+55)/256.0:0
+                      color:[NSColor colorWithCalibratedRed:(i/36) ? ((i/36)*40+55)/255.0 : 0
+                                                      green:(i%36)/6 ? (((i%36)/6)*40+55)/255.0:0
+                                                       blue:(i%6) ?((i%6)*40+55)/255.0:0
                                                       alpha:1]];
     }
     for (i = 0; i < 24; i++) {
-        [self setColorTable:i+232 color:[NSColor colorWithCalibratedWhite:(i*10+8)/256.0 alpha:1]];
+        [self setColorTable:i+232 color:[NSColor colorWithCalibratedWhite:(i*10+8)/255.0 alpha:1]];
     }
 
     // background image
     [self setBackgroundImagePath:[aDict objectForKey:KEY_BACKGROUND_IMAGE_LOCATION]];
+    [self setBackgroundImageTiled:[[aDict objectForKey:KEY_BACKGROUND_IMAGE_TILED] boolValue]];
 
     // colour scheme
     [self setCOLORFGBG_VALUE:[self ansiColorsMatchingForeground:[aDict objectForKey:KEY_FOREGROUND_COLOR]
@@ -2279,6 +2350,9 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [self setUseBoldFont:YES];
     }
     [TEXTVIEW setUseBrightBold:[aDict objectForKey:KEY_USE_BRIGHT_BOLD] ? [[aDict objectForKey:KEY_USE_BRIGHT_BOLD] boolValue] : YES];
+
+    // italic
+    [self setUseItalicFont:[[aDict objectForKey:KEY_USE_ITALIC_FONT] boolValue]];
 
     // set up the rest of the preferences
     [SCREEN setPlayBellFlag:![[aDict objectForKey:KEY_SILENCE_BELL] boolValue]];
@@ -2326,6 +2400,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [self setDoubleWidth:[[aDict objectForKey:KEY_AMBIGUOUS_DOUBLE_WIDTH] boolValue]];
     [self setXtermMouseReporting:[[aDict objectForKey:KEY_XTERM_MOUSE_REPORTING] boolValue]];
     [TERMINAL setDisableSmcupRmcup:[[aDict objectForKey:KEY_DISABLE_SMCUP_RMCUP] boolValue]];
+    [SCREEN setAllowTitleReporting:[[aDict objectForKey:KEY_ALLOW_TITLE_REPORTING] boolValue]];
+    [TERMINAL setUseCanonicalParser:[[aDict objectForKey:KEY_USE_CANONICAL_PARSER] boolValue]];
     [SCREEN setUnlimitedScrollback:[[aDict objectForKey:KEY_UNLIMITED_SCROLLBACK] intValue]];
     [SCREEN setScrollback:[[aDict objectForKey:KEY_SCROLLBACK_LINES] intValue]];
 
@@ -2462,6 +2538,10 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     return growlNewOutput;
 }
 
+- (NSString *)windowName {
+    return [[[self tab] realParentWindow] currentSessionName];
+}
+
 - (NSString*)name
 {
     return [self formattedName:name];
@@ -2546,6 +2626,58 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
 }
 
+- (void)pushWindowTitle
+{
+    if (!windowTitleStack) {
+        // initialize lazily
+        windowTitleStack = [[NSMutableArray alloc] init];
+    }
+    NSString *title = windowTitle;
+    if (!title) {
+        // if current title is nil, treat it as an empty string.
+        title = @"";
+    }
+    // push it
+    [windowTitleStack addObject:title];
+}
+
+- (void)popWindowTitle
+{
+    // Ignore if title stack is nil or stack count == 0
+    NSUInteger count = [windowTitleStack count];
+    if (count > 0) {
+        // pop window title
+        [self setWindowTitle:[windowTitleStack objectAtIndex:count - 1]];
+        [windowTitleStack removeObjectAtIndex:count - 1];
+    }
+}
+
+- (void)pushIconTitle
+{
+    if (!iconTitleStack) {
+        // initialize lazily
+        iconTitleStack = [[NSMutableArray alloc] init];
+    }
+    NSString *title = name;
+    if (!title) {
+        // if current icon title is nil, treat it as an empty string.
+        title = @"";
+    }
+    // push it
+    [iconTitleStack addObject:title];
+}
+
+- (void)popIconTitle
+{
+    // Ignore if icon title stack is nil or stack count == 0.
+    NSUInteger count = [iconTitleStack count];
+    if (count > 0) {
+        // pop icon title
+        [self setName:[iconTitleStack objectAtIndex:count - 1]];
+        [iconTitleStack removeObjectAtIndex:count - 1];
+    }
+}
+
 - (PTYTask *)SHELL
 {
     return SHELL;
@@ -2600,11 +2732,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 {
     [SCREEN autorelease];
     SCREEN = [theSCREEN retain];
-}
-
-- (NSImage *)image
-{
-    return [SCROLLVIEW backgroundImage];
 }
 
 - (SessionView *)view
@@ -2666,6 +2793,17 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     return [TEXTVIEW content];
 }
 
+- (BOOL)backgroundImageTiled
+{
+    return backgroundImageTiled;
+}
+
+- (void)setBackgroundImageTiled:(BOOL)set
+{
+    backgroundImageTiled = set;
+    [self setBackgroundImagePath:backgroundImagePath];
+}
+
 - (NSString *)backgroundImagePath
 {
     return backgroundImagePath;
@@ -2689,7 +2827,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         NSImage *anImage = [[NSImage alloc] initWithContentsOfFile:backgroundImagePath];
         if (anImage != nil) {
             [SCROLLVIEW setDrawsBackground:NO];
-            [SCROLLVIEW setBackgroundImage:anImage];
+            [SCROLLVIEW setBackgroundImage:anImage asPattern:[self backgroundImageTiled]];
             [anImage release];
         } else {
             [SCROLLVIEW setDrawsBackground:YES];
@@ -2892,6 +3030,16 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [TEXTVIEW setUseBoldFont:boldFlag];
 }
 
+- (BOOL)useItalicFont
+{
+    return [TEXTVIEW useItalicFont];
+}
+
+- (void)setUseItalicFont:(BOOL)italicFlag
+{
+    [TEXTVIEW setUseItalicFont:italicFlag];
+}
+
 - (BOOL)doubleWidth
 {
     return doubleWidth;
@@ -2911,7 +3059,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (void)setXtermMouseReporting:(BOOL)set
 {
     xtermMouseReporting = set;
-	[TEXTVIEW updateCursor:[NSApp currentEvent]];
+    [TEXTVIEW updateCursor:[NSApp currentEvent]];
 }
 
 - (BOOL)logging
@@ -3042,6 +3190,14 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 - (iTermGrowlDelegate*)growlDelegate
 {
     return gd;
+}
+
+- (BOOL)isPasting {
+    return slowPasteTimer != nil;
+}
+
+- (void)queueKeyDown:(NSEvent *)event {
+    [eventQueue_ addObject:event];
 }
 
 - (void)sendCommand:(NSString *)command
@@ -3666,11 +3822,11 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     tmuxGateway_ = [[TmuxGateway alloc] initWithDelegate:self];
     tmuxController_ = [[TmuxController alloc] initWithGateway:tmuxGateway_];
     tmuxController_.ambiguousIsDoubleWidth = doubleWidth;
-	NSSize theSize;
-	Profile *tmuxBookmark = [PTYTab tmuxBookmark];
-	theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
-	theSize.height = MAX(1, [[tmuxBookmark objectForKey:KEY_ROWS] intValue]);
-	[tmuxController_ setClientSize:theSize];
+    NSSize theSize;
+    Profile *tmuxBookmark = [PTYTab tmuxBookmark];
+    theSize.width = MAX(1, [[tmuxBookmark objectForKey:KEY_COLUMNS] intValue]);
+    theSize.height = MAX(1, [[tmuxBookmark objectForKey:KEY_ROWS] intValue]);
+    [tmuxController_ setClientSize:theSize];
 
     [self printTmuxMessage:@"** tmux mode started **"];
     [SCREEN crlf];
@@ -3871,6 +4027,16 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 	} else {
 		return [[dict objectForKey:KEY_SCROLLBACK_LINES] intValue];
 	}
+}
+
+- (void)pasteViewControllerDidCancel
+{
+    [self hidePasteUI];
+    [slowPasteTimer invalidate];
+    slowPasteTimer = nil;
+    [slowPasteBuffer release];
+    slowPasteBuffer = [[NSMutableString alloc] init];
+    [self emptyEventQueue];
 }
 
 @end

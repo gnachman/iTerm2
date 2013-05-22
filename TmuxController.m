@@ -20,6 +20,7 @@
 #import "EquivalenceClassSet.h"
 #import "TmuxDashboardController.h"
 #import "PreferencePanel.h"
+#import "iTermApplicationDelegate.h"
 
 NSString *kTmuxControllerSessionsDidChange = @"kTmuxControllerSessionsDidChange";
 NSString *kTmuxControllerDetachedNotification = @"kTmuxControllerDetachedNotification";
@@ -748,6 +749,7 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
         }
     }
     NSString *enc = [maps componentsJoinedByString:@" "];
+    DLog(@"Save window origins to %@ called from %@", enc, [NSThread callStackSymbols]);
     NSString *command = [NSString stringWithFormat:@"set -t $%d @origins \"%@\"",
              sessionId_, [enc stringByEscapingQuotes]];
     if (!lastOrigins_ || ![command isEqualToString:lastOrigins_]) {
