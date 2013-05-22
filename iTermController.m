@@ -254,6 +254,23 @@ static BOOL initDone = NO;
     }
 }
 
+- (BOOL)haveTmuxConnection
+{
+    return [self anyTmuxSession] != nil;
+}
+
+- (PTYSession *)anyTmuxSession
+{
+    for (PseudoTerminal* terminal in terminalWindows) {
+        for (PTYSession *session in [terminal sessions]) {
+            if ([session isTmuxClient] || [session isTmuxGateway]) {
+                return session;
+            }
+        }
+    }
+    return nil;
+}
+
 // Action methods
 - (IBAction)newWindow:(id)sender
 {

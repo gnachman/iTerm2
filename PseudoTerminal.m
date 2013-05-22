@@ -1339,17 +1339,22 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)detachTmux:(id)sender
 {
-    [[[self currentSession] tmuxController] requestDetach];
+    [[[[iTermController sharedInstance] anyTmuxSession] tmuxController] requestDetach];
 }
 
 - (IBAction)newTmuxWindow:(id)sender
 {
-    [[[self currentSession] tmuxController] newWindowWithAffinity:-1];
+    int nextWindowNumber = [[iTermController sharedInstance] allocateWindowNumber];
+    [[[[iTermController sharedInstance] anyTmuxSession] tmuxController] newWindowWithAffinity:-nextWindowNumber];
 }
 
 - (IBAction)newTmuxTab:(id)sender
 {
-    [[[self currentSession] tmuxController] newWindowWithAffinity:[[self currentTab] tmuxWindow]];
+    int tmuxWindow = [[self currentTab] tmuxWindow];
+    if (tmuxWindow < 0) {
+        tmuxWindow = -(number_ + 1);
+    }
+    [[[[iTermController sharedInstance] anyTmuxSession] tmuxController] newWindowWithAffinity:tmuxWindow];
 }
 
 - (NSSize)tmuxCompatibleSize
@@ -5223,7 +5228,7 @@ NSString *sessionsKey = @"sessions";
         [item action] == @selector(newTmuxWindow:) ||
         [item action] == @selector(newTmuxTab:) ||
         [item action] == @selector(openDashboard:)) {
-        result = [[self currentTab] isTmuxTab];
+        result = [[iTermController sharedInstance] haveTmuxConnection];
     } else if ([item action] == @selector(wrapToggleToolbarShown:)) {
         result = ![self lionFullScreen];
     } else if ([item action] == @selector(moveSessionToWindow:)) {
@@ -5671,6 +5676,16 @@ NSString *sessionsKey = @"sessions";
 - (void)window:(NSWindow *)window didDecodeRestorableState:(NSCoder *)state
 {
     [self loadArrangement:[state decodeObjectForKey:@"ptyarrangement"]];
+}
+
+- (BOOL)anyTabIsTmuxTab
+{
+    for (PTYTab *tab in [self tabs]) {
+        if ([tab isTmuxTab]) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (BOOL)allTabsAreTmuxTabs
