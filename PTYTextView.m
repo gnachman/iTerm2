@@ -3306,8 +3306,21 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         DLog(@"is a click in the window");
 
         BOOL altPressed = ([event modifierFlags] & NSAlternateKeyMask) != 0;
-        if (altPressed && !cmdPressed && ![[self delegate] xtermMouseReporting]) {
-            [self placeCursorOnCurrentLineWithEvent:event];
+        if (altPressed) {
+            // This moves the cursor, but not if mouse reporting is on for button clicks.
+            VT100Terminal *terminal = [dataSource terminal];
+            switch ([terminal mouseMode]) {
+                case MOUSE_REPORTING_NORMAL:
+                case MOUSE_REPORTING_BUTTON_MOTION:
+                case MOUSE_REPORTING_ALL_MOTION:
+                    // Reporting mosue clicks. The remote app gets preference.
+                    break;
+
+                default:
+                    // Not reporting mouse clicks, so we'll move the cursor since the remote app can't.
+                    [self placeCursorOnCurrentLineWithEvent:event];
+                    break;
+            }
         }
 
         startX=-1;
