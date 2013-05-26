@@ -478,12 +478,12 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
          responseSelector:nil];
 }
 
-- (void)newWindowWithAffinity:(int)windowId
+- (void)newWindowWithAffinity:(NSString *)windowIdString
 {
     [gateway_ sendCommand:@"new-window -PF '#{window_id}'"
            responseTarget:self
          responseSelector:@selector(newWindowWithAffinityCreated:affinityWindow:)
-           responseObject:[NSString stringWithInt:windowId]
+           responseObject:windowIdString
                     flags:0];
 }
 
@@ -1048,11 +1048,16 @@ static NSString *kListWindowsFormat = @"\"#{session_name}\t#{window_id}\t"
 }
 
 - (void)newWindowWithAffinityCreated:(NSString *)responseStr
-                      affinityWindow:(NSString  *)affinityWindow
+                      affinityWindow:(NSString *)affinityWindow  // Value passed in to -newWindowWithAffinity:, may be nil
 {
     if ([responseStr hasPrefix:@"@"]) {
-        [affinities_ setValue:[NSString stringWithInt:[[responseStr substringFromIndex:1] intValue]]
-                 equalToValue:affinityWindow];
+        NSString  *windowId = [NSString stringWithInt:[[responseStr substringFromIndex:1] intValue]];
+        if (affinityWindow) {
+            [affinities_ setValue:windowId
+                     equalToValue:affinityWindow];
+        } else {
+            [affinities_ removeValue:windowId];
+        }
     } else {
         NSLog(@"Response to new-window doesn't look like a window id: \"%@\"", responseStr);
     }

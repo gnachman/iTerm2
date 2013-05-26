@@ -1344,8 +1344,7 @@ NSString *sessionsKey = @"sessions";
 
 - (IBAction)newTmuxWindow:(id)sender
 {
-    int nextWindowNumber = [[iTermController sharedInstance] allocateWindowNumber];
-    [[[[iTermController sharedInstance] anyTmuxSession] tmuxController] newWindowWithAffinity:-nextWindowNumber];
+    [[[[iTermController sharedInstance] anyTmuxSession] tmuxController] newWindowWithAffinity:nil];
 }
 
 - (IBAction)newTmuxTab:(id)sender
@@ -1354,7 +1353,7 @@ NSString *sessionsKey = @"sessions";
     if (tmuxWindow < 0) {
         tmuxWindow = -(number_ + 1);
     }
-    [[[[iTermController sharedInstance] anyTmuxSession] tmuxController] newWindowWithAffinity:tmuxWindow];
+    [[[[iTermController sharedInstance] anyTmuxSession] tmuxController] newWindowWithAffinity:[NSString stringWithFormat:@"%d", tmuxWindow]];
 }
 
 - (NSSize)tmuxCompatibleSize

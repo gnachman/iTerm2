@@ -101,7 +101,10 @@ extern NSString *kTmuxControllerSessionWasRenamed;
 - (void)newWindowInSession:(NSString *)targetSession afterWindowWithName:(NSString *)predecessorWindow;
 
 - (PseudoTerminal *)windowWithAffinityForWindowId:(int)wid;
-- (void)newWindowWithAffinity:(int)windowId;
+// nil: Open in a new window
+// A string of a non-negative integer (e.g., @"2") means to open alongside a tmux window with that ID
+// A string of a negative integer (e.g., @"-2") means to open in an iTerm2 window with abs(windowId)==window number.
+- (void)newWindowWithAffinity:(NSString *)windowId;
 - (void)movePane:(int)srcPane
         intoPane:(int)destPane
       isVertical:(BOOL)splitVertical
