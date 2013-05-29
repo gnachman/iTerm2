@@ -3990,6 +3990,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         includeLastNewline:(BOOL)includeLastNewline
     trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 {
+    DLog(@"Find selected text from %d,%d to %d,%d pad=%d, includeLastNewline=%d, trim=%d",
+         startx, starty, nonInclusiveEndx, endy, (int)pad, (int)includeLastNewline,
+         (int)trimSelectionTrailingSpaces);
     int endx = nonInclusiveEndx-1;
     int width = [dataSource width];
     const int estimatedSize = (endy - starty + 1) * (width + 1) + (endx - startx + 1);
@@ -4089,15 +4092,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (NSString *)selectedTextWithPad:(BOOL)pad
 {
     if (startX <= -1) {
+        DLog(@"startx < 0 so there is no selected text");
         return nil;
     }
     if (selectMode == SELECT_BOX) {
+        DLog(@"find selected text in box");
         return [self contentInBoxFromX:startX
                                      Y:startY
                                    ToX:endX
                                      Y:endY
                                    pad:pad];
     } else {
+        DLog(@"find selected text in normal region");
         return ([self contentFromX:startX
                                  Y:startY
                                ToX:endX
@@ -4167,8 +4173,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
     NSString *copyString;
 
+    DLog(@"-[PTYTextView copy:] called");
     copyString = [self selectedText];
-
+    DLog(@"Have selected text of length %d. startX=%d, startY=%d, endX=%d, endY=%d", (int)[copyString length], startX, startY, endX, endY);
     if (copyString) {
         [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
         [pboard setString:copyString forType:NSStringPboardType];
