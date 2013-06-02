@@ -366,12 +366,6 @@ static int getCSIParam(unsigned char *datap,
                 param->count++;
             // reset the parameter flag
             readNumericParameter = NO;
-
-            if (param->count >= VT100CSIPARAM_MAX) {
-                // broken
-                param->cmd = 0xff;
-                unrecognized = YES;
-            }
         }
         else if (isalpha(*datap)||*datap=='@') {
             datalen--;
@@ -639,9 +633,7 @@ static int getCSIParamCanonically(unsigned char *datap,
 
             case ';':
                 // If we got an implied (blank) parameter, increment the parameter count again
-                if (param->count >= VT100CSIPARAM_MAX) {
-                    unrecognized = YES;
-                } else if(readNumericParameter == NO) {
+                if (param->count < VT100CSIPARAM_MAX && readNumericParameter == NO) {
                     param->count++;
                 }
                 // reset the parameter flag
