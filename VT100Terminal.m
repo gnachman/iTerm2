@@ -366,12 +366,6 @@ static int getCSIParam(unsigned char *datap,
                 param->count++;
             // reset the parameter flag
             readNumericParameter = NO;
-
-            if (param->count >= VT100CSIPARAM_MAX) {
-                // broken
-                param->cmd = 0xff;
-                unrecognized = YES;
-            }
         }
         else if (isalpha(*datap)||*datap=='@') {
             datalen--;
