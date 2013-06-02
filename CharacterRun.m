@@ -84,8 +84,11 @@ static const int kDefaultAdvancesCapacity = 100;
 }
 
 - (BOOL)isCompatibleWith:(CharacterRun *)otherRun {
-    return (fakeBold_ == otherRun.fakeBold &&
-            fontInfo_ == otherRun.fontInfo);
+    return (antiAlias_ == otherRun.antiAlias &&
+            color_ == otherRun.color &&
+            fakeBold_ == otherRun.fakeBold &&
+            fontInfo_ == otherRun.fontInfo &&
+            advancedFontRendering_ == otherRun.advancedFontRendering);
 }
 
 - (NSDictionary *)attributes {
@@ -105,7 +108,7 @@ static const int kDefaultAdvancesCapacity = 100;
 
 - (void)appendToAdvances:(float)advance {
     if (advancesSize_ + 1 >= advancesCapacity_) {
-        advancesCapacity_ = (advancesSize_ + 1) * 2;;
+        advancesCapacity_ = (advancesSize_ + 1) * 2;
         advances_ = realloc(advances_, advancesCapacity_ * sizeof(float));
     }
     advances_[advancesSize_++] = advance;
