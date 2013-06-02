@@ -8191,10 +8191,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 #endif
     BOOL irEnabled = [[PreferencePanel sharedInstance] instantReplay];
     long long totalScrollbackOverflow = [dataSource totalScrollbackOverflow];
+    int allDirty = [dataSource isAllDirty] ? 1 : 0;
+    [dataSource resetAllDirty];
     for (int y = lineStart; y < lineEnd; y++) {
         NSMutableData* matches = [resultMap_ objectForKey:[NSNumber numberWithLongLong:y + totalScrollbackOverflow]];
         for (int x = 0; x < WIDTH; x++) {
-            int dirtyFlags = [dataSource dirtyAtX:x Y:y-lineStart];
+            int dirtyFlags = ([dataSource dirtyAtX:x Y:y-lineStart] | allDirty);
             if (dirtyFlags) {
                 if (irEnabled) {
                     if (dirtyFlags & 1) {
