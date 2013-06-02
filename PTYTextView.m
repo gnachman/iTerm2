@@ -6215,6 +6215,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
 
         if (minimumContrast_ > 0.001 && bgColor) {
+            // TODO: Way too much time spent here. Use previous char's color if it is the same.
             thisChar.color = [self color:thisChar.color withContrastAgainst:bgColor];
         }
         BOOL drawable;

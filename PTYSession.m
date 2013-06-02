@@ -1029,7 +1029,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     [updateDisplayUntil_ release];
     updateDisplayUntil_ = [[NSDate dateWithTimeIntervalSinceNow:10] retain];
     if ([[[self tab] parentWindow] currentTab] == [self tab]) {
-        if ([data length] < 1024) {
+        if ([data length] < 256) {
             [self scheduleUpdateIn:kFastTimerIntervalSec];
         } else {
             [self scheduleUpdateIn:kSlowTimerIntervalSec];
