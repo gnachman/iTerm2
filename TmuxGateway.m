@@ -323,12 +323,22 @@ error:
 
 - (void)parseBegin:(NSString *)command
 {
-    if ([command hasPrefix:@"%begin auto"]) {
-        NSArray *components = [command captureComponentsMatchedByRegex:@"^%begin auto ([0-9 ]+)$"];
-        if (components.count != 2) {
-            [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%begin command_id): \"%@\"", command]];
-            return;
-        }
+    int flags = -1;
+    // begin commandId commandNumber[ flags]
+    // flags = 0: Server-originated command
+    // flags & 1: Client-originated command (default)
+    NSArray *components = [command captureComponentsMatchedByRegex:@"^%begin ([0-9]+) [0-9]+( [0-9]+)?$"];
+    if (components.count < 3) {
+        [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%begin command_id [flags]): \"%@\"", command]];
+        return;
+    }
+
+    NSString *flagStr = [[components objectAtIndex:2] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    if ([flagStr length] > 0) {
+        flags = [flagStr intValue];
+    }
+    if (!(flags & 1)) {
+        // Not a client-originated command.
         TmuxLog(@"Begin auto response");
         currentCommand_ = [[NSMutableDictionary dictionaryWithObjectsAndKeys:
                                [components objectAtIndex:1], kCommandId,
@@ -339,11 +349,6 @@ error:
         currentCommandData_ = [[NSMutableData alloc] init];
     } else {
         currentCommand_ = [[commandQueue_ objectAtIndex:0] retain];
-        NSArray *components = [command captureComponentsMatchedByRegex:@"^%begin ([0-9 ]+)$"];
-        if (components.count != 2) {
-            [self abortWithErrorMessage:[NSString stringWithFormat:@"Malformed command (expected %%begin command_id): \"%@\"", command]];
-            return;
-        }
         NSString *commandId = [components objectAtIndex:1];
         [currentCommand_ setObject:commandId forKey:kCommandId];
         TmuxLog(@"Begin response to %@", [currentCommand_ objectForKey:kCommandString]);
@@ -435,11 +440,13 @@ error:
 
     NSString *endCommand = [NSString stringWithFormat:@"%%end %@", [currentCommand_ objectForKey:kCommandId]];
     NSString *errorCommand = [NSString stringWithFormat:@"%%error %@", [currentCommand_ objectForKey:kCommandId]];
-    if (currentCommand_ && [command isEqualToString:endCommand]) {
+    // TODO(georgen): It would be nice to include the command number and flags in
+    // endCommand and errorCommand. Tmux 1.8 does not send flags.
+    if (currentCommand_ && [command hasPrefix:endCommand]) {
         TmuxLog(@"End for command %@", currentCommand_);
         [self stripLastNewline];
         [self currentCommandResponseFinishedWithError:NO];
-    } else if (currentCommand_ && [command isEqualToString:errorCommand]) {
+    } else if (currentCommand_ && [command hasPrefix:errorCommand]) {
         [self stripLastNewline];
         [self currentCommandResponseFinishedWithError:YES];
     } else if (currentCommand_) {
