@@ -63,17 +63,17 @@ static const int kDefaultAdvancesCapacity = 100;
     return [string_ description];
 }
 
-- (void)updateAdvances:(CGSize *)advances
-  forSuggestedAdvances:(const CGSize *)suggestedAdvances
+- (void)updateAdvances:(NSSize *)advances
+  forSuggestedAdvances:(const NSSize *)suggestedAdvances
                  count:(int)glyphCount {
     int i = 0;  // Index into suggestedAdvances (input) and advances (output)
     int j = 0;  // Index into advances_
     while (i < glyphCount) {
         if (suggestedAdvances[i].width> 0) {
-            advances[i] = CGSizeMake(advances_[j], 0);
+            advances[i] = NSMakeSize(advances_[j], 0);
             j++;
         } else {
-            advances[i] = CGSizeZero;
+            advances[i] = NSMakeSize(0, 0);
         }
         i++;
     }

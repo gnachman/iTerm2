@@ -6330,9 +6330,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         run = (CTRunRef) [runs objectAtIndex:i];
 
         CFIndex glyphCount = CTRunGetGlyphCount(run);
-        const CGSize *suggestedAdvances = CTRunGetAdvancesPtr(run);
+        const NSSize *suggestedAdvances = CTRunGetAdvancesPtr(run);
         const CGGlyph *glyphs = CTRunGetGlyphsPtr(run);
-        CGSize advances[glyphCount];
+        NSSize advances[glyphCount];
         [currentRun updateAdvances:advances forSuggestedAdvances:suggestedAdvances count:glyphCount];
 
 

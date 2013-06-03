@@ -50,8 +50,8 @@
 // This adds the code to temporary storage; call |commit| to actually append.
 - (void)appendCode:(unichar)code withAdvance:(CGFloat)advance;
 
-- (void)updateAdvances:(CGSize *)advances
-  forSuggestedAdvances:(const CGSize *)suggestedAdvances
+- (void)updateAdvances:(NSSize *)advances
+  forSuggestedAdvances:(const NSSize *)suggestedAdvances
                  count:(int)glyphCount;
 
 // Returns a newly allocated line.
