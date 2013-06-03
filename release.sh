@@ -31,7 +31,7 @@ echo Num args is $#
 COMPACTDATE=$(date +"%Y%m%d")
 VERSION=$(cat version.txt | sed -e "s/%(extra)s/$COMPACTDATE/")
 NAME=$(echo $VERSION | sed -e "s/\\./_/g")
-SVNDIR=~/svn/iterm2
+SVNDIR=~/iterm2-website
 ORIG_DIR=`pwd`
 
 make Deployment || exit
@@ -53,7 +53,7 @@ cd build/Deployment
 zip -ry iTerm2-${NAME}.zip iTerm.app
 
 # Update the list of changes
-vi $SVNDIR/appcasts/testing_changes.html
+vi $SVNDIR/appcasts/testing_changes.txt
 
 # Prepare the sparkle xml file
 SparkleSign testing.xml
@@ -77,7 +77,7 @@ echo "Go upload iTerm2-${MODERN_NAME}.zip and iTerm2-${NAME}.zip"
 echo "Then run:"
 echo "git tag v${VERSION}"
 echo "git push --tags"
-echo "pushd ${SVNDIR} && svn commit -m ${VERSION} appcasts/testing.xml appcasts/testing_changes.html appcasts/legacy_testing.xml"
+echo "pushd ${SVNDIR} && git commit -am ${VERSION} && git push origin master"
 echo "popd"
 echo "git commit -am ${VERSION}"
 echo "git push origin master"
