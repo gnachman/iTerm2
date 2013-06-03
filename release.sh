@@ -34,7 +34,6 @@ NAME=$(echo $VERSION | sed -e "s/\\./_/g")
 SVNDIR=~/iterm2-website
 ORIG_DIR=`pwd`
 
-make Deployment || exit
 ./sign.sh
 
 # Build tmux and move its tar.gz into the Deployment build directory
