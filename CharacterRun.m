@@ -59,24 +59,55 @@ static const int kDefaultAdvancesCapacity = 100;
     return theCopy;
 }
 
-- (NSString *)description {
-    return [string_ description];
+- (int)getPositions:(CGPoint *)positions
+             forRun:(CTRunRef)run
+    startingAtIndex:(int)firstCharacterIndex
+              baseX:(CGFloat)baseX
+         glyphCount:(int)glyphCount
+        runWidthPtr:(CGFloat *)runWidthPtr {
+    /*
+     String:             "xéｍo"
+     Glyphs:             "xe'ｍo"
+     suggestedPositions: 0, 10, 11, 20, 40
+     Indices:            0,  1,  1,  2,  3       // values are index into Advances
+     Advances:           8, 8, 16,  8
+     Positions:          0, 8, 16, 32            // integral of Advances
+     RevIndices:         0, 1,  3,  4            // maps index of string to index of first glphy
+     
+     Output:             0,  8,  9, 16, 24
+     
+     output[i] = positions[i] + sp[i] - sp[reverse[indices[i]]]
+     */
+    const CGPoint *suggestedPositions = CTRunGetPositionsPtr(run);
+    const CFIndex *indices = CTRunGetStringIndicesPtr(run);
+
+    int characterIndex = firstCharacterIndex;
+    int indexOfFirstGlyphForCharacter = 0;
+    CGFloat basePosition = 0;
+    int numChars = 0;
+    CGFloat width = 0;
+    if (glyphCount > 0) {
+        numChars = 1;
+        width = advances_[firstCharacterIndex];
+    }
+    for (int glyphIndex = 0; glyphIndex < glyphCount; glyphIndex++) {
+        if (glyphIndex > 0 && indices[glyphIndex] != indices[glyphIndex - 1]) {
+            // Have advanced to the next character.
+            basePosition += advances_[characterIndex];
+            indexOfFirstGlyphForCharacter = glyphIndex;
+            ++characterIndex;
+            width += advances_[characterIndex];
+            ++numChars;
+        }
+        CGFloat x = basePosition + suggestedPositions[glyphIndex].x - suggestedPositions[indexOfFirstGlyphForCharacter].x;
+        positions[glyphIndex] = CGPointMake(x, suggestedPositions[glyphIndex].y);
+    }
+    *runWidthPtr = width;
+    return numChars;
 }
 
-- (void)updateAdvances:(CGSize *)advances
-  forSuggestedAdvances:(const CGSize *)suggestedAdvances
-                 count:(int)glyphCount {
-    int i = 0;  // Index into suggestedAdvances (input) and advances (output)
-    int j = 0;  // Index into advances_
-    while (i < glyphCount) {
-        if (suggestedAdvances[i].width> 0) {
-            advances[i] = CGSizeMake(advances_[j], 0);
-            j++;
-        } else {
-            advances[i] = CGSizeZero;
-        }
-        i++;
-    }
+- (NSString *)description {
+    return [string_ description];
 }
 
 - (CTLineRef)newLine {
@@ -131,6 +162,9 @@ static const int kDefaultAdvancesCapacity = 100;
 
 - (void)appendCodesFromString:(NSString *)string withAdvance:(CGFloat)advance {
     [self commit];
+    for (int i = 1; i < [string length]; i++) {
+        [self appendToAdvances:0];
+    }
     [self appendToAdvances:advance];
     [string_ appendAttributedString:[self attributedStringForString:string]];
 }
