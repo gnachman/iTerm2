@@ -6323,6 +6323,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     CTLineRef line = [currentRun newLine];
     NSArray *runs = (NSArray *)CTLineGetGlyphRuns(line);
     int x = currentRun.x;
+    int characterIndex = 0;
 
     CGContextSetShouldAntialias(ctx, currentRun.antiAlias);
     CTRunRef run;
@@ -6330,10 +6331,15 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         run = (CTRunRef) [runs objectAtIndex:i];
 
         CFIndex glyphCount = CTRunGetGlyphCount(run);
-        const CGSize *suggestedAdvances = CTRunGetAdvancesPtr(run);
         const CGGlyph *glyphs = CTRunGetGlyphsPtr(run);
-        CGSize advances[glyphCount];
-        [currentRun updateAdvances:advances forSuggestedAdvances:suggestedAdvances count:glyphCount];
+        CGPoint positions[glyphCount];
+        CGFloat runWidth;
+        characterIndex += [currentRun getPositions:positions
+                                            forRun:run
+                                   startingAtIndex:characterIndex
+                                             baseX:x
+                                        glyphCount:glyphCount
+                                       runWidthPtr:&runWidth];
 
 
         CTFontRef runFont =
@@ -6355,7 +6361,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                           0.0, -1.0,
                                                           x,    y));
 
-        CGContextShowGlyphsWithAdvances(ctx, glyphs, advances, glyphCount);
+        CGContextShowGlyphsAtPositions(ctx, glyphs, positions, glyphCount);
 
         if (currentRun.fakeBold) {
             // If anti-aliased, drawing twice at the same position makes the strokes thicker.
@@ -6365,11 +6371,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                               x + (currentRun.antiAlias ? 0 : 1),
                                                               y));
 
-            CGContextShowGlyphsWithAdvances(ctx, glyphs, advances, glyphCount);
+            CGContextShowGlyphsAtPositions(ctx, glyphs, positions, glyphCount);
         }
-        for (int j = 0; j < glyphCount; j++) {
-            x += advances[j].width;
-        }
+        x += runWidth;
     }
     CFRelease(line);
 }

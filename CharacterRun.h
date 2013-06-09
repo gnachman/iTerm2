@@ -44,20 +44,26 @@
 // Returns YES if the codes in otherRun can be safely added to this run.
 - (BOOL)isCompatibleWith:(CharacterRun *)otherRun;
 
-// Append to |string_|.
+// Append codes from |string|, which will be rendered in a single cell (perhaps double-width) and may
+// include combining marks.
 - (void)appendCodesFromString:(NSString *)string withAdvance:(CGFloat)advance;
 
 // This adds the code to temporary storage; call |commit| to actually append.
 - (void)appendCode:(unichar)code withAdvance:(CGFloat)advance;
-
-- (void)updateAdvances:(CGSize *)advances
-  forSuggestedAdvances:(const CGSize *)suggestedAdvances
-                 count:(int)glyphCount;
 
 // Returns a newly allocated line.
 - (CTLineRef)newLine;
 
 // Commit appended codes to the internal string.
 - (void)commit;
+
+// Returns the positions for characters in the given run, which begins at the specified character
+// and x position. Returns the number of characters.
+- (int)getPositions:(CGPoint *)positions
+             forRun:(CTRunRef)run
+    startingAtIndex:(int)firstCharacterIndex
+              baseX:(CGFloat)baseX
+         glyphCount:(int)glyphCount
+        runWidthPtr:(CGFloat *)runWidthPtr;
 
 @end
