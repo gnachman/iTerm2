@@ -2304,6 +2304,7 @@ static VT100TCC decode_string(unsigned char *datap,
         INTERLACE_MODE = NO;
         KEYPAD_MODE = NO;
         INSERT_MODE = NO;
+        VSPLIT_MODE = NO;
         saveCHARSET=CHARSET = NO;
         XON = YES;
         bold = italic = blink = reversed = under = NO;
@@ -3161,6 +3162,11 @@ static VT100TCC decode_string(unsigned char *datap,
     return INSERT_MODE;
 }
 
+- (BOOL)vsplitMode
+{
+    return VSPLIT_MODE;
+}
+
 - (BOOL) xon
 {
     return XON;
@@ -3302,6 +3308,7 @@ static VT100TCC decode_string(unsigned char *datap,
                     case 9:  INTERLACE_MODE  = mode; break;
                     case 25: [SCREEN showCursor: mode]; break;
                     case 40: allowColumnMode = mode; break;
+                    case 69: VSPLIT_MODE = mode; break;
 
                     case 1049:
                         // From the xterm release log:
