@@ -2054,6 +2054,11 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         }
         break;
 
+    case VT100CSI_DECSLRM:
+        SCROLL_LEFT = token.u.csi.p[0] - 1;
+        SCROLL_RIGHT = token.u.csi.p[1];
+        break;
+            
     /* My interpretation of this:
      * http://www.cl.cam.ac.uk/~mgk25/unicode.html#term
      * is that UTF-8 terminals should ignore SCS because

@@ -76,6 +76,8 @@ void TranslateCharacterSet(screen_char_t *s, int len);
     int ALT_SAVE_CURSOR_Y;
     int SCROLL_TOP;
     int SCROLL_BOTTOM;
+    int SCROLL_LEFT;
+    int SCROLL_RIGHT;
     NSMutableSet* tabStops;
 
     VT100Terminal *TERMINAL;
