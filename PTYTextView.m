@@ -6345,7 +6345,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         characterIndex += [currentRun getPositions:positions
                                             forRun:run
                                    startingAtIndex:characterIndex
-                                             baseX:x
                                         glyphCount:glyphCount
                                        runWidthPtr:&runWidth];
 

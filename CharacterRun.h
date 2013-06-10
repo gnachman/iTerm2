@@ -26,7 +26,9 @@
     int tempCount_;
     NSMutableAttributedString *string_;
 
-	// Array of advances. Gets realloced.
+	// Array of advances. Gets realloced. If there are multiple characters in a cell, the first will
+    // have a positive advance and the others will have a 0 advance. Core Text's positions are used
+    // for those codes.
     float *advances_;
     int advancesSize_;  // used space
     int advancesCapacity_;  // available space
@@ -62,7 +64,6 @@
 - (int)getPositions:(CGPoint *)positions
              forRun:(CTRunRef)run
     startingAtIndex:(int)firstCharacterIndex
-              baseX:(CGFloat)baseX
          glyphCount:(int)glyphCount
         runWidthPtr:(CGFloat *)runWidthPtr;
 
