@@ -3838,7 +3838,9 @@ void DumpBuf(screen_char_t* p, int n) {
         for (i = num_lines_moved ; i >= 0; i--) {
             sourceLine = [self getLineAtScreenIndex:cursorY + i];
             targetLine = [self getLineAtScreenIndex:cursorY + i + n];
-            memcpy(targetLine, sourceLine, REAL_WIDTH * sizeof(screen_char_t));
+            memcpy(targetLine + SCROLL_LEFT,
+                   sourceLine + SCROLL_LEFT,
+                   (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
         }
 
     }
@@ -3850,7 +3852,9 @@ void DumpBuf(screen_char_t* p, int n) {
     aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
     for (i = 0; i < n; i++) {
         sourceLine = [self getLineAtScreenIndex:cursorY + i];
-        memcpy(sourceLine, aDefaultLine, REAL_WIDTH*sizeof(screen_char_t));
+        memcpy(sourceLine + SCROLL_LEFT,
+               aDefaultLine,
+               (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
     }
 
     // everything between cursorY and SCROLL_BOTTOM is dirty
@@ -3876,7 +3880,9 @@ void DumpBuf(screen_char_t* p, int n) {
         for (i = 0; i <= num_lines_moved; i++) {
             sourceLine = [self getLineAtScreenIndex:cursorY + i + n];
             targetLine = [self getLineAtScreenIndex:cursorY + i];
-            memcpy(targetLine, sourceLine, REAL_WIDTH*sizeof(screen_char_t));
+            memcpy(targetLine + SCROLL_LEFT,
+                   sourceLine + SCROLL_LEFT,
+                   (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
         }
 
     }
@@ -3887,7 +3893,9 @@ void DumpBuf(screen_char_t* p, int n) {
     aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
     for (i = 0; i < n; i++) {
         sourceLine = [self getLineAtScreenIndex:SCROLL_BOTTOM-n+1+i];
-        memcpy(sourceLine, aDefaultLine, REAL_WIDTH*sizeof(screen_char_t));
+        memcpy(sourceLine + SCROLL_LEFT,
+               aDefaultLine,
+               (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
     }
 
     // everything between cursorY and SCROLL_BOTTOM is dirty
