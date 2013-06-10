@@ -59,31 +59,18 @@ static const int kDefaultAdvancesCapacity = 100;
     return theCopy;
 }
 
+// Align positions into cells.
 - (int)getPositions:(CGPoint *)positions
              forRun:(CTRunRef)run
     startingAtIndex:(int)firstCharacterIndex
-              baseX:(CGFloat)baseX
          glyphCount:(int)glyphCount
         runWidthPtr:(CGFloat *)runWidthPtr {
-    /*
-     String:             "xéｍo"
-     Glyphs:             "xe'ｍo"
-     suggestedPositions: 0, 10, 11, 20, 40
-     Indices:            0,  1,  1,  2,  3       // values are index into Advances
-     Advances:           8, 8, 16,  8
-     Positions:          0, 8, 16, 32            // integral of Advances
-     RevIndices:         0, 1,  3,  4            // maps index of string to index of first glphy
-     
-     Output:             0,  8,  9, 16, 24
-     
-     output[i] = positions[i] + sp[i] - sp[reverse[indices[i]]]
-     */
     const CGPoint *suggestedPositions = CTRunGetPositionsPtr(run);
     const CFIndex *indices = CTRunGetStringIndicesPtr(run);
 
     int characterIndex = firstCharacterIndex;
-    int indexOfFirstGlyphForCharacter = 0;
-    CGFloat basePosition = 0;
+    int indexOfFirstGlyphInCurrentCell = 0;
+    CGFloat basePosition = 0;  // X coord of the current cell relative to the start of this CTRun.
     int numChars = 0;
     CGFloat width = 0;
     if (glyphCount > 0) {
@@ -91,16 +78,22 @@ static const int kDefaultAdvancesCapacity = 100;
         width = advances_[firstCharacterIndex];
     }
     for (int glyphIndex = 0; glyphIndex < glyphCount; glyphIndex++) {
-        if (glyphIndex > 0 && indices[glyphIndex] != indices[glyphIndex - 1]) {
-            // Have advanced to the next character.
-            basePosition += advances_[characterIndex];
-            indexOfFirstGlyphForCharacter = glyphIndex;
-            ++characterIndex;
-            width += advances_[characterIndex];
+        CGFloat x = basePosition + suggestedPositions[glyphIndex].x - suggestedPositions[indexOfFirstGlyphInCurrentCell].x;
+        positions[glyphIndex] = CGPointMake(x, suggestedPositions[glyphIndex].y);
+
+        if (indices[glyphIndex] != characterIndex) {
+            // The glyph we just added is for a new character in string_.
+            // Some characters, such as THAI CHARACTER SARA AM, are composed of
+            // multiple glyphs.
+            if (advances_[characterIndex] > 0) {
+                // The glyph we just added was the first in a new cell.
+                basePosition += advances_[characterIndex];
+                indexOfFirstGlyphInCurrentCell = glyphIndex;
+                width += advances_[characterIndex];
+            }
+            characterIndex = indices[glyphIndex];
             ++numChars;
         }
-        CGFloat x = basePosition + suggestedPositions[glyphIndex].x - suggestedPositions[indexOfFirstGlyphForCharacter].x;
-        positions[glyphIndex] = CGPointMake(x, suggestedPositions[glyphIndex].y);
     }
     *runWidthPtr = width;
     return numChars;
