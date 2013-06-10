@@ -6138,10 +6138,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int lastBold = 2;  // Bold is a one-bit field so it can never equal 2.
     NSColor *lastColor = nil;
 
-    CharacterRun *prevChar = [[[CharacterRun alloc] init] autorelease];
+    CharacterRun *prevChar = [[CharacterRun alloc] init];
     BOOL havePrevChar = NO;
     CGFloat curX = initialPoint.x;
-    CharacterRun *thisChar = [[[CharacterRun alloc] init] autorelease];
+    CharacterRun *thisChar = [[CharacterRun alloc] init];
     thisChar.advancedFontRendering = advancedFontRendering;
     for (int i = indexRange.location; i < indexRange.location + indexRange.length; i++) {
         if (theLine[i].code == DWC_RIGHT) {
@@ -6315,6 +6315,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (currentRun) {
         [runs addObject:currentRun];
     }
+    [prevChar release];
+    [thisChar release];
 }
 
 - (void)drawRun:(CharacterRun *)currentRun
