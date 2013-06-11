@@ -929,6 +929,7 @@ NSString *sessionsKey = @"sessions";
                                                 forKey:@"ShowFullScreenTabBar"];
     }
     [self repositionWidgets];
+    [self fitTabsToWindow];
 }
 
 - (IBAction)closeCurrentTab:(id)sender
