@@ -319,7 +319,9 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     cursorX = cursorY = 0;
     SAVE_CURSOR_X = SAVE_CURSOR_Y = 0;
     ALT_SAVE_CURSOR_X = ALT_SAVE_CURSOR_Y = 0;
+    SCROLL_LEFT = 0;
     SCROLL_TOP = 0;
+    SCROLL_RIGHT = WIDTH - 1;
     SCROLL_BOTTOM = HEIGHT - 1;
 
     TERMINAL = nil;
@@ -420,7 +422,9 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     cursorX = cursorY = 0;
     SAVE_CURSOR_X = SAVE_CURSOR_Y = 0;
     ALT_SAVE_CURSOR_X = ALT_SAVE_CURSOR_Y = 0;
+    SCROLL_LEFT = 0;
     SCROLL_TOP = 0;
+    SCROLL_RIGHT = WIDTH - 1;
     SCROLL_BOTTOM = HEIGHT - 1;
     blinkShow=YES;
     findContext.substring = nil;
@@ -623,7 +627,9 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         [self setCursorX:0 Y:0];
         SAVE_CURSOR_X = SAVE_CURSOR_Y = 0;
         ALT_SAVE_CURSOR_X = ALT_SAVE_CURSOR_Y = 0;
+        SCROLL_LEFT = 0;
         SCROLL_TOP = 0;
+        SCROLL_RIGHT = WIDTH - 1;
         SCROLL_BOTTOM = HEIGHT - 1;
     }
 }
@@ -1566,8 +1572,10 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     [linebuffer dump];
 #endif
 
-    // reset terminal scroll top and bottom
+    // reset terminal scroll region
+    SCROLL_LEFT = 0;
     SCROLL_TOP = 0;
+    SCROLL_RIGHT = WIDTH - 1;
     SCROLL_BOTTOM = HEIGHT - 1;
 
     [self clampCursorPositionToValid];
@@ -1629,8 +1637,10 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     // Save screen contents before resetting.
     [self scrollScreenIntoScrollbackBuffer:1];
 
-    // reset terminal scroll top and bottom
+    // reset terminal scroll region
+    SCROLL_LEFT = 0;
     SCROLL_TOP = 0;
+    SCROLL_RIGHT = WIDTH - 1;
     SCROLL_BOTTOM = HEIGHT - 1;
 
     [self clearScreen];
