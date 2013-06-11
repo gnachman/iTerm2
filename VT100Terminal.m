@@ -2488,6 +2488,7 @@ static VT100TCC decode_string(unsigned char *datap,
     INTERLACE_MODE = NO;
     KEYPAD_MODE = NO;
     INSERT_MODE = NO;
+    VSPLIT_MODE = NO;
     bracketedPasteMode_ = NO;
     saveCHARSET=CHARSET = NO;
     XON = YES;
