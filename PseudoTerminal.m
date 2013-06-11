@@ -5045,7 +5045,7 @@ NSString *sessionsKey = @"sessions";
 - (void)fitTabToWindow:(PTYTab*)aTab
 {
     NSSize size = [TABVIEW contentRect].size;
-        PtyLog(@"fitTabToWindow calling setSize for content size of %@", [NSValue valueWithSize:size]);
+    PtyLog(@"fitTabToWindow calling setSize for content size of %@", [NSValue valueWithSize:size]);
     [aTab setSize:size];
 }
 

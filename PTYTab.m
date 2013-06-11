@@ -1154,7 +1154,9 @@ static NSString* FormatRect(NSRect r) {
                                                      0,
                                                      theSize.width,
                                                      theSize.height)];
-        [[theSession view] setAutoresizesSubviews:NO];
+        if ([self isTmuxTab]) {
+            [[theSession view] setAutoresizesSubviews:NO];
+        }
         [[theSession view] updateTitleFrame];
     }
 }
@@ -2124,7 +2126,7 @@ static NSString* FormatRect(NSRect r) {
   [self updateFlexibleViewColors];
   [flexibleView_ setFrameSize:[[realParentWindow_ tabView] frame].size];
   for (PTYSession *aSession in [self sessions]) {
-    [[aSession view] setAutoresizesSubviews:NO];
+    [[aSession view] setAutoresizesSubviews:NO];  // This is ok because it is a tmux tab
     [[aSession view] updateTitleFrame];
   }
 }
@@ -2498,7 +2500,7 @@ static NSString* FormatRect(NSRect r) {
     theTab->parseTree_ = [parseTree retain];
     // The only way a tmux view should resize is because the server told it to.
     for (PTYSession *aSession in [theTab sessions]) {
-        [[aSession view] setAutoresizesSubviews:NO];
+        [[aSession view] setAutoresizesSubviews:NO];  // This is ok because it's a tmux tab
     }
     [theTab addToTerminal:term
           withArrangement:arrangement];
@@ -2730,6 +2732,7 @@ static NSString* FormatRect(NSRect r) {
     return [self _recursiveParseTree:parseTree matchesViewHierarchy:view];
 }
 
+// NOTE: This is only called on tmux tabs.
 - (void)_recursiveResizeViewsInViewHierarchy:(NSView *)view
                               forArrangement:(NSDictionary *)arrangement
 {
