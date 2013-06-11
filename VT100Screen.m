@@ -1685,7 +1685,6 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     [self scrollScreenIntoScrollbackBuffer:1];
 
     // reset terminal scroll top and bottom
-    [self setCursorX:cursorX Y:SCROLL_TOP];
     SCROLL_TOP = 0;
     SCROLL_BOTTOM = HEIGHT - 1;
 
