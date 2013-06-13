@@ -48,8 +48,9 @@ static const int kDefaultAdvancesCapacity = 100;
     theCopy.color = color_;
     theCopy.fakeBold = fakeBold_;
     theCopy.x = x_;
+    [theCopy->string_ release];
     theCopy->string_ = [string_ mutableCopy];
-    theCopy->advances_ = (float*)malloc(advancesCapacity_ * sizeof(float));
+    theCopy->advances_ = (float*)realloc(theCopy->advances_, advancesCapacity_ * sizeof(float));
     memcpy(theCopy->advances_, advances_, advancesCapacity_ * sizeof(float));
     theCopy->advancesCapacity_ = advancesCapacity_;
     memmove(theCopy->temp_, temp_, sizeof(temp_));
@@ -59,24 +60,48 @@ static const int kDefaultAdvancesCapacity = 100;
     return theCopy;
 }
 
-- (NSString *)description {
-    return [string_ description];
+// Align positions into cells.
+- (int)getPositions:(NSPoint *)positions
+             forRun:(CTRunRef)run
+    startingAtIndex:(int)firstCharacterIndex
+         glyphCount:(int)glyphCount
+        runWidthPtr:(CGFloat *)runWidthPtr {
+    const NSPoint *suggestedPositions = CTRunGetPositionsPtr(run);
+    const CFIndex *indices = CTRunGetStringIndicesPtr(run);
+
+    int characterIndex = firstCharacterIndex;
+    int indexOfFirstGlyphInCurrentCell = 0;
+    CGFloat basePosition = 0;  // X coord of the current cell relative to the start of this CTRun.
+    int numChars = 0;
+    CGFloat width = 0;
+    if (glyphCount > 0) {
+        numChars = 1;
+        width = advances_[firstCharacterIndex];
+    }
+    for (int glyphIndex = 0; glyphIndex < glyphCount; glyphIndex++) {
+        CGFloat x = basePosition + suggestedPositions[glyphIndex].x - suggestedPositions[indexOfFirstGlyphInCurrentCell].x;
+        positions[glyphIndex] = NSMakePoint(x, suggestedPositions[glyphIndex].y);
+
+        if (indices[glyphIndex] != characterIndex) {
+            // The glyph we just added is for a new character in string_.
+            // Some characters, such as THAI CHARACTER SARA AM, are composed of
+            // multiple glyphs.
+            if (advances_[characterIndex] > 0) {
+                // The glyph we just added was the first in a new cell.
+                basePosition += advances_[characterIndex];
+                indexOfFirstGlyphInCurrentCell = glyphIndex;
+                width += advances_[characterIndex];
+            }
+            characterIndex = indices[glyphIndex];
+            ++numChars;
+        }
+    }
+    *runWidthPtr = width;
+    return numChars;
 }
 
-- (void)updateAdvances:(NSSize *)advances
-  forSuggestedAdvances:(const NSSize *)suggestedAdvances
-                 count:(int)glyphCount {
-    int i = 0;  // Index into suggestedAdvances (input) and advances (output)
-    int j = 0;  // Index into advances_
-    while (i < glyphCount) {
-        if (suggestedAdvances[i].width> 0) {
-            advances[i] = NSMakeSize(advances_[j], 0);
-            j++;
-        } else {
-            advances[i] = NSMakeSize(0, 0);
-        }
-        i++;
-    }
+- (NSString *)description {
+    return [string_ description];
 }
 
 - (CTLineRef)newLine {
@@ -131,6 +156,9 @@ static const int kDefaultAdvancesCapacity = 100;
 
 - (void)appendCodesFromString:(NSString *)string withAdvance:(CGFloat)advance {
     [self commit];
+    for (int i = 1; i < [string length]; i++) {
+        [self appendToAdvances:0];
+    }
     [self appendToAdvances:advance];
     [string_ appendAttributedString:[self attributedStringForString:string]];
 }

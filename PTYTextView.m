@@ -6138,10 +6138,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int lastBold = 2;  // Bold is a one-bit field so it can never equal 2.
     NSColor *lastColor = nil;
 
-    CharacterRun *prevChar = [[[CharacterRun alloc] init] autorelease];
+    CharacterRun *prevChar = [[CharacterRun alloc] init];
     BOOL havePrevChar = NO;
     CGFloat curX = initialPoint.x;
-    CharacterRun *thisChar = [[[CharacterRun alloc] init] autorelease];
+    CharacterRun *thisChar = [[CharacterRun alloc] init];
     thisChar.advancedFontRendering = advancedFontRendering;
     for (int i = indexRange.location; i < indexRange.location + indexRange.length; i++) {
         if (theLine[i].code == DWC_RIGHT) {
@@ -6315,6 +6315,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     if (currentRun) {
         [runs addObject:currentRun];
     }
+    [prevChar release];
+    [thisChar release];
 }
 
 - (void)drawRun:(CharacterRun *)currentRun
@@ -6323,6 +6325,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     CTLineRef line = [currentRun newLine];
     NSArray *runs = (NSArray *)CTLineGetGlyphRuns(line);
     int x = currentRun.x;
+    int characterIndex = 0;
 
     CGContextSetShouldAntialias(ctx, currentRun.antiAlias);
     CTRunRef run;
@@ -6330,11 +6333,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         run = (CTRunRef) [runs objectAtIndex:i];
 
         CFIndex glyphCount = CTRunGetGlyphCount(run);
-        const NSSize *suggestedAdvances = CTRunGetAdvancesPtr(run);
         const CGGlyph *glyphs = CTRunGetGlyphsPtr(run);
-        NSSize advances[glyphCount];
-        [currentRun updateAdvances:advances forSuggestedAdvances:suggestedAdvances count:glyphCount];
-
+        NSPoint positions[glyphCount];
+        CGFloat runWidth;
+        characterIndex += [currentRun getPositions:positions
+                                            forRun:run
+                                   startingAtIndex:characterIndex
+                                        glyphCount:glyphCount
+                                       runWidthPtr:&runWidth];
 
         CTFontRef runFont =
                 CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);
@@ -6355,7 +6361,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                           0.0, -1.0,
                                                           x,    y));
 
-        CGContextShowGlyphsWithAdvances(ctx, glyphs, advances, glyphCount);
+        CGContextShowGlyphsAtPositions(ctx, glyphs, positions, glyphCount);
 
         if (currentRun.fakeBold) {
             // If anti-aliased, drawing twice at the same position makes the strokes thicker.
@@ -6365,11 +6371,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                               x + (currentRun.antiAlias ? 0 : 1),
                                                               y));
 
-            CGContextShowGlyphsWithAdvances(ctx, glyphs, advances, glyphCount);
+            CGContextShowGlyphsAtPositions(ctx, glyphs, positions, glyphCount);
         }
-        for (int j = 0; j < glyphCount; j++) {
-            x += advances[j].width;
-        }
+        x += runWidth;
     }
     CFRelease(line);
 }

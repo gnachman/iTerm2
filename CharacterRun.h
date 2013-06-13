@@ -26,7 +26,9 @@
     int tempCount_;
     NSMutableAttributedString *string_;
 
-	// Array of advances. Gets realloced.
+	// Array of advances. Gets realloced. If there are multiple characters in a cell, the first will
+    // have a positive advance and the others will have a 0 advance. Core Text's positions are used
+    // for those codes.
     float *advances_;
     int advancesSize_;  // used space
     int advancesCapacity_;  // available space
@@ -44,20 +46,25 @@
 // Returns YES if the codes in otherRun can be safely added to this run.
 - (BOOL)isCompatibleWith:(CharacterRun *)otherRun;
 
-// Append to |string_|.
+// Append codes from |string|, which will be rendered in a single cell (perhaps double-width) and may
+// include combining marks.
 - (void)appendCodesFromString:(NSString *)string withAdvance:(CGFloat)advance;
 
 // This adds the code to temporary storage; call |commit| to actually append.
 - (void)appendCode:(unichar)code withAdvance:(CGFloat)advance;
-
-- (void)updateAdvances:(NSSize *)advances
-  forSuggestedAdvances:(const NSSize *)suggestedAdvances
-                 count:(int)glyphCount;
 
 // Returns a newly allocated line.
 - (CTLineRef)newLine;
 
 // Commit appended codes to the internal string.
 - (void)commit;
+
+// Returns the positions for characters in the given run, which begins at the specified character
+// and x position. Returns the number of characters.
+- (int)getPositions:(NSPoint *)positions
+             forRun:(CTRunRef)run
+    startingAtIndex:(int)firstCharacterIndex
+         glyphCount:(int)glyphCount
+        runWidthPtr:(CGFloat *)runWidthPtr;
 
 @end
