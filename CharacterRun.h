@@ -61,7 +61,7 @@
 
 // Returns the positions for characters in the given run, which begins at the specified character
 // and x position. Returns the number of characters.
-- (int)getPositions:(CGPoint *)positions
+- (int)getPositions:(NSPoint *)positions
              forRun:(CTRunRef)run
     startingAtIndex:(int)firstCharacterIndex
          glyphCount:(int)glyphCount

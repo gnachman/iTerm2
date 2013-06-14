@@ -6334,14 +6334,13 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
         CFIndex glyphCount = CTRunGetGlyphCount(run);
         const CGGlyph *glyphs = CTRunGetGlyphsPtr(run);
-        CGPoint positions[glyphCount];
+        NSPoint positions[glyphCount];
         CGFloat runWidth;
         characterIndex += [currentRun getPositions:positions
                                             forRun:run
                                    startingAtIndex:characterIndex
                                         glyphCount:glyphCount
                                        runWidthPtr:&runWidth];
-
 
         CTFontRef runFont =
                 CFDictionaryGetValue(CTRunGetAttributes(run), kCTFontAttributeName);

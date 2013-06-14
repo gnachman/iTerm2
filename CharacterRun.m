@@ -61,12 +61,12 @@ static const int kDefaultAdvancesCapacity = 100;
 }
 
 // Align positions into cells.
-- (int)getPositions:(CGPoint *)positions
+- (int)getPositions:(NSPoint *)positions
              forRun:(CTRunRef)run
     startingAtIndex:(int)firstCharacterIndex
          glyphCount:(int)glyphCount
         runWidthPtr:(CGFloat *)runWidthPtr {
-    const CGPoint *suggestedPositions = CTRunGetPositionsPtr(run);
+    const NSPoint *suggestedPositions = CTRunGetPositionsPtr(run);
     const CFIndex *indices = CTRunGetStringIndicesPtr(run);
 
     int characterIndex = firstCharacterIndex;
@@ -92,7 +92,7 @@ static const int kDefaultAdvancesCapacity = 100;
             ++numChars;
         }
         CGFloat x = basePosition + suggestedPositions[glyphIndex].x - suggestedPositions[indexOfFirstGlyphInCurrentCell].x;
-        positions[glyphIndex] = CGPointMake(x, suggestedPositions[glyphIndex].y);
+        positions[glyphIndex] = NSMakePoint(x, suggestedPositions[glyphIndex].y);
     }
     *runWidthPtr = width;
     return numChars;
