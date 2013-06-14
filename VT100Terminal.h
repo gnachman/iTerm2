@@ -341,7 +341,6 @@ typedef enum {
     BOOL INTERLACE_MODE;    // YES=On, NO=Off
     BOOL KEYPAD_MODE;       // YES=Application, NO=Numeric
     BOOL INSERT_MODE;       // YES=Insert, NO=Replace
-    BOOL VSPLIT_MODE;       // YES=On, NO=Off
     int  CHARSET;           // G0...G3
     BOOL XON;               // YES=XON, NO=XOFF
     BOOL numLock;           // YES=ON, NO=OFF, default=YES;
@@ -460,7 +459,6 @@ typedef enum {
 - (BOOL)interlaceMode;
 - (BOOL)keypadMode;
 - (BOOL)insertMode;
-- (BOOL)vsplitMode;
 - (int)charset;
 - (BOOL)xon;
 - (MouseMode)mouseMode;

@@ -1357,13 +1357,13 @@ static VT100TCC decode_csi_canonically(unsigned char *datap,
                 SET_PARAM_DEFAULT(param,0,0);
                 break;
             case 's':
-                if ([[SCREEN terminal] vsplitMode]) {
+                if (SCREEN.vsplitMode) {
                     result.type = VT100CSI_DECSLRM;
                     SET_PARAM_DEFAULT(param, 0, 1);
                     SET_PARAM_DEFAULT(param, 1, 1);
                 } else {
                     result.type = ANSICSI_SCP;
-                    SET_PARAM_DEFAULT(param,0,0);
+                    SET_PARAM_DEFAULT(param, 0, 0);
                 }
                 break;
             case 'u':
@@ -2310,7 +2310,6 @@ static VT100TCC decode_string(unsigned char *datap,
         INTERLACE_MODE = NO;
         KEYPAD_MODE = NO;
         INSERT_MODE = NO;
-        VSPLIT_MODE = NO;
         saveCHARSET=CHARSET = NO;
         XON = YES;
         bold = italic = blink = reversed = under = NO;
@@ -2488,7 +2487,6 @@ static VT100TCC decode_string(unsigned char *datap,
     INTERLACE_MODE = NO;
     KEYPAD_MODE = NO;
     INSERT_MODE = NO;
-    VSPLIT_MODE = NO;
     bracketedPasteMode_ = NO;
     saveCHARSET=CHARSET = NO;
     XON = YES;
@@ -2505,6 +2503,7 @@ static VT100TCC decode_string(unsigned char *datap,
     MOUSE_MODE = MOUSE_REPORTING_NONE;
     MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
     [SCREEN mouseModeDidChange:MOUSE_MODE];
+    SCREEN.vsplitMode = NO;
     REPORT_FOCUS = NO;
 
     TRACE = NO;
@@ -3169,11 +3168,6 @@ static VT100TCC decode_string(unsigned char *datap,
     return INSERT_MODE;
 }
 
-- (BOOL)vsplitMode
-{
-    return VSPLIT_MODE;
-}
-
 - (BOOL) xon
 {
     return XON;
@@ -3315,7 +3309,9 @@ static VT100TCC decode_string(unsigned char *datap,
                     case 9:  INTERLACE_MODE  = mode; break;
                     case 25: [SCREEN showCursor: mode]; break;
                     case 40: allowColumnMode = mode; break;
-                    case 69: VSPLIT_MODE = mode; break;
+                    case 69:
+                        SCREEN.vsplitMode = mode;
+                        break;
 
                     case 1049:
                         // From the xterm release log:

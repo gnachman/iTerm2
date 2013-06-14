@@ -89,7 +89,7 @@ void TranslateCharacterSet(screen_char_t *s, int len);
     BOOL SHOWBELL;
     BOOL FLASHBELL;
     BOOL GROWL;
-
+    BOOL vsplitMode;
 
     BOOL blinkingCursor;
     PTYTextView *display;
@@ -169,6 +169,8 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)setTerminal:(VT100Terminal *)terminal;
 - (void)setShellTask:(PTYTask *)shell;
 - (void)setSession:(PTYSession *)session;
+- (BOOL)vsplitMode;
+- (void)setVsplitMode: (BOOL)mode;
 
 - (PTYTextView *) display;
 - (void) setDisplay: (PTYTextView *) aDisplay;

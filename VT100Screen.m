@@ -3086,7 +3086,7 @@ void DumpBuf(screen_char_t* p, int n) {
         // set last screen line default
         aLine = [self getLineAtScreenIndex: (HEIGHT - 1)];
         
-        if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && [TERMINAL vsplitMode]) {
+        if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && vsplitMode) {
             memcpy(aLine + SCROLL_LEFT,
                [self _getDefaultLineWithWidth:WIDTH],
                (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
@@ -3705,10 +3705,10 @@ void DumpBuf(screen_char_t* p, int n) {
         // check if the screen area is wrapped
         sourceLine = [self getLineAtScreenIndex:SCROLL_TOP];
         targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
-        if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && [TERMINAL vsplitMode]) {
+        if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && vsplitMode) {
             // screen area is wrapped; copy line by line
             for(i = SCROLL_TOP; i < SCROLL_BOTTOM; i++) {
-                sourceLine = [self getLineAtScreenIndex:i+1];
+                sourceLine = [self getLineAtScreenIndex:i + 1];
                 targetLine = [self getLineAtScreenIndex: i];
                 memmove(targetLine + SCROLL_LEFT,
                         sourceLine + SCROLL_LEFT,
@@ -3726,7 +3726,6 @@ void DumpBuf(screen_char_t* p, int n) {
                             toX:SCROLL_RIGHT
                               Y:SCROLL_BOTTOM];
         } else {
-            
             if (sourceLine < targetLine) {
                 // screen area is not wrapped; direct memmove
                 memmove(sourceLine,
@@ -3776,11 +3775,11 @@ void DumpBuf(screen_char_t* p, int n) {
         // check if screen is wrapped
         sourceLine = [self getLineAtScreenIndex:SCROLL_TOP];
         targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
-        if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && [TERMINAL vsplitMode]) {
+        if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && vsplitMode) {
             // screen area is wrapped; move line by line
             for(i = SCROLL_BOTTOM - 1; i >= SCROLL_TOP; i--) {
                 sourceLine = [self getLineAtScreenIndex:i];
-                targetLine = [self getLineAtScreenIndex:i+1];
+                targetLine = [self getLineAtScreenIndex:i + 1];
                 memmove(targetLine + SCROLL_LEFT,
                         sourceLine + SCROLL_LEFT,
                         (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
@@ -3881,7 +3880,7 @@ void DumpBuf(screen_char_t* p, int n) {
         for (i = num_lines_moved ; i >= 0; i--) {
             sourceLine = [self getLineAtScreenIndex:cursorY + i];
             targetLine = [self getLineAtScreenIndex:cursorY + i + n];
-            if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && [TERMINAL vsplitMode]) {
+            if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && vsplitMode) {
                 memcpy(targetLine + SCROLL_LEFT,
                        sourceLine + SCROLL_LEFT,
                        (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
@@ -3900,7 +3899,7 @@ void DumpBuf(screen_char_t* p, int n) {
     aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
     for (i = 0; i < n; i++) {
         sourceLine = [self getLineAtScreenIndex:cursorY + i];
-        if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && [TERMINAL vsplitMode]) {
+        if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && vsplitMode) {
             memcpy(sourceLine + SCROLL_LEFT,
                    aDefaultLine,
                    (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
@@ -3934,7 +3933,7 @@ void DumpBuf(screen_char_t* p, int n) {
         for (i = 0; i <= num_lines_moved; i++) {
             sourceLine = [self getLineAtScreenIndex:cursorY + i + n];
             targetLine = [self getLineAtScreenIndex:cursorY + i];
-            if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && [TERMINAL vsplitMode]) {
+            if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && vsplitMode) {
                 memcpy(targetLine + SCROLL_LEFT,
                        sourceLine + SCROLL_LEFT,
                        (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
@@ -3953,7 +3952,7 @@ void DumpBuf(screen_char_t* p, int n) {
     aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
     for (i = 0; i < n; i++) {
         sourceLine = [self getLineAtScreenIndex:SCROLL_BOTTOM-n+1+i];
-        if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && [TERMINAL vsplitMode]) {
+        if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && vsplitMode) {
             memcpy(sourceLine + SCROLL_LEFT,
                    aDefaultLine,
                    (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
@@ -4132,6 +4131,16 @@ void DumpBuf(screen_char_t* p, int n) {
     } else {
         [display hideCursor];
     }
+}
+
+- (void)setVsplitMode: (BOOL)mode;
+{
+    vsplitMode = mode;
+}
+
+- (BOOL)vsplitMode;
+{
+    return vsplitMode;
 }
 
 - (void)blink
