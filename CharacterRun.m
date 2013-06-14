@@ -74,27 +74,25 @@ static const int kDefaultAdvancesCapacity = 100;
     CGFloat basePosition = 0;  // X coord of the current cell relative to the start of this CTRun.
     int numChars = 0;
     CGFloat width = 0;
-    if (glyphCount > 0) {
-        numChars = 1;
-        width = advances_[firstCharacterIndex];
-    }
     for (int glyphIndex = 0; glyphIndex < glyphCount; glyphIndex++) {
-        CGFloat x = basePosition + suggestedPositions[glyphIndex].x - suggestedPositions[indexOfFirstGlyphInCurrentCell].x;
-        positions[glyphIndex] = CGPointMake(x, suggestedPositions[glyphIndex].y);
-
-        if (indices[glyphIndex] != characterIndex) {
-            // The glyph we just added is for a new character in string_.
+        if (glyphIndex == 0 || indices[glyphIndex] != characterIndex) {
+            // This glyph is for a new character in string_.
             // Some characters, such as THAI CHARACTER SARA AM, are composed of
-            // multiple glyphs.
+            // multiple glyphs, which is why this if statement's condition
+            // isn't always true.
             if (advances_[characterIndex] > 0) {
-                // The glyph we just added was the first in a new cell.
-                basePosition += advances_[characterIndex];
+                if (glyphIndex > 0) {
+                    // Advance to the next cell.
+                    basePosition += advances_[characterIndex];
+                }
                 indexOfFirstGlyphInCurrentCell = glyphIndex;
                 width += advances_[characterIndex];
             }
             characterIndex = indices[glyphIndex];
             ++numChars;
         }
+        CGFloat x = basePosition + suggestedPositions[glyphIndex].x - suggestedPositions[indexOfFirstGlyphInCurrentCell].x;
+        positions[glyphIndex] = CGPointMake(x, suggestedPositions[glyphIndex].y);
     }
     *runWidthPtr = width;
     return numChars;
