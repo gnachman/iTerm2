@@ -3985,19 +3985,9 @@ void DumpBuf(screen_char_t* p, int n) {
             break;
 
         case 6: // Command from host -- Please report active position
-        {
-            int x, y;
-
-            if ([TERMINAL originMode]) {
-                x = cursorX + 1;
-                y = cursorY - SCROLL_TOP + 1;
-            }
-            else {
-                x = cursorX + 1;
-                y = cursorY + 1;
-            }
-            report = [TERMINAL reportActivePositionWithX:x Y:y withQuestion:question];
-        }
+            report = [TERMINAL reportActivePositionWithX:cursorX + 1
+                                                       Y:cursorY + 1
+                                            withQuestion:question];
             break;
 
         case 0: // Response from VT100 -- Ready, No malfuctions detected
