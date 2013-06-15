@@ -3575,7 +3575,13 @@ void DumpBuf(screen_char_t* p, int n) {
     x_pos = x - 1;
     y_pos = y - 1;
 
-    if ([TERMINAL originMode]) y_pos += SCROLL_TOP;
+    if ([TERMINAL originMode]) {
+        y_pos += SCROLL_TOP;
+        if (vsplitMode) {
+            x_pos += SCROLL_LEFT;
+        }
+    }
+    
 
     if (x_pos < 0) {
         x_pos = 0;
@@ -3671,7 +3677,8 @@ void DumpBuf(screen_char_t* p, int n) {
         assert(SCROLL_BOTTOM < HEIGHT);
 
         if ([TERMINAL originMode]) {
-            [self setCursorX:0 Y:SCROLL_TOP];
+            [self setCursorX:vsplitMode ? SCROLL_LEFT: 0
+                           Y:SCROLL_TOP];
         } else {
             [self setCursorX:0 Y:0];
         }
@@ -4067,7 +4074,7 @@ void DumpBuf(screen_char_t* p, int n) {
             int x, y;
 
             if ([TERMINAL originMode]) {
-                x = cursorX + 1;
+                x = cursorX - SCROLL_LEFT + 1;
                 y = cursorY - SCROLL_TOP + 1;
             }
             else {
