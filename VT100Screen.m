@@ -3088,7 +3088,7 @@ void DumpBuf(screen_char_t* p, int n) {
         
         if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && vsplitMode) {
             memcpy(aLine + SCROLL_LEFT,
-               [self _getDefaultLineWithWidth:WIDTH],
+               [self _getDefaultLineWithWidth:SCROLL_RIGHT - SCROLL_LEFT],
                (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
         } else {
             memcpy(aLine,
@@ -3724,7 +3724,7 @@ void DumpBuf(screen_char_t* p, int n) {
             // new line at SCROLL_BOTTOM with default settings
             targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
             memcpy(targetLine + SCROLL_LEFT,
-                   [self _getDefaultLineWithWidth:WIDTH],
+                   [self _getDefaultLineWithWidth:SCROLL_RIGHT - SCROLL_LEFT],
                    (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
 
             // everything between SCROLL_TOP and SCROLL_BOTTOM is dirty
@@ -3795,7 +3795,7 @@ void DumpBuf(screen_char_t* p, int n) {
             // new line at SCROLL_TOP with default settings
             targetLine = [self getLineAtScreenIndex:SCROLL_TOP];
             memcpy(targetLine + SCROLL_LEFT,
-                   [self _getDefaultLineWithWidth:WIDTH],
+                   [self _getDefaultLineWithWidth:SCROLL_RIGHT - SCROLL_LEFT],
                    (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
             
             // everything between SCROLL_TOP and SCROLL_BOTTOM is dirty
