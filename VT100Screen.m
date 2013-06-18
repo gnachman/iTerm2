@@ -4125,8 +4125,21 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     [self resetScrollbackOverflow];
     [display deselect];
-    [display setNeedsDisplay:YES];
-    DebugLog(@"setDirty (doesn't actually set dirty)");
+    // There was a call to [display setNeedsDisplay:YES] here which was
+    // a remnant of iTerm 0.1 (see bug 1124) that was killing performance.
+    // I'm almost sure it wasn't doing any good.
+	allDirty_ = YES;
+    DebugLog(@"setDirty (screen scrolled)");
+}
+
+- (BOOL)isAllDirty
+{
+	return allDirty_;
+}
+
+- (void)resetAllDirty
+{
+	allDirty_ = NO;
 }
 
 - (void)doPrint
