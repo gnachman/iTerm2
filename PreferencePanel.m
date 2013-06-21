@@ -1456,7 +1456,7 @@ static float versionNumber;
         [openArrangementAtStartup setState:NO];
     }
     [hotkey setState: defaultHotkey?NSOnState:NSOffState];
-    if (defaultHotkeyCode) {
+    if (defaultHotkeyCode || defaultHotkeyChar) {
         [hotkeyField setStringValue:[iTermKeyBindingMgr formatKeyCombination:[NSString stringWithFormat:@"0x%x-0x%x", defaultHotkeyChar, defaultHotkeyModifiers]]];
     } else {
         [hotkeyField setStringValue:@""];
@@ -2362,10 +2362,6 @@ static float versionNumber;
         for (NSString *key in localPrefs) {
             if ([self preferenceKeyIsSyncable:key] &&
                 ![[remotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
-                NSLog(@"Prefs differ for key %@. local=\"%@\", remote=\"%@\" [case 1]",
-                      key,
-                      [localPrefs objectForKey:key],
-                      [remotePrefs objectForKey:key]);
                 return YES;
             }
         }
@@ -2373,10 +2369,6 @@ static float versionNumber;
         for (NSString *key in remotePrefs) {
             if ([self preferenceKeyIsSyncable:key] &&
                 ![[remotePrefs objectForKey:key] isEqual:[localPrefs objectForKey:key]]) {
-                NSLog(@"Prefs differ for key %@. local=\"%@\", remote=\"%@\" [case 2]",
-                      key,
-                      [localPrefs objectForKey:key],
-                      [remotePrefs objectForKey:key]);
                 return YES;
             }
         }
