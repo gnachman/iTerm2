@@ -6327,9 +6327,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [thisChar release];
 }
 
+static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, NSPoint *positions, int glyphCount, CGContextRef ctx) {
+    CTFontDrawGlyphsFunction* function = GetCTFontDrawGlyphsFunction();
+    if (function) {
+        // function is CTFontDrawGlyphs. It can draw Emoji, but only exists on 10.7.
+        CTFontDrawGlyphs(runFont, glyphs, positions, glyphCount, ctx);
+    } else {
+        CGContextShowGlyphsAtPositions(ctx, glyphs, positions, glyphCount);
+    }
+}
+
 - (void)drawRun:(CharacterRun *)currentRun
             ctx:(CGContextRef)ctx
    initialPoint:(NSPoint)initialPoint {
+    NSGraphicsContext *graphicsContext = [NSGraphicsContext graphicsContextWithGraphicsPort:ctx flipped:YES];
     CTLineRef line = [currentRun newLine];
     NSArray *runs = (NSArray *)CTLineGetGlyphRuns(line);
     int x = currentRun.x;
@@ -6369,7 +6380,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                           0.0, -1.0,
                                                           x,    y));
 
-        CGContextShowGlyphsAtPositions(ctx, glyphs, positions, glyphCount);
+        // Keeps emoji from being transparent.
+        [graphicsContext setCompositingOperation:NSCompositeSourceOver];
+
+        PTYShowGlyphsAtPositions(runFont, glyphs, positions, glyphCount, ctx);
 
         if (currentRun.fakeBold) {
             // If anti-aliased, drawing twice at the same position makes the strokes thicker.
@@ -6379,7 +6393,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                               x + (currentRun.antiAlias ? 0 : 1),
                                                               y));
 
-            CGContextShowGlyphsAtPositions(ctx, glyphs, positions, glyphCount);
+            PTYShowGlyphsAtPositions(runFont, glyphs, positions, glyphCount, ctx);
         }
         x += runWidth;
     }

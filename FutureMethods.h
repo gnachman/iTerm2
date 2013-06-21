@@ -6,6 +6,8 @@
 //
 
 #import <Cocoa/Cocoa.h>
+// This is for the args to CGSSetWindowBackgroundBlurRadiusFunction, which is used for window-blurring using undocumented APIs.
+#import <CGSInternal.h>
 
 #ifdef BLOCKS_NOT_AVAILABLE
 // OS 10.5 Compatibility
@@ -110,3 +112,11 @@ typedef NSInteger FutureNSScrollerStyle;
 @interface NSScroller (future)
 - (void)futureSetKnobStyle:(NSInteger)newKnobStyle;
 @end
+
+typedef CGError CGSSetWindowBackgroundBlurRadiusFunction(CGSConnectionID cid, CGSWindowID wid, NSUInteger blur);
+CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFunction(void);
+
+// 10.7-only function.
+typedef void CTFontDrawGlyphsFunction(CTFontRef runFont, const CGGlyph *glyphs, NSPoint *positions, int glyphCount, CGContextRef ctx);
+CTFontDrawGlyphsFunction* GetCTFontDrawGlyphsFunction(void);
+

@@ -35,8 +35,6 @@
 #import "FutureMethods.h"
 #import "iTermController.h"
 #import "iTermApplicationDelegate.h"
-// This is included because the blurring code uses undocumented APIs to do its thing.
-#import <CGSInternal.h>
 
 #define DEBUG_METHOD_ALLOC  0
 #define DEBUG_METHOD_TRACE  0
@@ -82,34 +80,6 @@
     }
 
     return self;
-}
-
-typedef CGError CGSSetWindowBackgroundBlurRadiusFunction(CGSConnectionID cid, CGSWindowID wid, NSUInteger blur);
-
-static void *GetFunctionByName(NSString *library, char *func) {
-    CFBundleRef bundle;
-    CFURLRef bundleURL = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (CFStringRef) library, kCFURLPOSIXPathStyle, true);
-    CFStringRef functionName = CFStringCreateWithCString(kCFAllocatorDefault, func, kCFStringEncodingASCII);    
-    bundle = CFBundleCreate(kCFAllocatorDefault, bundleURL);
-    void *f = NULL;
-    if (bundle) {
-        f = CFBundleGetFunctionPointerForName(bundle, functionName);
-        CFRelease(bundle);
-    }
-    CFRelease(functionName);
-    CFRelease(bundleURL);
-    return f;
-}
-
-static CGSSetWindowBackgroundBlurRadiusFunction* GetCGSSetWindowBackgroundBlurRadiusFunction() {
-    static BOOL tried = NO;
-    static CGSSetWindowBackgroundBlurRadiusFunction *function = NULL;
-    if (!tried) {
-        function  = GetFunctionByName(@"/System/Library/Frameworks/ApplicationServices.framework",
-                                      "CGSSetWindowBackgroundBlurRadius");
-        tried = YES;
-    }
-    return function;
 }
 
 - (void)encodeRestorableStateWithCoder:(NSCoder *)coder
