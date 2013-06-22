@@ -76,6 +76,17 @@ typedef struct {
     int savedCursorY;
 } SavedScreenInfo;
 
+typedef struct {
+    int x, y;
+} CellCoord;
+
+static CellCoord MakeCellCoord(int x, int y) {
+    CellCoord c;
+    c.x = x;
+    c.y = y;
+    return c;
+}
+
 // Wait this long between calls to NSBeep().
 static const double kInterBellQuietPeriod = 0.1;
 
@@ -773,8 +784,8 @@ static char* FormatCont(int c)
 
 // Set the color of prototypechar to all chars between startPoint and endPoint on the screen.
 - (void)highlightWithColors:(NSDictionary *)colors
-                  fromPoint:(NSPoint)startPoint
-                    toPoint:(NSPoint)endPoint
+                  fromPoint:(CellCoord)startPoint
+                    toPoint:(CellCoord)endPoint
 {
     NSColor *fgColor = [colors objectForKey:kHighlightForegroundColor];
     NSColor *bgColor = [colors objectForKey:kHighlightBackgroundColor];
@@ -890,7 +901,11 @@ static char* FormatCont(int c)
                 endY = HEIGHT - 1;
                 endX = WIDTH;
             }
-            [self highlightWithColors:colors fromPoint:NSMakePoint(startX, startY) toPoint:NSMakePoint(endX, endY)];
+            if (startY < HEIGHT) {
+                [self highlightWithColors:colors
+                                fromPoint:MakeCellCoord(startX, startY)
+                                  toPoint:MakeCellCoord(endX, endY)];
+            }
 
             searchRange.location = range.location + range.length;
             searchRange.length = joinedLine.length - searchRange.location;
@@ -4125,8 +4140,21 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     [self resetScrollbackOverflow];
     [display deselect];
-    [display setNeedsDisplay:YES];
-    DebugLog(@"setDirty (doesn't actually set dirty)");
+    // There was a call to [display setNeedsDisplay:YES] here which was
+    // a remnant of iTerm 0.1 (see bug 1124) that was killing performance.
+    // I'm almost sure it wasn't doing any good.
+	allDirty_ = YES;
+    DebugLog(@"setDirty (screen scrolled)");
+}
+
+- (BOOL)isAllDirty
+{
+	return allDirty_;
+}
+
+- (void)resetAllDirty
+{
+	allDirty_ = NO;
 }
 
 - (void)doPrint

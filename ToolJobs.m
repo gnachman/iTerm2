@@ -102,15 +102,11 @@ static const CGFloat kMargin = 4;
         
         [scrollView_ setDocumentView:tableView_];
         [self addSubview:scrollView_];
-        
+
         [tableView_ sizeToFit];
         [tableView_ setColumnAutoresizingStyle:NSTableViewSequentialColumnAutoresizingStyle];
 
-        timer_ = [NSTimer scheduledTimerWithTimeInterval:1
-                                                  target:self
-                                                selector:@selector(updateTimer:)
-                                                userInfo:nil
-                                                 repeats:YES];
+        timerInterval_ = 1;
 
         [[NSNotificationCenter defaultCenter] addObserver:self
                                                  selector:@selector(setSlowTimer)
@@ -140,23 +136,15 @@ static const CGFloat kMargin = 4;
 // When not key, check much less often to avoid burning the battery.
 - (void)setSlowTimer
 {
-    [timer_ invalidate];
-    timer_ = [NSTimer scheduledTimerWithTimeInterval:10
-                                              target:self
-                                            selector:@selector(updateTimer:)
-                                            userInfo:nil
-                                             repeats:YES];
+    timerInterval_ = 10;
 }
 
 - (void)setFastTimer
 {
-    [self updateTimer:nil];
+    timerInterval_ = 1;
     [timer_ invalidate];
-    timer_ = [NSTimer scheduledTimerWithTimeInterval:1
-                                              target:self
-                                            selector:@selector(updateTimer:)
-                                            userInfo:nil
-                                             repeats:YES];
+    timer_ = nil;
+    [self updateTimer:nil];
 }
 
 - (void)dealloc
@@ -166,6 +154,7 @@ static const CGFloat kMargin = 4;
     [tableView_ release];
     [scrollView_ release];
     [timer_ invalidate];
+    timer_ = nil;
     [names_ release];
     [pids_ release];
     [super dealloc];
@@ -176,43 +165,48 @@ static const CGFloat kMargin = 4;
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     shutdown_ = YES;
     [timer_ invalidate];
-    [kill_ unbind:@"enabled"];
     timer_ = nil;
+    [kill_ unbind:@"enabled"];
 }
 
 - (void)updateTimer:(id)sender
 {
+    timer_ = nil;
     if (shutdown_) {
         return;
     }
     ToolWrapper *wrapper = (ToolWrapper *)[[self superview] superview];
     pid_t rootPid = [[[wrapper.term currentSession] SHELL] pid];
     NSSet *pids = [[ProcessCache sharedInstance] childrenOfPid:rootPid levelsToSkip:0];
-    if ([pids isEqualToSet:[NSSet setWithArray:pids_]]) {
-        // Nothing to do, skip the expensive step of getting names.
-        return;
-    }
-    [pids_ release];
-    pids_ = [[[pids allObjects] sortedArrayUsingSelector:@selector(compare:)] retain];
-    [names_ removeAllObjects];
-    int i = 0;
-    for (NSNumber *pid in pids_) {
-        BOOL fg;
-        NSString *pidName;
-        pidName = [[ProcessCache sharedInstance] getNameOfPid:[pid intValue]
-                                                 isForeground:&fg];
-        if (pidName) {
-            [names_ addObject:pidName];
-            i++;
-            if (i > kMaxJobs) {
-                break;
+    if (![pids isEqualToSet:[NSSet setWithArray:pids_]]) {
+        // Something changed. Get job names, which is expensive.
+        [pids_ release];
+        pids_ = [[[pids allObjects] sortedArrayUsingSelector:@selector(compare:)] retain];
+        [names_ removeAllObjects];
+        int i = 0;
+        for (NSNumber *pid in pids_) {
+            BOOL fg;
+            NSString *pidName;
+            pidName = [[ProcessCache sharedInstance] getNameOfPid:[pid intValue]
+                                                     isForeground:&fg];
+            if (pidName) {
+                [names_ addObject:pidName];
+                i++;
+                if (i > kMaxJobs) {
+                    break;
+                }
             }
         }
-    }
-    [tableView_ reloadData];
+        [tableView_ reloadData];
 
-    // Updating the table data causes the cursor to change into an arrow!
-    [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
+        // Updating the table data causes the cursor to change into an arrow!
+        [self performSelector:@selector(fixCursor) withObject:nil afterDelay:0];
+    }
+    timer_ = [NSTimer scheduledTimerWithTimeInterval:timerInterval_
+                                              target:self
+                                            selector:@selector(updateTimer:)
+                                            userInfo:nil
+                                             repeats:NO];
 }
 
 - (void)fixCursor

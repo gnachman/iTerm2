@@ -154,6 +154,7 @@ void TranslateCharacterSet(screen_char_t *s, int len);
     BOOL saveToScrollbackInAlternateScreen_;
 
     BOOL allowTitleReporting_;
+	BOOL allDirty_;  // When true, all cells are dirty. Faster than a big memset.
 }
 
 
@@ -285,6 +286,8 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 
 - (void)resetDirty;
 - (void)setDirty;
+- (BOOL)isAllDirty;
+- (void)resetAllDirty;
 
 // print to ansi...
 - (BOOL) printToAnsi;

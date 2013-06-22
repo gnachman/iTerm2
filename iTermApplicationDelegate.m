@@ -311,7 +311,8 @@ static BOOL hasBecomeActive = NO;
                              kCFPreferencesCurrentApplication);
 
     PreferencePanel* ppanel = [PreferencePanel sharedInstance];
-    if ([ppanel hotkey] && [ppanel hotkeyChar]) {
+    // Code could be 0 (e.g., A on an American keyboard) and char is also sometimes 0 (seen in bug 2501).
+    if ([ppanel hotkey] && ([ppanel hotkeyCode] || [ppanel hotkeyChar])) {
         [[iTermController sharedInstance] registerHotkey:[ppanel hotkeyCode] modifiers:[ppanel hotkeyModifiers]];
     }
     if ([ppanel isAnyModifierRemapped]) {

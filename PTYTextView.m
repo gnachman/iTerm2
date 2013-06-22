@@ -3990,6 +3990,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         includeLastNewline:(BOOL)includeLastNewline
     trimTrailingWhitespace:(BOOL)trimSelectionTrailingSpaces
 {
+    DLog(@"Find selected text from %d,%d to %d,%d pad=%d, includeLastNewline=%d, trim=%d",
+         startx, starty, nonInclusiveEndx, endy, (int)pad, (int)includeLastNewline,
+         (int)trimSelectionTrailingSpaces);
     int endx = nonInclusiveEndx-1;
     int width = [dataSource width];
     const int estimatedSize = (endy - starty + 1) * (width + 1) + (endx - startx + 1);
@@ -4089,15 +4092,18 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 - (NSString *)selectedTextWithPad:(BOOL)pad
 {
     if (startX <= -1) {
+        DLog(@"startx < 0 so there is no selected text");
         return nil;
     }
     if (selectMode == SELECT_BOX) {
+        DLog(@"find selected text in box");
         return [self contentInBoxFromX:startX
                                      Y:startY
                                    ToX:endX
                                      Y:endY
                                    pad:pad];
     } else {
+        DLog(@"find selected text in normal region");
         return ([self contentFromX:startX
                                  Y:startY
                                ToX:endX
@@ -4167,8 +4173,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     NSPasteboard *pboard = [NSPasteboard generalPasteboard];
     NSString *copyString;
 
+    DLog(@"-[PTYTextView copy:] called");
     copyString = [self selectedText];
-
+    DLog(@"Have selected text of length %d. startX=%d, startY=%d, endX=%d, endY=%d", (int)[copyString length], startX, startY, endX, endY);
     if (copyString) {
         [pboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
         [pboard setString:copyString forType:NSStringPboardType];
@@ -6208,6 +6215,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         }
 
         if (minimumContrast_ > 0.001 && bgColor) {
+            // TODO: Way too much time spent here. Use previous char's color if it is the same.
             thisChar.color = [self color:thisChar.color withContrastAgainst:bgColor];
         }
         BOOL drawable;
@@ -6319,9 +6327,20 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     [thisChar release];
 }
 
+static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, NSPoint *positions, int glyphCount, CGContextRef ctx) {
+    CTFontDrawGlyphsFunction* function = GetCTFontDrawGlyphsFunction();
+    if (function) {
+        // function is CTFontDrawGlyphs. It can draw Emoji, but only exists on 10.7.
+        CTFontDrawGlyphs(runFont, glyphs, positions, glyphCount, ctx);
+    } else {
+        CGContextShowGlyphsAtPositions(ctx, glyphs, positions, glyphCount);
+    }
+}
+
 - (void)drawRun:(CharacterRun *)currentRun
             ctx:(CGContextRef)ctx
    initialPoint:(NSPoint)initialPoint {
+    NSGraphicsContext *graphicsContext = [NSGraphicsContext graphicsContextWithGraphicsPort:ctx flipped:YES];
     CTLineRef line = [currentRun newLine];
     NSArray *runs = (NSArray *)CTLineGetGlyphRuns(line);
     int x = currentRun.x;
@@ -6361,7 +6380,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                           0.0, -1.0,
                                                           x,    y));
 
-        CGContextShowGlyphsAtPositions(ctx, glyphs, positions, glyphCount);
+        // Keeps emoji from being transparent.
+        [graphicsContext setCompositingOperation:NSCompositeSourceOver];
+
+        PTYShowGlyphsAtPositions(runFont, glyphs, positions, glyphCount, ctx);
 
         if (currentRun.fakeBold) {
             // If anti-aliased, drawing twice at the same position makes the strokes thicker.
@@ -6371,7 +6393,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                               x + (currentRun.antiAlias ? 0 : 1),
                                                               y));
 
-            CGContextShowGlyphsAtPositions(ctx, glyphs, positions, glyphCount);
+            PTYShowGlyphsAtPositions(runFont, glyphs, positions, glyphCount, ctx);
         }
         x += runWidth;
     }
@@ -8187,10 +8209,12 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 #endif
     BOOL irEnabled = [[PreferencePanel sharedInstance] instantReplay];
     long long totalScrollbackOverflow = [dataSource totalScrollbackOverflow];
+    int allDirty = [dataSource isAllDirty] ? 1 : 0;
+    [dataSource resetAllDirty];
     for (int y = lineStart; y < lineEnd; y++) {
         NSMutableData* matches = [resultMap_ objectForKey:[NSNumber numberWithLongLong:y + totalScrollbackOverflow]];
         for (int x = 0; x < WIDTH; x++) {
-            int dirtyFlags = [dataSource dirtyAtX:x Y:y-lineStart];
+            int dirtyFlags = ([dataSource dirtyAtX:x Y:y-lineStart] | allDirty);
             if (dirtyFlags) {
                 if (irEnabled) {
                     if (dirtyFlags & 1) {

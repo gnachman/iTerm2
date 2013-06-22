@@ -122,6 +122,8 @@ static const int kDefaultAdvancesCapacity = 100;
         [dict setObject:[NSNumber numberWithDouble:strokeThickness] forKey:NSStrokeWidthAttributeName];
     }
     [dict setObject:color_ forKey:NSForegroundColorAttributeName];
+    // Turn off all ligatures
+    [dict setObject:[NSNumber numberWithInt:0] forKey:NSLigatureAttributeName];
     return dict;
 }
 
