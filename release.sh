@@ -22,6 +22,7 @@ function SparkleSign {
     sed -e "s/%NAME%/${NAME}/" | \
     sed -e "s/%LENGTH%/$LENGTH/" |
     sed -e "s,%SIG%,${SIG}," > $SVNDIR/appcasts/$1
+    cp iTerm2-${NAME}.zip ~/iterm2-website/downloads/beta/
 }
 
 echo Num args is $#
