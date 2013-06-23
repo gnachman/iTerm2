@@ -263,7 +263,7 @@ static int advanceAndEatControlChars(unsigned char **ppdata,
                 [SCREEN setNewLine];
                 break;
             case VT100CC_CR:
-                [SCREEN cursorToX:1 Y:[SCREEN cursorY]];
+                [SCREEN carriageReturn];
                 break;
             case VT100CC_SO:
                 // TODO: ISO-2022 mode terminal should implement SO
@@ -458,7 +458,7 @@ static int getCSIParam(unsigned char *datap,
                 case VT100CC_LF:
                 case VT100CC_VT:
                 case VT100CC_FF:  [SCREEN setNewLine]; break;
-                case VT100CC_CR:  [SCREEN cursorToX:1 Y:[SCREEN cursorY]]; break;
+                case VT100CC_CR:  [SCREEN carriageReturn]; break;
                 case VT100CC_SO:  break;
                 case VT100CC_SI:  break;
                 case VT100CC_DC1: break;

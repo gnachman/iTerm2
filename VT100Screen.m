@@ -614,6 +614,11 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     }
 }
 
+- (void)carriageReturn
+{
+    [self setCursorX:vsplitMode ? SCROLL_LEFT:0 Y:cursorY];
+}
+
 - (void)setWidth:(int)width height:(int)height
 {
 #if DEBUG_METHOD_TRACE
@@ -1873,7 +1878,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         [SESSION clearTriggerLine];
         break;
     case VT100CC_CR:
-        [self setCursorX:0 Y:cursorY];
+        [self carriageReturn];
         [SESSION clearTriggerLine];
         break;
     case VT100CC_SO:  break;

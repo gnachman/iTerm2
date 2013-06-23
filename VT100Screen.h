@@ -231,6 +231,7 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)cursorDown:(int)n;
 - (void)cursorToX: (int) x;
 - (void)cursorToX:(int)x Y:(int)y;
+- (void)carriageReturn;
 - (void)saveCursorPosition;
 - (void)restoreCursorPosition;
 - (void)setTopBottom:(VT100TCC)token;
