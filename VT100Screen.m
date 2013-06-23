@@ -3071,7 +3071,7 @@ void DumpBuf(screen_char_t* p, int n) {
             }
         }
         DebugLog(@"setNewline advance cursor");
-    } else if (SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT - 1) {
+    } else if (SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT - 1 && (!vsplitMode || (SCROLL_LEFT == 0 && SCROLL_RIGHT == WIDTH - 1))) {
         // Scroll the whole screen.
 
         // Mark the cursor's previous location dirty. This fixes a rare race condition where
@@ -3091,15 +3091,9 @@ void DumpBuf(screen_char_t* p, int n) {
         // set last screen line default
         aLine = [self getLineAtScreenIndex: (HEIGHT - 1)];
         
-        if ((SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) && vsplitMode) {
-            memcpy(aLine + SCROLL_LEFT,
-               [self _getDefaultLineWithWidth:SCROLL_RIGHT - SCROLL_LEFT],
-               (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
-        } else {
-            memcpy(aLine,
-               [self _getDefaultLineWithWidth:WIDTH],
-               REAL_WIDTH * sizeof(screen_char_t));
-        }
+        memcpy(aLine,
+           [self _getDefaultLineWithWidth:WIDTH],
+           REAL_WIDTH * sizeof(screen_char_t));
 
         // Mark everything dirty if we're not using the scrollback buffer
         if (showingAltScreen) {
@@ -3703,7 +3697,7 @@ void DumpBuf(screen_char_t* p, int n) {
     assert(SCROLL_BOTTOM >= 0 && SCROLL_BOTTOM < HEIGHT);
     assert(SCROLL_TOP <= SCROLL_BOTTOM );
 
-    if (SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT -1) {
+    if (SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT - 1 && (!vsplitMode || (SCROLL_LEFT == 0 && SCROLL_RIGHT == WIDTH - 1))) {
         [self setNewLine];
     } else if (SCROLL_TOP < SCROLL_BOTTOM) {
         // Not scrolling the whole screen.
