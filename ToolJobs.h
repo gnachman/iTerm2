@@ -20,6 +20,7 @@
     NSMutableArray *pids_;
     BOOL hasSelection;
     BOOL shutdown_;
+    NSTimeInterval timerInterval_;
 }
 
 @property (nonatomic, assign) BOOL hasSelection;
