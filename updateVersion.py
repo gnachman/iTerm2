@@ -12,17 +12,17 @@ except KeyError:
 from Foundation import NSMutableDictionary
 
 if os.environ["CONFIGURATION"] == "Development":
-        status, output = commands.getstatusoutput("bash -l -c 'LANGUAGE=C svn info'")
+        cmd = "git log -1 --format=\"%H\""
+        status, output = commands.getstatusoutput(cmd)
         if status != 0:
                 sys.exit(status)
 
+        revision = "git.unknown"
         for line in output.split("\n"):
-                if len(line.strip()) == 0 or ":" not in line:
-                        continue
-                key, value = [x.lower().strip() for x in line.split(":", 1)]
-                if key == "revision":
-                        revision = "svn" + value
-                        break
+            if len(line.strip()) > 0:
+                revision = "git." + line.strip()[:10]
+                break
+
 elif os.environ["CONFIGURATION"] == "Nightly":
         revision = time.strftime("%Y%m%d-nightly")
 else:
