@@ -1259,7 +1259,9 @@ NSMutableArray* screens=0;
     NSUInteger lineNumber = [self _lineNumberOfIndex:theIndex];
     screen_char_t* theLine = [dataSource getLineAtIndex:lineNumber];
     NSUInteger startingIndexOfLine = [self _startingIndexOfLineNumber:lineNumber];
-    assert(theIndex >= startingIndexOfLine);
+    if (theIndex < startingIndexOfLine) {
+        return NSMakeRange(NSNotFound, 0);
+    }
     int x = theIndex - startingIndexOfLine;
     NSRange rangeOfLine = [self _rangeOfLine:lineNumber];
     NSRange range;
