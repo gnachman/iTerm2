@@ -819,7 +819,10 @@ static int Search(NSString* needle,
 
 - (int) _findEntryBeforeOffset: (int) offset
 {
-    assert(offset >= start_offset);
+    if (offset < start_offset) {
+        return -1;
+    }
+
     int i;
     for (i = first_entry; i < cll_entries; ++i) {
         if (cumulative_line_lengths[i] > offset) {
