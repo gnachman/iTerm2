@@ -3988,7 +3988,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)tmuxReadTask:(NSData *)data
 {
-    [self readTask:data];
+    if (!EXIT) {
+        [SHELL logData:data];
+        [self readTask:data];
+    }
 }
 
 - (void)tmuxSessionChanged:(NSString *)sessionName sessionId:(int)sessionId

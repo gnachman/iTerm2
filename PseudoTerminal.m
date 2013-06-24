@@ -1726,6 +1726,9 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"makeCurrentSessionFirstResponder. New first responder will be %@. The current first responder is %@",
                [[self currentSession] TEXTVIEW], [[self window] firstResponder]);
         [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
+                                                            object:[self currentSession]
+                                                          userInfo:nil];
     } else {
         PtyLog(@"There is no current session to make the first responder");
     }
