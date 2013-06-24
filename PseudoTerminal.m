@@ -5226,6 +5226,7 @@ NSString *sessionsKey = @"sessions";
 - (IBAction)logStart:(id)sender
 {
     if (![[self currentSession] logging]) {
+        [[self retain] autorelease];  // Prevent self from getting dealloc'ed during modal panel.
         [[self currentSession] logStart];
     }
     // send a notification
