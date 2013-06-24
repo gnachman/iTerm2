@@ -1369,7 +1369,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         memcpy(new_buffer_lines + (new_width + 1) * i, defaultLine, sizeof(screen_char_t) * (new_width+1));
     }
 
-    BOOL hasSelection = display && [display selectionStartX] != -1;
+    BOOL hasSelection = display && ([display selectionStartX] >= 0);
 
     int usedHeight = [self _usedHeight];
 
