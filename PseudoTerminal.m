@@ -805,6 +805,8 @@ NSString *sessionsKey = @"sessions";
     } else {
         message = [NSString stringWithFormat:@"%@ will be closed.", identifier];
     }
+    // The PseudoTerminal might close while the dialog is open so keep it around for now.
+    [[self retain] autorelease];
     return NSRunAlertPanel([NSString stringWithFormat:@"Close %@?", genericName],
                            message,
                            @"OK",
@@ -1726,6 +1728,9 @@ NSString *sessionsKey = @"sessions";
         PtyLog(@"makeCurrentSessionFirstResponder. New first responder will be %@. The current first responder is %@",
                [[self currentSession] TEXTVIEW], [[self window] firstResponder]);
         [[self window] makeFirstResponder:[[self currentSession] TEXTVIEW]];
+        [[NSNotificationCenter defaultCenter] postNotificationName:@"iTermSessionBecameKey"
+                                                            object:[self currentSession]
+                                                          userInfo:nil];
     } else {
         PtyLog(@"There is no current session to make the first responder");
     }
@@ -5221,6 +5226,7 @@ NSString *sessionsKey = @"sessions";
 - (IBAction)logStart:(id)sender
 {
     if (![[self currentSession] logging]) {
+        [[self retain] autorelease];  // Prevent self from getting dealloc'ed during modal panel.
         [[self currentSession] logStart];
     }
     // send a notification

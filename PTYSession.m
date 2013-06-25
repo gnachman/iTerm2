@@ -3077,6 +3077,8 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
           __FILE__, __LINE__);
 #endif
     panel = [NSSavePanel savePanel];
+    // Session could end before panel is dismissed.
+    [[self retain] autorelease];
     sts = [panel runModalForDirectory:NSHomeDirectory() file:@""];
     if (sts == NSOKButton) {
         BOOL logsts = [SHELL loggingStartWithPath:[panel filename]];
@@ -3988,7 +3990,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)tmuxReadTask:(NSData *)data
 {
-    [self readTask:data];
+    if (!EXIT) {
+        [SHELL logData:data];
+        [self readTask:data];
+    }
 }
 
 - (void)tmuxSessionChanged:(NSString *)sessionName sessionId:(int)sessionId

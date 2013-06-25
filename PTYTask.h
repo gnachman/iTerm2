@@ -116,5 +116,10 @@ extern NSString *kCoprocessStatusChangeNotification;
 - (BOOL)hasMuteCoprocess;
 - (void)stopCoprocess;
 
+// If session logging is on, append data to it. Only needed if PTYTask is not doing the reading, as
+// is the case for tmux.
+- (void)logData:(NSData *)data;
+
+
 @end
 

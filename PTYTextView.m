@@ -1259,7 +1259,9 @@ NSMutableArray* screens=0;
     NSUInteger lineNumber = [self _lineNumberOfIndex:theIndex];
     screen_char_t* theLine = [dataSource getLineAtIndex:lineNumber];
     NSUInteger startingIndexOfLine = [self _startingIndexOfLineNumber:lineNumber];
-    assert(theIndex >= startingIndexOfLine);
+    if (theIndex < startingIndexOfLine) {
+        return NSMakeRange(NSNotFound, 0);
+    }
     int x = theIndex - startingIndexOfLine;
     NSRange rangeOfLine = [self _rangeOfLine:lineNumber];
     NSRange range;
@@ -6331,7 +6333,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     CTFontDrawGlyphsFunction* function = GetCTFontDrawGlyphsFunction();
     if (function) {
         // function is CTFontDrawGlyphs. It can draw Emoji, but only exists on 10.7.
-        CTFontDrawGlyphs(runFont, glyphs, positions, glyphCount, ctx);
+        function(runFont, glyphs, positions, glyphCount, ctx);
     } else {
         CGContextShowGlyphsAtPositions(ctx, glyphs, positions, glyphCount);
     }

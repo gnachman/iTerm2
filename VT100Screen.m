@@ -1369,7 +1369,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         memcpy(new_buffer_lines + (new_width + 1) * i, defaultLine, sizeof(screen_char_t) * (new_width+1));
     }
 
-    BOOL hasSelection = display && [display selectionStartX] != -1;
+    BOOL hasSelection = display && ([display selectionStartX] >= 0);
 
     int usedHeight = [self _usedHeight];
 
@@ -1700,7 +1700,6 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     [self scrollScreenIntoScrollbackBuffer:1];
 
     // reset terminal scroll top and bottom
-    [self setCursorX:cursorX Y:SCROLL_TOP];
     SCROLL_TOP = 0;
     SCROLL_BOTTOM = HEIGHT - 1;
 
@@ -1708,7 +1707,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     [self _setInitialTabStops];
     SAVE_CURSOR_X = 0;
     ALT_SAVE_CURSOR_X = 0;
-    [self setCursorX:cursorX Y:0];
+    [self setCursorX:0 Y:0];
     SAVE_CURSOR_Y = 0;
     ALT_SAVE_CURSOR_Y = 0;
 
