@@ -237,8 +237,14 @@ CTFontDrawGlyphsFunction* GetCTFontDrawGlyphsFunction(void) {
     static BOOL tried = NO;
     static CTFontDrawGlyphsFunction *function = NULL;
     if (!tried) {
+        // This works in 10.8
         function  = GetFunctionByName(@"/System/Library/Frameworks/CoreText.framework",
                                       "CTFontDrawGlyphs");
+        if (!function) {
+            // This works in 10.7 and earlier versions won't have it.
+            function = GetFunctionByName(@"/System/Library/Frameworks/ApplicationServices.framework/Frameworks/CoreText.framework",
+                                         "CTFontDrawGlyphs");
+        }
         tried = YES;
     }
     return function;
