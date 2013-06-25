@@ -2300,7 +2300,7 @@ static VT100TCC decode_string(unsigned char *datap,
         SCREEN_MODE = NO;
         ORIGIN_MODE = NO;
         WRAPAROUND_MODE = YES;
-        AUTOREPEAT_MODE = NO;
+        AUTOREPEAT_MODE = YES;
         INTERLACE_MODE = NO;
         KEYPAD_MODE = NO;
         INSERT_MODE = NO;
@@ -2465,7 +2465,7 @@ static VT100TCC decode_string(unsigned char *datap,
     SCREEN_MODE = NO;
     ORIGIN_MODE = NO;
     WRAPAROUND_MODE = YES;
-    AUTOREPEAT_MODE = NO;
+    AUTOREPEAT_MODE = YES;
     INTERLACE_MODE = NO;
     KEYPAD_MODE = NO;
     INSERT_MODE = NO;

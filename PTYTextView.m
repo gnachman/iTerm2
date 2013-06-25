@@ -2353,8 +2353,14 @@ NSMutableArray* screens=0;
         NSLog(@"modflag & rightAlt == rightAlt && rightOptionKey != NORMAL = %d", (int)((modflag & NSRightAlternateKeyMask) == NSRightAlternateKeyMask && [delegate rightOptionKey] != OPT_NORMAL));
         NSLog(@"isControl=%d", (int)(modflag & NSControlKeyMask));
         NSLog(@"keycode is slash=%d, is backslash=%d", (keyCode == 0x2c), (keyCode == 0x2a));
+        NSLog(@"event is repeated=%d", keyIsARepeat);
     }
 
+    // discard repeated key events if auto repeat mode (DECARM) is disabled
+    if (keyIsARepeat && ![[dataSource terminal] autorepeatMode]) {
+        return;
+    }
+    
     // Hide the cursor
     [NSCursor setHiddenUntilMouseMoves:YES];
 
