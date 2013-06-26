@@ -3162,18 +3162,28 @@ void DumpBuf(screen_char_t* p, int n) {
 
 - (void)backSpace
 {
+    int leftMargin, rightMargin;
+
+    if (vsplitMode) {
+        leftMargin = SCROLL_LEFT;
+        rightMargin = SCROLL_RIGHT + 1;
+    } else {
+        leftMargin = 0;
+        rightMargin = WIDTH;
+    }
+
     if (cursorX > 0) {
-        if (cursorX >= WIDTH) {
+        if (cursorX >= rightMargin) {
             [self setCursorX:cursorX - 2 Y:cursorY];
         } else {
             [self setCursorX:cursorX - 1 Y:cursorY];
         }
-    } else if (cursorX == 0 && cursorY > 0) {
+    } else if (cursorX == leftMargin && cursorY > 0) {
         screen_char_t* aLine = [self getLineAtScreenIndex:cursorY - 1];
-        if (aLine[WIDTH].code == EOL_SOFT) {
-            [self setCursorX:WIDTH - 1 Y:cursorY - 1];
-        } else if (aLine[WIDTH].code == EOL_DWC) {
-            [self setCursorX:WIDTH - 2 Y:cursorY - 1];
+        if (aLine[rightMargin].code == EOL_SOFT) {
+            [self setCursorX:rightMargin - 1 Y:cursorY - 1];
+        } else if (aLine[rightMargin].code == EOL_DWC) {
+            [self setCursorX:rightMargin - 2 Y:cursorY - 1];
         }
     }
 }
