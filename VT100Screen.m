@@ -310,6 +310,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
     saved_primary_buffer = NULL;
     saved_alt_buffer = NULL;
+    showingAltScreen = NO;
     findContext.substring = nil;
 
     max_scrollback_lines = DEFAULT_SCROLLBACK;
@@ -2593,9 +2594,10 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 
 - (void)showPrimaryBuffer
 {
-    if (!saved_primary_buffer) {
+    if (!showingAltScreen) {
         return;
     }
+    showingAltScreen = NO;
     [self saveAltBuffer];
 
     int n = (screen_top - buffer_lines) / REAL_WIDTH;
@@ -2611,6 +2613,29 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 
     free(saved_primary_buffer);
     saved_primary_buffer = NULL;
+}
+
+- (void)showAltBuffer
+{
+    if (showingAltScreen) {
+        return;
+    }
+    showingAltScreen = YES;
+    [self saveBuffer];
+
+    if (saved_alt_buffer) {
+        int n = (screen_top - buffer_lines) / REAL_WIDTH;
+        if (n <= 0) {
+            memcpy(screen_top, saved_alt_buffer, REAL_WIDTH * HEIGHT * sizeof(screen_char_t));
+        } else {
+            memcpy(screen_top, saved_alt_buffer, (HEIGHT - n) * REAL_WIDTH * sizeof(screen_char_t));
+            memcpy(buffer_lines, saved_alt_buffer + (HEIGHT - n) * REAL_WIDTH, n * REAL_WIDTH * sizeof(screen_char_t));
+        }
+    }
+
+    DebugLog(@"showAltBuffer setDirty");
+    [self setDirty];
+
 }
 
 - (void)setSendModifiers:(int *)modifiers
