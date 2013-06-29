@@ -5203,7 +5203,7 @@ NSString *sessionsKey = @"sessions";
 
 - (void)reset:(id)sender
 {
-    [[[self currentSession] TERMINAL] reset];
+    [[[self currentSession] TERMINAL] resetPreservingPrompt:YES];
     [[self currentSession] updateDisplay];
 }
 

@@ -1693,7 +1693,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     }
 }
 
-- (void)reset
+- (void)resetScreen
 {
     [SESSION clearTriggerLine];
     // Save screen contents before resetting.
@@ -1716,6 +1716,23 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     }
 
     [self showCursor:YES];
+}
+
+- (void)resetPreservingPrompt:(BOOL)preservePrompt
+{
+    int savedCursorX = cursorX;
+    if (preservePrompt) {
+        [self setCursorX:savedCursorX Y:SCROLL_TOP];
+    }
+    [self resetScreen];
+    if (preservePrompt) {
+        [self setCursorX:savedCursorX Y:0];
+    }
+}
+
+- (void)reset
+{
+    [self resetPreservingPrompt:NO];
 }
 
 - (int)width

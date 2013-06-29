@@ -166,6 +166,7 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (screen_char_t*)initScreenWithWidth:(int)width Height:(int)height;
 - (void)resizeWidth:(int)new_width height:(int)height;
 - (void)reset;
+- (void)resetPreservingPrompt:(BOOL)preservePrompt;
 - (void)resetCharset;
 - (BOOL)usingDefaultCharset;
 - (void)setWidth:(int)width height:(int)height;

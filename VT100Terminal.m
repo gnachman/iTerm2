@@ -2456,7 +2456,7 @@ static VT100TCC decode_string(unsigned char *datap,
     CHARSET = NO;
 }
 
-- (void)reset
+- (void)resetPreservingPrompt:(BOOL)preservePrompt
 {
     LINE_MODE = NO;
     CURSOR_MODE = NO;
@@ -2487,7 +2487,12 @@ static VT100TCC decode_string(unsigned char *datap,
 
     strictAnsiMode = NO;
     allowColumnMode = NO;
-    [SCREEN reset];
+    [SCREEN resetPreservingPrompt:preservePrompt];
+}
+
+- (void)reset
+{
+    [self resetPreservingPrompt:NO];
 }
 
 - (BOOL)trace
