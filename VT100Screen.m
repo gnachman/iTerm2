@@ -2557,7 +2557,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     [self setDirty];
 }
 
-- (void)saveBuffer
+- (void)savePrimaryBuffer
 {
     if (saved_primary_buffer) {
         free(saved_primary_buffer);
@@ -2621,7 +2621,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         return;
     }
     showingAltScreen = YES;
-    [self saveBuffer];
+    [self savePrimaryBuffer];
 
     if (saved_alt_buffer) {
         int n = (screen_top - buffer_lines) / REAL_WIDTH;
