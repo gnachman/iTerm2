@@ -211,7 +211,7 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)clearBuffer;
 - (long long)absoluteLineNumberOfCursor;
 - (void)clearScrollbackBuffer;
-- (void)saveBuffer;
+- (void)savePrimaryBuffer;
 - (void)showPrimaryBuffer;
 - (void)saveAltBuffer;
 - (void)showAltBuffer;
