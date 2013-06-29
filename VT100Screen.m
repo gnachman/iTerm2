@@ -1497,7 +1497,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 
         // Allocate a new saved_primary_buffer of the right size.
         free(saved_primary_buffer);
-        saved_primary_buffer = [self mallocedScreenBufferWithDefaultChar:temp_default_char];
+        saved_primary_buffer = [self mallocedScreenBufferWithDefaultChar:primary_default_char];
         [self loadAltScreenInfoInto:&baseScreenInfo];
 
         // Temporarily exit alt screen mode.
@@ -2567,7 +2567,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         memcpy(saved_primary_buffer, screen_top, (HEIGHT-n)*REAL_WIDTH*sizeof(screen_char_t));
         memcpy(saved_primary_buffer + (HEIGHT - n) * REAL_WIDTH, buffer_lines, n * REAL_WIDTH * sizeof(screen_char_t));
     }
-    temp_default_char = [self defaultChar];
+    primary_default_char = [self defaultChar];
 }
 
 - (void)restoreBuffer
@@ -4223,7 +4223,7 @@ void DumpBuf(screen_char_t* p, int n) {
                aDefaultLine,
                REAL_WIDTH * sizeof(screen_char_t));
     }
-    temp_default_char = [self defaultChar];
+    primary_default_char = [self defaultChar];
 
     // Copy the lines back over it
     int o = 0;
