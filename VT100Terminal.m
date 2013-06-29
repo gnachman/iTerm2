@@ -3292,7 +3292,7 @@ static VT100TCC decode_string(unsigned char *datap,
                             [SCREEN saveBuffer];
                             [SCREEN clearScreen];
                         } else {
-                            [SCREEN restoreBuffer];
+                            [SCREEN showPrimaryBuffer];
                             [self restoreCursorAttributes];
                             [SCREEN restoreCursorPosition];
                         }
@@ -3310,7 +3310,7 @@ static VT100TCC decode_string(unsigned char *datap,
                         if (mode) {
                             [SCREEN saveBuffer];
                         } else {
-                            [SCREEN restoreBuffer];
+                            [SCREEN showPrimaryBuffer];
                         }
                     }
                     break;

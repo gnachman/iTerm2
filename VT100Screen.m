@@ -2591,7 +2591,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     }
 }
 
-- (void)restoreBuffer
+- (void)showPrimaryBuffer
 {
     if (!saved_primary_buffer) {
         return;
@@ -2606,7 +2606,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         memcpy(buffer_lines, saved_primary_buffer + (HEIGHT - n) * REAL_WIDTH, n * REAL_WIDTH * sizeof(screen_char_t));
     }
 
-    DebugLog(@"restoreBuffer setDirty");
+    DebugLog(@"showPrimaryBuffer setDirty");
     [self setDirty];
 
     free(saved_primary_buffer);
