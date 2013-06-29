@@ -3584,7 +3584,7 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)cursorToX:(int)x
 {
     int x_pos;
-
+    int leftMargin, rightMargin;
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[VT100Screen cursorToX:%d]",
@@ -3592,10 +3592,21 @@ void DumpBuf(screen_char_t* p, int n) {
 #endif
     x_pos = (x-1);
 
-    if (x_pos < 0) {
-        x_pos = 0;
-    } else if (x_pos >= WIDTH) {
-        x_pos = WIDTH - 1;
+    if (vsplitMode) {
+        if ([TERMINAL originMode]) {
+            x_pos += SCROLL_LEFT;
+        }
+        leftMargin = SCROLL_LEFT;
+        rightMargin = SCROLL_RIGHT + 1;
+    } else {
+        leftMargin = 0;
+        rightMargin = WIDTH;
+    }
+    
+    if (x_pos < leftMargin) {
+        x_pos = leftMargin;
+    } else if (x_pos >= rightMargin) {
+        x_pos = rightMargin - 1;
     }
 
     [self setCursorX:x_pos Y:cursorY];
