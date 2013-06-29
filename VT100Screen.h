@@ -119,7 +119,7 @@ void TranslateCharacterSet(screen_char_t *s, int len);
     screen_char_t *default_line;
     screen_char_t *result_line;
 
-    // temporary buffer to store main buffer in SAVE_BUFFER/RESET_BUFFER mode
+    // temporary buffers to store main/alt screens in SAVE_BUFFER/RESET_BUFFER mode
     screen_char_t *saved_primary_buffer;
     screen_char_t *saved_alt_buffer;
     screen_char_t primary_default_char;
