@@ -1390,7 +1390,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     int originalStartPos = 0;
     int originalEndPos = 0;
     BOOL originalIsFullLine;
-    if (hasSelection && saved_primary_buffer) {
+    if (hasSelection && showingAltScreen) {
         // In alternate screen mode, get the original positions of the
         // selection. Later this will be used to set the selection positions
         // relative to the end of the udpated linebuffer (which could change as
@@ -1412,7 +1412,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     // If we're in the alternate screen, create a temporary linebuffer and append
     // the base screen's contents to it.
     LineBuffer *tempLineBuffer = nil;
-    if (saved_primary_buffer) {
+    if (showingAltScreen) {
         tempLineBuffer = [[[LineBuffer alloc] init] autorelease];
         realLineBuffer = linebuffer;
         linebuffer = tempLineBuffer;
@@ -1427,7 +1427,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     int newSelStartX = -1, newSelStartY = -1;
     int newSelEndX = -1, newSelEndY = -1;
     BOOL isFullLineSelection = NO;
-    if (saved_primary_buffer) {
+    if (showingAltScreen) {
         // We are in alternate screen mode.
         // Append base screen to real line buffer
         [self appendScreenWithInfo:&baseScreenInfo
@@ -1496,7 +1496,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 
     // If we're in the alternate screen, restore its contents from the temporary
     // linebuffer.
-    if (saved_primary_buffer) {
+    if (showingAltScreen) {
         SavedScreenInfo savedInfo;
         [self saveScreenInfoTo:&savedInfo];
 
@@ -3163,7 +3163,7 @@ void DumpBuf(screen_char_t* p, int n) {
                REAL_WIDTH*sizeof(screen_char_t));
 
         // Mark everything dirty if we're not using the scrollback buffer
-        if (saved_primary_buffer) {
+        if (showingAltScreen) {
             [self setDirty];
         }
 
@@ -3675,7 +3675,7 @@ void DumpBuf(screen_char_t* p, int n) {
     }
     [self setCursorX:nx Y:ny];
 
-    if (saved_primary_buffer) {
+    if (showingAltScreen) {
         ALT_SAVE_CURSOR_X = cursorX;
         ALT_SAVE_CURSOR_Y = cursorY;
     } else {
@@ -3694,7 +3694,7 @@ void DumpBuf(screen_char_t* p, int n) {
     NSLog(@"%s(%d):-[VT100Screen restoreCursorPosition]", __FILE__, __LINE__);
 #endif
 
-    if(saved_primary_buffer) {
+    if(showingAltScreen) {
         [self setCursorX:ALT_SAVE_CURSOR_X Y:ALT_SAVE_CURSOR_Y];
     } else {
         [self setCursorX:SAVE_CURSOR_X Y:SAVE_CURSOR_Y];
@@ -4783,7 +4783,7 @@ void DumpBuf(screen_char_t* p, int n) {
 // adds a line to scrollback area. Returns YES if oldest line is lost, NO otherwise
 - (int)_addLineToScrollbackImpl
 {
-    if (saved_primary_buffer && !saveToScrollbackInAlternateScreen_) {
+    if (showingAltScreen && !saveToScrollbackInAlternateScreen_) {
         // Don't save to scrollback in alternate screen mode.
         return 0;
     }
