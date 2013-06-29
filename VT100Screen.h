@@ -121,6 +121,7 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 
     // temporary buffer to store main buffer in SAVE_BUFFER/RESET_BUFFER mode
     screen_char_t *saved_primary_buffer;
+    screen_char_t *saved_alt_buffer;
     screen_char_t primary_default_char;
 
     // default line stuff
@@ -211,6 +212,7 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)clearScrollbackBuffer;
 - (void)saveBuffer;
 - (void)restoreBuffer;
+- (void)saveAltBuffer;
 
 - (void)setSendModifiers:(int *)modifiers
                numValues:(int)numValues;
