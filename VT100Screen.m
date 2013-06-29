@@ -308,7 +308,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     result_line = NULL;
     screen_top = NULL;
 
-    temp_buffer = NULL;
+    saved_primary_buffer = NULL;
     findContext.substring = nil;
 
     max_scrollback_lines = DEFAULT_SCROLLBACK;
@@ -352,8 +352,8 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         free(default_line);
     }
 
-    if (temp_buffer) {
-        free(temp_buffer);
+    if (saved_primary_buffer) {
+        free(saved_primary_buffer);
     }
 
     [tabStops release];
@@ -1309,8 +1309,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 
 - (void)loadAltScreenInfoInto:(SavedScreenInfo *)info
 {
-    info->saved_buffer_lines = temp_buffer;
-    info->saved_screen_top = temp_buffer;
+    info->saved_buffer_lines = saved_primary_buffer;
+    info->saved_screen_top = saved_primary_buffer;
     info->savedCursorX = SAVE_CURSOR_X;
     info->savedCursorY = SAVE_CURSOR_Y;
 }
@@ -1385,7 +1385,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     int originalStartPos = 0;
     int originalEndPos = 0;
     BOOL originalIsFullLine;
-    if (hasSelection && temp_buffer) {
+    if (hasSelection && saved_primary_buffer) {
         // In alternate screen mode, get the original positions of the
         // selection. Later this will be used to set the selection positions
         // relative to the end of the udpated linebuffer (which could change as
@@ -1407,7 +1407,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     // If we're in the alternate screen, create a temporary linebuffer and append
     // the base screen's contents to it.
     LineBuffer *tempLineBuffer = nil;
-    if (temp_buffer) {
+    if (saved_primary_buffer) {
         tempLineBuffer = [[[LineBuffer alloc] init] autorelease];
         realLineBuffer = linebuffer;
         linebuffer = tempLineBuffer;
@@ -1422,7 +1422,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     int newSelStartX = -1, newSelStartY = -1;
     int newSelEndX = -1, newSelEndY = -1;
     BOOL isFullLineSelection = NO;
-    if (temp_buffer) {
+    if (saved_primary_buffer) {
         // We are in alternate screen mode.
         // Append base screen to real line buffer
         [self appendScreenWithInfo:&baseScreenInfo
@@ -1491,13 +1491,13 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 
     // If we're in the alternate screen, restore its contents from the temporary
     // linebuffer.
-    if (temp_buffer) {
+    if (saved_primary_buffer) {
         SavedScreenInfo savedInfo;
         [self saveScreenInfoTo:&savedInfo];
 
-        // Allocate a new temp_buffer of the right size.
-        free(temp_buffer);
-        temp_buffer = [self mallocedScreenBufferWithDefaultChar:temp_default_char];
+        // Allocate a new saved_primary_buffer of the right size.
+        free(saved_primary_buffer);
+        saved_primary_buffer = [self mallocedScreenBufferWithDefaultChar:temp_default_char];
         [self loadAltScreenInfoInto:&baseScreenInfo];
 
         // Temporarily exit alt screen mode.
@@ -1512,16 +1512,16 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
          */
         if (old_height < new_height) {
             // Growing (avoid pulling in stuff from scrollback. Add blank lines
-            // at bottom instead). Note there's a little hack here: we use temp_buffer as the default
+            // at bottom instead). Note there's a little hack here: we use saved_primary_buffer as the default
             // line because it was just initialized with default lines.
-            [self restoreScreenFromScrollbackWithDefaultLine:temp_buffer
+            [self restoreScreenFromScrollbackWithDefaultLine:saved_primary_buffer
                                                         upTo:old_height];
         } else {
             // Shrinking (avoid pulling in stuff from scrollback, pull in no more
             // than might have been pushed, even if more is available). Note there's a little hack
-            // here: we use temp_buffer as the default line because it was just initialized with
+            // here: we use saved_primary_buffer as the default line because it was just initialized with
             // default lines.
-            [self restoreScreenFromScrollbackWithDefaultLine:temp_buffer
+            [self restoreScreenFromScrollbackWithDefaultLine:saved_primary_buffer
                                                         upTo:new_height];
         }
         /*                  **************
@@ -2554,41 +2554,41 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
 
 - (void)saveBuffer
 {
-    if (temp_buffer) {
-        free(temp_buffer);
+    if (saved_primary_buffer) {
+        free(saved_primary_buffer);
     }
 
     int size = REAL_WIDTH * HEIGHT;
     int n = (screen_top - buffer_lines) / REAL_WIDTH;
-    temp_buffer = (screen_char_t*)calloc(size, (sizeof(screen_char_t)));
+    saved_primary_buffer = (screen_char_t*)calloc(size, (sizeof(screen_char_t)));
     if (n <= 0) {
-        memcpy(temp_buffer, screen_top, size*sizeof(screen_char_t));
+        memcpy(saved_primary_buffer, screen_top, size*sizeof(screen_char_t));
     } else {
-        memcpy(temp_buffer, screen_top, (HEIGHT-n)*REAL_WIDTH*sizeof(screen_char_t));
-        memcpy(temp_buffer + (HEIGHT - n) * REAL_WIDTH, buffer_lines, n * REAL_WIDTH * sizeof(screen_char_t));
+        memcpy(saved_primary_buffer, screen_top, (HEIGHT-n)*REAL_WIDTH*sizeof(screen_char_t));
+        memcpy(saved_primary_buffer + (HEIGHT - n) * REAL_WIDTH, buffer_lines, n * REAL_WIDTH * sizeof(screen_char_t));
     }
     temp_default_char = [self defaultChar];
 }
 
 - (void)restoreBuffer
 {
-    if (!temp_buffer) {
+    if (!saved_primary_buffer) {
         return;
     }
 
     int n = (screen_top - buffer_lines) / REAL_WIDTH;
     if (n <= 0) {
-        memcpy(screen_top, temp_buffer, REAL_WIDTH * HEIGHT * sizeof(screen_char_t));
+        memcpy(screen_top, saved_primary_buffer, REAL_WIDTH * HEIGHT * sizeof(screen_char_t));
     } else {
-        memcpy(screen_top, temp_buffer, (HEIGHT - n) * REAL_WIDTH * sizeof(screen_char_t));
-        memcpy(buffer_lines, temp_buffer + (HEIGHT - n) * REAL_WIDTH, n * REAL_WIDTH * sizeof(screen_char_t));
+        memcpy(screen_top, saved_primary_buffer, (HEIGHT - n) * REAL_WIDTH * sizeof(screen_char_t));
+        memcpy(buffer_lines, saved_primary_buffer + (HEIGHT - n) * REAL_WIDTH, n * REAL_WIDTH * sizeof(screen_char_t));
     }
 
     DebugLog(@"restoreBuffer setDirty");
     [self setDirty];
 
-    free(temp_buffer);
-    temp_buffer = NULL;
+    free(saved_primary_buffer);
+    saved_primary_buffer = NULL;
 }
 
 - (void)setSendModifiers:(int *)modifiers
@@ -3116,7 +3116,7 @@ void DumpBuf(screen_char_t* p, int n) {
                REAL_WIDTH*sizeof(screen_char_t));
 
         // Mark everything dirty if we're not using the scrollback buffer
-        if (temp_buffer) {
+        if (saved_primary_buffer) {
             [self setDirty];
         }
 
@@ -3628,7 +3628,7 @@ void DumpBuf(screen_char_t* p, int n) {
     }
     [self setCursorX:nx Y:ny];
 
-    if (temp_buffer) {
+    if (saved_primary_buffer) {
         ALT_SAVE_CURSOR_X = cursorX;
         ALT_SAVE_CURSOR_Y = cursorY;
     } else {
@@ -3647,7 +3647,7 @@ void DumpBuf(screen_char_t* p, int n) {
     NSLog(@"%s(%d):-[VT100Screen restoreCursorPosition]", __FILE__, __LINE__);
 #endif
 
-    if(temp_buffer) {
+    if(saved_primary_buffer) {
         [self setCursorX:ALT_SAVE_CURSOR_X Y:ALT_SAVE_CURSOR_Y];
     } else {
         [self setCursorX:SAVE_CURSOR_X Y:SAVE_CURSOR_Y];
@@ -4214,12 +4214,12 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     // Initialize alternate screen to be empty
     screen_char_t* aDefaultLine = [self _getDefaultLineWithWidth:WIDTH];
-    if (temp_buffer) {
-        free(temp_buffer);
+    if (saved_primary_buffer) {
+        free(saved_primary_buffer);
     }
-    temp_buffer = (screen_char_t*) calloc(REAL_WIDTH * HEIGHT, sizeof(screen_char_t));
+    saved_primary_buffer = (screen_char_t*) calloc(REAL_WIDTH * HEIGHT, sizeof(screen_char_t));
     for (int i = 0; i < HEIGHT; i++) {
-        memcpy(temp_buffer + i * REAL_WIDTH,
+        memcpy(saved_primary_buffer + i * REAL_WIDTH,
                aDefaultLine,
                REAL_WIDTH * sizeof(screen_char_t));
     }
@@ -4234,11 +4234,11 @@ void DumpBuf(screen_char_t* p, int n) {
 
         do {
             // Add up to WIDTH characters at a time until they're all used.
-            memmove(temp_buffer + o * REAL_WIDTH,
+            memmove(saved_primary_buffer + o * REAL_WIDTH,
                     line,
                     MIN(WIDTH, length) * sizeof(screen_char_t));
             const BOOL isPartial = (length > WIDTH);
-            temp_buffer[o * REAL_WIDTH + WIDTH].code = (isPartial ? EOL_SOFT : EOL_HARD);
+            saved_primary_buffer[o * REAL_WIDTH + WIDTH].code = (isPartial ? EOL_SOFT : EOL_HARD);
             length -= WIDTH;
             line += WIDTH;
             o++;
@@ -4262,11 +4262,11 @@ void DumpBuf(screen_char_t* p, int n) {
                              withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedGrid,
                                                                         kStateDictInAlternateScreen,
                                                                         nil]] intValue];
-    if (!savedGrid && temp_buffer) {
-        free(temp_buffer);
-        temp_buffer = NULL;
+    if (!savedGrid && saved_primary_buffer) {
+        free(saved_primary_buffer);
+        saved_primary_buffer = NULL;
     }
-    // TODO(georgen): Get the alt screen contents and fill temp_buffer.
+    // TODO(georgen): Get the alt screen contents and fill saved_primary_buffer.
 
     SAVE_CURSOR_X = [[self objectInDictionary:state
                              withFirstKeyFrom:[NSArray arrayWithObjects:kStateDictSavedCX,
@@ -4736,7 +4736,7 @@ void DumpBuf(screen_char_t* p, int n) {
 // adds a line to scrollback area. Returns YES if oldest line is lost, NO otherwise
 - (int)_addLineToScrollbackImpl
 {
-    if (temp_buffer && !saveToScrollbackInAlternateScreen_) {
+    if (saved_primary_buffer && !saveToScrollbackInAlternateScreen_) {
         // Don't save to scrollback in alternate screen mode.
         return 0;
     }

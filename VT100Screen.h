@@ -120,8 +120,8 @@ void TranslateCharacterSet(screen_char_t *s, int len);
     screen_char_t *result_line;
 
     // temporary buffer to store main buffer in SAVE_BUFFER/RESET_BUFFER mode
-    screen_char_t *temp_buffer;
     screen_char_t temp_default_char;
+    screen_char_t *saved_primary_buffer;
 
     // default line stuff
     screen_char_t default_bg_code;
