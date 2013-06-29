@@ -309,6 +309,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     screen_top = NULL;
 
     saved_primary_buffer = NULL;
+    saved_alt_buffer = NULL;
     findContext.substring = nil;
 
     max_scrollback_lines = DEFAULT_SCROLLBACK;
@@ -354,6 +355,9 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
     if (saved_primary_buffer) {
         free(saved_primary_buffer);
+    }
+    if (saved_alt_buffer) {
+        free(saved_alt_buffer);
     }
 
     [tabStops release];
@@ -2570,11 +2574,29 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     primary_default_char = [self defaultChar];
 }
 
+- (void)saveAltBuffer
+{
+    if (saved_alt_buffer) {
+        free(saved_alt_buffer);
+    }
+
+    int size = REAL_WIDTH * HEIGHT;
+    int n = (screen_top - buffer_lines) / REAL_WIDTH;
+    saved_alt_buffer = (screen_char_t*)calloc(size, (sizeof(screen_char_t)));
+    if (n <= 0) {
+        memcpy(saved_alt_buffer, screen_top, size*sizeof(screen_char_t));
+    } else {
+        memcpy(saved_alt_buffer, screen_top, (HEIGHT-n)*REAL_WIDTH*sizeof(screen_char_t));
+        memcpy(saved_alt_buffer + (HEIGHT - n) * REAL_WIDTH, buffer_lines, n * REAL_WIDTH * sizeof(screen_char_t));
+    }
+}
+
 - (void)restoreBuffer
 {
     if (!saved_primary_buffer) {
         return;
     }
+    [self saveAltBuffer];
 
     int n = (screen_top - buffer_lines) / REAL_WIDTH;
     if (n <= 0) {
