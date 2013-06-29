@@ -3497,14 +3497,23 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)cursorLeft:(int)n
 {
     int x = cursorX - (n > 0 ? n : 1);
+    int leftMargin, rightMargin;
+
+    if (vsplitMode) {
+        leftMargin = SCROLL_LEFT;
+        rightMargin = SCROLL_RIGHT + 1;
+    } else {
+        leftMargin = 0;
+        rightMargin = WIDTH;
+    }
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[VT100Screen cursorLeft:%d]",
       __FILE__, __LINE__, n);
 #endif
-    if (x < 0)
-        x = 0;
-    if (x >= 0 && x < WIDTH) {
+    if (x < leftMargin)
+        x = leftMargin;
+    if (x >= leftMargin && x < rightMargin) {
         [self setCursorX:x Y:cursorY];
     }
 
@@ -3517,14 +3526,23 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)cursorRight:(int)n
 {
     int x = cursorX + (n > 0 ? n : 1);
+    int leftMargin, rightMargin;
+
+    if (vsplitMode) {
+        leftMargin = SCROLL_LEFT;
+        rightMargin = SCROLL_RIGHT + 1;
+    } else {
+        leftMargin = 0;
+        rightMargin = WIDTH;
+    }
 
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[VT100Screen cursorRight:%d]",
           __FILE__, __LINE__, n);
 #endif
-    if (x >= WIDTH)
-        x =  WIDTH - 1;
-    if (x >= 0 && x < WIDTH) {
+    if (x >= rightMargin)
+        x =  rightMargin - 1;
+    if (x >= leftMargin && x < rightMargin) {
         [self setCursorX:x Y:cursorY];
     }
 
