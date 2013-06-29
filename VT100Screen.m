@@ -1634,6 +1634,11 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
          */
         linebuffer = realLineBuffer;
         // NOTE: linebuffer remains set to realLineBuffer at this point.
+    } else {
+        // wipe the alt screen if the primary screen resizes
+        // todo: resize the alt screen correctly
+        free(saved_alt_buffer);
+        saved_alt_buffer = NULL;
     }
 
 #ifdef DEBUG_RESIZEDWIDTH
