@@ -2072,6 +2072,9 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     case VT100CSI_DECSLRM:
         SCROLL_LEFT = token.u.csi.p[0] - 1;
         SCROLL_RIGHT = token.u.csi.p[1] - 1;
+        if (SCROLL_RIGHT == 0) {
+            SCROLL_RIGHT = WIDTH - 1;
+        }
         break;
             
     /* My interpretation of this:
