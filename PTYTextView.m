@@ -1170,6 +1170,7 @@ NSMutableArray* screens=0;
 - (NSRange)_rangeOfLine:(NSUInteger)lineNumber
 {
     NSRange range;
+    [self _allText];  // Refresh lineBreakCharOffsets_
     if (lineNumber == 0) {
         range.location = 0;
     } else {
@@ -1330,10 +1331,17 @@ NSMutableArray* screens=0;
         return [allText_ substringWithRange:range];
     } else if ([attribute isEqualToString:NSAccessibilityRangeForPositionParameterizedAttribute]) {
         //(NSValue *)  - (rangeValue) composed char range; param:(NSValue * - pointValue)
-        NSPoint position = [(NSValue*)parameter pointValue];
-        int x = position.x / charWidth;
-        NSRect myFrame = [self frame];
-        int y = (myFrame.size.height - position.y) / lineHeight;
+        NSPoint screenPosition = [(NSValue*)parameter pointValue];
+        NSRect screenRect = NSMakeRect(screenPosition.x,
+                                       screenPosition.y,
+                                       0,
+                                       0);
+        NSRect windowRect = [self futureConvertRectFromScreen:screenRect];
+        NSPoint locationInTextView = [self convertPoint:windowRect.origin fromView:nil];
+        NSRect visibleRect = [[self enclosingScrollView] documentVisibleRect];
+        int x = (locationInTextView.x - MARGIN - visibleRect.origin.x) / charWidth;
+        int y = locationInTextView.y / lineHeight;
+
         if (y < 0) {
             return [NSValue valueWithRange:NSMakeRange(0, 0)];
         } else {
@@ -1424,7 +1432,12 @@ NSMutableArray* screens=0;
                     chars[o++] = [cs characterAtIndex:l];
                 }
             } else {
-                chars[o++] = line[j].code;
+                if (line[j].code >= 0xf000 && line[j].code <= 0xffff) {
+                    // Don't output private range chars to accessibility.
+                    chars[o++] = 0;
+                } else {
+                    chars[o++] = line[j].code;
+                }
             }
         }
         // Append this line to allText_.
