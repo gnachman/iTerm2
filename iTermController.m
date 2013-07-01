@@ -1330,6 +1330,15 @@ static void RollInHotkeyTerm(PseudoTerminal* term)
             [[[term window] animator] setAlphaValue:1];
             break;
 
+        case WINDOW_TYPE_RIGHT:
+            rect.origin.x = screenFrame.origin.x + screenFrame.size.width - rect.size.width;
+            rect.origin.y = screenFrame.origin.y;
+
+            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
+            [[[term window] animator] setFrame:rect display:YES];
+            [[[term window] animator] setAlphaValue:1];
+            break;
+
         case WINDOW_TYPE_LION_FULL_SCREEN:  // Shouldn't happen
         case WINDOW_TYPE_FULL_SCREEN:
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
@@ -1507,6 +1516,13 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
             [[[term window] animator] setAlphaValue:0];
             break;
 
+        case WINDOW_TYPE_RIGHT:
+            rect.origin.x = screenFrame.origin.x + screenFrame.size.width;
+            [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
+            [[[term window] animator] setFrame:rect display:YES];
+            [[[term window] animator] setAlphaValue:0];
+            break;
+
         case WINDOW_TYPE_LION_FULL_SCREEN:  // Shouldn't happen
         case WINDOW_TYPE_FULL_SCREEN:
             [[NSAnimationContext currentContext] setDuration:[[PreferencePanel sharedInstance] hotkeyTermAnimationDuration]];
@@ -1654,6 +1670,11 @@ static void RollOutHotkeyTerm(PseudoTerminal* term, BOOL itermWasActiveWhenHotke
                 [[term window] setFrame:rect display:YES];
                 break;
 
+            case WINDOW_TYPE_RIGHT:
+                rect.origin.x = screenFrame.origin.x + screenFrame.size.width;
+                HKWLog(@"FAST: Set y=%f", rect.origin.y);
+                [[term window] setFrame:rect display:YES];
+                break;
 
             case WINDOW_TYPE_LION_FULL_SCREEN:  // Shouldn't happen.
             case WINDOW_TYPE_FULL_SCREEN:
