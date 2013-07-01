@@ -5926,6 +5926,18 @@ AAMAAAABAAEAAAFTAAMAAAAEAAAFwgAAAAAACAAIAAgACAABAAEAAQABA</bytes>
 																					<int key="NSTag">6</int>
 																					<reference key="NSTarget" ref="200082643"/>
 																				</object>
+																				<object class="NSMenuItem" id="110635613">
+																					<reference key="NSMenu" ref="657701459"/>
+																					<string key="NSTitle">Right of Screen</string>
+																					<string key="NSKeyEquiv"/>
+																					<int key="NSKeyEquivModMask">1048576</int>
+																					<int key="NSMnemonicLoc">2147483647</int>
+																					<reference key="NSOnImage" ref="853102319"/>
+																					<reference key="NSMixedImage" ref="1035000976"/>
+																					<string key="NSAction">_popUpItemAction:</string>
+																					<int key="NSTag">7</int>
+																					<reference key="NSTarget" ref="200082643"/>
+																				</object>
 																			</object>
 																		</object>
 																		<int key="NSPreferredEdge">1</int>

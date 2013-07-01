@@ -222,7 +222,7 @@ NSString *sessionsKey = @"sessions";
         }
     }
     if (windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_BOTTOM
-        || windowType == WINDOW_TYPE_LEFT) {
+        || windowType == WINDOW_TYPE_LEFT || windowType == WINDOW_TYPE_RIGHT) {
         PtyLog(@"Window type is %d so disable smart layout", windowType);
         smartLayout = NO;
     }
@@ -259,6 +259,7 @@ NSString *sessionsKey = @"sessions";
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
             initialFrame = [screen visibleFrame];
             break;
 
@@ -317,6 +318,7 @@ NSString *sessionsKey = @"sessions";
         case WINDOW_TYPE_TOP:
         case WINDOW_TYPE_BOTTOM:
         case WINDOW_TYPE_LEFT:
+        case WINDOW_TYPE_RIGHT:
             styleMask = NSBorderlessWindowMask;
             break;
 
@@ -333,7 +335,7 @@ NSString *sessionsKey = @"sessions";
                                               backing:NSBackingStoreBuffered
                                                 defer:NO];
     if (windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_BOTTOM
-        || windowType == WINDOW_TYPE_LEFT) {
+        || windowType == WINDOW_TYPE_LEFT || windowType == WINDOW_TYPE_RIGHT) {
         [myWindow setHasShadow:YES];
     }
     [myWindow _setContentHasShadow:NO];
@@ -1256,6 +1258,11 @@ NSString *sessionsKey = @"sessions";
       rect.origin.y = yOrigin;
       rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
       rect.size.height = virtualScreenFrame.size.height;
+    } else if (windowType == WINDOW_TYPE_RIGHT) {
+        rect.origin.x = virtualScreenFrame.size.width - rect.size.width;
+        rect.origin.y = yOrigin;
+        rect.size.width = xScale * [[terminalArrangement objectForKey:TERMINAL_ARRANGEMENT_WIDTH] doubleValue];
+        rect.size.height = virtualScreenFrame.size.height;
     }
 
     [[NSColor blackColor] set];
@@ -1825,7 +1832,27 @@ NSString *sessionsKey = @"sessions";
                 // Normal case
                 frame.origin.x = [screen visibleFrame].origin.x;
             }
-            
+
+            if (frame.size.width > 0) {
+                [[self window] setFrame:frame display:YES];
+            }
+            break;
+
+        case WINDOW_TYPE_RIGHT:
+            PtyLog(@"Window type = RIGHT, desired cols=%d", desiredColumns_);
+            // If the screen grew and the window was smaller than the desired number of columns, grow it.
+            frame.size.width = MIN([screen visibleFrame].size.width,
+                                   [[session TEXTVIEW] charWidth] * desiredColumns_ + 2 * MARGIN);
+            frame.size.height = [screen visibleFrame].size.height;
+            frame.origin.y = [screen visibleFrame].origin.y;
+            if ([[self window] alphaValue] == 0) {
+                // Is hidden hotkey window
+                frame.origin.x = [screen visibleFrame].origin.x + [screen visibleFrame].size.width;
+            } else {
+                // Normal case
+                frame.origin.x = [screen visibleFrame].origin.x + [screen visibleFrame].size.width - frame.size.width;
+            }
+
             if (frame.size.width > 0) {
                 [[self window] setFrame:frame display:YES];
             }
@@ -2202,6 +2229,7 @@ NSString *sessionsKey = @"sessions";
          windowType_ != WINDOW_TYPE_TOP &&
          windowType_ != WINDOW_TYPE_BOTTOM &&
          windowType_ != WINDOW_TYPE_LEFT &&
+         windowType_ != WINDOW_TYPE_RIGHT &&
          IsLionOrLater() &&
          [[PreferencePanel sharedInstance] lionStyleFullscreen])) {
         // Is 10.7 Lion or later.
@@ -2252,7 +2280,7 @@ NSString *sessionsKey = @"sessions";
 {
     [SessionView windowDidResize];
     if (windowType_ == WINDOW_TYPE_TOP || windowType_ == WINDOW_TYPE_BOTTOM
-        || windowType_ == WINDOW_TYPE_LEFT) {
+        || windowType_ == WINDOW_TYPE_LEFT || windowType_ == WINDOW_TYPE_RIGHT) {
         // TODO: would be nice if you could toggle top windows to fullscreen
         return;
     }
@@ -3943,20 +3971,26 @@ NSString *sessionsKey = @"sessions";
         frame.origin.x = [[self window] frame].origin.x;
     }
 
+    if (windowType_ == WINDOW_TYPE_LEFT || windowType_ == WINDOW_TYPE_RIGHT) {
+        frame.size.height = self.screen.visibleFrame.size.height;
+
+        PTYSession* session = [self currentSession];
+        frame.size.width = MIN(winSize.width,
+            ceil([[session TEXTVIEW] charWidth] *
+            desiredColumns_) + decorationSize.width + 2 * MARGIN);
+
+    }
+
     if (windowType_ == WINDOW_TYPE_LEFT) {
-      frame.size.height = self.screen.visibleFrame.size.height;
-
-      PTYSession* session = [self currentSession];
-      frame.size.width = MIN(winSize.width,
-                             ceil([[session TEXTVIEW] charWidth] *
-                               desiredColumns_) + decorationSize.width + 2 * MARGIN);
-
-      frame.origin.x = [[self window] frame].origin.x;
+        frame.origin.x = [[self window] frame].origin.x;
+    } else if (windowType_ == WINDOW_TYPE_RIGHT) {
+        frame.origin.x = [[self window] frame].origin.x + [[self window] frame].size.width - frame.size.width;
     }
 
     // Set the origin again to the bottom of screen
     if (windowType_ == WINDOW_TYPE_BOTTOM
-        || windowType_ == WINDOW_TYPE_LEFT) {
+        || windowType_ == WINDOW_TYPE_LEFT
+        || windowType_ == WINDOW_TYPE_RIGHT) {
         frame.origin.y = self.screen.visibleFrame.origin.y;
     }
 
@@ -4546,7 +4580,8 @@ NSString *sessionsKey = @"sessions";
 {
     if (![[PreferencePanel sharedInstance] showWindowBorder]) {
         return NO;
-    } else if ([self anyFullScreen]) {
+    } else if ([self anyFullScreen] ||
+               windowType_ == WINDOW_TYPE_RIGHT ) {
         return NO;
     } else if (![[[self currentSession] SCROLLVIEW] isLegacyScroller] ||
                ![self scrollbarShouldBeVisible]) {
@@ -4921,14 +4956,16 @@ NSString *sessionsKey = @"sessions";
 
     if (windowType_ == WINDOW_TYPE_TOP ||
         windowType_ == WINDOW_TYPE_BOTTOM ||
-        windowType_ == WINDOW_TYPE_LEFT) {
+        windowType_ == WINDOW_TYPE_LEFT ||
+        windowType_ == WINDOW_TYPE_RIGHT) {
         NSRect windowFrame = [[self window] frame];
         BOOL hasScrollbar = [self scrollbarShouldBeVisible];
         NSSize contentSize = [PTYScrollView contentSizeForFrameSize:windowFrame.size
                                               hasHorizontalScroller:NO
                                                 hasVerticalScroller:hasScrollbar
                                                          borderType:NSNoBorder];
-        if (windowType_ != WINDOW_TYPE_LEFT) {
+        if (windowType_ != WINDOW_TYPE_LEFT &&
+            windowType_ != WINDOW_TYPE_RIGHT) {
             columns = (contentSize.width - MARGIN*2) / charSize.width;
         }
     }
