@@ -3893,13 +3893,22 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     screen_char_t *aLine;
     int i;
+    int leftMargin, rightMargin;
 
-    if (cursorX >= WIDTH) {
+    if (vsplitMode) {
+        leftMargin = SCROLL_LEFT;
+        rightMargin = SCROLL_RIGHT + 1;
+    } else {
+        leftMargin = 0;
+        rightMargin = WIDTH;
+    }
+    
+    if (cursorX >= rightMargin || cursorX < leftMargin) {
         return;
     }
 
-    if (n + cursorX > WIDTH) {
-        n = WIDTH - cursorX;
+    if (n + cursorX > rightMargin) {
+        n = rightMargin - cursorX;
     }
 
     // get the appropriate line
@@ -3907,7 +3916,7 @@ void DumpBuf(screen_char_t* p, int n) {
 
     memmove(aLine + cursorX + n,
             aLine + cursorX,
-            (WIDTH - cursorX - n) * sizeof(screen_char_t));
+            (rightMargin - cursorX - n) * sizeof(screen_char_t));
 
     for (i = 0; i < n; i++) {
         aLine[cursorX + i].code = 0;
@@ -3917,9 +3926,9 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 
     // everything from cursorX to end of line is dirty
-    [self setDirtyFromX:MIN(WIDTH - 1, cursorX)
+    [self setDirtyFromX:MIN(rightMargin - 1, cursorX)
                       Y:cursorY
-                    toX:WIDTH
+                    toX:rightMargin
                       Y:cursorY];
     DebugLog(@"insertBlank");
 }
