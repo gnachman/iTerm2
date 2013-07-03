@@ -3129,37 +3129,46 @@ void DumpBuf(screen_char_t* p, int n) {
 {
     screen_char_t *aLine;
     int i;
-
+    int leftMargin, rightMargin;
+    
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[VT100Screen deleteCharacter]: %d", __FILE__, __LINE__, n);
 #endif
+    
+    if (vsplitMode) {
+        leftMargin = SCROLL_LEFT;
+        rightMargin = SCROLL_RIGHT + 1;
+    } else {
+        leftMargin = 0;
+        rightMargin = WIDTH;
+    }
 
-    if (cursorX >= 0 && cursorX < WIDTH &&
+    if (cursorX >= leftMargin && cursorX < rightMargin &&
         cursorY >= 0 && cursorY < HEIGHT) {
         int idx;
 
         idx = cursorY * WIDTH;
-        if (n + cursorX > WIDTH) {
-            n = WIDTH - cursorX;
+        if (n + cursorX > rightMargin) {
+            n = rightMargin - cursorX;
         }
 
         // get the appropriate screen line
         aLine = [self getLineAtScreenIndex:cursorY];
 
-        if (n < WIDTH) {
+        if (n < rightMargin) {
             memmove(aLine + cursorX,
                     aLine + cursorX + n,
-                    (WIDTH - cursorX - n) * sizeof(screen_char_t));
+                    (rightMargin - cursorX - n) * sizeof(screen_char_t));
         }
         for (i = 0; i < n; i++) {
-            aLine[WIDTH-n+i].code = 0;
-            aLine[WIDTH-n+i].complexChar = NO;
-            CopyForegroundColor(&aLine[WIDTH-n+i], [TERMINAL foregroundColorCodeReal]);
-            CopyBackgroundColor(&aLine[WIDTH-n+i], [TERMINAL backgroundColorCodeReal]);
+            aLine[rightMargin - n + i].code = 0;
+            aLine[rightMargin - n + i].complexChar = NO;
+            CopyForegroundColor(&aLine[rightMargin - n + i], [TERMINAL foregroundColorCodeReal]);
+            CopyBackgroundColor(&aLine[rightMargin - n + i], [TERMINAL backgroundColorCodeReal]);
         }
         DebugLog(@"deleteCharacters");
 
-        [self setRangeDirty:NSMakeRange(idx + cursorX, WIDTH - cursorX)];
+        [self setRangeDirty:NSMakeRange(idx + cursorX, rightMargin - cursorX)];
     }
 }
 
