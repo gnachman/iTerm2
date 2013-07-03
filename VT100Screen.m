@@ -2808,7 +2808,7 @@ void DumpBuf(screen_char_t* p, int n) {
             widthOffset = 0;
         }
         
-        if (vsplitMode) {
+        if (vsplitMode && cursorX <= SCROLL_RIGHT) {
             leftMargin = SCROLL_LEFT;
             rightMargin = SCROLL_RIGHT + 1;
         } else {
@@ -3544,7 +3544,7 @@ void DumpBuf(screen_char_t* p, int n) {
           __FILE__, __LINE__, n);
 #endif
     if (x >= rightMargin)
-        x =  rightMargin - 1;
+        x = rightMargin - 1;
     if (x >= leftMargin && x < rightMargin) {
         [self setCursorX:x Y:cursorY];
     }
@@ -3603,10 +3603,10 @@ void DumpBuf(screen_char_t* p, int n) {
         rightMargin = WIDTH;
     }
     
-    if (x_pos < leftMargin) {
-        x_pos = leftMargin;
-    } else if (x_pos >= rightMargin) {
-        x_pos = rightMargin - 1;
+    if (x_pos < 0) {
+        x_pos = 0;
+    } else if (x_pos >= WIDTH) {
+        x_pos = WIDTH - 1;
     }
 
     [self setCursorX:x_pos Y:cursorY];
