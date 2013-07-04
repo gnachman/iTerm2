@@ -2162,11 +2162,10 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         [SESSION clearTriggerLine];
         break;
     case ANSICSI_VPA:
-        [self cursorToX:cursorX + 1 Y:token.u.csi.p[0]];
-        [SESSION clearTriggerLine];
+        [self cursorToY:token.u.csi.p[0]];
         break;
     case ANSICSI_VPR:
-        [self cursorToX:cursorX + 1 Y:token.u.csi.p[0] + cursorY + 1];
+        [self cursorRight:token.u.csi.p[0]];
         [SESSION clearTriggerLine];
         break;
     case ANSICSI_ECH:
@@ -3627,6 +3626,34 @@ void DumpBuf(screen_char_t* p, int n) {
 
 }
 
+- (void)cursorToY:(int)y
+{
+    int y_pos;
+
+#if DEBUG_METHOD_TRACE
+    NSLog(@"%s(%d):-[VT100Screen cursorToY:%d]",
+          __FILE__, __LINE__, y);
+#endif
+    
+    y_pos = y - 1;
+    
+    if ([TERMINAL originMode]) {
+        y_pos += SCROLL_TOP;
+    }
+    
+    if (y_pos < 0) {
+        y_pos = 0;
+    } else if (y_pos >= HEIGHT) {
+        y_pos = HEIGHT - 1;
+    }
+
+    [self setCursorX:cursorX Y:y_pos];
+
+    [self setCharAtCursorDirty:1];
+    DebugLog(@"cursorToY");
+
+}
+
 - (void)cursorToX:(int)x Y:(int)y
 {
 #if DEBUG_METHOD_TRACE
@@ -3634,19 +3661,26 @@ void DumpBuf(screen_char_t* p, int n) {
           __FILE__, __LINE__, x, y);
 #endif
     int x_pos, y_pos;
-
+    int leftMargin, rightMargin;
 
     x_pos = x - 1;
     y_pos = y - 1;
 
-    if ([TERMINAL originMode]) {
-        y_pos += SCROLL_TOP;
-        if (vsplitMode) {
+    if (vsplitMode) {
+        if ([TERMINAL originMode]) {
             x_pos += SCROLL_LEFT;
+            y_pos += SCROLL_TOP;
         }
+        leftMargin = SCROLL_LEFT;
+        rightMargin = SCROLL_RIGHT + 1;
+    } else {
+        if ([TERMINAL originMode]) {
+            y_pos += SCROLL_TOP;
+        }
+        leftMargin = 0;
+        rightMargin = WIDTH;
     }
     
-
     if (x_pos < 0) {
         x_pos = 0;
     } else if (x_pos >= WIDTH) {
