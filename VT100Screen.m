@@ -2562,39 +2562,48 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     [self setDirty];
 }
 
-- (void)savePrimaryBuffer
+- (void)saveBuffer:(screen_char_t **)bufferPtr
 {
-    if (saved_primary_buffer) {
-        free(saved_primary_buffer);
+    screen_char_t *buffer = *bufferPtr;
+    if (buffer) {
+        free(buffer);
     }
 
     int size = REAL_WIDTH * HEIGHT;
     int n = (screen_top - buffer_lines) / REAL_WIDTH;
-    saved_primary_buffer = (screen_char_t*)calloc(size, (sizeof(screen_char_t)));
+    buffer = (screen_char_t*)calloc(size, (sizeof(screen_char_t)));
     if (n <= 0) {
-        memcpy(saved_primary_buffer, screen_top, size*sizeof(screen_char_t));
+        memcpy(buffer, screen_top, size*sizeof(screen_char_t));
     } else {
-        memcpy(saved_primary_buffer, screen_top, (HEIGHT-n)*REAL_WIDTH*sizeof(screen_char_t));
-        memcpy(saved_primary_buffer + (HEIGHT - n) * REAL_WIDTH, buffer_lines, n * REAL_WIDTH * sizeof(screen_char_t));
+        memcpy(buffer, screen_top, (HEIGHT-n)*REAL_WIDTH*sizeof(screen_char_t));
+        memcpy(buffer + (HEIGHT - n) * REAL_WIDTH, buffer_lines, n * REAL_WIDTH * sizeof(screen_char_t));
     }
+    *bufferPtr = buffer;
+}
+
+- (void)savePrimaryBuffer
+{
+    [self saveBuffer:&saved_primary_buffer];
     primary_default_char = [self defaultChar];
 }
 
 - (void)saveAltBuffer
 {
-    if (saved_alt_buffer) {
-        free(saved_alt_buffer);
+    [self saveBuffer:&saved_alt_buffer];
+}
+
+- (void)showBuffer:(screen_char_t *)buffer
+{
+    int n = (screen_top - buffer_lines) / REAL_WIDTH;
+    if (n <= 0) {
+        memcpy(screen_top, buffer, REAL_WIDTH * HEIGHT * sizeof(screen_char_t));
+    } else {
+        memcpy(screen_top, buffer, (HEIGHT - n) * REAL_WIDTH * sizeof(screen_char_t));
+        memcpy(buffer_lines, buffer + (HEIGHT - n) * REAL_WIDTH, n * REAL_WIDTH * sizeof(screen_char_t));
     }
 
-    int size = REAL_WIDTH * HEIGHT;
-    int n = (screen_top - buffer_lines) / REAL_WIDTH;
-    saved_alt_buffer = (screen_char_t*)calloc(size, (sizeof(screen_char_t)));
-    if (n <= 0) {
-        memcpy(saved_alt_buffer, screen_top, size*sizeof(screen_char_t));
-    } else {
-        memcpy(saved_alt_buffer, screen_top, (HEIGHT-n)*REAL_WIDTH*sizeof(screen_char_t));
-        memcpy(saved_alt_buffer + (HEIGHT - n) * REAL_WIDTH, buffer_lines, n * REAL_WIDTH * sizeof(screen_char_t));
-    }
+    DebugLog(@"showPrimaryBuffer setDirty");
+    [self setDirty];
 }
 
 - (void)showPrimaryBuffer
@@ -2605,17 +2614,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     showingAltScreen = NO;
     [self saveAltBuffer];
 
-    int n = (screen_top - buffer_lines) / REAL_WIDTH;
-    if (n <= 0) {
-        memcpy(screen_top, saved_primary_buffer, REAL_WIDTH * HEIGHT * sizeof(screen_char_t));
-    } else {
-        memcpy(screen_top, saved_primary_buffer, (HEIGHT - n) * REAL_WIDTH * sizeof(screen_char_t));
-        memcpy(buffer_lines, saved_primary_buffer + (HEIGHT - n) * REAL_WIDTH, n * REAL_WIDTH * sizeof(screen_char_t));
-    }
-
-    DebugLog(@"showPrimaryBuffer setDirty");
-    [self setDirty];
-
+    [self showBuffer:saved_primary_buffer];
     free(saved_primary_buffer);
     saved_primary_buffer = NULL;
 }
@@ -2629,18 +2628,8 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
     [self savePrimaryBuffer];
 
     if (saved_alt_buffer) {
-        int n = (screen_top - buffer_lines) / REAL_WIDTH;
-        if (n <= 0) {
-            memcpy(screen_top, saved_alt_buffer, REAL_WIDTH * HEIGHT * sizeof(screen_char_t));
-        } else {
-            memcpy(screen_top, saved_alt_buffer, (HEIGHT - n) * REAL_WIDTH * sizeof(screen_char_t));
-            memcpy(buffer_lines, saved_alt_buffer + (HEIGHT - n) * REAL_WIDTH, n * REAL_WIDTH * sizeof(screen_char_t));
-        }
+        [self showBuffer:saved_alt_buffer];
     }
-
-    DebugLog(@"showAltBuffer setDirty");
-    [self setDirty];
-
 }
 
 - (void)setSendModifiers:(int *)modifiers
