@@ -314,6 +314,8 @@ static PSMTabDragAssistant *sharedDragAssistant = nil;
         if ([[[self sourceTabBar] tabView] numberOfTabViewItems] == 1 && [self sourceTabBar] == control &&
                 [[[self sourceTabBar] delegate] respondsToSelector:@selector(tabView:newTabBarForDraggedTabViewItem:atPoint:)]) {
             [[[self sourceTabBar] window] setAlphaValue:0.0];
+            // Move the window out of the way so it doesn't block drop targets under it.
+            [[[self sourceTabBar] window] setFrameOrigin:NSMakePoint(-1000000, -1000000)];
             [_dragViewWindow setAlphaValue:kPSMTabDragWindowAlpha];
         } else {
             _fadeTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 / 30.0 target:self selector:@selector(fadeInDragWindow:) userInfo:nil repeats:YES];
