@@ -6162,6 +6162,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     CharacterRun* currentRun = NULL;
     const char* matchBytes = [matches bytes];
     int lastForegroundColor = -1;
+    int lastFgWas24bit = 2; // one-bit field
+    int lastFgRed   = -1;
+    int lastFgGreen = -1;
+    int lastFgBlue  = -1;
     int lastAlternateForegroundSemantics = -1;
     int lastBold = 2;  // Bold is a one-bit field so it can never equal 2.
     NSColor *lastColor = nil;
@@ -6197,7 +6201,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Not a selection.
             if (reversed &&
                 theLine[i].alternateForegroundSemantics &&
-                theLine[i].foregroundColor == ALTSEM_FG_DEFAULT) {
+                theLine[i].foregroundColor == ALTSEM_FG_DEFAULT &&
+                theLine[i].fgIs24bit == NO) {
                 // Has default foreground color so use background color.
                 if (!dimOnlyText_) {
                     thisChar.color = [self _dimmedColorFrom:defaultBGColor];
@@ -6205,7 +6210,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     thisChar.color = defaultBGColor;
                 }
             } else {
-                if (theLine[i].foregroundColor == lastForegroundColor &&
+                if ((theLine[i].foregroundColor == lastForegroundColor ||
+                     (theLine[i].fgIs24bit == lastFgWas24bit &&
+                      theLine[i].fgRed   == lastFgRed &&
+                      theLine[i].fgGreen == lastFgGreen &&
+                      theLine[i].fgBlue  == lastFgBlue)) &&
                     theLine[i].alternateForegroundSemantics == lastAlternateForegroundSemantics &&
                     theLine[i].bold == lastBold) {
                     // Looking up colors with -colorForCode:... is expensive and it's common to
@@ -6214,11 +6223,22 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 } else {
                     // Not reversed or not subject to reversing (only default
                     // foreground color is drawn in reverse video).
-                    thisChar.color = [self colorForCode:theLine[i].foregroundColor
-                                     alternateSemantics:theLine[i].alternateForegroundSemantics
-                                                   bold:theLine[i].bold
-                                           isBackground:NO];
-                    lastForegroundColor = theLine[i].foregroundColor;
+                    if((lastFgWas24bit = theLine[i].fgIs24bit) == NO) {
+                        thisChar.color = [self colorForCode:theLine[i].foregroundColor
+                                         alternateSemantics:theLine[i].alternateForegroundSemantics
+                                                       bold:theLine[i].bold
+                                               isBackground:NO];
+                        lastForegroundColor = theLine[i].foregroundColor;
+                    } else {
+                        lastForegroundColor = theLine[i].foregroundColor;
+                        lastFgRed   = theLine[i].fgRed;
+                        lastFgGreen = theLine[i].fgGreen;
+                        lastFgBlue  = theLine[i].fgBlue;
+                        thisChar.color = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:theLine[i].fgRed  /255.0
+                                                                                          green:theLine[i].fgGreen/255.0
+                                                                                           blue:theLine[i].fgBlue /255.0
+                                                                                          alpha:1]];
+                    }
                     lastAlternateForegroundSemantics = theLine[i].alternateForegroundSemantics;
                     lastBold = theLine[i].bold;
                     lastColor = thisChar.color;
@@ -6579,6 +6599,10 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     int bgstart = -1;
     int j = 0;
     int bgColor = 0;
+    BOOL bgIs24bit = NO;
+    int bgRed   = 0;
+    int bgGreen = 0;
+    int bgBlue  = 0;
     BOOL bgAlt = NO;
     BOOL bgselected = NO;
     BOOL isMatch = NO;
@@ -6623,6 +6647,10 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
             // Start new run
             bgstart = j;
             bgColor = theLine[j].backgroundColor;
+            bgIs24bit = theLine[j].bgIs24bit;
+            bgRed   = theLine[j].bgRed;
+            bgGreen = theLine[j].bgGreen;
+            bgBlue  = theLine[j].bgBlue;
             bgAlt = theLine[j].alternateBackgroundSemantics;
             bgselected = selected;
             isMatch = match;
@@ -6631,6 +6659,10 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
         if (j != WIDTH &&
             bgselected == selected &&
             theLine[j].backgroundColor == bgColor &&
+            theLine[j].bgIs24bit == bgIs24bit &&
+            theLine[j].bgRed == bgRed &&
+            theLine[j].bgGreen == bgGreen &&
+            theLine[j].bgBlue == bgBlue &&
             match == isMatch &&
             theLine[j].alternateBackgroundSemantics == bgAlt) {
             // Continue the run
@@ -6676,10 +6708,17 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                                        isBackground:NO];
                     } else {
                         // Use the regular background color.
-                        aColor = [self colorForCode:bgColor
-                                 alternateSemantics:bgAlt
-                                               bold:NO
-                                       isBackground:(bgColor == ALTSEM_BG_DEFAULT)];
+                        if(theLine[j-1].bgIs24bit == NO) {
+                            aColor = [self colorForCode:bgColor
+                                     alternateSemantics:bgAlt
+                                                   bold:NO
+                                           isBackground:(bgColor == ALTSEM_BG_DEFAULT)];
+                        } else {
+                            aColor = [NSColor colorWithCalibratedRed:theLine[j-1].bgRed  /255.0
+                                                               green:theLine[j-1].bgGreen/255.0
+                                                                blue:theLine[j-1].bgBlue /255.0
+                                                               alpha:1];
+                        }
                     }
                 }
                 aColor = [aColor colorWithAlphaComponent:alphaIfTransparencyInUse];
@@ -6773,7 +6812,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
             [overrideColor set];
         } else {
             [[self colorForCode:fgColor
-               alternateSemantics:fgAlt
+             alternateSemantics:fgAlt
                            bold:fgBold
                    isBackground:NO] set];
         }
@@ -6837,6 +6876,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
         screen_char_t buf[maxLen];
         screen_char_t fg = {0}, bg = {0};
         fg.foregroundColor = ALTSEM_FG_DEFAULT;
+        fg.fgIs24bit = NO;
         fg.alternateForegroundSemantics = YES;
         fg.bold = NO;
         fg.italic = NO;
@@ -7148,16 +7188,30 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
             NSColor *bgColor;
             if (colorInvertedCursor) {
                 if (reversed) {
-                    bgColor = [self colorForCode:screenChar.backgroundColor
-                              alternateSemantics:screenChar.alternateBackgroundSemantics
-                                            bold:screenChar.bold
-                                    isBackground:NO];
+                    if(screenChar.bgIs24bit == NO) {
+                        bgColor = [self colorForCode:screenChar.backgroundColor
+                                  alternateSemantics:screenChar.alternateBackgroundSemantics
+                                                bold:screenChar.bold
+                                        isBackground:NO];
+                    } else {
+                        bgColor = [NSColor colorWithCalibratedRed:screenChar.bgRed  /255.0
+                                                            green:screenChar.bgGreen/255.0
+                                                             blue:screenChar.bgBlue /255.0
+                                                            alpha:1];;
+                    }
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 } else {
+                    if(screenChar.fgIs24bit == NO) {
                     bgColor = [self colorForCode:screenChar.foregroundColor
                               alternateSemantics:screenChar.alternateForegroundSemantics
                                             bold:screenChar.bold
                                     isBackground:NO];
+                    } else {
+                        bgColor = [NSColor colorWithCalibratedRed:screenChar.fgRed  /255.0
+                                                            green:screenChar.fgGreen/255.0
+                                                             blue:screenChar.fgBlue /255.0
+                                                            alpha:1];
+                    }
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 }
 
@@ -7213,19 +7267,19 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                         if (colorInvertedCursor && !frameOnly) {
                             int fgColor;
                             BOOL fgAlt;
-                                                        BOOL fgBold;
+                            BOOL fgBold;
                             if ([[self window] isKeyWindow]) {
                                 // Draw a character in background color when
                                 // window is key.
                                 fgColor = screenChar.backgroundColor;
                                 fgAlt = screenChar.alternateBackgroundSemantics;
-                                                                fgBold = NO;
+                                fgBold = NO;
                             } else {
                                 // Draw character in foreground color when there
                                 // is just a frame around it.
                                 fgColor = screenChar.foregroundColor;
                                 fgAlt = screenChar.alternateForegroundSemantics;
-                                                                fgBold = screenChar.bold;
+                                fgBold = screenChar.bold;
                             }
 
                             // Pick background color for text if is key window, otherwise use fg color for text.
@@ -7259,6 +7313,13 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                                     overrideColor = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1]];
                                 }
                             }
+
+                            if(screenChar.fgIs24bit)
+                                overrideColor = [NSColor colorWithCalibratedRed:screenChar.fgRed  /255.0
+                                                                          green:screenChar.fgGreen/255.0
+                                                                           blue:screenChar.fgBlue /255.0
+                                                                          alpha:1];;
+
                             BOOL saved = useBrightBold;
                             useBrightBold = NO;
                             [self _drawCharacter:screenChar
@@ -7273,14 +7334,27 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                         } else {
                             // Non-inverted cursor or cursor is frame
                             int theColor;
+                            NSColor* overrideColor = nil;
                             BOOL alt;
                             BOOL isBold;
                             if ([[self window] isKeyWindow]) {
                                 theColor = ALTSEM_CURSOR;
+                                if(screenChar.fgIs24bit == YES) {
+                                    overrideColor = [NSColor colorWithCalibratedRed:screenChar.fgRed  /255.0
+                                                                              green:screenChar.fgGreen/255.0
+                                                                               blue:screenChar.fgBlue /255.0
+                                                                              alpha:1];;
+                                }
                                 alt = YES;
                                 isBold = screenChar.bold;
                             } else {
                                 theColor = screenChar.foregroundColor;
+                                if(screenChar.fgIs24bit) {
+                                    overrideColor = [NSColor colorWithCalibratedRed:screenChar.fgRed  /255.0
+                                                                              green:screenChar.fgGreen/255.0
+                                                                               blue:screenChar.fgBlue /255.0
+                                                                              alpha:1];;
+                                }
                                 alt = screenChar.alternateForegroundSemantics;
                                 isBold = screenChar.bold;
                             }
@@ -7291,7 +7365,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                                              AtX:x1 * charWidth + MARGIN
                                                Y:curY + cursorHeight - lineHeight
                                      doubleWidth:double_width
-                                   overrideColor:nil];
+                                   overrideColor:overrideColor];
                         }
                     }
 
