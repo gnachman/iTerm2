@@ -107,6 +107,16 @@ typedef struct screen_char_t
     unsigned int backgroundColor : 8;
     unsigned int foregroundColor : 8;
 
+    unsigned int fgIs24bit : 1;
+    unsigned int fgRed   : 8;
+    unsigned int fgGreen : 8;
+    unsigned int fgBlue  : 8;
+
+    unsigned int bgIs24bit : 1;
+    unsigned int bgRed   : 8;
+    unsigned int bgGreen : 8;
+    unsigned int bgBlue  : 8;
+
     // This flag determines the interpretation of backgroundColor.
     unsigned int alternateBackgroundSemantics : 1;
 
@@ -129,8 +139,10 @@ typedef struct screen_char_t
 
     // These bits aren't used but are defined here so that the entire memory
     // region can be initialized.
-    unsigned int unused : 25;
+    unsigned int unused1 : 32;
+    unsigned int unused2 :  7;
 } screen_char_t;
+
 
 // Standard unicode replacement string. Is a double-width character.
 static inline NSString* ReplacementString()
@@ -143,6 +155,8 @@ static inline NSString* ReplacementString()
 static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t from)
 {
     to->foregroundColor = from.foregroundColor;
+    to->fgIs24bit = from.fgIs24bit;
+    to->fgRed = from.fgRed; to->fgGreen = from.fgGreen; to->fgBlue = from.fgBlue;
     to->alternateForegroundSemantics = from.alternateForegroundSemantics;
     to->bold = from.bold;
     to->italic = from.italic;
@@ -150,10 +164,12 @@ static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t fr
     to->underline = from.underline;
 }
 
-// COpy background color from one char to another.
+// Copy background color from one char to another.
 static inline void CopyBackgroundColor(screen_char_t* to, const screen_char_t from)
 {
     to->backgroundColor = from.backgroundColor;
+    to->bgIs24bit = from.bgIs24bit;
+    to->bgRed = from.bgRed; to->bgGreen = from.bgGreen; to->bgBlue = from.bgBlue;
     to->alternateBackgroundSemantics = from.alternateBackgroundSemantics;
 }
 
@@ -161,20 +177,37 @@ static inline void CopyBackgroundColor(screen_char_t* to, const screen_char_t fr
 static inline BOOL BackgroundColorsEqual(const screen_char_t a,
                                          const screen_char_t b)
 {
-    return a.backgroundColor == b.backgroundColor &&
-    a.alternateBackgroundSemantics == b.alternateBackgroundSemantics;
+    if(!(a.bgIs24bit && b.bgIs24bit))
+        return a.backgroundColor == b.backgroundColor &&
+        a.alternateBackgroundSemantics == b.alternateBackgroundSemantics;
+    else if(a.bgIs24bit == !b.bgIs24bit)
+        return false;
+    else
+        return a.bgRed   == b.bgRed &&
+        a.bgGreen == b.bgGreen &&
+        a.bgBlue  == b.bgBlue  &&
+        a.alternateBackgroundSemantics == b.alternateBackgroundSemantics;
 }
 
 // Returns true iff two foreground colors are equal.
 static inline BOOL ForegroundColorsEqual(const screen_char_t a,
                                          const screen_char_t b)
 {
-    return a.foregroundColor == b.foregroundColor &&
-           a.alternateForegroundSemantics == b.alternateForegroundSemantics &&
-           a.bold == b.bold &&
-           a.italic == b.italic &&
-           a.blink == b.blink &&
-           a.underline == b.underline;
+    if(!(a.fgIs24bit && b.fgIs24bit))
+        return a.foregroundColor == b.foregroundColor &&
+        a.alternateForegroundSemantics == b.alternateForegroundSemantics &&
+        a.bold == b.bold &&
+        a.italic == b.italic &&
+        a.blink == b.blink &&
+        a.underline == b.underline;
+    else if(a.fgIs24bit == !b.fgIs24bit)
+        return false;
+    else
+        return a.fgRed   == b.fgRed   &&
+        a.fgGreen == b.fgGreen &&
+        a.fgBlue  == b.fgBlue  &&
+        a.alternateForegroundSemantics == b.alternateForegroundSemantics;
+    
 }
 
 // Look up the string associated with a complex char's key.

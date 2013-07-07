@@ -2309,12 +2309,18 @@ static VT100TCC decode_string(unsigned char *datap,
         bold = italic = blink = reversed = under = NO;
         saveBold = saveItalic = saveBlink = saveReversed = saveUnder = NO;
         FG_COLORCODE = ALTSEM_FG_DEFAULT;
+        FG_IS24BIT = NO;
+        FG_RED = 0; FG_GREEN = 0; FG_BLUE = 0;
         alternateForegroundSemantics = YES;
         BG_COLORCODE = ALTSEM_BG_DEFAULT;
+        BG_IS24BIT = NO;
+        BG_RED = 0; BG_GREEN = 0; BG_BLUE = 0;
         alternateBackgroundSemantics = YES;
         saveForeground = FG_COLORCODE;
+        saveFgIs24bit = NO;
         saveAltForeground = alternateForegroundSemantics;
         saveBackground = BG_COLORCODE;
+        saveFgIs24bit = NO;
         saveAltBackground = alternateBackgroundSemantics;
         MOUSE_MODE = MOUSE_REPORTING_NONE;
         MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
@@ -2348,7 +2354,7 @@ static VT100TCC decode_string(unsigned char *datap,
         }
         key_strings[i] = NULL;
     }
-
+ 
     [super dealloc];
 #if DEBUG_ALLOC
     NSLog(@"%s: 0x%x, done", __PRETTY_FUNCTION__, self);
@@ -2421,8 +2427,18 @@ static VT100TCC decode_string(unsigned char *datap,
     saveReversed = reversed;
     saveCHARSET = CHARSET;
     saveForeground = FG_COLORCODE;
+    if((saveFgIs24bit = FG_IS24BIT)) {
+        saveFgRed   = FG_RED;
+        saveFgGreen = FG_GREEN;
+        saveFgBlue  = FG_BLUE;
+    }
     saveAltForeground = alternateForegroundSemantics;
     saveBackground = BG_COLORCODE;
+    if((saveBgIs24bit = BG_IS24BIT)) {
+        saveBgRed   = BG_RED;
+        saveBgGreen = BG_GREEN;
+        saveBgBlue  = BG_BLUE;
+    }
     saveAltBackground = alternateBackgroundSemantics;
 }
 
@@ -2435,20 +2451,32 @@ static VT100TCC decode_string(unsigned char *datap,
     reversed=saveReversed;
     CHARSET=saveCHARSET;
     FG_COLORCODE = saveForeground;
+    if((FG_IS24BIT = saveFgIs24bit)) {
+        FG_RED   = saveFgRed;
+        FG_GREEN = saveFgGreen;
+        FG_BLUE  = saveFgBlue;
+    }
     alternateForegroundSemantics = saveAltForeground;
     BG_COLORCODE = saveBackground;
+    if((BG_IS24BIT = saveBgIs24bit)) {
+        BG_RED   = saveBgRed;
+        BG_GREEN = saveBgGreen;
+        BG_BLUE  = saveBgBlue;
+    }
     alternateBackgroundSemantics = saveAltBackground;
 }
 
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem
 {
     FG_COLORCODE = fgColorCode;
+    FG_IS24BIT = NO;
     alternateForegroundSemantics = altsem;
 }
 
 - (void)setBackgroundColor:(int)bgColorCode alternateSemantics:(BOOL)altsem
 {
     BG_COLORCODE = bgColorCode;
+    BG_IS24BIT = NO;
     alternateBackgroundSemantics = altsem;
 }
 
@@ -2475,8 +2503,10 @@ static VT100TCC decode_string(unsigned char *datap,
     bold = italic = blink = reversed = under = NO;
     saveBold = saveItalic = saveBlink = saveReversed = saveUnder = NO;
     FG_COLORCODE = ALTSEM_FG_DEFAULT;
+    FG_IS24BIT = NO;
     alternateForegroundSemantics = YES;
     BG_COLORCODE = ALTSEM_BG_DEFAULT;
+    BG_IS24BIT = NO;
     alternateBackgroundSemantics = YES;
     MOUSE_MODE = MOUSE_REPORTING_NONE;
     MOUSE_FORMAT = MOUSE_FORMAT_XTERM;
@@ -3177,9 +3207,19 @@ static VT100TCC decode_string(unsigned char *datap,
     screen_char_t result = { 0 };
     if (reversed) {
         result.foregroundColor = BG_COLORCODE;
+        if((result.fgIs24bit = BG_IS24BIT)) {
+            result.fgRed   = BG_RED;
+            result.fgGreen = BG_GREEN;
+            result.fgBlue  = BG_BLUE;
+        }
         result.alternateForegroundSemantics = alternateBackgroundSemantics;
     } else {
         result.foregroundColor = FG_COLORCODE;
+        if((result.fgIs24bit = FG_IS24BIT)) {
+            result.fgRed   = FG_RED;
+            result.fgGreen = FG_GREEN;
+            result.fgBlue  = FG_BLUE;
+        }
         result.alternateForegroundSemantics = alternateForegroundSemantics;
     }
     result.bold = bold;
@@ -3194,9 +3234,19 @@ static VT100TCC decode_string(unsigned char *datap,
     screen_char_t result = { 0 };
     if (reversed) {
         result.backgroundColor = FG_COLORCODE;
+        if((result.bgIs24bit = FG_IS24BIT)) {
+            result.bgRed   = FG_RED;
+            result.bgGreen = FG_GREEN;
+            result.bgBlue  = FG_BLUE;
+        }
         result.alternateBackgroundSemantics = alternateForegroundSemantics;
     } else {
         result.backgroundColor = BG_COLORCODE;
+        if((result.bgIs24bit = BG_IS24BIT)) {
+            result.bgRed   = BG_RED;
+            result.bgGreen = BG_GREEN;
+            result.bgBlue  = BG_BLUE;
+        }
         result.alternateBackgroundSemantics = alternateBackgroundSemantics;
     }
     return result;
@@ -3206,6 +3256,11 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     screen_char_t result = { 0 };
     result.foregroundColor = FG_COLORCODE;
+    if((result.fgIs24bit = FG_IS24BIT)) {
+        result.fgRed   = FG_RED;
+        result.fgGreen = FG_GREEN;
+        result.fgBlue  = FG_BLUE;
+    }
     result.alternateForegroundSemantics = alternateForegroundSemantics;
     result.bold = bold;
     result.italic = italic;
@@ -3218,6 +3273,11 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     screen_char_t result = { 0 };
     result.backgroundColor = BG_COLORCODE;
+    if((result.bgIs24bit = BG_IS24BIT)) {
+        result.bgRed   = BG_RED;
+        result.bgGreen = BG_GREEN;
+        result.bgBlue  = BG_BLUE;
+    }
     result.alternateBackgroundSemantics = alternateBackgroundSemantics;
     return result;
 }
@@ -3439,8 +3499,10 @@ static VT100TCC decode_string(unsigned char *datap,
     // all attributes off
     bold = italic = under = blink = reversed = NO;
     FG_COLORCODE = ALTSEM_FG_DEFAULT;
+    FG_IS24BIT   = NO;
     alternateForegroundSemantics = YES;
     BG_COLORCODE = ALTSEM_BG_DEFAULT;
+    BG_IS24BIT   = NO;
     alternateBackgroundSemantics = YES;
 }
 
@@ -3458,8 +3520,10 @@ static VT100TCC decode_string(unsigned char *datap,
                         // all attribute off
                         bold = italic = under = blink = reversed = NO;
                         FG_COLORCODE = ALTSEM_FG_DEFAULT;
+                        FG_IS24BIT = NO;
                         alternateForegroundSemantics = YES;
                         BG_COLORCODE = ALTSEM_BG_DEFAULT;
+                        BG_IS24BIT = NO;
                         alternateBackgroundSemantics = YES;
                         break;
 
@@ -3495,44 +3559,68 @@ static VT100TCC decode_string(unsigned char *datap,
                         break;
                     case VT100CHARATTR_FG_DEFAULT:
                         FG_COLORCODE = ALTSEM_FG_DEFAULT;
+                        FG_IS24BIT = NO;
                         alternateForegroundSemantics = YES;
                         break;
                     case VT100CHARATTR_BG_DEFAULT:
                         BG_COLORCODE = ALTSEM_BG_DEFAULT;
+                        BG_IS24BIT = NO;
                         alternateBackgroundSemantics = YES;
                         break;
                     case VT100CHARATTR_FG_256:
                         if (token.u.csi.count - i >= 3 && token.u.csi.p[i + 1] == 5) {
+                            FG_IS24BIT = NO;
                             FG_COLORCODE = token.u.csi.p[i + 2];
                             alternateForegroundSemantics = NO;
                             i += 2;
+                        } // 24-bit color support
+                        else if (token.u.csi.count - i >= 5 && token.u.csi.p[i + 1] == 2) {
+                            FG_IS24BIT = YES;
+                            FG_RED   = token.u.csi.p[i+2];
+                            FG_GREEN = token.u.csi.p[i+3];
+                            FG_BLUE  = token.u.csi.p[i+4];
+                            alternateForegroundSemantics = NO;
+                            i += 4;
                         }
                         break;
                     case VT100CHARATTR_BG_256:
                         if (token.u.csi.count - i >= 3 && token.u.csi.p[i + 1] == 5) {
+                            BG_IS24BIT = NO;
                             BG_COLORCODE = token.u.csi.p[i + 2];
                             alternateBackgroundSemantics = NO;
                             i += 2;
+                        } // 24-bit color support
+                        else if (token.u.csi.count - i >= 5 && token.u.csi.p[i + 1] == 2) {
+                            BG_IS24BIT = YES;
+                            BG_RED   = token.u.csi.p[i+2];
+                            BG_GREEN = token.u.csi.p[i+3];
+                            BG_BLUE  = token.u.csi.p[i+4];
+                            alternateBackgroundSemantics = NO;
+                            i += 4;
                         }
                         break;
                     default:
                         // 8 color support
                         if (n >= VT100CHARATTR_FG_BLACK &&
                             n <= VT100CHARATTR_FG_WHITE) {
+                            FG_IS24BIT = NO;
                             FG_COLORCODE = n - VT100CHARATTR_FG_BASE - COLORCODE_BLACK;
                             alternateForegroundSemantics = NO;
                         } else if (n >= VT100CHARATTR_BG_BLACK &&
                                    n <= VT100CHARATTR_BG_WHITE) {
+                            BG_IS24BIT = NO;
                             BG_COLORCODE = n - VT100CHARATTR_BG_BASE - COLORCODE_BLACK;
                             alternateBackgroundSemantics = NO;
                         }
                         // 16 color support
                         if (n >= VT100CHARATTR_FG_HI_BLACK &&
                             n <= VT100CHARATTR_FG_HI_WHITE) {
+                            FG_IS24BIT = NO;
                             FG_COLORCODE = n - VT100CHARATTR_FG_HI_BASE - COLORCODE_BLACK + 8;
                             alternateForegroundSemantics = NO;
                         } else if (n >= VT100CHARATTR_BG_HI_BLACK &&
                                    n <= VT100CHARATTR_BG_HI_WHITE) {
+                            BG_IS24BIT = NO;
                             BG_COLORCODE = n - VT100CHARATTR_BG_HI_BASE - COLORCODE_BLACK + 8;
                             alternateBackgroundSemantics = NO;
                         }
