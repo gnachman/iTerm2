@@ -148,7 +148,6 @@ void StringToScreenChars(NSString *s,
 
             buf[j].foregroundColor = fg.foregroundColor;
             if((buf[j].fgIs24bit = fg.fgIs24bit)) {
-                buf[j].fgRed     = fg.fgRed;
                 buf[j].fgGreen   = fg.fgGreen;
                 buf[j].fgBlue    = fg.fgBlue;
             }
@@ -160,14 +159,12 @@ void StringToScreenChars(NSString *s,
 
             buf[j].backgroundColor = bg.backgroundColor;
             if((buf[j].bgIs24bit = bg.bgIs24bit)) {
-                buf[j].bgRed     = bg.bgRed;
                 buf[j].bgGreen   = bg.bgGreen;
                 buf[j].bgBlue    = bg.bgBlue;
             }
             buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
 
-            buf[j].unused1 = 0;
-            buf[j].unused2 = 0;
+            buf[j].unused = 0;
             lastInitializedChar = j;
         }
 
@@ -186,7 +183,6 @@ void StringToScreenChars(NSString *s,
 
             buf[j].foregroundColor = fg.foregroundColor;
             if((buf[j].fgIs24bit = fg.fgIs24bit)) {
-                buf[j].fgRed     = fg.fgRed;
                 buf[j].fgGreen   = fg.fgGreen;
                 buf[j].fgBlue    = fg.fgBlue;
             }
@@ -198,7 +194,6 @@ void StringToScreenChars(NSString *s,
 
             buf[j].backgroundColor = bg.backgroundColor;
             if((buf[j].bgIs24bit = bg.fgIs24bit)) {
-                buf[j].bgRed     = bg.fgRed;
                 buf[j].bgGreen   = bg.fgGreen;
                 buf[j].bgBlue    = bg.fgBlue;
             }
@@ -231,7 +226,6 @@ void StringToScreenChars(NSString *s,
 
                         buf[j].foregroundColor = fg.foregroundColor;
                         if((buf[j].fgIs24bit = fg.fgIs24bit)) {
-                            buf[j].fgRed     = fg.fgRed;
                             buf[j].fgGreen   = fg.fgGreen;
                             buf[j].fgBlue    = fg.fgBlue;
                         }
@@ -243,7 +237,6 @@ void StringToScreenChars(NSString *s,
 
                         buf[j].backgroundColor = bg.backgroundColor;
                         if((buf[j].bgIs24bit = bg.fgIs24bit)) {
-                            buf[j].bgRed     = bg.fgRed;
                             buf[j].bgGreen   = bg.fgGreen;
                             buf[j].bgBlue    = bg.fgBlue;
                         }
@@ -2817,8 +2810,7 @@ void DumpBuf(screen_char_t* p, int n) {
             buffer[i].complexChar = NO;
             CopyForegroundColor(&buffer[i], fg);
             CopyBackgroundColor(&buffer[i], bg);
-            buffer[i].unused1 = 0;
-            buffer[i].unused2 = 0;
+            buffer[i].unused = 0;
         }
 
         // If a graphics character set was selected then translate buffer

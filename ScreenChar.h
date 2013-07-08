@@ -104,16 +104,14 @@ typedef struct screen_char_t
     //         to brightest 255 (not white).
     // With alternate background semantics:
     //   ALTSEM_xxx (see comments above)
-    unsigned int backgroundColor : 8;
-    unsigned int foregroundColor : 8;
+    unsigned int backgroundColor : 8; //contains bgRed when bgIs24bit
+    unsigned int foregroundColor : 8; //contains fgred when fgIs24bit
 
     unsigned int fgIs24bit : 1;
-    unsigned int fgRed   : 8;
     unsigned int fgGreen : 8;
     unsigned int fgBlue  : 8;
 
     unsigned int bgIs24bit : 1;
-    unsigned int bgRed   : 8;
     unsigned int bgGreen : 8;
     unsigned int bgBlue  : 8;
 
@@ -139,8 +137,7 @@ typedef struct screen_char_t
 
     // These bits aren't used but are defined here so that the entire memory
     // region can be initialized.
-    unsigned int unused1 : 32;
-    unsigned int unused2 :  7;
+    unsigned long unused : 55;
 } screen_char_t;
 
 
@@ -156,7 +153,7 @@ static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t fr
 {
     to->foregroundColor = from.foregroundColor;
     to->fgIs24bit = from.fgIs24bit;
-    to->fgRed = from.fgRed; to->fgGreen = from.fgGreen; to->fgBlue = from.fgBlue;
+    to->fgGreen = from.fgGreen; to->fgBlue = from.fgBlue;
     to->alternateForegroundSemantics = from.alternateForegroundSemantics;
     to->bold = from.bold;
     to->italic = from.italic;
@@ -169,7 +166,7 @@ static inline void CopyBackgroundColor(screen_char_t* to, const screen_char_t fr
 {
     to->backgroundColor = from.backgroundColor;
     to->bgIs24bit = from.bgIs24bit;
-    to->bgRed = from.bgRed; to->bgGreen = from.bgGreen; to->bgBlue = from.bgBlue;
+    to->bgGreen = from.bgGreen; to->bgBlue = from.bgBlue;
     to->alternateBackgroundSemantics = from.alternateBackgroundSemantics;
 }
 
@@ -183,7 +180,7 @@ static inline BOOL BackgroundColorsEqual(const screen_char_t a,
     else if(a.bgIs24bit == !b.bgIs24bit)
         return false;
     else
-        return a.bgRed   == b.bgRed &&
+        return a.backgroundColor == b.backgroundColor &&
         a.bgGreen == b.bgGreen &&
         a.bgBlue  == b.bgBlue  &&
         a.alternateBackgroundSemantics == b.alternateBackgroundSemantics;
@@ -203,7 +200,7 @@ static inline BOOL ForegroundColorsEqual(const screen_char_t a,
     else if(a.fgIs24bit == !b.fgIs24bit)
         return false;
     else
-        return a.fgRed   == b.fgRed   &&
+        return a.foregroundColor   == b.foregroundColor &&
         a.fgGreen == b.fgGreen &&
         a.fgBlue  == b.fgBlue  &&
         a.alternateForegroundSemantics == b.alternateForegroundSemantics;
