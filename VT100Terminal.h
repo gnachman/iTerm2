@@ -350,13 +350,11 @@ typedef enum {
 
     int  FG_COLORCODE;
     BOOL FG_IS24BIT;
-    char FG_RED;
     char FG_GREEN;
     char FG_BLUE;
     BOOL alternateForegroundSemantics;
     int  BG_COLORCODE;
     BOOL BG_IS24BIT;
-    char BG_RED;
     char BG_GREEN;
     char BG_BLUE;
     BOOL alternateBackgroundSemantics;

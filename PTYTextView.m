@@ -6163,7 +6163,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     const char* matchBytes = [matches bytes];
     int lastForegroundColor = -1;
     int lastFgWas24bit = 2; // one-bit field
-    int lastFgRed   = -1;
     int lastFgGreen = -1;
     int lastFgBlue  = -1;
     int lastAlternateForegroundSemantics = -1;
@@ -6212,7 +6211,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             } else {
                 if ((theLine[i].foregroundColor == lastForegroundColor ||
                      (theLine[i].fgIs24bit == lastFgWas24bit &&
-                      theLine[i].fgRed   == lastFgRed &&
                       theLine[i].fgGreen == lastFgGreen &&
                       theLine[i].fgBlue  == lastFgBlue)) &&
                     theLine[i].alternateForegroundSemantics == lastAlternateForegroundSemantics &&
@@ -6231,10 +6229,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         lastForegroundColor = theLine[i].foregroundColor;
                     } else {
                         lastForegroundColor = theLine[i].foregroundColor;
-                        lastFgRed   = theLine[i].fgRed;
                         lastFgGreen = theLine[i].fgGreen;
                         lastFgBlue  = theLine[i].fgBlue;
-                        thisChar.color = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:theLine[i].fgRed  /255.0
+                        thisChar.color = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:theLine[i].foregroundColor/255.0
                                                                                           green:theLine[i].fgGreen/255.0
                                                                                            blue:theLine[i].fgBlue /255.0
                                                                                           alpha:1]];
@@ -6600,7 +6597,6 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     int j = 0;
     int bgColor = 0;
     BOOL bgIs24bit = NO;
-    int bgRed   = 0;
     int bgGreen = 0;
     int bgBlue  = 0;
     BOOL bgAlt = NO;
@@ -6648,7 +6644,6 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
             bgstart = j;
             bgColor = theLine[j].backgroundColor;
             bgIs24bit = theLine[j].bgIs24bit;
-            bgRed   = theLine[j].bgRed;
             bgGreen = theLine[j].bgGreen;
             bgBlue  = theLine[j].bgBlue;
             bgAlt = theLine[j].alternateBackgroundSemantics;
@@ -6660,7 +6655,6 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
             bgselected == selected &&
             theLine[j].backgroundColor == bgColor &&
             theLine[j].bgIs24bit == bgIs24bit &&
-            theLine[j].bgRed == bgRed &&
             theLine[j].bgGreen == bgGreen &&
             theLine[j].bgBlue == bgBlue &&
             match == isMatch &&
@@ -6714,7 +6708,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                                                    bold:NO
                                            isBackground:(bgColor == ALTSEM_BG_DEFAULT)];
                         } else {
-                            aColor = [NSColor colorWithCalibratedRed:theLine[j-1].bgRed  /255.0
+                            aColor = [NSColor colorWithCalibratedRed:theLine[j-1].backgroundColor/255.0
                                                                green:theLine[j-1].bgGreen/255.0
                                                                 blue:theLine[j-1].bgBlue /255.0
                                                                alpha:1];
@@ -7194,7 +7188,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                                                 bold:screenChar.bold
                                         isBackground:NO];
                     } else {
-                        bgColor = [NSColor colorWithCalibratedRed:screenChar.bgRed  /255.0
+                        bgColor = [NSColor colorWithCalibratedRed:screenChar.backgroundColor/255.0
                                                             green:screenChar.bgGreen/255.0
                                                              blue:screenChar.bgBlue /255.0
                                                             alpha:1];;
@@ -7207,7 +7201,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                                             bold:screenChar.bold
                                     isBackground:NO];
                     } else {
-                        bgColor = [NSColor colorWithCalibratedRed:screenChar.fgRed  /255.0
+                        bgColor = [NSColor colorWithCalibratedRed:screenChar.foregroundColor/255.0
                                                             green:screenChar.fgGreen/255.0
                                                              blue:screenChar.fgBlue /255.0
                                                             alpha:1];
@@ -7315,7 +7309,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                             }
 
                             if(screenChar.fgIs24bit)
-                                overrideColor = [NSColor colorWithCalibratedRed:screenChar.fgRed  /255.0
+                                overrideColor = [NSColor colorWithCalibratedRed:screenChar.foregroundColor/255.0
                                                                           green:screenChar.fgGreen/255.0
                                                                            blue:screenChar.fgBlue /255.0
                                                                           alpha:1];;
@@ -7340,7 +7334,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                             if ([[self window] isKeyWindow]) {
                                 theColor = ALTSEM_CURSOR;
                                 if(screenChar.fgIs24bit == YES) {
-                                    overrideColor = [NSColor colorWithCalibratedRed:screenChar.fgRed  /255.0
+                                    overrideColor = [NSColor colorWithCalibratedRed:screenChar.foregroundColor/255.0
                                                                               green:screenChar.fgGreen/255.0
                                                                                blue:screenChar.fgBlue /255.0
                                                                               alpha:1];;
@@ -7350,7 +7344,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                             } else {
                                 theColor = screenChar.foregroundColor;
                                 if(screenChar.fgIs24bit) {
-                                    overrideColor = [NSColor colorWithCalibratedRed:screenChar.fgRed  /255.0
+                                    overrideColor = [NSColor colorWithCalibratedRed:screenChar.foregroundColor/255.0
                                                                               green:screenChar.fgGreen/255.0
                                                                                blue:screenChar.fgBlue /255.0
                                                                               alpha:1];;

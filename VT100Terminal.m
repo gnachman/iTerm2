@@ -2310,11 +2310,11 @@ static VT100TCC decode_string(unsigned char *datap,
         saveBold = saveItalic = saveBlink = saveReversed = saveUnder = NO;
         FG_COLORCODE = ALTSEM_FG_DEFAULT;
         FG_IS24BIT = NO;
-        FG_RED = 0; FG_GREEN = 0; FG_BLUE = 0;
+        FG_GREEN = 0; FG_BLUE = 0;
         alternateForegroundSemantics = YES;
         BG_COLORCODE = ALTSEM_BG_DEFAULT;
         BG_IS24BIT = NO;
-        BG_RED = 0; BG_GREEN = 0; BG_BLUE = 0;
+        BG_GREEN = 0; BG_BLUE = 0;
         alternateBackgroundSemantics = YES;
         saveForeground = FG_COLORCODE;
         saveFgIs24bit = NO;
@@ -2428,14 +2428,12 @@ static VT100TCC decode_string(unsigned char *datap,
     saveCHARSET = CHARSET;
     saveForeground = FG_COLORCODE;
     if((saveFgIs24bit = FG_IS24BIT)) {
-        saveFgRed   = FG_RED;
         saveFgGreen = FG_GREEN;
         saveFgBlue  = FG_BLUE;
     }
     saveAltForeground = alternateForegroundSemantics;
     saveBackground = BG_COLORCODE;
     if((saveBgIs24bit = BG_IS24BIT)) {
-        saveBgRed   = BG_RED;
         saveBgGreen = BG_GREEN;
         saveBgBlue  = BG_BLUE;
     }
@@ -2452,14 +2450,12 @@ static VT100TCC decode_string(unsigned char *datap,
     CHARSET=saveCHARSET;
     FG_COLORCODE = saveForeground;
     if((FG_IS24BIT = saveFgIs24bit)) {
-        FG_RED   = saveFgRed;
         FG_GREEN = saveFgGreen;
         FG_BLUE  = saveFgBlue;
     }
     alternateForegroundSemantics = saveAltForeground;
     BG_COLORCODE = saveBackground;
     if((BG_IS24BIT = saveBgIs24bit)) {
-        BG_RED   = saveBgRed;
         BG_GREEN = saveBgGreen;
         BG_BLUE  = saveBgBlue;
     }
@@ -3208,7 +3204,6 @@ static VT100TCC decode_string(unsigned char *datap,
     if (reversed) {
         result.foregroundColor = BG_COLORCODE;
         if((result.fgIs24bit = BG_IS24BIT)) {
-            result.fgRed   = BG_RED;
             result.fgGreen = BG_GREEN;
             result.fgBlue  = BG_BLUE;
         }
@@ -3216,7 +3211,6 @@ static VT100TCC decode_string(unsigned char *datap,
     } else {
         result.foregroundColor = FG_COLORCODE;
         if((result.fgIs24bit = FG_IS24BIT)) {
-            result.fgRed   = FG_RED;
             result.fgGreen = FG_GREEN;
             result.fgBlue  = FG_BLUE;
         }
@@ -3235,7 +3229,6 @@ static VT100TCC decode_string(unsigned char *datap,
     if (reversed) {
         result.backgroundColor = FG_COLORCODE;
         if((result.bgIs24bit = FG_IS24BIT)) {
-            result.bgRed   = FG_RED;
             result.bgGreen = FG_GREEN;
             result.bgBlue  = FG_BLUE;
         }
@@ -3243,7 +3236,6 @@ static VT100TCC decode_string(unsigned char *datap,
     } else {
         result.backgroundColor = BG_COLORCODE;
         if((result.bgIs24bit = BG_IS24BIT)) {
-            result.bgRed   = BG_RED;
             result.bgGreen = BG_GREEN;
             result.bgBlue  = BG_BLUE;
         }
@@ -3257,7 +3249,6 @@ static VT100TCC decode_string(unsigned char *datap,
     screen_char_t result = { 0 };
     result.foregroundColor = FG_COLORCODE;
     if((result.fgIs24bit = FG_IS24BIT)) {
-        result.fgRed   = FG_RED;
         result.fgGreen = FG_GREEN;
         result.fgBlue  = FG_BLUE;
     }
@@ -3274,7 +3265,6 @@ static VT100TCC decode_string(unsigned char *datap,
     screen_char_t result = { 0 };
     result.backgroundColor = BG_COLORCODE;
     if((result.bgIs24bit = BG_IS24BIT)) {
-        result.bgRed   = BG_RED;
         result.bgGreen = BG_GREEN;
         result.bgBlue  = BG_BLUE;
     }
@@ -3576,7 +3566,7 @@ static VT100TCC decode_string(unsigned char *datap,
                         } // 24-bit color support
                         else if (token.u.csi.count - i >= 5 && token.u.csi.p[i + 1] == 2) {
                             FG_IS24BIT = YES;
-                            FG_RED   = token.u.csi.p[i+2];
+                            FG_COLORCODE = token.u.csi.p[i + 2];
                             FG_GREEN = token.u.csi.p[i+3];
                             FG_BLUE  = token.u.csi.p[i+4];
                             alternateForegroundSemantics = NO;
@@ -3592,7 +3582,7 @@ static VT100TCC decode_string(unsigned char *datap,
                         } // 24-bit color support
                         else if (token.u.csi.count - i >= 5 && token.u.csi.p[i + 1] == 2) {
                             BG_IS24BIT = YES;
-                            BG_RED   = token.u.csi.p[i+2];
+                            BG_COLORCODE = token.u.csi.p[i + 2];
                             BG_GREEN = token.u.csi.p[i+3];
                             BG_BLUE  = token.u.csi.p[i+4];
                             alternateBackgroundSemantics = NO;
