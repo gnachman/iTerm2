@@ -119,9 +119,11 @@ void TranslateCharacterSet(screen_char_t *s, int len);
     screen_char_t *default_line;
     screen_char_t *result_line;
 
-    // temporary buffer to store main buffer in SAVE_BUFFER/RESET_BUFFER mode
-    screen_char_t *temp_buffer;
-    screen_char_t temp_default_char;
+    // temporary buffers to store main/alt screens in SAVE_BUFFER/RESET_BUFFER mode
+    screen_char_t *saved_primary_buffer;
+    screen_char_t *saved_alt_buffer;
+    screen_char_t primary_default_char;
+    BOOL showingAltScreen;
 
     // default line stuff
     screen_char_t default_bg_code;
@@ -209,8 +211,10 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)clearBuffer;
 - (long long)absoluteLineNumberOfCursor;
 - (void)clearScrollbackBuffer;
-- (void)saveBuffer;
-- (void)restoreBuffer;
+- (void)savePrimaryBuffer;
+- (void)showPrimaryBuffer;
+- (void)saveAltBuffer;
+- (void)showAltBuffer;
 
 - (void)setSendModifiers:(int *)modifiers
                numValues:(int)numValues;
