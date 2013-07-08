@@ -942,12 +942,12 @@ static BOOL hasBecomeActive = NO;
 }
 
 // font control
-- (IBAction) biggerFont: (id) sender
+- (IBAction)biggerFont: (id) sender
 {
     [[[[iTermController sharedInstance] currentTerminal] currentSession] changeFontSizeDirection:1];
 }
 
-- (IBAction) smallerFont: (id) sender
+- (IBAction)smallerFont: (id) sender
 {
     [[[[iTermController sharedInstance] currentTerminal] currentSession] changeFontSizeDirection:-1];
 }
@@ -1206,24 +1206,14 @@ int DebugLogImpl(const char *file, int line, const char *function, NSString* val
 - (IBAction)returnToDefaultSize:(id)sender
 {
     PseudoTerminal *frontTerminal = [[iTermController sharedInstance] currentTerminal];
-    PTYTab* theTab = [frontTerminal currentTab];
-    PTYSession* aSession = [theTab activeSession];
-
-    NSDictionary *abEntry = [aSession originalAddressBookEntry];
-
-    NSString* fontDesc = [abEntry objectForKey:KEY_NORMAL_FONT];
-    NSFont* font = [ITAddressBookMgr fontWithDesc:fontDesc];
-    NSFont* nafont = [ITAddressBookMgr fontWithDesc:[abEntry objectForKey:KEY_NON_ASCII_FONT]];
-    float hs = [[abEntry objectForKey:KEY_HORIZONTAL_SPACING] floatValue];
-    float vs = [[abEntry objectForKey:KEY_VERTICAL_SPACING] floatValue];
-    PTYSession* session = [frontTerminal currentSession];
-    PTYTextView* textview = [session TEXTVIEW];
-    [textview setFont:font nafont:nafont horizontalSpacing:hs verticalSpacing:vs];
-        if ([sender isAlternate]) {
-                [frontTerminal sessionInitiatedResize:session
-                                                width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
-                                               height:[[abEntry objectForKey:KEY_ROWS] intValue]];
-        }
+    PTYSession *session = [frontTerminal currentSession];
+	[session changeFontSizeDirection:0];
+    if ([sender isAlternate]) {
+        NSDictionary *abEntry = [session originalAddressBookEntry];
+        [frontTerminal sessionInitiatedResize:session
+                                        width:[[abEntry objectForKey:KEY_COLUMNS] intValue]
+                                       height:[[abEntry objectForKey:KEY_ROWS] intValue]];
+    }
 }
 
 - (IBAction)exposeForTabs:(id)sender
