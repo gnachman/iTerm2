@@ -6180,7 +6180,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     int lastForegroundColor = -1;
     int lastFgWas24bit = 2; // one-bit field
     int lastFgGreen = -1;
-    int lastFgBlue  = -1;
+    int lastFgBlue = -1;
     int lastAlternateForegroundSemantics = -1;
     int lastBold = 2;  // Bold is a one-bit field so it can never equal 2.
     NSColor *lastColor = nil;
@@ -6228,7 +6228,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 if ((theLine[i].foregroundColor == lastForegroundColor ||
                      (theLine[i].fgIs24bit == lastFgWas24bit &&
                       theLine[i].fgGreen == lastFgGreen &&
-                      theLine[i].fgBlue  == lastFgBlue)) &&
+                      theLine[i].fgBlue == lastFgBlue)) &&
                     theLine[i].alternateForegroundSemantics == lastAlternateForegroundSemantics &&
                     theLine[i].bold == lastBold) {
                     // Looking up colors with -colorForCode:... is expensive and it's common to
@@ -6247,7 +6247,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                     } else {
                         lastForegroundColor = theLine[i].foregroundColor;
                         lastFgGreen = theLine[i].fgGreen;
-                        lastFgBlue  = theLine[i].fgBlue;
+                        lastFgBlue = theLine[i].fgBlue;
                         thisChar.color = [self _dimmedColorFrom:[self foregroundColorForChar:theLine[i]];
                     }
                     lastAlternateForegroundSemantics = theLine[i].alternateForegroundSemantics;
@@ -6612,7 +6612,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     int bgColor = 0;
     BOOL bgIs24bit = NO;
     int bgGreen = 0;
-    int bgBlue  = 0;
+    int bgBlue = 0;
     BOOL bgAlt = NO;
     BOOL bgselected = NO;
     BOOL isMatch = NO;
@@ -6659,7 +6659,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
             bgColor = theLine[j].backgroundColor;
             bgIs24bit = theLine[j].bgIs24bit;
             bgGreen = theLine[j].bgGreen;
-            bgBlue  = theLine[j].bgBlue;
+            bgBlue = theLine[j].bgBlue;
             bgAlt = theLine[j].alternateBackgroundSemantics;
             bgselected = selected;
             isMatch = match;
