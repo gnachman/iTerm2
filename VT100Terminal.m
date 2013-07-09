@@ -3485,9 +3485,13 @@ static VT100TCC decode_string(unsigned char *datap,
     // all attributes off
     bold = italic = under = blink = reversed = NO;
     FG_COLORCODE = ALTSEM_FG_DEFAULT;
+    FG_GREEN = 0;
+    FG_BLUE = 0;
     FG_IS24BIT = NO;
     alternateForegroundSemantics = YES;
     BG_COLORCODE = ALTSEM_BG_DEFAULT;
+    BG_GREEN = 0;
+    BG_BLUE = 0;
     BG_IS24BIT = NO;
     alternateBackgroundSemantics = YES;
 }

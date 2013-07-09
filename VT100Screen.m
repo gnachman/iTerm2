@@ -147,22 +147,22 @@ void StringToScreenChars(NSString *s,
             buf[j].complexChar = NO;
 
             buf[j].foregroundColor = fg.foregroundColor;
-            if ((buf[j].fgIs24bit = fg.fgIs24bit)) {
-                 buf[j].fgGreen   = fg.fgGreen;
-                 buf[j].fgBlue    = fg.fgBlue;
-            }
+            buf[j].fgGreen = fg.fgGreen;
+            buf[j].fgBlue = fg.fgBlue;
+
+            buf[j].backgroundColor = bg.backgroundColor;
+            buf[j].bgGreen = bg.bgGreen;
+            buf[j].bgBlue = bg.bgBlue;
+
+            buf[j].fgIs24bit = fg.fgIs24bit;
+            buf[j].bgIs24bit = bg.bgIs24bit;
             buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
+            buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
+
             buf[j].bold = fg.bold;
             buf[j].italic = fg.italic;
             buf[j].blink = fg.blink;
             buf[j].underline = fg.underline;
-
-            buf[j].backgroundColor = bg.backgroundColor;
-            if ((buf[j].bgIs24bit = bg.bgIs24bit)) {
-                 buf[j].bgGreen   = bg.bgGreen;
-                 buf[j].bgBlue    = bg.bgBlue;
-            }
-            buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
 
             buf[j].unused = 0;
             lastInitializedChar = j;
@@ -182,22 +182,24 @@ void StringToScreenChars(NSString *s,
             buf[j].complexChar = NO;
 
             buf[j].foregroundColor = fg.foregroundColor;
-            if ((buf[j].fgIs24bit = fg.fgIs24bit)) {
-                 buf[j].fgGreen   = fg.fgGreen;
-                 buf[j].fgBlue    = fg.fgBlue;
-            }
+            buf[j].fgGreen = fg.fgGreen;
+            buf[j].fgBlue = fg.fgBlue;
+
+            buf[j].backgroundColor = bg.backgroundColor;
+            buf[j].bgGreen = bg.fgGreen;
+            buf[j].bgBlue = bg.fgBlue;
+
+            buf[j].fgIs24bit = fg.fgIs24bit;
+            buf[j].bgIs24bit = bg.fgIs24bit;
             buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
+            buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
+
             buf[j].bold = fg.bold;
             buf[j].italic = fg.italic;
             buf[j].blink = fg.blink;
             buf[j].underline = fg.underline;
 
-            buf[j].backgroundColor = bg.backgroundColor;
-            if ((buf[j].bgIs24bit = bg.fgIs24bit)) {
-                 buf[j].bgGreen   = bg.fgGreen;
-                 buf[j].bgBlue    = bg.fgBlue;
-            }
-            buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
+            buf[j].unused = 0;
         } else if (sc[i] == 0xfeff ||  // zero width no-break space
                    sc[i] == 0x200b ||  // zero width space
                    sc[i] == 0x200c ||  // zero width non-joiner
@@ -225,22 +227,24 @@ void StringToScreenChars(NSString *s,
                         buf[j].complexChar = NO;
 
                         buf[j].foregroundColor = fg.foregroundColor;
-                        if ((buf[j].fgIs24bit = fg.fgIs24bit)) {
-                             buf[j].fgGreen   = fg.fgGreen;
-                             buf[j].fgBlue    = fg.fgBlue;
-                        }
+                        buf[j].fgGreen = fg.fgGreen;
+                        buf[j].fgBlue = fg.fgBlue;
+
+                        buf[j].backgroundColor = bg.backgroundColor;
+                        buf[j].bgGreen = bg.fgGreen;
+                        buf[j].bgBlue = bg.fgBlue;
+
+                        buf[j].fgIs24bit = fg.fgIs24bit;
+                        buf[j].bgIs24bit = bg.fgIs24bit;
                         buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
+                        buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
+
                         buf[j].bold = fg.bold;
                         buf[j].italic = fg.italic;
                         buf[j].blink = fg.blink;
                         buf[j].underline = fg.underline;
 
-                        buf[j].backgroundColor = bg.backgroundColor;
-                        if ((buf[j].bgIs24bit = bg.fgIs24bit)) {
-                             buf[j].bgGreen   = bg.fgGreen;
-                             buf[j].bgBlue    = bg.fgBlue;
-                        }
-                        buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
+                        buf[j].unused = 0;
                     }
                 }
             }
@@ -840,12 +844,12 @@ static char* FormatCont(int c)
         assert(theLine);
         if (theLine) {
             if (fgColor) {
-                theLine[x].alternateForegroundSemantics = NO;
                 theLine[x].foregroundColor = fgColorCode;
+                theLine[x].alternateForegroundSemantics = NO;
             }
             if (bgColor) {
-                theLine[x].alternateBackgroundSemantics = NO;
                 theLine[x].backgroundColor = bgColorCode;
+                theLine[x].alternateBackgroundSemantics = NO;
             }
         }
         ++x;
@@ -994,7 +998,7 @@ static char* FormatCont(int c)
     // loop doesn't call dropExcessLinesWithWidth.
     int next_line_length;
     if (numLines > 0) {
-        next_line_length  = [self _getLineLength:[self getLineAtScreenIndex: 0]];
+        next_line_length = [self _getLineLength:[self getLineAtScreenIndex: 0]];
     }
     for (i = 0; i < numLines; ++i) {
         screen_char_t* line = [self getLineAtScreenIndex: i];
@@ -3934,7 +3938,7 @@ void DumpBuf(screen_char_t* p, int n) {
 
     }
     if (n + cursorY > SCROLL_BOTTOM) {
-        n  = SCROLL_BOTTOM - cursorY + 1;
+        n = SCROLL_BOTTOM - cursorY + 1;
     }
 
     // clear the n lines
