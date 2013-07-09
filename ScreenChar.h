@@ -141,7 +141,6 @@ typedef struct screen_char_t
     unsigned int unused : 7;
 } screen_char_t;
 
-
 // Standard unicode replacement string. Is a double-width character.
 static inline NSString* ReplacementString()
 {
@@ -154,7 +153,8 @@ static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t fr
 {
     to->foregroundColor = from.foregroundColor;
     to->fgIs24bit = from.fgIs24bit;
-    to->fgGreen = from.fgGreen; to->fgBlue = from.fgBlue;
+    to->fgGreen = from.fgGreen;
+    to->fgBlue = from.fgBlue;
     to->alternateForegroundSemantics = from.alternateForegroundSemantics;
     to->bold = from.bold;
     to->italic = from.italic;
@@ -167,7 +167,8 @@ static inline void CopyBackgroundColor(screen_char_t* to, const screen_char_t fr
 {
     to->backgroundColor = from.backgroundColor;
     to->bgIs24bit = from.bgIs24bit;
-    to->bgGreen = from.bgGreen; to->bgBlue = from.bgBlue;
+    to->bgGreen = from.bgGreen;
+    to->bgBlue = from.bgBlue;
     to->alternateBackgroundSemantics = from.alternateBackgroundSemantics;
 }
 

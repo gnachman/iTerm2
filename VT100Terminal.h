@@ -348,27 +348,27 @@ typedef enum {
     MouseFormat MOUSE_FORMAT;
     BOOL REPORT_FOCUS;
 
-    int  FG_COLORCODE;
+    int FG_COLORCODE;
     BOOL FG_IS24BIT;
     char FG_GREEN;
     char FG_BLUE;
     BOOL alternateForegroundSemantics;
-    int  BG_COLORCODE;
+    int BG_COLORCODE;
     BOOL BG_IS24BIT;
     char BG_GREEN;
     char BG_BLUE;
     BOOL alternateBackgroundSemantics;
-    int  bold, italic, under, blink, reversed;
+    int bold, italic, under, blink, reversed;
 
-    int  saveBold, saveItalic, saveUnder, saveBlink, saveReversed;
-    int  saveCHARSET;
-    int  saveForeground;
+    int saveBold, saveItalic, saveUnder, saveBlink, saveReversed;
+    int saveCHARSET;
+    int saveForeground;
     BOOL saveFgIs24bit;
     char saveFgRed;
     char saveFgGreen;
     char saveFgBlue;
     BOOL saveAltForeground;
-    int  saveBackground;
+    int saveBackground;
     BOOL saveBgIs24bit;
     char saveBgRed;
     char saveBgGreen;
@@ -389,7 +389,7 @@ typedef enum {
     BOOL useCanonicalParser;
 
     //terminfo
-    char  *key_strings[TERMINFO_KEYS];
+    char *key_strings[TERMINFO_KEYS];
 
     // http://www.xfree86.org/current/ctlseqs.html#Bracketed%20Paste%20Mode
     BOOL bracketedPasteMode_;

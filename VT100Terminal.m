@@ -2309,12 +2309,14 @@ static VT100TCC decode_string(unsigned char *datap,
         bold = italic = blink = reversed = under = NO;
         saveBold = saveItalic = saveBlink = saveReversed = saveUnder = NO;
         FG_COLORCODE = ALTSEM_FG_DEFAULT;
+        FG_GREEN = 0;
+        FG_BLUE = 0;
         FG_IS24BIT = NO;
-        FG_GREEN = 0; FG_BLUE = 0;
         alternateForegroundSemantics = YES;
         BG_COLORCODE = ALTSEM_BG_DEFAULT;
+        BG_GREEN = 0;
+        BG_BLUE = 0;
         BG_IS24BIT = NO;
-        BG_GREEN = 0; BG_BLUE = 0;
         alternateBackgroundSemantics = YES;
         saveForeground = FG_COLORCODE;
         saveFgIs24bit = NO;
@@ -2354,7 +2356,7 @@ static VT100TCC decode_string(unsigned char *datap,
         }
         key_strings[i] = NULL;
     }
- 
+
     [super dealloc];
 #if DEBUG_ALLOC
     NSLog(@"%s: 0x%x, done", __PRETTY_FUNCTION__, self);
@@ -2427,18 +2429,14 @@ static VT100TCC decode_string(unsigned char *datap,
     saveReversed = reversed;
     saveCHARSET = CHARSET;
     saveForeground = FG_COLORCODE;
+    saveFgGreen = FG_GREEN;
+    saveFgBlue = FG_BLUE;
     saveFgIs24bit = FG_IS24BIT;
-    if (saveFgIs24bit == YES) {
-        saveFgGreen = FG_GREEN;
-        saveFgBlue  = FG_BLUE;
-    }
     saveAltForeground = alternateForegroundSemantics;
     saveBackground = BG_COLORCODE;
+    saveBgGreen = BG_GREEN;
+    saveBgBlue = BG_BLUE;
     saveBgIs24bit = BG_IS24BIT;
-    if (saveBgIs24bit == YES) {
-        saveBgGreen = BG_GREEN;
-        saveBgBlue  = BG_BLUE;
-    }
     saveAltBackground = alternateBackgroundSemantics;
 }
 
@@ -2451,18 +2449,14 @@ static VT100TCC decode_string(unsigned char *datap,
     reversed=saveReversed;
     CHARSET=saveCHARSET;
     FG_COLORCODE = saveForeground;
+    FG_GREEN = saveFgGreen;
+    FG_BLUE = saveFgBlue;
     FG_IS24BIT = saveFgIs24bit;
-    if (FG_IS24BIT == YES) {
-        FG_GREEN = saveFgGreen;
-        FG_BLUE  = saveFgBlue;
-    }
     alternateForegroundSemantics = saveAltForeground;
     BG_COLORCODE = saveBackground;
+    BG_GREEN = saveBgGreen;
+    BG_BLUE = saveBgBlue;
     BG_IS24BIT = saveBgIs24bit;
-    if (BG_IS24BIT == YES) {
-        BG_GREEN = saveBgGreen;
-        BG_BLUE  = saveBgBlue;
-    }
     alternateBackgroundSemantics = saveAltBackground;
 }
 
@@ -2503,9 +2497,13 @@ static VT100TCC decode_string(unsigned char *datap,
     bold = italic = blink = reversed = under = NO;
     saveBold = saveItalic = saveBlink = saveReversed = saveUnder = NO;
     FG_COLORCODE = ALTSEM_FG_DEFAULT;
+    FG_GREEN = 0;
+    FG_BLUE = 0;
     FG_IS24BIT = NO;
     alternateForegroundSemantics = YES;
     BG_COLORCODE = ALTSEM_BG_DEFAULT;
+    BG_GREEN = 0;
+    BG_BLUE = 0;
     BG_IS24BIT = NO;
     alternateBackgroundSemantics = YES;
     MOUSE_MODE = MOUSE_REPORTING_NONE;
@@ -3207,19 +3205,15 @@ static VT100TCC decode_string(unsigned char *datap,
     screen_char_t result = { 0 };
     if (reversed) {
         result.foregroundColor = BG_COLORCODE;
+        result.fgGreen = BG_GREEN;
+        result.fgBlue = BG_BLUE;
         result.fgIs24bit = BG_IS24BIT;
-        if (result.fgIs24bit == YES) {
-            result.fgGreen = BG_GREEN;
-            result.fgBlue  = BG_BLUE;
-        }
         result.alternateForegroundSemantics = alternateBackgroundSemantics;
     } else {
         result.foregroundColor = FG_COLORCODE;
+        result.fgGreen = FG_GREEN;
+        result.fgBlue = FG_BLUE;
         result.fgIs24bit = FG_IS24BIT;
-        if (result.fgIs24bit == YES) {
-            result.fgGreen = FG_GREEN;
-            result.fgBlue  = FG_BLUE;
-        }
         result.alternateForegroundSemantics = alternateForegroundSemantics;
     }
     result.bold = bold;
@@ -3234,19 +3228,15 @@ static VT100TCC decode_string(unsigned char *datap,
     screen_char_t result = { 0 };
     if (reversed) {
         result.backgroundColor = FG_COLORCODE;
+        result.bgGreen = FG_GREEN;
+        result.bgBlue = FG_BLUE;
         result.bgIs24bit = FG_IS24BIT;
-        if (result.bgIs24bit == YES) {
-            result.bgGreen = FG_GREEN;
-            result.bgBlue  = FG_BLUE;
-        }
         result.alternateBackgroundSemantics = alternateForegroundSemantics;
     } else {
         result.backgroundColor = BG_COLORCODE;
+        result.bgGreen = BG_GREEN;
+        result.bgBlue = BG_BLUE;
         result.bgIs24bit = BG_IS24BIT;
-        if (result.bgIs24bit == YES) {
-            result.bgGreen = BG_GREEN;
-            result.bgBlue  = BG_BLUE;
-        }
         result.alternateBackgroundSemantics = alternateBackgroundSemantics;
     }
     return result;
@@ -3256,11 +3246,9 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     screen_char_t result = { 0 };
     result.foregroundColor = FG_COLORCODE;
+    result.fgGreen = FG_GREEN;
+    result.fgBlue = FG_BLUE;
     result.fgIs24bit = FG_IS24BIT;
-    if (result.fgIs24bit == YES) {
-        result.fgGreen = FG_GREEN;
-        result.fgBlue  = FG_BLUE;
-    }
     result.alternateForegroundSemantics = alternateForegroundSemantics;
     result.bold = bold;
     result.italic = italic;
@@ -3273,11 +3261,9 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     screen_char_t result = { 0 };
     result.backgroundColor = BG_COLORCODE;
+    result.bgGreen = BG_GREEN;
+    result.bgBlue = BG_BLUE;
     result.bgIs24bit = BG_IS24BIT;
-    if (result.bgIs24bit == YES) {
-        result.bgGreen = BG_GREEN;
-        result.bgBlue  = BG_BLUE;
-    }
     result.alternateBackgroundSemantics = alternateBackgroundSemantics;
     return result;
 }
@@ -3499,10 +3485,10 @@ static VT100TCC decode_string(unsigned char *datap,
     // all attributes off
     bold = italic = under = blink = reversed = NO;
     FG_COLORCODE = ALTSEM_FG_DEFAULT;
-    FG_IS24BIT   = NO;
+    FG_IS24BIT = NO;
     alternateForegroundSemantics = YES;
     BG_COLORCODE = ALTSEM_BG_DEFAULT;
-    BG_IS24BIT   = NO;
+    BG_IS24BIT = NO;
     alternateBackgroundSemantics = YES;
 }
 
@@ -3569,32 +3555,32 @@ static VT100TCC decode_string(unsigned char *datap,
                         break;
                     case VT100CHARATTR_FG_256:
                         if (token.u.csi.count - i >= 3 && token.u.csi.p[i + 1] == 5) {
-                            FG_IS24BIT = NO;
                             FG_COLORCODE = token.u.csi.p[i + 2];
+                            FG_IS24BIT = NO;
                             alternateForegroundSemantics = NO;
                             i += 2;
-                        } // 24-bit color support
-                        else if (token.u.csi.count - i >= 5 && token.u.csi.p[i + 1] == 2) {
-                            FG_IS24BIT = YES;
+                        } else if (token.u.csi.count - i >= 5 && token.u.csi.p[i + 1] == 2) {
+                            // 24-bit color support
                             FG_COLORCODE = token.u.csi.p[i + 2];
-                            FG_GREEN = token.u.csi.p[i+3];
-                            FG_BLUE  = token.u.csi.p[i+4];
+                            FG_GREEN = token.u.csi.p[i + 3];
+                            FG_BLUE = token.u.csi.p[i + 4];
+                            FG_IS24BIT = YES;
                             alternateForegroundSemantics = NO;
                             i += 4;
                         }
                         break;
                     case VT100CHARATTR_BG_256:
                         if (token.u.csi.count - i >= 3 && token.u.csi.p[i + 1] == 5) {
-                            BG_IS24BIT = NO;
                             BG_COLORCODE = token.u.csi.p[i + 2];
+                            BG_IS24BIT = NO;
                             alternateBackgroundSemantics = NO;
                             i += 2;
-                        } // 24-bit color support
-                        else if (token.u.csi.count - i >= 5 && token.u.csi.p[i + 1] == 2) {
-                            BG_IS24BIT = YES;
+                        } else if (token.u.csi.count - i >= 5 && token.u.csi.p[i + 1] == 2) {
+                            // 24-bit color support
                             BG_COLORCODE = token.u.csi.p[i + 2];
-                            BG_GREEN = token.u.csi.p[i+3];
-                            BG_BLUE  = token.u.csi.p[i+4];
+                            BG_GREEN = token.u.csi.p[i + 3];
+                            BG_BLUE = token.u.csi.p[i + 4];
+                            BG_IS24BIT = YES;
                             alternateBackgroundSemantics = NO;
                             i += 4;
                         }
@@ -3603,25 +3589,25 @@ static VT100TCC decode_string(unsigned char *datap,
                         // 8 color support
                         if (n >= VT100CHARATTR_FG_BLACK &&
                             n <= VT100CHARATTR_FG_WHITE) {
-                            FG_IS24BIT = NO;
                             FG_COLORCODE = n - VT100CHARATTR_FG_BASE - COLORCODE_BLACK;
+                            FG_IS24BIT = NO;
                             alternateForegroundSemantics = NO;
                         } else if (n >= VT100CHARATTR_BG_BLACK &&
                                    n <= VT100CHARATTR_BG_WHITE) {
-                            BG_IS24BIT = NO;
                             BG_COLORCODE = n - VT100CHARATTR_BG_BASE - COLORCODE_BLACK;
+                            BG_IS24BIT = NO;
                             alternateBackgroundSemantics = NO;
                         }
                         // 16 color support
                         if (n >= VT100CHARATTR_FG_HI_BLACK &&
                             n <= VT100CHARATTR_FG_HI_WHITE) {
-                            FG_IS24BIT = NO;
                             FG_COLORCODE = n - VT100CHARATTR_FG_HI_BASE - COLORCODE_BLACK + 8;
+                            FG_IS24BIT = NO;
                             alternateForegroundSemantics = NO;
                         } else if (n >= VT100CHARATTR_BG_HI_BLACK &&
                                    n <= VT100CHARATTR_BG_HI_WHITE) {
-                            BG_IS24BIT = NO;
                             BG_COLORCODE = n - VT100CHARATTR_BG_HI_BASE - COLORCODE_BLACK + 8;
+                            BG_IS24BIT = NO;
                             alternateBackgroundSemantics = NO;
                         }
                 }
