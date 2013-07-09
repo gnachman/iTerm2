@@ -349,31 +349,27 @@ typedef enum {
     BOOL REPORT_FOCUS;
 
     int FG_COLORCODE;
-    BOOL FG_IS24BIT;
     char FG_GREEN;
     char FG_BLUE;
-    BOOL alternateForegroundSemantics;
+    ColorMode FG_COLORMODE;
     int BG_COLORCODE;
-    BOOL BG_IS24BIT;
     char BG_GREEN;
     char BG_BLUE;
-    BOOL alternateBackgroundSemantics;
+    ColorMode BG_COLORMODE;
     int bold, italic, under, blink, reversed;
 
     int saveBold, saveItalic, saveUnder, saveBlink, saveReversed;
     int saveCHARSET;
     int saveForeground;
-    BOOL saveFgIs24bit;
     char saveFgRed;
     char saveFgGreen;
     char saveFgBlue;
-    BOOL saveAltForeground;
+    ColorMode saveFgColorMode;
     int saveBackground;
-    BOOL saveBgIs24bit;
     char saveBgRed;
     char saveBgGreen;
     char saveBgBlue;
-    BOOL saveAltBackground;
+    ColorMode saveBgColorMode;
 
     BOOL TRACE;
 

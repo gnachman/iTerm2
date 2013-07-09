@@ -154,10 +154,8 @@ void StringToScreenChars(NSString *s,
             buf[j].bgGreen = bg.bgGreen;
             buf[j].bgBlue = bg.bgBlue;
 
-            buf[j].fgIs24bit = fg.fgIs24bit;
-            buf[j].bgIs24bit = bg.bgIs24bit;
-            buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
-            buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
+            buf[j].foregroundColorMode = fg.foregroundColorMode;
+            buf[j].backgroundColorMode = bg.backgroundColorMode;
 
             buf[j].bold = fg.bold;
             buf[j].italic = fg.italic;
@@ -189,10 +187,8 @@ void StringToScreenChars(NSString *s,
             buf[j].bgGreen = bg.fgGreen;
             buf[j].bgBlue = bg.fgBlue;
 
-            buf[j].fgIs24bit = fg.fgIs24bit;
-            buf[j].bgIs24bit = bg.fgIs24bit;
-            buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
-            buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
+            buf[j].foregroundColorMode = fg.foregroundColorMode;
+            buf[j].backgroundColorMode = bg.backgroundColorMode;
 
             buf[j].bold = fg.bold;
             buf[j].italic = fg.italic;
@@ -234,10 +230,8 @@ void StringToScreenChars(NSString *s,
                         buf[j].bgGreen = bg.fgGreen;
                         buf[j].bgBlue = bg.fgBlue;
 
-                        buf[j].fgIs24bit = fg.fgIs24bit;
-                        buf[j].bgIs24bit = bg.fgIs24bit;
-                        buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
-                        buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
+                        buf[j].foregroundColorMode = fg.foregroundColorMode;
+                        buf[j].backgroundColorMode = bg.backgroundColorMode;
 
                         buf[j].bold = fg.bold;
                         buf[j].italic = fg.italic;
@@ -845,11 +839,11 @@ static char* FormatCont(int c)
         if (theLine) {
             if (fgColor) {
                 theLine[x].foregroundColor = fgColorCode;
-                theLine[x].alternateForegroundSemantics = NO;
+                theLine[x].foregroundColorMode = ColorModeNormal;
             }
             if (bgColor) {
                 theLine[x].backgroundColor = bgColorCode;
-                theLine[x].alternateBackgroundSemantics = NO;
+                theLine[x].backgroundColorMode = ColorModeNormal;
             }
         }
         ++x;
