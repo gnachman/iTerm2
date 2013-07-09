@@ -78,6 +78,12 @@
 // Max unichars in a glyph.
 static const int kMaxParts = 20;
 
+typedef enum {
+    ColorModeNormal = 0,
+    ColorModeAlternate = 1,
+    ColorMode24bit = 2
+} ColorMode;
+
 typedef struct screen_char_t
 {
     // Normally, 'code' gives a utf-16 code point. If 'complexChar' is set then
@@ -105,28 +111,25 @@ typedef struct screen_char_t
     // With alternate background semantics:
     //   ALTSEM_xxx (see comments above)
 
-    unsigned int foregroundColor : 8; //contains fgred when fgIs24bit
+    // foregroundColor contains fgRed when foregroundColorMode == ColorMode24bit
+    unsigned int foregroundColor : 8;
     unsigned int fgGreen : 8;
     unsigned int fgBlue  : 8;
 
-    unsigned int backgroundColor : 8; //contains bgRed when bgIs24bit
+    // backgroundColor contains fgRed when backgroundColorMode == ColorMode24bit
+    unsigned int backgroundColor : 8;
     unsigned int bgGreen : 8;
     unsigned int bgBlue  : 8;
 
-    unsigned int fgIs24bit : 1;
-    unsigned int bgIs24bit : 1;
-
-    // This flag determines the interpretation of backgroundColor.
-    unsigned int alternateBackgroundSemantics : 1;
+    // These determine the interpretation of {fore,back}groundColor.
+    unsigned int foregroundColorMode : 2;
+    unsigned int backgroundColorMode : 2;
 
     // If set, the 'code' field does not give a utf-16 value but is intead a
     // key into a string table of more complex chars (combined, surrogate pairs,
     // etc.). Valid 'code' values for a complex char are in [1, 0xefff] and will
     // be recycled as needed.
     unsigned int complexChar : 1;
-
-    // Foreground color has the same definition as background color.
-    unsigned int alternateForegroundSemantics : 1;
 
     // Various bits affecting text appearance. The bold flag here is semantic
     // and may be rendered as some combination of font choice and color
@@ -152,10 +155,9 @@ static inline NSString* ReplacementString()
 static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t from)
 {
     to->foregroundColor = from.foregroundColor;
-    to->fgIs24bit = from.fgIs24bit;
     to->fgGreen = from.fgGreen;
     to->fgBlue = from.fgBlue;
-    to->alternateForegroundSemantics = from.alternateForegroundSemantics;
+    to->foregroundColorMode = from.foregroundColorMode;
     to->bold = from.bold;
     to->italic = from.italic;
     to->blink = from.blink;
@@ -166,26 +168,28 @@ static inline void CopyForegroundColor(screen_char_t* to, const screen_char_t fr
 static inline void CopyBackgroundColor(screen_char_t* to, const screen_char_t from)
 {
     to->backgroundColor = from.backgroundColor;
-    to->bgIs24bit = from.bgIs24bit;
     to->bgGreen = from.bgGreen;
     to->bgBlue = from.bgBlue;
-    to->alternateBackgroundSemantics = from.alternateBackgroundSemantics;
+    to->backgroundColorMode = from.backgroundColorMode;
 }
 
 // Returns true iff two background colors are equal.
 static inline BOOL BackgroundColorsEqual(const screen_char_t a,
                                          const screen_char_t b)
 {
-    if (!a.bgIs24bit && !b.bgIs24bit) {
-        return a.backgroundColor == b.backgroundColor &&
-        a.alternateBackgroundSemantics == b.alternateBackgroundSemantics;
-    } else if (a.bgIs24bit != b.bgIs24bit) {
-        return NO;
+    if (a.backgroundColorMode == b.backgroundColorMode) {
+        if (a.backgroundColorMode != ColorMode24bit) {
+            // for normal and alternate colorMode
+            return a.backgroundColor == b.backgroundColor;
+        } else {
+            // RGB must all be equal for 24bit color
+            return a.backgroundColor == b.backgroundColor &&
+            a.bgGreen == b.bgGreen &&
+            a.bgBlue == b.bgBlue;
+        }
     } else {
-        return a.backgroundColor == b.backgroundColor &&
-        a.bgGreen == b.bgGreen &&
-        a.bgBlue == b.bgBlue  &&
-        a.alternateBackgroundSemantics == b.alternateBackgroundSemantics;
+        // different colorMode == different colors
+        return NO;
     }
 }
 
@@ -193,20 +197,19 @@ static inline BOOL BackgroundColorsEqual(const screen_char_t a,
 static inline BOOL ForegroundColorsEqual(const screen_char_t a,
                                          const screen_char_t b)
 {
-    if (!a.fgIs24bit && !b.fgIs24bit) {
-        return a.foregroundColor == b.foregroundColor &&
-        a.alternateForegroundSemantics == b.alternateForegroundSemantics &&
-        a.bold == b.bold &&
-        a.italic == b.italic &&
-        a.blink == b.blink &&
-        a.underline == b.underline;
-    } else if (a.fgIs24bit != b.fgIs24bit) {
-        return NO;
+    if (a.foregroundColorMode == b.foregroundColorMode) {
+        if (a.foregroundColorMode != ColorMode24bit) {
+            // for normal and alternate colorMode
+            return a.foregroundColor == b.foregroundColor;
+        } else {
+            // RGB must all be equal for 24bit color
+            return a.foregroundColor == b.foregroundColor &&
+            a.fgGreen == b.fgGreen &&
+            a.fgBlue == b.fgBlue;
+        }
     } else {
-        return a.foregroundColor == b.foregroundColor &&
-        a.fgGreen == b.fgGreen &&
-        a.fgBlue == b.fgBlue  &&
-        a.alternateForegroundSemantics == b.alternateForegroundSemantics;
+        // different colorMode == different colors
+        return NO;
     }
 }
 

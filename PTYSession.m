@@ -4350,9 +4350,9 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [SCREEN setString:message ascii:YES];
     [SCREEN crlf];
     [TERMINAL setForegroundColor:savedFgColor.foregroundColor
-              alternateSemantics:savedFgColor.alternateForegroundSemantics];
+              alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
     [TERMINAL setBackgroundColor:savedBgColor.backgroundColor
-              alternateSemantics:savedBgColor.alternateBackgroundSemantics];
+              alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
 }
 
 - (void)printTmuxCommandOutputToScreen:(NSString *)response
