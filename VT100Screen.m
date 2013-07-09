@@ -164,7 +164,6 @@ void StringToScreenChars(NSString *s,
             }
             buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
 
-            buf[j].unused = 0;
             lastInitializedChar = j;
         }
 
@@ -2810,7 +2809,6 @@ void DumpBuf(screen_char_t* p, int n) {
             buffer[i].complexChar = NO;
             CopyForegroundColor(&buffer[i], fg);
             CopyBackgroundColor(&buffer[i], bg);
-            buffer[i].unused = 0;
         }
 
         // If a graphics character set was selected then translate buffer

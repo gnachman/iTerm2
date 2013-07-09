@@ -104,16 +104,17 @@ typedef struct screen_char_t
     //         to brightest 255 (not white).
     // With alternate background semantics:
     //   ALTSEM_xxx (see comments above)
-    unsigned int backgroundColor : 8; //contains bgRed when bgIs24bit
-    unsigned int foregroundColor : 8; //contains fgred when fgIs24bit
 
-    unsigned int fgIs24bit : 1;
+    unsigned int foregroundColor : 8; //contains fgred when fgIs24bit
     unsigned int fgGreen : 8;
     unsigned int fgBlue  : 8;
 
-    unsigned int bgIs24bit : 1;
+    unsigned int backgroundColor : 8; //contains bgRed when bgIs24bit
     unsigned int bgGreen : 8;
     unsigned int bgBlue  : 8;
+
+    unsigned int fgIs24bit : 1;
+    unsigned int bgIs24bit : 1;
 
     // This flag determines the interpretation of backgroundColor.
     unsigned int alternateBackgroundSemantics : 1;
@@ -137,7 +138,7 @@ typedef struct screen_char_t
 
     // These bits aren't used but are defined here so that the entire memory
     // region can be initialized.
-    unsigned long unused : 55;
+    unsigned int unused : 7;
 } screen_char_t;
 
 
