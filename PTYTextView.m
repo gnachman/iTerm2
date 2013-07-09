@@ -862,6 +862,22 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     }
 }
 
+- (NSColor *)foregroundColorForChar:(screen_char_t)sct
+{
+    return [NSColor colorWithCalibratedRed:sct.foregroundColor/255.0
+                                     green:sct.fgGreen/255.0
+                                      blue:sct.fgBlue /255.0
+                                     alpha:1];
+}
+
+- (NSColor *)backgroundColorForChar:(screen_char_t)sct
+{
+    return [NSColor colorWithCalibratedRed:sct.backgroundColor/255.0
+                                     green:sct.bgGreen/255.0
+                                      blue:sct.bgBlue /255.0
+                                     alpha:1];
+}
+
 - (NSColor *)selectionColor
 {
     return selectionColor;
@@ -6232,10 +6248,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         lastForegroundColor = theLine[i].foregroundColor;
                         lastFgGreen = theLine[i].fgGreen;
                         lastFgBlue  = theLine[i].fgBlue;
-                        thisChar.color = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:theLine[i].foregroundColor/255.0
-                                                                                          green:theLine[i].fgGreen/255.0
-                                                                                           blue:theLine[i].fgBlue /255.0
-                                                                                          alpha:1]];
+                        thisChar.color = [self _dimmedColorFrom:[self foregroundColorForChar:theLine[i]];
                     }
                     lastAlternateForegroundSemantics = theLine[i].alternateForegroundSemantics;
                     lastBold = theLine[i].bold;
@@ -7189,10 +7202,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                                                 bold:screenChar.bold
                                         isBackground:NO];
                     } else {
-                        bgColor = [NSColor colorWithCalibratedRed:screenChar.backgroundColor/255.0
-                                                            green:screenChar.bgGreen/255.0
-                                                             blue:screenChar.bgBlue /255.0
-                                                            alpha:1];
+                        bgColor = [self backgroundColorForChar:screenChar];
                     }
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 } else {
@@ -7202,10 +7212,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                                                 bold:screenChar.bold
                                         isBackground:NO];
                     } else {
-                        bgColor = [NSColor colorWithCalibratedRed:screenChar.foregroundColor/255.0
-                                                            green:screenChar.fgGreen/255.0
-                                                             blue:screenChar.fgBlue /255.0
-                                                            alpha:1];
+                        bgColor = [self foregroundColorForChar:screenChar];
                     }
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 }
@@ -7310,10 +7317,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                             }
 
                             if (screenChar.fgIs24bit) {
-                                overrideColor = [NSColor colorWithCalibratedRed:screenChar.foregroundColor/255.0
-                                                                          green:screenChar.fgGreen/255.0
-                                                                           blue:screenChar.fgBlue /255.0
-                                                                          alpha:1];
+                                overrideColor = [self foregroundColorForChar:screenChar];
                             }
 
                             BOOL saved = useBrightBold;
@@ -7336,20 +7340,14 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                             if ([[self window] isKeyWindow]) {
                                 theColor = ALTSEM_CURSOR;
                                 if (screenChar.fgIs24bit == YES) {
-                                    overrideColor = [NSColor colorWithCalibratedRed:screenChar.foregroundColor/255.0
-                                                                              green:screenChar.fgGreen/255.0
-                                                                               blue:screenChar.fgBlue /255.0
-                                                                              alpha:1];;
+                                    overrideColor = [self foregroundColorForChar:screenChar];;
                                 }
                                 alt = YES;
                                 isBold = screenChar.bold;
                             } else {
                                 theColor = screenChar.foregroundColor;
                                 if (screenChar.fgIs24bit) {
-                                    overrideColor = [NSColor colorWithCalibratedRed:screenChar.foregroundColor/255.0
-                                                                              green:screenChar.fgGreen/255.0
-                                                                               blue:screenChar.fgBlue /255.0
-                                                                              alpha:1];;
+                                    overrideColor = [self foregroundColorForChar:screenChar];;
                                 }
                                 alt = screenChar.alternateForegroundSemantics;
                                 isBold = screenChar.bold;
