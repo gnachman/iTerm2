@@ -362,7 +362,7 @@ static int getCSIParam(unsigned char *datap,
             datalen--;
 
             // If we got an implied (blank) parameter, increment the parameter count again
-            if(readNumericParameter == NO)
+            if (readNumericParameter == NO)
                 param->count++;
             // reset the parameter flag
             readNumericParameter = NO;
@@ -2427,13 +2427,15 @@ static VT100TCC decode_string(unsigned char *datap,
     saveReversed = reversed;
     saveCHARSET = CHARSET;
     saveForeground = FG_COLORCODE;
-    if((saveFgIs24bit = FG_IS24BIT)) {
+    saveFgIs24bit = FG_IS24BIT;
+    if (saveFgIs24bit == YES) {
         saveFgGreen = FG_GREEN;
         saveFgBlue  = FG_BLUE;
     }
     saveAltForeground = alternateForegroundSemantics;
     saveBackground = BG_COLORCODE;
-    if((saveBgIs24bit = BG_IS24BIT)) {
+    saveBgIs24bit = BG_IS24BIT;
+    if (saveBgIs24bit == YES) {
         saveBgGreen = BG_GREEN;
         saveBgBlue  = BG_BLUE;
     }
@@ -2449,13 +2451,15 @@ static VT100TCC decode_string(unsigned char *datap,
     reversed=saveReversed;
     CHARSET=saveCHARSET;
     FG_COLORCODE = saveForeground;
-    if((FG_IS24BIT = saveFgIs24bit)) {
+    FG_IS24BIT = saveFgIs24bit;
+    if (FG_IS24BIT == YES) {
         FG_GREEN = saveFgGreen;
         FG_BLUE  = saveFgBlue;
     }
     alternateForegroundSemantics = saveAltForeground;
     BG_COLORCODE = saveBackground;
-    if((BG_IS24BIT = saveBgIs24bit)) {
+    BG_IS24BIT = saveBgIs24bit;
+    if (BG_IS24BIT == YES) {
         BG_GREEN = saveBgGreen;
         BG_BLUE  = saveBgBlue;
     }
@@ -3203,14 +3207,16 @@ static VT100TCC decode_string(unsigned char *datap,
     screen_char_t result = { 0 };
     if (reversed) {
         result.foregroundColor = BG_COLORCODE;
-        if((result.fgIs24bit = BG_IS24BIT)) {
+        result.fgIs24bit = BG_IS24BIT;
+        if (result.fgIs24bit == YES) {
             result.fgGreen = BG_GREEN;
             result.fgBlue  = BG_BLUE;
         }
         result.alternateForegroundSemantics = alternateBackgroundSemantics;
     } else {
         result.foregroundColor = FG_COLORCODE;
-        if((result.fgIs24bit = FG_IS24BIT)) {
+        result.fgIs24bit = FG_IS24BIT;
+        if (result.fgIs24bit == YES) {
             result.fgGreen = FG_GREEN;
             result.fgBlue  = FG_BLUE;
         }
@@ -3228,14 +3234,16 @@ static VT100TCC decode_string(unsigned char *datap,
     screen_char_t result = { 0 };
     if (reversed) {
         result.backgroundColor = FG_COLORCODE;
-        if((result.bgIs24bit = FG_IS24BIT)) {
+        result.bgIs24bit = FG_IS24BIT;
+        if (result.bgIs24bit == YES) {
             result.bgGreen = FG_GREEN;
             result.bgBlue  = FG_BLUE;
         }
         result.alternateBackgroundSemantics = alternateForegroundSemantics;
     } else {
         result.backgroundColor = BG_COLORCODE;
-        if((result.bgIs24bit = BG_IS24BIT)) {
+        result.bgIs24bit = BG_IS24BIT;
+        if (result.bgIs24bit == YES) {
             result.bgGreen = BG_GREEN;
             result.bgBlue  = BG_BLUE;
         }
@@ -3248,7 +3256,8 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     screen_char_t result = { 0 };
     result.foregroundColor = FG_COLORCODE;
-    if((result.fgIs24bit = FG_IS24BIT)) {
+    result.fgIs24bit = FG_IS24BIT;
+    if (result.fgIs24bit == YES) {
         result.fgGreen = FG_GREEN;
         result.fgBlue  = FG_BLUE;
     }
@@ -3264,7 +3273,8 @@ static VT100TCC decode_string(unsigned char *datap,
 {
     screen_char_t result = { 0 };
     result.backgroundColor = BG_COLORCODE;
-    if((result.bgIs24bit = BG_IS24BIT)) {
+    result.bgIs24bit = BG_IS24BIT;
+    if (result.bgIs24bit == YES) {
         result.bgGreen = BG_GREEN;
         result.bgBlue  = BG_BLUE;
     }

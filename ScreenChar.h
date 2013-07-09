@@ -175,37 +175,38 @@ static inline void CopyBackgroundColor(screen_char_t* to, const screen_char_t fr
 static inline BOOL BackgroundColorsEqual(const screen_char_t a,
                                          const screen_char_t b)
 {
-    if(!(a.bgIs24bit && b.bgIs24bit))
+    if (!(a.bgIs24bit && b.bgIs24bit)) {
         return a.backgroundColor == b.backgroundColor &&
         a.alternateBackgroundSemantics == b.alternateBackgroundSemantics;
-    else if(a.bgIs24bit == !b.bgIs24bit)
+    } else if (a.bgIs24bit == !b.bgIs24bit) {
         return false;
-    else
+    } else {
         return a.backgroundColor == b.backgroundColor &&
         a.bgGreen == b.bgGreen &&
         a.bgBlue  == b.bgBlue  &&
         a.alternateBackgroundSemantics == b.alternateBackgroundSemantics;
+    }
 }
 
 // Returns true iff two foreground colors are equal.
 static inline BOOL ForegroundColorsEqual(const screen_char_t a,
                                          const screen_char_t b)
 {
-    if(!(a.fgIs24bit && b.fgIs24bit))
+    if (!(a.fgIs24bit && b.fgIs24bit)) {
         return a.foregroundColor == b.foregroundColor &&
         a.alternateForegroundSemantics == b.alternateForegroundSemantics &&
         a.bold == b.bold &&
         a.italic == b.italic &&
         a.blink == b.blink &&
         a.underline == b.underline;
-    else if(a.fgIs24bit == !b.fgIs24bit)
+    } else if (a.fgIs24bit == !b.fgIs24bit) {
         return false;
-    else
+    } else {
         return a.foregroundColor   == b.foregroundColor &&
         a.fgGreen == b.fgGreen &&
         a.fgBlue  == b.fgBlue  &&
         a.alternateForegroundSemantics == b.alternateForegroundSemantics;
-    
+    }
 }
 
 // Look up the string associated with a complex char's key.
