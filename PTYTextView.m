@@ -6237,7 +6237,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 } else {
                     // Not reversed or not subject to reversing (only default
                     // foreground color is drawn in reverse video).
-                    lastFgWas24bit = theLine[i].fgIs24bit
+                    lastFgWas24bit = theLine[i].fgIs24bit;
                     if (lastFgWas24bit == NO) {
                         thisChar.color = [self colorForCode:theLine[i].foregroundColor
                                          alternateSemantics:theLine[i].alternateForegroundSemantics
@@ -6248,7 +6248,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                         lastForegroundColor = theLine[i].foregroundColor;
                         lastFgGreen = theLine[i].fgGreen;
                         lastFgBlue = theLine[i].fgBlue;
-                        thisChar.color = [self _dimmedColorFrom:[self foregroundColorForChar:theLine[i]];
+                        thisChar.color = [self _dimmedColorFrom:[self foregroundColorForChar:theLine[i]]];
                     }
                     lastAlternateForegroundSemantics = theLine[i].alternateForegroundSemantics;
                     lastBold = theLine[i].bold;
