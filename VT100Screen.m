@@ -147,9 +147,9 @@ void StringToScreenChars(NSString *s,
             buf[j].complexChar = NO;
 
             buf[j].foregroundColor = fg.foregroundColor;
-            if((buf[j].fgIs24bit = fg.fgIs24bit)) {
-                buf[j].fgGreen   = fg.fgGreen;
-                buf[j].fgBlue    = fg.fgBlue;
+            if ((buf[j].fgIs24bit = fg.fgIs24bit)) {
+                 buf[j].fgGreen   = fg.fgGreen;
+                 buf[j].fgBlue    = fg.fgBlue;
             }
             buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
             buf[j].bold = fg.bold;
@@ -158,9 +158,9 @@ void StringToScreenChars(NSString *s,
             buf[j].underline = fg.underline;
 
             buf[j].backgroundColor = bg.backgroundColor;
-            if((buf[j].bgIs24bit = bg.bgIs24bit)) {
-                buf[j].bgGreen   = bg.bgGreen;
-                buf[j].bgBlue    = bg.bgBlue;
+            if ((buf[j].bgIs24bit = bg.bgIs24bit)) {
+                 buf[j].bgGreen   = bg.bgGreen;
+                 buf[j].bgBlue    = bg.bgBlue;
             }
             buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
 
@@ -181,9 +181,9 @@ void StringToScreenChars(NSString *s,
             buf[j].complexChar = NO;
 
             buf[j].foregroundColor = fg.foregroundColor;
-            if((buf[j].fgIs24bit = fg.fgIs24bit)) {
-                buf[j].fgGreen   = fg.fgGreen;
-                buf[j].fgBlue    = fg.fgBlue;
+            if ((buf[j].fgIs24bit = fg.fgIs24bit)) {
+                 buf[j].fgGreen   = fg.fgGreen;
+                 buf[j].fgBlue    = fg.fgBlue;
             }
             buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
             buf[j].bold = fg.bold;
@@ -192,9 +192,9 @@ void StringToScreenChars(NSString *s,
             buf[j].underline = fg.underline;
 
             buf[j].backgroundColor = bg.backgroundColor;
-            if((buf[j].bgIs24bit = bg.fgIs24bit)) {
-                buf[j].bgGreen   = bg.fgGreen;
-                buf[j].bgBlue    = bg.fgBlue;
+            if ((buf[j].bgIs24bit = bg.fgIs24bit)) {
+                 buf[j].bgGreen   = bg.fgGreen;
+                 buf[j].bgBlue    = bg.fgBlue;
             }
             buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
         } else if (sc[i] == 0xfeff ||  // zero width no-break space
@@ -224,9 +224,9 @@ void StringToScreenChars(NSString *s,
                         buf[j].complexChar = NO;
 
                         buf[j].foregroundColor = fg.foregroundColor;
-                        if((buf[j].fgIs24bit = fg.fgIs24bit)) {
-                            buf[j].fgGreen   = fg.fgGreen;
-                            buf[j].fgBlue    = fg.fgBlue;
+                        if ((buf[j].fgIs24bit = fg.fgIs24bit)) {
+                             buf[j].fgGreen   = fg.fgGreen;
+                             buf[j].fgBlue    = fg.fgBlue;
                         }
                         buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
                         buf[j].bold = fg.bold;
@@ -235,9 +235,9 @@ void StringToScreenChars(NSString *s,
                         buf[j].underline = fg.underline;
 
                         buf[j].backgroundColor = bg.backgroundColor;
-                        if((buf[j].bgIs24bit = bg.fgIs24bit)) {
-                            buf[j].bgGreen   = bg.fgGreen;
-                            buf[j].bgBlue    = bg.fgBlue;
+                        if ((buf[j].bgIs24bit = bg.fgIs24bit)) {
+                             buf[j].bgGreen   = bg.fgGreen;
+                             buf[j].bgBlue    = bg.fgBlue;
                         }
                         buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
                     }
@@ -266,13 +266,13 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     line_width++;
 
     next_line = current_line + line_width;
-    if(next_line >= (buf_start + line_width*max_lines))
+    if (next_line >= (buf_start + line_width*max_lines))
     {
         next_line = buf_start;
-        if(wrap)
+        if (wrap)
             *wrap = YES;
     }
-    else if(wrap)
+    else if (wrap)
         *wrap = NO;
 
     return (next_line);
@@ -3727,7 +3727,7 @@ void DumpBuf(screen_char_t* p, int n) {
     NSLog(@"%s(%d):-[VT100Screen restoreCursorPosition]", __FILE__, __LINE__);
 #endif
 
-    if(showingAltScreen) {
+    if (showingAltScreen) {
         [self setCursorX:ALT_SAVE_CURSOR_X Y:ALT_SAVE_CURSOR_Y];
     } else {
         [self setCursorX:SAVE_CURSOR_X Y:SAVE_CURSOR_Y];
@@ -3844,7 +3844,7 @@ void DumpBuf(screen_char_t* p, int n) {
         // check if screen is wrapped
         sourceLine = [self getLineAtScreenIndex:SCROLL_TOP];
         targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
-        if(sourceLine < targetLine)
+        if (sourceLine < targetLine)
         {
             // screen area is not wrapped; direct memmove
             memmove(sourceLine+REAL_WIDTH, sourceLine, (SCROLL_BOTTOM-SCROLL_TOP)*REAL_WIDTH*sizeof(screen_char_t));
