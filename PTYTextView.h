@@ -442,6 +442,8 @@ enum {
 - (NSColor*)defaultBGColor;
 - (NSColor*)defaultBoldColor;
 - (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold isBackground:(BOOL)isBackground;
+- (NSColor*)foregroundColorForChar:(screen_char_t)sct
+- (NSColor*)backgroundColorForChar:(screen_char_t)sct
 - (NSColor*)selectionColor;
 - (NSColor*)defaultCursorColor;
 - (NSColor*)selectedTextColor;
