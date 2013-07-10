@@ -184,8 +184,8 @@ static inline BOOL BackgroundColorsEqual(const screen_char_t a,
         } else {
             // RGB must all be equal for 24bit color
             return a.backgroundColor == b.backgroundColor &&
-            a.bgGreen == b.bgGreen &&
-            a.bgBlue == b.bgBlue;
+                a.bgGreen == b.bgGreen &&
+                a.bgBlue == b.bgBlue;
         }
     } else {
         // different colorMode == different colors
@@ -204,8 +204,8 @@ static inline BOOL ForegroundColorsEqual(const screen_char_t a,
         } else {
             // RGB must all be equal for 24bit color
             return a.foregroundColor == b.foregroundColor &&
-            a.fgGreen == b.fgGreen &&
-            a.fgBlue == b.fgBlue;
+                a.fgGreen == b.fgGreen &&
+                a.fgBlue == b.fgBlue;
         }
     } else {
         // different colorMode == different colors
