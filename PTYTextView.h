@@ -638,7 +638,7 @@ typedef enum {
 - (void)_drawCursorTo:(NSPoint*)toOrigin;
 - (void)_drawCharacter:(screen_char_t)screenChar
                fgColor:(int)fgColor
-    alternateSemantics:(BOOL)fgAlt
+           fgColorMode:(ColorMode)fgColorMode
                 fgBold:(BOOL)fgBold
                    AtX:(double)X
                      Y:(double)Y
