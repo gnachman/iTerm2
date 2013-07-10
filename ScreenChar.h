@@ -110,18 +110,19 @@ typedef struct screen_char_t
     //         to brightest 255 (not white).
     // With alternate background semantics:
     //   ALTSEM_xxx (see comments above)
+    // With 24-bit semantics:
+    //   foreground/backgroundColor gives red component and fg/bgGreen, fg/bgBlue
+    //     give the rest of the color's components
 
-    // foregroundColor contains fgRed when foregroundColorMode == ColorMode24bit
     unsigned int foregroundColor : 8;
     unsigned int fgGreen : 8;
     unsigned int fgBlue  : 8;
 
-    // backgroundColor contains fgRed when backgroundColorMode == ColorMode24bit
     unsigned int backgroundColor : 8;
     unsigned int bgGreen : 8;
     unsigned int bgBlue  : 8;
 
-    // These determine the interpretation of {fore,back}groundColor.
+    // These determine the interpretation of foreground/backgroundColor.
     unsigned int foregroundColorMode : 2;
     unsigned int backgroundColorMode : 2;
 
