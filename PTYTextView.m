@@ -7270,35 +7270,29 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                                 fgColor = screenChar.backgroundColor;
                                 fgColorMode = screenChar.backgroundColorMode;
                                 fgBold = NO;
-                                if (fgColorMode == ColorMode24bit)
-                                    overrideColor = [self backgroundColorForChar:screenChar];
                             } else {
                                 // Draw character in foreground color when there
                                 // is just a frame around it.
                                 fgColor = screenChar.foregroundColor;
                                 fgColorMode = screenChar.foregroundColorMode;
                                 fgBold = screenChar.bold;
-                                if (fgColorMode == ColorMode24bit)
-                                    overrideColor = [self foregroundColorForChar:screenChar];
                             }
                             isBold = screenChar.bold;
 
-                            if (fgColorMode != ColorMode24bit) {
-                                // Ensure text has enough contrast by making it black/white if the char's color would be close to the cursor bg.
-                                NSColor* proposedForeground = [[self colorForCode:fgColor
-                                                            alternateSemantics:fgColorMode == ColorModeAlternate
-                                                                            bold:fgBold
-                                                                    isBackground:NO] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-                                CGFloat fgBrightness = [self perceivedBrightness:proposedForeground];
-                                CGFloat bgBrightness = [self perceivedBrightness:[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
-                                if (!frameOnly && fabs(fgBrightness - bgBrightness) < gSmartCursorFgThreshold) {
-                                    // foreground and background are very similar. Just use black and
-                                    // white.
-                                    if (bgBrightness < 0.5) {
-                                        overrideColor = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:1 green:1 blue:1 alpha:1]];
-                                    } else {
-                                        overrideColor = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1]];
-                                    }
+                            // Ensure text has enough contrast by making it black/white if the char's color would be close to the cursor bg.
+                            NSColor* proposedForeground = [[self colorForCode:fgColor
+                                                        alternateSemantics:fgColorMode == ColorModeAlternate
+                                                                        bold:fgBold
+                                                                isBackground:NO] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+                            CGFloat fgBrightness = [self perceivedBrightness:proposedForeground];
+                            CGFloat bgBrightness = [self perceivedBrightness:[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
+                            if (!frameOnly && fabs(fgBrightness - bgBrightness) < gSmartCursorFgThreshold) {
+                                // foreground and background are very similar. Just use black and
+                                // white.
+                                if (bgBrightness < 0.5) {
+                                    overrideColor = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:1 green:1 blue:1 alpha:1]];
+                                } else {
+                                    overrideColor = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1]];
                                 }
                             }
 
@@ -7325,10 +7319,6 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                             } else {
                                 theColor = screenChar.foregroundColor;
                                 alt = (screenChar.foregroundColorMode == ColorModeAlternate);
-                            }
-
-                            if (screenChar.foregroundColorMode == ColorMode24bit) {
-                                overrideColor = [self foregroundColorForChar:screenChar];;
                             }
                             isBold = screenChar.bold;
 
