@@ -8098,8 +8098,9 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     NSSize dragOffset = NSMakeSize(0.0, 0.0);
 
     length = [aString length];
-    if ([aString length] > 15)
+    if ([aString length] > 15) {
         length = 15;
+    }
 
     imageSize = NSMakeSize(charWidth*length, lineHeight);
     anImage = [[NSImage alloc] initWithSize: imageSize];
