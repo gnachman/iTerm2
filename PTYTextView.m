@@ -6811,10 +6811,14 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
         if (overrideColor) {
             [overrideColor set];
         } else {
-            [[self colorForCode:fgColor
-             alternateSemantics:fgAlt
-                           bold:fgBold
-                   isBackground:NO] set];
+            if (screenChar.foregroundColorMode != ColorMode24bit) {
+                [[self colorForCode:fgColor
+                 alternateSemantics:fgAlt
+                               bold:fgBold
+                       isBackground:NO] set];
+            } else {
+                [[self foregroundColorForChar:screenChar] set];
+            }
         }
 
         NSRectFill(NSMakeRect(X,
