@@ -6775,7 +6775,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
 
 - (void)_drawCharacter:(screen_char_t)screenChar
                fgColor:(int)fgColor
-    alternateSemantics:(BOOL)fgAlt
+           fgColorMode:(ColorMode)fgColorMode
                 fgBold:(BOOL)fgBold
                    AtX:(double)X
                      Y:(double)Y
@@ -6784,7 +6784,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
 {
     screen_char_t temp = screenChar;
     temp.foregroundColor = fgColor;
-    temp.foregroundColorMode = (fgAlt == YES ? ColorModeAlternate : ColorModeNormal);
+    temp.foregroundColorMode = fgColorMode;
     temp.bold = fgBold;
     NSMutableArray *runs = [NSMutableArray arrayWithCapacity:kMaxParts];
 
@@ -6813,7 +6813,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
         } else {
             if (screenChar.foregroundColorMode != ColorMode24bit) {
                 [[self colorForCode:fgColor
-                 alternateSemantics:fgAlt
+                 alternateSemantics:(fgColorMode == ColorModeAlternate)
                                bold:fgBold
                        isBackground:NO] set];
             } else {
@@ -7304,7 +7304,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                             useBrightBold = NO;
                             [self _drawCharacter:screenChar
                                          fgColor:fgColor
-                              alternateSemantics:fgColorMode == ColorModeAlternate
+                                     fgColorMode:fgColorMode
                                           fgBold:isBold
                                              AtX:x1 * charWidth + MARGIN
                                                Y:curY + cursorHeight - lineHeight
@@ -7315,20 +7315,20 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                             // Non-inverted cursor or cursor is frame
                             int theColor;
                             NSColor* overrideColor = nil;
-                            BOOL alt;
+                            ColorMode theMode;
                             BOOL isBold;
                             if ([[self window] isKeyWindow]) {
                                 theColor = ALTSEM_CURSOR;
-                                alt = YES;
+                                theMode = ColorModeAlternate;
                             } else {
                                 theColor = screenChar.foregroundColor;
-                                alt = (screenChar.foregroundColorMode == ColorModeAlternate);
+                                theMode = screenChar.foregroundColorMode;
                             }
                             isBold = screenChar.bold;
 
                             [self _drawCharacter:screenChar
                                          fgColor:theColor
-                              alternateSemantics:alt
+                                     fgColorMode:theMode
                                           fgBold:isBold
                                              AtX:x1 * charWidth + MARGIN
                                                Y:curY + cursorHeight - lineHeight
