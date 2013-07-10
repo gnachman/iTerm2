@@ -769,9 +769,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 }
         }
     } else if (theMode == ColorMode24bit) {
-        return [self colorFromRGB:theIndex
-                            green:green
-                             blue:blue];
+        color = [self colorFromRGB:theIndex
+                             green:green
+                              blue:blue];
     } else {
         // Render bold text as bright. The spec (ECMA-48) describes the intense
         // display setting (esc[1m) as "bold or bright". We make it a
@@ -835,6 +835,17 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
         return theColor;
     }
 
+    // 24-bit colors are not cached, as they could increase cache size
+    // nontrivially up to to 2^27
+    if (theMode == ColorMode24bit) {
+        NSColor *theColor = [self _colorForCode:theIndex
+                                          green:green
+                                           blue:blue
+                                      colorMode:theMode
+                                           bold:isBold];
+        return [self _dimmedColorFrom:theColor];
+    }
+
     // Dimming is on. See if the dimmed version of the color is cached.
     // The max number of keys is 2^11 so this won't take too much memory.
     // This cache provides a 20%ish performance gain when dimming is on.
@@ -844,7 +855,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                ((isBackground ? 1 : 0) << 0));
     NSNumber *numKey = [NSNumber numberWithInt:key];
     NSColor *cacheEntry = [dimmedColorCache_ objectForKey:numKey];
-    if (cacheEntry ) {
+    if (cacheEntry) {
         return cacheEntry;
     } else {
         NSColor *theColor = [self _colorForCode:theIndex
@@ -5946,7 +5957,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)complex
-                       fgColor:(int)fgColor
                     renderBold:(BOOL*)renderBold
                   renderItalic:(BOOL)renderItalic
 {
@@ -6254,10 +6264,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 } else {
                     // Not reversed or not subject to reversing (only default
                     // foreground color is drawn in reverse video).
-                    lastForegroundColorMode = theLine[i].foregroundColorMode;
                     lastForegroundColor = theLine[i].foregroundColor;
                     lastFgGreen = theLine[i].fgGreen;
                     lastFgBlue = theLine[i].fgBlue;
+                    lastForegroundColorMode = theLine[i].foregroundColorMode;
                     lastBold = theLine[i].bold;
                     thisChar.color = [self colorForCode:lastForegroundColor
                                                   green:lastFgGreen
@@ -6329,7 +6339,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             BOOL fakeBold = theLine[i].bold;
             thisChar.fontInfo = [self getFontForChar:theLine[i].code
                                            isComplex:theLine[i].complexChar
-                                             fgColor:theLine[i].foregroundColor
                                           renderBold:&fakeBold
                                         renderItalic:theLine[i].italic];
             thisChar.fakeBold = fakeBold;

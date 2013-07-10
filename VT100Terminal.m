@@ -3490,7 +3490,11 @@ static VT100TCC decode_string(unsigned char *datap,
                         // all attribute off
                         bold = italic = under = blink = reversed = NO;
                         FG_COLORCODE = ALTSEM_FG_DEFAULT;
+                        FG_GREEN = 0;
+                        FG_BLUE = 0;
                         BG_COLORCODE = ALTSEM_BG_DEFAULT;
+                        BG_GREEN = 0;
+                        BG_BLUE = 0;
                         FG_COLORMODE = ColorModeAlternate;
                         BG_COLORMODE = ColorModeAlternate;
                         break;
@@ -3526,15 +3530,21 @@ static VT100TCC decode_string(unsigned char *datap,
                         break;
                     case VT100CHARATTR_FG_DEFAULT:
                         FG_COLORCODE = ALTSEM_FG_DEFAULT;
+                        FG_GREEN = 0;
+                        FG_BLUE = 0;
                         FG_COLORMODE = ColorModeAlternate;
                         break;
                     case VT100CHARATTR_BG_DEFAULT:
                         BG_COLORCODE = ALTSEM_BG_DEFAULT;
+                        BG_GREEN = 0;
+                        BG_BLUE = 0;
                         BG_COLORMODE = ColorModeAlternate;
                         break;
                     case VT100CHARATTR_FG_256:
                         if (token.u.csi.count - i >= 3 && token.u.csi.p[i + 1] == 5) {
                             FG_COLORCODE = token.u.csi.p[i + 2];
+                            FG_GREEN = 0;
+                            FG_BLUE = 0;
                             FG_COLORMODE = ColorModeNormal;
                             i += 2;
                         } else if (token.u.csi.count - i >= 5 && token.u.csi.p[i + 1] == 2) {
@@ -3549,6 +3559,8 @@ static VT100TCC decode_string(unsigned char *datap,
                     case VT100CHARATTR_BG_256:
                         if (token.u.csi.count - i >= 3 && token.u.csi.p[i + 1] == 5) {
                             BG_COLORCODE = token.u.csi.p[i + 2];
+                            BG_GREEN = 0;
+                            BG_BLUE = 0;
                             BG_COLORMODE = ColorModeNormal;
                             i += 2;
                         } else if (token.u.csi.count - i >= 5 && token.u.csi.p[i + 1] == 2) {
@@ -3565,20 +3577,28 @@ static VT100TCC decode_string(unsigned char *datap,
                         if (n >= VT100CHARATTR_FG_BLACK &&
                             n <= VT100CHARATTR_FG_WHITE) {
                             FG_COLORCODE = n - VT100CHARATTR_FG_BASE - COLORCODE_BLACK;
+                            FG_GREEN = 0;
+                            FG_BLUE = 0;
                             FG_COLORMODE = ColorModeNormal;
                         } else if (n >= VT100CHARATTR_BG_BLACK &&
                                    n <= VT100CHARATTR_BG_WHITE) {
                             BG_COLORCODE = n - VT100CHARATTR_BG_BASE - COLORCODE_BLACK;
+                            BG_GREEN = 0;
+                            BG_BLUE = 0;
                             BG_COLORMODE = ColorModeNormal;
                         }
                         // 16 color support
                         if (n >= VT100CHARATTR_FG_HI_BLACK &&
                             n <= VT100CHARATTR_FG_HI_WHITE) {
                             FG_COLORCODE = n - VT100CHARATTR_FG_HI_BASE - COLORCODE_BLACK + 8;
+                            FG_GREEN = 0;
+                            FG_BLUE = 0;
                             FG_COLORMODE = ColorModeNormal;
                         } else if (n >= VT100CHARATTR_BG_HI_BLACK &&
                                    n <= VT100CHARATTR_BG_HI_WHITE) {
                             BG_COLORCODE = n - VT100CHARATTR_BG_HI_BASE - COLORCODE_BLACK + 8;
+                            BG_GREEN = 0;
+                            BG_BLUE = 0;
                             BG_COLORMODE = ColorModeNormal;
                         }
                 }
