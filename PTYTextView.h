@@ -669,7 +669,6 @@ typedef enum {
 - (void)_settingsChanged:(NSNotification *)notification;
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)complex
-                       fgColor:(int)fgColor
                     renderBold:(BOOL*)renderBold
                   renderItalic:(BOOL)renderItalic;
 
