@@ -197,6 +197,11 @@ static inline BOOL BackgroundColorsEqual(const screen_char_t a,
 static inline BOOL ForegroundColorsEqual(const screen_char_t a,
                                          const screen_char_t b)
 {
+    if (a.bold != b.bold ||
+        a.italic != b.italic ||
+        a.blink != b.blink ||
+        a.underline != b.underline)
+        return NO;
     if (a.foregroundColorMode == b.foregroundColorMode) {
         if (a.foregroundColorMode != ColorMode24bit) {
             // for normal and alternate colorMode
