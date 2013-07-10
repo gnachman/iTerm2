@@ -4785,7 +4785,7 @@ void DumpBuf(screen_char_t* p, int n) {
     // check if we have to generate a new line
     if (default_line &&
         default_line_width >= width &&
-        ForegroundColorsEqual(default_fg_code, [TERMINAL foregroundColorCodeReal]) &&
+        ForegroundAttributesEqual(default_fg_code, [TERMINAL foregroundColorCodeReal]) &&
         BackgroundColorsEqual(default_bg_code, [TERMINAL backgroundColorCodeReal])) {
         return default_line;
     }
