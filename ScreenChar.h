@@ -195,8 +195,8 @@ static inline BOOL BackgroundColorsEqual(const screen_char_t a,
 }
 
 // Returns true iff two foreground colors are equal.
-static inline BOOL ForegroundColorsEqual(const screen_char_t a,
-                                         const screen_char_t b)
+static inline BOOL ForegroundAttributesEqual(const screen_char_t a,
+                                             const screen_char_t b)
 {
     if (a.bold != b.bold ||
         a.italic != b.italic ||
