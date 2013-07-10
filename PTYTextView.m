@@ -6215,7 +6215,7 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             // Not a selection.
             if (reversed &&
                 theLine[i].foregroundColor == ALTSEM_FG_DEFAULT &&
-                theLine[i].foregroundColorMode != ColorMode24bit) {
+                theLine[i].foregroundColorMode == ColorModeAlternate) {
                 // Has default foreground color so use background color.
                 if (!dimOnlyText_) {
                     thisChar.color = [self _dimmedColorFrom:defaultBGColor];
