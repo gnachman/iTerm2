@@ -180,7 +180,7 @@ static inline BOOL BackgroundColorsEqual(const screen_char_t a,
 {
     if (a.backgroundColorMode == b.backgroundColorMode) {
         if (a.backgroundColorMode != ColorMode24bit) {
-            // for normal and alternate colorMode
+            // for normal and alternate ColorMode
             return a.backgroundColor == b.backgroundColor;
         } else {
             // RGB must all be equal for 24bit color
@@ -189,7 +189,7 @@ static inline BOOL BackgroundColorsEqual(const screen_char_t a,
                 a.bgBlue == b.bgBlue;
         }
     } else {
-        // different colorMode == different colors
+        // different ColorMode == different colors
         return NO;
     }
 }
@@ -201,11 +201,12 @@ static inline BOOL ForegroundAttributesEqual(const screen_char_t a,
     if (a.bold != b.bold ||
         a.italic != b.italic ||
         a.blink != b.blink ||
-        a.underline != b.underline)
+        a.underline != b.underline) {
         return NO;
+    }
     if (a.foregroundColorMode == b.foregroundColorMode) {
         if (a.foregroundColorMode != ColorMode24bit) {
-            // for normal and alternate colorMode
+            // for normal and alternate ColorMode
             return a.foregroundColor == b.foregroundColor;
         } else {
             // RGB must all be equal for 24bit color
@@ -214,7 +215,7 @@ static inline BOOL ForegroundAttributesEqual(const screen_char_t a,
                 a.fgBlue == b.fgBlue;
         }
     } else {
-        // different colorMode == different colors
+        // different ColorMode == different colors
         return NO;
     }
 }

@@ -2455,13 +2455,13 @@ static VT100TCC decode_string(unsigned char *datap,
 - (void)setForegroundColor:(int)fgColorCode alternateSemantics:(BOOL)altsem
 {
     FG_COLORCODE = fgColorCode;
-    FG_COLORMODE = (altsem == YES ? ColorModeAlternate : ColorModeNormal);
+    FG_COLORMODE = (altsem ? ColorModeAlternate : ColorModeNormal);
 }
 
 - (void)setBackgroundColor:(int)bgColorCode alternateSemantics:(BOOL)altsem
 {
     BG_COLORCODE = bgColorCode;
-    BG_COLORMODE = (altsem == YES ? ColorModeAlternate : ColorModeNormal);
+    BG_COLORMODE = (altsem ? ColorModeAlternate : ColorModeNormal);
 }
 
 - (void)resetCharset {
