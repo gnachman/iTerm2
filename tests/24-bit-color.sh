@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-#   This file echoes a bunch of 24-bit color codes
-#   to the terminal to demonstrate its functionality.
+#   This file echoes four gradients with 24-bit color codes
+#   to the terminal to demonstrate their functionality.
 #   The foreground escape sequence is ^[38;2;<r>;<g>;<b>m
 #   The background escape sequence is ^[48;2;<r>;<g>;<b>m
 #   <r> <g> <b> range from 0 to 255 inclusive.
