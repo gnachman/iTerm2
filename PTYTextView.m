@@ -7356,7 +7356,6 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                             int theColor;
                             int theGreen;
                             int theBlue;
-                            NSColor* overrideColor = nil;
                             ColorMode theMode;
                             BOOL isBold;
                             if ([[self window] isKeyWindow]) {
@@ -7381,7 +7380,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                                              AtX:x1 * charWidth + MARGIN
                                                Y:curY + cursorHeight - lineHeight
                                      doubleWidth:double_width
-                                   overrideColor:overrideColor];
+                                   overrideColor:nil];
                         }
                     }
 
