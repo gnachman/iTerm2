@@ -270,7 +270,8 @@ NSWindowDelegate,
 // smartLayout: If true then position windows using the "smart layout"
 //   algorithm.
 // windowType: WINDOW_TYPE_NORMAL, WINDOW_TYPE_FULL_SCREEN, WINDOW_TYPE_TOP, or
-//   WINDOW_TYPE_LION_FULL_SCREEN, or WINDOW_TYPE_BOTTOM or WINDOW_TYPE_LEFT.
+//   WINDOW_TYPE_LION_FULL_SCREEN, or WINDOW_TYPE_BOTTOM or WINDOW_TYPE_LEFT or
+//   WINDOW_TYPE_RIGHT
 // screen: An index into [NSScreen screens], or -1 to let the system pick a
 //   screen.
 - (id)initWithSmartLayout:(BOOL)smartLayout
