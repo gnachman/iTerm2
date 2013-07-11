@@ -751,7 +751,6 @@ static void reapchild(int n)
     // No data?
     if ((written < 0) && (!(errno == EAGAIN || errno == EINTR))) {
         [self brokenPipe];
-        return;
     } else if (written > 0) {
         // Shrink the writeBuffer
         length = [writeBuffer length] - written;
