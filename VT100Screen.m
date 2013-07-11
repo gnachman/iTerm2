@@ -147,14 +147,20 @@ void StringToScreenChars(NSString *s,
             buf[j].complexChar = NO;
 
             buf[j].foregroundColor = fg.foregroundColor;
-            buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
+            buf[j].fgGreen = fg.fgGreen;
+            buf[j].fgBlue = fg.fgBlue;
+
+            buf[j].backgroundColor = bg.backgroundColor;
+            buf[j].bgGreen = bg.bgGreen;
+            buf[j].bgBlue = bg.bgBlue;
+
+            buf[j].foregroundColorMode = fg.foregroundColorMode;
+            buf[j].backgroundColorMode = bg.backgroundColorMode;
+
             buf[j].bold = fg.bold;
             buf[j].italic = fg.italic;
             buf[j].blink = fg.blink;
             buf[j].underline = fg.underline;
-
-            buf[j].backgroundColor = bg.backgroundColor;
-            buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
 
             buf[j].unused = 0;
             lastInitializedChar = j;
@@ -174,14 +180,22 @@ void StringToScreenChars(NSString *s,
             buf[j].complexChar = NO;
 
             buf[j].foregroundColor = fg.foregroundColor;
-            buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
+            buf[j].fgGreen = fg.fgGreen;
+            buf[j].fgBlue = fg.fgBlue;
+
+            buf[j].backgroundColor = bg.backgroundColor;
+            buf[j].bgGreen = bg.fgGreen;
+            buf[j].bgBlue = bg.fgBlue;
+
+            buf[j].foregroundColorMode = fg.foregroundColorMode;
+            buf[j].backgroundColorMode = bg.backgroundColorMode;
+
             buf[j].bold = fg.bold;
             buf[j].italic = fg.italic;
             buf[j].blink = fg.blink;
             buf[j].underline = fg.underline;
 
-            buf[j].backgroundColor = bg.backgroundColor;
-            buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
+            buf[j].unused = 0;
         } else if (sc[i] == 0xfeff ||  // zero width no-break space
                    sc[i] == 0x200b ||  // zero width space
                    sc[i] == 0x200c ||  // zero width non-joiner
@@ -209,14 +223,22 @@ void StringToScreenChars(NSString *s,
                         buf[j].complexChar = NO;
 
                         buf[j].foregroundColor = fg.foregroundColor;
-                        buf[j].alternateForegroundSemantics = fg.alternateForegroundSemantics;
+                        buf[j].fgGreen = fg.fgGreen;
+                        buf[j].fgBlue = fg.fgBlue;
+
+                        buf[j].backgroundColor = bg.backgroundColor;
+                        buf[j].bgGreen = bg.fgGreen;
+                        buf[j].bgBlue = bg.fgBlue;
+
+                        buf[j].foregroundColorMode = fg.foregroundColorMode;
+                        buf[j].backgroundColorMode = bg.backgroundColorMode;
+
                         buf[j].bold = fg.bold;
                         buf[j].italic = fg.italic;
                         buf[j].blink = fg.blink;
                         buf[j].underline = fg.underline;
 
-                        buf[j].backgroundColor = bg.backgroundColor;
-                        buf[j].alternateBackgroundSemantics = bg.alternateBackgroundSemantics;
+                        buf[j].unused = 0;
                     }
                 }
             }
@@ -243,13 +265,13 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     line_width++;
 
     next_line = current_line + line_width;
-    if(next_line >= (buf_start + line_width*max_lines))
+    if (next_line >= (buf_start + line_width*max_lines))
     {
         next_line = buf_start;
-        if(wrap)
+        if (wrap)
             *wrap = YES;
     }
-    else if(wrap)
+    else if (wrap)
         *wrap = NO;
 
     return (next_line);
@@ -816,12 +838,12 @@ static char* FormatCont(int c)
         assert(theLine);
         if (theLine) {
             if (fgColor) {
-                theLine[x].alternateForegroundSemantics = NO;
                 theLine[x].foregroundColor = fgColorCode;
+                theLine[x].foregroundColorMode = ColorModeNormal;
             }
             if (bgColor) {
-                theLine[x].alternateBackgroundSemantics = NO;
                 theLine[x].backgroundColor = bgColorCode;
+                theLine[x].backgroundColorMode = ColorModeNormal;
             }
         }
         ++x;
@@ -970,7 +992,7 @@ static char* FormatCont(int c)
     // loop doesn't call dropExcessLinesWithWidth.
     int next_line_length;
     if (numLines > 0) {
-        next_line_length  = [self _getLineLength:[self getLineAtScreenIndex: 0]];
+        next_line_length = [self _getLineLength:[self getLineAtScreenIndex: 0]];
     }
     for (i = 0; i < numLines; ++i) {
         screen_char_t* line = [self getLineAtScreenIndex: i];
@@ -3705,7 +3727,7 @@ void DumpBuf(screen_char_t* p, int n) {
     NSLog(@"%s(%d):-[VT100Screen restoreCursorPosition]", __FILE__, __LINE__);
 #endif
 
-    if(showingAltScreen) {
+    if (showingAltScreen) {
         [self setCursorX:ALT_SAVE_CURSOR_X Y:ALT_SAVE_CURSOR_Y];
     } else {
         [self setCursorX:SAVE_CURSOR_X Y:SAVE_CURSOR_Y];
@@ -3822,7 +3844,7 @@ void DumpBuf(screen_char_t* p, int n) {
         // check if screen is wrapped
         sourceLine = [self getLineAtScreenIndex:SCROLL_TOP];
         targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
-        if(sourceLine < targetLine)
+        if (sourceLine < targetLine)
         {
             // screen area is not wrapped; direct memmove
             memmove(sourceLine+REAL_WIDTH, sourceLine, (SCROLL_BOTTOM-SCROLL_TOP)*REAL_WIDTH*sizeof(screen_char_t));
@@ -3910,7 +3932,7 @@ void DumpBuf(screen_char_t* p, int n) {
 
     }
     if (n + cursorY > SCROLL_BOTTOM) {
-        n  = SCROLL_BOTTOM - cursorY + 1;
+        n = SCROLL_BOTTOM - cursorY + 1;
     }
 
     // clear the n lines
@@ -4763,7 +4785,7 @@ void DumpBuf(screen_char_t* p, int n) {
     // check if we have to generate a new line
     if (default_line &&
         default_line_width >= width &&
-        ForegroundColorsEqual(default_fg_code, [TERMINAL foregroundColorCodeReal]) &&
+        ForegroundAttributesEqual(default_fg_code, [TERMINAL foregroundColorCodeReal]) &&
         BackgroundColorsEqual(default_bg_code, [TERMINAL backgroundColorCodeReal])) {
         return default_line;
     }
