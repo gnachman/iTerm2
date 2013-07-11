@@ -767,7 +767,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
             }
             break;
         case ColorMode24bit:
-            color = [self colorFromRGB:theIndex
+            color = [self colorFromRed:theIndex
                                  green:green
                                   blue:blue];
             break;
@@ -893,7 +893,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     }
 }
 
-- (NSColor *)colorFromRGB:(int)red
+- (NSColor *)colorFromRed:(int)red
                     green:(int)green
                      blue:(int)blue
 {

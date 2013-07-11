@@ -442,7 +442,7 @@ enum {
 - (NSColor*)defaultBGColor;
 - (NSColor*)defaultBoldColor;
 - (NSColor*)colorForCode:(int)theIndex green:(int)green blue:(int)blue colorMode:(ColorMode)theMode bold:(BOOL)isBold isBackground:(BOOL)isBackground;
-- (NSColor*)colorFromRGB:(int)red green:(int)green blue:(int)blue;
+- (NSColor*)colorFromRed:(int)red green:(int)green blue:(int)blue;
 - (NSColor*)selectionColor;
 - (NSColor*)defaultCursorColor;
 - (NSColor*)selectedTextColor;
