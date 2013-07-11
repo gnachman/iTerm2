@@ -416,6 +416,7 @@ typedef enum {
 
 - (void)resetCharset;
 - (void)reset;
+- (void)resetPreservingPrompt:(BOOL)preservePrompt;
 
 - (NSData *)keyArrowUp:(unsigned int)modflag;
 - (NSData *)keyArrowDown:(unsigned int)modflag;

@@ -1,7 +1,4 @@
 #!/bin/bash
-# DO NOT RUN THIS DIRECTLY! Use "make release" instead.
-# Run this before uploading.
-set -x
 function RunFromMakefile {
   echo You\'re supposed to use "make release", not run this directly. I\'ll just do it for you.
   sleep 1
@@ -9,19 +6,23 @@ function RunFromMakefile {
   exit
 }
 
-# Takes one arg: filename excluding path of output file.
+# Usage: SparkleSign testing.xml template.xml
 function SparkleSign {
     LENGTH=$(ls -l iTerm2-${NAME}.zip | awk '{print $5}')
     ruby "../../SparkleSigningTools/sign_update.rb" iTerm2-${NAME}.zip $PRIVKEY > /tmp/sig.txt
     SIG=$(cat /tmp/sig.txt)
     DATE=$(date +"%a, %d %b %Y %H:%M:%S %z")
-    cp $SVNDIR/appcasts/template.xml /tmp
-    cat /tmp/template.xml | \
+    XML=$1
+    TEMPLATE=$2
+    cp $SVNDIR/appcasts/${TEMPLATE} /tmp
+    cat /tmp/${TEMPLATE} | \
+    sed -e "s/%XML%/${XML}/" | \
     sed -e "s/%VER%/${VERSION}/" | \
     sed -e "s/%DATE%/${DATE}/" | \
     sed -e "s/%NAME%/${NAME}/" | \
     sed -e "s/%LENGTH%/$LENGTH/" |
     sed -e "s,%SIG%,${SIG}," > $SVNDIR/appcasts/$1
+    cp iTerm2-${NAME}.zip ~/iterm2-website/downloads/beta/
 }
 
 echo Num args is $#
@@ -55,7 +56,7 @@ zip -ry iTerm2-${NAME}.zip iTerm.app
 vi $SVNDIR/appcasts/testing_changes.txt
 
 # Prepare the sparkle xml file
-SparkleSign testing.xml
+SparkleSign testing.xml template.xml
 
 ############################################################################################
 # Begin legacy build
@@ -68,7 +69,7 @@ NAME=$(echo $VERSION | sed -e "s/\\./_/g")-LeopardPPC
 zip -ry iTerm2-${NAME}.zip iTerm.app
 
 # Prepare the sparkle xml file
-SparkleSign legacy_testing.xml
+SparkleSign legacy_testing.xml legacy_template.xml
 # End legacy build
 ############################################################################################
 

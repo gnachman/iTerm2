@@ -342,10 +342,6 @@
 		1DC742A0127C96F90069594C /* IBarCursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 1DC7429F127C96F90069594C /* IBarCursor.png */; };
 		1DCA5ECF13EE507800B7725E /* WindowArrangements.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCA5ECD13EE507800B7725E /* WindowArrangements.h */; };
 		1DCA5ED013EE507800B7725E /* WindowArrangements.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DCA5ECE13EE507800B7725E /* WindowArrangements.m */; };
-		1DCA8BA9121A1B8000ABDEB5 /* PrefsAdvanced.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA3121A1B8000ABDEB5 /* PrefsAdvanced.tiff */; };
-		1DCA8BAA121A1B8000ABDEB5 /* PrefsBookmarks.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA4121A1B8000ABDEB5 /* PrefsBookmarks.tiff */; };
-		1DCA8BAB121A1B8000ABDEB5 /* PrefsDisplay.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA5121A1B8000ABDEB5 /* PrefsDisplay.tiff */; };
-		1DCA8BAE121A1B8000ABDEB5 /* PrefsTerminal.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 1DCA8BA8121A1B8000ABDEB5 /* PrefsTerminal.tiff */; };
 		1DCBC811126DD98200D5B961 /* WindowControllerInterface.h in Headers */ = {isa = PBXBuildFile; fileRef = 1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */; };
 		1DCF3CB71222FF1400AD56F1 /* PresetKeyMappings.plist in Resources */ = {isa = PBXBuildFile; fileRef = 1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */; };
 		1DCF3E8F122419D200AD56F1 /* ProfileModel.m in Sources */ = {isa = PBXBuildFile; fileRef = 1DCF3E8D122419D200AD56F1 /* ProfileModel.m */; };
@@ -659,10 +655,6 @@
 		1DC7429F127C96F90069594C /* IBarCursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = IBarCursor.png; path = images/IBarCursor.png; sourceTree = "<group>"; };
 		1DCA5ECD13EE507800B7725E /* WindowArrangements.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WindowArrangements.h; sourceTree = "<group>"; };
 		1DCA5ECE13EE507800B7725E /* WindowArrangements.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = WindowArrangements.m; sourceTree = "<group>"; };
-		1DCA8BA3121A1B8000ABDEB5 /* PrefsAdvanced.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsAdvanced.tiff; path = images/PrefsAdvanced.tiff; sourceTree = "<group>"; };
-		1DCA8BA4121A1B8000ABDEB5 /* PrefsBookmarks.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsBookmarks.tiff; path = images/PrefsBookmarks.tiff; sourceTree = "<group>"; };
-		1DCA8BA5121A1B8000ABDEB5 /* PrefsDisplay.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsDisplay.tiff; path = images/PrefsDisplay.tiff; sourceTree = "<group>"; };
-		1DCA8BA8121A1B8000ABDEB5 /* PrefsTerminal.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PrefsTerminal.tiff; path = images/PrefsTerminal.tiff; sourceTree = "<group>"; };
 		1DCBC810126DD98200D5B961 /* WindowControllerInterface.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WindowControllerInterface.h; sourceTree = "<group>"; };
 		1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = PresetKeyMappings.plist; sourceTree = "<group>"; };
 		1DCF3E8D122419D200AD56F1 /* ProfileModel.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; lineEnding = 0; path = ProfileModel.m; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.objc; };
@@ -1224,13 +1216,9 @@
 				1D6C4D59122329F000E0AA3E /* ColorPresets.plist */,
 				1DCF3EC51224D03D00AD56F1 /* DefaultBookmark.plist */,
 				1DCF3EFF1224EEBD00AD56F1 /* MigrationMap.plist */,
-				1DCA8BA3121A1B8000ABDEB5 /* PrefsAdvanced.tiff */,
-				1DCA8BA4121A1B8000ABDEB5 /* PrefsBookmarks.tiff */,
 				9D737D5D17495B4100B3334D /* PrefsGeneral.png */,
 				9D737D5E17495B4100B3334D /* PrefsGeneral@2x.png */,
 				1DB72CF51396059200EB1005 /* xterm-terminfo.txt */,
-				1DCA8BA5121A1B8000ABDEB5 /* PrefsDisplay.tiff */,
-				1DCA8BA8121A1B8000ABDEB5 /* PrefsTerminal.tiff */,
 				1DCF3CB61222FF1400AD56F1 /* PresetKeyMappings.plist */,
 				1D1158C913444D29009B366F /* iTerm2 Help */,
 				1D8255F8146869D8007CAE78 /* DefaultPointerActions.plist */,
@@ -1765,10 +1753,6 @@
 				F6CDC4E70AE6D3E2005E7D4F /* folder.png in Resources */,
 				9325FF500FB54E00004EC67C /* MainMenu.xib in Resources */,
 				93A6FEFA10685E9900A5F905 /* dsa_pub.pem in Resources */,
-				1DCA8BA9121A1B8000ABDEB5 /* PrefsAdvanced.tiff in Resources */,
-				1DCA8BAA121A1B8000ABDEB5 /* PrefsBookmarks.tiff in Resources */,
-				1DCA8BAB121A1B8000ABDEB5 /* PrefsDisplay.tiff in Resources */,
-				1DCA8BAE121A1B8000ABDEB5 /* PrefsTerminal.tiff in Resources */,
 				1DCF3CB71222FF1400AD56F1 /* PresetKeyMappings.plist in Resources */,
 				1D6C4D5A122329F000E0AA3E /* ColorPresets.plist in Resources */,
 				1DCF3EC61224D03D00AD56F1 /* DefaultBookmark.plist in Resources */,

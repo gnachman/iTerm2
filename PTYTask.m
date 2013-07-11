@@ -751,7 +751,6 @@ static void reapchild(int n)
     // No data?
     if ((written < 0) && (!(errno == EAGAIN || errno == EINTR))) {
         [self brokenPipe];
-        return;
     } else if (written > 0) {
         // Shrink the writeBuffer
         length = [writeBuffer length] - written;
@@ -779,14 +778,18 @@ static void reapchild(int n)
     return delegate;
 }
 
-// The bytes in data were just read from the fd.
-- (void)readTask:(NSData*)data
-{
+- (void)logData:(NSData *)data {
     @synchronized(logHandle) {
         if ([self logging]) {
             [logHandle writeData:data];
         }
     }
+}
+
+// The bytes in data were just read from the fd.
+- (void)readTask:(NSData*)data
+{
+    [self logData:data];
 
     // forward the data to our delegate
     if ([delegate respondsToSelector:@selector(readTask:)]) {
@@ -860,6 +863,7 @@ static void reapchild(int n)
 
 - (void)stop
 {
+    [self loggingStop];
     [self sendSignal:SIGHUP];
 
     if (fd >= 0) {
