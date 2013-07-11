@@ -334,8 +334,8 @@ NSString *sessionsKey = @"sessions";
                                             styleMask:styleMask
                                               backing:NSBackingStoreBuffered
                                                 defer:NO];
-    if (windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_BOTTOM
-        || windowType == WINDOW_TYPE_LEFT || windowType == WINDOW_TYPE_RIGHT) {
+    if (windowType == WINDOW_TYPE_TOP || windowType == WINDOW_TYPE_BOTTOM ||
+        windowType == WINDOW_TYPE_LEFT || windowType == WINDOW_TYPE_RIGHT) {
         [myWindow setHasShadow:YES];
     }
     [myWindow _setContentHasShadow:NO];
@@ -3975,8 +3975,8 @@ NSString *sessionsKey = @"sessions";
 
         PTYSession* session = [self currentSession];
         frame.size.width = MIN(winSize.width,
-            ceil([[session TEXTVIEW] charWidth] *
-            desiredColumns_) + decorationSize.width + 2 * MARGIN);
+                               ceil([[session TEXTVIEW] charWidth] *
+                                    desiredColumns_) + decorationSize.width + 2 * MARGIN);
 
     }
 
@@ -3987,9 +3987,9 @@ NSString *sessionsKey = @"sessions";
     }
 
     // Set the origin again to the bottom of screen
-    if (windowType_ == WINDOW_TYPE_BOTTOM
-        || windowType_ == WINDOW_TYPE_LEFT
-        || windowType_ == WINDOW_TYPE_RIGHT) {
+    if (windowType_ == WINDOW_TYPE_BOTTOM ||
+        windowType_ == WINDOW_TYPE_LEFT ||
+        windowType_ == WINDOW_TYPE_RIGHT) {
         frame.origin.y = self.screen.visibleFrame.origin.y;
     }
 

@@ -176,7 +176,7 @@
 #define WINDOW_TYPE_LION_FULL_SCREEN 4  // Lion-native fullscreen
 #define WINDOW_TYPE_BOTTOM 5
 #define WINDOW_TYPE_LEFT 6
- #define WINDOW_TYPE_RIGHT 7
+#define WINDOW_TYPE_RIGHT 7
 
 typedef enum {
   iTermWindowObject,
