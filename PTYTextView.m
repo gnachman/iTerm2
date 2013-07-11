@@ -746,42 +746,42 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 {
     NSColor* color;
 
-    if (theMode == ColorModeAlternate) {
-        switch (theIndex) {
-            case ALTSEM_SELECTED:
-                color = selectedTextColor;
-                break;
-            case ALTSEM_CURSOR:
-                color = cursorTextColor;
-                break;
-            case ALTSEM_BG_DEFAULT:
-                color = defaultBGColor;
-                break;
-            default:
-                if (isBold && useBrightBold) {
-                    if (theIndex == ALTSEM_BG_DEFAULT) {
-                        color = defaultBGColor;
-                    } else {
+    switch (theMode) {
+        case ColorModeAlternate:
+            switch (theIndex) {
+                case ALTSEM_SELECTED:
+                    color = selectedTextColor;
+                    break;
+                case ALTSEM_CURSOR:
+                    color = cursorTextColor;
+                    break;
+                case ALTSEM_BG_DEFAULT:
+                    color = defaultBGColor;
+                    break;
+                default:
+                    if (isBold && useBrightBold) {
                         color = [self defaultBoldColor];
+                    } else {
+                        color = defaultFGColor;
                     }
-                } else {
-                    color = defaultFGColor;
-                }
-        }
-    } else if (theMode == ColorMode24bit) {
-        color = [self colorFromRGB:theIndex
-                             green:green
-                              blue:blue];
-    } else {
-        // Render bold text as bright. The spec (ECMA-48) describes the intense
-        // display setting (esc[1m) as "bold or bright". We make it a
-        // preference.
-        if (isBold &&
-            useBrightBold &&
-            (theIndex < 8)) { // Only colors 0-7 can be made "bright".
-            theIndex |= 8;  // set "bright" bit.
-        }
-        color = colorTable[theIndex];
+            }
+            break;
+        case ColorMode24bit:
+            color = [self colorFromRGB:theIndex
+                                 green:green
+                                  blue:blue];
+            break;
+        case ColorModeNormal:
+            // Render bold text as bright. The spec (ECMA-48) describes the intense
+            // display setting (esc[1m) as "bold or bright". We make it a
+            // preference.
+            if (isBold &&
+                useBrightBold &&
+                (theIndex < 8)) { // Only colors 0-7 can be made "bright".
+                theIndex |= 8;  // set "bright" bit.
+            }
+            color = colorTable[theIndex];
+            break;
     }
 
     return color;
