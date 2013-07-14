@@ -127,7 +127,7 @@ typedef struct FindContext {
 
 // Try to append a line to the end of the buffer. Returns false if it does not fit. If length > buffer_size it will never succeed.
 // Callers should split such lines into multiple pieces.
-- (BOOL) appendLine: (screen_char_t*) buffer length: (int) length partial: (BOOL) partial;
+- (BOOL) appendLine: (screen_char_t*) buffer length: (int) length partial: (BOOL) partial width: (int) width;
 
 // Try to get a line that is lineNum after the first line in this block after wrapping them to a given width.
 // If the line is present, return a pointer to its start and fill in *lineLength with the number of bytes in the line.
