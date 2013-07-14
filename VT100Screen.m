@@ -2807,7 +2807,7 @@ void DumpBuf(screen_char_t* p, int n) {
             widthOffset = 0;
         }
         
-        if (vsplitMode && cursorX <= SCROLL_RIGHT) {
+        if (vsplitMode && cursorX <= SCROLL_RIGHT + 1) {
             leftMargin = SCROLL_LEFT;
             rightMargin = SCROLL_RIGHT + 1;
         } else {
@@ -3184,7 +3184,7 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 
     if (cursorX > 0) {
-        if (cursorX >= rightMargin) {
+        if (cursorX >= WIDTH) {
             [self setCursorX:cursorX - 2 Y:cursorY];
         } else {
             [self setCursorX:cursorX - 1 Y:cursorY];
@@ -3666,25 +3666,25 @@ void DumpBuf(screen_char_t* p, int n) {
     x_pos = x - 1;
     y_pos = y - 1;
 
-    if (vsplitMode) {
-        if ([TERMINAL originMode]) {
+    if ([TERMINAL originMode]) {
+        y_pos += SCROLL_TOP;
+        if (vsplitMode) {
             x_pos += SCROLL_LEFT;
-            y_pos += SCROLL_TOP;
+            leftMargin = SCROLL_LEFT;
+            rightMargin = SCROLL_RIGHT + 1;
+        } else {
+            leftMargin = 0;
+            rightMargin = WIDTH;
         }
-        leftMargin = SCROLL_LEFT;
-        rightMargin = SCROLL_RIGHT + 1;
     } else {
-        if ([TERMINAL originMode]) {
-            y_pos += SCROLL_TOP;
-        }
         leftMargin = 0;
         rightMargin = WIDTH;
     }
     
-    if (x_pos < 0) {
-        x_pos = 0;
-    } else if (x_pos >= WIDTH) {
-        x_pos = WIDTH - 1;
+    if (x_pos < leftMargin) {
+        x_pos = leftMargin;
+    } else if (x_pos >= rightMargin) {
+        x_pos = rightMargin - 1;
     }
     if (y_pos < 0) {
         y_pos = 0;
@@ -4250,6 +4250,8 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)setVsplitMode: (BOOL)mode;
 {
     vsplitMode = mode;
+    SCROLL_LEFT = 0;
+    SCROLL_RIGHT = WIDTH - 1;
 }
 
 - (BOOL)vsplitMode;
