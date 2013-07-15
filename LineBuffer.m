@@ -184,10 +184,27 @@ static int NumberOfFullLines(screen_char_t* buffer, int length, int width)
         cached_numlines += newnum - oldnum;
 
         cumulative_line_lengths[cll_entries - 1] += length;
+#ifdef TEST_LINEBUFFER_SANITY
+        int old_cached = cached_numlines;
+        cached_numlines_width = -1;
+        int new_cached = [self getNumLinesWithWrapWidth: width];
+        if (old_cached != new_cached) {
+            NSLog(@"appendLine partial case: cached_numlines updated to %d, but should be %d!", old_cached, new_cached);
+
+        }
+#endif
     } else {
         // add a new line
         [self _appendCumulativeLineLength: (space_used + length)];
         cached_numlines += NumberOfFullLines(buffer, length, width) + 1;
+#ifdef TEST_LINEBUFFER_SANITY
+        int old_cached = cached_numlines;
+        cached_numlines_width = -1;
+        int new_cached = [self getNumLinesWithWrapWidth: width];
+        if (old_cached != new_cached) {
+            NSLog(@"appendLine normal case: cached_numlines updated to %d, but should be %d!", old_cached, new_cached);
+        }
+#endif
     }
     is_partial = partial;
     return YES;
@@ -475,6 +492,16 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
             start_offset = buffer_start - raw_buffer;
             first_entry = i;
             *charsDropped = start_offset - initialOffset;
+
+#ifdef TEST_LINEBUFFER_SANITY
+            int old_cached = cached_numlines;
+            cached_numlines_width = -1;
+            int new_cached = [self getNumLinesWithWrapWidth: width];
+            if (old_cached != new_cached) {
+                NSLog(@"dropLines: cached_numlines updated to %d, but should be %d!", old_cached, new_cached);
+            }
+#endif
+
             return orig_n;
         }
         prev = cll;
