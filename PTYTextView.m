@@ -758,12 +758,18 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
                 case ALTSEM_BG_DEFAULT:
                     color = defaultBGColor;
                     break;
-                default:
+                case ALTSEM_FG_DEFAULT:
                     if (isBold && useBrightBold) {
                         color = [self defaultBoldColor];
                     } else {
                         color = defaultFGColor;
                     }
+                    break;
+                default:
+                    // This should never happen, but if it does we should
+                    // get some bug reports by returning red.
+                    NSLog(@"Unexpected alternate-semantics color %d", theIndex);
+                    return [NSColor colorWithCalibratedRed:1 green:0 blue:0 alpha:1];
             }
             break;
         case ColorMode24bit:
