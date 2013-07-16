@@ -90,6 +90,37 @@
     return theCopy;
 }
 
+- (NSString *)formattedBytesInRange:(NSRange)range {
+  NSMutableString *s = [NSMutableString string];
+  for (int i = range.location; i < range.location + range.length; i++) {
+    if (raw_buffer[i].code == DWC_RIGHT) {
+      [s appendFormat:@"[DWC_RIGHT]"];
+    } else {
+      [s appendFormat:@"%C", raw_buffer[i].code];
+    }
+  }
+  return s;
+}
+
+- (NSString *)description {
+  NSMutableString *desc = [NSMutableString string];
+  [desc appendFormat:@"<%p>\n", self];
+  [desc appendFormat:@"Already-dropped bytes: %d\n", start_offset];
+  [desc appendFormat:@"Start offset: %d\n", start_offset];
+  [desc appendFormat:@"is_partial: %@\n", is_partial ? @"YES" : @"NO"];
+  int start = 0;
+  int length;
+  for (int i = 0; i < cll_entries; i++) {
+    length = cumulative_line_lengths[i] - start;
+    [desc appendFormat:@"Line %d (cumulative length=%d, length=%d): %@\n", i, cumulative_line_lengths[i], length,
+      [self formattedBytesInRange:NSMakeRange(start, length)]];
+    start = cumulative_line_lengths[i];
+  }
+  [desc appendFormat:@"Number of lines: %d\n", cll_entries];
+  [desc appendFormat:@"Cached lines: %d at width %d\n", cached_numlines, cached_numlines_width];
+  return desc;
+}
+
 - (int) rawSpaceUsed
 {
     if (cll_entries == 0) {
@@ -469,6 +500,7 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     int i;
     *charsDropped = 0;
     int initialOffset = start_offset;
+    LineBlock *orig = [[self copy] autorelease];
     for (i = first_entry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - start_offset;
         length = cll - prev;
@@ -501,6 +533,9 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
             int new_cached = [self getNumLinesWithWrapWidth: width];
             if (old_cached != new_cached) {
                 NSLog(@"dropLines: cached_numlines updated to %d, but should be %d!", old_cached, new_cached);
+                NSLog(@"n's original value=%d", orig_n);
+                NSLog(@"Line block before dropping:\n%@", orig);
+                NSLog(@"Line block after dropping:\n%@", self);
             }
 #endif
 
