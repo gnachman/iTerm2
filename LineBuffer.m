@@ -158,6 +158,24 @@ static int NumberOfFullLines(screen_char_t* buffer, int length, int width)
     return fullLines;
 }
 
+static int NumberOfLinesAfterWrapping(screen_char_t *buffer, int length, int width)
+{
+  return NumberOfFullLines(buffer, length, width) + 1;
+}
+
+#ifdef TEST_LINEBUFFER_SANITY
+- (void)sanityTest
+{
+    int old_cached = cached_numlines;
+    cached_numlines_width = -1;
+    int new_cached = [self getNumLinesWithWrapWidth: width];
+    if (old_cached != new_cached) {
+        NSLog(@"appendLine normal case: cached_numlines updated to %d, but should be %d!", old_cached, new_cached);
+        assert(false);
+    }
+}
+#endif
+
 - (BOOL) appendLine: (screen_char_t*) buffer length: (int) length partial:(BOOL) partial width: (int) width
 {
     const int space_used = [self rawSpaceUsed];
@@ -166,44 +184,154 @@ static int NumberOfFullLines(screen_char_t* buffer, int length, int width)
         return NO;
     }
     memcpy(raw_buffer + space_used, buffer, sizeof(screen_char_t) * length);
-    // There's a bit of an edge case here: if you're appending an empty
-    // non-partial line to a partial line, we need it to append a blank line
-    // after the continued line. In practice this happens because a line is
-    // long but then the wrapped portion is erased and the EOL_SOFT flag stays
-    // behind. It would be really complex to ensure consistency of line-wrapping
-    // flags because the screen contents are changed in so many places.
-    if (is_partial && !(!partial && length == 0)) {
+    if (!is_partial || (!partial && length == 0)) {
+        // There's a bit of an edge case here when appending an empty
+        // non-partial line to a partial line. In other words, this is true:
+        //   is_partial && !partial && length == 0
+        // We need it to append a blank line after the continued line.
+        //
+        // In practice this happens because a line is long but then the wrapped
+        // portion is erased and the EOL_SOFT flag stays behind. Here's an
+        // example with > showing where the next append goes:
+        //
+        // 1. Line buffer has
+        //    0 xyz>
+        //
+        // 2. Screen looks like:
+        //    |abc| EOL_SOFT
+        //    |d  | EOL_HARD
+        //    |efg| EOL_HARD
+        //
+        // 3. Erase chars in second line
+        //    |abc| EOL_SOFT
+        //    |   | EOL_HARD
+        //    |efg| EOL_HARD
+        //
+        // 4. Append first line to line buffer. Line buffer should have:
+        //    0 xyzabc>
+        //
+        // 5. Append next line to line buffer. Line buffer should have:
+        //    0 xyzabc
+        //    1
+        //    >
+        //    ***This is the edge case we're talking about***
+        //
+        // 6. So that when the final line is appended the line buffer has:
+        //    0 xyzabc
+        //    1
+        //    2 efg
+        //    >
+        //
+        // It would be really complex to ensure consistency of line-wrapping
+        // flags because the screen contents are changed in so many places.
+
+        // In this clause, we append a new line to the end of the block.
+        [self _appendCumulativeLineLength: (space_used + length)];
+        cached_numlines += NumberOfLinesAfterWrapping(buffer, length, width);
+#ifdef TEST_LINEBUFFER_SANITY
+        [self sanityTest];
+#endif
+    } else {
         // append to an existing line
         NSAssert(cll_entries > 0, @"is_partial but has no entries");
-        // update the numlines cache with the new number of full lines that the updated line has.
-        int prev_cll = cll_entries > first_entry + 1 ? cumulative_line_lengths[cll_entries - 2] - start_offset : 0;
+        // Update the numlines cache with the new number of full lines that the updated line has.
+        //
+        // Suppose we're appending "QWERTY" to a buffer containing either 1 or
+        // 2 lines (the two cases to consder here. If there are more than 2
+        // lines in the buffer, it's the same as the 2-line case).
+        //
+        // Set 'prev_cll' to the cumulative length up to the beginning of the
+        // line we're appending to.
+        //
+        // CASE 1
+        //   cll_entries=2, first_entry=0
+        //   0 abcdefg   <- prev_cll=7
+        //   1 hig>
+        //
+        // CASE 2
+        //   cll_entries=1, first_entry=0
+        //   0 abcdefg>  <- prev_cll=0
+        const int prev_cll = cll_entries > first_entry + 1 ?
+                             cumulative_line_lengths[cll_entries - 2] - start_offset :  // At least 2 valid line lengths
+                             0;                                                         // Exactly 1 valid line length
+
+        // Set 'cll' to the pre-appending CLL of the line we will append to
+        // (which is always the last line in the block).
+        //
+        // CASE 1
+        //   cll_entries=2, first_entry=0
+        //   0 abcdefg   <- prev_cll=7
+        //   1 hig>      <- cll=10
+        //
+        // CASE 2
+        //   cll_entries=1, first_entry=0
+        //   0 abcdefg>  <- prev_cll=0, cll=7
         int cll = cumulative_line_lengths[cll_entries - 1] - start_offset;
+
+        // Set 'old_length' to the length of the line before the one we're appending to.
+        // CASE 1
+        //   cll_entries=2, first_entry=0
+        //   0 abcdefg   <- prev_cll=7
+        //   1 hig>      <- cll=10
+        //   old_length=3
+        //
+        // CASE 2
+        //   cll_entries=1, first_entry=0
+        //   0 abcdefg>  <- prev_cll=0, cll=7
+        //   old_length=7
         int old_length = cll - prev_cll;
-        int oldnum = NumberOfFullLines(buffer_start + prev_cll, old_length, width);
-        int newnum = NumberOfFullLines(buffer_start + prev_cll, old_length + length, width);
+
+        // Compute the number of lines after wrapping without and without the appended bit.
+        // CASE 1
+        //   Wrapped lines from prev_cll of length old_length:
+        //     |hig |
+        //   oldnum=1
+        //   Wrapped lines from prev_cll of length old_length+length:
+        //     |higQ|
+        //     |WERT|
+        //     |Y   |
+        //   newnum=3
+        //   Number of lines added = 3-1 = 2
+        //
+        //   After all is said and done the whole buffer went from:
+        //     |abcd|
+        //     |efg |
+        //     |hig |  3 lines
+        //   to:
+        //     |abcd|
+        //     |efg |
+        //     |higQ|
+        //     |WERT|
+        //     |Y   |  5 lines
+        //
+        // CASE 2
+        //   Wrapped lines from prev_cll of length old_length:
+        //     |abcd|
+        //     |efg |
+        //   oldnum=2
+        //   Wrapped lines from prev_cll of length old_length+length:
+        //     |abcd|
+        //     |efgQ|
+        //     |WERT|
+        //     |Y   |
+        //   newnum=4
+        //   Number of lines added = 4-2=2
+        //
+        //   After all is said and done the whole buffer went from:
+        //     |abcd|
+        //     |efg |
+        //   to:
+        //     |abcd|
+        //     |efgQ|
+        //     |WERT|
+        //     |Y   |
+        int oldnum = NumberOfLinesAfterWrapping(buffer_start + prev_cll, old_length, width);
+        int newnum = NumberOfLinesAfterWrapping(buffer_start + prev_cll, old_length + length, width);
         cached_numlines += newnum - oldnum;
 
         cumulative_line_lengths[cll_entries - 1] += length;
 #ifdef TEST_LINEBUFFER_SANITY
-        int old_cached = cached_numlines;
-        cached_numlines_width = -1;
-        int new_cached = [self getNumLinesWithWrapWidth: width];
-        if (old_cached != new_cached) {
-            NSLog(@"appendLine partial case: cached_numlines updated to %d, but should be %d!", old_cached, new_cached);
-
-        }
-#endif
-    } else {
-        // add a new line
-        [self _appendCumulativeLineLength: (space_used + length)];
-        cached_numlines += NumberOfFullLines(buffer, length, width) + 1;
-#ifdef TEST_LINEBUFFER_SANITY
-        int old_cached = cached_numlines;
-        cached_numlines_width = -1;
-        int new_cached = [self getNumLinesWithWrapWidth: width];
-        if (old_cached != new_cached) {
-            NSLog(@"appendLine normal case: cached_numlines updated to %d, but should be %d!", old_cached, new_cached);
-        }
+        [self sanityTest];
 #endif
     }
     is_partial = partial;
