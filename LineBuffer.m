@@ -268,7 +268,7 @@ static int NumberOfLinesAfterWrapping(screen_char_t *buffer, int length, int wid
         //   0 abcdefg>  <- prev_cll=0, cll=7
         int cll = cumulative_line_lengths[cll_entries - 1] - start_offset;
 
-        // Set 'old_length' to the length of the line before the one we're appending to.
+        // Set 'old_length' to the length of the line we're appending to.
         // CASE 1
         //   cll_entries=2, first_entry=0
         //   0 abcdefg   <- prev_cll=7
@@ -281,15 +281,15 @@ static int NumberOfLinesAfterWrapping(screen_char_t *buffer, int length, int wid
         //   old_length=7
         int old_length = cll - prev_cll;
 
-        // Compute the number of lines after wrapping without and without the appended bit.
+        // Compute the number-of-lines-after-wrapping without and without the appended part.
         // CASE 1
         //   Wrapped lines from prev_cll of length old_length:
-        //     |hig |
+        //     |hig |  1 line
         //   oldnum=1
         //   Wrapped lines from prev_cll of length old_length+length:
         //     |higQ|
         //     |WERT|
-        //     |Y   |
+        //     |Y   |  3 lines
         //   newnum=3
         //   Number of lines added = 3-1 = 2
         //
@@ -307,24 +307,24 @@ static int NumberOfLinesAfterWrapping(screen_char_t *buffer, int length, int wid
         // CASE 2
         //   Wrapped lines from prev_cll of length old_length:
         //     |abcd|
-        //     |efg |
+        //     |efg |  2 lines
         //   oldnum=2
         //   Wrapped lines from prev_cll of length old_length+length:
         //     |abcd|
         //     |efgQ|
         //     |WERT|
-        //     |Y   |
+        //     |Y   |  4 lines
         //   newnum=4
         //   Number of lines added = 4-2=2
         //
         //   After all is said and done the whole buffer went from:
         //     |abcd|
-        //     |efg |
+        //     |efg |  2 lines
         //   to:
         //     |abcd|
         //     |efgQ|
         //     |WERT|
-        //     |Y   |
+        //     |Y   |  4 lines
         int oldnum = NumberOfLinesAfterWrapping(buffer_start + prev_cll, old_length, width);
         int newnum = NumberOfLinesAfterWrapping(buffer_start + prev_cll, old_length + length, width);
         cached_numlines += newnum - oldnum;
