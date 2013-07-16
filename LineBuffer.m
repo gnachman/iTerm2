@@ -497,8 +497,7 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
             if (width != cached_numlines_width) {
                 cached_numlines_width = -1;
             } else {
-                int fullLinesDropped = NumberOfFullLines(buffer_start, prev + offset, width) + 1;
-                cached_numlines -= fullLinesDropped;
+                cached_numlines -= orig_n;
             }
             buffer_start += prev + offset;
             start_offset = buffer_start - raw_buffer;
