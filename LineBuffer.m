@@ -90,34 +90,54 @@
     return theCopy;
 }
 
-- (NSString *)formattedBytesInRange:(NSRange)range {
+- (NSString *)formattedBytes:(screen_char_t *)chars inRange:(NSRange)range {
   NSMutableString *s = [NSMutableString string];
   for (int i = range.location; i < range.location + range.length; i++) {
-    if (raw_buffer[i].code == DWC_RIGHT) {
-      [s appendFormat:@"[DWC_RIGHT]"];
+    if (chars[i].code == DWC_RIGHT) {
+      [s appendFormat:@"[DWC_RIGHT] "];
     } else {
-      [s appendFormat:@"%C", raw_buffer[i].code];
+      [s appendFormat:@"%02x ", chars[i].code];
     }
   }
   return s;
 }
 
-- (NSString *)description {
+- (NSString *)formattedBytesInRange:(NSRange)range {
+  return [self formattedBytes:raw_buffer inRange:range];
+}
+
+- (NSString *)descriptionAtWidth:(int)width {
   NSMutableString *desc = [NSMutableString string];
   [desc appendFormat:@"<%p>\n", self];
   [desc appendFormat:@"Already-dropped bytes: %d\n", start_offset];
   [desc appendFormat:@"Start offset: %d\n", start_offset];
   [desc appendFormat:@"is_partial: %@\n", is_partial ? @"YES" : @"NO"];
+  [desc appendFormat:@"Number of raw lines: %d\n", cll_entries];
+  [desc appendFormat:@"Cached lines: %d at width %d\n", cached_numlines, cached_numlines_width];
   int start = 0;
   int length;
+  [desc appendFormat:@"RAW LINES:\n"];
   for (int i = 0; i < cll_entries; i++) {
     length = cumulative_line_lengths[i] - start;
     [desc appendFormat:@"Line %d (cumulative length=%d, length=%d): %@\n", i, cumulative_line_lengths[i], length,
       [self formattedBytesInRange:NSMakeRange(start, length)]];
     start = cumulative_line_lengths[i];
   }
-  [desc appendFormat:@"Number of lines: %d\n", cll_entries];
-  [desc appendFormat:@"Cached lines: %d at width %d\n", cached_numlines, cached_numlines_width];
+  [desc appendFormat:@"\nWRAPPED LINES:\n"];
+  int temp_width = cached_numlines_width;
+  int temp_num = cached_numlines;
+  cached_numlines_width = -1;
+  int numWrappedLines = [self getNumLinesWithWrapWidth:width];
+  for (int i = 0; i < numWrappedLines; i++) {
+    int lineNum = i;
+    length = 0;
+    int eol = 0;
+    screen_char_t *line = [self getWrappedLineWithWrapWidth:width lineNum:&lineNum lineLength:&length includesEndOfLine:&eol];
+    [desc appendFormat:@"Wrapped line %d: %@ [%@]\n", i, [self formattedBytes:line inRange:NSMakeRange(0, length)], eol ? @"EOL" : @"PARTIAL"];
+  }
+  cached_numlines_width = temp_width;
+  cached_numlines = temp_num;
+
   return desc;
 }
 
@@ -534,8 +554,8 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
             if (old_cached != new_cached) {
                 NSLog(@"dropLines: cached_numlines updated to %d, but should be %d!", old_cached, new_cached);
                 NSLog(@"n's original value=%d", orig_n);
-                NSLog(@"Line block before dropping:\n%@", orig);
-                NSLog(@"Line block after dropping:\n%@", self);
+                NSLog(@"Line block before dropping:\n%@", [orig descriptionAtWidth:width]);
+                NSLog(@"Line block after dropping:\n%@", [self descriptionAtWidth:width]);
             }
 #endif
 
