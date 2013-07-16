@@ -31,6 +31,8 @@
 #import "RegexKitLite/RegexKitLite.h"
 #import "BackgroundThread.h"
 
+#define TEST_LINEBUFFER_SANITY
+
 @implementation ResultRange
 @end
 
