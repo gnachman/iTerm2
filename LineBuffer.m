@@ -164,13 +164,13 @@ static int NumberOfLinesAfterWrapping(screen_char_t *buffer, int length, int wid
 }
 
 #ifdef TEST_LINEBUFFER_SANITY
-- (void)sanityTest
+- (void)sanityTest:(NSString *)location
 {
     int old_cached = cached_numlines;
     cached_numlines_width = -1;
     int new_cached = [self getNumLinesWithWrapWidth: width];
     if (old_cached != new_cached) {
-        NSLog(@"appendLine normal case: cached_numlines updated to %d, but should be %d!", old_cached, new_cached);
+        NSLog(@"%@: cached_numlines updated to %d, but should be %d!", location, old_cached, new_cached);
         assert(false);
     }
 }
@@ -229,7 +229,7 @@ static int NumberOfLinesAfterWrapping(screen_char_t *buffer, int length, int wid
         [self _appendCumulativeLineLength: (space_used + length)];
         cached_numlines += NumberOfLinesAfterWrapping(buffer, length, width);
 #ifdef TEST_LINEBUFFER_SANITY
-        [self sanityTest];
+        [self sanityTest:@"appendLines normal case"];
 #endif
     } else {
         // append to an existing line
@@ -331,7 +331,7 @@ static int NumberOfLinesAfterWrapping(screen_char_t *buffer, int length, int wid
 
         cumulative_line_lengths[cll_entries - 1] += length;
 #ifdef TEST_LINEBUFFER_SANITY
-        [self sanityTest];
+        [self sanityTest:@"appendLines partial case"];
 #endif
     }
     is_partial = partial;
@@ -451,7 +451,7 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
     for (i = first_entry; i < cll_entries; ++i) {
         int cll = cumulative_line_lengths[i] - start_offset;
         int length = cll - prev;
-        count += NumberOfFullLines(buffer_start + prev, length, width) + 1;
+        count += NumberOfLinesAfterWrapping(buffer_start + prev, length, width);
         prev = cll;
     }
 
@@ -613,8 +613,8 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
             // would be:
             //   offset = n * width;
             int offset = OffsetOfWrappedLine(buffer_start + prev, n, length, width);
-            int fullLinesDropped = NumberOfFullLines(buffer_start, prev + offset, width) + 1;
-            cached_numlines -= fullLinesDropped;
+            const int wrappedLinesDropped = NumberOfLinesAfterWrapping(buffer_start, prev + offset, width);
+            cached_numlines -= wrappedLinesDropped;
 
             buffer_start += prev + offset;
             start_offset = buffer_start - raw_buffer;
@@ -622,12 +622,7 @@ static int OffsetOfWrappedLine(screen_char_t* p, int n, int length, int width) {
             *charsDropped = start_offset - initialOffset;
 
 #ifdef TEST_LINEBUFFER_SANITY
-            int old_cached = cached_numlines;
-            cached_numlines_width = -1;
-            int new_cached = [self getNumLinesWithWrapWidth: width];
-            if (old_cached != new_cached) {
-                NSLog(@"dropLines: cached_numlines updated to %d, but should be %d!", old_cached, new_cached);
-            }
+            [self sanityTest:@"dropLines"];
 #endif
 
             return orig_n;
