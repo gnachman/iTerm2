@@ -738,42 +738,56 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     [self setNeedsDisplay:YES];
 }
 
-- (NSColor*)_colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold
+- (NSColor*)_colorForCode:(int)theIndex
+                    green:(int)green
+                     blue:(int)blue
+                colorMode:(ColorMode)theMode
+                     bold:(BOOL)isBold
 {
     NSColor* color;
 
-    if (alt) {
-        switch (theIndex) {
-            case ALTSEM_SELECTED:
-                color = selectedTextColor;
-                break;
-            case ALTSEM_CURSOR:
-                color = cursorTextColor;
-                break;
-            case ALTSEM_BG_DEFAULT:
-                color = defaultBGColor;
-                break;
-            default:
-                if (isBold && useBrightBold) {
-                    if (theIndex == ALTSEM_BG_DEFAULT) {
-                        color = defaultBGColor;
-                    } else {
+    switch (theMode) {
+        case ColorModeAlternate:
+            switch (theIndex) {
+                case ALTSEM_SELECTED:
+                    color = selectedTextColor;
+                    break;
+                case ALTSEM_CURSOR:
+                    color = cursorTextColor;
+                    break;
+                case ALTSEM_BG_DEFAULT:
+                    color = defaultBGColor;
+                    break;
+                case ALTSEM_FG_DEFAULT:
+                    if (isBold && useBrightBold) {
                         color = [self defaultBoldColor];
+                    } else {
+                        color = defaultFGColor;
                     }
-                } else {
-                    color = defaultFGColor;
-                }
-        }
-    } else {
-        // Render bold text as bright. The spec (ECMA-48) describes the intense
-        // display setting (esc[1m) as "bold or bright". We make it a
-        // preference.
-        if (isBold &&
-            useBrightBold &&
-            (theIndex < 8)) { // Only colors 0-7 can be made "bright".
-            theIndex |= 8;  // set "bright" bit.
-        }
-        color = colorTable[theIndex];
+                    break;
+                default:
+                    // This should never happen, but if it does we should
+                    // get some bug reports by returning red.
+                    NSLog(@"Unexpected alternate-semantics color %d", theIndex);
+                    return [NSColor colorWithCalibratedRed:1 green:0 blue:0 alpha:1];
+            }
+            break;
+        case ColorMode24bit:
+            color = [self colorFromRed:theIndex
+                                 green:green
+                                  blue:blue];
+            break;
+        case ColorModeNormal:
+            // Render bold text as bright. The spec (ECMA-48) describes the intense
+            // display setting (esc[1m) as "bold or bright". We make it a
+            // preference.
+            if (isBold &&
+                useBrightBold &&
+                (theIndex < 8)) { // Only colors 0-7 can be made "bright".
+                theIndex |= 8;  // set "bright" bit.
+            }
+            color = colorTable[theIndex];
+            break;
     }
 
     return color;
@@ -811,32 +825,49 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 // Provide a dimmed version of a color. It includes a caching optimization that
 // really helps when dimming is on.
 - (NSColor *)_dimmedColorForCode:(int)theIndex
-              alternateSemantics:(BOOL)alt
+                           green:(int)green
+                            blue:(int)blue
+                       colorMode:(ColorMode)theMode
                             bold:(BOOL)isBold
                       background:(BOOL)isBackground
 {
     if (dimmingAmount_ == 0) {
         // No dimming: return plain-vanilla color.
         NSColor *theColor = [self _colorForCode:theIndex
-                             alternateSemantics:alt
+                                          green:green
+                                           blue:blue
+                                      colorMode:theMode
                                            bold:isBold];
         return theColor;
+    }
+
+    // 24-bit colors are not cached, as they could increase cache size
+    // nontrivially up to to 2^27
+    if (theMode == ColorMode24bit) {
+        NSColor *theColor = [self _colorForCode:theIndex
+                                          green:green
+                                           blue:blue
+                                      colorMode:theMode
+                                           bold:isBold];
+        return [self _dimmedColorFrom:theColor];
     }
 
     // Dimming is on. See if the dimmed version of the color is cached.
     // The max number of keys is 2^11 so this won't take too much memory.
     // This cache provides a 20%ish performance gain when dimming is on.
     int key = (((theIndex & 0xff) << 3) |
-               ((alt ? 1 : 0) << 2) |
+               ((theMode == ColorModeAlternate ? 1 : 0) << 2) |
                ((isBold ? 1 : 0) << 1) |
                ((isBackground ? 1 : 0) << 0));
     NSNumber *numKey = [NSNumber numberWithInt:key];
     NSColor *cacheEntry = [dimmedColorCache_ objectForKey:numKey];
-    if (cacheEntry ) {
+    if (cacheEntry) {
         return cacheEntry;
     } else {
         NSColor *theColor = [self _colorForCode:theIndex
-                             alternateSemantics:alt
+                                          green:green
+                                           blue:blue
+                                      colorMode:theMode
                                            bold:isBold];
         NSColor *dimmedColor = [self _dimmedColorFrom:theColor];
         [dimmedColorCache_ setObject:dimmedColor forKey:numKey];
@@ -845,21 +876,37 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 }
 
 - (NSColor*)colorForCode:(int)theIndex
-      alternateSemantics:(BOOL)alt
+                   green:(int)green
+                    blue:(int)blue
+               colorMode:(ColorMode)theMode
                     bold:(BOOL)isBold
             isBackground:(BOOL)isBackground
 {
     if (isBackground && dimOnlyText_) {
         NSColor *theColor = [self _colorForCode:theIndex
-                             alternateSemantics:alt
+                                          green:green
+                                           blue:blue
+                                      colorMode:theMode
                                            bold:isBold];
         return theColor;
     } else {
         return [self _dimmedColorForCode:theIndex
-                      alternateSemantics:alt
+                                   green:green
+                                    blue:blue
+                               colorMode:theMode
                                     bold:isBold
                               background:isBackground];
     }
+}
+
+- (NSColor *)colorFromRed:(int)red
+                    green:(int)green
+                     blue:(int)blue
+{
+    return [NSColor colorWithCalibratedRed:red/255.0
+                                     green:green/255.0
+                                      blue:blue/255.0
+                                     alpha:1];
 }
 
 - (NSColor *)selectionColor
@@ -5644,9 +5691,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                              useTransparency:[self useTransparency]];
                 // Blend default bg color
         NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
-                              alternateSemantics:YES
-                                            bold:NO
-                                    isBackground:YES];
+                                       green:0
+                                        blue:0
+                                   colorMode:ColorModeAlternate
+                                        bold:NO
+                                isBackground:YES];
         [[aColor colorWithAlphaComponent:1 - blend] set];
         NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
                                             dest.y + bgRect.origin.y,
@@ -5679,9 +5728,11 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                              useTransparency:[self useTransparency]];
         // Blend default bg color over bg image.
         NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
-                              alternateSemantics:YES
-                                            bold:NO
-                                    isBackground:YES];
+                                       green:0
+                                        blue:0
+                                   colorMode:ColorModeAlternate
+                                        bold:NO
+                                isBackground:YES];
         [[aColor colorWithAlphaComponent:1 - blend] set];
         NSRectFillUsingOperation(NSMakeRect(dest.x + bgRect.origin.x,
                                             dest.y + bgRect.origin.y,
@@ -5712,7 +5763,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                                                              useTransparency:[self useTransparency]];
                 // Blend default bg color over bg iamge.
         NSColor *aColor = [self colorForCode:ALTSEM_BG_DEFAULT
-                          alternateSemantics:YES
+                                       green:0
+                                        blue:0
+                                   colorMode:ColorModeAlternate
                                         bold:NO
                                 isBackground:YES];
         [[aColor colorWithAlphaComponent:1 - blend] set];
@@ -5910,7 +5963,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
 
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)complex
-                       fgColor:(int)fgColor
                     renderBold:(BOOL*)renderBold
                   renderItalic:(BOOL)renderItalic
 {
@@ -6162,7 +6214,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
     CharacterRun* currentRun = NULL;
     const char* matchBytes = [matches bytes];
     int lastForegroundColor = -1;
-    int lastAlternateForegroundSemantics = -1;
+    int lastFgGreen = -1;
+    int lastFgBlue = -1;
+    int lastForegroundColorMode = -1;
     int lastBold = 2;  // Bold is a one-bit field so it can never equal 2.
     NSColor *lastColor = nil;
 
@@ -6196,8 +6250,8 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         } else {
             // Not a selection.
             if (reversed &&
-                theLine[i].alternateForegroundSemantics &&
-                theLine[i].foregroundColor == ALTSEM_FG_DEFAULT) {
+                theLine[i].foregroundColor == ALTSEM_FG_DEFAULT &&
+                theLine[i].foregroundColorMode == ColorModeAlternate) {
                 // Has default foreground color so use background color.
                 if (!dimOnlyText_) {
                     thisChar.color = [self _dimmedColorFrom:defaultBGColor];
@@ -6206,7 +6260,9 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 }
             } else {
                 if (theLine[i].foregroundColor == lastForegroundColor &&
-                    theLine[i].alternateForegroundSemantics == lastAlternateForegroundSemantics &&
+                    theLine[i].fgGreen == lastFgGreen &&
+                    theLine[i].fgBlue == lastFgBlue &&
+                    theLine[i].foregroundColorMode == lastForegroundColorMode &&
                     theLine[i].bold == lastBold) {
                     // Looking up colors with -colorForCode:... is expensive and it's common to
                     // have consecutive characters with the same color.
@@ -6214,13 +6270,17 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 } else {
                     // Not reversed or not subject to reversing (only default
                     // foreground color is drawn in reverse video).
-                    thisChar.color = [self colorForCode:theLine[i].foregroundColor
-                                     alternateSemantics:theLine[i].alternateForegroundSemantics
-                                                   bold:theLine[i].bold
-                                           isBackground:NO];
                     lastForegroundColor = theLine[i].foregroundColor;
-                    lastAlternateForegroundSemantics = theLine[i].alternateForegroundSemantics;
+                    lastFgGreen = theLine[i].fgGreen;
+                    lastFgBlue = theLine[i].fgBlue;
+                    lastForegroundColorMode = theLine[i].foregroundColorMode;
                     lastBold = theLine[i].bold;
+                    thisChar.color = [self colorForCode:lastForegroundColor
+                                                  green:lastFgGreen
+                                                   blue:lastFgBlue
+                                              colorMode:lastForegroundColorMode
+                                                   bold:lastBold
+                                           isBackground:NO];
                     lastColor = thisChar.color;
                 }
             }
@@ -6285,7 +6345,6 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
             BOOL fakeBold = theLine[i].bold;
             thisChar.fontInfo = [self getFontForChar:theLine[i].code
                                            isComplex:theLine[i].complexChar
-                                             fgColor:theLine[i].foregroundColor
                                           renderBold:&fakeBold
                                         renderItalic:theLine[i].italic];
             thisChar.fakeBold = fakeBold;
@@ -6512,7 +6571,9 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     rightMargin.size.height = lineHeight;
 
     aColor = [self colorForCode:ALTSEM_BG_DEFAULT
-             alternateSemantics:YES
+                          green:0
+                           blue:0
+                      colorMode:ColorModeAlternate
                            bold:NO
                    isBackground:YES];
 
@@ -6579,7 +6640,9 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     int bgstart = -1;
     int j = 0;
     int bgColor = 0;
-    BOOL bgAlt = NO;
+    int bgGreen = 0;
+    int bgBlue = 0;
+    ColorMode bgColorMode = ColorModeNormal;
     BOOL bgselected = NO;
     BOOL isMatch = NO;
     NSData* matches = [resultMap_ objectForKey:[NSNumber numberWithLongLong:line + [dataSource totalScrollbackOverflow]]];
@@ -6623,7 +6686,9 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
             // Start new run
             bgstart = j;
             bgColor = theLine[j].backgroundColor;
-            bgAlt = theLine[j].alternateBackgroundSemantics;
+            bgGreen = theLine[j].bgGreen;
+            bgBlue = theLine[j].bgBlue;
+            bgColorMode = theLine[j].backgroundColorMode;
             bgselected = selected;
             isMatch = match;
         }
@@ -6631,8 +6696,10 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
         if (j != WIDTH &&
             bgselected == selected &&
             theLine[j].backgroundColor == bgColor &&
-            match == isMatch &&
-            theLine[j].alternateBackgroundSemantics == bgAlt) {
+            theLine[j].bgGreen == bgGreen &&
+            theLine[j].bgBlue == bgBlue &&
+            theLine[j].backgroundColorMode == bgColorMode &&
+            match == isMatch) {
             // Continue the run
             j += (double_width ? 2 : 1);
         } else if (bgstart >= 0) {
@@ -6655,7 +6722,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
             }
             if (!hasBGImage ||
                 (isMatch && !bgselected) ||
-                !(bgColor == ALTSEM_BG_DEFAULT && bgAlt) ||
+                !(bgColor == ALTSEM_BG_DEFAULT && bgColorMode == ColorModeAlternate) ||
                 bgselected) {
                 // There's no bg image, or there's a nondefault bg on a bg image.
                 // We are not drawing an unmolested background image. Some
@@ -6667,17 +6734,21 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                 } else if (bgselected) {
                     aColor = selectionColor;
                 } else {
-                    if (reversed && bgColor == ALTSEM_BG_DEFAULT && bgAlt) {
+                    if (reversed && bgColor == ALTSEM_BG_DEFAULT && bgColorMode == ColorModeAlternate) {
                         // Reverse video is only applied to default background-
                         // color chars.
                         aColor = [self colorForCode:ALTSEM_FG_DEFAULT
-                                 alternateSemantics:YES
+                                              green:0
+                                               blue:0
+                                          colorMode:ColorModeAlternate
                                                bold:NO
                                        isBackground:NO];
                     } else {
                         // Use the regular background color.
                         aColor = [self colorForCode:bgColor
-                                 alternateSemantics:bgAlt
+                                              green:bgGreen
+                                               blue:bgBlue
+                                          colorMode:bgColorMode
                                                bold:NO
                                        isBackground:(bgColor == ALTSEM_BG_DEFAULT)];
                     }
@@ -6694,7 +6765,9 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                 // There is a bg image and no special background on it. Blend
                 // in the default background color.
                 aColor = [self colorForCode:ALTSEM_BG_DEFAULT
-                         alternateSemantics:YES
+                                      green:0
+                                       blue:0
+                                  colorMode:ColorModeAlternate
                                        bold:NO
                                isBackground:YES];
                 aColor = [aColor colorWithAlphaComponent:1 - blend];
@@ -6736,7 +6809,9 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
 
 - (void)_drawCharacter:(screen_char_t)screenChar
                fgColor:(int)fgColor
-    alternateSemantics:(BOOL)fgAlt
+               fgGreen:(int)fgGreen
+                fgBlue:(int)fgBlue
+           fgColorMode:(ColorMode)fgColorMode
                 fgBold:(BOOL)fgBold
                    AtX:(double)X
                      Y:(double)Y
@@ -6745,7 +6820,9 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
 {
     screen_char_t temp = screenChar;
     temp.foregroundColor = fgColor;
-    temp.alternateForegroundSemantics = fgAlt;
+    temp.fgGreen = fgGreen;
+    temp.fgBlue = fgBlue;
+    temp.foregroundColorMode = fgColorMode;
     temp.bold = fgBold;
     NSMutableArray *runs = [NSMutableArray arrayWithCapacity:kMaxParts];
 
@@ -6773,7 +6850,9 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
             [overrideColor set];
         } else {
             [[self colorForCode:fgColor
-               alternateSemantics:fgAlt
+                          green:fgGreen
+                           blue:fgBlue
+                      colorMode:ColorModeAlternate
                            bold:fgBold
                    isBackground:NO] set];
         }
@@ -6837,7 +6916,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
         screen_char_t buf[maxLen];
         screen_char_t fg = {0}, bg = {0};
         fg.foregroundColor = ALTSEM_FG_DEFAULT;
-        fg.alternateForegroundSemantics = YES;
+        fg.foregroundColorMode = ColorModeAlternate;
         fg.bold = NO;
         fg.italic = NO;
         fg.blink = NO;
@@ -6983,13 +7062,17 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     if ([[dataSource terminal] screenMode]) {
         // reversed
         return [self colorForCode:c.foregroundColor
-               alternateSemantics:c.alternateForegroundSemantics
+                            green:c.fgGreen
+                             blue:c.fgBlue
+                        colorMode:c.foregroundColorMode
                              bold:c.bold
                      isBackground:YES];
     } else {
         // normal
         return [self colorForCode:c.backgroundColor
-               alternateSemantics:c.alternateBackgroundSemantics
+                            green:c.bgGreen
+                             blue:c.bgBlue
+                        colorMode:c.backgroundColorMode
                              bold:false
                      isBackground:YES];
     }
@@ -7149,13 +7232,17 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
             if (colorInvertedCursor) {
                 if (reversed) {
                     bgColor = [self colorForCode:screenChar.backgroundColor
-                              alternateSemantics:screenChar.alternateBackgroundSemantics
+                                           green:screenChar.bgGreen
+                                            blue:screenChar.bgBlue
+                                       colorMode:screenChar.backgroundColorMode
                                             bold:screenChar.bold
                                     isBackground:NO];
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
                 } else {
                     bgColor = [self colorForCode:screenChar.foregroundColor
-                              alternateSemantics:screenChar.alternateForegroundSemantics
+                                           green:screenChar.fgGreen
+                                            blue:screenChar.fgBlue
+                                       colorMode:screenChar.foregroundColorMode
                                             bold:screenChar.bold
                                     isBackground:NO];
                     bgColor = [bgColor colorWithAlphaComponent:alpha];
@@ -7211,45 +7298,42 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                     if (aChar) {
                         // Have a char at the cursor position.
                         if (colorInvertedCursor && !frameOnly) {
+                            // Pick background color for text if is key window, otherwise use fg color for text.
                             int fgColor;
-                            BOOL fgAlt;
-                                                        BOOL fgBold;
+                            int fgGreen;
+                            int fgBlue;
+                            ColorMode fgColorMode;
+                            BOOL fgBold;
+                            BOOL isBold;
+                            NSColor* overrideColor = nil;
                             if ([[self window] isKeyWindow]) {
                                 // Draw a character in background color when
                                 // window is key.
                                 fgColor = screenChar.backgroundColor;
-                                fgAlt = screenChar.alternateBackgroundSemantics;
-                                                                fgBold = NO;
+                                fgGreen = screenChar.bgGreen;
+                                fgBlue = screenChar.bgBlue;
+                                fgColorMode = screenChar.backgroundColorMode;
+                                fgBold = NO;
                             } else {
                                 // Draw character in foreground color when there
                                 // is just a frame around it.
                                 fgColor = screenChar.foregroundColor;
-                                fgAlt = screenChar.alternateForegroundSemantics;
-                                                                fgBold = screenChar.bold;
+                                fgGreen = screenChar.fgGreen;
+                                fgBlue = screenChar.fgBlue;
+                                fgColorMode = screenChar.foregroundColorMode;
+                                fgBold = screenChar.bold;
                             }
-
-                            // Pick background color for text if is key window, otherwise use fg color for text.
-                            int theColor;
-                            BOOL alt;
-                            BOOL isBold;
-                            if ([[self window] isKeyWindow]) {
-                                theColor = screenChar.backgroundColor;
-                                alt = screenChar.alternateBackgroundSemantics;
-                                isBold = screenChar.bold;
-                            } else {
-                                theColor = screenChar.foregroundColor;
-                                alt = screenChar.alternateForegroundSemantics;
-                                isBold = screenChar.bold;
-                            }
+                            isBold = screenChar.bold;
 
                             // Ensure text has enough contrast by making it black/white if the char's color would be close to the cursor bg.
                             NSColor* proposedForeground = [[self colorForCode:fgColor
-                                                           alternateSemantics:fgAlt
+                                                                        green:fgGreen
+                                                                         blue:fgBlue
+                                                                    colorMode:fgColorMode
                                                                          bold:fgBold
                                                                  isBackground:NO] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
                             CGFloat fgBrightness = [self perceivedBrightness:proposedForeground];
                             CGFloat bgBrightness = [self perceivedBrightness:[bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]];
-                            NSColor* overrideColor = nil;
                             if (!frameOnly && fabs(fgBrightness - bgBrightness) < gSmartCursorFgThreshold) {
                                 // foreground and background are very similar. Just use black and
                                 // white.
@@ -7259,11 +7343,14 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                                     overrideColor = [self _dimmedColorFrom:[NSColor colorWithCalibratedRed:0 green:0 blue:0 alpha:1]];
                                 }
                             }
+
                             BOOL saved = useBrightBold;
                             useBrightBold = NO;
                             [self _drawCharacter:screenChar
-                                         fgColor:theColor
-                              alternateSemantics:alt
+                                         fgColor:fgColor
+                                         fgGreen:fgGreen
+                                          fgBlue:fgBlue
+                                     fgColorMode:fgColorMode
                                           fgBold:isBold
                                              AtX:x1 * charWidth + MARGIN
                                                Y:curY + cursorHeight - lineHeight
@@ -7273,20 +7360,28 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                         } else {
                             // Non-inverted cursor or cursor is frame
                             int theColor;
-                            BOOL alt;
+                            int theGreen;
+                            int theBlue;
+                            ColorMode theMode;
                             BOOL isBold;
                             if ([[self window] isKeyWindow]) {
                                 theColor = ALTSEM_CURSOR;
-                                alt = YES;
-                                isBold = screenChar.bold;
+                                theGreen = 0;
+                                theBlue = 0;
+                                theMode = ColorModeAlternate;
                             } else {
                                 theColor = screenChar.foregroundColor;
-                                alt = screenChar.alternateForegroundSemantics;
-                                isBold = screenChar.bold;
+                                theGreen = screenChar.fgGreen;
+                                theBlue = screenChar.fgBlue;
+                                theMode = screenChar.foregroundColorMode;
                             }
+                            isBold = screenChar.bold;
+
                             [self _drawCharacter:screenChar
                                          fgColor:theColor
-                              alternateSemantics:alt
+                                         fgGreen:theGreen
+                                          fgBlue:theBlue
+                                     fgColorMode:theMode
                                           fgBold:isBold
                                              AtX:x1 * charWidth + MARGIN
                                                Y:curY + cursorHeight - lineHeight
@@ -8056,13 +8151,14 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     NSSize dragOffset = NSMakeSize(0.0, 0.0);
 
     length = [aString length];
-    if([aString length] > 15)
+    if ([aString length] > 15) {
         length = 15;
+    }
 
     imageSize = NSMakeSize(charWidth*length, lineHeight);
     anImage = [[NSImage alloc] initWithSize: imageSize];
     [anImage lockFocus];
-    if([aString length] > 15)
+    if ([aString length] > 15)
         tmpString = [NSString stringWithFormat: @"%@...", [aString substringWithRange: NSMakeRange(0, 12)]];
     else
         tmpString = [aString substringWithRange: NSMakeRange(0, length)];

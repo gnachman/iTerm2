@@ -441,7 +441,8 @@ enum {
 - (NSColor*)defaultFGColor;
 - (NSColor*)defaultBGColor;
 - (NSColor*)defaultBoldColor;
-- (NSColor*)colorForCode:(int)theIndex alternateSemantics:(BOOL)alt bold:(BOOL)isBold isBackground:(BOOL)isBackground;
+- (NSColor*)colorForCode:(int)theIndex green:(int)green blue:(int)blue colorMode:(ColorMode)theMode bold:(BOOL)isBold isBackground:(BOOL)isBackground;
+- (NSColor*)colorFromRed:(int)red green:(int)green blue:(int)blue;
 - (NSColor*)selectionColor;
 - (NSColor*)defaultCursorColor;
 - (NSColor*)selectedTextColor;
@@ -636,7 +637,9 @@ typedef enum {
 - (void)_drawCursorTo:(NSPoint*)toOrigin;
 - (void)_drawCharacter:(screen_char_t)screenChar
                fgColor:(int)fgColor
-    alternateSemantics:(BOOL)fgAlt
+               fgGreen:(int)fgGreen
+                fgBlue:(int)fgBlue
+           fgColorMode:(ColorMode)fgColorMode
                 fgBold:(BOOL)fgBold
                    AtX:(double)X
                      Y:(double)Y
@@ -666,7 +669,6 @@ typedef enum {
 - (void)_settingsChanged:(NSNotification *)notification;
 - (PTYFontInfo*)getFontForChar:(UniChar)ch
                      isComplex:(BOOL)complex
-                       fgColor:(int)fgColor
                     renderBold:(BOOL*)renderBold
                   renderItalic:(BOOL)renderItalic;
 

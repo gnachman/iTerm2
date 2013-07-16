@@ -349,17 +349,25 @@ typedef enum {
     BOOL REPORT_FOCUS;
 
     int FG_COLORCODE;
-    BOOL alternateForegroundSemantics;
+    int FG_GREEN;
+    int FG_BLUE;
+    ColorMode FG_COLORMODE;
     int BG_COLORCODE;
-    BOOL alternateBackgroundSemantics;
+    int BG_GREEN;
+    int BG_BLUE;
+    ColorMode BG_COLORMODE;
     int bold, italic, under, blink, reversed;
 
     int saveBold, saveItalic, saveUnder, saveBlink, saveReversed;
     int saveCHARSET;
     int saveForeground;
-    BOOL saveAltForeground;
+    int saveFgGreen;
+    int saveFgBlue;
+    ColorMode saveFgColorMode;
     int saveBackground;
-    BOOL saveAltBackground;
+    int saveBgGreen;
+    int saveBgBlue;
+    ColorMode saveBgColorMode;
 
     BOOL TRACE;
 
@@ -375,7 +383,7 @@ typedef enum {
     BOOL useCanonicalParser;
 
     //terminfo
-    char  *key_strings[TERMINFO_KEYS];
+    char *key_strings[TERMINFO_KEYS];
 
     // http://www.xfree86.org/current/ctlseqs.html#Bracketed%20Paste%20Mode
     BOOL bracketedPasteMode_;
