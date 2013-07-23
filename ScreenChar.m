@@ -41,6 +41,12 @@ static int ccmNextKey = 1;
 // strings before creating a new one with a recycled code.
 static BOOL hasWrapped = NO;
 
+@implementation ScreenCharArray
+@synthesize line = _line;
+@synthesize length = _length;
+@synthesize eol = _eol;
+@end
+
 NSString* ComplexCharToStr(int key)
 {
     if (key == UNICODE_REPLACEMENT_CHAR) {

@@ -250,7 +250,13 @@ typedef struct FindContext {
 // characters will be modified.
 // 0 <= lineNum < numLinesWithWidth:width
 // Returns EOL code.
+// DEPRECATED, use wrappedLineAtIndex:width: instead.
 - (int) copyLineToBuffer: (screen_char_t*) buffer width: (int) width lineNum: (int) lineNum;
+
+// Like the above but with a saner way of holding the returned data. Callers are advised not
+// to modify the screen_char_t's returned, but the ScreenCharArray is otherwise safe to
+// mutate.
+- (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum width:(int)width;
 
 // Copy up to width chars from the last line into *ptr. The last line will be removed or
 // truncated from the buffer. Sets *includesEndOfLine to true if this line should have a

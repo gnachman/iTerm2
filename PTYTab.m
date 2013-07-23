@@ -2758,17 +2758,17 @@ static NSString* FormatRect(NSRect r) {
         SessionView *sv = (SessionView *)view;
         PTYSession *theSession = [sv session];
         [theSession resizeFromArrangement:[arrangement objectForKey:TAB_ARRANGEMENT_SESSION]];
-                assert([arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]);
+        assert([arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]);
 
-                NSRect aFrame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
-                [sv setFrame:aFrame];
-                NSSize theSize = [theSession idealScrollViewSize];
-                [[theSession SCROLLVIEW] setFrame:NSMakeRect(0,
-                                                                                                         0,
-                                                                                                         theSize.width,
-                                                                                                         theSize.height)];
-                [[theSession view] setAutoresizesSubviews:NO];
-                [[theSession view] updateTitleFrame];
+        NSRect aFrame = [PTYTab dictToFrame:[arrangement objectForKey:TAB_ARRANGEMENT_SESSIONVIEW_FRAME]];
+        [sv setFrame:aFrame];
+        NSSize theSize = [theSession idealScrollViewSize];
+        [[theSession SCROLLVIEW] setFrame:NSMakeRect(0,
+                                                     0,
+                                                     theSize.width,
+                                                     theSize.height)];
+        [[theSession view] setAutoresizesSubviews:NO];
+        [[theSession view] updateTitleFrame];
     }
 }
 

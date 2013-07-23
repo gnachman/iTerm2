@@ -4269,15 +4269,60 @@ void DumpBuf(screen_char_t* p, int n) {
     free(dummy);
 }
 
+- (void)stripTrailingSpaceFromLine:(ScreenCharArray *)line
+{
+    screen_char_t *p = line.line;
+    int len = line.length;
+    for (int i = len - 1; i >= 0; i--) {
+        if (p[i].code == ' ' && ScreenCharHasDefaultAttributesAndColors(p[i])) {
+            len--;
+        } else {
+            break;
+        }
+    }
+    line.length = len;
+}
+
 - (void)setHistory:(NSArray *)history
 {
+    // This is way more complicated than it should be to work around something dumb in tmux.
+    // It pads lines in its history with trailing spaces, which we'd like to trim. More importantly,
+    // we need to trim empty lines at the end of the history because that breaks how we move the
+    // screen contents around on resize. So we take the history from tmux, append it to a temporary
+    // line buffer, grab each wrapped line and trim spaces from it, and then append those modified
+    // line (excluding empty ones at the end) to the real line buffer.
     [self clearBuffer];
+    LineBuffer *temp = [[[LineBuffer alloc] init] autorelease];
     for (NSData *chars in history) {
         screen_char_t *line = (screen_char_t *) [chars bytes];
         const int len = [chars length] / sizeof(screen_char_t);
-        [linebuffer appendLine:line
+        [temp appendLine:line
                         length:len
                        partial:NO
+                         width:WIDTH];
+    }
+    NSMutableArray *wrappedLines = [NSMutableArray array];
+    int n = [temp numLinesWithWidth:WIDTH];
+    int numberOfConsecutiveEmptyLines = 0;
+    for (int i = 0; i < n; i++) {
+        ScreenCharArray *line = [temp wrappedLineAtIndex:i width:WIDTH];
+        if (line.eol == EOL_HARD) {
+            [self stripTrailingSpaceFromLine:line];
+            if (line.length == 0) {
+                ++numberOfConsecutiveEmptyLines;
+            } else {
+                numberOfConsecutiveEmptyLines = 0;
+            }
+        } else {
+            numberOfConsecutiveEmptyLines = 0;
+        }
+        [wrappedLines addObject:line];
+    }
+    for (int i = 0; i < n - numberOfConsecutiveEmptyLines; i++) {
+        ScreenCharArray *line = [wrappedLines objectAtIndex:i];
+        [linebuffer appendLine:line.line
+                        length:line.length
+                       partial:(line.eol != EOL_HARD)
                          width:WIDTH];
     }
     if (!unlimitedScrollback_) {

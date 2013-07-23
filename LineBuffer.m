@@ -179,12 +179,16 @@ static int NumberOfFullLines(screen_char_t* buffer, int length, int width)
         return NO;
     }
     memcpy(raw_buffer + space_used, buffer, sizeof(screen_char_t) * length);
-    // There's a bit of an edge case here: if you're appending an empty
-    // non-partial line to a partial line, we need it to append a blank line
-    // after the continued line. In practice this happens because a line is
-    // long but then the wrapped portion is erased and the EOL_SOFT flag stays
-    // behind. It would be really complex to ensure consistency of line-wrapping
-    // flags because the screen contents are changed in so many places.
+    // There's an edge case here. In the else clause, the line buffer looks like this originally:
+    //   |xxxx| EOL_SOFT
+    // Then append an empty line with EOL_HARD. The desired result is
+    //   |xxxx| EOL_SOFT
+    //   ||     EOL_HARD
+    // It's an edge case because even though the line buffer is in the "is_partial" state, we can't
+    // just increment the last line's length.
+    //
+    // This can happen in practice if the now-empty line being appended formerly had some stuff
+    // but that stuff was erased and the EOL_SOFT was left behind.
     if (is_partial && !(!partial && length == 0)) {
         // append to an existing line
         NSAssert(cll_entries > 0, @"is_partial but has no entries");
@@ -1234,6 +1238,40 @@ static int RawNumLines(LineBuffer* buffer, int width) {
     NSLog(@"Couldn't find line %d", lineNum);
     NSAssert(NO, @"Tried to get non-existant line");
     return NO;
+}
+
+- (ScreenCharArray *)wrappedLineAtIndex:(int)lineNum width:(int)width
+{
+    int line = lineNum;
+    int i;
+    ScreenCharArray *result = [[[ScreenCharArray alloc] init] autorelease];
+    for (i = 0; i < [blocks count]; ++i) {
+        LineBlock* block = [blocks objectAtIndex:i];
+
+        // getNumLinesWithWrapWidth caches its result for the last-used width so
+        // this is usually faster than calling getWrappedLineWithWrapWidth since
+        // most calls to the latter will just decrement line and return NULL.
+        int block_lines = [block getNumLinesWithWrapWidth:width];
+        if (block_lines < line) {
+            line -= block_lines;
+            continue;
+        }
+
+        int length, eol;
+        result.line = [block getWrappedLineWithWrapWidth:width
+                                                 lineNum:&line
+                                              lineLength:&length
+                                       includesEndOfLine:&eol];
+        if (result.line) {
+            result.length = length;
+            result.eol = eol;
+            NSAssert(result.length <= width, @"Length too long");
+            return result;
+        }
+    }
+    NSLog(@"Couldn't find line %d", lineNum);
+    NSAssert(NO, @"Tried to get non-existant line");
+    return nil;
 }
 
 - (int) numLinesWithWidth: (int) width

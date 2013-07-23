@@ -145,6 +145,18 @@ typedef struct screen_char_t
     unsigned int unused : 7;
 } screen_char_t;
 
+// Typically used to store a single screen line.
+@interface ScreenCharArray : NSObject {
+    screen_char_t *_line;  // Array of chars
+    int _length;  // Number of chars in _line
+    int _eol;  // EOL_SOFT, EOL_HARD, or EOL_DWC
+}
+
+@property (nonatomic, assign) screen_char_t *line;  // Assume const unless instructed otherwise
+@property (nonatomic, assign) int length;
+@property (nonatomic, assign) int eol;
+@end
+
 // Standard unicode replacement string. Is a double-width character.
 static inline NSString* ReplacementString()
 {
@@ -218,6 +230,18 @@ static inline BOOL ForegroundAttributesEqual(const screen_char_t a,
         // different ColorMode == different colors
         return NO;
     }
+}
+
+static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s) {
+    return (s.backgroundColor == ALTSEM_BG_DEFAULT &&
+            s.foregroundColor == ALTSEM_FG_DEFAULT &&
+            s.alternateBackgroundSemantics &&
+            !s.complexChar &&
+            s.alternateForegroundSemantics &&
+            !s.bold &&
+            !s.italic &&
+            !s.blink &&
+            !s.underline);
 }
 
 // Look up the string associated with a complex char's key.
