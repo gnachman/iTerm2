@@ -3435,12 +3435,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
-                    // Reporting mosue clicks. The remote app gets preference.
+                    // Reporting mouse clicks. The remote app gets preference.
                     break;
 
                 default:
                     // Not reporting mouse clicks, so we'll move the cursor since the remote app can't.
-                    [self placeCursorOnCurrentLineWithEvent:event];
+                    if (!cmdPressed) {
+                        [self placeCursorOnCurrentLineWithEvent:event];
+                    }
                     break;
             }
         }
@@ -4892,8 +4894,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         IM_INPUT_INSERT = YES;
     }
 
-    // In case imeOffset changed, the frame height must adjust.
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    if ([self hasMarkedText]) {
+        // In case imeOffset changed, the frame height must adjust.
+        [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    }
 }
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
