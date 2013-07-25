@@ -4841,8 +4841,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         IM_INPUT_INSERT = YES;
     }
 
-    // In case imeOffset changed, the frame height must adjust.
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    if ([self hasMarkedText]) {
+        // In case imeOffset changed, the frame height must adjust.
+        [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    }
 }
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
