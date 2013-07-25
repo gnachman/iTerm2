@@ -235,9 +235,9 @@ static inline BOOL ForegroundAttributesEqual(const screen_char_t a,
 static inline BOOL ScreenCharHasDefaultAttributesAndColors(const screen_char_t s) {
     return (s.backgroundColor == ALTSEM_BG_DEFAULT &&
             s.foregroundColor == ALTSEM_FG_DEFAULT &&
-            s.alternateBackgroundSemantics &&
+            s.backgroundColorMode == ColorModeAlternate &&
+            s.foregroundColorMode == ColorModeAlternate &&
             !s.complexChar &&
-            s.alternateForegroundSemantics &&
             !s.bold &&
             !s.italic &&
             !s.blink &&
