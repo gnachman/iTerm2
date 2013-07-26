@@ -327,6 +327,11 @@ enum {
 
 	// Experimental feature gated by ThreeFingerTapEmulatesThreeFingerClick bool pref.
     ThreeFingerTapGestureRecognizer *threeFingerTapGestureRecognizer_;
+
+    // Position of cursor last time we looked. Since the cursor might move around a lot between
+    // calls to -updateDirtyRects without making any changes, we only redraw the old and new cursor
+    // positions.
+    int prevCursorX, prevCursorY;
 }
 
 + (NSCursor *)textViewCursor;
