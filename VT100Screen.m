@@ -69,6 +69,14 @@
 NSString * const kHighlightForegroundColor = @"kHighlightForegroundColor";
 NSString * const kHighlightBackgroundColor = @"kHighlightBackgroundColor";
 
+// If set, turns on the following optimizations:
+// 1. When appending a single character, make sure it is different than the existing character at its
+//    cell before marking the cell dirty. This improves performance with vim drawing a vertical divider.
+// 2. Change how the cursor's cells (old and new) are marked dirty. Ordinarily, every position the cursor
+//    passes through is marked dirty. With the optimization, only its previous position at the last update
+//    and its current position at the current update are marked dirty.
+BOOL gExperimentalOptimization;
+
 typedef struct {
     screen_char_t *saved_buffer_lines;
     screen_char_t *saved_screen_top;
@@ -279,6 +287,14 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 #define TABSIZE     8
 
++ (void)initialize
+{
+    gExperimentalOptimization =
+        [[NSUserDefaults standardUserDefaults] boolForKey:@"ExperimentalOptimizationsEnabled"];
+    if (gExperimentalOptimization) {
+        NSLog(@"** Experimental optimizations enabled **");
+    }
+}
 
 - (id)init
 {
@@ -597,6 +613,17 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     return [self dirtyAtOffset:i];
 }
 
+- (void)setCharDirtyAtCursorX:(int)x Y:(int)y value:(int)v
+{
+    int xToMark = x;
+    int yToMark = y;
+    if (xToMark == WIDTH && yToMark < HEIGHT - 1) {
+        xToMark = 0;
+        yToMark++;
+    }
+    [self setCharDirtyAtX:xToMark Y:yToMark value:v];
+}
+
 - (void)setCharDirtyAtX:(int)x Y:(int)y value:(int)v
 {
     if (x == WIDTH) {
@@ -621,16 +648,20 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (void)setCursorX:(int)x Y:(int)y
 {
-    if (cursorX >= 0 && cursorX < WIDTH && cursorY >= 0 && cursorY < HEIGHT) {
-        [self setCharAtCursorDirty:1];
+    if (!gExperimentalOptimization) {
+        if (cursorX >= 0 && cursorX < WIDTH && cursorY >= 0 && cursorY < HEIGHT) {
+            [self setCharAtCursorDirty:1];
+        }
     }
     if (gDebugLogging) {
       DebugLog([NSString stringWithFormat:@"Move cursor to %d,%d", x, y]);
     }
     cursorX = x;
     cursorY = y;
-    if (cursorX >= 0 && cursorX < WIDTH && cursorY >= 0 && cursorY < HEIGHT) {
-        [self setCharAtCursorDirty:1];
+    if (!gExperimentalOptimization) {
+        if (cursorX >= 0 && cursorX < WIDTH && cursorY >= 0 && cursorY < HEIGHT) {
+            [self setCharAtCursorDirty:1];
+        }
     }
 }
 
@@ -3006,11 +3037,18 @@ void DumpBuf(screen_char_t* p, int n) {
             [self setDirtyAtOffset:screenIdx + cursorX - 1 value:1];
         }
 
-        // copy charsToInsert characters into the line and set them dirty.
-        memcpy(aLine + cursorX,
-               buffer + idx,
-               charsToInsert * sizeof(screen_char_t));
-        [self setRangeDirty:NSMakeRange(screenIdx + cursorX, charsToInsert)];
+        // This is an ugly little optimization--if we're inserting just one character, see if it would
+        // change anything (because the memcmp is really cheap). In particular, this helps vim out because
+        // it really likes redrawing pane separators when it doesn't need to.
+        if (!gExperimentalOptimization ||
+            charsToInsert > 1 ||
+            memcmp(aLine + cursorX, buffer + idx, charsToInsert * sizeof(screen_char_t))) {
+            // copy charsToInsert characters into the line and set them dirty.
+            memcpy(aLine + cursorX,
+                   buffer + idx,
+                   charsToInsert * sizeof(screen_char_t));
+            [self setRangeDirty:NSMakeRange(screenIdx + cursorX, charsToInsert)];
+        }
         if (wrapDwc) {
             aLine[cursorX + charsToInsert].code = DWC_SKIP;
         }
@@ -3104,8 +3142,10 @@ void DumpBuf(screen_char_t* p, int n) {
          cursorY > SCROLL_BOTTOM)) {
         // Do not scroll the screen; just move the cursor.
         [self setCursorX:cursorX Y:cursorY + 1];
-        if (cursorX < WIDTH) {
-            [self setCharAtCursorDirty:1];
+        if (!gExperimentalOptimization) {
+            if (cursorX < WIDTH) {
+                [self setCharAtCursorDirty:1];
+            }
         }
         DebugLog(@"setNewline advance cursor");
     } else if (SCROLL_TOP == 0 && SCROLL_BOTTOM == HEIGHT - 1) {
@@ -3226,7 +3266,9 @@ void DumpBuf(screen_char_t* p, int n) {
 
 - (void)advanceCursor:(BOOL)canOccupyLastSpace
 {
-    [self setCharAtCursorDirty:1];
+    if (!gExperimentalOptimization) {
+        [self setCharAtCursorDirty:1];
+    }
     ++cursorX;
     if (canOccupyLastSpace) {
         if (cursorX > WIDTH) {
@@ -3241,7 +3283,9 @@ void DumpBuf(screen_char_t* p, int n) {
         [self setNewLine];
         [self setCursorX:0 Y:cursorY];
     }
-    [self setCharAtCursorDirty:1];
+    if (!gExperimentalOptimization) {
+        [self setCharAtCursorDirty:1];
+    }
 }
 
 - (BOOL)haveTabStopBefore:(int)limit {
@@ -3290,7 +3334,9 @@ void DumpBuf(screen_char_t* p, int n) {
             allNulls = NO;
         }
     }
-    [self setCharAtCursorDirty:1];
+    if (!gExperimentalOptimization) {
+        [self setCharAtCursorDirty:1];
+    }
     if (allNulls) {
         // If only nulls were advanced over, convert them to tab fillers
         // and place a tab character at the end of the run.
@@ -3520,7 +3566,9 @@ void DumpBuf(screen_char_t* p, int n) {
         [self setCursorX:x Y:cursorY];
     }
 
-    [self setCharAtCursorDirty:1];
+    if (!gExperimentalOptimization) {
+        [self setCharAtCursorDirty:1];
+    }
     DebugLog(@"cursorLeft");
 }
 
@@ -3538,7 +3586,9 @@ void DumpBuf(screen_char_t* p, int n) {
         [self setCursorX:x Y:cursorY];
     }
 
-    [self setCharAtCursorDirty:1];
+    if (!gExperimentalOptimization) {
+        [self setCharAtCursorDirty:1];
+    }
     DebugLog(@"cursorRight");
 }
 
@@ -3587,7 +3637,9 @@ void DumpBuf(screen_char_t* p, int n) {
 
     [self setCursorX:x_pos Y:cursorY];
 
-    [self setCharAtCursorDirty:1];
+    if (!gExperimentalOptimization) {
+        [self setCharAtCursorDirty:1];
+    }
     DebugLog(@"cursorToX");
 
 }
@@ -3619,7 +3671,9 @@ void DumpBuf(screen_char_t* p, int n) {
 
     [self setCursorX:x_pos Y:y_pos];
 
-    [self setCharAtCursorDirty:1];
+    if (!gExperimentalOptimization) {
+        [self setCharAtCursorDirty:1];
+    }
     DebugLog(@"cursorToX:Y");
 }
 
@@ -4159,18 +4213,18 @@ void DumpBuf(screen_char_t* p, int n) {
     // There was a call to [display setNeedsDisplay:YES] here which was
     // a remnant of iTerm 0.1 (see bug 1124) that was killing performance.
     // I'm almost sure it wasn't doing any good.
-	allDirty_ = YES;
+        allDirty_ = YES;
     DebugLog(@"setDirty (screen scrolled)");
 }
 
 - (BOOL)isAllDirty
 {
-	return allDirty_;
+        return allDirty_;
 }
 
 - (void)resetAllDirty
 {
-	allDirty_ = NO;
+        allDirty_ = NO;
 }
 
 - (void)doPrint

@@ -34,6 +34,7 @@
 
 extern NSString * const kHighlightForegroundColor;
 extern NSString * const kHighlightBackgroundColor;
+extern BOOL gExperimentalOptimization;
 
 @class PTYTask;
 @class PTYSession;
@@ -275,6 +276,11 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 
 // Set a range of bytes to dirty=1
 - (void)setRangeDirty:(NSRange)range;
+
+// Set the cursor dirty. Cursor coords are different because of how they handle
+// being in the WIDTH'th column (it wraps to the start of the next line)
+// whereas that wouldn't normally be a legal X value.
+- (void)setCharDirtyAtCursorX:(int)x Y:(int)y value:(int)v;
 
 // OR in a value into the dirty array at an x,y coordinate
 - (void)setCharDirtyAtX:(int)x Y:(int)y value:(int)v;
