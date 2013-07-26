@@ -3075,9 +3075,9 @@ void DumpBuf(screen_char_t* p, int n) {
 
         // set last screen line default
         aLine = [self getLineAtScreenIndex: (HEIGHT - 1)];
-        memcpy(aLine,
+        memcpy(aLine + SCROLL_LEFT,
                [self _getDefaultLineWithWidth:WIDTH],
-               REAL_WIDTH*sizeof(screen_char_t));
+               (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
 
         // Mark everything dirty if we're not using the scrollback buffer
         if (showingAltScreen) {
@@ -3688,7 +3688,16 @@ void DumpBuf(screen_char_t* p, int n) {
         // check if the screen area is wrapped
         sourceLine = [self getLineAtScreenIndex:SCROLL_TOP];
         targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
-        if (sourceLine < targetLine) {
+        if (SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) {
+            // screen area is wrapped; copy line by line
+            for(i = SCROLL_TOP; i < SCROLL_BOTTOM; i++) {
+                sourceLine = [self getLineAtScreenIndex:i+1];
+                targetLine = [self getLineAtScreenIndex: i];
+                memmove(targetLine + SCROLL_LEFT,
+                        sourceLine + SCROLL_LEFT,
+                        (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
+            }
+        } else if (sourceLine < targetLine) {
             // screen area is not wrapped; direct memmove
             memmove(sourceLine,
                     sourceLine + REAL_WIDTH,
@@ -3705,14 +3714,14 @@ void DumpBuf(screen_char_t* p, int n) {
         }
         // new line at SCROLL_BOTTOM with default settings
         targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
-        memcpy(targetLine,
+        memcpy(targetLine + SCROLL_LEFT,
                [self _getDefaultLineWithWidth:WIDTH],
-               REAL_WIDTH * sizeof(screen_char_t));
+               (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
 
         // everything between SCROLL_TOP and SCROLL_BOTTOM is dirty
-        [self setDirtyFromX:0
+        [self setDirtyFromX:SCROLL_LEFT
                           Y:SCROLL_TOP
-                        toX:WIDTH
+                        toX:SCROLL_RIGHT
                           Y:SCROLL_BOTTOM];
         DebugLog(@"scrollUp");
     }
@@ -3737,8 +3746,17 @@ void DumpBuf(screen_char_t* p, int n) {
         // check if screen is wrapped
         sourceLine = [self getLineAtScreenIndex:SCROLL_TOP];
         targetLine = [self getLineAtScreenIndex:SCROLL_BOTTOM];
-        if (sourceLine < targetLine)
-        {
+        if (SCROLL_LEFT > 0 || SCROLL_RIGHT < WIDTH) {
+            // screen area is wrapped; move line by line
+            for(i = SCROLL_BOTTOM - 1; i >= SCROLL_TOP; i--)
+            {
+                sourceLine = [self getLineAtScreenIndex:i];
+                targetLine = [self getLineAtScreenIndex:i+1];
+                memmove(targetLine + SCROLL_LEFT,
+                        sourceLine + SCROLL_LEFT,
+                        (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
+            }
+        } else if (sourceLine < targetLine) {
             // screen area is not wrapped; direct memmove
             memmove(sourceLine+REAL_WIDTH, sourceLine, (SCROLL_BOTTOM-SCROLL_TOP)*REAL_WIDTH*sizeof(screen_char_t));
         }
@@ -3755,14 +3773,14 @@ void DumpBuf(screen_char_t* p, int n) {
     }
     // new line at SCROLL_TOP with default settings
     targetLine = [self getLineAtScreenIndex:SCROLL_TOP];
-    memcpy(targetLine,
+    memcpy(targetLine + SCROLL_LEFT,
            [self _getDefaultLineWithWidth:WIDTH],
-           REAL_WIDTH*sizeof(screen_char_t));
+           (SCROLL_RIGHT - SCROLL_LEFT) * sizeof(screen_char_t));
 
     // everything between SCROLL_TOP and SCROLL_BOTTOM is dirty
-    [self setDirtyFromX:0
+    [self setDirtyFromX:SCROLL_LEFT
                       Y:SCROLL_TOP
-                    toX:WIDTH
+                    toX:SCROLL_RIGHT
                       Y:SCROLL_BOTTOM];
     DebugLog(@"scrollDown");
 }
