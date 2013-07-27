@@ -2315,7 +2315,7 @@ static VT100TCC decode_string(unsigned char *datap,
         BG_COLORCODE = ALTSEM_BG_DEFAULT;
         BG_GREEN = 0;
         BG_BLUE = 0;
-        FG_COLORMODE = ColorModeAlternate;
+        BG_COLORMODE = ColorModeAlternate;
         saveForeground = FG_COLORCODE;
         saveFgColorMode = FG_COLORMODE;
         saveBackground = BG_COLORCODE;
@@ -3473,7 +3473,7 @@ static VT100TCC decode_string(unsigned char *datap,
     BG_COLORCODE = ALTSEM_BG_DEFAULT;
     BG_GREEN = 0;
     BG_BLUE = 0;
-    FG_COLORMODE = ColorModeAlternate;
+    BG_COLORMODE = ColorModeAlternate;
 }
 
 - (void)_setCharAttr:(VT100TCC)token
