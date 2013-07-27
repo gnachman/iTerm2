@@ -52,6 +52,7 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
 }
 
 + (Coprocess *)launchedCoprocessWithCommand:(NSString *)command
+                                        tty:(NSString *)tty
 {
         [Coprocess addCommandToMostRecentlyUsed:command];
     int inputPipe[2];
@@ -77,6 +78,7 @@ static NSString *kCoprocessMruKey = @"Coprocess MRU";
             }
         }
 
+        setenv("ITERM2_COPROCESS_TTY", [tty UTF8String], 1);
         signal(SIGCHLD, SIG_DFL);
         execl("/bin/sh", "/bin/sh", "-c", [command UTF8String], 0);
 

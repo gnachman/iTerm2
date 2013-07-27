@@ -3232,7 +3232,7 @@ static long long timeInTenthsOfSeconds(struct timeval t)
 
 - (void)launchCoprocessWithCommand:(NSString *)command mute:(BOOL)mute
 {
-    Coprocess *coprocess = [Coprocess launchedCoprocessWithCommand:command];
+    Coprocess *coprocess = [Coprocess launchedCoprocessWithCommand:command tty:[_shell tty]];
     coprocess.mute = mute;
     [_shell setCoprocess:coprocess];
     [_textview setNeedsDisplay:YES];
