@@ -90,6 +90,9 @@ static double gSmartCursorBgThreshold = 0.5;
 // B/W text mode is triggered. 0 means always trigger, 1 means never trigger.
 static double gSmartCursorFgThreshold = 0.75;
 
+// If set log info about drawing speed to console
+static int gLogDrawingPerformance;
+
 @implementation FindCursorView
 
 @synthesize cursor;
@@ -193,6 +196,8 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 + (void)initialize
 {
+    gLogDrawingPerformance = [[NSUserDefaults standardUserDefaults] boolForKey:@"LogDrawingPerformance"];
+
     NSPoint hotspot = NSMakePoint(4, 5);
 
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
@@ -1840,11 +1845,21 @@ NSMutableArray* screens=0;
     // If there are two or more rects that need display, the OS will pass in |rect| as the smallest
     // bounding rect that contains them all. Luckily, we can get the list of the "real" dirty rects
     // and they're guaranteed to be disjoint. So draw each of them individually.
+    static NSTimeInterval lastTime;
+    NSTimeInterval startTime;
+    if (gLogDrawingPerformance) {
+      startTime = [NSDate timeIntervalSinceReferenceDate];
+    }
     const NSRect *rectArray;
     NSInteger rectCount;
     [self getRectsBeingDrawn:&rectArray count:&rectCount];
     for (int i = 0; i < rectCount; i++) {
         [self drawRect:rectArray[i] to:nil];
+    }
+    if (gLogDrawingPerformance) {
+        NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
+        NSLog(@"Elapsed drawing time=%lf, time between calls=%lf", now - startTime, startTime - lastTime);
+        lastTime = startTime;
     }
 
     const NSRect frame = [self visibleRect];
