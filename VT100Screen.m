@@ -2075,6 +2075,11 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         if (SCROLL_RIGHT == 0) {
             SCROLL_RIGHT = WIDTH - 1;
         }
+        // check wrong parameter
+        if (SCROLL_RIGHT - SCROLL_LEFT < 1) {
+            SCROLL_LEFT = 0;
+            SCROLL_RIGHT = WIDTH - 1;
+        }
         break;
             
     /* My interpretation of this:
