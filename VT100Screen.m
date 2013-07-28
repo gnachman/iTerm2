@@ -4255,8 +4255,10 @@ void DumpBuf(screen_char_t* p, int n) {
 - (void)setVsplitMode: (BOOL)mode;
 {
     vsplitMode = mode;
-    SCROLL_LEFT = 0;
-    SCROLL_RIGHT = WIDTH - 1;
+    if (!mode) {
+        SCROLL_LEFT = 0;
+        SCROLL_RIGHT = WIDTH - 1;
+    }
 }
 
 - (BOOL)vsplitMode;
