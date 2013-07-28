@@ -70,6 +70,7 @@ static const int kMaxSelectedTextLinesForCustomActions = 100;
 #import "CharacterRun.h"
 #import "ThreeFingerTapGestureRecognizer.h"
 #import "FutureMethods.h"
+#import "MovingAverage.h"
 
 #include <sys/time.h>
 #include <math.h>
@@ -335,6 +336,11 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     } else {
         DLog(@"Not tracking touches in view %@", self);
     }
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"LogDrawingPerformance"]) {
+        NSLog(@"** Drawing performance timing enabled **");
+        drawRectDuration_ = [[MovingAverage alloc] init];
+        drawRectInterval_ = [[MovingAverage alloc] init];
+    }
 
     return self;
 }
@@ -440,6 +446,9 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
 
 - (void)dealloc
 {
+    [drawRectDuration_ release];
+    [drawRectInterval_ release];
+
     [smartSelectionRules_ release];
     int i;
 
@@ -1842,11 +1851,23 @@ NSMutableArray* screens=0;
     // and they're guaranteed to be disjoint. So draw each of them individually.
     const NSRect *rectArray;
     NSInteger rectCount;
+    if (drawRectDuration_) {
+        [drawRectDuration_ startTimer];
+        NSTimeInterval interval = [drawRectInterval_ timeSinceTimerStarted];
+        if ([drawRectInterval_ haveStartedTimer]) {
+            [drawRectInterval_ addValue:interval];
+        }
+        [drawRectInterval_ startTimer];
+    }
     [self getRectsBeingDrawn:&rectArray count:&rectCount];
     for (int i = 0; i < rectCount; i++) {
         [self drawRect:rectArray[i] to:nil];
     }
-
+    if (drawRectDuration_) {
+        [drawRectDuration_ addValue:[drawRectDuration_ timeSinceTimerStarted]];
+        NSLog(@"%p Moving average time draw rect is %04f, time between calls to drawRect is %04f",
+              self, drawRectDuration_.value, drawRectInterval_.value);
+    }
     const NSRect frame = [self visibleRect];
     double x = frame.origin.x + frame.size.width;
     if ([[[[dataSource session] tab] realParentWindow] broadcastInputToSession:[dataSource session]]) {
