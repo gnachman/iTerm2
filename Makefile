@@ -40,7 +40,9 @@ Deployment:
 	chmod -R go+rX build/Deployment
 
 Nightly: force
+	cp nightly-iTerm.plist iTerm.plist
 	xcodebuild -parallelizeTargets -alltargets -configuration Nightly && \
+	git checkout -- iTerm.plist
 	chmod -R go+rX build/Nightly
 
 run: Development

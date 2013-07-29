@@ -192,7 +192,7 @@
 	<key>SUPublicDSAKeyFile</key>
 	<string>dsa_pub.pem</string>
 	<key>SUFeedURLForTesting</key>
-	<string>http://iterm2.com/appcasts/testing.xml</string>
+	<string>http://iterm2.com/appcasts/nightly.xml</string>
 	<key>SUFeedURLForFinal</key>
 	<string>http://iterm2.com/appcasts/final.xml</string>
 </dict>
