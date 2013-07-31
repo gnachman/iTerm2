@@ -317,6 +317,7 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     resultMap_ = [[NSMutableDictionary alloc] init];
 
     trouter = [[Trouter alloc] init];
+    trouter.delegate = self;
     trouterDragged = NO;
     workingDirectoryAtLines = [[NSMutableArray alloc] init];
 
@@ -8741,6 +8742,12 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
         }
     }
     return anyBlinkers;
+}
+
+#pragma mark - Trouter Delegate
+
+- (void)trouterLaunchCoprocessWithCommand:(NSString *)command {
+    [_delegate launchCoprocessWithCommand:command];
 }
 
 @end

@@ -33,6 +33,7 @@
 @implementation Trouter
 
 @synthesize prefs = prefs_;
+@synthesize delegate = delegate_;
 
 - (Trouter *)init
 {
@@ -226,19 +227,14 @@
             workingDirectory:workingDirectory
                   lineNumber:&lineNumber];
 
+    NSString *script = [prefs_ objectForKey:kTrouterTextKey];
+    script = [script stringByReplacingBackreference:1 withString:path ? [path stringWithEscapedShellCharacters] : @""];
+    script = [script stringByReplacingBackreference:2 withString:lineNumber ? lineNumber : @""];
+    script = [script stringByReplacingBackreference:3 withString:[prefix stringWithEscapedShellCharacters]];
+    script = [script stringByReplacingBackreference:4 withString:[suffix stringWithEscapedShellCharacters]];
+    script = [script stringByReplacingBackreference:5 withString:[workingDirectory stringWithEscapedShellCharacters]];
 
     if ([[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterRawCommandAction]) {
-        NSString *script = [prefs_ objectForKey:kTrouterTextKey];
-        script = [script stringByReplacingBackreference:1
-                                             withString:path ? [path stringWithEscapedShellCharacters] : @""];
-            script = [script stringByReplacingBackreference:2
-                                                 withString:lineNumber ? lineNumber : @""];
-        script = [script stringByReplacingBackreference:3
-                                             withString:[prefix stringWithEscapedShellCharacters]];
-        script = [script stringByReplacingBackreference:4
-                                             withString:[suffix stringWithEscapedShellCharacters]];
-        script = [script stringByReplacingBackreference:5
-                                             withString:[workingDirectory stringWithEscapedShellCharacters]];
         [[NSTask launchedTaskWithLaunchPath:@"/bin/sh"
                                   arguments:[NSArray arrayWithObjects:@"-c", script, nil]] waitUntilExit];
         return YES;
@@ -249,14 +245,14 @@
     }
 
     if ([[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterCommandAction]) {
-        NSString *script = [prefs_ objectForKey:kTrouterTextKey];
-        script = [script stringByReplacingBackreference:1 withString:path ? [path stringWithEscapedShellCharacters] : @""];
-        script = [script stringByReplacingBackreference:2 withString:lineNumber ? lineNumber : @""];
-        script = [script stringByReplacingBackreference:3 withString:[prefix stringWithEscapedShellCharacters]];
-        script = [script stringByReplacingBackreference:4 withString:[suffix stringWithEscapedShellCharacters]];
-        script = [script stringByReplacingBackreference:5 withString:[workingDirectory stringWithEscapedShellCharacters]];
         [[NSTask launchedTaskWithLaunchPath:@"/bin/sh"
                                   arguments:[NSArray arrayWithObjects:@"-c", script, nil]] waitUntilExit];
+        return YES;
+    }
+
+    if ([[prefs_ objectForKey:kTrouterActionKey] isEqualToString:kTrouterCoprocessAction]) {
+        assert(delegate_);
+        [delegate_ trouterLaunchCoprocessWithCommand:script];
         return YES;
     }
 

@@ -45,6 +45,7 @@
 @class VT100Screen;
 @class ThreeFingerTapGestureRecognizer;
 @class MovingAverage;
+@protocol TrouterDelegate;
 
 // Amount of time to highlight the cursor after beginFindCursor:YES
 static const double kFindCursorHoldTime = 1;
