@@ -48,6 +48,7 @@
 NSString* kDeleteKeyString = @"0x7f-0x0";
 
 static float versionNumber;
+static NSString * const kRebuildColorPresetsMenuNotification = @"kRebuildColorPresetsMenuNotification";
 
 @interface NSFileManager (TemporaryDirectory)
 
@@ -184,6 +185,10 @@ static float versionNumber;
                                              selector:@selector(keyBindingsChanged)
                                                  name:@"iTermKeyBindingsChanged"
                                                object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(rebuildColorPresetsMenu)
+                                                 name:kRebuildColorPresetsMenuNotification
+                                               object:nil];
     return (self);
 }
 
@@ -258,7 +263,7 @@ static float versionNumber;
     }
 }
 
-- (void)_rebuildColorPresetsMenu
+- (void)rebuildColorPresetsMenu
 {
     while ([presetsMenu numberOfItems] > 1) {
         [presetsMenu removeItemAtIndex:1];
@@ -305,7 +310,8 @@ static float versionNumber;
     [customPresets setObject:theDict forKey:temp];
     [[NSUserDefaults standardUserDefaults] setObject:customPresets forKey:CUSTOM_COLOR_PRESETS];
 
-    [self _rebuildColorPresetsMenu];
+    [[NSNotificationCenter defaultCenter] postNotificationName:kRebuildColorPresetsMenuNotification
+                                                        object:nil];
 }
 
 - (NSString*)_presetNameFromFilename:(NSString*)filename
@@ -473,7 +479,8 @@ static float versionNumber;
         [newCustom removeObjectForKey:[[pub selectedItem] title]];
         [[NSUserDefaults standardUserDefaults] setObject:newCustom
                                                   forKey:CUSTOM_COLOR_PRESETS];
-        [self _rebuildColorPresetsMenu];
+        [[NSNotificationCenter defaultCenter] postNotificationName:kRebuildColorPresetsMenuNotification
+                                                            object:nil];
     }
 }
 
@@ -575,7 +582,7 @@ static float versionNumber;
     keyboardToolbarId = [keyboardToolbarItem itemIdentifier];
     arrangementsToolbarId = [arrangementsToolbarItem itemIdentifier];
     mouseToolbarId = [mouseToolbarItem itemIdentifier];
-  
+
     [globalToolbarItem setEnabled:YES];
     [toolbar setSelectedItemIdentifier:globalToolbarId];
 
@@ -598,7 +605,7 @@ static float versionNumber;
     [copyTo allowMultipleSelections];
 
     // Add presets to preset color selection.
-    [self _rebuildColorPresetsMenu];
+    [self rebuildColorPresetsMenu];
 
     // Add preset keybindings to button-popup-list.
     NSArray* presetArray = [iTermKeyBindingMgr presetKeyMappingsNames];
