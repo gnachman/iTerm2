@@ -1790,7 +1790,16 @@ NSMutableArray* screens=0;
 
 - (void)drawRect:(NSRect)rect
 {
-    [self drawRect:rect to:nil];
+    // If there are two or more rects that need display, the OS will pass in |rect| as the smallest
+    // bounding rect that contains them all. Luckily, we can get the list of the "real" dirty rects
+    // and they're guaranteed to be disjoint. So draw each of them individually.
+    const NSRect *rectArray;
+    NSInteger rectCount;
+    [self getRectsBeingDrawn:&rectArray count:&rectCount];
+    for (int i = 0; i < rectCount; i++) {
+        [self drawRect:rectArray[i] to:nil];
+    }
+
     const NSRect frame = [self visibleRect];
     double x = frame.origin.x + frame.size.width;
     if ([[[[dataSource session] tab] realParentWindow] broadcastInputToSession:[dataSource session]]) {
@@ -3382,12 +3391,14 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
                 case MOUSE_REPORTING_NORMAL:
                 case MOUSE_REPORTING_BUTTON_MOTION:
                 case MOUSE_REPORTING_ALL_MOTION:
-                    // Reporting mosue clicks. The remote app gets preference.
+                    // Reporting mouse clicks. The remote app gets preference.
                     break;
 
                 default:
                     // Not reporting mouse clicks, so we'll move the cursor since the remote app can't.
-                    [self placeCursorOnCurrentLineWithEvent:event];
+                    if (!cmdPressed) {
+                        [self placeCursorOnCurrentLineWithEvent:event];
+                    }
                     break;
             }
         }
@@ -4839,8 +4850,10 @@ static double EuclideanDistance(NSPoint p1, NSPoint p2) {
         IM_INPUT_INSERT = YES;
     }
 
-    // In case imeOffset changed, the frame height must adjust.
-    [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    if ([self hasMarkedText]) {
+        // In case imeOffset changed, the frame height must adjust.
+        [[[self dataSource] session] refreshAndStartTimerIfNeeded];
+    }
 }
 
 - (BOOL)acceptsFirstMouse:(NSEvent *)theEvent
@@ -8226,6 +8239,21 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     long long totalScrollbackOverflow = [dataSource totalScrollbackOverflow];
     int allDirty = [dataSource isAllDirty] ? 1 : 0;
     [dataSource resetAllDirty];
+
+    if (gExperimentalOptimization) {
+      int currentCursorX = [dataSource cursorX] - 1;
+      int currentCursorY = [dataSource cursorY] - 1;
+      if (prevCursorX != currentCursorX ||
+          prevCursorY != currentCursorY) {
+          // Mark previous and current cursor position dirty
+          [dataSource setCharDirtyAtCursorX:prevCursorX Y:prevCursorY value:1];
+          [dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY value:1];
+
+          // Set prevCursor[XY] to new cursor position
+          prevCursorX = currentCursorX;
+          prevCursorY = currentCursorY;
+      }
+    }
     for (int y = lineStart; y < lineEnd; y++) {
         NSMutableData* matches = [resultMap_ objectForKey:[NSNumber numberWithLongLong:y + totalScrollbackOverflow]];
         for (int x = 0; x < WIDTH; x++) {

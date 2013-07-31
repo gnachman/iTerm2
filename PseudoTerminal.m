@@ -1778,8 +1778,12 @@ NSString *sessionsKey = @"sessions";
         case WINDOW_TYPE_TOP:
             PtyLog(@"Window type = TOP, desired rows=%d", desiredRows_);
             // If the screen grew and the window was smaller than the desired number of rows, grow it.
-            frame.size.height = MIN([screen visibleFrame].size.height,
-                                    ceil([[session TEXTVIEW] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
+            if (desiredRows_ > 0) {
+                frame.size.height = MIN([screen visibleFrame].size.height,
+                                        ceil([[session TEXTVIEW] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
+            } else {
+                frame.size.height = MIN([screen visibleFrame].size.height, frame.size.height);
+            }
             frame.size.width = [screen visibleFrame].size.width;
             frame.origin.x = [screen visibleFrame].origin.x;
             if ([[self window] alphaValue] == 0) {
@@ -1798,8 +1802,12 @@ NSString *sessionsKey = @"sessions";
         case WINDOW_TYPE_BOTTOM:
             PtyLog(@"Window type = BOTTOM, desired rows=%d", desiredRows_);
             // If the screen grew and the window was smaller than the desired number of rows, grow it.
-            frame.size.height = MIN([screen visibleFrame].size.height,
-                                    ceil([[session TEXTVIEW] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
+            if (desiredRows_ > 0) {
+                frame.size.height = MIN([screen visibleFrame].size.height,
+                                        ceil([[session TEXTVIEW] lineHeight] * desiredRows_) + decorationSize.height + 2 * VMARGIN);
+            } else {
+                frame.size.height = MIN([screen visibleFrame].size.height, frame.size.height);
+            }
             frame.size.width = [screen visibleFrame].size.width;
             frame.origin.x = [screen visibleFrame].origin.x;
             if ([[self window] alphaValue] == 0) {
@@ -1818,8 +1826,12 @@ NSString *sessionsKey = @"sessions";
         case WINDOW_TYPE_LEFT:
             PtyLog(@"Window type = LEFT, desired cols=%d", desiredColumns_);
             // If the screen grew and the window was smaller than the desired number of columns, grow it.
-            frame.size.width = MIN([screen visibleFrame].size.width,
-                                   [[session TEXTVIEW] charWidth] * desiredColumns_ + 2 * MARGIN);
+            if (desiredColumns_ > 0) {
+                frame.size.width = MIN([screen visibleFrame].size.width,
+                                       [[session TEXTVIEW] charWidth] * desiredColumns_ + 2 * MARGIN);
+            } else {
+                frame.size.width = MIN([screen visibleFrame].size.width, frame.size.width);
+            }
             frame.size.height = [screen visibleFrame].size.height;
             frame.origin.y = [screen visibleFrame].origin.y;
             if ([[self window] alphaValue] == 0) {
@@ -1829,7 +1841,6 @@ NSString *sessionsKey = @"sessions";
                 // Normal case
                 frame.origin.x = [screen visibleFrame].origin.x;
             }
-            
             if (frame.size.width > 0) {
                 [[self window] setFrame:frame display:YES];
             }
@@ -3951,9 +3962,13 @@ NSString *sessionsKey = @"sessions";
       frame.size.height = self.screen.visibleFrame.size.height;
 
       PTYSession* session = [self currentSession];
-      frame.size.width = MIN(winSize.width,
-                             ceil([[session TEXTVIEW] charWidth] *
-                               desiredColumns_) + decorationSize.width + 2 * MARGIN);
+      if (desiredColumns_ > 0) {
+          frame.size.width = MIN(winSize.width,
+                                 ceil([[session TEXTVIEW] charWidth] *
+                                      desiredColumns_) + decorationSize.width + 2 * MARGIN);
+      } else {
+          frame.size.width = winSize.width;
+      }
 
       frame.origin.x = [[self window] frame].origin.x;
     }
@@ -4218,8 +4233,8 @@ NSString *sessionsKey = @"sessions";
     } else if ([broadcastViewIds_ count] == 1) {
         // Turned on one session so add the current session.
         [broadcastViewIds_ addObject:[NSNumber numberWithInt:[[[self currentSession] view] viewId]]];
-	// NOTE: There may still be only one session. This is of use to focus
-	// follows mouse users who want to toggle particular panes.
+        // NOTE: There may still be only one session. This is of use to focus
+        // follows mouse users who want to toggle particular panes.
     }
     for (PTYTab *aTab in [self tabs]) {
         for (PTYSession *aSession in [aTab sessions]) {
