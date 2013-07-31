@@ -266,9 +266,16 @@
     return [ProfileModel sharedInstance];
 }
 
+- (BOOL)verbose {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"iTermDebugBonjour"];
+}
+
 // NSNetServiceBrowser delegate methods
 - (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didFindService:(NSNetService *)aNetService moreComing:(BOOL)moreComing
 {
+    if ([self verbose]) {
+        NSLog(@"netServiceBrowser:%@ didFindService:%@ moreComing:%d", aNetServiceBrowser, aNetService, (int)moreComing);
+    }
     // resolve the service and add to temporary array to retain it so that
     // resolving works.
     [bonjourServices addObject:aNetService];
@@ -276,11 +283,13 @@
     [aNetService resolveWithTimeout:5];
 }
 
-
 - (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didRemoveService:(NSNetService *)aNetService moreComing:(BOOL)moreComing
 {
     if (aNetService == nil) {
         return;
+    }
+    if ([self verbose]) {
+        NSLog(@"netServiceBrowser:%@ didRemoveService:%@ moreComing:%d", aNetServiceBrowser, aNetService, (int)moreComing);
     }
 
     // remove host entry from this group
@@ -297,6 +306,9 @@
             || [bookmarkName isEqualToString:sftpName]
 #endif
             ) {
+            if ([self verbose]) {
+                NSLog(@"remove profile with name %@", bookmarkName);
+            }
             [toRemove addObject:[NSNumber numberWithInt:i]];
         }
     }
@@ -386,28 +398,43 @@
     // cancel the resolution
     [sender stop];
 
+    if ([self verbose]) {
+        NSLog(@"netServiceDidResolveAddress:%@", sender);
+    }
     if ([bonjourServices containsObject: sender] == NO) {
+        if ([self verbose]) {
+            NSLog(@"netServiceDidResolveAddress sender not in services @", bonjourServices);
+        }
         return;
     }
 
     // grab the address
     if ([[sender addresses] count] == 0) {
+        if ([self verbose]) {
+            NSLog(@"netServiceDidResolveAddress sender has no addresses");
+        }
         return;
     }
     NSString* serviceType = [self getBonjourServiceType:[sender type]];
     NSString* serviceName = [sender name];
     NSData* address = [[sender addresses] objectAtIndex: 0];
+    if ([self verbose]) {
+        NSLog(@"netServiceDidResolveAddress type=%@ name=%@ address=%@", serviceType, serviceName, address);
+    }
     struct sockaddr_in *socketAddress = (struct sockaddr_in *)[address bytes];
     char buffer[INET6_ADDRSTRLEN + 1];
 
     const char* strAddr = inet_ntop(socketAddress->sin_family, &socketAddress->sin_addr,
                                     buffer, [address length]);
     if (strAddr) {
-          [self _addBonjourHostProfileWithName:serviceName
-                               ipAddressString:[NSString stringWithFormat:@"%s", strAddr]
-                                          port:htons(socketAddress->sin_port)
-                                   serviceType:serviceType];
-
+        if ([self verbose]) {
+            NSLog(@"netServiceDidResolveAddress add profile with address %s", strAddr);
+        }
+        [self _addBonjourHostProfileWithName:serviceName
+                             ipAddressString:[NSString stringWithFormat:@"%s", strAddr]
+                                        port:htons(socketAddress->sin_port)
+                                 serviceType:serviceType];
+        
         // remove from array now that resolving is done
         if ([bonjourServices containsObject:sender]) {
             [bonjourServices removeObject:sender];
@@ -433,14 +460,26 @@
 
 - (NSString*)getBonjourServiceType:(NSString*)aType
 {
+    if ([self verbose]) {
+        NSLog(@"getBonjourServiceType:%@", aType);
+    }
     NSString *serviceType = aType;
     if ([aType length] <= 0) {
+        if ([self verbose]) {
+            NSLog(@"netServiceDidResolveAddress empty type");
+        }
         return nil;
     }
     NSRange aRange = [serviceType rangeOfString: @"."];
     if(aRange.location != NSNotFound) {
+        if ([self verbose]) {
+            NSLog(@"netServiceDidResolveAddress return value prior to first .");
+        }
         return [serviceType substringWithRange: NSMakeRange(1, aRange.location - 1)];
     } else {
+        if ([self verbose]) {
+            NSLog(@"netServiceDidResolveAddress no . found, return whole value");
+        }
         return serviceType;
     }
 }
