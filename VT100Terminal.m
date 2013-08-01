@@ -3303,7 +3303,10 @@ static VT100TCC decode_string(unsigned char *datap,
                 case 3:  COLUMN_MODE = mode; break;
                 case 4:  SCROLL_MODE = mode; break;
                 case 5:  SCREEN_MODE = mode; [SCREEN setDirty]; break;
-                case 6:  ORIGIN_MODE = mode; break;
+                case 6:
+                    ORIGIN_MODE = mode;
+                    [SCREEN cursorToX:1 Y:1];
+                    break;
                 case 7:  WRAPAROUND_MODE = mode; break;
                 case 8:  AUTOREPEAT_MODE = mode; break;
                 case 9:  INTERLACE_MODE  = mode; break;
