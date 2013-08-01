@@ -1488,7 +1488,7 @@ NSMutableArray* screens=0;
                     chars[o++] = [cs characterAtIndex:l];
                 }
             } else {
-                if (line[j].code >= 0xf000) {
+                if (line[j].code >= 0xe000) {  // will always be <= 0xffff
                     // Don't output private range chars to accessibility.
                     chars[o++] = 0;
                 } else {
