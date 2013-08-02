@@ -1932,7 +1932,9 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             aLine[WIDTH].code = EOL_HARD;
         }
         // reset scroll region
+        SCROLL_LEFT = 0;
         SCROLL_TOP = 0;
+        SCROLL_RIGHT = WIDTH - 1;
         SCROLL_BOTTOM = HEIGHT - 1;
         // set cursor to (1, 1)
         [self setCursorX:0 Y:0];
