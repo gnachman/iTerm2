@@ -2086,7 +2086,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
             SCROLL_RIGHT = WIDTH - 1;
         }
         break;
-            
+
     /* My interpretation of this:
      * http://www.cl.cam.ac.uk/~mgk25/unicode.html#term
      * is that UTF-8 terminals should ignore SCS because
@@ -2816,7 +2816,7 @@ void DumpBuf(screen_char_t* p, int n) {
         } else {
             widthOffset = 0;
         }
-        
+
         if (vsplitMode && cursorX <= SCROLL_RIGHT + 1) {
             leftMargin = SCROLL_LEFT;
             rightMargin = SCROLL_RIGHT + 1;
@@ -3116,7 +3116,7 @@ void DumpBuf(screen_char_t* p, int n) {
 
         // set last screen line default
         aLine = [self getLineAtScreenIndex: (HEIGHT - 1)];
-        
+
         memcpy(aLine,
            [self _getDefaultLineWithWidth:WIDTH],
            REAL_WIDTH * sizeof(screen_char_t));
@@ -3139,11 +3139,11 @@ void DumpBuf(screen_char_t* p, int n) {
     screen_char_t *aLine;
     int i;
     int leftMargin, rightMargin;
-    
+
 #if DEBUG_METHOD_TRACE
     NSLog(@"%s(%d):-[VT100Screen deleteCharacter]: %d", __FILE__, __LINE__, n);
 #endif
-    
+
     if (vsplitMode) {
         leftMargin = SCROLL_LEFT;
         rightMargin = SCROLL_RIGHT + 1;
@@ -3620,7 +3620,7 @@ void DumpBuf(screen_char_t* p, int n) {
         leftMargin = 0;
         rightMargin = WIDTH;
     }
-    
+
     if (x_pos < 0) {
         x_pos = 0;
     } else if (x_pos >= WIDTH) {
@@ -3644,13 +3644,13 @@ void DumpBuf(screen_char_t* p, int n) {
     NSLog(@"%s(%d):-[VT100Screen cursorToY:%d]",
           __FILE__, __LINE__, y);
 #endif
-    
+
     y_pos = y - 1;
-    
+
     if ([TERMINAL originMode]) {
         y_pos += SCROLL_TOP;
     }
-    
+
     if (y_pos < 0) {
         y_pos = 0;
     } else if (y_pos >= HEIGHT) {
@@ -3690,7 +3690,7 @@ void DumpBuf(screen_char_t* p, int n) {
         leftMargin = 0;
         rightMargin = WIDTH;
     }
-    
+
     if (x_pos < leftMargin) {
         x_pos = leftMargin;
     } else if (x_pos >= rightMargin) {
@@ -3905,7 +3905,7 @@ void DumpBuf(screen_char_t* p, int n) {
             memcpy(targetLine + SCROLL_LEFT,
                    [self _getDefaultLineWithWidth:SCROLL_RIGHT + 1 - SCROLL_LEFT],
                    (SCROLL_RIGHT + 1 - SCROLL_LEFT) * sizeof(screen_char_t));
-            
+
             // everything between SCROLL_TOP and SCROLL_BOTTOM is dirty
             [self setDirtyFromX:SCROLL_LEFT
                               Y:SCROLL_TOP
@@ -3955,7 +3955,7 @@ void DumpBuf(screen_char_t* p, int n) {
         leftMargin = 0;
         rightMargin = WIDTH;
     }
-    
+
     if (cursorX >= rightMargin || cursorX < leftMargin) {
         return;
     }
