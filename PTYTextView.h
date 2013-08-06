@@ -44,6 +44,7 @@
 
 @class VT100Screen;
 @class ThreeFingerTapGestureRecognizer;
+@class MovingAverage;
 
 // Amount of time to highlight the cursor after beginFindCursor:YES
 static const double kFindCursorHoldTime = 1;
@@ -332,6 +333,8 @@ enum {
     // calls to -updateDirtyRects without making any changes, we only redraw the old and new cursor
     // positions.
     int prevCursorX, prevCursorY;
+
+    MovingAverage *drawRectDuration_, *drawRectInterval_;
 }
 
 + (NSCursor *)textViewCursor;

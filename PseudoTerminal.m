@@ -4272,8 +4272,8 @@ NSString *sessionsKey = @"sessions";
     } else if ([broadcastViewIds_ count] == 1) {
         // Turned on one session so add the current session.
         [broadcastViewIds_ addObject:[NSNumber numberWithInt:[[[self currentSession] view] viewId]]];
-	// NOTE: There may still be only one session. This is of use to focus
-	// follows mouse users who want to toggle particular panes.
+        // NOTE: There may still be only one session. This is of use to focus
+        // follows mouse users who want to toggle particular panes.
     }
     for (PTYTab *aTab in [self tabs]) {
         for (PTYSession *aSession in [aTab sessions]) {

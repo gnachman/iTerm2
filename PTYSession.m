@@ -1977,7 +1977,7 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
             [escapedFilenames addObject:[filename stringWithEscapedShellCharacters]];
         }
         if (escapedFilenames.count > 0) {
-            info = [escapedFilenames componentsJoinedByString:@"\n"];
+            info = [escapedFilenames componentsJoinedByString:@" "];
         }
         if ([info length] == 0) {
             info = nil;
