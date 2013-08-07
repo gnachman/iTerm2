@@ -29,7 +29,7 @@ static const CGFloat kMargin = 4;
     self = [super initWithFrame:frame];
     if (self) {
         names_ = [[NSMutableArray alloc] init];
-        pids_ = [[NSMutableArray alloc] init];
+        pids_ = [[NSArray alloc] init];
 
         kill_ = [[NSButton alloc] initWithFrame:NSMakeRect(0, frame.size.height - kButtonHeight, frame.size.width, kButtonHeight)];
         [kill_ setButtonType:NSMomentaryPushInButton];

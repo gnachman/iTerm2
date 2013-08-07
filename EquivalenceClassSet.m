@@ -35,7 +35,7 @@
     return ec ? [classes_ objectForKey:ec] : nil;
 }
 
-- (void)addValue:(NSObject *)value toClass:(NSNumber *)ec
+- (void)addValue:(NSObject<NSCopying> *)value toClass:(NSNumber *)ec
 {
     [self removeValue:value];
     [index_ setObject:ec forKey:value];
@@ -56,7 +56,7 @@
     return [NSNumber numberWithInt:i];
 }
 
-- (void)setValue:(NSObject *)n1 equalToValue:(NSObject *)n2
+- (void)setValue:(NSObject<NSCopying> *)n1 equalToValue:(NSObject<NSCopying> *)n2
 {
     NSNumber *n1Class = [index_ objectForKey:n1];
     NSNumber *n2Class = [index_ objectForKey:n2];

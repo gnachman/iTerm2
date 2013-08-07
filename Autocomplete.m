@@ -118,7 +118,7 @@ const int kMaxResultContextWords = 4;
                                                         endY:&ty2];
         if ([s rangeOfCharacterFromSet:nonWhitespace].location != NSNotFound) {
             // Add only if not whitespace.
-            AcLog(@"Add to context (%d/%d): %@", [context count], maxWords, s);
+            AcLog(@"Add to context (%d/%d): %@", (int) [context count], (int) maxWords, s);
             [context addObject:s];
         }
         x = tx1;
@@ -444,7 +444,7 @@ const int kMaxResultContextWords = 4;
             more_ = [screen continueFindAllResults:findResults_
                                             inContext:&findContext_];
         }
-        AcLog(@"This iteration found %d results in %lf sec", [findResults_ count], [[NSDate date] timeIntervalSinceDate:cs]);
+        AcLog(@"This iteration found %d results in %lf sec", (int) [findResults_ count], [[NSDate date] timeIntervalSinceDate:cs]);
         NSDate* ps = [NSDate date];
         int n = 0;
         while ([findResults_ count] > 0 && [[NSDate date] timeIntervalSinceDate:cs] < 0.15) {
@@ -552,7 +552,7 @@ const int kMaxResultContextWords = 4;
                 }
                 x_ = startX;
                 y_ = startY + [screen scrollbackOverflow];
-                AcLog(@"Update x,y to %d,%d", x_, y_);
+                AcLog(@"Update x,y to %d,%d", (int) x_, (int) y_);
             } else {
                 // Match started in the middle of a word.
                 AcLog(@"Search found %@ which doesn't start the same as our search term %@", word, prefix_);

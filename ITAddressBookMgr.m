@@ -132,7 +132,7 @@
     bonjourServices = nil;
 }
 
-+ (NSArray*)encodeColor:(NSColor*)origColor
++ (NSDictionary*)encodeColor:(NSColor*)origColor
 {
     NSColor* color = [origColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
     CGFloat red, green, blue, alpha;
@@ -403,7 +403,7 @@
     }
     if ([bonjourServices containsObject: sender] == NO) {
         if ([self verbose]) {
-            NSLog(@"netServiceDidResolveAddress sender not in services @", bonjourServices);
+            NSLog(@"netServiceDidResolveAddress sender not in services %@", bonjourServices);
         }
         return;
     }

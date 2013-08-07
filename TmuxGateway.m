@@ -144,7 +144,7 @@ static NSString *kCommandIsLastInList = @"lastInList";
 
     NSData *decodedData = [self decodeEscapedOutput:space + 1];
 
-    TmuxLog(@"Run tmux command: \"%%output %%%d %.*s", windowPane, [decodedData length], [decodedData bytes]);
+    TmuxLog(@"Run tmux command: \"%%output %%%d %.*s", windowPane, (int)[decodedData length], [decodedData bytes]);
     [[[delegate_ tmuxController] sessionForWindowPane:windowPane]  tmuxReadTask:decodedData];
     state_ = CONTROL_STATE_READY;
 

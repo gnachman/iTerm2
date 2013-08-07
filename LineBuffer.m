@@ -643,7 +643,7 @@ static int CoreSearch(NSString* needle, screen_char_t* rawline, int raw_line_len
             }
         } else {
             hasSuffix = NO;
-            sandwich = [NSString stringWithFormat:@"%C%@", kPrefixChar, sanitizedHaystack, kSuffixChar];
+            sandwich = [NSString stringWithFormat:@"%C%@", kPrefixChar, sanitizedHaystack];
         }
 
         temp = [sandwich rangeOfRegex:rewrittenRegex

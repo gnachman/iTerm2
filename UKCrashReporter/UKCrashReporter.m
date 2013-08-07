@@ -202,8 +202,8 @@ NSString*	gCrashLogString = nil;
 		NSString*		defaultKey = [emailAddresses primaryIdentifier];
 		if( defaultKey )
 		{
-			unsigned int	defaultIndex = [emailAddresses indexForIdentifier: defaultKey];
-			if( defaultIndex >= 0 )
+			NSUInteger	defaultIndex = [emailAddresses indexForIdentifier: defaultKey];
+			if( defaultIndex != NSNotFound )
 				emailAddr = [emailAddresses valueAtIndex: defaultIndex];
 		}
 	}

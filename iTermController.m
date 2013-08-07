@@ -53,6 +53,7 @@
 #import "iTerm.h"
 #import "WindowArrangements.h"
 #import "NSView+iTerm.h"
+#import <objc/runtime.h>
 
 //#define HOTKEY_WINDOW_VERBOSE_LOGGING
 #ifdef HOTKEY_WINDOW_VERBOSE_LOGGING
@@ -382,7 +383,7 @@ static BOOL initDone = NO;
     } else if (button == NSAlertAlternateReturn) {
         return nil;
     } else {
-        NSAssert1(NO, @"Invalid input dialog button %d", button);
+        NSAssert1(NO, @"Invalid input dialog button %d", (int) button);
         return nil;
     }
 }
@@ -1238,7 +1239,7 @@ static BOOL initDone = NO;
         // 10.6 function.
 
         // app = [runningApplicationClass_ runningApplicationWithProcessIdentifier:[previouslyActiveAppPID_ intValue]];
-        NSMethodSignature *sig = [runningApplicationClass_->isa instanceMethodSignatureForSelector:@selector(runningApplicationWithProcessIdentifier:)];
+        NSMethodSignature *sig = [object_getClass(runningApplicationClass_) instanceMethodSignatureForSelector:@selector(runningApplicationWithProcessIdentifier:)];
         NSInvocation *inv = [NSInvocation invocationWithMethodSignature:sig];
         [inv setTarget:runningApplicationClass_];
         [inv setSelector:@selector(runningApplicationWithProcessIdentifier:)];
