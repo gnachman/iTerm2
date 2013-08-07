@@ -569,18 +569,21 @@ static CGFloat PerceivedBrightness(CGFloat r, CGFloat g, CGFloat b) {
     blinkAllowed_ = value;
 }
 
-- (void)markCursorAsDirty {
+- (void)setCursorNeedsDisplay {
+    int lineStart = [dataSource numberOfLines] - [dataSource height];
     int cursorX = [dataSource cursorX] - 1;
     int cursorY = [dataSource cursorY] - 1;
-    // Set a different bit for the cursor's dirty position because we don't
-    // want to save an instant replay from when only the cursor is dirty.
-    [dataSource setCharDirtyAtX:cursorX Y:cursorY value:2];
+    NSRect dirtyRect = NSMakeRect(MARGIN + cursorX * charWidth,
+                                  (lineStart + cursorY) * lineHeight,
+                                  charWidth,
+                                  lineHeight);
+    [self setNeedsDisplayInRect:dirtyRect];
 }
 
 - (void)setCursorType:(ITermCursorType)value
 {
     cursorType_ = value;
-    [self markCursorAsDirty];
+    [self setCursorNeedsDisplay];
     [self refresh];
 }
 
@@ -1849,7 +1852,6 @@ NSMutableArray* screens=0;
     // If there are two or more rects that need display, the OS will pass in |rect| as the smallest
     // bounding rect that contains them all. Luckily, we can get the list of the "real" dirty rects
     // and they're guaranteed to be disjoint. So draw each of them individually.
-    static NSTimeInterval lastTime;
     const NSRect *rectArray;
     NSInteger rectCount;
     if (drawRectDuration_) {
@@ -1974,6 +1976,13 @@ NSMutableArray* screens=0;
 
 - (void)drawRect:(NSRect)rect to:(NSPoint*)toOrigin
 {
+    // The range of chars int he line that need to be drawn.
+    NSRange charRange = NSMakeRange(MAX(0, (rect.origin.x - MARGIN) / charWidth),
+                                    (rect.origin.x + rect.size.width - MARGIN) / charWidth);
+    charRange.length -= charRange.location;
+    if (charRange.location + charRange.length > [dataSource width]) {
+        charRange.length = [dataSource width] - charRange.location;
+    }
 #ifdef DEBUG_DRAWING
     static int iteration=0;
     static BOOL prevBad=NO;
@@ -1982,7 +1991,7 @@ NSMutableArray* screens=0;
         NSLog(@"Last was bad.");
         prevBad = NO;
     }
-    DebugLog([NSString stringWithFormat:@"%s(0x%x): rect=(%f,%f,%f,%f) frameRect=(%f,%f,%f,%f)]",
+    DebugLog([NSString stringWithFormat:@"%s(%p): rect=(%f,%f,%f,%f) frameRect=(%f,%f,%f,%f)]",
           __PRETTY_FUNCTION__, self,
           rect.origin.x, rect.origin.y, rect.size.width, rect.size.height,
           [self frame].origin.x, [self frame].origin.y, [self frame].size.width, [self frame].size.height]);
@@ -2021,11 +2030,11 @@ NSMutableArray* screens=0;
 #ifdef DEBUG_DRAWING
     DebugLog([NSString stringWithFormat:@"drawRect: Draw lines in range [%d, %d)", lineStart, lineEnd]);
     // Draw each line
-    NSMutableDictionary* dct =
-    [NSDictionary dictionaryWithObjectsAndKeys:
-    [NSColor textBackgroundColor], NSBackgroundColorAttributeName,
-    [NSColor textColor], NSForegroundColorAttributeName,
-    [NSFont userFixedPitchFontOfSize: 0], NSFontAttributeName, NULL];
+    NSDictionary* dct =
+        [NSDictionary dictionaryWithObjectsAndKeys:
+            [NSColor textBackgroundColor], NSBackgroundColorAttributeName,
+            [NSColor textColor], NSForegroundColorAttributeName,
+            [NSFont userFixedPitchFontOfSize: 0], NSFontAttributeName, NULL];
 #endif
     int overflow = [dataSource scrollbackOverflow];
 #ifdef DEBUG_DRAWING
@@ -2053,7 +2062,10 @@ NSMutableArray* screens=0;
                     const CGFloat offsetFromTopOfScreen = y - initialY;
                     temp = NSMakePoint(toOrigin->x, toOrigin->y + offsetFromTopOfScreen);
                 }
-                anyBlinking |= [self _drawLine:line-overflow AtY:y toPoint:toOrigin ? &temp : nil];
+                anyBlinking |= [self _drawLine:line-overflow
+                                           AtY:y
+                                       toPoint:toOrigin ? &temp : nil
+                                     charRange:charRange];
             }
 #ifdef DEBUG_DRAWING
             // if overflow > line then the requested line cannot be drawn
@@ -2077,12 +2089,12 @@ NSMutableArray* screens=0;
                 [lineDebug appendFormat:@"%@", ScreenCharToStr(&theLine[i])];
             }
             [lineDebug appendString:@"\n"];
-            [[NSString stringWithFormat:@"Iter %d, line %d, y=%d",
-              iteration, line, (int)(y)] drawInRect:NSMakeRect(rect.size.width-200,
-                                                               y,
-                                                               200,
-                                                               lineHeight)
-             withAttributes:dct];
+            [[NSString stringWithFormat:@"Iter %d, line %d, y=%d", iteration, line, (int)(y)]
+                 drawInRect:NSMakeRect(rect.size.width-200,
+                                       y,
+                                       200,
+                                       lineHeight)
+                 withAttributes:dct];
 #endif
         }
         y += lineHeight;
@@ -6578,7 +6590,10 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     [NSGraphicsContext restoreGraphicsState];
 }
 
-- (BOOL)_drawLine:(int)line AtY:(double)curY toPoint:(NSPoint*)toPoint
+- (BOOL)_drawLine:(int)line
+              AtY:(double)curY
+          toPoint:(NSPoint*)toPoint
+        charRange:(NSRange)charRange
 {
     BOOL anyBlinking = NO;
 #ifdef DEBUG_DRAWING
@@ -6596,7 +6611,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     BOOL reversed = [[dataSource terminal] screenMode];
     NSColor *aColor = nil;
 
-    // Redraw margins
+    // Redraw margins ------------------------------------------------------------------------------
     NSRect leftMargin = NSMakeRect(0, curY, MARGIN, lineHeight);
     NSRect rightMargin;
     NSRect visibleRect = [self visibleRect];
@@ -6670,10 +6685,11 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
         }
     }
 
+    // Draw text and background --------------------------------------------------------------------
     // Contiguous sections of background with the same colour
     // are combined into runs and draw as one operation
     int bgstart = -1;
-    int j = 0;
+    int j = charRange.location;
     int bgColor = 0;
     int bgGreen = 0;
     int bgBlue = 0;
@@ -6683,8 +6699,10 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     NSData* matches = [resultMap_ objectForKey:[NSNumber numberWithLongLong:line + [dataSource totalScrollbackOverflow]]];
     const char* matchBytes = [matches bytes];
 
-    // Iterate over each character in the line
-    while (j <= WIDTH) {
+    // Iterate over each character in the line.
+    // Go one past where we really need to go to simplify the code.  // TODO(georgen): Fix that.
+    int limit = charRange.location + charRange.length;
+    while (j <= limit) {
         if (theLine[j].code == DWC_RIGHT) {
             // Do not draw the right-hand side of double-width characters.
             j++;
@@ -6717,7 +6735,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
             match = theIndex < [matches length] && (matchBytes[theIndex] & bitMask);
         }
 
-        if (j != WIDTH && bgstart < 0) {
+        if (j != limit && bgstart < 0) {
             // Start new run
             bgstart = j;
             bgColor = theLine[j].backgroundColor;
@@ -6728,7 +6746,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
             isMatch = match;
         }
 
-        if (j != WIDTH &&
+        if (j != limit &&
             bgselected == selected &&
             theLine[j].backgroundColor == bgColor &&
             theLine[j].bgGreen == bgGreen &&
@@ -6820,7 +6838,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
                 textOrigin = NSMakePoint(toPoint->x + MARGIN + bgstart * charWidth,
                                          toPoint->y);
             } else {
-                textOrigin = NSMakePoint(MARGIN + bgstart*charWidth,
+                textOrigin = NSMakePoint(MARGIN + bgstart * charWidth,
                                          curY);
             }
             [self _drawCharactersInLine:theLine
@@ -8370,8 +8388,8 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
       if (prevCursorX != currentCursorX ||
           prevCursorY != currentCursorY) {
           // Mark previous and current cursor position dirty
-          [dataSource setCharDirtyAtCursorX:prevCursorX Y:prevCursorY value:1];
-          [dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY value:1];
+          [dataSource setCharDirtyAtCursorX:prevCursorX Y:prevCursorY];
+          [dataSource setCharDirtyAtCursorX:currentCursorX Y:currentCursorY];
 
           // Set prevCursor[XY] to new cursor position
           prevCursorX = currentCursorX;
@@ -8379,36 +8397,34 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
       }
     }
     for (int y = lineStart; y < lineEnd; y++) {
-        NSMutableData* matches = [resultMap_ objectForKey:[NSNumber numberWithLongLong:y + totalScrollbackOverflow]];
         for (int x = 0; x < WIDTH; x++) {
-            int dirtyFlags = ([dataSource dirtyAtX:x Y:y-lineStart] | allDirty);
+            int dirtyFlags = allDirty || [dataSource dirtyAtX:x Y:y-lineStart];
             if (dirtyFlags) {
-                if (irEnabled) {
-                    if (dirtyFlags & 1) {
-                        foundDirty = YES;
-                        if (matches) {
-                            // Remove highlighted search matches on this line.
-                            [resultMap_ removeObjectForKey:[NSNumber numberWithLongLong:y + totalScrollbackOverflow]];
-                            matches = nil;
-                        }
-                    } else {
-                        for (int j = x+1; j < WIDTH; ++j) {
-                            if ([dataSource dirtyAtX:j Y:y-lineStart] & 1) {
-                                foundDirty = YES;
-                            }
+                foundDirty = YES;
+                // Remove highlighted search matches on this line.
+                [resultMap_ removeObjectForKey:[NSNumber numberWithLongLong:y + totalScrollbackOverflow]];
+
+                // Compute the dirty rect for this line.
+                NSRect dirtyRect = [self visibleRect];
+                dirtyRect.origin.y = y * lineHeight;
+                dirtyRect.size.height = lineHeight;
+                if (!allDirty) {
+                    dirtyRect.origin.x = MARGIN + x * charWidth;
+                    int maxX;
+                    for (maxX = WIDTH - 1; maxX > x; maxX--) {
+                        if ([dataSource dirtyAtX:maxX Y:y-lineStart]) {
+                            break;
                         }
                     }
+                    dirtyRect.size.width = (maxX - x + 1) * charWidth;
                 }
-                NSRect dirtyRect = [self visibleRect];
-                dirtyRect.origin.y = y*lineHeight;
-                dirtyRect.size.height = lineHeight;
                 if (gDebugLogging) {
                     DebugLog([NSString stringWithFormat:@"%d is dirty", y]);
                 }
                 [self setNeedsDisplayInRect:dirtyRect];
 
 #ifdef DEBUG_DRAWING
-                char temp[100];
+                char temp[WIDTH + 1];
                 screen_char_t* p = [dataSource getLineAtScreenIndex:screenindex];
                 for (int i = 0; i < WIDTH; ++i) {
                     temp[i] = p[i].complexChar ? '#' : p[i].code;
@@ -8677,8 +8693,8 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
 
         if ([self blinkingCursor] &&
             [[self window] isKeyWindow]) {
-            // Blink flag flipped and there is a blinking cursor. Mark it dirty.
-            [self markCursorAsDirty];
+            // Blink flag flipped and there is a blinking cursor. Make it redraw.
+            [self setCursorNeedsDisplay];
         }
         DebugLog(@"time to redraw blinking text");
     }

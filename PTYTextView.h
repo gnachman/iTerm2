@@ -640,7 +640,11 @@ typedef enum {
 
 - (NSString *)_getURLForX:(int)x y:(int)y;
 // Returns true if any char in the line is blinking.
-- (BOOL)_drawLine:(int)line AtY:(double)curY toPoint:(NSPoint*)toPoint;
+- (BOOL)_drawLine:(int)line
+              AtY:(double)curY
+          toPoint:(NSPoint*)toPoint
+        charRange:(NSRange)charRange;
+
 - (void)_drawCursor;
 - (void)_drawCursorTo:(NSPoint*)toOrigin;
 - (void)_drawCharacter:(screen_char_t)screenChar

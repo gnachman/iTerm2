@@ -589,13 +589,13 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     [self setRangeDirty:NSMakeRange(i, toX + toY * WIDTH - i)];
 }
 
-- (void)setDirtyAtOffset:(int)i value:(int)v
+- (void)setDirtyAtOffset:(int)i
 {
     i = MIN(i, WIDTH*HEIGHT-1);
     assert(i >= 0);
     assert(i < dirtySize);
 
-    dirty[i] |= v;
+    dirty[i] = 1;
 }
 
 - (void)setRangeDirty:(NSRange)range
@@ -640,7 +640,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
     return [self dirtyAtOffset:i];
 }
 
-- (void)setCharDirtyAtCursorX:(int)x Y:(int)y value:(int)v
+- (void)setCharDirtyAtCursorX:(int)x Y:(int)y
 {
     int xToMark = x;
     int yToMark = y;
@@ -648,10 +648,10 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         xToMark = 0;
         yToMark++;
     }
-    [self setCharDirtyAtX:xToMark Y:yToMark value:v];
+    [self setCharDirtyAtX:xToMark Y:yToMark];
 }
 
-- (void)setCharDirtyAtX:(int)x Y:(int)y value:(int)v
+- (void)setCharDirtyAtX:(int)x Y:(int)y
 {
     if (x == WIDTH) {
         x = WIDTH-1;
@@ -661,16 +661,16 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         y >= 0 &&
         y < HEIGHT) {
         int i = x + y * WIDTH;
-        [self setDirtyAtOffset:i value:v];
+        [self setDirtyAtOffset:i];
     }
 }
 
 - (void)setCharAtCursorDirty:(int)value
 {
     if (cursorX == WIDTH && cursorY < HEIGHT - 1) {
-        [self setCharDirtyAtX:0 Y:cursorY+1 value:value];
+        [self setCharDirtyAtX:0 Y:cursorY+1];
     }
-    [self setCharDirtyAtX:cursorX Y:cursorY value:value];
+    [self setCharDirtyAtX:cursorX Y:cursorY];
 }
 
 - (void)setCursorX:(int)x Y:(int)y
@@ -3102,8 +3102,8 @@ void DumpBuf(screen_char_t* p, int n) {
             aLine[cursorX].complexChar = NO;
             aLine[cursorX-1].code = ' ';
             aLine[cursorX-1].complexChar = NO;
-            [self setDirtyAtOffset:screenIdx + cursorX value:1];
-            [self setDirtyAtOffset:screenIdx + cursorX - 1 value:1];
+            [self setDirtyAtOffset:screenIdx + cursorX];
+            [self setDirtyAtOffset:screenIdx + cursorX - 1];
         }
 
         // This is an ugly little optimization--if we're inserting just one character, see if it would
@@ -3223,8 +3223,7 @@ void DumpBuf(screen_char_t* p, int n) {
         // Mark the cursor's previous location dirty. This fixes a rare race condition where
         // the cursor is not erased.
         [self setCharDirtyAtX:MAX(0, cursorX - 1)
-                            Y:MAX(0, cursorY-1)
-                        value:1];
+                            Y:MAX(0, cursorY - 1)];
 
         // Top line can move into scroll area; we need to draw only bottom line.
         [self moveDirtyRangeFromX:0 Y:1 toX:0 Y:0 size:WIDTH*(HEIGHT - 1)];
@@ -4282,18 +4281,18 @@ void DumpBuf(screen_char_t* p, int n) {
     // There was a call to [display setNeedsDisplay:YES] here which was
     // a remnant of iTerm 0.1 (see bug 1124) that was killing performance.
     // I'm almost sure it wasn't doing any good.
-        allDirty_ = YES;
+    allDirty_ = YES;
     DebugLog(@"setDirty (screen scrolled)");
 }
 
 - (BOOL)isAllDirty
 {
-        return allDirty_;
+    return allDirty_;
 }
 
 - (void)resetAllDirty
 {
-        allDirty_ = NO;
+    allDirty_ = NO;
 }
 
 - (void)doPrint
