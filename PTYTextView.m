@@ -6590,6 +6590,121 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     [NSGraphicsContext restoreGraphicsState];
 }
 
+// Draw a run of background color/image and foreground text.
+- (void)drawRunStartingAtIndex:(const int)firstIndex  // Index into line of first char
+                         endAt:(const int)lastIndex   // Index into line of last char
+                       yOrigin:(const double)yOrigin  // Top left corner of rect to draw into
+                       toPoint:(NSPoint * const)toPoint  // If not nil, an offset for drawing
+                    hasBGImage:(const BOOL)hasBGImage  // If set, draw a bg image (else solid colors only)
+             defaultBgColorPtr:(NSColor **)defaultBgColorPtr  // Pass in default bg color; may be changed.
+      alphaIfTransparencyInUse:(const double)alphaIfTransparencyInUse  // Alpha value to use if transparency is on
+                       bgColor:(const int)bgColor      // bg color code (or red component if 24 bit)
+                   bgColorMode:(const ColorMode)bgColorMode  // bg color mode
+                        bgBlue:(const int)bgBlue       // blue component if 24 bit
+                       bgGreen:(const int)bgGreen      // green component if 24 bit
+                      reversed:(const BOOL)reversed    // reverse video?
+                    bgselected:(const BOOL)bgselected  // is selected text?
+                       isMatch:(const BOOL)isMatch     // is Find On Page match?
+                       stripes:(const BOOL)stripes     // bg is striped?
+                          line:(screen_char_t const *)theLine  // Whole screen line
+                       matches:(NSData const *)matches // Bitmask of Find On Page matches
+{
+    NSColor *aColor = *defaultBgColorPtr;
+
+    NSRect bgRect = NSMakeRect(floor(MARGIN + firstIndex * charWidth),
+                               yOrigin,
+                               ceil((lastIndex - firstIndex) * charWidth),
+                               lineHeight);
+
+    if (hasBGImage) {
+        if (toPoint) {
+            [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
+                                                                         toPoint:NSMakePoint(toPoint->x + bgRect.origin.x,
+                                                                                             toPoint->y + bgRect.size.height)
+                                                                 useTransparency:[self useTransparency]];
+        } else {
+            [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
+                                                                 useTransparency:[self useTransparency]];
+        }
+    }
+    if (!hasBGImage ||
+        (isMatch && !bgselected) ||
+        !(bgColor == ALTSEM_BG_DEFAULT && bgColorMode == ColorModeAlternate) ||
+        bgselected) {
+        // There's no bg image, or there's a nondefault bg on a bg image.
+        // We are not drawing an unmolested background image. Some
+        // background fill must be drawn. If there is a background image
+        // it will be blended with the bg color.
+
+        if (isMatch && !bgselected) {
+            aColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:1];
+        } else if (bgselected) {
+            aColor = selectionColor;
+        } else {
+            if (reversed && bgColor == ALTSEM_BG_DEFAULT && bgColorMode == ColorModeAlternate) {
+                // Reverse video is only applied to default background-
+                // color chars.
+                aColor = [self colorForCode:ALTSEM_FG_DEFAULT
+                                      green:0
+                                       blue:0
+                                  colorMode:ColorModeAlternate
+                                       bold:NO
+                               isBackground:NO];
+            } else {
+                // Use the regular background color.
+                aColor = [self colorForCode:bgColor
+                                      green:bgGreen
+                                       blue:bgBlue
+                                  colorMode:bgColorMode
+                                       bold:NO
+                               isBackground:(bgColor == ALTSEM_BG_DEFAULT)];
+            }
+        }
+        aColor = [aColor colorWithAlphaComponent:alphaIfTransparencyInUse];
+        [aColor set];
+        if (toPoint) {
+            bgRect.origin.x += toPoint->x;
+            bgRect.origin.y = toPoint->y;
+        }
+        NSRectFillUsingOperation(bgRect,
+                                 hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
+    } else if (hasBGImage) {
+        // There is a bg image and no special background on it. Blend
+        // in the default background color.
+        aColor = [self colorForCode:ALTSEM_BG_DEFAULT
+                              green:0
+                               blue:0
+                          colorMode:ColorModeAlternate
+                               bold:NO
+                       isBackground:YES];
+        aColor = [aColor colorWithAlphaComponent:1 - blend];
+        [aColor set];
+        NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
+    }
+    *defaultBgColorPtr = aColor;
+
+    // Draw red stripes in the background if sending input to all sessions
+    if (stripes) {
+        [self _drawStripesInRect:bgRect];
+    }
+
+    NSPoint textOrigin;
+    if (toPoint) {
+        textOrigin = NSMakePoint(toPoint->x + MARGIN + firstIndex * charWidth,
+                                 toPoint->y);
+    } else {
+        textOrigin = NSMakePoint(MARGIN + firstIndex * charWidth,
+                                 yOrigin);
+    }
+    [self _drawCharactersInLine:theLine
+                        inRange:NSMakeRange(firstIndex, lastIndex - firstIndex)
+                startingAtPoint:textOrigin
+                     bgselected:bgselected
+                       reversed:reversed
+                        bgColor:aColor
+                        matches:matches];
+}
+
 - (BOOL)_drawLine:(int)line
               AtY:(double)curY
           toPoint:(NSPoint*)toPoint
@@ -6702,7 +6817,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
     // Iterate over each character in the line.
     // Go one past where we really need to go to simplify the code.  // TODO(georgen): Fix that.
     int limit = charRange.location + charRange.length;
-    while (j <= limit) {
+    while (j < limit) {
         if (theLine[j].code == DWC_RIGHT) {
             // Do not draw the right-hand side of double-width characters.
             j++;
@@ -6757,97 +6872,23 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
             j += (double_width ? 2 : 1);
         } else if (bgstart >= 0) {
             // This run is finished, draw it
-            NSRect bgRect = NSMakeRect(floor(MARGIN + bgstart * charWidth),
-                                       curY,
-                                       ceil((j - bgstart) * charWidth),
-                                       lineHeight);
-
-            if (hasBGImage) {
-                if (toPoint) {
-                    [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
-                                                                                 toPoint:NSMakePoint(toPoint->x + bgRect.origin.x,
-                                                                                                     toPoint->y + bgRect.size.height)
-                                                                         useTransparency:[self useTransparency]];
-                } else {
-                    [(PTYScrollView *)[self enclosingScrollView] drawBackgroundImageRect:bgRect
-                                                                         useTransparency:[self useTransparency]];
-                }
-            }
-            if (!hasBGImage ||
-                (isMatch && !bgselected) ||
-                !(bgColor == ALTSEM_BG_DEFAULT && bgColorMode == ColorModeAlternate) ||
-                bgselected) {
-                // There's no bg image, or there's a nondefault bg on a bg image.
-                // We are not drawing an unmolested background image. Some
-                // background fill must be drawn. If there is a background image
-                // it will be blended 50/50.
-
-                if (isMatch && !bgselected) {
-                    aColor = [NSColor colorWithCalibratedRed:1 green:1 blue:0 alpha:1];
-                } else if (bgselected) {
-                    aColor = selectionColor;
-                } else {
-                    if (reversed && bgColor == ALTSEM_BG_DEFAULT && bgColorMode == ColorModeAlternate) {
-                        // Reverse video is only applied to default background-
-                        // color chars.
-                        aColor = [self colorForCode:ALTSEM_FG_DEFAULT
-                                              green:0
-                                               blue:0
-                                          colorMode:ColorModeAlternate
-                                               bold:NO
-                                       isBackground:NO];
-                    } else {
-                        // Use the regular background color.
-                        aColor = [self colorForCode:bgColor
-                                              green:bgGreen
-                                               blue:bgBlue
-                                          colorMode:bgColorMode
-                                               bold:NO
-                                       isBackground:(bgColor == ALTSEM_BG_DEFAULT)];
-                    }
-                }
-                aColor = [aColor colorWithAlphaComponent:alphaIfTransparencyInUse];
-                [aColor set];
-                if (toPoint) {
-                    bgRect.origin.x += toPoint->x;
-                    bgRect.origin.y = toPoint->y;
-                }
-                NSRectFillUsingOperation(bgRect,
-                                         hasBGImage ? NSCompositeSourceOver : NSCompositeCopy);
-            } else if (hasBGImage) {
-                // There is a bg image and no special background on it. Blend
-                // in the default background color.
-                aColor = [self colorForCode:ALTSEM_BG_DEFAULT
-                                      green:0
-                                       blue:0
-                                  colorMode:ColorModeAlternate
-                                       bold:NO
-                               isBackground:YES];
-                aColor = [aColor colorWithAlphaComponent:1 - blend];
-                [aColor set];
-                NSRectFillUsingOperation(bgRect, NSCompositeSourceOver);
-            }
-
-            // Draw red stripes in the background if sending input to all sessions
-            if (stripes) {
-                [self _drawStripesInRect:bgRect];
-            }
-
-            NSPoint textOrigin;
-            if (toPoint) {
-                textOrigin = NSMakePoint(toPoint->x + MARGIN + bgstart * charWidth,
-                                         toPoint->y);
-            } else {
-                textOrigin = NSMakePoint(MARGIN + bgstart * charWidth,
-                                         curY);
-            }
-            [self _drawCharactersInLine:theLine
-                                inRange:NSMakeRange(bgstart, j - bgstart)
-                        startingAtPoint:textOrigin
-                             bgselected:bgselected
-                               reversed:reversed
-                                bgColor:aColor
-                                matches:matches];
+            [self drawRunStartingAtIndex:bgstart
+                                   endAt:j
+                                 yOrigin:curY
+                                 toPoint:toPoint
+                              hasBGImage:hasBGImage
+                       defaultBgColorPtr:&aColor
+                alphaIfTransparencyInUse:alphaIfTransparencyInUse
+                                 bgColor:bgColor
+                             bgColorMode:bgColorMode
+                                  bgBlue:bgBlue
+                                 bgGreen:bgGreen
+                                reversed:reversed
+                              bgselected:bgselected
+                                 isMatch:isMatch
+                                 stripes:stripes
+                                    line:theLine
+                                 matches:matches];
             bgstart = -1;
             // Return to top of loop without incrementing j so this
             // character gets the chance to start its own run
@@ -6855,6 +6896,26 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
             // Don't need to draw and not on a run, move to next char
             j += (double_width ? 2 : 1);
         }
+    }
+    if (bgstart >= 0) {
+        // Draw last run, if necesary.
+        [self drawRunStartingAtIndex:bgstart
+                               endAt:j
+                             yOrigin:curY
+                             toPoint:toPoint
+                          hasBGImage:hasBGImage
+                   defaultBgColorPtr:&aColor
+            alphaIfTransparencyInUse:alphaIfTransparencyInUse
+                             bgColor:bgColor
+                         bgColorMode:bgColorMode
+                              bgBlue:bgBlue
+                             bgGreen:bgGreen
+                            reversed:reversed
+                          bgselected:bgselected
+                             isMatch:isMatch
+                             stripes:stripes
+                                line:theLine
+                             matches:matches];
     }
     return anyBlinking;
 }

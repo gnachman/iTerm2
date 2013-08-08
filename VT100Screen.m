@@ -649,6 +649,10 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
         yToMark++;
     }
     [self setCharDirtyAtX:xToMark Y:yToMark];
+    if (xToMark < WIDTH - 1) {
+        // Just in case the cursor was over a double width character
+        [self setCharDirtyAtX:xToMark + 1 Y:yToMark];
+    }
 }
 
 - (void)setCharDirtyAtX:(int)x Y:(int)y
@@ -667,10 +671,7 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 
 - (void)setCharAtCursorDirty:(int)value
 {
-    if (cursorX == WIDTH && cursorY < HEIGHT - 1) {
-        [self setCharDirtyAtX:0 Y:cursorY+1];
-    }
-    [self setCharDirtyAtX:cursorX Y:cursorY];
+    [self setCharDirtyAtCursorX:cursorX Y:cursorY];
 }
 
 - (void)setCursorX:(int)x Y:(int)y
