@@ -2176,7 +2176,7 @@ static BOOL XYIsBeforeXY(int px1, int py1, int px2, int py2) {
         [SESSION clearTriggerLine];
         break;
     case ANSICSI_VPR:
-        [self cursorRight:token.u.csi.p[0]];
+        [self cursorDown:token.u.csi.p[0]];
         [SESSION clearTriggerLine];
         break;
     case ANSICSI_ECH:
