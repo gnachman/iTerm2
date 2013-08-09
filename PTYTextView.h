@@ -49,8 +49,9 @@
 @class ThreeFingerTapGestureRecognizer;
 @class VT100Screen;
 @class VT100Terminal;
+@class PTYScrollView;
 
-@protocol PTYTextViewDelegate
+@protocol PTYTextViewDelegate <NSObject>
 
 - (BOOL)xtermMouseReporting;
 - (BOOL)isPasting;
@@ -62,6 +63,14 @@
 // Contextual menu
 - (void)menuForEvent:(NSEvent *)theEvent menu:(NSMenu *)theMenu;
 - (void)pasteString:(NSString *)aString;
+- (void)paste:(id)sender;
+- (void)textViewFontDidChange;
+- (PTYScrollView *)SCROLLVIEW;
+- (void)sendEscapeSequence:(NSString *)text;
+- (void)sendHexCode:(NSString *)codes;
+- (void)sendText:(NSString *)text;
+- (void)launchCoprocessWithCommand:(NSString *)command;
+- (void)insertText:(NSString *)string;
 
 @end
 

@@ -66,7 +66,7 @@ static const int kDefaultAdvancesCapacity = 100;
     startingAtIndex:(int)firstCharacterIndex
          glyphCount:(int)glyphCount
         runWidthPtr:(CGFloat *)runWidthPtr {
-    const NSPoint *suggestedPositions = CTRunGetPositionsPtr(run);
+    const NSPoint *suggestedPositions = (const NSPoint *) CTRunGetPositionsPtr(run);
     const CFIndex *indices = CTRunGetStringIndicesPtr(run);
 
     int characterIndex = firstCharacterIndex;

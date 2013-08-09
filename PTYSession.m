@@ -1271,50 +1271,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
     }
 }
 
-- (void)sendEscapeSequence:(NSString *)text
-{
-    if (EXIT) {
-        return;
-    }
-    if ([text length] > 0) {
-        NSString *aString = [NSString stringWithFormat:@"\e%@", text];
-        [self writeTask:[aString dataUsingEncoding:NSUTF8StringEncoding]];
-    }
-}
-
-- (void)sendHexCode:(NSString *)codes
-{
-    if (EXIT) {
-        return;
-    }
-    if ([codes length]) {
-        NSArray* components = [codes componentsSeparatedByString:@" "];
-        for (NSString* part in components) {
-            const char* utf8 = [part UTF8String];
-            char* endPtr;
-            unsigned char c = strtol(utf8, &endPtr, 16);
-            if (endPtr != utf8) {
-                [self writeTask:[NSData dataWithBytes:&c length:sizeof(c)]];
-            }
-        }
-    }
-}
-
-- (void)sendText:(NSString *)text
-{
-    if (EXIT) {
-        return;
-    }
-    if ([text length] > 0) {
-        NSString *temp = text;
-        temp = [temp stringByReplacingEscapedChar:'n' withString:@"\n"];
-        temp = [temp stringByReplacingEscapedChar:'e' withString:@"\e"];
-        temp = [temp stringByReplacingEscapedChar:'a' withString:@"\a"];
-        temp = [temp stringByReplacingEscapedChar:'t' withString:@"\t"];
-        [self writeTask:[temp dataUsingEncoding:NSUTF8StringEncoding]];
-    }
-}
-
 - (BOOL)willHandleEvent:(NSEvent *) theEvent
 {
     return NO;
@@ -1322,47 +1278,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 
 - (void)handleEvent:(NSEvent *)theEvent
 {
-}
-
-- (void)insertText:(NSString *)string
-{
-    NSData *data;
-    NSMutableString *mstring;
-    int i;
-    int max;
-
-    if (EXIT) {
-        return;
-    }
-
-    //    NSLog(@"insertText:%@",string);
-    mstring = [NSMutableString stringWithString:string];
-    max = [string length];
-    for (i = 0; i < max; i++) {
-        // From http://lists.apple.com/archives/cocoa-dev/2001/Jul/msg00114.html
-        // in MacJapanese, the backslash char (ASCII 0xdC) is mapped to Unicode 0xA5.
-        // The following line gives you NSString containing an Unicode character Yen sign (0xA5) in Japanese localization.
-        // string = [NSString stringWithCString:"\"];
-        // TODO: Check the locale before doing this.
-        if ([mstring characterAtIndex:i] == 0xa5) {
-            [mstring replaceCharactersInRange:NSMakeRange(i, 1) withString:@"\\"];
-        }
-    }
-
-#if DEBUG_METHOD_TRACE
-    NSLog(@"%s(%d):-[PTYSession insertText:%@]",
-          __FILE__, __LINE__, mstring);
-#endif
-
-    data = [mstring dataUsingEncoding:[TERMINAL encoding]
-                 allowLossyConversion:YES];
-
-    if (data != nil) {
-        if (gDebugLogging) {
-            DebugLog([NSString stringWithFormat:@"writeTask:%@", data]);
-        }
-        [self writeTask:data];
-    }
 }
 
 - (void)insertNewline:(id)sender
@@ -1608,22 +1523,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
         [self _pasteStringMore];
     } else {
         NSBeep();
-    }
-}
-
-- (void)paste:(id)sender
-{
-    NSString* pbStr = [PTYSession pasteboardString];
-    if (pbStr) {
-        if ([self isPasting]) {
-            if ([pbStr length] == 0) {
-                NSBeep();
-            } else {
-                [eventQueue_ addObject:[PasteEvent pasteEventWithString:pbStr flags:[sender tag]]];
-            }
-        } else {
-            [self pasteString:pbStr flags:[sender tag]];
-        }
     }
 }
 
@@ -2220,11 +2119,6 @@ static NSString *kTmuxFontChanged = @"kTmuxFontChanged";
 {
     [TEXTVIEW autorelease];
     TEXTVIEW = [theTEXTVIEW retain];
-}
-
-- (PTYScrollView *)SCROLLVIEW
-{
-    return SCROLLVIEW;
 }
 
 - (void)setSCROLLVIEW:(PTYScrollView *)theSCROLLVIEW
@@ -2915,13 +2809,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
-- (void)textViewFontDidChange
-{
-    if ([self isTmuxClient]) {
-        [self notifyTmuxFontChange];
-    }
-}
-
 - (void)setIgnoreResizeNotifications:(BOOL)ignore
 {
     ignoreResizeNotifications_ = ignore;
@@ -3222,11 +3109,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [TEXTVIEW setNeedsDisplay:YES];
 }
 
-- (void)launchCoprocessWithCommand:(NSString *)command
-{
-    [self launchCoprocessWithCommand:command mute:NO];
-}
-
 - (void)launchSilentCoprocessWithCommand:(NSString *)command
 {
     [self launchCoprocessWithCommand:command mute:YES];
@@ -3500,117 +3382,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     [self emptyEventQueue];
 }
 
-@end
-
-@implementation PTYSession (ScriptingSupport)
-
-// Object specifier
-- (NSScriptObjectSpecifier *)objectSpecifier
-{
-    NSUInteger theIndex = 0;
-    id classDescription = nil;
-
-    NSScriptObjectSpecifier *containerRef = nil;
-    if (![[self tab] realParentWindow]) {
-        // TODO(georgen): scripting is broken while in instant replay.
-        return nil;
-    }
-    // TODO: Test this with multiple panes per tab.
-    theIndex = [[[[self tab] realParentWindow] tabView] indexOfTabViewItem:[[self tab] tabViewItem]];
-
-    if (theIndex != NSNotFound) {
-        containerRef = [[[self tab] realParentWindow] objectSpecifier];
-        classDescription = [containerRef keyClassDescription];
-        //create and return the specifier
-        return [[[NSIndexSpecifier allocWithZone:[self zone]]
-                 initWithContainerClassDescription:classDescription
-                 containerSpecifier:containerRef
-                 key:@ "sessions"
-                 index:theIndex] autorelease];
-    } else {
-        // NSLog(@"recipient not found!");
-        return nil;
-    }
-
-}
-
-// Handlers for supported commands:
--(void)handleExecScriptCommand:(NSScriptCommand *)aCommand
-{
-    // if we are already doing something, get out.
-    if ([SHELL pid] > 0) {
-        NSBeep();
-        return;
-    }
-
-    // Get the command's arguments:
-    NSDictionary *args = [aCommand evaluatedArguments];
-    NSString *command = [args objectForKey:@"command"];
-    BOOL isUTF8 = [[args objectForKey:@"isUTF8"] boolValue];
-
-    NSString *cmd;
-    NSArray *arg;
-
-    [command breakDownCommandToPath:&cmd cmdArgs:&arg];
-    [self startProgram:cmd arguments:arg environment:[NSDictionary dictionary] isUTF8:isUTF8 asLoginSession:NO];
-
-    return;
-}
-
--(void)handleSelectScriptCommand:(NSScriptCommand *)command
-{
-    [[[[self tab] parentWindow] tabView] selectTabViewItemWithIdentifier:[self tab]];
-}
-
--(void)handleWriteScriptCommand:(NSScriptCommand *)command
-{
-    // Get the command's arguments:
-    NSDictionary *args = [command evaluatedArguments];
-    // optional argument follows (might be nil):
-    NSString *contentsOfFile = [args objectForKey:@"contentsOfFile"];
-    // optional argument follows (might be nil):
-    NSString *text = [args objectForKey:@"text"];
-    NSData *data = nil;
-    NSString *aString = nil;
-
-    if (text != nil) {
-        if ([text characterAtIndex:[text length]-1]==' ') {
-            data = [text dataUsingEncoding:[TERMINAL encoding]];
-        } else {
-            aString = [NSString stringWithFormat:@"%@\n", text];
-            data = [aString dataUsingEncoding:[TERMINAL encoding]];
-        }
-    }
-
-    if (contentsOfFile != nil) {
-        aString = [NSString stringWithContentsOfFile:contentsOfFile
-                                            encoding:NSUTF8StringEncoding
-                                               error:nil];
-        data = [aString dataUsingEncoding:[TERMINAL encoding]];
-    }
-
-    if (data != nil && [SHELL pid] > 0) {
-        int i = 0;
-        // wait here until we have had some output
-        while ([SHELL hasOutput] == NO && i < 1000000) {
-            usleep(50000);
-            i += 50000;
-        }
-
-        [self writeTask:data];
-    }
-}
-
-
-- (void)handleTerminateScriptCommand:(NSScriptCommand *)command
-{
-    [[self tab] closeSession:self];
-}
-
-@end
-
-@implementation PTYSession (Private)
-
 - (NSString*)encodingName
 {
     // Get the encoding, perhaps as a fully written out name.
@@ -3649,174 +3420,6 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     DLog(@"Return nil encoding");
 
     return nil;
-}
-
-- (NSString*)_getLocale
-{
-    NSString* theLocale = nil;
-    NSString* languageCode = [[NSLocale currentLocale] objectForKey:NSLocaleLanguageCode];
-    NSString* countryCode = [[NSLocale currentLocale] objectForKey:NSLocaleCountryCode];
-    DLog(@"getLocale: languageCode=%@, countryCode=%@", languageCode, countryCode);
-    if (languageCode && countryCode) {
-        theLocale = [NSString stringWithFormat:@"%@_%@", languageCode, countryCode];
-        DLog(@"Return combined language/country locale %@", theLocale);
-    } else {
-        NSString *localeId = [[NSLocale currentLocale] localeIdentifier];
-        DLog(@"Return local identifier of %@", localeId);
-        return localeId;
-    }
-    return theLocale;
-}
-
-- (NSString*)_lang
-{
-    NSString* theLocale = [self _getLocale];
-    NSString* encoding = [self encodingName];
-    DLog(@"locale=%@, encoding=%@", theLocale, encoding);
-    if (encoding && theLocale) {
-        NSString* result = [NSString stringWithFormat:@"%@.%@", theLocale, encoding];
-        DLog(@"Tentative locale is %@", result);
-        if ([self _localeIsSupported:result]) {
-            DLog(@"Locale is supported");
-            return result;
-        } else {
-            DLog(@"Locale is NOT supported");
-            return nil;
-        }
-    } else {
-        DLog(@"No locale or encoding, returning nil language");
-        return nil;
-    }
-}
-
-- (void)setDvrFrame
-{
-    screen_char_t* s = (screen_char_t*)[dvrDecoder_ decodedFrame];
-    int len = [dvrDecoder_ length];
-    DVRFrameInfo info = [dvrDecoder_ info];
-    if (info.width != [SCREEN width] || info.height != [SCREEN height]) {
-        if (![liveSession_ isTmuxClient]) {
-            [[[self tab] realParentWindow] sessionInitiatedResize:self
-                                                            width:info.width
-                                                           height:info.height];
-        }
-    }
-    [SCREEN setFromFrame:s len:len info:info];
-    [[[self tab] realParentWindow] resetTempTitle];
-    [[[self tab] realParentWindow] setWindowTitle];
-}
-
-- (void)continueTailFind
-{
-    NSMutableArray *results = [NSMutableArray array];
-    BOOL more;
-    more = [SCREEN continueFindAllResults:results
-                                inContext:&tailFindContext_];
-    for (SearchResult *r in results) {
-        [TEXTVIEW addResultFromX:r->startX
-                            absY:r->absStartY
-                             toX:r->endX
-                          toAbsY:r->absEndY];
-    }
-    if ([results count]) {
-        [TEXTVIEW setNeedsDisplay:YES];
-    }
-    if (more) {
-        tailFindTimer_ = [NSTimer scheduledTimerWithTimeInterval:0.01
-                                                          target:self
-                                                        selector:@selector(continueTailFind)
-                                                        userInfo:nil
-                                                         repeats:NO];
-    } else {
-        // Update the saved position to just before the screen.
-        [SCREEN saveTerminalAbsPos];
-        tailFindTimer_ = nil;
-    }
-}
-
-- (void)beginTailFind
-{
-    FindContext *initialFindContext = [TEXTVIEW initialFindContext];
-    if (!initialFindContext->substring) {
-        return;
-    }
-    [SCREEN initFindString:initialFindContext->substring
-          forwardDirection:YES
-              ignoringCase:!!(initialFindContext->options & FindOptCaseInsensitive)
-                     regex:!!(initialFindContext->options & FindOptRegex)
-               startingAtX:0
-               startingAtY:0
-                withOffset:0
-                 inContext:&tailFindContext_
-           multipleResults:YES];
-
-    // Set the starting position to the block & offset that the backward search
-    // began at. Do a forward search from that location.
-    [SCREEN restoreSavedPositionToFindContext:&tailFindContext_];
-    [self continueTailFind];
-}
-
-- (void)sessionContentsChanged:(NSNotification *)notification
-{
-    if (!tailFindTimer_ &&
-        [notification object] == self &&
-        [[tab_ realParentWindow] currentTab] == tab_) {
-        [self beginTailFind];
-    }
-}
-
-- (void)stopTailFind
-{
-    if (tailFindTimer_) {
-        [SCREEN cancelFindInContext:&tailFindContext_];
-        [tailFindTimer_ invalidate];
-        tailFindTimer_ = nil;
-    }
-}
-
-- (void)printTmuxMessage:(NSString *)message
-{
-    if (EXIT) {
-        return;
-    }
-    screen_char_t savedFgColor = [TERMINAL foregroundColorCode];
-    screen_char_t savedBgColor = [TERMINAL backgroundColorCode];
-    [TERMINAL setForegroundColor:ALTSEM_FG_DEFAULT
-                          alternateSemantics:YES];
-    [TERMINAL setBackgroundColor:ALTSEM_BG_DEFAULT
-                          alternateSemantics:YES];
-    [SCREEN setString:message ascii:YES];
-    [SCREEN crlf];
-    [TERMINAL setForegroundColor:savedFgColor.foregroundColor
-              alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
-    [TERMINAL setBackgroundColor:savedBgColor.backgroundColor
-              alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
-}
-
-- (void)printTmuxCommandOutputToScreen:(NSString *)response
-{
-    for (NSString *aLine in [response componentsSeparatedByString:@"\n"]) {
-        aLine = [aLine stringByReplacingOccurrencesOfString:@"\r" withString:@""];
-        [self printTmuxMessage:aLine];
-    }
-}
-
-- (BOOL)_localeIsSupported:(NSString*)theLocale
-{
-    // Keep a copy of the current locale setting for this process
-    char* backupLocale = setlocale(LC_CTYPE, NULL);
-
-    // Try to set it to the proposed locale
-    BOOL supported;
-    if (setlocale(LC_CTYPE, [theLocale UTF8String])) {
-        supported = YES;
-    } else {
-        supported = NO;
-    }
-
-    // Restore locale and return
-    setlocale(LC_CTYPE, backupLocale);
-    return supported;
 }
 
 #pragma mark PTYTextViewDelegate
@@ -4273,10 +3876,10 @@ static long long timeInTenthsOfSeconds(struct timeval t)
                 send_str = (unsigned char *)[data bytes];
                 send_strlen = [data length];
                 DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
-                          modflag, send_strlen, send_str[0], send_str[0]]);
+                         modflag, send_strlen, send_str[0], send_str[0]]);
                 if (debugKeyDown) {
                     DebugLog([NSString stringWithFormat:@"modflag = 0x%x; send_strlen = %zd; send_str[0] = '%c (0x%x)'",
-                              modflag, send_strlen, send_str[0], send_str[0]]);
+                             modflag, send_strlen, send_str[0], send_str[0]]);
                 }
             }
 
@@ -4388,5 +3991,396 @@ static long long timeInTenthsOfSeconds(struct timeval t)
     }
 }
 
+- (void)paste:(id)sender
+{
+    NSString* pbStr = [PTYSession pasteboardString];
+    if (pbStr) {
+        if ([self isPasting]) {
+            if ([pbStr length] == 0) {
+                NSBeep();
+            } else {
+                [eventQueue_ addObject:[PasteEvent pasteEventWithString:pbStr flags:[sender tag]]];
+            }
+        } else {
+            [self pasteString:pbStr flags:[sender tag]];
+        }
+    }
+}
+
+- (void)textViewFontDidChange
+{
+    if ([self isTmuxClient]) {
+        [self notifyTmuxFontChange];
+    }
+}
+
+- (PTYScrollView *)SCROLLVIEW
+{
+    return SCROLLVIEW;
+}
+
+- (void)sendEscapeSequence:(NSString *)text
+{
+    if (EXIT) {
+        return;
+    }
+    if ([text length] > 0) {
+        NSString *aString = [NSString stringWithFormat:@"\e%@", text];
+        [self writeTask:[aString dataUsingEncoding:NSUTF8StringEncoding]];
+    }
+}
+
+- (void)sendHexCode:(NSString *)codes
+{
+    if (EXIT) {
+        return;
+    }
+    if ([codes length]) {
+        NSArray* components = [codes componentsSeparatedByString:@" "];
+        for (NSString* part in components) {
+            const char* utf8 = [part UTF8String];
+            char* endPtr;
+            unsigned char c = strtol(utf8, &endPtr, 16);
+            if (endPtr != utf8) {
+                [self writeTask:[NSData dataWithBytes:&c length:sizeof(c)]];
+            }
+        }
+    }
+}
+
+- (void)sendText:(NSString *)text
+{
+    if (EXIT) {
+        return;
+    }
+    if ([text length] > 0) {
+        NSString *temp = text;
+        temp = [temp stringByReplacingEscapedChar:'n' withString:@"\n"];
+        temp = [temp stringByReplacingEscapedChar:'e' withString:@"\e"];
+        temp = [temp stringByReplacingEscapedChar:'a' withString:@"\a"];
+        temp = [temp stringByReplacingEscapedChar:'t' withString:@"\t"];
+        [self writeTask:[temp dataUsingEncoding:NSUTF8StringEncoding]];
+    }
+}
+
+- (void)launchCoprocessWithCommand:(NSString *)command
+{
+    [self launchCoprocessWithCommand:command mute:NO];
+}
+
+- (void)insertText:(NSString *)string
+{
+    NSData *data;
+    NSMutableString *mstring;
+    int i;
+    int max;
+
+    if (EXIT) {
+        return;
+    }
+
+    //    NSLog(@"insertText:%@",string);
+    mstring = [NSMutableString stringWithString:string];
+    max = [string length];
+    for (i = 0; i < max; i++) {
+        // From http://lists.apple.com/archives/cocoa-dev/2001/Jul/msg00114.html
+        // in MacJapanese, the backslash char (ASCII 0xdC) is mapped to Unicode 0xA5.
+        // The following line gives you NSString containing an Unicode character Yen sign (0xA5) in Japanese localization.
+        // string = [NSString stringWithCString:"\"];
+        // TODO: Check the locale before doing this.
+        if ([mstring characterAtIndex:i] == 0xa5) {
+            [mstring replaceCharactersInRange:NSMakeRange(i, 1) withString:@"\\"];
+        }
+    }
+
+#if DEBUG_METHOD_TRACE
+    NSLog(@"%s(%d):-[PTYSession insertText:%@]",
+          __FILE__, __LINE__, mstring);
+#endif
+
+    data = [mstring dataUsingEncoding:[TERMINAL encoding]
+                 allowLossyConversion:YES];
+
+    if (data != nil) {
+        if (gDebugLogging) {
+            DebugLog([NSString stringWithFormat:@"writeTask:%@", data]);
+        }
+        [self writeTask:data];
+    }
+}
+
+- (NSString*)_getLocale
+{
+    NSString* theLocale = nil;
+    NSString* languageCode = [[NSLocale currentLocale] objectForKey:NSLocaleLanguageCode];
+    NSString* countryCode = [[NSLocale currentLocale] objectForKey:NSLocaleCountryCode];
+    DLog(@"getLocale: languageCode=%@, countryCode=%@", languageCode, countryCode);
+    if (languageCode && countryCode) {
+        theLocale = [NSString stringWithFormat:@"%@_%@", languageCode, countryCode];
+        DLog(@"Return combined language/country locale %@", theLocale);
+    } else {
+        NSString *localeId = [[NSLocale currentLocale] localeIdentifier];
+        DLog(@"Return local identifier of %@", localeId);
+        return localeId;
+    }
+    return theLocale;
+}
+
+- (NSString*)_lang
+{
+    NSString* theLocale = [self _getLocale];
+    NSString* encoding = [self encodingName];
+    DLog(@"locale=%@, encoding=%@", theLocale, encoding);
+    if (encoding && theLocale) {
+        NSString* result = [NSString stringWithFormat:@"%@.%@", theLocale, encoding];
+        DLog(@"Tentative locale is %@", result);
+        if ([self _localeIsSupported:result]) {
+            DLog(@"Locale is supported");
+            return result;
+        } else {
+            DLog(@"Locale is NOT supported");
+            return nil;
+        }
+    } else {
+        DLog(@"No locale or encoding, returning nil language");
+        return nil;
+    }
+}
+
+- (void)setDvrFrame
+{
+    screen_char_t* s = (screen_char_t*)[dvrDecoder_ decodedFrame];
+    int len = [dvrDecoder_ length];
+    DVRFrameInfo info = [dvrDecoder_ info];
+    if (info.width != [SCREEN width] || info.height != [SCREEN height]) {
+        if (![liveSession_ isTmuxClient]) {
+            [[[self tab] realParentWindow] sessionInitiatedResize:self
+                                                            width:info.width
+                                                           height:info.height];
+        }
+    }
+    [SCREEN setFromFrame:s len:len info:info];
+    [[[self tab] realParentWindow] resetTempTitle];
+    [[[self tab] realParentWindow] setWindowTitle];
+}
+
+- (void)continueTailFind
+{
+    NSMutableArray *results = [NSMutableArray array];
+    BOOL more;
+    more = [SCREEN continueFindAllResults:results
+                                inContext:&tailFindContext_];
+    for (SearchResult *r in results) {
+        [TEXTVIEW addResultFromX:r->startX
+                            absY:r->absStartY
+                             toX:r->endX
+                          toAbsY:r->absEndY];
+    }
+    if ([results count]) {
+        [TEXTVIEW setNeedsDisplay:YES];
+    }
+    if (more) {
+        tailFindTimer_ = [NSTimer scheduledTimerWithTimeInterval:0.01
+                                                          target:self
+                                                        selector:@selector(continueTailFind)
+                                                        userInfo:nil
+                                                         repeats:NO];
+    } else {
+        // Update the saved position to just before the screen.
+        [SCREEN saveTerminalAbsPos];
+        tailFindTimer_ = nil;
+    }
+}
+
+- (void)beginTailFind
+{
+    FindContext *initialFindContext = [TEXTVIEW initialFindContext];
+    if (!initialFindContext->substring) {
+        return;
+    }
+    [SCREEN initFindString:initialFindContext->substring
+          forwardDirection:YES
+              ignoringCase:!!(initialFindContext->options & FindOptCaseInsensitive)
+                     regex:!!(initialFindContext->options & FindOptRegex)
+               startingAtX:0
+               startingAtY:0
+                withOffset:0
+                 inContext:&tailFindContext_
+           multipleResults:YES];
+
+    // Set the starting position to the block & offset that the backward search
+    // began at. Do a forward search from that location.
+    [SCREEN restoreSavedPositionToFindContext:&tailFindContext_];
+    [self continueTailFind];
+}
+
+- (void)sessionContentsChanged:(NSNotification *)notification
+{
+    if (!tailFindTimer_ &&
+        [notification object] == self &&
+        [[tab_ realParentWindow] currentTab] == tab_) {
+        [self beginTailFind];
+    }
+}
+
+- (void)stopTailFind
+{
+    if (tailFindTimer_) {
+        [SCREEN cancelFindInContext:&tailFindContext_];
+        [tailFindTimer_ invalidate];
+        tailFindTimer_ = nil;
+    }
+}
+
+- (void)printTmuxMessage:(NSString *)message
+{
+    if (EXIT) {
+        return;
+    }
+    screen_char_t savedFgColor = [TERMINAL foregroundColorCode];
+    screen_char_t savedBgColor = [TERMINAL backgroundColorCode];
+    [TERMINAL setForegroundColor:ALTSEM_FG_DEFAULT
+              alternateSemantics:YES];
+    [TERMINAL setBackgroundColor:ALTSEM_BG_DEFAULT
+              alternateSemantics:YES];
+    [SCREEN setString:message ascii:YES];
+    [SCREEN crlf];
+    [TERMINAL setForegroundColor:savedFgColor.foregroundColor
+              alternateSemantics:savedFgColor.foregroundColorMode == ColorModeAlternate];
+    [TERMINAL setBackgroundColor:savedBgColor.backgroundColor
+              alternateSemantics:savedBgColor.backgroundColorMode == ColorModeAlternate];
+}
+
+- (void)printTmuxCommandOutputToScreen:(NSString *)response
+{
+    for (NSString *aLine in [response componentsSeparatedByString:@"\n"]) {
+        aLine = [aLine stringByReplacingOccurrencesOfString:@"\r" withString:@""];
+        [self printTmuxMessage:aLine];
+    }
+}
+
+- (BOOL)_localeIsSupported:(NSString*)theLocale
+{
+    // Keep a copy of the current locale setting for this process
+    char* backupLocale = setlocale(LC_CTYPE, NULL);
+
+    // Try to set it to the proposed locale
+    BOOL supported;
+    if (setlocale(LC_CTYPE, [theLocale UTF8String])) {
+        supported = YES;
+    } else {
+        supported = NO;
+    }
+
+    // Restore locale and return
+    setlocale(LC_CTYPE, backupLocale);
+    return supported;
+}
+
+@end
+
+@implementation PTYSession (ScriptingSupport)
+
+    // Object specifier
+    - (NSScriptObjectSpecifier *)objectSpecifier
+{
+    NSUInteger theIndex = 0;
+    id classDescription = nil;
+
+    NSScriptObjectSpecifier *containerRef = nil;
+    if (![[self tab] realParentWindow]) {
+        // TODO(georgen): scripting is broken while in instant replay.
+        return nil;
+    }
+    // TODO: Test this with multiple panes per tab.
+    theIndex = [[[[self tab] realParentWindow] tabView] indexOfTabViewItem:[[self tab] tabViewItem]];
+
+    if (theIndex != NSNotFound) {
+        containerRef = [[[self tab] realParentWindow] objectSpecifier];
+        classDescription = [containerRef keyClassDescription];
+        //create and return the specifier
+        return [[[NSIndexSpecifier allocWithZone:[self zone]]
+               initWithContainerClassDescription:classDescription
+                              containerSpecifier:containerRef
+                                             key:@ "sessions"
+                                           index:theIndex] autorelease];
+    } else {
+        // NSLog(@"recipient not found!");
+        return nil;
+    }
+}
+
+// Handlers for supported commands:
+    -(void)handleExecScriptCommand:(NSScriptCommand *)aCommand
+{
+    // if we are already doing something, get out.
+    if ([SHELL pid] > 0) {
+        NSBeep();
+        return;
+    }
+
+    // Get the command's arguments:
+    NSDictionary *args = [aCommand evaluatedArguments];
+    NSString *command = [args objectForKey:@"command"];
+    BOOL isUTF8 = [[args objectForKey:@"isUTF8"] boolValue];
+
+    NSString *cmd;
+    NSArray *arg;
+
+    [command breakDownCommandToPath:&cmd cmdArgs:&arg];
+    [self startProgram:cmd arguments:arg environment:[NSDictionary dictionary] isUTF8:isUTF8 asLoginSession:NO];
+
+    return;
+}
+
+-(void)handleSelectScriptCommand:(NSScriptCommand *)command
+{
+    [[[[self tab] parentWindow] tabView] selectTabViewItemWithIdentifier:[self tab]];
+}
+
+-(void)handleWriteScriptCommand:(NSScriptCommand *)command
+{
+    // Get the command's arguments:
+    NSDictionary *args = [command evaluatedArguments];
+    // optional argument follows (might be nil):
+    NSString *contentsOfFile = [args objectForKey:@"contentsOfFile"];
+    // optional argument follows (might be nil):
+    NSString *text = [args objectForKey:@"text"];
+    NSData *data = nil;
+    NSString *aString = nil;
+
+    if (text != nil) {
+        if ([text characterAtIndex:[text length]-1]==' ') {
+            data = [text dataUsingEncoding:[TERMINAL encoding]];
+        } else {
+            aString = [NSString stringWithFormat:@"%@\n", text];
+            data = [aString dataUsingEncoding:[TERMINAL encoding]];
+        }
+    }
+
+    if (contentsOfFile != nil) {
+        aString = [NSString stringWithContentsOfFile:contentsOfFile
+                                            encoding:NSUTF8StringEncoding
+                                               error:nil];
+        data = [aString dataUsingEncoding:[TERMINAL encoding]];
+    }
+
+    if (data != nil && [SHELL pid] > 0) {
+        int i = 0;
+        // wait here until we have had some output
+        while ([SHELL hasOutput] == NO && i < 1000000) {
+            usleep(50000);
+            i += 50000;
+        }
+
+        [self writeTask:data];
+    }
+}
+
+
+- (void)handleTerminateScriptCommand:(NSScriptCommand *)command
+{
+    [[self tab] closeSession:self];
+}
 
 @end

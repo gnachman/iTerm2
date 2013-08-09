@@ -351,7 +351,6 @@ typedef enum {
 - (BOOL)hasTextSendingKeyMappingForEvent:(NSEvent*)event;
 - (BOOL)willHandleEvent: (NSEvent *)theEvent;
 - (void)handleEvent: (NSEvent *)theEvent;
-- (void)insertText:(NSString *)string;
 - (void)insertNewline:(id)sender;
 - (void)insertTab:(id)sender;
 - (void)moveUp:(id)sender;
@@ -432,7 +431,6 @@ typedef enum {
 - (void)setView:(SessionView*)newView;
 - (PTYTextView *)TEXTVIEW;
 - (void)setTEXTVIEW: (PTYTextView *)theTEXTVIEW;
-- (PTYScrollView *)SCROLLVIEW;
 - (void)setSCROLLVIEW: (PTYScrollView *)theSCROLLVIEW;
 - (NSStringEncoding)encoding;
 - (void)setEncoding:(NSStringEncoding)encoding;
@@ -565,15 +563,10 @@ typedef enum {
 - (void)setPasteboard:(NSString *)pbName;
 - (BOOL)hasCoprocess;
 - (void)stopCoprocess;
-- (void)launchCoprocessWithCommand:(NSString *)command;
 - (void)launchSilentCoprocessWithCommand:(NSString *)command;
 
 - (void)setFocused:(BOOL)focused;
 - (BOOL)wantsContentChangedNotification;
-
-- (void)sendEscapeSequence:(NSString *)text;
-- (void)sendHexCode:(NSString *)codes;
-- (void)sendText:(NSString *)text;
 
 - (void)startTmuxMode;
 - (void)tmuxDetach;
@@ -599,17 +592,3 @@ typedef enum {
 
 @end
 
-@interface PTYSession (Private)
-
-- (NSString*)_getLocale;
-- (NSString*)_lang;
-- (NSString*)encodingName;
-- (void)setDvrFrame;
-- (void)stopTailFind;
-- (void)beginTailFind;
-- (void)continueTailFind;
-- (void)printTmuxMessage:(NSString *)message;
-- (void)printTmuxCommandOutputToScreen:(NSString *)response;
-- (BOOL)_localeIsSupported:(NSString*)theLocale;
-
-@end

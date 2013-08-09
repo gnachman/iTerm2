@@ -28,7 +28,7 @@
         @"";
 
     // Append our own description at this level
-    [builtHierarchicalString appendFormat:@"\n%@%@ %@ %@(%li subviews)", tabString, view, [NSValue valueWithRect:view.frame], titleString, [[view subviews] count]];
+    [builtHierarchicalString appendFormat:@"\n%@%@ %@ %@(%d subviews)", tabString, view, [NSValue valueWithRect:view.frame], titleString, (int)[[view subviews] count]];
 
     // Recurse for each subview ...
     for (NSView * subview in [view subviews])

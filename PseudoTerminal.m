@@ -802,7 +802,7 @@ NSString *sessionsKey = @"sessions";
         message = [NSString stringWithFormat:@"%@ is running the following jobs: %@, plus %ld %@.",
                    identifier,
                    [self prettyListOfStrings:sortedNames],
-                   [sortedNames count] - 10,
+                   (long)[sortedNames count] - 10,
                    [sortedNames count] == 11 ? @"other" : @"others"];
     } else {
         message = [NSString stringWithFormat:@"%@ will be closed.", identifier];
@@ -3159,7 +3159,7 @@ NSString *sessionsKey = @"sessions";
         NSMenu *tabMenu = [[[NSMenu alloc] initWithTitle:@""] autorelease];
         NSUInteger count = 1;
         for (NSTabViewItem *aTabViewItem in [TABVIEW tabViewItems]) {
-            NSString *title = [NSString stringWithFormat:@"%@ #%ld", [aTabViewItem label], count++];
+            NSString *title = [NSString stringWithFormat:@"%@ #%ld", [aTabViewItem label], (unsigned long)count++];
             item = [[[NSMenuItem alloc] initWithTitle:title
                                                action:@selector(selectTab:)
                                         keyEquivalent:@""] autorelease];
@@ -5241,7 +5241,7 @@ NSString *sessionsKey = @"sessions";
         NSMutableString *title = [NSMutableString string];
         NSString *progpath = [NSString stringWithFormat: @"%@ #%ld",
                               [[[[aSession SHELL] path] pathComponents] lastObject],
-                              [TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]]];
+                              (long)[TABVIEW indexOfTabViewItem:[TABVIEW selectedTabViewItem]]];
 
         if ([aSession exited]) {
             [title appendString:@"Finish"];

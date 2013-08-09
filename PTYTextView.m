@@ -6463,7 +6463,7 @@ static void PTYShowGlyphsAtPositions(CTFontRef runFont, const CGGlyph *glyphs, N
         // function is CTFontDrawGlyphs. It can draw Emoji, but only exists on 10.7.
         function(runFont, glyphs, positions, glyphCount, ctx);
     } else {
-        CGContextShowGlyphsAtPositions(ctx, glyphs, positions, glyphCount);
+        CGContextShowGlyphsAtPositions(ctx, glyphs, (struct CGPoint *)positions, glyphCount);
     }
 }
 

@@ -284,17 +284,6 @@ static __inline__ screen_char_t *incrementLinePointer(screen_char_t *buf_start, 
 }
 
 
-@interface VT100Screen (Private)
-
-- (screen_char_t *)_getLineAtIndex:(int)anIndex fromLine:(screen_char_t *)aLine;
-- (screen_char_t *)_getDefaultLineWithChar:(screen_char_t)defaultChar;
-- (screen_char_t*)_getDefaultLineWithWidth:(int)width;
-- (int)_addLineToScrollbackImpl;
-- (void)_setInitialTabStops;
-- (screen_char_t)defaultChar;
-
-@end
-
 @implementation VT100Screen
 
 #define DEFAULT_WIDTH     80
@@ -702,7 +691,9 @@ static char* FormatCont(int c)
         }
         dirtyline[x] = 0;
         line[x] = 0;
-        DebugLog([NSString stringWithFormat:@"%04d @ buffer+%lu lines: %s %s", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)]);
+        DebugLog([NSString stringWithFormat:@"%04d @ buffer+%d lines: %s %s",
+                  y, (int)((p - buffer_lines) / REAL_WIDTH), line,
+                  FormatCont(p[WIDTH].code)]);
         DebugLog([NSString stringWithFormat:@"                 dirty: %s", dirtyline]);
     }
 }
@@ -2635,7 +2626,7 @@ void DumpBuf(screen_char_t* p, int n) {
 
     if (gDebugLogging) {
         DebugLog([NSString stringWithFormat:@"setString: %ld chars starting with %c at x=%d, y=%d, line=%d",
-                  [string length], [string characterAtIndex:0],
+                  (unsigned long)[string length], [string characterAtIndex:0],
                   cursorX, cursorY, cursorY + [linebuffer numLinesWithWidth: WIDTH]]);
     }
 
@@ -4771,8 +4762,10 @@ void DumpBuf(screen_char_t* p, int n) {
         }
         line[x] = 0;
         dirtyline[x] = 0;
-        [result appendFormat:@"%04d @ buffer+%lu lines: %s %s\n", y, ((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)];
-        [result appendFormat:@"%04d @ buffer+%lu dirty: %s\n", y, ((p - buffer_lines) / REAL_WIDTH), dirtyline];
+        [result appendFormat:@"%04d @ buffer+%d lines: %s %s\n",
+            y, (int)((p - buffer_lines) / REAL_WIDTH), line, FormatCont(p[WIDTH].code)];
+        [result appendFormat:@"%04d @ buffer+%d dirty: %s\n",
+            y, (int)((p - buffer_lines) / REAL_WIDTH), dirtyline];
     }
     return result;
 }
@@ -4845,9 +4838,7 @@ void DumpBuf(screen_char_t* p, int n) {
            [SESSION wantsContentChangedNotification];
 }
 
-@end
-
-@implementation VT100Screen (Private)
+#pragma mark - Private
 
 // gets line offset by specified index from specified line poiner; accounts for buffer wrap
 - (screen_char_t *)_getLineAtIndex:(int)anIndex fromLine:(screen_char_t *)aLine

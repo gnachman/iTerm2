@@ -60,7 +60,7 @@ static _object_name_ *z##_shared_obj_name_ = nil;  \
 - (NSUInteger)retainCount {                        \
   return NSUIntegerMax;                            \
 }                                                  \
-- (void)release {                                  \
+- (oneway void)release {                           \
 }                                                  \
 - (id)autorelease {                                \
   return self;                                     \

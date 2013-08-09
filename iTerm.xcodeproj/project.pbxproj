@@ -2160,7 +2160,46 @@
 				PRODUCT_NAME = iTerm;
 				SDKROOT = macosx;
 				VALID_ARCHS = "ppc i386 x86_64";
-				WARNING_CFLAGS = "-Wall";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wendif-labels",
+					"-Werror",
+					"-Wnewline-eof",
+					"-Wno-bool-conversion",
+					"-Wno-constant-conversion",
+					"-Wno-conversion",
+					"-Wno-deprecated-declarations",
+					"-Wno-deprecated-implementations",
+					"-Wno-empty-body",
+					"-Wno-enum-conversion",
+					"-Wno-error=deprecated-declarations",
+					"-Wno-four-char-constants",
+					"-Wno-implicit-atomic-properties",
+					"-Wno-int-conversion",
+					"-Wno-missing-braces",
+					"-Wno-missing-field-initializers",
+					"-Wno-missing-prototypes",
+					"-Wno-newline-eof",
+					"-Wno-receiver-is-weak",
+					"-Wno-selector",
+					"-Wno-shadow",
+					"-Wno-shorten-64-to-32",
+					"-Wno-sign-conversion",
+					"-Wno-strict-selector-match",
+					"-Wno-trigraphs",
+					"-Wno-undeclared-selector",
+					"-Wno-uninitialized",
+					"-Wno-unknown-pragmas",
+					"-Wno-unused-function",
+					"-Wno-unused-label",
+					"-Wno-unused-parameter",
+					"-Wno-unused-variable",
+					"-Wparentheses",
+					"-Wpointer-sign",
+					"-Wprotocol",
+					"-Wswitch",
+					"-Wunused-value",
+				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
 			};
@@ -2223,7 +2262,46 @@
 				PRODUCT_NAME = iTerm;
 				SDKROOT = macosx;
 				VALID_ARCHS = "i386 x86_64";
-				WARNING_CFLAGS = "-Wall";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wendif-labels",
+					"-Werror",
+					"-Wnewline-eof",
+					"-Wno-bool-conversion",
+					"-Wno-constant-conversion",
+					"-Wno-conversion",
+					"-Wno-deprecated-declarations",
+					"-Wno-deprecated-implementations",
+					"-Wno-empty-body",
+					"-Wno-enum-conversion",
+					"-Wno-error=deprecated-declarations",
+					"-Wno-four-char-constants",
+					"-Wno-implicit-atomic-properties",
+					"-Wno-int-conversion",
+					"-Wno-missing-braces",
+					"-Wno-missing-field-initializers",
+					"-Wno-missing-prototypes",
+					"-Wno-newline-eof",
+					"-Wno-receiver-is-weak",
+					"-Wno-selector",
+					"-Wno-shadow",
+					"-Wno-shorten-64-to-32",
+					"-Wno-sign-conversion",
+					"-Wno-strict-selector-match",
+					"-Wno-trigraphs",
+					"-Wno-undeclared-selector",
+					"-Wno-uninitialized",
+					"-Wno-unknown-pragmas",
+					"-Wno-unused-function",
+					"-Wno-unused-label",
+					"-Wno-unused-parameter",
+					"-Wno-unused-variable",
+					"-Wparentheses",
+					"-Wpointer-sign",
+					"-Wprotocol",
+					"-Wswitch",
+					"-Wunused-value",
+				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
 			};
@@ -2295,7 +2373,46 @@
 				PRODUCT_NAME = iTerm;
 				SDKROOT = macosx;
 				VALID_ARCHS = "ppc i386 x86_64";
-				WARNING_CFLAGS = "-Wall";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wendif-labels",
+					"-Werror",
+					"-Wnewline-eof",
+					"-Wno-bool-conversion",
+					"-Wno-constant-conversion",
+					"-Wno-conversion",
+					"-Wno-deprecated-declarations",
+					"-Wno-deprecated-implementations",
+					"-Wno-empty-body",
+					"-Wno-enum-conversion",
+					"-Wno-error=deprecated-declarations",
+					"-Wno-four-char-constants",
+					"-Wno-implicit-atomic-properties",
+					"-Wno-int-conversion",
+					"-Wno-missing-braces",
+					"-Wno-missing-field-initializers",
+					"-Wno-missing-prototypes",
+					"-Wno-newline-eof",
+					"-Wno-receiver-is-weak",
+					"-Wno-selector",
+					"-Wno-shadow",
+					"-Wno-shorten-64-to-32",
+					"-Wno-sign-conversion",
+					"-Wno-strict-selector-match",
+					"-Wno-trigraphs",
+					"-Wno-undeclared-selector",
+					"-Wno-uninitialized",
+					"-Wno-unknown-pragmas",
+					"-Wno-unused-function",
+					"-Wno-unused-label",
+					"-Wno-unused-parameter",
+					"-Wno-unused-variable",
+					"-Wparentheses",
+					"-Wpointer-sign",
+					"-Wprotocol",
+					"-Wswitch",
+					"-Wunused-value",
+				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
 			};
@@ -2344,7 +2461,46 @@
 				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
 				VALID_ARCHS = "ppc i386 x86_64";
-				WARNING_CFLAGS = "-Wall";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wendif-labels",
+					"-Werror",
+					"-Wnewline-eof",
+					"-Wno-bool-conversion",
+					"-Wno-constant-conversion",
+					"-Wno-conversion",
+					"-Wno-deprecated-declarations",
+					"-Wno-deprecated-implementations",
+					"-Wno-empty-body",
+					"-Wno-enum-conversion",
+					"-Wno-error=deprecated-declarations",
+					"-Wno-four-char-constants",
+					"-Wno-implicit-atomic-properties",
+					"-Wno-int-conversion",
+					"-Wno-missing-braces",
+					"-Wno-missing-field-initializers",
+					"-Wno-missing-prototypes",
+					"-Wno-newline-eof",
+					"-Wno-receiver-is-weak",
+					"-Wno-selector",
+					"-Wno-shadow",
+					"-Wno-shorten-64-to-32",
+					"-Wno-sign-conversion",
+					"-Wno-strict-selector-match",
+					"-Wno-trigraphs",
+					"-Wno-undeclared-selector",
+					"-Wno-uninitialized",
+					"-Wno-unknown-pragmas",
+					"-Wno-unused-function",
+					"-Wno-unused-label",
+					"-Wno-unused-parameter",
+					"-Wno-unused-variable",
+					"-Wparentheses",
+					"-Wpointer-sign",
+					"-Wprotocol",
+					"-Wswitch",
+					"-Wunused-value",
+				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = YES;
 			};
@@ -2391,7 +2547,46 @@
 				PRODUCT_NAME = iTerm;
 				SDKROOT = macosx;
 				VALID_ARCHS = "i386 x86_64";
-				WARNING_CFLAGS = "-Wall";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wendif-labels",
+					"-Werror",
+					"-Wnewline-eof",
+					"-Wno-bool-conversion",
+					"-Wno-constant-conversion",
+					"-Wno-conversion",
+					"-Wno-deprecated-declarations",
+					"-Wno-deprecated-implementations",
+					"-Wno-empty-body",
+					"-Wno-enum-conversion",
+					"-Wno-error=deprecated-declarations",
+					"-Wno-four-char-constants",
+					"-Wno-implicit-atomic-properties",
+					"-Wno-int-conversion",
+					"-Wno-missing-braces",
+					"-Wno-missing-field-initializers",
+					"-Wno-missing-prototypes",
+					"-Wno-newline-eof",
+					"-Wno-receiver-is-weak",
+					"-Wno-selector",
+					"-Wno-shadow",
+					"-Wno-shorten-64-to-32",
+					"-Wno-sign-conversion",
+					"-Wno-strict-selector-match",
+					"-Wno-trigraphs",
+					"-Wno-undeclared-selector",
+					"-Wno-uninitialized",
+					"-Wno-unknown-pragmas",
+					"-Wno-unused-function",
+					"-Wno-unused-label",
+					"-Wno-unused-parameter",
+					"-Wno-unused-variable",
+					"-Wparentheses",
+					"-Wpointer-sign",
+					"-Wprotocol",
+					"-Wswitch",
+					"-Wunused-value",
+				);
 				WRAPPER_EXTENSION = app;
 				ZERO_LINK = NO;
 			};
@@ -2443,7 +2638,46 @@
 				SDKROOT = macosx;
 				SECTORDER_FLAGS = "";
 				VALID_ARCHS = "ppc i386 x86_64";
-				WARNING_CFLAGS = "-Wall";
+				WARNING_CFLAGS = (
+					"-Wall",
+					"-Wendif-labels",
+					"-Werror",
+					"-Wnewline-eof",
+					"-Wno-bool-conversion",
+					"-Wno-constant-conversion",
+					"-Wno-conversion",
+					"-Wno-deprecated-declarations",
+					"-Wno-deprecated-implementations",
+					"-Wno-empty-body",
+					"-Wno-enum-conversion",
+					"-Wno-error=deprecated-declarations",
+					"-Wno-four-char-constants",
+					"-Wno-implicit-atomic-properties",
+					"-Wno-int-conversion",
+					"-Wno-missing-braces",
+					"-Wno-missing-field-initializers",
+					"-Wno-missing-prototypes",
+					"-Wno-newline-eof",
+					"-Wno-receiver-is-weak",
+					"-Wno-selector",
+					"-Wno-shadow",
+					"-Wno-shorten-64-to-32",
+					"-Wno-sign-conversion",
+					"-Wno-strict-selector-match",
+					"-Wno-trigraphs",
+					"-Wno-undeclared-selector",
+					"-Wno-uninitialized",
+					"-Wno-unknown-pragmas",
+					"-Wno-unused-function",
+					"-Wno-unused-label",
+					"-Wno-unused-parameter",
+					"-Wno-unused-variable",
+					"-Wparentheses",
+					"-Wpointer-sign",
+					"-Wprotocol",
+					"-Wswitch",
+					"-Wunused-value",
+				);
 				WRAPPER_EXTENSION = app;
 			};
 			name = Default;
