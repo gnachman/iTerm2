@@ -170,7 +170,7 @@ void TranslateCharacterSet(screen_char_t *s, int len);
 - (void)setShellTask:(PTYTask *)shell;
 - (void)setSession:(PTYSession *)session;
 - (BOOL)vsplitMode;
-- (void)setVsplitMode: (BOOL)mode;
+- (void)setVsplitMode:(BOOL)mode;
 
 - (PTYTextView *) display;
 - (void) setDisplay: (PTYTextView *) aDisplay;

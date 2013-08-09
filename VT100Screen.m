@@ -4257,7 +4257,7 @@ void DumpBuf(screen_char_t* p, int n) {
     }
 }
 
-- (void)setVsplitMode: (BOOL)mode;
+- (void)setVsplitMode:(BOOL)mode;
 {
     vsplitMode = mode;
     if (!mode) {
